@@ -30,25 +30,30 @@
 
 ## Stochastic & Signal Processing Models (Core Engine Ideas)
 
+These are the mathematical tools available for modeling. Each is annotated with its implementation home in `specs/project-structure.md`.
+
 ### Random Process Models
-- **Markov Chains**: State transitions for unit morale, readiness, engagement status
-- **Poisson Processes**: Event arrivals (reinforcements, supply deliveries, random encounters)
-- **Gaussian/Shot Noise**: Weapon accuracy, dispersion patterns, sensor noise
-- **Brownian Motion / Random Walks**: Unit drift in movement under uncertainty
-- **Queueing Theory**: Supply chain bottlenecks, medical evacuation, repair depots
+- **Markov Chains**: State transitions for unit morale, readiness, engagement status → `morale/state.py`
+- **Poisson Processes**: Event arrivals (reinforcements, supply deliveries, random encounters) → `simulation/campaign.py`, `core/events.py`
+- **Gaussian/Shot Noise**: Weapon accuracy, dispersion patterns, sensor noise → `combat/ballistics.py`, `combat/indirect_fire.py`, `detection/sensors.py`
+- **Brownian Motion / Random Walks**: Unit drift in movement under uncertainty, stress accumulation → `movement/engine.py`, `morale/stress.py`
+- **Queueing Theory**: Supply chain bottlenecks, medical evacuation, repair depots → `logistics/medical.py`, `logistics/maintenance.py`, `logistics/supply_network.py`
 
 ### Signal Processing Analogies
-- **Kalman Filtering**: Intelligence estimation — tracking enemy positions with noisy observations
-- **Monte Carlo Methods**: Outcome probability estimation for engagements
-- **Spectral Analysis**: Analyzing periodicity in operational tempo
-- **Convolution**: Modeling cascading effects (suppression spreading through a formation)
-- **Matched Filtering / Detection Theory**: Reconnaissance and detection modeling (SNR-based detection probability)
+- **Kalman Filtering**: Intelligence estimation — tracking enemy positions with noisy observations → `detection/estimation.py`
+- **Monte Carlo Methods**: Outcome probability estimation for engagements, campaign-level analysis → `simulation/metrics.py`, Phase 8 validation
+- **Spectral Analysis**: Analyzing periodicity in operational tempo → `simulation/metrics.py` (post-run analysis tool, not real-time engine component)
+- **Convolution**: Modeling cascading effects (suppression spreading through a formation) → `combat/suppression.py`, `morale/cohesion.py`
+- **Matched Filtering / Detection Theory**: Reconnaissance and detection modeling (SNR-based detection probability) → `detection/detection.py`
 
 ### Optimization
-- **Linear/Nonlinear Programming**: Optimal resource allocation (ammo, fuel, troops)
-- **Stochastic Optimization**: Decision-making under uncertainty
-- **Graph Theory / Network Flow**: Supply line optimization, movement planning
-- **Game Theory**: Adversarial decision modeling
+- **Linear/Nonlinear Programming**: Optimal resource allocation (ammo, fuel, troops) → `c2/ai/assessment.py` (combat power), `logistics/supply_network.py` (flow optimization)
+- **Stochastic Optimization**: Decision-making under uncertainty → `c2/ai/decisions.py`
+- **Graph Theory / Network Flow**: Supply line optimization, movement planning → `logistics/supply_network.py`, `movement/pathfinding.py`
+- **Game Theory**: Adversarial decision modeling → `c2/ai/decisions.py`, `c2/ai/stratagems.py` (opponent modeling in COA analysis)
+
+### Attrition & Force Models
+- **Lanchester Models** (square law, linear law): Attrition rate baselines for campaign-level modeling, validation benchmarks → `simulation/campaign.py` (aggregate force modeling), Phase 8 backtesting comparisons
 
 ---
 
@@ -59,6 +64,10 @@
 - Damage / lethality models
 - Suppression and morale effects
 - Armor penetration / protection
+- **Long-range fires & deep strike**: tube artillery, rocket artillery (MLRS/HIMARS — area fires and precision-guided munitions), mortars
+- **Surface-to-surface missiles**: theater ballistic missiles (Scud, Iskander, DF-21), land-attack cruise missiles (Tomahawk, Kalibr, JASSM), ground-launched anti-ship missiles (coastal defense — Bastion, NSM, shore-based Harpoon)
+- **Missile defense**: ballistic missile defense (Patriot PAC-3, THAAD, S-400 BMD mode, Aegis BMD), cruise missile defense, counter-rocket/artillery/mortar (C-RAM, Iron Dome)
+- **Sensor-to-shooter kill chain**: targeting cycle from detection through engagement — time-sensitive targeting, dynamic targeting, BDA feedback loop
 
 ### Movement & Maneuver
 - Terrain-dependent movement rates
@@ -127,6 +136,8 @@
 | **Fuller** | Mechanized warfare, combined arms | Combined arms interaction rules |
 | **Boyd** | OODA loop | C2 cycle modeling: sensor → processing → decision → order propagation |
 | **Warden** | Five rings (strategic targeting) | Target prioritization for strategic/air campaigns |
+| **Tukhachevsky** | Deep operations, operational depth | Deep fires targeting, operational-depth strike planning |
+| **Starry / DePuy** | AirLand Battle, deep attack, synchronization | Deep fires doctrine, sensor-to-shooter integration, fire support coordination |
 
 ### Philosophers, Historians & Political Theorists
 

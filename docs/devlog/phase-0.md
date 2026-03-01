@@ -100,3 +100,65 @@ Established the foundational infrastructure that every subsequent phase builds o
 
 - Bound method identity in Python is a recurring gotcha — always use `==` not `is` for callable comparison.
 - uv is significantly faster than pip for installs (~3s vs ~15s for this dependency set).
+
+---
+
+## Post-Phase Design Doc Updates (2026-02-28)
+
+While reviewing Phase 0 completion, identified gaps in design documentation around long-range fires and missiles. Updated all three design docs:
+
+### brainstorm.md
+- Expanded **Combat Resolution** section: added long-range fires (tube & rocket artillery), surface-to-surface missiles (TBM, cruise, coastal defense), missile defense (BMD, C-RAM), sensor-to-shooter kill chain
+- Added **Tukhachevsky** (deep operations) and **Starry/DePuy** (AirLand Battle, deep attack) to the military theorist table
+
+### project-structure.md
+- Added `data/units/missiles/` directory for SSM launcher definitions
+- Added `combat/missiles.py` module — TBMs, land-attack cruise missiles, ground-launched AShM, kill chain modeling, missile logistics
+- Added `combat/missile_defense.py` module — BMD (Patriot/THAAD/Aegis), cruise missile defense, C-RAM (Iron Dome/Phalanx), IAMD integration
+- Expanded `combat/indirect_fire.py` — now explicitly covers tube artillery AND rocket artillery (MLRS/HIMARS) as distinct fire types with different mechanics (pod-based ammo, dispersal patterns, shoot-and-scoot)
+- Expanded `combat/air_defense.py` description to reference IAMD shared engagement mechanics
+- Expanded ammunition types to include rockets and missiles, with note on individual tracking for high-value munitions
+- Expanded `c2/coordination.py` — added target lists (HPTL/AGM), missile flight corridor deconfliction, deep fires coordination (FSCL boundary)
+- Added missile and guided munition logistics to `logistics/` section — TEL reload cycles, VLS non-reloadable at sea, interceptor inventory sustainability
+
+### development-phases.md
+- Restructured **Phase 4** into subphases: 4a (direct fire), 4b (indirect fire & deep fires), 4c (surface-to-surface missiles), 4d (air combat & air/missile defense), 4e (naval combat)
+- Updated Phase 4 exit criteria to require all combat domains
+- Fixed **Future Phases**: removed "Naval units and naval warfare" (contradicted FULL maritime scope decision), updated EW/CBRN notes to reference interface points, added note clarifying naval integration across phases
+
+---
+
+## Cross-Document Consistency Audit (2026-02-28)
+
+Ran a full alignment audit between `development-phases.md`, `project-structure.md`, and `brainstorm.md`. Found critical misalignment.
+
+### Audit Findings (Pre-Fix)
+
+| Check | Result | Severity |
+|-------|--------|----------|
+| Module Coverage | **FAIL** — ~63 of ~107 module files had no phase assignment | CRITICAL |
+| Phase Content Match | **FAIL** — entire `environment/` module (9 files) had no phase | CRITICAL |
+| Dependency Ordering | PASS (after review) | — |
+| Exit Criteria Coverage | **FAIL** — 6 of 9 phases had exit criteria weaker than deliverables | HIGH |
+| Contradictions | **FAIL** — 7 contradictions found (naval scope, deferred items, doctrinal AI) | HIGH |
+| Brainstorm Traceability | **FAIL** — spectral analysis, convolution, LP/NLP, game theory, Lanchester models had no implementation home annotations | MEDIUM |
+
+### Fixes Applied
+
+1. **Full rewrite of `development-phases.md`**:
+   - Phase 1 expanded to "Terrain, Environment & Spatial Foundation" with subphases 1a–1d (terrain data, environment/weather, detection foundation, terrain analysis)
+   - All phases expanded with explicit module file lists (every `.py` file assigned)
+   - All exit criteria strengthened to match deliverables
+   - Naval items integrated across phases (not deferred)
+   - Module-to-Phase Index table added at bottom (~107 module files, each mapped to exactly one phase)
+   - Doctrinal AI scope clarified (framework in Phase 5, named schools deferred to future)
+
+2. **Updated `brainstorm.md`**:
+   - Annotated all stochastic/signal processing models with their implementation module homes
+   - Added Lanchester Models under "Attrition & Force Models"
+
+3. **Created `/cross-doc-audit` skill** (`.claude/skills/cross-doc-audit/SKILL.md`):
+   - 8 systematic checks: module coverage, phase content match, dependency ordering, exit criteria coverage, contradictions, brainstorm traceability, devlog completeness, memory freshness
+   - Designed to run after completing any phase, adding modules, or changing architecture
+
+4. **Updated `/update-docs` skill** — added devlog and project-structure to document table, cross-referenced `/cross-doc-audit`

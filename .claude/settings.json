@@ -1,0 +1,35 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "prompt",
+            "prompt": "Check if the file being edited is a Python file (.py) inside the simulation core (stochastic_warfare/ directory). If it is, inspect the new content for these CRITICAL violations:\n\n1. PRNG violations: `import random`, `random.random()`, `random.choice()`, `random.randint()`, `random.uniform()`, `random.gauss()`, `np.random.seed()`, `np.random.random()`, `np.random.randn()`, or any legacy numpy.random global function. All randomness must use `numpy.random.Generator` via `default_rng()`.\n2. Non-deterministic iteration: `for x in some_set` or iterating over a set() where order affects simulation logic.\n3. Bare print(): `print()` calls in simulation core (should use logging). Acceptable in tests, scripts, CLI entry points.\n4. Wall-clock time: `time.time()`, `datetime.now()`, `datetime.utcnow()` in simulation logic (not in logging/profiling utilities).\n\nIf the file is NOT a .py file or NOT in the simulation core directory, ALLOW the edit.\nIf no violations are found, ALLOW the edit.\nIf violations are found, BLOCK the edit and list each violation with the offending line."
+          }
+        ]
+      },
+      {
+        "matcher": "Write",
+        "hooks": [
+          {
+            "type": "prompt",
+            "prompt": "Check if the file being written is a YAML file (.yaml or .yml) inside a unit definitions or config directory (units/, config/, scenarios/, data/). If it is, check for obvious structural issues:\n\n1. Does it have an 'id' field?\n2. Are numeric values actually numbers (not strings)?\n3. Are probability values between 0 and 1?\n\nIf the file is NOT a YAML unit/config file, ALLOW the write.\nIf no issues found, ALLOW the write.\nIf issues found, BLOCK and describe the problems."
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "prompt",
+            "prompt": "Check if the bash command that was just run created a new directory under the simulation core (stochastic_warfare/). If a new package/module directory was created (contains __init__.py or is clearly a new module), check whether a corresponding spec file exists at docs/specs/<module_name>.md. If no spec exists, add a reminder message: 'REMINDER: New module directory created without a spec. Consider running /spec <module_name> before implementing.' Do not block — this is advisory only. If no new module directory was created, do nothing."
+          }
+        ]
+      }
+    ]
+  }
+}
