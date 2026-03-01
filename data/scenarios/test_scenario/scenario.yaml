@@ -1,0 +1,5 @@
+name: "Desert Storm Test"
+start_time: "1991-02-24T04:00:00Z"
+duration_hours: 100
+master_seed: 42
+tick_duration_seconds: 10.0
