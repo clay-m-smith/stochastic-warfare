@@ -69,6 +69,22 @@ Phase 3 implements the detection and intelligence layer — the fog of war. Unit
 - **Detection Pd**: 0.5 × erfc(−(SNR−threshold)/√2) — Gaussian noise model, monotonic.
 - **Misclassification**: Sigmoid P(wrong) = 1/(1+exp(k(SNR−midpoint))), decreasing with SNR.
 
+## Known Limitations / Post-MVP Refinements
+
+These are deliberate simplifications made during initial implementation. All are functional but could benefit from refinement after MVP is complete.
+
+1. **Test coverage gap vs plan**: 296 tests vs planned ~455. Key behaviors are all covered, but edge-case coverage (e.g., sensor FOV gating, multi-target saturation, partial equipment degradation effects on specific sensor types) is thinner than originally scoped. Worth a dedicated test-hardening pass post-MVP.
+
+2. **Track-to-target association in `fog_of_war.py`**: Currently associates contacts by unit ID (direct lookup). A real tracker would use nearest-neighbor gating on predicted position — required once combat starts generating many simultaneous contacts where the observer *doesn't know* the target's ID. Straightforward to add (Mahalanobis distance gating on track covariance) but not needed until multi-unit engagements are running.
+
+3. **Environment data threading**: `DetectionEngine.check_detection()` takes environmental conditions as explicit parameters (illumination_lux, thermal_contrast, visibility_m, etc.) rather than querying `ConditionsEngine` internally. This keeps unit tests lightweight (no Phase 1 dependencies) but means the *caller* (fog_of_war update cycle, or the future simulation loop) is responsible for querying the environment and passing values through. If this becomes a maintenance burden, consider an adapter that wraps `ConditionsEngine` + `DetectionEngine` together.
+
+4. **Sonar bearing in passive detection**: The passive sonar model generates a random bearing rather than computing the true bearing to target and adding noise. The signal excess calculation is correct, but the bearing output is placeholder. Needs the actual observer→target geometry threaded through when sonar is used in real scenarios.
+
+5. **No sensor FOV filtering**: `check_detection()` doesn't gate on the sensor's `fov_deg` relative to the observer's heading. All sensors currently scan 360°. Adding FOV filtering requires knowing the sensor's mounting direction relative to the unit's heading — straightforward but deferred.
+
+6. **Single-scan detection model**: Each `check_detection()` call is a single independent Bernoulli trial. Real sensors accumulate signal over multiple scans (integration gain). The current model is correct for instantaneous detection but doesn't model dwell time or scan-to-scan integration. The Kalman filter partially compensates (multiple detections improve the track), but true integration gain would improve Pd at the sensor level.
+
 ## Lessons Learned
 
 - The SNR-based framework unifies all sensor physics under a single Pd computation, making it easy to add new sensor types.
