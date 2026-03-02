@@ -1,0 +1,10 @@
+comm_id: vlf_receiver
+comm_type: VLF
+display_name: "Submarine VLF Receiver"
+max_range_m: 20000000.0
+bandwidth_bps: 300.0
+base_latency_s: 30.0
+base_reliability: 0.70
+intercept_risk: 0.05
+jam_resistance: 0.9
+requires_los: false

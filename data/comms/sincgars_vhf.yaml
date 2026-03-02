@@ -1,0 +1,10 @@
+comm_id: sincgars_vhf
+comm_type: RADIO_VHF
+display_name: "AN/PRC-119 SINCGARS"
+max_range_m: 8000.0
+bandwidth_bps: 16000.0
+base_latency_s: 0.5
+base_reliability: 0.92
+intercept_risk: 0.3
+jam_resistance: 0.7
+requires_los: true

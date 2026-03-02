@@ -1,0 +1,10 @@
+comm_id: harris_hf
+comm_type: RADIO_HF
+display_name: "AN/PRC-150 Harris HF"
+max_range_m: 300000.0
+bandwidth_bps: 9600.0
+base_latency_s: 2.0
+base_reliability: 0.75
+intercept_risk: 0.5
+jam_resistance: 0.4
+requires_los: false

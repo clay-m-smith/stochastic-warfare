@@ -1,0 +1,10 @@
+comm_id: link11
+comm_type: DATA_LINK
+display_name: "Link 11 (TADIL-A)"
+max_range_m: 300000.0
+bandwidth_bps: 2250.0
+base_latency_s: 2.0
+base_reliability: 0.82
+intercept_risk: 0.4
+jam_resistance: 0.5
+requires_los: false

@@ -3,7 +3,7 @@
 ## Project Overview
 High-fidelity, high-resolution wargame simulator. Multi-scale (campaign → battlefield → battle → unit level) with stochastic/signal-processing-inspired models (Markov chains, Monte Carlo, Kalman filters, noise models, queueing theory). Headless Python engine first; matplotlib for validation; full UI deferred. Modern era (Cold War–present) as prototype. Maritime warfare fully integrated, not deferred.
 
-**Current status**: Phase 4 complete (combat resolution, morale). 1,770 tests passing (includes post-Phase 4 backfill). Next: Phase 5 (Command & Control).
+**Current status**: Phase 5 complete (C2 infrastructure). 2,115 tests passing. Next: Phase 6 (Logistics & Supply).
 
 ## Package Management
 **Use `uv` exclusively.** Never use bare `pip install`. Always use `uv add`, `uv sync`, etc. Direct `pip` may target system Python instead of the project venv.
@@ -123,5 +123,15 @@ No new dependencies.
 - **YAML data** (47 files): 24 weapon definitions + 23 ammunition definitions
 
 Key features: RK4 ballistic trajectories, DeMarre penetration, Wayne Hughes salvo model, Markov morale transitions, kill chain timing, fratricide driven by detection confidence, YAML-driven weapons/ammunition, all domains covered (land, air, sea, subsurface), deterministic replay from seed.
+
+No new dependencies.
+
+### Phase 5: C2 Infrastructure (345 tests)
+17 new source modules + 8 YAML data files:
+- **C2** (8 modules): events, command, communications, naval_c2, roe, coordination, mission_command
+- **Orders** (9 modules): types, individual, tactical, operational, strategic, naval_orders, air_orders, propagation, execution
+- **YAML data** (8 files): 8 communication equipment definitions (SINCGARS VHF, Harris HF, FBCB2, Link 16, Link 11, SATCOM UHF, VLF receiver, field wire)
+
+Key features: 4-state command authority (succession with log-normal delays), stochastic comms reliability (Bernoulli per message), EMCON states blocking emitters, jamming with resistance, log-normal propagation delays scaling with echelon, order misinterpretation probability, ROE enforcement (WEAPONS_HOLD/TIGHT/FREE), fire support coordination (FSCL/NFA/RFA/FFA), Auftragstaktik vs Befehlstaktik initiative, naval task force hierarchy (TF/TG/TU/TE), tactical data links, submarine VLF/SATCOM constraints, ATO/ACO/CAS structures, deterministic replay from seed.
 
 No new dependencies.

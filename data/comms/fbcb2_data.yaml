@@ -1,0 +1,10 @@
+comm_id: fbcb2_data
+comm_type: DATA_LINK
+display_name: "FBCB2 Data Terminal"
+max_range_m: 50000.0
+bandwidth_bps: 128000.0
+base_latency_s: 1.0
+base_reliability: 0.88
+intercept_risk: 0.2
+jam_resistance: 0.6
+requires_los: false

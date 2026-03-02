@@ -1,0 +1,10 @@
+comm_id: field_wire
+comm_type: WIRE
+display_name: "WF-16 Field Wire"
+max_range_m: 20000.0
+bandwidth_bps: 32000.0
+base_latency_s: 0.1
+base_reliability: 0.98
+intercept_risk: 0.02
+jam_resistance: 1.0
+requires_los: false

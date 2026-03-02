@@ -1,0 +1,10 @@
+comm_id: satcom_uhf
+comm_type: SATELLITE
+display_name: "AN/PSC-5 SATCOM Terminal"
+max_range_m: 40000000.0
+bandwidth_bps: 64000.0
+base_latency_s: 0.5
+base_reliability: 0.90
+intercept_risk: 0.15
+jam_resistance: 0.75
+requires_los: false

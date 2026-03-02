@@ -11,7 +11,7 @@ Rolling record of implementation decisions, changes, and lessons learned across 
 | 2 | Entity System & Movement | **Complete** | [phase-2.md](phase-2.md) |
 | 3 | Detection & Intelligence | **Complete** | [phase-3.md](phase-3.md) |
 | 4 | Combat Resolution & Morale | **Complete** | [phase-4.md](phase-4.md) |
-| 5 | C2 Infrastructure | Not started | — |
+| 5 | C2 Infrastructure | **Complete** | [phase-5.md](phase-5.md) |
 | 6 | Logistics & Supply | Not started | — |
 | 7 | Engagement Validation | Not started | — |
 | 8 | AI & Planning | Not started | — |
@@ -42,6 +42,12 @@ Known limitations and deferred improvements logged during implementation. Review
 | 4 | Naval damage control lacks compartment flooding model | [phase-4.md — Known Limitations](phase-4.md#known-limitations--post-mvp-refinements) |
 | 4 | Air combat lacks detailed flight dynamics / energy-maneuverability | [phase-4.md — Known Limitations](phase-4.md#known-limitations--post-mvp-refinements) |
 | 4 | Environment→combat coupling partial: only hit_probability (visibility), ballistics (wind/temp), air_ground (weather/night) wired; air_combat, air_defense, naval_surface, indirect_fire lack env coupling | [phase-4.md — Known Limitations](phase-4.md#known-limitations--post-mvp-refinements) |
+| 5 | No multi-hop propagation (single hop issuer→recipient only) | [phase-5.md — Known Limitations](phase-5.md#known-limitations--deferred-items) |
+| 5 | No terrain-based LOS check for communications | [phase-5.md — Known Limitations](phase-5.md#known-limitations--deferred-items) |
+| 5 | Simplified FSCL (east-west line, not arbitrary polyline) | [phase-5.md — Known Limitations](phase-5.md#known-limitations--deferred-items) |
+| 5 | No ATO planning cycle (structures only, generation deferred to Phase 8) | [phase-5.md — Known Limitations](phase-5.md#known-limitations--deferred-items) |
+| 5 | No JTAC/FAC observer model for CAS | [phase-5.md — Known Limitations](phase-5.md#known-limitations--deferred-items) |
+| 5 | Messenger comm type has no terrain traversal or intercept risk | [phase-5.md — Known Limitations](phase-5.md#known-limitations--deferred-items) |
 
 ## Conventions
 

@@ -1,0 +1,10 @@
+comm_id: link16
+comm_type: DATA_LINK
+display_name: "Link 16 (JTIDS/MIDS)"
+max_range_m: 500000.0
+bandwidth_bps: 238000.0
+base_latency_s: 0.2
+base_reliability: 0.95
+intercept_risk: 0.1
+jam_resistance: 0.85
+requires_los: true
