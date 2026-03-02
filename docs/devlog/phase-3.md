@@ -4,7 +4,7 @@
 
 Phase 3 implements the detection and intelligence layer — the fog of war. Units become aware of each other through realistic sensor models across all domains (visual, thermal, radar, acoustic, EM). Detection uses a unified SNR-based framework where signal strength depends on target signature and range, noise depends on environmental conditions, and detection probability follows from the complementary error function. Each side maintains an independent, noisy, decaying belief state via Kalman filtering.
 
-**Test count**: 296 new tests → 1,087 total (791 Phase 0–2 + 296 Phase 3).
+**Test count**: 296 new tests → 1,087 total (791 Phase 0–2 + 296 Phase 3). Post-Phase 4 backfill added 38 tests targeting C2-facing interfaces (track lifecycle, multi-sensor fusion, side isolation, Kalman edge cases, identification recovery) → 334 Phase 3 tests total.
 
 ## What Was Built
 
@@ -73,7 +73,7 @@ Phase 3 implements the detection and intelligence layer — the fog of war. Unit
 
 These are deliberate simplifications made during initial implementation. All are functional but could benefit from refinement after MVP is complete.
 
-1. **Test coverage gap vs plan**: 296 tests vs planned ~455. Key behaviors are all covered, but edge-case coverage (e.g., sensor FOV gating, multi-target saturation, partial equipment degradation effects on specific sensor types) is thinner than originally scoped. Worth a dedicated test-hardening pass post-MVP.
+1. **Test coverage gap vs plan**: 296 tests initially, backfilled to 334 post-Phase 4 (vs planned ~455). The backfill targeted C2-facing APIs: FoW track lifecycle (contact persistence, removal, confidence progression), multi-sensor same target (deduplication, reporting_sensors), world view consistency, re-detection after gap, Kalman edge cases (full TENTATIVE→CONFIRMED→COASTING→LOST lifecycle, re-update resetting coast timer, velocity estimation, covariance growth bounds), intel fusion (multi-source conflict resolution, side isolation, track management), and identification (misclassification recovery, extreme SNR, threshold boundary). Remaining gap is sensor FOV gating, multi-target saturation, and integration gain — worth a dedicated pass post-MVP.
 
 2. **Track-to-target association in `fog_of_war.py`**: Currently associates contacts by unit ID (direct lookup). A real tracker would use nearest-neighbor gating on predicted position — required once combat starts generating many simultaneous contacts where the observer *doesn't know* the target's ID. Straightforward to add (Mahalanobis distance gating on track covariance) but not needed until multi-unit engagements are running.
 

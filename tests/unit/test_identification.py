@@ -232,3 +232,68 @@ class TestStateRoundTrip:
         r1 = engine.classify_from_detection(det2, _unit(), threshold_db=10.0)
         r2 = engine2.classify_from_detection(det2, _unit(), threshold_db=10.0)
         assert r1 == r2
+
+
+# ── Misclassification recovery ──────────────────────────────────────
+
+
+class TestMisclassificationRecovery:
+    def test_classification_recovery_with_better_snr(self) -> None:
+        """Starting with low SNR (DETECTED), then high SNR should advance level."""
+        engine = _engine(seed=42)
+        det_low = _detection(snr_db=11.0)  # just above threshold → DETECTED
+        info = engine.classify_from_detection(det_low, _unit(), threshold_db=10.0)
+        assert info.level <= ContactLevel.DETECTED or info.level <= ContactLevel.CLASSIFIED
+
+        det_high = _detection(snr_db=50.0)  # way above → should reach IDENTIFIED
+        info_high = engine.classify_from_detection(det_high, _unit(), threshold_db=10.0)
+        merged = IdentificationEngine.update_contact(info, info_high)
+        assert merged.level >= ContactLevel.CLASSIFIED
+
+    def test_multiple_observations_increase_confidence(self) -> None:
+        """10 updates with moderate confidence should push confidence above 0.95."""
+        info = ContactInfo(ContactLevel.DETECTED, None, None, None, 0.1)
+        for _ in range(10):
+            obs = ContactInfo(ContactLevel.DETECTED, None, None, None, 0.4)
+            info = IdentificationEngine.update_contact(info, obs)
+        assert info.confidence > 0.95
+
+    def test_domain_estimate_preserved_on_low_snr_update(self) -> None:
+        """Low-SNR update should not erase existing domain estimate, and confidence still accumulates."""
+        existing = ContactInfo(ContactLevel.CLASSIFIED, "GROUND", "ARMOR", None, 0.6)
+        low_snr = ContactInfo(ContactLevel.DETECTED, None, None, None, 0.3)
+        merged = IdentificationEngine.update_contact(existing, low_snr)
+        assert merged.domain_estimate == "GROUND"
+        # Confidence should accumulate: 1 - (1-0.6)*(1-0.3) = 0.72
+        assert merged.confidence == pytest.approx(0.72, abs=0.01)
+
+
+# ── Edge cases ──────────────────────────────────────────────────────
+
+
+class TestIdentificationEdgeCases:
+    def test_snr_at_threshold_boundary(self) -> None:
+        """SNR exactly at threshold should produce DETECTED level (excess=0 < 3 dB margin)."""
+        engine = _engine(seed=42)
+        det = _detection(snr_db=10.0)
+        info = engine.classify_from_detection(det, _unit(), threshold_db=10.0)
+        # excess = 0 dB which is < 3 dB (CLASSIFY_MARGIN), so level = DETECTED
+        assert info.level == ContactLevel.DETECTED
+
+    def test_extreme_snr_values(self) -> None:
+        """Very negative SNR should give low confidence; very high should give IDENTIFIED."""
+        # Very negative SNR
+        engine_low = _engine(seed=42)
+        det_neg = _detection(snr_db=-50.0)
+        info_neg = engine_low.classify_from_detection(det_neg, _unit(), threshold_db=10.0)
+        # With -60 dB excess, should be DETECTED with low confidence
+        assert info_neg.level == ContactLevel.DETECTED
+        assert info_neg.confidence < 0.5
+
+        # Very high SNR
+        engine_high = _engine(seed=42)
+        det_pos = _detection(snr_db=100.0)
+        info_pos = engine_high.classify_from_detection(det_pos, _unit(), threshold_db=10.0)
+        # excess = 90 dB, well above 10 dB IDENTIFY_MARGIN
+        assert info_pos.level == ContactLevel.IDENTIFIED
+        assert info_pos.confidence > 0.9

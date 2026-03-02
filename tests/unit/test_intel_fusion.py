@@ -248,3 +248,129 @@ class TestStateRoundTrip:
         assert len(engine2.get_tracks("blue")) == 1
         assert len(engine2.get_tracks("red")) == 1
         assert engine2._track_counter == 2
+
+
+# ── Multi-source fusion ──────────────────────────────────────────────
+
+
+class TestMultiSourceFusion:
+    def test_sensor_and_humint_same_target(self) -> None:
+        """SENSOR + HUMINT report on same contact should reduce uncertainty."""
+        engine = _engine()
+        tid = engine.submit_report(
+            "blue", _report(x=1000.0, y=2000.0, source=IntelSource.SENSOR, uncertainty=200.0),
+        )
+        track = engine.get_tracks("blue")[tid]
+        unc_1 = track.position_uncertainty
+
+        # Submit HUMINT report at nearby position, same contact
+        engine.submit_report(
+            "blue",
+            _report(x=1010.0, y=2010.0, source=IntelSource.HUMINT, uncertainty=200.0, reliability=0.6),
+            contact_id=tid,
+        )
+        unc_2 = track.position_uncertainty
+        assert unc_2 < unc_1
+
+    def test_conflicting_positions_weighted_by_reliability(self) -> None:
+        """High-reliability report should dominate track position over low-reliability."""
+        engine = _engine()
+        # High reliability at (1000, 2000)
+        tid = engine.submit_report(
+            "blue", _report(x=1000.0, y=2000.0, reliability=0.99, uncertainty=100.0),
+        )
+        # Low reliability at (5000, 5000) — same contact
+        engine.submit_report(
+            "blue", _report(x=5000.0, y=5000.0, reliability=0.01, uncertainty=100.0),
+            contact_id=tid,
+        )
+        track = engine.get_tracks("blue")[tid]
+        # Track should be much closer to (1000, 2000) than (5000, 5000)
+        dx_hi = abs(track.state.position[0] - 1000.0)
+        dx_lo = abs(track.state.position[0] - 5000.0)
+        assert dx_hi < dx_lo
+
+    def test_imint_report_creates_track(self) -> None:
+        """An IMINT source report should create a track."""
+        engine = _engine()
+        tid = engine.submit_report(
+            "blue", _report(x=3000.0, y=4000.0, source=IntelSource.IMINT),
+        )
+        assert tid is not None
+        tracks = engine.get_tracks("blue")
+        assert tid in tracks
+
+    def test_comint_report_creates_track(self) -> None:
+        """A COMINT source report with position should create a track."""
+        engine = _engine()
+        tid = engine.submit_report(
+            "blue", _report(x=7000.0, y=8000.0, source=IntelSource.COMINT),
+        )
+        assert tid is not None
+        tracks = engine.get_tracks("blue")
+        assert tid in tracks
+
+
+# ── Side isolation ───────────────────────────────────────────────────
+
+
+class TestSideIsolation:
+    def test_blue_tracks_invisible_to_red(self) -> None:
+        """Tracks submitted to blue should not appear in red's tracks."""
+        engine = _engine()
+        engine.submit_report("blue", _report(x=1000.0, y=2000.0))
+        assert len(engine.get_tracks("blue")) == 1
+        assert len(engine.get_tracks("red")) == 0
+
+    def test_independent_track_counters(self) -> None:
+        """Track IDs should increment globally, giving unique IDs across sides."""
+        engine = _engine()
+        tid_blue = engine.submit_report("blue", _report(x=1000.0))
+        tid_red = engine.submit_report("red", _report(x=5000.0))
+        assert tid_blue != tid_red
+
+
+# ── Track management ─────────────────────────────────────────────────
+
+
+class TestTrackManagementViaFusion:
+    def test_manage_tracks_promotes_to_confirmed(self) -> None:
+        """Track with enough hits should be promoted to CONFIRMED."""
+        cfg = EstimationConfig(confirmation_threshold=3)
+        rng = np.random.Generator(np.random.PCG64(42))
+        est = StateEstimator(rng=np.random.Generator(np.random.PCG64(100)), config=cfg)
+        engine = IntelFusionEngine(state_estimator=est, rng=rng)
+
+        tid = engine.submit_report("blue", _report(x=1000.0, time=0.0, uncertainty=100.0))
+        # Submit more reports to accumulate hits
+        engine.submit_report("blue", _report(x=1005.0, time=1.0, uncertainty=100.0), contact_id=tid)
+        engine.submit_report("blue", _report(x=1010.0, time=2.0, uncertainty=100.0), contact_id=tid)
+
+        tracks = engine.get_tracks("blue")
+        assert tracks[tid].hits >= 3
+        # manage_tracks should promote
+        est.manage_tracks(tracks, 2.0)
+        # Access internal tracks to verify status (get_tracks returns a copy)
+        internal_tracks = engine._get_side_tracks("blue")
+        assert internal_tracks[tid].status == TrackStatus.CONFIRMED
+
+    def test_manage_tracks_coasts_old_track(self) -> None:
+        """Track not updated for a long time should transition to COASTING or LOST."""
+        cfg = EstimationConfig(
+            confirmation_threshold=1,
+            coast_timeout_s=50.0,
+            lost_timeout_s=200.0,
+        )
+        rng = np.random.Generator(np.random.PCG64(42))
+        est = StateEstimator(rng=np.random.Generator(np.random.PCG64(100)), config=cfg)
+        engine = IntelFusionEngine(state_estimator=est, rng=rng)
+
+        tid = engine.submit_report("blue", _report(x=1000.0, time=0.0))
+        # Promote to CONFIRMED (hits >= 1)
+        internal_tracks = engine._get_side_tracks("blue")
+        est.manage_tracks(internal_tracks, 0.0)
+        assert internal_tracks[tid].status == TrackStatus.CONFIRMED
+
+        # Now advance time far beyond coast_timeout
+        est.manage_tracks(internal_tracks, 100.0)
+        assert internal_tracks[tid].status == TrackStatus.COASTING
