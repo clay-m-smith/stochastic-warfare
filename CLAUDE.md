@@ -3,7 +3,7 @@
 ## Project Overview
 High-fidelity, high-resolution wargame simulator. Multi-scale (campaign → battlefield → battle → unit level) with stochastic/signal-processing-inspired models (Markov chains, Monte Carlo, Kalman filters, noise models, queueing theory). Headless Python engine first; matplotlib for validation; full UI deferred. Modern era (Cold War–present) as prototype. Maritime warfare fully integrated, not deferred.
 
-**Current status**: Phase 3 complete (detection, intelligence, fog of war). 1,087 tests passing. Next: Phase 4 (Combat Resolution).
+**Current status**: Phase 4 complete (combat resolution, morale). 1,770 tests passing (includes post-Phase 4 backfill). Next: Phase 5 (Command & Control).
 
 ## Package Management
 **Use `uv` exclusively.** Never use bare `pip install`. Always use `uv add`, `uv sync`, etc. Direct `pip` may target system Python instead of the project venv.
@@ -50,7 +50,7 @@ Layered hybrid — graph (strategic), grid (operational/tactical), continuous (u
 - **Type hints**: Required on all public API functions.
 
 ## Development Process
-- Development phases defined in `docs/development-phases.md` (Phase 0–8 + future)
+- Development phases defined in `docs/development-phases.md` (Phase 0–10 + future)
 - Devlog: `docs/devlog/` — one markdown file per phase, living documents. Update the relevant phase log when completing work.
 - Run `/cross-doc-audit` after completing phases or changing architecture
 - Run `/validate-conventions` after writing simulation core code
@@ -112,5 +112,16 @@ No new dependencies.
 - **YAML data** (19 files): 11 signature profiles (m1a2, us_rifle_squad, m109a6, f16c, mq9, ah64d, patriot, ddg51, ssn688, lhd1, hemtt) + 8 sensor definitions (mk1_eyeball, thermal_sight, ground_search_radar, air_search_radar, passive_sonar, active_sonar, esm_suite, nvg)
 
 Key features: Unified SNR-based detection probability (erfc), YAML-driven signatures and sensors, radar range equation (R^4 law), passive/active sonar with convergence zone detection, 4-state Kalman filter state estimation with track lifecycle, multi-source intel fusion (SENSOR/SIGINT/HUMINT/IMINT), decoy deployment and degradation, per-side fog-of-war with independent world views, deterministic replay from seed.
+
+No new dependencies.
+
+### Phase 4: Combat Resolution & Morale (634 tests)
+28 new source modules + 47 YAML data files:
+- **Combat** (19 modules): ammunition, ballistics, hit_probability, damage, suppression, fratricide, engagement, indirect_fire, missiles, air_combat, air_ground, air_defense, missile_defense, naval_surface, naval_subsurface, naval_mine, naval_gunfire_support, amphibious_assault, carrier_ops
+- **Morale** (6 modules): state, cohesion, stress, experience, psychology, rout
+- **Support** (3 modules)
+- **YAML data** (47 files): 24 weapon definitions + 23 ammunition definitions
+
+Key features: RK4 ballistic trajectories, DeMarre penetration, Wayne Hughes salvo model, Markov morale transitions, kill chain timing, fratricide driven by detection confidence, YAML-driven weapons/ammunition, all domains covered (land, air, sea, subsurface), deterministic replay from seed.
 
 No new dependencies.

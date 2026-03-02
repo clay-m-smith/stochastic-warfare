@@ -171,8 +171,10 @@ Build the nuts and bolts first. Every phase produces runnable, testable code. Va
 
 ---
 
-## Phase 5: Command & Control
-**Goal**: Orders flow through a chain of command with realistic delays, degradation, and AI decision-making.
+## Phase 5: C2 Infrastructure
+**Goal**: Orders flow through a chain of command with realistic delays, degradation, and constraints. The plumbing — not the brains.
+
+**Rationale for split**: The original Phase 5 had 27 modules (larger than Phase 4's 25). Phase 4 showed that >20 modules per phase creates API mismatch risk when parallelizing. AI decision-making (now Phase 8) also benefits from seeing logistics state (Phase 6), so deferring AI until after logistics gives it richer inputs.
 
 ### 5a: Command Authority & Communications
 - `c2/command.py` — command authority, relationships (OPCON/TACON/ADCON/support), succession
@@ -190,32 +192,14 @@ Build the nuts and bolts first. Every phase produces runnable, testable code. Va
 - `c2/orders/propagation.py` — order transmission: delays, degradation, misinterpretation probability
 - `c2/orders/execution.py` — order execution tracking: compliance, adaptation, deviation reporting
 
-### 5c: Planning Process
-- `c2/planning/process.py` — configurable planning (MDMP, rapid planning, intuitive decision)
-- `c2/planning/mission_analysis.py` — specified/implied tasks, constraints, risk assessment
-- `c2/planning/coa.py` — COA development, analysis (wargaming), comparison, selection
-- `c2/planning/estimates.py` — running estimates: personnel, intel, operations, logistics, comms
-- `c2/planning/phases.py` — operation phasing: shaping, decisive, exploitation, transition
-
-### 5d: ROE, Coordination & Mission Command
+### 5c: ROE, Coordination & Mission Command
 - `c2/roe.py` — rules of engagement, escalation, political constraints, law of armed conflict
 - `c2/coordination.py` — fire support coordination (FSCL/CFL/NFA/RFA, HPTL/AGM, missile flight corridors), airspace deconfliction, boundaries
 - `c2/mission_command.py` — commander's intent, mission-type orders, subordinate initiative/adaptation
 
-### 5e: AI Decision-Making
-- `c2/ai/ooda.py` — OODA loop implementation
-- `c2/ai/commander.py` — commander personality model: risk tolerance, aggression, initiative, experience
-- `c2/ai/assessment.py` — situation assessment: combat power, terrain, supply, morale, intel, environment
-- `c2/ai/decisions.py` — echelon-appropriate decision logic (individual through strategic)
-- `c2/ai/adaptation.py` — reacting to changed situations, plan adjustment, opportunity exploitation
-- `c2/ai/doctrine.py` — doctrinal templates per nation/era (offensive, defensive, retrograde, stability, enabling)
-- `c2/ai/stratagems.py` — deception plans, economy of force, concentration, surprise, tempo control
+**Visualization**: command hierarchy tree, order propagation timeline, C2 link status
 
-**Note on scope**: `c2/ai/doctrine.py` and `c2/ai/commander.py` provide the *framework* for doctrinal and personality-driven AI in this phase. Named doctrinal schools (Clausewitzian AI, Sun Tzu AI, etc.) as described in brainstorm.md are deferred to Future Phases — they build ON TOP of this framework.
-
-**Visualization**: command hierarchy tree, order propagation timeline, C2 link status, planning process flow, situation assessment overlay
-
-**Exit Criteria**: Orders propagate through chain of command at all echelons (individual through strategic, plus naval and air) with realistic delays and degradation. Communication means have distinct reliability/speed/intercept profiles. AI commanders make echelon-appropriate decisions via OODA cycle, informed by doctrine templates and personality. Planning process produces COAs from mission analysis. ROE constrains engagements. Fire support and airspace coordination function. C2 disruption (HQ destruction) degrades unit effectiveness with succession mechanics. All reproducible from seed.
+**Exit Criteria**: Orders propagate through chain of command at all echelons (individual through strategic, plus naval and air) with realistic delays and degradation. Communication means have distinct reliability/speed/intercept profiles. ROE constrains engagements. Fire support and airspace coordination function. C2 disruption (HQ destruction) degrades unit effectiveness with succession mechanics. All reproducible from seed.
 
 ---
 
@@ -251,7 +235,66 @@ Build the nuts and bolts first. Every phase produces runnable, testable code. Va
 
 ---
 
-## Phase 7: Simulation Orchestration & Integration
+## Phase 7: Engagement Validation
+**Goal**: Prove the combat model produces realistic results BEFORE building AI on top of it. Early validation catches calibration issues while fixes are cheap.
+
+**Rationale**: With Phases 0-6 complete, we have terrain, weather, entities, movement, detection, combat, morale, C2 plumbing, and logistics — everything needed to run realistic engagement-level scenarios without AI commanders. Validating now means the AI (Phase 8) is built on a proven combat foundation.
+
+### 7a: Validation Infrastructure
+- `validation/scenario_runner.py` — lightweight runner: loads terrain + forces + objectives, wires modules, executes time steps
+- `validation/monte_carlo.py` — Monte Carlo harness: run N iterations with different seeds, collect statistics
+- `validation/metrics.py` — engagement-level metrics: casualty exchange ratios, duration, ammunition expenditure, territorial outcomes
+- `validation/historical_data.py` — structured historical data loader (JSON/YAML format for engagement parameters)
+
+### 7b: Engagement Scenario Packs
+Build 2-3 scenario packs from well-documented historical engagements:
+
+1. **73 Easting (1991)** — US armor vs Iraqi armor in open desert. Tests: direct fire, hit probability at range, DeMarre penetration, crew quality asymmetry, morale collapse. Well-documented casualty ratios and engagement duration.
+2. **Falklands — naval engagements (1982)** — Exocet ASM vs Type 42 destroyers, Argentine air attacks on the task force. Tests: Wayne Hughes salvo model, air defense (Sea Dart/Sea Wolf), ship damage/DC, sortie generation. Well-documented ship losses and missile expenditure.
+3. **Golan Heights (1973)** — Israeli defense against Syrian armor. Tests: defensive position advantage, combined arms (tanks + ATGMs + artillery), force ratio survivability, morale under pressure. Well-documented force ratios and casualty exchanges.
+
+### 7c: Calibration
+- Compare Monte Carlo distributions against historical outcomes
+- Identify parameters that need tuning (hit probability modifiers, damage scaling, morale transition rates)
+- Document model deficiencies by domain with severity rating
+- Adjust combat parameters to produce statistically plausible outcomes
+
+**Visualization**: Monte Carlo outcome distributions, casualty ratio histograms, engagement timeline comparisons, parameter sensitivity plots
+
+**Exit Criteria**: All 2-3 engagement scenarios produce casualty exchange ratios within 2x of historical outcomes across 1000-run Monte Carlo. Major model deficiencies documented with severity. Combat parameter calibration applied. Validation infrastructure reusable for Phase 10.
+
+---
+
+## Phase 8: AI & Planning
+**Goal**: AI commanders make echelon-appropriate decisions informed by doctrine and personality. The brains.
+
+**Rationale for position**: AI decision-making is the most conceptually complex phase. By this point, the AI has access to: combat state (Phase 4), detection/intel (Phase 3), morale state (Phase 4), C2 plumbing (Phase 5), logistics state (Phase 6), AND validated combat parameters (Phase 7). Building AI last among the domain modules ensures it reasons about real, calibrated data rather than untested approximations.
+
+### 8a: AI Decision-Making
+- `c2/ai/ooda.py` — OODA loop implementation (observe-orient-decide-act cycle with time costs)
+- `c2/ai/commander.py` — commander personality model: risk tolerance, aggression, initiative, experience
+- `c2/ai/assessment.py` — situation assessment: combat power, terrain, supply, morale, intel, environment
+- `c2/ai/decisions.py` — echelon-appropriate decision logic (individual through strategic)
+- `c2/ai/adaptation.py` — reacting to changed situations, plan adjustment, opportunity exploitation
+- `c2/ai/doctrine.py` — doctrinal templates per nation/era (offensive, defensive, retrograde, stability, enabling)
+- `c2/ai/stratagems.py` — deception plans, economy of force, concentration, surprise, tempo control
+
+### 8b: Planning Process
+- `c2/planning/process.py` — configurable planning (MDMP, rapid planning, intuitive decision)
+- `c2/planning/mission_analysis.py` — specified/implied tasks, constraints, risk assessment
+- `c2/planning/coa.py` — COA development, analysis (wargaming), comparison, selection
+- `c2/planning/estimates.py` — running estimates: personnel, intel, operations, logistics, comms
+- `c2/planning/phases.py` — operation phasing: shaping, decisive, exploitation, transition
+
+**Note on scope**: `c2/ai/doctrine.py` and `c2/ai/commander.py` provide the *framework* for doctrinal and personality-driven AI. Named doctrinal schools (Clausewitzian AI, Sun Tzu AI, etc.) as described in brainstorm.md are deferred to Future Phases — they build ON TOP of this framework.
+
+**Visualization**: OODA cycle timing, situation assessment overlay, COA comparison matrix, planning process flow
+
+**Exit Criteria**: AI commanders make echelon-appropriate decisions via OODA cycle, informed by doctrine templates and personality. Planning process produces COAs from mission analysis with wargaming. Commanders adapt to changing situations. Situation assessment integrates combat, logistics, intel, morale, and terrain. All reproducible from seed.
+
+---
+
+## Phase 9: Simulation Orchestration & Integration
 **Goal**: All systems work together. The master simulation loop ties everything into coherent multi-scale campaigns.
 
 - `simulation/engine.py` — master simulation loop (hybrid tick + event), tick sequencing (environment first, then domain modules)
@@ -262,26 +305,27 @@ Build the nuts and bolts first. Every phase produces runnable, testable code. Va
 - `simulation/recorder.py` — event/state recording for replay and analysis
 - `simulation/metrics.py` — simulation output metrics, statistical aggregation, analysis hooks
 
-**Also in this phase**: multi-scale transitions (strategic graph ↔ tactical grid ↔ unit continuous), force aggregation/disaggregation, full checkpoint/replay validation across all modules
+**Also in this phase**: multi-scale transitions (strategic graph ↔ tactical grid ↔ unit continuous), force aggregation/disaggregation, complete env→combat wiring for all domains, full checkpoint/replay validation across all modules
 
 **Visualization**: comprehensive multi-scale display, campaign overview, drill-down to tactical engagements
 
-**Exit Criteria**: Can define and run a complete multi-day campaign scenario with: full tactical resolution of all engagements, logistics flowing, intel updating, C2 functioning, environment evolving, and all domain modules interacting correctly. Victory conditions evaluate. Campaign-level AI makes strategic decisions. Scenario can be checkpointed, restored, and replayed identically from seed. Recorder captures full event history. Metrics provide statistical summaries.
+**Exit Criteria**: Can define and run a complete multi-day campaign scenario with: full tactical resolution of all engagements, logistics flowing, intel updating, C2 functioning with AI commanders, environment evolving, and all domain modules interacting correctly. Victory conditions evaluate. Campaign-level AI makes strategic decisions. Scenario can be checkpointed, restored, and replayed identically from seed. Recorder captures full event history. Metrics provide statistical summaries.
 
 ---
 
-## Phase 8: Validation & Backtesting
-**Goal**: Prove the simulation produces realistic results.
+## Phase 10: Full Campaign Validation & Backtesting
+**Goal**: Prove the complete simulation produces realistic campaign-level results.
 
-- Select historical engagements for backtesting (modern era: 73 Easting, Golan Heights, Falklands, etc.)
-- Build scenario packs from historical data
-- Run Monte Carlo validation campaigns
-- Compare against historical outcomes (casualty rates, durations, territorial outcomes, logistics consumption)
-- Identify and document model deficiencies
-- Calibrate parameters based on backtest results
-- Performance profiling and optimization
+Building on Phase 7's engagement-level validation infrastructure and calibration:
 
-**Exit Criteria**: Simulation produces statistically plausible outcomes for at least 2-3 historical scenarios across domains (land and naval). Model deficiencies are documented with severity. Performance is acceptable for campaign-length runs.
+- Expand scenario packs to full campaign duration (multi-day operations with logistics, C2, reinforcement)
+- Add campaign-level metrics: logistics throughput, C2 effectiveness, operational tempo, culminating points
+- Run Monte Carlo validation campaigns with AI commanders
+- Compare campaign-level outcomes against historical analysis
+- Validate AI decision quality (does it make defensible choices given the situation?)
+- Performance profiling and optimization for campaign-length runs
+
+**Exit Criteria**: Simulation produces statistically plausible outcomes for at least 2-3 historical scenarios at campaign scale across domains (land and naval). AI commanders make contextually appropriate decisions. Model deficiencies documented with severity. Performance acceptable for campaign-length runs.
 
 ---
 
@@ -291,7 +335,7 @@ These are explicitly deferred until the core engine is validated:
 - Electronic warfare — full EW module (interface points already defined in combat/ and detection/, see project-structure.md)
 - Cyber operations
 - NBC/CBRN effects (interface points already defined, see project-structure.md)
-- Named doctrinal AI schools (Clausewitzian, Sun Tzu, maneuverist, etc.) — builds on the c2/ai/doctrine.py framework from Phase 5
+- Named doctrinal AI schools (Clausewitzian, Sun Tzu, maneuverist, etc.) — builds on the c2/ai/doctrine.py framework from Phase 8
 - Multi-player / networked simulation
 - Earlier era support (WW2, Napoleonic, etc.)
 - Modding and scenario editor tools
@@ -407,21 +451,9 @@ Every non-`__init__` module file from `project-structure.md` and its phase assig
 | `c2/orders/air_orders.py` | 5b |
 | `c2/orders/propagation.py` | 5b |
 | `c2/orders/execution.py` | 5b |
-| `c2/planning/process.py` | 5c |
-| `c2/planning/mission_analysis.py` | 5c |
-| `c2/planning/coa.py` | 5c |
-| `c2/planning/estimates.py` | 5c |
-| `c2/planning/phases.py` | 5c |
-| `c2/roe.py` | 5d |
-| `c2/coordination.py` | 5d |
-| `c2/mission_command.py` | 5d |
-| `c2/ai/ooda.py` | 5e |
-| `c2/ai/commander.py` | 5e |
-| `c2/ai/assessment.py` | 5e |
-| `c2/ai/decisions.py` | 5e |
-| `c2/ai/adaptation.py` | 5e |
-| `c2/ai/doctrine.py` | 5e |
-| `c2/ai/stratagems.py` | 5e |
+| `c2/roe.py` | 5c |
+| `c2/coordination.py` | 5c |
+| `c2/mission_command.py` | 5c |
 | `logistics/supply_network.py` | 6a |
 | `logistics/supply_classes.py` | 6a |
 | `logistics/consumption.py` | 6a |
@@ -434,10 +466,26 @@ Every non-`__init__` module file from `project-structure.md` and its phase assig
 | `logistics/naval_logistics.py` | 6d |
 | `logistics/naval_basing.py` | 6d |
 | `logistics/disruption.py` | 6e |
-| `simulation/engine.py` | 7 |
-| `simulation/campaign.py` | 7 |
-| `simulation/battle.py` | 7 |
-| `simulation/scenario.py` | 7 |
-| `simulation/victory.py` | 7 |
-| `simulation/recorder.py` | 7 |
-| `simulation/metrics.py` | 7 |
+| `validation/scenario_runner.py` | 7a |
+| `validation/monte_carlo.py` | 7a |
+| `validation/metrics.py` | 7a |
+| `validation/historical_data.py` | 7a |
+| `c2/ai/ooda.py` | 8a |
+| `c2/ai/commander.py` | 8a |
+| `c2/ai/assessment.py` | 8a |
+| `c2/ai/decisions.py` | 8a |
+| `c2/ai/adaptation.py` | 8a |
+| `c2/ai/doctrine.py` | 8a |
+| `c2/ai/stratagems.py` | 8a |
+| `c2/planning/process.py` | 8b |
+| `c2/planning/mission_analysis.py` | 8b |
+| `c2/planning/coa.py` | 8b |
+| `c2/planning/estimates.py` | 8b |
+| `c2/planning/phases.py` | 8b |
+| `simulation/engine.py` | 9 |
+| `simulation/campaign.py` | 9 |
+| `simulation/battle.py` | 9 |
+| `simulation/scenario.py` | 9 |
+| `simulation/victory.py` | 9 |
+| `simulation/recorder.py` | 9 |
+| `simulation/metrics.py` | 9 |
