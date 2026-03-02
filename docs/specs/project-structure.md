@@ -39,6 +39,10 @@ stochastic-warfare/
 │   ├── sensors/                      # Sensor type definitions (referenced by units)
 │   ├── signatures/                   # Unit signature profiles (visual, thermal, RCS, acoustic, EM)
 │   ├── comms/                        # Communication equipment definitions (SINCGARS, Harris HF, Link 16, SATCOM, etc.)
+│   ├── logistics/                    # Logistics data definitions
+│   │   ├── supply_items/            # Supply item definitions by NATO class (I, III, IV, VIII, IX)
+│   │   ├── transport_profiles/      # Transport vehicle profiles (truck, C-130, rail, sealift)
+│   │   └── medical_facilities/      # Medical facility definitions (aid station, field hospital)
 │   ├── organizations/                # TO&E definitions per nation/era
 │   │   ├── us_modern/               # US Army/USMC/Navy modern structure
 │   │   ├── russian_modern/          # Russian ground/naval/air structure
@@ -227,6 +231,7 @@ stochastic-warfare/
     │       └── stratagems.py         # Higher-order strategic/tactical concepts: deception plans, feints, economy of force, concentration, surprise
     ├── logistics/                    # Supply & logistics
     │   ├── __init__.py
+    │   ├── events.py                 # Logistics events (supply delivery/shortage/depletion, convoy, maintenance, engineering, medical, POW, naval, disruption)
     │   ├── supply_network.py         # Supply chain graph (networkx), leverages terrain infrastructure
     │   ├── supply_classes.py         # Military supply classification (Class I-X), ammo types, fuel types
     │   ├── consumption.py            # Per-unit consumption models (ammo by type, fuel by activity, food, water)

@@ -12,7 +12,7 @@ Rolling record of implementation decisions, changes, and lessons learned across 
 | 3 | Detection & Intelligence | **Complete** | [phase-3.md](phase-3.md) |
 | 4 | Combat Resolution & Morale | **Complete** | [phase-4.md](phase-4.md) |
 | 5 | C2 Infrastructure | **Complete** | [phase-5.md](phase-5.md) |
-| 6 | Logistics & Supply | Not started | — |
+| 6 | Logistics & Supply | **Complete** | [phase-6.md](phase-6.md) |
 | 7 | Engagement Validation | Not started | — |
 | 8 | AI & Planning | Not started | — |
 | 9 | Simulation Orchestration | Not started | — |
@@ -48,6 +48,17 @@ Known limitations and deferred improvements logged during implementation. Review
 | 5 | No ATO planning cycle (structures only, generation deferred to Phase 8) | [phase-5.md — Known Limitations](phase-5.md#known-limitations--deferred-items) |
 | 5 | No JTAC/FAC observer model for CAS | [phase-5.md — Known Limitations](phase-5.md#known-limitations--deferred-items) |
 | 5 | Messenger comm type has no terrain traversal or intercept risk | [phase-5.md — Known Limitations](phase-5.md#known-limitations--deferred-items) |
+| 6 | No supply optimization solver (pull-based nearest depot only) | [phase-6.md — Known Limitations](phase-6.md#known-limitations) |
+| 6 | No multi-echelon supply chain (direct depot-to-unit) | [phase-6.md — Known Limitations](phase-6.md#known-limitations) |
+| 6 | Simplified transport vulnerability (no escort effects) | [phase-6.md — Known Limitations](phase-6.md#known-limitations) |
+| 6 | Medical M/M/c queueing approximate (exponential service) | [phase-6.md — Known Limitations](phase-6.md#known-limitations) |
+| 6 | Engineering times deterministic (no stochastic variation) | [phase-6.md — Known Limitations](phase-6.md#known-limitations) |
+| 6 | No fuel gating on movement (tracked but not enforced) | [phase-6.md — Known Limitations](phase-6.md#known-limitations) |
+| 6 | Blockade effectiveness simplified (flat per-ship probability) | [phase-6.md — Known Limitations](phase-6.md#known-limitations) |
+| 6 | Captured supply efficiency flat 50% (no compatibility check) | [phase-6.md — Known Limitations](phase-6.md#known-limitations) |
+| 6 | No local water procurement (always from rear depots) | [phase-6.md — Known Limitations](phase-6.md#known-limitations) |
+| 6 | No ammunition production (scenario-defined depots only) | [phase-6.md — Known Limitations](phase-6.md#known-limitations) |
+| 6 | VLS non-reloadable-at-sea enforcement deferred to naval combat integration | [phase-6.md — Known Limitations](phase-6.md#known-limitations) |
 
 ## Conventions
 

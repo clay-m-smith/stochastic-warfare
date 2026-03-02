@@ -1,0 +1,5 @@
+profile_id: truck_convoy
+mode: ROAD
+capacity_tons: 20.0
+speed_mps: 8.0
+vulnerability: 0.3

@@ -207,6 +207,7 @@ Build the nuts and bolts first. Every phase produces runnable, testable code. Va
 **Goal**: Sustaining the force — armies need beans, bullets, fuel, and maintenance.
 
 ### 6a: Supply Network & Consumption
+- `logistics/events.py` — logistics events (supply, transport, maintenance, engineering, medical, POW, naval, disruption)
 - `logistics/supply_network.py` — supply chain graph (networkx), leverages terrain infrastructure
 - `logistics/supply_classes.py` — military supply classification (Class I-X), ammo types, fuel types
 - `logistics/consumption.py` — per-unit consumption models (ammo by type, fuel by activity, environmentally variable)
@@ -461,6 +462,7 @@ Every non-`__init__` module file from `project-structure.md` and its phase assig
 | `c2/roe.py` | 5c |
 | `c2/coordination.py` | 5c |
 | `c2/mission_command.py` | 5c |
+| `logistics/events.py` | 6a |
 | `logistics/supply_network.py` | 6a |
 | `logistics/supply_classes.py` | 6a |
 | `logistics/consumption.py` | 6a |

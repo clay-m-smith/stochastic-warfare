@@ -31,8 +31,19 @@ class CombatPowerAssessment(NamedTuple):
 class CombatPowerCalculator:
     """Assess unit combat power from personnel, equipment, and status."""
 
-    def factors(self, unit: Unit) -> CombatPowerFactors:
-        """Break down the individual factors contributing to combat power."""
+    def factors(
+        self, unit: Unit, supply_state_override: float | None = None,
+    ) -> CombatPowerFactors:
+        """Break down the individual factors contributing to combat power.
+
+        Parameters
+        ----------
+        supply_state_override:
+            If provided, use this value (0-1) for the supply state factor
+            instead of the default 1.0.  The simulation loop (Phase 9)
+            queries the logistics ``StockpileManager.get_supply_state()``
+            and passes the result here.
+        """
         if not unit.personnel:
             personnel_strength = 0.0
         else:
@@ -45,8 +56,8 @@ class CombatPowerCalculator:
         fatigue = 1.0 - (
             sum(m.fatigue for m in unit.personnel) / max(len(unit.personnel), 1)
         )
-        # Supply state defaults to 1.0 (logistics module not yet implemented)
-        supply_state = 1.0
+        # Supply state from logistics StockpileManager (Phase 6)
+        supply_state = supply_state_override if supply_state_override is not None else 1.0
         # Leadership from commander effectiveness
         from stochastic_warfare.entities.personnel import CrewRole
 

@@ -1,0 +1,5 @@
+profile_id: sealift
+mode: SEA
+capacity_tons: 5000.0
+speed_mps: 8.0
+vulnerability: 0.2

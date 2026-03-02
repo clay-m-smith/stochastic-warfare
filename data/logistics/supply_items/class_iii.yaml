@@ -1,0 +1,27 @@
+- item_id: fuel_diesel
+  supply_class: CLASS_III
+  display_name: "Diesel Fuel (liter)"
+  weight_per_unit_kg: 0.85
+  volume_per_unit_m3: 0.001
+  perishable: false
+
+- item_id: fuel_jp8
+  supply_class: CLASS_IIIA
+  display_name: "JP-8 Aviation Fuel (liter)"
+  weight_per_unit_kg: 0.80
+  volume_per_unit_m3: 0.001
+  perishable: false
+
+- item_id: fuel_bunker
+  supply_class: CLASS_III
+  display_name: "Bunker Fuel (liter)"
+  weight_per_unit_kg: 0.96
+  volume_per_unit_m3: 0.001
+  perishable: false
+
+- item_id: fuel_avgas
+  supply_class: CLASS_IIIA
+  display_name: "AVGAS (liter)"
+  weight_per_unit_kg: 0.72
+  volume_per_unit_m3: 0.001
+  perishable: false

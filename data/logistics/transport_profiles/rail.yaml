@@ -1,0 +1,5 @@
+profile_id: rail_transport
+mode: RAIL
+capacity_tons: 500.0
+speed_mps: 15.0
+vulnerability: 0.4

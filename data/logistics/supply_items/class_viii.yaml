@@ -1,0 +1,22 @@
+- item_id: medical_kit_basic
+  supply_class: CLASS_VIII
+  display_name: "Basic Medical Kit"
+  weight_per_unit_kg: 5.0
+  volume_per_unit_m3: 0.01
+  perishable: true
+  shelf_life_hours: 17520.0  # ~2 years
+
+- item_id: blood_unit
+  supply_class: CLASS_VIII
+  display_name: "Blood Unit (pint)"
+  weight_per_unit_kg: 0.5
+  volume_per_unit_m3: 0.0005
+  perishable: true
+  shelf_life_hours: 1008.0  # 42 days
+
+- item_id: surgical_supplies
+  supply_class: CLASS_VIII
+  display_name: "Surgical Supply Pack"
+  weight_per_unit_kg: 8.0
+  volume_per_unit_m3: 0.02
+  perishable: false

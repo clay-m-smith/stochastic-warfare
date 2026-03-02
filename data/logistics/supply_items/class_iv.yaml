@@ -1,0 +1,27 @@
+- item_id: construction_timber
+  supply_class: CLASS_IV
+  display_name: "Construction Timber (board-foot)"
+  weight_per_unit_kg: 2.5
+  volume_per_unit_m3: 0.0024
+  perishable: false
+
+- item_id: construction_concrete
+  supply_class: CLASS_IV
+  display_name: "Pre-mixed Concrete (bag)"
+  weight_per_unit_kg: 25.0
+  volume_per_unit_m3: 0.012
+  perishable: false
+
+- item_id: construction_sandbag
+  supply_class: CLASS_IV
+  display_name: "Sandbag (filled)"
+  weight_per_unit_kg: 18.0
+  volume_per_unit_m3: 0.015
+  perishable: false
+
+- item_id: bridging_material
+  supply_class: CLASS_IV
+  display_name: "Bridging Material (meter)"
+  weight_per_unit_kg: 500.0
+  volume_per_unit_m3: 2.0
+  perishable: false

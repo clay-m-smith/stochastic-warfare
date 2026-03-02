@@ -3,7 +3,7 @@
 ## Project Overview
 High-fidelity, high-resolution wargame simulator. Multi-scale (campaign → battlefield → battle → unit level) with stochastic/signal-processing-inspired models (Markov chains, Monte Carlo, Kalman filters, noise models, queueing theory). Headless Python engine first; matplotlib for validation; full UI deferred. Modern era (Cold War–present) as prototype. Maritime warfare fully integrated, not deferred.
 
-**Current status**: Phase 5 complete (C2 infrastructure). 2,115 tests passing. Next: Phase 6 (Logistics & Supply).
+**Current status**: Phase 6 complete (Logistics & Supply). 2,451 tests passing. Next: Phase 7 (Engagement Validation).
 
 ## Package Management
 **Use `uv` exclusively.** Never use bare `pip install`. Always use `uv add`, `uv sync`, etc. Direct `pip` may target system Python instead of the project venv.
@@ -74,7 +74,7 @@ Layered hybrid — graph (strategic), grid (operational/tactical), continuous (u
 | Document | Purpose |
 |----------|---------|
 | `docs/brainstorm.md` | Architecture decisions, domain decomposition, rationale |
-| `docs/development-phases.md` | Phase roadmap (0–8), module-to-phase index |
+| `docs/development-phases.md` | Phase roadmap (0–10 + future), module-to-phase index |
 | `docs/specs/project-structure.md` | Full package tree, module decomposition, dependency graph |
 | `docs/devlog/` | Per-phase implementation logs (`index.md` tracks status) |
 | `docs/skills-and-hooks.md` | Dev infrastructure documentation |
@@ -133,5 +133,15 @@ No new dependencies.
 - **YAML data** (8 files): 8 communication equipment definitions (SINCGARS VHF, Harris HF, FBCB2, Link 16, Link 11, SATCOM UHF, VLF receiver, field wire)
 
 Key features: 4-state command authority (succession with log-normal delays), stochastic comms reliability (Bernoulli per message), EMCON states blocking emitters, jamming with resistance, log-normal propagation delays scaling with echelon, order misinterpretation probability, ROE enforcement (WEAPONS_HOLD/TIGHT/FREE), fire support coordination (FSCL/NFA/RFA/FFA), Auftragstaktik vs Befehlstaktik initiative, naval task force hierarchy (TF/TG/TU/TE), tactical data links, submarine VLF/SATCOM constraints, ATO/ACO/CAS structures, deterministic replay from seed.
+
+No new dependencies.
+
+### Phase 6: Logistics & Supply (336 tests)
+14 new source modules + 11 YAML data files:
+- **Logistics** (13 modules): events, supply_classes, consumption, stockpile, supply_network, transport, maintenance, engineering, medical, prisoners, naval_logistics, naval_basing, disruption
+- **YAML data** (11 files): 5 supply item definitions (18 items across Class I/III/IV/VIII/IX), 4 transport profiles (truck, C-130, rail, sealift), 2 medical facility definitions (aid station, field hospital)
+- **Modified** (1 file): entities/capabilities.py — added `supply_state_override` parameter
+
+Key features: NATO supply classification (9 classes), environment-coupled consumption rates, networkx supply network with pull-based routing, log-normal transport delays, Poisson equipment breakdown model, M/M/c medical priority queue with overwhelm dynamics, engineering terrain modification, POW handling, naval UNREP/port ops/LOTS/sealift, interdiction/blockade/sabotage disruption, combat power degrades with supply depletion, deterministic replay from seed.
 
 No new dependencies.

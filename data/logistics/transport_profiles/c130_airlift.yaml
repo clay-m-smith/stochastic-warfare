@@ -1,0 +1,7 @@
+profile_id: c130_airlift
+mode: AIR
+capacity_tons: 19.0
+speed_mps: 130.0
+vulnerability: 0.1
+weather_ceiling_m: 150.0
+weather_visibility_m: 1600.0

@@ -1,0 +1,6 @@
+facility_type: FIELD_HOSPITAL
+display_name: "Combat Support Hospital"
+default_capacity: 50
+treatment_hours_minor: 2.0
+treatment_hours_serious: 8.0
+treatment_hours_critical: 24.0

@@ -1,0 +1,22 @@
+- item_id: ration_mre
+  supply_class: CLASS_I
+  display_name: "MRE (Meal Ready to Eat)"
+  weight_per_unit_kg: 0.85
+  volume_per_unit_m3: 0.002
+  perishable: true
+  shelf_life_hours: 8760.0  # ~1 year
+
+- item_id: water_potable
+  supply_class: CLASS_I
+  display_name: "Potable Water (liter)"
+  weight_per_unit_kg: 1.0
+  volume_per_unit_m3: 0.001
+  perishable: false
+
+- item_id: ration_fresh
+  supply_class: CLASS_I
+  display_name: "Fresh Rations (kg)"
+  weight_per_unit_kg: 1.0
+  volume_per_unit_m3: 0.003
+  perishable: true
+  shelf_life_hours: 72.0  # 3 days

@@ -1,0 +1,27 @@
+- item_id: spare_parts_ground
+  supply_class: CLASS_IX
+  display_name: "Ground Vehicle Spare Parts Kit"
+  weight_per_unit_kg: 50.0
+  volume_per_unit_m3: 0.1
+  perishable: false
+
+- item_id: spare_parts_aviation
+  supply_class: CLASS_IX
+  display_name: "Aviation Spare Parts Kit"
+  weight_per_unit_kg: 30.0
+  volume_per_unit_m3: 0.08
+  perishable: false
+
+- item_id: spare_parts_naval
+  supply_class: CLASS_IX
+  display_name: "Naval Spare Parts Kit"
+  weight_per_unit_kg: 75.0
+  volume_per_unit_m3: 0.15
+  perishable: false
+
+- item_id: spare_parts_electronics
+  supply_class: CLASS_IX
+  display_name: "Electronics Repair Kit"
+  weight_per_unit_kg: 10.0
+  volume_per_unit_m3: 0.02
+  perishable: false

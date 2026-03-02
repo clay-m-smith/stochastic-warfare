@@ -1,0 +1,6 @@
+facility_type: AID_STATION
+display_name: "Battalion Aid Station"
+default_capacity: 10
+treatment_hours_minor: 1.0
+treatment_hours_serious: 4.0
+treatment_hours_critical: 12.0
