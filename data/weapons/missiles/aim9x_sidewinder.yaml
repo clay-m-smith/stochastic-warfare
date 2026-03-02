@@ -1,0 +1,25 @@
+weapon_id: aim9x_sidewinder
+display_name: "AIM-9X Sidewinder Launcher Rail"
+category: MISSILE_LAUNCHER
+caliber_mm: 127.0
+muzzle_velocity_mps: 0.0
+max_range_m: 35000.0
+min_range_m: 300.0
+rate_of_fire_rpm: 4.0
+burst_size: 1
+base_accuracy_mrad: 0.0
+cep_m: 0.0
+min_engagement_altitude_m: 15.0
+max_engagement_altitude_m: 20000.0
+guidance: IR
+magazine_capacity: 2
+reload_time_s: 0.0
+compatible_ammo:
+  - aim9x_sidewinder
+weight_kg: 30.0
+reliability: 0.93
+barrel_life_rounds: 0
+requires_deployed: false
+traverse_deg: 0.0
+elevation_min_deg: -10.0
+elevation_max_deg: 60.0

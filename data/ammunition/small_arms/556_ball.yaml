@@ -1,0 +1,14 @@
+ammo_id: 556_ball
+display_name: "5.56x45mm NATO Ball M855"
+ammo_type: AP
+mass_kg: 0.004
+diameter_mm: 5.56
+drag_coefficient: 0.30
+penetration_mm_rha: 12.0
+penetration_reference_range_m: 100.0
+blast_radius_m: 0.0
+fragmentation_radius_m: 0.0
+guidance: NONE
+propulsion: none
+max_speed_mps: 910.0
+unit_cost_factor: 0.01

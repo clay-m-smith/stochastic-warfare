@@ -59,6 +59,7 @@ class EquipmentEntry(BaseModel):
     weight_kg: float = 0.0
     reliability: float = 0.95
     temperature_range: list[float] | None = None
+    weapon_ref: str | None = None  # References WeaponDefinition.weapon_id
 
 
 class UnitDefinition(BaseModel):

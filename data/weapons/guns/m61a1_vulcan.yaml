@@ -1,0 +1,22 @@
+weapon_id: m61a1_vulcan
+display_name: "M61A1 Vulcan 20mm Gatling Gun"
+category: AIRCRAFT_GUN
+caliber_mm: 20.0
+muzzle_velocity_mps: 1030.0
+max_range_m: 2000.0
+min_range_m: 100.0
+rate_of_fire_rpm: 6000.0
+burst_size: 50
+base_accuracy_mrad: 2.0
+guidance: NONE
+magazine_capacity: 511
+reload_time_s: 0.0
+compatible_ammo:
+  - 556_ball
+weight_kg: 112.0
+reliability: 0.90
+barrel_life_rounds: 50000
+requires_deployed: false
+traverse_deg: 0.0
+elevation_min_deg: 0.0
+elevation_max_deg: 0.0

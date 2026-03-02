@@ -1,0 +1,22 @@
+weapon_id: m4_556mm
+display_name: "M4A1 5.56mm Carbine"
+category: MACHINE_GUN
+caliber_mm: 5.56
+muzzle_velocity_mps: 910.0
+max_range_m: 600.0
+min_range_m: 0.0
+rate_of_fire_rpm: 90.0
+burst_size: 3
+base_accuracy_mrad: 1.0
+guidance: NONE
+magazine_capacity: 30
+reload_time_s: 3.0
+compatible_ammo:
+  - 556_ball
+weight_kg: 3.4
+reliability: 0.94
+barrel_life_rounds: 15000
+requires_deployed: false
+traverse_deg: 360.0
+elevation_min_deg: -30.0
+elevation_max_deg: 80.0

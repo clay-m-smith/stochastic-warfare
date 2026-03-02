@@ -1,0 +1,19 @@
+ammo_id: m31_gmlrs
+display_name: "M31 GMLRS Unitary"
+ammo_type: GUIDED
+mass_kg: 308.0
+diameter_mm: 227.0
+drag_coefficient: 0.25
+penetration_mm_rha: 0.0
+penetration_reference_range_m: 0.0
+blast_radius_m: 50.0
+fragmentation_radius_m: 150.0
+guidance: GPS
+seeker_fov_deg: 0.0
+seeker_range_m: 0.0
+pk_at_reference: 0.95
+countermeasure_susceptibility: 0.05
+propulsion: rocket
+max_speed_mps: 900.0
+flight_time_s: 90.0
+unit_cost_factor: 30.0

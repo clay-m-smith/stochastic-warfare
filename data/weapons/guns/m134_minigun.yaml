@@ -1,0 +1,22 @@
+weapon_id: m134_minigun
+display_name: "M134 7.62mm Minigun"
+category: MACHINE_GUN
+caliber_mm: 7.62
+muzzle_velocity_mps: 853.0
+max_range_m: 1500.0
+min_range_m: 0.0
+rate_of_fire_rpm: 3000.0
+burst_size: 50
+base_accuracy_mrad: 3.0
+guidance: NONE
+magazine_capacity: 4000
+reload_time_s: 60.0
+compatible_ammo:
+  - 762_ball
+weight_kg: 18.0
+reliability: 0.88
+barrel_life_rounds: 100000
+requires_deployed: false
+traverse_deg: 120.0
+elevation_min_deg: -60.0
+elevation_max_deg: 10.0

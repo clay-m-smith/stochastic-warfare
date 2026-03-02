@@ -1,0 +1,22 @@
+weapon_id: m240_762mm
+display_name: "M240 7.62mm Machine Gun"
+category: MACHINE_GUN
+caliber_mm: 7.62
+muzzle_velocity_mps: 853.0
+max_range_m: 1800.0
+min_range_m: 0.0
+rate_of_fire_rpm: 650.0
+burst_size: 7
+base_accuracy_mrad: 1.5
+guidance: NONE
+magazine_capacity: 200
+reload_time_s: 8.0
+compatible_ammo:
+  - 762_ball
+weight_kg: 12.5
+reliability: 0.92
+barrel_life_rounds: 25000
+requires_deployed: false
+traverse_deg: 360.0
+elevation_min_deg: -10.0
+elevation_max_deg: 45.0

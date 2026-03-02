@@ -1,0 +1,17 @@
+ammo_id: m26_mlrs_rocket
+display_name: "M26 MLRS Rocket (DPICM)"
+ammo_type: ROCKET
+mass_kg: 296.0
+diameter_mm: 227.0
+drag_coefficient: 0.30
+penetration_mm_rha: 60.0
+penetration_reference_range_m: 0.0
+blast_radius_m: 0.0
+fragmentation_radius_m: 0.0
+guidance: INERTIAL
+submunition_count: 644
+submunition_lethal_radius_m: 4.0
+propulsion: rocket
+max_speed_mps: 900.0
+flight_time_s: 60.0
+unit_cost_factor: 10.0

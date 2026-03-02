@@ -1,0 +1,17 @@
+ammo_id: aim120_amraam
+display_name: "AIM-120 AMRAAM"
+ammo_type: MISSILE
+mass_kg: 152.0
+diameter_mm: 178.0
+drag_coefficient: 0.25
+blast_radius_m: 10.0
+fragmentation_radius_m: 20.0
+guidance: RADAR_ACTIVE
+seeker_fov_deg: 60.0
+seeker_range_m: 20000.0
+pk_at_reference: 0.85
+countermeasure_susceptibility: 0.15
+max_speed_mps: 1372.0
+flight_time_s: 60.0
+terminal_maneuver: true
+unit_cost_factor: 80.0

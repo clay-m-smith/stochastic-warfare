@@ -1,0 +1,17 @@
+ammo_id: agm114_hellfire
+display_name: "AGM-114 Hellfire"
+ammo_type: MISSILE
+mass_kg: 49.0
+diameter_mm: 178.0
+drag_coefficient: 0.30
+blast_radius_m: 15.0
+fragmentation_radius_m: 25.0
+guidance: LASER
+seeker_fov_deg: 30.0
+seeker_range_m: 8000.0
+pk_at_reference: 0.90
+countermeasure_susceptibility: 0.10
+max_speed_mps: 475.0
+flight_time_s: 26.0
+terminal_maneuver: true
+unit_cost_factor: 50.0

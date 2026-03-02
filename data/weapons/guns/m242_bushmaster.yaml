@@ -1,0 +1,22 @@
+weapon_id: m242_bushmaster
+display_name: "M242 Bushmaster 25mm Chain Gun"
+category: CANNON
+caliber_mm: 25.0
+muzzle_velocity_mps: 1100.0
+max_range_m: 3000.0
+min_range_m: 0.0
+rate_of_fire_rpm: 200.0
+burst_size: 5
+base_accuracy_mrad: 0.8
+guidance: NONE
+magazine_capacity: 230
+reload_time_s: 15.0
+compatible_ammo:
+  - 556_ball
+weight_kg: 109.0
+reliability: 0.90
+barrel_life_rounds: 20000
+requires_deployed: false
+traverse_deg: 360.0
+elevation_min_deg: -10.0
+elevation_max_deg: 60.0

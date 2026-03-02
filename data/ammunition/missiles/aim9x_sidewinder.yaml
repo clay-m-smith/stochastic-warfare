@@ -1,0 +1,17 @@
+ammo_id: aim9x_sidewinder
+display_name: "AIM-9X Sidewinder"
+ammo_type: MISSILE
+mass_kg: 85.3
+diameter_mm: 127.0
+drag_coefficient: 0.28
+blast_radius_m: 8.0
+fragmentation_radius_m: 15.0
+guidance: IR
+seeker_fov_deg: 90.0
+seeker_range_m: 18000.0
+pk_at_reference: 0.90
+countermeasure_susceptibility: 0.10
+max_speed_mps: 850.0
+flight_time_s: 40.0
+terminal_maneuver: true
+unit_cost_factor: 40.0

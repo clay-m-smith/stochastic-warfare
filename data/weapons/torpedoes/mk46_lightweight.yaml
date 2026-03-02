@@ -1,0 +1,23 @@
+weapon_id: mk46_lightweight
+display_name: "Mk 46 Lightweight Torpedo Tube"
+category: TORPEDO_TUBE
+caliber_mm: 324.0
+muzzle_velocity_mps: 0.0
+max_range_m: 11000.0
+min_range_m: 300.0
+rate_of_fire_rpm: 1.0
+burst_size: 1
+base_accuracy_mrad: 0.0
+cep_m: 0.0
+guidance: COMBINED
+magazine_capacity: 6
+reload_time_s: 300.0
+compatible_ammo:
+  - mk48_torpedo_warhead
+weight_kg: 232.0
+reliability: 0.88
+barrel_life_rounds: 0
+requires_deployed: false
+traverse_deg: 90.0
+elevation_min_deg: -10.0
+elevation_max_deg: 10.0

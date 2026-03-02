@@ -1,0 +1,24 @@
+weapon_id: m270_mlrs
+display_name: "M270 MLRS Launcher"
+category: ROCKET_LAUNCHER
+caliber_mm: 227.0
+muzzle_velocity_mps: 0.0
+max_range_m: 45000.0
+min_range_m: 10000.0
+rate_of_fire_rpm: 12.0
+burst_size: 12
+base_accuracy_mrad: 5.0
+cep_m: 300.0
+guidance: NONE
+magazine_capacity: 12
+reload_time_s: 480.0
+compatible_ammo:
+  - m26_mlrs_rocket
+  - m31_gmlrs
+weight_kg: 24756.0
+reliability: 0.88
+barrel_life_rounds: 0
+requires_deployed: true
+traverse_deg: 180.0
+elevation_min_deg: 0.0
+elevation_max_deg: 60.0

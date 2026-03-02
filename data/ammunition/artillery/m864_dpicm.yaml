@@ -1,0 +1,16 @@
+ammo_id: m864_dpicm
+display_name: "M864 155mm DPICM"
+ammo_type: DPICM
+mass_kg: 46.0
+diameter_mm: 155.0
+drag_coefficient: 0.30
+penetration_mm_rha: 80.0
+penetration_reference_range_m: 0.0
+blast_radius_m: 0.0
+fragmentation_radius_m: 0.0
+guidance: NONE
+submunition_count: 72
+submunition_lethal_radius_m: 5.0
+propulsion: none
+max_speed_mps: 684.0
+unit_cost_factor: 3.0

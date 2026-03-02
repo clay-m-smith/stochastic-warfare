@@ -1,0 +1,17 @@
+ammo_id: mim104_pac3
+display_name: "MIM-104 PAC-3"
+ammo_type: MISSILE
+mass_kg: 312.0
+diameter_mm: 255.0
+drag_coefficient: 0.25
+blast_radius_m: 5.0
+fragmentation_radius_m: 15.0
+guidance: RADAR_ACTIVE
+seeker_fov_deg: 25.0
+seeker_range_m: 15000.0
+pk_at_reference: 0.80
+countermeasure_susceptibility: 0.10
+max_speed_mps: 1700.0
+flight_time_s: 120.0
+terminal_maneuver: true
+unit_cost_factor: 150.0

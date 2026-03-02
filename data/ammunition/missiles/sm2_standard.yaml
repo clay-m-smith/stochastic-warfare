@@ -1,0 +1,17 @@
+ammo_id: sm2_standard
+display_name: "SM-2 Standard"
+ammo_type: MISSILE
+mass_kg: 1558.0
+diameter_mm: 343.0
+drag_coefficient: 0.25
+blast_radius_m: 10.0
+fragmentation_radius_m: 20.0
+guidance: RADAR_SEMI
+seeker_fov_deg: 30.0
+seeker_range_m: 12000.0
+pk_at_reference: 0.80
+countermeasure_susceptibility: 0.15
+max_speed_mps: 1200.0
+flight_time_s: 90.0
+terminal_maneuver: true
+unit_cost_factor: 130.0

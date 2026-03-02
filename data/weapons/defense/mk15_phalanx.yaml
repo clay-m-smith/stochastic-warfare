@@ -1,0 +1,22 @@
+weapon_id: mk15_phalanx
+display_name: "Mk 15 Phalanx CIWS"
+category: CIWS
+caliber_mm: 20.0
+muzzle_velocity_mps: 1100.0
+max_range_m: 3600.0
+min_range_m: 200.0
+rate_of_fire_rpm: 4500.0
+burst_size: 100
+base_accuracy_mrad: 1.5
+guidance: RADAR_ACTIVE
+magazine_capacity: 1550
+reload_time_s: 0.0
+compatible_ammo:
+  - 556_ball
+weight_kg: 5625.0
+reliability: 0.90
+barrel_life_rounds: 50000
+requires_deployed: false
+traverse_deg: 360.0
+elevation_min_deg: -25.0
+elevation_max_deg: 85.0

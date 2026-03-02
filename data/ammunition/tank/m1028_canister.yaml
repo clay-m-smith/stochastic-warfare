@@ -1,0 +1,16 @@
+ammo_id: m1028_canister
+display_name: "M1028 120mm Canister"
+ammo_type: HE
+mass_kg: 10.9
+diameter_mm: 120.0
+drag_coefficient: 0.50
+penetration_mm_rha: 0.0
+penetration_reference_range_m: 0.0
+blast_radius_m: 0.0
+fragmentation_radius_m: 30.0
+guidance: NONE
+submunition_count: 1100
+submunition_lethal_radius_m: 0.5
+propulsion: none
+max_speed_mps: 1410.0
+unit_cost_factor: 2.0

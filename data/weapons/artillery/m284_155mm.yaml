@@ -1,0 +1,28 @@
+weapon_id: m284_155mm
+display_name: "M284 155mm Howitzer (M109A6)"
+category: HOWITZER
+caliber_mm: 155.0
+muzzle_velocity_mps: 684.0
+max_range_m: 30000.0
+min_range_m: 3000.0
+rate_of_fire_rpm: 4.0
+burst_size: 1
+base_accuracy_mrad: 0.4
+cep_m: 267.0
+guidance: NONE
+magazine_capacity: 39
+reload_time_s: 15.0
+compatible_ammo:
+  - m795_he
+  - m549a1_rap
+  - m864_dpicm
+  - m982_excalibur
+  - m485_illumination
+  - m825_smoke
+weight_kg: 2540.0
+reliability: 0.90
+barrel_life_rounds: 2400
+requires_deployed: true
+traverse_deg: 360.0
+elevation_min_deg: -3.0
+elevation_max_deg: 75.0

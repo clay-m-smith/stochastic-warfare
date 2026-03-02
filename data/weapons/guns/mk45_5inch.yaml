@@ -1,0 +1,24 @@
+weapon_id: mk45_5inch
+display_name: "Mk 45 Mod 4 5-inch Naval Gun"
+category: NAVAL_GUN
+caliber_mm: 127.0
+muzzle_velocity_mps: 808.0
+max_range_m: 37000.0
+min_range_m: 500.0
+rate_of_fire_rpm: 20.0
+burst_size: 1
+base_accuracy_mrad: 0.5
+cep_m: 50.0
+guidance: NONE
+magazine_capacity: 680
+reload_time_s: 0.0
+compatible_ammo:
+  - mk45_he
+  - m982_excalibur
+weight_kg: 21691.0
+reliability: 0.92
+barrel_life_rounds: 7000
+requires_deployed: false
+traverse_deg: 360.0
+elevation_min_deg: -15.0
+elevation_max_deg: 65.0

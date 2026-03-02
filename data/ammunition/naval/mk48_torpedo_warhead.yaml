@@ -1,0 +1,20 @@
+ammo_id: mk48_torpedo_warhead
+display_name: "Mk 48 ADCAP Torpedo"
+ammo_type: TORPEDO
+mass_kg: 1582.0
+diameter_mm: 533.0
+drag_coefficient: 0.20
+penetration_mm_rha: 0.0
+penetration_reference_range_m: 0.0
+blast_radius_m: 30.0
+fragmentation_radius_m: 50.0
+guidance: WIRE
+seeker_fov_deg: 30.0
+seeker_range_m: 3000.0
+pk_at_reference: 0.85
+countermeasure_susceptibility: 0.15
+propulsion: none
+max_speed_mps: 28.3
+flight_time_s: 1300.0
+terminal_maneuver: true
+unit_cost_factor: 100.0

@@ -1,0 +1,18 @@
+ammo_id: rgm84_harpoon
+display_name: "RGM-84 Harpoon"
+ammo_type: MISSILE
+mass_kg: 691.0
+diameter_mm: 343.0
+drag_coefficient: 0.28
+blast_radius_m: 20.0
+fragmentation_radius_m: 35.0
+guidance: RADAR_ACTIVE
+seeker_fov_deg: 45.0
+seeker_range_m: 10000.0
+pk_at_reference: 0.75
+countermeasure_susceptibility: 0.20
+max_speed_mps: 240.0
+flight_time_s: 500.0
+cruise_altitude_m: 5.0
+terminal_maneuver: true
+unit_cost_factor: 120.0
