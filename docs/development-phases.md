@@ -379,6 +379,7 @@ Every non-`__init__` module file from `project-structure.md` and its phase assig
 | `environment/electromagnetic.py` | 1c |
 | `environment/conditions.py` | 1c |
 | `entities/base.py` | 0 (stub), 2a (full) |
+| `entities/events.py` | 2a |
 | `entities/personnel.py` | 2a |
 | `entities/equipment.py` | 2a |
 | `entities/unit_classes/ground.py` | 2a |
@@ -394,6 +395,8 @@ Every non-`__init__` module file from `project-structure.md` and its phase assig
 | `entities/organization/staff.py` | 2b |
 | `entities/organization/orbat.py` | 2b |
 | `entities/organization/special_org.py` | 2b |
+| `entities/organization/events.py` | 2b |
+| `movement/events.py` | 2c |
 | `movement/engine.py` | 2c |
 | `movement/pathfinding.py` | 2c |
 | `movement/fatigue.py` | 2c |
@@ -404,6 +407,7 @@ Every non-`__init__` module file from `project-structure.md` and its phase assig
 | `movement/submarine_movement.py` | 2c |
 | `movement/amphibious_movement.py` | 2c |
 | `movement/airborne.py` | 2c |
+| `detection/events.py` | 3 |
 | `detection/sensors.py` | 3 |
 | `detection/signatures.py` | 3 |
 | `detection/detection.py` | 3 |
@@ -414,6 +418,7 @@ Every non-`__init__` module file from `project-structure.md` and its phase assig
 | `detection/sonar.py` | 3 |
 | `detection/underwater_detection.py` | 3 |
 | `detection/fog_of_war.py` | 3 |
+| `combat/events.py` | 4a |
 | `combat/engagement.py` | 4a |
 | `combat/ballistics.py` | 4a |
 | `combat/hit_probability.py` | 4a |
@@ -433,12 +438,14 @@ Every non-`__init__` module file from `project-structure.md` and its phase assig
 | `combat/naval_gunfire_support.py` | 4e |
 | `combat/amphibious_assault.py` | 4e |
 | `combat/carrier_ops.py` | 4e |
+| `morale/events.py` | 4f |
 | `morale/state.py` | 4f |
 | `morale/cohesion.py` | 4f |
 | `morale/stress.py` | 4f |
 | `morale/experience.py` | 4f |
 | `morale/psychology.py` | 4f |
 | `morale/rout.py` | 4f |
+| `c2/events.py` | 5a |
 | `c2/command.py` | 5a |
 | `c2/communications.py` | 5a |
 | `c2/naval_c2.py` | 5a |

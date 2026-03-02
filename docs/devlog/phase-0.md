@@ -151,7 +151,7 @@ Ran a full alignment audit between `development-phases.md`, `project-structure.m
    - All exit criteria strengthened to match deliverables
    - Naval items integrated across phases (not deferred)
    - Module-to-Phase Index table added at bottom (~107 module files, each mapped to exactly one phase)
-   - Doctrinal AI scope clarified (framework in Phase 5, named schools deferred to future)
+   - Doctrinal AI scope clarified (framework in Phase 8, named schools deferred to future)
 
 2. **Updated `brainstorm.md`**:
    - Annotated all stochastic/signal processing models with their implementation module homes

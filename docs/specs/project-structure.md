@@ -1,6 +1,6 @@
 # Project Structure & Module Decomposition
 **Status**: Draft
-**Last Updated**: 2026-02-28
+**Last Updated**: 2026-03-02
 
 ---
 
@@ -38,6 +38,7 @@ stochastic-warfare/
 │   ├── ammunition/                   # Ammunition type definitions (AP, HE, HEAT, smoke, illum, guided, rockets, missiles)
 │   ├── sensors/                      # Sensor type definitions (referenced by units)
 │   ├── signatures/                   # Unit signature profiles (visual, thermal, RCS, acoustic, EM)
+│   ├── comms/                        # Communication equipment definitions (SINCGARS, Harris HF, Link 16, SATCOM, etc.)
 │   ├── organizations/                # TO&E definitions per nation/era
 │   │   ├── us_modern/               # US Army/USMC/Navy modern structure
 │   │   ├── russian_modern/          # Russian ground/naval/air structure
@@ -110,6 +111,7 @@ stochastic-warfare/
     ├── entities/                     # Units and organizational structures
     │   ├── __init__.py
     │   ├── base.py                   # Base entity class, common state/interface
+    │   ├── events.py                 # Entity-level events (personnel casualties, equipment breakdown)
     │   ├── personnel.py              # Crew/individual modeling: roles, skills, experience, casualties
     │   ├── equipment.py              # Equipment state: degradation, maintenance, breakdown probability
     │   ├── unit_classes/             # Unit class hierarchy (behavior definitions)
@@ -127,10 +129,12 @@ stochastic-warfare/
     │   │   ├── task_org.py           # Dynamic task organization: attach/detach, cross-attachment, combined arms TF
     │   │   ├── staff.py              # Staff functions (S1-S6/G1-G6/J1-J6) as functional capabilities affecting C2 performance
     │   │   ├── orbat.py              # Order of battle loading, TO&E (table of org & equipment) definitions
-    │   │   └── special_org.py        # Non-standard organizations: SOF, irregular/insurgent (cell/network), coalition/joint
+    │   │   ├── special_org.py        # Non-standard organizations: SOF, irregular/insurgent (cell/network), coalition/joint
+    │   │   └── events.py            # Organization events (task org changes)
     │   └── capabilities.py           # Combat power assessment: weighted factors, force ratios, readiness computation
     ├── movement/                     # Movement & pathfinding
     │   ├── __init__.py
+    │   ├── events.py                 # Movement events (waypoint reached, formation change, mount/dismount)
     │   ├── engine.py                 # Movement execution (terrain speed, deviation, load effects)
     │   ├── pathfinding.py            # A* and route planning (terrain, obstacle, threat-aware)
     │   ├── fatigue.py                # Fatigue accumulation model, sleep deprivation, recovery
@@ -143,6 +147,7 @@ stochastic-warfare/
     │   └── airborne.py              # Airborne/air assault: parachute drop, helicopter insertion, DZ/LZ selection, assembly
     ├── detection/                    # Intelligence, sensors, & fog of war
     │   ├── __init__.py
+    │   ├── events.py                 # Detection events (contact gained/lost, track update, ID change)
     │   ├── sensors.py                # Sensor models (visual, thermal, radar, acoustic, seismic)
     │   ├── signatures.py             # Unit signature profiles: visual, thermal, radar cross-section, acoustic, EM emission
     │   ├── detection.py              # SNR-based detection probability engine (Pd, Pfa, ROC)
@@ -155,6 +160,7 @@ stochastic-warfare/
     │   └── fog_of_war.py             # Fog of war manager (per-side world view — land, air, AND maritime)
     ├── combat/                       # Combat resolution
     │   ├── __init__.py
+    │   ├── events.py                 # Combat events (engagement, hit, kill, fratricide, suppression)
     │   ├── engagement.py             # Engagement sequencing, target selection, range determination
     │   ├── ballistics.py             # Projectile physics: trajectory, drag, wind, Coriolis (long range)
     │   ├── hit_probability.py        # P(hit) model: range, weapon, skill, target motion, conditions
@@ -176,14 +182,16 @@ stochastic-warfare/
     │   └── fratricide.py             # Friendly fire: IFF uncertainty, deconfliction, identification errors
     ├── morale/                       # Morale & human factors
     │   ├── __init__.py
+    │   ├── events.py                 # Morale events (state change, rout, rally, surrender)
     │   ├── state.py                  # Morale state machine (Markov transitions): steady/shaken/broken/routed/surrendered
     │   ├── cohesion.py               # Unit cohesion, nearby friendlies, leadership, unit history/reputation
     │   ├── stress.py                 # Stress/fatigue/sleep deprivation accumulation (random walk with drift)
     │   ├── experience.py             # Training level, combat experience learning curve, skill progression
     │   ├── psychology.py             # PSYOP effects, propaganda, surrender inducement, civilian reaction
     │   └── rout.py                   # Rout, rally, surrender mechanics, POW generation
-    ├── c2/                           # Command & Control
+    ├── c2/                           # Command & Control (Phase 5: plumbing; Phase 8: AI/planning)
     │   ├── __init__.py
+    │   ├── events.py                 # C2 events (command status, succession, comms, orders, ROE, coordination, initiative)
     │   ├── command.py                # Command authority, command relationships (OPCON, TACON, ADCON, support)
     │   ├── orders/                   # Order system
     │   │   ├── __init__.py
@@ -196,7 +204,7 @@ stochastic-warfare/
     │   │   ├── air_orders.py         # Air-specific: ATO (Air Tasking Order), ACO, SPINS, strike packages, CAP assignments
     │   │   ├── propagation.py        # Order transmission: delays, degradation, misinterpretation probability
     │   │   └── execution.py          # Order execution tracking: compliance, adaptation, deviation reporting
-    │   ├── planning/                 # Planning process
+    │   ├── planning/                 # Planning process [PHASE 8b — not yet implemented]
     │   │   ├── __init__.py
     │   │   ├── process.py            # Configurable planning process (MDMP, rapid planning, intuitive decision)
     │   │   ├── mission_analysis.py   # Mission analysis: specified/implied tasks, constraints, risk assessment
@@ -208,7 +216,7 @@ stochastic-warfare/
     │   ├── coordination.py           # Fire support coord, airspace deconfliction, boundaries, sea-land-air integration
     │   ├── naval_c2.py              # Fleet org (TF/TG/TU), naval data links, submarine comms (VLF/ELF)
     │   ├── mission_command.py        # Commander's intent, mission-type orders, subordinate initiative/adaptation
-    │   └── ai/                       # AI decision-making
+    │   └── ai/                       # AI decision-making [PHASE 8a — not yet implemented]
     │       ├── __init__.py
     │       ├── ooda.py               # OODA loop implementation
     │       ├── commander.py          # Commander personality model: risk tolerance, aggression, initiative, experience
@@ -498,7 +506,7 @@ The organizational model must be **nation-agnostic and era-agnostic** — it pro
 **Depends on**: core/, entities/, environment/ (for environmental stress modifiers)
 
 ### c2/
-**Owns**: The entire command and control layer. Command authority, orders at every echelon, planning processes, communications, ROE, coordination, mission command, and AI decision-making. This is the brain of the simulation — it drives everything else.
+**Owns**: The entire command and control layer. Command authority, orders at every echelon, planning processes, communications, ROE, coordination, mission command, and AI decision-making. Split across two phases: **Phase 5** builds the C2 plumbing (orders, comms, ROE, coordination, succession — the mechanism), **Phase 8** builds the AI brain (OODA, planning, doctrine, commander personality — the decision-maker).
 
 #### Command Authority (c2/command.py)
 - **Command relationships** map to entities/organization task_org: OPCON, TACON, ADCON, support relationships determine what authority a commander has over attached/subordinate units
@@ -519,7 +527,7 @@ Orders exist at every echelon with fundamentally different character:
 - **Order propagation**: orders take TIME to transmit down the chain. A corps order must be received, interpreted, translated into subordinate orders at division, then brigade, then battalion, etc. Each echelon adds planning time and interpretation delay. Orders can be degraded, delayed, or misunderstood in transmission — stochastic propagation model.
 - **Order execution tracking**: units report compliance/status back up the chain (also subject to delay and degradation). Commanders track execution against plan. Deviation beyond threshold triggers reassessment.
 
-#### Planning Process (c2/planning/)
+#### Planning Process (c2/planning/) — *Phase 8b*
 - **Configurable planning model**: MDMP (Military Decision Making Process — US), Soviet-style directive planning, rapid/abbreviated planning for time-constrained situations, intuitive decision-making for small units. Selected per doctrine and echelon.
 - **Mission analysis**: determine specified tasks, implied tasks, constraints, restated mission, commander's critical information requirements (CCIR). This step feeds the AI's understanding of what needs to happen.
 - **Course of action (COA) development and analysis**: the AI develops multiple possible plans, then wargames them (yes, wargaming WITHIN the wargame — using simplified models to predict outcomes). COA comparison selects the best option.
@@ -539,7 +547,7 @@ Orders exist at every echelon with fundamentally different character:
 - **Coordination (c2/coordination.py)**: fire support coordination (FSCL, CFL, no-fire areas, restricted fire areas, target lists — high-payoff target list / attack guidance matrix), airspace coordination (air corridors, transit routes, restricted operating zones, missile flight corridors for TBM/cruise missile deconfliction), boundary management (lateral, rear), sea-land-air integration (composite warfare commander, amphibious force coordination). Deep fires coordination: targets beyond FSCL are service-coordinated (air or missile), targets short of FSCL require ground force coordination. Failure of coordination → fratricide or missed opportunities.
 - **Mission command (c2/mission_command.py)**: commander's intent enables subordinates to adapt to changing conditions without waiting for new orders. Degree of subordinate initiative is configurable by doctrine — high in US/German tradition, lower in Soviet/Russian tradition. When communications are cut, units operating under mission command can continue to function; units operating under detailed control may freeze.
 
-#### AI Decision-Making (c2/ai/)
+#### AI Decision-Making (c2/ai/) — *Phase 8a*
 - **OODA loop (ooda.py)**: Observe (from detection/intel), Orient (situation assessment considering doctrine, experience, cultural factors), Decide (COA selection), Act (order generation). Loop speed varies by echelon, commander quality, and staff capability. Faster OODA → tempo advantage.
 - **Commander personality (commander.py)**: AI commanders are not all the same. Personality model includes: risk tolerance (cautious ↔ aggressive), initiative level (waits for orders ↔ acts independently), preferred doctrine (attritionist ↔ maneuverist), decisiveness, adaptability. Loaded from YAML profiles. This creates realistic variation — some commanders exploit opportunities aggressively, others consolidate carefully.
 - **Situation assessment (assessment.py)**: evaluates relative combat power (from entities/capabilities), terrain advantage, supply state, morale state, intel confidence, operational tempo, AND environmental conditions (weather forecast, daylight remaining, tidal windows, seasonal ground state, visibility forecast). Environmental assessment is integral — a commander deciding whether to attack considers whether there's enough daylight remaining, whether weather will support air operations, whether the ground will support armored maneuver. This is the "Orient" phase of OODA — synthesizing all available information into an actionable picture.

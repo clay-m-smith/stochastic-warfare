@@ -41,7 +41,7 @@ These are the mathematical tools available for modeling. Each is annotated with 
 
 ### Signal Processing Analogies
 - **Kalman Filtering**: Intelligence estimation — tracking enemy positions with noisy observations → `detection/estimation.py`
-- **Monte Carlo Methods**: Outcome probability estimation for engagements, campaign-level analysis → `simulation/metrics.py`, Phase 8 validation
+- **Monte Carlo Methods**: Outcome probability estimation for engagements, campaign-level analysis → `simulation/metrics.py`, Phase 7 (engagement) / Phase 10 (campaign) validation
 - **Spectral Analysis**: Analyzing periodicity in operational tempo → `simulation/metrics.py` (post-run analysis tool, not real-time engine component)
 - **Convolution**: Modeling cascading effects (suppression spreading through a formation) → `combat/suppression.py`, `morale/cohesion.py`
 - **Matched Filtering / Detection Theory**: Reconnaissance and detection modeling (SNR-based detection probability) → `detection/detection.py`
@@ -53,7 +53,7 @@ These are the mathematical tools available for modeling. Each is annotated with 
 - **Game Theory**: Adversarial decision modeling → `c2/ai/decisions.py`, `c2/ai/stratagems.py` (opponent modeling in COA analysis)
 
 ### Attrition & Force Models
-- **Lanchester Models** (square law, linear law): Attrition rate baselines for campaign-level modeling, validation benchmarks → `simulation/campaign.py` (aggregate force modeling), Phase 8 backtesting comparisons
+- **Lanchester Models** (square law, linear law): Attrition rate baselines for campaign-level modeling, validation benchmarks → `simulation/campaign.py` (aggregate force modeling), Phase 10 backtesting comparisons
 
 ---
 
