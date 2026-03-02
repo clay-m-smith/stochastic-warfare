@@ -1,0 +1,12 @@
+sensor_id: esm_suite
+sensor_type: ESM
+display_name: "AN/SLQ-32 Electronic Support Measures"
+max_range_m: 200000.0
+detection_threshold: -60.0
+false_alarm_rate: 1.0e-5
+scan_time_s: 2.0
+antenna_height_m: 20.0
+min_range_m: 0.0
+fov_deg: 360.0
+requires_los: false
+detects_domain: ["ELECTROMAGNETIC"]

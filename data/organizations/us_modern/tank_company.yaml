@@ -1,0 +1,9 @@
+name: "US Tank Company"
+echelon: COMPANY
+nation: US
+era: modern
+staff: ["S1"]
+subordinates:
+  - unit_type: m1a2
+    count: 14
+    echelon: INDIVIDUAL

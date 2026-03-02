@@ -1,0 +1,13 @@
+sensor_id: active_sonar
+sensor_type: ACTIVE_SONAR
+display_name: "AN/SQS-53C Hull-Mounted Sonar"
+max_range_m: 50000.0
+detection_threshold: 6.0
+false_alarm_rate: 1.0e-6
+scan_time_s: 15.0
+source_level_db: 235.0
+directivity_index_db: 20.0
+min_range_m: 100.0
+fov_deg: 360.0
+requires_los: false
+detects_domain: ["ACOUSTIC"]

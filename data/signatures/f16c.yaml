@@ -1,0 +1,21 @@
+profile_id: f16c
+unit_type: f16c
+visual:
+  height_m: 5.0
+  cross_section_m2: 28.0
+  camouflage_factor: 1.0
+thermal:
+  emissivity: 0.90
+  heat_output_kw: 5000.0
+  contrast_modifier: 1.5
+radar:
+  rcs_frontal_m2: 1.2
+  rcs_side_m2: 5.0
+  rcs_rear_m2: 3.0
+acoustic:
+  noise_db: 120.0
+  speed_coefficient: 0.05
+electromagnetic:
+  emitting: true
+  power_dbm: 60.0
+  frequency_ghz: 9.4

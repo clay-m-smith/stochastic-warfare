@@ -1,0 +1,32 @@
+unit_type: f16c
+domain: aerial
+display_name: "F-16C Fighting Falcon"
+aerial_type: FIGHTER
+max_speed: 600.0  # m/s (~Mach 2)
+service_ceiling: 15240.0
+crew:
+  - role: PILOT
+    count: 1
+    skill: EXPERIENCED
+equipment:
+  - name: "M61A1 Vulcan 20mm"
+    category: WEAPON
+    weight_kg: 112.0
+    reliability: 0.94
+  - name: "AN/APG-68 Radar"
+    category: SENSOR
+    weight_kg: 164.0
+    reliability: 0.88
+  - name: "F110-GE-100 Turbofan"
+    category: PROPULSION
+    weight_kg: 1996.0
+    reliability: 0.92
+    temperature_range: [-54.0, 71.0]
+  - name: "AN/ALR-56M RWR"
+    category: SENSOR
+    weight_kg: 22.0
+    reliability: 0.90
+  - name: "Link 16 Terminal"
+    category: COMMUNICATION
+    weight_kg: 30.0
+    reliability: 0.91

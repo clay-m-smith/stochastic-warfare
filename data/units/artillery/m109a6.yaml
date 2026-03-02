@@ -1,0 +1,37 @@
+unit_type: m109a6
+domain: ground
+display_name: "M109A6 Paladin 155mm SP Howitzer"
+ground_type: ARTILLERY_SP
+max_speed: 17.0  # m/s (~61 km/h road)
+armor_front: 25.0
+armor_side: 15.0
+crew:
+  - role: COMMANDER
+    count: 1
+    skill: TRAINED
+  - role: GUNNER
+    count: 1
+    skill: TRAINED
+  - role: LOADER
+    count: 2
+    skill: BASIC
+  - role: DRIVER
+    count: 1
+    skill: TRAINED
+equipment:
+  - name: "M284 155mm Howitzer"
+    category: WEAPON
+    weight_kg: 2200.0
+    reliability: 0.92
+  - name: "M2HB .50 Cal"
+    category: WEAPON
+    weight_kg: 38.0
+    reliability: 0.92
+  - name: "Detroit Diesel 8V71T"
+    category: PROPULSION
+    weight_kg: 800.0
+    reliability: 0.85
+  - name: "SRP Inertial Nav"
+    category: NAVIGATION
+    weight_kg: 15.0
+    reliability: 0.94

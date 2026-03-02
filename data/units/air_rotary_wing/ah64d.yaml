@@ -1,0 +1,35 @@
+unit_type: ah64d
+domain: aerial
+display_name: "AH-64D Apache Longbow"
+aerial_type: ATTACK_HELO
+max_speed: 83.0  # m/s (~160 kts)
+service_ceiling: 6400.0
+crew:
+  - role: PILOT
+    count: 1
+    skill: EXPERIENCED
+  - role: COPILOT
+    count: 1
+    skill: TRAINED
+equipment:
+  - name: "M230 Chain Gun 30mm"
+    category: WEAPON
+    weight_kg: 57.0
+    reliability: 0.91
+  - name: "AN/APG-78 Longbow Radar"
+    category: SENSOR
+    weight_kg: 136.0
+    reliability: 0.85
+  - name: "T700-GE-701D Turboshaft"
+    category: PROPULSION
+    weight_kg: 219.0
+    reliability: 0.89
+    temperature_range: [-46.0, 52.0]
+  - name: "M299 Launcher"
+    category: WEAPON
+    weight_kg: 64.0
+    reliability: 0.93
+  - name: "TADS/PNVS"
+    category: SENSOR
+    weight_kg: 230.0
+    reliability: 0.86

@@ -1,0 +1,42 @@
+unit_type: m1a2
+domain: ground
+display_name: "M1A2 Abrams MBT"
+ground_type: ARMOR
+max_speed: 18.0  # m/s (~65 km/h road)
+armor_front: 600.0
+armor_side: 200.0
+crew:
+  - role: COMMANDER
+    count: 1
+    skill: TRAINED
+  - role: GUNNER
+    count: 1
+    skill: TRAINED
+  - role: LOADER
+    count: 1
+    skill: BASIC
+  - role: DRIVER
+    count: 1
+    skill: TRAINED
+equipment:
+  - name: "M256 120mm Smoothbore"
+    category: WEAPON
+    weight_kg: 1800.0
+    reliability: 0.95
+  - name: "M2HB .50 Cal"
+    category: WEAPON
+    weight_kg: 38.0
+    reliability: 0.92
+  - name: "AGT-1500 Gas Turbine"
+    category: PROPULSION
+    weight_kg: 1134.0
+    reliability: 0.88
+    temperature_range: [-40.0, 52.0]
+  - name: "AN/VVS-2 Commander Viewer"
+    category: SENSOR
+    weight_kg: 45.0
+    reliability: 0.90
+  - name: "Composite Armor Array"
+    category: PROTECTION
+    weight_kg: 5000.0
+    reliability: 0.99

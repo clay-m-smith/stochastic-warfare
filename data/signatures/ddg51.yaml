@@ -1,0 +1,21 @@
+profile_id: ddg51
+unit_type: ddg51
+visual:
+  height_m: 20.0
+  cross_section_m2: 500.0
+  camouflage_factor: 1.0
+thermal:
+  emissivity: 0.90
+  heat_output_kw: 25000.0
+  contrast_modifier: 1.4
+radar:
+  rcs_frontal_m2: 1000.0
+  rcs_side_m2: 5000.0
+  rcs_rear_m2: 2000.0
+acoustic:
+  noise_db: 130.0
+  speed_coefficient: 1.0
+electromagnetic:
+  emitting: true
+  power_dbm: 96.0
+  frequency_ghz: 3.3

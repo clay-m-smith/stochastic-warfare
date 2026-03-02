@@ -1,0 +1,54 @@
+unit_type: ddg51
+domain: naval
+display_name: "Arleigh Burke-class Destroyer (DDG-51)"
+naval_type: DESTROYER
+max_speed: 16.0  # m/s (~31 knots)
+draft: 9.4
+displacement: 9200.0
+fuel_capacity: 600.0
+noise_signature_base: 130.0
+crew:
+  - role: COMMANDER
+    count: 1
+    skill: EXPERIENCED
+  - role: NAVIGATOR
+    count: 2
+    skill: TRAINED
+  - role: SENSOR_OPERATOR
+    count: 8
+    skill: TRAINED
+  - role: GUNNER
+    count: 6
+    skill: TRAINED
+  - role: ENGINEER
+    count: 10
+    skill: TRAINED
+  - role: GENERIC
+    count: 254
+    skill: BASIC
+equipment:
+  - name: "Mk 45 5-inch Gun"
+    category: WEAPON
+    weight_kg: 22000.0
+    reliability: 0.92
+  - name: "Mk 41 VLS"
+    category: WEAPON
+    weight_kg: 120000.0
+    reliability: 0.94
+  - name: "AN/SPY-1D Radar"
+    category: SENSOR
+    weight_kg: 5200.0
+    reliability: 0.88
+  - name: "AN/SQQ-89 Sonar"
+    category: SENSOR
+    weight_kg: 3200.0
+    reliability: 0.86
+  - name: "LM2500 Gas Turbine"
+    category: PROPULSION
+    weight_kg: 4670.0
+    reliability: 0.90
+    temperature_range: [-40.0, 50.0]
+  - name: "AN/SLQ-32 EW Suite"
+    category: SENSOR
+    weight_kg: 1800.0
+    reliability: 0.87

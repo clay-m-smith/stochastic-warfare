@@ -1,0 +1,46 @@
+unit_type: lhd1
+domain: naval
+display_name: "Wasp-class LHD"
+naval_type: LHD
+max_speed: 11.3  # m/s (~22 knots)
+draft: 8.1
+displacement: 40500.0
+fuel_capacity: 5500.0
+noise_signature_base: 140.0
+crew:
+  - role: COMMANDER
+    count: 1
+    skill: EXPERIENCED
+  - role: NAVIGATOR
+    count: 3
+    skill: TRAINED
+  - role: SENSOR_OPERATOR
+    count: 6
+    skill: TRAINED
+  - role: ENGINEER
+    count: 20
+    skill: TRAINED
+  - role: GENERIC
+    count: 1040
+    skill: BASIC
+equipment:
+  - name: "RAM Launcher"
+    category: WEAPON
+    weight_kg: 6200.0
+    reliability: 0.91
+  - name: "Mk 15 Phalanx CIWS"
+    category: WEAPON
+    weight_kg: 6120.0
+    reliability: 0.89
+  - name: "AN/SPS-48E Radar"
+    category: SENSOR
+    weight_kg: 3600.0
+    reliability: 0.87
+  - name: "LM2500+ Gas Turbine"
+    category: PROPULSION
+    weight_kg: 5000.0
+    reliability: 0.90
+  - name: "Well Deck"
+    category: UTILITY
+    weight_kg: 0.0
+    reliability: 0.98

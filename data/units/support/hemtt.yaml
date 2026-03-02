@@ -1,0 +1,24 @@
+unit_type: hemtt
+domain: ground
+display_name: "M977 HEMTT Cargo Truck"
+ground_type: MOTORIZED
+support_type: LOGISTICS_TRUCK
+max_speed: 16.0  # m/s (~57 km/h)
+cargo_capacity_tons: 10.0
+crew:
+  - role: DRIVER
+    count: 1
+    skill: BASIC
+  - role: GENERIC
+    count: 1
+    skill: BASIC
+equipment:
+  - name: "Detroit Diesel 8V92TA"
+    category: PROPULSION
+    weight_kg: 900.0
+    reliability: 0.88
+    temperature_range: [-32.0, 49.0]
+  - name: "AN/VRC-92 Radio"
+    category: COMMUNICATION
+    weight_kg: 12.0
+    reliability: 0.90

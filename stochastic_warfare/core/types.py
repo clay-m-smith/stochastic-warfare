@@ -59,6 +59,25 @@ class ModuleId(str, enum.Enum):
     TERRAIN = "terrain"
 
 
+class Domain(enum.IntEnum):
+    """Operational domain for a unit or platform."""
+
+    GROUND = 0
+    AERIAL = 1
+    NAVAL = 2
+    SUBMARINE = 3
+    AMPHIBIOUS = 4
+
+
+class Side(str, enum.Enum):
+    """Force allegiance."""
+
+    BLUE = "blue"
+    RED = "red"
+    NEUTRAL = "neutral"
+    CIVILIAN = "civilian"
+
+
 class TickResolution(enum.Enum):
     """Granularity of a simulation tick."""
 

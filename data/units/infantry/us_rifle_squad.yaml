@@ -1,0 +1,36 @@
+unit_type: us_rifle_squad
+domain: ground
+display_name: "US Rifle Squad"
+ground_type: LIGHT_INFANTRY
+max_speed: 1.3  # m/s (~5 km/h dismounted march)
+crew:
+  - role: COMMANDER
+    count: 1
+    skill: EXPERIENCED
+  - role: RIFLEMAN
+    count: 7
+    skill: TRAINED
+  - role: MEDIC
+    count: 1
+    skill: TRAINED
+equipment:
+  - name: "M4A1 Carbine"
+    category: WEAPON
+    weight_kg: 3.4
+    reliability: 0.95
+  - name: "M249 SAW"
+    category: WEAPON
+    weight_kg: 7.5
+    reliability: 0.90
+  - name: "M240B GPMG"
+    category: WEAPON
+    weight_kg: 12.5
+    reliability: 0.92
+  - name: "AN/PRC-152 Radio"
+    category: COMMUNICATION
+    weight_kg: 1.6
+    reliability: 0.93
+  - name: "AN/PVS-14 NVG"
+    category: SENSOR
+    weight_kg: 0.4
+    reliability: 0.88

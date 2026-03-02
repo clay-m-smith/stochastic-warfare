@@ -1,0 +1,21 @@
+profile_id: m1a2
+unit_type: m1a2
+visual:
+  height_m: 2.4
+  cross_section_m2: 8.5
+  camouflage_factor: 0.8
+thermal:
+  emissivity: 0.95
+  heat_output_kw: 1100.0
+  contrast_modifier: 1.2
+radar:
+  rcs_frontal_m2: 15.0
+  rcs_side_m2: 35.0
+  rcs_rear_m2: 10.0
+acoustic:
+  noise_db: 85.0
+  speed_coefficient: 2.0
+electromagnetic:
+  emitting: false
+  power_dbm: 0.0
+  frequency_ghz: 0.0

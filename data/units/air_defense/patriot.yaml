@@ -1,0 +1,38 @@
+unit_type: patriot
+domain: ground
+display_name: "MIM-104 Patriot Battery"
+ad_type: SAM_LONG
+max_speed: 10.0  # m/s emplaced; transport speed
+min_engagement_altitude: 60.0
+max_engagement_altitude: 24000.0
+max_engagement_range: 160000.0
+ready_missiles: 16
+reload_time: 1800.0
+crew:
+  - role: COMMANDER
+    count: 1
+    skill: EXPERIENCED
+  - role: SENSOR_OPERATOR
+    count: 3
+    skill: TRAINED
+  - role: GENERIC
+    count: 6
+    skill: BASIC
+equipment:
+  - name: "AN/MPQ-53 Radar"
+    category: SENSOR
+    weight_kg: 6800.0
+    reliability: 0.90
+    temperature_range: [-32.0, 49.0]
+  - name: "M901 Launching Station"
+    category: WEAPON
+    weight_kg: 12000.0
+    reliability: 0.93
+  - name: "AN/MSQ-104 ECS"
+    category: COMMUNICATION
+    weight_kg: 4500.0
+    reliability: 0.88
+  - name: "EPP-III Power Plant"
+    category: POWER
+    weight_kg: 5400.0
+    reliability: 0.85

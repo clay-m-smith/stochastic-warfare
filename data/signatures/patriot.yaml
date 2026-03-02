@@ -1,0 +1,21 @@
+profile_id: patriot
+unit_type: patriot
+visual:
+  height_m: 4.0
+  cross_section_m2: 25.0
+  camouflage_factor: 0.7
+thermal:
+  emissivity: 0.94
+  heat_output_kw: 500.0
+  contrast_modifier: 1.0
+radar:
+  rcs_frontal_m2: 20.0
+  rcs_side_m2: 50.0
+  rcs_rear_m2: 15.0
+acoustic:
+  noise_db: 70.0
+  speed_coefficient: 2.0
+electromagnetic:
+  emitting: true
+  power_dbm: 73.0
+  frequency_ghz: 5.6

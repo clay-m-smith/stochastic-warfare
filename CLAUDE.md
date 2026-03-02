@@ -3,19 +3,21 @@
 ## Project Overview
 High-fidelity, high-resolution wargame simulator. Multi-scale (campaign → battlefield → battle → unit level) with stochastic/signal-processing-inspired models (Markov chains, Monte Carlo, Kalman filters, noise models, queueing theory). Headless Python engine first; matplotlib for validation; full UI deferred. Modern era (Cold War–present) as prototype. Maritime warfare fully integrated, not deferred.
 
-**Current status**: Phase 1 complete (terrain + environment). 367 tests passing. Next: Phase 2 (Entities, Organization & Movement).
+**Current status**: Phase 3 complete (detection, intelligence, fog of war). 1,087 tests passing. Next: Phase 4 (Combat Resolution).
 
 ## Package Management
-**Use `uv` exclusively.** Never use bare `pip install`. Always use `uv pip install`, `uv add`, `uv sync`, etc. Direct `pip` may target system Python instead of the project venv.
+**Use `uv` exclusively.** Never use bare `pip install`. Always use `uv add`, `uv sync`, etc. Direct `pip` may target system Python instead of the project venv.
 
-Before running any Python commands:
+Use `uv run` to execute all Python commands — this automatically uses the correct venv without manual activation:
 ```bash
-source .venv/Scripts/activate
+uv run python -m pytest --tb=short -q
 ```
+
+Do NOT use `source .venv/Scripts/activate` — use `uv run` instead.
 
 ## Running Tests
 ```bash
-source .venv/Scripts/activate && python -m pytest --tb=short -q
+uv run python -m pytest --tb=short -q
 ```
 
 ## Architecture
@@ -92,3 +94,23 @@ Core infrastructure: types, logging, RNG manager, calendar-aware clock (Meeus Ju
 Key physics: Meeus astronomical algorithms, Markov weather chains, Pierson-Moskowitz wave spectrum, Mackenzie sound velocity, acoustic propagation, RF propagation, DDA raycasting LOS with Earth curvature correction.
 
 Dependencies added: `shapely>=2.0`, `networkx>=3.0`
+
+### Phase 2: Entities, Organization & Movement (424 tests)
+28 new source modules + 13 YAML data files:
+- **Entities** (12 modules): base (expanded with Unit), personnel, equipment, events, loader, capabilities, unit_classes/ (ground, aerial, air_defense, naval, support)
+- **Organization** (7 modules): echelons, hierarchy, task_org, staff, orbat, special_org, events
+- **Movement** (11 modules): engine, pathfinding, fatigue, formation, events, obstacles, mount_dismount, naval_movement, submarine_movement, amphibious_movement, airborne
+- **YAML data** (13 files): 11 unit definitions (m1a2, us_rifle_squad, m109a6, f16c, mq9, ah64d, patriot, ddg51, ssn688, lhd1, hemtt) + 2 TO&E definitions (infantry_platoon, tank_company)
+
+Key features: YAML-driven unit factory, military hierarchy with task-org overlay, A* pathfinding with threat avoidance, cubic fuel law, submarine speed-noise curve, airborne drop scatter, formation geometry (10 types), combat power assessment.
+
+No new dependencies.
+
+### Phase 3: Detection & Intelligence (296 tests)
+12 new source modules + 19 YAML data files:
+- **Detection** (12 modules): signatures, events, sensors, detection, identification, sonar, underwater_detection, estimation, intel_fusion, deception, fog_of_war
+- **YAML data** (19 files): 11 signature profiles (m1a2, us_rifle_squad, m109a6, f16c, mq9, ah64d, patriot, ddg51, ssn688, lhd1, hemtt) + 8 sensor definitions (mk1_eyeball, thermal_sight, ground_search_radar, air_search_radar, passive_sonar, active_sonar, esm_suite, nvg)
+
+Key features: Unified SNR-based detection probability (erfc), YAML-driven signatures and sensors, radar range equation (R^4 law), passive/active sonar with convergence zone detection, 4-state Kalman filter state estimation with track lifecycle, multi-source intel fusion (SENSOR/SIGINT/HUMINT/IMINT), decoy deployment and degradation, per-side fog-of-war with independent world views, deterministic replay from seed.
+
+No new dependencies.

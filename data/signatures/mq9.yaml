@@ -1,0 +1,21 @@
+profile_id: mq9
+unit_type: mq9
+visual:
+  height_m: 3.8
+  cross_section_m2: 15.0
+  camouflage_factor: 1.0
+thermal:
+  emissivity: 0.88
+  heat_output_kw: 200.0
+  contrast_modifier: 1.0
+radar:
+  rcs_frontal_m2: 0.5
+  rcs_side_m2: 2.0
+  rcs_rear_m2: 1.5
+acoustic:
+  noise_db: 80.0
+  speed_coefficient: 0.1
+electromagnetic:
+  emitting: true
+  power_dbm: 45.0
+  frequency_ghz: 15.0

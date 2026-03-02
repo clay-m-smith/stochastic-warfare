@@ -1,0 +1,21 @@
+profile_id: ssn688
+unit_type: ssn688
+visual:
+  height_m: 10.0
+  cross_section_m2: 100.0
+  camouflage_factor: 1.0
+thermal:
+  emissivity: 0.85
+  heat_output_kw: 100.0
+  contrast_modifier: 0.3
+radar:
+  rcs_frontal_m2: 0.01
+  rcs_side_m2: 0.05
+  rcs_rear_m2: 0.02
+acoustic:
+  noise_db: 100.0
+  speed_coefficient: 4.0
+electromagnetic:
+  emitting: false
+  power_dbm: 0.0
+  frequency_ghz: 0.0

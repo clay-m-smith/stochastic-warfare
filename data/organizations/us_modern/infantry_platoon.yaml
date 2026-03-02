@@ -1,0 +1,9 @@
+name: "US Infantry Platoon"
+echelon: PLATOON
+nation: US
+era: modern
+staff: []
+subordinates:
+  - unit_type: us_rifle_squad
+    count: 3
+    echelon: SQUAD

@@ -1,0 +1,21 @@
+profile_id: m109a6
+unit_type: m109a6
+visual:
+  height_m: 3.0
+  cross_section_m2: 10.0
+  camouflage_factor: 0.75
+thermal:
+  emissivity: 0.93
+  heat_output_kw: 400.0
+  contrast_modifier: 1.1
+radar:
+  rcs_frontal_m2: 18.0
+  rcs_side_m2: 40.0
+  rcs_rear_m2: 12.0
+acoustic:
+  noise_db: 82.0
+  speed_coefficient: 2.5
+electromagnetic:
+  emitting: false
+  power_dbm: 0.0
+  frequency_ghz: 0.0

@@ -1,0 +1,32 @@
+unit_type: mq9
+domain: aerial
+display_name: "MQ-9 Reaper UAV"
+aerial_type: UAV_ARMED
+max_speed: 115.0  # m/s (~250 kts)
+service_ceiling: 15240.0
+data_link_range: 250000.0
+crew:
+  - role: PILOT
+    count: 1
+    skill: TRAINED
+  - role: SENSOR_OPERATOR
+    count: 1
+    skill: TRAINED
+equipment:
+  - name: "MTS-B Targeting System"
+    category: SENSOR
+    weight_kg: 95.0
+    reliability: 0.88
+  - name: "TPE331-10 Turboprop"
+    category: PROPULSION
+    weight_kg: 175.0
+    reliability: 0.90
+    temperature_range: [-40.0, 50.0]
+  - name: "AN/DAS-1 EO/IR"
+    category: SENSOR
+    weight_kg: 40.0
+    reliability: 0.87
+  - name: "Ku-Band SATCOM"
+    category: COMMUNICATION
+    weight_kg: 25.0
+    reliability: 0.85

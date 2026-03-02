@@ -8,8 +8,8 @@ Rolling record of implementation decisions, changes, and lessons learned across 
 |-------|-------|--------|-----|
 | 0 | Project Scaffolding | **Complete** | [phase-0.md](phase-0.md) |
 | 1 | Terrain & Environment Foundation | **Complete** | [phase-1.md](phase-1.md) |
-| 2 | Entity System & Movement | Not started | — |
-| 3 | Detection & Intelligence | Not started | — |
+| 2 | Entity System & Movement | **Complete** | [phase-2.md](phase-2.md) |
+| 3 | Detection & Intelligence | **Complete** | [phase-3.md](phase-3.md) |
 | 4 | Combat Resolution | Not started | — |
 | 5 | Morale & C2 | Not started | — |
 | 6 | Logistics | Not started | — |

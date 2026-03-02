@@ -1,0 +1,15 @@
+sensor_id: air_search_radar
+sensor_type: RADAR
+display_name: "AN/SPY-1D Air Search Radar"
+max_range_m: 400000.0
+detection_threshold: 10.0
+false_alarm_rate: 1.0e-8
+scan_time_s: 6.0
+frequency_mhz: 3300.0
+peak_power_w: 4000000.0
+antenna_gain_dbi: 42.0
+antenna_height_m: 25.0
+min_range_m: 500.0
+fov_deg: 360.0
+requires_los: true
+detects_domain: ["RADAR"]
