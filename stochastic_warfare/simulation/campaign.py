@@ -50,6 +50,7 @@ class ReinforcementEntry:
 
     config: ReinforcementConfig
     arrived: bool = False
+    actual_arrival_time_s: float = 0.0  # computed at setup (may differ from config)
 
 
 # ---------------------------------------------------------------------------
@@ -82,10 +83,22 @@ class CampaignManager:
         self._reinforcements: list[ReinforcementEntry] = []
 
     def set_reinforcements(self, reinforcements: list[ReinforcementConfig]) -> None:
-        """Initialize the reinforcement schedule."""
-        self._reinforcements = [
-            ReinforcementEntry(config=r) for r in reinforcements
-        ]
+        """Initialize the reinforcement schedule.
+
+        When a reinforcement has ``arrival_sigma > 0``, the actual arrival
+        time is sampled from a log-normal distribution centered on the
+        configured ``arrival_time_s``. Otherwise it matches exactly.
+        """
+        self._reinforcements = []
+        for r in reinforcements:
+            sigma = getattr(r, "arrival_sigma", 0.0)
+            if sigma > 0:
+                actual = r.arrival_time_s * float(self._rng.lognormal(0, sigma))
+            else:
+                actual = r.arrival_time_s
+            self._reinforcements.append(
+                ReinforcementEntry(config=r, actual_arrival_time_s=actual)
+            )
 
     # ── Strategic tick ──────────────────────────────────────────────
 
@@ -150,7 +163,7 @@ class CampaignManager:
         for entry in self._reinforcements:
             if entry.arrived:
                 continue
-            if elapsed_s >= entry.config.arrival_time_s:
+            if elapsed_s >= entry.actual_arrival_time_s:
                 entry.arrived = True
                 units = self._spawn_reinforcements(ctx, entry.config)
                 new_units.extend(units)
@@ -257,7 +270,12 @@ class CampaignManager:
         """Capture campaign manager state."""
         return {
             "reinforcements": [
-                {"arrived": e.arrived, "side": e.config.side, "arrival_time_s": e.config.arrival_time_s}
+                {
+                    "arrived": e.arrived,
+                    "side": e.config.side,
+                    "arrival_time_s": e.config.arrival_time_s,
+                    "actual_arrival_time_s": e.actual_arrival_time_s,
+                }
                 for e in self._reinforcements
             ],
         }
@@ -267,3 +285,5 @@ class CampaignManager:
         for i, rdata in enumerate(state.get("reinforcements", [])):
             if i < len(self._reinforcements):
                 self._reinforcements[i].arrived = rdata.get("arrived", False)
+                if "actual_arrival_time_s" in rdata:
+                    self._reinforcements[i].actual_arrival_time_s = rdata["actual_arrival_time_s"]

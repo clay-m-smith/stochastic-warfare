@@ -3,7 +3,7 @@
 ## Project Overview
 High-fidelity, high-resolution wargame simulator. Multi-scale (campaign → battlefield → battle → unit level) with stochastic/signal-processing-inspired models (Markov chains, Monte Carlo, Kalman filters, noise models, queueing theory). Headless Python engine first; matplotlib for validation; full UI deferred. Modern era (Cold War–present) as prototype. Maritime warfare fully integrated, not deferred.
 
-**Current status**: Phase 10 complete (Campaign Validation). 3,782 tests passing. MVP complete — all phases 0-10 delivered.
+**Current status**: Phase 11 complete (Core Fidelity Fixes). 3,818 tests passing. MVP complete (phases 0-10). Post-MVP Phase 11 delivered — 15 deficit fixes across ~20 source files.
 
 ## Python & Package Management
 **Requires Python >=3.12** (pinned to 3.12.10 via `.python-version`).
@@ -62,11 +62,13 @@ Layered hybrid — graph (strategic), grid (operational/tactical), continuous (u
 - Existing test files have their own local helpers — no need to migrate.
 
 ## Development Process
-- Development phases defined in `docs/development-phases.md` (Phase 0–10 + future)
+- **MVP phases** (0–10): defined in `docs/development-phases.md`. All complete.
+- **Post-MVP phases** (11–24): defined in `docs/development-phases-post-mvp.md`. Design thinking in `docs/brainstorm-post-mvp.md`.
 - Devlog: `docs/devlog/` — one markdown file per phase, living documents. Update the relevant phase log when completing work.
 - Run `/cross-doc-audit` after completing phases or changing architecture
 - Run `/validate-conventions` after writing simulation core code
 - All design docs are **living documents** — propagate implementation decisions back to all affected docs via `/update-docs`
+- **Post-MVP lockstep**: When completing Phase 11+, update ALL of: CLAUDE.md, project-structure.md, `development-phases-post-mvp.md` (phase status + module index), `devlog/index.md` (phase status + refinement entries), phase devlog, README.md, MEMORY.md. New deficits must be added to both devlog index AND deficit-to-phase mapping.
 
 ## Available Skills
 | Skill | Purpose |
@@ -74,12 +76,12 @@ Layered hybrid — graph (strategic), grid (operational/tactical), continuous (u
 | `/research-military` | Military doctrine, historical data, theorist/philosopher writings (tiered sources) |
 | `/research-models` | Mathematical, stochastic, signal processing modeling approaches (tiered sources) |
 | `/validate-conventions` | Check code against PRNG, determinism, coordinate, logging conventions |
-| `/update-docs` | Propagate design decisions to brainstorm, specs, memory |
+| `/update-docs` | Propagate design decisions to brainstorm, specs, memory (MVP + post-MVP) |
 | `/spec` | Draft/update module specification before implementation |
 | `/backtest` | Structure validation against historical engagement data |
 | `/audit-determinism` | Deep PRNG discipline audit — trace all stochastic paths |
 | `/design-review` | Review module design against military theory and architecture |
-| `/cross-doc-audit` | Verify alignment across development-phases, project-structure, brainstorm, devlog |
+| `/cross-doc-audit` | Verify alignment across all docs (MVP + post-MVP, 13 checks) |
 | `/simplify` | Review changed code for reuse, quality, and efficiency |
 | `/profile` | Performance profiling — cProfile analysis, hotspot identification, benchmarking |
 
@@ -87,7 +89,9 @@ Layered hybrid — graph (strategic), grid (operational/tactical), continuous (u
 | Document | Purpose |
 |----------|---------|
 | `docs/brainstorm.md` | Architecture decisions, domain decomposition, rationale |
-| `docs/development-phases.md` | Phase roadmap (0–10 + future), module-to-phase index |
+| `docs/brainstorm-post-mvp.md` | Post-MVP design thinking (deficits, EW, Space, CBRN, eras, tooling, unconventional warfare, strategic air campaigns/IADS) |
+| `docs/development-phases.md` | MVP phase roadmap (0–10), module-to-phase index |
+| `docs/development-phases-post-mvp.md` | Post-MVP phase roadmap (11–24), deficit-to-phase mapping |
 | `docs/specs/project-structure.md` | Full package tree, module decomposition, dependency graph |
 | `docs/devlog/` | Per-phase implementation logs (`index.md` tracks status) |
 | `docs/skills-and-hooks.md` | Dev infrastructure documentation |
@@ -196,5 +200,14 @@ No new dependencies.
 - **YAML data** (2 files): Golan Heights 4-day campaign, Falklands San Carlos 5-day campaign
 
 Key features: Campaign-level historical data model (HistoricalCampaign wraps CampaignScenarioConfig + documented_outcomes + ai_expectations), CampaignRunner wrapping ScenarioLoader + SimulationEngine for single-call campaign execution, CampaignValidationMetrics extracting flat metric dicts (units destroyed, exchange ratio, duration, territory control, ships sunk), CampaignMonteCarloHarness extending MC infrastructure for campaign-level N-iteration runs with process-parallel support, AIDecisionValidator extracting AI events from recorder and matching against expected postures (attack/defend/withdraw/culminate) with configurable tolerance (strict/moderate/loose), PerformanceProfiler wrapping cProfile + tracemalloc for wall-clock time, realtime ratio, ticks/second, peak memory, and top hotspots, 2 validated historical campaigns (Golan Heights land + Falklands naval), model deficiency report with severity ratings, deterministic replay from seed.
+
+No new dependencies.
+
+### Phase 11: Core Fidelity Fixes (109 tests)
+15 surgical modifications across ~20 existing source files. No new modules, no new dependencies. All changes backward-compatible with default parameters preserving MVP behavior.
+- **11a Combat** (36 tests): Fire rate limiting (WeaponInstance cooldown), per-side target_size_modifier, environment coupling (air_combat, air_defense, naval_surface, indirect_fire), Mach-dependent drag (piecewise Cd(M)), armor type + obliquity (ArmorType enum, ricochet at >75°)
+- **11b Detection** (35 tests): Sensor FOV filtering (boresight_offset_deg), dwell/integration gain (5·log10(n_scans), capped at 6 dB), geometric sonar bearing (atan2 + SNR-dependent noise), Mahalanobis gating (chi-squared threshold 9.21)
+- **11c Movement & Logistics** (23 tests): Fuel gating on movement (fuel_available param), stochastic engineering times (log-normal), wave attack modeling (wave_assignments dict), stochastic reinforcement arrivals (arrival_sigma config)
+- **11d AI** (9 tests): Echelon hardcode fix (decisions.py), tactical OODA acceleration (tactical_mult stacking multiplier)
 
 No new dependencies.

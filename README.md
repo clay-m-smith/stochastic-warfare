@@ -1,8 +1,8 @@
 # Stochastic Warfare
 
 ![Python](https://img.shields.io/badge/python-%3E%3D3.12-blue)
-![Tests](https://img.shields.io/badge/tests-3%2C782_passing-brightgreen)
-![Phase](https://img.shields.io/badge/phase-10%2F10_MVP-success)
+![Tests](https://img.shields.io/badge/tests-3%2C818_passing-brightgreen)
+![Phase](https://img.shields.io/badge/phase-11_Post--MVP-blue)
 
 High-fidelity, high-resolution wargame simulator built as a headless Python engine. Models warfare across multiple scales — from individual unit engagements up through tactical battles, operational battlefields, and multi-day strategic campaigns — with stochastic and signal-processing-inspired models throughout.
 
@@ -118,7 +118,7 @@ data/                     # ~118 YAML data files
   medical/                # 2 medical facility definitions
   scenarios/              # 3 engagement + 6 campaign scenarios
 
-tests/                    # 3,782 tests across ~130 test files
+tests/                    # 3,818 tests across ~130 test files
 docs/                     # specs, brainstorm, devlog, development phases
 ```
 
@@ -126,7 +126,7 @@ For the full package tree and module decomposition, see [`docs/specs/project-str
 
 ## Development Status
 
-All 11 phases (0–10) are complete. The MVP is delivered.
+All 11 MVP phases (0–10) are complete. Post-MVP refinement is underway.
 
 | Phase | Focus | Tests | Status |
 |-------|-------|-------|--------|
@@ -141,9 +141,10 @@ All 11 phases (0–10) are complete. The MVP is delivered.
 | 8 | AI & Planning | 575 | Complete |
 | 9 | Simulation Orchestration | 372 | Complete |
 | 10 | Campaign Validation | 196 | Complete |
-| | **Total** | **3,782** | |
+| 11 | Core Fidelity Fixes | 109 | Complete |
+| | **Total** | **3,818** | |
 
-For the full phase roadmap, see [`docs/development-phases.md`](docs/development-phases.md). For per-phase implementation logs, see [`docs/devlog/`](docs/devlog/).
+For the full phase roadmap, see [`docs/development-phases.md`](docs/development-phases.md) (MVP) and [`docs/development-phases-post-mvp.md`](docs/development-phases-post-mvp.md) (post-MVP). For per-phase implementation logs, see [`docs/devlog/`](docs/devlog/).
 
 ## Key Dependencies
 

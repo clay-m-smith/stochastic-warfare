@@ -65,6 +65,10 @@ class BattleContext:
     ticks_executed: int = 0
     # Track which units are involved in this battle
     unit_ids: set[str] = field(default_factory=set)
+    # Wave attack assignments: entity_id → wave number (0=immediate, N=delayed, -1=reserve)
+    wave_assignments: dict[str, int] = field(default_factory=dict)
+    # Elapsed battle time in seconds (incremented each tactical tick)
+    battle_elapsed_s: float = 0.0
 
 
 @dataclass(frozen=True)
@@ -183,6 +187,7 @@ class BattleManager:
             return
 
         battle.ticks_executed += 1
+        battle.battle_elapsed_s += dt
         units_by_side = ctx.units_by_side
         cal = ctx.calibration
         timestamp = ctx.clock.current_time
@@ -201,7 +206,7 @@ class BattleManager:
 
         # 4. Movement — units with active movement orders
         # (For now, simple advance toward enemy centroid for units without AI)
-        self._execute_movement(ctx, units_by_side, active_enemies, dt)
+        self._execute_movement(ctx, units_by_side, active_enemies, dt, battle)
 
         # 5. Engagement — detection + combat
         pending_damage = self._execute_engagements(
@@ -305,6 +310,8 @@ class BattleManager:
                     "active": b.active,
                     "ticks_executed": b.ticks_executed,
                     "unit_ids": list(b.unit_ids),
+                    "wave_assignments": b.wave_assignments,
+                    "battle_elapsed_s": b.battle_elapsed_s,
                 }
                 for bid, b in self._battles.items()
             },
@@ -324,6 +331,8 @@ class BattleManager:
                 active=bdata["active"],
                 ticks_executed=bdata["ticks_executed"],
                 unit_ids=set(bdata.get("unit_ids", [])),
+                wave_assignments=bdata.get("wave_assignments", {}),
+                battle_elapsed_s=bdata.get("battle_elapsed_s", 0.0),
             )
 
     @property
@@ -381,8 +390,17 @@ class BattleManager:
         completions: list[tuple[str, Any]],
         timestamp: datetime,
     ) -> None:
-        """Handle OODA phase completions — trigger assessment/decision."""
+        """Handle OODA phase completions — trigger assessment/decision.
+
+        After processing each completion, advances the OODA loop to the
+        next phase with tactical acceleration applied.
+        """
         from stochastic_warfare.c2.ai.ooda import OODAPhase
+
+        # Tactical acceleration multiplier (< 1 = faster decisions in battle)
+        tactical_mult = 1.0
+        if ctx.ooda_engine is not None:
+            tactical_mult = ctx.ooda_engine.tactical_acceleration
 
         for unit_id, completed_phase in completions:
             if completed_phase == OODAPhase.OBSERVE:
@@ -420,14 +438,30 @@ class BattleManager:
                         ts=timestamp,
                     )
 
+            # Advance to the next OODA phase and start its timer
+            if ctx.ooda_engine is not None:
+                next_phase = ctx.ooda_engine.advance_phase(unit_id)
+                ctx.ooda_engine.start_phase(
+                    unit_id,
+                    next_phase,
+                    tactical_mult=tactical_mult,
+                    ts=timestamp,
+                )
+
     def _execute_movement(
         self,
         ctx: Any,
         units_by_side: dict[str, list[Unit]],
         active_enemies: dict[str, list[Unit]],
         dt: float,
+        battle: BattleContext | None = None,
     ) -> None:
         """Execute movement for all active units."""
+        cal = ctx.calibration
+        wave_interval = cal.get("wave_interval_s", 300.0)
+        battle_elapsed = battle.battle_elapsed_s if battle is not None else 0.0
+        wave_assignments = battle.wave_assignments if battle is not None else {}
+
         for side, units in units_by_side.items():
             enemies = active_enemies.get(side, [])
             if not enemies:
@@ -439,6 +473,14 @@ class BattleManager:
             for u in units:
                 if u.status != UnitStatus.ACTIVE or u.speed <= 0:
                     continue
+
+                # Wave gating: check if this unit's wave has been released
+                wave = wave_assignments.get(u.entity_id, 0)
+                if wave == -1:
+                    continue  # Reserve — never moves
+                if wave > 0 and battle_elapsed < wave * wave_interval:
+                    continue  # Wave not yet released
+
                 dx = cx - u.position.easting
                 dy = cy - u.position.northing
                 dist = math.sqrt(dx * dx + dy * dy)
@@ -463,7 +505,8 @@ class BattleManager:
         cal = ctx.calibration
         visibility_m = cal.get("visibility_m", self._config.default_visibility_m)
         hit_prob_mod = cal.get("hit_probability_modifier", 1.0)
-        target_size_mod = cal.get("target_size_modifier", 1.0)
+        # Per-side target_size_modifier: look up target_size_modifier_{side}, fall back to uniform
+        target_size_mod_default = cal.get("target_size_modifier", 1.0)
 
         if ctx.engagement_engine is None:
             return pending_damage
@@ -524,6 +567,16 @@ class BattleManager:
                             break
                     crew_skill = (side_cfg.experience_level if side_cfg else 0.5) * hit_prob_mod
 
+                    # Per-side target_size_modifier: use target's side
+                    target_side = self._find_unit_side(ctx, best_target.entity_id)
+                    target_size_mod = cal.get(
+                        f"target_size_modifier_{target_side}",
+                        target_size_mod_default,
+                    )
+
+                    # Current time for fire rate limiting
+                    current_time_s = ctx.clock.elapsed.total_seconds()
+
                     result = ctx.engagement_engine.execute_engagement(
                         attacker_id=attacker.entity_id,
                         target_id=best_target.entity_id,
@@ -538,6 +591,7 @@ class BattleManager:
                         crew_count=crew_count,
                         visibility=vis_mod,
                         timestamp=timestamp,
+                        current_time_s=current_time_s,
                     )
 
                     if (result.engaged and result.hit_result

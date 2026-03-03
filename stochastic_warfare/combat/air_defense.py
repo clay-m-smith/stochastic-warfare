@@ -221,6 +221,7 @@ class AirDefenseEngine:
         countermeasures: str = "none",
         shot_number: int = 1,
         timestamp: Any = None,
+        weather_modifier: float = 1.0,
     ) -> InterceptResult:
         """Fire a single interceptor at an aerial target.
 
@@ -242,6 +243,8 @@ class AirDefenseEngine:
             Which shot in a sequence (for logging).
         timestamp:
             Simulation timestamp for events.
+        weather_modifier:
+            Weather quality 0.0--1.0 (heavy rain/clutter degrades tracking).
         """
         cfg = self._config
 
@@ -261,6 +264,10 @@ class AirDefenseEngine:
         elif countermeasures == "ecm":
             effective_pk *= 0.6
 
+        effective_pk = max(0.01, min(0.99, effective_pk))
+
+        # Weather degradation (heavy rain/clutter affects radar tracking)
+        effective_pk *= weather_modifier
         effective_pk = max(0.01, min(0.99, effective_pk))
 
         hit = float(self._rng.random()) < effective_pk
@@ -293,6 +300,7 @@ class AirDefenseEngine:
         target_rcs_m2: float = 3.0,
         countermeasures: str = "none",
         timestamp: Any = None,
+        weather_modifier: float = 1.0,
     ) -> list[InterceptResult]:
         """Execute shoot-look-shoot doctrine.
 
@@ -316,6 +324,8 @@ class AirDefenseEngine:
             Countermeasure type.
         timestamp:
             Simulation timestamp for events.
+        weather_modifier:
+            Weather quality 0.0--1.0 (passed through to fire_interceptor).
         """
         cfg = self._config
         max_shots = min(max_shots, cfg.max_sls_shots)
@@ -331,6 +341,7 @@ class AirDefenseEngine:
                 countermeasures=countermeasures,
                 shot_number=shot_num,
                 timestamp=timestamp,
+                weather_modifier=weather_modifier,
             )
             results.append(result)
 

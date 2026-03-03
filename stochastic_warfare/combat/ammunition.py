@@ -353,6 +353,12 @@ class WeaponInstance:
         self.ammo_state = ammo_state or AmmoState()
         self.equipment = equipment
         self._rounds_since_maintenance: int = 0
+        # Fire rate limiting: cooldown computed from rate_of_fire_rpm
+        self._last_fire_time_s: float = float("-inf")
+        if definition.rate_of_fire_rpm > 0:
+            self._cooldown_s: float = 60.0 / definition.rate_of_fire_rpm
+        else:
+            self._cooldown_s: float = 0.0
 
     @property
     def weapon_id(self) -> str:
@@ -378,12 +384,30 @@ class WeaponInstance:
         return base
 
     def can_fire(self, ammo_id: str) -> bool:
-        """Check if weapon can fire the given ammo type."""
+        """Check if weapon can fire the given ammo type (ammo + operational)."""
         if not self.operational:
             return False
         if ammo_id not in self.definition.compatible_ammo:
             return False
         return self.ammo_state.available(ammo_id) > 0
+
+    def can_fire_timed(self, current_time_s: float) -> bool:
+        """Check if enough time has elapsed since last fire (rate-of-fire limit).
+
+        Parameters
+        ----------
+        current_time_s : float
+            Current simulation time in seconds.
+
+        Returns ``True`` if the cooldown has elapsed or the weapon has no ROF limit.
+        """
+        if self._cooldown_s <= 0:
+            return True
+        return (current_time_s - self._last_fire_time_s) >= self._cooldown_s
+
+    def record_fire(self, current_time_s: float) -> None:
+        """Record the time of a successful fire for cooldown tracking."""
+        self._last_fire_time_s = current_time_s
 
     def fire(self, ammo_id: str, count: int = 1) -> bool:
         """Attempt to fire.  Returns True on success, False if unable."""
@@ -409,6 +433,7 @@ class WeaponInstance:
             "equipment_operational": (
                 self.equipment.operational if self.equipment else True
             ),
+            "last_fire_time_s": self._last_fire_time_s,
         }
 
     def set_state(self, state: dict[str, Any]) -> None:
@@ -417,3 +442,4 @@ class WeaponInstance:
         if self.equipment is not None:
             self.equipment.condition = state["equipment_condition"]
             self.equipment.operational = state["equipment_operational"]
+        self._last_fire_time_s = state.get("last_fire_time_s", float("-inf"))

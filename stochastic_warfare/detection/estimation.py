@@ -134,6 +134,8 @@ class EstimationConfig(BaseModel):
     coast_timeout_s: float = 300.0  # seconds before COASTING → LOST
     lost_timeout_s: float = 600.0  # seconds before track deleted
     max_covariance_m: float = 10000.0  # max position uncertainty before LOST
+    enable_gating: bool = True
+    gating_threshold_chi2: float = 9.21  # 99% for 2 DOF
 
 
 # ---------------------------------------------------------------------------
@@ -215,11 +217,13 @@ class StateEstimator:
         measurement: np.ndarray,
         measurement_noise: np.ndarray,
         time: float,
-    ) -> None:
+    ) -> bool:
         """Kalman update step — fuse a position measurement.
 
         measurement: [x, y] observed position
         measurement_noise: 2×2 noise covariance (R)
+
+        Returns True if measurement was accepted, False if gated out.
         """
         x = np.concatenate([track.state.position, track.state.velocity])
         P = track.state.covariance
@@ -230,6 +234,17 @@ class StateEstimator:
 
         # Innovation covariance
         S = _H @ P @ _H.T + R
+
+        # Mahalanobis gating
+        if self._config.enable_gating:
+            S_inv = np.linalg.inv(S)
+            d2 = float(y @ S_inv @ y)
+            if d2 > self._config.gating_threshold_chi2:
+                logger.debug(
+                    "Gated measurement for track %s: d²=%.1f > threshold=%.1f",
+                    track.track_id, d2, self._config.gating_threshold_chi2,
+                )
+                return False
 
         # Kalman gain
         K = P @ _H.T @ np.linalg.inv(S)
@@ -245,6 +260,7 @@ class StateEstimator:
             last_update_time=time,
         )
         track.hits += 1
+        return True
 
     # ------------------------------------------------------------------
     # Track creation

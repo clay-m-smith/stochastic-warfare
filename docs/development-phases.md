@@ -357,16 +357,26 @@ Building on Phase 7's engagement-level validation infrastructure and Phase 9's s
 ---
 
 ## Future Phases (Post-MVP)
-These are explicitly deferred until the core engine is validated:
+
+**See `development-phases-post-mvp.md`** for the full phased roadmap (Phases 11–24) and **`brainstorm-post-mvp.md`** for design thinking.
+
+Summary of post-MVP scope:
+- **Phases 11–12**: Deficit remediation (fire rate limiting, fuel gating, multi-hop C2, multi-echelon logistics, combat depth)
+- **Phase 13**: Performance optimization (STRtree, Numba JIT, force aggregation, auto-resolve)
+- **Phase 14**: Tooling & developer experience (MCP server, analysis tools, visualization, new Claude skills)
+- **Phase 15**: Real-world terrain & data pipeline (SRTM, OSM, GEBCO via rasterio/xarray)
+- **Phase 16**: Electronic warfare (jamming, ECCM, SIGINT)
+- **Phase 17**: Space & satellite domain (GPS dependency, ISR, SATCOM, ASAT)
+- **Phase 18**: NBC/CBRN effects (contamination, MOPP, dispersal, nuclear)
+- **Phase 19**: Doctrinal AI schools (Clausewitzian, Sun Tzu, Maneuverist, Attrition, Deep Battle, Maritime)
+- **Phases 20–23**: Historical era expansion (WW2, WW1, Napoleonic, Ancient/Medieval)
+- **Phase 24**: Unconventional & prohibited warfare (escalation dynamics, prohibited weapons, insurgency/COIN, war crimes consequences)
+
+Also planned but not yet phased:
 - Full UI (separate language/framework)
-- Electronic warfare — full EW module (interface points already defined in combat/ and detection/, see project-structure.md)
 - Cyber operations
-- NBC/CBRN effects (interface points already defined, see project-structure.md)
-- Named doctrinal AI schools (Clausewitzian, Sun Tzu, maneuverist, etc.) — builds on the c2/ai/doctrine.py framework from Phase 8
 - Multi-player / networked simulation
-- Earlier era support (WW2, Napoleonic, etc.)
 - Modding and scenario editor tools
-- Performance optimization (Cython, GPU acceleration)
 
 ---
 

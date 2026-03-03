@@ -64,6 +64,7 @@ class ReinforcementConfig(BaseModel):
     arrival_time_s: float
     units: list[ReinforcementUnitConfig]
     position: list[float] = [0.0, 0.0]  # spawn position
+    arrival_sigma: float = 0.0  # log-normal sigma for stochastic arrival
 
     @field_validator("arrival_time_s")
     @classmethod

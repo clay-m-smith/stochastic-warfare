@@ -52,6 +52,8 @@ class DetectionConfig(BaseModel):
     default_scan_interval: float = 1.0  # seconds
     max_simultaneous_contacts: int = 100
     noise_std: float = 0.05  # stochastic variation on Pd
+    enable_integration_gain: bool = True
+    max_integration_gain_db: float = 6.0  # cap at 4 scans (+6 dB)
 
 
 # ---------------------------------------------------------------------------
@@ -129,6 +131,7 @@ class DetectionEngine:
         self._sensor_loader = sensor_loader
         self._rng = rng or np.random.default_rng(0)
         self._config = config or DetectionConfig()
+        self._scan_counts: dict[tuple[str, str], int] = {}  # (sensor_id, target_id) → count
 
     # ------------------------------------------------------------------
     # SNR computation per sensor type
@@ -275,6 +278,10 @@ class DetectionEngine:
     # High-level API
     # ------------------------------------------------------------------
 
+    def reset_scan_counts(self) -> None:
+        """Clear all integration gain scan counters."""
+        self._scan_counts.clear()
+
     def check_detection(
         self,
         observer_pos: Position,
@@ -292,6 +299,8 @@ class DetectionEngine:
         ambient_noise_db: float = 70.0,
         atmospheric_atten_db_per_km: float = 0.01,
         transmission_loss: float | None = None,
+        observer_heading_deg: float = 0.0,
+        target_id: str = "",
     ) -> DetectionResult:
         """Run a single sensor check against a target.
 
@@ -311,6 +320,18 @@ class DetectionEngine:
             return DetectionResult(False, 0.0, -100.0, rng_m, st, bearing)
         if rng_m < sensor.definition.min_range_m:
             return DetectionResult(False, 0.0, -100.0, rng_m, st, bearing)
+
+        # 2b. FOV check
+        fov = sensor.definition.fov_deg
+        if fov < 360.0:
+            boresight_offset = sensor.definition.boresight_offset_deg
+            sensor_boresight = (observer_heading_deg + boresight_offset) % 360.0
+            relative_bearing = (bearing - sensor_boresight) % 360.0
+            # Normalize to [-180, 180]
+            if relative_bearing > 180.0:
+                relative_bearing -= 360.0
+            if abs(relative_bearing) > fov / 2.0:
+                return DetectionResult(False, 0.0, -100.0, rng_m, st, bearing)
 
         # 3. LOS check (for sensors that require it)
         if sensor.definition.requires_los and self._los is not None:
@@ -348,10 +369,20 @@ class DetectionEngine:
         else:
             snr = -100.0
 
-        # 5. Compute Pd
+        # 5. Integration gain (dwell/scan accumulation)
+        if target_id and self._config.enable_integration_gain:
+            key = (sensor.sensor_id, target_id)
+            n_scans = self._scan_counts.get(key, 0) + 1
+            self._scan_counts[key] = n_scans
+            if n_scans > 1:
+                gain_db = 5.0 * math.log10(n_scans)
+                gain_db = min(gain_db, self._config.max_integration_gain_db)
+                snr += gain_db
+
+        # 6. Compute Pd
         pd = self.detection_probability(snr, threshold)
 
-        # 6. Stochastic roll
+        # 7. Stochastic roll
         roll = float(self._rng.random())
         detected = roll < pd
 
@@ -394,7 +425,14 @@ class DetectionEngine:
     def get_state(self) -> dict[str, Any]:
         return {
             "rng_state": self._rng.bit_generator.state,
+            "scan_counts": {
+                f"{k[0]}:{k[1]}": v for k, v in self._scan_counts.items()
+            },
         }
 
     def set_state(self, state: dict[str, Any]) -> None:
         self._rng.bit_generator.state = state["rng_state"]
+        self._scan_counts.clear()
+        for key_str, count in state.get("scan_counts", {}).items():
+            sensor_id, target_id = key_str.split(":", 1)
+            self._scan_counts[(sensor_id, target_id)] = count

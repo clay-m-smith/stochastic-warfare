@@ -98,6 +98,8 @@ class AirCombatEngine:
         aspect_angle_deg: float = 0.0,
         pilot_skill: float = 0.5,
         countermeasure_type: str = "none",
+        weather_modifier: float = 1.0,
+        visibility_km: float = 20.0,
         timestamp: Any = None,
     ) -> AirCombatResult:
         """Resolve an air-to-air engagement, auto-selecting mode if not given.
@@ -122,6 +124,10 @@ class AirCombatEngine:
             Pilot skill factor 0.0--1.0.
         countermeasure_type:
             "chaff", "flare", or "none".
+        weather_modifier:
+            Weather quality 0.0--1.0 (1.0 = clear, <0.3 aborts sortie).
+        visibility_km:
+            Visibility in km (<10 degrades WVR/guns Pk).
         timestamp:
             Simulation timestamp for events.
         """
@@ -141,6 +147,13 @@ class AirCombatEngine:
             else:
                 mode = AirCombatMode.GUNS_ONLY
 
+        # Weather effects: severe weather can abort sortie
+        if weather_modifier < 0.3:
+            return AirCombatResult(
+                mode=mode, attacker_id=attacker_id, target_id=defender_id,
+                missile_pk=0.0, effective_pk=0.0, hit=False, range_m=range_m,
+            )
+
         if mode == AirCombatMode.BVR:
             result = self.bvr_engagement(
                 attacker_id, defender_id, range_m, missile_pk, countermeasure_type,
@@ -153,6 +166,18 @@ class AirCombatEngine:
         else:
             result = self.guns_engagement(
                 attacker_id, defender_id, range_m, pilot_skill, aspect_angle_deg,
+            )
+
+        # Weather/visibility degradation (mainly affects WVR and guns)
+        if visibility_km < 10.0 and mode != AirCombatMode.BVR:
+            vis_penalty = max(0.3, visibility_km / 10.0)
+            result = AirCombatResult(
+                mode=result.mode, attacker_id=result.attacker_id,
+                target_id=result.target_id, missile_pk=result.missile_pk,
+                effective_pk=result.effective_pk * vis_penalty,
+                hit=float(self._rng.random()) < result.effective_pk * vis_penalty,
+                range_m=result.range_m,
+                countermeasure_reduction=result.countermeasure_reduction,
             )
 
         self._engagements_resolved += 1

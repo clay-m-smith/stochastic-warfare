@@ -28,9 +28,14 @@
 
 ### /update-docs
 - When a design decision is made or a module is completed, updates the relevant documentation:
-  - `docs/brainstorm.md` — architecture decisions
+  - `docs/brainstorm.md` — architecture decisions (MVP)
+  - `docs/brainstorm-post-mvp.md` — design thinking (post-MVP domains)
+  - `docs/development-phases-post-mvp.md` — phase status + deficit mapping (post-MVP)
   - `docs/specs/<module>.md` — module specifications
+  - `docs/devlog/index.md` — phase status + deficit inventory
   - Memory files — stable patterns and conventions
+- Enforces post-MVP lockstep: completing Phase 11+ requires updating CLAUDE.md, project-structure.md, development-phases-post-mvp.md, devlog/index.md, phase devlog, README.md, and MEMORY.md together
+- New deficits discovered during post-MVP work must be added to both devlog/index.md AND the deficit-to-phase mapping
 - Keeps documentation in sync with implementation
 
 ### /spec
@@ -56,8 +61,10 @@
 - Keeps implementation honest against the theoretical foundations we've committed to
 
 ### /cross-doc-audit
-- Audits alignment across all documentation layers: development-phases.md, project-structure.md, brainstorm.md, devlog, MEMORY.md, README.md
-- Nine checks: module coverage, phase content match, dependency ordering, exit criteria coverage, contradictions, brainstorm traceability, devlog completeness, memory freshness, README currency
+- Audits alignment across all documentation layers — MVP AND post-MVP:
+  - MVP: development-phases.md, project-structure.md, brainstorm.md, devlog, MEMORY.md, README.md
+  - Post-MVP: development-phases-post-mvp.md, brainstorm-post-mvp.md, devlog/index.md deficit inventory
+- 13 checks: original 9 (module coverage, phase content match, dependency ordering, exit criteria coverage, contradictions, brainstorm traceability, devlog completeness, memory freshness, README currency) + 4 post-MVP checks (deficit traceability, cross-document alignment, module coverage, devlog completeness)
 - Output: PASS/FAIL per check with severity (CRITICAL/HIGH/MEDIUM/LOW)
 - Run after completing phases, adding modules, or changing architecture
 

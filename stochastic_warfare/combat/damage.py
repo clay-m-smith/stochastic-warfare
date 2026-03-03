@@ -43,6 +43,29 @@ class DamageType(enum.IntEnum):
     COMBINED = 4
 
 
+class ArmorType(enum.IntEnum):
+    """Armor composition type affecting protection effectiveness."""
+
+    RHA = 0
+    COMPOSITE = 1
+    REACTIVE = 2
+    SPACED = 3
+
+
+# Armor effectiveness multipliers: (armor_type, ammo_category) -> multiplier
+# Higher multiplier = more effective armor (harder to penetrate)
+_ARMOR_EFFECTIVENESS: dict[tuple[int, str], float] = {
+    (ArmorType.RHA, "KE"): 1.0,
+    (ArmorType.RHA, "HEAT"): 1.0,
+    (ArmorType.COMPOSITE, "KE"): 1.5,
+    (ArmorType.COMPOSITE, "HEAT"): 2.5,
+    (ArmorType.REACTIVE, "KE"): 1.0,
+    (ArmorType.REACTIVE, "HEAT"): 2.0,
+    (ArmorType.SPACED, "KE"): 0.9,
+    (ArmorType.SPACED, "HEAT"): 1.3,
+}
+
+
 class DamageConfig(BaseModel):
     """Tunable parameters for damage resolution."""
 
@@ -115,6 +138,7 @@ class DamageEngine:
         armor_mm: float,
         impact_angle_deg: float = 0.0,
         range_m: float = 0.0,
+        armor_type: str = "RHA",
     ) -> PenetrationResult:
         """Compute whether a round penetrates armor.
 
@@ -128,6 +152,8 @@ class DamageEngine:
             Impact angle from normal (0 = perpendicular).
         range_m:
             Engagement range for velocity-dependent penetration.
+        armor_type:
+            Armor composition type (RHA, COMPOSITE, REACTIVE, SPACED).
         """
         if ammo.penetration_mm_rha <= 0:
             return PenetrationResult(
@@ -142,9 +168,27 @@ class DamageEngine:
             cos_angle = 0.1
         armor_eff = armor_mm / cos_angle
 
+        # Ricochet check: extreme obliquity causes round to skip off surface
+        if abs(impact_angle_deg) > 75.0:
+            return PenetrationResult(
+                penetrated=False,
+                penetration_mm=0.0,
+                armor_effective_mm=armor_eff,
+                margin_mm=-armor_eff,
+            )
+
+        # Armor effectiveness multiplier based on composition and ammo category
+        ammo_type_str = ammo.ammo_type.upper()
+        ammo_category = "HEAT" if ammo_type_str == "HEAT" else "KE"
+        try:
+            at_enum = ArmorType[armor_type.upper()]
+        except KeyError:
+            at_enum = ArmorType.RHA
+        effectiveness = _ARMOR_EFFECTIVENESS.get((at_enum, ammo_category), 1.0)
+        armor_eff *= effectiveness
+
         # Penetration calculation
         pen_ref = ammo.penetration_mm_rha
-        ammo_type_str = ammo.ammo_type.upper()
 
         if ammo_type_str == "HEAT":
             # HEAT: penetration independent of range (shaped charge)
@@ -274,6 +318,7 @@ class DamageEngine:
         crew_count: int = 4,
         posture: str = "MOVING",
         timestamp: Any = None,
+        armor_type: str = "RHA",
     ) -> DamageResult:
         """Full damage resolution: penetration + blast + behind-armor effects.
 
@@ -297,12 +342,14 @@ class DamageEngine:
             Target posture.
         timestamp:
             Simulation timestamp for events.
+        armor_type:
+            Armor composition type (RHA, COMPOSITE, REACTIVE, SPACED).
         """
         result = DamageResult(damage_type=DamageType.COMBINED, damage_fraction=0.0)
 
         # Kinetic / penetration
         if armor_mm > 0 and ammo.penetration_mm_rha > 0:
-            pen = self.compute_penetration(ammo, armor_mm, impact_angle_deg, range_m)
+            pen = self.compute_penetration(ammo, armor_mm, impact_angle_deg, range_m, armor_type)
             result.penetrated = pen.penetrated
 
             if pen.penetrated:

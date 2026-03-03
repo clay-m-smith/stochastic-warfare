@@ -262,6 +262,13 @@ class SimulationEngine:
                 self._battle.execute_tick(ctx, battle, dt)
                 if self._battle.check_battle_termination(battle, ctx.units_by_side):
                     self._battle.resolve_battle(battle, ctx.units_by_side)
+                    # Clear integration gain scan counts so they don't bleed
+                    # across battles.
+                    det_eng = getattr(
+                        getattr(ctx, "fog_of_war", None), "_detection", None
+                    )
+                    if det_eng is not None and hasattr(det_eng, "reset_scan_counts"):
+                        det_eng.reset_scan_counts()
                     logger.info("Battle %s resolved after %d ticks",
                                 battle.battle_id, battle.ticks_executed)
 

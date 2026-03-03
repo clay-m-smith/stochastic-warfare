@@ -74,6 +74,7 @@ class EngineeringConfig(BaseModel):
     minefield_clear_hours_per_density: float = 6.0
     airfield_build_hours: float = 48.0
     construction_material_per_hour_tons: float = 0.5
+    duration_sigma: float = 0.0  # log-normal sigma for stochastic variation (0=deterministic MVP)
 
 
 # ---------------------------------------------------------------------------
@@ -166,9 +167,14 @@ class EngineeringEngine:
         return completed
 
     def assess_task(self, task_type: EngineeringTask) -> float:
-        """Return estimated hours for a task type."""
+        """Return estimated hours for a task type.
+
+        When ``duration_sigma > 0``, applies log-normal variation to the
+        base duration. When ``duration_sigma == 0``, returns the
+        deterministic base duration (MVP behavior).
+        """
         cfg = self._config
-        return {
+        base = {
             EngineeringTask.BUILD_BRIDGE: cfg.bridge_build_hours,
             EngineeringTask.REPAIR_ROAD: 1.0 / max(cfg.road_repair_rate_per_hour, 0.001),
             EngineeringTask.REPAIR_BRIDGE: cfg.bridge_repair_hours,
@@ -177,6 +183,9 @@ class EngineeringEngine:
             EngineeringTask.CLEAR_OBSTACLE: cfg.minefield_clear_hours_per_density,
             EngineeringTask.BUILD_AIRFIELD: cfg.airfield_build_hours,
         }[task_type]
+        if cfg.duration_sigma > 0:
+            base *= float(self._rng.lognormal(0, cfg.duration_sigma))
+        return base
 
     def get_project(self, project_id: str) -> EngineeringProject:
         """Return a project; raises ``KeyError`` if not found."""

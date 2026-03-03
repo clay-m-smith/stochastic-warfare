@@ -122,7 +122,7 @@ class TestUpdate:
 
     def test_position_moves_toward_measurement(self) -> None:
         est = _estimator()
-        track = _make_track(x=0.0, y=0.0, pos_var=1000.0)
+        track = _make_track(x=0.0, y=0.0, pos_var=50000.0)
         R = np.diag([10.0, 10.0])
         meas = np.array([100.0, 200.0])
         est.update(track, meas, R, time=1.0)
@@ -148,7 +148,7 @@ class TestUpdate:
     def test_convergence(self) -> None:
         """Multiple updates at same position should converge estimate."""
         est = _estimator()
-        track = _make_track(x=0.0, y=0.0, pos_var=10000.0)
+        track = _make_track(x=0.0, y=0.0, pos_var=100000.0)
         R = np.diag([10.0, 10.0])
         true_pos = np.array([500.0, 300.0])
         for _ in range(20):
@@ -435,7 +435,7 @@ class TestKalmanEdgeCases:
     def test_multiple_updates_converge(self) -> None:
         """50 updates at noisy positions around true=(500,300) should converge."""
         est = _estimator(seed=42)
-        track = _make_track(x=0.0, y=0.0, pos_var=10000.0)
+        track = _make_track(x=0.0, y=0.0, pos_var=100000.0)
         true_pos = np.array([500.0, 300.0])
         rng = np.random.Generator(np.random.PCG64(99))
         R = np.diag([10.0, 10.0])

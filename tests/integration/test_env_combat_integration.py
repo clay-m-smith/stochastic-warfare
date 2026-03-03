@@ -286,7 +286,10 @@ class TestTemperatureAffectsBallistics:
     and therefore trajectory range."""
 
     def _make_engine(self, seed: int = 300) -> BallisticsEngine:
-        return BallisticsEngine(rng=_make_rng(seed))
+        from stochastic_warfare.combat.ballistics import BallisticsConfig
+        # Disable Mach-dependent drag to isolate MV-temperature effect
+        config = BallisticsConfig(enable_mach_drag=False)
+        return BallisticsEngine(rng=_make_rng(seed), config=config)
 
     def test_cold_reduces_muzzle_velocity(self) -> None:
         """At -20 C propellant burns slower; muzzle velocity decreases,

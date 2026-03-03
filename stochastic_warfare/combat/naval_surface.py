@@ -114,6 +114,7 @@ class NavalSurfaceEngine:
         defender_point_defense_count: int,
         defender_pd_pk: float,
         defender_chaff: bool = False,
+        sea_state: int = 3,
     ) -> SalvoResult:
         """Compute a salvo exchange using the Hughes salvo model.
 
@@ -133,6 +134,8 @@ class NavalSurfaceEngine:
             Kill probability per point-defense engagement.
         defender_chaff:
             Whether the defender deploys chaff/decoys.
+        sea_state:
+            Sea state 0--9 (>4 degrades missile seekers and PD accuracy).
         """
         # Offensive power: expected hitting missiles
         alpha = attacker_missiles * attacker_pk
@@ -144,6 +147,12 @@ class NavalSurfaceEngine:
 
         # Defensive power
         beta = defender_point_defense_count * defender_pd_pk
+
+        # Sea state penalty: high seas degrade PD accuracy and missile seekers
+        if sea_state > 4:
+            sea_penalty = max(0.5, 1.0 - 0.1 * (sea_state - 4))
+            beta *= sea_penalty  # PD less effective in rough seas
+            alpha *= sea_penalty  # Missile seekers also degraded
 
         # Leakers (stochastic)
         expected_leakers = max(0.0, alpha - beta)

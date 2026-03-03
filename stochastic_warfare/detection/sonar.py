@@ -110,6 +110,8 @@ class SonarEngine:
         ambient_noise_db: float = 70.0,
         transmission_loss: float | None = None,
         sonar_type: SonarType = SonarType.HULL_MOUNTED,
+        observer_pos: tuple[float, float] | None = None,
+        target_pos: tuple[float, float] | None = None,
     ) -> SonarResult:
         """Passive sonar detection using the sonar equation.
 
@@ -133,10 +135,21 @@ class SonarEngine:
         detected = se > dt
 
         # Bearing estimate with uncertainty
-        bearing = float(self._rng.uniform(0, 360))  # random true bearing placeholder
         bearing_unc = self._bearing_uncertainty(sonar_type)
-        bearing += float(self._rng.normal(0, bearing_unc))
-        bearing = bearing % 360.0
+        if observer_pos is not None and target_pos is not None:
+            # Geometric bearing from atan2
+            dx = target_pos[0] - observer_pos[0]
+            dy = target_pos[1] - observer_pos[1]
+            true_bearing = math.degrees(math.atan2(dx, dy)) % 360.0
+            # SNR-dependent bearing noise: better SNR → less noise
+            se_linear = max(10.0 ** (se / 10.0), 0.1)
+            bearing_error = bearing_unc / max(math.sqrt(se_linear), 0.1)
+            bearing = (true_bearing + float(self._rng.normal(0, bearing_error))) % 360.0
+        else:
+            # Fallback: random bearing (legacy / no position info)
+            bearing = float(self._rng.uniform(0, 360))
+            bearing += float(self._rng.normal(0, bearing_unc))
+            bearing = bearing % 360.0
 
         return SonarResult(
             detected=detected,
@@ -161,6 +174,8 @@ class SonarEngine:
         range_m: float,
         ambient_noise_db: float = 70.0,
         transmission_loss: float | None = None,
+        observer_pos: tuple[float, float] | None = None,
+        target_pos: tuple[float, float] | None = None,
     ) -> SonarResult:
         """Active sonar detection using the active sonar equation.
 
@@ -188,10 +203,18 @@ class SonarEngine:
 
         # Active provides range AND bearing
         range_unc = range_m * 0.05  # 5% range uncertainty
-        bearing = float(self._rng.uniform(0, 360))
         bearing_unc = 2.0  # active has better bearing
-        bearing += float(self._rng.normal(0, bearing_unc))
-        bearing = bearing % 360.0
+        if observer_pos is not None and target_pos is not None:
+            dx = target_pos[0] - observer_pos[0]
+            dy = target_pos[1] - observer_pos[1]
+            true_bearing = math.degrees(math.atan2(dx, dy)) % 360.0
+            se_linear = max(10.0 ** (se / 10.0), 0.1) if se > -100 else 0.1
+            bearing_error = bearing_unc / max(math.sqrt(se_linear), 0.1)
+            bearing = (true_bearing + float(self._rng.normal(0, bearing_error))) % 360.0
+        else:
+            bearing = float(self._rng.uniform(0, 360))
+            bearing += float(self._rng.normal(0, bearing_unc))
+            bearing = bearing % 360.0
 
         range_est = range_m + float(self._rng.normal(0, range_unc))
         range_est = max(0.0, range_est)

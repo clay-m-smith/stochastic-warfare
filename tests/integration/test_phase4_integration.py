@@ -114,7 +114,7 @@ class TestDirectFireEndToEnd:
 
         eng, *_ = _make_engagement_stack(42)
 
-        for _ in range(5):
+        for i in range(5):
             eng.execute_engagement(
                 attacker_id="tank1", target_id="target1",
                 shooter_pos=Position(0, 0, 0),
@@ -122,17 +122,19 @@ class TestDirectFireEndToEnd:
                 weapon=weapon,
                 ammo_id="m829a3_apfsds", ammo_def=ammo_def,
                 timestamp=_TS,
+                current_time_s=float(i * 60),  # space shots apart for fire rate
             )
 
         assert weapon.ammo_state.available("m829a3_apfsds") == 0
 
-        # 6th shot should fail
+        # 6th shot should fail (no ammo)
         result = eng.execute_engagement(
             attacker_id="tank1", target_id="target1",
             shooter_pos=Position(0, 0, 0),
             target_pos=Position(0, 1500, 0),
             weapon=weapon,
             ammo_id="m829a3_apfsds", ammo_def=ammo_def,
+            current_time_s=600.0,  # past cooldown
         )
         assert result.engaged is False
         assert result.aborted_reason == "no_ammo"

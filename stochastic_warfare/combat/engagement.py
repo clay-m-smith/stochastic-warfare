@@ -202,10 +202,12 @@ class EngagementEngine:
         target_is_friendly: bool = False,
         crew_count: int = 4,
         timestamp: Any = None,
+        current_time_s: float = 0.0,
     ) -> EngagementResult:
         """Execute a complete direct-fire engagement.
 
-        Kill chain: fratricide check → ammo consumption → hit resolution → damage.
+        Kill chain: rate-of-fire check → fratricide check → ammo consumption →
+        hit resolution → damage.
         """
         dx = target_pos.easting - shooter_pos.easting
         dy = target_pos.northing - shooter_pos.northing
@@ -224,6 +226,11 @@ class EngagementEngine:
         # 1. Range check
         if not self.can_engage(shooter_pos, target_pos, weapon.definition):
             result.aborted_reason = "out_of_range"
+            return result
+
+        # 1b. Fire rate limiting
+        if not weapon.can_fire_timed(current_time_s):
+            result.aborted_reason = "cooldown"
             return result
 
         # 2. Fratricide check
@@ -246,6 +253,9 @@ class EngagementEngine:
         if not weapon.fire(ammo_id):
             result.aborted_reason = "no_ammo"
             return result
+
+        # Record fire time for rate limiting
+        weapon.record_fire(current_time_s)
 
         if timestamp is not None:
             self._event_bus.publish(AmmoExpendedEvent(

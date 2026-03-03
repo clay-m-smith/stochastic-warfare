@@ -119,6 +119,8 @@ class IndirectFireEngine:
         round_count: int,
         conditions: dict[str, Any] | None = None,
         timestamp: Any = None,
+        wind_speed_mps: float = 0.0,
+        wind_direction_deg: float = 0.0,
     ) -> FireMissionResult:
         """Execute a tube artillery fire mission.
 
@@ -142,6 +144,10 @@ class IndirectFireEngine:
             Environmental conditions.
         timestamp:
             Simulation timestamp.
+        wind_speed_mps:
+            Wind speed in m/s (crosswind increases dispersion).
+        wind_direction_deg:
+            Wind direction in degrees from north (meteorological convention).
         """
         result = FireMissionResult(
             mission_type=mission_type,
@@ -161,6 +167,19 @@ class IndirectFireEngine:
 
         # Convert CEP to sigma: sigma = CEP / 1.1774
         sigma_m = cep_m / 1.1774 if cep_m > 0 else weapon.base_accuracy_mrad * 10.0
+
+        # Wind increases CEP: crosswind component adds to dispersion
+        if wind_speed_mps > 0:
+            dx = target_pos.easting - fire_pos.easting
+            dy = target_pos.northing - fire_pos.northing
+            fire_range = math.sqrt(dx * dx + dy * dy)
+            if fire_range > 0:
+                fire_dir_deg = math.degrees(math.atan2(dx, dy)) % 360.0
+                crosswind_angle_rad = math.radians(wind_direction_deg - fire_dir_deg)
+                crosswind_mps = abs(wind_speed_mps * math.sin(crosswind_angle_rad))
+                # Each m/s of crosswind adds ~0.5% CEP increase per km range
+                wind_cep_factor = 1.0 + 0.005 * crosswind_mps * (fire_range / 1000.0)
+                sigma_m *= wind_cep_factor
 
         for _ in range(round_count):
             offset_e = self._rng.normal(0.0, sigma_m)

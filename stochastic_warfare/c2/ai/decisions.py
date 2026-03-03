@@ -281,7 +281,7 @@ class DecisionEngine:
             )
         elif echelon <= _DIVISION:
             result = self._decide_brigade_div(
-                unit_id, assessment, p, doctrine, roe_level, ts,
+                unit_id, echelon, assessment, p, doctrine, roe_level, ts,
             )
         else:
             result = self._decide_corps_plus(
@@ -575,6 +575,7 @@ class DecisionEngine:
     def _decide_brigade_div(
         self,
         unit_id: str,
+        echelon: int,
         assessment: SituationAssessment,
         personality: CommanderPersonality,
         doctrine: DoctrineTemplate | None,
@@ -665,7 +666,7 @@ class DecisionEngine:
 
         return self._select_best(
             unit_id=unit_id,
-            echelon_level=9,  # DIVISION range
+            echelon_level=echelon,
             scores=scores,
             personality=personality,
             assessment=assessment,

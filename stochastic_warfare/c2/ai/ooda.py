@@ -61,6 +61,7 @@ class OODAConfig(BaseModel):
     timing_sigma: float = 0.3  # log-normal sigma for friction
     degraded_mult: float = 1.5  # C2 degraded multiplier
     disrupted_mult: float = 3.0  # C2 disrupted multiplier
+    tactical_acceleration: float = 0.5  # multiplier for tactical OODA (<1 = faster)
 
 
 # ---------------------------------------------------------------------------
@@ -161,6 +162,7 @@ class OODALoopEngine:
         staff_quality: float = 1.0,
         c2_multiplier: float = 1.0,
         personality_mult: float = 1.0,
+        tactical_mult: float = 1.0,
     ) -> float:
         """Compute the duration (seconds) for a given OODA phase.
 
@@ -176,6 +178,8 @@ class OODALoopEngine:
             >1 = slower (degraded/disrupted C2). 1.0 = baseline.
         personality_mult : float
             Commander personality modifier. 1.0 = baseline.
+        tactical_mult : float
+            <1 = faster (tactical acceleration during battles). 1.0 = baseline.
 
         Returns
         -------
@@ -186,8 +190,8 @@ class OODALoopEngine:
         phase_name = phase.name
         base = self._config.base_durations_s[config_key][phase_name]
 
-        # Apply modifiers: c2 and personality increase duration, staff decreases
-        duration = base * c2_multiplier * personality_mult / staff_quality
+        # Apply modifiers: c2, personality, tactical increase/decrease duration; staff decreases
+        duration = base * c2_multiplier * personality_mult * tactical_mult / staff_quality
 
         # Apply log-normal variation for Clausewitzian friction
         duration = duration * float(self._rng.lognormal(0, self._config.timing_sigma))
@@ -203,6 +207,7 @@ class OODALoopEngine:
         staff_quality: float = 1.0,
         c2_multiplier: float = 1.0,
         personality_mult: float = 1.0,
+        tactical_mult: float = 1.0,
         ts: datetime | None = None,
     ) -> None:
         """Start a specific OODA phase for a commander.
@@ -222,6 +227,8 @@ class OODALoopEngine:
             >1 = slower.
         personality_mult : float
             Commander personality modifier.
+        tactical_mult : float
+            <1 = faster (tactical acceleration during battles). 1.0 = baseline.
         ts : datetime | None
             Simulation timestamp for the event. Uses ``datetime.now()`` if None.
         """
@@ -234,6 +241,7 @@ class OODALoopEngine:
             staff_quality=staff_quality,
             c2_multiplier=c2_multiplier,
             personality_mult=personality_mult,
+            tactical_mult=tactical_mult,
         )
 
         state.phase = phase
@@ -294,6 +302,13 @@ class OODALoopEngine:
                 )
 
         return completed
+
+    # -- Properties ---------------------------------------------------------
+
+    @property
+    def tactical_acceleration(self) -> float:
+        """Tactical OODA acceleration multiplier (< 1.0 = faster)."""
+        return self._config.tactical_acceleration
 
     # -- Queries ------------------------------------------------------------
 

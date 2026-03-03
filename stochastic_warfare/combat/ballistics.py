@@ -28,6 +28,7 @@ class BallisticsConfig(BaseModel):
     """Tunable parameters for the ballistics engine."""
 
     enable_drag: bool = True
+    enable_mach_drag: bool = True
     enable_wind: bool = True
     enable_coriolis: bool = True
     air_density_sea_level: float = 1.225  # kg/m^3
@@ -75,6 +76,31 @@ class ImpactResult:
 
 
 # ---------------------------------------------------------------------------
+# Mach-dependent drag helpers
+# ---------------------------------------------------------------------------
+
+
+def _speed_of_sound(temp_c: float) -> float:
+    """Speed of sound in air at given temperature (Celsius)."""
+    return 331.3 * math.sqrt(1.0 + temp_c / 273.15)
+
+
+def _mach_drag_multiplier(mach: float) -> float:
+    """Piecewise Mach-dependent drag multiplier.
+
+    - Subsonic (M < 0.8): 1.0 (no correction)
+    - Transonic (0.8 <= M <= 1.2): linear rise from 1.0 to 2.0
+    - Supersonic (M > 1.2): 2.0 * (1.2/M)^0.5 (falling)
+    """
+    if mach < 0.8:
+        return 1.0
+    elif mach <= 1.2:
+        return 1.0 + 2.5 * (mach - 0.8)
+    else:
+        return 2.0 * (1.2 / mach) ** 0.5
+
+
+# ---------------------------------------------------------------------------
 # Engine
 # ---------------------------------------------------------------------------
 
@@ -112,6 +138,7 @@ class BallisticsEngine:
         mass_kg: float,
         diameter_mm: float,
         altitude_m: float,
+        air_temp_c: float | None = None,
     ) -> tuple[float, float, float]:
         """Compute drag deceleration vector."""
         if not self._config.enable_drag:
@@ -123,9 +150,16 @@ class BallisticsEngine:
             return (0.0, 0.0, 0.0)
 
         rho = self._air_density(altitude_m)
+        # Mach-dependent drag coefficient
+        effective_cd = drag_coeff
+        if self._config.enable_mach_drag:
+            temp = air_temp_c if air_temp_c is not None else self._config.temperature_c
+            sos = _speed_of_sound(temp)
+            mach = speed / sos if sos > 0 else 0.0
+            effective_cd = drag_coeff * _mach_drag_multiplier(mach)
         radius_m = diameter_mm / 2000.0
         area = math.pi * radius_m * radius_m
-        drag_force = 0.5 * drag_coeff * rho * speed * speed * area
+        drag_force = 0.5 * effective_cd * rho * speed * speed * area
 
         # Drag opposes velocity direction
         drag_accel = drag_force / mass_kg
@@ -229,7 +263,7 @@ class BallisticsEngine:
 
                 drag = self._drag_acceleration(
                     v_air, ammo.drag_coefficient, ammo.mass_kg,
-                    ammo.diameter_mm, pos[2],
+                    ammo.diameter_mm, pos[2], air_temp_c=temp_c,
                 )
                 cor = self._coriolis_acceleration(vel, lat_rad)
 

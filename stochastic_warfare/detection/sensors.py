@@ -83,6 +83,7 @@ class SensorDefinition(BaseModel):
     # General
     min_range_m: float = 0.0
     fov_deg: float = 360.0
+    boresight_offset_deg: float = 0.0  # sensor boresight offset from unit heading
     requires_los: bool = True
     detects_domain: list[str] = []
 

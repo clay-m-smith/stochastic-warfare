@@ -165,8 +165,16 @@ class MovementEngine:
         target: Position,
         dt: Seconds,
         conditions=None,
+        fuel_available: float = float("inf"),
     ) -> MovementResult:
         """Move *unit* toward *target* for *dt* seconds.
+
+        Parameters
+        ----------
+        fuel_available:
+            Fuel units available. If finite, clamps movement distance to
+            what fuel allows. ``float('inf')`` means unlimited fuel
+            (backward-compatible default).
 
         Returns the actual new position (may not reach target in one tick).
         """
@@ -178,13 +186,25 @@ class MovementEngine:
         if dist_to_target < 0.1:
             return MovementResult(pos, 0.0, dt, 0.0, 0.0)
 
+        # Fuel gating: zero fuel → no movement
+        if fuel_available <= 0:
+            return MovementResult(pos, 0.0, dt, 0.0, 0.0)
+
         heading = math.atan2(dx, dy)  # 0=north, CW
         speed = self.compute_speed(unit, pos, heading, conditions)
 
         max_dist = speed * dt
         dist = min(dist_to_target, max_dist)
 
-        if dist_to_target > 0:
+        # Fuel consumption rate (proportional to distance)
+        fuel_rate = 0.0001 if unit.max_speed > 5.0 else 0.0
+
+        # Fuel gating: clamp distance if insufficient fuel
+        if fuel_rate > 0 and fuel_available < float("inf"):
+            max_fuel_dist = fuel_available / fuel_rate
+            dist = min(dist, max_fuel_dist)
+
+        if dist_to_target > 0 and dist > 0:
             ratio = dist / dist_to_target
             new_pos = Position(
                 pos.easting + dx * ratio,
@@ -198,7 +218,7 @@ class MovementEngine:
         hours = dt / 3600.0
         fatigue_added = hours * 0.08  # base rate
 
-        # Fuel consumption placeholder (proportional to distance)
-        fuel = dist * 0.0001 if unit.max_speed > 5.0 else 0.0
+        # Fuel consumed
+        fuel = dist * fuel_rate
 
         return MovementResult(new_pos, dist, dt, fatigue_added, fuel)
