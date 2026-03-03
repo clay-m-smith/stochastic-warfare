@@ -92,6 +92,7 @@ Layered hybrid — graph (strategic), grid (operational/tactical), continuous (u
 | `docs/devlog/` | Per-phase implementation logs (`index.md` tracks status) |
 | `docs/skills-and-hooks.md` | Dev infrastructure documentation |
 | `docs/specs/` | Per-module specifications (written before implementation) |
+| `README.md` | Project overview, setup, architecture summary, status |
 
 ## Completed Phases
 

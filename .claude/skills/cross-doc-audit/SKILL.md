@@ -1,6 +1,6 @@
 ---
 name: cross-doc-audit
-description: Audit alignment between development-phases.md, project-structure.md, brainstorm.md, and the devlog. Run after completing a phase, adding modules, or changing architecture. Catches contradictions, missing phase assignments, and stale documentation.
+description: Audit alignment between development-phases.md, project-structure.md, brainstorm.md, the devlog, and README.md. Run after completing a phase, adding modules, or changing architecture. Catches contradictions, missing phase assignments, and stale documentation.
 allowed-tools: Read, Grep, Glob, Agent, Write, Edit
 ---
 
@@ -25,6 +25,7 @@ Run this audit:
 | Brainstorm | `docs/brainstorm.md` | WHY decisions were made |
 | Dev Log | `docs/devlog/phase-*.md` | WHAT actually happened |
 | Memory | `.claude/memory/MEMORY.md` | Cross-session context |
+| README | `README.md` | Public-facing project summary |
 
 ## Checks to Perform (in order)
 
@@ -54,6 +55,14 @@ For each completed phase, verify the devlog entry exists and covers: what was bu
 
 ### 8. Memory Freshness
 Verify MEMORY.md reflects current project status (correct phase, key decisions up to date).
+
+### 9. README Currency
+Verify README.md is consistent with CLAUDE.md and development-phases.md:
+- Python version requirement matches
+- Test count matches current total
+- Phase table status matches (all phases listed, correct completion status)
+- Architecture summary (module dependency chain, simulation loop, spatial model) matches CLAUDE.md
+- Key dependencies table matches actual `pyproject.toml` runtime deps
 
 ## Output Format
 

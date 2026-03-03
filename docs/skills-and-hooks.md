@@ -56,8 +56,8 @@
 - Keeps implementation honest against the theoretical foundations we've committed to
 
 ### /cross-doc-audit
-- Audits alignment across all documentation layers: development-phases.md, project-structure.md, brainstorm.md, devlog, MEMORY.md
-- Eight checks: module coverage, phase content match, dependency ordering, exit criteria coverage, contradictions, brainstorm traceability, devlog completeness, memory freshness
+- Audits alignment across all documentation layers: development-phases.md, project-structure.md, brainstorm.md, devlog, MEMORY.md, README.md
+- Nine checks: module coverage, phase content match, dependency ordering, exit criteria coverage, contradictions, brainstorm traceability, devlog completeness, memory freshness, README currency
 - Output: PASS/FAIL per check with severity (CRITICAL/HIGH/MEDIUM/LOW)
 - Run after completing phases, adding modules, or changing architecture
 
