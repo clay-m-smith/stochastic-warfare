@@ -1,0 +1,46 @@
+unit_type: m3a2_bradley
+domain: ground
+display_name: "M3A2 Bradley Cavalry Fighting Vehicle"
+ground_type: MECHANIZED_INFANTRY
+max_speed: 18.3
+armor_front: 100.0
+armor_side: 30.0
+crew:
+  - role: COMMANDER
+    count: 1
+    skill: TRAINED
+  - role: GUNNER
+    count: 1
+    skill: TRAINED
+  - role: DRIVER
+    count: 1
+    skill: TRAINED
+  - role: GENERIC
+    count: 2
+    skill: BASIC
+equipment:
+  - name: "M242 25mm Chain Gun"
+    category: WEAPON
+    weight_kg: 109.0
+    reliability: 0.90
+  - name: "TOW-2 ATGM"
+    category: WEAPON
+    weight_kg: 22.6
+    reliability: 0.88
+  - name: "M240C 7.62mm Coaxial"
+    category: WEAPON
+    weight_kg: 12.2
+    reliability: 0.92
+  - name: "Cummins VTA-903T Diesel"
+    category: PROPULSION
+    weight_kg: 570.0
+    reliability: 0.87
+    temperature_range: [-40.0, 52.0]
+  - name: "AN/VVS-2 Commander Viewer"
+    category: SENSOR
+    weight_kg: 45.0
+    reliability: 0.88
+  - name: "Laminate Armor + ERA"
+    category: PROTECTION
+    weight_kg: 2000.0
+    reliability: 0.97

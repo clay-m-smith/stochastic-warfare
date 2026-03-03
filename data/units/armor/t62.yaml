@@ -1,0 +1,42 @@
+unit_type: t62
+domain: ground
+display_name: "T-62 Main Battle Tank"
+ground_type: ARMOR
+max_speed: 13.9
+armor_front: 242.0
+armor_side: 79.0
+crew:
+  - role: COMMANDER
+    count: 1
+    skill: BASIC
+  - role: GUNNER
+    count: 1
+    skill: BASIC
+  - role: LOADER
+    count: 1
+    skill: BASIC
+  - role: DRIVER
+    count: 1
+    skill: BASIC
+equipment:
+  - name: "U-5TS 115mm Smoothbore"
+    category: WEAPON
+    weight_kg: 2400.0
+    reliability: 0.80
+  - name: "PKT 7.62mm Coaxial"
+    category: WEAPON
+    weight_kg: 10.5
+    reliability: 0.85
+  - name: "V-55-5 Diesel Engine"
+    category: PROPULSION
+    weight_kg: 680.0
+    reliability: 0.75
+    temperature_range: [-30.0, 45.0]
+  - name: "TSh2B-41U Gunner Sight"
+    category: SENSOR
+    weight_kg: 22.0
+    reliability: 0.75
+  - name: "Cast Steel Armor"
+    category: PROTECTION
+    weight_kg: 2200.0
+    reliability: 0.99

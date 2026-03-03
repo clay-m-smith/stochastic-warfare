@@ -269,11 +269,11 @@ class TestApplyMoraleEffects:
             for i in range(len(values) - 1):
                 assert values[i] >= values[i + 1]
 
-    def test_returns_new_dict(self) -> None:
-        """Should return a new dict each time, not a reference."""
+    def test_returns_consistent_dict(self) -> None:
+        """Should return equal values for the same state."""
         e1 = MoraleStateMachine.apply_morale_effects(MoraleState.STEADY)
         e2 = MoraleStateMachine.apply_morale_effects(MoraleState.STEADY)
-        assert e1 is not e2
+        assert e1 == e2
 
 
 # ── State round-trip ─────────────────────────────────────────────────

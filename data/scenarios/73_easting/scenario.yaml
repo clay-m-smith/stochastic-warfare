@@ -1,0 +1,117 @@
+name: "73 Easting — Eagle Troop Engagement"
+date: "1991-02-26T16:18:00Z"
+duration_hours: 0.5
+tick_duration_seconds: 5.0
+latitude: 30.0
+longitude: 47.0
+
+weather_conditions:
+  visibility_m: 400
+  wind_speed_mps: 8.0
+  wind_direction_deg: 270
+  temperature_c: 18.0
+  precipitation: none
+  cloud_cover: 0.3
+  humidity: 0.25
+
+blue_forces:
+  side: blue
+  units:
+    - unit_type: m1a1
+      count: 9
+    - unit_type: m3a2_bradley
+      count: 12
+  personnel_total: 120
+  experience_level: 0.8
+  morale_initial: STEADY
+
+red_forces:
+  side: red
+  units:
+    - unit_type: t72m
+      count: 30
+    - unit_type: bmp1
+      count: 16
+  personnel_total: 500
+  experience_level: 0.3
+  morale_initial: STEADY
+
+terrain:
+  width_m: 6000
+  height_m: 4000
+  cell_size_m: 50.0
+  base_elevation_m: 200.0
+  terrain_type: flat_desert
+
+documented_outcomes:
+  - name: exchange_ratio
+    value: 28.0
+    tolerance_factor: 2.0
+    unit: "red:blue destroyed"
+    source: "McMaster, *Eagles in the Desert*"
+    source_quality: 1
+    notes: "Eagle Troop only; overall ratio higher"
+  - name: blue_units_destroyed
+    value: 1.0
+    tolerance_factor: 3.0
+    unit: "vehicles"
+    source: "Eagle Troop AAR"
+    source_quality: 0
+    notes: "1 M3A2 Bradley lost"
+  - name: red_units_destroyed
+    value: 28.0
+    tolerance_factor: 2.0
+    unit: "vehicles"
+    source: "Eagle Troop AAR"
+    source_quality: 0
+  - name: duration_s
+    value: 1380.0
+    tolerance_factor: 2.0
+    unit: "seconds"
+    source: "Eagle Troop AAR"
+    source_quality: 0
+    notes: "~23 minutes"
+
+calibration_overrides:
+  hit_probability_modifier: 1.0
+  target_size_modifier: 1.0
+  thermal_contrast: 2.0
+  # Morale calibration — Eagle Troop was elite and aggressive; Iraqi units
+  # were poorly trained and collapsed quickly once taking fire.
+  morale_degrade_rate_modifier: 0.3
+  morale_force_ratio_weight: 0.1
+  morale_base_degrade_rate: 0.01
+  morale_casualty_weight: 0.5
+  morale_check_interval: 12
+  blue_force_ratio_modifier: 2.5
+  red_force_ratio_modifier: 1.0
+  blue_cohesion: 0.9
+  red_cohesion: 0.5
+  # Starting positions — Eagle Troop approaching from west, Iraqi forces in
+  # hasty defense to the east.  ~7.5km initial separation provides a closing
+  # phase before M1A1 thermals detect at 4km.
+  blue_start_x: 100.0
+  blue_start_y: 2000.0
+  red_start_x: 5900.0
+  red_start_y: 2000.0
+  # Weapon assignments — use correct weapon IDs for each platform.
+  weapon_assignments:
+    "M256 120mm Smoothbore": m256_120mm
+    "M242 25mm Chain Gun": m242_bushmaster
+    "2A46M 125mm Smoothbore": 2a46m_125mm
+    "73mm 2A28 Grom": 2a28_grom_73mm
+    "TOW-2 ATGM": tow2_atgm
+    "AT-3 Sagger ATGM": at3_sagger
+
+behavior_rules:
+  blue:
+    advance_speed_mps: 2.5
+    engagement_range_m: 3500
+  red:
+    hold_position: true
+    engagement_range_m: 800
+
+sources:
+  - "McMaster, H.R. *Eagles in the Desert*"
+  - "Eagle Troop After-Action Report, 2nd ACR"
+  - "Bourque, Stephen. *Jayhawk! The VII Corps in the Persian Gulf War*"

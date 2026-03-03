@@ -55,6 +55,40 @@ class Pathfinder:
         self._obstacles = obstacles
         self._hydrography = hydrography
 
+    def _cell_difficulty(self, pos: Position) -> float:
+        """Terrain difficulty multiplier at *pos* (terrain factors only).
+
+        This captures trafficability, slope, roads, obstacles, and water —
+        everything that depends only on the destination cell, not the edge.
+        Returns ``inf`` for impassable cells.
+        """
+        mult = 1.0
+
+        if self._classification is not None:
+            trafficability = self._classification.trafficability_at(pos)
+            if trafficability <= 0.01:
+                return float("inf")
+            mult /= trafficability
+
+        if self._heightmap is not None:
+            slope = self._heightmap.slope_at(pos)
+            mult *= 1.0 + 2.0 * abs(slope)
+
+        if self._infrastructure is not None:
+            road_factor = self._infrastructure.road_speed_at(pos)
+            if road_factor is not None and road_factor > 1.0:
+                mult /= road_factor
+
+        if self._obstacles is not None:
+            obs = self._obstacles.obstacles_at(pos)
+            for o in obs:
+                mult *= o.traversal_time_multiplier
+
+        if self._hydrography is not None and self._hydrography.is_in_water(pos):
+            mult *= 10.0
+
+        return mult
+
     def movement_cost(
         self, from_pos: Position, to_pos: Position, unit=None
     ) -> float:
@@ -63,38 +97,11 @@ class Pathfinder:
         dy = to_pos.northing - from_pos.northing
         dist = math.sqrt(dx * dx + dy * dy)
 
-        # Base cost = distance
-        cost = dist
+        difficulty = self._cell_difficulty(to_pos)
+        if difficulty == float("inf"):
+            return float("inf")
 
-        # Terrain trafficability penalty
-        if self._classification is not None:
-            trafficability = self._classification.trafficability_at(to_pos)
-            if trafficability <= 0.01:
-                return float("inf")  # impassable
-            cost /= trafficability
-
-        # Slope penalty
-        if self._heightmap is not None:
-            slope = self._heightmap.slope_at(to_pos)
-            cost *= 1.0 + 2.0 * abs(slope)
-
-        # Road bonus — reduce cost
-        if self._infrastructure is not None:
-            road_factor = self._infrastructure.road_speed_at(to_pos)
-            if road_factor is not None and road_factor > 1.0:
-                cost /= road_factor
-
-        # Obstacle penalty
-        if self._obstacles is not None:
-            obs = self._obstacles.obstacles_at(to_pos)
-            for o in obs:
-                cost *= o.traversal_time_multiplier
-
-        # Water penalty
-        if self._hydrography is not None and self._hydrography.is_in_water(to_pos):
-            cost *= 10.0  # heavy penalty for water crossing
-
-        return cost
+        return dist * difficulty
 
     def find_path(
         self,
@@ -146,12 +153,20 @@ class Pathfinder:
                         extra += (tr - d) / tr * res * 5.0
                 return extra
 
-        # A* with 8-connectivity
+        # Pre-compute diagonal/cardinal distances
+        _DIAG_DIST = math.sqrt(2.0) * res
+        _CARD_DIST = res
+
+        # A* with 8-connectivity and closed set
         open_set: list[tuple[float, int, tuple[int, int]]] = []
         counter = 0
         heapq.heappush(open_set, (0.0, counter, start_g))
         came_from: dict[tuple[int, int], tuple[int, int] | None] = {start_g: None}
         g_score: dict[tuple[int, int], float] = {start_g: 0.0}
+        closed: set[tuple[int, int]] = set()
+
+        # Cache cell difficulty to avoid redundant terrain module lookups
+        _cell_cache: dict[tuple[int, int], float] = {}
 
         neighbors_8 = [
             (-1, -1), (-1, 0), (-1, 1), (0, -1),
@@ -162,6 +177,10 @@ class Pathfinder:
         while open_set and iterations < max_iterations:
             iterations += 1
             _, _, current = heapq.heappop(open_set)
+
+            if current in closed:
+                continue
+            closed.add(current)
 
             if current == goal_g:
                 # Reconstruct path
@@ -185,17 +204,25 @@ class Pathfinder:
 
                 return PathResult(path, g_score[current], total_dist, True)
 
-            cur_pos = to_pos(current)
             for dx, dy in neighbors_8:
                 nb = (current[0] + dx, current[1] + dy)
-                nb_pos = to_pos(nb)
-
-                edge_cost = self.movement_cost(cur_pos, nb_pos, unit)
-                if edge_cost == float("inf"):
+                if nb in closed:
                     continue
 
+                # Cached cell difficulty lookup
+                if nb not in _cell_cache:
+                    _cell_cache[nb] = self._cell_difficulty(to_pos(nb))
+                difficulty = _cell_cache[nb]
+
+                if difficulty == float("inf"):
+                    continue
+
+                # Distance: diagonal or cardinal
+                dist = _DIAG_DIST if (dx != 0 and dy != 0) else _CARD_DIST
+                edge_cost = dist * difficulty
+
                 if threat_cost_fn is not None:
-                    edge_cost += threat_cost_fn(nb_pos)
+                    edge_cost += threat_cost_fn(to_pos(nb))
 
                 tentative = g_score[current] + edge_cost
 

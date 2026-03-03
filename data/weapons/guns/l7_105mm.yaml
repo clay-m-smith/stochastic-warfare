@@ -1,0 +1,22 @@
+weapon_id: l7_105mm
+display_name: "L7 105mm Rifled Gun"
+category: CANNON
+caliber_mm: 105.0
+muzzle_velocity_mps: 1470.0
+max_range_m: 3000.0
+min_range_m: 50.0
+rate_of_fire_rpm: 8.0
+burst_size: 1
+base_accuracy_mrad: 0.3
+guidance: NONE
+magazine_capacity: 64
+reload_time_s: 6.0
+compatible_ammo:
+  - 105mm_l52_apds
+weight_kg: 1282.0
+reliability: 0.90
+barrel_life_rounds: 1000
+requires_deployed: false
+traverse_deg: 360.0
+elevation_min_deg: -10.0
+elevation_max_deg: 20.0

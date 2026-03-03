@@ -55,6 +55,25 @@
 - Checks: does this morale model capture Clausewitzian friction? Does the C2 system implement OODA-like cycles? Does the logistics model respect Jominian LOC principles?
 - Keeps implementation honest against the theoretical foundations we've committed to
 
+### /cross-doc-audit
+- Audits alignment across all documentation layers: development-phases.md, project-structure.md, brainstorm.md, devlog, MEMORY.md
+- Eight checks: module coverage, phase content match, dependency ordering, exit criteria coverage, contradictions, brainstorm traceability, devlog completeness, memory freshness
+- Output: PASS/FAIL per check with severity (CRITICAL/HIGH/MEDIUM/LOW)
+- Run after completing phases, adding modules, or changing architecture
+
+### /simplify
+- Reviews changed code for reuse, quality, and efficiency
+- Six checks: duplication detection, complexity reduction, performance patterns, interface quality, test quality, convention compliance
+- Flags issues by severity (HIGH/MEDIUM/LOW) with concrete fix suggestions
+- Run after completing significant implementations or before committing phase work
+
+### /profile
+- Identifies performance hotspots via cProfile analysis
+- Classifies hotspots: algorithmic, Python overhead, allocation, redundant computation, I/O
+- Estimates impact and implementation effort for each optimization
+- Provides benchmark script template for standardized measurement
+- Run when scenarios are slow or before/after optimization work
+
 ---
 
 ## Hooks

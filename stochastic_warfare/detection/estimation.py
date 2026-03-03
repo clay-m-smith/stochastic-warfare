@@ -20,6 +20,10 @@ from stochastic_warfare.detection.identification import ContactInfo, ContactLeve
 
 logger = get_logger(__name__)
 
+# Pre-allocated constant matrices for Kalman filter
+_H = np.array([[1, 0, 0, 0], [0, 1, 0, 0]], dtype=np.float64)
+_EYE4 = np.eye(4, dtype=np.float64)
+
 # ---------------------------------------------------------------------------
 # Data types
 # ---------------------------------------------------------------------------
@@ -217,28 +221,22 @@ class StateEstimator:
         measurement: [x, y] observed position
         measurement_noise: 2×2 noise covariance (R)
         """
-        # Observation matrix: we observe position only
-        H = np.array([
-            [1, 0, 0, 0],
-            [0, 1, 0, 0],
-        ])
-
         x = np.concatenate([track.state.position, track.state.velocity])
-        P = track.state.covariance.copy()
+        P = track.state.covariance
         R = measurement_noise
 
         # Innovation
-        y = measurement - H @ x
+        y = measurement - _H @ x
 
         # Innovation covariance
-        S = H @ P @ H.T + R
+        S = _H @ P @ _H.T + R
 
         # Kalman gain
-        K = P @ H.T @ np.linalg.inv(S)
+        K = P @ _H.T @ np.linalg.inv(S)
 
         # Updated state
         x_new = x + K @ y
-        P_new = (np.eye(4) - K @ H) @ P
+        P_new = (_EYE4 - K @ _H) @ P
 
         track.state = TrackState(
             position=x_new[:2],

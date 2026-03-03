@@ -22,6 +22,16 @@ from stochastic_warfare.core.types import ModuleId
 
 logger = get_logger(__name__)
 
+# Constant posture protection factors (blast and fragmentation)
+_POSTURE_BLAST_PROTECT: dict[str, float] = {
+    "MOVING": 1.0, "HALTED": 0.9, "DEFENSIVE": 0.7,
+    "DUG_IN": 0.3, "FORTIFIED": 0.1,
+}
+_POSTURE_FRAG_PROTECT: dict[str, float] = {
+    "MOVING": 1.0, "HALTED": 0.85, "DEFENSIVE": 0.5,
+    "DUG_IN": 0.15, "FORTIFIED": 0.05,
+}
+
 
 class DamageType(enum.IntEnum):
     """Terminal effect classification."""
@@ -238,21 +248,13 @@ class DamageEngine:
                 -distance_m * distance_m / (2.0 * sigma * sigma)
             )
             # Posture protection
-            posture_protect = {
-                "MOVING": 1.0, "HALTED": 0.9, "DEFENSIVE": 0.7,
-                "DUG_IN": 0.3, "FORTIFIED": 0.1,
-            }
-            protection = posture_protect.get(posture, 1.0)
+            protection = _POSTURE_BLAST_PROTECT.get(posture, 1.0)
             damage_fraction = max(damage_fraction, p_kill_blast * protection)
 
         # Fragmentation: 1/r^2 falloff
         if ammo.fragmentation_radius_m > 0 and distance_m < ammo.fragmentation_radius_m:
             frag_factor = 1.0 - (distance_m / ammo.fragmentation_radius_m) ** 2
-            posture_frag_protect = {
-                "MOVING": 1.0, "HALTED": 0.85, "DEFENSIVE": 0.5,
-                "DUG_IN": 0.15, "FORTIFIED": 0.05,
-            }
-            frag_protection = posture_frag_protect.get(posture, 1.0)
+            frag_protection = _POSTURE_FRAG_PROTECT.get(posture, 1.0)
             frag_damage = frag_factor * frag_protection
             damage_fraction = max(damage_fraction, frag_damage)
 

@@ -1,0 +1,39 @@
+unit_type: t72m
+domain: ground
+display_name: "T-72M Main Battle Tank"
+ground_type: ARMOR
+max_speed: 16.7
+armor_front: 400.0
+armor_side: 80.0
+crew:
+  - role: COMMANDER
+    count: 1
+    skill: BASIC
+  - role: GUNNER
+    count: 1
+    skill: BASIC
+  - role: DRIVER
+    count: 1
+    skill: BASIC
+equipment:
+  - name: "2A46M 125mm Smoothbore"
+    category: WEAPON
+    weight_kg: 2500.0
+    reliability: 0.82
+  - name: "PKT 7.62mm Coaxial"
+    category: WEAPON
+    weight_kg: 10.5
+    reliability: 0.88
+  - name: "V-84 Diesel Engine"
+    category: PROPULSION
+    weight_kg: 750.0
+    reliability: 0.78
+    temperature_range: [-35.0, 45.0]
+  - name: "TPN-3-49 Night Sight"
+    category: SENSOR
+    weight_kg: 30.0
+    reliability: 0.70
+  - name: "Cast/Rolled Steel Armor"
+    category: PROTECTION
+    weight_kg: 3500.0
+    reliability: 0.99

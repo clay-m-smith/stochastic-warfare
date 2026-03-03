@@ -1,0 +1,21 @@
+profile_id: t72m
+unit_type: t72m
+visual:
+  height_m: 2.2
+  cross_section_m2: 7.5
+  camouflage_factor: 0.7
+thermal:
+  emissivity: 0.90
+  heat_output_kw: 550.0
+  contrast_modifier: 0.9
+radar:
+  rcs_frontal_m2: 12.0
+  rcs_side_m2: 30.0
+  rcs_rear_m2: 8.0
+acoustic:
+  noise_db: 82.0
+  speed_coefficient: 2.0
+electromagnetic:
+  emitting: false
+  power_dbm: 0.0
+  frequency_ghz: 0.0

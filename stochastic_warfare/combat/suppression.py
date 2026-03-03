@@ -22,6 +22,15 @@ from stochastic_warfare.core.types import ModuleId
 
 logger = get_logger(__name__)
 
+# Constant suppression effects per level
+_SUPPRESSION_EFFECTS: dict[int, dict[str, float]] = {
+    0: {"accuracy_penalty": 0.0, "movement_speed_factor": 1.0, "morale_modifier": 0.0},
+    1: {"accuracy_penalty": 0.1, "movement_speed_factor": 0.9, "morale_modifier": -0.05},
+    2: {"accuracy_penalty": 0.25, "movement_speed_factor": 0.7, "morale_modifier": -0.15},
+    3: {"accuracy_penalty": 0.5, "movement_speed_factor": 0.3, "morale_modifier": -0.30},
+    4: {"accuracy_penalty": 0.8, "movement_speed_factor": 0.0, "morale_modifier": -0.50},
+}
+
 
 class SuppressionLevel(enum.IntEnum):
     """Graduated suppression state."""
@@ -164,34 +173,7 @@ class SuppressionEngine:
 
     def compute_suppression_effect(self, level: SuppressionLevel) -> dict[str, float]:
         """Return combat effects for a given suppression level."""
-        effects_table = {
-            SuppressionLevel.NONE: {
-                "accuracy_penalty": 0.0,
-                "movement_speed_factor": 1.0,
-                "morale_modifier": 0.0,
-            },
-            SuppressionLevel.LIGHT: {
-                "accuracy_penalty": 0.1,
-                "movement_speed_factor": 0.9,
-                "morale_modifier": -0.05,
-            },
-            SuppressionLevel.MODERATE: {
-                "accuracy_penalty": 0.25,
-                "movement_speed_factor": 0.7,
-                "morale_modifier": -0.15,
-            },
-            SuppressionLevel.HEAVY: {
-                "accuracy_penalty": 0.5,
-                "movement_speed_factor": 0.3,
-                "morale_modifier": -0.30,
-            },
-            SuppressionLevel.PINNED: {
-                "accuracy_penalty": 0.8,
-                "movement_speed_factor": 0.0,
-                "morale_modifier": -0.50,
-            },
-        }
-        return dict(effects_table[level])
+        return _SUPPRESSION_EFFECTS[int(level)]
 
     def update_suppression(
         self,

@@ -1,0 +1,21 @@
+ammo_id: am39_exocet_warhead
+display_name: "AM.39 Exocet Warhead (165kg HE)"
+ammo_type: HE
+mass_kg: 165.0
+diameter_mm: 350.0
+drag_coefficient: 0.3
+penetration_mm_rha: 0.0
+penetration_reference_range_m: 0.0
+blast_radius_m: 15.0
+fragmentation_radius_m: 30.0
+guidance: COMBINED
+seeker_fov_deg: 10.0
+seeker_range_m: 12000.0
+pk_at_reference: 0.60
+countermeasure_susceptibility: 0.3
+propulsion: turbojet
+max_speed_mps: 315.0
+flight_time_s: 160.0
+cruise_altitude_m: 2.0
+terminal_maneuver: true
+unit_cost_factor: 50.0

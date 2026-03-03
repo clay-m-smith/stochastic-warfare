@@ -1,0 +1,21 @@
+profile_id: type42_destroyer
+unit_type: type42_destroyer
+visual:
+  height_m: 14.0
+  cross_section_m2: 350.0
+  camouflage_factor: 0.3
+thermal:
+  emissivity: 0.85
+  heat_output_kw: 8000.0
+  contrast_modifier: 1.5
+radar:
+  rcs_frontal_m2: 3000.0
+  rcs_side_m2: 8000.0
+  rcs_rear_m2: 2500.0
+acoustic:
+  noise_db: 130.0
+  speed_coefficient: 3.0
+electromagnetic:
+  emitting: true
+  power_dbm: 55.0
+  frequency_ghz: 3.0

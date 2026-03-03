@@ -1,0 +1,46 @@
+unit_type: bmp1
+domain: ground
+display_name: "BMP-1 Infantry Fighting Vehicle"
+ground_type: MECHANIZED_INFANTRY
+max_speed: 18.1
+armor_front: 33.0
+armor_side: 19.0
+crew:
+  - role: COMMANDER
+    count: 1
+    skill: BASIC
+  - role: GUNNER
+    count: 1
+    skill: BASIC
+  - role: DRIVER
+    count: 1
+    skill: BASIC
+  - role: GENERIC
+    count: 8
+    skill: BASIC
+equipment:
+  - name: "73mm 2A28 Grom"
+    category: WEAPON
+    weight_kg: 115.0
+    reliability: 0.78
+  - name: "AT-3 Sagger ATGM"
+    category: WEAPON
+    weight_kg: 11.3
+    reliability: 0.70
+  - name: "PKT 7.62mm Coaxial"
+    category: WEAPON
+    weight_kg: 10.5
+    reliability: 0.85
+  - name: "UTD-20 Diesel Engine"
+    category: PROPULSION
+    weight_kg: 580.0
+    reliability: 0.76
+    temperature_range: [-35.0, 45.0]
+  - name: "1PN22M1 Gunner Sight"
+    category: SENSOR
+    weight_kg: 15.0
+    reliability: 0.72
+  - name: "Aluminum Hull Armor"
+    category: PROTECTION
+    weight_kg: 800.0
+    reliability: 0.99

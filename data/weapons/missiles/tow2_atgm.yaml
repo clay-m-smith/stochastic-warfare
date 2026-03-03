@@ -1,0 +1,22 @@
+weapon_id: tow2_atgm
+display_name: "BGM-71 TOW-2 ATGM"
+category: MISSILE_LAUNCHER
+caliber_mm: 152.0
+muzzle_velocity_mps: 310.0
+max_range_m: 3750.0
+min_range_m: 65.0
+rate_of_fire_rpm: 2.0
+burst_size: 1
+base_accuracy_mrad: 0.3
+guidance: WIRE
+magazine_capacity: 7
+reload_time_s: 30.0
+compatible_ammo:
+  - tow2_warhead
+weight_kg: 22.6
+reliability: 0.88
+barrel_life_rounds: 100
+requires_deployed: false
+traverse_deg: 360.0
+elevation_min_deg: -20.0
+elevation_max_deg: 30.0

@@ -1,0 +1,28 @@
+unit_type: super_etendard
+domain: aerial
+display_name: "Dassault Super Etendard"
+aerial_type: ATTACK
+max_speed: 340.0
+service_ceiling: 13700.0
+crew:
+  - role: PILOT
+    count: 1
+    skill: EXPERIENCED
+equipment:
+  - name: "AM.39 Exocet"
+    category: WEAPON
+    weight_kg: 670.0
+    reliability: 0.85
+  - name: "DEFA 553 30mm Cannon"
+    category: WEAPON
+    weight_kg: 80.0
+    reliability: 0.88
+  - name: "Agave Radar"
+    category: SENSOR
+    weight_kg: 70.0
+    reliability: 0.80
+  - name: "SNECMA Atar 8K-50 Turbojet"
+    category: PROPULSION
+    weight_kg: 1456.0
+    reliability: 0.85
+    temperature_range: [-54.0, 60.0]

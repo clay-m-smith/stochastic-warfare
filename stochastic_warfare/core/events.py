@@ -62,10 +62,12 @@ class EventBus:
         """Dispatch *event* to all matching subscribers.
 
         A subscriber registered for a base type receives events of that type
-        *and all subclasses*.
+        *and all subclasses*.  Uses MRO walk for O(depth) dispatch instead of
+        O(num_subscribed_types) isinstance checks.
         """
-        for event_type, handlers in self._subscribers.items():
-            if isinstance(event, event_type):
+        for cls in type(event).__mro__:
+            handlers = self._subscribers.get(cls)
+            if handlers:
                 for _priority, handler in handlers:
                     handler(event)
 

@@ -69,6 +69,11 @@ class LOSEngine:
 
         Returns a :class:`LOSResult` indicating whether the target is
         visible and, if not, what blocks the view.
+
+        Uses vectorized numpy operations for the ray march when no
+        infrastructure (building) data is present — the common case.
+        Falls back to per-sample scalar lookups when buildings must be
+        checked.
         """
         obs_elev = self._hm.elevation_at(observer) + observer_height
         tgt_elev = self._hm.elevation_at(target) + target_height
@@ -80,18 +85,89 @@ class LOSEngine:
         if total_dist < 1.0:
             return LOSResult(True, None, None, None)
 
-        # Earth curvature correction factor
-        k_factor = 4.0 / 3.0
-        R_earth = 6_371_000.0
+        # Earth curvature constants
+        _K_FACTOR = 4.0 / 3.0
+        _R_EARTH = 6_371_000.0
 
-        # Step along the ray at cell_size resolution
-        step = self._hm.cell_size / 2.0
-        num_steps = max(2, int(total_dist / step))
-        step = total_dist / num_steps
+        num_steps = max(2, int(total_dist / (self._hm.cell_size / 2.0)))
 
+        if self._infra is None:
+            return self._check_los_vectorized(
+                observer, obs_elev, tgt_elev, dx, dy, total_dist,
+                num_steps, _K_FACTOR, _R_EARTH,
+            )
+
+        return self._check_los_scalar(
+            observer, obs_elev, tgt_elev, dx, dy, total_dist,
+            num_steps, _K_FACTOR, _R_EARTH,
+        )
+
+    def _check_los_vectorized(
+        self,
+        observer: Position,
+        obs_elev: float,
+        tgt_elev: float,
+        dx: float,
+        dy: float,
+        total_dist: float,
+        num_steps: int,
+        k_factor: float,
+        r_earth: float,
+    ) -> LOSResult:
+        """Fully vectorized LOS ray march (no infrastructure)."""
+        fracs = np.arange(1, num_steps, dtype=np.float64) / num_steps
+        d = fracs * total_dist
+
+        sample_e = observer.easting + dx * fracs
+        sample_n = observer.northing + dy * fracs
+
+        # Vectorized bounds check
+        in_bounds = self._hm.in_bounds_batch(sample_e, sample_n)
+        if not np.any(in_bounds):
+            return LOSResult(True, None, None, None)
+
+        # Vectorized bilinear elevation lookup
+        terrain_elev = self._hm.elevation_at_batch(sample_e, sample_n)
+
+        # Earth curvature drop
+        curvature_drop = (d * (total_dist - d)) / (2 * k_factor * r_earth)
+
+        # Ray elevation (linear interpolation)
+        ray_elev = obs_elev + (tgt_elev - obs_elev) * fracs - curvature_drop
+
+        # Clearance — set out-of-bounds samples to +inf (non-blocking)
+        clearance = ray_elev - terrain_elev
+        clearance[~in_bounds] = np.inf
+
+        # Check for blocked
+        blocked_mask = clearance < 0
+        if np.any(blocked_mask):
+            idx = int(np.argmax(blocked_mask))
+            return LOSResult(
+                False,
+                Position(float(sample_e[idx]), float(sample_n[idx])),
+                "terrain",
+                0.0,
+            )
+
+        valid_clearance = clearance[in_bounds]
+        min_clearance = float(np.min(valid_clearance)) if len(valid_clearance) > 0 else None
+        return LOSResult(True, None, None, min_clearance)
+
+    def _check_los_scalar(
+        self,
+        observer: Position,
+        obs_elev: float,
+        tgt_elev: float,
+        dx: float,
+        dy: float,
+        total_dist: float,
+        num_steps: int,
+        k_factor: float,
+        r_earth: float,
+    ) -> LOSResult:
+        """Scalar LOS ray march (with infrastructure/building checks)."""
         min_clearance = float("inf")
-        blocked_at: Position | None = None
-        blocked_by: str | None = None
 
         for i in range(1, num_steps):
             frac = i / num_steps
@@ -104,31 +180,24 @@ class LOSEngine:
             if not self._hm.in_bounds(sample_pos):
                 continue
 
-            # Terrain elevation at sample point
             terrain_elev = self._hm.elevation_at(sample_pos)
 
-            # Building height
             building_h = 0.0
             if self._infra is not None:
                 building_h = self._infra.max_building_height_at(sample_pos)
 
             surface_elev = terrain_elev + building_h
 
-            # Earth curvature drop
-            curvature_drop = (d * (total_dist - d)) / (2 * k_factor * R_earth)
-
-            # Expected ray elevation at this distance (linear interpolation)
+            curvature_drop = (d * (total_dist - d)) / (2 * k_factor * r_earth)
             ray_elev = obs_elev + (tgt_elev - obs_elev) * frac - curvature_drop
-
             clearance = ray_elev - surface_elev
 
             if clearance < min_clearance:
                 min_clearance = clearance
 
             if clearance < 0:
-                blocked_at = sample_pos
                 blocked_by = "building" if building_h > 0 else "terrain"
-                return LOSResult(False, blocked_at, blocked_by, 0.0)
+                return LOSResult(False, sample_pos, blocked_by, 0.0)
 
         grazing = min_clearance if min_clearance < float("inf") else None
         return LOSResult(True, None, None, grazing)

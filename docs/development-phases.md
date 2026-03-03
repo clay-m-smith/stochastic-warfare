@@ -69,6 +69,7 @@ Build the nuts and bolts first. Every phase produces runnable, testable code. Va
 **Goal**: Define what simulation entities ARE, how they're organized, and how they move.
 
 ### 2a: Entity System
+- `entities/events.py` — entity lifecycle events (creation, destruction, status changes)
 - `entities/personnel.py` — crew/individual modeling: roles, skills, experience, casualties
 - `entities/equipment.py` — equipment state: degradation, maintenance, breakdown probability, environmental hardening
 - `entities/unit_classes/ground.py` — armor, infantry, mechanized, artillery
@@ -80,6 +81,7 @@ Build the nuts and bolts first. Every phase produces runnable, testable code. Va
 - `entities/capabilities.py` — combat power assessment: weighted factors, force ratios, readiness
 
 ### 2b: Organization
+- `entities/organization/events.py` — organization events (attach, detach, task org changes)
 - `entities/organization/hierarchy.py` — configurable echelon hierarchy (nation/era-agnostic)
 - `entities/organization/echelons.py` — echelon type definitions (fire team through theater)
 - `entities/organization/task_org.py` — dynamic task organization: attach/detach, OPCON/TACON
@@ -88,6 +90,7 @@ Build the nuts and bolts first. Every phase produces runnable, testable code. Va
 - `entities/organization/special_org.py` — SOF, irregular/insurgent (cell/network), coalition/joint
 
 ### 2c: Movement
+- `movement/events.py` — movement events (waypoint reached, formation change, mount/dismount)
 - `movement/engine.py` — movement execution (terrain speed, stochastic deviation, load effects)
 - `movement/pathfinding.py` — A* route planning (terrain, obstacle, threat-aware)
 - `movement/fatigue.py` — fatigue/sleep deprivation accumulation, recovery
@@ -108,6 +111,7 @@ Build the nuts and bolts first. Every phase produces runnable, testable code. Va
 ## Phase 3: Detection & Intelligence
 **Goal**: Units become aware of each other through realistic sensor models across all domains.
 
+- `detection/events.py` — detection events (new contact, track update, track lost, identification)
 - `detection/sensors.py` — sensor models: visual, thermal, radar, acoustic, seismic, sonar (parameterized via YAML)
 - `detection/signatures.py` — unit signature profiles: visual, thermal, RCS, acoustic, EM emission
 - `detection/detection.py` — SNR-based detection probability engine (Pd, Pfa, ROC curves)
@@ -129,6 +133,7 @@ Build the nuts and bolts first. Every phase produces runnable, testable code. Va
 **Goal**: Units engage and the simulation resolves outcomes across all combat domains.
 
 ### 4a: Direct Fire & Fundamentals
+- `combat/events.py` — combat events (engagement, hit, damage, suppression, fratricide)
 - `combat/engagement.py` — engagement sequencing, target selection, range determination
 - `combat/ballistics.py` — projectile physics: trajectory, drag, wind, Coriolis (long range)
 - `combat/hit_probability.py` — P(hit): range, weapon, skill, target motion, conditions
@@ -158,6 +163,7 @@ Build the nuts and bolts first. Every phase produces runnable, testable code. Va
 - `combat/carrier_ops.py` — sortie generation, deck cycle, CAP management
 
 ### 4f: Morale & Human Factors
+- `morale/events.py` — morale events (state transition, rout, surrender, rally)
 - `morale/state.py` — Markov state machine (steady/shaken/broken/routed/surrendered)
 - `morale/cohesion.py` — unit cohesion, nearby friendlies, leadership, unit history
 - `morale/stress.py` — stress/fatigue/sleep deprivation (random walk with drift)
@@ -177,6 +183,7 @@ Build the nuts and bolts first. Every phase produces runnable, testable code. Va
 **Rationale for split**: The original Phase 5 had 27 modules (larger than Phase 4's 25). Phase 4 showed that >20 modules per phase creates API mismatch risk when parallelizing. AI decision-making (now Phase 8) also benefits from seeing logistics state (Phase 6), so deferring AI until after logistics gives it richer inputs.
 
 ### 5a: Command Authority & Communications
+- `c2/events.py` — C2 events (order issued, comms failure, authority change, succession)
 - `c2/command.py` — command authority, relationships (OPCON/TACON/ADCON/support), succession
 - `c2/communications.py` — comms reliability, bandwidth, degradation, EMCON, means (radio/wire/messenger/data link)
 - `c2/naval_c2.py` — fleet organization (TF/TG/TU), naval data links, submarine comms (VLF/ELF)
@@ -264,6 +271,8 @@ Build 2-3 scenario packs from well-documented historical engagements:
 
 **Exit Criteria**: All 2-3 engagement scenarios produce casualty exchange ratios within 2x of historical outcomes across 1000-run Monte Carlo. Major model deficiencies documented with severity. Combat parameter calibration applied. Validation infrastructure reusable for Phase 10.
 
+**Post-completion performance work**: Vectorized LOS raycasting (`los.py` + `heightmap.py` batch methods), vectorized nearest-enemy distance (`scenario_runner.py`), O(1) fog_of_war contact lookup, pathfinding cell cost cache + closed set, pre-sorted weapons. Created `tests/conftest.py` with shared fixtures for Phase 8+. Created `/simplify` and `/profile` skills. Validation tests 86s → 57s (34% faster). See `docs/devlog/phase-7.md` Post-Phase Post-Mortem.
+
 ---
 
 ## Phase 8: AI & Planning
@@ -291,6 +300,13 @@ Build 2-3 scenario packs from well-documented historical engagements:
 
 **Visualization**: OODA cycle timing, situation assessment overlay, COA comparison matrix, planning process flow
 
+**Performance tasks (deferred from Phase 7 post-mortem)**:
+- ~~Cache `SensorInstance.sensor_type` in `__init__`~~ *(completed in Phase 7 Pass 3)*
+- ~~Promote `math.sqrt(2.0)` to module-level `_SQRT_2`~~ *(completed in Phase 7 Pass 3)*
+- ~~Pre-allocate Kalman H/I₄ matrices~~ *(completed in Phase 7 Pass 3; dt-dependent F/Q still deferred)*
+- ~~Compute morale transition matrix once per side per tick~~ *(completed in Phase 7 Pass 3)*
+- Add Shapely STRtree for static infrastructure spatial queries
+
 **Exit Criteria**: AI commanders make echelon-appropriate decisions via OODA cycle, informed by doctrine templates and personality. Planning process produces COAs from mission analysis with wargaming. Commanders adapt to changing situations. Situation assessment integrates combat, logistics, intel, morale, and terrain. All reproducible from seed.
 
 ---
@@ -307,6 +323,12 @@ Build 2-3 scenario packs from well-documented historical engagements:
 - `simulation/metrics.py` — simulation output metrics, statistical aggregation, analysis hooks
 
 **Also in this phase**: multi-scale transitions (strategic graph ↔ tactical grid ↔ unit continuous), force aggregation/disaggregation, complete env→combat wiring for all domains, full checkpoint/replay validation across all modules
+
+**Performance tasks (deferred from Phase 7 post-mortem)**:
+- Add LOS result caching (per-tick cache keyed on observer/target grid cells)
+- Vectorize `visible_area` viewshed (horizon-angle sweep or van Kreveld's algorithm)
+- Add pathfinding closed set (already done) + threat cost grid pre-computation
+- Profile full campaign loop and optimize based on cProfile results
 
 **Visualization**: comprehensive multi-scale display, campaign overview, drill-down to tactical engagements
 

@@ -1,0 +1,22 @@
+weapon_id: 2a28_grom_73mm
+display_name: "2A28 Grom 73mm Smoothbore"
+category: CANNON
+caliber_mm: 73.0
+muzzle_velocity_mps: 665.0
+max_range_m: 1300.0
+min_range_m: 0.0
+rate_of_fire_rpm: 8.0
+burst_size: 1
+base_accuracy_mrad: 4.0
+guidance: NONE
+magazine_capacity: 40
+reload_time_s: 6.0
+compatible_ammo:
+  - 73mm_pg15_heat
+weight_kg: 115.0
+reliability: 0.78
+barrel_life_rounds: 1000
+requires_deployed: false
+traverse_deg: 360.0
+elevation_min_deg: -4.0
+elevation_max_deg: 33.0

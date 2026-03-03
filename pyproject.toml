@@ -27,6 +27,10 @@ dev = [
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 strict_markers = true
+addopts = "-m 'not slow'"
+markers = [
+    "slow: marks tests as slow (1000-run Monte Carlo, run explicitly with '-m slow')",
+]
 
 [tool.setuptools.packages.find]
 include = ["stochastic_warfare*"]

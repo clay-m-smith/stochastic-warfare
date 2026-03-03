@@ -109,7 +109,7 @@ class TestSignatureLoader:
         loader = SignatureLoader(DATA_DIR)
         loader.load_all()
         profiles = loader.available_profiles()
-        assert len(profiles) == 11
+        assert len(profiles) == 15
         assert "m1a2" in profiles
         assert "ssn688" in profiles
         assert "f16c" in profiles

@@ -12,7 +12,7 @@ guidance: NONE
 magazine_capacity: 230
 reload_time_s: 15.0
 compatible_ammo:
-  - 556_ball
+  - 25mm_m791_apds
 weight_kg: 109.0
 reliability: 0.90
 barrel_life_rounds: 20000

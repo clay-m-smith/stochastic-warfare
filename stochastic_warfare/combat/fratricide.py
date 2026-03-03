@@ -66,6 +66,12 @@ class FratricideEngine:
         self._event_bus = event_bus
         self._rng = rng
         self._config = config or FratricideConfig()
+        self._level_risks = {
+            "IDENTIFIED": self._config.identified_base_risk,
+            "CLASSIFIED": self._config.classified_base_risk,
+            "DETECTED": self._config.detected_only_base_risk,
+            "UNKNOWN": self._config.unknown_base_risk,
+        }
 
     def check_fratricide_risk(
         self,
@@ -98,13 +104,7 @@ class FratricideEngine:
         modifiers: dict[str, float] = {}
 
         # Base risk from identification level
-        level_risks = {
-            "IDENTIFIED": cfg.identified_base_risk,
-            "CLASSIFIED": cfg.classified_base_risk,
-            "DETECTED": cfg.detected_only_base_risk,
-            "UNKNOWN": cfg.unknown_base_risk,
-        }
-        base_risk = level_risks.get(identification_level, cfg.unknown_base_risk)
+        base_risk = self._level_risks.get(identification_level, cfg.unknown_base_risk)
         modifiers["base"] = base_risk
 
         # Confidence reduces risk

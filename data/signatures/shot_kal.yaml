@@ -1,0 +1,21 @@
+profile_id: shot_kal
+unit_type: shot_kal
+visual:
+  height_m: 3.0
+  cross_section_m2: 8.5
+  camouflage_factor: 0.75
+thermal:
+  emissivity: 0.92
+  heat_output_kw: 450.0
+  contrast_modifier: 0.85
+radar:
+  rcs_frontal_m2: 14.0
+  rcs_side_m2: 32.0
+  rcs_rear_m2: 10.0
+acoustic:
+  noise_db: 80.0
+  speed_coefficient: 2.2
+electromagnetic:
+  emitting: false
+  power_dbm: 0.0
+  frequency_ghz: 0.0

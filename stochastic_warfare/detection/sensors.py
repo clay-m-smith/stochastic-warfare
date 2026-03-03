@@ -151,6 +151,7 @@ class SensorInstance:
     ) -> None:
         self.definition = definition
         self.equipment = equipment
+        self._sensor_type = definition.parsed_sensor_type()
 
     @property
     def sensor_id(self) -> str:
@@ -158,7 +159,7 @@ class SensorInstance:
 
     @property
     def sensor_type(self) -> SensorType:
-        return self.definition.parsed_sensor_type()
+        return self._sensor_type
 
     @property
     def operational(self) -> bool:

@@ -67,6 +67,13 @@ class HitProbabilityEngine:
         self._ballistics = ballistics
         self._rng = rng
         self._config = config or HitProbabilityConfig()
+        self._posture_mods = {
+            "MOVING": 1.0,
+            "HALTED": 1.0,
+            "DEFENSIVE": 0.85,
+            "DUG_IN": 1.0 - self._config.posture_dug_in_bonus,
+            "FORTIFIED": 0.4,
+        }
 
     def compute_phit(
         self,
@@ -149,14 +156,7 @@ class HitProbabilityEngine:
         modifiers["visibility"] = vis_mod
 
         # Target posture — dug-in targets present smaller area
-        posture_mods = {
-            "MOVING": 1.0,
-            "HALTED": 1.0,
-            "DEFENSIVE": 0.85,
-            "DUG_IN": 1.0 - cfg.posture_dug_in_bonus,
-            "FORTIFIED": 0.4,
-        }
-        posture_mod = posture_mods.get(target_posture, 1.0)
+        posture_mod = self._posture_mods.get(target_posture, 1.0)
         p *= posture_mod
         modifiers["posture"] = posture_mod
 

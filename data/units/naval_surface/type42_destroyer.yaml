@@ -1,0 +1,54 @@
+unit_type: type42_destroyer
+domain: naval
+display_name: "Type 42 Destroyer"
+naval_type: DESTROYER
+max_speed: 15.4
+draft: 5.8
+displacement: 4350.0
+fuel_capacity: 400.0
+noise_signature_base: 125.0
+crew:
+  - role: COMMANDER
+    count: 1
+    skill: EXPERIENCED
+  - role: NAVIGATOR
+    count: 2
+    skill: TRAINED
+  - role: SENSOR_OPERATOR
+    count: 6
+    skill: TRAINED
+  - role: GUNNER
+    count: 4
+    skill: TRAINED
+  - role: ENGINEER
+    count: 8
+    skill: TRAINED
+  - role: GENERIC
+    count: 232
+    skill: BASIC
+equipment:
+  - name: "4.5 inch Mk 8 Naval Gun"
+    category: WEAPON
+    weight_kg: 24500.0
+    reliability: 0.88
+  - name: "Sea Dart SAM"
+    category: WEAPON
+    weight_kg: 550.0
+    reliability: 0.80
+  - name: "Rolls-Royce Olympus TM3B"
+    category: PROPULSION
+    weight_kg: 3500.0
+    reliability: 0.85
+    temperature_range: [-20.0, 45.0]
+  - name: "Type 965 Air Search Radar"
+    category: SENSOR
+    weight_kg: 2000.0
+    reliability: 0.82
+  - name: "Type 909 Fire Control Radar"
+    category: SENSOR
+    weight_kg: 800.0
+    reliability: 0.80
+  - name: "Type 184 Hull Sonar"
+    category: SENSOR
+    weight_kg: 1500.0
+    reliability: 0.78

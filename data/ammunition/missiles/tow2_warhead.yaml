@@ -1,0 +1,14 @@
+ammo_id: tow2_warhead
+display_name: "BGM-71 TOW-2 Warhead"
+ammo_type: HEAT
+mass_kg: 21.5
+diameter_mm: 152.0
+drag_coefficient: 0.35
+penetration_mm_rha: 900.0
+penetration_reference_range_m: 0.0
+blast_radius_m: 3.0
+fragmentation_radius_m: 8.0
+guidance: WIRE
+propulsion: solid_rocket
+max_speed_mps: 310.0
+unit_cost_factor: 8.0

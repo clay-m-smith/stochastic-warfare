@@ -1,0 +1,21 @@
+ammo_id: at3_sagger_warhead
+display_name: "9M14 Malyutka (AT-3 Sagger) HEAT Warhead"
+ammo_type: HEAT
+mass_kg: 2.6
+diameter_mm: 125.0
+drag_coefficient: 0.4
+penetration_mm_rha: 400.0
+penetration_reference_range_m: 0.0
+blast_radius_m: 3.0
+fragmentation_radius_m: 5.0
+guidance: WIRE
+seeker_fov_deg: 0.0
+seeker_range_m: 0.0
+pk_at_reference: 0.25
+countermeasure_susceptibility: 0.1
+propulsion: rocket
+max_speed_mps: 120.0
+flight_time_s: 25.0
+cruise_altitude_m: 1.0
+terminal_maneuver: false
+unit_cost_factor: 5.0

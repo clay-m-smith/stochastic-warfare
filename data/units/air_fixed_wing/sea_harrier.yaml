@@ -1,0 +1,28 @@
+unit_type: sea_harrier
+domain: aerial
+display_name: "Sea Harrier FRS.1"
+aerial_type: FIGHTER
+max_speed: 340.0
+service_ceiling: 15600.0
+crew:
+  - role: PILOT
+    count: 1
+    skill: EXPERIENCED
+equipment:
+  - name: "30mm ADEN"
+    category: WEAPON
+    weight_kg: 42.0
+    reliability: 0.90
+  - name: "AIM-9L Sidewinder"
+    category: WEAPON
+    weight_kg: 85.4
+    reliability: 0.88
+  - name: "Blue Fox Radar"
+    category: SENSOR
+    weight_kg: 72.0
+    reliability: 0.78
+  - name: "Pegasus Mk 104 Engine"
+    category: PROPULSION
+    weight_kg: 1541.0
+    reliability: 0.88
+    temperature_range: [-54.0, 60.0]

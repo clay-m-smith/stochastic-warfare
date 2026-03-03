@@ -1,0 +1,25 @@
+weapon_id: sea_dart
+display_name: "Sea Dart GWS-30 SAM"
+category: MISSILE_LAUNCHER
+caliber_mm: 420.0
+muzzle_velocity_mps: 1020.0
+max_range_m: 40000.0
+min_range_m: 1000.0
+min_engagement_altitude_m: 30.0
+max_engagement_altitude_m: 18300.0
+rate_of_fire_rpm: 3.0
+burst_size: 1
+base_accuracy_mrad: 0.0
+cep_m: 10.0
+guidance: RADAR_SEMI
+magazine_capacity: 22
+reload_time_s: 20.0
+compatible_ammo:
+  - sea_dart_warhead
+weight_kg: 550.0
+reliability: 0.80
+barrel_life_rounds: 0
+requires_deployed: false
+traverse_deg: 360.0
+elevation_min_deg: 0.0
+elevation_max_deg: 85.0

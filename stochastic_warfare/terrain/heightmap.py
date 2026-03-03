@@ -64,6 +64,68 @@ class Heightmap:
         col_f, row_f = self._enu_to_grid_float(pos)
         return float(self._bilinear(row_f, col_f))
 
+    def elevation_at_batch(
+        self, eastings: np.ndarray, northings: np.ndarray
+    ) -> np.ndarray:
+        """Vectorized bilinear-interpolated elevation for arrays of positions.
+
+        Parameters
+        ----------
+        eastings:
+            1-D array of easting coordinates (ENU meters).
+        northings:
+            1-D array of northing coordinates (ENU meters).
+
+        Returns
+        -------
+        1-D array of elevations.
+        """
+        nrows, ncols = self._data.shape
+        cs = self._config.cell_size
+
+        col_f = (eastings - self._config.origin_easting) / cs - 0.5
+        row_f = (northings - self._config.origin_northing) / cs - 0.5
+
+        row_f = np.clip(row_f, 0.0, nrows - 1.0)
+        col_f = np.clip(col_f, 0.0, ncols - 1.0)
+
+        r0 = np.floor(row_f).astype(int)
+        c0 = np.floor(col_f).astype(int)
+        r1 = np.minimum(r0 + 1, nrows - 1)
+        c1 = np.minimum(c0 + 1, ncols - 1)
+
+        dr = row_f - r0
+        dc = col_f - c0
+
+        v00 = self._data[r0, c0]
+        v01 = self._data[r0, c1]
+        v10 = self._data[r1, c0]
+        v11 = self._data[r1, c1]
+
+        return (
+            v00 * (1 - dr) * (1 - dc)
+            + v01 * (1 - dr) * dc
+            + v10 * dr * (1 - dc)
+            + v11 * dr * dc
+        )
+
+    def in_bounds_batch(
+        self, eastings: np.ndarray, northings: np.ndarray
+    ) -> np.ndarray:
+        """Vectorized bounds check for arrays of positions.
+
+        Returns a boolean array: True where positions fall within the grid.
+        """
+        cs = self._config.cell_size
+        col_f = (eastings - self._config.origin_easting) / cs - 0.5
+        row_f = (northings - self._config.origin_northing) / cs - 0.5
+        return (
+            (row_f >= 0)
+            & (row_f <= self._data.shape[0] - 1)
+            & (col_f >= 0)
+            & (col_f <= self._data.shape[1] - 1)
+        )
+
     def elevation_at_grid(self, row: int, col: int) -> Meters:
         """Elevation at an integer grid cell."""
         return float(self._data[row, col])

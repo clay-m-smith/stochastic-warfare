@@ -228,11 +228,7 @@ class FogOfWarManager:
                             )
 
                         # Feed to intel fusion
-                        existing_tid = None
-                        for cid, cr in wv.contacts.items():
-                            if cr.contact_id == tgt_id:
-                                existing_tid = cid
-                                break
+                        existing_tid = tgt_id if tgt_id in wv.contacts else None
 
                         tid = self._intel_fusion.submit_sensor_detection(
                             side, result, ci, obs_pos, contact_id=existing_tid,

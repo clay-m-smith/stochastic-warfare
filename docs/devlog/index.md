@@ -13,7 +13,7 @@ Rolling record of implementation decisions, changes, and lessons learned across 
 | 4 | Combat Resolution & Morale | **Complete** | [phase-4.md](phase-4.md) |
 | 5 | C2 Infrastructure | **Complete** | [phase-5.md](phase-5.md) |
 | 6 | Logistics & Supply | **Complete** | [phase-6.md](phase-6.md) |
-| 7 | Engagement Validation | Not started | — |
+| 7 | Engagement Validation | **Complete** | [phase-7.md](phase-7.md) |
 | 8 | AI & Planning | Not started | — |
 | 9 | Simulation Orchestration | Not started | — |
 | 10 | Campaign Validation | Not started | — |
@@ -59,6 +59,16 @@ Known limitations and deferred improvements logged during implementation. Review
 | 6 | No local water procurement (always from rear depots) | [phase-6.md — Known Limitations](phase-6.md#known-limitations) |
 | 6 | No ammunition production (scenario-defined depots only) | [phase-6.md — Known Limitations](phase-6.md#known-limitations) |
 | 6 | VLS non-reloadable-at-sea enforcement deferred to naval combat integration | [phase-6.md — Known Limitations](phase-6.md#known-limitations) |
+| 7 | 73 Easting exchange_ratio = inf (detection asymmetry prevents blue losses) | [phase-7.md — Known Limitations](phase-7.md#known-limitations--post-mvp-refinements) |
+| 7 | No fire rate limiting (units fire once per tick regardless of ROF) | [phase-7.md — Known Limitations](phase-7.md#known-limitations--post-mvp-refinements) |
+| 7 | Uniform target_size_modifier (applies to both sides equally) | [phase-7.md — Known Limitations](phase-7.md#known-limitations--post-mvp-refinements) |
+| 7 | No wave attack modeling (all units advance simultaneously) | [phase-7.md — Known Limitations](phase-7.md#known-limitations--post-mvp-refinements) |
+| 7 | Pre-scripted behavior only (no tactical AI, deferred to Phase 8) | [phase-7.md — Known Limitations](phase-7.md#known-limitations--post-mvp-refinements) |
+| 7 | Falklands simplified — Sheffield attack only, no San Carlos raids | [phase-7.md — Known Limitations](phase-7.md#known-limitations--post-mvp-refinements) |
+| 7 | Synthetic terrain (programmatic heightmaps, not real topographic data) | [phase-7.md — Known Limitations](phase-7.md#known-limitations--post-mvp-refinements) |
+| 7 | No logistics in validation scenarios (short engagements) | [phase-7.md — Known Limitations](phase-7.md#known-limitations--post-mvp-refinements) |
+| 7 | No C2 propagation in validation (direct behavior, no order chain) | [phase-7.md — Known Limitations](phase-7.md#known-limitations--post-mvp-refinements) |
+| 7 | Simplified force compositions (representative samples, not complete OOB) | [phase-7.md — Known Limitations](phase-7.md#known-limitations--post-mvp-refinements) |
 
 ## Conventions
 

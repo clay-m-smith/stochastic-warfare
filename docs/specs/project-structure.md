@@ -12,7 +12,7 @@ stochastic-warfare/
 ├── README.md
 ├── .claude/
 │   ├── settings.json                 # Project hooks
-│   └── skills/                       # Claude skills (8 total)
+│   └── skills/                       # Claude skills (11 total)
 ├── docs/
 │   ├── brainstorm.md                 # Architecture decisions & rationale
 │   ├── development-phases.md         # Development roadmap
@@ -68,6 +68,7 @@ stochastic-warfare/
 │           ├── forces/               # OOB and initial dispositions per side (land, air, naval)
 │           └── objectives/           # Victory conditions and ROE
 ├── tests/
+│   ├── conftest.py                   # Shared fixtures (rng, event_bus, sim_clock) + helpers
 │   ├── unit/                         # Fast, isolated unit tests
 │   ├── integration/                  # Multi-module integration tests
 │   └── validation/                   # Historical backtest scenarios
@@ -79,7 +80,7 @@ stochastic-warfare/
     │   ├── __init__.py
     │   ├── rng.py                    # Central RNG manager, stream forking
     │   ├── clock.py                  # Simulation clock, tick management, calendar-aware (real date/time, UTC)
-    │   ├── events.py                 # Event system (within-tick event queue)
+    │   ├── events.py                 # Event system (MRO-based publish dispatch, within-tick event queue)
     │   ├── config.py                 # YAML config loading, pydantic base models
     │   ├── checkpoint.py             # State serialization, checkpoint/restore
     │   ├── logging.py                # Project logging setup
@@ -91,13 +92,13 @@ stochastic-warfare/
     │   └── magnetic.py              # Magnetic declination model (WMM), compass navigation corrections
     ├── terrain/                      # Terrain representation & analysis
     │   ├── __init__.py
-    │   ├── heightmap.py              # DEM loading, elevation queries, slope, aspect
+    │   ├── heightmap.py              # DEM loading, elevation queries (scalar + batch), slope, aspect
     │   ├── classification.py         # Land cover, soil type, trafficability, concealment vs cover
     │   ├── hydrography.py            # Rivers (depth, current, ford points), lakes, flooding, watersheds
     │   ├── infrastructure.py         # Roads, bridges, rail, buildings (type, height, construction), utilities, tunnels
     │   ├── obstacles.py              # Natural (ravines, cliffs) and man-made (minefields, barriers, wire, ditches)
     │   ├── population.py             # Civilian population density, disposition (friendly/neutral/hostile)
-    │   ├── los.py                    # Line-of-sight and line-of-fire computation (terrain + structures)
+    │   ├── los.py                    # Line-of-sight (vectorized ray march + scalar fallback for buildings)
     │   ├── bathymetry.py             # Ocean/sea floor depth, bottom type (affects sonar, mine placement)
     │   ├── maritime_geography.py     # Coastline, ports, harbors, straits, chokepoints, sea lanes, anchorages
     │   └── strategic_map.py          # Graph-based strategic terrain (nodes + edges — includes sea zones and maritime routes)
@@ -152,11 +153,11 @@ stochastic-warfare/
     ├── detection/                    # Intelligence, sensors, & fog of war
     │   ├── __init__.py
     │   ├── events.py                 # Detection events (contact gained/lost, track update, ID change)
-    │   ├── sensors.py                # Sensor models (visual, thermal, radar, acoustic, seismic)
+    │   ├── sensors.py                # Sensor models (visual, thermal, radar, acoustic, seismic); cached sensor_type
     │   ├── signatures.py             # Unit signature profiles: visual, thermal, radar cross-section, acoustic, EM emission
     │   ├── detection.py              # SNR-based detection probability engine (Pd, Pfa, ROC)
     │   ├── identification.py         # Classification & ID confidence (detected → classified → identified)
-    │   ├── estimation.py             # Kalman/particle filter state estimation (belief state)
+    │   ├── estimation.py             # Kalman filter state estimation (pre-alloc H/I₄ matrices, belief state)
     │   ├── intel_fusion.py           # Multi-source intelligence fusion (SIGINT, HUMINT, IMINT, sensor data)
     │   ├── deception.py              # Decoys, feints, false signals, camouflage effectiveness
     │   ├── sonar.py                  # Sonar models: active/passive, towed array, hull-mounted, sonobuoy, dipping
@@ -244,6 +245,12 @@ stochastic-warfare/
     │   ├── naval_logistics.py         # Underway replenishment (UNREP/RAS), port operations, sealift, LOTS
     │   ├── naval_basing.py           # Naval bases, forward operating bases, anchorage, port capacity/throughput
     │   └── disruption.py             # Interdiction, route destruction, sabotage, blockade
+    ├── validation/                    # Engagement validation (Phase 7)
+    │   ├── __init__.py
+    │   ├── historical_data.py         # Historical engagement data models + YAML loader
+    │   ├── metrics.py                 # Engagement-level metric extraction from simulation results
+    │   ├── scenario_runner.py         # Lightweight tick-loop orchestrator for validation scenarios
+    │   └── monte_carlo.py             # Monte Carlo harness: N iterations, statistics, historical comparison
     └── simulation/                   # Top-level simulation orchestration
         ├── __init__.py
         ├── engine.py                 # Master simulation loop (hybrid tick + event)

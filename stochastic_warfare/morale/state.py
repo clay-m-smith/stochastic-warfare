@@ -133,6 +133,10 @@ class MoraleStateMachine:
         self._rng = rng
         self._config = config or MoraleConfig()
         self._unit_states: dict[str, UnitMoraleState] = {}
+        # Last-result cache for compute_transition_matrix (same-side units
+        # share identical parameters within a tick)
+        self._cached_matrix_key: tuple[float, ...] | None = None
+        self._cached_matrix: np.ndarray | None = None
 
     def _get_unit_state(self, unit_id: str) -> UnitMoraleState:
         """Get or create morale state for a unit."""
@@ -169,6 +173,9 @@ class MoraleStateMachine:
             5x5 row-stochastic transition matrix.
         """
         cfg = self._config
+        key = (casualty_rate, suppression_level, float(leadership_present), cohesion, force_ratio)
+        if self._cached_matrix_key == key and self._cached_matrix is not None:
+            return self._cached_matrix
         n = len(MoraleState)
         matrix = np.zeros((n, n), dtype=np.float64)
 
@@ -220,6 +227,8 @@ class MoraleStateMachine:
                 matrix[i, i - 1] = p_up
             matrix[i, i] = 1.0 - p_down - p_up
 
+        self._cached_matrix_key = key
+        self._cached_matrix = matrix
         return matrix
 
     def check_transition(
@@ -230,8 +239,15 @@ class MoraleStateMachine:
         leadership_present: bool,
         cohesion: float,
         force_ratio: float,
+        timestamp: datetime | None = None,
     ) -> MoraleState:
         """Check for a morale state transition.
+
+        Parameters
+        ----------
+        timestamp:
+            Simulation clock time for the event.  Falls back to
+            ``datetime.now(UTC)`` if not provided (legacy callers).
 
         Returns the (possibly new) morale state.
         """
@@ -261,8 +277,9 @@ class MoraleStateMachine:
             logger.debug(
                 "Unit %s morale: %s -> %s", unit_id, old_state.name, new_state.name,
             )
+            ts = timestamp if timestamp is not None else datetime.now(tz=timezone.utc)
             self._event_bus.publish(MoraleStateChangeEvent(
-                timestamp=datetime.now(tz=timezone.utc),
+                timestamp=ts,
                 source=ModuleId.MORALE,
                 unit_id=unit_id,
                 old_state=int(old_state),
@@ -274,7 +291,7 @@ class MoraleStateMachine:
     @staticmethod
     def apply_morale_effects(state: MoraleState) -> dict[str, float]:
         """Return effectiveness multipliers for the given morale state."""
-        return dict(_MORALE_EFFECTS[state])
+        return _MORALE_EFFECTS[state]
 
     # ------------------------------------------------------------------
     # State

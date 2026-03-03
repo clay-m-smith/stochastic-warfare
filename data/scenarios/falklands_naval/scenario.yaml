@@ -1,0 +1,101 @@
+name: "Falklands Naval — Sheffield Exocet Attack"
+date: "1982-05-04T14:00:00Z"
+duration_hours: 0.25
+tick_duration_seconds: 2.0
+latitude: -51.8
+longitude: -59.0
+
+weather_conditions:
+  visibility_m: 15000
+  wind_speed_mps: 10.0
+  wind_direction_deg: 240
+  temperature_c: 5.0
+  precipitation: none
+  cloud_cover: 0.6
+  humidity: 0.70
+  sea_state: 4
+
+blue_forces:
+  side: blue
+  units:
+    - unit_type: type42_destroyer
+      count: 2
+    - unit_type: type22_frigate
+      count: 2
+    - unit_type: sea_harrier
+      count: 4
+  personnel_total: 1200
+  experience_level: 0.7
+  morale_initial: STEADY
+
+red_forces:
+  side: red
+  units:
+    - unit_type: super_etendard
+      count: 2
+  personnel_total: 2
+  experience_level: 0.7
+  morale_initial: STEADY
+
+terrain:
+  width_m: 100000
+  height_m: 100000
+  cell_size_m: 1000.0
+  base_elevation_m: 0.0
+  terrain_type: open_ocean
+
+documented_outcomes:
+  - name: blue_ships_sunk
+    value: 1.0
+    tolerance_factor: 2.0
+    unit: "ships"
+    source: "Freedman, *The Official History of the Falklands Campaign*"
+    source_quality: 0
+    notes: "HMS Sheffield sunk by Exocet"
+  - name: missiles_hit_ratio
+    value: 0.5
+    tolerance_factor: 2.0
+    unit: "ratio"
+    source: "Falklands Campaign records"
+    source_quality: 1
+    notes: "1 hit out of 2 launched (Sheffield attack)"
+
+calibration_overrides:
+  hit_probability_modifier: 1.0
+  target_size_modifier: 1.0
+  morale_degrade_rate_modifier: 0.1
+  morale_force_ratio_weight: 0.0
+  morale_base_degrade_rate: 0.005
+  morale_casualty_weight: 0.3
+  morale_check_interval: 50
+  blue_force_ratio_modifier: 1.0
+  red_force_ratio_modifier: 4.0
+  blue_cohesion: 0.9
+  red_cohesion: 0.9
+  # Positions — Super Etendards approach from ~40km (within Exocet range).
+  # Short engagement window: fire and egress.
+  blue_start_x: 50000.0
+  blue_start_y: 50000.0
+  red_start_x: 90000.0
+  red_start_y: 50000.0
+  weapon_assignments:
+    "AM.39 Exocet": am39_exocet
+    "Sea Dart SAM": sea_dart
+    "Sea Wolf SAM": sea_dart
+    "4.5 inch Mk 8 Naval Gun": mk45_5inch
+    "30mm ADEN": m61a1_vulcan
+    "DEFA 553 30mm Cannon": m61a1_vulcan
+    "AIM-9L Sidewinder": aim9x_sidewinder
+
+behavior_rules:
+  blue:
+    hold_position: true
+    engagement_range_m: 40000
+  red:
+    advance_speed_mps: 300.0
+    engagement_range_m: 45000
+
+sources:
+  - "Freedman, Lawrence. *The Official History of the Falklands Campaign*"
+  - "Woodward, Sandy. *One Hundred Days*"
+  - "Clapp, Michael and Southby-Tailyour, Ewen. *Amphibious Assault Falklands*"

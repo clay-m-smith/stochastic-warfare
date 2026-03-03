@@ -3,7 +3,7 @@
 ## Project Overview
 High-fidelity, high-resolution wargame simulator. Multi-scale (campaign → battlefield → battle → unit level) with stochastic/signal-processing-inspired models (Markov chains, Monte Carlo, Kalman filters, noise models, queueing theory). Headless Python engine first; matplotlib for validation; full UI deferred. Modern era (Cold War–present) as prototype. Maritime warfare fully integrated, not deferred.
 
-**Current status**: Phase 6 complete (Logistics & Supply). 2,451 tests passing. Next: Phase 7 (Engagement Validation).
+**Current status**: Phase 7 complete (Engagement Validation). 2,639 tests passing. Next: Phase 8 (AI & Planning).
 
 ## Package Management
 **Use `uv` exclusively.** Never use bare `pip install`. Always use `uv add`, `uv sync`, etc. Direct `pip` may target system Python instead of the project venv.
@@ -17,7 +17,8 @@ Do NOT use `source .venv/Scripts/activate` — use `uv run` instead.
 
 ## Running Tests
 ```bash
-uv run python -m pytest --tb=short -q
+uv run python -m pytest --tb=short -q          # default: excludes @pytest.mark.slow
+uv run python -m pytest -m slow --tb=short -q   # 1000-run MC validation only
 ```
 
 ## Architecture
@@ -49,6 +50,10 @@ Layered hybrid — graph (strategic), grid (operational/tactical), continuous (u
 - **Logging**: `from stochastic_warfare.core.logging import get_logger; logger = get_logger(__name__)` — no bare `print()` in sim core.
 - **Type hints**: Required on all public API functions.
 
+## Testing
+- **Shared fixtures**: `tests/conftest.py` provides `rng`, `event_bus`, `sim_clock`, `rng_manager` fixtures + `make_rng()`, `make_clock()`, `make_stream()` helpers. Use for all new test files (Phase 8+).
+- Existing test files have their own local helpers — no need to migrate.
+
 ## Development Process
 - Development phases defined in `docs/development-phases.md` (Phase 0–10 + future)
 - Devlog: `docs/devlog/` — one markdown file per phase, living documents. Update the relevant phase log when completing work.
@@ -69,6 +74,7 @@ Layered hybrid — graph (strategic), grid (operational/tactical), continuous (u
 | `/design-review` | Review module design against military theory and architecture |
 | `/cross-doc-audit` | Verify alignment across development-phases, project-structure, brainstorm, devlog |
 | `/simplify` | Review changed code for reuse, quality, and efficiency |
+| `/profile` | Performance profiling — cProfile analysis, hotspot identification, benchmarking |
 
 ## Documentation Map
 | Document | Purpose |
@@ -143,5 +149,14 @@ No new dependencies.
 - **Modified** (1 file): entities/capabilities.py — added `supply_state_override` parameter
 
 Key features: NATO supply classification (9 classes), environment-coupled consumption rates, networkx supply network with pull-based routing, log-normal transport delays, Poisson equipment breakdown model, M/M/c medical priority queue with overwhelm dynamics, engineering terrain modification, POW handling, naval UNREP/port ops/LOTS/sealift, interdiction/blockade/sabotage disruption, combat power degrades with supply depletion, deterministic replay from seed.
+
+No new dependencies.
+
+### Phase 7: Engagement Validation (188 tests)
+5 new source modules + ~30 YAML data files + 3 scenario packs:
+- **Validation** (5 modules): historical_data, metrics, scenario_runner, monte_carlo, `__init__`
+- **YAML data** (~30 files): 10 unit definitions (m1a1, t72m, shot_kal, t55a, t62, bmp1, m3a2_bradley, type42_destroyer, type22_frigate, sea_harrier, super_etendard), 9 weapon/ammo definitions, 1 sensor (active_ir_sight), 4 signature profiles, 3 scenario packs (73_easting, falklands_naval, golan_heights)
+
+Key features: Historical engagement data loader (YAML), lightweight scenario runner with pre-scripted behavior, Monte Carlo harness with statistical comparison, deferred damage resolution (simultaneous fire), weather-independent sensor handling (thermal/radar bypass visibility), per-scenario calibration overrides, 3 validated historical engagements (73 Easting, Falklands Naval, Golan Heights), validation infrastructure reusable for Phase 10.
 
 No new dependencies.

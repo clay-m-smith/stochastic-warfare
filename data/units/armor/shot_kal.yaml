@@ -1,0 +1,42 @@
+unit_type: shot_kal
+domain: ground
+display_name: "Sho't Kal (Centurion) MBT"
+ground_type: ARMOR
+max_speed: 12.5
+armor_front: 152.0
+armor_side: 51.0
+crew:
+  - role: COMMANDER
+    count: 1
+    skill: TRAINED
+  - role: GUNNER
+    count: 1
+    skill: TRAINED
+  - role: LOADER
+    count: 1
+    skill: TRAINED
+  - role: DRIVER
+    count: 1
+    skill: TRAINED
+equipment:
+  - name: "L7 105mm Rifled Gun"
+    category: WEAPON
+    weight_kg: 1282.0
+    reliability: 0.90
+  - name: "M2HB .50 Cal"
+    category: WEAPON
+    weight_kg: 38.0
+    reliability: 0.92
+  - name: "Continental AVDS-1790 Diesel"
+    category: PROPULSION
+    weight_kg: 750.0
+    reliability: 0.82
+    temperature_range: [-30.0, 50.0]
+  - name: "Urdan Cupola Sight"
+    category: SENSOR
+    weight_kg: 25.0
+    reliability: 0.85
+  - name: "Blazer ERA Armor"
+    category: PROTECTION
+    weight_kg: 1000.0
+    reliability: 0.95

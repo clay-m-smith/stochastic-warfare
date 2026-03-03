@@ -1,0 +1,42 @@
+unit_type: t55a
+domain: ground
+display_name: "T-55A Main Battle Tank"
+ground_type: ARMOR
+max_speed: 13.9
+armor_front: 200.0
+armor_side: 80.0
+crew:
+  - role: COMMANDER
+    count: 1
+    skill: BASIC
+  - role: GUNNER
+    count: 1
+    skill: BASIC
+  - role: LOADER
+    count: 1
+    skill: BASIC
+  - role: DRIVER
+    count: 1
+    skill: BASIC
+equipment:
+  - name: "D-10T 100mm Rifled Gun"
+    category: WEAPON
+    weight_kg: 1948.0
+    reliability: 0.82
+  - name: "SGMT 7.62mm Coaxial"
+    category: WEAPON
+    weight_kg: 9.0
+    reliability: 0.85
+  - name: "V-55 Diesel Engine"
+    category: PROPULSION
+    weight_kg: 680.0
+    reliability: 0.75
+    temperature_range: [-30.0, 45.0]
+  - name: "TSh2B-32P Gunner Sight"
+    category: SENSOR
+    weight_kg: 20.0
+    reliability: 0.75
+  - name: "Cast Steel Turret"
+    category: PROTECTION
+    weight_kg: 2000.0
+    reliability: 0.99

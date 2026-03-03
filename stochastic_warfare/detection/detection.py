@@ -60,6 +60,9 @@ class DetectionConfig(BaseModel):
 
 _BOLTZMANN_K = 1.380649e-23  # J/K
 _C = 299_792_458.0  # m/s
+_SQRT_2 = math.sqrt(2.0)
+_FOUR_PI_CUBED = (4.0 * math.pi) ** 3
+_BOLTZMANN_290_1E6 = _BOLTZMANN_K * 290.0 * 1e6
 
 
 def _clamp(v: float, lo: float, hi: float) -> float:
@@ -200,7 +203,7 @@ class DetectionEngine:
         gt_linear = 10.0 ** (gt_dbi / 10.0)
 
         numerator = pt * gt_linear * gt_linear * wavelength * wavelength * effective_rcs
-        denominator = (4.0 * math.pi) ** 3 * range_m ** 4 * _BOLTZMANN_K * 290.0 * 1e6
+        denominator = _FOUR_PI_CUBED * range_m ** 4 * _BOLTZMANN_290_1E6
 
         if denominator <= 0:
             return -100.0
@@ -256,7 +259,7 @@ class DetectionEngine:
         Clamped to [0, 1].
         """
         excess = snr_db - threshold_db
-        pd = float(0.5 * erfc(-excess / math.sqrt(2.0)))
+        pd = float(0.5 * erfc(-excess / _SQRT_2))
         return _clamp(pd, 0.0, 1.0)
 
     @staticmethod
@@ -265,7 +268,7 @@ class DetectionEngine:
 
         Pfa = 0.5 * erfc(threshold / sqrt(2))
         """
-        pfa = float(0.5 * erfc(threshold_db / math.sqrt(2.0)))
+        pfa = float(0.5 * erfc(threshold_db / _SQRT_2))
         return _clamp(pfa, 0.0, 1.0)
 
     # ------------------------------------------------------------------
