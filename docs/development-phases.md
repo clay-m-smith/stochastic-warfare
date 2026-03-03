@@ -65,7 +65,7 @@ Build the nuts and bolts first. Every phase produces runnable, testable code. Va
 
 ---
 
-## Phase 2: Entities, Organization & Movement
+## Phase 2: Entities, Organization & Movement ✅
 **Goal**: Define what simulation entities ARE, how they're organized, and how they move.
 
 ### 2a: Entity System
@@ -108,7 +108,7 @@ Build the nuts and bolts first. Every phase produces runnable, testable code. Va
 
 ---
 
-## Phase 3: Detection & Intelligence
+## Phase 3: Detection & Intelligence ✅
 **Goal**: Units become aware of each other through realistic sensor models across all domains.
 
 - `detection/events.py` — detection events (new contact, track update, track lost, identification)
@@ -129,7 +129,7 @@ Build the nuts and bolts first. Every phase produces runnable, testable code. Va
 
 ---
 
-## Phase 4: Combat Resolution
+## Phase 4: Combat Resolution ✅
 **Goal**: Units engage and the simulation resolves outcomes across all combat domains.
 
 ### 4a: Direct Fire & Fundamentals
@@ -177,7 +177,7 @@ Build the nuts and bolts first. Every phase produces runnable, testable code. Va
 
 ---
 
-## Phase 5: C2 Infrastructure
+## Phase 5: C2 Infrastructure ✅
 **Goal**: Orders flow through a chain of command with realistic delays, degradation, and constraints. The plumbing — not the brains.
 
 **Rationale for split**: The original Phase 5 had 27 modules (larger than Phase 4's 25). Phase 4 showed that >20 modules per phase creates API mismatch risk when parallelizing. AI decision-making (now Phase 8) also benefits from seeing logistics state (Phase 6), so deferring AI until after logistics gives it richer inputs.
@@ -210,7 +210,7 @@ Build the nuts and bolts first. Every phase produces runnable, testable code. Va
 
 ---
 
-## Phase 6: Logistics & Supply
+## Phase 6: Logistics & Supply ✅
 **Goal**: Sustaining the force — armies need beans, bullets, fuel, and maintenance.
 
 ### 6a: Supply Network & Consumption
@@ -243,7 +243,7 @@ Build the nuts and bolts first. Every phase produces runnable, testable code. Va
 
 ---
 
-## Phase 7: Engagement Validation
+## Phase 7: Engagement Validation ✅
 **Goal**: Prove the combat model produces realistic results BEFORE building AI on top of it. Early validation catches calibration issues while fixes are cheap.
 
 **Rationale**: With Phases 0-6 complete, we have terrain, weather, entities, movement, detection, combat, morale, C2 plumbing, and logistics — everything needed to run realistic engagement-level scenarios without AI commanders. Validating now means the AI (Phase 8) is built on a proven combat foundation.
@@ -338,19 +338,21 @@ Build 2-3 scenario packs from well-documented historical engagements:
 
 ---
 
-## Phase 10: Full Campaign Validation & Backtesting
+## Phase 10: Full Campaign Validation & Backtesting ✅
 **Goal**: Prove the complete simulation produces realistic campaign-level results.
 
-Building on Phase 7's engagement-level validation infrastructure and calibration:
+Building on Phase 7's engagement-level validation infrastructure and Phase 9's simulation engine:
 
-- Expand scenario packs to full campaign duration (multi-day operations with logistics, C2, reinforcement)
-- Add campaign-level metrics: logistics throughput, C2 effectiveness, operational tempo, culminating points
-- Run Monte Carlo validation campaigns with AI commanders
-- Compare campaign-level outcomes against historical analysis
-- Validate AI decision quality (does it make defensible choices given the situation?)
-- Performance profiling and optimization for campaign-length runs
+5 new source modules + 2 modified + 2 campaign YAML scenarios + 9 test files (196 tests):
+- **Campaign Data** (1 module): `campaign_data.py` — `HistoricalCampaign` model, `AIExpectation`, `CampaignDataLoader`
+- **Campaign Runner** (1 module): `campaign_runner.py` — wraps `ScenarioLoader` + `SimulationEngine`
+- **Campaign Metrics** (1 module): `campaign_metrics.py` — campaign-level metric extraction
+- **AI Validation** (1 module): `ai_validation.py` — AI decision quality analysis from recorder events
+- **Performance** (1 module): `performance.py` — cProfile + tracemalloc campaign profiling
+- **Monte Carlo** (modified): `monte_carlo.py` + `CampaignMonteCarloHarness`
+- **Scenarios** (2 YAML): Golan Heights 4-day campaign, Falklands San Carlos 5-day campaign
 
-**Exit Criteria**: Simulation produces statistically plausible outcomes for at least 2-3 historical scenarios at campaign scale across domains (land and naval). AI commanders make contextually appropriate decisions. Model deficiencies documented with severity. Performance acceptable for campaign-length runs.
+**Exit Criteria**: ✅ Simulation produces statistically plausible outcomes for 2 historical scenarios at campaign scale across domains (land: Golan Heights, naval: Falklands). AI commanders make contextually appropriate decisions validated via recorder events. Model deficiencies documented with severity in devlog. Performance acceptable for campaign-length runs (profiler integrated).
 
 ---
 
@@ -522,3 +524,8 @@ Every non-`__init__` module file from `project-structure.md` and its phase assig
 | `simulation/victory.py` | 9 |
 | `simulation/recorder.py` | 9 |
 | `simulation/metrics.py` | 9 |
+| `validation/campaign_data.py` | 10 |
+| `validation/campaign_runner.py` | 10 |
+| `validation/campaign_metrics.py` | 10 |
+| `validation/ai_validation.py` | 10 |
+| `validation/performance.py` | 10 |

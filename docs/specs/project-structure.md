@@ -1,6 +1,6 @@
 # Project Structure & Module Decomposition
-**Status**: Draft
-**Last Updated**: 2026-03-02
+**Status**: Complete (MVP)
+**Last Updated**: 2026-03-03
 
 ---
 
@@ -73,7 +73,9 @@ stochastic-warfare/
 │       ├── test_campaign/           # Phase 9: Minimal campaign test (2 sides, 1 objective, 24h)
 │       ├── test_campaign_multi/     # Phase 9: Multiple engagement points (2 objectives, 48h)
 │       ├── test_campaign_reinforce/ # Phase 9: Reinforcement schedule test (3 waves)
-│       └── test_campaign_logistics/ # Phase 9: Supply chain emphasis (multiple depots, 72h)
+│       ├── test_campaign_logistics/ # Phase 9: Supply chain emphasis (multiple depots, 72h)
+│       ├── golan_campaign/         # Phase 10: Golan Heights 4-day campaign validation
+│       └── falklands_campaign/     # Phase 10: Falklands San Carlos 5-day campaign validation
 ├── tests/
 │   ├── conftest.py                   # Shared fixtures (rng, event_bus, sim_clock) + helpers
 │   ├── unit/                         # Fast, isolated unit tests
@@ -252,12 +254,17 @@ stochastic-warfare/
     │   ├── naval_logistics.py         # Underway replenishment (UNREP/RAS), port operations, sealift, LOTS
     │   ├── naval_basing.py           # Naval bases, forward operating bases, anchorage, port capacity/throughput
     │   └── disruption.py             # Interdiction, route destruction, sabotage, blockade
-    ├── validation/                    # Engagement validation (Phase 7)
+    ├── validation/                    # Engagement + campaign validation (Phase 7, 10)
     │   ├── __init__.py
     │   ├── historical_data.py         # Historical engagement data models + YAML loader
     │   ├── metrics.py                 # Engagement-level metric extraction from simulation results
     │   ├── scenario_runner.py         # Lightweight tick-loop orchestrator for validation scenarios
-    │   └── monte_carlo.py             # Monte Carlo harness: N iterations, statistics, historical comparison
+    │   ├── monte_carlo.py             # Monte Carlo harness: engagement + campaign, N iterations, statistics
+    │   ├── campaign_data.py           # Campaign-level historical data models, AIExpectation, CampaignDataLoader
+    │   ├── campaign_runner.py         # Campaign runner wrapping ScenarioLoader + SimulationEngine
+    │   ├── campaign_metrics.py        # Campaign-level metric extraction (units destroyed, exchange ratio, etc.)
+    │   ├── ai_validation.py           # AI decision quality analysis from recorder events
+    │   └── performance.py             # cProfile + tracemalloc campaign performance profiling
     └── simulation/                   # Top-level simulation orchestration
         ├── __init__.py
         ├── engine.py                 # Master simulation loop (hybrid tick + event)

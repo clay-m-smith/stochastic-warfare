@@ -16,7 +16,7 @@ Rolling record of implementation decisions, changes, and lessons learned across 
 | 7 | Engagement Validation | **Complete** | [phase-7.md](phase-7.md) |
 | 8 | AI & Planning | **Complete** | [phase-8.md](phase-8.md) |
 | 9 | Simulation Orchestration | **Complete** | [phase-9.md](phase-9.md) |
-| 10 | Campaign Validation | Not started | — |
+| 10 | Campaign Validation | **Complete** | [phase-10.md](phase-10.md) |
 
 ## Post-MVP Refinement Index
 
@@ -88,6 +88,15 @@ Known limitations and deferred improvements logged during implementation. Review
 | 9 | No weather evolution mid-campaign beyond WeatherEngine.step() | [phase-9.md — Known Limitations](phase-9.md#known-limitations--post-mvp-refinements) |
 | 9 | Viewshed vectorization deferred (lower priority) | [phase-9.md — Known Limitations](phase-9.md#known-limitations--post-mvp-refinements) |
 | 9 | STRtree for infrastructure spatial queries still deferred | [phase-9.md — Known Limitations](phase-9.md#known-limitations--post-mvp-refinements) |
+| 10 | No fire rate limiting — units fire once per tick regardless of ROF (inherited) | [phase-10.md — Known Limitations](phase-10.md#known-limitations--post-mvp-refinements) |
+| 10 | No wave attack modeling — all red units advance simultaneously (inherited) | [phase-10.md — Known Limitations](phase-10.md#known-limitations--post-mvp-refinements) |
+| 10 | Campaign AI decisions coarse — OODA at echelon timing, may not produce tactical posture changes in short runs | [phase-10.md — Known Limitations](phase-10.md#known-limitations--post-mvp-refinements) |
+| 10 | Simplified force compositions — representative samples, not complete historical OOB | [phase-10.md — Known Limitations](phase-10.md#known-limitations--post-mvp-refinements) |
+| 10 | Synthetic terrain — programmatic heightmaps, not real topographic data | [phase-10.md — Known Limitations](phase-10.md#known-limitations--post-mvp-refinements) |
+| 10 | Fixed reinforcement schedule — deterministic arrival, no stochastic variation | [phase-10.md — Known Limitations](phase-10.md#known-limitations--post-mvp-refinements) |
+| 10 | No force aggregation/disaggregation — all units individually tracked | [phase-10.md — Known Limitations](phase-10.md#known-limitations--post-mvp-refinements) |
+| 10 | AI expectation matching approximate — string-based posture detection | [phase-10.md — Known Limitations](phase-10.md#known-limitations--post-mvp-refinements) |
+| 10 | Campaign metrics proxy territory control via survival fraction not spatial | [phase-10.md — Known Limitations](phase-10.md#known-limitations--post-mvp-refinements) |
 
 ## Conventions
 

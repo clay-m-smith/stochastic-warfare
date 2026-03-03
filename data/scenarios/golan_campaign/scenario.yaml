@@ -1,0 +1,200 @@
+name: "Golan Heights Campaign (Oct 6-10, 1973)"
+date: "1973-10-06T14:00:00Z"
+duration_hours: 96.0
+latitude: 33.1
+longitude: 35.8
+
+tick_resolution:
+  strategic_s: 3600
+  operational_s: 300
+  tactical_s: 5
+
+weather_conditions:
+  visibility_m: 3000
+  wind_speed_mps: 3.0
+  wind_direction_deg: 180
+  temperature_c: 22.0
+  precipitation: none
+  cloud_cover: 0.2
+  humidity: 0.40
+
+terrain:
+  width_m: 15000
+  height_m: 20000
+  cell_size_m: 100.0
+  base_elevation_m: 900.0
+  terrain_type: hilly_defense
+  features:
+    - type: ridge
+      position: [3000, 0]
+      params:
+        height_m: 80.0
+        width_m: 300.0
+    - type: ridge
+      position: [7000, 0]
+      params:
+        height_m: 60.0
+        width_m: 250.0
+    - type: ridge
+      position: [11000, 0]
+      params:
+        height_m: 50.0
+        width_m: 200.0
+    - type: berm
+      position: [3000, 10000]
+      params:
+        height_m: 3.0
+        radius_m: 100.0
+
+sides:
+  - side: blue
+    units:
+      - unit_type: shot_kal
+        count: 40
+    experience_level: 0.7
+    morale_initial: STEADY
+    commander_profile: cautious_infantry
+    doctrine_template: generic_defense
+    depots:
+      - depot_id: blue_rear_depot
+        position: [500, 10000]
+        capacity_tons: 2000
+        throughput_tons_per_hour: 100.0
+
+  - side: red
+    units:
+      - unit_type: t55a
+        count: 100
+      - unit_type: t62
+        count: 100
+      - unit_type: bmp1
+        count: 50
+        overrides:
+          armor_front: 33.0
+    experience_level: 0.4
+    morale_initial: STEADY
+    commander_profile: aggressive_armor
+    doctrine_template: russian_deep_operations
+
+objectives:
+  - objective_id: southern_ridge
+    position: [3000, 5000]
+    radius_m: 1000
+    type: territory
+  - objective_id: central_valley
+    position: [7500, 10000]
+    radius_m: 1000
+    type: key_terrain
+  - objective_id: northern_ridge
+    position: [3000, 15000]
+    radius_m: 1000
+    type: territory
+
+victory_conditions:
+  - type: territory_control
+    side: red
+    params:
+      threshold: 1.0
+  - type: force_destroyed
+    side: ""
+    params:
+      threshold: 0.7
+  - type: time_expired
+    side: blue
+    params:
+      max_duration_s: 345600
+  - type: morale_collapsed
+    side: ""
+
+reinforcements:
+  - side: blue
+    arrival_time_s: 129600  # 36 hours
+    units:
+      - unit_type: m1a1
+        count: 20
+    position: [500, 8000]
+  - side: blue
+    arrival_time_s: 259200  # 72 hours
+    units:
+      - unit_type: m1a1
+        count: 20
+    position: [500, 12000]
+
+calibration_overrides:
+  hit_probability_modifier: 1.0
+  target_size_modifier: 0.55
+  thermal_contrast: 0.8
+  morale_degrade_rate_modifier: 0.2
+  morale_force_ratio_weight: 0.05
+  morale_base_degrade_rate: 0.005
+  morale_base_recover_rate: 0.15
+  morale_casualty_weight: 0.3
+  morale_check_interval: 30
+  blue_force_ratio_modifier: 4.0
+  red_force_ratio_modifier: 1.0
+  blue_cohesion: 0.95
+  red_cohesion: 0.5
+  destruction_threshold: 0.5
+  blue_start_x: 1000.0
+  blue_start_y: 10000.0
+  red_start_x: 14000.0
+  red_start_y: 10000.0
+  weapon_assignments:
+    "L7 105mm Rifled Gun": l7_105mm
+    "D-10T 100mm Rifled Gun": d10t_100mm
+    "U-5TS 115mm Smoothbore": u5ts_115mm
+    "73mm 2A28 Grom": 2a28_grom_73mm
+    "AT-3 Sagger ATGM": at3_sagger
+    "M256 120mm Smoothbore": m256_120mm
+
+documented_outcomes:
+  - name: red_units_destroyed
+    value: 1100.0
+    tolerance_factor: 3.0
+    unit: tanks
+    source: "Rabinovich, *The Yom Kippur War*"
+    source_quality: 1
+    notes: "Total Syrian armor losses over 4 days — includes all destroyed/abandoned"
+  - name: blue_units_destroyed
+    value: 250.0
+    tolerance_factor: 3.0
+    unit: tanks
+    source: "7th Armored Brigade records"
+    source_quality: 1
+    notes: "Israeli tank losses over 4 days — mostly replacement crews in same hulls"
+  - name: campaign_duration_s
+    value: 345600.0
+    tolerance_factor: 1.5
+    unit: seconds
+    source: "IDF historical records"
+    source_quality: 1
+    notes: "4 days of fighting"
+
+ai_expectations:
+  - side: red
+    time_range_s: [0, 172800]
+    expected_posture: attack
+    description: "Syrian forces attack aggressively Days 1-2"
+    tolerance: moderate
+  - side: red
+    time_range_s: [172800, 259200]
+    expected_posture: defend
+    description: "Syrian advance culminates Day 3 — transition to defense"
+    tolerance: loose
+  - side: blue
+    time_range_s: [0, 172800]
+    expected_posture: defend
+    description: "Israeli forces defend ridgelines Days 1-2"
+    tolerance: moderate
+  - side: blue
+    time_range_s: [259200, 345600]
+    expected_posture: attack
+    description: "Israeli counterattack Day 4 after reserves arrive"
+    tolerance: loose
+
+sources:
+  - "Rabinovich, Abraham. *The Yom Kippur War*"
+  - "Asher, Jerry. *Duel for the Golan*"
+  - "Herzog, Chaim. *The War of Atonement*"
+  - "7th Armored Brigade After-Action Reports"
+  - "Dunstan, Simon. *The Yom Kippur War: The Epic Encounter That Transformed the Middle East*"

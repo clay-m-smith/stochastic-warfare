@@ -3,10 +3,17 @@
 ## Project Overview
 High-fidelity, high-resolution wargame simulator. Multi-scale (campaign → battlefield → battle → unit level) with stochastic/signal-processing-inspired models (Markov chains, Monte Carlo, Kalman filters, noise models, queueing theory). Headless Python engine first; matplotlib for validation; full UI deferred. Modern era (Cold War–present) as prototype. Maritime warfare fully integrated, not deferred.
 
-**Current status**: Phase 9 complete (Simulation Orchestration). 3,586 tests passing. Next: Phase 10 (Campaign Validation).
+**Current status**: Phase 10 complete (Campaign Validation). 3,782 tests passing. MVP complete — all phases 0-10 delivered.
 
-## Package Management
+## Python & Package Management
+**Requires Python >=3.12** (pinned to 3.12.10 via `.python-version`).
+
 **Use `uv` exclusively.** Never use bare `pip install`. Always use `uv add`, `uv sync`, etc. Direct `pip` may target system Python instead of the project venv.
+
+Setup from scratch:
+```bash
+uv sync --extra dev    # creates .venv, installs all deps including pytest/matplotlib
+```
 
 Use `uv run` to execute all Python commands — this automatically uses the correct venv without manual activation:
 ```bash
@@ -178,5 +185,15 @@ No new dependencies.
 - **YAML data** (4 files): 4 test campaign scenarios (test_campaign, test_campaign_multi, test_campaign_reinforce, test_campaign_logistics)
 
 Key features: Master simulation engine with tick resolution switching (STRATEGIC 3600s / OPERATIONAL 300s / TACTICAL 5s), campaign scenario YAML loader wiring all 11 domain modules into SimulationContext, VictoryEvaluator with 5 condition types (territory_control, force_destroyed, time_expired, morale_collapsed, supply_exhausted), BattleManager with full tactical loop (detection → AI → orders → movement → engagement → deferred damage → morale → supply), CampaignManager for strategic ticks (reinforcements → supply network → strategic AI → maintenance → engagement detection), SimulationRecorder subscribing to Event base class via MRO dispatch, CampaignMetrics for post-run analysis (force strength/supply/objective time series, engagement outcomes, campaign summary), per-tick LOS result caching, pathfinding threat cost caching, checkpoint/restore across all engines, deterministic replay from seed.
+
+No new dependencies.
+
+### Phase 10: Campaign Validation (196 tests)
+5 new source modules + 2 modified + 2 YAML campaign scenarios:
+- **Validation** (5 modules): campaign_data, campaign_runner, campaign_metrics, ai_validation, performance
+- **Modified** (2 files): monte_carlo.py (+ CampaignMonteCarloHarness), __init__.py (updated docstring)
+- **YAML data** (2 files): Golan Heights 4-day campaign, Falklands San Carlos 5-day campaign
+
+Key features: Campaign-level historical data model (HistoricalCampaign wraps CampaignScenarioConfig + documented_outcomes + ai_expectations), CampaignRunner wrapping ScenarioLoader + SimulationEngine for single-call campaign execution, CampaignValidationMetrics extracting flat metric dicts (units destroyed, exchange ratio, duration, territory control, ships sunk), CampaignMonteCarloHarness extending MC infrastructure for campaign-level N-iteration runs with process-parallel support, AIDecisionValidator extracting AI events from recorder and matching against expected postures (attack/defend/withdraw/culminate) with configurable tolerance (strict/moderate/loose), PerformanceProfiler wrapping cProfile + tracemalloc for wall-clock time, realtime ratio, ticks/second, peak memory, and top hotspots, 2 validated historical campaigns (Golan Heights land + Falklands naval), model deficiency report with severity ratings, deterministic replay from seed.
 
 No new dependencies.

@@ -12,7 +12,7 @@ Established the foundational infrastructure that every subsequent phase builds o
 ## What Was Built
 
 ### Package & Build (Step 1)
-- `pyproject.toml` — PEP 621, setuptools backend, Python >=3.11
+- `pyproject.toml` — PEP 621, setuptools backend, Python >=3.12 (bumped from >=3.11 post-MVP)
 - Dependencies: numpy, scipy, pydantic, pyproj, pyyaml
 - Dev deps: pytest, pytest-cov, matplotlib
 - **Environment**: uv-managed venv (`.venv/`), not global install

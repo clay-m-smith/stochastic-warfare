@@ -1,8 +1,9 @@
-"""Monte Carlo harness for engagement validation.
+"""Monte Carlo harness for engagement and campaign validation.
 
 Runs N iterations of a scenario with different PRNG seeds, collects
 per-run metrics, and compares aggregate statistics against historical
-outcomes.
+outcomes.  Supports both engagement-level (:class:`MonteCarloHarness`)
+and campaign-level (:class:`CampaignMonteCarloHarness`) validation.
 """
 
 from __future__ import annotations
@@ -301,6 +302,135 @@ class MonteCarloHarness:
         with ProcessPoolExecutor(max_workers=workers) as executor:
             for i, result in enumerate(executor.map(_run_single_iteration, args_list)):
                 logger.info("MC run %d/%d complete (seed=%d)", i + 1, len(seeds), result.seed)
+                run_results.append(result)
+
+        return run_results
+
+
+# ---------------------------------------------------------------------------
+# Campaign Monte Carlo — top-level picklable iteration function
+# ---------------------------------------------------------------------------
+
+
+def _run_campaign_iteration(args: tuple[Any, ...]) -> RunResult:
+    """Execute one campaign MC iteration in a worker process.
+
+    Top-level function so it can be pickled by :class:`ProcessPoolExecutor`.
+    Each worker constructs its own :class:`CampaignRunner` to avoid shared state.
+    """
+    from stochastic_warfare.validation.campaign_data import HistoricalCampaign
+    from stochastic_warfare.validation.campaign_metrics import CampaignValidationMetrics
+    from stochastic_warfare.validation.campaign_runner import (
+        CampaignRunner,
+        CampaignRunnerConfig,
+    )
+
+    runner_config_dict, campaign_dict, seed, blue_side, red_side = args
+    runner_config = CampaignRunnerConfig.model_validate(runner_config_dict)
+    campaign = HistoricalCampaign.model_validate(campaign_dict)
+    runner = CampaignRunner(runner_config)
+    result = runner.run(campaign, seed=seed)
+    metrics = CampaignValidationMetrics.extract_all(result, blue_side, red_side)
+    return RunResult(seed=seed, metrics=metrics, terminated_by=result.terminated_by)
+
+
+# ---------------------------------------------------------------------------
+# Campaign Monte Carlo Harness
+# ---------------------------------------------------------------------------
+
+
+class CampaignMonteCarloHarness:
+    """Run N campaign iterations and collect statistics.
+
+    Campaign analog of :class:`MonteCarloHarness`.  Wraps
+    :class:`CampaignRunner` in a Monte Carlo loop with per-iteration
+    PRNG seeds.
+
+    Parameters
+    ----------
+    runner:
+        CampaignRunner to execute each iteration (used for serial mode).
+    config:
+        Monte Carlo configuration.  Set ``max_workers > 1`` to run
+        iterations in parallel using :class:`ProcessPoolExecutor`.
+    """
+
+    def __init__(
+        self,
+        runner: Any,
+        config: MonteCarloConfig | None = None,
+    ) -> None:
+        self._runner = runner
+        self._config = config or MonteCarloConfig()
+
+    def run(
+        self,
+        campaign: Any,
+        blue_side: str = "blue",
+        red_side: str = "red",
+    ) -> MonteCarloResult:
+        """Execute *num_iterations* campaign runs and return collected results."""
+        n = self._config.num_iterations
+        seeds = [self._config.base_seed + i for i in range(n)]
+
+        if self._config.max_workers > 1:
+            run_results = self._run_parallel(campaign, seeds, blue_side, red_side)
+        else:
+            run_results = self._run_serial(campaign, seeds, blue_side, red_side)
+
+        logger.info("Campaign MC complete: %d runs", len(run_results))
+        return MonteCarloResult(run_results)
+
+    def _run_serial(
+        self,
+        campaign: Any,
+        seeds: list[int],
+        blue_side: str,
+        red_side: str,
+    ) -> list[RunResult]:
+        """Run campaign iterations sequentially."""
+        from stochastic_warfare.validation.campaign_metrics import CampaignValidationMetrics
+
+        run_results: list[RunResult] = []
+        n = len(seeds)
+        for i, seed in enumerate(seeds):
+            logger.info("Campaign MC run %d/%d (seed=%d)", i + 1, n, seed)
+            result = self._runner.run(campaign, seed=seed)
+            metrics = CampaignValidationMetrics.extract_all(result, blue_side, red_side)
+            run_results.append(
+                RunResult(seed=seed, metrics=metrics, terminated_by=result.terminated_by)
+            )
+        return run_results
+
+    def _run_parallel(
+        self,
+        campaign: Any,
+        seeds: list[int],
+        blue_side: str,
+        red_side: str,
+    ) -> list[RunResult]:
+        """Run campaign iterations in parallel."""
+        workers = min(self._config.max_workers, len(seeds), os.cpu_count() or 1)
+        logger.info(
+            "Campaign MC parallel: %d iterations across %d workers",
+            len(seeds), workers,
+        )
+
+        runner_cfg_dict = self._runner._config.model_dump()
+        campaign_dict = campaign.model_dump()
+
+        args_list = [
+            (runner_cfg_dict, campaign_dict, seed, blue_side, red_side)
+            for seed in seeds
+        ]
+
+        run_results: list[RunResult] = []
+        with ProcessPoolExecutor(max_workers=workers) as executor:
+            for i, result in enumerate(executor.map(_run_campaign_iteration, args_list)):
+                logger.info(
+                    "Campaign MC run %d/%d complete (seed=%d)",
+                    i + 1, len(seeds), result.seed,
+                )
                 run_results.append(result)
 
         return run_results
