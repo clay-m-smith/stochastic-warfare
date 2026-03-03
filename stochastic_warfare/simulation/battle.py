@@ -1,0 +1,650 @@
+"""Tactical battle manager — detection, engagement, and AI resolution.
+
+Orchestrates the per-tick tactical loop for active engagements.
+Evolves Phase 7's ``ScenarioRunner._run_tick()`` with AI commanders
+replacing pre-scripted behavior and full C2/logistics integration.
+No domain logic lives here — only sequencing and data routing.
+"""
+
+from __future__ import annotations
+
+import math
+from dataclasses import dataclass, field
+from datetime import datetime
+from typing import Any
+
+import numpy as np
+from pydantic import BaseModel
+
+from stochastic_warfare.core.events import EventBus
+from stochastic_warfare.core.logging import get_logger
+from stochastic_warfare.core.types import ModuleId, Position
+from stochastic_warfare.entities.base import Unit, UnitStatus
+from stochastic_warfare.detection.sensors import SensorType
+
+logger = get_logger(__name__)
+
+# Sensor types that bypass visual weather degradation
+_WEATHER_BYPASS_TYPES: frozenset[SensorType] = frozenset({
+    SensorType.THERMAL,
+    SensorType.RADAR,
+    SensorType.ESM,
+})
+
+
+# ---------------------------------------------------------------------------
+# Configuration
+# ---------------------------------------------------------------------------
+
+
+class BattleConfig(BaseModel):
+    """Tuning parameters for the battle manager."""
+
+    engagement_range_m: float = 10000.0
+    morale_check_interval: int = 12
+    destruction_threshold: float = 0.5
+    disable_threshold: float = 0.3
+    default_visibility_m: float = 10000.0
+    max_ticks_per_battle: int = 50000
+
+
+# ---------------------------------------------------------------------------
+# Data structures
+# ---------------------------------------------------------------------------
+
+
+@dataclass
+class BattleContext:
+    """Tracks state for one active battle."""
+
+    battle_id: str
+    start_tick: int
+    start_time: datetime
+    involved_sides: list[str]
+    active: bool = True
+    ticks_executed: int = 0
+    # Track which units are involved in this battle
+    unit_ids: set[str] = field(default_factory=set)
+
+
+@dataclass(frozen=True)
+class BattleResult:
+    """Outcome of a resolved battle."""
+
+    battle_id: str
+    duration_ticks: int
+    terminated_by: str
+    units_destroyed: dict[str, int] = field(default_factory=dict)
+    units_routing: dict[str, int] = field(default_factory=dict)
+
+
+# ---------------------------------------------------------------------------
+# Battle Manager
+# ---------------------------------------------------------------------------
+
+
+class BattleManager:
+    """Manages tactical-level battle resolution.
+
+    Orchestrates the full tactical loop per tick: detection → AI →
+    orders → movement → engagement → morale → supply consumption.
+
+    Parameters
+    ----------
+    event_bus : EventBus
+        For publishing battle events.
+    config : BattleConfig | None
+        Tuning parameters.
+    """
+
+    def __init__(
+        self,
+        event_bus: EventBus,
+        config: BattleConfig | None = None,
+    ) -> None:
+        self._bus = event_bus
+        self._config = config or BattleConfig()
+        self._battles: dict[str, BattleContext] = {}
+        self._next_battle_id = 0
+
+    # ── Engagement detection ────────────────────────────────────────
+
+    def detect_engagement(
+        self,
+        units_by_side: dict[str, list[Unit]],
+        engagement_range_m: float | None = None,
+    ) -> list[BattleContext]:
+        """Detect new engagements based on proximity between opposing forces.
+
+        Returns newly created :class:`BattleContext` instances for each
+        detected engagement (forces within engagement range).
+        """
+        eng_range = engagement_range_m or self._config.engagement_range_m
+        sides = list(units_by_side.keys())
+        new_battles: list[BattleContext] = []
+
+        for i, side_a in enumerate(sides):
+            for side_b in sides[i + 1:]:
+                active_a = [u for u in units_by_side[side_a] if u.status == UnitStatus.ACTIVE]
+                active_b = [u for u in units_by_side[side_b] if u.status == UnitStatus.ACTIVE]
+                if not active_a or not active_b:
+                    continue
+
+                # Check if any pair is within engagement range
+                min_dist = self._min_distance(active_a, active_b)
+                if min_dist <= eng_range:
+                    # Check if these sides already have an active battle
+                    pair = frozenset({side_a, side_b})
+                    already_active = any(
+                        frozenset(b.involved_sides) == pair and b.active
+                        for b in self._battles.values()
+                    )
+                    if not already_active:
+                        battle = BattleContext(
+                            battle_id=f"battle_{self._next_battle_id:04d}",
+                            start_tick=0,
+                            start_time=datetime.now(),
+                            involved_sides=[side_a, side_b],
+                            unit_ids={u.entity_id for u in active_a + active_b},
+                        )
+                        self._next_battle_id += 1
+                        self._battles[battle.battle_id] = battle
+                        new_battles.append(battle)
+                        logger.info(
+                            "New battle detected: %s (%s vs %s), min distance %.0fm",
+                            battle.battle_id, side_a, side_b, min_dist,
+                        )
+
+        return new_battles
+
+    # ── Tactical tick ───────────────────────────────────────────────
+
+    def execute_tick(
+        self,
+        ctx: Any,  # SimulationContext
+        battle: BattleContext,
+        dt: float,
+    ) -> None:
+        """Execute one tactical tick for a battle.
+
+        Sequences: detection → AI → orders → movement → engagement →
+        morale → supply.  All domain logic delegated to engines in *ctx*.
+
+        Parameters
+        ----------
+        ctx:
+            SimulationContext with all engines and state.
+        battle:
+            Active battle to advance.
+        dt:
+            Tick duration in seconds.
+        """
+        if not battle.active:
+            return
+
+        battle.ticks_executed += 1
+        units_by_side = ctx.units_by_side
+        cal = ctx.calibration
+        timestamp = ctx.clock.current_time
+
+        # 1. Pre-build per-side active enemy lists and position arrays
+        active_enemies, enemy_pos_arrays = self._build_enemy_data(units_by_side)
+
+        # 2. AI OODA loop update → completions trigger assess/decide
+        if ctx.ooda_engine is not None:
+            completions = ctx.ooda_engine.update(dt, ts=timestamp)
+            self._process_ooda_completions(ctx, completions, timestamp)
+
+        # 3. Order execution update
+        if ctx.order_execution is not None:
+            ctx.order_execution.update(dt)
+
+        # 4. Movement — units with active movement orders
+        # (For now, simple advance toward enemy centroid for units without AI)
+        self._execute_movement(ctx, units_by_side, active_enemies, dt)
+
+        # 5. Engagement — detection + combat
+        pending_damage = self._execute_engagements(
+            ctx, units_by_side, active_enemies, enemy_pos_arrays, dt, timestamp,
+        )
+
+        # 6. Apply deferred damage
+        self._apply_deferred_damage(pending_damage)
+
+        # 7. Morale checks
+        if battle.ticks_executed % self._config.morale_check_interval == 0:
+            self._execute_morale(ctx, units_by_side, active_enemies, timestamp)
+
+        # 8. Supply consumption (combat rate)
+        if ctx.consumption_engine is not None and ctx.stockpile_manager is not None:
+            self._execute_supply_consumption(ctx, units_by_side, dt)
+
+    # ── Battle termination ──────────────────────────────────────────
+
+    def check_battle_termination(
+        self,
+        battle: BattleContext,
+        units_by_side: dict[str, list[Unit]],
+    ) -> bool:
+        """Check if a battle should terminate.
+
+        A battle ends when:
+        - One side has no active units
+        - Max ticks exceeded
+        - All opposing forces are out of engagement range
+        """
+        if not battle.active:
+            return True
+
+        if battle.ticks_executed >= self._config.max_ticks_per_battle:
+            battle.active = False
+            return True
+
+        for side in battle.involved_sides:
+            units = units_by_side.get(side, [])
+            active = [u for u in units if u.status == UnitStatus.ACTIVE]
+            if not active:
+                battle.active = False
+                return True
+
+        # Check if forces are still in range
+        sides = battle.involved_sides
+        if len(sides) >= 2:
+            active_a = [u for u in units_by_side.get(sides[0], []) if u.status == UnitStatus.ACTIVE]
+            active_b = [u for u in units_by_side.get(sides[1], []) if u.status == UnitStatus.ACTIVE]
+            if active_a and active_b:
+                min_dist = self._min_distance(active_a, active_b)
+                if min_dist > self._config.engagement_range_m * 2.0:
+                    battle.active = False
+                    return True
+
+        return False
+
+    def resolve_battle(self, battle: BattleContext, units_by_side: dict[str, list[Unit]]) -> BattleResult:
+        """Finalize a terminated battle and produce a result."""
+        battle.active = False
+        destroyed: dict[str, int] = {}
+        routing: dict[str, int] = {}
+
+        for side in battle.involved_sides:
+            units = units_by_side.get(side, [])
+            destroyed[side] = sum(1 for u in units if u.status == UnitStatus.DESTROYED)
+            routing[side] = sum(1 for u in units if u.status == UnitStatus.ROUTING)
+
+        terminated_by = "force_destroyed"
+        for side in battle.involved_sides:
+            active = [u for u in units_by_side.get(side, []) if u.status == UnitStatus.ACTIVE]
+            if not active:
+                terminated_by = f"force_destroyed_{side}"
+                break
+        else:
+            if battle.ticks_executed >= self._config.max_ticks_per_battle:
+                terminated_by = "max_ticks"
+            else:
+                terminated_by = "disengaged"
+
+        return BattleResult(
+            battle_id=battle.battle_id,
+            duration_ticks=battle.ticks_executed,
+            terminated_by=terminated_by,
+            units_destroyed=destroyed,
+            units_routing=routing,
+        )
+
+    # ── State persistence ───────────────────────────────────────────
+
+    def get_state(self) -> dict[str, Any]:
+        """Capture battle manager state for checkpointing."""
+        return {
+            "battles": {
+                bid: {
+                    "battle_id": b.battle_id,
+                    "start_tick": b.start_tick,
+                    "start_time": b.start_time.isoformat(),
+                    "involved_sides": b.involved_sides,
+                    "active": b.active,
+                    "ticks_executed": b.ticks_executed,
+                    "unit_ids": list(b.unit_ids),
+                }
+                for bid, b in self._battles.items()
+            },
+            "next_battle_id": self._next_battle_id,
+        }
+
+    def set_state(self, state: dict[str, Any]) -> None:
+        """Restore battle manager state from checkpoint."""
+        self._next_battle_id = state.get("next_battle_id", 0)
+        self._battles.clear()
+        for bid, bdata in state.get("battles", {}).items():
+            self._battles[bid] = BattleContext(
+                battle_id=bdata["battle_id"],
+                start_tick=bdata["start_tick"],
+                start_time=datetime.fromisoformat(bdata["start_time"]),
+                involved_sides=bdata["involved_sides"],
+                active=bdata["active"],
+                ticks_executed=bdata["ticks_executed"],
+                unit_ids=set(bdata.get("unit_ids", [])),
+            )
+
+    @property
+    def active_battles(self) -> list[BattleContext]:
+        """Return all currently active battles."""
+        return [b for b in self._battles.values() if b.active]
+
+    # ── Private helpers ─────────────────────────────────────────────
+
+    @staticmethod
+    def _min_distance(units_a: list[Unit], units_b: list[Unit]) -> float:
+        """Compute minimum distance between any pair of units."""
+        if not units_a or not units_b:
+            return float("inf")
+        pos_a = np.array(
+            [(u.position.easting, u.position.northing) for u in units_a],
+            dtype=np.float64,
+        )
+        pos_b = np.array(
+            [(u.position.easting, u.position.northing) for u in units_b],
+            dtype=np.float64,
+        )
+        # Broadcast distance computation
+        diffs = pos_a[:, np.newaxis, :] - pos_b[np.newaxis, :, :]
+        dists = np.sqrt(np.sum(diffs * diffs, axis=2))
+        return float(np.min(dists))
+
+    @staticmethod
+    def _build_enemy_data(
+        units_by_side: dict[str, list[Unit]],
+    ) -> tuple[dict[str, list[Unit]], dict[str, np.ndarray]]:
+        """Pre-build per-side active enemy lists and position arrays."""
+        active_enemies: dict[str, list[Unit]] = {}
+        enemy_pos_arrays: dict[str, np.ndarray] = {}
+
+        for side in units_by_side:
+            enemies: list[Unit] = []
+            for other_side, other_units in units_by_side.items():
+                if other_side != side:
+                    enemies.extend(u for u in other_units if u.status == UnitStatus.ACTIVE)
+            active_enemies[side] = enemies
+            if enemies:
+                enemy_pos_arrays[side] = np.array(
+                    [(e.position.easting, e.position.northing) for e in enemies],
+                    dtype=np.float64,
+                )
+            else:
+                enemy_pos_arrays[side] = np.empty((0, 2), dtype=np.float64)
+
+        return active_enemies, enemy_pos_arrays
+
+    def _process_ooda_completions(
+        self,
+        ctx: Any,
+        completions: list[tuple[str, Any]],
+        timestamp: datetime,
+    ) -> None:
+        """Handle OODA phase completions — trigger assessment/decision."""
+        from stochastic_warfare.c2.ai.ooda import OODAPhase
+
+        for unit_id, completed_phase in completions:
+            if completed_phase == OODAPhase.OBSERVE:
+                # Run situation assessment
+                if ctx.assessor is not None:
+                    side = self._find_unit_side(ctx, unit_id)
+                    if side:
+                        friendly = len(ctx.active_units(side))
+                        enemies = sum(
+                            len(ctx.active_units(s))
+                            for s in ctx.side_names()
+                            if s != side
+                        )
+                        ctx.assessor.assess(
+                            unit_id=unit_id,
+                            echelon=5,
+                            friendly_units=friendly,
+                            friendly_power=float(friendly),
+                            morale_level=0.7,
+                            supply_level=1.0,
+                            c2_effectiveness=1.0,
+                            contacts=enemies,
+                            enemy_power=float(enemies),
+                            ts=timestamp,
+                        )
+            elif completed_phase == OODAPhase.DECIDE:
+                # Run decision engine
+                if ctx.decision_engine is not None:
+                    ctx.decision_engine.decide(
+                        unit_id=unit_id,
+                        echelon=5,
+                        assessment=None,
+                        personality=None,
+                        doctrine=None,
+                        ts=timestamp,
+                    )
+
+    def _execute_movement(
+        self,
+        ctx: Any,
+        units_by_side: dict[str, list[Unit]],
+        active_enemies: dict[str, list[Unit]],
+        dt: float,
+    ) -> None:
+        """Execute movement for all active units."""
+        for side, units in units_by_side.items():
+            enemies = active_enemies.get(side, [])
+            if not enemies:
+                continue
+            # Compute enemy centroid
+            cx = sum(e.position.easting for e in enemies) / len(enemies)
+            cy = sum(e.position.northing for e in enemies) / len(enemies)
+
+            for u in units:
+                if u.status != UnitStatus.ACTIVE or u.speed <= 0:
+                    continue
+                dx = cx - u.position.easting
+                dy = cy - u.position.northing
+                dist = math.sqrt(dx * dx + dy * dy)
+                if dist < 1.0:
+                    continue
+                move_dist = min(u.speed * dt, dist)
+                nx = u.position.easting + (dx / dist) * move_dist
+                ny = u.position.northing + (dy / dist) * move_dist
+                object.__setattr__(u, "position", Position(nx, ny, u.position.altitude))
+
+    def _execute_engagements(
+        self,
+        ctx: Any,
+        units_by_side: dict[str, list[Unit]],
+        active_enemies: dict[str, list[Unit]],
+        enemy_pos_arrays: dict[str, np.ndarray],
+        dt: float,
+        timestamp: datetime,
+    ) -> list[tuple[Unit, UnitStatus]]:
+        """Run detection + engagement for all units. Returns deferred damage."""
+        pending_damage: list[tuple[Unit, UnitStatus]] = []
+        cal = ctx.calibration
+        visibility_m = cal.get("visibility_m", self._config.default_visibility_m)
+        hit_prob_mod = cal.get("hit_probability_modifier", 1.0)
+        target_size_mod = cal.get("target_size_modifier", 1.0)
+
+        if ctx.engagement_engine is None:
+            return pending_damage
+
+        for side_name, side_units in units_by_side.items():
+            enemies = active_enemies.get(side_name, [])
+            pos_arr = enemy_pos_arrays.get(side_name, np.empty((0, 2)))
+
+            for attacker in side_units:
+                if attacker.status != UnitStatus.ACTIVE:
+                    continue
+                weapons = ctx.unit_weapons.get(attacker.entity_id, [])
+                if not weapons or pos_arr.shape[0] == 0:
+                    continue
+
+                # Find closest enemy (vectorized)
+                att_pos = np.array([attacker.position.easting, attacker.position.northing])
+                diffs = pos_arr - att_pos
+                dists = np.sqrt(np.sum(diffs * diffs, axis=1))
+                best_idx = int(np.argmin(dists))
+                best_range = float(dists[best_idx])
+                best_target = enemies[best_idx]
+
+                # Detection check
+                detection_range = visibility_m
+                weather_independent = False
+                sensors = ctx.unit_sensors.get(attacker.entity_id, [])
+                for sensor in sensors:
+                    if sensor.effective_range > detection_range:
+                        detection_range = sensor.effective_range
+                        if sensor.sensor_type in _WEATHER_BYPASS_TYPES:
+                            weather_independent = True
+
+                if best_range > detection_range:
+                    continue
+
+                vis_mod = 1.0 if weather_independent else (min(visibility_m / best_range, 1.0) if best_range > 0 else 1.0)
+
+                # Engage with best weapon
+                for wpn_inst, ammo_defs in weapons:
+                    if not ammo_defs:
+                        continue
+                    ammo_def = ammo_defs[0]
+                    ammo_id = ammo_def.ammo_id
+                    if not wpn_inst.can_fire(ammo_id):
+                        continue
+                    if wpn_inst.definition.max_range_m > 0 and best_range > wpn_inst.definition.max_range_m:
+                        continue
+
+                    target_armor = getattr(best_target, "armor_front", 0.0)
+                    crew_count = len(best_target.personnel) if best_target.personnel else 4
+
+                    # Find side config for crew skill
+                    side_cfg = None
+                    for sc in ctx.config.sides:
+                        if sc.side == side_name:
+                            side_cfg = sc
+                            break
+                    crew_skill = (side_cfg.experience_level if side_cfg else 0.5) * hit_prob_mod
+
+                    result = ctx.engagement_engine.execute_engagement(
+                        attacker_id=attacker.entity_id,
+                        target_id=best_target.entity_id,
+                        shooter_pos=attacker.position,
+                        target_pos=best_target.position,
+                        weapon=wpn_inst,
+                        ammo_id=ammo_id,
+                        ammo_def=ammo_def,
+                        crew_skill=crew_skill,
+                        target_size_m2=8.5 * target_size_mod,
+                        target_armor_mm=target_armor,
+                        crew_count=crew_count,
+                        visibility=vis_mod,
+                        timestamp=timestamp,
+                    )
+
+                    if (result.engaged and result.hit_result
+                            and result.hit_result.hit and result.damage_result
+                            and result.damage_result.damage_fraction > 0):
+                        if result.damage_result.damage_fraction >= self._config.destruction_threshold:
+                            pending_damage.append((best_target, UnitStatus.DESTROYED))
+                        elif result.damage_result.damage_fraction >= self._config.disable_threshold:
+                            pending_damage.append((best_target, UnitStatus.DISABLED))
+
+                    break  # One engagement per unit per tick
+
+        return pending_damage
+
+    @staticmethod
+    def _apply_deferred_damage(pending_damage: list[tuple[Unit, UnitStatus]]) -> None:
+        """Apply deferred damage — worst outcome wins per unit."""
+        applied: dict[str, UnitStatus] = {}
+        for target, new_status in pending_damage:
+            prev = applied.get(target.entity_id)
+            if prev is None or new_status.value > prev.value:
+                applied[target.entity_id] = new_status
+
+        for target, new_status in pending_damage:
+            if applied.get(target.entity_id) == new_status:
+                object.__setattr__(target, "status", new_status)
+                applied.pop(target.entity_id, None)
+
+    def _execute_morale(
+        self,
+        ctx: Any,
+        units_by_side: dict[str, list[Unit]],
+        active_enemies: dict[str, list[Unit]],
+        timestamp: datetime,
+    ) -> None:
+        """Run morale checks for all active/routing units."""
+        if ctx.morale_machine is None:
+            return
+
+        cal = ctx.calibration
+        morale_degrade_mod = cal.get("morale_degrade_rate_modifier", 1.0)
+
+        for side_name, side_units in units_by_side.items():
+            total = len(side_units)
+            destroyed = sum(
+                1 for u in side_units
+                if u.status in (UnitStatus.DESTROYED, UnitStatus.SURRENDERED)
+            )
+            casualty_rate = destroyed / total if total > 0 else 0.0
+
+            enemies = active_enemies.get(side_name, [])
+            active_own = sum(1 for u in side_units if u.status == UnitStatus.ACTIVE)
+            active_enemy = len(enemies)
+            force_ratio = active_own / active_enemy if active_enemy > 0 else 10.0
+
+            cohesion = cal.get(f"{side_name}_cohesion", 0.7)
+
+            for u in side_units:
+                if u.status not in (UnitStatus.ACTIVE, UnitStatus.ROUTING):
+                    continue
+                from stochastic_warfare.morale.state import MoraleState
+
+                new_morale = ctx.morale_machine.check_transition(
+                    unit_id=u.entity_id,
+                    casualty_rate=casualty_rate * morale_degrade_mod,
+                    suppression_level=0.0,
+                    leadership_present=True,
+                    cohesion=cohesion,
+                    force_ratio=force_ratio,
+                    timestamp=timestamp,
+                )
+                ctx.morale_states[u.entity_id] = new_morale
+
+                if new_morale == MoraleState.ROUTED:
+                    object.__setattr__(u, "status", UnitStatus.ROUTING)
+                elif new_morale == MoraleState.SURRENDERED:
+                    object.__setattr__(u, "status", UnitStatus.SURRENDERED)
+
+    def _execute_supply_consumption(
+        self,
+        ctx: Any,
+        units_by_side: dict[str, list[Unit]],
+        dt: float,
+    ) -> None:
+        """Consume supplies for active units during combat."""
+        dt_hours = dt / 3600.0
+        for side_units in units_by_side.values():
+            for u in side_units:
+                if u.status != UnitStatus.ACTIVE:
+                    continue
+                personnel = len(u.personnel) if u.personnel else 4
+                equipment = len(u.equipment) if u.equipment else 1
+                try:
+                    result = ctx.consumption_engine.compute_consumption(
+                        personnel_count=personnel,
+                        equipment_count=equipment,
+                        base_fuel_rate_per_hour=10.0,
+                        activity=3,  # COMBAT
+                        dt_hours=dt_hours,
+                    )
+                except Exception:
+                    pass  # Non-critical — don't halt battle over supply math
+
+    @staticmethod
+    def _find_unit_side(ctx: Any, unit_id: str) -> str:
+        """Find which side a unit belongs to."""
+        for side, units in ctx.units_by_side.items():
+            if any(u.entity_id == unit_id for u in units):
+                return side
+        return ""

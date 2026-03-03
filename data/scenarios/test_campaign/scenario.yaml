@@ -1,0 +1,73 @@
+name: "Test Campaign — Minimal"
+date: "2024-06-15T12:00:00Z"
+duration_hours: 24
+latitude: 32.0
+longitude: 44.0
+
+tick_resolution:
+  strategic_s: 3600
+  operational_s: 300
+  tactical_s: 5
+
+weather_conditions:
+  visibility_m: 10000
+  wind_speed_mps: 3.0
+  temperature_c: 35.0
+
+terrain:
+  width_m: 10000
+  height_m: 10000
+  cell_size_m: 100
+  terrain_type: "flat_desert"
+
+sides:
+  - side: "blue"
+    units:
+      - unit_type: "m1a2"
+        count: 4
+    experience_level: 0.8
+    morale_initial: "STEADY"
+    commander_profile: "aggressive_armor"
+    doctrine_template: "us_combined_arms"
+    depots:
+      - depot_id: "blue_fob"
+        position: [500, 5000]
+        capacity_tons: 500
+
+  - side: "red"
+    units:
+      - unit_type: "m1a2"
+        count: 6
+    experience_level: 0.5
+    morale_initial: "STEADY"
+    commander_profile: "cautious_infantry"
+    doctrine_template: "russian_deep_operations"
+
+objectives:
+  - objective_id: "obj_alpha"
+    position: [5000, 5000]
+    radius_m: 500
+    type: "territory"
+
+victory_conditions:
+  - type: "territory_control"
+    side: "blue"
+    params:
+      objective_ids: ["obj_alpha"]
+      threshold: 1.0
+  - type: "force_destroyed"
+    params:
+      threshold: 0.7
+  - type: "time_expired"
+
+reinforcements:
+  - side: "blue"
+    arrival_time_s: 7200
+    units:
+      - unit_type: "m1a2"
+        count: 2
+    position: [200, 5000]
+
+calibration_overrides:
+  hit_probability_modifier: 1.0
+  target_size_modifier: 1.0

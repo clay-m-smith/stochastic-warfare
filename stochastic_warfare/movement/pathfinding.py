@@ -140,10 +140,11 @@ class Pathfinder:
         def heuristic(a: tuple[int, int], b: tuple[int, int]) -> float:
             return math.sqrt((a[0] - b[0]) ** 2 + (a[1] - b[1]) ** 2) * res
 
-        # Threat cost cache
+        # Threat cost function + per-cell cache
         threat_cost_fn = None
+        _threat_cache: dict[tuple[int, int], float] = {}
         if avoid_threats:
-            def threat_cost_fn(pos: Position) -> float:
+            def _raw_threat_cost(pos: Position) -> float:
                 extra = 0.0
                 for tp, tr in avoid_threats:
                     dx = pos.easting - tp.easting
@@ -152,6 +153,14 @@ class Pathfinder:
                     if d < tr:
                         extra += (tr - d) / tr * res * 5.0
                 return extra
+
+            def threat_cost_fn(cell: tuple[int, int], pos: Position) -> float:
+                cached = _threat_cache.get(cell)
+                if cached is not None:
+                    return cached
+                cost = _raw_threat_cost(pos)
+                _threat_cache[cell] = cost
+                return cost
 
         # Pre-compute diagonal/cardinal distances
         _DIAG_DIST = math.sqrt(2.0) * res
@@ -222,7 +231,7 @@ class Pathfinder:
                 edge_cost = dist * difficulty
 
                 if threat_cost_fn is not None:
-                    edge_cost += threat_cost_fn(to_pos(nb))
+                    edge_cost += threat_cost_fn(nb, to_pos(nb))
 
                 tentative = g_score[current] + edge_cost
 

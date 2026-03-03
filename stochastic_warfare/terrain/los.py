@@ -44,6 +44,14 @@ class LOSEngine:
         Elevation data.
     infrastructure:
         Optional building data for obstruction checking.
+
+    Notes
+    -----
+    A per-tick LOS result cache avoids redundant ray-march computations
+    when the same observer→target pair is checked more than once in a
+    single simulation tick (e.g. detection and engagement in the same
+    tick, or viewshed computation).  Call :meth:`clear_los_cache` at the
+    start of each tick (or whenever unit positions change).
     """
 
     def __init__(
@@ -53,6 +61,27 @@ class LOSEngine:
     ) -> None:
         self._hm = heightmap
         self._infra = infrastructure
+        # Per-tick LOS result cache.
+        # Key: (obs_row, obs_col, tgt_row, tgt_col, obs_height_cm, tgt_height_cm)
+        # Value: LOSResult
+        self._los_cache: dict[tuple[int, int, int, int, int, int], LOSResult] = {}
+
+    # ------------------------------------------------------------------
+    # Cache management
+    # ------------------------------------------------------------------
+
+    def clear_los_cache(self) -> None:
+        """Clear the per-tick LOS result cache.
+
+        Should be called at the start of each simulation tick so that
+        stale results from prior ticks (before movement) are discarded.
+        """
+        self._los_cache.clear()
+
+    @property
+    def los_cache_size(self) -> int:
+        """Number of entries currently in the LOS cache."""
+        return len(self._los_cache)
 
     # ------------------------------------------------------------------
     # Public API
@@ -74,7 +103,23 @@ class LOSEngine:
         infrastructure (building) data is present — the common case.
         Falls back to per-sample scalar lookups when buildings must be
         checked.
+
+        Results are cached by grid-cell coordinates and quantized height
+        so that repeated queries for the same pair within a tick skip
+        the expensive ray march.
         """
+        # Build cache key from grid-cell coordinates + quantized heights
+        # (centimetre precision avoids float-key issues).
+        obs_row, obs_col = self._hm.enu_to_grid(observer)
+        tgt_row, tgt_col = self._hm.enu_to_grid(target)
+        obs_h_cm = int(round(observer_height * 100))
+        tgt_h_cm = int(round(target_height * 100))
+
+        cache_key = (obs_row, obs_col, tgt_row, tgt_col, obs_h_cm, tgt_h_cm)
+        cached = self._los_cache.get(cache_key)
+        if cached is not None:
+            return cached
+
         obs_elev = self._hm.elevation_at(observer) + observer_height
         tgt_elev = self._hm.elevation_at(target) + target_height
 
@@ -83,7 +128,9 @@ class LOSEngine:
         total_dist = math.sqrt(dx * dx + dy * dy)
 
         if total_dist < 1.0:
-            return LOSResult(True, None, None, None)
+            result = LOSResult(True, None, None, None)
+            self._los_cache[cache_key] = result
+            return result
 
         # Earth curvature constants
         _K_FACTOR = 4.0 / 3.0
@@ -92,15 +139,18 @@ class LOSEngine:
         num_steps = max(2, int(total_dist / (self._hm.cell_size / 2.0)))
 
         if self._infra is None:
-            return self._check_los_vectorized(
+            result = self._check_los_vectorized(
+                observer, obs_elev, tgt_elev, dx, dy, total_dist,
+                num_steps, _K_FACTOR, _R_EARTH,
+            )
+        else:
+            result = self._check_los_scalar(
                 observer, obs_elev, tgt_elev, dx, dy, total_dist,
                 num_steps, _K_FACTOR, _R_EARTH,
             )
 
-        return self._check_los_scalar(
-            observer, obs_elev, tgt_elev, dx, dy, total_dist,
-            num_steps, _K_FACTOR, _R_EARTH,
-        )
+        self._los_cache[cache_key] = result
+        return result
 
     def _check_los_vectorized(
         self,

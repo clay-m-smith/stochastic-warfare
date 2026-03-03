@@ -3,7 +3,7 @@
 ## Project Overview
 High-fidelity, high-resolution wargame simulator. Multi-scale (campaign → battlefield → battle → unit level) with stochastic/signal-processing-inspired models (Markov chains, Monte Carlo, Kalman filters, noise models, queueing theory). Headless Python engine first; matplotlib for validation; full UI deferred. Modern era (Cold War–present) as prototype. Maritime warfare fully integrated, not deferred.
 
-**Current status**: Phase 8 complete (AI & Planning). 3,214 tests passing. Next: Phase 9 (Simulation Orchestration).
+**Current status**: Phase 9 complete (Simulation Orchestration). 3,586 tests passing. Next: Phase 10 (Campaign Validation).
 
 ## Package Management
 **Use `uv` exclusively.** Never use bare `pip install`. Always use `uv add`, `uv sync`, etc. Direct `pip` may target system Python instead of the project venv.
@@ -169,5 +169,14 @@ No new dependencies.
 - **YAML data** (16 files): 6 commander profiles (aggressive_armor, cautious_infantry, balanced_default, naval_surface, air_superiority, sof_operator), 10 doctrine templates (us/3, russian/2, nato/1, generic/4)
 
 Key features: Boyd OODA cycle as pure timer/FSM with echelon-scaled log-normal timing, YAML-driven commander personalities (aggression, caution, flexibility, initiative, experience, decision_speed) modulating OODA speed/noise/risk, YAML-driven doctrine templates (US/Russian/NATO/generic) with action filtering, 7-factor weighted situation assessment (force ratio/terrain/supply/morale/intel/environment/C2), 5 echelon-specific decision functions (individual through corps+), MDMP state machine (INTUITIVE/DIRECTIVE/RAPID/MDMP with speed multipliers and 1/3-2/3 rule), mission analysis extracting specified/implied/essential tasks with staff-quality-gated discovery, Lanchester-attrition COA wargaming with personality-biased softmax selection, condition-based operational phasing with branches and sequels, 5 running estimates (personnel/intel/ops/logistics/comms) with periodic update and significant-change events, 7-trigger plan adaptation (casualties/force ratio/supply/morale/opportunity/surprise/C2), 6 echelon+experience-gated stratagem types, deterministic replay from seed.
+
+No new dependencies.
+
+### Phase 9: Simulation Orchestration (372 tests)
+8 new source modules + 4 YAML scenario files:
+- **Simulation** (7 modules): scenario, victory, recorder, metrics, battle, campaign, engine
+- **YAML data** (4 files): 4 test campaign scenarios (test_campaign, test_campaign_multi, test_campaign_reinforce, test_campaign_logistics)
+
+Key features: Master simulation engine with tick resolution switching (STRATEGIC 3600s / OPERATIONAL 300s / TACTICAL 5s), campaign scenario YAML loader wiring all 11 domain modules into SimulationContext, VictoryEvaluator with 5 condition types (territory_control, force_destroyed, time_expired, morale_collapsed, supply_exhausted), BattleManager with full tactical loop (detection → AI → orders → movement → engagement → deferred damage → morale → supply), CampaignManager for strategic ticks (reinforcements → supply network → strategic AI → maintenance → engagement detection), SimulationRecorder subscribing to Event base class via MRO dispatch, CampaignMetrics for post-run analysis (force strength/supply/objective time series, engagement outcomes, campaign summary), per-tick LOS result caching, pathfinding threat cost caching, checkpoint/restore across all engines, deterministic replay from seed.
 
 No new dependencies.

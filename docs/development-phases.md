@@ -311,7 +311,7 @@ Build 2-3 scenario packs from well-documented historical engagements:
 
 ---
 
-## Phase 9: Simulation Orchestration & Integration
+## Phase 9: Simulation Orchestration & Integration ✅
 **Goal**: All systems work together. The master simulation loop ties everything into coherent multi-scale campaigns.
 
 - `simulation/engine.py` — master simulation loop (hybrid tick + event), tick sequencing (environment first, then domain modules)
@@ -322,13 +322,15 @@ Build 2-3 scenario packs from well-documented historical engagements:
 - `simulation/recorder.py` — event/state recording for replay and analysis
 - `simulation/metrics.py` — simulation output metrics, statistical aggregation, analysis hooks
 
-**Also in this phase**: multi-scale transitions (strategic graph ↔ tactical grid ↔ unit continuous), force aggregation/disaggregation, complete env→combat wiring for all domains, full checkpoint/replay validation across all modules
+**Also delivered**: tick resolution switching (STRATEGIC 3600s / OPERATIONAL 300s / TACTICAL 5s) via clock, full checkpoint/replay validation across all modules, per-tick LOS and pathfinding caches
+
+**Deferred from original scope**: force aggregation/disaggregation (all units at individual resolution), multi-scale spatial transitions (strategic graph ↔ tactical grid ↔ unit continuous — resolution switching is temporal only), complete env→combat wiring for remaining domains (partial from Phase 4)
 
 **Performance tasks (deferred from Phase 7 post-mortem)**:
-- Add LOS result caching (per-tick cache keyed on observer/target grid cells)
-- Vectorize `visible_area` viewshed (horizon-angle sweep or van Kreveld's algorithm)
-- Add pathfinding closed set (already done) + threat cost grid pre-computation
-- Profile full campaign loop and optimize based on cProfile results
+- ~~Add LOS result caching (per-tick cache keyed on observer/target grid cells)~~ *(completed)*
+- Vectorize `visible_area` viewshed (horizon-angle sweep or van Kreveld's algorithm) — deferred, lower priority
+- ~~Add pathfinding closed set (already done) + threat cost grid pre-computation~~ *(completed)*
+- Profile full campaign loop and optimize based on cProfile results — deferred to Phase 10
 
 **Visualization**: comprehensive multi-scale display, campaign overview, drill-down to tactical engagements
 

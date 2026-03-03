@@ -58,15 +58,22 @@ stochastic-warfare/
 │   ├── commander_profiles/           # Commander personality archetypes (risk tolerance, style, preferences)
 │   ├── maritime/                     # Maritime-specific data: port facilities, sea lanes, chokepoints, bathymetry reference
 │   └── scenarios/                    # Complete scenario packages
-│       └── example_scenario/
-│           ├── scenario.yaml         # Master scenario config: start date/time (UTC), duration, initial weather, time zone
-│           ├── terrain/              # Terrain data: elevation, classification, soil, vegetation, infrastructure
-│           ├── infrastructure/       # Road/rail/bridge networks, building data, utilities
-│           ├── population/           # Civilian population data and disposition
-│           ├── maritime/             # Bathymetry, ports, sea lanes, acoustic environment profiles, tidal harmonic constituents
-│           ├── environment/          # Climate zone, prevailing weather patterns, seasonal parameters, magnetic declination grid
-│           ├── forces/               # OOB and initial dispositions per side (land, air, naval)
-│           └── objectives/           # Victory conditions and ROE
+│       ├── example_scenario/
+│       │   ├── scenario.yaml         # Master scenario config: start date/time (UTC), duration, initial weather, time zone
+│       │   ├── terrain/              # Terrain data: elevation, classification, soil, vegetation, infrastructure
+│       │   ├── infrastructure/       # Road/rail/bridge networks, building data, utilities
+│       │   ├── population/           # Civilian population data and disposition
+│       │   ├── maritime/             # Bathymetry, ports, sea lanes, acoustic environment profiles, tidal harmonic constituents
+│       │   ├── environment/          # Climate zone, prevailing weather patterns, seasonal parameters, magnetic declination grid
+│       │   ├── forces/               # OOB and initial dispositions per side (land, air, naval)
+│       │   └── objectives/           # Victory conditions and ROE
+│       ├── 73_easting/              # Phase 7: 73 Easting validation scenario
+│       ├── falklands_naval/         # Phase 7: Falklands naval validation scenario
+│       ├── golan_heights/           # Phase 7: Golan Heights validation scenario
+│       ├── test_campaign/           # Phase 9: Minimal campaign test (2 sides, 1 objective, 24h)
+│       ├── test_campaign_multi/     # Phase 9: Multiple engagement points (2 objectives, 48h)
+│       ├── test_campaign_reinforce/ # Phase 9: Reinforcement schedule test (3 waves)
+│       └── test_campaign_logistics/ # Phase 9: Supply chain emphasis (multiple depots, 72h)
 ├── tests/
 │   ├── conftest.py                   # Shared fixtures (rng, event_bus, sim_clock) + helpers
 │   ├── unit/                         # Fast, isolated unit tests

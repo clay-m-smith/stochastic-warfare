@@ -15,7 +15,7 @@ Rolling record of implementation decisions, changes, and lessons learned across 
 | 6 | Logistics & Supply | **Complete** | [phase-6.md](phase-6.md) |
 | 7 | Engagement Validation | **Complete** | [phase-7.md](phase-7.md) |
 | 8 | AI & Planning | **Complete** | [phase-8.md](phase-8.md) |
-| 9 | Simulation Orchestration | Not started | — |
+| 9 | Simulation Orchestration | **Complete** | [phase-9.md](phase-9.md) |
 | 10 | Campaign Validation | Not started | — |
 
 ## Post-MVP Refinement Index
@@ -77,6 +77,17 @@ Known limitations and deferred improvements logged during implementation. Review
 | 8 | Estimates update periodically, not reactively to every event | [phase-8.md — Known Limitations](phase-8.md#known-limitations--post-mvp-refinements) |
 | 8 | Stratagems are opportunity-evaluated, not proactively planned in COA | [phase-8.md — Known Limitations](phase-8.md#known-limitations--post-mvp-refinements) |
 | 8 | Brigade echelon decision hardcodes echelon_level=9 in result (cosmetic) | [phase-8.md — Known Limitations](phase-8.md#known-limitations--post-mvp-refinements) |
+| 9 | No force aggregation/disaggregation — all units at individual resolution | [phase-9.md — Known Limitations](phase-9.md#known-limitations--post-mvp-refinements) |
+| 9 | Single-threaded simulation loop (required for deterministic PRNG replay) | [phase-9.md — Known Limitations](phase-9.md#known-limitations--post-mvp-refinements) |
+| 9 | No auto-resolve — every engagement runs full tactical resolution | [phase-9.md — Known Limitations](phase-9.md#known-limitations--post-mvp-refinements) |
+| 9 | Simplified strategic movement (no detailed operational pathfinding) | [phase-9.md — Known Limitations](phase-9.md#known-limitations--post-mvp-refinements) |
+| 9 | Fixed reinforcement schedule (no Poisson/stochastic arrivals) | [phase-9.md — Known Limitations](phase-9.md#known-limitations--post-mvp-refinements) |
+| 9 | No naval campaign management (structurally supported but untested) | [phase-9.md — Known Limitations](phase-9.md#known-limitations--post-mvp-refinements) |
+| 9 | Synthetic terrain only (programmatic heightmaps, not real topographic data) | [phase-9.md — Known Limitations](phase-9.md#known-limitations--post-mvp-refinements) |
+| 9 | LOS cache is per-tick only (cleared each tick after movement) | [phase-9.md — Known Limitations](phase-9.md#known-limitations--post-mvp-refinements) |
+| 9 | No weather evolution mid-campaign beyond WeatherEngine.step() | [phase-9.md — Known Limitations](phase-9.md#known-limitations--post-mvp-refinements) |
+| 9 | Viewshed vectorization deferred (lower priority) | [phase-9.md — Known Limitations](phase-9.md#known-limitations--post-mvp-refinements) |
+| 9 | STRtree for infrastructure spatial queries still deferred | [phase-9.md — Known Limitations](phase-9.md#known-limitations--post-mvp-refinements) |
 
 ## Conventions
 

@@ -1,0 +1,67 @@
+name: "Test Campaign — Multiple Engagement Points"
+date: "2024-06-15T12:00:00Z"
+duration_hours: 48
+latitude: 32.0
+longitude: 44.0
+
+tick_resolution:
+  strategic_s: 3600
+  operational_s: 300
+  tactical_s: 5
+
+weather_conditions:
+  visibility_m: 8000
+  wind_speed_mps: 5.0
+  temperature_c: 30.0
+
+terrain:
+  width_m: 20000
+  height_m: 20000
+  cell_size_m: 100
+  terrain_type: "flat_desert"
+
+sides:
+  - side: "blue"
+    units:
+      - unit_type: "m1a2"
+        count: 6
+    experience_level: 0.7
+    morale_initial: "STEADY"
+    commander_profile: "aggressive_armor"
+    doctrine_template: "us_combined_arms"
+
+  - side: "red"
+    units:
+      - unit_type: "m1a2"
+        count: 8
+    experience_level: 0.6
+    morale_initial: "STEADY"
+    commander_profile: "cautious_infantry"
+    doctrine_template: "russian_deep_operations"
+
+objectives:
+  - objective_id: "obj_north"
+    position: [10000, 15000]
+    radius_m: 500
+    type: "territory"
+  - objective_id: "obj_south"
+    position: [10000, 5000]
+    radius_m: 500
+    type: "territory"
+
+victory_conditions:
+  - type: "territory_control"
+    side: "blue"
+    params:
+      threshold: 1.0
+  - type: "force_destroyed"
+    params:
+      threshold: 0.7
+  - type: "time_expired"
+    side: "draw"
+    params:
+      max_duration_s: 172800
+
+calibration_overrides:
+  hit_probability_modifier: 1.0
+  target_size_modifier: 1.0

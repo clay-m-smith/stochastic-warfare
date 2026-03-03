@@ -1,0 +1,76 @@
+name: "Test Campaign — Supply Chain Emphasis"
+date: "2024-06-15T08:00:00Z"
+duration_hours: 72
+latitude: 32.0
+longitude: 44.0
+
+tick_resolution:
+  strategic_s: 3600
+  operational_s: 300
+  tactical_s: 5
+
+weather_conditions:
+  visibility_m: 10000
+  wind_speed_mps: 4.0
+  temperature_c: 38.0
+
+terrain:
+  width_m: 15000
+  height_m: 15000
+  cell_size_m: 100
+  terrain_type: "flat_desert"
+
+sides:
+  - side: "blue"
+    units:
+      - unit_type: "m1a2"
+        count: 4
+    experience_level: 0.7
+    morale_initial: "STEADY"
+    commander_profile: "balanced_default"
+    doctrine_template: "us_combined_arms"
+    depots:
+      - depot_id: "blue_main_depot"
+        position: [500, 7500]
+        capacity_tons: 1000
+        throughput_tons_per_hour: 100
+      - depot_id: "blue_forward_depot"
+        position: [3000, 7500]
+        capacity_tons: 200
+        throughput_tons_per_hour: 30
+
+  - side: "red"
+    units:
+      - unit_type: "m1a2"
+        count: 5
+    experience_level: 0.5
+    morale_initial: "STEADY"
+    commander_profile: "cautious_infantry"
+    doctrine_template: "russian_deep_operations"
+    depots:
+      - depot_id: "red_depot"
+        position: [14500, 7500]
+        capacity_tons: 800
+        throughput_tons_per_hour: 60
+
+objectives:
+  - objective_id: "obj_crossroads"
+    position: [7500, 7500]
+    radius_m: 600
+    type: "key_terrain"
+
+victory_conditions:
+  - type: "supply_exhausted"
+    params:
+      threshold: 0.15
+  - type: "force_destroyed"
+    params:
+      threshold: 0.7
+  - type: "time_expired"
+    side: "draw"
+    params:
+      max_duration_s: 259200
+
+calibration_overrides:
+  hit_probability_modifier: 1.0
+  target_size_modifier: 1.0
