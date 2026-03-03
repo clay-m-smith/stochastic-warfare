@@ -1,0 +1,17 @@
+doctrine_id: us_movement_to_contact
+display_name: "US Movement to Contact"
+category: OFFENSIVE
+faction: us
+description: "FM 3-90 movement to contact to develop the situation"
+min_echelon: 4  # Platoon
+max_echelon: 9  # Division
+applicable_domains: ["LAND"]
+phases: ["MOVEMENT", "CONTACT", "DEVELOPMENT", "MANEUVER"]
+force_ratios:
+  advance_guard: 0.30
+  main_body: 0.55
+  reserve: 0.15
+actions: ["movement_to_contact", "hasty_attack", "bypass", "recon", "support_by_fire"]
+priorities: ["maneuver", "firepower", "protection"]
+risk_tolerance: moderate
+tempo: high

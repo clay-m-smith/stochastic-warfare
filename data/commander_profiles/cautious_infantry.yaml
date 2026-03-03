@@ -1,0 +1,12 @@
+profile_id: cautious_infantry
+display_name: "Cautious Infantry Commander"
+description: "Methodical infantry commander who minimizes casualties"
+aggression: 0.3
+caution: 0.8
+flexibility: 0.4
+initiative: 0.4
+experience: 0.6
+preferred_doctrine: us_defend_area
+stress_tolerance: 0.5
+decision_speed: 0.4
+risk_acceptance: 0.25

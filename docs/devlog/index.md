@@ -14,7 +14,7 @@ Rolling record of implementation decisions, changes, and lessons learned across 
 | 5 | C2 Infrastructure | **Complete** | [phase-5.md](phase-5.md) |
 | 6 | Logistics & Supply | **Complete** | [phase-6.md](phase-6.md) |
 | 7 | Engagement Validation | **Complete** | [phase-7.md](phase-7.md) |
-| 8 | AI & Planning | Not started | — |
+| 8 | AI & Planning | **Complete** | [phase-8.md](phase-8.md) |
 | 9 | Simulation Orchestration | Not started | — |
 | 10 | Campaign Validation | Not started | — |
 
@@ -45,7 +45,7 @@ Known limitations and deferred improvements logged during implementation. Review
 | 5 | No multi-hop propagation (single hop issuer→recipient only) | [phase-5.md — Known Limitations](phase-5.md#known-limitations--deferred-items) |
 | 5 | No terrain-based LOS check for communications | [phase-5.md — Known Limitations](phase-5.md#known-limitations--deferred-items) |
 | 5 | Simplified FSCL (east-west line, not arbitrary polyline) | [phase-5.md — Known Limitations](phase-5.md#known-limitations--deferred-items) |
-| 5 | No ATO planning cycle (structures only, generation deferred to Phase 8) | [phase-5.md — Known Limitations](phase-5.md#known-limitations--deferred-items) |
+| 5 | No ATO planning cycle (structures only, generation deferred to Phase 9/Future) | [phase-5.md — Known Limitations](phase-5.md#known-limitations--deferred-items) |
 | 5 | No JTAC/FAC observer model for CAS | [phase-5.md — Known Limitations](phase-5.md#known-limitations--deferred-items) |
 | 5 | Messenger comm type has no terrain traversal or intercept risk | [phase-5.md — Known Limitations](phase-5.md#known-limitations--deferred-items) |
 | 6 | No supply optimization solver (pull-based nearest depot only) | [phase-6.md — Known Limitations](phase-6.md#known-limitations) |
@@ -69,6 +69,14 @@ Known limitations and deferred improvements logged during implementation. Review
 | 7 | No logistics in validation scenarios (short engagements) | [phase-7.md — Known Limitations](phase-7.md#known-limitations--post-mvp-refinements) |
 | 7 | No C2 propagation in validation (direct behavior, no order chain) | [phase-7.md — Known Limitations](phase-7.md#known-limitations--post-mvp-refinements) |
 | 7 | Simplified force compositions (representative samples, not complete OOB) | [phase-7.md — Known Limitations](phase-7.md#known-limitations--post-mvp-refinements) |
+| 8 | Named doctrinal schools (Clausewitzian AI, Sun Tzu AI) deferred to Future Phases | [phase-8.md — Known Limitations](phase-8.md#known-limitations--post-mvp-refinements) |
+| 8 | COA wargaming is analytical (Lanchester), not full nested simulation | [phase-8.md — Known Limitations](phase-8.md#known-limitations--post-mvp-refinements) |
+| 8 | No terrain-specific COA generation (e.g., no river crossing planning detail) | [phase-8.md — Known Limitations](phase-8.md#known-limitations--post-mvp-refinements) |
+| 8 | Implied task tables are simplified (not full FM 5-0 comprehensive list) | [phase-8.md — Known Limitations](phase-8.md#known-limitations--post-mvp-refinements) |
+| 8 | No multi-echelon simultaneous planning (each commander plans independently) | [phase-8.md — Known Limitations](phase-8.md#known-limitations--post-mvp-refinements) |
+| 8 | Estimates update periodically, not reactively to every event | [phase-8.md — Known Limitations](phase-8.md#known-limitations--post-mvp-refinements) |
+| 8 | Stratagems are opportunity-evaluated, not proactively planned in COA | [phase-8.md — Known Limitations](phase-8.md#known-limitations--post-mvp-refinements) |
+| 8 | Brigade echelon decision hardcodes echelon_level=9 in result (cosmetic) | [phase-8.md — Known Limitations](phase-8.md#known-limitations--post-mvp-refinements) |
 
 ## Conventions
 

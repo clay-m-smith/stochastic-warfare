@@ -1,0 +1,12 @@
+profile_id: aggressive_armor
+display_name: "Aggressive Armor Commander"
+description: "Bold, offensive-minded tank commander who exploits breakthroughs"
+aggression: 0.85
+caution: 0.2
+flexibility: 0.6
+initiative: 0.7
+experience: 0.7
+preferred_doctrine: us_attack_deliberate
+stress_tolerance: 0.65
+decision_speed: 0.8
+risk_acceptance: 0.75

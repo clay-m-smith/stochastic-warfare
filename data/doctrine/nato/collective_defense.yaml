@@ -1,0 +1,17 @@
+doctrine_id: nato_collective_defense
+display_name: "NATO Collective Defense"
+category: DEFENSIVE
+faction: nato
+description: "AJP-3 combined joint operations with multinational coordination"
+min_echelon: 8  # Brigade
+max_echelon: 13
+applicable_domains: ["LAND", "SEA", "AIR"]
+phases: ["DETER", "DEFEND", "COUNTERATTACK", "RESTORE"]
+force_ratios:
+  forward_defense: 0.50
+  reserve: 0.30
+  deep_strike: 0.20
+actions: ["defend", "counterattack", "deep_strike", "interdict", "air_defense"]
+priorities: ["protection", "firepower", "interoperability"]
+risk_tolerance: low
+tempo: moderate

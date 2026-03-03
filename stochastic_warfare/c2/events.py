@@ -163,3 +163,131 @@ class InitiativeActionEvent(Event):
     unit_id: str
     action_type: str  # "engage", "withdraw", "reposition", etc.
     justification: str  # "commander_intent", "self_defense", "opportunity"
+
+
+# ---------------------------------------------------------------------------
+# AI events (Phase 8)
+# ---------------------------------------------------------------------------
+
+
+@dataclass(frozen=True)
+class OODAPhaseChangeEvent(Event):
+    """Published when a commander transitions OODA phases."""
+
+    unit_id: str
+    old_phase: int  # OODAPhase value
+    new_phase: int
+    cycle_number: int
+
+
+@dataclass(frozen=True)
+class OODALoopResetEvent(Event):
+    """Published when an OODA loop is interrupted and restarted."""
+
+    unit_id: str
+    cause: str  # "surprise_contact", "c2_disruption", "frago_received"
+    cycle_number: int
+
+
+@dataclass(frozen=True)
+class SituationAssessedEvent(Event):
+    """Published when a commander completes a situation assessment."""
+
+    unit_id: str
+    overall_rating: int  # AssessmentRating value
+    confidence: float  # 0.0–1.0
+
+
+@dataclass(frozen=True)
+class DecisionMadeEvent(Event):
+    """Published when a commander reaches a decision."""
+
+    unit_id: str
+    decision_type: str  # action name
+    echelon_level: int
+    confidence: float
+
+
+@dataclass(frozen=True)
+class PlanAdaptedEvent(Event):
+    """Published when a plan is adapted due to changing conditions."""
+
+    unit_id: str
+    trigger: str  # AdaptationTrigger name
+    action: str  # AdaptationAction name
+    frago_order_id: str  # order ID of the resulting FRAGO, or ""
+
+
+@dataclass(frozen=True)
+class StratagemActivatedEvent(Event):
+    """Published when a stratagem is employed."""
+
+    unit_id: str
+    stratagem_type: str  # StratagemType name
+    target_area: str  # description of target area
+
+
+# ---------------------------------------------------------------------------
+# Planning events (Phase 8)
+# ---------------------------------------------------------------------------
+
+
+@dataclass(frozen=True)
+class PlanningStartedEvent(Event):
+    """Published when a planning process begins."""
+
+    unit_id: str
+    planning_method: str  # PlanningMethod name
+    echelon_level: int
+    estimated_duration_s: float
+
+
+@dataclass(frozen=True)
+class PlanningCompletedEvent(Event):
+    """Published when planning finishes and a COA is selected."""
+
+    unit_id: str
+    planning_method: str
+    selected_coa_id: str
+    duration_s: float
+    num_coas_evaluated: int
+
+
+@dataclass(frozen=True)
+class MissionAnalysisCompleteEvent(Event):
+    """Published when mission analysis phase is complete."""
+
+    unit_id: str
+    num_specified_tasks: int
+    num_implied_tasks: int
+    num_constraints: int
+
+
+@dataclass(frozen=True)
+class COASelectedEvent(Event):
+    """Published when a COA is selected for execution."""
+
+    unit_id: str
+    coa_id: str
+    score: float
+    risk_level: str  # "LOW", "MODERATE", "HIGH", "EXTREME"
+
+
+@dataclass(frozen=True)
+class PhaseTransitionEvent(Event):
+    """Published when an operational plan transitions phases."""
+
+    unit_id: str
+    plan_id: str
+    old_phase: str  # OperationalPhaseType name
+    new_phase: str
+    trigger: str  # condition that caused the transition
+
+
+@dataclass(frozen=True)
+class EstimateUpdatedEvent(Event):
+    """Published when running estimates are updated."""
+
+    unit_id: str
+    estimate_type: str  # EstimateType name
+    supportability: float  # 0.0–1.0

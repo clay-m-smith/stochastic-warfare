@@ -209,27 +209,27 @@ stochastic-warfare/
     │   │   ├── air_orders.py         # Air-specific: ATO (Air Tasking Order), ACO, SPINS, strike packages, CAP assignments
     │   │   ├── propagation.py        # Order transmission: delays, degradation, misinterpretation probability
     │   │   └── execution.py          # Order execution tracking: compliance, adaptation, deviation reporting
-    │   ├── planning/                 # Planning process [PHASE 8b — not yet implemented]
+    │   ├── planning/                 # Planning process [PHASE 8b]
     │   │   ├── __init__.py
-    │   │   ├── process.py            # Configurable planning process (MDMP, rapid planning, intuitive decision)
-    │   │   ├── mission_analysis.py   # Mission analysis: specified/implied tasks, constraints, risk assessment
-    │   │   ├── coa.py                # Course of action development, analysis (wargaming), comparison, selection
-    │   │   ├── estimates.py          # Running estimates: personnel, intel, operations, logistics, comms
-    │   │   └── phases.py             # Operation phasing: shaping, decisive, exploitation, transition
+    │   │   ├── process.py            # MDMP state machine (INTUITIVE/DIRECTIVE/RAPID/MDMP), 1/3-2/3 rule
+    │   │   ├── mission_analysis.py   # Mission analysis: specified/implied/essential tasks, risks, constraints, key terrain
+    │   │   ├── coa.py                # COA development, Lanchester wargaming, weighted comparison, softmax selection
+    │   │   ├── estimates.py          # Running estimates (5 types), periodic update, significant change events
+    │   │   └── phases.py             # Condition-based operational phasing with branches and sequels
     │   ├── communications.py         # Comms reliability, bandwidth, degradation, EMCON, means (radio/wire/messenger/data link)
     │   ├── roe.py                    # Rules of engagement, escalation, political constraints, law of armed conflict
     │   ├── coordination.py           # Fire support coord, airspace deconfliction, boundaries, sea-land-air integration
     │   ├── naval_c2.py              # Fleet org (TF/TG/TU), naval data links, submarine comms (VLF/ELF)
     │   ├── mission_command.py        # Commander's intent, mission-type orders, subordinate initiative/adaptation
-    │   └── ai/                       # AI decision-making [PHASE 8a — not yet implemented]
+    │   └── ai/                       # AI decision-making [PHASE 8a]
     │       ├── __init__.py
-    │       ├── ooda.py               # OODA loop implementation
-    │       ├── commander.py          # Commander personality model: risk tolerance, aggression, initiative, experience
-    │       ├── assessment.py         # Situation assessment: combat power ratios, terrain analysis, threat evaluation
-    │       ├── decisions.py          # Decision logic across all echelons (individual through strategic)
-    │       ├── adaptation.py         # Reacting to unexpected situations, plan adjustment, opportunity exploitation
-    │       ├── doctrine.py           # Doctrinal templates per nation/era: offensive, defensive, retrograde, stability
-    │       └── stratagems.py         # Higher-order strategic/tactical concepts: deception plans, feints, economy of force, concentration, surprise
+    │       ├── ooda.py               # OODA loop timer/FSM (echelon-scaled, log-normal friction)
+    │       ├── commander.py          # YAML personality profiles (aggression, caution, flexibility, experience, decision_speed)
+    │       ├── assessment.py         # 7-factor situation assessment (force ratio, terrain, supply, morale, intel, env, C2)
+    │       ├── decisions.py          # 5 echelon-specific decision functions (individual through corps+)
+    │       ├── adaptation.py         # 7-trigger plan adaptation (casualties, force ratio, supply, morale, opportunity, surprise, C2)
+    │       ├── doctrine.py           # YAML doctrine templates (US, Russian, NATO, generic) with action/echelon filtering
+    │       └── stratagems.py         # 6 stratagem types with echelon+experience gating (deception, concentration, surprise, etc.)
     ├── logistics/                    # Supply & logistics
     │   ├── __init__.py
     │   ├── events.py                 # Logistics events (supply delivery/shortage/depletion, convoy, maintenance, engineering, medical, POW, naval, disruption)

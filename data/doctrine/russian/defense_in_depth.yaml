@@ -1,0 +1,17 @@
+doctrine_id: russian_defense_in_depth
+display_name: "Russian Defense in Depth"
+category: DEFENSIVE
+faction: russian
+description: "Echeloned defense with prepared positions and counterattack forces"
+min_echelon: 6  # Battalion
+max_echelon: 13
+applicable_domains: ["LAND"]
+phases: ["SECURITY_ZONE", "MAIN_DEFENSE", "COUNTERATTACK"]
+force_ratios:
+  security_zone: 0.15
+  main_defense: 0.55
+  counterattack: 0.30
+actions: ["defend", "counterattack", "delay", "fire_sack", "withdrawal"]
+priorities: ["firepower", "protection", "maneuver"]
+risk_tolerance: moderate
+tempo: slow

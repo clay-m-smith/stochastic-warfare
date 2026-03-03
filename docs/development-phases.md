@@ -275,7 +275,7 @@ Build 2-3 scenario packs from well-documented historical engagements:
 
 ---
 
-## Phase 8: AI & Planning
+## Phase 8: AI & Planning ✅
 **Goal**: AI commanders make echelon-appropriate decisions informed by doctrine and personality. The brains.
 
 **Rationale for position**: AI decision-making is the most conceptually complex phase. By this point, the AI has access to: combat state (Phase 4), detection/intel (Phase 3), morale state (Phase 4), C2 plumbing (Phase 5), logistics state (Phase 6), AND validated combat parameters (Phase 7). Building AI last among the domain modules ensures it reasons about real, calibrated data rather than untested approximations.

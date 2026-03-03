@@ -1,0 +1,17 @@
+doctrine_id: generic_combined_arms_defense
+display_name: "Combined Arms Defense"
+category: DEFENSIVE
+faction: generic
+description: "Generic combined arms defensive operations"
+min_echelon: 5
+max_echelon: 10
+applicable_domains: ["LAND"]
+phases: ["PREPARATION", "DEFENSE", "COUNTERATTACK"]
+force_ratios:
+  main_defense: 0.60
+  reserve: 0.25
+  security: 0.15
+actions: ["defend", "counterattack", "delay", "block", "support_by_fire"]
+priorities: ["protection", "firepower", "maneuver"]
+risk_tolerance: low
+tempo: slow

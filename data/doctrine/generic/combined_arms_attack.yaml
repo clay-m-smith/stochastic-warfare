@@ -1,0 +1,17 @@
+doctrine_id: generic_combined_arms_attack
+display_name: "Combined Arms Attack"
+category: OFFENSIVE
+faction: generic
+description: "Generic combined arms offensive operations"
+min_echelon: 5
+max_echelon: 10
+applicable_domains: ["LAND"]
+phases: ["SHAPING", "DECISIVE", "EXPLOITATION"]
+force_ratios:
+  main_effort: 0.60
+  supporting: 0.25
+  reserve: 0.15
+actions: ["attack", "support_by_fire", "suppress", "exploit", "seize"]
+priorities: ["firepower", "maneuver", "protection"]
+risk_tolerance: moderate
+tempo: moderate

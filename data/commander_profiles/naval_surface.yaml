@@ -1,0 +1,11 @@
+profile_id: naval_surface
+display_name: "Naval Surface Warfare Commander"
+description: "Surface action group commander balancing offense and defense"
+aggression: 0.55
+caution: 0.6
+flexibility: 0.65
+initiative: 0.6
+experience: 0.7
+stress_tolerance: 0.6
+decision_speed: 0.7
+risk_acceptance: 0.45

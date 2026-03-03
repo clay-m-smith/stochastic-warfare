@@ -1,0 +1,17 @@
+doctrine_id: russian_deep_operations
+display_name: "Russian Deep Operations"
+category: OFFENSIVE
+faction: russian
+description: "Tukhachevsky deep battle doctrine — simultaneous echeloned strikes"
+min_echelon: 8  # Brigade
+max_echelon: 13  # Theater
+applicable_domains: ["LAND"]
+phases: ["FIRE_PREPARATION", "BREAKTHROUGH", "EXPLOITATION", "PURSUIT"]
+force_ratios:
+  first_echelon: 0.55
+  second_echelon: 0.30
+  reserve: 0.15
+actions: ["attack", "breakthrough", "exploit", "pursuit", "fire_preparation", "encircle"]
+priorities: ["firepower", "mass", "maneuver"]
+risk_tolerance: high
+tempo: high

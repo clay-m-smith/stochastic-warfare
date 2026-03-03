@@ -1,0 +1,12 @@
+profile_id: sof_operator
+display_name: "SOF Operator"
+description: "Special operations commander with high initiative and flexibility"
+aggression: 0.6
+caution: 0.45
+flexibility: 0.9
+initiative: 0.9
+experience: 0.85
+preferred_doctrine: us_movement_to_contact
+stress_tolerance: 0.8
+decision_speed: 0.75
+risk_acceptance: 0.6

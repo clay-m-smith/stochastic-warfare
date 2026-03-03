@@ -1,0 +1,17 @@
+doctrine_id: generic_retrograde
+display_name: "Retrograde"
+category: RETROGRADE
+faction: generic
+description: "Organized movement away from enemy to preserve combat power"
+min_echelon: 5
+max_echelon: 10
+applicable_domains: ["LAND"]
+phases: ["PREPARATION", "DISENGAGEMENT", "MOVEMENT", "OCCUPATION"]
+force_ratios:
+  covering_force: 0.30
+  main_body: 0.55
+  advance_party: 0.15
+actions: ["withdraw", "delay", "defend", "passage_of_lines", "screen"]
+priorities: ["maneuver", "protection", "firepower"]
+risk_tolerance: low
+tempo: moderate

@@ -3,7 +3,7 @@
 ## Project Overview
 High-fidelity, high-resolution wargame simulator. Multi-scale (campaign → battlefield → battle → unit level) with stochastic/signal-processing-inspired models (Markov chains, Monte Carlo, Kalman filters, noise models, queueing theory). Headless Python engine first; matplotlib for validation; full UI deferred. Modern era (Cold War–present) as prototype. Maritime warfare fully integrated, not deferred.
 
-**Current status**: Phase 7 complete (Engagement Validation). 2,639 tests passing. Next: Phase 8 (AI & Planning).
+**Current status**: Phase 8 complete (AI & Planning). 3,214 tests passing. Next: Phase 9 (Simulation Orchestration).
 
 ## Package Management
 **Use `uv` exclusively.** Never use bare `pip install`. Always use `uv add`, `uv sync`, etc. Direct `pip` may target system Python instead of the project venv.
@@ -158,5 +158,16 @@ No new dependencies.
 - **YAML data** (~30 files): 10 unit definitions (m1a1, t72m, shot_kal, t55a, t62, bmp1, m3a2_bradley, type42_destroyer, type22_frigate, sea_harrier, super_etendard), 9 weapon/ammo definitions, 1 sensor (active_ir_sight), 4 signature profiles, 3 scenario packs (73_easting, falklands_naval, golan_heights)
 
 Key features: Historical engagement data loader (YAML), lightweight scenario runner with pre-scripted behavior, Monte Carlo harness with statistical comparison, deferred damage resolution (simultaneous fire), weather-independent sensor handling (thermal/radar bypass visibility), per-scenario calibration overrides, 3 validated historical engagements (73 Easting, Falklands Naval, Golan Heights), validation infrastructure reusable for Phase 10.
+
+No new dependencies.
+
+### Phase 8: AI & Planning (575 tests)
+14 new source modules + 16 YAML data files:
+- **AI** (7 modules): ooda, commander, doctrine, assessment, decisions, adaptation, stratagems
+- **Planning** (5 modules): process, mission_analysis, coa, estimates, phases
+- **Events** (12 new): 6 AI events + 6 planning events added to c2/events.py
+- **YAML data** (16 files): 6 commander profiles (aggressive_armor, cautious_infantry, balanced_default, naval_surface, air_superiority, sof_operator), 10 doctrine templates (us/3, russian/2, nato/1, generic/4)
+
+Key features: Boyd OODA cycle as pure timer/FSM with echelon-scaled log-normal timing, YAML-driven commander personalities (aggression, caution, flexibility, initiative, experience, decision_speed) modulating OODA speed/noise/risk, YAML-driven doctrine templates (US/Russian/NATO/generic) with action filtering, 7-factor weighted situation assessment (force ratio/terrain/supply/morale/intel/environment/C2), 5 echelon-specific decision functions (individual through corps+), MDMP state machine (INTUITIVE/DIRECTIVE/RAPID/MDMP with speed multipliers and 1/3-2/3 rule), mission analysis extracting specified/implied/essential tasks with staff-quality-gated discovery, Lanchester-attrition COA wargaming with personality-biased softmax selection, condition-based operational phasing with branches and sequels, 5 running estimates (personnel/intel/ops/logistics/comms) with periodic update and significant-change events, 7-trigger plan adaptation (casualties/force ratio/supply/morale/opportunity/surprise/C2), 6 echelon+experience-gated stratagem types, deterministic replay from seed.
 
 No new dependencies.

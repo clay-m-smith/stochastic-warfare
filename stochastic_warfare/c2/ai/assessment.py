@@ -1,0 +1,356 @@
+"""Situation assessment -- the ORIENT phase of the OODA loop.
+
+Integrates force ratios, terrain advantage, supply status, unit morale,
+intelligence quality, environmental conditions, and C2 effectiveness into
+a multi-factor situation assessment. Assessment quality degrades with
+stale intel, poor C2, and low experience. All input data is passed as
+parameters (DI pattern) -- no stored references to other engines.
+"""
+
+from __future__ import annotations
+
+import enum
+from dataclasses import dataclass
+from datetime import datetime, timezone
+
+import numpy as np
+
+from stochastic_warfare.c2.events import SituationAssessedEvent
+from stochastic_warfare.core.events import EventBus
+from stochastic_warfare.core.logging import get_logger
+from stochastic_warfare.core.types import ModuleId
+
+logger = get_logger(__name__)
+
+
+# ---------------------------------------------------------------------------
+# Enums
+# ---------------------------------------------------------------------------
+
+
+class AssessmentRating(enum.IntEnum):
+    """Situation assessment rating, from worst to best."""
+
+    VERY_UNFAVORABLE = 0
+    UNFAVORABLE = 1
+    NEUTRAL = 2
+    FAVORABLE = 3
+    VERY_FAVORABLE = 4
+
+
+# ---------------------------------------------------------------------------
+# Data classes
+# ---------------------------------------------------------------------------
+
+
+@dataclass(frozen=True)
+class SituationAssessment:
+    """Immutable snapshot of a situation assessment."""
+
+    unit_id: str
+    timestamp: datetime
+    force_ratio: float
+    force_ratio_rating: AssessmentRating
+    terrain_advantage: float
+    terrain_rating: AssessmentRating
+    supply_level: float
+    supply_rating: AssessmentRating
+    morale_level: float
+    morale_rating: AssessmentRating
+    intel_quality: float
+    intel_rating: AssessmentRating
+    environmental_rating: AssessmentRating
+    c2_effectiveness: float
+    c2_rating: AssessmentRating
+    overall_rating: AssessmentRating
+    confidence: float
+    opportunities: tuple[str, ...]
+    threats: tuple[str, ...]
+
+
+# ---------------------------------------------------------------------------
+# Default thresholds (ascending: VU/U boundary, U/N boundary, N/F, F/VF)
+# ---------------------------------------------------------------------------
+
+_FORCE_RATIO_THRESHOLDS = (0.4, 0.8, 1.5, 3.0)
+_TERRAIN_THRESHOLDS = (-0.5, -0.2, 0.2, 0.5)
+_SUPPLY_THRESHOLDS = (0.15, 0.3, 0.5, 0.8)
+_MORALE_THRESHOLDS = (0.2, 0.4, 0.6, 0.8)
+_INTEL_THRESHOLDS = (0.15, 0.35, 0.6, 0.8)
+_ENV_THRESHOLDS = (0.15, 0.3, 0.5, 0.8)
+_C2_THRESHOLDS = (0.2, 0.4, 0.6, 0.8)
+
+# Overall rating maps a 0-4 weighted average back to a rating
+_OVERALL_THRESHOLDS = (1.0, 1.75, 2.5, 3.25)
+
+# Weights for overall rating computation
+_WEIGHTS = {
+    "force_ratio": 0.30,
+    "terrain": 0.10,
+    "supply": 0.15,
+    "morale": 0.15,
+    "intel": 0.10,
+    "environmental": 0.05,
+    "c2": 0.15,
+}
+
+
+# ---------------------------------------------------------------------------
+# Engine
+# ---------------------------------------------------------------------------
+
+
+class SituationAssessor:
+    """Computes multi-factor situation assessments.
+
+    Parameters
+    ----------
+    event_bus : EventBus
+        Bus for publishing :class:`SituationAssessedEvent`.
+    rng : numpy.random.Generator
+        Deterministic PRNG stream for confidence noise.
+    """
+
+    def __init__(self, event_bus: EventBus, rng: np.random.Generator) -> None:
+        self._event_bus = event_bus
+        self._rng = rng
+
+    # -- Public API ---------------------------------------------------------
+
+    def assess(
+        self,
+        unit_id: str,
+        echelon: int,
+        friendly_units: int,
+        friendly_power: float,
+        morale_level: float,
+        supply_level: float,
+        c2_effectiveness: float,
+        contacts: int,
+        enemy_power: float,
+        visibility_km: float = 10.0,
+        illumination: float = 1.0,
+        daylight_hours: float = 12.0,
+        weather_severity: float = 0.0,
+        terrain_advantage: float = 0.0,
+        experience: float = 0.5,
+        staff_quality: float = 0.5,
+        ts: datetime | None = None,
+    ) -> SituationAssessment:
+        """Compute a situation assessment for *unit_id*.
+
+        All input data is passed as parameters (DI pattern).
+
+        Parameters
+        ----------
+        unit_id : str
+            The unit performing the assessment.
+        echelon : int
+            Echelon level of the assessing unit.
+        friendly_units : int
+            Count of friendly units in the area.
+        friendly_power : float
+            Aggregate friendly combat power.
+        morale_level : float
+            Average morale (0.0--1.0).
+        supply_level : float
+            Composite supply state (0.0--1.0).
+        c2_effectiveness : float
+            C2 effectiveness (0.0--1.0).
+        contacts : int
+            Number of confirmed enemy contacts.
+        enemy_power : float
+            Estimated enemy combat power.
+        visibility_km : float
+            Current visibility in kilometres.
+        illumination : float
+            Illumination level (0.0--1.0).
+        daylight_hours : float
+            Remaining daylight hours.
+        weather_severity : float
+            Weather severity (0.0--1.0; 0 = clear, 1 = extreme).
+        terrain_advantage : float
+            Terrain advantage (-1.0 enemy advantage to 1.0 friendly advantage).
+        experience : float
+            Commander experience (0.0--1.0).
+        staff_quality : float
+            Staff quality (0.0--1.0).
+        ts : datetime | None
+            Timestamp for the assessment.  Defaults to UTC now.
+
+        Returns
+        -------
+        SituationAssessment
+            Frozen assessment snapshot.
+        """
+        if ts is None:
+            ts = datetime.now(tz=timezone.utc)
+
+        # 1. Force ratio
+        if enemy_power <= 0.0:
+            force_ratio = float("inf")
+        else:
+            force_ratio = friendly_power / enemy_power
+        force_ratio_rating = self._rate(force_ratio, _FORCE_RATIO_THRESHOLDS)
+
+        # 2. Terrain
+        terrain_rating = self._rate(terrain_advantage, _TERRAIN_THRESHOLDS)
+
+        # 3. Supply
+        supply_rating = self._rate(supply_level, _SUPPLY_THRESHOLDS)
+
+        # 4. Morale
+        morale_rating = self._rate(morale_level, _MORALE_THRESHOLDS)
+
+        # 5. Intel quality — derived from contact count.
+        # Each confirmed contact adds 0.2 to quality, capped at 1.0.
+        if enemy_power > 0.0 and contacts > 0:
+            intel_quality = min(1.0, contacts * 0.2)
+        elif contacts > 0:
+            intel_quality = 1.0  # contacts exist but no estimated enemy power
+        else:
+            intel_quality = 0.0
+        intel_rating = self._rate(intel_quality, _INTEL_THRESHOLDS)
+
+        # 6. Environmental
+        env_score = (visibility_km / 10.0) * illumination * (1.0 - weather_severity * 0.5)
+        env_score = max(0.0, min(1.0, env_score))
+        environmental_rating = self._rate(env_score, _ENV_THRESHOLDS)
+
+        # 7. C2
+        c2_rating = self._rate(c2_effectiveness, _C2_THRESHOLDS)
+
+        # 8. Overall — weighted average of all ratings (int values 0-4)
+        ratings = {
+            "force_ratio": force_ratio_rating,
+            "terrain": terrain_rating,
+            "supply": supply_rating,
+            "morale": morale_rating,
+            "intel": intel_rating,
+            "environmental": environmental_rating,
+            "c2": c2_rating,
+        }
+        weighted_sum = sum(
+            int(ratings[key]) * _WEIGHTS[key] for key in _WEIGHTS
+        )
+        overall_rating = self._rate(weighted_sum, _OVERALL_THRESHOLDS)
+
+        # 9. Confidence
+        raw_confidence = (
+            intel_quality * 0.4
+            + c2_effectiveness * 0.3
+            + experience * 0.2
+            + staff_quality * 0.1
+        )
+        noise_mult = 1.0 + float(self._rng.normal(0.0, 0.05))
+        confidence = max(0.0, min(1.0, raw_confidence * noise_mult))
+
+        # 10. Opportunities
+        opportunities: list[str] = []
+        if force_ratio > 2.0:
+            opportunities.append("numerical_superiority")
+        if terrain_advantage > 0.3:
+            opportunities.append("terrain_advantage")
+        if supply_level > 0.8:
+            opportunities.append("logistics_advantage")
+        if morale_level > 0.7:
+            opportunities.append("high_morale")
+
+        # 11. Threats
+        threats: list[str] = []
+        if force_ratio < 0.5:
+            threats.append("outnumbered")
+        if supply_level < 0.2:
+            threats.append("supply_critical")
+        if morale_level < 0.3:
+            threats.append("morale_crisis")
+        if c2_effectiveness < 0.3:
+            threats.append("c2_degraded")
+        if weather_severity > 0.7:
+            threats.append("severe_weather")
+
+        # Build the frozen assessment
+        assessment = SituationAssessment(
+            unit_id=unit_id,
+            timestamp=ts,
+            force_ratio=force_ratio,
+            force_ratio_rating=force_ratio_rating,
+            terrain_advantage=terrain_advantage,
+            terrain_rating=terrain_rating,
+            supply_level=supply_level,
+            supply_rating=supply_rating,
+            morale_level=morale_level,
+            morale_rating=morale_rating,
+            intel_quality=intel_quality,
+            intel_rating=intel_rating,
+            environmental_rating=environmental_rating,
+            c2_effectiveness=c2_effectiveness,
+            c2_rating=c2_rating,
+            overall_rating=overall_rating,
+            confidence=confidence,
+            opportunities=tuple(opportunities),
+            threats=tuple(threats),
+        )
+
+        # Publish event
+        self._event_bus.publish(
+            SituationAssessedEvent(
+                timestamp=ts,
+                source=ModuleId.C2,
+                unit_id=unit_id,
+                overall_rating=int(overall_rating),
+                confidence=confidence,
+            )
+        )
+
+        logger.debug(
+            "Assessment for %s: overall=%s confidence=%.2f",
+            unit_id,
+            overall_rating.name,
+            confidence,
+        )
+
+        return assessment
+
+    # -- Rating helper ------------------------------------------------------
+
+    @staticmethod
+    def _rate(
+        value: float,
+        thresholds: tuple[float, float, float, float],
+    ) -> AssessmentRating:
+        """Map a numeric *value* to an :class:`AssessmentRating`.
+
+        Parameters
+        ----------
+        value : float
+            The value to classify.
+        thresholds : tuple[float, float, float, float]
+            Four ascending boundaries:
+            ``(vu_u, u_n, n_f, f_vf)`` where:
+            - value < vu_u → VERY_UNFAVORABLE
+            - vu_u <= value < u_n → UNFAVORABLE
+            - u_n <= value < n_f → NEUTRAL
+            - n_f <= value < f_vf → FAVORABLE
+            - value >= f_vf → VERY_FAVORABLE
+        """
+        vu_u, u_n, n_f, f_vf = thresholds
+        if value >= f_vf:
+            return AssessmentRating.VERY_FAVORABLE
+        if value >= n_f:
+            return AssessmentRating.FAVORABLE
+        if value >= u_n:
+            return AssessmentRating.NEUTRAL
+        if value >= vu_u:
+            return AssessmentRating.UNFAVORABLE
+        return AssessmentRating.VERY_UNFAVORABLE
+
+    # -- State protocol -----------------------------------------------------
+
+    def get_state(self) -> dict:
+        """Serialize for checkpoint/restore."""
+        return {}
+
+    def set_state(self, state: dict) -> None:
+        """Restore from checkpoint."""
+        pass

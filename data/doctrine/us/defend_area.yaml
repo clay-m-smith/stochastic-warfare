@@ -1,0 +1,17 @@
+doctrine_id: us_defend_area
+display_name: "US Area Defense"
+category: DEFENSIVE
+faction: us
+description: "FM 3-90 area defense with mutual support and counterattack"
+min_echelon: 5
+max_echelon: 10
+applicable_domains: ["LAND"]
+phases: ["PREPARATION", "DEFENSIVE_BATTLE", "COUNTERATTACK", "CONSOLIDATION"]
+force_ratios:
+  main_battle_area: 0.65
+  reserve: 0.25
+  security: 0.10
+actions: ["defend", "counterattack", "delay", "support_by_fire", "block"]
+priorities: ["protection", "firepower", "maneuver"]
+risk_tolerance: low
+tempo: slow

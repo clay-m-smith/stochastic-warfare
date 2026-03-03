@@ -1,0 +1,11 @@
+profile_id: balanced_default
+display_name: "Balanced Commander"
+description: "Well-rounded commander with no strong biases"
+aggression: 0.5
+caution: 0.5
+flexibility: 0.5
+initiative: 0.5
+experience: 0.5
+stress_tolerance: 0.5
+decision_speed: 0.5
+risk_acceptance: 0.5

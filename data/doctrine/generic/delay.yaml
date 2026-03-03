@@ -1,0 +1,17 @@
+doctrine_id: generic_delay
+display_name: "Delay"
+category: RETROGRADE
+faction: generic
+description: "Trade space for time while inflicting maximum casualties"
+min_echelon: 4
+max_echelon: 10
+applicable_domains: ["LAND"]
+phases: ["INITIAL_DELAY", "SUBSEQUENT_POSITIONS", "HANDOFF"]
+force_ratios:
+  delay_force: 0.70
+  reserve: 0.15
+  security: 0.15
+actions: ["delay", "defend", "withdraw", "ambush", "support_by_fire"]
+priorities: ["protection", "maneuver", "firepower"]
+risk_tolerance: low
+tempo: slow

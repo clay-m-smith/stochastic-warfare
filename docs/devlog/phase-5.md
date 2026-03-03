@@ -76,7 +76,7 @@ Phase 5 implements the C2 plumbing — orders flow through the chain of command 
 ## Known Limitations & Deferred Items
 
 - **No multi-hop propagation**: Current model propagates one hop (issuer → recipient). Multi-hop accumulation through full CoC deferred to integration with actual scenario setup.
-- **No ATO planning cycle**: ATO structures exist but generation is Phase 8.
+- **No ATO planning cycle**: ATO structures exist but generation deferred to Phase 9/Future Phases.
 - **No terrain-based LOS for comms**: `requires_los` field exists but not checked against terrain.
 - **Messenger intercept/casualty**: Messenger comm type exists but has no terrain traversal or intercept risk model.
 - **No frequency deconfliction**: Radio equipment can interfere but no frequency assignment model.
