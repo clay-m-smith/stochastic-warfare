@@ -57,6 +57,8 @@ class ModuleId(str, enum.Enum):
     C2 = "c2"
     ENTITIES = "entities"
     TERRAIN = "terrain"
+    POPULATION = "population"
+    AIR_CAMPAIGN = "air_campaign"
 
 
 class Domain(enum.IntEnum):

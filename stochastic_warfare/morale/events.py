@@ -60,3 +60,14 @@ class CohesionChangeEvent(Event):
     unit_id: str
     cohesion_delta: float
     cause: str  # "casualties", "leader_lost", "isolation", "reinforcement"
+
+
+@dataclass(frozen=True)
+class PsyopAppliedEvent(Event):
+    """Published when a PSYOP operation is applied against a target."""
+
+    target_unit_id: str
+    message_type: str  # "surrender", "desertion", "fear", "deception"
+    delivery_method: str  # "leaflet", "broadcast", "social_media", "loudspeaker"
+    morale_degradation: float
+    effective: bool

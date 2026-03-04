@@ -291,3 +291,37 @@ class EstimateUpdatedEvent(Event):
     unit_id: str
     estimate_type: str  # EstimateType name
     supportability: float  # 0.0–1.0
+
+
+# ---------------------------------------------------------------------------
+# Phase 12a events
+# ---------------------------------------------------------------------------
+
+
+@dataclass(frozen=True)
+class MultiHopMessageEvent(Event):
+    """Published when a message is relayed through multiple hops."""
+
+    from_unit_id: str
+    to_unit_id: str
+    hop_count: int
+    total_latency_s: float
+    success: bool
+
+
+@dataclass(frozen=True)
+class JIPTLGeneratedEvent(Event):
+    """Published when a Joint Integrated Prioritized Target List is generated."""
+
+    num_nominations: int
+    num_allocated: int
+    highest_priority_target: str
+
+
+@dataclass(frozen=True)
+class ATOGeneratedEvent(Event):
+    """Published when an Air Tasking Order is generated."""
+
+    num_missions: int
+    num_aircraft: int
+    cas_reserve_fraction: float

@@ -69,6 +69,10 @@ class MoraleConfig(BaseModel):
     transition_cooldown_s: float = 30.0
     """Minimum seconds between morale state transitions."""
 
+    use_continuous_time: bool = False
+    """When True, interpret rates as continuous-time Markov chain rates
+    and scale by dt, making transitions tick-rate-independent."""
+
 
 # ---------------------------------------------------------------------------
 # Per-unit morale tracking
@@ -81,7 +85,7 @@ class UnitMoraleState:
 
     current_state: MoraleState = MoraleState.STEADY
     transition_cooldown_s: float = 0.0
-    last_transition_time: float = 0.0
+    last_transition_time: float = -1e9
 
     def get_state(self) -> dict[str, Any]:
         return {
@@ -231,6 +235,86 @@ class MoraleStateMachine:
         self._cached_matrix = matrix
         return matrix
 
+    def compute_continuous_transition_probs(
+        self,
+        casualty_rate: float,
+        suppression_level: float,
+        leadership_present: bool,
+        cohesion: float,
+        force_ratio: float,
+        dt: float,
+    ) -> np.ndarray:
+        """Build a 5x5 transition matrix using continuous-time rates.
+
+        Uses ``P(transition) = 1 - exp(-λ·dt)`` so that transitions are
+        tick-rate-independent.  With ``dt=1.0`` and moderate rates, this
+        closely approximates the discrete matrix but scales properly for
+        any tick duration.
+
+        Parameters
+        ----------
+        casualty_rate, suppression_level, leadership_present, cohesion, force_ratio:
+            Same semantics as :meth:`compute_transition_matrix`.
+        dt:
+            Time step duration in seconds.
+
+        Returns
+        -------
+        np.ndarray
+            5x5 row-stochastic transition matrix.
+        """
+        cfg = self._config
+
+        # Degradation rate (per second)
+        degrade_rate = cfg.base_degrade_rate
+        degrade_rate += cfg.casualty_weight * casualty_rate
+        degrade_rate += cfg.suppression_weight * suppression_level
+        if force_ratio < 1.0:
+            degrade_rate += cfg.force_ratio_weight * (1.0 - force_ratio)
+        degrade_rate = min(degrade_rate, 2.0)
+
+        # Recovery rate (per second)
+        recover_rate = cfg.base_recover_rate
+        if leadership_present:
+            recover_rate += cfg.leadership_weight
+        recover_rate += cfg.cohesion_weight * cohesion
+        if force_ratio > 1.0:
+            recover_rate += cfg.force_ratio_weight * min(force_ratio - 1.0, 1.0) * 0.5
+        recover_rate = min(recover_rate, 2.0)
+
+        n = len(MoraleState)
+        matrix = np.zeros((n, n), dtype=np.float64)
+
+        for i in range(n):
+            state = MoraleState(i)
+
+            if state == MoraleState.SURRENDERED:
+                matrix[i, i] = 1.0
+                continue
+
+            # State-dependent rate scaling (same shape as discrete version)
+            lambda_down = degrade_rate * (1.0 + 0.2 * i)
+            lambda_up = recover_rate * max(0.1, 1.0 - 0.3 * i) if i > 0 else 0.0
+
+            # Convert rate to probability over dt
+            p_down = 1.0 - np.exp(-lambda_down * dt)
+            p_up = 1.0 - np.exp(-lambda_up * dt)
+
+            # Clamp total transition probability
+            total_trans = p_down + p_up
+            if total_trans > 0.95:
+                scale = 0.95 / total_trans
+                p_down *= scale
+                p_up *= scale
+
+            if i < n - 1:
+                matrix[i, i + 1] = p_down
+            if i > 0:
+                matrix[i, i - 1] = p_up
+            matrix[i, i] = 1.0 - p_down - p_up
+
+        return matrix
+
     def check_transition(
         self,
         unit_id: str,
@@ -240,6 +324,8 @@ class MoraleStateMachine:
         cohesion: float,
         force_ratio: float,
         timestamp: datetime | None = None,
+        dt: float = 1.0,
+        current_time_s: float = 0.0,
     ) -> MoraleState:
         """Check for a morale state transition.
 
@@ -248,6 +334,11 @@ class MoraleStateMachine:
         timestamp:
             Simulation clock time for the event.  Falls back to
             ``datetime.now(UTC)`` if not provided (legacy callers).
+        dt:
+            Tick duration in seconds.  Only used when
+            ``config.use_continuous_time`` is True.
+        current_time_s:
+            Current simulation time in seconds, for cooldown enforcement.
 
         Returns the (possibly new) morale state.
         """
@@ -257,9 +348,20 @@ class MoraleStateMachine:
         if old_state == MoraleState.SURRENDERED:
             return old_state
 
-        matrix = self.compute_transition_matrix(
-            casualty_rate, suppression_level, leadership_present, cohesion, force_ratio,
-        )
+        # Enforce transition cooldown
+        elapsed_since_last = current_time_s - ums.last_transition_time
+        if elapsed_since_last < self._config.transition_cooldown_s:
+            return old_state
+
+        if self._config.use_continuous_time:
+            matrix = self.compute_continuous_transition_probs(
+                casualty_rate, suppression_level, leadership_present,
+                cohesion, force_ratio, dt,
+            )
+        else:
+            matrix = self.compute_transition_matrix(
+                casualty_rate, suppression_level, leadership_present, cohesion, force_ratio,
+            )
 
         row = matrix[int(old_state)]
         roll = self._rng.random()
@@ -274,6 +376,7 @@ class MoraleStateMachine:
 
         if new_state != old_state:
             ums.current_state = new_state
+            ums.last_transition_time = current_time_s
             logger.debug(
                 "Unit %s morale: %s -> %s", unit_id, old_state.name, new_state.name,
             )

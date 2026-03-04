@@ -19,7 +19,7 @@ Rolling record of implementation decisions, changes, and lessons learned across 
 | 10 | Campaign Validation | **Complete** | [phase-10.md](phase-10.md) |
 | | | | |
 | 11 | Core Fidelity Fixes | **Complete** | [phase-11.md](phase-11.md) |
-| 12 | Deep Systems Rework | Planned | — |
+| 12 | Deep Systems Rework | **Complete** | [phase-12.md](phase-12.md) |
 | 13 | Performance Optimization | Planned | — |
 | 14 | Tooling & Developer Experience | Planned | — |
 | 15 | Real-World Terrain & Data Pipeline | Planned | — |
@@ -49,24 +49,24 @@ Known limitations and deferred improvements logged during implementation. Review
 | 4 | ~~Ballistic trajectory uses simplified drag (no Mach-dependent Cd)~~ *(resolved Phase 11a)* | [phase-4.md — Known Limitations](phase-4.md#known-limitations--post-mvp-refinements) |
 | 4 | ~~DeMarre penetration approximation (no obliquity, composite, reactive armor)~~ *(resolved Phase 11a)* | [phase-4.md — Known Limitations](phase-4.md#known-limitations--post-mvp-refinements) |
 | 4 | HEAT penetration is range-independent | [phase-4.md — Known Limitations](phase-4.md#known-limitations--post-mvp-refinements) |
-| 4 | Submarine evasion simplified probability model | [phase-4.md — Known Limitations](phase-4.md#known-limitations--post-mvp-refinements) |
-| 4 | Mine trigger model lacks detailed ship signature interaction | [phase-4.md — Known Limitations](phase-4.md#known-limitations--post-mvp-refinements) |
+| 4 | ~~Submarine evasion simplified probability model~~ *(resolved Phase 12c)* | [phase-4.md — Known Limitations](phase-4.md#known-limitations--post-mvp-refinements) |
+| 4 | ~~Mine trigger model lacks detailed ship signature interaction~~ *(resolved Phase 12c)* | [phase-4.md — Known Limitations](phase-4.md#known-limitations--post-mvp-refinements) |
 | 4 | Carrier ops deck management abstracted (no individual spot tracking) | [phase-4.md — Known Limitations](phase-4.md#known-limitations--post-mvp-refinements) |
-| 4 | Morale Markov is discrete-time (not continuous-time) | [phase-4.md — Known Limitations](phase-4.md#known-limitations--post-mvp-refinements) |
-| 4 | PSYOP model is simplified effectiveness roll | [phase-4.md — Known Limitations](phase-4.md#known-limitations--post-mvp-refinements) |
-| 4 | Naval damage control lacks compartment flooding model | [phase-4.md — Known Limitations](phase-4.md#known-limitations--post-mvp-refinements) |
-| 4 | Air combat lacks detailed flight dynamics / energy-maneuverability | [phase-4.md — Known Limitations](phase-4.md#known-limitations--post-mvp-refinements) |
+| 4 | ~~Morale Markov is discrete-time (not continuous-time)~~ *(resolved Phase 12d)* | [phase-4.md — Known Limitations](phase-4.md#known-limitations--post-mvp-refinements) |
+| 4 | ~~PSYOP model is simplified effectiveness roll~~ *(resolved Phase 12d)* | [phase-4.md — Known Limitations](phase-4.md#known-limitations--post-mvp-refinements) |
+| 4 | ~~Naval damage control lacks compartment flooding model~~ *(resolved Phase 12c)* | [phase-4.md — Known Limitations](phase-4.md#known-limitations--post-mvp-refinements) |
+| 4 | ~~Air combat lacks detailed flight dynamics / energy-maneuverability~~ *(resolved Phase 12c)* | [phase-4.md — Known Limitations](phase-4.md#known-limitations--post-mvp-refinements) |
 | 4 | ~~Environment→combat coupling partial: air_combat, air_defense, naval_surface, indirect_fire lack env coupling~~ *(resolved Phase 11a)* | [phase-4.md — Known Limitations](phase-4.md#known-limitations--post-mvp-refinements) |
-| 5 | No multi-hop propagation (single hop issuer→recipient only) | [phase-5.md — Known Limitations](phase-5.md#known-limitations--deferred-items) |
-| 5 | No terrain-based LOS check for communications | [phase-5.md — Known Limitations](phase-5.md#known-limitations--deferred-items) |
-| 5 | Simplified FSCL (east-west line, not arbitrary polyline) | [phase-5.md — Known Limitations](phase-5.md#known-limitations--deferred-items) |
-| 5 | No ATO planning cycle (structures only, generation deferred to Phase 9/Future) | [phase-5.md — Known Limitations](phase-5.md#known-limitations--deferred-items) |
-| 5 | No JTAC/FAC observer model for CAS | [phase-5.md — Known Limitations](phase-5.md#known-limitations--deferred-items) |
+| 5 | ~~No multi-hop propagation (single hop issuer→recipient only)~~ *(resolved Phase 12a)* | [phase-5.md — Known Limitations](phase-5.md#known-limitations--deferred-items) |
+| 5 | ~~No terrain-based LOS check for communications~~ *(resolved Phase 12a)* | [phase-5.md — Known Limitations](phase-5.md#known-limitations--deferred-items) |
+| 5 | ~~Simplified FSCL (east-west line, not arbitrary polyline)~~ *(resolved Phase 12a)* | [phase-5.md — Known Limitations](phase-5.md#known-limitations--deferred-items) |
+| 5 | ~~No ATO planning cycle (structures only, generation deferred to Phase 9/Future)~~ *(resolved Phase 12a)* | [phase-5.md — Known Limitations](phase-5.md#known-limitations--deferred-items) |
+| 5 | ~~No JTAC/FAC observer model for CAS~~ *(resolved Phase 12a)* | [phase-5.md — Known Limitations](phase-5.md#known-limitations--deferred-items) |
 | 5 | Messenger comm type has no terrain traversal or intercept risk | [phase-5.md — Known Limitations](phase-5.md#known-limitations--deferred-items) |
-| 6 | No supply optimization solver (pull-based nearest depot only) | [phase-6.md — Known Limitations](phase-6.md#known-limitations) |
-| 6 | No multi-echelon supply chain (direct depot-to-unit) | [phase-6.md — Known Limitations](phase-6.md#known-limitations) |
-| 6 | Simplified transport vulnerability (no escort effects) | [phase-6.md — Known Limitations](phase-6.md#known-limitations) |
-| 6 | Medical M/M/c queueing approximate (exponential service) | [phase-6.md — Known Limitations](phase-6.md#known-limitations) |
+| 6 | ~~No supply optimization solver (pull-based nearest depot only)~~ *(resolved Phase 12b)* | [phase-6.md — Known Limitations](phase-6.md#known-limitations) |
+| 6 | ~~No multi-echelon supply chain (direct depot-to-unit)~~ *(resolved Phase 12b)* | [phase-6.md — Known Limitations](phase-6.md#known-limitations) |
+| 6 | ~~Simplified transport vulnerability (no escort effects)~~ *(resolved Phase 12b)* | [phase-6.md — Known Limitations](phase-6.md#known-limitations) |
+| 6 | ~~Medical M/M/c queueing approximate (exponential service)~~ *(resolved Phase 12b)* | [phase-6.md — Known Limitations](phase-6.md#known-limitations) |
 | 6 | ~~Engineering times deterministic (no stochastic variation)~~ *(resolved Phase 11c)* | [phase-6.md — Known Limitations](phase-6.md#known-limitations) |
 | 6 | ~~No fuel gating on movement (tracked but not enforced)~~ *(resolved Phase 11c)* | [phase-6.md — Known Limitations](phase-6.md#known-limitations) |
 | 6 | Blockade effectiveness simplified (flat per-ship probability) | [phase-6.md — Known Limitations](phase-6.md#known-limitations) |

@@ -218,8 +218,18 @@ class TransportEngine:
         dt_hours: float,
         env: EnvironmentConditions | None = None,
         timestamp: datetime | None = None,
+        escort_strength: float = 1.0,
+        threat_level: float = 0.0,
     ) -> list[TransportMission]:
-        """Advance all in-transit missions.  Return newly completed missions."""
+        """Advance all in-transit missions.  Return newly completed missions.
+
+        Parameters
+        ----------
+        escort_strength:
+            12b-3: Escort protection level (0.0–1.0). Higher = better protection.
+        threat_level:
+            12b-3: Threat level along routes (0.0–1.0). Higher = more interdiction risk.
+        """
         if env is None:
             env = EnvironmentConditions()
         self._sim_time += dt_hours
@@ -234,6 +244,19 @@ class TransportEngine:
                 if not self._check_airlift_weather(env):
                     mission.status = "DELAYED"
                     logger.debug("Airlift %s delayed by weather", mission.mission_id)
+                    continue
+
+            # 12b-3: Per-tick interdiction roll
+            if threat_level > 0.0:
+                vulnerability = 0.5  # Default convoy vulnerability
+                p_interdict = threat_level * vulnerability * (1.0 - escort_strength * 0.8)
+                p_interdict = max(0.0, min(1.0, p_interdict)) * dt_hours
+                if self._rng.random() < p_interdict:
+                    self.destroy_mission(
+                        mission.mission_id,
+                        cause="interdiction",
+                        timestamp=timestamp,
+                    )
                     continue
 
             # Apply environmental speed modifier

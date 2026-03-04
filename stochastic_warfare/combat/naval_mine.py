@@ -36,6 +36,15 @@ class MineType(enum.IntEnum):
     SMART = 6
 
 
+class MCMMode(enum.IntEnum):
+    """Mine countermeasures operational mode."""
+
+    SURFACE_SWEEP = 0
+    BOTTOM_SEARCH = 1
+    HUNTING = 2
+    ROUTE_SURVEY = 3
+
+
 class MineWarfareConfig(BaseModel):
     """Tunable parameters for mine warfare."""
 
@@ -48,6 +57,19 @@ class MineWarfareConfig(BaseModel):
     base_sweep_rate_m2_per_s: float = 500.0
     mine_damage_fraction: float = 0.25
     dud_rate: float = 0.05
+
+
+@dataclass
+class ShipMineSignature:
+    """Ship signature profile for mine triggering.
+
+    All signature values are normalized 0-1 unless otherwise noted.
+    """
+
+    acoustic_db: float = 0.5
+    magnetic_tesla: float = 0.5
+    pressure_kpa: float = 0.5
+    displacement_tons: float = 5000.0
 
 
 @dataclass
@@ -142,6 +164,8 @@ class MineWarfareEngine:
         positions: list[Position],
         mine_type: MineType,
         count_per_pos: int = 1,
+        delivery_method: str = "surface",
+        placement_accuracy_m: float = 0.0,
     ) -> list[Mine]:
         """Lay mines at specified positions.
 
@@ -155,23 +179,38 @@ class MineWarfareEngine:
             Type of mine to lay.
         count_per_pos:
             Number of mines per position.
+        delivery_method:
+            How mines are delivered (``"surface"``, ``"air"``, ``"submarine"``).
+        placement_accuracy_m:
+            When > 0, apply Gaussian scatter (standard deviation in meters)
+            to each mine's position.
         """
         laid: list[Mine] = []
 
         for pos in positions:
             for _ in range(count_per_pos):
                 self._mine_counter += 1
+                if placement_accuracy_m > 0.0:
+                    offset_e = self._rng.normal(0.0, placement_accuracy_m)
+                    offset_n = self._rng.normal(0.0, placement_accuracy_m)
+                    actual_pos = Position(
+                        pos.easting + offset_e,
+                        pos.northing + offset_n,
+                        pos.altitude,
+                    )
+                else:
+                    actual_pos = pos
                 mine = Mine(
                     mine_id=f"{layer_id}_mine_{self._mine_counter}",
-                    position=pos,
+                    position=actual_pos,
                     mine_type=mine_type,
                 )
                 laid.append(mine)
                 self._mines.append(mine)
 
         logger.debug(
-            "Layer %s laid %d %s mines at %d positions",
-            layer_id, len(laid), mine_type.name, len(positions),
+            "Layer %s laid %d %s mines at %d positions via %s",
+            layer_id, len(laid), mine_type.name, len(positions), delivery_method,
         )
         return laid
 
@@ -226,6 +265,7 @@ class MineWarfareEngine:
         ship_magnetic_sig: float,
         ship_acoustic_sig: float,
         timestamp: Any = None,
+        ship_signature: ShipMineSignature | None = None,
     ) -> MineResult:
         """Resolve a ship's encounter with a mine.
 
@@ -236,38 +276,62 @@ class MineWarfareEngine:
         mine:
             The mine being encountered.
         ship_magnetic_sig:
-            Ship's magnetic signature 0.0–1.0.
+            Ship's magnetic signature 0.0–1.0 (used when *ship_signature*
+            is not provided).
         ship_acoustic_sig:
-            Ship's acoustic signature 0.0–1.0.
+            Ship's acoustic signature 0.0–1.0 (used when *ship_signature*
+            is not provided).
         timestamp:
             Simulation timestamp.
+        ship_signature:
+            Optional structured ship signature.  When provided, its fields
+            override *ship_magnetic_sig* / *ship_acoustic_sig* and supply
+            pressure / displacement data for PRESSURE and COMBINATION
+            mine types.
         """
         if not mine.armed or mine.detonated:
             return MineResult(mine_id=mine.mine_id, triggered=False, detonated=False)
 
         cfg = self._config
 
+        # Resolve effective signature values
+        if ship_signature is not None:
+            eff_magnetic = ship_signature.magnetic_tesla
+            eff_acoustic = ship_signature.acoustic_db
+            eff_pressure = ship_signature.pressure_kpa
+            # Normalize displacement: 10 000 t → 1.0
+            eff_displacement = min(1.0, ship_signature.displacement_tons / 10000.0)
+        else:
+            eff_magnetic = ship_magnetic_sig
+            eff_acoustic = ship_acoustic_sig
+            eff_pressure = 0.5 * (ship_magnetic_sig + ship_acoustic_sig)
+            eff_displacement = 0.5
+
         # Trigger probability depends on mine type and ship signature
         if mine.mine_type == MineType.CONTACT:
             trigger_prob = 0.8  # Contact mines trigger on proximity
         elif mine.mine_type == MineType.MAGNETIC:
-            trigger_prob = ship_magnetic_sig * 0.9
+            trigger_prob = eff_magnetic * 0.9
         elif mine.mine_type == MineType.ACOUSTIC:
-            trigger_prob = ship_acoustic_sig * 0.85
+            trigger_prob = eff_acoustic * 0.85
         elif mine.mine_type == MineType.PRESSURE:
-            # Pressure mines respond to hull pressure wave
-            trigger_prob = 0.5 * (ship_magnetic_sig + ship_acoustic_sig)
+            # Pressure mines respond to hull pressure wave — use pressure
+            # and displacement when available
+            trigger_prob = 0.5 * (eff_pressure + eff_displacement)
         elif mine.mine_type == MineType.COMBINATION:
-            # Requires multiple signatures — harder to false-trigger
-            combined = ship_magnetic_sig * ship_acoustic_sig
+            # Requires multiple signatures — harder to false-trigger.
+            # Incorporate pressure/displacement when structured sig provided.
+            combined = eff_magnetic * eff_acoustic
+            if ship_signature is not None:
+                combined *= 0.5 * (eff_pressure + eff_displacement)
             trigger_prob = combined * 0.95
         elif mine.mine_type == MineType.RISING:
-            trigger_prob = 0.7 * max(ship_magnetic_sig, ship_acoustic_sig)
+            trigger_prob = 0.7 * max(eff_magnetic, eff_acoustic)
         elif mine.mine_type == MineType.SMART:
             # Smart mines can classify targets; selectivity determines
             # whether they engage
             trigger_prob = cfg.smart_mine_selectivity * max(
-                ship_magnetic_sig, ship_acoustic_sig,
+                eff_magnetic, eff_acoustic,
             )
         else:
             trigger_prob = 0.5
@@ -333,6 +397,8 @@ class MineWarfareEngine:
         mine_type: MineType,
         sweep_rate: float | None = None,
         dt: float = 60.0,
+        sweep_center: Position | None = None,
+        sweep_radius_m: float = 0.0,
     ) -> SweepResult:
         """Simulate mine-sweeping operations over a time step.
 
@@ -348,6 +414,12 @@ class MineWarfareEngine:
             Sweep rate in m^2/s (uses config default if not provided).
         dt:
             Time step in seconds.
+        sweep_center:
+            Optional geographic center for bounding the sweep.  When
+            provided together with *sweep_radius_m* > 0, only mines
+            within the circle are candidates.
+        sweep_radius_m:
+            Radius of the geographic bounding circle in meters.
         """
         if sweep_rate is None:
             sweep_rate = self._config.base_sweep_rate_m2_per_s
@@ -372,6 +444,12 @@ class MineWarfareEngine:
         neutralized = 0
         for mine in self._mines:
             if mine.mine_type == mine_type and mine.armed and not mine.detonated:
+                # Geographic bounding — skip mines outside the sweep circle
+                if sweep_center is not None and sweep_radius_m > 0.0:
+                    dx = mine.position.easting - sweep_center.easting
+                    dy = mine.position.northing - sweep_center.northing
+                    if math.hypot(dx, dy) > sweep_radius_m:
+                        continue
                 # Stochastic: each mine has a chance of being found
                 if self._rng.random() < type_factor:
                     swept += 1
@@ -391,6 +469,57 @@ class MineWarfareEngine:
             area_cleared_m2=area_cleared,
             sweep_time_s=dt,
         )
+
+    def update_mine_persistence(self, dt_hours: float) -> None:
+        """Age all armed mines — batteries decay exponentially.
+
+        Mines lose their armed status stochastically based on an
+        exponential decay model with rate 0.001 per hour.
+
+        Parameters
+        ----------
+        dt_hours:
+            Elapsed time in hours.
+        """
+        decay_rate = 0.001  # per hour
+        p_disarm = 1.0 - math.exp(-decay_rate * dt_hours)
+        for mine in self._mines:
+            if mine.armed and not mine.detonated:
+                if self._rng.random() < p_disarm:
+                    mine.armed = False
+
+    def compute_minefield_density(
+        self,
+        area_center: Position,
+        area_radius_m: float,
+    ) -> float:
+        """Count armed mines in a circular area and return density.
+
+        Parameters
+        ----------
+        area_center:
+            Center of the query area (ENU position).
+        area_radius_m:
+            Radius of the query area in meters.
+
+        Returns
+        -------
+        float
+            Armed mines per square meter within the circle.
+        """
+        if area_radius_m <= 0.0:
+            return 0.0
+
+        count = 0
+        for mine in self._mines:
+            if mine.armed and not mine.detonated:
+                dx = mine.position.easting - area_center.easting
+                dy = mine.position.northing - area_center.northing
+                if math.hypot(dx, dy) <= area_radius_m:
+                    count += 1
+
+        area_m2 = math.pi * area_radius_m ** 2
+        return count / area_m2
 
     def get_state(self) -> dict[str, Any]:
         return {

@@ -1,9 +1,12 @@
-"""Submarine warfare — torpedo attack, evasion, counter-torpedo.
+"""Submarine warfare — torpedo attack, evasion, counter-torpedo, patrol ops.
 
 Models torpedo engagement with wire-guided and autonomous seekers,
-submarine evasion maneuvers (decoy, depth change, knuckle), and
-counter-torpedo defense.  Torpedo kill probability depends on range,
-guidance mode, and environmental conditions (thermocline, ambient noise).
+submarine evasion maneuvers (decoy, depth change, knuckle, geometric),
+counter-torpedo defense, and patrol area operations.  Torpedo kill
+probability depends on range, guidance mode, and environmental conditions
+(thermocline, ambient noise).  Geometric evasion models bearing-rate
+maneuvers and thermocline exploitation.  Patrol operations model
+area-coverage detection over time.
 """
 
 from __future__ import annotations
@@ -19,7 +22,7 @@ from stochastic_warfare.combat.damage import DamageEngine
 from stochastic_warfare.combat.events import TorpedoEvent
 from stochastic_warfare.core.events import EventBus
 from stochastic_warfare.core.logging import get_logger
-from stochastic_warfare.core.types import ModuleId
+from stochastic_warfare.core.types import ModuleId, Position
 
 logger = get_logger(__name__)
 
@@ -36,6 +39,13 @@ class NavalSubsurfaceConfig(BaseModel):
     counter_torpedo_base_pk: float = 0.2
     range_decay_factor: float = 0.00002  # pk degrades with range
     malfunction_probability: float = 0.05
+
+    # Geometric evasion (Phase 12c)
+    enable_geometric_evasion: bool = False
+    bearing_rate_threshold: float = 0.05  # rad/s — minimum rate for evasion
+    thermocline_bonus: float = 0.2  # success probability bonus for crossing
+    speed_diff_threshold: float = 0.3  # minimum speed differential ratio
+    range_proxy_m: float = 5000.0  # proxy range for bearing rate calc
 
 
 @dataclass
@@ -59,6 +69,63 @@ class EvasionResult:
     effectiveness: float  # 0.0–1.0 reduction in incoming pk
 
 
+# ---------------------------------------------------------------------------
+# Geometric evasion (Phase 12c)
+# ---------------------------------------------------------------------------
+
+
+@dataclass
+class SubmarineState:
+    """Snapshot of a submarine's kinematic state for evasion computations."""
+
+    speed_kts: float = 5.0
+    depth_m: float = 100.0
+    heading_deg: float = 0.0
+    below_thermocline: bool = False
+
+
+@dataclass
+class GeometricEvasionResult:
+    """Outcome of a geometry-based evasion maneuver."""
+
+    success: bool
+    bearing_rate_change: float
+    speed_differential: float
+    crossed_thermocline: bool
+    evasion_type: str
+
+
+# ---------------------------------------------------------------------------
+# Patrol operations (Phase 12c)
+# ---------------------------------------------------------------------------
+
+
+@dataclass
+class PatrolArea:
+    """Defines a submarine patrol area."""
+
+    patrol_id: str
+    center: Position
+    radius_m: float
+    area_type: str = "barrier"  # "barrier", "area_search", "chokepoint"
+
+
+@dataclass
+class PatrolResult:
+    """Outcome of a patrol update tick."""
+
+    contacts_detected: int
+    area_covered_fraction: float
+    time_on_station_hours: float
+
+
+class SubmarinePatrolConfig(BaseModel):
+    """Configuration for patrol operations."""
+
+    detection_rate_base: float = 0.02  # contacts per hour per unit sensor quality
+    enable_patrol_ops: bool = False
+
+
 class NavalSubsurfaceEngine:
     """Manages submarine torpedo attacks and evasion.
 
@@ -80,12 +147,17 @@ class NavalSubsurfaceEngine:
         event_bus: EventBus,
         rng: np.random.Generator,
         config: NavalSubsurfaceConfig | None = None,
+        patrol_config: SubmarinePatrolConfig | None = None,
     ) -> None:
         self._damage = damage_engine
         self._event_bus = event_bus
         self._rng = rng
         self._config = config or NavalSubsurfaceConfig()
+        self._patrol_config = patrol_config or SubmarinePatrolConfig()
         self._torpedo_count: int = 0
+        # Patrol state: sub_id -> (PatrolArea, cumulative hours)
+        self._patrol_assignments: dict[str, PatrolArea] = {}
+        self._patrol_hours: dict[str, float] = {}
 
     def torpedo_engagement(
         self,
@@ -224,8 +296,15 @@ class NavalSubsurfaceEngine:
         sub_id: str,
         threat_bearing_deg: float,
         evasion_type: str,
+        sub_state: SubmarineState | None = None,
+        threat_speed_kts: float = 15.0,
     ) -> EvasionResult:
         """Execute an evasion maneuver against an incoming threat.
+
+        When ``enable_geometric_evasion`` is *True* in the config and
+        *sub_state* is provided, the method delegates to
+        :meth:`geometric_evasion` and wraps the result in an
+        :class:`EvasionResult` for backward compatibility.
 
         Parameters
         ----------
@@ -235,9 +314,33 @@ class NavalSubsurfaceEngine:
             Bearing to the incoming threat (degrees from north).
         evasion_type:
             Type of evasion: "decoy", "depth_change", "knuckle".
+        sub_state:
+            Optional submarine kinematic state (required when geometric
+            evasion is enabled).
+        threat_speed_kts:
+            Speed of the threat in knots (used by geometric evasion).
         """
         cfg = self._config
 
+        # --- geometric evasion delegation ---
+        if cfg.enable_geometric_evasion and sub_state is not None:
+            geo = self.geometric_evasion(
+                sub_state, threat_bearing_deg, threat_speed_kts,
+            )
+            effectiveness = min(
+                1.0, abs(geo.bearing_rate_change) / max(cfg.bearing_rate_threshold, 1e-9),
+            )
+            logger.debug(
+                "Sub %s geometric evasion against bearing %.0f°: success=%s",
+                sub_id, threat_bearing_deg, geo.success,
+            )
+            return EvasionResult(
+                evasion_type=geo.evasion_type,
+                success=geo.success,
+                effectiveness=effectiveness,
+            )
+
+        # --- legacy path ---
         effectiveness_map = {
             "decoy": cfg.decoy_effectiveness,
             "depth_change": cfg.depth_change_effectiveness,
@@ -295,12 +398,195 @@ class NavalSubsurfaceEngine:
         )
         return defeated
 
+    # ------------------------------------------------------------------
+    # Geometric evasion (Phase 12c)
+    # ------------------------------------------------------------------
+
+    def geometric_evasion(
+        self,
+        sub_state: SubmarineState,
+        threat_bearing_deg: float,
+        threat_speed_kts: float,
+    ) -> GeometricEvasionResult:
+        """Evaluate a geometry-based evasion maneuver.
+
+        The submarine tries to generate a high bearing-rate relative to
+        the threat by turning perpendicular and exploiting speed and
+        thermocline differences.
+
+        Parameters
+        ----------
+        sub_state:
+            Current kinematic state of the submarine.
+        threat_bearing_deg:
+            Bearing to the threat in degrees from north.
+        threat_speed_kts:
+            Speed of the threat (torpedo / ASW ship) in knots.
+        """
+        cfg = self._config
+
+        # Relative bearing between sub heading and threat
+        rel_bearing_rad = math.radians(threat_bearing_deg - sub_state.heading_deg)
+
+        # Threat speed component along the submarine's beam
+        threat_component = threat_speed_kts * math.cos(rel_bearing_rad)
+
+        # Bearing rate proxy: lateral speed difference over range
+        bearing_rate = (
+            (sub_state.speed_kts - threat_component) / cfg.range_proxy_m
+        )
+
+        # Speed differential ratio
+        speed_diff = sub_state.speed_kts / max(threat_speed_kts, 0.1)
+
+        # Thermocline crossing bonus
+        crossed = sub_state.below_thermocline
+
+        # Success determination
+        rate_ok = abs(bearing_rate) > cfg.bearing_rate_threshold
+        speed_ok = speed_diff > cfg.speed_diff_threshold
+        success = rate_ok and (speed_ok or crossed)
+
+        # Apply thermocline bonus to success probability (stochastic)
+        if not success and crossed:
+            success = self._rng.random() < cfg.thermocline_bonus
+
+        evasion_type = "geometric_thermocline" if crossed else "geometric_maneuver"
+
+        logger.debug(
+            "Geometric evasion: bearing_rate=%.4f, speed_diff=%.2f, "
+            "thermocline=%s, success=%s",
+            bearing_rate, speed_diff, crossed, success,
+        )
+
+        return GeometricEvasionResult(
+            success=success,
+            bearing_rate_change=bearing_rate,
+            speed_differential=speed_diff,
+            crossed_thermocline=crossed,
+            evasion_type=evasion_type,
+        )
+
+    # ------------------------------------------------------------------
+    # Patrol operations (Phase 12c)
+    # ------------------------------------------------------------------
+
+    def assign_patrol(self, sub_id: str, patrol_area: PatrolArea) -> None:
+        """Assign a submarine to a patrol area.
+
+        Parameters
+        ----------
+        sub_id:
+            Entity ID of the submarine.
+        patrol_area:
+            Patrol area definition.
+        """
+        self._patrol_assignments[sub_id] = patrol_area
+        self._patrol_hours[sub_id] = 0.0
+        logger.debug(
+            "Sub %s assigned to patrol %s (type=%s, radius=%.0fm)",
+            sub_id, patrol_area.patrol_id, patrol_area.area_type,
+            patrol_area.radius_m,
+        )
+
+    def update_patrol(
+        self,
+        sub_id: str,
+        dt_hours: float,
+        sensor_quality: float = 1.0,
+    ) -> PatrolResult:
+        """Advance patrol simulation for a submarine.
+
+        Parameters
+        ----------
+        sub_id:
+            Entity ID of the submarine on patrol.
+        dt_hours:
+            Time increment in hours.
+        sensor_quality:
+            Sensor effectiveness factor (0.0-1.0).
+
+        Returns
+        -------
+        PatrolResult
+            Contacts detected this tick, area coverage, and cumulative
+            time on station.
+        """
+        pcfg = self._patrol_config
+        if sub_id not in self._patrol_assignments:
+            logger.warning("Sub %s has no patrol assignment", sub_id)
+            return PatrolResult(
+                contacts_detected=0,
+                area_covered_fraction=0.0,
+                time_on_station_hours=0.0,
+            )
+
+        patrol = self._patrol_assignments[sub_id]
+        self._patrol_hours[sub_id] += dt_hours
+        total_hours = self._patrol_hours[sub_id]
+
+        # Area coverage saturates over time (1 - e^(-t/tau))
+        # tau scales with patrol area size
+        area_km2 = math.pi * (patrol.radius_m / 1000.0) ** 2
+        tau = max(1.0, area_km2 / 10.0)  # hours to ~63% coverage
+        area_covered = 1.0 - math.exp(-total_hours / tau)
+
+        # Contact detection: Poisson process modulated by sensor quality,
+        # area type, and detection rate
+        type_mult = {
+            "chokepoint": 2.0,
+            "barrier": 1.0,
+            "area_search": 0.5,
+        }.get(patrol.area_type, 1.0)
+
+        rate = pcfg.detection_rate_base * sensor_quality * type_mult * dt_hours
+        contacts = int(self._rng.poisson(rate))
+
+        logger.debug(
+            "Sub %s patrol update: dt=%.1fh, area=%.1f%%, contacts=%d",
+            sub_id, dt_hours, area_covered * 100.0, contacts,
+        )
+
+        return PatrolResult(
+            contacts_detected=contacts,
+            area_covered_fraction=area_covered,
+            time_on_station_hours=total_hours,
+        )
+
+    # ------------------------------------------------------------------
+    # State protocol
+    # ------------------------------------------------------------------
+
     def get_state(self) -> dict[str, Any]:
+        patrol_state = {
+            sub_id: {
+                "patrol_id": pa.patrol_id,
+                "center": (pa.center.easting, pa.center.northing, pa.center.altitude),
+                "radius_m": pa.radius_m,
+                "area_type": pa.area_type,
+            }
+            for sub_id, pa in self._patrol_assignments.items()
+        }
         return {
             "rng_state": self._rng.bit_generator.state,
             "torpedo_count": self._torpedo_count,
+            "patrol_assignments": patrol_state,
+            "patrol_hours": dict(self._patrol_hours),
         }
 
     def set_state(self, state: dict[str, Any]) -> None:
         self._rng.bit_generator.state = state["rng_state"]
         self._torpedo_count = state["torpedo_count"]
+        # Restore patrol state (backward-compatible — keys may be absent)
+        self._patrol_assignments = {}
+        self._patrol_hours = {}
+        for sub_id, pa_dict in state.get("patrol_assignments", {}).items():
+            cx, cy, cz = pa_dict["center"]
+            self._patrol_assignments[sub_id] = PatrolArea(
+                patrol_id=pa_dict["patrol_id"],
+                center=Position(cx, cy, cz),
+                radius_m=pa_dict["radius_m"],
+                area_type=pa_dict["area_type"],
+            )
+        for sub_id, hours in state.get("patrol_hours", {}).items():
+            self._patrol_hours[sub_id] = hours

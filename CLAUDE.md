@@ -3,7 +3,7 @@
 ## Project Overview
 High-fidelity, high-resolution wargame simulator. Multi-scale (campaign → battlefield → battle → unit level) with stochastic/signal-processing-inspired models (Markov chains, Monte Carlo, Kalman filters, noise models, queueing theory). Headless Python engine first; matplotlib for validation; full UI deferred. Modern era (Cold War–present) as prototype. Maritime warfare fully integrated, not deferred.
 
-**Current status**: Phase 11 complete (Core Fidelity Fixes). 3,818 tests passing. MVP complete (phases 0-10). Post-MVP Phase 11 delivered — 15 deficit fixes across ~20 source files.
+**Current status**: Phase 12 complete (Deep Systems Rework). 4,077 tests passing. MVP complete (phases 0-10). Post-MVP Phases 11-12 delivered — Phase 11: 15 deficit fixes across ~20 source files. Phase 12: 16 deficits resolved + 2 new domains (civilian population, strategic air campaigns/IADS) across 12 new + ~25 modified source files.
 
 ## Python & Package Management
 **Requires Python >=3.12** (pinned to 3.12.10 via `.python-version`).
@@ -209,5 +209,16 @@ No new dependencies.
 - **11b Detection** (35 tests): Sensor FOV filtering (boresight_offset_deg), dwell/integration gain (5·log10(n_scans), capped at 6 dB), geometric sonar bearing (atan2 + SNR-dependent noise), Mahalanobis gating (chi-squared threshold 9.21)
 - **11c Movement & Logistics** (23 tests): Fuel gating on movement (fuel_available param), stochastic engineering times (log-normal), wave attack modeling (wave_assignments dict), stochastic reinforcement arrivals (arrival_sigma config)
 - **11d AI** (9 tests): Echelon hardcode fix (decisions.py), tactical OODA acceleration (tactical_mult stacking multiplier)
+
+No new dependencies.
+
+### Phase 12: Deep Systems Rework (259 tests)
+12 new source files + ~25 modified across 6 sub-phases. No new dependencies. All changes backward-compatible with `enable_*` config flags.
+- **12d Morale** (30 tests): Continuous-time Markov morale (`P = 1 - exp(-λ·dt)`), enhanced PSYOP (message×susceptibility×delivery), cooldown enforcement
+- **12a C2** (53 tests): Multi-hop relay (hierarchy LCA), terrain comms LOS, network congestion, polyline FSCL, JTAC/FAC observer, JIPTL generation, network-centric COP (data link sharing), joint ops coordination (cross-service delays/caveats), ATO planning cycle
+- **12b Logistics** (22 tests): Multi-echelon supply (capacity constraints, min-cost flow, infrastructure coupling, route severing/rerouting), supply regeneration (production.py), transport escort effects, Erlang medical service, fuel gating wired to stockpile
+- **12c Combat** (66 tests): Air combat energy-maneuverability (EnergyState, specific energy), compartment flooding (progressive/counter/capsize), submarine geometric evasion + patrol ops, mine ship-signature + MCM + persistence, amphibious landing craft + tidal windows
+- **12e Civilian Population** (41 tests): New `population/` package — civilian regions, displacement (combat-driven), collateral tracking, civilian HUMINT (Poisson tips), disposition dynamics (Markov influence), ROE escalation triggers
+- **12f Air Campaigns/IADS** (47 tests): IADS sectors (radar handoff chain, SEAD degradation), air campaign management (sortie capacity, pilot fatigue, weather days, attrition), strategic targeting (TPL, BDA with ×3 overestimate bias, target regeneration), strategic infrastructure nodes (PowerPlant, Factory, Port, SupplyDepot)
 
 No new dependencies.

@@ -13,6 +13,7 @@ import enum
 import math
 from dataclasses import dataclass, field
 from pathlib import Path
+from typing import Any
 
 import numpy as np
 from pydantic import BaseModel
@@ -155,6 +156,20 @@ class CommunicationsConfig(BaseModel):
     env_factor_default: float = 1.0  # Environment degradation (1.0 = clear)
     messenger_speed_mps: float = 1.5  # Walking speed for messengers
 
+    # 12a-1: Multi-hop message propagation
+    enable_multi_hop: bool = False
+    max_relay_hops: int = 5
+
+    # 12a-2: Terrain-based comms LOS
+    # Injected via los_engine parameter, no config needed
+
+    # 12a-3: Network degradation model
+    enable_network_degradation: bool = False
+    congestion_threshold_low: float = 0.5
+    congestion_threshold_high: float = 0.9
+    congestion_latency_mult: float = 3.0
+    bandwidth_decay_rate: float = 0.1  # per-second exponential decay
+
 
 # ---------------------------------------------------------------------------
 # Internal state
@@ -206,6 +221,8 @@ class CommunicationsEngine:
         rng: np.random.Generator,
         equipment_loader: CommEquipmentLoader | None = None,
         config: CommunicationsConfig | None = None,
+        hierarchy: Any | None = None,
+        los_engine: Any | None = None,
     ) -> None:
         self._event_bus = event_bus
         self._rng = rng
@@ -214,6 +231,12 @@ class CommunicationsEngine:
         self._units: dict[str, _UnitCommsState] = {}
         self._jamming_zones: list[_JammingZone] = []
         self._env_factor: float = self._config.env_factor_default
+        # 12a-1: hierarchy for relay path finding
+        self._hierarchy = hierarchy
+        # 12a-2: LOS engine for terrain-based comm checks
+        self._los_engine = los_engine
+        # 12a-3: network load tracking (per CommType band)
+        self._network_loads: dict[int, float] = {}
 
     # -- Registration -------------------------------------------------------
 
@@ -326,6 +349,112 @@ class CommunicationsEngine:
                 worst = min(worst, factor)
         return worst
 
+    def _los_factor(
+        self,
+        equip: CommEquipmentDefinition,
+        from_pos: Position,
+        to_pos: Position,
+    ) -> float:
+        """12a-2: terrain LOS factor — 0.0 when LOS required but blocked."""
+        if self._los_engine is None:
+            return 1.0
+        if not equip.requires_los:
+            return 1.0
+        # LOS engine's check_los returns an object with .has_los
+        result = self._los_engine.check_los(from_pos, to_pos)
+        return 1.0 if result.has_los else 0.0
+
+    def _congestion_factor(self, equip: CommEquipmentDefinition) -> tuple[float, float]:
+        """12a-3: network congestion effect — (reliability_mult, latency_mult).
+
+        Returns (1.0, 1.0) when disabled or load is below threshold.
+        """
+        if not self._config.enable_network_degradation:
+            return 1.0, 1.0
+        band = int(equip.comm_type_enum)
+        load = self._network_loads.get(band, 0.0)
+        cfg = self._config
+        if load < cfg.congestion_threshold_low:
+            return 1.0, 1.0
+        if load > cfg.congestion_threshold_high:
+            return 0.0, cfg.congestion_latency_mult  # message loss
+        # Linear interpolation in the mid zone
+        frac = (load - cfg.congestion_threshold_low) / (
+            cfg.congestion_threshold_high - cfg.congestion_threshold_low
+        )
+        reliability_mult = 1.0 - frac
+        latency_mult = 1.0 + frac * (cfg.congestion_latency_mult - 1.0)
+        return reliability_mult, latency_mult
+
+    def add_network_load(self, band: CommType, load: float) -> None:
+        """Add load to a comm band (for network degradation model)."""
+        key = int(band)
+        self._network_loads[key] = self._network_loads.get(key, 0.0) + load
+
+    def get_network_load(self, band: CommType) -> float:
+        """Return current network load for a band."""
+        return self._network_loads.get(int(band), 0.0)
+
+    def _find_relay_path(
+        self,
+        from_id: str,
+        to_id: str,
+        unit_positions: dict[str, Position],
+    ) -> list[str] | None:
+        """12a-1: find relay path through hierarchy (LCA algorithm)."""
+        if self._hierarchy is None:
+            return None
+
+        # Walk up from sender to root
+        from_chain: list[str] = []
+        node = from_id
+        while node:
+            from_chain.append(node)
+            parent = self._hierarchy.get_parent(node)
+            if parent is None:
+                break
+            node = parent
+
+        # Walk up from receiver to root
+        to_chain: list[str] = []
+        node = to_id
+        while node:
+            to_chain.append(node)
+            parent = self._hierarchy.get_parent(node)
+            if parent is None:
+                break
+            node = parent
+
+        # Find LCA
+        to_set = set(to_chain)
+        lca = None
+        lca_idx_from = -1
+        for i, uid in enumerate(from_chain):
+            if uid in to_set:
+                lca = uid
+                lca_idx_from = i
+                break
+
+        if lca is None:
+            return None
+
+        lca_idx_to = to_chain.index(lca)
+
+        # Build path: from → ... → LCA → ... → to
+        path = from_chain[: lca_idx_from + 1]
+        path += list(reversed(to_chain[:lca_idx_to]))
+
+        # Limit hops
+        if len(path) - 1 > self._config.max_relay_hops:
+            return None
+
+        # Ensure all relay nodes have positions
+        for uid in path:
+            if uid not in unit_positions and uid not in self._units:
+                return None
+
+        return path
+
     def _channel_reliability(
         self,
         equip: CommEquipmentDefinition,
@@ -340,6 +469,9 @@ class CommunicationsEngine:
         r *= self._range_factor(distance, equip.max_range_m)
         r *= self._emcon_factor(equip, sender_emcon)
         r *= self._jam_factor(equip, from_pos)
+        r *= self._los_factor(equip, from_pos, to_pos)
+        cong_rel, _cong_lat = self._congestion_factor(equip)
+        r *= cong_rel
         return max(0.0, min(1.0, r))
 
     def _channel_latency(
@@ -356,7 +488,10 @@ class CommunicationsEngine:
             return distance / self._config.messenger_speed_mps
         # Propagation + transmission + base latency
         transmission_time = message_size_bits / equip.bandwidth_bps if equip.bandwidth_bps > 0 else 0
-        return equip.base_latency_s + transmission_time
+        base_latency = equip.base_latency_s + transmission_time
+        # 12a-3: congestion multiplier
+        _cong_rel, cong_lat = self._congestion_factor(equip)
+        return base_latency * cong_lat
 
     def can_communicate(
         self,
@@ -444,11 +579,94 @@ class CommunicationsEngine:
 
         return success, latency
 
+    def send_message_multi_hop(
+        self,
+        from_id: str,
+        to_id: str,
+        unit_positions: dict[str, Position],
+        message_size_bits: int = 1000,
+        timestamp: "datetime | None" = None,
+    ) -> tuple[bool, float, int]:
+        """12a-1: Send message via relay path. Returns (success, latency, hops).
+
+        Falls back to direct send if multi-hop disabled or no path found.
+        """
+        from datetime import datetime, timezone
+        from stochastic_warfare.c2.events import MultiHopMessageEvent
+
+        ts = timestamp or datetime.now(tz=timezone.utc)
+
+        if not self._config.enable_multi_hop or self._hierarchy is None:
+            from_pos = unit_positions.get(from_id)
+            to_pos = unit_positions.get(to_id)
+            if from_pos is None or to_pos is None:
+                return False, 0.0, 0
+            success, latency = self.send_message(
+                from_id, to_id, from_pos, to_pos, message_size_bits, ts,
+            )
+            return success, latency, 1 if success else 0
+
+        path = self._find_relay_path(from_id, to_id, unit_positions)
+        if path is None or len(path) < 2:
+            from_pos = unit_positions.get(from_id)
+            to_pos = unit_positions.get(to_id)
+            if from_pos is None or to_pos is None:
+                return False, 0.0, 0
+            success, latency = self.send_message(
+                from_id, to_id, from_pos, to_pos, message_size_bits, ts,
+            )
+            return success, latency, 1 if success else 0
+
+        # Multi-hop: each hop is independent P(success) and additive delay
+        total_latency = 0.0
+        hop_count = 0
+        for i in range(len(path) - 1):
+            hop_from = path[i]
+            hop_to = path[i + 1]
+            from_pos = unit_positions.get(hop_from)
+            to_pos = unit_positions.get(hop_to)
+            if from_pos is None or to_pos is None:
+                self._event_bus.publish(MultiHopMessageEvent(
+                    timestamp=ts, source=ModuleId.C2,
+                    from_unit_id=from_id, to_unit_id=to_id,
+                    hop_count=hop_count, total_latency_s=total_latency,
+                    success=False,
+                ))
+                return False, total_latency, hop_count
+
+            success, latency = self.send_message(
+                hop_from, hop_to, from_pos, to_pos, message_size_bits, ts,
+            )
+            total_latency += latency
+            hop_count += 1
+
+            if not success:
+                self._event_bus.publish(MultiHopMessageEvent(
+                    timestamp=ts, source=ModuleId.C2,
+                    from_unit_id=from_id, to_unit_id=to_id,
+                    hop_count=hop_count, total_latency_s=total_latency,
+                    success=False,
+                ))
+                return False, total_latency, hop_count
+
+        self._event_bus.publish(MultiHopMessageEvent(
+            timestamp=ts, source=ModuleId.C2,
+            from_unit_id=from_id, to_unit_id=to_id,
+            hop_count=hop_count, total_latency_s=total_latency,
+            success=True,
+        ))
+        return True, total_latency, hop_count
+
     # -- Update -------------------------------------------------------------
 
     def update(self, dt_seconds: float) -> None:
-        """Advance time (placeholder for future degradation models)."""
-        pass
+        """Advance time — decay network loads."""
+        if self._config.enable_network_degradation:
+            decay = math.exp(-self._config.bandwidth_decay_rate * dt_seconds)
+            for band in list(self._network_loads.keys()):
+                self._network_loads[band] *= decay
+                if self._network_loads[band] < 0.001:
+                    del self._network_loads[band]
 
     # -- State protocol -----------------------------------------------------
 

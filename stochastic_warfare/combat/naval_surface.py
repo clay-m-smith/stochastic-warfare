@@ -36,6 +36,21 @@ class NavalSurfaceConfig(BaseModel):
     chaff_effectiveness: float = 0.25  # fraction of missiles seduced by chaff
     fire_spread_probability: float = 0.1
     flooding_spread_probability: float = 0.15
+    enable_compartment_model: bool = False
+    num_compartments_default: int = 8
+    capsize_threshold: float = 0.6
+    progressive_flooding_rate: float = 0.02  # per second per damaged bulkhead
+    counter_flooding_rate: float = 0.01  # per second
+
+
+@dataclass
+class CompartmentConfig:
+    """Per-ship compartment configuration for the flooding model."""
+
+    num_compartments: int = 8
+    capsize_threshold: float = 0.6
+    progressive_flooding_rate: float = 0.02
+    counter_flooding_rate: float = 0.01
 
 
 @dataclass
@@ -59,6 +74,8 @@ class ShipDamageState:
     fire: float = 0.0  # 0.0–1.0
     structural: float = 0.0  # 0.0–1.0
     systems_damaged: list[str] = field(default_factory=list)
+    compartment_flooding: list[float] = field(default_factory=list)
+    capsized: bool = False
 
     def get_state(self) -> dict[str, Any]:
         return {
@@ -68,6 +85,8 @@ class ShipDamageState:
             "fire": self.fire,
             "structural": self.structural,
             "systems_damaged": list(self.systems_damaged),
+            "compartment_flooding": list(self.compartment_flooding),
+            "capsized": self.capsized,
         }
 
     def set_state(self, state: dict[str, Any]) -> None:
@@ -77,6 +96,8 @@ class ShipDamageState:
         self.fire = state["fire"]
         self.structural = state["structural"]
         self.systems_damaged = list(state["systems_damaged"])
+        self.compartment_flooding = list(state.get("compartment_flooding", []))
+        self.capsized = state.get("capsized", False)
 
 
 class NavalSurfaceEngine:
@@ -366,6 +387,204 @@ class NavalSurfaceEngine:
             Current hull integrity 0.0–1.0.
         """
         return hull_integrity < self._config.mission_kill_threshold
+
+    # ------------------------------------------------------------------
+    # Compartment flooding model (Phase 12c-2)
+    # ------------------------------------------------------------------
+
+    def initialize_compartments(
+        self,
+        ship_id: str,
+        num_compartments: int = 8,
+    ) -> None:
+        """Initialize compartment flooding array for a ship.
+
+        Creates a zero-filled flooding list in the ship's damage state.
+        If no damage state exists yet one is created.
+
+        Parameters
+        ----------
+        ship_id:
+            Entity ID of the ship.
+        num_compartments:
+            Number of watertight compartments (default 8).
+        """
+        if ship_id not in self._damage_states:
+            self._damage_states[ship_id] = ShipDamageState(ship_id=ship_id)
+        self._damage_states[ship_id].compartment_flooding = [0.0] * num_compartments
+        logger.debug(
+            "Initialized %d compartments for %s", num_compartments, ship_id,
+        )
+
+    def apply_compartment_damage(
+        self,
+        ship_id: str,
+        hit_count: int,
+        warhead_damage: float,
+    ) -> None:
+        """Apply warhead hits to random compartments.
+
+        Each hit selects a random compartment and increases its flooding
+        level by a fraction of the warhead damage (with stochastic
+        variation).  Only operates when compartments are initialized.
+
+        Parameters
+        ----------
+        ship_id:
+            Entity ID of the ship.
+        hit_count:
+            Number of hits to distribute across compartments.
+        warhead_damage:
+            Base warhead damage fraction (0.0-1.0).
+        """
+        if ship_id not in self._damage_states:
+            return
+        state = self._damage_states[ship_id]
+        if not state.compartment_flooding:
+            return
+
+        n = len(state.compartment_flooding)
+        for _ in range(hit_count):
+            idx = int(self._rng.integers(0, n))
+            # Each hit floods between 50-100% of warhead_damage in that compartment
+            flood_amount = warhead_damage * (0.5 + 0.5 * self._rng.random())
+            state.compartment_flooding[idx] = min(
+                1.0, state.compartment_flooding[idx] + flood_amount,
+            )
+        logger.debug(
+            "Compartment damage to %s: %d hits (wd=%.2f), flooding=%s",
+            ship_id, hit_count, warhead_damage, state.compartment_flooding,
+        )
+
+    def progressive_flooding(self, ship_id: str, dt: float) -> None:
+        """Spread flooding through damaged bulkheads over time.
+
+        For each compartment with flooding > 0, there is a probability
+        per time step that adjacent compartments begin flooding.  The
+        probability is proportional to the flooding level in the source
+        compartment and the configured progressive flooding rate.
+
+        Parameters
+        ----------
+        ship_id:
+            Entity ID of the ship.
+        dt:
+            Time step in seconds.
+        """
+        if ship_id not in self._damage_states:
+            return
+        state = self._damage_states[ship_id]
+        if not state.compartment_flooding:
+            return
+
+        n = len(state.compartment_flooding)
+        rate = self._config.progressive_flooding_rate
+
+        # Snapshot current levels so spreading is computed from pre-step state
+        current = list(state.compartment_flooding)
+        for i in range(n):
+            if current[i] <= 0.0:
+                continue
+            # Probability of breaching each adjacent bulkhead this step
+            p_spread = min(1.0, current[i] * rate * dt)
+            for adj in (i - 1, i + 1):
+                if 0 <= adj < n:
+                    if self._rng.random() < p_spread:
+                        spread_amount = current[i] * rate * dt
+                        state.compartment_flooding[adj] = min(
+                            1.0, state.compartment_flooding[adj] + spread_amount,
+                        )
+
+    def counter_flood(
+        self,
+        ship_id: str,
+        dc_quality: float,
+        dt: float,
+    ) -> None:
+        """Apply counter-flooding to reduce water in all compartments.
+
+        Crew damage-control quality modulates how fast pumps and
+        counter-flooding measures can drain compartments.
+
+        Parameters
+        ----------
+        ship_id:
+            Entity ID of the ship.
+        dc_quality:
+            Crew damage-control quality 0.0-1.0.
+        dt:
+            Time step in seconds.
+        """
+        if ship_id not in self._damage_states:
+            return
+        state = self._damage_states[ship_id]
+        if not state.compartment_flooding:
+            return
+
+        rate = self._config.counter_flooding_rate * dc_quality
+        for i in range(len(state.compartment_flooding)):
+            if state.compartment_flooding[i] > 0.0:
+                reduction = rate * dt * (0.5 + 0.5 * self._rng.random())
+                state.compartment_flooding[i] = max(
+                    0.0, state.compartment_flooding[i] - reduction,
+                )
+
+    def check_capsize(self, ship_id: str) -> bool:
+        """Check whether a ship has capsized due to flooding.
+
+        Capsize occurs when total flooding exceeds the capsize threshold
+        **or** when asymmetric flooding (large port/starboard imbalance)
+        exceeds half the threshold.  A capsized ship is permanently lost.
+
+        Parameters
+        ----------
+        ship_id:
+            Entity ID of the ship.
+
+        Returns
+        -------
+        bool
+            True if the ship has capsized.
+        """
+        if ship_id not in self._damage_states:
+            return False
+        state = self._damage_states[ship_id]
+        if state.capsized:
+            return True
+        if not state.compartment_flooding:
+            return False
+
+        n = len(state.compartment_flooding)
+        total = sum(state.compartment_flooding)
+        avg_per_compartment = total / n
+
+        # Overall flooding check
+        if avg_per_compartment >= self._config.capsize_threshold:
+            state.capsized = True
+            state.hull_integrity = 0.0
+            logger.info(
+                "Ship %s capsized: average flooding %.2f >= threshold %.2f",
+                ship_id, avg_per_compartment, self._config.capsize_threshold,
+            )
+            return True
+
+        # Asymmetry check: compare port-side (first half) vs starboard (second half)
+        mid = n // 2
+        port_flood = sum(state.compartment_flooding[:mid]) / max(mid, 1)
+        starboard_flood = sum(state.compartment_flooding[mid:]) / max(n - mid, 1)
+        asymmetry = abs(port_flood - starboard_flood)
+        if asymmetry >= self._config.capsize_threshold * 0.5:
+            state.capsized = True
+            state.hull_integrity = 0.0
+            logger.info(
+                "Ship %s capsized from asymmetry: port=%.2f starboard=%.2f "
+                "(asymmetry %.2f >= %.2f)",
+                ship_id, port_flood, starboard_flood,
+                asymmetry, self._config.capsize_threshold * 0.5,
+            )
+            return True
+
+        return False
 
     def get_state(self) -> dict[str, Any]:
         return {

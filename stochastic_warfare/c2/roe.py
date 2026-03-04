@@ -205,6 +205,34 @@ class RoeEngine:
             severity=severity,
         ))
 
+    # -- Escalation (12e-6) -------------------------------------------------
+
+    def evaluate_escalation(
+        self,
+        cumulative_collateral: float,
+        threshold: float,
+    ) -> RoeLevel | None:
+        """Check if cumulative collateral damage warrants ROE tightening.
+
+        Returns the new (tighter) ROE level if the threshold is exceeded,
+        or ``None`` if no change is needed. Tightening path:
+        ``WEAPONS_FREE → WEAPONS_TIGHT → WEAPONS_HOLD``.
+
+        Parameters
+        ----------
+        cumulative_collateral:
+            Total civilian casualties attributed to a side.
+        threshold:
+            Casualty count that triggers escalation.
+        """
+        if cumulative_collateral < threshold:
+            return None
+        if self._default_level == RoeLevel.WEAPONS_FREE:
+            return RoeLevel.WEAPONS_TIGHT
+        if self._default_level == RoeLevel.WEAPONS_TIGHT:
+            return RoeLevel.WEAPONS_HOLD
+        return None  # already at HOLD
+
     # -- State protocol -----------------------------------------------------
 
     def get_state(self) -> dict:

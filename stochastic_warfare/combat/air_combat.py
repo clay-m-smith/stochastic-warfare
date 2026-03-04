@@ -23,6 +23,26 @@ from stochastic_warfare.core.types import ModuleId, Position
 
 logger = get_logger(__name__)
 
+_G = 9.81  # gravitational acceleration (m/s²)
+
+
+@dataclass
+class EnergyState:
+    """Aircraft energy state for energy-maneuverability modeling.
+
+    Specific energy (energy height) combines potential and kinetic energy
+    into a single altitude-equivalent metric, following the Boyd /
+    Christie energy-maneuverability theory.
+    """
+
+    altitude_m: float
+    speed_mps: float
+
+    @property
+    def specific_energy(self) -> float:
+        """Energy height h_e = h + V² / 2g (meters)."""
+        return self.altitude_m + self.speed_mps ** 2 / (2 * _G)
+
 
 class AirCombatMode(enum.IntEnum):
     """Air-to-air engagement regime."""
@@ -47,6 +67,7 @@ class AirCombatConfig(BaseModel):
     pilot_skill_weight: float = 0.4
     deflection_penalty_per_deg: float = 0.005
     guns_base_pk: float = 0.15
+    energy_advantage_weight: float = 0.0
 
 
 @dataclass
@@ -101,6 +122,8 @@ class AirCombatEngine:
         weather_modifier: float = 1.0,
         visibility_km: float = 20.0,
         timestamp: Any = None,
+        attacker_energy: EnergyState | None = None,
+        defender_energy: EnergyState | None = None,
     ) -> AirCombatResult:
         """Resolve an air-to-air engagement, auto-selecting mode if not given.
 
@@ -130,6 +153,10 @@ class AirCombatEngine:
             Visibility in km (<10 degrades WVR/guns Pk).
         timestamp:
             Simulation timestamp for events.
+        attacker_energy:
+            Attacker energy state (altitude + speed) for E-M modifier.
+        defender_energy:
+            Defender energy state (altitude + speed) for E-M modifier.
         """
         dx = defender_pos.easting - attacker_pos.easting
         dy = defender_pos.northing - attacker_pos.northing
@@ -166,6 +193,42 @@ class AirCombatEngine:
         else:
             result = self.guns_engagement(
                 attacker_id, defender_id, range_m, pilot_skill, aspect_angle_deg,
+            )
+
+        # Energy-maneuverability modifier (Boyd/Christie E-M theory)
+        if (
+            self._config.energy_advantage_weight > 0.0
+            and attacker_energy is not None
+            and defender_energy is not None
+        ):
+            e_diff = (
+                attacker_energy.specific_energy
+                - defender_energy.specific_energy
+            )
+            e_max = max(
+                attacker_energy.specific_energy,
+                defender_energy.specific_energy,
+            )
+            e_norm = e_diff / max(1.0, e_max)
+            # Mode-dependent scaling: energy matters most in WVR/guns
+            if mode == AirCombatMode.BVR:
+                e_factor = e_norm * 0.3
+            else:  # WVR or GUNS
+                e_factor = e_norm * 1.0
+            e_factor = max(-0.3, min(0.3, e_factor))
+            new_pk = result.effective_pk + (
+                self._config.energy_advantage_weight * e_factor
+            )
+            new_pk = max(0.01, min(0.99, new_pk))
+            result = AirCombatResult(
+                mode=result.mode,
+                attacker_id=result.attacker_id,
+                target_id=result.target_id,
+                missile_pk=result.missile_pk,
+                effective_pk=new_pk,
+                hit=float(self._rng.random()) < new_pk,
+                range_m=result.range_m,
+                countermeasure_reduction=result.countermeasure_reduction,
             )
 
         # Weather/visibility degradation (mainly affects WVR and guns)

@@ -162,6 +162,11 @@ class MedicalConfig(BaseModel):
     overwhelm_time_multiplier: float = 2.0
     overwhelm_rtd_penalty: float = 0.5  # multiply RTD probability by this
 
+    # 12b-4: Erlang service time
+    erlang_shape_k: int = 1
+    """Erlang shape parameter k. k=1 = exponential (MVP default).
+    k>1 = more predictable treatment times (sum of k exponentials)."""
+
 
 # ---------------------------------------------------------------------------
 # Engine
@@ -276,14 +281,25 @@ class MedicalEngine:
         return completed
 
     def _get_treatment_time(self, record: CasualtyRecord) -> float:
-        """Return treatment time based on severity."""
+        """Return treatment time based on severity.
+
+        When ``erlang_shape_k > 1``, treatment time is drawn from a Gamma
+        distribution with shape k and the same mean, producing less variable
+        but still stochastic durations.
+        """
         cfg = self._config
         if record.severity <= 1:
-            return cfg.treatment_hours_minor
+            mean = cfg.treatment_hours_minor
         elif record.severity == 2:
-            return cfg.treatment_hours_serious
+            mean = cfg.treatment_hours_serious
         else:
-            return cfg.treatment_hours_critical
+            mean = cfg.treatment_hours_critical
+
+        k = cfg.erlang_shape_k
+        if k > 1:
+            # Gamma(k, mean/k) has mean = mean, variance = mean²/k
+            return float(self._rng.gamma(k, mean / k))
+        return mean
 
     def _resolve_outcome(
         self, record: CasualtyRecord, timestamp: datetime | None,

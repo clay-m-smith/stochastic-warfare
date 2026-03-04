@@ -1,5 +1,5 @@
 # Project Structure & Module Decomposition
-**Status**: Complete (MVP)
+**Status**: Complete (Phase 12)
 **Last Updated**: 2026-03-03
 
 ---
@@ -193,7 +193,10 @@ stochastic-warfare/
     │   ├── naval_gunfire_support.py  # Shore bombardment, naval fire support for ground forces
     │   ├── amphibious_assault.py     # Beach assault resolution, shore defenses, landing operations
     │   ├── carrier_ops.py            # Carrier flight operations, sortie generation rate, deck cycle, CAP management
-    │   └── fratricide.py             # Friendly fire: IFF uncertainty, deconfliction, identification errors
+    │   ├── fratricide.py             # Friendly fire: IFF uncertainty, deconfliction, identification errors
+    │   ├── iads.py                   # IADS sector model: radar handoff chain, SEAD degradation, sector health [Phase 12f]
+    │   ├── air_campaign.py           # Air campaign management: sortie capacity, pilot fatigue, weather days, attrition [Phase 12f]
+    │   └── strategic_targeting.py    # Strategic targeting: TPL generation, BDA cycle, target-effect chains [Phase 12f]
     ├── morale/                       # Morale & human factors
     │   ├── __init__.py
     │   ├── events.py                 # Morale events (state change, rout, rally, surrender)
@@ -230,6 +233,7 @@ stochastic-warfare/
     │   ├── coordination.py           # Fire support coord, airspace deconfliction, boundaries, sea-land-air integration
     │   ├── naval_c2.py              # Fleet org (TF/TG/TU), naval data links, submarine comms (VLF/ELF)
     │   ├── mission_command.py        # Commander's intent, mission-type orders, subordinate initiative/adaptation
+    │   ├── joint_ops.py             # Joint task force command: service coordination, liaison, coalition caveats [Phase 12a]
     │   └── ai/                       # AI decision-making [PHASE 8a]
     │       ├── __init__.py
     │       ├── ooda.py               # OODA loop timer/FSM (echelon-scaled, log-normal friction)
@@ -253,7 +257,16 @@ stochastic-warfare/
     │   ├── prisoners.py              # POW handling, processing, resource cost of prisoner management
     │   ├── naval_logistics.py         # Underway replenishment (UNREP/RAS), port operations, sealift, LOTS
     │   ├── naval_basing.py           # Naval bases, forward operating bases, anchorage, port capacity/throughput
-    │   └── disruption.py             # Interdiction, route destruction, sabotage, blockade
+    │   ├── disruption.py             # Interdiction, route destruction, sabotage, blockade
+    │   └── production.py             # Supply regeneration: production facilities, infrastructure-coupled output [Phase 12b]
+    ├── population/                    # Civilian population & COIN [Phase 12e]
+    │   ├── __init__.py
+    │   ├── events.py                 # Population events (displacement, collateral, disposition, HUMINT tip)
+    │   ├── civilians.py              # Civilian entity manager: regions, disposition, displacement tracking
+    │   ├── displacement.py           # Refugee displacement: combat-driven movement, transport penalty
+    │   ├── collateral.py             # Collateral damage tracking, escalation threshold
+    │   ├── humint.py                 # Civilian HUMINT: Poisson tip generation, disposition-dependent flow
+    │   └── influence.py              # Population disposition dynamics: Markov chain transitions
     ├── validation/                    # Engagement + campaign validation (Phase 7, 10)
     │   ├── __init__.py
     │   ├── historical_data.py         # Historical engagement data models + YAML loader

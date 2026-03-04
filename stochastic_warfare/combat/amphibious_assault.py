@@ -46,6 +46,18 @@ class AmphibiousAssaultConfig(BaseModel):
     terrain_defense_multiplier: float = 1.5  # defender terrain advantage
     buildup_efficiency: float = 0.9  # fraction of subsequent waves that land
     min_force_ratio_for_establishment: float = 1.5  # attacker:defender ratio
+    enable_landing_craft_model: bool = False  # enable craft-limited throughput
+
+
+@dataclass
+class LandingCraft:
+    """A single landing craft used for ship-to-shore movement."""
+
+    craft_id: str
+    capacity_troops: int = 200
+    turnaround_time_s: float = 3600.0
+    min_beach_depth_m: float = 1.5
+    speed_kts: float = 10.0
 
 
 @dataclass
@@ -257,6 +269,138 @@ class AmphibiousAssaultEngine:
             defender_casualties_fraction=defender_attrition,
             beachhead_established=established,
         )
+
+    def compute_throughput(
+        self,
+        craft: list[LandingCraft],
+        beach_gradient: float,
+        obstacle_factor: float,
+        fire_factor: float,
+    ) -> float:
+        """Compute troop throughput (troops per second) for a set of craft.
+
+        Parameters
+        ----------
+        craft:
+            Available landing craft.
+        beach_gradient:
+            Beach slope factor 0.0–1.0.  Steeper or rougher beaches reduce
+            throughput (1.0 = ideal, 0.0 = impassable).
+        obstacle_factor:
+            Obstacle multiplier 0.0–1.0 (1.0 = clear beach).
+        fire_factor:
+            Defensive fire multiplier 0.0–1.0 (1.0 = no opposing fire).
+
+        Returns
+        -------
+        float
+            Effective troops per second that can be delivered to shore.
+        """
+        if not craft:
+            return 0.0
+
+        raw_throughput = sum(
+            c.capacity_troops / max(c.turnaround_time_s, 1.0) for c in craft
+        )
+        return raw_throughput * beach_gradient * obstacle_factor * fire_factor
+
+    @staticmethod
+    def check_tidal_window(
+        tide_height_m: float,
+        craft_min_depth: float,
+    ) -> bool:
+        """Check whether the tide permits landing craft to beach.
+
+        Parameters
+        ----------
+        tide_height_m:
+            Current tide height in meters above chart datum.
+        craft_min_depth:
+            Minimum water depth the craft requires to reach the beach.
+
+        Returns
+        -------
+        bool
+            ``True`` if the tide is high enough for the craft to beach.
+        """
+        return tide_height_m >= craft_min_depth
+
+    def execute_wave_with_craft(
+        self,
+        wave_size: int,
+        craft: list[LandingCraft],
+        tide_height: float,
+        beach_gradient: float,
+        defense_strength: float,
+        conditions: dict[str, Any] | None = None,
+        timestamp: Any = None,
+    ) -> WaveResult:
+        """Execute an amphibious wave constrained by landing craft and tides.
+
+        The number of troops that can land in a single wave is limited by
+        total craft capacity.  If the tidal window is closed for any craft
+        its capacity is excluded.
+
+        Parameters
+        ----------
+        wave_size:
+            Number of troops assigned to the wave.
+        craft:
+            Available landing craft.
+        tide_height:
+            Current tide height in meters above chart datum.
+        beach_gradient:
+            Beach slope factor 0.0–1.0 (affects throughput).
+        defense_strength:
+            Beach defensive strength 0.0–1.0.
+        conditions:
+            Environmental conditions (``sea_state``, ``visibility``).
+        timestamp:
+            Simulation timestamp.
+        """
+        # Filter craft by tidal window
+        usable_craft = [
+            c for c in craft
+            if self.check_tidal_window(tide_height, c.min_beach_depth_m)
+        ]
+
+        if not usable_craft:
+            logger.debug("No craft can beach at tide height %.1f m", tide_height)
+            return WaveResult(
+                wave_size=wave_size,
+                landed=0,
+                casualties=0,
+                phase=AssaultPhase.APPROACH,
+            )
+
+        # Craft capacity limits how many troops can go in one lift
+        total_capacity = sum(c.capacity_troops for c in usable_craft)
+        effective_wave = min(wave_size, total_capacity)
+
+        # Compute throughput modifier (affects landing success)
+        fire_factor = max(0.0, 1.0 - defense_strength)
+        obstacle_factor = 1.0  # can be extended later
+        throughput = self.compute_throughput(
+            usable_craft, beach_gradient, obstacle_factor, fire_factor,
+        )
+
+        # Naval support — not separately specified here, use 0.0 default
+        naval_support_factor = 0.0
+
+        # Delegate to the standard wave execution with the capacity-limited size
+        result = self.execute_wave(
+            wave_size=effective_wave,
+            beach_defense_strength=defense_strength,
+            naval_support_factor=naval_support_factor,
+            conditions=conditions,
+            timestamp=timestamp,
+        )
+
+        # If wave_size exceeded capacity, the remainder did not embark
+        # Report the original wave_size for bookkeeping
+        result.wave_size = wave_size
+
+        return result
 
     def get_state(self) -> dict[str, Any]:
         return {

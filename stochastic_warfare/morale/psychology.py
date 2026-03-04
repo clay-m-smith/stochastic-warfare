@@ -7,6 +7,7 @@ and civilian population reaction to military operations.
 from __future__ import annotations
 
 from dataclasses import dataclass
+from datetime import datetime, timezone
 from typing import Any
 
 import numpy as np
@@ -14,6 +15,8 @@ from pydantic import BaseModel
 
 from stochastic_warfare.core.events import EventBus
 from stochastic_warfare.core.logging import get_logger
+from stochastic_warfare.core.types import ModuleId
+from stochastic_warfare.morale.events import PsyopAppliedEvent
 
 logger = get_logger(__name__)
 
@@ -45,6 +48,26 @@ class PsychologyConfig(BaseModel):
 
     civilian_cooperation_threshold: float = 0.3
     """Military intensity below which civilians may cooperate."""
+
+    # Enhanced PSYOP configuration (12d-2)
+    message_type_multipliers: dict[str, float] = {
+        "surrender": 1.5,
+        "desertion": 1.2,
+        "fear": 1.0,
+        "deception": 0.8,
+    }
+    """Effectiveness multiplier per PSYOP message type."""
+
+    delivery_method_multipliers: dict[str, float] = {
+        "leaflet": 0.6,
+        "broadcast": 1.0,
+        "social_media": 1.3,
+        "loudspeaker": 0.8,
+    }
+    """Effectiveness multiplier per PSYOP delivery method."""
+
+    training_resistance_weight: float = 0.5
+    """How much target training (0–1) reduces PSYOP effectiveness."""
 
 
 # ---------------------------------------------------------------------------
@@ -159,6 +182,104 @@ class PsychologyEngine:
             morale_degradation=effect,
             effective=effective,
             description=f"PSYOP degradation {effect:.3f} (intensity={psyop_intensity:.2f})",
+        )
+
+    def apply_psyop_enhanced(
+        self,
+        target_unit_id: str,
+        target_morale_state: int,
+        message_type: str,
+        delivery_method: str,
+        target_susceptibility: float,
+        target_training: float = 0.5,
+        timestamp: datetime | None = None,
+    ) -> PsyopResult:
+        """Apply an enhanced PSYOP with message type, delivery, and training resistance.
+
+        Parameters
+        ----------
+        target_unit_id:
+            ID of the target unit for event publishing.
+        target_morale_state:
+            Current morale state of the target (0=STEADY .. 4=SURRENDERED).
+        message_type:
+            Type of PSYOP message ("surrender", "desertion", "fear", "deception").
+        delivery_method:
+            Delivery mechanism ("leaflet", "broadcast", "social_media", "loudspeaker").
+        target_susceptibility:
+            Target's susceptibility to PSYOP (0.0–1.0). Higher = more susceptible.
+        target_training:
+            Target's PSYOP resistance training level (0.0–1.0). Higher = more resistant.
+        timestamp:
+            Simulation clock time for the event.
+
+        Returns
+        -------
+        PsyopResult
+            Outcome including morale degradation amount.
+        """
+        cfg = self._config
+
+        if target_morale_state >= 4:
+            return PsyopResult(
+                morale_degradation=0.0,
+                effective=False,
+                description="Target already surrendered",
+            )
+
+        # Base effect
+        effect = cfg.psyop_base_effect
+
+        # Message type multiplier
+        msg_mult = cfg.message_type_multipliers.get(message_type, 1.0)
+        effect *= msg_mult
+
+        # Delivery method multiplier
+        del_mult = cfg.delivery_method_multipliers.get(delivery_method, 1.0)
+        effect *= del_mult
+
+        # Target susceptibility (higher = more vulnerable)
+        effect *= (0.5 + target_susceptibility)
+
+        # Training resistance reduces effect
+        resistance = cfg.training_resistance_weight * target_training
+        effect *= max(0.1, 1.0 - resistance)
+
+        # Morale state susceptibility (worse morale = more susceptible)
+        susceptibility = 1.0 + 0.3 * target_morale_state
+        effect *= susceptibility
+
+        # Stochastic variation
+        noise = self._rng.normal(0.0, 0.02)
+        effect += noise
+        effect = float(np.clip(effect, 0.0, 1.0))
+
+        effective = effect > 0.02
+
+        if effective:
+            logger.debug(
+                "Enhanced PSYOP on %s: degradation=%.3f, msg=%s, delivery=%s",
+                target_unit_id, effect, message_type, delivery_method,
+            )
+
+        ts = timestamp if timestamp is not None else datetime.now(tz=timezone.utc)
+        self._event_bus.publish(PsyopAppliedEvent(
+            timestamp=ts,
+            source=ModuleId.MORALE,
+            target_unit_id=target_unit_id,
+            message_type=message_type,
+            delivery_method=delivery_method,
+            morale_degradation=effect,
+            effective=effective,
+        ))
+
+        return PsyopResult(
+            morale_degradation=effect,
+            effective=effective,
+            description=(
+                f"Enhanced PSYOP ({message_type}/{delivery_method}) "
+                f"degradation {effect:.3f}"
+            ),
         )
 
     def surrender_inducement(

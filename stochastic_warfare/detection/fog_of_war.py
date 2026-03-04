@@ -12,6 +12,8 @@ from typing import Any
 
 import numpy as np
 
+from pydantic import BaseModel
+
 from stochastic_warfare.core.logging import get_logger
 from stochastic_warfare.core.types import Position
 from stochastic_warfare.detection.deception import Decoy, DeceptionEngine
@@ -84,6 +86,21 @@ class SideWorldView:
 
 
 # ---------------------------------------------------------------------------
+# 12a-7: Data Link / COP configuration
+# ---------------------------------------------------------------------------
+
+
+class DataLinkConfig(BaseModel):
+    """Configuration for network-centric COP sharing."""
+
+    enable_cop_sharing: bool = False
+    track_degradation_per_hop: float = 0.1
+    """Confidence degradation per data link hop (0.0–1.0)."""
+    max_track_age_s: float = 60.0
+    """Maximum age of a track before it is dropped from COP sharing."""
+
+
+# ---------------------------------------------------------------------------
 # Fog of War Manager
 # ---------------------------------------------------------------------------
 
@@ -115,6 +132,7 @@ class FogOfWarManager:
         intel_fusion: IntelFusionEngine | None = None,
         deception_engine: DeceptionEngine | None = None,
         rng: np.random.Generator | None = None,
+        data_link_config: DataLinkConfig | None = None,
     ) -> None:
         self._detection = detection_engine or DetectionEngine()
         self._identification = identification_engine
@@ -123,6 +141,12 @@ class FogOfWarManager:
         self._deception = deception_engine or DeceptionEngine()
         self._rng = rng or np.random.default_rng(0)
         self._world_views: dict[str, SideWorldView] = {}
+        # 12a-7: COP sharing
+        self._dl_config = data_link_config or DataLinkConfig()
+        # network_name → list of unit_ids
+        self._data_link_networks: dict[str, list[str]] = {}
+        # unit_id → set of network names
+        self._unit_networks: dict[str, set[str]] = {}
 
     # ------------------------------------------------------------------
     # World view access
@@ -269,6 +293,86 @@ class FogOfWarManager:
                     break
 
         return wv
+
+    # ------------------------------------------------------------------
+    # 12a-7: COP sharing via data links
+    # ------------------------------------------------------------------
+
+    def set_data_link_networks(
+        self, networks: dict[str, list[str]],
+    ) -> None:
+        """Register data link network memberships.
+
+        Parameters
+        ----------
+        networks:
+            Dict of network_name → list of unit_ids.
+            E.g. {"link16": ["unit_a", "unit_b"], "fbcb2": ["unit_c", "unit_d"]}
+        """
+        self._data_link_networks = {k: list(v) for k, v in networks.items()}
+        self._unit_networks.clear()
+        for net_name, members in self._data_link_networks.items():
+            for uid in members:
+                if uid not in self._unit_networks:
+                    self._unit_networks[uid] = set()
+                self._unit_networks[uid].add(net_name)
+
+    def share_cop(
+        self,
+        side: str,
+        unit_contacts: dict[str, dict[str, ContactRecord]],
+        current_time: float = 0.0,
+    ) -> None:
+        """Share contacts laterally among data-linked units on the same side.
+
+        Parameters
+        ----------
+        unit_contacts:
+            Dict of unit_id → {contact_id: ContactRecord} for units on this side.
+        current_time:
+            Current simulation time for track age filtering.
+        """
+        if not self._dl_config.enable_cop_sharing:
+            return
+
+        wv = self.get_world_view(side)
+        max_age = self._dl_config.max_track_age_s
+        degradation = self._dl_config.track_degradation_per_hop
+
+        # For each network, share contacts among members
+        for net_name, members in self._data_link_networks.items():
+            # Collect all contacts from members of this network
+            shared_contacts: dict[str, tuple[ContactRecord, str]] = {}
+            for uid in members:
+                if uid not in unit_contacts:
+                    continue
+                for cid, cr in unit_contacts[uid].items():
+                    # Check track age
+                    age = current_time - cr.last_sensor_contact_time
+                    if age > max_age:
+                        continue
+                    if cid not in shared_contacts:
+                        shared_contacts[cid] = (cr, uid)
+
+            # Distribute shared contacts to all network members' world view
+            for cid, (cr, source_uid) in shared_contacts.items():
+                if cid not in wv.contacts:
+                    # Add with degraded confidence
+                    degraded_info = ContactInfo(
+                        level=cr.contact_info.level,
+                        domain_estimate=cr.contact_info.domain_estimate,
+                        type_estimate=cr.contact_info.type_estimate,
+                        specific_estimate=cr.contact_info.specific_estimate,
+                        confidence=max(0.1, cr.contact_info.confidence - degradation),
+                    )
+                    wv.contacts[cid] = ContactRecord(
+                        contact_id=cid,
+                        track=cr.track,
+                        contact_info=degraded_info,
+                        first_detected_time=cr.first_detected_time,
+                        last_sensor_contact_time=cr.last_sensor_contact_time,
+                        reporting_sensors=list(cr.reporting_sensors),
+                    )
 
     # ------------------------------------------------------------------
     # Ground truth comparison

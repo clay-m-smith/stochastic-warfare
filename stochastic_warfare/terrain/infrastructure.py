@@ -107,6 +107,57 @@ class Tunnel(BaseModel):
     rail_id: str | None = None
 
 
+# 12f-4: Strategic infrastructure node types
+
+
+class HealthState(enum.IntEnum):
+    """Infrastructure health state."""
+
+    OPERATIONAL = 0
+    DAMAGED = 1
+    DESTROYED = 2
+
+
+class PowerPlant(BaseModel):
+    """A power generation facility."""
+
+    plant_id: str
+    position: tuple[float, float]
+    capacity_mw: float = 100.0
+    condition: float = 1.0
+    repair_rate: float = 0.005  # per hour
+
+
+class Factory(BaseModel):
+    """A manufacturing facility."""
+
+    factory_id: str
+    position: tuple[float, float]
+    production_type: str = "general"  # general, munitions, vehicles
+    condition: float = 1.0
+    repair_rate: float = 0.003
+
+
+class Port(BaseModel):
+    """A port facility."""
+
+    port_id: str
+    position: tuple[float, float]
+    throughput_tons_per_day: float = 10000.0
+    condition: float = 1.0
+    repair_rate: float = 0.002
+
+
+class SupplyDepot(BaseModel):
+    """A supply storage depot."""
+
+    depot_id: str
+    position: tuple[float, float]
+    capacity_tons: float = 5000.0
+    condition: float = 1.0
+    repair_rate: float = 0.01
+
+
 # ---------------------------------------------------------------------------
 # InfrastructureManager
 # ---------------------------------------------------------------------------
@@ -129,6 +180,10 @@ class InfrastructureManager:
         airfields: list[Airfield] | None = None,
         tunnels: list[Tunnel] | None = None,
         rail_lines: list[RailLine] | None = None,
+        power_plants: list[PowerPlant] | None = None,
+        factories: list[Factory] | None = None,
+        ports: list[Port] | None = None,
+        supply_depots: list[SupplyDepot] | None = None,
     ) -> None:
         self._roads = {r.road_id: r for r in (roads or [])}
         self._bridges = {b.bridge_id: b for b in (bridges or [])}
@@ -136,6 +191,10 @@ class InfrastructureManager:
         self._airfields = {a.airfield_id: a for a in (airfields or [])}
         self._tunnels = {t.tunnel_id: t for t in (tunnels or [])}
         self._rail_lines = {r.rail_id: r for r in (rail_lines or [])}
+        self._power_plants = {p.plant_id: p for p in (power_plants or [])}
+        self._factories = {f.factory_id: f for f in (factories or [])}
+        self._ports = {p.port_id: p for p in (ports or [])}
+        self._supply_depots = {d.depot_id: d for d in (supply_depots or [])}
 
         # Pre-build shapely geometries
         self._road_geoms: dict[str, LineString] = {
@@ -230,10 +289,16 @@ class InfrastructureManager:
     # Mutable state
     # ------------------------------------------------------------------
 
+    def _all_stores(self):
+        """Return all feature stores for unified iteration."""
+        return (self._roads, self._bridges, self._buildings,
+                self._airfields, self._tunnels, self._rail_lines,
+                self._power_plants, self._factories, self._ports,
+                self._supply_depots)
+
     def damage(self, feature_id: str, amount: float) -> None:
         """Reduce condition of any feature by *amount* (clamped to 0)."""
-        for store in (self._roads, self._bridges, self._buildings,
-                      self._airfields, self._tunnels, self._rail_lines):
+        for store in self._all_stores():
             if feature_id in store:
                 feat = store[feature_id]
                 feat.condition = max(0.0, feat.condition - amount)  # type: ignore[union-attr]
@@ -242,12 +307,18 @@ class InfrastructureManager:
 
     def repair(self, feature_id: str, amount: float) -> None:
         """Increase condition of any feature by *amount* (clamped to 1)."""
-        for store in (self._roads, self._bridges, self._buildings,
-                      self._airfields, self._tunnels, self._rail_lines):
+        for store in self._all_stores():
             if feature_id in store:
                 feat = store[feature_id]
                 feat.condition = min(1.0, feat.condition + amount)  # type: ignore[union-attr]
                 return
+        raise KeyError(f"Unknown feature: {feature_id}")
+
+    def get_feature_condition(self, feature_id: str) -> float:
+        """Return the condition (0-1) of any feature."""
+        for store in self._all_stores():
+            if feature_id in store:
+                return store[feature_id].condition  # type: ignore[union-attr]
         raise KeyError(f"Unknown feature: {feature_id}")
 
     # ------------------------------------------------------------------
@@ -257,8 +328,7 @@ class InfrastructureManager:
     def get_state(self) -> dict:
         """Capture mutable condition values for all features."""
         conditions: dict[str, float] = {}
-        for store in (self._roads, self._bridges, self._buildings,
-                      self._airfields, self._tunnels, self._rail_lines):
+        for store in self._all_stores():
             for fid, feat in store.items():
                 conditions[fid] = feat.condition  # type: ignore[union-attr]
         return {"conditions": conditions}
@@ -266,8 +336,7 @@ class InfrastructureManager:
     def set_state(self, state: dict) -> None:
         """Restore condition values."""
         conditions = state["conditions"]
-        for store in (self._roads, self._bridges, self._buildings,
-                      self._airfields, self._tunnels, self._rail_lines):
+        for store in self._all_stores():
             for fid, feat in store.items():
                 if fid in conditions:
                     feat.condition = conditions[fid]  # type: ignore[union-attr]

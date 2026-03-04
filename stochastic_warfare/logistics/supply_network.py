@@ -49,6 +49,8 @@ class SupplyRoute:
     capacity_tons_per_hour: float
     base_transit_time_hours: float
     condition: float = 1.0  # 0-1, degrades from damage/weather
+    current_flow_tons_per_hour: float = 0.0  # 12b-1: current utilization
+    infrastructure_ids: list[str] = field(default_factory=list)  # 12b-1: linked infrastructure
 
 
 @dataclass
@@ -59,6 +61,9 @@ class SupplyNode:
     position: Position
     node_type: str  # DEPOT, UNIT, PORT, AIRFIELD
     linked_id: str | None = None  # depot_id or unit_id
+    echelon_level: int = 0  # 12b-1: supply echelon (0=unit, 1=fwd, 2=main, 3=theater)
+    infrastructure_id: str | None = None  # 12b-1: linked infrastructure
+    throughput_tons_per_hour: float = 100.0  # 12b-1: node throughput cap
 
 
 # ---------------------------------------------------------------------------
@@ -73,6 +78,11 @@ class SupplyNetworkConfig(BaseModel):
     rail_capacity_multiplier: float = 5.0
     cross_country_capacity_fraction: float = 0.1
     seasonal_degradation_rate: float = 0.01  # per hour in bad conditions
+
+    # 12b-1: Capacity constraints & infrastructure coupling
+    enable_capacity_constraints: bool = False
+    enable_infrastructure_coupling: bool = False
+    enable_min_cost_flow: bool = False
 
 
 # ---------------------------------------------------------------------------
@@ -232,6 +242,125 @@ class SupplyNetworkEngine:
         if best is None:
             return None
         return (best[0], best[1])
+
+    # -- 12b-1: Infrastructure coupling & capacity-aware routing --
+
+    def sync_infrastructure(self, infrastructure_manager: object) -> None:
+        """Propagate infrastructure damage to route conditions.
+
+        Parameters
+        ----------
+        infrastructure_manager:
+            Object with ``get_feature_condition(feature_id) -> float`` method.
+        """
+        if not self._config.enable_infrastructure_coupling:
+            return
+        for route in self._routes.values():
+            for infra_id in route.infrastructure_ids:
+                if hasattr(infrastructure_manager, "get_feature_condition"):
+                    cond = infrastructure_manager.get_feature_condition(infra_id)
+                    if cond < route.condition:
+                        self.update_route_condition(route.route_id, cond)
+
+    def sever_route(self, route_id: str) -> list[str]:
+        """Destroy a supply route. Returns IDs of units that may be affected.
+
+        Sets condition to 0, effectively removing the route from pathfinding.
+        """
+        from stochastic_warfare.logistics.events import SupplyShortageEvent
+
+        route = self._routes.get(route_id)
+        if route is None:
+            return []
+
+        self.update_route_condition(route_id, 0.0)
+
+        # Find affected unit nodes downstream of this route
+        affected: list[str] = []
+        try:
+            downstream = nx.descendants(self._graph, route.to_node)
+            for nid in downstream:
+                node = self._nodes.get(nid)
+                if node and node.node_type == "UNIT" and node.linked_id:
+                    affected.append(node.linked_id)
+            # Also the immediate to_node
+            to_node = self._nodes.get(route.to_node)
+            if to_node and to_node.node_type == "UNIT" and to_node.linked_id:
+                affected.append(to_node.linked_id)
+        except nx.NetworkXError:
+            pass
+
+        logger.info("Route %s severed, %d units affected", route_id, len(affected))
+        return affected
+
+    def find_alternate_route(
+        self,
+        from_id: str,
+        to_id: str,
+        blocked_routes: set[str] | None = None,
+    ) -> list[SupplyRoute] | None:
+        """Find alternate route avoiding blocked routes.
+
+        Parameters
+        ----------
+        blocked_routes:
+            Set of route_ids to exclude from pathfinding.
+
+        Returns route path or None.
+        """
+        if blocked_routes is None:
+            return self.find_supply_route(from_id, to_id)
+
+        # Build temporary graph excluding blocked routes
+        temp_graph = self._graph.copy()
+        for route_id in blocked_routes:
+            route = self._routes.get(route_id)
+            if route and temp_graph.has_edge(route.from_node, route.to_node):
+                temp_graph.remove_edge(route.from_node, route.to_node)
+
+        try:
+            node_path = nx.shortest_path(temp_graph, from_id, to_id, weight="weight")
+        except (nx.NetworkXNoPath, nx.NodeNotFound):
+            return None
+
+        routes: list[SupplyRoute] = []
+        for i in range(len(node_path) - 1):
+            edge_data = temp_graph.edges[node_path[i], node_path[i + 1]]
+            route = self._routes[edge_data["route_id"]]
+            routes.append(route)
+        return routes
+
+    def compute_network_redundancy(self, node_id: str) -> float:
+        """Compute redundancy score for a node (0=single point of failure, 1=fully redundant).
+
+        Based on the number of independent paths from depot nodes.
+        """
+        depot_nodes = [
+            nid for nid, n in self._nodes.items()
+            if n.node_type == "DEPOT"
+        ]
+        if not depot_nodes:
+            return 0.0
+
+        paths_found = 0
+        for depot_id in depot_nodes:
+            try:
+                # Check for at least 2 node-disjoint paths
+                paths = list(nx.node_disjoint_paths(
+                    self._graph, depot_id, node_id,
+                ))
+                paths_found += min(len(paths), 2)
+            except (nx.NetworkXNoPath, nx.NodeNotFound, nx.NetworkXError):
+                # Try simple connectivity
+                if nx.has_path(self._graph, depot_id, node_id):
+                    paths_found += 1
+
+        if not depot_nodes:
+            return 0.0
+
+        # Score: 0 = no paths, 0.5 = one path, 1.0 = multiple paths
+        max_possible = len(depot_nodes) * 2
+        return min(1.0, paths_found / max(1, max_possible))
 
     # -- State protocol --
 

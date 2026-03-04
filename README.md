@@ -1,8 +1,8 @@
 # Stochastic Warfare
 
 ![Python](https://img.shields.io/badge/python-%3E%3D3.12-blue)
-![Tests](https://img.shields.io/badge/tests-3%2C818_passing-brightgreen)
-![Phase](https://img.shields.io/badge/phase-11_Post--MVP-blue)
+![Tests](https://img.shields.io/badge/tests-4%2C077_passing-brightgreen)
+![Phase](https://img.shields.io/badge/phase-12_Post--MVP-blue)
 
 High-fidelity, high-resolution wargame simulator built as a headless Python engine. Models warfare across multiple scales — from individual unit engagements up through tactical battles, operational battlefields, and multi-day strategic campaigns — with stochastic and signal-processing-inspired models throughout.
 
@@ -86,7 +86,7 @@ For full architectural rationale, see [`docs/brainstorm.md`](docs/brainstorm.md)
 ## Project Structure
 
 ```
-stochastic_warfare/       # simulation engine (12 modules, ~150 source files)
+stochastic_warfare/       # simulation engine (14 modules, ~165 source files)
   core/                   # types, logging, RNG, clock, events, config, checkpoint
   coordinates/            # geodetic/UTM/ENU transforms, magnetic declination
   terrain/                # heightmap, classification, bathymetry, LOS, infrastructure
@@ -94,10 +94,11 @@ stochastic_warfare/       # simulation engine (12 modules, ~150 source files)
   entities/               # unit definitions, equipment, organization, hierarchy
   movement/               # pathfinding, fatigue, formations, naval/air/amphibious
   detection/              # sensors, signatures, sonar, estimation, fog of war
-  combat/                 # ballistics, damage, missiles, naval, air combat, suppression
+  combat/                 # ballistics, damage, missiles, naval, air combat, IADS, strategic targeting
   morale/                 # state transitions, cohesion, stress, psychology, rout
-  c2/                     # command, communications, ROE, orders, mission command
-  logistics/              # supply, transport, maintenance, medical, engineering
+  c2/                     # command, communications, ROE, orders, joint ops, mission command
+  logistics/              # supply, transport, maintenance, medical, engineering, production
+  population/             # civilian regions, displacement, collateral, HUMINT, influence
   simulation/             # scenario loading, battle/campaign managers, engine
   validation/             # historical data, Monte Carlo, campaign validation
   ai/                     # OODA, commander AI, doctrine, assessment, decisions
@@ -118,7 +119,7 @@ data/                     # ~118 YAML data files
   medical/                # 2 medical facility definitions
   scenarios/              # 3 engagement + 6 campaign scenarios
 
-tests/                    # 3,818 tests across ~130 test files
+tests/                    # 4,077 tests across ~136 test files
 docs/                     # specs, brainstorm, devlog, development phases
 ```
 
@@ -126,7 +127,7 @@ For the full package tree and module decomposition, see [`docs/specs/project-str
 
 ## Development Status
 
-All 11 MVP phases (0–10) are complete. Post-MVP refinement is underway.
+All 11 MVP phases (0–10) are complete. Post-MVP deep systems rework through Phase 12 is complete.
 
 | Phase | Focus | Tests | Status |
 |-------|-------|-------|--------|
@@ -142,7 +143,8 @@ All 11 MVP phases (0–10) are complete. Post-MVP refinement is underway.
 | 9 | Simulation Orchestration | 372 | Complete |
 | 10 | Campaign Validation | 196 | Complete |
 | 11 | Core Fidelity Fixes | 109 | Complete |
-| | **Total** | **3,818** | |
+| 12 | Deep Systems Rework | 259 | Complete |
+| | **Total** | **4,077** | |
 
 For the full phase roadmap, see [`docs/development-phases.md`](docs/development-phases.md) (MVP) and [`docs/development-phases-post-mvp.md`](docs/development-phases-post-mvp.md) (post-MVP). For per-phase implementation logs, see [`docs/devlog/`](docs/devlog/).
 
