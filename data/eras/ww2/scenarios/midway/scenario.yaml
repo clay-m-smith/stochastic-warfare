@@ -1,0 +1,94 @@
+name: "Battle of Midway (1942)"
+date: "1942-06-04T06:00:00Z"
+duration_hours: 24.0
+latitude: 28.2
+longitude: -177.4
+era: ww2
+
+tick_resolution:
+  strategic_s: 3600
+  operational_s: 300
+  tactical_s: 5
+
+weather_conditions:
+  visibility_m: 15000
+  wind_speed_mps: 5.0
+  wind_direction_deg: 90
+  temperature_c: 22.0
+  precipitation: none
+  cloud_cover: 0.4
+  humidity: 0.70
+
+terrain:
+  width_m: 100000
+  height_m: 80000
+  cell_size_m: 1000.0
+  base_elevation_m: 0.0
+  terrain_type: open_ocean
+
+sides:
+  - side: usn
+    units:
+      - unit_type: fletcher_dd
+        count: 8
+    experience_level: 0.6
+    morale_initial: STEADY
+
+  - side: ijn
+    units:
+      - unit_type: fletcher_dd
+        count: 10
+    experience_level: 0.7
+    morale_initial: STEADY
+
+objectives:
+  - objective_id: midway_atoll
+    position: [50000, 40000]
+    radius_m: 5000
+    type: territory
+
+victory_conditions:
+  - type: force_destroyed
+    side: ""
+    params:
+      threshold: 0.5
+  - type: time_expired
+    side: usn
+    params:
+      max_duration_s: 86400
+
+calibration_overrides:
+  hit_probability_modifier: 0.8
+  target_size_modifier: 1.0
+  morale_degrade_rate_modifier: 0.3
+  morale_base_degrade_rate: 0.005
+  morale_casualty_weight: 0.5
+  morale_check_interval: 30
+  usn_force_ratio_modifier: 1.5
+  ijn_force_ratio_modifier: 1.0
+  usn_cohesion: 0.8
+  ijn_cohesion: 0.7
+  usn_start_x: 20000.0
+  usn_start_y: 40000.0
+  ijn_start_x: 80000.0
+  ijn_start_y: 40000.0
+
+documented_outcomes:
+  - name: ijn_units_destroyed
+    value: 4.0
+    tolerance_factor: 3.0
+    unit: carriers
+    source: "Parshall & Tully, *Shattered Sword*"
+    source_quality: 1
+    notes: "All 4 IJN fleet carriers sunk"
+  - name: usn_units_destroyed
+    value: 1.0
+    tolerance_factor: 3.0
+    unit: carriers
+    source: "Parshall & Tully, *Shattered Sword*"
+    source_quality: 1
+    notes: "USS Yorktown sunk"
+
+sources:
+  - "Parshall, Jonathan & Tully, Anthony. *Shattered Sword: The Untold Story of the Battle of Midway*"
+  - "Symonds, Craig L. *The Battle of Midway*"

@@ -1,0 +1,12 @@
+profile_id: operational_zhukov
+display_name: "Operational Zhukov-type Commander"
+description: "Determined, large-scale operational thinker modeled on Georgy Zhukov — masters massed artillery preparation and deep echeloned attacks at the expense of casualties"
+aggression: 0.7
+caution: 0.5
+flexibility: 0.6
+initiative: 0.5
+experience: 0.85
+preferred_doctrine: soviet_deep_ops
+stress_tolerance: 0.85
+decision_speed: 0.6
+risk_acceptance: 0.6

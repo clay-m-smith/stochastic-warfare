@@ -1,0 +1,12 @@
+profile_id: aggressive_patton
+display_name: "Aggressive Patton-type Commander"
+description: "Bold, relentless pursuit commander modeled on George S. Patton — favors speed, audacity, and continuous offensive pressure over deliberate planning"
+aggression: 0.9
+caution: 0.1
+flexibility: 0.7
+initiative: 0.85
+experience: 0.8
+preferred_doctrine: us_combined_arms_ww2
+stress_tolerance: 0.8
+decision_speed: 0.9
+risk_acceptance: 0.85

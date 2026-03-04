@@ -1,0 +1,49 @@
+unit_type: sherman_m4a3
+domain: ground
+display_name: "M4A3 Sherman Medium Tank"
+ground_type: ARMOR
+max_speed: 13.0  # m/s (~47 km/h road)
+armor_front: 63.0
+armor_side: 38.0
+crew:
+  - role: COMMANDER
+    count: 1
+    skill: TRAINED
+  - role: GUNNER
+    count: 1
+    skill: TRAINED
+  - role: LOADER
+    count: 1
+    skill: BASIC
+  - role: DRIVER
+    count: 1
+    skill: TRAINED
+  - role: CREW
+    count: 1
+    skill: BASIC  # bow gunner / assistant driver
+equipment:
+  - name: "75mm M3 Gun"
+    category: WEAPON
+    weight_kg: 405.0
+    reliability: 0.92
+  - name: "M1919A4 .30 Cal Coaxial"
+    category: WEAPON
+    weight_kg: 14.0
+    reliability: 0.90
+  - name: "M2HB .50 Cal AA Mount"
+    category: WEAPON
+    weight_kg: 38.0
+    reliability: 0.88
+  - name: "Ford GAA V-8 Gasoline"
+    category: PROPULSION
+    weight_kg: 703.0
+    reliability: 0.82
+    temperature_range: [-25.0, 45.0]
+  - name: "M55 Telescope"
+    category: SENSOR
+    weight_kg: 5.0
+    reliability: 0.93
+  - name: "Rolled Homogeneous Armor"
+    category: PROTECTION
+    weight_kg: 8500.0
+    reliability: 0.98

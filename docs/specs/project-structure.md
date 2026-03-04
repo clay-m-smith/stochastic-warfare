@@ -1,5 +1,5 @@
 # Project Structure & Module Decomposition
-**Status**: Complete (Phase 19)
+**Status**: Complete (Phase 20)
 **Last Updated**: 2026-03-04
 
 ---
@@ -70,6 +70,16 @@ stochastic-warfare/
 │   │   └── (9 files)                # clausewitzian, maneuverist, attrition, airland_battle, air_power, sun_tzu, deep_battle, maritime_mahanian, maritime_corbettian
 │   ├── commander_profiles/           # Commander personality archetypes (risk tolerance, style, preferences)
 │   ├── maritime/                     # Maritime-specific data: port facilities, sea lanes, chokepoints, bathymetry reference
+│   ├── eras/                         # Era-specific data packages [Phase 20+]
+│   │   └── ww2/                     # WW2 era data
+│   │       ├── units/               # 15 unit definitions (5 armor, 3 infantry, 4 air, 3 naval)
+│   │       ├── weapons/             # 8 weapon definitions (tank guns, MGs, torpedo, naval guns)
+│   │       ├── ammunition/          # 13 ammo definitions (AP/HE variants, torpedo, naval)
+│   │       ├── sensors/             # 4 sensor definitions (eyeball, radar, naval radar, hydrophone)
+│   │       ├── signatures/          # 15 signature profiles (one per unit, zeroed thermal)
+│   │       ├── doctrine/            # 4 doctrine templates (blitzkrieg, soviet_deep_ops, british_deliberate, us_combined_arms_ww2)
+│   │       ├── commanders/          # 3 commander profiles (Patton, Montgomery, Zhukov types)
+│   │       └── scenarios/           # 3 validation scenarios (Kursk, Midway, Normandy Bocage)
 │   └── scenarios/                    # Complete scenario packages
 │       ├── example_scenario/
 │       │   ├── scenario.yaml         # Master scenario config: start date/time (UTC), duration, initial weather, time zone
@@ -185,7 +195,8 @@ stochastic-warfare/
     │   ├── naval_movement.py         # Ship movement: speed-fuel curves, formation steaming, turning circles, draft constraints
     │   ├── submarine_movement.py     # Submarine depth management, speed-noise tradeoff, snorkel, periscope depth
     │   ├── amphibious_movement.py    # Ship-to-shore movement, beach approach, over-the-horizon assault, landing craft
-    │   └── airborne.py              # Airborne/air assault: parachute drop, helicopter insertion, DZ/LZ selection, assembly
+    │   ├── airborne.py              # Airborne/air assault: parachute drop, helicopter insertion, DZ/LZ selection, assembly
+    │   └── convoy.py                # WW2 convoy operations: formation, speed limiting, stragglers, wolf pack, depth charge [Phase 20b]
     ├── detection/                    # Intelligence, sensors, & fog of war
     │   ├── __init__.py
     │   ├── events.py                 # Detection events (contact gained/lost, track update, ID change)
@@ -223,7 +234,9 @@ stochastic-warfare/
     │   ├── fratricide.py             # Friendly fire: IFF uncertainty, deconfliction, identification errors
     │   ├── iads.py                   # IADS sector model: radar handoff chain, SEAD degradation, sector health [Phase 12f]
     │   ├── air_campaign.py           # Air campaign management: sortie capacity, pilot fatigue, weather days, attrition [Phase 12f]
-    │   └── strategic_targeting.py    # Strategic targeting: TPL generation, BDA cycle, target-effect chains [Phase 12f]
+    │   ├── strategic_targeting.py    # Strategic targeting: TPL generation, BDA cycle, target-effect chains [Phase 12f]
+    │   ├── naval_gunnery.py          # WW2 naval gunnery: bracket firing, fire control quality, 2D Gaussian dispersion [Phase 20b]
+    │   └── strategic_bombing.py      # WW2 strategic bombing: CEP area damage, flak, fighter escort, target regeneration [Phase 20b]
     ├── morale/                       # Morale & human factors
     │   ├── __init__.py
     │   ├── events.py                 # Morale events (state change, rout, rally, surrender)
@@ -386,6 +399,7 @@ stochastic-warfare/
   - **Calendar-driven triggers**: exposes queries like "what month is it?" that environment modules use for seasonal transitions, storm season windows, monsoon timing, etc.
 - Config provides the pattern for all YAML loading
 - Checkpoint handles all serialization (modules register their state)
+- **Era framework** (`era.py`): Era enum (MODERN/WW2/WW1/NAPOLEONIC/ANCIENT_MEDIEVAL), EraConfig pydantic model (disabled modules, available sensor types, physics overrides, tick resolution overrides), pre-defined era configs, `get_era_config()` factory [Phase 20]
 
 **Depends on**: Nothing (leaf dependency)
 

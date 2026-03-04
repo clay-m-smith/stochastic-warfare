@@ -27,7 +27,7 @@ Rolling record of implementation decisions, changes, and lessons learned across 
 | 17 | Space & Satellite Domain | **Complete** | [phase-17.md](phase-17.md) |
 | 18 | NBC/CBRN Effects | **Complete** | [phase-18.md](phase-18.md) |
 | 19 | Doctrinal AI Schools | **Complete** | [phase-19.md](phase-19.md) |
-| 20 | WW2 Era | Planned | — |
+| 20 | WW2 Era | **Complete** | [phase-20.md](phase-20.md) |
 | 21 | WW1 Era | Planned | — |
 | 22 | Napoleonic Era | Planned | — |
 | 23 | Ancient & Medieval Era | Planned | — |
@@ -139,6 +139,10 @@ Known limitations and deferred improvements logged during implementation. Review
 | 16/17/18/19 | ScenarioLoader doesn't auto-wire SchoolRegistry from YAML (extends existing EW/Space/CBRN gap) | [phase-19.md — Known Limitations](phase-19.md#known-limitations) |
 | 19 | `get_coa_score_weight_overrides()` and `get_stratagem_affinity()` hooks defined but never called in production battle loop | [phase-19.md — Postmortem](phase-19.md#postmortem) |
 | 19 | `CommanderPersonality.school_id` field defined but never read — schools assigned via SchoolRegistry instead | [phase-19.md — Postmortem](phase-19.md#postmortem) |
+| 20 | Convoy engine does not model individual escort positions (abstract effectiveness parameter) | [phase-20.md — Known Limitations](phase-20.md#known-limitations) |
+| 20 | Strategic bombing target regeneration is linear (no industrial interdependency graph) | [phase-20.md — Known Limitations](phase-20.md#known-limitations) |
+| 20 | Fighter escort in strategic bombing is probability modifier, not full air combat sub-simulation | [phase-20.md — Known Limitations](phase-20.md#known-limitations) |
+| 16/17/18/19/20 | ScenarioLoader doesn't auto-wire era-specific engines from YAML (extends existing EW/Space/CBRN/Schools gap) | [phase-20.md — Postmortem](phase-20.md#postmortem) |
 
 ## Conventions
 

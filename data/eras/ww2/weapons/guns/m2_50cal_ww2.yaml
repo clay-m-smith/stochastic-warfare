@@ -1,0 +1,22 @@
+weapon_id: m2_50cal_ww2
+display_name: "M2 Browning .50 Cal HMG (WW2)"
+category: MACHINE_GUN
+caliber_mm: 12.7
+muzzle_velocity_mps: 890.0
+max_range_m: 1800.0
+min_range_m: 0.0
+rate_of_fire_rpm: 500.0
+burst_size: 5
+base_accuracy_mrad: 1.2
+guidance: NONE
+magazine_capacity: 100
+reload_time_s: 10.0
+compatible_ammo:
+  - 50cal_ap_ww2
+weight_kg: 38.0
+reliability: 0.92
+barrel_life_rounds: 10000
+requires_deployed: false
+traverse_deg: 360.0
+elevation_min_deg: -15.0
+elevation_max_deg: 65.0

@@ -1,0 +1,12 @@
+sensor_id: hydrophone_ww2
+sensor_type: PASSIVE_SONAR
+display_name: "WW2 Passive Hydrophone"
+max_range_m: 5000.0
+detection_threshold: 15.0
+false_alarm_rate: 1.0e-4
+scan_time_s: 10.0
+directivity_index_db: 10.0
+min_range_m: 0.0
+fov_deg: 360.0
+requires_los: false
+detects_domain: ["ACOUSTIC"]

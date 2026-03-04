@@ -1,0 +1,21 @@
+profile_id: fletcher_dd
+unit_type: fletcher_dd
+visual:
+  height_m: 10.0
+  cross_section_m2: 200.0
+  camouflage_factor: 0.3
+thermal:
+  emissivity: 0.0
+  heat_output_kw: 0.0
+  contrast_modifier: 0.0
+radar:
+  rcs_frontal_m2: 100.0
+  rcs_side_m2: 300.0
+  rcs_rear_m2: 80.0
+acoustic:
+  noise_db: 90.0
+  speed_coefficient: 2.0
+electromagnetic:
+  emitting: false
+  power_dbm: 0.0
+  frequency_ghz: 0.0

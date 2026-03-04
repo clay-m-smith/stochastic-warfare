@@ -1,0 +1,49 @@
+unit_type: panzer_iv_h
+domain: ground
+display_name: "Panzer IV Ausf. H (Pz.Kpfw. IV)"
+ground_type: ARMOR
+max_speed: 11.0  # m/s (~38 km/h road)
+armor_front: 80.0
+armor_side: 30.0
+crew:
+  - role: COMMANDER
+    count: 1
+    skill: TRAINED
+  - role: GUNNER
+    count: 1
+    skill: TRAINED
+  - role: LOADER
+    count: 1
+    skill: BASIC
+  - role: DRIVER
+    count: 1
+    skill: TRAINED
+  - role: CREW
+    count: 1
+    skill: BASIC  # radio operator / hull MG
+equipment:
+  - name: "75mm KwK 40 L/48 Gun"
+    category: WEAPON
+    weight_kg: 750.0
+    reliability: 0.91
+  - name: "MG 34 Coaxial"
+    category: WEAPON
+    weight_kg: 12.1
+    reliability: 0.88
+  - name: "MG 34 Hull Mount"
+    category: WEAPON
+    weight_kg: 12.1
+    reliability: 0.88
+  - name: "Maybach HL 120 TRM V-12"
+    category: PROPULSION
+    weight_kg: 950.0
+    reliability: 0.78
+    temperature_range: [-20.0, 40.0]
+  - name: "TZF 5f Telescope Sight"
+    category: SENSOR
+    weight_kg: 5.0
+    reliability: 0.92
+  - name: "Rolled Armor with Schurzen Side Skirts"
+    category: PROTECTION
+    weight_kg: 7500.0
+    reliability: 0.97

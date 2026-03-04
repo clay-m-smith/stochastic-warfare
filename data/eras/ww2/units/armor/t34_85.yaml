@@ -1,0 +1,45 @@
+unit_type: t34_85
+domain: ground
+display_name: "T-34/85 Medium Tank"
+ground_type: ARMOR
+max_speed: 15.0  # m/s (~55 km/h road)
+armor_front: 90.0  # 45mm plate at 60 degrees = ~90mm effective
+armor_side: 45.0
+crew:
+  - role: COMMANDER
+    count: 1
+    skill: TRAINED
+  - role: GUNNER
+    count: 1
+    skill: TRAINED
+  - role: LOADER
+    count: 1
+    skill: BASIC
+  - role: DRIVER
+    count: 1
+    skill: TRAINED
+  - role: CREW
+    count: 1
+    skill: BASIC  # hull machine gunner
+equipment:
+  - name: "85mm ZIS-S-53 Gun"
+    category: WEAPON
+    weight_kg: 1150.0
+    reliability: 0.90
+  - name: "DT 7.62mm Coaxial MG"
+    category: WEAPON
+    weight_kg: 9.1
+    reliability: 0.88
+  - name: "V-2-34 Diesel Engine"
+    category: PROPULSION
+    weight_kg: 750.0
+    reliability: 0.80
+    temperature_range: [-30.0, 42.0]
+  - name: "TSh-16 Telescopic Sight"
+    category: SENSOR
+    weight_kg: 4.5
+    reliability: 0.90
+  - name: "Cast/Rolled Armor Plate"
+    category: PROTECTION
+    weight_kg: 7200.0
+    reliability: 0.97

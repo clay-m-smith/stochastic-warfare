@@ -1,8 +1,8 @@
 # Stochastic Warfare
 
 ![Python](https://img.shields.io/badge/python-%3E%3D3.12-blue)
-![Tests](https://img.shields.io/badge/tests-5%2C107_passing-brightgreen)
-![Phase](https://img.shields.io/badge/phase-19_Post--MVP-blue)
+![Tests](https://img.shields.io/badge/tests-5%2C244_passing-brightgreen)
+![Phase](https://img.shields.io/badge/phase-20_Post--MVP-blue)
 
 High-fidelity, high-resolution wargame simulator built as a headless Python engine. Models warfare across multiple scales — from individual unit engagements up through tactical battles, operational battlefields, and multi-day strategic campaigns — with stochastic and signal-processing-inspired models throughout.
 
@@ -159,7 +159,8 @@ All 11 MVP phases (0–10) are complete. Post-MVP Phases 11–19 are complete (d
 | 17 | Space & Satellite Domain | 149 | Complete |
 | 18 | CBRN Effects | 155 | Complete |
 | 19 | Doctrinal AI Schools | 189 | Complete |
-| | **Total** | **5,107** | |
+| 20 | WW2 Era | 137 | Complete |
+| | **Total** | **5,244** | |
 
 For the full phase roadmap, see [`docs/development-phases.md`](docs/development-phases.md) (MVP) and [`docs/development-phases-post-mvp.md`](docs/development-phases-post-mvp.md) (post-MVP). For per-phase implementation logs, see [`docs/devlog/`](docs/devlog/).
 

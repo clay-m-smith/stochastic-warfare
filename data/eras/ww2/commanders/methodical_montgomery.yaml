@@ -1,0 +1,12 @@
+profile_id: methodical_montgomery
+display_name: "Methodical Montgomery-type Commander"
+description: "Cautious, meticulous planner modeled on Bernard Montgomery — refuses to attack without overwhelming superiority and thorough preparation"
+aggression: 0.3
+caution: 0.8
+flexibility: 0.3
+initiative: 0.4
+experience: 0.75
+preferred_doctrine: british_deliberate
+stress_tolerance: 0.7
+decision_speed: 0.4
+risk_acceptance: 0.2

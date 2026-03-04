@@ -1,0 +1,17 @@
+doctrine_id: blitzkrieg
+display_name: "German Blitzkrieg"
+category: OFFENSIVE
+faction: german
+description: "Lightning warfare combining concentrated armor, close air support, and aggressive exploitation of breakthroughs to encircle and destroy enemy forces"
+min_echelon: 5  # Company
+max_echelon: 10  # Corps
+applicable_domains: ["LAND"]
+phases: ["RECONNAISSANCE", "BREAKTHROUGH", "EXPLOITATION", "PURSUIT"]
+force_ratios:
+  main_effort: 0.7
+  supporting: 0.2
+  reserve: 0.1
+actions: ["attack", "breakthrough", "exploit", "encircle", "pursuit"]
+priorities: ["maneuver", "firepower", "speed"]
+risk_tolerance: high
+tempo: high

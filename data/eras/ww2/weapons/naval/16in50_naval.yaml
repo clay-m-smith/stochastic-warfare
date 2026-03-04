@@ -1,0 +1,24 @@
+weapon_id: 16in50_naval
+display_name: "16\"/50 Cal Mk 7 Naval Gun (Iowa-class)"
+category: NAVAL_GUN
+caliber_mm: 406.0
+muzzle_velocity_mps: 762.0
+max_range_m: 38700.0
+min_range_m: 1000.0
+rate_of_fire_rpm: 2.0
+burst_size: 1
+base_accuracy_mrad: 0.3
+cep_m: 200.0
+guidance: NONE
+magazine_capacity: 130
+reload_time_s: 30.0
+compatible_ammo:
+  - 16in_ap_mk8
+  - 16in_hc_he
+weight_kg: 108000.0
+reliability: 0.90
+barrel_life_rounds: 290
+requires_deployed: false
+traverse_deg: 300.0
+elevation_min_deg: -5.0
+elevation_max_deg: 45.0

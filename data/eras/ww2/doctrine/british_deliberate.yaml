@@ -1,0 +1,17 @@
+doctrine_id: british_deliberate
+display_name: "British Set-Piece Attack"
+category: OFFENSIVE
+faction: british
+description: "Methodical set-piece warfare emphasizing concentrated artillery preparation, tight phase lines, and systematic consolidation before further advance"
+min_echelon: 5  # Company
+max_echelon: 10  # Corps
+applicable_domains: ["LAND"]
+phases: ["PREPARATION", "ASSAULT", "CONSOLIDATION", "TRANSITION"]
+force_ratios:
+  main_effort: 0.5
+  supporting: 0.3
+  reserve: 0.2
+actions: ["attack", "support_by_fire", "suppress", "seize"]
+priorities: ["firepower", "protection", "maneuver"]
+risk_tolerance: low
+tempo: low

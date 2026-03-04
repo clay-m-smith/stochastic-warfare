@@ -1,0 +1,70 @@
+unit_type: fletcher_dd
+domain: naval
+display_name: "Fletcher-class Destroyer"
+naval_type: DESTROYER
+max_speed: 18.0  # m/s (~36 knots)
+draft: 5.3
+displacement: 2500.0  # full load tonnes
+fuel_capacity: 492.0  # tonnes of fuel oil
+noise_signature_base: 135.0
+crew:
+  - role: COMMANDER
+    count: 1
+    skill: EXPERIENCED
+  - role: NAVIGATOR
+    count: 2
+    skill: TRAINED
+  - role: SENSOR_OPERATOR
+    count: 4
+    skill: TRAINED
+  - role: GUNNER
+    count: 12
+    skill: TRAINED
+  - role: ENGINEER
+    count: 8
+    skill: TRAINED
+  - role: GENERIC
+    count: 246
+    skill: BASIC
+equipment:
+  - name: "5-inch/38 Mk 12 Gun (x5)"
+    category: WEAPON
+    weight_kg: 68000.0
+    reliability: 0.90
+  - name: "Bofors 40mm Twin Mount (x5)"
+    category: WEAPON
+    weight_kg: 11300.0
+    reliability: 0.88
+  - name: "Oerlikon 20mm (x7)"
+    category: WEAPON
+    weight_kg: 4760.0
+    reliability: 0.87
+  - name: "Mk 15 Torpedo Tubes (2x5)"
+    category: WEAPON
+    weight_kg: 10200.0
+    reliability: 0.85
+  - name: "Depth Charge Racks and K-Guns"
+    category: WEAPON
+    weight_kg: 6000.0
+    reliability: 0.92
+  - name: "SG Surface Search Radar"
+    category: SENSOR
+    weight_kg: 680.0
+    reliability: 0.78
+  - name: "SC-2 Air Search Radar"
+    category: SENSOR
+    weight_kg: 900.0
+    reliability: 0.72
+  - name: "QC/JK Sonar"
+    category: SENSOR
+    weight_kg: 1200.0
+    reliability: 0.75
+  - name: "Mk 37 Fire Control Director"
+    category: SENSOR
+    weight_kg: 8600.0
+    reliability: 0.82
+  - name: "GE Geared Steam Turbines (60,000 SHP)"
+    category: PROPULSION
+    weight_kg: 25000.0
+    reliability: 0.85
+    temperature_range: [-15.0, 45.0]

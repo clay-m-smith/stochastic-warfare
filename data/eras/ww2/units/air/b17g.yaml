@@ -1,0 +1,45 @@
+unit_type: b17g
+domain: aerial
+display_name: "B-17G Flying Fortress"
+aerial_type: BOMBER
+max_speed: 140.0  # m/s (~510 km/h at altitude)
+service_ceiling: 10850.0
+crew:
+  - role: PILOT
+    count: 1
+    skill: TRAINED
+  - role: COPILOT
+    count: 1
+    skill: TRAINED
+  - role: COMMANDER
+    count: 1
+    skill: TRAINED  # bombardier / navigator
+  - role: CREW
+    count: 7
+    skill: BASIC  # flight engineer, radio op, 5 gunners
+equipment:
+  - name: "Norden M-9B Bombsight"
+    category: SENSOR
+    weight_kg: 20.0
+    reliability: 0.85
+  - name: "M2 Browning .50 Cal (x13)"
+    category: WEAPON
+    weight_kg: 494.0
+    reliability: 0.89
+  - name: "Internal Bomb Bay (4000 kg capacity)"
+    category: WEAPON
+    weight_kg: 4000.0
+    reliability: 0.96
+  - name: "Wright R-1820-97 Cyclone (x4)"
+    category: PROPULSION
+    weight_kg: 2380.0
+    reliability: 0.80
+    temperature_range: [-35.0, 40.0]
+  - name: "SCR-274N Command Radio Set"
+    category: COMMUNICATION
+    weight_kg: 35.0
+    reliability: 0.75
+  - name: "AN/APS-15 H2X Radar"
+    category: SENSOR
+    weight_kg: 90.0
+    reliability: 0.68

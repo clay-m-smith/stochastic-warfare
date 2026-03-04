@@ -1,0 +1,35 @@
+unit_type: wehrmacht_rifle_squad
+domain: ground
+display_name: "Wehrmacht Rifle Squad (Gruppe)"
+ground_type: LIGHT_INFANTRY
+max_speed: 1.4  # m/s (~5 km/h dismounted march)
+armor_front: 0.0
+armor_side: 0.0
+crew:
+  - role: COMMANDER
+    count: 1
+    skill: TRAINED  # Gruppenfuhrer (squad leader)
+  - role: CREW
+    count: 9
+    skill: BASIC  # 7 riflemen + MG gunner + assistant gunner
+equipment:
+  - name: "Karabiner 98k Rifle"
+    category: WEAPON
+    weight_kg: 3.7
+    reliability: 0.94
+  - name: "MG 42 Light Machine Gun"
+    category: WEAPON
+    weight_kg: 11.6
+    reliability: 0.88
+  - name: "Stielhandgranate 24"
+    category: WEAPON
+    weight_kg: 0.6
+    reliability: 0.95
+  - name: "Walther P38 Pistol"
+    category: WEAPON
+    weight_kg: 0.8
+    reliability: 0.92
+  - name: "Feldfernsprecher 33 Field Telephone"
+    category: COMMUNICATION
+    weight_kg: 4.5
+    reliability: 0.75

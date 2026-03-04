@@ -1,0 +1,114 @@
+name: "Prokhorovka Tank Battle (Kursk, 1943)"
+date: "1943-07-12T06:00:00Z"
+duration_hours: 8.0
+latitude: 51.0
+longitude: 36.4
+era: ww2
+
+tick_resolution:
+  strategic_s: 3600
+  operational_s: 300
+  tactical_s: 5
+
+weather_conditions:
+  visibility_m: 5000
+  wind_speed_mps: 3.0
+  wind_direction_deg: 180
+  temperature_c: 28.0
+  precipitation: none
+  cloud_cover: 0.3
+  humidity: 0.55
+
+terrain:
+  width_m: 12000
+  height_m: 8000
+  cell_size_m: 100.0
+  base_elevation_m: 200.0
+  terrain_type: flat_desert
+
+sides:
+  - side: soviet
+    units:
+      - unit_type: t34_85
+        count: 80
+    experience_level: 0.5
+    morale_initial: STEADY
+    commander_profile: operational_zhukov
+    doctrine_template: soviet_deep_ops
+    depots:
+      - depot_id: soviet_depot
+        position: [500, 4000]
+        capacity_tons: 1500
+        throughput_tons_per_hour: 80.0
+
+  - side: german
+    units:
+      - unit_type: tiger_i
+        count: 15
+      - unit_type: panther
+        count: 20
+      - unit_type: panzer_iv_h
+        count: 30
+    experience_level: 0.7
+    morale_initial: STEADY
+    commander_profile: aggressive_patton
+    doctrine_template: blitzkrieg
+
+objectives:
+  - objective_id: prokhorovka_village
+    position: [6000, 4000]
+    radius_m: 1000
+    type: territory
+
+victory_conditions:
+  - type: force_destroyed
+    side: ""
+    params:
+      threshold: 0.6
+  - type: time_expired
+    side: soviet
+    params:
+      max_duration_s: 28800
+
+calibration_overrides:
+  hit_probability_modifier: 1.0
+  target_size_modifier: 0.7
+  morale_degrade_rate_modifier: 0.25
+  morale_base_degrade_rate: 0.008
+  morale_casualty_weight: 0.4
+  morale_check_interval: 20
+  soviet_force_ratio_modifier: 1.0
+  german_force_ratio_modifier: 2.5
+  soviet_cohesion: 0.6
+  german_cohesion: 0.8
+  destruction_threshold: 0.5
+  soviet_start_x: 500.0
+  soviet_start_y: 4000.0
+  german_start_x: 11500.0
+  german_start_y: 4000.0
+  weapon_assignments:
+    "85mm ZIS-S-53": 85mm_zis_s53
+    "88mm KwK 36 L/56": 88mm_kwk36
+    "75mm KwK 42 L/70": 88mm_kwk36
+    "75mm KwK 40 L/48": 75mm_m3
+
+documented_outcomes:
+  - name: soviet_units_destroyed
+    value: 300.0
+    tolerance_factor: 3.0
+    unit: tanks
+    source: "Glantz & House, *The Battle of Kursk*"
+    source_quality: 1
+    notes: "Estimated Soviet tank losses at Prokhorovka"
+  - name: german_units_destroyed
+    value: 80.0
+    tolerance_factor: 3.0
+    unit: tanks
+    source: "Zetterling & Frankson, *Kursk 1943: A Statistical Analysis*"
+    source_quality: 1
+    notes: "German losses were significantly lower"
+
+sources:
+  - "Glantz, David M. & House, Jonathan M. *The Battle of Kursk*"
+  - "Zetterling, Niklas & Frankson, Anders. *Kursk 1943: A Statistical Analysis*"
+  - "Showalter, Dennis. *Armor and Blood: The Battle of Kursk*"

@@ -1,0 +1,15 @@
+sensor_id: type271_naval_radar
+sensor_type: RADAR
+display_name: "Type 271 Surface Search Radar (Royal Navy)"
+max_range_m: 15000.0
+detection_threshold: 14.0
+false_alarm_rate: 1.0e-6
+scan_time_s: 4.0
+frequency_mhz: 3000.0
+peak_power_w: 90000.0
+antenna_gain_dbi: 20.0
+antenna_height_m: 10.0
+min_range_m: 300.0
+fov_deg: 360.0
+requires_los: true
+detects_domain: ["RADAR"]

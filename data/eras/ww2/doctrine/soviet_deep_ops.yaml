@@ -1,0 +1,17 @@
+doctrine_id: soviet_deep_ops
+display_name: "Soviet Deep Operations"
+category: OFFENSIVE
+faction: soviet
+description: "Tukhachevsky-inspired deep operations using echeloned forces to break through, exploit in depth, and destroy enemy operational reserves simultaneously"
+min_echelon: 5  # Company
+max_echelon: 10  # Corps
+applicable_domains: ["LAND"]
+phases: ["PREPARATION", "BREAKTHROUGH", "EXPLOITATION", "DEEP_STRIKE"]
+force_ratios:
+  main_effort: 0.5
+  supporting: 0.3
+  reserve: 0.2
+actions: ["attack", "breakthrough", "deep_operation", "encircle", "pursuit"]
+priorities: ["mass", "firepower", "depth"]
+risk_tolerance: moderate
+tempo: moderate

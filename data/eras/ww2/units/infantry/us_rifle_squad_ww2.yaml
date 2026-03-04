@@ -1,0 +1,35 @@
+unit_type: us_rifle_squad_ww2
+domain: ground
+display_name: "US WW2 Rifle Squad"
+ground_type: LIGHT_INFANTRY
+max_speed: 1.5  # m/s (~5.4 km/h dismounted march)
+armor_front: 0.0
+armor_side: 0.0
+crew:
+  - role: COMMANDER
+    count: 1
+    skill: TRAINED  # squad leader (sergeant)
+  - role: CREW
+    count: 11
+    skill: BASIC  # 11 riflemen including assistant squad leader and BAR man
+equipment:
+  - name: "M1 Garand Rifle"
+    category: WEAPON
+    weight_kg: 4.3
+    reliability: 0.93
+  - name: "M1918A2 BAR"
+    category: WEAPON
+    weight_kg: 8.8
+    reliability: 0.85
+  - name: "M1911A1 .45 Pistol"
+    category: WEAPON
+    weight_kg: 1.1
+    reliability: 0.94
+  - name: "Mk 2 Fragmentation Grenade"
+    category: WEAPON
+    weight_kg: 0.6
+    reliability: 0.96
+  - name: "SCR-536 Handie-Talkie"
+    category: COMMUNICATION
+    weight_kg: 2.5
+    reliability: 0.70

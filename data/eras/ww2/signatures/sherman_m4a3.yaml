@@ -1,0 +1,21 @@
+profile_id: sherman_m4a3
+unit_type: sherman_m4a3
+visual:
+  height_m: 2.7
+  cross_section_m2: 7.5
+  camouflage_factor: 0.7
+thermal:
+  emissivity: 0.0
+  heat_output_kw: 0.0
+  contrast_modifier: 0.0
+radar:
+  rcs_frontal_m2: 8.0
+  rcs_side_m2: 20.0
+  rcs_rear_m2: 6.0
+acoustic:
+  noise_db: 80.0
+  speed_coefficient: 2.0
+electromagnetic:
+  emitting: false
+  power_dbm: 0.0
+  frequency_ghz: 0.0

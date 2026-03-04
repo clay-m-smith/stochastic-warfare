@@ -1,0 +1,35 @@
+unit_type: soviet_rifle_squad
+domain: ground
+display_name: "Soviet Rifle Squad (Otdelenie)"
+ground_type: LIGHT_INFANTRY
+max_speed: 1.4  # m/s (~5 km/h dismounted march)
+armor_front: 0.0
+armor_side: 0.0
+crew:
+  - role: COMMANDER
+    count: 1
+    skill: TRAINED  # squad leader (sergeant)
+  - role: CREW
+    count: 10
+    skill: BASIC  # 8 riflemen + LMG gunner + assistant gunner
+equipment:
+  - name: "Mosin-Nagant M91/30 Rifle"
+    category: WEAPON
+    weight_kg: 4.0
+    reliability: 0.93
+  - name: "DP-28 Light Machine Gun"
+    category: WEAPON
+    weight_kg: 9.1
+    reliability: 0.85
+  - name: "PPSh-41 Submachine Gun"
+    category: WEAPON
+    weight_kg: 3.6
+    reliability: 0.88
+  - name: "RGD-33 Fragmentation Grenade"
+    category: WEAPON
+    weight_kg: 0.5
+    reliability: 0.93
+  - name: "TT-33 Pistol"
+    category: WEAPON
+    weight_kg: 0.85
+    reliability: 0.90

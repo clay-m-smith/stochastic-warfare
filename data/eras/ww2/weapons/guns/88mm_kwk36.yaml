@@ -1,0 +1,23 @@
+weapon_id: 88mm_kwk36
+display_name: "88mm KwK 36 L/56 (Tiger I)"
+category: CANNON
+caliber_mm: 88.0
+muzzle_velocity_mps: 773.0
+max_range_m: 3000.0
+min_range_m: 50.0
+rate_of_fire_rpm: 8.0
+burst_size: 1
+base_accuracy_mrad: 0.4
+guidance: NONE
+magazine_capacity: 92
+reload_time_s: 7.5
+compatible_ammo:
+  - 88mm_pzgr39_apcbc
+  - 88mm_sprgr_he
+weight_kg: 1350.0
+reliability: 0.88
+barrel_life_rounds: 2000
+requires_deployed: false
+traverse_deg: 360.0
+elevation_min_deg: -8.0
+elevation_max_deg: 15.0

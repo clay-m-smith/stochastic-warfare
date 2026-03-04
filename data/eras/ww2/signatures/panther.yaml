@@ -1,0 +1,21 @@
+profile_id: panther
+unit_type: panther
+visual:
+  height_m: 2.9
+  cross_section_m2: 8.5
+  camouflage_factor: 0.65
+thermal:
+  emissivity: 0.0
+  heat_output_kw: 0.0
+  contrast_modifier: 0.0
+radar:
+  rcs_frontal_m2: 9.0
+  rcs_side_m2: 22.0
+  rcs_rear_m2: 7.0
+acoustic:
+  noise_db: 84.0
+  speed_coefficient: 2.2
+electromagnetic:
+  emitting: false
+  power_dbm: 0.0
+  frequency_ghz: 0.0

@@ -1,0 +1,32 @@
+unit_type: spitfire_ix
+domain: aerial
+display_name: "Supermarine Spitfire Mk IX"
+aerial_type: FIGHTER
+max_speed: 182.0  # m/s (~656 km/h at altitude, Mach 0.54)
+service_ceiling: 13100.0
+crew:
+  - role: PILOT
+    count: 1
+    skill: TRAINED
+equipment:
+  - name: "Hispano Mk II 20mm Cannon (x2)"
+    category: WEAPON
+    weight_kg: 100.0
+    reliability: 0.87
+  - name: "Browning .303 Machine Gun (x4)"
+    category: WEAPON
+    weight_kg: 40.8
+    reliability: 0.90
+  - name: "Rolls-Royce Merlin 61 V-12"
+    category: PROPULSION
+    weight_kg: 744.0
+    reliability: 0.82
+    temperature_range: [-28.0, 42.0]
+  - name: "GM 2 Reflector Gunsight"
+    category: SENSOR
+    weight_kg: 1.8
+    reliability: 0.91
+  - name: "TR.1133 VHF Radio"
+    category: COMMUNICATION
+    weight_kg: 9.5
+    reliability: 0.76

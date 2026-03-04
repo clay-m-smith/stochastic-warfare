@@ -1,0 +1,32 @@
+unit_type: bf109g
+domain: aerial
+display_name: "Messerschmitt Bf 109G-6"
+aerial_type: FIGHTER
+max_speed: 180.0  # m/s (~640 km/h, Mach 0.53)
+service_ceiling: 12000.0
+crew:
+  - role: PILOT
+    count: 1
+    skill: TRAINED
+equipment:
+  - name: "MG 151/20 20mm Cannon"
+    category: WEAPON
+    weight_kg: 42.7
+    reliability: 0.90
+  - name: "MG 131 13mm Machine Gun (x2)"
+    category: WEAPON
+    weight_kg: 33.4
+    reliability: 0.89
+  - name: "Daimler-Benz DB 605A V-12"
+    category: PROPULSION
+    weight_kg: 745.0
+    reliability: 0.78
+    temperature_range: [-25.0, 40.0]
+  - name: "Revi 16B Reflector Gunsight"
+    category: SENSOR
+    weight_kg: 1.5
+    reliability: 0.92
+  - name: "FuG 16ZY Radio"
+    category: COMMUNICATION
+    weight_kg: 6.0
+    reliability: 0.72

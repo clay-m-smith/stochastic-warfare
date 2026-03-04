@@ -1,0 +1,15 @@
+sensor_id: scr584_radar
+sensor_type: RADAR
+display_name: "SCR-584 Gun-Laying Radar (US)"
+max_range_m: 30000.0
+detection_threshold: 13.0
+false_alarm_rate: 1.0e-6
+scan_time_s: 3.0
+frequency_mhz: 3000.0
+peak_power_w: 300000.0
+antenna_gain_dbi: 25.0
+antenna_height_m: 4.0
+min_range_m: 500.0
+fov_deg: 360.0
+requires_los: true
+detects_domain: ["RADAR"]

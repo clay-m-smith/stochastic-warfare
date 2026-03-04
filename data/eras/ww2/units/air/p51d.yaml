@@ -1,0 +1,32 @@
+unit_type: p51d
+domain: aerial
+display_name: "P-51D Mustang"
+aerial_type: FIGHTER
+max_speed: 190.0  # m/s (~703 km/h at altitude, Mach 0.58)
+service_ceiling: 12800.0
+crew:
+  - role: PILOT
+    count: 1
+    skill: TRAINED
+equipment:
+  - name: "M2 Browning .50 Cal (x6)"
+    category: WEAPON
+    weight_kg: 228.0
+    reliability: 0.91
+  - name: "Packard V-1650-7 Merlin V-12"
+    category: PROPULSION
+    weight_kg: 744.0
+    reliability: 0.84
+    temperature_range: [-30.0, 45.0]
+  - name: "K-14 Gyroscopic Gunsight"
+    category: SENSOR
+    weight_kg: 3.2
+    reliability: 0.88
+  - name: "SCR-522 VHF Radio"
+    category: COMMUNICATION
+    weight_kg: 12.0
+    reliability: 0.78
+  - name: "269 US Gallon Internal Fuel"
+    category: UTILITY
+    weight_kg: 750.0
+    reliability: 0.97

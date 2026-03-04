@@ -1,0 +1,14 @@
+ammo_id: 5in_common_ap
+display_name: "5\"/38 Common AP Round"
+ammo_type: AP
+mass_kg: 25.0
+diameter_mm: 127.0
+drag_coefficient: 0.35
+penetration_mm_rha: 76.0
+penetration_reference_range_m: 5000.0
+blast_radius_m: 0.0
+fragmentation_radius_m: 0.0
+guidance: NONE
+propulsion: none
+max_speed_mps: 792.0
+unit_cost_factor: 2.5

@@ -1,0 +1,17 @@
+doctrine_id: us_combined_arms_ww2
+display_name: "US WW2 Combined Arms"
+category: OFFENSIVE
+faction: us
+description: "American combined arms doctrine emphasizing overwhelming firepower, flexible task organization, and aggressive exploitation once breakthrough is achieved"
+min_echelon: 5  # Company
+max_echelon: 10  # Corps
+applicable_domains: ["LAND"]
+phases: ["SHAPING", "DECISIVE", "EXPLOITATION", "TRANSITION"]
+force_ratios:
+  main_effort: 0.55
+  supporting: 0.3
+  reserve: 0.15
+actions: ["attack", "support_by_fire", "suppress", "breach", "seize", "exploit"]
+priorities: ["firepower", "maneuver", "protection"]
+risk_tolerance: moderate
+tempo: moderate

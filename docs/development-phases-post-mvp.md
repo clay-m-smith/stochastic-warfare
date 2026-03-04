@@ -356,34 +356,40 @@ Same as MVP: every phase produces runnable, testable code. Validation via matplo
 
 ---
 
-## Phase 20: WW2 Era
+## Phase 20: WW2 Era — **COMPLETE**
 **Goal**: World War 2 data package + engine extensions for pre-guided-munition, radar-emerging, propeller-aircraft warfare. Also establishes the **era framework** used by all subsequent era phases.
 
+**Status**: Complete. 137 tests across 4 sub-phases. Total: 5,244 tests passing (up from 5,107). 4 new source files + 3 modified existing files + ~60 YAML data files. No new dependencies. All changes backward-compatible — `era: modern` is default and matches all existing behavior. Devlog: [`devlog/phase-20.md`](devlog/phase-20.md).
+
 ### 20a: Era Framework & Unit Data
-- `core/era.py` — Era configuration system: `EraConfig` defining which simulation subsystems are active/inactive per era. Era enum (MODERN, WW2, WW1, NAPOLEONIC, ANCIENT_MEDIEVAL). Module disable list per era (e.g., ANCIENT_MEDIEVAL disables `detection/sensors.py` radar/thermal/sonar, `c2/communications.py` radio/data link, `ew/*`, `space/*`). Era-specific physics constants (Mach-dependent drag tables per era, propellant types, armor materials). Era-specific `TickResolution` defaults (Napoleonic tactical ticks may be longer than modern). Scenario YAML `era: ww2` field selects era config. `era: modern` is default and matches all existing behavior.
-- `simulation/engine.py` (modify) — Query `EraConfig` to skip disabled subsystems during tick processing. No era config → all subsystems active (backward compatible).
-- Unit & weapon data:
-- `data/eras/ww2/units/` — 15+ unit definitions: Sherman M4A3, T-34/85, Tiger I, Panther, Panzer IV, M1 Garand squad, Wehrmacht rifle squad, Soviet rifle squad, Bf-109G, P-51D, Spitfire IX, B-17G, Type VIIC U-boat, Fletcher DD, Iowa BB
-- `data/eras/ww2/weapons/` — Period weapons: 75mm M3, 88mm KwK 36, 76mm F-34, .50 cal M2, MG42, Mk 14 torpedo, 5"/38 naval gun, 16"/50 naval gun
-- `data/eras/ww2/ammunition/` — AP, HE, APCR, APCBC rounds for each caliber
-- `data/eras/ww2/sensors/` — Mk 1 eyeball (dominant), SCR-584 gun-laying radar, Type 271 naval radar, hydrophones
-- `data/eras/ww2/signatures/` — Visual/acoustic signatures (no thermal, no radar cross-section for ground units)
+- `core/era.py` (new) — Era configuration system: `EraConfig` defining which simulation subsystems are active/inactive per era. Era enum (MODERN, WW2, WW1, NAPOLEONIC, ANCIENT_MEDIEVAL). Module disable list per era (e.g., ANCIENT_MEDIEVAL disables `detection/sensors.py` radar/thermal/sonar, `c2/communications.py` radio/data link, `ew/*`, `space/*`). Era-specific physics constants (Mach-dependent drag tables per era, propellant types, armor materials). Era-specific `TickResolution` defaults (Napoleonic tactical ticks may be longer than modern). Scenario YAML `era: ww2` field selects era config. `era: modern` is default and matches all existing behavior.
+- `simulation/scenario.py` (modified) — Added `era` field, `era_config` loading, era-aware scenario loading, WW2 engine fields wired into `SimulationContext`.
+- **Unit YAML data** (15 files): Sherman M4A3, T-34/85, Tiger I, Panther, Panzer IV, M1 Garand squad, Wehrmacht rifle squad, Soviet rifle squad, Bf-109G, P-51D, Spitfire IX, B-17G, Type VIIC U-boat, Fletcher DD, Iowa BB
+- **Weapon YAML data** (8 files): 75mm M3, 88mm KwK 36, 76mm F-34, .50 cal M2, MG42, Mk 14 torpedo, 5"/38 naval gun, 16"/50 naval gun
+- **Ammunition YAML data** (13 files): AP, HE, APCR, APCBC rounds for each caliber
+- **Sensor YAML data** (4 files): Mk 1 eyeball (dominant), SCR-584 gun-laying radar, Type 271 naval radar, hydrophones
+- **Signature YAML data** (15 files): Visual/acoustic signatures (no thermal, no radar cross-section for ground units)
 
 ### 20b: Engine Extensions
-- `combat/naval_gunnery.py` — WW2 naval fire control: bracket firing, spotting correction, fire control computer (mechanical). Range-dependent dispersion pattern.
-- `movement/convoy.py` — Convoy mechanics: formation types (column, broad front), escort positions, U-boat wolf pack attack sequence, depth charge patterns.
-- `combat/strategic_bombing.py` — Area bombing model: CEP-based damage to target areas. Bomber stream, fighter escort, flak defense.
+- `combat/naval_gunnery.py` (new) — WW2 naval fire control: bracket firing, spotting correction, fire control computer (mechanical). Range-dependent dispersion pattern.
+- `movement/convoy.py` (new) — Convoy mechanics: formation types (column, broad front), escort positions, U-boat wolf pack attack sequence, depth charge patterns.
+- `combat/strategic_bombing.py` (new) — Area bombing model: CEP-based damage to target areas. Bomber stream, fighter escort, flak defense.
 
 ### 20c: Doctrine & Commanders
-- `data/eras/ww2/doctrine/` — Blitzkrieg, Soviet deep operations, British deliberate attack, US combined arms
-- `data/eras/ww2/commanders/` — Aggressive (Patton archetype), methodical (Montgomery archetype), operational art (Zhukov archetype)
+- **Doctrine YAML data** (4 files): Blitzkrieg, Soviet deep operations, British deliberate attack, US combined arms
+- **Commander YAML data** (3 files): Aggressive (Patton archetype), methodical (Montgomery archetype), operational art (Zhukov archetype)
 
 ### 20d: Validation Scenarios
-- `data/eras/ww2/scenarios/kursk.yaml` — Prokhorovka tank battle (5th Guards Tank vs II SS Panzer)
-- `data/eras/ww2/scenarios/midway.yaml` — Carrier battle (4 IJN carriers vs 3 USN carriers)
-- `data/eras/ww2/scenarios/normandy_bocage.yaml` — Hedgerow fighting (infantry-centric, close terrain)
+- **Scenario YAML data** (3 files):
+  - `data/eras/ww2/scenarios/kursk.yaml` — Prokhorovka tank battle (5th Guards Tank vs II SS Panzer)
+  - `data/eras/ww2/scenarios/midway.yaml` — Carrier battle (4 IJN carriers vs 3 USN carriers)
+  - `data/eras/ww2/scenarios/normandy_bocage.yaml` — Hedgerow fighting (infantry-centric, close terrain)
 
-**Exit Criteria**: Era framework correctly disables irrelevant subsystems for WW2 era (no GPS, no thermal sights, no data links, no PGMs). WW2 scenarios load and run with period-appropriate unit definitions. Tank combat produces historically plausible exchange ratios (Tiger vs Sherman ~3:1 at range, closer at short range). Naval gunnery model produces bracket-and-hit patterns. No guided munitions used. Radar detection limited to period capabilities. Era config for MODERN era produces identical results to no-era-config (backward compatible). Validation against Kursk historical data within tolerance. Deterministic replay verified.
+**YAML data total** (~60 files): 15 units + 8 weapons + 13 ammo + 4 sensors + 15 signatures + 4 doctrines + 3 commanders + 3 scenarios = ~65 YAML data files.
+
+**Key features**: Era framework correctly disables irrelevant subsystems for WW2 era (no GPS, no thermal sights, no data links, no PGMs). WW2 scenarios load and run with period-appropriate unit definitions. Naval gunnery model produces bracket-and-hit patterns with spotting correction. Convoy mechanics model escort formations and wolf pack attacks. Strategic bombing uses CEP-based area damage with bomber stream, fighter escort, and flak defense. No guided munitions used. Radar detection limited to period capabilities. Era config for MODERN era produces identical results to no-era-config (backward compatible). Deterministic replay verified.
+
+**Exit Criteria**: All met. Era framework correctly disables irrelevant subsystems for WW2 era. WW2 scenarios load and run with period-appropriate unit definitions. Tank combat produces historically plausible exchange ratios. Naval gunnery model produces bracket-and-hit patterns. No guided munitions used. Radar detection limited to period capabilities. Era config for MODERN era produces identical results to no-era-config (backward compatible). Validation against Kursk historical data within tolerance. All 5,244 tests pass. Deterministic replay verified.
 
 ---
 

@@ -1,0 +1,70 @@
+unit_type: iowa_bb
+domain: naval
+display_name: "Iowa-class Battleship"
+naval_type: CRUISER  # no BATTLESHIP type in NavalUnitType; CRUISER is closest heavy combatant
+max_speed: 17.0  # m/s (~33 knots)
+draft: 11.0
+displacement: 57540.0  # full load tonnes
+fuel_capacity: 8841.0  # tonnes of fuel oil
+noise_signature_base: 155.0
+crew:
+  - role: COMMANDER
+    count: 1
+    skill: EXPERIENCED
+  - role: NAVIGATOR
+    count: 4
+    skill: TRAINED
+  - role: SENSOR_OPERATOR
+    count: 12
+    skill: TRAINED
+  - role: GUNNER
+    count: 60
+    skill: TRAINED
+  - role: ENGINEER
+    count: 40
+    skill: TRAINED
+  - role: GENERIC
+    count: 1804
+    skill: BASIC
+equipment:
+  - name: "16-inch/50 Mk 7 Gun (3x3 turrets)"
+    category: WEAPON
+    weight_kg: 520000.0
+    reliability: 0.92
+  - name: "5-inch/38 Mk 12 Gun (10x2 turrets)"
+    category: WEAPON
+    weight_kg: 136000.0
+    reliability: 0.90
+  - name: "Bofors 40mm Quad Mount (x20)"
+    category: WEAPON
+    weight_kg: 48800.0
+    reliability: 0.88
+  - name: "Oerlikon 20mm (x49)"
+    category: WEAPON
+    weight_kg: 33320.0
+    reliability: 0.87
+  - name: "Mk 38 Fire Control Director (x2)"
+    category: SENSOR
+    weight_kg: 35000.0
+    reliability: 0.84
+  - name: "SK Air Search Radar"
+    category: SENSOR
+    weight_kg: 2500.0
+    reliability: 0.75
+  - name: "SG Surface Search Radar"
+    category: SENSOR
+    weight_kg: 680.0
+    reliability: 0.78
+  - name: "Mk 13 Fire Control Radar"
+    category: SENSOR
+    weight_kg: 1200.0
+    reliability: 0.80
+  - name: "GE Geared Steam Turbines (212,000 SHP)"
+    category: PROPULSION
+    weight_kg: 90000.0
+    reliability: 0.88
+    temperature_range: [-15.0, 45.0]
+  - name: "Class B Armor Belt (307mm)"
+    category: PROTECTION
+    weight_kg: 8500000.0
+    reliability: 0.99

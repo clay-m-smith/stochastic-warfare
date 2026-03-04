@@ -1,0 +1,22 @@
+weapon_id: mg42
+display_name: "MG 42 General-Purpose Machine Gun"
+category: MACHINE_GUN
+caliber_mm: 7.92
+muzzle_velocity_mps: 740.0
+max_range_m: 1000.0
+min_range_m: 0.0
+rate_of_fire_rpm: 1200.0
+burst_size: 6
+base_accuracy_mrad: 1.5
+guidance: NONE
+magazine_capacity: 50
+reload_time_s: 5.0
+compatible_ammo:
+  - 792mm_sst_ap
+weight_kg: 11.6
+reliability: 0.90
+barrel_life_rounds: 6000
+requires_deployed: false
+traverse_deg: 360.0
+elevation_min_deg: -10.0
+elevation_max_deg: 45.0

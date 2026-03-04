@@ -1,0 +1,49 @@
+unit_type: panther
+domain: ground
+display_name: "Panther Ausf. G (Pz.Kpfw. V)"
+ground_type: ARMOR
+max_speed: 14.0  # m/s (~50 km/h road)
+armor_front: 80.0  # 80mm at 55 degrees = ~140mm effective
+armor_side: 40.0
+crew:
+  - role: COMMANDER
+    count: 1
+    skill: TRAINED
+  - role: GUNNER
+    count: 1
+    skill: TRAINED
+  - role: LOADER
+    count: 1
+    skill: BASIC
+  - role: DRIVER
+    count: 1
+    skill: TRAINED
+  - role: CREW
+    count: 1
+    skill: BASIC  # radio operator / hull MG
+equipment:
+  - name: "75mm KwK 42 L/70 Gun"
+    category: WEAPON
+    weight_kg: 1000.0
+    reliability: 0.92
+  - name: "MG 34 Coaxial"
+    category: WEAPON
+    weight_kg: 12.1
+    reliability: 0.88
+  - name: "MG 34 Hull Mount"
+    category: WEAPON
+    weight_kg: 12.1
+    reliability: 0.88
+  - name: "Maybach HL 230 P30 V-12"
+    category: PROPULSION
+    weight_kg: 1200.0
+    reliability: 0.73
+    temperature_range: [-20.0, 40.0]
+  - name: "TZF 12a Monocular Sight"
+    category: SENSOR
+    weight_kg: 5.5
+    reliability: 0.94
+  - name: "Sloped Rolled Homogeneous Armor"
+    category: PROTECTION
+    weight_kg: 12000.0
+    reliability: 0.98

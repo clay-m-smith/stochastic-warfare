@@ -1,0 +1,14 @@
+ammo_id: 88mm_pzgr39_apcbc
+display_name: "88mm Pzgr.39 APCBC (KwK 36)"
+ammo_type: AP
+mass_kg: 10.2
+diameter_mm: 88.0
+drag_coefficient: 0.35
+penetration_mm_rha: 120.0
+penetration_reference_range_m: 1000.0
+blast_radius_m: 0.0
+fragmentation_radius_m: 0.0
+guidance: NONE
+propulsion: none
+max_speed_mps: 773.0
+unit_cost_factor: 2.0

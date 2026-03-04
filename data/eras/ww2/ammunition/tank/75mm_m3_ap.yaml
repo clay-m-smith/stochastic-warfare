@@ -1,0 +1,14 @@
+ammo_id: 75mm_m3_ap
+display_name: "75mm M61 APC (M3 Gun)"
+ammo_type: AP
+mass_kg: 6.3
+diameter_mm: 75.0
+drag_coefficient: 0.35
+penetration_mm_rha: 66.0
+penetration_reference_range_m: 1000.0
+blast_radius_m: 0.0
+fragmentation_radius_m: 0.0
+guidance: NONE
+propulsion: none
+max_speed_mps: 619.0
+unit_cost_factor: 1.0

@@ -1,0 +1,23 @@
+weapon_id: 85mm_zis_s53
+display_name: "85mm ZIS-S-53 (T-34/85)"
+category: CANNON
+caliber_mm: 85.0
+muzzle_velocity_mps: 792.0
+max_range_m: 2500.0
+min_range_m: 50.0
+rate_of_fire_rpm: 8.0
+burst_size: 1
+base_accuracy_mrad: 0.6
+guidance: NONE
+magazine_capacity: 56
+reload_time_s: 7.0
+compatible_ammo:
+  - 85mm_br365_ap
+  - 85mm_o365_he
+weight_kg: 1150.0
+reliability: 0.88
+barrel_life_rounds: 2000
+requires_deployed: false
+traverse_deg: 360.0
+elevation_min_deg: -5.0
+elevation_max_deg: 22.0

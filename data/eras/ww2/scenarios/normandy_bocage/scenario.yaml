@@ -1,0 +1,127 @@
+name: "Normandy Bocage Fighting (1944)"
+date: "1944-07-01T06:00:00Z"
+duration_hours: 12.0
+latitude: 49.1
+longitude: -1.0
+era: ww2
+
+tick_resolution:
+  strategic_s: 3600
+  operational_s: 300
+  tactical_s: 5
+
+weather_conditions:
+  visibility_m: 1500
+  wind_speed_mps: 2.0
+  wind_direction_deg: 270
+  temperature_c: 18.0
+  precipitation: light_rain
+  cloud_cover: 0.7
+  humidity: 0.80
+
+terrain:
+  width_m: 2000
+  height_m: 1500
+  cell_size_m: 25.0
+  base_elevation_m: 50.0
+  terrain_type: hilly_defense
+  features:
+    - type: ridge
+      position: [1000, 0]
+      params:
+        height_m: 15.0
+        width_m: 100.0
+    - type: ridge
+      position: [500, 0]
+      params:
+        height_m: 10.0
+        width_m: 80.0
+
+sides:
+  - side: us
+    units:
+      - unit_type: us_rifle_squad_ww2
+        count: 12
+      - unit_type: sherman_m4a3
+        count: 4
+    experience_level: 0.5
+    morale_initial: STEADY
+    commander_profile: aggressive_patton
+    doctrine_template: us_combined_arms_ww2
+    depots:
+      - depot_id: us_depot
+        position: [100, 750]
+        capacity_tons: 500
+        throughput_tons_per_hour: 30.0
+
+  - side: german
+    units:
+      - unit_type: wehrmacht_rifle_squad
+        count: 8
+      - unit_type: panzer_iv_h
+        count: 2
+    experience_level: 0.7
+    morale_initial: STEADY
+    commander_profile: methodical_montgomery
+    doctrine_template: british_deliberate
+
+objectives:
+  - objective_id: village_crossroads
+    position: [1200, 750]
+    radius_m: 200
+    type: territory
+
+victory_conditions:
+  - type: territory_control
+    side: us
+    params:
+      threshold: 1.0
+  - type: force_destroyed
+    side: ""
+    params:
+      threshold: 0.6
+  - type: time_expired
+    side: german
+    params:
+      max_duration_s: 43200
+
+calibration_overrides:
+  hit_probability_modifier: 0.8
+  target_size_modifier: 0.5
+  morale_degrade_rate_modifier: 0.3
+  morale_base_degrade_rate: 0.006
+  morale_casualty_weight: 0.5
+  morale_check_interval: 15
+  us_force_ratio_modifier: 1.0
+  german_force_ratio_modifier: 2.0
+  us_cohesion: 0.7
+  german_cohesion: 0.85
+  destruction_threshold: 0.4
+  us_start_x: 100.0
+  us_start_y: 750.0
+  german_start_x: 1800.0
+  german_start_y: 750.0
+  weapon_assignments:
+    "75mm M3 Tank Gun": 75mm_m3
+    "75mm KwK 40 L/48": 75mm_m3
+
+documented_outcomes:
+  - name: us_casualty_ratio
+    value: 2.0
+    tolerance_factor: 3.0
+    unit: "attacker:defender"
+    source: "Doubler, *Closing with the Enemy*"
+    source_quality: 1
+    notes: "~2:1 attacker casualty ratio in bocage fighting"
+  - name: terrain_advantage
+    value: 2.0
+    tolerance_factor: 2.0
+    unit: "defensive multiplier"
+    source: "US Army Historical Division"
+    source_quality: 1
+    notes: "Hedgerows provided ~2x defensive advantage"
+
+sources:
+  - "Doubler, Michael D. *Closing with the Enemy: How GIs Fought the War in Europe*"
+  - "Balkoski, Joseph. *Beyond the Beachhead: The 29th Infantry Division in Normandy*"
+  - "US Army Historical Division, After-Action Reports"

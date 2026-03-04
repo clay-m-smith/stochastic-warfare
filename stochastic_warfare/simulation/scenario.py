@@ -188,6 +188,7 @@ class CampaignScenarioConfig(BaseModel):
     duration_hours: float
     latitude: float = 0.0
     longitude: float = 0.0
+    era: str = "modern"
     tick_resolution: TickResolutionConfig = TickResolutionConfig()
     weather_conditions: dict[str, Any] = {}
     terrain: TerrainConfig
@@ -292,6 +293,14 @@ class SimulationContext:
     # Doctrinal AI Schools (Phase 19)
     school_registry: Any = None
 
+    # Era Framework (Phase 20)
+    era_config: Any = None
+
+    # WW2 Engine Extensions (Phase 20b)
+    naval_gunnery_engine: Any = None
+    convoy_engine: Any = None
+    strategic_bombing_engine: Any = None
+
     # Logistics
     consumption_engine: Any = None
     stockpile_manager: Any = None
@@ -362,6 +371,9 @@ class SimulationContext:
         for name, eng in engines:
             if eng is not None and hasattr(eng, "get_state"):
                 state[name] = eng.get_state()
+        # Era config
+        if self.era_config is not None and hasattr(self.era_config, "model_dump"):
+            state["era_config"] = self.era_config.model_dump()
         return state
 
     def set_state(self, state: dict[str, Any]) -> None:
@@ -449,8 +461,10 @@ class ScenarioLoader:
         self._real_terrain_ctx = None
         heightmap = self._build_terrain(config.terrain, rng_mgr, config)
 
-        # 4. Load YAML data
-        loaders = self._create_loaders()
+        # 4. Load YAML data (era-aware)
+        from stochastic_warfare.core.era import get_era_config
+        era_config = get_era_config(config.era)
+        loaders = self._create_loaders(era=config.era)
 
         # 5. Build forces
         entities_rng = rng_mgr.get_stream(ModuleId.ENTITIES)
@@ -465,7 +479,8 @@ class ScenarioLoader:
             for u in units:
                 morale_states[u.entity_id] = MoraleState.STEADY
 
-        # 7. Create domain engines
+        # 7. Create domain engines (era-gated)
+        disabled = era_config.disabled_modules
         engines = self._create_engines(rng_mgr, bus, heightmap, loaders, config)
 
         # 8. Assemble context
@@ -484,6 +499,7 @@ class ScenarioLoader:
             unit_sensors=unit_sensors,
             morale_states=morale_states,
             calibration=dict(config.calibration_overrides),
+            era_config=era_config,
             **engines,
             **loaders,
         )
@@ -559,8 +575,13 @@ class ScenarioLoader:
         self._real_terrain_ctx = ctx
         return ctx.heightmap
 
-    def _create_loaders(self) -> dict[str, Any]:
-        """Create and initialize all YAML data loaders."""
+    def _create_loaders(self, era: str = "modern") -> dict[str, Any]:
+        """Create and initialize all YAML data loaders.
+
+        When *era* is not ``"modern"``, also loads YAML definitions from
+        ``data/eras/{era}/`` — era-specific files add to (not replace)
+        the base data set.
+        """
         from stochastic_warfare.entities.loader import UnitLoader
         from stochastic_warfare.combat.ammunition import AmmoLoader, WeaponLoader
         from stochastic_warfare.detection.signatures import SignatureLoader
@@ -580,6 +601,42 @@ class ScenarioLoader:
 
         sensor_loader = SensorLoader(self._data_dir / "sensors")
         sensor_loader.load_all()
+
+        # Load era-specific data on top of base data
+        if era != "modern":
+            era_dir = self._data_dir / "eras" / era
+            if era_dir.is_dir():
+                era_units = era_dir / "units"
+                if era_units.is_dir():
+                    era_unit_loader = UnitLoader(era_units)
+                    era_unit_loader.load_all()
+                    unit_loader._definitions.update(era_unit_loader._definitions)
+
+                era_weapons = era_dir / "weapons"
+                if era_weapons.is_dir():
+                    era_weapon_loader = WeaponLoader(era_weapons)
+                    era_weapon_loader.load_all()
+                    weapon_loader._definitions.update(era_weapon_loader._definitions)
+
+                era_ammo = era_dir / "ammunition"
+                if era_ammo.is_dir():
+                    era_ammo_loader = AmmoLoader(era_ammo)
+                    era_ammo_loader.load_all()
+                    ammo_loader._definitions.update(era_ammo_loader._definitions)
+
+                era_sigs = era_dir / "signatures"
+                if era_sigs.is_dir():
+                    era_sig_loader = SignatureLoader(era_sigs)
+                    era_sig_loader.load_all()
+                    sig_loader._profiles.update(era_sig_loader._profiles)
+
+                era_sensors = era_dir / "sensors"
+                if era_sensors.is_dir():
+                    era_sensor_loader = SensorLoader(era_sensors)
+                    era_sensor_loader.load_all()
+                    sensor_loader._definitions.update(era_sensor_loader._definitions)
+
+                logger.info("Loaded era-specific data from %s", era_dir)
 
         return {
             "unit_loader": unit_loader,
