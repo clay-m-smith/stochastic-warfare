@@ -29,14 +29,19 @@ perf = [
 mcp = [
     "mcp[cli]>=1.2.0",
 ]
+terrain = [
+    "rasterio>=1.3",
+    "xarray>=2024.1",
+]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 strict_markers = true
-addopts = "-m 'not slow and not benchmark'"
+addopts = "-m 'not slow and not benchmark and not terrain'"
 markers = [
     "slow: marks tests as slow (1000-run Monte Carlo, run explicitly with '-m slow')",
     "benchmark: marks tests as performance benchmarks (run explicitly with '-m benchmark')",
+    "terrain: marks tests requiring downloaded terrain data (run explicitly with '-m terrain')",
 ]
 
 [project.scripts]

@@ -22,7 +22,7 @@ Rolling record of implementation decisions, changes, and lessons learned across 
 | 12 | Deep Systems Rework | **Complete** | [phase-12.md](phase-12.md) |
 | 13 | Performance Optimization | **Complete** | [phase-13.md](phase-13.md) |
 | 14 | Tooling & Developer Experience | **Complete** | [phase-14.md](phase-14.md) |
-| 15 | Real-World Terrain & Data Pipeline | Planned | — |
+| 15 | Real-World Terrain & Data Pipeline | **Complete** | [phase-15.md](phase-15.md) |
 | 16 | Electronic Warfare | Planned | — |
 | 17 | Space & Satellite Domain | Planned | — |
 | 18 | NBC/CBRN Effects | Planned | — |
@@ -80,7 +80,7 @@ Known limitations and deferred improvements logged during implementation. Review
 | 7 | ~~No wave attack modeling (all units advance simultaneously)~~ *(resolved Phase 11c)* | [phase-7.md — Known Limitations](phase-7.md#known-limitations--post-mvp-refinements) |
 | 7 | Pre-scripted behavior only (no tactical AI, deferred to Phase 8) | [phase-7.md — Known Limitations](phase-7.md#known-limitations--post-mvp-refinements) |
 | 7 | Falklands simplified — Sheffield attack only, no San Carlos raids | [phase-7.md — Known Limitations](phase-7.md#known-limitations--post-mvp-refinements) |
-| 7 | Synthetic terrain (programmatic heightmaps, not real topographic data) | [phase-7.md — Known Limitations](phase-7.md#known-limitations--post-mvp-refinements) |
+| 7 | ~~Synthetic terrain (programmatic heightmaps, not real topographic data)~~ *(resolved Phase 15 — real-world terrain pipeline)* | [phase-7.md — Known Limitations](phase-7.md#known-limitations--post-mvp-refinements) |
 | 7 | No logistics in validation scenarios (short engagements) | [phase-7.md — Known Limitations](phase-7.md#known-limitations--post-mvp-refinements) |
 | 7 | No C2 propagation in validation (direct behavior, no order chain) | [phase-7.md — Known Limitations](phase-7.md#known-limitations--post-mvp-refinements) |
 | 7 | Simplified force compositions (representative samples, not complete OOB) | [phase-7.md — Known Limitations](phase-7.md#known-limitations--post-mvp-refinements) |
@@ -98,7 +98,7 @@ Known limitations and deferred improvements logged during implementation. Review
 | 9 | Simplified strategic movement (no detailed operational pathfinding) | [phase-9.md — Known Limitations](phase-9.md#known-limitations--post-mvp-refinements) |
 | 9 | Fixed reinforcement schedule (no Poisson/stochastic arrivals) | [phase-9.md — Known Limitations](phase-9.md#known-limitations--post-mvp-refinements) |
 | 9 | No naval campaign management (structurally supported but untested) | [phase-9.md — Known Limitations](phase-9.md#known-limitations--post-mvp-refinements) |
-| 9 | Synthetic terrain only (programmatic heightmaps, not real topographic data) | [phase-9.md — Known Limitations](phase-9.md#known-limitations--post-mvp-refinements) |
+| 9 | ~~Synthetic terrain only (programmatic heightmaps, not real topographic data)~~ *(resolved Phase 15 — real-world terrain pipeline)* | [phase-9.md — Known Limitations](phase-9.md#known-limitations--post-mvp-refinements) |
 | 9 | ~~LOS cache is per-tick only (cleared each tick after movement)~~ *(resolved Phase 13 postmortem — selective invalidation wired)* | [phase-9.md — Known Limitations](phase-9.md#known-limitations--post-mvp-refinements) |
 | 9 | No weather evolution mid-campaign beyond WeatherEngine.step() | [phase-9.md — Known Limitations](phase-9.md#known-limitations--post-mvp-refinements) |
 | 9 | ~~Viewshed vectorization deferred (lower priority)~~ *(resolved Phase 13a-5)* | [phase-9.md — Known Limitations](phase-9.md#known-limitations--post-mvp-refinements) |
@@ -107,7 +107,7 @@ Known limitations and deferred improvements logged during implementation. Review
 | 10 | No wave attack modeling — all red units advance simultaneously (inherited) | [phase-10.md — Known Limitations](phase-10.md#known-limitations--post-mvp-refinements) |
 | 10 | Campaign AI decisions coarse — OODA at echelon timing, may not produce tactical posture changes in short runs | [phase-10.md — Known Limitations](phase-10.md#known-limitations--post-mvp-refinements) |
 | 10 | Simplified force compositions — representative samples, not complete historical OOB | [phase-10.md — Known Limitations](phase-10.md#known-limitations--post-mvp-refinements) |
-| 10 | Synthetic terrain — programmatic heightmaps, not real topographic data | [phase-10.md — Known Limitations](phase-10.md#known-limitations--post-mvp-refinements) |
+| 10 | ~~Synthetic terrain — programmatic heightmaps, not real topographic data~~ *(resolved Phase 15 — real-world terrain pipeline)* | [phase-10.md — Known Limitations](phase-10.md#known-limitations--post-mvp-refinements) |
 | 10 | Fixed reinforcement schedule — deterministic arrival, no stochastic variation | [phase-10.md — Known Limitations](phase-10.md#known-limitations--post-mvp-refinements) |
 | 10 | ~~No force aggregation/disaggregation — all units individually tracked~~ *(resolved Phase 13 postmortem)* | [phase-10.md — Known Limitations](phase-10.md#known-limitations--post-mvp-refinements) |
 | 10 | AI expectation matching approximate — string-based posture detection | [phase-10.md — Known Limitations](phase-10.md#known-limitations--post-mvp-refinements) |

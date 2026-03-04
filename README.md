@@ -1,8 +1,8 @@
 # Stochastic Warfare
 
 ![Python](https://img.shields.io/badge/python-%3E%3D3.12-blue)
-![Tests](https://img.shields.io/badge/tests-4%2C372_passing-brightgreen)
-![Phase](https://img.shields.io/badge/phase-13_Post--MVP-blue)
+![Tests](https://img.shields.io/badge/tests-4%2C469_passing-brightgreen)
+![Phase](https://img.shields.io/badge/phase-15_Post--MVP-blue)
 
 High-fidelity, high-resolution wargame simulator built as a headless Python engine. Models warfare across multiple scales — from individual unit engagements up through tactical battles, operational battlefields, and multi-day strategic campaigns — with stochastic and signal-processing-inspired models throughout.
 
@@ -120,7 +120,7 @@ data/                     # ~118 YAML data files
   medical/                # 2 medical facility definitions
   scenarios/              # 3 engagement + 6 campaign scenarios
 
-tests/                    # 4,372 tests across ~156 test files
+tests/                    # 4,469 tests across ~160 test files
 docs/                     # specs, brainstorm, devlog, development phases
 ```
 
@@ -128,7 +128,7 @@ For the full package tree and module decomposition, see [`docs/specs/project-str
 
 ## Development Status
 
-All 11 MVP phases (0–10) are complete. Post-MVP Phases 11–14 are complete (deep systems rework + performance optimization + developer tooling).
+All 11 MVP phases (0–10) are complete. Post-MVP Phases 11–15 are complete (deep systems rework + performance optimization + developer tooling + real-world terrain).
 
 | Phase | Focus | Tests | Status |
 |-------|-------|-------|--------|
@@ -147,7 +147,8 @@ All 11 MVP phases (0–10) are complete. Post-MVP Phases 11–14 are complete (d
 | 12 | Deep Systems Rework | 259 | Complete |
 | 13 | Performance Optimization | 142 | Complete |
 | 14 | Tooling & Developer Experience | 125 | Complete |
-| | **Total** | **4,372** | |
+| 15 | Real-World Terrain & Data Pipeline | 97 | Complete |
+| | **Total** | **4,469** | |
 
 For the full phase roadmap, see [`docs/development-phases.md`](docs/development-phases.md) (MVP) and [`docs/development-phases-post-mvp.md`](docs/development-phases-post-mvp.md) (post-MVP). For per-phase implementation logs, see [`docs/devlog/`](docs/devlog/).
 
@@ -163,7 +164,7 @@ For the full phase roadmap, see [`docs/development-phases.md`](docs/development-
 | `shapely` | Vector geometry (roads, rivers, coastlines, obstacles) |
 | `networkx` | Supply network graphs, strategic map routing |
 
-Optional: `numba` (JIT acceleration, `uv sync --extra perf`). Dev: `pytest`, `pytest-cov`, `matplotlib`
+Optional: `numba` (JIT acceleration, `--extra perf`), `rasterio`/`xarray` (real terrain, `--extra terrain`), `mcp[cli]` (MCP server, `--extra mcp`). Dev: `pytest`, `pytest-cov`, `matplotlib`
 
 ## Documentation
 

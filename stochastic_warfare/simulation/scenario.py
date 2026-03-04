@@ -154,12 +154,26 @@ class TerrainConfig(BaseModel):
     height_m: float
     cell_size_m: float = 100.0
     base_elevation_m: float = 0.0
+    terrain_source: str = "procedural"
     terrain_type: str = "flat_desert"
     features: list[dict[str, Any]] = []
+    data_dir: str = "data/terrain_raw"
+    cache_dir: str = "data/terrain_cache"
+
+    @field_validator("terrain_source")
+    @classmethod
+    def _known_source(cls, v: str) -> str:
+        allowed = {"procedural", "real"}
+        if v not in allowed:
+            raise ValueError(f"terrain_source must be one of {allowed}; got {v!r}")
+        return v
 
     @field_validator("terrain_type")
     @classmethod
-    def _known_terrain(cls, v: str) -> str:
+    def _known_terrain(cls, v: str, info: Any) -> str:
+        source = info.data.get("terrain_source", "procedural")
+        if source == "real":
+            return v  # No constraint when using real terrain
         allowed = {"flat_desert", "open_ocean", "hilly_defense"}
         if v not in allowed:
             raise ValueError(f"terrain_type must be one of {allowed}; got {v!r}")
@@ -220,6 +234,9 @@ class SimulationContext:
     # Terrain
     heightmap: Heightmap | None = None
     los_engine: Any = None
+    classification: Any = None
+    infrastructure_manager: Any = None
+    bathymetry: Any = None
 
     # Forces
     units_by_side: dict[str, list[Unit]] = field(default_factory=dict)
@@ -411,7 +428,8 @@ class ScenarioLoader:
         )
 
         # 3. Terrain
-        heightmap = self._build_terrain(config.terrain, rng_mgr)
+        self._real_terrain_ctx = None
+        heightmap = self._build_terrain(config.terrain, rng_mgr, config)
 
         # 4. Load YAML data
         loaders = self._create_loaders()
@@ -433,12 +451,16 @@ class ScenarioLoader:
         engines = self._create_engines(rng_mgr, bus, heightmap, loaders, config)
 
         # 8. Assemble context
+        real_ctx = self._real_terrain_ctx
         ctx = SimulationContext(
             config=config,
             clock=clock,
             rng_manager=rng_mgr,
             event_bus=bus,
             heightmap=heightmap,
+            classification=real_ctx.classification if real_ctx else None,
+            infrastructure_manager=real_ctx.infrastructure if real_ctx else None,
+            bathymetry=real_ctx.bathymetry if real_ctx else None,
             units_by_side=units_by_side,
             unit_weapons=unit_weapons,
             unit_sensors=unit_sensors,
@@ -455,8 +477,12 @@ class ScenarioLoader:
         self,
         spec: TerrainConfig,
         rng_mgr: RNGManager,
+        config: CampaignScenarioConfig | None = None,
     ) -> Heightmap:
         """Build heightmap from terrain specification."""
+        if spec.terrain_source == "real":
+            return self._build_real_terrain(spec, config)
+
         from stochastic_warfare.terrain.heightmap import HeightmapConfig
         from stochastic_warfare.validation.scenario_runner import build_terrain
         from stochastic_warfare.validation.historical_data import TerrainSpec
@@ -471,6 +497,49 @@ class ScenarioLoader:
         )
         terrain_rng = rng_mgr.get_stream(ModuleId.TERRAIN)
         return build_terrain(terrain_spec, terrain_rng)
+
+    def _build_real_terrain(
+        self,
+        spec: TerrainConfig,
+        config: CampaignScenarioConfig | None = None,
+    ) -> Heightmap:
+        """Build terrain from real-world geospatial data."""
+        from stochastic_warfare.terrain.data_pipeline import (
+            BoundingBox,
+            TerrainDataConfig,
+            load_real_terrain,
+        )
+        from stochastic_warfare.coordinates.transforms import ScenarioProjection
+
+        lat = config.latitude if config else 0.0
+        lon = config.longitude if config else 0.0
+        projection = ScenarioProjection(lat, lon)
+
+        # Compute bbox from lat/lon + width/height
+        import math
+        meters_per_deg_lat = 111_320.0
+        meters_per_deg_lon = 111_320.0 * math.cos(math.radians(lat))
+        half_h = (spec.height_m / 2) / meters_per_deg_lat
+        half_w = (spec.width_m / 2) / meters_per_deg_lon
+
+        bbox = BoundingBox(
+            south=lat - half_h,
+            west=lon - half_w,
+            north=lat + half_h,
+            east=lon + half_w,
+        )
+        tdc = TerrainDataConfig(
+            bbox=bbox,
+            cell_size_m=spec.cell_size_m,
+            data_dir=spec.data_dir,
+            cache_dir=spec.cache_dir,
+        )
+
+        ctx = load_real_terrain(tdc, projection)
+
+        # Stash extra layers for the SimulationContext to pick up
+        self._real_terrain_ctx = ctx
+        return ctx.heightmap
 
     def _create_loaders(self) -> dict[str, Any]:
         """Create and initialize all YAML data loaders."""

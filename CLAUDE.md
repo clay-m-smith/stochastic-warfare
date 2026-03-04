@@ -3,7 +3,7 @@
 ## Project Overview
 High-fidelity, high-resolution wargame simulator. Multi-scale (campaign → battlefield → battle → unit level) with stochastic/signal-processing-inspired models (Markov chains, Monte Carlo, Kalman filters, noise models, queueing theory). Headless Python engine first; matplotlib for validation; full UI deferred. Modern era (Cold War–present) as prototype. Maritime warfare fully integrated, not deferred.
 
-**Current status**: Phase 14 complete (Tooling & Developer Experience) + postmortem cleanup. 4,372 tests passing. MVP complete (phases 0-10). Post-MVP Phases 11-14 delivered — Phase 11: 15 deficit fixes across ~20 source files. Phase 12: 16 deficits resolved + 2 new domains (civilian population, strategic air campaigns/IADS) across 12 new + ~25 modified source files. Phase 13: Performance optimization (STRtree, Kalman cache, LOS cache, viewshed vectorization, auto-resolve, force aggregation, Numba JIT, A* precompute, MC parallelism) across 2 new + ~10 modified source files. Phase 14: Developer tooling (MCP server, analysis utilities, visualization, 7 Claude skills) across 12 new source files + 7 skill files. Postmortem: wired MCP resources, fixed return type annotations, removed no-op params, eliminated set() iteration, extracted magic numbers.
+**Current status**: Phase 15 complete (Real-World Terrain & Data Pipeline) + postmortem cleanup. 4,469 tests passing. MVP complete (phases 0-10). Post-MVP Phases 11-15 delivered — Phase 11: 15 deficit fixes across ~20 source files. Phase 12: 16 deficits resolved + 2 new domains (civilian population, strategic air campaigns/IADS) across 12 new + ~25 modified source files. Phase 13: Performance optimization (STRtree, Kalman cache, LOS cache, viewshed vectorization, auto-resolve, force aggregation, Numba JIT, A* precompute, MC parallelism) across 2 new + ~10 modified source files. Phase 14: Developer tooling (MCP server, analysis utilities, visualization, 7 Claude skills) across 12 new source files + 7 skill files. Phase 15: Real-world terrain pipeline (SRTM elevation, Copernicus land cover, OSM infrastructure, GEBCO bathymetry) across 5 new source files + 1 modified + 1 download script.
 
 ## Python & Package Management
 **Requires Python >=3.12** (pinned to 3.12.10 via `.python-version`).
@@ -42,7 +42,7 @@ Hybrid — tick-based outer loop (variable resolution per scale) + event-driven 
 Layered hybrid — graph (strategic), grid (operational/tactical), continuous (unit-level). All raster grids share: Grid[0,0] = SW corner, row increases northward, col increases eastward.
 
 ### Key Dependencies
-`numpy`, `scipy`, `pydantic`, `pyproj`, `shapely`, `networkx` (+ `pytest`, `pytest-cov`, `matplotlib` for dev)
+`numpy`, `scipy`, `pydantic`, `pyproj`, `shapely`, `networkx` (+ `pytest`, `pytest-cov`, `matplotlib` for dev). Optional: `numba` (perf), `mcp[cli]` (mcp), `rasterio`/`xarray` (terrain).
 
 ## Project Conventions
 - **PRNG discipline**: No `np.random` module-level calls. All randomness via `RNGManager.get_stream(ModuleId)` → `np.random.Generator`. No bare `random` module.
@@ -247,3 +247,14 @@ Optional dependency: `numba>=0.59` (via `--extra perf`).
 - **14d Claude Skills** (7 new): `/scenario`, `/compare`, `/what-if`, `/timeline`, `/orbat`, `/calibrate`, `/postmortem`
 
 Optional dependency: `mcp[cli]>=1.2.0` (via `--extra mcp`).
+
+### Phase 15: Real-World Terrain & Data Pipeline (97 tests)
+5 new source files + 1 modified + 1 download script:
+- **15a Elevation Pipeline** (35 tests): `terrain/data_pipeline.py` (BoundingBox/TerrainDataConfig config, tile management, SHA-256 cache, unified `load_real_terrain()` entry point, `RealTerrainContext`), `terrain/real_heightmap.py` (SRTM .hgt + GeoTIFF reader, no-data fill, multi-tile merge, geodetic→ENU bilinear interpolation → `Heightmap`)
+- **15b Classification & Infrastructure** (29 tests): `terrain/real_classification.py` (Copernicus→LandCover 23-entry mapping, SoilType derivation, nearest-neighbor resample → `TerrainClassification`), `terrain/real_infrastructure.py` (GeoJSON input, 18-entry highway→RoadType mapping, road/bridge/building/railway extraction → `InfrastructureManager`)
+- **15c Maritime Data** (12 tests): `terrain/real_bathymetry.py` (GEBCO NetCDF reader, elevation negation, depth→BottomType heuristic, vectorized classification → `Bathymetry`)
+- **15d Integration** (21 tests): `simulation/scenario.py` (modified — `terrain_source: "real"` dispatch, `SimulationContext` + classification/infrastructure_manager/bathymetry fields), `scripts/download_terrain.py` (CLI: SRTM/Copernicus/OSM/GEBCO download)
+
+Key features: All loaders produce standard terrain objects — downstream code (LOS, movement, combat, logistics) works unchanged. `.npz` cache with mtime validation. `terrain_source` defaults to `"procedural"` (backward-compatible). Synthetic test files (GeoTIFF/HGT/GeoJSON/NetCDF) for CI without real data. `@pytest.mark.terrain` for tests needing downloaded data (excluded by default). Deterministic replay from seed.
+
+Optional dependencies: `rasterio>=1.3`, `xarray>=2024.1` (via `--extra terrain`).

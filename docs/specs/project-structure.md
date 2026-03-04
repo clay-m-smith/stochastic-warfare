@@ -1,6 +1,6 @@
 # Project Structure & Module Decomposition
-**Status**: Complete (Phase 14)
-**Last Updated**: 2026-03-03
+**Status**: Complete (Phase 15)
+**Last Updated**: 2026-03-04
 
 ---
 
@@ -112,7 +112,12 @@ stochastic-warfare/
     │   ├── los.py                    # Line-of-sight (vectorized ray march + scalar fallback for buildings)
     │   ├── bathymetry.py             # Ocean/sea floor depth, bottom type (affects sonar, mine placement)
     │   ├── maritime_geography.py     # Coastline, ports, harbors, straits, chokepoints, sea lanes, anchorages
-    │   └── strategic_map.py          # Graph-based strategic terrain (nodes + edges — includes sea zones and maritime routes)
+    │   ├── strategic_map.py          # Graph-based strategic terrain (nodes + edges — includes sea zones and maritime routes)
+    │   ├── data_pipeline.py          # Real-world terrain: tile management, caching, unified loader (Phase 15)
+    │   ├── real_heightmap.py         # SRTM/ASTER GeoTIFF → Heightmap loader (Phase 15)
+    │   ├── real_classification.py    # Copernicus land cover → TerrainClassification (Phase 15)
+    │   ├── real_infrastructure.py    # OSM GeoJSON → InfrastructureManager (Phase 15)
+    │   └── real_bathymetry.py        # GEBCO NetCDF → Bathymetry (Phase 15)
     ├── environment/                  # Weather, time-of-day, dynamic conditions, obscurants
     │   ├── __init__.py
     │   ├── weather.py                # Weather state, transitions, precipitation, wind, temperature
