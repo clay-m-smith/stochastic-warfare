@@ -552,6 +552,11 @@ class BattleManager:
             tactical_mult = ctx.ooda_engine.tactical_acceleration
 
         for unit_id, completed_phase in completions:
+            # Look up doctrinal school for this unit
+            school = None
+            if ctx.school_registry is not None:
+                school = ctx.school_registry.get_for_unit(unit_id)
+
             if completed_phase == OODAPhase.OBSERVE:
                 # Run situation assessment
                 if ctx.assessor is not None:
@@ -563,6 +568,10 @@ class BattleManager:
                             for s in ctx.side_names()
                             if s != side
                         )
+                        # Get school weight overrides
+                        weight_overrides = None
+                        if school is not None:
+                            weight_overrides = school.get_assessment_weight_overrides() or None
                         ctx.assessor.assess(
                             unit_id=unit_id,
                             echelon=5,
@@ -574,10 +583,40 @@ class BattleManager:
                             contacts=enemies,
                             enemy_power=float(enemies),
                             ts=timestamp,
+                            weight_overrides=weight_overrides,
                         )
             elif completed_phase == OODAPhase.DECIDE:
                 # Run decision engine
                 if ctx.decision_engine is not None:
+                    # Get school decision adjustments
+                    school_adjustments = None
+                    if school is not None:
+                        assessment_summary = {
+                            "force_ratio": 1.0,
+                            "supply_level": 1.0,
+                            "morale_level": 0.7,
+                            "intel_quality": 0.5,
+                            "c2_effectiveness": 1.0,
+                        }
+                        school_adjustments = school.get_decision_score_adjustments(
+                            echelon=5,
+                            assessment_summary=assessment_summary,
+                        )
+                        # Apply opponent modeling if enabled
+                        if school.definition.opponent_modeling_enabled:
+                            opponent_prediction = school.predict_opponent_action(
+                                own_assessment=assessment_summary,
+                                opponent_power=1.0,
+                                opponent_morale=0.7,
+                                own_power=1.0,
+                            )
+                            if opponent_prediction:
+                                # Build temporary scores dict for adjustment
+                                temp_scores = {k: v for k, v in school_adjustments.items()}
+                                adjusted = school.adjust_scores_for_opponent(
+                                    temp_scores, opponent_prediction,
+                                )
+                                school_adjustments = adjusted
                     ctx.decision_engine.decide(
                         unit_id=unit_id,
                         echelon=5,
@@ -585,15 +624,20 @@ class BattleManager:
                         personality=None,
                         doctrine=None,
                         ts=timestamp,
+                        school_adjustments=school_adjustments,
                     )
 
             # Advance to the next OODA phase and start its timer
             if ctx.ooda_engine is not None:
+                # Fold school OODA multiplier into tactical_mult
+                effective_mult = tactical_mult
+                if school is not None:
+                    effective_mult *= school.get_ooda_multiplier()
                 next_phase = ctx.ooda_engine.advance_phase(unit_id)
                 ctx.ooda_engine.start_phase(
                     unit_id,
                     next_phase,
-                    tactical_mult=tactical_mult,
+                    tactical_mult=effective_mult,
                     ts=timestamp,
                 )
 

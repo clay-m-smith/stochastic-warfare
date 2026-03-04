@@ -1,0 +1,15 @@
+school_id: attrition
+display_name: "Attrition"
+description: "Exchange ratio optimization, fire superiority, deliberate operations"
+assessment_weight_overrides: {}
+preferred_actions:
+  SUPPORT_BY_FIRE: 0.1
+  DEFEND: 0.05
+avoided_actions: {}
+ooda_multiplier: 1.2
+coa_score_weight_overrides:
+  preservation: 0.35
+risk_tolerance: "low"
+stratagem_affinity: {}
+opponent_modeling_enabled: false
+opponent_modeling_weight: 0.0

@@ -1,0 +1,18 @@
+school_id: maritime_corbettian
+display_name: "Corbettian"
+description: "Fleet-in-being, sea denial, selective engagement"
+assessment_weight_overrides:
+  intel: 1.5
+  supply: 1.5
+  force_ratio: 0.7
+preferred_actions:
+  DEFEND: 0.1
+  DELAY: 0.05
+avoided_actions: {}
+ooda_multiplier: 1.0
+coa_score_weight_overrides: {}
+risk_tolerance: "low"
+stratagem_affinity:
+  ECONOMY_OF_FORCE: 0.3
+opponent_modeling_enabled: false
+opponent_modeling_weight: 0.0

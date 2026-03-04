@@ -26,7 +26,7 @@ Rolling record of implementation decisions, changes, and lessons learned across 
 | 16 | Electronic Warfare | **Complete** | [phase-16.md](phase-16.md) |
 | 17 | Space & Satellite Domain | **Complete** | [phase-17.md](phase-17.md) |
 | 18 | NBC/CBRN Effects | **Complete** | [phase-18.md](phase-18.md) |
-| 19 | Doctrinal AI Schools | Planned | — |
+| 19 | Doctrinal AI Schools | **Complete** | [phase-19.md](phase-19.md) |
 | 20 | WW2 Era | Planned | — |
 | 21 | WW1 Era | Planned | — |
 | 22 | Napoleonic Era | Planned | — |
@@ -84,7 +84,7 @@ Known limitations and deferred improvements logged during implementation. Review
 | 7 | No logistics in validation scenarios (short engagements) | [phase-7.md — Known Limitations](phase-7.md#known-limitations--post-mvp-refinements) |
 | 7 | No C2 propagation in validation (direct behavior, no order chain) | [phase-7.md — Known Limitations](phase-7.md#known-limitations--post-mvp-refinements) |
 | 7 | Simplified force compositions (representative samples, not complete OOB) | [phase-7.md — Known Limitations](phase-7.md#known-limitations--post-mvp-refinements) |
-| 8 | Named doctrinal schools (Clausewitzian AI, Sun Tzu AI) deferred to Future Phases | [phase-8.md — Known Limitations](phase-8.md#known-limitations--post-mvp-refinements) |
+| 8 | ~~Named doctrinal schools (Clausewitzian AI, Sun Tzu AI) deferred to Future Phases~~ *(resolved Phase 19)* | [phase-8.md — Known Limitations](phase-8.md#known-limitations--post-mvp-refinements) |
 | 8 | COA wargaming is analytical (Lanchester), not full nested simulation | [phase-8.md — Known Limitations](phase-8.md#known-limitations--post-mvp-refinements) |
 | 8 | No terrain-specific COA generation (e.g., no river crossing planning detail) | [phase-8.md — Known Limitations](phase-8.md#known-limitations--post-mvp-refinements) |
 | 8 | Implied task tables are simplified (not full FM 5-0 comprehensive list) | [phase-8.md — Known Limitations](phase-8.md#known-limitations--post-mvp-refinements) |
@@ -134,6 +134,11 @@ Known limitations and deferred improvements logged during implementation. Review
 | 18 | Hardcoded terrain channeling thresholds in dispersal (5m valley/ridge, 50m offset) | [phase-18.md — Postmortem](phase-18.md#postmortem) |
 | 18 | Hardcoded fallback weather defaults in CBRN engine (wind=2.0, temp=20°C, cloud=0.5) | [phase-18.md — Postmortem](phase-18.md#postmortem) |
 | 18 | No automatic puff aging/cleanup mechanism in dispersal engine | [phase-18.md — Postmortem](phase-18.md#postmortem) |
+| 19 | CommanderEngine not wired into SimulationContext — SchoolRegistry stores unit assignments as workaround | [phase-19.md — Known Limitations](phase-19.md#known-limitations) |
+| 19 | battle.py passes assessment=None to decide() — pre-existing gap prevents full OODA DECIDE integration | [phase-19.md — Known Limitations](phase-19.md#known-limitations) |
+| 16/17/18/19 | ScenarioLoader doesn't auto-wire SchoolRegistry from YAML (extends existing EW/Space/CBRN gap) | [phase-19.md — Known Limitations](phase-19.md#known-limitations) |
+| 19 | `get_coa_score_weight_overrides()` and `get_stratagem_affinity()` hooks defined but never called in production battle loop | [phase-19.md — Postmortem](phase-19.md#postmortem) |
+| 19 | `CommanderPersonality.school_id` field defined but never read — schools assigned via SchoolRegistry instead | [phase-19.md — Postmortem](phase-19.md#postmortem) |
 
 ## Conventions
 

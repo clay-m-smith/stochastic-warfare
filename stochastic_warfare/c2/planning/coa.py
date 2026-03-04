@@ -434,7 +434,11 @@ class COAEngine:
 
     # -- Comparison ---------------------------------------------------------
 
-    def compare_coas(self, coas: list[COA]) -> list[COA]:
+    def compare_coas(
+        self,
+        coas: list[COA],
+        score_weight_overrides: dict[str, float] | None = None,
+    ) -> list[COA]:
         """Score and rank COAs by weighted criteria.
 
         Each COA must have a ``wargame_result`` set.
@@ -443,13 +447,19 @@ class COAEngine:
         ----------
         coas : list[COA]
             COAs to compare (must have wargame results).
+        score_weight_overrides : dict[str, float] | None
+            Override COA scoring weights (keys: ``mission``,
+            ``preservation``, ``tempo``, ``simplicity``).
+            ``None`` uses config defaults.
 
         Returns
         -------
         list[COA]
             COAs with ``score`` set, sorted by total descending.
         """
-        weights = self._config.score_weights
+        weights = dict(self._config.score_weights)
+        if score_weight_overrides:
+            weights.update(score_weight_overrides)
         w_mission = weights.get("mission", 0.40)
         w_preservation = weights.get("preservation", 0.25)
         w_tempo = weights.get("tempo", 0.20)

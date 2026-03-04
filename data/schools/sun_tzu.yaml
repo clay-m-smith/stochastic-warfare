@@ -1,0 +1,19 @@
+school_id: sun_tzu
+display_name: "Sun Tzu"
+description: "Intel-first, deception, indirect approach, opponent modeling"
+assessment_weight_overrides:
+  intel: 3.0
+  morale: 1.5
+  force_ratio: 0.5
+preferred_actions:
+  RECON: 0.1
+  FLANK: 0.05
+avoided_actions: {}
+ooda_multiplier: 0.9
+coa_score_weight_overrides: {}
+risk_tolerance: "low"
+stratagem_affinity:
+  DECEPTION: 0.4
+  SURPRISE: 0.3
+opponent_modeling_enabled: true
+opponent_modeling_weight: 0.8

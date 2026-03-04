@@ -1,0 +1,16 @@
+school_id: deep_battle
+display_name: "Deep Battle"
+description: "Echeloned assault, operational-depth strikes, reserve management (Tukhachevsky)"
+assessment_weight_overrides:
+  force_ratio: 1.5
+  supply: 1.5
+preferred_actions:
+  ATTACK: 0.05
+avoided_actions: {}
+ooda_multiplier: 1.1
+coa_score_weight_overrides: {}
+risk_tolerance: "moderate"
+stratagem_affinity:
+  CONCENTRATION: 0.3
+opponent_modeling_enabled: false
+opponent_modeling_weight: 0.0

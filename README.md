@@ -1,8 +1,8 @@
 # Stochastic Warfare
 
 ![Python](https://img.shields.io/badge/python-%3E%3D3.12-blue)
-![Tests](https://img.shields.io/badge/tests-4%2C918_passing-brightgreen)
-![Phase](https://img.shields.io/badge/phase-18_Post--MVP-blue)
+![Tests](https://img.shields.io/badge/tests-5%2C107_passing-brightgreen)
+![Phase](https://img.shields.io/badge/phase-19_Post--MVP-blue)
 
 High-fidelity, high-resolution wargame simulator built as a headless Python engine. Models warfare across multiple scales — from individual unit engagements up through tactical battles, operational battlefields, and multi-day strategic campaigns — with stochastic and signal-processing-inspired models throughout.
 
@@ -86,7 +86,7 @@ For full architectural rationale, see [`docs/brainstorm.md`](docs/brainstorm.md)
 ## Project Structure
 
 ```
-stochastic_warfare/       # simulation engine (18 modules, ~202 source files)
+stochastic_warfare/       # simulation engine (18 modules, ~212 source files)
   core/                   # types, logging, RNG, clock, events, config, checkpoint
   coordinates/            # geodetic/UTM/ENU transforms, magnetic declination
   terrain/                # heightmap, classification, bathymetry, LOS, infrastructure
@@ -101,14 +101,14 @@ stochastic_warfare/       # simulation engine (18 modules, ~202 source files)
   population/             # civilian regions, displacement, collateral, HUMINT, influence
   simulation/             # scenario loading, battle/campaign managers, engine
   validation/             # historical data, Monte Carlo, campaign validation
-  ai/                     # OODA, commander AI, doctrine, assessment, decisions
+  ai/                     # OODA, commander AI, doctrine, assessment, decisions, doctrinal schools
   planning/               # MDMP, mission analysis, COA generation, estimates
   ew/                     # electronic warfare: jamming, spoofing, ECCM, SIGINT, decoys
   space/                  # space & satellite: GPS, SATCOM, ISR, early warning, ASAT
   cbrn/                   # CBRN effects: agents, dispersal, contamination, protection, nuclear
   tools/                  # MCP server, analysis (narrative, tempo, comparison, sensitivity), visualization
 
-data/                     # ~162 YAML data files
+data/                     # ~171 YAML data files
   units/                  # 21 unit definitions (ground, air, naval, support)
   weapons/                # 24 weapon definitions (guns, artillery, missiles, torpedoes)
   ammunition/             # 23 ammunition definitions
@@ -121,12 +121,13 @@ data/                     # ~162 YAML data files
   organizations/          # 2 TO&E definitions
   commanders/             # 6 commander personality profiles
   doctrine/               # 10 doctrine templates (US, Russian, NATO, generic)
+  schools/                # 9 doctrinal school definitions (Clausewitzian, Maneuverist, etc.)
   supply/                 # 5 supply item definitions
   transport/              # 4 transport profiles
   medical/                # 2 medical facility definitions
   scenarios/              # 3 engagement + 6 campaign + 2 EW + 3 space + 2 CBRN validation scenarios
 
-tests/                    # 4,918 tests across ~178 test files
+tests/                    # 5,107 tests across ~184 test files
 docs/                     # specs, brainstorm, devlog, development phases
 ```
 
@@ -134,7 +135,7 @@ For the full package tree and module decomposition, see [`docs/specs/project-str
 
 ## Development Status
 
-All 11 MVP phases (0–10) are complete. Post-MVP Phases 11–18 are complete (deep systems rework + performance optimization + developer tooling + real-world terrain + electronic warfare + space & satellite domain + CBRN effects).
+All 11 MVP phases (0–10) are complete. Post-MVP Phases 11–19 are complete (deep systems rework + performance optimization + developer tooling + real-world terrain + electronic warfare + space & satellite domain + CBRN effects + doctrinal AI schools).
 
 | Phase | Focus | Tests | Status |
 |-------|-------|-------|--------|
@@ -157,7 +158,8 @@ All 11 MVP phases (0–10) are complete. Post-MVP Phases 11–18 are complete (d
 | 16 | Electronic Warfare | 144 | Complete |
 | 17 | Space & Satellite Domain | 149 | Complete |
 | 18 | CBRN Effects | 155 | Complete |
-| | **Total** | **4,918** | |
+| 19 | Doctrinal AI Schools | 189 | Complete |
+| | **Total** | **5,107** | |
 
 For the full phase roadmap, see [`docs/development-phases.md`](docs/development-phases.md) (MVP) and [`docs/development-phases-post-mvp.md`](docs/development-phases-post-mvp.md) (post-MVP). For per-phase implementation logs, see [`docs/devlog/`](docs/devlog/).
 

@@ -358,6 +358,57 @@ stratagem_affinity: [FEINT, DEMONSTRATION]
 
 9 school YAML configs total: clausewitzian, maneuverist, attrition, sun_tzu, deep_battle, maritime_mahanian, maritime_corbettian, airland_battle, air_power.
 
+### Modern & Post-Classical Schools
+
+Phase 19 implements 9 schools rooted in classical and Cold War-era doctrine. Three more recent theoretical developments extend beyond the conventional doctrinal spectrum and bridge toward Phase 24 (Unconventional Warfare):
+
+#### Generational Warfare (Lind et al.)
+
+William S. Lind and co-authors introduced the "Generations of Warfare" framework in *Marine Corps Gazette* (1989), mapping Western warfare evolution through four generations:
+
+| Generation | Era | Core Logic | Decision Driver |
+|------------|-----|-----------|-----------------|
+| 1GW | Post-Westphalia–1860 | Line & column, massed fire | Formation discipline |
+| 2GW | 1860–1918 | Firepower, attrition (Fr. *bataille conduite*) | Force ratio, fire superiority |
+| 3GW | 1918–present (conventional) | Maneuver, tempo, Auftragstaktik | OODA speed, bypass, C2 collapse |
+| 4GW | Emerging | Non-state, legitimacy contest, moral level | Political will, population disposition, information |
+
+4GW argues the state loses its monopoly on war. The adversary may have no center-of-gravity in the Clausewitzian sense — the target is state *legitimacy* itself. Blurs war/peace, combatant/civilian, military/political. Fought primarily at Boyd's "moral level."
+
+**5GW** (speculative — Abbott, *Handbook of 5GW*, 2010): Warfare through manipulation of context so subtle the target may not realize it is under attack. Cognitive manipulation, algorithmic influence, exploitation of systemic vulnerabilities. The "superempowered individual" concept (Barnett) — single actors achieving strategic effect through leverage of technology or network position.
+
+**Modeling relevance**: 4GW maps to a doctrinal school that weights `population_disposition`, `political_will`, and `information_effects` far above `force_ratio`. Force ratio assessment weight near-zero. Seeks no decisive engagement. Planning horizon 5–10× baseline. 5GW mechanisms (information manipulation, systemic attacks) are individual capabilities rather than a unified school — they modulate existing assessment/decision functions.
+
+**Key sources**: Lind et al., "The Changing Face of War" (*MCG* 1989, Tier 2). Lind, "Understanding Fourth Generation War" (*Military Review* 2004, Tier 1). Hammes, *The Sling and the Stone* (2004, Tier 3). Echevarria, *Fourth-Generation War and Other Myths* (SSI 2005, Tier 1 — argues 4GW is relabeled insurgency, not a new generation). Hoffman, "Hybrid Warfare and Challenges" (*JFQ* 2009, Tier 1 — hybrid warfare as more analytically useful framework than generational model).
+
+#### Unrestricted Warfare (Qiao Liang & Wang Xiangsui)
+
+*Unrestricted Warfare* (超限战, PLA Literature Press, 1999) by two PLA Air Force colonels argues any domain of human activity can become a weapon. Identifies 24 warfare types across three categories:
+
+- **Military**: Atomic, conventional, biochemical, ecological, space, electronic, guerrilla, terrorist
+- **Trans-military**: Diplomatic, network (cyber), intelligence, psychological, smuggling, drug, technological, virtual (deterrence)
+- **Non-military**: Financial, trade, resource, economic aid, regulatory (legal/lawfare), sanction, media, ideological
+
+Core principles: **Omnidirectionality** (attack from any domain), **Synchrony** (simultaneous multi-domain action for multiplicative effect), **Limited objectives** (cumulative strategic effect from many limited actions), **Unlimited means** (any tool legitimate), **Asymmetry** (avoid adversary strengths — if they dominate military, attack through finance).
+
+Closely related: PLA "Three Warfares" (三战, formally adopted 2003) — psychological warfare (心理战), media warfare (舆论战), legal warfare/lawfare (法律战). Gerasimov's "New Generation Warfare" (2013) — 4:1 non-military-to-military ratio, phased escalation, reflexive control (рефлексивное управление — manipulating adversary decision-making, not just degrading it).
+
+**Modeling relevance**: An "Unrestricted Warfare" school would dramatically expand the action space beyond kinetic options. Multi-domain synergy multiplier when N domains active simultaneously. Cost-benefit asymmetry inverts classical force ratio calculations ($1M cyber operation ≈ $1B conventional strike in strategic effect). Victory through cumulative erosion of systemic resilience, not decisive battle.
+
+**Key sources**: Qiao & Wang, *Unrestricted Warfare* (1999, Tier 1 — original PLA publication). Gerasimov, "Value of Science Is in the Foresight" (*Voyenno-Promyshlennyy Kurier* 2013, Tier 1). Thomas, "Russia's Reflexive Control Theory" (*JSMS* 2004, Tier 2). Cheng, *Cyber Dragon* (Praeger 2017, Tier 2). Mattis & Brazil, *Chinese Communist Espionage* (NIP 2019, Tier 1 — Three Warfares formal doctrine).
+
+#### Relationship to Existing Schools & Phase 24
+
+These modern theories inherit from classical schools but add new action domains and victory conditions:
+
+| Modern Theory | Classical Root | Extension |
+|---------------|---------------|-----------|
+| 4GW | Mao (people's war), Sun Tzu (asymmetry) | + information domain, legitimacy as CoG, non-state actors |
+| Unrestricted Warfare | Sun Tzu (indirect), Clausewitz (war = politics) | + 24 warfare types, multi-domain synchrony, systemic targeting |
+| Gerasimov Hybrid | Soviet deep battle (operational depth) | + phased non-military escalation, reflexive control, 4:1 non-kinetic ratio |
+
+These schools are **not implementable in Phase 19** because they require non-kinetic action domains (information, cyber, economic, legal) that don't yet exist in the engine. They are natural candidates for **Phase 24** (Unconventional Warfare), which already plans escalation modeling, population-centric operations, and political pressure mechanics. A future "19+" sub-phase could add 4GW/Unrestricted Warfare/Gerasimov Hybrid schools once Phase 24's non-kinetic infrastructure is in place.
+
 ### Game-Theoretic Opponent Modeling
 
 The original brainstorm identified game theory as a modeling tool for adversarial decision-making. Currently each AI commander decides independently with no model of the opponent's likely decisions. Deeper schools (particularly Sun Tzu and Maneuverist) should incorporate opponent modeling:

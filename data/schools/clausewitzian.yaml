@@ -1,0 +1,18 @@
+school_id: clausewitzian
+display_name: "Clausewitzian"
+description: "Center-of-gravity targeting, decisive engagement, Schwerpunkt"
+assessment_weight_overrides:
+  force_ratio: 2.0
+  intel: 0.5
+preferred_actions:
+  ATTACK: 0.1
+  MAIN_ATTACK: 0.1
+  ENVELOP: 0.05
+avoided_actions: {}
+ooda_multiplier: 1.0
+coa_score_weight_overrides: {}
+risk_tolerance: "moderate"
+stratagem_affinity:
+  CONCENTRATION: 0.3
+opponent_modeling_enabled: false
+opponent_modeling_weight: 0.0

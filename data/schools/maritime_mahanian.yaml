@@ -1,0 +1,17 @@
+school_id: maritime_mahanian
+display_name: "Mahanian"
+description: "Fleet concentration, decisive naval battle, sea control"
+assessment_weight_overrides:
+  force_ratio: 2.0
+preferred_actions:
+  ATTACK: 0.1
+  MAIN_ATTACK: 0.1
+avoided_actions:
+  BYPASS: 0.1
+ooda_multiplier: 1.0
+coa_score_weight_overrides: {}
+risk_tolerance: "high"
+stratagem_affinity:
+  CONCENTRATION: 0.4
+opponent_modeling_enabled: false
+opponent_modeling_weight: 0.0

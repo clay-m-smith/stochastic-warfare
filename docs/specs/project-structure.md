@@ -1,5 +1,5 @@
 # Project Structure & Module Decomposition
-**Status**: Complete (Phase 18)
+**Status**: Complete (Phase 19)
 **Last Updated**: 2026-03-04
 
 ---
@@ -66,6 +66,8 @@ stochastic-warfare/
 │   │   ├── russian/                 # Russian doctrine: deep operations, correlation of forces
 │   │   ├── nato/                    # NATO doctrinal procedures
 │   │   └── generic/                 # Era/domain-generic tactical patterns
+│   ├── schools/                      # Doctrinal school definitions [Phase 19]
+│   │   └── (9 files)                # clausewitzian, maneuverist, attrition, airland_battle, air_power, sun_tzu, deep_battle, maritime_mahanian, maritime_corbettian
 │   ├── commander_profiles/           # Commander personality archetypes (risk tolerance, style, preferences)
 │   ├── maritime/                     # Maritime-specific data: port facilities, sea lanes, chokepoints, bathymetry reference
 │   └── scenarios/                    # Complete scenario packages
@@ -267,7 +269,18 @@ stochastic-warfare/
     │       ├── decisions.py          # 5 echelon-specific decision functions (individual through corps+)
     │       ├── adaptation.py         # 7-trigger plan adaptation (casualties, force ratio, supply, morale, opportunity, surprise, C2)
     │       ├── doctrine.py           # YAML doctrine templates (US, Russian, NATO, generic) with action/echelon filtering
-    │       └── stratagems.py         # 6 stratagem types with echelon+experience gating (deception, concentration, surprise, etc.)
+    │       ├── stratagems.py         # 6 stratagem types with echelon+experience gating (deception, concentration, surprise, etc.)
+    │       └── schools/              # Doctrinal AI schools — Strategy pattern [Phase 19]
+    │           ├── __init__.py       # SchoolRegistry + SchoolLoader
+    │           ├── base.py           # SchoolDefinition pydantic model + DoctrinalSchool ABC (8 hooks)
+    │           ├── clausewitzian.py  # Center-of-gravity, decisive engagement, culmination awareness
+    │           ├── maneuverist.py    # Tempo/OODA ×0.7, bypass, indirect approach
+    │           ├── attrition.py      # Exchange ratio, fire superiority, deliberate operations
+    │           ├── airland_battle.py # Echelon-dependent deep/close, sensor-to-shooter
+    │           ├── air_power.py      # Five Rings, air superiority prerequisite
+    │           ├── sun_tzu.py        # Intel ×3, opponent modeling, counter-posture scoring
+    │           ├── deep_battle.py    # Echeloned assault, reserve management, operational depth
+    │           └── maritime.py       # MahanianSchool + CorbettianSchool
     ├── logistics/                    # Supply & logistics
     │   ├── __init__.py
     │   ├── events.py                 # Logistics events (supply delivery/shortage/depletion, convoy, maintenance, engineering, medical, POW, naval, disruption)
@@ -664,6 +677,13 @@ Orders exist at every echelon with fundamentally different character:
 - **Adaptation (adaptation.py)**: reacting when the plan meets reality. Detecting that the situation has changed (surprise contact, unexpected resistance, opportunity), assessing whether the current plan is still viable, deciding whether to adapt or continue, generating a new plan if needed. This is where Clausewitzian friction becomes a C2 problem — how fast can the command system adapt?
 - **Doctrine (doctrine.py)**: codified tactical/operational patterns per nation and era. Offensive operations (movement to contact, attack — hasty/deliberate, exploitation, pursuit), defensive (area defense, mobile defense, retrograde — delay/withdrawal/retirement), stability (security ops — screen/guard/cover, area security), enabling (passage of lines, relief in place, river crossing, airborne/air assault, amphibious). Doctrinal templates define the sequence of actions, not the specific decisions — they're the playbook, not the game plan.
 - **Stratagems (stratagems.py)**: higher-order concepts that operate above tactical doctrine. Deception plans (coordinated with detection/deception.py for execution), feints and demonstrations, economy of force (accepting risk in one area to mass elsewhere), concentration (massing combat power at the decisive point), surprise (achieving it and reacting to it), tempo control (dictating the pace of operations to keep the enemy off balance). These are the domain of experienced commanders and represent the art of war that transcends mechanical doctrine.
+
+#### Doctrinal Schools (c2/ai/schools/) — *Phase 19*
+- **School framework (base.py)**: `SchoolDefinition` pydantic model for YAML-loaded school parameters (assessment_weight_overrides, preferred/avoided_actions, ooda_multiplier, coa_score_weight_overrides, risk_tolerance, stratagem_affinity, opponent_modeling). `DoctrinalSchool` ABC with 8 hooks producing modifier dicts consumed by existing engines via DI parameters.
+- **Registry (__init__.py)**: `SchoolRegistry` maps school_id → instance and unit_id → school_id. `SchoolLoader` reads YAML definitions from `data/schools/`. State protocol support.
+- **Western schools**: `ClausewitzianSchool` (center-of-gravity, decisive engagement, culmination awareness), `ManeuveristSchool` (tempo/OODA ×0.7, bypass, indirect), `AttritionSchool` (exchange ratio, fire superiority, deliberate), `AirLandBattleSchool` (echelon-dependent deep/close, sensor-to-shooter), `AirPowerSchool` (Five Rings, air superiority prerequisite)
+- **Eastern schools**: `SunTzuSchool` (intel ×3, opponent modeling via Lanchester lookahead, counter-posture scoring), `DeepBattleSchool` (echeloned assault, reserve management, operational-depth strikes)
+- **Maritime schools**: `MahanianSchool` (fleet concentration, decisive naval battle), `CorbettianSchool` (fleet-in-being, sea denial, selective engagement)
 
 **Depends on**: core/, entities/, detection/, environment/ (AI assessment queries environmental conditions for operational planning)
 

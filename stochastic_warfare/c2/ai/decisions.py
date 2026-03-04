@@ -235,6 +235,7 @@ class DecisionEngine:
         roe_level: int = 1,
         comms_available: bool = True,
         ts: datetime | None = None,
+        school_adjustments: dict[str, float] | None = None,
     ) -> DecisionResult:
         """Produce an echelon-appropriate decision.
 
@@ -258,6 +259,10 @@ class DecisionEngine:
             Whether C2 comms are currently functional.
         ts : datetime | None
             Timestamp; defaults to UTC now.
+        school_adjustments : dict[str, float] | None
+            Additive score adjustments from a doctrinal school.
+            Applied after doctrine filtering and before noise.
+            ``None`` means no school adjustments.
 
         Returns
         -------
@@ -270,22 +275,22 @@ class DecisionEngine:
         p = personality if personality is not None else _DEFAULT_PERSONALITY
 
         if echelon <= _FIRE_TEAM:
-            result = self._decide_individual(unit_id, assessment, p, roe_level, ts)
+            result = self._decide_individual(unit_id, assessment, p, roe_level, ts, school_adjustments)
         elif echelon <= _PLATOON:
             result = self._decide_small_unit(
-                unit_id, assessment, p, doctrine, roe_level, current_orders_mission, ts,
+                unit_id, assessment, p, doctrine, roe_level, current_orders_mission, ts, school_adjustments,
             )
         elif echelon <= _BATTALION:
             result = self._decide_company_bn(
-                unit_id, assessment, p, doctrine, roe_level, ts,
+                unit_id, assessment, p, doctrine, roe_level, ts, school_adjustments,
             )
         elif echelon <= _DIVISION:
             result = self._decide_brigade_div(
-                unit_id, echelon, assessment, p, doctrine, roe_level, ts,
+                unit_id, echelon, assessment, p, doctrine, roe_level, ts, school_adjustments,
             )
         else:
             result = self._decide_corps_plus(
-                unit_id, assessment, p, doctrine, roe_level, ts,
+                unit_id, assessment, p, doctrine, roe_level, ts, school_adjustments,
             )
 
         # Publish event
@@ -321,6 +326,7 @@ class DecisionEngine:
         personality: CommanderPersonality,
         roe_level: int,
         ts: datetime,
+        school_adjustments: dict[str, float] | None = None,
     ) -> DecisionResult:
         scores: dict[str, float] = {}
 
@@ -375,6 +381,7 @@ class DecisionEngine:
             action_enum=_INDIVIDUAL_ENUM,
             doctrine=None,  # individual doesn't use doctrine
             ts=ts,
+            school_adjustments=school_adjustments,
         )
 
     # -- Squad / platoon ----------------------------------------------------
@@ -388,6 +395,7 @@ class DecisionEngine:
         roe_level: int,
         current_orders_mission: int | None,
         ts: datetime,
+        school_adjustments: dict[str, float] | None = None,
     ) -> DecisionResult:
         scores: dict[str, float] = {}
 
@@ -461,6 +469,7 @@ class DecisionEngine:
             action_enum=_SMALL_UNIT_ENUM,
             doctrine=doctrine,
             ts=ts,
+            school_adjustments=school_adjustments,
         )
 
     # -- Company / battalion ------------------------------------------------
@@ -473,6 +482,7 @@ class DecisionEngine:
         doctrine: DoctrineTemplate | None,
         roe_level: int,
         ts: datetime,
+        school_adjustments: dict[str, float] | None = None,
     ) -> DecisionResult:
         scores: dict[str, float] = {}
 
@@ -568,6 +578,7 @@ class DecisionEngine:
             action_enum=_COMPANY_BN_ENUM,
             doctrine=doctrine,
             ts=ts,
+            school_adjustments=school_adjustments,
         )
 
     # -- Brigade / division -------------------------------------------------
@@ -581,6 +592,7 @@ class DecisionEngine:
         doctrine: DoctrineTemplate | None,
         roe_level: int,
         ts: datetime,
+        school_adjustments: dict[str, float] | None = None,
     ) -> DecisionResult:
         scores: dict[str, float] = {}
 
@@ -673,6 +685,7 @@ class DecisionEngine:
             action_enum=_BRIGADE_DIV_ENUM,
             doctrine=doctrine,
             ts=ts,
+            school_adjustments=school_adjustments,
         )
 
     # -- Corps and above ----------------------------------------------------
@@ -685,6 +698,7 @@ class DecisionEngine:
         doctrine: DoctrineTemplate | None,
         roe_level: int,
         ts: datetime,
+        school_adjustments: dict[str, float] | None = None,
     ) -> DecisionResult:
         scores: dict[str, float] = {}
 
@@ -760,6 +774,7 @@ class DecisionEngine:
             action_enum=_CORPS_ENUM,
             doctrine=doctrine,
             ts=ts,
+            school_adjustments=school_adjustments,
         )
 
     # -- Common selection logic ---------------------------------------------
@@ -774,8 +789,9 @@ class DecisionEngine:
         action_enum: type[enum.IntEnum],
         doctrine: DoctrineTemplate | None,
         ts: datetime,
+        school_adjustments: dict[str, float] | None = None,
     ) -> DecisionResult:
-        """Apply doctrine filtering, noise, and select the highest-scored action.
+        """Apply doctrine filtering, school adjustments, noise, and select.
 
         Parameters
         ----------
@@ -795,6 +811,8 @@ class DecisionEngine:
             Active doctrine for action filtering.
         ts : datetime
             Timestamp.
+        school_adjustments : dict[str, float] | None
+            Additive score adjustments from a doctrinal school.
 
         Returns
         -------
@@ -811,6 +829,12 @@ class DecisionEngine:
             # Don't filter to empty
             if filtered:
                 scores = filtered
+
+        # 1b. Apply school adjustments (after doctrine filtering, before noise)
+        if school_adjustments:
+            for action, adj in school_adjustments.items():
+                if action in scores:
+                    scores[action] += adj
 
         # 2. Add Gaussian noise: sigma = 0.1 * (1.0 - experience)
         sigma = 0.1 * (1.0 - personality.experience)

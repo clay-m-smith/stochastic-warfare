@@ -289,6 +289,9 @@ class SimulationContext:
     # CBRN (Phase 18)
     cbrn_engine: Any = None
 
+    # Doctrinal AI Schools (Phase 19)
+    school_registry: Any = None
+
     # Logistics
     consumption_engine: Any = None
     stockpile_manager: Any = None
@@ -354,6 +357,7 @@ class SimulationContext:
             ("aggregation_engine", self.aggregation_engine),
             ("space_engine", self.space_engine),
             ("cbrn_engine", self.cbrn_engine),
+            ("school_registry", self.school_registry),
         ]
         for name, eng in engines:
             if eng is not None and hasattr(eng, "get_state"):
@@ -377,6 +381,7 @@ class SimulationContext:
             ("aggregation_engine", self.aggregation_engine),
             ("space_engine", self.space_engine),
             ("cbrn_engine", self.cbrn_engine),
+            ("school_registry", self.school_registry),
         ]
         for name, eng in engines:
             if eng is not None and name in state and hasattr(eng, "set_state"):

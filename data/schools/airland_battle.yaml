@@ -1,0 +1,15 @@
+school_id: airland_battle
+display_name: "AirLand Battle"
+description: "Simultaneous deep/close/rear operations, sensor-to-shooter"
+assessment_weight_overrides:
+  intel: 1.5
+  c2: 1.5
+preferred_actions:
+  COUNTERATTACK: 0.05
+avoided_actions: {}
+ooda_multiplier: 0.85
+coa_score_weight_overrides: {}
+risk_tolerance: "moderate"
+stratagem_affinity: {}
+opponent_modeling_enabled: false
+opponent_modeling_weight: 0.0

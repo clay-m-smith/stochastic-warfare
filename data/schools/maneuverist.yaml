@@ -1,0 +1,18 @@
+school_id: maneuverist
+display_name: "Maneuverist"
+description: "Tempo-driven OODA acceleration, bypass strongpoints (Boyd)"
+assessment_weight_overrides: {}
+preferred_actions:
+  FLANK: 0.1
+  BYPASS: 0.1
+  EXPLOIT: 0.05
+  PURSUE: 0.05
+avoided_actions: {}
+ooda_multiplier: 0.7
+coa_score_weight_overrides:
+  tempo: 0.35
+risk_tolerance: "moderate"
+stratagem_affinity:
+  SURPRISE: 0.3
+opponent_modeling_enabled: false
+opponent_modeling_weight: 0.0

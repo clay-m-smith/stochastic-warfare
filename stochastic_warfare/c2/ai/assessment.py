@@ -136,6 +136,7 @@ class SituationAssessor:
         experience: float = 0.5,
         staff_quality: float = 0.5,
         ts: datetime | None = None,
+        weight_overrides: dict[str, float] | None = None,
     ) -> SituationAssessment:
         """Compute a situation assessment for *unit_id*.
 
@@ -177,6 +178,11 @@ class SituationAssessor:
             Staff quality (0.0--1.0).
         ts : datetime | None
             Timestamp for the assessment.  Defaults to UTC now.
+        weight_overrides : dict[str, float] | None
+            Multipliers for assessment weight factors (e.g.
+            ``{"intel": 3.0, "force_ratio": 0.5}``).  Applied
+            multiplicatively to ``_WEIGHTS`` then re-normalized.
+            ``None`` uses baseline weights.
 
         Returns
         -------
@@ -230,8 +236,18 @@ class SituationAssessor:
             "environmental": environmental_rating,
             "c2": c2_rating,
         }
+        # Apply weight overrides: multiply then re-normalize
+        effective_weights = dict(_WEIGHTS)
+        if weight_overrides:
+            for key in effective_weights:
+                if key in weight_overrides:
+                    effective_weights[key] *= weight_overrides[key]
+            w_sum = sum(effective_weights.values())
+            if w_sum > 0:
+                for key in effective_weights:
+                    effective_weights[key] /= w_sum
         weighted_sum = sum(
-            int(ratings[key]) * _WEIGHTS[key] for key in _WEIGHTS
+            int(ratings[key]) * effective_weights[key] for key in effective_weights
         )
         overall_rating = self._rate(weighted_sum, _OVERALL_THRESHOLDS)
 
@@ -354,3 +370,73 @@ class SituationAssessor:
     def set_state(self, state: dict) -> None:
         """Restore from checkpoint."""
         pass
+
+
+# ---------------------------------------------------------------------------
+# Opponent prediction (standalone, used by Sun Tzu school)
+# ---------------------------------------------------------------------------
+
+
+def predict_opponent_action_lanchester(
+    opponent_power: float,
+    own_power: float,
+    opponent_morale: float,
+) -> dict[str, float]:
+    """Predict opponent action distribution using force-ratio heuristics.
+
+    Simple one-step prediction: if opponent has superiority they likely
+    attack; if outnumbered they likely defend or withdraw.
+
+    Parameters
+    ----------
+    opponent_power : float
+        Estimated opponent combat power.
+    own_power : float
+        Own combat power.
+    opponent_morale : float
+        Estimated opponent morale (0.0--1.0).
+
+    Returns
+    -------
+    dict[str, float]
+        Probability distribution over ``ATTACK``, ``DEFEND``, ``WITHDRAW``.
+    """
+    if own_power <= 0:
+        return {"ATTACK": 0.8, "DEFEND": 0.15, "WITHDRAW": 0.05}
+
+    ratio = opponent_power / own_power  # opponent's force ratio
+
+    if ratio > 2.0:
+        p_attack = 0.7
+        p_defend = 0.2
+        p_withdraw = 0.1
+    elif ratio > 1.2:
+        p_attack = 0.5
+        p_defend = 0.35
+        p_withdraw = 0.15
+    elif ratio > 0.8:
+        p_attack = 0.3
+        p_defend = 0.5
+        p_withdraw = 0.2
+    elif ratio > 0.5:
+        p_attack = 0.15
+        p_defend = 0.45
+        p_withdraw = 0.4
+    else:
+        p_attack = 0.05
+        p_defend = 0.25
+        p_withdraw = 0.7
+
+    # Low morale shifts toward withdraw
+    if opponent_morale < 0.3:
+        shift = 0.2
+        p_attack = max(0.0, p_attack - shift)
+        p_withdraw = min(1.0, p_withdraw + shift)
+
+    # Re-normalize
+    total = p_attack + p_defend + p_withdraw
+    return {
+        "ATTACK": p_attack / total,
+        "DEFEND": p_defend / total,
+        "WITHDRAW": p_withdraw / total,
+    }
