@@ -1,0 +1,17 @@
+constellation_id: sigint_leo
+display_name: "SIGINT LEO"
+constellation_type: 4  # SIGINT
+side: blue
+num_satellites: 4
+orbital_elements_template:
+  semi_major_axis_m: 6971000.0  # ~600km altitude
+  eccentricity: 0.0
+  inclination_deg: 63.0
+  raan_deg: 0.0
+  arg_perigee_deg: 0.0
+plane_count: 2
+sats_per_plane: 2
+sensor_resolution_m: 0.0
+sensor_swath_km: 500.0
+sensor_type: "none"
+bandwidth_bps: 0.0

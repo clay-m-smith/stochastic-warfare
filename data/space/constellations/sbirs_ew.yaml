@@ -1,0 +1,19 @@
+constellation_id: sbirs_ew
+display_name: "SBIRS Early Warning"
+constellation_type: 5  # EARLY_WARNING
+side: blue
+num_satellites: 6
+orbital_elements_template:
+  semi_major_axis_m: 42164000.0  # GEO
+  eccentricity: 0.0
+  inclination_deg: 0.0
+  raan_deg: 0.0
+  arg_perigee_deg: 0.0
+plane_count: 1
+sats_per_plane: 6
+sensor_resolution_m: 0.0
+sensor_swath_km: 0.0
+sensor_type: "ir"
+bandwidth_bps: 0.0
+detection_delay_s: 30.0
+detection_confidence: 0.95

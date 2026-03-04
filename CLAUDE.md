@@ -3,7 +3,7 @@
 ## Project Overview
 High-fidelity, high-resolution wargame simulator. Multi-scale (campaign → battlefield → battle → unit level) with stochastic/signal-processing-inspired models (Markov chains, Monte Carlo, Kalman filters, noise models, queueing theory). Headless Python engine first; matplotlib for validation; full UI deferred. Modern era (Cold War–present) as prototype. Maritime warfare fully integrated, not deferred.
 
-**Current status**: Phase 15 complete (Real-World Terrain & Data Pipeline) + postmortem cleanup. 4,469 tests passing. MVP complete (phases 0-10). Post-MVP Phases 11-15 delivered — Phase 11: 15 deficit fixes across ~20 source files. Phase 12: 16 deficits resolved + 2 new domains (civilian population, strategic air campaigns/IADS) across 12 new + ~25 modified source files. Phase 13: Performance optimization (STRtree, Kalman cache, LOS cache, viewshed vectorization, auto-resolve, force aggregation, Numba JIT, A* precompute, MC parallelism) across 2 new + ~10 modified source files. Phase 14: Developer tooling (MCP server, analysis utilities, visualization, 7 Claude skills) across 12 new source files + 7 skill files. Phase 15: Real-world terrain pipeline (SRTM elevation, Copernicus land cover, OSM infrastructure, GEBCO bathymetry) across 5 new source files + 1 modified + 1 download script.
+**Current status**: Phase 17 complete (Space & Satellite) + all prior phases. 4,763 tests passing. MVP complete (phases 0-10). Post-MVP Phases 11-17 delivered — Phase 11: 15 deficit fixes across ~20 source files. Phase 12: 16 deficits resolved + 2 new domains (civilian population, strategic air campaigns/IADS) across 12 new + ~25 modified source files. Phase 13: Performance optimization (STRtree, Kalman cache, LOS cache, viewshed vectorization, auto-resolve, force aggregation, Numba JIT, A* precompute, MC parallelism) across 2 new + ~10 modified source files. Phase 14: Developer tooling (MCP server, analysis utilities, visualization, 7 Claude skills) across 12 new source files + 7 skill files. Phase 15: Real-world terrain pipeline (SRTM elevation, Copernicus land cover, OSM infrastructure, GEBCO bathymetry) across 5 new source files + 1 modified + 1 download script. Phase 16: Electronic Warfare (EA/EP/ES — J/S ratio, GPS spoofing, ECCM, SIGINT) across 8 new source files + 5 modified + 14 YAML + 2 scenarios. Phase 17: Space & Satellite (orbital mechanics, GPS dependency, space ISR, early warning, SATCOM, ASAT warfare) across 9 new source files + 7 modified + 12 YAML + 3 scenarios.
 
 ## Python & Package Management
 **Requires Python >=3.12** (pinned to 3.12.10 via `.python-version`).
@@ -258,3 +258,29 @@ Optional dependency: `mcp[cli]>=1.2.0` (via `--extra mcp`).
 Key features: All loaders produce standard terrain objects — downstream code (LOS, movement, combat, logistics) works unchanged. `.npz` cache with mtime validation. `terrain_source` defaults to `"procedural"` (backward-compatible). Synthetic test files (GeoTIFF/HGT/GeoJSON/NetCDF) for CI without real data. `@pytest.mark.terrain` for tests needing downloaded data (excluded by default). Deterministic replay from seed.
 
 Optional dependencies: `rasterio>=1.3`, `xarray>=2024.1` (via `--extra terrain`).
+
+### Phase 16: Electronic Warfare (143 tests)
+8 new source files + 5 modified + 14 YAML data files + 2 scenarios:
+- **16a Spectrum & Emitters** (22 tests): `ew/__init__.py` (package), `ew/events.py` (7 event types), `ew/spectrum.py` (frequency allocation, conflict detection, bandwidth overlap), `ew/emitters.py` (emitter registry)
+- **16b Electronic Attack** (40 tests): `ew/jamming.py` (J/S ratio physics, burn-through range, radar SNR penalty, comms jam factor), `ew/spoofing.py` (GPS spoofing zones, receiver-type resistance, INS cross-check, PGM offset), `ew/decoys_ew.py` (chaff/flare/towed decoy/DRFM, missile diversion)
+- **16c Electronic Protection** (20 tests): `ew/eccm.py` (frequency hopping, spread spectrum, sidelobe blanking, adaptive nulling — additive dB reduction)
+- **16d Electronic Support** (25 tests): `ew/sigint.py` (intercept probability, AOA geolocation via Cramér-Rao bound, TDOA geolocation, traffic analysis)
+- **16e Integration** (12 tests): `detection/detection.py` (+`jam_snr_penalty_db`), `environment/electromagnetic.py` (+GPS degradation hooks), `combat/air_ground.py` (+`gps_accuracy_m`), `simulation/scenario.py` (+`ew_engine`), `core/types.py` (+`ModuleId.EW`)
+- **16f Validation** (24 tests): 6 jammer YAMLs (AN/ALQ-99, AN/TLQ-32, Krasukha-4, AN/SLQ-32, AN/ALQ-131, R-330Zh), 4 ECCM suite YAMLs, 2 SIGINT collector YAMLs, 2 validation scenarios (Bekaa Valley 1982 + Gulf War EW 1991)
+
+Key features: J/S ratio physics (Schleher/Adamy), stand-off/self-screening jamming, GPS spoofing with receiver-type resistance (civilian/P-code/M-code), ECCM 4-technique framework, SIGINT Cramér-Rao geolocation, full EA/EP/ES chain. All effects backward-compatible via `enable_ew` flag and default parameter values. Deterministic replay from seed.
+
+No new dependencies.
+
+### Phase 17: Space & Satellite Domain (149 tests)
+9 new source files + 7 modified + 12 YAML data files + 3 scenarios:
+- **17a Orbital Mechanics & Constellations** (35 tests): `space/__init__.py` (package), `space/events.py` (7 event types), `space/orbits.py` (Keplerian propagation, Kepler solver, J2 RAAN precession, subsatellite point, geometric visibility), `space/constellations.py` (ConstellationManager, SpaceConfig, SpaceEngine orchestrator), `core/types.py` (+`ModuleId.SPACE`)
+- **17b GPS Dependency** (25 tests): `space/gps.py` (DOP from visible count, position accuracy, INS drift, CEP factor for GPS-guided weapons, fix quality classification), `environment/electromagnetic.py` (+`constellation_accuracy_m`, `set_constellation_accuracy()`)
+- **17c Space ISR & Early Warning** (25 tests): `space/isr.py` (overpass detection, resolution thresholds, cloud blocking for optical, SAR all-weather), `space/early_warning.py` (GEO/HEO detection, warning time computation), `combat/missile_defense.py` (+`early_warning_time_s` Pk bonus)
+- **17d SATCOM & ASAT** (30 tests): `space/satcom.py` (availability, reliability factor from constellation health), `space/asat.py` (kinetic KKV Pk, laser dazzle/destruct, Poisson debris, cascade model), `c2/communications.py` (+`satcom_reliability_factor`)
+- **17e Integration** (15 tests): `combat/missiles.py` (+`gps_accuracy_m` CEP scaling), `simulation/scenario.py` (+`space_engine`), `simulation/engine.py` (+`space_engine.update()`)
+- **17f Validation** (19 tests): 9 constellation YAMLs (GPS NAVSTAR, GLONASS, MILSTAR, WGS, KH-11, Lacrosse, SBIRS, Molniya, SIGINT LEO), 3 ASAT weapon YAMLs (SM-3 Block IIA, Nudol, ground laser), 3 validation scenarios (GPS denial, ISR gap, ASAT escalation)
+
+Key features: Simplified Keplerian orbital mechanics with J2 secular precession, GPS accuracy as function of constellation health (HDOP model), INS drift during GPS denial, CEP scaling for GPS-guided weapons, space-based ISR with resolution thresholds and optical cloud blocking, early warning BMD Pk bonus, SATCOM reliability from constellation health, ASAT kinetic/laser/dazzle engagement, Poisson debris with cascade model. All effects backward-compatible via `enable_space` flag and default parameter values. Deterministic replay from seed.
+
+No new dependencies.

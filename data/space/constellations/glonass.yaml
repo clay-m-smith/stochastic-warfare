@@ -1,0 +1,17 @@
+constellation_id: glonass
+display_name: "GLONASS"
+constellation_type: 1  # GLONASS
+side: red
+num_satellites: 24
+orbital_elements_template:
+  semi_major_axis_m: 25508000.0
+  eccentricity: 0.0
+  inclination_deg: 64.8
+  raan_deg: 0.0
+  arg_perigee_deg: 0.0
+plane_count: 3
+sats_per_plane: 8
+sensor_resolution_m: 0.0
+sensor_swath_km: 0.0
+sensor_type: "none"
+bandwidth_bps: 0.0

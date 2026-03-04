@@ -1,0 +1,97 @@
+name: "Bekaa Valley 1982 — Operation Mole Cricket 19"
+date: "1982-06-09T14:00:00Z"
+duration_hours: 2.0
+tick_duration_seconds: 5.0
+latitude: 33.85
+longitude: 35.9
+
+weather_conditions:
+  visibility_m: 15000
+  wind_speed_mps: 5.0
+  wind_direction_deg: 240
+  temperature_c: 30.0
+  precipitation: none
+  cloud_cover: 0.1
+  humidity: 0.35
+
+blue_forces:
+  side: blue
+  units:
+    - unit_type: f16c
+      count: 40
+    - unit_type: mq9
+      count: 6
+  personnel_total: 46
+  experience_level: 0.85
+  morale_initial: STEADY
+
+red_forces:
+  side: red
+  units:
+    - unit_type: patriot
+      count: 19
+  personnel_total: 380
+  experience_level: 0.4
+  morale_initial: STEADY
+
+terrain:
+  width_m: 40000
+  height_m: 30000
+  cell_size_m: 200.0
+  base_elevation_m: 800.0
+  terrain_type: valley
+
+ew_config:
+  enable_ew: true
+  blue_jammers:
+    - jammer_id: ew_standoff_1
+      platform_type: airborne
+      frequency_min_ghz: 2.0
+      frequency_max_ghz: 18.0
+      power_dbm: 73.0
+      antenna_gain_dbi: 15.0
+      bandwidth_ghz: 0.1
+      techniques: [1, 2, 4]  # BARRAGE, SPOT, DECEPTIVE
+  blue_sigint_collectors:
+    - collector_id: sigint_air_1
+      receiver_sensitivity_dbm: -115.0
+      frequency_range_ghz: [2.0, 18.0]
+      bandwidth_ghz: 2.0
+      df_accuracy_deg: 0.5
+      has_tdoa: true
+      aperture_m: 8.0
+  red_eccm_suites:
+    - suite_id: sa6_eccm
+      techniques: [0]  # FREQUENCY_HOP
+      hop_bandwidth_ghz: 0.5
+      hop_rate_hz: 100.0
+      sidelobe_ratio_db: 20.0
+
+documented_outcomes:
+  - name: sam_suppression_rate
+    value: 0.89
+    tolerance_factor: 1.5
+    unit: "fraction"
+    source: "Lambeth, *Moscow's Lessons from the 1982 Lebanon Air War*"
+    source_quality: 1
+    notes: "17 of 19 SA-6 batteries suppressed or destroyed"
+  - name: blue_air_losses
+    value: 0
+    tolerance_factor: 3.0
+    unit: "aircraft"
+    source: "Hurley, *The Bekaa Valley Air Battle, June 1982*"
+    source_quality: 1
+    notes: "Zero Israeli aircraft lost during the operation"
+  - name: sigint_geolocation_success
+    value: 0.85
+    tolerance_factor: 2.0
+    unit: "fraction"
+    source: "Nordeen, *Air Warfare in the Missile Age*"
+    source_quality: 2
+    notes: "Estimated SIGINT geolocation rate of SAM radars"
+
+calibration_overrides:
+  sam_suppression_modifier: 1.2
+  sead_effectiveness: 0.9
+  drone_provocation_prob: 0.85
+  sigint_detection_bonus: 0.15

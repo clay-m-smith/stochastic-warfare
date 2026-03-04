@@ -1,0 +1,17 @@
+constellation_id: gps_navstar
+display_name: "GPS NAVSTAR"
+constellation_type: 0  # GPS
+side: blue
+num_satellites: 24
+orbital_elements_template:
+  semi_major_axis_m: 26559700.0
+  eccentricity: 0.0
+  inclination_deg: 55.0
+  raan_deg: 0.0
+  arg_perigee_deg: 0.0
+plane_count: 6
+sats_per_plane: 4
+sensor_resolution_m: 0.0
+sensor_swath_km: 0.0
+sensor_type: "none"
+bandwidth_bps: 0.0

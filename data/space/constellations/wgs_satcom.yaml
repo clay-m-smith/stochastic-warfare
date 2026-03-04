@@ -1,0 +1,17 @@
+constellation_id: wgs_satcom
+display_name: "WGS Wideband Global SATCOM"
+constellation_type: 6  # SATCOM
+side: blue
+num_satellites: 10
+orbital_elements_template:
+  semi_major_axis_m: 42164000.0
+  eccentricity: 0.0
+  inclination_deg: 0.0
+  raan_deg: 0.0
+  arg_perigee_deg: 0.0
+plane_count: 1
+sats_per_plane: 10
+sensor_resolution_m: 0.0
+sensor_swath_km: 0.0
+sensor_type: "none"
+bandwidth_bps: 3600000000.0

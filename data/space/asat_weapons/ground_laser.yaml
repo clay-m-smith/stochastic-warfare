@@ -1,0 +1,11 @@
+weapon_id: ground_laser_dazzle
+display_name: "Ground-Based Laser Dazzle"
+asat_type: 2  # GROUND_LASER_DAZZLE
+lethal_radius_m: 0.0
+guidance_sigma_m: 0.0
+max_altitude_km: 2000.0
+min_altitude_km: 200.0
+closing_velocity_mps: 0.0
+reload_time_s: 60.0
+dazzle_duration_s: 300.0
+dazzle_range_km: 1000.0

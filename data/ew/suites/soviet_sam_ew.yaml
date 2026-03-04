@@ -1,0 +1,14 @@
+suite_id: soviet_sam_ew
+unit_id: sa6
+techniques:
+  - 0  # FREQUENCY_HOP
+  - 2  # SIDELOBE_BLANKING
+hop_bandwidth_ghz: 0.5
+hop_rate_hz: 100
+spread_bandwidth_ghz: 0.0
+signal_bandwidth_ghz: 0.001
+processing_gain_db: 0.0
+sidelobe_ratio_db: 20.0
+null_depth_db: 25.0
+num_elements: 4
+max_nulls: 1

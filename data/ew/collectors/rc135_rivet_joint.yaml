@@ -1,0 +1,10 @@
+collector_id: rc135_rivet_joint
+unit_id: rc135
+receiver_sensitivity_dbm: -120.0
+frequency_range_ghz:
+  - 0.5
+  - 40.0
+bandwidth_ghz: 2.0
+df_accuracy_deg: 0.5
+has_tdoa: true
+aperture_m: 10.0

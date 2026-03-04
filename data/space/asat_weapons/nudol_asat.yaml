@@ -1,0 +1,11 @@
+weapon_id: nudol_asat
+display_name: "PL-19 Nudol"
+asat_type: 0  # DIRECT_ASCENT_KKV
+lethal_radius_m: 2.0
+guidance_sigma_m: 0.5
+max_altitude_km: 1500.0
+min_altitude_km: 200.0
+closing_velocity_mps: 8000.0
+reload_time_s: 7200.0
+dazzle_duration_s: 0.0
+dazzle_range_km: 0.0

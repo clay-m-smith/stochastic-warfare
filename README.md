@@ -1,8 +1,8 @@
 # Stochastic Warfare
 
 ![Python](https://img.shields.io/badge/python-%3E%3D3.12-blue)
-![Tests](https://img.shields.io/badge/tests-4%2C469_passing-brightgreen)
-![Phase](https://img.shields.io/badge/phase-15_Post--MVP-blue)
+![Tests](https://img.shields.io/badge/tests-4%2C763_passing-brightgreen)
+![Phase](https://img.shields.io/badge/phase-17_Post--MVP-blue)
 
 High-fidelity, high-resolution wargame simulator built as a headless Python engine. Models warfare across multiple scales — from individual unit engagements up through tactical battles, operational battlefields, and multi-day strategic campaigns — with stochastic and signal-processing-inspired models throughout.
 
@@ -86,7 +86,7 @@ For full architectural rationale, see [`docs/brainstorm.md`](docs/brainstorm.md)
 ## Project Structure
 
 ```
-stochastic_warfare/       # simulation engine (14 modules, ~167 source files)
+stochastic_warfare/       # simulation engine (17 modules, ~192 source files)
   core/                   # types, logging, RNG, clock, events, config, checkpoint
   coordinates/            # geodetic/UTM/ENU transforms, magnetic declination
   terrain/                # heightmap, classification, bathymetry, LOS, infrastructure
@@ -103,24 +103,28 @@ stochastic_warfare/       # simulation engine (14 modules, ~167 source files)
   validation/             # historical data, Monte Carlo, campaign validation
   ai/                     # OODA, commander AI, doctrine, assessment, decisions
   planning/               # MDMP, mission analysis, COA generation, estimates
+  ew/                     # electronic warfare: jamming, spoofing, ECCM, SIGINT, decoys
+  space/                  # space & satellite: GPS, SATCOM, ISR, early warning, ASAT
   tools/                  # MCP server, analysis (narrative, tempo, comparison, sensitivity), visualization
 
-data/                     # ~118 YAML data files
+data/                     # ~147 YAML data files
   units/                  # 21 unit definitions (ground, air, naval, support)
   weapons/                # 24 weapon definitions (guns, artillery, missiles, torpedoes)
   ammunition/             # 23 ammunition definitions
   sensors/                # 9 sensor definitions
   signatures/             # 15 signature profiles
   comms/                  # 8 communication equipment definitions
+  ew/                     # 12 EW equipment definitions (jammers, ECCM suites, SIGINT collectors)
+  space/                  # 12 space definitions (9 constellations, 3 ASAT weapons)
   organizations/          # 2 TO&E definitions
   commanders/             # 6 commander personality profiles
   doctrine/               # 10 doctrine templates (US, Russian, NATO, generic)
   supply/                 # 5 supply item definitions
   transport/              # 4 transport profiles
   medical/                # 2 medical facility definitions
-  scenarios/              # 3 engagement + 6 campaign scenarios
+  scenarios/              # 3 engagement + 6 campaign + 2 EW + 3 space validation scenarios
 
-tests/                    # 4,469 tests across ~160 test files
+tests/                    # 4,763 tests across ~172 test files
 docs/                     # specs, brainstorm, devlog, development phases
 ```
 
@@ -128,7 +132,7 @@ For the full package tree and module decomposition, see [`docs/specs/project-str
 
 ## Development Status
 
-All 11 MVP phases (0–10) are complete. Post-MVP Phases 11–15 are complete (deep systems rework + performance optimization + developer tooling + real-world terrain).
+All 11 MVP phases (0–10) are complete. Post-MVP Phases 11–17 are complete (deep systems rework + performance optimization + developer tooling + real-world terrain + electronic warfare + space & satellite domain).
 
 | Phase | Focus | Tests | Status |
 |-------|-------|-------|--------|
@@ -148,7 +152,9 @@ All 11 MVP phases (0–10) are complete. Post-MVP Phases 11–15 are complete (d
 | 13 | Performance Optimization | 142 | Complete |
 | 14 | Tooling & Developer Experience | 125 | Complete |
 | 15 | Real-World Terrain & Data Pipeline | 97 | Complete |
-| | **Total** | **4,469** | |
+| 16 | Electronic Warfare | 144 | Complete |
+| 17 | Space & Satellite Domain | 149 | Complete |
+| | **Total** | **4,763** | |
 
 For the full phase roadmap, see [`docs/development-phases.md`](docs/development-phases.md) (MVP) and [`docs/development-phases-post-mvp.md`](docs/development-phases-post-mvp.md) (post-MVP). For per-phase implementation logs, see [`docs/devlog/`](docs/devlog/).
 

@@ -89,6 +89,19 @@ class TestPropagation:
 
 
 class TestStatePersistence:
-    def test_stateless(self) -> None:
+    def test_default_state(self) -> None:
         em = _build()
-        assert em.get_state() == {}
+        state = em.get_state()
+        assert state["gps_jam_degradation_m"] == 0.0
+        assert state["gps_spoof_offset"] == [0.0, 0.0]
+
+    def test_state_roundtrip(self) -> None:
+        em = _build()
+        em.set_gps_jam_degradation(10.0)
+        em.set_gps_spoof_offset(50.0, -30.0)
+        state = em.get_state()
+
+        em2 = _build()
+        em2.set_state(state)
+        assert em2._gps_jam_degradation_m == 10.0
+        assert em2.gps_spoof_offset == (50.0, -30.0)

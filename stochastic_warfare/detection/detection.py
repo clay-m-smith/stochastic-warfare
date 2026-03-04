@@ -301,6 +301,7 @@ class DetectionEngine:
         transmission_loss: float | None = None,
         observer_heading_deg: float = 0.0,
         target_id: str = "",
+        jam_snr_penalty_db: float = 0.0,
     ) -> DetectionResult:
         """Run a single sensor check against a target.
 
@@ -368,6 +369,10 @@ class DetectionEngine:
             snr = em_power - 20.0 * math.log10(max(rng_m, 1.0))
         else:
             snr = -100.0
+
+        # 4b. Jamming penalty (EW module)
+        if jam_snr_penalty_db > 0.0:
+            snr -= jam_snr_penalty_db
 
         # 5. Integration gain (dwell/scan accumulation)
         if target_id and self._config.enable_integration_gain:

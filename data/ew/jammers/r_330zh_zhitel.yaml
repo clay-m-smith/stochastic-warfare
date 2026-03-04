@@ -1,0 +1,14 @@
+# R-330Zh Zhitel (Squire) Communications Jammer
+# Russian tactical communications jamming system
+# Vehicle-mounted, targets VHF/UHF military communications
+# Coverage: 100 MHz-2000 MHz
+jammer_id: r_330zh_zhitel
+display_name: "R-330Zh Zhitel (Russia)"
+platform_type: "ground"
+frequency_min_ghz: 0.1
+frequency_max_ghz: 2.0
+power_dbm: 63.0
+antenna_gain_dbi: 9.0
+bandwidth_ghz: 0.6
+techniques: [1, 2]  # BARRAGE, SPOT
+max_simultaneous_targets: 4

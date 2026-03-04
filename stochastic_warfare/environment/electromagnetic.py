@@ -68,6 +68,9 @@ class EMEnvironment:
         self._weather = weather
         self._sea_state = sea_state
         self._clock = clock
+        self._gps_jam_degradation_m: float = 0.0
+        self._gps_spoof_offset: tuple[float, float] = (0.0, 0.0)
+        self._constellation_accuracy_m: float = 0.0
 
     # ------------------------------------------------------------------
     # Public API
@@ -148,14 +151,36 @@ class EMEnvironment:
             k = 1.5
         return k
 
+    def set_constellation_accuracy(self, accuracy_m: float) -> None:
+        """Set GPS accuracy from space constellation (metres).
+
+        When > 0, replaces the default 5.0m baseline in :meth:`gps_accuracy`.
+        """
+        self._constellation_accuracy_m = max(0.0, accuracy_m)
+
+    def set_gps_jam_degradation(self, degradation_m: float) -> None:
+        """Set GPS accuracy degradation from EW jamming (metres)."""
+        self._gps_jam_degradation_m = max(0.0, degradation_m)
+
+    def set_gps_spoof_offset(self, east_m: float, north_m: float) -> None:
+        """Set GPS position offset from EW spoofing (metres)."""
+        self._gps_spoof_offset = (east_m, north_m)
+
+    @property
+    def gps_spoof_offset(self) -> tuple[float, float]:
+        """Current GPS spoofing offset (east_m, north_m)."""
+        return self._gps_spoof_offset
+
     def gps_accuracy(self) -> Meters:
         """GPS position accuracy (metres)."""
-        base = 5.0  # civilian GPS ~5m
+        base = self._constellation_accuracy_m if self._constellation_accuracy_m > 0 else 5.0
         # Ionospheric delay worse at night (but dual-freq corrects)
         hour = self._clock.hour_utc
         # Storm interference
         if self._weather.current.state.name == "STORM":
             base += 3.0
+        # EW jamming degradation
+        base += self._gps_jam_degradation_m
         return base
 
     def hf_propagation_quality(self) -> float:
@@ -188,10 +213,17 @@ class EMEnvironment:
     # ------------------------------------------------------------------
 
     def get_state(self) -> dict:
-        return {}  # stateless
+        return {
+            "gps_jam_degradation_m": self._gps_jam_degradation_m,
+            "gps_spoof_offset": list(self._gps_spoof_offset),
+            "constellation_accuracy_m": self._constellation_accuracy_m,
+        }
 
     def set_state(self, state: dict) -> None:
-        pass
+        self._gps_jam_degradation_m = state.get("gps_jam_degradation_m", 0.0)
+        offset = state.get("gps_spoof_offset", [0.0, 0.0])
+        self._gps_spoof_offset = (offset[0], offset[1])
+        self._constellation_accuracy_m = state.get("constellation_accuracy_m", 0.0)
 
     # ------------------------------------------------------------------
     # Internals

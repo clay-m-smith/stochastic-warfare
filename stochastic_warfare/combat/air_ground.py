@@ -262,6 +262,7 @@ class AirGroundEngine:
         speed_mps: float,
         guidance_type: str,
         conditions: dict[str, float] | None = None,
+        gps_accuracy_m: float = 5.0,
     ) -> float:
         """Compute weapon delivery accuracy factor.
 
@@ -289,6 +290,11 @@ class AirGroundEngine:
             accuracy = cfg.guided_base_accuracy
         else:
             accuracy = cfg.unguided_base_accuracy
+
+        # GPS accuracy degradation (EW spoofing/jamming)
+        if guidance_type == "gps" and gps_accuracy_m > 5.0:
+            gps_factor = min(1.0, 5.0 / max(gps_accuracy_m, 0.1))
+            accuracy *= gps_factor
 
         # Altitude penalty (higher release = less accurate for unguided)
         alt_km = altitude_m / 1000.0

@@ -1,0 +1,53 @@
+# Space validation scenario: ISR gap exploitation
+# Tests: Red repositions during satellite blind window
+name: "Space ISR Gap"
+date: "2024-06-15"
+duration_hours: 8.0
+latitude: 33.0
+longitude: 35.0
+
+terrain:
+  width_m: 20000.0
+  height_m: 20000.0
+  cell_size_m: 200.0
+  base_elevation_m: 100.0
+  terrain_type: flat_desert
+
+weather_conditions:
+  initial_state: CLEAR
+  temperature: 25.0
+  humidity: 0.4
+
+sides:
+  - side: blue
+    units:
+      - unit_type: m1a2
+        count: 4
+    experience_level: 0.7
+    commander_profile: balanced_default
+    doctrine_template: us_combined_arms
+  - side: red
+    units:
+      - unit_type: t72m
+        count: 8
+    experience_level: 0.6
+    commander_profile: aggressive_armor
+    doctrine_template: russian_deep_ops
+
+objectives:
+  - objective_id: crossroads
+    position: [10000.0, 10000.0]
+    radius_m: 1000.0
+    type: territory
+
+victory_conditions:
+  - type: time_expired
+    side: ""
+    params:
+      max_time_s: 28800
+
+calibration_overrides:
+  blue_start_x: 2000.0
+  blue_start_y: 10000.0
+  red_start_x: 18000.0
+  red_start_y: 10000.0

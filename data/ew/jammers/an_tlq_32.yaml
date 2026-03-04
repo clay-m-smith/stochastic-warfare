@@ -1,0 +1,13 @@
+# AN/TLQ-32 Ground-Based Electronic Warfare System
+# Air defense and tactical EW platform
+# Coverage: 20-2500 MHz (VHF/UHF/L-band radars)
+jammer_id: an_tlq_32
+display_name: "AN/TLQ-32 (EWDS)"
+platform_type: "ground"
+frequency_min_ghz: 0.020
+frequency_max_ghz: 2.5
+power_dbm: 63.0
+antenna_gain_dbi: 12.0
+bandwidth_ghz: 1.2
+techniques: [0, 1, 3]  # NOISE, BARRAGE, SWEEP
+max_simultaneous_targets: 2

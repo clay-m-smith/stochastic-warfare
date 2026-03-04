@@ -1,0 +1,16 @@
+suite_id: us_destroyer_ew
+unit_id: ddg51
+techniques:
+  - 0  # FREQUENCY_HOP
+  - 1  # SPREAD_SPECTRUM
+  - 2  # SIDELOBE_BLANKING
+  - 3  # ADAPTIVE_NULLING
+hop_bandwidth_ghz: 3.0
+hop_rate_hz: 500
+spread_bandwidth_ghz: 2.0
+signal_bandwidth_ghz: 0.005
+processing_gain_db: 25.0  # 10·log10(2.0 / 0.005)
+sidelobe_ratio_db: 30.0
+null_depth_db: 35.0
+num_elements: 16
+max_nulls: 6

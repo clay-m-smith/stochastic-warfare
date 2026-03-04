@@ -112,6 +112,7 @@ class MissileDefenseEngine:
         defender_id: str = "bmd",
         missile_id: str = "bm",
         timestamp: Any = None,
+        early_warning_time_s: float = 0.0,
     ) -> BMDResult:
         """Engage a ballistic missile with layered interceptors.
 
@@ -142,10 +143,16 @@ class MissileDefenseEngine:
         else:
             speed_penalty = 1.0
 
+        # Early warning bonus: more time = better first-layer engagement
+        ew_bonus = min(0.15, early_warning_time_s / 600.0) if early_warning_time_s > 60.0 else 0.0
+
         miss_product = 1.0
 
-        for pk in defender_pks:
+        for idx, pk in enumerate(defender_pks):
             effective_pk = pk * speed_penalty
+            # Apply early warning bonus to first layer only
+            if idx == 0 and ew_bonus > 0:
+                effective_pk = min(0.99, effective_pk + ew_bonus)
             effective_pk = max(0.01, min(0.99, effective_pk))
             result.per_layer_pk.append(effective_pk)
 

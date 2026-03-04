@@ -1,0 +1,10 @@
+collector_id: ground_sigint_station
+unit_id: sigint_station
+receiver_sensitivity_dbm: -110.0
+frequency_range_ghz:
+  - 1.0
+  - 18.0
+bandwidth_ghz: 1.0
+df_accuracy_deg: 1.0
+has_tdoa: true
+aperture_m: 5.0

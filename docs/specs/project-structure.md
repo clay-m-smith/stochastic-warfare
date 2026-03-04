@@ -1,5 +1,5 @@
 # Project Structure & Module Decomposition
-**Status**: Complete (Phase 15)
+**Status**: Complete (Phase 17)
 **Last Updated**: 2026-03-04
 
 ---
@@ -39,6 +39,13 @@ stochastic-warfare/
 │   ├── sensors/                      # Sensor type definitions (referenced by units)
 │   ├── signatures/                   # Unit signature profiles (visual, thermal, RCS, acoustic, EM)
 │   ├── comms/                        # Communication equipment definitions (SINCGARS, Harris HF, Link 16, SATCOM, etc.)
+│   ├── ew/                           # EW equipment definitions [Phase 16]
+│   │   ├── jammers/                 # Jammer definitions (AN/ALQ-99, AN/TLQ-32, Krasukha-4, AN/SLQ-32, AN/ALQ-131, R-330Zh)
+│   │   ├── eccm_suites/            # ECCM suite definitions (US fighter, US destroyer, Soviet SAM, Patriot)
+│   │   └── sigint_collectors/      # SIGINT collector definitions (RC-135, ground station)
+│   ├── space/                        # Space & satellite definitions [Phase 17]
+│   │   ├── constellations/          # Constellation definitions (GPS NAVSTAR, GLONASS, Milstar, WGS, Keyhole, Lacrosse, SBIRS, Molniya, SIGINT LEO)
+│   │   └── asat_weapons/           # ASAT weapon definitions (SM-3 Block IIA, Nudol, ground laser)
 │   ├── logistics/                    # Logistics data definitions
 │   │   ├── supply_items/            # Supply item definitions by NATO class (I, III, IV, VIII, IX)
 │   │   ├── transport_profiles/      # Transport vehicle profiles (truck, C-130, rail, sealift)
@@ -75,7 +82,12 @@ stochastic-warfare/
 │       ├── test_campaign_reinforce/ # Phase 9: Reinforcement schedule test (3 waves)
 │       ├── test_campaign_logistics/ # Phase 9: Supply chain emphasis (multiple depots, 72h)
 │       ├── golan_campaign/         # Phase 10: Golan Heights 4-day campaign validation
-│       └── falklands_campaign/     # Phase 10: Falklands San Carlos 5-day campaign validation
+│       ├── falklands_campaign/     # Phase 10: Falklands San Carlos 5-day campaign validation
+│       ├── bekaa_valley_1982/     # Phase 16: Bekaa Valley SEAD validation (Israeli EW vs Syrian SAMs)
+│       ├── gulf_war_ew_1991/      # Phase 16: Gulf War EW campaign validation (Coalition vs Iraqi IADS)
+│       ├── space_gps_denial/      # Phase 17: PGM accuracy comparison (full GPS vs degraded vs denied)
+│       ├── space_isr_gap/         # Phase 17: Satellite overpass gap exploitation validation
+│       └── space_asat_escalation/ # Phase 17: Kinetic ASAT cascading constellation degradation
 ├── tests/
 │   ├── conftest.py                   # Shared fixtures (rng, event_bus, sim_clock) + helpers
 │   ├── unit/                         # Fast, isolated unit tests
@@ -298,6 +310,26 @@ stochastic-warfare/
     │   ├── sensitivity.py             # Parameter sweep analysis
     │   ├── charts.py                  # 6 reusable chart functions (force, engagement, supply, morale, MC)
     │   └── replay.py                  # Animated battle replay (FuncAnimation)
+    ├── ew/                            # Electronic Warfare [Phase 16]
+    │   ├── __init__.py
+    │   ├── events.py                  # EW events (7 types: jamming, spoofing, intercept, decoy, ECCM, emitter, spectrum)
+    │   ├── spectrum.py                # EM spectrum manager: frequency allocation, conflict detection, bandwidth overlap
+    │   ├── emitters.py                # Emitter registry: active emitters with type/freq/side queries
+    │   ├── jamming.py                 # Jamming models: J/S ratio, burn-through range, radar SNR penalty, comms jam factor
+    │   ├── spoofing.py                # GPS spoofing: zones, position offset, INS cross-check detection, PGM offset
+    │   ├── decoys_ew.py               # Electronic decoys: chaff/flare/towed decoy/DRFM deployment, missile diversion
+    │   ├── eccm.py                    # ECCM: frequency hopping, spread spectrum, sidelobe blanking, adaptive nulling
+    │   └── sigint.py                  # SIGINT: intercept probability, AOA/TDOA geolocation, traffic analysis
+    ├── space/                         # Space & Satellite Domain [Phase 17]
+    │   ├── __init__.py
+    │   ├── events.py                  # Space events (SatelliteOverpass, GPSDegraded, SATCOMWindow, ASATEngagement, ConstellationDegraded)
+    │   ├── orbits.py                  # Simplified Keplerian orbital mechanics: period, ground track, J2 precession
+    │   ├── constellations.py          # Constellation manager: satellite groups, coverage windows, health tracking
+    │   ├── gps.py                     # GPS accuracy model: DOP from visible satellites, INS drift, CEP scaling
+    │   ├── isr.py                     # Space-based ISR: imaging satellites, resolution thresholds, cloud blocking
+    │   ├── early_warning.py           # Missile early warning: GEO/HEO IR detection, BMD Pk bonus
+    │   ├── satcom.py                  # SATCOM availability: coverage windows, bandwidth capacity, reliability
+    │   └── asat.py                    # Anti-satellite warfare: kinetic KKV, laser dazzle/destruct, Poisson debris cascade
     └── simulation/                   # Top-level simulation orchestration
         ├── __init__.py
         ├── engine.py                 # Master simulation loop (hybrid tick + event)

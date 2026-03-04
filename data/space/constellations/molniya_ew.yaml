@@ -1,0 +1,19 @@
+constellation_id: molniya_ew
+display_name: "Molniya Early Warning"
+constellation_type: 5  # EARLY_WARNING
+side: red
+num_satellites: 3
+orbital_elements_template:
+  semi_major_axis_m: 26571000.0  # Molniya orbit
+  eccentricity: 0.74
+  inclination_deg: 63.4  # critical inclination
+  raan_deg: 0.0
+  arg_perigee_deg: 270.0  # apogee over northern hemisphere
+plane_count: 3
+sats_per_plane: 1
+sensor_resolution_m: 0.0
+sensor_swath_km: 0.0
+sensor_type: "ir"
+bandwidth_bps: 0.0
+detection_delay_s: 90.0
+detection_confidence: 0.85

@@ -1,0 +1,15 @@
+suite_id: us_fighter_ew
+unit_id: f16c
+techniques:
+  - 0  # FREQUENCY_HOP
+  - 1  # SPREAD_SPECTRUM
+  - 2  # SIDELOBE_BLANKING
+hop_bandwidth_ghz: 1.5
+hop_rate_hz: 200
+spread_bandwidth_ghz: 0.5
+signal_bandwidth_ghz: 0.001
+processing_gain_db: 27.0  # 10·log10(0.5 / 0.001)
+sidelobe_ratio_db: 25.0
+null_depth_db: 30.0
+num_elements: 8
+max_nulls: 2

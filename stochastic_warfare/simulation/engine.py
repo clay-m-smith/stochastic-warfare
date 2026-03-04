@@ -410,6 +410,19 @@ class SimulationEngine:
             except Exception:
                 pass
 
+        # Phase 17: Space domain
+        if ctx.space_engine is not None and hasattr(ctx.space_engine, "update"):
+            try:
+                elapsed = clock.elapsed.total_seconds()
+                ctx.space_engine.update(
+                    dt, elapsed,
+                    em_environment=ctx.conditions_engine,
+                    comms_engine=ctx.comms_engine,
+                    targets_by_side=ctx.units_by_side,
+                )
+            except Exception:
+                pass
+
     # ── Battle positions (for aggregation) ─────────────────────────────
 
     def _compute_battle_positions(self, ctx: SimulationContext) -> list[Position]:

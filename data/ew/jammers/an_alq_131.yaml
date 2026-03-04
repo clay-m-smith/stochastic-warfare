@@ -1,0 +1,14 @@
+# AN/ALQ-131 Self-Protection Pod
+# Fighter-mounted jamming pod (F-15, F-16, A-10, etc.)
+# Lower power but distributed across many aircraft
+# Coverage: 2-18 GHz
+jammer_id: an_alq_131
+display_name: "AN/ALQ-131 (Fighter Pod)"
+platform_type: "airborne"
+frequency_min_ghz: 2.0
+frequency_max_ghz: 18.0
+power_dbm: 60.0
+antenna_gain_dbi: 8.0
+bandwidth_ghz: 0.8
+techniques: [0, 4]  # NOISE, DECEPTIVE
+max_simultaneous_targets: 1

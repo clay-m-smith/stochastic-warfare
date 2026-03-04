@@ -1,0 +1,14 @@
+# Krasukha-4 Electronic Warfare System
+# Russian mobile ground-based EW jammer
+# Targets aircraft and UAV detection radars
+# Coverage: 150 MHz-18 GHz (broad spectrum)
+jammer_id: krasukha_4
+display_name: "Krasukha-4 (Russia)"
+platform_type: "ground"
+frequency_min_ghz: 0.15
+frequency_max_ghz: 18.0
+power_dbm: 70.0
+antenna_gain_dbi: 14.0
+bandwidth_ghz: 1.5
+techniques: [1, 2, 3]  # BARRAGE, SPOT, SWEEP
+max_simultaneous_targets: 3

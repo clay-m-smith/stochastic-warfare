@@ -1,0 +1,17 @@
+constellation_id: keyhole_optical
+display_name: "KH-11 Optical Imaging"
+constellation_type: 2  # IMAGING_OPTICAL
+side: blue
+num_satellites: 4
+orbital_elements_template:
+  semi_major_axis_m: 6871000.0  # ~500km altitude
+  eccentricity: 0.0
+  inclination_deg: 97.9  # sun-synchronous
+  raan_deg: 0.0
+  arg_perigee_deg: 0.0
+plane_count: 2
+sats_per_plane: 2
+sensor_resolution_m: 0.3
+sensor_swath_km: 20.0
+sensor_type: "optical"
+bandwidth_bps: 0.0

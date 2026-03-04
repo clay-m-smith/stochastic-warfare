@@ -237,6 +237,8 @@ class CommunicationsEngine:
         self._los_engine = los_engine
         # 12a-3: network load tracking (per CommType band)
         self._network_loads: dict[int, float] = {}
+        # Phase 17: SATCOM reliability factor from space constellation health
+        self._satcom_reliability_factor: float = 1.0
 
     # -- Registration -------------------------------------------------------
 
@@ -277,6 +279,10 @@ class CommunicationsEngine:
     def set_environment_factor(self, factor: float) -> None:
         """Set global environment degradation factor (0.0–1.0)."""
         self._env_factor = max(0.0, min(1.0, factor))
+
+    def set_satcom_reliability(self, factor: float) -> None:
+        """Set SATCOM reliability factor from space constellation health [0.0-1.0]."""
+        self._satcom_reliability_factor = max(0.0, min(1.0, factor))
 
     # -- Jamming ------------------------------------------------------------
 
@@ -472,6 +478,9 @@ class CommunicationsEngine:
         r *= self._los_factor(equip, from_pos, to_pos)
         cong_rel, _cong_lat = self._congestion_factor(equip)
         r *= cong_rel
+        # Phase 17: SATCOM reliability degradation from constellation health
+        if equip.comm_type_enum == CommType.SATELLITE:
+            r *= self._satcom_reliability_factor
         return max(0.0, min(1.0, r))
 
     def _channel_latency(
@@ -691,6 +700,7 @@ class CommunicationsEngine:
                 for jz in self._jamming_zones
             ],
             "env_factor": self._env_factor,
+            "satcom_reliability_factor": self._satcom_reliability_factor,
         }
 
     def set_state(self, state: dict) -> None:
@@ -712,3 +722,4 @@ class CommunicationsEngine:
             for jd in state["jamming_zones"]
         ]
         self._env_factor = state["env_factor"]
+        self._satcom_reliability_factor = state.get("satcom_reliability_factor", 1.0)

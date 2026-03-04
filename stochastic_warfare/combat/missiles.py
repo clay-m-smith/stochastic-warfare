@@ -240,6 +240,7 @@ class MissileEngine:
     def update_missiles_in_flight(
         self,
         dt: float,
+        gps_accuracy_m: float = 5.0,
     ) -> list[MissileImpactResult]:
         """Advance all active missiles by *dt* seconds.
 
@@ -258,8 +259,8 @@ class MissileEngine:
             # Check if missile has reached target
             if missile.time_elapsed_s >= profile.flight_time_s:
                 # Terminal phase — resolve impact
-                # Apply CEP dispersion
-                cep_m = 10.0  # Default missile CEP
+                # Apply CEP dispersion (GPS-guided weapons scale with accuracy)
+                cep_m = 10.0 * max(1.0, gps_accuracy_m / 5.0)
                 sigma_m = cep_m / 1.1774
                 offset_e = self._rng.normal(0.0, sigma_m)
                 offset_n = self._rng.normal(0.0, sigma_m)

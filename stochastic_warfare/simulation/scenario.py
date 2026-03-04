@@ -280,6 +280,12 @@ class SimulationContext:
     # Aggregation (Phase 13a-7)
     aggregation_engine: Any = None
 
+    # Electronic Warfare (Phase 16)
+    ew_engine: Any = None
+
+    # Space & Satellite (Phase 17)
+    space_engine: Any = None
+
     # Logistics
     consumption_engine: Any = None
     stockpile_manager: Any = None
@@ -343,6 +349,7 @@ class SimulationContext:
             ("stockpile_manager", self.stockpile_manager),
             ("fog_of_war", self.fog_of_war),
             ("aggregation_engine", self.aggregation_engine),
+            ("space_engine", self.space_engine),
         ]
         for name, eng in engines:
             if eng is not None and hasattr(eng, "get_state"):
@@ -364,6 +371,7 @@ class SimulationContext:
             ("stockpile_manager", self.stockpile_manager),
             ("fog_of_war", self.fog_of_war),
             ("aggregation_engine", self.aggregation_engine),
+            ("space_engine", self.space_engine),
         ]
         for name, eng in engines:
             if eng is not None and name in state and hasattr(eng, "set_state"):

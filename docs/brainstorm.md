@@ -41,8 +41,8 @@ These are the mathematical tools available for modeling. Each is annotated with 
 
 ### Signal Processing Analogies
 - **Kalman Filtering**: Intelligence estimation — tracking enemy positions with noisy observations → `detection/estimation.py`
-- **Monte Carlo Methods**: Outcome probability estimation for engagements, campaign-level analysis → `simulation/metrics.py`, Phase 7 (engagement) / Phase 10 (campaign) validation
-- **Spectral Analysis**: Analyzing periodicity in operational tempo → `simulation/metrics.py` (post-run analysis tool, not real-time engine component)
+- **Monte Carlo Methods**: Outcome probability estimation for engagements, campaign-level analysis → `validation/monte_carlo.py`, Phase 7 (engagement) / Phase 10 (campaign) validation
+- **Spectral Analysis**: Analyzing periodicity in operational tempo → `tools/tempo_analysis.py` (post-run analysis tool, not real-time engine component)
 - **Convolution**: Modeling cascading effects (suppression spreading through a formation) → `combat/suppression.py`, `morale/cohesion.py`
 - **Matched Filtering / Detection Theory**: Reconnaissance and detection modeling (SNR-based detection probability) → `detection/detection.py`
 

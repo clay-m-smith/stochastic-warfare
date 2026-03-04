@@ -23,8 +23,8 @@ Rolling record of implementation decisions, changes, and lessons learned across 
 | 13 | Performance Optimization | **Complete** | [phase-13.md](phase-13.md) |
 | 14 | Tooling & Developer Experience | **Complete** | [phase-14.md](phase-14.md) |
 | 15 | Real-World Terrain & Data Pipeline | **Complete** | [phase-15.md](phase-15.md) |
-| 16 | Electronic Warfare | Planned | — |
-| 17 | Space & Satellite Domain | Planned | — |
+| 16 | Electronic Warfare | **Complete** | [phase-16.md](phase-16.md) |
+| 17 | Space & Satellite Domain | **Complete** | [phase-17.md](phase-17.md) |
 | 18 | NBC/CBRN Effects | Planned | — |
 | 19 | Doctrinal AI Schools | Planned | — |
 | 20 | WW2 Era | Planned | — |
@@ -112,6 +112,23 @@ Known limitations and deferred improvements logged during implementation. Review
 | 10 | ~~No force aggregation/disaggregation — all units individually tracked~~ *(resolved Phase 13 postmortem)* | [phase-10.md — Known Limitations](phase-10.md#known-limitations--post-mvp-refinements) |
 | 10 | AI expectation matching approximate — string-based posture detection | [phase-10.md — Known Limitations](phase-10.md#known-limitations--post-mvp-refinements) |
 | 10 | Campaign metrics proxy territory control via survival fraction not spatial | [phase-10.md — Known Limitations](phase-10.md#known-limitations--post-mvp-refinements) |
+| 11 | ~~Fuel gating not wired to stockpile in battle.py~~ *(resolved Phase 12b)* | [phase-11.md — Known Limitations](phase-11.md#known-limitations) |
+| 11 | Wave assignments are manual (no AI auto-assignment) | [phase-11.md — Known Limitations](phase-11.md#known-limitations) |
+| 11 | Integration gain caps at 4 scans | [phase-11.md — Known Limitations](phase-11.md#known-limitations) |
+| 11 | Armor type YAML data missing | [phase-11.md — Known Limitations](phase-11.md#known-limitations) |
+| 16 | EW engines not yet wired into simulation engine tick loop | [phase-16.md — Known Limitations](phase-16.md#known-limitations--future-work) |
+| 16 | No DRFM detailed waveform modeling (simplified effectiveness parameter) | [phase-16.md — Known Limitations](phase-16.md#known-limitations--future-work) |
+| 16 | TDOA geolocation uses simplified centroid-shift algorithm | [phase-16.md — Known Limitations](phase-16.md#known-limitations--future-work) |
+| 16 | No cooperative jamming between multiple platforms | [phase-16.md — Known Limitations](phase-16.md#known-limitations--future-work) |
+| 16 | Campaign-level EW validation deferred (component-level only) | [phase-16.md — Known Limitations](phase-16.md#known-limitations--future-work) |
+| 17 | Simplified Keplerian orbits (no SGP4/TLE, no atmospheric drag for LEO decay) | [phase-17.md — Known Limitations](phase-17.md#known-limitations--future-work) |
+| 17 | No detailed satellite bus modeling (power, thermal, attitude control) | [phase-17.md — Known Limitations](phase-17.md#known-limitations--future-work) |
+| 17 | No space-based SIGINT integration with Phase 16 SIGINT engine | [phase-17.md — Known Limitations](phase-17.md#known-limitations--future-work) |
+| 17 | Debris cascade model is statistical (no individual fragment tracking) | [phase-17.md — Known Limitations](phase-17.md#known-limitations--future-work) |
+| 17 | No satellite maneuvering or station-keeping fuel limits | [phase-17.md — Known Limitations](phase-17.md#known-limitations--future-work) |
+| 17 | No space weather effects (solar flares, radiation belt variations) | [phase-17.md — Known Limitations](phase-17.md#known-limitations--future-work) |
+| 17 | EMEnvironment GPS accuracy is not per-side (uses worst-case aggregation) | [phase-17.md — Postmortem](phase-17.md#postmortem) |
+| 16/17 | ScenarioLoader doesn't auto-wire EWEngine or SpaceEngine from YAML | [phase-17.md — Postmortem](phase-17.md#postmortem) |
 
 ## Conventions
 

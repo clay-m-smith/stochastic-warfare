@@ -1,0 +1,14 @@
+# AN/SLQ-32 Naval Electronic Warfare Suite
+# Standard US Navy EW system for surface combatants
+# Primary defense against anti-ship missile guidance radars
+# Coverage: 500 MHz-18 GHz
+jammer_id: an_slq_32
+display_name: "AN/SLQ-32(V) (Navy)"
+platform_type: "naval"
+frequency_min_ghz: 0.5
+frequency_max_ghz: 18.0
+power_dbm: 65.0
+antenna_gain_dbi: 11.0
+bandwidth_ghz: 1.0
+techniques: [0, 4]  # NOISE, DECEPTIVE
+max_simultaneous_targets: 2

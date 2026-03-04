@@ -1,0 +1,14 @@
+# AN/ALQ-99 Tactical Jamming System
+# EA-6B Prowler & EA-18G Growler airborne stand-off jammer
+# One of the most powerful and versatile jamming pods in US inventory
+# Coverage: 64-18000 MHz (covers all major radar bands)
+jammer_id: an_alq_99
+display_name: "AN/ALQ-99 (EA-6B/EA-18G)"
+platform_type: "airborne"
+frequency_min_ghz: 0.064
+frequency_max_ghz: 18.0
+power_dbm: 73.0
+antenna_gain_dbi: 15.0
+bandwidth_ghz: 2.0
+techniques: [1, 2, 4]  # BARRAGE, SPOT, DECEPTIVE
+max_simultaneous_targets: 4

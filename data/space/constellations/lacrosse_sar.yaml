@@ -1,0 +1,17 @@
+constellation_id: lacrosse_sar
+display_name: "Lacrosse SAR Imaging"
+constellation_type: 3  # IMAGING_SAR
+side: blue
+num_satellites: 3
+orbital_elements_template:
+  semi_major_axis_m: 7051000.0  # ~680km altitude
+  eccentricity: 0.0
+  inclination_deg: 68.0
+  raan_deg: 0.0
+  arg_perigee_deg: 0.0
+plane_count: 3
+sats_per_plane: 1
+sensor_resolution_m: 1.0
+sensor_swath_km: 40.0
+sensor_type: "sar"
+bandwidth_bps: 0.0
