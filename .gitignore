@@ -7,3 +7,5 @@ build/
 .pytest_cache/
 *.coverage
 scripts/visualize/output/
+.claude/settings.local.json
+data/terrain_cache/
