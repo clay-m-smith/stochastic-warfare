@@ -1,0 +1,13 @@
+# 100kT Intermediate Nuclear Weapon
+# Theater-level weapon for operational targets (e.g., B61 Mod 4,
+# Pershing II warhead).  Delivered by tactical ballistic missile or
+# strike aircraft.  Destructive radius extends several km — suitable
+# for airfields, supply depots, and assembly areas.
+# Source: Glasstone & Dolan, *Effects of Nuclear Weapons* (1977)
+
+weapon_id: intermediate_100kt
+display_name: "100kT Intermediate Nuclear Weapon"
+yield_kt: 100.0
+delivery_method: missile
+airburst_capable: true
+weight_kg: 500

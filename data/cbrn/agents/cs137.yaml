@@ -1,0 +1,44 @@
+# Cesium-137 (Cs-137) Radiological Agent
+# Primary radiological dispersal device (RDD / "dirty bomb") isotope.
+# Gamma emitter with 30.17-year half-life.  Highly soluble in water,
+# binds strongly to soil.  Goiania incident (1987) demonstrated severe
+# contamination from a small source.  Chernobyl/Fukushima primary
+# long-term contaminant.
+# Source: IAEA Safety Standards, NRC Radiological Dispersal Device reports
+
+agent_id: cs137
+display_name: "Cesium-137 Radiological"
+category: 5  # RADIOLOGICAL
+
+# Toxicity thresholds
+# Radiological agents use dose-rate models, not chemical Ct products
+lct50_mg_min_m3: 0.0      # Not applicable for radiological
+ict50_mg_min_m3: 0.0       # Not applicable for radiological
+ld50_mg: 0.0               # Dose-rate dependent, not mass-based LD50
+detection_threshold_mg_m3: 0.0001  # Detectable with radiation monitors at trace levels
+
+# Persistence & environmental behavior
+persistence_hours: 263568.0  # ~30 years (half-life 30.17 years)
+evaporation_rate_per_c: 0.0  # Does not evaporate
+rain_washout_rate: 0.08    # Moderate — soluble, moves with water runoff
+density_kg_m3: 1.93        # Cesium chloride crystal density (bulk)
+vapor_pressure_kpa: 0.0    # Not volatile at ambient temperatures
+
+# Decontamination
+decon_difficulty: 0.9  # Very difficult — binds to soil, requires removal/chelation
+
+# Probit model: default values for radiological agents
+# Casualty assessment uses dose-rate accumulation rather than Ct probit
+probit_a: -14.0
+probit_b: 1.0
+
+# Soil absorption multipliers by soil type
+# Cs-137 is highly absorbed by clay minerals (illite)
+soil_absorption:
+  SAND: 0.4
+  CLAY: 0.9
+  LOAM: 0.7
+  ROCK: 0.1
+  GRAVEL: 0.3
+  PEAT: 0.8
+  MUD: 0.6

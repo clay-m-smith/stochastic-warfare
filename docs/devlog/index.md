@@ -25,7 +25,7 @@ Rolling record of implementation decisions, changes, and lessons learned across 
 | 15 | Real-World Terrain & Data Pipeline | **Complete** | [phase-15.md](phase-15.md) |
 | 16 | Electronic Warfare | **Complete** | [phase-16.md](phase-16.md) |
 | 17 | Space & Satellite Domain | **Complete** | [phase-17.md](phase-17.md) |
-| 18 | NBC/CBRN Effects | Planned | — |
+| 18 | NBC/CBRN Effects | **Complete** | [phase-18.md](phase-18.md) |
 | 19 | Doctrinal AI Schools | Planned | — |
 | 20 | WW2 Era | Planned | — |
 | 21 | WW1 Era | Planned | — |
@@ -129,6 +129,11 @@ Known limitations and deferred improvements logged during implementation. Review
 | 17 | No space weather effects (solar flares, radiation belt variations) | [phase-17.md — Known Limitations](phase-17.md#known-limitations--future-work) |
 | 17 | EMEnvironment GPS accuracy is not per-side (uses worst-case aggregation) | [phase-17.md — Postmortem](phase-17.md#postmortem) |
 | 16/17 | ScenarioLoader doesn't auto-wire EWEngine or SpaceEngine from YAML | [phase-17.md — Postmortem](phase-17.md#postmortem) |
+| 16/17/18 | ScenarioLoader doesn't auto-wire CBRNEngine from YAML (extends existing EW/Space gap) | [phase-18.md — Postmortem](phase-18.md#postmortem) |
+| 18 | `mopp_speed_factor` parameter exists in movement engine but never passed from battle loop | [phase-18.md — Postmortem](phase-18.md#postmortem) |
+| 18 | Hardcoded terrain channeling thresholds in dispersal (5m valley/ridge, 50m offset) | [phase-18.md — Postmortem](phase-18.md#postmortem) |
+| 18 | Hardcoded fallback weather defaults in CBRN engine (wind=2.0, temp=20°C, cloud=0.5) | [phase-18.md — Postmortem](phase-18.md#postmortem) |
+| 18 | No automatic puff aging/cleanup mechanism in dispersal engine | [phase-18.md — Postmortem](phase-18.md#postmortem) |
 
 ## Conventions
 

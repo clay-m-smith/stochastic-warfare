@@ -1,0 +1,6 @@
+delivery_id: scud_chemical_warhead
+display_name: "SCUD-B Chemical Warhead"
+agent_capacity_kg: 500
+dispersal_radius_m: 300
+delivery_method: missile
+accuracy_cep_m: 450

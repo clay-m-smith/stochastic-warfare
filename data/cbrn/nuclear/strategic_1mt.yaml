@@ -1,0 +1,13 @@
+# 1MT Strategic Nuclear Weapon
+# High-yield strategic warhead (e.g., W87, W88 class).  Delivered by
+# ICBM or SLBM.  Destructive radius extends tens of km — city-busting
+# capability with massive fallout (ground burst) or wide thermal/blast
+# coverage (airburst).
+# Source: Glasstone & Dolan, *Effects of Nuclear Weapons* (1977)
+
+weapon_id: strategic_1mt
+display_name: "1MT Strategic Nuclear Weapon"
+yield_kt: 1000.0
+delivery_method: icbm
+airburst_capable: true
+weight_kg: 1000

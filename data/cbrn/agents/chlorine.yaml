@@ -1,0 +1,41 @@
+# Chlorine (CL) Choking Agent
+# Non-persistent pulmonary/choking agent.  Dense greenish-yellow gas
+# that attacks the respiratory tract.  First large-scale CW use at Ypres
+# (1915).  Still used as an improvised chemical weapon due to industrial
+# availability.
+# Source: FM 3-11.9, SIPRI Chemical & Biological Warfare Studies
+
+agent_id: chlorine
+display_name: "Chlorine (CL) Choking Agent"
+category: 2  # CHOKING
+
+# Toxicity thresholds (mg·min/m³ for inhalation)
+lct50_mg_min_m3: 6000.0
+ict50_mg_min_m3: 1200.0
+ld50_mg: 0.0
+detection_threshold_mg_m3: 1.0
+
+# Persistence & environmental behavior
+persistence_hours: 0.5     # Very non-persistent — dissipates rapidly
+evaporation_rate_per_c: 0.1
+rain_washout_rate: 0.3     # High — water-soluble, forms hydrochloric acid
+density_kg_m3: 3.21        # ~2.5x air density — settles in low terrain
+vapor_pressure_kpa: 680.0
+
+# Decontamination
+decon_difficulty: 0.1  # Easy — dissipates naturally, ventilation sufficient
+
+# Probit model: Y = probit_a + probit_b * ln(dosage), P = Phi(Y - 5)
+# At LCt50=6000: probit_a = 5 - 1.0 * ln(6000) = 5 - 8.6995 = -3.6995
+probit_a: -3.6995
+probit_b: 1.0
+
+# Soil absorption multipliers by soil type
+soil_absorption:
+  SAND: 0.1
+  CLAY: 0.1
+  LOAM: 0.1
+  ROCK: 0.05
+  GRAVEL: 0.1
+  PEAT: 0.15
+  MUD: 0.1

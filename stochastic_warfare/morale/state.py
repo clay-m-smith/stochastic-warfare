@@ -155,6 +155,7 @@ class MoraleStateMachine:
         leadership_present: bool,
         cohesion: float,
         force_ratio: float,
+        cbrn_stress: float = 0.0,
     ) -> np.ndarray:
         """Build a 5x5 morale transition matrix.
 
@@ -170,6 +171,8 @@ class MoraleStateMachine:
             Unit cohesion factor (0.0–1.0).
         force_ratio:
             Friendly-to-enemy force ratio (>1 = advantage).
+        cbrn_stress:
+            Additional degradation pressure from CBRN environment (0.0–1.0).
 
         Returns
         -------
@@ -177,7 +180,7 @@ class MoraleStateMachine:
             5x5 row-stochastic transition matrix.
         """
         cfg = self._config
-        key = (casualty_rate, suppression_level, float(leadership_present), cohesion, force_ratio)
+        key = (casualty_rate, suppression_level, float(leadership_present), cohesion, force_ratio, cbrn_stress)
         if self._cached_matrix_key == key and self._cached_matrix is not None:
             return self._cached_matrix
         n = len(MoraleState)
@@ -189,6 +192,7 @@ class MoraleStateMachine:
         degrade += cfg.suppression_weight * suppression_level
         if force_ratio < 1.0:
             degrade += cfg.force_ratio_weight * (1.0 - force_ratio)
+        degrade += cbrn_stress  # CBRN environmental stress
         degrade = np.clip(degrade, 0.0, 0.8)
 
         # Recovery pressure
@@ -326,6 +330,7 @@ class MoraleStateMachine:
         timestamp: datetime | None = None,
         dt: float = 1.0,
         current_time_s: float = 0.0,
+        cbrn_stress: float = 0.0,
     ) -> MoraleState:
         """Check for a morale state transition.
 
@@ -339,6 +344,8 @@ class MoraleStateMachine:
             ``config.use_continuous_time`` is True.
         current_time_s:
             Current simulation time in seconds, for cooldown enforcement.
+        cbrn_stress:
+            Additional degradation pressure from CBRN environment (0.0–1.0).
 
         Returns the (possibly new) morale state.
         """
@@ -361,6 +368,7 @@ class MoraleStateMachine:
         else:
             matrix = self.compute_transition_matrix(
                 casualty_rate, suppression_level, leadership_present, cohesion, force_ratio,
+                cbrn_stress=cbrn_stress,
             )
 
         row = matrix[int(old_state)]

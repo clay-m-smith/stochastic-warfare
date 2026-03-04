@@ -125,11 +125,17 @@ class MovementEngine:
         pos: Position,
         heading: float,
         conditions=None,
+        mopp_speed_factor: float = 1.0,
     ) -> float:
         """Compute effective speed in m/s for *unit* at *pos*.
 
-        Speed = base * terrain * slope * road * weather * fatigue * night
+        Speed = base * terrain * slope * road * weather * fatigue * night * mopp
         Plus stochastic Gaussian noise.
+
+        Parameters
+        ----------
+        mopp_speed_factor:
+            MOPP gear speed multiplier (1.0 = no MOPP penalty).
         """
         base = unit.max_speed if unit.max_speed > 0 else self._config.base_infantry_speed
 
@@ -150,7 +156,7 @@ class MovementEngine:
                 if nvg > 0:
                     night += (1.0 - night) * nvg * self._config.nvg_speed_recovery
 
-        speed = base * terrain * slope * road * weather * night
+        speed = base * terrain * slope * road * weather * night * mopp_speed_factor
 
         # Stochastic noise
         if self._rng is not None and self._config.noise_std > 0:

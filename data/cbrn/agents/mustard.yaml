@@ -1,0 +1,40 @@
+# Mustard Gas (HD) Blister Agent (Bis(2-chloroethyl) sulfide)
+# Persistent vesicant (blister agent).  Oily liquid that causes severe
+# skin, eye, and respiratory blistering.  Primary area-denial weapon in
+# WWI and Iran-Iraq War.  Delayed onset (2-24 hours) complicates treatment.
+# Source: FM 3-11.9, OPCW Technical Secretariat
+
+agent_id: mustard
+display_name: "Mustard (HD) Blister Agent"
+category: 1  # BLISTER
+
+# Toxicity thresholds (mg·min/m³ for inhalation)
+lct50_mg_min_m3: 1500.0
+ict50_mg_min_m3: 200.0
+ld50_mg: 0.0
+detection_threshold_mg_m3: 0.5
+
+# Persistence & environmental behavior
+persistence_hours: 72.0    # Highly persistent — days to weeks
+evaporation_rate_per_c: 0.01
+rain_washout_rate: 0.05    # Low — oily, hydrophobic
+density_kg_m3: 1.27
+vapor_pressure_kpa: 0.072
+
+# Decontamination
+decon_difficulty: 0.7  # Difficult — persistent, penetrates rubber and leather
+
+# Probit model: Y = probit_a + probit_b * ln(dosage), P = Phi(Y - 5)
+# At LCt50=1500: probit_a = 5 - 1.0 * ln(1500) = 5 - 7.3132 = -2.3132
+probit_a: -2.3132
+probit_b: 1.0
+
+# Soil absorption multipliers by soil type
+soil_absorption:
+  SAND: 0.7
+  CLAY: 0.3
+  LOAM: 0.5
+  ROCK: 0.1
+  GRAVEL: 0.4
+  PEAT: 0.8
+  MUD: 0.4

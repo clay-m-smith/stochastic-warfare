@@ -423,6 +423,22 @@ class SimulationEngine:
             except Exception:
                 pass
 
+        # Phase 18: CBRN domain
+        if ctx.cbrn_engine is not None and hasattr(ctx.cbrn_engine, "update"):
+            try:
+                elapsed = clock.elapsed.total_seconds()
+                ctx.cbrn_engine.update(
+                    dt, elapsed,
+                    units_by_side=ctx.units_by_side,
+                    weather_conditions=ctx.weather_engine,
+                    classification=ctx.classification,
+                    heightmap=ctx.heightmap,
+                    time_of_day=ctx.time_of_day_engine,
+                    timestamp=clock.current_time,
+                )
+            except Exception:
+                pass
+
     # ── Battle positions (for aggregation) ─────────────────────────────
 
     def _compute_battle_positions(self, ctx: SimulationContext) -> list[Position]:

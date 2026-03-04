@@ -61,7 +61,7 @@ class TestModuleId:
         expected = {
             "CORE", "COMBAT", "MOVEMENT", "DETECTION", "MORALE",
             "ENVIRONMENT", "LOGISTICS", "C2", "ENTITIES", "TERRAIN",
-            "POPULATION", "AIR_CAMPAIGN", "EW", "SPACE",
+            "POPULATION", "AIR_CAMPAIGN", "EW", "SPACE", "CBRN",
         }
         assert {m.name for m in ModuleId} == expected
 

@@ -1,0 +1,6 @@
+delivery_id: aerial_chemical_bomb
+display_name: "Aerial Chemical Bomb"
+agent_capacity_kg: 200
+dispersal_radius_m: 500
+delivery_method: aerial
+accuracy_cep_m: 50

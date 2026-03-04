@@ -1,0 +1,14 @@
+# 155mm Chemical Artillery Shell
+# Standard chemical delivery munition for tube artillery (e.g., M687
+# binary 155mm shell).  Burster charge disperses agent as aerosol on
+# impact.  Limited payload per round — battery-level concentration
+# fires required for effective coverage.  CEP reflects unguided
+# artillery dispersion at typical engagement ranges (15-20 km).
+# Source: FM 3-11.4 (Multiservice Tactics for NBC Defense)
+
+delivery_id: artillery_chemical_shell
+display_name: "155mm Chemical Shell"
+agent_capacity_kg: 3.5
+dispersal_radius_m: 50
+delivery_method: artillery
+accuracy_cep_m: 100

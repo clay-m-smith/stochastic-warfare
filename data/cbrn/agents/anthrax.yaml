@@ -1,0 +1,42 @@
+# Anthrax (Bacillus anthracis) Biological Agent
+# Weaponized spore-forming bacterium.  Inhalational anthrax has ~90%
+# fatality rate without treatment.  Spores are extremely persistent
+# (decades in soil) and resistant to environmental degradation.
+# Gruinard Island remained contaminated for 48 years after WWII trials.
+# Source: FM 3-11.9, CDC Select Agent Program, WHO Health Aspects of CBW
+
+agent_id: anthrax
+display_name: "Anthrax (Bacillus anthracis)"
+category: 4  # BIOLOGICAL
+
+# Toxicity thresholds
+# Anthrax uses LD50 (lethal dose) not LCt50 (concentration x time)
+lct50_mg_min_m3: 0.0      # Not applicable for biological
+ict50_mg_min_m3: 0.0       # Not applicable for biological
+ld50_mg: 8000.0            # ~8,000-10,000 spores (measured in spore mass equivalent)
+detection_threshold_mg_m3: 0.001  # Very low — specialized biodetectors required
+
+# Persistence & environmental behavior
+persistence_hours: 8760.0  # ~1 year (spores persist for decades in soil)
+evaporation_rate_per_c: 0.0  # Spores do not evaporate
+rain_washout_rate: 0.05    # Low — spores bind to soil particles
+density_kg_m3: 1.2         # Aerosol density (air-suspended)
+vapor_pressure_kpa: 0.0    # Not volatile
+
+# Decontamination
+decon_difficulty: 0.95  # Extremely difficult — requires bleach/formaldehyde
+
+# Probit model: default values for biological agents
+# Casualty assessment uses LD50 pathway rather than inhalation probit
+probit_a: -14.0
+probit_b: 1.0
+
+# Soil absorption multipliers by soil type
+soil_absorption:
+  SAND: 0.3
+  CLAY: 0.2
+  LOAM: 0.4
+  ROCK: 0.05
+  GRAVEL: 0.2
+  PEAT: 0.6
+  MUD: 0.3

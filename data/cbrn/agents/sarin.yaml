@@ -1,0 +1,40 @@
+# Sarin (GB) Nerve Agent (Isopropyl methylphosphonofluoridate)
+# Non-persistent nerve agent.  Volatile liquid that evaporates rapidly,
+# creating an immediate inhalation hazard.  Used in Tokyo subway (1995)
+# and Syrian Civil War incidents.
+# Source: FM 3-11.9, WHO International Programme on Chemical Safety
+
+agent_id: sarin
+display_name: "Sarin (GB) Nerve Agent"
+category: 0  # NERVE
+
+# Toxicity thresholds (mg·min/m³ for inhalation)
+lct50_mg_min_m3: 70.0
+ict50_mg_min_m3: 35.0
+ld50_mg: 0.0
+detection_threshold_mg_m3: 0.001
+
+# Persistence & environmental behavior
+persistence_hours: 2.0     # Non-persistent — rapid evaporation
+evaporation_rate_per_c: 0.05
+rain_washout_rate: 0.15    # Moderate — water-soluble
+density_kg_m3: 1.089
+vapor_pressure_kpa: 2.1
+
+# Decontamination
+decon_difficulty: 0.3  # Relatively easy — volatile, self-decontaminates
+
+# Probit model: Y = probit_a + probit_b * ln(dosage), P = Phi(Y - 5)
+# At LCt50=70: probit_a = 5 - 1.0 * ln(70) = 5 - 4.2485 = 0.7515
+probit_a: 0.7515
+probit_b: 1.0
+
+# Soil absorption multipliers by soil type
+soil_absorption:
+  SAND: 0.8
+  CLAY: 0.4
+  LOAM: 0.6
+  ROCK: 0.1
+  GRAVEL: 0.5
+  PEAT: 0.9
+  MUD: 0.5

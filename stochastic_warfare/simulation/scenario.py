@@ -286,6 +286,9 @@ class SimulationContext:
     # Space & Satellite (Phase 17)
     space_engine: Any = None
 
+    # CBRN (Phase 18)
+    cbrn_engine: Any = None
+
     # Logistics
     consumption_engine: Any = None
     stockpile_manager: Any = None
@@ -350,6 +353,7 @@ class SimulationContext:
             ("fog_of_war", self.fog_of_war),
             ("aggregation_engine", self.aggregation_engine),
             ("space_engine", self.space_engine),
+            ("cbrn_engine", self.cbrn_engine),
         ]
         for name, eng in engines:
             if eng is not None and hasattr(eng, "get_state"):
@@ -372,6 +376,7 @@ class SimulationContext:
             ("fog_of_war", self.fog_of_war),
             ("aggregation_engine", self.aggregation_engine),
             ("space_engine", self.space_engine),
+            ("cbrn_engine", self.cbrn_engine),
         ]
         for name, eng in engines:
             if eng is not None and name in state and hasattr(eng, "set_state"):

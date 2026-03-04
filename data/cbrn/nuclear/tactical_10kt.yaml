@@ -1,0 +1,13 @@
+# 10kT Tactical Nuclear Weapon
+# Low-yield weapon for battlefield use (e.g., W48 155mm, W82, B61 Mod 3).
+# Delivered by artillery or tactical aircraft.  Effects confined to a
+# few km radius — intended to destroy massed formations, key bridges,
+# or hardened positions without strategic-scale collateral damage.
+# Source: Glasstone & Dolan, *Effects of Nuclear Weapons* (1977)
+
+weapon_id: tactical_10kt
+display_name: "10kT Tactical Nuclear Weapon"
+yield_kt: 10.0
+delivery_method: artillery
+airburst_capable: true
+weight_kg: 150

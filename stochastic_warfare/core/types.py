@@ -61,6 +61,7 @@ class ModuleId(str, enum.Enum):
     AIR_CAMPAIGN = "air_campaign"
     EW = "ew"
     SPACE = "space"
+    CBRN = "cbrn"
 
 
 class Domain(enum.IntEnum):

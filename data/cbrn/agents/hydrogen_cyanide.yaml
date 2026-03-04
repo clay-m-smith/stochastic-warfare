@@ -1,0 +1,41 @@
+# Hydrogen Cyanide (AC) Blood Agent
+# Non-persistent blood agent that inhibits cytochrome oxidase, blocking
+# cellular respiration.  Extremely volatile — lighter than air so
+# dissipates rapidly outdoors.  Effective in enclosed spaces.
+# Military utility limited by rapid dissipation.
+# Source: FM 3-11.9, OPCW Technical Secretariat
+
+agent_id: hydrogen_cyanide
+display_name: "Hydrogen Cyanide (AC) Blood Agent"
+category: 3  # BLOOD
+
+# Toxicity thresholds (mg·min/m³ for inhalation)
+lct50_mg_min_m3: 4500.0
+ict50_mg_min_m3: 2000.0
+ld50_mg: 0.0
+detection_threshold_mg_m3: 0.5
+
+# Persistence & environmental behavior
+persistence_hours: 0.1     # Extremely non-persistent — lighter than air
+evaporation_rate_per_c: 0.2
+rain_washout_rate: 0.25    # High — water-soluble
+density_kg_m3: 0.69        # Lighter than air (1.2 kg/m³)
+vapor_pressure_kpa: 83.0
+
+# Decontamination
+decon_difficulty: 0.1  # Easy — dissipates very rapidly
+
+# Probit model: Y = probit_a + probit_b * ln(dosage), P = Phi(Y - 5)
+# At LCt50=4500: probit_a = 5 - 1.0 * ln(4500) = 5 - 8.4118 = -3.4118
+probit_a: -3.4118
+probit_b: 1.0
+
+# Soil absorption multipliers by soil type
+soil_absorption:
+  SAND: 0.05
+  CLAY: 0.05
+  LOAM: 0.05
+  ROCK: 0.02
+  GRAVEL: 0.05
+  PEAT: 0.1
+  MUD: 0.05

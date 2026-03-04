@@ -1,5 +1,5 @@
 # Project Structure & Module Decomposition
-**Status**: Complete (Phase 17)
+**Status**: Complete (Phase 18)
 **Last Updated**: 2026-03-04
 
 ---
@@ -46,6 +46,10 @@ stochastic-warfare/
 │   ├── space/                        # Space & satellite definitions [Phase 17]
 │   │   ├── constellations/          # Constellation definitions (GPS NAVSTAR, GLONASS, Milstar, WGS, Keyhole, Lacrosse, SBIRS, Molniya, SIGINT LEO)
 │   │   └── asat_weapons/           # ASAT weapon definitions (SM-3 Block IIA, Nudol, ground laser)
+│   ├── cbrn/                         # CBRN agent & weapon definitions [Phase 18]
+│   │   ├── agents/                  # Agent definitions (VX, sarin, mustard, chlorine, hydrogen_cyanide, anthrax, cs137)
+│   │   ├── nuclear/                 # Nuclear weapon definitions (10kT, 100kT, 1MT)
+│   │   └── delivery/               # Delivery system definitions (artillery shell, aerial bomb, SCUD warhead)
 │   ├── logistics/                    # Logistics data definitions
 │   │   ├── supply_items/            # Supply item definitions by NATO class (I, III, IV, VIII, IX)
 │   │   ├── transport_profiles/      # Transport vehicle profiles (truck, C-130, rail, sealift)
@@ -87,7 +91,9 @@ stochastic-warfare/
 │       ├── gulf_war_ew_1991/      # Phase 16: Gulf War EW campaign validation (Coalition vs Iraqi IADS)
 │       ├── space_gps_denial/      # Phase 17: PGM accuracy comparison (full GPS vs degraded vs denied)
 │       ├── space_isr_gap/         # Phase 17: Satellite overpass gap exploitation validation
-│       └── space_asat_escalation/ # Phase 17: Kinetic ASAT cascading constellation degradation
+│       ├── space_asat_escalation/ # Phase 17: Kinetic ASAT cascading constellation degradation
+│       ├── cbrn_chemical_defense/ # Phase 18: Chemical attack on defended position (dispersal, MOPP, casualties)
+│       └── cbrn_nuclear_tactical/ # Phase 18: Tactical nuclear weapon blast/EMP/fallout validation
 ├── tests/
 │   ├── conftest.py                   # Shared fixtures (rng, event_bus, sim_clock) + helpers
 │   ├── unit/                         # Fast, isolated unit tests
@@ -330,6 +336,17 @@ stochastic-warfare/
     │   ├── early_warning.py           # Missile early warning: GEO/HEO IR detection, BMD Pk bonus
     │   ├── satcom.py                  # SATCOM availability: coverage windows, bandwidth capacity, reliability
     │   └── asat.py                    # Anti-satellite warfare: kinetic KKV, laser dazzle/destruct, Poisson debris cascade
+    ├── cbrn/                          # CBRN Effects [Phase 18]
+    │   ├── __init__.py
+    │   ├── events.py                  # CBRN events (contamination, exposure, decontamination, nuclear, MOPP, casualty)
+    │   ├── agents.py                  # CBRN agent definitions: nerve/blister/choking/blood/biological/radiological, LCt50/LD50
+    │   ├── dispersal.py               # Pasquill-Gifford atmospheric dispersal: Gaussian puff/plume, wind advection, stability classes
+    │   ├── contamination.py           # Contamination grid overlay: concentration tracking, decay, evaporation, washout, absorption
+    │   ├── protection.py              # MOPP levels 0-4: movement/detection/fatigue degradation, equipment effectiveness
+    │   ├── casualties.py              # Probit dose-response model: dosage accumulation, incapacitation, lethality
+    │   ├── decontamination.py         # 3-tier decon: hasty (60%), deliberate (95%), thorough (99%), equipment requirements
+    │   ├── nuclear.py                 # Nuclear effects: Hopkinson-Cranz blast, thermal fluence, radiation, EMP, fallout, craters
+    │   └── engine.py                  # CBRNEngine orchestrator: per-tick dispersal, contamination, exposure, MOPP management
     └── simulation/                   # Top-level simulation orchestration
         ├── __init__.py
         ├── engine.py                 # Master simulation loop (hybrid tick + event)

@@ -1,0 +1,40 @@
+# VX Nerve Agent (O-ethyl S-[2-(diisopropylamino)ethyl] methylphosphonothioate)
+# Most potent nerve agent in military arsenals.  Persistent oily liquid
+# with extremely low LCt50.  Primarily a contact/percutaneous hazard,
+# but vapor inhalation lethal at very low concentrations.
+# Source: FM 3-11.9 (Potential Military Chemical/Biological Agents), SIPRI
+
+agent_id: vx
+display_name: "VX Nerve Agent"
+category: 0  # NERVE
+
+# Toxicity thresholds (mg·min/m³ for inhalation)
+lct50_mg_min_m3: 10.0
+ict50_mg_min_m3: 5.0
+ld50_mg: 0.0
+detection_threshold_mg_m3: 0.0001
+
+# Persistence & environmental behavior
+persistence_hours: 168.0   # ~1 week; extremely persistent
+evaporation_rate_per_c: 0.002
+rain_washout_rate: 0.02    # Low — oily liquid resists washout
+density_kg_m3: 1.008
+vapor_pressure_kpa: 0.0007
+
+# Decontamination
+decon_difficulty: 0.8  # Very difficult — oily, persistent, penetrates equipment
+
+# Probit model: Y = probit_a + probit_b * ln(dosage), P = Phi(Y - 5)
+# At LCt50=10: probit_a = 5 - 1.0 * ln(10) = 5 - 2.3026 = 2.6974
+probit_a: 2.6974
+probit_b: 1.0
+
+# Soil absorption multipliers by soil type
+soil_absorption:
+  SAND: 0.6
+  CLAY: 0.3
+  LOAM: 0.5
+  ROCK: 0.1
+  GRAVEL: 0.4
+  PEAT: 0.7
+  MUD: 0.4
