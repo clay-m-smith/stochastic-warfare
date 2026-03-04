@@ -3,7 +3,7 @@
 ## Project Overview
 High-fidelity, high-resolution wargame simulator. Multi-scale (campaign → battlefield → battle → unit level) with stochastic/signal-processing-inspired models (Markov chains, Monte Carlo, Kalman filters, noise models, queueing theory). Headless Python engine first; matplotlib for validation; full UI deferred. Modern era (Cold War–present) as prototype. Maritime warfare fully integrated, not deferred.
 
-**Current status**: Phase 13 complete (Performance Optimization) + postmortem cleanup. 4,247 tests passing. MVP complete (phases 0-10). Post-MVP Phases 11-13 delivered — Phase 11: 15 deficit fixes across ~20 source files. Phase 12: 16 deficits resolved + 2 new domains (civilian population, strategic air campaigns/IADS) across 12 new + ~25 modified source files. Phase 13: Performance optimization (STRtree, Kalman cache, LOS cache, viewshed vectorization, auto-resolve, force aggregation, Numba JIT, A* precompute, MC parallelism) across 2 new + ~10 modified source files. Postmortem: wired aggregation engine + selective LOS invalidation into simulation loop.
+**Current status**: Phase 14 complete (Tooling & Developer Experience) + postmortem cleanup. 4,372 tests passing. MVP complete (phases 0-10). Post-MVP Phases 11-14 delivered — Phase 11: 15 deficit fixes across ~20 source files. Phase 12: 16 deficits resolved + 2 new domains (civilian population, strategic air campaigns/IADS) across 12 new + ~25 modified source files. Phase 13: Performance optimization (STRtree, Kalman cache, LOS cache, viewshed vectorization, auto-resolve, force aggregation, Numba JIT, A* precompute, MC parallelism) across 2 new + ~10 modified source files. Phase 14: Developer tooling (MCP server, analysis utilities, visualization, 7 Claude skills) across 12 new source files + 7 skill files. Postmortem: wired MCP resources, fixed return type annotations, removed no-op params, eliminated set() iteration, extracted magic numbers.
 
 ## Python & Package Management
 **Requires Python >=3.12** (pinned to 3.12.10 via `.python-version`).
@@ -84,6 +84,13 @@ Layered hybrid — graph (strategic), grid (operational/tactical), continuous (u
 | `/cross-doc-audit` | Verify alignment across all docs (MVP + post-MVP, 13 checks) |
 | `/simplify` | Review changed code for reuse, quality, and efficiency |
 | `/profile` | Performance profiling — cProfile analysis, hotspot identification, benchmarking |
+| `/scenario` | Interactive scenario creation/editing walkthrough |
+| `/compare` | Run two configs and summarize with statistical comparison |
+| `/what-if` | Quick parameter sensitivity from natural language questions |
+| `/timeline` | Generate battle narrative from simulation run |
+| `/orbat` | Interactive order of battle builder |
+| `/calibrate` | Auto-tune calibration overrides to match historical data |
+| `/postmortem` | Structured retrospective after completing a phase — catches integration gaps, deficits, test quality issues |
 
 ## Documentation Map
 | Document | Purpose |
@@ -231,3 +238,12 @@ No new dependencies.
 - **Postmortem** (28 tests): Wired `aggregation_engine` into `SimulationContext` + engine strategic tick (disaggregation triggers → aggregation candidates). Wired selective LOS invalidation into engine (dirty-cell tracking around movement, `enable_selective_los_invalidation` config flag). Added `_compute_battle_positions()` and `_snapshot_unit_cells()` helpers. Golan campaign profiling script (`scripts/profile_golan.py`).
 
 Optional dependency: `numba>=0.59` (via `--extra perf`).
+
+### Phase 14: Tooling & Developer Experience (125 tests)
+12 new source files + 7 skill files. Purely additive — no modifications to existing simulation code. Optional `mcp[cli]>=1.2.0` dependency (`uv sync --extra mcp`).
+- **14a MCP Server** (36 tests): `tools/serializers.py` (JSON serialization for numpy/datetime/enum/Position), `tools/result_store.py` (LRU cache), `tools/mcp_server.py` (FastMCP with 7 tools: run_scenario, query_state, run_monte_carlo, compare_results, list_scenarios, list_units, modify_parameter), `tools/mcp_resources.py` (3 resource providers, wired via `register_resources()`)
+- **14b Analysis Tools** (63 tests): `tools/narrative.py` (registry-based battle narrative, ~15 formatters, full/summary/timeline styles), `tools/tempo_analysis.py` (FFT spectral analysis, 5 event categories, OODA cycle extraction), `tools/comparison.py` (A/B Mann-Whitney U test, rank-biserial effect size), `tools/sensitivity.py` (parameter sweep), `tools/_run_helpers.py` (shared batch runner)
+- **14c Visualization** (26 tests): `tools/charts.py` (6 chart functions: force_strength, engagement_network, supply_flow, engagement_timeline, morale_progression, mc_distribution_grid), `tools/replay.py` (FuncAnimation battle replay with engagement lines)
+- **14d Claude Skills** (7 new): `/scenario`, `/compare`, `/what-if`, `/timeline`, `/orbat`, `/calibrate`, `/postmortem`
+
+Optional dependency: `mcp[cli]>=1.2.0` (via `--extra mcp`).

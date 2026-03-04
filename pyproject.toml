@@ -26,6 +26,9 @@ dev = [
 perf = [
     "numba>=0.59",
 ]
+mcp = [
+    "mcp[cli]>=1.2.0",
+]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
@@ -35,6 +38,9 @@ markers = [
     "slow: marks tests as slow (1000-run Monte Carlo, run explicitly with '-m slow')",
     "benchmark: marks tests as performance benchmarks (run explicitly with '-m benchmark')",
 ]
+
+[project.scripts]
+stochastic-warfare-mcp = "stochastic_warfare.tools.mcp_server:main"
 
 [tool.setuptools.packages.find]
 include = ["stochastic_warfare*"]

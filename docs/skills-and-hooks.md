@@ -81,6 +81,47 @@
 - Provides benchmark script template for standardized measurement
 - Run when scenarios are slow or before/after optimization work
 
+### /scenario (Phase 14)
+- Interactive walkthrough for creating or editing campaign scenario YAML files
+- Guides user through sides, units, terrain, objectives, victory conditions, and calibration
+- Validates against `CampaignScenarioConfig` schema and runs smoke test
+- Outputs complete scenario YAML to `data/scenarios/{name}/scenario.yaml`
+
+### /compare (Phase 14)
+- Runs two scenario configurations and statistically compares outcomes
+- Uses `tools/comparison.py` with Mann-Whitney U test
+- Interprets p-values and effect sizes in military context
+- Outputs formatted comparison table
+
+### /what-if (Phase 14)
+- Quick parameter sensitivity analysis from natural language questions
+- Identifies parameter and range from user's question
+- Uses `tools/sensitivity.py` for sweep, generates errorbar plot
+- Summarizes sensitivity level and key inflection points
+
+### /timeline (Phase 14)
+- Runs a scenario and generates human-readable battle narrative
+- Uses `tools/narrative.py` with full/summary/timeline styles
+- Structures output as Opening/Main Battle/Conclusion phases
+
+### /orbat (Phase 14)
+- Interactive order of battle builder
+- Lists available unit types, guides through echelon hierarchy
+- Generates `sides` section of scenario YAML
+- Validates unit types, commander profiles, and doctrine templates
+
+### /calibrate (Phase 14)
+- Auto-tunes calibration overrides to match historical metrics
+- Sweeps influential parameters via `tools/sensitivity.py`
+- Uses binary search refinement to narrow to target value
+- Validates with statistical test against historical data
+
+### /postmortem (Phase 14)
+- Structured retrospective to run after completing each implementation phase
+- 8-step process: delivered vs planned, integration audit, test quality review, API surface check, deficit discovery, documentation freshness, performance sanity, summary
+- Catches integration gaps, dead modules, missing wiring, undocumented limitations
+- Updates phase devlog with findings and action items
+
 ---
 
 ## Hooks

@@ -21,7 +21,7 @@ Rolling record of implementation decisions, changes, and lessons learned across 
 | 11 | Core Fidelity Fixes | **Complete** | [phase-11.md](phase-11.md) |
 | 12 | Deep Systems Rework | **Complete** | [phase-12.md](phase-12.md) |
 | 13 | Performance Optimization | **Complete** | [phase-13.md](phase-13.md) |
-| 14 | Tooling & Developer Experience | Planned | — |
+| 14 | Tooling & Developer Experience | **Complete** | [phase-14.md](phase-14.md) |
 | 15 | Real-World Terrain & Data Pipeline | Planned | — |
 | 16 | Electronic Warfare | Planned | — |
 | 17 | Space & Satellite Domain | Planned | — |

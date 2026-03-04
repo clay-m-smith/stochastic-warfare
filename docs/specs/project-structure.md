@@ -1,5 +1,5 @@
 # Project Structure & Module Decomposition
-**Status**: Complete (Phase 13 + postmortem)
+**Status**: Complete (Phase 14)
 **Last Updated**: 2026-03-03
 
 ---
@@ -12,7 +12,7 @@ stochastic-warfare/
 ├── README.md
 ├── .claude/
 │   ├── settings.json                 # Project hooks
-│   └── skills/                       # Claude skills (11 total)
+│   └── skills/                       # Claude skills (17 total)
 ├── docs/
 │   ├── brainstorm.md                 # Architecture decisions & rationale
 │   ├── development-phases.md         # Development roadmap
@@ -280,6 +280,19 @@ stochastic-warfare/
     │   ├── campaign_metrics.py        # Campaign-level metric extraction (units destroyed, exchange ratio, etc.)
     │   ├── ai_validation.py           # AI decision quality analysis from recorder events
     │   └── performance.py             # cProfile + tracemalloc campaign performance profiling
+    ├── tools/                         # Developer tooling — MCP server, analysis, visualization [Phase 14]
+    │   ├── __init__.py
+    │   ├── serializers.py             # JSON serialization for numpy, datetime, enum, Position
+    │   ├── result_store.py            # In-memory LRU cache for run results
+    │   ├── mcp_server.py              # FastMCP server with 7 tools (run, query, MC, compare, list, modify)
+    │   ├── mcp_resources.py           # MCP resource providers (scenarios, units, results)
+    │   ├── _run_helpers.py            # Shared batch scenario runner for analysis tools
+    │   ├── narrative.py               # Battle narrative generation from events (registry-based formatters)
+    │   ├── tempo_analysis.py          # Operational tempo FFT + OODA cycle extraction
+    │   ├── comparison.py              # A/B statistical comparison (Mann-Whitney U)
+    │   ├── sensitivity.py             # Parameter sweep analysis
+    │   ├── charts.py                  # 6 reusable chart functions (force, engagement, supply, morale, MC)
+    │   └── replay.py                  # Animated battle replay (FuncAnimation)
     └── simulation/                   # Top-level simulation orchestration
         ├── __init__.py
         ├── engine.py                 # Master simulation loop (hybrid tick + event)

@@ -124,30 +124,37 @@ Same as MVP: every phase produces runnable, testable code. Validation via matplo
 
 ---
 
-## Phase 14: Tooling & Developer Experience
+## Phase 14: Tooling & Developer Experience — **COMPLETE**
 **Goal**: Build developer tools, analysis utilities, and MCP server for LLM-assisted simulation.
 
-### 14a: MCP Server
-- `tools/mcp_server.py` — MCP server exposing simulation as tools: `run_scenario`, `query_state`, `run_monte_carlo`, `compare_results`, `list_scenarios`, `list_units`, `modify_parameter`
-- `tools/mcp_resources.py` — MCP resource providers for scenario files, unit definitions, results
+**Status**: Complete (+ postmortem). 125 tests across 7 test files. Total: 4,372 tests passing. 12 new source files + 7 skill files. Optional dependency: `mcp[cli]>=1.2.0` (via `--extra mcp`). Devlog: [`devlog/phase-14.md`](devlog/phase-14.md).
 
-### 14b: Analysis Tools
-- `tools/sensitivity.py` — Parameter sweep: vary one parameter across range, run N iterations each, plot outcome distribution
-- `tools/comparison.py` — A/B scenario comparison with Mann-Whitney U test for statistical significance
-- `tools/narrative.py` — Natural language generation from RecordedEvents: tick-by-tick battle narrative
-- `tools/tempo_analysis.py` — Operational tempo analysis: FFT of engagement/event frequency over time, tempo comparison between sides, OODA cycle timing distributions. Implements the spectral analysis concept from the original brainstorm.
+### 14a: MCP Server (36 tests)
+- `tools/__init__.py` — Package init
+- `tools/serializers.py` — JSON serialization for simulation objects (numpy, datetime, enum, Position, inf/nan, dataclasses, pydantic models)
+- `tools/result_store.py` — In-memory LRU cache (max 20) for cross-tool result referencing
+- `tools/mcp_server.py` — FastMCP server with 7 tools: `run_scenario`, `query_state`, `run_monte_carlo`, `compare_results`, `list_scenarios`, `list_units`, `modify_parameter`. stdio transport. `asyncio.to_thread()` for blocking sim calls.
+- `tools/mcp_resources.py` — 3 resource providers: `scenario://{name}/config`, `unit://{category}/{type}`, `result://{run_id}`
 
-### 14c: Visualization
-- `tools/replay.py` — Animated battle replay via matplotlib FuncAnimation: unit positions, engagement lines, detection arcs per tick
-- `tools/charts.py` — Standard chart library: force strength timeline, engagement network graph, supply flow diagram
+### 14b: Analysis Tools (63 tests)
+- `tools/narrative.py` — Registry-based template system (~15 formatters), `generate_narrative()` with side/type/tick filtering, `format_narrative()` with full/summary/timeline styles
+- `tools/tempo_analysis.py` — FFT spectral analysis of event frequency by 5 categories (Combat, Detection, C2, Morale, Movement), OODA cycle timing extraction, 3-panel plot
+- `tools/comparison.py` — A/B statistical comparison with Mann-Whitney U test, rank-biserial effect size, formatted table output
+- `tools/sensitivity.py` — Parameter sweep with same seed sequence per point, errorbar plot output
+- `tools/_run_helpers.py` — Shared batch runner (temp YAML pattern from CampaignRunner)
 
-### 14d: Claude Skills
-- `/scenario` skill — Interactive scenario creation/editing via structured prompts
-- `/compare` skill — Run two configurations and summarize differences
-- `/what-if` skill — Quick parameter sensitivity wrapper
-- `/timeline` skill — Generate narrative from a completed simulation run
-- `/orbat` skill — Interactive order of battle builder
-- `/calibrate` skill — Auto-tune calibration overrides to match historical data
+### 14c: Visualization (26 tests)
+- `tools/charts.py` — 6 chart functions: `force_strength_chart`, `engagement_network`, `supply_flow_diagram`, `engagement_timeline`, `morale_progression`, `mc_distribution_grid`
+- `tools/replay.py` — Animated battle replay via FuncAnimation: `extract_replay_frames`, `create_replay` (side-colored scatter, engagement lines, destroyed markers), `save_replay` (GIF/MP4)
+
+### 14d: Claude Skills (7 new skills)
+- `/scenario` — Interactive scenario creation/editing walkthrough
+- `/compare` — Run two configs and summarize with statistical interpretation
+- `/what-if` — Quick parameter sensitivity from natural language questions
+- `/timeline` — Generate narrative from simulation run
+- `/orbat` — Interactive order of battle builder
+- `/calibrate` — Auto-tune calibration overrides to match historical metrics
+- `/postmortem` — Structured phase retrospective (8-step process: scope, integration, tests, API, deficits, docs, perf, summary)
 
 **Exit Criteria**: MCP server responds to all tool calls with correct results. Sensitivity analysis produces parameter sweep plots. A/B comparison returns p-values. Battle replay animation renders 73 Easting. All new skills functional. No regression in existing tests.
 
@@ -621,13 +628,18 @@ New modules introduced in Phases 11–24:
 | `logistics/foraging.py` | 22b |
 | `c2/courier.py` | 22b |
 | `c2/visual_signals.py` | 23b |
+| `tools/__init__.py` | 14a |
+| `tools/serializers.py` | 14a |
+| `tools/result_store.py` | 14a |
 | `tools/mcp_server.py` | 14a |
 | `tools/mcp_resources.py` | 14a |
-| `tools/sensitivity.py` | 14b |
-| `tools/comparison.py` | 14b |
 | `tools/narrative.py` | 14b |
-| `tools/replay.py` | 14c |
+| `tools/tempo_analysis.py` | 14b |
+| `tools/comparison.py` | 14b |
+| `tools/sensitivity.py` | 14b |
+| `tools/_run_helpers.py` | 14b |
 | `tools/charts.py` | 14c |
+| `tools/replay.py` | 14c |
 | `c2/joint_ops.py` | 12a |
 | `logistics/production.py` | 12b |
 | `combat/iads.py` | 12f |

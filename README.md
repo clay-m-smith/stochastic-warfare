@@ -1,7 +1,7 @@
 # Stochastic Warfare
 
 ![Python](https://img.shields.io/badge/python-%3E%3D3.12-blue)
-![Tests](https://img.shields.io/badge/tests-4%2C247_passing-brightgreen)
+![Tests](https://img.shields.io/badge/tests-4%2C372_passing-brightgreen)
 ![Phase](https://img.shields.io/badge/phase-13_Post--MVP-blue)
 
 High-fidelity, high-resolution wargame simulator built as a headless Python engine. Models warfare across multiple scales — from individual unit engagements up through tactical battles, operational battlefields, and multi-day strategic campaigns — with stochastic and signal-processing-inspired models throughout.
@@ -103,6 +103,7 @@ stochastic_warfare/       # simulation engine (14 modules, ~167 source files)
   validation/             # historical data, Monte Carlo, campaign validation
   ai/                     # OODA, commander AI, doctrine, assessment, decisions
   planning/               # MDMP, mission analysis, COA generation, estimates
+  tools/                  # MCP server, analysis (narrative, tempo, comparison, sensitivity), visualization
 
 data/                     # ~118 YAML data files
   units/                  # 21 unit definitions (ground, air, naval, support)
@@ -119,7 +120,7 @@ data/                     # ~118 YAML data files
   medical/                # 2 medical facility definitions
   scenarios/              # 3 engagement + 6 campaign scenarios
 
-tests/                    # 4,219 tests across ~149 test files
+tests/                    # 4,372 tests across ~156 test files
 docs/                     # specs, brainstorm, devlog, development phases
 ```
 
@@ -127,7 +128,7 @@ For the full package tree and module decomposition, see [`docs/specs/project-str
 
 ## Development Status
 
-All 11 MVP phases (0–10) are complete. Post-MVP Phases 11–13 are complete (deep systems rework + performance optimization).
+All 11 MVP phases (0–10) are complete. Post-MVP Phases 11–14 are complete (deep systems rework + performance optimization + developer tooling).
 
 | Phase | Focus | Tests | Status |
 |-------|-------|-------|--------|
@@ -145,7 +146,8 @@ All 11 MVP phases (0–10) are complete. Post-MVP Phases 11–13 are complete (d
 | 11 | Core Fidelity Fixes | 109 | Complete |
 | 12 | Deep Systems Rework | 259 | Complete |
 | 13 | Performance Optimization | 142 | Complete |
-| | **Total** | **4,219** | |
+| 14 | Tooling & Developer Experience | 125 | Complete |
+| | **Total** | **4,372** | |
 
 For the full phase roadmap, see [`docs/development-phases.md`](docs/development-phases.md) (MVP) and [`docs/development-phases-post-mvp.md`](docs/development-phases-post-mvp.md) (post-MVP). For per-phase implementation logs, see [`docs/devlog/`](docs/devlog/).
 
