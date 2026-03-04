@@ -46,6 +46,9 @@ class BattleConfig(BaseModel):
     disable_threshold: float = 0.3
     default_visibility_m: float = 10000.0
     max_ticks_per_battle: int = 50000
+    # Phase 13a-6: Auto-resolve
+    auto_resolve_enabled: bool = False
+    auto_resolve_max_units: int = 0  # battles with <= this many total units get auto-resolved
 
 
 # ---------------------------------------------------------------------------
@@ -80,6 +83,16 @@ class BattleResult:
     terminated_by: str
     units_destroyed: dict[str, int] = field(default_factory=dict)
     units_routing: dict[str, int] = field(default_factory=dict)
+
+
+@dataclass(frozen=True)
+class AutoResolveResult:
+    """Outcome of an auto-resolved battle."""
+
+    battle_id: str
+    winner: str
+    side_losses: dict[str, float] = field(default_factory=dict)  # side -> loss fraction
+    duration_s: float = 0.0
 
 
 # ---------------------------------------------------------------------------
@@ -294,6 +307,142 @@ class BattleManager:
             terminated_by=terminated_by,
             units_destroyed=destroyed,
             units_routing=routing,
+        )
+
+    # ── Auto-resolve (Phase 13a-6) ──────────────────────────────────
+
+    def auto_resolve(
+        self,
+        battle: BattleContext,
+        units_by_side: dict[str, list[Unit]],
+        rng: np.random.Generator,
+        morale_states: dict | None = None,
+        supply_states: dict | None = None,
+    ) -> AutoResolveResult:
+        """Auto-resolve a minor battle using simplified Lanchester attrition.
+
+        Adapted from c2/planning/coa.py::wargame_coa.  Computes aggregate
+        combat power per side, runs 10 steps of Lanchester attrition,
+        and applies losses to individual units.
+
+        Parameters
+        ----------
+        battle : BattleContext
+            The battle to resolve.
+        units_by_side : dict
+            Current force disposition.
+        rng : np.random.Generator
+            PRNG stream for loss distribution.
+        morale_states : dict | None
+            Per-unit morale states for morale factor.
+        supply_states : dict | None
+            Per-unit supply levels for supply factor.
+        """
+        battle.active = False
+        sides = battle.involved_sides
+        if len(sides) < 2:
+            return AutoResolveResult(
+                battle_id=battle.battle_id,
+                winner=sides[0] if sides else "",
+            )
+
+        # Compute per-side combat power
+        side_power: dict[str, float] = {}
+        side_units_active: dict[str, list[Unit]] = {}
+        for side in sides:
+            units = [u for u in units_by_side.get(side, []) if u.status == UnitStatus.ACTIVE]
+            side_units_active[side] = units
+            power = 0.0
+            for u in units:
+                personnel = len(u.personnel) if u.personnel else 4
+                equipment = len(u.equipment) if u.equipment else 1
+                power += personnel + equipment * 2.0
+            side_power[side] = power
+
+        # Apply morale and supply factors
+        for side in sides:
+            morale_factor = 1.0
+            supply_factor = 1.0
+            if morale_states:
+                from stochastic_warfare.morale.state import MoraleState
+
+                side_morale_vals = [
+                    morale_states.get(u.entity_id, MoraleState.STEADY)
+                    for u in side_units_active[side]
+                ]
+                if side_morale_vals:
+                    avg_morale = sum(int(m) for m in side_morale_vals) / len(side_morale_vals)
+                    morale_factor = max(0.3, 1.0 - avg_morale * 0.15)
+            if supply_states:
+                side_supply = [
+                    supply_states.get(u.entity_id, 1.0)
+                    for u in side_units_active[side]
+                ]
+                if side_supply:
+                    avg_supply = sum(side_supply) / len(side_supply)
+                    supply_factor = max(0.5, avg_supply)
+            side_power[side] *= morale_factor * supply_factor
+
+        # Lanchester attrition loop (10 steps, exponent 0.5)
+        power = {s: float(side_power[s]) for s in sides}
+        initial_power = {s: float(side_power[s]) for s in sides}
+        exponent = 0.5
+        steps = 10
+
+        for _ in range(steps):
+            if any(power[s] <= 0 for s in sides):
+                break
+            losses: dict[str, float] = {}
+            for s in sides:
+                enemy_sides = [o for o in sides if o != s]
+                enemy_power = sum(power[o] for o in enemy_sides)
+                own_power = max(power[s], 1e-10)
+                loss_rate = 0.02 * (enemy_power**exponent / own_power**exponent)
+                losses[s] = power[s] * loss_rate
+            for s in sides:
+                power[s] = max(0.0, power[s] - losses[s])
+
+        # Compute loss fractions
+        side_losses: dict[str, float] = {}
+        for s in sides:
+            if initial_power[s] > 0:
+                side_losses[s] = 1.0 - power[s] / initial_power[s]
+            else:
+                side_losses[s] = 1.0
+
+        # Determine winner (side with most remaining power)
+        winner = max(sides, key=lambda s: power[s])
+
+        # Apply losses to units
+        for side in sides:
+            loss_frac = side_losses[side]
+            active = side_units_active[side]
+            if not active:
+                continue
+            # Distribute losses randomly across active units
+            num_to_destroy = int(round(loss_frac * len(active)))
+            if num_to_destroy > 0:
+                indices = list(range(len(active)))
+                rng.shuffle(indices)
+                for i in indices[:num_to_destroy]:
+                    object.__setattr__(active[i], "status", UnitStatus.DESTROYED)
+
+        # Estimate duration (shorter for one-sided battles)
+        power_ratio = max(power.values()) / max(sum(power.values()), 1e-10)
+        duration_s = 3600.0 * (1.0 - power_ratio * 0.5)  # 30min to 1hr
+
+        logger.info(
+            "Auto-resolved %s: winner=%s, losses=%s",
+            battle.battle_id,
+            winner,
+            {s: f"{l:.1%}" for s, l in side_losses.items()},
+        )
+
+        return AutoResolveResult(
+            battle_id=battle.battle_id,
+            winner=winner,
+            side_losses=side_losses,
+            duration_s=duration_s,
         )
 
     # ── State persistence ───────────────────────────────────────────

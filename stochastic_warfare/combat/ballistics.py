@@ -15,6 +15,7 @@ from pydantic import BaseModel
 
 from stochastic_warfare.combat.ammunition import AmmoDefinition, WeaponDefinition
 from stochastic_warfare.core.logging import get_logger
+from stochastic_warfare.core.numba_utils import optional_jit
 from stochastic_warfare.core.types import EARTH_MEAN_RADIUS, STANDARD_GRAVITY, Position
 
 logger = get_logger(__name__)
@@ -80,11 +81,13 @@ class ImpactResult:
 # ---------------------------------------------------------------------------
 
 
+@optional_jit
 def _speed_of_sound(temp_c: float) -> float:
     """Speed of sound in air at given temperature (Celsius)."""
     return 331.3 * math.sqrt(1.0 + temp_c / 273.15)
 
 
+@optional_jit
 def _mach_drag_multiplier(mach: float) -> float:
     """Piecewise Mach-dependent drag multiplier.
 
@@ -98,6 +101,150 @@ def _mach_drag_multiplier(mach: float) -> float:
         return 1.0 + 2.5 * (mach - 0.8)
     else:
         return 2.0 * (1.2 / mach) ** 0.5
+
+
+@optional_jit
+def _derivs_kernel(
+    px: float, py: float, pz: float,
+    vvx: float, vvy: float, vvz: float,
+    enable_drag: int, enable_mach_drag: int,
+    enable_wind: int, enable_coriolis: int,
+    drag_coeff: float, mass_kg: float, area: float,
+    rho0: float, scale_height: float, speed_of_sound: float,
+    wind_e: float, wind_n: float,
+    lat_rad: float, omega: float, g: float,
+) -> tuple[float, float, float, float, float, float]:
+    """Compute derivatives for RK4 trajectory integration.
+
+    Returns (dpx, dpy, dpz, dvx, dvy, dvz) — position and velocity
+    derivatives at the given state.
+    """
+    # Velocity relative to air
+    if enable_wind:
+        vax = vvx - wind_e
+        vay = vvy - wind_n
+        vaz = vvz
+    else:
+        vax = vvx
+        vay = vvy
+        vaz = vvz
+
+    # Drag acceleration
+    dax = 0.0
+    day = 0.0
+    daz = 0.0
+    if enable_drag:
+        spd = math.sqrt(vax * vax + vay * vay + vaz * vaz)
+        if spd > 1e-6:
+            rho = rho0 * math.exp(-pz / scale_height)
+            effective_cd = drag_coeff
+            if enable_mach_drag:
+                mach = spd / speed_of_sound if speed_of_sound > 0 else 0.0
+                effective_cd = drag_coeff * _mach_drag_multiplier(mach)
+            drag_force = 0.5 * effective_cd * rho * spd * spd * area
+            drag_accel = drag_force / mass_kg
+            dax = -drag_accel * vax / spd
+            day = -drag_accel * vay / spd
+            daz = -drag_accel * vaz / spd
+
+    # Coriolis acceleration
+    cax = 0.0
+    cay = 0.0
+    caz = 0.0
+    if enable_coriolis:
+        sin_lat = math.sin(lat_rad)
+        cos_lat = math.cos(lat_rad)
+        cax = 2.0 * omega * (vvy * sin_lat - vvz * cos_lat)
+        cay = -2.0 * omega * vvx * sin_lat
+        caz = 2.0 * omega * vvx * cos_lat
+
+    ax = dax + cax
+    ay = day + cay
+    az = daz + caz - g
+
+    return vvx, vvy, vvz, ax, ay, az
+
+
+@optional_jit
+def _rk4_trajectory_kernel(
+    x: float, y: float, z: float,
+    vx: float, vy: float, vz: float,
+    dt: float, max_t: float, fire_alt: float,
+    enable_drag: int, enable_mach_drag: int,
+    enable_wind: int, enable_coriolis: int,
+    drag_coeff: float, mass_kg: float, area: float,
+    rho0: float, scale_height: float, speed_of_sound: float,
+    wind_e: float, wind_n: float,
+    lat_rad: float, omega: float, g: float,
+) -> tuple[float, float, float, float, float, float, float, float, float]:
+    """Pure-numerical RK4 trajectory kernel.
+
+    Returns (final_x, final_y, final_z, final_vx, final_vy, final_vz,
+             tof, max_alt, impact_angle_deg).
+    """
+    max_alt = z
+    t = 0.0
+
+    while t < max_t:
+        # k1
+        dp1x, dp1y, dp1z, dv1x, dv1y, dv1z = _derivs_kernel(
+            x, y, z, vx, vy, vz,
+            enable_drag, enable_mach_drag, enable_wind, enable_coriolis,
+            drag_coeff, mass_kg, area,
+            rho0, scale_height, speed_of_sound,
+            wind_e, wind_n, lat_rad, omega, g,
+        )
+        # k2
+        dp2x, dp2y, dp2z, dv2x, dv2y, dv2z = _derivs_kernel(
+            x + 0.5 * dt * dp1x, y + 0.5 * dt * dp1y, z + 0.5 * dt * dp1z,
+            vx + 0.5 * dt * dv1x, vy + 0.5 * dt * dv1y, vz + 0.5 * dt * dv1z,
+            enable_drag, enable_mach_drag, enable_wind, enable_coriolis,
+            drag_coeff, mass_kg, area,
+            rho0, scale_height, speed_of_sound,
+            wind_e, wind_n, lat_rad, omega, g,
+        )
+        # k3
+        dp3x, dp3y, dp3z, dv3x, dv3y, dv3z = _derivs_kernel(
+            x + 0.5 * dt * dp2x, y + 0.5 * dt * dp2y, z + 0.5 * dt * dp2z,
+            vx + 0.5 * dt * dv2x, vy + 0.5 * dt * dv2y, vz + 0.5 * dt * dv2z,
+            enable_drag, enable_mach_drag, enable_wind, enable_coriolis,
+            drag_coeff, mass_kg, area,
+            rho0, scale_height, speed_of_sound,
+            wind_e, wind_n, lat_rad, omega, g,
+        )
+        # k4
+        dp4x, dp4y, dp4z, dv4x, dv4y, dv4z = _derivs_kernel(
+            x + dt * dp3x, y + dt * dp3y, z + dt * dp3z,
+            vx + dt * dv3x, vy + dt * dv3y, vz + dt * dv3z,
+            enable_drag, enable_mach_drag, enable_wind, enable_coriolis,
+            drag_coeff, mass_kg, area,
+            rho0, scale_height, speed_of_sound,
+            wind_e, wind_n, lat_rad, omega, g,
+        )
+
+        x += dt / 6.0 * (dp1x + 2 * dp2x + 2 * dp3x + dp4x)
+        y += dt / 6.0 * (dp1y + 2 * dp2y + 2 * dp3y + dp4y)
+        z += dt / 6.0 * (dp1z + 2 * dp2z + 2 * dp3z + dp4z)
+        vx += dt / 6.0 * (dv1x + 2 * dv2x + 2 * dv3x + dv4x)
+        vy += dt / 6.0 * (dv1y + 2 * dv2y + 2 * dv3y + dv4y)
+        vz += dt / 6.0 * (dv1z + 2 * dv2z + 2 * dv3z + dv4z)
+        t += dt
+
+        if z > max_alt:
+            max_alt = z
+
+        # Impact: below starting altitude after ascending
+        if z <= fire_alt and t > dt * 2:
+            break
+
+    speed = math.sqrt(vx * vx + vy * vy + vz * vz)
+    v_horiz = math.sqrt(vx * vx + vy * vy)
+    if v_horiz > 0:
+        impact_angle = math.degrees(math.atan2(-vz, v_horiz))
+    else:
+        impact_angle = 90.0
+
+    return (x, y, z, vx, vy, vz, t, max_alt, abs(impact_angle))
 
 
 # ---------------------------------------------------------------------------
@@ -242,78 +389,31 @@ class BallisticsEngine:
         wind_n = conditions.get("wind_n", 0.0)
         lat_rad = conditions.get("latitude_rad", 0.7)  # ~40° default
 
-        result = TrajectoryResult()
-        result.points.append(
-            TrajectoryPoint(0.0, Position(x, y, z), (vx, vy, vz))
+        # Use JIT kernel for fast path (impact data only)
+        radius_m = ammo.diameter_mm / 2000.0
+        area = math.pi * radius_m * radius_m
+        sos = _speed_of_sound(temp_c)
+
+        fx, fy, fz, fvx, fvy, fvz, tof, max_alt, impact_angle = _rk4_trajectory_kernel(
+            x, y, z, vx, vy, vz,
+            dt, max_t, fire_pos.altitude,
+            int(self._config.enable_drag), int(self._config.enable_mach_drag),
+            int(self._config.enable_wind), int(self._config.enable_coriolis),
+            ammo.drag_coefficient, ammo.mass_kg, area,
+            self._config.air_density_sea_level, 8500.0, sos,
+            wind_e, wind_n,
+            lat_rad, self._config.earth_rotation_rad_s, STANDARD_GRAVITY,
         )
-        max_alt = z
-        t = 0.0
 
-        while t < max_t:
-            # RK4 integration step
-            def derivs(
-                pos: tuple[float, float, float],
-                vel: tuple[float, float, float],
-            ) -> tuple[tuple[float, float, float], tuple[float, float, float]]:
-                # Velocity relative to air (wind effect)
-                if self._config.enable_wind:
-                    v_air = (vel[0] - wind_e, vel[1] - wind_n, vel[2])
-                else:
-                    v_air = vel
-
-                drag = self._drag_acceleration(
-                    v_air, ammo.drag_coefficient, ammo.mass_kg,
-                    ammo.diameter_mm, pos[2], air_temp_c=temp_c,
-                )
-                cor = self._coriolis_acceleration(vel, lat_rad)
-
-                ax = drag[0] + cor[0]
-                ay = drag[1] + cor[1]
-                az_accel = drag[2] + cor[2] - STANDARD_GRAVITY
-
-                return vel, (ax, ay, az_accel)
-
-            # k1
-            dp1, dv1 = derivs((x, y, z), (vx, vy, vz))
-            # k2
-            p2 = (x + 0.5 * dt * dp1[0], y + 0.5 * dt * dp1[1], z + 0.5 * dt * dp1[2])
-            v2 = (vx + 0.5 * dt * dv1[0], vy + 0.5 * dt * dv1[1], vz + 0.5 * dt * dv1[2])
-            dp2, dv2 = derivs(p2, v2)
-            # k3
-            p3 = (x + 0.5 * dt * dp2[0], y + 0.5 * dt * dp2[1], z + 0.5 * dt * dp2[2])
-            v3 = (vx + 0.5 * dt * dv2[0], vy + 0.5 * dt * dv2[1], vz + 0.5 * dt * dv2[2])
-            dp3, dv3 = derivs(p3, v3)
-            # k4
-            p4 = (x + dt * dp3[0], y + dt * dp3[1], z + dt * dp3[2])
-            v4 = (vx + dt * dv3[0], vy + dt * dv3[1], vz + dt * dv3[2])
-            dp4, dv4 = derivs(p4, v4)
-
-            x += dt / 6.0 * (dp1[0] + 2 * dp2[0] + 2 * dp3[0] + dp4[0])
-            y += dt / 6.0 * (dp1[1] + 2 * dp2[1] + 2 * dp3[1] + dp4[1])
-            z += dt / 6.0 * (dp1[2] + 2 * dp2[2] + 2 * dp3[2] + dp4[2])
-            vx += dt / 6.0 * (dv1[0] + 2 * dv2[0] + 2 * dv3[0] + dv4[0])
-            vy += dt / 6.0 * (dv1[1] + 2 * dv2[1] + 2 * dv3[1] + dv4[1])
-            vz += dt / 6.0 * (dv1[2] + 2 * dv2[2] + 2 * dv3[2] + dv4[2])
-            t += dt
-
-            max_alt = max(max_alt, z)
-
-            # Record trajectory point at impact or periodically
-            # Impact detection: below starting altitude after ascending
-            if z <= fire_pos.altitude and t > dt * 2:
-                result.points.append(
-                    TrajectoryPoint(t, Position(x, y, max(z, 0.0)), (vx, vy, vz))
-                )
-                break
-
-        speed = math.sqrt(vx * vx + vy * vy + vz * vz)
-        v_horiz_final = math.sqrt(vx * vx + vy * vy)
-        impact_angle = math.degrees(math.atan2(-vz, v_horiz_final)) if v_horiz_final > 0 else 90.0
-
-        result.impact_position = Position(x, y, max(z, 0.0))
-        result.impact_velocity = speed
-        result.impact_angle_deg = abs(impact_angle)
-        result.time_of_flight_s = t
+        result = TrajectoryResult()
+        result.points.append(TrajectoryPoint(0.0, fire_pos, (vx, vy, vz)))
+        result.points.append(
+            TrajectoryPoint(tof, Position(fx, fy, max(fz, 0.0)), (fvx, fvy, fvz))
+        )
+        result.impact_position = Position(fx, fy, max(fz, 0.0))
+        result.impact_velocity = math.sqrt(fvx * fvx + fvy * fvy + fvz * fvz)
+        result.impact_angle_deg = impact_angle
+        result.time_of_flight_s = tof
         result.max_altitude_m = max_alt
 
         return result

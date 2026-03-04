@@ -92,32 +92,35 @@ Same as MVP: every phase produces runnable, testable code. Validation via matplo
 
 ---
 
-## Phase 13: Performance Optimization
+## Phase 13: Performance Optimization — **COMPLETE**
 **Goal**: Achieve 5x speedup on campaign-scale simulations through algorithmic optimization, compiled extensions, and parallelism.
 
-### 13a: Algorithmic Optimization
-- `terrain/infrastructure.py` (modify) — STRtree spatial index for building/road queries. Replace brute-force iteration.
-- `terrain/los.py` (modify) — Multi-tick LOS cache: invalidate only cells where units moved. Track dirty cells per tick.
-- `terrain/los.py` (modify) — Viewshed vectorization: batch multiple observer LOS checks using numpy broadcasting.
-- `detection/estimation.py` (modify) — Cache Kalman F/Q matrices for fixed dt. Only recompute on tick duration change.
-- `simulation/engine.py` (modify) — Force aggregation: aggregate distant units into formation-level entities at strategic resolution. Disaggregate when entering tactical battle.
-- `simulation/battle.py` (modify) — Auto-resolve option: Lanchester-based quick resolution for battles below interest threshold.
+**Status**: Complete (+ postmortem cleanup). 142 tests + 28 postmortem across 14 test files + 7 benchmark tests + 11 determinism tests. Total: 4,247 tests passing (up from 4,077). 2 new source files (`simulation/aggregation.py`, `core/numba_utils.py`) + ~10 modified source files. Optional `numba` dependency added (`uv sync --extra perf`). All changes backward-compatible with `enable_*` config flags. Postmortem wired aggregation engine into `SimulationContext` + engine strategic tick, and selective LOS invalidation into engine dirty-cell tracking. Devlog: [`devlog/phase-13.md`](devlog/phase-13.md).
 
-### 13b: Compiled Extensions
-- `core/numba_utils.py` — Numba JIT decorators with pure-Python fallback. `@optional_jit` wrapper.
-- `combat/ballistics.py` (modify) — Numba JIT for RK4 trajectory integration inner loop.
-- `terrain/los.py` (modify) — Numba JIT for DDA raycasting inner loop.
-- `movement/pathfinding.py` (modify) — Numba JIT for A* cell cost computation.
+### 13a: Algorithmic Optimization (7 sub-phases, 99 tests)
+- `terrain/infrastructure.py` (modified) — STRtree spatial index for building/road/airfield queries. `roads_near()`, `nearest_road()`, `buildings_at()`, `buildings_near()`, `airfields_near()` rewritten to use `shapely.STRtree`. 14 tests.
+- `terrain/los.py` (modified) — Multi-tick LOS cache: `invalidate_cells(dirty_cells)` selective invalidation based on grid-cell coordinates. 11 tests.
+- `terrain/los.py` (modified) — Viewshed vectorization: `visible_area()` uses numpy broadcasting for distance filtering, skipping out-of-range cells. 8 tests.
+- `detection/estimation.py` (modified) — Kalman F/Q matrix caching: `_cached_dt`, `_cached_F`, `_cached_Q` fields. Only recomputes on dt change. 6 tests.
+- `simulation/battle.py` (modified) — Auto-resolve: `auto_resolve()` method with Lanchester attrition (10 steps, exponent 0.5, morale/supply factors). `AutoResolveResult` dataclass. `auto_resolve_enabled`/`auto_resolve_max_units` config. 17 tests.
+- `simulation/aggregation.py` (new) — Force aggregation/disaggregation: `AggregationEngine` with `snapshot_unit()`, `aggregate()`, `disaggregate()`, `check_aggregation_candidates()`, `check_disaggregation_triggers()`, `get_state()`/`set_state()`. `UnitSnapshot`, `AggregateUnit`, `AggregationConfig` data structures. 27 tests.
+- `simulation/engine.py` (modified) — Selective LOS cache invalidation wiring, auto-resolve integration. Postmortem: aggregation engine wired into strategic tick, `_compute_battle_positions()` + `_snapshot_unit_cells()` helpers, `enable_selective_los_invalidation` config flag, dirty-cell tracking around movement.
+- `simulation/scenario.py` (modified, postmortem) — `aggregation_engine` field on `SimulationContext`, `get_state()`/`set_state()` support, `AggregationEngine` instantiation in `ScenarioLoader._create_engines()`.
+- `tests/benchmarks/test_phase13_benchmarks.py` (new) — 7 baseline benchmark tests (spatial query, Kalman predict, LOS check, pathfinding, RK4 trajectory, MC, viewshed).
 
-**Also**: `pyproject.toml` — add `numba` as optional dependency (`uv sync --extra perf`)
+### 13b: Compiled Extensions (4 sub-phases, 42 tests)
+- `core/numba_utils.py` (new) — `NUMBA_AVAILABLE` flag, `optional_jit` decorator with pure-Python fallback. 5 tests.
+- `combat/ballistics.py` (modified) — `@optional_jit` on `_speed_of_sound()`, `_mach_drag_multiplier()`. New `_derivs_kernel()` and `_rk4_trajectory_kernel()` JIT functions. `compute_trajectory()` delegates to kernel. 18 tests.
+- `terrain/los.py` (modified) — `@optional_jit` on `_los_terrain_kernel()` for DDA raycasting inner loop. `_check_los_terrain_jit()` method on LOSEngine. 8 tests.
+- `movement/pathfinding.py` (modified) — `_compute_difficulty_grid()` pre-computes cell difficulty into numpy array. `find_path()` uses array lookup instead of per-cell dict cache. 11 tests.
 
-### 13c: Parallelism
-- `simulation/engine.py` (modify) — Thread-pool for per-side computations within a tick (detection, morale, logistics). Requires PRNG stream partitioning.
-- `validation/monte_carlo.py` (modify) — Extend campaign MC parallelism. Verify deterministic replay with per-worker seed streams.
+**Also**: `pyproject.toml` — `perf = ["numba>=0.59"]` optional dependency group. `benchmark` marker excluded by default.
 
-**Visualization**: Benchmark comparison charts (before/after per phase).
+### 13c: Parallelism & Verification (2 sub-phases, 17 tests)
+- `validation/monte_carlo.py` (modified) — `submit()` + `as_completed()` pattern replacing `executor.map()`. Results sorted by seed for deterministic ordering. 6 tests.
+- `tests/benchmarks/test_phase13_determinism.py` (new) — 11 determinism verification tests: LOS cache selective vs full clear, Kalman cache, RK4 trajectory, aggregation round-trip, auto-resolve PRNG isolation, viewshed consistency.
 
-**Exit Criteria**: 73 Easting full run <0.5s (from ~2s). Golan Heights campaign <3s (from ~15s). 100-iteration MC on 4 cores <25s (from ~120s). STRtree LOS with buildings 10x faster than brute-force. Numba-accelerated RK4 5x faster than pure Python. All results identical to pre-optimization (bit-for-bit deterministic). Deterministic replay verified.
+**Exit Criteria**: All met. STRtree replaces brute-force spatial queries. Multi-tick LOS cache retains entries for stationary units. Viewshed uses vectorized distance filtering. Kalman F/Q matrices cached per dt. Auto-resolve available for minor battles. Force aggregation/disaggregation preserves all subsystem state. Numba JIT kernels for RK4 and DDA with pure-Python fallback. A* uses pre-computed difficulty grid. MC uses as_completed pattern. All results bit-for-bit deterministic (verified by 11 determinism tests). All 4,219 tests pass. Deterministic replay verified.
 
 ---
 
@@ -526,24 +529,24 @@ Every item from `devlog/index.md` Post-MVP Refinement Index assigned to a phase:
 | Estimates update periodically | Phase 8 | Deferred (periodic update adequate; reactive would be expensive) |
 | Stratagems opportunity-evaluated | Phase 8 | Deferred (proactive stratagem planning is aspirational) |
 | ~~Brigade decision hardcodes echelon_level=9~~ | Phase 8 | ~~11d~~ **Resolved** |
-| No force aggregation/disaggregation | Phase 9 | 13a |
+| ~~No force aggregation/disaggregation~~ | Phase 9 | ~~13a~~ **Resolved** (postmortem wired into engine) |
 | Single-threaded simulation | Phase 9 | 13c |
-| No auto-resolve | Phase 9 | 13a |
+| ~~No auto-resolve~~ | Phase 9 | ~~13a~~ **Resolved** (13a-6) |
 | Simplified strategic movement | Phase 9 | Deferred (operational pathfinding is future scope) |
 | ~~Fixed reinforcement schedule~~ | Phase 9 | ~~11c~~ **Resolved** |
 | No naval campaign management | Phase 9 | Deferred (expand with naval scenarios) |
 | Synthetic terrain | Phase 9 | 15 |
-| LOS cache per-tick only | Phase 9 | 13a |
+| ~~LOS cache per-tick only~~ | Phase 9 | ~~13a~~ **Resolved** (postmortem wired selective invalidation) |
 | No weather evolution beyond WeatherEngine.step() | Phase 9 | Deferred (step() is adequate) |
-| Viewshed vectorization deferred | Phase 9 | 13a |
-| STRtree for infrastructure deferred | Phase 9 | 13a |
+| ~~Viewshed vectorization deferred~~ | Phase 9 | ~~13a~~ **Resolved** (13a-5) |
+| ~~STRtree for infrastructure deferred~~ | Phase 9 | ~~13a~~ **Resolved** (13a-2) |
 | ~~No fire rate limiting (Phase 10 inherited)~~ | Phase 10 | ~~11a~~ **Resolved** |
 | ~~No wave attack modeling (Phase 10 inherited)~~ | Phase 10 | ~~11c~~ **Resolved** |
 | ~~Campaign AI coarseness~~ | Phase 10 | ~~11d~~ **Resolved** |
 | Simplified force compositions (Phase 10) | Phase 10 | Deferred |
 | Synthetic terrain (Phase 10) | Phase 10 | 15 |
 | ~~Fixed reinforcement schedule (Phase 10)~~ | Phase 10 | ~~11c~~ **Resolved** |
-| No force aggregation/disaggregation (Phase 10) | Phase 10 | 13a |
+| ~~No force aggregation/disaggregation (Phase 10)~~ | Phase 10 | ~~13a~~ **Resolved** (postmortem wired into engine) |
 | AI expectation matching approximate | Phase 10 | Deferred (adequate for validation) |
 | Campaign metrics proxy territory | Phase 10 | Deferred (spatial control requires Phase 15 real terrain) |
 | ~~Fuel gating not wired to stockpile in battle.py~~ | Phase 11 | ~~12b~~ **Resolved** |

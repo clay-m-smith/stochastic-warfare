@@ -21,6 +21,8 @@ from typing import Any
 from pydantic import BaseModel
 
 from stochastic_warfare.core.logging import get_logger
+from stochastic_warfare.core.types import Position
+from stochastic_warfare.entities.base import UnitStatus
 from stochastic_warfare.simulation.battle import BattleConfig, BattleContext, BattleManager
 from stochastic_warfare.simulation.campaign import CampaignConfig, CampaignManager
 from stochastic_warfare.simulation.recorder import SimulationRecorder
@@ -46,6 +48,9 @@ class EngineConfig(BaseModel):
 
     snapshot_interval_ticks: int = 100
     """Ticks between recorder state snapshots."""
+
+    enable_selective_los_invalidation: bool = False
+    """Use selective cell invalidation instead of full LOS cache clear."""
 
 
 # ---------------------------------------------------------------------------
@@ -235,9 +240,19 @@ class SimulationEngine:
         dt = clock.tick_duration.total_seconds()
         timestamp = clock.current_time
 
-        # 1b. Clear per-tick caches (LOS results become stale after movement)
-        if ctx.los_engine is not None and hasattr(ctx.los_engine, "clear_los_cache"):
+        # 1b. LOS cache management
+        selective_los = (
+            self._config.enable_selective_los_invalidation
+            and ctx.los_engine is not None
+            and hasattr(ctx.los_engine, "invalidate_cells")
+        )
+        if not selective_los and ctx.los_engine is not None and hasattr(ctx.los_engine, "clear_los_cache"):
             ctx.los_engine.clear_los_cache()
+
+        # Record pre-move grid cells for selective LOS invalidation
+        pre_move_cells: dict[str, tuple[int, int]] | None = None
+        if selective_los:
+            pre_move_cells = self._snapshot_unit_cells(ctx)
 
         # 2. Update environment
         self._update_environment(dt)
@@ -249,11 +264,50 @@ class SimulationEngine:
         #    manager internally gates on strategic tick intervals)
         if self._resolution == TickResolution.STRATEGIC:
             self._campaign.update_strategic(ctx, dt)
+
+            # Phase 13 postmortem: aggregation/disaggregation
+            if (ctx.aggregation_engine is not None
+                    and ctx.aggregation_engine._config.enable_aggregation):
+                battle_positions = self._compute_battle_positions(ctx)
+                # Disaggregate first (units approaching battle)
+                for agg_id in ctx.aggregation_engine.check_disaggregation_triggers(
+                    ctx, battle_positions,
+                ):
+                    ctx.aggregation_engine.disaggregate(agg_id, ctx)
+                # Then aggregate (distant units can be merged)
+                for group in ctx.aggregation_engine.check_aggregation_candidates(
+                    ctx, battle_positions,
+                ):
+                    ctx.aggregation_engine.aggregate(group, ctx)
+
             # Detect new engagements
             new_battles = self._campaign.detect_engagements(ctx, self._battle)
             if new_battles:
-                # Switch to tactical
-                self._set_resolution(TickResolution.TACTICAL)
+                # Phase 13a-6: Auto-resolve minor battles
+                remaining = []
+                for battle in new_battles:
+                    total_units = sum(
+                        len([u for u in ctx.units_by_side.get(s, [])
+                             if u.status == UnitStatus.ACTIVE])
+                        for s in battle.involved_sides
+                    )
+                    if (self._battle._config.auto_resolve_enabled
+                            and self._battle._config.auto_resolve_max_units > 0
+                            and total_units <= self._battle._config.auto_resolve_max_units):
+                        ar_rng = ctx.rng_manager.get_stream(
+                            __import__(
+                                "stochastic_warfare.core.types", fromlist=["ModuleId"]
+                            ).ModuleId.CORE
+                        )
+                        self._battle.auto_resolve(
+                            battle, ctx.units_by_side, ar_rng,
+                            morale_states=ctx.morale_states,
+                        )
+                    else:
+                        remaining.append(battle)
+                if remaining:
+                    # Switch to tactical
+                    self._set_resolution(TickResolution.TACTICAL)
 
         # 5. Tactical logic (active battles)
         active = self._battle.active_battles
@@ -271,6 +325,22 @@ class SimulationEngine:
                         det_eng.reset_scan_counts()
                     logger.info("Battle %s resolved after %d ticks",
                                 battle.battle_id, battle.ticks_executed)
+
+        # 5b. Selective LOS invalidation after movement
+        if selective_los and pre_move_cells is not None:
+            post_move_cells = self._snapshot_unit_cells(ctx)
+            dirty_cells: set[tuple[int, int]] = set()
+            all_ids = set(pre_move_cells) | set(post_move_cells)
+            for uid in all_ids:
+                pre = pre_move_cells.get(uid)
+                post = post_move_cells.get(uid)
+                if pre != post:
+                    if pre is not None:
+                        dirty_cells.add(pre)
+                    if post is not None:
+                        dirty_cells.add(post)
+            if dirty_cells:
+                ctx.los_engine.invalidate_cells(dirty_cells)
 
         # 6. Victory evaluation
         victory = self._evaluate_victory(tick)
@@ -339,6 +409,41 @@ class SimulationEngine:
                 ctx.seasons_engine.update(clock)
             except Exception:
                 pass
+
+    # ── Battle positions (for aggregation) ─────────────────────────────
+
+    def _compute_battle_positions(self, ctx: SimulationContext) -> list[Position]:
+        """Compute centroid positions of active battles for aggregation distance checks."""
+        positions: list[Position] = []
+        for battle in self._battle.active_battles:
+            if not battle.unit_ids:
+                continue
+            eastings: list[float] = []
+            northings: list[float] = []
+            for side_units in ctx.units_by_side.values():
+                for u in side_units:
+                    if u.entity_id in battle.unit_ids and u.status == UnitStatus.ACTIVE:
+                        eastings.append(u.position.easting)
+                        northings.append(u.position.northing)
+            if eastings:
+                positions.append(Position(
+                    sum(eastings) / len(eastings),
+                    sum(northings) / len(northings),
+                ))
+        return positions
+
+    # ── Selective LOS invalidation helpers ──────────────────────────────
+
+    def _snapshot_unit_cells(self, ctx: SimulationContext) -> dict[str, tuple[int, int]]:
+        """Snapshot current grid cell for each active unit (for dirty-cell tracking)."""
+        cells: dict[str, tuple[int, int]] = {}
+        if ctx.heightmap is None:
+            return cells
+        for side_units in ctx.units_by_side.values():
+            for u in side_units:
+                if u.status == UnitStatus.ACTIVE:
+                    cells[u.entity_id] = ctx.heightmap.enu_to_grid(u.position)
+        return cells
 
     # ── Resolution switching ─────────────────────────────────────────
 

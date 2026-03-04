@@ -260,6 +260,9 @@ class SimulationContext:
     decision_engine: Any = None
     adaptation_engine: Any = None
 
+    # Aggregation (Phase 13a-7)
+    aggregation_engine: Any = None
+
     # Logistics
     consumption_engine: Any = None
     stockpile_manager: Any = None
@@ -322,6 +325,7 @@ class SimulationContext:
             ("order_execution", self.order_execution),
             ("stockpile_manager", self.stockpile_manager),
             ("fog_of_war", self.fog_of_war),
+            ("aggregation_engine", self.aggregation_engine),
         ]
         for name, eng in engines:
             if eng is not None and hasattr(eng, "get_state"):
@@ -342,6 +346,7 @@ class SimulationContext:
             ("order_execution", self.order_execution),
             ("stockpile_manager", self.stockpile_manager),
             ("fog_of_war", self.fog_of_war),
+            ("aggregation_engine", self.aggregation_engine),
         ]
         for name, eng in engines:
             if eng is not None and name in state and hasattr(eng, "set_state"):
@@ -665,6 +670,19 @@ class ScenarioLoader:
         supply_network_engine = SupplyNetworkEngine(bus, logistics_rng)
         maintenance_engine = MaintenanceEngine(bus, logistics_rng)
 
+        # Aggregation (Phase 13a-7)
+        from stochastic_warfare.simulation.aggregation import (
+            AggregationConfig,
+            AggregationEngine,
+        )
+
+        agg_config = AggregationConfig()
+        aggregation_engine = AggregationEngine(
+            config=agg_config,
+            rng=rng_mgr.get_stream(ModuleId.CORE),
+            event_bus=bus,
+        )
+
         return {
             "los_engine": los_engine,
             "engagement_engine": engagement_engine,
@@ -683,4 +701,5 @@ class ScenarioLoader:
             "stockpile_manager": stockpile_manager,
             "supply_network_engine": supply_network_engine,
             "maintenance_engine": maintenance_engine,
+            "aggregation_engine": aggregation_engine,
         }

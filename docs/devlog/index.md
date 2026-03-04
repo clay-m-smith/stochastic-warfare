@@ -20,7 +20,7 @@ Rolling record of implementation decisions, changes, and lessons learned across 
 | | | | |
 | 11 | Core Fidelity Fixes | **Complete** | [phase-11.md](phase-11.md) |
 | 12 | Deep Systems Rework | **Complete** | [phase-12.md](phase-12.md) |
-| 13 | Performance Optimization | Planned | — |
+| 13 | Performance Optimization | **Complete** | [phase-13.md](phase-13.md) |
 | 14 | Tooling & Developer Experience | Planned | — |
 | 15 | Real-World Terrain & Data Pipeline | Planned | — |
 | 16 | Electronic Warfare | Planned | — |
@@ -92,24 +92,24 @@ Known limitations and deferred improvements logged during implementation. Review
 | 8 | Estimates update periodically, not reactively to every event | [phase-8.md — Known Limitations](phase-8.md#known-limitations--post-mvp-refinements) |
 | 8 | Stratagems are opportunity-evaluated, not proactively planned in COA | [phase-8.md — Known Limitations](phase-8.md#known-limitations--post-mvp-refinements) |
 | 8 | ~~Brigade echelon decision hardcodes echelon_level=9 in result (cosmetic)~~ *(resolved Phase 11d)* | [phase-8.md — Known Limitations](phase-8.md#known-limitations--post-mvp-refinements) |
-| 9 | No force aggregation/disaggregation — all units at individual resolution | [phase-9.md — Known Limitations](phase-9.md#known-limitations--post-mvp-refinements) |
+| 9 | ~~No force aggregation/disaggregation — all units at individual resolution~~ *(resolved Phase 13 postmortem)* | [phase-9.md — Known Limitations](phase-9.md#known-limitations--post-mvp-refinements) |
 | 9 | Single-threaded simulation loop (required for deterministic PRNG replay) | [phase-9.md — Known Limitations](phase-9.md#known-limitations--post-mvp-refinements) |
-| 9 | No auto-resolve — every engagement runs full tactical resolution | [phase-9.md — Known Limitations](phase-9.md#known-limitations--post-mvp-refinements) |
+| 9 | ~~No auto-resolve — every engagement runs full tactical resolution~~ *(resolved Phase 13a-6)* | [phase-9.md — Known Limitations](phase-9.md#known-limitations--post-mvp-refinements) |
 | 9 | Simplified strategic movement (no detailed operational pathfinding) | [phase-9.md — Known Limitations](phase-9.md#known-limitations--post-mvp-refinements) |
 | 9 | Fixed reinforcement schedule (no Poisson/stochastic arrivals) | [phase-9.md — Known Limitations](phase-9.md#known-limitations--post-mvp-refinements) |
 | 9 | No naval campaign management (structurally supported but untested) | [phase-9.md — Known Limitations](phase-9.md#known-limitations--post-mvp-refinements) |
 | 9 | Synthetic terrain only (programmatic heightmaps, not real topographic data) | [phase-9.md — Known Limitations](phase-9.md#known-limitations--post-mvp-refinements) |
-| 9 | LOS cache is per-tick only (cleared each tick after movement) | [phase-9.md — Known Limitations](phase-9.md#known-limitations--post-mvp-refinements) |
+| 9 | ~~LOS cache is per-tick only (cleared each tick after movement)~~ *(resolved Phase 13 postmortem — selective invalidation wired)* | [phase-9.md — Known Limitations](phase-9.md#known-limitations--post-mvp-refinements) |
 | 9 | No weather evolution mid-campaign beyond WeatherEngine.step() | [phase-9.md — Known Limitations](phase-9.md#known-limitations--post-mvp-refinements) |
-| 9 | Viewshed vectorization deferred (lower priority) | [phase-9.md — Known Limitations](phase-9.md#known-limitations--post-mvp-refinements) |
-| 9 | STRtree for infrastructure spatial queries still deferred | [phase-9.md — Known Limitations](phase-9.md#known-limitations--post-mvp-refinements) |
+| 9 | ~~Viewshed vectorization deferred (lower priority)~~ *(resolved Phase 13a-5)* | [phase-9.md — Known Limitations](phase-9.md#known-limitations--post-mvp-refinements) |
+| 9 | ~~STRtree for infrastructure spatial queries still deferred~~ *(resolved Phase 13a-2)* | [phase-9.md — Known Limitations](phase-9.md#known-limitations--post-mvp-refinements) |
 | 10 | No fire rate limiting — units fire once per tick regardless of ROF (inherited) | [phase-10.md — Known Limitations](phase-10.md#known-limitations--post-mvp-refinements) |
 | 10 | No wave attack modeling — all red units advance simultaneously (inherited) | [phase-10.md — Known Limitations](phase-10.md#known-limitations--post-mvp-refinements) |
 | 10 | Campaign AI decisions coarse — OODA at echelon timing, may not produce tactical posture changes in short runs | [phase-10.md — Known Limitations](phase-10.md#known-limitations--post-mvp-refinements) |
 | 10 | Simplified force compositions — representative samples, not complete historical OOB | [phase-10.md — Known Limitations](phase-10.md#known-limitations--post-mvp-refinements) |
 | 10 | Synthetic terrain — programmatic heightmaps, not real topographic data | [phase-10.md — Known Limitations](phase-10.md#known-limitations--post-mvp-refinements) |
 | 10 | Fixed reinforcement schedule — deterministic arrival, no stochastic variation | [phase-10.md — Known Limitations](phase-10.md#known-limitations--post-mvp-refinements) |
-| 10 | No force aggregation/disaggregation — all units individually tracked | [phase-10.md — Known Limitations](phase-10.md#known-limitations--post-mvp-refinements) |
+| 10 | ~~No force aggregation/disaggregation — all units individually tracked~~ *(resolved Phase 13 postmortem)* | [phase-10.md — Known Limitations](phase-10.md#known-limitations--post-mvp-refinements) |
 | 10 | AI expectation matching approximate — string-based posture detection | [phase-10.md — Known Limitations](phase-10.md#known-limitations--post-mvp-refinements) |
 | 10 | Campaign metrics proxy territory control via survival fraction not spatial | [phase-10.md — Known Limitations](phase-10.md#known-limitations--post-mvp-refinements) |
 

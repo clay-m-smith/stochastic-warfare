@@ -6,6 +6,8 @@ import heapq
 import math
 from typing import NamedTuple
 
+import numpy as np
+
 from stochastic_warfare.core.logging import get_logger
 from stochastic_warfare.core.types import Meters, Position
 
@@ -88,6 +90,41 @@ class Pathfinder:
             mult *= 10.0
 
         return mult
+
+    def _compute_difficulty_grid(
+        self,
+        min_gc: int,
+        max_gc: int,
+        min_gr: int,
+        max_gr: int,
+        res: float,
+    ) -> np.ndarray:
+        """Pre-compute cell difficulty for a bounding box.
+
+        Returns a 2-D array where ``grid[r - min_gr, c - min_gc]`` gives the
+        difficulty multiplier for grid cell ``(c, r)``.
+
+        Parameters
+        ----------
+        min_gc, max_gc:
+            Column range (inclusive).
+        min_gr, max_gr:
+            Row range (inclusive).
+        res:
+            Grid resolution in meters.
+        """
+        height = max_gr - min_gr + 1
+        width = max_gc - min_gc + 1
+        grid = np.full((height, width), 1.0, dtype=np.float64)
+
+        for dr in range(height):
+            for dc in range(width):
+                gc = min_gc + dc
+                gr = min_gr + dr
+                pos = Position(gc * res, gr * res, 0.0)
+                grid[dr, dc] = self._cell_difficulty(pos)
+
+        return grid
 
     def movement_cost(
         self, from_pos: Position, to_pos: Position, unit=None
@@ -174,8 +211,15 @@ class Pathfinder:
         g_score: dict[tuple[int, int], float] = {start_g: 0.0}
         closed: set[tuple[int, int]] = set()
 
-        # Cache cell difficulty to avoid redundant terrain module lookups
-        _cell_cache: dict[tuple[int, int], float] = {}
+        # Pre-compute difficulty grid for bounding box (Phase 13b-4)
+        margin = 10  # cells beyond start/goal bounding box
+        min_gc = min(start_g[0], goal_g[0]) - margin
+        max_gc = max(start_g[0], goal_g[0]) + margin
+        min_gr = min(start_g[1], goal_g[1]) - margin
+        max_gr = max(start_g[1], goal_g[1]) + margin
+        _diff_grid = self._compute_difficulty_grid(min_gc, max_gc, min_gr, max_gr, res)
+        _grid_width = max_gc - min_gc + 1
+        _grid_height = max_gr - min_gr + 1
 
         neighbors_8 = [
             (-1, -1), (-1, 0), (-1, 1), (0, -1),
@@ -218,10 +262,14 @@ class Pathfinder:
                 if nb in closed:
                     continue
 
-                # Cached cell difficulty lookup
-                if nb not in _cell_cache:
-                    _cell_cache[nb] = self._cell_difficulty(to_pos(nb))
-                difficulty = _cell_cache[nb]
+                # Grid-based difficulty lookup (Phase 13b-4)
+                gc = nb[0] - min_gc
+                gr = nb[1] - min_gr
+                if 0 <= gc < _grid_width and 0 <= gr < _grid_height:
+                    difficulty = _diff_grid[gr, gc]
+                else:
+                    # Outside pre-computed grid — compute on demand
+                    difficulty = self._cell_difficulty(to_pos(nb))
 
                 if difficulty == float("inf"):
                     continue

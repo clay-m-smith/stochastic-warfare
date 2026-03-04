@@ -1,8 +1,9 @@
 """Infrastructure features: roads, bridges, buildings, airfields, rail, tunnels.
 
 Vector features stored as shapely geometries with mutable ``condition``
-(0.0 = destroyed, 1.0 = pristine).  Spatial queries use brute-force
-iteration; STRtree optimization can be added later if profiling warrants it.
+(0.0 = destroyed, 1.0 = pristine).  Spatial queries use Shapely 2.0
+STRtree indices for O(log n) envelope filtering, with exact geometry
+checks applied to the candidate set.
 """
 
 from __future__ import annotations
@@ -11,6 +12,7 @@ import enum
 import math
 
 from pydantic import BaseModel
+from shapely import STRtree
 from shapely.geometry import LineString, Point, Polygon
 
 from stochastic_warfare.core.types import Meters, Position
@@ -204,31 +206,58 @@ class InfrastructureManager:
             bid: Polygon(b.footprint) for bid, b in self._buildings.items()
         }
 
+        # STRtree spatial indices for O(log n) queries
+        self._road_ids = list(self._road_geoms.keys())
+        self._road_geom_list = [self._road_geoms[rid] for rid in self._road_ids]
+        self._road_tree = STRtree(self._road_geom_list) if self._road_ids else None
+
+        self._building_ids = list(self._building_geoms.keys())
+        self._building_geom_list = [self._building_geoms[bid] for bid in self._building_ids]
+        self._building_tree = STRtree(self._building_geom_list) if self._building_ids else None
+
+        # Point-based STRtree for airfields
+        airfield_points = [Point(a.position[0], a.position[1]) for a in self._airfields.values()]
+        self._airfield_ids = list(self._airfields.keys())
+        self._airfield_tree = STRtree(airfield_points) if self._airfield_ids else None
+
     # ------------------------------------------------------------------
     # Spatial queries — roads
     # ------------------------------------------------------------------
 
     def roads_near(self, pos: Position, radius: Meters) -> list[Road]:
         """Return all roads within *radius* metres of *pos*."""
+        if self._road_tree is None:
+            return []
         pt = Point(pos.easting, pos.northing)
+        indices = self._road_tree.query(pt.buffer(radius))
         return [
-            self._roads[rid]
-            for rid, geom in self._road_geoms.items()
-            if geom.distance(pt) <= radius and self._roads[rid].condition > 0
+            self._roads[self._road_ids[i]]
+            for i in indices
+            if self._roads[self._road_ids[i]].condition > 0
+            and self._road_geom_list[i].distance(pt) <= radius
         ]
 
     def nearest_road(self, pos: Position) -> tuple[Road, Meters] | None:
         """Return the closest non-destroyed road and the distance to it."""
+        if self._road_tree is None:
+            return None
         pt = Point(pos.easting, pos.northing)
-        best: tuple[Road, float] | None = None
-        for rid, geom in self._road_geoms.items():
-            road = self._roads[rid]
-            if road.condition <= 0:
-                continue
-            d = geom.distance(pt)
-            if best is None or d < best[1]:
-                best = (road, d)
-        return best
+        # Query nearest — returns index into geom list
+        idx = self._road_tree.nearest(pt)
+        road = self._roads[self._road_ids[idx]]
+        if road.condition <= 0:
+            # Fall back to brute-force for non-destroyed
+            best: tuple[Road, float] | None = None
+            for rid, geom in self._road_geoms.items():
+                r = self._roads[rid]
+                if r.condition <= 0:
+                    continue
+                d = geom.distance(pt)
+                if best is None or d < best[1]:
+                    best = (r, d)
+            return best
+        d = self._road_geom_list[idx].distance(pt)
+        return (road, d)
 
     def road_speed_at(self, pos: Position) -> float | None:
         """Speed factor of the nearest road if within its width, else None."""
@@ -247,20 +276,27 @@ class InfrastructureManager:
 
     def buildings_at(self, pos: Position) -> list[Building]:
         """Return buildings whose footprint contains *pos*."""
+        if self._building_tree is None:
+            return []
         pt = Point(pos.easting, pos.northing)
+        indices = self._building_tree.query(pt, predicate='covered_by')
         return [
-            self._buildings[bid]
-            for bid, geom in self._building_geoms.items()
-            if geom.contains(pt) and self._buildings[bid].condition > 0
+            self._buildings[self._building_ids[i]]
+            for i in indices
+            if self._buildings[self._building_ids[i]].condition > 0
         ]
 
     def buildings_near(self, pos: Position, radius: Meters) -> list[Building]:
         """Return buildings within *radius* of *pos*."""
+        if self._building_tree is None:
+            return []
         pt = Point(pos.easting, pos.northing)
+        indices = self._building_tree.query(pt.buffer(radius))
         return [
-            self._buildings[bid]
-            for bid, geom in self._building_geoms.items()
-            if geom.distance(pt) <= radius and self._buildings[bid].condition > 0
+            self._buildings[self._building_ids[i]]
+            for i in indices
+            if self._buildings[self._building_ids[i]].condition > 0
+            and self._building_geom_list[i].distance(pt) <= radius
         ]
 
     def max_building_height_at(self, pos: Position) -> Meters:
@@ -276,12 +312,17 @@ class InfrastructureManager:
 
     def airfields_near(self, pos: Position, radius: Meters) -> list[Airfield]:
         """Return airfields within *radius* of *pos*."""
+        if self._airfield_tree is None:
+            return []
+        pt = Point(pos.easting, pos.northing)
+        indices = self._airfield_tree.query(pt.buffer(radius))
         return [
-            a for a in self._airfields.values()
-            if a.condition > 0
+            self._airfields[self._airfield_ids[i]]
+            for i in indices
+            if self._airfields[self._airfield_ids[i]].condition > 0
             and math.sqrt(
-                (pos.easting - a.position[0]) ** 2
-                + (pos.northing - a.position[1]) ** 2
+                (pos.easting - self._airfields[self._airfield_ids[i]].position[0]) ** 2
+                + (pos.northing - self._airfields[self._airfield_ids[i]].position[1]) ** 2
             ) <= radius
         ]
 

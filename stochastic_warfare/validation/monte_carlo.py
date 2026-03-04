@@ -9,7 +9,7 @@ and campaign-level (:class:`CampaignMonteCarloHarness`) validation.
 from __future__ import annotations
 
 import os
-from concurrent.futures import ProcessPoolExecutor
+from concurrent.futures import ProcessPoolExecutor, as_completed
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -283,27 +283,40 @@ class MonteCarloHarness:
         blue_side: str,
         red_side: str,
     ) -> list[RunResult]:
-        """Run iterations in parallel using ProcessPoolExecutor."""
+        """Run iterations in parallel using submit + as_completed.
+
+        Results are collected as they finish (out of order) and sorted
+        by seed at the end for deterministic ordering.
+        """
         workers = min(self._config.max_workers, len(seeds), os.cpu_count() or 1)
         logger.info(
             "MC parallel: %d iterations across %d workers", len(seeds), workers
         )
 
-        # Serialize config + engagement to dicts for pickling
         runner_cfg_dict = self._runner._config.model_dump()
         eng_dict = engagement.model_dump()
 
-        args_list = [
-            (runner_cfg_dict, eng_dict, seed, blue_side, red_side)
-            for seed in seeds
-        ]
-
         run_results: list[RunResult] = []
+        completed = 0
         with ProcessPoolExecutor(max_workers=workers) as executor:
-            for i, result in enumerate(executor.map(_run_single_iteration, args_list)):
-                logger.info("MC run %d/%d complete (seed=%d)", i + 1, len(seeds), result.seed)
+            futures = {
+                executor.submit(
+                    _run_single_iteration,
+                    (runner_cfg_dict, eng_dict, seed, blue_side, red_side),
+                ): seed
+                for seed in seeds
+            }
+            for future in as_completed(futures):
+                result = future.result()
+                completed += 1
+                logger.info(
+                    "MC run %d/%d complete (seed=%d)",
+                    completed, len(seeds), result.seed,
+                )
                 run_results.append(result)
 
+        # Sort by seed for deterministic ordering
+        run_results.sort(key=lambda r: r.seed)
         return run_results
 
 
@@ -409,7 +422,10 @@ class CampaignMonteCarloHarness:
         blue_side: str,
         red_side: str,
     ) -> list[RunResult]:
-        """Run campaign iterations in parallel."""
+        """Run campaign iterations in parallel using submit + as_completed.
+
+        Results sorted by seed for deterministic ordering.
+        """
         workers = min(self._config.max_workers, len(seeds), os.cpu_count() or 1)
         logger.info(
             "Campaign MC parallel: %d iterations across %d workers",
@@ -419,18 +435,25 @@ class CampaignMonteCarloHarness:
         runner_cfg_dict = self._runner._config.model_dump()
         campaign_dict = campaign.model_dump()
 
-        args_list = [
-            (runner_cfg_dict, campaign_dict, seed, blue_side, red_side)
-            for seed in seeds
-        ]
-
         run_results: list[RunResult] = []
+        completed = 0
         with ProcessPoolExecutor(max_workers=workers) as executor:
-            for i, result in enumerate(executor.map(_run_campaign_iteration, args_list)):
+            futures = {
+                executor.submit(
+                    _run_campaign_iteration,
+                    (runner_cfg_dict, campaign_dict, seed, blue_side, red_side),
+                ): seed
+                for seed in seeds
+            }
+            for future in as_completed(futures):
+                result = future.result()
+                completed += 1
                 logger.info(
                     "Campaign MC run %d/%d complete (seed=%d)",
-                    i + 1, len(seeds), result.seed,
+                    completed, len(seeds), result.seed,
                 )
                 run_results.append(result)
 
+        # Sort by seed for deterministic ordering
+        run_results.sort(key=lambda r: r.seed)
         return run_results

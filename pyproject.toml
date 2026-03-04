@@ -23,13 +23,17 @@ dev = [
     "pytest-cov>=4.1",
     "matplotlib>=3.8",
 ]
+perf = [
+    "numba>=0.59",
+]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 strict_markers = true
-addopts = "-m 'not slow'"
+addopts = "-m 'not slow and not benchmark'"
 markers = [
     "slow: marks tests as slow (1000-run Monte Carlo, run explicitly with '-m slow')",
+    "benchmark: marks tests as performance benchmarks (run explicitly with '-m benchmark')",
 ]
 
 [tool.setuptools.packages.find]

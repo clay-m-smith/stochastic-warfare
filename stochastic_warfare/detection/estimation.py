@@ -161,6 +161,10 @@ class StateEstimator:
     ) -> None:
         self._rng = rng or np.random.default_rng(0)
         self._config = config or EstimationConfig()
+        # Kalman F/Q matrix cache (keyed by dt)
+        self._cached_dt: float | None = None
+        self._cached_F: np.ndarray | None = None
+        self._cached_Q: np.ndarray | None = None
 
     # ------------------------------------------------------------------
     # Kalman predict
@@ -171,31 +175,35 @@ class StateEstimator:
 
         State transition: x_pred = F @ x
         Covariance:       P_pred = F @ P @ F^T + Q
-        """
-        q = self._config.process_noise_std
 
-        # State vector [x, y, vx, vy]
+        F and Q matrices are cached when *dt* is unchanged between calls,
+        eliminating redundant 4×4 array construction for the common case
+        where all tracks share the same tick duration.
+        """
+        if dt != self._cached_dt:
+            q = self._config.process_noise_std
+            dt2 = dt * dt
+            dt3 = dt2 * dt / 2.0
+            dt4 = dt2 * dt2 / 4.0
+            self._cached_F = np.array([
+                [1, 0, dt, 0],
+                [0, 1, 0, dt],
+                [0, 0, 1, 0],
+                [0, 0, 0, 1],
+            ])
+            self._cached_Q = q * q * np.array([
+                [dt4, 0, dt3, 0],
+                [0, dt4, 0, dt3],
+                [dt3, 0, dt2, 0],
+                [0, dt3, 0, dt2],
+            ])
+            self._cached_dt = dt
+
+        F = self._cached_F
+        Q = self._cached_Q
+
         x = np.concatenate([track.state.position, track.state.velocity])
         P = track.state.covariance.copy()
-
-        # Transition matrix
-        F = np.array([
-            [1, 0, dt, 0],
-            [0, 1, 0, dt],
-            [0, 0, 1, 0],
-            [0, 0, 0, 1],
-        ])
-
-        # Process noise (acceleration noise)
-        dt2 = dt * dt
-        dt3 = dt2 * dt / 2.0
-        dt4 = dt2 * dt2 / 4.0
-        Q = q * q * np.array([
-            [dt4, 0, dt3, 0],
-            [0, dt4, 0, dt3],
-            [dt3, 0, dt2, 0],
-            [0, dt3, 0, dt2],
-        ])
 
         x_pred = F @ x
         P_pred = F @ P @ F.T + Q

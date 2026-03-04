@@ -2,6 +2,10 @@
 
 Checks terrain and building obstructions.  Earth curvature correction
 applied for ranges > 2 km using the 4/3 effective earth radius model.
+
+Phase 13a-4: Multi-tick LOS cache with selective invalidation based on
+dirty grid cells (units that moved).
+Phase 13a-5: Vectorized viewshed computation using numpy broadcasting.
 """
 
 from __future__ import annotations
@@ -11,6 +15,7 @@ from typing import NamedTuple
 
 import numpy as np
 
+from stochastic_warfare.core.numba_utils import optional_jit
 from stochastic_warfare.core.types import Meters, Position
 from stochastic_warfare.terrain.heightmap import Heightmap
 from stochastic_warfare.terrain.infrastructure import InfrastructureManager
@@ -28,6 +33,71 @@ class LOSResult(NamedTuple):
     blocked_at: Position | None
     blocked_by: str | None  # "terrain" or "building"
     grazing_distance: Meters | None  # closest clearance distance
+
+
+# ---------------------------------------------------------------------------
+# JIT kernel for terrain-only ray march
+# ---------------------------------------------------------------------------
+
+
+@optional_jit
+def _los_terrain_kernel(
+    obs_e: float, obs_n: float,
+    obs_elev: float, tgt_elev: float,
+    dx: float, dy: float,
+    total_dist: float, num_steps: int,
+    k_factor: float, r_earth: float,
+    heightmap_data: np.ndarray,
+    origin_e: float, origin_n: float, cell_size: float,
+) -> tuple[int, float]:
+    """JIT-compiled terrain-only LOS ray march.
+
+    Returns (blocked_step, min_clearance).
+    blocked_step = -1 if not blocked, otherwise the step index.
+    """
+    min_clearance = 1e30  # large initial value
+    nrows = heightmap_data.shape[0]
+    ncols = heightmap_data.shape[1]
+
+    for i in range(1, num_steps):
+        frac = i / num_steps
+        d = frac * total_dist
+
+        sample_e = obs_e + dx * frac
+        sample_n = obs_n + dy * frac
+
+        # Bounds check (inline)
+        col_f = (sample_e - origin_e) / cell_size - 0.5
+        row_f = (sample_n - origin_n) / cell_size - 0.5
+        if row_f < 0 or row_f > nrows - 1 or col_f < 0 or col_f > ncols - 1:
+            continue
+
+        # Bilinear interpolation (inline)
+        r0 = int(math.floor(row_f))
+        c0 = int(math.floor(col_f))
+        r1 = min(r0 + 1, nrows - 1)
+        c1 = min(c0 + 1, ncols - 1)
+        fr = row_f - r0
+        fc = col_f - c0
+        terrain_elev = (
+            heightmap_data[r0, c0] * (1 - fr) * (1 - fc)
+            + heightmap_data[r1, c0] * fr * (1 - fc)
+            + heightmap_data[r0, c1] * (1 - fr) * fc
+            + heightmap_data[r1, c1] * fr * fc
+        )
+
+        # Earth curvature
+        curvature_drop = (d * (total_dist - d)) / (2 * k_factor * r_earth)
+        ray_elev = obs_elev + (tgt_elev - obs_elev) * frac - curvature_drop
+        clearance = ray_elev - terrain_elev
+
+        if clearance < min_clearance:
+            min_clearance = clearance
+
+        if clearance < 0:
+            return (i, min_clearance)
+
+    return (-1, min_clearance)
 
 
 # ---------------------------------------------------------------------------
@@ -77,6 +147,27 @@ class LOSEngine:
         stale results from prior ticks (before movement) are discarded.
         """
         self._los_cache.clear()
+
+    def invalidate_cells(self, dirty_cells: set[tuple[int, int]]) -> None:
+        """Selectively invalidate cache entries involving dirty grid cells.
+
+        Only removes entries whose observer OR target grid cell is in
+        *dirty_cells*.  More efficient than :meth:`clear_los_cache` when
+        only a few units moved (Phase 13a-4).
+
+        Parameters
+        ----------
+        dirty_cells:
+            Set of (row, col) grid cells that changed (units moved to/from).
+        """
+        if not dirty_cells or not self._los_cache:
+            return
+        keys_to_remove = [
+            key for key in self._los_cache
+            if (key[0], key[1]) in dirty_cells or (key[2], key[3]) in dirty_cells
+        ]
+        for key in keys_to_remove:
+            del self._los_cache[key]
 
     @property
     def los_cache_size(self) -> int:
@@ -252,6 +343,37 @@ class LOSEngine:
         grazing = min_clearance if min_clearance < float("inf") else None
         return LOSResult(True, None, None, grazing)
 
+    def _check_los_terrain_jit(
+        self,
+        observer: Position,
+        obs_elev: float,
+        tgt_elev: float,
+        dx: float,
+        dy: float,
+        total_dist: float,
+        num_steps: int,
+        k_factor: float,
+        r_earth: float,
+    ) -> LOSResult:
+        """JIT-accelerated terrain-only LOS check (no infrastructure)."""
+        blocked_step, min_clearance = _los_terrain_kernel(
+            observer.easting, observer.northing,
+            obs_elev, tgt_elev,
+            dx, dy, total_dist, num_steps,
+            k_factor, r_earth,
+            self._hm._data,
+            self._hm._config.origin_easting,
+            self._hm._config.origin_northing,
+            self._hm._config.cell_size,
+        )
+        if blocked_step >= 0:
+            frac = blocked_step / num_steps
+            bx = observer.easting + dx * frac
+            by = observer.northing + dy * frac
+            return LOSResult(False, Position(bx, by), "terrain", 0.0)
+        grazing = min_clearance if min_clearance < 1e29 else None
+        return LOSResult(True, None, None, grazing)
+
     def visible_area(
         self,
         observer: Position,
@@ -263,21 +385,39 @@ class LOSEngine:
 
         Returns a 2-D boolean array aligned with the heightmap where
         True = visible from the observer position.
+
+        Uses vectorized distance computation to skip out-of-range cells
+        (Phase 13a-5).  Individual LOS checks still go through
+        :meth:`check_los` (which benefits from the per-tick cache).
         """
         rows, cols = self._hm.shape
+        cs = self._hm.cell_size
+
+        # Build grid-cell centre coordinate arrays
+        row_indices = np.arange(rows)
+        col_indices = np.arange(cols)
+        # Northing increases with row, easting increases with col
+        northings = self._hm._config.origin_northing + (row_indices + 0.5) * cs
+        eastings = self._hm._config.origin_easting + (col_indices + 0.5) * cs
+
+        # 2-D broadcast: (rows, 1) and (1, cols)
+        de = eastings[np.newaxis, :] - observer.easting   # (1, cols)
+        dn = northings[:, np.newaxis] - observer.northing  # (rows, 1)
+        dist_sq = de * de + dn * dn
+        max_range_sq = max_range * max_range
+        in_range_mask = dist_sq <= max_range_sq
+
         viewshed = np.zeros((rows, cols), dtype=bool)
 
-        for r in range(rows):
-            for c in range(cols):
-                target = self._hm.grid_to_enu(r, c)
-                dist = math.sqrt(
-                    (target.easting - observer.easting) ** 2
-                    + (target.northing - observer.northing) ** 2
-                )
-                if dist > max_range:
-                    continue
-                result = self.check_los(observer, target, observer_height)
-                viewshed[r, c] = result.visible
+        # Get indices of in-range cells (avoids iterating all cells)
+        in_range_rows, in_range_cols = np.where(in_range_mask)
+
+        for idx in range(len(in_range_rows)):
+            r = int(in_range_rows[idx])
+            c = int(in_range_cols[idx])
+            target = self._hm.grid_to_enu(r, c)
+            result = self.check_los(observer, target, observer_height)
+            viewshed[r, c] = result.visible
 
         return viewshed
 

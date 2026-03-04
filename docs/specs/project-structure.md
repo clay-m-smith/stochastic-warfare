@@ -1,5 +1,5 @@
 # Project Structure & Module Decomposition
-**Status**: Complete (Phase 12)
+**Status**: Complete (Phase 13 + postmortem)
 **Last Updated**: 2026-03-03
 
 ---
@@ -80,6 +80,7 @@ stochastic-warfare/
 │   ├── conftest.py                   # Shared fixtures (rng, event_bus, sim_clock) + helpers
 │   ├── unit/                         # Fast, isolated unit tests
 │   ├── integration/                  # Multi-module integration tests
+│   ├── benchmarks/                   # Performance benchmarks + determinism verification [Phase 13]
 │   └── validation/                   # Historical backtest scenarios
 ├── scripts/
 │   └── visualize/                    # Matplotlib visualization utilities
@@ -93,7 +94,8 @@ stochastic-warfare/
     │   ├── config.py                 # YAML config loading, pydantic base models
     │   ├── checkpoint.py             # State serialization, checkpoint/restore
     │   ├── logging.py                # Project logging setup
-    │   └── types.py                  # Shared type definitions, enums, constants
+    │   ├── types.py                  # Shared type definitions, enums, constants
+    │   └── numba_utils.py           # Numba JIT decorators with pure-Python fallback (@optional_jit) [Phase 13b]
     ├── coordinates/                  # Coordinate systems & transforms
     │   ├── __init__.py
     │   ├── transforms.py             # Geodetic ↔ UTM ↔ ENU conversions
@@ -286,7 +288,8 @@ stochastic-warfare/
         ├── scenario.py               # Scenario loading, setup, initialization
         ├── victory.py                # Victory conditions, war termination criteria, objective evaluation
         ├── recorder.py               # Event/state recording for replay & analysis
-        └── metrics.py                # Simulation output metrics, statistical aggregation, analysis hooks
+        ├── metrics.py                # Simulation output metrics, statistical aggregation, analysis hooks
+        └── aggregation.py           # Force aggregation/disaggregation engine for campaign-scale [Phase 13a]
 ```
 
 ---

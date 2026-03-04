@@ -1,8 +1,8 @@
 # Stochastic Warfare
 
 ![Python](https://img.shields.io/badge/python-%3E%3D3.12-blue)
-![Tests](https://img.shields.io/badge/tests-4%2C077_passing-brightgreen)
-![Phase](https://img.shields.io/badge/phase-12_Post--MVP-blue)
+![Tests](https://img.shields.io/badge/tests-4%2C247_passing-brightgreen)
+![Phase](https://img.shields.io/badge/phase-13_Post--MVP-blue)
 
 High-fidelity, high-resolution wargame simulator built as a headless Python engine. Models warfare across multiple scales — from individual unit engagements up through tactical battles, operational battlefields, and multi-day strategic campaigns — with stochastic and signal-processing-inspired models throughout.
 
@@ -86,7 +86,7 @@ For full architectural rationale, see [`docs/brainstorm.md`](docs/brainstorm.md)
 ## Project Structure
 
 ```
-stochastic_warfare/       # simulation engine (14 modules, ~165 source files)
+stochastic_warfare/       # simulation engine (14 modules, ~167 source files)
   core/                   # types, logging, RNG, clock, events, config, checkpoint
   coordinates/            # geodetic/UTM/ENU transforms, magnetic declination
   terrain/                # heightmap, classification, bathymetry, LOS, infrastructure
@@ -119,7 +119,7 @@ data/                     # ~118 YAML data files
   medical/                # 2 medical facility definitions
   scenarios/              # 3 engagement + 6 campaign scenarios
 
-tests/                    # 4,077 tests across ~136 test files
+tests/                    # 4,219 tests across ~149 test files
 docs/                     # specs, brainstorm, devlog, development phases
 ```
 
@@ -127,7 +127,7 @@ For the full package tree and module decomposition, see [`docs/specs/project-str
 
 ## Development Status
 
-All 11 MVP phases (0–10) are complete. Post-MVP deep systems rework through Phase 12 is complete.
+All 11 MVP phases (0–10) are complete. Post-MVP Phases 11–13 are complete (deep systems rework + performance optimization).
 
 | Phase | Focus | Tests | Status |
 |-------|-------|-------|--------|
@@ -144,7 +144,8 @@ All 11 MVP phases (0–10) are complete. Post-MVP deep systems rework through Ph
 | 10 | Campaign Validation | 196 | Complete |
 | 11 | Core Fidelity Fixes | 109 | Complete |
 | 12 | Deep Systems Rework | 259 | Complete |
-| | **Total** | **4,077** | |
+| 13 | Performance Optimization | 142 | Complete |
+| | **Total** | **4,219** | |
 
 For the full phase roadmap, see [`docs/development-phases.md`](docs/development-phases.md) (MVP) and [`docs/development-phases-post-mvp.md`](docs/development-phases-post-mvp.md) (post-MVP). For per-phase implementation logs, see [`docs/devlog/`](docs/devlog/).
 
@@ -160,7 +161,7 @@ For the full phase roadmap, see [`docs/development-phases.md`](docs/development-
 | `shapely` | Vector geometry (roads, rivers, coastlines, obstacles) |
 | `networkx` | Supply network graphs, strategic map routing |
 
-Dev dependencies: `pytest`, `pytest-cov`, `matplotlib`
+Optional: `numba` (JIT acceleration, `uv sync --extra perf`). Dev: `pytest`, `pytest-cov`, `matplotlib`
 
 ## Documentation
 

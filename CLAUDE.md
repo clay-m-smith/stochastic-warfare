@@ -3,7 +3,7 @@
 ## Project Overview
 High-fidelity, high-resolution wargame simulator. Multi-scale (campaign → battlefield → battle → unit level) with stochastic/signal-processing-inspired models (Markov chains, Monte Carlo, Kalman filters, noise models, queueing theory). Headless Python engine first; matplotlib for validation; full UI deferred. Modern era (Cold War–present) as prototype. Maritime warfare fully integrated, not deferred.
 
-**Current status**: Phase 12 complete (Deep Systems Rework). 4,077 tests passing. MVP complete (phases 0-10). Post-MVP Phases 11-12 delivered — Phase 11: 15 deficit fixes across ~20 source files. Phase 12: 16 deficits resolved + 2 new domains (civilian population, strategic air campaigns/IADS) across 12 new + ~25 modified source files.
+**Current status**: Phase 13 complete (Performance Optimization) + postmortem cleanup. 4,247 tests passing. MVP complete (phases 0-10). Post-MVP Phases 11-13 delivered — Phase 11: 15 deficit fixes across ~20 source files. Phase 12: 16 deficits resolved + 2 new domains (civilian population, strategic air campaigns/IADS) across 12 new + ~25 modified source files. Phase 13: Performance optimization (STRtree, Kalman cache, LOS cache, viewshed vectorization, auto-resolve, force aggregation, Numba JIT, A* precompute, MC parallelism) across 2 new + ~10 modified source files. Postmortem: wired aggregation engine + selective LOS invalidation into simulation loop.
 
 ## Python & Package Management
 **Requires Python >=3.12** (pinned to 3.12.10 via `.python-version`).
@@ -222,3 +222,12 @@ No new dependencies.
 - **12f Air Campaigns/IADS** (47 tests): IADS sectors (radar handoff chain, SEAD degradation), air campaign management (sortie capacity, pilot fatigue, weather days, attrition), strategic targeting (TPL, BDA with ×3 overestimate bias, target regeneration), strategic infrastructure nodes (PowerPlant, Factory, Port, SupplyDepot)
 
 No new dependencies.
+
+### Phase 13: Performance Optimization (142 tests + 28 postmortem)
+2 new source files + ~10 modified. Optional `numba` dependency (`uv sync --extra perf`). All changes backward-compatible with `enable_*` config flags.
+- **13a Algorithmic** (99 tests): STRtree spatial indexing (infrastructure.py), multi-tick LOS cache with selective invalidation (los.py), viewshed vectorization (los.py), Kalman F/Q matrix caching (estimation.py), auto-resolve for minor battles (battle.py), force aggregation/disaggregation (aggregation.py — new), benchmark infrastructure
+- **13b Compiled Extensions** (42 tests): `@optional_jit` Numba wrapper with fallback (numba_utils.py — new), RK4 trajectory JIT kernel (ballistics.py), DDA raycasting JIT kernel (los.py), A* difficulty grid pre-computation (pathfinding.py)
+- **13c Parallelism** (17 tests): MC `submit()`+`as_completed()` pattern (monte_carlo.py), determinism verification suite (11 tests)
+- **Postmortem** (28 tests): Wired `aggregation_engine` into `SimulationContext` + engine strategic tick (disaggregation triggers → aggregation candidates). Wired selective LOS invalidation into engine (dirty-cell tracking around movement, `enable_selective_los_invalidation` config flag). Added `_compute_battle_positions()` and `_snapshot_unit_cells()` helpers. Golan campaign profiling script (`scripts/profile_golan.py`).
+
+Optional dependency: `numba>=0.59` (via `--extra perf`).
