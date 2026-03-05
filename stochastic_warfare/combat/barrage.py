@@ -82,6 +82,12 @@ class BarrageConfig(BaseModel):
     trench_condition_loss_per_density: float = 0.0001
     """Trench condition loss per round/hectare of fire density."""
 
+    observer_correction_factor: float = 0.5
+    """How strongly an observer corrects drift (0.0–1.0)."""
+
+    observer_quality_default: float = 0.5
+    """Default observer quality when not specified."""
+
 
 # ---------------------------------------------------------------------------
 # Barrage zone state
@@ -109,6 +115,8 @@ class BarrageZone:
     drift_easting_m: float = 0.0
     drift_northing_m: float = 0.0
     active: bool = True
+    has_observer: bool = False
+    observer_quality: float = 0.5
 
 
 # ---------------------------------------------------------------------------
@@ -149,6 +157,8 @@ class BarrageEngine:
         heading_deg: float = 0.0,
         fire_density: float = 100.0,
         duration_s: float | None = None,
+        has_observer: bool = False,
+        observer_quality: float = 0.5,
     ) -> BarrageZone:
         """Create a new barrage zone."""
         dur = duration_s or self._config.default_duration_s
@@ -169,6 +179,8 @@ class BarrageEngine:
             advance_rate_mps=advance,
             fire_density_rounds_per_hectare=fire_density,
             duration_s=dur,
+            has_observer=has_observer,
+            observer_quality=observer_quality,
         )
         self._barrages[barrage_id] = zone
         logger.info(
@@ -218,6 +230,12 @@ class BarrageEngine:
             if sigma > 0:
                 zone.drift_easting_m += self._rng.normal(0, sigma)
                 zone.drift_northing_m += self._rng.normal(0, sigma)
+
+            # Observer correction — reduces accumulated drift
+            if zone.has_observer:
+                correction = cfg.observer_correction_factor * zone.observer_quality
+                zone.drift_easting_m *= (1.0 - correction)
+                zone.drift_northing_m *= (1.0 - correction)
 
             # Trench degradation
             if trench_engine is not None:
@@ -344,6 +362,8 @@ class BarrageEngine:
                     "drift_easting_m": z.drift_easting_m,
                     "drift_northing_m": z.drift_northing_m,
                     "active": z.active,
+                    "has_observer": z.has_observer,
+                    "observer_quality": z.observer_quality,
                 }
                 for bid, z in self._barrages.items()
             },
@@ -354,4 +374,6 @@ class BarrageEngine:
         self._barrages.clear()
         for bid, zdata in state.get("barrages", {}).items():
             zdata["barrage_type"] = BarrageType(zdata["barrage_type"])
+            zdata.setdefault("has_observer", False)
+            zdata.setdefault("observer_quality", 0.5)
             self._barrages[bid] = BarrageZone(**zdata)

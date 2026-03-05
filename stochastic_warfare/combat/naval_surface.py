@@ -41,6 +41,12 @@ class NavalSurfaceConfig(BaseModel):
     capsize_threshold: float = 0.6
     progressive_flooding_rate: float = 0.02  # per second per damaged bulkhead
     counter_flooding_rate: float = 0.01  # per second
+    # Modern naval gun (Phase 27c)
+    naval_gun_base_pk_per_round: float = 0.03
+    naval_gun_fire_control_bonus: float = 1.5
+    naval_gun_max_range_m: float = 24_000.0
+    naval_gun_rate_of_fire_rpm: float = 20.0
+    naval_gun_damage_per_hit: float = 0.05
 
 
 @dataclass
@@ -98,6 +104,19 @@ class ShipDamageState:
         self.systems_damaged = list(state["systems_damaged"])
         self.compartment_flooding = list(state.get("compartment_flooding", []))
         self.capsized = state.get("capsized", False)
+
+
+@dataclass
+class NavalGunResult:
+    """Outcome of a modern naval gun engagement."""
+
+    ship_id: str
+    target_id: str
+    rounds_fired: int
+    hits: int
+    damage_per_hit: float
+    total_damage: float
+    range_m: float
 
 
 class NavalSurfaceEngine:
@@ -585,6 +604,67 @@ class NavalSurfaceEngine:
             return True
 
         return False
+
+    def naval_gun_engagement(
+        self,
+        ship_id: str,
+        target_id: str,
+        range_m: float,
+        rounds_fired: int,
+        fire_control_quality: float = 0.8,
+        target_size_m2: float = 2000.0,
+        sea_state: int = 3,
+        timestamp: Any = None,
+    ) -> NavalGunResult:
+        """Modern radar-directed naval gun engagement.
+
+        Pk per round = base * FC_bonus * range_factor * sea_state_factor.
+        Each round resolved as independent Bernoulli trial.
+        """
+        cfg = self._config
+
+        # Range factor: linear degradation
+        if range_m > cfg.naval_gun_max_range_m:
+            return NavalGunResult(
+                ship_id=ship_id, target_id=target_id,
+                rounds_fired=0, hits=0,
+                damage_per_hit=cfg.naval_gun_damage_per_hit,
+                total_damage=0.0, range_m=range_m,
+            )
+        range_factor = max(0.2, 1.0 - 0.8 * (range_m / cfg.naval_gun_max_range_m))
+
+        # Sea state factor: degrades accuracy above state 4
+        sea_factor = max(0.3, 1.0 - 0.15 * max(0, sea_state - 3))
+
+        # Size factor: larger targets easier to hit
+        size_factor = min(2.0, (target_size_m2 / 1000.0) ** 0.25)
+
+        pk_per_round = (
+            cfg.naval_gun_base_pk_per_round
+            * cfg.naval_gun_fire_control_bonus
+            * fire_control_quality
+            * range_factor
+            * sea_factor
+            * size_factor
+        )
+        pk_per_round = max(0.001, min(0.5, pk_per_round))
+
+        hits = int(self._rng.binomial(rounds_fired, pk_per_round))
+        total_damage = hits * cfg.naval_gun_damage_per_hit
+
+        if timestamp is not None and hits > 0:
+            self._event_bus.publish(NavalEngagementEvent(
+                timestamp=timestamp, source=ModuleId.COMBAT,
+                attacker_id=ship_id, target_id=target_id,
+                weapon_type="NAVAL_GUN",
+            ))
+
+        return NavalGunResult(
+            ship_id=ship_id, target_id=target_id,
+            rounds_fired=rounds_fired, hits=hits,
+            damage_per_hit=cfg.naval_gun_damage_per_hit,
+            total_damage=total_damage, range_m=range_m,
+        )
 
     def get_state(self) -> dict[str, Any]:
         return {

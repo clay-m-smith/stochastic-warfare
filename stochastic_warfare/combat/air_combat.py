@@ -68,6 +68,10 @@ class AirCombatConfig(BaseModel):
     deflection_penalty_per_deg: float = 0.005
     guns_base_pk: float = 0.15
     energy_advantage_weight: float = 0.0
+    # EW integration (Phase 27a)
+    enable_ew_countermeasures: bool = False
+    # Multi-spectral CM (Phase 27b)
+    dircm_effectiveness: float = 0.5
 
 
 @dataclass
@@ -124,6 +128,9 @@ class AirCombatEngine:
         timestamp: Any = None,
         attacker_energy: EnergyState | None = None,
         defender_energy: EnergyState | None = None,
+        ew_decoy_engine: Any | None = None,
+        jamming_engine: Any | None = None,
+        countermeasure_types: list[str] | None = None,
     ) -> AirCombatResult:
         """Resolve an air-to-air engagement, auto-selecting mode if not given.
 
@@ -181,19 +188,58 @@ class AirCombatEngine:
                 missile_pk=0.0, effective_pk=0.0, hit=False, range_m=range_m,
             )
 
+        # Determine effective CM: EW engines, multi-CM list, or legacy string
+        ew_cm = countermeasure_type
+        if cfg.enable_ew_countermeasures and (ew_decoy_engine or jamming_engine):
+            seeker_type = 4 if mode == AirCombatMode.BVR else 6  # radar or IR
+            ew_reduction = self.compute_ew_countermeasure_reduction(
+                defender_pos, seeker_type, ew_decoy_engine, jamming_engine,
+            )
+            # Use "none" for sub-calls; apply EW reduction separately
+            ew_cm = "none"
+        else:
+            ew_reduction = 0.0
+
         if mode == AirCombatMode.BVR:
             result = self.bvr_engagement(
-                attacker_id, defender_id, range_m, missile_pk, countermeasure_type,
+                attacker_id, defender_id, range_m, missile_pk, ew_cm,
             )
         elif mode == AirCombatMode.WVR:
             result = self.wvr_engagement(
                 attacker_id, defender_id, range_m, missile_pk, aspect_angle_deg,
-                countermeasure_type,
+                ew_cm,
             )
         else:
             result = self.guns_engagement(
                 attacker_id, defender_id, range_m, pilot_skill, aspect_angle_deg,
             )
+
+        # Apply EW reduction post-dispatch
+        if ew_reduction > 0 and mode != AirCombatMode.GUNS_ONLY:
+            new_pk = result.effective_pk * (1.0 - ew_reduction)
+            new_pk = max(0.01, min(0.99, new_pk))
+            result = AirCombatResult(
+                mode=result.mode, attacker_id=result.attacker_id,
+                target_id=result.target_id, missile_pk=result.missile_pk,
+                effective_pk=new_pk, hit=float(self._rng.random()) < new_pk,
+                range_m=result.range_m,
+                countermeasure_reduction=result.countermeasure_reduction + ew_reduction,
+            )
+
+        # Multi-spectral CM stacking (overrides string CM if list provided)
+        if countermeasure_types is not None and mode != AirCombatMode.GUNS_ONLY:
+            guidance = "radar" if mode == AirCombatMode.BVR else "ir"
+            multi_reduction = self.apply_countermeasures_multi(guidance, countermeasure_types)
+            if multi_reduction > result.countermeasure_reduction:
+                new_pk = result.missile_pk * (1.0 - multi_reduction)
+                new_pk = max(0.01, min(0.99, new_pk))
+                result = AirCombatResult(
+                    mode=result.mode, attacker_id=result.attacker_id,
+                    target_id=result.target_id, missile_pk=result.missile_pk,
+                    effective_pk=new_pk, hit=float(self._rng.random()) < new_pk,
+                    range_m=result.range_m,
+                    countermeasure_reduction=multi_reduction,
+                )
 
         # Energy-maneuverability modifier (Boyd/Christie E-M theory)
         if (
@@ -441,6 +487,67 @@ class AirCombatEngine:
             return cfg.flare_effectiveness
         # Mismatched CM type (chaff vs IR, flares vs radar) — minimal effect
         return 0.05
+
+    def compute_ew_countermeasure_reduction(
+        self,
+        defender_pos: Position,
+        missile_seeker_type: int,
+        ew_decoy_engine: Any | None = None,
+        jamming_engine: Any | None = None,
+    ) -> float:
+        """Compute EW-based Pk reduction from decoys and jamming.
+
+        Queries ``ew_decoy_engine`` for missile divert probability and
+        ``jamming_engine`` for radar SNR penalty (radar seekers only).
+
+        Returns combined Pk reduction factor 0.0–1.0.
+        """
+        reduction = 0.0
+
+        if ew_decoy_engine is not None:
+            divert_p = getattr(ew_decoy_engine, "compute_missile_divert_probability", None)
+            if divert_p is not None:
+                reduction += divert_p(defender_pos, missile_seeker_type)
+
+        # Radar jamming (only for radar seekers: type 4=RADAR_ACTIVE, 5=RADAR_SEMI)
+        if jamming_engine is not None and missile_seeker_type in (4, 5):
+            snr_penalty = getattr(jamming_engine, "compute_radar_snr_penalty", None)
+            if snr_penalty is not None:
+                penalty = snr_penalty(defender_pos)
+                reduction += min(0.5, abs(penalty) / 20.0)
+
+        return min(1.0, reduction)
+
+    def apply_countermeasures_multi(
+        self,
+        guidance_type: str,
+        countermeasure_types: list[str],
+    ) -> float:
+        """Compute multi-spectral countermeasure effectiveness.
+
+        Multiplicative stacking: combined = 1 - product(1 - individual).
+
+        Supports "chaff", "flare", "dircm".
+        """
+        cfg = self._config
+        if not countermeasure_types:
+            return 0.0
+
+        cm_map: dict[tuple[str, str], float] = {
+            ("radar", "chaff"): cfg.chaff_effectiveness,
+            ("ir", "flare"): cfg.flare_effectiveness,
+            ("ir", "dircm"): cfg.dircm_effectiveness,
+            ("radar", "flare"): 0.05,
+            ("ir", "chaff"): 0.05,
+            ("radar", "dircm"): 0.05,
+        }
+
+        survive = 1.0
+        for cm in countermeasure_types:
+            eff = cm_map.get((guidance_type, cm), 0.05)
+            survive *= (1.0 - eff)
+
+        return 1.0 - survive
 
     def get_state(self) -> dict[str, Any]:
         """Return serialisable engine state."""

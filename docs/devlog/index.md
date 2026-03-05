@@ -35,7 +35,7 @@ Rolling record of implementation decisions, changes, and lessons learned across 
 | | | | |
 | 25 | Engine Wiring & Integration Sprint | **Complete** | [phase-25.md](phase-25.md) |
 | 26 | Core Polish & Configuration | **Complete** | [phase-26.md](phase-26.md) |
-| 27 | Combat System Completeness | Planned | — |
+| 27 | Combat System Completeness | **Complete** | [phase-27.md](phase-27.md) |
 | 28 | Modern Era Data Package | Planned | — |
 | 29 | Historical Era Data Expansion | Planned | — |
 | 30 | Scenario & Campaign Library | Planned | — |
@@ -150,15 +150,15 @@ Known limitations and deferred improvements logged during implementation. Review
 | 20 | Strategic bombing target regeneration is linear (no industrial interdependency graph) | [phase-20.md — Known Limitations](phase-20.md#known-limitations) |
 | 20 | Fighter escort in strategic bombing is probability modifier, not full air combat sub-simulation | [phase-20.md — Known Limitations](phase-20.md#known-limitations) |
 | 16/17/18/19/20 | ~~ScenarioLoader doesn't auto-wire era-specific engines from YAML~~ *(resolved Phase 25a)* | [phase-20.md — Postmortem](phase-20.md#postmortem) |
-| 21 | Barrage drift is purely random walk — no systematic correction for observer feedback | [phase-21.md — Known Limitations](phase-21.md#known-limitations) |
-| 21 | Gas warfare engine does not model gas mask don time delay (units gain instant protection) | [phase-21.md — Known Limitations](phase-21.md#known-limitations) |
+| 21 | ~~Barrage drift is purely random walk — no systematic correction for observer feedback~~ *(resolved Phase 27d — observer correction)* | [phase-21.md — Known Limitations](phase-21.md#known-limitations) |
+| 21 | ~~Gas warfare engine does not model gas mask don time delay (units gain instant protection)~~ *(resolved Phase 27d — compute_exposure_during_don + get_effective_mopp_level)* | [phase-21.md — Known Limitations](phase-21.md#known-limitations) |
 | 21 | Trench system has no wire-cutting mechanic (wire is a query attribute only, not a movement blocker) | [phase-21.md — Known Limitations](phase-21.md#known-limitations) |
 | 16/17/18/19/20/21 | ~~ScenarioLoader doesn't auto-wire WW1 engines from YAML~~ *(resolved Phase 25a)* | [phase-21.md — Known Limitations](phase-21.md#known-limitations) |
 | 21 | ~~Gas warfare wind direction tolerance (60°) hardcoded — should be configurable in GasWarfareConfig~~ *(resolved Phase 26b — GasWarfareConfig.max_wind_angle_deg)* | [phase-21.md — Postmortem](phase-21.md#postmortem) |
 | 21 | ~~Barrage/gas engines use hardcoded fallback RNG seed (42) when no RNG injected~~ *(resolved Phase 26a — rng required on all 23 engines)* | [phase-21.md — Postmortem](phase-21.md#postmortem) |
 | 16/17/18/19/20/21/22 | ~~ScenarioLoader doesn't auto-wire Napoleonic engines from YAML~~ *(resolved Phase 25a)* | [phase-22.md — Known Limitations](phase-22.md#known-limitations) |
-| 22 | Cavalry charge ignores terrain effects (speed not modified by slope or obstacles) | [phase-22.md — Known Limitations](phase-22.md#known-limitations) |
-| 22 | No frontage/depth in melee — simplified to force ratio × formation modifier | [phase-22.md — Known Limitations](phase-22.md#known-limitations) |
+| 22 | ~~Cavalry charge ignores terrain effects (speed not modified by slope or obstacles)~~ *(resolved Phase 27d — compute_cavalry_terrain_modifier)* | [phase-22.md — Known Limitations](phase-22.md#known-limitations) |
+| 22 | ~~No frontage/depth in melee — simplified to force ratio × formation modifier~~ *(resolved Phase 27d — compute_frontage_constraint)* | [phase-22.md — Known Limitations](phase-22.md#known-limitations) |
 | 22 | ~~Foraging ambush casualty rate hardcoded at 10% — should be configurable in ForagingConfig~~ *(resolved Phase 26b — ForagingConfig.ambush_casualty_rate)* | [phase-22.md — Known Limitations](phase-22.md#known-limitations) |
 | 22 | ~~Volley/melee/cavalry/courier/foraging engines use hardcoded fallback RNG seed (42) when no RNG injected~~ *(resolved Phase 26a — rng required on all 23 engines)* | [phase-22.md — Known Limitations](phase-22.md#known-limitations) |
 | 16/17/18/19/20/21/22/23 | ~~ScenarioLoader doesn't auto-wire Ancient/Medieval engines from YAML~~ *(resolved Phase 25a)* | [phase-23.md — Postmortem](phase-23.md#postmortem) |

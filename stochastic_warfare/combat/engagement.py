@@ -40,6 +40,9 @@ class EngagementType(enum.IntEnum):
     TORPEDO = 6
     NAVAL_GUN = 7
     MINE = 8
+    COASTAL_DEFENSE = 9
+    AIR_LAUNCHED_ASHM = 10
+    ATGM_VS_ROTARY = 11
 
 
 class EngagementConfig(BaseModel):
@@ -48,6 +51,12 @@ class EngagementConfig(BaseModel):
     max_simultaneous_engagements: int = 3
     fratricide_abort_threshold: float = 0.15
     min_engagement_range_m: float = 10.0
+    # ATGM vs rotary (Phase 27a)
+    atgm_max_altitude_m: float = 500.0
+    atgm_range_decay_factor: float = 0.0001
+    # Burst fire (Phase 27b)
+    enable_burst_fire: bool = False
+    max_burst_size: int = 10
 
 
 @dataclass
@@ -62,6 +71,21 @@ class EngagementResult:
     ammo_id: str = ""
     hit_result: HitResult | None = None
     damage_result: DamageResult | None = None
+    aborted_reason: str = ""
+    range_m: float = 0.0
+
+
+@dataclass
+class BurstEngagementResult:
+    """Outcome of a burst-fire engagement."""
+
+    engaged: bool
+    attacker_id: str = ""
+    target_id: str = ""
+    weapon_id: str = ""
+    rounds_fired: int = 0
+    hits: int = 0
+    damage_results: list[DamageResult] = field(default_factory=list)
     aborted_reason: str = ""
     range_m: float = 0.0
 
@@ -306,6 +330,290 @@ class EngagementEngine:
                 timestamp=timestamp,
             )
             result.damage_result = damage_result
+
+        return result
+
+    def route_engagement(
+        self,
+        engagement_type: EngagementType,
+        attacker_id: str,
+        target_id: str,
+        attacker_pos: Position,
+        target_pos: Position,
+        weapon: WeaponInstance,
+        ammo_id: str,
+        ammo_def: AmmoDefinition,
+        *,
+        missile_engine: Any | None = None,
+        naval_surface_engine: Any | None = None,
+        crew_skill: float = 0.5,
+        target_size_m2: float = 6.0,
+        target_armor_mm: float = 0.0,
+        target_speed_mps: float = 0.0,
+        target_altitude_m: float = 0.0,
+        timestamp: Any = None,
+        current_time_s: float = 0.0,
+    ) -> EngagementResult:
+        """Dispatch an engagement to the appropriate handler.
+
+        Routes DIRECT_FIRE to ``execute_engagement()``, COASTAL_DEFENSE
+        and AIR_LAUNCHED_ASHM to missile launch, ATGM_VS_ROTARY to
+        ``_resolve_atgm_vs_rotary()``, and returns a non-engaged result
+        for unrecognised types.
+        """
+        if engagement_type == EngagementType.DIRECT_FIRE:
+            return self.execute_engagement(
+                attacker_id=attacker_id,
+                target_id=target_id,
+                shooter_pos=attacker_pos,
+                target_pos=target_pos,
+                weapon=weapon,
+                ammo_id=ammo_id,
+                ammo_def=ammo_def,
+                crew_skill=crew_skill,
+                target_size_m2=target_size_m2,
+                target_armor_mm=target_armor_mm,
+                target_speed_mps=target_speed_mps,
+                timestamp=timestamp,
+                current_time_s=current_time_s,
+            )
+
+        if engagement_type == EngagementType.COASTAL_DEFENSE:
+            if missile_engine is None:
+                return EngagementResult(
+                    engaged=False, attacker_id=attacker_id,
+                    target_id=target_id, aborted_reason="no_missile_engine",
+                )
+            from stochastic_warfare.combat.missiles import MissileType
+            missile_engine.launch_missile(
+                ammo=ammo_def,
+                launch_pos=attacker_pos,
+                target_pos=target_pos,
+                missile_type=MissileType.COASTAL_DEFENSE_SSM,
+                timestamp=timestamp,
+            )
+            return EngagementResult(
+                engaged=True, engagement_type=engagement_type,
+                attacker_id=attacker_id, target_id=target_id,
+                weapon_id=weapon.weapon_id, ammo_id=ammo_id,
+            )
+
+        if engagement_type == EngagementType.AIR_LAUNCHED_ASHM:
+            if missile_engine is None:
+                return EngagementResult(
+                    engaged=False, attacker_id=attacker_id,
+                    target_id=target_id, aborted_reason="no_missile_engine",
+                )
+            from stochastic_warfare.combat.missiles import MissileType
+            missile_engine.launch_missile(
+                ammo=ammo_def,
+                launch_pos=attacker_pos,
+                target_pos=target_pos,
+                missile_type=MissileType.CRUISE_SUBSONIC,
+                timestamp=timestamp,
+            )
+            return EngagementResult(
+                engaged=True, engagement_type=engagement_type,
+                attacker_id=attacker_id, target_id=target_id,
+                weapon_id=weapon.weapon_id, ammo_id=ammo_id,
+            )
+
+        if engagement_type == EngagementType.ATGM_VS_ROTARY:
+            return self._resolve_atgm_vs_rotary(
+                attacker_id=attacker_id,
+                target_id=target_id,
+                attacker_pos=attacker_pos,
+                target_pos=target_pos,
+                weapon=weapon,
+                ammo_id=ammo_id,
+                ammo_def=ammo_def,
+                target_altitude_m=target_altitude_m,
+                target_speed_mps=target_speed_mps,
+                timestamp=timestamp,
+            )
+
+        # Unknown engagement type
+        return EngagementResult(
+            engaged=False, attacker_id=attacker_id,
+            target_id=target_id, aborted_reason="unknown_engagement_type",
+        )
+
+    def _resolve_atgm_vs_rotary(
+        self,
+        attacker_id: str,
+        target_id: str,
+        attacker_pos: Position,
+        target_pos: Position,
+        weapon: WeaponInstance,
+        ammo_id: str,
+        ammo_def: AmmoDefinition,
+        target_altitude_m: float = 0.0,
+        target_speed_mps: float = 0.0,
+        timestamp: Any = None,
+    ) -> EngagementResult:
+        """Resolve ATGM engagement against rotary-wing aircraft."""
+        cfg = self._config
+        dx = target_pos.easting - attacker_pos.easting
+        dy = target_pos.northing - attacker_pos.northing
+        dz = target_pos.altitude - attacker_pos.altitude
+        range_m = math.sqrt(dx * dx + dy * dy + dz * dz)
+
+        result = EngagementResult(
+            engaged=False,
+            engagement_type=EngagementType.ATGM_VS_ROTARY,
+            attacker_id=attacker_id,
+            target_id=target_id,
+            weapon_id=weapon.weapon_id,
+            ammo_id=ammo_id,
+            range_m=range_m,
+        )
+
+        # Altitude check
+        if target_altitude_m > cfg.atgm_max_altitude_m:
+            result.aborted_reason = "target_too_high"
+            return result
+
+        # Range check
+        if weapon.definition.max_range_m > 0 and range_m > weapon.definition.max_range_m:
+            result.aborted_reason = "out_of_range"
+            return result
+
+        # Base Pk from ammo
+        base_pk = ammo_def.pk_at_reference if ammo_def.pk_at_reference > 0 else 0.3
+
+        # Range factor
+        range_factor = max(0.1, 1.0 - cfg.atgm_range_decay_factor * range_m)
+
+        # Altitude penalty (higher = harder to track)
+        altitude_penalty = max(0.5, 1.0 - target_altitude_m / cfg.atgm_max_altitude_m)
+
+        # Wire-guided bonus vs hovering target
+        wire_bonus = 1.0
+        if ammo_def.guidance.upper() == "WIRE" and target_speed_mps < 5.0:
+            wire_bonus = 1.2
+
+        effective_pk = base_pk * range_factor * altitude_penalty * wire_bonus
+        effective_pk = max(0.01, min(0.99, effective_pk))
+
+        result.engaged = True
+        hit = float(self._rng.random()) < effective_pk
+
+        if hit:
+            result.hit_result = HitResult(p_hit=effective_pk, range_m=range_m, modifiers={}, hit=True)
+        else:
+            result.hit_result = HitResult(p_hit=effective_pk, range_m=range_m, modifiers={}, hit=False)
+
+        return result
+
+    def execute_burst_engagement(
+        self,
+        attacker_id: str,
+        target_id: str,
+        shooter_pos: Position,
+        target_pos: Position,
+        weapon: WeaponInstance,
+        ammo_id: str,
+        ammo_def: AmmoDefinition,
+        burst_size: int | None = None,
+        crew_skill: float = 0.5,
+        target_size_m2: float = 6.0,
+        target_armor_mm: float = 0.0,
+        target_speed_mps: float = 0.0,
+        shooter_speed_mps: float = 0.0,
+        visibility: float = 1.0,
+        target_posture: str = "MOVING",
+        position_uncertainty_m: float = 0.0,
+        current_time_s: float = 0.0,
+        timestamp: Any = None,
+    ) -> BurstEngagementResult:
+        """Execute a burst-fire engagement (multiple rounds, single cooldown).
+
+        Fires N rounds as independent Bernoulli trials. Resolves damage
+        per hit. Consumes burst_size rounds from magazine.
+        """
+        dx = target_pos.easting - shooter_pos.easting
+        dy = target_pos.northing - shooter_pos.northing
+        dz = target_pos.altitude - shooter_pos.altitude
+        range_m = math.sqrt(dx * dx + dy * dy + dz * dz)
+
+        result = BurstEngagementResult(
+            engaged=False,
+            attacker_id=attacker_id,
+            target_id=target_id,
+            weapon_id=weapon.weapon_id,
+            range_m=range_m,
+        )
+
+        # Range check
+        if not self.can_engage(shooter_pos, target_pos, weapon.definition):
+            result.aborted_reason = "out_of_range"
+            return result
+
+        # Fire rate limiting
+        if not weapon.can_fire_timed(current_time_s):
+            result.aborted_reason = "cooldown"
+            return result
+
+        # Determine burst size
+        if burst_size is None:
+            burst_size = weapon.definition.burst_size
+        if not self._config.enable_burst_fire:
+            burst_size = 1
+        else:
+            burst_size = min(burst_size, self._config.max_burst_size)
+
+        # Check available ammo
+        available = weapon.ammo_state.available(ammo_id)
+        actual_burst = min(burst_size, available)
+        if actual_burst <= 0:
+            result.aborted_reason = "no_ammo"
+            return result
+
+        # Consume ammo
+        for _ in range(actual_burst):
+            if not weapon.fire(ammo_id):
+                break
+
+        # Record fire time (single cooldown for entire burst)
+        weapon.record_fire(current_time_s)
+
+        result.engaged = True
+        result.rounds_fired = actual_burst
+
+        # Compute Pk
+        hit_result = self._hit.compute_phit(
+            weapon=weapon.definition,
+            ammo=ammo_def,
+            range_m=range_m,
+            target_size_m2=target_size_m2,
+            crew_skill=crew_skill,
+            target_speed_mps=target_speed_mps,
+            shooter_speed_mps=shooter_speed_mps,
+            visibility=visibility,
+            target_posture=target_posture,
+            position_uncertainty_m=position_uncertainty_m,
+            weapon_condition=weapon.condition,
+        )
+        p_hit = hit_result.p_hit
+
+        # Resolve each round as independent Bernoulli trial
+        hits = int(self._rng.binomial(actual_burst, p_hit))
+        result.hits = hits
+
+        # Resolve damage per hit
+        if hits > 0:
+            impact_angle = math.degrees(math.atan2(dz, max(range_m, 1.0)))
+            for _ in range(hits):
+                dmg = self._damage.resolve_damage(
+                    target_id=target_id,
+                    ammo=ammo_def,
+                    armor_mm=target_armor_mm,
+                    impact_angle_deg=abs(impact_angle),
+                    range_m=range_m,
+                    posture=target_posture,
+                    timestamp=timestamp,
+                )
+                result.damage_results.append(dmg)
 
         return result
 

@@ -32,6 +32,7 @@ class AirGroundMission(enum.IntEnum):
     DEAD = 2
     AIR_INTERDICTION = 3
     BAI = 4
+    ASHM = 5
 
 
 class AirGroundConfig(BaseModel):
@@ -47,6 +48,11 @@ class AirGroundConfig(BaseModel):
     unguided_base_accuracy: float = 0.35
     weather_accuracy_penalty: float = 0.15
     night_accuracy_penalty: float = 0.10
+    # CAS designation (Phase 27b)
+    jtac_designation_delay_s: float = 15.0
+    laser_acquisition_window_s: float = 10.0
+    talk_on_latency_s: float = 30.0
+    designation_accuracy_bonus: float = 0.15
 
 
 @dataclass
@@ -75,6 +81,27 @@ class SEADResult:
     hit: bool = False
     target_emitting: bool = False
     emcon_defeated: bool = False
+
+
+@dataclass
+class AirASHMResult:
+    """Outcome of an air-launched ASHM engagement."""
+
+    aircraft_id: str
+    target_ship_id: str
+    launched: bool = False
+    missile_type: str = "CRUISE_SUBSONIC"
+    abort_reason: str = ""
+
+
+@dataclass
+class CASDesignationResult:
+    """Result of JTAC target designation for CAS."""
+
+    jtac_present: bool
+    laser_designator: bool = False
+    accuracy_bonus: float = 0.0
+    designation_delay_s: float = 0.0
 
 
 class AirGroundEngine:
@@ -314,6 +341,101 @@ class AirGroundEngine:
         accuracy -= cfg.night_accuracy_penalty * night
 
         return max(0.05, min(1.0, accuracy))
+
+    def execute_ashm(
+        self,
+        aircraft_id: str,
+        target_ship_id: str,
+        aircraft_pos: Position,
+        target_pos: Position,
+        missile_pk: float,
+        missile_type: str = "CRUISE_SUBSONIC",
+        timestamp: Any = None,
+    ) -> AirASHMResult:
+        """Execute an air-launched ASHM engagement.
+
+        Launch-only method (consistent with missiles.py pattern).
+        Actual flight/terminal defense handled by MissileEngine in tick loop.
+        """
+        result = AirASHMResult(
+            aircraft_id=aircraft_id,
+            target_ship_id=target_ship_id,
+            missile_type=missile_type,
+        )
+
+        # Range check
+        dx = target_pos.easting - aircraft_pos.easting
+        dy = target_pos.northing - aircraft_pos.northing
+        dz = target_pos.altitude - aircraft_pos.altitude
+        range_m = math.sqrt(dx * dx + dy * dy + dz * dz)
+
+        # ASHM typical max range ~200km
+        if range_m > 200_000.0:
+            result.abort_reason = "out_of_range"
+            return result
+
+        result.launched = True
+        self._missions_executed += 1
+
+        if timestamp is not None:
+            self._event_bus.publish(AirEngagementEvent(
+                timestamp=timestamp, source=ModuleId.COMBAT,
+                attacker_id=aircraft_id, target_id=target_ship_id,
+                engagement_type="ASHM",
+            ))
+
+        return result
+
+    def compute_cas_designation(
+        self,
+        jtac_present: bool,
+        laser_designator: bool = False,
+        elapsed_since_contact_s: float = 0.0,
+        comm_quality: float = 1.0,
+    ) -> CASDesignationResult:
+        """Compute JTAC designation effects for CAS.
+
+        Parameters
+        ----------
+        jtac_present:
+            Whether a JTAC is on the ground at the target.
+        laser_designator:
+            Whether the JTAC has a laser designator.
+        elapsed_since_contact_s:
+            Time since first contact with target.
+        comm_quality:
+            Communication link quality 0.0–1.0.
+        """
+        cfg = self._config
+
+        if not jtac_present:
+            return CASDesignationResult(jtac_present=False)
+
+        # Must exceed designation delay before any bonus applies
+        if elapsed_since_contact_s < cfg.jtac_designation_delay_s:
+            return CASDesignationResult(
+                jtac_present=True,
+                laser_designator=laser_designator,
+                designation_delay_s=cfg.jtac_designation_delay_s,
+            )
+
+        bonus = cfg.designation_accuracy_bonus * comm_quality
+
+        # Laser designator adds extra precision
+        if laser_designator:
+            bonus += cfg.designation_accuracy_bonus * 0.5
+
+        # Talk-on latency: full bonus only after settling time
+        if elapsed_since_contact_s < cfg.talk_on_latency_s:
+            fraction = elapsed_since_contact_s / cfg.talk_on_latency_s
+            bonus *= fraction
+
+        return CASDesignationResult(
+            jtac_present=True,
+            laser_designator=laser_designator,
+            accuracy_bonus=bonus,
+            designation_delay_s=cfg.jtac_designation_delay_s,
+        )
 
     def get_state(self) -> dict[str, Any]:
         """Return serialisable engine state."""

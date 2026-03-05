@@ -342,6 +342,74 @@ class GasWarfareEngine:
         mask = self._unit_masks.get(unit_id, GasMaskType.NONE)
         return _MASK_TO_MOPP[mask]
 
+    def compute_exposure_during_don(
+        self,
+        unit_id: str,
+        concentration: float,
+        time_since_alert_s: float,
+    ) -> float:
+        """Compute exposure fraction during mask donning.
+
+        Linear ramp: full exposure at t=0, zero at t=don_time.
+        Units without a mask always have full exposure.
+
+        Parameters
+        ----------
+        unit_id:
+            Unit identifier.
+        concentration:
+            Current gas concentration (arbitrary units).
+        time_since_alert_s:
+            Time elapsed since the gas alert was raised.
+
+        Returns
+        -------
+        Exposure fraction 0.0–1.0.
+        """
+        mask = self._unit_masks.get(unit_id, GasMaskType.NONE)
+        if mask == GasMaskType.NONE:
+            return 1.0
+
+        don_time = self._config.mask_don_time_s
+        if don_time <= 0 or time_since_alert_s >= don_time:
+            return 0.0
+
+        # Linear ramp from 1.0 (no protection) to 0.0 (full protection)
+        return max(0.0, 1.0 - time_since_alert_s / don_time)
+
+    def get_effective_mopp_level(
+        self,
+        unit_id: str,
+        time_since_alert_s: float,
+    ) -> tuple[int, float]:
+        """Get MOPP level with protection factor accounting for don time.
+
+        Parameters
+        ----------
+        unit_id:
+            Unit identifier.
+        time_since_alert_s:
+            Time elapsed since the gas alert was raised.
+
+        Returns
+        -------
+        (mopp_level, protection_factor):
+            mopp_level is the full MOPP level for the unit's mask.
+            protection_factor ramps from 0.0 (unprotected) to 1.0
+            (full protection) over the don time period.
+        """
+        mask = self._unit_masks.get(unit_id, GasMaskType.NONE)
+        mopp = _MASK_TO_MOPP[mask]
+        if mask == GasMaskType.NONE:
+            return mopp, 0.0
+
+        don_time = self._config.mask_don_time_s
+        if don_time <= 0 or time_since_alert_s >= don_time:
+            return mopp, 1.0
+
+        protection = max(0.0, time_since_alert_s / don_time)
+        return mopp, protection
+
     def get_state(self) -> dict[str, Any]:
         """Capture state for checkpointing."""
         return {

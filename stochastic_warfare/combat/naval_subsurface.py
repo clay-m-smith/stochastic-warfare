@@ -39,6 +39,18 @@ class NavalSubsurfaceConfig(BaseModel):
     counter_torpedo_base_pk: float = 0.2
     range_decay_factor: float = 0.00002  # pk degrades with range
     malfunction_probability: float = 0.05
+    # ASROC (Phase 27c)
+    asroc_max_range_m: float = 22_000.0
+    asroc_flight_time_s: float = 30.0
+    asroc_torpedo_pk: float = 0.3
+    # Depth charges (Phase 27c)
+    depth_charge_pattern_radius_m: float = 100.0
+    depth_charge_lethal_radius_m: float = 15.0
+    depth_charge_pk_per_charge: float = 0.05
+    # Torpedo countermeasures (Phase 27c)
+    nixie_seduction_probability: float = 0.35
+    acoustic_cm_confusion_probability: float = 0.25
+    enable_torpedo_countermeasures: bool = False
 
     # Geometric evasion (Phase 12c)
     enable_geometric_evasion: bool = False
@@ -117,6 +129,40 @@ class PatrolResult:
     contacts_detected: int
     area_covered_fraction: float
     time_on_station_hours: float
+
+
+@dataclass
+class ASROCResult:
+    """Outcome of an ASROC engagement."""
+
+    ship_id: str
+    target_id: str
+    flight_success: bool = False
+    torpedo_hit: bool = False
+    damage_fraction: float = 0.0
+
+
+@dataclass
+class DepthChargeResult:
+    """Outcome of a depth charge attack."""
+
+    ship_id: str
+    target_id: str
+    charges_dropped: int = 0
+    hits: int = 0
+    damage_fraction: float = 0.0
+
+
+@dataclass
+class TorpedoCountermeasureResult:
+    """Outcome of torpedo countermeasure employment."""
+
+    defender_id: str
+    torpedo_defeated: bool = False
+    nixie_success: bool = False
+    acoustic_cm_success: bool = False
+    evasion_success: bool = False
+    effective_pk: float = 0.0
 
 
 class SubmarinePatrolConfig(BaseModel):
@@ -397,6 +443,139 @@ class NavalSubsurfaceEngine:
             defender_id, counter_pk, "defeated" if defeated else "failed",
         )
         return defeated
+
+    def asroc_engagement(
+        self,
+        ship_id: str,
+        target_id: str,
+        range_m: float,
+        target_depth_m: float = 100.0,
+        conditions: dict[str, Any] | None = None,
+        timestamp: Any = None,
+    ) -> ASROCResult:
+        """Resolve an ASROC (rocket-delivered torpedo) engagement.
+
+        Two-phase: rocket flight (0.9 success) then torpedo engagement.
+        """
+        cfg = self._config
+        result = ASROCResult(ship_id=ship_id, target_id=target_id)
+
+        # Range check
+        if range_m > cfg.asroc_max_range_m:
+            return result
+
+        # Rocket delivery phase (0.9 reliability)
+        if self._rng.random() >= 0.9:
+            return result
+        result.flight_success = True
+
+        # Lightweight torpedo engagement
+        torp_pk = cfg.asroc_torpedo_pk
+        # Depth penalty: deeper targets harder to acquire
+        depth_factor = max(0.5, 1.0 - target_depth_m / 500.0)
+        effective_pk = torp_pk * depth_factor
+        effective_pk = max(0.01, min(0.99, effective_pk))
+
+        hit = self._rng.random() < effective_pk
+        result.torpedo_hit = hit
+        if hit:
+            result.damage_fraction = 0.3 + 0.4 * self._rng.random()
+
+        if timestamp is not None:
+            self._event_bus.publish(TorpedoEvent(
+                timestamp=timestamp, source=ModuleId.COMBAT,
+                shooter_id=ship_id, target_id=target_id,
+                torpedo_id=f"{ship_id}_asroc",
+                result="hit" if hit else "miss",
+            ))
+
+        return result
+
+    def depth_charge_attack(
+        self,
+        ship_id: str,
+        target_id: str,
+        num_charges: int,
+        target_depth_m: float = 100.0,
+        target_range_m: float = 500.0,
+        timestamp: Any = None,
+    ) -> DepthChargeResult:
+        """Resolve a depth charge attack pattern.
+
+        Each charge is scattered within the pattern radius. A charge within
+        the lethal radius scores a hit.
+        """
+        cfg = self._config
+        result = DepthChargeResult(
+            ship_id=ship_id, target_id=target_id,
+            charges_dropped=num_charges,
+        )
+
+        for _ in range(num_charges):
+            # Scatter each charge within pattern radius
+            offset = self._rng.normal(0.0, cfg.depth_charge_pattern_radius_m / 2.0)
+            distance = abs(target_range_m + offset)
+            if distance <= cfg.depth_charge_lethal_radius_m:
+                if self._rng.random() < cfg.depth_charge_pk_per_charge:
+                    result.hits += 1
+
+        if result.hits > 0:
+            result.damage_fraction = result.hits * 0.2 * (0.5 + 0.5 * self._rng.random())
+            result.damage_fraction = min(1.0, result.damage_fraction)
+
+        return result
+
+    def resolve_torpedo_countermeasures(
+        self,
+        defender_id: str,
+        torpedo_pk: float,
+        nixie_deployed: bool = False,
+        acoustic_cm: bool = False,
+        evasion_type: str = "none",
+    ) -> TorpedoCountermeasureResult:
+        """Resolve layered torpedo countermeasures.
+
+        Layers: NIXIE seduction -> acoustic CM confusion -> evasive maneuver.
+        Torpedo defeated if any layer succeeds.
+        """
+        cfg = self._config
+        result = TorpedoCountermeasureResult(
+            defender_id=defender_id, effective_pk=torpedo_pk,
+        )
+
+        effective_pk = torpedo_pk
+
+        # Layer 1: NIXIE towed decoy
+        if nixie_deployed:
+            if self._rng.random() < cfg.nixie_seduction_probability:
+                result.nixie_success = True
+                result.torpedo_defeated = True
+                result.effective_pk = 0.0
+                return result
+
+        # Layer 2: Acoustic countermeasures
+        if acoustic_cm:
+            if self._rng.random() < cfg.acoustic_cm_confusion_probability:
+                result.acoustic_cm_success = True
+                result.torpedo_defeated = True
+                result.effective_pk = 0.0
+                return result
+
+        # Layer 3: Evasive maneuver
+        evasion_effectiveness = {
+            "hard_turn": 0.15,
+            "sprint": 0.10,
+            "none": 0.0,
+        }
+        evasion_pk = evasion_effectiveness.get(evasion_type, 0.0)
+        if evasion_pk > 0 and self._rng.random() < evasion_pk:
+            result.evasion_success = True
+            result.torpedo_defeated = True
+            result.effective_pk = 0.0
+            return result
+
+        result.effective_pk = effective_pk
+        return result
 
     # ------------------------------------------------------------------
     # Geometric evasion (Phase 12c)

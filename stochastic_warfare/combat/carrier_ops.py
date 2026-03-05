@@ -46,6 +46,11 @@ class CarrierOpsConfig(BaseModel):
     turnaround_rearm_factor: float = 1.5  # rearm takes longer
     turnaround_hot_refuel_factor: float = 0.7  # hot refuel is faster
     cap_station_endurance_s: float = 14400.0  # 4 hours on station
+    # CAP management (Phase 27c)
+    cap_aircraft_per_station: int = 2
+    cap_relief_margin_s: float = 1800.0
+    recovery_window_duration_s: float = 1200.0
+    recovery_window_interval_s: float = 5400.0
 
 
 @dataclass
@@ -78,6 +83,26 @@ class CAPStatus:
     coverage_factor: float  # 0.0–1.0 effectiveness
 
 
+@dataclass
+class CAPStation:
+    """A combat air patrol station."""
+
+    station_id: str
+    aircraft_ids: list[str] = field(default_factory=list)
+    time_on_station_s: float = 0.0
+    relief_needed: bool = False
+
+
+@dataclass
+class RecoveryWindow:
+    """A scheduled recovery window for returning aircraft."""
+
+    start_time_s: float
+    duration_s: float
+    aircraft_recovered: list[str] = field(default_factory=list)
+    active: bool = True
+
+
 class CarrierOpsEngine:
     """Carrier flight operations management.
 
@@ -102,6 +127,8 @@ class CarrierOpsEngine:
         self._config = config or CarrierOpsConfig()
         self._sorties_launched: int = 0
         self._aircraft_turnaround: dict[str, float] = {}  # aircraft_id -> ready_time_s
+        self._cap_stations: dict[str, CAPStation] = {}
+        self._recovery_windows: list[RecoveryWindow] = []
 
     def compute_sortie_rate(
         self,
@@ -299,6 +326,45 @@ class CarrierOpsEngine:
             aircraft_id, rearm_type, turnaround_s,
         )
         return turnaround_s
+
+    def create_cap_station(
+        self,
+        station_id: str,
+        aircraft_ids: list[str],
+    ) -> CAPStation:
+        """Create a CAP station with assigned aircraft."""
+        station = CAPStation(
+            station_id=station_id,
+            aircraft_ids=list(aircraft_ids),
+        )
+        self._cap_stations[station_id] = station
+        logger.debug(
+            "CAP station %s created with %d aircraft",
+            station_id, len(aircraft_ids),
+        )
+        return station
+
+    def update_cap_stations(self, dt_s: float) -> list[CAPStation]:
+        """Advance all CAP stations by dt_s. Returns stations needing relief."""
+        cfg = self._config
+        need_relief: list[CAPStation] = []
+        for station in self._cap_stations.values():
+            station.time_on_station_s += dt_s
+            endurance = cfg.cap_station_endurance_s
+            if station.time_on_station_s >= endurance - cfg.cap_relief_margin_s:
+                station.relief_needed = True
+                need_relief.append(station)
+        return need_relief
+
+    def schedule_recovery_window(self, start_time_s: float) -> RecoveryWindow:
+        """Schedule a recovery window at the given time."""
+        window = RecoveryWindow(
+            start_time_s=start_time_s,
+            duration_s=self._config.recovery_window_duration_s,
+        )
+        self._recovery_windows.append(window)
+        logger.debug("Recovery window scheduled at %.0f s", start_time_s)
+        return window
 
     def get_state(self) -> dict[str, Any]:
         return {

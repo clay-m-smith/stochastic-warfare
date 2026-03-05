@@ -73,6 +73,15 @@ class MeleeConfig(BaseModel):
     pike_push_attrition_rate: float = 0.01
     shield_wall_defense_bonus: float = 0.5
     mounted_charge_casualty_rate: float = 0.04
+    # Cavalry terrain effects (Phase 27 — deficit 2.11)
+    cavalry_slope_penalty_per_deg: float = 0.02
+    cavalry_soft_ground_penalty: float = 0.3
+    cavalry_obstacle_abort_threshold: float = 0.5
+    cavalry_uphill_casualty_bonus: float = 0.1
+    # Frontage constraint (Phase 27 — deficit 2.10)
+    max_frontage_m: float = 0.0  # 0 = disabled
+    combatant_spacing_m: float = 1.5
+    second_rank_effectiveness: float = 0.3
 
 
 # ---------------------------------------------------------------------------
@@ -164,6 +173,66 @@ class MeleeEngine:
             return self._config.reach_advantage_modifier
         return 1.0
 
+    def compute_cavalry_terrain_modifier(
+        self,
+        slope_deg: float = 0.0,
+        soft_ground: bool = False,
+        obstacle_density: float = 0.0,
+    ) -> tuple[float, bool]:
+        """Compute terrain effects on cavalry charge.
+
+        Returns (speed_modifier, should_abort). speed_modifier is 0.0–1.0
+        factor applied to cavalry shock/speed. should_abort is True when
+        obstacle density exceeds the abort threshold.
+        """
+        cfg = self._config
+        modifier = 1.0
+
+        # Uphill slope degrades charge speed
+        if slope_deg > 0:
+            modifier -= cfg.cavalry_slope_penalty_per_deg * slope_deg
+
+        # Soft ground (mud, bog, sand) further reduces effectiveness
+        if soft_ground:
+            modifier -= cfg.cavalry_soft_ground_penalty
+
+        modifier = max(0.0, modifier)
+
+        # Dense obstacles abort the charge entirely
+        should_abort = obstacle_density >= cfg.cavalry_obstacle_abort_threshold
+
+        return modifier, should_abort
+
+    def compute_frontage_constraint(
+        self,
+        attacker_strength: int,
+        defender_strength: int,
+        frontage_m: float = 0.0,
+    ) -> tuple[int, int, int]:
+        """Limit engaged combatants based on available frontage.
+
+        Parameters
+        ----------
+        attacker_strength:
+            Total attacker combatants.
+        defender_strength:
+            Total defender combatants.
+        frontage_m:
+            Available frontage in metres (0 = disabled).
+
+        Returns
+        -------
+        (engaged_attackers, engaged_defenders, reserve_attackers)
+        """
+        if frontage_m <= 0 or self._config.combatant_spacing_m <= 0:
+            return attacker_strength, defender_strength, 0
+
+        max_in_line = max(1, int(frontage_m / self._config.combatant_spacing_m))
+        engaged_att = min(attacker_strength, max_in_line)
+        engaged_def = min(defender_strength, max_in_line)
+        reserve_att = attacker_strength - engaged_att
+        return engaged_att, engaged_def, reserve_att
+
     def compute_flanking_bonus(self, is_flanked: bool) -> float:
         """Return flanking casualty multiplier.
 
@@ -183,6 +252,10 @@ class MeleeEngine:
         attacker_reach_m: float = 1.0,
         defender_reach_m: float = 1.0,
         is_flanked: bool = False,
+        slope_deg: float = 0.0,
+        soft_ground: bool = False,
+        obstacle_density: float = 0.0,
+        frontage_m: float = 0.0,
     ) -> MeleeResult:
         """Resolve one round of melee combat.
 
@@ -217,8 +290,33 @@ class MeleeEngine:
                 attacker_routed=False,
             )
 
+        # Cavalry terrain effects (deficit 2.11)
+        terrain_mod = 1.0
+        is_cavalry = melee_type in (
+            MeleeType.CAVALRY_CHARGE, MeleeType.CAVALRY_VS_CAVALRY,
+            MeleeType.MOUNTED_CHARGE,
+        )
+        if is_cavalry and (slope_deg > 0 or soft_ground or obstacle_density > 0):
+            terrain_mod, should_abort = self.compute_cavalry_terrain_modifier(
+                slope_deg, soft_ground, obstacle_density,
+            )
+            if should_abort:
+                return MeleeResult(
+                    attacker_casualties=0,
+                    defender_casualties=0,
+                    attacker_morale_change=0.0,
+                    defender_morale_change=0.0,
+                    defender_routed=False,
+                    attacker_routed=False,
+                )
+
+        # Frontage constraint (deficit 2.10)
+        engaged_att, engaged_def, reserve_att = self.compute_frontage_constraint(
+            attacker_strength, defender_strength, frontage_m,
+        )
+
         # Force ratio
-        force_ratio = attacker_strength / defender_strength
+        force_ratio = engaged_att / engaged_def
 
         # Base casualty rate depends on melee type
         if melee_type in (MeleeType.CAVALRY_CHARGE, MeleeType.CAVALRY_VS_CAVALRY):
@@ -258,16 +356,23 @@ class MeleeEngine:
         # Flanking multiplier
         flank_mod = self.compute_flanking_bonus(is_flanked)
 
-        # Shock decay over rounds
+        # Shock decay over rounds — terrain_mod reduces cavalry shock
         shock_bonus = max(0.0, 1.0 - cfg.shock_decay_per_round * (round_number - 1))
+        shock_bonus *= terrain_mod
 
-        # Defender casualties
+        # Defender casualties (use engaged strengths for frontage)
         def_cas_rate = min(
             0.5,
             base_rate * force_ratio * formation_mod * (1.0 + shock_bonus)
             * reach_mod * flank_mod,
         )
-        defender_cas = int(self._rng.binomial(defender_strength, def_cas_rate))
+        defender_cas = int(self._rng.binomial(engaged_def, def_cas_rate))
+        # Reserves contribute at reduced effectiveness
+        if reserve_att > 0:
+            reserve_rate = def_cas_rate * cfg.second_rank_effectiveness
+            defender_cas += int(self._rng.binomial(
+                min(reserve_att, engaged_def), min(0.5, reserve_rate),
+            ))
 
         # Attacker casualties (defenders fight back)
         att_cas_rate = min(
@@ -275,7 +380,10 @@ class MeleeEngine:
             base_rate / max(0.5, force_ratio) * (1.0 / max(0.1, formation_mod))
             * defense_mod,
         )
-        attacker_cas = int(self._rng.binomial(attacker_strength, att_cas_rate))
+        # Uphill cavalry casualty bonus (attacker takes more casualties charging uphill)
+        if is_cavalry and slope_deg > 0:
+            att_cas_rate = min(0.5, att_cas_rate + cfg.cavalry_uphill_casualty_bonus)
+        attacker_cas = int(self._rng.binomial(engaged_att, att_cas_rate))
 
         # Morale effects
         def_morale = -cfg.defender_morale_penalty * force_ratio * formation_mod

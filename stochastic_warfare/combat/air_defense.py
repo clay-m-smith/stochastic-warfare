@@ -44,6 +44,8 @@ class AirDefenseConfig(BaseModel):
     threat_weight_speed: float = 0.3
     threat_weight_altitude: float = 0.2
     threat_weight_type: float = 0.5
+    # EW integration (Phase 27a)
+    enable_ew_countermeasures: bool = False
 
 
 @dataclass
@@ -222,6 +224,8 @@ class AirDefenseEngine:
         shot_number: int = 1,
         timestamp: Any = None,
         weather_modifier: float = 1.0,
+        ew_decoy_engine: Any | None = None,
+        jamming_engine: Any | None = None,
     ) -> InterceptResult:
         """Fire a single interceptor at an aerial target.
 
@@ -258,8 +262,23 @@ class AirDefenseEngine:
 
         effective_pk = interceptor_pk * rcs_factor * range_factor
 
-        # Countermeasure reduction
-        if countermeasures == "chaff":
+        # Countermeasure reduction — EW engines or legacy string
+        if (
+            cfg.enable_ew_countermeasures
+            and (ew_decoy_engine is not None or jamming_engine is not None)
+        ):
+            ew_reduction = 0.0
+            if ew_decoy_engine is not None:
+                divert_fn = getattr(ew_decoy_engine, "compute_missile_divert_probability", None)
+                if divert_fn is not None:
+                    ew_reduction += divert_fn()
+            if jamming_engine is not None:
+                penalty_fn = getattr(jamming_engine, "compute_radar_snr_penalty", None)
+                if penalty_fn is not None:
+                    penalty = penalty_fn()
+                    ew_reduction += min(0.5, abs(penalty) / 20.0)
+            effective_pk *= max(0.0, 1.0 - ew_reduction)
+        elif countermeasures == "chaff":
             effective_pk *= 0.7
         elif countermeasures == "ecm":
             effective_pk *= 0.6

@@ -18,7 +18,7 @@ from stochastic_warfare.combat.ammunition import AmmoDefinition
 from stochastic_warfare.combat.events import DamageEvent, HitEvent
 from stochastic_warfare.core.events import EventBus
 from stochastic_warfare.core.logging import get_logger
-from stochastic_warfare.core.types import ModuleId
+from stochastic_warfare.core.types import ModuleId, Position
 
 logger = get_logger(__name__)
 
@@ -75,6 +75,9 @@ class DamageConfig(BaseModel):
     ammo_cookoff_probability: float = 0.05
     min_penetration_fraction: float = 0.5
     blast_sigma_scale: float = 1.0
+    # Submunition scatter (Phase 27b)
+    enable_submunition_scatter: bool = False
+    submunition_scatter_sigma_fraction: float = 0.7
 
 
 @dataclass
@@ -385,6 +388,87 @@ class DamageEngine:
             ))
 
         return result
+
+    def resolve_submunition_damage(
+        self,
+        ammo: AmmoDefinition,
+        impact_pos: Position,
+        target_positions: dict[str, Position],
+        posture: str = "MOVING",
+        uxo_engine: Any | None = None,
+        timestamp: float = 0.0,
+    ) -> dict[str, DamageResult]:
+        """Scatter submunitions from a DPICM or cluster round and resolve damage.
+
+        Parameters
+        ----------
+        ammo:
+            Ammunition with submunition_count and submunition_lethal_radius_m.
+        impact_pos:
+            Center of the cluster impact area.
+        target_positions:
+            Mapping of target_id -> Position for potential targets.
+        posture:
+            Target posture for blast damage.
+        uxo_engine:
+            Optional UXO engine for failed submunition tracking.
+        timestamp:
+            Simulation timestamp.
+        """
+        from stochastic_warfare.core.types import Position as Pos
+
+        count = ammo.submunition_count
+        if count <= 0:
+            return {}
+
+        lethal_r = ammo.submunition_lethal_radius_m
+        if lethal_r <= 0:
+            lethal_r = ammo.blast_radius_m
+
+        # Scatter sigma proportional to blast radius
+        sigma = ammo.blast_radius_m * self._config.submunition_scatter_sigma_fraction
+        if sigma <= 0:
+            sigma = 50.0
+
+        # Determine failed submunitions
+        failed = int(count * ammo.uxo_rate)
+        live = count - failed
+
+        # Create UXO field if engine provided and there are duds
+        if uxo_engine is not None and failed > 0:
+            uxo_engine.create_uxo_field(
+                position=impact_pos,
+                radius_m=sigma * 3.0,
+                submunition_count=count,
+                uxo_rate=ammo.uxo_rate,
+                timestamp=timestamp,
+            )
+
+        # Scatter live submunitions
+        results: dict[str, DamageResult] = {}
+        for _ in range(live):
+            off_e = self._rng.normal(0.0, sigma)
+            off_n = self._rng.normal(0.0, sigma)
+            sub_pos = Pos(
+                impact_pos.easting + off_e,
+                impact_pos.northing + off_n,
+                impact_pos.altitude,
+            )
+            # Check each target
+            for tid, tpos in target_positions.items():
+                dx = sub_pos.easting - tpos.easting
+                dy = sub_pos.northing - tpos.northing
+                dist = math.sqrt(dx * dx + dy * dy)
+                if dist <= lethal_r:
+                    dmg = self.apply_blast_damage(ammo, dist, posture)
+                    if tid in results:
+                        results[tid].damage_fraction = min(
+                            1.0, results[tid].damage_fraction + dmg.damage_fraction,
+                        )
+                    else:
+                        results[tid] = dmg
+
+        return results
 
     def get_state(self) -> dict[str, Any]:
         return {"rng_state": self._rng.bit_generator.state}
