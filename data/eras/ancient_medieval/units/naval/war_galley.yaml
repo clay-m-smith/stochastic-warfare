@@ -1,0 +1,44 @@
+unit_type: war_galley
+domain: naval
+display_name: "War Galley (Lepanto-era)"
+naval_type: DESTROYER
+max_speed: 3.6  # m/s (~7 knots under oar)
+draft: 1.3
+displacement: 150.0  # tonnes
+fuel_capacity: 0.0
+noise_signature_base: 55.0
+crew:
+  - role: COMMANDER
+    count: 1
+    skill: TRAINED
+  - role: NAVIGATOR
+    count: 1
+    skill: TRAINED
+  - role: CREW
+    count: 200
+    skill: BASIC  # oarsmen
+  - role: GUNNER
+    count: 50
+    skill: TRAINED  # soldiers
+equipment:
+  - name: "Bow Cannon (x3)"
+    category: WEAPON
+    weight_kg: 3000.0
+    reliability: 0.70
+  - name: "Arquebuses and Crossbows"
+    category: WEAPON
+    weight_kg: 100.0
+    reliability: 0.80
+  - name: "Ram Prow"
+    category: WEAPON
+    weight_kg: 250.0
+    reliability: 0.85
+  - name: "Lookout Mast"
+    category: SENSOR
+    weight_kg: 0.0
+    reliability: 0.85
+  - name: "Oar Banks (26 per side) + Lateen Sails"
+    category: PROPULSION
+    weight_kg: 3500.0
+    reliability: 0.78
+    temperature_range: [-5.0, 40.0]

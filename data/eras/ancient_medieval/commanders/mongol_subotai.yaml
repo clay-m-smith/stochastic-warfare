@@ -1,0 +1,12 @@
+profile_id: mongol_subotai
+display_name: "Subotai Ba'atur"
+description: "Supreme Mongol general, architect of the European campaign. Master of deep strategic maneuver across continental distances, operational deception, and coordinated multi-army attacks."
+aggression: 0.8
+caution: 0.4
+flexibility: 0.95
+initiative: 0.95
+experience: 0.98
+preferred_doctrine: steppe_nomad
+stress_tolerance: 0.95
+decision_speed: 0.85
+risk_acceptance: 0.75

@@ -1,0 +1,26 @@
+unit_type: 18pdr_battery
+domain: ground
+display_name: "18-Pounder Field Gun Battery (BEF)"
+ground_type: ARTILLERY_TOWED
+max_speed: 0.8  # m/s (horse-drawn)
+armor_front: 0.0
+armor_side: 0.0
+crew:
+  - role: COMMANDER
+    count: 1
+    skill: TRAINED
+  - role: GUNNER
+    count: 4
+    skill: TRAINED
+  - role: CREW
+    count: 24
+    skill: BASIC
+equipment:
+  - name: "QF 18-Pounder Field Gun (x4)"
+    category: WEAPON
+    weight_kg: 5136.0
+    reliability: 0.90
+  - name: "No. 7 Dial Sight"
+    category: SENSOR
+    weight_kg: 2.0
+    reliability: 0.92

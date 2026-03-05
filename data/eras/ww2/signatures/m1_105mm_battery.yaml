@@ -1,0 +1,21 @@
+profile_id: m1_105mm_battery
+unit_type: m1_105mm_battery
+visual:
+  height_m: 1.5
+  cross_section_m2: 8.0
+  camouflage_factor: 0.5
+thermal:
+  emissivity: 0.0
+  heat_output_kw: 0.0
+  contrast_modifier: 0.0
+radar:
+  rcs_frontal_m2: 2.0
+  rcs_side_m2: 5.0
+  rcs_rear_m2: 2.0
+acoustic:
+  noise_db: 55.0
+  speed_coefficient: 1.0
+electromagnetic:
+  emitting: false
+  power_dbm: 0.0
+  frequency_ghz: 0.0

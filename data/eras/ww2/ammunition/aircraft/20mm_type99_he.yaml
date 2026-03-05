@@ -1,0 +1,14 @@
+ammo_id: 20mm_type99_he
+display_name: "20mm Type 99 HE (IJN)"
+ammo_type: HE
+mass_kg: 0.083
+diameter_mm: 20.0
+drag_coefficient: 0.38
+penetration_mm_rha: 2.5
+penetration_reference_range_m: 100.0
+blast_radius_m: 1.2
+fragmentation_radius_m: 2.5
+guidance: NONE
+propulsion: none
+max_speed_mps: 750.0
+unit_cost_factor: 0.04

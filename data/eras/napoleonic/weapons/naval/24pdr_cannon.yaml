@@ -1,0 +1,24 @@
+weapon_id: 24pdr_cannon
+display_name: "24-Pounder Long Gun (Frigate)"
+category: NAVAL_GUN
+caliber_mm: 139.0
+muzzle_velocity_mps: 472.0
+max_range_m: 2400.0
+min_range_m: 50.0
+rate_of_fire_rpm: 1.5
+burst_size: 1
+base_accuracy_mrad: 8.0
+cep_m: 14.0
+guidance: NONE
+magazine_capacity: 60
+reload_time_s: 40.0
+compatible_ammo:
+  - chain_shot
+  - grape_shot_naval
+weight_kg: 2200.0
+reliability: 0.85
+barrel_life_rounds: 3000
+requires_deployed: false
+traverse_deg: 15.0
+elevation_min_deg: -5.0
+elevation_max_deg: 12.0

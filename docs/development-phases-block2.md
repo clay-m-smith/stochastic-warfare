@@ -337,7 +337,7 @@ New unit YAML + matching signature YAML for each:
 
 ---
 
-## Phase 29: Historical Era Data Expansion
+## Phase 29: Historical Era Data Expansion — **COMPLETE** (164 tests, 7,111 total)
 
 **Goal**: Add naval units to all pre-modern eras, fill remaining unit type gaps, add missing comms/organization data, and enable naval scenarios for each era.
 

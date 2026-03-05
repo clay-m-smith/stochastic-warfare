@@ -1,0 +1,22 @@
+weapon_id: 18in_torpedo_ww1
+display_name: "18-inch Torpedo (WW1 Standard)"
+category: TORPEDO_TUBE
+caliber_mm: 457.0
+muzzle_velocity_mps: 0.0
+max_range_m: 3200.0
+min_range_m: 200.0
+rate_of_fire_rpm: 0.3
+burst_size: 1
+base_accuracy_mrad: 0.0
+guidance: NONE
+magazine_capacity: 2
+reload_time_s: 1800.0
+compatible_ammo:
+  - 18in_torpedo_warhead
+weight_kg: 680.0
+reliability: 0.65
+barrel_life_rounds: 0
+requires_deployed: false
+traverse_deg: 20.0
+elevation_min_deg: -5.0
+elevation_max_deg: 5.0

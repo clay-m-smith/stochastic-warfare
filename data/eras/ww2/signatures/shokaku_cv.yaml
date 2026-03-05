@@ -1,0 +1,21 @@
+profile_id: shokaku_cv
+unit_type: shokaku_cv
+visual:
+  height_m: 38.0
+  cross_section_m2: 1800.0
+  camouflage_factor: 0.05
+thermal:
+  emissivity: 0.0
+  heat_output_kw: 0.0
+  contrast_modifier: 0.0
+radar:
+  rcs_frontal_m2: 550.0
+  rcs_side_m2: 2200.0
+  rcs_rear_m2: 450.0
+acoustic:
+  noise_db: 93.0
+  speed_coefficient: 1.5
+electromagnetic:
+  emitting: false
+  power_dbm: 0.0
+  frequency_ghz: 0.0

@@ -1,0 +1,54 @@
+unit_type: shokaku_cv
+domain: naval
+display_name: "Shokaku-class Aircraft Carrier (IJN)"
+naval_type: CARRIER
+max_speed: 17.5  # m/s (~34 knots)
+draft: 8.9
+displacement: 32000.0  # full load tonnes
+fuel_capacity: 5700.0  # tonnes of fuel oil
+noise_signature_base: 148.0
+crew:
+  - role: COMMANDER
+    count: 1
+    skill: EXPERIENCED
+  - role: NAVIGATOR
+    count: 3
+    skill: TRAINED
+  - role: SENSOR_OPERATOR
+    count: 6
+    skill: TRAINED
+  - role: GUNNER
+    count: 36
+    skill: TRAINED
+  - role: ENGINEER
+    count: 28
+    skill: TRAINED
+  - role: GENERIC
+    count: 1586
+    skill: BASIC
+equipment:
+  - name: "Type 89 12.7cm AA Gun (8x2)"
+    category: WEAPON
+    weight_kg: 40000.0
+    reliability: 0.87
+  - name: "Type 96 25mm Triple Mount (x12)"
+    category: WEAPON
+    weight_kg: 10800.0
+    reliability: 0.85
+  - name: "Flight Deck (72 aircraft capacity)"
+    category: WEAPON
+    weight_kg: 400000.0
+    reliability: 0.90
+  - name: "Type 21 Air Search Radar"
+    category: SENSOR
+    weight_kg: 1500.0
+    reliability: 0.65
+  - name: "Type 94 Fire Control Director"
+    category: SENSOR
+    weight_kg: 8000.0
+    reliability: 0.78
+  - name: "Kampon Geared Turbines (160,000 SHP)"
+    category: PROPULSION
+    weight_kg: 65000.0
+    reliability: 0.85
+    temperature_range: [-10.0, 42.0]

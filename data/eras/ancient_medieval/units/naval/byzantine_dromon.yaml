@@ -1,0 +1,44 @@
+unit_type: byzantine_dromon
+domain: naval
+display_name: "Byzantine Dromon (Fire Ship)"
+naval_type: FRIGATE
+max_speed: 3.6  # m/s (~7 knots under oar)
+draft: 1.2
+displacement: 70.0  # tonnes
+fuel_capacity: 0.0
+noise_signature_base: 52.0
+crew:
+  - role: COMMANDER
+    count: 1
+    skill: TRAINED
+  - role: NAVIGATOR
+    count: 1
+    skill: TRAINED
+  - role: CREW
+    count: 200
+    skill: BASIC  # oarsmen
+  - role: GUNNER
+    count: 50
+    skill: TRAINED  # marines
+equipment:
+  - name: "Greek Fire Siphon"
+    category: WEAPON
+    weight_kg: 300.0
+    reliability: 0.65
+  - name: "Marine Weapons (Swords and Javelins)"
+    category: WEAPON
+    weight_kg: 100.0
+    reliability: 0.90
+  - name: "Ballistae (x2)"
+    category: WEAPON
+    weight_kg: 400.0
+    reliability: 0.75
+  - name: "Lookout Mast"
+    category: SENSOR
+    weight_kg: 0.0
+    reliability: 0.85
+  - name: "Oar Banks (2 tiers, 100 oars) + Lateen Sail"
+    category: PROPULSION
+    weight_kg: 3000.0
+    reliability: 0.80
+    temperature_range: [-5.0, 40.0]

@@ -1,0 +1,62 @@
+unit_type: essex_cv
+domain: naval
+display_name: "Essex-class Aircraft Carrier"
+naval_type: CARRIER
+max_speed: 17.0  # m/s (~33 knots)
+draft: 8.4
+displacement: 27100.0  # full load tonnes
+fuel_capacity: 6330.0  # tonnes of fuel oil
+noise_signature_base: 150.0
+crew:
+  - role: COMMANDER
+    count: 1
+    skill: EXPERIENCED
+  - role: NAVIGATOR
+    count: 4
+    skill: TRAINED
+  - role: SENSOR_OPERATOR
+    count: 8
+    skill: TRAINED
+  - role: GUNNER
+    count: 40
+    skill: TRAINED
+  - role: ENGINEER
+    count: 30
+    skill: TRAINED
+  - role: GENERIC
+    count: 2600
+    skill: BASIC
+equipment:
+  - name: "5-inch/38 Mk 12 Gun (4x2 turrets)"
+    category: WEAPON
+    weight_kg: 54400.0
+    reliability: 0.90
+  - name: "Bofors 40mm Quad Mount (x8)"
+    category: WEAPON
+    weight_kg: 19520.0
+    reliability: 0.88
+  - name: "Oerlikon 20mm (x46)"
+    category: WEAPON
+    weight_kg: 31280.0
+    reliability: 0.87
+  - name: "Flight Deck (90 aircraft capacity)"
+    category: WEAPON
+    weight_kg: 500000.0
+    reliability: 0.92
+  - name: "SK-2 Air Search Radar"
+    category: SENSOR
+    weight_kg: 3200.0
+    reliability: 0.76
+  - name: "SG Surface Search Radar"
+    category: SENSOR
+    weight_kg: 680.0
+    reliability: 0.78
+  - name: "Mk 37 Fire Control Director (x2)"
+    category: SENSOR
+    weight_kg: 17200.0
+    reliability: 0.82
+  - name: "Westinghouse Geared Steam Turbines (150,000 SHP)"
+    category: PROPULSION
+    weight_kg: 60000.0
+    reliability: 0.86
+    temperature_range: [-15.0, 45.0]

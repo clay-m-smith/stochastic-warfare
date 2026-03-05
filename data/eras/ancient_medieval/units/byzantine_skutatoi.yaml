@@ -1,0 +1,27 @@
+unit_type: byzantine_skutatoi
+domain: ground
+display_name: "Byzantine Skutatoi (Heavy Infantry)"
+ground_type: LIGHT_INFANTRY
+max_speed: 1.2  # m/s
+armor_front: 2.0  # scale/lamellar armor + large shield
+armor_side: 1.0
+crew:
+  - role: COMMANDER
+    count: 1
+    skill: TRAINED
+  - role: CREW
+    count: 399
+    skill: TRAINED
+equipment:
+  - name: "Kontarion Spear"
+    category: WEAPON
+    weight_kg: 2.5
+    reliability: 0.92
+  - name: "Spathion Sword"
+    category: WEAPON
+    weight_kg: 1.2
+    reliability: 0.95
+  - name: "Skuton Shield (Large Oval)"
+    category: PROTECTION
+    weight_kg: 5.0
+    reliability: 0.90

@@ -1,0 +1,55 @@
+unit_type: konig_bb
+domain: naval
+display_name: "Konig-class Battleship (Kaiserliche Marine)"
+naval_type: CRUISER
+max_speed: 10.8  # m/s (~21 knots)
+draft: 9.2
+displacement: 25796.0  # full load tonnes
+fuel_capacity: 3000.0  # tonnes of coal/oil
+noise_signature_base: 146.0
+crew:
+  - role: COMMANDER
+    count: 1
+    skill: EXPERIENCED
+  - role: NAVIGATOR
+    count: 3
+    skill: TRAINED
+  - role: GUNNER
+    count: 48
+    skill: TRAINED
+  - role: ENGINEER
+    count: 28
+    skill: TRAINED
+  - role: GENERIC
+    count: 1056
+    skill: BASIC
+equipment:
+  - name: "30.5cm SK L/50 Gun (5x2 turrets)"
+    category: WEAPON
+    weight_kg: 360000.0
+    reliability: 0.89
+  - name: "15cm SK L/45 Gun (x14)"
+    category: WEAPON
+    weight_kg: 98000.0
+    reliability: 0.88
+  - name: "8.8cm SK L/45 FlaK (x6)"
+    category: WEAPON
+    weight_kg: 7200.0
+    reliability: 0.85
+  - name: "50cm Torpedo Tubes (x5)"
+    category: WEAPON
+    weight_kg: 7500.0
+    reliability: 0.76
+  - name: "Zeiss Entfernungsmesser Rangefinder"
+    category: SENSOR
+    weight_kg: 180.0
+    reliability: 0.86
+  - name: "Parsons/Schichau Turbines (31,000 SHP)"
+    category: PROPULSION
+    weight_kg: 48000.0
+    reliability: 0.83
+    temperature_range: [-10.0, 40.0]
+  - name: "350mm Krupp Cemented Belt Armour"
+    category: PROTECTION
+    weight_kg: 5500000.0
+    reliability: 0.99

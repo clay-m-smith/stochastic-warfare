@@ -1,0 +1,21 @@
+profile_id: 6pdr_at
+unit_type: 6pdr_at
+visual:
+  height_m: 1.0
+  cross_section_m2: 3.0
+  camouflage_factor: 0.6
+thermal:
+  emissivity: 0.0
+  heat_output_kw: 0.0
+  contrast_modifier: 0.0
+radar:
+  rcs_frontal_m2: 0.8
+  rcs_side_m2: 2.5
+  rcs_rear_m2: 0.8
+acoustic:
+  noise_db: 42.0
+  speed_coefficient: 1.0
+electromagnetic:
+  emitting: false
+  power_dbm: 0.0
+  frequency_ghz: 0.0

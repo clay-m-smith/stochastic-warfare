@@ -1,0 +1,27 @@
+unit_type: pontoon_engineer
+domain: ground
+display_name: "Pontoon Engineer Company"
+ground_type: ENGINEER
+max_speed: 0.8  # m/s (horse-drawn pontoon train)
+armor_front: 0.0
+armor_side: 0.0
+crew:
+  - role: COMMANDER
+    count: 1
+    skill: TRAINED
+  - role: CREW
+    count: 99
+    skill: TRAINED
+equipment:
+  - name: "Pontoon Boat Set (x12)"
+    category: PROTECTION
+    weight_kg: 6000.0
+    reliability: 0.85
+  - name: "Construction Tools"
+    category: PROTECTION
+    weight_kg: 500.0
+    reliability: 0.90
+  - name: "Charleville Musket (personal arms)"
+    category: WEAPON
+    weight_kg: 4.0
+    reliability: 0.80

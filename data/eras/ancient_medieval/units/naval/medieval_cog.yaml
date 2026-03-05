@@ -1,0 +1,27 @@
+unit_type: medieval_cog
+domain: naval
+display_name: "Medieval Cog (Transport)"
+naval_type: SUPPLY_SHIP
+max_speed: 2.6  # m/s (~5 knots under sail)
+draft: 2.0
+displacement: 200.0  # tonnes
+fuel_capacity: 0.0
+noise_signature_base: 35.0
+cargo_capacity_tons: 100.0
+crew:
+  - role: COMMANDER
+    count: 1
+    skill: TRAINED
+  - role: CREW
+    count: 19
+    skill: BASIC
+equipment:
+  - name: "Crew Weapons (Swords and Crossbows)"
+    category: WEAPON
+    weight_kg: 40.0
+    reliability: 0.85
+  - name: "Single Square Sail"
+    category: PROPULSION
+    weight_kg: 400.0
+    reliability: 0.75
+    temperature_range: [-10.0, 40.0]

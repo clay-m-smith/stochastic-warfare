@@ -1,0 +1,22 @@
+weapon_id: type93_torpedo
+display_name: "Type 93 Long Lance Torpedo (IJN)"
+category: TORPEDO_TUBE
+caliber_mm: 610.0
+muzzle_velocity_mps: 0.0
+max_range_m: 20000.0
+min_range_m: 500.0
+rate_of_fire_rpm: 0.2
+burst_size: 1
+base_accuracy_mrad: 0.0
+guidance: NONE
+magazine_capacity: 4
+reload_time_s: 1200.0
+compatible_ammo:
+  - type93_warhead
+weight_kg: 2700.0
+reliability: 0.80
+barrel_life_rounds: 0
+requires_deployed: false
+traverse_deg: 30.0
+elevation_min_deg: -5.0
+elevation_max_deg: 5.0

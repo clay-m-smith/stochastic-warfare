@@ -1,0 +1,26 @@
+unit_type: 6pdr_at
+domain: ground
+display_name: "Ordnance QF 6-Pounder Anti-Tank Gun"
+ground_type: ARTILLERY_TOWED
+max_speed: 0.5  # m/s (manhandled/towed into position)
+armor_front: 4.0  # gun shield
+armor_side: 0.0
+crew:
+  - role: COMMANDER
+    count: 1
+    skill: TRAINED
+  - role: GUNNER
+    count: 1
+    skill: TRAINED
+  - role: CREW
+    count: 4
+    skill: BASIC
+equipment:
+  - name: "QF 6-Pounder (57mm) L/50"
+    category: WEAPON
+    weight_kg: 1140.0
+    reliability: 0.92
+  - name: "No. 22c Mk 1 Telescopic Sight"
+    category: SENSOR
+    weight_kg: 1.5
+    reliability: 0.94

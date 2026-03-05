@@ -1,0 +1,30 @@
+unit_type: viking_longship
+domain: naval
+display_name: "Viking Longship (Drakkar)"
+naval_type: PATROL
+max_speed: 5.1  # m/s (~10 knots under sail/oar)
+draft: 0.5
+displacement: 20.0  # tonnes
+fuel_capacity: 0.0
+noise_signature_base: 40.0
+crew:
+  - role: COMMANDER
+    count: 1
+    skill: EXPERIENCED
+  - role: CREW
+    count: 59
+    skill: TRAINED  # Viking warriors double as oarsmen
+equipment:
+  - name: "Viking Weapons (Swords, Axes, Spears)"
+    category: WEAPON
+    weight_kg: 120.0
+    reliability: 0.92
+  - name: "Bows and Javelins"
+    category: WEAPON
+    weight_kg: 30.0
+    reliability: 0.88
+  - name: "Square Sail + Oar Banks (30 oars)"
+    category: PROPULSION
+    weight_kg: 800.0
+    reliability: 0.85
+    temperature_range: [-15.0, 35.0]

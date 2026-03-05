@@ -1,0 +1,21 @@
+profile_id: saracen_cavalry
+unit_type: saracen_cavalry
+visual:
+  height_m: 2.3
+  cross_section_m2: 4.0
+  camouflage_factor: 0.2
+thermal:
+  emissivity: 0.0
+  heat_output_kw: 0.0
+  contrast_modifier: 0.0
+radar:
+  rcs_frontal_m2: 0.0
+  rcs_side_m2: 0.0
+  rcs_rear_m2: 0.0
+acoustic:
+  noise_db: 60.0
+  speed_coefficient: 1.5
+electromagnetic:
+  emitting: false
+  power_dbm: 0.0
+  frequency_ghz: 0.0

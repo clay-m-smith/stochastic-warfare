@@ -1,0 +1,21 @@
+profile_id: essex_cv
+unit_type: essex_cv
+visual:
+  height_m: 40.0
+  cross_section_m2: 2000.0
+  camouflage_factor: 0.05
+thermal:
+  emissivity: 0.0
+  heat_output_kw: 0.0
+  contrast_modifier: 0.0
+radar:
+  rcs_frontal_m2: 600.0
+  rcs_side_m2: 2500.0
+  rcs_rear_m2: 500.0
+acoustic:
+  noise_db: 95.0
+  speed_coefficient: 1.5
+electromagnetic:
+  emitting: false
+  power_dbm: 0.0
+  frequency_ghz: 0.0

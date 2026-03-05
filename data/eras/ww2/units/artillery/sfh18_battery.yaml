@@ -1,0 +1,26 @@
+unit_type: sfh18_battery
+domain: ground
+display_name: "sFH 18 150mm Howitzer Battery (German)"
+ground_type: ARTILLERY_TOWED
+max_speed: 0.8  # m/s (horse-drawn or towed)
+armor_front: 0.0
+armor_side: 0.0
+crew:
+  - role: COMMANDER
+    count: 1
+    skill: TRAINED
+  - role: GUNNER
+    count: 4
+    skill: TRAINED
+  - role: CREW
+    count: 24
+    skill: BASIC
+equipment:
+  - name: "15cm sFH 18 Howitzer (x4)"
+    category: WEAPON
+    weight_kg: 22400.0
+    reliability: 0.90
+  - name: "Rblf 36 Panoramic Sight"
+    category: SENSOR
+    weight_kg: 4.0
+    reliability: 0.93

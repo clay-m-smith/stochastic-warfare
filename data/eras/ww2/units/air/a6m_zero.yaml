@@ -1,0 +1,24 @@
+unit_type: a6m_zero
+domain: aerial
+display_name: "Mitsubishi A6M5 Zero (IJN)"
+aerial_type: FIGHTER
+max_speed: 155.0  # m/s (~565 km/h at altitude)
+service_ceiling: 10000.0
+crew:
+  - role: PILOT
+    count: 1
+    skill: TRAINED
+equipment:
+  - name: "Type 99 Model 2 20mm Cannon (x2)"
+    category: WEAPON
+    weight_kg: 46.0
+    reliability: 0.87
+  - name: "Type 97 7.7mm MG (x2)"
+    category: WEAPON
+    weight_kg: 16.0
+    reliability: 0.90
+  - name: "Nakajima NK1C Sakae 21 Radial Engine"
+    category: PROPULSION
+    weight_kg: 590.0
+    reliability: 0.82
+    temperature_range: [-30.0, 40.0]

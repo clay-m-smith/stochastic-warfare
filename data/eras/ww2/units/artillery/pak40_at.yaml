@@ -1,0 +1,26 @@
+unit_type: pak40_at
+domain: ground
+display_name: "7.5cm PaK 40 Anti-Tank Gun"
+ground_type: ARTILLERY_TOWED
+max_speed: 0.5  # m/s (manhandled/towed into position)
+armor_front: 5.0  # gun shield
+armor_side: 0.0
+crew:
+  - role: COMMANDER
+    count: 1
+    skill: TRAINED
+  - role: GUNNER
+    count: 1
+    skill: TRAINED
+  - role: CREW
+    count: 4
+    skill: BASIC
+equipment:
+  - name: "7.5cm PaK 40 L/46"
+    category: WEAPON
+    weight_kg: 1425.0
+    reliability: 0.91
+  - name: "ZF 3x8 Telescopic Sight"
+    category: SENSOR
+    weight_kg: 2.0
+    reliability: 0.94

@@ -1,0 +1,24 @@
+weapon_id: 32pdr_cannon
+display_name: "32-Pounder Long Gun (Ship of the Line)"
+category: NAVAL_GUN
+caliber_mm: 156.0
+muzzle_velocity_mps: 488.0
+max_range_m: 2700.0
+min_range_m: 50.0
+rate_of_fire_rpm: 1.5
+burst_size: 1
+base_accuracy_mrad: 8.0
+cep_m: 15.0
+guidance: NONE
+magazine_capacity: 60
+reload_time_s: 40.0
+compatible_ammo:
+  - round_shot_32pdr
+  - grape_shot_naval
+weight_kg: 2800.0
+reliability: 0.85
+barrel_life_rounds: 3000
+requires_deployed: false
+traverse_deg: 15.0
+elevation_min_deg: -5.0
+elevation_max_deg: 12.0

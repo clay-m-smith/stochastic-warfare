@@ -1,0 +1,27 @@
+unit_type: byzantine_kataphraktoi
+domain: ground
+display_name: "Byzantine Kataphraktoi (Heavy Cavalry)"
+ground_type: ARMOR
+max_speed: 6.5  # m/s (~23 km/h charge speed)
+armor_front: 3.0  # lamellar/scale armor + barding
+armor_side: 2.0
+crew:
+  - role: COMMANDER
+    count: 1
+    skill: VETERAN
+  - role: CREW
+    count: 299
+    skill: TRAINED
+equipment:
+  - name: "Kontarion Lance"
+    category: WEAPON
+    weight_kg: 3.5
+    reliability: 0.85
+  - name: "Spathion Sword"
+    category: WEAPON
+    weight_kg: 1.2
+    reliability: 0.95
+  - name: "Composite Bow"
+    category: WEAPON
+    weight_kg: 1.0
+    reliability: 0.88

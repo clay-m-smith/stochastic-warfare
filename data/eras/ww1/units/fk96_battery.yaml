@@ -1,0 +1,26 @@
+unit_type: fk96_battery
+domain: ground
+display_name: "7.7cm FK 96 n.A. Battery (German)"
+ground_type: ARTILLERY_TOWED
+max_speed: 0.8  # m/s (horse-drawn)
+armor_front: 0.0
+armor_side: 0.0
+crew:
+  - role: COMMANDER
+    count: 1
+    skill: TRAINED
+  - role: GUNNER
+    count: 4
+    skill: TRAINED
+  - role: CREW
+    count: 20
+    skill: BASIC
+equipment:
+  - name: "7.7cm FK 96 n.A. Field Gun (x4)"
+    category: WEAPON
+    weight_kg: 4320.0
+    reliability: 0.89
+  - name: "Panoramic Sight"
+    category: SENSOR
+    weight_kg: 2.0
+    reliability: 0.90

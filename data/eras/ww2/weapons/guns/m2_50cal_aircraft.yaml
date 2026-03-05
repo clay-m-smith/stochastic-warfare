@@ -1,0 +1,19 @@
+weapon_id: m2_50cal_aircraft
+display_name: "M2 Browning .50 Cal Aircraft Mount (6x, P-51D)"
+category: HEAVY_MG
+caliber_mm: 12.7
+muzzle_velocity_mps: 890.0
+max_range_m: 1200.0
+min_range_m: 0.0
+rate_of_fire_rpm: 750.0
+burst_size: 10
+base_accuracy_mrad: 1.5
+guidance: NONE
+magazine_capacity: 400
+reload_time_s: 0.0
+compatible_ammo:
+  - 50cal_m2_ap
+weight_kg: 228.0
+reliability: 0.90
+barrel_life_rounds: 8000
+requires_deployed: false

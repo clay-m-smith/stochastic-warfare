@@ -1,0 +1,20 @@
+unit_type: fokker_dvii
+domain: aerial
+display_name: "Fokker D.VII Fighter"
+aerial_type: FIGHTER
+max_speed: 53.0  # m/s (~189 km/h)
+service_ceiling: 6000.0
+crew:
+  - role: PILOT
+    count: 1
+    skill: TRAINED
+equipment:
+  - name: "LMG 08/15 Spandau MG (x2)"
+    category: WEAPON
+    weight_kg: 20.0
+    reliability: 0.84
+  - name: "BMW IIIa Inline-6 Engine (185 hp)"
+    category: PROPULSION
+    weight_kg: 220.0
+    reliability: 0.76
+    temperature_range: [-20.0, 35.0]

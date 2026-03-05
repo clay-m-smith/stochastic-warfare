@@ -1,0 +1,10 @@
+comm_id: radio_scr300_ww2
+comm_type: RADIO_VHF
+display_name: "SCR-300 Walkie-Talkie (WW2)"
+max_range_m: 5000.0
+bandwidth_bps: 4800.0
+base_latency_s: 0.5
+base_reliability: 0.75
+intercept_risk: 0.20
+jam_resistance: 0.3
+requires_los: true

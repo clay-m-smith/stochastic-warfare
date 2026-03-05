@@ -1,0 +1,22 @@
+weapon_id: congreve_rocket
+display_name: "Congreve Rocket (32-pdr)"
+category: ROCKET_LAUNCHER
+caliber_mm: 106.0
+muzzle_velocity_mps: 200.0
+max_range_m: 2700.0
+min_range_m: 100.0
+rate_of_fire_rpm: 2.0
+burst_size: 1
+base_accuracy_mrad: 50.0
+cep_m: 200.0
+guidance: NONE
+magazine_capacity: 12
+reload_time_s: 30.0
+compatible_ammo:
+  - congreve_rocket_round
+weight_kg: 50.0
+reliability: 0.60
+barrel_life_rounds: 100
+requires_deployed: true
+elevation_min_deg: 15.0
+elevation_max_deg: 55.0

@@ -1,0 +1,40 @@
+unit_type: greek_trireme
+domain: naval
+display_name: "Greek Trireme"
+naval_type: CRUISER
+max_speed: 4.1  # m/s (~8 knots under oar)
+draft: 1.0
+displacement: 40.0  # tonnes
+fuel_capacity: 0.0
+noise_signature_base: 55.0
+crew:
+  - role: COMMANDER
+    count: 1
+    skill: TRAINED
+  - role: NAVIGATOR
+    count: 1
+    skill: TRAINED
+  - role: CREW
+    count: 170
+    skill: BASIC  # oarsmen
+  - role: GUNNER
+    count: 14
+    skill: TRAINED  # marines/hoplites
+equipment:
+  - name: "Bronze Ram Prow"
+    category: WEAPON
+    weight_kg: 200.0
+    reliability: 0.85
+  - name: "Marine Javelins and Swords"
+    category: WEAPON
+    weight_kg: 50.0
+    reliability: 0.90
+  - name: "Lookout Mast"
+    category: SENSOR
+    weight_kg: 0.0
+    reliability: 0.85
+  - name: "Oar Banks (3 tiers, 170 oars)"
+    category: PROPULSION
+    weight_kg: 3400.0
+    reliability: 0.80
+    temperature_range: [-5.0, 40.0]

@@ -1,0 +1,48 @@
+unit_type: ship_of_line_74
+domain: naval
+display_name: "74-gun Ship of the Line"
+naval_type: CRUISER
+max_speed: 5.1  # m/s (~10 knots)
+draft: 6.9
+displacement: 1600.0  # tonnes
+fuel_capacity: 0.0
+noise_signature_base: 60.0
+crew:
+  - role: COMMANDER
+    count: 1
+    skill: EXPERIENCED
+  - role: NAVIGATOR
+    count: 2
+    skill: TRAINED
+  - role: GUNNER
+    count: 74
+    skill: TRAINED
+  - role: CREW
+    count: 523
+    skill: BASIC
+equipment:
+  - name: "32-pdr Long Guns (lower deck, x28)"
+    category: WEAPON
+    weight_kg: 84000.0
+    reliability: 0.85
+  - name: "18-pdr Long Guns (upper deck, x30)"
+    category: WEAPON
+    weight_kg: 60000.0
+    reliability: 0.85
+  - name: "9-pdr Guns (quarterdeck/forecastle, x16)"
+    category: WEAPON
+    weight_kg: 16000.0
+    reliability: 0.85
+  - name: "Lookout Masthead"
+    category: SENSOR
+    weight_kg: 0.0
+    reliability: 0.90
+  - name: "Canvas Sails (Full Rig)"
+    category: PROPULSION
+    weight_kg: 5000.0
+    reliability: 0.80
+    temperature_range: [-10.0, 45.0]
+  - name: "Oak Hull (3-layer)"
+    category: PROTECTION
+    weight_kg: 400000.0
+    reliability: 0.95

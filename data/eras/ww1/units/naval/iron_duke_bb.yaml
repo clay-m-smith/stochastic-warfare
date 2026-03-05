@@ -1,0 +1,55 @@
+unit_type: iron_duke_bb
+domain: naval
+display_name: "Iron Duke-class Battleship (Royal Navy)"
+naval_type: CRUISER
+max_speed: 10.8  # m/s (~21 knots)
+draft: 8.7
+displacement: 25000.0  # full load tonnes
+fuel_capacity: 3300.0  # tonnes of coal/oil
+noise_signature_base: 145.0
+crew:
+  - role: COMMANDER
+    count: 1
+    skill: EXPERIENCED
+  - role: NAVIGATOR
+    count: 3
+    skill: TRAINED
+  - role: GUNNER
+    count: 50
+    skill: TRAINED
+  - role: ENGINEER
+    count: 30
+    skill: TRAINED
+  - role: GENERIC
+    count: 916
+    skill: BASIC
+equipment:
+  - name: "BL 13.5-inch Mk V Gun (5x2 turrets)"
+    category: WEAPON
+    weight_kg: 380000.0
+    reliability: 0.88
+  - name: "BL 6-inch Mk VII Gun (x12)"
+    category: WEAPON
+    weight_kg: 84000.0
+    reliability: 0.87
+  - name: "QF 3-inch AA Gun (x2)"
+    category: WEAPON
+    weight_kg: 2600.0
+    reliability: 0.82
+  - name: "21-inch Torpedo Tubes (x4)"
+    category: WEAPON
+    weight_kg: 6000.0
+    reliability: 0.78
+  - name: "Barr & Stroud Rangefinder"
+    category: SENSOR
+    weight_kg: 200.0
+    reliability: 0.85
+  - name: "Parsons Steam Turbines (29,000 SHP)"
+    category: PROPULSION
+    weight_kg: 45000.0
+    reliability: 0.84
+    temperature_range: [-10.0, 40.0]
+  - name: "12-inch Krupp Cemented Armour Belt"
+    category: PROTECTION
+    weight_kg: 5000000.0
+    reliability: 0.99

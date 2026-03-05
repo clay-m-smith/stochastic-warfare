@@ -1,0 +1,20 @@
+unit_type: spad_xiii
+domain: aerial
+display_name: "SPAD XIII Fighter"
+aerial_type: FIGHTER
+max_speed: 60.0  # m/s (~222 km/h)
+service_ceiling: 6650.0
+crew:
+  - role: PILOT
+    count: 1
+    skill: TRAINED
+equipment:
+  - name: "Vickers .303 Synchronized MG (x2)"
+    category: WEAPON
+    weight_kg: 22.0
+    reliability: 0.85
+  - name: "Hispano-Suiza 8BEc V-8 Engine (220 hp)"
+    category: PROPULSION
+    weight_kg: 235.0
+    reliability: 0.75
+    temperature_range: [-20.0, 35.0]

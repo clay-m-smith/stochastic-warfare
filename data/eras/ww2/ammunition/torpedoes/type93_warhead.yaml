@@ -1,0 +1,14 @@
+ammo_id: type93_warhead
+display_name: "Type 93 Long Lance Torpedo Warhead"
+ammo_type: HE
+mass_kg: 490.0
+diameter_mm: 610.0
+drag_coefficient: 0.28
+penetration_mm_rha: 0.0
+penetration_reference_range_m: 0.0
+blast_radius_m: 35.0
+fragmentation_radius_m: 55.0
+guidance: NONE
+propulsion: torpedo
+max_speed_mps: 24.7
+unit_cost_factor: 60.0

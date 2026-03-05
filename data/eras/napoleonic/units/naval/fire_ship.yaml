@@ -1,0 +1,26 @@
+unit_type: fire_ship
+domain: naval
+display_name: "Fire Ship (Expendable)"
+naval_type: PATROL
+max_speed: 4.1  # m/s (~8 knots)
+draft: 3.0
+displacement: 350.0  # tonnes
+fuel_capacity: 0.0
+noise_signature_base: 40.0
+crew:
+  - role: COMMANDER
+    count: 1
+    skill: TRAINED
+  - role: CREW
+    count: 14
+    skill: BASIC
+equipment:
+  - name: "Combustible Materials and Incendiaries"
+    category: WEAPON
+    weight_kg: 50000.0
+    reliability: 0.70
+  - name: "Canvas Sails (Reduced Rig)"
+    category: PROPULSION
+    weight_kg: 1000.0
+    reliability: 0.75
+    temperature_range: [-10.0, 45.0]

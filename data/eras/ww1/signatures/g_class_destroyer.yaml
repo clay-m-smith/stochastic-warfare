@@ -1,0 +1,21 @@
+profile_id: g_class_destroyer
+unit_type: g_class_destroyer
+visual:
+  height_m: 8.0
+  cross_section_m2: 100.0
+  camouflage_factor: 0.3
+thermal:
+  emissivity: 0.0
+  heat_output_kw: 0.0
+  contrast_modifier: 0.0
+radar:
+  rcs_frontal_m2: 0.0
+  rcs_side_m2: 0.0
+  rcs_rear_m2: 0.0
+acoustic:
+  noise_db: 85.0
+  speed_coefficient: 2.0
+electromagnetic:
+  emitting: false
+  power_dbm: 0.0
+  frequency_ghz: 0.0

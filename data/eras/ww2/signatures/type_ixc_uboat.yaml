@@ -1,0 +1,21 @@
+profile_id: type_ixc_uboat
+unit_type: type_ixc_uboat
+visual:
+  height_m: 4.5
+  cross_section_m2: 20.0
+  camouflage_factor: 0.7
+thermal:
+  emissivity: 0.0
+  heat_output_kw: 0.0
+  contrast_modifier: 0.0
+radar:
+  rcs_frontal_m2: 2.0
+  rcs_side_m2: 8.0
+  rcs_rear_m2: 2.0
+acoustic:
+  noise_db: 75.0
+  speed_coefficient: 2.5
+electromagnetic:
+  emitting: false
+  power_dbm: 0.0
+  frequency_ghz: 0.0

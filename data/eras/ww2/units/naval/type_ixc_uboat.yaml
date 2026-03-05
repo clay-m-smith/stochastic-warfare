@@ -1,0 +1,59 @@
+unit_type: type_ixc_uboat
+domain: naval
+display_name: "Type IXC U-boat"
+naval_type: SSK
+max_speed: 4.7  # m/s (~9.2 knots surfaced)
+draft: 4.7
+displacement: 1120.0  # surfaced tonnes
+fuel_capacity: 214.0  # tonnes of diesel
+max_depth: 230.0
+noise_signature_base: 112.0
+crew:
+  - role: COMMANDER
+    count: 1
+    skill: EXPERIENCED
+  - role: NAVIGATOR
+    count: 1
+    skill: TRAINED
+  - role: SENSOR_OPERATOR
+    count: 2
+    skill: TRAINED
+  - role: ENGINEER
+    count: 6
+    skill: TRAINED
+  - role: GUNNER
+    count: 3
+    skill: TRAINED
+  - role: GENERIC
+    count: 35
+    skill: BASIC
+equipment:
+  - name: "53.3cm Torpedo Tubes (4 bow, 2 stern)"
+    category: WEAPON
+    weight_kg: 4200.0
+    reliability: 0.82
+  - name: "G7e/T3 Torpedoes (x22)"
+    category: WEAPON
+    weight_kg: 11000.0
+    reliability: 0.78
+  - name: "10.5cm SK C/32 Deck Gun"
+    category: WEAPON
+    weight_kg: 3600.0
+    reliability: 0.85
+  - name: "3.7cm FlaK M42 AA Gun"
+    category: WEAPON
+    weight_kg: 550.0
+    reliability: 0.84
+  - name: "GHG Passive Hydrophone Array"
+    category: SENSOR
+    weight_kg: 350.0
+    reliability: 0.80
+  - name: "FuMO 30 Radar"
+    category: SENSOR
+    weight_kg: 50.0
+    reliability: 0.58
+  - name: "MAN M9V 40/46 Diesel (x2) + SSW Electric (x2)"
+    category: PROPULSION
+    weight_kg: 22000.0
+    reliability: 0.74
+    temperature_range: [-10.0, 38.0]

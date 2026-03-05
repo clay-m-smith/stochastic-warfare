@@ -1,0 +1,40 @@
+unit_type: corvette_sloop
+domain: naval
+display_name: "Corvette / Sloop-of-War (20 guns)"
+naval_type: CORVETTE
+max_speed: 5.7  # m/s (~11 knots)
+draft: 3.7
+displacement: 450.0  # tonnes
+fuel_capacity: 0.0
+noise_signature_base: 45.0
+crew:
+  - role: COMMANDER
+    count: 1
+    skill: TRAINED
+  - role: NAVIGATOR
+    count: 1
+    skill: TRAINED
+  - role: GUNNER
+    count: 20
+    skill: TRAINED
+  - role: CREW
+    count: 118
+    skill: BASIC
+equipment:
+  - name: "9-pdr Long Guns (x18)"
+    category: WEAPON
+    weight_kg: 18000.0
+    reliability: 0.84
+  - name: "Carronades 24-pdr (x2)"
+    category: WEAPON
+    weight_kg: 900.0
+    reliability: 0.82
+  - name: "Lookout Masthead"
+    category: SENSOR
+    weight_kg: 0.0
+    reliability: 0.90
+  - name: "Canvas Sails (Full Rig)"
+    category: PROPULSION
+    weight_kg: 2000.0
+    reliability: 0.83
+    temperature_range: [-10.0, 45.0]

@@ -1,0 +1,24 @@
+weapon_id: carronade_32pdr
+display_name: "32-Pounder Carronade (Short-Range Smasher)"
+category: NAVAL_GUN
+caliber_mm: 156.0
+muzzle_velocity_mps: 280.0
+max_range_m: 600.0
+min_range_m: 0.0
+rate_of_fire_rpm: 2.0
+burst_size: 1
+base_accuracy_mrad: 6.0
+cep_m: 8.0
+guidance: NONE
+magazine_capacity: 60
+reload_time_s: 30.0
+compatible_ammo:
+  - round_shot_32pdr
+  - grape_shot_naval
+weight_kg: 740.0
+reliability: 0.83
+barrel_life_rounds: 2000
+requires_deployed: false
+traverse_deg: 20.0
+elevation_min_deg: -5.0
+elevation_max_deg: 11.0

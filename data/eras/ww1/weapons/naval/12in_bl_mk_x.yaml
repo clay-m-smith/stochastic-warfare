@@ -1,0 +1,23 @@
+weapon_id: 12in_bl_mk_x
+display_name: "BL 12-inch Mk X Naval Gun"
+category: NAVAL_GUN
+caliber_mm: 305.0
+muzzle_velocity_mps: 831.0
+max_range_m: 21700.0
+min_range_m: 1000.0
+rate_of_fire_rpm: 2.0
+burst_size: 1
+base_accuracy_mrad: 1.0
+cep_m: 150.0
+guidance: NONE
+magazine_capacity: 80
+reload_time_s: 30.0
+compatible_ammo:
+  - 12in_ap_mk_viia
+weight_kg: 58000.0
+reliability: 0.87
+barrel_life_rounds: 340
+requires_deployed: false
+traverse_deg: 280.0
+elevation_min_deg: -5.0
+elevation_max_deg: 13.5

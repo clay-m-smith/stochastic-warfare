@@ -1,0 +1,24 @@
+unit_type: supply_train_nap
+domain: ground
+display_name: "Horse-Drawn Supply Train"
+ground_type: MOTORIZED
+max_speed: 1.0  # m/s (horse-drawn wagons)
+armor_front: 0.0
+armor_side: 0.0
+cargo_capacity_tons: 20.0
+crew:
+  - role: COMMANDER
+    count: 1
+    skill: BASIC
+  - role: CREW
+    count: 39
+    skill: BASIC
+equipment:
+  - name: "Supply Wagons (x10)"
+    category: PROTECTION
+    weight_kg: 15000.0
+    reliability: 0.75
+  - name: "Muskets (personal arms)"
+    category: WEAPON
+    weight_kg: 4.0
+    reliability: 0.78

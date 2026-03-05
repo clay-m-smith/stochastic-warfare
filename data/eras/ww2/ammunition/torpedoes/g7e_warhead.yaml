@@ -1,0 +1,14 @@
+ammo_id: g7e_warhead
+display_name: "G7e/T3 Torpedo Warhead"
+ammo_type: HE
+mass_kg: 280.0
+diameter_mm: 533.0
+drag_coefficient: 0.30
+penetration_mm_rha: 0.0
+penetration_reference_range_m: 0.0
+blast_radius_m: 25.0
+fragmentation_radius_m: 40.0
+guidance: NONE
+propulsion: torpedo
+max_speed_mps: 15.4
+unit_cost_factor: 40.0

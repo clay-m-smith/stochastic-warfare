@@ -74,43 +74,53 @@ stochastic-warfare/
 │   ├── commander_profiles/           # Commander personality archetypes (risk tolerance, style, preferences)
 │   ├── maritime/                     # Maritime-specific data: port facilities, sea lanes, chokepoints, bathymetry reference
 │   ├── eras/                         # Era-specific data packages [Phase 20+]
-│   │   ├── ww2/                     # WW2 era data
-│   │   │   ├── units/               # 15 unit definitions (5 armor, 3 infantry, 4 air, 3 naval)
-│   │   │   ├── weapons/             # 8 weapon definitions (tank guns, MGs, torpedo, naval guns)
-│   │   │   ├── ammunition/          # 13 ammo definitions (AP/HE variants, torpedo, naval)
+│   │   ├── ww2/                     # WW2 era data [Phases 20, 29]
+│   │   │   ├── units/               # 25 unit defs (5 armor, 3 infantry, 5 air, 8 naval, 4 artillery)
+│   │   │   │   ├── armor/           # Tiger I, Panther, Sherman, Panzer IV, T-34/85
+│   │   │   │   ├── infantry/        # US/Soviet/Wehrmacht rifle squads
+│   │   │   │   ├── air/             # B-17G, Bf 109G, P-51D, Spitfire IX, A6M Zero [P29]
+│   │   │   │   ├── naval/           # Iowa BB, Fletcher DD, Type VIIC, Essex CV, Shokaku CV, Type IXC, Flower, LST [P29]
+│   │   │   │   └── artillery/       # M1 105mm, sFH 18, PaK 40, 6-pdr AT [P29]
+│   │   │   ├── weapons/             # 14 weapon defs (guns, naval, torpedoes) [P29: +6]
+│   │   │   ├── ammunition/          # 19 ammo defs (tank/small_arms/naval/torpedoes/aircraft/depth_charges) [P29: +6]
 │   │   │   ├── sensors/             # 4 sensor definitions (eyeball, radar, naval radar, hydrophone)
-│   │   │   ├── signatures/          # 15 signature profiles (one per unit, zeroed thermal)
-│   │   │   ├── doctrine/            # 4 doctrine templates (blitzkrieg, soviet_deep_ops, british_deliberate, us_combined_arms_ww2)
-│   │   │   ├── commanders/          # 3 commander profiles (Patton, Montgomery, Zhukov types)
+│   │   │   ├── signatures/          # 25 signature profiles [P29: +10]
+│   │   │   ├── doctrine/            # 4 doctrine templates
+│   │   │   ├── commanders/          # 3 commander profiles
+│   │   │   ├── comms/               # 2 comm definitions (field telephone, SCR-300 radio) [P29]
 │   │   │   └── scenarios/           # 3 validation scenarios (Kursk, Midway, Normandy Bocage)
-│   │   ├── ww1/                     # WW1 era data [Phase 21]
-│   │   │   ├── units/               # 6 unit definitions (3 infantry, 2 armor, 1 cavalry)
-│   │   │   ├── weapons/             # 8 weapon definitions (rifles, MGs, artillery, grenades)
-│   │   │   ├── ammunition/          # 10 ammo definitions (ball, AP, HE, shrapnel, gas)
-│   │   │   ├── sensors/             # 5 sensor definitions (binoculars, sound ranging, flash spotting, balloon, aircraft recon)
-│   │   │   ├── signatures/          # 6 signature profiles (one per unit, zeroed thermal/radar/EM)
-│   │   │   ├── doctrine/            # 3 doctrine templates (british_trench_warfare, german_sturmtaktik, french_attaque_outrance)
-│   │   │   ├── commanders/          # 3 commander profiles (Haig, Ludendorff, Foch types)
+│   │   ├── ww1/                     # WW1 era data [Phases 21, 29]
+│   │   │   ├── units/               # 16 unit defs (3 infantry, 2 armor, 1 cavalry, 5 naval, 3 ground, 2 air) [P29: +10]
+│   │   │   │   ├── naval/           # Iron Duke BB, Konig BB, Invincible BC, G-class DD, U-boat [P29]
+│   │   │   │   └── air/             # SPAD XIII, Fokker D.VII [P29]
+│   │   │   ├── weapons/             # 13 weapon defs (rifles, MGs, artillery, grenades, naval, aircraft guns) [P29: +5]
+│   │   │   ├── ammunition/          # 14 ammo defs (ball, AP, HE, shrapnel, gas, naval, aircraft) [P29: +4]
+│   │   │   ├── sensors/             # 5 sensor definitions
+│   │   │   ├── signatures/          # 16 signature profiles [P29: +10]
+│   │   │   ├── doctrine/            # 3 doctrine templates
+│   │   │   ├── commanders/          # 3 commander profiles
 │   │   │   ├── comms/               # 2 comm definitions (field telephone, runner messenger)
 │   │   │   └── scenarios/           # 2 validation scenarios (Somme Day 1, Cambrai)
-│   │   ├── napoleonic/              # Napoleonic era data [Phase 22]
-│   │   │   ├── units/               # 10 unit definitions (french/british infantry, Old Guard, cuirassier, hussar, lancer, artillery)
-│   │   │   ├── weapons/             # 9 weapon definitions (muskets, rifle, cannons, howitzer, saber, lance, bayonet)
-│   │   │   ├── ammunition/          # 9 ammo definitions (musket balls, roundshot, canister, howitzer shell)
-│   │   │   ├── sensors/             # 3 sensor definitions (telescope, cavalry scout, observation post)
-│   │   │   ├── signatures/          # 10 signature profiles (one per unit, zeroed thermal/radar/EM)
-│   │   │   ├── doctrine/            # 3 doctrine templates (french_grande_armee, british_thin_red_line, coalition_linear)
-│   │   │   ├── commanders/          # 3 commander profiles (Napoleon, Wellington, Blucher types)
+│   │   ├── napoleonic/              # Napoleonic era data [Phases 22, 29]
+│   │   │   ├── units/               # 21 unit defs (infantry, cavalry, artillery, naval, engineer, supply) [P29: +11]
+│   │   │   │   └── naval/           # Ship of line 74, First Rate 100, Frigate 32, Corvette, Fire Ship [P29]
+│   │   │   ├── weapons/             # 13 weapon defs (muskets, cannons, naval, rockets) [P29: +4]
+│   │   │   ├── ammunition/          # 13 ammo defs (musket balls, roundshot, canister, naval, rockets) [P29: +4]
+│   │   │   ├── sensors/             # 3 sensor definitions
+│   │   │   ├── signatures/          # 21 signature profiles [P29: +11]
+│   │   │   ├── doctrine/            # 3 doctrine templates
+│   │   │   ├── commanders/          # 3 commander profiles
 │   │   │   ├── comms/               # 2 comm definitions (mounted courier, drum/bugle signals)
 │   │   │   └── scenarios/           # 2 validation scenarios (Austerlitz, Waterloo)
-│   │   └── ancient_medieval/        # Ancient & Medieval era data [Phase 23]
-│   │       ├── units/               # 7 unit definitions (roman legionary, hoplite, longbowman, knight, pike block, horse archer, huscarl)
-│   │       ├── weapons/             # 13 weapon definitions (gladius, pilum, sarissa, longbow, crossbow, lance, sword, mace, pike, catapult, trebuchet, ballista, ram)
-│   │       ├── ammunition/          # 8 ammo definitions (arrows, bolts, javelins, stones, sling stones)
-│   │       ├── sensors/             # 3 sensor definitions (mounted scout, watchtower, ship lookout)
-│   │       ├── signatures/          # 7 signature profiles (one per unit, zeroed thermal/radar/EM)
-│   │       ├── doctrine/            # 3 doctrine templates (roman_legion, english_defensive, steppe_nomad)
-│   │       ├── commanders/          # 3 commander profiles (Hannibal, Henry V, William Conqueror types)
+│   │   └── ancient_medieval/        # Ancient & Medieval era data [Phases 23, 29]
+│   │       ├── units/               # 17 unit defs (infantry, cavalry, mounted, naval, siege) [P29: +10]
+│   │       │   └── naval/           # Trireme, Quinquereme, Longship, Dromon, Cog, War Galley [P29]
+│   │       ├── weapons/             # 16 weapon defs (melee, ranged, siege, naval) [P29: +3]
+│   │       ├── ammunition/          # 10 ammo defs (arrows, bolts, javelins, stones, naval) [P29: +2]
+│   │       ├── sensors/             # 3 sensor definitions
+│   │       ├── signatures/          # 17 signature profiles [P29: +10]
+│   │       ├── doctrine/            # 3 doctrine templates
+│   │       ├── commanders/          # 4 commander profiles (Hannibal, Henry V, William Conqueror, Subotai) [P29: +1]
 │   │       ├── comms/               # 2 comm definitions (battle horn, banner signal)
 │   │       └── scenarios/           # 3 validation scenarios (Cannae, Agincourt, Hastings)
 │   └── scenarios/                    # Complete scenario packages

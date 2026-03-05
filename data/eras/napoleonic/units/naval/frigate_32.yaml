@@ -1,0 +1,44 @@
+unit_type: frigate_32
+domain: naval
+display_name: "32-gun Frigate"
+naval_type: FRIGATE
+max_speed: 6.2  # m/s (~12 knots)
+draft: 4.6
+displacement: 900.0  # tonnes
+fuel_capacity: 0.0
+noise_signature_base: 50.0
+crew:
+  - role: COMMANDER
+    count: 1
+    skill: TRAINED
+  - role: NAVIGATOR
+    count: 1
+    skill: TRAINED
+  - role: GUNNER
+    count: 32
+    skill: TRAINED
+  - role: CREW
+    count: 221
+    skill: BASIC
+equipment:
+  - name: "24-pdr Long Guns (x26)"
+    category: WEAPON
+    weight_kg: 65000.0
+    reliability: 0.85
+  - name: "Carronades 32-pdr (x6)"
+    category: WEAPON
+    weight_kg: 3000.0
+    reliability: 0.82
+  - name: "Lookout Masthead"
+    category: SENSOR
+    weight_kg: 0.0
+    reliability: 0.90
+  - name: "Canvas Sails (Full Rig)"
+    category: PROPULSION
+    weight_kg: 3500.0
+    reliability: 0.82
+    temperature_range: [-10.0, 45.0]
+  - name: "Oak Hull (2-layer)"
+    category: PROTECTION
+    weight_kg: 200000.0
+    reliability: 0.92

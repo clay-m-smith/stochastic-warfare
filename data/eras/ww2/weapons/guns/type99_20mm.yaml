@@ -1,0 +1,19 @@
+weapon_id: type99_20mm
+display_name: "Type 99 Model 2 20mm Cannon (IJN)"
+category: AUTOCANNON
+caliber_mm: 20.0
+muzzle_velocity_mps: 750.0
+max_range_m: 700.0
+min_range_m: 0.0
+rate_of_fire_rpm: 490.0
+burst_size: 5
+base_accuracy_mrad: 2.5
+guidance: NONE
+magazine_capacity: 100
+reload_time_s: 0.0
+compatible_ammo:
+  - 20mm_type99_he
+weight_kg: 23.0
+reliability: 0.87
+barrel_life_rounds: 8000
+requires_deployed: false

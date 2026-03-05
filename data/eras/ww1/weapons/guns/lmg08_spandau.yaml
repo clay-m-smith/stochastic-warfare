@@ -1,0 +1,19 @@
+weapon_id: lmg08_spandau
+display_name: "LMG 08/15 Spandau Synchronized MG (Aircraft)"
+category: LIGHT_MG
+caliber_mm: 7.92
+muzzle_velocity_mps: 895.0
+max_range_m: 500.0
+min_range_m: 0.0
+rate_of_fire_rpm: 550.0
+burst_size: 5
+base_accuracy_mrad: 4.0
+guidance: NONE
+magazine_capacity: 250
+reload_time_s: 0.0
+compatible_ammo:
+  - 792_smk
+weight_kg: 10.0
+reliability: 0.83
+barrel_life_rounds: 10000
+requires_deployed: false

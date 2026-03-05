@@ -1,0 +1,27 @@
+unit_type: saracen_cavalry
+domain: ground
+display_name: "Saracen Light Cavalry"
+ground_type: ARMOR
+max_speed: 7.0  # m/s (~25 km/h, fast light cavalry)
+armor_front: 1.0  # light mail
+armor_side: 0.5
+crew:
+  - role: COMMANDER
+    count: 1
+    skill: TRAINED
+  - role: CREW
+    count: 199
+    skill: TRAINED
+equipment:
+  - name: "Composite Bow"
+    category: WEAPON
+    weight_kg: 0.8
+    reliability: 0.90
+  - name: "Saif Sword"
+    category: WEAPON
+    weight_kg: 1.0
+    reliability: 0.95
+  - name: "Lance"
+    category: WEAPON
+    weight_kg: 2.5
+    reliability: 0.85

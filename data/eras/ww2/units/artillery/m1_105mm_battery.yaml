@@ -1,0 +1,30 @@
+unit_type: m1_105mm_battery
+domain: ground
+display_name: "M1 105mm Howitzer Battery (US)"
+ground_type: ARTILLERY_TOWED
+max_speed: 1.0  # m/s (towed, limited by prime mover)
+armor_front: 0.0
+armor_side: 0.0
+crew:
+  - role: COMMANDER
+    count: 1
+    skill: TRAINED
+  - role: GUNNER
+    count: 4
+    skill: TRAINED
+  - role: CREW
+    count: 20
+    skill: BASIC
+equipment:
+  - name: "M2A1 105mm Howitzer (x4)"
+    category: WEAPON
+    weight_kg: 8760.0
+    reliability: 0.92
+  - name: "M1 Panoramic Telescope"
+    category: SENSOR
+    weight_kg: 3.0
+    reliability: 0.95
+  - name: "M4 Fire Control Instrument"
+    category: SENSOR
+    weight_kg: 15.0
+    reliability: 0.90

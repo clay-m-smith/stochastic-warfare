@@ -1,0 +1,14 @@
+ammo_id: 18in_torpedo_warhead
+display_name: "18-inch Torpedo Warhead (WW1)"
+ammo_type: HE
+mass_kg: 104.0
+diameter_mm: 457.0
+drag_coefficient: 0.30
+penetration_mm_rha: 0.0
+penetration_reference_range_m: 0.0
+blast_radius_m: 18.0
+fragmentation_radius_m: 30.0
+guidance: NONE
+propulsion: torpedo
+max_speed_mps: 16.5
+unit_cost_factor: 25.0

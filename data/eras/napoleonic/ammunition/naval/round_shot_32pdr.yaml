@@ -1,0 +1,14 @@
+ammo_id: round_shot_32pdr
+display_name: "32-Pounder Round Shot"
+ammo_type: AP
+mass_kg: 14.5
+diameter_mm: 156.0
+drag_coefficient: 0.45
+penetration_mm_rha: 40.0
+penetration_reference_range_m: 500.0
+blast_radius_m: 0.0
+fragmentation_radius_m: 0.0
+guidance: NONE
+propulsion: none
+max_speed_mps: 488.0
+unit_cost_factor: 0.5

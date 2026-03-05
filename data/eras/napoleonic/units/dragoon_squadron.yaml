@@ -1,0 +1,27 @@
+unit_type: dragoon_squadron
+domain: ground
+display_name: "French Dragoon Squadron"
+ground_type: CAVALRY
+max_speed: 6.5  # m/s (~23 km/h charge speed)
+armor_front: 0.0
+armor_side: 0.0
+crew:
+  - role: COMMANDER
+    count: 1
+    skill: TRAINED
+  - role: CREW
+    count: 119
+    skill: BASIC
+equipment:
+  - name: "Cavalry Saber"
+    category: WEAPON
+    weight_kg: 1.1
+    reliability: 0.95
+  - name: "Musketoon (Dragoon)"
+    category: WEAPON
+    weight_kg: 2.5
+    reliability: 0.78
+  - name: "Bayonet"
+    category: WEAPON
+    weight_kg: 0.4
+    reliability: 0.95

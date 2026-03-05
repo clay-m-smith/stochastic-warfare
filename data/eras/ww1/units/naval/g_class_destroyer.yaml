@@ -1,0 +1,43 @@
+unit_type: g_class_destroyer
+domain: naval
+display_name: "G-class Destroyer (Royal Navy)"
+naval_type: DESTROYER
+max_speed: 16.5  # m/s (~32 knots)
+draft: 3.2
+displacement: 810.0  # full load tonnes
+fuel_capacity: 200.0  # tonnes of fuel oil
+noise_signature_base: 130.0
+crew:
+  - role: COMMANDER
+    count: 1
+    skill: TRAINED
+  - role: NAVIGATOR
+    count: 1
+    skill: TRAINED
+  - role: GUNNER
+    count: 6
+    skill: TRAINED
+  - role: ENGINEER
+    count: 5
+    skill: TRAINED
+  - role: GENERIC
+    count: 83
+    skill: BASIC
+equipment:
+  - name: "QF 4-inch Mk IV Gun (x3)"
+    category: WEAPON
+    weight_kg: 4500.0
+    reliability: 0.86
+  - name: "21-inch Torpedo Tubes (x2x2)"
+    category: WEAPON
+    weight_kg: 3200.0
+    reliability: 0.78
+  - name: "Depth Charges (x4)"
+    category: WEAPON
+    weight_kg: 600.0
+    reliability: 0.90
+  - name: "Parsons Steam Turbines (15,500 SHP)"
+    category: PROPULSION
+    weight_kg: 12000.0
+    reliability: 0.82
+    temperature_range: [-10.0, 40.0]

@@ -1,0 +1,23 @@
+weapon_id: 15cm_sk_l45
+display_name: "15cm SK L/45 Naval Gun (German)"
+category: NAVAL_GUN
+caliber_mm: 149.0
+muzzle_velocity_mps: 835.0
+max_range_m: 14900.0
+min_range_m: 500.0
+rate_of_fire_rpm: 5.0
+burst_size: 1
+base_accuracy_mrad: 2.0
+cep_m: 80.0
+guidance: NONE
+magazine_capacity: 160
+reload_time_s: 12.0
+compatible_ammo:
+  - 15cm_he_shell
+weight_kg: 5730.0
+reliability: 0.88
+barrel_life_rounds: 1400
+requires_deployed: false
+traverse_deg: 150.0
+elevation_min_deg: -7.0
+elevation_max_deg: 20.0

@@ -1,0 +1,19 @@
+weapon_id: mg151_20mm
+display_name: "MG 151/20 20mm Autocannon (Luftwaffe)"
+category: AUTOCANNON
+caliber_mm: 20.0
+muzzle_velocity_mps: 785.0
+max_range_m: 800.0
+min_range_m: 0.0
+rate_of_fire_rpm: 700.0
+burst_size: 5
+base_accuracy_mrad: 2.0
+guidance: NONE
+magazine_capacity: 200
+reload_time_s: 0.0
+compatible_ammo:
+  - 20mm_mg151_mine
+weight_kg: 42.0
+reliability: 0.88
+barrel_life_rounds: 10000
+requires_deployed: false

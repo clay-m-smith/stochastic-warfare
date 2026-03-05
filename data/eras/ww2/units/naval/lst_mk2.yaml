@@ -1,0 +1,43 @@
+unit_type: lst_mk2
+domain: naval
+display_name: "LST Mk 2 (Landing Ship, Tank)"
+naval_type: LST
+max_speed: 6.2  # m/s (~12 knots)
+draft: 4.3
+displacement: 4080.0  # full load tonnes
+fuel_capacity: 560.0  # tonnes of fuel oil
+noise_signature_base: 132.0
+crew:
+  - role: COMMANDER
+    count: 1
+    skill: TRAINED
+  - role: NAVIGATOR
+    count: 1
+    skill: TRAINED
+  - role: GUNNER
+    count: 10
+    skill: BASIC
+  - role: ENGINEER
+    count: 6
+    skill: TRAINED
+  - role: GENERIC
+    count: 93
+    skill: BASIC
+equipment:
+  - name: "Bofors 40mm Twin Mount (x2)"
+    category: WEAPON
+    weight_kg: 4520.0
+    reliability: 0.88
+  - name: "Oerlikon 20mm (x6)"
+    category: WEAPON
+    weight_kg: 4080.0
+    reliability: 0.87
+  - name: "Tank Deck (20 tanks capacity)"
+    category: PROTECTION
+    weight_kg: 200000.0
+    reliability: 0.95
+  - name: "GM 12-567A Diesel Engines (x2)"
+    category: PROPULSION
+    weight_kg: 18000.0
+    reliability: 0.80
+    temperature_range: [-10.0, 40.0]

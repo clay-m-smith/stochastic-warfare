@@ -1,0 +1,14 @@
+ammo_id: 20mm_mg151_mine
+display_name: "20mm M-Geschoss Mine Shell (MG 151)"
+ammo_type: HE
+mass_kg: 0.092
+diameter_mm: 20.0
+drag_coefficient: 0.38
+penetration_mm_rha: 3.0
+penetration_reference_range_m: 100.0
+blast_radius_m: 1.5
+fragmentation_radius_m: 3.0
+guidance: NONE
+propulsion: none
+max_speed_mps: 785.0
+unit_cost_factor: 0.05

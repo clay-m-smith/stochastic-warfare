@@ -1,0 +1,23 @@
+unit_type: siege_engineer
+domain: ground
+display_name: "Siege Engineer Company"
+ground_type: ENGINEER
+max_speed: 0.5  # m/s (with siege equipment)
+armor_front: 0.0
+armor_side: 0.0
+crew:
+  - role: COMMANDER
+    count: 1
+    skill: VETERAN
+  - role: CREW
+    count: 99
+    skill: TRAINED
+equipment:
+  - name: "Siege Tools (Picks, Shovels, Rams)"
+    category: PROTECTION
+    weight_kg: 500.0
+    reliability: 0.85
+  - name: "Personal Weapons (Swords)"
+    category: WEAPON
+    weight_kg: 1.0
+    reliability: 0.90

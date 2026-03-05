@@ -1,0 +1,22 @@
+weapon_id: g7e_torpedo
+display_name: "G7e/T3 Electric Torpedo (U-boat)"
+category: TORPEDO_TUBE
+caliber_mm: 533.0
+muzzle_velocity_mps: 0.0
+max_range_m: 5000.0
+min_range_m: 300.0
+rate_of_fire_rpm: 0.3
+burst_size: 1
+base_accuracy_mrad: 0.0
+guidance: NONE
+magazine_capacity: 6
+reload_time_s: 900.0
+compatible_ammo:
+  - g7e_warhead
+weight_kg: 1760.0
+reliability: 0.75
+barrel_life_rounds: 0
+requires_deployed: false
+traverse_deg: 20.0
+elevation_min_deg: -10.0
+elevation_max_deg: 10.0

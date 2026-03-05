@@ -1,0 +1,58 @@
+unit_type: flower_corvette
+domain: naval
+display_name: "Flower-class Corvette"
+naval_type: CORVETTE
+max_speed: 8.2  # m/s (~16 knots)
+draft: 3.5
+displacement: 1170.0  # full load tonnes
+fuel_capacity: 233.0  # tonnes of fuel oil
+noise_signature_base: 128.0
+crew:
+  - role: COMMANDER
+    count: 1
+    skill: TRAINED
+  - role: NAVIGATOR
+    count: 1
+    skill: TRAINED
+  - role: SENSOR_OPERATOR
+    count: 3
+    skill: TRAINED
+  - role: GUNNER
+    count: 6
+    skill: TRAINED
+  - role: ENGINEER
+    count: 5
+    skill: TRAINED
+  - role: GENERIC
+    count: 69
+    skill: BASIC
+equipment:
+  - name: "BL 4-inch Mk IX Gun"
+    category: WEAPON
+    weight_kg: 3500.0
+    reliability: 0.88
+  - name: "2-pdr Pom-Pom"
+    category: WEAPON
+    weight_kg: 2200.0
+    reliability: 0.85
+  - name: "Depth Charge Rails and Throwers (x4)"
+    category: WEAPON
+    weight_kg: 3000.0
+    reliability: 0.92
+  - name: "Hedgehog ASW Mortar"
+    category: WEAPON
+    weight_kg: 1400.0
+    reliability: 0.80
+  - name: "Type 271 Surface Search Radar"
+    category: SENSOR
+    weight_kg: 200.0
+    reliability: 0.72
+  - name: "Type 123A ASDIC (Sonar)"
+    category: SENSOR
+    weight_kg: 800.0
+    reliability: 0.75
+  - name: "4-Cylinder Triple Expansion Steam Engine (2,750 IHP)"
+    category: PROPULSION
+    weight_kg: 15000.0
+    reliability: 0.82
+    temperature_range: [-10.0, 40.0]

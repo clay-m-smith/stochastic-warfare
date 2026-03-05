@@ -1,0 +1,22 @@
+unit_type: congreve_rocket_battery
+domain: ground
+display_name: "Congreve Rocket Battery"
+ground_type: ROCKET_ARTILLERY
+max_speed: 1.0  # m/s
+armor_front: 0.0
+armor_side: 0.0
+crew:
+  - role: COMMANDER
+    count: 1
+    skill: TRAINED
+  - role: GUNNER
+    count: 4
+    skill: TRAINED
+  - role: CREW
+    count: 20
+    skill: BASIC
+equipment:
+  - name: "Congreve Rocket Launcher Tripod (x4)"
+    category: WEAPON
+    weight_kg: 200.0
+    reliability: 0.60

@@ -1,0 +1,10 @@
+comm_id: field_telephone_ww2
+comm_type: WIRE
+display_name: "WW2 Field Telephone (EE-8)"
+max_range_m: 20000.0
+bandwidth_bps: 4000.0
+base_latency_s: 1.5
+base_reliability: 0.88
+intercept_risk: 0.03
+jam_resistance: 1.0
+requires_los: false

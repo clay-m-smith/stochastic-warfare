@@ -38,7 +38,7 @@ Rolling record of implementation decisions, changes, and lessons learned across 
 | 27 | Combat System Completeness | **Complete** | [phase-27.md](phase-27.md) |
 | 28 | Modern Era Data Package | **Complete** | [phase-28.md](phase-28.md) |
 | 28.5 | Directed Energy Weapons | **Complete** | [phase-28.5.md](phase-28.5.md) |
-| 29 | Historical Era Data Expansion | Planned | — |
+| 29 | Historical Era Data Expansion | **Complete** | [phase-29.md](phase-29.md) |
 | 30 | Scenario & Campaign Library | Planned | — |
 
 ## Post-MVP Refinement Index

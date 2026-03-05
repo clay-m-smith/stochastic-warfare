@@ -1,0 +1,44 @@
+unit_type: roman_quinquereme
+domain: naval
+display_name: "Roman Quinquereme"
+naval_type: CRUISER
+max_speed: 3.1  # m/s (~6 knots under oar)
+draft: 1.5
+displacement: 100.0  # tonnes
+fuel_capacity: 0.0
+noise_signature_base: 60.0
+crew:
+  - role: COMMANDER
+    count: 1
+    skill: TRAINED
+  - role: NAVIGATOR
+    count: 1
+    skill: TRAINED
+  - role: CREW
+    count: 300
+    skill: BASIC  # oarsmen
+  - role: GUNNER
+    count: 120
+    skill: TRAINED  # legionaries (boarding)
+equipment:
+  - name: "Bronze Ram Prow"
+    category: WEAPON
+    weight_kg: 300.0
+    reliability: 0.85
+  - name: "Corvus Boarding Bridge"
+    category: WEAPON
+    weight_kg: 500.0
+    reliability: 0.75
+  - name: "Legionary Weapons (Gladius and Pilum)"
+    category: WEAPON
+    weight_kg: 200.0
+    reliability: 0.90
+  - name: "Lookout Mast"
+    category: SENSOR
+    weight_kg: 0.0
+    reliability: 0.85
+  - name: "Oar Banks (5 files, 300 oars)"
+    category: PROPULSION
+    weight_kg: 6000.0
+    reliability: 0.78
+    temperature_range: [-5.0, 40.0]

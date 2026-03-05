@@ -1,0 +1,44 @@
+unit_type: u_boat_ww1
+domain: naval
+display_name: "SM U-boat (Mittel-U, Kaiserliche Marine)"
+naval_type: SSK
+max_speed: 4.6  # m/s (~9 knots surfaced)
+draft: 3.7
+displacement: 685.0  # surfaced tonnes
+fuel_capacity: 80.0  # tonnes of diesel
+max_depth: 50.0
+noise_signature_base: 105.0
+crew:
+  - role: COMMANDER
+    count: 1
+    skill: EXPERIENCED
+  - role: NAVIGATOR
+    count: 1
+    skill: TRAINED
+  - role: ENGINEER
+    count: 4
+    skill: TRAINED
+  - role: GUNNER
+    count: 2
+    skill: TRAINED
+  - role: GENERIC
+    count: 27
+    skill: BASIC
+equipment:
+  - name: "45cm Torpedo Tubes (x4)"
+    category: WEAPON
+    weight_kg: 2800.0
+    reliability: 0.72
+  - name: "8.8cm SK L/30 Deck Gun"
+    category: WEAPON
+    weight_kg: 1500.0
+    reliability: 0.84
+  - name: "Passive Hydrophone"
+    category: SENSOR
+    weight_kg: 50.0
+    reliability: 0.65
+  - name: "MAN Diesel (x2) + Electric Motors"
+    category: PROPULSION
+    weight_kg: 12000.0
+    reliability: 0.70
+    temperature_range: [-5.0, 35.0]

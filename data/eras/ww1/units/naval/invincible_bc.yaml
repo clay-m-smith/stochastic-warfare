@@ -1,0 +1,51 @@
+unit_type: invincible_bc
+domain: naval
+display_name: "Invincible-class Battlecruiser (Royal Navy)"
+naval_type: CRUISER
+max_speed: 12.9  # m/s (~25 knots)
+draft: 7.9
+displacement: 17373.0  # full load tonnes
+fuel_capacity: 3000.0  # tonnes of coal/oil
+noise_signature_base: 142.0
+crew:
+  - role: COMMANDER
+    count: 1
+    skill: EXPERIENCED
+  - role: NAVIGATOR
+    count: 2
+    skill: TRAINED
+  - role: GUNNER
+    count: 40
+    skill: TRAINED
+  - role: ENGINEER
+    count: 25
+    skill: TRAINED
+  - role: GENERIC
+    count: 713
+    skill: BASIC
+equipment:
+  - name: "BL 12-inch Mk X Gun (4x2 turrets)"
+    category: WEAPON
+    weight_kg: 260000.0
+    reliability: 0.87
+  - name: "BL 4-inch Mk III Gun (x16)"
+    category: WEAPON
+    weight_kg: 24000.0
+    reliability: 0.86
+  - name: "18-inch Torpedo Tubes (x5)"
+    category: WEAPON
+    weight_kg: 7500.0
+    reliability: 0.75
+  - name: "Barr & Stroud Rangefinder"
+    category: SENSOR
+    weight_kg: 200.0
+    reliability: 0.85
+  - name: "Parsons Steam Turbines (41,000 SHP)"
+    category: PROPULSION
+    weight_kg: 38000.0
+    reliability: 0.83
+    temperature_range: [-10.0, 40.0]
+  - name: "6-inch Krupp Cemented Belt Armour"
+    category: PROTECTION
+    weight_kg: 2500000.0
+    reliability: 0.99

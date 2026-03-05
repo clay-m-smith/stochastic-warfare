@@ -1,0 +1,48 @@
+unit_type: first_rate_100
+domain: naval
+display_name: "First Rate Ship of the Line (100+ guns)"
+naval_type: CRUISER
+max_speed: 4.6  # m/s (~9 knots)
+draft: 7.8
+displacement: 2500.0  # tonnes
+fuel_capacity: 0.0
+noise_signature_base: 65.0
+crew:
+  - role: COMMANDER
+    count: 1
+    skill: VETERAN
+  - role: NAVIGATOR
+    count: 3
+    skill: TRAINED
+  - role: GUNNER
+    count: 100
+    skill: TRAINED
+  - role: CREW
+    count: 746
+    skill: BASIC
+equipment:
+  - name: "32-pdr Long Guns (lower deck, x32)"
+    category: WEAPON
+    weight_kg: 96000.0
+    reliability: 0.85
+  - name: "24-pdr Long Guns (middle deck, x34)"
+    category: WEAPON
+    weight_kg: 85000.0
+    reliability: 0.85
+  - name: "18-pdr Long Guns (upper deck, x34)"
+    category: WEAPON
+    weight_kg: 68000.0
+    reliability: 0.85
+  - name: "Lookout Masthead"
+    category: SENSOR
+    weight_kg: 0.0
+    reliability: 0.90
+  - name: "Canvas Sails (Full Rig, 3 masts)"
+    category: PROPULSION
+    weight_kg: 7000.0
+    reliability: 0.78
+    temperature_range: [-10.0, 45.0]
+  - name: "Oak Hull (4-layer, copper-sheathed)"
+    category: PROTECTION
+    weight_kg: 600000.0
+    reliability: 0.96
