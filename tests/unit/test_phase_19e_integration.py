@@ -133,6 +133,7 @@ def _make_mock_ctx(
         stockpile_manager=None,
         morale_machine=None,
         movement_engine=None,
+        commander_engine=None,
     )
     ctx.all_units = lambda: [u for us in ctx.units_by_side.values() for u in us]
     ctx.active_units = lambda side: [

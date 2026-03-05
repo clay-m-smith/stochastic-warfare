@@ -123,6 +123,8 @@ class BattleManager:
         self._config = config or BattleConfig()
         self._battles: dict[str, BattleContext] = {}
         self._next_battle_id = 0
+        # Transient assessment cache — not checkpointed
+        self._cached_assessments: dict[str, Any] = {}  # unit_id -> SituationAssessment
 
     # ── Engagement detection ────────────────────────────────────────
 
@@ -471,6 +473,7 @@ class BattleManager:
         """Restore battle manager state from checkpoint."""
         self._next_battle_id = state.get("next_battle_id", 0)
         self._battles.clear()
+        self._cached_assessments.clear()
         for bid, bdata in state.get("battles", {}).items():
             self._battles[bid] = BattleContext(
                 battle_id=bdata["battle_id"],
@@ -558,7 +561,7 @@ class BattleManager:
                 school = ctx.school_registry.get_for_unit(unit_id)
 
             if completed_phase == OODAPhase.OBSERVE:
-                # Run situation assessment
+                # Run situation assessment with real data
                 if ctx.assessor is not None:
                     side = self._find_unit_side(ctx, unit_id)
                     if side:
@@ -568,51 +571,72 @@ class BattleManager:
                             for s in ctx.side_names()
                             if s != side
                         )
+
+                        # Real morale from state tracking
+                        morale_level = self._get_unit_morale_level(ctx, unit_id)
+
+                        # Real supply from stockpile manager
+                        supply_level = self._get_unit_supply_level(ctx, unit_id)
+
                         # Get school weight overrides
                         weight_overrides = None
                         if school is not None:
                             weight_overrides = school.get_assessment_weight_overrides() or None
-                        ctx.assessor.assess(
+                        assessment = ctx.assessor.assess(
                             unit_id=unit_id,
                             echelon=5,
                             friendly_units=friendly,
                             friendly_power=float(friendly),
-                            morale_level=0.7,
-                            supply_level=1.0,
+                            morale_level=morale_level,
+                            supply_level=supply_level,
                             c2_effectiveness=1.0,
                             contacts=enemies,
                             enemy_power=float(enemies),
                             ts=timestamp,
                             weight_overrides=weight_overrides,
                         )
+                        # Cache assessment for DECIDE phase
+                        self._cached_assessments[unit_id] = assessment
             elif completed_phase == OODAPhase.DECIDE:
-                # Run decision engine
+                # Run decision engine with real assessment + personality
                 if ctx.decision_engine is not None:
+                    # Retrieve cached assessment from OBSERVE phase
+                    assessment = self._cached_assessments.get(unit_id)
+
+                    # Get commander personality
+                    personality = None
+                    if ctx.commander_engine is not None:
+                        personality = ctx.commander_engine.get_personality(unit_id)
+
+                    # Build assessment summary from real data
+                    assessment_summary = self._build_assessment_summary(
+                        ctx, unit_id, assessment,
+                    )
+
                     # Get school decision adjustments
                     school_adjustments = None
                     if school is not None:
-                        assessment_summary = {
-                            "force_ratio": 1.0,
-                            "supply_level": 1.0,
-                            "morale_level": 0.7,
-                            "intel_quality": 0.5,
-                            "c2_effectiveness": 1.0,
-                        }
                         school_adjustments = school.get_decision_score_adjustments(
                             echelon=5,
                             assessment_summary=assessment_summary,
                         )
                         # Apply opponent modeling if enabled
                         if school.definition.opponent_modeling_enabled:
+                            side = self._find_unit_side(ctx, unit_id)
+                            enemies = sum(
+                                len(ctx.active_units(s))
+                                for s in ctx.side_names()
+                                if s != side
+                            ) if side else 1
+                            friendly = len(ctx.active_units(side)) if side else 1
                             opponent_prediction = school.predict_opponent_action(
                                 own_assessment=assessment_summary,
-                                opponent_power=1.0,
-                                opponent_morale=0.7,
-                                own_power=1.0,
+                                opponent_power=float(enemies),
+                                opponent_morale=assessment_summary.get("morale_level", 0.7),
+                                own_power=float(friendly),
                             )
                             if opponent_prediction:
-                                # Build temporary scores dict for adjustment
-                                temp_scores = {k: v for k, v in school_adjustments.items()}
+                                temp_scores = dict(school_adjustments)
                                 adjusted = school.adjust_scores_for_opponent(
                                     temp_scores, opponent_prediction,
                                 )
@@ -620,8 +644,8 @@ class BattleManager:
                     ctx.decision_engine.decide(
                         unit_id=unit_id,
                         echelon=5,
-                        assessment=None,
-                        personality=None,
+                        assessment=assessment,
+                        personality=personality,
                         doctrine=None,
                         ts=timestamp,
                         school_adjustments=school_adjustments,
@@ -629,10 +653,12 @@ class BattleManager:
 
             # Advance to the next OODA phase and start its timer
             if ctx.ooda_engine is not None:
-                # Fold school OODA multiplier into tactical_mult
+                # Fold school + commander OODA multipliers into tactical_mult
                 effective_mult = tactical_mult
                 if school is not None:
                     effective_mult *= school.get_ooda_multiplier()
+                if ctx.commander_engine is not None:
+                    effective_mult *= ctx.commander_engine.get_ooda_speed_multiplier(unit_id)
                 next_phase = ctx.ooda_engine.advance_phase(unit_id)
                 ctx.ooda_engine.start_phase(
                     unit_id,
@@ -679,7 +705,18 @@ class BattleManager:
                 dist = math.sqrt(dx * dx + dy * dy)
                 if dist < 1.0:
                     continue
-                move_dist = min(u.speed * dt, dist)
+
+                # MOPP speed factor (Phase 25c)
+                mopp_speed_factor = 1.0
+                cbrn = getattr(ctx, "cbrn_engine", None)
+                if cbrn is not None:
+                    mopp_levels = getattr(cbrn, "_mopp_levels", {})
+                    mopp_level = mopp_levels.get(u.entity_id, 0)
+                    if mopp_level > 0:
+                        from stochastic_warfare.cbrn.protection import ProtectionEngine
+                        mopp_speed_factor = ProtectionEngine.get_mopp_speed_factor(mopp_level)
+
+                move_dist = min(u.speed * dt * mopp_speed_factor, dist)
                 nx = u.position.easting + (dx / dist) * move_dist
                 ny = u.position.northing + (dy / dist) * move_dist
                 object.__setattr__(u, "position", Position(nx, ny, u.position.altitude))
@@ -895,3 +932,66 @@ class BattleManager:
             if any(u.entity_id == unit_id for u in units):
                 return side
         return ""
+
+    @staticmethod
+    def _get_unit_morale_level(ctx: Any, unit_id: str) -> float:
+        """Derive morale level [0, 1] from morale state.
+
+        STEADY=1.0, SHAKEN=0.75, BROKEN=0.5, ROUTED=0.25, SURRENDERED=0.0.
+        """
+        ms = ctx.morale_states.get(unit_id)
+        if ms is None:
+            return 0.7  # sensible default
+        val = int(ms)
+        return max(0.0, 1.0 - val * 0.25)
+
+    @staticmethod
+    def _get_unit_supply_level(ctx: Any, unit_id: str) -> float:
+        """Query stockpile manager for supply state [0, 1]."""
+        if ctx.stockpile_manager is None:
+            return 1.0
+        if not hasattr(ctx.stockpile_manager, "get_supply_state"):
+            return 1.0
+        try:
+            return ctx.stockpile_manager.get_supply_state(unit_id)
+        except Exception:
+            return 1.0
+
+    @staticmethod
+    def _build_assessment_summary(
+        ctx: Any,
+        unit_id: str,
+        assessment: Any,
+    ) -> dict[str, float]:
+        """Build assessment summary dict from real or default data.
+
+        Used by school decision adjustments and opponent modeling.
+        """
+        if assessment is not None:
+            return {
+                "force_ratio": getattr(assessment, "force_ratio", 1.0),
+                "supply_level": getattr(assessment, "supply_level", 1.0),
+                "morale_level": getattr(assessment, "morale_level", 0.7),
+                "intel_quality": getattr(assessment, "intel_quality", 0.5),
+                "c2_effectiveness": getattr(assessment, "c2_effectiveness", 1.0),
+            }
+        # Fallback: compute basic values
+        side = ""
+        for s, units in ctx.units_by_side.items():
+            if any(u.entity_id == unit_id for u in units):
+                side = s
+                break
+        friendly = len(ctx.active_units(side)) if side else 1
+        enemies = sum(
+            len(ctx.active_units(s))
+            for s in ctx.side_names()
+            if s != side
+        ) if side else 1
+        force_ratio = friendly / max(enemies, 1)
+        return {
+            "force_ratio": force_ratio,
+            "supply_level": BattleManager._get_unit_supply_level(ctx, unit_id),
+            "morale_level": BattleManager._get_unit_morale_level(ctx, unit_id),
+            "intel_quality": 0.5,
+            "c2_effectiveness": 1.0,
+        }

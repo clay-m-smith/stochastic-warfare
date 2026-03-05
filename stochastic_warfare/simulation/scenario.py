@@ -200,6 +200,11 @@ class CampaignScenarioConfig(BaseModel):
     reinforcements: list[ReinforcementConfig] = []
     calibration_overrides: dict[str, Any] = {}
     escalation_config: dict[str, Any] | None = None
+    ew_config: dict[str, Any] | None = None
+    space_config: dict[str, Any] | None = None
+    cbrn_config: dict[str, Any] | None = None
+    school_config: dict[str, Any] | None = None
+    commander_config: dict[str, Any] | None = None
 
     @field_validator("sides")
     @classmethod
@@ -295,6 +300,14 @@ class SimulationContext:
 
     # Doctrinal AI Schools (Phase 19)
     school_registry: Any = None
+
+    # Commander (Phase 25)
+    commander_engine: Any = None
+
+    # EW sub-engines (Phase 25 wiring)
+    eccm_engine: Any = None
+    sigint_engine: Any = None
+    ew_decoy_engine: Any = None
 
     # Era Framework (Phase 20)
     era_config: Any = None
@@ -424,6 +437,10 @@ class SimulationContext:
             ("war_termination_engine", self.war_termination_engine),
             ("incendiary_engine", self.incendiary_engine),
             ("uxo_engine", self.uxo_engine),
+            ("commander_engine", self.commander_engine),
+            ("eccm_engine", self.eccm_engine),
+            ("sigint_engine", self.sigint_engine),
+            ("ew_decoy_engine", self.ew_decoy_engine),
         ]
         for name, eng in engines:
             if eng is not None and hasattr(eng, "get_state"):
@@ -474,6 +491,10 @@ class SimulationContext:
             ("war_termination_engine", self.war_termination_engine),
             ("incendiary_engine", self.incendiary_engine),
             ("uxo_engine", self.uxo_engine),
+            ("commander_engine", self.commander_engine),
+            ("eccm_engine", self.eccm_engine),
+            ("sigint_engine", self.sigint_engine),
+            ("ew_decoy_engine", self.ew_decoy_engine),
         ]
         for name, eng in engines:
             if eng is not None and name in state and hasattr(eng, "set_state"):
@@ -583,9 +604,50 @@ class ScenarioLoader:
             **engines,
             **loaders,
         )
+
+        # 9. Commander assignments (Phase 25d)
+        self._apply_commander_assignments(ctx, config)
+
         return ctx
 
     # ── Private helpers ──────────────────────────────────────────────
+
+    def _apply_commander_assignments(
+        self,
+        ctx: SimulationContext,
+        config: CampaignScenarioConfig,
+    ) -> None:
+        """Assign commander profiles to units from commander_config.
+
+        Applies side-level defaults first, then per-unit overrides.
+        """
+        if ctx.commander_engine is None or config.commander_config is None:
+            return
+
+        cmd_cfg = config.commander_config
+        side_defaults = cmd_cfg.get("side_defaults", {})
+        assignments = cmd_cfg.get("assignments", {})
+
+        # Side-level defaults: assign all units on a side to the given profile
+        for side_name, profile_id in side_defaults.items():
+            for u in ctx.units_by_side.get(side_name, []):
+                try:
+                    ctx.commander_engine.assign_personality(u.entity_id, profile_id)
+                except Exception:
+                    logger.warning(
+                        "Failed to assign profile %r to unit %s",
+                        profile_id, u.entity_id,
+                    )
+
+        # Per-unit overrides (take precedence)
+        for unit_id, profile_id in assignments.items():
+            try:
+                ctx.commander_engine.assign_personality(unit_id, profile_id)
+            except Exception:
+                logger.warning(
+                    "Failed to assign profile %r to unit %s",
+                    profile_id, unit_id,
+                )
 
     def _build_terrain(
         self,
@@ -907,7 +969,7 @@ class ScenarioLoader:
             event_bus=bus,
         )
 
-        return {
+        result = {
             "los_engine": los_engine,
             "engagement_engine": engagement_engine,
             "fog_of_war": fog_of_war,
@@ -927,3 +989,344 @@ class ScenarioLoader:
             "maintenance_engine": maintenance_engine,
             "aggregation_engine": aggregation_engine,
         }
+
+        # ── Optional engine wiring (Phase 25) ────────────────────────
+        result.update(self._create_optional_engines(rng_mgr, bus, config, c2_rng))
+        return result
+
+    def _create_optional_engines(
+        self,
+        rng_mgr: RNGManager,
+        bus: EventBus,
+        config: CampaignScenarioConfig,
+        c2_rng: np.random.Generator,
+    ) -> dict[str, Any]:
+        """Create optional domain engines based on config blocks.
+
+        Only instantiates engines whose config block is non-None.
+        """
+        result: dict[str, Any] = {}
+
+        # 1. EW engines
+        if config.ew_config is not None:
+            result.update(self._create_ew_engines(rng_mgr, bus, config.ew_config))
+
+        # 2. Space engines
+        if config.space_config is not None:
+            result.update(self._create_space_engines(rng_mgr, bus, config.space_config))
+
+        # 3. CBRN engines
+        if config.cbrn_config is not None:
+            result.update(self._create_cbrn_engines(rng_mgr, bus, config))
+
+        # 4. Schools
+        if config.school_config is not None:
+            result.update(self._create_school_engines(config.school_config))
+
+        # 5. Commander
+        if config.commander_config is not None:
+            result.update(self._create_commander_engine(c2_rng, config.commander_config))
+
+        # 6. Escalation
+        if config.escalation_config is not None:
+            result.update(self._create_escalation_engines(rng_mgr, bus, config.escalation_config))
+
+        # 7. Era engines
+        if config.era != "modern":
+            result.update(self._create_era_engines(rng_mgr, bus, config))
+
+        return result
+
+    def _create_ew_engines(
+        self,
+        rng_mgr: RNGManager,
+        bus: EventBus,
+        ew_cfg: dict[str, Any],
+    ) -> dict[str, Any]:
+        """Create EW sub-engines from ew_config."""
+        ew_rng = rng_mgr.get_stream(ModuleId.EW)
+
+        from stochastic_warfare.ew.jamming import JammingConfig, JammingEngine
+        from stochastic_warfare.ew.eccm import ECCMEngine
+        from stochastic_warfare.ew.sigint import SIGINTEngine
+        from stochastic_warfare.ew.decoys_ew import EWDecoyEngine
+
+        jam_config = JammingConfig.model_validate(ew_cfg)
+        ew_engine = JammingEngine(bus, ew_rng, jam_config)
+        eccm_engine = ECCMEngine(bus)
+        sigint_engine = SIGINTEngine(bus, ew_rng)
+        ew_decoy_engine = EWDecoyEngine(bus, ew_rng)
+
+        logger.info("Created EW engines (jamming, ECCM, SIGINT, decoys)")
+        return {
+            "ew_engine": ew_engine,
+            "eccm_engine": eccm_engine,
+            "sigint_engine": sigint_engine,
+            "ew_decoy_engine": ew_decoy_engine,
+        }
+
+    def _create_space_engines(
+        self,
+        rng_mgr: RNGManager,
+        bus: EventBus,
+        space_cfg: dict[str, Any],
+    ) -> dict[str, Any]:
+        """Create space domain engines from space_config."""
+        space_rng = rng_mgr.get_stream(ModuleId.SPACE)
+
+        from stochastic_warfare.space.constellations import (
+            ConstellationManager,
+            SpaceConfig,
+            SpaceEngine,
+        )
+        from stochastic_warfare.space.orbits import OrbitalMechanicsEngine
+        from stochastic_warfare.space.gps import GPSEngine
+        from stochastic_warfare.space.isr import SpaceISREngine
+        from stochastic_warfare.space.early_warning import EarlyWarningEngine
+        from stochastic_warfare.space.satcom import SATCOMEngine
+        from stochastic_warfare.space.asat import ASATEngine
+
+        sc = SpaceConfig.model_validate(space_cfg)
+        orbits = OrbitalMechanicsEngine()
+        constellation = ConstellationManager(orbits, bus, space_rng, sc)
+
+        gps = GPSEngine(constellation, sc, bus, space_rng)
+        isr = SpaceISREngine(constellation, sc, bus, space_rng)
+        ew_sat = EarlyWarningEngine(constellation, sc, bus, space_rng)
+        satcom = SATCOMEngine(constellation, sc, bus, space_rng)
+        asat = ASATEngine(constellation, sc, bus, space_rng)
+
+        space_engine = SpaceEngine(
+            config=sc,
+            constellation_manager=constellation,
+            gps_engine=gps,
+            isr_engine=isr,
+            early_warning_engine=ew_sat,
+            satcom_engine=satcom,
+            asat_engine=asat,
+        )
+
+        logger.info("Created space engines (GPS, ISR, EW, SATCOM, ASAT)")
+        return {"space_engine": space_engine}
+
+    def _create_cbrn_engines(
+        self,
+        rng_mgr: RNGManager,
+        bus: EventBus,
+        config: CampaignScenarioConfig,
+    ) -> dict[str, Any]:
+        """Create CBRN engines from cbrn_config."""
+        cbrn_rng = rng_mgr.get_stream(ModuleId.CBRN)
+        cbrn_cfg = config.cbrn_config
+
+        from stochastic_warfare.cbrn.agents import AgentRegistry
+        from stochastic_warfare.cbrn.dispersal import DispersalEngine
+        from stochastic_warfare.cbrn.contamination import ContaminationManager
+        from stochastic_warfare.cbrn.protection import ProtectionEngine
+        from stochastic_warfare.cbrn.casualties import CBRNCasualtyEngine
+        from stochastic_warfare.cbrn.decontamination import DecontaminationEngine
+        from stochastic_warfare.cbrn.nuclear import NuclearEffectsEngine
+        from stochastic_warfare.cbrn.engine import CBRNConfig, CBRNEngine
+
+        agent_registry = AgentRegistry()
+        dispersal = DispersalEngine()
+
+        # Grid from terrain config
+        rows = max(1, int(config.terrain.height_m / config.terrain.cell_size_m))
+        cols = max(1, int(config.terrain.width_m / config.terrain.cell_size_m))
+        contamination = ContaminationManager(
+            grid_shape=(rows, cols),
+            cell_size_m=config.terrain.cell_size_m,
+            origin_easting=0.0,
+            origin_northing=0.0,
+            event_bus=bus,
+            rng=cbrn_rng,
+        )
+        protection = ProtectionEngine()
+        casualty = CBRNCasualtyEngine(bus, cbrn_rng)
+        decon = DecontaminationEngine(bus, cbrn_rng)
+        nuclear = NuclearEffectsEngine(bus, cbrn_rng, dispersal)
+
+        cbrn_config_obj = CBRNConfig.model_validate(cbrn_cfg)
+        cbrn_engine = CBRNEngine(
+            config=cbrn_config_obj,
+            event_bus=bus,
+            rng=cbrn_rng,
+            agent_registry=agent_registry,
+            dispersal_engine=dispersal,
+            contamination_manager=contamination,
+            protection_engine=protection,
+            casualty_engine=casualty,
+            decon_engine=decon,
+            nuclear_engine=nuclear,
+        )
+
+        logger.info("Created CBRN engines")
+        return {"cbrn_engine": cbrn_engine}
+
+    def _create_school_engines(
+        self,
+        school_cfg: dict[str, Any],
+    ) -> dict[str, Any]:
+        """Create doctrinal school registry from school_config."""
+        from stochastic_warfare.c2.ai.schools import (
+            SchoolLoader,
+            SchoolRegistry,
+            create_school,
+        )
+
+        loader = SchoolLoader(self._data_dir / "schools")
+        definitions = loader.load_all()
+
+        registry = SchoolRegistry()
+        for defn in definitions:
+            school = create_school(defn)
+            registry.register(school)
+
+        # Apply unit assignments
+        unit_assignments = school_cfg.get("unit_assignments", {})
+        for unit_id, school_id in unit_assignments.items():
+            registry.assign_to_unit(unit_id, school_id)
+
+        logger.info(
+            "Created school registry with %d schools, %d assignments",
+            len(definitions),
+            len(unit_assignments),
+        )
+        return {"school_registry": registry}
+
+    def _create_commander_engine(
+        self,
+        c2_rng: np.random.Generator,
+        commander_cfg: dict[str, Any],
+    ) -> dict[str, Any]:
+        """Create commander engine from commander_config."""
+        from stochastic_warfare.c2.ai.commander import (
+            CommanderConfig,
+            CommanderEngine,
+            CommanderProfileLoader,
+        )
+
+        loader = CommanderProfileLoader(self._data_dir / "commander_profiles")
+        loader.load_all()
+
+        cmd_config = None
+        config_params = {
+            k: v for k, v in commander_cfg.items()
+            if k not in ("assignments", "side_defaults")
+        }
+        if config_params:
+            cmd_config = CommanderConfig.model_validate(config_params)
+
+        engine = CommanderEngine(loader, c2_rng, cmd_config)
+
+        logger.info("Created commander engine")
+        return {"commander_engine": engine}
+
+    def _create_escalation_engines(
+        self,
+        rng_mgr: RNGManager,
+        bus: EventBus,
+        esc_cfg: dict[str, Any],
+    ) -> dict[str, Any]:
+        """Create escalation and unconventional warfare engines."""
+        esc_rng = rng_mgr.get_stream(ModuleId.ESCALATION)
+        combat_rng = rng_mgr.get_stream(ModuleId.COMBAT)
+
+        from stochastic_warfare.escalation.ladder import EscalationLadder
+        from stochastic_warfare.escalation.political import PoliticalPressureEngine
+        from stochastic_warfare.escalation.consequences import ConsequenceEngine
+        from stochastic_warfare.escalation.war_termination import WarTerminationEngine
+        from stochastic_warfare.combat.unconventional import UnconventionalWarfareEngine
+        from stochastic_warfare.c2.ai.sof_ops import SOFOpsEngine
+        from stochastic_warfare.population.insurgency import InsurgencyEngine
+        from stochastic_warfare.combat.damage import IncendiaryDamageEngine, UXOEngine
+
+        escalation_engine = EscalationLadder(bus, esc_rng)
+        political_engine = PoliticalPressureEngine(bus)
+        consequence_engine = ConsequenceEngine(bus, esc_rng)
+        war_termination_engine = WarTerminationEngine(bus)
+        unconventional_engine = UnconventionalWarfareEngine(bus, combat_rng)
+        sof_engine = SOFOpsEngine(bus, combat_rng)
+        insurgency_engine = InsurgencyEngine(bus, esc_rng)
+        incendiary_engine = IncendiaryDamageEngine(combat_rng)
+        uxo_engine = UXOEngine(combat_rng)
+
+        logger.info("Created escalation and unconventional engines")
+        return {
+            "escalation_engine": escalation_engine,
+            "political_engine": political_engine,
+            "consequence_engine": consequence_engine,
+            "war_termination_engine": war_termination_engine,
+            "unconventional_engine": unconventional_engine,
+            "sof_engine": sof_engine,
+            "insurgency_engine": insurgency_engine,
+            "incendiary_engine": incendiary_engine,
+            "uxo_engine": uxo_engine,
+        }
+
+    def _create_era_engines(
+        self,
+        rng_mgr: RNGManager,
+        bus: EventBus,
+        config: CampaignScenarioConfig,
+    ) -> dict[str, Any]:
+        """Create era-specific engines based on config.era."""
+        era = config.era
+        result: dict[str, Any] = {}
+        combat_rng = rng_mgr.get_stream(ModuleId.COMBAT)
+        movement_rng = rng_mgr.get_stream(ModuleId.MOVEMENT)
+        c2_rng = rng_mgr.get_stream(ModuleId.C2)
+        logistics_rng = rng_mgr.get_stream(ModuleId.LOGISTICS)
+
+        if era == "ww2":
+            from stochastic_warfare.combat.naval_gunnery import NavalGunneryEngine
+            from stochastic_warfare.movement.convoy import ConvoyEngine
+            from stochastic_warfare.combat.strategic_bombing import StrategicBombingEngine
+
+            result["naval_gunnery_engine"] = NavalGunneryEngine(rng=combat_rng)
+            result["convoy_engine"] = ConvoyEngine(rng=movement_rng)
+            result["strategic_bombing_engine"] = StrategicBombingEngine(rng=combat_rng)
+            logger.info("Created WW2 era engines")
+
+        elif era == "ww1":
+            from stochastic_warfare.terrain.trenches import TrenchSystemEngine
+            from stochastic_warfare.combat.barrage import BarrageEngine
+            from stochastic_warfare.combat.gas_warfare import GasWarfareEngine
+
+            result["trench_engine"] = TrenchSystemEngine()
+            result["barrage_engine"] = BarrageEngine(rng=combat_rng)
+            result["gas_warfare_engine"] = GasWarfareEngine(rng=combat_rng)
+            logger.info("Created WW1 era engines")
+
+        elif era == "napoleonic":
+            from stochastic_warfare.combat.volley_fire import VolleyFireEngine
+            from stochastic_warfare.combat.melee import MeleeEngine
+            from stochastic_warfare.movement.cavalry import CavalryEngine
+            from stochastic_warfare.movement.formation_napoleonic import NapoleonicFormationEngine
+            from stochastic_warfare.c2.courier import CourierEngine
+            from stochastic_warfare.logistics.foraging import ForagingEngine
+
+            result["volley_fire_engine"] = VolleyFireEngine(rng=combat_rng)
+            result["melee_engine"] = MeleeEngine(rng=combat_rng)
+            result["cavalry_engine"] = CavalryEngine(rng=movement_rng)
+            result["formation_napoleonic_engine"] = NapoleonicFormationEngine()
+            result["courier_engine"] = CourierEngine(rng=c2_rng)
+            result["foraging_engine"] = ForagingEngine(rng=logistics_rng)
+            logger.info("Created Napoleonic era engines")
+
+        elif era == "ancient":
+            from stochastic_warfare.combat.archery import ArcheryEngine
+            from stochastic_warfare.combat.siege import SiegeEngine
+            from stochastic_warfare.movement.formation_ancient import AncientFormationEngine
+            from stochastic_warfare.movement.naval_oar import NavalOarEngine
+            from stochastic_warfare.c2.visual_signals import VisualSignalEngine
+
+            result["archery_engine"] = ArcheryEngine(rng=combat_rng)
+            result["siege_engine"] = SiegeEngine(rng=combat_rng)
+            result["formation_ancient_engine"] = AncientFormationEngine()
+            result["naval_oar_engine"] = NavalOarEngine(rng=movement_rng)
+            result["visual_signals_engine"] = VisualSignalEngine(rng=c2_rng)
+            logger.info("Created Ancient/Medieval era engines")
+
+        return result

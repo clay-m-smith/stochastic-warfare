@@ -1,8 +1,8 @@
 # Stochastic Warfare
 
 ![Python](https://img.shields.io/badge/python-%3E%3D3.12-blue)
-![Tests](https://img.shields.io/badge/tests-6%2C325_passing-brightgreen)
-![Phase](https://img.shields.io/badge/phase-24_Post--MVP-blue)
+![Tests](https://img.shields.io/badge/tests-6%2C477_passing-brightgreen)
+![Phase](https://img.shields.io/badge/phase-25_Block--2-blue)
 
 High-fidelity, high-resolution wargame simulator built as a headless Python engine. Models warfare across multiple scales — from individual unit engagements up through tactical battles, operational battlefields, and multi-day strategic campaigns — with stochastic and signal-processing-inspired models throughout.
 
@@ -129,7 +129,7 @@ data/                     # ~220 YAML data files
   eras/                    # Era-specific data packages (WW2, WW1, Napoleonic, Ancient/Medieval)
   scenarios/              # 3 engagement + 6 campaign + 2 EW + 3 space + 2 CBRN + 4 escalation validation scenarios
 
-tests/                    # 6,325 tests across ~196 test files
+tests/                    # 6,477 tests across ~200 test files
 docs/                     # specs, brainstorm, devlog, development phases
 ```
 
@@ -137,7 +137,7 @@ For the full package tree and module decomposition, see [`docs/specs/project-str
 
 ## Development Status
 
-All 11 MVP phases (0–10) are complete. Post-MVP Phases 11–24 are complete (deep systems rework + performance optimization + developer tooling + real-world terrain + electronic warfare + space & satellite domain + CBRN effects + doctrinal AI schools + WW2 era + WW1 era + Napoleonic era + Ancient & Medieval era + unconventional & prohibited warfare).
+All 11 MVP phases (0–10) are complete. Post-MVP Phases 11–24 are complete (deep systems rework + performance optimization + developer tooling + real-world terrain + electronic warfare + space & satellite domain + CBRN effects + doctrinal AI schools + WW2 era + WW1 era + Napoleonic era + Ancient & Medieval era + unconventional & prohibited warfare). Block 2 Phase 25 (Engine Wiring & Integration Sprint) is complete.
 
 | Phase | Focus | Tests | Status |
 |-------|-------|-------|--------|
@@ -154,10 +154,10 @@ All 11 MVP phases (0–10) are complete. Post-MVP Phases 11–24 are complete (d
 | 10 | Campaign Validation | 196 | Complete |
 | 11 | Core Fidelity Fixes | 109 | Complete |
 | 12 | Deep Systems Rework | 259 | Complete |
-| 13 | Performance Optimization | 142 | Complete |
+| 13 | Performance Optimization | 170 | Complete |
 | 14 | Tooling & Developer Experience | 125 | Complete |
 | 15 | Real-World Terrain & Data Pipeline | 97 | Complete |
-| 16 | Electronic Warfare | 144 | Complete |
+| 16 | Electronic Warfare | 143 | Complete |
 | 17 | Space & Satellite Domain | 149 | Complete |
 | 18 | CBRN Effects | 155 | Complete |
 | 19 | Doctrinal AI Schools | 189 | Complete |
@@ -166,7 +166,8 @@ All 11 MVP phases (0–10) are complete. Post-MVP Phases 11–24 are complete (d
 | 22 | Napoleonic Era | 233 | Complete |
 | 23 | Ancient & Medieval Era | 321 | Complete |
 | 24 | Unconventional & Prohibited Warfare | 345 | Complete |
-| | **Total** | **6,325** | |
+| 25 | Engine Wiring & Integration (Block 2) | 152 | Complete |
+| | **Total** | **6,477** | |
 
 For the full phase roadmap, see [`docs/development-phases.md`](docs/development-phases.md) (MVP) and [`docs/development-phases-post-mvp.md`](docs/development-phases-post-mvp.md) (post-MVP). For per-phase implementation logs, see [`docs/devlog/`](docs/devlog/).
 

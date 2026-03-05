@@ -117,9 +117,11 @@ class SimulationEngine:
         battle_config: BattleConfig | None = None,
         victory_evaluator: VictoryEvaluator | None = None,
         recorder: SimulationRecorder | None = None,
+        strict_mode: bool = False,
     ) -> None:
         self._ctx = ctx
         self._config = config or EngineConfig()
+        self._strict_mode = strict_mode
 
         # Sub-managers
         core_rng = ctx.rng_manager.get_stream(
@@ -394,25 +396,33 @@ class SimulationEngine:
             try:
                 ctx.weather_engine.step(clock)
             except Exception:
-                pass  # Non-critical
+                logger.error("Weather engine update failed", exc_info=True)
+                if self._strict_mode:
+                    raise
 
         if ctx.time_of_day_engine is not None and hasattr(ctx.time_of_day_engine, "update"):
             try:
                 ctx.time_of_day_engine.update(clock)
             except Exception:
-                pass
+                logger.error("Time-of-day engine update failed", exc_info=True)
+                if self._strict_mode:
+                    raise
 
         if ctx.sea_state_engine is not None and hasattr(ctx.sea_state_engine, "update"):
             try:
                 ctx.sea_state_engine.update(clock)
             except Exception:
-                pass
+                logger.error("Sea state engine update failed", exc_info=True)
+                if self._strict_mode:
+                    raise
 
         if ctx.seasons_engine is not None and hasattr(ctx.seasons_engine, "update"):
             try:
                 ctx.seasons_engine.update(clock)
             except Exception:
-                pass
+                logger.error("Seasons engine update failed", exc_info=True)
+                if self._strict_mode:
+                    raise
 
         # Phase 17: Space domain
         if ctx.space_engine is not None and hasattr(ctx.space_engine, "update"):
@@ -425,7 +435,9 @@ class SimulationEngine:
                     targets_by_side=ctx.units_by_side,
                 )
             except Exception:
-                pass
+                logger.error("Space engine update failed", exc_info=True)
+                if self._strict_mode:
+                    raise
 
         # Phase 18: CBRN domain
         if ctx.cbrn_engine is not None and hasattr(ctx.cbrn_engine, "update"):
@@ -441,7 +453,32 @@ class SimulationEngine:
                     timestamp=clock.current_time,
                 )
             except Exception:
-                pass
+                logger.error("CBRN engine update failed", exc_info=True)
+                if self._strict_mode:
+                    raise
+
+        # Phase 25: EW domain
+        self._update_ew(dt)
+
+    # ── EW ────────────────────────────────────────────────────────────
+
+    def _update_ew(self, dt: float) -> None:
+        """Update EW engines for the current tick."""
+        ctx = self._ctx
+        if ctx.ew_engine is not None and hasattr(ctx.ew_engine, "update"):
+            try:
+                ctx.ew_engine.update(dt)
+            except Exception:
+                logger.error("EW jamming engine update failed", exc_info=True)
+                if self._strict_mode:
+                    raise
+        if ctx.ew_decoy_engine is not None and hasattr(ctx.ew_decoy_engine, "update"):
+            try:
+                ctx.ew_decoy_engine.update(dt)
+            except Exception:
+                logger.error("EW decoy engine update failed", exc_info=True)
+                if self._strict_mode:
+                    raise
 
     # ── Escalation ────────────────────────────────────────────────────
 
@@ -464,13 +501,26 @@ class SimulationEngine:
         if ctx.sof_engine is not None:
             ctx.sof_engine.update(dt, timestamp)
 
-        # Update insurgency
+        # Update insurgency with real data
         if ctx.insurgency_engine is not None:
-            # Basic update with empty inputs -- scenario wiring provides real data
+            # Compute military presence from active units per side
+            military_presence: dict[str, float] = {}
+            for side_name, units in ctx.units_by_side.items():
+                active_count = sum(1 for u in units if u.status == UnitStatus.ACTIVE)
+                military_presence[side_name] = float(active_count)
+
+            # Compute collateral from consequence engine if available
+            collateral: dict[str, float] = {}
+            if ctx.consequence_engine is not None and hasattr(ctx.consequence_engine, "get_collateral_by_region"):
+                try:
+                    collateral = ctx.consequence_engine.get_collateral_by_region()
+                except Exception:
+                    pass
+
             ctx.insurgency_engine.update_radicalization(
                 dt_hours=dt_hours,
-                collateral_by_region={},
-                military_presence_by_region={},
+                collateral_by_region=collateral,
+                military_presence_by_region=military_presence,
                 economic_factor=0.5,
                 aid_by_region={},
                 psyop_by_region={},

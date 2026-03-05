@@ -158,3 +158,52 @@ class SchoolLoader:
     def available_schools(self) -> list[str]:
         """Return all loaded school IDs."""
         return sorted(self._definitions.keys())
+
+
+# ---------------------------------------------------------------------------
+# School factory
+# ---------------------------------------------------------------------------
+
+
+def _build_school_class_map() -> dict[str, type[DoctrinalSchool]]:
+    """Lazily import all school subclasses and build the ID→class mapping."""
+    from stochastic_warfare.c2.ai.schools.clausewitzian import ClausewitzianSchool
+    from stochastic_warfare.c2.ai.schools.maneuverist import ManeuveristSchool
+    from stochastic_warfare.c2.ai.schools.attrition import AttritionSchool
+    from stochastic_warfare.c2.ai.schools.airland_battle import AirLandBattleSchool
+    from stochastic_warfare.c2.ai.schools.air_power import AirPowerSchool
+    from stochastic_warfare.c2.ai.schools.sun_tzu import SunTzuSchool
+    from stochastic_warfare.c2.ai.schools.deep_battle import DeepBattleSchool
+    from stochastic_warfare.c2.ai.schools.maritime import MahanianSchool, CorbettianSchool
+
+    return {
+        "clausewitzian": ClausewitzianSchool,
+        "maneuverist": ManeuveristSchool,
+        "attrition": AttritionSchool,
+        "airland_battle": AirLandBattleSchool,
+        "air_power": AirPowerSchool,
+        "sun_tzu": SunTzuSchool,
+        "deep_battle": DeepBattleSchool,
+        "maritime_mahanian": MahanianSchool,
+        "maritime_corbettian": CorbettianSchool,
+    }
+
+
+_SCHOOL_ID_TO_CLASS: dict[str, type[DoctrinalSchool]] | None = None
+
+
+def create_school(definition: SchoolDefinition) -> DoctrinalSchool:
+    """Factory: create correct school subclass from a definition.
+
+    Raises
+    ------
+    KeyError
+        If *definition.school_id* is not a recognised school.
+    """
+    global _SCHOOL_ID_TO_CLASS
+    if _SCHOOL_ID_TO_CLASS is None:
+        _SCHOOL_ID_TO_CLASS = _build_school_class_map()
+    cls = _SCHOOL_ID_TO_CLASS.get(definition.school_id)
+    if cls is None:
+        raise KeyError(f"Unknown school_id: {definition.school_id!r}")
+    return cls(definition)
