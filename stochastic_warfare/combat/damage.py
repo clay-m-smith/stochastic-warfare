@@ -41,6 +41,8 @@ class DamageType(enum.IntEnum):
     FRAGMENTATION = 2
     INCENDIARY = 3
     COMBINED = 4
+    THERMAL_ENERGY = 5
+    ELECTRONIC = 6
 
 
 class ArmorType(enum.IntEnum):

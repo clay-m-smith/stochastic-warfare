@@ -1,0 +1,21 @@
+profile_id: glws_dazzler
+unit_type: glws_dazzler
+visual:
+  height_m: 1.7
+  cross_section_m2: 0.5
+  camouflage_factor: 0.80
+thermal:
+  emissivity: 0.70
+  heat_output_kw: 0.5
+  contrast_modifier: 0.3
+radar:
+  rcs_frontal_m2: 0.3
+  rcs_side_m2: 0.5
+  rcs_rear_m2: 0.3
+acoustic:
+  noise_db: 30.0
+  speed_coefficient: 0.5
+electromagnetic:
+  emitting: false
+  power_dbm: 0.0
+  frequency_ghz: 0.0

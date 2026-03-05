@@ -1,0 +1,29 @@
+weapon_id: glws_dazzler
+display_name: "GLWS Green Laser Warning System"
+category: DIRECTED_ENERGY
+caliber_mm: 0.0
+muzzle_velocity_mps: 0.0
+max_range_m: 500.0
+min_range_m: 10.0
+rate_of_fire_rpm: 60.0
+burst_size: 1
+base_accuracy_mrad: 0.0
+cep_m: 0.0
+min_engagement_altitude_m: 0.0
+max_engagement_altitude_m: 500.0
+guidance: NONE
+magazine_capacity: 1000
+reload_time_s: 0.0
+compatible_ammo:
+  - dew_dazzler_charge
+weight_kg: 3.5
+reliability: 0.95
+barrel_life_rounds: 0
+requires_deployed: false
+traverse_deg: 360.0
+elevation_min_deg: -10.0
+elevation_max_deg: 45.0
+beam_power_kw: 0.5
+beam_wavelength_nm: 532.0
+dwell_time_s: 1.0
+beam_divergence_mrad: 2.0

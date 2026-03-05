@@ -37,6 +37,7 @@ Rolling record of implementation decisions, changes, and lessons learned across 
 | 26 | Core Polish & Configuration | **Complete** | [phase-26.md](phase-26.md) |
 | 27 | Combat System Completeness | **Complete** | [phase-27.md](phase-27.md) |
 | 28 | Modern Era Data Package | **Complete** | [phase-28.md](phase-28.md) |
+| 28.5 | Directed Energy Weapons | **Complete** | [phase-28.5.md](phase-28.5.md) |
 | 29 | Historical Era Data Expansion | Planned | — |
 | 30 | Scenario & Campaign Library | Planned | — |
 
@@ -162,6 +163,11 @@ Known limitations and deferred improvements logged during implementation. Review
 | 22 | ~~Foraging ambush casualty rate hardcoded at 10% — should be configurable in ForagingConfig~~ *(resolved Phase 26b — ForagingConfig.ambush_casualty_rate)* | [phase-22.md — Known Limitations](phase-22.md#known-limitations) |
 | 22 | ~~Volley/melee/cavalry/courier/foraging engines use hardcoded fallback RNG seed (42) when no RNG injected~~ *(resolved Phase 26a — rng required on all 23 engines)* | [phase-22.md — Known Limitations](phase-22.md#known-limitations) |
 | 16/17/18/19/20/21/22/23 | ~~ScenarioLoader doesn't auto-wire Ancient/Medieval engines from YAML~~ *(resolved Phase 25a)* | [phase-23.md — Postmortem](phase-23.md#postmortem) |
+| 28.5 | DEWEngagementEvent has zero subscribers in production code (events published but never consumed) | [phase-28.5.md — Postmortem](phase-28.5.md#postmortem) |
+| 28.5 | dew_engine not used in simulation/engine.py or simulation/battle.py tick loops (wired in scenario only) | [phase-28.5.md — Postmortem](phase-28.5.md#postmortem) |
+| 28.5 | No scenario YAML references dew_config (engine can be created but no scenarios exercise it) | [phase-28.5.md — Postmortem](phase-28.5.md#postmortem) |
+| 28.5 | ADUnitType.DEW not handled in air defense engagement logic (enum exists but no routing) | [phase-28.5.md — Postmortem](phase-28.5.md#postmortem) |
+| 28.5 | route_engagement() not called from battle.py (uses execute_engagement directly) — DEW routing untested in loop | [phase-28.5.md — Postmortem](phase-28.5.md#postmortem) |
 
 ## Conventions
 

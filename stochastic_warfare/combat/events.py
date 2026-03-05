@@ -195,3 +195,19 @@ class AmphibiousAssaultEvent(Event):
     landed: int
     casualties: int
     phase: str  # AssaultPhase name
+
+
+# -- Directed energy engagements ------------------------------------------
+
+
+@dataclass(frozen=True)
+class DEWEngagementEvent(Event):
+    """Published when a directed energy weapon engages a target."""
+
+    attacker_id: str
+    target_id: str
+    weapon_id: str
+    dew_type: str  # "LASER" or "HPM"
+    result: str  # "hit", "miss", "aborted"
+    transmittance: float = 1.0
+    power_on_target_kw: float = 0.0

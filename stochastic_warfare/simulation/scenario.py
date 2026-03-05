@@ -205,6 +205,7 @@ class CampaignScenarioConfig(BaseModel):
     cbrn_config: dict[str, Any] | None = None
     school_config: dict[str, Any] | None = None
     commander_config: dict[str, Any] | None = None
+    dew_config: dict[str, Any] | None = None
 
     @field_validator("sides")
     @classmethod
@@ -348,6 +349,9 @@ class SimulationContext:
     incendiary_engine: Any = None
     uxo_engine: Any = None
 
+    # Directed Energy (Phase 28.5)
+    dew_engine: Any = None
+
     # Logistics
     consumption_engine: Any = None
     stockpile_manager: Any = None
@@ -441,6 +445,7 @@ class SimulationContext:
             ("eccm_engine", self.eccm_engine),
             ("sigint_engine", self.sigint_engine),
             ("ew_decoy_engine", self.ew_decoy_engine),
+            ("dew_engine", self.dew_engine),
         ]
         for name, eng in engines:
             if eng is not None and hasattr(eng, "get_state"):
@@ -495,6 +500,7 @@ class SimulationContext:
             ("eccm_engine", self.eccm_engine),
             ("sigint_engine", self.sigint_engine),
             ("ew_decoy_engine", self.ew_decoy_engine),
+            ("dew_engine", self.dew_engine),
         ]
         for name, eng in engines:
             if eng is not None and name in state and hasattr(eng, "set_state"):
@@ -1035,6 +1041,10 @@ class ScenarioLoader:
         if config.era != "modern":
             result.update(self._create_era_engines(rng_mgr, bus, config))
 
+        # 8. DEW engines
+        if config.dew_config is not None:
+            result.update(self._create_dew_engine(rng_mgr, bus, config.dew_config))
+
         return result
 
     def _create_ew_engines(
@@ -1330,3 +1340,20 @@ class ScenarioLoader:
             logger.info("Created Ancient/Medieval era engines")
 
         return result
+
+    def _create_dew_engine(
+        self,
+        rng_mgr: RNGManager,
+        bus: EventBus,
+        dew_cfg: dict[str, Any],
+    ) -> dict[str, Any]:
+        """Create directed energy weapon engine from dew_config."""
+        combat_rng = rng_mgr.get_stream(ModuleId.COMBAT)
+
+        from stochastic_warfare.combat.directed_energy import DEWConfig, DEWEngine
+
+        config = DEWConfig.model_validate(dew_cfg)
+        dew_engine = DEWEngine(bus, combat_rng, config)
+
+        logger.info("Created DEW engine")
+        return {"dew_engine": dew_engine}

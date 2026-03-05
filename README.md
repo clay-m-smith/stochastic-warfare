@@ -1,8 +1,8 @@
 # Stochastic Warfare
 
 ![Python](https://img.shields.io/badge/python-%3E%3D3.12-blue)
-![Tests](https://img.shields.io/badge/tests-6%2C835_passing-brightgreen)
-![Phase](https://img.shields.io/badge/phase-28_Block--2-blue)
+![Tests](https://img.shields.io/badge/tests-6%2C947_passing-brightgreen)
+![Phase](https://img.shields.io/badge/phase-28.5_Block--2-blue)
 
 High-fidelity, high-resolution wargame simulator built as a headless Python engine. Models warfare across multiple scales — from individual unit engagements up through tactical battles, operational battlefields, and multi-day strategic campaigns — with stochastic and signal-processing-inspired models throughout.
 
@@ -80,6 +80,7 @@ All raster grids share the convention: `Grid[0,0]` = SW corner, row increases no
 | Wayne Hughes salvo | `combat/naval_surface` | Missile exchange with leaker dynamics |
 | Boyd OODA | `ai/ooda` | Commander decision cycle as FSM |
 | Log-normal delays | `c2/communications`, `logistics/transport` | Clausewitzian friction in C2 and supply |
+| Beer-Lambert law | `combat/directed_energy` | Laser atmospheric transmittance for DEW |
 
 For full architectural rationale, see [`docs/brainstorm.md`](docs/brainstorm.md).
 
@@ -129,7 +130,7 @@ data/                     # ~220 YAML data files
   eras/                    # Era-specific data packages (WW2, WW1, Napoleonic, Ancient/Medieval)
   scenarios/              # 3 engagement + 6 campaign + 2 EW + 3 space + 2 CBRN + 4 escalation validation scenarios
 
-tests/                    # 6,698 tests across ~200 test files
+tests/                    # 6,947 tests across ~200 test files
 docs/                     # specs, brainstorm, devlog, development phases
 ```
 
@@ -137,7 +138,7 @@ For the full package tree and module decomposition, see [`docs/specs/project-str
 
 ## Development Status
 
-All 11 MVP phases (0–10) are complete. Post-MVP Phases 11–24 are complete (deep systems rework + performance optimization + developer tooling + real-world terrain + electronic warfare + space & satellite domain + CBRN effects + doctrinal AI schools + WW2 era + WW1 era + Napoleonic era + Ancient & Medieval era + unconventional & prohibited warfare). Block 2 Phases 25–27 complete (Engine Wiring & Integration Sprint + Core Polish & Configuration + Combat System Completeness).
+All 11 MVP phases (0–10) are complete. Post-MVP Phases 11–24 are complete (deep systems rework + performance optimization + developer tooling + real-world terrain + electronic warfare + space & satellite domain + CBRN effects + doctrinal AI schools + WW2 era + WW1 era + Napoleonic era + Ancient & Medieval era + unconventional & prohibited warfare). Block 2 Phases 25–28.5 complete (Engine Wiring & Integration Sprint + Core Polish & Configuration + Combat System Completeness + Modern Era Data Package + Directed Energy Weapons).
 
 | Phase | Focus | Tests | Status |
 |-------|-------|-------|--------|
@@ -169,7 +170,9 @@ All 11 MVP phases (0–10) are complete. Post-MVP Phases 11–24 are complete (d
 | 25 | Engine Wiring & Integration (Block 2) | 152 | Complete |
 | 26 | Core Polish & Configuration (Block 2) | 82 | Complete |
 | 27 | Combat System Completeness (Block 2) | 139 | Complete |
-| | **Total** | **6,698** | |
+| 28 | Modern Era Data Package (Block 2) | 137 | Complete |
+| 28.5 | Directed Energy Weapons (Block 2) | 112 | Complete |
+| | **Total** | **6,947** | |
 
 For the full phase roadmap, see [`docs/development-phases.md`](docs/development-phases.md) (MVP) and [`docs/development-phases-post-mvp.md`](docs/development-phases-post-mvp.md) (post-MVP). For per-phase implementation logs, see [`docs/devlog/`](docs/devlog/).
 

@@ -1,0 +1,29 @@
+weapon_id: phaser_hpm
+display_name: "PHASER High-Power Microwave System"
+category: DIRECTED_ENERGY
+caliber_mm: 0.0
+muzzle_velocity_mps: 0.0
+max_range_m: 1000.0
+min_range_m: 50.0
+rate_of_fire_rpm: 5.0
+burst_size: 1
+base_accuracy_mrad: 0.0
+cep_m: 0.0
+min_engagement_altitude_m: 0.0
+max_engagement_altitude_m: 1500.0
+guidance: NONE
+magazine_capacity: 50
+reload_time_s: 5.0
+compatible_ammo:
+  - hpm_pulse
+weight_kg: 5000.0
+reliability: 0.85
+barrel_life_rounds: 0
+requires_deployed: true
+traverse_deg: 120.0
+elevation_min_deg: 0.0
+elevation_max_deg: 60.0
+beam_power_kw: 0.0
+beam_wavelength_nm: 0.0
+dwell_time_s: 0.5
+beam_divergence_mrad: 50.0

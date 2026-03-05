@@ -40,6 +40,7 @@ class WeaponCategory(enum.IntEnum):
     AIRCRAFT_GUN = 9
     MINE_LAYER = 10
     CIWS = 11
+    DIRECTED_ENERGY = 12
 
 
 class GuidanceType(enum.IntEnum):
@@ -75,6 +76,7 @@ class AmmoType(enum.IntEnum):
     INCENDIARY_WEAPON = 11
     ANTI_PERSONNEL_MINE = 12
     EXPANDING = 13
+    DIRECTED_ENERGY = 14
 
 
 # ---------------------------------------------------------------------------
@@ -115,6 +117,12 @@ class WeaponDefinition(BaseModel):
     weight_kg: float = 0.0
     reliability: float = 0.95
     barrel_life_rounds: int = 0
+
+    # Directed energy (Phase 28.5)
+    beam_power_kw: float = 0.0
+    beam_wavelength_nm: float = 0.0
+    dwell_time_s: float = 0.0
+    beam_divergence_mrad: float = 0.0
 
     # Deployment
     requires_deployed: bool = False

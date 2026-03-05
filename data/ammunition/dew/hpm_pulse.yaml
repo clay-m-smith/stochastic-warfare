@@ -1,0 +1,14 @@
+ammo_id: hpm_pulse
+display_name: "HPM Electromagnetic Pulse"
+ammo_type: DIRECTED_ENERGY
+mass_kg: 0.0
+diameter_mm: 0.0
+drag_coefficient: 0.0
+penetration_mm_rha: 0.0
+blast_radius_m: 0.0
+fragmentation_radius_m: 0.0
+guidance: NONE
+pk_at_reference: 0.90
+propulsion: none
+max_speed_mps: 0.0
+unit_cost_factor: 0.5

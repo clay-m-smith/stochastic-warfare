@@ -309,6 +309,34 @@ New unit YAML + matching signature YAML for each:
 
 ---
 
+## Phase 28.5: Directed Energy Weapons — **COMPLETE** (112 tests, 6,947 total)
+
+**Goal**: Add directed energy weapon modeling (high-energy lasers and high-power microwave) to the modern era simulator. Fills counter-UAS/RAM and counter-swarm gap.
+
+**Dependencies**: Phase 28 (Modern Era Data Package).
+
+### 28.5a: Core DEW Engine + Enum Extensions (57 tests)
+
+- **`combat/directed_energy.py`** (new) — DEWEngine with Beer-Lambert atmospheric transmittance, laser Pk (dwell-time exponential), HPM Pk (inverse-square), engagement execution
+- **`combat/ammunition.py`** (modified) — `WeaponCategory.DIRECTED_ENERGY = 12`, `AmmoType.DIRECTED_ENERGY = 14`, 4 new WeaponDefinition fields
+- **`combat/damage.py`** (modified) — `DamageType.THERMAL_ENERGY = 5`, `DamageType.ELECTRONIC = 6`
+- **`combat/events.py`** (modified) — `DEWEngagementEvent` frozen dataclass
+
+### 28.5b: Engagement Routing & Scenario Wiring (20 tests)
+
+- **`combat/engagement.py`** (modified) — `EngagementType.DEW_LASER = 12`, `DEW_HPM = 13`, routing in `route_engagement()`
+- **`entities/unit_classes/air_defense.py`** (modified) — `ADUnitType.DEW = 8`
+- **`simulation/scenario.py`** (modified) — `dew_engine` on SimulationContext, `dew_config` on CampaignScenarioConfig, factory method
+
+### 28.5c: YAML Data Package (38 tests)
+
+- 5 weapon YAML (`data/weapons/dew/`): DE-SHORAD 50kW, HELIOS 60kW, Iron Beam 100kW, GLWS Dazzler, PHASER HPM
+- 5 ammo YAML (`data/ammunition/dew/`): energy charges + HPM pulse
+- 3 unit YAML: DE-SHORAD, Iron Beam, DDG w/ HELIOS
+- 5 signature YAML, 2 sensor YAML
+
+---
+
 ## Phase 29: Historical Era Data Expansion
 
 **Goal**: Add naval units to all pre-modern eras, fill remaining unit type gaps, add missing comms/organization data, and enable naval scenarios for each era.

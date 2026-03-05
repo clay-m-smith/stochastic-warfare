@@ -1,0 +1,29 @@
+weapon_id: iron_beam_100kw
+display_name: "Iron Beam 100kW Laser"
+category: DIRECTED_ENERGY
+caliber_mm: 0.0
+muzzle_velocity_mps: 0.0
+max_range_m: 7000.0
+min_range_m: 100.0
+rate_of_fire_rpm: 12.0
+burst_size: 1
+base_accuracy_mrad: 0.0
+cep_m: 0.0
+min_engagement_altitude_m: 0.0
+max_engagement_altitude_m: 4000.0
+guidance: NONE
+magazine_capacity: 100
+reload_time_s: 0.0
+compatible_ammo:
+  - dew_100kw_charge
+weight_kg: 3500.0
+reliability: 0.92
+barrel_life_rounds: 0
+requires_deployed: false
+traverse_deg: 360.0
+elevation_min_deg: -5.0
+elevation_max_deg: 85.0
+beam_power_kw: 100.0
+beam_wavelength_nm: 1064.0
+dwell_time_s: 2.5
+beam_divergence_mrad: 0.3

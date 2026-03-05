@@ -1,0 +1,21 @@
+profile_id: iron_beam
+unit_type: iron_beam
+visual:
+  height_m: 4.0
+  cross_section_m2: 15.0
+  camouflage_factor: 0.60
+thermal:
+  emissivity: 0.93
+  heat_output_kw: 600.0
+  contrast_modifier: 1.4
+radar:
+  rcs_frontal_m2: 20.0
+  rcs_side_m2: 35.0
+  rcs_rear_m2: 15.0
+acoustic:
+  noise_db: 70.0
+  speed_coefficient: 1.0
+electromagnetic:
+  emitting: true
+  power_dbm: 55.0
+  frequency_ghz: 8.0

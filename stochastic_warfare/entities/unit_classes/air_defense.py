@@ -20,6 +20,7 @@ class ADUnitType(enum.IntEnum):
     CIWS = 5
     RADAR_EARLY_WARNING = 6
     RADAR_FIRE_CONTROL = 7
+    DEW = 8
 
 
 class RadarState(enum.IntEnum):

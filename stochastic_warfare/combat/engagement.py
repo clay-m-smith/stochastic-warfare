@@ -43,6 +43,8 @@ class EngagementType(enum.IntEnum):
     COASTAL_DEFENSE = 9
     AIR_LAUNCHED_ASHM = 10
     ATGM_VS_ROTARY = 11
+    DEW_LASER = 12
+    DEW_HPM = 13
 
 
 class EngagementConfig(BaseModel):
@@ -346,6 +348,7 @@ class EngagementEngine:
         *,
         missile_engine: Any | None = None,
         naval_surface_engine: Any | None = None,
+        dew_engine: Any | None = None,
         crew_skill: float = 0.5,
         target_size_m2: float = 6.0,
         target_armor_mm: float = 0.0,
@@ -416,6 +419,62 @@ class EngagementEngine:
                 engaged=True, engagement_type=engagement_type,
                 attacker_id=attacker_id, target_id=target_id,
                 weapon_id=weapon.weapon_id, ammo_id=ammo_id,
+            )
+
+        if engagement_type == EngagementType.DEW_LASER:
+            if dew_engine is None:
+                return EngagementResult(
+                    engaged=False, attacker_id=attacker_id,
+                    target_id=target_id, aborted_reason="no_dew_engine",
+                )
+            dew_result = dew_engine.execute_laser_engagement(
+                attacker_id=attacker_id,
+                target_id=target_id,
+                shooter_pos=attacker_pos,
+                target_pos=target_pos,
+                weapon=weapon,
+                ammo_id=ammo_id,
+                ammo_def=ammo_def,
+                current_time_s=current_time_s,
+                timestamp=timestamp,
+            )
+            return EngagementResult(
+                engaged=dew_result.engaged,
+                engagement_type=engagement_type,
+                attacker_id=attacker_id,
+                target_id=target_id,
+                weapon_id=weapon.weapon_id,
+                ammo_id=ammo_id,
+                aborted_reason=dew_result.aborted_reason,
+                range_m=dew_result.range_m,
+            )
+
+        if engagement_type == EngagementType.DEW_HPM:
+            if dew_engine is None:
+                return EngagementResult(
+                    engaged=False, attacker_id=attacker_id,
+                    target_id=target_id, aborted_reason="no_dew_engine",
+                )
+            dew_results = dew_engine.execute_hpm_engagement(
+                attacker_id=attacker_id,
+                shooter_pos=attacker_pos,
+                weapon=weapon,
+                ammo_id=ammo_id,
+                ammo_def=ammo_def,
+                targets=[(target_id, target_pos, False)],
+                current_time_s=current_time_s,
+                timestamp=timestamp,
+            )
+            first = dew_results[0] if dew_results else None
+            return EngagementResult(
+                engaged=first.engaged if first else False,
+                engagement_type=engagement_type,
+                attacker_id=attacker_id,
+                target_id=target_id,
+                weapon_id=weapon.weapon_id,
+                ammo_id=ammo_id,
+                aborted_reason=first.aborted_reason if first else "no_targets",
+                range_m=first.range_m if first else 0.0,
             )
 
         if engagement_type == EngagementType.ATGM_VS_ROTARY:

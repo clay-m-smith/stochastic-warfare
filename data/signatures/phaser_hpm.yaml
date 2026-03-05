@@ -1,0 +1,21 @@
+profile_id: phaser_hpm
+unit_type: phaser_hpm
+visual:
+  height_m: 3.0
+  cross_section_m2: 12.0
+  camouflage_factor: 0.50
+thermal:
+  emissivity: 0.85
+  heat_output_kw: 300.0
+  contrast_modifier: 1.0
+radar:
+  rcs_frontal_m2: 15.0
+  rcs_side_m2: 25.0
+  rcs_rear_m2: 10.0
+acoustic:
+  noise_db: 65.0
+  speed_coefficient: 1.0
+electromagnetic:
+  emitting: true
+  power_dbm: 60.0
+  frequency_ghz: 1.0

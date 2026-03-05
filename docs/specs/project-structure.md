@@ -285,7 +285,8 @@ stochastic-warfare/
     │   ├── melee.py                  # Contact combat: Napoleonic (bayonet/cavalry charge, pursuit) + Ancient (pike push, shield wall, mounted charge, reach/flanking) [Phase 22b, 23b]
     │   ├── archery.py                # Massed archery: Binomial aggregate, 5 missile types, armor reduction, per-archer ammo [Phase 23b]
     │   ├── siege.py                  # Siege warfare: daily state machine (encirclement→bombardment→breach→assault→fallen/relief) [Phase 23b]
-    │   └── unconventional.py         # IED emplacement/detection/detonation, guerrilla hit-and-run, human shields [Phase 24c]
+    │   ├── unconventional.py         # IED emplacement/detection/detonation, guerrilla hit-and-run, human shields [Phase 24c]
+    │   └── directed_energy.py       # DEW engine: Beer-Lambert laser transmittance, laser/HPM Pk, engagement execution [Phase 28.5]
     ├── morale/                       # Morale & human factors
     │   ├── __init__.py
     │   ├── events.py                 # Morale events (state change, rout, rally, surrender)

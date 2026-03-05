@@ -1,0 +1,37 @@
+unit_type: de_shorad
+domain: ground
+display_name: "DE-SHORAD Stryker Laser System"
+ad_type: DEW
+max_speed: 27.8
+min_engagement_altitude: 0.0
+max_engagement_altitude: 3000.0
+max_engagement_range: 5000.0
+ready_missiles: 0
+reload_time: 0.0
+crew:
+  - role: COMMANDER
+    count: 1
+    skill: TRAINED
+  - role: SENSOR_OPERATOR
+    count: 1
+    skill: TRAINED
+  - role: GENERIC
+    count: 1
+    skill: BASIC
+equipment:
+  - name: "50kW Fiber Laser"
+    category: WEAPON
+    weight_kg: 2500.0
+    reliability: 0.90
+  - name: "Multi-Function Sensor Suite"
+    category: SENSOR
+    weight_kg: 200.0
+    reliability: 0.92
+  - name: "Stryker Power Plant"
+    category: PROPULSION
+    weight_kg: 500.0
+    reliability: 0.90
+  - name: "SINCGARS Radio"
+    category: COMMUNICATION
+    weight_kg: 12.0
+    reliability: 0.92

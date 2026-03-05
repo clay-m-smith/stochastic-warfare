@@ -1,0 +1,37 @@
+unit_type: iron_beam
+domain: ground
+display_name: "Iron Beam Laser Air Defense System"
+ad_type: DEW
+max_speed: 0.0
+min_engagement_altitude: 0.0
+max_engagement_altitude: 4000.0
+max_engagement_range: 7000.0
+ready_missiles: 0
+reload_time: 0.0
+crew:
+  - role: COMMANDER
+    count: 1
+    skill: VETERAN
+  - role: SENSOR_OPERATOR
+    count: 2
+    skill: TRAINED
+  - role: GENERIC
+    count: 2
+    skill: BASIC
+equipment:
+  - name: "100kW Solid-State Laser"
+    category: WEAPON
+    weight_kg: 3500.0
+    reliability: 0.92
+  - name: "EL/M-2084 Fire Control Radar"
+    category: SENSOR
+    weight_kg: 1200.0
+    reliability: 0.90
+  - name: "Generator Unit"
+    category: PROPULSION
+    weight_kg: 2000.0
+    reliability: 0.88
+  - name: "TADIRAN CNR-9000 Radio"
+    category: COMMUNICATION
+    weight_kg: 15.0
+    reliability: 0.90
