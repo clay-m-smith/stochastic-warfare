@@ -1,0 +1,19 @@
+unit_type: greek_hoplite_phalanx
+domain: ground
+display_name: "Greek Hoplite Phalanx"
+ground_type: LIGHT_INFANTRY
+max_speed: 0.8
+armor_front: 3.0
+armor_side: 1.5
+crew:
+  - role: COMMANDER
+    count: 1
+    skill: TRAINED
+  - role: CREW
+    count: 255
+    skill: BASIC
+equipment:
+  - name: "Sarissa"
+    category: WEAPON
+    weight_kg: 5.5
+    reliability: 0.85

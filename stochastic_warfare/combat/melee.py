@@ -41,6 +41,10 @@ class MeleeType(enum.IntEnum):
     CAVALRY_CHARGE = 1
     CAVALRY_VS_CAVALRY = 2
     MIXED_MELEE = 3
+    # Ancient/Medieval types (Phase 23)
+    PIKE_PUSH = 4
+    SHIELD_WALL = 5
+    MOUNTED_CHARGE = 6
 
 
 # ---------------------------------------------------------------------------
@@ -63,6 +67,12 @@ class MeleeConfig(BaseModel):
     shock_decay_per_round: float = 0.3
     defender_morale_penalty: float = 0.15
     attacker_morale_boost: float = 0.05
+    # Ancient/Medieval additions (Phase 23)
+    reach_advantage_modifier: float = 1.3
+    flanking_casualty_multiplier: float = 2.5
+    pike_push_attrition_rate: float = 0.01
+    shield_wall_defense_bonus: float = 0.5
+    mounted_charge_casualty_rate: float = 0.04
 
 
 # ---------------------------------------------------------------------------
@@ -134,6 +144,34 @@ class MeleeEngine:
 
         return defender_breaks, attacker_breaks
 
+    def compute_reach_advantage(
+        self,
+        attacker_reach_m: float,
+        defender_reach_m: float,
+        round_number: int = 1,
+    ) -> float:
+        """Compute reach advantage modifier.
+
+        Longer weapon gets a bonus on round 1 only (first contact).
+        After first round, close quarters negates reach.
+
+        Returns modifier applied to attacker casualty-inflicting rate.
+        """
+        if round_number > 1:
+            return 1.0
+        if attacker_reach_m > defender_reach_m:
+            return self._config.reach_advantage_modifier
+        return 1.0
+
+    def compute_flanking_bonus(self, is_flanked: bool) -> float:
+        """Return flanking casualty multiplier.
+
+        Returns ``flanking_casualty_multiplier`` if flanked, else 1.0.
+        """
+        if is_flanked:
+            return self._config.flanking_casualty_multiplier
+        return 1.0
+
     def resolve_melee_round(
         self,
         attacker_strength: int,
@@ -141,6 +179,9 @@ class MeleeEngine:
         melee_type: MeleeType,
         defender_formation_cavalry_vuln: float = 1.0,
         round_number: int = 1,
+        attacker_reach_m: float = 1.0,
+        defender_reach_m: float = 1.0,
+        is_flanked: bool = False,
     ) -> MeleeResult:
         """Resolve one round of melee combat.
 
@@ -156,6 +197,12 @@ class MeleeEngine:
             Defender's cavalry vulnerability from formation.
         round_number:
             Round number (1-based); shock decays with each round.
+        attacker_reach_m:
+            Attacker weapon reach in metres (for reach advantage).
+        defender_reach_m:
+            Defender weapon reach in metres (for reach advantage).
+        is_flanked:
+            Whether the defender is flanked.
         """
         cfg = self._config
 
@@ -175,6 +222,12 @@ class MeleeEngine:
         # Base casualty rate depends on melee type
         if melee_type in (MeleeType.CAVALRY_CHARGE, MeleeType.CAVALRY_VS_CAVALRY):
             base_rate = cfg.cavalry_casualty_rate
+        elif melee_type == MeleeType.PIKE_PUSH:
+            base_rate = cfg.pike_push_attrition_rate
+        elif melee_type == MeleeType.MOUNTED_CHARGE:
+            base_rate = cfg.mounted_charge_casualty_rate
+        elif melee_type == MeleeType.SHIELD_WALL:
+            base_rate = cfg.bayonet_casualty_rate
         else:
             base_rate = cfg.bayonet_casualty_rate
 
@@ -191,20 +244,35 @@ class MeleeEngine:
             else:
                 formation_mod = cfg.cavalry_vs_column_modifier
 
+        # Shield wall defense bonus — halves incoming casualties
+        defense_mod = 1.0
+        if melee_type == MeleeType.SHIELD_WALL:
+            defense_mod = cfg.shield_wall_defense_bonus
+
+        # Reach advantage (round 1 only)
+        reach_mod = self.compute_reach_advantage(
+            attacker_reach_m, defender_reach_m, round_number,
+        )
+
+        # Flanking multiplier
+        flank_mod = self.compute_flanking_bonus(is_flanked)
+
         # Shock decay over rounds
         shock_bonus = max(0.0, 1.0 - cfg.shock_decay_per_round * (round_number - 1))
 
         # Defender casualties
         def_cas_rate = min(
             0.5,
-            base_rate * force_ratio * formation_mod * (1.0 + shock_bonus),
+            base_rate * force_ratio * formation_mod * (1.0 + shock_bonus)
+            * reach_mod * flank_mod,
         )
         defender_cas = int(self._rng.binomial(defender_strength, def_cas_rate))
 
         # Attacker casualties (defenders fight back)
         att_cas_rate = min(
             0.5,
-            base_rate / max(0.5, force_ratio) * (1.0 / max(0.1, formation_mod)),
+            base_rate / max(0.5, force_ratio) * (1.0 / max(0.1, formation_mod))
+            * defense_mod,
         )
         attacker_cas = int(self._rng.binomial(attacker_strength, att_cas_rate))
 

@@ -1,0 +1,14 @@
+ammo_id: arrow_longbow
+display_name: "English Longbow Arrow"
+ammo_type: BALL
+mass_kg: 0.060
+diameter_mm: 12.0
+drag_coefficient: 0.60
+penetration_mm_rha: 2.0
+penetration_reference_range_m: 50.0
+blast_radius_m: 0.0
+fragmentation_radius_m: 0.0
+guidance: NONE
+propulsion: none
+max_speed_mps: 55.0
+unit_cost_factor: 0.001

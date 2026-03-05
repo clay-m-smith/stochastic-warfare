@@ -1,0 +1,12 @@
+profile_id: hannibal_barca
+display_name: "Hannibal Barca"
+description: "Master of tactical deception and the double envelopment. Defeated numerically superior Roman armies through superior maneuver, terrain exploitation, and allied cavalry superiority."
+aggression: 0.85
+caution: 0.3
+flexibility: 0.95
+initiative: 0.9
+experience: 0.95
+preferred_doctrine: steppe_nomad
+stress_tolerance: 0.9
+decision_speed: 0.8
+risk_acceptance: 0.85

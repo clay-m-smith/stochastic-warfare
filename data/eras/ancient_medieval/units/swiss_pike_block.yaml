@@ -1,0 +1,19 @@
+unit_type: swiss_pike_block
+domain: ground
+display_name: "Swiss Pike Block"
+ground_type: LIGHT_INFANTRY
+max_speed: 1.0
+armor_front: 1.5
+armor_side: 0.5
+crew:
+  - role: COMMANDER
+    count: 1
+    skill: TRAINED
+  - role: CREW
+    count: 499
+    skill: BASIC
+equipment:
+  - name: "Pike"
+    category: WEAPON
+    weight_kg: 4.0
+    reliability: 0.85

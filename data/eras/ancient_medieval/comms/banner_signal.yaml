@@ -1,0 +1,10 @@
+comm_id: banner_signal
+comm_type: MESSENGER
+display_name: "Banner Signal"
+max_range_m: 1000.0
+bandwidth_bps: 10.0
+base_latency_s: 0.5
+base_reliability: 0.85
+intercept_risk: 0.0
+jam_resistance: 1.0
+requires_los: true

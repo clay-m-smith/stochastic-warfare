@@ -1,0 +1,137 @@
+name: "Battle of Cannae (August 2, 216 BC)"
+date: "0216-08-02T08:00:00Z"
+duration_hours: 8.0
+latitude: 41.30
+longitude: 16.13
+era: ancient_medieval
+
+tick_resolution:
+  strategic_s: 3600
+  operational_s: 300
+  tactical_s: 5
+
+weather_conditions:
+  visibility_m: 5000
+  wind_speed_mps: 3.0
+  wind_direction_deg: 180
+  temperature_c: 35.0
+  precipitation: none
+  cloud_cover: 0.1
+  humidity: 0.40
+
+terrain:
+  width_m: 4000
+  height_m: 3000
+  cell_size_m: 50.0
+  base_elevation_m: 50.0
+  terrain_type: open_field
+
+sides:
+  - side: carthaginian
+    units:
+      - unit_type: roman_legionary_cohort
+        count: 2
+        overrides:
+          display_name: "Carthaginian Infantry"
+      - unit_type: mongol_horse_archer
+        count: 2
+        overrides:
+          display_name: "Numidian/Gallic Cavalry"
+    experience_level: 0.75
+    morale_initial: STEADY
+    commander_profile: hannibal_barca
+    doctrine_template: steppe_nomad
+    depots:
+      - depot_id: carthaginian_depot
+        position: [200, 1500]
+        capacity_tons: 500
+        throughput_tons_per_hour: 30.0
+
+  - side: roman
+    units:
+      - unit_type: roman_legionary_cohort
+        count: 4
+      - unit_type: norman_knight_conroi
+        count: 1
+        overrides:
+          display_name: "Roman Cavalry"
+    experience_level: 0.55
+    morale_initial: STEADY
+    commander_profile: william_conqueror
+    doctrine_template: roman_legion
+    depots:
+      - depot_id: roman_depot
+        position: [3800, 1500]
+        capacity_tons: 1000
+        throughput_tons_per_hour: 50.0
+
+objectives:
+  - objective_id: center_field
+    position: [2000, 1500]
+    radius_m: 500
+    type: territory
+  - objective_id: roman_camp
+    position: [3500, 1500]
+    radius_m: 300
+    type: key_terrain
+
+victory_conditions:
+  - type: force_destroyed
+    side: ""
+    params:
+      threshold: 0.5
+  - type: morale_collapsed
+    side: roman
+    params:
+      threshold: 0.7
+  - type: time_expired
+    side: carthaginian
+    params:
+      max_duration_s: 28800
+
+calibration_overrides:
+  hit_probability_modifier: 0.6
+  target_size_modifier: 0.7
+  morale_degrade_rate_modifier: 0.6
+  morale_base_degrade_rate: 0.015
+  morale_casualty_weight: 0.6
+  morale_check_interval: 15
+  carthaginian_force_ratio_modifier: 1.8
+  roman_force_ratio_modifier: 1.0
+  carthaginian_cohesion: 0.80
+  roman_cohesion: 0.55
+  destruction_threshold: 0.5
+  carthaginian_start_x: 500.0
+  carthaginian_start_y: 1500.0
+  roman_start_x: 3500.0
+  roman_start_y: 1500.0
+  advance_speed: 0.8
+  weapon_assignments:
+    "Gladius": gladius
+    "Pilum": pilum
+    "Composite Bow": longbow
+    "Sword (Medieval)": sword_medieval
+    "Lance (Medieval)": lance_medieval
+    "Shield": sword_medieval
+
+documented_outcomes:
+  - name: roman_casualty_fraction
+    value: 0.85
+    tolerance_factor: 3.0
+    unit: fraction
+    source: "Polybius, *Histories*; Livy, *Ab Urbe Condita*"
+    source_quality: 2
+    notes: "~70,000 Roman casualties out of ~80,000 engaged; devastating envelopment"
+  - name: carthaginian_casualty_fraction
+    value: 0.08
+    tolerance_factor: 3.0
+    unit: fraction
+    source: "Polybius, *Histories*"
+    source_quality: 2
+    notes: "~6,000 Carthaginian casualties; masterful double envelopment"
+
+sources:
+  - "Polybius. *Histories*"
+  - "Livy. *Ab Urbe Condita*"
+  - "Goldsworthy, Adrian. *Cannae: Hannibal's Greatest Victory*"
+  - "Daly, Gregory. *Cannae: The Experience of Battle in the Second Punic War*"

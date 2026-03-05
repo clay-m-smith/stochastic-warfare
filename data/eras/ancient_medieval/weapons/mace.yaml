@@ -1,0 +1,18 @@
+weapon_id: mace
+display_name: "Flanged Mace"
+category: MELEE
+caliber_mm: 0.0
+muzzle_velocity_mps: 0.0
+max_range_m: 1.0
+min_range_m: 0.0
+rate_of_fire_rpm: 25.0
+burst_size: 1
+base_accuracy_mrad: 0.0
+guidance: NONE
+magazine_capacity: 0
+reload_time_s: 0.0
+compatible_ammo: []
+weight_kg: 2.0
+reliability: 0.95
+barrel_life_rounds: 100000
+requires_deployed: false

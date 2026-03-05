@@ -1,0 +1,12 @@
+profile_id: william_conqueror
+display_name: "William the Conqueror"
+description: "Combined arms commander skilled at integrating cavalry, infantry, and archery into coordinated assaults. Decisive leader who adapts tactics mid-battle."
+aggression: 0.8
+caution: 0.4
+flexibility: 0.7
+initiative: 0.85
+experience: 0.8
+preferred_doctrine: roman_legion
+stress_tolerance: 0.8
+decision_speed: 0.75
+risk_acceptance: 0.7

@@ -1,0 +1,21 @@
+profile_id: swiss_pike_block
+unit_type: swiss_pike_block
+visual:
+  height_m: 2.0
+  cross_section_m2: 3.5
+  camouflage_factor: 0.1
+thermal:
+  emissivity: 0.0
+  heat_output_kw: 0.0
+  contrast_modifier: 0.0
+radar:
+  rcs_frontal_m2: 0.0
+  rcs_side_m2: 0.0
+  rcs_rear_m2: 0.0
+acoustic:
+  noise_db: 60.0
+  speed_coefficient: 1.0
+electromagnetic:
+  emitting: false
+  power_dbm: 0.0
+  frequency_ghz: 0.0

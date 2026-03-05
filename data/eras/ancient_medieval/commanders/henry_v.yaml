@@ -1,0 +1,12 @@
+profile_id: henry_v
+display_name: "King Henry V"
+description: "Charismatic defensive commander who maximizes terrain advantage and archery firepower. Inspired outnumbered forces to decisive victory at Agincourt through disciplined positioning."
+aggression: 0.7
+caution: 0.6
+flexibility: 0.6
+initiative: 0.7
+experience: 0.75
+preferred_doctrine: english_defensive
+stress_tolerance: 0.9
+decision_speed: 0.7
+risk_acceptance: 0.6

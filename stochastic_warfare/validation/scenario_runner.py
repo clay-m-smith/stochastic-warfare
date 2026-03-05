@@ -263,6 +263,8 @@ def build_terrain(spec: TerrainSpec, rng: np.random.Generator | None = None) -> 
         return build_hilly_defense(spec, rng)
     elif spec.terrain_type == "trench_warfare":
         return build_flat_desert(spec)  # Flat terrain; trenches are a separate overlay
+    elif spec.terrain_type == "open_field":
+        return build_flat_desert(spec)  # Flat open ground; ancient/medieval battles
     else:
         raise ValueError(f"Unknown terrain type: {spec.terrain_type!r}")
 

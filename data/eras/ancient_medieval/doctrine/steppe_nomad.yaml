@@ -1,0 +1,17 @@
+doctrine_id: steppe_nomad
+display_name: "Steppe Nomad Doctrine"
+category: OFFENSIVE
+faction: mongol
+description: "Extreme mobility with feigned retreat and encirclement. Horse archers harass and attrit the enemy, drawing them into pursuit before encircling and destroying from all sides."
+min_echelon: 5
+max_echelon: 10
+applicable_domains: ["LAND"]
+phases: ["APPROACH", "HARASS", "FEIGNED_RETREAT", "ENCIRCLEMENT"]
+force_ratios:
+  main_effort: 0.3
+  supporting: 0.5
+  reserve: 0.2
+actions: ["harass", "feigned_retreat", "encircle", "pursuit"]
+priorities: ["mobility", "deception", "endurance"]
+risk_tolerance: high
+tempo: high

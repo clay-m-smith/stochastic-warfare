@@ -123,11 +123,30 @@ NAPOLEONIC_ERA_CONFIG = EraConfig(
     },
 )
 
+ANCIENT_MEDIEVAL_ERA_CONFIG = EraConfig(
+    era=Era.ANCIENT_MEDIEVAL,
+    disabled_modules={
+        "ew",
+        "space",
+        "cbrn",
+        "gps",
+        "thermal_sights",
+        "data_links",
+        "pgm",
+    },
+    available_sensor_types={"VISUAL"},
+    physics_overrides={
+        "c2_delay_multiplier": 12.0,
+        "cbrn_nuclear_enabled": False,
+    },
+)
+
 _ERA_REGISTRY: dict[str, EraConfig] = {
     "modern": MODERN_ERA_CONFIG,
     "ww2": WW2_ERA_CONFIG,
     "ww1": WW1_ERA_CONFIG,
     "napoleonic": NAPOLEONIC_ERA_CONFIG,
+    "ancient_medieval": ANCIENT_MEDIEVAL_ERA_CONFIG,
 }
 
 

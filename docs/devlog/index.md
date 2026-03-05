@@ -30,7 +30,7 @@ Rolling record of implementation decisions, changes, and lessons learned across 
 | 20 | WW2 Era | **Complete** | [phase-20.md](phase-20.md) |
 | 21 | WW1 Era | **Complete** | [phase-21.md](phase-21.md) |
 | 22 | Napoleonic Era | **Complete** | [phase-22.md](phase-22.md) |
-| 23 | Ancient & Medieval Era | Planned | — |
+| 23 | Ancient & Medieval Era | **Complete** | [phase-23.md](phase-23.md) |
 | 24 | Unconventional & Prohibited Warfare | Planned | — |
 
 ## Post-MVP Refinement Index
@@ -154,6 +154,7 @@ Known limitations and deferred improvements logged during implementation. Review
 | 22 | No frontage/depth in melee — simplified to force ratio × formation modifier | [phase-22.md — Known Limitations](phase-22.md#known-limitations) |
 | 22 | Foraging ambush casualty rate hardcoded at 10% — should be configurable in ForagingConfig | [phase-22.md — Known Limitations](phase-22.md#known-limitations) |
 | 22 | Volley/melee/cavalry/courier/foraging engines use hardcoded fallback RNG seed (42) when no RNG injected | [phase-22.md — Known Limitations](phase-22.md#known-limitations) |
+| 16/17/18/19/20/21/22/23 | ScenarioLoader doesn't auto-wire Ancient/Medieval engines (archery/siege/formation_ancient/naval_oar/visual_signals) from YAML (extends existing gap) | [phase-23.md — Postmortem](phase-23.md#postmortem) |
 
 ## Conventions
 

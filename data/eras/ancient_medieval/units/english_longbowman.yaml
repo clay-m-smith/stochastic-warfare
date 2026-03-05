@@ -1,0 +1,19 @@
+unit_type: english_longbowman
+domain: ground
+display_name: "English Longbowman Company"
+ground_type: LIGHT_INFANTRY
+max_speed: 1.5
+armor_front: 0.5
+armor_side: 0.0
+crew:
+  - role: COMMANDER
+    count: 1
+    skill: TRAINED
+  - role: CREW
+    count: 99
+    skill: TRAINED
+equipment:
+  - name: "Longbow"
+    category: WEAPON
+    weight_kg: 1.5
+    reliability: 0.90

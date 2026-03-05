@@ -1,5 +1,5 @@
 # Project Structure & Module Decomposition
-**Status**: Complete (Phase 22)
+**Status**: Complete (Phase 23)
 **Last Updated**: 2026-03-04
 
 ---
@@ -90,16 +90,26 @@ stochastic-warfare/
 │   │   │   ├── commanders/          # 3 commander profiles (Haig, Ludendorff, Foch types)
 │   │   │   ├── comms/               # 2 comm definitions (field telephone, runner messenger)
 │   │   │   └── scenarios/           # 2 validation scenarios (Somme Day 1, Cambrai)
-│   │   └── napoleonic/              # Napoleonic era data [Phase 22]
-│   │       ├── units/               # 10 unit definitions (french/british infantry, Old Guard, cuirassier, hussar, lancer, artillery)
-│   │       ├── weapons/             # 9 weapon definitions (muskets, rifle, cannons, howitzer, saber, lance, bayonet)
-│   │       ├── ammunition/          # 9 ammo definitions (musket balls, roundshot, canister, howitzer shell)
-│   │       ├── sensors/             # 3 sensor definitions (telescope, cavalry scout, observation post)
-│   │       ├── signatures/          # 10 signature profiles (one per unit, zeroed thermal/radar/EM)
-│   │       ├── doctrine/            # 3 doctrine templates (french_grande_armee, british_thin_red_line, coalition_linear)
-│   │       ├── commanders/          # 3 commander profiles (Napoleon, Wellington, Blucher types)
-│   │       ├── comms/               # 2 comm definitions (mounted courier, drum/bugle signals)
-│   │       └── scenarios/           # 2 validation scenarios (Austerlitz, Waterloo)
+│   │   ├── napoleonic/              # Napoleonic era data [Phase 22]
+│   │   │   ├── units/               # 10 unit definitions (french/british infantry, Old Guard, cuirassier, hussar, lancer, artillery)
+│   │   │   ├── weapons/             # 9 weapon definitions (muskets, rifle, cannons, howitzer, saber, lance, bayonet)
+│   │   │   ├── ammunition/          # 9 ammo definitions (musket balls, roundshot, canister, howitzer shell)
+│   │   │   ├── sensors/             # 3 sensor definitions (telescope, cavalry scout, observation post)
+│   │   │   ├── signatures/          # 10 signature profiles (one per unit, zeroed thermal/radar/EM)
+│   │   │   ├── doctrine/            # 3 doctrine templates (french_grande_armee, british_thin_red_line, coalition_linear)
+│   │   │   ├── commanders/          # 3 commander profiles (Napoleon, Wellington, Blucher types)
+│   │   │   ├── comms/               # 2 comm definitions (mounted courier, drum/bugle signals)
+│   │   │   └── scenarios/           # 2 validation scenarios (Austerlitz, Waterloo)
+│   │   └── ancient_medieval/        # Ancient & Medieval era data [Phase 23]
+│   │       ├── units/               # 7 unit definitions (roman legionary, hoplite, longbowman, knight, pike block, horse archer, huscarl)
+│   │       ├── weapons/             # 13 weapon definitions (gladius, pilum, sarissa, longbow, crossbow, lance, sword, mace, pike, catapult, trebuchet, ballista, ram)
+│   │       ├── ammunition/          # 8 ammo definitions (arrows, bolts, javelins, stones, sling stones)
+│   │       ├── sensors/             # 3 sensor definitions (mounted scout, watchtower, ship lookout)
+│   │       ├── signatures/          # 7 signature profiles (one per unit, zeroed thermal/radar/EM)
+│   │       ├── doctrine/            # 3 doctrine templates (roman_legion, english_defensive, steppe_nomad)
+│   │       ├── commanders/          # 3 commander profiles (Hannibal, Henry V, William Conqueror types)
+│   │       ├── comms/               # 2 comm definitions (battle horn, banner signal)
+│   │       └── scenarios/           # 3 validation scenarios (Cannae, Agincourt, Hastings)
 │   └── scenarios/                    # Complete scenario packages
 │       ├── example_scenario/
 │       │   ├── scenario.yaml         # Master scenario config: start date/time (UTC), duration, initial weather, time zone
@@ -219,7 +229,9 @@ stochastic-warfare/
     │   ├── airborne.py              # Airborne/air assault: parachute drop, helicopter insertion, DZ/LZ selection, assembly
     │   ├── convoy.py                # WW2 convoy operations: formation, speed limiting, stragglers, wolf pack, depth charge [Phase 20b]
     │   ├── cavalry.py               # Napoleonic cavalry charge state machine: WALK→TROT→GALLOP→CHARGE→IMPACT→PURSUIT→RALLY [Phase 22b]
-    │   └── formation_napoleonic.py  # Napoleonic formations: LINE/COLUMN/SQUARE/SKIRMISH, worst-of-both transitions [Phase 22b]
+    │   ├── formation_napoleonic.py  # Napoleonic formations: LINE/COLUMN/SQUARE/SKIRMISH, worst-of-both transitions [Phase 22b]
+    │   ├── formation_ancient.py     # Ancient formations: PHALANX/SHIELD_WALL/PIKE_BLOCK/WEDGE/SKIRMISH/TESTUDO/COLUMN [Phase 23b]
+    │   └── naval_oar.py             # Oar-powered galley: fatigue rowing, ramming, boarding transition [Phase 23b]
     ├── detection/                    # Intelligence, sensors, & fog of war
     │   ├── __init__.py
     │   ├── events.py                 # Detection events (contact gained/lost, track update, ID change)
@@ -263,7 +275,9 @@ stochastic-warfare/
     │   ├── barrage.py                # WW1 artillery barrage: standing/creeping/box, fire density, suppression, drift, friendly fire [Phase 21b]
     │   ├── gas_warfare.py            # WW1 gas warfare adapter: cylinder release, gas shells, projectors, mask→MOPP mapping [Phase 21b]
     │   ├── volley_fire.py            # Napoleonic massed musket fire: Binomial aggregate, range table, smoke, canister [Phase 22b]
-    │   └── melee.py                  # Napoleonic contact combat: pre-contact morale, bayonet/cavalry charge, pursuit [Phase 22b]
+    │   ├── melee.py                  # Contact combat: Napoleonic (bayonet/cavalry charge, pursuit) + Ancient (pike push, shield wall, mounted charge, reach/flanking) [Phase 22b, 23b]
+    │   ├── archery.py                # Massed archery: Binomial aggregate, 5 missile types, armor reduction, per-archer ammo [Phase 23b]
+    │   └── siege.py                  # Siege warfare: daily state machine (encirclement→bombardment→breach→assault→fallen/relief) [Phase 23b]
     ├── morale/                       # Morale & human factors
     │   ├── __init__.py
     │   ├── events.py                 # Morale events (state change, rout, rally, surrender)
@@ -302,6 +316,7 @@ stochastic-warfare/
     │   ├── mission_command.py        # Commander's intent, mission-type orders, subordinate initiative/adaptation
     │   ├── joint_ops.py             # Joint task force command: service coordination, liaison, coalition caveats [Phase 12a]
     │   ├── courier.py               # Napoleonic courier C2: physical messenger, terrain speed, interception risk, courier pool [Phase 22b]
+    │   ├── visual_signals.py        # Ancient C2: banner/horn/runner/fire beacon, synchronous presence-based signaling [Phase 23b]
     │   └── ai/                       # AI decision-making [PHASE 8a]
     │       ├── __init__.py
     │       ├── ooda.py               # OODA loop timer/FSM (echelon-scaled, log-normal friction)

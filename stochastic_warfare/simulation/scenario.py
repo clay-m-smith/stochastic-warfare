@@ -174,7 +174,7 @@ class TerrainConfig(BaseModel):
         source = info.data.get("terrain_source", "procedural")
         if source == "real":
             return v  # No constraint when using real terrain
-        allowed = {"flat_desert", "open_ocean", "hilly_defense", "trench_warfare"}
+        allowed = {"flat_desert", "open_ocean", "hilly_defense", "trench_warfare", "open_field"}
         if v not in allowed:
             raise ValueError(f"terrain_type must be one of {allowed}; got {v!r}")
         return v
@@ -314,6 +314,13 @@ class SimulationContext:
     courier_engine: Any = None
     foraging_engine: Any = None
 
+    # Ancient/Medieval Engine Extensions (Phase 23b)
+    archery_engine: Any = None
+    siege_engine: Any = None
+    formation_ancient_engine: Any = None
+    naval_oar_engine: Any = None
+    visual_signals_engine: Any = None
+
     # Logistics
     consumption_engine: Any = None
     stockpile_manager: Any = None
@@ -389,6 +396,11 @@ class SimulationContext:
             ("formation_napoleonic_engine", self.formation_napoleonic_engine),
             ("courier_engine", self.courier_engine),
             ("foraging_engine", self.foraging_engine),
+            ("archery_engine", self.archery_engine),
+            ("siege_engine", self.siege_engine),
+            ("formation_ancient_engine", self.formation_ancient_engine),
+            ("naval_oar_engine", self.naval_oar_engine),
+            ("visual_signals_engine", self.visual_signals_engine),
         ]
         for name, eng in engines:
             if eng is not None and hasattr(eng, "get_state"):
@@ -425,6 +437,11 @@ class SimulationContext:
             ("formation_napoleonic_engine", self.formation_napoleonic_engine),
             ("courier_engine", self.courier_engine),
             ("foraging_engine", self.foraging_engine),
+            ("archery_engine", self.archery_engine),
+            ("siege_engine", self.siege_engine),
+            ("formation_ancient_engine", self.formation_ancient_engine),
+            ("naval_oar_engine", self.naval_oar_engine),
+            ("visual_signals_engine", self.visual_signals_engine),
         ]
         for name, eng in engines:
             if eng is not None and name in state and hasattr(eng, "set_state"):

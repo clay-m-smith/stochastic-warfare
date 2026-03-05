@@ -1,0 +1,17 @@
+doctrine_id: english_defensive
+display_name: "English Defensive Doctrine"
+category: DEFENSIVE
+faction: english
+description: "Prepared defensive positions exploiting terrain with archery dominance. Dismounted men-at-arms anchor flanks while massed longbows destroy advancing enemy at range."
+min_echelon: 5
+max_echelon: 10
+applicable_domains: ["LAND"]
+phases: ["PREPARATION", "DEFENSE", "ARCHERY", "COUNTERATTACK"]
+force_ratios:
+  main_effort: 0.6
+  supporting: 0.2
+  reserve: 0.2
+actions: ["defend", "archery", "hold", "counterattack"]
+priorities: ["firepower", "protection", "terrain"]
+risk_tolerance: low
+tempo: low

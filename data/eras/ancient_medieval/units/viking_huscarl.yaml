@@ -1,0 +1,23 @@
+unit_type: viking_huscarl
+domain: ground
+display_name: "Viking Huscarl Warband"
+ground_type: LIGHT_INFANTRY
+max_speed: 1.3
+armor_front: 2.5
+armor_side: 1.5
+crew:
+  - role: COMMANDER
+    count: 1
+    skill: TRAINED
+  - role: CREW
+    count: 59
+    skill: TRAINED
+equipment:
+  - name: "Sword (Medieval)"
+    category: WEAPON
+    weight_kg: 1.5
+    reliability: 0.95
+  - name: "Shield"
+    category: WEAPON
+    weight_kg: 4.0
+    reliability: 0.90

@@ -1,0 +1,10 @@
+comm_id: battle_horn
+comm_type: MESSENGER
+display_name: "Battle Horn"
+max_range_m: 500.0
+bandwidth_bps: 10.0
+base_latency_s: 1.0
+base_reliability: 0.90
+intercept_risk: 0.0
+jam_resistance: 1.0
+requires_los: false

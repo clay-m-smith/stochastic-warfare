@@ -1,0 +1,23 @@
+unit_type: roman_legionary_cohort
+domain: ground
+display_name: "Roman Legionary Cohort"
+ground_type: LIGHT_INFANTRY
+max_speed: 1.2
+armor_front: 2.0
+armor_side: 1.0
+crew:
+  - role: COMMANDER
+    count: 1
+    skill: VETERAN
+  - role: CREW
+    count: 479
+    skill: TRAINED
+equipment:
+  - name: "Gladius"
+    category: WEAPON
+    weight_kg: 0.7
+    reliability: 0.95
+  - name: "Pilum"
+    category: WEAPON
+    weight_kg: 2.0
+    reliability: 0.90

@@ -1,0 +1,17 @@
+doctrine_id: roman_legion
+display_name: "Roman Legion Doctrine"
+category: OFFENSIVE
+faction: roman
+description: "Disciplined combined arms doctrine built around flexible centuries. Javelin volley disrupts enemy formation before close combat with gladius. Reserves committed decisively."
+min_echelon: 5
+max_echelon: 10
+applicable_domains: ["LAND"]
+phases: ["PREPARATION", "ADVANCE", "JAVELIN_VOLLEY", "CLOSE_COMBAT", "PURSUIT"]
+force_ratios:
+  main_effort: 0.5
+  supporting: 0.3
+  reserve: 0.2
+actions: ["advance", "javelin_throw", "close_combat", "pursue"]
+priorities: ["discipline", "shock", "flexibility"]
+risk_tolerance: medium
+tempo: medium

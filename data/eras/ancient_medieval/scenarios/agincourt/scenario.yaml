@@ -1,0 +1,128 @@
+name: "Battle of Agincourt (October 25, 1415)"
+date: "1415-10-25T08:00:00Z"
+duration_hours: 6.0
+latitude: 50.46
+longitude: 2.14
+era: ancient_medieval
+
+tick_resolution:
+  strategic_s: 3600
+  operational_s: 300
+  tactical_s: 5
+
+weather_conditions:
+  visibility_m: 3000
+  wind_speed_mps: 2.0
+  wind_direction_deg: 270
+  temperature_c: 10.0
+  precipitation: light_rain
+  cloud_cover: 0.8
+  humidity: 0.85
+
+terrain:
+  width_m: 2000
+  height_m: 1000
+  cell_size_m: 50.0
+  base_elevation_m: 100.0
+  terrain_type: open_field
+
+sides:
+  - side: english
+    units:
+      - unit_type: english_longbowman
+        count: 4
+      - unit_type: viking_huscarl
+        count: 1
+        overrides:
+          display_name: "English Men-at-Arms"
+    experience_level: 0.65
+    morale_initial: STEADY
+    commander_profile: henry_v
+    doctrine_template: english_defensive
+    depots:
+      - depot_id: english_depot
+        position: [200, 500]
+        capacity_tons: 200
+        throughput_tons_per_hour: 20.0
+
+  - side: french
+    units:
+      - unit_type: norman_knight_conroi
+        count: 3
+      - unit_type: viking_huscarl
+        count: 1
+        overrides:
+          display_name: "French Crossbowmen"
+    experience_level: 0.50
+    morale_initial: STEADY
+    commander_profile: william_conqueror
+    doctrine_template: roman_legion
+    depots:
+      - depot_id: french_depot
+        position: [1800, 500]
+        capacity_tons: 500
+        throughput_tons_per_hour: 40.0
+
+objectives:
+  - objective_id: main_field
+    position: [1000, 500]
+    radius_m: 400
+    type: territory
+
+victory_conditions:
+  - type: force_destroyed
+    side: ""
+    params:
+      threshold: 0.4
+  - type: morale_collapsed
+    side: french
+    params:
+      threshold: 0.6
+  - type: time_expired
+    side: english
+    params:
+      max_duration_s: 21600
+
+calibration_overrides:
+  hit_probability_modifier: 0.7
+  target_size_modifier: 0.8
+  morale_degrade_rate_modifier: 0.5
+  morale_base_degrade_rate: 0.012
+  morale_casualty_weight: 0.5
+  morale_check_interval: 20
+  english_force_ratio_modifier: 1.0
+  french_force_ratio_modifier: 0.8
+  english_cohesion: 0.80
+  french_cohesion: 0.45
+  destruction_threshold: 0.4
+  english_start_x: 300.0
+  english_start_y: 500.0
+  french_start_x: 1700.0
+  french_start_y: 500.0
+  advance_speed: 0.5
+  weapon_assignments:
+    "Longbow": longbow
+    "Sword (Medieval)": sword_medieval
+    "Lance (Medieval)": lance_medieval
+    "Shield": sword_medieval
+
+documented_outcomes:
+  - name: french_casualty_fraction
+    value: 0.50
+    tolerance_factor: 3.0
+    unit: fraction
+    source: "Barker, Juliet. *Agincourt: Henry V and the Battle That Made England*"
+    source_quality: 1
+    notes: "~6,000-10,000 French casualties including prisoners from ~12,000 engaged"
+  - name: english_casualty_fraction
+    value: 0.05
+    tolerance_factor: 3.0
+    unit: fraction
+    source: "Barker, Juliet. *Agincourt*"
+    source_quality: 1
+    notes: "~400 English casualties from ~8,000 engaged; longbow dominated"
+
+sources:
+  - "Barker, Juliet. *Agincourt: Henry V and the Battle That Made England*"
+  - "Curry, Anne. *Agincourt: A New History*"
+  - "Keegan, John. *The Face of Battle*"

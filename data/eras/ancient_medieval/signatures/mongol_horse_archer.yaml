@@ -1,0 +1,21 @@
+profile_id: mongol_horse_archer
+unit_type: mongol_horse_archer
+visual:
+  height_m: 2.3
+  cross_section_m2: 2.5
+  camouflage_factor: 0.5
+thermal:
+  emissivity: 0.0
+  heat_output_kw: 0.0
+  contrast_modifier: 0.0
+radar:
+  rcs_frontal_m2: 0.0
+  rcs_side_m2: 0.0
+  rcs_rear_m2: 0.0
+acoustic:
+  noise_db: 65.0
+  speed_coefficient: 1.0
+electromagnetic:
+  emitting: false
+  power_dbm: 0.0
+  frequency_ghz: 0.0

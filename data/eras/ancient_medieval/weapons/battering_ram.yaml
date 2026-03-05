@@ -1,0 +1,18 @@
+weapon_id: battering_ram
+display_name: "Battering Ram"
+category: MELEE
+caliber_mm: 0.0
+muzzle_velocity_mps: 0.0
+max_range_m: 5.0
+min_range_m: 0.0
+rate_of_fire_rpm: 0.5
+burst_size: 1
+base_accuracy_mrad: 0.0
+guidance: NONE
+magazine_capacity: 0
+reload_time_s: 0.0
+compatible_ammo: []
+weight_kg: 1000.0
+reliability: 0.90
+barrel_life_rounds: 100000
+requires_deployed: true

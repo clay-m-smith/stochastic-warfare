@@ -1,0 +1,23 @@
+unit_type: norman_knight_conroi
+domain: ground
+display_name: "Norman Knight Conroi"
+ground_type: CAVALRY
+max_speed: 7.0
+armor_front: 4.0
+armor_side: 3.0
+crew:
+  - role: COMMANDER
+    count: 1
+    skill: VETERAN
+  - role: CREW
+    count: 29
+    skill: TRAINED
+equipment:
+  - name: "Lance (Medieval)"
+    category: WEAPON
+    weight_kg: 3.5
+    reliability: 0.80
+  - name: "Sword (Medieval)"
+    category: WEAPON
+    weight_kg: 1.5
+    reliability: 0.95
