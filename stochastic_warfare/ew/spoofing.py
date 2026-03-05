@@ -188,6 +188,7 @@ class SpoofingEngine:
         receiver_type: ReceiverType,
         time_in_zone_s: float,
         timestamp: Any = None,
+        unit_id: str = "",
     ) -> bool:
         """Check if a unit detects it is being spoofed (via INS cross-check).
 
@@ -212,7 +213,7 @@ class SpoofingEngine:
                 if zone.active and self._in_zone(receiver_pos, zone):
                     self._event_bus.publish(GPSSpoofingDetectedEvent(
                         timestamp=timestamp, source=ModuleId.EW,
-                        unit_id="", detection_delay_s=time_in_zone_s,
+                        unit_id=unit_id, detection_delay_s=time_in_zone_s,
                     ))
                     break
 

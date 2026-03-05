@@ -69,6 +69,9 @@ class DispersalConfig(BaseModel):
     ridge_deflection_factor: float = 0.5
     min_wind_speed_m_s: float = 0.5
     height_release_m: float = 2.0
+    terrain_channel_offset_m: float = 50.0
+    terrain_channel_height_m: float = 5.0
+    max_puff_age_s: float = 3600.0
 
 
 @dataclass
@@ -247,8 +250,8 @@ class DispersalEngine:
         except (AttributeError, IndexError):
             return concentration
 
-        # Sample cardinal neighbors (50m offset)
-        offset = 50.0
+        # Sample cardinal neighbors
+        offset = self._config.terrain_channel_offset_m
         neighbors = []
         for de, dn in [(offset, 0), (-offset, 0), (0, offset), (0, -offset)]:
             try:
@@ -260,10 +263,11 @@ class DispersalEngine:
 
         avg_neighbor = sum(neighbors) / len(neighbors) if neighbors else elev
 
-        if elev < avg_neighbor - 5.0:
+        threshold = self._config.terrain_channel_height_m
+        if elev < avg_neighbor - threshold:
             # Valley — concentrate
             return concentration * self._config.valley_concentration_factor
-        elif elev > avg_neighbor + 5.0:
+        elif elev > avg_neighbor + threshold:
             # Ridge — deflect
             return concentration * self._config.ridge_deflection_factor
         return concentration
@@ -276,6 +280,13 @@ class DispersalEngine:
     def remove_puff(self, puff_id: str) -> None:
         """Remove a puff by ID."""
         self._puffs = [p for p in self._puffs if p.puff_id != puff_id]
+
+    def cleanup_aged_puffs(self) -> int:
+        """Remove puffs older than ``max_puff_age_s``. Returns count removed."""
+        max_age = self._config.max_puff_age_s
+        before = len(self._puffs)
+        self._puffs = [p for p in self._puffs if p.age_s < max_age]
+        return before - len(self._puffs)
 
     # ── State persistence ────────────────────────────────────────────
 

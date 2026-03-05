@@ -95,10 +95,11 @@ class NavalGunneryEngine:
     def __init__(
         self,
         config: NavalGunneryConfig | None = None,
-        rng: np.random.Generator | None = None,
+        *,
+        rng: np.random.Generator,
     ) -> None:
         self._config = config or NavalGunneryConfig()
-        self._rng = rng or np.random.default_rng(42)
+        self._rng = rng
         self._brackets: dict[tuple[str, str], BracketState] = {}
 
     def get_bracket(self, firer_id: str, target_id: str) -> BracketState:

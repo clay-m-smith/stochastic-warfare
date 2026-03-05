@@ -58,6 +58,12 @@ class EWDecoyConfig(BaseModel):
     towed_decoy_duration_s: float = 600.0
     drfm_false_target_effectiveness: float = 0.7
     drfm_duration_s: float = 300.0
+    decoy_seeker_effectiveness: dict[int, dict[int, float]] = {
+        0: {0: 0.7, 3: 0.3},       # CHAFF: RADAR=0.7, ANTI_RAD=0.3
+        1: {1: 0.8, 2: 0.2},       # FLARE: IR=0.8, EO=0.2
+        2: {0: 0.8},               # TOWED_DECOY: RADAR=0.8
+        3: {0: 0.6, 3: 0.5},       # DRFM: RADAR=0.6, ANTI_RAD=0.5
+    }
 
 
 # ---------------------------------------------------------------------------
@@ -233,26 +239,9 @@ class EWDecoyEngine:
         if not decoy.active or decoy.effectiveness <= 0:
             return 0.0
 
-        # Type-seeker match matrix
-        match_effectiveness = 0.0
-        if decoy.decoy_type == EWDecoyType.CHAFF:
-            if missile_seeker_type == SeekerType.RADAR:
-                match_effectiveness = 0.7
-            elif missile_seeker_type == SeekerType.ANTI_RADIATION:
-                match_effectiveness = 0.3
-        elif decoy.decoy_type == EWDecoyType.FLARE:
-            if missile_seeker_type == SeekerType.IR:
-                match_effectiveness = 0.8
-            elif missile_seeker_type == SeekerType.ELECTRO_OPTICAL:
-                match_effectiveness = 0.2
-        elif decoy.decoy_type == EWDecoyType.TOWED_DECOY:
-            if missile_seeker_type == SeekerType.RADAR:
-                match_effectiveness = 0.8
-        elif decoy.decoy_type == EWDecoyType.DRFM:
-            if missile_seeker_type == SeekerType.RADAR:
-                match_effectiveness = 0.6
-            elif missile_seeker_type == SeekerType.ANTI_RADIATION:
-                match_effectiveness = 0.5
+        # Type-seeker match matrix (configurable via EWDecoyConfig)
+        matrix = self._config.decoy_seeker_effectiveness
+        match_effectiveness = matrix.get(int(decoy.decoy_type), {}).get(int(missile_seeker_type), 0.0)
 
         if match_effectiveness <= 0:
             return 0.0

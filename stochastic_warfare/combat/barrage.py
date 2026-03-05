@@ -130,10 +130,11 @@ class BarrageEngine:
     def __init__(
         self,
         config: BarrageConfig | None = None,
-        rng: np.random.Generator | None = None,
+        *,
+        rng: np.random.Generator,
     ) -> None:
         self._config = config or BarrageConfig()
-        self._rng = rng or np.random.default_rng(42)
+        self._rng = rng
         self._barrages: dict[str, BarrageZone] = {}
 
     def create_barrage(

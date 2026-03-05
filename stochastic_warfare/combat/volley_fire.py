@@ -103,10 +103,11 @@ class VolleyFireEngine:
     def __init__(
         self,
         config: VolleyFireConfig | None = None,
-        rng: np.random.Generator | None = None,
+        *,
+        rng: np.random.Generator,
     ) -> None:
         self._config = config or VolleyFireConfig()
-        self._rng = rng or np.random.default_rng(42)
+        self._rng = rng
         self._current_smoke: float = 0.0
 
     def _interpolate_phit(self, range_m: float) -> float:

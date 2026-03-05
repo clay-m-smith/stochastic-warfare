@@ -226,7 +226,7 @@ class TestNapoleonicCombatMechanics:
     def test_courier_hour_scale_delays(self) -> None:
         """10km courier should take ~30 min."""
         from stochastic_warfare.c2.courier import CourierEngine, CourierType
-        eng = CourierEngine()
+        eng = CourierEngine(rng=np.random.default_rng(0))
         time = eng.compute_travel_time(10000.0, CourierType.MOUNTED_ADC, "open")
         assert 1500.0 < time < 2500.0  # ~33 min
 

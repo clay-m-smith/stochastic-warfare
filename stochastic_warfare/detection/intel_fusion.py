@@ -92,10 +92,11 @@ class IntelFusionEngine:
     def __init__(
         self,
         state_estimator: StateEstimator | None = None,
-        rng: np.random.Generator | None = None,
+        *,
+        rng: np.random.Generator,
     ) -> None:
-        self._estimator = state_estimator or StateEstimator()
-        self._rng = rng or np.random.default_rng(0)
+        self._estimator = state_estimator or StateEstimator(rng=rng)
+        self._rng = rng
         self._tracks: dict[str, dict[str, Track]] = {}  # side → {track_id: Track}
         self._satellite_passes: dict[str, list[SatellitePass]] = {}  # side → passes
         self._track_counter: int = 0

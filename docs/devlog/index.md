@@ -34,7 +34,7 @@ Rolling record of implementation decisions, changes, and lessons learned across 
 | 24 | Unconventional & Prohibited Warfare | **Complete** | [phase-24.md](phase-24.md) |
 | | | | |
 | 25 | Engine Wiring & Integration Sprint | **Complete** | [phase-25.md](phase-25.md) |
-| 26 | Core Polish & Configuration | Planned | — |
+| 26 | Core Polish & Configuration | **Complete** | [phase-26.md](phase-26.md) |
 | 27 | Combat System Completeness | Planned | — |
 | 28 | Modern Era Data Package | Planned | — |
 | 29 | Historical Era Data Expansion | Planned | — |
@@ -121,8 +121,8 @@ Known limitations and deferred improvements logged during implementation. Review
 | 10 | Campaign metrics proxy territory control via survival fraction not spatial | [phase-10.md — Known Limitations](phase-10.md#known-limitations--post-mvp-refinements) |
 | 11 | ~~Fuel gating not wired to stockpile in battle.py~~ *(resolved Phase 12b)* | [phase-11.md — Known Limitations](phase-11.md#known-limitations) |
 | 11 | Wave assignments are manual (no AI auto-assignment) | [phase-11.md — Known Limitations](phase-11.md#known-limitations) |
-| 11 | Integration gain caps at 4 scans | [phase-11.md — Known Limitations](phase-11.md#known-limitations) |
-| 11 | Armor type YAML data missing | [phase-11.md — Known Limitations](phase-11.md#known-limitations) |
+| 11 | ~~Integration gain caps at 4 scans~~ *(resolved Phase 26c — configurable max_integration_scans)* | [phase-11.md — Known Limitations](phase-11.md#known-limitations) |
+| 11 | ~~Armor type YAML data missing~~ *(resolved Phase 26c — armor_type field + 6 YAML files)* | [phase-11.md — Known Limitations](phase-11.md#known-limitations) |
 | 16 | ~~EW engines not yet wired into simulation engine tick loop~~ *(resolved Phase 25c)* | [phase-16.md — Known Limitations](phase-16.md#known-limitations--future-work) |
 | 16 | No DRFM detailed waveform modeling (simplified effectiveness parameter) | [phase-16.md — Known Limitations](phase-16.md#known-limitations--future-work) |
 | 16 | TDOA geolocation uses simplified centroid-shift algorithm | [phase-16.md — Known Limitations](phase-16.md#known-limitations--future-work) |
@@ -138,9 +138,9 @@ Known limitations and deferred improvements logged during implementation. Review
 | 16/17 | ~~ScenarioLoader doesn't auto-wire EWEngine or SpaceEngine from YAML~~ *(resolved Phase 25a)* | [phase-17.md — Postmortem](phase-17.md#postmortem) |
 | 16/17/18 | ~~ScenarioLoader doesn't auto-wire CBRNEngine from YAML~~ *(resolved Phase 25a)* | [phase-18.md — Postmortem](phase-18.md#postmortem) |
 | 18 | ~~`mopp_speed_factor` parameter exists in movement engine but never passed from battle loop~~ *(resolved Phase 25c)* | [phase-18.md — Postmortem](phase-18.md#postmortem) |
-| 18 | Hardcoded terrain channeling thresholds in dispersal (5m valley/ridge, 50m offset) | [phase-18.md — Postmortem](phase-18.md#postmortem) |
-| 18 | Hardcoded fallback weather defaults in CBRN engine (wind=2.0, temp=20°C, cloud=0.5) | [phase-18.md — Postmortem](phase-18.md#postmortem) |
-| 18 | No automatic puff aging/cleanup mechanism in dispersal engine | [phase-18.md — Postmortem](phase-18.md#postmortem) |
+| 18 | ~~Hardcoded terrain channeling thresholds in dispersal (5m valley/ridge, 50m offset)~~ *(resolved Phase 26b — DispersalConfig fields)* | [phase-18.md — Postmortem](phase-18.md#postmortem) |
+| 18 | ~~Hardcoded fallback weather defaults in CBRN engine (wind=2.0, temp=20°C, cloud=0.5)~~ *(resolved Phase 26b — CBRNConfig fields)* | [phase-18.md — Postmortem](phase-18.md#postmortem) |
+| 18 | ~~No automatic puff aging/cleanup mechanism in dispersal engine~~ *(resolved Phase 26c — cleanup_aged_puffs() + max_puff_age_s)* | [phase-18.md — Postmortem](phase-18.md#postmortem) |
 | 19 | ~~CommanderEngine not wired into SimulationContext~~ *(resolved Phase 25d)* | [phase-19.md — Known Limitations](phase-19.md#known-limitations) |
 | 19 | ~~battle.py passes assessment=None to decide()~~ *(resolved Phase 25b)* | [phase-19.md — Known Limitations](phase-19.md#known-limitations) |
 | 16/17/18/19 | ~~ScenarioLoader doesn't auto-wire SchoolRegistry from YAML~~ *(resolved Phase 25a)* | [phase-19.md — Known Limitations](phase-19.md#known-limitations) |
@@ -154,13 +154,13 @@ Known limitations and deferred improvements logged during implementation. Review
 | 21 | Gas warfare engine does not model gas mask don time delay (units gain instant protection) | [phase-21.md — Known Limitations](phase-21.md#known-limitations) |
 | 21 | Trench system has no wire-cutting mechanic (wire is a query attribute only, not a movement blocker) | [phase-21.md — Known Limitations](phase-21.md#known-limitations) |
 | 16/17/18/19/20/21 | ~~ScenarioLoader doesn't auto-wire WW1 engines from YAML~~ *(resolved Phase 25a)* | [phase-21.md — Known Limitations](phase-21.md#known-limitations) |
-| 21 | Gas warfare wind direction tolerance (60°) hardcoded — should be configurable in GasWarfareConfig | [phase-21.md — Postmortem](phase-21.md#postmortem) |
-| 21 | Barrage/gas engines use hardcoded fallback RNG seed (42) when no RNG injected | [phase-21.md — Postmortem](phase-21.md#postmortem) |
+| 21 | ~~Gas warfare wind direction tolerance (60°) hardcoded — should be configurable in GasWarfareConfig~~ *(resolved Phase 26b — GasWarfareConfig.max_wind_angle_deg)* | [phase-21.md — Postmortem](phase-21.md#postmortem) |
+| 21 | ~~Barrage/gas engines use hardcoded fallback RNG seed (42) when no RNG injected~~ *(resolved Phase 26a — rng required on all 23 engines)* | [phase-21.md — Postmortem](phase-21.md#postmortem) |
 | 16/17/18/19/20/21/22 | ~~ScenarioLoader doesn't auto-wire Napoleonic engines from YAML~~ *(resolved Phase 25a)* | [phase-22.md — Known Limitations](phase-22.md#known-limitations) |
 | 22 | Cavalry charge ignores terrain effects (speed not modified by slope or obstacles) | [phase-22.md — Known Limitations](phase-22.md#known-limitations) |
 | 22 | No frontage/depth in melee — simplified to force ratio × formation modifier | [phase-22.md — Known Limitations](phase-22.md#known-limitations) |
-| 22 | Foraging ambush casualty rate hardcoded at 10% — should be configurable in ForagingConfig | [phase-22.md — Known Limitations](phase-22.md#known-limitations) |
-| 22 | Volley/melee/cavalry/courier/foraging engines use hardcoded fallback RNG seed (42) when no RNG injected | [phase-22.md — Known Limitations](phase-22.md#known-limitations) |
+| 22 | ~~Foraging ambush casualty rate hardcoded at 10% — should be configurable in ForagingConfig~~ *(resolved Phase 26b — ForagingConfig.ambush_casualty_rate)* | [phase-22.md — Known Limitations](phase-22.md#known-limitations) |
+| 22 | ~~Volley/melee/cavalry/courier/foraging engines use hardcoded fallback RNG seed (42) when no RNG injected~~ *(resolved Phase 26a — rng required on all 23 engines)* | [phase-22.md — Known Limitations](phase-22.md#known-limitations) |
 | 16/17/18/19/20/21/22/23 | ~~ScenarioLoader doesn't auto-wire Ancient/Medieval engines from YAML~~ *(resolved Phase 25a)* | [phase-23.md — Postmortem](phase-23.md#postmortem) |
 
 ## Conventions

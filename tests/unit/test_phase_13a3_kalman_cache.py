@@ -33,7 +33,7 @@ def _make_track(track_id: str = "t1") -> Track:
 class TestKalmanFQCaching:
     def test_cached_result_identical_to_uncached(self):
         """Cached prediction must produce identical result to uncached."""
-        est = StateEstimator(config=EstimationConfig())
+        est = StateEstimator(rng=np.random.default_rng(0), config=EstimationConfig())
         # First call: computes F, Q and caches
         t1 = _make_track("t1")
         est.predict(t1, 5.0)
@@ -48,7 +48,7 @@ class TestKalmanFQCaching:
 
     def test_cache_invalidation_on_dt_change(self):
         """Changing dt must recompute F and Q."""
-        est = StateEstimator(config=EstimationConfig())
+        est = StateEstimator(rng=np.random.default_rng(0), config=EstimationConfig())
         t1 = _make_track("t1")
         est.predict(t1, 5.0)
         assert est._cached_dt == 5.0
@@ -62,7 +62,7 @@ class TestKalmanFQCaching:
 
     def test_multiple_dt_values(self):
         """Switching between multiple dt values produces correct results."""
-        est = StateEstimator(config=EstimationConfig())
+        est = StateEstimator(rng=np.random.default_rng(0), config=EstimationConfig())
         dts = [5.0, 10.0, 5.0, 1.0, 5.0]
         results = []
         for dt in dts:
@@ -77,14 +77,14 @@ class TestKalmanFQCaching:
 
     def test_cache_initial_state_none(self):
         """Cache starts as None."""
-        est = StateEstimator(config=EstimationConfig())
+        est = StateEstimator(rng=np.random.default_rng(0), config=EstimationConfig())
         assert est._cached_dt is None
         assert est._cached_F is None
         assert est._cached_Q is None
 
     def test_cache_populated_after_first_predict(self):
         """Cache is populated after first predict call."""
-        est = StateEstimator(config=EstimationConfig())
+        est = StateEstimator(rng=np.random.default_rng(0), config=EstimationConfig())
         t = _make_track()
         est.predict(t, 5.0)
         assert est._cached_dt == 5.0
@@ -95,7 +95,7 @@ class TestKalmanFQCaching:
 
     def test_cache_uses_same_object(self):
         """When dt is unchanged, the same array objects are reused."""
-        est = StateEstimator(config=EstimationConfig())
+        est = StateEstimator(rng=np.random.default_rng(0), config=EstimationConfig())
         t1 = _make_track()
         est.predict(t1, 5.0)
         F_ref = est._cached_F

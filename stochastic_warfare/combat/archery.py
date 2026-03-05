@@ -145,10 +145,11 @@ class ArcheryEngine:
     def __init__(
         self,
         config: ArcheryConfig | None = None,
-        rng: np.random.Generator | None = None,
+        *,
+        rng: np.random.Generator,
     ) -> None:
         self._config = config or ArcheryConfig()
-        self._rng = rng or np.random.default_rng(42)
+        self._rng = rng
         self._ammo: dict[str, int] = {}
 
     def _get_phit_table(self, missile_type: MissileType) -> dict[int, float]:

@@ -99,10 +99,11 @@ class CourierEngine:
     def __init__(
         self,
         config: CourierConfig | None = None,
-        rng: np.random.Generator | None = None,
+        *,
+        rng: np.random.Generator,
     ) -> None:
         self._config = config or CourierConfig()
-        self._rng = rng or np.random.default_rng(42)
+        self._rng = rng
         self._messages: dict[str, CourierMessage] = {}
         self._active_couriers_by_hq: dict[str, int] = {}
 

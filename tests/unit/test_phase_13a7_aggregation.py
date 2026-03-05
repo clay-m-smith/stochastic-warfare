@@ -16,6 +16,10 @@ from stochastic_warfare.simulation.aggregation import (
 )
 
 
+def _rng() -> np.random.Generator:
+    return np.random.default_rng(0)
+
+
 def _make_unit(entity_id: str, side: str = "blue", pos: Position = Position(0, 0),
                unit_type: str = "infantry") -> Unit:
     return Unit(entity_id=entity_id, position=pos, side=side, unit_type=unit_type)
@@ -34,7 +38,7 @@ def _make_ctx(units_by_side=None, morale_states=None):
 
 class TestUnitSnapshot:
     def test_snapshot_captures_unit_state(self):
-        engine = AggregationEngine()
+        engine = AggregationEngine(rng=_rng())
         unit = _make_unit("u1", "blue", Position(100, 200))
         ctx = _make_ctx({"blue": [unit]})
         snap = engine.snapshot_unit(unit, ctx)
@@ -42,14 +46,14 @@ class TestUnitSnapshot:
         assert snap.original_side == "blue"
 
     def test_snapshot_captures_morale(self):
-        engine = AggregationEngine()
+        engine = AggregationEngine(rng=_rng())
         unit = _make_unit("u1")
         ctx = _make_ctx({"blue": [unit]}, {"u1": MoraleState.SHAKEN})
         snap = engine.snapshot_unit(unit, ctx)
         assert snap.morale_state == int(MoraleState.SHAKEN)
 
     def test_snapshot_default_morale_steady(self):
-        engine = AggregationEngine()
+        engine = AggregationEngine(rng=_rng())
         unit = _make_unit("u1")
         ctx = _make_ctx({"blue": [unit]})
         snap = engine.snapshot_unit(unit, ctx)
@@ -59,7 +63,7 @@ class TestUnitSnapshot:
 class TestAggregation:
     def test_aggregate_basic(self):
         config = AggregationConfig(enable_aggregation=True, min_units_to_aggregate=2)
-        engine = AggregationEngine(config=config)
+        engine = AggregationEngine(config=config, rng=_rng())
         units = [_make_unit(f"u{i}", "blue", Position(100 * i, 0)) for i in range(4)]
         ctx = _make_ctx({"blue": units})
         agg = engine.aggregate([u.entity_id for u in units], ctx)
@@ -69,7 +73,7 @@ class TestAggregation:
 
     def test_aggregate_removes_units_from_context(self):
         config = AggregationConfig(enable_aggregation=True, min_units_to_aggregate=2)
-        engine = AggregationEngine(config=config)
+        engine = AggregationEngine(config=config, rng=_rng())
         units = [_make_unit(f"u{i}", "blue") for i in range(4)]
         ctx = _make_ctx({"blue": list(units)})
         engine.aggregate([u.entity_id for u in units], ctx)
@@ -80,7 +84,7 @@ class TestAggregation:
 
     def test_aggregate_proxy_in_units_by_side(self):
         config = AggregationConfig(enable_aggregation=True, min_units_to_aggregate=2)
-        engine = AggregationEngine(config=config)
+        engine = AggregationEngine(config=config, rng=_rng())
         units = [_make_unit(f"u{i}", "blue") for i in range(4)]
         ctx = _make_ctx({"blue": list(units)})
         agg = engine.aggregate([u.entity_id for u in units], ctx)
@@ -90,7 +94,7 @@ class TestAggregation:
 
     def test_aggregate_centroid_position(self):
         config = AggregationConfig(enable_aggregation=True, min_units_to_aggregate=2)
-        engine = AggregationEngine(config=config)
+        engine = AggregationEngine(config=config, rng=_rng())
         units = [
             _make_unit("u0", "blue", Position(0, 0)),
             _make_unit("u1", "blue", Position(1000, 0)),
@@ -101,7 +105,7 @@ class TestAggregation:
 
     def test_aggregate_worst_morale(self):
         config = AggregationConfig(enable_aggregation=True, min_units_to_aggregate=2)
-        engine = AggregationEngine(config=config)
+        engine = AggregationEngine(config=config, rng=_rng())
         units = [_make_unit("u0", "blue"), _make_unit("u1", "blue")]
         morale = {"u0": MoraleState.STEADY, "u1": MoraleState.BROKEN}
         ctx = _make_ctx({"blue": list(units)}, morale)
@@ -110,7 +114,7 @@ class TestAggregation:
 
     def test_aggregate_mixed_types(self):
         config = AggregationConfig(enable_aggregation=True, min_units_to_aggregate=2)
-        engine = AggregationEngine(config=config)
+        engine = AggregationEngine(config=config, rng=_rng())
         units = [
             _make_unit("u0", "blue", unit_type="infantry"),
             _make_unit("u1", "blue", unit_type="armor"),
@@ -121,7 +125,7 @@ class TestAggregation:
 
     def test_aggregate_same_type(self):
         config = AggregationConfig(enable_aggregation=True, min_units_to_aggregate=2)
-        engine = AggregationEngine(config=config)
+        engine = AggregationEngine(config=config, rng=_rng())
         units = [_make_unit(f"u{i}", "blue", unit_type="infantry") for i in range(3)]
         ctx = _make_ctx({"blue": list(units)})
         agg = engine.aggregate([u.entity_id for u in units], ctx)
@@ -129,7 +133,7 @@ class TestAggregation:
 
     def test_aggregate_too_few_units(self):
         config = AggregationConfig(enable_aggregation=True, min_units_to_aggregate=5)
-        engine = AggregationEngine(config=config)
+        engine = AggregationEngine(config=config, rng=_rng())
         units = [_make_unit(f"u{i}", "blue") for i in range(3)]
         ctx = _make_ctx({"blue": list(units)})
         agg = engine.aggregate([u.entity_id for u in units], ctx)
@@ -137,7 +141,7 @@ class TestAggregation:
 
     def test_aggregate_different_sides_rejected(self):
         config = AggregationConfig(enable_aggregation=True, min_units_to_aggregate=2)
-        engine = AggregationEngine(config=config)
+        engine = AggregationEngine(config=config, rng=_rng())
         units = [_make_unit("u0", "blue"), _make_unit("u1", "red")]
         ctx = _make_ctx({"blue": [units[0]], "red": [units[1]]})
         agg = engine.aggregate(["u0", "u1"], ctx)
@@ -147,7 +151,7 @@ class TestAggregation:
 class TestDisaggregation:
     def test_disaggregate_restores_units(self):
         config = AggregationConfig(enable_aggregation=True, min_units_to_aggregate=2)
-        engine = AggregationEngine(config=config)
+        engine = AggregationEngine(config=config, rng=_rng())
         units = [_make_unit(f"u{i}", "blue", Position(i * 100, 0)) for i in range(4)]
         ctx = _make_ctx({"blue": list(units)})
         agg = engine.aggregate([u.entity_id for u in units], ctx)
@@ -158,7 +162,7 @@ class TestDisaggregation:
 
     def test_disaggregate_removes_proxy(self):
         config = AggregationConfig(enable_aggregation=True, min_units_to_aggregate=2)
-        engine = AggregationEngine(config=config)
+        engine = AggregationEngine(config=config, rng=_rng())
         units = [_make_unit(f"u{i}", "blue") for i in range(4)]
         ctx = _make_ctx({"blue": list(units)})
         agg = engine.aggregate([u.entity_id for u in units], ctx)
@@ -170,7 +174,7 @@ class TestDisaggregation:
 
     def test_disaggregate_restores_morale(self):
         config = AggregationConfig(enable_aggregation=True, min_units_to_aggregate=2)
-        engine = AggregationEngine(config=config)
+        engine = AggregationEngine(config=config, rng=_rng())
         units = [_make_unit("u0", "blue"), _make_unit("u1", "blue")]
         morale = {"u0": MoraleState.STEADY, "u1": MoraleState.SHAKEN}
         ctx = _make_ctx({"blue": list(units)}, morale)
@@ -181,14 +185,14 @@ class TestDisaggregation:
         assert ctx.morale_states["u1"] == MoraleState.SHAKEN
 
     def test_disaggregate_unknown_id(self):
-        engine = AggregationEngine()
+        engine = AggregationEngine(rng=_rng())
         ctx = _make_ctx()
         result = engine.disaggregate("nonexistent", ctx)
         assert result == []
 
     def test_roundtrip_preserves_unit_state(self):
         config = AggregationConfig(enable_aggregation=True, min_units_to_aggregate=2)
-        engine = AggregationEngine(config=config)
+        engine = AggregationEngine(config=config, rng=_rng())
         units = [
             _make_unit("u0", "blue", Position(100, 200), "infantry"),
             _make_unit("u1", "blue", Position(300, 400), "infantry"),
@@ -212,7 +216,7 @@ class TestDisaggregation:
 class TestCandidateDetection:
     def test_no_candidates_when_disabled(self):
         config = AggregationConfig(enable_aggregation=False)
-        engine = AggregationEngine(config=config)
+        engine = AggregationEngine(config=config, rng=_rng())
         units = [_make_unit(f"u{i}", "blue") for i in range(5)]
         ctx = _make_ctx({"blue": units})
         candidates = engine.check_aggregation_candidates(ctx)
@@ -223,7 +227,7 @@ class TestCandidateDetection:
             enable_aggregation=True, min_units_to_aggregate=3,
             aggregation_distance_m=1000.0,
         )
-        engine = AggregationEngine(config=config)
+        engine = AggregationEngine(config=config, rng=_rng())
         units = [_make_unit(f"u{i}", "blue", unit_type="infantry") for i in range(5)]
         ctx = _make_ctx({"blue": units})
         candidates = engine.check_aggregation_candidates(ctx)
@@ -235,7 +239,7 @@ class TestCandidateDetection:
             enable_aggregation=True, min_units_to_aggregate=2,
             aggregation_distance_m=10_000.0,
         )
-        engine = AggregationEngine(config=config)
+        engine = AggregationEngine(config=config, rng=_rng())
         # Units near a battle
         units = [_make_unit(f"u{i}", "blue", Position(100, 0)) for i in range(4)]
         ctx = _make_ctx({"blue": units})
@@ -248,7 +252,7 @@ class TestCandidateDetection:
             enable_aggregation=True, min_units_to_aggregate=2,
             aggregation_distance_m=1000.0,
         )
-        engine = AggregationEngine(config=config)
+        engine = AggregationEngine(config=config, rng=_rng())
         units = [_make_unit(f"u{i}", "blue", Position(50000, 0)) for i in range(4)]
         ctx = _make_ctx({"blue": units})
         battle_pos = [Position(0, 0)]
@@ -259,7 +263,7 @@ class TestCandidateDetection:
 class TestDisaggregationTriggers:
     def test_no_triggers_when_disabled(self):
         config = AggregationConfig(enable_aggregation=False)
-        engine = AggregationEngine(config=config)
+        engine = AggregationEngine(config=config, rng=_rng())
         ctx = _make_ctx()
         triggers = engine.check_disaggregation_triggers(ctx)
         assert triggers == []
@@ -269,7 +273,7 @@ class TestDisaggregationTriggers:
             enable_aggregation=True, min_units_to_aggregate=2,
             disaggregate_distance_m=10_000.0,
         )
-        engine = AggregationEngine(config=config)
+        engine = AggregationEngine(config=config, rng=_rng())
         units = [_make_unit(f"u{i}", "blue", Position(5000, 0)) for i in range(4)]
         ctx = _make_ctx({"blue": list(units)})
         agg = engine.aggregate([u.entity_id for u in units], ctx)
@@ -283,7 +287,7 @@ class TestDisaggregationTriggers:
             enable_aggregation=True, min_units_to_aggregate=2,
             disaggregate_distance_m=1000.0,
         )
-        engine = AggregationEngine(config=config)
+        engine = AggregationEngine(config=config, rng=_rng())
         units = [_make_unit(f"u{i}", "blue", Position(50000, 0)) for i in range(4)]
         ctx = _make_ctx({"blue": list(units)})
         agg = engine.aggregate([u.entity_id for u in units], ctx)
@@ -296,13 +300,13 @@ class TestDisaggregationTriggers:
 class TestStatePersistence:
     def test_get_set_state_roundtrip(self):
         config = AggregationConfig(enable_aggregation=True, min_units_to_aggregate=2)
-        engine = AggregationEngine(config=config)
+        engine = AggregationEngine(config=config, rng=_rng())
         units = [_make_unit(f"u{i}", "blue") for i in range(4)]
         ctx = _make_ctx({"blue": list(units)})
         engine.aggregate([u.entity_id for u in units], ctx)
 
         state = engine.get_state()
-        engine2 = AggregationEngine(config=config)
+        engine2 = AggregationEngine(config=config, rng=_rng())
         engine2.set_state(state)
 
         assert len(engine2.active_aggregates) == 1
@@ -310,10 +314,10 @@ class TestStatePersistence:
         assert len(agg.constituent_snapshots) == 4
 
     def test_empty_state(self):
-        engine = AggregationEngine()
+        engine = AggregationEngine(rng=_rng())
         state = engine.get_state()
         assert state["aggregates"] == {}
-        engine2 = AggregationEngine()
+        engine2 = AggregationEngine(rng=_rng())
         engine2.set_state(state)
         assert len(engine2.active_aggregates) == 0
 
@@ -322,7 +326,7 @@ class TestStatePersistence:
         config = AggregationConfig(enable_aggregation=True, min_units_to_aggregate=2)
         ids = []
         for _ in range(2):
-            engine = AggregationEngine(config=config)
+            engine = AggregationEngine(config=config, rng=_rng())
             units = [_make_unit(f"u{i}", "blue") for i in range(4)]
             ctx = _make_ctx({"blue": list(units)})
             agg = engine.aggregate([u.entity_id for u in units], ctx)

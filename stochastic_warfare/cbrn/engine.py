@@ -38,6 +38,9 @@ class CBRNConfig(BaseModel):
     enable_cbrn: bool = False
     update_interval_s: float = 10.0
     auto_mopp_response: bool = True
+    fallback_wind_speed_mps: float = 2.0
+    fallback_wind_direction_rad: float = 0.0
+    fallback_cloud_cover: float = 0.5
 
 
 # ---------------------------------------------------------------------------
@@ -159,15 +162,19 @@ class CBRNEngine:
         if not self._config.enable_cbrn:
             return
 
-        wind_speed = 2.0
-        wind_direction = 0.0
+        wind_speed = self._config.fallback_wind_speed_mps
+        wind_direction = self._config.fallback_wind_direction_rad
         if weather_conditions is not None:
-            wind_speed = getattr(weather_conditions, "wind_speed_m_s", 2.0)
-            wind_direction = getattr(weather_conditions, "wind_direction_rad", 0.0)
+            wind_speed = getattr(weather_conditions, "wind_speed_m_s", self._config.fallback_wind_speed_mps)
+            wind_direction = getattr(weather_conditions, "wind_direction_rad", self._config.fallback_wind_direction_rad)
+
+        cloud_cover = self._config.fallback_cloud_cover
+        if weather_conditions is not None:
+            cloud_cover = getattr(weather_conditions, "cloud_cover", self._config.fallback_cloud_cover)
 
         stability = self._dispersal.classify_stability(
             wind_speed,
-            getattr(weather_conditions, "cloud_cover", 0.5) if weather_conditions else 0.5,
+            cloud_cover,
             getattr(time_of_day, "is_daytime", True) if time_of_day else True,
         )
 
@@ -241,6 +248,9 @@ class CBRNEngine:
 
         # 4. Decon operations
         self._decon.update(sim_time_s, timestamp)
+
+        # 5. Puff cleanup — remove aged puffs
+        self._dispersal.cleanup_aged_puffs()
 
     # ── MOPP effects query ────────────────────────────────────────────
 

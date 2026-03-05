@@ -90,10 +90,11 @@ class NavalOarEngine:
     def __init__(
         self,
         config: GalleyConfig | None = None,
-        rng: np.random.Generator | None = None,
+        *,
+        rng: np.random.Generator,
     ) -> None:
         self._config = config or GalleyConfig()
-        self._rng = rng or np.random.default_rng(42)
+        self._rng = rng
         self._galleys: dict[str, GalleyState] = {}
         self._boarding: dict[str, tuple[str, float]] = {}  # vessel_id -> (target_id, remaining_s)
 

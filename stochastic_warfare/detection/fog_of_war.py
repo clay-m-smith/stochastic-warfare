@@ -131,15 +131,16 @@ class FogOfWarManager:
         state_estimator: StateEstimator | None = None,
         intel_fusion: IntelFusionEngine | None = None,
         deception_engine: DeceptionEngine | None = None,
-        rng: np.random.Generator | None = None,
+        *,
+        rng: np.random.Generator,
         data_link_config: DataLinkConfig | None = None,
     ) -> None:
-        self._detection = detection_engine or DetectionEngine()
+        self._detection = detection_engine or DetectionEngine(rng=rng)
         self._identification = identification_engine
-        self._estimator = state_estimator or StateEstimator()
-        self._intel_fusion = intel_fusion or IntelFusionEngine(self._estimator)
-        self._deception = deception_engine or DeceptionEngine()
-        self._rng = rng or np.random.default_rng(0)
+        self._estimator = state_estimator or StateEstimator(rng=rng)
+        self._intel_fusion = intel_fusion or IntelFusionEngine(rng=rng)
+        self._deception = deception_engine or DeceptionEngine(rng=rng)
+        self._rng = rng
         self._world_views: dict[str, SideWorldView] = {}
         # 12a-7: COP sharing
         self._dl_config = data_link_config or DataLinkConfig()

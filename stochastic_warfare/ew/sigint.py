@@ -92,6 +92,13 @@ class SIGINTReport:
 # ---------------------------------------------------------------------------
 
 
+class SIGINTConfig(BaseModel):
+    """Tunable parameters for SIGINT traffic analysis."""
+
+    activity_sigmoid_center: float = 10.0
+    activity_sigmoid_scale: float = 10.0
+
+
 class SIGINTEngine:
     """SIGINT collection engine.
 
@@ -101,15 +108,19 @@ class SIGINTEngine:
         For publishing SIGINT events.
     rng : np.random.Generator
         PRNG stream.
+    config : SIGINTConfig | None
+        Optional tuning parameters.
     """
 
     def __init__(
         self,
         event_bus: EventBus,
         rng: np.random.Generator,
+        config: SIGINTConfig | None = None,
     ) -> None:
         self._event_bus = event_bus
         self._rng = rng
+        self._sigint_config = config or SIGINTConfig()
         self._collectors: dict[str, SIGINTCollector] = {}
         self._intercept_history: dict[str, list[float]] = {}  # emitter_id → timestamps
 
@@ -322,7 +333,9 @@ class SIGINTEngine:
         rate = len(intercept_history) / duration_h
 
         # Activity level: sigmoid of rate (10 msgs/hr → 0.5, 100 → ~1.0)
-        activity = 1.0 / (1.0 + math.exp(-(rate - 10.0) / 10.0))
+        center = self._sigint_config.activity_sigmoid_center
+        scale = self._sigint_config.activity_sigmoid_scale
+        activity = 1.0 / (1.0 + math.exp(-(rate - center) / scale))
 
         # Trend: compare first half vs second half rates
         mid = len(sorted_times) // 2

@@ -239,7 +239,7 @@ class TestInformationDecay:
 
 class TestIntelFusionIntegration:
     def test_multi_source_fusion(self) -> None:
-        est = StateEstimator()
+        est = StateEstimator(rng=np.random.default_rng(42))
         engine = IntelFusionEngine(state_estimator=est, rng=np.random.default_rng(42))
         tid = engine.submit_report("blue", IntelReport(
             source=IntelSource.SENSOR, timestamp=0.0, reliability=0.8,
@@ -284,8 +284,9 @@ class TestFogOfWarAsymmetry:
         fow = FogOfWarManager(
             detection_engine=DetectionEngine(rng=np.random.default_rng(42)),
             identification_engine=IdentificationEngine(np.random.default_rng(43)),
-            state_estimator=StateEstimator(),
-            intel_fusion=IntelFusionEngine(StateEstimator()),
+            state_estimator=StateEstimator(rng=np.random.default_rng(44)),
+            intel_fusion=IntelFusionEngine(rng=np.random.default_rng(45)),
+            rng=np.random.default_rng(46),
         )
         blue_wv = fow.get_world_view("blue")
         red_wv = fow.get_world_view("red")

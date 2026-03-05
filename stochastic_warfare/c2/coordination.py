@@ -147,12 +147,12 @@ class CoordinationEngine:
     def __init__(
         self,
         event_bus: EventBus,
-        rng: np.random.Generator | None = None,
+        rng: np.random.Generator,
         los_engine: Any | None = None,
         jiptl_config: JIPTLConfig | None = None,
     ) -> None:
         self._event_bus = event_bus
-        self._rng = rng or np.random.default_rng(0)
+        self._rng = rng
         self._los_engine = los_engine
         self._jiptl_config = jiptl_config or JIPTLConfig()
         self._measures: dict[str, CoordinationMeasure] = {}

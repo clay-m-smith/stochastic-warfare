@@ -233,13 +233,13 @@ class TestGasWarfareIntegration:
             GasWarfareEngine,
             GasMaskType,
         )
-        eng = GasWarfareEngine()
+        eng = GasWarfareEngine(rng=np.random.default_rng(0))
         mopp = eng.set_unit_gas_mask("inf_1", GasMaskType.SMALL_BOX_RESPIRATOR)
         assert mopp == 3  # Good protection
 
     def test_no_mask_is_vulnerable(self) -> None:
         from stochastic_warfare.combat.gas_warfare import GasWarfareEngine
-        eng = GasWarfareEngine()
+        eng = GasWarfareEngine(rng=np.random.default_rng(0))
         mopp = eng.get_unit_mopp_level("unprotected_unit")
         assert mopp == 0  # No protection
 

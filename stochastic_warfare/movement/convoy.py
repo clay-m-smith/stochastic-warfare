@@ -98,10 +98,11 @@ class ConvoyEngine:
     def __init__(
         self,
         config: ConvoyConfig | None = None,
-        rng: np.random.Generator | None = None,
+        *,
+        rng: np.random.Generator,
     ) -> None:
         self._config = config or ConvoyConfig()
-        self._rng = rng or np.random.default_rng(42)
+        self._rng = rng
         self._convoys: dict[str, ConvoyState] = {}
 
     def form_convoy(

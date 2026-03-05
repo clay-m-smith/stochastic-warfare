@@ -341,7 +341,7 @@ class TestFireSupportCoordination:
 
     def test_coordination_scenario(self) -> None:
         bus = EventBus()
-        coord = CoordinationEngine(bus)
+        coord = CoordinationEngine(bus, rng=np.random.default_rng(0))
         events: list[Event] = []
         bus.subscribe(Event, events.append)
 

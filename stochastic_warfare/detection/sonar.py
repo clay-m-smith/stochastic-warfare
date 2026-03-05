@@ -90,11 +90,12 @@ class SonarEngine:
         self,
         acoustics_engine: Any = None,
         conditions_engine: Any = None,
-        rng: np.random.Generator | None = None,
+        *,
+        rng: np.random.Generator,
     ) -> None:
         self._acoustics = acoustics_engine
         self._conditions = conditions_engine
-        self._rng = rng or np.random.default_rng(0)
+        self._rng = rng
 
     # ------------------------------------------------------------------
     # Passive sonar

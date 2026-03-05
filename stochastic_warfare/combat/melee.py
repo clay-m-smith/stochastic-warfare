@@ -111,10 +111,11 @@ class MeleeEngine:
     def __init__(
         self,
         config: MeleeConfig | None = None,
-        rng: np.random.Generator | None = None,
+        *,
+        rng: np.random.Generator,
     ) -> None:
         self._config = config or MeleeConfig()
-        self._rng = rng or np.random.default_rng(42)
+        self._rng = rng
 
     def check_pre_contact_morale(
         self,

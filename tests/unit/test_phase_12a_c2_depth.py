@@ -363,7 +363,7 @@ class TestNetworkDegradation:
 class TestPolylineFSCL:
     def _make_engine(self):
         from stochastic_warfare.c2.coordination import CoordinationEngine
-        return CoordinationEngine(EventBus())
+        return CoordinationEngine(EventBus(), rng=np.random.default_rng(0))
 
     def test_classic_fscl_still_works(self) -> None:
         eng = self._make_engine()
@@ -395,7 +395,7 @@ class TestPolylineFSCL:
 
     def test_missile_fire_type_blocked_by_fscl(self) -> None:
         from stochastic_warfare.c2.coordination import CoordinationEngine, FireType
-        eng = CoordinationEngine(EventBus())
+        eng = CoordinationEngine(EventBus(), rng=np.random.default_rng(0))
         eng.set_fscl(Position(0, 5000, 0), Position(10000, 5000, 0))
         cleared, reason = eng.check_fire_clearance(
             "shooter1", Position(5000, 4000, 0), FireType.MISSILE,
@@ -470,7 +470,7 @@ class TestJTAC:
 class TestJIPTL:
     def _make_engine(self):
         from stochastic_warfare.c2.coordination import CoordinationEngine
-        return CoordinationEngine(EventBus())
+        return CoordinationEngine(EventBus(), rng=np.random.default_rng(0))
 
     def test_empty_nominations(self) -> None:
         eng = self._make_engine()
@@ -544,7 +544,7 @@ class TestJIPTL:
         bus = EventBus()
         events = []
         bus.subscribe(JIPTLGeneratedEvent, events.append)
-        eng = CoordinationEngine(bus)
+        eng = CoordinationEngine(bus, rng=np.random.default_rng(0))
         eng.submit_target_nomination(TargetNomination(
             target_id="tgt1", target_type="armor",
             position=Position(1000, 0, 0), priority=1,
@@ -580,7 +580,7 @@ class TestCOP:
             track_degradation_per_hop=0.1,
             max_track_age_s=60.0,
         )
-        return FogOfWarManager(data_link_config=cfg)
+        return FogOfWarManager(data_link_config=cfg, rng=np.random.default_rng(0))
 
     def test_config_default_disabled(self) -> None:
         from stochastic_warfare.detection.fog_of_war import DataLinkConfig

@@ -122,7 +122,7 @@ class TestKalmanCacheDeterminism:
         )
         from stochastic_warfare.detection.identification import ContactInfo, ContactLevel
 
-        est = StateEstimator(config=EstimationConfig())
+        est = StateEstimator(rng=np.random.default_rng(0), config=EstimationConfig())
         ci = ContactInfo(
             level=ContactLevel.DETECTED,
             domain_estimate=None,
@@ -167,7 +167,7 @@ class TestKalmanCacheDeterminism:
         )
         from stochastic_warfare.detection.identification import ContactInfo, ContactLevel
 
-        est = StateEstimator(config=EstimationConfig())
+        est = StateEstimator(rng=np.random.default_rng(0), config=EstimationConfig())
         ci = ContactInfo(
             level=ContactLevel.DETECTED,
             domain_estimate=None,
@@ -261,7 +261,7 @@ class TestAggregationDeterminism:
         morale = {"u0": MoraleState.STEADY, "u1": MoraleState.SHAKEN, "u2": MoraleState.STEADY}
         ctx = _make_ctx({"blue": list(units)}, dict(morale))
 
-        engine = AggregationEngine(config=config)
+        engine = AggregationEngine(config=config, rng=np.random.default_rng(0))
         agg = engine.aggregate([u.entity_id for u in units], ctx)
         assert agg is not None
 
@@ -283,7 +283,7 @@ class TestAggregationDeterminism:
         config = AggregationConfig(enable_aggregation=True, min_units_to_aggregate=2)
         ids = []
         for _ in range(3):
-            engine = AggregationEngine(config=config)
+            engine = AggregationEngine(config=config, rng=np.random.default_rng(0))
             units = [_make_unit(f"u{i}", "blue") for i in range(4)]
             ctx = _make_ctx({"blue": list(units)})
             agg = engine.aggregate([u.entity_id for u in units], ctx)
@@ -294,13 +294,13 @@ class TestAggregationDeterminism:
         from stochastic_warfare.simulation.aggregation import AggregationConfig, AggregationEngine
 
         config = AggregationConfig(enable_aggregation=True, min_units_to_aggregate=2)
-        engine1 = AggregationEngine(config=config)
+        engine1 = AggregationEngine(config=config, rng=np.random.default_rng(0))
         units = [_make_unit(f"u{i}", "blue", Position(i * 100, 0)) for i in range(4)]
         ctx = _make_ctx({"blue": list(units)})
         engine1.aggregate([u.entity_id for u in units], ctx)
 
         state = engine1.get_state()
-        engine2 = AggregationEngine(config=config)
+        engine2 = AggregationEngine(config=config, rng=np.random.default_rng(0))
         engine2.set_state(state)
 
         agg1 = list(engine1.active_aggregates.values())[0]

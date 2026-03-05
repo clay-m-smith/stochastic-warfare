@@ -537,7 +537,7 @@ class TestGasWarfareEngine:
     def test_no_cbrn_engine_safe(self) -> None:
         """Engine works without CBRN engine (returns empty lists)."""
         from stochastic_warfare.combat.gas_warfare import GasWarfareEngine
-        eng = GasWarfareEngine(cbrn_engine=None)
+        eng = GasWarfareEngine(cbrn_engine=None, rng=np.random.default_rng(0))
         puffs = eng.execute_cylinder_release("chlorine", (0, 0), (100, 0))
         assert puffs == []
 
@@ -548,7 +548,7 @@ class TestGasWarfareEngine:
         )
         engine.set_unit_gas_mask("u1", GasMaskType.PH_HELMET)
         state = engine.get_state()
-        eng2 = GasWarfareEngine()
+        eng2 = GasWarfareEngine(rng=np.random.default_rng(0))
         eng2.set_state(state)
         assert eng2.get_unit_mopp_level("u1") == 2
 

@@ -103,10 +103,11 @@ class SiegeEngine:
     def __init__(
         self,
         config: SiegeConfig | None = None,
-        rng: np.random.Generator | None = None,
+        *,
+        rng: np.random.Generator,
     ) -> None:
         self._config = config or SiegeConfig()
-        self._rng = rng or np.random.default_rng(42)
+        self._rng = rng
         self._sieges: dict[str, SiegeState] = {}
 
     def begin_siege(

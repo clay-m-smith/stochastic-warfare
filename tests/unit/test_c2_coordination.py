@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 
+import numpy as np
 import pytest
 
 from stochastic_warfare.core.events import Event, EventBus
@@ -38,7 +39,7 @@ class TestNFA:
 
     def test_nfa_blocks_fire(self) -> None:
         bus = EventBus()
-        coord = CoordinationEngine(bus)
+        coord = CoordinationEngine(bus, rng=np.random.default_rng(0))
         coord.add_measure(CoordinationMeasure(
             measure_id="nfa1",
             measure_type=CoordinationMeasureType.NFA,
@@ -53,7 +54,7 @@ class TestNFA:
 
     def test_nfa_publishes_violation(self) -> None:
         bus = EventBus()
-        coord = CoordinationEngine(bus)
+        coord = CoordinationEngine(bus, rng=np.random.default_rng(0))
         coord.add_measure(CoordinationMeasure(
             measure_id="nfa1",
             measure_type=CoordinationMeasureType.NFA,
@@ -70,7 +71,7 @@ class TestNFA:
 
     def test_outside_nfa_cleared(self) -> None:
         bus = EventBus()
-        coord = CoordinationEngine(bus)
+        coord = CoordinationEngine(bus, rng=np.random.default_rng(0))
         coord.add_measure(CoordinationMeasure(
             measure_id="nfa1",
             measure_type=CoordinationMeasureType.NFA,
@@ -88,7 +89,7 @@ class TestRFA:
 
     def test_rfa_requires_coordination(self) -> None:
         bus = EventBus()
-        coord = CoordinationEngine(bus)
+        coord = CoordinationEngine(bus, rng=np.random.default_rng(0))
         coord.add_measure(CoordinationMeasure(
             measure_id="rfa1",
             measure_type=CoordinationMeasureType.RFA,
@@ -108,7 +109,7 @@ class TestFFA:
 
     def test_ffa_clears_fire(self) -> None:
         bus = EventBus()
-        coord = CoordinationEngine(bus)
+        coord = CoordinationEngine(bus, rng=np.random.default_rng(0))
         coord.add_measure(CoordinationMeasure(
             measure_id="ffa1",
             measure_type=CoordinationMeasureType.FFA,
@@ -127,25 +128,25 @@ class TestFSCL:
 
     def test_set_and_query_fscl(self) -> None:
         bus = EventBus()
-        coord = CoordinationEngine(bus)
+        coord = CoordinationEngine(bus, rng=np.random.default_rng(0))
         coord.set_fscl(Position(0, 5000), Position(10000, 5000))
         assert coord.get_fscl() is not None
 
     def test_beyond_fscl(self) -> None:
         bus = EventBus()
-        coord = CoordinationEngine(bus)
+        coord = CoordinationEngine(bus, rng=np.random.default_rng(0))
         coord.set_fscl(Position(0, 5000), Position(10000, 5000))
         assert coord.is_beyond_fscl(Position(5000, 6000)) is True
 
     def test_short_of_fscl(self) -> None:
         bus = EventBus()
-        coord = CoordinationEngine(bus)
+        coord = CoordinationEngine(bus, rng=np.random.default_rng(0))
         coord.set_fscl(Position(0, 5000), Position(10000, 5000))
         assert coord.is_beyond_fscl(Position(5000, 4000)) is False
 
     def test_air_short_of_fscl_requires_coordination(self) -> None:
         bus = EventBus()
-        coord = CoordinationEngine(bus)
+        coord = CoordinationEngine(bus, rng=np.random.default_rng(0))
         coord.set_fscl(Position(0, 5000), Position(10000, 5000))
         cleared, reason = coord.check_fire_clearance(
             "cas_flight", Position(5000, 4000), FireType.AIR_DELIVERED, _TS,
@@ -155,7 +156,7 @@ class TestFSCL:
 
     def test_direct_fire_short_of_fscl_ok(self) -> None:
         bus = EventBus()
-        coord = CoordinationEngine(bus)
+        coord = CoordinationEngine(bus, rng=np.random.default_rng(0))
         coord.set_fscl(Position(0, 5000), Position(10000, 5000))
         cleared, reason = coord.check_fire_clearance(
             "tank1", Position(5000, 4000), FireType.DIRECT, _TS,
@@ -168,7 +169,7 @@ class TestBoundary:
 
     def test_boundary_crossing_detected(self) -> None:
         bus = EventBus()
-        coord = CoordinationEngine(bus)
+        coord = CoordinationEngine(bus, rng=np.random.default_rng(0))
         coord.add_measure(CoordinationMeasure(
             measure_id="bdy1",
             measure_type=CoordinationMeasureType.BOUNDARY,
@@ -188,7 +189,7 @@ class TestBoundary:
 
     def test_no_boundary_crossing_cleared(self) -> None:
         bus = EventBus()
-        coord = CoordinationEngine(bus)
+        coord = CoordinationEngine(bus, rng=np.random.default_rng(0))
         coord.add_measure(CoordinationMeasure(
             measure_id="bdy1",
             measure_type=CoordinationMeasureType.BOUNDARY,
@@ -204,7 +205,7 @@ class TestBoundary:
 
     def test_movement_into_nfa_blocked(self) -> None:
         bus = EventBus()
-        coord = CoordinationEngine(bus)
+        coord = CoordinationEngine(bus, rng=np.random.default_rng(0))
         coord.add_measure(CoordinationMeasure(
             measure_id="nfa1",
             measure_type=CoordinationMeasureType.NFA,
@@ -222,7 +223,7 @@ class TestMeasureManagement:
 
     def test_remove_measure(self) -> None:
         bus = EventBus()
-        coord = CoordinationEngine(bus)
+        coord = CoordinationEngine(bus, rng=np.random.default_rng(0))
         coord.add_measure(CoordinationMeasure(
             measure_id="nfa1",
             measure_type=CoordinationMeasureType.NFA,
@@ -240,7 +241,7 @@ class TestCoordinationState:
 
     def test_state_round_trip(self) -> None:
         bus = EventBus()
-        coord = CoordinationEngine(bus)
+        coord = CoordinationEngine(bus, rng=np.random.default_rng(0))
         coord.add_measure(CoordinationMeasure(
             measure_id="nfa1",
             measure_type=CoordinationMeasureType.NFA,
@@ -248,6 +249,6 @@ class TestCoordinationState:
         ))
         coord.set_fscl(Position(0, 5000), Position(10000, 5000))
         state = coord.get_state()
-        coord2 = CoordinationEngine(bus)
+        coord2 = CoordinationEngine(bus, rng=np.random.default_rng(0))
         coord2.set_state(state)
         assert coord2.get_state() == state

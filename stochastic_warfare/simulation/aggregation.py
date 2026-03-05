@@ -99,11 +99,12 @@ class AggregationEngine:
     def __init__(
         self,
         config: AggregationConfig | None = None,
-        rng: np.random.Generator | None = None,
+        *,
+        rng: np.random.Generator,
         event_bus: EventBus | None = None,
     ) -> None:
         self._config = config or AggregationConfig()
-        self._rng = rng or np.random.default_rng(0)
+        self._rng = rng
         self._bus = event_bus
         self._aggregates: dict[str, AggregateUnit] = {}
         self._next_id = 0

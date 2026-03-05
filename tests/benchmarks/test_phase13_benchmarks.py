@@ -47,7 +47,7 @@ class TestBaselineBenchmarks:
         )
         from stochastic_warfare.detection.identification import ContactInfo, ContactLevel
 
-        est = StateEstimator(config=EstimationConfig())
+        est = StateEstimator(rng=np.random.default_rng(0), config=EstimationConfig())
         tracks = []
         for i in range(100):
             ci = ContactInfo(

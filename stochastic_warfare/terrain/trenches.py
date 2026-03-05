@@ -69,6 +69,11 @@ class TrenchConfig(BaseModel):
     bombardment_condition_loss_per_intensity: float = 0.15
     """Condition loss per unit bombardment intensity (0–1)."""
 
+    along_angle_threshold_deg: float = 30.0
+    """Heading angle (deg) below which movement is 'along' trench."""
+    crossing_angle_threshold_deg: float = 60.0
+    """Heading angle (deg) above which movement is 'crossing' trench."""
+
 
 _COVER_BY_TYPE: dict[TrenchType, str] = {
     TrenchType.FIRE_TRENCH: "cover_fire_trench",
@@ -272,13 +277,15 @@ class TrenchSystemEngine:
         if diff > 180.0:
             diff = 360.0 - diff
 
-        # Along (< 30°) vs crossing (> 60°), interpolate between
-        if diff < 30.0:
+        # Along (< along_threshold) vs crossing (> crossing_threshold), interpolate between
+        along = self._config.along_angle_threshold_deg
+        crossing = self._config.crossing_angle_threshold_deg
+        if diff < along:
             return self._config.movement_along
-        elif diff > 60.0:
+        elif diff > crossing:
             return self._config.movement_crossing
         else:
-            t = (diff - 30.0) / 30.0
+            t = (diff - along) / (crossing - along)
             return (
                 self._config.movement_along * (1.0 - t)
                 + self._config.movement_crossing * t

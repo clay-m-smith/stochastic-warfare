@@ -152,19 +152,19 @@ class TestAggregationContextField:
         assert ctx.aggregation_engine is None
 
     def test_context_accepts_aggregation_engine(self):
-        agg = AggregationEngine()
+        agg = AggregationEngine(rng=np.random.default_rng(0))
         ctx = _make_ctx(aggregation_engine=agg)
         assert ctx.aggregation_engine is agg
 
     def test_get_state_includes_aggregation_engine(self):
-        agg = AggregationEngine()
+        agg = AggregationEngine(rng=np.random.default_rng(0))
         ctx = _make_ctx(aggregation_engine=agg)
         state = ctx.get_state()
         assert "aggregation_engine" in state
 
     def test_set_state_restores_aggregation_engine(self):
         config = AggregationConfig(enable_aggregation=True, min_units_to_aggregate=2)
-        agg = AggregationEngine(config=config)
+        agg = AggregationEngine(config=config, rng=np.random.default_rng(0))
         units = [_make_unit(f"u{i}", "blue", Position(100 * i, 0)) for i in range(4)]
         ctx = _make_ctx(
             units_by_side={"blue": units},
@@ -175,13 +175,13 @@ class TestAggregationContextField:
         state = ctx.get_state()
 
         # Restore into a new engine
-        agg2 = AggregationEngine(config=config)
+        agg2 = AggregationEngine(config=config, rng=np.random.default_rng(0))
         ctx2 = _make_ctx(aggregation_engine=agg2)
         ctx2.set_state(state)
         assert agg2.active_aggregates  # restored aggregates
 
     def test_aggregation_disabled_by_default(self):
-        agg = AggregationEngine()
+        agg = AggregationEngine(rng=np.random.default_rng(0))
         assert not agg._config.enable_aggregation
 
 
@@ -297,7 +297,7 @@ class TestAggregationWiring:
         engine.step()  # should not raise
 
     def test_step_runs_with_aggregation_disabled(self):
-        agg = AggregationEngine(config=AggregationConfig(enable_aggregation=False))
+        agg = AggregationEngine(config=AggregationConfig(enable_aggregation=False), rng=np.random.default_rng(0))
         ctx = _make_ctx(
             units_by_side={
                 "blue": _make_units("blue", 5, Position(100, 100)),
@@ -317,7 +317,7 @@ class TestAggregationWiring:
             aggregation_distance_m=5000.0,
             min_units_to_aggregate=4,
         )
-        agg = AggregationEngine(config=agg_config)
+        agg = AggregationEngine(config=agg_config, rng=np.random.default_rng(0))
         # All blue units at (100, 100) — far from red
         blue = _make_units("blue", 6, Position(100, 100))
         red = _make_units("red", 2, Position(9000, 9000))
@@ -339,7 +339,7 @@ class TestAggregationWiring:
             aggregation_distance_m=50000.0,
             min_units_to_aggregate=4,
         )
-        agg = AggregationEngine(config=agg_config)
+        agg = AggregationEngine(config=agg_config, rng=np.random.default_rng(0))
         # All units at same location — a battle is nearby
         blue = _make_units("blue", 6, Position(100, 100))
         ctx = _make_ctx(
@@ -359,7 +359,7 @@ class TestAggregationWiring:
             aggregation_distance_m=5000.0,
             min_units_to_aggregate=4,
         )
-        agg = AggregationEngine(config=agg_config)
+        agg = AggregationEngine(config=agg_config, rng=np.random.default_rng(0))
         battle_config = BattleConfig(
             auto_resolve_enabled=True,
             auto_resolve_max_units=10,
@@ -575,7 +575,7 @@ class TestIntegration:
             aggregation_distance_m=5000.0,
             min_units_to_aggregate=4,
         )
-        agg = AggregationEngine(config=agg_config)
+        agg = AggregationEngine(config=agg_config, rng=np.random.default_rng(0))
         blue = _make_units("blue", 6, Position(100, 100))
         red = _make_units("red", 6, Position(9000, 9000))
         ctx = _make_ctx(
@@ -615,7 +615,7 @@ class TestIntegration:
             aggregation_distance_m=5000.0,
             min_units_to_aggregate=4,
         )
-        agg = AggregationEngine(config=agg_config)
+        agg = AggregationEngine(config=agg_config, rng=np.random.default_rng(0))
         blue = _make_units("blue", 6, Position(100, 100))
         red = _make_units("red", 6, Position(9000, 9000))
         ctx = _make_ctx(

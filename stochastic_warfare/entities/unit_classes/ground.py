@@ -44,6 +44,7 @@ class GroundUnit(Unit):
     dug_in_time: float = 0.0  # hours spent in current posture
     armor_front: float = 0.0  # mm RHA equivalent
     armor_side: float = 0.0
+    armor_type: str = "RHA"
 
     def __post_init__(self) -> None:
         self.domain = Domain.GROUND
@@ -58,6 +59,7 @@ class GroundUnit(Unit):
                 "dug_in_time": self.dug_in_time,
                 "armor_front": self.armor_front,
                 "armor_side": self.armor_side,
+                "armor_type": self.armor_type,
             }
         )
         return state
@@ -70,3 +72,4 @@ class GroundUnit(Unit):
         self.dug_in_time = state["dug_in_time"]
         self.armor_front = state["armor_front"]
         self.armor_side = state["armor_side"]
+        self.armor_type = state.get("armor_type", "RHA")

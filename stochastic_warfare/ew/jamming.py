@@ -50,6 +50,7 @@ class JammingConfig(BaseModel):
     js_threshold_db: float = 0.0
     deceptive_false_target_prob: float = 0.3
     deceptive_js_multiplier: float = 1.5
+    jamming_event_radius_m: float = 50000.0
 
 
 # ---------------------------------------------------------------------------
@@ -167,7 +168,7 @@ class JammingEngine:
                 timestamp=timestamp, source=ModuleId.EW,
                 jammer_id=jammer_id,
                 target_area_center=target_pos or j.position,
-                radius_m=50000.0,
+                radius_m=self._config.jamming_event_radius_m,
                 jam_type=int(technique),
             ))
 

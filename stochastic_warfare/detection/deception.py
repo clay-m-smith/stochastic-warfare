@@ -94,8 +94,8 @@ class DeceptionEngine:
         A ``numpy.random.Generator``.
     """
 
-    def __init__(self, rng: np.random.Generator | None = None) -> None:
-        self._rng = rng or np.random.default_rng(0)
+    def __init__(self, rng: np.random.Generator) -> None:
+        self._rng = rng
         self._decoys: dict[str, Decoy] = {}
         self._decoy_counter: int = 0
 

@@ -5,6 +5,7 @@ ground_type: ARMOR
 max_speed: 18.0
 armor_front: 550.0
 armor_side: 180.0
+armor_type: COMPOSITE
 crew:
   - role: COMMANDER
     count: 1

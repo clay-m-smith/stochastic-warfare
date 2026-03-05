@@ -65,6 +65,7 @@ class ForagingConfig(BaseModel):
     foraging_party_fraction: float = 0.10
     ambush_risk_per_mission: float = 0.05
     attrition_rate_no_food: float = 0.01
+    ambush_casualty_rate: float = 0.1
 
 
 # ---------------------------------------------------------------------------
@@ -119,10 +120,11 @@ class ForagingEngine:
     def __init__(
         self,
         config: ForagingConfig | None = None,
-        rng: np.random.Generator | None = None,
+        *,
+        rng: np.random.Generator,
     ) -> None:
         self._config = config or ForagingConfig()
-        self._rng = rng or np.random.default_rng(42)
+        self._rng = rng
         self._zones: dict[str, ForageZone] = {}
 
     def register_zone(
@@ -224,7 +226,7 @@ class ForagingEngine:
         ambush_casualties = 0
         if ambush and foraging_party_size > 0:
             ambush_casualties = int(
-                self._rng.binomial(foraging_party_size, 0.1),
+                self._rng.binomial(foraging_party_size, cfg.ambush_casualty_rate),
             )
 
         return ForageResult(

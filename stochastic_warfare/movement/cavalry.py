@@ -103,10 +103,11 @@ class CavalryEngine:
     def __init__(
         self,
         config: CavalryConfig | None = None,
-        rng: np.random.Generator | None = None,
+        *,
+        rng: np.random.Generator,
     ) -> None:
         self._config = config or CavalryConfig()
-        self._rng = rng or np.random.default_rng(42)
+        self._rng = rng
         self._charges: dict[str, ChargeState] = {}
 
     def initiate_charge(

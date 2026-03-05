@@ -81,6 +81,9 @@ class GasWarfareConfig(BaseModel):
     mask_don_time_s: float = 10.0
     """Time to don gas mask (units are unprotected during this interval)."""
 
+    max_wind_angle_deg: float = 60.0
+    """Maximum angular tolerance for wind-to-target bearing (degrees)."""
+
 
 # ---------------------------------------------------------------------------
 # Engine
@@ -106,11 +109,12 @@ class GasWarfareEngine:
         self,
         config: GasWarfareConfig | None = None,
         cbrn_engine: Any = None,
-        rng: np.random.Generator | None = None,
+        *,
+        rng: np.random.Generator,
     ) -> None:
         self._config = config or GasWarfareConfig()
         self._cbrn = cbrn_engine
-        self._rng = rng or np.random.default_rng(42)
+        self._rng = rng
         self._unit_masks: dict[str, GasMaskType] = {}
         self._release_ids: list[str] = []
 
@@ -149,7 +153,7 @@ class GasWarfareEngine:
         diff = abs(gas_travel_dir - target_bearing_deg) % 360.0
         if diff > 180.0:
             diff = 360.0 - diff
-        return diff <= 60.0
+        return diff <= self._config.max_wind_angle_deg
 
     def execute_cylinder_release(
         self,

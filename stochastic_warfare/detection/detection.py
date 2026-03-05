@@ -54,6 +54,7 @@ class DetectionConfig(BaseModel):
     noise_std: float = 0.05  # stochastic variation on Pd
     enable_integration_gain: bool = True
     max_integration_gain_db: float = 6.0  # cap at 4 scans (+6 dB)
+    max_integration_scans: int = 4
 
 
 # ---------------------------------------------------------------------------
@@ -121,7 +122,8 @@ class DetectionEngine:
         em_environment: Any = None,
         signature_loader: Any = None,
         sensor_loader: Any = None,
-        rng: np.random.Generator | None = None,
+        *,
+        rng: np.random.Generator,
         config: DetectionConfig | None = None,
     ) -> None:
         self._los = los_checker
@@ -129,7 +131,7 @@ class DetectionEngine:
         self._em = em_environment
         self._sig_loader = signature_loader
         self._sensor_loader = sensor_loader
-        self._rng = rng or np.random.default_rng(0)
+        self._rng = rng
         self._config = config or DetectionConfig()
         self._scan_counts: dict[tuple[str, str], int] = {}  # (sensor_id, target_id) → count
 
@@ -377,8 +379,9 @@ class DetectionEngine:
         # 5. Integration gain (dwell/scan accumulation)
         if target_id and self._config.enable_integration_gain:
             key = (sensor.sensor_id, target_id)
-            n_scans = self._scan_counts.get(key, 0) + 1
-            self._scan_counts[key] = n_scans
+            raw_scans = self._scan_counts.get(key, 0) + 1
+            self._scan_counts[key] = raw_scans
+            n_scans = min(raw_scans, self._config.max_integration_scans)
             if n_scans > 1:
                 gain_db = 5.0 * math.log10(n_scans)
                 gain_db = min(gain_db, self._config.max_integration_gain_db)

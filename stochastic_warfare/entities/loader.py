@@ -82,6 +82,7 @@ class UnitDefinition(BaseModel):
     # Ground
     armor_front: float = 0.0
     armor_side: float = 0.0
+    armor_type: str = "RHA"
 
     # Aerial
     service_ceiling: float = 15000.0
@@ -269,4 +270,5 @@ class UnitLoader:
             kwargs["ground_type"] = GroundUnitType[defn.ground_type.upper()]
         kwargs["armor_front"] = defn.armor_front
         kwargs["armor_side"] = defn.armor_side
+        kwargs["armor_type"] = defn.armor_type
         return GroundUnit(**common, **kwargs)

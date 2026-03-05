@@ -5,6 +5,7 @@ ground_type: ARMOR
 max_speed: 12.5
 armor_front: 152.0
 armor_side: 51.0
+armor_type: RHA
 crew:
   - role: COMMANDER
     count: 1

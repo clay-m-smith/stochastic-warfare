@@ -64,11 +64,12 @@ class UnderwaterDetectionEngine:
         self,
         sonar_engine: SonarEngine | None = None,
         conditions_engine: Any = None,
-        rng: np.random.Generator | None = None,
+        *,
+        rng: np.random.Generator,
     ) -> None:
         self._sonar = sonar_engine
         self._conditions = conditions_engine
-        self._rng = rng or np.random.default_rng(0)
+        self._rng = rng
 
     # ------------------------------------------------------------------
     # MAD detection

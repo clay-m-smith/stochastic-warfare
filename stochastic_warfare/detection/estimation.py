@@ -156,10 +156,10 @@ class StateEstimator:
 
     def __init__(
         self,
-        rng: np.random.Generator | None = None,
+        rng: np.random.Generator,
         config: EstimationConfig | None = None,
     ) -> None:
-        self._rng = rng or np.random.default_rng(0)
+        self._rng = rng
         self._config = config or EstimationConfig()
         # Kalman F/Q matrix cache (keyed by dt)
         self._cached_dt: float | None = None

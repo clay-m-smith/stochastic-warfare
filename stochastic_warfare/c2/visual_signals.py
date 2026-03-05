@@ -101,10 +101,11 @@ class VisualSignalEngine:
     def __init__(
         self,
         config: VisualSignalConfig | None = None,
-        rng: np.random.Generator | None = None,
+        *,
+        rng: np.random.Generator,
     ) -> None:
         self._config = config or VisualSignalConfig()
-        self._rng = rng or np.random.default_rng(42)
+        self._rng = rng
         self._pending: dict[str, SignalMessage] = {}
         self._delivered: list[SignalMessage] = []
         self._msg_counter: int = 0

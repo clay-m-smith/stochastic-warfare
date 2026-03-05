@@ -71,61 +71,65 @@ Extend `CampaignScenarioConfig` and `ScenarioLoader.load()` to parse and instant
 
 ---
 
-## Phase 26: Core Polish & Configuration
+## Phase 26: Core Polish & Configuration — **COMPLETE** (82 tests, 6,559 total)
 
 **Goal**: Fix PRNG discipline violations, replace all hardcoded magic numbers with configurable pydantic fields, and address remaining core engine quality items.
 
 **Dependencies**: Phase 25 (wiring must work before polishing).
 
-### 26a: PRNG Discipline (est. ~25 tests)
+### 26a: PRNG Discipline (25 tests)
 
-Remove all fallback `np.random.default_rng(42)` in era engines. Every engine that accepts `rng` must require it (no silent fallback). Audit:
+Removed all fallback `np.random.default_rng()` from 23 engine constructors across combat (8), detection (7), C2 (3), movement (3), logistics (1), simulation (1). Made `rng` a required parameter (keyword-only via `*,` where needed). Updated 12 existing test files to pass explicit `rng=` arguments.
 
-- `combat/barrage.py` — WW1 barrage engine
-- `combat/gas_warfare.py` — WW1 gas warfare
-- `combat/volley_fire.py` — Napoleonic volley fire
-- `combat/melee.py` — Napoleonic/Ancient melee
-- `combat/archery.py` — Ancient archery
-- `combat/siege.py` — Ancient siege
-- `combat/naval_gunnery.py` — WW2 bracket firing
-- Any others found via grep for `default_rng`
-
-For each: make `rng` a required constructor parameter (no default). Update all call sites to inject RNG from RNGManager streams.
+- `combat/archery.py`, `combat/barrage.py`, `combat/gas_warfare.py`, `combat/melee.py`, `combat/naval_gunnery.py`, `combat/siege.py`, `combat/strategic_bombing.py`, `combat/volley_fire.py`
+- `detection/deception.py`, `detection/detection.py`, `detection/estimation.py`, `detection/fog_of_war.py`, `detection/intel_fusion.py`, `detection/sonar.py`, `detection/underwater_detection.py`
+- `c2/coordination.py`, `c2/courier.py`, `c2/visual_signals.py`
+- `movement/cavalry.py`, `movement/convoy.py`, `movement/naval_oar.py`
+- `logistics/foraging.py`
+- `simulation/aggregation.py`
 
 **Resolves deficits**: 8.1 (hardcoded fallback RNG seeds).
 
-### 26b: Configurable Constants (est. ~30 tests)
+### 26b: Configurable Constants (34 tests)
 
-Replace hardcoded magic numbers with pydantic Config fields:
+Replaced hardcoded magic numbers with pydantic Config fields in 9 source files:
 
-| Module | Constant | Current Value | New Config Field |
-|--------|----------|---------------|-----------------|
-| `cbrn/dispersal.py` | Valley/ridge threshold | 5m height, 50m offset | `DisperseConfig.terrain_channel_height_m`, `terrain_channel_offset_m` |
-| `cbrn/engine.py` | Fallback weather | wind=2.0, temp=20°C, cloud=0.5 | `CBRNConfig.fallback_wind_mps`, `fallback_temp_c`, `fallback_cloud_cover` |
-| `combat/gas_warfare.py` | Wind direction tolerance | 60° | `GasWarfareConfig.max_wind_angle_deg` |
-| `combat/barrage.py` | Trench direction angles | 30°/60° | `BarrageConfig.direction_interp_angles` |
-| `combat/melee.py` | Foraging ambush rate | 10% | `ForagingConfig.ambush_casualty_rate` |
-| `ew/jamming.py` | Jamming event radius | 50km | `JammingConfig.event_radius_km` |
-| `ew/gps_spoofing.py` | unit_id="" hardcoded | empty string | Pass actual unit_id through event emission |
-| `ew/` modules | Decoy-seeker matrix, traffic sigmoid | various | Config fields on respective pydantic models |
+| Module | New Config Field | Default |
+|--------|-----------------|---------|
+| `cbrn/dispersal.py` | `DispersalConfig.terrain_channel_offset_m`, `terrain_channel_height_m` | 50.0, 5.0 |
+| `cbrn/engine.py` | `CBRNConfig.fallback_wind_speed_mps`, `fallback_wind_direction_rad`, `fallback_cloud_cover` | 2.0, 0.0, 0.5 |
+| `combat/gas_warfare.py` | `GasWarfareConfig.max_wind_angle_deg` | 60.0 |
+| `terrain/trenches.py` | `TrenchConfig.along_angle_threshold_deg`, `crossing_angle_threshold_deg` | 30.0, 60.0 |
+| `logistics/foraging.py` | `ForagingConfig.ambush_casualty_rate` | 0.1 |
+| `ew/jamming.py` | `JammingConfig.jamming_event_radius_m` | 50000.0 |
+| `ew/spoofing.py` | `check_spoof_detection(unit_id="")` parameter | "" |
+| `ew/decoys_ew.py` | `EWDecoyConfig.decoy_seeker_effectiveness` dict | {CHAFF→RADAR/ANTI_RAD, FLARE→IR/EO, TOWED→RADAR, DRFM→RADAR/ANTI_RAD} |
+| `ew/sigint.py` | `SIGINTConfig.activity_sigmoid_center`, `activity_sigmoid_scale` | 10.0, 10.0 |
 
-### 26c: Engine Lifecycle & Cleanup (est. ~20 tests)
+J/S sigmoid in `ew/jamming.py` deliberately NOT changed — standard dB power conversion (physics, not tunable).
 
-- **`cbrn/dispersal.py`** (modified) — Add puff aging/cleanup: `max_puff_age_s` config field, `cleanup_aged_puffs()` method called each tick, removes puffs older than threshold.
-- **`detection/detection.py`** (modified) — Make integration gain cap configurable: `DetectionConfig.max_integration_scans` (default 4, allow higher).
-- **Unit YAML armor type data** — Add `armor_type` field to unit YAML files that lack it (based on real platform data).
+**Resolves deficits**: 5.6 (GPS spoofing unit_id), 5.7 (EW magic numbers), 7.1 (terrain channeling), 7.2 (weather defaults), 8.2 (gas wind angle), 8.3 (trench angles), 8.4 (foraging ambush).
 
-**Resolves deficits**: 7.1 (terrain channeling), 7.2 (weather defaults), 7.3 (puff cleanup), 8.2 (gas wind angle), 8.3 (trench angles), 8.4 (foraging ambush), 5.6 (GPS spoofing unit_id), 5.7 (EW magic numbers), 10.4 (integration gain cap), 10.5 (armor type YAML).
+### 26c: Engine Lifecycle & Cleanup (23 tests)
 
-### Tests: `tests/unit/test_phase_26a_prng.py`, `tests/unit/test_phase_26b_config.py`, `tests/unit/test_phase_26c_lifecycle.py`
+- **`cbrn/dispersal.py`** — `DispersalConfig.max_puff_age_s` (default 3600.0), `cleanup_aged_puffs()` method.
+- **`cbrn/engine.py`** — Wires `cleanup_aged_puffs()` at end of `update()`.
+- **`detection/detection.py`** — `DetectionConfig.max_integration_scans` (default 4), caps scan count before computing gain.
+- **`entities/unit_classes/ground.py`** — `armor_type: str = "RHA"` field with get_state/set_state (backward-compat default).
+- **`entities/loader.py`** — `UnitDefinition.armor_type` field, passed to GroundUnit in `create_unit()`.
+- **6 armor YAML files** — m1a1_abrams (COMPOSITE), m1a2 (COMPOSITE), shot_kal (RHA), t55a (RHA), t62 (RHA), t72m (COMPOSITE).
 
-### Exit Criteria
-- `grep -r "default_rng" stochastic_warfare/` returns zero matches
-- All previously hardcoded constants are pydantic Config fields with documented defaults
-- CBRN puff cleanup runs each tick, respects max_puff_age_s
-- GPS spoofing events carry actual unit_id
-- Armor type specified in all armored unit YAML files
-- All 6,400+ tests pass
+**Resolves deficits**: 7.3 (puff cleanup), 10.4 (integration gain cap), 10.5 (armor type YAML).
+
+### Tests: `tests/unit/test_phase_26a_prng.py` (25), `tests/unit/test_phase_26b_config.py` (34), `tests/unit/test_phase_26c_lifecycle.py` (23)
+
+### Exit Criteria — All Met
+- `grep -r "default_rng" stochastic_warfare/` returns zero matches ✓
+- All previously hardcoded constants are pydantic Config fields with documented defaults ✓
+- CBRN puff cleanup runs each tick, respects max_puff_age_s ✓
+- GPS spoofing events carry actual unit_id ✓
+- Armor type specified in all armored unit YAML files ✓
+- All 6,559 tests pass ✓
 
 ---
 
@@ -533,8 +537,8 @@ New unit YAML + matching signature YAML for each:
 
 | Phase | Sub-phases | Est. Tests | Running Total |
 |-------|-----------|------------|---------------|
-| 25 | 25a–25d | 151 ✓ | 6,476 |
-| 26 | 26a–26c | ~75 | ~6,560 |
+| 25 | 25a–25d | 152 ✓ | 6,477 |
+| 26 | 26a–26c | 82 ✓ | 6,559 |
 | 27 | 27a–27d | ~165 | ~6,725 |
 | 28 | 28a–28d | ~70 | ~6,795 |
 | 29 | 29a–29d | ~85 | ~6,880 |

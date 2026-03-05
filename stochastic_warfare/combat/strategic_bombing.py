@@ -113,10 +113,11 @@ class StrategicBombingEngine:
     def __init__(
         self,
         config: StrategicBombingConfig | None = None,
-        rng: np.random.Generator | None = None,
+        *,
+        rng: np.random.Generator,
     ) -> None:
         self._config = config or StrategicBombingConfig()
-        self._rng = rng or np.random.default_rng(42)
+        self._rng = rng
         self._targets: dict[str, TargetDamageState] = {}
 
     def get_target_damage(self, target_id: str) -> TargetDamageState:
