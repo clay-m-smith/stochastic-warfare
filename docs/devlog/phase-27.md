@@ -76,3 +76,29 @@ Phase 27 fills missing cross-domain engagement paths, enhances the engagement en
 | `combat/barrage.py` | Observer correction (2 config + 2 zone fields + update logic) |
 | `combat/melee.py` | compute_cavalry_terrain_modifier(), compute_frontage_constraint(), 7 config fields |
 | `combat/gas_warfare.py` | compute_exposure_during_don(), get_effective_mopp_level() |
+
+## Postmortem
+
+### Scope: On target
+139 tests vs ~165 estimated (84%). Shortfall from 27a (31 vs 50) and 27c (31 vs 40) — some planned tests were redundant with backward-compat/config-default tests already covered elsewhere. All planned features delivered, none dropped.
+
+### Quality: High
+- All 20 new public methods have type hints and docstrings
+- No bare `print()`, all logging via `get_logger`
+- No TODOs or FIXMEs in new code
+- Statistical tests use 100-200 seed loops for probabilistic assertions
+- Edge cases covered: out-of-range, no ammo, empty inputs, boundary values
+- One unnecessary local import fixed in postmortem (`Position as Pos` in `damage.py` where `Position` already imported at module level)
+
+### Integration: Standalone (by design)
+New methods are unit-tested but not yet wired into `simulation/engine.py` or `simulation/battle.py`. This is consistent with Block 2 pattern — Phase 27 adds combat mechanics, tick-loop wiring would be separate work. All new features are gated by `enable_*` config flags with backward-compatible defaults.
+
+### Deficits: 1 new item
+- **12.1**: `execute_tot_mission()` uses placeholder `fire_pos=Position(0,0,0)` because `TOTFirePlan` doesn't store battery positions. This means wind-based CEP adjustment is not applied for TOT missions. Low impact — TOT is primarily about timing synchronization, not individual round accuracy.
+
+### Lessons Learned
+- **WeaponInstance lives in `combat/ammunition.py`**, not `entities/weapons.py`. Easy to mis-remember.
+- **`compatible_ammo` is required for `fire()`**: Test weapon fixtures must include `compatible_ammo=[ammo_id]` or `fire()` silently returns False.
+- **Designation delay should be a hard gate**: Initial implementation had talk-on ramp applying before designation delay, giving non-zero bonus too early. Fixed to return zero bonus before delay threshold.
+- **Submunition scatter sigma vs lethal radius**: sigma=blast_radius*0.7 can be much larger than lethal_radius, causing most submunitions to miss targets at the impact center. Tests need appropriate lethal_radius values.
+- **Some 27b features implemented with 27a**: When features share source files (engagement.py, air_combat.py, air_ground.py), it's cleaner to implement them together rather than making two passes over the same file.

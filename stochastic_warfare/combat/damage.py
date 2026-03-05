@@ -415,8 +415,6 @@ class DamageEngine:
         timestamp:
             Simulation timestamp.
         """
-        from stochastic_warfare.core.types import Position as Pos
-
         count = ammo.submunition_count
         if count <= 0:
             return {}
@@ -449,7 +447,7 @@ class DamageEngine:
         for _ in range(live):
             off_e = self._rng.normal(0.0, sigma)
             off_n = self._rng.normal(0.0, sigma)
-            sub_pos = Pos(
+            sub_pos = Position(
                 impact_pos.easting + off_e,
                 impact_pos.northing + off_n,
                 impact_pos.altitude,
