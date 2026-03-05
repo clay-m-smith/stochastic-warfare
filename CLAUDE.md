@@ -154,15 +154,15 @@ All phase details are in `docs/devlog/` (one file per phase). Below is a summary
 | 27 | Combat System Completeness | 139 | Cross-domain routing (3 new EngagementTypes), EW air combat/defense integration, burst fire, submunition scatter, TOT sync, CAS designation, naval gun, ASROC/depth charges, torpedo CM, CAP management, observer correction, cavalry terrain, frontage constraint, gas mask don time |
 | 28 | Modern Era Data Package | 137 | 95 YAML data files: 19 units (adversary/allied/specialist), 9 weapons, 16 ammo, 5 sensors, 28 signatures, 7 orgs, 5 doctrine, 3 commanders, 3 escalation configs. 8 new data dirs. Zero source changes. |
 | 28.5 | Directed Energy Weapons | 112 | DEW engine (Beer-Lambert laser transmittance, laser/HPM Pk), 7 enum extensions, engagement routing, scenario wiring, 20 YAML (5 weapons, 5 ammo, 3 units, 5 signatures, 2 sensors). 1 new + 6 modified source files. |
-| 29 | Historical Era Data Expansion | 164 | 121 YAML: naval units for all 4 historical eras (WW2 carriers/subs, WW1 dreadnoughts, Napoleonic ships of line, Ancient triremes/longships), plus ground/air/weapons/ammo/signatures/comms/commander. 15 new data directories. Zero source changes. |
+| 29 | Historical Era Data Expansion | 164 | 119 YAML: naval units for all 4 historical eras (WW2 carriers/subs, WW1 dreadnoughts, Napoleonic ships of line, Ancient triremes/longships), plus ground/air/weapons/ammo/signatures/comms/commander. 15 new data directories. Zero source changes. |
 
 ### Phase 29 Detail (Most Recent)
 
-Pure data phase — 121 new YAML files + 1 test file (164 tests). Zero new Python source files. 15 new data directories.
+Pure data phase — 119 new YAML files + 1 test file (164 tests). Zero new Python source files. 15 new data directories.
 - **29a WW2** (34 files): 5 naval (Essex CV, Shokaku CV, Type IXC U-boat, Flower corvette, LST Mk2), 4 ground (M1 105mm, sFH 18, PaK 40, 6-pdr AT), 1 aircraft (A6M Zero), 6 weapons (MG 151/20, M2 .50 cal, Type 99 20mm, G7e torpedo, Mk 7 DC, Type 93 Long Lance), 6 ammo, 10 signatures, 2 comms (field telephone + SCR-300).
 - **29b WW1** (29 files): 5 naval (Iron Duke BB, Konig BB, Invincible BC, G-class DD, U-boat), 3 ground (18-pdr battery, FK 96 battery, US AEF squad), 2 aircraft (SPAD XIII, Fokker D.VII), 5 weapons, 4 ammo, 10 signatures.
 - **29c Napoleonic** (30 files): 5 naval (74-gun ship of the line, First Rate 100, 32-gun frigate, corvette/sloop, fire ship), 6 ground (dragoon, Austrian/Russian infantry, Congreve rocket, pontoon engineer, supply train), 4 weapons, 4 ammo, 11 signatures.
-- **29d Ancient/Medieval** (28 files): 6 naval (Greek trireme, Roman quinquereme, Viking longship, Byzantine dromon, medieval cog, war galley), 4 ground (kataphraktoi, Saracen cavalry, skutatoi, siege engineer), 3 weapons (naval ram, Greek fire siphon, corvus boarding), 2 ammo, 10 signatures, 1 commander (Subotai).
+- **29d Ancient/Medieval** (26 files): 6 naval (Greek trireme, Roman quinquereme, Viking longship, Byzantine dromon, medieval cog, war galley), 4 ground (kataphraktoi, Saracen cavalry, skutatoi, siege engineer), 3 weapons (naval ram, Greek fire siphon, corvus boarding), 2 ammo, 10 signatures, 1 commander (Subotai).
 
 Phase 29 pattern: Pure data expansion following Phase 28 precedent. Naval units use existing NavalUnitType values (CRUISER for capital ships). Pre-radar eras have zero RCS. 15 new data directories.
 

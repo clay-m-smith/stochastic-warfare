@@ -2,7 +2,7 @@
 
 ## Summary
 
-Pure data phase filling critical naval gaps across all 4 historical eras, plus missing ground/air unit types, weapons, comms, and commander profiles. Zero new Python source files, zero enum extensions. 121 new YAML files, 1 new test file with 164 tests.
+Pure data phase filling critical naval gaps across all 4 historical eras, plus missing ground/air unit types, weapons, comms, and commander profiles. Zero new Python source files, zero enum extensions. 119 new YAML files, 1 new test file with 164 tests.
 
 **Cumulative**: 7,111 tests passing (164 new).
 
@@ -35,7 +35,7 @@ Pure data phase filling critical naval gaps across all 4 historical eras, plus m
 - **Ammunition** (4): 32-pdr round shot, chain shot, grape shot naval, Congreve rocket round
 - **Signatures** (11): One per new unit
 
-### 29d: Ancient/Medieval Naval & Expansion (28 YAML files)
+### 29d: Ancient/Medieval Naval & Expansion (26 YAML files)
 
 - **Naval units** (6): Greek trireme, Roman quinquereme, Viking longship, Byzantine dromon, medieval cog, war galley
 - **Ground units** (4): Byzantine kataphraktoi, Saracen cavalry, Byzantine skutatoi, siege engineer
@@ -87,3 +87,33 @@ data/eras/ancient_medieval/ammunition/naval/ # NEW
 - WW2 comms are NOT auto-loaded by era overlay in `_create_loaders()` — existing limitation, not introduced here
 - Naval weapon YAML for WW1/Napoleonic/Ancient is minimal (focuses on key weapon types, not comprehensive armament lists)
 - No new scenarios added — Phase 30 will create scenarios using this naval data
+
+## Postmortem
+
+### Scope: On target
+Plan called for ~121 YAML files; delivered 119. Two fewer due to: (1) WW1 `303_ball` ammo already existed so no duplicate created, (2) plan double-counted Ancient/Medieval commander in both "Unit YAML" and "Commander YAML" summary rows. All planned unit types, weapons, ammo, signatures, comms, and commander delivered. Tests: 164 vs estimated ~90 — exceeded because thorough spot-check assertions added per unit type.
+
+### Quality: High
+- All 164 tests pass in 0.52s
+- Full regression: 7,111 tests, 116.71s — no performance impact
+- All weapon→ammo cross-references verified programmatically (all 4 eras)
+- All new units have matching signatures
+- No TODOs, FIXMEs, or dead code
+
+### Integration: Fully wired (N/A — pure data)
+- All YAML loads through existing loaders without modification
+- No new source files, no enum extensions
+- Zero backward compatibility issues
+
+### Test gaps (minor)
+- WW2 has explicit cross-reference tests (weapon→ammo, unit→signature)
+- Ancient/Medieval has unit→signature cross-ref test
+- WW1 and Napoleonic lack explicit cross-reference tests (weapon→ammo refs verified programmatically in postmortem but not in test suite)
+
+### Deficits: 0 new
+No new deficits introduced. Existing limitation (WW2 comms not auto-loaded by era overlay) was pre-existing and already documented.
+
+### Documentation fixes applied
+- CLAUDE.md: corrected YAML count 121→119, 29d sub-count 28→26
+- devlog/phase-29.md: corrected YAML count 121→119, 29d sub-count 28→26
+- README.md: added Phase 29 row to table, fixed stale test counts (6,947→7,111 in 2 places), updated status description

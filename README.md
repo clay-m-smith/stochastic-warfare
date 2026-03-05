@@ -130,7 +130,7 @@ data/                     # ~220 YAML data files
   eras/                    # Era-specific data packages (WW2, WW1, Napoleonic, Ancient/Medieval)
   scenarios/              # 3 engagement + 6 campaign + 2 EW + 3 space + 2 CBRN + 4 escalation validation scenarios
 
-tests/                    # 6,947 tests across ~200 test files
+tests/                    # 7,111 tests across ~200 test files
 docs/                     # specs, brainstorm, devlog, development phases
 ```
 
@@ -138,7 +138,7 @@ For the full package tree and module decomposition, see [`docs/specs/project-str
 
 ## Development Status
 
-All 11 MVP phases (0–10) are complete. Post-MVP Phases 11–24 are complete (deep systems rework + performance optimization + developer tooling + real-world terrain + electronic warfare + space & satellite domain + CBRN effects + doctrinal AI schools + WW2 era + WW1 era + Napoleonic era + Ancient & Medieval era + unconventional & prohibited warfare). Block 2 Phases 25–28.5 complete (Engine Wiring & Integration Sprint + Core Polish & Configuration + Combat System Completeness + Modern Era Data Package + Directed Energy Weapons).
+All 11 MVP phases (0–10) are complete. Post-MVP Phases 11–24 are complete (deep systems rework + performance optimization + developer tooling + real-world terrain + electronic warfare + space & satellite domain + CBRN effects + doctrinal AI schools + WW2 era + WW1 era + Napoleonic era + Ancient & Medieval era + unconventional & prohibited warfare). Block 2 Phases 25–29 complete (Engine Wiring & Integration Sprint + Core Polish & Configuration + Combat System Completeness + Modern Era Data Package + Directed Energy Weapons + Historical Era Data Expansion).
 
 | Phase | Focus | Tests | Status |
 |-------|-------|-------|--------|
@@ -172,7 +172,8 @@ All 11 MVP phases (0–10) are complete. Post-MVP Phases 11–24 are complete (d
 | 27 | Combat System Completeness (Block 2) | 139 | Complete |
 | 28 | Modern Era Data Package (Block 2) | 137 | Complete |
 | 28.5 | Directed Energy Weapons (Block 2) | 112 | Complete |
-| | **Total** | **6,947** | |
+| 29 | Historical Era Data Expansion (Block 2) | 164 | Complete |
+| | **Total** | **7,111** | |
 
 For the full phase roadmap, see [`docs/development-phases.md`](docs/development-phases.md) (MVP) and [`docs/development-phases-post-mvp.md`](docs/development-phases-post-mvp.md) (post-MVP). For per-phase implementation logs, see [`docs/devlog/`](docs/devlog/).
 
