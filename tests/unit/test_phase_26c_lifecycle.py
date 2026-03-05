@@ -74,14 +74,14 @@ class TestPuffCleanup:
         eng = DispersalEngine()
         assert eng.cleanup_aged_puffs() == 0
 
-    def test_boundary_age_not_removed(self) -> None:
-        """Puff exactly at max age is NOT removed (strict less-than)."""
+    def test_boundary_age_removed(self) -> None:
+        """Puff exactly at max age IS removed (keep condition is strict less-than)."""
         from stochastic_warfare.cbrn.dispersal import DispersalConfig, DispersalEngine
 
         eng = DispersalEngine(DispersalConfig(max_puff_age_s=100.0))
         p = eng.create_puff("VX", 0.0, 0.0, 1.0, 0.0)
         p.age_s = 100.0  # exactly at threshold
-        # age_s < max_puff_age_s → 100.0 < 100.0 is False → removed
+        # keep condition: age_s < max_puff_age_s → 100.0 < 100.0 is False → removed
         removed = eng.cleanup_aged_puffs()
         assert removed == 1
 
