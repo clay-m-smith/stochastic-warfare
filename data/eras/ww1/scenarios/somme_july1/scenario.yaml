@@ -1,0 +1,128 @@
+name: "Somme Day 1 (July 1, 1916)"
+date: "1916-07-01T07:30:00Z"
+duration_hours: 12.0
+latitude: 50.0
+longitude: 2.7
+era: ww1
+
+tick_resolution:
+  strategic_s: 3600
+  operational_s: 300
+  tactical_s: 5
+
+weather_conditions:
+  visibility_m: 5000
+  wind_speed_mps: 2.0
+  wind_direction_deg: 270
+  temperature_c: 18.0
+  precipitation: none
+  cloud_cover: 0.4
+  humidity: 0.65
+
+terrain:
+  width_m: 10000
+  height_m: 3000
+  cell_size_m: 50.0
+  base_elevation_m: 100.0
+  terrain_type: trench_warfare
+
+sides:
+  - side: british
+    units:
+      - unit_type: british_infantry_platoon
+        count: 5
+    experience_level: 0.4
+    morale_initial: STEADY
+    commander_profile: haig_attritional
+    doctrine_template: british_trench_warfare
+    depots:
+      - depot_id: british_depot
+        position: [200, 1500]
+        capacity_tons: 2000
+        throughput_tons_per_hour: 50.0
+
+  - side: german
+    units:
+      - unit_type: german_sturmtruppen
+        count: 3
+      - unit_type: german_sturmtruppen
+        count: 2
+        overrides:
+          display_name: "German MG Stellung"
+    experience_level: 0.65
+    morale_initial: STEADY
+    commander_profile: ludendorff_storm
+    doctrine_template: german_sturmtaktik
+    depots:
+      - depot_id: german_depot
+        position: [9800, 1500]
+        capacity_tons: 1500
+        throughput_tons_per_hour: 40.0
+
+objectives:
+  - objective_id: german_first_trench_line
+    position: [7000, 1500]
+    radius_m: 500
+    type: territory
+
+  - objective_id: german_support_line
+    position: [8500, 1500]
+    radius_m: 500
+    type: territory
+
+victory_conditions:
+  - type: territory_control
+    side: british
+    params:
+      threshold: 0.5
+  - type: force_destroyed
+    side: ""
+    params:
+      threshold: 0.7
+  - type: time_expired
+    side: german
+    params:
+      max_duration_s: 43200
+
+calibration_overrides:
+  hit_probability_modifier: 1.2
+  target_size_modifier: 0.4
+  morale_degrade_rate_modifier: 0.3
+  morale_base_degrade_rate: 0.01
+  morale_casualty_weight: 0.5
+  morale_check_interval: 15
+  british_force_ratio_modifier: 1.0
+  german_force_ratio_modifier: 3.5
+  british_cohesion: 0.5
+  german_cohesion: 0.8
+  destruction_threshold: 0.6
+  british_start_x: 500.0
+  british_start_y: 1500.0
+  german_start_x: 7000.0
+  german_start_y: 1500.0
+  weapon_assignments:
+    "Lee-Enfield SMLE Mk III": lee_enfield
+    "Gewehr 98 Infantry Rifle": gewehr_98
+    "Maxim MG 08 Heavy Machine Gun": maxim_mg08
+    "Stielhandgranate M1917": mills_bomb
+
+documented_outcomes:
+  - name: british_casualties_ratio
+    value: 7.0
+    tolerance_factor: 3.0
+    unit: "attacker:defender ratio"
+    source: "Prior, Robin & Wilson, Trevor. *The Somme*"
+    source_quality: 1
+    notes: "~57,000 British casualties vs ~8,000 German on July 1"
+  - name: german_trench_held
+    value: 1.0
+    tolerance_factor: 3.0
+    unit: fraction
+    source: "Philpott, William. *Bloody Victory*"
+    source_quality: 1
+    notes: "German first line held across most of the front"
+
+sources:
+  - "Prior, Robin & Wilson, Trevor. *The Somme*"
+  - "Philpott, William. *Bloody Victory: The Sacrifice on the Somme*"
+  - "Sheffield, Gary. *The Somme: A New History*"

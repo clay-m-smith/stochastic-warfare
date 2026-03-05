@@ -1,0 +1,13 @@
+# Livens Projector — electrically-fired mortar for mass gas delivery
+# Introduced 1917.  Buried steel tubes fire 30-lb drums simultaneously
+# for surprise concentration.  Up to 1000+ projectors per attack.
+
+delivery_id: livens_projector
+display_name: "Livens Projector"
+delivery_type: mortar
+release_height_m: 0.0
+initial_cloud_radius_m: 20.0
+release_rate_kg_per_s: 14.0
+wind_dependent: false
+max_range_m: 1500.0
+min_range_m: 200.0

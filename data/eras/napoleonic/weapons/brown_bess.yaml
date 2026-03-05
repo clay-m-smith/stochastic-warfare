@@ -1,0 +1,19 @@
+weapon_id: brown_bess
+display_name: "Brown Bess Musket"
+category: RIFLE
+caliber_mm: 19.0
+muzzle_velocity_mps: 370.0
+max_range_m: 200.0
+min_range_m: 0.0
+rate_of_fire_rpm: 3.0
+burst_size: 1
+base_accuracy_mrad: 50.0
+guidance: NONE
+magazine_capacity: 1
+reload_time_s: 20.0
+compatible_ammo:
+  - musket_ball_75
+weight_kg: 4.7
+reliability: 0.85
+barrel_life_rounds: 5000
+requires_deployed: false

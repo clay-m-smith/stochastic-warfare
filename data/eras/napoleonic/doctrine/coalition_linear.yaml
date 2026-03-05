@@ -1,0 +1,17 @@
+doctrine_id: coalition_linear
+display_name: "Coalition Linear Warfare"
+category: BALANCED
+faction: coalition
+description: "Linear warfare doctrine with equal emphasis on firepower and maneuver. Cautious approach with coordinated advances and mutual support."
+min_echelon: 5
+max_echelon: 10
+applicable_domains: ["LAND"]
+phases: ["DEPLOYMENT", "ADVANCE", "ENGAGEMENT", "CONSOLIDATION"]
+force_ratios:
+  main_effort: 0.4
+  supporting: 0.35
+  reserve: 0.25
+actions: ["advance", "defend", "artillery_support", "withdraw"]
+priorities: ["coordination", "firepower", "protection"]
+risk_tolerance: medium
+tempo: medium

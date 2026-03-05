@@ -1,8 +1,8 @@
 # Stochastic Warfare
 
 ![Python](https://img.shields.io/badge/python-%3E%3D3.12-blue)
-![Tests](https://img.shields.io/badge/tests-5%2C244_passing-brightgreen)
-![Phase](https://img.shields.io/badge/phase-20_Post--MVP-blue)
+![Tests](https://img.shields.io/badge/tests-5%2C659_passing-brightgreen)
+![Phase](https://img.shields.io/badge/phase-22_Post--MVP-blue)
 
 High-fidelity, high-resolution wargame simulator built as a headless Python engine. Models warfare across multiple scales — from individual unit engagements up through tactical battles, operational battlefields, and multi-day strategic campaigns — with stochastic and signal-processing-inspired models throughout.
 
@@ -135,7 +135,7 @@ For the full package tree and module decomposition, see [`docs/specs/project-str
 
 ## Development Status
 
-All 11 MVP phases (0–10) are complete. Post-MVP Phases 11–19 are complete (deep systems rework + performance optimization + developer tooling + real-world terrain + electronic warfare + space & satellite domain + CBRN effects + doctrinal AI schools).
+All 11 MVP phases (0–10) are complete. Post-MVP Phases 11–22 are complete (deep systems rework + performance optimization + developer tooling + real-world terrain + electronic warfare + space & satellite domain + CBRN effects + doctrinal AI schools + WW2 era + WW1 era + Napoleonic era).
 
 | Phase | Focus | Tests | Status |
 |-------|-------|-------|--------|
@@ -160,7 +160,9 @@ All 11 MVP phases (0–10) are complete. Post-MVP Phases 11–19 are complete (d
 | 18 | CBRN Effects | 155 | Complete |
 | 19 | Doctrinal AI Schools | 189 | Complete |
 | 20 | WW2 Era | 137 | Complete |
-| | **Total** | **5,244** | |
+| 21 | WW1 Era | 182 | Complete |
+| 22 | Napoleonic Era | 233 | Complete |
+| | **Total** | **5,659** | |
 
 For the full phase roadmap, see [`docs/development-phases.md`](docs/development-phases.md) (MVP) and [`docs/development-phases-post-mvp.md`](docs/development-phases-post-mvp.md) (post-MVP). For per-phase implementation logs, see [`docs/devlog/`](docs/devlog/).
 

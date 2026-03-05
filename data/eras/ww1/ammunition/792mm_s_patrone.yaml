@@ -1,0 +1,14 @@
+ammo_id: 792mm_s_patrone
+display_name: "7.92x57mm S Patrone"
+ammo_type: BALL
+mass_kg: 0.0128
+diameter_mm: 7.92
+drag_coefficient: 0.38
+penetration_mm_rha: 6.0
+penetration_reference_range_m: 100.0
+blast_radius_m: 0.0
+fragmentation_radius_m: 0.0
+guidance: NONE
+propulsion: none
+max_speed_mps: 878.0
+unit_cost_factor: 0.01

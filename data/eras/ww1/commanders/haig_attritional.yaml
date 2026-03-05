@@ -1,0 +1,12 @@
+profile_id: haig_attritional
+display_name: "Field Marshal Haig (Attritional Commander)"
+description: "Methodical attrition-focused commander who believes in wearing down the enemy through sustained pressure and firepower superiority"
+aggression: 0.6
+caution: 0.7
+flexibility: 0.2
+initiative: 0.3
+experience: 0.6
+preferred_doctrine: british_trench_warfare
+stress_tolerance: 0.7
+decision_speed: 0.3
+risk_acceptance: 0.4

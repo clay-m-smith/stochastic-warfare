@@ -1,0 +1,14 @@
+ammo_id: 77mm_he
+display_name: "77mm FK 96 HE"
+ammo_type: HE
+mass_kg: 6.8
+diameter_mm: 77.0
+drag_coefficient: 0.30
+penetration_mm_rha: 0.0
+penetration_reference_range_m: 0.0
+blast_radius_m: 12.0
+fragmentation_radius_m: 18.0
+guidance: NONE
+propulsion: none
+max_speed_mps: 465.0
+unit_cost_factor: 1.0

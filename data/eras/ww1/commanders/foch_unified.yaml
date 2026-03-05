@@ -1,0 +1,12 @@
+profile_id: foch_unified
+display_name: "Marshal Foch (Unified Command)"
+description: "Coordinated allied commander who balanced offensive spirit with strategic patience, unifying disparate national forces under coherent direction"
+aggression: 0.5
+caution: 0.5
+flexibility: 0.6
+initiative: 0.5
+experience: 0.7
+preferred_doctrine: french_attaque_outrance
+stress_tolerance: 0.85
+decision_speed: 0.5
+risk_acceptance: 0.5

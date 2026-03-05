@@ -1,0 +1,35 @@
+unit_type: german_sturmtruppen
+domain: ground
+display_name: "German Sturmtruppen (Storm Troopers)"
+ground_type: LIGHT_INFANTRY
+max_speed: 1.5  # m/s (~5.4 km/h dismounted infiltration)
+armor_front: 0.0
+armor_side: 0.0
+crew:
+  - role: COMMANDER
+    count: 1
+    skill: VETERAN  # experienced Stosstruppfuhrer
+  - role: CREW
+    count: 17
+    skill: TRAINED  # hand-picked assault troops
+equipment:
+  - name: "Gewehr 98 Rifle"
+    category: WEAPON
+    weight_kg: 4.1
+    reliability: 0.93
+  - name: "Stielhandgranate M1917 Grenade"
+    category: WEAPON
+    weight_kg: 0.5
+    reliability: 0.90
+  - name: "MP 18 Submachine Gun"
+    category: WEAPON
+    weight_kg: 4.2
+    reliability: 0.82
+  - name: "Luger P08 Pistol"
+    category: WEAPON
+    weight_kg: 0.9
+    reliability: 0.88
+  - name: "Wire Cutters"
+    category: TOOL
+    weight_kg: 1.5
+    reliability: 0.95

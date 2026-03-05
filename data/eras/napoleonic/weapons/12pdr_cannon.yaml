@@ -1,0 +1,20 @@
+weapon_id: 12pdr_cannon
+display_name: "12-Pounder Cannon"
+category: ARTILLERY
+caliber_mm: 121.0
+muzzle_velocity_mps: 460.0
+max_range_m: 1600.0
+min_range_m: 50.0
+rate_of_fire_rpm: 1.0
+burst_size: 1
+base_accuracy_mrad: 8.0
+guidance: NONE
+magazine_capacity: 1
+reload_time_s: 60.0
+compatible_ammo:
+  - roundshot_12pdr
+  - canister_12pdr
+weight_kg: 1200.0
+reliability: 0.90
+barrel_life_rounds: 1500
+requires_deployed: true

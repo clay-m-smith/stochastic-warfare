@@ -1,0 +1,27 @@
+unit_type: cavalry_troop
+domain: ground
+display_name: "Cavalry Troop (Mounted)"
+ground_type: CAVALRY
+max_speed: 3.9  # m/s (~14 km/h gallop)
+armor_front: 0.0
+armor_side: 0.0
+crew:
+  - role: COMMANDER
+    count: 1
+    skill: TRAINED  # troop leader (lieutenant or NCO)
+  - role: CREW
+    count: 3
+    skill: BASIC  # mounted troopers
+equipment:
+  - name: "SMLE Cavalry Carbine"
+    category: WEAPON
+    weight_kg: 3.4
+    reliability: 0.91
+  - name: "Pattern 1908 Cavalry Sabre"
+    category: WEAPON
+    weight_kg: 1.0
+    reliability: 0.99
+  - name: "Webley Mk V Revolver"
+    category: WEAPON
+    weight_kg: 1.0
+    reliability: 0.90

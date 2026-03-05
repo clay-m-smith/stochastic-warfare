@@ -1,0 +1,12 @@
+sensor_id: sound_ranging
+sensor_type: VISUAL
+display_name: "WW1 Sound Ranging Equipment"
+max_range_m: 10000.0
+detection_threshold: 15.0
+false_alarm_rate: 5.0e-4
+scan_time_s: 30.0
+antenna_height_m: 0.0
+min_range_m: 0.0
+fov_deg: 360.0
+requires_los: false
+detects_domain: ["VISUAL"]

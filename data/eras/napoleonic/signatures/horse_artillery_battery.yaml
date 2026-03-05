@@ -1,0 +1,21 @@
+profile_id: horse_artillery_battery
+unit_type: horse_artillery_battery
+visual:
+  height_m: 1.5
+  cross_section_m2: 6.0
+  camouflage_factor: 0.2
+thermal:
+  emissivity: 0.0
+  heat_output_kw: 0.0
+  contrast_modifier: 0.0
+radar:
+  rcs_frontal_m2: 0.0
+  rcs_side_m2: 0.0
+  rcs_rear_m2: 0.0
+acoustic:
+  noise_db: 80.0
+  speed_coefficient: 0.5
+electromagnetic:
+  emitting: false
+  power_dbm: 0.0
+  frequency_ghz: 0.0

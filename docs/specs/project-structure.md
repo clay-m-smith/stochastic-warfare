@@ -1,5 +1,5 @@
 # Project Structure & Module Decomposition
-**Status**: Complete (Phase 20)
+**Status**: Complete (Phase 22)
 **Last Updated**: 2026-03-04
 
 ---
@@ -71,15 +71,35 @@ stochastic-warfare/
 │   ├── commander_profiles/           # Commander personality archetypes (risk tolerance, style, preferences)
 │   ├── maritime/                     # Maritime-specific data: port facilities, sea lanes, chokepoints, bathymetry reference
 │   ├── eras/                         # Era-specific data packages [Phase 20+]
-│   │   └── ww2/                     # WW2 era data
-│   │       ├── units/               # 15 unit definitions (5 armor, 3 infantry, 4 air, 3 naval)
-│   │       ├── weapons/             # 8 weapon definitions (tank guns, MGs, torpedo, naval guns)
-│   │       ├── ammunition/          # 13 ammo definitions (AP/HE variants, torpedo, naval)
-│   │       ├── sensors/             # 4 sensor definitions (eyeball, radar, naval radar, hydrophone)
-│   │       ├── signatures/          # 15 signature profiles (one per unit, zeroed thermal)
-│   │       ├── doctrine/            # 4 doctrine templates (blitzkrieg, soviet_deep_ops, british_deliberate, us_combined_arms_ww2)
-│   │       ├── commanders/          # 3 commander profiles (Patton, Montgomery, Zhukov types)
-│   │       └── scenarios/           # 3 validation scenarios (Kursk, Midway, Normandy Bocage)
+│   │   ├── ww2/                     # WW2 era data
+│   │   │   ├── units/               # 15 unit definitions (5 armor, 3 infantry, 4 air, 3 naval)
+│   │   │   ├── weapons/             # 8 weapon definitions (tank guns, MGs, torpedo, naval guns)
+│   │   │   ├── ammunition/          # 13 ammo definitions (AP/HE variants, torpedo, naval)
+│   │   │   ├── sensors/             # 4 sensor definitions (eyeball, radar, naval radar, hydrophone)
+│   │   │   ├── signatures/          # 15 signature profiles (one per unit, zeroed thermal)
+│   │   │   ├── doctrine/            # 4 doctrine templates (blitzkrieg, soviet_deep_ops, british_deliberate, us_combined_arms_ww2)
+│   │   │   ├── commanders/          # 3 commander profiles (Patton, Montgomery, Zhukov types)
+│   │   │   └── scenarios/           # 3 validation scenarios (Kursk, Midway, Normandy Bocage)
+│   │   ├── ww1/                     # WW1 era data [Phase 21]
+│   │   │   ├── units/               # 6 unit definitions (3 infantry, 2 armor, 1 cavalry)
+│   │   │   ├── weapons/             # 8 weapon definitions (rifles, MGs, artillery, grenades)
+│   │   │   ├── ammunition/          # 10 ammo definitions (ball, AP, HE, shrapnel, gas)
+│   │   │   ├── sensors/             # 5 sensor definitions (binoculars, sound ranging, flash spotting, balloon, aircraft recon)
+│   │   │   ├── signatures/          # 6 signature profiles (one per unit, zeroed thermal/radar/EM)
+│   │   │   ├── doctrine/            # 3 doctrine templates (british_trench_warfare, german_sturmtaktik, french_attaque_outrance)
+│   │   │   ├── commanders/          # 3 commander profiles (Haig, Ludendorff, Foch types)
+│   │   │   ├── comms/               # 2 comm definitions (field telephone, runner messenger)
+│   │   │   └── scenarios/           # 2 validation scenarios (Somme Day 1, Cambrai)
+│   │   └── napoleonic/              # Napoleonic era data [Phase 22]
+│   │       ├── units/               # 10 unit definitions (french/british infantry, Old Guard, cuirassier, hussar, lancer, artillery)
+│   │       ├── weapons/             # 9 weapon definitions (muskets, rifle, cannons, howitzer, saber, lance, bayonet)
+│   │       ├── ammunition/          # 9 ammo definitions (musket balls, roundshot, canister, howitzer shell)
+│   │       ├── sensors/             # 3 sensor definitions (telescope, cavalry scout, observation post)
+│   │       ├── signatures/          # 10 signature profiles (one per unit, zeroed thermal/radar/EM)
+│   │       ├── doctrine/            # 3 doctrine templates (french_grande_armee, british_thin_red_line, coalition_linear)
+│   │       ├── commanders/          # 3 commander profiles (Napoleon, Wellington, Blucher types)
+│   │       ├── comms/               # 2 comm definitions (mounted courier, drum/bugle signals)
+│   │       └── scenarios/           # 2 validation scenarios (Austerlitz, Waterloo)
 │   └── scenarios/                    # Complete scenario packages
 │       ├── example_scenario/
 │       │   ├── scenario.yaml         # Master scenario config: start date/time (UTC), duration, initial weather, time zone
@@ -147,7 +167,8 @@ stochastic-warfare/
     │   ├── real_heightmap.py         # SRTM/ASTER GeoTIFF → Heightmap loader (Phase 15)
     │   ├── real_classification.py    # Copernicus land cover → TerrainClassification (Phase 15)
     │   ├── real_infrastructure.py    # OSM GeoJSON → InfrastructureManager (Phase 15)
-    │   └── real_bathymetry.py        # GEBCO NetCDF → Bathymetry (Phase 15)
+    │   ├── real_bathymetry.py        # GEBCO NetCDF → Bathymetry (Phase 15)
+    │   └── trenches.py               # WW1 trench system overlay: STRtree spatial queries, cover/movement modifiers, bombardment [Phase 21b]
     ├── environment/                  # Weather, time-of-day, dynamic conditions, obscurants
     │   ├── __init__.py
     │   ├── weather.py                # Weather state, transitions, precipitation, wind, temperature
@@ -196,7 +217,9 @@ stochastic-warfare/
     │   ├── submarine_movement.py     # Submarine depth management, speed-noise tradeoff, snorkel, periscope depth
     │   ├── amphibious_movement.py    # Ship-to-shore movement, beach approach, over-the-horizon assault, landing craft
     │   ├── airborne.py              # Airborne/air assault: parachute drop, helicopter insertion, DZ/LZ selection, assembly
-    │   └── convoy.py                # WW2 convoy operations: formation, speed limiting, stragglers, wolf pack, depth charge [Phase 20b]
+    │   ├── convoy.py                # WW2 convoy operations: formation, speed limiting, stragglers, wolf pack, depth charge [Phase 20b]
+    │   ├── cavalry.py               # Napoleonic cavalry charge state machine: WALK→TROT→GALLOP→CHARGE→IMPACT→PURSUIT→RALLY [Phase 22b]
+    │   └── formation_napoleonic.py  # Napoleonic formations: LINE/COLUMN/SQUARE/SKIRMISH, worst-of-both transitions [Phase 22b]
     ├── detection/                    # Intelligence, sensors, & fog of war
     │   ├── __init__.py
     │   ├── events.py                 # Detection events (contact gained/lost, track update, ID change)
@@ -236,7 +259,11 @@ stochastic-warfare/
     │   ├── air_campaign.py           # Air campaign management: sortie capacity, pilot fatigue, weather days, attrition [Phase 12f]
     │   ├── strategic_targeting.py    # Strategic targeting: TPL generation, BDA cycle, target-effect chains [Phase 12f]
     │   ├── naval_gunnery.py          # WW2 naval gunnery: bracket firing, fire control quality, 2D Gaussian dispersion [Phase 20b]
-    │   └── strategic_bombing.py      # WW2 strategic bombing: CEP area damage, flak, fighter escort, target regeneration [Phase 20b]
+    │   ├── strategic_bombing.py      # WW2 strategic bombing: CEP area damage, flak, fighter escort, target regeneration [Phase 20b]
+    │   ├── barrage.py                # WW1 artillery barrage: standing/creeping/box, fire density, suppression, drift, friendly fire [Phase 21b]
+    │   ├── gas_warfare.py            # WW1 gas warfare adapter: cylinder release, gas shells, projectors, mask→MOPP mapping [Phase 21b]
+    │   ├── volley_fire.py            # Napoleonic massed musket fire: Binomial aggregate, range table, smoke, canister [Phase 22b]
+    │   └── melee.py                  # Napoleonic contact combat: pre-contact morale, bayonet/cavalry charge, pursuit [Phase 22b]
     ├── morale/                       # Morale & human factors
     │   ├── __init__.py
     │   ├── events.py                 # Morale events (state change, rout, rally, surrender)
@@ -274,6 +301,7 @@ stochastic-warfare/
     │   ├── naval_c2.py              # Fleet org (TF/TG/TU), naval data links, submarine comms (VLF/ELF)
     │   ├── mission_command.py        # Commander's intent, mission-type orders, subordinate initiative/adaptation
     │   ├── joint_ops.py             # Joint task force command: service coordination, liaison, coalition caveats [Phase 12a]
+    │   ├── courier.py               # Napoleonic courier C2: physical messenger, terrain speed, interception risk, courier pool [Phase 22b]
     │   └── ai/                       # AI decision-making [PHASE 8a]
     │       ├── __init__.py
     │       ├── ooda.py               # OODA loop timer/FSM (echelon-scaled, log-normal friction)
@@ -309,7 +337,8 @@ stochastic-warfare/
     │   ├── naval_logistics.py         # Underway replenishment (UNREP/RAS), port operations, sealift, LOTS
     │   ├── naval_basing.py           # Naval bases, forward operating bases, anchorage, port capacity/throughput
     │   ├── disruption.py             # Interdiction, route destruction, sabotage, blockade
-    │   └── production.py             # Supply regeneration: production facilities, infrastructure-coupled output [Phase 12b]
+    │   ├── production.py             # Supply regeneration: production facilities, infrastructure-coupled output [Phase 12b]
+    │   └── foraging.py              # Napoleonic foraging: terrain productivity, seasonal modifiers, depletion/recovery, ambush [Phase 22b]
     ├── population/                    # Civilian population & COIN [Phase 12e]
     │   ├── __init__.py
     │   ├── events.py                 # Population events (displacement, collateral, disposition, HUMINT tip)

@@ -1,0 +1,12 @@
+sensor_id: cavalry_scout
+sensor_type: VISUAL
+display_name: "Cavalry Scout"
+max_range_m: 3000.0
+detection_threshold: 10.0
+false_alarm_rate: 2.0e-4
+scan_time_s: 3.0
+antenna_height_m: 2.5
+min_range_m: 0.0
+fov_deg: 180.0
+requires_los: true
+detects_domain: ["VISUAL"]

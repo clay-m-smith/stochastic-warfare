@@ -1,0 +1,23 @@
+unit_type: french_line_infantry
+domain: ground
+display_name: "French Line Infantry Battalion"
+ground_type: LIGHT_INFANTRY
+max_speed: 1.3  # m/s (~4.7 km/h column march)
+armor_front: 0.0
+armor_side: 0.0
+crew:
+  - role: COMMANDER
+    count: 1
+    skill: TRAINED  # company-grade officer
+  - role: CREW
+    count: 74
+    skill: BASIC  # fusiliers in 6 companies
+equipment:
+  - name: "Charleville 1777 Musket"
+    category: WEAPON
+    weight_kg: 4.6
+    reliability: 0.85
+  - name: "Bayonet"
+    category: WEAPON
+    weight_kg: 0.5
+    reliability: 0.95

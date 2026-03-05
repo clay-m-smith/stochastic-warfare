@@ -1,0 +1,10 @@
+comm_id: mounted_courier
+comm_type: MESSENGER
+display_name: "Mounted ADC/Courier"
+max_range_m: 30000.0
+bandwidth_bps: 100.0
+base_latency_s: 1800.0
+base_reliability: 0.80
+intercept_risk: 0.10
+jam_resistance: 1.0
+requires_los: false

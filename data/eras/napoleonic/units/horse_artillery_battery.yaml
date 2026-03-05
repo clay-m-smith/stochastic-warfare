@@ -1,0 +1,19 @@
+unit_type: horse_artillery_battery
+domain: ground
+display_name: "Horse Artillery Battery"
+ground_type: ARTILLERY
+max_speed: 3.5  # m/s (~12.6 km/h horse-drawn limber)
+armor_front: 0.0
+armor_side: 0.0
+crew:
+  - role: COMMANDER
+    count: 1
+    skill: TRAINED  # battery captain
+  - role: CREW
+    count: 49
+    skill: BASIC  # gun crews for 6 guns + drivers
+equipment:
+  - name: "6-Pounder Cannon"
+    category: WEAPON
+    weight_kg: 700.0
+    reliability: 0.90

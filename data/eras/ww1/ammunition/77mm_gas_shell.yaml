@@ -1,0 +1,14 @@
+ammo_id: 77mm_gas_shell
+display_name: "77mm Gas Shell (Phosgene)"
+ammo_type: CHEMICAL
+mass_kg: 6.8
+diameter_mm: 77.0
+drag_coefficient: 0.30
+penetration_mm_rha: 0.0
+penetration_reference_range_m: 0.0
+blast_radius_m: 5.0
+fragmentation_radius_m: 0.0
+guidance: NONE
+propulsion: none
+max_speed_mps: 465.0
+unit_cost_factor: 2.0

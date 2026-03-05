@@ -138,8 +138,8 @@ class TestGetEraConfig:
 
     def test_register_custom_era(self) -> None:
         custom = EraConfig(era=Era.WW1, disabled_modules={"space", "ew", "cbrn", "gps"})
-        register_era_config("ww1", custom)
-        retrieved = get_era_config("ww1")
+        register_era_config("ww1_custom_test", custom)
+        retrieved = get_era_config("ww1_custom_test")
         assert retrieved.era == Era.WW1
         assert "space" in retrieved.disabled_modules
 

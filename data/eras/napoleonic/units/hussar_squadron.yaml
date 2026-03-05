@@ -1,0 +1,23 @@
+unit_type: hussar_squadron
+domain: ground
+display_name: "Hussar Squadron"
+ground_type: CAVALRY
+max_speed: 8.0  # m/s (~29 km/h light cavalry gallop)
+armor_front: 0.0
+armor_side: 0.0
+crew:
+  - role: COMMANDER
+    count: 1
+    skill: TRAINED  # squadron officer
+  - role: CREW
+    count: 119
+    skill: BASIC  # light cavalry troopers
+equipment:
+  - name: "Cavalry Saber"
+    category: WEAPON
+    weight_kg: 1.2
+    reliability: 0.95
+  - name: "Musketoon"
+    category: WEAPON
+    weight_kg: 2.5
+    reliability: 0.80

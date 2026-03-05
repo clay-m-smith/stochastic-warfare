@@ -1,0 +1,21 @@
+profile_id: german_sturmtruppen
+unit_type: german_sturmtruppen
+visual:
+  height_m: 1.8
+  cross_section_m2: 1.5
+  camouflage_factor: 0.6
+thermal:
+  emissivity: 0.0
+  heat_output_kw: 0.0
+  contrast_modifier: 0.0
+radar:
+  rcs_frontal_m2: 0.0
+  rcs_side_m2: 0.0
+  rcs_rear_m2: 0.0
+acoustic:
+  noise_db: 45.0
+  speed_coefficient: 1.0
+electromagnetic:
+  emitting: false
+  power_dbm: 0.0
+  frequency_ghz: 0.0

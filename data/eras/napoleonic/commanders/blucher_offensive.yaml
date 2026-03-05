@@ -1,0 +1,12 @@
+profile_id: blucher_offensive
+display_name: "Field Marshal Bl\u00fccher"
+description: "Aggressive Prussian commander known for relentless offensive spirit. Favors direct attack and rapid movement. High initiative but limited flexibility."
+aggression: 0.85
+caution: 0.3
+flexibility: 0.4
+initiative: 0.8
+experience: 0.7
+preferred_doctrine: coalition_linear
+stress_tolerance: 0.7
+decision_speed: 0.7
+risk_acceptance: 0.75

@@ -1,0 +1,17 @@
+doctrine_id: french_grande_armee
+display_name: "French Grande Arm\u00e9e Doctrine"
+category: OFFENSIVE
+faction: french
+description: "Combined arms doctrine emphasizing artillery mass at the decisive point followed by column assault. Aggressive tempo with reserve commitment at the critical moment."
+min_echelon: 5
+max_echelon: 10
+applicable_domains: ["LAND"]
+phases: ["RECONNAISSANCE", "ARTILLERY_PREPARATION", "MAIN_ASSAULT", "EXPLOITATION"]
+force_ratios:
+  main_effort: 0.5
+  supporting: 0.3
+  reserve: 0.2
+actions: ["attack", "maneuver", "artillery_mass", "reserve_commitment"]
+priorities: ["shock", "maneuver", "firepower"]
+risk_tolerance: high
+tempo: high

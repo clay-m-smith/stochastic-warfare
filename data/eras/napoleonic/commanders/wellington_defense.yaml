@@ -1,0 +1,12 @@
+profile_id: wellington_defense
+display_name: "Duke of Wellington"
+description: "Defensive master who maximizes terrain advantage. Reverse slope defense, disciplined fire, and counterattack at the critical moment. Patient and cautious."
+aggression: 0.4
+caution: 0.8
+flexibility: 0.6
+initiative: 0.5
+experience: 0.85
+preferred_doctrine: british_thin_red_line
+stress_tolerance: 0.9
+decision_speed: 0.6
+risk_acceptance: 0.3

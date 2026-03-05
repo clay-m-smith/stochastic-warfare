@@ -1,0 +1,19 @@
+unit_type: foot_artillery_battery
+domain: ground
+display_name: "Foot Artillery Battery"
+ground_type: ARTILLERY
+max_speed: 1.5  # m/s (~5.4 km/h foot march with limber)
+armor_front: 0.0
+armor_side: 0.0
+crew:
+  - role: COMMANDER
+    count: 1
+    skill: TRAINED  # battery captain
+  - role: CREW
+    count: 79
+    skill: BASIC  # gun crews for 8 guns + drivers
+equipment:
+  - name: "12-Pounder Cannon"
+    category: WEAPON
+    weight_kg: 1200.0
+    reliability: 0.90

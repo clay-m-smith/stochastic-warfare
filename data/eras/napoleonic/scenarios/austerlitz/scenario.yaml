@@ -1,0 +1,147 @@
+name: "Battle of Austerlitz (December 2, 1805)"
+date: "1805-12-02T07:00:00Z"
+duration_hours: 10.0
+latitude: 49.15
+longitude: 16.76
+era: napoleonic
+
+tick_resolution:
+  strategic_s: 3600
+  operational_s: 300
+  tactical_s: 5
+
+weather_conditions:
+  visibility_m: 2000
+  wind_speed_mps: 2.0
+  wind_direction_deg: 270
+  temperature_c: 2.0
+  precipitation: none
+  cloud_cover: 0.6
+  humidity: 0.75
+
+terrain:
+  width_m: 12000
+  height_m: 8000
+  cell_size_m: 100.0
+  base_elevation_m: 200.0
+  terrain_type: hilly_defense
+
+sides:
+  - side: french
+    units:
+      - unit_type: french_line_infantry
+        count: 4
+      - unit_type: french_light_infantry
+        count: 1
+      - unit_type: french_old_guard
+        count: 1
+      - unit_type: cuirassier_squadron
+        count: 2
+      - unit_type: horse_artillery_battery
+        count: 1
+      - unit_type: foot_artillery_battery
+        count: 1
+    experience_level: 0.70
+    morale_initial: STEADY
+    commander_profile: napoleon_grande_armee
+    doctrine_template: french_grande_armee
+    depots:
+      - depot_id: french_depot
+        position: [1000, 4000]
+        capacity_tons: 3000
+        throughput_tons_per_hour: 80.0
+
+  - side: coalition
+    units:
+      - unit_type: british_line_infantry
+        count: 5
+      - unit_type: hussar_squadron
+        count: 2
+      - unit_type: foot_artillery_battery
+        count: 2
+    experience_level: 0.50
+    morale_initial: STEADY
+    commander_profile: blucher_offensive
+    doctrine_template: coalition_linear
+    depots:
+      - depot_id: coalition_depot
+        position: [11000, 4000]
+        capacity_tons: 2000
+        throughput_tons_per_hour: 50.0
+
+objectives:
+  - objective_id: pratzen_heights
+    position: [6000, 4000]
+    radius_m: 800
+    type: key_terrain
+  - objective_id: santon_hill
+    position: [3000, 6000]
+    radius_m: 500
+    type: territory
+  - objective_id: telnitz_village
+    position: [8000, 2000]
+    radius_m: 400
+    type: territory
+
+victory_conditions:
+  - type: territory_control
+    side: french
+    params:
+      threshold: 0.6
+  - type: force_destroyed
+    side: ""
+    params:
+      threshold: 0.4
+  - type: time_expired
+    side: french
+    params:
+      max_duration_s: 36000
+
+calibration_overrides:
+  hit_probability_modifier: 0.8
+  target_size_modifier: 0.6
+  morale_degrade_rate_modifier: 0.4
+  morale_base_degrade_rate: 0.01
+  morale_casualty_weight: 0.5
+  morale_check_interval: 20
+  french_force_ratio_modifier: 1.5
+  coalition_force_ratio_modifier: 1.0
+  french_cohesion: 0.75
+  coalition_cohesion: 0.55
+  destruction_threshold: 0.4
+  french_start_x: 2000.0
+  french_start_y: 4000.0
+  coalition_start_x: 10000.0
+  coalition_start_y: 4000.0
+  advance_speed: 1.0
+  weapon_assignments:
+    "Charleville 1777 Musket": charleville_1777
+    "Brown Bess Musket": brown_bess
+    "Baker Rifle": baker_rifle
+    "6-Pounder Cannon": 6pdr_cannon
+    "12-Pounder Cannon": 12pdr_cannon
+    "Cavalry Saber": cavalry_saber
+    "Lance": lance
+    "Bayonet": bayonet
+    "Musketoon": cavalry_saber
+
+documented_outcomes:
+  - name: coalition_casualty_fraction
+    value: 0.27
+    tolerance_factor: 3.0
+    unit: fraction
+    source: "Chandler, David. *The Campaigns of Napoleon*"
+    source_quality: 1
+    notes: "~27% coalition casualties including prisoners; decisive French victory"
+  - name: french_casualty_fraction
+    value: 0.10
+    tolerance_factor: 3.0
+    unit: fraction
+    source: "Chandler, David. *The Campaigns of Napoleon*"
+    source_quality: 1
+    notes: "~10% French casualties; maneuver victory at decisive point"
+
+sources:
+  - "Chandler, David. *The Campaigns of Napoleon*"
+  - "Duffy, Christopher. *Austerlitz 1805*"
+  - "Goetz, Robert. *1805: Austerlitz*"

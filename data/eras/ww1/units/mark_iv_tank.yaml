@@ -1,0 +1,41 @@
+unit_type: mark_iv_tank
+domain: ground
+display_name: "Mark IV Tank (Male)"
+ground_type: ARMOR
+max_speed: 1.7  # m/s (~6 km/h cross-country)
+armor_front: 12.0  # 12mm hardened steel plate
+armor_side: 6.0
+crew:
+  - role: COMMANDER
+    count: 1
+    skill: TRAINED  # officer commanding
+  - role: GUNNER
+    count: 2
+    skill: BASIC  # left and right sponson gunners
+  - role: LOADER
+    count: 2
+    skill: BASIC  # sponson loaders
+  - role: DRIVER
+    count: 1
+    skill: TRAINED  # requires coordinating with gearsmen
+  - role: CREW
+    count: 2
+    skill: BASIC  # gearsmen operating secondary transmission
+equipment:
+  - name: "QF 6-pounder 6 cwt Hotchkiss Gun"
+    category: WEAPON
+    weight_kg: 380.0
+    reliability: 0.80
+  - name: "Lewis Gun Sponson Mount"
+    category: WEAPON
+    weight_kg: 12.7
+    reliability: 0.78
+  - name: "Daimler-Knight 105 hp Engine"
+    category: PROPULSION
+    weight_kg: 600.0
+    reliability: 0.55  # very unreliable, frequent breakdowns
+    temperature_range: [-5.0, 40.0]
+  - name: "Hardened Steel Plate Armor"
+    category: PROTECTION
+    weight_kg: 8000.0
+    reliability: 0.90  # bullet splash and spall a persistent problem

@@ -1,0 +1,41 @@
+# Phosgene (CG) Choking Agent
+# Non-persistent pulmonary agent.  Colourless gas with musty-hay odour;
+# more lethal than chlorine (lower LCt50) but with delayed effects
+# (pulmonary oedema onset 2-24 hours).  Widely used 1915-1918; accounted
+# for ~80% of chemical casualties in WW1.
+# Source: FM 3-11.9, SIPRI Chemical & Biological Warfare Studies
+
+agent_id: phosgene
+display_name: "Phosgene (CG) Choking Agent"
+category: 2  # CHOKING
+
+# Toxicity thresholds (mg·min/m³ for inhalation)
+lct50_mg_min_m3: 3200.0
+ict50_mg_min_m3: 800.0
+ld50_mg: 0.0
+detection_threshold_mg_m3: 4.0
+
+# Persistence & environmental behavior
+persistence_hours: 0.3     # Very non-persistent — volatile gas
+evaporation_rate_per_c: 0.15
+rain_washout_rate: 0.2     # Moderate — reacts with water
+density_kg_m3: 4.25        # ~3.5x air density — settles in low terrain
+vapor_pressure_kpa: 162.0
+
+# Decontamination
+decon_difficulty: 0.1  # Easy — dissipates rapidly, ventilation sufficient
+
+# Probit model: Y = probit_a + probit_b * ln(dosage), P = Phi(Y - 5)
+# At LCt50=3200: probit_a = 5 - 1.0 * ln(3200) = 5 - 8.0709 = -3.0709
+probit_a: -3.0709
+probit_b: 1.0
+
+# Soil absorption multipliers by soil type
+soil_absorption:
+  SAND: 0.05
+  CLAY: 0.05
+  LOAM: 0.05
+  ROCK: 0.02
+  GRAVEL: 0.05
+  PEAT: 0.1
+  MUD: 0.05

@@ -28,8 +28,8 @@ Rolling record of implementation decisions, changes, and lessons learned across 
 | 18 | NBC/CBRN Effects | **Complete** | [phase-18.md](phase-18.md) |
 | 19 | Doctrinal AI Schools | **Complete** | [phase-19.md](phase-19.md) |
 | 20 | WW2 Era | **Complete** | [phase-20.md](phase-20.md) |
-| 21 | WW1 Era | Planned | — |
-| 22 | Napoleonic Era | Planned | — |
+| 21 | WW1 Era | **Complete** | [phase-21.md](phase-21.md) |
+| 22 | Napoleonic Era | **Complete** | [phase-22.md](phase-22.md) |
 | 23 | Ancient & Medieval Era | Planned | — |
 | 24 | Unconventional & Prohibited Warfare | Planned | — |
 
@@ -143,6 +143,17 @@ Known limitations and deferred improvements logged during implementation. Review
 | 20 | Strategic bombing target regeneration is linear (no industrial interdependency graph) | [phase-20.md — Known Limitations](phase-20.md#known-limitations) |
 | 20 | Fighter escort in strategic bombing is probability modifier, not full air combat sub-simulation | [phase-20.md — Known Limitations](phase-20.md#known-limitations) |
 | 16/17/18/19/20 | ScenarioLoader doesn't auto-wire era-specific engines from YAML (extends existing EW/Space/CBRN/Schools gap) | [phase-20.md — Postmortem](phase-20.md#postmortem) |
+| 21 | Barrage drift is purely random walk — no systematic correction for observer feedback | [phase-21.md — Known Limitations](phase-21.md#known-limitations) |
+| 21 | Gas warfare engine does not model gas mask don time delay (units gain instant protection) | [phase-21.md — Known Limitations](phase-21.md#known-limitations) |
+| 21 | Trench system has no wire-cutting mechanic (wire is a query attribute only, not a movement blocker) | [phase-21.md — Known Limitations](phase-21.md#known-limitations) |
+| 16/17/18/19/20/21 | ScenarioLoader doesn't auto-wire WW1 engines (trench/barrage/gas) from YAML (extends existing gap) | [phase-21.md — Known Limitations](phase-21.md#known-limitations) |
+| 21 | Gas warfare wind direction tolerance (60°) hardcoded — should be configurable in GasWarfareConfig | [phase-21.md — Postmortem](phase-21.md#postmortem) |
+| 21 | Barrage/gas engines use hardcoded fallback RNG seed (42) when no RNG injected | [phase-21.md — Postmortem](phase-21.md#postmortem) |
+| 16/17/18/19/20/21/22 | ScenarioLoader doesn't auto-wire Napoleonic engines (volley/melee/cavalry/formation/courier/foraging) from YAML (extends existing gap) | [phase-22.md — Known Limitations](phase-22.md#known-limitations) |
+| 22 | Cavalry charge ignores terrain effects (speed not modified by slope or obstacles) | [phase-22.md — Known Limitations](phase-22.md#known-limitations) |
+| 22 | No frontage/depth in melee — simplified to force ratio × formation modifier | [phase-22.md — Known Limitations](phase-22.md#known-limitations) |
+| 22 | Foraging ambush casualty rate hardcoded at 10% — should be configurable in ForagingConfig | [phase-22.md — Known Limitations](phase-22.md#known-limitations) |
+| 22 | Volley/melee/cavalry/courier/foraging engines use hardcoded fallback RNG seed (42) when no RNG injected | [phase-22.md — Known Limitations](phase-22.md#known-limitations) |
 
 ## Conventions
 

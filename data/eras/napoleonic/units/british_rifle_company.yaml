@@ -1,0 +1,19 @@
+unit_type: british_rifle_company
+domain: ground
+display_name: "British 95th Rifles Company"
+ground_type: LIGHT_INFANTRY
+max_speed: 1.5  # m/s (~5.4 km/h skirmish pace)
+armor_front: 0.0
+armor_side: 0.0
+crew:
+  - role: COMMANDER
+    count: 1
+    skill: VETERAN  # experienced rifle officer
+  - role: CREW
+    count: 39
+    skill: TRAINED  # trained marksmen
+equipment:
+  - name: "Baker Rifle"
+    category: WEAPON
+    weight_kg: 4.1
+    reliability: 0.88

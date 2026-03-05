@@ -174,7 +174,7 @@ class TerrainConfig(BaseModel):
         source = info.data.get("terrain_source", "procedural")
         if source == "real":
             return v  # No constraint when using real terrain
-        allowed = {"flat_desert", "open_ocean", "hilly_defense"}
+        allowed = {"flat_desert", "open_ocean", "hilly_defense", "trench_warfare"}
         if v not in allowed:
             raise ValueError(f"terrain_type must be one of {allowed}; got {v!r}")
         return v
@@ -301,6 +301,19 @@ class SimulationContext:
     convoy_engine: Any = None
     strategic_bombing_engine: Any = None
 
+    # WW1 Engine Extensions (Phase 21b)
+    trench_engine: Any = None
+    barrage_engine: Any = None
+    gas_warfare_engine: Any = None
+
+    # Napoleonic Engine Extensions (Phase 22b)
+    volley_fire_engine: Any = None
+    melee_engine: Any = None
+    cavalry_engine: Any = None
+    formation_napoleonic_engine: Any = None
+    courier_engine: Any = None
+    foraging_engine: Any = None
+
     # Logistics
     consumption_engine: Any = None
     stockpile_manager: Any = None
@@ -367,6 +380,15 @@ class SimulationContext:
             ("space_engine", self.space_engine),
             ("cbrn_engine", self.cbrn_engine),
             ("school_registry", self.school_registry),
+            ("trench_engine", self.trench_engine),
+            ("barrage_engine", self.barrage_engine),
+            ("gas_warfare_engine", self.gas_warfare_engine),
+            ("volley_fire_engine", self.volley_fire_engine),
+            ("melee_engine", self.melee_engine),
+            ("cavalry_engine", self.cavalry_engine),
+            ("formation_napoleonic_engine", self.formation_napoleonic_engine),
+            ("courier_engine", self.courier_engine),
+            ("foraging_engine", self.foraging_engine),
         ]
         for name, eng in engines:
             if eng is not None and hasattr(eng, "get_state"):
@@ -394,6 +416,15 @@ class SimulationContext:
             ("space_engine", self.space_engine),
             ("cbrn_engine", self.cbrn_engine),
             ("school_registry", self.school_registry),
+            ("trench_engine", self.trench_engine),
+            ("barrage_engine", self.barrage_engine),
+            ("gas_warfare_engine", self.gas_warfare_engine),
+            ("volley_fire_engine", self.volley_fire_engine),
+            ("melee_engine", self.melee_engine),
+            ("cavalry_engine", self.cavalry_engine),
+            ("formation_napoleonic_engine", self.formation_napoleonic_engine),
+            ("courier_engine", self.courier_engine),
+            ("foraging_engine", self.foraging_engine),
         ]
         for name, eng in engines:
             if eng is not None and name in state and hasattr(eng, "set_state"):

@@ -1,0 +1,135 @@
+name: "Battle of Cambrai (November 20, 1917)"
+date: "1917-11-20T06:20:00Z"
+duration_hours: 10.0
+latitude: 50.1
+longitude: 3.2
+era: ww1
+
+tick_resolution:
+  strategic_s: 3600
+  operational_s: 300
+  tactical_s: 5
+
+weather_conditions:
+  visibility_m: 3000
+  wind_speed_mps: 1.5
+  wind_direction_deg: 240
+  temperature_c: 5.0
+  precipitation: none
+  cloud_cover: 0.7
+  humidity: 0.80
+
+terrain:
+  width_m: 8000
+  height_m: 5000
+  cell_size_m: 50.0
+  base_elevation_m: 80.0
+  terrain_type: trench_warfare
+
+sides:
+  - side: british
+    units:
+      - unit_type: british_infantry_platoon
+        count: 3
+      - unit_type: mark_iv_tank
+        count: 4
+    experience_level: 0.55
+    morale_initial: STEADY
+    commander_profile: haig_attritional
+    doctrine_template: british_trench_warfare
+    depots:
+      - depot_id: british_depot
+        position: [200, 2500]
+        capacity_tons: 2500
+        throughput_tons_per_hour: 60.0
+
+  - side: german
+    units:
+      - unit_type: german_sturmtruppen
+        count: 2
+      - unit_type: german_sturmtruppen
+        count: 1
+        overrides:
+          display_name: "German MG Position"
+    experience_level: 0.55
+    morale_initial: STEADY
+    commander_profile: ludendorff_storm
+    doctrine_template: german_sturmtaktik
+    depots:
+      - depot_id: german_depot
+        position: [7800, 2500]
+        capacity_tons: 1200
+        throughput_tons_per_hour: 35.0
+
+objectives:
+  - objective_id: hindenburg_line_1
+    position: [5000, 2500]
+    radius_m: 500
+    type: territory
+  - objective_id: hindenburg_line_2
+    position: [6000, 2500]
+    radius_m: 500
+    type: territory
+  - objective_id: cambrai_outskirts
+    position: [7000, 2500]
+    radius_m: 700
+    type: key_terrain
+
+victory_conditions:
+  - type: territory_control
+    side: british
+    params:
+      threshold: 0.6
+  - type: force_destroyed
+    side: ""
+    params:
+      threshold: 0.5
+  - type: time_expired
+    side: british
+    params:
+      max_duration_s: 36000
+
+calibration_overrides:
+  hit_probability_modifier: 0.9
+  target_size_modifier: 0.5
+  morale_degrade_rate_modifier: 0.35
+  morale_base_degrade_rate: 0.008
+  morale_casualty_weight: 0.45
+  morale_check_interval: 20
+  british_force_ratio_modifier: 2.0
+  german_force_ratio_modifier: 1.5
+  british_cohesion: 0.65
+  german_cohesion: 0.6
+  destruction_threshold: 0.5
+  british_start_x: 500.0
+  british_start_y: 2500.0
+  german_start_x: 5000.0
+  german_start_y: 2500.0
+  weapon_assignments:
+    "Lee-Enfield SMLE Mk III": lee_enfield
+    "Gewehr 98 Infantry Rifle": gewehr_98
+    "QF 6-pounder Gun (Sponson)": 18pdr_field_gun
+    "Lewis Gun (Sponson MG)": lewis_gun
+    "Maxim MG 08 Heavy Machine Gun": maxim_mg08
+    "Stielhandgranate M1917": mills_bomb
+
+documented_outcomes:
+  - name: advance_km
+    value: 8.0
+    tolerance_factor: 3.0
+    unit: km
+    source: "Hammond, Bryn. *Cambrai 1917: The Myth of the First Great Tank Battle*"
+    source_quality: 1
+    notes: "Deepest advance on Western Front in 3 years; unprecedented"
+  - name: tank_mechanical_loss_fraction
+    value: 0.30
+    tolerance_factor: 3.0
+    unit: fraction
+    source: "Harris, J.P. *Men, Ideas and Tanks*"
+    source_quality: 1
+    notes: "~30% of tanks lost to mechanical failure, not enemy action"
+
+sources:
+  - "Hammond, Bryn. *Cambrai 1917: The Myth of the First Great Tank Battle*"
+  - "Harris, J.P. *Men, Ideas and Tanks: British Military Thought and Armoured Forces 1903-1939*"
+  - "Foley, Robert. *German Strategy and the Path to Verdun*"

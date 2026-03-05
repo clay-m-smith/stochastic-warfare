@@ -1,0 +1,12 @@
+profile_id: ludendorff_storm
+display_name: "General Ludendorff (Stormtroop Commander)"
+description: "Bold innovative tactician who pioneered infiltration methods, favoring decentralized execution and rapid exploitation of opportunities"
+aggression: 0.85
+caution: 0.3
+flexibility: 0.7
+initiative: 0.8
+experience: 0.8
+preferred_doctrine: german_sturmtaktik
+stress_tolerance: 0.7
+decision_speed: 0.8
+risk_acceptance: 0.8

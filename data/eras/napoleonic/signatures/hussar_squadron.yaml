@@ -1,0 +1,21 @@
+profile_id: hussar_squadron
+unit_type: hussar_squadron
+visual:
+  height_m: 2.2
+  cross_section_m2: 3.0
+  camouflage_factor: 0.2
+thermal:
+  emissivity: 0.0
+  heat_output_kw: 0.0
+  contrast_modifier: 0.0
+radar:
+  rcs_frontal_m2: 0.0
+  rcs_side_m2: 0.0
+  rcs_rear_m2: 0.0
+acoustic:
+  noise_db: 70.0
+  speed_coefficient: 1.5
+electromagnetic:
+  emitting: false
+  power_dbm: 0.0
+  frequency_ghz: 0.0

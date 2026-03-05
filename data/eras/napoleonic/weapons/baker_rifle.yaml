@@ -1,0 +1,19 @@
+weapon_id: baker_rifle
+display_name: "Baker Rifle"
+category: RIFLE
+caliber_mm: 15.9
+muzzle_velocity_mps: 400.0
+max_range_m: 300.0
+min_range_m: 0.0
+rate_of_fire_rpm: 1.0
+burst_size: 1
+base_accuracy_mrad: 17.0
+guidance: NONE
+magazine_capacity: 1
+reload_time_s: 60.0
+compatible_ammo:
+  - rifle_ball
+weight_kg: 4.1
+reliability: 0.88
+barrel_life_rounds: 3000
+requires_deployed: false

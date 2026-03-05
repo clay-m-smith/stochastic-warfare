@@ -1,0 +1,12 @@
+sensor_id: binoculars_ww1
+sensor_type: VISUAL
+display_name: "WW1 Field Binoculars"
+max_range_m: 3000.0
+detection_threshold: 10.0
+false_alarm_rate: 1.0e-4
+scan_time_s: 4.0
+antenna_height_m: 1.8
+min_range_m: 0.0
+fov_deg: 30.0
+requires_los: true
+detects_domain: ["VISUAL"]

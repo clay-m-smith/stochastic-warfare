@@ -1,0 +1,17 @@
+doctrine_id: british_trench_warfare
+display_name: "British Trench Warfare"
+category: DEFENSIVE
+faction: british
+description: "Deliberate methodical operations emphasizing artillery preparation, systematic advance by bounds, and consolidation of captured positions"
+min_echelon: 5
+max_echelon: 10
+applicable_domains: ["LAND"]
+phases: ["PREPARATION", "BOMBARDMENT", "ASSAULT", "CONSOLIDATION"]
+force_ratios:
+  main_effort: 0.5
+  supporting: 0.3
+  reserve: 0.2
+actions: ["defend", "deliberate_attack", "consolidate", "hold"]
+priorities: ["firepower", "protection", "attrition"]
+risk_tolerance: low
+tempo: low

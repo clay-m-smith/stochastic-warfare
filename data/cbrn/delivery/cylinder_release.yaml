@@ -1,0 +1,14 @@
+# WW1 Cylinder Release — ground-level continuous gas cloud
+# First used at Second Battle of Ypres, April 22, 1915.
+# Requires favorable wind (1-6 m/s toward enemy).
+# Release from buried cylinders along front line.
+
+delivery_id: cylinder_release
+display_name: "Gas Cylinder Release"
+delivery_type: ground_release
+release_height_m: 0.5
+initial_cloud_radius_m: 10.0
+release_rate_kg_per_s: 2.0
+wind_dependent: true
+min_wind_speed_mps: 1.0
+max_wind_speed_mps: 6.0

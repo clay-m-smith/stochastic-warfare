@@ -1,0 +1,17 @@
+doctrine_id: british_thin_red_line
+display_name: "British Thin Red Line"
+category: DEFENSIVE
+faction: british
+description: "Linear defensive doctrine maximizing musket firepower from two-deep line formations. Reverse slope defense to deny observation. Disciplined fire held until close range."
+min_echelon: 5
+max_echelon: 10
+applicable_domains: ["LAND"]
+phases: ["PREPARATION", "DEFENSE", "VOLLEY_FIRE", "COUNTERATTACK"]
+force_ratios:
+  main_effort: 0.4
+  supporting: 0.3
+  reserve: 0.3
+actions: ["defend", "volley_fire", "hold", "counterattack"]
+priorities: ["firepower", "protection", "discipline"]
+risk_tolerance: low
+tempo: low

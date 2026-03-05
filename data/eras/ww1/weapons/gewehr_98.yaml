@@ -1,0 +1,19 @@
+weapon_id: gewehr_98
+display_name: "Gewehr 98 Infantry Rifle"
+category: RIFLE
+caliber_mm: 7.92
+muzzle_velocity_mps: 878.0
+max_range_m: 800.0
+min_range_m: 0.0
+rate_of_fire_rpm: 10.0
+burst_size: 1
+base_accuracy_mrad: 0.8
+guidance: NONE
+magazine_capacity: 5
+reload_time_s: 5.0
+compatible_ammo:
+  - 792mm_s_patrone
+weight_kg: 4.09
+reliability: 0.95
+barrel_life_rounds: 10000
+requires_deployed: false

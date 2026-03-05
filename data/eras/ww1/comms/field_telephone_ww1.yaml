@@ -1,0 +1,10 @@
+comm_id: field_telephone_ww1
+comm_type: WIRE
+display_name: "WW1 Field Telephone"
+max_range_m: 15000.0
+bandwidth_bps: 4000.0
+base_latency_s: 2.0
+base_reliability: 0.85
+intercept_risk: 0.05
+jam_resistance: 1.0
+requires_los: false

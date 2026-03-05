@@ -1,0 +1,24 @@
+weapon_id: 77mm_fk96
+display_name: "7.7 cm FK 96 n.A. Field Gun"
+category: CANNON
+caliber_mm: 77.0
+muzzle_velocity_mps: 465.0
+max_range_m: 7800.0
+min_range_m: 200.0
+rate_of_fire_rpm: 10.0
+burst_size: 1
+base_accuracy_mrad: 3.0
+guidance: NONE
+magazine_capacity: 1
+reload_time_s: 6.0
+compatible_ammo:
+  - 77mm_he
+  - 77mm_shrapnel
+  - 77mm_gas_shell
+weight_kg: 925.0
+reliability: 0.90
+barrel_life_rounds: 5000
+requires_deployed: true
+traverse_deg: 8.0
+elevation_min_deg: -5.0
+elevation_max_deg: 15.0

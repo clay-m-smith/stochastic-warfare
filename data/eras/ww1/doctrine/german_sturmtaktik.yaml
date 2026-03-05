@@ -1,0 +1,17 @@
+doctrine_id: german_sturmtaktik
+display_name: "German Sturmtaktik (Stormtroop Tactics)"
+category: OFFENSIVE
+faction: german
+description: "Infiltration tactics bypassing strongpoints to penetrate deep into enemy rear areas, exploiting gaps and disrupting command and supply"
+min_echelon: 4
+max_echelon: 8
+applicable_domains: ["LAND"]
+phases: ["RECONNAISSANCE", "INFILTRATION", "EXPLOITATION", "MOPPING_UP"]
+force_ratios:
+  main_effort: 0.6
+  supporting: 0.25
+  reserve: 0.15
+actions: ["attack", "infiltrate", "bypass", "exploit"]
+priorities: ["maneuver", "surprise", "speed"]
+risk_tolerance: high
+tempo: high

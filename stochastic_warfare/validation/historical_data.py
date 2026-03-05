@@ -99,7 +99,7 @@ class TerrainSpec(BaseModel):
     @field_validator("terrain_type")
     @classmethod
     def _known_type(cls, v: str) -> str:
-        allowed = {"flat_desert", "open_ocean", "hilly_defense"}
+        allowed = {"flat_desert", "open_ocean", "hilly_defense", "trench_warfare"}
         if v not in allowed:
             raise ValueError(f"terrain_type must be one of {allowed}; got {v!r}")
         return v

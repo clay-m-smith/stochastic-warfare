@@ -1,0 +1,41 @@
+unit_type: a7v
+domain: ground
+display_name: "A7V Sturmpanzerwagen"
+ground_type: ARMOR
+max_speed: 4.2  # m/s (~15 km/h road, ~5 km/h cross-country)
+armor_front: 30.0  # 30mm hardened steel plate
+armor_side: 15.0
+crew:
+  - role: COMMANDER
+    count: 1
+    skill: TRAINED  # officer commanding
+  - role: GUNNER
+    count: 1
+    skill: TRAINED  # main gun (57mm Maxim-Nordenfelt)
+  - role: LOADER
+    count: 1
+    skill: BASIC  # main gun loader
+  - role: DRIVER
+    count: 2
+    skill: TRAINED  # driver + mechanic
+  - role: CREW
+    count: 13
+    skill: BASIC  # 6 MG gunners + 6 MG loaders + signaller
+equipment:
+  - name: "57mm Maxim-Nordenfelt Gun"
+    category: WEAPON
+    weight_kg: 450.0
+    reliability: 0.82
+  - name: "MG 08 Machine Gun (x6)"
+    category: WEAPON
+    weight_kg: 26.4  # per gun, 6 mounted
+    reliability: 0.85
+  - name: "Daimler-Benz 4-Cylinder 100 hp Engine (x2)"
+    category: PROPULSION
+    weight_kg: 500.0
+    reliability: 0.50  # poor reliability, high center of gravity
+    temperature_range: [-5.0, 40.0]
+  - name: "Hardened Steel Plate Armor"
+    category: PROTECTION
+    weight_kg: 10000.0
+    reliability: 0.92

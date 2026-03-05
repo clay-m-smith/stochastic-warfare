@@ -1,0 +1,17 @@
+doctrine_id: french_attaque_outrance
+display_name: "French Attaque à outrance"
+category: OFFENSIVE
+faction: french
+description: "All-out offensive spirit emphasizing élan, massed infantry assault, and the moral superiority of the attack over the defense"
+min_echelon: 5
+max_echelon: 10
+applicable_domains: ["LAND"]
+phases: ["BOMBARDMENT", "ASSAULT", "PURSUIT"]
+force_ratios:
+  main_effort: 0.8
+  supporting: 0.15
+  reserve: 0.05
+actions: ["attack", "frontal_assault", "pursuit"]
+priorities: ["morale", "firepower", "aggression"]
+risk_tolerance: high
+tempo: high

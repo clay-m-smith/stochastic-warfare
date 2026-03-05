@@ -1,0 +1,14 @@
+ammo_id: rifle_ball
+display_name: ".625 Caliber Rifle Ball"
+ammo_type: BALL
+mass_kg: 0.023
+diameter_mm: 15.9
+drag_coefficient: 0.38
+penetration_mm_rha: 4.0
+penetration_reference_range_m: 100.0
+blast_radius_m: 0.0
+fragmentation_radius_m: 0.0
+guidance: NONE
+propulsion: none
+max_speed_mps: 400.0
+unit_cost_factor: 0.005

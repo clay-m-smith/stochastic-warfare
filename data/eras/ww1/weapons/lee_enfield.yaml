@@ -1,0 +1,20 @@
+weapon_id: lee_enfield
+display_name: "Lee-Enfield SMLE Mk III"
+category: RIFLE
+caliber_mm: 7.7
+muzzle_velocity_mps: 744.0
+max_range_m: 800.0
+min_range_m: 0.0
+rate_of_fire_rpm: 15.0
+burst_size: 1
+base_accuracy_mrad: 1.0
+guidance: NONE
+magazine_capacity: 10
+reload_time_s: 4.0
+compatible_ammo:
+  - 303_ball
+  - 303_ap
+weight_kg: 3.96
+reliability: 0.95
+barrel_life_rounds: 10000
+requires_deployed: false

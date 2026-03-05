@@ -1,0 +1,19 @@
+unit_type: french_light_infantry
+domain: ground
+display_name: "French Light Infantry (Voltigeurs)"
+ground_type: LIGHT_INFANTRY
+max_speed: 1.5  # m/s (~5.4 km/h skirmish pace)
+armor_front: 0.0
+armor_side: 0.0
+crew:
+  - role: COMMANDER
+    count: 1
+    skill: TRAINED  # voltigeur officer
+  - role: CREW
+    count: 39
+    skill: BASIC  # skirmisher company
+equipment:
+  - name: "Charleville 1777 Musket"
+    category: WEAPON
+    weight_kg: 4.6
+    reliability: 0.85

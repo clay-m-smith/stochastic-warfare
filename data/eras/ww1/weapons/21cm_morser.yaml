@@ -1,0 +1,22 @@
+weapon_id: 21cm_morser
+display_name: "21 cm Morser 10 Heavy Howitzer"
+category: CANNON
+caliber_mm: 210.0
+muzzle_velocity_mps: 393.0
+max_range_m: 9400.0
+min_range_m: 500.0
+rate_of_fire_rpm: 1.0
+burst_size: 1
+base_accuracy_mrad: 5.0
+guidance: NONE
+magazine_capacity: 1
+reload_time_s: 60.0
+compatible_ammo:
+  - 21cm_he
+weight_kg: 6680.0
+reliability: 0.85
+barrel_life_rounds: 2000
+requires_deployed: true
+traverse_deg: 4.0
+elevation_min_deg: 0.0
+elevation_max_deg: 70.0

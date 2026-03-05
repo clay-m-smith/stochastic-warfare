@@ -1,0 +1,10 @@
+comm_id: runner_messenger_ww1
+comm_type: MESSENGER
+display_name: "WW1 Runner/Messenger"
+max_range_m: 5000.0
+bandwidth_bps: 100.0
+base_latency_s: 600.0
+base_reliability: 0.70
+intercept_risk: 0.10
+jam_resistance: 1.0
+requires_los: false
