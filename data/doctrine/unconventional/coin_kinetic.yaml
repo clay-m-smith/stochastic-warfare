@@ -1,0 +1,17 @@
+doctrine_id: coin_kinetic
+display_name: "COIN Kinetic"
+category: OFFENSIVE
+faction: generic
+description: "Kinetic-focused counterinsurgency emphasizing enemy destruction"
+min_echelon: 4
+max_echelon: 10
+applicable_domains: ["LAND"]
+phases: ["FIND", "FIX", "FINISH"]
+force_ratios:
+  strike: 0.50
+  screening: 0.30
+  reserve: 0.20
+actions: ["attack", "cordon_search", "raid", "pursuit", "support_by_fire"]
+priorities: ["firepower", "maneuver", "protection"]
+risk_tolerance: moderate
+tempo: high

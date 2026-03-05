@@ -31,7 +31,7 @@ Rolling record of implementation decisions, changes, and lessons learned across 
 | 21 | WW1 Era | **Complete** | [phase-21.md](phase-21.md) |
 | 22 | Napoleonic Era | **Complete** | [phase-22.md](phase-22.md) |
 | 23 | Ancient & Medieval Era | **Complete** | [phase-23.md](phase-23.md) |
-| 24 | Unconventional & Prohibited Warfare | Planned | — |
+| 24 | Unconventional & Prohibited Warfare | **Complete** | [phase-24.md](phase-24.md) |
 
 ## Post-MVP Refinement Index
 

@@ -1,8 +1,8 @@
 # Stochastic Warfare
 
 ![Python](https://img.shields.io/badge/python-%3E%3D3.12-blue)
-![Tests](https://img.shields.io/badge/tests-5%2C980_passing-brightgreen)
-![Phase](https://img.shields.io/badge/phase-23_Post--MVP-blue)
+![Tests](https://img.shields.io/badge/tests-6%2C325_passing-brightgreen)
+![Phase](https://img.shields.io/badge/phase-24_Post--MVP-blue)
 
 High-fidelity, high-resolution wargame simulator built as a headless Python engine. Models warfare across multiple scales — from individual unit engagements up through tactical battles, operational battlefields, and multi-day strategic campaigns — with stochastic and signal-processing-inspired models throughout.
 
@@ -86,7 +86,7 @@ For full architectural rationale, see [`docs/brainstorm.md`](docs/brainstorm.md)
 ## Project Structure
 
 ```
-stochastic_warfare/       # simulation engine (18 modules, ~217 source files)
+stochastic_warfare/       # simulation engine (19 modules, ~226 source files)
   core/                   # types, logging, RNG, clock, events, config, checkpoint
   coordinates/            # geodetic/UTM/ENU transforms, magnetic declination
   terrain/                # heightmap, classification, bathymetry, LOS, infrastructure
@@ -98,7 +98,8 @@ stochastic_warfare/       # simulation engine (18 modules, ~217 source files)
   morale/                 # state transitions, cohesion, stress, psychology, rout
   c2/                     # command, communications, ROE, orders, joint ops, mission command
   logistics/              # supply, transport, maintenance, medical, engineering, production
-  population/             # civilian regions, displacement, collateral, HUMINT, influence
+  population/             # civilian regions, displacement, collateral, HUMINT, influence, insurgency
+  escalation/             # escalation ladder, political pressure, consequences, war termination
   simulation/             # scenario loading, battle/campaign managers, engine
   validation/             # historical data, Monte Carlo, campaign validation
   ai/                     # OODA, commander AI, doctrine, assessment, decisions, doctrinal schools
@@ -126,9 +127,9 @@ data/                     # ~220 YAML data files
   transport/              # 4 transport profiles
   medical/                # 2 medical facility definitions
   eras/                    # Era-specific data packages (WW2, WW1, Napoleonic, Ancient/Medieval)
-  scenarios/              # 3 engagement + 6 campaign + 2 EW + 3 space + 2 CBRN validation scenarios
+  scenarios/              # 3 engagement + 6 campaign + 2 EW + 3 space + 2 CBRN + 4 escalation validation scenarios
 
-tests/                    # 5,980 tests across ~190 test files
+tests/                    # 6,325 tests across ~196 test files
 docs/                     # specs, brainstorm, devlog, development phases
 ```
 
@@ -136,7 +137,7 @@ For the full package tree and module decomposition, see [`docs/specs/project-str
 
 ## Development Status
 
-All 11 MVP phases (0–10) are complete. Post-MVP Phases 11–23 are complete (deep systems rework + performance optimization + developer tooling + real-world terrain + electronic warfare + space & satellite domain + CBRN effects + doctrinal AI schools + WW2 era + WW1 era + Napoleonic era + Ancient & Medieval era).
+All 11 MVP phases (0–10) are complete. Post-MVP Phases 11–24 are complete (deep systems rework + performance optimization + developer tooling + real-world terrain + electronic warfare + space & satellite domain + CBRN effects + doctrinal AI schools + WW2 era + WW1 era + Napoleonic era + Ancient & Medieval era + unconventional & prohibited warfare).
 
 | Phase | Focus | Tests | Status |
 |-------|-------|-------|--------|
@@ -164,7 +165,8 @@ All 11 MVP phases (0–10) are complete. Post-MVP Phases 11–23 are complete (d
 | 21 | WW1 Era | 182 | Complete |
 | 22 | Napoleonic Era | 233 | Complete |
 | 23 | Ancient & Medieval Era | 321 | Complete |
-| | **Total** | **5,980** | |
+| 24 | Unconventional & Prohibited Warfare | 345 | Complete |
+| | **Total** | **6,325** | |
 
 For the full phase roadmap, see [`docs/development-phases.md`](docs/development-phases.md) (MVP) and [`docs/development-phases-post-mvp.md`](docs/development-phases-post-mvp.md) (post-MVP). For per-phase implementation logs, see [`docs/devlog/`](docs/devlog/).
 

@@ -62,6 +62,7 @@ class TestModuleId:
             "CORE", "COMBAT", "MOVEMENT", "DETECTION", "MORALE",
             "ENVIRONMENT", "LOGISTICS", "C2", "ENTITIES", "TERRAIN",
             "POPULATION", "AIR_CAMPAIGN", "EW", "SPACE", "CBRN",
+            "ESCALATION",
         }
         assert {m.name for m in ModuleId} == expected
 

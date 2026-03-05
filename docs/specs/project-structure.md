@@ -1,5 +1,5 @@
 # Project Structure & Module Decomposition
-**Status**: Complete (Phase 23)
+**Status**: Complete (Phase 24)
 **Last Updated**: 2026-03-04
 
 ---
@@ -135,7 +135,11 @@ stochastic-warfare/
 │       ├── space_isr_gap/         # Phase 17: Satellite overpass gap exploitation validation
 │       ├── space_asat_escalation/ # Phase 17: Kinetic ASAT cascading constellation degradation
 │       ├── cbrn_chemical_defense/ # Phase 18: Chemical attack on defended position (dispersal, MOPP, casualties)
-│       └── cbrn_nuclear_tactical/ # Phase 18: Tactical nuclear weapon blast/EMP/fallout validation
+│       ├── cbrn_nuclear_tactical/ # Phase 18: Tactical nuclear weapon blast/EMP/fallout validation
+│       ├── halabja_1988/         # Phase 24: Iraqi chemical escalation against Kurdish town
+│       ├── srebrenica_1995/      # Phase 24: Bosnian Serb protected zone violation
+│       ├── eastern_front_1943/   # Phase 24: German-Soviet mutual escalation (Kursk sector)
+│       └── coin_campaign/        # Phase 24: Modern COIN composite scenario (IED, insurgency, COIN)
 ├── tests/
 │   ├── conftest.py                   # Shared fixtures (rng, event_bus, sim_clock) + helpers
 │   ├── unit/                         # Fast, isolated unit tests
@@ -277,7 +281,8 @@ stochastic-warfare/
     │   ├── volley_fire.py            # Napoleonic massed musket fire: Binomial aggregate, range table, smoke, canister [Phase 22b]
     │   ├── melee.py                  # Contact combat: Napoleonic (bayonet/cavalry charge, pursuit) + Ancient (pike push, shield wall, mounted charge, reach/flanking) [Phase 22b, 23b]
     │   ├── archery.py                # Massed archery: Binomial aggregate, 5 missile types, armor reduction, per-archer ammo [Phase 23b]
-    │   └── siege.py                  # Siege warfare: daily state machine (encirclement→bombardment→breach→assault→fallen/relief) [Phase 23b]
+    │   ├── siege.py                  # Siege warfare: daily state machine (encirclement→bombardment→breach→assault→fallen/relief) [Phase 23b]
+    │   └── unconventional.py         # IED emplacement/detection/detonation, guerrilla hit-and-run, human shields [Phase 24c]
     ├── morale/                       # Morale & human factors
     │   ├── __init__.py
     │   ├── events.py                 # Morale events (state change, rout, rally, surrender)
@@ -326,6 +331,7 @@ stochastic-warfare/
     │       ├── adaptation.py         # 7-trigger plan adaptation (casualties, force ratio, supply, morale, opportunity, surprise, C2)
     │       ├── doctrine.py           # YAML doctrine templates (US, Russian, NATO, generic) with action/echelon filtering
     │       ├── stratagems.py         # 6 stratagem types with echelon+experience gating (deception, concentration, surprise, etc.)
+    │       ├── sof_ops.py            # SOF mission lifecycle: infiltration, HVT targeting, sabotage, direct action [Phase 24c]
     │       └── schools/              # Doctrinal AI schools — Strategy pattern [Phase 19]
     │           ├── __init__.py       # SchoolRegistry + SchoolLoader
     │           ├── base.py           # SchoolDefinition pydantic model + DoctrinalSchool ABC (8 hooks)
@@ -361,7 +367,8 @@ stochastic-warfare/
     │   ├── displacement.py           # Refugee displacement: combat-driven movement, transport penalty
     │   ├── collateral.py             # Collateral damage tracking, escalation threshold
     │   ├── humint.py                 # Civilian HUMINT: Poisson tip generation, disposition-dependent flow
-    │   └── influence.py              # Population disposition dynamics: Markov chain transitions
+    │   ├── influence.py              # Population disposition dynamics: Markov chain transitions
+    │   └── insurgency.py             # Insurgency dynamics: Markov radicalization pipeline, cell operations, discovery [Phase 24e]
     ├── validation/                    # Engagement + campaign validation (Phase 7, 10)
     │   ├── __init__.py
     │   ├── historical_data.py         # Historical engagement data models + YAML loader
@@ -417,6 +424,13 @@ stochastic-warfare/
     │   ├── decontamination.py         # 3-tier decon: hasty (60%), deliberate (95%), thorough (99%), equipment requirements
     │   ├── nuclear.py                 # Nuclear effects: Hopkinson-Cranz blast, thermal fluence, radiation, EMP, fallout, craters
     │   └── engine.py                  # CBRNEngine orchestrator: per-tick dispersal, contamination, exposure, MOPP management
+    ├── escalation/                   # Escalation dynamics & political pressure [Phase 24]
+    │   ├── __init__.py
+    │   ├── ladder.py                 # 11-level escalation state machine, desperation index, hysteresis de-escalation
+    │   ├── political.py              # International + domestic political pressure model, threshold effects
+    │   ├── consequences.py           # War crimes consequence cascading: morale, hardening, hostility, pressure
+    │   ├── events.py                 # 8 escalation event types (level change, war crime, political pressure, etc.)
+    │   └── war_termination.py        # Negotiated war termination: ceasefire, armistice, capitulation
     └── simulation/                   # Top-level simulation orchestration
         ├── __init__.py
         ├── engine.py                 # Master simulation loop (hybrid tick + event)

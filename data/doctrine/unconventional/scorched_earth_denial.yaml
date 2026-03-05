@@ -1,0 +1,17 @@
+doctrine_id: scorched_earth
+display_name: "Scorched Earth Denial"
+category: RETROGRADE
+faction: generic
+description: "Systematic destruction of infrastructure and resources during withdrawal"
+min_echelon: 5
+max_echelon: 10
+applicable_domains: ["LAND"]
+phases: ["PREPARATION", "DEMOLITION", "WITHDRAWAL"]
+force_ratios:
+  demolition: 0.40
+  security: 0.35
+  rear_guard: 0.25
+actions: ["destroy", "withdraw", "delay", "deny"]
+priorities: ["firepower", "protection", "maneuver"]
+risk_tolerance: high
+tempo: moderate

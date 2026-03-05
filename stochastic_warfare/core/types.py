@@ -62,6 +62,7 @@ class ModuleId(str, enum.Enum):
     EW = "ew"
     SPACE = "space"
     CBRN = "cbrn"
+    ESCALATION = "escalation"
 
 
 class Domain(enum.IntEnum):

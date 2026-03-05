@@ -42,6 +42,9 @@ class CommanderPersonality(BaseModel):
     stress_tolerance: float = Field(default=0.5, ge=0.0, le=1.0)
     decision_speed: float = Field(default=0.5, ge=0.0, le=1.0)
     risk_acceptance: float = Field(default=0.5, ge=0.0, le=1.0)
+    doctrine_violation_tolerance: float = Field(default=0.2, ge=0.0, le=1.0)
+    collateral_tolerance: float = Field(default=0.3, ge=0.0, le=1.0)
+    escalation_awareness: float = Field(default=0.5, ge=0.0, le=1.0)
 
 
 class CommanderConfig(BaseModel):

@@ -1,0 +1,21 @@
+weapon_id: remote_ied
+display_name: "Remote Detonated IED"
+category: MINE_LAYER
+caliber_mm: 0.0
+muzzle_velocity_mps: 0.0
+max_range_m: 0.0
+min_range_m: 0.0
+rate_of_fire_rpm: 0.0
+burst_size: 1
+base_accuracy_mrad: 0.0
+guidance: NONE
+magazine_capacity: 1
+reload_time_s: 0.0
+compatible_ammo: []
+weight_kg: 8.0
+reliability: 0.82
+barrel_life_rounds: 1
+requires_deployed: true
+traverse_deg: 0.0
+elevation_min_deg: 0.0
+elevation_max_deg: 0.0

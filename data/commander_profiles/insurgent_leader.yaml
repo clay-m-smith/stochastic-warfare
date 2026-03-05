@@ -1,0 +1,14 @@
+profile_id: insurgent_leader
+display_name: "Insurgent Leader"
+description: "Unconventional warfare commander with high tolerance for violations but protective of own population"
+aggression: 0.6
+caution: 0.5
+flexibility: 0.8
+initiative: 0.7
+experience: 0.5
+stress_tolerance: 0.7
+decision_speed: 0.6
+risk_acceptance: 0.7
+doctrine_violation_tolerance: 0.7
+collateral_tolerance: 0.3
+escalation_awareness: 0.4

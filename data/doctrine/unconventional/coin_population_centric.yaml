@@ -1,0 +1,17 @@
+doctrine_id: coin_pop_centric
+display_name: "COIN Population-Centric"
+category: STABILITY
+faction: generic
+description: "Population-centric counterinsurgency emphasizing winning hearts and minds"
+min_echelon: 4
+max_echelon: 10
+applicable_domains: ["LAND"]
+phases: ["CLEAR", "HOLD", "BUILD"]
+force_ratios:
+  security: 0.40
+  civil_affairs: 0.35
+  reserve: 0.25
+actions: ["patrol", "cordon_search", "civil_engagement", "defend"]
+priorities: ["protection", "firepower", "maneuver"]
+risk_tolerance: low
+tempo: slow

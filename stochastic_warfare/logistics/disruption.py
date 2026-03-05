@@ -135,6 +135,28 @@ class DisruptionEngine:
         )
         return zone
 
+    def apply_insurgent_sabotage(
+        self,
+        position: Position,
+        intensity: float,
+        cell_id: str,
+        target_type: str,
+        timestamp: datetime | None = None,
+    ) -> InterdictionZone:
+        """Create an interdiction zone from insurgent cell sabotage.
+
+        Wires cell sabotage operations into existing disruption framework.
+        """
+        zone_id = f"insurgent_sabotage_{cell_id}_{target_type}"
+        return self.apply_interdiction(
+            zone_id=zone_id,
+            position=position,
+            radius_m=200.0,
+            intensity=intensity,
+            source="insurgent",
+            timestamp=timestamp,
+        )
+
     def remove_interdiction(self, zone_id: str) -> None:
         """Remove an interdiction zone."""
         self._zones.pop(zone_id, None)

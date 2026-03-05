@@ -1,0 +1,10 @@
+entry_thresholds: [0.0, 0.15, 0.25, 0.35, 0.50, 0.65, 0.75, 0.85, 0.90, 0.95, 0.98]
+hysteresis_factor: 0.7
+cooldown_s: 7200.0
+desperation_weights:
+  casualty: 0.30
+  supply: 0.20
+  morale: 0.20
+  stalemate: 0.15
+  political: 0.15
+  stalemate_normalize_s: 259200.0

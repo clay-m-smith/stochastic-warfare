@@ -1,0 +1,35 @@
+unit_type: sf_oda
+domain: ground
+display_name: "SF ODA (12-man)"
+ground_type: LIGHT_INFANTRY
+max_speed: 1.5
+crew:
+  - role: COMMANDER
+    count: 1
+    skill: ELITE
+  - role: RIFLEMAN
+    count: 9
+    skill: EXPERIENCED
+  - role: MEDIC
+    count: 1
+    skill: EXPERIENCED
+  - role: ENGINEER
+    count: 1
+    skill: EXPERIENCED
+equipment:
+  - name: "M4A1 SOPMOD"
+    category: WEAPON
+    weight_kg: 4.5
+    reliability: 0.95
+  - name: "M249 SAW"
+    category: WEAPON
+    weight_kg: 7.5
+    reliability: 0.90
+  - name: "AN/PRC-152A Radio"
+    category: COMMUNICATION
+    weight_kg: 1.6
+    reliability: 0.95
+  - name: "AN/PVS-31 NVG"
+    category: SENSOR
+    weight_kg: 0.5
+    reliability: 0.92

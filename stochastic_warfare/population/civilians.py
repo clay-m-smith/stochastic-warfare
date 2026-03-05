@@ -102,6 +102,10 @@ class CivilianManager:
         """Return all registered regions."""
         return list(self._regions.values())
 
+    def get_regions_by_disposition(self, disposition: CivilianDisposition) -> list[CivilianRegion]:
+        """Return all regions with the given disposition."""
+        return [r for r in self._regions.values() if r.disposition == disposition]
+
     def query_disposition_at(self, position: Position) -> CivilianDisposition | None:
         """Return the disposition of the region containing *position*.
 

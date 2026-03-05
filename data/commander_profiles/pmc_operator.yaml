@@ -1,0 +1,14 @@
+profile_id: pmc_operator
+display_name: "PMC Operator"
+description: "Contract-bounded operator with strict ROE adherence and professional equipment handling"
+aggression: 0.5
+caution: 0.6
+flexibility: 0.4
+initiative: 0.3
+experience: 0.7
+stress_tolerance: 0.5
+decision_speed: 0.5
+risk_acceptance: 0.3
+doctrine_violation_tolerance: 0.1
+collateral_tolerance: 0.2
+escalation_awareness: 0.8

@@ -46,6 +46,8 @@ class VictoryConditionType(IntEnum):
     TIME_EXPIRED = 2
     MORALE_COLLAPSED = 3
     SUPPLY_EXHAUSTED = 4
+    CEASEFIRE = 5
+    ARMISTICE = 6
 
 
 # ---------------------------------------------------------------------------
@@ -326,8 +328,37 @@ class VictoryEvaluator:
             return self._check_morale_collapsed(cond, units_by_side, morale_states, tick)
         elif ctype == "supply_exhausted":
             return self._check_supply_exhausted(cond, units_by_side, supply_states, tick)
+        elif ctype == "ceasefire":
+            return self._check_ceasefire(cond, tick)
+        elif ctype == "armistice":
+            return self._check_armistice(cond, tick)
         else:
             return VictoryResult(game_over=False, tick=tick)
+
+    def _check_ceasefire(
+        self,
+        cond: VictoryConditionConfig,
+        tick: int,
+    ) -> VictoryResult:
+        """Check if a ceasefire has been activated via war termination engine.
+
+        This is a marker condition -- the war_termination_engine activates
+        ceasefire through the engine tick loop.  Here we simply acknowledge
+        that the scenario supports ceasefire-type victory.
+        """
+        return VictoryResult(game_over=False, tick=tick)
+
+    def _check_armistice(
+        self,
+        cond: VictoryConditionConfig,
+        tick: int,
+    ) -> VictoryResult:
+        """Check if an armistice has been reached.
+
+        Like ceasefire, this is a marker condition type.  Armistice
+        transitions are driven externally by the war termination engine.
+        """
+        return VictoryResult(game_over=False, tick=tick)
 
     def _check_territory_control(
         self,

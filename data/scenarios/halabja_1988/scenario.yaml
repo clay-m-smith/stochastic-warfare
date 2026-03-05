@@ -1,0 +1,51 @@
+name: "Halabja Chemical Attack 1988"
+date: "1988-03-16"
+duration_hours: 48
+latitude: 35.17
+longitude: 45.98
+era: modern
+tick_resolution:
+  strategic_s: 3600
+  operational_s: 300
+  tactical_s: 5
+terrain:
+  width_m: 10000
+  height_m: 10000
+  cell_size_m: 100
+  base_elevation_m: 800
+  terrain_type: hilly_defense
+sides:
+  - side: blue
+    units:
+      - {unit_type: infantry_platoon, count: 3}
+    experience_level: 0.3
+    morale_initial: STEADY
+    commander_profile: desperate_defender
+  - side: red
+    units:
+      - {unit_type: infantry_platoon, count: 6}
+      - {unit_type: mechanized_company, count: 2}
+    experience_level: 0.6
+    morale_initial: STEADY
+    commander_profile: ruthless_authoritarian
+objectives:
+  - objective_id: halabja_town
+    position: [5000, 5000]
+    radius_m: 2000
+    type: territory
+victory_conditions:
+  - type: territory_control
+    side: red
+    params: {threshold: 1.0}
+  - type: time_expired
+    side: draw
+    params: {max_duration_s: 172800}
+calibration_overrides:
+  blue_start_x: 5000
+  blue_start_y: 5000
+  red_start_x: 1000
+  red_start_y: 5000
+escalation_config:
+  entry_thresholds: [0.0, 0.10, 0.20, 0.30, 0.40, 0.50, 0.60, 0.70, 0.80, 0.90, 0.95]
+  hysteresis_factor: 0.7
+  cooldown_s: 1800

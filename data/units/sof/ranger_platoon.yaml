@@ -1,0 +1,43 @@
+unit_type: ranger_plt
+domain: ground
+display_name: "Ranger Platoon"
+ground_type: LIGHT_INFANTRY
+max_speed: 1.4
+crew:
+  - role: COMMANDER
+    count: 1
+    skill: ELITE
+  - role: RIFLEMAN
+    count: 36
+    skill: EXPERIENCED
+  - role: MEDIC
+    count: 2
+    skill: EXPERIENCED
+  - role: ENGINEER
+    count: 3
+    skill: EXPERIENCED
+equipment:
+  - name: "M4A1 Carbine"
+    category: WEAPON
+    weight_kg: 3.4
+    reliability: 0.95
+  - name: "M240B GPMG"
+    category: WEAPON
+    weight_kg: 12.5
+    reliability: 0.92
+  - name: "M249 SAW"
+    category: WEAPON
+    weight_kg: 7.5
+    reliability: 0.90
+  - name: "Carl Gustaf M3"
+    category: WEAPON
+    weight_kg: 8.5
+    reliability: 0.88
+  - name: "AN/PRC-152A Radio"
+    category: COMMUNICATION
+    weight_kg: 1.6
+    reliability: 0.95
+  - name: "AN/PVS-14 NVG"
+    category: SENSOR
+    weight_kg: 0.4
+    reliability: 0.88

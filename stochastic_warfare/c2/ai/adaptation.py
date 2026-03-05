@@ -40,6 +40,8 @@ class AdaptationTrigger(enum.IntEnum):
     OPPORTUNITY = 4
     SURPRISE_CONTACT = 5
     C2_DISRUPTION = 6
+    MILITARY_STALEMATE = 7
+    POLITICAL_PRESSURE = 8
 
 
 class AdaptationAction(enum.IntEnum):
@@ -52,6 +54,8 @@ class AdaptationAction(enum.IntEnum):
     WITHDRAW = 4
     COUNTERATTACK = 5
     ISSUE_FRAGO = 6
+    ESCALATE_FORCE = 7
+    DE_ESCALATE = 8
 
 
 # ---------------------------------------------------------------------------

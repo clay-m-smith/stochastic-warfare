@@ -1,0 +1,51 @@
+name: "Srebrenica Protected Zone 1995"
+date: "1995-07-11"
+duration_hours: 72
+latitude: 44.11
+longitude: 19.30
+era: modern
+tick_resolution:
+  strategic_s: 3600
+  operational_s: 300
+  tactical_s: 5
+terrain:
+  width_m: 12000
+  height_m: 12000
+  cell_size_m: 100
+  base_elevation_m: 400
+  terrain_type: hilly_defense
+sides:
+  - side: blue
+    units:
+      - {unit_type: infantry_platoon, count: 2}
+    experience_level: 0.4
+    morale_initial: STEADY
+    commander_profile: desperate_defender
+  - side: red
+    units:
+      - {unit_type: infantry_platoon, count: 8}
+      - {unit_type: mechanized_company, count: 3}
+    experience_level: 0.6
+    morale_initial: STEADY
+    commander_profile: ruthless_authoritarian
+objectives:
+  - objective_id: srebrenica_town
+    position: [6000, 6000]
+    radius_m: 2000
+    type: territory
+victory_conditions:
+  - type: territory_control
+    side: red
+    params: {threshold: 1.0}
+  - type: time_expired
+    side: draw
+    params: {max_duration_s: 259200}
+calibration_overrides:
+  blue_start_x: 6000
+  blue_start_y: 6000
+  red_start_x: 1000
+  red_start_y: 6000
+escalation_config:
+  entry_thresholds: [0.0, 0.05, 0.10, 0.20, 0.30, 0.40, 0.50, 0.60, 0.70, 0.80, 0.90]
+  hysteresis_factor: 0.7
+  cooldown_s: 1800

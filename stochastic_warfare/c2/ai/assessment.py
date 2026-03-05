@@ -440,3 +440,54 @@ def predict_opponent_action_lanchester(
         "DEFEND": p_defend / total,
         "WITHDRAW": p_withdraw / total,
     }
+
+
+# ---------------------------------------------------------------------------
+# Desperation & escalation helpers (standalone, used by Phase 24d)
+# ---------------------------------------------------------------------------
+
+
+def compute_desperation_index(
+    casualties_sustained: int,
+    initial_strength: int,
+    supply_state: float,
+    avg_morale: float,
+    stalemate_duration_s: float,
+    domestic_pressure: float,
+    casualty_weight: float = 0.30,
+    supply_weight: float = 0.20,
+    morale_weight: float = 0.20,
+    stalemate_weight: float = 0.15,
+    political_weight: float = 0.15,
+    stalemate_normalize_s: float = 259200.0,
+) -> float:
+    """Compute desperation index as weighted factor composite.
+
+    Same formula as escalation.ladder.EscalationLadder.compute_desperation
+    but accessible from assessment context without importing escalation.
+    """
+    cas = min(1.0, max(0.0, casualties_sustained / max(initial_strength, 1)))
+    sup = min(1.0, max(0.0, 1.0 - supply_state))
+    mor = min(1.0, max(0.0, 1.0 - avg_morale))
+    sta = min(1.0, max(0.0, stalemate_duration_s / stalemate_normalize_s))
+    pol = min(1.0, max(0.0, domestic_pressure))
+    return min(1.0, max(0.0,
+        casualty_weight * cas
+        + supply_weight * sup
+        + morale_weight * mor
+        + stalemate_weight * sta
+        + political_weight * pol
+    ))
+
+
+def estimate_escalation_consequences(
+    escalation_level: int,
+    escalation_awareness: float,
+) -> float:
+    """Estimate consequence cost of being at given escalation level.
+
+    Returns 0-1. High awareness -> accurate estimate -> inhibits escalation.
+    Low awareness -> underestimates consequences.
+    """
+    raw_cost = escalation_level * 0.1  # 0.0 for level 0, 1.0 for level 10
+    return min(1.0, raw_cost * escalation_awareness)

@@ -39,6 +39,9 @@ class StratagemType(enum.IntEnum):
     SURPRISE = 3
     FEINT = 4
     DEMONSTRATION = 5
+    SABOTAGE_CAMPAIGN = 6
+    TERROR = 7
+    SCORCHED_EARTH = 8
 
 
 # ---------------------------------------------------------------------------
@@ -70,6 +73,9 @@ _STRATAGEM_REQUIREMENTS: dict[StratagemType, tuple[int, float]] = {
     StratagemType.SURPRISE: (4, 0.5),  # Platoon+, high experience
     StratagemType.FEINT: (5, 0.4),  # Company+
     StratagemType.DEMONSTRATION: (6, 0.3),  # Battalion+
+    StratagemType.SABOTAGE_CAMPAIGN: (8, 0.5),  # Brigade+, experience >= 0.5
+    StratagemType.TERROR: (9, 0.3),  # Division+, experience >= 0.3
+    StratagemType.SCORCHED_EARTH: (8, 0.4),  # Brigade+, experience >= 0.4
 }
 
 

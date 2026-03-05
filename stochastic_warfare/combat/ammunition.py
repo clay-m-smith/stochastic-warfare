@@ -71,6 +71,10 @@ class AmmoType(enum.IntEnum):
     ROCKET = 7
     MISSILE = 8
     TORPEDO = 9
+    CLUSTER = 10
+    INCENDIARY_WEAPON = 11
+    ANTI_PERSONNEL_MINE = 12
+    EXPANDING = 13
 
 
 # ---------------------------------------------------------------------------
@@ -165,6 +169,11 @@ class AmmoDefinition(BaseModel):
 
     # Cost
     unit_cost_factor: float = 1.0
+
+    # Treaty compliance (Phase 24b)
+    prohibited_under_treaties: list[str] = []
+    compliance_check: bool = False
+    uxo_rate: float = 0.0  # submunition failure rate
 
     def parsed_ammo_type(self) -> AmmoType:
         """Return the enum value for this definition's ammo_type string."""

@@ -251,7 +251,7 @@ class TestRealYamlFiles:
         return loader
 
     def test_all_ten_files_loaded(self, real_loader: DoctrineTemplateLoader) -> None:
-        assert len(real_loader.all_definitions()) == 10
+        assert len(real_loader.all_definitions()) == 16
 
     def test_us_attack_deliberate(self, real_loader: DoctrineTemplateLoader) -> None:
         d = real_loader.get_definition("us_attack_deliberate")

@@ -1,0 +1,13 @@
+ammo_id: wp_155mm
+display_name: "155mm White Phosphorus"
+ammo_type: INCENDIARY_WEAPON
+mass_kg: 43.0
+diameter_mm: 155.0
+blast_radius_m: 15.0
+fragmentation_radius_m: 20.0
+guidance: NONE
+propulsion: none
+prohibited_under_treaties:
+  - "Protocol III CCW"
+compliance_check: true
+uxo_rate: 0.0

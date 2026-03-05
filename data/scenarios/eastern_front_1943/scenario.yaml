@@ -1,0 +1,52 @@
+name: "Eastern Front Kursk Sector 1943"
+date: "1943-07-05"
+duration_hours: 168
+latitude: 51.73
+longitude: 36.19
+era: modern
+tick_resolution:
+  strategic_s: 3600
+  operational_s: 300
+  tactical_s: 5
+terrain:
+  width_m: 20000
+  height_m: 20000
+  cell_size_m: 200
+  base_elevation_m: 200
+  terrain_type: flat_desert
+sides:
+  - side: blue
+    units:
+      - {unit_type: infantry_platoon, count: 6}
+      - {unit_type: mechanized_company, count: 2}
+    experience_level: 0.5
+    morale_initial: STEADY
+    commander_profile: desperate_defender
+  - side: red
+    units:
+      - {unit_type: infantry_platoon, count: 5}
+      - {unit_type: mechanized_company, count: 3}
+    experience_level: 0.7
+    morale_initial: STEADY
+    commander_profile: ruthless_authoritarian
+objectives:
+  - objective_id: kursk_salient
+    position: [10000, 10000]
+    radius_m: 3000
+    type: territory
+victory_conditions:
+  - type: force_destroyed
+    side: ""
+    params: {threshold: 0.7}
+  - type: time_expired
+    side: draw
+    params: {max_duration_s: 604800}
+calibration_overrides:
+  blue_start_x: 10000
+  blue_start_y: 10000
+  red_start_x: 2000
+  red_start_y: 10000
+escalation_config:
+  entry_thresholds: [0.0, 0.15, 0.25, 0.35, 0.50, 0.60, 0.70, 0.80, 0.85, 0.90, 0.95]
+  hysteresis_factor: 0.7
+  cooldown_s: 3600

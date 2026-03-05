@@ -1,0 +1,17 @@
+doctrine_id: guerrilla_hit_run
+display_name: "Guerrilla Hit and Run"
+category: OFFENSIVE
+faction: generic
+description: "Guerrilla tactics emphasizing surprise attacks and rapid disengagement"
+min_echelon: 2
+max_echelon: 6
+applicable_domains: ["LAND"]
+phases: ["RECONNAISSANCE", "AMBUSH", "DISENGAGE"]
+force_ratios:
+  strike_element: 0.60
+  security: 0.25
+  reserve: 0.15
+actions: ["ambush", "attack", "withdraw", "evade"]
+priorities: ["maneuver", "firepower", "protection"]
+risk_tolerance: low
+tempo: high

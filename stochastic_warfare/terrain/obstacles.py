@@ -31,6 +31,8 @@ class ObstacleType(enum.IntEnum):
     RAVINE = 5
     CLIFF = 6
     DENSE_FOREST = 7
+    IED = 8
+    BOOBY_TRAP = 9
 
 
 # ---------------------------------------------------------------------------
@@ -49,6 +51,9 @@ class Obstacle(BaseModel):
     is_natural: bool = False
     traversal_risk: float = 0.0  # 0–1 probability of casualty per crossing
     traversal_time_multiplier: float = 5.0  # movement time multiplier
+    ied_subtype: str = ""  # command_wire, pressure_plate, remote, vbied
+    ied_blast_radius_m: float = 0.0
+    ied_concealment: float = 0.5
 
 
 # ---------------------------------------------------------------------------

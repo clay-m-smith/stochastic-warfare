@@ -1,0 +1,17 @@
+doctrine_id: pmc_security
+display_name: "PMC Security Operations"
+category: DEFENSIVE
+faction: generic
+description: "Private military company security operations with limited offensive capability"
+min_echelon: 2
+max_echelon: 7
+applicable_domains: ["LAND"]
+phases: ["ASSESSMENT", "DEPLOYMENT", "OPERATIONS"]
+force_ratios:
+  security: 0.50
+  quick_reaction: 0.30
+  reserve: 0.20
+actions: ["defend", "patrol", "escort", "support_by_fire"]
+priorities: ["protection", "firepower", "maneuver"]
+risk_tolerance: moderate
+tempo: moderate

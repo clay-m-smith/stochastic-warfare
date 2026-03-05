@@ -1,0 +1,14 @@
+profile_id: ruthless_authoritarian
+display_name: "Ruthless Authoritarian"
+description: "Commander with extreme willingness to use prohibited methods and accept collateral damage"
+aggression: 0.8
+caution: 0.2
+flexibility: 0.3
+initiative: 0.6
+experience: 0.7
+stress_tolerance: 0.8
+decision_speed: 0.7
+risk_acceptance: 0.9
+doctrine_violation_tolerance: 0.9
+collateral_tolerance: 0.8
+escalation_awareness: 0.2

@@ -88,7 +88,7 @@ class TestStratagemType:
         assert StratagemType.DEMONSTRATION == 5
 
     def test_enum_count(self) -> None:
-        assert len(StratagemType) == 6
+        assert len(StratagemType) == 9
 
 
 # ---------------------------------------------------------------------------

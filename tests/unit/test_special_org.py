@@ -13,7 +13,7 @@ class TestOrgType:
         assert OrgType.COALITION == 3
 
     def test_count(self) -> None:
-        assert len(OrgType) == 4
+        assert len(OrgType) == 7
 
 
 class TestSpecialOrgTraits:

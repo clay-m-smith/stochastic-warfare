@@ -1,0 +1,12 @@
+ammo_id: scud_c_chemical
+display_name: "Scud-C Chemical Warhead"
+ammo_type: HE
+mass_kg: 600.0
+diameter_mm: 880.0
+blast_radius_m: 100.0
+guidance: NONE
+propulsion: none
+prohibited_under_treaties:
+  - "CWC"
+compliance_check: true
+uxo_rate: 0.0

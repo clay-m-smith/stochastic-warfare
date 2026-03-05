@@ -314,3 +314,56 @@ class EngagementEngine:
 
     def set_state(self, state: dict[str, Any]) -> None:
         self._rng.bit_generator.state = state["rng_state"]
+
+
+# ---------------------------------------------------------------------------
+# Treaty compliance helper (Phase 24b)
+# ---------------------------------------------------------------------------
+
+# Mapping from treaty name to the minimum escalation level required
+# to authorize employment of munitions prohibited under that treaty.
+_TREATY_ESCALATION_LEVELS: dict[str, int] = {
+    "CWC": 5,                # Chemical Weapons Convention → CHEMICAL
+    "BWC": 6,                # Biological Weapons Convention → BIOLOGICAL
+    "CCM": 4,                # Convention on Cluster Munitions → PROHIBITED_METHODS
+    "Ottawa": 4,             # Ottawa Treaty (AP mines) → PROHIBITED_METHODS
+    "Protocol III CCW": 3,   # Protocol III to CCW (incendiary) → ROE_VIOLATIONS
+    "Hague": 3,              # Hague Convention (expanding bullets) → ROE_VIOLATIONS
+}
+
+
+def check_prohibited_compliance(
+    ammo_def: AmmoDefinition,
+    escalation_engine: Any | None,
+) -> tuple[bool, str]:
+    """Check if ammo requires escalation authorization.
+
+    Parameters
+    ----------
+    ammo_def:
+        Ammunition definition to check.
+    escalation_engine:
+        Escalation engine instance with a ``current_level`` attribute,
+        or ``None`` if no escalation system is active.
+
+    Returns
+    -------
+    (authorized, reason):
+        ``authorized`` is True if the weapon may be employed.
+        ``reason`` is an empty string when authorized, or a descriptive
+        string when not.
+    """
+    if not ammo_def.compliance_check:
+        return True, ""
+
+    if escalation_engine is None:
+        return True, "no_escalation_system"
+
+    current_level = getattr(escalation_engine, "current_level", 0)
+
+    for treaty in ammo_def.prohibited_under_treaties:
+        required_level = _TREATY_ESCALATION_LEVELS.get(treaty)
+        if required_level is not None and current_level < required_level:
+            return False, f"requires_escalation_level_{required_level}_for_{treaty}"
+
+    return True, ""

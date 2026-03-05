@@ -1,0 +1,15 @@
+ammo_id: mk20_rockeye
+display_name: "Mk.20 Rockeye Cluster Bomb"
+ammo_type: CLUSTER
+mass_kg: 222.0
+diameter_mm: 330.0
+blast_radius_m: 50.0
+fragmentation_radius_m: 100.0
+submunition_count: 247
+submunition_lethal_radius_m: 3.0
+guidance: NONE
+propulsion: none
+prohibited_under_treaties:
+  - "CCM"
+compliance_check: true
+uxo_rate: 0.05

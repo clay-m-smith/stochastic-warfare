@@ -196,7 +196,7 @@ class TestBrigadeDivAction:
         assert BrigadeDivAction.RESERVE == 9
 
     def test_enum_count(self) -> None:
-        assert len(BrigadeDivAction) == 10
+        assert len(BrigadeDivAction) == 13
 
 
 class TestCorpsAction:
@@ -210,7 +210,7 @@ class TestCorpsAction:
         assert CorpsAction.TRANSITION == 6
 
     def test_enum_count(self) -> None:
-        assert len(CorpsAction) == 7
+        assert len(CorpsAction) == 9
 
 
 # ---------------------------------------------------------------------------

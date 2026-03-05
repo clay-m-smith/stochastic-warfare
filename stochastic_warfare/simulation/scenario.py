@@ -114,6 +114,8 @@ class VictoryConditionConfig(BaseModel):
             "time_expired",
             "morale_collapsed",
             "supply_exhausted",
+            "ceasefire",
+            "armistice",
         }
         if v not in allowed:
             raise ValueError(f"victory condition type must be one of {allowed}; got {v!r}")
@@ -197,6 +199,7 @@ class CampaignScenarioConfig(BaseModel):
     victory_conditions: list[VictoryConditionConfig] = []
     reinforcements: list[ReinforcementConfig] = []
     calibration_overrides: dict[str, Any] = {}
+    escalation_config: dict[str, Any] | None = None
 
     @field_validator("sides")
     @classmethod
@@ -321,6 +324,17 @@ class SimulationContext:
     naval_oar_engine: Any = None
     visual_signals_engine: Any = None
 
+    # Escalation & Unconventional (Phase 24)
+    escalation_engine: Any = None
+    political_engine: Any = None
+    consequence_engine: Any = None
+    unconventional_engine: Any = None
+    insurgency_engine: Any = None
+    sof_engine: Any = None
+    war_termination_engine: Any = None
+    incendiary_engine: Any = None
+    uxo_engine: Any = None
+
     # Logistics
     consumption_engine: Any = None
     stockpile_manager: Any = None
@@ -401,6 +415,15 @@ class SimulationContext:
             ("formation_ancient_engine", self.formation_ancient_engine),
             ("naval_oar_engine", self.naval_oar_engine),
             ("visual_signals_engine", self.visual_signals_engine),
+            ("escalation_engine", self.escalation_engine),
+            ("political_engine", self.political_engine),
+            ("consequence_engine", self.consequence_engine),
+            ("unconventional_engine", self.unconventional_engine),
+            ("insurgency_engine", self.insurgency_engine),
+            ("sof_engine", self.sof_engine),
+            ("war_termination_engine", self.war_termination_engine),
+            ("incendiary_engine", self.incendiary_engine),
+            ("uxo_engine", self.uxo_engine),
         ]
         for name, eng in engines:
             if eng is not None and hasattr(eng, "get_state"):
@@ -442,6 +465,15 @@ class SimulationContext:
             ("formation_ancient_engine", self.formation_ancient_engine),
             ("naval_oar_engine", self.naval_oar_engine),
             ("visual_signals_engine", self.visual_signals_engine),
+            ("escalation_engine", self.escalation_engine),
+            ("political_engine", self.political_engine),
+            ("consequence_engine", self.consequence_engine),
+            ("unconventional_engine", self.unconventional_engine),
+            ("insurgency_engine", self.insurgency_engine),
+            ("sof_engine", self.sof_engine),
+            ("war_termination_engine", self.war_termination_engine),
+            ("incendiary_engine", self.incendiary_engine),
+            ("uxo_engine", self.uxo_engine),
         ]
         for name, eng in engines:
             if eng is not None and name in state and hasattr(eng, "set_state"):

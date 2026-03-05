@@ -1,0 +1,17 @@
+doctrine_id: insurgency_campaign
+display_name: "Insurgency Campaign"
+category: OFFENSIVE
+faction: generic
+description: "Protracted insurgency combining political action with irregular combat"
+min_echelon: 2
+max_echelon: 8
+applicable_domains: ["LAND"]
+phases: ["ORGANISATION", "GUERRILLA", "CONVENTIONAL"]
+force_ratios:
+  combat: 0.40
+  political: 0.35
+  logistics: 0.25
+actions: ["ambush", "ied", "propaganda", "evade", "blend"]
+priorities: ["protection", "maneuver", "firepower"]
+risk_tolerance: low
+tempo: slow

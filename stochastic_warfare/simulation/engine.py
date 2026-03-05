@@ -265,6 +265,10 @@ class SimulationEngine:
         if self._resolution == TickResolution.STRATEGIC:
             self._campaign.update_strategic(ctx, dt)
 
+            # Phase 24: Escalation update
+            if ctx.escalation_engine is not None:
+                self._update_escalation(dt)
+
             # Phase 13 postmortem: aggregation/disaggregation
             if (ctx.aggregation_engine is not None
                     and ctx.aggregation_engine._config.enable_aggregation):
@@ -437,6 +441,46 @@ class SimulationEngine:
                     timestamp=clock.current_time,
                 )
             except Exception:
+                pass
+
+    # ── Escalation ────────────────────────────────────────────────────
+
+    def _update_escalation(self, dt: float) -> None:
+        """Update escalation engines for the current tick.
+
+        Runs after strategic AI tick, before engagement detection.
+        Updates: escalation ladder, political pressure, consequences,
+        war termination, insurgency, SOF, fire zones.
+        """
+        ctx = self._ctx
+        timestamp = ctx.clock.current_time
+        dt_hours = dt / 3600.0
+
+        # Update incendiary fire zones
+        if ctx.incendiary_engine is not None:
+            ctx.incendiary_engine.update_fire_zones(dt)
+
+        # Update SOF missions
+        if ctx.sof_engine is not None:
+            ctx.sof_engine.update(dt, timestamp)
+
+        # Update insurgency
+        if ctx.insurgency_engine is not None:
+            # Basic update with empty inputs -- scenario wiring provides real data
+            ctx.insurgency_engine.update_radicalization(
+                dt_hours=dt_hours,
+                collateral_by_region={},
+                military_presence_by_region={},
+                economic_factor=0.5,
+                aid_by_region={},
+                psyop_by_region={},
+                timestamp=timestamp,
+            )
+
+        # Check war termination
+        if ctx.war_termination_engine is not None:
+            if ctx.war_termination_engine.is_ceasefire_active():
+                # Ceasefire freezes combat -- handled by victory evaluator
                 pass
 
     # ── Battle positions (for aggregation) ─────────────────────────────

@@ -1,0 +1,48 @@
+name: "COIN Campaign"
+date: "2024-01-15"
+duration_hours: 720
+latitude: 33.30
+longitude: 44.37
+era: modern
+tick_resolution:
+  strategic_s: 3600
+  operational_s: 300
+  tactical_s: 5
+terrain:
+  width_m: 15000
+  height_m: 15000
+  cell_size_m: 150
+  base_elevation_m: 50
+  terrain_type: flat_desert
+sides:
+  - side: blue
+    units:
+      - {unit_type: infantry_platoon, count: 4}
+      - {unit_type: mechanized_company, count: 2}
+    experience_level: 0.6
+    morale_initial: STEADY
+    commander_profile: pmc_operator
+  - side: red
+    units:
+      - {unit_type: infantry_platoon, count: 6}
+    experience_level: 0.4
+    morale_initial: STEADY
+    commander_profile: insurgent_leader
+objectives:
+  - objective_id: coin_area
+    position: [7500, 7500]
+    radius_m: 3000
+    type: territory
+victory_conditions:
+  - type: time_expired
+    side: draw
+    params: {max_duration_s: 2592000}
+calibration_overrides:
+  blue_start_x: 2000
+  blue_start_y: 7500
+  red_start_x: 13000
+  red_start_y: 7500
+escalation_config:
+  entry_thresholds: [0.0, 0.15, 0.25, 0.35, 0.50, 0.60, 0.70, 0.80, 0.85, 0.90, 0.95]
+  hysteresis_factor: 0.7
+  cooldown_s: 3600

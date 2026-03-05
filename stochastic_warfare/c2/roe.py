@@ -264,3 +264,81 @@ class RoeEngine:
             )
             for od in state["area_overrides"]
         ]
+
+
+# ---------------------------------------------------------------------------
+# Treaty compliance and political ROE modulation (Phase 24b)
+# ---------------------------------------------------------------------------
+
+# Mapping from treaty name to the minimum escalation level required
+# to authorize employment of munitions prohibited under that treaty.
+_TREATY_ESCALATION_LEVELS: dict[str, int] = {
+    "CWC": 5,                # Chemical Weapons Convention → CHEMICAL
+    "BWC": 6,                # Biological Weapons Convention → BIOLOGICAL
+    "CCM": 4,                # Convention on Cluster Munitions → PROHIBITED_METHODS
+    "Ottawa": 4,             # Ottawa Treaty (AP mines) → PROHIBITED_METHODS
+    "Protocol III CCW": 3,   # Protocol III to CCW (incendiary) → ROE_VIOLATIONS
+    "Hague": 3,              # Hague Convention (expanding bullets) → ROE_VIOLATIONS
+}
+
+
+def check_treaty_compliance(
+    ammo_def: "AmmoDefinition",
+    escalation_level: int,
+) -> tuple[bool, str]:
+    """Check if ammo is treaty-compliant at current escalation level.
+
+    Parameters
+    ----------
+    ammo_def:
+        Ammunition definition with ``prohibited_under_treaties`` and
+        ``compliance_check`` fields.
+    escalation_level:
+        Current escalation level (0-10 integer scale).
+
+    Returns
+    -------
+    (compliant, reason):
+        ``compliant`` is True if the weapon may be employed at this
+        escalation level.  ``reason`` explains any rejection.
+    """
+    if not ammo_def.compliance_check:
+        return True, ""
+
+    for treaty in ammo_def.prohibited_under_treaties:
+        required_level = _TREATY_ESCALATION_LEVELS.get(treaty)
+        if required_level is not None and escalation_level < required_level:
+            return False, f"requires_escalation_level_{required_level}_for_{treaty}"
+
+    return True, ""
+
+
+def apply_political_roe_modulation(
+    current_roe_level: int,
+    effects: list[str],
+) -> int:
+    """Apply political pressure effects to ROE levels.
+
+    Parameters
+    ----------
+    current_roe_level:
+        Current ROE level as integer (0 = WEAPONS_HOLD, 1 = WEAPONS_TIGHT,
+        2 = WEAPONS_FREE).
+    effects:
+        List of active political effect strings.  Recognized effects:
+
+        - ``"FORCED_ROE_TIGHTENING"`` — decrease ROE by 1 (tighter).
+        - ``"ROE_LOOSENING_AUTHORIZED"`` — increase ROE by 1 (looser).
+
+    Returns
+    -------
+    The adjusted ROE level, clamped to [0, 2].
+    """
+    level = current_roe_level
+    for effect in effects:
+        if effect == "FORCED_ROE_TIGHTENING":
+            level -= 1
+        elif effect == "ROE_LOOSENING_AUTHORIZED":
+            level += 1
+    # Clamp to valid range
+    return max(0, min(2, level))

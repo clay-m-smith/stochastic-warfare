@@ -1,0 +1,14 @@
+profile_id: desperate_defender
+display_name: "Desperate Defender"
+description: "Commander willing to escalate when pushed but aware of consequences"
+aggression: 0.4
+caution: 0.7
+flexibility: 0.5
+initiative: 0.4
+experience: 0.6
+stress_tolerance: 0.6
+decision_speed: 0.4
+risk_acceptance: 0.4
+doctrine_violation_tolerance: 0.5
+collateral_tolerance: 0.4
+escalation_awareness: 0.6

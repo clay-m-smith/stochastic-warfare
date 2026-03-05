@@ -1,0 +1,12 @@
+ammo_id: expanding_762
+display_name: "7.62mm Expanding Bullet"
+ammo_type: EXPANDING
+mass_kg: 0.012
+diameter_mm: 7.62
+penetration_mm_rha: 5.0
+guidance: NONE
+propulsion: none
+prohibited_under_treaties:
+  - "Hague"
+compliance_check: true
+uxo_rate: 0.0

@@ -194,7 +194,11 @@ class TestCommanderProfileLoader:
             "air_superiority",
             "balanced_default",
             "cautious_infantry",
+            "desperate_defender",
+            "insurgent_leader",
             "naval_surface",
+            "pmc_operator",
+            "ruthless_authoritarian",
             "sof_operator",
         ])
         assert loader.available_profiles() == expected

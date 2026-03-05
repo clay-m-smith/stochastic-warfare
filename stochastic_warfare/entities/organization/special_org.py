@@ -18,6 +18,9 @@ class OrgType(enum.IntEnum):
     SOF = 1
     IRREGULAR = 2
     COALITION = 3
+    INSURGENT = 4
+    MILITIA = 5
+    PMC = 6
 
 
 class SpecialOrgTraits(BaseModel):

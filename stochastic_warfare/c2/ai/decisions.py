@@ -93,6 +93,9 @@ class BrigadeDivAction(enum.IntEnum):
     PASSAGE_OF_LINES = 7
     RELIEF_IN_PLACE = 8
     RESERVE = 9
+    EMPLOY_PROHIBITED_WEAPON = 10
+    AUTHORIZE_ESCALATION = 11
+    ORDER_SCORCHED_EARTH = 12
 
 
 class CorpsAction(enum.IntEnum):
@@ -105,6 +108,8 @@ class CorpsAction(enum.IntEnum):
     OPERATIONAL_MANEUVER = 4
     RESERVE = 5
     TRANSITION = 6
+    EMPLOY_CHEMICAL = 7
+    AUTHORIZE_NUCLEAR = 8
 
 
 # ---------------------------------------------------------------------------
@@ -116,6 +121,7 @@ _OFFENSIVE_NAMES: frozenset[str] = frozenset({
     "ENVELOP", "EXPLOIT", "PURSUE", "MAIN_ATTACK", "SUPPORTING_ATTACK",
     "DEEP_STRIKE", "OPERATIONAL_MANEUVER", "BOUND_FORWARD",
     "SUPPORT_BY_FIRE", "BYPASS", "FIX",
+    "EMPLOY_PROHIBITED_WEAPON", "EMPLOY_CHEMICAL", "AUTHORIZE_NUCLEAR",
 })
 
 _DEFENSIVE_NAMES: frozenset[str] = frozenset({
@@ -130,6 +136,7 @@ _MOVEMENT_NAMES: frozenset[str] = frozenset({
 
 _C2_NAMES: frozenset[str] = frozenset({
     "TRANSITION",
+    "AUTHORIZE_ESCALATION", "ORDER_SCORCHED_EARTH",
 })
 
 

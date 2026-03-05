@@ -111,7 +111,7 @@ class TestAdaptationTrigger:
         assert AdaptationTrigger.C2_DISRUPTION == 6
 
     def test_enum_count(self) -> None:
-        assert len(AdaptationTrigger) == 7
+        assert len(AdaptationTrigger) == 9
 
 
 class TestAdaptationAction:
@@ -125,7 +125,7 @@ class TestAdaptationAction:
         assert AdaptationAction.ISSUE_FRAGO == 6
 
     def test_enum_count(self) -> None:
-        assert len(AdaptationAction) == 7
+        assert len(AdaptationAction) == 9
 
 
 # ---------------------------------------------------------------------------

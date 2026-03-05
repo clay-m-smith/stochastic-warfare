@@ -6,6 +6,7 @@ other duties).
 
 from __future__ import annotations
 
+import enum
 from dataclasses import dataclass, field
 from datetime import datetime
 
@@ -24,6 +25,19 @@ logger = get_logger(__name__)
 
 
 # ---------------------------------------------------------------------------
+# Enums
+# ---------------------------------------------------------------------------
+
+
+class TreatmentLevel(enum.IntEnum):
+    """Prisoner treatment levels."""
+
+    STANDARD = 0
+    MISTREATED = 1
+    TORTURED = 2
+
+
+# ---------------------------------------------------------------------------
 # Data types
 # ---------------------------------------------------------------------------
 
@@ -39,6 +53,9 @@ class PrisonerGroup:
     side_captured: str
     status: str = "UNPROCESSED"  # UNPROCESSED, PROCESSING, HELD, EVACUATED
     processing_elapsed: float = 0.0
+    treatment_level: int = 0  # TreatmentLevel value
+    interrogation_stress: float = 0.0
+    intelligence_yielded: bool = False
 
 
 # ---------------------------------------------------------------------------
@@ -53,6 +70,24 @@ class PrisonerConfig(BaseModel):
     guard_ratio: int = 10  # 1 guard per N prisoners
     food_per_prisoner_per_hour: float = 0.104  # same as troops
     water_per_prisoner_per_hour: float = 0.167
+    interrogation_base_delay_hours: float = 8.0
+    stress_yield_multiplier: float = 2.0
+    stress_reliability_penalty: float = 0.4
+
+
+# ---------------------------------------------------------------------------
+# Interrogation result
+# ---------------------------------------------------------------------------
+
+
+@dataclass(frozen=True)
+class InterrogationResult:
+    """Result of a prisoner interrogation."""
+
+    intelligence_type: str
+    reliability: float
+    delay_hours: float
+    value: float
 
 
 # ---------------------------------------------------------------------------
@@ -147,6 +182,53 @@ class PrisonerEngine:
 
         logger.info("Evacuated POW group %s to %s", group_id, destination_id)
 
+    def set_treatment(
+        self,
+        group_id: str,
+        level: int,
+        timestamp: datetime | None = None,
+    ) -> None:
+        """Set treatment level for a prisoner group."""
+        group = self._groups[group_id]
+        group.treatment_level = level
+
+    def interrogate(
+        self,
+        group_id: str,
+        stress_level: float,
+        timestamp: datetime | None = None,
+    ) -> InterrogationResult | None:
+        """Interrogate a prisoner group.
+
+        Higher stress produces faster results but lower reliability.
+        Returns ``None`` if no intelligence obtained.
+        """
+        group = self._groups[group_id]
+        if group.intelligence_yielded:
+            return None
+
+        cfg = self._config
+        # Stress speeds up but reduces reliability
+        delay = cfg.interrogation_base_delay_hours / (
+            1.0 + stress_level * cfg.stress_yield_multiplier
+        )
+        reliability = max(
+            0.1, 1.0 - stress_level * cfg.stress_reliability_penalty
+        )
+
+        # Chance of yielding intel
+        yield_prob = 0.3 + stress_level * 0.4  # 0.3 base, up to 0.7
+        if self._rng.random() < yield_prob:
+            group.intelligence_yielded = True
+            group.interrogation_stress = stress_level
+            return InterrogationResult(
+                intelligence_type="tactical",
+                reliability=reliability,
+                delay_hours=delay,
+                value=self._rng.uniform(0.3, 1.0),
+            )
+        return None
+
     def get_group(self, group_id: str) -> PrisonerGroup:
         """Return a prisoner group; raises ``KeyError`` if not found."""
         return self._groups[group_id]
@@ -187,6 +269,9 @@ class PrisonerEngine:
                     "side_captured": g.side_captured,
                     "status": g.status,
                     "processing_elapsed": g.processing_elapsed,
+                    "treatment_level": g.treatment_level,
+                    "interrogation_stress": g.interrogation_stress,
+                    "intelligence_yielded": g.intelligence_yielded,
                 }
                 for gid, g in self._groups.items()
             },
@@ -205,4 +290,7 @@ class PrisonerEngine:
                 side_captured=gd["side_captured"],
                 status=gd["status"],
                 processing_elapsed=gd.get("processing_elapsed", 0.0),
+                treatment_level=gd.get("treatment_level", 0),
+                interrogation_stress=gd.get("interrogation_stress", 0.0),
+                intelligence_yielded=gd.get("intelligence_yielded", False),
             )

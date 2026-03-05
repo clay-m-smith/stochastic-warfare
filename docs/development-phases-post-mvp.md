@@ -486,8 +486,10 @@ Devlog: [devlog/phase-21.md](devlog/phase-21.md)
 
 ---
 
-## Phase 24: Unconventional & Prohibited Warfare
+## Phase 24: Unconventional & Prohibited Warfare — **COMPLETE**
 **Goal**: Model escalation dynamics, prohibited weapons employment, unconventional/irregular warfare mechanics, war crimes consequences, and insurgency/COIN feedback loops. Adds the "full spectrum" of conflict that conventional-only modeling cannot capture.
+
+**Status**: Complete. 345 tests (75 + 56 + 59 + 62 + 46 + 47) across 6 test files. Total: 6,325 tests passing (up from 5,980). 9 new source files + ~18 modified. ~32 YAML data files. No new dependencies. All changes backward-compatible — `escalation_config` defaults to `None`, new enum values appended, new commander traits have defaults. Devlog: [`devlog/phase-24.md`](devlog/phase-24.md).
 
 **Prerequisites**: Phase 12e (civilian population — displacement, collateral, HUMINT, influence dynamics), Phase 18 (CBRN effects — chemical/biological/nuclear weapon effects). Benefits from Phase 16 (EW — counter-IED jamming), Phase 19 (doctrinal schools — school-specific escalation tendencies).
 
