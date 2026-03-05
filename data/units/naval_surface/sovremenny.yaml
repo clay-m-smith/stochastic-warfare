@@ -1,0 +1,50 @@
+unit_type: sovremenny
+domain: naval
+display_name: "Sovremenny-class Destroyer"
+naval_type: DESTROYER
+max_speed: 17.5  # m/s (~34 knots)
+draft: 6.5
+displacement: 7940.0
+fuel_capacity: 500.0
+noise_signature_base: 135.0
+crew:
+  - role: COMMANDER
+    count: 1
+    skill: TRAINED
+  - role: NAVIGATOR
+    count: 2
+    skill: TRAINED
+  - role: SENSOR_OPERATOR
+    count: 6
+    skill: TRAINED
+  - role: GUNNER
+    count: 8
+    skill: BASIC
+  - role: ENGINEER
+    count: 12
+    skill: BASIC
+  - role: GENERIC
+    count: 315
+    skill: BASIC
+equipment:
+  - name: "AK-130 130mm Twin Gun"
+    category: WEAPON
+    weight_kg: 35000.0
+    reliability: 0.88
+  - name: "3M80 Moskit Launcher"
+    category: WEAPON
+    weight_kg: 6000.0
+    reliability: 0.85
+  - name: "MR-184 Voskhod Radar"
+    category: SENSOR
+    weight_kg: 4000.0
+    reliability: 0.82
+  - name: "MGK-335 Sonar"
+    category: SENSOR
+    weight_kg: 2800.0
+    reliability: 0.80
+  - name: "Steam Turbine Plant"
+    category: PROPULSION
+    weight_kg: 80000.0
+    reliability: 0.82
+    temperature_range: [-30.0, 45.0]

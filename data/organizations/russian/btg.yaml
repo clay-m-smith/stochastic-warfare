@@ -1,0 +1,18 @@
+name: "Russian Battalion Tactical Group"
+echelon: BATTALION
+nation: RU
+era: modern
+staff: ["S1", "S3"]
+subordinates:
+  - unit_type: t90a
+    count: 10
+    echelon: INDIVIDUAL
+  - unit_type: bmp2
+    count: 30
+    echelon: INDIVIDUAL
+  - unit_type: btr80
+    count: 10
+    echelon: INDIVIDUAL
+  - unit_type: kornet_team
+    count: 4
+    echelon: FIRE_TEAM

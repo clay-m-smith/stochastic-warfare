@@ -1,0 +1,21 @@
+profile_id: su27s
+unit_type: su27s
+visual:
+  height_m: 5.9
+  cross_section_m2: 18.0
+  camouflage_factor: 0.90
+thermal:
+  emissivity: 0.93
+  heat_output_kw: 280.0
+  contrast_modifier: 1.4
+radar:
+  rcs_frontal_m2: 10.0
+  rcs_side_m2: 20.0
+  rcs_rear_m2: 12.0
+acoustic:
+  noise_db: 128.0
+  speed_coefficient: 0.5
+electromagnetic:
+  emitting: true
+  power_dbm: 62.0
+  frequency_ghz: 10.0

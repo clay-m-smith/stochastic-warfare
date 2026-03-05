@@ -1,0 +1,21 @@
+profile_id: b52h
+unit_type: b52h
+visual:
+  height_m: 12.4
+  cross_section_m2: 60.0
+  camouflage_factor: 0.95
+thermal:
+  emissivity: 0.90
+  heat_output_kw: 800.0
+  contrast_modifier: 1.5
+radar:
+  rcs_frontal_m2: 100.0
+  rcs_side_m2: 200.0
+  rcs_rear_m2: 120.0
+acoustic:
+  noise_db: 140.0
+  speed_coefficient: 0.3
+electromagnetic:
+  emitting: true
+  power_dbm: 55.0
+  frequency_ghz: 9.0

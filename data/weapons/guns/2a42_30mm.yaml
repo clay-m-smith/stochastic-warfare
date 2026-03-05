@@ -1,0 +1,23 @@
+weapon_id: 2a42_30mm
+display_name: "2A42 30mm Autocannon"
+category: CANNON
+caliber_mm: 30.0
+muzzle_velocity_mps: 960.0
+max_range_m: 4000.0
+min_range_m: 0.0
+rate_of_fire_rpm: 550.0
+burst_size: 5
+base_accuracy_mrad: 1.5
+cep_m: 0.0
+guidance: NONE
+magazine_capacity: 500
+reload_time_s: 120.0
+compatible_ammo:
+  - 30mm_3uor6_hei
+weight_kg: 115.0
+reliability: 0.88
+barrel_life_rounds: 6000
+requires_deployed: false
+traverse_deg: 360.0
+elevation_min_deg: -5.0
+elevation_max_deg: 75.0

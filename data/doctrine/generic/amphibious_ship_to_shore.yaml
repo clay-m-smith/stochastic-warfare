@@ -1,0 +1,18 @@
+doctrine_id: amphibious_ship_to_shore
+display_name: "Amphibious Ship-to-Shore Movement"
+category: OFFENSIVE
+faction: generic
+description: "Naval amphibious operations projecting ground forces from sea to hostile shore. Requires naval fire support, air superiority, and mine clearance."
+min_echelon: 6
+max_echelon: 10
+applicable_domains: ["LAND", "SEA", "AIR"]
+phases: ["APPROACH", "FIRE_SUPPORT", "LANDING", "BUILDUP", "BREAKOUT"]
+force_ratios:
+  assault_wave: 0.40
+  fire_support: 0.30
+  follow_on: 0.20
+  reserve: 0.10
+actions: ["naval_fire_support", "air_strike", "amphibious_landing", "seize_beachhead", "exploit"]
+priorities: ["naval_superiority", "air_superiority", "firepower"]
+risk_tolerance: high
+tempo: moderate

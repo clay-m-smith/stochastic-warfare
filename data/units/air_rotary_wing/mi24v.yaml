@@ -1,0 +1,38 @@
+unit_type: mi24v
+domain: aerial
+display_name: "Mi-24V Hind-E"
+aerial_type: ATTACK_HELO
+max_speed: 83.3  # m/s (~162 kts)
+service_ceiling: 4500.0
+crew:
+  - role: PILOT
+    count: 1
+    skill: TRAINED
+  - role: COPILOT
+    count: 1
+    skill: TRAINED
+  - role: GENERIC
+    count: 8
+    skill: BASIC
+equipment:
+  - name: "YakB-12.7 Gatling Gun"
+    category: WEAPON
+    weight_kg: 45.0
+    reliability: 0.86
+  - name: "9M114 Shturm-V Launcher"
+    category: WEAPON
+    weight_kg: 48.0
+    reliability: 0.84
+  - name: "TV3-117V Turboshaft x2"
+    category: PROPULSION
+    weight_kg: 600.0
+    reliability: 0.86
+    temperature_range: [-50.0, 50.0]
+  - name: "Raduga-Sh Sight"
+    category: SENSOR
+    weight_kg: 40.0
+    reliability: 0.82
+  - name: "R-863 Radio"
+    category: COMMUNICATION
+    weight_kg: 10.0
+    reliability: 0.87

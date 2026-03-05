@@ -1,0 +1,12 @@
+name: "US Stryker Infantry Company"
+echelon: COMPANY
+nation: US
+era: modern
+staff: ["XO"]
+subordinates:
+  - unit_type: us_rifle_squad
+    count: 9
+    echelon: SQUAD
+  - unit_type: javelin_team
+    count: 3
+    echelon: FIRE_TEAM

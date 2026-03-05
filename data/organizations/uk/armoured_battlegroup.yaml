@@ -1,0 +1,15 @@
+name: "UK Armoured Battlegroup"
+echelon: BATTALION
+nation: UK
+era: modern
+staff: ["S1", "S2", "S3"]
+subordinates:
+  - unit_type: challenger2
+    count: 14
+    echelon: INDIVIDUAL
+  - unit_type: us_rifle_squad
+    count: 12
+    echelon: SQUAD
+  - unit_type: hemtt
+    count: 4
+    echelon: INDIVIDUAL

@@ -1,0 +1,43 @@
+unit_type: leopard2a6
+domain: ground
+display_name: "Leopard 2A6 MBT"
+ground_type: ARMOR
+max_speed: 19.4  # m/s (~70 km/h road)
+armor_front: 700.0
+armor_side: 250.0
+armor_type: COMPOSITE
+crew:
+  - role: COMMANDER
+    count: 1
+    skill: TRAINED
+  - role: GUNNER
+    count: 1
+    skill: TRAINED
+  - role: LOADER
+    count: 1
+    skill: BASIC
+  - role: DRIVER
+    count: 1
+    skill: TRAINED
+equipment:
+  - name: "Rh-120 L/55 120mm Smoothbore"
+    category: WEAPON
+    weight_kg: 1900.0
+    reliability: 0.96
+  - name: "MG3 7.62mm Coaxial"
+    category: WEAPON
+    weight_kg: 10.5
+    reliability: 0.93
+  - name: "MTU MB 873 Ka-501 Diesel"
+    category: PROPULSION
+    weight_kg: 1100.0
+    reliability: 0.92
+    temperature_range: [-35.0, 50.0]
+  - name: "EMES 15 Gunner Sight"
+    category: SENSOR
+    weight_kg: 60.0
+    reliability: 0.92
+  - name: "PERI R17A2 Commander Sight"
+    category: SENSOR
+    weight_kg: 40.0
+    reliability: 0.91

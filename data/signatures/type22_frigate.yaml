@@ -1,0 +1,21 @@
+profile_id: type22_frigate
+unit_type: type22_frigate
+visual:
+  height_m: 14.0
+  cross_section_m2: 350.0
+  camouflage_factor: 1.0
+thermal:
+  emissivity: 0.90
+  heat_output_kw: 5000.0
+  contrast_modifier: 1.2
+radar:
+  rcs_frontal_m2: 3000.0
+  rcs_side_m2: 8000.0
+  rcs_rear_m2: 4000.0
+acoustic:
+  noise_db: 130.0
+  speed_coefficient: 1.5
+electromagnetic:
+  emitting: true
+  power_dbm: 65.0
+  frequency_ghz: 3.0

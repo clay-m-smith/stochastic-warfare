@@ -1,0 +1,44 @@
+unit_type: kilo636
+domain: submarine
+display_name: "Kilo-class (Project 636.3) SSK"
+naval_type: SSK
+max_speed: 10.3  # m/s (~20 knots submerged)
+draft: 6.2
+displacement: 3100.0
+fuel_capacity: 200.0
+max_depth: 300.0
+noise_signature_base: 85.0
+crew:
+  - role: COMMANDER
+    count: 1
+    skill: TRAINED
+  - role: NAVIGATOR
+    count: 2
+    skill: TRAINED
+  - role: SENSOR_OPERATOR
+    count: 4
+    skill: TRAINED
+  - role: ENGINEER
+    count: 8
+    skill: BASIC
+  - role: GENERIC
+    count: 37
+    skill: BASIC
+equipment:
+  - name: "533mm Torpedo Tubes x6"
+    category: WEAPON
+    weight_kg: 5000.0
+    reliability: 0.90
+  - name: "MGK-400 Rubikon Sonar"
+    category: SENSOR
+    weight_kg: 3500.0
+    reliability: 0.84
+  - name: "Diesel-Electric Plant"
+    category: PROPULSION
+    weight_kg: 25000.0
+    reliability: 0.88
+    temperature_range: [-10.0, 40.0]
+  - name: "MRK-50 Albatros Radar"
+    category: SENSOR
+    weight_kg: 400.0
+    reliability: 0.86

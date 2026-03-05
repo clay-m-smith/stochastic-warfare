@@ -1,0 +1,17 @@
+doctrine_id: pla_active_defense
+display_name: "PLA Active Defense"
+category: DEFENSIVE
+faction: chinese
+description: "PLA doctrine emphasizing strategic defense with operational/tactical offense. Layered defense-in-depth with counter-attack at decisive points."
+min_echelon: 5
+max_echelon: 10
+applicable_domains: ["LAND", "SEA", "AIR"]
+phases: ["DEFEND", "ATTRIT", "COUNTERATTACK", "EXPLOIT"]
+force_ratios:
+  main_defense: 0.40
+  counter_attack: 0.35
+  reserve: 0.25
+actions: ["defend", "delay", "counterattack", "deny", "ambush"]
+priorities: ["information_dominance", "firepower", "maneuver"]
+risk_tolerance: moderate
+tempo: moderate

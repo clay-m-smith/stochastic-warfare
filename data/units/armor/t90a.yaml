@@ -1,0 +1,44 @@
+unit_type: t90a
+domain: ground
+display_name: "T-90A Vladimir MBT"
+ground_type: ARMOR
+max_speed: 16.7  # m/s (~60 km/h road)
+armor_front: 800.0
+armor_side: 300.0
+armor_type: COMPOSITE
+crew:
+  - role: COMMANDER
+    count: 1
+    skill: TRAINED
+  - role: GUNNER
+    count: 1
+    skill: TRAINED
+  - role: DRIVER
+    count: 1
+    skill: BASIC
+equipment:
+  - name: "2A46M-5 125mm Smoothbore"
+    category: WEAPON
+    weight_kg: 2400.0
+    reliability: 0.90
+  - name: "NSVT 12.7mm HMG"
+    category: WEAPON
+    weight_kg: 25.0
+    reliability: 0.90
+  - name: "V-92S2 Diesel"
+    category: PROPULSION
+    weight_kg: 1020.0
+    reliability: 0.85
+    temperature_range: [-40.0, 50.0]
+  - name: "Essa Thermal Sight"
+    category: SENSOR
+    weight_kg: 45.0
+    reliability: 0.84
+  - name: "Shtora-1 APS"
+    category: PROTECTION
+    weight_kg: 400.0
+    reliability: 0.80
+  - name: "R-163-50U Radio"
+    category: COMMUNICATION
+    weight_kg: 20.0
+    reliability: 0.85

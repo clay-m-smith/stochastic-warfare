@@ -405,8 +405,8 @@ class TestCheckpointRestore:
         """All YAML data files load and validate."""
         sig_loader = SignatureLoader(SIG_DIR)
         sig_loader.load_all()
-        assert len(sig_loader.available_profiles()) == 15
+        assert len(sig_loader.available_profiles()) >= 15
 
         sensor_loader = SensorLoader(SENSOR_DIR)
         sensor_loader.load_all()
-        assert len(sensor_loader.available_sensors()) == 9
+        assert len(sensor_loader.available_sensors()) >= 9

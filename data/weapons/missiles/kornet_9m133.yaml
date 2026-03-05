@@ -1,0 +1,25 @@
+weapon_id: kornet_9m133
+display_name: "9M133 Kornet ATGM Launcher"
+category: MISSILE_LAUNCHER
+caliber_mm: 152.0
+muzzle_velocity_mps: 0.0
+max_range_m: 5500.0
+min_range_m: 100.0
+rate_of_fire_rpm: 2.0
+burst_size: 1
+base_accuracy_mrad: 0.0
+cep_m: 0.0
+min_engagement_altitude_m: 0.0
+max_engagement_altitude_m: 0.0
+guidance: LASER
+magazine_capacity: 1
+reload_time_s: 15.0
+compatible_ammo:
+  - kornet_warhead
+weight_kg: 19.0
+reliability: 0.88
+barrel_life_rounds: 0
+requires_deployed: true
+traverse_deg: 360.0
+elevation_min_deg: -5.0
+elevation_max_deg: 20.0

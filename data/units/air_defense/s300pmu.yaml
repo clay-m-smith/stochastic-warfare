@@ -1,0 +1,42 @@
+unit_type: s300pmu
+domain: ground
+display_name: "S-300PMU Long-Range SAM Battery"
+ad_type: SAM_LONG
+max_speed: 11.1  # m/s (~40 km/h road, towed)
+min_engagement_altitude: 25.0
+max_engagement_altitude: 30000.0
+max_engagement_range: 150000.0
+ready_missiles: 4
+reload_time: 1200.0
+crew:
+  - role: COMMANDER
+    count: 1
+    skill: EXPERIENCED
+  - role: SENSOR_OPERATOR
+    count: 4
+    skill: TRAINED
+  - role: GENERIC
+    count: 8
+    skill: BASIC
+equipment:
+  - name: "30N6E Flap Lid Radar"
+    category: SENSOR
+    weight_kg: 8000.0
+    reliability: 0.86
+    temperature_range: [-40.0, 50.0]
+  - name: "5P85 TEL"
+    category: WEAPON
+    weight_kg: 42000.0
+    reliability: 0.88
+  - name: "76T6E Clam Shell Radar"
+    category: SENSOR
+    weight_kg: 3500.0
+    reliability: 0.84
+  - name: "54K6E Command Post"
+    category: COMMUNICATION
+    weight_kg: 20000.0
+    reliability: 0.85
+  - name: "Generator Set"
+    category: POWER
+    weight_kg: 6000.0
+    reliability: 0.82

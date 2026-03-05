@@ -1,0 +1,38 @@
+unit_type: sa11_buk
+domain: ground
+display_name: "SA-11 Buk-M1 SAM Battery"
+ad_type: SAM_MEDIUM
+max_speed: 13.9  # m/s (~50 km/h road, self-propelled)
+min_engagement_altitude: 15.0
+max_engagement_altitude: 22000.0
+max_engagement_range: 35000.0
+ready_missiles: 4
+reload_time: 600.0
+crew:
+  - role: COMMANDER
+    count: 1
+    skill: TRAINED
+  - role: SENSOR_OPERATOR
+    count: 2
+    skill: TRAINED
+  - role: GENERIC
+    count: 3
+    skill: BASIC
+equipment:
+  - name: "9S35 Fire Dome Radar"
+    category: SENSOR
+    weight_kg: 3200.0
+    reliability: 0.84
+    temperature_range: [-40.0, 50.0]
+  - name: "9A310 TELAR"
+    category: WEAPON
+    weight_kg: 32500.0
+    reliability: 0.86
+  - name: "V-46 Diesel Engine"
+    category: PROPULSION
+    weight_kg: 750.0
+    reliability: 0.84
+  - name: "R-173 Radio"
+    category: COMMUNICATION
+    weight_kg: 16.0
+    reliability: 0.86

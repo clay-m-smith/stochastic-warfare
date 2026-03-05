@@ -1,0 +1,21 @@
+profile_id: t90a
+unit_type: t90a
+visual:
+  height_m: 2.22
+  cross_section_m2: 7.8
+  camouflage_factor: 0.78
+thermal:
+  emissivity: 0.94
+  heat_output_kw: 650.0
+  contrast_modifier: 1.1
+radar:
+  rcs_frontal_m2: 12.0
+  rcs_side_m2: 30.0
+  rcs_rear_m2: 9.0
+acoustic:
+  noise_db: 83.0
+  speed_coefficient: 2.0
+electromagnetic:
+  emitting: false
+  power_dbm: 0.0
+  frequency_ghz: 0.0

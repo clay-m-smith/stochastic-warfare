@@ -1,0 +1,18 @@
+ammo_id: r77_warhead
+display_name: "R-77 (AA-12 Adder)"
+ammo_type: MISSILE
+mass_kg: 175.0
+diameter_mm: 200.0
+drag_coefficient: 0.25
+blast_radius_m: 8.0
+fragmentation_radius_m: 18.0
+guidance: RADAR_ACTIVE
+seeker_fov_deg: 60.0
+seeker_range_m: 16000.0
+pk_at_reference: 0.70
+countermeasure_susceptibility: 0.20
+propulsion: rocket
+max_speed_mps: 1300.0
+flight_time_s: 50.0
+terminal_maneuver: true
+unit_cost_factor: 70.0

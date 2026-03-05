@@ -1,0 +1,32 @@
+unit_type: mig29a
+domain: aerial
+display_name: "MiG-29A Fulcrum"
+aerial_type: FIGHTER
+max_speed: 680.0  # m/s (~Mach 2.25)
+service_ceiling: 18000.0
+crew:
+  - role: PILOT
+    count: 1
+    skill: TRAINED
+equipment:
+  - name: "GSh-30-1 30mm Cannon"
+    category: WEAPON
+    weight_kg: 46.0
+    reliability: 0.90
+  - name: "N019 Sapfir Radar"
+    category: SENSOR
+    weight_kg: 300.0
+    reliability: 0.82
+  - name: "RD-33 Turbofan x2"
+    category: PROPULSION
+    weight_kg: 2060.0
+    reliability: 0.85
+    temperature_range: [-50.0, 60.0]
+  - name: "SPO-15 Beryoza RWR"
+    category: SENSOR
+    weight_kg: 18.0
+    reliability: 0.84
+  - name: "R-862 VHF Radio"
+    category: COMMUNICATION
+    weight_kg: 10.0
+    reliability: 0.88

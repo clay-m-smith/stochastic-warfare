@@ -1,0 +1,17 @@
+ammo_id: gbu12_paveway
+display_name: "GBU-12 Paveway II Laser-Guided Bomb"
+ammo_type: GUIDED
+mass_kg: 227.0
+diameter_mm: 274.0
+drag_coefficient: 0.30
+penetration_mm_rha: 0.0
+blast_radius_m: 60.0
+fragmentation_radius_m: 200.0
+guidance: LASER
+seeker_fov_deg: 30.0
+seeker_range_m: 0.0
+pk_at_reference: 0.85
+countermeasure_susceptibility: 0.10
+propulsion: none
+max_speed_mps: 0.0
+unit_cost_factor: 20.0

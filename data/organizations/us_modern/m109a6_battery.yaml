@@ -1,0 +1,12 @@
+name: "M109A6 Paladin Battery"
+echelon: COMPANY
+nation: US
+era: modern
+staff: ["FDC"]
+subordinates:
+  - unit_type: m109a6
+    count: 6
+    echelon: INDIVIDUAL
+  - unit_type: hemtt
+    count: 2
+    echelon: INDIVIDUAL

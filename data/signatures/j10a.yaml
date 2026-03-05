@@ -1,0 +1,21 @@
+profile_id: j10a
+unit_type: j10a
+visual:
+  height_m: 5.4
+  cross_section_m2: 13.0
+  camouflage_factor: 0.90
+thermal:
+  emissivity: 0.93
+  heat_output_kw: 190.0
+  contrast_modifier: 1.3
+radar:
+  rcs_frontal_m2: 2.5
+  rcs_side_m2: 7.0
+  rcs_rear_m2: 5.0
+acoustic:
+  noise_db: 123.0
+  speed_coefficient: 0.5
+electromagnetic:
+  emitting: true
+  power_dbm: 58.0
+  frequency_ghz: 9.5

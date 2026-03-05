@@ -1,0 +1,21 @@
+profile_id: s300pmu
+unit_type: s300pmu
+visual:
+  height_m: 4.5
+  cross_section_m2: 20.0
+  camouflage_factor: 0.65
+thermal:
+  emissivity: 0.90
+  heat_output_kw: 500.0
+  contrast_modifier: 1.0
+radar:
+  rcs_frontal_m2: 25.0
+  rcs_side_m2: 50.0
+  rcs_rear_m2: 18.0
+acoustic:
+  noise_db: 75.0
+  speed_coefficient: 2.0
+electromagnetic:
+  emitting: true
+  power_dbm: 70.0
+  frequency_ghz: 4.0

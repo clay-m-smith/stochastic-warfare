@@ -1,0 +1,12 @@
+name: "Generic Mechanized Infantry Company"
+echelon: COMPANY
+nation: GENERIC
+era: modern
+staff: []
+subordinates:
+  - unit_type: bmp1
+    count: 14
+    echelon: INDIVIDUAL
+  - unit_type: us_rifle_squad
+    count: 9
+    echelon: SQUAD

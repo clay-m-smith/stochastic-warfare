@@ -1,0 +1,21 @@
+profile_id: sa11_buk
+unit_type: sa11_buk
+visual:
+  height_m: 3.8
+  cross_section_m2: 12.0
+  camouflage_factor: 0.70
+thermal:
+  emissivity: 0.92
+  heat_output_kw: 400.0
+  contrast_modifier: 1.0
+radar:
+  rcs_frontal_m2: 18.0
+  rcs_side_m2: 35.0
+  rcs_rear_m2: 12.0
+acoustic:
+  noise_db: 80.0
+  speed_coefficient: 2.0
+electromagnetic:
+  emitting: true
+  power_dbm: 58.0
+  frequency_ghz: 6.0

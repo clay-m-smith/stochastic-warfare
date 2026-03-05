@@ -1,0 +1,11 @@
+profile_id: joint_campaign
+display_name: "Joint Campaign Commander"
+description: "Balanced senior commander experienced in joint operations across all domains"
+aggression: 0.5
+caution: 0.5
+flexibility: 0.8
+initiative: 0.6
+experience: 0.9
+stress_tolerance: 0.7
+decision_speed: 0.6
+risk_acceptance: 0.5

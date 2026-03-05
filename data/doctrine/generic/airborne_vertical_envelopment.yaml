@@ -1,0 +1,17 @@
+doctrine_id: airborne_vertical_envelopment
+display_name: "Airborne Vertical Envelopment"
+category: OFFENSIVE
+faction: generic
+description: "Airborne and air assault operations to seize key terrain behind enemy lines, disrupting rear areas and enabling link-up with ground forces."
+min_echelon: 5
+max_echelon: 8
+applicable_domains: ["LAND", "AIR"]
+phases: ["INSERTION", "SEIZURE", "DEFENSE", "LINKUP"]
+force_ratios:
+  assault: 0.50
+  supporting_fires: 0.30
+  reserve: 0.20
+actions: ["air_assault", "seize", "defend", "link_up", "isolate"]
+priorities: ["surprise", "speed", "firepower"]
+risk_tolerance: high
+tempo: high

@@ -1,0 +1,12 @@
+sensor_id: sqr19_towed_array
+sensor_type: PASSIVE_SONAR
+display_name: "AN/SQR-19 TACTAS Towed Array Sonar"
+max_range_m: 120000.0
+detection_threshold: 6.0
+false_alarm_rate: 1.0e-5
+scan_time_s: 15.0
+directivity_index_db: 25.0
+min_range_m: 1000.0
+fov_deg: 360.0
+requires_los: false
+detects_domain: ["ACOUSTIC"]

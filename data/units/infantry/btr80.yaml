@@ -1,0 +1,39 @@
+unit_type: btr80
+domain: ground
+display_name: "BTR-80 Armored Personnel Carrier"
+ground_type: MOTORIZED
+max_speed: 22.2  # m/s (~80 km/h road)
+armor_front: 10.0
+armor_side: 7.0
+armor_type: RHA
+crew:
+  - role: COMMANDER
+    count: 1
+    skill: TRAINED
+  - role: GUNNER
+    count: 1
+    skill: BASIC
+  - role: DRIVER
+    count: 1
+    skill: BASIC
+  - role: GENERIC
+    count: 7
+    skill: BASIC
+equipment:
+  - name: "KPVT 14.5mm HMG"
+    category: WEAPON
+    weight_kg: 49.0
+    reliability: 0.88
+  - name: "PKT 7.62mm MG"
+    category: WEAPON
+    weight_kg: 10.5
+    reliability: 0.92
+  - name: "KamAZ-7403 Diesel"
+    category: PROPULSION
+    weight_kg: 750.0
+    reliability: 0.86
+    temperature_range: [-40.0, 50.0]
+  - name: "R-173 Radio"
+    category: COMMUNICATION
+    weight_kg: 16.0
+    reliability: 0.86

@@ -36,7 +36,7 @@ Rolling record of implementation decisions, changes, and lessons learned across 
 | 25 | Engine Wiring & Integration Sprint | **Complete** | [phase-25.md](phase-25.md) |
 | 26 | Core Polish & Configuration | **Complete** | [phase-26.md](phase-26.md) |
 | 27 | Combat System Completeness | **Complete** | [phase-27.md](phase-27.md) |
-| 28 | Modern Era Data Package | Planned | — |
+| 28 | Modern Era Data Package | **Complete** | [phase-28.md](phase-28.md) |
 | 29 | Historical Era Data Expansion | Planned | — |
 | 30 | Scenario & Campaign Library | Planned | — |
 

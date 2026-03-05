@@ -109,7 +109,7 @@ class TestSensorLoader:
         loader = SensorLoader(DATA_DIR)
         loader.load_all()
         sensors = loader.available_sensors()
-        assert len(sensors) == 9
+        assert len(sensors) >= 9
         assert "mk1_eyeball" in sensors
         assert "air_search_radar" in sensors
         assert "passive_sonar" in sensors

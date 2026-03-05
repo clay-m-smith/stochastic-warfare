@@ -1,0 +1,12 @@
+sensor_id: aaq33_sniper
+sensor_type: THERMAL
+display_name: "AN/AAQ-33 Sniper Advanced Targeting Pod"
+max_range_m: 55000.0
+detection_threshold: 8.0
+false_alarm_rate: 1.0e-6
+scan_time_s: 0.5
+min_range_m: 200.0
+fov_deg: 4.0
+boresight_offset_deg: 0.0
+requires_los: true
+detects_domain: ["THERMAL"]

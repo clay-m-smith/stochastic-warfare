@@ -1,0 +1,15 @@
+name: "PLA Combined Arms Brigade"
+echelon: BRIGADE
+nation: CN
+era: modern
+staff: ["S1", "S2", "S3", "S4"]
+subordinates:
+  - unit_type: t90a
+    count: 30
+    echelon: INDIVIDUAL
+  - unit_type: bmp2
+    count: 60
+    echelon: INDIVIDUAL
+  - unit_type: btr80
+    count: 30
+    echelon: INDIVIDUAL

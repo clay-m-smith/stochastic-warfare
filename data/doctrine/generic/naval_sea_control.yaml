@@ -1,0 +1,18 @@
+doctrine_id: naval_sea_control
+display_name: "Naval Sea Control Operations"
+category: OFFENSIVE
+faction: generic
+description: "Establishing and maintaining sea control in a designated area through offensive and defensive operations, including ASW, AAW, and surface warfare."
+min_echelon: 6
+max_echelon: 10
+applicable_domains: ["SEA", "AIR"]
+phases: ["SCREENING", "SANITIZATION", "CONTROL", "SUSTAINMENT"]
+force_ratios:
+  asw_screen: 0.30
+  aaw_screen: 0.25
+  surface_strike: 0.25
+  reserve: 0.20
+actions: ["asw_patrol", "aaw_defense", "surface_engagement", "mine_countermeasures", "air_strike"]
+priorities: ["subsurface_defense", "air_defense", "surface_action"]
+risk_tolerance: moderate
+tempo: moderate

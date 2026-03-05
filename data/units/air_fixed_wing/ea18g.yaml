@@ -1,0 +1,35 @@
+unit_type: ea18g
+domain: aerial
+display_name: "EA-18G Growler"
+aerial_type: EW
+max_speed: 595.0  # m/s (~Mach 1.8)
+service_ceiling: 15000.0
+crew:
+  - role: PILOT
+    count: 1
+    skill: EXPERIENCED
+  - role: SENSOR_OPERATOR
+    count: 1
+    skill: EXPERIENCED
+equipment:
+  - name: "AN/ALQ-99 Jamming Pods"
+    category: WEAPON
+    weight_kg: 480.0
+    reliability: 0.85
+  - name: "AN/APG-79 AESA Radar"
+    category: SENSOR
+    weight_kg: 300.0
+    reliability: 0.90
+  - name: "F414-GE-400 Turbofan x2"
+    category: PROPULSION
+    weight_kg: 2200.0
+    reliability: 0.91
+    temperature_range: [-54.0, 71.0]
+  - name: "AN/ALQ-218 EW Receiver"
+    category: SENSOR
+    weight_kg: 150.0
+    reliability: 0.88
+  - name: "Link 16 Terminal"
+    category: COMMUNICATION
+    weight_kg: 30.0
+    reliability: 0.91

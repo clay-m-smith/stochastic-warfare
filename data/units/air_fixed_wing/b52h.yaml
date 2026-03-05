@@ -1,0 +1,48 @@
+unit_type: b52h
+domain: aerial
+display_name: "B-52H Stratofortress"
+aerial_type: BOMBER
+max_speed: 290.0  # m/s (~560 kts)
+service_ceiling: 15200.0
+crew:
+  - role: PILOT
+    count: 1
+    skill: EXPERIENCED
+  - role: COPILOT
+    count: 1
+    skill: TRAINED
+  - role: NAVIGATOR
+    count: 1
+    skill: TRAINED
+  - role: SENSOR_OPERATOR
+    count: 1
+    skill: TRAINED
+  - role: GENERIC
+    count: 1
+    skill: TRAINED
+equipment:
+  - name: "AN/ASQ-176 OAS"
+    category: SENSOR
+    weight_kg: 200.0
+    reliability: 0.88
+  - name: "AN/ALQ-172 ECM"
+    category: SENSOR
+    weight_kg: 350.0
+    reliability: 0.84
+  - name: "TF33-P-3 Turbofan x8"
+    category: PROPULSION
+    weight_kg: 13600.0
+    reliability: 0.90
+    temperature_range: [-54.0, 71.0]
+  - name: "CSRL Rotary Launcher"
+    category: WEAPON
+    weight_kg: 1000.0
+    reliability: 0.94
+  - name: "AN/ASQ-38 Bombing/Nav"
+    category: NAVIGATION
+    weight_kg: 180.0
+    reliability: 0.86
+  - name: "Link 16 Terminal"
+    category: COMMUNICATION
+    weight_kg: 30.0
+    reliability: 0.91

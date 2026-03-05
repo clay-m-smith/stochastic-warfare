@@ -1,0 +1,32 @@
+unit_type: su27s
+domain: aerial
+display_name: "Su-27S Flanker-B"
+aerial_type: FIGHTER
+max_speed: 694.0  # m/s (~Mach 2.35)
+service_ceiling: 18500.0
+crew:
+  - role: PILOT
+    count: 1
+    skill: TRAINED
+equipment:
+  - name: "GSh-30-1 30mm Cannon"
+    category: WEAPON
+    weight_kg: 46.0
+    reliability: 0.90
+  - name: "N001 Myech Radar"
+    category: SENSOR
+    weight_kg: 980.0
+    reliability: 0.80
+  - name: "AL-31F Turbofan x2"
+    category: PROPULSION
+    weight_kg: 3060.0
+    reliability: 0.87
+    temperature_range: [-50.0, 60.0]
+  - name: "SPO-15 Beryoza RWR"
+    category: SENSOR
+    weight_kg: 18.0
+    reliability: 0.84
+  - name: "OEPS-27 IRST"
+    category: SENSOR
+    weight_kg: 120.0
+    reliability: 0.82

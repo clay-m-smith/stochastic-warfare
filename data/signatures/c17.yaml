@@ -1,0 +1,21 @@
+profile_id: c17
+unit_type: c17
+visual:
+  height_m: 16.8
+  cross_section_m2: 80.0
+  camouflage_factor: 0.95
+thermal:
+  emissivity: 0.90
+  heat_output_kw: 600.0
+  contrast_modifier: 1.4
+radar:
+  rcs_frontal_m2: 80.0
+  rcs_side_m2: 180.0
+  rcs_rear_m2: 100.0
+acoustic:
+  noise_db: 135.0
+  speed_coefficient: 0.3
+electromagnetic:
+  emitting: true
+  power_dbm: 50.0
+  frequency_ghz: 9.4

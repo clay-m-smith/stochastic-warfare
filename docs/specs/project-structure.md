@@ -1,5 +1,5 @@
 # Project Structure & Module Decomposition
-**Status**: Complete (Phase 25)
+**Status**: Complete (Phase 28)
 **Last Updated**: 2026-03-05
 
 ---
@@ -35,7 +35,7 @@ stochastic-warfare/
 │   │   ├── naval_mine_warfare/       # Minesweepers, minelayers, mine hunters
 │   │   └── naval_auxiliary/          # Oilers, supply ships, hospital ships, salvage
 │   ├── weapons/                      # Weapon system definitions (referenced by units)
-│   ├── ammunition/                   # Ammunition type definitions (AP, HE, HEAT, smoke, illum, guided, rockets, missiles)
+│   ├── ammunition/                   # Ammunition type definitions (AP, HE, HEAT, smoke, illum, guided, rockets, missiles, bombs, autocannon)
 │   ├── sensors/                      # Sensor type definitions (referenced by units)
 │   ├── signatures/                   # Unit signature profiles (visual, thermal, RCS, acoustic, EM)
 │   ├── comms/                        # Communication equipment definitions (SINCGARS, Harris HF, Link 16, SATCOM, etc.)
@@ -55,17 +55,20 @@ stochastic-warfare/
 │   │   ├── transport_profiles/      # Transport vehicle profiles (truck, C-130, rail, sealift)
 │   │   └── medical_facilities/      # Medical facility definitions (aid station, field hospital)
 │   ├── organizations/                # TO&E definitions per nation/era
-│   │   ├── us_modern/               # US Army/USMC/Navy modern structure
-│   │   ├── russian_modern/          # Russian ground/naval/air structure
-│   │   ├── chinese_modern/          # PLA structure
-│   │   ├── nato_generic/            # Generic NATO-standard allied force structure
+│   │   ├── us_modern/               # US Army/USMC/Navy modern structure (CABTF, Stryker Co, Paladin Bty)
+│   │   ├── russian/                 # Russian ground/naval/air structure (BTG)
+│   │   ├── chinese/                 # PLA structure (Combined Arms Brigade)
+│   │   ├── uk/                      # UK armoured battlegroup
+│   │   ├── generic/                 # Generic force templates (mech company)
 │   │   ├── irregular/               # Insurgent, militia, guerrilla organizational templates
 │   │   └── historical/              # WW2, Napoleonic, etc. (future era support)
 │   ├── doctrine/                     # Doctrinal templates per nation/era/domain
 │   │   ├── us/                      # US doctrine: FM 3-0 operations framework, mission command
 │   │   ├── russian/                 # Russian doctrine: deep operations, correlation of forces
 │   │   ├── nato/                    # NATO doctrinal procedures
-│   │   └── generic/                 # Era/domain-generic tactical patterns
+│   │   ├── chinese/                 # PLA Active Defense [Phase 28]
+│   │   ├── idf/                     # IDF Preemptive Strike [Phase 28]
+│   │   └── generic/                 # Era/domain-generic tactical patterns (airborne, amphibious, naval sea control)
 │   ├── schools/                      # Doctrinal school definitions [Phase 19]
 │   │   └── (9 files)                # clausewitzian, maneuverist, attrition, airland_battle, air_power, sun_tzu, deep_battle, maritime_mahanian, maritime_corbettian
 │   ├── commander_profiles/           # Commander personality archetypes (risk tolerance, style, preferences)

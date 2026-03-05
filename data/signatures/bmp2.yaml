@@ -1,0 +1,21 @@
+profile_id: bmp2
+unit_type: bmp2
+visual:
+  height_m: 2.45
+  cross_section_m2: 6.5
+  camouflage_factor: 0.75
+thermal:
+  emissivity: 0.92
+  heat_output_kw: 220.0
+  contrast_modifier: 1.0
+radar:
+  rcs_frontal_m2: 9.0
+  rcs_side_m2: 20.0
+  rcs_rear_m2: 7.0
+acoustic:
+  noise_db: 80.0
+  speed_coefficient: 2.0
+electromagnetic:
+  emitting: false
+  power_dbm: 0.0
+  frequency_ghz: 0.0

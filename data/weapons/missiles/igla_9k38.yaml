@@ -1,0 +1,25 @@
+weapon_id: igla_9k38
+display_name: "9K38 Igla (SA-18) MANPADS"
+category: MISSILE_LAUNCHER
+caliber_mm: 72.0
+muzzle_velocity_mps: 0.0
+max_range_m: 5200.0
+min_range_m: 500.0
+rate_of_fire_rpm: 2.0
+burst_size: 1
+base_accuracy_mrad: 0.0
+cep_m: 0.0
+min_engagement_altitude_m: 10.0
+max_engagement_altitude_m: 3500.0
+guidance: IR
+magazine_capacity: 1
+reload_time_s: 15.0
+compatible_ammo:
+  - igla_warhead
+weight_kg: 17.9
+reliability: 0.88
+barrel_life_rounds: 0
+requires_deployed: false
+traverse_deg: 360.0
+elevation_min_deg: 0.0
+elevation_max_deg: 80.0

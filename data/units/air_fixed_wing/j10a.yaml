@@ -1,0 +1,32 @@
+unit_type: j10a
+domain: aerial
+display_name: "J-10A Vigorous Dragon"
+aerial_type: FIGHTER
+max_speed: 650.0  # m/s (~Mach 2.2)
+service_ceiling: 18000.0
+crew:
+  - role: PILOT
+    count: 1
+    skill: TRAINED
+equipment:
+  - name: "GSh-23 23mm Cannon"
+    category: WEAPON
+    weight_kg: 50.0
+    reliability: 0.88
+  - name: "KLJ-3A Pulse-Doppler Radar"
+    category: SENSOR
+    weight_kg: 280.0
+    reliability: 0.83
+  - name: "AL-31FN Turbofan"
+    category: PROPULSION
+    weight_kg: 1530.0
+    reliability: 0.86
+    temperature_range: [-50.0, 60.0]
+  - name: "RKL800 RWR"
+    category: SENSOR
+    weight_kg: 15.0
+    reliability: 0.85
+  - name: "KJ-8602 Datalink"
+    category: COMMUNICATION
+    weight_kg: 25.0
+    reliability: 0.87

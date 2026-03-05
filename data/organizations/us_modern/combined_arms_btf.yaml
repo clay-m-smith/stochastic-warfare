@@ -1,0 +1,21 @@
+name: "US Combined Arms Battalion Task Force"
+echelon: BATTALION
+nation: US
+era: modern
+staff: ["S1", "S2", "S3", "S4"]
+subordinates:
+  - unit_type: m1a2
+    count: 14
+    echelon: INDIVIDUAL
+  - unit_type: m3a2_bradley
+    count: 14
+    echelon: INDIVIDUAL
+  - unit_type: m109a6
+    count: 6
+    echelon: INDIVIDUAL
+  - unit_type: us_rifle_squad
+    count: 9
+    echelon: SQUAD
+  - unit_type: hemtt
+    count: 4
+    echelon: INDIVIDUAL

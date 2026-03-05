@@ -1,0 +1,21 @@
+profile_id: kilo636
+unit_type: kilo636
+visual:
+  height_m: 0.5
+  cross_section_m2: 2.0
+  camouflage_factor: 0.95
+thermal:
+  emissivity: 0.50
+  heat_output_kw: 5.0
+  contrast_modifier: 0.3
+radar:
+  rcs_frontal_m2: 1.0
+  rcs_side_m2: 3.0
+  rcs_rear_m2: 1.5
+acoustic:
+  noise_db: 85.0
+  speed_coefficient: 4.0
+electromagnetic:
+  emitting: false
+  power_dbm: 0.0
+  frequency_ghz: 0.0

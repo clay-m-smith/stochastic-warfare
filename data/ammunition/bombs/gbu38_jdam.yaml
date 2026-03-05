@@ -1,0 +1,17 @@
+ammo_id: gbu38_jdam
+display_name: "GBU-38 JDAM GPS-Guided Bomb"
+ammo_type: GUIDED
+mass_kg: 227.0
+diameter_mm: 274.0
+drag_coefficient: 0.30
+penetration_mm_rha: 0.0
+blast_radius_m: 60.0
+fragmentation_radius_m: 200.0
+guidance: GPS
+seeker_fov_deg: 0.0
+seeker_range_m: 0.0
+pk_at_reference: 0.80
+countermeasure_susceptibility: 0.05
+propulsion: none
+max_speed_mps: 0.0
+unit_cost_factor: 25.0

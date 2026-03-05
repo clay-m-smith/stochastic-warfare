@@ -1,0 +1,43 @@
+unit_type: bmp2
+domain: ground
+display_name: "BMP-2 Infantry Fighting Vehicle"
+ground_type: MECHANIZED_INFANTRY
+max_speed: 18.1  # m/s (~65 km/h road)
+armor_front: 33.0
+armor_side: 18.0
+armor_type: ALUMINUM
+crew:
+  - role: COMMANDER
+    count: 1
+    skill: TRAINED
+  - role: GUNNER
+    count: 1
+    skill: TRAINED
+  - role: DRIVER
+    count: 1
+    skill: BASIC
+  - role: GENERIC
+    count: 7
+    skill: BASIC
+equipment:
+  - name: "2A42 30mm Autocannon"
+    category: WEAPON
+    weight_kg: 115.0
+    reliability: 0.88
+  - name: "9P135M ATGM Launcher"
+    category: WEAPON
+    weight_kg: 22.0
+    reliability: 0.85
+  - name: "UTD-20S1 Diesel"
+    category: PROPULSION
+    weight_kg: 700.0
+    reliability: 0.84
+    temperature_range: [-40.0, 50.0]
+  - name: "R-173 Radio"
+    category: COMMUNICATION
+    weight_kg: 16.0
+    reliability: 0.86
+  - name: "BPK-2-42 Sight"
+    category: SENSOR
+    weight_kg: 30.0
+    reliability: 0.87

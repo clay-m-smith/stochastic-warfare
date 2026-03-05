@@ -1,0 +1,21 @@
+profile_id: challenger2
+unit_type: challenger2
+visual:
+  height_m: 2.49
+  cross_section_m2: 8.8
+  camouflage_factor: 0.80
+thermal:
+  emissivity: 0.94
+  heat_output_kw: 850.0
+  contrast_modifier: 1.2
+radar:
+  rcs_frontal_m2: 13.0
+  rcs_side_m2: 32.0
+  rcs_rear_m2: 10.0
+acoustic:
+  noise_db: 83.0
+  speed_coefficient: 2.0
+electromagnetic:
+  emitting: false
+  power_dbm: 0.0
+  frequency_ghz: 0.0

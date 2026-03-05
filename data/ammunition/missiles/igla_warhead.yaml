@@ -1,0 +1,18 @@
+ammo_id: igla_warhead
+display_name: "9M39 Igla Missile"
+ammo_type: MISSILE
+mass_kg: 10.8
+diameter_mm: 72.0
+drag_coefficient: 0.25
+blast_radius_m: 3.0
+fragmentation_radius_m: 8.0
+guidance: IR
+seeker_fov_deg: 40.0
+seeker_range_m: 5200.0
+pk_at_reference: 0.60
+countermeasure_susceptibility: 0.30
+propulsion: rocket
+max_speed_mps: 570.0
+flight_time_s: 12.0
+terminal_maneuver: false
+unit_cost_factor: 15.0

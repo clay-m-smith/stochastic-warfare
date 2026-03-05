@@ -1,0 +1,19 @@
+ammo_id: agm88_harm_warhead
+display_name: "AGM-88 HARM Anti-Radiation Missile"
+ammo_type: MISSILE
+mass_kg: 361.0
+diameter_mm: 254.0
+drag_coefficient: 0.25
+penetration_mm_rha: 0.0
+blast_radius_m: 20.0
+fragmentation_radius_m: 50.0
+guidance: RADAR_ACTIVE
+seeker_fov_deg: 90.0
+seeker_range_m: 80000.0
+pk_at_reference: 0.75
+countermeasure_susceptibility: 0.20
+propulsion: rocket
+max_speed_mps: 680.0
+flight_time_s: 120.0
+terminal_maneuver: false
+unit_cost_factor: 60.0

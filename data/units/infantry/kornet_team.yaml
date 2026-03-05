@@ -1,0 +1,25 @@
+unit_type: kornet_team
+domain: ground
+display_name: "9M133 Kornet ATGM Team"
+ground_type: LIGHT_INFANTRY
+max_speed: 1.3  # m/s (~5 km/h dismounted)
+crew:
+  - role: GUNNER
+    count: 1
+    skill: BASIC
+  - role: LOADER
+    count: 1
+    skill: BASIC
+equipment:
+  - name: "9P163-2 Kornet Launcher"
+    category: WEAPON
+    weight_kg: 19.0
+    reliability: 0.88
+  - name: "9M133 Missile"
+    category: WEAPON
+    weight_kg: 27.0
+    reliability: 0.86
+  - name: "R-148 Radio"
+    category: COMMUNICATION
+    weight_kg: 1.8
+    reliability: 0.85

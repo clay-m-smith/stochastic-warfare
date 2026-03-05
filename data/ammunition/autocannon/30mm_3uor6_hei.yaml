@@ -1,0 +1,14 @@
+ammo_id: 30mm_3uor6_hei
+display_name: "30mm 3UOR6 HE-I"
+ammo_type: HE
+mass_kg: 0.39
+diameter_mm: 30.0
+drag_coefficient: 0.32
+penetration_mm_rha: 18.0
+penetration_reference_range_m: 1000.0
+blast_radius_m: 3.5
+fragmentation_radius_m: 9.0
+guidance: NONE
+propulsion: none
+max_speed_mps: 960.0
+unit_cost_factor: 0.4

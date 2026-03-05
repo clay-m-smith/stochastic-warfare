@@ -1,0 +1,19 @@
+ammo_id: asroc_payload
+display_name: "RUR-5 ASROC Rocket Delivery Vehicle"
+ammo_type: MISSILE
+mass_kg: 487.0
+diameter_mm: 324.0
+drag_coefficient: 0.30
+penetration_mm_rha: 0.0
+blast_radius_m: 0.0
+fragmentation_radius_m: 0.0
+guidance: INERTIAL
+seeker_fov_deg: 0.0
+seeker_range_m: 0.0
+pk_at_reference: 0.30
+countermeasure_susceptibility: 0.10
+propulsion: rocket
+max_speed_mps: 300.0
+flight_time_s: 30.0
+terminal_maneuver: false
+unit_cost_factor: 40.0

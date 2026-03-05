@@ -1,0 +1,25 @@
+unit_type: javelin_team
+domain: ground
+display_name: "FGM-148 Javelin ATGM Team"
+ground_type: LIGHT_INFANTRY
+max_speed: 1.3  # m/s (~5 km/h dismounted)
+crew:
+  - role: GUNNER
+    count: 1
+    skill: TRAINED
+  - role: LOADER
+    count: 1
+    skill: TRAINED
+equipment:
+  - name: "FGM-148 Javelin CLU"
+    category: WEAPON
+    weight_kg: 6.4
+    reliability: 0.92
+  - name: "Javelin Missile Round"
+    category: WEAPON
+    weight_kg: 15.9
+    reliability: 0.94
+  - name: "AN/PRC-152 Radio"
+    category: COMMUNICATION
+    weight_kg: 1.6
+    reliability: 0.93

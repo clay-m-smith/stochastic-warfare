@@ -1,0 +1,38 @@
+unit_type: c17
+domain: aerial
+display_name: "C-17A Globemaster III"
+aerial_type: TRANSPORT
+max_speed: 265.0  # m/s (~515 kts)
+service_ceiling: 13700.0
+crew:
+  - role: PILOT
+    count: 1
+    skill: EXPERIENCED
+  - role: COPILOT
+    count: 1
+    skill: TRAINED
+  - role: CREW_CHIEF
+    count: 1
+    skill: TRAINED
+equipment:
+  - name: "F117-PW-100 Turbofan x4"
+    category: PROPULSION
+    weight_kg: 9360.0
+    reliability: 0.93
+    temperature_range: [-54.0, 71.0]
+  - name: "AN/AAQ-24 DIRCM"
+    category: PROTECTION
+    weight_kg: 120.0
+    reliability: 0.87
+  - name: "AN/APN-242 Weather Radar"
+    category: SENSOR
+    weight_kg: 80.0
+    reliability: 0.90
+  - name: "SATCOM Terminal"
+    category: COMMUNICATION
+    weight_kg: 45.0
+    reliability: 0.92
+  - name: "TCAS II"
+    category: NAVIGATION
+    weight_kg: 15.0
+    reliability: 0.95

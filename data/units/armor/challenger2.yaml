@@ -1,0 +1,43 @@
+unit_type: challenger2
+domain: ground
+display_name: "Challenger 2 MBT"
+ground_type: ARMOR
+max_speed: 16.4  # m/s (~59 km/h road)
+armor_front: 600.0
+armor_side: 220.0
+armor_type: COMPOSITE
+crew:
+  - role: COMMANDER
+    count: 1
+    skill: TRAINED
+  - role: GUNNER
+    count: 1
+    skill: TRAINED
+  - role: LOADER
+    count: 1
+    skill: BASIC
+  - role: DRIVER
+    count: 1
+    skill: TRAINED
+equipment:
+  - name: "L30A1 120mm Rifled Gun"
+    category: WEAPON
+    weight_kg: 2100.0
+    reliability: 0.94
+  - name: "L94A1 7.62mm Chain Gun"
+    category: WEAPON
+    weight_kg: 11.0
+    reliability: 0.92
+  - name: "Perkins CV12 Diesel"
+    category: PROPULSION
+    weight_kg: 1200.0
+    reliability: 0.90
+    temperature_range: [-30.0, 50.0]
+  - name: "TOGS II Thermal Sight"
+    category: SENSOR
+    weight_kg: 55.0
+    reliability: 0.90
+  - name: "Dorchester Composite Armor"
+    category: PROTECTION
+    weight_kg: 6000.0
+    reliability: 0.99

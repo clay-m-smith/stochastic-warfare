@@ -1,0 +1,21 @@
+profile_id: ea18g
+unit_type: ea18g
+visual:
+  height_m: 4.9
+  cross_section_m2: 15.0
+  camouflage_factor: 0.90
+thermal:
+  emissivity: 0.92
+  heat_output_kw: 220.0
+  contrast_modifier: 1.3
+radar:
+  rcs_frontal_m2: 1.5
+  rcs_side_m2: 5.0
+  rcs_rear_m2: 4.0
+acoustic:
+  noise_db: 126.0
+  speed_coefficient: 0.5
+electromagnetic:
+  emitting: true
+  power_dbm: 72.0
+  frequency_ghz: 9.0

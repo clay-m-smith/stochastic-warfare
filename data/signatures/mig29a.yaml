@@ -1,0 +1,21 @@
+profile_id: mig29a
+unit_type: mig29a
+visual:
+  height_m: 4.7
+  cross_section_m2: 14.0
+  camouflage_factor: 0.90
+thermal:
+  emissivity: 0.93
+  heat_output_kw: 200.0
+  contrast_modifier: 1.4
+radar:
+  rcs_frontal_m2: 3.0
+  rcs_side_m2: 8.0
+  rcs_rear_m2: 6.0
+acoustic:
+  noise_db: 125.0
+  speed_coefficient: 0.5
+electromagnetic:
+  emitting: true
+  power_dbm: 60.0
+  frequency_ghz: 10.0

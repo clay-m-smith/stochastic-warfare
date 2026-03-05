@@ -1,0 +1,21 @@
+profile_id: mi24v
+unit_type: mi24v
+visual:
+  height_m: 4.4
+  cross_section_m2: 16.0
+  camouflage_factor: 0.85
+thermal:
+  emissivity: 0.93
+  heat_output_kw: 150.0
+  contrast_modifier: 1.3
+radar:
+  rcs_frontal_m2: 6.0
+  rcs_side_m2: 15.0
+  rcs_rear_m2: 8.0
+acoustic:
+  noise_db: 110.0
+  speed_coefficient: 1.0
+electromagnetic:
+  emitting: false
+  power_dbm: 0.0
+  frequency_ghz: 0.0

@@ -1,0 +1,19 @@
+ammo_id: mk54_warhead
+display_name: "Mk 54 Lightweight Torpedo"
+ammo_type: TORPEDO
+mass_kg: 276.0
+diameter_mm: 324.0
+drag_coefficient: 0.20
+penetration_mm_rha: 0.0
+blast_radius_m: 15.0
+fragmentation_radius_m: 30.0
+guidance: COMBINED
+seeker_fov_deg: 120.0
+seeker_range_m: 2000.0
+pk_at_reference: 0.40
+countermeasure_susceptibility: 0.25
+propulsion: rocket
+max_speed_mps: 20.6
+flight_time_s: 450.0
+terminal_maneuver: true
+unit_cost_factor: 50.0

@@ -1,0 +1,11 @@
+profile_id: logistics_sustainment
+display_name: "Logistics/Sustainment Commander"
+description: "Cautious support commander who prioritizes force preservation and sustainment"
+aggression: 0.2
+caution: 0.8
+flexibility: 0.4
+initiative: 0.3
+experience: 0.6
+stress_tolerance: 0.5
+decision_speed: 0.3
+risk_acceptance: 0.2

@@ -1,0 +1,13 @@
+ammo_id: m720_mortar_he
+display_name: "M720 81mm Mortar HE"
+ammo_type: HE
+mass_kg: 4.2
+diameter_mm: 81.0
+drag_coefficient: 0.35
+penetration_mm_rha: 0.0
+blast_radius_m: 30.0
+fragmentation_radius_m: 70.0
+guidance: NONE
+propulsion: none
+max_speed_mps: 250.0
+unit_cost_factor: 0.5

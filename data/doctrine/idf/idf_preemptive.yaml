@@ -1,0 +1,17 @@
+doctrine_id: idf_preemptive
+display_name: "IDF Preemptive Strike Doctrine"
+category: OFFENSIVE
+faction: idf
+description: "Israeli doctrine emphasizing rapid preemptive action, air superiority, and maneuver warfare to achieve quick decisive outcomes."
+min_echelon: 5
+max_echelon: 10
+applicable_domains: ["LAND", "AIR"]
+phases: ["AIR_SUPERIORITY", "SHAPING", "DECISIVE", "EXPLOITATION"]
+force_ratios:
+  main_effort: 0.65
+  supporting: 0.20
+  reserve: 0.15
+actions: ["attack", "preempt", "exploit", "pursuit", "air_strike"]
+priorities: ["air_superiority", "maneuver", "firepower"]
+risk_tolerance: high
+tempo: high

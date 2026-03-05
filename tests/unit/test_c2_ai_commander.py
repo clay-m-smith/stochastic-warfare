@@ -189,7 +189,7 @@ class TestCommanderProfileLoader:
         """Load all 6 real YAML files from data/commander_profiles/."""
         loader = CommanderProfileLoader()
         loader.load_all()
-        expected = sorted([
+        expected = {
             "aggressive_armor",
             "air_superiority",
             "balanced_default",
@@ -200,8 +200,8 @@ class TestCommanderProfileLoader:
             "pmc_operator",
             "ruthless_authoritarian",
             "sof_operator",
-        ])
-        assert loader.available_profiles() == expected
+        }
+        assert expected.issubset(set(loader.available_profiles()))
 
     def test_real_profiles_have_valid_ranges(self) -> None:
         """Every real profile has all traits within [0, 1]."""

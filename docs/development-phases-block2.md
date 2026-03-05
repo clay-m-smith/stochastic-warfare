@@ -185,7 +185,7 @@ J/S sigmoid in `ew/jamming.py` deliberately NOT changed — standard dB power co
 
 ---
 
-## Phase 28: Modern Era Data Package
+## Phase 28: Modern Era Data Package — **COMPLETE** (137 tests, 6,835 total)
 
 **Goal**: Fill all modern era YAML data gaps — adversary forces, missing signatures, ammunition types, sensors, organizations, doctrine templates, and commander profiles.
 
@@ -537,10 +537,10 @@ New unit YAML + matching signature YAML for each:
 | 25 | 25a–25d | 152 ✓ | 6,477 |
 | 26 | 26a–26c | 82 ✓ | 6,559 |
 | 27 | 27a–27d | 139 ✓ | 6,698 |
-| 28 | 28a–28d | ~70 | ~6,795 |
-| 29 | 29a–29d | ~85 | ~6,880 |
-| 30 | 30a–30d | ~90 | ~6,970 |
-| **Total** | | **~645** | **~6,970** |
+| 28 | 28a–28d | 137 ✓ | 6,835 |
+| 29 | 29a–29d | ~85 | ~6,920 |
+| 30 | 30a–30d | ~90 | ~7,010 |
+| **Total** | | **~685** | **~7,010** |
 
 ---
 
