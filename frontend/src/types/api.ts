@@ -98,3 +98,132 @@ export interface EraInfo {
   value: string
   disabled_modules: string[]
 }
+
+// --- Events ---
+
+export interface EventItem {
+  tick: number
+  event_type: string
+  source: string
+  data: Record<string, unknown>
+}
+
+export interface EventsResponse {
+  events: EventItem[]
+  total: number
+  offset: number
+  limit: number
+}
+
+// --- Narrative ---
+
+export interface NarrativeResponse {
+  narrative: string
+  tick_count: number
+}
+
+// --- Forces ---
+
+export interface SideForces {
+  total: number
+  active: number
+  destroyed: number
+}
+
+export interface ForcesResponse {
+  sides: Record<string, SideForces>
+}
+
+// --- Typed Run Result ---
+
+export interface VictoryResult {
+  status: string
+  winner?: string
+  winning_side?: string
+}
+
+export interface RunResult {
+  scenario: string
+  seed: number
+  ticks_executed: number
+  duration_s: number
+  victory: VictoryResult
+  sides: Record<string, SideForces>
+}
+
+// --- WebSocket ---
+
+export interface RunProgressMessage {
+  type: 'tick' | 'complete' | 'error'
+  tick?: number
+  max_ticks?: number
+  elapsed_s?: number
+  active_units?: Record<string, number>
+  game_over?: boolean
+  message?: string
+}
+
+// --- Batch ---
+
+export interface BatchSubmitRequest {
+  scenario: string
+  num_iterations?: number
+  base_seed?: number
+  max_ticks?: number
+}
+
+export interface BatchSubmitResponse {
+  batch_id: string
+  status: RunStatus
+}
+
+export interface MetricStats {
+  mean: number
+  median: number
+  std: number
+  min: number
+  max: number
+  p5: number
+  p95: number
+  n: number
+}
+
+export interface BatchDetail {
+  batch_id: string
+  scenario_name: string
+  num_iterations: number
+  completed_iterations: number
+  status: RunStatus
+  created_at: string
+  completed_at: string | null
+  metrics: Record<string, MetricStats> | null
+  error_message: string | null
+}
+
+export interface BatchProgressMessage {
+  type: 'iteration' | 'complete' | 'error'
+  iteration?: number
+  total?: number
+  seed?: number
+  message?: string
+}
+
+// --- Analysis ---
+
+export interface CompareRequest {
+  scenario: string
+  overrides_a?: Record<string, unknown>
+  overrides_b?: Record<string, unknown>
+  label_a?: string
+  label_b?: string
+  num_iterations?: number
+  max_ticks?: number
+}
+
+export interface SweepRequest {
+  scenario: string
+  parameter_name: string
+  values: number[]
+  num_iterations?: number
+  max_ticks?: number
+}

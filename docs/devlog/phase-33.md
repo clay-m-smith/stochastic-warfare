@@ -4,7 +4,7 @@
 
 Stood up the React + TypeScript frontend consuming the Phase 32 FastAPI service. Delivers scenario browser, unit catalog, run configuration, and run list pages. Pure frontend phase -- zero engine or API modifications.
 
-**58 tests** (vitest). **~50 new files** in `frontend/`.
+**62 tests** (vitest). **~50 new files** in `frontend/`.
 
 ## What Was Built
 
@@ -119,4 +119,5 @@ Stood up the React + TypeScript frontend consuming the Phase 32 FastAPI service.
 | components/Layout.test.tsx | 3 | Sidebar nav, health status |
 | lib/format.test.ts | 7 | formatDuration, formatDate edge cases |
 | lib/era.test.ts | 6 | eraDisplayName, eraBadgeColor, eraOrder |
-| **Total** | **58** | |
+| lib/domain.test.ts | 4 | domainDisplayName, domainBadgeColor |
+| **Total** | **62** | |

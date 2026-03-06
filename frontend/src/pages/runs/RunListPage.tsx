@@ -51,7 +51,11 @@ export function RunListPage() {
             </thead>
             <tbody>
               {runs.map((run) => (
-                <tr key={run.run_id} className="border-b border-gray-100 hover:bg-gray-50">
+                <tr
+                  key={run.run_id}
+                  className="cursor-pointer border-b border-gray-100 hover:bg-gray-50"
+                  onClick={() => navigate(`/runs/${run.run_id}`)}
+                >
                   <td className="px-4 py-3 font-medium text-gray-900">{run.scenario_name}</td>
                   <td className="px-4 py-3 text-gray-600">{run.seed}</td>
                   <td className="px-4 py-3">

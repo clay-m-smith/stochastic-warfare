@@ -231,11 +231,13 @@ api = ["fastapi>=0.115", "uvicorn[standard]>=0.34", "aiosqlite>=0.20"]
 
 ---
 
-## Phase 34: Run Results & Analysis Dashboard
+## Phase 34: Run Results & Analysis Dashboard — COMPLETE
 
 **Goal**: Display simulation results interactively. Replace static matplotlib charts with web-based interactive visualizations. Build the post-run analysis experience.
 
 **Dependencies**: Phase 32 (run results API), Phase 33 (frontend framework).
+
+**Delivered**: ~45 new files — RunDetailPage with live WebSocket progress, 5 Plotly chart types (force strength, engagement timeline, morale, event activity, comparison), narrative view with side/style filters, Analysis page with Batch MC / A/B Compare / Sensitivity Sweep tabs. `react-plotly.js` + `plotly.js-dist-min` dependencies. 65 new vitest tests (127 total). Zero engine/API changes.
 
 ### 34a: Run Status & History
 
@@ -459,8 +461,8 @@ tests/api/                  # NEW — API integration tests
 |-------|-------|-----------------|
 | 31 | Documentation Site | MkDocs + Material theme, GitHub Actions deployment, 8 user-facing docs, docs site live at GitHub Pages. **COMPLETE** |
 | 32 | API & Service Foundation | FastAPI app, async runs, SQLite persistence, WebSocket progress, batch/MC/analysis endpoints, OpenAPI docs. **COMPLETE** |
-| 33 | Frontend Foundation & Scenario Browser | React app, scenario list/detail, unit catalog, run configuration page. **COMPLETE** |
-| 34 | Run Results & Analysis Dashboard | Interactive charts (Plotly), narrative view, MC results, A/B comparison, live run tracking |
+| 33 | Frontend Foundation & Scenario Browser | React app, scenario list/detail, unit catalog, run configuration page. 62 vitest tests. **COMPLETE** |
+| 34 | Run Results & Analysis Dashboard | Interactive charts (Plotly), narrative view, MC results, A/B comparison, live run tracking. 65 vitest tests. **COMPLETE** |
 | 35 | Tactical Map & Spatial Visualization | Canvas terrain renderer, unit positions, engagement arcs, playback controls, chart sync |
 | 36 | Scenario Tweaker & Polish | Clone-and-tweak scenarios, terrain preview, PDF/CSV export, keyboard shortcuts, error handling |
 

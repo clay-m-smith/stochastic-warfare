@@ -13,3 +13,4 @@ site/
 node_modules/
 frontend/dist/
 frontend/.env.local
+data/api_runs.db
