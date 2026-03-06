@@ -42,6 +42,7 @@ Rolling record of implementation decisions, changes, and lessons learned across 
 | 30 | Scenario & Campaign Library | **Complete** | [phase-30.md](phase-30.md) |
 | | | | |
 | 31 | Documentation Site (GitHub Pages) | **Complete** | [phase-31.md](phase-31.md) |
+| 32 | API & Service Foundation | **Complete** | [phase-32.md](phase-32.md) |
 
 ## Post-MVP Refinement Index
 
@@ -170,6 +171,8 @@ Known limitations and deferred improvements logged during implementation. Review
 | 28.5 | No scenario YAML references dew_config (engine can be created but no scenarios exercise it) | [phase-28.5.md — Postmortem](phase-28.5.md#postmortem) |
 | 28.5 | ADUnitType.DEW not handled in air defense engagement logic (enum exists but no routing) | [phase-28.5.md — Postmortem](phase-28.5.md#postmortem) |
 | 28.5 | route_engagement() not called from battle.py (uses execute_engagement directly) — DEW routing untested in loop | [phase-28.5.md — Postmortem](phase-28.5.md#postmortem) |
+| 32 | `config_overrides` accepted and stored but not applied to engine (calibration_overrides not injected before ScenarioLoader.load) | [phase-32.md — Postmortem](phase-32.md#postmortem) |
+| 32 | `GET /api/meta/terrain-types` returns hardcoded list instead of deriving from TerrainConfig or data | [phase-32.md — Postmortem](phase-32.md#postmortem) |
 
 ## Conventions
 

@@ -74,11 +74,13 @@ docs = ["mkdocs-material>=9.5"]
 
 ---
 
-## Phase 32: API & Service Foundation
+## Phase 32: API & Service Foundation — COMPLETE
 
 **Goal**: Build a FastAPI service layer wrapping the simulation engine. Async run execution, WebSocket progress streaming, persistent result storage, and a documented REST API that any frontend can consume.
 
 **Dependencies**: None (builds on existing engine and tools/).
+
+**Delivered**: `api/` package (13 source files) — FastAPI app, SQLite persistence (aiosqlite), RunManager with step-based progress streaming, 23 REST endpoints + 2 WebSocket endpoints. `pyproject.toml` `api` extra. 77 new tests. Zero engine changes.
 
 ### 32a: Core API Scaffolding
 

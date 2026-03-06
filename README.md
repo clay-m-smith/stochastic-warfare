@@ -1,8 +1,8 @@
 # Stochastic Warfare
 
 ![Python](https://img.shields.io/badge/python-%3E%3D3.12-blue)
-![Tests](https://img.shields.io/badge/tests-7%2C307_passing-brightgreen)
-![Phase](https://img.shields.io/badge/phase-31_Block--3_IN--PROGRESS-blue)
+![Tests](https://img.shields.io/badge/tests-7%2C384_passing-brightgreen)
+![Phase](https://img.shields.io/badge/phase-32_Block--3_IN--PROGRESS-blue)
 
 High-fidelity, high-resolution wargame simulator built as a headless Python engine. Models warfare across multiple scales — from individual unit engagements up through tactical battles, operational battlefields, and multi-day strategic campaigns — with stochastic and signal-processing-inspired models throughout.
 
@@ -87,6 +87,9 @@ For full architectural rationale, see [`docs/brainstorm.md`](docs/brainstorm.md)
 ## Project Structure
 
 ```
+api/                      # REST API service layer (13 source files) [Phase 32]
+  routers/                # FastAPI route handlers (scenarios, units, runs, analysis, meta)
+
 stochastic_warfare/       # simulation engine (19 modules, ~226 source files)
   core/                   # types, logging, RNG, clock, events, config, checkpoint
   coordinates/            # geodetic/UTM/ENU transforms, magnetic declination
@@ -130,7 +133,7 @@ data/                     # ~700 YAML data files
   eras/                    # Era-specific data packages (WW2, WW1, Napoleonic, Ancient/Medieval)
   scenarios/              # 27 modern scenarios (engagement, campaign, EW, space, CBRN, escalation, joint) + 5 test
 
-tests/                    # 7,307 tests across ~200 test files
+tests/                    # 7,384 tests across ~210 test files
 docs/                     # specs, brainstorm, devlog, development phases
 ```
 
@@ -138,7 +141,7 @@ For the full package tree and module decomposition, see [`docs/specs/project-str
 
 ## Development Status
 
-All 11 MVP phases (0–10) are complete. Post-MVP Phases 11–24 are complete (deep systems rework + performance optimization + developer tooling + real-world terrain + electronic warfare + space & satellite domain + CBRN effects + doctrinal AI schools + WW2 era + WW1 era + Napoleonic era + Ancient & Medieval era + unconventional & prohibited warfare). Block 2 Phases 25–30 complete (Engine Wiring & Integration Sprint + Core Polish & Configuration + Combat System Completeness + Modern Era Data Package + Directed Energy Weapons + Historical Era Data Expansion + Scenario & Campaign Library). Block 3 in progress (Phase 31: Documentation Site).
+All 11 MVP phases (0–10) are complete. Post-MVP Phases 11–24 are complete (deep systems rework + performance optimization + developer tooling + real-world terrain + electronic warfare + space & satellite domain + CBRN effects + doctrinal AI schools + WW2 era + WW1 era + Napoleonic era + Ancient & Medieval era + unconventional & prohibited warfare). Block 2 Phases 25–30 complete (Engine Wiring & Integration Sprint + Core Polish & Configuration + Combat System Completeness + Modern Era Data Package + Directed Energy Weapons + Historical Era Data Expansion + Scenario & Campaign Library). Block 3 in progress (Phase 32: API & Service Foundation).
 
 | Phase | Focus | Tests | Status |
 |-------|-------|-------|--------|
@@ -175,7 +178,8 @@ All 11 MVP phases (0–10) are complete. Post-MVP Phases 11–24 are complete (d
 | 29 | Historical Era Data Expansion (Block 2) | 164 | Complete |
 | 30 | Scenario & Campaign Library (Block 2) | 196 | Complete |
 | 31 | Documentation Site (Block 3) | 0 | Complete |
-| | **Total** | **7,307** | |
+| 32 | API & Service Foundation (Block 3) | 77 | Complete |
+| | **Total** | **7,384** | |
 
 For the full phase roadmap, see [`docs/development-phases.md`](docs/development-phases.md) (MVP) and [`docs/development-phases-post-mvp.md`](docs/development-phases-post-mvp.md) (post-MVP). For per-phase implementation logs, see [`docs/devlog/`](docs/devlog/).
 
@@ -191,7 +195,19 @@ For the full phase roadmap, see [`docs/development-phases.md`](docs/development-
 | `shapely` | Vector geometry (roads, rivers, coastlines, obstacles) |
 | `networkx` | Supply network graphs, strategic map routing |
 
-Optional: `numba` (JIT acceleration, `--extra perf`), `rasterio`/`xarray` (real terrain, `--extra terrain`), `mcp[cli]` (MCP server, `--extra mcp`), `mkdocs-material` (docs site, `--extra docs`). Dev: `pytest`, `pytest-cov`, `matplotlib`
+Optional: `numba` (JIT acceleration, `--extra perf`), `rasterio`/`xarray` (real terrain, `--extra terrain`), `mcp[cli]` (MCP server, `--extra mcp`), `mkdocs-material` (docs site, `--extra docs`), `fastapi`/`uvicorn`/`aiosqlite` (REST API, `--extra api`). Dev: `pytest`, `pytest-cov`, `matplotlib`, `httpx`, `pytest-asyncio`
+
+## REST API
+
+The project includes a FastAPI-based REST API for running simulations, browsing scenarios/units, and accessing results programmatically.
+
+```bash
+uv sync --extra api              # install API dependencies
+uv run uvicorn api.main:app      # start the API server
+# OpenAPI docs at http://localhost:8000/api/docs
+```
+
+Key endpoints: `GET /api/scenarios`, `GET /api/units`, `POST /api/runs` (submit simulation), `GET /api/runs/{id}` (poll results), `WS /api/runs/{id}/progress` (live progress), `POST /api/runs/batch` (Monte Carlo), `POST /api/analysis/compare` (A/B comparison).
 
 ## Documentation
 

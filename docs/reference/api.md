@@ -1,6 +1,67 @@
 # API Reference
 
-This page documents the key classes for running simulations programmatically. All classes are in the `stochastic_warfare` package.
+This page documents both the REST API for web-based access and the Python API for direct programmatic use.
+
+---
+
+## REST API (Phase 32)
+
+The project includes a FastAPI-based REST API for running simulations, browsing scenarios/units, and accessing results over HTTP.
+
+### Setup
+
+```bash
+uv sync --extra api              # install API dependencies
+uv run uvicorn api.main:app      # start at http://localhost:8000
+```
+
+OpenAPI docs are available at `/api/docs` (Swagger UI) and `/api/redoc`.
+
+### Endpoints
+
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | `/api/health` | Service health check (version, scenario/unit counts) |
+| GET | `/api/meta/eras` | Available eras with disabled modules |
+| GET | `/api/meta/doctrines` | Doctrine templates |
+| GET | `/api/meta/terrain-types` | Terrain type list |
+| GET | `/api/scenarios` | List all scenarios (base + era) |
+| GET | `/api/scenarios/{name}` | Full scenario config as JSON |
+| GET | `/api/units?domain=&era=&category=` | List units with optional filters |
+| GET | `/api/units/{type}` | Full unit definition |
+| POST | `/api/runs` | Submit simulation run (202 Accepted) |
+| GET | `/api/runs?limit=&offset=&scenario=&status=` | List runs (paginated) |
+| GET | `/api/runs/{id}` | Run detail with result |
+| DELETE | `/api/runs/{id}` | Delete run record |
+| GET | `/api/runs/{id}/forces` | Side force states |
+| GET | `/api/runs/{id}/events?offset=&limit=&event_type=` | Paginated event log |
+| GET | `/api/runs/{id}/narrative?side=&style=&max_ticks=` | Battle narrative text |
+| GET | `/api/runs/{id}/snapshots` | State snapshots |
+| WS | `/api/runs/{id}/progress` | Live tick-level progress stream |
+| POST | `/api/runs/batch` | Monte Carlo batch run |
+| GET | `/api/runs/batch/{id}` | Batch status and aggregated metrics |
+| WS | `/api/runs/batch/{id}/progress` | Batch iteration progress |
+| POST | `/api/analysis/compare` | A/B configuration comparison |
+| POST | `/api/analysis/sweep` | Parameter sensitivity sweep |
+| GET | `/api/analysis/tempo/{id}` | Operational tempo analysis |
+
+### Configuration
+
+All settings are overridable via environment variables with the `SW_API_` prefix:
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `SW_API_HOST` | `127.0.0.1` | Bind address |
+| `SW_API_PORT` | `8000` | Port |
+| `SW_API_DB_PATH` | `data/api_runs.db` | SQLite database path |
+| `SW_API_MAX_CONCURRENT_RUNS` | `4` | Max parallel simulation runs |
+| `SW_API_CORS_ORIGINS` | `["http://localhost:5173"]` | Allowed CORS origins |
+
+---
+
+## Python API
+
+The following classes are in the `stochastic_warfare` package for direct programmatic use.
 
 ---
 

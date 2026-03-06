@@ -105,6 +105,7 @@ nav:
     - Phase 29 - Historical Data Expansion: devlog/phase-29.md
     - Phase 30 - Scenario Library: devlog/phase-30.md
     - Phase 31 - Documentation Site: devlog/phase-31.md
+    - Phase 32 - API & Service Foundation: devlog/phase-32.md
   - Specifications:
     - Project Structure: specs/project-structure.md
     - Skills & Hooks: skills-and-hooks.md

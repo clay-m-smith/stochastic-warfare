@@ -1,5 +1,5 @@
 # Project Structure & Module Decomposition
-**Status**: Complete (Phase 31)
+**Status**: Complete (Phase 32)
 **Last Updated**: 2026-03-05
 
 ---
@@ -11,6 +11,21 @@ stochastic-warfare/
 ├── pyproject.toml                    # Build config, dependencies, metadata
 ├── mkdocs.yml                        # MkDocs site configuration [Phase 31]
 ├── README.md
+├── api/                              # REST API service layer [Phase 32]
+│   ├── __init__.py                   # Package marker, version
+│   ├── config.py                     # ApiSettings (pydantic-settings)
+│   ├── schemas.py                    # Request/response Pydantic models
+│   ├── dependencies.py               # FastAPI dependency injection
+│   ├── scenarios.py                  # Scenario/unit discovery helpers
+│   ├── database.py                   # SQLite persistence (aiosqlite)
+│   ├── run_manager.py                # Async run execution, progress streaming
+│   ├── main.py                       # App factory, lifespan, CORS
+│   └── routers/                      # Route handlers
+│       ├── meta.py                   # Health, eras, doctrines, terrain types
+│       ├── scenarios.py              # Scenario listing/detail
+│       ├── units.py                  # Unit listing/detail
+│       ├── runs.py                   # Run lifecycle, events, narrative, WebSocket, batch
+│       └── analysis.py              # Compare, sweep, tempo
 ├── .claude/
 │   ├── settings.json                 # Project hooks
 │   └── skills/                       # Claude skills (17 total)

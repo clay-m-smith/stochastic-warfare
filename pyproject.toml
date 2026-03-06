@@ -22,6 +22,8 @@ dev = [
     "pytest>=7.4",
     "pytest-cov>=4.1",
     "matplotlib>=3.8",
+    "httpx>=0.27",
+    "pytest-asyncio>=0.23",
 ]
 perf = [
     "numba>=0.59",
@@ -36,19 +38,27 @@ terrain = [
 docs = [
     "mkdocs-material>=9.5",
 ]
+api = [
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.34",
+    "aiosqlite>=0.20",
+    "pydantic-settings>=2.0",
+]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 strict_markers = true
-addopts = "-m 'not slow and not benchmark and not terrain'"
+addopts = "-m 'not slow and not benchmark and not terrain and not api'"
 markers = [
     "slow: marks tests as slow (1000-run Monte Carlo, run explicitly with '-m slow')",
     "benchmark: marks tests as performance benchmarks (run explicitly with '-m benchmark')",
     "terrain: marks tests requiring downloaded terrain data (run explicitly with '-m terrain')",
+    "api: marks API tests (require api extra)",
 ]
 
 [project.scripts]
 stochastic-warfare-mcp = "stochastic_warfare.tools.mcp_server:main"
+stochastic-warfare-api = "api.main:run"
 
 [tool.setuptools.packages.find]
-include = ["stochastic_warfare*"]
+include = ["stochastic_warfare*", "api*"]
