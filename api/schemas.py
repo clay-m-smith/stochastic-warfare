@@ -158,6 +158,60 @@ class SnapshotsResponse(BaseModel):
 
 
 # ---------------------------------------------------------------------------
+# Map / Spatial Data
+# ---------------------------------------------------------------------------
+
+
+class MapUnitFrame(BaseModel):
+    """A single unit's position in one frame."""
+
+    id: str
+    side: str
+    x: float
+    y: float
+    domain: int = 0
+    status: int = 0
+    heading: float = 0.0
+    type: str = ""
+
+
+class ReplayFrame(BaseModel):
+    """One tick's worth of unit positions."""
+
+    tick: int
+    units: list[MapUnitFrame] = Field(default_factory=list)
+
+
+class FramesResponse(BaseModel):
+    """Paginated replay frames."""
+
+    frames: list[ReplayFrame] = Field(default_factory=list)
+    total_frames: int = 0
+
+
+class ObjectiveInfo(BaseModel):
+    """Map objective marker."""
+
+    id: str
+    x: float
+    y: float
+    radius: float = 500.0
+
+
+class TerrainResponse(BaseModel):
+    """Static terrain data for a run."""
+
+    width_cells: int = 0
+    height_cells: int = 0
+    cell_size: float = 100.0
+    origin_easting: float = 0.0
+    origin_northing: float = 0.0
+    land_cover: list[list[int]] = Field(default_factory=list)
+    objectives: list[ObjectiveInfo] = Field(default_factory=list)
+    extent: list[float] = Field(default_factory=list)
+
+
+# ---------------------------------------------------------------------------
 # Batch / MC
 # ---------------------------------------------------------------------------
 

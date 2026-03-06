@@ -20,13 +20,18 @@ from api.schemas import (
     EventItem,
     EventsResponse,
     ForcesResponse,
+    FramesResponse,
+    MapUnitFrame,
     NarrativeResponse,
+    ObjectiveInfo,
+    ReplayFrame,
     RunDetail,
     RunStatus,
     RunSubmitRequest,
     RunSubmitResponse,
     RunSummary,
     SnapshotsResponse,
+    TerrainResponse,
 )
 
 router = APIRouter(prefix="/runs", tags=["runs"])
@@ -193,6 +198,76 @@ async def get_run_snapshots(run_id: str, db: Database = Depends(get_db)) -> Snap
         return SnapshotsResponse(snapshots=[])
     snapshots = json.loads(row["snapshots_json"])
     return SnapshotsResponse(snapshots=snapshots)
+
+
+# ── Map data (Phase 35) ──────────────────────────────────────────────────
+
+
+@router.get("/{run_id}/terrain", response_model=TerrainResponse)
+async def get_run_terrain(run_id: str, db: Database = Depends(get_db)) -> TerrainResponse:
+    row = await db.get_run(run_id)
+    if row is None:
+        raise HTTPException(status_code=404, detail=f"Run '{run_id}' not found")
+    if not row.get("terrain_json"):
+        return TerrainResponse()
+    data = json.loads(row["terrain_json"])
+    objectives = [
+        ObjectiveInfo(id=o.get("id", ""), x=o.get("x", 0), y=o.get("y", 0), radius=o.get("radius", 500))
+        for o in data.get("objectives", [])
+    ]
+    return TerrainResponse(
+        width_cells=data.get("width_cells", 0),
+        height_cells=data.get("height_cells", 0),
+        cell_size=data.get("cell_size", 100.0),
+        origin_easting=data.get("origin_easting", 0.0),
+        origin_northing=data.get("origin_northing", 0.0),
+        land_cover=data.get("land_cover", []),
+        objectives=objectives,
+        extent=data.get("extent", []),
+    )
+
+
+@router.get("/{run_id}/frames", response_model=FramesResponse)
+async def get_run_frames(
+    run_id: str,
+    start_tick: int | None = Query(None, ge=0),
+    end_tick: int | None = Query(None, ge=0),
+    db: Database = Depends(get_db),
+) -> FramesResponse:
+    row = await db.get_run(run_id)
+    if row is None:
+        raise HTTPException(status_code=404, detail=f"Run '{run_id}' not found")
+    if not row.get("frames_json"):
+        return FramesResponse()
+    all_frames = json.loads(row["frames_json"])
+
+    # Filter by tick range
+    filtered = all_frames
+    if start_tick is not None:
+        filtered = [f for f in filtered if f.get("tick", 0) >= start_tick]
+    if end_tick is not None:
+        filtered = [f for f in filtered if f.get("tick", 0) <= end_tick]
+
+    frames = [
+        ReplayFrame(
+            tick=f.get("tick", 0),
+            units=[
+                MapUnitFrame(
+                    id=u.get("id", ""),
+                    side=u.get("side", ""),
+                    x=u.get("x", 0),
+                    y=u.get("y", 0),
+                    domain=u.get("d", 0),
+                    status=u.get("s", 0),
+                    heading=u.get("h", 0),
+                    type=u.get("t", ""),
+                )
+                for u in f.get("units", [])
+            ],
+        )
+        for f in filtered
+    ]
+    return FramesResponse(frames=frames, total_frames=len(all_frames))
 
 
 # ── WebSocket progress ───────────────────────────────────────────────────

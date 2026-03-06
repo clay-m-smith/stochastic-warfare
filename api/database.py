@@ -58,6 +58,13 @@ class Database:
         self._conn.row_factory = aiosqlite.Row
         await self._conn.executescript(_SCHEMA)
         await self._conn.commit()
+        # Migrate: add Phase 35 map data columns if missing
+        for col in ("terrain_json", "frames_json"):
+            try:
+                await self._conn.execute(f"ALTER TABLE runs ADD COLUMN {col} TEXT")
+                await self._conn.commit()
+            except Exception:
+                pass  # Column already exists
 
     async def close(self) -> None:
         """Close the database connection."""
@@ -108,6 +115,8 @@ class Database:
         events_json: str | None = None,
         snapshots_json: str | None = None,
         error_message: str | None = None,
+        terrain_json: str | None = None,
+        frames_json: str | None = None,
     ) -> None:
         fields = ["status = ?"]
         values: list[Any] = [status]
@@ -129,6 +138,12 @@ class Database:
         if error_message is not None:
             fields.append("error_message = ?")
             values.append(error_message)
+        if terrain_json is not None:
+            fields.append("terrain_json = ?")
+            values.append(terrain_json)
+        if frames_json is not None:
+            fields.append("frames_json = ?")
+            values.append(frames_json)
         values.append(run_id)
         await self.conn.execute(
             f"UPDATE runs SET {', '.join(fields)} WHERE id = ?",

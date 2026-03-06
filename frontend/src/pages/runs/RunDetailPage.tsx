@@ -11,6 +11,7 @@ import { RunDeleteButton } from './RunDeleteButton'
 import { RunProgressPanel } from './RunProgressPanel'
 import { ChartsTab } from './tabs/ChartsTab'
 import { EventsTab } from './tabs/EventsTab'
+import { MapTab } from './tabs/MapTab'
 import { NarrativeTab } from './tabs/NarrativeTab'
 import { ResultsTab } from './tabs/ResultsTab'
 
@@ -25,6 +26,7 @@ const STATUS_COLORS: Record<RunStatus, string> = {
 const TABS = [
   { id: 'results', label: 'Results' },
   { id: 'charts', label: 'Charts' },
+  { id: 'map', label: 'Map' },
   { id: 'narrative', label: 'Narrative' },
   { id: 'events', label: 'Events' },
 ]
@@ -86,6 +88,7 @@ export function RunDetailPage() {
               <ResultsTab run={run} result={run.result as unknown as RunResult | null} />
             )}
             {activeTab === 'charts' && <ChartsTab runId={runId} result={run.result as unknown as RunResult | null} />}
+            {activeTab === 'map' && <MapTab runId={runId} />}
             {activeTab === 'narrative' && <NarrativeTab runId={runId} />}
             {activeTab === 'events' && <EventsTab runId={runId} />}
           </div>

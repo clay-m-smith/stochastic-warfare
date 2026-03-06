@@ -94,6 +94,8 @@ class RunManager:
                 result_json=json.dumps(result["summary"], default=str),
                 events_json=json.dumps(result["events"], default=str),
                 snapshots_json=json.dumps(result["snapshots"], default=str),
+                terrain_json=json.dumps(result["terrain"], default=str),
+                frames_json=json.dumps(result["frames"], default=str),
             )
         except Exception as exc:
             now = datetime.now(timezone.utc).isoformat()
@@ -141,6 +143,9 @@ class RunManager:
         loader = ScenarioLoader(self._data_dir)
         ctx = loader.load(path, seed=seed)
 
+        # Capture static terrain data (Phase 35)
+        terrain_data = self._capture_terrain(ctx, config_dict)
+
         # Build victory evaluator
         objectives = []
         for obj_cfg in config_dict.get("objectives", []):
@@ -173,6 +178,8 @@ class RunManager:
         recorder.start()
         game_over = False
         progress_interval = max(1, max_ticks // 100)
+        frame_interval = max(1, max_ticks // 500)
+        map_frames: list[dict] = []
 
         while not game_over:
             # Check cancellation
@@ -181,6 +188,10 @@ class RunManager:
 
             game_over = engine.step()
             tick = ctx.clock.tick_count
+
+            # Capture position frame at dynamic intervals (Phase 35)
+            if tick % frame_interval == 0 or game_over:
+                map_frames.append(self._capture_frame(tick, ctx))
 
             # Emit progress
             if queue is not None and (tick % progress_interval == 0 or game_over):
@@ -227,7 +238,82 @@ class RunManager:
         events = [serialize_to_dict(e) for e in recorder.events[:self._max_stored_events]]
         snapshots = [{"tick": s.tick} for s in recorder.snapshots]
 
-        return {"summary": summary, "events": events, "snapshots": snapshots}
+        return {
+            "summary": summary,
+            "events": events,
+            "snapshots": snapshots,
+            "terrain": terrain_data,
+            "frames": map_frames,
+        }
+
+    # ── Map data capture (Phase 35) ─────────────────────────────────
+
+    @staticmethod
+    def _capture_terrain(ctx: Any, config_dict: dict[str, Any]) -> dict[str, Any]:
+        """Extract static terrain data from simulation context."""
+        terrain: dict[str, Any] = {
+            "width_cells": 0,
+            "height_cells": 0,
+            "cell_size": 100.0,
+            "origin_easting": 0.0,
+            "origin_northing": 0.0,
+            "land_cover": [],
+            "objectives": [],
+            "extent": [],
+        }
+
+        heightmap = getattr(ctx, "heightmap", None)
+        if heightmap is not None:
+            cell_size = getattr(heightmap, "cell_size", 100.0)
+            shape = getattr(heightmap, "shape", (0, 0))
+            extent = getattr(heightmap, "extent", None)
+            terrain["cell_size"] = float(cell_size)
+            terrain["height_cells"] = int(shape[0])
+            terrain["width_cells"] = int(shape[1])
+            if extent is not None:
+                terrain["origin_easting"] = float(extent[0])
+                terrain["origin_northing"] = float(extent[1])
+                terrain["extent"] = [float(v) for v in extent]
+
+        classification = getattr(ctx, "classification", None)
+        if classification is not None:
+            state = classification.get_state()
+            lc = state.get("land_cover")
+            if lc is not None:
+                import numpy as np
+                if isinstance(lc, np.ndarray):
+                    terrain["land_cover"] = lc.tolist()
+                else:
+                    terrain["land_cover"] = [list(row) for row in lc]
+
+        for obj_cfg in config_dict.get("objectives", []):
+            pos = obj_cfg.get("position", [0.0, 0.0])
+            terrain["objectives"].append({
+                "id": obj_cfg.get("objective_id", ""),
+                "x": float(pos[0]),
+                "y": float(pos[1]),
+                "radius": float(obj_cfg.get("radius_m", 500.0)),
+            })
+
+        return terrain
+
+    @staticmethod
+    def _capture_frame(tick: int, ctx: Any) -> dict[str, Any]:
+        """Capture unit positions for a single tick."""
+        units = []
+        for side, unit_list in ctx.units_by_side.items():
+            for u in unit_list:
+                units.append({
+                    "id": str(u.entity_id),
+                    "side": side,
+                    "x": float(u.position.easting),
+                    "y": float(u.position.northing),
+                    "d": int(u.domain.value) if hasattr(u.domain, "value") else 0,
+                    "s": int(u.status.value) if hasattr(u.status, "value") else 0,
+                    "h": round(float(getattr(u, "heading", 0.0)), 1),
+                    "t": str(getattr(u, "unit_type", "")),
+                })
+        return {"tick": tick, "units": units}
 
     # ── Batch ────────────────────────────────────────────────────────
 

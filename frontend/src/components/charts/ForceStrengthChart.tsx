@@ -11,9 +11,10 @@ const SIDE_COLORS: Record<string, string> = {
 interface ForceStrengthChartProps {
   data: ForceTimePoint[]
   className?: string
+  layoutOverrides?: Partial<Plotly.Layout>
 }
 
-export function ForceStrengthChart({ data, className }: ForceStrengthChartProps) {
+export function ForceStrengthChart({ data, className, layoutOverrides }: ForceStrengthChartProps) {
   if (data.length === 0) {
     return <div className="py-8 text-center text-sm text-gray-400">No force data available</div>
   }
@@ -37,6 +38,7 @@ export function ForceStrengthChart({ data, className }: ForceStrengthChartProps)
         xaxis: { title: { text: 'Tick' } },
         yaxis: { title: { text: 'Active Units' }, rangemode: 'tozero' },
         height: 350,
+        ...layoutOverrides,
       }}
       className={className}
     />

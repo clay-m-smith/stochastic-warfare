@@ -463,7 +463,7 @@ tests/api/                  # NEW — API integration tests
 | 32 | API & Service Foundation | FastAPI app, async runs, SQLite persistence, WebSocket progress, batch/MC/analysis endpoints, OpenAPI docs. **COMPLETE** |
 | 33 | Frontend Foundation & Scenario Browser | React app, scenario list/detail, unit catalog, run configuration page. 62 vitest tests. **COMPLETE** |
 | 34 | Run Results & Analysis Dashboard | Interactive charts (Plotly), narrative view, MC results, A/B comparison, live run tracking. 65 vitest tests. **COMPLETE** |
-| 35 | Tactical Map & Spatial Visualization | Canvas terrain renderer, unit positions, engagement arcs, playback controls, chart sync |
+| 35 | Tactical Map & Spatial Visualization | Canvas terrain renderer, unit positions, engagement arcs, movement trails, playback controls, chart sync. 71 new tests. **COMPLETE** |
 | 36 | Scenario Tweaker & Polish | Clone-and-tweak scenarios, terrain preview, PDF/CSV export, keyboard shortcuts, error handling |
 
 **Implementation order**: 31 → 32 → 33 → 34 → 35 → 36. Phase 31 (docs site) is independent and should ship first — it gives the newly-public repo a professional face. Phase 32 (API) is the foundation for all UI work. Phases 33–34 can potentially overlap (scenario browser doesn't depend on charting, and vice versa). Phase 35 (map) depends on snapshot data from Phase 32 and the frontend from Phase 33. Phase 36 (tweaker + polish) is the capstone.

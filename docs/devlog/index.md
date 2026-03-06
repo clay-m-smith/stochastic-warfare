@@ -45,6 +45,7 @@ Rolling record of implementation decisions, changes, and lessons learned across 
 | 32 | API & Service Foundation | **Complete** | [phase-32.md](phase-32.md) |
 | 33 | Frontend Foundation & Scenario Browser | **Complete** | [phase-33.md](phase-33.md) |
 | 34 | Run Results & Analysis Dashboard | **Complete** | [phase-34.md](phase-34.md) |
+| 35 | Tactical Map & Spatial Visualization | **Complete** | [phase-35.md](phase-35.md) |
 
 ## Post-MVP Refinement Index
 
@@ -180,6 +181,12 @@ Known limitations and deferred improvements logged during implementation. Review
 | 34 | Analysis API responses untyped (`Record<string, unknown>`) — compare/sweep return free-form dicts | [phase-34.md — Postmortem](phase-34.md#postmortem) |
 | 34 | Hardcoded morale state names and event type strings in eventProcessing.ts | [phase-34.md — Postmortem](phase-34.md#postmortem) |
 | 34 | Force time series reconstruction assumes no reinforcements (only counts destructions) | [phase-34.md — Postmortem](phase-34.md#postmortem) |
+| 35 | Frame data uses compact keys in storage but API expands to full names — slight redundancy | [phase-35.md — Known Limitations](phase-35.md#known-limitations) |
+| 35 | `terrain_json` and `frames_json` stored as TEXT blobs — no indexing, large runs may produce 2MB+ frames | [phase-35.md — Known Limitations](phase-35.md#known-limitations) |
+| 35 | `useViewportControls` hook has no dedicated test file (exercised indirectly via TacticalMap) | [phase-35.md — Known Limitations](phase-35.md#known-limitations) |
+| 35 | Only `ForceStrengthChart` shows the tick sync marker line — other charts don't | [phase-35.md — Known Limitations](phase-35.md#known-limitations) |
+| 35 | Frame capture interval is not configurable | [phase-35.md — Known Limitations](phase-35.md#known-limitations) |
+| 35 | No keyboard shortcuts for playback (deferred to Phase 36) | [phase-35.md — Known Limitations](phase-35.md#known-limitations) |
 
 ## Conventions
 

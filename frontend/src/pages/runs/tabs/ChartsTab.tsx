@@ -1,3 +1,4 @@
+import { useSearchParams } from 'react-router-dom'
 import { EventActivityChart } from '../../../components/charts/EventActivityChart'
 import { EngagementTimeline } from '../../../components/charts/EngagementTimeline'
 import { ForceStrengthChart } from '../../../components/charts/ForceStrengthChart'
@@ -19,6 +20,8 @@ interface ChartsTabProps {
 }
 
 export function ChartsTab({ runId, result }: ChartsTabProps) {
+  const [searchParams] = useSearchParams()
+  const currentTick = searchParams.get('tick') ? Number(searchParams.get('tick')) : null
   const { data: eventsData, isLoading } = useRunEvents(runId, { limit: 10000 })
 
   if (isLoading) return <LoadingSpinner />
@@ -33,9 +36,24 @@ export function ChartsTab({ runId, result }: ChartsTabProps) {
   const moraleData = buildMoraleTimeSeries(events)
   const activityData = buildEventCounts(events)
 
+  // Build vertical reference line shape for chart sync
+  const tickMarkerShapes = currentTick != null
+    ? [
+        {
+          type: 'line' as const,
+          x0: currentTick,
+          x1: currentTick,
+          y0: 0,
+          y1: 1,
+          yref: 'paper' as const,
+          line: { color: '#FF6600', width: 1, dash: 'dot' as const },
+        },
+      ]
+    : []
+
   return (
     <div className="space-y-6">
-      <ForceStrengthChart data={forceData} />
+      <ForceStrengthChart data={forceData} layoutOverrides={{ shapes: tickMarkerShapes }} />
       <EngagementTimeline data={engagementData} />
       <EventActivityChart data={activityData} />
       <MoraleChart data={moraleData} />

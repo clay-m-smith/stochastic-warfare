@@ -6,6 +6,7 @@ import { RunDetailPage } from './pages/runs/RunDetailPage'
 import { RunListPage } from './pages/runs/RunListPage'
 import { ScenarioDetailPage } from './pages/scenarios/ScenarioDetailPage'
 import { ScenarioListPage } from './pages/scenarios/ScenarioListPage'
+import { FullscreenMapPage } from './pages/map/FullscreenMapPage'
 import { UnitCatalogPage } from './pages/units/UnitCatalogPage'
 
 const router = createBrowserRouter([
@@ -21,6 +22,7 @@ const router = createBrowserRouter([
       { path: 'runs/new', element: <RunConfigPage /> },
       { path: 'runs/:runId', element: <RunDetailPage /> },
       { path: 'analysis', element: <AnalysisPage /> },
+      { path: 'map/:runId', element: <FullscreenMapPage /> },
     ],
   },
 ])

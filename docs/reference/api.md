@@ -37,6 +37,8 @@ OpenAPI docs are available at `/api/docs` (Swagger UI) and `/api/redoc`.
 | GET | `/api/runs/{id}/events?offset=&limit=&event_type=` | Paginated event log |
 | GET | `/api/runs/{id}/narrative?side=&style=&max_ticks=` | Battle narrative text |
 | GET | `/api/runs/{id}/snapshots` | State snapshots |
+| GET | `/api/runs/{id}/terrain` | Terrain grid data (land cover, objectives, extent) |
+| GET | `/api/runs/{id}/frames?start_tick=&end_tick=` | Unit position replay frames |
 | WS | `/api/runs/{id}/progress` | Live tick-level progress stream |
 | POST | `/api/runs/batch` | Monte Carlo batch run |
 | GET | `/api/runs/batch/{id}` | Batch status and aggregated metrics |
