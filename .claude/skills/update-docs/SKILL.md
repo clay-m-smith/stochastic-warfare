@@ -32,6 +32,19 @@ $ARGUMENTS
 | Post-MVP Phases | `docs/development-phases-post-mvp.md` | Post-MVP roadmap (Phases 11–22), deficit-to-phase mapping |
 | Devlog Index | `docs/devlog/index.md` | Phase status tracking + deficit inventory (covers all phases) |
 
+### User-Facing Documentation (MkDocs Site)
+| Document | Path | Purpose |
+|----------|------|---------|
+| Site Landing Page | `docs/index.md` | Project overview, capabilities, test/scenario/unit counts, status |
+| Getting Started | `docs/guide/getting-started.md` | Installation, first scenario code examples, MC batch |
+| Scenario Library | `docs/guide/scenarios.md` | Scenario catalog tables, YAML format reference |
+| Architecture | `docs/concepts/architecture.md` | Module chain, sim loop, spatial model, engine wiring, eras |
+| Math Models | `docs/concepts/models.md` | 10 stochastic models with formulas and examples |
+| API Reference | `docs/reference/api.md` | Key class signatures, config fields, usage patterns |
+| Era Reference | `docs/reference/eras.md` | 5 eras: mechanics, units, scenarios per era |
+| Units & Equipment | `docs/reference/units.md` | Unit/weapon/ammo schemas, catalogs, doctrines, commanders |
+| MkDocs Config | `mkdocs.yml` | Site nav structure — must list all docs |
+
 **Related skill**: `/cross-doc-audit` — run after major changes to verify alignment across all documents.
 
 ## Rules
@@ -43,6 +56,16 @@ $ARGUMENTS
 6. **Don't remove history** — if a decision is superseded, mark it as such rather than deleting. Context for past decisions is valuable.
 7. **Post-MVP lockstep** — when completing a post-MVP phase (11+), ALL of the following must be updated together: CLAUDE.md, project-structure.md, `development-phases-post-mvp.md` (phase status + module index), `devlog/index.md` (phase status + any new refinement entries), phase devlog (`docs/devlog/phase-{N}.md`), README.md, MEMORY.md. The deficit-to-phase mapping in `development-phases-post-mvp.md` must also be updated if any deficits are resolved.
 8. **New deficits feed back** — any limitation discovered during post-MVP implementation must be added to `devlog/index.md` AND assigned to a phase in the deficit-to-phase mapping in `development-phases-post-mvp.md`.
+9. **User-facing docs must track engine changes** — when any of the following change, the corresponding user-facing doc must be updated:
+   - **New/removed modules** → update `docs/concepts/architecture.md` (module table, optional subsystems)
+   - **New/changed class signatures** → update `docs/reference/api.md` (constructor params, fields, methods)
+   - **New scenarios added** → update `docs/guide/scenarios.md` (catalog tables) + `docs/reference/eras.md` (per-era scenario lists)
+   - **New units/weapons/doctrines/commanders** → update `docs/reference/units.md` (catalog tables)
+   - **New eras or era mechanic changes** → update `docs/reference/eras.md` (mechanics, unit tables)
+   - **New mathematical models** → update `docs/concepts/models.md`
+   - **Test count or phase status changes** → update `docs/index.md` (status table, badges)
+   - **New devlog files** → add entry to `mkdocs.yml` nav (Devlog section)
+10. **MkDocs nav must be complete** — every new `.md` file in `docs/` must be added to `mkdocs.yml` nav. Run `mkdocs build --strict` to verify no orphaned pages.
 
 ## Process
 1. Read the current state of the relevant document(s)

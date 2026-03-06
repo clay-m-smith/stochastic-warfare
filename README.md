@@ -2,7 +2,7 @@
 
 ![Python](https://img.shields.io/badge/python-%3E%3D3.12-blue)
 ![Tests](https://img.shields.io/badge/tests-7%2C307_passing-brightgreen)
-![Phase](https://img.shields.io/badge/phase-30_Block--2_COMPLETE-blue)
+![Phase](https://img.shields.io/badge/phase-31_Block--3_IN--PROGRESS-blue)
 
 High-fidelity, high-resolution wargame simulator built as a headless Python engine. Models warfare across multiple scales — from individual unit engagements up through tactical battles, operational battlefields, and multi-day strategic campaigns — with stochastic and signal-processing-inspired models throughout.
 
@@ -110,27 +110,27 @@ stochastic_warfare/       # simulation engine (19 modules, ~226 source files)
   cbrn/                   # CBRN effects: agents, dispersal, contamination, protection, nuclear
   tools/                  # MCP server, analysis (narrative, tempo, comparison, sensitivity), visualization
 
-data/                     # ~220 YAML data files
-  units/                  # 21 unit definitions (ground, air, naval, support)
-  weapons/                # 24 weapon definitions (guns, artillery, missiles, torpedoes)
-  ammunition/             # 23 ammunition definitions
-  sensors/                # 9 sensor definitions
-  signatures/             # 15 signature profiles
+data/                     # ~700 YAML data files
+  units/                  # 46 unit definitions (ground, air, naval, support)
+  weapons/                # 51 weapon definitions (guns, artillery, missiles, torpedoes)
+  ammunition/             # 63 ammunition definitions
+  sensors/                # 16 sensor definitions
+  signatures/             # 48 signature profiles
   comms/                  # 8 communication equipment definitions
   ew/                     # 12 EW equipment definitions (jammers, ECCM suites, SIGINT collectors)
   space/                  # 12 space definitions (9 constellations, 3 ASAT weapons)
-  cbrn/                   # 13 CBRN definitions (7 agents, 3 nuclear weapons, 3 delivery systems)
-  organizations/          # 2 TO&E definitions
-  commanders/             # 6 commander personality profiles
-  doctrine/               # 10 doctrine templates (US, Russian, NATO, generic)
+  cbrn/                   # 16 CBRN definitions (agents, nuclear weapons, delivery systems)
+  organizations/          # 9 TO&E definitions
+  commanders/             # 13 commander personality profiles
+  doctrine/               # 21 doctrine templates (US, Russian, NATO, PLA, IDF, generic, unconventional)
   schools/                # 9 doctrinal school definitions (Clausewitzian, Maneuverist, etc.)
   supply/                 # 5 supply item definitions
   transport/              # 4 transport profiles
   medical/                # 2 medical facility definitions
   eras/                    # Era-specific data packages (WW2, WW1, Napoleonic, Ancient/Medieval)
-  scenarios/              # 3 engagement + 6 campaign + 2 EW + 3 space + 2 CBRN + 4 escalation + 6 Phase 30 scenarios
+  scenarios/              # 27 modern scenarios (engagement, campaign, EW, space, CBRN, escalation, joint) + 5 test
 
-tests/                    # 7,111 tests across ~200 test files
+tests/                    # 7,307 tests across ~200 test files
 docs/                     # specs, brainstorm, devlog, development phases
 ```
 
@@ -138,7 +138,7 @@ For the full package tree and module decomposition, see [`docs/specs/project-str
 
 ## Development Status
 
-All 11 MVP phases (0–10) are complete. Post-MVP Phases 11–24 are complete (deep systems rework + performance optimization + developer tooling + real-world terrain + electronic warfare + space & satellite domain + CBRN effects + doctrinal AI schools + WW2 era + WW1 era + Napoleonic era + Ancient & Medieval era + unconventional & prohibited warfare). Block 2 Phases 25–29 complete (Engine Wiring & Integration Sprint + Core Polish & Configuration + Combat System Completeness + Modern Era Data Package + Directed Energy Weapons + Historical Era Data Expansion).
+All 11 MVP phases (0–10) are complete. Post-MVP Phases 11–24 are complete (deep systems rework + performance optimization + developer tooling + real-world terrain + electronic warfare + space & satellite domain + CBRN effects + doctrinal AI schools + WW2 era + WW1 era + Napoleonic era + Ancient & Medieval era + unconventional & prohibited warfare). Block 2 Phases 25–30 complete (Engine Wiring & Integration Sprint + Core Polish & Configuration + Combat System Completeness + Modern Era Data Package + Directed Energy Weapons + Historical Era Data Expansion + Scenario & Campaign Library). Block 3 in progress (Phase 31: Documentation Site).
 
 | Phase | Focus | Tests | Status |
 |-------|-------|-------|--------|
@@ -173,7 +173,9 @@ All 11 MVP phases (0–10) are complete. Post-MVP Phases 11–24 are complete (d
 | 28 | Modern Era Data Package (Block 2) | 137 | Complete |
 | 28.5 | Directed Energy Weapons (Block 2) | 112 | Complete |
 | 29 | Historical Era Data Expansion (Block 2) | 164 | Complete |
-| | **Total** | **7,111** | |
+| 30 | Scenario & Campaign Library (Block 2) | 196 | Complete |
+| 31 | Documentation Site (Block 3) | 0 | Complete |
+| | **Total** | **7,307** | |
 
 For the full phase roadmap, see [`docs/development-phases.md`](docs/development-phases.md) (MVP) and [`docs/development-phases-post-mvp.md`](docs/development-phases-post-mvp.md) (post-MVP). For per-phase implementation logs, see [`docs/devlog/`](docs/devlog/).
 
@@ -189,23 +191,34 @@ For the full phase roadmap, see [`docs/development-phases.md`](docs/development-
 | `shapely` | Vector geometry (roads, rivers, coastlines, obstacles) |
 | `networkx` | Supply network graphs, strategic map routing |
 
-Optional: `numba` (JIT acceleration, `--extra perf`), `rasterio`/`xarray` (real terrain, `--extra terrain`), `mcp[cli]` (MCP server, `--extra mcp`). Dev: `pytest`, `pytest-cov`, `matplotlib`
+Optional: `numba` (JIT acceleration, `--extra perf`), `rasterio`/`xarray` (real terrain, `--extra terrain`), `mcp[cli]` (MCP server, `--extra mcp`), `mkdocs-material` (docs site, `--extra docs`). Dev: `pytest`, `pytest-cov`, `matplotlib`
 
 ## Documentation
+
+**Documentation site**: [clay-m-smith.github.io/stochastic-warfare](https://clay-m-smith.github.io/stochastic-warfare) -- full docs with getting started guide, scenario library, architecture overview, mathematical models, API reference, and era reference.
 
 | Document | Purpose |
 |----------|---------|
 | [`docs/brainstorm.md`](docs/brainstorm.md) | Architecture decisions, domain decomposition, rationale |
 | [`docs/development-phases.md`](docs/development-phases.md) | Phase roadmap (0–10 + future), module-to-phase index |
+| [`docs/development-phases-block3.md`](docs/development-phases-block3.md) | Block 3 UX/UI phase roadmap (31–36) |
 | [`docs/specs/project-structure.md`](docs/specs/project-structure.md) | Full package tree, module decomposition, dependency graph |
 | [`docs/devlog/`](docs/devlog/) | Per-phase implementation logs (`index.md` tracks status) |
 | [`docs/skills-and-hooks.md`](docs/skills-and-hooks.md) | Dev infrastructure (Claude skills, hooks, research tiers) |
 | [`docs/specs/`](docs/specs/) | Per-module specifications (written before implementation) |
 | [`CLAUDE.md`](CLAUDE.md) | Full project conventions and coding standards |
 
+## License
+
+This project is licensed under the [PolyForm Noncommercial License 1.0.0](LICENSE.md). You are free to use, modify, and share the software for personal, academic, and research purposes. Commercial and institutional use requires a separate license — contact **claymsmith1@gmail.com** for inquiries.
+
 ## Contributing
 
-Key conventions (see [`CLAUDE.md`](CLAUDE.md) for the complete list):
+This project does not accept external contributions. See [CONTRIBUTING.md](CONTRIBUTING.md) for details.
+
+### Key Conventions
+
+For reference, the engine follows these conventions (see [`CLAUDE.md`](CLAUDE.md) for the complete list):
 
 - **PRNG discipline** — all randomness via `RNGManager.get_stream(ModuleId)` returning `np.random.Generator`. No bare `random` module, no `np.random` module-level calls.
 - **Deterministic iteration** — no `set()` or unordered dict driving simulation logic.

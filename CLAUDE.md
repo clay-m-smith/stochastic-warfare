@@ -3,7 +3,7 @@
 ## Project Overview
 High-fidelity, high-resolution wargame simulator. Multi-scale (campaign → battlefield → battle → unit level) with stochastic/signal-processing-inspired models (Markov chains, Monte Carlo, Kalman filters, noise models, queueing theory). Headless Python engine first; matplotlib for validation; full UI deferred. Modern era (Cold War–present) as prototype. Maritime warfare fully integrated, not deferred.
 
-**Current status**: Phase 30 complete (Scenario & Campaign Library — Block 2) + all prior phases. 7,307 tests passing. Block 1 COMPLETE (0–24). Block 2 COMPLETE (25–30). MVP complete (phases 0-10). Post-MVP Phases 11-23 delivered — Phase 11: 15 deficit fixes across ~20 source files. Phase 12: 16 deficits resolved + 2 new domains (civilian population, strategic air campaigns/IADS) across 12 new + ~25 modified source files. Phase 13: Performance optimization (STRtree, Kalman cache, LOS cache, viewshed vectorization, auto-resolve, force aggregation, Numba JIT, A* precompute, MC parallelism) across 2 new + ~10 modified source files. Phase 14: Developer tooling (MCP server, analysis utilities, visualization, 7 Claude skills) across 12 new source files + 7 skill files. Phase 15: Real-world terrain pipeline (SRTM elevation, Copernicus land cover, OSM infrastructure, GEBCO bathymetry) across 5 new source files + 1 modified + 1 download script. Phase 16: Electronic Warfare (EA/EP/ES — J/S ratio, GPS spoofing, ECCM, SIGINT) across 8 new source files + 5 modified + 14 YAML + 2 scenarios. Phase 17: Space & Satellite (orbital mechanics, GPS dependency, space ISR, early warning, SATCOM, ASAT warfare) across 9 new source files + 7 modified + 12 YAML + 3 scenarios. Phase 18: CBRN (Pasquill-Gifford dispersal, contamination grids, MOPP protection, probit casualties, nuclear blast/thermal/radiation/EMP/fallout) across 10 new source files + 6 modified + 15 YAML + 2 scenarios. Phase 19: Doctrinal AI Schools (9 named schools as Strategy-pattern classes — Clausewitz, Maneuver, Attrition, AirLand Battle, Air Power, Sun Tzu, Deep Battle, Mahanian, Corbettian — with assessment weight overrides, decision score adjustments, OODA multipliers, COA weight overrides, opponent modeling) across 10 new source files + 6 modified + 9 YAML. Phase 20: WW2 Era (era framework — Era enum, EraConfig, module gating, era-aware YAML loading; WW2 data package — 15 units, 8 weapons, 13 ammo, 4 sensors, 15 signatures, 4 doctrines, 3 commanders, 3 scenarios; engine extensions — naval gunnery bracket firing, convoy/wolf pack, strategic bombing CEP) across 4 new source files + 2 modified + ~60 YAML. Phase 21: WW1 Era (WW1 era config + data package — 6 units, 8 weapons, 10 ammo, 5 sensors, 6 signatures, 3 doctrines, 3 commanders, 2 comms, 2 scenarios; engine extensions — trench system STRtree overlay, creeping barrage aggregate model, gas warfare CBRN adapter) across 3 new source files + 4 modified + ~45 YAML. Phase 22: Napoleonic Era (Napoleonic era config + data package — 10 units, 9 weapons, 9 ammo, 3 sensors, 10 signatures, 3 doctrines, 3 commanders, 2 comms, 2 scenarios; engine extensions — volley fire aggregate model, melee combat, cavalry charge state machine, Napoleonic formations, courier C2, foraging logistics) across 6 new source files + 2 modified + ~53 YAML. Phase 23: Ancient & Medieval Era (Ancient/Medieval era config + data package — 7 units, 13 weapons, 8 ammo, 3 sensors, 7 signatures, 3 doctrines, 3 commanders, 2 comms, 3 scenarios; engine extensions — massed archery aggregate model, ancient formations, siege state machine, oar-powered naval, visual signals C2, melee extension with reach/flanking) across 5 new source files + 4 modified + ~49 YAML.
+**Current status**: Phase 31 complete (Documentation Site — Block 3) + all prior phases. 7,307 tests passing. Block 1 COMPLETE (0–24). Block 2 COMPLETE (25–30). Block 3 IN PROGRESS (31 complete). MVP complete (phases 0-10). Post-MVP Phases 11-23 delivered — Phase 11: 15 deficit fixes across ~20 source files. Phase 12: 16 deficits resolved + 2 new domains (civilian population, strategic air campaigns/IADS) across 12 new + ~25 modified source files. Phase 13: Performance optimization (STRtree, Kalman cache, LOS cache, viewshed vectorization, auto-resolve, force aggregation, Numba JIT, A* precompute, MC parallelism) across 2 new + ~10 modified source files. Phase 14: Developer tooling (MCP server, analysis utilities, visualization, 7 Claude skills) across 12 new source files + 7 skill files. Phase 15: Real-world terrain pipeline (SRTM elevation, Copernicus land cover, OSM infrastructure, GEBCO bathymetry) across 5 new source files + 1 modified + 1 download script. Phase 16: Electronic Warfare (EA/EP/ES — J/S ratio, GPS spoofing, ECCM, SIGINT) across 8 new source files + 5 modified + 14 YAML + 2 scenarios. Phase 17: Space & Satellite (orbital mechanics, GPS dependency, space ISR, early warning, SATCOM, ASAT warfare) across 9 new source files + 7 modified + 12 YAML + 3 scenarios. Phase 18: CBRN (Pasquill-Gifford dispersal, contamination grids, MOPP protection, probit casualties, nuclear blast/thermal/radiation/EMP/fallout) across 10 new source files + 6 modified + 15 YAML + 2 scenarios. Phase 19: Doctrinal AI Schools (9 named schools as Strategy-pattern classes — Clausewitz, Maneuver, Attrition, AirLand Battle, Air Power, Sun Tzu, Deep Battle, Mahanian, Corbettian — with assessment weight overrides, decision score adjustments, OODA multipliers, COA weight overrides, opponent modeling) across 10 new source files + 6 modified + 9 YAML. Phase 20: WW2 Era (era framework — Era enum, EraConfig, module gating, era-aware YAML loading; WW2 data package — 15 units, 8 weapons, 13 ammo, 4 sensors, 15 signatures, 4 doctrines, 3 commanders, 3 scenarios; engine extensions — naval gunnery bracket firing, convoy/wolf pack, strategic bombing CEP) across 4 new source files + 2 modified + ~60 YAML. Phase 21: WW1 Era (WW1 era config + data package — 6 units, 8 weapons, 10 ammo, 5 sensors, 6 signatures, 3 doctrines, 3 commanders, 2 comms, 2 scenarios; engine extensions — trench system STRtree overlay, creeping barrage aggregate model, gas warfare CBRN adapter) across 3 new source files + 4 modified + ~45 YAML. Phase 22: Napoleonic Era (Napoleonic era config + data package — 10 units, 9 weapons, 9 ammo, 3 sensors, 10 signatures, 3 doctrines, 3 commanders, 2 comms, 2 scenarios; engine extensions — volley fire aggregate model, melee combat, cavalry charge state machine, Napoleonic formations, courier C2, foraging logistics) across 6 new source files + 2 modified + ~53 YAML. Phase 23: Ancient & Medieval Era (Ancient/Medieval era config + data package — 7 units, 13 weapons, 8 ammo, 3 sensors, 7 signatures, 3 doctrines, 3 commanders, 2 comms, 3 scenarios; engine extensions — massed archery aggregate model, ancient formations, siege state machine, oar-powered naval, visual signals C2, melee extension with reach/flanking) across 5 new source files + 4 modified + ~49 YAML.
 
 ## Python & Package Management
 **Requires Python >=3.12** (pinned to 3.12.10 via `.python-version`).
@@ -42,7 +42,7 @@ Hybrid — tick-based outer loop (variable resolution per scale) + event-driven 
 Layered hybrid — graph (strategic), grid (operational/tactical), continuous (unit-level). All raster grids share: Grid[0,0] = SW corner, row increases northward, col increases eastward.
 
 ### Key Dependencies
-`numpy`, `scipy`, `pydantic`, `pyproj`, `shapely`, `networkx` (+ `pytest`, `pytest-cov`, `matplotlib` for dev). Optional: `numba` (perf), `mcp[cli]` (mcp), `rasterio`/`xarray` (terrain).
+`numpy`, `scipy`, `pydantic`, `pyproj`, `shapely`, `networkx` (+ `pytest`, `pytest-cov`, `matplotlib` for dev). Optional: `numba` (perf), `mcp[cli]` (mcp), `rasterio`/`xarray` (terrain), `mkdocs-material` (docs).
 
 ## Project Conventions
 - **PRNG discipline**: No `np.random` module-level calls. All randomness via `RNGManager.get_stream(ModuleId)` → `np.random.Generator`. No bare `random` module.
@@ -100,11 +100,18 @@ Layered hybrid — graph (strategic), grid (operational/tactical), continuous (u
 | `docs/development-phases.md` | MVP phase roadmap (0–10), module-to-phase index |
 | `docs/development-phases-post-mvp.md` | Post-MVP phase roadmap (11–24), deficit-to-phase mapping |
 | `docs/development-phases-block2.md` | Block 2 phase roadmap (25–30), integration & hardening |
+| `docs/brainstorm-block3.md` | Block 3 design thinking (docs site, API, UI, tactical map) |
+| `docs/development-phases-block3.md` | Block 3 phase roadmap (31–36), UX/UI pivot |
 | `docs/specs/project-structure.md` | Full package tree, module decomposition, dependency graph |
 | `docs/devlog/` | Per-phase implementation logs (`index.md` tracks status) |
 | `docs/skills-and-hooks.md` | Dev infrastructure documentation |
 | `docs/specs/` | Per-module specifications (written before implementation) |
 | `README.md` | Project overview, setup, architecture summary, status |
+| `mkdocs.yml` | MkDocs site configuration (Phase 31) |
+| `docs/index.md` | Docs site landing page (Phase 31) |
+| `docs/guide/` | User-facing guides (getting started, scenarios) (Phase 31) |
+| `docs/concepts/` | Architecture overview, mathematical models (Phase 31) |
+| `docs/reference/` | API reference, eras, units & equipment (Phase 31) |
 
 ## Completed Phases
 
@@ -145,7 +152,7 @@ All phase details are in `docs/devlog/` (one file per phase). Below is a summary
 | 23 | Ancient & Medieval Era | 321 | Ancient/Medieval era config + data (~49 YAML) + 5 new engine extensions (archery, ancient formations, siege, naval oar, visual signals) + melee extension. 3 scenarios |
 | 24 | Unconventional & Prohibited Warfare | 345 | 9 new source files: escalation/ package (ladder, political, consequences, events, war_termination), combat/unconventional.py, c2/ai/sof_ops.py, population/insurgency.py. ~18 modified + ~32 YAML + 4 scenarios |
 
-### Block 2 Phases (25-30) — In Progress
+### Block 2 Phases (25-30) — Complete
 
 | Phase | Focus | Tests | Key Deliverables |
 |-------|-------|-------|------------------|
@@ -157,7 +164,13 @@ All phase details are in `docs/devlog/` (one file per phase). Below is a summary
 | 29 | Historical Era Data Expansion | 164 | 119 YAML: naval units for all 4 historical eras (WW2 carriers/subs, WW1 dreadnoughts, Napoleonic ships of line, Ancient triremes/longships), plus ground/air/weapons/ammo/signatures/comms/commander. 15 new data directories. Zero source changes. |
 | 30 | Scenario & Campaign Library | 196 | 10 new scenario YAML (4 modern joint, 4 historical), 3 modified scenarios (73 Easting fix, Midway carrier fix, Golan expansion), 2 new Falklands scenarios. Cross-scenario validation. 3 deficits resolved. Zero source changes. |
 
-### Phase 30 Detail (Most Recent)
+### Block 3 Phases (31-36) — In Progress
+
+| Phase | Focus | Tests | Key Deliverables |
+|-------|-------|-------|------------------|
+| 31 | Documentation Site (GitHub Pages) | 0 | MkDocs + Material theme, GitHub Actions deployment, 8 user-facing docs (getting started, scenarios, architecture, models, API, eras, units), docs/index.md landing page. Zero engine changes. |
+
+### Phase 30 Detail
 
 Pure data phase — 10 new scenario YAMLs + 3 modified + 1 test file (196 tests). Zero new Python source files. 10 new scenario directories.
 - **30a Modern Joint** (4 scenarios): Taiwan Strait (air-naval, EW+escalation), Korean Peninsula (combined arms, CBRN), Suwalki Gap (EW+schools), Hybrid Gray Zone (SOF+escalation).

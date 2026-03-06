@@ -34,8 +34,10 @@
   - `docs/specs/<module>.md` — module specifications
   - `docs/devlog/index.md` — phase status + deficit inventory
   - Memory files — stable patterns and conventions
+  - **User-facing docs** (Phase 31+) — `docs/index.md`, `docs/guide/`, `docs/concepts/`, `docs/reference/`, `mkdocs.yml`
 - Enforces post-MVP lockstep: completing Phase 11+ requires updating CLAUDE.md, project-structure.md, development-phases-post-mvp.md, devlog/index.md, phase devlog, README.md, and MEMORY.md together
 - New deficits discovered during post-MVP work must be added to both devlog/index.md AND the deficit-to-phase mapping
+- **User-facing doc rules** (Phase 31+): new modules update architecture.md; new scenarios update scenarios.md + eras.md; new units update units.md; API changes update api.md; new devlogs require mkdocs.yml nav entry; test count changes update index.md
 - Keeps documentation in sync with implementation
 
 ### /spec
@@ -61,10 +63,11 @@
 - Keeps implementation honest against the theoretical foundations we've committed to
 
 ### /cross-doc-audit
-- Audits alignment across all documentation layers — MVP AND post-MVP:
+- Audits alignment across all documentation layers — MVP, post-MVP, AND user-facing docs site:
   - MVP: development-phases.md, project-structure.md, brainstorm.md, devlog, MEMORY.md, README.md
   - Post-MVP: development-phases-post-mvp.md, brainstorm-post-mvp.md, devlog/index.md deficit inventory
-- 13 checks: original 9 (module coverage, phase content match, dependency ordering, exit criteria coverage, contradictions, brainstorm traceability, devlog completeness, memory freshness, README currency) + 4 post-MVP checks (deficit traceability, cross-document alignment, module coverage, devlog completeness)
+  - User-facing (Phase 31+): index.md, guide/, concepts/, reference/, mkdocs.yml
+- 19 checks: original 13 + 6 user-facing checks (status/counts, architecture accuracy, API accuracy, scenario catalog completeness, era/unit accuracy, MkDocs nav completeness)
 - Output: PASS/FAIL per check with severity (CRITICAL/HIGH/MEDIUM/LOW)
 - Run after completing phases, adding modules, or changing architecture
 
@@ -118,8 +121,9 @@
 
 ### /postmortem (Phase 14)
 - Structured retrospective to run after completing each implementation phase
-- 8-step process: delivered vs planned, integration audit, test quality review, API surface check, deficit discovery, documentation freshness, performance sanity, summary
+- 8-step process: delivered vs planned, integration audit, test quality review, API surface check, deficit discovery, documentation freshness (including user-facing docs staleness check), performance sanity, summary
 - Catches integration gaps, dead modules, missing wiring, undocumented limitations
+- Documentation freshness now checks user-facing docs: architecture.md, api.md, scenarios.md, eras.md, units.md, models.md, index.md, mkdocs.yml
 - Updates phase devlog with findings and action items
 
 ---

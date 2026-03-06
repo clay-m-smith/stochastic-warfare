@@ -556,6 +556,15 @@ New unit YAML + matching signature YAML for each:
 | 9.1–9.5 | Terrain pipeline depth — real-world data adequate |
 | 10.1–10.3 | Core infrastructure (pickle, threading, coverage) — won't fix / by design |
 | 10.6 | Single-threaded loop — required for PRNG determinism |
+
+### Introduced by Phase 28.5 (DEW — open deficits)
+| Deficit | Description | Status |
+|---------|------------|--------|
+| 11.1 | DEWEngagementEvent has zero subscribers in production code | Deferred — future DEW integration |
+| 11.2 | dew_engine not used in simulation/engine.py or battle.py tick loops | Deferred — future DEW integration |
+| 11.3 | No scenario YAML references dew_config | Deferred — future DEW scenarios |
+| 11.4 | ADUnitType.DEW not handled in air defense engagement logic | Deferred — future DEW integration |
+| 11.5 | route_engagement() not called from battle.py — DEW routing untested in loop | Deferred — future DEW integration |
 | 11.1–11.4 | Deferred domains (cyber, 4GW schools, amphibious depth, FM 5-0) — future blocks |
 
 ---

@@ -33,6 +33,9 @@ terrain = [
     "rasterio>=1.3",
     "xarray>=2024.1",
 ]
+docs = [
+    "mkdocs-material>=9.5",
+]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

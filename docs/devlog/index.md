@@ -40,6 +40,8 @@ Rolling record of implementation decisions, changes, and lessons learned across 
 | 28.5 | Directed Energy Weapons | **Complete** | [phase-28.5.md](phase-28.5.md) |
 | 29 | Historical Era Data Expansion | **Complete** | [phase-29.md](phase-29.md) |
 | 30 | Scenario & Campaign Library | **Complete** | [phase-30.md](phase-30.md) |
+| | | | |
+| 31 | Documentation Site (GitHub Pages) | **Complete** | [phase-31.md](phase-31.md) |
 
 ## Post-MVP Refinement Index
 

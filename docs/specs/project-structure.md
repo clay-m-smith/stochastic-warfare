@@ -1,5 +1,5 @@
 # Project Structure & Module Decomposition
-**Status**: Complete (Phase 28)
+**Status**: Complete (Phase 31)
 **Last Updated**: 2026-03-05
 
 ---
@@ -9,14 +9,29 @@
 ```
 stochastic-warfare/
 ├── pyproject.toml                    # Build config, dependencies, metadata
+├── mkdocs.yml                        # MkDocs site configuration [Phase 31]
 ├── README.md
 ├── .claude/
 │   ├── settings.json                 # Project hooks
 │   └── skills/                       # Claude skills (17 total)
+├── .github/
+│   └── workflows/
+│       └── docs.yml                  # GitHub Actions — docs deployment [Phase 31]
 ├── docs/
+│   ├── index.md                      # Docs site landing page [Phase 31]
 │   ├── brainstorm.md                 # Architecture decisions & rationale
 │   ├── development-phases.md         # Development roadmap
 │   ├── skills-and-hooks.md           # Dev infrastructure docs
+│   ├── guide/                        # User-facing guides [Phase 31]
+│   │   ├── getting-started.md        # Installation, first scenario, output
+│   │   └── scenarios.md              # Scenario catalog, YAML format
+│   ├── concepts/                     # Conceptual documentation [Phase 31]
+│   │   ├── architecture.md           # Public architecture overview
+│   │   └── models.md                 # Mathematical models reference
+│   ├── reference/                    # Reference documentation [Phase 31]
+│   │   ├── api.md                    # API class reference
+│   │   ├── eras.md                   # Era framework & mechanics
+│   │   └── units.md                  # Units & equipment catalog
 │   └── specs/                        # Per-module specifications
 │       └── project-structure.md      # (this document)
 ├── data/

@@ -593,11 +593,11 @@ Every item from `devlog/index.md` Post-MVP Refinement Index assigned to a phase:
 | ~~Uniform target_size_modifier~~ | Phase 7 | ~~11a~~ **Resolved** |
 | ~~No wave attack modeling~~ | Phase 7 | ~~11c~~ **Resolved** |
 | Pre-scripted behavior only | Phase 7 | Resolved (Phase 8 added AI) |
-| Falklands simplified | Phase 7 | Deferred (expand scenario in future) |
+| ~~Falklands simplified~~ | Phase 7 | ~~Deferred~~ **Resolved** (Phase 30 — San Carlos + Goose Green) |
 | Synthetic terrain | Phase 7 | 15 |
 | No logistics in validation | Phase 7 | Deferred (short engagements don't need it) |
 | No C2 propagation in validation | Phase 7 | Deferred (direct behavior adequate for engagement-level) |
-| Simplified force compositions | Phase 7 | Deferred (expand OOB data over time) |
+| ~~Simplified force compositions~~ | Phase 7 | ~~Deferred~~ **Resolved** (Phase 28/30 — expanded OOB) |
 | Named doctrinal schools deferred | Phase 8 | 19 |
 | COA wargaming analytical | Phase 8 | Deferred (Lanchester adequate for planning level) |
 | No terrain-specific COA generation | Phase 8 | Deferred (terrain-aware COA is aspirational) |
@@ -620,7 +620,7 @@ Every item from `devlog/index.md` Post-MVP Refinement Index assigned to a phase:
 | ~~No fire rate limiting (Phase 10 inherited)~~ | Phase 10 | ~~11a~~ **Resolved** |
 | ~~No wave attack modeling (Phase 10 inherited)~~ | Phase 10 | ~~11c~~ **Resolved** |
 | ~~Campaign AI coarseness~~ | Phase 10 | ~~11d~~ **Resolved** |
-| Simplified force compositions (Phase 10) | Phase 10 | Deferred |
+| ~~Simplified force compositions (Phase 10)~~ | Phase 10 | ~~Deferred~~ **Resolved** (Phase 28/30 — expanded OOB) |
 | Synthetic terrain (Phase 10) | Phase 10 | 15 |
 | ~~Fixed reinforcement schedule (Phase 10)~~ | Phase 10 | ~~11c~~ **Resolved** |
 | ~~No force aggregation/disaggregation (Phase 10)~~ | Phase 10 | ~~13a~~ **Resolved** (postmortem wired into engine) |
@@ -628,8 +628,8 @@ Every item from `devlog/index.md` Post-MVP Refinement Index assigned to a phase:
 | Campaign metrics proxy territory | Phase 10 | Deferred (spatial control requires Phase 15 real terrain) |
 | ~~Fuel gating not wired to stockpile in battle.py~~ | Phase 11 | ~~12b~~ **Resolved** |
 | Wave assignments are manual (no AI auto-assignment) | Phase 11 | 19 (doctrinal AI) |
-| Integration gain caps at 4 scans | Phase 11 | Deferred (conservative cap adequate) |
-| Armor type YAML data missing | Phase 11 | Deferred (expand unit definitions over time) |
+| ~~Integration gain caps at 4 scans~~ | Phase 11 | ~~Deferred~~ **Resolved** (Phase 26c) |
+| ~~Armor type YAML data missing~~ | Phase 11 | ~~Deferred~~ **Resolved** (Phase 26c — armor_type field added) |
 | ~~EW engines not wired into simulation engine tick loop~~ | Phase 16 | ~~25c~~ **Resolved** |
 | No DRFM detailed waveform modeling | Phase 16 | Deferred (simplified effectiveness parameter adequate) |
 | TDOA geolocation simplified centroid-shift | Phase 16 | Deferred (full TDOA solver is low priority) |
@@ -644,9 +644,9 @@ Every item from `devlog/index.md` Post-MVP Refinement Index assigned to a phase:
 | EMEnvironment GPS accuracy not per-side | Phase 17 | Deferred (uses worst-case aggregation; per-side EM requires architectural changes) |
 | ~~ScenarioLoader doesn't auto-wire EW/Space/CBRN engines~~ | Phase 16/17/18 | ~~25a~~ **Resolved** |
 | ~~MOPP speed factor never passed from battle loop to movement~~ | Phase 18 | ~~25c~~ **Resolved** |
-| Hardcoded terrain channeling thresholds in dispersal | Phase 18 | Deferred (5m valley/ridge detection; configurable thresholds not critical) |
-| Hardcoded fallback weather defaults in CBRN engine | Phase 18 | Deferred (wind=2.0, temp=20°C when weather engine unavailable) |
-| No automatic puff aging/cleanup in dispersal engine | Phase 18 | Deferred (caller must remove aged puffs; unbounded growth possible in long campaigns) |
+| ~~Hardcoded terrain channeling thresholds in dispersal~~ | Phase 18 | ~~Deferred~~ **Resolved** (Phase 26b — configurable thresholds) |
+| ~~Hardcoded fallback weather defaults in CBRN engine~~ | Phase 18 | ~~Deferred~~ **Resolved** (Phase 26b — configurable defaults) |
+| ~~No automatic puff aging/cleanup in dispersal engine~~ | Phase 18 | ~~Deferred~~ **Resolved** (Phase 26c — puff cleanup added) |
 | ~~CommanderEngine not wired into SimulationContext~~ | Phase 19 | ~~25d~~ **Resolved** |
 | ~~`battle.py` passes `assessment=None` to `decide()`~~ | Phase 19 | ~~25b~~ **Resolved** |
 | ~~ScenarioLoader doesn't auto-wire SchoolRegistry from YAML~~ | Phase 16/17/18/19 | ~~25a~~ **Resolved** |
@@ -656,15 +656,15 @@ Every item from `devlog/index.md` Post-MVP Refinement Index assigned to a phase:
 | Strategic bombing target regeneration is linear | Phase 20 | Deferred (industrial interdependency graph is aspirational) |
 | Fighter escort is probability modifier, not full air combat | Phase 20 | Deferred (adequate fidelity for campaign-level) |
 | ~~ScenarioLoader doesn't auto-wire era-specific engines from YAML~~ | Phase 16/17/18/19/20 | ~~25a~~ **Resolved** |
-| Barrage drift is purely random walk — no observer feedback correction | Phase 21 | Deferred (adequate for aggregate model) |
-| Gas warfare does not model gas mask don time delay | Phase 21 | Deferred (low impact) |
+| ~~Barrage drift is purely random walk — no observer feedback correction~~ | Phase 21 | ~~Deferred~~ **Resolved** (Phase 27d — observer correction) |
+| ~~Gas warfare does not model gas mask don time delay~~ | Phase 21 | ~~Deferred~~ **Resolved** (Phase 27d — don time enforcement) |
 | Trench system has no wire-cutting mechanic | Phase 21 | Deferred (low impact) |
 | ~~ScenarioLoader doesn't auto-wire WW1 engines from YAML~~ | Phase 16/17/18/19/20/21 | ~~25a~~ **Resolved** |
 | Gas warfare wind direction tolerance (60°) hardcoded | Phase 21 | 26b |
 | Barrage/gas engines use hardcoded fallback RNG seed (42) | Phase 21 | 26a |
 | ~~ScenarioLoader doesn't auto-wire Napoleonic engines from YAML~~ | Phase 16/17/18/19/20/21/22 | ~~25a~~ **Resolved** |
-| Cavalry charge ignores terrain effects | Phase 22 | Deferred (low impact for aggregate model) |
-| No frontage/depth in melee — simplified to force ratio × formation modifier | Phase 22 | Deferred (adequate for current scope) |
+| ~~Cavalry charge ignores terrain effects~~ | Phase 22 | ~~Deferred~~ **Resolved** (Phase 27d — compute_cavalry_terrain_modifier) |
+| ~~No frontage/depth in melee — simplified to force ratio × formation modifier~~ | Phase 22 | ~~Deferred~~ **Resolved** (Phase 27d — compute_frontage_constraint) |
 | Foraging ambush casualty rate hardcoded at 10% | Phase 22 | 26b |
 | Volley/melee/cavalry/courier/foraging engines use hardcoded fallback RNG seed (42) | Phase 22 | 26a |
 | ~~ScenarioLoader doesn't auto-wire Ancient/Medieval engines from YAML~~ | Phase 16/17/18/19/20/21/22/23 | ~~25a~~ **Resolved** |
@@ -771,3 +771,6 @@ New modules introduced in Phases 11–24:
 | `combat/unconventional.py` | 24c |
 | `c2/ai/sof_ops.py` | 24c |
 | `population/insurgency.py` | 24e |
+| `combat/archery.py` | 23b |
+| `movement/formation_ancient.py` | 23b |
+| `escalation/__init__.py` | 24a |

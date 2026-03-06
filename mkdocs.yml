@@ -1,0 +1,110 @@
+site_name: Stochastic Warfare
+site_description: High-fidelity stochastic wargame simulator — multi-scale, multi-domain, multi-era
+site_author: Clay Smith
+site_url: https://clay-m-smith.github.io/stochastic-warfare
+repo_url: https://github.com/clay-m-smith/stochastic-warfare
+repo_name: clay-m-smith/stochastic-warfare
+
+theme:
+  name: material
+  palette:
+    - scheme: default
+      primary: blue grey
+      accent: indigo
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - scheme: slate
+      primary: blue grey
+      accent: indigo
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.expand
+    - navigation.top
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+
+plugins:
+  - search
+
+markdown_extensions:
+  - tables
+  - toc:
+      permalink: true
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.tilde
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - attr_list
+  - def_list
+
+nav:
+  - Home: index.md
+  - Guide:
+    - Getting Started: guide/getting-started.md
+    - Scenario Library: guide/scenarios.md
+  - Concepts:
+    - Architecture Overview: concepts/architecture.md
+    - Mathematical Models: concepts/models.md
+  - Reference:
+    - API Reference: reference/api.md
+    - Eras: reference/eras.md
+    - Units & Equipment: reference/units.md
+  - Architecture (Internal):
+    - Core Design: brainstorm.md
+    - Post-MVP Design: brainstorm-post-mvp.md
+    - Block 2 Design: brainstorm-block2.md
+    - Block 3 Design: brainstorm-block3.md
+  - Development Phases:
+    - MVP (0-10): development-phases.md
+    - Post-MVP (11-24): development-phases-post-mvp.md
+    - Block 2 (25-30): development-phases-block2.md
+    - Block 3 (31-36): development-phases-block3.md
+  - Devlog:
+    - Overview: devlog/index.md
+    - Phase 0 - Scaffolding: devlog/phase-0.md
+    - Phase 1 - Terrain & Environment: devlog/phase-1.md
+    - Phase 2 - Entities & Movement: devlog/phase-2.md
+    - Phase 3 - Detection & Intelligence: devlog/phase-3.md
+    - Phase 4 - Combat & Morale: devlog/phase-4.md
+    - Phase 5 - C2 Infrastructure: devlog/phase-5.md
+    - Phase 6 - Logistics & Supply: devlog/phase-6.md
+    - Phase 7 - Engagement Validation: devlog/phase-7.md
+    - Phase 8 - AI & Planning: devlog/phase-8.md
+    - Phase 9 - Simulation Orchestration: devlog/phase-9.md
+    - Phase 10 - Campaign Validation: devlog/phase-10.md
+    - Phase 11 - Core Fidelity Fixes: devlog/phase-11.md
+    - Phase 12 - Deep Systems Rework: devlog/phase-12.md
+    - Phase 13 - Performance Optimization: devlog/phase-13.md
+    - Phase 14 - Tooling & Dev Experience: devlog/phase-14.md
+    - Phase 15 - Real-World Terrain: devlog/phase-15.md
+    - Phase 16 - Electronic Warfare: devlog/phase-16.md
+    - Phase 17 - Space & Satellite: devlog/phase-17.md
+    - Phase 18 - CBRN Effects: devlog/phase-18.md
+    - Phase 19 - Doctrinal AI Schools: devlog/phase-19.md
+    - Phase 20 - WW2 Era: devlog/phase-20.md
+    - Phase 21 - WW1 Era: devlog/phase-21.md
+    - Phase 22 - Napoleonic Era: devlog/phase-22.md
+    - Phase 23 - Ancient & Medieval Era: devlog/phase-23.md
+    - Phase 24 - Unconventional Warfare: devlog/phase-24.md
+    - Phase 25 - Engine Wiring: devlog/phase-25.md
+    - Phase 26 - Core Polish: devlog/phase-26.md
+    - Phase 27 - Combat Completeness: devlog/phase-27.md
+    - Phase 28 - Modern Data Package: devlog/phase-28.md
+    - Phase 28.5 - Directed Energy: devlog/phase-28.5.md
+    - Phase 29 - Historical Data Expansion: devlog/phase-29.md
+    - Phase 30 - Scenario Library: devlog/phase-30.md
+    - Phase 31 - Documentation Site: devlog/phase-31.md
+  - Specifications:
+    - Project Structure: specs/project-structure.md
+    - Skills & Hooks: skills-and-hooks.md

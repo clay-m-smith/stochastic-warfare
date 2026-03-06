@@ -9,3 +9,4 @@ build/
 scripts/visualize/output/
 .claude/settings.local.json
 data/terrain_cache/
+site/

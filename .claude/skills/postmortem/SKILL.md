@@ -54,6 +54,15 @@ Verify the lockstep docs are accurate (not just updated — *accurate*):
 - Does MEMORY.md reflect key learnings (not just copy-paste from devlog)?
 - Does README.md test count match `pytest --co -q | tail -1`?
 - Are all new skills in both CLAUDE.md skill table AND skills-and-hooks.md?
+- **User-facing docs staleness check** (if the phase changed any of the following):
+  - New modules/engines → is `docs/concepts/architecture.md` updated?
+  - Changed class signatures → is `docs/reference/api.md` still accurate?
+  - New scenarios → are `docs/guide/scenarios.md` and `docs/reference/eras.md` updated?
+  - New units/weapons/doctrines → is `docs/reference/units.md` updated?
+  - New era mechanics → is `docs/reference/eras.md` updated?
+  - New math models → is `docs/concepts/models.md` updated?
+  - Test count changed → is `docs/index.md` updated?
+  - New devlog file → is `mkdocs.yml` nav updated?
 
 ### 7. Performance Sanity
 Quick check that the phase didn't introduce performance issues:
