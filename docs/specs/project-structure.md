@@ -1,5 +1,5 @@
 # Project Structure & Module Decomposition
-**Status**: Complete (Phase 33)
+**Status**: Complete (Phase 36)
 **Last Updated**: 2026-03-06
 
 ---
@@ -36,34 +36,60 @@ stochastic-warfare/
 │       ├── main.tsx                     # Entry: QueryClientProvider + RouterProvider
 │       ├── App.tsx                      # Router + Layout
 │       ├── types/api.ts                 # TypeScript interfaces (mirrors api/schemas.py)
+│       ├── types/
+│       │   ├── api.ts                  # TypeScript interfaces (mirrors api/schemas.py)
+│       │   ├── map.ts                  # Map/replay types [Phase 35]
+│       │   └── editor.ts              # Editor state/action types [Phase 36]
 │       ├── api/                         # Typed fetch wrappers
 │       │   ├── client.ts               # apiGet, apiPost, apiDelete, ApiError
 │       │   ├── scenarios.ts            # fetchScenarios, fetchScenario
 │       │   ├── units.ts                # fetchUnits, fetchUnit
 │       │   ├── runs.ts                 # submitRun, fetchRuns
-│       │   └── meta.ts                 # fetchHealth, fetchEras
+│       │   ├── meta.ts                 # fetchHealth, fetchEras
+│       │   ├── batch.ts               # submitBatch, fetchBatch [Phase 34]
+│       │   ├── analysis.ts            # submitCompare, submitSweep [Phase 34]
+│       │   ├── map.ts                  # fetchRunTerrain, fetchRunFrames [Phase 35]
+│       │   └── editor.ts              # submitRunFromConfig, validateConfig [Phase 36]
 │       ├── hooks/                       # TanStack Query hooks
 │       │   ├── useScenarios.ts         # useScenarios, useScenario
 │       │   ├── useUnits.ts             # useUnits, useUnit
-│       │   ├── useRuns.ts              # useRuns, useSubmitRun
-│       │   └── useMeta.ts             # useHealth, useEras
+│       │   ├── useRuns.ts              # useRuns, useSubmitRun, useRunEvents
+│       │   ├── useMeta.ts             # useHealth, useEras
+│       │   ├── useWebSocket.ts        # useRunProgress (WS + reconnect), useBatchProgress [Phase 34/36]
+│       │   ├── useMap.ts              # useRunTerrain, useRunFrames [Phase 35]
+│       │   ├── usePlayback.ts         # Playback state machine (rAF loop) [Phase 35]
+│       │   ├── useScenarioEditor.ts   # useReducer-based editor state [Phase 36]
+│       │   ├── useExport.ts           # downloadJSON/CSV/YAML, printReport [Phase 36]
+│       │   └── useKeyboardShortcuts.ts # Global keyboard shortcut hook [Phase 36]
 │       ├── components/                  # Shared UI components
-│       │   ├── Layout.tsx              # App shell: sidebar + <Outlet />
-│       │   ├── Sidebar.tsx             # Nav links + health indicator
+│       │   ├── Layout.tsx              # App shell: responsive sidebar + <Outlet />
+│       │   ├── Sidebar.tsx             # Nav links + health (desktop/mobile responsive)
 │       │   ├── Badge.tsx               # Colored pill component
 │       │   ├── Card.tsx                # Container with hover ring
 │       │   ├── SearchInput.tsx         # Debounced search input
 │       │   ├── Select.tsx              # Styled dropdown
+│       │   ├── TabBar.tsx             # Tab navigation [Phase 34]
+│       │   ├── ProgressBar.tsx        # Progress bar [Phase 34]
 │       │   ├── LoadingSpinner.tsx      # Centered spinner
-│       │   ├── ErrorMessage.tsx        # Error alert + retry
+│       │   ├── ErrorMessage.tsx        # Error alert + retry + variants [Phase 36]
 │       │   ├── EmptyState.tsx          # Zero-results message
-│       │   └── PageHeader.tsx          # h1 + optional actions
+│       │   ├── PageHeader.tsx          # h1 + optional actions
+│       │   ├── ExportMenu.tsx         # Dropdown export menu [Phase 36]
+│       │   ├── KeyboardShortcutHelp.tsx # Shortcut help modal [Phase 36]
+│       │   ├── PlotlyChart.tsx        # Lazy Plotly wrapper [Phase 34]
+│       │   └── map/                    # Tactical map components [Phase 35]
+│       │       ├── TacticalMap.tsx     # Main canvas renderer + keyboard shortcuts
+│       │       ├── PlaybackControls.tsx
+│       │       ├── MapControls.tsx
+│       │       ├── MapLegend.tsx
+│       │       ├── UnitDetailSidebar.tsx
+│       │       └── useViewportControls.ts
 │       ├── pages/
 │       │   ├── scenarios/              # Scenario browser
 │       │   │   ├── ScenarioListPage.tsx
 │       │   │   ├── ScenarioCard.tsx
 │       │   │   ├── ScenarioFilters.tsx
-│       │   │   ├── ScenarioDetailPage.tsx
+│       │   │   ├── ScenarioDetailPage.tsx  # + Clone&Tweak + Download YAML [Phase 36]
 │       │   │   ├── ForceTable.tsx
 │       │   │   └── ConfigBadges.tsx
 │       │   ├── units/                  # Unit catalog
@@ -71,16 +97,41 @@ stochastic-warfare/
 │       │   │   ├── UnitCard.tsx
 │       │   │   ├── UnitFilters.tsx
 │       │   │   └── UnitDetailModal.tsx
-│       │   ├── runs/                   # Run config + list
+│       │   ├── runs/                   # Run management
 │       │   │   ├── RunConfigPage.tsx
-│       │   │   └── RunListPage.tsx
-│       │   └── analysis/
-│       │       └── AnalysisPage.tsx    # Stub (Phase 34)
+│       │   │   ├── RunListPage.tsx
+│       │   │   ├── RunDetailPage.tsx   # + ExportMenu [Phase 36]
+│       │   │   ├── RunProgressPanel.tsx # + WS reconnect display [Phase 36]
+│       │   │   ├── PrintReportPage.tsx # Print-optimized report [Phase 36]
+│       │   │   └── tabs/              # Run detail tabs [Phase 34/35]
+│       │   ├── editor/                 # Scenario editor [Phase 36]
+│       │   │   ├── ScenarioEditorPage.tsx
+│       │   │   ├── GeneralSection.tsx
+│       │   │   ├── TerrainSection.tsx
+│       │   │   ├── WeatherSection.tsx
+│       │   │   ├── ForceEditor.tsx
+│       │   │   ├── UnitPicker.tsx
+│       │   │   ├── ConfigToggles.tsx
+│       │   │   ├── CalibrationSliders.tsx
+│       │   │   ├── YamlPreview.tsx
+│       │   │   └── TerrainPreview.tsx
+│       │   ├── map/                    # Fullscreen map [Phase 35]
+│       │   │   └── FullscreenMapPage.tsx
+│       │   └── analysis/              # Analysis tools [Phase 34]
+│       │       ├── AnalysisPage.tsx
+│       │       ├── BatchPanel.tsx
+│       │       ├── ComparePanel.tsx
+│       │       └── SweepPanel.tsx
 │       ├── lib/                         # Utility functions
-│       │   ├── format.ts               # formatDuration, formatDate
+│       │   ├── format.ts               # formatDuration, formatDate, eventsToCsvRows
 │       │   ├── era.ts                  # eraDisplayName, eraBadgeColor
-│       │   └── domain.ts              # domainDisplayName, domainBadgeColor
-│       └── __tests__/                   # Vitest tests (58 total)
+│       │   ├── domain.ts              # domainDisplayName, domainBadgeColor
+│       │   ├── terrain.ts             # worldToScreen, LAND_COVER_COLORS [Phase 35]
+│       │   ├── terrainTypeColors.ts   # terrain_type string → color [Phase 36]
+│       │   ├── yamlExport.ts          # configToYaml (js-yaml wrapper) [Phase 36]
+│       │   ├── unitRendering.ts       # drawUnit, hitTestUnit [Phase 35]
+│       │   └── engagementProcessing.ts # buildEngagementArcs [Phase 35]
+│       └── __tests__/                   # Vitest tests (231 total)
 ├── .claude/
 │   ├── settings.json                 # Project hooks
 │   └── skills/                       # Claude skills (17 total)

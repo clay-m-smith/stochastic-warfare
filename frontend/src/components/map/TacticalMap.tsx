@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { MapUnitFrame, ReplayFrame, TerrainData, EngagementArc } from '../../types/map'
 import { useViewportControls } from './useViewportControls'
 import { LAND_COVER_COLORS, worldToScreen, screenToWorld, getVisibleCellRange } from '../../lib/terrain'
@@ -8,6 +8,7 @@ import { MapLegend } from './MapLegend'
 import { PlaybackControls } from './PlaybackControls'
 import { UnitDetailSidebar } from './UnitDetailSidebar'
 import { usePlayback } from '../../hooks/usePlayback'
+import { useKeyboardShortcuts, type ShortcutConfig } from '../../hooks/useKeyboardShortcuts'
 
 interface TacticalMapProps {
   terrain: TerrainData
@@ -53,6 +54,21 @@ export function TacticalMap({ terrain, frames, engagementArcs = [], onTickChange
   } = usePlayback(frames.length)
 
   const currentFrameData = frames[currentFrame] ?? null
+
+  // Keyboard shortcuts for playback
+  const mapShortcuts: ShortcutConfig[] = useMemo(
+    () => [
+      { key: ' ', action: () => (isPlaying ? pause() : play()), description: 'Play / Pause' },
+      { key: 'ArrowRight', action: stepForward, description: 'Step Forward' },
+      { key: 'ArrowLeft', action: stepBackward, description: 'Step Backward' },
+      { key: '1', action: () => setSpeed(1), description: 'Speed 1x' },
+      { key: '2', action: () => setSpeed(2), description: 'Speed 2x' },
+      { key: '3', action: () => setSpeed(5), description: 'Speed 5x' },
+      { key: '4', action: () => setSpeed(10), description: 'Speed 10x' },
+    ],
+    [isPlaying, pause, play, stepForward, stepBackward, setSpeed],
+  )
+  useKeyboardShortcuts(mapShortcuts)
 
   // Notify parent of tick changes
   useEffect(() => {

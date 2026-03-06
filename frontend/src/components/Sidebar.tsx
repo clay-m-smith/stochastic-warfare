@@ -8,11 +8,16 @@ const NAV_ITEMS = [
   { to: '/analysis', label: 'Analysis' },
 ]
 
-export function Sidebar() {
+interface SidebarProps {
+  open: boolean
+  onClose: () => void
+}
+
+export function Sidebar({ open, onClose }: SidebarProps) {
   const { data: health } = useHealth()
 
-  return (
-    <aside className="fixed left-0 top-0 flex h-full w-64 flex-col border-r border-gray-200 bg-white">
+  const sidebar = (
+    <aside className="flex h-full w-64 flex-col border-r border-gray-200 bg-white">
       <div className="border-b border-gray-200 px-6 py-4">
         <h2 className="text-lg font-bold text-gray-900">Stochastic Warfare</h2>
         <p className="text-xs text-gray-500">Wargame Simulator</p>
@@ -23,6 +28,7 @@ export function Sidebar() {
           <NavLink
             key={item.to}
             to={item.to}
+            onClick={onClose}
             className={({ isActive }) =>
               `block rounded-md px-3 py-2 text-sm font-medium transition-colors ${
                 isActive
@@ -50,5 +56,24 @@ export function Sidebar() {
         )}
       </div>
     </aside>
+  )
+
+  return (
+    <>
+      {/* Desktop sidebar: always visible */}
+      <div className="fixed left-0 top-0 hidden h-full md:block">
+        {sidebar}
+      </div>
+
+      {/* Mobile sidebar: overlay */}
+      {open && (
+        <div className="fixed inset-0 z-30 md:hidden">
+          <div className="fixed inset-0 bg-black/30" onClick={onClose} />
+          <div className="fixed left-0 top-0 h-full z-40">
+            {sidebar}
+          </div>
+        </div>
+      )}
+    </>
   )
 }

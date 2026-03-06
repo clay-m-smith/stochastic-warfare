@@ -32,3 +32,11 @@ export function formatSeconds(s: number): string {
 export function formatPercent(n: number): string {
   return `${(n * 100).toFixed(1)}%`
 }
+
+export function eventsToCsvRows(
+  events: { tick: number; event_type: string; source: string; data: Record<string, unknown> }[],
+): { headers: string[]; rows: unknown[][] } {
+  const headers = ['tick', 'event_type', 'source', 'data']
+  const rows = events.map((e) => [e.tick, e.event_type, e.source, JSON.stringify(e.data)])
+  return { headers, rows }
+}

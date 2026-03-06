@@ -1,11 +1,13 @@
 import { useParams, useSearchParams } from 'react-router-dom'
 import { Badge } from '../../components/Badge'
 import { ErrorMessage } from '../../components/ErrorMessage'
+import { ExportMenu } from '../../components/ExportMenu'
 import { LoadingSpinner } from '../../components/LoadingSpinner'
 import { PageHeader } from '../../components/PageHeader'
 import { TabBar } from '../../components/TabBar'
-import { useRun } from '../../hooks/useRuns'
-import { formatDate } from '../../lib/format'
+import { useRun, useRunEvents, useRunNarrative } from '../../hooks/useRuns'
+import { useExport } from '../../hooks/useExport'
+import { formatDate, eventsToCsvRows } from '../../lib/format'
 import type { RunResult, RunStatus } from '../../types/api'
 import { RunDeleteButton } from './RunDeleteButton'
 import { RunProgressPanel } from './RunProgressPanel'
@@ -36,6 +38,9 @@ export function RunDetailPage() {
   const [searchParams, setSearchParams] = useSearchParams()
   const activeTab = searchParams.get('tab') ?? 'results'
   const { data: run, isLoading, error, refetch } = useRun(runId ?? '')
+  const { data: allEvents } = useRunEvents(runId ?? '', { limit: 10000 })
+  const { data: narrativeData } = useRunNarrative(runId ?? '')
+  const { downloadJSON, downloadCSV, printReport } = useExport()
 
   if (!runId) return <ErrorMessage message="No run ID specified" />
   if (isLoading) return <LoadingSpinner />
@@ -45,10 +50,42 @@ export function RunDetailPage() {
   const isActive = run.status === 'pending' || run.status === 'running'
   const isCompleted = run.status === 'completed'
 
+  const exportItems = [
+    {
+      label: 'Export JSON',
+      onClick: () => run.result && downloadJSON(run.result, `${run.scenario_name}_result.json`),
+    },
+    {
+      label: 'Export Events CSV',
+      onClick: () => {
+        if (allEvents?.events) {
+          const { headers, rows } = eventsToCsvRows(allEvents.events)
+          downloadCSV(headers, rows, `${run.scenario_name}_events.csv`)
+        }
+      },
+    },
+    {
+      label: 'Download Narrative',
+      onClick: () => {
+        if (narrativeData?.narrative) {
+          const blob = new Blob([narrativeData.narrative], { type: 'text/plain' })
+          const url = URL.createObjectURL(blob)
+          const a = document.createElement('a')
+          a.href = url
+          a.download = `${run.scenario_name}_narrative.txt`
+          a.click()
+          URL.revokeObjectURL(url)
+        }
+      },
+    },
+    { label: 'Print Report', onClick: () => printReport(runId) },
+  ]
+
   return (
     <div>
       <PageHeader title={run.scenario_name}>
         <Badge className={STATUS_COLORS[run.status]}>{run.status}</Badge>
+        {isCompleted && <ExportMenu items={exportItems} />}
         <RunDeleteButton runId={runId} />
       </PageHeader>
 

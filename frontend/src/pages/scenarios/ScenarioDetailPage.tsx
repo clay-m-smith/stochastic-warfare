@@ -4,6 +4,7 @@ import { ErrorMessage } from '../../components/ErrorMessage'
 import { LoadingSpinner } from '../../components/LoadingSpinner'
 import { PageHeader } from '../../components/PageHeader'
 import { useScenario } from '../../hooks/useScenarios'
+import { useExport } from '../../hooks/useExport'
 import { eraBadgeColor, eraDisplayName } from '../../lib/era'
 import { formatDuration } from '../../lib/format'
 import type { ForceSummaryEntry } from '../../types/api'
@@ -14,6 +15,7 @@ export function ScenarioDetailPage() {
   const { name } = useParams<{ name: string }>()
   const navigate = useNavigate()
   const { data: scenario, isLoading, error, refetch } = useScenario(name ?? '')
+  const { downloadYAML } = useExport()
 
   if (isLoading) return <LoadingSpinner />
   if (error) return <ErrorMessage message={error.message} onRetry={() => refetch()} />
@@ -32,6 +34,18 @@ export function ScenarioDetailPage() {
   return (
     <div>
       <PageHeader title={displayName}>
+        <button
+          onClick={() => downloadYAML(scenario.config as Record<string, unknown>, `${scenario.name}.yaml`)}
+          className="rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+        >
+          Download YAML
+        </button>
+        <button
+          onClick={() => navigate(`/scenarios/${encodeURIComponent(scenario.name)}/edit`)}
+          className="rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+        >
+          Clone &amp; Tweak
+        </button>
         <button
           onClick={() => navigate(`/runs/new?scenario=${encodeURIComponent(scenario.name)}`)}
           className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"

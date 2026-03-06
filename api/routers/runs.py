@@ -26,6 +26,7 @@ from api.schemas import (
     ObjectiveInfo,
     ReplayFrame,
     RunDetail,
+    RunFromConfigRequest,
     RunStatus,
     RunSubmitRequest,
     RunSubmitResponse,
@@ -54,6 +55,36 @@ async def submit_run(
 
     run_id = await mgr.submit(
         req.scenario, str(path), req.seed, req.max_ticks, req.config_overrides,
+    )
+    return RunSubmitResponse(run_id=run_id, status=RunStatus.PENDING)
+
+
+@router.post("/from-config", response_model=RunSubmitResponse, status_code=202)
+async def submit_run_from_config(
+    req: RunFromConfigRequest,
+    mgr: RunManager = Depends(get_run_manager),
+) -> RunSubmitResponse:
+    """Start a run from an inline config dict (no saved scenario file required)."""
+    import tempfile
+    import yaml
+    from pydantic import ValidationError
+    from stochastic_warfare.simulation.scenario import CampaignScenarioConfig
+
+    # Validate first
+    try:
+        CampaignScenarioConfig(**req.config)
+    except (ValidationError, Exception) as exc:
+        raise HTTPException(status_code=422, detail=str(exc))
+
+    # Write config to temp YAML
+    tmp_dir = tempfile.mkdtemp(prefix="sw_custom_")
+    tmp_path = Path(tmp_dir) / "custom_scenario.yaml"
+    with open(tmp_path, "w") as f:
+        yaml.dump(req.config, f, default_flow_style=False)
+
+    scenario_name = req.config.get("name", "[custom]")
+    run_id = await mgr.submit(
+        str(scenario_name), str(tmp_path), req.seed, req.max_ticks,
     )
     return RunSubmitResponse(run_id=run_id, status=RunStatus.PENDING)
 

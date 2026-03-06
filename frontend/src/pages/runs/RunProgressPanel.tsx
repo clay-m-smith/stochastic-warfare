@@ -8,9 +8,16 @@ interface RunProgressPanelProps {
   runId: string
 }
 
+const CONNECTION_LABELS: Record<string, { text: string; dotClass: string; textClass: string }> = {
+  connected: { text: 'Connected', dotClass: 'bg-green-500', textClass: 'text-green-600' },
+  connecting: { text: 'Connecting...', dotClass: 'bg-yellow-400', textClass: 'text-yellow-600' },
+  disconnected: { text: 'Reconnecting...', dotClass: 'bg-yellow-400', textClass: 'text-yellow-600' },
+  failed: { text: 'Connection failed', dotClass: 'bg-red-500', textClass: 'text-red-600' },
+}
+
 export function RunProgressPanel({ runId }: RunProgressPanelProps) {
   const queryClient = useQueryClient()
-  const { latestMessage, isConnected } = useRunProgress(runId)
+  const { latestMessage, connectionState } = useRunProgress(runId)
 
   useEffect(() => {
     if (latestMessage?.type === 'complete') {
@@ -18,26 +25,28 @@ export function RunProgressPanel({ runId }: RunProgressPanelProps) {
     }
   }, [latestMessage?.type, runId, queryClient])
 
+  // Poll fallback when WS fails
+  useEffect(() => {
+    if (connectionState !== 'failed') return
+    const interval = setInterval(() => {
+      void queryClient.invalidateQueries({ queryKey: ['runs', runId] })
+    }, 5000)
+    return () => clearInterval(interval)
+  }, [connectionState, runId, queryClient])
+
   const tick = latestMessage?.tick ?? 0
   const maxTicks = latestMessage?.max_ticks ?? 0
   const elapsed = latestMessage?.elapsed_s ?? 0
   const activeUnits = latestMessage?.active_units
+  const connInfo = CONNECTION_LABELS[connectionState] ?? CONNECTION_LABELS.connected!
 
   return (
     <div className="space-y-4 rounded-lg bg-white p-6 shadow">
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-semibold text-gray-900">Live Progress</h2>
-        <span
-          className={`inline-flex items-center gap-1 text-xs ${
-            isConnected ? 'text-green-600' : 'text-gray-400'
-          }`}
-        >
-          <span
-            className={`inline-block h-2 w-2 rounded-full ${
-              isConnected ? 'bg-green-500' : 'bg-gray-300'
-            }`}
-          />
-          {isConnected ? 'Connected' : 'Disconnected'}
+        <span className={`inline-flex items-center gap-1 text-xs ${connInfo!.textClass}`}>
+          <span className={`inline-block h-2 w-2 rounded-full ${connInfo!.dotClass}`} />
+          {connInfo!.text}
         </span>
       </div>
 

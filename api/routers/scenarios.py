@@ -10,7 +10,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from api.config import ApiSettings
 from api.dependencies import get_settings
 from api.scenarios import resolve_scenario, scan_scenarios
-from api.schemas import ScenarioDetail, ScenarioSummary
+from api.schemas import ScenarioDetail, ScenarioSummary, ValidateConfigRequest, ValidateConfigResponse
 
 router = APIRouter(prefix="/scenarios", tags=["scenarios"])
 
@@ -93,3 +93,19 @@ async def get_scenario(name: str, settings: ApiSettings = Depends(get_settings))
         config=serialize_to_dict(config_dict),
         force_summary=force_summary,
     )
+
+
+@router.post("/validate", response_model=ValidateConfigResponse)
+async def validate_config(req: ValidateConfigRequest) -> ValidateConfigResponse:
+    """Validate a scenario config dict against the campaign schema."""
+    from pydantic import ValidationError
+    from stochastic_warfare.simulation.scenario import CampaignScenarioConfig
+
+    try:
+        CampaignScenarioConfig(**req.config)
+        return ValidateConfigResponse(valid=True)
+    except ValidationError as exc:
+        errors = [f"{e['loc']}: {e['msg']}" for e in exc.errors()]
+        return ValidateConfigResponse(valid=False, errors=errors)
+    except Exception as exc:
+        return ValidateConfigResponse(valid=False, errors=[str(exc)])

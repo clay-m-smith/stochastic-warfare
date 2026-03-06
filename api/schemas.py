@@ -293,3 +293,29 @@ class EraInfo(BaseModel):
     name: str
     value: str
     disabled_modules: list[str] = Field(default_factory=list)
+
+
+# ---------------------------------------------------------------------------
+# Scenario Editor (Phase 36)
+# ---------------------------------------------------------------------------
+
+
+class RunFromConfigRequest(BaseModel):
+    """Request to start a run from an inline config dict."""
+
+    config: dict[str, Any]
+    seed: int = 42
+    max_ticks: int = 10_000
+
+
+class ValidateConfigRequest(BaseModel):
+    """Request to validate a scenario config."""
+
+    config: dict[str, Any]
+
+
+class ValidateConfigResponse(BaseModel):
+    """Response from config validation."""
+
+    valid: bool = True
+    errors: list[str] = Field(default_factory=list)
