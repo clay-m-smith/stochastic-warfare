@@ -1,6 +1,6 @@
 # Project Structure & Module Decomposition
-**Status**: Complete (Phase 32)
-**Last Updated**: 2026-03-05
+**Status**: Complete (Phase 33)
+**Last Updated**: 2026-03-06
 
 ---
 
@@ -26,6 +26,61 @@ stochastic-warfare/
 │       ├── units.py                  # Unit listing/detail
 │       ├── runs.py                   # Run lifecycle, events, narrative, WebSocket, batch
 │       └── analysis.py              # Compare, sweep, tempo
+├── frontend/                            # React frontend [Phase 33]
+│   ├── package.json                     # npm dependencies, scripts
+│   ├── vite.config.ts                   # Vite build config + /api proxy
+│   ├── tsconfig.json                    # TypeScript strict mode
+│   ├── tailwind.config.js              # Tailwind CSS + era/side colors
+│   ├── index.html                       # Vite entry HTML
+│   └── src/
+│       ├── main.tsx                     # Entry: QueryClientProvider + RouterProvider
+│       ├── App.tsx                      # Router + Layout
+│       ├── types/api.ts                 # TypeScript interfaces (mirrors api/schemas.py)
+│       ├── api/                         # Typed fetch wrappers
+│       │   ├── client.ts               # apiGet, apiPost, apiDelete, ApiError
+│       │   ├── scenarios.ts            # fetchScenarios, fetchScenario
+│       │   ├── units.ts                # fetchUnits, fetchUnit
+│       │   ├── runs.ts                 # submitRun, fetchRuns
+│       │   └── meta.ts                 # fetchHealth, fetchEras
+│       ├── hooks/                       # TanStack Query hooks
+│       │   ├── useScenarios.ts         # useScenarios, useScenario
+│       │   ├── useUnits.ts             # useUnits, useUnit
+│       │   ├── useRuns.ts              # useRuns, useSubmitRun
+│       │   └── useMeta.ts             # useHealth, useEras
+│       ├── components/                  # Shared UI components
+│       │   ├── Layout.tsx              # App shell: sidebar + <Outlet />
+│       │   ├── Sidebar.tsx             # Nav links + health indicator
+│       │   ├── Badge.tsx               # Colored pill component
+│       │   ├── Card.tsx                # Container with hover ring
+│       │   ├── SearchInput.tsx         # Debounced search input
+│       │   ├── Select.tsx              # Styled dropdown
+│       │   ├── LoadingSpinner.tsx      # Centered spinner
+│       │   ├── ErrorMessage.tsx        # Error alert + retry
+│       │   ├── EmptyState.tsx          # Zero-results message
+│       │   └── PageHeader.tsx          # h1 + optional actions
+│       ├── pages/
+│       │   ├── scenarios/              # Scenario browser
+│       │   │   ├── ScenarioListPage.tsx
+│       │   │   ├── ScenarioCard.tsx
+│       │   │   ├── ScenarioFilters.tsx
+│       │   │   ├── ScenarioDetailPage.tsx
+│       │   │   ├── ForceTable.tsx
+│       │   │   └── ConfigBadges.tsx
+│       │   ├── units/                  # Unit catalog
+│       │   │   ├── UnitCatalogPage.tsx
+│       │   │   ├── UnitCard.tsx
+│       │   │   ├── UnitFilters.tsx
+│       │   │   └── UnitDetailModal.tsx
+│       │   ├── runs/                   # Run config + list
+│       │   │   ├── RunConfigPage.tsx
+│       │   │   └── RunListPage.tsx
+│       │   └── analysis/
+│       │       └── AnalysisPage.tsx    # Stub (Phase 34)
+│       ├── lib/                         # Utility functions
+│       │   ├── format.ts               # formatDuration, formatDate
+│       │   ├── era.ts                  # eraDisplayName, eraBadgeColor
+│       │   └── domain.ts              # domainDisplayName, domainBadgeColor
+│       └── __tests__/                   # Vitest tests (58 total)
 ├── .claude/
 │   ├── settings.json                 # Project hooks
 │   └── skills/                       # Claude skills (17 total)

@@ -1,8 +1,8 @@
 # Stochastic Warfare
 
 ![Python](https://img.shields.io/badge/python-%3E%3D3.12-blue)
-![Tests](https://img.shields.io/badge/tests-7%2C384_passing-brightgreen)
-![Phase](https://img.shields.io/badge/phase-32_Block--3_IN--PROGRESS-blue)
+![Tests](https://img.shields.io/badge/tests-7%2C442_passing-brightgreen)
+![Phase](https://img.shields.io/badge/phase-33_Block--3_IN--PROGRESS-blue)
 
 High-fidelity, high-resolution wargame simulator built as a headless Python engine. Models warfare across multiple scales — from individual unit engagements up through tactical battles, operational battlefields, and multi-day strategic campaigns — with stochastic and signal-processing-inspired models throughout.
 
@@ -90,6 +90,15 @@ For full architectural rationale, see [`docs/brainstorm.md`](docs/brainstorm.md)
 api/                      # REST API service layer (13 source files) [Phase 32]
   routers/                # FastAPI route handlers (scenarios, units, runs, analysis, meta)
 
+frontend/                 # React frontend (Vite + TypeScript + Tailwind) [Phase 33]
+  src/
+    api/                  # Typed API client
+    components/           # Shared components (Layout, Badge, Card, etc.)
+    hooks/                # TanStack Query hooks
+    pages/                # Scenario browser, unit catalog, runs, analysis
+    lib/                  # Utility functions (format, era, domain)
+    types/                # TypeScript interfaces mirroring api/schemas.py
+
 stochastic_warfare/       # simulation engine (19 modules, ~226 source files)
   core/                   # types, logging, RNG, clock, events, config, checkpoint
   coordinates/            # geodetic/UTM/ENU transforms, magnetic declination
@@ -133,7 +142,7 @@ data/                     # ~700 YAML data files
   eras/                    # Era-specific data packages (WW2, WW1, Napoleonic, Ancient/Medieval)
   scenarios/              # 27 modern scenarios (engagement, campaign, EW, space, CBRN, escalation, joint) + 5 test
 
-tests/                    # 7,384 tests across ~210 test files
+tests/                    # 7,384 engine+API tests across ~210 test files
 docs/                     # specs, brainstorm, devlog, development phases
 ```
 
@@ -141,7 +150,7 @@ For the full package tree and module decomposition, see [`docs/specs/project-str
 
 ## Development Status
 
-All 11 MVP phases (0–10) are complete. Post-MVP Phases 11–24 are complete (deep systems rework + performance optimization + developer tooling + real-world terrain + electronic warfare + space & satellite domain + CBRN effects + doctrinal AI schools + WW2 era + WW1 era + Napoleonic era + Ancient & Medieval era + unconventional & prohibited warfare). Block 2 Phases 25–30 complete (Engine Wiring & Integration Sprint + Core Polish & Configuration + Combat System Completeness + Modern Era Data Package + Directed Energy Weapons + Historical Era Data Expansion + Scenario & Campaign Library). Block 3 in progress (Phase 32: API & Service Foundation).
+All 11 MVP phases (0–10) are complete. Post-MVP Phases 11–24 are complete (deep systems rework + performance optimization + developer tooling + real-world terrain + electronic warfare + space & satellite domain + CBRN effects + doctrinal AI schools + WW2 era + WW1 era + Napoleonic era + Ancient & Medieval era + unconventional & prohibited warfare). Block 2 Phases 25–30 complete (Engine Wiring & Integration Sprint + Core Polish & Configuration + Combat System Completeness + Modern Era Data Package + Directed Energy Weapons + Historical Era Data Expansion + Scenario & Campaign Library). Block 3 in progress (Phase 33: Frontend Foundation & Scenario Browser).
 
 | Phase | Focus | Tests | Status |
 |-------|-------|-------|--------|
@@ -179,7 +188,8 @@ All 11 MVP phases (0–10) are complete. Post-MVP Phases 11–24 are complete (d
 | 30 | Scenario & Campaign Library (Block 2) | 196 | Complete |
 | 31 | Documentation Site (Block 3) | 0 | Complete |
 | 32 | API & Service Foundation (Block 3) | 77 | Complete |
-| | **Total** | **7,384** | |
+| 33 | Frontend Foundation & Scenario Browser (Block 3) | 58 | Complete |
+| | **Total** | **7,442** | |
 
 For the full phase roadmap, see [`docs/development-phases.md`](docs/development-phases.md) (MVP) and [`docs/development-phases-post-mvp.md`](docs/development-phases-post-mvp.md) (post-MVP). For per-phase implementation logs, see [`docs/devlog/`](docs/devlog/).
 
@@ -208,6 +218,26 @@ uv run uvicorn api.main:app      # start the API server
 ```
 
 Key endpoints: `GET /api/scenarios`, `GET /api/units`, `POST /api/runs` (submit simulation), `GET /api/runs/{id}` (poll results), `WS /api/runs/{id}/progress` (live progress), `POST /api/runs/batch` (Monte Carlo), `POST /api/analysis/compare` (A/B comparison).
+
+## Frontend Development
+
+The React frontend lives in `frontend/` and connects to the API via Vite's dev proxy.
+
+```bash
+# Terminal 1: API server
+uv sync --extra api
+uv run uvicorn api.main:app --reload
+
+# Terminal 2: Frontend dev server
+cd frontend && npm install && npm run dev
+# Open http://localhost:5173
+```
+
+Frontend commands:
+- `npm run dev` — Vite dev server at localhost:5173
+- `npm run build` — Production build (TypeScript + Vite)
+- `npm test` — Run vitest tests (58 tests, no API server required)
+- `npm run lint` — ESLint
 
 ## Documentation
 

@@ -10,3 +10,6 @@ scripts/visualize/output/
 .claude/settings.local.json
 data/terrain_cache/
 site/
+node_modules/
+frontend/dist/
+frontend/.env.local

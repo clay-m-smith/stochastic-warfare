@@ -43,6 +43,7 @@ Rolling record of implementation decisions, changes, and lessons learned across 
 | | | | |
 | 31 | Documentation Site (GitHub Pages) | **Complete** | [phase-31.md](phase-31.md) |
 | 32 | API & Service Foundation | **Complete** | [phase-32.md](phase-32.md) |
+| 33 | Frontend Foundation & Scenario Browser | **Complete** | [phase-33.md](phase-33.md) |
 
 ## Post-MVP Refinement Index
 

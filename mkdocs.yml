@@ -106,6 +106,7 @@ nav:
     - Phase 30 - Scenario Library: devlog/phase-30.md
     - Phase 31 - Documentation Site: devlog/phase-31.md
     - Phase 32 - API & Service Foundation: devlog/phase-32.md
+    - Phase 33 - Frontend Foundation: devlog/phase-33.md
   - Specifications:
     - Project Structure: specs/project-structure.md
     - Skills & Hooks: skills-and-hooks.md

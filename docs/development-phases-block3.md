@@ -169,11 +169,13 @@ api = ["fastapi>=0.115", "uvicorn[standard]>=0.34", "aiosqlite>=0.20"]
 
 ---
 
-## Phase 33: Frontend Foundation & Scenario Browser
+## Phase 33: Frontend Foundation & Scenario Browser — COMPLETE
 
 **Goal**: Stand up the React frontend application with routing, layout, and the first functional page: a scenario browser that lets users explore and select scenarios.
 
 **Dependencies**: Phase 32 (API must serve scenario and unit data).
+
+**Delivered**: `frontend/` directory (~50 new files) — Vite + React 18 + TypeScript 5.7, Tailwind v3, TanStack Query v5, React Router v6, Headless UI v2. Scenario browser (list + detail), unit catalog with detail modal, run config + run list pages, 10 shared components. 58 vitest tests. Zero engine/API changes.
 
 ### 33a: Frontend Scaffolding
 
@@ -456,8 +458,8 @@ tests/api/                  # NEW — API integration tests
 | Phase | Focus | Key Deliverables |
 |-------|-------|-----------------|
 | 31 | Documentation Site | MkDocs + Material theme, GitHub Actions deployment, 8 user-facing docs, docs site live at GitHub Pages. **COMPLETE** |
-| 32 | API & Service Foundation | FastAPI app, async runs, SQLite persistence, WebSocket progress, batch/MC/analysis endpoints, OpenAPI docs |
-| 33 | Frontend Foundation & Scenario Browser | React app, scenario list/detail, unit catalog, run configuration page |
+| 32 | API & Service Foundation | FastAPI app, async runs, SQLite persistence, WebSocket progress, batch/MC/analysis endpoints, OpenAPI docs. **COMPLETE** |
+| 33 | Frontend Foundation & Scenario Browser | React app, scenario list/detail, unit catalog, run configuration page. **COMPLETE** |
 | 34 | Run Results & Analysis Dashboard | Interactive charts (Plotly), narrative view, MC results, A/B comparison, live run tracking |
 | 35 | Tactical Map & Spatial Visualization | Canvas terrain renderer, unit positions, engagement arcs, playback controls, chart sync |
 | 36 | Scenario Tweaker & Polish | Clone-and-tweak scenarios, terrain preview, PDF/CSV export, keyboard shortcuts, error handling |
