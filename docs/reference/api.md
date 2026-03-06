@@ -4,7 +4,7 @@ This page documents both the REST API for web-based access and the Python API fo
 
 ---
 
-## REST API (Phase 32)
+## REST API
 
 The project includes a FastAPI-based REST API for running simulations, browsing scenarios/units, and accessing results over HTTP.
 
@@ -27,9 +27,11 @@ OpenAPI docs are available at `/api/docs` (Swagger UI) and `/api/redoc`.
 | GET | `/api/meta/terrain-types` | Terrain type list |
 | GET | `/api/scenarios` | List all scenarios (base + era) |
 | GET | `/api/scenarios/{name}` | Full scenario config as JSON |
+| POST | `/api/scenarios/validate` | Validate a scenario config against pydantic schema |
 | GET | `/api/units?domain=&era=&category=` | List units with optional filters |
 | GET | `/api/units/{type}` | Full unit definition |
 | POST | `/api/runs` | Submit simulation run (202 Accepted) |
+| POST | `/api/runs/from-config` | Submit run from inline config dict (no saved scenario required) |
 | GET | `/api/runs?limit=&offset=&scenario=&status=` | List runs (paginated) |
 | GET | `/api/runs/{id}` | Run detail with result |
 | DELETE | `/api/runs/{id}` | Delete run record |

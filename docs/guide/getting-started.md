@@ -30,12 +30,13 @@ uv run python -c "import stochastic_warfare; print('OK')"
 | `perf` | `uv sync --extra perf` | Numba JIT acceleration for hot loops |
 | `terrain` | `uv sync --extra terrain` | Real-world terrain data (rasterio, xarray) |
 | `mcp` | `uv sync --extra mcp` | MCP server for Claude integration |
+| `api` | `uv sync --extra api` | REST API server (FastAPI, SQLite) |
 | `docs` | `uv sync --extra docs` | MkDocs documentation site |
 
 ## Running the Test Suite
 
 ```bash
-uv run python -m pytest --tb=short -q           # standard suite (~7,300 tests)
+uv run python -m pytest --tb=short -q           # standard suite (~7,500 tests)
 uv run python -m pytest -m slow --tb=short -q   # 1000-run Monte Carlo only
 ```
 
@@ -167,10 +168,36 @@ print(f"Mean exchange ratio: {mc_result.mean('exchange_ratio'):.1f}")
 print(f"95% CI: {mc_result.confidence_interval('exchange_ratio')}")
 ```
 
+## Using the Web UI
+
+If you prefer a graphical interface over Python scripting, the project includes a full web application for browsing scenarios, running simulations, viewing interactive results, and editing configurations.
+
+### Quick Start
+
+```bash
+# Terminal 1: API server
+uv sync --extra api
+uv run uvicorn api.main:app --reload
+
+# Terminal 2: Frontend dev server
+cd frontend && npm install && npm run dev
+```
+
+Open **http://localhost:5173** to access the web UI. From there you can:
+
+- **Browse scenarios** -- filter by era, search by name, view full configurations
+- **Run simulations** -- submit runs, watch live progress via WebSocket
+- **View results** -- interactive Plotly charts, battle narrative, tactical map with playback
+- **Clone & Tweak** -- modify any scenario's forces, terrain, weather, and calibration, then run your custom configuration
+- **Export** -- download results as JSON, CSV, YAML, or print a formatted report
+
+See the [Web UI Guide](web-ui.md) for a complete walkthrough.
+
 ## Next Steps
 
+- **[Web UI Guide](web-ui.md)** -- complete walkthrough of the web application
 - **[Scenario Library](scenarios.md)** -- browse all available scenarios and learn the YAML format
 - **[Architecture Overview](../concepts/architecture.md)** -- understand the module design and simulation loop
 - **[Mathematical Models](../concepts/models.md)** -- deep dive into the 10 stochastic models
-- **[API Reference](../reference/api.md)** -- complete class and method documentation
+- **[API Reference](../reference/api.md)** -- REST API and Python API documentation
 - **[Era Reference](../reference/eras.md)** -- explore all 5 historical eras

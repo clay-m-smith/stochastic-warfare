@@ -258,9 +258,24 @@ documented_outcomes:
 
 ## Creating Custom Scenarios
 
+### Using the Web UI (Clone & Tweak)
+
+The easiest way to create a custom scenario is through the web UI's scenario editor:
+
+1. Browse to any scenario's detail page
+2. Click **Clone & Tweak** to open the editor with a copy of that scenario
+3. Modify forces (add/remove units, adjust counts), terrain, weather, duration, and calibration
+4. Toggle optional subsystems (EW, CBRN, Escalation, Schools, Space, DEW)
+5. Use the live YAML preview to verify your changes
+6. Click **Validate** to check for errors, then **Run This Config** to execute
+
+The editor validates your configuration against the engine's pydantic schema and shows inline errors. You can also click **Download YAML** to save your custom scenario to disk.
+
+See the [Web UI Guide](web-ui.md#scenario-editor-clone-tweak) for a detailed walkthrough.
+
 ### Using the CLI Skill
 
-The `/scenario` CLI skill provides an interactive walkthrough for creating new scenarios. It handles YAML formatting and validation automatically.
+The `/scenario` CLI skill provides an interactive walkthrough for creating new scenarios from scratch. It handles YAML formatting and validation automatically.
 
 ### Manual YAML Editing
 

@@ -174,6 +174,44 @@ Every simulation run is fully reproducible given the same seed:
 - No `set()` or unordered dict drives simulation logic
 - All iteration over collections uses sorted or ordered containers
 
+## Web Application Layer
+
+The engine is wrapped by a web application stack that provides interactive access without writing Python code.
+
+### Architecture
+
+```
+Browser (React) -> Vite dev proxy -> FastAPI (api/) -> Simulation Engine (stochastic_warfare/)
+                                         |
+                                    SQLite (aiosqlite)
+```
+
+### API Layer (`api/`)
+
+A FastAPI service sits alongside the engine (not inside it). It provides:
+
+- **REST endpoints** for browsing scenarios, units, and run history
+- **WebSocket streaming** for live simulation progress
+- **Async run execution** via `asyncio.to_thread()` (CPU-bound simulation in thread pool)
+- **SQLite persistence** for run results across server restarts
+- **Batch execution** for Monte Carlo statistical analysis
+
+The API layer imports `stochastic_warfare` as a library. It never modifies engine code.
+
+### Frontend (`frontend/`)
+
+A React + TypeScript single-page application built with Vite:
+
+- **TanStack Query** for API data fetching and caching
+- **Plotly.js** for interactive charts (force strength, engagements, morale, tempo)
+- **Canvas 2D** for the tactical map (terrain rendering, unit positions, playback)
+- **React Router** for deep-linkable pages
+- **Headless UI** for accessible modals, dropdowns, and menus
+
+Key pages: Scenario Browser, Unit Catalog, Run Results (charts + narrative + map), Scenario Editor (clone-and-tweak), Analysis (Monte Carlo, A/B comparison, sensitivity sweep).
+
+See the [Web UI Guide](../guide/web-ui.md) for usage documentation.
+
 ## Checkpointing
 
 All stateful classes implement the checkpoint protocol:

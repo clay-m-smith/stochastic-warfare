@@ -52,6 +52,7 @@ nav:
   - Home: index.md
   - Guide:
     - Getting Started: guide/getting-started.md
+    - Web UI: guide/web-ui.md
     - Scenario Library: guide/scenarios.md
   - Concepts:
     - Architecture Overview: concepts/architecture.md
@@ -109,6 +110,7 @@ nav:
     - Phase 33 - Frontend Foundation: devlog/phase-33.md
     - Phase 34 - Run Results & Analysis: devlog/phase-34.md
     - Phase 35 - Tactical Map: devlog/phase-35.md
+    - Phase 36 - Scenario Tweaker & Polish: devlog/phase-36.md
   - Specifications:
     - Project Structure: specs/project-structure.md
     - Skills & Hooks: skills-and-hooks.md

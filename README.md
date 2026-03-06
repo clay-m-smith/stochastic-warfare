@@ -224,7 +224,7 @@ Key endpoints: `GET /api/scenarios`, `GET /api/units`, `POST /api/runs` (submit 
 
 ## Frontend Development
 
-The React frontend lives in `frontend/` and connects to the API via Vite's dev proxy.
+The React frontend lives in `frontend/` and connects to the API via Vite's dev proxy. See the [Web UI Guide](docs/guide/web-ui.md) for a full walkthrough of the web application.
 
 ```bash
 # Terminal 1: API server
@@ -239,12 +239,12 @@ cd frontend && npm install && npm run dev
 Frontend commands:
 - `npm run dev` — Vite dev server at localhost:5173
 - `npm run build` — Production build (TypeScript + Vite)
-- `npm test` — Run vitest tests (185 tests, no API server required)
+- `npm test` — Run vitest tests (231 tests, no API server required)
 - `npm run lint` — ESLint
 
 ## Documentation
 
-**Documentation site**: [clay-m-smith.github.io/stochastic-warfare](https://clay-m-smith.github.io/stochastic-warfare) -- full docs with getting started guide, scenario library, architecture overview, mathematical models, API reference, and era reference.
+**Documentation site**: [clay-m-smith.github.io/stochastic-warfare](https://clay-m-smith.github.io/stochastic-warfare) -- full docs with getting started guide, web UI guide, scenario library, architecture overview, mathematical models, API reference, and era reference.
 
 | Document | Purpose |
 |----------|---------|

@@ -3,8 +3,8 @@
 **High-fidelity stochastic wargame simulator** -- multi-scale, multi-domain, multi-era.
 
 ![Python](https://img.shields.io/badge/python-%3E%3D3.12-blue)
-![Tests](https://img.shields.io/badge/tests-7%2C646_passing-brightgreen)
-![Phase](https://img.shields.io/badge/phase-35_Block--3_IN--PROGRESS-blue)
+![Tests](https://img.shields.io/badge/tests-7%2C705_passing-brightgreen)
+![Phase](https://img.shields.io/badge/phase-36_Block--3_COMPLETE-brightgreen)
 
 ---
 
@@ -53,6 +53,7 @@ See the [Getting Started Guide](guide/getting-started.md) for a complete tutoria
 | Section | What You'll Find |
 |---------|-----------------|
 | [Getting Started](guide/getting-started.md) | Installation, first scenario run, understanding output |
+| [Web UI Guide](guide/web-ui.md) | Running the web application, browsing scenarios, viewing results, editing configs |
 | [Scenario Library](guide/scenarios.md) | Complete scenario catalog, YAML format reference |
 | [Architecture](concepts/architecture.md) | Module design, simulation loop, spatial model, engine wiring |
 | [Mathematical Models](concepts/models.md) | All 10 stochastic models with formulas and worked examples |
@@ -67,9 +68,9 @@ See the [Getting Started Guide](guide/getting-started.md) for a complete tutoria
 | MVP | 0--10 | Core engine (terrain through campaign validation) | **Complete** |
 | Post-MVP | 11--24 | Fidelity, EW, Space, CBRN, AI schools, 4 historical eras, unconventional warfare | **Complete** |
 | Block 2 | 25--30 | Integration, polish, data expansion, scenarios | **Complete** |
-| Block 3 | 31--36 | Documentation site, API, frontend, visualization | In Progress |
+| Block 3 | 31--36 | Documentation site, API, frontend, visualization | **Complete** |
 
-**7,646 tests** across ~210 test files. **~700 YAML data files** defining 125 units, 51 weapons, 63 ammunition types, sensors, signatures, 21 doctrines, 13 commanders, and 41 scenarios.
+**~7,705 tests** across ~220 test files. **~700 YAML data files** defining 125 units, 51 weapons, 63 ammunition types, sensors, signatures, 21 doctrines, 13 commanders, and 41 scenarios.
 
 ## License
 
