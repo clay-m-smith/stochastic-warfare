@@ -1,0 +1,143 @@
+name: "Battle of Jutland (May 31, 1916)"
+date: "1916-05-31T14:00:00Z"
+duration_hours: 12.0
+latitude: 57.0
+longitude: 6.0
+era: ww1
+
+tick_resolution:
+  strategic_s: 3600
+  operational_s: 300
+  tactical_s: 5
+
+weather_conditions:
+  visibility_m: 8000
+  wind_speed_mps: 6.0
+  wind_direction_deg: 315
+  temperature_c: 12.0
+  precipitation: none
+  cloud_cover: 0.5
+  humidity: 0.75
+  sea_state: 3
+
+terrain:
+  width_m: 100000
+  height_m: 80000
+  cell_size_m: 1000.0
+  base_elevation_m: 0.0
+  terrain_type: open_ocean
+
+sides:
+  - side: british
+    units:
+      - unit_type: iron_duke_bb
+        count: 5
+      - unit_type: invincible_bc
+        count: 3
+      - unit_type: g_class_destroyer
+        count: 8
+    experience_level: 0.65
+    morale_initial: STEADY
+    commander_profile: foch_unified
+    doctrine_template: british_trench_warfare
+    depots:
+      - depot_id: british_fleet_supply
+        position: [10000, 40000]
+        capacity_tons: 5000
+        throughput_tons_per_hour: 100.0
+
+  - side: german
+    units:
+      - unit_type: konig_bb
+        count: 5
+      - unit_type: g_class_destroyer
+        count: 6
+      - unit_type: u_boat_ww1
+        count: 2
+    experience_level: 0.7
+    morale_initial: STEADY
+    commander_profile: ludendorff_storm
+    doctrine_template: german_sturmtaktik
+    depots:
+      - depot_id: german_fleet_supply
+        position: [90000, 40000]
+        capacity_tons: 4000
+        throughput_tons_per_hour: 80.0
+
+objectives:
+  - objective_id: north_sea_control
+    position: [50000, 40000]
+    radius_m: 15000
+    type: territory
+
+victory_conditions:
+  - type: force_destroyed
+    side: ""
+    params:
+      threshold: 0.4
+  - type: time_expired
+    side: british
+    params:
+      max_duration_s: 43200
+
+calibration_overrides:
+  hit_probability_modifier: 0.7
+  target_size_modifier: 1.2
+  morale_degrade_rate_modifier: 0.2
+  morale_base_degrade_rate: 0.005
+  morale_casualty_weight: 0.5
+  morale_check_interval: 30
+  british_force_ratio_modifier: 1.5
+  german_force_ratio_modifier: 1.2
+  british_cohesion: 0.7
+  german_cohesion: 0.75
+  destruction_threshold: 0.4
+  british_start_x: 20000.0
+  british_start_y: 40000.0
+  german_start_x: 80000.0
+  german_start_y: 40000.0
+  weapon_assignments:
+    "12-inch Mk X Naval Gun": 12in_naval_gun
+    "5.9-inch SK L/45": 6in_naval_gun
+    "4-inch Mk V": 4in_naval_gun
+    "21-inch Torpedo Tube": torpedo_ww1
+
+documented_outcomes:
+  - name: british_ships_sunk
+    value: 14.0
+    tolerance_factor: 3.0
+    unit: ships
+    source: "Campbell, *Jutland: An Analysis of the Fighting*"
+    source_quality: 0
+    notes: "3 battlecruisers, 3 armoured cruisers, 8 destroyers"
+  - name: german_ships_sunk
+    value: 11.0
+    tolerance_factor: 3.0
+    unit: ships
+    source: "Campbell, *Jutland: An Analysis of the Fighting*"
+    source_quality: 0
+    notes: "1 battlecruiser, 1 pre-dreadnought, 4 light cruisers, 5 torpedo boats"
+  - name: british_casualties
+    value: 6094.0
+    tolerance_factor: 3.0
+    unit: personnel
+    source: "Massie, *Castles of Steel*"
+    source_quality: 1
+    notes: "Total British killed"
+
+ai_expectations:
+  - side: british
+    time_range_s: [0, 43200]
+    expected_posture: attack
+    description: "Grand Fleet seeks decisive engagement"
+    tolerance: moderate
+  - side: german
+    time_range_s: [0, 21600]
+    expected_posture: attack
+    description: "High Seas Fleet engages then withdraws"
+    tolerance: loose
+
+sources:
+  - "Massie, Robert K. *Castles of Steel: Britain, Germany, and the Winning of the Great War at Sea*"
+  - "Campbell, N.J.M. *Jutland: An Analysis of the Fighting*"
+  - "Staff, Gary. *German Battlecruisers of World War One*"

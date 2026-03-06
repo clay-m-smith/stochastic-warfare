@@ -1,0 +1,215 @@
+name: "Suwalki Gap — NATO Defense of the Baltic Corridor"
+date: "2025-09-01T05:00:00Z"
+duration_hours: 120.0
+latitude: 54.1
+longitude: 23.0
+era: modern
+
+tick_resolution:
+  strategic_s: 3600
+  operational_s: 300
+  tactical_s: 5
+
+weather_conditions:
+  visibility_m: 5000
+  wind_speed_mps: 6.0
+  wind_direction_deg: 270
+  temperature_c: 8.0
+  precipitation: light_rain
+  cloud_cover: 0.6
+  humidity: 0.70
+
+terrain:
+  width_m: 30000
+  height_m: 20000
+  cell_size_m: 200.0
+  base_elevation_m: 150.0
+  terrain_type: hilly_defense
+  features:
+    - type: ridge
+      position: [10000, 0]
+      params:
+        height_m: 40.0
+        width_m: 300.0
+    - type: ridge
+      position: [20000, 0]
+      params:
+        height_m: 30.0
+        width_m: 200.0
+
+sides:
+  - side: blue
+    units:
+      - unit_type: leopard2a6
+        count: 4
+      - unit_type: challenger2
+        count: 3
+      - unit_type: m3a2_bradley
+        count: 4
+      - unit_type: ea18g
+        count: 2
+      - unit_type: f16c
+        count: 4
+    experience_level: 0.7
+    morale_initial: STEADY
+    commander_profile: joint_campaign
+    doctrine_template: collective_defense
+    depots:
+      - depot_id: nato_forward_depot
+        position: [3000, 10000]
+        capacity_tons: 4000
+        throughput_tons_per_hour: 70.0
+
+  - side: red
+    units:
+      - unit_type: t90a
+        count: 6
+      - unit_type: bmp2
+        count: 6
+      - unit_type: su27s
+        count: 4
+      - unit_type: sa11_buk
+        count: 3
+      - unit_type: mi24v
+        count: 2
+    experience_level: 0.6
+    morale_initial: STEADY
+    commander_profile: aggressive_armor
+    doctrine_template: deep_operations
+    depots:
+      - depot_id: red_assembly_area
+        position: [28000, 10000]
+        capacity_tons: 6000
+        throughput_tons_per_hour: 90.0
+
+objectives:
+  - objective_id: suwalki_corridor
+    position: [15000, 10000]
+    radius_m: 3000
+    type: territory
+  - objective_id: western_ridge
+    position: [10000, 10000]
+    radius_m: 1500
+    type: key_terrain
+  - objective_id: eastern_approach
+    position: [22000, 10000]
+    radius_m: 2000
+    type: territory
+
+victory_conditions:
+  - type: territory_control
+    side: red
+    params:
+      threshold: 1.0
+  - type: force_destroyed
+    side: ""
+    params:
+      threshold: 0.5
+  - type: time_expired
+    side: blue
+    params:
+      max_duration_s: 432000
+  - type: morale_collapsed
+    side: ""
+
+reinforcements:
+  - side: blue
+    arrival_time_s: 172800
+    units:
+      - unit_type: m1a2
+        count: 4
+      - unit_type: m3a2_bradley
+        count: 4
+    position: [1000, 10000]
+
+calibration_overrides:
+  hit_probability_modifier: 1.0
+  target_size_modifier: 0.65
+  morale_degrade_rate_modifier: 0.2
+  morale_base_degrade_rate: 0.006
+  morale_casualty_weight: 0.35
+  morale_check_interval: 25
+  blue_force_ratio_modifier: 1.5
+  red_force_ratio_modifier: 1.2
+  blue_cohesion: 0.80
+  red_cohesion: 0.70
+  destruction_threshold: 0.5
+  blue_start_x: 5000.0
+  blue_start_y: 10000.0
+  red_start_x: 27000.0
+  red_start_y: 10000.0
+
+ew_config:
+  enable_ew: true
+  blue_jammers:
+    - jammer_id: growler_ew_1
+      platform_type: airborne
+      frequency_min_ghz: 2.0
+      frequency_max_ghz: 18.0
+      power_dbm: 73.0
+      antenna_gain_dbi: 15.0
+      bandwidth_ghz: 0.1
+      techniques: [1, 2, 4]
+  blue_sigint_collectors:
+    - collector_id: nato_sigint_1
+      receiver_sensitivity_dbm: -110.0
+      frequency_range_ghz: [2.0, 18.0]
+      bandwidth_ghz: 2.0
+      df_accuracy_deg: 1.0
+      has_tdoa: true
+      aperture_m: 6.0
+  red_eccm_suites:
+    - suite_id: russian_eccm
+      techniques: [0, 1]
+      hop_bandwidth_ghz: 0.5
+      hop_rate_hz: 200.0
+      sidelobe_ratio_db: 25.0
+
+school_config:
+  blue_school: maneuverist
+  red_school: deep_battle
+
+documented_outcomes:
+  - name: red_armor_destroyed
+    value: 8.0
+    tolerance_factor: 3.0
+    unit: vehicles
+    source: "Shlapak & Johnson, *Reinforcing Deterrence on NATO's Eastern Flank*"
+    source_quality: 2
+    notes: "Estimated armor attrition in corridor defense"
+  - name: blue_units_destroyed
+    value: 5.0
+    tolerance_factor: 3.0
+    unit: vehicles
+    source: "RAND wargame analysis"
+    source_quality: 2
+    notes: "Estimated NATO losses in initial defense phase"
+  - name: ew_effectiveness
+    value: 0.3
+    tolerance_factor: 3.0
+    unit: fraction
+    source: "Analytical estimate"
+    source_quality: 2
+    notes: "EW degradation of adversary sensor capability"
+
+ai_expectations:
+  - side: red
+    time_range_s: [0, 259200]
+    expected_posture: attack
+    description: "Russian forces attempt rapid corridor seizure"
+    tolerance: moderate
+  - side: blue
+    time_range_s: [0, 172800]
+    expected_posture: defend
+    description: "NATO forces defend corridor, await reinforcements"
+    tolerance: moderate
+  - side: blue
+    time_range_s: [172800, 432000]
+    expected_posture: attack
+    description: "NATO counterattack after US reinforcement arrives"
+    tolerance: loose
+
+sources:
+  - "Shlapak, David A. & Johnson, Michael W. *Reinforcing Deterrence on NATO's Eastern Flank*. RAND, 2016"
+  - "Ochmanek, David et al. *U.S. Military Capabilities and Forces for a Dangerous World*. RAND, 2017"
+  - "Hooker, R.D. *How to Defend the Baltic States*. Jamestown Foundation, 2019"

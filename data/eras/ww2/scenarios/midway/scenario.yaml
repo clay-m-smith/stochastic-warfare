@@ -29,15 +29,21 @@ terrain:
 sides:
   - side: usn
     units:
+      - unit_type: essex_cv
+        count: 3
       - unit_type: fletcher_dd
-        count: 8
+        count: 4
     experience_level: 0.6
     morale_initial: STEADY
 
   - side: ijn
     units:
+      - unit_type: shokaku_cv
+        count: 4
       - unit_type: fletcher_dd
-        count: 10
+        count: 4
+      - unit_type: a6m_zero
+        count: 6
     experience_level: 0.7
     morale_initial: STEADY
 

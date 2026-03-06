@@ -1,0 +1,149 @@
+name: "Falklands San Carlos Air Raids (May 21, 1982)"
+date: "1982-05-21T10:00:00Z"
+duration_hours: 12.0
+latitude: -51.5
+longitude: -59.0
+era: modern
+
+tick_resolution:
+  strategic_s: 3600
+  operational_s: 300
+  tactical_s: 5
+
+weather_conditions:
+  visibility_m: 12000
+  wind_speed_mps: 12.0
+  wind_direction_deg: 260
+  temperature_c: 4.0
+  precipitation: none
+  cloud_cover: 0.5
+  humidity: 0.70
+  sea_state: 4
+
+terrain:
+  width_m: 100000
+  height_m: 100000
+  cell_size_m: 1000.0
+  base_elevation_m: 0.0
+  terrain_type: open_ocean
+
+sides:
+  - side: blue
+    units:
+      - unit_type: type42_destroyer
+        count: 3
+      - unit_type: type22_frigate
+        count: 3
+      - unit_type: sea_harrier
+        count: 6
+    experience_level: 0.7
+    morale_initial: STEADY
+    commander_profile: naval_surface
+    doctrine_template: collective_defense
+    depots:
+      - depot_id: blue_anchorage
+        position: [30000, 50000]
+        capacity_tons: 4000
+        throughput_tons_per_hour: 50.0
+
+  - side: red
+    units:
+      - unit_type: super_etendard
+        count: 4
+      - unit_type: mig29a
+        count: 4
+        overrides:
+          display_name: "A-4 Skyhawk (proxy)"
+    experience_level: 0.6
+    morale_initial: STEADY
+    commander_profile: aggressive_armor
+    doctrine_template: generic_offense
+
+objectives:
+  - objective_id: san_carlos_anchorage
+    position: [30000, 50000]
+    radius_m: 5000
+    type: territory
+  - objective_id: approach_corridor
+    position: [70000, 50000]
+    radius_m: 10000
+    type: key_terrain
+
+victory_conditions:
+  - type: force_destroyed
+    side: blue
+    params:
+      threshold: 0.4
+  - type: force_destroyed
+    side: red
+    params:
+      threshold: 0.6
+  - type: time_expired
+    side: blue
+    params:
+      max_duration_s: 43200
+
+calibration_overrides:
+  hit_probability_modifier: 1.0
+  target_size_modifier: 1.0
+  morale_degrade_rate_modifier: 0.15
+  morale_base_degrade_rate: 0.005
+  morale_casualty_weight: 0.4
+  morale_check_interval: 30
+  blue_force_ratio_modifier: 1.5
+  red_force_ratio_modifier: 1.0
+  blue_cohesion: 0.85
+  red_cohesion: 0.7
+  destruction_threshold: 0.5
+  blue_start_x: 30000.0
+  blue_start_y: 50000.0
+  red_start_x: 90000.0
+  red_start_y: 50000.0
+  weapon_assignments:
+    "AM.39 Exocet": am39_exocet
+    "Sea Dart SAM": sea_dart
+    "Sea Wolf SAM": sea_dart
+    "4.5 inch Mk 8 Naval Gun": mk45_5inch
+    "30mm ADEN": m61a1_vulcan
+    "AIM-9L Sidewinder": aim9x_sidewinder
+
+documented_outcomes:
+  - name: blue_ships_damaged_or_sunk
+    value: 4.0
+    tolerance_factor: 3.0
+    unit: ships
+    source: "Freedman, *The Official History of the Falklands Campaign*"
+    source_quality: 0
+    notes: "HMS Ardent sunk, HMS Argonaut and HMS Brilliant damaged, others hit"
+  - name: red_aircraft_destroyed
+    value: 5.0
+    tolerance_factor: 3.0
+    unit: aircraft
+    source: "Ethell & Price, *Air War South Atlantic*"
+    source_quality: 1
+    notes: "Argentine aircraft losses on D-Day San Carlos"
+  - name: campaign_duration_s
+    value: 43200.0
+    tolerance_factor: 1.5
+    unit: seconds
+    source: "Official campaign timeline"
+    source_quality: 1
+    notes: "12 hours of air raids on D-Day"
+
+ai_expectations:
+  - side: red
+    time_range_s: [0, 43200]
+    expected_posture: attack
+    description: "Argentine aircraft conduct wave attacks on anchorage"
+    tolerance: moderate
+  - side: blue
+    time_range_s: [0, 43200]
+    expected_posture: defend
+    description: "RN maintains air defense of anchorage and CAP"
+    tolerance: moderate
+
+sources:
+  - "Freedman, Lawrence. *The Official History of the Falklands Campaign*"
+  - "Ethell, Jeffrey & Price, Alfred. *Air War South Atlantic*"
+  - "Woodward, Sandy. *One Hundred Days*"
+  - "Ward, Sharkey. *Sea Harrier Over the Falklands*"

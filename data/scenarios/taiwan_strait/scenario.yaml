@@ -1,0 +1,191 @@
+name: "Taiwan Strait Crisis — Carrier Strike vs Amphibious Assault"
+date: "2025-03-15T06:00:00Z"
+duration_hours: 72.0
+latitude: 24.5
+longitude: 120.5
+era: modern
+
+tick_resolution:
+  strategic_s: 3600
+  operational_s: 300
+  tactical_s: 5
+
+weather_conditions:
+  visibility_m: 12000
+  wind_speed_mps: 8.0
+  wind_direction_deg: 45
+  temperature_c: 22.0
+  precipitation: none
+  cloud_cover: 0.4
+  humidity: 0.75
+  sea_state: 3
+
+terrain:
+  width_m: 200000
+  height_m: 200000
+  cell_size_m: 1000.0
+  base_elevation_m: 0.0
+  terrain_type: open_ocean
+
+sides:
+  - side: blue
+    units:
+      - unit_type: ddg51
+        count: 3
+      - unit_type: f16c
+        count: 8
+      - unit_type: ssn688
+        count: 1
+      - unit_type: patriot
+        count: 2
+      - unit_type: m1a2
+        count: 2
+    experience_level: 0.75
+    morale_initial: STEADY
+    commander_profile: joint_campaign
+    doctrine_template: collective_defense
+    depots:
+      - depot_id: blue_logistics_base
+        position: [30000, 100000]
+        capacity_tons: 8000
+        throughput_tons_per_hour: 80.0
+
+  - side: red
+    units:
+      - unit_type: j10a
+        count: 6
+      - unit_type: sovremenny
+        count: 2
+      - unit_type: kilo636
+        count: 2
+      - unit_type: s300pmu
+        count: 2
+      - unit_type: bmp2
+        count: 4
+    experience_level: 0.6
+    morale_initial: STEADY
+    commander_profile: aggressive_armor
+    doctrine_template: pla_active_defense
+    depots:
+      - depot_id: red_staging_base
+        position: [170000, 100000]
+        capacity_tons: 10000
+        throughput_tons_per_hour: 100.0
+
+objectives:
+  - objective_id: strait_control
+    position: [100000, 100000]
+    radius_m: 20000
+    type: territory
+  - objective_id: western_approaches
+    position: [60000, 100000]
+    radius_m: 10000
+    type: key_terrain
+  - objective_id: eastern_approaches
+    position: [140000, 100000]
+    radius_m: 10000
+    type: key_terrain
+
+victory_conditions:
+  - type: force_destroyed
+    side: ""
+    params:
+      threshold: 0.5
+  - type: territory_control
+    side: red
+    params:
+      threshold: 1.0
+  - type: time_expired
+    side: blue
+    params:
+      max_duration_s: 259200
+
+reinforcements:
+  - side: blue
+    arrival_time_s: 86400
+    units:
+      - unit_type: ddg51
+        count: 2
+      - unit_type: f16c
+        count: 4
+    position: [10000, 100000]
+
+calibration_overrides:
+  hit_probability_modifier: 1.0
+  target_size_modifier: 1.0
+  morale_degrade_rate_modifier: 0.15
+  morale_base_degrade_rate: 0.005
+  morale_casualty_weight: 0.4
+  morale_check_interval: 30
+  blue_force_ratio_modifier: 1.5
+  red_force_ratio_modifier: 1.0
+  blue_cohesion: 0.85
+  red_cohesion: 0.7
+  destruction_threshold: 0.5
+  blue_start_x: 30000.0
+  blue_start_y: 100000.0
+  red_start_x: 170000.0
+  red_start_y: 100000.0
+
+ew_config:
+  enable_ew: true
+  blue_jammers:
+    - jammer_id: blue_standoff_jammer
+      platform_type: airborne
+      frequency_min_ghz: 2.0
+      frequency_max_ghz: 18.0
+      power_dbm: 70.0
+      antenna_gain_dbi: 14.0
+      bandwidth_ghz: 0.1
+      techniques: [1, 2, 4]
+  red_eccm_suites:
+    - suite_id: red_naval_eccm
+      techniques: [0]
+      hop_bandwidth_ghz: 0.3
+      hop_rate_hz: 200.0
+      sidelobe_ratio_db: 22.0
+
+escalation_config:
+  entry_thresholds: [0.0, 0.20, 0.35, 0.45, 0.60, 0.75, 0.85, 0.92, 0.95, 0.97, 0.99]
+  hysteresis_factor: 0.65
+  cooldown_s: 14400
+
+documented_outcomes:
+  - name: blue_ships_sunk
+    value: 1.0
+    tolerance_factor: 3.0
+    unit: ships
+    source: "Heginbotham, *The U.S.-China Military Scorecard*"
+    source_quality: 2
+    notes: "Estimated carrier group losses in peer confrontation"
+  - name: red_ships_sunk
+    value: 2.0
+    tolerance_factor: 3.0
+    unit: ships
+    source: "Biddle & Oelrich, *Future Warfare in the Western Pacific*"
+    source_quality: 2
+    notes: "Estimated PLAN surface combatant losses"
+  - name: red_units_destroyed
+    value: 6.0
+    tolerance_factor: 3.0
+    unit: aircraft
+    source: "RAND Corporation analysis"
+    source_quality: 2
+    notes: "Estimated aircraft attrition in contested environment"
+
+ai_expectations:
+  - side: red
+    time_range_s: [0, 86400]
+    expected_posture: attack
+    description: "PLAN attempts to establish sea control in first 24h"
+    tolerance: moderate
+  - side: blue
+    time_range_s: [0, 259200]
+    expected_posture: defend
+    description: "US/Taiwan maintain defensive posture and sea denial"
+    tolerance: moderate
+
+sources:
+  - "Heginbotham, Eric et al. *The U.S.-China Military Scorecard*. RAND, 2015"
+  - "Biddle, Stephen & Oelrich, Ivan. *Future Warfare in the Western Pacific*. International Security, 2016"
+  - "Cliff, Roger. *China's Military Power*. Cambridge University Press, 2015"

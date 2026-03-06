@@ -1,0 +1,154 @@
+name: "Battle of Trafalgar (October 21, 1805)"
+date: "1805-10-21T11:00:00Z"
+duration_hours: 8.0
+latitude: 36.18
+longitude: -6.25
+era: napoleonic
+
+tick_resolution:
+  strategic_s: 3600
+  operational_s: 300
+  tactical_s: 5
+
+weather_conditions:
+  visibility_m: 10000
+  wind_speed_mps: 4.0
+  wind_direction_deg: 270
+  temperature_c: 20.0
+  precipitation: none
+  cloud_cover: 0.3
+  humidity: 0.65
+  sea_state: 2
+
+terrain:
+  width_m: 20000
+  height_m: 15000
+  cell_size_m: 200.0
+  base_elevation_m: 0.0
+  terrain_type: open_ocean
+
+sides:
+  - side: british
+    units:
+      - unit_type: ship_of_line_74
+        count: 15
+      - unit_type: first_rate_100
+        count: 4
+      - unit_type: frigate_32
+        count: 4
+    experience_level: 0.8
+    morale_initial: STEADY
+    commander_profile: wellington_defense
+    doctrine_template: british_thin_red_line
+    depots:
+      - depot_id: british_fleet_stores
+        position: [2000, 7500]
+        capacity_tons: 3000
+        throughput_tons_per_hour: 40.0
+
+  - side: franco_spanish
+    units:
+      - unit_type: ship_of_line_74
+        count: 18
+      - unit_type: first_rate_100
+        count: 3
+      - unit_type: frigate_32
+        count: 5
+      - unit_type: corvette_sloop
+        count: 2
+      - unit_type: fire_ship
+        count: 2
+    experience_level: 0.45
+    morale_initial: STEADY
+    commander_profile: napoleon_grande_armee
+    doctrine_template: french_grande_armee
+    depots:
+      - depot_id: combined_fleet_stores
+        position: [18000, 7500]
+        capacity_tons: 4000
+        throughput_tons_per_hour: 35.0
+
+objectives:
+  - objective_id: battle_line
+    position: [10000, 7500]
+    radius_m: 3000
+    type: territory
+
+victory_conditions:
+  - type: force_destroyed
+    side: ""
+    params:
+      threshold: 0.35
+  - type: morale_collapsed
+    side: franco_spanish
+    params:
+      threshold: 0.6
+  - type: time_expired
+    side: british
+    params:
+      max_duration_s: 28800
+
+calibration_overrides:
+  hit_probability_modifier: 0.9
+  target_size_modifier: 1.5
+  morale_degrade_rate_modifier: 0.5
+  morale_base_degrade_rate: 0.012
+  morale_casualty_weight: 0.5
+  morale_check_interval: 15
+  british_force_ratio_modifier: 1.8
+  franco_spanish_force_ratio_modifier: 1.0
+  british_cohesion: 0.9
+  franco_spanish_cohesion: 0.45
+  destruction_threshold: 0.35
+  british_start_x: 3000.0
+  british_start_y: 7500.0
+  franco_spanish_start_x: 17000.0
+  franco_spanish_start_y: 7500.0
+  advance_speed: 0.5
+  weapon_assignments:
+    "32-Pounder Long Gun": 32pdr_long_gun
+    "24-Pounder Long Gun": 24pdr_long_gun
+    "18-Pounder Long Gun": 18pdr_long_gun
+    "Carronade 32-pdr": carronade_32pdr
+    "Fire Pot": fire_pot
+
+documented_outcomes:
+  - name: franco_spanish_ships_captured_or_sunk
+    value: 22.0
+    tolerance_factor: 2.0
+    unit: ships
+    source: "Adkin, *The Trafalgar Companion*"
+    source_quality: 0
+    notes: "22 ships captured or sunk; decisive British victory"
+  - name: british_ships_sunk
+    value: 0.0
+    tolerance_factor: 3.0
+    unit: ships
+    source: "Adkin, *The Trafalgar Companion*"
+    source_quality: 0
+    notes: "No British ships sunk during the battle"
+  - name: british_casualties
+    value: 1690.0
+    tolerance_factor: 3.0
+    unit: personnel
+    source: "Gardiner, *The Campaign of Trafalgar*"
+    source_quality: 1
+    notes: "449 killed, 1241 wounded including Nelson"
+
+ai_expectations:
+  - side: british
+    time_range_s: [0, 28800]
+    expected_posture: attack
+    description: "Nelson's two-column perpendicular attack on enemy line"
+    tolerance: moderate
+  - side: franco_spanish
+    time_range_s: [0, 14400]
+    expected_posture: defend
+    description: "Combined fleet attempts to maintain line formation"
+    tolerance: moderate
+
+sources:
+  - "Adkin, Mark. *The Trafalgar Companion*"
+  - "Gardiner, Robert. *The Campaign of Trafalgar*"
+  - "Lambert, Andrew. *Nelson: Britannia's God of War*"
+  - "Rodger, N.A.M. *The Command of the Ocean*"

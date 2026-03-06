@@ -1,0 +1,173 @@
+name: "Battle of Stalingrad — Urban Combat (November 1942)"
+date: "1942-11-15T06:00:00Z"
+duration_hours: 168.0
+latitude: 48.7
+longitude: 44.5
+era: ww2
+
+tick_resolution:
+  strategic_s: 3600
+  operational_s: 300
+  tactical_s: 5
+
+weather_conditions:
+  visibility_m: 1500
+  wind_speed_mps: 7.0
+  wind_direction_deg: 0
+  temperature_c: -5.0
+  precipitation: light_rain
+  cloud_cover: 0.8
+  humidity: 0.70
+
+terrain:
+  width_m: 5000
+  height_m: 3000
+  cell_size_m: 50.0
+  base_elevation_m: 80.0
+  terrain_type: hilly_defense
+  features:
+    - type: berm
+      position: [2500, 1500]
+      params:
+        height_m: 5.0
+        radius_m: 200.0
+
+sides:
+  - side: soviet
+    units:
+      - unit_type: soviet_rifle_squad
+        count: 8
+      - unit_type: t34_85
+        count: 4
+    experience_level: 0.5
+    morale_initial: STEADY
+    commander_profile: operational_zhukov
+    doctrine_template: soviet_deep_ops
+    depots:
+      - depot_id: soviet_volga_crossing
+        position: [200, 1500]
+        capacity_tons: 800
+        throughput_tons_per_hour: 30.0
+
+  - side: german
+    units:
+      - unit_type: wehrmacht_rifle_squad
+        count: 6
+      - unit_type: panzer_iv_h
+        count: 3
+      - unit_type: tiger_i
+        count: 1
+    experience_level: 0.6
+    morale_initial: STEADY
+    commander_profile: aggressive_patton
+    doctrine_template: blitzkrieg
+    depots:
+      - depot_id: german_supply_line
+        position: [4800, 1500]
+        capacity_tons: 600
+        throughput_tons_per_hour: 15.0
+
+objectives:
+  - objective_id: factory_district
+    position: [2500, 1500]
+    radius_m: 500
+    type: key_terrain
+  - objective_id: volga_riverbank
+    position: [500, 1500]
+    radius_m: 300
+    type: territory
+
+victory_conditions:
+  - type: territory_control
+    side: german
+    params:
+      threshold: 1.0
+  - type: force_destroyed
+    side: ""
+    params:
+      threshold: 0.6
+  - type: time_expired
+    side: soviet
+    params:
+      max_duration_s: 604800
+  - type: morale_collapsed
+    side: ""
+
+reinforcements:
+  - side: soviet
+    arrival_time_s: 172800
+    units:
+      - unit_type: soviet_rifle_squad
+        count: 4
+    position: [100, 1500]
+  - side: soviet
+    arrival_time_s: 345600
+    units:
+      - unit_type: t34_85
+        count: 2
+    position: [100, 1000]
+
+calibration_overrides:
+  hit_probability_modifier: 1.2
+  target_size_modifier: 0.4
+  morale_degrade_rate_modifier: 0.3
+  morale_base_degrade_rate: 0.01
+  morale_casualty_weight: 0.5
+  morale_check_interval: 20
+  soviet_force_ratio_modifier: 1.0
+  german_force_ratio_modifier: 2.0
+  soviet_cohesion: 0.6
+  german_cohesion: 0.65
+  destruction_threshold: 0.55
+  soviet_start_x: 500.0
+  soviet_start_y: 1500.0
+  german_start_x: 4500.0
+  german_start_y: 1500.0
+  weapon_assignments:
+    "85mm ZIS-S-53": 85mm_zis_s53
+    "75mm KwK 40 L/48": 75mm_m3
+    "88mm KwK 36 L/56": 88mm_kwk36
+    "PPSh-41": ppsh41
+    "MP 40": mp40
+    "Mosin-Nagant M91/30": mosin_nagant
+
+documented_outcomes:
+  - name: german_casualty_fraction
+    value: 0.80
+    tolerance_factor: 3.0
+    unit: fraction
+    source: "Beevor, *Stalingrad*"
+    source_quality: 1
+    notes: "6th Army effectively destroyed; 80%+ casualties/POW"
+  - name: soviet_casualty_fraction
+    value: 0.65
+    tolerance_factor: 3.0
+    unit: fraction
+    source: "Glantz, *To the Gates of Stalingrad*"
+    source_quality: 1
+    notes: "Massive Soviet losses but held the city"
+  - name: campaign_duration_s
+    value: 604800.0
+    tolerance_factor: 2.0
+    unit: seconds
+    source: "Official campaign records"
+    source_quality: 1
+    notes: "7 days of intense urban fighting (segment of longer battle)"
+
+ai_expectations:
+  - side: german
+    time_range_s: [0, 345600]
+    expected_posture: attack
+    description: "German forces attempt to clear factory district"
+    tolerance: moderate
+  - side: soviet
+    time_range_s: [0, 604800]
+    expected_posture: defend
+    description: "Soviet forces defend every building, counterattack locally"
+    tolerance: moderate
+
+sources:
+  - "Beevor, Antony. *Stalingrad: The Fateful Siege 1942-1943*"
+  - "Glantz, David M. *To the Gates of Stalingrad*"
+  - "Craig, William. *Enemy at the Gates*"
+  - "Chuikov, Vasily. *The Battle for Stalingrad*"

@@ -1,0 +1,158 @@
+name: "Battle of Salamis (September 480 BC)"
+date: "0480-09-25T07:00:00Z"
+duration_hours: 8.0
+latitude: 37.95
+longitude: 23.60
+era: ancient_medieval
+
+tick_resolution:
+  strategic_s: 3600
+  operational_s: 300
+  tactical_s: 5
+
+weather_conditions:
+  visibility_m: 5000
+  wind_speed_mps: 5.0
+  wind_direction_deg: 270
+  temperature_c: 25.0
+  precipitation: none
+  cloud_cover: 0.2
+  humidity: 0.55
+  sea_state: 2
+
+terrain:
+  width_m: 8000
+  height_m: 4000
+  cell_size_m: 50.0
+  base_elevation_m: 0.0
+  terrain_type: open_ocean
+
+sides:
+  - side: greek
+    units:
+      - unit_type: greek_trireme
+        count: 50
+      - unit_type: war_galley
+        count: 10
+    experience_level: 0.7
+    morale_initial: STEADY
+    commander_profile: hannibal_barca
+    doctrine_template: roman_legion
+    depots:
+      - depot_id: greek_shore_depot
+        position: [500, 2000]
+        capacity_tons: 300
+        throughput_tons_per_hour: 20.0
+
+  - side: persian
+    units:
+      - unit_type: greek_trireme
+        count: 30
+        overrides:
+          display_name: "Persian Trireme"
+      - unit_type: war_galley
+        count: 20
+        overrides:
+          display_name: "Phoenician Galley"
+      - unit_type: roman_quinquereme
+        count: 10
+        overrides:
+          display_name: "Persian Heavy Ship"
+    experience_level: 0.45
+    morale_initial: STEADY
+    commander_profile: william_conqueror
+    doctrine_template: steppe_nomad
+    depots:
+      - depot_id: persian_beach_depot
+        position: [7500, 2000]
+        capacity_tons: 500
+        throughput_tons_per_hour: 25.0
+
+objectives:
+  - objective_id: salamis_strait
+    position: [4000, 2000]
+    radius_m: 1500
+    type: territory
+  - objective_id: greek_anchorage
+    position: [1500, 2000]
+    radius_m: 500
+    type: key_terrain
+
+victory_conditions:
+  - type: force_destroyed
+    side: ""
+    params:
+      threshold: 0.4
+  - type: morale_collapsed
+    side: persian
+    params:
+      threshold: 0.6
+  - type: time_expired
+    side: greek
+    params:
+      max_duration_s: 28800
+
+calibration_overrides:
+  hit_probability_modifier: 0.5
+  target_size_modifier: 0.8
+  morale_degrade_rate_modifier: 0.7
+  morale_base_degrade_rate: 0.02
+  morale_casualty_weight: 0.6
+  morale_check_interval: 10
+  greek_force_ratio_modifier: 2.0
+  persian_force_ratio_modifier: 1.0
+  greek_cohesion: 0.85
+  persian_cohesion: 0.4
+  destruction_threshold: 0.4
+  greek_start_x: 1000.0
+  greek_start_y: 2000.0
+  persian_start_x: 7000.0
+  persian_start_y: 2000.0
+  advance_speed: 0.6
+  weapon_assignments:
+    "Naval Ram (Bronze)": naval_ram
+    "Greek Fire Siphon": greek_fire_siphon
+    "Corvus Boarding Bridge": corvus_boarding
+    "Javelin": pilum
+    "Short Sword": gladius
+
+documented_outcomes:
+  - name: persian_ships_destroyed
+    value: 200.0
+    tolerance_factor: 3.0
+    unit: ships
+    source: "Strauss, *The Battle of Salamis*"
+    source_quality: 2
+    notes: "~200 Persian ships destroyed or captured; ancient sources vary widely"
+  - name: greek_ships_destroyed
+    value: 40.0
+    tolerance_factor: 3.0
+    unit: ships
+    source: "Holland, *Persian Fire*"
+    source_quality: 2
+    notes: "~40 Greek ships lost; narrow strait negated Persian numbers"
+  - name: persian_fleet_destroyed_fraction
+    value: 0.30
+    tolerance_factor: 3.0
+    unit: fraction
+    source: "Herodotus, *Histories*"
+    source_quality: 2
+    notes: "Roughly one-third of Persian fleet destroyed"
+
+ai_expectations:
+  - side: greek
+    time_range_s: [0, 28800]
+    expected_posture: defend
+    description: "Greeks fight defensively in narrow strait, exploiting terrain"
+    tolerance: moderate
+  - side: persian
+    time_range_s: [0, 14400]
+    expected_posture: attack
+    description: "Persian fleet attempts to force passage through strait"
+    tolerance: moderate
+
+sources:
+  - "Strauss, Barry. *The Battle of Salamis: The Naval Encounter That Saved Greece*"
+  - "Holland, Tom. *Persian Fire: The First World Empire and the Battle for the West*"
+  - "Herodotus. *Histories*"
+  - "Green, Peter. *The Greco-Persian Wars*"

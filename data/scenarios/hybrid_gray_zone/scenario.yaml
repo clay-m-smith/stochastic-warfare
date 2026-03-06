@@ -1,0 +1,141 @@
+name: "Hybrid Gray Zone — Gerasimov-Style Escalation Campaign"
+date: "2025-04-01T00:00:00Z"
+duration_hours: 720.0
+latitude: 48.5
+longitude: 37.5
+era: modern
+
+tick_resolution:
+  strategic_s: 3600
+  operational_s: 300
+  tactical_s: 5
+
+weather_conditions:
+  visibility_m: 8000
+  wind_speed_mps: 3.0
+  wind_direction_deg: 180
+  temperature_c: 15.0
+  precipitation: none
+  cloud_cover: 0.3
+  humidity: 0.50
+
+terrain:
+  width_m: 15000
+  height_m: 15000
+  cell_size_m: 150.0
+  base_elevation_m: 100.0
+  terrain_type: flat_desert
+
+sides:
+  - side: blue
+    units:
+      - unit_type: us_rifle_squad
+        count: 4
+      - unit_type: sf_oda
+        count: 2
+      - unit_type: ranger_platoon
+        count: 1
+    experience_level: 0.7
+    morale_initial: STEADY
+    commander_profile: sof_operator
+    doctrine_template: coin_population_centric
+    depots:
+      - depot_id: blue_fob
+        position: [2000, 7500]
+        capacity_tons: 1500
+        throughput_tons_per_hour: 30.0
+
+  - side: red
+    units:
+      - unit_type: us_rifle_squad
+        count: 3
+        overrides:
+          display_name: "Irregular Militia"
+    experience_level: 0.35
+    morale_initial: STEADY
+    commander_profile: insurgent_leader
+    doctrine_template: guerrilla_hit_and_run
+
+objectives:
+  - objective_id: population_center
+    position: [7500, 7500]
+    radius_m: 2000
+    type: territory
+  - objective_id: key_infrastructure
+    position: [10000, 5000]
+    radius_m: 1000
+    type: infrastructure
+
+victory_conditions:
+  - type: time_expired
+    side: blue
+    params:
+      max_duration_s: 2592000
+  - type: force_destroyed
+    side: red
+    params:
+      threshold: 0.8
+  - type: morale_collapsed
+    side: ""
+
+calibration_overrides:
+  hit_probability_modifier: 0.8
+  target_size_modifier: 0.5
+  morale_degrade_rate_modifier: 0.1
+  morale_base_degrade_rate: 0.003
+  morale_casualty_weight: 0.3
+  morale_check_interval: 50
+  blue_force_ratio_modifier: 1.0
+  red_force_ratio_modifier: 1.0
+  blue_cohesion: 0.85
+  red_cohesion: 0.4
+  destruction_threshold: 0.7
+  blue_start_x: 2000.0
+  blue_start_y: 7500.0
+  red_start_x: 13000.0
+  red_start_y: 7500.0
+
+escalation_config:
+  entry_thresholds: [0.0, 0.15, 0.25, 0.35, 0.50, 0.60, 0.70, 0.80, 0.85, 0.90, 0.95]
+  hysteresis_factor: 0.7
+  cooldown_s: 7200
+
+documented_outcomes:
+  - name: escalation_level_final
+    value: 3.0
+    tolerance_factor: 3.0
+    unit: level
+    source: "Gerasimov, *The Value of Science is in the Foresight*"
+    source_quality: 2
+    notes: "Expected escalation from gray zone to limited conventional"
+  - name: sof_missions_completed
+    value: 4.0
+    tolerance_factor: 3.0
+    unit: missions
+    source: "Analytical estimate"
+    source_quality: 2
+    notes: "Expected SOF mission success rate over 30-day campaign"
+  - name: red_units_destroyed
+    value: 2.0
+    tolerance_factor: 3.0
+    unit: units
+    source: "Analytical estimate"
+    source_quality: 2
+    notes: "Irregular force attrition over 30-day campaign"
+
+ai_expectations:
+  - side: red
+    time_range_s: [0, 604800]
+    expected_posture: attack
+    description: "Irregular forces conduct harassment and provocation"
+    tolerance: loose
+  - side: blue
+    time_range_s: [0, 2592000]
+    expected_posture: defend
+    description: "Coalition forces maintain population-centric COIN posture"
+    tolerance: loose
+
+sources:
+  - "Gerasimov, Valery. *The Value of Science is in the Foresight*. Military-Industrial Courier, 2013"
+  - "Hoffman, Frank G. *Conflict in the 21st Century: The Rise of Hybrid Wars*. PIJS, 2007"
+  - "Fridman, Ofer. *Russian 'Hybrid Warfare': Resisting Great Power Politics*. Oxford, 2018"

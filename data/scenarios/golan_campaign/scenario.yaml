@@ -71,6 +71,8 @@ sides:
         count: 50
         overrides:
           armor_front: 33.0
+      - unit_type: bmp2
+        count: 10
     experience_level: 0.4
     morale_initial: STEADY
     commander_profile: aggressive_armor

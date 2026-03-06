@@ -6,7 +6,7 @@ latitude: 30.0
 longitude: 47.0
 
 weather_conditions:
-  visibility_m: 400
+  visibility_m: 800
   wind_speed_mps: 8.0
   wind_direction_deg: 270
   temperature_c: 18.0
@@ -32,6 +32,8 @@ red_forces:
       count: 30
     - unit_type: bmp1
       count: 16
+    - unit_type: bmp2
+      count: 4
   personnel_total: 500
   experience_level: 0.3
   morale_initial: STEADY
@@ -75,7 +77,7 @@ documented_outcomes:
 calibration_overrides:
   hit_probability_modifier: 1.0
   target_size_modifier: 1.0
-  thermal_contrast: 2.0
+  thermal_contrast: 1.5
   # Morale calibration — Eagle Troop was elite and aggressive; Iraqi units
   # were poorly trained and collapsed quickly once taking fire.
   morale_degrade_rate_modifier: 0.3
@@ -109,7 +111,7 @@ behavior_rules:
     engagement_range_m: 3500
   red:
     hold_position: true
-    engagement_range_m: 800
+    engagement_range_m: 1500
 
 sources:
   - "McMaster, H.R. *Eagles in the Desert*"

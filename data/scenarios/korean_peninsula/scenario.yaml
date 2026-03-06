@@ -1,0 +1,187 @@
+name: "Korean Peninsula — Combined Arms Defense Against Massed Armor"
+date: "2025-06-01T04:00:00Z"
+duration_hours: 96.0
+latitude: 37.9
+longitude: 126.9
+era: modern
+
+tick_resolution:
+  strategic_s: 3600
+  operational_s: 300
+  tactical_s: 5
+
+weather_conditions:
+  visibility_m: 3000
+  wind_speed_mps: 4.0
+  wind_direction_deg: 180
+  temperature_c: 12.0
+  precipitation: light_rain
+  cloud_cover: 0.7
+  humidity: 0.80
+
+terrain:
+  width_m: 20000
+  height_m: 15000
+  cell_size_m: 100.0
+  base_elevation_m: 200.0
+  terrain_type: hilly_defense
+  features:
+    - type: ridge
+      position: [5000, 0]
+      params:
+        height_m: 60.0
+        width_m: 250.0
+    - type: ridge
+      position: [10000, 0]
+      params:
+        height_m: 40.0
+        width_m: 200.0
+
+sides:
+  - side: blue
+    units:
+      - unit_type: m1a2
+        count: 4
+      - unit_type: m3a2_bradley
+        count: 6
+      - unit_type: f16c
+        count: 4
+      - unit_type: patriot
+        count: 2
+    experience_level: 0.7
+    morale_initial: STEADY
+    commander_profile: cautious_infantry
+    doctrine_template: combined_arms_defense
+    depots:
+      - depot_id: blue_forward_depot
+        position: [2000, 7500]
+        capacity_tons: 3000
+        throughput_tons_per_hour: 60.0
+
+  - side: red
+    units:
+      - unit_type: t72m
+        count: 8
+      - unit_type: bmp1
+        count: 10
+      - unit_type: t90a
+        count: 2
+      - unit_type: sa11_buk
+        count: 2
+    experience_level: 0.4
+    morale_initial: STEADY
+    commander_profile: aggressive_armor
+    doctrine_template: deep_operations
+    depots:
+      - depot_id: red_rear_depot
+        position: [19000, 7500]
+        capacity_tons: 5000
+        throughput_tons_per_hour: 80.0
+
+objectives:
+  - objective_id: forward_ridge
+    position: [10000, 7500]
+    radius_m: 1000
+    type: key_terrain
+  - objective_id: defense_line
+    position: [5000, 7500]
+    radius_m: 1500
+    type: territory
+
+victory_conditions:
+  - type: territory_control
+    side: red
+    params:
+      threshold: 1.0
+  - type: force_destroyed
+    side: ""
+    params:
+      threshold: 0.6
+  - type: time_expired
+    side: blue
+    params:
+      max_duration_s: 345600
+  - type: morale_collapsed
+    side: ""
+
+reinforcements:
+  - side: blue
+    arrival_time_s: 172800
+    units:
+      - unit_type: m1a2
+        count: 2
+      - unit_type: m3a2_bradley
+        count: 4
+    position: [1000, 7500]
+  - side: red
+    arrival_time_s: 86400
+    units:
+      - unit_type: t72m
+        count: 4
+      - unit_type: bmp1
+        count: 6
+    position: [19500, 7500]
+
+calibration_overrides:
+  hit_probability_modifier: 1.0
+  target_size_modifier: 0.6
+  morale_degrade_rate_modifier: 0.25
+  morale_base_degrade_rate: 0.008
+  morale_casualty_weight: 0.4
+  morale_check_interval: 25
+  blue_force_ratio_modifier: 2.0
+  red_force_ratio_modifier: 1.0
+  blue_cohesion: 0.85
+  red_cohesion: 0.55
+  destruction_threshold: 0.5
+  blue_start_x: 3000.0
+  blue_start_y: 7500.0
+  red_start_x: 18000.0
+  red_start_y: 7500.0
+
+cbrn_config:
+  enable_cbrn: true
+  threat_level: chemical
+  agent_types: [nerve_persistent]
+  detection_threshold: 0.1
+  mopp_level_default: 0
+
+documented_outcomes:
+  - name: red_armor_destroyed
+    value: 12.0
+    tolerance_factor: 3.0
+    unit: tanks
+    source: "Cordesman, *The Korean Military Balance*"
+    source_quality: 2
+    notes: "Estimated armor losses in prepared defense scenario"
+  - name: blue_units_destroyed
+    value: 3.0
+    tolerance_factor: 3.0
+    unit: vehicles
+    source: "IISS, *The Military Balance*"
+    source_quality: 2
+    notes: "Estimated defender losses with prepared positions"
+  - name: territorial_penetration_m
+    value: 5000.0
+    tolerance_factor: 3.0
+    unit: meters
+    source: "Analytical estimate"
+    source_quality: 2
+    notes: "Expected penetration depth against prepared defense"
+
+ai_expectations:
+  - side: red
+    time_range_s: [0, 172800]
+    expected_posture: attack
+    description: "DPRK forces attack with massed armor in first 48h"
+    tolerance: moderate
+  - side: blue
+    time_range_s: [0, 345600]
+    expected_posture: defend
+    description: "ROK/US forces defend prepared positions throughout"
+    tolerance: moderate
+
+sources:
+  - "Cordesman, Anthony H. *The Korean Military Balance*. CSIS, 2011"
+  - "IISS. *The Military Balance 2024*. Routledge, 2024"
+  - "Bennett, Bruce W. *Preparing for the Possibility of a North Korean Collapse*. RAND, 2013"

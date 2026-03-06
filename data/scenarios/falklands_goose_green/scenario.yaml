@@ -1,0 +1,144 @@
+name: "Falklands Goose Green (May 28, 1982)"
+date: "1982-05-28T02:00:00Z"
+duration_hours: 18.0
+latitude: -51.82
+longitude: -59.97
+era: modern
+
+tick_resolution:
+  strategic_s: 3600
+  operational_s: 300
+  tactical_s: 5
+
+weather_conditions:
+  visibility_m: 3000
+  wind_speed_mps: 8.0
+  wind_direction_deg: 240
+  temperature_c: 2.0
+  precipitation: light_rain
+  cloud_cover: 0.7
+  humidity: 0.80
+
+terrain:
+  width_m: 6000
+  height_m: 4000
+  cell_size_m: 50.0
+  base_elevation_m: 30.0
+  terrain_type: hilly_defense
+  features:
+    - type: ridge
+      position: [3000, 0]
+      params:
+        height_m: 20.0
+        width_m: 150.0
+
+sides:
+  - side: blue
+    units:
+      - unit_type: us_rifle_squad
+        count: 6
+        overrides:
+          display_name: "2 Para Section"
+    experience_level: 0.8
+    morale_initial: STEADY
+    commander_profile: aggressive_armor
+    doctrine_template: combined_arms_defense
+    depots:
+      - depot_id: blue_start_line
+        position: [500, 2000]
+        capacity_tons: 200
+        throughput_tons_per_hour: 10.0
+
+  - side: red
+    units:
+      - unit_type: us_rifle_squad
+        count: 8
+        overrides:
+          display_name: "Argentine Garrison"
+    experience_level: 0.35
+    morale_initial: STEADY
+    commander_profile: cautious_infantry
+    doctrine_template: delay
+
+objectives:
+  - objective_id: goose_green_settlement
+    position: [4500, 2000]
+    radius_m: 500
+    type: territory
+  - objective_id: darwin_ridge
+    position: [3000, 2000]
+    radius_m: 300
+    type: key_terrain
+
+victory_conditions:
+  - type: territory_control
+    side: blue
+    params:
+      threshold: 1.0
+  - type: force_destroyed
+    side: red
+    params:
+      threshold: 0.5
+  - type: time_expired
+    side: red
+    params:
+      max_duration_s: 64800
+  - type: morale_collapsed
+    side: red
+
+calibration_overrides:
+  hit_probability_modifier: 1.0
+  target_size_modifier: 0.5
+  morale_degrade_rate_modifier: 0.4
+  morale_base_degrade_rate: 0.01
+  morale_casualty_weight: 0.5
+  morale_check_interval: 20
+  blue_force_ratio_modifier: 2.0
+  red_force_ratio_modifier: 1.0
+  blue_cohesion: 0.9
+  red_cohesion: 0.4
+  destruction_threshold: 0.5
+  blue_start_x: 500.0
+  blue_start_y: 2000.0
+  red_start_x: 4500.0
+  red_start_y: 2000.0
+
+documented_outcomes:
+  - name: blue_casualties
+    value: 18.0
+    tolerance_factor: 3.0
+    unit: killed
+    source: "Adkin, *Goose Green*"
+    source_quality: 0
+    notes: "17 killed including Lt Col H. Jones VC, 35 wounded"
+  - name: red_casualties
+    value: 47.0
+    tolerance_factor: 3.0
+    unit: killed
+    source: "Fitz-Gibbon, *Not Mentioned in Despatches*"
+    source_quality: 1
+    notes: "47 killed, 145 taken prisoner"
+  - name: campaign_duration_s
+    value: 50400.0
+    tolerance_factor: 2.0
+    unit: seconds
+    source: "Official campaign records"
+    source_quality: 0
+    notes: "~14 hours from H-hour to surrender"
+
+ai_expectations:
+  - side: blue
+    time_range_s: [0, 64800]
+    expected_posture: attack
+    description: "2 Para attacks south through Darwin toward Goose Green"
+    tolerance: moderate
+  - side: red
+    time_range_s: [0, 64800]
+    expected_posture: defend
+    description: "Argentine garrison defends prepared positions"
+    tolerance: moderate
+
+sources:
+  - "Adkin, Mark. *Goose Green: A Battle is Fought to be Won*"
+  - "Fitz-Gibbon, Spencer. *Not Mentioned in Despatches: The History and Mythology of the Battle of Goose Green*"
+  - "Frost, John. *2 Para Falklands: The Battalion at War*"
