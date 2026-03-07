@@ -40,6 +40,26 @@ export const LAND_COVER_NAMES: Record<number, string> = {
 }
 
 /**
+ * Apply elevation-based brightness shading to a hex color.
+ * Low elevations are darker (0.8x), high elevations are brighter (1.2x).
+ */
+export function applyElevationShading(
+  baseColor: string,
+  elevation: number,
+  minElev: number,
+  maxElev: number,
+): string {
+  if (maxElev <= minElev) return baseColor
+  const t = (elevation - minElev) / (maxElev - minElev)
+  const factor = 0.8 + 0.4 * t // range [0.8, 1.2]
+  const r = parseInt(baseColor.slice(1, 3), 16)
+  const g = parseInt(baseColor.slice(3, 5), 16)
+  const b = parseInt(baseColor.slice(5, 7), 16)
+  const clamp = (v: number) => Math.min(255, Math.max(0, Math.round(v * factor)))
+  return `rgb(${clamp(r)}, ${clamp(g)}, ${clamp(b)})`
+}
+
+/**
  * Convert world ENU coordinates to screen pixel coordinates.
  * Canvas Y goes down, ENU northing goes up — hence the flip.
  */

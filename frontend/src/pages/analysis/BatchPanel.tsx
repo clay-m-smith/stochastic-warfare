@@ -38,11 +38,11 @@ export function BatchPanel() {
 
   return (
     <div className="space-y-6">
-      <div className="rounded-lg bg-white p-6 shadow">
-        <h2 className="mb-4 text-lg font-semibold text-gray-900">Monte Carlo Batch</h2>
+      <div className="rounded-lg bg-white dark:bg-gray-800 p-6 shadow">
+        <h2 className="mb-4 text-lg font-semibold text-gray-900 dark:text-gray-100">Monte Carlo Batch</h2>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">Scenario</label>
+            <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Scenario</label>
             <Select
               value={scenario}
               onChange={setScenario}
@@ -50,30 +50,30 @@ export function BatchPanel() {
             />
           </div>
           <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">Iterations</label>
+            <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Iterations</label>
             <input
               type="number"
               value={numIterations}
               onChange={(e) => setNumIterations(Number(e.target.value))}
-              className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+              className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200"
             />
           </div>
           <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">Base Seed</label>
+            <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Base Seed</label>
             <input
               type="number"
               value={baseSeed}
               onChange={(e) => setBaseSeed(Number(e.target.value))}
-              className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+              className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200"
             />
           </div>
           <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">Max Ticks</label>
+            <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Max Ticks</label>
             <input
               type="number"
               value={maxTicks}
               onChange={(e) => setMaxTicks(Number(e.target.value))}
-              className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+              className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200"
             />
           </div>
         </div>
@@ -90,7 +90,7 @@ export function BatchPanel() {
       </div>
 
       {isRunning && (
-        <div className="rounded-lg bg-white p-6 shadow">
+        <div className="rounded-lg bg-white dark:bg-gray-800 p-6 shadow">
           <ProgressBar
             value={latestMessage?.iteration ?? batchDetail?.completed_iterations ?? 0}
             max={latestMessage?.total ?? batchDetail?.num_iterations ?? 0}

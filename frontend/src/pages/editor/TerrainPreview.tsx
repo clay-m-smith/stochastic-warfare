@@ -59,8 +59,8 @@ export function TerrainPreview({ config }: TerrainPreviewProps) {
   }, [width, height, terrainType, objectives])
 
   return (
-    <div className="rounded-lg border border-gray-200 bg-gray-50 p-3">
-      <span className="mb-2 block text-xs font-medium text-gray-500">Terrain Preview</span>
+    <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 p-3">
+      <span className="mb-2 block text-xs font-medium text-gray-500 dark:text-gray-400">Terrain Preview</span>
       <canvas ref={canvasRef} width={300} height={200} className="w-full rounded" />
     </div>
   )

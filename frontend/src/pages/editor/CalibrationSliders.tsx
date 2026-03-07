@@ -18,7 +18,7 @@ export function CalibrationSliders({ config, dispatch }: CalibrationSlidersProps
 
   return (
     <section>
-      <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-gray-500">
+      <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
         Calibration
       </h3>
       <div className="space-y-3">
@@ -27,8 +27,8 @@ export function CalibrationSliders({ config, dispatch }: CalibrationSlidersProps
           return (
             <div key={s.key}>
               <div className="flex items-center justify-between text-sm">
-                <span className="text-gray-700">{s.label}</span>
-                <span className="font-mono text-gray-500">{value.toFixed(1)}</span>
+                <span className="text-gray-700 dark:text-gray-300">{s.label}</span>
+                <span className="font-mono text-gray-500 dark:text-gray-400">{value.toFixed(1)}</span>
               </div>
               <input
                 type="range"

@@ -12,9 +12,10 @@ interface ForceStrengthChartProps {
   data: ForceTimePoint[]
   className?: string
   layoutOverrides?: Partial<Plotly.Layout>
+  onClick?: (event: Plotly.PlotMouseEvent) => void
 }
 
-export function ForceStrengthChart({ data, className, layoutOverrides }: ForceStrengthChartProps) {
+export function ForceStrengthChart({ data, className, layoutOverrides, onClick }: ForceStrengthChartProps) {
   if (data.length === 0) {
     return <div className="py-8 text-center text-sm text-gray-400">No force data available</div>
   }
@@ -41,6 +42,7 @@ export function ForceStrengthChart({ data, className, layoutOverrides }: ForceSt
         ...layoutOverrides,
       }}
       className={className}
+      onClick={onClick}
     />
   )
 }

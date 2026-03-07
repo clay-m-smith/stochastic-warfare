@@ -15,11 +15,11 @@ export function ScenarioCard({ scenario }: ScenarioCardProps) {
   return (
     <Card onClick={() => navigate(`/scenarios/${scenario.name}`)}>
       <div className="mb-2 flex items-start justify-between">
-        <h3 className="font-semibold text-gray-900">{scenario.display_name || scenario.name}</h3>
+        <h3 className="font-semibold text-gray-900 dark:text-gray-100">{scenario.display_name || scenario.name}</h3>
         <Badge className={eraBadgeColor(scenario.era)}>{eraDisplayName(scenario.era)}</Badge>
       </div>
 
-      <div className="mb-3 flex flex-wrap gap-2 text-xs text-gray-500">
+      <div className="mb-3 flex flex-wrap gap-2 text-xs text-gray-500 dark:text-gray-400">
         {scenario.terrain_type && <span>{scenario.terrain_type}</span>}
         {scenario.duration_hours > 0 && (
           <>
@@ -33,7 +33,7 @@ export function ScenarioCard({ scenario }: ScenarioCardProps) {
 
       <div className="flex flex-wrap gap-1">
         {scenario.sides.map((side) => (
-          <Badge key={side} className="bg-gray-200 text-gray-700">
+          <Badge key={side} className="bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300">
             {side}
           </Badge>
         ))}

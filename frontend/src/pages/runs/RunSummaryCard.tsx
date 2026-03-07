@@ -22,7 +22,7 @@ export function RunSummaryCard({ result }: RunSummaryCardProps) {
             ? 'bg-green-100 text-green-800'
             : victoryStatus === 'draw' || victoryStatus === 'stalemate'
               ? 'bg-yellow-100 text-yellow-800'
-              : 'bg-gray-100 text-gray-800'
+              : 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200'
         }`}
       >
         {winner ? `${winner.toUpperCase()} ${victoryStatus}` : victoryStatus.toUpperCase()}
@@ -34,9 +34,9 @@ export function RunSummaryCard({ result }: RunSummaryCardProps) {
           return (
             <div
               key={side}
-              className={`rounded-lg bg-white p-4 shadow ${SIDE_COLORS[side] ?? 'border-l-4 border-l-gray-400'}`}
+              className={`rounded-lg bg-white dark:bg-gray-800 p-4 shadow ${SIDE_COLORS[side] ?? 'border-l-4 border-l-gray-400'}`}
             >
-              <h3 className="mb-3 text-sm font-semibold uppercase text-gray-500">{side}</h3>
+              <h3 className="mb-3 text-sm font-semibold uppercase text-gray-500 dark:text-gray-400">{side}</h3>
               <div className="grid grid-cols-3 gap-2">
                 <StatCard label="Total" value={sf.total} />
                 <StatCard label="Active" value={sf.active} />

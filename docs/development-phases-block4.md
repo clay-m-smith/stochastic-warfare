@@ -126,9 +126,11 @@ Run every scenario through the full web UI pipeline and fix whatever breaks.
 
 ---
 
-## Phase 38: Map & Chart Enhancements
+## Phase 38: Map & Chart Enhancements — COMPLETE
 
 **Goal**: Bring the tactical map and charts up to the quality level designed in the Block 3 brainstorm. Add FOW toggle, detection circles, elevation shading, cross-chart tick sync, and dark mode.
+
+**Status**: Complete. 35 new tests (13 Python + 22 frontend vitest). 6 new + 57 modified = 63 files. 1 deficit resolved, 2 new cosmetic deficits logged. Descoped: `LAND_COVER_COLORS_DARK` palette, Plotly dark template, engagement arc age model (fade handled in rendering). Already done: destroyed X marker (Phase 35).
 
 **Dependencies**: Phase 37 (bugs must be fixed before polish).
 
@@ -464,7 +466,7 @@ Phase 37 is strictly sequential: fix bugs, wire DEW, then smoke-test everything.
 | Analysis API responses untyped | Phase 34 | 39a |
 | Hardcoded morale/event strings | Phase 34 | 39a |
 | useViewportControls no dedicated test | Phase 35 | 39a |
-| Only ForceStrengthChart shows tick sync | Phase 35 | 38c |
+| ~~Only ForceStrengthChart shows tick sync~~ | Phase 35 | **38 ✅** |
 | Frame capture interval not configurable | Phase 35 | 39b |
 
 **Total**: 15 deficits resolved across Block 4.

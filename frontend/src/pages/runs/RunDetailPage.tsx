@@ -18,7 +18,7 @@ import { NarrativeTab } from './tabs/NarrativeTab'
 import { ResultsTab } from './tabs/ResultsTab'
 
 const STATUS_COLORS: Record<RunStatus, string> = {
-  pending: 'bg-gray-200 text-gray-700',
+  pending: 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300',
   running: 'bg-blue-100 text-blue-800',
   completed: 'bg-green-100 text-green-800',
   failed: 'bg-red-100 text-red-800',
@@ -89,18 +89,18 @@ export function RunDetailPage() {
         <RunDeleteButton runId={runId} />
       </PageHeader>
 
-      <div className="mb-6 grid grid-cols-2 gap-4 text-sm text-gray-600 sm:grid-cols-4">
+      <div className="mb-6 grid grid-cols-2 gap-4 text-sm text-gray-600 dark:text-gray-400 sm:grid-cols-4">
         <div>
-          <span className="font-medium text-gray-500">Seed:</span> {run.seed}
+          <span className="font-medium text-gray-500 dark:text-gray-400">Seed:</span> {run.seed}
         </div>
         <div>
-          <span className="font-medium text-gray-500">Max Ticks:</span> {run.max_ticks}
+          <span className="font-medium text-gray-500 dark:text-gray-400">Max Ticks:</span> {run.max_ticks}
         </div>
         <div>
-          <span className="font-medium text-gray-500">Created:</span> {formatDate(run.created_at)}
+          <span className="font-medium text-gray-500 dark:text-gray-400">Created:</span> {formatDate(run.created_at)}
         </div>
         <div>
-          <span className="font-medium text-gray-500">Completed:</span>{' '}
+          <span className="font-medium text-gray-500 dark:text-gray-400">Completed:</span>{' '}
           {formatDate(run.completed_at)}
         </div>
       </div>
@@ -108,7 +108,7 @@ export function RunDetailPage() {
       {isActive && <RunProgressPanel runId={runId} />}
 
       {run.status === 'failed' && run.error_message && (
-        <div className="mb-6 rounded-md bg-red-50 p-4 text-sm text-red-700">
+        <div className="mb-6 rounded-md bg-red-50 dark:bg-red-900/30 p-4 text-sm text-red-700 dark:text-red-400">
           {run.error_message}
         </div>
       )}

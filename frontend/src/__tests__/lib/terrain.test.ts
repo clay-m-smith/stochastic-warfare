@@ -5,6 +5,7 @@ import {
   getVisibleCellRange,
   LAND_COVER_COLORS,
   LAND_COVER_NAMES,
+  applyElevationShading,
 } from '../../lib/terrain'
 import type { ViewportTransform, TerrainData } from '../../types/map'
 
@@ -49,6 +50,29 @@ describe('LAND_COVER_NAMES', () => {
     for (let code = 0; code <= 14; code++) {
       expect(LAND_COVER_NAMES[code]).toBeDefined()
     }
+  })
+})
+
+describe('applyElevationShading', () => {
+  it('returns brighter color for high elevation', () => {
+    const high = applyElevationShading('#808080', 100, 0, 100)
+    // At max elevation, factor = 1.2, so 128 * 1.2 = 153.6 ≈ 154
+    expect(high).toMatch(/^rgb\(\d+, \d+, \d+\)$/)
+    // Extract R value
+    const r = parseInt(high.match(/\d+/)![0])
+    expect(r).toBeGreaterThan(128) // brighter than base
+  })
+
+  it('returns darker color for low elevation', () => {
+    const low = applyElevationShading('#808080', 0, 0, 100)
+    // At min elevation, factor = 0.8, so 128 * 0.8 = 102.4 ≈ 102
+    const r = parseInt(low.match(/\d+/)![0])
+    expect(r).toBeLessThan(128) // darker than base
+  })
+
+  it('returns base color when min equals max', () => {
+    const result = applyElevationShading('#808080', 50, 50, 50)
+    expect(result).toBe('#808080')
   })
 })
 

@@ -40,17 +40,17 @@ export function RunConfigPage() {
     <div className="mx-auto max-w-xl">
       <PageHeader title="Configure Run" />
 
-      <div className="mb-6 rounded-lg bg-white p-4 shadow">
+      <div className="mb-6 rounded-lg bg-white dark:bg-gray-800 p-4 shadow">
         <div className="mb-2 flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-gray-900">{displayName}</h2>
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{displayName}</h2>
           <Badge className={eraBadgeColor(era)}>{eraDisplayName(era)}</Badge>
         </div>
-        <p className="text-sm text-gray-500">Scenario: {scenarioName}</p>
+        <p className="text-sm text-gray-500 dark:text-gray-400">Scenario: {scenarioName}</p>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-4 rounded-lg bg-white p-4 shadow">
+      <form onSubmit={handleSubmit} className="space-y-4 rounded-lg bg-white dark:bg-gray-800 p-4 shadow">
         <div>
-          <label htmlFor="seed" className="block text-sm font-medium text-gray-700">
+          <label htmlFor="seed" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
             Random Seed
           </label>
           <input
@@ -58,11 +58,11 @@ export function RunConfigPage() {
             type="number"
             value={seed}
             onChange={(e) => setSeed(Number(e.target.value))}
-            className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200"
           />
         </div>
         <div>
-          <label htmlFor="maxTicks" className="block text-sm font-medium text-gray-700">
+          <label htmlFor="maxTicks" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
             Max Ticks
           </label>
           <input
@@ -71,7 +71,7 @@ export function RunConfigPage() {
             value={maxTicks}
             onChange={(e) => setMaxTicks(Number(e.target.value))}
             min={1}
-            className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200"
           />
         </div>
 

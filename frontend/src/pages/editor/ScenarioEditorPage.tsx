@@ -87,9 +87,9 @@ function EditorContent({ initialConfig, scenarioName }: { initialConfig: Record<
 
       {/* Validation errors */}
       {state.validationErrors.length > 0 && (
-        <div className="mt-4 rounded-md bg-red-50 p-4">
-          <h4 className="text-sm font-medium text-red-800">Validation Errors</h4>
-          <ul className="mt-1 list-inside list-disc text-sm text-red-700">
+        <div className="mt-4 rounded-md bg-red-50 dark:bg-red-900/30 p-4">
+          <h4 className="text-sm font-medium text-red-800 dark:text-red-300">Validation Errors</h4>
+          <ul className="mt-1 list-inside list-disc text-sm text-red-700 dark:text-red-400">
             {state.validationErrors.map((err, i) => (
               <li key={i}>{err}</li>
             ))}
@@ -98,11 +98,11 @@ function EditorContent({ initialConfig, scenarioName }: { initialConfig: Record<
       )}
 
       {/* Action bar */}
-      <div className="mt-6 flex gap-3 border-t border-gray-200 pt-4">
+      <div className="mt-6 flex gap-3 border-t border-gray-200 dark:border-gray-700 pt-4">
         <button
           onClick={handleValidate}
           disabled={validating}
-          className="rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+          className="rounded-md border border-gray-300 dark:border-gray-600 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50"
         >
           {validating ? 'Validating...' : 'Validate'}
         </button>
@@ -115,7 +115,7 @@ function EditorContent({ initialConfig, scenarioName }: { initialConfig: Record<
         </button>
         <button
           onClick={handleDownload}
-          className="rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+          className="rounded-md border border-gray-300 dark:border-gray-600 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
         >
           Download YAML
         </button>

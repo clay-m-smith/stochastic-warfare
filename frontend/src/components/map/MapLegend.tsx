@@ -11,14 +11,14 @@ const DOMAIN_SHAPES = [
 
 export function MapLegend() {
   return (
-    <div className="space-y-3 rounded bg-white/90 p-3 text-xs shadow">
+    <div className="space-y-3 rounded bg-white/90 p-3 text-xs shadow dark:bg-gray-800/90 dark:text-gray-200">
       <div>
-        <div className="mb-1 font-semibold text-gray-700">Terrain</div>
+        <div className="mb-1 font-semibold text-gray-700 dark:text-gray-300">Terrain</div>
         <div className="grid grid-cols-2 gap-x-3 gap-y-0.5">
           {TERRAIN_ENTRIES.map((code) => (
             <div key={code} className="flex items-center gap-1">
               <span
-                className="inline-block h-3 w-3 border border-gray-300"
+                className="inline-block h-3 w-3 border border-gray-300 dark:border-gray-600"
                 style={{ backgroundColor: LAND_COVER_COLORS[code] }}
               />
               <span>{LAND_COVER_NAMES[code]}</span>
@@ -28,12 +28,12 @@ export function MapLegend() {
       </div>
 
       <div>
-        <div className="mb-1 font-semibold text-gray-700">Sides</div>
+        <div className="mb-1 font-semibold text-gray-700 dark:text-gray-300">Sides</div>
         <div className="flex gap-3">
           {Object.entries(SIDE_COLORS).map(([side, color]) => (
             <div key={side} className="flex items-center gap-1">
               <span
-                className="inline-block h-3 w-3 rounded-sm border border-gray-300"
+                className="inline-block h-3 w-3 rounded-sm border border-gray-300 dark:border-gray-600"
                 style={{ backgroundColor: color }}
               />
               <span className="capitalize">{side}</span>
@@ -43,7 +43,7 @@ export function MapLegend() {
       </div>
 
       <div>
-        <div className="mb-1 font-semibold text-gray-700">Unit Shapes</div>
+        <div className="mb-1 font-semibold text-gray-700 dark:text-gray-300">Unit Shapes</div>
         <div className="flex gap-3">
           {DOMAIN_SHAPES.map(({ domain, shape }) => (
             <div key={domain} className="flex items-center gap-1">

@@ -42,12 +42,12 @@ export function NarrativeTab({ runId }: NarrativeTabProps) {
       )}
 
       {data?.narrative && (
-        <div className="rounded-lg bg-white p-6 shadow">
-          <div className="whitespace-pre-wrap font-mono text-sm leading-relaxed text-gray-800">
+        <div className="rounded-lg bg-white dark:bg-gray-800 p-6 shadow">
+          <div className="whitespace-pre-wrap font-mono text-sm leading-relaxed text-gray-800 dark:text-gray-200">
             {data.narrative}
           </div>
           {data.tick_count > 0 && (
-            <div className="mt-4 text-xs text-gray-400">
+            <div className="mt-4 text-xs text-gray-400 dark:text-gray-500">
               Covering {data.tick_count} ticks
             </div>
           )}

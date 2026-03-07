@@ -13,9 +13,11 @@ const MORALE_VALUES: Record<string, number> = {
 interface MoraleChartProps {
   data: MoraleChange[]
   className?: string
+  layoutOverrides?: Partial<Plotly.Layout>
+  onClick?: (event: Plotly.PlotMouseEvent) => void
 }
 
-export function MoraleChart({ data, className }: MoraleChartProps) {
+export function MoraleChart({ data, className, layoutOverrides, onClick }: MoraleChartProps) {
   const unitIds = [...new Set(data.map((d) => d.unit_id))]
   const [selectedUnits, setSelectedUnits] = useState<string[]>(() => unitIds.slice(0, 5))
 
@@ -62,7 +64,9 @@ export function MoraleChart({ data, className }: MoraleChartProps) {
             range: [-0.5, 4.5],
           },
           height: 350,
+          ...layoutOverrides,
         }}
+        onClick={onClick}
       />
     </div>
   )

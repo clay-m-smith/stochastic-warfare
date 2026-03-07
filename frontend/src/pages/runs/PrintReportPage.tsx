@@ -27,30 +27,30 @@ export function PrintReportPage() {
 
   return (
     <div className="mx-auto max-w-3xl p-8 print:p-0">
-      <h1 className="mb-4 text-2xl font-bold text-gray-900">
+      <h1 className="mb-4 text-2xl font-bold text-gray-900 dark:text-gray-100">
         Run Report: {run.scenario_name}
       </h1>
 
       <table className="mb-6 w-full text-sm">
         <tbody>
           <tr className="border-b">
-            <td className="py-1 font-medium text-gray-500">Run ID</td>
+            <td className="py-1 font-medium text-gray-500 dark:text-gray-400">Run ID</td>
             <td className="py-1">{run.run_id}</td>
           </tr>
           <tr className="border-b">
-            <td className="py-1 font-medium text-gray-500">Status</td>
+            <td className="py-1 font-medium text-gray-500 dark:text-gray-400">Status</td>
             <td className="py-1">{run.status}</td>
           </tr>
           <tr className="border-b">
-            <td className="py-1 font-medium text-gray-500">Seed</td>
+            <td className="py-1 font-medium text-gray-500 dark:text-gray-400">Seed</td>
             <td className="py-1">{run.seed}</td>
           </tr>
           <tr className="border-b">
-            <td className="py-1 font-medium text-gray-500">Created</td>
+            <td className="py-1 font-medium text-gray-500 dark:text-gray-400">Created</td>
             <td className="py-1">{formatDate(run.created_at)}</td>
           </tr>
           <tr className="border-b">
-            <td className="py-1 font-medium text-gray-500">Completed</td>
+            <td className="py-1 font-medium text-gray-500 dark:text-gray-400">Completed</td>
             <td className="py-1">{formatDate(run.completed_at)}</td>
           </tr>
         </tbody>
@@ -61,18 +61,18 @@ export function PrintReportPage() {
           <h2 className="mb-2 text-lg font-semibold">Summary</h2>
           <div className="mb-4 grid grid-cols-3 gap-4 text-sm">
             <div>
-              <span className="text-gray-500">Ticks: </span>
+              <span className="text-gray-500 dark:text-gray-400">Ticks: </span>
               <span className="font-medium">{result.ticks_executed}</span>
             </div>
             <div>
-              <span className="text-gray-500">Duration: </span>
+              <span className="text-gray-500 dark:text-gray-400">Duration: </span>
               <span className="font-medium">{formatSeconds(result.duration_s)}</span>
             </div>
             <div>
-              <span className="text-gray-500">Victory: </span>
+              <span className="text-gray-500 dark:text-gray-400">Victory: </span>
               <span className="font-medium">{result.victory?.status ?? '—'}</span>
               {result.victory?.winner && (
-                <span className="ml-1 text-gray-600">({result.victory.winner})</span>
+                <span className="ml-1 text-gray-600 dark:text-gray-400">({result.victory.winner})</span>
               )}
             </div>
           </div>
@@ -80,7 +80,7 @@ export function PrintReportPage() {
           <h2 className="mb-2 text-lg font-semibold">Force Composition</h2>
           <table className="mb-6 w-full text-sm">
             <thead>
-              <tr className="border-b text-left text-gray-500">
+              <tr className="border-b text-left text-gray-500 dark:text-gray-400">
                 <th className="pb-1">Side</th>
                 <th className="pb-1">Total</th>
                 <th className="pb-1">Active</th>
@@ -104,7 +104,7 @@ export function PrintReportPage() {
       {narrative && narrative.narrative && (
         <>
           <h2 className="mb-2 text-lg font-semibold">Narrative</h2>
-          <div className="whitespace-pre-wrap text-sm text-gray-700">
+          <div className="whitespace-pre-wrap text-sm text-gray-700 dark:text-gray-300">
             {narrative.narrative}
           </div>
         </>

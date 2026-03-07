@@ -15,34 +15,34 @@ export function GeneralSection({ config, dispatch }: GeneralSectionProps) {
 
   return (
     <section>
-      <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-gray-500">General</h3>
+      <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">General</h3>
       <div className="grid grid-cols-2 gap-4">
         <label className="block">
-          <span className="text-sm text-gray-700">Name</span>
+          <span className="text-sm text-gray-700 dark:text-gray-300">Name</span>
           <input
             type="text"
-            className="mt-1 block w-full rounded border-gray-300 text-sm shadow-sm"
+            className="mt-1 block w-full rounded border-gray-300 text-sm shadow-sm dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200"
             value={(config.name as string) ?? ''}
             onChange={(e) => set(['name'], e.target.value)}
           />
         </label>
 
         <label className="block">
-          <span className="text-sm text-gray-700">Duration (hours)</span>
+          <span className="text-sm text-gray-700 dark:text-gray-300">Duration (hours)</span>
           <input
             type="number"
             min={0.1}
             step={0.5}
-            className="mt-1 block w-full rounded border-gray-300 text-sm shadow-sm"
+            className="mt-1 block w-full rounded border-gray-300 text-sm shadow-sm dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200"
             value={(config.duration_hours as number) ?? 4}
             onChange={(e) => set(['duration_hours'], parseFloat(e.target.value) || 1)}
           />
         </label>
 
         <label className="block">
-          <span className="text-sm text-gray-700">Era</span>
+          <span className="text-sm text-gray-700 dark:text-gray-300">Era</span>
           <select
-            className="mt-1 block w-full rounded border-gray-300 text-sm shadow-sm"
+            className="mt-1 block w-full rounded border-gray-300 text-sm shadow-sm dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200"
             value={(config.era as string) ?? 'modern'}
             onChange={(e) => set(['era'], e.target.value)}
           >
@@ -57,10 +57,10 @@ export function GeneralSection({ config, dispatch }: GeneralSectionProps) {
         </label>
 
         <label className="block">
-          <span className="text-sm text-gray-700">Date</span>
+          <span className="text-sm text-gray-700 dark:text-gray-300">Date</span>
           <input
             type="text"
-            className="mt-1 block w-full rounded border-gray-300 text-sm shadow-sm"
+            className="mt-1 block w-full rounded border-gray-300 text-sm shadow-sm dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200"
             value={(config.date as string) ?? ''}
             onChange={(e) => set(['date'], e.target.value)}
           />

@@ -4,9 +4,11 @@ import { PlotlyChart } from './PlotlyChart'
 interface EngagementTimelineProps {
   data: EngagementPoint[]
   className?: string
+  layoutOverrides?: Partial<Plotly.Layout>
+  onClick?: (event: Plotly.PlotMouseEvent) => void
 }
 
-export function EngagementTimeline({ data, className }: EngagementTimelineProps) {
+export function EngagementTimeline({ data, className, layoutOverrides, onClick }: EngagementTimelineProps) {
   if (data.length === 0) {
     return <div className="py-8 text-center text-sm text-gray-400">No engagement data available</div>
   }
@@ -39,8 +41,10 @@ export function EngagementTimeline({ data, className }: EngagementTimelineProps)
         xaxis: { title: { text: 'Tick' } },
         yaxis: { title: { text: hasRange ? 'Range (m)' : 'Engagement' } },
         height: 350,
+        ...layoutOverrides,
       }}
       className={className}
+      onClick={onClick}
     />
   )
 }

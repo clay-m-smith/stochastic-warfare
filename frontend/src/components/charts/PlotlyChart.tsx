@@ -7,9 +7,10 @@ interface PlotlyChartProps {
   data: Plotly.Data[]
   layout?: Partial<Plotly.Layout>
   className?: string
+  onClick?: (event: Plotly.PlotMouseEvent) => void
 }
 
-export function PlotlyChart({ data, layout, className = '' }: PlotlyChartProps) {
+export function PlotlyChart({ data, layout, className = '', onClick }: PlotlyChartProps) {
   const defaultLayout: Partial<Plotly.Layout> = {
     autosize: true,
     margin: { l: 50, r: 20, t: 30, b: 40 },
@@ -27,6 +28,7 @@ export function PlotlyChart({ data, layout, className = '' }: PlotlyChartProps) 
           config={{ responsive: true, displayModeBar: false }}
           useResizeHandler
           style={{ width: '100%', height: '100%' }}
+          onClick={onClick}
         />
       </Suspense>
     </div>

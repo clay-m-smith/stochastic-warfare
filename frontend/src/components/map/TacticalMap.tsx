@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { MapUnitFrame, ReplayFrame, TerrainData, EngagementArc } from '../../types/map'
 import { useViewportControls } from './useViewportControls'
-import { LAND_COVER_COLORS, worldToScreen, screenToWorld, getVisibleCellRange } from '../../lib/terrain'
+import { LAND_COVER_COLORS, worldToScreen, screenToWorld, getVisibleCellRange, applyElevationShading } from '../../lib/terrain'
 import { drawUnit, hitTestUnit, SIDE_COLORS } from '../../lib/unitRendering'
 import { MapControls } from './MapControls'
 import { MapLegend } from './MapLegend'
@@ -28,6 +28,9 @@ export function TacticalMap({ terrain, frames, engagementArcs = [], onTickChange
   const [showDestroyed, setShowDestroyed] = useState(true)
   const [showEngagements, setShowEngagements] = useState(true)
   const [showTrails, setShowTrails] = useState(false)
+  const [showSensors, setShowSensors] = useState(false)
+  const [showFow, setShowFow] = useState(false)
+  const [fowSide, setFowSide] = useState('')
   const terrainVersionRef = useRef(0)
   const lastTerrainDrawRef = useRef<string>('')
 
@@ -54,6 +57,43 @@ export function TacticalMap({ terrain, frames, engagementArcs = [], onTickChange
   } = usePlayback(frames.length)
 
   const currentFrameData = frames[currentFrame] ?? null
+
+  // Determine available sides and FOW availability
+  const availableSides = useMemo(() => {
+    const sidesSet = new Set<string>()
+    for (const frame of frames) {
+      if (frame.detected) {
+        for (const side of Object.keys(frame.detected)) {
+          sidesSet.add(side)
+        }
+      }
+    }
+    return Array.from(sidesSet).sort()
+  }, [frames])
+
+  const fowAvailable = availableSides.length > 0
+
+  // Auto-select first side when FOW becomes available
+  useEffect(() => {
+    if (fowAvailable && !fowSide && availableSides.length > 0) {
+      setFowSide(availableSides[0]!)
+    }
+  }, [fowAvailable, fowSide, availableSides])
+
+  // Memoize elevation min/max
+  const elevRange = useMemo(() => {
+    const elev = terrain.elevation
+    if (!elev || elev.length === 0) return { min: 0, max: 0 }
+    let min = Infinity
+    let max = -Infinity
+    for (const row of elev) {
+      for (const v of row) {
+        if (v < min) min = v
+        if (v > max) max = v
+      }
+    }
+    return { min, max }
+  }, [terrain.elevation])
 
   // Keyboard shortcuts for playback
   const mapShortcuts: ShortcutConfig[] = useMemo(
@@ -126,6 +166,7 @@ export function TacticalMap({ terrain, frames, engagementArcs = [], onTickChange
       const cs = terrain.cell_size
       const ox = terrain.origin_easting
       const oy = terrain.origin_northing
+      const hasElev = terrain.elevation && terrain.elevation.length > 0 && elevRange.max > elevRange.min
 
       for (let row = minRow; row <= maxRow; row++) {
         for (let col = minCol; col <= maxCol; col++) {
@@ -134,7 +175,12 @@ export function TacticalMap({ terrain, frames, engagementArcs = [], onTickChange
           const wy = oy + row * cs
           const tl = worldToScreen(wx, wy + cs, transform, canvasSize.height)
           const br = worldToScreen(wx + cs, wy, transform, canvasSize.height)
-          tctx.fillStyle = LAND_COVER_COLORS[code] ?? '#F5DEB3'
+          let color = LAND_COVER_COLORS[code] ?? '#F5DEB3'
+          if (hasElev) {
+            const elev = terrain.elevation![row]?.[col] ?? 0
+            color = applyElevationShading(color, elev, elevRange.min, elevRange.max)
+          }
+          tctx.fillStyle = color
           tctx.fillRect(tl.sx, tl.sy, br.sx - tl.sx, br.sy - tl.sy)
         }
       }
@@ -145,7 +191,7 @@ export function TacticalMap({ terrain, frames, engagementArcs = [], onTickChange
     }
 
     terrainVersionRef.current++
-  }, [transform, canvasSize, terrain])
+  }, [transform, canvasSize, terrain, elevRange])
 
   // Main render loop
   useEffect(() => {
@@ -210,13 +256,16 @@ export function TacticalMap({ terrain, frames, engagementArcs = [], onTickChange
       }
     }
 
-    // Draw engagement arcs
+    // Draw engagement arcs with fade
     if (showEngagements && currentFrameData) {
       const tick = currentFrameData.tick
+      const fadeWindow = 10
       const visibleArcs = engagementArcs.filter(
-        (a) => Math.abs(a.tick - tick) <= 5,
+        (a) => Math.abs(a.tick - tick) <= fadeWindow,
       )
       for (const arc of visibleArcs) {
+        const opacity = 1 - Math.abs(tick - arc.tick) / fadeWindow
+        ctx2d.globalAlpha = opacity
         const from = worldToScreen(arc.attackerX, arc.attackerY, transform, canvasSize.height)
         const to = worldToScreen(arc.targetX, arc.targetY, transform, canvasSize.height)
         ctx2d.beginPath()
@@ -227,21 +276,44 @@ export function TacticalMap({ terrain, frames, engagementArcs = [], onTickChange
         ctx2d.setLineDash(arc.hit ? [] : [3, 3])
         ctx2d.stroke()
         ctx2d.setLineDash([])
+        ctx2d.globalAlpha = 1.0
       }
     }
+
+    // Build FOW detection set for filtering
+    const detectedSet = showFow && fowSide && currentFrameData?.detected
+      ? new Set(currentFrameData.detected[fowSide] ?? [])
+      : null
 
     // Draw units
     if (currentFrameData) {
       for (const unit of currentFrameData.units) {
         if (!showDestroyed && unit.status >= 3) continue
+        if (detectedSet && unit.side !== fowSide && !detectedSet.has(unit.id)) continue
         const isSelected = selectedUnit?.id === unit.id
         drawUnit(ctx2d, unit, transform, canvasSize.height, isSelected, showLabels)
       }
     }
+
+    // Draw sensor range circle for selected unit
+    if (showSensors && selectedUnit && (selectedUnit.sensor_range ?? 0) > 0) {
+      const { sx, sy } = worldToScreen(selectedUnit.x, selectedUnit.y, transform, canvasSize.height)
+      const radius = selectedUnit.sensor_range! * transform.scale
+      ctx2d.beginPath()
+      ctx2d.arc(sx, sy, radius, 0, Math.PI * 2)
+      ctx2d.strokeStyle = SIDE_COLORS[selectedUnit.side] ?? '#999'
+      ctx2d.lineWidth = 1
+      ctx2d.globalAlpha = 0.3
+      ctx2d.setLineDash([5, 5])
+      ctx2d.stroke()
+      ctx2d.setLineDash([])
+      ctx2d.globalAlpha = 1.0
+    }
   }, [
     currentFrame, currentFrameData, transform, canvasSize,
     showLabels, showDestroyed, showEngagements, showTrails,
-    terrain.objectives, frames, engagementArcs, selectedUnit,
+    showSensors, showFow, fowSide, selectedUnit,
+    terrain.objectives, frames, engagementArcs,
     // eslint-disable-next-line react-hooks/exhaustive-deps
     terrainVersionRef.current,
   ])
@@ -296,6 +368,14 @@ export function TacticalMap({ terrain, frames, engagementArcs = [], onTickChange
         onToggleEngagements={() => setShowEngagements((v) => !v)}
         showTrails={showTrails}
         onToggleTrails={() => setShowTrails((v) => !v)}
+        showSensors={showSensors}
+        onToggleSensors={() => setShowSensors((v) => !v)}
+        showFow={showFow}
+        onToggleFow={() => setShowFow((v) => !v)}
+        fowSide={fowSide}
+        onChangeFowSide={setFowSide}
+        availableSides={availableSides}
+        fowAvailable={fowAvailable}
         onZoomToFit={handleZoomToFit}
         mouseWorldX={mouseWorld?.x ?? null}
         mouseWorldY={mouseWorld?.y ?? null}

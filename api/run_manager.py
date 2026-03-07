@@ -289,6 +289,13 @@ class RunManager:
                 terrain["origin_northing"] = float(extent[1])
                 terrain["extent"] = [float(v) for v in extent]
 
+        if heightmap is not None:
+            raw = getattr(heightmap, "_data", None)
+            if raw is not None:
+                import numpy as np
+                if isinstance(raw, np.ndarray):
+                    terrain["elevation"] = raw.tolist()
+
         classification = getattr(ctx, "classification", None)
         if classification is not None:
             state = classification.get_state()
@@ -317,7 +324,7 @@ class RunManager:
         units = []
         for side, unit_list in ctx.units_by_side.items():
             for u in unit_list:
-                units.append({
+                unit_entry: dict[str, Any] = {
                     "id": str(u.entity_id),
                     "side": side,
                     "x": float(u.position.easting),
@@ -326,8 +333,33 @@ class RunManager:
                     "s": int(u.status.value) if hasattr(u.status, "value") else 0,
                     "h": round(float(getattr(u, "heading", 0.0)), 1),
                     "t": str(getattr(u, "unit_type", "")),
-                })
-        return {"tick": tick, "units": units}
+                }
+                # Sensor range (Phase 38b)
+                unit_sensors = getattr(ctx, "unit_sensors", {})
+                sensors = unit_sensors.get(str(u.entity_id), [])
+                if sensors:
+                    max_range = max(
+                        (getattr(s, "effective_range", 0.0) for s in sensors),
+                        default=0.0,
+                    )
+                    if max_range > 0:
+                        unit_entry["sr"] = round(max_range, 0)
+                units.append(unit_entry)
+        # FOW detection data (Phase 38a)
+        detected: dict[str, list[str]] = {}
+        fow = getattr(ctx, "fog_of_war", None)
+        if fow is not None:
+            for side in ctx.units_by_side:
+                try:
+                    wv = fow.get_world_view(side)
+                    detected[side] = sorted(wv.contacts.keys())
+                except Exception:
+                    pass
+
+        result: dict[str, Any] = {"tick": tick, "units": units}
+        if detected:
+            result["det"] = detected
+        return result
 
     # ── Batch ────────────────────────────────────────────────────────
 

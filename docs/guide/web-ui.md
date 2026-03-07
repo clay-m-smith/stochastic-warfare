@@ -44,6 +44,10 @@ The sidebar provides access to four main sections:
 
 The sidebar shows a connection indicator (green dot = connected) and counts of available scenarios and units. On mobile screens, the sidebar collapses into a hamburger menu.
 
+### Dark Mode
+
+A theme toggle button in the sidebar footer switches between light and dark mode. The preference is saved to `localStorage` and persists across sessions. Dark mode applies to all pages, components, and the tactical map.
+
 ---
 
 ## Scenario Browser
@@ -152,6 +156,8 @@ Five interactive Plotly charts, all supporting zoom, pan, hover tooltips, and le
 | **Event Activity** | Histogram of events per tick (operational tempo) |
 | **Comparison** | Side-by-side metrics (when comparing two runs) |
 
+**Tick sync**: When the tactical map is playing back at a specific tick, all four charts show a vertical reference line at that tick. Clicking any data point on a chart sets the `?tick=N` URL parameter, which the map reads to jump to that tick -- bidirectional sync between charts and map.
+
 ### Narrative
 
 A text narrative of the battle, generated from simulation events. Controls:
@@ -252,7 +258,7 @@ The tactical map provides a 2D spatial visualization of a completed simulation r
 
 ### Terrain
 
-The map renders the terrain grid with cells colored by land cover type (desert/tan, forest/green, urban/gray, water/blue, mountain/brown). Objective zones are shown as highlighted circles.
+The map renders the terrain grid with cells colored by land cover type (desert/tan, forest/green, urban/gray, water/blue, mountain/brown). Objective zones are shown as highlighted circles. When elevation data is available, cells are brightness-modulated -- higher elevations appear slightly brighter, lower elevations slightly darker -- giving a visual sense of terrain relief.
 
 ### Units
 
@@ -263,12 +269,39 @@ Units are displayed as side-colored markers (blue/red) with domain-specific shap
 - **Triangle** -- aircraft
 - **Pentagon** -- naval
 
-Destroyed units are shown with reduced opacity. Click a unit to see details in the sidebar (type, health, morale, ammunition, position).
+Destroyed units are shown with reduced opacity and a red X overlay. Click a unit to see details in the sidebar (type, health, morale, ammunition, position).
 
 ### Overlays
 
-- **Engagement arcs** -- lines from attacker to target, colored by result (hit/miss)
+- **Engagement arcs** -- lines from attacker to target, colored by result (hit/miss). Arcs fade smoothly over a 10-tick window instead of appearing/disappearing instantly.
 - **Movement trails** -- fading polylines showing recent unit paths
+- **Sensor circles** -- when the "Sensors" toggle is on and a unit is selected, a dashed semi-transparent circle shows the unit's maximum sensor range
+
+### Map Controls
+
+The control bar above the map provides several toggles:
+
+| Toggle | Effect |
+|--------|--------|
+| **Labels** | Show/hide unit ID labels |
+| **Destroyed** | Show/hide destroyed units |
+| **Engagements** | Show/hide engagement arcs |
+| **Trails** | Show/hide movement trails |
+| **Sensors** | Show/hide sensor range circle for the selected unit |
+| **FOW** | Enable Fog of War view (see below) |
+| **Fit** | Reset zoom to fit all units |
+
+Mouse world coordinates (easting/northing) are displayed when hovering over the map.
+
+### Fog of War (FOW)
+
+The FOW toggle enables a "what does this side see?" view. When active:
+
+1. A side selector dropdown appears (e.g., Blue / Red)
+2. Only units that the selected side has detected are visible -- undetected enemy units are hidden entirely
+3. Friendly units (same side as selected) are always shown
+
+This uses the simulation's actual detection data from the `FogOfWarManager`, showing what each side believed at each tick. The FOW toggle is disabled for runs that don't have detection data (e.g., older runs or scenarios without fog of war).
 
 ### Playback Controls
 

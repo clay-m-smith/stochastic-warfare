@@ -203,8 +203,8 @@ The API layer imports `stochastic_warfare` as a library. It never modifies engin
 A React + TypeScript single-page application built with Vite:
 
 - **TanStack Query** for API data fetching and caching
-- **Plotly.js** for interactive charts (force strength, engagements, morale, tempo)
-- **Canvas 2D** for the tactical map (terrain rendering, unit positions, playback)
+- **Plotly.js** for interactive charts (force strength, engagements, morale, tempo) with cross-chart tick sync
+- **Canvas 2D** for the tactical map (terrain with elevation shading, unit positions, FOW filtering, sensor circles, engagement fade, playback)
 - **React Router** for deep-linkable pages
 - **Headless UI** for accessible modals, dropdowns, and menus
 

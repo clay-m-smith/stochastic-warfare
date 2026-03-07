@@ -9,11 +9,13 @@ export interface MapUnitFrame {
   status: number
   heading: number
   type: string
+  sensor_range?: number
 }
 
 export interface ReplayFrame {
   tick: number
   units: MapUnitFrame[]
+  detected?: Record<string, string[]>
 }
 
 export interface FramesData {
@@ -35,6 +37,7 @@ export interface TerrainData {
   origin_easting: number
   origin_northing: number
   land_cover: number[][]
+  elevation?: number[][]
   objectives: ObjectiveInfo[]
   extent: number[]
 }

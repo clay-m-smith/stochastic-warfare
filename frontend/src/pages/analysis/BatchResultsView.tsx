@@ -10,11 +10,11 @@ export function BatchResultsView({ metrics }: BatchResultsViewProps) {
   return (
     <div className="space-y-6">
       <div>
-        <h3 className="mb-3 text-lg font-semibold text-gray-900">Distribution</h3>
+        <h3 className="mb-3 text-lg font-semibold text-gray-900 dark:text-gray-100">Distribution</h3>
         <HistogramGrid metrics={metrics} />
       </div>
       <div>
-        <h3 className="mb-3 text-lg font-semibold text-gray-900">Statistics</h3>
+        <h3 className="mb-3 text-lg font-semibold text-gray-900 dark:text-gray-100">Statistics</h3>
         <StatisticsTable metrics={metrics} />
       </div>
     </div>

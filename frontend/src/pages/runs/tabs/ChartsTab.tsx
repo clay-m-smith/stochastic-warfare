@@ -1,3 +1,4 @@
+import { useCallback } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { EventActivityChart } from '../../../components/charts/EventActivityChart'
 import { EngagementTimeline } from '../../../components/charts/EngagementTimeline'
@@ -20,9 +21,23 @@ interface ChartsTabProps {
 }
 
 export function ChartsTab({ runId, result }: ChartsTabProps) {
-  const [searchParams] = useSearchParams()
+  const [searchParams, setSearchParams] = useSearchParams()
   const currentTick = searchParams.get('tick') ? Number(searchParams.get('tick')) : null
   const { data: eventsData, isLoading } = useRunEvents(runId, { limit: 10000 })
+
+  const handleChartClick = useCallback(
+    (event: Plotly.PlotMouseEvent) => {
+      const point = event.points?.[0]
+      if (point && typeof point.x === 'number') {
+        setSearchParams((prev) => {
+          const next = new URLSearchParams(prev)
+          next.set('tick', String(Math.round(point.x as number)))
+          return next
+        })
+      }
+    },
+    [setSearchParams],
+  )
 
   if (isLoading) return <LoadingSpinner />
 
@@ -51,12 +66,14 @@ export function ChartsTab({ runId, result }: ChartsTabProps) {
       ]
     : []
 
+  const tickOverrides = { shapes: tickMarkerShapes }
+
   return (
     <div className="space-y-6">
-      <ForceStrengthChart data={forceData} layoutOverrides={{ shapes: tickMarkerShapes }} />
-      <EngagementTimeline data={engagementData} />
-      <EventActivityChart data={activityData} />
-      <MoraleChart data={moraleData} />
+      <ForceStrengthChart data={forceData} layoutOverrides={tickOverrides} onClick={handleChartClick} />
+      <EngagementTimeline data={engagementData} layoutOverrides={tickOverrides} onClick={handleChartClick} />
+      <EventActivityChart data={activityData} layoutOverrides={tickOverrides} onClick={handleChartClick} />
+      <MoraleChart data={moraleData} layoutOverrides={tickOverrides} onClick={handleChartClick} />
     </div>
   )
 }

@@ -10,7 +10,7 @@ interface ResultsTabProps {
 
 export function ResultsTab({ run, result }: ResultsTabProps) {
   if (!result) {
-    return <div className="py-8 text-center text-sm text-gray-400">No result data available</div>
+    return <div className="py-8 text-center text-sm text-gray-400 dark:text-gray-500">No result data available</div>
   }
 
   return (

@@ -11,6 +11,14 @@ const defaultProps = {
   onToggleEngagements: vi.fn(),
   showTrails: false,
   onToggleTrails: vi.fn(),
+  showSensors: false,
+  onToggleSensors: vi.fn(),
+  showFow: false,
+  onToggleFow: vi.fn(),
+  fowSide: 'blue',
+  onChangeFowSide: vi.fn(),
+  availableSides: ['blue', 'red'],
+  fowAvailable: true,
   onZoomToFit: vi.fn(),
   mouseWorldX: 1234.5,
   mouseWorldY: 5678.9,
@@ -23,6 +31,8 @@ describe('MapControls', () => {
     expect(screen.getByText('Destroyed')).toBeInTheDocument()
     expect(screen.getByText('Engagements')).toBeInTheDocument()
     expect(screen.getByText('Trails')).toBeInTheDocument()
+    expect(screen.getByText('Sensors')).toBeInTheDocument()
+    expect(screen.getByText('FOW')).toBeInTheDocument()
   })
 
   it('renders Fit button', () => {

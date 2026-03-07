@@ -41,9 +41,9 @@ export function RunProgressPanel({ runId }: RunProgressPanelProps) {
   const connInfo = CONNECTION_LABELS[connectionState] ?? CONNECTION_LABELS.connected!
 
   return (
-    <div className="space-y-4 rounded-lg bg-white p-6 shadow">
+    <div className="space-y-4 rounded-lg bg-white dark:bg-gray-800 p-6 shadow">
       <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold text-gray-900">Live Progress</h2>
+        <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Live Progress</h2>
         <span className={`inline-flex items-center gap-1 text-xs ${connInfo!.textClass}`}>
           <span className={`inline-block h-2 w-2 rounded-full ${connInfo!.dotClass}`} />
           {connInfo!.text}
@@ -52,18 +52,18 @@ export function RunProgressPanel({ runId }: RunProgressPanelProps) {
 
       <ProgressBar value={tick} max={maxTicks} label={`Tick ${tick} of ${maxTicks}`} />
 
-      <div className="flex gap-6 text-sm text-gray-600">
+      <div className="flex gap-6 text-sm text-gray-600 dark:text-gray-400">
         <span>Elapsed: {formatSeconds(elapsed)}</span>
       </div>
 
       {activeUnits != null && (
         <div>
-          <h3 className="mb-2 text-sm font-medium text-gray-500">Active Units</h3>
+          <h3 className="mb-2 text-sm font-medium text-gray-500 dark:text-gray-400">Active Units</h3>
           <div className="flex gap-4">
             {Object.entries(activeUnits).map(([side, count]) => (
               <div key={side} className="text-sm">
-                <span className="font-medium text-gray-700">{side}:</span>{' '}
-                <span className="text-gray-600">{count}</span>
+                <span className="font-medium text-gray-700 dark:text-gray-300">{side}:</span>{' '}
+                <span className="text-gray-600 dark:text-gray-400">{count}</span>
               </div>
             ))}
           </div>
@@ -71,7 +71,7 @@ export function RunProgressPanel({ runId }: RunProgressPanelProps) {
       )}
 
       {latestMessage?.type === 'error' && (
-        <div className="rounded-md bg-red-50 p-3 text-sm text-red-700">
+        <div className="rounded-md bg-red-50 dark:bg-red-900/30 p-3 text-sm text-red-700 dark:text-red-400">
           {latestMessage.message ?? 'An error occurred'}
         </div>
       )}

@@ -39,11 +39,11 @@ export function SweepPanel() {
 
   return (
     <div className="space-y-6">
-      <div className="rounded-lg bg-white p-6 shadow">
-        <h2 className="mb-4 text-lg font-semibold text-gray-900">Sensitivity Sweep</h2>
+      <div className="rounded-lg bg-white dark:bg-gray-800 p-6 shadow">
+        <h2 className="mb-4 text-lg font-semibold text-gray-900 dark:text-gray-100">Sensitivity Sweep</h2>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">Scenario</label>
+            <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Scenario</label>
             <Select
               value={scenario}
               onChange={setScenario}
@@ -51,41 +51,41 @@ export function SweepPanel() {
             />
           </div>
           <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">Parameter Name</label>
+            <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Parameter Name</label>
             <input
               type="text"
               value={paramName}
               onChange={(e) => setParamName(e.target.value)}
               placeholder="e.g. max_detection_range"
-              className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+              className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200"
             />
           </div>
           <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">Values (comma-separated)</label>
+            <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Values (comma-separated)</label>
             <input
               type="text"
               value={valuesStr}
               onChange={(e) => setValuesStr(e.target.value)}
               placeholder="e.g. 100, 500, 1000, 2000"
-              className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+              className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200"
             />
           </div>
           <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">Iterations</label>
+            <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Iterations</label>
             <input
               type="number"
               value={numIterations}
               onChange={(e) => setNumIterations(Number(e.target.value))}
-              className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+              className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200"
             />
           </div>
           <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">Max Ticks</label>
+            <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Max Ticks</label>
             <input
               type="number"
               value={maxTicks}
               onChange={(e) => setMaxTicks(Number(e.target.value))}
-              className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+              className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200"
             />
           </div>
         </div>

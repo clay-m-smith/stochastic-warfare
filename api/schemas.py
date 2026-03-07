@@ -173,6 +173,7 @@ class MapUnitFrame(BaseModel):
     status: int = 0
     heading: float = 0.0
     type: str = ""
+    sensor_range: float = 0.0
 
 
 class ReplayFrame(BaseModel):
@@ -180,6 +181,7 @@ class ReplayFrame(BaseModel):
 
     tick: int
     units: list[MapUnitFrame] = Field(default_factory=list)
+    detected: dict[str, list[str]] = Field(default_factory=dict)
 
 
 class FramesResponse(BaseModel):
@@ -207,6 +209,7 @@ class TerrainResponse(BaseModel):
     origin_easting: float = 0.0
     origin_northing: float = 0.0
     land_cover: list[list[int]] = Field(default_factory=list)
+    elevation: list[list[float]] = Field(default_factory=list)
     objectives: list[ObjectiveInfo] = Field(default_factory=list)
     extent: list[float] = Field(default_factory=list)
 

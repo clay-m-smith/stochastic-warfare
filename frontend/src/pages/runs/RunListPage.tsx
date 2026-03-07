@@ -9,7 +9,7 @@ import { formatDate } from '../../lib/format'
 import type { RunStatus } from '../../types/api'
 
 const STATUS_COLORS: Record<RunStatus, string> = {
-  pending: 'bg-gray-200 text-gray-700',
+  pending: 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300',
   running: 'bg-blue-100 text-blue-800',
   completed: 'bg-green-100 text-green-800',
   failed: 'bg-red-100 text-red-800',
@@ -38,10 +38,10 @@ export function RunListPage() {
       )}
 
       {runs && runs.length > 0 && (
-        <div className="overflow-x-auto rounded-lg bg-white shadow">
+        <div className="overflow-x-auto rounded-lg bg-white dark:bg-gray-800 shadow">
           <table className="min-w-full text-sm">
             <thead>
-              <tr className="border-b border-gray-200 text-left text-gray-500">
+              <tr className="border-b border-gray-200 dark:border-gray-700 text-left text-gray-500 dark:text-gray-400">
                 <th className="px-4 py-3 font-medium">Scenario</th>
                 <th className="px-4 py-3 font-medium">Seed</th>
                 <th className="px-4 py-3 font-medium">Status</th>
@@ -53,16 +53,16 @@ export function RunListPage() {
               {runs.map((run) => (
                 <tr
                   key={run.run_id}
-                  className="cursor-pointer border-b border-gray-100 hover:bg-gray-50"
+                  className="cursor-pointer border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700"
                   onClick={() => navigate(`/runs/${run.run_id}`)}
                 >
-                  <td className="px-4 py-3 font-medium text-gray-900">{run.scenario_name}</td>
-                  <td className="px-4 py-3 text-gray-600">{run.seed}</td>
+                  <td className="px-4 py-3 font-medium text-gray-900 dark:text-gray-100">{run.scenario_name}</td>
+                  <td className="px-4 py-3 text-gray-600 dark:text-gray-400">{run.seed}</td>
                   <td className="px-4 py-3">
                     <Badge className={STATUS_COLORS[run.status]}>{run.status}</Badge>
                   </td>
-                  <td className="px-4 py-3 text-gray-600">{formatDate(run.created_at)}</td>
-                  <td className="px-4 py-3 text-gray-600">{formatDate(run.completed_at)}</td>
+                  <td className="px-4 py-3 text-gray-600 dark:text-gray-400">{formatDate(run.created_at)}</td>
+                  <td className="px-4 py-3 text-gray-600 dark:text-gray-400">{formatDate(run.completed_at)}</td>
                 </tr>
               ))}
             </tbody>

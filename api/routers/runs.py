@@ -253,6 +253,7 @@ async def get_run_terrain(run_id: str, db: Database = Depends(get_db)) -> Terrai
         origin_easting=data.get("origin_easting", 0.0),
         origin_northing=data.get("origin_northing", 0.0),
         land_cover=data.get("land_cover", []),
+        elevation=data.get("elevation", []),
         objectives=objectives,
         extent=data.get("extent", []),
     )
@@ -292,9 +293,11 @@ async def get_run_frames(
                     status=u.get("s", 0),
                     heading=u.get("h", 0),
                     type=u.get("t", ""),
+                    sensor_range=u.get("sr", 0.0),
                 )
                 for u in f.get("units", [])
             ],
+            detected=f.get("det", {}),
         )
         for f in filtered
     ]

@@ -30,7 +30,7 @@ export function FullscreenMapPage() {
         <Link to={`/runs/${runId}?tab=map`} className="hover:underline">
           &larr; Back to run
         </Link>
-        <span className="text-gray-400">Fullscreen Map — Run {runId}</span>
+        <span className="text-gray-400 dark:text-gray-500">Fullscreen Map — Run {runId}</span>
       </div>
       <div className="flex-1">
         <TacticalMap

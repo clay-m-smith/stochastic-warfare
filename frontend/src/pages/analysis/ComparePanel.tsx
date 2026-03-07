@@ -50,11 +50,11 @@ export function ComparePanel() {
 
   return (
     <div className="space-y-6">
-      <div className="rounded-lg bg-white p-6 shadow">
-        <h2 className="mb-4 text-lg font-semibold text-gray-900">A/B Comparison</h2>
+      <div className="rounded-lg bg-white dark:bg-gray-800 p-6 shadow">
+        <h2 className="mb-4 text-lg font-semibold text-gray-900 dark:text-gray-100">A/B Comparison</h2>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">Scenario</label>
+            <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Scenario</label>
             <Select
               value={scenario}
               onChange={setScenario}
@@ -62,57 +62,57 @@ export function ComparePanel() {
             />
           </div>
           <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">Iterations</label>
+            <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Iterations</label>
             <input
               type="number"
               value={numIterations}
               onChange={(e) => setNumIterations(Number(e.target.value))}
-              className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+              className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200"
             />
           </div>
           <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">Label A</label>
+            <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Label A</label>
             <input
               type="text"
               value={labelA}
               onChange={(e) => setLabelA(e.target.value)}
-              className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+              className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200"
             />
           </div>
           <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">Label B</label>
+            <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Label B</label>
             <input
               type="text"
               value={labelB}
               onChange={(e) => setLabelB(e.target.value)}
-              className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+              className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200"
             />
           </div>
           <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">Overrides A (JSON)</label>
+            <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Overrides A (JSON)</label>
             <textarea
               value={overridesA}
               onChange={(e) => setOverridesA(e.target.value)}
               rows={3}
-              className="w-full rounded-md border border-gray-300 px-3 py-2 font-mono text-sm"
+              className="w-full rounded-md border border-gray-300 px-3 py-2 font-mono text-sm dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200"
             />
           </div>
           <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">Overrides B (JSON)</label>
+            <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Overrides B (JSON)</label>
             <textarea
               value={overridesB}
               onChange={(e) => setOverridesB(e.target.value)}
               rows={3}
-              className="w-full rounded-md border border-gray-300 px-3 py-2 font-mono text-sm"
+              className="w-full rounded-md border border-gray-300 px-3 py-2 font-mono text-sm dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200"
             />
           </div>
           <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">Max Ticks</label>
+            <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Max Ticks</label>
             <input
               type="number"
               value={maxTicks}
               onChange={(e) => setMaxTicks(Number(e.target.value))}
-              className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+              className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200"
             />
           </div>
         </div>

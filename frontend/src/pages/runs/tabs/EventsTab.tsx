@@ -32,9 +32,9 @@ export function EventsTab({ runId }: EventsTabProps) {
             setEventType(e.target.value)
             setOffset(0)
           }}
-          className="rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+          className="rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200"
         />
-        <span className="text-sm text-gray-500">
+        <span className="text-sm text-gray-500 dark:text-gray-400">
           {total} total events
         </span>
       </div>
@@ -46,10 +46,10 @@ export function EventsTab({ runId }: EventsTabProps) {
       )}
 
       {events.length > 0 && (
-        <div className="overflow-x-auto rounded-lg bg-white shadow">
+        <div className="overflow-x-auto rounded-lg bg-white dark:bg-gray-800 shadow">
           <table className="min-w-full text-sm">
             <thead>
-              <tr className="border-b border-gray-200 text-left text-gray-500">
+              <tr className="border-b border-gray-200 dark:border-gray-700 text-left text-gray-500 dark:text-gray-400">
                 <th className="px-4 py-3 font-medium">Tick</th>
                 <th className="px-4 py-3 font-medium">Type</th>
                 <th className="px-4 py-3 font-medium">Source</th>
@@ -58,11 +58,11 @@ export function EventsTab({ runId }: EventsTabProps) {
             </thead>
             <tbody>
               {events.map((ev, i) => (
-                <tr key={`${ev.tick}-${i}`} className="border-b border-gray-100">
-                  <td className="px-4 py-3 text-gray-600">{ev.tick}</td>
-                  <td className="px-4 py-3 font-mono text-xs text-gray-900">{ev.event_type}</td>
-                  <td className="px-4 py-3 text-gray-600">{ev.source}</td>
-                  <td className="max-w-md truncate px-4 py-3 font-mono text-xs text-gray-500">
+                <tr key={`${ev.tick}-${i}`} className="border-b border-gray-100 dark:border-gray-700">
+                  <td className="px-4 py-3 text-gray-600 dark:text-gray-400">{ev.tick}</td>
+                  <td className="px-4 py-3 font-mono text-xs text-gray-900 dark:text-gray-100">{ev.event_type}</td>
+                  <td className="px-4 py-3 text-gray-600 dark:text-gray-400">{ev.source}</td>
+                  <td className="max-w-md truncate px-4 py-3 font-mono text-xs text-gray-500 dark:text-gray-400">
                     {JSON.stringify(ev.data)}
                   </td>
                 </tr>
@@ -77,17 +77,17 @@ export function EventsTab({ runId }: EventsTabProps) {
           <button
             disabled={offset === 0}
             onClick={() => setOffset(Math.max(0, offset - PAGE_SIZE))}
-            className="rounded-md border border-gray-300 px-3 py-2 text-sm disabled:opacity-50"
+            className="rounded-md border border-gray-300 dark:border-gray-600 px-3 py-2 text-sm dark:text-gray-200 disabled:opacity-50"
           >
             Previous
           </button>
-          <span className="text-sm text-gray-500">
+          <span className="text-sm text-gray-500 dark:text-gray-400">
             {offset + 1}–{Math.min(offset + PAGE_SIZE, total)} of {total}
           </span>
           <button
             disabled={offset + PAGE_SIZE >= total}
             onClick={() => setOffset(offset + PAGE_SIZE)}
-            className="rounded-md border border-gray-300 px-3 py-2 text-sm disabled:opacity-50"
+            className="rounded-md border border-gray-300 dark:border-gray-600 px-3 py-2 text-sm dark:text-gray-200 disabled:opacity-50"
           >
             Next
           </button>

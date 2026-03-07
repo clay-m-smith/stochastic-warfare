@@ -24,12 +24,12 @@ interface UnitDetailSidebarProps {
 
 export function UnitDetailSidebar({ unit, onClose }: UnitDetailSidebarProps) {
   return (
-    <div className="w-56 rounded bg-white p-3 text-sm shadow-lg" data-testid="unit-sidebar">
+    <div className="w-56 rounded bg-white p-3 text-sm shadow-lg dark:bg-gray-800 dark:text-gray-200" data-testid="unit-sidebar">
       <div className="mb-2 flex items-center justify-between">
         <span className="font-semibold">{unit.type || unit.id}</span>
         <button
           onClick={onClose}
-          className="text-gray-400 hover:text-gray-600"
+          className="text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
           aria-label="Close unit detail"
         >
           x
@@ -51,7 +51,7 @@ export function UnitDetailSidebar({ unit, onClose }: UnitDetailSidebarProps) {
 function Row({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex justify-between">
-      <dt className="text-gray-500">{label}</dt>
+      <dt className="text-gray-500 dark:text-gray-400">{label}</dt>
       <dd className="font-mono">{value}</dd>
     </div>
   )

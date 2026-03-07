@@ -36,7 +36,7 @@ uv run python -c "import stochastic_warfare; print('OK')"
 ## Running the Test Suite
 
 ```bash
-uv run python -m pytest --tb=short -q           # standard suite (~7,500 tests)
+uv run python -m pytest --tb=short -q           # standard suite (~7,550 tests)
 uv run python -m pytest -m slow --tb=short -q   # 1000-run Monte Carlo only
 ```
 

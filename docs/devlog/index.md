@@ -49,7 +49,7 @@ Rolling record of implementation decisions, changes, and lessons learned across 
 | 36 | Scenario Tweaker & Polish | **Complete** | [phase-36.md](phase-36.md) |
 | | | | |
 | 37 | Integration Fixes & E2E Validation | **Complete** | [phase-37.md](phase-37.md) |
-| 38 | Map & Chart Enhancements | Planned | |
+| 38 | Map & Chart Enhancements | **Complete** | [phase-38.md](phase-38.md) |
 | 39 | Quality, Performance & Packaging | Planned | |
 
 ## Post-MVP Refinement Index
@@ -189,11 +189,13 @@ Known limitations and deferred improvements logged during implementation. Review
 | 35 | Frame data uses compact keys in storage but API expands to full names — slight redundancy | [phase-35.md — Known Limitations](phase-35.md#known-limitations) |
 | 35 | `terrain_json` and `frames_json` stored as TEXT blobs — no indexing, large runs may produce 2MB+ frames | [phase-35.md — Known Limitations](phase-35.md#known-limitations) |
 | 35 | `useViewportControls` hook has no dedicated test file (exercised indirectly via TacticalMap) | [phase-35.md — Known Limitations](phase-35.md#known-limitations) |
-| 35 | Only `ForceStrengthChart` shows the tick sync marker line — other charts don't | [phase-35.md — Known Limitations](phase-35.md#known-limitations) |
+| 35 | ~~Only `ForceStrengthChart` shows the tick sync marker line — other charts don't~~ *(resolved Phase 38c — all 4 charts show tick sync + bidirectional click)* | [phase-35.md — Known Limitations](phase-35.md#known-limitations) |
 | 35 | Frame capture interval is not configurable | [phase-35.md — Known Limitations](phase-35.md#known-limitations) |
 | 35 | No keyboard shortcuts for playback (deferred to Phase 36) | [phase-35.md — Known Limitations](phase-35.md#known-limitations) |
 | 37 | 8 legacy-format scenarios can't load through API (missing campaign schema fields) | [phase-37.md — Known Limitations](phase-37.md#known-limitations) |
 | 37 | DEW hit in battle loop always results in destruction (no partial damage/disable) | [phase-37.md — Known Limitations](phase-37.md#known-limitations) |
+| 38 | Plotly charts don't use `plotly_dark` template when dark mode is active (cosmetic) | [phase-38.md — Known Limitations](phase-38.md#known-limitations) |
+| 38 | No separate dark terrain color palette (elevation shading brightness modulation covers the need) | [phase-38.md — Known Limitations](phase-38.md#known-limitations) |
 
 ## Conventions
 

@@ -18,7 +18,7 @@ const TOGGLES = [
 export function ConfigToggles({ config, dispatch }: ConfigTogglesProps) {
   return (
     <section>
-      <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-gray-500">
+      <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
         Optional Systems
       </h3>
       <div className="flex flex-wrap gap-3">
@@ -32,9 +32,9 @@ export function ConfigToggles({ config, dispatch }: ConfigTogglesProps) {
                 onChange={(e) =>
                   dispatch({ type: 'TOGGLE_CONFIG', key: t.key, enabled: e.target.checked })
                 }
-                className="rounded border-gray-300"
+                className="rounded border-gray-300 dark:border-gray-600"
               />
-              <span className={`rounded px-2 py-0.5 text-xs font-medium ${enabled ? t.color : 'bg-gray-100 text-gray-400'}`}>
+              <span className={`rounded px-2 py-0.5 text-xs font-medium ${enabled ? t.color : 'bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-500'}`}>
                 {t.label}
               </span>
             </label>
