@@ -47,6 +47,10 @@ Rolling record of implementation decisions, changes, and lessons learned across 
 | 34 | Run Results & Analysis Dashboard | **Complete** | [phase-34.md](phase-34.md) |
 | 35 | Tactical Map & Spatial Visualization | **Complete** | [phase-35.md](phase-35.md) |
 | 36 | Scenario Tweaker & Polish | **Complete** | [phase-36.md](phase-36.md) |
+| | | | |
+| 37 | Integration Fixes & E2E Validation | Planned | |
+| 38 | Map & Chart Enhancements | Planned | |
+| 39 | Quality, Performance & Packaging | Planned | |
 
 ## Post-MVP Refinement Index
 

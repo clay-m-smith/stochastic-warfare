@@ -150,7 +150,7 @@ For the full package tree and module decomposition, see [`docs/specs/project-str
 
 ## Development Status
 
-All 11 MVP phases (0–10) are complete. Post-MVP Phases 11–24 are complete (deep systems rework + performance optimization + developer tooling + real-world terrain + electronic warfare + space & satellite domain + CBRN effects + doctrinal AI schools + WW2 era + WW1 era + Napoleonic era + Ancient & Medieval era + unconventional & prohibited warfare). Block 2 Phases 25–30 complete (Engine Wiring & Integration Sprint + Core Polish & Configuration + Combat System Completeness + Modern Era Data Package + Directed Energy Weapons + Historical Era Data Expansion + Scenario & Campaign Library). Block 3 in progress (Phase 35: Tactical Map & Spatial Visualization complete).
+All 11 MVP phases (0–10) are complete. Post-MVP Phases 11–24 are complete (deep systems rework + performance optimization + developer tooling + real-world terrain + electronic warfare + space & satellite domain + CBRN effects + doctrinal AI schools + WW2 era + WW1 era + Napoleonic era + Ancient & Medieval era + unconventional & prohibited warfare). Block 2 Phases 25–30 complete (Engine Wiring & Integration Sprint + Core Polish & Configuration + Combat System Completeness + Modern Era Data Package + Directed Energy Weapons + Historical Era Data Expansion + Scenario & Campaign Library). Block 3 complete (Phases 31–36: Documentation Site + API + Frontend + Charts + Tactical Map + Scenario Tweaker). Block 4 planned (Phases 37–39: Integration Fixes + Map Enhancements + Packaging).
 
 | Phase | Focus | Tests | Status |
 |-------|-------|-------|--------|
@@ -192,9 +192,12 @@ All 11 MVP phases (0–10) are complete. Post-MVP Phases 11–24 are complete (d
 | 34 | Run Results & Analysis Dashboard (Block 3) | 65 | Complete |
 | 35 | Tactical Map & Spatial Visualization (Block 3) | 71 | Complete |
 | 36 | Scenario Tweaker & Polish (Block 3) | 59 | Complete |
-| | **Total** | **~7,705** | |
+| 37 | Integration Fixes & E2E Validation (Block 4) | ~55 | Planned |
+| 38 | Map & Chart Enhancements (Block 4) | ~30 | Planned |
+| 39 | Quality, Performance & Packaging (Block 4) | ~26 | Planned |
+| | **Total** | **~7,816** | |
 
-For the full phase roadmap, see [`docs/development-phases.md`](docs/development-phases.md) (MVP) and [`docs/development-phases-post-mvp.md`](docs/development-phases-post-mvp.md) (post-MVP). For per-phase implementation logs, see [`docs/devlog/`](docs/devlog/).
+For the full phase roadmap, see [`docs/development-phases.md`](docs/development-phases.md) (MVP), [`docs/development-phases-post-mvp.md`](docs/development-phases-post-mvp.md) (post-MVP), and [`docs/development-phases-block4.md`](docs/development-phases-block4.md) (Block 4). For per-phase implementation logs, see [`docs/devlog/`](docs/devlog/).
 
 ## Key Dependencies
 

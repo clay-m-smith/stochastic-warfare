@@ -1,6 +1,6 @@
 # Project Structure & Module Decomposition
-**Status**: Complete (Phase 36)
-**Last Updated**: 2026-03-06
+**Status**: Complete (Phase 36). Block 4 (Phases 37--39) planned.
+**Last Updated**: 2026-03-07
 
 ---
 

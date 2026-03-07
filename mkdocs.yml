@@ -66,11 +66,13 @@ nav:
     - Post-MVP Design: brainstorm-post-mvp.md
     - Block 2 Design: brainstorm-block2.md
     - Block 3 Design: brainstorm-block3.md
+    - Block 4 Design: brainstorm-block4.md
   - Development Phases:
     - MVP (0-10): development-phases.md
     - Post-MVP (11-24): development-phases-post-mvp.md
     - Block 2 (25-30): development-phases-block2.md
     - Block 3 (31-36): development-phases-block3.md
+    - Block 4 (37-39): development-phases-block4.md
   - Devlog:
     - Overview: devlog/index.md
     - Phase 0 - Scaffolding: devlog/phase-0.md
