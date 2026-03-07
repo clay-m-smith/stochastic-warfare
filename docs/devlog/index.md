@@ -48,7 +48,7 @@ Rolling record of implementation decisions, changes, and lessons learned across 
 | 35 | Tactical Map & Spatial Visualization | **Complete** | [phase-35.md](phase-35.md) |
 | 36 | Scenario Tweaker & Polish | **Complete** | [phase-36.md](phase-36.md) |
 | | | | |
-| 37 | Integration Fixes & E2E Validation | Planned | |
+| 37 | Integration Fixes & E2E Validation | **Complete** | [phase-37.md](phase-37.md) |
 | 38 | Map & Chart Enhancements | Planned | |
 | 39 | Quality, Performance & Packaging | Planned | |
 
@@ -174,24 +174,26 @@ Known limitations and deferred improvements logged during implementation. Review
 | 22 | ~~Foraging ambush casualty rate hardcoded at 10% — should be configurable in ForagingConfig~~ *(resolved Phase 26b — ForagingConfig.ambush_casualty_rate)* | [phase-22.md — Known Limitations](phase-22.md#known-limitations) |
 | 22 | ~~Volley/melee/cavalry/courier/foraging engines use hardcoded fallback RNG seed (42) when no RNG injected~~ *(resolved Phase 26a — rng required on all 23 engines)* | [phase-22.md — Known Limitations](phase-22.md#known-limitations) |
 | 16/17/18/19/20/21/22/23 | ~~ScenarioLoader doesn't auto-wire Ancient/Medieval engines from YAML~~ *(resolved Phase 25a)* | [phase-23.md — Postmortem](phase-23.md#postmortem) |
-| 28.5 | DEWEngagementEvent has zero subscribers in production code (events published but never consumed) | [phase-28.5.md — Postmortem](phase-28.5.md#postmortem) |
-| 28.5 | dew_engine not used in simulation/engine.py or simulation/battle.py tick loops (wired in scenario only) | [phase-28.5.md — Postmortem](phase-28.5.md#postmortem) |
+| 28.5 | ~~DEWEngagementEvent has zero subscribers in production code (events published but never consumed)~~ *(closed Phase 37 — SimulationRecorder subscribes to base Event)* | [phase-28.5.md — Postmortem](phase-28.5.md#postmortem) |
+| 28.5 | ~~dew_engine not used in simulation/engine.py or simulation/battle.py tick loops (wired in scenario only)~~ *(resolved Phase 37 — battle.py routes DEW via route_engagement)* | [phase-28.5.md — Postmortem](phase-28.5.md#postmortem) |
 | 28.5 | No scenario YAML references dew_config (engine can be created but no scenarios exercise it) | [phase-28.5.md — Postmortem](phase-28.5.md#postmortem) |
 | 28.5 | ADUnitType.DEW not handled in air defense engagement logic (enum exists but no routing) | [phase-28.5.md — Postmortem](phase-28.5.md#postmortem) |
-| 28.5 | route_engagement() not called from battle.py (uses execute_engagement directly) — DEW routing untested in loop | [phase-28.5.md — Postmortem](phase-28.5.md#postmortem) |
-| 32 | `config_overrides` accepted and stored but not applied to engine (calibration_overrides not injected before ScenarioLoader.load) | [phase-32.md — Postmortem](phase-32.md#postmortem) |
+| 28.5 | ~~route_engagement() not called from battle.py (uses execute_engagement directly) — DEW routing untested in loop~~ *(resolved Phase 37 — battle.py calls route_engagement for all engagements)* | [phase-28.5.md — Postmortem](phase-28.5.md#postmortem) |
+| 32 | ~~`config_overrides` accepted and stored but not applied to engine (calibration_overrides not injected before ScenarioLoader.load)~~ *(resolved Phase 37 — deep merge before load)* | [phase-32.md — Postmortem](phase-32.md#postmortem) |
 | 32 | `GET /api/meta/terrain-types` returns hardcoded list instead of deriving from TerrainConfig or data | [phase-32.md — Postmortem](phase-32.md#postmortem) |
 | 34 | `useBatchProgress` hook has no dedicated test file | [phase-34.md — Postmortem](phase-34.md#postmortem) |
 | 34 | RunDetailPage tests don't cover cancelled/error run states | [phase-34.md — Postmortem](phase-34.md#postmortem) |
 | 34 | Analysis API responses untyped (`Record<string, unknown>`) — compare/sweep return free-form dicts | [phase-34.md — Postmortem](phase-34.md#postmortem) |
 | 34 | Hardcoded morale state names and event type strings in eventProcessing.ts | [phase-34.md — Postmortem](phase-34.md#postmortem) |
-| 34 | Force time series reconstruction assumes no reinforcements (only counts destructions) | [phase-34.md — Postmortem](phase-34.md#postmortem) |
+| 34 | ~~Force time series reconstruction assumes no reinforcements (only counts destructions)~~ *(resolved Phase 37 — handles ReinforcementArrivedEvent)* | [phase-34.md — Postmortem](phase-34.md#postmortem) |
 | 35 | Frame data uses compact keys in storage but API expands to full names — slight redundancy | [phase-35.md — Known Limitations](phase-35.md#known-limitations) |
 | 35 | `terrain_json` and `frames_json` stored as TEXT blobs — no indexing, large runs may produce 2MB+ frames | [phase-35.md — Known Limitations](phase-35.md#known-limitations) |
 | 35 | `useViewportControls` hook has no dedicated test file (exercised indirectly via TacticalMap) | [phase-35.md — Known Limitations](phase-35.md#known-limitations) |
 | 35 | Only `ForceStrengthChart` shows the tick sync marker line — other charts don't | [phase-35.md — Known Limitations](phase-35.md#known-limitations) |
 | 35 | Frame capture interval is not configurable | [phase-35.md — Known Limitations](phase-35.md#known-limitations) |
 | 35 | No keyboard shortcuts for playback (deferred to Phase 36) | [phase-35.md — Known Limitations](phase-35.md#known-limitations) |
+| 37 | 8 legacy-format scenarios can't load through API (missing campaign schema fields) | [phase-37.md — Known Limitations](phase-37.md#known-limitations) |
+| 37 | DEW hit in battle loop always results in destruction (no partial damage/disable) | [phase-37.md — Known Limitations](phase-37.md#known-limitations) |
 
 ## Conventions
 

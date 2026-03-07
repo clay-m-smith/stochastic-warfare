@@ -10,9 +10,11 @@ Block 4 tightens the product. No new engine subsystems, no new simulation domain
 
 ---
 
-## Phase 37: Integration Fixes & End-to-End Validation
+## Phase 37: Integration Fixes & End-to-End Validation — COMPLETE
 
 **Goal**: Fix the three broken integration points that will surface during real use (config_overrides silently ignored, DEW completely unwired, reinforcement charts wrong), then smoke-test every scenario through the web UI pipeline.
+
+**Status**: Complete. 70 new tests (24 Python unit + 41 E2E parametrized + 5 frontend vitest). 6 modified + 6 new files. 5 deficits resolved, 2 new deficits logged. Focused implementation: 3 core bugs + E2E smoke test. Deferred items: terrain-types-from-data (→39d), ADUnitType.DEW routing, scenario dew_config YAML.
 
 **Dependencies**: Block 3 complete (Phases 31--36).
 
@@ -449,14 +451,14 @@ Phase 37 is strictly sequential: fix bugs, wire DEW, then smoke-test everything.
 
 | Deficit | Origin | Resolved In |
 |---------|--------|-------------|
-| DEWEngagementEvent has zero subscribers | Phase 28.5 | 37b |
-| dew_engine not used in simulation tick loops | Phase 28.5 | 37b |
-| No scenario YAML references dew_config | Phase 28.5 | 37b |
-| ADUnitType.DEW not handled in air defense | Phase 28.5 | 37b |
-| route_engagement() not called from battle.py | Phase 28.5 | 37b |
-| config_overrides accepted but not applied | Phase 32 | 37a |
-| GET /api/meta/terrain-types hardcoded | Phase 32 | 37a |
-| Force time series assumes no reinforcements | Phase 34 | 37a |
+| ~~DEWEngagementEvent has zero subscribers~~ | Phase 28.5 | 37 (closed — recorder catches via base Event) |
+| ~~dew_engine not used in simulation tick loops~~ | Phase 28.5 | **37 ✅** |
+| No scenario YAML references dew_config | Phase 28.5 | Deferred |
+| ADUnitType.DEW not handled in air defense | Phase 28.5 | Deferred |
+| ~~route_engagement() not called from battle.py~~ | Phase 28.5 | **37 ✅** |
+| ~~config_overrides accepted but not applied~~ | Phase 32 | **37 ✅** |
+| GET /api/meta/terrain-types hardcoded | Phase 32 | 39d |
+| ~~Force time series assumes no reinforcements~~ | Phase 34 | **37 ✅** |
 | useBatchProgress no dedicated test | Phase 34 | 39a |
 | RunDetailPage tests don't cover error states | Phase 34 | 39a |
 | Analysis API responses untyped | Phase 34 | 39a |

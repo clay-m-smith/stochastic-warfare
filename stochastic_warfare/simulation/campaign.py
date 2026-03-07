@@ -15,7 +15,7 @@ from typing import Any
 import numpy as np
 from pydantic import BaseModel
 
-from stochastic_warfare.core.events import EventBus
+from stochastic_warfare.core.events import Event, EventBus
 from stochastic_warfare.core.logging import get_logger
 from stochastic_warfare.core.types import ModuleId, Position
 from stochastic_warfare.entities.base import Unit, UnitStatus
@@ -23,6 +23,15 @@ from stochastic_warfare.simulation.battle import BattleContext, BattleManager
 from stochastic_warfare.simulation.scenario import ReinforcementConfig
 
 logger = get_logger(__name__)
+
+
+@dataclass(frozen=True)
+class ReinforcementArrivedEvent(Event):
+    """Published when reinforcement units arrive."""
+
+    side: str = ""
+    unit_count: int = 0
+    unit_types: tuple[str, ...] = ()
 
 
 # ---------------------------------------------------------------------------
@@ -171,6 +180,15 @@ class CampaignManager:
                     "Reinforcements arrived: %d units for %s at t=%.0fs",
                     len(units), entry.config.side, elapsed_s,
                 )
+                clock = getattr(ctx, "clock", None)
+                ts = clock.current_time if clock is not None else datetime.min
+                self._bus.publish(ReinforcementArrivedEvent(
+                    timestamp=ts,
+                    source=ModuleId.CORE,
+                    side=entry.config.side,
+                    unit_count=len(units),
+                    unit_types=tuple(u.unit_type for u in units),
+                ))
 
         return new_units
 

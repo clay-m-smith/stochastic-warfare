@@ -33,6 +33,11 @@ const DESTRUCTION_EVENTS = new Set([
   'unit_killed',
 ])
 
+const REINFORCEMENT_EVENTS = new Set([
+  'ReinforcementArrivedEvent',
+  'reinforcement_arrived',
+])
+
 export function buildForceTimeSeries(
   events: EventItem[],
   result: RunResult | null,
@@ -50,11 +55,19 @@ export function buildForceTimeSeries(
 
   const sorted = [...events].sort((a, b) => a.tick - b.tick)
   for (const ev of sorted) {
-    if (!DESTRUCTION_EVENTS.has(ev.event_type)) continue
-    const side = (ev.data.side as string | undefined) ?? ''
-    if (side && activeCounts[side] != null) {
-      activeCounts[side] = Math.max(0, activeCounts[side]! - 1)
-      points.push({ tick: ev.tick, ...activeCounts })
+    if (DESTRUCTION_EVENTS.has(ev.event_type)) {
+      const side = (ev.data.side as string | undefined) ?? ''
+      if (side && activeCounts[side] != null) {
+        activeCounts[side] = Math.max(0, activeCounts[side]! - 1)
+        points.push({ tick: ev.tick, ...activeCounts })
+      }
+    } else if (REINFORCEMENT_EVENTS.has(ev.event_type)) {
+      const side = (ev.data.side as string | undefined) ?? ''
+      const count = (ev.data.unit_count as number | undefined) ?? 1
+      if (side && activeCounts[side] != null) {
+        activeCounts[side] = activeCounts[side]! + count
+        points.push({ tick: ev.tick, ...activeCounts })
+      }
     }
   }
 

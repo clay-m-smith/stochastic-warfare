@@ -48,12 +48,13 @@ api = [
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 strict_markers = true
-addopts = "-m 'not slow and not benchmark and not terrain and not api'"
+addopts = "-m 'not slow and not benchmark and not terrain and not api and not e2e'"
 markers = [
     "slow: marks tests as slow (1000-run Monte Carlo, run explicitly with '-m slow')",
     "benchmark: marks tests as performance benchmarks (run explicitly with '-m benchmark')",
     "terrain: marks tests requiring downloaded terrain data (run explicitly with '-m terrain')",
     "api: marks API tests (require api extra)",
+    "e2e: marks end-to-end tests running full scenarios via API (run explicitly with '-m e2e')",
 ]
 
 [project.scripts]

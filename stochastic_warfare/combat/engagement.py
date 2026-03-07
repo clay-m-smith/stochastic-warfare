@@ -438,6 +438,10 @@ class EngagementEngine:
                 current_time_s=current_time_s,
                 timestamp=timestamp,
             )
+            hit_res = HitResult(
+                p_hit=dew_result.pk, range_m=dew_result.range_m,
+                modifiers={}, hit=dew_result.hit,
+            ) if dew_result.engaged else None
             return EngagementResult(
                 engaged=dew_result.engaged,
                 engagement_type=engagement_type,
@@ -445,6 +449,7 @@ class EngagementEngine:
                 target_id=target_id,
                 weapon_id=weapon.weapon_id,
                 ammo_id=ammo_id,
+                hit_result=hit_res,
                 aborted_reason=dew_result.aborted_reason,
                 range_m=dew_result.range_m,
             )
@@ -466,6 +471,10 @@ class EngagementEngine:
                 timestamp=timestamp,
             )
             first = dew_results[0] if dew_results else None
+            hit_res = HitResult(
+                p_hit=first.pk, range_m=first.range_m,
+                modifiers={}, hit=first.hit,
+            ) if first and first.engaged else None
             return EngagementResult(
                 engaged=first.engaged if first else False,
                 engagement_type=engagement_type,
@@ -473,6 +482,7 @@ class EngagementEngine:
                 target_id=target_id,
                 weapon_id=weapon.weapon_id,
                 ammo_id=ammo_id,
+                hit_result=hit_res,
                 aborted_reason=first.aborted_reason if first else "no_targets",
                 range_m=first.range_m if first else 0.0,
             )

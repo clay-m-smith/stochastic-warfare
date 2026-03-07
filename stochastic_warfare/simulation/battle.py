@@ -16,6 +16,8 @@ from typing import Any
 import numpy as np
 from pydantic import BaseModel
 
+from stochastic_warfare.combat.ammunition import WeaponCategory
+from stochastic_warfare.combat.engagement import EngagementType
 from stochastic_warfare.core.events import EventBus
 from stochastic_warfare.core.logging import get_logger
 from stochastic_warfare.core.types import ModuleId, Position
@@ -807,30 +809,45 @@ class BattleManager:
                     # Current time for fire rate limiting
                     current_time_s = ctx.clock.elapsed.total_seconds()
 
-                    result = ctx.engagement_engine.execute_engagement(
+                    # Determine engagement type — DEW weapons route through
+                    # Beer-Lambert / HPM models instead of ballistic physics
+                    engagement_type = EngagementType.DIRECT_FIRE
+                    try:
+                        if wpn_inst.definition.parsed_category() == WeaponCategory.DIRECTED_ENERGY:
+                            if wpn_inst.definition.beam_power_kw > 0:
+                                engagement_type = EngagementType.DEW_LASER
+                            else:
+                                engagement_type = EngagementType.DEW_HPM
+                    except (KeyError, ValueError):
+                        pass
+
+                    result = ctx.engagement_engine.route_engagement(
+                        engagement_type=engagement_type,
                         attacker_id=attacker.entity_id,
                         target_id=best_target.entity_id,
-                        shooter_pos=attacker.position,
+                        attacker_pos=attacker.position,
                         target_pos=best_target.position,
                         weapon=wpn_inst,
                         ammo_id=ammo_id,
                         ammo_def=ammo_def,
+                        dew_engine=getattr(ctx, 'dew_engine', None),
                         crew_skill=crew_skill,
                         target_size_m2=8.5 * target_size_mod,
                         target_armor_mm=target_armor,
-                        crew_count=crew_count,
-                        visibility=vis_mod,
                         timestamp=timestamp,
                         current_time_s=current_time_s,
                     )
 
-                    if (result.engaged and result.hit_result
-                            and result.hit_result.hit and result.damage_result
-                            and result.damage_result.damage_fraction > 0):
-                        if result.damage_result.damage_fraction >= self._config.destruction_threshold:
+                    if result.engaged and result.hit_result and result.hit_result.hit:
+                        if engagement_type in (EngagementType.DEW_LASER, EngagementType.DEW_HPM):
+                            # DEW hit = target destroyed (thermal/EMP kill)
                             pending_damage.append((best_target, UnitStatus.DESTROYED))
-                        elif result.damage_result.damage_fraction >= self._config.disable_threshold:
-                            pending_damage.append((best_target, UnitStatus.DISABLED))
+                        elif (result.damage_result
+                                and result.damage_result.damage_fraction > 0):
+                            if result.damage_result.damage_fraction >= self._config.destruction_threshold:
+                                pending_damage.append((best_target, UnitStatus.DESTROYED))
+                            elif result.damage_result.damage_fraction >= self._config.disable_threshold:
+                                pending_damage.append((best_target, UnitStatus.DISABLED))
 
                     break  # One engagement per unit per tick
 

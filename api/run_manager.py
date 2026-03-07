@@ -140,6 +140,9 @@ class RunManager:
         with open(path) as f:
             config_dict = yaml.safe_load(f)
 
+        if config_overrides:
+            self._apply_overrides(config_dict, config_overrides)
+
         loader = ScenarioLoader(self._data_dir)
         ctx = loader.load(path, seed=seed)
 
@@ -245,6 +248,17 @@ class RunManager:
             "terrain": terrain_data,
             "frames": map_frames,
         }
+
+    # ── Config overrides (Phase 37) ─────────────────────────────────
+
+    @staticmethod
+    def _apply_overrides(base: dict, overrides: dict) -> None:
+        """Recursive deep-merge of *overrides* into *base* (mutates base)."""
+        for key, val in overrides.items():
+            if isinstance(val, dict) and isinstance(base.get(key), dict):
+                RunManager._apply_overrides(base[key], val)
+            else:
+                base[key] = val
 
     # ── Map data capture (Phase 35) ─────────────────────────────────
 
