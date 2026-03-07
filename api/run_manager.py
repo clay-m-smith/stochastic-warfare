@@ -37,6 +37,7 @@ class RunManager:
         seed: int,
         max_ticks: int,
         config_overrides: dict[str, Any] | None = None,
+        frame_interval: int | None = None,
     ) -> str:
         """Submit a run for background execution. Returns run_id."""
         run_id = uuid.uuid4().hex[:12]
@@ -46,7 +47,7 @@ class RunManager:
         queue: asyncio.Queue = asyncio.Queue(maxsize=100)
         self._progress_queues[run_id] = queue
         self._cancel_flags[run_id] = False
-        task = asyncio.create_task(self._execute_run(run_id, scenario_path, seed, max_ticks, config_overrides or {}))
+        task = asyncio.create_task(self._execute_run(run_id, scenario_path, seed, max_ticks, config_overrides or {}, frame_interval))
         self._tasks[run_id] = task
         return run_id
 
@@ -68,6 +69,7 @@ class RunManager:
         seed: int,
         max_ticks: int,
         config_overrides: dict[str, Any],
+        frame_interval: int | None = None,
     ) -> None:
         """Execute a simulation run in a background thread."""
         loop = asyncio.get_running_loop()
@@ -84,7 +86,7 @@ class RunManager:
                     None,
                     self._run_sync,
                     run_id, scenario_path, seed, max_ticks, config_overrides,
-                    loop, queue,
+                    loop, queue, frame_interval,
                 )
 
             now = datetime.now(timezone.utc).isoformat()
@@ -125,6 +127,7 @@ class RunManager:
         config_overrides: dict[str, Any],
         loop: asyncio.AbstractEventLoop,
         queue: asyncio.Queue | None,
+        frame_interval: int | None = None,
     ) -> dict[str, Any]:
         """Core synchronous simulation execution (runs in thread pool)."""
         from stochastic_warfare.entities.base import UnitStatus
@@ -181,7 +184,10 @@ class RunManager:
         recorder.start()
         game_over = False
         progress_interval = max(1, max_ticks // 100)
-        frame_interval = max(1, max_ticks // 500)
+        if frame_interval is not None:
+            fi = max(1, frame_interval)
+        else:
+            fi = max(1, max_ticks // 500)
         map_frames: list[dict] = []
 
         while not game_over:
@@ -193,7 +199,7 @@ class RunManager:
             tick = ctx.clock.tick_count
 
             # Capture position frame at dynamic intervals (Phase 35)
-            if tick % frame_interval == 0 or game_over:
+            if tick % fi == 0 or game_over:
                 map_frames.append(self._capture_frame(tick, ctx))
 
             # Emit progress

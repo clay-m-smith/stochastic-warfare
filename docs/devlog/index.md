@@ -50,7 +50,7 @@ Rolling record of implementation decisions, changes, and lessons learned across 
 | | | | |
 | 37 | Integration Fixes & E2E Validation | **Complete** | [phase-37.md](phase-37.md) |
 | 38 | Map & Chart Enhancements | **Complete** | [phase-38.md](phase-38.md) |
-| 39 | Quality, Performance & Packaging | Planned | |
+| 39 | Quality, Performance & Packaging | **Complete** | [phase-39.md](phase-39.md) |
 
 ## Post-MVP Refinement Index
 
@@ -180,17 +180,17 @@ Known limitations and deferred improvements logged during implementation. Review
 | 28.5 | ADUnitType.DEW not handled in air defense engagement logic (enum exists but no routing) | [phase-28.5.md — Postmortem](phase-28.5.md#postmortem) |
 | 28.5 | ~~route_engagement() not called from battle.py (uses execute_engagement directly) — DEW routing untested in loop~~ *(resolved Phase 37 — battle.py calls route_engagement for all engagements)* | [phase-28.5.md — Postmortem](phase-28.5.md#postmortem) |
 | 32 | ~~`config_overrides` accepted and stored but not applied to engine (calibration_overrides not injected before ScenarioLoader.load)~~ *(resolved Phase 37 — deep merge before load)* | [phase-32.md — Postmortem](phase-32.md#postmortem) |
-| 32 | `GET /api/meta/terrain-types` returns hardcoded list instead of deriving from TerrainConfig or data | [phase-32.md — Postmortem](phase-32.md#postmortem) |
-| 34 | `useBatchProgress` hook has no dedicated test file | [phase-34.md — Postmortem](phase-34.md#postmortem) |
-| 34 | RunDetailPage tests don't cover cancelled/error run states | [phase-34.md — Postmortem](phase-34.md#postmortem) |
-| 34 | Analysis API responses untyped (`Record<string, unknown>`) — compare/sweep return free-form dicts | [phase-34.md — Postmortem](phase-34.md#postmortem) |
-| 34 | Hardcoded morale state names and event type strings in eventProcessing.ts | [phase-34.md — Postmortem](phase-34.md#postmortem) |
+| 32 | ~~`GET /api/meta/terrain-types` returns hardcoded list instead of deriving from TerrainConfig or data~~ *(resolved Phase 39d — uses LandCover enum)* | [phase-32.md — Postmortem](phase-32.md#postmortem) |
+| 34 | ~~`useBatchProgress` hook has no dedicated test file~~ *(resolved Phase 39a — 4 dedicated tests)* | [phase-34.md — Postmortem](phase-34.md#postmortem) |
+| 34 | ~~RunDetailPage tests don't cover cancelled/error run states~~ *(resolved Phase 39a — 2 tests)* | [phase-34.md — Postmortem](phase-34.md#postmortem) |
+| 34 | ~~Analysis API responses untyped (`Record<string, unknown>`) — compare/sweep return free-form dicts~~ *(resolved Phase 39a — typed CompareResult/SweepResult)* | [phase-34.md — Postmortem](phase-34.md#postmortem) |
+| 34 | ~~Hardcoded morale state names and event type strings in eventProcessing.ts~~ *(resolved Phase 39a — exported constants ENGAGEMENT_EVENTS, MORALE_EVENTS)* | [phase-34.md — Postmortem](phase-34.md#postmortem) |
 | 34 | ~~Force time series reconstruction assumes no reinforcements (only counts destructions)~~ *(resolved Phase 37 — handles ReinforcementArrivedEvent)* | [phase-34.md — Postmortem](phase-34.md#postmortem) |
 | 35 | Frame data uses compact keys in storage but API expands to full names — slight redundancy | [phase-35.md — Known Limitations](phase-35.md#known-limitations) |
 | 35 | `terrain_json` and `frames_json` stored as TEXT blobs — no indexing, large runs may produce 2MB+ frames | [phase-35.md — Known Limitations](phase-35.md#known-limitations) |
-| 35 | `useViewportControls` hook has no dedicated test file (exercised indirectly via TacticalMap) | [phase-35.md — Known Limitations](phase-35.md#known-limitations) |
+| 35 | ~~`useViewportControls` hook has no dedicated test file (exercised indirectly via TacticalMap)~~ *(resolved Phase 39a — 4 dedicated tests)* | [phase-35.md — Known Limitations](phase-35.md#known-limitations) |
 | 35 | ~~Only `ForceStrengthChart` shows the tick sync marker line — other charts don't~~ *(resolved Phase 38c — all 4 charts show tick sync + bidirectional click)* | [phase-35.md — Known Limitations](phase-35.md#known-limitations) |
-| 35 | Frame capture interval is not configurable | [phase-35.md — Known Limitations](phase-35.md#known-limitations) |
+| 35 | ~~Frame capture interval is not configurable~~ *(resolved Phase 39b — RunSubmitRequest.frame_interval)* | [phase-35.md — Known Limitations](phase-35.md#known-limitations) |
 | 35 | No keyboard shortcuts for playback (deferred to Phase 36) | [phase-35.md — Known Limitations](phase-35.md#known-limitations) |
 | 37 | 8 legacy-format scenarios can't load through API (missing campaign schema fields) | [phase-37.md — Known Limitations](phase-37.md#known-limitations) |
 | 37 | DEW hit in battle loop always results in destruction (no partial damage/disable) | [phase-37.md — Known Limitations](phase-37.md#known-limitations) |

@@ -1,0 +1,14 @@
+.venv/
+node_modules/
+__pycache__/
+*.pyc
+.git/
+.github/
+tests/
+docs/
+frontend/node_modules/
+frontend/dist/
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.claude/

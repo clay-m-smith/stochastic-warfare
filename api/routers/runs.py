@@ -55,6 +55,7 @@ async def submit_run(
 
     run_id = await mgr.submit(
         req.scenario, str(path), req.seed, req.max_ticks, req.config_overrides,
+        frame_interval=req.frame_interval,
     )
     return RunSubmitResponse(run_id=run_id, status=RunStatus.PENDING)
 

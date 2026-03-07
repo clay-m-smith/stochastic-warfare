@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
+import { useVirtualizer } from '@tanstack/react-virtual'
 import { EmptyState } from '../../../components/EmptyState'
 import { LoadingSpinner } from '../../../components/LoadingSpinner'
 import { useRunEvents } from '../../../hooks/useRuns'
@@ -8,10 +9,12 @@ interface EventsTabProps {
 }
 
 const PAGE_SIZE = 100
+const ROW_HEIGHT = 40
 
 export function EventsTab({ runId }: EventsTabProps) {
   const [offset, setOffset] = useState(0)
   const [eventType, setEventType] = useState('')
+  const parentRef = useRef<HTMLDivElement>(null)
   const { data, isLoading } = useRunEvents(runId, {
     offset,
     limit: PAGE_SIZE,
@@ -20,6 +23,13 @@ export function EventsTab({ runId }: EventsTabProps) {
 
   const events = data?.events ?? []
   const total = data?.total ?? 0
+
+  const virtualizer = useVirtualizer({
+    count: events.length,
+    getScrollElement: () => parentRef.current,
+    estimateSize: () => ROW_HEIGHT,
+    overscan: 5,
+  })
 
   return (
     <div className="space-y-4">
@@ -56,19 +66,35 @@ export function EventsTab({ runId }: EventsTabProps) {
                 <th className="px-4 py-3 font-medium">Data</th>
               </tr>
             </thead>
-            <tbody>
-              {events.map((ev, i) => (
-                <tr key={`${ev.tick}-${i}`} className="border-b border-gray-100 dark:border-gray-700">
-                  <td className="px-4 py-3 text-gray-600 dark:text-gray-400">{ev.tick}</td>
-                  <td className="px-4 py-3 font-mono text-xs text-gray-900 dark:text-gray-100">{ev.event_type}</td>
-                  <td className="px-4 py-3 text-gray-600 dark:text-gray-400">{ev.source}</td>
-                  <td className="max-w-md truncate px-4 py-3 font-mono text-xs text-gray-500 dark:text-gray-400">
-                    {JSON.stringify(ev.data)}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
           </table>
+          <div
+            ref={parentRef}
+            className="max-h-[600px] overflow-y-auto"
+          >
+            <div style={{ height: `${virtualizer.getTotalSize()}px`, position: 'relative' }}>
+              {virtualizer.getVirtualItems().map((virtualRow) => {
+                const ev = events[virtualRow.index]!
+                return (
+                  <div
+                    key={virtualRow.index}
+                    data-testid="event-row"
+                    className="absolute left-0 right-0 flex border-b border-gray-100 dark:border-gray-700 text-sm"
+                    style={{
+                      height: `${virtualRow.size}px`,
+                      transform: `translateY(${virtualRow.start}px)`,
+                    }}
+                  >
+                    <span className="w-20 shrink-0 px-4 py-2 text-gray-600 dark:text-gray-400">{ev.tick}</span>
+                    <span className="w-48 shrink-0 px-4 py-2 font-mono text-xs text-gray-900 dark:text-gray-100 truncate">{ev.event_type}</span>
+                    <span className="w-32 shrink-0 px-4 py-2 text-gray-600 dark:text-gray-400 truncate">{ev.source}</span>
+                    <span className="flex-1 px-4 py-2 font-mono text-xs text-gray-500 dark:text-gray-400 truncate">
+                      {JSON.stringify(ev.data)}
+                    </span>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
         </div>
       )}
 

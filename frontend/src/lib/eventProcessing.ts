@@ -26,14 +26,14 @@ export interface EventCountBin {
   count: number
 }
 
-const DESTRUCTION_EVENTS = new Set([
+export const DESTRUCTION_EVENTS = new Set([
   'UnitDestroyedEvent',
   'UnitKilledEvent',
   'unit_destroyed',
   'unit_killed',
 ])
 
-const REINFORCEMENT_EVENTS = new Set([
+export const REINFORCEMENT_EVENTS = new Set([
   'ReinforcementArrivedEvent',
   'reinforcement_arrived',
 ])
@@ -74,17 +74,23 @@ export function buildForceTimeSeries(
   return points
 }
 
-export function buildEngagementData(events: EventItem[]): EngagementPoint[] {
-  const engagementTypes = new Set([
-    'EngagementEvent',
-    'HitEvent',
-    'engagement',
-    'hit',
-    'engagement_result',
-  ])
+export const ENGAGEMENT_EVENTS = new Set([
+  'EngagementEvent',
+  'HitEvent',
+  'engagement',
+  'hit',
+  'engagement_result',
+])
 
+export const MORALE_EVENTS = new Set([
+  'MoraleStateChangeEvent',
+  'morale_state_change',
+  'morale_change',
+])
+
+export function buildEngagementData(events: EventItem[]): EngagementPoint[] {
   return events
-    .filter((ev) => engagementTypes.has(ev.event_type))
+    .filter((ev) => ENGAGEMENT_EVENTS.has(ev.event_type))
     .map((ev) => ({
       tick: ev.tick,
       range: ev.data.range as number | undefined,
@@ -96,14 +102,8 @@ export function buildEngagementData(events: EventItem[]): EngagementPoint[] {
 }
 
 export function buildMoraleTimeSeries(events: EventItem[]): MoraleChange[] {
-  const moraleTypes = new Set([
-    'MoraleStateChangeEvent',
-    'morale_state_change',
-    'morale_change',
-  ])
-
   return events
-    .filter((ev) => moraleTypes.has(ev.event_type))
+    .filter((ev) => MORALE_EVENTS.has(ev.event_type))
     .map((ev) => ({
       tick: ev.tick,
       unit_id: (ev.data.unit_id as string | undefined) ?? ev.source,

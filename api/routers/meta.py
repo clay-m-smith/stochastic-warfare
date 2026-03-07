@@ -69,8 +69,6 @@ async def list_doctrines(settings: ApiSettings = Depends(get_settings)) -> list[
 
 @router.get("/meta/terrain-types", response_model=list[str])
 async def list_terrain_types() -> list[str]:
-    return [
-        "flat", "rolling", "hilly", "mountainous",
-        "urban", "forest", "desert", "jungle",
-        "arctic", "coastal", "riverine", "swamp",
-    ]
+    from stochastic_warfare.terrain.classification import LandCover
+
+    return [member.name for member in LandCover]

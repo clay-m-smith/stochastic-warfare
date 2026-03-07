@@ -16,19 +16,21 @@ const MOCK_EVENTS = {
 
 beforeEach(() => {
   vi.restoreAllMocks()
+  // Virtualizer needs layout dimensions that jsdom doesn't provide
+  Object.defineProperty(HTMLElement.prototype, 'offsetHeight', { configurable: true, value: 600 })
+  Object.defineProperty(HTMLElement.prototype, 'scrollHeight', { configurable: true, value: 600 })
 })
 
 describe('EventsTab', () => {
-  it('renders events in a table', async () => {
+  it('renders virtualized event rows', async () => {
     vi.spyOn(globalThis, 'fetch').mockResolvedValue(
       new Response(JSON.stringify(MOCK_EVENTS), { status: 200 }),
     )
     renderWithProviders(<EventsTab runId="r1" />)
     await waitFor(() => {
-      expect(screen.getByText('EngagementEvent')).toBeInTheDocument()
+      const rows = screen.getAllByTestId('event-row')
+      expect(rows.length).toBeGreaterThan(0)
     })
-    expect(screen.getByText('MoraleStateChangeEvent')).toBeInTheDocument()
-    expect(screen.getByText('UnitDestroyedEvent')).toBeInTheDocument()
   })
 
   it('shows total event count', async () => {

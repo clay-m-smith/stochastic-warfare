@@ -30,10 +30,10 @@ export function SweepPanel() {
     })
   }
 
-  const sweepData = sweep.data
-    ? Object.entries(sweep.data).map(([x, stats]) => {
-        const s = stats as Record<string, number>
-        return { x, mean: s.mean ?? 0, std: s.std ?? 0 }
+  const sweepData = sweep.data?.points
+    ? sweep.data.points.map((pt) => {
+        const first = pt.metric_results[0]
+        return { x: String(pt.parameter_value), mean: first?.mean ?? 0, std: first?.std ?? 0 }
       })
     : []
 

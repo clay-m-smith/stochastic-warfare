@@ -15,6 +15,7 @@ import { ConfigToggles } from './ConfigToggles'
 import { CalibrationSliders } from './CalibrationSliders'
 import { YamlPreview } from './YamlPreview'
 import { TerrainPreview } from './TerrainPreview'
+import { ConfigDiff } from './ConfigDiff'
 
 function EditorContent({ initialConfig, scenarioName }: { initialConfig: Record<string, unknown>; scenarioName: string }) {
   const navigate = useNavigate()
@@ -81,6 +82,7 @@ function EditorContent({ initialConfig, scenarioName }: { initialConfig: Record<
         {/* Right column: previews (sticky) */}
         <div className="space-y-4 lg:sticky lg:top-4 lg:self-start">
           <TerrainPreview config={config} />
+          <ConfigDiff original={initialConfig} modified={config} />
           <YamlPreview config={config} />
         </div>
       </div>

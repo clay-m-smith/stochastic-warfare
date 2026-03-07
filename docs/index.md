@@ -3,8 +3,8 @@
 **High-fidelity stochastic wargame simulator** -- multi-scale, multi-domain, multi-era.
 
 ![Python](https://img.shields.io/badge/python-%3E%3D3.12-blue)
-![Tests](https://img.shields.io/badge/tests-7%2C811_passing-brightgreen)
-![Phase](https://img.shields.io/badge/phase-38_Block--4-brightgreen)
+![Tests](https://img.shields.io/badge/tests-7%2C833_passing-brightgreen)
+![Phase](https://img.shields.io/badge/phase-39_Block--4_COMPLETE-brightgreen)
 
 ---
 
@@ -69,9 +69,9 @@ See the [Getting Started Guide](guide/getting-started.md) for a complete tutoria
 | Post-MVP | 11--24 | Fidelity, EW, Space, CBRN, AI schools, 4 historical eras, unconventional warfare | **Complete** |
 | Block 2 | 25--30 | Integration, polish, data expansion, scenarios | **Complete** |
 | Block 3 | 31--36 | Documentation site, API, frontend, visualization | **Complete** |
-| Block 4 | 37--39 | Integration fixes, map enhancements, packaging | In Progress |
+| Block 4 | 37--39 | Integration fixes, map enhancements, packaging | **Complete** |
 
-**~7,775 tests** across ~326 test files. **~700 YAML data files** defining 125 units, 51 weapons, 63 ammunition types, sensors, signatures, 21 doctrines, 13 commanders, and 41 scenarios.
+**~7,833 tests** across ~340 test files. **~700 YAML data files** defining 125 units, 107 weapons, 119 ammunition types, sensors, signatures, 34 doctrines, 13 commanders, and 41 scenarios.
 
 ## License
 

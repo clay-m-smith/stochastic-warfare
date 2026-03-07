@@ -109,7 +109,7 @@ export function RunDetailPage() {
 
       {run.status === 'failed' && run.error_message && (
         <div className="mb-6 rounded-md bg-red-50 dark:bg-red-900/30 p-4 text-sm text-red-700 dark:text-red-400">
-          {run.error_message}
+          <pre className="whitespace-pre-wrap font-mono text-xs">{run.error_message}</pre>
         </div>
       )}
 

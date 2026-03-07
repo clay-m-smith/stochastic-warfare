@@ -1,8 +1,8 @@
 # Stochastic Warfare
 
 ![Python](https://img.shields.io/badge/python-%3E%3D3.12-blue)
-![Tests](https://img.shields.io/badge/tests-7%2C811_passing-brightgreen)
-![Phase](https://img.shields.io/badge/phase-38_Block--4-brightgreen)
+![Tests](https://img.shields.io/badge/tests-7%2C833_passing-brightgreen)
+![Phase](https://img.shields.io/badge/phase-39_Block--4_COMPLETE-brightgreen)
 
 High-fidelity, high-resolution wargame simulator built as a headless Python engine. Models warfare across multiple scales — from individual unit engagements up through tactical battles, operational battlefields, and multi-day strategic campaigns — with stochastic and signal-processing-inspired models throughout.
 
@@ -31,6 +31,27 @@ uv run python -m pytest -m slow --tb=short -q   # 1000-run Monte Carlo validatio
 ```
 
 All commands use `uv run` to ensure the correct venv is used without manual activation.
+
+## Quick Start (Web UI)
+
+**Development mode** (two terminals):
+```bash
+bash scripts/dev.sh   # or .\scripts\dev.ps1 on Windows
+# Open http://localhost:5173
+```
+
+**Production mode** (single command):
+```bash
+cd frontend && npm run build && cd ..
+uv run python -m api
+# Open http://localhost:8000
+```
+
+**Docker**:
+```bash
+docker build -t stochastic-warfare .
+docker run -p 8000:8000 stochastic-warfare
+```
 
 ## Architecture
 
@@ -142,7 +163,7 @@ data/                     # ~700 YAML data files
   eras/                    # Era-specific data packages (WW2, WW1, Napoleonic, Ancient/Medieval)
   scenarios/              # 27 modern scenarios (engagement, campaign, EW, space, CBRN, escalation, joint) + 5 test
 
-tests/                    # 7,811 engine+API+frontend tests across ~332 test files
+tests/                    # 7,833 engine+API+frontend tests across ~340 test files
 docs/                     # specs, brainstorm, devlog, development phases
 ```
 
@@ -150,7 +171,7 @@ For the full package tree and module decomposition, see [`docs/specs/project-str
 
 ## Development Status
 
-All 11 MVP phases (0–10) are complete. Post-MVP Phases 11–24 are complete (deep systems rework + performance optimization + developer tooling + real-world terrain + electronic warfare + space & satellite domain + CBRN effects + doctrinal AI schools + WW2 era + WW1 era + Napoleonic era + Ancient & Medieval era + unconventional & prohibited warfare). Block 2 Phases 25–30 complete (Engine Wiring & Integration Sprint + Core Polish & Configuration + Combat System Completeness + Modern Era Data Package + Directed Energy Weapons + Historical Era Data Expansion + Scenario & Campaign Library). Block 3 complete (Phases 31–36: Documentation Site + API + Frontend + Charts + Tactical Map + Scenario Tweaker). Block 4 in progress (Phases 37–38 complete: Integration Fixes + E2E Validation + Map & Chart Enhancements; Phase 39 planned: Packaging).
+All 11 MVP phases (0–10) are complete. Post-MVP Phases 11–24 are complete (deep systems rework + performance optimization + developer tooling + real-world terrain + electronic warfare + space & satellite domain + CBRN effects + doctrinal AI schools + WW2 era + WW1 era + Napoleonic era + Ancient & Medieval era + unconventional & prohibited warfare). Block 2 Phases 25–30 complete (Engine Wiring & Integration Sprint + Core Polish & Configuration + Combat System Completeness + Modern Era Data Package + Directed Energy Weapons + Historical Era Data Expansion + Scenario & Campaign Library). Block 3 complete (Phases 31–36: Documentation Site + API + Frontend + Charts + Tactical Map + Scenario Tweaker). Block 4 complete (Phases 37–39: Integration Fixes + E2E Validation + Map & Chart Enhancements + Quality, Performance & Packaging).
 
 | Phase | Focus | Tests | Status |
 |-------|-------|-------|--------|
@@ -194,8 +215,8 @@ All 11 MVP phases (0–10) are complete. Post-MVP Phases 11–24 are complete (d
 | 36 | Scenario Tweaker & Polish (Block 3) | 59 | Complete |
 | 37 | Integration Fixes & E2E Validation (Block 4) | 70 | Complete |
 | 38 | Map & Chart Enhancements (Block 4) | 35 | Complete |
-| 39 | Quality, Performance & Packaging (Block 4) | ~26 | Planned |
-| | **Total** | **~7,837** | |
+| 39 | Quality, Performance & Packaging (Block 4) | 22 | Complete |
+| | **Total** | **~7,833** | |
 
 For the full phase roadmap, see [`docs/development-phases.md`](docs/development-phases.md) (MVP), [`docs/development-phases-post-mvp.md`](docs/development-phases-post-mvp.md) (post-MVP), and [`docs/development-phases-block4.md`](docs/development-phases-block4.md) (Block 4). For per-phase implementation logs, see [`docs/devlog/`](docs/devlog/).
 
@@ -242,7 +263,7 @@ cd frontend && npm install && npm run dev
 Frontend commands:
 - `npm run dev` — Vite dev server at localhost:5173
 - `npm run build` — Production build (TypeScript + Vite)
-- `npm test` — Run vitest tests (258 tests, no API server required)
+- `npm test` — Run vitest tests (272 tests, no API server required)
 - `npm run lint` — ESLint
 
 ## Documentation

@@ -82,6 +82,7 @@ class RunSubmitRequest(BaseModel):
     seed: int = 42
     max_ticks: int = 10_000
     config_overrides: dict[str, Any] = Field(default_factory=dict)
+    frame_interval: int | None = None
 
 
 class RunSubmitResponse(BaseModel):
