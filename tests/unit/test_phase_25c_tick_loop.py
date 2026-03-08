@@ -93,7 +93,7 @@ class TestStrictMode:
 
     def test_strict_mode_false_swallows_weather_error(self) -> None:
         mock_weather = MagicMock()
-        mock_weather.step.side_effect = RuntimeError("boom")
+        mock_weather.update.side_effect = RuntimeError("boom")
         ctx = _make_ctx(
             weather_engine=mock_weather,
             units_by_side={"blue": [], "red": []},
@@ -104,7 +104,7 @@ class TestStrictMode:
 
     def test_strict_mode_true_raises_weather_error(self) -> None:
         mock_weather = MagicMock()
-        mock_weather.step.side_effect = RuntimeError("boom")
+        mock_weather.update.side_effect = RuntimeError("boom")
         ctx = _make_ctx(
             weather_engine=mock_weather,
             units_by_side={"blue": [], "red": []},
@@ -497,7 +497,8 @@ class TestErrorHandling:
         with pytest.raises(RuntimeError, match="cbrn strict"):
             engine._update_environment(10.0)
 
-    def test_time_of_day_error_strict(self) -> None:
+    def test_time_of_day_not_called_in_update(self) -> None:
+        """TimeOfDayEngine is query-only — no per-tick update call."""
         mock_tod = MagicMock()
         mock_tod.update.side_effect = RuntimeError("tod")
         ctx = _make_ctx(
@@ -505,21 +506,19 @@ class TestErrorHandling:
             units_by_side={"blue": [], "red": []},
         )
         engine = SimulationEngine(ctx, EngineConfig(max_ticks=1), strict_mode=True)
-        with pytest.raises(RuntimeError, match="tod"):
-            engine._update_environment(10.0)
+        # Should not raise — TimeOfDayEngine.update is never called
+        engine._update_environment(10.0)
+        mock_tod.update.assert_not_called()
 
     def test_isolated_failures_non_strict(self) -> None:
         """Multiple engines can fail without cascading."""
         mock_weather = MagicMock()
-        mock_weather.step.side_effect = RuntimeError("weather")
-        mock_tod = MagicMock()
-        mock_tod.update.side_effect = RuntimeError("tod")
+        mock_weather.update.side_effect = RuntimeError("weather")
         mock_sea = MagicMock()
         mock_sea.update.side_effect = RuntimeError("sea")
 
         ctx = _make_ctx(
             weather_engine=mock_weather,
-            time_of_day_engine=mock_tod,
             sea_state_engine=mock_sea,
             units_by_side={"blue": [], "red": []},
         )

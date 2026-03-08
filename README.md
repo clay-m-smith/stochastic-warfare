@@ -1,8 +1,8 @@
 # Stochastic Warfare
 
 ![Python](https://img.shields.io/badge/python-%3E%3D3.12-blue)
-![Tests](https://img.shields.io/badge/tests-8%2C002_passing-brightgreen)
-![Phase](https://img.shields.io/badge/phase-42_Block--5_COMPLETE-brightgreen)
+![Tests](https://img.shields.io/badge/tests-8%2C039_passing-brightgreen)
+![Phase](https://img.shields.io/badge/phase-44_Block--5_COMPLETE-brightgreen)
 
 High-fidelity, high-resolution wargame simulator built as a headless Python engine. Models warfare across multiple scales — from individual unit engagements up through tactical battles, operational battlefields, and multi-day strategic campaigns — with stochastic and signal-processing-inspired models throughout.
 
@@ -163,7 +163,7 @@ data/                     # ~700 YAML data files
   eras/                    # Era-specific data packages (WW2, WW1, Napoleonic, Ancient/Medieval)
   scenarios/              # 27 modern scenarios (engagement, campaign, EW, space, CBRN, escalation, joint) + 5 test
 
-tests/                    # 8,002 engine+API+frontend tests across ~340 test files
+tests/                    # 8,039 engine+API+frontend tests across ~340 test files
 docs/                     # specs, brainstorm, devlog, development phases
 ```
 
@@ -171,7 +171,7 @@ For the full package tree and module decomposition, see [`docs/specs/project-str
 
 ## Development Status
 
-All 11 MVP phases (0–10) are complete. Post-MVP Phases 11–24 are complete (deep systems rework + performance optimization + developer tooling + real-world terrain + electronic warfare + space & satellite domain + CBRN effects + doctrinal AI schools + WW2 era + WW1 era + Napoleonic era + Ancient & Medieval era + unconventional & prohibited warfare). Block 2 Phases 25–30 complete (Engine Wiring & Integration Sprint + Core Polish & Configuration + Combat System Completeness + Modern Era Data Package + Directed Energy Weapons + Historical Era Data Expansion + Scenario & Campaign Library). Block 3 complete (Phases 31–36: Documentation Site + API + Frontend + Charts + Tactical Map + Scenario Tweaker). Block 4 complete (Phases 37–39: Integration Fixes + E2E Validation + Map & Chart Enhancements + Quality, Performance & Packaging).
+All 11 MVP phases (0–10) are complete. Post-MVP Phases 11–24 are complete (deep systems rework + performance optimization + developer tooling + real-world terrain + electronic warfare + space & satellite domain + CBRN effects + doctrinal AI schools + WW2 era + WW1 era + Napoleonic era + Ancient & Medieval era + unconventional & prohibited warfare). Block 2 Phases 25–30 complete (Engine Wiring & Integration Sprint + Core Polish & Configuration + Combat System Completeness + Modern Era Data Package + Directed Energy Weapons + Historical Era Data Expansion + Scenario & Campaign Library). Block 3 complete (Phases 31–36: Documentation Site + API + Frontend + Charts + Tactical Map + Scenario Tweaker). Block 4 complete (Phases 37–39: Integration Fixes + E2E Validation + Map & Chart Enhancements + Quality, Performance & Packaging). Block 5 in progress (Phases 40–44 of 47: Battle Loop Foundation + Combat Depth + Tactical Behavior + Domain-Specific Resolution + Environmental & Subsystem Integration).
 
 | Phase | Focus | Tests | Status |
 |-------|-------|-------|--------|
@@ -220,7 +220,8 @@ All 11 MVP phases (0–10) are complete. Post-MVP Phases 11–24 are complete (d
 | 41 | Combat Depth (Block 5) | 51 | **Complete** |
 | 42 | Tactical Behavior (Block 5) | 26 | **Complete** |
 | 43 | Domain-Specific Resolution (Block 5) | 45 | **Complete** |
-| | **Total** | **~8,002** | |
+| 44 | Environmental & Subsystem Integration (Block 5) | 37 | **Complete** |
+| | **Total** | **~8,039** | |
 
 For the full phase roadmap, see [`docs/development-phases.md`](docs/development-phases.md) (MVP), [`docs/development-phases-post-mvp.md`](docs/development-phases-post-mvp.md) (post-MVP), and [`docs/development-phases-block4.md`](docs/development-phases-block4.md) (Block 4), and [`docs/development-phases-block5.md`](docs/development-phases-block5.md) (Block 5). For per-phase implementation logs, see [`docs/devlog/`](docs/devlog/).
 

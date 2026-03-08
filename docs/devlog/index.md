@@ -56,6 +56,7 @@ Rolling record of implementation decisions, changes, and lessons learned across 
 | 41 | Combat Depth | **Complete** | [phase-41.md](phase-41.md) |
 | 42 | Tactical Behavior | **Complete** | [phase-42.md](phase-42.md) |
 | 43 | Domain-Specific Resolution | **Complete** | [phase-43.md](phase-43.md) |
+| 44 | Environmental & Subsystem Integration | **Complete** | [phase-44.md](phase-44.md) |
 
 ## Post-MVP Refinement Index
 

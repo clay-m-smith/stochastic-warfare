@@ -382,6 +382,11 @@ class SimulationContext:
     stockpile_manager: Any = None
     supply_network_engine: Any = None
     maintenance_engine: Any = None
+    medical_engine: Any = None
+    engineering_engine: Any = None
+
+    # Collateral (Phase 44d)
+    collateral_engine: Any = None
 
     # Loaders (needed for reinforcements)
     unit_loader: Any = None
@@ -476,6 +481,12 @@ class SimulationContext:
             ("naval_subsurface_engine", self.naval_subsurface_engine),
             ("naval_gunfire_support_engine", self.naval_gunfire_support_engine),
             ("mine_warfare_engine", self.mine_warfare_engine),
+            ("maintenance_engine", self.maintenance_engine),
+            ("medical_engine", self.medical_engine),
+            ("engineering_engine", self.engineering_engine),
+            ("collateral_engine", self.collateral_engine),
+            ("weather_engine", self.weather_engine),
+            ("sea_state_engine", self.sea_state_engine),
         ]
         for name, eng in engines:
             if eng is not None and hasattr(eng, "get_state"):
@@ -536,10 +547,38 @@ class SimulationContext:
             ("naval_subsurface_engine", self.naval_subsurface_engine),
             ("naval_gunfire_support_engine", self.naval_gunfire_support_engine),
             ("mine_warfare_engine", self.mine_warfare_engine),
+            ("maintenance_engine", self.maintenance_engine),
+            ("medical_engine", self.medical_engine),
+            ("engineering_engine", self.engineering_engine),
+            ("collateral_engine", self.collateral_engine),
+            ("weather_engine", self.weather_engine),
+            ("sea_state_engine", self.sea_state_engine),
         ]
         for name, eng in engines:
             if eng is not None and name in state and hasattr(eng, "set_state"):
                 eng.set_state(state[name])
+
+
+# ---------------------------------------------------------------------------
+# Helpers
+# ---------------------------------------------------------------------------
+
+
+def _parse_weather_state(precip: str) -> int:
+    """Map scenario precipitation string to WeatherState int."""
+    from stochastic_warfare.environment.weather import WeatherState
+
+    _MAP = {
+        "clear": WeatherState.CLEAR,
+        "partly_cloudy": WeatherState.PARTLY_CLOUDY,
+        "overcast": WeatherState.OVERCAST,
+        "light_rain": WeatherState.LIGHT_RAIN,
+        "heavy_rain": WeatherState.HEAVY_RAIN,
+        "snow": WeatherState.SNOW,
+        "fog": WeatherState.FOG,
+        "storm": WeatherState.STORM,
+    }
+    return _MAP.get(precip.lower(), WeatherState.CLEAR)
 
 
 # ---------------------------------------------------------------------------
@@ -637,7 +676,7 @@ class ScenarioLoader:
 
         # 7. Create domain engines (era-gated)
         disabled = era_config.disabled_modules
-        engines = self._create_engines(rng_mgr, bus, heightmap, loaders, config)
+        engines = self._create_engines(rng_mgr, bus, heightmap, loaders, config, clock)
 
         # 8. Assemble context
         real_ctx = self._real_terrain_ctx
@@ -905,6 +944,7 @@ class ScenarioLoader:
         heightmap: Heightmap,
         loaders: dict[str, Any],
         config: CampaignScenarioConfig,
+        clock: SimulationClock | None = None,
     ) -> dict[str, Any]:
         """Create all domain engine instances."""
         combat_rng = rng_mgr.get_stream(ModuleId.COMBAT)
@@ -1057,6 +1097,57 @@ class ScenarioLoader:
         obstacle_mgr = ObstacleManager()
         hydro_mgr = HydrographyManager()
 
+        # Phase 44a: Environment engines
+        weather_engine = None
+        time_of_day_engine = None
+        sea_state_engine = None
+
+        if clock is not None:
+            from stochastic_warfare.environment.weather import (
+                WeatherConfig,
+                WeatherEngine,
+            )
+            from stochastic_warfare.environment.astronomy import AstronomyEngine
+            from stochastic_warfare.environment.time_of_day import TimeOfDayEngine
+            from stochastic_warfare.environment.sea_state import (
+                SeaStateConfig,
+                SeaStateEngine,
+            )
+
+            env_rng = rng_mgr.get_stream(ModuleId.ENVIRONMENT)
+            wc = config.weather_conditions
+            weather_cfg = WeatherConfig(
+                latitude=config.latitude,
+                initial_state=_parse_weather_state(
+                    wc.get("precipitation", "clear"),
+                ),
+                initial_temperature=wc.get("temperature_c", 20.0),
+            )
+            weather_engine = WeatherEngine(weather_cfg, clock, env_rng)
+            astronomy_engine = AstronomyEngine(clock)
+            time_of_day_engine = TimeOfDayEngine(
+                astronomy_engine, weather_engine, clock,
+            )
+            sea_state_rng = rng_mgr.get_stream(ModuleId.ENVIRONMENT)
+            sea_state_engine = SeaStateEngine(
+                SeaStateConfig(), clock, astronomy_engine, weather_engine,
+                sea_state_rng,
+            )
+
+            # Merge weather visibility into calibration if not already set
+            if (
+                "visibility_m" not in config.calibration_overrides
+                and "visibility_m" in wc
+            ):
+                config.calibration_overrides["visibility_m"] = wc["visibility_m"]
+
+        # Phase 44c: Medical & engineering engines
+        from stochastic_warfare.logistics.medical import MedicalEngine
+        from stochastic_warfare.logistics.engineering import EngineeringEngine
+
+        medical_engine = MedicalEngine(bus, logistics_rng)
+        engineering_engine = EngineeringEngine(bus, logistics_rng)
+
         result = {
             "los_engine": los_engine,
             "engagement_engine": engagement_engine,
@@ -1087,6 +1178,11 @@ class ScenarioLoader:
             "mine_warfare_engine": mine_warfare_engine,
             "obstacle_manager": obstacle_mgr,
             "hydrography_manager": hydro_mgr,
+            "weather_engine": weather_engine,
+            "time_of_day_engine": time_of_day_engine,
+            "sea_state_engine": sea_state_engine,
+            "medical_engine": medical_engine,
+            "engineering_engine": engineering_engine,
         }
 
         # ── Optional engine wiring (Phase 25) ────────────────────────
@@ -1129,6 +1225,14 @@ class ScenarioLoader:
         # 6. Escalation
         if config.escalation_config is not None:
             result.update(self._create_escalation_engines(rng_mgr, bus, config.escalation_config))
+
+            # Phase 44d: Population engines for escalation scenarios
+            from stochastic_warfare.population.civilians import CivilianManager
+            from stochastic_warfare.population.collateral import CollateralEngine
+
+            pop_rng = rng_mgr.get_stream(ModuleId.POPULATION)
+            result["population_manager"] = CivilianManager(bus, pop_rng)
+            result["collateral_engine"] = CollateralEngine(bus)
 
         # 7. Era engines
         if config.era != "modern":

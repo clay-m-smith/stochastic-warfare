@@ -36,6 +36,24 @@ _WEATHER_BYPASS_TYPES: frozenset[SensorType] = frozenset({
     SensorType.ESM,
 })
 
+# Phase 44a: weather Pk modifier lookup (by WeatherState int value)
+_WEATHER_PK_TABLE: dict[int, float] = {
+    0: 1.00,  # CLEAR
+    1: 1.00,  # PARTLY_CLOUDY
+    2: 0.95,  # OVERCAST
+    3: 0.90,  # LIGHT_RAIN
+    4: 0.80,  # HEAVY_RAIN
+    5: 0.85,  # SNOW
+    6: 0.65,  # FOG
+    7: 0.55,  # STORM
+}
+
+
+def _compute_weather_pk_modifier(weather_state: int) -> float:
+    """Return hit probability modifier for the given weather state."""
+    return _WEATHER_PK_TABLE.get(int(weather_state), 1.0)
+
+
 # Phase 43a: melee range threshold (metres)
 _MELEE_RANGE_M = 10.0
 
@@ -1363,6 +1381,54 @@ class BattleManager:
         # Phase 41c: target selection mode
         target_selection_mode = cal.get("target_selection_mode", "threat_scored")
 
+        # Phase 44a: Weather combat effects (computed once per tick)
+        weather_pk_modifier = 1.0
+        weather_engine = getattr(ctx, "weather_engine", None)
+        if weather_engine is not None:
+            try:
+                conditions = weather_engine.current
+                # Use weather visibility when worse than calibration
+                weather_vis = conditions.visibility
+                if weather_vis < visibility_m:
+                    visibility_m = weather_vis
+                # Precipitation Pk penalty
+                weather_pk_modifier = _compute_weather_pk_modifier(
+                    int(conditions.state),
+                )
+            except Exception:
+                pass
+
+        # Phase 44a: Night combat effects (computed once per tick)
+        night_visual_modifier = 1.0  # 1.0 = day, 0.3 = night
+        thermal_night_bonus = 0.0
+        tod_engine = getattr(ctx, "time_of_day_engine", None)
+        if tod_engine is not None:
+            try:
+                lat = getattr(ctx.config, "latitude", 0.0)
+                lon = getattr(ctx.config, "longitude", 0.0)
+                illum = tod_engine.illumination_at(lat, lon)
+                if not illum.is_day:
+                    night_visual_modifier = 0.3
+                    thermal_env = tod_engine.thermal_environment(lat, lon)
+                    thermal_night_bonus = min(
+                        0.2, thermal_env.thermal_contrast * 0.3,
+                    )
+            except Exception:
+                pass
+
+        # Phase 44a: Sea state effects (computed once per tick)
+        sea_dispersion_modifier = 1.0
+        sea_state_engine = getattr(ctx, "sea_state_engine", None)
+        if sea_state_engine is not None:
+            try:
+                sea = sea_state_engine.current
+                if sea.beaufort_scale > 4:
+                    sea_dispersion_modifier = 1.0 + 0.2 * (
+                        sea.beaufort_scale - 4
+                    )
+            except Exception:
+                pass
+
         # Phase 42a: ROE engine and hold-fire discipline
         roe_engine = getattr(ctx, "roe_engine", None)
         roe_level_str = cal.get("roe_level", None)
@@ -1443,6 +1509,25 @@ class BattleManager:
                 if concealment > 0 and not weather_independent:
                     detection_range *= (1.0 - concealment)
 
+                # Phase 44a: Night degrades visual detection, thermal gets bonus
+                if not weather_independent:
+                    detection_range *= night_visual_modifier
+                else:
+                    detection_range *= (1.0 + thermal_night_bonus)
+
+                # Phase 44b: CBRN MOPP detection degradation
+                mopp_fatigue_factor = 1.0
+                cbrn_engine = getattr(ctx, "cbrn_engine", None)
+                if cbrn_engine is not None:
+                    try:
+                        _spd, _det, _fat = cbrn_engine.get_mopp_effects(
+                            attacker.entity_id,
+                        )
+                        detection_range *= _det
+                        mopp_fatigue_factor = _fat
+                    except Exception:
+                        pass
+
                 if best_range > detection_range:
                     continue
 
@@ -1466,6 +1551,34 @@ class BattleManager:
                         # SNR excess → quality mod (linear scale)
                         snr_linear = 10.0 ** (best_snr / 20.0)
                         detection_quality_mod = min(1.0, max(0.3, snr_linear / 10.0))
+
+                # Phase 44b: EW jamming degrades radar/electronic detection
+                ew_engine = getattr(ctx, "ew_engine", None)
+                if ew_engine is not None and weather_independent:
+                    try:
+                        snr_penalty_db = ew_engine.compute_radar_snr_penalty(
+                            sensor_pos=attacker.position,
+                            sensor_freq_ghz=getattr(
+                                sensors[0], "frequency_ghz", 10.0,
+                            ) if sensors else 10.0,
+                            sensor_power_dbm=getattr(
+                                sensors[0], "power_dbm", 70.0,
+                            ) if sensors else 70.0,
+                            sensor_gain_dbi=getattr(
+                                sensors[0], "antenna_gain_dbi", 30.0,
+                            ) if sensors else 30.0,
+                            sensor_bw_ghz=getattr(
+                                sensors[0], "bandwidth_ghz", 0.1,
+                            ) if sensors else 0.1,
+                            target_range_m=best_range,
+                        )
+                        if snr_penalty_db > 0:
+                            ew_factor = max(
+                                0.1, 1.0 - snr_penalty_db / 40.0,
+                            )
+                            detection_quality_mod *= ew_factor
+                    except Exception:
+                        pass
 
                 vis_mod = 1.0 if weather_independent else (min(visibility_m / best_range, 1.0) if best_range > 0 else 1.0)
                 vis_mod = vis_mod * detection_quality_mod
@@ -1563,7 +1676,28 @@ class BattleManager:
                 base_skill = side_cfg.experience_level if side_cfg else 0.5
                 unit_training = getattr(attacker, "training_level", 0.5)
                 effective_skill = base_skill * (0.5 + 0.5 * unit_training)
-                crew_skill = effective_skill * hit_prob_mod * morale_accuracy_mod
+                crew_skill = (
+                    effective_skill * hit_prob_mod
+                    * morale_accuracy_mod * weather_pk_modifier
+                )
+
+                # Phase 44b: MOPP fatigue degrades crew skill
+                if mopp_fatigue_factor > 1.0:
+                    crew_skill /= mopp_fatigue_factor
+
+                # Phase 44c: Equipment readiness gate
+                readiness = 1.0
+                maint_engine = getattr(ctx, "maintenance_engine", None)
+                if maint_engine is not None:
+                    try:
+                        readiness = maint_engine.get_unit_readiness(
+                            attacker.entity_id,
+                        )
+                    except Exception:
+                        pass
+                if readiness < 0.3:
+                    continue  # Too degraded to engage
+                crew_skill *= max(0.5, readiness)
 
                 # Per-side target_size_modifier: use target's side
                 target_side = self._find_unit_side(ctx, best_target.entity_id)
@@ -1572,8 +1706,37 @@ class BattleManager:
                     target_size_mod_default,
                 )
 
+                # Phase 44a: Sea state degrades naval target accuracy
+                if best_target.domain in (Domain.NAVAL, Domain.SUBMARINE):
+                    target_size_mod /= sea_dispersion_modifier
+
                 # Current time for fire rate limiting
                 current_time_s = ctx.clock.elapsed.total_seconds()
+
+                # Phase 44b: GPS accuracy affects guided weapon Pk
+                gps_cep_factor = 1.0
+                space_engine = getattr(ctx, "space_engine", None)
+                if space_engine is not None:
+                    gps_eng = getattr(space_engine, "gps_engine", None)
+                    if gps_eng is not None:
+                        try:
+                            guidance = getattr(
+                                ammo_def, "guidance_type", "none",
+                            )
+                            if guidance in ("gps", "gps_ins"):
+                                gps_state = gps_eng.compute_gps_accuracy(
+                                    side_name,
+                                    current_time_s,
+                                )
+                                gps_cep_factor = gps_eng.compute_cep_factor(
+                                    gps_state.position_accuracy_m,
+                                    guidance,
+                                )
+                        except Exception:
+                            pass
+                # Apply GPS degradation
+                if gps_cep_factor > 1.0:
+                    crew_skill /= gps_cep_factor
 
                 # ── Phase 43: domain-specific engagement routing ──────
                 routed_aggregate = False

@@ -416,25 +416,21 @@ class SimulationEngine:
         ctx = self._ctx
         clock = ctx.clock
 
-        if ctx.weather_engine is not None and hasattr(ctx.weather_engine, "step"):
+        # Phase 44a: Fixed environment engine update calls — use actual
+        # method signatures (update(dt_seconds), not step(clock)).
+        if ctx.weather_engine is not None:
             try:
-                ctx.weather_engine.step(clock)
+                ctx.weather_engine.update(dt)
             except Exception:
                 logger.error("Weather engine update failed", exc_info=True)
                 if self._strict_mode:
                     raise
 
-        if ctx.time_of_day_engine is not None and hasattr(ctx.time_of_day_engine, "update"):
-            try:
-                ctx.time_of_day_engine.update(clock)
-            except Exception:
-                logger.error("Time-of-day engine update failed", exc_info=True)
-                if self._strict_mode:
-                    raise
+        # TimeOfDayEngine is query-only — no per-tick update needed.
 
-        if ctx.sea_state_engine is not None and hasattr(ctx.sea_state_engine, "update"):
+        if ctx.sea_state_engine is not None:
             try:
-                ctx.sea_state_engine.update(clock)
+                ctx.sea_state_engine.update(dt)
             except Exception:
                 logger.error("Sea state engine update failed", exc_info=True)
                 if self._strict_mode:
@@ -483,6 +479,36 @@ class SimulationEngine:
 
         # Phase 25: EW domain
         self._update_ew(dt)
+
+        # Phase 44c: Maintenance engine — equipment breakdowns
+        if ctx.maintenance_engine is not None:
+            try:
+                dt_hours = dt / 3600.0
+                temp_c = 20.0
+                if ctx.weather_engine is not None:
+                    try:
+                        temp_c = ctx.weather_engine.current.temperature
+                    except Exception:
+                        pass
+                ctx.maintenance_engine.update(
+                    dt_hours=dt_hours, temperature_c=temp_c,
+                    timestamp=ctx.clock.current_time,
+                )
+            except Exception:
+                logger.error("Maintenance update failed", exc_info=True)
+                if self._strict_mode:
+                    raise
+
+        # Phase 44c: Medical engine — casualty processing
+        if ctx.medical_engine is not None:
+            try:
+                ctx.medical_engine.update(
+                    dt / 3600.0, ctx.clock.current_time,
+                )
+            except Exception:
+                logger.error("Medical update failed", exc_info=True)
+                if self._strict_mode:
+                    raise
 
     # ── EW ────────────────────────────────────────────────────────────
 
@@ -550,6 +576,17 @@ class SimulationEngine:
                 psyop_by_region={},
                 timestamp=timestamp,
             )
+
+        # Phase 44d: Collateral damage tracking
+        if ctx.collateral_engine is not None:
+            try:
+                # CollateralEngine is event-driven (record_damage called on hits),
+                # no per-tick update needed.
+                pass
+            except Exception:
+                logger.error("Collateral engine update failed", exc_info=True)
+                if self._strict_mode:
+                    raise
 
         # Check war termination
         if ctx.war_termination_engine is not None:

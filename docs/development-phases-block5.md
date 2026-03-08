@@ -536,7 +536,7 @@ Route naval engagements to the 5 specialized naval engines.
 
 **Goal**: Wire ALL remaining disconnected subsystem engines into the simulation loop: CBRN, EW, Space/GPS, weather/night, logistics (8 engines), population (5 engines), strategic/campaign (4 engines), and command authority.
 
-**Status**: Not started.
+**Status**: **Complete**. 37 tests. Zero new source files — pure instantiation + query wiring.
 
 **Dependencies**: Phase 43 (engagement routing framework enables subsystem modifier injection). Phase 41 (detection pipeline required for command picture).
 

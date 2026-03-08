@@ -244,17 +244,17 @@ class TestSingleStep:
 
     def test_step_updates_environment(self) -> None:
         # Create a mock weather engine to verify it gets called
-        called = {"step": False}
+        called = {"update": False}
 
         class _MockWeather:
-            def step(self, clock: Any) -> None:
-                called["step"] = True
+            def update(self, dt: float) -> None:
+                called["update"] = True
 
         ctx = _make_ctx(config=_minimal_config(duration_hours=24.0))
         ctx.weather_engine = _MockWeather()
         engine = SimulationEngine(ctx)
         engine.step()
-        assert called["step"] is True
+        assert called["update"] is True
 
     def test_step_with_recorder(self) -> None:
         ctx = _make_ctx(config=_minimal_config(duration_hours=24.0))
@@ -806,7 +806,7 @@ class TestEdgeCases:
 
     def test_environment_engine_failure_doesnt_crash(self) -> None:
         class _BrokenWeather:
-            def step(self, clock: Any) -> None:
+            def update(self, dt: float) -> None:
                 raise RuntimeError("Weather broken!")
 
         ctx = _make_ctx(config=_minimal_config(duration_hours=24.0))

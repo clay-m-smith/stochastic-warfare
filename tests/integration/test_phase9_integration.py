@@ -884,7 +884,7 @@ class TestEnvironmentUpdate:
         call_count = {"n": 0}
 
         class _MockWeather:
-            def step(self, clock: Any) -> None:
+            def update(self, dt: float) -> None:
                 call_count["n"] += 1
 
         cfg = _minimal_config(duration_hours=24.0)
@@ -898,18 +898,14 @@ class TestEnvironmentUpdate:
         assert call_count["n"] == 5
 
     def test_multiple_environment_engines_called(self) -> None:
-        calls: dict[str, int] = {"weather": 0, "tod": 0, "sea": 0, "seasons": 0}
+        calls: dict[str, int] = {"weather": 0, "sea": 0, "seasons": 0}
 
         class _W:
-            def step(self, clock: Any) -> None:
+            def update(self, dt: float) -> None:
                 calls["weather"] += 1
 
-        class _T:
-            def update(self, clock: Any) -> None:
-                calls["tod"] += 1
-
         class _S:
-            def update(self, clock: Any) -> None:
+            def update(self, dt: float) -> None:
                 calls["sea"] += 1
 
         class _Sn:
@@ -919,7 +915,6 @@ class TestEnvironmentUpdate:
         cfg = _minimal_config(duration_hours=24.0)
         ctx = _make_ctx(config=cfg, tick_s=3600.0)
         ctx.weather_engine = _W()
-        ctx.time_of_day_engine = _T()
         ctx.sea_state_engine = _S()
         ctx.seasons_engine = _Sn()
 
@@ -927,11 +922,12 @@ class TestEnvironmentUpdate:
         engine.step()
         engine.step()
 
+        # TimeOfDayEngine is query-only (no per-tick update), so not counted
         assert all(v == 2 for v in calls.values())
 
     def test_environment_failure_does_not_halt(self) -> None:
         class _BrokenEngine:
-            def step(self, clock: Any) -> None:
+            def update(self, dt: float) -> None:
                 raise RuntimeError("Weather crash!")
 
         cfg = _minimal_config(duration_hours=24.0)
