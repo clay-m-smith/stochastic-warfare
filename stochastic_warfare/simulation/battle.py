@@ -105,17 +105,25 @@ def _nearest_enemy_dist(unit_pos: Position, enemies: list[Unit]) -> float:
 def _standoff_range(unit: Unit, ctx: Any) -> float:
     """Return the range at which this unit should stop advancing.
 
-    Uses 80% of the best weapon's max range so the unit parks
-    comfortably within engagement distance.  Units without weapons
-    (or with only melee) close to contact.
+    Uses 80% of the best *usable* weapon's max range so the unit parks
+    comfortably within engagement distance.  Weapons with no ammo remaining
+    are ignored — a unit that has expended all ranged ammo will close to
+    melee range.  Units without weapons (or with only melee) close fully.
     """
     weapons = getattr(ctx, "unit_weapons", {}).get(unit.entity_id, [])
     best_range = 0.0
-    for wpn_inst, _ammo_defs in weapons:
+    for wpn_inst, ammo_defs in weapons:
         r = wpn_inst.definition.max_range_m
-        if r > best_range:
+        if r <= 10:
+            continue  # melee / point-blank — no standoff
+        # Check that the weapon still has ammo
+        has_ammo = False
+        for ad in ammo_defs:
+            if wpn_inst.can_fire(ad.ammo_id):
+                has_ammo = True
+                break
+        if has_ammo and r > best_range:
             best_range = r
-    # Park at 80% of max range; melee / zero-range weapons close fully
     return best_range * 0.8 if best_range > 10 else 0.0
 
 
@@ -854,13 +862,40 @@ class BattleManager:
                 if nearest_dist <= standoff:
                     continue
 
-                # Blend centroid + nearest enemy for movement target
+                # Blend centroid + nearest enemy for movement target,
+                # then add a perpendicular offset to maintain formation
+                # spacing and prevent centroid collapse.
                 tx, ty = _movement_target(u.position, enemies)
                 dx = tx - u.position.easting
                 dy = ty - u.position.northing
                 dist = math.sqrt(dx * dx + dy * dy)
                 if dist < 1.0:
                     continue
+
+                # Perpendicular offset: preserve each unit's lateral
+                # displacement relative to its own side's centroid.
+                # This keeps units in a rough line rather than collapsing.
+                own_units = [ou for ou in units
+                             if ou.status == UnitStatus.ACTIVE]
+                if len(own_units) > 1:
+                    own_cx = sum(ou.position.easting for ou in own_units) / len(own_units)
+                    own_cy = sum(ou.position.northing for ou in own_units) / len(own_units)
+                    # Unit's lateral offset from its own centroid
+                    lat_dx = u.position.easting - own_cx
+                    lat_dy = u.position.northing - own_cy
+                    # Project onto perpendicular of advance direction
+                    # perp = (-dy, dx) / dist
+                    perp_x, perp_y = -dy / dist, dx / dist
+                    lat_proj = lat_dx * perp_x + lat_dy * perp_y
+                    # Add lateral offset to target (preserves formation width)
+                    tx += perp_x * lat_proj
+                    ty += perp_y * lat_proj
+                    # Recompute advance vector
+                    dx = tx - u.position.easting
+                    dy = ty - u.position.northing
+                    dist = math.sqrt(dx * dx + dy * dy)
+                    if dist < 1.0:
+                        continue
 
                 # MOPP speed factor (Phase 25c)
                 mopp_speed_factor = 1.0
@@ -935,7 +970,13 @@ class BattleManager:
 
                 vis_mod = 1.0 if weather_independent else (min(visibility_m / best_range, 1.0) if best_range > 0 else 1.0)
 
-                # Engage with best weapon
+                # Select best weapon for current range — prefer ranged weapons
+                # at distance, melee weapons at close range.  Skip weapons
+                # that are out of ammo or out of range.
+                selected_wpn = None
+                selected_ammo_def = None
+                selected_ammo_id = None
+                best_wpn_score = -1.0
                 for wpn_inst, ammo_defs in weapons:
                     if not ammo_defs:
                         continue
@@ -943,71 +984,91 @@ class BattleManager:
                     ammo_id = ammo_def.ammo_id
                     if not wpn_inst.can_fire(ammo_id):
                         continue
-                    if wpn_inst.definition.max_range_m > 0 and best_range > wpn_inst.definition.max_range_m:
+                    max_r = wpn_inst.definition.max_range_m
+                    if max_r > 0 and best_range > max_r:
                         continue
+                    # Score: prefer weapon whose max range best fits current
+                    # distance.  Ranged weapons score higher when target is
+                    # far; melee weapons score higher when target is very
+                    # close (ratio > 1 means "within comfortable range").
+                    if max_r > 0:
+                        ratio = max_r / max(best_range, 1.0)
+                        # Ideal ratio is ~1.5 (target well within range)
+                        score = min(ratio, 3.0)
+                    else:
+                        score = 0.1  # fallback for weapons with 0 range
+                    if score > best_wpn_score:
+                        best_wpn_score = score
+                        selected_wpn = wpn_inst
+                        selected_ammo_def = ammo_def
+                        selected_ammo_id = ammo_id
 
-                    target_armor = getattr(best_target, "armor_front", 0.0)
-                    crew_count = len(best_target.personnel) if best_target.personnel else 4
+                if selected_wpn is None:
+                    continue
+                wpn_inst = selected_wpn
+                ammo_def = selected_ammo_def
+                ammo_id = selected_ammo_id
 
-                    # Find side config for crew skill
-                    side_cfg = None
-                    for sc in ctx.config.sides:
-                        if sc.side == side_name:
-                            side_cfg = sc
-                            break
-                    crew_skill = (side_cfg.experience_level if side_cfg else 0.5) * hit_prob_mod
+                target_armor = getattr(best_target, "armor_front", 0.0)
+                crew_count = len(best_target.personnel) if best_target.personnel else 4
 
-                    # Per-side target_size_modifier: use target's side
-                    target_side = self._find_unit_side(ctx, best_target.entity_id)
-                    target_size_mod = cal.get(
-                        f"target_size_modifier_{target_side}",
-                        target_size_mod_default,
-                    )
+                # Find side config for crew skill
+                side_cfg = None
+                for sc in ctx.config.sides:
+                    if sc.side == side_name:
+                        side_cfg = sc
+                        break
+                crew_skill = (side_cfg.experience_level if side_cfg else 0.5) * hit_prob_mod
 
-                    # Current time for fire rate limiting
-                    current_time_s = ctx.clock.elapsed.total_seconds()
+                # Per-side target_size_modifier: use target's side
+                target_side = self._find_unit_side(ctx, best_target.entity_id)
+                target_size_mod = cal.get(
+                    f"target_size_modifier_{target_side}",
+                    target_size_mod_default,
+                )
 
-                    # Determine engagement type — DEW weapons route through
-                    # Beer-Lambert / HPM models instead of ballistic physics
-                    engagement_type = EngagementType.DIRECT_FIRE
-                    try:
-                        if wpn_inst.definition.parsed_category() == WeaponCategory.DIRECTED_ENERGY:
-                            if wpn_inst.definition.beam_power_kw > 0:
-                                engagement_type = EngagementType.DEW_LASER
-                            else:
-                                engagement_type = EngagementType.DEW_HPM
-                    except (KeyError, ValueError):
-                        pass
+                # Current time for fire rate limiting
+                current_time_s = ctx.clock.elapsed.total_seconds()
 
-                    result = ctx.engagement_engine.route_engagement(
-                        engagement_type=engagement_type,
-                        attacker_id=attacker.entity_id,
-                        target_id=best_target.entity_id,
-                        attacker_pos=attacker.position,
-                        target_pos=best_target.position,
-                        weapon=wpn_inst,
-                        ammo_id=ammo_id,
-                        ammo_def=ammo_def,
-                        dew_engine=getattr(ctx, 'dew_engine', None),
-                        crew_skill=crew_skill,
-                        target_size_m2=8.5 * target_size_mod,
-                        target_armor_mm=target_armor,
-                        timestamp=timestamp,
-                        current_time_s=current_time_s,
-                    )
+                # Determine engagement type — DEW weapons route through
+                # Beer-Lambert / HPM models instead of ballistic physics
+                engagement_type = EngagementType.DIRECT_FIRE
+                try:
+                    if wpn_inst.definition.parsed_category() == WeaponCategory.DIRECTED_ENERGY:
+                        if wpn_inst.definition.beam_power_kw > 0:
+                            engagement_type = EngagementType.DEW_LASER
+                        else:
+                            engagement_type = EngagementType.DEW_HPM
+                except (KeyError, ValueError):
+                    pass
 
-                    if result.engaged and result.hit_result and result.hit_result.hit:
-                        if engagement_type in (EngagementType.DEW_LASER, EngagementType.DEW_HPM):
-                            # DEW hit = target destroyed (thermal/EMP kill)
+                result = ctx.engagement_engine.route_engagement(
+                    engagement_type=engagement_type,
+                    attacker_id=attacker.entity_id,
+                    target_id=best_target.entity_id,
+                    attacker_pos=attacker.position,
+                    target_pos=best_target.position,
+                    weapon=wpn_inst,
+                    ammo_id=ammo_id,
+                    ammo_def=ammo_def,
+                    dew_engine=getattr(ctx, 'dew_engine', None),
+                    crew_skill=crew_skill,
+                    target_size_m2=8.5 * target_size_mod,
+                    target_armor_mm=target_armor,
+                    timestamp=timestamp,
+                    current_time_s=current_time_s,
+                )
+
+                if result.engaged and result.hit_result and result.hit_result.hit:
+                    if engagement_type in (EngagementType.DEW_LASER, EngagementType.DEW_HPM):
+                        # DEW hit = target destroyed (thermal/EMP kill)
+                        pending_damage.append((best_target, UnitStatus.DESTROYED))
+                    elif (result.damage_result
+                            and result.damage_result.damage_fraction > 0):
+                        if result.damage_result.damage_fraction >= self._config.destruction_threshold:
                             pending_damage.append((best_target, UnitStatus.DESTROYED))
-                        elif (result.damage_result
-                                and result.damage_result.damage_fraction > 0):
-                            if result.damage_result.damage_fraction >= self._config.destruction_threshold:
-                                pending_damage.append((best_target, UnitStatus.DESTROYED))
-                            elif result.damage_result.damage_fraction >= self._config.disable_threshold:
-                                pending_damage.append((best_target, UnitStatus.DISABLED))
-
-                    break  # One engagement per unit per tick
+                        elif result.damage_result.damage_fraction >= self._config.disable_threshold:
+                            pending_damage.append((best_target, UnitStatus.DISABLED))
 
         return pending_damage
 

@@ -368,6 +368,14 @@ class DamageEngine:
                 if self._rng.random() < self._config.ammo_cookoff_probability:
                     result.ammo_cookoff = True
                     result.damage_fraction = 1.0
+            elif armor_mm <= 10.0:
+                # Near-miss against light armor (ancient/medieval shields,
+                # light body armor): blunt force trauma, gaps in protection,
+                # shield splits.  Heavier armor (modern vehicles) fully stops
+                # non-penetrating rounds.
+                pen_ratio = ammo.penetration_mm_rha / max(armor_mm, 0.1)
+                if pen_ratio > 0.3:
+                    result.damage_fraction = 0.15 * pen_ratio
 
             # Publish events
             if timestamp is not None:

@@ -230,6 +230,22 @@ class CampaignManager:
                 if dist < 1.0:
                     continue
 
+                # Perpendicular offset to maintain formation spacing
+                if len(active_own) > 1:
+                    own_cx = sum(ou.position.easting for ou in active_own) / len(active_own)
+                    own_cy = sum(ou.position.northing for ou in active_own) / len(active_own)
+                    lat_dx = u.position.easting - own_cx
+                    lat_dy = u.position.northing - own_cy
+                    perp_x, perp_y = -dy / dist, dx / dist
+                    lat_proj = lat_dx * perp_x + lat_dy * perp_y
+                    tx += perp_x * lat_proj
+                    ty += perp_y * lat_proj
+                    dx = tx - u.position.easting
+                    dy = ty - u.position.northing
+                    dist = math.sqrt(dx * dx + dy * dy)
+                    if dist < 1.0:
+                        continue
+
                 move_dist = min(effective_speed * dt, dist)
                 scale = move_dist / dist
                 new_e = u.position.easting + dx * scale

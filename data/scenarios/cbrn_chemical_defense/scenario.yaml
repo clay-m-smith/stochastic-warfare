@@ -9,9 +9,9 @@ tick_resolution:
   tactical_s: 5
 
 terrain:
-  width_m: 2000
-  height_m: 2000
-  cell_size_m: 50.0
+  width_m: 10000
+  height_m: 10000
+  cell_size_m: 100.0
   base_elevation_m: 100.0
   terrain_type: flat_desert
 
@@ -26,13 +26,13 @@ sides:
   - side: red
     units:
       - unit_type: m109a6
-        count: 1
+        count: 2
     experience_level: 0.5
     morale_initial: STEADY
 
 objectives:
   - objective_id: chemical_defense_zone
-    position: [1000, 1000]
+    position: [5000, 5000]
     radius_m: 500
     type: territory
 
@@ -50,16 +50,20 @@ cbrn:
   enable_cbrn: true
   agent_releases:
     - agent_id: sarin
-      position: [1000.0, 1000.0]
+      position: [5000.0, 5000.0]
       quantity_kg: 10.0
       delivery_method: artillery
       time_s: 0
 
 calibration_overrides:
-  blue_start_x: 1000.0
-  blue_start_y: 1000.0
-  red_start_x: 100.0
-  red_start_y: 100.0
+  # Blue starts in the contaminated zone (objective area)
+  blue_start_x: 5000.0
+  blue_start_y: 5000.0
+  # Red artillery positioned 8km away (well within 30km howitzer range,
+  # well beyond 3km minimum range)
+  red_start_x: 5000.0
+  red_start_y: 1000.0
+  defensive_sides: [red]
   weapon_assignments:
     "M284 155mm Howitzer": m284_155mm
     "M4A1 Carbine": m4_556mm
