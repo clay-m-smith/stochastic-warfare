@@ -10,14 +10,23 @@ import { UnitDetailSidebar } from './UnitDetailSidebar'
 import { usePlayback } from '../../hooks/usePlayback'
 import { useKeyboardShortcuts, type ShortcutConfig } from '../../hooks/useKeyboardShortcuts'
 
+function formatPlaybackTime(seconds: number): string {
+  const h = Math.floor(seconds / 3600)
+  const m = Math.floor((seconds % 3600) / 60)
+  const s = Math.floor(seconds % 60)
+  return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
+}
+
 interface TacticalMapProps {
   terrain: TerrainData
   frames: ReplayFrame[]
   engagementArcs?: EngagementArc[]
   onTickChange?: (tick: number) => void
+  durationS?: number
+  ticksExecuted?: number
 }
 
-export function TacticalMap({ terrain, frames, engagementArcs = [], onTickChange }: TacticalMapProps) {
+export function TacticalMap({ terrain, frames, engagementArcs = [], onTickChange, durationS, ticksExecuted }: TacticalMapProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null)
   const terrainCanvasRef = useRef<HTMLCanvasElement | null>(null)
   const containerRef = useRef<HTMLDivElement | null>(null)
@@ -414,6 +423,12 @@ export function TacticalMap({ terrain, frames, engagementArcs = [], onTickChange
         isPlaying={isPlaying}
         speed={speed}
         currentTick={currentFrameData?.tick ?? null}
+        elapsedTime={
+          currentFrameData && durationS && ticksExecuted
+            ? formatPlaybackTime((currentFrameData.tick / ticksExecuted) * durationS)
+            : null
+        }
+        totalTime={durationS ? formatPlaybackTime(durationS) : null}
         onPlay={play}
         onPause={pause}
         onStepForward={stepForward}

@@ -46,6 +46,9 @@ class CampaignConfig(BaseModel):
     strategic_ai_echelon: int = 9  # Corps+
     enable_maintenance: bool = True
     enable_supply_network: bool = True
+    enable_strategic_movement: bool = True
+    strategic_speed_fraction: float = 0.3
+    """Fraction of max_speed used during strategic march toward enemies."""
 
 
 # ---------------------------------------------------------------------------
@@ -152,9 +155,75 @@ class CampaignManager:
         if ctx.consumption_engine is not None and ctx.stockpile_manager is not None:
             self._consume_idle_supplies(ctx, dt)
 
-        # 5. Maintenance checks
+        # 5. Strategic movement — march toward nearest enemy
+        if self._config.enable_strategic_movement:
+            self._execute_strategic_movement(ctx, dt)
+
+        # 6. Maintenance checks
         if self._config.enable_maintenance and ctx.maintenance_engine is not None:
             self._run_maintenance(ctx, dt)
+
+    # ── Strategic movement ───────────────────────────────────────────
+
+    def _execute_strategic_movement(
+        self,
+        ctx: Any,
+        dt: float,
+    ) -> None:
+        """Move units toward nearest enemy at strategic march speed.
+
+        During strategic resolution, units advance toward the closest
+        opposing force at a fraction of their max speed (configured by
+        ``strategic_speed_fraction``).  This models operational-level
+        maneuver to contact.
+        """
+        import math
+
+        units_by_side = ctx.units_by_side
+        sides = list(units_by_side.keys())
+        speed_frac = self._config.strategic_speed_fraction
+
+        for side in sides:
+            active_own = [u for u in units_by_side[side]
+                          if u.status == UnitStatus.ACTIVE]
+            if not active_own:
+                continue
+
+            # Build enemy position list across all opposing sides
+            enemies: list[Unit] = []
+            for other_side in sides:
+                if other_side != side:
+                    enemies.extend(
+                        u for u in units_by_side[other_side]
+                        if u.status == UnitStatus.ACTIVE
+                    )
+            if not enemies:
+                continue
+
+            # Enemy centroid
+            cx = sum(e.position.easting for e in enemies) / len(enemies)
+            cy = sum(e.position.northing for e in enemies) / len(enemies)
+
+            for u in active_own:
+                effective_speed = u.max_speed * speed_frac
+                if effective_speed <= 0:
+                    continue
+
+                dx = cx - u.position.easting
+                dy = cy - u.position.northing
+                dist = math.sqrt(dx * dx + dy * dy)
+                if dist < 1.0:
+                    continue
+
+                move_dist = min(effective_speed * dt, dist)
+                scale = move_dist / dist
+                new_e = u.position.easting + dx * scale
+                new_n = u.position.northing + dy * scale
+                object.__setattr__(
+                    u, "position",
+                    Position(easting=new_e, northing=new_n,
+                             altitude=u.position.altitude),
+                )
 
     # ── Reinforcements ──────────────────────────────────────────────
 

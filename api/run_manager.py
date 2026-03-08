@@ -189,7 +189,13 @@ class RunManager:
         progress_interval = max(1, max_ticks // 100)
 
         # Frame interval: use scenario duration to estimate actual ticks
-        tick_dur = config_dict.get("tick_duration_seconds", 5.0)
+        tick_res = config_dict.get("tick_resolution")
+        if tick_res and isinstance(tick_res, dict):
+            # Campaign scenarios use tick_resolution — strategic_s is the
+            # dominant tick duration (engine starts at strategic resolution)
+            tick_dur = tick_res.get("strategic_s", 3600)
+        else:
+            tick_dur = config_dict.get("tick_duration_seconds", 5.0)
         dur_hours = config_dict.get("duration_hours", 24)
         expected_ticks = int(dur_hours * 3600.0 / tick_dur)
         actual_ticks = min(max_ticks, expected_ticks)

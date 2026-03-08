@@ -6,6 +6,8 @@ interface PlaybackControlsProps {
   isPlaying: boolean
   speed: PlaybackSpeed
   currentTick: number | null
+  elapsedTime?: string | null
+  totalTime?: string | null
   onPlay: () => void
   onPause: () => void
   onStepForward: () => void
@@ -21,6 +23,8 @@ export function PlaybackControls({
   isPlaying,
   speed,
   currentTick,
+  elapsedTime,
+  totalTime,
   onPlay,
   onPause,
   onStepForward,
@@ -82,8 +86,12 @@ export function PlaybackControls({
       </select>
 
       <span className="ml-1 font-mono text-gray-500 dark:text-gray-400">
-        {currentTick != null ? `Tick ${currentTick}` : ''} — Frame {currentFrame + 1}/
-        {totalFrames}
+        {elapsedTime && totalTime
+          ? `${elapsedTime} / ${totalTime}`
+          : currentTick != null
+            ? `Tick ${currentTick}`
+            : ''}{' '}
+        — Frame {currentFrame + 1}/{totalFrames}
       </span>
     </div>
   )

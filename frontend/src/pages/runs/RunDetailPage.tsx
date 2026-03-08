@@ -125,7 +125,7 @@ export function RunDetailPage() {
               <ResultsTab run={run} result={run.result as unknown as RunResult | null} />
             )}
             {activeTab === 'charts' && <ChartsTab runId={runId} result={run.result as unknown as RunResult | null} />}
-            {activeTab === 'map' && <MapTab runId={runId} />}
+            {activeTab === 'map' && <MapTab runId={runId} result={run.result as unknown as RunResult | null} />}
             {activeTab === 'narrative' && <NarrativeTab runId={runId} />}
             {activeTab === 'events' && <EventsTab runId={runId} />}
           </div>

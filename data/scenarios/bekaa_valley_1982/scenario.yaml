@@ -111,6 +111,10 @@ calibration_overrides:
   sead_effectiveness: 0.9
   drone_provocation_prob: 0.85
   sigint_detection_bonus: 0.15
+  blue_start_x: 30000.0
+  blue_start_y: 15000.0
+  red_start_x: 20000.0
+  red_start_y: 15000.0
   weapon_assignments:
     "M61A1 Vulcan 20mm": m61a1_vulcan
     "M901 Launching Station": mim104_pac3
