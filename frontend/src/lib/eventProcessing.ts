@@ -50,6 +50,15 @@ export interface EventCountBin {
   count: number
 }
 
+export const CASUALTY_EVENTS = new Set([
+  'UnitDestroyedEvent',
+  'UnitKilledEvent',
+  'UnitDisabledEvent',
+  'unit_destroyed',
+  'unit_killed',
+  'unit_disabled',
+])
+
 export const DESTRUCTION_EVENTS = new Set([
   'UnitDestroyedEvent',
   'UnitKilledEvent',
@@ -80,7 +89,7 @@ export function buildForceTimeSeries(
 
   const sorted = [...events].sort((a, b) => a.tick - b.tick)
   for (const ev of sorted) {
-    if (DESTRUCTION_EVENTS.has(ev.event_type)) {
+    if (CASUALTY_EVENTS.has(ev.event_type)) {
       const side = (ev.data.side as string | undefined) ?? ''
       if (side && activeCounts[side] != null) {
         activeCounts[side] = Math.max(0, activeCounts[side]! - 1)

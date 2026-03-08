@@ -107,7 +107,7 @@ describe('TacticalMap', () => {
   it('renders map controls', () => {
     render(<TacticalMap terrain={TERRAIN} frames={FRAMES} />)
     expect(screen.getByText('Labels')).toBeInTheDocument()
-    expect(screen.getByText('Destroyed')).toBeInTheDocument()
+    expect(screen.getAllByText('Destroyed').length).toBeGreaterThanOrEqual(1)
     expect(screen.getByText('Fit')).toBeInTheDocument()
   })
 

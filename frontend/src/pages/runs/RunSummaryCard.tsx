@@ -38,9 +38,10 @@ export function RunSummaryCard({ result }: RunSummaryCardProps) {
               className={`rounded-lg bg-white dark:bg-gray-800 p-4 shadow ${getSideBorderClass(side)}`}
             >
               <h3 className="mb-3 text-sm font-semibold uppercase text-gray-500 dark:text-gray-400">{formatSideName(side)}</h3>
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-4 gap-2">
                 <StatCard label="Total" value={sf.total} />
                 <StatCard label="Active" value={sf.active} />
+                <StatCard label="Disabled" value={sf.disabled ?? 0} />
                 <StatCard label="Destroyed" value={sf.destroyed} />
               </div>
             </div>

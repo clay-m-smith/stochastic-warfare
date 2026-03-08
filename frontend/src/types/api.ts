@@ -127,6 +127,7 @@ export interface NarrativeResponse {
 export interface SideForces {
   total: number
   active: number
+  disabled: number
   destroyed: number
 }
 

@@ -243,10 +243,12 @@ class RunManager:
         side_summaries = {}
         for side, units in ctx.units_by_side.items():
             active = sum(1 for u in units if u.status == UnitStatus.ACTIVE)
+            disabled = sum(1 for u in units if u.status == UnitStatus.DISABLED)
             destroyed = sum(1 for u in units if u.status == UnitStatus.DESTROYED)
             side_summaries[side] = {
                 "total": len(units),
                 "active": active,
+                "disabled": disabled,
                 "destroyed": destroyed,
             }
 

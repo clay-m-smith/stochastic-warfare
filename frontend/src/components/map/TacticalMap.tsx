@@ -3,7 +3,7 @@ import type { MapUnitFrame, ReplayFrame, TerrainData, EngagementArc } from '../.
 import { useViewportControls } from './useViewportControls'
 import { LAND_COVER_COLORS, worldToScreen, screenToWorld, getVisibleCellRange, applyElevationShading } from '../../lib/terrain'
 import { drawUnit, hitTestUnit } from '../../lib/unitRendering'
-import { getSideColor } from '../../lib/sideColors'
+import { getSideColor, initSidesForScenario } from '../../lib/sideColors'
 import { MapControls } from './MapControls'
 import { MapLegend } from './MapLegend'
 import { PlaybackControls } from './PlaybackControls'
@@ -78,6 +78,13 @@ export function TacticalMap({ terrain, frames, engagementArcs = [], onTickChange
     }
     return Array.from(sidesSet).sort()
   }, [frames])
+
+  // Initialize side colors when sides change (prevents collisions + resets between scenarios)
+  useEffect(() => {
+    if (allSides.length > 0) {
+      initSidesForScenario(allSides)
+    }
+  }, [allSides])
 
   // Determine available sides for FOW (from detection data)
   const availableSides = useMemo(() => {

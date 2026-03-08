@@ -58,7 +58,44 @@ export function MapLegend({ sides }: MapLegendProps) {
           ))}
         </div>
       </div>
+
+      <div>
+        <div className="mb-1 font-semibold text-gray-700 dark:text-gray-300">Status</div>
+        <div className="flex gap-3">
+          <div className="flex items-center gap-1">
+            <StatusIcon type="active" />
+            <span>Active</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <StatusIcon type="disabled" />
+            <span>Disabled</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <StatusIcon type="destroyed" />
+            <span>Destroyed</span>
+          </div>
+        </div>
+      </div>
     </div>
+  )
+}
+
+function StatusIcon({ type }: { type: 'active' | 'disabled' | 'destroyed' }) {
+  const size = 12
+  const opacity = type === 'destroyed' ? 0.35 : type === 'disabled' ? 0.55 : 1.0
+  return (
+    <svg width={size} height={size} viewBox="0 0 12 12">
+      <rect x="1" y="1" width="10" height="10" fill="#666" stroke="#000" strokeWidth="0.5" opacity={opacity} />
+      {type === 'disabled' && (
+        <line x1="10" y1="2" x2="2" y2="10" stroke="#FF8800" strokeWidth="2" />
+      )}
+      {type === 'destroyed' && (
+        <>
+          <line x1="2" y1="2" x2="10" y2="10" stroke="#FF0000" strokeWidth="2" />
+          <line x1="10" y1="2" x2="2" y2="10" stroke="#FF0000" strokeWidth="2" />
+        </>
+      )}
+    </svg>
   )
 }
 

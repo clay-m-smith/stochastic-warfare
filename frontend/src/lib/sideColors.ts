@@ -31,12 +31,32 @@ const BORDER_PALETTE = [
   'border-l-4 border-l-gray-500',
 ] as const
 
-/** Fixed index assignments for standard side names */
+/** Fixed index assignments for standard and historical side names */
 const FIXED_INDICES: Record<string, number> = {
+  // Standard NATO sides
   blue: 0,
   red: 1,
   green: 2,
   neutral: 7,
+  // Western / Allied factions → blue
+  british: 0,
+  english: 0,
+  usn: 0,
+  us: 0,
+  coalition: 0,
+  greek: 0,
+  roman: 0,
+  saxon: 2,
+  // Eastern / Opposing factions → red/rose
+  soviet: 1,
+  ijn: 1,
+  // Historical factions → distinct colors
+  german: 3,         // brown/tan — feldgrau
+  french: 5,         // teal
+  franco_spanish: 5, // teal (Trafalgar)
+  carthaginian: 4,   // purple — Tyrian purple
+  persian: 6,        // gold
+  norman: 6,         // gold
 }
 
 /** Track assignment order for dynamically-named sides */
@@ -55,8 +75,8 @@ export function resetSideOrder(): void {
 
 function resolveIndex(side: string): number {
   const lower = side.toLowerCase()
-  if (lower in FIXED_INDICES) return FIXED_INDICES[lower]
-  if (lower in _assigned) return _assigned[lower]
+  if (lower in FIXED_INDICES) return FIXED_INDICES[lower]!
+  if (lower in _assigned) return _assigned[lower]!
 
   // Find next available index (skip fixed ones)
   const fixedSet = new Set(Object.values(FIXED_INDICES))
@@ -69,14 +89,53 @@ function resolveIndex(side: string): number {
   return idx
 }
 
+/**
+ * Initialize colors for a set of sides, ensuring no two share the same color.
+ * Call this when loading a new scenario/run to reset dynamic assignments
+ * and resolve any collisions in fixed mappings.
+ */
+export function initSidesForScenario(sides: string[]): void {
+  resetSideOrder()
+  if (sides.length < 2) return
+
+  // Check for collisions among fixed mappings
+  const indexToSides = new Map<number, string[]>()
+  for (const side of sides) {
+    const idx = resolveIndex(side.toLowerCase())
+    const existing = indexToSides.get(idx) ?? []
+    existing.push(side.toLowerCase())
+    indexToSides.set(idx, existing)
+  }
+
+  // Resolve collisions: keep first side at its index, bump others
+  const usedIndices = new Set<number>()
+  for (const [idx, group] of indexToSides) {
+    usedIndices.add(idx)
+    for (let i = 1; i < group.length; i++) {
+      // Find nearest unused index
+      let newIdx = -1
+      for (let j = 0; j < COLOR_PALETTE.length; j++) {
+        if (!usedIndices.has(j)) {
+          newIdx = j
+          break
+        }
+      }
+      if (newIdx >= 0) {
+        _assigned[group[i]!] = newIdx
+        usedIndices.add(newIdx)
+      }
+    }
+  }
+}
+
 /** Get hex color for a side name (for canvas/Plotly). */
 export function getSideColor(side: string): string {
-  return COLOR_PALETTE[resolveIndex(side)]
+  return COLOR_PALETTE[resolveIndex(side)] ?? '#888888'
 }
 
 /** Get Tailwind border class for a side name (for cards). */
 export function getSideBorderClass(side: string): string {
-  return BORDER_PALETTE[resolveIndex(side)]
+  return BORDER_PALETTE[resolveIndex(side)] ?? 'border-l-4 border-l-gray-500'
 }
 
 /** Capitalize side name for display. */

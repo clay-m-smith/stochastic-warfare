@@ -22,7 +22,7 @@ from stochastic_warfare.core.events import EventBus
 from stochastic_warfare.core.logging import get_logger
 from stochastic_warfare.core.types import ModuleId, Position
 from stochastic_warfare.entities.base import Unit, UnitStatus
-from stochastic_warfare.entities.events import UnitDestroyedEvent
+from stochastic_warfare.entities.events import UnitDestroyedEvent, UnitDisabledEvent
 from stochastic_warfare.detection.sensors import SensorType
 
 logger = get_logger(__name__)
@@ -1090,14 +1090,23 @@ class BattleManager:
             if applied.get(target.entity_id) == new_status:
                 object.__setattr__(target, "status", new_status)
                 applied.pop(target.entity_id, None)
-                if new_status == UnitStatus.DESTROYED and event_bus is not None:
-                    event_bus.publish(UnitDestroyedEvent(
-                        timestamp=ts,
-                        source=ModuleId.COMBAT,
-                        unit_id=target.entity_id,
-                        cause="combat_damage",
-                        side=target.side,
-                    ))
+                if event_bus is not None:
+                    if new_status == UnitStatus.DESTROYED:
+                        event_bus.publish(UnitDestroyedEvent(
+                            timestamp=ts,
+                            source=ModuleId.COMBAT,
+                            unit_id=target.entity_id,
+                            cause="combat_damage",
+                            side=target.side,
+                        ))
+                    elif new_status == UnitStatus.DISABLED:
+                        event_bus.publish(UnitDisabledEvent(
+                            timestamp=ts,
+                            source=ModuleId.COMBAT,
+                            unit_id=target.entity_id,
+                            cause="combat_damage",
+                            side=target.side,
+                        ))
 
     def _execute_morale(
         self,

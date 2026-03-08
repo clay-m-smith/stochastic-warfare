@@ -23,10 +23,11 @@ export function drawUnit(
   const { sx, sy } = worldToScreen(unit.x, unit.y, transform, canvasHeight)
   const color = getSideColor(unit.side)
   const size = UNIT_SIZE
+  const disabled = unit.status === 1 // UnitStatus.DISABLED = 1
   const destroyed = unit.status >= 2 // UnitStatus.DESTROYED = 2
 
   ctx2d.save()
-  ctx2d.globalAlpha = destroyed ? 0.35 : 1.0
+  ctx2d.globalAlpha = destroyed ? 0.35 : disabled ? 0.55 : 1.0
   ctx2d.fillStyle = color
   ctx2d.strokeStyle = isSelected ? '#FFD700' : '#000000'
   ctx2d.lineWidth = isSelected ? 2 : 1
@@ -54,6 +55,17 @@ export function drawUnit(
   ctx2d.closePath()
   ctx2d.fill()
   ctx2d.stroke()
+
+  // Slash overlay for disabled units
+  if (disabled) {
+    ctx2d.globalAlpha = 0.8
+    ctx2d.strokeStyle = '#FF8800'
+    ctx2d.lineWidth = 2
+    ctx2d.beginPath()
+    ctx2d.moveTo(sx + size, sy - size)
+    ctx2d.lineTo(sx - size, sy + size)
+    ctx2d.stroke()
+  }
 
   // X overlay for destroyed units
   if (destroyed) {

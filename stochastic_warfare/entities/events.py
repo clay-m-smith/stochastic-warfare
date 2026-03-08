@@ -20,6 +20,15 @@ class UnitCreatedEvent(Event):
 
 
 @dataclass(frozen=True)
+class UnitDisabledEvent(Event):
+    """Published when a unit is disabled (combat-ineffective but not destroyed)."""
+
+    unit_id: str
+    cause: str
+    side: str = ""
+
+
+@dataclass(frozen=True)
 class UnitDestroyedEvent(Event):
     """Published when a unit is destroyed or removed from play."""
 
