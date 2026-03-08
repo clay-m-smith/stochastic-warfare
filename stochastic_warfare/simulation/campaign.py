@@ -19,7 +19,10 @@ from stochastic_warfare.core.events import Event, EventBus
 from stochastic_warfare.core.logging import get_logger
 from stochastic_warfare.core.types import ModuleId, Position
 from stochastic_warfare.entities.base import Unit, UnitStatus
-from stochastic_warfare.simulation.battle import BattleContext, BattleManager
+from stochastic_warfare.simulation.battle import (
+    BattleContext, BattleManager,
+    _movement_target, _should_hold_position,
+)
 from stochastic_warfare.simulation.scenario import ReinforcementConfig
 
 logger = get_logger(__name__)
@@ -210,17 +213,19 @@ class CampaignManager:
             if not enemies:
                 continue
 
-            # Enemy centroid
-            cx = sum(e.position.easting for e in enemies) / len(enemies)
-            cy = sum(e.position.northing for e in enemies) / len(enemies)
-
             for u in active_own:
+                # Emplaced / air-defense units hold position
+                if _should_hold_position(u):
+                    continue
+
                 effective_speed = u.max_speed * speed_frac
                 if effective_speed <= 0:
                     continue
 
-                dx = cx - u.position.easting
-                dy = cy - u.position.northing
+                # Blend centroid + nearest enemy for movement target
+                tx, ty = _movement_target(u.position, enemies)
+                dx = tx - u.position.easting
+                dy = ty - u.position.northing
                 dist = math.sqrt(dx * dx + dy * dy)
                 if dist < 1.0:
                     continue

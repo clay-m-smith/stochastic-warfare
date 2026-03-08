@@ -36,6 +36,90 @@ _WEATHER_BYPASS_TYPES: frozenset[SensorType] = frozenset({
 
 
 # ---------------------------------------------------------------------------
+# Movement helpers
+# ---------------------------------------------------------------------------
+
+
+def _should_hold_position(unit: Unit) -> bool:
+    """Return True if the unit should not advance toward enemies.
+
+    Emplaced systems (SAMs, deployed artillery) fight from their
+    position rather than maneuvering toward the enemy.
+    """
+    # Air defense units are always emplaced
+    try:
+        from stochastic_warfare.entities.unit_classes.air_defense import AirDefenseUnit
+        if isinstance(unit, AirDefenseUnit):
+            return True
+    except ImportError:
+        pass
+    return False
+
+
+def _movement_target(
+    unit_pos: Position,
+    enemies: list[Unit],
+    centroid_weight: float = 0.5,
+) -> tuple[float, float]:
+    """Compute a blended movement target from centroid and nearest enemy.
+
+    Returns a point that is a weighted average of the enemy centroid
+    (general advance toward the line) and the nearest enemy (local
+    threat response).  This produces natural "lines closing" behavior
+    rather than all units collapsing onto a single point.
+    """
+    # Centroid
+    cx = sum(e.position.easting for e in enemies) / len(enemies)
+    cy = sum(e.position.northing for e in enemies) / len(enemies)
+
+    # Nearest enemy
+    best_dist_sq = float("inf")
+    nx, ny = cx, cy
+    ux, uy = unit_pos.easting, unit_pos.northing
+    for e in enemies:
+        dx = e.position.easting - ux
+        dy = e.position.northing - uy
+        d2 = dx * dx + dy * dy
+        if d2 < best_dist_sq:
+            best_dist_sq = d2
+            nx, ny = e.position.easting, e.position.northing
+
+    # Blend
+    w = centroid_weight
+    return cx * w + nx * (1 - w), cy * w + ny * (1 - w)
+
+
+def _nearest_enemy_dist(unit_pos: Position, enemies: list[Unit]) -> float:
+    """Return distance to the closest enemy."""
+    best = float("inf")
+    ux, uy = unit_pos.easting, unit_pos.northing
+    for e in enemies:
+        dx = e.position.easting - ux
+        dy = e.position.northing - uy
+        d = math.sqrt(dx * dx + dy * dy)
+        if d < best:
+            best = d
+    return best
+
+
+def _standoff_range(unit: Unit, ctx: Any) -> float:
+    """Return the range at which this unit should stop advancing.
+
+    Uses 80% of the best weapon's max range so the unit parks
+    comfortably within engagement distance.  Units without weapons
+    (or with only melee) close to contact.
+    """
+    weapons = getattr(ctx, "unit_weapons", {}).get(unit.entity_id, [])
+    best_range = 0.0
+    for wpn_inst, _ammo_defs in weapons:
+        r = wpn_inst.definition.max_range_m
+        if r > best_range:
+            best_range = r
+    # Park at 80% of max range; melee / zero-range weapons close fully
+    return best_range * 0.8 if best_range > 10 else 0.0
+
+
+# ---------------------------------------------------------------------------
 # Configuration
 # ---------------------------------------------------------------------------
 
@@ -742,12 +826,12 @@ class BattleManager:
             if side in defensive_sides:
                 continue
 
-            # Compute enemy centroid
-            cx = sum(e.position.easting for e in enemies) / len(enemies)
-            cy = sum(e.position.northing for e in enemies) / len(enemies)
-
             for u in units:
                 if u.status != UnitStatus.ACTIVE:
+                    continue
+
+                # Emplaced / air-defense units hold position
+                if _should_hold_position(u):
                     continue
 
                 # Effective speed: use current speed (set by behavior_rules
@@ -763,8 +847,17 @@ class BattleManager:
                 if wave > 0 and battle_elapsed < wave * wave_interval:
                     continue  # Wave not yet released
 
-                dx = cx - u.position.easting
-                dy = cy - u.position.northing
+                # Standoff: stop closing once within best weapon range
+                # of the nearest enemy
+                standoff = _standoff_range(u, ctx)
+                nearest_dist = _nearest_enemy_dist(u.position, enemies)
+                if nearest_dist <= standoff:
+                    continue
+
+                # Blend centroid + nearest enemy for movement target
+                tx, ty = _movement_target(u.position, enemies)
+                dx = tx - u.position.easting
+                dy = ty - u.position.northing
                 dist = math.sqrt(dx * dx + dy * dy)
                 if dist < 1.0:
                     continue
@@ -779,7 +872,11 @@ class BattleManager:
                         from stochastic_warfare.cbrn.protection import ProtectionEngine
                         mopp_speed_factor = ProtectionEngine.get_mopp_speed_factor(mopp_level)
 
-                move_dist = min(effective_speed * dt * mopp_speed_factor, dist)
+                # Don't overshoot past standoff distance
+                max_close = max(0.0, nearest_dist - standoff)
+                move_dist = min(effective_speed * dt * mopp_speed_factor, dist, max_close)
+                if move_dist <= 0:
+                    continue
                 nx = u.position.easting + (dx / dist) * move_dist
                 ny = u.position.northing + (dy / dist) * move_dist
                 object.__setattr__(u, "position", Position(nx, ny, u.position.altitude))

@@ -153,12 +153,10 @@ class EngagementEngine:
         dz = target_pos.altitude - shooter_pos.altitude
         range_m = math.sqrt(dx * dx + dy * dy + dz * dz)
 
-        # Melee weapons use only their own min_range, not the global minimum
-        if weapon.category == "MELEE":
-            min_range = weapon.min_range_m
-        else:
-            min_range = max(weapon.min_range_m, self._config.min_engagement_range_m)
-        if range_m < min_range:
+        # Use each weapon's own min_range (e.g. SAMs have 3km minimum,
+        # guns have 0m).  No global floor — the movement model may place
+        # units very close together.
+        if range_m < weapon.min_range_m:
             return False
         if range_m > weapon.max_range_m > 0:
             return False
