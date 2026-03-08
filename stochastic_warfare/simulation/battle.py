@@ -18,12 +18,14 @@ from pydantic import BaseModel
 
 from stochastic_warfare.combat.ammunition import WeaponCategory
 from stochastic_warfare.combat.engagement import EngagementType
+from stochastic_warfare.combat.suppression import UnitSuppressionState
 from stochastic_warfare.core.events import EventBus
 from stochastic_warfare.core.logging import get_logger
 from stochastic_warfare.core.types import ModuleId, Position
 from stochastic_warfare.entities.base import Unit, UnitStatus
 from stochastic_warfare.entities.events import UnitDestroyedEvent, UnitDisabledEvent
 from stochastic_warfare.detection.sensors import SensorType
+from stochastic_warfare.morale.state import MoraleState, _MORALE_EFFECTS
 
 logger = get_logger(__name__)
 
@@ -220,6 +222,10 @@ class BattleManager:
         self._next_battle_id = 0
         # Transient assessment cache — not checkpointed
         self._cached_assessments: dict[str, Any] = {}  # unit_id -> SituationAssessment
+        # Phase 40b: posture tracking (ticks unit has been stationary)
+        self._ticks_stationary: dict[str, int] = {}
+        # Phase 40e: per-unit suppression state
+        self._suppression_states: dict[str, UnitSuppressionState] = {}
 
     # ── Engagement detection ────────────────────────────────────────
 
@@ -320,8 +326,50 @@ class BattleManager:
         if behavior_rules:
             self._apply_behavior_rules(units_by_side, active_enemies, behavior_rules)
 
+        # 3c. Decay suppression (Phase 40e)
+        sup_engine = getattr(ctx, "suppression_engine", None)
+        if sup_engine is not None:
+            for state in self._suppression_states.values():
+                sup_engine.update_suppression(state, dt)
+
         # 4. Movement — units with active movement orders
+        # Record pre-movement positions for posture tracking (Phase 40b)
+        pre_positions: dict[str, tuple[float, float]] = {}
+        for side_units in units_by_side.values():
+            for u in side_units:
+                if u.status == UnitStatus.ACTIVE:
+                    pre_positions[u.entity_id] = (u.position.easting, u.position.northing)
+
         self._execute_movement(ctx, units_by_side, active_enemies, dt, battle, behavior_rules)
+
+        # 4b. Update posture based on movement (Phase 40b)
+        defensive_sides = set(cal.get("defensive_sides", []))
+        dig_in_ticks = cal.get("dig_in_ticks", 30)
+        for side_name, side_units in units_by_side.items():
+            for u in side_units:
+                if u.status != UnitStatus.ACTIVE:
+                    continue
+                if not hasattr(u, "posture"):
+                    continue
+                uid = u.entity_id
+                pre = pre_positions.get(uid)
+                if pre is None:
+                    continue
+                cur = (u.position.easting, u.position.northing)
+                moved = abs(cur[0] - pre[0]) > 0.01 or abs(cur[1] - pre[1]) > 0.01
+                if moved:
+                    self._ticks_stationary[uid] = 0
+                    object.__setattr__(u, "posture", type(u.posture)(0))  # MOVING
+                else:
+                    self._ticks_stationary[uid] = self._ticks_stationary.get(uid, 0) + 1
+                    ticks = self._ticks_stationary[uid]
+                    if side_name in defensive_sides:
+                        if ticks > dig_in_ticks:
+                            object.__setattr__(u, "posture", type(u.posture)(3))  # DUG_IN
+                        else:
+                            object.__setattr__(u, "posture", type(u.posture)(2))  # DEFENSIVE
+                    else:
+                        object.__setattr__(u, "posture", type(u.posture)(1))  # HALTED
 
         # 5. Engagement — detection + combat
         pending_damage = self._execute_engagements(
@@ -943,6 +991,14 @@ class BattleManager:
             for attacker in side_units:
                 if attacker.status != UnitStatus.ACTIVE:
                     continue
+
+                # Phase 40f: morale gate — routed/surrendered units don't fire
+                attacker_morale = ctx.morale_states.get(attacker.entity_id)
+                if attacker_morale is not None:
+                    ms = MoraleState(int(attacker_morale)) if not isinstance(attacker_morale, MoraleState) else attacker_morale
+                    if ms in (MoraleState.ROUTED, MoraleState.SURRENDERED):
+                        continue
+
                 weapons = ctx.unit_weapons.get(attacker.entity_id, [])
                 if not weapons or pos_arr.shape[0] == 0:
                     continue
@@ -973,6 +1029,7 @@ class BattleManager:
                 # Select best weapon for current range — prefer ranged weapons
                 # at distance, melee weapons at close range.  Skip weapons
                 # that are out of ammo or out of range.
+                target_domain = best_target.domain.name
                 selected_wpn = None
                 selected_ammo_def = None
                 selected_ammo_id = None
@@ -986,6 +1043,12 @@ class BattleManager:
                         continue
                     max_r = wpn_inst.definition.max_range_m
                     if max_r > 0 and best_range > max_r:
+                        continue
+                    # Phase 40d: domain filtering
+                    if target_domain not in wpn_inst.definition.effective_target_domains():
+                        continue
+                    # Phase 40c: deployed weapons can't fire while moving
+                    if attacker.speed > 0.5 and wpn_inst.definition.requires_deployed:
                         continue
                     # Score: prefer weapon whose max range best fits current
                     # distance.  Ranged weapons score higher when target is
@@ -1018,7 +1081,15 @@ class BattleManager:
                     if sc.side == side_name:
                         side_cfg = sc
                         break
-                crew_skill = (side_cfg.experience_level if side_cfg else 0.5) * hit_prob_mod
+
+                # Phase 40f: morale accuracy modifier
+                morale_accuracy_mod = 1.0
+                if attacker_morale is not None:
+                    ms = MoraleState(int(attacker_morale)) if not isinstance(attacker_morale, MoraleState) else attacker_morale
+                    effects = _MORALE_EFFECTS.get(ms, {})
+                    morale_accuracy_mod = effects.get("accuracy_mult", 1.0)
+
+                crew_skill = (side_cfg.experience_level if side_cfg else 0.5) * hit_prob_mod * morale_accuracy_mod
 
                 # Per-side target_size_modifier: use target's side
                 target_side = self._find_unit_side(ctx, best_target.entity_id)
@@ -1042,6 +1113,10 @@ class BattleManager:
                 except (KeyError, ValueError):
                     pass
 
+                # Phase 40b: extract target posture
+                target_posture_val = getattr(best_target, "posture", None)
+                target_posture_str = target_posture_val.name if target_posture_val is not None else "MOVING"
+
                 result = ctx.engagement_engine.route_engagement(
                     engagement_type=engagement_type,
                     attacker_id=attacker.entity_id,
@@ -1055,9 +1130,27 @@ class BattleManager:
                     crew_skill=crew_skill,
                     target_size_m2=8.5 * target_size_mod,
                     target_armor_mm=target_armor,
+                    shooter_speed_mps=attacker.speed,
+                    target_posture=target_posture_str,
+                    visibility=vis_mod,
                     timestamp=timestamp,
                     current_time_s=current_time_s,
                 )
+
+                # Phase 40e: apply fire volume to target suppression
+                if result.engaged:
+                    sup_eng = getattr(ctx, "suppression_engine", None)
+                    if sup_eng is not None:
+                        tid = best_target.entity_id
+                        if tid not in self._suppression_states:
+                            self._suppression_states[tid] = UnitSuppressionState()
+                        sup_eng.apply_fire_volume(
+                            state=self._suppression_states[tid],
+                            rounds_per_minute=wpn_inst.definition.rate_of_fire_rpm,
+                            caliber_mm=wpn_inst.definition.caliber_mm,
+                            range_m=best_range,
+                            duration_s=dt,
+                        )
 
                 if result.engaged and result.hit_result and result.hit_result.hit:
                     if engagement_type in (EngagementType.DEW_LASER, EngagementType.DEW_HPM):
@@ -1140,12 +1233,15 @@ class BattleManager:
             for u in side_units:
                 if u.status not in (UnitStatus.ACTIVE, UnitStatus.ROUTING):
                     continue
-                from stochastic_warfare.morale.state import MoraleState
+
+                # Phase 40e: use actual suppression level
+                sup_state = self._suppression_states.get(u.entity_id)
+                suppression_level = sup_state.value if sup_state is not None else 0.0
 
                 new_morale = ctx.morale_machine.check_transition(
                     unit_id=u.entity_id,
                     casualty_rate=casualty_rate * morale_degrade_mod,
-                    suppression_level=0.0,
+                    suppression_level=suppression_level,
                     leadership_present=True,
                     cohesion=cohesion,
                     force_ratio=force_ratio,

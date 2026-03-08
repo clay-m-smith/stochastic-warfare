@@ -357,6 +357,10 @@ class EngagementEngine:
         target_armor_mm: float = 0.0,
         target_speed_mps: float = 0.0,
         target_altitude_m: float = 0.0,
+        shooter_speed_mps: float = 0.0,
+        target_posture: str = "MOVING",
+        visibility: float = 1.0,
+        position_uncertainty_m: float = 0.0,
         timestamp: Any = None,
         current_time_s: float = 0.0,
     ) -> EngagementResult:
@@ -380,6 +384,10 @@ class EngagementEngine:
                 target_size_m2=target_size_m2,
                 target_armor_mm=target_armor_mm,
                 target_speed_mps=target_speed_mps,
+                shooter_speed_mps=shooter_speed_mps,
+                target_posture=target_posture,
+                visibility=visibility,
+                position_uncertainty_m=position_uncertainty_m,
                 timestamp=timestamp,
                 current_time_s=current_time_s,
             )

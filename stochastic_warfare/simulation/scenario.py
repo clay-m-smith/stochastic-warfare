@@ -250,6 +250,12 @@ class SimulationContext:
     classification: Any = None
     infrastructure_manager: Any = None
     bathymetry: Any = None
+    obstacle_manager: Any = None
+    hydrography_manager: Any = None
+    population_manager: Any = None
+
+    # Suppression (Phase 40e)
+    suppression_engine: Any = None
 
     # Forces
     units_by_side: dict[str, list[Unit]] = field(default_factory=dict)
@@ -992,6 +998,13 @@ class ScenarioLoader:
             event_bus=bus,
         )
 
+        # Terrain managers (Phase 40g)
+        from stochastic_warfare.terrain.obstacles import ObstacleManager
+        from stochastic_warfare.terrain.hydrography import HydrographyManager
+
+        obstacle_mgr = ObstacleManager()
+        hydro_mgr = HydrographyManager()
+
         result = {
             "los_engine": los_engine,
             "engagement_engine": engagement_engine,
@@ -1011,6 +1024,9 @@ class ScenarioLoader:
             "supply_network_engine": supply_network_engine,
             "maintenance_engine": maintenance_engine,
             "aggregation_engine": aggregation_engine,
+            "suppression_engine": sup_engine,
+            "obstacle_manager": obstacle_mgr,
+            "hydrography_manager": hydro_mgr,
         }
 
         # ── Optional engine wiring (Phase 25) ────────────────────────

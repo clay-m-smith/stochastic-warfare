@@ -599,7 +599,7 @@ class VictoryEvaluator:
         """
         best_side = ""
         best_survival = -1.0
-        is_tie = True
+        sides_at_best = 0
         details: list[str] = []
 
         for side, units in units_by_side.items():
@@ -611,14 +611,13 @@ class VictoryEvaluator:
             details.append(f"{side}: {active}/{total} ({survival:.0%})")
 
             if survival > best_survival:
-                if best_survival >= 0:
-                    is_tie = False
                 best_survival = survival
                 best_side = side
+                sides_at_best = 1
             elif survival == best_survival:
-                is_tie = True
+                sides_at_best += 1
 
-        if is_tie or not best_side:
+        if sides_at_best != 1 or not best_side:
             return VictoryResult(
                 game_over=True,
                 winning_side="draw",

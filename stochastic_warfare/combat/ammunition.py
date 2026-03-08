@@ -84,6 +84,23 @@ class AmmoType(enum.IntEnum):
 # ---------------------------------------------------------------------------
 
 
+_CATEGORY_DEFAULT_DOMAINS: dict[int, set[str]] = {
+    WeaponCategory.CANNON: {"GROUND"},
+    WeaponCategory.MACHINE_GUN: {"GROUND", "AERIAL"},
+    WeaponCategory.HOWITZER: {"GROUND"},
+    WeaponCategory.MORTAR: {"GROUND"},
+    WeaponCategory.ROCKET_LAUNCHER: {"GROUND"},
+    WeaponCategory.MISSILE_LAUNCHER: {"GROUND", "AERIAL"},
+    WeaponCategory.TORPEDO_TUBE: {"NAVAL", "SUBMARINE"},
+    WeaponCategory.NAVAL_GUN: {"GROUND", "NAVAL"},
+    WeaponCategory.AAA: {"AERIAL"},
+    WeaponCategory.AIRCRAFT_GUN: {"GROUND", "AERIAL"},
+    WeaponCategory.MINE_LAYER: {"GROUND", "NAVAL"},
+    WeaponCategory.CIWS: {"AERIAL", "NAVAL"},
+    WeaponCategory.DIRECTED_ENERGY: {"GROUND", "AERIAL", "NAVAL"},
+}
+
+
 class WeaponDefinition(BaseModel):
     """Weapon system specification loaded from YAML."""
 
@@ -129,6 +146,20 @@ class WeaponDefinition(BaseModel):
     traverse_deg: float = 360.0
     elevation_min_deg: float = -5.0
     elevation_max_deg: float = 85.0
+
+    # Domain targeting (Phase 40d)
+    target_domains: list[str] = []  # empty = infer from category
+
+    def effective_target_domains(self) -> set[str]:
+        """Return the set of domains this weapon can engage."""
+        if self.target_domains:
+            return set(self.target_domains)
+        try:
+            return _CATEGORY_DEFAULT_DOMAINS.get(
+                self.parsed_category(), {"GROUND", "NAVAL"}
+            )
+        except (KeyError, ValueError):
+            return {"GROUND", "NAVAL"}
 
     def parsed_category(self) -> WeaponCategory:
         """Return the enum value for this definition's category string."""
