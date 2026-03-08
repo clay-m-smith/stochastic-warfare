@@ -12,6 +12,7 @@ import {
   buildEventCounts,
   buildForceTimeSeries,
   buildMoraleTimeSeries,
+  tickToSeconds,
 } from '../../../lib/eventProcessing'
 import type { RunResult } from '../../../types/api'
 
@@ -24,19 +25,22 @@ export function ChartsTab({ runId, result }: ChartsTabProps) {
   const [searchParams, setSearchParams] = useSearchParams()
   const currentTick = searchParams.get('tick') ? Number(searchParams.get('tick')) : null
   const { data: eventsData, isLoading } = useRunEvents(runId, { limit: 10000 })
+  const dt = tickToSeconds(result)
 
   const handleChartClick = useCallback(
     (event: Plotly.PlotMouseEvent) => {
       const point = event.points?.[0]
       if (point && typeof point.x === 'number') {
+        // x is time_s, convert back to tick
+        const tick = Math.round((point.x as number) / dt)
         setSearchParams((prev) => {
           const next = new URLSearchParams(prev)
-          next.set('tick', String(Math.round(point.x as number)))
+          next.set('tick', String(tick))
           return next
         })
       }
     },
-    [setSearchParams],
+    [setSearchParams, dt],
   )
 
   if (isLoading) return <LoadingSpinner />
@@ -47,17 +51,18 @@ export function ChartsTab({ runId, result }: ChartsTabProps) {
   }
 
   const forceData = buildForceTimeSeries(events, result)
-  const engagementData = buildEngagementData(events)
-  const moraleData = buildMoraleTimeSeries(events)
-  const activityData = buildEventCounts(events)
+  const engagementData = buildEngagementData(events, result)
+  const moraleData = buildMoraleTimeSeries(events, result)
+  const activityData = buildEventCounts(events, result)
 
-  // Build vertical reference line shape for chart sync
-  const tickMarkerShapes = currentTick != null
+  // Build vertical reference line shape for chart sync (in time_s units)
+  const currentTime = currentTick != null ? currentTick * dt : null
+  const tickMarkerShapes = currentTime != null
     ? [
         {
           type: 'line' as const,
-          x0: currentTick,
-          x1: currentTick,
+          x0: currentTime,
+          x1: currentTime,
           y0: 0,
           y1: 1,
           yref: 'paper' as const,

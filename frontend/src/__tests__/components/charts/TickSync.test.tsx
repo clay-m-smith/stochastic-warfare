@@ -82,7 +82,8 @@ describe('TickSync', () => {
       const layout = JSON.parse(plot.getAttribute('data-layout') || '{}')
       expect(layout.shapes).toBeDefined()
       expect(layout.shapes.length).toBe(1)
-      expect(layout.shapes[0].x0).toBe(50)
+      // tick=50, dt=5.0/100=0.05, so time_s = 50*0.05 = 2.5
+      expect(layout.shapes[0].x0).toBe(2.5)
     }
   })
 

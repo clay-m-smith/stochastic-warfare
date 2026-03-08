@@ -18,7 +18,7 @@ export function EngagementTimeline({ data, className, layoutOverrides, onClick }
   const hasRange = data.some((d) => d.range != null)
 
   const makeTrace = (points: EngagementPoint[], name: string, color: string): Plotly.Data => ({
-    x: points.map((p) => p.tick),
+    x: points.map((p) => p.time_s),
     y: hasRange ? points.map((p) => p.range ?? 0) : points.map(() => 1),
     name,
     type: 'scatter' as const,
@@ -38,7 +38,7 @@ export function EngagementTimeline({ data, className, layoutOverrides, onClick }
       ]}
       layout={{
         title: { text: 'Engagement Timeline' },
-        xaxis: { title: { text: 'Tick' } },
+        xaxis: { title: { text: 'Elapsed Time (s)' } },
         yaxis: { title: { text: hasRange ? 'Range (m)' : 'Engagement' } },
         height: 350,
         ...layoutOverrides,

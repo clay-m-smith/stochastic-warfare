@@ -1,4 +1,5 @@
 import type { ForceTimePoint } from '../../lib/eventProcessing'
+import { formatElapsed } from '../../lib/eventProcessing'
 import { PlotlyChart } from './PlotlyChart'
 
 const SIDE_COLORS: Record<string, string> = {
@@ -20,15 +21,17 @@ export function ForceStrengthChart({ data, className, layoutOverrides, onClick }
     return <div className="py-8 text-center text-sm text-gray-400">No force data available</div>
   }
 
-  const sides = Object.keys(data[0]!).filter((k) => k !== 'tick')
+  const sides = Object.keys(data[0]!).filter((k) => k !== 'tick' && k !== 'time_s')
   const traces: Plotly.Data[] = sides.map((side) => ({
-    x: data.map((p) => p.tick),
+    x: data.map((p) => p.time_s),
     y: data.map((p) => (p[side] as number | undefined) ?? 0),
     name: side,
     type: 'scatter' as const,
     mode: 'lines' as const,
     fill: 'tozeroy' as const,
     line: { color: SIDE_COLORS[side] ?? '#6b7280' },
+    text: data.map((p) => formatElapsed(p.time_s)),
+    hovertemplate: '%{text}<br>%{y} units<extra>%{fullData.name}</extra>',
   }))
 
   return (
@@ -36,7 +39,7 @@ export function ForceStrengthChart({ data, className, layoutOverrides, onClick }
       data={traces}
       layout={{
         title: { text: 'Force Strength Over Time' },
-        xaxis: { title: { text: 'Tick' } },
+        xaxis: { title: { text: 'Elapsed Time (s)' } },
         yaxis: { title: { text: 'Active Units' }, rangemode: 'tozero' },
         height: 350,
         ...layoutOverrides,

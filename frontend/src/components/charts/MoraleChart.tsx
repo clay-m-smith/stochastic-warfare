@@ -28,7 +28,7 @@ export function MoraleChart({ data, className, layoutOverrides, onClick }: Moral
   const traces: Plotly.Data[] = selectedUnits.map((uid) => {
     const points = data.filter((d) => d.unit_id === uid)
     return {
-      x: points.map((p) => p.tick),
+      x: points.map((p) => p.time_s),
       y: points.map((p) => MORALE_VALUES[p.new_state] ?? 2),
       name: uid,
       type: 'scatter' as const,
@@ -56,7 +56,7 @@ export function MoraleChart({ data, className, layoutOverrides, onClick }: Moral
         data={traces}
         layout={{
           title: { text: 'Morale State Over Time' },
-          xaxis: { title: { text: 'Tick' } },
+          xaxis: { title: { text: 'Elapsed Time (s)' } },
           yaxis: {
             title: { text: 'Morale' },
             tickvals: [0, 1, 2, 3, 4],

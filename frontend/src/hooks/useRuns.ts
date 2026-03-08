@@ -35,8 +35,12 @@ export function useRuns(params?: {
 }
 
 export function useSubmitRun() {
+  const queryClient = useQueryClient()
   return useMutation<RunSubmitResponse, Error, RunSubmitRequest>({
     mutationFn: submitRun,
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['runs'] })
+    },
   })
 }
 

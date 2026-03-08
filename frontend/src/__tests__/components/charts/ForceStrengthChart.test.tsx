@@ -11,8 +11,8 @@ vi.mock('../../../components/charts/PlotlyChart', () => ({
 describe('ForceStrengthChart', () => {
   it('renders chart with data', () => {
     const data: ForceTimePoint[] = [
-      { tick: 0, blue: 10, red: 8 },
-      { tick: 5, blue: 10, red: 7 },
+      { tick: 0, time_s: 0, blue: 10, red: 8 },
+      { tick: 5, time_s: 25, blue: 10, red: 7 },
     ]
     renderWithProviders(<ForceStrengthChart data={data} />)
     expect(screen.getByTestId('plotly-chart')).toBeInTheDocument()

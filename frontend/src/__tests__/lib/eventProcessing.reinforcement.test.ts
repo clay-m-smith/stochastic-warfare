@@ -32,8 +32,8 @@ describe('buildForceTimeSeries with reinforcements', () => {
     ]
     const points = buildForceTimeSeries(events, MOCK_RESULT)
     expect(points).toHaveLength(2)
-    expect(points[0]).toEqual({ tick: 0, blue: 10, red: 8 })
-    expect(points[1]).toEqual({ tick: 10, blue: 13, red: 8 })
+    expect(points[0]).toEqual({ tick: 0, time_s: 0, blue: 10, red: 8 })
+    expect(points[1]).toEqual({ tick: 10, time_s: 1, blue: 13, red: 8 })
   })
 
   it('handles reinforcement_arrived snake_case variant', () => {
@@ -42,7 +42,7 @@ describe('buildForceTimeSeries with reinforcements', () => {
     ]
     const points = buildForceTimeSeries(events, MOCK_RESULT)
     expect(points).toHaveLength(2)
-    expect(points[1]).toEqual({ tick: 5, blue: 10, red: 10 })
+    expect(points[1]).toEqual({ tick: 5, time_s: 0.5, blue: 10, red: 10 })
   })
 
   it('mixed reinforcements and destructions in correct order', () => {
