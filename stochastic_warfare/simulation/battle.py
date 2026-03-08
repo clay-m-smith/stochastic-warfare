@@ -1123,6 +1123,17 @@ class BattleManager:
         # Phase 41c: target selection mode
         target_selection_mode = cal.get("target_selection_mode", "threat_scored")
 
+        # Phase 42a: ROE engine and hold-fire discipline
+        roe_engine = getattr(ctx, "roe_engine", None)
+        roe_level_str = cal.get("roe_level", None)
+        if roe_engine is not None and roe_level_str is not None:
+            from stochastic_warfare.c2.roe import RoeLevel
+            try:
+                roe_engine._default_level = RoeLevel[roe_level_str.upper()]
+            except (KeyError, AttributeError):
+                pass
+        behavior_rules = getattr(ctx.config, "behavior_rules", None) or {}
+
         if ctx.engagement_engine is None:
             return pending_damage
 
@@ -1219,6 +1230,20 @@ class BattleManager:
                 vis_mod = 1.0 if weather_independent else (min(visibility_m / best_range, 1.0) if best_range > 0 else 1.0)
                 vis_mod = vis_mod * detection_quality_mod
 
+                # Phase 42a: ROE gate
+                if roe_engine is not None:
+                    from stochastic_warfare.c2.roe import TargetCategory
+                    id_confidence = detection_quality_mod
+                    authorized, _reason = roe_engine.check_engagement_authorized(
+                        shooter_id=attacker.entity_id,
+                        target_id=best_target.entity_id,
+                        target_category=TargetCategory.MILITARY_COMBATANT,
+                        id_confidence=id_confidence,
+                        target_position=best_target.position,
+                    )
+                    if not authorized:
+                        continue
+
                 # Select best weapon for current range — prefer ranged weapons
                 # at distance, melee weapons at close range.  Skip weapons
                 # that are out of ammo or out of range.
@@ -1261,6 +1286,18 @@ class BattleManager:
 
                 if selected_wpn is None:
                     continue
+
+                # Phase 42a: hold-fire — defensive units wait for effective range
+                side_rules = behavior_rules.get(side_name, {})
+                if isinstance(side_rules, dict) and side_rules.get("hold_fire_until_effective_range", False):
+                    best_eff_range = max(
+                        (w[0].definition.get_effective_range()
+                         for w in weapons if w[0].definition.max_range_m > 0),
+                        default=0.0,
+                    )
+                    if best_eff_range > 0 and best_range > best_eff_range:
+                        continue  # Hold fire — target not yet in effective range
+
                 wpn_inst = selected_wpn
                 ammo_def = selected_ammo_def
                 ammo_id = selected_ammo_id
@@ -1414,6 +1451,35 @@ class BattleManager:
 
         cal = ctx.calibration
         morale_degrade_mod = cal.get("morale_degrade_rate_modifier", 1.0)
+        rout_engine = getattr(ctx, "rout_engine", None)
+
+        # Phase 42c: rally check for routing units
+        if rout_engine is not None:
+            for side_name, side_units in units_by_side.items():
+                for u in side_units:
+                    if u.status != UnitStatus.ROUTING:
+                        continue
+                    ms = ctx.morale_states.get(u.entity_id)
+                    if ms is None or int(ms) != MoraleState.ROUTED:
+                        continue
+                    # Count nearby friendly active units
+                    nearby_count = 0
+                    leader_present = False
+                    for other in side_units:
+                        if other.entity_id == u.entity_id or other.status != UnitStatus.ACTIVE:
+                            continue
+                        dx = other.position.easting - u.position.easting
+                        dy = other.position.northing - u.position.northing
+                        if math.sqrt(dx * dx + dy * dy) < 500.0:
+                            nearby_count += 1
+                            st = getattr(other, "support_type", None)
+                            if st is not None:
+                                st_name = st.name if hasattr(st, "name") else str(st)
+                                if st_name == "HQ":
+                                    leader_present = True
+                    if rout_engine.check_rally(u.entity_id, nearby_count, leader_present):
+                        ctx.morale_states[u.entity_id] = MoraleState.SHAKEN
+                        object.__setattr__(u, "status", UnitStatus.ACTIVE)
 
         for side_name, side_units in units_by_side.items():
             total = len(side_units)
@@ -1453,6 +1519,44 @@ class BattleManager:
                     object.__setattr__(u, "status", UnitStatus.ROUTING)
                 elif new_morale == MoraleState.SURRENDERED:
                     object.__setattr__(u, "status", UnitStatus.SURRENDERED)
+
+        # Phase 42c: rout cascade — newly routed units may trigger adjacent routs
+        if rout_engine is not None:
+            newly_routed: list[tuple[str, Unit]] = []
+            for side_name, side_units in units_by_side.items():
+                for u in side_units:
+                    if u.status == UnitStatus.ROUTING:
+                        ms = ctx.morale_states.get(u.entity_id)
+                        if ms is not None and int(ms) == MoraleState.ROUTED:
+                            newly_routed.append((side_name, u))
+
+            for side_name, routing_unit in newly_routed:
+                same_side = units_by_side.get(side_name, [])
+                adjacent_morale: dict[str, int] = {}
+                distances: dict[str, float] = {}
+                for other in same_side:
+                    if other.entity_id == routing_unit.entity_id:
+                        continue
+                    if other.status not in (UnitStatus.ACTIVE, UnitStatus.ROUTING):
+                        continue
+                    ms = ctx.morale_states.get(other.entity_id)
+                    if ms is not None:
+                        adjacent_morale[other.entity_id] = int(ms)
+                    dx = other.position.easting - routing_unit.position.easting
+                    dy = other.position.northing - routing_unit.position.northing
+                    distances[other.entity_id] = math.sqrt(dx * dx + dy * dy)
+
+                cascaded_ids = rout_engine.rout_cascade(
+                    routing_unit_id=routing_unit.entity_id,
+                    adjacent_unit_morale_states=adjacent_morale,
+                    distances_m=distances,
+                )
+                for cid in cascaded_ids:
+                    ctx.morale_states[cid] = MoraleState.ROUTED
+                    for u in same_side:
+                        if u.entity_id == cid:
+                            object.__setattr__(u, "status", UnitStatus.ROUTING)
+                            break
 
     def _execute_supply_consumption(
         self,

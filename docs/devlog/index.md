@@ -51,6 +51,10 @@ Rolling record of implementation decisions, changes, and lessons learned across 
 | 37 | Integration Fixes & E2E Validation | **Complete** | [phase-37.md](phase-37.md) |
 | 38 | Map & Chart Enhancements | **Complete** | [phase-38.md](phase-38.md) |
 | 39 | Quality, Performance & Packaging | **Complete** | [phase-39.md](phase-39.md) |
+| | | | |
+| 40 | Battle Loop Foundation | **Complete** | [phase-40.md](phase-40.md) |
+| 41 | Combat Depth | **Complete** | [phase-41.md](phase-41.md) |
+| 42 | Tactical Behavior | **Complete** | [phase-42.md](phase-42.md) |
 
 ## Post-MVP Refinement Index
 
@@ -196,6 +200,12 @@ Known limitations and deferred improvements logged during implementation. Review
 | 37 | DEW hit in battle loop always results in destruction (no partial damage/disable) | [phase-37.md — Known Limitations](phase-37.md#known-limitations) |
 | 38 | Plotly charts don't use `plotly_dark` template when dark mode is active (cosmetic) | [phase-38.md — Known Limitations](phase-38.md#known-limitations) |
 | 38 | No separate dark terrain color palette (elevation shading brightness modulation covers the need) | [phase-38.md — Known Limitations](phase-38.md#known-limitations) |
+| 40 | No fire-on-move accuracy penalty (only deployed weapon skip) | [phase-40.md — Known Limitations](phase-40.md#known-limitations) |
+| 40 | Posture doesn't affect movement speed | [phase-40.md — Known Limitations](phase-40.md#known-limitations) |
+| 41 | Cover from buildings/fortifications additive with terrain cover (potential double-count) | [phase-41.md — Known Limitations](phase-41.md#known-limitations) |
+| 42 | Suwalki Gap and Taiwan Strait stall at max_ticks — need additional victory conditions | [phase-42.md — Known Limitations](phase-42.md#known-limitations) |
+| 42 | Rally radius (500m) and friendly count threshold hardcoded, not configurable | [phase-42.md — Known Limitations](phase-42.md#known-limitations) |
+| 42 | No per-scenario ROE configuration in existing scenario YAMLs | [phase-42.md — Known Limitations](phase-42.md#known-limitations) |
 
 ## Conventions
 

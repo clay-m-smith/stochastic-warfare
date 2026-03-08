@@ -1,8 +1,8 @@
 # Stochastic Warfare
 
 ![Python](https://img.shields.io/badge/python-%3E%3D3.12-blue)
-![Tests](https://img.shields.io/badge/tests-7%2C833_passing-brightgreen)
-![Phase](https://img.shields.io/badge/phase-39_Block--4_COMPLETE-brightgreen)
+![Tests](https://img.shields.io/badge/tests-7%2C957_passing-brightgreen)
+![Phase](https://img.shields.io/badge/phase-42_Block--5_COMPLETE-brightgreen)
 
 High-fidelity, high-resolution wargame simulator built as a headless Python engine. Models warfare across multiple scales — from individual unit engagements up through tactical battles, operational battlefields, and multi-day strategic campaigns — with stochastic and signal-processing-inspired models throughout.
 
@@ -163,7 +163,7 @@ data/                     # ~700 YAML data files
   eras/                    # Era-specific data packages (WW2, WW1, Napoleonic, Ancient/Medieval)
   scenarios/              # 27 modern scenarios (engagement, campaign, EW, space, CBRN, escalation, joint) + 5 test
 
-tests/                    # 7,833 engine+API+frontend tests across ~340 test files
+tests/                    # 7,957 engine+API+frontend tests across ~340 test files
 docs/                     # specs, brainstorm, devlog, development phases
 ```
 
@@ -216,9 +216,12 @@ All 11 MVP phases (0–10) are complete. Post-MVP Phases 11–24 are complete (d
 | 37 | Integration Fixes & E2E Validation (Block 4) | 70 | Complete |
 | 38 | Map & Chart Enhancements (Block 4) | 35 | Complete |
 | 39 | Quality, Performance & Packaging (Block 4) | 22 | Complete |
-| | **Total** | **~7,833** | |
+| 40 | Battle Loop Foundation (Block 5) | 47 | **Complete** |
+| 41 | Combat Depth (Block 5) | 51 | **Complete** |
+| 42 | Tactical Behavior (Block 5) | 26 | **Complete** |
+| | **Total** | **~7,957** | |
 
-For the full phase roadmap, see [`docs/development-phases.md`](docs/development-phases.md) (MVP), [`docs/development-phases-post-mvp.md`](docs/development-phases-post-mvp.md) (post-MVP), and [`docs/development-phases-block4.md`](docs/development-phases-block4.md) (Block 4). For per-phase implementation logs, see [`docs/devlog/`](docs/devlog/).
+For the full phase roadmap, see [`docs/development-phases.md`](docs/development-phases.md) (MVP), [`docs/development-phases-post-mvp.md`](docs/development-phases-post-mvp.md) (post-MVP), and [`docs/development-phases-block4.md`](docs/development-phases-block4.md) (Block 4), and [`docs/development-phases-block5.md`](docs/development-phases-block5.md) (Block 5). For per-phase implementation logs, see [`docs/devlog/`](docs/devlog/).
 
 ## Key Dependencies
 

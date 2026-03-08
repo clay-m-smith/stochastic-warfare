@@ -70,8 +70,9 @@ See the [Getting Started Guide](guide/getting-started.md) for a complete tutoria
 | Block 2 | 25--30 | Integration, polish, data expansion, scenarios | **Complete** |
 | Block 3 | 31--36 | Documentation site, API, frontend, visualization | **Complete** |
 | Block 4 | 37--39 | Integration fixes, map enhancements, packaging | **Complete** |
+| Block 5 | 40--47 | Core combat fidelity — battle loop wiring, terrain interaction, ROE, composite victory | **In Progress** (40--42 complete) |
 
-**~7,833 tests** across ~340 test files. **~700 YAML data files** defining 125 units, 107 weapons, 119 ammunition types, sensors, signatures, 34 doctrines, 13 commanders, and 41 scenarios.
+**~7,957 tests** across ~340 test files. **~700 YAML data files** defining 125 units, 107 weapons, 119 ammunition types, sensors, signatures, 34 doctrines, 13 commanders, and 41 scenarios.
 
 ## License
 

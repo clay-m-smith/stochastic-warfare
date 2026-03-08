@@ -112,6 +112,7 @@ class WeaponDefinition(BaseModel):
     # Ballistic parameters
     muzzle_velocity_mps: float = 0.0
     max_range_m: float = 0.0
+    effective_range_m: float = 0.0  # 0 = compute as 80% of max_range_m
     min_range_m: float = 0.0
     rate_of_fire_rpm: float = 0.0
     burst_size: int = 1
@@ -164,6 +165,12 @@ class WeaponDefinition(BaseModel):
     def parsed_category(self) -> WeaponCategory:
         """Return the enum value for this definition's category string."""
         return WeaponCategory[self.category.upper()]
+
+    def get_effective_range(self) -> float:
+        """Return effective engagement range. Defaults to 80% of max_range_m."""
+        if self.effective_range_m > 0:
+            return self.effective_range_m
+        return self.max_range_m * 0.8
 
     def parsed_guidance(self) -> GuidanceType:
         """Return the enum value for this definition's guidance string."""

@@ -284,6 +284,12 @@ class SimulationContext:
     # Morale
     morale_machine: Any = None
 
+    # ROE (Phase 42a)
+    roe_engine: Any = None
+
+    # Rout (Phase 42c)
+    rout_engine: Any = None
+
     # C2
     command_engine: Any = None
     comms_engine: Any = None
@@ -934,6 +940,14 @@ class ScenarioLoader:
         morale_config = _SR._build_morale_config(cal) if cal else None
         morale_machine = MoraleStateMachine(bus, morale_rng, morale_config)
 
+        # ROE (Phase 42a)
+        from stochastic_warfare.c2.roe import RoeEngine, RoeLevel
+        roe_engine = RoeEngine(bus, default_level=RoeLevel.WEAPONS_FREE)
+
+        # Rout (Phase 42c)
+        from stochastic_warfare.morale.rout import RoutEngine
+        rout_engine = RoutEngine(bus, morale_rng)
+
         # Movement
         from stochastic_warfare.movement.engine import MovementEngine
 
@@ -1012,6 +1026,8 @@ class ScenarioLoader:
             "detection_engine": det_engine,
             "fog_of_war": fog_of_war,
             "morale_machine": morale_machine,
+            "roe_engine": roe_engine,
+            "rout_engine": rout_engine,
             "movement_engine": movement_engine,
             "comms_engine": comms_engine,
             "order_propagation": order_propagation,

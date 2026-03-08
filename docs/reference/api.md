@@ -241,9 +241,25 @@ Evaluates victory conditions each tick. Supports multiple condition types.
 | `force_destroyed` | Opponent loses > 70% of forces (configurable) |
 | `morale_collapsed` | Opponent has > 60% units routed/surrendered |
 | `supply_exhausted` | Opponent's average supply < 20% |
-| `time_expired` | Scenario duration exceeded |
+| `time_expired` | Scenario duration exceeded -- uses composite scoring |
 | `ceasefire` | Negotiated war termination (escalation system) |
 | `capitulation` | Unilateral surrender at extreme desperation |
+
+**Composite Victory Scoring (time_expired):**
+
+When a scenario reaches its time limit, `evaluate_force_advantage()` determines the winner using a composite score:
+
+```python
+VictoryEvaluator.evaluate_force_advantage(
+    units_by_side,
+    morale_states=ctx.morale_states,       # dict of unit_id -> MoraleState
+    weights={"force_ratio": 1.0,           # quality-weighted survival
+             "morale_ratio": 0.3,          # 1 - (routed_count / total)
+             "casualty_exchange": 0.2},    # survival as proxy
+)
+```
+
+When called without `weights` (or with `None`), defaults to force-ratio-only scoring for backward compatibility.
 
 ### VictoryResult
 

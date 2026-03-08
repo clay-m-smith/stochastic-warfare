@@ -69,10 +69,28 @@ Within each tick, processing follows a fixed order:
 2. **Detection** -- sensor scans, Kalman updates, fog of war refresh
 3. **AI/C2** -- OODA cycle, commander decisions, order propagation
 4. **Movement** -- pathfinding, formation maintenance, fatigue
-5. **Combat** -- engagement resolution, damage application
-6. **Morale** -- state transitions, cohesion checks
+5. **Combat** -- engagement resolution, damage application (see Engagement Gate Sequence below)
+6. **Morale** -- state transitions, cohesion checks, rout cascade, rally
 7. **Logistics** -- supply consumption, transport, maintenance
 8. **Victory** -- condition evaluation
+
+### Engagement Gate Sequence
+
+Within combat, each potential engagement passes through a series of gates before resolving. If any gate rejects, the engagement is skipped:
+
+1. **Domain filtering** -- attacker's weapon must target the defender's domain (ground, air, naval)
+2. **Posture/status check** -- ROUTED/SURRENDERED units skip; morale accuracy multiplier applied
+3. **Suppression check** -- heavily suppressed units may skip engagement
+4. **Fire-on-move check** -- `requires_deployed` weapons skip if attacker is moving
+5. **Terrain cover/concealment** -- cover reduces hit probability; concealment reduces detection range
+6. **Detection quality** -- sensor-derived `id_confidence` modulates engagement effectiveness
+7. **Training level** -- unit quality multiplies hit probability
+8. **ROE gate** -- `RoeEngine.check_engagement_authorized()` blocks engagements below the current ROE level's confidence threshold (WEAPONS_HOLD blocks all non-self-defense; WEAPONS_TIGHT requires high `id_confidence`)
+9. **Weapon selection** -- best weapon chosen by range, ammo, and target type
+10. **Hold-fire discipline** -- if enabled via `behavior_rules`, defensive units wait until targets are within effective range (default 80% of max range)
+11. **Engagement resolution** -- ballistics, penetration, and damage applied
+
+After morale transitions, a **rout cascade** check propagates routing to nearby SHAKEN/BROKEN units. A **rally check** allows ROUTING units near friendly forces to recover.
 
 ## Spatial Model
 
@@ -122,7 +140,8 @@ The `ScenarioLoader` is the central factory. Given a scenario YAML file, it:
    - `escalation_config` present -> creates escalation engine
    - `dew_config` present -> creates directed energy weapon engine
    - `era` specified -> loads era-specific data and engines
-6. Returns a `SimulationContext` with everything wired together
+6. Creates always-on behavioral engines: ROE engine (default WEAPONS_FREE), rout engine
+7. Returns a `SimulationContext` with everything wired together
 
 ### Null-Config Gating
 

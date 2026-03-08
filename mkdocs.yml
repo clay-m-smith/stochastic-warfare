@@ -67,12 +67,14 @@ nav:
     - Block 2 Design: brainstorm-block2.md
     - Block 3 Design: brainstorm-block3.md
     - Block 4 Design: brainstorm-block4.md
+    - Block 5 Design: brainstorm-block5.md
   - Development Phases:
     - MVP (0-10): development-phases.md
     - Post-MVP (11-24): development-phases-post-mvp.md
     - Block 2 (25-30): development-phases-block2.md
     - Block 3 (31-36): development-phases-block3.md
     - Block 4 (37-39): development-phases-block4.md
+    - Block 5 (40-47): development-phases-block5.md
   - Devlog:
     - Overview: devlog/index.md
     - Phase 0 - Scaffolding: devlog/phase-0.md
@@ -116,6 +118,9 @@ nav:
     - Phase 37 - Integration Fixes & E2E: devlog/phase-37.md
     - Phase 38 - Map & Chart Enhancements: devlog/phase-38.md
     - Phase 39 - Quality & Packaging: devlog/phase-39.md
+    - Phase 40 - Battle Loop Foundation: devlog/phase-40.md
+    - Phase 41 - Combat Depth: devlog/phase-41.md
+    - Phase 42 - Tactical Behavior: devlog/phase-42.md
   - Specifications:
     - Project Structure: specs/project-structure.md
     - Skills & Hooks: skills-and-hooks.md

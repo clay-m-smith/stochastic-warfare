@@ -130,6 +130,14 @@
 - **Run after**: adding new units, weapons, scenarios, or modifying equipment entries
 - Key files: `_WEAPON_NAME_MAP` and `_SENSOR_NAME_MAP` in `scenario_runner.py`, `scripts/validate_scenario_data.py`
 
+### /evaluate-scenarios (Phase 42)
+- Runs all scenarios through simulation engine and compares against previous baseline
+- Reports winner changes, casualty deltas, condition changes, new/resolved issues
+- Classifies changes as improvements, regressions, stalls, or neutral
+- Saves new baseline for future comparisons
+- **Run after**: completing any phase that modifies battle loop, engagement resolution, or victory evaluation
+- Key files: `scripts/evaluate_scenarios.py`, `scripts/evaluation_results_v*.json`
+
 ### /postmortem (Phase 14)
 - Structured retrospective to run after completing each implementation phase
 - 8-step process: delivered vs planned, integration audit, test quality review, API surface check, deficit discovery, documentation freshness (including user-facing docs staleness check), performance sanity, summary

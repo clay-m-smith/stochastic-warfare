@@ -591,14 +591,27 @@ class VictoryEvaluator:
     @staticmethod
     def evaluate_force_advantage(
         units_by_side: dict[str, list[Unit]],
+        *,
+        morale_states: dict[str, Any] | None = None,
+        weights: dict[str, float] | None = None,
     ) -> VictoryResult:
         """Evaluate which side has the force advantage.
 
         Used as a fallback when time expires or max ticks reached.
-        Compares survival rate (active / total) across sides.
+        Computes a composite score from force ratio, morale, and
+        casualty exchange (weighted by *weights*).  Defaults to
+        force-ratio-only scoring for backward compatibility.
         """
+        w = weights or {}
+        w_force = w.get("force_ratio", 1.0)
+        w_morale = w.get("morale_ratio", 0.0)
+        w_casualty = w.get("casualty_exchange", 0.0)
+        total_weight = w_force + w_morale + w_casualty
+        if total_weight <= 0:
+            total_weight = 1.0
+
         best_side = ""
-        best_survival = -1.0
+        best_composite = -1.0
         sides_at_best = 0
         details: list[str] = []
 
@@ -616,13 +629,34 @@ class VictoryEvaluator:
                 continue
             survival = weighted_active / weighted_total
             active = sum(1 for u in units if u.status == UnitStatus.ACTIVE)
-            details.append(f"{side}: {active}/{total} ({survival:.0%} quality-weighted)")
 
-            if survival > best_survival:
-                best_survival = survival
+            # Morale component
+            morale_score = 1.0
+            if morale_states and w_morale > 0:
+                routed_count = sum(
+                    1 for u in units
+                    if morale_states.get(u.entity_id) is not None
+                    and int(morale_states.get(u.entity_id, 0)) >= MoraleState.ROUTED
+                )
+                morale_score = 1.0 - (routed_count / total) if total > 0 else 0.0
+
+            # Casualty exchange component (survival as proxy)
+            casualty_score = survival
+
+            # Composite score
+            composite = (
+                w_force * survival
+                + w_morale * morale_score
+                + w_casualty * casualty_score
+            ) / total_weight
+
+            details.append(f"{side}: {active}/{total} ({composite:.0%} composite)")
+
+            if composite > best_composite:
+                best_composite = composite
                 best_side = side
                 sides_at_best = 1
-            elif survival == best_survival:
+            elif composite == best_composite:
                 sides_at_best += 1
 
         if sides_at_best != 1 or not best_side:

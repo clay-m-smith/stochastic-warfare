@@ -239,7 +239,12 @@ class SimulationEngine:
         # Safety limit
         if tick >= self._config.max_ticks:
             logger.info("Max ticks (%d) reached — stopping", self._config.max_ticks)
-            result = VictoryEvaluator.evaluate_force_advantage(ctx.units_by_side)
+            composite_weights = getattr(ctx, "calibration", {}).get("victory_weights", None)
+            result = VictoryEvaluator.evaluate_force_advantage(
+                ctx.units_by_side,
+                morale_states=getattr(ctx, "morale_states", None),
+                weights=composite_weights,
+            )
             self._last_victory = VictoryResult(
                 game_over=True,
                 winning_side=result.winning_side,
@@ -387,7 +392,12 @@ class SimulationEngine:
         # Check time limit
         elapsed_s = ctx.clock.elapsed.total_seconds()
         if elapsed_s >= self._max_duration_s:
-            result = VictoryEvaluator.evaluate_force_advantage(ctx.units_by_side)
+            composite_weights = getattr(ctx, "calibration", {}).get("victory_weights", None)
+            result = VictoryEvaluator.evaluate_force_advantage(
+                ctx.units_by_side,
+                morale_states=getattr(ctx, "morale_states", None),
+                weights=composite_weights,
+            )
             self._last_victory = VictoryResult(
                 game_over=True,
                 winning_side=result.winning_side,
