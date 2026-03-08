@@ -438,7 +438,7 @@ Complete the morale cascade mechanic with suppression feeding into morale degrad
 
 **Goal**: Route engagements to era-appropriate aggregate models (volley fire, massed archery, barrage) and domain-appropriate engines (indirect fire, 5 naval combat engines). Formation-based casualty assessment and simultaneous fire coordination.
 
-**Status**: Not started.
+**Status**: Complete.
 
 **Dependencies**: Phase 42 (hold-fire discipline required for volley coordination; terrain affects aggregate fire).
 

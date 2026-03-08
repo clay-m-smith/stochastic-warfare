@@ -161,6 +161,10 @@ Aggregate fire model for massed artillery:
 - Random walk drift with observer correction
 - Casualties proportional to troop density in beaten zone
 
+**Volley Fire & Melee**
+
+WW1 bolt-action rifles route to the volley fire aggregate model (coordinated fire), while close-quarters combat uses the melee engine for bayonet charges and trench raids. Machine guns use the standard direct-fire model for sustained suppressive fire.
+
 **Gas Warfare**
 
 Chemical weapons via CBRN adapter:

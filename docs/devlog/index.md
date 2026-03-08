@@ -55,6 +55,7 @@ Rolling record of implementation decisions, changes, and lessons learned across 
 | 40 | Battle Loop Foundation | **Complete** | [phase-40.md](phase-40.md) |
 | 41 | Combat Depth | **Complete** | [phase-41.md](phase-41.md) |
 | 42 | Tactical Behavior | **Complete** | [phase-42.md](phase-42.md) |
+| 43 | Domain-Specific Resolution | **Complete** | [phase-43.md](phase-43.md) |
 
 ## Post-MVP Refinement Index
 

@@ -21,7 +21,7 @@ from stochastic_warfare.combat.engagement import EngagementType
 from stochastic_warfare.combat.suppression import UnitSuppressionState
 from stochastic_warfare.core.events import EventBus
 from stochastic_warfare.core.logging import get_logger
-from stochastic_warfare.core.types import ModuleId, Position
+from stochastic_warfare.core.types import Domain, ModuleId, Position
 from stochastic_warfare.entities.base import Unit, UnitStatus
 from stochastic_warfare.entities.events import UnitDestroyedEvent, UnitDisabledEvent
 from stochastic_warfare.detection.sensors import SensorType
@@ -35,6 +35,246 @@ _WEATHER_BYPASS_TYPES: frozenset[SensorType] = frozenset({
     SensorType.RADAR,
     SensorType.ESM,
 })
+
+# Phase 43a: melee range threshold (metres)
+_MELEE_RANGE_M = 10.0
+
+# Phase 43b: weapon categories that route to indirect fire
+_INDIRECT_FIRE_CATEGORIES = frozenset({"HOWITZER", "MORTAR", "ARTILLERY"})
+
+
+# ---------------------------------------------------------------------------
+# Phase 43 helpers — aggregate engagement routing
+# ---------------------------------------------------------------------------
+
+
+def _get_formation_firepower(ctx: Any, unit: Unit) -> float:
+    """Get formation firepower fraction for Napoleonic units."""
+    engine = getattr(ctx, "formation_napoleonic_engine", None)
+    if engine is not None:
+        try:
+            return engine.get_firepower_fraction(unit.entity_id)
+        except Exception:
+            pass
+    return 1.0  # Default: all muskets fire (LINE formation)
+
+
+def _infer_melee_type(attacker: Unit, wpn_inst: Any) -> Any:
+    """Infer MeleeType from unit/weapon characteristics."""
+    from stochastic_warfare.combat.melee import MeleeType
+
+    wpn_id = wpn_inst.definition.weapon_id.lower()
+    if "cavalry" in wpn_id or "saber" in wpn_id or "lance" in wpn_id:
+        return MeleeType.CAVALRY_CHARGE
+    if "bayonet" in wpn_id:
+        return MeleeType.BAYONET_CHARGE
+    if "pike" in wpn_id or "spear" in wpn_id:
+        return MeleeType.PIKE_PUSH
+    if "sword" in wpn_id or "axe" in wpn_id or "gladius" in wpn_id:
+        return MeleeType.SHIELD_WALL
+    return MeleeType.BAYONET_CHARGE  # Default
+
+
+def _infer_missile_type(wpn_inst: Any) -> Any:
+    """Infer archery MissileType from weapon."""
+    from stochastic_warfare.combat.archery import MissileType
+
+    wpn_id = wpn_inst.definition.weapon_id.lower()
+    if "longbow" in wpn_id:
+        return MissileType.LONGBOW
+    if "crossbow" in wpn_id:
+        return MissileType.CROSSBOW
+    if "composite" in wpn_id:
+        return MissileType.COMPOSITE_BOW
+    if "javelin" in wpn_id:
+        return MissileType.JAVELIN
+    if "sling" in wpn_id:
+        return MissileType.SLING
+    return MissileType.LONGBOW  # Default
+
+
+def _apply_aggregate_casualties(
+    casualties: int,
+    target: Unit,
+    pending_damage: list[tuple[Unit, UnitStatus]],
+    destruction_threshold: float = 0.5,
+    disable_threshold: float = 0.3,
+) -> None:
+    """Convert aggregate casualty count to pending unit status changes."""
+    if casualties <= 0:
+        return
+    total = max(1, len(target.personnel))
+    fraction = casualties / total
+    if fraction >= destruction_threshold:
+        pending_damage.append((target, UnitStatus.DESTROYED))
+    elif fraction >= disable_threshold:
+        pending_damage.append((target, UnitStatus.DISABLED))
+
+
+def _apply_melee_result(
+    mr: Any,
+    attacker: Unit,
+    defender: Unit,
+    pending_damage: list[tuple[Unit, UnitStatus]],
+    morale_states: dict[str, Any],
+    destruction_threshold: float = 0.5,
+    disable_threshold: float = 0.3,
+) -> None:
+    """Convert melee result to damage entries for both sides."""
+    # Defender casualties
+    if mr.defender_casualties > 0:
+        def_total = max(1, len(defender.personnel))
+        frac = mr.defender_casualties / def_total
+        if frac >= destruction_threshold:
+            pending_damage.append((defender, UnitStatus.DESTROYED))
+        elif frac >= disable_threshold:
+            pending_damage.append((defender, UnitStatus.DISABLED))
+    # Attacker casualties
+    if mr.attacker_casualties > 0:
+        att_total = max(1, len(attacker.personnel))
+        frac = mr.attacker_casualties / att_total
+        if frac >= destruction_threshold:
+            pending_damage.append((attacker, UnitStatus.DESTROYED))
+        elif frac >= disable_threshold:
+            pending_damage.append((attacker, UnitStatus.DISABLED))
+    # Morale effects — rout
+    if mr.defender_routed:
+        morale_states[defender.entity_id] = 3  # ROUTED
+        object.__setattr__(defender, "status", UnitStatus.ROUTING)
+    if mr.attacker_routed:
+        morale_states[attacker.entity_id] = 3
+        object.__setattr__(attacker, "status", UnitStatus.ROUTING)
+
+
+def _route_naval_engagement(
+    ctx: Any,
+    attacker: Unit,
+    target: Unit,
+    wpn_inst: Any,
+    best_range: float,
+    dt: float,
+    timestamp: Any,
+) -> tuple[bool, UnitStatus | None]:
+    """Route naval engagement to appropriate engine.
+
+    Returns ``(handled, status)`` — *handled* is ``True`` when the weapon
+    was processed by a naval engine (even on a miss), ``False`` when the
+    weapon type is not naval-specific and should fall through.
+    """
+    wpn_cat_str = wpn_inst.definition.category.upper()
+
+    # Torpedo
+    if wpn_cat_str == "TORPEDO_TUBE":
+        engine = getattr(ctx, "naval_subsurface_engine", None)
+        if engine is not None:
+            result = engine.torpedo_engagement(
+                sub_id=attacker.entity_id,
+                target_id=target.entity_id,
+                torpedo_pk=0.4,
+                range_m=best_range,
+                timestamp=timestamp,
+            )
+            if result.hit:
+                status = (
+                    UnitStatus.DESTROYED
+                    if result.damage_fraction >= 0.6
+                    else UnitStatus.DISABLED
+                )
+                return True, status
+            return True, None  # handled, miss
+
+    # Missile (ASHM) — surface-to-surface salvo
+    if wpn_cat_str == "MISSILE_LAUNCHER":
+        engine = getattr(ctx, "naval_surface_engine", None)
+        if engine is not None:
+            salvo = engine.salvo_exchange(
+                attacker_missiles=max(
+                    1, int(wpn_inst.definition.rate_of_fire_rpm),
+                ),
+                attacker_pk=0.7,
+                defender_point_defense_count=2,
+                defender_pd_pk=0.3,
+            )
+            if salvo.hits > 0:
+                status = (
+                    UnitStatus.DESTROYED if salvo.hits >= 2
+                    else UnitStatus.DISABLED
+                )
+                return True, status
+            return True, None  # handled, all intercepted
+
+    # Naval gun
+    if wpn_cat_str == "NAVAL_GUN":
+        gunnery = getattr(ctx, "naval_gunnery_engine", None)
+        if gunnery is not None:
+            salvo = gunnery.fire_salvo(
+                firer_id=attacker.entity_id,
+                target_id=target.entity_id,
+                range_m=best_range,
+                target_length_m=150.0,
+                target_beam_m=20.0,
+                num_guns=max(1, int(wpn_inst.definition.rate_of_fire_rpm)),
+            )
+            if salvo.get("hits", 0) > 0:
+                return True, UnitStatus.DISABLED
+            return True, None
+        # Fallback: modern naval gun engagement
+        ns_engine = getattr(ctx, "naval_surface_engine", None)
+        if ns_engine is not None:
+            gun_result = ns_engine.naval_gun_engagement(
+                ship_id=attacker.entity_id,
+                target_id=target.entity_id,
+                range_m=best_range,
+                rounds_fired=max(
+                    1, int(wpn_inst.definition.rate_of_fire_rpm * dt / 60),
+                ),
+                timestamp=timestamp,
+            )
+            if gun_result.hits > 0:
+                return True, UnitStatus.DISABLED
+            return True, None
+
+    # Shore bombardment: naval gun vs ground target
+    if wpn_cat_str in ("NAVAL_GUN", "CANNON") and target.domain == Domain.GROUND:
+        ngse = getattr(ctx, "naval_gunfire_support_engine", None)
+        if ngse is not None:
+            bom_result = ngse.shore_bombardment(
+                ship_id=attacker.entity_id,
+                ship_pos=attacker.position,
+                target_pos=target.position,
+                round_count=max(
+                    1, int(wpn_inst.definition.rate_of_fire_rpm * dt / 60),
+                ),
+                timestamp=timestamp,
+            )
+            if bom_result.hits_in_lethal_radius > 0:
+                return True, UnitStatus.DISABLED
+            return True, None
+
+    return False, None  # Not a naval-specific weapon, fall through
+
+
+def _apply_indirect_fire_result(
+    fm_result: Any,
+    target: Unit,
+    pending_damage: list[tuple[Unit, UnitStatus]],
+    destruction_threshold: float = 0.5,
+    disable_threshold: float = 0.3,
+) -> None:
+    """Convert indirect fire impacts to damage."""
+    hits_near = 0
+    for impact in fm_result.impacts:
+        dx = impact.position.easting - target.position.easting
+        dy = impact.position.northing - target.position.northing
+        dist = math.sqrt(dx * dx + dy * dy)
+        if dist < 50.0:  # Lethal radius
+            hits_near += 1
+    if hits_near > 0:
+        fraction = min(1.0, hits_near * 0.15)
+        if fraction >= destruction_threshold:
+            pending_damage.append((target, UnitStatus.DESTROYED))
+        elif fraction >= disable_threshold:
+            pending_damage.append((target, UnitStatus.DISABLED))
 
 
 # ---------------------------------------------------------------------------
@@ -1335,70 +1575,236 @@ class BattleManager:
                 # Current time for fire rate limiting
                 current_time_s = ctx.clock.elapsed.total_seconds()
 
-                # Determine engagement type — DEW weapons route through
-                # Beer-Lambert / HPM models instead of ballistic physics
-                engagement_type = EngagementType.DIRECT_FIRE
-                try:
-                    if wpn_inst.definition.parsed_category() == WeaponCategory.DIRECTED_ENERGY:
-                        if wpn_inst.definition.beam_power_kw > 0:
-                            engagement_type = EngagementType.DEW_LASER
-                        else:
-                            engagement_type = EngagementType.DEW_HPM
-                except (KeyError, ValueError):
-                    pass
+                # ── Phase 43: domain-specific engagement routing ──────
+                routed_aggregate = False
+                wpn_cat_str = getattr(
+                    wpn_inst.definition, "category", "",
+                ).upper()
+                dest_thresh = self._config.destruction_threshold
+                dis_thresh = self._config.disable_threshold
 
-                # Phase 40b: extract target posture
-                target_posture_val = getattr(best_target, "posture", None)
-                target_posture_str = target_posture_val.name if target_posture_val is not None else "MOVING"
+                # Phase 43c: naval domain routing (all eras, highest priority)
+                if (
+                    not routed_aggregate
+                    and (attacker.domain in (Domain.NAVAL, Domain.SUBMARINE)
+                         or best_target.domain in (Domain.NAVAL, Domain.SUBMARINE))
+                ):
+                    handled, naval_status = _route_naval_engagement(
+                        ctx, attacker, best_target, wpn_inst,
+                        best_range, dt, timestamp,
+                    )
+                    if handled:
+                        if naval_status is not None:
+                            pending_damage.append((best_target, naval_status))
+                        side_engagements += 1
+                        routed_aggregate = True
 
-                result = ctx.engagement_engine.route_engagement(
-                    engagement_type=engagement_type,
-                    attacker_id=attacker.entity_id,
-                    target_id=best_target.entity_id,
-                    attacker_pos=attacker.position,
-                    target_pos=best_target.position,
-                    weapon=wpn_inst,
-                    ammo_id=ammo_id,
-                    ammo_def=ammo_def,
-                    dew_engine=getattr(ctx, 'dew_engine', None),
-                    crew_skill=crew_skill,
-                    target_size_m2=8.5 * target_size_mod,
-                    target_armor_mm=target_armor,
-                    shooter_speed_mps=attacker.speed,
-                    target_posture=target_posture_str,
-                    visibility=vis_mod,
-                    timestamp=timestamp,
-                    current_time_s=current_time_s,
-                    terrain_cover=terrain_cover,
-                    elevation_mod=elevation_mod,
-                )
+                # Phase 43a: era-aware aggregate model routing
+                if not routed_aggregate:
+                    era = getattr(ctx.config, "era", "modern")
 
-                # Phase 40e: apply fire volume to target suppression
-                if result.engaged:
-                    side_engagements += 1
-                    sup_eng = getattr(ctx, "suppression_engine", None)
-                    if sup_eng is not None:
-                        tid = best_target.entity_id
-                        if tid not in self._suppression_states:
-                            self._suppression_states[tid] = UnitSuppressionState()
-                        sup_eng.apply_fire_volume(
-                            state=self._suppression_states[tid],
-                            rounds_per_minute=wpn_inst.definition.rate_of_fire_rpm,
-                            caliber_mm=wpn_inst.definition.caliber_mm,
-                            range_m=best_range,
-                            duration_s=dt,
-                        )
+                    if era == "napoleonic":
+                        if wpn_cat_str in ("RIFLE", "CANNON") and best_range > _MELEE_RANGE_M:
+                            vf = getattr(ctx, "volley_fire_engine", None)
+                            if vf is not None:
+                                n_muskets = max(1, len(attacker.personnel))
+                                formation_frac = _get_formation_firepower(ctx, attacker)
+                                is_rifle = "rifle" in wpn_inst.definition.weapon_id.lower()
+                                vr = vf.fire_volley(
+                                    n_muskets=n_muskets,
+                                    range_m=best_range,
+                                    is_rifle=is_rifle,
+                                    formation_firepower_fraction=formation_frac,
+                                )
+                                _apply_aggregate_casualties(
+                                    vr.casualties, best_target, pending_damage,
+                                    dest_thresh, dis_thresh,
+                                )
+                                side_engagements += 1
+                                routed_aggregate = True
+                        if not routed_aggregate and (
+                            wpn_cat_str == "MELEE" or best_range <= _MELEE_RANGE_M
+                        ):
+                            me = getattr(ctx, "melee_engine", None)
+                            if me is not None:
+                                mr = me.resolve_melee_round(
+                                    attacker_strength=max(1, len(attacker.personnel)),
+                                    defender_strength=max(1, len(best_target.personnel)),
+                                    melee_type=_infer_melee_type(attacker, wpn_inst),
+                                )
+                                _apply_melee_result(
+                                    mr, attacker, best_target, pending_damage,
+                                    ctx.morale_states, dest_thresh, dis_thresh,
+                                )
+                                side_engagements += 1
+                                routed_aggregate = True
 
-                if result.engaged and result.hit_result and result.hit_result.hit:
-                    if engagement_type in (EngagementType.DEW_LASER, EngagementType.DEW_HPM):
-                        # DEW hit = target destroyed (thermal/EMP kill)
-                        pending_damage.append((best_target, UnitStatus.DESTROYED))
-                    elif (result.damage_result
-                            and result.damage_result.damage_fraction > 0):
-                        if result.damage_result.damage_fraction >= self._config.destruction_threshold:
+                    elif era == "ancient":
+                        if wpn_cat_str == "RIFLE" and best_range > _MELEE_RANGE_M:
+                            ae = getattr(ctx, "archery_engine", None)
+                            if ae is not None:
+                                n_archers = max(1, len(attacker.personnel))
+                                ar = ae.fire_volley(
+                                    unit_id=attacker.entity_id,
+                                    n_archers=n_archers,
+                                    range_m=best_range,
+                                    missile_type=_infer_missile_type(wpn_inst),
+                                )
+                                _apply_aggregate_casualties(
+                                    ar.casualties, best_target, pending_damage,
+                                    dest_thresh, dis_thresh,
+                                )
+                                side_engagements += 1
+                                routed_aggregate = True
+                        if not routed_aggregate and (
+                            wpn_cat_str == "MELEE" or best_range <= _MELEE_RANGE_M
+                        ):
+                            me = getattr(ctx, "melee_engine", None)
+                            if me is not None:
+                                mr = me.resolve_melee_round(
+                                    attacker_strength=max(1, len(attacker.personnel)),
+                                    defender_strength=max(1, len(best_target.personnel)),
+                                    melee_type=_infer_melee_type(attacker, wpn_inst),
+                                )
+                                _apply_melee_result(
+                                    mr, attacker, best_target, pending_damage,
+                                    ctx.morale_states, dest_thresh, dis_thresh,
+                                )
+                                side_engagements += 1
+                                routed_aggregate = True
+
+                    elif era == "ww1":
+                        if wpn_cat_str == "RIFLE":
+                            vf = getattr(ctx, "volley_fire_engine", None)
+                            if vf is not None:
+                                n_rifles = max(1, len(attacker.personnel))
+                                vr = vf.fire_volley(
+                                    n_muskets=n_rifles,
+                                    range_m=best_range,
+                                    is_rifle=True,
+                                    formation_firepower_fraction=1.0,
+                                )
+                                _apply_aggregate_casualties(
+                                    vr.casualties, best_target, pending_damage,
+                                    dest_thresh, dis_thresh,
+                                )
+                                side_engagements += 1
+                                routed_aggregate = True
+                        if not routed_aggregate and (
+                            wpn_cat_str == "MELEE" or best_range <= _MELEE_RANGE_M
+                        ):
+                            me = getattr(ctx, "melee_engine", None)
+                            if me is not None:
+                                mr = me.resolve_melee_round(
+                                    attacker_strength=max(1, len(attacker.personnel)),
+                                    defender_strength=max(1, len(best_target.personnel)),
+                                    melee_type=_infer_melee_type(attacker, wpn_inst),
+                                )
+                                _apply_melee_result(
+                                    mr, attacker, best_target, pending_damage,
+                                    ctx.morale_states, dest_thresh, dis_thresh,
+                                )
+                                side_engagements += 1
+                                routed_aggregate = True
+                    # era == "modern" or "ww2" → no aggregate routing
+
+                # Phase 43b: indirect fire routing (all eras)
+                if not routed_aggregate and wpn_cat_str in _INDIRECT_FIRE_CATEGORIES:
+                    ife = getattr(ctx, "indirect_fire_engine", None)
+                    if ife is not None:
+                        min_range = getattr(wpn_inst.definition, "min_range_m", 0.0)
+                        if best_range >= min_range:
+                            from stochastic_warfare.combat.indirect_fire import (
+                                FireMissionType,
+                            )
+                            round_count = max(
+                                1,
+                                int(wpn_inst.definition.rate_of_fire_rpm * dt / 60),
+                            )
+                            fm_result = ife.fire_mission(
+                                battery_id=attacker.entity_id,
+                                fire_pos=attacker.position,
+                                target_pos=best_target.position,
+                                weapon=wpn_inst.definition,
+                                ammo=ammo_def,
+                                mission_type=FireMissionType.FIRE_FOR_EFFECT,
+                                round_count=round_count,
+                                timestamp=timestamp,
+                            )
+                            if fm_result.impacts:
+                                _apply_indirect_fire_result(
+                                    fm_result, best_target, pending_damage,
+                                    dest_thresh, dis_thresh,
+                                )
+                            side_engagements += 1
+                            routed_aggregate = True
+
+                # ── Standard direct-fire path (modern, WW2, fallback) ─────
+                if not routed_aggregate:
+                    # Determine engagement type — DEW weapons route through
+                    # Beer-Lambert / HPM models instead of ballistic physics
+                    engagement_type = EngagementType.DIRECT_FIRE
+                    try:
+                        if wpn_inst.definition.parsed_category() == WeaponCategory.DIRECTED_ENERGY:
+                            if wpn_inst.definition.beam_power_kw > 0:
+                                engagement_type = EngagementType.DEW_LASER
+                            else:
+                                engagement_type = EngagementType.DEW_HPM
+                    except (KeyError, ValueError):
+                        pass
+
+                    # Phase 40b: extract target posture
+                    target_posture_val = getattr(best_target, "posture", None)
+                    target_posture_str = target_posture_val.name if target_posture_val is not None else "MOVING"
+
+                    result = ctx.engagement_engine.route_engagement(
+                        engagement_type=engagement_type,
+                        attacker_id=attacker.entity_id,
+                        target_id=best_target.entity_id,
+                        attacker_pos=attacker.position,
+                        target_pos=best_target.position,
+                        weapon=wpn_inst,
+                        ammo_id=ammo_id,
+                        ammo_def=ammo_def,
+                        dew_engine=getattr(ctx, 'dew_engine', None),
+                        crew_skill=crew_skill,
+                        target_size_m2=8.5 * target_size_mod,
+                        target_armor_mm=target_armor,
+                        shooter_speed_mps=attacker.speed,
+                        target_posture=target_posture_str,
+                        visibility=vis_mod,
+                        timestamp=timestamp,
+                        current_time_s=current_time_s,
+                        terrain_cover=terrain_cover,
+                        elevation_mod=elevation_mod,
+                    )
+
+                    # Phase 40e: apply fire volume to target suppression
+                    if result.engaged:
+                        side_engagements += 1
+                        sup_eng = getattr(ctx, "suppression_engine", None)
+                        if sup_eng is not None:
+                            tid = best_target.entity_id
+                            if tid not in self._suppression_states:
+                                self._suppression_states[tid] = UnitSuppressionState()
+                            sup_eng.apply_fire_volume(
+                                state=self._suppression_states[tid],
+                                rounds_per_minute=wpn_inst.definition.rate_of_fire_rpm,
+                                caliber_mm=wpn_inst.definition.caliber_mm,
+                                range_m=best_range,
+                                duration_s=dt,
+                            )
+
+                    if result.engaged and result.hit_result and result.hit_result.hit:
+                        if engagement_type in (EngagementType.DEW_LASER, EngagementType.DEW_HPM):
+                            # DEW hit = target destroyed (thermal/EMP kill)
                             pending_damage.append((best_target, UnitStatus.DESTROYED))
-                        elif result.damage_result.damage_fraction >= self._config.disable_threshold:
-                            pending_damage.append((best_target, UnitStatus.DISABLED))
+                        elif (result.damage_result
+                                and result.damage_result.damage_fraction > 0):
+                            if result.damage_result.damage_fraction >= dest_thresh:
+                                pending_damage.append((best_target, UnitStatus.DESTROYED))
+                            elif result.damage_result.damage_fraction >= dis_thresh:
+                                pending_damage.append((best_target, UnitStatus.DISABLED))
 
         return pending_damage
 

@@ -121,6 +121,7 @@ nav:
     - Phase 40 - Battle Loop Foundation: devlog/phase-40.md
     - Phase 41 - Combat Depth: devlog/phase-41.md
     - Phase 42 - Tactical Behavior: devlog/phase-42.md
+    - Phase 43 - Domain-Specific Resolution: devlog/phase-43.md
   - Specifications:
     - Project Structure: specs/project-structure.md
     - Skills & Hooks: skills-and-hooks.md

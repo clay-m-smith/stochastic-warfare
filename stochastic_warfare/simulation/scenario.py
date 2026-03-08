@@ -368,6 +368,15 @@ class SimulationContext:
     # Directed Energy (Phase 28.5)
     dew_engine: Any = None
 
+    # Indirect Fire (Phase 43b)
+    indirect_fire_engine: Any = None
+
+    # Naval Engines (Phase 43c)
+    naval_surface_engine: Any = None
+    naval_subsurface_engine: Any = None
+    naval_gunfire_support_engine: Any = None
+    mine_warfare_engine: Any = None
+
     # Logistics
     consumption_engine: Any = None
     stockpile_manager: Any = None
@@ -462,6 +471,11 @@ class SimulationContext:
             ("sigint_engine", self.sigint_engine),
             ("ew_decoy_engine", self.ew_decoy_engine),
             ("dew_engine", self.dew_engine),
+            ("indirect_fire_engine", self.indirect_fire_engine),
+            ("naval_surface_engine", self.naval_surface_engine),
+            ("naval_subsurface_engine", self.naval_subsurface_engine),
+            ("naval_gunfire_support_engine", self.naval_gunfire_support_engine),
+            ("mine_warfare_engine", self.mine_warfare_engine),
         ]
         for name, eng in engines:
             if eng is not None and hasattr(eng, "get_state"):
@@ -517,6 +531,11 @@ class SimulationContext:
             ("sigint_engine", self.sigint_engine),
             ("ew_decoy_engine", self.ew_decoy_engine),
             ("dew_engine", self.dew_engine),
+            ("indirect_fire_engine", self.indirect_fire_engine),
+            ("naval_surface_engine", self.naval_surface_engine),
+            ("naval_subsurface_engine", self.naval_subsurface_engine),
+            ("naval_gunfire_support_engine", self.naval_gunfire_support_engine),
+            ("mine_warfare_engine", self.mine_warfare_engine),
         ]
         for name, eng in engines:
             if eng is not None and name in state and hasattr(eng, "set_state"):
@@ -912,6 +931,24 @@ class ScenarioLoader:
             hit_engine, dmg_engine, sup_engine, frat_engine, bus, combat_rng,
         )
 
+        # Indirect fire (Phase 43b)
+        from stochastic_warfare.combat.indirect_fire import IndirectFireEngine
+
+        indirect_fire_engine = IndirectFireEngine(bal, dmg_engine, bus, combat_rng)
+
+        # Naval engines (Phase 43c)
+        from stochastic_warfare.combat.naval_surface import NavalSurfaceEngine
+        from stochastic_warfare.combat.naval_subsurface import NavalSubsurfaceEngine
+        from stochastic_warfare.combat.naval_gunfire_support import NavalGunfireSupportEngine
+        from stochastic_warfare.combat.naval_mine import MineWarfareEngine
+
+        naval_surface_engine = NavalSurfaceEngine(dmg_engine, bus, combat_rng)
+        naval_subsurface_engine = NavalSubsurfaceEngine(dmg_engine, bus, combat_rng)
+        naval_gunfire_support_engine = NavalGunfireSupportEngine(
+            indirect_fire_engine, bus, combat_rng,
+        )
+        mine_warfare_engine = MineWarfareEngine(dmg_engine, bus, combat_rng)
+
         # LOS engine (built from heightmap, cached per tick)
         from stochastic_warfare.terrain.los import LOSEngine
 
@@ -1043,6 +1080,11 @@ class ScenarioLoader:
             "maintenance_engine": maintenance_engine,
             "aggregation_engine": aggregation_engine,
             "suppression_engine": sup_engine,
+            "indirect_fire_engine": indirect_fire_engine,
+            "naval_surface_engine": naval_surface_engine,
+            "naval_subsurface_engine": naval_subsurface_engine,
+            "naval_gunfire_support_engine": naval_gunfire_support_engine,
+            "mine_warfare_engine": mine_warfare_engine,
             "obstacle_manager": obstacle_mgr,
             "hydrography_manager": hydro_mgr,
         }
@@ -1354,10 +1396,14 @@ class ScenarioLoader:
             from stochastic_warfare.terrain.trenches import TrenchSystemEngine
             from stochastic_warfare.combat.barrage import BarrageEngine
             from stochastic_warfare.combat.gas_warfare import GasWarfareEngine
+            from stochastic_warfare.combat.volley_fire import VolleyFireEngine
+            from stochastic_warfare.combat.melee import MeleeEngine
 
             result["trench_engine"] = TrenchSystemEngine()
             result["barrage_engine"] = BarrageEngine(rng=combat_rng)
             result["gas_warfare_engine"] = GasWarfareEngine(rng=combat_rng)
+            result["volley_fire_engine"] = VolleyFireEngine(rng=combat_rng)
+            result["melee_engine"] = MeleeEngine(rng=combat_rng)
             logger.info("Created WW1 era engines")
 
         elif era == "napoleonic":
@@ -1378,12 +1424,14 @@ class ScenarioLoader:
 
         elif era == "ancient":
             from stochastic_warfare.combat.archery import ArcheryEngine
+            from stochastic_warfare.combat.melee import MeleeEngine
             from stochastic_warfare.combat.siege import SiegeEngine
             from stochastic_warfare.movement.formation_ancient import AncientFormationEngine
             from stochastic_warfare.movement.naval_oar import NavalOarEngine
             from stochastic_warfare.c2.visual_signals import VisualSignalEngine
 
             result["archery_engine"] = ArcheryEngine(rng=combat_rng)
+            result["melee_engine"] = MeleeEngine(rng=combat_rng)
             result["siege_engine"] = SiegeEngine(rng=combat_rng)
             result["formation_ancient_engine"] = AncientFormationEngine()
             result["naval_oar_engine"] = NavalOarEngine(rng=movement_rng)
