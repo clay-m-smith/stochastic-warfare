@@ -84,6 +84,7 @@ victory_conditions:
       max_duration_s: 21600
 
 calibration_overrides:
+  defensive_sides: [english]
   hit_probability_modifier: 0.7
   target_size_modifier: 0.8
   morale_degrade_rate_modifier: 0.5

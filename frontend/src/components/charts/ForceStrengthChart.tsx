@@ -1,13 +1,7 @@
 import type { ForceTimePoint } from '../../lib/eventProcessing'
 import { formatElapsed } from '../../lib/eventProcessing'
+import { getSideColor } from '../../lib/sideColors'
 import { PlotlyChart } from './PlotlyChart'
-
-const SIDE_COLORS: Record<string, string> = {
-  blue: '#3b82f6',
-  red: '#ef4444',
-  green: '#22c55e',
-  neutral: '#6b7280',
-}
 
 interface ForceStrengthChartProps {
   data: ForceTimePoint[]
@@ -29,7 +23,7 @@ export function ForceStrengthChart({ data, className, layoutOverrides, onClick }
     type: 'scatter' as const,
     mode: 'lines' as const,
     fill: 'tozeroy' as const,
-    line: { color: SIDE_COLORS[side] ?? '#6b7280' },
+    line: { color: getSideColor(side) },
     text: data.map((p) => formatElapsed(p.time_s)),
     hovertemplate: '%{text}<br>%{y} units<extra>%{fullData.name}</extra>',
   }))

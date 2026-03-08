@@ -1,5 +1,5 @@
 import { LAND_COVER_COLORS, LAND_COVER_NAMES } from '../../lib/terrain'
-import { SIDE_COLORS } from '../../lib/unitRendering'
+import { getSideColor, formatSideName } from '../../lib/sideColors'
 
 const TERRAIN_ENTRIES = [0, 1, 3, 6, 9, 11, 14] // Representative subset
 
@@ -9,7 +9,12 @@ const DOMAIN_SHAPES = [
   { domain: 'Naval', shape: 'diamond' },
 ]
 
-export function MapLegend() {
+interface MapLegendProps {
+  sides?: string[]
+}
+
+export function MapLegend({ sides }: MapLegendProps) {
+  const displaySides = sides && sides.length > 0 ? sides : ['blue', 'red']
   return (
     <div className="space-y-3 rounded bg-white/90 p-3 text-xs shadow dark:bg-gray-800/90 dark:text-gray-200">
       <div>
@@ -30,13 +35,13 @@ export function MapLegend() {
       <div>
         <div className="mb-1 font-semibold text-gray-700 dark:text-gray-300">Sides</div>
         <div className="flex gap-3">
-          {Object.entries(SIDE_COLORS).map(([side, color]) => (
+          {displaySides.map((side) => (
             <div key={side} className="flex items-center gap-1">
               <span
                 className="inline-block h-3 w-3 rounded-sm border border-gray-300 dark:border-gray-600"
-                style={{ backgroundColor: color }}
+                style={{ backgroundColor: getSideColor(side) }}
               />
-              <span className="capitalize">{side}</span>
+              <span className="capitalize">{formatSideName(side)}</span>
             </div>
           ))}
         </div>

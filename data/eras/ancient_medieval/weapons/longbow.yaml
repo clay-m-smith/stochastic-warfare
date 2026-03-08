@@ -7,10 +7,10 @@ max_range_m: 250.0
 min_range_m: 0.0
 rate_of_fire_rpm: 6.0
 burst_size: 1
-base_accuracy_mrad: 30.0
+base_accuracy_mrad: 15.0
 guidance: NONE
-magazine_capacity: 1
-reload_time_s: 10.0
+magazine_capacity: 24
+reload_time_s: 0.0
 compatible_ammo:
   - arrow_longbow
 weight_kg: 1.0

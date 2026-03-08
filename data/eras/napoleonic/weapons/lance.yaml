@@ -9,9 +9,10 @@ rate_of_fire_rpm: 15.0
 burst_size: 1
 base_accuracy_mrad: 0.0
 guidance: NONE
-magazine_capacity: 0
+magazine_capacity: 9999
 reload_time_s: 0.0
-compatible_ammo: []
+compatible_ammo:
+  - lance_charge
 weight_kg: 2.5
 reliability: 0.90
 barrel_life_rounds: 100000

@@ -1,12 +1,7 @@
 import type { MapUnitFrame, ViewportTransform } from '../types/map'
 import { worldToScreen } from './terrain'
-
-export const SIDE_COLORS: Record<string, string> = {
-  blue: '#4477AA',
-  red: '#CC6677',
-  green: '#228B22',
-  neutral: '#999999',
-}
+export { SIDE_COLORS } from './sideColors'
+import { getSideColor } from './sideColors'
 
 const UNIT_SIZE = 8
 
@@ -26,7 +21,7 @@ export function drawUnit(
   showLabel: boolean,
 ): void {
   const { sx, sy } = worldToScreen(unit.x, unit.y, transform, canvasHeight)
-  const color = SIDE_COLORS[unit.side] ?? SIDE_COLORS.neutral ?? '#999999'
+  const color = getSideColor(unit.side)
   const size = UNIT_SIZE
   const destroyed = unit.status >= 2 // UnitStatus.DESTROYED = 2
 

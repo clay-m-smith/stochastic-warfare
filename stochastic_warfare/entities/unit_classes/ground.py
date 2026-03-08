@@ -22,6 +22,9 @@ class GroundUnitType(enum.IntEnum):
     MORTAR = 7
     RECON = 8
     ENGINEER = 9
+    CAVALRY = 10
+    MILITIA = 11
+    ARTILLERY = 12
 
 
 class Posture(enum.IntEnum):

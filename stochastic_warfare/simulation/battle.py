@@ -725,6 +725,9 @@ class BattleManager:
         wave_assignments = battle.wave_assignments if battle is not None else {}
         _rules = behavior_rules or {}
 
+        # Sides that should hold position (defensive doctrine)
+        defensive_sides = set(cal.get("defensive_sides", []))
+
         for side, units in units_by_side.items():
             enemies = active_enemies.get(side, [])
             if not enemies:
@@ -733,6 +736,10 @@ class BattleManager:
             # If behavior_rules explicitly say hold_position, skip this side
             side_rules = _rules.get(side, {})
             if side_rules.get("hold_position", False):
+                continue
+
+            # Defensive sides don't advance
+            if side in defensive_sides:
                 continue
 
             # Compute enemy centroid

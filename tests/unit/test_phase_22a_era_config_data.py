@@ -266,9 +266,10 @@ class TestNapoleonicWeapons:
         defn = weapon_loader._definitions["cavalry_saber"]
         assert defn.muzzle_velocity_mps == 0.0
 
-    def test_melee_no_ammo(self, weapon_loader) -> None:
+    def test_melee_has_ammo(self, weapon_loader) -> None:
         defn = weapon_loader._definitions["bayonet"]
-        assert len(defn.compatible_ammo) == 0
+        assert len(defn.compatible_ammo) > 0
+        assert "bayonet_thrust" in defn.compatible_ammo
 
     def test_musket_has_ammo(self, weapon_loader) -> None:
         defn = weapon_loader._definitions["charleville_1777"]

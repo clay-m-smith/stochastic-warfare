@@ -48,6 +48,7 @@ class CampaignConfig(BaseModel):
     enable_supply_network: bool = True
     enable_strategic_movement: bool = True
     strategic_speed_fraction: float = 0.3
+    defensive_sides: list[str] = []
     """Fraction of max_speed used during strategic march toward enemies."""
 
 
@@ -183,7 +184,16 @@ class CampaignManager:
         sides = list(units_by_side.keys())
         speed_frac = self._config.strategic_speed_fraction
 
+        # Sides that should hold position (from config or scenario calibration)
+        defensive = set(self._config.defensive_sides)
+        cal_defensive = getattr(ctx, "calibration", {}).get("defensive_sides", [])
+        if cal_defensive:
+            defensive.update(cal_defensive)
+
         for side in sides:
+            if side in defensive:
+                continue
+
             active_own = [u for u in units_by_side[side]
                           if u.status == UnitStatus.ACTIVE]
             if not active_own:

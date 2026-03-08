@@ -376,8 +376,25 @@ class DamageEngine:
                     target_id=target_id, weapon_id="",
                     damage_type="KINETIC", penetrated=pen.penetrated,
                 ))
+        elif armor_mm <= 0 and ammo.penetration_mm_rha > 0:
+            # Kinetic round vs unarmored/soft target (small arms, autocannon
+            # against infantry).  A direct hit is highly lethal; posture
+            # provides the only protection.
+            result.damage_type = DamageType.KINETIC
+            result.penetrated = True
+            posture_protect = _POSTURE_BLAST_PROTECT.get(posture, 1.0)
+            # Base lethality from kinetic energy (caliber-scaled)
+            base_damage = min(1.0, 0.3 + 0.07 * ammo.penetration_mm_rha)
+            result.damage_fraction = base_damage * posture_protect
+
+            if timestamp is not None:
+                self._event_bus.publish(HitEvent(
+                    timestamp=timestamp, source=ModuleId.COMBAT,
+                    target_id=target_id, weapon_id="",
+                    damage_type="KINETIC", penetrated=True,
+                ))
         else:
-            # Blast/frag against unarmored or soft target
+            # Blast/frag against unarmored or soft target (HE, grenades, etc.)
             blast_result = self.apply_blast_damage(ammo, distance_from_impact_m, posture)
             result.damage_fraction = blast_result.damage_fraction
             result.damage_type = blast_result.damage_type

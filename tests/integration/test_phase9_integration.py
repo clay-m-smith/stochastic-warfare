@@ -170,7 +170,10 @@ class TestScenarioLoadStrategicTick:
         # forces from engaging immediately.
         engine = SimulationEngine(
             ctx,
-            campaign_config=CampaignConfig(engagement_detection_range_m=5000),
+            campaign_config=CampaignConfig(
+                engagement_detection_range_m=5000,
+                enable_strategic_movement=False,
+            ),
         )
         done = engine.step()
         assert done is False
@@ -448,7 +451,10 @@ class TestReinforcementArrival:
         # in just 2 ticks.
         engine = SimulationEngine(
             ctx,
-            campaign_config=CampaignConfig(engagement_detection_range_m=5000),
+            campaign_config=CampaignConfig(
+                engagement_detection_range_m=5000,
+                enable_strategic_movement=False,
+            ),
         )
         engine.campaign_manager.set_reinforcements(ctx.config.reinforcements)
 

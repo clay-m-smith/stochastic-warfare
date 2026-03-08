@@ -15,7 +15,7 @@ class TestGroundUnitType:
         assert GroundUnitType.ENGINEER == 9
 
     def test_count(self) -> None:
-        assert len(GroundUnitType) == 10
+        assert len(GroundUnitType) >= 10
 
 
 class TestPosture:

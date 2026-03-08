@@ -2,7 +2,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { MapUnitFrame, ReplayFrame, TerrainData, EngagementArc } from '../../types/map'
 import { useViewportControls } from './useViewportControls'
 import { LAND_COVER_COLORS, worldToScreen, screenToWorld, getVisibleCellRange, applyElevationShading } from '../../lib/terrain'
-import { drawUnit, hitTestUnit, SIDE_COLORS } from '../../lib/unitRendering'
+import { drawUnit, hitTestUnit } from '../../lib/unitRendering'
+import { getSideColor } from '../../lib/sideColors'
 import { MapControls } from './MapControls'
 import { MapLegend } from './MapLegend'
 import { PlaybackControls } from './PlaybackControls'
@@ -67,7 +68,18 @@ export function TacticalMap({ terrain, frames, engagementArcs = [], onTickChange
 
   const currentFrameData = frames[currentFrame] ?? null
 
-  // Determine available sides and FOW availability
+  // Determine all sides present in unit data (for legend)
+  const allSides = useMemo(() => {
+    const sidesSet = new Set<string>()
+    for (const frame of frames) {
+      for (const unit of frame.units) {
+        sidesSet.add(unit.side)
+      }
+    }
+    return Array.from(sidesSet).sort()
+  }, [frames])
+
+  // Determine available sides for FOW (from detection data)
   const availableSides = useMemo(() => {
     const sidesSet = new Set<string>()
     for (const frame of frames) {
@@ -249,7 +261,7 @@ export function TacticalMap({ terrain, frames, engagementArcs = [], onTickChange
       for (const [unitId, trail] of unitTrails) {
         if (trail.length < 2) continue
         const lastUnit = currentFrameData?.units.find((u) => u.id === unitId)
-        const color = lastUnit ? (SIDE_COLORS[lastUnit.side] ?? '#999') : '#999'
+        const color = lastUnit ? getSideColor(lastUnit.side) : '#999'
         ctx2d.strokeStyle = color
         ctx2d.lineWidth = 1
         ctx2d.globalAlpha = 0.4
@@ -310,7 +322,7 @@ export function TacticalMap({ terrain, frames, engagementArcs = [], onTickChange
       const radius = selectedUnit.sensor_range! * transform.scale
       ctx2d.beginPath()
       ctx2d.arc(sx, sy, radius, 0, Math.PI * 2)
-      ctx2d.strokeStyle = SIDE_COLORS[selectedUnit.side] ?? '#999'
+      ctx2d.strokeStyle = getSideColor(selectedUnit.side)
       ctx2d.lineWidth = 1
       ctx2d.globalAlpha = 0.3
       ctx2d.setLineDash([5, 5])
@@ -406,7 +418,7 @@ export function TacticalMap({ terrain, frames, engagementArcs = [], onTickChange
         {/* Legend overlay */}
         <div className="pointer-events-none absolute bottom-2 left-2">
           <div className="pointer-events-auto">
-            <MapLegend />
+            <MapLegend sides={allSides} />
           </div>
         </div>
         {/* Unit detail sidebar */}

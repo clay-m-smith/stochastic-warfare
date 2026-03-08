@@ -51,9 +51,9 @@ red_forces:
   morale_initial: STEADY
 
 terrain:
-  width_m: 40000
-  height_m: 30000
-  cell_size_m: 200.0
+  width_m: 200000
+  height_m: 100000
+  cell_size_m: 1000.0
   base_elevation_m: 800.0
   terrain_type: open_field
 
@@ -111,10 +111,10 @@ calibration_overrides:
   sead_effectiveness: 0.9
   drone_provocation_prob: 0.85
   sigint_detection_bonus: 0.15
-  blue_start_x: 30000.0
-  blue_start_y: 15000.0
+  blue_start_x: 180000.0
+  blue_start_y: 50000.0
   red_start_x: 20000.0
-  red_start_y: 15000.0
+  red_start_y: 50000.0
   weapon_assignments:
     "M61A1 Vulcan 20mm": m61a1_vulcan
     "M901 Launching Station": mim104_pac3

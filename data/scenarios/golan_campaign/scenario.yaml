@@ -141,6 +141,8 @@ calibration_overrides:
   blue_start_y: 10000.0
   red_start_x: 14000.0
   red_start_y: 10000.0
+  defensive_sides:
+    - blue
   weapon_assignments:
     "L7 105mm Rifled Gun": l7_105mm
     "D-10T 100mm Rifled Gun": d10t_100mm

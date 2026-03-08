@@ -1,10 +1,6 @@
 import { StatCard } from '../../components/StatCard'
+import { getSideBorderClass, formatSideName } from '../../lib/sideColors'
 import type { RunResult, SideForces } from '../../types/api'
-
-const SIDE_COLORS: Record<string, string> = {
-  blue: 'border-l-4 border-l-blue-500',
-  red: 'border-l-4 border-l-red-500',
-}
 
 interface RunSummaryCardProps {
   result: RunResult
@@ -39,9 +35,9 @@ export function RunSummaryCard({ result }: RunSummaryCardProps) {
           return (
             <div
               key={side}
-              className={`rounded-lg bg-white dark:bg-gray-800 p-4 shadow ${SIDE_COLORS[side] ?? 'border-l-4 border-l-gray-400'}`}
+              className={`rounded-lg bg-white dark:bg-gray-800 p-4 shadow ${getSideBorderClass(side)}`}
             >
-              <h3 className="mb-3 text-sm font-semibold uppercase text-gray-500 dark:text-gray-400">{side}</h3>
+              <h3 className="mb-3 text-sm font-semibold uppercase text-gray-500 dark:text-gray-400">{formatSideName(side)}</h3>
               <div className="grid grid-cols-3 gap-2">
                 <StatCard label="Total" value={sf.total} />
                 <StatCard label="Active" value={sf.active} />

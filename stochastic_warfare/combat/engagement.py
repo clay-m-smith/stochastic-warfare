@@ -153,7 +153,12 @@ class EngagementEngine:
         dz = target_pos.altitude - shooter_pos.altitude
         range_m = math.sqrt(dx * dx + dy * dy + dz * dz)
 
-        if range_m < max(weapon.min_range_m, self._config.min_engagement_range_m):
+        # Melee weapons use only their own min_range, not the global minimum
+        if weapon.category == "MELEE":
+            min_range = weapon.min_range_m
+        else:
+            min_range = max(weapon.min_range_m, self._config.min_engagement_range_m)
+        if range_m < min_range:
             return False
         if range_m > weapon.max_range_m > 0:
             return False
