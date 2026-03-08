@@ -232,6 +232,8 @@ class EngagementEngine:
         crew_count: int = 4,
         timestamp: Any = None,
         current_time_s: float = 0.0,
+        terrain_cover: float = 0.0,
+        elevation_mod: float = 1.0,
     ) -> EngagementResult:
         """Execute a complete direct-fire engagement.
 
@@ -307,6 +309,8 @@ class EngagementEngine:
             target_posture=target_posture,
             position_uncertainty_m=position_uncertainty_m,
             weapon_condition=weapon.condition,
+            terrain_cover=terrain_cover,
+            elevation_mod=elevation_mod,
         )
         hit_result.hit = self._hit.resolve_hit(hit_result.p_hit)
         result.hit_result = hit_result
@@ -363,6 +367,8 @@ class EngagementEngine:
         position_uncertainty_m: float = 0.0,
         timestamp: Any = None,
         current_time_s: float = 0.0,
+        terrain_cover: float = 0.0,
+        elevation_mod: float = 1.0,
     ) -> EngagementResult:
         """Dispatch an engagement to the appropriate handler.
 
@@ -390,6 +396,8 @@ class EngagementEngine:
                 position_uncertainty_m=position_uncertainty_m,
                 timestamp=timestamp,
                 current_time_s=current_time_s,
+                terrain_cover=terrain_cover,
+                elevation_mod=elevation_mod,
             )
 
         if engagement_type == EngagementType.COASTAL_DEFENSE:

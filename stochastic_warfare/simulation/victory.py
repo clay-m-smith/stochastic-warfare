@@ -606,9 +606,17 @@ class VictoryEvaluator:
             total = len(units)
             if total == 0:
                 continue
+            # Phase 41b: quality-weighted survival
+            weighted_active = sum(
+                getattr(u, "training_level", 0.5)
+                for u in units if u.status == UnitStatus.ACTIVE
+            )
+            weighted_total = sum(getattr(u, "training_level", 0.5) for u in units)
+            if weighted_total <= 0:
+                continue
+            survival = weighted_active / weighted_total
             active = sum(1 for u in units if u.status == UnitStatus.ACTIVE)
-            survival = active / total
-            details.append(f"{side}: {active}/{total} ({survival:.0%})")
+            details.append(f"{side}: {active}/{total} ({survival:.0%} quality-weighted)")
 
             if survival > best_survival:
                 best_survival = survival

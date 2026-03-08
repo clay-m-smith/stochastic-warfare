@@ -88,6 +88,8 @@ class HitProbabilityEngine:
         target_posture: str = "MOVING",
         position_uncertainty_m: float = 0.0,
         weapon_condition: float = 1.0,
+        terrain_cover: float = 0.0,
+        elevation_mod: float = 1.0,
     ) -> HitResult:
         """Compute probability of hit for an unguided engagement.
 
@@ -170,6 +172,17 @@ class HitProbabilityEngine:
         cond_mod = 0.5 + 0.5 * weapon_condition
         p *= cond_mod
         modifiers["weapon_condition"] = cond_mod
+
+        # Terrain cover — reduces hit probability (target behind cover)
+        if terrain_cover > 0:
+            cover_mod = 1.0 - terrain_cover
+            p *= cover_mod
+            modifiers["terrain_cover"] = cover_mod
+
+        # Elevation advantage — high ground bonus
+        if elevation_mod != 1.0:
+            p *= elevation_mod
+            modifiers["elevation"] = elevation_mod
 
         # Clamp
         p = max(cfg.min_phit, min(cfg.max_phit, p))

@@ -275,6 +275,7 @@ class SimulationContext:
     engagement_engine: Any = None
 
     # Detection
+    detection_engine: Any = None
     fog_of_war: Any = None
 
     # Movement
@@ -1008,6 +1009,7 @@ class ScenarioLoader:
         result = {
             "los_engine": los_engine,
             "engagement_engine": engagement_engine,
+            "detection_engine": det_engine,
             "fog_of_war": fog_of_war,
             "morale_machine": morale_machine,
             "movement_engine": movement_engine,

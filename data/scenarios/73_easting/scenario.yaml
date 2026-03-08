@@ -19,18 +19,28 @@ sides:
     units:
       - unit_type: m1a1
         count: 9
+        overrides:
+          training_level: 0.85
       - unit_type: m3a2_bradley
         count: 12
+        overrides:
+          training_level: 0.85
     experience_level: 0.8
     morale_initial: STEADY
   - side: red
     units:
       - unit_type: t72m
         count: 30
+        overrides:
+          training_level: 0.3
       - unit_type: bmp1
         count: 16
+        overrides:
+          training_level: 0.3
       - unit_type: bmp2
         count: 4
+        overrides:
+          training_level: 0.3
     experience_level: 0.3
     morale_initial: STEADY
 

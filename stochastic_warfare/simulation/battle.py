@@ -38,6 +38,33 @@ _WEATHER_BYPASS_TYPES: frozenset[SensorType] = frozenset({
 
 
 # ---------------------------------------------------------------------------
+# Target scoring (Phase 41c)
+# ---------------------------------------------------------------------------
+
+
+def _target_value(target: Unit) -> float:
+    """Target type priority for threat-based selection."""
+    # HQ is highest value
+    st = getattr(target, "support_type", None)
+    if st is not None:
+        st_name = st.name if hasattr(st, "name") else str(st)
+        if st_name == "HQ":
+            return 2.0
+    # Air defense enables air ops
+    if hasattr(target, "ad_type"):
+        return 1.8
+    # Artillery/rocket and armor
+    gt = getattr(target, "ground_type", None)
+    if gt is not None:
+        gt_name = gt.name if hasattr(gt, "name") else str(gt)
+        if "ARTILLERY" in gt_name or "ROCKET" in gt_name:
+            return 1.5
+        if gt_name == "ARMOR":
+            return 1.3
+    return 1.0
+
+
+# ---------------------------------------------------------------------------
 # Movement helpers
 # ---------------------------------------------------------------------------
 
@@ -964,6 +991,117 @@ class BattleManager:
                 ny = u.position.northing + (dy / dist) * move_dist
                 object.__setattr__(u, "position", Position(nx, ny, u.position.altitude))
 
+    # ------------------------------------------------------------------
+    # Phase 41a: Terrain combat modifiers
+    # ------------------------------------------------------------------
+
+    @staticmethod
+    def _compute_terrain_modifiers(
+        ctx: Any,
+        target_pos: Position,
+        attacker_pos: Position,
+    ) -> tuple[float, float, float]:
+        """Query terrain at positions and return (cover, elevation_mod, concealment).
+
+        Returns defaults (0.0, 1.0, 0.0) when terrain managers are absent.
+        """
+        cover = 0.0
+        elevation_mod = 1.0
+        concealment = 0.0
+
+        # 1. Terrain classification cover & concealment
+        classification = getattr(ctx, "classification", None)
+        if classification is not None:
+            try:
+                props = classification.properties_at(target_pos)
+                cover = max(cover, props.cover)
+                concealment = props.concealment
+            except (IndexError, ValueError, AttributeError):
+                pass
+
+        # 2. Trench cover (WW1+)
+        trench_engine = getattr(ctx, "trench_engine", None)
+        if trench_engine is not None:
+            try:
+                tq = trench_engine.query_trench(target_pos.easting, target_pos.northing)
+                if tq.in_trench:
+                    cover = max(cover, tq.cover_value)
+            except (IndexError, ValueError, AttributeError):
+                pass
+
+        # 3. Building cover
+        infra = getattr(ctx, "infrastructure_manager", None)
+        if infra is not None:
+            try:
+                buildings = infra.buildings_at(target_pos)
+                for b in buildings:
+                    cover = max(cover, getattr(b, "cover_value", 0.0))
+            except (IndexError, ValueError, AttributeError):
+                pass
+
+        # 4. Obstacle fortification cover
+        obstacle_mgr = getattr(ctx, "obstacle_manager", None)
+        if obstacle_mgr is not None:
+            try:
+                obstacles = obstacle_mgr.obstacles_at(target_pos)
+                for obs in obstacles:
+                    if hasattr(obs, "obstacle_type"):
+                        ot_name = obs.obstacle_type.name if hasattr(obs.obstacle_type, "name") else str(obs.obstacle_type)
+                        if ot_name == "FORTIFICATION":
+                            cover = max(cover, 0.8)
+            except (IndexError, ValueError, AttributeError):
+                pass
+
+        # 5. Elevation advantage
+        heightmap = getattr(ctx, "heightmap", None)
+        if heightmap is not None:
+            try:
+                att_elev = heightmap.elevation_at(attacker_pos)
+                tgt_elev = heightmap.elevation_at(target_pos)
+                delta = att_elev - tgt_elev
+                # +10% per 33m height advantage, capped at +30%, floor at -10%
+                raw = delta / 330.0
+                elevation_mod = 1.0 + max(-0.1, min(0.3, raw))
+            except (IndexError, ValueError):
+                pass
+
+        return cover, elevation_mod, concealment
+
+    # ------------------------------------------------------------------
+    # Phase 41c: Threat-based target scoring
+    # ------------------------------------------------------------------
+
+    @staticmethod
+    def _score_target(
+        attacker: Unit,
+        target: Unit,
+        distance: float,
+        attacker_weapons: list,
+        ctx: Any,
+    ) -> float:
+        """Compute threat-based target score. Higher = more attractive."""
+        # Threat: target's ability to damage us
+        target_weapons = ctx.unit_weapons.get(target.entity_id, [])
+        target_max_range = max(
+            (w[0].definition.max_range_m for w in target_weapons), default=0.0
+        )
+        attacker_armor = getattr(attacker, "armor_front", 0.0)
+        threat = min(5.0, max(0.1, target_max_range / max(1.0, attacker_armor * 10.0)))
+
+        # Pk: our hit likelihood at this range
+        best_wpn_range = max(
+            (w[0].definition.max_range_m for w in attacker_weapons), default=1000.0
+        )
+        pk = min(3.0, best_wpn_range / max(1.0, distance))
+
+        # Value: target type priority
+        value = _target_value(target)
+
+        # Distance penalty
+        dist_pen = max(1.0, distance / max(1.0, best_wpn_range))
+
+        return (threat * pk * value) / dist_pen
+
     def _execute_engagements(
         self,
         ctx: Any,
@@ -980,6 +1118,10 @@ class BattleManager:
         hit_prob_mod = cal.get("hit_probability_modifier", 1.0)
         # Per-side target_size_modifier: look up target_size_modifier_{side}, fall back to uniform
         target_size_mod_default = cal.get("target_size_modifier", 1.0)
+        # Phase 41a: force channeling
+        max_engagers = cal.get("max_engagers_per_side", 0)
+        # Phase 41c: target selection mode
+        target_selection_mode = cal.get("target_selection_mode", "threat_scored")
 
         if ctx.engagement_engine is None:
             return pending_damage
@@ -987,10 +1129,15 @@ class BattleManager:
         for side_name, side_units in units_by_side.items():
             enemies = active_enemies.get(side_name, [])
             pos_arr = enemy_pos_arrays.get(side_name, np.empty((0, 2)))
+            side_engagements = 0
 
             for attacker in side_units:
                 if attacker.status != UnitStatus.ACTIVE:
                     continue
+
+                # Phase 41a: force channeling — limit engagers per side
+                if max_engagers > 0 and side_engagements >= max_engagers:
+                    break
 
                 # Phase 40f: morale gate — routed/surrendered units don't fire
                 attacker_morale = ctx.morale_states.get(attacker.entity_id)
@@ -1003,13 +1150,32 @@ class BattleManager:
                 if not weapons or pos_arr.shape[0] == 0:
                     continue
 
-                # Find closest enemy (vectorized)
+                # Target selection (vectorized distance computation)
                 att_pos = np.array([attacker.position.easting, attacker.position.northing])
                 diffs = pos_arr - att_pos
                 dists = np.sqrt(np.sum(diffs * diffs, axis=1))
-                best_idx = int(np.argmin(dists))
+
+                # Phase 41c: threat-based or closest target selection
+                if target_selection_mode == "closest":
+                    best_idx = int(np.argmin(dists))
+                else:
+                    best_score = -1.0
+                    best_idx = 0
+                    for ei in range(len(enemies)):
+                        score = self._score_target(
+                            attacker, enemies[ei], float(dists[ei]), weapons, ctx,
+                        )
+                        if score > best_score:
+                            best_score = score
+                            best_idx = ei
+
                 best_range = float(dists[best_idx])
                 best_target = enemies[best_idx]
+
+                # Phase 41a: terrain modifiers
+                terrain_cover, elevation_mod, concealment = self._compute_terrain_modifiers(
+                    ctx, best_target.position, attacker.position,
+                )
 
                 # Detection check
                 detection_range = visibility_m
@@ -1021,10 +1187,37 @@ class BattleManager:
                         if sensor.sensor_type in _WEATHER_BYPASS_TYPES:
                             weather_independent = True
 
+                # Phase 41a: concealment reduces effective detection range
+                # (thermal/radar sensors bypass concealment)
+                if concealment > 0 and not weather_independent:
+                    detection_range *= (1.0 - concealment)
+
                 if best_range > detection_range:
                     continue
 
+                # Phase 41d: detection quality modulates engagement effectiveness
+                detection_quality_mod = 1.0
+                det_engine = getattr(ctx, "detection_engine", None)
+                if det_engine is not None and sensors:
+                    best_snr = -100.0
+                    for sensor in sensors:
+                        if best_range > getattr(sensor, "effective_range", 0.0):
+                            continue
+                        try:
+                            snr = det_engine.compute_snr_visual(
+                                sensor, 1.0, best_range, visibility_m=visibility_m,
+                            )
+                            if snr > best_snr:
+                                best_snr = snr
+                        except Exception:
+                            pass
+                    if best_snr > -100.0:
+                        # SNR excess → quality mod (linear scale)
+                        snr_linear = 10.0 ** (best_snr / 20.0)
+                        detection_quality_mod = min(1.0, max(0.3, snr_linear / 10.0))
+
                 vis_mod = 1.0 if weather_independent else (min(visibility_m / best_range, 1.0) if best_range > 0 else 1.0)
+                vis_mod = vis_mod * detection_quality_mod
 
                 # Select best weapon for current range — prefer ranged weapons
                 # at distance, melee weapons at close range.  Skip weapons
@@ -1089,7 +1282,11 @@ class BattleManager:
                     effects = _MORALE_EFFECTS.get(ms, {})
                     morale_accuracy_mod = effects.get("accuracy_mult", 1.0)
 
-                crew_skill = (side_cfg.experience_level if side_cfg else 0.5) * hit_prob_mod * morale_accuracy_mod
+                # Phase 41b: per-unit training_level modulates crew skill
+                base_skill = side_cfg.experience_level if side_cfg else 0.5
+                unit_training = getattr(attacker, "training_level", 0.5)
+                effective_skill = base_skill * (0.5 + 0.5 * unit_training)
+                crew_skill = effective_skill * hit_prob_mod * morale_accuracy_mod
 
                 # Per-side target_size_modifier: use target's side
                 target_side = self._find_unit_side(ctx, best_target.entity_id)
@@ -1135,10 +1332,13 @@ class BattleManager:
                     visibility=vis_mod,
                     timestamp=timestamp,
                     current_time_s=current_time_s,
+                    terrain_cover=terrain_cover,
+                    elevation_mod=elevation_mod,
                 )
 
                 # Phase 40e: apply fire volume to target suppression
                 if result.engaged:
+                    side_engagements += 1
                     sup_eng = getattr(ctx, "suppression_engine", None)
                     if sup_eng is not None:
                         tid = best_target.entity_id

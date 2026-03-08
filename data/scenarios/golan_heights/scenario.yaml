@@ -19,16 +19,24 @@ sides:
     units:
       - unit_type: shot_kal
         count: 40
+        overrides:
+          training_level: 0.9
     experience_level: 0.7
     morale_initial: STEADY
   - side: red
     units:
       - unit_type: t55a
         count: 100
+        overrides:
+          training_level: 0.5
       - unit_type: t62
         count: 100
+        overrides:
+          training_level: 0.5
       - unit_type: bmp1
         count: 50
+        overrides:
+          training_level: 0.5
     experience_level: 0.4
     morale_initial: STEADY
 

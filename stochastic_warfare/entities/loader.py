@@ -83,6 +83,7 @@ class UnitDefinition(BaseModel):
     armor_front: float = 0.0
     armor_side: float = 0.0
     armor_type: str = "RHA"
+    training_level: float = 0.5
 
     # Aerial
     service_ceiling: float = 15000.0
@@ -228,6 +229,7 @@ class UnitLoader:
             max_speed=defn.max_speed,
             personnel=personnel,
             equipment=equipment,
+            training_level=defn.training_level,
         )
 
         if defn.ad_type is not None:
