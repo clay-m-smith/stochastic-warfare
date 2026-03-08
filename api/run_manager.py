@@ -163,6 +163,9 @@ class RunManager:
             ))
 
         conditions = [VictoryConditionConfig(**vc) for vc in config_dict.get("victory_conditions", [])]
+        # Default: end when any side loses 70%+ of forces
+        if not conditions:
+            conditions = [VictoryConditionConfig(type="force_destroyed")]
         max_dur = config_dict.get("duration_hours", 24) * 3600.0
 
         victory_eval = VictoryEvaluator(
@@ -184,10 +187,16 @@ class RunManager:
         recorder.start()
         game_over = False
         progress_interval = max(1, max_ticks // 100)
+
+        # Frame interval: use scenario duration to estimate actual ticks
+        tick_dur = config_dict.get("tick_duration_seconds", 5.0)
+        dur_hours = config_dict.get("duration_hours", 24)
+        expected_ticks = int(dur_hours * 3600.0 / tick_dur)
+        actual_ticks = min(max_ticks, expected_ticks)
         if frame_interval is not None:
             fi = max(1, frame_interval)
         else:
-            fi = max(1, max_ticks // 500)
+            fi = max(1, actual_ticks // 500)
         map_frames: list[dict] = []
 
         while not game_over:
@@ -235,12 +244,32 @@ class RunManager:
                 "destroyed": destroyed,
             }
 
+        # Transform VictoryResult into frontend-friendly format
+        victory_raw = serialize_to_dict(run_result)
+        ct = victory_raw.get("condition_type", "")
+        ws = victory_raw.get("winning_side", "")
+        if ws and ws != "draw":
+            status = "decisive"
+        elif ws == "draw":
+            status = "draw"
+        elif ct:
+            status = ct
+        else:
+            status = "unknown"
+        victory_dict = {
+            "status": status,
+            "winner": ws if ws and ws != "draw" else None,
+            "winning_side": ws,
+            "condition_type": ct,
+            "message": victory_raw.get("message", ""),
+        }
+
         summary = {
             "scenario": config_dict.get("name", path.stem),
             "seed": seed,
             "ticks_executed": ctx.clock.tick_count,
             "duration_s": ctx.clock.elapsed.total_seconds(),
-            "victory": serialize_to_dict(run_result),
+            "victory": victory_dict,
             "sides": side_summaries,
         }
 
@@ -317,6 +346,21 @@ class RunManager:
                     terrain["land_cover"] = lc.tolist()
                 else:
                     terrain["land_cover"] = [list(row) for row in lc]
+
+        # Generate default land_cover grid for synthetic terrain
+        if not terrain["land_cover"] and terrain["height_cells"] > 0 and terrain["width_cells"] > 0:
+            # Map terrain_type -> land cover code
+            terrain_type = config_dict.get("terrain", {}).get("terrain_type", "flat_desert")
+            lc_map = {
+                "flat_desert": 11,     # DESERT_SAND
+                "open_ocean": 9,       # WATER
+                "hilly_defense": 1,    # GRASSLAND
+                "trench_warfare": 14,  # CULTIVATED
+                "open_field": 0,       # OPEN
+            }
+            code = lc_map.get(terrain_type, 0)
+            h, w = terrain["height_cells"], terrain["width_cells"]
+            terrain["land_cover"] = [[code] * w for _ in range(h)]
 
         for obj_cfg in config_dict.get("objectives", []):
             pos = obj_cfg.get("position", [0.0, 0.0])

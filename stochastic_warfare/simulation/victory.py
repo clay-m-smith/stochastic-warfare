@@ -90,6 +90,10 @@ class VictoryEvaluatorConfig(BaseModel):
     supply_exhaustion_threshold: float = 0.2
     """Average supply level below which supply_exhausted triggers."""
 
+    attrition_ratio_threshold: float = 2.0
+    """Kill ratio (enemy destroyed / own destroyed) above which attrition_ratio
+    victory triggers.  E.g. 2.0 = side must inflict 2x the casualties it takes."""
+
 
 # ---------------------------------------------------------------------------
 # Dataclasses
@@ -332,6 +336,8 @@ class VictoryEvaluator:
             return self._check_ceasefire(cond, tick)
         elif ctype == "armistice":
             return self._check_armistice(cond, tick)
+        elif ctype == "attrition_ratio":
+            return self._check_attrition_ratio(cond, units_by_side, tick)
         else:
             return VictoryResult(game_over=False, tick=tick)
 
@@ -532,3 +538,97 @@ class VictoryEvaluator:
                     tick=tick,
                 )
         return VictoryResult(game_over=False, tick=tick)
+
+    def _check_attrition_ratio(
+        self,
+        cond: VictoryConditionConfig,
+        units_by_side: dict[str, list[Unit]],
+        tick: int,
+    ) -> VictoryResult:
+        """Check if any side has achieved a kill ratio above threshold.
+
+        Kill ratio = enemies destroyed / own destroyed.  A side wins when
+        its ratio exceeds ``attrition_ratio_threshold`` (default 2.0) AND
+        it has destroyed at least 1 enemy unit.
+        """
+        threshold = cond.params.get(
+            "threshold", self._config.attrition_ratio_threshold,
+        )
+        sides = list(units_by_side.keys())
+
+        for side in sides:
+            own_units = units_by_side[side]
+            own_destroyed = sum(
+                1 for u in own_units
+                if u.status in (UnitStatus.DESTROYED, UnitStatus.SURRENDERED)
+            )
+            enemy_destroyed = 0
+            for other_side, other_units in units_by_side.items():
+                if other_side == side:
+                    continue
+                enemy_destroyed += sum(
+                    1 for u in other_units
+                    if u.status in (UnitStatus.DESTROYED, UnitStatus.SURRENDERED)
+                )
+
+            if enemy_destroyed == 0:
+                continue
+            ratio = enemy_destroyed / own_destroyed if own_destroyed > 0 else float("inf")
+
+            if ratio >= threshold:
+                return VictoryResult(
+                    game_over=True,
+                    winning_side=side,
+                    condition_type="attrition_ratio",
+                    message=(
+                        f"{side} achieved {ratio:.1f}:1 kill ratio "
+                        f"(destroyed {enemy_destroyed}, lost {own_destroyed})"
+                    ),
+                    tick=tick,
+                )
+        return VictoryResult(game_over=False, tick=tick)
+
+    @staticmethod
+    def evaluate_force_advantage(
+        units_by_side: dict[str, list[Unit]],
+    ) -> VictoryResult:
+        """Evaluate which side has the force advantage.
+
+        Used as a fallback when time expires or max ticks reached.
+        Compares survival rate (active / total) across sides.
+        """
+        best_side = ""
+        best_survival = -1.0
+        is_tie = True
+        details: list[str] = []
+
+        for side, units in units_by_side.items():
+            total = len(units)
+            if total == 0:
+                continue
+            active = sum(1 for u in units if u.status == UnitStatus.ACTIVE)
+            survival = active / total
+            details.append(f"{side}: {active}/{total} ({survival:.0%})")
+
+            if survival > best_survival:
+                if best_survival >= 0:
+                    is_tie = False
+                best_survival = survival
+                best_side = side
+            elif survival == best_survival:
+                is_tie = True
+
+        if is_tie or not best_side:
+            return VictoryResult(
+                game_over=True,
+                winning_side="draw",
+                condition_type="time_expired",
+                message=f"Draw — {', '.join(details)}",
+            )
+
+        return VictoryResult(
+            game_over=True,
+            winning_side=best_side,
+            condition_type="time_expired",
+            message=f"{best_side} force advantage — {', '.join(details)}",
+        )

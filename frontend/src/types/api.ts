@@ -138,8 +138,10 @@ export interface ForcesResponse {
 
 export interface VictoryResult {
   status: string
-  winner?: string
+  winner?: string | null
   winning_side?: string
+  condition_type?: string
+  message?: string
 }
 
 export interface RunResult {

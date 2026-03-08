@@ -288,7 +288,7 @@ export function TacticalMap({ terrain, frames, engagementArcs = [], onTickChange
     // Draw units
     if (currentFrameData) {
       for (const unit of currentFrameData.units) {
-        if (!showDestroyed && unit.status >= 3) continue
+        if (!showDestroyed && unit.status >= 2) continue
         if (detectedSet && unit.side !== fowSide && !detectedSet.has(unit.id)) continue
         const isSelected = selectedUnit?.id === unit.id
         drawUnit(ctx2d, unit, transform, canvasSize.height, isSelected, showLabels)
@@ -327,7 +327,7 @@ export function TacticalMap({ terrain, frames, engagementArcs = [], onTickChange
       const sy = e.clientY - rect.top
 
       for (const unit of currentFrameData.units) {
-        if (!showDestroyed && unit.status >= 3) continue
+        if (!showDestroyed && unit.status >= 2) continue
         if (hitTestUnit(sx, sy, unit, transform, canvasSize.height)) {
           setSelectedUnit(unit)
           return

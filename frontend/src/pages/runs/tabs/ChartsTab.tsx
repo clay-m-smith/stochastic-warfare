@@ -71,7 +71,12 @@ export function ChartsTab({ runId, result }: ChartsTabProps) {
       ]
     : []
 
-  const tickOverrides = { shapes: tickMarkerShapes }
+  // Set x-axis range to full scenario duration
+  const totalTime = result?.duration_s ?? 0
+  const tickOverrides = {
+    shapes: tickMarkerShapes,
+    xaxis: { range: [0, totalTime], title: { text: 'Elapsed Time (s)' } },
+  }
 
   return (
     <div className="space-y-6">

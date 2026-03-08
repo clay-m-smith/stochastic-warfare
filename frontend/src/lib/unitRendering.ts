@@ -28,7 +28,7 @@ export function drawUnit(
   const { sx, sy } = worldToScreen(unit.x, unit.y, transform, canvasHeight)
   const color = SIDE_COLORS[unit.side] ?? SIDE_COLORS.neutral ?? '#999999'
   const size = UNIT_SIZE
-  const destroyed = unit.status >= 3 // UnitStatus.DESTROYED = 3
+  const destroyed = unit.status >= 2 // UnitStatus.DESTROYED = 2
 
   ctx2d.save()
   ctx2d.globalAlpha = destroyed ? 0.35 : 1.0

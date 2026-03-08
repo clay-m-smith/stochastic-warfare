@@ -239,11 +239,12 @@ class SimulationEngine:
         # Safety limit
         if tick >= self._config.max_ticks:
             logger.info("Max ticks (%d) reached — stopping", self._config.max_ticks)
+            result = VictoryEvaluator.evaluate_force_advantage(ctx.units_by_side)
             self._last_victory = VictoryResult(
                 game_over=True,
-                winning_side="draw",
+                winning_side=result.winning_side,
                 condition_type="max_ticks",
-                message=f"Safety limit of {self._config.max_ticks} ticks reached",
+                message=f"Max ticks reached — {result.message}",
                 tick=tick,
             )
             return True
@@ -386,11 +387,12 @@ class SimulationEngine:
         # Check time limit
         elapsed_s = ctx.clock.elapsed.total_seconds()
         if elapsed_s >= self._max_duration_s:
+            result = VictoryEvaluator.evaluate_force_advantage(ctx.units_by_side)
             self._last_victory = VictoryResult(
                 game_over=True,
-                winning_side="draw",
+                winning_side=result.winning_side,
                 condition_type="time_expired",
-                message=f"Campaign duration {elapsed_s:.0f}s reached limit {self._max_duration_s:.0f}s",
+                message=f"Time expired — {result.message}",
                 tick=tick,
             )
             return True

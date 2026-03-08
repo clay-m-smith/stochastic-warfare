@@ -116,6 +116,7 @@ class VictoryConditionConfig(BaseModel):
             "supply_exhausted",
             "ceasefire",
             "armistice",
+            "attrition_ratio",
         }
         if v not in allowed:
             raise ValueError(f"victory condition type must be one of {allowed}; got {v!r}")
