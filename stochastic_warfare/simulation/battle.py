@@ -22,6 +22,7 @@ from stochastic_warfare.core.events import EventBus
 from stochastic_warfare.core.logging import get_logger
 from stochastic_warfare.core.types import ModuleId, Position
 from stochastic_warfare.entities.base import Unit, UnitStatus
+from stochastic_warfare.entities.events import UnitDestroyedEvent
 from stochastic_warfare.detection.sensors import SensorType
 
 logger = get_logger(__name__)
@@ -236,7 +237,7 @@ class BattleManager:
         )
 
         # 6. Apply deferred damage
-        self._apply_deferred_damage(pending_damage)
+        self._apply_deferred_damage(pending_damage, ctx.event_bus, timestamp)
 
         # 7. Morale checks
         if battle.ticks_executed % self._config.morale_check_interval == 0:
@@ -434,7 +435,15 @@ class BattleManager:
                 indices = list(range(len(active)))
                 rng.shuffle(indices)
                 for i in indices[:num_to_destroy]:
-                    object.__setattr__(active[i], "status", UnitStatus.DESTROYED)
+                    unit = active[i]
+                    object.__setattr__(unit, "status", UnitStatus.DESTROYED)
+                    self._bus.publish(UnitDestroyedEvent(
+                        timestamp=datetime.min,
+                        source=ModuleId.COMBAT,
+                        unit_id=unit.entity_id,
+                        cause="auto_resolve",
+                        side=unit.side,
+                    ))
 
         # Estimate duration (shorter for one-sided battles)
         power_ratio = max(power.values()) / max(sum(power.values()), 1e-10)
@@ -899,7 +908,11 @@ class BattleManager:
         return pending_damage
 
     @staticmethod
-    def _apply_deferred_damage(pending_damage: list[tuple[Unit, UnitStatus]]) -> None:
+    def _apply_deferred_damage(
+        pending_damage: list[tuple[Unit, UnitStatus]],
+        event_bus: Any | None = None,
+        timestamp: datetime | None = None,
+    ) -> None:
         """Apply deferred damage — worst outcome wins per unit."""
         applied: dict[str, UnitStatus] = {}
         for target, new_status in pending_damage:
@@ -907,10 +920,19 @@ class BattleManager:
             if prev is None or new_status.value > prev.value:
                 applied[target.entity_id] = new_status
 
+        ts = timestamp or datetime.min
         for target, new_status in pending_damage:
             if applied.get(target.entity_id) == new_status:
                 object.__setattr__(target, "status", new_status)
                 applied.pop(target.entity_id, None)
+                if new_status == UnitStatus.DESTROYED and event_bus is not None:
+                    event_bus.publish(UnitDestroyedEvent(
+                        timestamp=ts,
+                        source=ModuleId.COMBAT,
+                        unit_id=target.entity_id,
+                        cause="combat_damage",
+                        side=target.side,
+                    ))
 
     def _execute_morale(
         self,

@@ -25,6 +25,7 @@ class UnitDestroyedEvent(Event):
 
     unit_id: str
     cause: str
+    side: str = ""
 
 
 @dataclass(frozen=True)

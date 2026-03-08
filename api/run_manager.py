@@ -291,9 +291,14 @@ class RunManager:
             terrain["height_cells"] = int(shape[0])
             terrain["width_cells"] = int(shape[1])
             if extent is not None:
-                terrain["origin_easting"] = float(extent[0])
-                terrain["origin_northing"] = float(extent[1])
-                terrain["extent"] = [float(v) for v in extent]
+                # extent from heightmap is (min_e, max_e, min_n, max_n)
+                terrain["origin_easting"] = float(extent[0])   # min_easting
+                terrain["origin_northing"] = float(extent[2])  # min_northing
+                # Frontend expects [minX, minY, maxX, maxY]
+                terrain["extent"] = [
+                    float(extent[0]), float(extent[2]),  # min_e, min_n
+                    float(extent[1]), float(extent[3]),  # max_e, max_n
+                ]
 
         if heightmap is not None:
             raw = getattr(heightmap, "_data", None)
