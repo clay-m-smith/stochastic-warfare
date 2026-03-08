@@ -1,4 +1,4 @@
-name: "Falklands Naval — Sheffield Exocet Attack"
+name: "Falklands Naval - Sheffield Exocet Attack"
 date: "1982-05-04T14:00:00Z"
 duration_hours: 0.25
 tick_duration_seconds: 2.0
@@ -14,6 +14,24 @@ weather_conditions:
   cloud_cover: 0.6
   humidity: 0.70
   sea_state: 4
+
+sides:
+  - side: blue
+    units:
+      - unit_type: type42_destroyer
+        count: 2
+      - unit_type: type22_frigate
+        count: 2
+      - unit_type: sea_harrier
+        count: 4
+    experience_level: 0.7
+    morale_initial: STEADY
+  - side: red
+    units:
+      - unit_type: super_etendard
+        count: 2
+    experience_level: 0.7
+    morale_initial: STEADY
 
 blue_forces:
   side: blue

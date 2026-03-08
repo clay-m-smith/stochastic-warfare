@@ -87,10 +87,10 @@ calibration_overrides:
   german_start_x: 11500.0
   german_start_y: 4000.0
   weapon_assignments:
-    "85mm ZIS-S-53": 85mm_zis_s53
-    "88mm KwK 36 L/56": 88mm_kwk36
-    "75mm KwK 42 L/70": 88mm_kwk36
-    "75mm KwK 40 L/48": 75mm_m3
+    "85mm ZIS-S-53 Gun": 85mm_zis_s53
+    "88mm KwK 36 L/56 Gun": 88mm_kwk36
+    "75mm KwK 42 L/70 Gun": 88mm_kwk36
+    "75mm KwK 40 L/48 Gun": 75mm_m3
 
 documented_outcomes:
   - name: soviet_units_destroyed

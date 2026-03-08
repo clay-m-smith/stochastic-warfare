@@ -102,8 +102,8 @@ calibration_overrides:
   german_start_x: 1800.0
   german_start_y: 750.0
   weapon_assignments:
-    "75mm M3 Tank Gun": 75mm_m3
-    "75mm KwK 40 L/48": 75mm_m3
+    "75mm M3 Gun": 75mm_m3
+    "75mm KwK 40 L/48 Gun": 75mm_m3
 
 documented_outcomes:
   - name: us_casualty_ratio

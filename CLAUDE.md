@@ -94,7 +94,8 @@ Layered hybrid — graph (strategic), grid (operational/tactical), continuous (u
 | `/cross-doc-audit` | Verify alignment across all docs (MVP + post-MVP, 13 checks) |
 | `/simplify` | Review changed code for reuse, quality, and efficiency |
 | `/profile` | Performance profiling — cProfile analysis, hotspot identification, benchmarking |
-| `/scenario` | Interactive scenario creation/editing walkthrough |
+| `/scenario` | Interactive scenario creation/editing walkthrough (with mandatory equipment mapping validation) |
+| `/validate-data` | Validate unit/scenario YAML data integrity — equipment maps, sensor presence, unit type refs |
 | `/compare` | Run two configs and summarize with statistical comparison |
 | `/what-if` | Quick parameter sensitivity from natural language questions |
 | `/timeline` | Generate battle narrative from simulation run |

@@ -97,10 +97,22 @@ calibration_overrides:
   german_start_x: 80000.0
   german_start_y: 40000.0
   weapon_assignments:
-    "12-inch Mk X Naval Gun": 12in_naval_gun
-    "5.9-inch SK L/45": 6in_naval_gun
-    "4-inch Mk V": 4in_naval_gun
-    "21-inch Torpedo Tube": torpedo_ww1
+    "BL 13.5-inch Mk V Gun (5x2 turrets)": 12in_bl_mk_x
+    "BL 6-inch Mk VII Gun (x12)": 15cm_sk_l45
+    "QF 3-inch AA Gun (x2)": 15cm_sk_l45
+    "21-inch Torpedo Tubes (x4)": 18in_torpedo_ww1
+    "BL 12-inch Mk X Gun (4x2 turrets)": 12in_bl_mk_x
+    "BL 4-inch Mk III Gun (x16)": 15cm_sk_l45
+    "18-inch Torpedo Tubes (x5)": 18in_torpedo_ww1
+    "QF 4-inch Mk IV Gun (x3)": 15cm_sk_l45
+    "21-inch Torpedo Tubes (x2x2)": 18in_torpedo_ww1
+    "Depth Charges (x4)": 18in_torpedo_ww1
+    "30.5cm SK L/50 Gun (5x2 turrets)": 12in_bl_mk_x
+    "15cm SK L/45 Gun (x14)": 15cm_sk_l45
+    "8.8cm SK L/45 FlaK (x6)": 15cm_sk_l45
+    "50cm Torpedo Tubes (x5)": 18in_torpedo_ww1
+    "45cm Torpedo Tubes (x4)": 18in_torpedo_ww1
+    "8.8cm SK L/30 Deck Gun": 15cm_sk_l45
 
 documented_outcomes:
   - name: british_ships_sunk

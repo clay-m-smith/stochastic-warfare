@@ -39,3 +39,8 @@ equipment:
     category: PROTECTION
     weight_kg: 8000.0
     reliability: 0.90  # bullet splash and spall a persistent problem
+
+  - name: "Field Binoculars"
+    category: SENSOR
+    weight_kg: 0.5
+    reliability: 0.99

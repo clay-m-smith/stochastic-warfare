@@ -33,3 +33,8 @@ equipment:
     category: WEAPON
     weight_kg: 0.85
     reliability: 0.90
+
+  - name: "Mk 1 Eyeball"
+    category: SENSOR
+    weight_kg: 0.5
+    reliability: 0.99

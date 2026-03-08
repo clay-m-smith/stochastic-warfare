@@ -41,3 +41,8 @@ equipment:
     weight_kg: 12000.0
     reliability: 0.82
     temperature_range: [-10.0, 40.0]
+
+  - name: "Field Binoculars"
+    category: SENSOR
+    weight_kg: 0.5
+    reliability: 0.99

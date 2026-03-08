@@ -110,11 +110,13 @@ calibration_overrides:
   persian_start_y: 2000.0
   advance_speed: 0.6
   weapon_assignments:
-    "Naval Ram (Bronze)": naval_ram
-    "Greek Fire Siphon": greek_fire_siphon
+    "Bronze Ram Prow": naval_ram
+    "Marine Javelins and Swords": pilum
+    "Bow Cannon (x3)": crossbow
+    "Arquebuses and Crossbows": crossbow
+    "Ram Prow": naval_ram
     "Corvus Boarding Bridge": corvus_boarding
-    "Javelin": pilum
-    "Short Sword": gladius
+    "Legionary Weapons (Gladius and Pilum)": gladius
 
 documented_outcomes:
   - name: persian_ships_destroyed

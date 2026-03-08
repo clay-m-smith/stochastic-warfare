@@ -191,6 +191,7 @@ class CampaignScenarioConfig(BaseModel):
     latitude: float = 0.0
     longitude: float = 0.0
     era: str = "modern"
+    tick_duration_seconds: float | None = None
     tick_resolution: TickResolutionConfig = TickResolutionConfig()
     weather_conditions: dict[str, Any] = {}
     terrain: TerrainConfig
@@ -206,6 +207,7 @@ class CampaignScenarioConfig(BaseModel):
     school_config: dict[str, Any] | None = None
     commander_config: dict[str, Any] | None = None
     dew_config: dict[str, Any] | None = None
+    behavior_rules: dict[str, Any] = {}
 
     @field_validator("sides")
     @classmethod
@@ -559,6 +561,20 @@ class ScenarioLoader:
         rng_mgr = RNGManager(seed)
         bus = EventBus()
         start_dt = _parse_start_time(config.date)
+
+        # When tick_duration_seconds is set (engagement-scale scenarios),
+        # use it as the tactical tick resolution so the engine runs at
+        # the scenario-appropriate cadence during combat.
+        if config.tick_duration_seconds is not None:
+            config.tick_resolution = TickResolutionConfig(
+                strategic_s=config.tick_duration_seconds,
+                operational_s=config.tick_duration_seconds,
+                tactical_s=config.tick_duration_seconds,
+            )
+
+        # The engine detects initial force proximity and picks the right
+        # starting resolution (strategic vs tactical), so we always
+        # initialize the clock at strategic pace here.
         clock = SimulationClock(
             start=start_dt,
             tick_duration=timedelta(seconds=config.tick_resolution.strategic_s),

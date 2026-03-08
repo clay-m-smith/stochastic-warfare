@@ -25,3 +25,8 @@ equipment:
     category: WEAPON
     weight_kg: 1.0
     reliability: 0.88
+
+  - name: "Naked Eye Observation"
+    category: SENSOR
+    weight_kg: 0.5
+    reliability: 0.99

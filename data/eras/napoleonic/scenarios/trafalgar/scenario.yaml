@@ -106,11 +106,17 @@ calibration_overrides:
   franco_spanish_start_y: 7500.0
   advance_speed: 0.5
   weapon_assignments:
-    "32-Pounder Long Gun": 32pdr_long_gun
-    "24-Pounder Long Gun": 24pdr_long_gun
-    "18-Pounder Long Gun": 18pdr_long_gun
-    "Carronade 32-pdr": carronade_32pdr
-    "Fire Pot": fire_pot
+    "32-pdr Long Guns (lower deck, x28)": 32pdr_cannon
+    "32-pdr Long Guns (lower deck, x32)": 32pdr_cannon
+    "24-pdr Long Guns (middle deck, x34)": 24pdr_cannon
+    "24-pdr Long Guns (x26)": 24pdr_cannon
+    "18-pdr Long Guns (upper deck, x30)": 24pdr_cannon
+    "18-pdr Long Guns (upper deck, x34)": 24pdr_cannon
+    "9-pdr Guns (quarterdeck/forecastle, x16)": 6pdr_cannon
+    "9-pdr Long Guns (x18)": 6pdr_cannon
+    "Carronades 32-pdr (x6)": carronade_32pdr
+    "Carronades 24-pdr (x2)": carronade_32pdr
+    "Combustible Materials and Incendiaries": carronade_32pdr
 
 documented_outcomes:
   - name: franco_spanish_ships_captured_or_sunk

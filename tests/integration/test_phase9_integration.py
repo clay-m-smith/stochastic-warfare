@@ -184,7 +184,12 @@ class TestScenarioLoadStrategicTick:
     def test_full_scenario_clock_advances_correctly(self) -> None:
         loader = ScenarioLoader(_DATA_DIR)
         ctx = loader.load(_TEST_SCENARIO, seed=42)
-        engine = SimulationEngine(ctx)
+        # Use short engagement range so forces don't trigger initial
+        # engagement detection (9800m apart > 5000m range).
+        engine = SimulationEngine(
+            ctx,
+            campaign_config=CampaignConfig(engagement_detection_range_m=5000),
+        )
         engine.step()
         # Strategic tick is 3600s per the YAML
         assert ctx.clock.elapsed.total_seconds() == pytest.approx(3600.0)
@@ -383,7 +388,12 @@ class TestReinforcementArrival:
         blue = [_make_unit("b1", Position(100, 5000, 0), "blue")]
         red = [_make_unit("r1", Position(9900, 5000, 0), "red")]
         ctx = _make_ctx(blue_units=blue, red_units=red, config=cfg, tick_s=3600.0)
-        engine = SimulationEngine(ctx)
+        # Use short engagement range so forces don't trigger initial
+        # engagement detection (9800m apart > 5000m range).
+        engine = SimulationEngine(
+            ctx,
+            campaign_config=CampaignConfig(engagement_detection_range_m=5000),
+        )
         engine.campaign_manager.set_reinforcements(cfg.reinforcements)
 
         initial_blue_count = len(ctx.units_by_side["blue"])

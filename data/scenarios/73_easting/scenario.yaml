@@ -1,4 +1,4 @@
-name: "73 Easting — Eagle Troop Engagement"
+name: "73 Easting - Eagle Troop Engagement"
 date: "1991-02-26T16:18:00Z"
 duration_hours: 0.5
 tick_duration_seconds: 5.0
@@ -13,6 +13,26 @@ weather_conditions:
   precipitation: none
   cloud_cover: 0.3
   humidity: 0.25
+
+sides:
+  - side: blue
+    units:
+      - unit_type: m1a1
+        count: 9
+      - unit_type: m3a2_bradley
+        count: 12
+    experience_level: 0.8
+    morale_initial: STEADY
+  - side: red
+    units:
+      - unit_type: t72m
+        count: 30
+      - unit_type: bmp1
+        count: 16
+      - unit_type: bmp2
+        count: 4
+    experience_level: 0.3
+    morale_initial: STEADY
 
 blue_forces:
   side: blue

@@ -123,7 +123,10 @@ def _parse_crew(
     members: list[CrewMember] = []
     counter = 0
     for entry in entries:
-        role = CrewRole[entry.role.upper()]
+        role_name = entry.role.upper()
+        if role_name == "CREW":
+            role_name = "GENERIC"
+        role = CrewRole[role_name]
         skill = SkillLevel[entry.skill.upper()]
         for _ in range(entry.count):
             experience = float(rng.uniform(0.0, 0.3))

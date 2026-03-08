@@ -1,42 +1,50 @@
 name: "CBRN Chemical Defense Validation"
-description: >
-  Chemical strike on defended position. Validates Pasquill-Gifford dispersal,
-  MOPP protection effectiveness, and probit casualty rates. Red force fires
-  sarin artillery shells at blue defensive positions. Blue platoon 1 at MOPP-0,
-  platoon 2 at MOPP-4.
-start_date: "1991-01-17"
-duration_s: 3600
-seed: 42
+date: "2024-06-15T06:00:00Z"
+duration_hours: 1.0
+era: modern
+
+tick_resolution:
+  strategic_s: 300
+  operational_s: 60
+  tactical_s: 5
 
 terrain:
-  type: procedural
   width_m: 2000
   height_m: 2000
-  cell_size_m: 50
-  base_elevation_m: 100
+  cell_size_m: 50.0
+  base_elevation_m: 100.0
+  terrain_type: flat_desert
 
 sides:
-  blue:
+  - side: blue
     units:
       - unit_type: us_rifle_squad
-        count: 2
-        position: [1000.0, 1000.0]
-        overrides:
-          entity_id: blue_plt1
-          personnel_count: 30
-      - unit_type: us_rifle_squad
-        count: 2
-        position: [1000.0, 1050.0]
-        overrides:
-          entity_id: blue_plt2
-          personnel_count: 30
-  red:
+        count: 4
+    experience_level: 0.5
+    morale_initial: STEADY
+
+  - side: red
     units:
       - unit_type: m109a6
         count: 1
-        position: [100.0, 100.0]
-        overrides:
-          entity_id: red_arty
+    experience_level: 0.5
+    morale_initial: STEADY
+
+objectives:
+  - objective_id: chemical_defense_zone
+    position: [1000, 1000]
+    radius_m: 500
+    type: territory
+
+victory_conditions:
+  - type: time_expired
+    side: blue
+    params:
+      max_duration_s: 3600
+  - type: force_destroyed
+    side: ""
+    params:
+      threshold: 0.8
 
 cbrn:
   enable_cbrn: true
@@ -48,12 +56,24 @@ cbrn:
       time_s: 0
 
 calibration_overrides:
-  cbrn_update_interval_s: 5.0
+  blue_start_x: 1000.0
+  blue_start_y: 1000.0
+  red_start_x: 100.0
+  red_start_y: 100.0
+  weapon_assignments:
+    "M284 155mm Howitzer": m284_155mm
+    "M4A1 Carbine": m4_556mm
+    "M249 SAW": m240_762mm
+    "M240B GPMG": m240_762mm
 
 documented_outcomes:
-  description: >
-    MOPP-0 units suffer significantly higher casualties than MOPP-4 units.
-    Sarin disperses within minutes, creating a hazard area of ~500m radius.
-  expected_mopp0_casualty_rate_min: 0.3
-  expected_mopp4_casualty_rate_max: 0.1
-  expected_hazard_radius_m: 500
+  - name: chemical_exposure
+    value: 0.5
+    tolerance_factor: 3.0
+    unit: ratio
+    source: "FM 3-11 tables"
+    source_quality: 2
+    notes: "MOPP-0 units suffer higher casualties than MOPP-4"
+
+sources:
+  - "FM 3-11 Chemical, Biological, Radiological, Nuclear, and Explosives"

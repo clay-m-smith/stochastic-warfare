@@ -102,6 +102,10 @@ calibration_overrides:
   blue_start_y: 2000.0
   red_start_x: 4500.0
   red_start_y: 2000.0
+  weapon_assignments:
+    "M4A1 Carbine": m4_556mm
+    "M249 SAW": m240_762mm
+    "M240B GPMG": m240_762mm
 
 documented_outcomes:
   - name: blue_casualties

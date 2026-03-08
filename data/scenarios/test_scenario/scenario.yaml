@@ -1,5 +1,52 @@
 name: "Desert Storm Test"
+date: "1991-02-24T04:00:00Z"
 start_time: "1991-02-24T04:00:00Z"
-duration_hours: 100
+duration_hours: 100.0
 master_seed: 42
 tick_duration_seconds: 10.0
+era: modern
+
+tick_resolution:
+  strategic_s: 3600
+  operational_s: 300
+  tactical_s: 10
+
+terrain:
+  width_m: 10000
+  height_m: 10000
+  cell_size_m: 100.0
+  base_elevation_m: 50.0
+  terrain_type: flat_desert
+
+sides:
+  - side: blue
+    units:
+      - unit_type: m1a2
+        count: 4
+      - unit_type: m3a2_bradley
+        count: 6
+    experience_level: 0.7
+    morale_initial: STEADY
+
+  - side: red
+    units:
+      - unit_type: t72m
+        count: 8
+    experience_level: 0.4
+    morale_initial: STEADY
+
+objectives:
+  - objective_id: objective_alpha
+    position: [5000, 5000]
+    radius_m: 1000
+    type: territory
+
+victory_conditions:
+  - type: force_destroyed
+    side: ""
+    params:
+      threshold: 0.6
+  - type: time_expired
+    side: blue
+    params:
+      max_duration_s: 43200

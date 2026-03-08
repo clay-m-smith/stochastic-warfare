@@ -29,3 +29,8 @@ equipment:
     category: COMMUNICATION
     weight_kg: 5.0
     reliability: 0.65
+
+  - name: "Field Binoculars"
+    category: SENSOR
+    weight_kg: 0.5
+    reliability: 0.99

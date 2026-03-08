@@ -78,6 +78,12 @@ calibration_overrides:
   usn_start_y: 40000.0
   ijn_start_x: 80000.0
   ijn_start_y: 40000.0
+  weapon_assignments:
+    "5-inch/38 Mk 12 Gun (4x2 turrets)": 5in38_naval
+    "5-inch/38 Mk 12 Gun (x5)": 5in38_naval
+    "Mk 15 Torpedo Tubes (2x5)": mk14_torpedo
+    "Depth Charge Racks and K-Guns": depth_charge_mk7
+    "Type 99 Model 2 20mm Cannon (x2)": type99_20mm
 
 documented_outcomes:
   - name: ijn_units_destroyed

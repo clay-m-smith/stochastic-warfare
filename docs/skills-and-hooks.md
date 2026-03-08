@@ -84,10 +84,13 @@
 - Provides benchmark script template for standardized measurement
 - Run when scenarios are slow or before/after optimization work
 
-### /scenario (Phase 14)
+### /scenario (Phase 14, updated)
 - Interactive walkthrough for creating or editing campaign scenario YAML files
 - Guides user through sides, units, terrain, objectives, victory conditions, and calibration
-- Validates against `CampaignScenarioConfig` schema and runs smoke test
+- **Mandatory equipment mapping validation** (Step 3): verifies all WEAPON/SENSOR equipment names have entries in `_WEAPON_NAME_MAP`/`_SENSOR_NAME_MAP` in `scenario_runner.py`. Missing mappings are added before YAML generation.
+- **Mandatory sensor presence check**: ensures every unit type has at least one `category: SENSOR` equipment entry. Adds era-appropriate defaults if missing.
+- **Mandatory load test** (Step 7): runs `scripts/validate_scenario_data.py --file` and verifies armed > 0, sensored > 0 through ScenarioLoader
+- Validates against `CampaignScenarioConfig` schema
 - Outputs complete scenario YAML to `data/scenarios/{name}/scenario.yaml`
 
 ### /compare (Phase 14)
@@ -119,6 +122,14 @@
 - Uses binary search refinement to narrow to target value
 - Validates with statistical test against historical data
 
+### /validate-data
+- Validates unit YAML and scenario YAML data integrity
+- Catches equipment name → weapon/sensor ID mapping drift, missing sensor entries, invalid unit type references, broken ScenarioLoader loads
+- Runs `scripts/validate_scenario_data.py` (standalone validation script)
+- Diagnoses and fixes common issues: unmapped weapon/sensor names, missing default sensors, non-existent unit types, invalid equipment categories
+- **Run after**: adding new units, weapons, scenarios, or modifying equipment entries
+- Key files: `_WEAPON_NAME_MAP` and `_SENSOR_NAME_MAP` in `scenario_runner.py`, `scripts/validate_scenario_data.py`
+
 ### /postmortem (Phase 14)
 - Structured retrospective to run after completing each implementation phase
 - 8-step process: delivered vs planned, integration audit, test quality review, API surface check, deficit discovery, documentation freshness (including user-facing docs staleness check), performance sanity, summary
@@ -140,9 +151,14 @@
 - **Action**: warn and flag violations before edit is accepted
 
 ### YAML Validation Hook
-- **Trigger**: when a unit definition YAML is created or modified
-- **Checks**: validates against the pydantic schema for that unit class
-- **Action**: report schema violations immediately (missing required fields, out-of-range values, type errors)
+- **Trigger**: when a unit definition or scenario YAML is created or modified
+- **Checks**:
+  - Validates against the pydantic schema for that unit class (id field, numeric types, probability ranges)
+  - **Equipment category validation**: all `category` values must be valid `EquipmentCategory` enum values (WEAPON, SENSOR, PROPULSION, PROTECTION, COMMUNICATION, NAVIGATION, UTILITY, POWER — NOT "TOOL")
+  - **Sensor presence check**: warns if unit YAML has no `category: SENSOR` equipment entry
+  - **Equipment name sanity**: flags obviously malformed weapon equipment names
+  - **Scenario unit_type validation**: flags `unit_type` values that look like display names instead of valid IDs
+- **Action**: block write if structural issues found; warn on missing sensors
 
 ### Spec-Before-Code Hook
 - **Trigger**: when creating a new module/package directory under the sim core

@@ -17,15 +17,15 @@ terrain:
 sides:
   - side: blue
     units:
-      - {unit_type: infantry_platoon, count: 6}
-      - {unit_type: mechanized_company, count: 2}
+      - {unit_type: us_rifle_squad, count: 6}
+      - {unit_type: m3a2_bradley, count: 2}
     experience_level: 0.5
     morale_initial: STEADY
     commander_profile: desperate_defender
   - side: red
     units:
-      - {unit_type: infantry_platoon, count: 5}
-      - {unit_type: mechanized_company, count: 3}
+      - {unit_type: us_rifle_squad, count: 5}
+      - {unit_type: m3a2_bradley, count: 3}
     experience_level: 0.7
     morale_initial: STEADY
     commander_profile: ruthless_authoritarian

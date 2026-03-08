@@ -116,14 +116,12 @@ calibration_overrides:
   advance_speed: 1.0
   weapon_assignments:
     "Charleville 1777 Musket": charleville_1777
-    "Brown Bess Musket": brown_bess
-    "Baker Rifle": baker_rifle
+    "Bayonet": bayonet
+    "Cavalry Saber": cavalry_saber
+    "Musketoon": cavalry_saber
     "6-Pounder Cannon": 6pdr_cannon
     "12-Pounder Cannon": 12pdr_cannon
-    "Cavalry Saber": cavalry_saber
-    "Lance": lance
-    "Bayonet": bayonet
-    "Musketoon": cavalry_saber
+    "Brown Bess Musket": brown_bess
 
 documented_outcomes:
   - name: coalition_casualty_fraction

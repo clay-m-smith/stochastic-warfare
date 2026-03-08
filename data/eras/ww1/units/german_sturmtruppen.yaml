@@ -30,6 +30,11 @@ equipment:
     weight_kg: 0.9
     reliability: 0.88
   - name: "Wire Cutters"
-    category: TOOL
+    category: UTILITY
     weight_kg: 1.5
     reliability: 0.95
+
+  - name: "Field Binoculars"
+    category: SENSOR
+    weight_kg: 0.5
+    reliability: 0.99

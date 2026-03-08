@@ -198,7 +198,7 @@ class TestHybridGrayZone:
         blue = next(s for s in cfg.sides if s.side == "blue")
         blue_types = [u["unit_type"] for u in blue.units]
         assert "sf_oda" in blue_types
-        assert "ranger_platoon" in blue_types
+        assert "us_rifle_squad" in blue_types
 
     def test_has_escalation_config(self):
         cfg = _load_scenario_by_name("hybrid_gray_zone")
@@ -703,3 +703,73 @@ class TestDocumentedOutcomesFormat:
                 continue
             assert "name" in outcome, f"outcome missing 'name' in {path}"
             assert "value" in outcome, f"outcome missing 'value' in {path}"
+
+
+# ---------------------------------------------------------------------------
+# Full-stack scenario loading validation
+# ---------------------------------------------------------------------------
+
+def _scenario_has_campaign_schema(path: Path) -> bool:
+    """Check if scenario YAML has the required campaign schema fields."""
+    with open(path) as f:
+        raw = yaml.safe_load(f)
+    return all(k in raw for k in ("sides", "date", "duration_hours", "terrain"))
+
+
+# Scenarios that can load through ScenarioLoader (have sides + terrain + date)
+_LOADABLE_SCENARIO_PATHS = [
+    p for p in _ALL_SCENARIO_PATHS
+    if _scenario_has_campaign_schema(p)
+]
+_LOADABLE_SCENARIO_IDS = [
+    str(p.parent.relative_to(_DATA_DIR)) for p in _LOADABLE_SCENARIO_PATHS
+]
+
+
+class TestScenarioFullLoad:
+    """Every loadable scenario produces units with weapons and sensors.
+
+    Catches data-schema drift: crew role mismatches, weapon_assignment
+    name mismatches, missing sensor name mappings, missing era data, etc.
+    """
+
+    @pytest.mark.parametrize(
+        "path", _LOADABLE_SCENARIO_PATHS, ids=_LOADABLE_SCENARIO_IDS,
+    )
+    def test_scenario_loads_with_armed_units(self, path: Path):
+        from stochastic_warfare.simulation.scenario import ScenarioLoader
+
+        loader = ScenarioLoader(_DATA_DIR)
+        ctx = loader.load(path, seed=42)
+
+        # Every side must have at least one unit
+        for side, units in ctx.units_by_side.items():
+            assert len(units) > 0, (
+                f"Side {side!r} has 0 units in {path} — "
+                "check unit_type names match era YAML definitions "
+                "and crew roles are valid CrewRole enum values"
+            )
+
+        # At least one unit across all sides must have weapons
+        all_weapon_counts = [
+            len(ctx.unit_weapons.get(u.entity_id, []))
+            for units in ctx.units_by_side.values()
+            for u in units
+        ]
+        assert sum(all_weapon_counts) > 0, (
+            f"No units have weapons in {path} — "
+            "check weapon_assignments keys match equipment names exactly "
+            "and weapon YAML IDs exist in the era data"
+        )
+
+        # At least one unit across all sides must have sensors
+        all_sensor_counts = [
+            len(ctx.unit_sensors.get(u.entity_id, []))
+            for units in ctx.units_by_side.values()
+            for u in units
+        ]
+        assert sum(all_sensor_counts) > 0, (
+            f"No units have sensors in {path} — "
+            "check _SENSOR_NAME_MAP in scenario_runner.py covers "
+            "all SENSOR equipment names used in unit YAML"
+        )

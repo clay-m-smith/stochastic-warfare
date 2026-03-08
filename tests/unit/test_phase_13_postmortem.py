@@ -312,6 +312,8 @@ class TestAggregationWiring:
 
     def test_step_aggregates_distant_units(self):
         """Units far from battles should be aggregated."""
+        from stochastic_warfare.simulation.campaign import CampaignConfig
+
         agg_config = AggregationConfig(
             enable_aggregation=True,
             aggregation_distance_m=5000.0,
@@ -325,7 +327,13 @@ class TestAggregationWiring:
             units_by_side={"blue": blue, "red": red},
             aggregation_engine=agg,
         )
-        engine = _make_engine(ctx, EngineConfig(max_ticks=2))
+        # Use short engagement range so initial engagement detection
+        # doesn't trigger (forces are ~12.6km apart > 5km range).
+        engine = SimulationEngine(
+            ctx,
+            config=EngineConfig(max_ticks=2),
+            campaign_config=CampaignConfig(engagement_detection_range_m=5000),
+        )
         # Force strategic resolution
         engine._resolution = TickResolution.STRATEGIC
         engine.step()

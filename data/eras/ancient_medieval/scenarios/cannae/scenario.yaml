@@ -112,7 +112,6 @@ calibration_overrides:
     "Composite Bow": longbow
     "Sword (Medieval)": sword_medieval
     "Lance (Medieval)": lance_medieval
-    "Shield": sword_medieval
 
 documented_outcomes:
   - name: roman_casualty_fraction

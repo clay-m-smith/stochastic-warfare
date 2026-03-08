@@ -35,3 +35,8 @@ equipment:
     category: NAVIGATION
     weight_kg: 15.0
     reliability: 0.94
+
+  - name: "Mk 1 Eyeball"
+    category: SENSOR
+    weight_kg: 0.5
+    reliability: 0.99

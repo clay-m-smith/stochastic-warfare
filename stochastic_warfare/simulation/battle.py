@@ -221,9 +221,14 @@ class BattleManager:
         if ctx.order_execution is not None:
             ctx.order_execution.update(dt)
 
+        # 3b. Apply behavior rules — set unit speeds from scenario YAML
+        # (pre-scripted behavior for historical scenarios)
+        behavior_rules = getattr(ctx.config, "behavior_rules", {})
+        if behavior_rules:
+            self._apply_behavior_rules(units_by_side, active_enemies, behavior_rules)
+
         # 4. Movement — units with active movement orders
-        # (For now, simple advance toward enemy centroid for units without AI)
-        self._execute_movement(ctx, units_by_side, active_enemies, dt, battle)
+        self._execute_movement(ctx, units_by_side, active_enemies, dt, battle, behavior_rules)
 
         # 5. Engagement — detection + combat
         pending_damage = self._execute_engagements(
@@ -669,6 +674,32 @@ class BattleManager:
                     ts=timestamp,
                 )
 
+    @staticmethod
+    def _apply_behavior_rules(
+        units_by_side: dict[str, list[Unit]],
+        active_enemies: dict[str, list[Unit]],
+        behavior_rules: dict[str, Any],
+    ) -> None:
+        """Set unit speeds from scenario behavior_rules (pre-scripted behavior).
+
+        Mirrors :func:`~stochastic_warfare.validation.scenario_runner.apply_behavior`.
+        For each side, reads ``advance_speed_mps`` or ``hold_position`` and
+        sets ``speed`` on active units accordingly.
+        """
+        for side, units in units_by_side.items():
+            rules = behavior_rules.get(side, {})
+            if rules.get("hold_position", False):
+                for u in units:
+                    if u.status == UnitStatus.ACTIVE:
+                        object.__setattr__(u, "speed", 0.0)
+                continue
+
+            advance_speed = rules.get("advance_speed_mps", 0.0)
+            if advance_speed > 0:
+                for u in units:
+                    if u.status == UnitStatus.ACTIVE:
+                        object.__setattr__(u, "speed", advance_speed)
+
     def _execute_movement(
         self,
         ctx: Any,
@@ -676,23 +707,37 @@ class BattleManager:
         active_enemies: dict[str, list[Unit]],
         dt: float,
         battle: BattleContext | None = None,
+        behavior_rules: dict[str, Any] | None = None,
     ) -> None:
         """Execute movement for all active units."""
         cal = ctx.calibration
         wave_interval = cal.get("wave_interval_s", 300.0)
         battle_elapsed = battle.battle_elapsed_s if battle is not None else 0.0
         wave_assignments = battle.wave_assignments if battle is not None else {}
+        _rules = behavior_rules or {}
 
         for side, units in units_by_side.items():
             enemies = active_enemies.get(side, [])
             if not enemies:
                 continue
+
+            # If behavior_rules explicitly say hold_position, skip this side
+            side_rules = _rules.get(side, {})
+            if side_rules.get("hold_position", False):
+                continue
+
             # Compute enemy centroid
             cx = sum(e.position.easting for e in enemies) / len(enemies)
             cy = sum(e.position.northing for e in enemies) / len(enemies)
 
             for u in units:
-                if u.status != UnitStatus.ACTIVE or u.speed <= 0:
+                if u.status != UnitStatus.ACTIVE:
+                    continue
+
+                # Effective speed: use current speed (set by behavior_rules
+                # or AI), fall back to max_speed for scenarios without rules
+                effective_speed = u.speed if u.speed > 0 else u.max_speed
+                if effective_speed <= 0:
                     continue
 
                 # Wave gating: check if this unit's wave has been released
@@ -718,7 +763,7 @@ class BattleManager:
                         from stochastic_warfare.cbrn.protection import ProtectionEngine
                         mopp_speed_factor = ProtectionEngine.get_mopp_speed_factor(mopp_level)
 
-                move_dist = min(u.speed * dt * mopp_speed_factor, dist)
+                move_dist = min(effective_speed * dt * mopp_speed_factor, dist)
                 nx = u.position.easting + (dx / dist) * move_dist
                 ny = u.position.northing + (dy / dist) * move_dist
                 object.__setattr__(u, "position", Position(nx, ny, u.position.altitude))

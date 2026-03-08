@@ -143,9 +143,21 @@ class SimulationEngine:
             TickResolution.OPERATIONAL: ctx.config.tick_resolution.operational_s,
             TickResolution.TACTICAL: ctx.config.tick_resolution.tactical_s,
         }
+
+        # Detect initial engagement proximity — if opposing forces are
+        # already within engagement range at start, begin at tactical
+        # resolution instead of strategic (prevents overshooting short
+        # engagement scenarios with hour-long ticks).
+        initial_battles = self._campaign.detect_engagements(ctx, self._battle)
+        if initial_battles:
+            self._resolution = TickResolution.TACTICAL
+            logger.info(
+                "Forces in contact at start — beginning at TACTICAL resolution"
+            )
+
         # Set initial tick duration
         ctx.clock.set_tick_duration(
-            timedelta(seconds=self._tick_durations[TickResolution.STRATEGIC])
+            timedelta(seconds=self._tick_durations[self._resolution])
         )
 
         # Campaign duration limit

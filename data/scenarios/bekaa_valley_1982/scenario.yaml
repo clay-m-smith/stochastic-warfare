@@ -1,4 +1,4 @@
-name: "Bekaa Valley 1982 — Operation Mole Cricket 19"
+name: "Bekaa Valley 1982 - Operation Mole Cricket 19"
 date: "1982-06-09T14:00:00Z"
 duration_hours: 2.0
 tick_duration_seconds: 5.0
@@ -13,6 +13,22 @@ weather_conditions:
   precipitation: none
   cloud_cover: 0.1
   humidity: 0.35
+
+sides:
+  - side: blue
+    units:
+      - unit_type: f16c
+        count: 40
+      - unit_type: mq9
+        count: 6
+    experience_level: 0.85
+    morale_initial: STEADY
+  - side: red
+    units:
+      - unit_type: patriot
+        count: 19
+    experience_level: 0.4
+    morale_initial: STEADY
 
 blue_forces:
   side: blue
@@ -39,7 +55,7 @@ terrain:
   height_m: 30000
   cell_size_m: 200.0
   base_elevation_m: 800.0
-  terrain_type: valley
+  terrain_type: open_field
 
 ew_config:
   enable_ew: true
@@ -95,3 +111,6 @@ calibration_overrides:
   sead_effectiveness: 0.9
   drone_provocation_prob: 0.85
   sigint_detection_bonus: 0.15
+  weapon_assignments:
+    "M61A1 Vulcan 20mm": m61a1_vulcan
+    "M901 Launching Station": mim104_pac3

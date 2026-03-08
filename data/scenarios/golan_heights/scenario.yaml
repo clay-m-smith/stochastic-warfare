@@ -1,4 +1,4 @@
-name: "Golan Heights — Valley of Tears (Day 2)"
+name: "Golan Heights - Valley of Tears (Day 2)"
 date: "1973-10-07T06:00:00Z"
 duration_hours: 18.0
 tick_duration_seconds: 10.0
@@ -13,6 +13,24 @@ weather_conditions:
   precipitation: none
   cloud_cover: 0.2
   humidity: 0.40
+
+sides:
+  - side: blue
+    units:
+      - unit_type: shot_kal
+        count: 40
+    experience_level: 0.7
+    morale_initial: STEADY
+  - side: red
+    units:
+      - unit_type: t55a
+        count: 100
+      - unit_type: t62
+        count: 100
+      - unit_type: bmp1
+        count: 50
+    experience_level: 0.4
+    morale_initial: STEADY
 
 blue_forces:
   side: blue

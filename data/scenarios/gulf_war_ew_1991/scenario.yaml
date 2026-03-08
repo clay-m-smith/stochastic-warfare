@@ -1,4 +1,4 @@
-name: "Gulf War EW 1991 — Coalition Night One"
+name: "Gulf War EW 1991 - Coalition Night One"
 date: "1991-01-17T03:00:00Z"
 duration_hours: 6.0
 tick_duration_seconds: 5.0
@@ -13,6 +13,24 @@ weather_conditions:
   precipitation: none
   cloud_cover: 0.6
   humidity: 0.45
+
+sides:
+  - side: blue
+    units:
+      - unit_type: f16c
+        count: 60
+      - unit_type: mq9
+        count: 12
+      - unit_type: ah64d
+        count: 8
+    experience_level: 0.8
+    morale_initial: STEADY
+  - side: red
+    units:
+      - unit_type: patriot
+        count: 24
+    experience_level: 0.35
+    morale_initial: STEADY
 
 blue_forces:
   side: blue
@@ -105,3 +123,8 @@ calibration_overrides:
   sead_arm_effectiveness: 0.65
   jammer_coverage_mult: 1.3
   stealth_detection_penalty: 0.8
+  weapon_assignments:
+    "M61A1 Vulcan 20mm": m61a1_vulcan
+    "M230 Chain Gun 30mm": m61a1_vulcan
+    "M299 Launcher": agm114_hellfire
+    "M901 Launching Station": mim104_pac3

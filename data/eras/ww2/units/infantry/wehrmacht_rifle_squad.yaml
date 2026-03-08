@@ -33,3 +33,8 @@ equipment:
     category: COMMUNICATION
     weight_kg: 4.5
     reliability: 0.75
+
+  - name: "Mk 1 Eyeball"
+    category: SENSOR
+    weight_kg: 0.5
+    reliability: 0.99

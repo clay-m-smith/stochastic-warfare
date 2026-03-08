@@ -1,42 +1,53 @@
+id: cbrn_nuclear_tactical
 name: "CBRN Nuclear Tactical Strike Validation"
-description: >
-  Tactical nuclear strike (10kT) on massed blue formation. Validates
-  Hopkinson-Cranz blast radii, thermal fluence zones, EMP electronics
-  effects, and wind-driven fallout plume per FM 3-11 tables.
-start_date: "1985-06-15"
-duration_s: 7200
-seed: 42
+date: "1985-06-15T06:00:00Z"
+duration_hours: 2.0
+era: modern
+
+tick_resolution:
+  strategic_s: 300
+  operational_s: 60
+  tactical_s: 5
 
 terrain:
-  type: procedural
   width_m: 5000
   height_m: 5000
-  cell_size_m: 50
-  base_elevation_m: 200
+  cell_size_m: 50.0
+  base_elevation_m: 200.0
+  terrain_type: flat_desert
 
 sides:
-  blue:
+  - side: blue
     units:
       - unit_type: m1a2
         count: 4
-        position: [2500.0, 2500.0]
-        overrides:
-          entity_id: blue_armor_1
-          personnel_count: 16
       - unit_type: us_rifle_squad
         count: 6
-        position: [2500.0, 2600.0]
-        overrides:
-          entity_id: blue_infantry_1
-          personnel_count: 60
-  red:
+    experience_level: 0.5
+    morale_initial: STEADY
+
+  - side: red
     units:
       - unit_type: m1a2
         count: 2
-        position: [4500.0, 4500.0]
-        overrides:
-          entity_id: red_armor_1
-          personnel_count: 8
+    experience_level: 0.5
+    morale_initial: STEADY
+
+objectives:
+  - objective_id: nuclear_target_zone
+    position: [2500, 2500]
+    radius_m: 1000
+    type: territory
+
+victory_conditions:
+  - type: time_expired
+    side: red
+    params:
+      max_duration_s: 7200
+  - type: force_destroyed
+    side: ""
+    params:
+      threshold: 0.8
 
 cbrn:
   enable_cbrn: true
@@ -53,14 +64,19 @@ weather:
   cloud_cover: 0.3
 
 calibration_overrides:
-  cbrn_update_interval_s: 10.0
+  blue_start_x: 2500.0
+  blue_start_y: 2500.0
+  red_start_x: 4500.0
+  red_start_y: 4500.0
 
 documented_outcomes:
-  description: >
-    10kT ground burst at blue formation center. All blue units within 1km
-    suffer blast and thermal casualties. EMP disables unshielded electronics
-    within ~10km. Fallout plume extends downwind (NE).
-  expected_blue_casualties_min_pct: 0.8
-  expected_emp_radius_m: 10770
-  expected_crater_radius_m: 25.8
-  expected_fallout_mass_kg: 500.0
+  - name: blue_casualties
+    value: 0.8
+    tolerance_factor: 2.0
+    unit: ratio
+    source: "FM 3-11 tables"
+    source_quality: 2
+    notes: "10kT ground burst at blue formation center"
+
+sources:
+  - "FM 3-11 Chemical, Biological, Radiological, Nuclear, and Explosives"

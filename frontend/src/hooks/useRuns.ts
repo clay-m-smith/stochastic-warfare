@@ -25,7 +25,12 @@ export function useRuns(params?: {
   return useQuery<RunSummary[]>({
     queryKey: ['runs', params],
     queryFn: () => fetchRuns(params),
-    staleTime: 30 * 1000,
+    staleTime: 5_000,
+    refetchInterval: (query) => {
+      const runs = query.state.data
+      if (runs?.some((r) => r.status === 'pending' || r.status === 'running')) return 3000
+      return false
+    },
   })
 }
 
