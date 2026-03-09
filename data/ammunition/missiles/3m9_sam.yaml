@@ -1,0 +1,17 @@
+ammo_id: 3m9_sam
+display_name: "3M9 SA-6 Gainful Missile"
+ammo_type: MISSILE
+mass_kg: 599.0
+diameter_mm: 330.0
+drag_coefficient: 0.28
+blast_radius_m: 15.0
+fragmentation_radius_m: 25.0
+guidance: RADAR_SEMI_ACTIVE
+seeker_fov_deg: 20.0
+seeker_range_m: 24000.0
+pk_at_reference: 0.55
+countermeasure_susceptibility: 0.30
+max_speed_mps: 600.0
+flight_time_s: 40.0
+terminal_maneuver: false
+unit_cost_factor: 40.0

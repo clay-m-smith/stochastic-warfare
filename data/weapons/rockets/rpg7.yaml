@@ -1,0 +1,22 @@
+weapon_id: rpg7
+display_name: "RPG-7 Rocket-Propelled Grenade Launcher"
+category: ROCKET_LAUNCHER
+caliber_mm: 40.0
+muzzle_velocity_mps: 115.0
+max_range_m: 300.0
+min_range_m: 20.0
+rate_of_fire_rpm: 4.0
+burst_size: 1
+base_accuracy_mrad: 5.0
+guidance: NONE
+magazine_capacity: 1
+reload_time_s: 10.0
+compatible_ammo:
+  - pg7_heat
+weight_kg: 6.3
+reliability: 0.90
+barrel_life_rounds: 500
+requires_deployed: false
+traverse_deg: 360.0
+elevation_min_deg: -10.0
+elevation_max_deg: 60.0

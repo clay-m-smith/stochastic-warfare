@@ -17,15 +17,22 @@ terrain:
 sides:
   - side: blue
     units:
-      - {unit_type: us_rifle_squad, count: 3}
-    experience_level: 0.3
+      - unit_type: civilian_noncombatant
+        count: 3
+        overrides:
+          display_name: "Kurdish Civilians"
+    experience_level: 0.1
     morale_initial: STEADY
     commander_profile: desperate_defender
   - side: red
     units:
-      - {unit_type: us_rifle_squad, count: 6}
-      - {unit_type: m3a2_bradley, count: 2}
-    experience_level: 0.6
+      - unit_type: insurgent_squad
+        count: 6
+        overrides:
+          display_name: "Iraqi Republican Guard"
+      - unit_type: t72m
+        count: 2
+    experience_level: 0.7
     morale_initial: STEADY
     commander_profile: ruthless_authoritarian
 objectives:
@@ -45,6 +52,9 @@ calibration_overrides:
   blue_start_y: 5000
   red_start_x: 1000
   red_start_y: 5000
+  weapon_assignments:
+    "AK-47": ak47
+    "RPG-7": rpg7
 escalation_config:
   entry_thresholds: [0.0, 0.10, 0.20, 0.30, 0.40, 0.50, 0.60, 0.70, 0.80, 0.90, 0.95]
   hysteresis_factor: 0.7

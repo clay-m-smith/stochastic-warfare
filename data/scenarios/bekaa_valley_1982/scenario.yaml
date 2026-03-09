@@ -25,7 +25,7 @@ sides:
     morale_initial: STEADY
   - side: red
     units:
-      - unit_type: patriot
+      - unit_type: sa6_gainful
         count: 19
     experience_level: 0.4
     morale_initial: STEADY
@@ -44,7 +44,7 @@ blue_forces:
 red_forces:
   side: red
   units:
-    - unit_type: patriot
+    - unit_type: sa6_gainful
       count: 19
   personnel_total: 380
   experience_level: 0.4
@@ -117,4 +117,4 @@ calibration_overrides:
   red_start_y: 50000.0
   weapon_assignments:
     "M61A1 Vulcan 20mm": m61a1_vulcan
-    "M901 Launching Station": mim104_pac3
+    "2K12 Launcher": sa6_3m9

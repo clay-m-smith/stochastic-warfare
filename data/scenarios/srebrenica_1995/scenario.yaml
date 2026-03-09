@@ -17,14 +17,21 @@ terrain:
 sides:
   - side: blue
     units:
-      - {unit_type: us_rifle_squad, count: 2}
-    experience_level: 0.4
+      - unit_type: insurgent_squad
+        count: 2
+        overrides:
+          display_name: "Bosnian Muslim Militia"
+    experience_level: 0.3
     morale_initial: STEADY
     commander_profile: desperate_defender
   - side: red
     units:
-      - {unit_type: us_rifle_squad, count: 8}
-      - {unit_type: m3a2_bradley, count: 3}
+      - unit_type: insurgent_squad
+        count: 8
+        overrides:
+          display_name: "Bosnian Serb Infantry"
+      - unit_type: t72m
+        count: 3
     experience_level: 0.6
     morale_initial: STEADY
     commander_profile: ruthless_authoritarian
@@ -45,6 +52,9 @@ calibration_overrides:
   blue_start_y: 6000
   red_start_x: 1000
   red_start_y: 6000
+  weapon_assignments:
+    "AK-47": ak47
+    "RPG-7": rpg7
 escalation_config:
   entry_thresholds: [0.0, 0.05, 0.10, 0.20, 0.30, 0.40, 0.50, 0.60, 0.70, 0.80, 0.90]
   hysteresis_factor: 0.7

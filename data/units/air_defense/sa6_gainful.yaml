@@ -1,0 +1,38 @@
+unit_type: sa6_gainful
+domain: ground
+display_name: "2K12 Kub (SA-6 Gainful) SAM Battery"
+ad_type: SAM_MEDIUM
+max_speed: 12.2  # m/s (~44 km/h road, self-propelled on 2P25 TEL)
+min_engagement_altitude: 100.0
+max_engagement_altitude: 12000.0
+max_engagement_range: 24000.0
+ready_missiles: 3
+reload_time: 300.0
+crew:
+  - role: COMMANDER
+    count: 1
+    skill: TRAINED
+  - role: SENSOR_OPERATOR
+    count: 2
+    skill: TRAINED
+  - role: GENERIC
+    count: 3
+    skill: BASIC
+equipment:
+  - name: "2K12 Launcher"
+    category: WEAPON
+    weight_kg: 20500.0
+    reliability: 0.82
+  - name: "1S91 Straight Flush Radar"
+    category: SENSOR
+    weight_kg: 2800.0
+    reliability: 0.80
+    temperature_range: [-40.0, 50.0]
+  - name: "V-6R Diesel Engine"
+    category: PROPULSION
+    weight_kg: 700.0
+    reliability: 0.80
+  - name: "R-123 Radio"
+    category: COMMUNICATION
+    weight_kg: 16.0
+    reliability: 0.82

@@ -1,0 +1,15 @@
+sensor_id: 1s91_straight_flush
+sensor_type: RADAR
+display_name: "1S91 Straight Flush Fire Control Radar"
+max_range_m: 75000.0
+detection_threshold: 10.0
+false_alarm_rate: 1.0e-6
+scan_time_s: 6.0
+frequency_mhz: 6000.0
+peak_power_w: 200000.0
+antenna_gain_dbi: 30.0
+antenna_height_m: 4.0
+min_range_m: 500.0
+fov_deg: 360.0
+requires_los: true
+detects_domain: ["RADAR"]

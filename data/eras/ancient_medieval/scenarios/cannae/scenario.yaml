@@ -29,14 +29,10 @@ terrain:
 sides:
   - side: carthaginian
     units:
-      - unit_type: roman_legionary_cohort
+      - unit_type: carthaginian_infantry
         count: 2
-        overrides:
-          display_name: "Carthaginian Infantry"
-      - unit_type: mongol_horse_archer
+      - unit_type: numidian_cavalry
         count: 2
-        overrides:
-          display_name: "Numidian/Gallic Cavalry"
     experience_level: 0.75
     morale_initial: STEADY
     commander_profile: hannibal_barca
@@ -51,10 +47,10 @@ sides:
     units:
       - unit_type: roman_legionary_cohort
         count: 4
-      - unit_type: norman_knight_conroi
+      - unit_type: saracen_cavalry
         count: 1
         overrides:
-          display_name: "Roman Cavalry"
+          display_name: "Roman Equites"
     experience_level: 0.55
     morale_initial: STEADY
     commander_profile: william_conqueror
@@ -110,8 +106,8 @@ calibration_overrides:
     "Gladius": gladius
     "Pilum": pilum
     "Composite Bow": longbow
-    "Sword (Medieval)": sword_medieval
-    "Lance (Medieval)": lance_medieval
+    "Saif Sword": sword_medieval
+    "Lance": lance_medieval
 
 documented_outcomes:
   - name: roman_casualty_fraction

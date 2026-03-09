@@ -1,0 +1,12 @@
+ammo_id: 20mm_mk100
+display_name: "20mm Mk 100 HEI"
+ammo_type: HE
+mass_kg: 0.1
+diameter_mm: 20.0
+drag_coefficient: 0.35
+blast_radius_m: 1.0
+fragmentation_radius_m: 3.0
+guidance: NONE
+propulsion: none
+max_speed_mps: 1010.0
+unit_cost_factor: 0.05

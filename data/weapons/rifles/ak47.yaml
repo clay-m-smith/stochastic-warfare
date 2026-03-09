@@ -1,0 +1,22 @@
+weapon_id: ak47
+display_name: "AK-47 Assault Rifle"
+category: MACHINE_GUN
+caliber_mm: 7.62
+muzzle_velocity_mps: 715.0
+max_range_m: 400.0
+min_range_m: 0.0
+rate_of_fire_rpm: 100.0
+burst_size: 3
+base_accuracy_mrad: 2.0
+guidance: NONE
+magazine_capacity: 30
+reload_time_s: 3.0
+compatible_ammo:
+  - 7_62x39_fmj
+weight_kg: 3.47
+reliability: 0.98
+barrel_life_rounds: 20000
+requires_deployed: false
+traverse_deg: 360.0
+elevation_min_deg: -30.0
+elevation_max_deg: 80.0

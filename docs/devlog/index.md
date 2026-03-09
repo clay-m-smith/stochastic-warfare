@@ -58,6 +58,7 @@ Rolling record of implementation decisions, changes, and lessons learned across 
 | 43 | Domain-Specific Resolution | **Complete** | [phase-43.md](phase-43.md) |
 | 44 | Environmental & Subsystem Integration | **Complete** | [phase-44.md](phase-44.md) |
 | 45 | Mathematical Model Audit & Hardening | **Complete** | [phase-45.md](phase-45.md) |
+| 46 | Scenario Data Cleanup & Expansion | **Complete** | [phase-46.md](phase-46.md) |
 
 ## Post-MVP Refinement Index
 

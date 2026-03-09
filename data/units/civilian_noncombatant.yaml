@@ -1,0 +1,12 @@
+unit_type: civilian_noncombatant
+domain: ground
+display_name: "Civilian Noncombatant Group"
+ground_type: LIGHT_INFANTRY
+max_speed: 1.4  # m/s (~5 km/h walking speed)
+armor_front: 0.0
+armor_side: 0.0
+crew:
+  - role: GENERIC
+    count: 20
+    skill: UNTRAINED
+equipment: []

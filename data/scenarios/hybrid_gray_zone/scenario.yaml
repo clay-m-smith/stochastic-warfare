@@ -47,10 +47,8 @@ sides:
 
   - side: red
     units:
-      - unit_type: us_rifle_squad
+      - unit_type: insurgent_squad
         count: 3
-        overrides:
-          display_name: "Irregular Militia"
     experience_level: 0.35
     morale_initial: STEADY
     commander_profile: insurgent_leader
@@ -100,6 +98,8 @@ calibration_overrides:
     "M249 SAW": m240_762mm
     "M240B GPMG": m240_762mm
     "Carl Gustaf M3": javelin_clm
+    "AK-47": ak47
+    "RPG-7": rpg7
 
 escalation_config:
   entry_thresholds: [0.0, 0.15, 0.25, 0.35, 0.50, 0.60, 0.70, 0.80, 0.85, 0.90, 0.95]

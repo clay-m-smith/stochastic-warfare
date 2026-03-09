@@ -65,8 +65,10 @@ equipment:
 | `bmp2` | BMP-2 | infantry | 18.0 | 2A42 30mm |
 | `btr80` | BTR-80 | infantry | 22.2 | KPVT 14.5mm |
 | `rifle_squad` | Rifle Squad | infantry | 1.5 | Small arms |
+| `insurgent_squad` | Insurgent Squad | infantry | 1.1 | AK-47 + RPG-7 |
 | `javelin_team` | Javelin ATGM Team | infantry | 1.5 | FGM-148 Javelin |
 | `kornet_team` | Kornet ATGM Team | infantry | 1.5 | 9M133 Kornet |
+| `civilian_noncombatant` | Civilian Noncombatant | civilian | 1.4 | None |
 | `engineer_squad` | Engineer Squad | support | 1.4 | Small arms |
 | `m109_paladin` | M109A6 Paladin | artillery | 16.0 | M284 155mm |
 | `mlrs` | M270 MLRS | artillery | 17.9 | M26 rockets |
@@ -82,6 +84,7 @@ equipment:
 | `mig29a` | MiG-29A Fulcrum | fixed_wing | 650 | R-73/R-77 |
 | `j10a` | J-10A | fixed_wing | 620 | PL-12 |
 | `b52h` | B-52H Stratofortress | fixed_wing | 260 | AGM-86 ALCM |
+| `a4_skyhawk` | A-4 Skyhawk | fixed_wing | 300 | Mk 12 20mm |
 | `ea18g` | EA-18G Growler | fixed_wing | 530 | AGM-88 HARM |
 | `ah64d` | AH-64D Apache | rotary_wing | 80 | AGM-114 Hellfire |
 | `uh60` | UH-60 Black Hawk | rotary_wing | 76 | Door guns |
@@ -94,6 +97,7 @@ equipment:
 |-----------|-------------|----------|------------|
 | `patriot` | MIM-104 Patriot | air_defense | PAC-3 missile |
 | `s300pmu` | S-300PMU | air_defense | 48N6 missile |
+| `sa6_gainful` | SA-6 Gainful (2K12 Kub) | air_defense | 3M9 missile |
 | `sa11_buk` | SA-11 Buk | air_defense | 9M38 missile |
 | `manpads` | MANPADS Team | air_defense | Stinger/Igla |
 
@@ -143,8 +147,8 @@ equipment:
 
 | Domain | Units |
 |--------|-------|
-| Infantry | Greek hoplite, Roman legionary, Viking huscarl, English longbowman |
-| Cavalry | Companion cavalry, cataphract, medieval knight, Mongol horse archer |
+| Infantry | Greek hoplite, Roman legionary, Carthaginian infantry, Viking huscarl, English longbowman |
+| Cavalry | Companion cavalry, cataphract, Numidian cavalry, medieval knight, Mongol horse archer |
 | Siege | Trebuchet, battering ram, siege tower |
 | Naval | Greek trireme, Roman quinquereme, Viking longship, medieval cog |
 

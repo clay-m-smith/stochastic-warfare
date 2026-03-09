@@ -1,0 +1,14 @@
+ammo_id: pg7_heat
+display_name: "PG-7VL HEAT Warhead"
+ammo_type: HEAT
+mass_kg: 2.6
+diameter_mm: 85.0
+drag_coefficient: 0.40
+penetration_mm_rha: 260.0
+penetration_reference_range_m: 100.0
+blast_radius_m: 3.0
+fragmentation_radius_m: 5.0
+guidance: NONE
+propulsion: none
+max_speed_mps: 120.0
+unit_cost_factor: 0.5

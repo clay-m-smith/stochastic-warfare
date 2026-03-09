@@ -78,7 +78,8 @@ class TestFullEntityStack:
             )
             assert unit.entity_id == f"int-{unit_type}"
             assert len(unit.personnel) > 0
-            assert len(unit.equipment) > 0
+            if unit_type != "civilian_noncombatant":
+                assert len(unit.equipment) > 0
 
             # State round-trip
             state = unit.get_state()

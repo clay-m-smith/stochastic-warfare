@@ -3,7 +3,7 @@ date: "1943-07-05"
 duration_hours: 168
 latitude: 51.73
 longitude: 36.19
-era: modern
+era: ww2
 tick_resolution:
   strategic_s: 3600
   operational_s: 300
@@ -17,15 +17,16 @@ terrain:
 sides:
   - side: blue
     units:
-      - {unit_type: us_rifle_squad, count: 6}
-      - {unit_type: m3a2_bradley, count: 2}
+      - {unit_type: soviet_rifle_squad, count: 6}
+      - {unit_type: t34_85, count: 2}
     experience_level: 0.5
     morale_initial: STEADY
     commander_profile: desperate_defender
   - side: red
     units:
-      - {unit_type: us_rifle_squad, count: 5}
-      - {unit_type: m3a2_bradley, count: 3}
+      - {unit_type: wehrmacht_rifle_squad, count: 5}
+      - {unit_type: panzer_iv_h, count: 2}
+      - {unit_type: tiger_i, count: 1}
     experience_level: 0.7
     morale_initial: STEADY
     commander_profile: ruthless_authoritarian

@@ -1,0 +1,28 @@
+unit_type: a4_skyhawk
+domain: aerial
+display_name: "A-4 Skyhawk"
+aerial_type: ATTACK
+max_speed: 300.0  # m/s (~1080 km/h, Mach 0.88 at sea level)
+service_ceiling: 12500.0
+crew:
+  - role: PILOT
+    count: 1
+    skill: TRAINED
+equipment:
+  - name: "Mk 12 20mm Cannon"
+    category: WEAPON
+    weight_kg: 52.0
+    reliability: 0.90
+  - name: "AN/APQ-94 Radar"
+    category: SENSOR
+    weight_kg: 80.0
+    reliability: 0.80
+  - name: "J52-P-8A Turbojet"
+    category: PROPULSION
+    weight_kg: 950.0
+    reliability: 0.85
+    temperature_range: [-40.0, 55.0]
+  - name: "AN/ARC-51 Radio"
+    category: COMMUNICATION
+    weight_kg: 15.0
+    reliability: 0.85

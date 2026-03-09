@@ -1,0 +1,21 @@
+profile_id: sa6_gainful
+unit_type: sa6_gainful
+visual:
+  height_m: 3.2
+  cross_section_m2: 14.0
+  camouflage_factor: 0.70
+thermal:
+  emissivity: 0.92
+  heat_output_kw: 350.0
+  contrast_modifier: 1.0
+radar:
+  rcs_frontal_m2: 16.0
+  rcs_side_m2: 30.0
+  rcs_rear_m2: 10.0
+acoustic:
+  noise_db: 82.0
+  speed_coefficient: 2.0
+electromagnetic:
+  emitting: true
+  power_dbm: 60.0
+  frequency_ghz: 6.0

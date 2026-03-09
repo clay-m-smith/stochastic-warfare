@@ -1,0 +1,27 @@
+unit_type: insurgent_squad
+domain: ground
+display_name: "Insurgent Squad"
+ground_type: LIGHT_INFANTRY
+max_speed: 1.1  # m/s (~4 km/h, irregular fighters, less march discipline)
+armor_front: 0.0
+armor_side: 0.0
+crew:
+  - role: COMMANDER
+    count: 1
+    skill: BASIC
+  - role: RIFLEMAN
+    count: 7
+    skill: BASIC
+equipment:
+  - name: "AK-47"
+    category: WEAPON
+    weight_kg: 3.47
+    reliability: 0.98
+  - name: "RPG-7"
+    category: WEAPON
+    weight_kg: 6.3
+    reliability: 0.90
+  - name: "Handheld Radio"
+    category: COMMUNICATION
+    weight_kg: 0.5
+    reliability: 0.70

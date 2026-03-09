@@ -78,7 +78,7 @@ class TestCannaeScenarioLoading:
     def test_carthaginian_has_cavalry(self) -> None:
         cfg = _load_scenario_config("cannae")
         carth = [s for s in cfg.sides if s.side == "carthaginian"][0]
-        cav = [u for u in carth.units if u.get("unit_type") == "mongol_horse_archer"]
+        cav = [u for u in carth.units if u.get("unit_type") == "numidian_cavalry"]
         assert len(cav) >= 1
         total = sum(u.get("count", 1) for u in cav)
         assert total >= 2

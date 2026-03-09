@@ -1,0 +1,21 @@
+profile_id: a4_skyhawk
+unit_type: a4_skyhawk
+visual:
+  height_m: 4.6
+  cross_section_m2: 8.0
+  camouflage_factor: 0.85
+thermal:
+  emissivity: 0.93
+  heat_output_kw: 200.0
+  contrast_modifier: 1.2
+radar:
+  rcs_frontal_m2: 3.0
+  rcs_side_m2: 7.0
+  rcs_rear_m2: 5.0
+acoustic:
+  noise_db: 110.0
+  speed_coefficient: 0.5
+electromagnetic:
+  emitting: true
+  power_dbm: 45.0
+  frequency_ghz: 9.4

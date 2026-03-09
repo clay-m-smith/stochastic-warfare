@@ -50,10 +50,8 @@ sides:
     units:
       - unit_type: super_etendard
         count: 4
-      - unit_type: mig29a
+      - unit_type: a4_skyhawk
         count: 4
-        overrides:
-          display_name: "A-4 Skyhawk (proxy)"
     experience_level: 0.6
     morale_initial: STEADY
     commander_profile: aggressive_armor
@@ -104,7 +102,7 @@ calibration_overrides:
     "Sea Dart SAM": sea_dart
     "Sea Wolf SAM": sea_dart
     "4.5 inch Mk 8 Naval Gun": mk45_5inch
-    "30mm ADEN": m61a1_vulcan
+    "Mk 12 20mm Cannon": mk12_20mm
     "AIM-9L Sidewinder": aim9x_sidewinder
 
 documented_outcomes:
