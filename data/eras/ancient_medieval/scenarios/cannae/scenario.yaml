@@ -47,10 +47,8 @@ sides:
     units:
       - unit_type: roman_legionary_cohort
         count: 4
-      - unit_type: saracen_cavalry
+      - unit_type: roman_equites
         count: 1
-        overrides:
-          display_name: "Roman Equites"
     experience_level: 0.55
     morale_initial: STEADY
     commander_profile: william_conqueror

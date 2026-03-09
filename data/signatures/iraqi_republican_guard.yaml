@@ -1,0 +1,21 @@
+profile_id: iraqi_republican_guard
+unit_type: iraqi_republican_guard
+visual:
+  height_m: 1.8
+  cross_section_m2: 2.0
+  camouflage_factor: 0.40
+thermal:
+  emissivity: 0.85
+  heat_output_kw: 5.0
+  contrast_modifier: 0.9
+radar:
+  rcs_frontal_m2: 0.8
+  rcs_side_m2: 1.0
+  rcs_rear_m2: 0.8
+acoustic:
+  noise_db: 35.0
+  speed_coefficient: 1.0
+electromagnetic:
+  emitting: false
+  power_dbm: 0.0
+  frequency_ghz: 0.0

@@ -601,7 +601,8 @@ class TestScoreTarget:
 
     def _bm(self):
         from stochastic_warfare.simulation.battle import BattleManager
-        return BattleManager
+        from stochastic_warfare.core.events import EventBus
+        return BattleManager(event_bus=EventBus())
 
     def test_score_computation_positive(self):
         """Score is positive for valid inputs."""

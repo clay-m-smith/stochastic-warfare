@@ -26,10 +26,8 @@ sides:
     commander_profile: desperate_defender
   - side: red
     units:
-      - unit_type: insurgent_squad
+      - unit_type: iraqi_republican_guard
         count: 6
-        overrides:
-          display_name: "Iraqi Republican Guard"
       - unit_type: t72m
         count: 2
     experience_level: 0.7

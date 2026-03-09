@@ -114,8 +114,8 @@ calibration_overrides:
   morale_base_degrade_rate: 0.01
   morale_casualty_weight: 0.5
   morale_check_interval: 5
-  soviet_force_ratio_modifier: 1.0
-  german_force_ratio_modifier: 2.0
+  soviet_force_ratio_modifier: 1.2
+  german_force_ratio_modifier: 1.3
   soviet_cohesion: 0.9
   german_cohesion: 0.6
   destruction_threshold: 0.3

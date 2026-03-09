@@ -60,6 +60,7 @@ Rolling record of implementation decisions, changes, and lessons learned across 
 | 45 | Mathematical Model Audit & Hardening | **Complete** | [phase-45.md](phase-45.md) |
 | 46 | Scenario Data Cleanup & Expansion | **Complete** | [phase-46.md](phase-46.md) |
 | 47 | Full Recalibration & Validation | **Complete** | [phase-47.md](phase-47.md) |
+| 48 | Block 5 Deficit Resolution | **Complete** | [phase-48.md](phase-48.md) |
 
 ## Post-MVP Refinement Index
 
@@ -205,16 +206,27 @@ Known limitations and deferred improvements logged during implementation. Review
 | 37 | DEW hit in battle loop always results in destruction (no partial damage/disable) | [phase-37.md — Known Limitations](phase-37.md#known-limitations) |
 | 38 | Plotly charts don't use `plotly_dark` template when dark mode is active (cosmetic) | [phase-38.md — Known Limitations](phase-38.md#known-limitations) |
 | 38 | No separate dark terrain color palette (elevation shading brightness modulation covers the need) | [phase-38.md — Known Limitations](phase-38.md#known-limitations) |
-| 40 | No fire-on-move accuracy penalty (only deployed weapon skip) | [phase-40.md — Known Limitations](phase-40.md#known-limitations) |
+| 40 | ~~No fire-on-move accuracy penalty (only deployed weapon skip)~~ *(resolved Phase 48a — speed-based crew_skill degradation, up to 50% at max speed)* | [phase-40.md — Known Limitations](phase-40.md#known-limitations) |
 | 40 | Posture doesn't affect movement speed | [phase-40.md — Known Limitations](phase-40.md#known-limitations) |
 | 41 | Cover from buildings/fortifications additive with terrain cover (potential double-count) | [phase-41.md — Known Limitations](phase-41.md#known-limitations) |
 | 42 | Suwalki Gap and Taiwan Strait stall at max_ticks — need additional victory conditions | [phase-42.md — Known Limitations](phase-42.md#known-limitations) |
-| 42 | Rally radius (500m) and friendly count threshold hardcoded, not configurable | [phase-42.md — Known Limitations](phase-42.md#known-limitations) |
-| 42 | No per-scenario ROE configuration in existing scenario YAMLs | [phase-42.md — Known Limitations](phase-42.md#known-limitations) |
+| 42 | ~~Rally radius (500m) and friendly count threshold hardcoded, not configurable~~ *(resolved Phase 48b — uses RoutConfig.cascade_radius_m)* | [phase-42.md — Known Limitations](phase-42.md#known-limitations) |
+| 42 | ~~No per-scenario ROE configuration in existing scenario YAMLs~~ *(resolved Phase 48c — roe_level added to Srebrenica, Hybrid Gray Zone)* | [phase-42.md — Known Limitations](phase-42.md#known-limitations) |
 | 47 | Naval engines are phantom references (4 engines referenced in `_route_naval_engagement()` don't exist) | [phase-47.md — Known Remaining Issues](phase-47.md#known-remaining-issues) |
-| 47 | `_check_morale_collapsed` ignores `cond.params` (reads global config only) | [phase-47.md — Postmortem](phase-47.md#postmortem) |
-| 47 | Hardcoded naval Pk values in `_route_naval_engagement()` (torpedo_pk=0.4, attacker_pk=0.7) | [phase-47.md — Postmortem](phase-47.md#postmortem) |
+| 47 | ~~`_check_morale_collapsed` ignores `cond.params` (reads global config only)~~ *(resolved Phase 48a — reads cond.params.threshold)* | [phase-47.md — Postmortem](phase-47.md#postmortem) |
+| 47 | ~~Hardcoded naval Pk values in `_route_naval_engagement()` (torpedo_pk=0.4, attacker_pk=0.7)~~ *(resolved Phase 48a — NavalEngagementConfig)* | [phase-47.md — Postmortem](phase-47.md#postmortem) |
 | 47 | Some historical scenarios win via time_expired rather than decisive combat | [phase-47.md — Known Remaining Issues](phase-47.md#known-remaining-issues) |
+| 48 | `advance_speed` calibration key dead data — 7 historical scenarios declare it, no Python code reads it | [phase-48.md — Postmortem](phase-48.md#postmortem) |
+| 48 | `dig_in_ticks` consumed by battle.py but zero scenarios use it — untested calibration point | [phase-48.md — Postmortem](phase-48.md#postmortem) |
+| 48 | `wave_interval_s` consumed by battle.py but zero scenarios use it — untested calibration point | [phase-48.md — Postmortem](phase-48.md#postmortem) |
+| 48 | `target_selection_mode` consumed by battle.py, always defaults to threat-scored, no scenario overrides | [phase-48.md — Postmortem](phase-48.md#postmortem) |
+| 48 | `roe_level` only in 2 of ~37 scenarios; other candidates (COIN, peacekeeping) missing | [phase-48.md — Postmortem](phase-48.md#postmortem) |
+| 48 | Morale config weights (cohesion, leadership, suppression, transition_cooldown) consumed by scenario_runner but never tuned | [phase-48.md — Postmortem](phase-48.md#postmortem) |
+| 48 | `victory_weights` consumed by engine.py but no scenario uses it — composite victory scoring untested | [phase-48.md — Postmortem](phase-48.md#postmortem) |
+| 48 | 4 SEAD/IADS/Escalation params unresolved — `sead_effectiveness`, `sead_arm_effectiveness`, `iads_degradation_rate`, `drone_provocation_prob` | [phase-48.md — Postmortem](phase-48.md#postmortem) |
+| 48 | Resolution switching causes long-range battles to resolve via time_expired instead of combat | [phase-48.md — Postmortem](phase-48.md#postmortem) |
+| 48 | Calibration audit test lists `advance_speed` in `_EXTERNAL_KEYS` but it's not consumed — false pass | [phase-48.md — Postmortem](phase-48.md#postmortem) |
+| 48 | `calibration_overrides` is free-form `dict[str, Any]` — no schema validation, mistyped keys pass silently | [phase-48.md — Postmortem](phase-48.md#postmortem) |
 
 ## Conventions
 

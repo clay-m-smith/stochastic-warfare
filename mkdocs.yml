@@ -126,6 +126,7 @@ nav:
     - Phase 45 - Mathematical Model Audit & Hardening: devlog/phase-45.md
     - Phase 46 - Scenario Data Cleanup & Expansion: devlog/phase-46.md
     - Phase 47 - Full Recalibration & Validation: devlog/phase-47.md
+    - Phase 48 - Block 5 Deficit Resolution: devlog/phase-48.md
   - Specifications:
     - Project Structure: specs/project-structure.md
     - Skills & Hooks: skills-and-hooks.md

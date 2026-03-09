@@ -402,18 +402,33 @@ class VictoryEvaluator:
         units_by_side: dict[str, list[Unit]],
         tick: int,
     ) -> VictoryResult:
-        """Check if any side has lost >= threshold fraction of its forces."""
+        """Check if any side has lost >= threshold fraction of its forces.
+
+        When ``params.target_side`` is set, only that side's forces are
+        checked (useful when both sides may cross threshold at different
+        times and the attacker shouldn't lose by crossing first).
+        """
         threshold = cond.params.get(
             "threshold", self._config.force_destroyed_threshold,
         )
         winning_side = cond.side
+        # Phase 48: optional target_side restricts which side is checked
+        target_side = cond.params.get("target_side", None)
+
+        # Phase 48: count_disabled — when target_side is set, also count
+        # DISABLED units as out-of-action (opt-in, preserves backward compat)
+        count_disabled = cond.params.get("count_disabled", target_side is not None)
+        loss_statuses = {UnitStatus.DESTROYED, UnitStatus.SURRENDERED}
+        if count_disabled:
+            loss_statuses.add(UnitStatus.DISABLED)
 
         for side, units in units_by_side.items():
+            if target_side and side != target_side:
+                continue
             if not units:
                 continue
             destroyed = sum(
-                1 for u in units
-                if u.status in (UnitStatus.DESTROYED, UnitStatus.SURRENDERED)
+                1 for u in units if u.status in loss_statuses
             )
             fraction = destroyed / len(units)
             if fraction >= threshold:
@@ -468,7 +483,9 @@ class VictoryEvaluator:
         tick: int,
     ) -> VictoryResult:
         """Check if any side's morale has collectively collapsed."""
-        threshold = self._config.morale_collapse_threshold
+        threshold = cond.params.get(
+            "threshold", self._config.morale_collapse_threshold,
+        )
         winning_side = cond.side
 
         for side, units in units_by_side.items():

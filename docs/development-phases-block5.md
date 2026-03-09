@@ -1121,11 +1121,132 @@ Phase 47 ─── depends on 46 ───────────────�
 | Wrong-faction units in scenarios | Phase 30 | **46a** |
 | `us_rifle_squad` used as universal proxy | Phase 30 | **46b** |
 
-**Total**: ~33 deficits targeted for resolution across Block 5.
+| Morale collapsed ignores cond.params | Phase 47 | **48a** |
+| Domain mapping incomplete (CANNON, AAA, NAVAL_GUN) | Phase 40 | **48a** |
+| Indirect fire lethal radius hardcoded | Phase 43 | **48a** |
+| Fire-on-move no accuracy penalty | Phase 40 | **48a** |
+| Naval Pk values hardcoded | Phase 43 | **48a** |
+| Rally radius hardcoded 500m | Phase 42 | **48b** |
+| Elevation caps hardcoded | Phase 41 | **48b** |
+| Target value weights hardcoded | Phase 41 | **48b** |
+| No per-scenario ROE in YAML | Phase 42 | **48c** |
+| No scenarios exercise DEW | Phase 28.5 | **48c** |
+| A-4 Skyhawk missing bomb weapon | Phase 46 | **48c** |
+| Falklands campaign 2-tick resolution | Phase 47 | **48c** |
+| Iraqi Republican Guard as insurgent proxy | Phase 46 | **48c** |
+| Saracen cavalry as Roman equites proxy | Phase 46 | **48c** |
+
+**Total**: ~47 deficits targeted for resolution across Block 5.
+
+---
+
+## Phase 48: Block 5 Deficit Resolution
+
+**Goal**: Resolve 14 tractable deficits, formally defer 16 as accepted limitations. Zero new features — only bug fixes, configurable constants, data gap fills, and deficit inventory cleanup.
+
+**Status**: **Complete**.
+
+**Dependencies**: Phase 47 complete.
+
+### 48a: Engine Code Fixes (5 items)
+
+- **A1**: `_check_morale_collapsed()` reads `cond.params.threshold` (matching `_check_force_destroyed` pattern)
+- **A6**: Domain mappings corrected — CANNON→{GROUND, AERIAL}, AAA→{AERIAL, GROUND}, NAVAL_GUN→{GROUND, NAVAL, AERIAL}
+- **A4**: `_apply_indirect_fire_result()` accepts `lethal_radius_m` and `casualty_per_hit` parameters, call site passes `ammo_def.blast_radius_m`
+- **A5**: Fire-on-move accuracy penalty — up to 50% crew_skill degradation proportional to speed fraction
+- **A3**: `NavalEngagementConfig(BaseModel)` replaces 6 hardcoded values, embedded in `BattleConfig.naval_config`
+
+### 48b: Configurable Constants (3 items)
+
+- **B1**: Rally radius uses `RoutConfig.cascade_radius_m` instead of hardcoded 500m
+- **B2**: Elevation caps configurable via `BattleConfig.elevation_advantage_cap` / `elevation_disadvantage_floor`
+- **A7**: Target value weights configurable via `BattleConfig.target_value_*` fields
+
+### 48c: Scenario Data Fixes (6 items)
+
+- **C3**: A-4 Skyhawk gets bomb rack weapon (new `bomb_rack_generic.yaml` + equipment entry)
+- **C1**: Per-scenario ROE added to Srebrenica (blue) and Hybrid Gray Zone (both sides)
+- **C2**: DEW config added to Taiwan Strait scenario
+- **C8**: New `roman_equites` unit replaces anachronistic `saracen_cavalry` in Cannae
+- **C7**: New `iraqi_republican_guard` unit replaces `insurgent_squad` proxy in Halabja
+- **C5**: Falklands campaign calibration moderated (morale_degrade_rate 3.0→1.5, red_cohesion 0.1→0.4)
+
+### 48d: Calibration Parameter Wiring (6 items — unplanned)
+
+Root cause: `calibration_overrides` is free-form `dict[str, Any]` — no schema validation means unused keys pass silently. Keys added in data phases were never consumed by wiring phases.
+
+- **force_ratio_modifier**: Per-side `{side}_force_ratio_modifier` wired into `crew_skill` (Dupuy CEV). Cascades to aggregate paths and naval routing.
+- **Per-side hit_probability_modifier**: `hit_probability_modifier_{side_name}` pattern with fallback to global.
+- **jammer_coverage_mult**: Scales EW SNR penalty in engagement loop.
+- **stealth_detection_penalty**: Degrades detection_quality_mod for low-RCS targets.
+- **sigint_detection_bonus**: Boosts ESM/SIGINT sensor detection quality.
+- **sam_suppression_modifier**: Degrades SAM/AAA crew_skill (simulates SEAD suppression).
+
+### 48e: Victory Condition Enhancements (unplanned)
+
+- **target_side**: `force_destroyed` accepts `params.target_side` to restrict checking to one side.
+- **count_disabled**: DISABLED units count as out-of-action when `target_side` is set (opt-in, backward compat).
+- **Trafalgar fixed**: Changed from `time_expired → british` to `force_destroyed → target_side: franco_spanish`.
+
+### 48f: Scenario Recalibrations (3 items — unplanned)
+
+- **Normandy**: `german_force_ratio_modifier` 2.0 → 1.3
+- **Stalingrad**: `german_force_ratio_modifier` 2.0 → 1.3, `soviet_force_ratio_modifier` 1.0 → 1.2
+- **Trafalgar**: Added `british_force_ratio_modifier: 2.5`, `franco_spanish_force_ratio_modifier: 0.6`
+
+### 48g: Calibration Key Audit Test
+
+`TestCalibrationKeyAudit` validates every `calibration_overrides` key across all scenario YAMLs is consumed or explicitly deferred. Categorized key sets prevent future drift.
+
+### 48h: Deferred Deficits (16 items)
+
+Formally documented as accepted limitations: D1-D16 (posture-movement, naval/air posture, binary concealment, O(n^2) rally, phantom naval engines, WW1 barrage, binary night, weather Pk, maintenance registration, medical/engineering data, per-commander assessment, global Weibull, training YAML, time_expired wins, DEW destroy-only, DEW AD routing).
+
+### File Inventory
+
+| File | Change |
+|------|--------|
+| `stochastic_warfare/simulation/victory.py` | A1: morale threshold from params; 48e: target_side + count_disabled |
+| `stochastic_warfare/simulation/battle.py` | A3-A5, A7, B1-B2: NavalEngagementConfig, indirect fire params, fire-on-move, target values, rally, elevation; 48d: force_ratio_modifier, EW params, per-side hit_prob |
+| `stochastic_warfare/combat/ammunition.py` | A6: domain mappings |
+| `data/weapons/bombs/bomb_rack_generic.yaml` | New: bomb delivery weapon |
+| `data/eras/ancient_medieval/units/roman_equites.yaml` | New: Roman cavalry unit |
+| `data/eras/ancient_medieval/signatures/roman_equites.yaml` | New: Roman cavalry signature |
+| `data/units/infantry/iraqi_republican_guard.yaml` | New: Iraqi RG infantry unit |
+| `data/signatures/iraqi_republican_guard.yaml` | New: Iraqi RG signature |
+| `data/units/air_fixed_wing/a4_skyhawk.yaml` | C3: add bomb rack |
+| `data/scenarios/srebrenica_1995/scenario.yaml` | C1: ROE |
+| `data/scenarios/hybrid_gray_zone/scenario.yaml` | C1: ROE |
+| `data/scenarios/taiwan_strait/scenario.yaml` | C2: DEW config |
+| `data/eras/ancient_medieval/scenarios/cannae/scenario.yaml` | C8: Roman cavalry |
+| `data/scenarios/halabja_1988/scenario.yaml` | C7: Iraqi RG |
+| `data/scenarios/falklands_campaign/scenario.yaml` | C5: calibration |
+| `data/eras/napoleonic/scenarios/trafalgar/scenario.yaml` | 48e: target_side victory condition; 48f: force_ratio_modifiers |
+| `data/eras/ww2/scenarios/normandy_bocage/scenario.yaml` | 48f: german_force_ratio_modifier 2.0→1.3 |
+| `data/eras/ww2/scenarios/stalingrad/scenario.yaml` | 48f: german/soviet force_ratio_modifier recalibration |
+| `tests/unit/test_phase48_deficit_fixes.py` | New: 52 tests |
+| `tests/unit/test_phase40_battle_loop.py` | Updated: domain mapping assertions |
+| `tests/unit/test_phase41_combat_depth.py` | Updated: _score_target instance method |
+| `tests/unit/test_phase_46_data.py` | Updated: Cannae cavalry assertion |
+
+### Exit Criteria
+
+- [x] 52 new tests pass
+- [x] Full suite passes (8,002 Python tests, 0 failures)
+- [x] 37/37 scenarios produce correct winners
+- [x] 14 planned + 6 unplanned deficits resolved, 16 formally deferred
+- [x] Calibration key audit test passes (all YAML keys recognized or explicitly deferred)
 
 ---
 
 ## Verification
+
+```bash
+# Phase 48: deficit resolution
+uv run python -m pytest tests/unit/test_phase48_deficit_fixes.py --tb=short -q
+uv run python -m pytest tests/ --tb=short -q
+
+
 
 ```bash
 # Phase 40: battle loop foundation

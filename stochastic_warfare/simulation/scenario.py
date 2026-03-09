@@ -912,12 +912,17 @@ class ScenarioLoader:
             start_x = cal.get(f"{prefix}_start_x", default_x)
             start_y = cal.get(f"{prefix}_start_y", default_y)
 
+            spacing = cal.get(
+                f"{prefix}_formation_spacing_m",
+                cal.get("formation_spacing_m", 50.0),
+            )
             units = build_forces(
                 force_def,
                 loaders["unit_loader"],
                 entities_rng,
                 start_x=start_x,
                 start_y=start_y,
+                spacing_m=spacing,
             )
             units_by_side[side_cfg.side] = units
 

@@ -389,7 +389,8 @@ class TestModifiedScenarioLoad:
             data = yaml.safe_load(f)
         roman = data["sides"][1]
         unit_types = [u["unit_type"] for u in roman["units"]]
-        assert "saracen_cavalry" in unit_types
+        # Phase 48: replaced anachronistic saracen_cavalry with roman_equites
+        assert "roman_equites" in unit_types
         assert "norman_knight_conroi" not in unit_types
 
     def test_halabja_uses_civilian(self) -> None:

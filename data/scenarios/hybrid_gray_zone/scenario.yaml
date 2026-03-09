@@ -39,6 +39,7 @@ sides:
     morale_initial: STEADY
     commander_profile: sof_operator
     doctrine_template: coin_population_centric
+    roe_level: WEAPONS_TIGHT
     depots:
       - depot_id: blue_fob
         position: [2000, 7500]
@@ -53,6 +54,7 @@ sides:
     morale_initial: STEADY
     commander_profile: insurgent_leader
     doctrine_template: guerrilla_hit_and_run
+    roe_level: WEAPONS_TIGHT
 
 objectives:
   - objective_id: population_center

@@ -54,6 +54,18 @@ def _compute_weather_pk_modifier(weather_state: int) -> float:
     return _WEATHER_PK_TABLE.get(int(weather_state), 1.0)
 
 
+# Phase 48a: configurable naval engagement defaults
+class NavalEngagementConfig(BaseModel):
+    """Default Pk / dimensions for naval engagement routing."""
+
+    default_torpedo_pk: float = 0.4
+    default_missile_pk: float = 0.7
+    default_pd_count: int = 2
+    default_pd_pk: float = 0.3
+    default_target_length_m: float = 150.0
+    default_target_beam_m: float = 20.0
+
+
 # Phase 43a: melee range threshold (metres)
 _MELEE_RANGE_M = 10.0
 
@@ -185,13 +197,18 @@ def _route_naval_engagement(
     best_range: float,
     dt: float,
     timestamp: Any,
+    naval_config: NavalEngagementConfig | None = None,
+    force_ratio_mod: float = 1.0,
 ) -> tuple[bool, UnitStatus | None]:
     """Route naval engagement to appropriate engine.
 
     Returns ``(handled, status)`` — *handled* is ``True`` when the weapon
     was processed by a naval engine (even on a miss), ``False`` when the
     weapon type is not naval-specific and should fall through.
+
+    *force_ratio_mod* scales per-side Pk values (Dupuy CEV).
     """
+    nc = naval_config or NavalEngagementConfig()
     wpn_cat_str = wpn_inst.definition.category.upper()
 
     # Torpedo
@@ -201,7 +218,7 @@ def _route_naval_engagement(
             result = engine.torpedo_engagement(
                 sub_id=attacker.entity_id,
                 target_id=target.entity_id,
-                torpedo_pk=0.4,
+                torpedo_pk=min(1.0, nc.default_torpedo_pk * force_ratio_mod),
                 range_m=best_range,
                 timestamp=timestamp,
             )
@@ -222,9 +239,9 @@ def _route_naval_engagement(
                 attacker_missiles=max(
                     1, int(wpn_inst.definition.rate_of_fire_rpm),
                 ),
-                attacker_pk=0.7,
-                defender_point_defense_count=2,
-                defender_pd_pk=0.3,
+                attacker_pk=min(1.0, nc.default_missile_pk * force_ratio_mod),
+                defender_point_defense_count=nc.default_pd_count,
+                defender_pd_pk=nc.default_pd_pk,
             )
             if salvo.hits > 0:
                 status = (
@@ -242,8 +259,8 @@ def _route_naval_engagement(
                 firer_id=attacker.entity_id,
                 target_id=target.entity_id,
                 range_m=best_range,
-                target_length_m=150.0,
-                target_beam_m=20.0,
+                target_length_m=nc.default_target_length_m,
+                target_beam_m=nc.default_target_beam_m,
                 num_guns=max(1, int(wpn_inst.definition.rate_of_fire_rpm)),
             )
             if salvo.get("hits", 0) > 0:
@@ -293,21 +310,27 @@ def _apply_indirect_fire_result(
     disable_threshold: float = 0.3,
     cumulative_tracker: dict[str, int] | None = None,
     terrain_modifier: float = 1.0,
+    lethal_radius_m: float = 50.0,
+    casualty_per_hit: float = 0.15,
 ) -> None:
     """Convert indirect fire impacts to damage.
 
     ``terrain_modifier`` scales the per-hit damage fraction — cover reduces
     effective indirect-fire lethality.
+    ``lethal_radius_m`` overrides the default 50 m lethal radius — pass
+    ``ammo_def.blast_radius_m`` when available.
+    ``casualty_per_hit`` overrides the default 0.15 casualty fraction per
+    impact within the lethal radius.
     """
     hits_near = 0
     for impact in fm_result.impacts:
         dx = impact.position.easting - target.position.easting
         dy = impact.position.northing - target.position.northing
         dist = math.sqrt(dx * dx + dy * dy)
-        if dist < 50.0:  # Lethal radius
+        if dist < lethal_radius_m:
             hits_near += 1
     if hits_near > 0:
-        per_hit = 0.15 * terrain_modifier
+        per_hit = casualty_per_hit * terrain_modifier
         if cumulative_tracker is not None:
             cumulative_tracker[target.entity_id] = (
                 cumulative_tracker.get(target.entity_id, 0) + hits_near
@@ -359,26 +382,34 @@ def _apply_aggregate_suppression(
 # ---------------------------------------------------------------------------
 
 
-def _target_value(target: Unit) -> float:
+def _target_value(
+    target: Unit,
+    *,
+    hq: float = 2.0,
+    ad: float = 1.8,
+    artillery: float = 1.5,
+    armor: float = 1.3,
+    default: float = 1.0,
+) -> float:
     """Target type priority for threat-based selection."""
     # HQ is highest value
     st = getattr(target, "support_type", None)
     if st is not None:
         st_name = st.name if hasattr(st, "name") else str(st)
         if st_name == "HQ":
-            return 2.0
+            return hq
     # Air defense enables air ops
     if hasattr(target, "ad_type"):
-        return 1.8
+        return ad
     # Artillery/rocket and armor
     gt = getattr(target, "ground_type", None)
     if gt is not None:
         gt_name = gt.name if hasattr(gt, "name") else str(gt)
         if "ARTILLERY" in gt_name or "ROCKET" in gt_name:
-            return 1.5
+            return artillery
         if gt_name == "ARMOR":
-            return 1.3
-    return 1.0
+            return armor
+    return default
 
 
 # ---------------------------------------------------------------------------
@@ -490,6 +521,17 @@ class BattleConfig(BaseModel):
     # Phase 13a-6: Auto-resolve
     auto_resolve_enabled: bool = False
     auto_resolve_max_units: int = 0  # battles with <= this many total units get auto-resolved
+    # Phase 48b: configurable elevation caps
+    elevation_advantage_cap: float = 0.3
+    elevation_disadvantage_floor: float = -0.1
+    # Phase 48b: configurable target value weights
+    target_value_hq: float = 2.0
+    target_value_ad: float = 1.8
+    target_value_artillery: float = 1.5
+    target_value_armor: float = 1.3
+    target_value_default: float = 1.0
+    # Phase 48a: naval engagement defaults
+    naval_config: NavalEngagementConfig = NavalEngagementConfig()
 
 
 # ---------------------------------------------------------------------------
@@ -1327,6 +1369,9 @@ class BattleManager:
         ctx: Any,
         target_pos: Position,
         attacker_pos: Position,
+        *,
+        elevation_cap: float = 0.3,
+        elevation_floor: float = -0.1,
     ) -> tuple[float, float, float]:
         """Query terrain at positions and return (cover, elevation_mod, concealment).
 
@@ -1386,9 +1431,9 @@ class BattleManager:
                 att_elev = heightmap.elevation_at(attacker_pos)
                 tgt_elev = heightmap.elevation_at(target_pos)
                 delta = att_elev - tgt_elev
-                # +10% per 33m height advantage, capped at +30%, floor at -10%
+                # +10% per 33m height advantage, configurable cap/floor
                 raw = delta / 330.0
-                elevation_mod = 1.0 + max(-0.1, min(0.3, raw))
+                elevation_mod = 1.0 + max(elevation_floor, min(elevation_cap, raw))
             except (IndexError, ValueError):
                 pass
 
@@ -1398,8 +1443,8 @@ class BattleManager:
     # Phase 41c: Threat-based target scoring
     # ------------------------------------------------------------------
 
-    @staticmethod
     def _score_target(
+        self,
         attacker: Unit,
         target: Unit,
         distance: float,
@@ -1421,8 +1466,16 @@ class BattleManager:
         )
         pk = min(3.0, best_wpn_range / max(1.0, distance))
 
-        # Value: target type priority
-        value = _target_value(target)
+        # Value: target type priority (configurable weights)
+        cfg = self._config
+        value = _target_value(
+            target,
+            hq=cfg.target_value_hq,
+            ad=cfg.target_value_ad,
+            artillery=cfg.target_value_artillery,
+            armor=cfg.target_value_armor,
+            default=cfg.target_value_default,
+        )
 
         # Distance penalty
         dist_pen = max(1.0, distance / max(1.0, best_wpn_range))
@@ -1561,6 +1614,8 @@ class BattleManager:
                 # Phase 41a: terrain modifiers
                 terrain_cover, elevation_mod, concealment = self._compute_terrain_modifiers(
                     ctx, best_target.position, attacker.position,
+                    elevation_cap=self._config.elevation_advantage_cap,
+                    elevation_floor=self._config.elevation_disadvantage_floor,
                 )
 
                 # Detection check
@@ -1642,12 +1697,33 @@ class BattleManager:
                             target_range_m=best_range,
                         )
                         if snr_penalty_db > 0:
+                            # Phase 48: jammer_coverage_mult scales EW effect
+                            jammer_mult = cal.get("jammer_coverage_mult", 1.0)
                             ew_factor = max(
-                                0.1, 1.0 - snr_penalty_db / 40.0,
+                                0.1, 1.0 - (snr_penalty_db * jammer_mult) / 40.0,
                             )
                             detection_quality_mod *= ew_factor
                     except Exception:
                         pass
+
+                # Phase 48: stealth_detection_penalty — reduce detection
+                # quality for stealth-configured targets
+                stealth_penalty = cal.get("stealth_detection_penalty", 0.0)
+                if stealth_penalty > 0:
+                    target_rcs = getattr(best_target, "radar_cross_section_m2", None)
+                    if target_rcs is not None and target_rcs < 1.0:
+                        detection_quality_mod *= max(0.1, 1.0 - stealth_penalty)
+
+                # Phase 48: sigint_detection_bonus — boost detection for
+                # SIGINT-capable sensors
+                sigint_bonus = cal.get("sigint_detection_bonus", 0.0)
+                if sigint_bonus > 0 and sensors:
+                    for sensor in sensors:
+                        if getattr(sensor, "sensor_type", None) == SensorType.ESM:
+                            detection_quality_mod = min(
+                                1.0, detection_quality_mod * (1.0 + sigint_bonus),
+                            )
+                            break
 
                 vis_mod = 1.0 if weather_independent else (min(visibility_m / best_range, 1.0) if best_range > 0 else 1.0)
                 vis_mod = vis_mod * detection_quality_mod
@@ -1745,9 +1821,21 @@ class BattleManager:
                 base_skill = side_cfg.experience_level if side_cfg else 0.5
                 unit_training = getattr(attacker, "training_level", 0.5)
                 effective_skill = base_skill * (0.5 + 0.5 * unit_training)
+                # Per-side hit probability modifier (Phase 48)
+                side_hit_prob = cal.get(
+                    f"hit_probability_modifier_{side_name}", hit_prob_mod,
+                )
+                # Phase 48: force_ratio_modifier — Dupuy CEV (Combat
+                # Effectiveness Value).  Captures training, doctrine,
+                # weapon superiority, and C2 quality as a single scalar.
+                # Values >1 = more effective than raw numbers suggest.
+                force_ratio_mod = cal.get(
+                    f"{side_name}_force_ratio_modifier", 1.0,
+                )
                 crew_skill = (
-                    effective_skill * hit_prob_mod
+                    effective_skill * side_hit_prob
                     * morale_accuracy_mod * weather_pk_modifier
+                    * force_ratio_mod
                 )
 
                 # Phase 44b: MOPP fatigue degrades crew skill
@@ -1767,6 +1855,22 @@ class BattleManager:
                 if readiness < 0.3:
                     continue  # Too degraded to engage
                 crew_skill *= max(0.5, readiness)
+
+                # Phase 48a: fire-on-move accuracy penalty (non-deployed)
+                if attacker.speed > 0.5 and not wpn_inst.definition.requires_deployed:
+                    _max_spd = getattr(attacker, "max_speed_mps", 20.0) or 20.0
+                    _speed_frac = min(1.0, attacker.speed / max(1.0, _max_spd))
+                    crew_skill *= 1.0 - _speed_frac * 0.5  # Up to 50% penalty
+
+                # Phase 48: sam_suppression_modifier — SEAD degrades AD
+                # unit effectiveness (SAM crews forced to shut down radar)
+                sam_supp = cal.get("sam_suppression_modifier", 0.0)
+                if sam_supp > 0:
+                    _wpn_cat = getattr(wpn_inst.definition, "category", "").upper()
+                    if _wpn_cat in ("SAM", "AAA", "MISSILE_LAUNCHER"):
+                        att_type = getattr(attacker, "unit_type_id", "")
+                        if any(k in att_type.lower() for k in ("sa-", "sam", "s-300", "buk", "patriot")):
+                            crew_skill *= max(0.1, 1.0 - sam_supp)
 
                 # Per-side target_size_modifier: use target's side
                 target_side = self._find_unit_side(ctx, best_target.entity_id)
@@ -1828,6 +1932,8 @@ class BattleManager:
                     handled, naval_status = _route_naval_engagement(
                         ctx, attacker, best_target, wpn_inst,
                         best_range, dt, timestamp,
+                        naval_config=self._config.naval_config,
+                        force_ratio_mod=force_ratio_mod,
                     )
                     if handled:
                         if naval_status is not None:
@@ -1995,11 +2101,15 @@ class BattleManager:
                                 timestamp=timestamp,
                             )
                             if fm_result.impacts:
+                                _ifire_radius = getattr(
+                                    ammo_def, "blast_radius_m", 0.0,
+                                ) or 50.0
                                 _apply_indirect_fire_result(
                                     fm_result, best_target, pending_damage,
                                     dest_thresh, dis_thresh,
                                     self._cumulative_casualties,
                                     _agg_modifier,
+                                    lethal_radius_m=_ifire_radius,
                                 )
                             side_engagements += 1
                             routed_aggregate = True
@@ -2145,7 +2255,8 @@ class BattleManager:
                             continue
                         dx = other.position.easting - u.position.easting
                         dy = other.position.northing - u.position.northing
-                        if math.sqrt(dx * dx + dy * dy) < 500.0:
+                        _rally_r = rout_engine._config.cascade_radius_m
+                    if math.sqrt(dx * dx + dy * dy) < _rally_r:
                             nearby_count += 1
                             st = getattr(other, "support_type", None)
                             if st is not None:

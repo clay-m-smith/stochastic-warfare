@@ -215,13 +215,13 @@ class TestVictoryBugFix:
 class TestDomainFiltering:
     """Tests for effective_target_domains() and domain gating."""
 
-    def test_cannon_targets_ground_only(self):
+    def test_cannon_targets_ground_and_aerial(self):
         wd = _make_weapon_def(category="CANNON")
-        assert wd.effective_target_domains() == {"GROUND"}
+        assert wd.effective_target_domains() == {"GROUND", "AERIAL"}
 
-    def test_aaa_targets_aerial(self):
+    def test_aaa_targets_aerial_and_ground(self):
         wd = _make_weapon_def(category="AAA")
-        assert wd.effective_target_domains() == {"AERIAL"}
+        assert wd.effective_target_domains() == {"AERIAL", "GROUND"}
 
     def test_torpedo_targets_naval_sub(self):
         wd = _make_weapon_def(category="TORPEDO_TUBE")

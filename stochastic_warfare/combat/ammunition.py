@@ -85,15 +85,15 @@ class AmmoType(enum.IntEnum):
 
 
 _CATEGORY_DEFAULT_DOMAINS: dict[int, set[str]] = {
-    WeaponCategory.CANNON: {"GROUND"},
+    WeaponCategory.CANNON: {"GROUND", "AERIAL"},
     WeaponCategory.MACHINE_GUN: {"GROUND", "AERIAL"},
     WeaponCategory.HOWITZER: {"GROUND"},
     WeaponCategory.MORTAR: {"GROUND"},
     WeaponCategory.ROCKET_LAUNCHER: {"GROUND"},
     WeaponCategory.MISSILE_LAUNCHER: {"GROUND", "AERIAL", "NAVAL"},
     WeaponCategory.TORPEDO_TUBE: {"NAVAL", "SUBMARINE"},
-    WeaponCategory.NAVAL_GUN: {"GROUND", "NAVAL"},
-    WeaponCategory.AAA: {"AERIAL"},
+    WeaponCategory.NAVAL_GUN: {"GROUND", "NAVAL", "AERIAL"},
+    WeaponCategory.AAA: {"AERIAL", "GROUND"},
     WeaponCategory.AIRCRAFT_GUN: {"GROUND", "AERIAL"},
     WeaponCategory.MINE_LAYER: {"GROUND", "NAVAL"},
     WeaponCategory.CIWS: {"AERIAL", "NAVAL"},

@@ -1,0 +1,24 @@
+weapon_id: bomb_rack_generic
+display_name: "Generic Bomb Rack"
+category: ROCKET_LAUNCHER
+caliber_mm: 274.0
+muzzle_velocity_mps: 0.0
+max_range_m: 5000.0
+min_range_m: 500.0
+rate_of_fire_rpm: 4.0
+burst_size: 1
+base_accuracy_mrad: 0.0
+cep_m: 50.0
+guidance: NONE
+magazine_capacity: 5
+reload_time_s: 0.0
+compatible_ammo:
+  - mk82_500lb
+  - mk84_2000lb
+weight_kg: 150.0
+reliability: 0.90
+barrel_life_rounds: 0
+requires_deployed: false
+traverse_deg: 0.0
+elevation_min_deg: -90.0
+elevation_max_deg: 0.0

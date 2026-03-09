@@ -13,6 +13,10 @@ equipment:
     category: WEAPON
     weight_kg: 52.0
     reliability: 0.90
+  - name: "Generic Bomb Rack"
+    category: WEAPON
+    weight_kg: 150.0
+    reliability: 0.90
   - name: "AN/APQ-94 Radar"
     category: SENSOR
     weight_kg: 80.0

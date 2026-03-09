@@ -1,0 +1,31 @@
+unit_type: roman_equites
+domain: ground
+display_name: "Roman Equites"
+ground_type: ARMOR
+max_speed: 6.0  # m/s (~22 km/h, Roman cavalry pace)
+armor_front: 1.0  # bronze cuirass
+armor_side: 0.5
+crew:
+  - role: COMMANDER
+    count: 1
+    skill: TRAINED
+  - role: CREW
+    count: 99
+    skill: TRAINED
+equipment:
+  - name: "Pilum"
+    category: WEAPON
+    weight_kg: 2.0
+    reliability: 0.85
+  - name: "Gladius"
+    category: WEAPON
+    weight_kg: 0.7
+    reliability: 0.95
+  - name: "Lance"
+    category: WEAPON
+    weight_kg: 2.5
+    reliability: 0.85
+  - name: "Naked Eye Observation"
+    category: SENSOR
+    weight_kg: 0.5
+    reliability: 0.99

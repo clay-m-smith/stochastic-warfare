@@ -24,6 +24,7 @@ sides:
     experience_level: 0.3
     morale_initial: STEADY
     commander_profile: desperate_defender
+    roe_level: WEAPONS_TIGHT
   - side: red
     units:
       - unit_type: insurgent_squad
