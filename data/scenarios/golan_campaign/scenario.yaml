@@ -64,16 +64,14 @@ sides:
   - side: red
     units:
       - unit_type: t55a
-        count: 100
+        count: 40
       - unit_type: t62
-        count: 100
+        count: 40
       - unit_type: bmp1
-        count: 50
+        count: 20
         overrides:
           armor_front: 33.0
-      - unit_type: bmp2
-        count: 10
-    experience_level: 0.4
+    experience_level: 0.3
     morale_initial: STEADY
     commander_profile: aggressive_armor
     doctrine_template: russian_deep_operations
@@ -93,10 +91,6 @@ objectives:
     type: territory
 
 victory_conditions:
-  - type: territory_control
-    side: red
-    params:
-      threshold: 1.0
   - type: force_destroyed
     side: ""
     params:
@@ -123,20 +117,21 @@ reinforcements:
     position: [500, 12000]
 
 calibration_overrides:
-  hit_probability_modifier: 1.0
+  hit_probability_modifier: 1.5
   target_size_modifier: 0.55
+  target_size_modifier_blue: 0.1
+  target_size_modifier_red: 3.0
+  max_engagers_per_side: 5
   thermal_contrast: 0.8
-  morale_degrade_rate_modifier: 0.2
-  morale_force_ratio_weight: 0.05
-  morale_base_degrade_rate: 0.005
+  morale_degrade_rate_modifier: 2.5
+  morale_force_ratio_weight: 0.0
+  morale_base_degrade_rate: 0.008
   morale_base_recover_rate: 0.15
-  morale_casualty_weight: 0.3
-  morale_check_interval: 30
-  blue_force_ratio_modifier: 4.0
-  red_force_ratio_modifier: 1.0
+  morale_casualty_weight: 0.4
+  morale_check_interval: 15
   blue_cohesion: 0.95
-  red_cohesion: 0.5
-  destruction_threshold: 0.5
+  red_cohesion: 0.15
+  destruction_threshold: 0.2
   blue_start_x: 1000.0
   blue_start_y: 10000.0
   red_start_x: 14000.0

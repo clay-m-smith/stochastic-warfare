@@ -75,7 +75,7 @@ victory_conditions:
   - type: force_destroyed
     side: ""
     params:
-      threshold: 0.5
+      threshold: 0.7
   - type: morale_collapsed
     side: roman
     params:
@@ -88,15 +88,18 @@ victory_conditions:
 calibration_overrides:
   hit_probability_modifier: 0.6
   target_size_modifier: 0.7
-  morale_degrade_rate_modifier: 0.6
+  morale_degrade_rate_modifier: 2.0
   morale_base_degrade_rate: 0.015
   morale_casualty_weight: 0.6
   morale_check_interval: 15
   carthaginian_force_ratio_modifier: 1.8
   roman_force_ratio_modifier: 1.0
-  carthaginian_cohesion: 0.80
-  roman_cohesion: 0.55
-  destruction_threshold: 0.5
+  carthaginian_cohesion: 0.9
+  roman_cohesion: 0.4
+  destruction_threshold: 0.3
+  max_engagers_per_side: 3
+  defensive_sides:
+    - carthaginian
   carthaginian_start_x: 500.0
   carthaginian_start_y: 1500.0
   roman_start_x: 3500.0

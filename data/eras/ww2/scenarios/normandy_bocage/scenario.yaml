@@ -79,7 +79,7 @@ victory_conditions:
   - type: force_destroyed
     side: ""
     params:
-      threshold: 0.6
+      threshold: 0.7
   - type: time_expired
     side: german
     params:

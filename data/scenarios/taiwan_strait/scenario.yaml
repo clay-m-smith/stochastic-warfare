@@ -21,9 +21,9 @@ weather_conditions:
   sea_state: 3
 
 terrain:
-  width_m: 200000
-  height_m: 200000
-  cell_size_m: 1000.0
+  width_m: 60000
+  height_m: 60000
+  cell_size_m: 500.0
   base_elevation_m: 0.0
   terrain_type: open_ocean
 
@@ -46,7 +46,7 @@ sides:
     doctrine_template: collective_defense
     depots:
       - depot_id: blue_logistics_base
-        position: [30000, 100000]
+        position: [10000, 30000]
         capacity_tons: 8000
         throughput_tons_per_hour: 80.0
 
@@ -68,37 +68,35 @@ sides:
     doctrine_template: pla_active_defense
     depots:
       - depot_id: red_staging_base
-        position: [170000, 100000]
+        position: [50000, 30000]
         capacity_tons: 10000
         throughput_tons_per_hour: 100.0
 
 objectives:
   - objective_id: strait_control
-    position: [100000, 100000]
-    radius_m: 20000
+    position: [30000, 30000]
+    radius_m: 10000
     type: territory
   - objective_id: western_approaches
-    position: [60000, 100000]
-    radius_m: 10000
+    position: [15000, 30000]
+    radius_m: 5000
     type: key_terrain
   - objective_id: eastern_approaches
-    position: [140000, 100000]
-    radius_m: 10000
+    position: [45000, 30000]
+    radius_m: 5000
     type: key_terrain
 
 victory_conditions:
   - type: force_destroyed
     side: ""
     params:
-      threshold: 0.5
-  - type: territory_control
-    side: red
-    params:
-      threshold: 1.0
+      threshold: 0.3
   - type: time_expired
     side: blue
     params:
       max_duration_s: 259200
+  - type: morale_collapsed
+    side: ""
 
 reinforcements:
   - side: blue
@@ -108,24 +106,26 @@ reinforcements:
         count: 2
       - unit_type: f16c
         count: 4
-    position: [10000, 100000]
+    position: [5000, 30000]
 
 calibration_overrides:
-  hit_probability_modifier: 1.0
-  target_size_modifier: 1.0
-  morale_degrade_rate_modifier: 0.15
-  morale_base_degrade_rate: 0.005
-  morale_casualty_weight: 0.4
-  morale_check_interval: 30
-  blue_force_ratio_modifier: 1.5
-  red_force_ratio_modifier: 1.0
+  hit_probability_modifier: 3.0
+  target_size_modifier: 2.0
+  morale_degrade_rate_modifier: 5.0
+  morale_base_degrade_rate: 0.01
+  morale_casualty_weight: 0.5
+  morale_check_interval: 5
   blue_cohesion: 0.85
-  red_cohesion: 0.7
-  destruction_threshold: 0.5
-  blue_start_x: 30000.0
-  blue_start_y: 100000.0
-  red_start_x: 170000.0
-  red_start_y: 100000.0
+  red_cohesion: 0.65
+  target_size_modifier_blue: 0.3
+  target_size_modifier_red: 2.0
+  destruction_threshold: 0.15
+  blue_start_x: 15000.0
+  blue_start_y: 30000.0
+  red_start_x: 45000.0
+  red_start_y: 30000.0
+  defensive_sides: [blue]
+  max_engagers_per_side: 5
 
 ew_config:
   enable_ew: true

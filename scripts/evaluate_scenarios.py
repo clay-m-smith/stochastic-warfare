@@ -91,7 +91,7 @@ class ScenarioResult:
     unit_details: list[dict] = field(default_factory=list)
 
 
-def run_scenario(scenario_path: Path, data_dir: Path, verbose: bool = False) -> ScenarioResult:
+def run_scenario(scenario_path: Path, data_dir: Path, verbose: bool = False, seed: int = 42) -> ScenarioResult:
     """Run a single scenario and collect diagnostics."""
     from stochastic_warfare.simulation.scenario import ScenarioLoader
     from stochastic_warfare.simulation.engine import SimulationEngine, EngineConfig
@@ -109,7 +109,7 @@ def run_scenario(scenario_path: Path, data_dir: Path, verbose: bool = False) -> 
     try:
         # Load scenario
         loader = ScenarioLoader(data_dir)
-        ctx = loader.load(scenario_path, seed=42)
+        ctx = loader.load(scenario_path, seed=seed)
 
         # Record initial positions
         initial_positions: dict[str, tuple[float, float]] = {}
@@ -301,11 +301,14 @@ def run_scenario(scenario_path: Path, data_dir: Path, verbose: bool = False) -> 
             non_combat = ('cbrn_chemical', 'space_isr')
             if not any(tag in result.scenario_name for tag in non_combat):
                 result.issues.append("ZERO_CASUALTIES")
-        if result.engagement_events == 0 and result.ticks_executed > 10:
+        if result.engagement_events == 0 and result.ticks_executed > 10 and result.total_casualties == 0:
+            # Only flag if there are truly no engagements AND no casualties.
+            # Aggregate models (volley fire, archery) produce casualties without
+            # EngagementEvent events.
             result.issues.append("ZERO_ENGAGEMENTS")
         if result.units_that_moved == 0 and result.initial_total > 0:
             result.issues.append("NO_MOVEMENT")
-        if result.damage_events == 0 and result.engagement_events > 0:
+        if result.damage_events == 0 and result.engagement_events > 0 and result.total_casualties == 0:
             result.issues.append("ENGAGEMENTS_BUT_NO_DAMAGE")
 
         # Check for centroid collapse (all active units within 50m)
@@ -443,6 +446,8 @@ def main():
     parser.add_argument("--verbose", action="store_true", help="Show per-unit details")
     parser.add_argument("--no-details", action="store_true",
                         help="Omit per-unit details from JSON output")
+    parser.add_argument("--seed", type=int, default=42,
+                        help="PRNG seed (default: 42)")
     args = parser.parse_args()
 
     data_dir = project_root / "data"
@@ -461,7 +466,7 @@ def main():
     for i, scenario_path in enumerate(all_scenarios, 1):
         name = scenario_path.parent.name
         print(f"[{i}/{len(all_scenarios)}] Running {name}...", end=" ", flush=True)
-        r = run_scenario(scenario_path, data_dir, verbose=args.verbose)
+        r = run_scenario(scenario_path, data_dir, verbose=args.verbose, seed=args.seed)
         status = "OK" if r.success and not r.issues else (
             "ERROR" if not r.success else f"WARN({','.join(r.issues)})"
         )

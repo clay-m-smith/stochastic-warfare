@@ -76,7 +76,7 @@ Within each tick, processing follows a fixed order:
 
 ### Engagement Gate Sequence
 
-Within combat, each potential engagement passes through a series of gates before resolving. If any gate rejects, the engagement is skipped:
+Within combat, each potential engagement passes through a series of gates before resolving. If any gate rejects, the engagement is skipped. This gate sequence was wired in Phases 40--47 (Block 5: Core Combat Fidelity), connecting 40+ previously disconnected subsystems into the battle loop. All 37 scenarios are validated against historical outcomes (Phase 47).
 
 1. **Domain filtering** -- attacker's weapon must target the defender's domain (ground, air, naval)
 2. **Posture/status check** -- ROUTED/SURRENDERED units skip; morale accuracy multiplier applied

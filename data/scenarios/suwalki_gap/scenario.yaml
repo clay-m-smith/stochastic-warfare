@@ -41,16 +41,16 @@ sides:
   - side: blue
     units:
       - unit_type: leopard2a6
-        count: 4
+        count: 6
       - unit_type: challenger2
-        count: 3
-      - unit_type: m3a2_bradley
         count: 4
+      - unit_type: m3a2_bradley
+        count: 6
       - unit_type: ea18g
         count: 2
       - unit_type: f16c
-        count: 4
-    experience_level: 0.7
+        count: 6
+    experience_level: 0.75
     morale_initial: STEADY
     commander_profile: joint_campaign
     doctrine_template: collective_defense
@@ -63,16 +63,16 @@ sides:
   - side: red
     units:
       - unit_type: t90a
-        count: 6
-      - unit_type: bmp2
-        count: 6
-      - unit_type: su27s
         count: 4
-      - unit_type: sa11_buk
+      - unit_type: bmp2
+        count: 4
+      - unit_type: su27s
         count: 3
+      - unit_type: sa11_buk
+        count: 2
       - unit_type: mi24v
         count: 2
-    experience_level: 0.6
+    experience_level: 0.5
     morale_initial: STEADY
     commander_profile: aggressive_armor
     doctrine_template: deep_operations
@@ -97,10 +97,6 @@ objectives:
     type: territory
 
 victory_conditions:
-  - type: territory_control
-    side: red
-    params:
-      threshold: 1.0
   - type: force_destroyed
     side: ""
     params:
@@ -123,21 +119,23 @@ reinforcements:
     position: [1000, 10000]
 
 calibration_overrides:
-  hit_probability_modifier: 1.0
-  target_size_modifier: 0.65
-  morale_degrade_rate_modifier: 0.2
-  morale_base_degrade_rate: 0.006
-  morale_casualty_weight: 0.35
-  morale_check_interval: 25
-  blue_force_ratio_modifier: 1.5
-  red_force_ratio_modifier: 1.2
-  blue_cohesion: 0.80
-  red_cohesion: 0.70
-  destruction_threshold: 0.5
-  blue_start_x: 5000.0
+  hit_probability_modifier: 1.5
+  target_size_modifier: 1.0
+  morale_degrade_rate_modifier: 3.0
+  morale_base_degrade_rate: 0.008
+  morale_casualty_weight: 0.4
+  morale_check_interval: 10
+  blue_cohesion: 0.9
+  red_cohesion: 0.35
+  target_size_modifier_blue: 0.05
+  target_size_modifier_red: 3.0
+  max_engagers_per_side: 5
+  destruction_threshold: 0.25
+  blue_start_x: 8000.0
   blue_start_y: 10000.0
-  red_start_x: 27000.0
+  red_start_x: 22000.0
   red_start_y: 10000.0
+  defensive_sides: [blue]
 
 ew_config:
   enable_ew: true

@@ -73,7 +73,7 @@ victory_conditions:
   - type: force_destroyed
     side: ""
     params:
-      threshold: 0.4
+      threshold: 0.7
   - type: morale_collapsed
     side: french
     params:

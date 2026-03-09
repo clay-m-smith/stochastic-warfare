@@ -89,10 +89,6 @@ objectives:
     type: territory
 
 victory_conditions:
-  - type: territory_control
-    side: red
-    params:
-      threshold: 1.0
   - type: force_destroyed
     side: ""
     params:
@@ -123,17 +119,19 @@ reinforcements:
     position: [19500, 7500]
 
 calibration_overrides:
-  hit_probability_modifier: 1.0
+  hit_probability_modifier: 1.8
   target_size_modifier: 0.6
   morale_degrade_rate_modifier: 0.25
   morale_base_degrade_rate: 0.008
   morale_casualty_weight: 0.4
   morale_check_interval: 25
-  blue_force_ratio_modifier: 2.0
+  blue_force_ratio_modifier: 3.0
   red_force_ratio_modifier: 1.0
-  blue_cohesion: 0.85
-  red_cohesion: 0.55
-  destruction_threshold: 0.5
+  blue_cohesion: 0.8
+  red_cohesion: 0.3
+  destruction_threshold: 0.25
+  defensive_sides:
+    - blue
   blue_start_x: 3000.0
   blue_start_y: 7500.0
   red_start_x: 18000.0

@@ -85,21 +85,22 @@ victory_conditions:
       max_duration_s: 43200
 
 calibration_overrides:
-  hit_probability_modifier: 1.2
+  hit_probability_modifier: 1.5
   target_size_modifier: 0.4
-  morale_degrade_rate_modifier: 0.3
+  morale_degrade_rate_modifier: 2.0
   morale_base_degrade_rate: 0.01
   morale_casualty_weight: 0.5
   morale_check_interval: 15
-  british_force_ratio_modifier: 1.0
-  german_force_ratio_modifier: 3.5
-  british_cohesion: 0.5
-  german_cohesion: 0.8
-  destruction_threshold: 0.6
-  british_start_x: 500.0
+  british_cohesion: 0.4
+  german_cohesion: 0.85
+  target_size_modifier_british: 3.0
+  target_size_modifier_german: 0.2
+  destruction_threshold: 0.3
+  british_start_x: 2000.0
   british_start_y: 1500.0
   german_start_x: 7000.0
   german_start_y: 1500.0
+  defensive_sides: [german]
   weapon_assignments:
     "Lee-Enfield SMLE Mk III Rifle": lee_enfield
     "Mills Bomb No. 5 Grenade": mills_bomb

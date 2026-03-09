@@ -90,7 +90,7 @@ _CATEGORY_DEFAULT_DOMAINS: dict[int, set[str]] = {
     WeaponCategory.HOWITZER: {"GROUND"},
     WeaponCategory.MORTAR: {"GROUND"},
     WeaponCategory.ROCKET_LAUNCHER: {"GROUND"},
-    WeaponCategory.MISSILE_LAUNCHER: {"GROUND", "AERIAL"},
+    WeaponCategory.MISSILE_LAUNCHER: {"GROUND", "AERIAL", "NAVAL"},
     WeaponCategory.TORPEDO_TUBE: {"NAVAL", "SUBMARINE"},
     WeaponCategory.NAVAL_GUN: {"GROUND", "NAVAL"},
     WeaponCategory.AAA: {"AERIAL"},

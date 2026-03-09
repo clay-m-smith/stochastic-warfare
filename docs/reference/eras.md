@@ -63,7 +63,7 @@ US FM 3-0, Russian Deep Operations, NATO Procedures, PLA Active Defense, IDF Pre
 
 ### Available Scenarios
 
-27+ modern scenarios including 73 Easting, Falklands Naval, Golan Heights, Taiwan Strait, Korean Peninsula, Suwalki Gap, and more.
+27 modern scenarios including 73 Easting, Falklands Naval, Golan Heights, Taiwan Strait, Korean Peninsula, Suwalki Gap, and more. All scenarios validated against historical outcomes in Phase 47 (seed=42 deterministic + Monte Carlo).
 
 ---
 
@@ -122,7 +122,7 @@ High-altitude bombing with circular error probable (CEP):
 
 ### Available Scenarios
 
-Stalingrad 1942 (urban combat), Midway 1942 (carrier battle), plus additional WW2 engagements.
+Kursk 1943 (largest tank battle), Normandy Bocage 1944 (hedgerow fighting), Stalingrad 1942 (urban combat), Midway 1942 (carrier battle). All validated against historical outcomes in Phase 47.
 
 ---
 
@@ -185,7 +185,7 @@ Chemical weapons via CBRN adapter:
 
 ### Available Scenarios
 
-Jutland 1916 (dreadnought fleet action), Somme 1916, Cambrai 1917.
+Somme July 1 1916 (first day of the Somme), Cambrai 1917 (first mass tank assault), Jutland 1916 (dreadnought fleet action). All validated against historical outcomes in Phase 47.
 
 ---
 
@@ -276,7 +276,7 @@ Supply through local foraging:
 
 ### Available Scenarios
 
-Trafalgar 1805 (naval), Austerlitz 1805, Waterloo 1815.
+Austerlitz 1805 (Napoleon's masterpiece), Waterloo 1815 (Coalition defeat of Napoleon), Trafalgar 1805 (Nelson vs Franco-Spanish fleet). All validated against historical outcomes in Phase 47.
 
 ---
 
@@ -365,7 +365,7 @@ Command and control via visual/audible signals:
 
 ### Available Scenarios
 
-Salamis 480 BC (naval), Cannae 216 BC, Hastings 1066, Agincourt 1415.
+Cannae 216 BC (Hannibal's double envelopment), Salamis 480 BC (Greek trireme victory), Hastings 1066 (Norman conquest), Agincourt 1415 (English longbow vs French knights). All validated against historical outcomes in Phase 47.
 
 ---
 

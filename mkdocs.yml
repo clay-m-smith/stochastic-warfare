@@ -125,6 +125,7 @@ nav:
     - Phase 44 - Environmental & Subsystem Integration: devlog/phase-44.md
     - Phase 45 - Mathematical Model Audit & Hardening: devlog/phase-45.md
     - Phase 46 - Scenario Data Cleanup & Expansion: devlog/phase-46.md
+    - Phase 47 - Full Recalibration & Validation: devlog/phase-47.md
   - Specifications:
     - Project Structure: specs/project-structure.md
     - Skills & Hooks: skills-and-hooks.md

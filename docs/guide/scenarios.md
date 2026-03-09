@@ -167,7 +167,7 @@ documented_outcomes:
 
 ---
 
-## Modern Scenarios
+## Modern Scenarios (27 total)
 
 ### Engagement Scenarios
 
@@ -218,7 +218,7 @@ documented_outcomes:
 
 ---
 
-## Historical Era Scenarios
+## Historical Era Scenarios (14 total)
 
 ### WW2
 

@@ -98,22 +98,23 @@ victory_conditions:
       max_duration_s: 36000
 
 calibration_overrides:
-  hit_probability_modifier: 0.8
+  hit_probability_modifier: 1.2
   target_size_modifier: 0.6
-  morale_degrade_rate_modifier: 0.4
+  morale_degrade_rate_modifier: 1.5
   morale_base_degrade_rate: 0.01
   morale_casualty_weight: 0.5
   morale_check_interval: 20
-  french_force_ratio_modifier: 1.5
-  coalition_force_ratio_modifier: 1.0
-  french_cohesion: 0.75
-  coalition_cohesion: 0.55
-  destruction_threshold: 0.4
-  french_start_x: 2000.0
+  french_cohesion: 0.85
+  coalition_cohesion: 0.4
+  target_size_modifier_french: 0.3
+  target_size_modifier_coalition: 2.0
+  destruction_threshold: 0.3
+  french_start_x: 3000.0
   french_start_y: 4000.0
-  coalition_start_x: 10000.0
+  coalition_start_x: 9000.0
   coalition_start_y: 4000.0
-  advance_speed: 1.0
+  defensive_sides: [coalition]
+  advance_speed: 1.5
   weapon_assignments:
     "Charleville 1777 Musket": charleville_1777
     "Bayonet": bayonet

@@ -812,7 +812,7 @@ Replaced `us_rifle_squad` proxies in 5 scenarios plus fixed 1 era tag.
 
 **Goal**: Systematically calibrate all 42 scenarios against historical outcomes using the fully wired and hardened engine. Establish Monte Carlo confidence intervals and create regression tests.
 
-**Status**: Not started.
+**Status**: **Complete**.
 
 **Dependencies**: Phases 40--46 (all engine improvements, model hardening, and data cleanup must be complete).
 

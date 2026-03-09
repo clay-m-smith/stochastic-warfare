@@ -110,15 +110,17 @@ reinforcements:
 calibration_overrides:
   hit_probability_modifier: 1.2
   target_size_modifier: 0.4
-  morale_degrade_rate_modifier: 0.3
+  morale_degrade_rate_modifier: 3.0
   morale_base_degrade_rate: 0.01
   morale_casualty_weight: 0.5
-  morale_check_interval: 20
+  morale_check_interval: 5
   soviet_force_ratio_modifier: 1.0
   german_force_ratio_modifier: 2.0
-  soviet_cohesion: 0.6
-  german_cohesion: 0.65
-  destruction_threshold: 0.55
+  soviet_cohesion: 0.9
+  german_cohesion: 0.6
+  destruction_threshold: 0.3
+  defensive_sides:
+    - soviet
   soviet_start_x: 500.0
   soviet_start_y: 1500.0
   german_start_x: 4500.0

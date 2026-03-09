@@ -59,6 +59,7 @@ Rolling record of implementation decisions, changes, and lessons learned across 
 | 44 | Environmental & Subsystem Integration | **Complete** | [phase-44.md](phase-44.md) |
 | 45 | Mathematical Model Audit & Hardening | **Complete** | [phase-45.md](phase-45.md) |
 | 46 | Scenario Data Cleanup & Expansion | **Complete** | [phase-46.md](phase-46.md) |
+| 47 | Full Recalibration & Validation | **Complete** | [phase-47.md](phase-47.md) |
 
 ## Post-MVP Refinement Index
 
@@ -210,6 +211,10 @@ Known limitations and deferred improvements logged during implementation. Review
 | 42 | Suwalki Gap and Taiwan Strait stall at max_ticks — need additional victory conditions | [phase-42.md — Known Limitations](phase-42.md#known-limitations) |
 | 42 | Rally radius (500m) and friendly count threshold hardcoded, not configurable | [phase-42.md — Known Limitations](phase-42.md#known-limitations) |
 | 42 | No per-scenario ROE configuration in existing scenario YAMLs | [phase-42.md — Known Limitations](phase-42.md#known-limitations) |
+| 47 | Naval engines are phantom references (4 engines referenced in `_route_naval_engagement()` don't exist) | [phase-47.md — Known Remaining Issues](phase-47.md#known-remaining-issues) |
+| 47 | `_check_morale_collapsed` ignores `cond.params` (reads global config only) | [phase-47.md — Postmortem](phase-47.md#postmortem) |
+| 47 | Hardcoded naval Pk values in `_route_naval_engagement()` (torpedo_pk=0.4, attacker_pk=0.7) | [phase-47.md — Postmortem](phase-47.md#postmortem) |
+| 47 | Some historical scenarios win via time_expired rather than decisive combat | [phase-47.md — Known Remaining Issues](phase-47.md#known-remaining-issues) |
 
 ## Conventions
 

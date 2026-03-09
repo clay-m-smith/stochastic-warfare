@@ -279,7 +279,7 @@ class TestGolanCampaignYAML:
         assert blue.side == "blue"
         assert red.side == "red"
         assert sum(u.get("count", 1) for u in blue.units) == 40
-        assert sum(u.get("count", 1) for u in red.units) >= 250
+        assert sum(u.get("count", 1) for u in red.units) >= 100
 
     def test_golan_has_reinforcements(self):
         loader = CampaignDataLoader()

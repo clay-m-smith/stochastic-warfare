@@ -52,11 +52,11 @@ sides:
   - side: red
     units:
       - unit_type: us_rifle_squad
-        count: 8
+        count: 6
         overrides:
           display_name: "Argentine Garrison"
-    experience_level: 0.35
-    morale_initial: STEADY
+    experience_level: 0.25
+    morale_initial: SHAKEN
     commander_profile: cautious_infantry
     doctrine_template: delay
 
@@ -71,33 +71,31 @@ objectives:
     type: key_terrain
 
 victory_conditions:
-  - type: territory_control
-    side: blue
-    params:
-      threshold: 1.0
   - type: force_destroyed
-    side: red
+    side: ""
     params:
-      threshold: 0.5
+      threshold: 0.3
   - type: time_expired
-    side: red
+    side: blue
     params:
       max_duration_s: 64800
   - type: morale_collapsed
-    side: red
+    side: ""
 
 calibration_overrides:
-  hit_probability_modifier: 1.0
-  target_size_modifier: 0.5
-  morale_degrade_rate_modifier: 0.4
-  morale_base_degrade_rate: 0.01
-  morale_casualty_weight: 0.5
-  morale_check_interval: 20
-  blue_force_ratio_modifier: 2.0
-  red_force_ratio_modifier: 1.0
-  blue_cohesion: 0.9
-  red_cohesion: 0.4
-  destruction_threshold: 0.5
+  hit_probability_modifier: 2.0
+  target_size_modifier: 0.3
+  target_size_modifier_blue: 0.1
+  target_size_modifier_red: 4.0
+  max_engagers_per_side: 3
+  morale_degrade_rate_modifier: 3.0
+  morale_base_degrade_rate: 0.015
+  morale_casualty_weight: 0.6
+  morale_check_interval: 10
+  blue_cohesion: 0.95
+  red_cohesion: 0.1
+  destruction_threshold: 0.2
+  defensive_sides: [red]
   blue_start_x: 500.0
   blue_start_y: 2000.0
   red_start_x: 4500.0

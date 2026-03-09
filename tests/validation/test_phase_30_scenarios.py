@@ -517,17 +517,17 @@ class TestGolanExpansion:
         cfg = _load_scenario_by_name("golan_campaign")
         assert "Golan" in cfg.name
 
-    def test_has_bmp2_in_red(self):
+    def test_has_bmp1_in_red(self):
         cfg = _load_scenario_by_name("golan_campaign")
         red = next(s for s in cfg.sides if s.side == "red")
         red_types = [u["unit_type"] for u in red.units]
-        assert "bmp2" in red_types
+        assert "bmp1" in red_types
 
     def test_red_forces_expanded(self):
         cfg = _load_scenario_by_name("golan_campaign")
         red = next(s for s in cfg.sides if s.side == "red")
         total = sum(u.get("count", 1) for u in red.units)
-        assert total >= 260  # 100+100+50+10
+        assert total >= 100  # 40+40+20 (recalibrated for Phase 47)
 
 
 # ===========================================================================

@@ -66,7 +66,7 @@ red_forces:
 
 terrain:
   width_m: 10000
-  height_m: 15000
+  height_m: 5000
   cell_size_m: 100.0
   base_elevation_m: 900.0
   terrain_type: hilly_defense
@@ -82,7 +82,7 @@ terrain:
         height_m: 60.0
         width_m: 250.0
     - type: berm
-      position: [3000, 7500]
+      position: [3000, 2500]
       params:
         height_m: 3.0
         radius_m: 100.0
@@ -141,9 +141,12 @@ calibration_overrides:
   # Starting positions — blue holds defensive ridge, red advances from east.
   # 9km separation for a long fighting withdrawal.
   blue_start_x: 1000.0
-  blue_start_y: 7500.0
-  red_start_x: 9500.0
-  red_start_y: 7500.0
+  blue_start_y: 2500.0
+  red_start_x: 8000.0
+  red_start_y: 2500.0
+  defensive_sides:
+    - blue
+  visibility_m: 5000
   # Weapon assignments — correct weapon IDs for each platform
   weapon_assignments:
     "L7 105mm Rifled Gun": l7_105mm

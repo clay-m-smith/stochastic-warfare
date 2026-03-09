@@ -66,28 +66,23 @@ objectives:
 
 victory_conditions:
   - type: time_expired
-    side: blue
+    side: draw
     params:
       max_duration_s: 2592000
-  - type: force_destroyed
-    side: red
-    params:
-      threshold: 0.8
-  - type: morale_collapsed
-    side: ""
 
 calibration_overrides:
-  hit_probability_modifier: 0.8
-  target_size_modifier: 0.5
-  morale_degrade_rate_modifier: 0.1
+  hit_probability_modifier: 0.1
+  target_size_modifier: 0.1
+  max_engagers_per_side: 1
+  morale_degrade_rate_modifier: 0.05
   morale_base_degrade_rate: 0.003
   morale_casualty_weight: 0.3
   morale_check_interval: 50
   blue_force_ratio_modifier: 1.0
   red_force_ratio_modifier: 1.0
-  blue_cohesion: 0.85
-  red_cohesion: 0.4
-  destruction_threshold: 0.7
+  blue_cohesion: 0.7
+  red_cohesion: 0.2
+  destruction_threshold: 0.9
   blue_start_x: 2000.0
   blue_start_y: 7500.0
   red_start_x: 13000.0

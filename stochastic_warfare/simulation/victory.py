@@ -403,7 +403,9 @@ class VictoryEvaluator:
         tick: int,
     ) -> VictoryResult:
         """Check if any side has lost >= threshold fraction of its forces."""
-        threshold = self._config.force_destroyed_threshold
+        threshold = cond.params.get(
+            "threshold", self._config.force_destroyed_threshold,
+        )
         winning_side = cond.side
 
         for side, units in units_by_side.items():

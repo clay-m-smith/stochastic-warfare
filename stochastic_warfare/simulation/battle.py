@@ -117,12 +117,25 @@ def _apply_aggregate_casualties(
     pending_damage: list[tuple[Unit, UnitStatus]],
     destruction_threshold: float = 0.5,
     disable_threshold: float = 0.3,
+    cumulative_tracker: dict[str, int] | None = None,
 ) -> None:
-    """Convert aggregate casualty count to pending unit status changes."""
+    """Convert aggregate casualty count to pending unit status changes.
+
+    When *cumulative_tracker* is provided, casualties are accumulated across
+    ticks and thresholds are evaluated against the running total.  This is
+    essential for aggregate models (volley fire, archery) where a single
+    volley rarely exceeds the threshold on its own.
+    """
     if casualties <= 0:
         return
     total = max(1, len(target.personnel))
-    fraction = casualties / total
+    if cumulative_tracker is not None:
+        cumulative_tracker[target.entity_id] = (
+            cumulative_tracker.get(target.entity_id, 0) + casualties
+        )
+        fraction = cumulative_tracker[target.entity_id] / total
+    else:
+        fraction = casualties / total
     if fraction >= destruction_threshold:
         pending_damage.append((target, UnitStatus.DESTROYED))
     elif fraction >= disable_threshold:
@@ -278,8 +291,14 @@ def _apply_indirect_fire_result(
     pending_damage: list[tuple[Unit, UnitStatus]],
     destruction_threshold: float = 0.5,
     disable_threshold: float = 0.3,
+    cumulative_tracker: dict[str, int] | None = None,
+    terrain_modifier: float = 1.0,
 ) -> None:
-    """Convert indirect fire impacts to damage."""
+    """Convert indirect fire impacts to damage.
+
+    ``terrain_modifier`` scales the per-hit damage fraction — cover reduces
+    effective indirect-fire lethality.
+    """
     hits_near = 0
     for impact in fm_result.impacts:
         dx = impact.position.easting - target.position.easting
@@ -288,11 +307,51 @@ def _apply_indirect_fire_result(
         if dist < 50.0:  # Lethal radius
             hits_near += 1
     if hits_near > 0:
-        fraction = min(1.0, hits_near * 0.15)
+        per_hit = 0.15 * terrain_modifier
+        if cumulative_tracker is not None:
+            cumulative_tracker[target.entity_id] = (
+                cumulative_tracker.get(target.entity_id, 0) + hits_near
+            )
+            fraction = min(1.0, cumulative_tracker[target.entity_id] * per_hit)
+        else:
+            fraction = min(1.0, hits_near * per_hit)
         if fraction >= destruction_threshold:
             pending_damage.append((target, UnitStatus.DESTROYED))
         elif fraction >= disable_threshold:
             pending_damage.append((target, UnitStatus.DISABLED))
+
+
+# ---------------------------------------------------------------------------
+# Aggregate-path suppression helper (Phase 47)
+# ---------------------------------------------------------------------------
+
+
+def _apply_aggregate_suppression(
+    ctx: Any,
+    target: Unit,
+    wpn_inst: Any,
+    range_m: float,
+    dt: float,
+    suppression_states: dict[str, Any],
+) -> None:
+    """Apply suppression from aggregate fire (volley, archery, indirect).
+
+    Mirrors the suppression wiring in the direct-fire path so that older-era
+    engagements also generate suppression effects on the target.
+    """
+    sup_eng = getattr(ctx, "suppression_engine", None)
+    if sup_eng is None:
+        return
+    tid = target.entity_id
+    if tid not in suppression_states:
+        suppression_states[tid] = UnitSuppressionState()
+    sup_eng.apply_fire_volume(
+        state=suppression_states[tid],
+        rounds_per_minute=wpn_inst.definition.rate_of_fire_rpm,
+        caliber_mm=wpn_inst.definition.caliber_mm,
+        range_m=range_m,
+        duration_s=dt,
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -511,6 +570,10 @@ class BattleManager:
         self._ticks_stationary: dict[str, int] = {}
         # Phase 40e: per-unit suppression state
         self._suppression_states: dict[str, UnitSuppressionState] = {}
+        # Phase 47: cumulative aggregate casualties per unit — volley/archery
+        # models produce few casualties per tick, so we must accumulate across
+        # volleys and assess thresholds on the running total.
+        self._cumulative_casualties: dict[str, int] = {}
 
     # ── Engagement detection ────────────────────────────────────────
 
@@ -656,19 +719,25 @@ class BattleManager:
                     else:
                         object.__setattr__(u, "posture", type(u.posture)(1))  # HALTED
 
-        # 5. Engagement — detection + combat
+        # 5. Rebuild enemy data after movement — position arrays from step 1
+        #    are stale (captured pre-movement coordinates).  The Unit object
+        #    references in active_enemies point to updated positions, but the
+        #    numpy arrays are snapshots that must be refreshed.
+        active_enemies, enemy_pos_arrays = self._build_enemy_data(units_by_side)
+
+        # 6. Engagement — detection + combat
         pending_damage = self._execute_engagements(
             ctx, units_by_side, active_enemies, enemy_pos_arrays, dt, timestamp,
         )
 
-        # 6. Apply deferred damage
+        # 7. Apply deferred damage
         self._apply_deferred_damage(pending_damage, ctx.event_bus, timestamp)
 
-        # 7. Morale checks
+        # 8. Morale checks
         if battle.ticks_executed % self._config.morale_check_interval == 0:
             self._execute_morale(ctx, units_by_side, active_enemies, timestamp)
 
-        # 8. Supply consumption (combat rate)
+        # 9. Supply consumption (combat rate)
         if ctx.consumption_engine is not None and ctx.stockpile_manager is not None:
             self._execute_supply_consumption(ctx, units_by_side, dt)
 
@@ -1743,8 +1812,12 @@ class BattleManager:
                 wpn_cat_str = getattr(
                     wpn_inst.definition, "category", "",
                 ).upper()
-                dest_thresh = self._config.destruction_threshold
-                dis_thresh = self._config.disable_threshold
+                dest_thresh = cal.get(
+                    "destruction_threshold", self._config.destruction_threshold,
+                )
+                dis_thresh = cal.get(
+                    "disable_threshold", self._config.disable_threshold,
+                )
 
                 # Phase 43c: naval domain routing (all eras, highest priority)
                 if (
@@ -1763,11 +1836,19 @@ class BattleManager:
                         routed_aggregate = True
 
                 # Phase 43a: era-aware aggregate model routing
+                # Phase 47: aggregate effectiveness modifier — terrain cover
+                # reduces effective casualties, elevation advantage boosts them,
+                # and crew_skill (morale × training × weather × CBRN × readiness)
+                # scales aggregate lethality the same way it scales direct-fire Pk.
+                _terrain_cas_mult = max(0.1, (1.0 - terrain_cover) * elevation_mod)
+                _agg_skill = min(1.0, max(0.1, crew_skill))
+                _agg_modifier = _terrain_cas_mult * _agg_skill
+
                 if not routed_aggregate:
                     era = getattr(ctx.config, "era", "modern")
 
                     if era == "napoleonic":
-                        if wpn_cat_str in ("RIFLE", "CANNON") and best_range > _MELEE_RANGE_M:
+                        if wpn_cat_str in ("RIFLE", "CANNON", "ARTILLERY") and best_range > _MELEE_RANGE_M:
                             vf = getattr(ctx, "volley_fire_engine", None)
                             if vf is not None:
                                 n_muskets = max(1, len(attacker.personnel))
@@ -1780,11 +1861,18 @@ class BattleManager:
                                     formation_firepower_fraction=formation_frac,
                                 )
                                 _apply_aggregate_casualties(
-                                    vr.casualties, best_target, pending_damage,
+                                    int(vr.casualties * _agg_modifier),
+                                    best_target, pending_damage,
                                     dest_thresh, dis_thresh,
+                                    self._cumulative_casualties,
                                 )
                                 side_engagements += 1
                                 routed_aggregate = True
+                                # Suppression from volley fire
+                                _apply_aggregate_suppression(
+                                    ctx, best_target, wpn_inst,
+                                    best_range, dt, self._suppression_states,
+                                )
                         if not routed_aggregate and (
                             wpn_cat_str == "MELEE" or best_range <= _MELEE_RANGE_M
                         ):
@@ -1814,11 +1902,17 @@ class BattleManager:
                                     missile_type=_infer_missile_type(wpn_inst),
                                 )
                                 _apply_aggregate_casualties(
-                                    ar.casualties, best_target, pending_damage,
+                                    int(ar.casualties * _agg_modifier),
+                                    best_target, pending_damage,
                                     dest_thresh, dis_thresh,
+                                    self._cumulative_casualties,
                                 )
                                 side_engagements += 1
                                 routed_aggregate = True
+                                _apply_aggregate_suppression(
+                                    ctx, best_target, wpn_inst,
+                                    best_range, dt, self._suppression_states,
+                                )
                         if not routed_aggregate and (
                             wpn_cat_str == "MELEE" or best_range <= _MELEE_RANGE_M
                         ):
@@ -1837,7 +1931,7 @@ class BattleManager:
                                 routed_aggregate = True
 
                     elif era == "ww1":
-                        if wpn_cat_str == "RIFLE":
+                        if wpn_cat_str in ("RIFLE", "MACHINE_GUN", "LIGHT_MG", "CANNON"):
                             vf = getattr(ctx, "volley_fire_engine", None)
                             if vf is not None:
                                 n_rifles = max(1, len(attacker.personnel))
@@ -1848,11 +1942,17 @@ class BattleManager:
                                     formation_firepower_fraction=1.0,
                                 )
                                 _apply_aggregate_casualties(
-                                    vr.casualties, best_target, pending_damage,
+                                    int(vr.casualties * _agg_modifier),
+                                    best_target, pending_damage,
                                     dest_thresh, dis_thresh,
+                                    self._cumulative_casualties,
                                 )
                                 side_engagements += 1
                                 routed_aggregate = True
+                                _apply_aggregate_suppression(
+                                    ctx, best_target, wpn_inst,
+                                    best_range, dt, self._suppression_states,
+                                )
                         if not routed_aggregate and (
                             wpn_cat_str == "MELEE" or best_range <= _MELEE_RANGE_M
                         ):
@@ -1898,9 +1998,15 @@ class BattleManager:
                                 _apply_indirect_fire_result(
                                     fm_result, best_target, pending_damage,
                                     dest_thresh, dis_thresh,
+                                    self._cumulative_casualties,
+                                    _agg_modifier,
                                 )
                             side_engagements += 1
                             routed_aggregate = True
+                            _apply_aggregate_suppression(
+                                ctx, best_target, wpn_inst,
+                                best_range, dt, self._suppression_states,
+                            )
 
                 # ── Standard direct-fire path (modern, WW2, fallback) ─────
                 if not routed_aggregate:

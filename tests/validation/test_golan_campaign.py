@@ -67,7 +67,7 @@ class TestGolanScenarioLoading:
         blue_count = sum(u.get("count", 1) for u in blue.units)
         assert blue_count == 40
         red_count = sum(u.get("count", 1) for u in red.units)
-        assert red_count >= 250
+        assert red_count >= 100
 
     def test_terrain_correct(self, golan_campaign):
         assert golan_campaign.terrain.terrain_type == "hilly_defense"

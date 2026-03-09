@@ -231,9 +231,9 @@ class TestDomainFiltering:
         wd = _make_weapon_def(category="AIRCRAFT_GUN")
         assert wd.effective_target_domains() == {"GROUND", "AERIAL"}
 
-    def test_missile_launcher_targets_ground_aerial(self):
+    def test_missile_launcher_targets_ground_aerial_naval(self):
         wd = _make_weapon_def(category="MISSILE_LAUNCHER")
-        assert wd.effective_target_domains() == {"GROUND", "AERIAL"}
+        assert wd.effective_target_domains() == {"GROUND", "AERIAL", "NAVAL"}
 
     def test_explicit_override(self):
         """Explicit target_domains overrides category default."""
