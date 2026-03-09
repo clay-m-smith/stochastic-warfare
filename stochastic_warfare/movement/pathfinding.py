@@ -50,12 +50,14 @@ class Pathfinder:
         infrastructure=None,
         obstacles=None,
         hydrography=None,
+        threat_cost_alpha: float = 3.0,
     ) -> None:
         self._heightmap = heightmap
         self._classification = classification
         self._infrastructure = infrastructure
         self._obstacles = obstacles
         self._hydrography = hydrography
+        self._threat_cost_alpha = threat_cost_alpha
 
     def _cell_difficulty(self, pos: Position) -> float:
         """Terrain difficulty multiplier at *pos* (terrain factors only).
@@ -177,7 +179,12 @@ class Pathfinder:
         def heuristic(a: tuple[int, int], b: tuple[int, int]) -> float:
             return math.sqrt((a[0] - b[0]) ** 2 + (a[1] - b[1]) ** 2) * res
 
-        # Threat cost function + per-cell cache
+        # Threat cost function + per-cell cache.
+        # Uses exponential cost: entering last 10% of threat radius is
+        # much costlier than the edge.  At d=tr (edge), cost ≈ 0.
+        # At d=0 (center), cost = res * 5.0.
+        alpha = self._threat_cost_alpha
+        _exp_alpha = math.exp(alpha)
         threat_cost_fn = None
         _threat_cache: dict[tuple[int, int], float] = {}
         if avoid_threats:
@@ -188,7 +195,7 @@ class Pathfinder:
                     dy = pos.northing - tp.northing
                     d = math.sqrt(dx * dx + dy * dy)
                     if d < tr:
-                        extra += (tr - d) / tr * res * 5.0
+                        extra += res * 5.0 * math.exp(alpha * (1.0 - d / tr)) / _exp_alpha
                 return extra
 
             def threat_cost_fn(cell: tuple[int, int], pos: Position) -> float:

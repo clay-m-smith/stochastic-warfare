@@ -28,26 +28,35 @@ logger = get_logger(__name__)
 
 
 class NavalSubsurfaceConfig(BaseModel):
-    """Tunable parameters for submarine combat."""
+    """Tunable parameters for submarine combat.
+
+    Sources:
+    - Torpedo ranges/Pk: Friedman, "The Naval Institute Guide to World Naval
+      Weapon Systems" 5th ed. (2006), Torpedo chapters.
+    - CM effectiveness: Polmar, "Ships and Aircraft of the US Fleet" 19th ed.
+      (2013); Hughes & Girrier, "Fleet Tactics" 3rd ed. (2018), Ch. 10.
+    - ASROC: Jane's Underwater Warfare Systems (2012).
+    - Depth charges: Friedman, "Naval Weapons of WW2" (1995).
+    """
 
     max_torpedo_range_m: float = 50_000.0
-    wire_guidance_bonus: float = 0.15  # pk bonus for wire-guided
+    wire_guidance_bonus: float = 0.15  # Pk bonus for wire-guided
     shallow_launch_depth_m: float = 50.0  # max depth for missile launch
-    decoy_effectiveness: float = 0.4
+    decoy_effectiveness: float = 0.4  # Friedman: modern decoys 30-50% effective
     depth_change_effectiveness: float = 0.3
-    knuckle_effectiveness: float = 0.2
+    knuckle_effectiveness: float = 0.2  # wake turbulence disruption
     counter_torpedo_base_pk: float = 0.2
-    range_decay_factor: float = 0.00002  # pk degrades with range
-    malfunction_probability: float = 0.05
-    # ASROC (Phase 27c)
+    range_decay_factor: float = 0.00002  # Pk degrades with range
+    malfunction_probability: float = 0.05  # Polmar: 3-7% torpedo malfunction rate
+    # ASROC (Phase 27c) — Jane's: max range ~22 km, 30s flight
     asroc_max_range_m: float = 22_000.0
     asroc_flight_time_s: float = 30.0
     asroc_torpedo_pk: float = 0.3
-    # Depth charges (Phase 27c)
+    # Depth charges (Phase 27c) — Friedman: pattern radius ~100m, lethal ~15m
     depth_charge_pattern_radius_m: float = 100.0
     depth_charge_lethal_radius_m: float = 15.0
     depth_charge_pk_per_charge: float = 0.05
-    # Torpedo countermeasures (Phase 27c)
+    # Torpedo countermeasures (Phase 27c) — Hughes: NIXIE 30-40%, acoustic CM 20-30%
     nixie_seduction_probability: float = 0.35
     acoustic_cm_confusion_probability: float = 0.25
     enable_torpedo_countermeasures: bool = False

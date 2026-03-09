@@ -663,9 +663,11 @@ Wire population/civilian engines and strategic/campaign engines.
 
 **Goal**: Replace simplified or physics-incorrect mathematical models with appropriate formulations, validate all unsourced constants against military/scientific literature, and move key tuning parameters to configurable pydantic models.
 
-**Status**: Not started.
+**Status**: **Complete**. 21 new tests (7,565 total Python passing). 11 modified source files + 1 modified test file + 1 new test file.
 
 **Dependencies**: Phases 40--44 (all systems must be wired before formulas can be hardened -- changing a formula in an unwired system has no observable effect).
+
+**Deliverables**: AssessmentConfig pydantic model for configurable thresholds, Hopkinson-Cranz overpressure blast model replacing Gaussian, Weibull maintenance distribution option, `explosive_fill_kg` field on ammo definitions, `moderate_condition_floor` for hit probability bounds, citation comments on 9 source files, exponential threat cost in pathfinding. Sub-phases completed: 45e (Constant Sourcing & Config), 45d (Hit Probability Review), 45b (Morale Constant Validation), 45c (Maintenance Model Review), 45a (Blast Damage Model).
 
 ### 45a: Blast Damage Model
 
@@ -948,19 +950,19 @@ Create a formal regression test for historical accuracy.
 | MODIFY | `stochastic_warfare/combat/air_campaign.py` -- integration interface | 44d |
 | NEW | `tests/unit/test_phase_44_integration.py` | 44a-d |
 
-### Phase 45 (~12 modified + ~1 new test file)
+### Phase 45 (11 modified source + 1 modified test + 1 new test file) -- COMPLETE
 
 | Action | File | Sub-phase |
 |--------|------|-----------|
-| MODIFY | `stochastic_warfare/combat/damage.py` -- Hopkinson-Cranz blast | 45a |
-| MODIFY | `stochastic_warfare/morale/state.py` -- sourced constants | 45b |
+| MODIFY | `stochastic_warfare/combat/damage.py` -- Hopkinson-Cranz blast, explosive_fill_kg | 45a |
+| MODIFY | `stochastic_warfare/morale/state.py` -- sourced constants, citation comments | 45b |
 | MODIFY | `stochastic_warfare/logistics/maintenance.py` -- Weibull option | 45c |
-| MODIFY | `stochastic_warfare/combat/hit_probability.py` -- modifier audit | 45d |
-| MODIFY | `stochastic_warfare/combat/naval_subsurface.py` -- sourced constants | 45e |
-| MODIFY | `stochastic_warfare/combat/naval_gunnery.py` -- sourced constants | 45e |
-| MODIFY | `stochastic_warfare/detection/sonar.py` -- sourced convergence zones | 45e |
-| MODIFY | `stochastic_warfare/c2/ai/assessment.py` -- configurable thresholds | 45e |
-| MODIFY | `stochastic_warfare/escalation/ladder.py` -- sourced weights | 45e |
+| MODIFY | `stochastic_warfare/combat/hit_probability.py` -- moderate_condition_floor, modifier audit | 45d |
+| MODIFY | `stochastic_warfare/combat/naval_subsurface.py` -- sourced constants, citations | 45e |
+| MODIFY | `stochastic_warfare/combat/naval_gunnery.py` -- sourced constants, citations | 45e |
+| MODIFY | `stochastic_warfare/detection/sonar.py` -- sourced convergence zones, citations | 45e |
+| MODIFY | `stochastic_warfare/c2/ai/assessment.py` -- AssessmentConfig pydantic model | 45e |
+| MODIFY | `stochastic_warfare/escalation/ladder.py` -- sourced weights, citations | 45e |
 | MODIFY | `stochastic_warfare/movement/pathfinding.py` -- exponential threat cost | 45e |
 | NEW | `tests/unit/test_phase_45_models.py` | 45a-e |
 

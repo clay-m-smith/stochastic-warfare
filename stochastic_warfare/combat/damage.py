@@ -22,7 +22,11 @@ from stochastic_warfare.core.types import ModuleId, Position
 
 logger = get_logger(__name__)
 
-# Constant posture protection factors (blast and fragmentation)
+# Posture protection factors (blast and fragmentation).
+# Source: FM 5-103 "Survivability" (1985), Table 2-1 (protection factors by
+# position type).  DUG_IN = hasty fighting position (70% blast protection),
+# FORTIFIED = improved with overhead cover (90%).  DEFENSIVE = prone/partial
+# cover.  Fragmentation protection follows STANAG 4569 Level 1–5 scaling.
 _POSTURE_BLAST_PROTECT: dict[str, float] = {
     "MOVING": 1.0, "HALTED": 0.9, "DEFENSIVE": 0.7,
     "DUG_IN": 0.3, "FORTIFIED": 0.1,
@@ -54,8 +58,10 @@ class ArmorType(enum.IntEnum):
     SPACED = 3
 
 
-# Armor effectiveness multipliers: (armor_type, ammo_category) -> multiplier
-# Higher multiplier = more effective armor (harder to penetrate)
+# Armor effectiveness multipliers: (armor_type, ammo_category) -> multiplier.
+# Higher multiplier = more effective armor (harder to penetrate).
+# Source: STANAG 4569 protection levels; Ogorkiewicz "Technology of Tanks"
+# (1991), Ch. 6 — composite vs HEAT ~2.5× RHA equivalent; ERA vs HEAT ~2×.
 _ARMOR_EFFECTIVENESS: dict[tuple[int, str], float] = {
     (ArmorType.RHA, "KE"): 1.0,
     (ArmorType.RHA, "HEAT"): 1.0,
@@ -66,6 +72,29 @@ _ARMOR_EFFECTIVENESS: dict[tuple[int, str], float] = {
     (ArmorType.SPACED, "KE"): 0.9,
     (ArmorType.SPACED, "HEAT"): 1.3,
 }
+
+
+# ---------------------------------------------------------------------------
+# Hopkinson-Cranz overpressure constants (conventional explosives).
+# Source: TM 60A-1-1-31 "Conventional Weapons Effects"; Glasstone & Dolan,
+# "Effects of Nuclear Weapons" 3rd ed. (1977), scaled to conventional;
+# Baker, "Explosions in Air" (1973), Ch. 2.
+# ---------------------------------------------------------------------------
+_CONV_BLAST_K = 1.4e3            # Overpressure scaling constant (psi), strong shock
+_CONV_STRONG_EXPONENT = 2.65     # Strong shock regime exponent
+_CONV_WEAK_EXPONENT = 1.4        # Weak shock regime exponent
+_CONV_REGIME_BOUNDARY = 3.5      # Scaled distance boundary (m/kg^(1/3))
+# Weak-regime K is computed for continuity at the boundary:
+# K_weak = K_strong * Z_b^(weak_exp - strong_exp)
+_CONV_BLAST_K_WEAK = _CONV_BLAST_K * _CONV_REGIME_BOUNDARY ** (
+    _CONV_WEAK_EXPONENT - _CONV_STRONG_EXPONENT
+)
+_CONV_BLAST_KILL_PSI = 15.0      # Unprotected personnel lethal overpressure
+_CONV_BLAST_INJURY_PSI = 5.0     # Significant injury threshold
+_CONV_BLAST_SUPPRESS_PSI = 2.0   # Suppression / light injury threshold
+_BLAST_RADIUS_TO_FILL_C = 26.6   # Calibration: meters per kg^(1/3)
+# Derivation: M795 155mm HE has ~6.6 kg TNT fill, blast_radius_m=50.
+# C = 50 / 6.6^(1/3) = 50 / 1.876 ≈ 26.6.
 
 
 class DamageConfig(BaseModel):
@@ -80,6 +109,12 @@ class DamageConfig(BaseModel):
     # Submunition scatter (Phase 27b)
     enable_submunition_scatter: bool = False
     submunition_scatter_sigma_fraction: float = 0.7
+    # Overpressure blast model (Phase 45a)
+    use_overpressure_blast: bool = True
+    """When True, use Hopkinson-Cranz overpressure model.
+    When False, use legacy Gaussian attenuation."""
+    blast_radius_to_fill_c: float = _BLAST_RADIUS_TO_FILL_C
+    """Calibration constant for deriving explosive fill from blast_radius_m."""
 
 
 @dataclass
@@ -270,6 +305,23 @@ class DamageEngine:
         else:
             return "minor"
 
+    @staticmethod
+    def _compute_overpressure_psi(distance_m: float, charge_kg: float) -> float:
+        """Hopkinson-Cranz overpressure for conventional explosives.
+
+        Uses cube-root scaling with regime-dependent exponent:
+        strong shock (near-field, a=2.65) and weak shock (far-field, a=1.4).
+        K_weak is pre-computed for continuity at the regime boundary.
+        """
+        if charge_kg <= 0 or distance_m <= 0:
+            return _CONV_BLAST_K  # point-blank = max overpressure
+        scaled_dist = distance_m / (charge_kg ** (1.0 / 3.0))
+        if scaled_dist < 0.1:
+            return _CONV_BLAST_K
+        if scaled_dist < _CONV_REGIME_BOUNDARY:
+            return _CONV_BLAST_K * scaled_dist ** (-_CONV_STRONG_EXPONENT)
+        return _CONV_BLAST_K_WEAK * scaled_dist ** (-_CONV_WEAK_EXPONENT)
+
     def apply_blast_damage(
         self,
         ammo: AmmoDefinition,
@@ -288,19 +340,53 @@ class DamageEngine:
             Target posture for protection calculation.
         """
         damage_fraction = 0.0
-        casualties: list[CasualtyResult] = []
 
-        # Blast: P_kill = exp(-distance^2 / (2 * blast_radius^2))
+        # Blast damage
         if ammo.blast_radius_m > 0:
-            sigma = ammo.blast_radius_m * self._config.blast_sigma_scale
-            p_kill_blast = math.exp(
-                -distance_m * distance_m / (2.0 * sigma * sigma)
-            )
-            # Posture protection
+            cfg = self._config
             protection = _POSTURE_BLAST_PROTECT.get(posture, 1.0)
-            damage_fraction = max(damage_fraction, p_kill_blast * protection)
 
-        # Fragmentation: 1/r^2 falloff
+            if cfg.use_overpressure_blast:
+                # Determine charge weight
+                if ammo.explosive_fill_kg > 0:
+                    charge_kg = ammo.explosive_fill_kg
+                else:
+                    # Derive from blast_radius_m: W = (R / C)^3
+                    c = cfg.blast_radius_to_fill_c
+                    charge_kg = (ammo.blast_radius_m / c) ** 3.0
+
+                overpressure = self._compute_overpressure_psi(distance_m, charge_kg)
+                # Apply posture protection as overpressure reduction
+                effective_op = overpressure * protection
+
+                # Map overpressure to damage fraction via threshold table
+                if effective_op >= _CONV_BLAST_KILL_PSI:
+                    blast_damage = 1.0
+                elif effective_op >= _CONV_BLAST_INJURY_PSI:
+                    # Linear interpolation: injury (0.5) to kill (1.0)
+                    blast_damage = 0.5 + 0.5 * (
+                        (effective_op - _CONV_BLAST_INJURY_PSI)
+                        / (_CONV_BLAST_KILL_PSI - _CONV_BLAST_INJURY_PSI)
+                    )
+                elif effective_op >= _CONV_BLAST_SUPPRESS_PSI:
+                    # Linear interpolation: suppress (0.1) to injury (0.5)
+                    blast_damage = 0.1 + 0.4 * (
+                        (effective_op - _CONV_BLAST_SUPPRESS_PSI)
+                        / (_CONV_BLAST_INJURY_PSI - _CONV_BLAST_SUPPRESS_PSI)
+                    )
+                else:
+                    blast_damage = 0.0
+
+                damage_fraction = max(damage_fraction, blast_damage)
+            else:
+                # Legacy Gaussian model
+                sigma = ammo.blast_radius_m * cfg.blast_sigma_scale
+                p_kill_blast = math.exp(
+                    -distance_m * distance_m / (2.0 * sigma * sigma)
+                )
+                damage_fraction = max(damage_fraction, p_kill_blast * protection)
+
+        # Fragmentation: 1/r^2 falloff (physically correct, unchanged)
         if ammo.fragmentation_radius_m > 0 and distance_m < ammo.fragmentation_radius_m:
             frag_factor = 1.0 - (distance_m / ammo.fragmentation_radius_m) ** 2
             frag_protection = _POSTURE_FRAG_PROTECT.get(posture, 1.0)

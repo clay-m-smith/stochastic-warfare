@@ -246,7 +246,10 @@ class SonarEngine:
         annulus of width *cz_width*.
         """
         if cz_ranges is None:
-            # Default: first CZ at ~55 km, second at ~110 km
+            # Default: first CZ at ~55 km, second at ~110 km.
+            # Source: Urick, "Principles of Underwater Sound" 3rd ed. (1983),
+            # Ch. 6 — CZ at ~30 nmi (~55 km) in deep water, repeating at
+            # multiples.  Width ~5 km (2.7 nmi).
             cz_ranges = [55000.0, 110000.0]
 
         for cz_center in cz_ranges:
@@ -283,7 +286,12 @@ class SonarEngine:
 
     @staticmethod
     def _bearing_uncertainty(sonar_type: SonarType) -> float:
-        """Return bearing uncertainty in degrees for the sonar type."""
+        """Return bearing uncertainty in degrees for the sonar type.
+
+        Source: Urick, "Principles of Underwater Sound" 3rd ed. (1983),
+        Ch. 3 & 11.  Towed array ~1° (large aperture), hull-mounted ~3°,
+        sonobuoy ~5° (small aperture), dipping ~2°.
+        """
         if sonar_type == SonarType.TOWED_ARRAY:
             return 1.0
         elif sonar_type == SonarType.HULL_MOUNTED:

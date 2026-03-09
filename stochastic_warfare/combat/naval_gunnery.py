@@ -35,7 +35,16 @@ logger = get_logger(__name__)
 
 
 class NavalGunneryConfig(BaseModel):
-    """Configuration for WW2-era naval gunnery."""
+    """Configuration for WW2-era naval gunnery.
+
+    Sources:
+    - Bracket convergence: Campbell, "Naval Weapons of World War Two" (1985),
+      Ch. 1 — typical initial bracket 400m, correction 30-50% per salvo.
+    - Hit probabilities: Friedman, "Naval Firepower" (2008), Ch. 4 — straddle
+      Pk ~3-8% per shell for 14-16" guns at 15-20 kyd.
+    - Dispersion: Jurens, "The Evolution of Battleship Gunnery in the US Navy,
+      1920-1945", Warship International (1991) — 5 mrad range, 2 mrad deflection.
+    """
 
     initial_bracket_m: float = 400.0
     """Initial bracket width in meters around the estimated target range."""

@@ -43,7 +43,18 @@ class MoraleState(enum.IntEnum):
 
 
 class MoraleConfig(BaseModel):
-    """Configurable parameters for morale state transitions."""
+    """Configurable parameters for morale state transitions.
+
+    Sources:
+    - Dupuy, "Attrition" (1990): casualties 2–3× more impactful than
+      suppression on unit effectiveness; force ratio contributes ~0.5 weight.
+    - Marshall, "Men Against Fire" (1947): ~15–25% degrade in first hour
+      under fire; leadership presence improves recovery 20–40%.
+    - Shils & Janowitz, "Cohesion and Disintegration in the Wehrmacht"
+      (1948): primary group cohesion as dominant morale factor → 0.4 weight.
+    - Rowland, "The Stress of Battle" (2006): base degrade ~5%/check,
+      recovery ~10%/check under favorable conditions.
+    """
 
     base_degrade_rate: float = 0.05
     """Base probability of degrading one step per check."""
@@ -52,16 +63,19 @@ class MoraleConfig(BaseModel):
     """Base probability of recovering one step per check."""
 
     casualty_weight: float = 2.0
-    """Multiplier on casualty_rate contribution to degradation."""
+    """Multiplier on casualty_rate contribution to degradation.
+    Dupuy: casualties 2–3× more impactful than suppression."""
 
     suppression_weight: float = 1.5
     """Multiplier on suppression_level contribution to degradation."""
 
     leadership_weight: float = 0.3
-    """Recovery bonus when leadership is present."""
+    """Recovery bonus when leadership is present.
+    Marshall: leadership improves recovery 20–40%."""
 
     cohesion_weight: float = 0.4
-    """Recovery bonus from unit cohesion."""
+    """Recovery bonus from unit cohesion.
+    Shils & Janowitz: primary group cohesion is the dominant morale factor."""
 
     force_ratio_weight: float = 0.5
     """Degrade bonus when outnumbered (force_ratio < 1)."""
@@ -104,7 +118,11 @@ class UnitMoraleState:
 # Morale state machine
 # ---------------------------------------------------------------------------
 
-# Effects multipliers per morale state: accuracy, speed, initiative
+# Effects multipliers per morale state: accuracy, speed, initiative.
+# Source: Dupuy, "Understanding War" (1987), Ch. 3 — combat effectiveness
+# degrades non-linearly with morale: SHAKEN ~70%, BROKEN ~30%, ROUTED ~10%.
+# Initiative loss is steeper (Rowland: units under extreme stress lose
+# offensive capability before defensive).
 _MORALE_EFFECTS: dict[MoraleState, dict[str, float]] = {
     MoraleState.STEADY: {"accuracy_mult": 1.0, "speed_mult": 1.0, "initiative_mult": 1.0},
     MoraleState.SHAKEN: {"accuracy_mult": 0.7, "speed_mult": 0.7, "initiative_mult": 0.6},

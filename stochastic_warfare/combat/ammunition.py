@@ -194,6 +194,10 @@ class AmmoDefinition(BaseModel):
     penetration_reference_range_m: float = 0.0
     blast_radius_m: float = 0.0
     fragmentation_radius_m: float = 0.0
+    explosive_fill_kg: float = 0.0
+    """TNT-equivalent explosive fill in kg.  When > 0, used directly for
+    Hopkinson-Cranz blast calculation.  When 0 (all legacy YAML), derived
+    from blast_radius_m via calibration constant."""
 
     # Guidance (for guided munitions)
     guidance: str = "NONE"

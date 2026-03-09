@@ -14,6 +14,7 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 
 import numpy as np
+from pydantic import BaseModel
 
 from stochastic_warfare.c2.events import SituationAssessedEvent
 from stochastic_warfare.core.events import EventBus
@@ -69,30 +70,53 @@ class SituationAssessment:
 
 
 # ---------------------------------------------------------------------------
-# Default thresholds (ascending: VU/U boundary, U/N boundary, N/F, F/VF)
+# Configuration
 # ---------------------------------------------------------------------------
 
-_FORCE_RATIO_THRESHOLDS = (0.4, 0.8, 1.5, 3.0)
-_TERRAIN_THRESHOLDS = (-0.5, -0.2, 0.2, 0.5)
-_SUPPLY_THRESHOLDS = (0.15, 0.3, 0.5, 0.8)
-_MORALE_THRESHOLDS = (0.2, 0.4, 0.6, 0.8)
-_INTEL_THRESHOLDS = (0.15, 0.35, 0.6, 0.8)
-_ENV_THRESHOLDS = (0.15, 0.3, 0.5, 0.8)
-_C2_THRESHOLDS = (0.2, 0.4, 0.6, 0.8)
 
-# Overall rating maps a 0-4 weighted average back to a rating
-_OVERALL_THRESHOLDS = (1.0, 1.75, 2.5, 3.25)
+class AssessmentConfig(BaseModel):
+    """Configurable thresholds and weights for situation assessment.
 
-# Weights for overall rating computation
-_WEIGHTS = {
-    "force_ratio": 0.30,
-    "terrain": 0.10,
-    "supply": 0.15,
-    "morale": 0.15,
-    "intel": 0.10,
-    "environmental": 0.05,
-    "c2": 0.15,
-}
+    All threshold tuples are ascending: (VU/U boundary, U/N, N/F, F/VF).
+    """
+
+    force_ratio_thresholds: tuple[float, float, float, float] = (0.4, 0.8, 1.5, 3.0)
+    terrain_thresholds: tuple[float, float, float, float] = (-0.5, -0.2, 0.2, 0.5)
+    supply_thresholds: tuple[float, float, float, float] = (0.15, 0.3, 0.5, 0.8)
+    morale_thresholds: tuple[float, float, float, float] = (0.2, 0.4, 0.6, 0.8)
+    intel_thresholds: tuple[float, float, float, float] = (0.15, 0.35, 0.6, 0.8)
+    env_thresholds: tuple[float, float, float, float] = (0.15, 0.3, 0.5, 0.8)
+    c2_thresholds: tuple[float, float, float, float] = (0.2, 0.4, 0.6, 0.8)
+    overall_thresholds: tuple[float, float, float, float] = (1.0, 1.75, 2.5, 3.25)
+
+    weights: dict[str, float] = {
+        "force_ratio": 0.30,
+        "terrain": 0.10,
+        "supply": 0.15,
+        "morale": 0.15,
+        "intel": 0.10,
+        "environmental": 0.05,
+        "c2": 0.15,
+    }
+
+    # Confidence formula weights
+    confidence_intel_weight: float = 0.4
+    confidence_c2_weight: float = 0.3
+    confidence_experience_weight: float = 0.2
+    confidence_staff_weight: float = 0.1
+
+    # Opportunity thresholds
+    opportunity_force_ratio: float = 2.0
+    opportunity_terrain: float = 0.3
+    opportunity_supply: float = 0.8
+    opportunity_morale: float = 0.7
+
+    # Threat thresholds
+    threat_force_ratio: float = 0.5
+    threat_supply: float = 0.2
+    threat_morale: float = 0.3
+    threat_c2: float = 0.3
+    threat_weather: float = 0.7
 
 
 # ---------------------------------------------------------------------------
@@ -109,11 +133,20 @@ class SituationAssessor:
         Bus for publishing :class:`SituationAssessedEvent`.
     rng : numpy.random.Generator
         Deterministic PRNG stream for confidence noise.
+    config : AssessmentConfig | None
+        Configurable thresholds and weights.  Defaults match prior
+        hardcoded values for zero behavioral change.
     """
 
-    def __init__(self, event_bus: EventBus, rng: np.random.Generator) -> None:
+    def __init__(
+        self,
+        event_bus: EventBus,
+        rng: np.random.Generator,
+        config: AssessmentConfig | None = None,
+    ) -> None:
         self._event_bus = event_bus
         self._rng = rng
+        self._config = config or AssessmentConfig()
 
     # -- Public API ---------------------------------------------------------
 
@@ -192,21 +225,23 @@ class SituationAssessor:
         if ts is None:
             ts = datetime.now(tz=timezone.utc)
 
+        cfg = self._config
+
         # 1. Force ratio
         if enemy_power <= 0.0:
             force_ratio = float("inf")
         else:
             force_ratio = friendly_power / enemy_power
-        force_ratio_rating = self._rate(force_ratio, _FORCE_RATIO_THRESHOLDS)
+        force_ratio_rating = self._rate(force_ratio, cfg.force_ratio_thresholds)
 
         # 2. Terrain
-        terrain_rating = self._rate(terrain_advantage, _TERRAIN_THRESHOLDS)
+        terrain_rating = self._rate(terrain_advantage, cfg.terrain_thresholds)
 
         # 3. Supply
-        supply_rating = self._rate(supply_level, _SUPPLY_THRESHOLDS)
+        supply_rating = self._rate(supply_level, cfg.supply_thresholds)
 
         # 4. Morale
-        morale_rating = self._rate(morale_level, _MORALE_THRESHOLDS)
+        morale_rating = self._rate(morale_level, cfg.morale_thresholds)
 
         # 5. Intel quality — derived from contact count.
         # Each confirmed contact adds 0.2 to quality, capped at 1.0.
@@ -216,15 +251,15 @@ class SituationAssessor:
             intel_quality = 1.0  # contacts exist but no estimated enemy power
         else:
             intel_quality = 0.0
-        intel_rating = self._rate(intel_quality, _INTEL_THRESHOLDS)
+        intel_rating = self._rate(intel_quality, cfg.intel_thresholds)
 
         # 6. Environmental
         env_score = (visibility_km / 10.0) * illumination * (1.0 - weather_severity * 0.5)
         env_score = max(0.0, min(1.0, env_score))
-        environmental_rating = self._rate(env_score, _ENV_THRESHOLDS)
+        environmental_rating = self._rate(env_score, cfg.env_thresholds)
 
         # 7. C2
-        c2_rating = self._rate(c2_effectiveness, _C2_THRESHOLDS)
+        c2_rating = self._rate(c2_effectiveness, cfg.c2_thresholds)
 
         # 8. Overall — weighted average of all ratings (int values 0-4)
         ratings = {
@@ -237,7 +272,7 @@ class SituationAssessor:
             "c2": c2_rating,
         }
         # Apply weight overrides: multiply then re-normalize
-        effective_weights = dict(_WEIGHTS)
+        effective_weights = dict(cfg.weights)
         if weight_overrides:
             for key in effective_weights:
                 if key in weight_overrides:
@@ -249,40 +284,40 @@ class SituationAssessor:
         weighted_sum = sum(
             int(ratings[key]) * effective_weights[key] for key in effective_weights
         )
-        overall_rating = self._rate(weighted_sum, _OVERALL_THRESHOLDS)
+        overall_rating = self._rate(weighted_sum, cfg.overall_thresholds)
 
         # 9. Confidence
         raw_confidence = (
-            intel_quality * 0.4
-            + c2_effectiveness * 0.3
-            + experience * 0.2
-            + staff_quality * 0.1
+            intel_quality * cfg.confidence_intel_weight
+            + c2_effectiveness * cfg.confidence_c2_weight
+            + experience * cfg.confidence_experience_weight
+            + staff_quality * cfg.confidence_staff_weight
         )
         noise_mult = 1.0 + float(self._rng.normal(0.0, 0.05))
         confidence = max(0.0, min(1.0, raw_confidence * noise_mult))
 
         # 10. Opportunities
         opportunities: list[str] = []
-        if force_ratio > 2.0:
+        if force_ratio > cfg.opportunity_force_ratio:
             opportunities.append("numerical_superiority")
-        if terrain_advantage > 0.3:
+        if terrain_advantage > cfg.opportunity_terrain:
             opportunities.append("terrain_advantage")
-        if supply_level > 0.8:
+        if supply_level > cfg.opportunity_supply:
             opportunities.append("logistics_advantage")
-        if morale_level > 0.7:
+        if morale_level > cfg.opportunity_morale:
             opportunities.append("high_morale")
 
         # 11. Threats
         threats: list[str] = []
-        if force_ratio < 0.5:
+        if force_ratio < cfg.threat_force_ratio:
             threats.append("outnumbered")
-        if supply_level < 0.2:
+        if supply_level < cfg.threat_supply:
             threats.append("supply_critical")
-        if morale_level < 0.3:
+        if morale_level < cfg.threat_morale:
             threats.append("morale_crisis")
-        if c2_effectiveness < 0.3:
+        if c2_effectiveness < cfg.threat_c2:
             threats.append("c2_degraded")
-        if weather_severity > 0.7:
+        if weather_severity > cfg.threat_weather:
             threats.append("severe_weather")
 
         # Build the frozen assessment

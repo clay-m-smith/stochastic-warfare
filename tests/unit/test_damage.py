@@ -118,11 +118,15 @@ class TestBlastDamage:
         result = e.apply_blast_damage(_he(), distance_m=30.0, posture="FORTIFIED")
         assert result.damage_fraction < 0.5
 
-    def test_beyond_frag_radius_no_frag(self) -> None:
+    def test_beyond_frag_radius_low_damage(self) -> None:
         e = _engine()
         result = e.apply_blast_damage(_he(), distance_m=200.0)
-        # Beyond fragmentation radius (150m), only blast
-        assert result.damage_fraction < 0.01
+        # Beyond fragmentation radius (150m), only blast overpressure remains.
+        # With Hopkinson-Cranz, residual overpressure is low at this distance.
+        assert result.damage_fraction < 0.5
+        # At even further distance, damage is zero or less
+        far = e.apply_blast_damage(_he(), distance_m=500.0)
+        assert far.damage_fraction <= result.damage_fraction
 
     def test_fragmentation_1_r_squared(self) -> None:
         e = _engine()

@@ -55,7 +55,13 @@ class EscalationLevel(enum.IntEnum):
 
 
 class DesperationWeights(BaseModel):
-    """Weights for the five desperation factors (must sum to ~1.0)."""
+    """Weights for the five desperation factors (must sum to ~1.0).
+
+    Source: Kahn, "On Escalation" (1965), Ch. 2 — casualties and supply
+    deprivation are the primary drivers; political pressure and stalemate
+    are secondary but accumulate over time.  Schelling, "Arms and
+    Influence" (1966), Ch. 3 — stalemate duration as escalation catalyst.
+    """
 
     casualty: float = 0.30
     supply: float = 0.20
@@ -66,7 +72,13 @@ class DesperationWeights(BaseModel):
 
 
 class EscalationLadderConfig(BaseModel):
-    """Configuration for the escalation ladder."""
+    """Configuration for the escalation ladder.
+
+    Source: Kahn, "On Escalation" (1965) — 44-rung ladder compressed to
+    11 levels.  Entry thresholds spaced to model increasing reluctance at
+    higher levels.  Hysteresis 0.7 prevents oscillation (Schelling:
+    commitment mechanisms make de-escalation harder than escalation).
+    """
 
     entry_thresholds: list[float] = [
         0.0, 0.15, 0.25, 0.35, 0.50,

@@ -22,7 +22,20 @@ logger = get_logger(__name__)
 
 
 class HitProbabilityConfig(BaseModel):
-    """Tunable parameters for hit probability computation."""
+    """Tunable parameters for hit probability computation.
+
+    Sources:
+    - Base dispersion model: area-ratio P(hit) from circular error
+      probable, standard in ballistic fire control (e.g., USMC TM
+      11000-15/1D "Employment of Machine Guns").
+    - Crew skill: bounded [0.5, 0.8] — trained gunner ~50% base,
+      expert +30% (Jane's Infantry Weapons, various editions).
+    - Motion penalties: lead angle error / stabilization degradation.
+      Target motion 15% per 10 m/s, shooter motion 25% per 10 m/s
+      (reflects inherent difficulty of fire-on-the-move without
+      modern stabilization).
+    - Posture: DUG_IN 40% area reduction from FM 5-103 fighting position.
+    """
 
     base_hit_fraction: float = 0.8
     crew_skill_weight: float = 0.3
@@ -33,6 +46,10 @@ class HitProbabilityConfig(BaseModel):
     uncertainty_penalty_scale: float = 0.01
     min_phit: float = 0.01
     max_phit: float = 0.99
+    moderate_condition_floor: float = 0.03
+    """Floor applied after all modifiers but before final clamp.
+    Prevents extreme penalty stacking from driving Pk below 3%.
+    Since 0.03 > min_phit, only matters when penalties compound."""
 
 
 @dataclass
@@ -183,6 +200,9 @@ class HitProbabilityEngine:
         if elevation_mod != 1.0:
             p *= elevation_mod
             modifiers["elevation"] = elevation_mod
+
+        # Moderate condition floor — prevents extreme penalty stacking
+        p = max(p, cfg.moderate_condition_floor)
 
         # Clamp
         p = max(cfg.min_phit, min(cfg.max_phit, p))

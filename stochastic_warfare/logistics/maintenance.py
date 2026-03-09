@@ -63,17 +63,40 @@ class MaintenanceRecord:
 
 
 class MaintenanceConfig(BaseModel):
-    """Tuning parameters for maintenance engine."""
+    """Tuning parameters for maintenance engine.
+
+    Sources:
+    - MIL-HDBK-217F "Reliability Prediction of Electronic Equipment" (1991):
+      MTBF 200-1000h for military ground vehicles; 500h is mid-range.
+    - Temperature thresholds: MIL-STD-810G Method 501.5 / 502.5 — extreme
+      heat >45°C and extreme cold <-20°C degrade reliability ~1.5×.
+    - Deferred maintenance: FM 4-30.31 "Recovery and Battle Damage
+      Assessment" — deferred maintenance doubles failure rate.
+    """
 
     base_mtbf_hours: float = 500.0
+    """Mid-range military vehicle MTBF (MIL-HDBK-217F: 200-1000h)."""
     deferred_maintenance_multiplier: float = 2.0
+    """Failure rate multiplier when maintenance overdue (FM 4-30.31)."""
     repair_time_hours: float = 4.0
     spare_parts_per_repair: float = 1.0
     environmental_stress_multiplier: float = 1.5
+    """Reliability degradation under extreme temperature (MIL-STD-810G)."""
     environmental_stress_threshold_c: float = 45.0
+    """Heat stress threshold in °C (MIL-STD-810G Method 501.5)."""
     cold_stress_threshold_c: float = -20.0
-    maintenance_due_fraction: float = 0.9  # fraction of MTBF when maintenance is due
+    """Cold stress threshold in °C (MIL-STD-810G Method 502.5)."""
+    maintenance_due_fraction: float = 0.9
     condition_restored_after_repair: float = 0.95
+
+    use_weibull: bool = False
+    """When True, use Weibull hazard function instead of exponential.
+    k=1.0 is mathematically identical to exponential (current default).
+    Typical military equipment: k=1.2-1.8 (MIL-HDBK-217F, Annex B)."""
+    weibull_shape_k: float = 1.0
+    """Weibull shape parameter.  k<1: decreasing failure rate (infant
+    mortality).  k=1: constant (exponential).  k>1: increasing failure
+    rate (wear-out) — typical for mechanical military equipment."""
 
 
 # ---------------------------------------------------------------------------
@@ -166,9 +189,19 @@ class MaintenanceEngine:
                         or temperature_c <= self._config.cold_stress_threshold_c):
                     mtbf /= self._config.environmental_stress_multiplier
 
-                # Poisson breakdown check
+                # Breakdown check: exponential or Weibull
                 if mtbf > 0:
-                    p_fail = 1.0 - math.exp(-dt_hours / mtbf)
+                    k = self._config.weibull_shape_k
+                    if self._config.use_weibull and k != 1.0:
+                        # Weibull hazard: h(t) = (k/η)(t/η)^(k-1)
+                        # P(fail in dt) = 1 - exp(-h(t) * dt)
+                        t = max(rec.hours_since_maintenance, dt_hours)
+                        eta = mtbf  # scale parameter = MTBF when k=1
+                        hazard = (k / eta) * (t / eta) ** (k - 1.0)
+                        p_fail = 1.0 - math.exp(-hazard * dt_hours)
+                    else:
+                        # Exponential (constant failure rate)
+                        p_fail = 1.0 - math.exp(-dt_hours / mtbf)
                     if self._rng.random() < p_fail:
                         rec.status = MaintenanceStatus.AWAITING_PARTS
                         rec.condition = 0.0
