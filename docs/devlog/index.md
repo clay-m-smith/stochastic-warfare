@@ -66,6 +66,7 @@ Rolling record of implementation decisions, changes, and lessons learned across 
 | 50 | Combat Fidelity Polish | **Complete** | [phase-50.md](phase-50.md) |
 | 51 | Naval Combat Completeness | **Complete** | [phase-51.md](phase-51.md) |
 | 52 | Environmental Continuity | **Complete** | [phase-52.md](phase-52.md) |
+| 53 | C2 & AI Completeness | **Complete** | [phase-53.md](phase-53.md) |
 
 ## Post-MVP Refinement Index
 
@@ -171,8 +172,8 @@ Known limitations and deferred improvements logged during implementation. Review
 | 19 | ~~CommanderEngine not wired into SimulationContext~~ *(resolved Phase 25d)* | [phase-19.md — Known Limitations](phase-19.md#known-limitations) |
 | 19 | ~~battle.py passes assessment=None to decide()~~ *(resolved Phase 25b)* | [phase-19.md — Known Limitations](phase-19.md#known-limitations) |
 | 16/17/18/19 | ~~ScenarioLoader doesn't auto-wire SchoolRegistry from YAML~~ *(resolved Phase 25a)* | [phase-19.md — Known Limitations](phase-19.md#known-limitations) |
-| 19 | ~~`get_coa_score_weight_overrides()` hook not called in battle loop~~ *(resolved Phase 25b)* / `get_stratagem_affinity()` still deferred | [phase-19.md — Postmortem](phase-19.md#postmortem) |
-| 19 | `CommanderPersonality.school_id` field defined but never read — schools assigned via SchoolRegistry instead | [phase-19.md — Postmortem](phase-19.md#postmortem) |
+| 19 | ~~`get_coa_score_weight_overrides()` hook not called in battle loop~~ *(resolved Phase 25b)* / ~~`get_stratagem_affinity()` still deferred~~ *(resolved Phase 53c — called in DECIDE phase with school affinity weights)* | [phase-19.md — Postmortem](phase-19.md#postmortem) |
+| 19 | ~~`CommanderPersonality.school_id` field defined but never read — schools assigned via SchoolRegistry instead~~ *(resolved Phase 53c — auto-assigns via SchoolRegistry in _apply_commander_assignments())* | [phase-19.md — Postmortem](phase-19.md#postmortem) |
 | 20 | Convoy engine does not model individual escort positions (abstract effectiveness parameter) | [phase-20.md — Known Limitations](phase-20.md#known-limitations) |
 | 20 | Strategic bombing target regeneration is linear (no industrial interdependency graph) | [phase-20.md — Known Limitations](phase-20.md#known-limitations) |
 | 20 | Fighter escort in strategic bombing is probability modifier, not full air combat sub-simulation | [phase-20.md — Known Limitations](phase-20.md#known-limitations) |
@@ -228,13 +229,15 @@ Known limitations and deferred improvements logged during implementation. Review
 | 48 | ~~`roe_level` only in 2 of ~37 scenarios; other candidates (COIN, peacekeeping) missing~~ *(resolved Phase 49c — expanded coverage)* | [phase-48.md — Postmortem](phase-48.md#postmortem) |
 | 48 | ~~Morale config weights (cohesion, leadership, suppression, transition_cooldown) consumed by scenario_runner but never tuned~~ *(resolved Phase 49c — exercised in test)* | [phase-48.md — Postmortem](phase-48.md#postmortem) |
 | 48 | ~~`victory_weights` consumed by engine.py but no scenario uses it — composite victory scoring untested~~ *(resolved Phase 49c — exercised in test)* | [phase-48.md — Postmortem](phase-48.md#postmortem) |
-| 48 | 4 SEAD/IADS/Escalation params unresolved — `sead_effectiveness`, `sead_arm_effectiveness`, `iads_degradation_rate`, `drone_provocation_prob` | [phase-48.md — Postmortem](phase-48.md#postmortem) |
+| 48 | 4 SEAD/IADS/Escalation params unresolved — ~~`sead_effectiveness`~~ *(resolved Phase 53e — wired into apply_sead_damage)*, ~~`iads_degradation_rate`~~ *(resolved Phase 53e — wired into IadsConfig)*, `sead_arm_effectiveness` *(defined on IadsConfig but unconsumed)*, `drone_provocation_prob` *(in CalibrationSchema but unconsumed)* | [phase-48.md — Postmortem](phase-48.md#postmortem) |
 | 48 | Resolution switching causes long-range battles to resolve via time_expired instead of combat | [phase-48.md — Postmortem](phase-48.md#postmortem) |
 | 51 | Naval posture detection modifiers not implemented (ANCHORED cross-section, TRANSIT reduced emissions, BATTLE_STATIONS active sensors) | [phase-51.md — Known Limitations](phase-51.md#known-limitations) |
 | 51 | Blockade throughput reduction not integrated into supply_network.py route costs | [phase-51.md — Known Limitations](phase-51.md#known-limitations) |
 | 51 | No scenarios exercise VLS magazine_capacity or mine encounters end-to-end | [phase-51.md — Known Limitations](phase-51.md#known-limitations) |
 | 48 | ~~Calibration audit test lists `advance_speed` in `_EXTERNAL_KEYS` but it's not consumed — false pass~~ *(resolved Phase 49b — schema-based validation)* | [phase-48.md — Postmortem](phase-48.md#postmortem) |
 | 48 | ~~`calibration_overrides` is free-form `dict[str, Any]` — no schema validation, mistyped keys pass silently~~ *(resolved Phase 49a — typed CalibrationSchema pydantic model)* | [phase-48.md — Postmortem](phase-48.md#postmortem) |
+| 53 | `sead_arm_effectiveness` defined on IadsConfig but never consumed in any code path (only `sead_effectiveness` used in `apply_sead_damage()`) | [phase-53.md — Postmortem](phase-53.md#postmortem) |
+| 53 | `drone_provocation_prob` in CalibrationSchema but never consumed by any engine (no escalation trigger integration point) | [phase-53.md — Postmortem](phase-53.md#postmortem) |
 
 ## Conventions
 

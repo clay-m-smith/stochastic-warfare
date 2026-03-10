@@ -869,7 +869,7 @@ Synchronize all documentation.
 | E5 | `roe_level` sparse coverage | Phase 49c + 55c |
 | E6 | Morale config weights unused | Phase 49c |
 | E7 | `victory_weights` untested | Phase 49c |
-| E8 | 4 SEAD/IADS params unwired | Phase 53e |
+| ~~E8~~ | ~~4 SEAD/IADS params unwired~~ | ~~Phase 53e~~ (**partial** — sead_effectiveness + iads_degradation_rate wired; sead_arm_effectiveness unconsumed, drone_provocation_prob unconsumed) |
 | E9 | Resolution switching time_expired | Phase 55a |
 | E10 | Calibration audit false pass | Phase 49b |
 
@@ -888,7 +888,7 @@ Synchronize all documentation.
 | D9 | Weather stops at visibility | Phase 52b |
 | D10 | Maintenance registration | Phase 56b |
 | D11 | Medical/engineering data sparse | Phase 56c |
-| D12 | Per-commander assessment | Phase 53a |
+| ~~D12~~ | ~~Per-commander assessment~~ | ~~Phase 53a~~ (**resolved**) |
 | D13 | Weibull global | Phase 56c |
 | D14 | Training data disconnected | Phase 50d |
 | D15 | time_expired wins | Phase 55a |
@@ -901,29 +901,31 @@ Synchronize all documentation.
 | Messenger intercept risk | Phase 53 (low priority) |
 | ~~Blockade effectiveness~~ | Phase 51d (wired, throughput reduction deferred to Phase 56) |
 | VLS reload enforcement | Phase 56d |
-| Stratagems not proactively planned | Phase 53c |
+| Stratagems not proactively planned | Phase 53c (opportunity-evaluated, not COA-planned) |
 | ~~Space SIGINT + EW SIGINT fusion~~ | Phase 52d (**resolved**) |
-| school_id dead data | Phase 53c |
-| get_stratagem_affinity never called | Phase 53c |
-| C2 effectiveness hardcoded 1.0 | Phase 53b |
-| ATO wiring | Phase 53d |
-| Stratagem affinity wiring | Phase 53c |
-| school_id auto-assignment | Phase 53c |
+| ~~school_id dead data~~ | Phase 53c (**resolved**) |
+| ~~get_stratagem_affinity never called~~ | Phase 53c (**resolved**) |
+| ~~C2 effectiveness hardcoded 1.0~~ | Phase 53b (**resolved**) |
+| ~~ATO wiring~~ | Phase 53d (**resolved**) |
+| ~~Stratagem affinity wiring~~ | Phase 53c (**resolved**) |
+| ~~school_id auto-assignment~~ | Phase 53c (**resolved**) |
 | Proxy units in scenarios | Phase 55c |
 | 8 legacy scenarios can't load API | Phase 55b |
 | MineWarfareEngine dead | Phase 51d |
-| StratagemEngine dead | Phase 53c |
+| ~~StratagemEngine dead~~ | Phase 53c (**resolved**) |
 | DisruptionEngine dead | Phase 51d |
-| ATOPlanningEngine dead | Phase 53d |
-| FogOfWarManager dead | Phase 53a |
-| PlanningProcessEngine dead | Phase 53d |
-| OrderPropagationEngine dead | Phase 53d |
+| ~~ATOPlanningEngine dead~~ | Phase 53d (**resolved**) |
+| ~~FogOfWarManager dead~~ | Phase 53a (**resolved**) |
+| ~~PlanningProcessEngine dead~~ | Phase 53d (**resolved**) |
+| ~~OrderPropagationEngine dead~~ | Phase 53d (**resolved**) |
 | Space sub-engines dead | Phase 54e |
 | Era-specific engines dead (12) | Phase 54a--d |
-| Escalation sub-engines dead (3) | Phase 53e |
+| ~~Escalation sub-engines dead (3)~~ | Phase 53e (**resolved** — PoliticalPressureEngine wired) |
 | Dead YAML fields (10) | Phase 54f |
 | Dead context fields (3) | Phase 54f |
 | Fragile private API access | Phase 54e |
+| sead_arm_effectiveness unconsumed | Phase 54 or 55 |
+| drone_provocation_prob unconsumed | Phase 54 or 55 |
 
 ---
 
@@ -935,11 +937,11 @@ Synchronize all documentation.
 | 50 | Combat Fidelity Polish | 40 | 8,093 | **Complete** |
 | 51 | Naval Combat Completeness | 37 | 8,130 | **Complete** |
 | 52 | Environmental Continuity | 32 | 8,162 | **Complete** |
-| 53 | C2 & AI Completeness | ~51 | ~8,212 | Planned |
-| 54 | Era & Domain Sub-Engine Wiring | ~54 | ~8,266 | Planned |
-| 55 | Resolution & Scenario Migration | ~26 | ~8,292 | Planned |
-| 56 | Performance & Logistics | ~26 | ~8,318 | Planned |
-| 57 | Full Validation & Regression | ~25 | ~8,343 | Planned |
+| 53 | C2 & AI Completeness | 44 | 8,206 | **Complete** |
+| 54 | Era & Domain Sub-Engine Wiring | ~54 | ~8,260 | Planned |
+| 55 | Resolution & Scenario Migration | ~26 | ~8,286 | Planned |
+| 56 | Performance & Logistics | ~26 | ~8,312 | Planned |
+| 57 | Full Validation & Regression | ~25 | ~8,337 | Planned |
 
-**Block 6 total**: ~335 new tests across 9 phases.
+**Block 6 total**: ~328 new tests across 9 phases (204 delivered, ~124 remaining).
 **Target cumulative**: ~8,600+ Python tests + 272 frontend = ~8,870+ total.

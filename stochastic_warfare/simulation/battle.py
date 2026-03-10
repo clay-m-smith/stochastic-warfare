@@ -839,6 +839,45 @@ class BattleManager:
         # 1. Pre-build per-side active enemy lists and position arrays
         active_enemies, enemy_pos_arrays = self._build_enemy_data(units_by_side)
 
+        # 1b. Phase 53a: Fog of war — per-side detection picture
+        _enable_fow = cal.get("enable_fog_of_war", False)
+        if _enable_fow and getattr(ctx, "fog_of_war", None) is not None:
+            _fow_time = getattr(timestamp, "timestamp", lambda: 0.0)()
+            for _fow_side, _fow_units in units_by_side.items():
+                _own_data = []
+                for _u in _fow_units:
+                    if _u.status != UnitStatus.ACTIVE:
+                        continue
+                    _own_data.append({
+                        "position": _u.position,
+                        "sensors": [],
+                        "observer_height": 1.8,
+                    })
+                _enemy_data = []
+                for _other_side, _other_units in units_by_side.items():
+                    if _other_side == _fow_side:
+                        continue
+                    for _eu in _other_units:
+                        if _eu.status != UnitStatus.ACTIVE:
+                            continue
+                        _enemy_data.append({
+                            "unit_id": _eu.entity_id,
+                            "position": _eu.position,
+                            "signature": None,
+                            "unit": _eu,
+                            "target_height": 0.0,
+                        })
+                try:
+                    ctx.fog_of_war.update(
+                        side=_fow_side,
+                        own_units=_own_data,
+                        enemy_units=_enemy_data,
+                        dt=dt,
+                        current_time=_fow_time,
+                    )
+                except Exception:
+                    logger.debug("FogOfWar update failed for %s", _fow_side, exc_info=True)
+
         # 2. AI OODA loop update → completions trigger assess/decide
         if ctx.ooda_engine is not None:
             completions = ctx.ooda_engine.update(dt, ts=timestamp)
@@ -1338,11 +1377,25 @@ class BattleManager:
                     side = self._find_unit_side(ctx, unit_id)
                     if side:
                         friendly = len(ctx.active_units(side))
-                        enemies = sum(
-                            len(ctx.active_units(s))
-                            for s in ctx.side_names()
-                            if s != side
-                        )
+                        # Phase 53a: Use fog-of-war detected count if enabled
+                        _cal = getattr(ctx, "calibration", None)
+                        _fow_enabled = _cal.get("enable_fog_of_war", False) if _cal is not None else False
+                        if _fow_enabled and getattr(ctx, "fog_of_war", None) is not None:
+                            try:
+                                _wv = ctx.fog_of_war.get_world_view(side)
+                                enemies = len(_wv.contacts)
+                            except Exception:
+                                enemies = sum(
+                                    len(ctx.active_units(s))
+                                    for s in ctx.side_names()
+                                    if s != side
+                                )
+                        else:
+                            enemies = sum(
+                                len(ctx.active_units(s))
+                                for s in ctx.side_names()
+                                if s != side
+                            )
 
                         # Real morale from state tracking
                         morale_level = self._get_unit_morale_level(ctx, unit_id)
@@ -1354,6 +1407,8 @@ class BattleManager:
                         weight_overrides = None
                         if school is not None:
                             weight_overrides = school.get_assessment_weight_overrides() or None
+                        # Phase 53b: C2 effectiveness from comms state
+                        c2_eff = self._compute_c2_effectiveness(ctx, unit_id, side)
                         assessment = ctx.assessor.assess(
                             unit_id=unit_id,
                             echelon=5,
@@ -1361,7 +1416,7 @@ class BattleManager:
                             friendly_power=float(friendly),
                             morale_level=morale_level,
                             supply_level=supply_level,
-                            c2_effectiveness=1.0,
+                            c2_effectiveness=c2_eff,
                             contacts=enemies,
                             enemy_power=float(enemies),
                             ts=timestamp,
@@ -1422,6 +1477,46 @@ class BattleManager:
                         ts=timestamp,
                         school_adjustments=school_adjustments,
                     )
+
+                    # Phase 53c: Evaluate stratagem opportunities
+                    if getattr(ctx, "stratagem_engine", None) is not None and assessment is not None:
+                        side = self._find_unit_side(ctx, unit_id)
+                        if side:
+                            unit_ids = [u.entity_id for u in ctx.active_units(side)]
+                            experience = getattr(personality, "experience", 0.5) if personality else 0.5
+                            affinity: dict[str, float] = {}
+                            if school is not None:
+                                affinity = school.get_stratagem_affinity()
+                            try:
+                                conc_viable, _ = ctx.stratagem_engine.evaluate_concentration_opportunity(
+                                    assessment, unit_ids, echelon=5, experience=experience,
+                                )
+                                if conc_viable:
+                                    logger.debug(
+                                        "Concentration opportunity for %s (affinity=%.2f)",
+                                        unit_id, affinity.get("CONCENTRATION", 0.5),
+                                    )
+                            except Exception:
+                                pass
+                            try:
+                                dec_viable, _ = ctx.stratagem_engine.evaluate_deception_opportunity(
+                                    assessment, unit_ids, echelon=5, experience=experience,
+                                )
+                                if dec_viable:
+                                    logger.debug(
+                                        "Deception opportunity for %s (affinity=%.2f)",
+                                        unit_id, affinity.get("DECEPTION", 0.5),
+                                    )
+                            except Exception:
+                                pass
+
+                    # Phase 53d: Order propagation (structural — log availability)
+                    if getattr(ctx, "order_propagation", None) is not None:
+                        _cmd_avail = getattr(ctx.order_propagation, "_command_engine", None) is not None
+                        logger.debug(
+                            "Order propagation available for %s (command=%s)",
+                            unit_id, _cmd_avail,
+                        )
 
             # Advance to the next OODA phase and start its timer
             if ctx.ooda_engine is not None:
@@ -2716,6 +2811,32 @@ class BattleManager:
         return ""
 
     @staticmethod
+    def _compute_c2_effectiveness(ctx: Any, unit_id: str, side: str) -> float:
+        """Compute C2 effectiveness from comms state. Returns 1.0 if unavailable."""
+        comms = getattr(ctx, "comms_engine", None)
+        if comms is None:
+            return 1.0
+        if not hasattr(comms, "compute_c2_effectiveness"):
+            return 1.0
+        # Build position dict for the unit's side
+        positions: dict[str, Position] = {}
+        for u in ctx.active_units(side):
+            if u.position is not None:
+                positions[u.entity_id] = u.position
+        if not positions:
+            return 1.0
+        cal = getattr(ctx, "calibration", None)
+        min_eff = 0.3
+        if cal is not None:
+            min_eff = cal.get("c2_min_effectiveness", 0.3)
+        try:
+            return comms.compute_c2_effectiveness(
+                unit_id, positions, min_effectiveness=min_eff,
+            )
+        except Exception:
+            return 1.0
+
+    @staticmethod
     def _get_unit_morale_level(ctx: Any, unit_id: str) -> float:
         """Derive morale level [0, 1] from morale state.
 
@@ -2775,5 +2896,5 @@ class BattleManager:
             "supply_level": BattleManager._get_unit_supply_level(ctx, unit_id),
             "morale_level": BattleManager._get_unit_morale_level(ctx, unit_id),
             "intel_quality": 0.5,
-            "c2_effectiveness": 1.0,
+            "c2_effectiveness": BattleManager._compute_c2_effectiveness(ctx, unit_id, side),
         }

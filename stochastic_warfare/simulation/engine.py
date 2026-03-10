@@ -289,6 +289,38 @@ class SimulationEngine:
             if ctx.escalation_engine is not None:
                 self._update_escalation(dt)
 
+            # Phase 53d: Planning process update (structural)
+            if ctx.planning_engine is not None:
+                try:
+                    _plan_completions = ctx.planning_engine.update(dt, ts=timestamp)
+                    if _plan_completions:
+                        logger.debug("Planning completions: %d", len(_plan_completions))
+                except Exception:
+                    logger.debug("Planning engine update failed", exc_info=True)
+
+            # Phase 53d: ATO generation (structural — auto-register aerial units)
+            if getattr(ctx, "ato_engine", None) is not None:
+                try:
+                    from stochastic_warfare.c2.orders.air_orders import AircraftAvailability
+                    from stochastic_warfare.core.types import Domain
+                    for _side_units in ctx.units_by_side.values():
+                        for _u in _side_units:
+                            if getattr(_u, "domain", None) == Domain.AIR and _u.status == UnitStatus.ACTIVE:
+                                try:
+                                    ctx.ato_engine.register_aircraft(
+                                        AircraftAvailability(unit_id=_u.entity_id),
+                                    )
+                                except Exception:
+                                    pass  # already registered or invalid
+                    _ato_entries = ctx.ato_engine.generate_ato(
+                        current_time_s=ctx.clock.elapsed.total_seconds(),
+                        timestamp=timestamp,
+                    )
+                    if _ato_entries:
+                        logger.debug("ATO generated %d entries", len(_ato_entries))
+                except Exception:
+                    logger.debug("ATO generation failed", exc_info=True)
+
             # Phase 13 postmortem: aggregation/disaggregation
             if (ctx.aggregation_engine is not None
                     and ctx.aggregation_engine._config.enable_aggregation):
@@ -641,6 +673,30 @@ class SimulationEngine:
                 psyop_by_region={},
                 timestamp=timestamp,
             )
+
+        # Phase 53e: Political pressure update
+        if ctx.political_engine is not None:
+            for _side_name in ctx.side_names():
+                _active = sum(1 for u in ctx.units_by_side.get(_side_name, [])
+                              if u.status == UnitStatus.ACTIVE)
+                _total = len(ctx.units_by_side.get(_side_name, []))
+                _casualties = _total - _active
+                try:
+                    ctx.political_engine.update(
+                        side=_side_name,
+                        dt_hours=dt_hours,
+                        war_crime_count=0,
+                        civilian_casualties=0,
+                        prohibited_weapon_events=0,
+                        media_visibility=0.3,
+                        own_casualties=_casualties,
+                        stalemate_indicator=0.0,
+                        enemy_psyop_effectiveness=0.0,
+                        perceived_existential_threat=0.0,
+                        timestamp=timestamp,
+                    )
+                except Exception:
+                    logger.debug("Political pressure update failed for %s", _side_name, exc_info=True)
 
         # Phase 44d: Collateral damage tracking
         if ctx.collateral_engine is not None:

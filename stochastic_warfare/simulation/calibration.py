@@ -103,6 +103,10 @@ class CalibrationSchema(BaseModel):
     wind_accuracy_penalty_scale: float = 0.03
     rain_attenuation_factor: float = 1.0
 
+    # -- C2 (Phase 53b) ----------------------------------------------------
+    c2_min_effectiveness: float = 0.3
+    enable_fog_of_war: bool = False
+
     # -- Concealment -------------------------------------------------------
     observation_decay_rate: float = 0.05
     engagement_concealment_threshold: float = 0.5

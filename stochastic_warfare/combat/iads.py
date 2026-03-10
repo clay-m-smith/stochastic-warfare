@@ -64,6 +64,10 @@ class IadsConfig(BaseModel):
     """SAM effectiveness multiplier when operating without command node."""
     sead_degradation_rate: float = 0.3
     """Damage per SEAD strike to targeted component."""
+    sead_effectiveness: float = 0.5
+    """Suppression factor scaling SEAD damage impact."""
+    sead_arm_effectiveness: float = 0.8
+    """ARM missile Pk modifier for anti-radiation missile attacks."""
 
 
 # ---------------------------------------------------------------------------
@@ -216,7 +220,9 @@ class IadsEngine:
         """
         sector = self._sectors[sector_id]
         old_health = sector.component_health.get(component_id, 1.0)
-        new_health = max(0.0, old_health - self._config.sead_degradation_rate)
+        # Phase 53e: Scale SEAD damage by effectiveness
+        damage = self._config.sead_degradation_rate * self._config.sead_effectiveness
+        new_health = max(0.0, old_health - damage)
         # Add stochastic variation
         variation = self._rng.normal(0.0, 0.05)
         new_health = max(0.0, min(1.0, new_health + variation))

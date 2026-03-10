@@ -688,6 +688,44 @@ class CommunicationsEngine:
         ))
         return True, total_latency, hop_count
 
+    # -- C2 effectiveness ---------------------------------------------------
+
+    def compute_c2_effectiveness(
+        self,
+        unit_id: str,
+        unit_positions: dict[str, Position],
+        min_effectiveness: float = 0.3,
+    ) -> float:
+        """Compute C2 effectiveness for a unit based on comms connectivity.
+
+        Returns average reliability of the unit's best channel to friendly
+        units.  Falls back to *min_effectiveness* if no channels available.
+        Returns 1.0 (backward compat) when the unit is not registered.
+        """
+        if unit_id not in self._units or not unit_positions:
+            return 1.0
+        from_pos = unit_positions.get(unit_id)
+        if from_pos is None:
+            return 1.0
+
+        sender_emcon = self._units[unit_id].emcon_state
+        reliabilities: list[float] = []
+        for other_id, other_pos in unit_positions.items():
+            if other_id == unit_id:
+                continue
+            if other_id not in self._units:
+                continue
+            channel = self.get_best_channel(unit_id, other_id, from_pos, other_pos)
+            if channel is not None:
+                rel = self._channel_reliability(
+                    channel, from_pos, other_pos, sender_emcon,
+                )
+                reliabilities.append(rel)
+
+        if not reliabilities:
+            return min_effectiveness
+        return max(min_effectiveness, sum(reliabilities) / len(reliabilities))
+
     # -- Update -------------------------------------------------------------
 
     def update(self, dt_seconds: float) -> None:

@@ -366,6 +366,15 @@ class SimulationContext:
     incendiary_engine: Any = None
     uxo_engine: Any = None
 
+    # Stratagems (Phase 53c)
+    stratagem_engine: Any = None
+
+    # IADS (Phase 53e)
+    iads_engine: Any = None
+
+    # ATO Planning (Phase 53d)
+    ato_engine: Any = None
+
     # Directed Energy (Phase 28.5)
     dew_engine: Any = None
 
@@ -496,6 +505,9 @@ class SimulationContext:
             ("collateral_engine", self.collateral_engine),
             ("weather_engine", self.weather_engine),
             ("sea_state_engine", self.sea_state_engine),
+            ("stratagem_engine", self.stratagem_engine),
+            ("iads_engine", self.iads_engine),
+            ("ato_engine", self.ato_engine),
         ]
         for name, eng in engines:
             if eng is not None and hasattr(eng, "get_state"):
@@ -568,6 +580,9 @@ class SimulationContext:
             ("collateral_engine", self.collateral_engine),
             ("weather_engine", self.weather_engine),
             ("sea_state_engine", self.sea_state_engine),
+            ("stratagem_engine", self.stratagem_engine),
+            ("iads_engine", self.iads_engine),
+            ("ato_engine", self.ato_engine),
         ]
         for name, eng in engines:
             if eng is not None and name in state and hasattr(eng, "set_state"):
@@ -757,6 +772,22 @@ class ScenarioLoader:
                     "Failed to assign profile %r to unit %s",
                     profile_id, unit_id,
                 )
+
+        # Phase 53c: Auto-assign school_id from commander personality
+        if ctx.school_registry is not None:
+            for side_units in ctx.units_by_side.values():
+                for u in side_units:
+                    personality = ctx.commander_engine.get_personality(u.entity_id)
+                    if personality is not None and personality.school_id:
+                        try:
+                            ctx.school_registry.assign_to_unit(
+                                u.entity_id, personality.school_id,
+                            )
+                        except KeyError:
+                            logger.debug(
+                                "School %s not registered for unit %s",
+                                personality.school_id, u.entity_id,
+                            )
 
     def _build_terrain(
         self,
@@ -1091,6 +1122,30 @@ class ScenarioLoader:
         decision_engine = DecisionEngine(bus, c2_rng)
         adaptation_engine = AdaptationEngine(bus, c2_rng)
 
+        # Phase 53c: Stratagem engine
+        from stochastic_warfare.c2.ai.stratagems import StratagemEngine
+        stratagem_engine = StratagemEngine(bus, c2_rng)
+
+        # Phase 53d: ATO planning engine
+        from stochastic_warfare.c2.orders.air_orders import ATOPlanningEngine
+        ato_engine = ATOPlanningEngine(bus)
+
+        # Phase 53e: IADS engine
+        from stochastic_warfare.combat.iads import IadsEngine, IadsConfig
+        iads_cfg = IadsConfig()
+        _cal = config.calibration_overrides
+        if _cal is not None:
+            _iads_rate = _cal.get("iads_degradation_rate", None) if hasattr(_cal, "get") else None
+            if _iads_rate is not None:
+                iads_cfg = IadsConfig(sead_degradation_rate=_iads_rate)
+            _sead_eff = _cal.get("sead_effectiveness", None) if hasattr(_cal, "get") else None
+            if _sead_eff is not None:
+                iads_cfg.sead_effectiveness = _sead_eff
+            _sead_arm = _cal.get("sead_arm_effectiveness", None) if hasattr(_cal, "get") else None
+            if _sead_arm is not None:
+                iads_cfg.sead_arm_effectiveness = _sead_arm
+        iads_engine = IadsEngine(bus, combat_rng, iads_cfg)
+
         # Logistics
         from stochastic_warfare.logistics.consumption import ConsumptionEngine
         from stochastic_warfare.logistics.stockpile import StockpileManager
@@ -1212,6 +1267,9 @@ class ScenarioLoader:
             "sea_state_engine": sea_state_engine,
             "medical_engine": medical_engine,
             "engineering_engine": engineering_engine,
+            "stratagem_engine": stratagem_engine,
+            "ato_engine": ato_engine,
+            "iads_engine": iads_engine,
         }
 
         # ── Optional engine wiring (Phase 25) ────────────────────────

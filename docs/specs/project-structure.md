@@ -1,6 +1,6 @@
 # Project Structure & Module Decomposition
-**Status**: Complete (Phase 36). Block 4 (Phases 37--39) planned.
-**Last Updated**: 2026-03-07
+**Status**: Complete (Phase 36). Blocks 4--6 ongoing.
+**Last Updated**: 2026-03-10
 
 ---
 
@@ -464,7 +464,7 @@ stochastic-warfare/
     │   │   ├── coa.py                # COA development, Lanchester wargaming, weighted comparison, softmax selection
     │   │   ├── estimates.py          # Running estimates (5 types), periodic update, significant change events
     │   │   └── phases.py             # Condition-based operational phasing with branches and sequels
-    │   ├── communications.py         # Comms reliability, bandwidth, degradation, EMCON, means (radio/wire/messenger/data link)
+    │   ├── communications.py         # Comms reliability, bandwidth, degradation, EMCON, means (radio/wire/messenger/data link), compute_c2_effectiveness() [Phase 53]
     │   ├── roe.py                    # Rules of engagement, escalation, political constraints, law of armed conflict
     │   ├── coordination.py           # Fire support coord, airspace deconfliction, boundaries, sea-land-air integration
     │   ├── naval_c2.py              # Fleet org (TF/TG/TU), naval data links, submarine comms (VLF/ELF)
@@ -586,7 +586,7 @@ stochastic-warfare/
         ├── engine.py                 # Master simulation loop (hybrid tick + event)
         ├── campaign.py               # Campaign-level management, strategic AI, reinforcement pipeline
         ├── battle.py                 # Tactical battle resolution manager
-        ├── scenario.py               # Scenario loading, setup, initialization
+        ├── scenario.py               # Scenario loading, setup, initialization; SimulationContext includes stratagem_engine, iads_engine, ato_engine [Phase 53]
         ├── victory.py                # Victory conditions, war termination criteria, objective evaluation
         ├── recorder.py               # Event/state recording for replay & analysis
         ├── metrics.py                # Simulation output metrics, statistical aggregation, analysis hooks
