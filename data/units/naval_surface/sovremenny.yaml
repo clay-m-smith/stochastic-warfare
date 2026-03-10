@@ -3,6 +3,7 @@ domain: naval
 display_name: "Sovremenny-class Destroyer"
 naval_type: DESTROYER
 max_speed: 17.5  # m/s (~34 knots)
+training_level: 0.7
 draft: 6.5
 displacement: 7940.0
 fuel_capacity: 500.0

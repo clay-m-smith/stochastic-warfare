@@ -95,6 +95,13 @@ class CalibrationSchema(BaseModel):
     # -- Morale (nested) --------------------------------------------------
     morale: MoraleCalibration = MoraleCalibration()
 
+    # -- Concealment -------------------------------------------------------
+    observation_decay_rate: float = 0.05
+    engagement_concealment_threshold: float = 0.5
+
+    # -- Target value weights (override BattleConfig defaults) -------------
+    target_value_weights: dict[str, float] | None = None
+
     # -- Collections ------------------------------------------------------
     weapon_assignments: dict[str, str] = {}
     victory_weights: dict[str, float] | None = None

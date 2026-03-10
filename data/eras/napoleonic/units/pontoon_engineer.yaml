@@ -3,6 +3,7 @@ domain: ground
 display_name: "Pontoon Engineer Company"
 ground_type: ENGINEER
 max_speed: 0.8  # m/s (horse-drawn pontoon train)
+training_level: 0.6
 armor_front: 0.0
 armor_side: 0.0
 crew:

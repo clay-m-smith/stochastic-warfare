@@ -3,6 +3,7 @@ domain: ground
 display_name: "T-62 Main Battle Tank"
 ground_type: ARMOR
 max_speed: 13.9
+training_level: 0.5
 armor_front: 242.0
 armor_side: 79.0
 armor_type: RHA

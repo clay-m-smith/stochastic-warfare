@@ -3,6 +3,7 @@ domain: naval
 display_name: "LST Mk 2 (Landing Ship, Tank)"
 naval_type: LST
 max_speed: 6.2  # m/s (~12 knots)
+training_level: 0.6
 draft: 4.3
 displacement: 4080.0  # full load tonnes
 fuel_capacity: 560.0  # tonnes of fuel oil

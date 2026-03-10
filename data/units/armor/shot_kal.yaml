@@ -3,6 +3,7 @@ domain: ground
 display_name: "Sho't Kal (Centurion) MBT"
 ground_type: ARMOR
 max_speed: 12.5
+training_level: 0.85
 armor_front: 152.0
 armor_side: 51.0
 armor_type: RHA

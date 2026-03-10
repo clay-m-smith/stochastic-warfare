@@ -3,6 +3,7 @@ domain: ground
 display_name: "Tiger I Heavy Tank (Pz.Kpfw. VI Ausf. E)"
 ground_type: ARMOR
 max_speed: 11.0  # m/s (~40 km/h road)
+training_level: 0.8
 armor_front: 100.0
 armor_side: 80.0
 crew:

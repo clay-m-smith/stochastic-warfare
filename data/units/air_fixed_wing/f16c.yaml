@@ -3,6 +3,7 @@ domain: aerial
 display_name: "F-16C Fighting Falcon"
 aerial_type: FIGHTER
 max_speed: 600.0  # m/s (~Mach 2)
+training_level: 0.8
 service_ceiling: 15240.0
 crew:
   - role: PILOT

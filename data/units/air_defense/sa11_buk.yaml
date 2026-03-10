@@ -3,6 +3,7 @@ domain: ground
 display_name: "SA-11 Buk-M1 SAM Battery"
 ad_type: SAM_MEDIUM
 max_speed: 13.9  # m/s (~50 km/h road, self-propelled)
+training_level: 0.7
 min_engagement_altitude: 15.0
 max_engagement_altitude: 22000.0
 max_engagement_range: 35000.0

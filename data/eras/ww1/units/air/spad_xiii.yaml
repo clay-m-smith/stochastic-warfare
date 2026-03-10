@@ -3,6 +3,7 @@ domain: aerial
 display_name: "SPAD XIII Fighter"
 aerial_type: FIGHTER
 max_speed: 60.0  # m/s (~222 km/h)
+training_level: 0.7
 service_ceiling: 6650.0
 crew:
   - role: PILOT

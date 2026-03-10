@@ -3,6 +3,7 @@ domain: ground
 display_name: "Challenger 2 MBT"
 ground_type: ARMOR
 max_speed: 16.4  # m/s (~59 km/h road)
+training_level: 0.8
 armor_front: 600.0
 armor_side: 220.0
 armor_type: COMPOSITE

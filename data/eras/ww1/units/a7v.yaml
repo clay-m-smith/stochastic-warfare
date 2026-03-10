@@ -3,6 +3,7 @@ domain: ground
 display_name: "A7V Sturmpanzerwagen"
 ground_type: ARMOR
 max_speed: 4.2  # m/s (~15 km/h road, ~5 km/h cross-country)
+training_level: 0.6
 armor_front: 30.0  # 30mm hardened steel plate
 armor_side: 15.0
 crew:

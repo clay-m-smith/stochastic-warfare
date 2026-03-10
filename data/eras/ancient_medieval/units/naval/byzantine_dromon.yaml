@@ -3,6 +3,7 @@ domain: naval
 display_name: "Byzantine Dromon (Fire Ship)"
 naval_type: FRIGATE
 max_speed: 3.6  # m/s (~7 knots under oar)
+training_level: 0.75
 draft: 1.2
 displacement: 70.0  # tonnes
 fuel_capacity: 0.0

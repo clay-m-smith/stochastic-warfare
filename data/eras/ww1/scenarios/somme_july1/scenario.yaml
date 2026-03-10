@@ -85,7 +85,7 @@ victory_conditions:
       max_duration_s: 43200
 
 calibration_overrides:
-  hit_probability_modifier: 1.5
+  hit_probability_modifier: 1.8
   target_size_modifier: 0.4
   morale_degrade_rate_modifier: 2.0
   morale_base_degrade_rate: 0.01
@@ -95,7 +95,9 @@ calibration_overrides:
   german_cohesion: 0.85
   target_size_modifier_british: 3.0
   target_size_modifier_german: 0.2
-  destruction_threshold: 0.3
+  destruction_threshold: 0.25
+  observation_decay_rate: 0.02
+  german_force_ratio_modifier: 1.3
   british_start_x: 2000.0
   british_start_y: 1500.0
   german_start_x: 7000.0

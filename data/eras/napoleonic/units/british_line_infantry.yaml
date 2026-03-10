@@ -3,6 +3,7 @@ domain: ground
 display_name: "British Line Infantry Battalion"
 ground_type: LIGHT_INFANTRY
 max_speed: 1.3  # m/s (~4.7 km/h column march)
+training_level: 0.8
 armor_front: 0.0
 armor_side: 0.0
 crew:

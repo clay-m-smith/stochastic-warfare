@@ -3,6 +3,7 @@ domain: naval
 display_name: "Fletcher-class Destroyer"
 naval_type: DESTROYER
 max_speed: 18.0  # m/s (~36 knots)
+training_level: 0.7
 draft: 5.3
 displacement: 2500.0  # full load tonnes
 fuel_capacity: 492.0  # tonnes of fuel oil

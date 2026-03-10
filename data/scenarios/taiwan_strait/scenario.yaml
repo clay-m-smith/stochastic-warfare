@@ -117,6 +117,7 @@ calibration_overrides:
   morale_check_interval: 5
   blue_cohesion: 0.85
   red_cohesion: 0.65
+  blue_force_ratio_modifier: 1.8
   target_size_modifier_blue: 0.3
   target_size_modifier_red: 2.0
   destruction_threshold: 0.15
@@ -126,6 +127,7 @@ calibration_overrides:
   red_start_y: 30000.0
   defensive_sides: [blue]
   max_engagers_per_side: 5
+  observation_decay_rate: 0.02
 
 ew_config:
   enable_ew: true

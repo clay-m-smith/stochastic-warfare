@@ -3,6 +3,7 @@ domain: ground
 display_name: "Saracen Light Cavalry"
 ground_type: ARMOR
 max_speed: 7.0  # m/s (~25 km/h, fast light cavalry)
+training_level: 0.7
 armor_front: 1.0  # light mail
 armor_side: 0.5
 crew:

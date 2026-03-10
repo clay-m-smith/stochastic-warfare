@@ -116,6 +116,8 @@ calibration_overrides:
   blue_start_y: 50000.0
   red_start_x: 20000.0
   red_start_y: 50000.0
+  blue_force_ratio_modifier: 1.5
+  observation_decay_rate: 0.03
   weapon_assignments:
     "M61A1 Vulcan 20mm": m61a1_vulcan
     "2K12 Launcher": sa6_3m9

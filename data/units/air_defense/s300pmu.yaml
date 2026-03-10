@@ -3,6 +3,7 @@ domain: ground
 display_name: "S-300PMU Long-Range SAM Battery"
 ad_type: SAM_LONG
 max_speed: 11.1  # m/s (~40 km/h road, towed)
+training_level: 0.8
 min_engagement_altitude: 25.0
 max_engagement_altitude: 30000.0
 max_engagement_range: 150000.0

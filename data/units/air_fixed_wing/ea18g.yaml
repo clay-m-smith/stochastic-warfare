@@ -3,6 +3,7 @@ domain: aerial
 display_name: "EA-18G Growler"
 aerial_type: EW
 max_speed: 595.0  # m/s (~Mach 1.8)
+training_level: 0.85
 service_ceiling: 15000.0
 crew:
   - role: PILOT

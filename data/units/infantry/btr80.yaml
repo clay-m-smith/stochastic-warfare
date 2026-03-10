@@ -3,6 +3,7 @@ domain: ground
 display_name: "BTR-80 Armored Personnel Carrier"
 ground_type: MOTORIZED
 max_speed: 22.2  # m/s (~80 km/h road)
+training_level: 0.6
 armor_front: 10.0
 armor_side: 7.0
 armor_type: RHA

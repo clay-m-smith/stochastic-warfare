@@ -3,6 +3,7 @@ domain: aerial
 display_name: "Mitsubishi A6M5 Zero (IJN)"
 aerial_type: FIGHTER
 max_speed: 155.0  # m/s (~565 km/h at altitude)
+training_level: 0.8
 service_ceiling: 10000.0
 crew:
   - role: PILOT

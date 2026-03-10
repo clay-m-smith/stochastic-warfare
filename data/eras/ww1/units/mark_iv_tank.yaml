@@ -3,6 +3,7 @@ domain: ground
 display_name: "Mark IV Tank (Male)"
 ground_type: ARMOR
 max_speed: 1.7  # m/s (~6 km/h cross-country)
+training_level: 0.6
 armor_front: 12.0  # 12mm hardened steel plate
 armor_side: 6.0
 crew:

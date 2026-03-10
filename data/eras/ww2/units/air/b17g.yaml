@@ -3,6 +3,7 @@ domain: aerial
 display_name: "B-17G Flying Fortress"
 aerial_type: BOMBER
 max_speed: 140.0  # m/s (~510 km/h at altitude)
+training_level: 0.7
 service_ceiling: 10850.0
 crew:
   - role: PILOT

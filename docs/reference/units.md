@@ -21,6 +21,7 @@ armor_mm: 600                       # effective armor thickness (mm RHA equivale
 armor_type: composite               # rha | composite | reactive | spaced | none
 health: 100.0
 signature_profile: m1a2_sig         # reference to signature YAML
+training_level: 0.8                  # 0.0–1.0 crew/unit proficiency (veteran)
 equipment:
   weapons:
     - weapon_type: m256_120mm       # reference to weapon YAML
@@ -46,6 +47,7 @@ equipment:
 | `armor_type` | `str` | Armor material type |
 | `health` | `float` | Hit points |
 | `signature_profile` | `str` | Reference to signature definition |
+| `training_level` | `float` | Crew/unit proficiency (0.0–1.0). Scales effective skill via `base_skill * (0.5 + 0.5 * training_level)`. Typical values: Elite 0.9, Veteran 0.8, Regular 0.7, Green 0.6, Conscript 0.5, Poor 0.3–0.4 |
 | `equipment` | `dict` | Weapons, sensors, comms references |
 
 ---

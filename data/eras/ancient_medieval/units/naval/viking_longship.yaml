@@ -3,6 +3,7 @@ domain: naval
 display_name: "Viking Longship (Drakkar)"
 naval_type: PATROL
 max_speed: 5.1  # m/s (~10 knots under sail/oar)
+training_level: 0.8
 draft: 0.5
 displacement: 20.0  # tonnes
 fuel_capacity: 0.0

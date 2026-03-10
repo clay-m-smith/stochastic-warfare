@@ -3,6 +3,7 @@ domain: ground
 display_name: "M1 105mm Howitzer Battery (US)"
 ground_type: ARTILLERY_TOWED
 max_speed: 1.0  # m/s (towed, limited by prime mover)
+training_level: 0.7
 armor_front: 0.0
 armor_side: 0.0
 crew:

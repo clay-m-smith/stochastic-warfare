@@ -3,6 +3,7 @@ domain: ground
 display_name: "BMP-1 Infantry Fighting Vehicle"
 ground_type: MECHANIZED_INFANTRY
 max_speed: 18.1
+training_level: 0.6
 armor_front: 33.0
 armor_side: 19.0
 crew:

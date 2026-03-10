@@ -590,7 +590,8 @@ stochastic-warfare/
         ├── victory.py                # Victory conditions, war termination criteria, objective evaluation
         ├── recorder.py               # Event/state recording for replay & analysis
         ├── metrics.py                # Simulation output metrics, statistical aggregation, analysis hooks
-        └── aggregation.py           # Force aggregation/disaggregation engine for campaign-scale [Phase 13a]
+        ├── aggregation.py           # Force aggregation/disaggregation engine for campaign-scale [Phase 13a]
+        └── calibration.py           # Typed CalibrationSchema pydantic model replacing free-form dict [Phase 49]
 ```
 
 ---

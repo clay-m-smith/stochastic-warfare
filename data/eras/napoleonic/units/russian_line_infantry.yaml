@@ -3,6 +3,7 @@ domain: ground
 display_name: "Russian Line Infantry Battalion"
 ground_type: LIGHT_INFANTRY
 max_speed: 1.2  # m/s
+training_level: 0.6
 armor_front: 0.0
 armor_side: 0.0
 crew:

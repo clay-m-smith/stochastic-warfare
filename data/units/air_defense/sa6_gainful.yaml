@@ -3,6 +3,7 @@ domain: ground
 display_name: "2K12 Kub (SA-6 Gainful) SAM Battery"
 ad_type: SAM_MEDIUM
 max_speed: 12.2  # m/s (~44 km/h road, self-propelled on 2P25 TEL)
+training_level: 0.65
 min_engagement_altitude: 100.0
 max_engagement_altitude: 12000.0
 max_engagement_range: 24000.0

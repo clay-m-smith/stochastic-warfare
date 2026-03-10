@@ -3,6 +3,7 @@ domain: ground
 display_name: "Horse-Drawn Supply Train"
 ground_type: MOTORIZED
 max_speed: 1.0  # m/s (horse-drawn wagons)
+training_level: 0.5
 armor_front: 0.0
 armor_side: 0.0
 cargo_capacity_tons: 20.0

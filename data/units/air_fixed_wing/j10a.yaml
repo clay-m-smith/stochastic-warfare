@@ -3,6 +3,7 @@ domain: aerial
 display_name: "J-10A Vigorous Dragon"
 aerial_type: FIGHTER
 max_speed: 650.0  # m/s (~Mach 2.2)
+training_level: 0.6
 service_ceiling: 18000.0
 crew:
   - role: PILOT

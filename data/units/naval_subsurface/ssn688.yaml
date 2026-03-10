@@ -3,6 +3,7 @@ domain: naval
 display_name: "Los Angeles-class SSN (688)"
 naval_type: SSN
 max_speed: 17.0  # m/s (~33 knots submerged)
+training_level: 0.8
 draft: 9.9
 displacement: 6900.0
 fuel_capacity: 0.0  # nuclear — no fuel constraint

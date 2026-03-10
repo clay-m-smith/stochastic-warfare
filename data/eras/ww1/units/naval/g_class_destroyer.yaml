@@ -3,6 +3,7 @@ domain: naval
 display_name: "G-class Destroyer (Royal Navy)"
 naval_type: DESTROYER
 max_speed: 16.5  # m/s (~32 knots)
+training_level: 0.7
 draft: 3.2
 displacement: 810.0  # full load tonnes
 fuel_capacity: 200.0  # tonnes of fuel oil

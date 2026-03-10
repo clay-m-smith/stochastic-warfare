@@ -3,6 +3,7 @@ domain: naval
 display_name: "Type VIIC U-boat"
 naval_type: SSK
 max_speed: 4.6  # m/s (~9 knots surfaced; 4 knots submerged)
+training_level: 0.7
 draft: 4.7
 displacement: 769.0  # surfaced tonnes
 fuel_capacity: 114.0  # tonnes of diesel

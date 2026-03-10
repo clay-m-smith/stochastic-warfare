@@ -3,6 +3,7 @@ domain: ground
 display_name: "Mongol Horse Archer"
 ground_type: CAVALRY
 max_speed: 8.0
+training_level: 0.85
 armor_front: 1.0
 armor_side: 0.5
 crew:

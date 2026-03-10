@@ -3,6 +3,7 @@ domain: ground
 display_name: "French Dragoon Squadron"
 ground_type: CAVALRY
 max_speed: 6.5  # m/s (~23 km/h charge speed)
+training_level: 0.75
 armor_front: 0.0
 armor_side: 0.0
 crew:

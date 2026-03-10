@@ -3,6 +3,7 @@ domain: submarine
 display_name: "Kilo-class (Project 636.3) SSK"
 naval_type: SSK
 max_speed: 10.3  # m/s (~20 knots submerged)
+training_level: 0.7
 draft: 6.2
 displacement: 3100.0
 fuel_capacity: 200.0

@@ -3,6 +3,7 @@ domain: ground
 display_name: "M109A6 Paladin 155mm SP Howitzer"
 ground_type: ARTILLERY_SP
 max_speed: 17.0  # m/s (~61 km/h road)
+training_level: 0.7
 armor_front: 25.0
 armor_side: 15.0
 crew:

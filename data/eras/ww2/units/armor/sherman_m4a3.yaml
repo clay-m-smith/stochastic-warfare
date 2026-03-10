@@ -3,6 +3,7 @@ domain: ground
 display_name: "M4A3 Sherman Medium Tank"
 ground_type: ARMOR
 max_speed: 13.0  # m/s (~47 km/h road)
+training_level: 0.7
 armor_front: 63.0
 armor_side: 38.0
 crew:

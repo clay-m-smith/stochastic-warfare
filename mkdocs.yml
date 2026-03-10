@@ -68,13 +68,15 @@ nav:
     - Block 3 Design: brainstorm-block3.md
     - Block 4 Design: brainstorm-block4.md
     - Block 5 Design: brainstorm-block5.md
+    - Block 6 Design: brainstorm-block6.md
   - Development Phases:
     - MVP (0-10): development-phases.md
     - Post-MVP (11-24): development-phases-post-mvp.md
     - Block 2 (25-30): development-phases-block2.md
     - Block 3 (31-36): development-phases-block3.md
     - Block 4 (37-39): development-phases-block4.md
-    - Block 5 (40-47): development-phases-block5.md
+    - Block 5 (40-48): development-phases-block5.md
+    - Block 6 (49-57): development-phases-block6.md
   - Devlog:
     - Overview: devlog/index.md
     - Phase 0 - Scaffolding: devlog/phase-0.md
@@ -127,6 +129,8 @@ nav:
     - Phase 46 - Scenario Data Cleanup & Expansion: devlog/phase-46.md
     - Phase 47 - Full Recalibration & Validation: devlog/phase-47.md
     - Phase 48 - Block 5 Deficit Resolution: devlog/phase-48.md
+    - Phase 49 - Calibration Schema Hardening: devlog/phase-49.md
+    - Phase 50 - Combat Fidelity Polish: devlog/phase-50.md
   - Specifications:
     - Project Structure: specs/project-structure.md
     - Skills & Hooks: skills-and-hooks.md

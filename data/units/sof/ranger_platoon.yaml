@@ -3,6 +3,7 @@ domain: ground
 display_name: "Ranger Platoon"
 ground_type: LIGHT_INFANTRY
 max_speed: 1.4
+training_level: 0.9
 crew:
   - role: COMMANDER
     count: 1

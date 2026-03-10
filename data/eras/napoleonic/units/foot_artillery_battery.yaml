@@ -3,6 +3,7 @@ domain: ground
 display_name: "Foot Artillery Battery"
 ground_type: ARTILLERY
 max_speed: 1.5  # m/s (~5.4 km/h foot march with limber)
+training_level: 0.7
 armor_front: 0.0
 armor_side: 0.0
 crew:

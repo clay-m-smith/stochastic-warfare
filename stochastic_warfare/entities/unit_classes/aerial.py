@@ -43,12 +43,26 @@ class FlightState(enum.IntEnum):
     HOVERING = 5
 
 
+class AirPosture(enum.IntEnum):
+    """Tactical mission posture for air units.
+
+    Orthogonal to :class:`FlightState` (physical flight phase).
+    Controls engagement eligibility.
+    """
+
+    GROUNDED = 0
+    INGRESSING = 1
+    ON_STATION = 2
+    RETURNING = 3
+
+
 @dataclass
 class AerialUnit(Unit):
     """An aerial-domain unit with flight state and fuel."""
 
     aerial_type: AerialUnitType = AerialUnitType.FIGHTER
     flight_state: FlightState = FlightState.GROUNDED
+    air_posture: AirPosture = AirPosture.GROUNDED
     altitude: float = 0.0  # meters AGL
     fuel_remaining: float = 1.0  # 0.0–1.0 fraction
     service_ceiling: float = 15000.0  # meters
@@ -84,6 +98,7 @@ class AerialUnit(Unit):
             {
                 "aerial_type": int(self.aerial_type),
                 "flight_state": int(self.flight_state),
+                "air_posture": int(self.air_posture),
                 "altitude": self.altitude,
                 "fuel_remaining": self.fuel_remaining,
                 "service_ceiling": self.service_ceiling,
@@ -98,6 +113,7 @@ class AerialUnit(Unit):
         super().set_state(state)
         self.aerial_type = AerialUnitType(state["aerial_type"])
         self.flight_state = FlightState(state["flight_state"])
+        self.air_posture = AirPosture(state.get("air_posture", 0))
         self.altitude = state["altitude"]
         self.fuel_remaining = state["fuel_remaining"]
         self.service_ceiling = state["service_ceiling"]

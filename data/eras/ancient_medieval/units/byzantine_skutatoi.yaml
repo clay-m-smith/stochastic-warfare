@@ -3,6 +3,7 @@ domain: ground
 display_name: "Byzantine Skutatoi (Heavy Infantry)"
 ground_type: LIGHT_INFANTRY
 max_speed: 1.2  # m/s
+training_level: 0.7
 armor_front: 2.0  # scale/lamellar armor + large shield
 armor_side: 1.0
 crew:

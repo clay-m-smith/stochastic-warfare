@@ -3,6 +3,7 @@ domain: aerial
 display_name: "C-17A Globemaster III"
 aerial_type: TRANSPORT
 max_speed: 265.0  # m/s (~515 kts)
+training_level: 0.75
 service_ceiling: 13700.0
 crew:
   - role: PILOT

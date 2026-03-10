@@ -69,6 +69,15 @@ class NavalEngagementConfig(BaseModel):
 # Phase 43a: melee range threshold (metres)
 _MELEE_RANGE_M = 10.0
 
+# Phase 50a: posture → movement speed multiplier
+_POSTURE_SPEED_MULT: dict[int, float] = {
+    0: 1.0,  # MOVING
+    1: 1.0,  # HALTED
+    2: 0.5,  # DEFENSIVE
+    3: 0.0,  # DUG_IN
+    4: 0.0,  # FORTIFIED
+}
+
 # Phase 43b: weapon categories that route to indirect fire
 _INDIRECT_FIRE_CATEGORIES = frozenset({"HOWITZER", "MORTAR", "ARTILLERY"})
 
@@ -616,6 +625,10 @@ class BattleManager:
         # models produce few casualties per tick, so we must accumulate across
         # volleys and assess thresholds on the running total.
         self._cumulative_casualties: dict[str, int] = {}
+        # Phase 50a: units transitioning from DUG_IN/FORTIFIED to MOVING
+        self._undigging: dict[str, bool] = {}
+        # Phase 50c: persistent concealment scores per target
+        self._concealment_scores: dict[str, float] = {}
 
     # ── Engagement detection ────────────────────────────────────────
 
@@ -760,6 +773,24 @@ class BattleManager:
                             object.__setattr__(u, "posture", type(u.posture)(2))  # DEFENSIVE
                     else:
                         object.__setattr__(u, "posture", type(u.posture)(1))  # HALTED
+
+        # 4c. Phase 50b: auto-assign air posture based on flight state / fuel
+        for side_units in units_by_side.values():
+            for u in side_units:
+                if u.status != UnitStatus.ACTIVE:
+                    continue
+                ap = getattr(u, "air_posture", None)
+                if ap is None:
+                    continue
+                from stochastic_warfare.entities.unit_classes.aerial import AirPosture
+                fs = getattr(u, "flight_state", None)
+                fuel = getattr(u, "fuel_remaining", 1.0)
+                if fs is not None and int(fs) == 0:  # FlightState.GROUNDED
+                    u.air_posture = AirPosture.GROUNDED
+                elif fuel < 0.2:
+                    u.air_posture = AirPosture.RETURNING
+                elif int(ap) == 0:  # Was GROUNDED posture but operational
+                    u.air_posture = AirPosture.ON_STATION
 
         # 5. Rebuild enemy data after movement — position arrays from step 1
         #    are stale (captured pre-movement coordinates).  The Unit object
@@ -1292,6 +1323,29 @@ class BattleManager:
                 if effective_speed <= 0:
                     continue
 
+                # Phase 50a: posture → movement speed multiplier
+                posture_val = getattr(u, "posture", None)
+                if posture_val is not None:
+                    posture_int = int(posture_val)
+                    if posture_int >= 3:  # DUG_IN or FORTIFIED
+                        uid = u.entity_id
+                        # Defensive sides stay dug in — no un-dig
+                        if side not in defensive_sides:
+                            if uid not in self._undigging:
+                                # First tick: start un-digging, skip movement
+                                self._undigging[uid] = True
+                                object.__setattr__(u, "posture", type(u.posture)(0))
+                                continue
+                            else:
+                                # Second tick: cleared to move
+                                del self._undigging[uid]
+                        else:
+                            continue  # Defensive side stays put
+                    speed_mult = _POSTURE_SPEED_MULT.get(posture_int, 1.0)
+                    effective_speed *= speed_mult
+                    if effective_speed <= 0:
+                        continue
+
                 # Wave gating: check if this unit's wave has been released
                 wave = wave_assignments.get(u.entity_id, 0)
                 if wave == -1:
@@ -1467,15 +1521,28 @@ class BattleManager:
         pk = min(3.0, best_wpn_range / max(1.0, distance))
 
         # Value: target type priority (configurable weights)
+        # Phase 50e: calibration can override BattleConfig target weights
         cfg = self._config
-        value = _target_value(
-            target,
-            hq=cfg.target_value_hq,
-            ad=cfg.target_value_ad,
-            artillery=cfg.target_value_artillery,
-            armor=cfg.target_value_armor,
-            default=cfg.target_value_default,
-        )
+        cal = getattr(ctx, "calibration", None)
+        _tvw = cal.get("target_value_weights", None) if cal is not None else None
+        if _tvw is not None:
+            value = _target_value(
+                target,
+                hq=_tvw.get("hq", cfg.target_value_hq),
+                ad=_tvw.get("ad", cfg.target_value_ad),
+                artillery=_tvw.get("artillery", cfg.target_value_artillery),
+                armor=_tvw.get("armor", cfg.target_value_armor),
+                default=_tvw.get("default", cfg.target_value_default),
+            )
+        else:
+            value = _target_value(
+                target,
+                hq=cfg.target_value_hq,
+                ad=cfg.target_value_ad,
+                artillery=cfg.target_value_artillery,
+                armor=cfg.target_value_armor,
+                default=cfg.target_value_default,
+            )
 
         # Distance penalty
         dist_pen = max(1.0, distance / max(1.0, best_wpn_range))
@@ -1578,6 +1645,11 @@ class BattleManager:
                 if max_engagers > 0 and side_engagements >= max_engagers:
                     break
 
+                # Phase 50b: air posture gate — GROUNDED/RETURNING skip
+                air_posture = getattr(attacker, "air_posture", None)
+                if air_posture is not None and int(air_posture) in (0, 3):
+                    continue
+
                 # Phase 40f: morale gate — routed/surrendered units don't fire
                 attacker_morale = ctx.morale_states.get(attacker.entity_id)
                 if attacker_morale is not None:
@@ -1628,10 +1700,27 @@ class BattleManager:
                         if sensor.sensor_type in _WEATHER_BYPASS_TYPES:
                             weather_independent = True
 
-                # Phase 41a: concealment reduces effective detection range
-                # (thermal/radar sensors bypass concealment)
-                if concealment > 0 and not weather_independent:
-                    detection_range *= (1.0 - concealment)
+                # Phase 50c: continuous concealment — persistent per-target,
+                # decays with sustained observation, resets on target movement
+                tid = best_target.entity_id
+                terrain_concealment = concealment
+                if tid not in self._concealment_scores:
+                    self._concealment_scores[tid] = terrain_concealment
+                # Moving target resets concealment (harder to stay hidden)
+                if best_target.speed > 0.5:
+                    self._concealment_scores[tid] = terrain_concealment * 0.5
+                # Decay with sustained observation
+                decay = cal.get("observation_decay_rate", 0.05)
+                self._concealment_scores[tid] = max(
+                    0.0, self._concealment_scores[tid] - decay,
+                )
+                effective_concealment = self._concealment_scores[tid]
+
+                # Concealment reduces detection range; thermal/radar get 0.3x effect
+                if effective_concealment > 0 and not weather_independent:
+                    detection_range *= (1.0 - effective_concealment)
+                elif effective_concealment > 0 and weather_independent:
+                    detection_range *= (1.0 - effective_concealment * 0.3)
 
                 # Phase 44a: Night degrades visual detection, thermal gets bonus
                 if not weather_independent:
@@ -1741,6 +1830,13 @@ class BattleManager:
                     )
                     if not authorized:
                         continue
+
+                # Phase 50c: concealment engagement threshold
+                _eng_conceal_thresh = cal.get(
+                    "engagement_concealment_threshold", 0.5,
+                )
+                if effective_concealment > _eng_conceal_thresh:
+                    continue
 
                 # Select best weapon for current range — prefer ranged weapons
                 # at distance, melee weapons at close range.  Skip weapons
@@ -1856,8 +1952,18 @@ class BattleManager:
                     continue  # Too degraded to engage
                 crew_skill *= max(0.5, readiness)
 
+                # Phase 50e: compute weapon category early for fire-on-move exemption
+                _early_wpn_cat = getattr(
+                    wpn_inst.definition, "category", "",
+                ).upper()
+
                 # Phase 48a: fire-on-move accuracy penalty (non-deployed)
-                if attacker.speed > 0.5 and not wpn_inst.definition.requires_deployed:
+                # Phase 50e: exempt indirect fire categories (D7 fix)
+                if (
+                    attacker.speed > 0.5
+                    and not wpn_inst.definition.requires_deployed
+                    and _early_wpn_cat not in _INDIRECT_FIRE_CATEGORIES
+                ):
                     _max_spd = getattr(attacker, "max_speed_mps", 20.0) or 20.0
                     _speed_frac = min(1.0, attacker.speed / max(1.0, _max_spd))
                     crew_skill *= 1.0 - _speed_frac * 0.5  # Up to 50% penalty

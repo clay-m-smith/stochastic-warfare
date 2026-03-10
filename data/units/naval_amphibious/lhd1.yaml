@@ -3,6 +3,7 @@ domain: naval
 display_name: "Wasp-class LHD"
 naval_type: LHD
 max_speed: 11.3  # m/s (~22 knots)
+training_level: 0.8
 draft: 8.1
 displacement: 40500.0
 fuel_capacity: 5500.0

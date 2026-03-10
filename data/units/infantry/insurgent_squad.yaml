@@ -3,6 +3,7 @@ domain: ground
 display_name: "Insurgent Squad"
 ground_type: LIGHT_INFANTRY
 max_speed: 1.1  # m/s (~4 km/h, irregular fighters, less march discipline)
+training_level: 0.4
 armor_front: 0.0
 armor_side: 0.0
 crew:

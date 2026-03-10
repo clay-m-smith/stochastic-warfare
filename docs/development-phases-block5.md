@@ -1,4 +1,4 @@
-# Stochastic Warfare -- Block 5 Development Phases (40--47)
+# Stochastic Warfare -- Block 5 Development Phases (40--48)
 
 ## Philosophy
 

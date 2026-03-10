@@ -3,6 +3,7 @@ domain: naval
 display_name: "Invincible-class Battlecruiser (Royal Navy)"
 naval_type: CRUISER
 max_speed: 12.9  # m/s (~25 knots)
+training_level: 0.8
 draft: 7.9
 displacement: 17373.0  # full load tonnes
 fuel_capacity: 3000.0  # tonnes of coal/oil

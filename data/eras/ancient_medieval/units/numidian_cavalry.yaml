@@ -3,6 +3,7 @@ domain: ground
 display_name: "Numidian Light Cavalry"
 ground_type: CAVALRY
 max_speed: 9.0  # m/s (~32 km/h, fastest cavalry of the ancient world)
+training_level: 0.7
 armor_front: 0.5  # minimal armor — shields only, no body armor
 armor_side: 0.2
 crew:

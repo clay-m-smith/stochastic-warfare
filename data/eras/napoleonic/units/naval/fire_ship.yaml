@@ -3,6 +3,7 @@ domain: naval
 display_name: "Fire Ship (Expendable)"
 naval_type: PATROL
 max_speed: 4.1  # m/s (~8 knots)
+training_level: 0.6
 draft: 3.0
 displacement: 350.0  # tonnes
 fuel_capacity: 0.0

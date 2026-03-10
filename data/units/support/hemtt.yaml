@@ -4,6 +4,7 @@ display_name: "M977 HEMTT Cargo Truck"
 ground_type: MOTORIZED
 support_type: LOGISTICS_TRUCK
 max_speed: 16.0  # m/s (~57 km/h)
+training_level: 0.7
 cargo_capacity_tons: 10.0
 crew:
   - role: DRIVER

@@ -21,6 +21,8 @@ from stochastic_warfare.entities.personnel import CrewMember, CrewRole, SkillLev
 from stochastic_warfare.entities.unit_classes.aerial import (
     AerialUnit,
     AerialUnitType,
+    AirPosture,
+    FlightState,
 )
 from stochastic_warfare.entities.unit_classes.air_defense import (
     ADUnitType,
@@ -256,6 +258,9 @@ class UnitLoader:
                 kwargs["aerial_type"] = AerialUnitType[defn.aerial_type.upper()]
             kwargs["service_ceiling"] = defn.service_ceiling
             kwargs["data_link_range"] = defn.data_link_range
+            # Phase 50b: scenarios assume aircraft are operational on spawn
+            kwargs["flight_state"] = FlightState.AIRBORNE
+            kwargs["air_posture"] = AirPosture.ON_STATION
             return AerialUnit(**common, **kwargs)
 
         if domain in (Domain.NAVAL, Domain.SUBMARINE, Domain.AMPHIBIOUS):

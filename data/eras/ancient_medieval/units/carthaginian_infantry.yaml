@@ -3,6 +3,7 @@ domain: ground
 display_name: "Carthaginian Infantry"
 ground_type: LIGHT_INFANTRY
 max_speed: 1.3  # m/s (~4.7 km/h, Libyan/Iberian infantry)
+training_level: 0.65
 armor_front: 1.5  # lighter than Roman 2.0; mixed equipment, many with shields only
 armor_side: 0.5
 crew:

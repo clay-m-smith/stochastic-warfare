@@ -3,6 +3,7 @@ domain: naval
 display_name: "Arleigh Burke-class Destroyer (DDG-51)"
 naval_type: DESTROYER
 max_speed: 16.0  # m/s (~31 knots)
+training_level: 0.8
 draft: 9.4
 displacement: 9200.0
 fuel_capacity: 600.0

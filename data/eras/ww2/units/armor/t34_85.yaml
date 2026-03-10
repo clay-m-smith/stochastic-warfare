@@ -3,6 +3,7 @@ domain: ground
 display_name: "T-34/85 Medium Tank"
 ground_type: ARMOR
 max_speed: 15.0  # m/s (~55 km/h road)
+training_level: 0.7
 armor_front: 90.0  # 45mm plate at 60 degrees = ~90mm effective
 armor_side: 45.0
 crew:

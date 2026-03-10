@@ -3,6 +3,7 @@ domain: ground
 display_name: "SF ODA (12-man)"
 ground_type: LIGHT_INFANTRY
 max_speed: 1.5
+training_level: 0.9
 crew:
   - role: COMMANDER
     count: 1

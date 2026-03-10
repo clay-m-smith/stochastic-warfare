@@ -3,6 +3,7 @@ domain: aerial
 display_name: "P-51D Mustang"
 aerial_type: FIGHTER
 max_speed: 190.0  # m/s (~703 km/h at altitude, Mach 0.58)
+training_level: 0.8
 service_ceiling: 12800.0
 crew:
   - role: PILOT

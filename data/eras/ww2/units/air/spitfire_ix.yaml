@@ -3,6 +3,7 @@ domain: aerial
 display_name: "Supermarine Spitfire Mk IX"
 aerial_type: FIGHTER
 max_speed: 182.0  # m/s (~656 km/h at altitude, Mach 0.54)
+training_level: 0.8
 service_ceiling: 13100.0
 crew:
   - role: PILOT

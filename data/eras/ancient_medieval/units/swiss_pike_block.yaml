@@ -3,6 +3,7 @@ domain: ground
 display_name: "Swiss Pike Block"
 ground_type: LIGHT_INFANTRY
 max_speed: 1.0
+training_level: 0.8
 armor_front: 1.5
 armor_side: 0.5
 crew:

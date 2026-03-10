@@ -3,6 +3,7 @@ domain: aerial
 display_name: "A-4 Skyhawk"
 aerial_type: ATTACK
 max_speed: 300.0  # m/s (~1080 km/h, Mach 0.88 at sea level)
+training_level: 0.7
 service_ceiling: 12500.0
 crew:
   - role: PILOT

@@ -3,6 +3,7 @@ domain: ground
 display_name: "Iron Beam Laser Air Defense System"
 ad_type: DEW
 max_speed: 0.0
+training_level: 0.9
 min_engagement_altitude: 0.0
 max_engagement_altitude: 4000.0
 max_engagement_range: 7000.0

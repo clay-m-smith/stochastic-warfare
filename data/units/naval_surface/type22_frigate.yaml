@@ -3,6 +3,7 @@ domain: naval
 display_name: "Type 22 Frigate (Batch 1)"
 naval_type: FRIGATE
 max_speed: 15.4
+training_level: 0.8
 draft: 6.1
 displacement: 4400.0
 fuel_capacity: 350.0

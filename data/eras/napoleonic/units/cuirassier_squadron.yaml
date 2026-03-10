@@ -3,6 +3,7 @@ domain: ground
 display_name: "French Cuirassier Squadron"
 ground_type: CAVALRY
 max_speed: 7.0  # m/s (~25 km/h charge speed)
+training_level: 0.8
 armor_front: 3.0  # iron cuirass (breastplate)
 armor_side: 0.0
 crew:

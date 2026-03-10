@@ -3,6 +3,7 @@ domain: naval
 display_name: "74-gun Ship of the Line"
 naval_type: CRUISER
 max_speed: 5.1  # m/s (~10 knots)
+training_level: 0.75
 draft: 6.9
 displacement: 1600.0  # tonnes
 fuel_capacity: 0.0

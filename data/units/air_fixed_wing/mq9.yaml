@@ -3,6 +3,7 @@ domain: aerial
 display_name: "MQ-9 Reaper UAV"
 aerial_type: UAV_ARMED
 max_speed: 115.0  # m/s (~250 kts)
+training_level: 0.8
 service_ceiling: 15240.0
 data_link_range: 250000.0
 crew:

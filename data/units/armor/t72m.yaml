@@ -3,6 +3,7 @@ domain: ground
 display_name: "T-72M Main Battle Tank"
 ground_type: ARMOR
 max_speed: 16.7
+training_level: 0.6
 armor_front: 400.0
 armor_side: 80.0
 armor_type: COMPOSITE

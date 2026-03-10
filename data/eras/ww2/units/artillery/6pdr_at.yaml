@@ -3,6 +3,7 @@ domain: ground
 display_name: "Ordnance QF 6-Pounder Anti-Tank Gun"
 ground_type: ARTILLERY_TOWED
 max_speed: 0.5  # m/s (manhandled/towed into position)
+training_level: 0.7
 armor_front: 4.0  # gun shield
 armor_side: 0.0
 crew:
