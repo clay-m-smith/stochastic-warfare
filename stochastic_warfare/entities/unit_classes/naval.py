@@ -9,6 +9,15 @@ from stochastic_warfare.core.types import Domain
 from stochastic_warfare.entities.base import Unit
 
 
+class NavalPosture(enum.IntEnum):
+    """Tactical posture for naval units."""
+
+    ANCHORED = 0       # In port, 0x speed, self-defense only
+    UNDERWAY = 1       # Standard steaming, 1.0x speed
+    TRANSIT = 2        # High-speed transit, 1.2x speed
+    BATTLE_STATIONS = 3  # Full combat readiness, 0.9x speed
+
+
 class NavalUnitType(enum.IntEnum):
     """Naval platform classification."""
 
@@ -49,6 +58,7 @@ class NavalUnit(Unit):
     displacement: float = 0.0  # metric tons
     fuel_capacity: float = 0.0  # metric tons
     fuel_remaining: float = 1.0  # 0.0–1.0 fraction
+    naval_posture: NavalPosture = NavalPosture.UNDERWAY
     depth: float = 0.0  # submarines: meters below surface
     max_depth: float = 0.0  # maximum operating depth
     noise_signature_base: float = 0.0  # dB reference
@@ -75,6 +85,7 @@ class NavalUnit(Unit):
                 "displacement": self.displacement,
                 "fuel_capacity": self.fuel_capacity,
                 "fuel_remaining": self.fuel_remaining,
+                "naval_posture": int(self.naval_posture),
                 "depth": self.depth,
                 "max_depth": self.max_depth,
                 "noise_signature_base": self.noise_signature_base,
@@ -91,6 +102,7 @@ class NavalUnit(Unit):
         self.displacement = state["displacement"]
         self.fuel_capacity = state["fuel_capacity"]
         self.fuel_remaining = state["fuel_remaining"]
+        self.naval_posture = NavalPosture(state.get("naval_posture", 1))
         self.depth = state["depth"]
         self.max_depth = state["max_depth"]
         self.noise_signature_base = state["noise_signature_base"]

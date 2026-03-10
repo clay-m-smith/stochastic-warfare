@@ -29,7 +29,7 @@ from stochastic_warfare.entities.unit_classes.air_defense import (
     AirDefenseUnit,
 )
 from stochastic_warfare.entities.unit_classes.ground import GroundUnit, GroundUnitType
-from stochastic_warfare.entities.unit_classes.naval import NavalUnit, NavalUnitType
+from stochastic_warfare.entities.unit_classes.naval import NavalPosture, NavalUnit, NavalUnitType
 from stochastic_warfare.entities.unit_classes.support import SupportUnit, SupportUnitType
 
 logger = get_logger(__name__)
@@ -272,6 +272,8 @@ class UnitLoader:
             kwargs["fuel_capacity"] = defn.fuel_capacity
             kwargs["max_depth"] = defn.max_depth
             kwargs["noise_signature_base"] = defn.noise_signature_base
+            # Phase 51b: naval units spawn UNDERWAY by default
+            kwargs["naval_posture"] = NavalPosture.UNDERWAY
             return NavalUnit(**common, **kwargs)
 
         # Default: ground

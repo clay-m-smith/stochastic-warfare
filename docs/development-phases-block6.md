@@ -204,9 +204,11 @@ Fix WW1 barrage accuracy, make target value weights configurable, verify melee w
 
 ---
 
-## Phase 51: Naval Combat Completeness
+## Phase 51: Naval Combat Completeness -- COMPLETE
 
 **Goal**: Wire existing naval engine methods into battle.py routing, implement naval posture, add DEW disable path, wire MineWarfareEngine and DisruptionEngine (blockade).
+
+**Status**: Complete. 37 new tests, 0 regressions. 7 files modified + 1 test file created. 6 deficits resolved (D2, D6, D16, Phase 43 shore bombardment, Phase 6 blockade, Phase 6 VLS).
 
 **Dependencies**: Phase 50 (posture system for naval posture).
 
@@ -897,7 +899,7 @@ Synchronize all documentation.
 | Deficit | Resolved In |
 |---------|-------------|
 | Messenger intercept risk | Phase 53 (low priority) |
-| Blockade effectiveness | Phase 51d |
+| ~~Blockade effectiveness~~ | Phase 51d (wired, throughput reduction deferred to Phase 56) |
 | VLS reload enforcement | Phase 56d |
 | Stratagems not proactively planned | Phase 53c |
 | Space SIGINT + EW SIGINT fusion | Phase 52d |
@@ -931,7 +933,7 @@ Synchronize all documentation.
 |-------|-------|-------|------------|--------|
 | 49 | Calibration Schema Hardening | 51 | 8,053 | **Complete** |
 | 50 | Combat Fidelity Polish | 40 | 8,093 | **Complete** |
-| 51 | Naval Combat Completeness | ~36 | ~8,129 | Planned |
+| 51 | Naval Combat Completeness | 37 | 8,130 | **Complete** |
 | 52 | Environmental Continuity | ~32 | ~8,161 | Planned |
 | 53 | C2 & AI Completeness | ~51 | ~8,212 | Planned |
 | 54 | Era & Domain Sub-Engine Wiring | ~54 | ~8,266 | Planned |

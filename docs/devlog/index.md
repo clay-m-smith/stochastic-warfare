@@ -64,6 +64,7 @@ Rolling record of implementation decisions, changes, and lessons learned across 
 | | | | |
 | 49 | Calibration Schema Hardening | **Complete** | [phase-49.md](phase-49.md) |
 | 50 | Combat Fidelity Polish | **Complete** | [phase-50.md](phase-50.md) |
+| 51 | Naval Combat Completeness | **Complete** | [phase-51.md](phase-51.md) |
 
 ## Post-MVP Refinement Index
 
@@ -101,7 +102,7 @@ Known limitations and deferred improvements logged during implementation. Review
 | 6 | ~~Medical M/M/c queueing approximate (exponential service)~~ *(resolved Phase 12b)* | [phase-6.md — Known Limitations](phase-6.md#known-limitations) |
 | 6 | ~~Engineering times deterministic (no stochastic variation)~~ *(resolved Phase 11c)* | [phase-6.md — Known Limitations](phase-6.md#known-limitations) |
 | 6 | ~~No fuel gating on movement (tracked but not enforced)~~ *(resolved Phase 11c)* | [phase-6.md — Known Limitations](phase-6.md#known-limitations) |
-| 6 | Blockade effectiveness simplified (flat per-ship probability) | [phase-6.md — Known Limitations](phase-6.md#known-limitations) |
+| 6 | ~~Blockade effectiveness simplified (flat per-ship probability)~~ *(resolved Phase 51d — DisruptionEngine wired, blockade queries in campaign.py)* | [phase-6.md — Known Limitations](phase-6.md#known-limitations) |
 | 6 | Captured supply efficiency flat 50% (no compatibility check) | [phase-6.md — Known Limitations](phase-6.md#known-limitations) |
 | 6 | No local water procurement (always from rear depots) | [phase-6.md — Known Limitations](phase-6.md#known-limitations) |
 | 6 | No ammunition production (scenario-defined depots only) | [phase-6.md — Known Limitations](phase-6.md#known-limitations) |
@@ -228,6 +229,9 @@ Known limitations and deferred improvements logged during implementation. Review
 | 48 | ~~`victory_weights` consumed by engine.py but no scenario uses it — composite victory scoring untested~~ *(resolved Phase 49c — exercised in test)* | [phase-48.md — Postmortem](phase-48.md#postmortem) |
 | 48 | 4 SEAD/IADS/Escalation params unresolved — `sead_effectiveness`, `sead_arm_effectiveness`, `iads_degradation_rate`, `drone_provocation_prob` | [phase-48.md — Postmortem](phase-48.md#postmortem) |
 | 48 | Resolution switching causes long-range battles to resolve via time_expired instead of combat | [phase-48.md — Postmortem](phase-48.md#postmortem) |
+| 51 | Naval posture detection modifiers not implemented (ANCHORED cross-section, TRANSIT reduced emissions, BATTLE_STATIONS active sensors) | [phase-51.md — Known Limitations](phase-51.md#known-limitations) |
+| 51 | Blockade throughput reduction not integrated into supply_network.py route costs | [phase-51.md — Known Limitations](phase-51.md#known-limitations) |
+| 51 | No scenarios exercise VLS magazine_capacity or mine encounters end-to-end | [phase-51.md — Known Limitations](phase-51.md#known-limitations) |
 | 48 | ~~Calibration audit test lists `advance_speed` in `_EXTERNAL_KEYS` but it's not consumed — false pass~~ *(resolved Phase 49b — schema-based validation)* | [phase-48.md — Postmortem](phase-48.md#postmortem) |
 | 48 | ~~`calibration_overrides` is free-form `dict[str, Any]` — no schema validation, mistyped keys pass silently~~ *(resolved Phase 49a — typed CalibrationSchema pydantic model)* | [phase-48.md — Postmortem](phase-48.md#postmortem) |
 

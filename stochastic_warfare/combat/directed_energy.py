@@ -118,6 +118,7 @@ class DEWEngine:
         humidity: float = 0.5,
         precipitation_rate: float = 0.0,
         visibility: float = 10000.0,
+        wavelength_nm: float = 1064.0,
     ) -> float:
         """Beer-Lambert atmospheric transmission for laser beam.
 
@@ -131,6 +132,10 @@ class DEWEngine:
             Precipitation rate in mm/hr.
         visibility:
             Atmospheric visibility in meters.
+        wavelength_nm:
+            Beam wavelength in nanometers.  Shorter wavelengths scatter
+            more (Rayleigh+Mie composite ~lambda^-2).  Default 1064 nm
+            (Nd:YAG fundamental).
 
         Returns
         -------
@@ -145,6 +150,12 @@ class DEWEngine:
 
         if visibility < 1000.0:
             extinction += cfg.fog_extinction_per_km
+
+        # Phase 51c: wavelength-dependent scattering correction
+        # Shorter wavelengths scatter more: ~lambda^-2 (Rayleigh+Mie composite)
+        if wavelength_nm > 0:
+            wavelength_factor = (1064.0 / max(wavelength_nm, 200.0)) ** 2
+            extinction *= wavelength_factor
 
         transmittance = math.exp(-extinction * range_km)
         return max(0.0, min(1.0, transmittance))
@@ -293,8 +304,10 @@ class DEWEngine:
             return result
 
         # Atmospheric transmittance
+        beam_wl = getattr(wdef, "beam_wavelength_nm", 0.0) or 1064.0
         transmittance = self.compute_atmospheric_transmittance(
             range_m, humidity, precipitation_rate, visibility,
+            wavelength_nm=beam_wl,
         )
         result.transmittance = transmittance
 

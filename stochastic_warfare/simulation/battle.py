@@ -78,6 +78,14 @@ _POSTURE_SPEED_MULT: dict[int, float] = {
     4: 0.0,  # FORTIFIED
 }
 
+# Phase 51b: naval posture → movement speed multiplier
+_NAVAL_POSTURE_SPEED_MULT: dict[int, float] = {
+    0: 0.0,   # ANCHORED
+    1: 1.0,   # UNDERWAY
+    2: 1.2,   # TRANSIT
+    3: 0.9,   # BATTLE_STATIONS
+}
+
 # Phase 43b: weapon categories that route to indirect fire
 _INDIRECT_FIRE_CATEGORIES = frozenset({"HOWITZER", "MORTAR", "ARTILLERY"})
 
@@ -208,6 +216,7 @@ def _route_naval_engagement(
     timestamp: Any,
     naval_config: NavalEngagementConfig | None = None,
     force_ratio_mod: float = 1.0,
+    vls_launches: dict[str, int] | None = None,
 ) -> tuple[bool, UnitStatus | None]:
     """Route naval engagement to appropriate engine.
 
@@ -240,18 +249,73 @@ def _route_naval_engagement(
                 return True, status
             return True, None  # handled, miss
 
+    # Phase 51a: depth charge routing
+    if wpn_cat_str == "DEPTH_CHARGE":
+        engine = getattr(ctx, "naval_subsurface_engine", None)
+        if engine is not None:
+            result = engine.depth_charge_attack(
+                ship_id=attacker.entity_id,
+                target_id=target.entity_id,
+                num_charges=max(1, int(wpn_inst.definition.rate_of_fire_rpm)),
+                target_depth_m=getattr(target, "depth", 100.0),
+                target_range_m=best_range,
+                timestamp=timestamp,
+            )
+            if result.hits > 0:
+                status = (
+                    UnitStatus.DESTROYED
+                    if result.damage_fraction >= 0.6
+                    else UnitStatus.DISABLED
+                )
+                return True, status
+            return True, None  # handled, miss
+
+    # Phase 51a: ASROC — missile launcher targeting submarine
+    if wpn_cat_str == "MISSILE_LAUNCHER" and target.domain == Domain.SUBMARINE:
+        subsurface = getattr(ctx, "naval_subsurface_engine", None)
+        if subsurface is not None:
+            result = subsurface.asroc_engagement(
+                ship_id=attacker.entity_id,
+                target_id=target.entity_id,
+                range_m=best_range,
+                target_depth_m=getattr(target, "depth", 100.0),
+                timestamp=timestamp,
+            )
+            if result.torpedo_hit:
+                status = (
+                    UnitStatus.DESTROYED
+                    if result.damage_fraction >= 0.6
+                    else UnitStatus.DISABLED
+                )
+                return True, status
+            return True, None  # handled, miss
+
     # Missile (ASHM) — surface-to-surface salvo
     if wpn_cat_str == "MISSILE_LAUNCHER":
+        # Phase 51a: VLS ammo tracking
+        _mc_raw = getattr(wpn_inst.definition, "magazine_capacity", 0)
+        try:
+            mag_cap = int(_mc_raw) if _mc_raw else 0
+        except (TypeError, ValueError):
+            mag_cap = 0
+        if mag_cap > 0:
+            uid = attacker.entity_id
+            launched = vls_launches.get(uid, 0) if vls_launches is not None else 0
+            if launched >= mag_cap:
+                return True, None  # magazine exhausted
         engine = getattr(ctx, "naval_surface_engine", None)
         if engine is not None:
+            missiles_fired = max(1, int(wpn_inst.definition.rate_of_fire_rpm))
             salvo = engine.salvo_exchange(
-                attacker_missiles=max(
-                    1, int(wpn_inst.definition.rate_of_fire_rpm),
-                ),
+                attacker_missiles=missiles_fired,
                 attacker_pk=min(1.0, nc.default_missile_pk * force_ratio_mod),
                 defender_point_defense_count=nc.default_pd_count,
                 defender_pd_pk=nc.default_pd_pk,
             )
+            # Track VLS expenditure
+            if mag_cap > 0 and vls_launches is not None:
+                uid = attacker.entity_id
+                vls_launches[uid] = vls_launches.get(uid, 0) + missiles_fired
             if salvo.hits > 0:
                 status = (
                     UnitStatus.DESTROYED if salvo.hits >= 2
@@ -291,8 +355,10 @@ def _route_naval_engagement(
                 return True, UnitStatus.DISABLED
             return True, None
 
-    # Shore bombardment: naval gun vs ground target
-    if wpn_cat_str in ("NAVAL_GUN", "CANNON") and target.domain == Domain.GROUND:
+    # Shore bombardment: naval gun vs ground target (attacker must be naval)
+    if (wpn_cat_str in ("NAVAL_GUN", "CANNON")
+            and target.domain == Domain.GROUND
+            and attacker.domain in (Domain.NAVAL, Domain.SUBMARINE)):
         ngse = getattr(ctx, "naval_gunfire_support_engine", None)
         if ngse is not None:
             bom_result = ngse.shore_bombardment(
@@ -629,6 +695,8 @@ class BattleManager:
         self._undigging: dict[str, bool] = {}
         # Phase 50c: persistent concealment scores per target
         self._concealment_scores: dict[str, float] = {}
+        # Phase 51a: VLS magazine tracking (entity_id → missiles launched)
+        self._vls_launches: dict[str, int] = {}
 
     # ── Engagement detection ────────────────────────────────────────
 
@@ -792,6 +860,68 @@ class BattleManager:
                 elif int(ap) == 0:  # Was GROUNDED posture but operational
                     u.air_posture = AirPosture.ON_STATION
 
+        # 4d. Phase 51b: auto-assign naval posture based on enemy proximity
+        # Only for modern/ww2 eras — ancient/napoleonic oar-powered ships
+        # don't have the modern battle stations speed concept.
+        _era = getattr(ctx.config, "era", "modern")
+        if _era in ("modern", "ww2", "ww1"):
+            for side_name, side_units in units_by_side.items():
+                enemies = active_enemies.get(side_name, [])
+                for u in side_units:
+                    if u.status != UnitStatus.ACTIVE:
+                        continue
+                    np_attr = getattr(u, "naval_posture", None)
+                    if np_attr is None:
+                        continue
+                    from stochastic_warfare.entities.unit_classes.naval import NavalPosture
+                    if not enemies:
+                        if int(np_attr) == 3:  # BATTLE_STATIONS → UNDERWAY
+                            object.__setattr__(u, "naval_posture", NavalPosture.UNDERWAY)
+                        continue
+                    min_dist = _nearest_enemy_dist(u.position, enemies)
+                    if min_dist < self._config.engagement_range_m * 2:
+                        object.__setattr__(u, "naval_posture", NavalPosture.BATTLE_STATIONS)
+                    elif int(np_attr) == 3:  # No longer in threat range
+                        object.__setattr__(u, "naval_posture", NavalPosture.UNDERWAY)
+
+        # 4e. Phase 51d: mine warfare — check moving naval units against minefields
+        mine_engine = getattr(ctx, "mine_warfare_engine", None)
+        pending_mine_damage: list[tuple[Unit, UnitStatus]] = []
+        if mine_engine is not None and mine_engine._mines:
+            dest_thresh_m = cal.get(
+                "destruction_threshold", self._config.destruction_threshold,
+            )
+            dis_thresh_m = cal.get(
+                "disable_threshold", self._config.disable_threshold,
+            )
+            for side_units in units_by_side.values():
+                for u in side_units:
+                    if u.status != UnitStatus.ACTIVE:
+                        continue
+                    if u.domain not in (Domain.NAVAL, Domain.SUBMARINE, Domain.AMPHIBIOUS):
+                        continue
+                    if u.speed < 0.1:
+                        continue  # stationary — no mine trigger
+                    for mine in list(mine_engine._mines):
+                        if not mine.armed or mine.detonated:
+                            continue
+                        dx = u.position.easting - mine.position.easting
+                        dy = u.position.northing - mine.position.northing
+                        dist_m = math.sqrt(dx * dx + dy * dy)
+                        _trigger_radii = {0: 5, 1: 50, 2: 100, 3: 30, 4: 80, 5: 100, 6: 120}
+                        trigger_radius = _trigger_radii.get(int(mine.mine_type), 50)
+                        if dist_m <= trigger_radius:
+                            mr = mine_engine.resolve_mine_encounter(
+                                ship_id=u.entity_id, mine=mine,
+                                ship_magnetic_sig=0.5, ship_acoustic_sig=0.5,
+                                timestamp=timestamp,
+                            )
+                            if mr.detonated and mr.damage_fraction > 0:
+                                if mr.damage_fraction >= dest_thresh_m:
+                                    pending_mine_damage.append((u, UnitStatus.DESTROYED))
+                                elif mr.damage_fraction >= dis_thresh_m:
+                                    pending_mine_damage.append((u, UnitStatus.DISABLED))
+
         # 5. Rebuild enemy data after movement — position arrays from step 1
         #    are stale (captured pre-movement coordinates).  The Unit object
         #    references in active_enemies point to updated positions, but the
@@ -802,6 +932,8 @@ class BattleManager:
         pending_damage = self._execute_engagements(
             ctx, units_by_side, active_enemies, enemy_pos_arrays, dt, timestamp,
         )
+        # Include mine damage
+        pending_damage.extend(pending_mine_damage)
 
         # 7. Apply deferred damage
         self._apply_deferred_damage(pending_damage, ctx.event_bus, timestamp)
@@ -1346,6 +1478,13 @@ class BattleManager:
                     if effective_speed <= 0:
                         continue
 
+                # Phase 51b: naval posture → speed multiplier
+                np_val = getattr(u, "naval_posture", None)
+                if np_val is not None:
+                    effective_speed *= _NAVAL_POSTURE_SPEED_MULT.get(int(np_val), 1.0)
+                    if effective_speed <= 0:
+                        continue
+
                 # Wave gating: check if this unit's wave has been released
                 wave = wave_assignments.get(u.entity_id, 0)
                 if wave == -1:
@@ -1648,6 +1787,11 @@ class BattleManager:
                 # Phase 50b: air posture gate — GROUNDED/RETURNING skip
                 air_posture = getattr(attacker, "air_posture", None)
                 if air_posture is not None and int(air_posture) in (0, 3):
+                    continue
+
+                # Phase 51b: naval posture gate — ANCHORED skip
+                naval_posture = getattr(attacker, "naval_posture", None)
+                if naval_posture is not None and int(naval_posture) == 0:
                     continue
 
                 # Phase 40f: morale gate — routed/surrendered units don't fire
@@ -2040,6 +2184,7 @@ class BattleManager:
                         best_range, dt, timestamp,
                         naval_config=self._config.naval_config,
                         force_ratio_mod=force_ratio_mod,
+                        vls_launches=self._vls_launches,
                     )
                     if handled:
                         if naval_status is not None:
@@ -2282,8 +2427,13 @@ class BattleManager:
 
                     if result.engaged and result.hit_result and result.hit_result.hit:
                         if engagement_type in (EngagementType.DEW_LASER, EngagementType.DEW_HPM):
-                            # DEW hit = target destroyed (thermal/EMP kill)
-                            pending_damage.append((best_target, UnitStatus.DESTROYED))
+                            # Phase 51c: DEW disable path — threshold-based
+                            dew_pk = result.hit_result.p_hit if hasattr(result.hit_result, "p_hit") else 0.5
+                            dew_thresh = cal.get("dew_disable_threshold", 0.5)
+                            if dew_pk >= dew_thresh:
+                                pending_damage.append((best_target, UnitStatus.DESTROYED))
+                            else:
+                                pending_damage.append((best_target, UnitStatus.DISABLED))
                         elif (result.damage_result
                                 and result.damage_result.damage_fraction > 0):
                             if result.damage_result.damage_fraction >= dest_thresh:

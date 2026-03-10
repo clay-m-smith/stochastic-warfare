@@ -131,6 +131,7 @@ nav:
     - Phase 48 - Block 5 Deficit Resolution: devlog/phase-48.md
     - Phase 49 - Calibration Schema Hardening: devlog/phase-49.md
     - Phase 50 - Combat Fidelity Polish: devlog/phase-50.md
+    - Phase 51 - Naval Combat Completeness: devlog/phase-51.md
   - Specifications:
     - Project Structure: specs/project-structure.md
     - Skills & Hooks: skills-and-hooks.md

@@ -336,10 +336,21 @@ class CampaignManager:
     # ── Supply network ──────────────────────────────────────────────
 
     def _update_supply_network(self, ctx: Any, dt: float) -> None:
-        """Update the supply network — transport and routing."""
-        # Supply network engine manages pull-based routing
-        # This is a thin delegation to the logistics module
-        pass  # Supply network update is handled by the engine's own update
+        """Update the supply network — transport and routing.
+
+        Phase 51d: queries active blockades via DisruptionEngine for
+        sea-zone interdiction effects.
+        """
+        disruption = getattr(ctx, "disruption_engine", None)
+        if disruption is not None:
+            for blockade in disruption.active_blockades():
+                for zone_id in blockade.sea_zone_ids:
+                    eff = disruption.check_blockade(zone_id)
+                    if eff > 0:
+                        logger.debug(
+                            "Blockade %s zone %s eff=%.2f",
+                            blockade.blockade_id, zone_id, eff,
+                        )
 
     def _consume_idle_supplies(self, ctx: Any, dt: float) -> None:
         """Consume supplies at idle/march rate during strategic ticks."""

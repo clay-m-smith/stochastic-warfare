@@ -378,6 +378,9 @@ class SimulationContext:
     naval_gunfire_support_engine: Any = None
     mine_warfare_engine: Any = None
 
+    # Disruption (Phase 51d — blockade / interdiction)
+    disruption_engine: Any = None
+
     # Logistics
     consumption_engine: Any = None
     stockpile_manager: Any = None
@@ -486,6 +489,7 @@ class SimulationContext:
             ("naval_subsurface_engine", self.naval_subsurface_engine),
             ("naval_gunfire_support_engine", self.naval_gunfire_support_engine),
             ("mine_warfare_engine", self.mine_warfare_engine),
+            ("disruption_engine", self.disruption_engine),
             ("maintenance_engine", self.maintenance_engine),
             ("medical_engine", self.medical_engine),
             ("engineering_engine", self.engineering_engine),
@@ -557,6 +561,7 @@ class SimulationContext:
             ("naval_subsurface_engine", self.naval_subsurface_engine),
             ("naval_gunfire_support_engine", self.naval_gunfire_support_engine),
             ("mine_warfare_engine", self.mine_warfare_engine),
+            ("disruption_engine", self.disruption_engine),
             ("maintenance_engine", self.maintenance_engine),
             ("medical_engine", self.medical_engine),
             ("engineering_engine", self.engineering_engine),
@@ -1004,6 +1009,11 @@ class ScenarioLoader:
         )
         mine_warfare_engine = MineWarfareEngine(dmg_engine, bus, combat_rng)
 
+        # Disruption engine (Phase 51d — blockade / interdiction)
+        from stochastic_warfare.logistics.disruption import DisruptionEngine
+
+        disruption_engine = DisruptionEngine(bus, logistics_rng)
+
         # LOS engine (built from heightmap, cached per tick)
         from stochastic_warfare.terrain.los import LOSEngine
 
@@ -1194,6 +1204,7 @@ class ScenarioLoader:
             "naval_subsurface_engine": naval_subsurface_engine,
             "naval_gunfire_support_engine": naval_gunfire_support_engine,
             "mine_warfare_engine": mine_warfare_engine,
+            "disruption_engine": disruption_engine,
             "obstacle_manager": obstacle_mgr,
             "hydrography_manager": hydro_mgr,
             "weather_engine": weather_engine,

@@ -74,6 +74,7 @@ class CalibrationSchema(BaseModel):
     # -- Thresholds -------------------------------------------------------
     destruction_threshold: float = 0.5
     disable_threshold: float = 0.3
+    dew_disable_threshold: float = 0.5
 
     # -- Behavioral -------------------------------------------------------
     defensive_sides: list[str] = []
