@@ -65,6 +65,7 @@ Rolling record of implementation decisions, changes, and lessons learned across 
 | 49 | Calibration Schema Hardening | **Complete** | [phase-49.md](phase-49.md) |
 | 50 | Combat Fidelity Polish | **Complete** | [phase-50.md](phase-50.md) |
 | 51 | Naval Combat Completeness | **Complete** | [phase-51.md](phase-51.md) |
+| 52 | Environmental Continuity | **Complete** | [phase-52.md](phase-52.md) |
 
 ## Post-MVP Refinement Index
 
@@ -91,7 +92,7 @@ Known limitations and deferred improvements logged during implementation. Review
 | 4 | ~~Air combat lacks detailed flight dynamics / energy-maneuverability~~ *(resolved Phase 12c)* | [phase-4.md — Known Limitations](phase-4.md#known-limitations-post-mvp-refinements) |
 | 4 | ~~Environment→combat coupling partial: air_combat, air_defense, naval_surface, indirect_fire lack env coupling~~ *(resolved Phase 11a)* | [phase-4.md — Known Limitations](phase-4.md#known-limitations-post-mvp-refinements) |
 | 5 | ~~No multi-hop propagation (single hop issuer→recipient only)~~ *(resolved Phase 12a)* | [phase-5.md — Known Limitations](phase-5.md#known-limitations-deferred-items) |
-| 5 | ~~No terrain-based LOS check for communications~~ *(resolved Phase 12a)* | [phase-5.md — Known Limitations](phase-5.md#known-limitations-deferred-items) |
+| 5 | ~~No terrain-based LOS check for communications~~ *(resolved Phase 52c — diffraction model + exempt types + has_los bug fix)* | [phase-5.md — Known Limitations](phase-5.md#known-limitations-deferred-items) |
 | 5 | ~~Simplified FSCL (east-west line, not arbitrary polyline)~~ *(resolved Phase 12a)* | [phase-5.md — Known Limitations](phase-5.md#known-limitations-deferred-items) |
 | 5 | ~~No ATO planning cycle (structures only, generation deferred to Phase 9/Future)~~ *(resolved Phase 12a)* | [phase-5.md — Known Limitations](phase-5.md#known-limitations-deferred-items) |
 | 5 | ~~No JTAC/FAC observer model for CAS~~ *(resolved Phase 12a)* | [phase-5.md — Known Limitations](phase-5.md#known-limitations-deferred-items) |
@@ -156,7 +157,7 @@ Known limitations and deferred improvements logged during implementation. Review
 | 16 | Campaign-level EW validation deferred (component-level only) | [phase-16.md — Known Limitations](phase-16.md#known-limitations-future-work) |
 | 17 | Simplified Keplerian orbits (no SGP4/TLE, no atmospheric drag for LEO decay) | [phase-17.md — Known Limitations](phase-17.md#known-limitations-future-work) |
 | 17 | No detailed satellite bus modeling (power, thermal, attitude control) | [phase-17.md — Known Limitations](phase-17.md#known-limitations-future-work) |
-| 17 | No space-based SIGINT integration with Phase 16 SIGINT engine | [phase-17.md — Known Limitations](phase-17.md#known-limitations-future-work) |
+| 17 | ~~No space-based SIGINT integration with Phase 16 SIGINT engine~~ *(resolved Phase 52d — inverse-variance weighted fusion in engine.py tick loop)* | [phase-17.md — Known Limitations](phase-17.md#known-limitations-future-work) |
 | 17 | Debris cascade model is statistical (no individual fragment tracking) | [phase-17.md — Known Limitations](phase-17.md#known-limitations-future-work) |
 | 17 | No satellite maneuvering or station-keeping fuel limits | [phase-17.md — Known Limitations](phase-17.md#known-limitations-future-work) |
 | 17 | No space weather effects (solar flares, radiation belt variations) | [phase-17.md — Known Limitations](phase-17.md#known-limitations-future-work) |

@@ -386,7 +386,7 @@ class CoordinationEngine:
             has_los = True
             if self._los_engine is not None:
                 result = self._los_engine.check_los(jtac_pos, target_position)
-                has_los = result.has_los
+                has_los = result.visible
 
             if not has_los:
                 continue

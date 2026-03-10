@@ -132,6 +132,7 @@ nav:
     - Phase 49 - Calibration Schema Hardening: devlog/phase-49.md
     - Phase 50 - Combat Fidelity Polish: devlog/phase-50.md
     - Phase 51 - Naval Combat Completeness: devlog/phase-51.md
+    - Phase 52 - Environmental Continuity: devlog/phase-52.md
   - Specifications:
     - Project Structure: specs/project-structure.md
     - Skills & Hooks: skills-and-hooks.md

@@ -123,6 +123,8 @@ class SIGINTEngine:
         self._sigint_config = config or SIGINTConfig()
         self._collectors: dict[str, SIGINTCollector] = {}
         self._intercept_history: dict[str, list[float]] = {}  # emitter_id → timestamps
+        # Phase 52d: buffer successful intercepts for SIGINT fusion
+        self._recent_reports: list[SIGINTReport] = []
 
     # ------------------------------------------------------------------
     # Collector management
@@ -421,7 +423,17 @@ class SIGINTEngine:
             traffic_level=0.0,
             timestamp=timestamp,
         )
+        # Phase 52d: buffer successful intercepts for fusion
+        if success:
+            self._recent_reports.append(report)
         return report
+
+    def get_recent_reports(self, *, clear: bool = True) -> list[SIGINTReport]:
+        """Return buffered intercept reports, optionally clearing the buffer."""
+        reports = list(self._recent_reports)
+        if clear:
+            self._recent_reports.clear()
+        return reports
 
     # ------------------------------------------------------------------
     # Helpers

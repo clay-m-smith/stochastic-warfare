@@ -96,6 +96,13 @@ class CalibrationSchema(BaseModel):
     # -- Morale (nested) --------------------------------------------------
     morale: MoraleCalibration = MoraleCalibration()
 
+    # -- Night gradation (Phase 52a) ----------------------------------------
+    night_thermal_floor: float = 0.8
+
+    # -- Weather → ballistics/sensors (Phase 52b) ---------------------------
+    wind_accuracy_penalty_scale: float = 0.03
+    rain_attenuation_factor: float = 1.0
+
     # -- Concealment -------------------------------------------------------
     observation_decay_rate: float = 0.05
     engagement_concealment_threshold: float = 0.5

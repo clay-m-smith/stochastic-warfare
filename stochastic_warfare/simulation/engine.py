@@ -480,6 +480,9 @@ class SimulationEngine:
         # Phase 25: EW domain
         self._update_ew(dt)
 
+        # Phase 52d: SIGINT fusion (after space + EW updates)
+        self._fuse_sigint()
+
         # Phase 44c: Maintenance engine — equipment breakdowns
         if ctx.maintenance_engine is not None:
             try:
@@ -529,6 +532,68 @@ class SimulationEngine:
                 logger.error("EW decoy engine update failed", exc_info=True)
                 if self._strict_mode:
                     raise
+
+    # ── Phase 52d: SIGINT fusion ──────────────────────────────────────
+
+    def _fuse_sigint(self) -> None:
+        """Fuse space-based and EW SIGINT reports into unified tracks."""
+        ctx = self._ctx
+        space = getattr(ctx, "space_engine", None)
+        ew = getattr(ctx, "ew_engine", None)
+        fusion = getattr(ctx, "intel_fusion_engine", None)
+        if space is None or ew is None or fusion is None:
+            return
+        sigint_engine = getattr(ew, "sigint_engine", None)
+        if sigint_engine is None:
+            return
+        ew_raw = sigint_engine.get_recent_reports(clear=True)
+        if not ew_raw:
+            return
+
+        from stochastic_warfare.detection.intel_fusion import IntelReport, IntelSource
+
+        # Convert SIGINTReport → IntelReport
+        ew_reports: list[IntelReport] = []
+        for r in ew_raw:
+            if r.estimated_position is None:
+                continue
+            ew_reports.append(IntelReport(
+                source=IntelSource.SIGINT,
+                timestamp=r.timestamp or 0.0,
+                reliability=0.7,
+                target_position=r.estimated_position,
+                position_uncertainty_m=r.position_uncertainty_m,
+            ))
+
+        # Collect space SIGINT reports (from ISR engine if available)
+        space_isr = getattr(space, "isr_engine", None)
+        space_reports: list[IntelReport] = []
+        if space_isr is not None:
+            raw_space = getattr(space_isr, "get_recent_reports", None)
+            if raw_space is not None:
+                for sr in raw_space(clear=True):
+                    if getattr(sr, "target_position", None) is not None:
+                        space_reports.append(IntelReport(
+                            source=IntelSource.SIGINT,
+                            timestamp=getattr(sr, "timestamp", 0.0) or 0.0,
+                            reliability=0.7,
+                            target_position=sr.target_position,
+                            position_uncertainty_m=getattr(
+                                sr, "position_uncertainty_m", 1000.0,
+                            ),
+                        ))
+
+        if not space_reports and not ew_reports:
+            return
+
+        # Fuse for each side
+        for side in getattr(ctx, "side_names", []):
+            try:
+                fusion.fuse_sigint_tracks(
+                    side, space_reports, ew_reports,
+                )
+            except Exception:
+                logger.debug("SIGINT fusion failed for side %s", side, exc_info=True)
 
     # ── Escalation ────────────────────────────────────────────────────
 

@@ -78,6 +78,43 @@ class SatellitePass(BaseModel):
 # ---------------------------------------------------------------------------
 
 
+def _position_distance(a: Position, b: Position) -> float:
+    """Euclidean distance between two positions (2D)."""
+    dx = a.easting - b.easting
+    dy = a.northing - b.northing
+    return math.sqrt(dx * dx + dy * dy)
+
+
+def _fuse_two_reports(a: IntelReport, b: IntelReport) -> IntelReport:
+    """Inverse-variance weighted fusion of two SIGINT reports.
+
+    Fused uncertainty: 1 / sqrt(1/σ_a² + 1/σ_b²)  — always less than
+    either individual uncertainty.
+    """
+    assert a.target_position is not None and b.target_position is not None
+    ua = max(a.position_uncertainty_m, 1.0)
+    ub = max(b.position_uncertainty_m, 1.0)
+    wa = 1.0 / (ua * ua)
+    wb = 1.0 / (ub * ub)
+    total_w = wa + wb
+    fused_e = (a.target_position.easting * wa + b.target_position.easting * wb) / total_w
+    fused_n = (a.target_position.northing * wa + b.target_position.northing * wb) / total_w
+    fused_alt = (a.target_position.altitude + b.target_position.altitude) / 2.0
+    fused_unc = 1.0 / math.sqrt(total_w)
+    return IntelReport(
+        source=IntelSource.SIGINT,
+        timestamp=max(a.timestamp, b.timestamp),
+        reliability=max(a.reliability, b.reliability),
+        target_position=Position(fused_e, fused_n, fused_alt),
+        position_uncertainty_m=fused_unc,
+        target_type=a.target_type or b.target_type,
+        classification_confidence=max(
+            a.classification_confidence, b.classification_confidence,
+        ),
+        source_unit_id=a.source_unit_id or b.source_unit_id,
+    )
+
+
 class IntelFusionEngine:
     """Multi-source intelligence fusion engine.
 
@@ -263,6 +300,68 @@ class IntelFusionEngine:
             target_position=noisy_pos,
             position_uncertainty_m=uncertainty,
         )
+
+    # ------------------------------------------------------------------
+    # Phase 52d: Space + EW SIGINT fusion
+    # ------------------------------------------------------------------
+
+    def fuse_sigint_tracks(
+        self,
+        side: str,
+        space_reports: list[IntelReport],
+        ew_reports: list[IntelReport],
+        association_radius_mult: float = 2.0,
+    ) -> list[str]:
+        """Fuse space-based and EW SIGINT reports into unified tracks.
+
+        Association criterion: two detections are candidates when their
+        distance < max(unc_a, unc_b) * *association_radius_mult*.
+        Fused position uses inverse-variance weighted average, giving
+        better accuracy than either individual source.
+
+        Returns list of track IDs created or updated.
+        """
+        fused_ids: list[str] = []
+        used_ew: set[int] = set()
+
+        for sp in space_reports:
+            if sp.target_position is None:
+                continue
+            best_ew: tuple[int, IntelReport] | None = None
+            best_dist = float("inf")
+            for i, ew in enumerate(ew_reports):
+                if i in used_ew or ew.target_position is None:
+                    continue
+                dist = _position_distance(
+                    sp.target_position, ew.target_position,
+                )
+                threshold = (
+                    max(sp.position_uncertainty_m, ew.position_uncertainty_m)
+                    * association_radius_mult
+                )
+                if dist < threshold and dist < best_dist:
+                    best_ew = (i, ew)
+                    best_dist = dist
+            if best_ew is not None:
+                idx, ew = best_ew
+                used_ew.add(idx)
+                fused_report = _fuse_two_reports(sp, ew)
+                tid = self.submit_report(side, fused_report)
+                if tid:
+                    fused_ids.append(tid)
+            else:
+                tid = self.submit_report(side, sp)
+                if tid:
+                    fused_ids.append(tid)
+
+        # Submit unmatched EW reports
+        for i, ew in enumerate(ew_reports):
+            if i not in used_ew:
+                tid = self.submit_report(side, ew)
+                if tid:
+                    fused_ids.append(tid)
+
+        return fused_ids
 
     # ------------------------------------------------------------------
     # Multi-source fusion

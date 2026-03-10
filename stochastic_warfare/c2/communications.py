@@ -86,6 +86,16 @@ _MINIMIZE_RESTRICTED: set[CommType] = {
     CommType.RADIO_UHF,
 }
 
+# Phase 52c: comm types exempt from terrain LOS (skywave/satellite/non-RF)
+_LOS_EXEMPT_TYPES: frozenset[CommType] = frozenset({
+    CommType.RADIO_HF,
+    CommType.SATELLITE,
+    CommType.VLF,
+    CommType.ELF,
+    CommType.WIRE,
+    CommType.MESSENGER,
+})
+
 
 # ---------------------------------------------------------------------------
 # YAML-loaded equipment definition
@@ -361,14 +371,26 @@ class CommunicationsEngine:
         from_pos: Position,
         to_pos: Position,
     ) -> float:
-        """12a-2: terrain LOS factor — 0.0 when LOS required but blocked."""
+        """Phase 52c: terrain LOS factor with diffraction loss.
+
+        Returns 1.0 for clear LOS or exempt comm types, 0.25 (~6 dB
+        single-obstruction diffraction loss) when terrain blocks LOS.
+        """
         if self._los_engine is None:
             return 1.0
+        # HF skywave, SATCOM, VLF/ELF, wire, messenger exempt
+        try:
+            if equip.comm_type_enum in _LOS_EXEMPT_TYPES:
+                return 1.0
+        except (KeyError, AttributeError):
+            pass
         if not equip.requires_los:
             return 1.0
-        # LOS engine's check_los returns an object with .has_los
         result = self._los_engine.check_los(from_pos, to_pos)
-        return 1.0 if result.has_los else 0.0
+        if result.visible:
+            return 1.0
+        # Terrain blocks LOS — apply diffraction loss (~6 dB)
+        return 0.25
 
     def _congestion_factor(self, equip: CommEquipmentDefinition) -> tuple[float, float]:
         """12a-3: network congestion effect — (reliability_mult, latency_mult).

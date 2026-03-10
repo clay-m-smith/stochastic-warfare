@@ -902,7 +902,7 @@ Synchronize all documentation.
 | ~~Blockade effectiveness~~ | Phase 51d (wired, throughput reduction deferred to Phase 56) |
 | VLS reload enforcement | Phase 56d |
 | Stratagems not proactively planned | Phase 53c |
-| Space SIGINT + EW SIGINT fusion | Phase 52d |
+| ~~Space SIGINT + EW SIGINT fusion~~ | Phase 52d (**resolved**) |
 | school_id dead data | Phase 53c |
 | get_stratagem_affinity never called | Phase 53c |
 | C2 effectiveness hardcoded 1.0 | Phase 53b |
@@ -934,7 +934,7 @@ Synchronize all documentation.
 | 49 | Calibration Schema Hardening | 51 | 8,053 | **Complete** |
 | 50 | Combat Fidelity Polish | 40 | 8,093 | **Complete** |
 | 51 | Naval Combat Completeness | 37 | 8,130 | **Complete** |
-| 52 | Environmental Continuity | ~32 | ~8,161 | Planned |
+| 52 | Environmental Continuity | 32 | 8,162 | **Complete** |
 | 53 | C2 & AI Completeness | ~51 | ~8,212 | Planned |
 | 54 | Era & Domain Sub-Engine Wiring | ~54 | ~8,266 | Planned |
 | 55 | Resolution & Scenario Migration | ~26 | ~8,292 | Planned |

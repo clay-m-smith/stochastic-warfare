@@ -186,7 +186,7 @@ class _MockLOSEngine:
         self._has_los = has_los
 
     def check_los(self, from_pos, to_pos):
-        return SimpleNamespace(has_los=self._has_los)
+        return SimpleNamespace(visible=self._has_los)
 
 
 class TestCommsLOS:

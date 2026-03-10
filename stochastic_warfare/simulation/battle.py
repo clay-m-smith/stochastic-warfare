@@ -54,6 +54,63 @@ def _compute_weather_pk_modifier(weather_state: int) -> float:
     return _WEATHER_PK_TABLE.get(int(weather_state), 1.0)
 
 
+# Phase 52a: twilight gradation lookup
+_TWILIGHT_VISUAL_MODIFIER: dict[str | None, float] = {
+    "civil": 0.8,
+    "nautical": 0.5,
+    "astronomical": 0.3,
+    None: 0.2,  # full night
+}
+
+
+def _compute_night_modifiers(illum, night_thermal_floor: float = 0.8) -> tuple[float, float]:
+    """Return (visual_modifier, thermal_modifier) from illumination.
+
+    Day → (1.0, 1.0).  At night, visual degrades through twilight
+    stages while thermal is barely affected (floor 0.8).
+    """
+    if illum.is_day:
+        return 1.0, 1.0
+    stage = getattr(illum, "twilight_stage", None)
+    visual = _TWILIGHT_VISUAL_MODIFIER.get(stage, 0.2)
+    thermal = max(night_thermal_floor, visual)
+    return visual, thermal
+
+
+# Phase 52b: cross-wind accuracy penalty
+def _compute_crosswind_penalty(
+    wind_e: float, wind_n: float,
+    att_e: float, att_n: float,
+    tgt_e: float, tgt_n: float,
+    scale: float = 0.03,
+) -> float:
+    """Return crew skill multiplier due to crosswind [0.7–1.0].
+
+    *scale* is m/s → penalty fraction (default 0.03 → 10 m/s = 30%).
+    """
+    dx = tgt_e - att_e
+    dy = tgt_n - att_n
+    if dx == 0.0 and dy == 0.0:
+        return 1.0
+    heading = math.atan2(dx, dy)
+    crosswind = abs(wind_e * math.cos(heading) - wind_n * math.sin(heading))
+    return max(0.7, 1.0 - crosswind * scale)
+
+
+# Phase 52b: ITU-R P.838 rain attenuation for radar sensors
+def _compute_rain_detection_factor(precip_rate_mmhr: float, range_km: float) -> float:
+    """Return detection range multiplier due to rain [0.1–1.0].
+
+    Uses ITU-R P.838 power law for X-band (~10 GHz): k~0.01, alpha~1.28.
+    Radar range equation R^4: factor = 10^(-atten_dB / 40).
+    """
+    if precip_rate_mmhr <= 0 or range_km <= 0:
+        return 1.0
+    specific_atten = 0.01 * (precip_rate_mmhr ** 1.28)
+    total_atten_db = specific_atten * range_km
+    return max(0.1, 10.0 ** (-total_atten_db / 40.0))
+
+
 # Phase 48a: configurable naval engagement defaults
 class NavalEngagementConfig(BaseModel):
     """Default Pk / dimensions for naval engagement routing."""
@@ -1709,8 +1766,11 @@ class BattleManager:
         # Phase 41c: target selection mode
         target_selection_mode = cal.get("target_selection_mode", "threat_scored")
 
-        # Phase 44a: Weather combat effects (computed once per tick)
+        # Phase 44a/52b: Weather combat effects (computed once per tick)
         weather_pk_modifier = 1.0
+        wind_e = 0.0
+        wind_n = 0.0
+        precipitation_rate_mmhr = 0.0
         weather_engine = getattr(ctx, "weather_engine", None)
         if weather_engine is not None:
             try:
@@ -1723,24 +1783,28 @@ class BattleManager:
                 weather_pk_modifier = _compute_weather_pk_modifier(
                     int(conditions.state),
                 )
+                # Phase 52b: extract wind for crosswind penalty
+                wind = conditions.wind
+                wind_e = -wind.speed * math.sin(wind.direction)
+                wind_n = -wind.speed * math.cos(wind.direction)
+                # Phase 52b: extract precipitation for radar attenuation
+                precipitation_rate_mmhr = conditions.precipitation_rate
             except Exception:
                 pass
 
-        # Phase 44a: Night combat effects (computed once per tick)
-        night_visual_modifier = 1.0  # 1.0 = day, 0.3 = night
-        thermal_night_bonus = 0.0
+        # Phase 52a: Night combat effects — continuous twilight gradation
+        night_visual_modifier = 1.0
+        night_thermal_modifier = 1.0
         tod_engine = getattr(ctx, "time_of_day_engine", None)
         if tod_engine is not None:
             try:
                 lat = getattr(ctx.config, "latitude", 0.0)
                 lon = getattr(ctx.config, "longitude", 0.0)
                 illum = tod_engine.illumination_at(lat, lon)
-                if not illum.is_day:
-                    night_visual_modifier = 0.3
-                    thermal_env = tod_engine.thermal_environment(lat, lon)
-                    thermal_night_bonus = min(
-                        0.2, thermal_env.thermal_contrast * 0.3,
-                    )
+                _thermal_floor = cal.get("night_thermal_floor", 0.8)
+                night_visual_modifier, night_thermal_modifier = (
+                    _compute_night_modifiers(illum, _thermal_floor)
+                )
             except Exception:
                 pass
 
@@ -1866,11 +1930,19 @@ class BattleManager:
                 elif effective_concealment > 0 and weather_independent:
                     detection_range *= (1.0 - effective_concealment * 0.3)
 
-                # Phase 44a: Night degrades visual detection, thermal gets bonus
+                # Phase 52a: Night degrades visual detection; thermal barely affected
                 if not weather_independent:
                     detection_range *= night_visual_modifier
                 else:
-                    detection_range *= (1.0 + thermal_night_bonus)
+                    detection_range *= night_thermal_modifier
+
+                # Phase 52b: Rain attenuates radar/weather-independent sensors
+                if weather_independent and precipitation_rate_mmhr > 0:
+                    _rain_f = _compute_rain_detection_factor(
+                        precipitation_rate_mmhr, detection_range / 1000.0,
+                    )
+                    _rain_scale = cal.get("rain_attenuation_factor", 1.0)
+                    detection_range *= _rain_f ** _rain_scale
 
                 # Phase 44b: CBRN MOPP detection degradation
                 mopp_fatigue_factor = 1.0
@@ -2077,6 +2149,16 @@ class BattleManager:
                     * morale_accuracy_mod * weather_pk_modifier
                     * force_ratio_mod
                 )
+
+                # Phase 52b: crosswind accuracy penalty
+                if wind_e != 0.0 or wind_n != 0.0:
+                    _wind_scale = cal.get("wind_accuracy_penalty_scale", 0.03)
+                    crew_skill *= _compute_crosswind_penalty(
+                        wind_e, wind_n,
+                        attacker.position.easting, attacker.position.northing,
+                        best_target.position.easting, best_target.position.northing,
+                        _wind_scale,
+                    )
 
                 # Phase 44b: MOPP fatigue degrades crew skill
                 if mopp_fatigue_factor > 1.0:
