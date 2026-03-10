@@ -705,93 +705,34 @@ class TestEWCalibrationParams:
 
 
 # ═══════════════════════════════════════════════════════════════════════════
-# Calibration key audit — no YAML key should be silently ignored
+# Calibration key audit — superseded by CalibrationSchema (Phase 49)
 # ═══════════════════════════════════════════════════════════════════════════
 
 
 class TestCalibrationKeyAudit:
-    """Verify that calibration_overrides keys are consumed by the engine."""
+    """Calibration key validation via CalibrationSchema (Phase 49).
 
-    # Keys that are consumed by scenario.py (start positions, spacing)
-    _SCENARIO_KEYS = {
-        "start_x", "start_y", "formation_spacing_m",
-    }
+    Replaces the string-list-based audit with schema validation.
+    CalibrationSchema(extra='forbid') rejects unknown keys at parse time.
+    """
 
-    # Keys consumed by battle.py via cal.get()
-    _BATTLE_KEYS = {
-        "hit_probability_modifier", "target_size_modifier",
-        "visibility_m", "morale_degrade_rate_modifier",
-        "morale_check_interval", "max_engagers_per_side",
-        "target_selection_mode", "defensive_sides", "dig_in_ticks",
-        "wave_interval_s", "destruction_threshold", "disable_threshold",
-        "roe_level", "jammer_coverage_mult", "stealth_detection_penalty",
-        "sigint_detection_bonus", "sam_suppression_modifier",
-    }
-
-    # Keys consumed via f-string pattern ({side}_suffix)
-    _SIDE_SUFFIXED_KEYS = {
-        "cohesion", "force_ratio_modifier", "start_x", "start_y",
-        "formation_spacing_m", "hit_probability_modifier",
-    }
-
-    # Keys consumed via f-string pattern (prefix_{side})
-    _SIDE_PREFIXED_KEYS = {
-        "target_size_modifier",
-    }
-
-    # Keys consumed by other systems outside battle.py
-    _EXTERNAL_KEYS = {
-        "morale_base_degrade_rate", "morale_casualty_weight",
-        "morale_force_ratio_weight", "morale_base_recover_rate",
-        "thermal_contrast", "weapon_assignments", "advance_speed",
-        "behavior_rules",
-    }
-
-    # Subsystem config keys (wired at scenario loader level, not cal.get())
-    _SUBSYSTEM_KEYS = {
-        "cbrn_config", "ew_config", "escalation_config", "dew_config",
-    }
-
-    # Known-unwired keys from subsystems not yet connected to battle loop
-    _DEFERRED_KEYS = {
-        "sead_arm_effectiveness", "sead_effectiveness",
-        "iads_degradation_rate", "drone_provocation_prob",
-    }
-
-    def _is_recognized_key(self, key: str) -> bool:
-        """Check if a calibration key is consumed somewhere."""
-        if key in self._BATTLE_KEYS:
-            return True
-        if key in self._EXTERNAL_KEYS:
-            return True
-        if key in self._SUBSYSTEM_KEYS:
-            return True
-        if key in self._DEFERRED_KEYS:
-            return True
-        # Check {side}_suffix patterns
-        for suffix in self._SIDE_SUFFIXED_KEYS:
-            if key.endswith(f"_{suffix}"):
-                return True
-        # Check prefix_{side} patterns
-        for prefix in self._SIDE_PREFIXED_KEYS:
-            if key.startswith(f"{prefix}_"):
-                return True
-        return False
-
-    def test_all_scenario_cal_keys_recognized(self):
-        """Every calibration_overrides key across all scenarios should be
-        recognized as consumed by the engine or explicitly deferred."""
+    def test_all_scenario_cal_keys_validated_by_schema(self):
+        """Every calibration_overrides across all scenarios validates
+        via CalibrationSchema without error."""
         import yaml
         from pathlib import Path
-        unrecognized: list[tuple[str, str]] = []
+        from stochastic_warfare.simulation.calibration import CalibrationSchema
+
+        failures: list[str] = []
         for scenario_yaml in Path("data").rglob("scenario.yaml"):
             data = yaml.safe_load(scenario_yaml.read_text())
             cal = data.get("calibration_overrides", {})
-            for key in cal:
-                if not self._is_recognized_key(key):
-                    unrecognized.append((str(scenario_yaml), key))
-        if unrecognized:
-            msg = "Unrecognized calibration keys:\n"
-            for path, key in sorted(unrecognized):
-                msg += f"  {path}: {key}\n"
-            pytest.fail(msg)
+            if not cal:
+                continue
+            try:
+                CalibrationSchema(**cal)
+            except Exception as e:
+                failures.append(f"{scenario_yaml}: {e}")
+        if failures:
+            pytest.fail("Schema validation failures:\n" +
+                        "\n".join(failures))

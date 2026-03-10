@@ -54,6 +54,7 @@ calibration_overrides:
   target_size_modifier_red: 2.5
   morale_degrade_rate_modifier: 1.5
   destruction_threshold: 0.3
+  roe_level: WEAPONS_FREE
 escalation_config:
   entry_thresholds: [0.0, 0.15, 0.25, 0.35, 0.50, 0.60, 0.70, 0.80, 0.85, 0.90, 0.95]
   hysteresis_factor: 0.7

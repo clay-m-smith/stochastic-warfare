@@ -108,7 +108,6 @@ calibration_overrides:
   greek_start_y: 2000.0
   persian_start_x: 7000.0
   persian_start_y: 2000.0
-  advance_speed: 0.6
   weapon_assignments:
     "Bronze Ram Prow": naval_ram
     "Marine Javelins and Swords": pilum

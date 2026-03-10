@@ -13,6 +13,7 @@ from pathlib import Path
 from typing import Any
 
 import yaml
+from stochastic_warfare.simulation.calibration import CalibrationSchema
 from pydantic import BaseModel, field_validator
 
 from stochastic_warfare.core.logging import get_logger
@@ -124,7 +125,7 @@ class HistoricalEngagement(BaseModel):
     red_forces: ForceDefinition
     terrain: TerrainSpec
     documented_outcomes: list[HistoricalMetric]
-    calibration_overrides: dict[str, Any] = {}
+    calibration_overrides: CalibrationSchema = CalibrationSchema()
     behavior_rules: dict[str, Any] = {}  # pre-scripted behavior per side
     sources: list[str] = []
 

@@ -169,7 +169,8 @@ class TestHistoricalEngagement:
     def test_defaults(self) -> None:
         raw = _minimal_engagement_dict()
         eng = HistoricalEngagement.model_validate(raw)
-        assert eng.calibration_overrides == {}
+        from stochastic_warfare.simulation.calibration import CalibrationSchema
+        assert isinstance(eng.calibration_overrides, CalibrationSchema)
         assert eng.behavior_rules == {}
         assert eng.sources == []
 
@@ -177,7 +178,7 @@ class TestHistoricalEngagement:
         raw = _minimal_engagement_dict()
         raw["calibration_overrides"] = {"hit_probability_modifier": 1.2}
         eng = HistoricalEngagement.model_validate(raw)
-        assert eng.calibration_overrides["hit_probability_modifier"] == 1.2
+        assert eng.calibration_overrides.get("hit_probability_modifier", 1.0) == 1.2
 
     def test_missing_required_field(self) -> None:
         raw = _minimal_engagement_dict()
@@ -410,12 +411,12 @@ class TestHistoricalDataLoaderYAML:
             documented_outcomes: []
             calibration_overrides:
               hit_probability_modifier: 1.2
-              morale_degrade_rate: 0.08
+              morale_base_degrade_rate: 0.08
         """)
         yaml_path = tmp_path / "cal.yaml"
         yaml_path.write_text(content)
 
         loader = HistoricalDataLoader()
         eng = loader.load(yaml_path)
-        assert eng.calibration_overrides["hit_probability_modifier"] == 1.2
-        assert eng.calibration_overrides["morale_degrade_rate"] == 0.08
+        assert eng.calibration_overrides.get("hit_probability_modifier", 1.0) == 1.2
+        assert eng.calibration_overrides.get("morale_base_degrade_rate", 0.05) == 0.08

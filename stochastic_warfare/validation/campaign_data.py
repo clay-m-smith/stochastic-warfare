@@ -13,6 +13,7 @@ from typing import Any
 
 import yaml
 from pydantic import BaseModel, field_validator
+from stochastic_warfare.simulation.calibration import CalibrationSchema
 
 from stochastic_warfare.core.logging import get_logger
 from stochastic_warfare.simulation.scenario import (
@@ -94,7 +95,7 @@ class HistoricalCampaign(BaseModel):
     objectives: list[ObjectiveConfig] = []
     victory_conditions: list[VictoryConditionConfig] = []
     reinforcements: list[ReinforcementConfig] = []
-    calibration_overrides: dict[str, Any] = {}
+    calibration_overrides: CalibrationSchema = CalibrationSchema()
 
     # --- Historical validation fields ---
     documented_outcomes: list[HistoricalMetric] = []

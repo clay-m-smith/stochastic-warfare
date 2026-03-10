@@ -100,7 +100,6 @@ calibration_overrides:
   english_start_y: 500.0
   french_start_x: 1700.0
   french_start_y: 500.0
-  advance_speed: 0.5
   weapon_assignments:
     "Longbow": longbow
     "Sword (Medieval)": sword_medieval

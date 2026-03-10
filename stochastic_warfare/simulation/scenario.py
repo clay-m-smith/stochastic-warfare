@@ -23,6 +23,7 @@ from stochastic_warfare.core.logging import get_logger
 from stochastic_warfare.core.rng import RNGManager
 from stochastic_warfare.core.types import ModuleId, Position
 from stochastic_warfare.entities.base import Unit, UnitStatus
+from stochastic_warfare.simulation.calibration import CalibrationSchema
 from stochastic_warfare.terrain.heightmap import Heightmap
 
 logger = get_logger(__name__)
@@ -200,7 +201,7 @@ class CampaignScenarioConfig(BaseModel):
     objectives: list[ObjectiveConfig] = []
     victory_conditions: list[VictoryConditionConfig] = []
     reinforcements: list[ReinforcementConfig] = []
-    calibration_overrides: dict[str, Any] = {}
+    calibration_overrides: CalibrationSchema = CalibrationSchema()
     escalation_config: dict[str, Any] | None = None
     ew_config: dict[str, Any] | None = None
     space_config: dict[str, Any] | None = None
@@ -396,7 +397,7 @@ class SimulationContext:
     sig_loader: Any = None
 
     # Calibration
-    calibration: dict[str, Any] = field(default_factory=dict)
+    calibration: CalibrationSchema | dict[str, Any] = field(default_factory=CalibrationSchema)
 
     # ── Helpers ──────────────────────────────────────────────────────
 
@@ -434,7 +435,11 @@ class SimulationContext:
                 uid: (ms.value if hasattr(ms, "value") else ms)
                 for uid, ms in self.morale_states.items()
             },
-            "calibration": dict(self.calibration),
+            "calibration": (
+                self.calibration.model_dump()
+                if isinstance(self.calibration, CalibrationSchema)
+                else dict(self.calibration)
+            ),
         }
         # Delegate to engines that have get_state
         engines = [
@@ -500,7 +505,12 @@ class SimulationContext:
         """Restore simulation state from checkpoint."""
         self.clock.set_state(state["clock"])
         self.rng_manager.set_state(state["rng"])
-        self.calibration = state.get("calibration", {})
+        cal_data = state.get("calibration", {})
+        self.calibration = (
+            CalibrationSchema(**cal_data)
+            if isinstance(cal_data, dict)
+            else cal_data
+        )
 
         # Restore engine states
         engines = [
@@ -693,7 +703,7 @@ class ScenarioLoader:
             unit_weapons=unit_weapons,
             unit_sensors=unit_sensors,
             morale_states=morale_states,
-            calibration=dict(config.calibration_overrides),
+            calibration=config.calibration_overrides,
             era_config=era_config,
             **engines,
             **loaders,
@@ -1140,11 +1150,14 @@ class ScenarioLoader:
             )
 
             # Merge weather visibility into calibration if not already set
-            if (
-                "visibility_m" not in config.calibration_overrides
-                and "visibility_m" in wc
-            ):
-                config.calibration_overrides["visibility_m"] = wc["visibility_m"]
+            cal = config.calibration_overrides
+            if "visibility_m" in wc:
+                from stochastic_warfare.simulation.calibration import CalibrationSchema
+                if isinstance(cal, CalibrationSchema):
+                    if cal.visibility_m is None:
+                        cal.visibility_m = wc["visibility_m"]
+                elif "visibility_m" not in cal:
+                    cal["visibility_m"] = wc["visibility_m"]
 
         # Phase 44c: Medical & engineering engines
         from stochastic_warfare.logistics.medical import MedicalEngine

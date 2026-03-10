@@ -102,7 +102,6 @@ calibration_overrides:
   carthaginian_start_y: 1500.0
   roman_start_x: 3500.0
   roman_start_y: 1500.0
-  advance_speed: 0.8
   weapon_assignments:
     "Gladius": gladius
     "Pilum": pilum

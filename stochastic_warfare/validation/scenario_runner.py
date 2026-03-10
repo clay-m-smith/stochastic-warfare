@@ -794,11 +794,31 @@ class ScenarioRunner:
 
     @staticmethod
     def _build_morale_config(
-        calibration: dict[str, Any],
+        calibration: Any,
     ) -> MoraleConfig | None:
         """Build MoraleConfig from calibration overrides, if any."""
         if not calibration:
             return None
+
+        from stochastic_warfare.simulation.calibration import CalibrationSchema
+
+        if isinstance(calibration, CalibrationSchema):
+            m = calibration.morale
+            kwargs: dict[str, Any] = {}
+            for field_name in (
+                "base_degrade_rate", "base_recover_rate",
+                "casualty_weight", "suppression_weight",
+                "leadership_weight", "cohesion_weight",
+                "force_ratio_weight", "transition_cooldown_s",
+            ):
+                val = getattr(m, field_name)
+                from stochastic_warfare.morale.state import MoraleConfig as MC
+                default = MC.model_fields[field_name].default
+                if val != default:
+                    kwargs[field_name] = val
+            return MoraleConfig(**kwargs) if kwargs else None
+
+        # Dict fallback for test mocks
         morale_keys = {
             "morale_base_degrade_rate": "base_degrade_rate",
             "morale_base_recover_rate": "base_recover_rate",
@@ -809,7 +829,7 @@ class ScenarioRunner:
             "morale_force_ratio_weight": "force_ratio_weight",
             "morale_transition_cooldown_s": "transition_cooldown_s",
         }
-        kwargs: dict[str, Any] = {}
+        kwargs = {}
         for cal_key, config_key in morale_keys.items():
             if cal_key in calibration:
                 kwargs[config_key] = calibration[cal_key]
@@ -820,7 +840,7 @@ class ScenarioRunner:
         units: list[Unit],
         weapon_loader: WeaponLoader,
         ammo_loader: AmmoLoader,
-        calibration: dict[str, Any],
+        calibration: Any,
     ) -> dict[str, list[tuple[WeaponInstance, list[AmmoDefinition]]]]:
         """Assign weapon instances to units based on their equipment."""
         result: dict[str, list[tuple[WeaponInstance, list[AmmoDefinition]]]] = {}

@@ -108,7 +108,6 @@ calibration_overrides:
   franco_spanish_start_x: 17000.0
   franco_spanish_start_y: 7500.0
   franco_spanish_formation_spacing_m: 300.0
-  advance_speed: 0.5
   weapon_assignments:
     "32-pdr Long Guns (lower deck, x28)": 32pdr_cannon
     "32-pdr Long Guns (lower deck, x32)": 32pdr_cannon

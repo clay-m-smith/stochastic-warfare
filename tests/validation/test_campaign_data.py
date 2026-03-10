@@ -140,7 +140,7 @@ class TestHistoricalCampaignModel:
         c = HistoricalCampaign.model_validate(
             _minimal_campaign_dict(calibration_overrides=cal)
         )
-        assert c.calibration_overrides["target_size_modifier"] == 0.55
+        assert c.calibration_overrides.get("target_size_modifier", 1.0) == 0.55
 
 
 # ===========================================================================
@@ -395,7 +395,7 @@ class TestToScenarioConfig:
             _minimal_campaign_dict(calibration_overrides=cal)
         )
         config = CampaignDataLoader.to_scenario_config(campaign)
-        assert config.calibration_overrides["hit_probability_modifier"] == 0.8
+        assert config.calibration_overrides.get("hit_probability_modifier", 1.0) == 0.8
 
     def test_victory_conditions_preserved(self):
         d = _minimal_campaign_dict(

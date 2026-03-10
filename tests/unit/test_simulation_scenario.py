@@ -365,7 +365,8 @@ class TestCampaignScenarioConfig:
         assert cfg.objectives == []
         assert cfg.victory_conditions == []
         assert cfg.reinforcements == []
-        assert cfg.calibration_overrides == {}
+        from stochastic_warfare.simulation.calibration import CalibrationSchema
+        assert isinstance(cfg.calibration_overrides, CalibrationSchema)
 
     def test_with_objectives_and_victory(self) -> None:
         raw = _minimal_config(
@@ -510,7 +511,7 @@ class TestYamlParsing:
         assert len(cfg.objectives) == 1
         assert len(cfg.victory_conditions) == 3
         assert len(cfg.reinforcements) == 1
-        assert cfg.calibration_overrides["hit_probability_modifier"] == 1.2
+        assert cfg.calibration_overrides.get("hit_probability_modifier", 1.0) == 1.2
 
 
 # ---------------------------------------------------------------------------
@@ -604,11 +605,11 @@ class TestSimulationContext:
         assert ctx2.clock.tick_count == 1
 
     def test_calibration_round_trip(self) -> None:
-        ctx = _make_ctx(calibration={"some_key": 42})
+        ctx = _make_ctx(calibration={"hit_probability_modifier": 1.5})
         state = ctx.get_state()
         ctx2 = _make_ctx()
         ctx2.set_state(state)
-        assert ctx2.calibration["some_key"] == 42
+        assert ctx2.calibration.get("hit_probability_modifier", 1.0) == 1.5
 
 
 # ---------------------------------------------------------------------------

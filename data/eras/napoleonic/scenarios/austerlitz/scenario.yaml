@@ -114,7 +114,6 @@ calibration_overrides:
   coalition_start_x: 9000.0
   coalition_start_y: 4000.0
   defensive_sides: [coalition]
-  advance_speed: 1.5
   weapon_assignments:
     "Charleville 1777 Musket": charleville_1777
     "Bayonet": bayonet

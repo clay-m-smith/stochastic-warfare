@@ -116,7 +116,6 @@ calibration_overrides:
   british_start_x: 4500.0
   british_start_y: 2000.0
   defensive_sides: [british]
-  advance_speed: 1.5
   weapon_assignments:
     "Charleville 1777 Musket": charleville_1777
     "Brown Bess Musket": brown_bess
