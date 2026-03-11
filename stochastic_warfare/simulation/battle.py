@@ -1686,6 +1686,18 @@ class BattleManager:
                     if dist < 1.0:
                         continue
 
+                # Phase 54b: trench movement factor (WW1)
+                trench_eng = getattr(ctx, "trench_engine", None)
+                if trench_eng is not None and u.position is not None:
+                    try:
+                        mvt_factor = trench_eng.movement_factor_at(
+                            u.position.easting, u.position.northing,
+                        )
+                        if mvt_factor < 1.0:
+                            effective_speed *= mvt_factor
+                    except Exception:
+                        pass
+
                 # MOPP speed factor (Phase 25c)
                 mopp_speed_factor = 1.0
                 cbrn = getattr(ctx, "cbrn_engine", None)
@@ -2173,6 +2185,37 @@ class BattleManager:
                     # Phase 40c: deployed weapons can't fire while moving
                     if attacker.speed > 0.5 and wpn_inst.definition.requires_deployed:
                         continue
+                    # Phase 54f: weapon traverse arc constraint
+                    # traverse_deg 0 or 360 = no constraint (platform-aimed)
+                    _traverse = getattr(wpn_inst.definition, "traverse_deg", 360.0)
+                    if isinstance(_traverse, (int, float)) and 0 < _traverse < 360.0:
+                        _att_heading = getattr(attacker, "heading", 0.0) or 0.0
+                        _tgt_bearing = math.atan2(
+                            best_target.position.easting - attacker.position.easting,
+                            best_target.position.northing - attacker.position.northing,
+                        )
+                        _bearing_diff = abs(_tgt_bearing - _att_heading)
+                        if _bearing_diff > math.pi:
+                            _bearing_diff = 2 * math.pi - _bearing_diff
+                        if _bearing_diff > math.radians(_traverse / 2):
+                            continue  # target outside weapon traverse arc
+                    # Phase 54f: weapon elevation constraint — only for
+                    # weapons with explicitly set (non-default) elevation arcs
+                    _elev_min = getattr(wpn_inst.definition, "elevation_min_deg", -5.0)
+                    _elev_max = getattr(wpn_inst.definition, "elevation_max_deg", 85.0)
+                    if (
+                        best_range > 0
+                        and isinstance(_elev_min, (int, float))
+                        and isinstance(_elev_max, (int, float))
+                        and (_elev_min != -5.0 or _elev_max != 85.0)
+                    ):
+                        _alt_diff = (
+                            getattr(best_target.position, "altitude", 0.0)
+                            - getattr(attacker.position, "altitude", 0.0)
+                        )
+                        _elev_deg = math.degrees(math.atan2(_alt_diff, best_range))
+                        if _elev_deg < _elev_min or _elev_deg > _elev_max:
+                            continue  # target outside weapon elevation arc
                     # Score: prefer weapon whose max range best fits current
                     # distance.  Ranged weapons score higher when target is
                     # far; melee weapons score higher when target is very
@@ -2410,21 +2453,68 @@ class BattleManager:
                         if not routed_aggregate and (
                             wpn_cat_str == "MELEE" or best_range <= _MELEE_RANGE_M
                         ):
-                            me = getattr(ctx, "melee_engine", None)
-                            if me is not None:
-                                mr = me.resolve_melee_round(
-                                    attacker_strength=max(1, len(attacker.personnel)),
-                                    defender_strength=max(1, len(best_target.personnel)),
-                                    melee_type=_infer_melee_type(attacker, wpn_inst),
+                            # Phase 54c: cavalry charge state machine
+                            cavalry_eng = getattr(ctx, "cavalry_engine", None)
+                            unit_type_lower = getattr(
+                                attacker, "unit_type", "",
+                            ).lower()
+                            is_cavalry = any(
+                                kw in unit_type_lower for kw in
+                                ("cavalry", "hussar", "dragoon",
+                                 "lancer", "cuirassier")
+                            )
+                            if (
+                                cavalry_eng is not None
+                                and is_cavalry
+                            ):
+                                charge_id = (
+                                    f"{attacker.entity_id}"
+                                    f"_vs_{best_target.entity_id}"
                                 )
-                                _apply_melee_result(
-                                    mr, attacker, best_target, pending_damage,
-                                    ctx.morale_states, dest_thresh, dis_thresh,
-                                )
-                                side_engagements += 1
-                                routed_aggregate = True
+                                try:
+                                    charges = getattr(
+                                        cavalry_eng, "_charges", {},
+                                    )
+                                    if charge_id not in charges:
+                                        cavalry_eng.initiate_charge(
+                                            charge_id,
+                                            attacker.entity_id,
+                                            best_target.entity_id,
+                                            distance_m=best_range,
+                                        )
+                                    phase = cavalry_eng.update_charge(
+                                        charge_id, dt,
+                                    )
+                                    logger.debug(
+                                        "Cavalry charge %s phase: %s",
+                                        charge_id, phase,
+                                    )
+                                    routed_aggregate = True
+                                    side_engagements += 1
+                                except Exception:
+                                    logger.debug(
+                                        "Cavalry charge failed for %s",
+                                        charge_id, exc_info=True,
+                                    )
+
+                            if not routed_aggregate:
+                                me = getattr(ctx, "melee_engine", None)
+                                if me is not None:
+                                    mr = me.resolve_melee_round(
+                                        attacker_strength=max(1, len(attacker.personnel)),
+                                        defender_strength=max(1, len(best_target.personnel)),
+                                        melee_type=_infer_melee_type(attacker, wpn_inst),
+                                    )
+                                    _apply_melee_result(
+                                        mr, attacker, best_target, pending_damage,
+                                        ctx.morale_states, dest_thresh, dis_thresh,
+                                    )
+                                    side_engagements += 1
+                                    routed_aggregate = True
 
                     elif era == "ancient":
+                        # Phase 54d: ancient formation modifiers
+                        af_eng = getattr(ctx, "formation_ancient_engine", None)
                         if wpn_cat_str == "RIFLE" and best_range > _MELEE_RANGE_M:
                             ae = getattr(ctx, "archery_engine", None)
                             if ae is not None:
@@ -2435,8 +2525,17 @@ class BattleManager:
                                     range_m=best_range,
                                     missile_type=_infer_missile_type(wpn_inst),
                                 )
+                                # Phase 54d: archery vulnerability from formation
+                                arch_vuln = 1.0
+                                if af_eng is not None:
+                                    try:
+                                        arch_vuln = af_eng.archery_vulnerability(
+                                            best_target.entity_id,
+                                        )
+                                    except Exception:
+                                        pass
                                 _apply_aggregate_casualties(
-                                    int(ar.casualties * _agg_modifier),
+                                    int(ar.casualties * _agg_modifier * arch_vuln),
                                     best_target, pending_damage,
                                     dest_thresh, dis_thresh,
                                     self._cumulative_casualties,
@@ -2452,9 +2551,31 @@ class BattleManager:
                         ):
                             me = getattr(ctx, "melee_engine", None)
                             if me is not None:
+                                # Phase 54d: formation melee/defense modifiers
+                                melee_power_mod = 1.0
+                                defense_mod_val = 1.0
+                                if af_eng is not None:
+                                    try:
+                                        melee_power_mod = af_eng.melee_power(
+                                            attacker.entity_id,
+                                        )
+                                    except Exception:
+                                        pass
+                                    try:
+                                        defense_mod_val = af_eng.defense_mod(
+                                            best_target.entity_id,
+                                        )
+                                    except Exception:
+                                        pass
                                 mr = me.resolve_melee_round(
-                                    attacker_strength=max(1, len(attacker.personnel)),
-                                    defender_strength=max(1, len(best_target.personnel)),
+                                    attacker_strength=int(
+                                        max(1, len(attacker.personnel))
+                                        * melee_power_mod
+                                    ),
+                                    defender_strength=int(
+                                        max(1, len(best_target.personnel))
+                                        * defense_mod_val
+                                    ),
                                     melee_type=_infer_melee_type(attacker, wpn_inst),
                                 )
                                 _apply_melee_result(
@@ -2465,6 +2586,33 @@ class BattleManager:
                                 routed_aggregate = True
 
                     elif era == "ww1":
+                        # Phase 54b: barrage zone suppression on defender
+                        barrage_eng = getattr(ctx, "barrage_engine", None)
+                        if barrage_eng is not None and best_target is not None:
+                            try:
+                                bz = barrage_eng.get_barrage_zone_at(
+                                    best_target.position.easting,
+                                    best_target.position.northing,
+                                )
+                                if bz is not None:
+                                    b_effects = barrage_eng.compute_effects(
+                                        best_target.position.easting,
+                                        best_target.position.northing,
+                                        in_dugout=(
+                                            getattr(best_target, "posture", None)
+                                            is not None
+                                            and int(getattr(best_target, "posture", 0)) >= 3
+                                        ),
+                                    )
+                                    b_supp = b_effects.get("suppression_p", 0.0)
+                                    if b_supp > 0:
+                                        logger.debug(
+                                            "Barrage suppression on %s: %.2f",
+                                            best_target.entity_id, b_supp,
+                                        )
+                            except Exception:
+                                pass
+
                         if wpn_cat_str in ("RIFLE", "MACHINE_GUN", "LIGHT_MG", "CANNON"):
                             vf = getattr(ctx, "volley_fire_engine", None)
                             if vf is not None:
@@ -2559,6 +2707,10 @@ class BattleManager:
                                 engagement_type = EngagementType.DEW_HPM
                     except (KeyError, ValueError):
                         pass
+
+                    # Phase 54f: terminal maneuver hit probability bonus
+                    if getattr(ammo_def, "terminal_maneuver", False) is True:
+                        crew_skill *= 1.05
 
                     # Phase 40b: extract target posture
                     target_posture_val = getattr(best_target, "posture", None)

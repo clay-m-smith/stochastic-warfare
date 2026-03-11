@@ -267,10 +267,10 @@ class SimulationContext:
     # Environment engines
     weather_engine: Any = None
     time_of_day_engine: Any = None
-    seasons_engine: Any = None
+    seasons_engine: Any = None  # TODO: SeasonsEngine not implemented
     sea_state_engine: Any = None
-    obscurants_engine: Any = None
-    conditions_engine: Any = None
+    obscurants_engine: Any = None  # TODO: ObscurantsEngine not implemented
+    conditions_engine: Any = None  # Used by SpaceEngine — keep
 
     # Combat
     engagement_engine: Any = None

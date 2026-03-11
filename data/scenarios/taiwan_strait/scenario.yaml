@@ -155,6 +155,12 @@ escalation_config:
   hysteresis_factor: 0.65
   cooldown_s: 14400
 
+# Phase 54e: space domain — GPS, ISR, SATCOM, ASAT
+space_config:
+  enable_space: true
+  gps_sigma_range_m: 5.0
+  ins_drift_rate_m_per_s: 0.6
+
 documented_outcomes:
   - name: blue_ships_sunk
     value: 1.0

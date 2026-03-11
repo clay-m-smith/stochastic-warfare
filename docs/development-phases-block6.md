@@ -504,9 +504,11 @@ Wire the 4 SEAD/IADS parameters and 3 escalation sub-engines.
 
 ---
 
-## Phase 54: Era-Specific & Domain Sub-Engine Wiring
+## Phase 54: Era-Specific & Domain Sub-Engine Wiring -- COMPLETE
 
 **Goal**: Wire the 12 dead era-specific engines into battle/campaign routing. Verify space sub-engine delegation. Create scenarios for dormant config fields. Wire or remove dead YAML data fields. Clean up dead context fields.
+
+**Status**: Complete. 53 new tests, 0 regressions. 6 files modified + 4 scenario YAMLs + 1 test file created. 7 deficits resolved (12 era engines dead, space sub-engines dead, 0 scenarios with space_config, 0 scenarios with commander_config, traverse_deg/elevation dead YAML, terminal_maneuver dead YAML, dead context fields).
 
 **Dependencies**: Phase 53 (C2 engines for courier/order propagation, ATO for strategic bombing).
 
@@ -918,14 +920,17 @@ Synchronize all documentation.
 | ~~FogOfWarManager dead~~ | Phase 53a (**resolved**) |
 | ~~PlanningProcessEngine dead~~ | Phase 53d (**resolved**) |
 | ~~OrderPropagationEngine dead~~ | Phase 53d (**resolved**) |
-| Space sub-engines dead | Phase 54e |
-| Era-specific engines dead (12) | Phase 54a--d |
+| ~~Space sub-engines dead~~ | Phase 54e (**resolved** — verified delegation + get_gps_cep() API) |
+| ~~Era-specific engines dead (12)~~ | Phase 54a--d (**resolved** — all 12 wired with era gating) |
 | ~~Escalation sub-engines dead (3)~~ | Phase 53e (**resolved** — PoliticalPressureEngine wired) |
-| Dead YAML fields (10) | Phase 54f |
-| Dead context fields (3) | Phase 54f |
-| Fragile private API access | Phase 54e |
-| sead_arm_effectiveness unconsumed | Phase 54 or 55 |
-| drone_provocation_prob unconsumed | Phase 54 or 55 |
+| ~~Dead YAML fields (10)~~ | Phase 54f (**resolved** — traverse_deg/elevation/terminal_maneuver wired, data-only fields documented) |
+| ~~Dead context fields (3)~~ | Phase 54f (**resolved** — seasons_engine/obscurants_engine annotated TODO, conditions_engine kept) |
+| ~~Fragile private API access~~ | Phase 54e (**resolved** — get_gps_cep() public convenience method) |
+| Naval posture detection modifiers | Phase 56 |
+| sead_arm_effectiveness unconsumed | Phase 55 |
+| drone_provocation_prob unconsumed | Phase 55 |
+| GasWarfareEngine unwired (instantiated, zero call sites) | Phase 55 |
+| seeker_fov_deg dead YAML field | Phase 55 |
 
 ---
 
@@ -938,10 +943,10 @@ Synchronize all documentation.
 | 51 | Naval Combat Completeness | 37 | 8,130 | **Complete** |
 | 52 | Environmental Continuity | 32 | 8,162 | **Complete** |
 | 53 | C2 & AI Completeness | 44 | 8,206 | **Complete** |
-| 54 | Era & Domain Sub-Engine Wiring | ~54 | ~8,260 | Planned |
-| 55 | Resolution & Scenario Migration | ~26 | ~8,286 | Planned |
-| 56 | Performance & Logistics | ~26 | ~8,312 | Planned |
-| 57 | Full Validation & Regression | ~25 | ~8,337 | Planned |
+| 54 | Era & Domain Sub-Engine Wiring | 53 | 8,259 | **Complete** |
+| 55 | Resolution & Scenario Migration | ~26 | ~8,285 | Planned |
+| 56 | Performance & Logistics | ~26 | ~8,311 | Planned |
+| 57 | Full Validation & Regression | ~25 | ~8,336 | Planned |
 
-**Block 6 total**: ~328 new tests across 9 phases (204 delivered, ~124 remaining).
+**Block 6 total**: ~330 new tests across 9 phases (257 delivered, ~77 remaining).
 **Target cumulative**: ~8,600+ Python tests + 272 frontend = ~8,870+ total.

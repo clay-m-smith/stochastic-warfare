@@ -67,6 +67,7 @@ Rolling record of implementation decisions, changes, and lessons learned across 
 | 51 | Naval Combat Completeness | **Complete** | [phase-51.md](phase-51.md) |
 | 52 | Environmental Continuity | **Complete** | [phase-52.md](phase-52.md) |
 | 53 | C2 & AI Completeness | **Complete** | [phase-53.md](phase-53.md) |
+| 54 | Era-Specific & Domain Sub-Engine Wiring | **Complete** | [phase-54.md](phase-54.md) |
 
 ## Post-MVP Refinement Index
 
@@ -238,6 +239,8 @@ Known limitations and deferred improvements logged during implementation. Review
 | 48 | ~~`calibration_overrides` is free-form `dict[str, Any]` — no schema validation, mistyped keys pass silently~~ *(resolved Phase 49a — typed CalibrationSchema pydantic model)* | [phase-48.md — Postmortem](phase-48.md#postmortem) |
 | 53 | `sead_arm_effectiveness` defined on IadsConfig but never consumed in any code path (only `sead_effectiveness` used in `apply_sead_damage()`) | [phase-53.md — Postmortem](phase-53.md#postmortem) |
 | 53 | `drone_provocation_prob` in CalibrationSchema but never consumed by any engine (no escalation trigger integration point) | [phase-53.md — Postmortem](phase-53.md#postmortem) |
+| 54 | GasWarfareEngine instantiated in scenario.py but zero call sites in battle/engine/campaign (other "structural" engines have update() calls) | [phase-54.md — Postmortem](phase-54.md#postmortem) |
+| 54 | `seeker_fov_deg` dead YAML field — planned for Phase 54f but not implemented | [phase-54.md — Postmortem](phase-54.md#postmortem) |
 
 ## Conventions
 

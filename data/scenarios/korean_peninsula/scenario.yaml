@@ -145,6 +145,18 @@ cbrn_config:
   detection_threshold: 0.1
   mopp_level_default: 0
 
+# Phase 54e: space ISR + GPS + commander personalities
+space_config:
+  enable_space: true
+  gps_sigma_range_m: 3.0
+
+commander_config:
+  ooda_speed_base_mult: 1.1
+  noise_sigma: 0.12
+  side_defaults:
+    blue: joint_commander
+    red: conventional_commander
+
 documented_outcomes:
   - name: red_armor_destroyed
     value: 12.0

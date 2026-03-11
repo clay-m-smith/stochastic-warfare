@@ -515,6 +515,59 @@ class SimulationEngine:
         # Phase 52d: SIGINT fusion (after space + EW updates)
         self._fuse_sigint()
 
+        # Phase 54: era-specific per-tick engine updates
+        era = getattr(ctx.config, "era", "modern")
+
+        # Phase 54b: WW1 barrage engine update (advance/drift barrages)
+        if era == "ww1":
+            barrage_eng = getattr(ctx, "barrage_engine", None)
+            if barrage_eng is not None:
+                try:
+                    trench_eng = getattr(ctx, "trench_engine", None)
+                    barrage_eng.update(dt, trench_engine=trench_eng)
+                except Exception:
+                    logger.debug("Barrage engine update failed", exc_info=True)
+
+        # Phase 54c: Napoleonic courier delivery
+        if era == "napoleonic":
+            courier_eng = getattr(ctx, "courier_engine", None)
+            if courier_eng is not None:
+                try:
+                    sim_time = clock.elapsed.total_seconds()
+                    delivered = courier_eng.update(sim_time)
+                    if delivered:
+                        logger.debug("Courier: %d messages delivered", len(delivered))
+                except Exception:
+                    logger.debug("Courier update failed", exc_info=True)
+
+        # Phase 54d: Ancient formation transitions + naval oar fatigue + visual signals
+        if era == "ancient":
+            af_eng = getattr(ctx, "formation_ancient_engine", None)
+            if af_eng is not None:
+                try:
+                    completed = af_eng.update(dt)
+                    if completed:
+                        logger.debug("Formation transitions completed: %s", completed)
+                except Exception:
+                    logger.debug("Ancient formation update failed", exc_info=True)
+
+            oar_eng = getattr(ctx, "naval_oar_engine", None)
+            if oar_eng is not None:
+                try:
+                    oar_eng.update(dt)
+                except Exception:
+                    logger.debug("Naval oar update failed", exc_info=True)
+
+            vs_eng = getattr(ctx, "visual_signals_engine", None)
+            if vs_eng is not None:
+                try:
+                    sim_time = clock.elapsed.total_seconds()
+                    delivered = vs_eng.update(dt, sim_time)
+                    if delivered:
+                        logger.debug("Visual signals: %d delivered", len(delivered))
+                except Exception:
+                    logger.debug("Visual signal update failed", exc_info=True)
+
         # Phase 44c: Maintenance engine — equipment breakdowns
         if ctx.maintenance_engine is not None:
             try:

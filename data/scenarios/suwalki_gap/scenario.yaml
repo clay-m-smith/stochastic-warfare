@@ -167,6 +167,14 @@ school_config:
   blue_school: maneuverist
   red_school: deep_battle
 
+# Phase 54e: commander personalities for doctrinal AI
+commander_config:
+  ooda_speed_base_mult: 1.0
+  noise_sigma: 0.1
+  side_defaults:
+    blue: joint_commander
+    red: conventional_commander
+
 documented_outcomes:
   - name: red_armor_destroyed
     value: 8.0

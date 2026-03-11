@@ -167,6 +167,47 @@ class CampaignManager:
         if self._config.enable_maintenance and ctx.maintenance_engine is not None:
             self._run_maintenance(ctx, dt)
 
+        # 7. Phase 54: era-specific strategic engine updates
+        era = getattr(ctx.config, "era", "modern")
+        if era == "ww2":
+            # Phase 54a: convoy updates
+            convoy_eng = getattr(ctx, "convoy_engine", None)
+            if convoy_eng is not None:
+                try:
+                    for cid in list(getattr(convoy_eng, "_convoys", {}).keys()):
+                        convoy_eng.update_convoy(cid, dt)
+                except Exception:
+                    logger.debug("Convoy update failed", exc_info=True)
+
+            # Phase 54a: strategic bombing target regeneration
+            sb_eng = getattr(ctx, "strategic_bombing_engine", None)
+            if sb_eng is not None:
+                try:
+                    sb_eng.apply_target_regeneration(dt)
+                except Exception:
+                    logger.debug("Strategic bombing regeneration failed", exc_info=True)
+
+        elif era == "napoleonic":
+            # Phase 54c: foraging zone recovery
+            foraging_eng = getattr(ctx, "foraging_engine", None)
+            if foraging_eng is not None:
+                try:
+                    dt_days = dt / 86400.0
+                    foraging_eng.update_recovery(dt_days)
+                except Exception:
+                    logger.debug("Foraging recovery failed", exc_info=True)
+
+        elif era == "ancient":
+            # Phase 54d: siege advancement
+            siege_eng = getattr(ctx, "siege_engine", None)
+            if siege_eng is not None:
+                try:
+                    for sid in list(getattr(siege_eng, "_sieges", {}).keys()):
+                        siege_eng.advance_day(sid)
+                        siege_eng.check_starvation(sid)
+                except Exception:
+                    logger.debug("Siege advance failed", exc_info=True)
+
     # ── Strategic movement ───────────────────────────────────────────
 
     def _execute_strategic_movement(

@@ -372,6 +372,18 @@ class SpaceEngine:
         if self._asat_engine is not None:
             self._asat_engine.update(dt_s, sim_time_s)
 
+    # ── Phase 54e: public GPS convenience API ───────────────────────
+
+    def get_gps_cep(self, side: str = "", sim_time_s: float = 0.0) -> float:
+        """Get GPS CEP in metres.  Returns large value if GPS unavailable."""
+        if self._gps_engine is None:
+            return 100.0
+        try:
+            state = self._gps_engine.compute_gps_accuracy(side, sim_time_s)
+            return getattr(state, "position_accuracy_m", 100.0)
+        except Exception:
+            return 100.0
+
     # ── State persistence ────────────────────────────────────────────
 
     def get_state(self) -> dict[str, Any]:
