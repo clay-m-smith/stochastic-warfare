@@ -73,6 +73,7 @@ victory_conditions:
       max_duration_s: 2592000
 
 calibration_overrides:
+  roe_level: WEAPONS_HOLD
   hit_probability_modifier: 0.1
   target_size_modifier: 0.1
   max_engagers_per_side: 1

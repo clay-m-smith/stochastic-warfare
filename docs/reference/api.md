@@ -168,6 +168,7 @@ Pydantic model for engine tuning parameters.
 | `max_ticks` | `int` | `1_000_000` | Safety limit -- stop after this many ticks |
 | `snapshot_interval_ticks` | `int` | `100` | Ticks between recorder state snapshots |
 | `enable_selective_los_invalidation` | `bool` | `False` | Use selective cell invalidation for LOS cache |
+| `resolution_closing_range_mult` | `float` | `2.0` | Multiplier on engagement range for closing-range guard (prevents STRATEGIC overshoot) |
 
 ---
 

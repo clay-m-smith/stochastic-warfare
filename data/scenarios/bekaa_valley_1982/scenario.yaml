@@ -83,6 +83,10 @@ ew_config:
       hop_rate_hz: 100.0
       sidelobe_ratio_db: 20.0
 
+school_config:
+  blue: air_power
+  red: attrition
+
 documented_outcomes:
   - name: sam_suppression_rate
     value: 0.89

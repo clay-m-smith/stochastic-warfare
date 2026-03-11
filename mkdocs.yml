@@ -135,6 +135,7 @@ nav:
     - Phase 52 - Environmental Continuity: devlog/phase-52.md
     - Phase 53 - C2 & AI Completeness: devlog/phase-53.md
     - Phase 54 - Era-Specific & Domain Sub-Engine Wiring: devlog/phase-54.md
+    - Phase 55 - Resolution & Scenario Migration: devlog/phase-55.md
   - Specifications:
     - Project Structure: specs/project-structure.md
     - Skills & Hooks: skills-and-hooks.md

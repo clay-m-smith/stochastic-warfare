@@ -740,9 +740,11 @@ class TestStratTactTransitions:
             campaign_config=CampaignConfig(engagement_detection_range_m=5000),
         )
         engine.step()  # STRATEGIC → TACTICAL (battle detected)
-        # Deactivate all battles
+        # Deactivate all battles and separate forces beyond engagement
+        # and closing range to prevent re-engagement
         for b in engine.battle_manager._battles.values():
             b.active = False
+        object.__setattr__(red[0], "position", Position(15100, 0, 0))
         engine.step()  # TACTICAL → OPERATIONAL
         assert engine.resolution == TickResolution.OPERATIONAL
 

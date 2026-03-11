@@ -68,6 +68,7 @@ Rolling record of implementation decisions, changes, and lessons learned across 
 | 52 | Environmental Continuity | **Complete** | [phase-52.md](phase-52.md) |
 | 53 | C2 & AI Completeness | **Complete** | [phase-53.md](phase-53.md) |
 | 54 | Era-Specific & Domain Sub-Engine Wiring | **Complete** | [phase-54.md](phase-54.md) |
+| 55 | Resolution & Scenario Migration | **Complete** | [phase-55.md](phase-55.md) |
 
 ## Post-MVP Refinement Index
 
@@ -222,7 +223,7 @@ Known limitations and deferred improvements logged during implementation. Review
 | 47 | Naval engines are phantom references (4 engines referenced in `_route_naval_engagement()` don't exist) | [phase-47.md — Known Remaining Issues](phase-47.md#known-remaining-issues) |
 | 47 | ~~`_check_morale_collapsed` ignores `cond.params` (reads global config only)~~ *(resolved Phase 48a — reads cond.params.threshold)* | [phase-47.md — Postmortem](phase-47.md#postmortem) |
 | 47 | ~~Hardcoded naval Pk values in `_route_naval_engagement()` (torpedo_pk=0.4, attacker_pk=0.7)~~ *(resolved Phase 48a — NavalEngagementConfig)* | [phase-47.md — Postmortem](phase-47.md#postmortem) |
-| 47 | Some historical scenarios win via time_expired rather than decisive combat | [phase-47.md — Known Remaining Issues](phase-47.md#known-remaining-issues) |
+| 47 | ~~Some historical scenarios win via time_expired rather than decisive combat~~ *(resolved Phase 55a — closing range guard + OPERATIONAL engagement detection)* | [phase-47.md — Known Remaining Issues](phase-47.md#known-remaining-issues) |
 | 48 | ~~`advance_speed` calibration key dead data — 7 historical scenarios declare it, no Python code reads it~~ *(resolved Phase 49b — removed from all scenarios)* | [phase-48.md — Postmortem](phase-48.md#postmortem) |
 | 48 | ~~`dig_in_ticks` consumed by battle.py but zero scenarios use it — untested calibration point~~ *(resolved Phase 49c — exercised in test)* | [phase-48.md — Postmortem](phase-48.md#postmortem) |
 | 48 | ~~`wave_interval_s` consumed by battle.py but zero scenarios use it — untested calibration point~~ *(resolved Phase 49c — exercised in test)* | [phase-48.md — Postmortem](phase-48.md#postmortem) |
@@ -230,17 +231,18 @@ Known limitations and deferred improvements logged during implementation. Review
 | 48 | ~~`roe_level` only in 2 of ~37 scenarios; other candidates (COIN, peacekeeping) missing~~ *(resolved Phase 49c — expanded coverage)* | [phase-48.md — Postmortem](phase-48.md#postmortem) |
 | 48 | ~~Morale config weights (cohesion, leadership, suppression, transition_cooldown) consumed by scenario_runner but never tuned~~ *(resolved Phase 49c — exercised in test)* | [phase-48.md — Postmortem](phase-48.md#postmortem) |
 | 48 | ~~`victory_weights` consumed by engine.py but no scenario uses it — composite victory scoring untested~~ *(resolved Phase 49c — exercised in test)* | [phase-48.md — Postmortem](phase-48.md#postmortem) |
-| 48 | 4 SEAD/IADS/Escalation params unresolved — ~~`sead_effectiveness`~~ *(resolved Phase 53e — wired into apply_sead_damage)*, ~~`iads_degradation_rate`~~ *(resolved Phase 53e — wired into IadsConfig)*, `sead_arm_effectiveness` *(defined on IadsConfig but unconsumed)*, `drone_provocation_prob` *(in CalibrationSchema but unconsumed)* | [phase-48.md — Postmortem](phase-48.md#postmortem) |
-| 48 | Resolution switching causes long-range battles to resolve via time_expired instead of combat | [phase-48.md — Postmortem](phase-48.md#postmortem) |
+| 48 | ~~4 SEAD/IADS/Escalation params unresolved~~ — ~~`sead_effectiveness`~~ *(resolved Phase 53e — wired into apply_sead_damage)*, ~~`iads_degradation_rate`~~ *(resolved Phase 53e — wired into IadsConfig)*, ~~`sead_arm_effectiveness`~~ *(resolved Phase 55c-3 — ARM vs non-radar differentiation in iads.py)*, ~~`drone_provocation_prob`~~ *(resolved Phase 55c-4 — escalation trigger in engine.py)* | [phase-48.md — Postmortem](phase-48.md#postmortem) |
+| 48 | ~~Resolution switching causes long-range battles to resolve via time_expired instead of combat~~ *(resolved Phase 55a — closing range guard + OPERATIONAL engagement detection)* | [phase-48.md — Postmortem](phase-48.md#postmortem) |
 | 51 | Naval posture detection modifiers not implemented (ANCHORED cross-section, TRANSIT reduced emissions, BATTLE_STATIONS active sensors) | [phase-51.md — Known Limitations](phase-51.md#known-limitations) |
 | 51 | Blockade throughput reduction not integrated into supply_network.py route costs | [phase-51.md — Known Limitations](phase-51.md#known-limitations) |
 | 51 | No scenarios exercise VLS magazine_capacity or mine encounters end-to-end | [phase-51.md — Known Limitations](phase-51.md#known-limitations) |
 | 48 | ~~Calibration audit test lists `advance_speed` in `_EXTERNAL_KEYS` but it's not consumed — false pass~~ *(resolved Phase 49b — schema-based validation)* | [phase-48.md — Postmortem](phase-48.md#postmortem) |
 | 48 | ~~`calibration_overrides` is free-form `dict[str, Any]` — no schema validation, mistyped keys pass silently~~ *(resolved Phase 49a — typed CalibrationSchema pydantic model)* | [phase-48.md — Postmortem](phase-48.md#postmortem) |
-| 53 | `sead_arm_effectiveness` defined on IadsConfig but never consumed in any code path (only `sead_effectiveness` used in `apply_sead_damage()`) | [phase-53.md — Postmortem](phase-53.md#postmortem) |
-| 53 | `drone_provocation_prob` in CalibrationSchema but never consumed by any engine (no escalation trigger integration point) | [phase-53.md — Postmortem](phase-53.md#postmortem) |
-| 54 | GasWarfareEngine instantiated in scenario.py but zero call sites in battle/engine/campaign (other "structural" engines have update() calls) | [phase-54.md — Postmortem](phase-54.md#postmortem) |
-| 54 | `seeker_fov_deg` dead YAML field — planned for Phase 54f but not implemented | [phase-54.md — Postmortem](phase-54.md#postmortem) |
+| 53 | ~~`sead_arm_effectiveness` defined on IadsConfig but never consumed in any code path~~ *(resolved Phase 55c-3 — ARM vs non-radar differentiation in iads.py)* | [phase-53.md — Postmortem](phase-53.md#postmortem) |
+| 53 | ~~`drone_provocation_prob` in CalibrationSchema but never consumed by any engine~~ *(resolved Phase 55c-4 — escalation trigger in engine.py)* | [phase-53.md — Postmortem](phase-53.md#postmortem) |
+| 54 | ~~GasWarfareEngine instantiated in scenario.py but zero call sites in battle/engine/campaign~~ *(resolved Phase 55c-1 — MOPP query in battle.py WW1 barrage path)* | [phase-54.md — Postmortem](phase-54.md#postmortem) |
+| 54 | ~~`seeker_fov_deg` dead YAML field~~ *(resolved Phase 55c-2 — FOV cone check in battle.py guided munition path)* | [phase-54.md — Postmortem](phase-54.md#postmortem) |
+| 55 | Gas casualty modifier has hardcoded floor (0.1) and scaling (0.8) — should be CalibrationSchema fields | [phase-55.md — Postmortem](phase-55.md#postmortem) |
 
 ## Conventions
 

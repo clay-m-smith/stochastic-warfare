@@ -2064,6 +2064,18 @@ class BattleManager:
                     except Exception:
                         pass
 
+                # Phase 55c-1: WW1 gas warfare MOPP — query gas mask protection
+                _gas_protection = 0.0
+                _gas_engine = getattr(ctx, "gas_warfare_engine", None)
+                if _gas_engine is not None:
+                    try:
+                        _mopp, _gas_protection = _gas_engine.get_effective_mopp_level(
+                            best_target.entity_id,
+                            time_since_alert_s=ctx.clock.elapsed.total_seconds(),
+                        )
+                    except Exception:
+                        pass
+
                 if best_range > detection_range:
                     continue
 
@@ -2216,6 +2228,20 @@ class BattleManager:
                         _elev_deg = math.degrees(math.atan2(_alt_diff, best_range))
                         if _elev_deg < _elev_min or _elev_deg > _elev_max:
                             continue  # target outside weapon elevation arc
+                    # Phase 55c-2: seeker FOV constraint — guided munitions
+                    # must acquire target within seeker cone
+                    _seeker_fov = getattr(ammo_def, "seeker_fov_deg", 0.0)
+                    if isinstance(_seeker_fov, (int, float)) and _seeker_fov > 0:
+                        _launch_bearing = math.atan2(
+                            best_target.position.easting - attacker.position.easting,
+                            best_target.position.northing - attacker.position.northing,
+                        )
+                        _att_heading_sk = getattr(attacker, "heading", 0.0) or 0.0
+                        _seeker_diff = abs(_launch_bearing - _att_heading_sk)
+                        if _seeker_diff > math.pi:
+                            _seeker_diff = 2 * math.pi - _seeker_diff
+                        if _seeker_diff > math.radians(_seeker_fov / 2):
+                            continue  # target outside seeker acquisition cone
                     # Score: prefer weapon whose max range best fits current
                     # distance.  Ranged weapons score higher when target is
                     # far; melee weapons score higher when target is very
@@ -2586,6 +2612,15 @@ class BattleManager:
                                 routed_aggregate = True
 
                     elif era == "ww1":
+                        # Phase 55c-1: gas warfare protection modifier
+                        # If ammo is gas-related, defender's gas mask reduces casualties
+                        _gas_cas_mod = 1.0
+                        _ammo_id_lower = (ammo_def.ammo_id if ammo_def else "").lower()
+                        if _gas_protection > 0 and any(
+                            kw in _ammo_id_lower for kw in ("gas", "chlorine", "phosgene", "mustard")
+                        ):
+                            _gas_cas_mod = max(0.1, 1.0 - _gas_protection * 0.8)
+
                         # Phase 54b: barrage zone suppression on defender
                         barrage_eng = getattr(ctx, "barrage_engine", None)
                         if barrage_eng is not None and best_target is not None:
@@ -2624,7 +2659,7 @@ class BattleManager:
                                     formation_firepower_fraction=1.0,
                                 )
                                 _apply_aggregate_casualties(
-                                    int(vr.casualties * _agg_modifier),
+                                    int(vr.casualties * _agg_modifier * _gas_cas_mod),
                                     best_target, pending_damage,
                                     dest_thresh, dis_thresh,
                                     self._cumulative_casualties,

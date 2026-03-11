@@ -216,12 +216,24 @@ class IadsEngine:
     ) -> float:
         """Apply SEAD damage to a specific IADS component.
 
+        Phase 55c-3: ARM missiles use ``sead_arm_effectiveness`` for radar
+        targets (early warning + acquisition radars).  Non-radar targets
+        (SAM batteries, AAA) use ``sead_effectiveness`` as before.
+
         Returns the new health of the component.
         """
         sector = self._sectors[sector_id]
         old_health = sector.component_health.get(component_id, 1.0)
-        # Phase 53e: Scale SEAD damage by effectiveness
-        damage = self._config.sead_degradation_rate * self._config.sead_effectiveness
+        # Phase 55c-3: use ARM effectiveness for radar targets
+        is_radar = (
+            component_id in sector.early_warning_radars
+            or component_id in sector.acquisition_radars
+        )
+        effectiveness = (
+            self._config.sead_arm_effectiveness if is_radar
+            else self._config.sead_effectiveness
+        )
+        damage = self._config.sead_degradation_rate * effectiveness
         new_health = max(0.0, old_health - damage)
         # Add stochastic variation
         variation = self._rng.normal(0.0, 0.05)

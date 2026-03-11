@@ -1,7 +1,7 @@
 unit_type: roman_equites
 domain: ground
 display_name: "Roman Equites"
-ground_type: ARMOR
+ground_type: CAVALRY
 max_speed: 6.0  # m/s (~22 km/h, Roman cavalry pace)
 training_level: 0.75
 armor_front: 1.0  # bronze cuirass

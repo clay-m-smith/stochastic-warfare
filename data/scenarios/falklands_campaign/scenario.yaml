@@ -50,7 +50,7 @@ sides:
       - unit_type: super_etendard
         count: 4
     experience_level: 0.4
-    morale_initial: SHAKEN
+    morale_initial: STEADY
     commander_profile: aggressive_armor
     doctrine_template: generic_offense
 
@@ -89,6 +89,7 @@ reinforcements:
     position: [19000, 10000]
 
 calibration_overrides:
+  roe_level: WEAPONS_TIGHT
   hit_probability_modifier: 1.5
   target_size_modifier: 0.3
   target_size_modifier_blue: 0.05
@@ -102,6 +103,8 @@ calibration_overrides:
   blue_cohesion: 0.95
   red_cohesion: 0.4
   destruction_threshold: 0.3
+  rout_cascade_radius_m: 200.0
+  rout_cascade_base_chance: 0.05
   defensive_sides: [blue]
   blue_start_x: 5000.0
   blue_start_y: 10000.0

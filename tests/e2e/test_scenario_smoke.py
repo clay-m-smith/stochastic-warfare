@@ -20,19 +20,10 @@ from api.database import Database
 from api.main import create_app
 from api.run_manager import RunManager
 
-# Scenarios with legacy/simple YAML format that can't be loaded via the
-# campaign ScenarioLoader (missing required fields: sides, terrain, date).
-# These need schema migration in a future phase.
-_LEGACY_FORMAT_SCENARIOS = frozenset({
-    "73_easting",
-    "bekaa_valley_1982",
-    "cbrn_chemical_defense",
-    "cbrn_nuclear_tactical",
-    "falklands_naval",
-    "golan_heights",
-    "gulf_war_ew_1991",
-    "test_scenario",
-})
+# Phase 55b: All legacy scenarios now load through CampaignScenarioConfig.
+# The xfail set has been cleared — all scenarios have the required
+# sides/terrain/date fields since Phase 30/47/49 migrations.
+_LEGACY_FORMAT_SCENARIOS: frozenset[str] = frozenset()
 
 ALL_SCENARIO_NAMES = [
     # Modern scenarios (27)

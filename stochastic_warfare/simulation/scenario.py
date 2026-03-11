@@ -1077,9 +1077,17 @@ class ScenarioLoader:
         from stochastic_warfare.c2.roe import RoeEngine, RoeLevel
         roe_engine = RoeEngine(bus, default_level=RoeLevel.WEAPONS_FREE)
 
-        # Rout (Phase 42c)
-        from stochastic_warfare.morale.rout import RoutEngine
-        rout_engine = RoutEngine(bus, morale_rng)
+        # Rout (Phase 42c / Phase 55 per-scenario config)
+        from stochastic_warfare.morale.rout import RoutConfig, RoutEngine
+        _rout_cfg_kwargs: dict[str, float] = {}
+        for _rout_field in ("cascade_radius_m", "cascade_base_chance", "cascade_shaken_susceptibility"):
+            _rout_val = cal.get(f"rout_{_rout_field}")
+            if _rout_val is not None:
+                _rout_cfg_kwargs[_rout_field] = _rout_val
+        rout_engine = RoutEngine(
+            bus, morale_rng,
+            config=RoutConfig(**_rout_cfg_kwargs) if _rout_cfg_kwargs else None,
+        )
 
         # Movement
         from stochastic_warfare.movement.engine import MovementEngine

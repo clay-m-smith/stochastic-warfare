@@ -52,6 +52,11 @@ class EngineConfig(BaseModel):
     enable_selective_los_invalidation: bool = False
     """Use selective cell invalidation instead of full LOS cache clear."""
 
+    resolution_closing_range_mult: float = 2.0
+    """Phase 55a: Multiplier on engagement detection range.  When opposing
+    forces are within ``engagement_range * mult``, the engine stays at
+    OPERATIONAL resolution to prevent overshooting at STRATEGIC ticks."""
+
 
 # ---------------------------------------------------------------------------
 # Tick resolution
@@ -363,6 +368,35 @@ class SimulationEngine:
                         remaining.append(battle)
                 if remaining:
                     # Switch to tactical
+                    self._set_resolution(TickResolution.TACTICAL)
+
+        # 4b. Phase 55a: engagement detection at OPERATIONAL resolution
+        # (prevents forces overshooting each other between STRATEGIC ticks)
+        if self._resolution == TickResolution.OPERATIONAL:
+            new_battles = self._campaign.detect_engagements(ctx, self._battle)
+            if new_battles:
+                remaining = []
+                for battle in new_battles:
+                    total_units = sum(
+                        len([u for u in ctx.units_by_side.get(s, [])
+                             if u.status == UnitStatus.ACTIVE])
+                        for s in battle.involved_sides
+                    )
+                    if (self._battle._config.auto_resolve_enabled
+                            and self._battle._config.auto_resolve_max_units > 0
+                            and total_units <= self._battle._config.auto_resolve_max_units):
+                        ar_rng = ctx.rng_manager.get_stream(
+                            __import__(
+                                "stochastic_warfare.core.types", fromlist=["ModuleId"]
+                            ).ModuleId.CORE
+                        )
+                        self._battle.auto_resolve(
+                            battle, ctx.units_by_side, ar_rng,
+                            morale_states=ctx.morale_states,
+                        )
+                    else:
+                        remaining.append(battle)
+                if remaining:
                     self._set_resolution(TickResolution.TACTICAL)
 
         # 5. Tactical logic (active battles)
@@ -762,6 +796,35 @@ class SimulationEngine:
                 if self._strict_mode:
                     raise
 
+        # Phase 55c-4: drone provocation — drones in contact can trigger
+        # escalation level increase
+        drone_prob = getattr(ctx, "calibration", {}).get("drone_provocation_prob", None)
+        if drone_prob is not None and ctx.escalation_engine is not None:
+            _drone_rng = ctx.rng_manager.get_stream(
+                __import__(
+                    "stochastic_warfare.core.types", fromlist=["ModuleId"]
+                ).ModuleId.CORE
+            )
+            for side_name, side_units in ctx.units_by_side.items():
+                for u in side_units:
+                    if u.status != UnitStatus.ACTIVE:
+                        continue
+                    _utype = getattr(u, "unit_type_id", "") or ""
+                    if any(kw in _utype.lower() for kw in ("drone", "uav", "ucav", "unmanned")):
+                        if _drone_rng.random() < drone_prob:
+                            try:
+                                ctx.escalation_engine.evaluate_trigger(
+                                    trigger_type="drone_provocation",
+                                    side=side_name,
+                                    context={"unit_id": u.entity_id},
+                                )
+                            except Exception:
+                                logger.debug(
+                                    "Drone provocation trigger failed for %s",
+                                    u.entity_id, exc_info=True,
+                                )
+                        break  # one provocation check per side per tick
+
         # Check war termination
         if ctx.war_termination_engine is not None:
             if ctx.war_termination_engine.is_ceasefire_active():
@@ -805,16 +868,61 @@ class SimulationEngine:
 
     # ── Resolution switching ─────────────────────────────────────────
 
+    def _forces_within_closing_range(self) -> bool:
+        """Phase 55a: Check if opposing forces are within closing range.
+
+        Returns ``True`` when the minimum distance between any pair of
+        opposing active units is less than
+        ``engagement_range * resolution_closing_range_mult``.  This prevents
+        the engine from escalating to STRATEGIC resolution when forces are
+        approaching — avoiding 3600s ticks that overshoot the engagement
+        detection window.
+        """
+        ctx = self._ctx
+        threshold = (
+            self._campaign._config.engagement_detection_range_m
+            * self._config.resolution_closing_range_mult
+        )
+        sides = list(ctx.units_by_side.keys())
+        if len(sides) < 2:
+            return False
+        for i in range(len(sides)):
+            units_a = [
+                u for u in ctx.units_by_side[sides[i]]
+                if u.status == UnitStatus.ACTIVE
+            ]
+            if not units_a:
+                continue
+            for j in range(i + 1, len(sides)):
+                units_b = [
+                    u for u in ctx.units_by_side[sides[j]]
+                    if u.status == UnitStatus.ACTIVE
+                ]
+                if not units_b:
+                    continue
+                min_dist = self._battle._min_distance(units_a, units_b)
+                if min_dist <= threshold:
+                    return True
+        return False
+
     def _update_resolution(self) -> None:
-        """Switch tick resolution based on battle state."""
+        """Switch tick resolution based on battle state.
+
+        Phase 55a: Guards against STRATEGIC when forces are closing.
+        """
         active = self._battle.active_battles
         if active:
             self._set_resolution(TickResolution.TACTICAL)
-        elif self._resolution == TickResolution.TACTICAL:
-            # All battles concluded — step back
+            return
+        # Phase 55a: Don't escalate to STRATEGIC if forces are approaching
+        if self._forces_within_closing_range():
+            if self._resolution != TickResolution.OPERATIONAL:
+                self._set_resolution(TickResolution.OPERATIONAL)
+            return
+        # Normal de-escalation
+        if self._resolution == TickResolution.TACTICAL:
             self._set_resolution(TickResolution.OPERATIONAL)
         elif self._resolution == TickResolution.OPERATIONAL:
-            # No contacts — back to strategic
             self._set_resolution(TickResolution.STRATEGIC)
 
     def _set_resolution(self, resolution: TickResolution) -> None:

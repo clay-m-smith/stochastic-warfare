@@ -170,6 +170,7 @@ class TestScenarioLoadStrategicTick:
         # forces from engaging immediately.
         engine = SimulationEngine(
             ctx,
+            config=EngineConfig(resolution_closing_range_mult=0.0),
             campaign_config=CampaignConfig(
                 engagement_detection_range_m=5000,
                 enable_strategic_movement=False,
@@ -393,8 +394,10 @@ class TestReinforcementArrival:
         ctx = _make_ctx(blue_units=blue, red_units=red, config=cfg, tick_s=3600.0)
         # Use short engagement range so forces don't trigger initial
         # engagement detection (9800m apart > 5000m range).
+        # Disable closing range guard so STRATEGIC ticks advance 3600s.
         engine = SimulationEngine(
             ctx,
+            config=EngineConfig(resolution_closing_range_mult=0.0),
             campaign_config=CampaignConfig(engagement_detection_range_m=5000),
         )
         engine.campaign_manager.set_reinforcements(cfg.reinforcements)
@@ -448,9 +451,11 @@ class TestReinforcementArrival:
 
         # Use short engagement range to prevent battle detection (units are
         # 9800m apart), keeping strategic ticks at 3600s so we reach 7200s
-        # in just 2 ticks.
+        # in just 2 ticks.  Disable closing range guard so STRATEGIC ticks
+        # advance at 3600s.
         engine = SimulationEngine(
             ctx,
+            config=EngineConfig(resolution_closing_range_mult=0.0),
             campaign_config=CampaignConfig(
                 engagement_detection_range_m=5000,
                 enable_strategic_movement=False,
@@ -794,17 +799,18 @@ class TestTickResolutionSwitching:
         assert engine.resolution == TickResolution.TACTICAL
         assert ctx.clock.tick_duration.total_seconds() == pytest.approx(5.0)
 
-        # Terminate battle and separate forces so they won't re-detect
+        # Terminate battle and separate forces beyond closing range
+        # (2x engagement range = 10000m, so 15000m is safely outside)
         for b in engine.battle_manager._battles.values():
             b.active = False
-        object.__setattr__(red[0], "position", Position(9000, 5000, 0))
+        object.__setattr__(red[0], "position", Position(15100, 5000, 0))
 
         # Step 2: TACTICAL -> OPERATIONAL
         engine.step()
         assert engine.resolution == TickResolution.OPERATIONAL
         assert ctx.clock.tick_duration.total_seconds() == pytest.approx(300.0)
 
-        # Step 3: OPERATIONAL -> STRATEGIC (forces still far apart)
+        # Step 3: OPERATIONAL -> STRATEGIC (forces far apart)
         engine.step()
         assert engine.resolution == TickResolution.STRATEGIC
         assert ctx.clock.tick_duration.total_seconds() == pytest.approx(3600.0)

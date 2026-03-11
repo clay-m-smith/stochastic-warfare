@@ -109,6 +109,7 @@ reinforcements:
     position: [5000, 30000]
 
 calibration_overrides:
+  roe_level: WEAPONS_TIGHT
   hit_probability_modifier: 3.0
   target_size_modifier: 2.0
   morale_degrade_rate_modifier: 5.0

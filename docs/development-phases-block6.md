@@ -626,7 +626,7 @@ Wire useful dead YAML fields. Remove unused ones and dead context fields.
 
 ---
 
-## Phase 55: Resolution & Scenario Migration
+## Phase 55: Resolution & Scenario Migration — **COMPLETE** (43 tests)
 
 **Goal**: Fix resolution switching time_expired issue, migrate 8 legacy scenarios to campaign format, expand ROE coverage, fix proxy units and data gaps, fix Falklands mechanism.
 

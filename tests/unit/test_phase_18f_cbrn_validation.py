@@ -108,7 +108,7 @@ class TestChemicalDefenseScenario:
         assert path.exists()
         data = _load_yaml(path)
         assert "name" in data
-        assert "cbrn" in data
+        assert "cbrn_config" in data or "cbrn" in data
 
     def test_outcomes_documented(self):
         path = SCENARIOS_DIR / "cbrn_chemical_defense" / "scenario.yaml"
@@ -139,7 +139,7 @@ class TestNuclearTacticalScenario:
         assert path.exists()
         data = _load_yaml(path)
         assert "name" in data
-        assert "cbrn" in data
+        assert "cbrn_config" in data or "cbrn" in data
 
     def test_blast_radii_plausible(self):
         """10kT blast should produce >12 psi within ~1km."""

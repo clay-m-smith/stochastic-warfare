@@ -114,6 +114,11 @@ class CalibrationSchema(BaseModel):
     # -- Target value weights (override BattleConfig defaults) -------------
     target_value_weights: dict[str, float] | None = None
 
+    # -- Rout cascade (per-scenario tuning) ---------------------------------
+    rout_cascade_radius_m: float | None = None
+    rout_cascade_base_chance: float | None = None
+    rout_cascade_shaken_susceptibility: float | None = None
+
     # -- Collections ------------------------------------------------------
     weapon_assignments: dict[str, str] = {}
     victory_weights: dict[str, float] | None = None

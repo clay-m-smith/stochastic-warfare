@@ -53,6 +53,20 @@ calibration_overrides:
   weapon_assignments:
     "AK-47": ak47
     "RPG-7": rpg7
+cbrn_config:
+  enable_cbrn: true
+  agent_releases:
+    - agent_id: mustard_gas
+      position: [5000.0, 5000.0]
+      quantity_kg: 500.0
+      delivery_method: artillery
+      time_s: 0
+    - agent_id: sarin
+      position: [5000.0, 5000.0]
+      quantity_kg: 200.0
+      delivery_method: artillery
+      time_s: 300
+
 escalation_config:
   entry_thresholds: [0.0, 0.10, 0.20, 0.30, 0.40, 0.50, 0.60, 0.70, 0.80, 0.90, 0.95]
   hysteresis_factor: 0.7

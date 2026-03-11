@@ -82,6 +82,7 @@ victory_conditions:
       max_duration_s: 43200
 
 calibration_overrides:
+  roe_level: WEAPONS_TIGHT
   hit_probability_modifier: 1.0
   target_size_modifier: 1.0
   morale_degrade_rate_modifier: 0.15
@@ -104,6 +105,7 @@ calibration_overrides:
     "4.5 inch Mk 8 Naval Gun": mk45_5inch
     "Mk 12 20mm Cannon": mk12_20mm
     "AIM-9L Sidewinder": aim9x_sidewinder
+    "Generic Bomb Rack": bomb_rack_generic
 
 documented_outcomes:
   - name: blue_ships_damaged_or_sunk

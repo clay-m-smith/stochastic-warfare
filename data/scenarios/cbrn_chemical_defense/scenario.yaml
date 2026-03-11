@@ -46,7 +46,7 @@ victory_conditions:
     params:
       threshold: 0.8
 
-cbrn:
+cbrn_config:
   enable_cbrn: true
   agent_releases:
     - agent_id: sarin

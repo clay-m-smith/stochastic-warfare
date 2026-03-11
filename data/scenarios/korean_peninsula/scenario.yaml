@@ -130,7 +130,7 @@ calibration_overrides:
   blue_cohesion: 0.8
   red_cohesion: 0.3
   destruction_threshold: 0.25
-  roe_level: WEAPONS_FREE
+  roe_level: WEAPONS_TIGHT
   defensive_sides:
     - blue
   blue_start_x: 3000.0

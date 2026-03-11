@@ -55,6 +55,20 @@ calibration_overrides:
   morale_degrade_rate_modifier: 1.5
   destruction_threshold: 0.3
   roe_level: WEAPONS_FREE
+  weapon_assignments:
+    "85mm ZIS-S-53 Gun": 85mm_zis_s53
+    "75mm KwK 40 L/48 Gun": 75mm_m3
+    "88mm KwK 36 L/56 Gun": 88mm_kwk36
+    "DT 7.62mm Coaxial MG": mg42
+    "MG 34 Coaxial": mg42
+    "MG 34 Hull Mount": mg42
+    "MG 42 Light Machine Gun": mg42
+    "Mosin-Nagant M91/30 Rifle": lee_enfield
+    "Karabiner 98k Rifle": gewehr_98
+    "DP-28 Light Machine Gun": mg42
+    "PPSh-41 Submachine Gun": lee_enfield
+    "Stielhandgranate 24": mills_bomb
+    "RGD-33 Fragmentation Grenade": mills_bomb
 escalation_config:
   entry_thresholds: [0.0, 0.15, 0.25, 0.35, 0.50, 0.60, 0.70, 0.80, 0.85, 0.90, 0.95]
   hysteresis_factor: 0.7
