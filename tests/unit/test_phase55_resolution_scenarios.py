@@ -579,8 +579,8 @@ class TestDataFixes:
         red_side = [s for s in data["sides"] if s["side"] == "red"][0]
         assert red_side["morale_initial"] == "STEADY"
 
-    def test_korean_peninsula_roe_weapons_tight(self):
-        """Korean Peninsula scenario has ROE set to WEAPONS_TIGHT."""
+    def test_korean_peninsula_roe_weapons_free(self):
+        """Korean Peninsula scenario has ROE set to WEAPONS_FREE (Phase 57 recalibration)."""
         from pathlib import Path
         import yaml
 
@@ -589,7 +589,7 @@ class TestDataFixes:
             pytest.skip("Scenario not found")
         with open(path) as f:
             data = yaml.safe_load(f)
-        assert data["calibration_overrides"]["roe_level"] == "WEAPONS_TIGHT"
+        assert data["calibration_overrides"]["roe_level"] == "WEAPONS_FREE"
 
     def test_hybrid_gray_zone_roe_weapons_hold(self):
         """Hybrid Gray Zone scenario has ROE set to WEAPONS_HOLD."""

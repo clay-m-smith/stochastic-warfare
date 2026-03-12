@@ -70,6 +70,7 @@ Rolling record of implementation decisions, changes, and lessons learned across 
 | 54 | Era-Specific & Domain Sub-Engine Wiring | **Complete** | [phase-54.md](phase-54.md) |
 | 55 | Resolution & Scenario Migration | **Complete** | [phase-55.md](phase-55.md) |
 | 56 | Performance & Logistics | **Complete** | [phase-56.md](phase-56.md) |
+| 57 | Full Validation & Regression | **Complete** | [phase-57.md](phase-57.md) |
 
 ## Post-MVP Refinement Index
 
@@ -77,19 +78,19 @@ Known limitations and deferred improvements logged during implementation. Review
 
 | Phase | Item | Section |
 |-------|------|---------|
-| 0 | Checkpoint format longevity (pickle fragility) | [phase-0.md — Open Questions](phase-0.md#open-questions) |
+| 0 | ~~Checkpoint format longevity (pickle fragility)~~ *(resolved Phase 57 — JSON serialization with NumpyEncoder, legacy pickle fallback)* | [phase-0.md — Open Questions](phase-0.md#open-questions) |
 | 3 | ~~Track-to-target association needs nearest-neighbor gating~~ *(resolved Phase 11b)* | [phase-3.md — Known Limitations](phase-3.md#known-limitations-post-mvp-refinements) |
-| 3 | Environment data threading (caller responsibility) | [phase-3.md — Known Limitations](phase-3.md#known-limitations-post-mvp-refinements) |
+| 3 | Environment data threading (caller responsibility) *(accepted limitation — explicit coupling is simpler than implicit dependency injection)* | [phase-3.md — Known Limitations](phase-3.md#known-limitations-post-mvp-refinements) |
 | 3 | ~~Passive sonar bearing is placeholder (random, not geometric)~~ *(resolved Phase 11b)* | [phase-3.md — Known Limitations](phase-3.md#known-limitations-post-mvp-refinements) |
 | 3 | ~~No sensor FOV filtering against observer heading~~ *(resolved Phase 11b)* | [phase-3.md — Known Limitations](phase-3.md#known-limitations-post-mvp-refinements) |
 | 3 | ~~Single-scan detection (no dwell/integration gain)~~ *(resolved Phase 11b)* | [phase-3.md — Known Limitations](phase-3.md#known-limitations-post-mvp-refinements) |
-| 3 | Test coverage gap (296→334 vs planned 455; backfilled C2-facing APIs) | [phase-3.md — Known Limitations](phase-3.md#known-limitations-post-mvp-refinements) |
+| 3 | ~~Test coverage gap (296→334 vs planned 455; backfilled C2-facing APIs)~~ *(resolved — 8,000+ tests across 57 phases massively exceed original target)* | [phase-3.md — Known Limitations](phase-3.md#known-limitations-post-mvp-refinements) |
 | 4 | ~~Ballistic trajectory uses simplified drag (no Mach-dependent Cd)~~ *(resolved Phase 11a)* | [phase-4.md — Known Limitations](phase-4.md#known-limitations-post-mvp-refinements) |
 | 4 | ~~DeMarre penetration approximation (no obliquity, composite, reactive armor)~~ *(resolved Phase 11a)* | [phase-4.md — Known Limitations](phase-4.md#known-limitations-post-mvp-refinements) |
-| 4 | HEAT penetration is range-independent | [phase-4.md — Known Limitations](phase-4.md#known-limitations-post-mvp-refinements) |
+| 4 | HEAT penetration is range-independent *(accepted limitation — physically correct for shaped charge jets)* | [phase-4.md — Known Limitations](phase-4.md#known-limitations-post-mvp-refinements) |
 | 4 | ~~Submarine evasion simplified probability model~~ *(resolved Phase 12c)* | [phase-4.md — Known Limitations](phase-4.md#known-limitations-post-mvp-refinements) |
 | 4 | ~~Mine trigger model lacks detailed ship signature interaction~~ *(resolved Phase 12c)* | [phase-4.md — Known Limitations](phase-4.md#known-limitations-post-mvp-refinements) |
-| 4 | Carrier ops deck management abstracted (no individual spot tracking) | [phase-4.md — Known Limitations](phase-4.md#known-limitations-post-mvp-refinements) |
+| 4 | Carrier ops deck management abstracted (no individual spot tracking) *(accepted limitation — below simulation granularity)* | [phase-4.md — Known Limitations](phase-4.md#known-limitations-post-mvp-refinements) |
 | 4 | ~~Morale Markov is discrete-time (not continuous-time)~~ *(resolved Phase 12d)* | [phase-4.md — Known Limitations](phase-4.md#known-limitations-post-mvp-refinements) |
 | 4 | ~~PSYOP model is simplified effectiveness roll~~ *(resolved Phase 12d)* | [phase-4.md — Known Limitations](phase-4.md#known-limitations-post-mvp-refinements) |
 | 4 | ~~Naval damage control lacks compartment flooding model~~ *(resolved Phase 12c)* | [phase-4.md — Known Limitations](phase-4.md#known-limitations-post-mvp-refinements) |
@@ -100,7 +101,7 @@ Known limitations and deferred improvements logged during implementation. Review
 | 5 | ~~Simplified FSCL (east-west line, not arbitrary polyline)~~ *(resolved Phase 12a)* | [phase-5.md — Known Limitations](phase-5.md#known-limitations-deferred-items) |
 | 5 | ~~No ATO planning cycle (structures only, generation deferred to Phase 9/Future)~~ *(resolved Phase 12a)* | [phase-5.md — Known Limitations](phase-5.md#known-limitations-deferred-items) |
 | 5 | ~~No JTAC/FAC observer model for CAS~~ *(resolved Phase 12a)* | [phase-5.md — Known Limitations](phase-5.md#known-limitations-deferred-items) |
-| 5 | Messenger comm type has no terrain traversal or intercept risk | [phase-5.md — Known Limitations](phase-5.md#known-limitations-deferred-items) |
+| 5 | Messenger comm type has no terrain traversal or intercept risk *(accepted limitation — courier engine handles Napoleonic era; modern MESSENGER is niche)* | [phase-5.md — Known Limitations](phase-5.md#known-limitations-deferred-items) |
 | 6 | ~~No supply optimization solver (pull-based nearest depot only)~~ *(resolved Phase 12b)* | [phase-6.md — Known Limitations](phase-6.md#known-limitations) |
 | 6 | ~~No multi-echelon supply chain (direct depot-to-unit)~~ *(resolved Phase 12b)* | [phase-6.md — Known Limitations](phase-6.md#known-limitations) |
 | 6 | ~~Simplified transport vulnerability (no escort effects)~~ *(resolved Phase 12b)* | [phase-6.md — Known Limitations](phase-6.md#known-limitations) |
@@ -108,64 +109,64 @@ Known limitations and deferred improvements logged during implementation. Review
 | 6 | ~~Engineering times deterministic (no stochastic variation)~~ *(resolved Phase 11c)* | [phase-6.md — Known Limitations](phase-6.md#known-limitations) |
 | 6 | ~~No fuel gating on movement (tracked but not enforced)~~ *(resolved Phase 11c)* | [phase-6.md — Known Limitations](phase-6.md#known-limitations) |
 | 6 | ~~Blockade effectiveness simplified (flat per-ship probability)~~ *(resolved Phase 51d — DisruptionEngine wired, blockade queries in campaign.py)* | [phase-6.md — Known Limitations](phase-6.md#known-limitations) |
-| 6 | Captured supply efficiency flat 50% (no compatibility check) | [phase-6.md — Known Limitations](phase-6.md#known-limitations) |
-| 6 | No local water procurement (always from rear depots) | [phase-6.md — Known Limitations](phase-6.md#known-limitations) |
-| 6 | No ammunition production (scenario-defined depots only) | [phase-6.md — Known Limitations](phase-6.md#known-limitations) |
+| 6 | Captured supply efficiency flat 50% (no compatibility check) *(dormant capability — implemented and tested but no game mechanic triggers depot capture; reserved for future campaign planning work)* | [phase-6.md — Known Limitations](phase-6.md#known-limitations) |
+| 6 | No local water procurement (always from rear depots) *(accepted limitation — below simulation granularity)* | [phase-6.md — Known Limitations](phase-6.md#known-limitations) |
+| 6 | No ammunition production (scenario-defined depots only) *(accepted limitation — scenarios define initial supply levels)* | [phase-6.md — Known Limitations](phase-6.md#known-limitations) |
 | 6 | ~~VLS non-reloadable-at-sea enforcement deferred to naval combat integration~~ *(resolved Phase 56d — exhaustion enforced, port reload deferred)* | [phase-6.md — Known Limitations](phase-6.md#known-limitations) |
 | 7 | ~~73 Easting exchange_ratio = inf (detection asymmetry prevents blue losses)~~ *(resolved Phase 30 — calibration tuning: visibility 800m, red engagement 1500m, thermal_contrast 1.5)* | [phase-7.md — Known Limitations](phase-7.md#known-limitations-post-mvp-refinements) |
 | 7 | ~~No fire rate limiting (units fire once per tick regardless of ROF)~~ *(resolved Phase 11a)* | [phase-7.md — Known Limitations](phase-7.md#known-limitations-post-mvp-refinements) |
 | 7 | ~~Uniform target_size_modifier (applies to both sides equally)~~ *(resolved Phase 11a)* | [phase-7.md — Known Limitations](phase-7.md#known-limitations-post-mvp-refinements) |
 | 7 | ~~No wave attack modeling (all units advance simultaneously)~~ *(resolved Phase 11c)* | [phase-7.md — Known Limitations](phase-7.md#known-limitations-post-mvp-refinements) |
-| 7 | Pre-scripted behavior only (no tactical AI, deferred to Phase 8) | [phase-7.md — Known Limitations](phase-7.md#known-limitations-post-mvp-refinements) |
+| 7 | ~~Pre-scripted behavior only (no tactical AI, deferred to Phase 8)~~ *(resolved Phase 8 — OODA FSM, commander personalities, doctrine templates, MDMP)* | [phase-7.md — Known Limitations](phase-7.md#known-limitations-post-mvp-refinements) |
 | 7 | ~~Falklands simplified — Sheffield attack only, no San Carlos raids~~ *(resolved Phase 30 — added San Carlos air raids + Goose Green ground scenarios)* | [phase-7.md — Known Limitations](phase-7.md#known-limitations-post-mvp-refinements) |
 | 7 | ~~Synthetic terrain (programmatic heightmaps, not real topographic data)~~ *(resolved Phase 15 — real-world terrain pipeline)* | [phase-7.md — Known Limitations](phase-7.md#known-limitations-post-mvp-refinements) |
-| 7 | No logistics in validation scenarios (short engagements) | [phase-7.md — Known Limitations](phase-7.md#known-limitations-post-mvp-refinements) |
-| 7 | No C2 propagation in validation (direct behavior, no order chain) | [phase-7.md — Known Limitations](phase-7.md#known-limitations-post-mvp-refinements) |
+| 7 | No logistics in validation scenarios (short engagements) *(accepted limitation — deliberately short engagements)* | [phase-7.md — Known Limitations](phase-7.md#known-limitations-post-mvp-refinements) |
+| 7 | No C2 propagation in validation (direct behavior, no order chain) *(accepted limitation — deliberately short engagements)* | [phase-7.md — Known Limitations](phase-7.md#known-limitations-post-mvp-refinements) |
 | 7 | ~~Simplified force compositions (representative samples, not complete OOB)~~ *(resolved Phase 30 — expanded 73 Easting OOB, diverse modern/historical scenarios)* | [phase-7.md — Known Limitations](phase-7.md#known-limitations-post-mvp-refinements) |
 | 8 | ~~Named doctrinal schools (Clausewitzian AI, Sun Tzu AI) deferred to Future Phases~~ *(resolved Phase 19)* | [phase-8.md — Known Limitations](phase-8.md#known-limitations-post-mvp-refinements) |
-| 8 | COA wargaming is analytical (Lanchester), not full nested simulation | [phase-8.md — Known Limitations](phase-8.md#known-limitations-post-mvp-refinements) |
-| 8 | No terrain-specific COA generation (e.g., no river crossing planning detail) | [phase-8.md — Known Limitations](phase-8.md#known-limitations-post-mvp-refinements) |
-| 8 | Implied task tables are simplified (not full FM 5-0 comprehensive list) | [phase-8.md — Known Limitations](phase-8.md#known-limitations-post-mvp-refinements) |
-| 8 | No multi-echelon simultaneous planning (each commander plans independently) | [phase-8.md — Known Limitations](phase-8.md#known-limitations-post-mvp-refinements) |
-| 8 | Estimates update periodically, not reactively to every event | [phase-8.md — Known Limitations](phase-8.md#known-limitations-post-mvp-refinements) |
-| 8 | Stratagems are opportunity-evaluated, not proactively planned in COA | [phase-8.md — Known Limitations](phase-8.md#known-limitations-post-mvp-refinements) |
+| 8 | COA wargaming is analytical (Lanchester), not full nested simulation *(accepted limitation — Lanchester captures key force-ratio dynamics)* | [phase-8.md — Known Limitations](phase-8.md#known-limitations-post-mvp-refinements) |
+| 8 | No terrain-specific COA generation (e.g., no river crossing planning detail) *(accepted limitation — COA operates at force-ratio level)* | [phase-8.md — Known Limitations](phase-8.md#known-limitations-post-mvp-refinements) |
+| 8 | Implied task tables are simplified (not full FM 5-0 comprehensive list) *(accepted limitation — captures key task categories)* | [phase-8.md — Known Limitations](phase-8.md#known-limitations-post-mvp-refinements) |
+| 8 | No multi-echelon simultaneous planning (each commander plans independently) *(accepted limitation — by design; avoids coordination complexity)* | [phase-8.md — Known Limitations](phase-8.md#known-limitations-post-mvp-refinements) |
+| 8 | Estimates update periodically, not reactively to every event *(accepted limitation — event-driven updates not needed at current tick resolution)* | [phase-8.md — Known Limitations](phase-8.md#known-limitations-post-mvp-refinements) |
+| 8 | Stratagems are opportunity-evaluated, not proactively planned in COA *(accepted limitation — by design; see Phase 53c wiring)* | [phase-8.md — Known Limitations](phase-8.md#known-limitations-post-mvp-refinements) |
 | 8 | ~~Brigade echelon decision hardcodes echelon_level=9 in result (cosmetic)~~ *(resolved Phase 11d)* | [phase-8.md — Known Limitations](phase-8.md#known-limitations-post-mvp-refinements) |
 | 9 | ~~No force aggregation/disaggregation — all units at individual resolution~~ *(resolved Phase 13 postmortem)* | [phase-9.md — Known Limitations](phase-9.md#known-limitations-post-mvp-refinements) |
-| 9 | Single-threaded simulation loop (required for deterministic PRNG replay) | [phase-9.md — Known Limitations](phase-9.md#known-limitations-post-mvp-refinements) |
+| 9 | Single-threaded simulation loop (required for deterministic PRNG replay) *(accepted limitation — required for deterministic reproducibility)* | [phase-9.md — Known Limitations](phase-9.md#known-limitations-post-mvp-refinements) |
 | 9 | ~~No auto-resolve — every engagement runs full tactical resolution~~ *(resolved Phase 13a-6)* | [phase-9.md — Known Limitations](phase-9.md#known-limitations-post-mvp-refinements) |
-| 9 | Simplified strategic movement (no detailed operational pathfinding) | [phase-9.md — Known Limitations](phase-9.md#known-limitations-post-mvp-refinements) |
-| 9 | Fixed reinforcement schedule (no Poisson/stochastic arrivals) | [phase-9.md — Known Limitations](phase-9.md#known-limitations-post-mvp-refinements) |
-| 9 | No naval campaign management (structurally supported but untested) | [phase-9.md — Known Limitations](phase-9.md#known-limitations-post-mvp-refinements) |
+| 9 | Simplified strategic movement (no detailed operational pathfinding) *(accepted limitation — campaign-scale abstraction)* | [phase-9.md — Known Limitations](phase-9.md#known-limitations-post-mvp-refinements) |
+| 9 | Fixed reinforcement schedule (no Poisson/stochastic arrivals) *(accepted limitation — scenario-defined determinism)* | [phase-9.md — Known Limitations](phase-9.md#known-limitations-post-mvp-refinements) |
+| 9 | ~~No naval campaign management (structurally supported but untested)~~ *(resolved — 6 naval scenarios run through CampaignManager with 23+ dedicated tests)* | [phase-9.md — Known Limitations](phase-9.md#known-limitations-post-mvp-refinements) |
 | 9 | ~~Synthetic terrain only (programmatic heightmaps, not real topographic data)~~ *(resolved Phase 15 — real-world terrain pipeline)* | [phase-9.md — Known Limitations](phase-9.md#known-limitations-post-mvp-refinements) |
 | 9 | ~~LOS cache is per-tick only (cleared each tick after movement)~~ *(resolved Phase 13 postmortem — selective invalidation wired)* | [phase-9.md — Known Limitations](phase-9.md#known-limitations-post-mvp-refinements) |
-| 9 | No weather evolution mid-campaign beyond WeatherEngine.step() | [phase-9.md — Known Limitations](phase-9.md#known-limitations-post-mvp-refinements) |
+| 9 | ~~No weather evolution mid-campaign beyond WeatherEngine.step()~~ *(resolved — WeatherEngine.update() implements full Markov transitions, diurnal temperature, O-U wind; called every tick)* | [phase-9.md — Known Limitations](phase-9.md#known-limitations-post-mvp-refinements) |
 | 9 | ~~Viewshed vectorization deferred (lower priority)~~ *(resolved Phase 13a-5)* | [phase-9.md — Known Limitations](phase-9.md#known-limitations-post-mvp-refinements) |
 | 9 | ~~STRtree for infrastructure spatial queries still deferred~~ *(resolved Phase 13a-2)* | [phase-9.md — Known Limitations](phase-9.md#known-limitations-post-mvp-refinements) |
-| 10 | No fire rate limiting — units fire once per tick regardless of ROF (inherited) | [phase-10.md — Known Limitations](phase-10.md#known-limitations-post-mvp-refinements) |
-| 10 | No wave attack modeling — all red units advance simultaneously (inherited) | [phase-10.md — Known Limitations](phase-10.md#known-limitations-post-mvp-refinements) |
-| 10 | Campaign AI decisions coarse — OODA at echelon timing, may not produce tactical posture changes in short runs | [phase-10.md — Known Limitations](phase-10.md#known-limitations-post-mvp-refinements) |
+| 10 | ~~No fire rate limiting — units fire once per tick regardless of ROF (inherited)~~ *(resolved Phase 11a — fire rate cooldown)* | [phase-10.md — Known Limitations](phase-10.md#known-limitations-post-mvp-refinements) |
+| 10 | ~~No wave attack modeling — all red units advance simultaneously (inherited)~~ *(resolved Phase 11c — wave attack mechanics)* | [phase-10.md — Known Limitations](phase-10.md#known-limitations-post-mvp-refinements) |
+| 10 | Campaign AI decisions coarse — OODA at echelon timing, may not produce tactical posture changes in short runs *(accepted limitation — OODA timing is by design)* | [phase-10.md — Known Limitations](phase-10.md#known-limitations-post-mvp-refinements) |
 | 10 | ~~Simplified force compositions — representative samples, not complete historical OOB~~ *(resolved Phase 30 — expanded OOBs, diverse modern/historical scenarios)* | [phase-10.md — Known Limitations](phase-10.md#known-limitations-post-mvp-refinements) |
 | 10 | ~~Synthetic terrain — programmatic heightmaps, not real topographic data~~ *(resolved Phase 15 — real-world terrain pipeline)* | [phase-10.md — Known Limitations](phase-10.md#known-limitations-post-mvp-refinements) |
-| 10 | Fixed reinforcement schedule — deterministic arrival, no stochastic variation | [phase-10.md — Known Limitations](phase-10.md#known-limitations-post-mvp-refinements) |
+| 9/10 | *(duplicate of Phase 9 fixed reinforcement entry above — consolidated)* | |
 | 10 | ~~No force aggregation/disaggregation — all units individually tracked~~ *(resolved Phase 13 postmortem)* | [phase-10.md — Known Limitations](phase-10.md#known-limitations-post-mvp-refinements) |
-| 10 | AI expectation matching approximate — string-based posture detection | [phase-10.md — Known Limitations](phase-10.md#known-limitations-post-mvp-refinements) |
-| 10 | Campaign metrics proxy territory control via survival fraction not spatial | [phase-10.md — Known Limitations](phase-10.md#known-limitations-post-mvp-refinements) |
+| 10 | AI expectation matching approximate — string-based posture detection *(accepted limitation — sufficient for posture change validation)* | [phase-10.md — Known Limitations](phase-10.md#known-limitations-post-mvp-refinements) |
+| 10 | Campaign metrics proxy territory control via survival fraction not spatial *(accepted limitation — survival fraction captures campaign outcomes)* | [phase-10.md — Known Limitations](phase-10.md#known-limitations-post-mvp-refinements) |
 | 11 | ~~Fuel gating not wired to stockpile in battle.py~~ *(resolved Phase 12b)* | [phase-11.md — Known Limitations](phase-11.md#known-limitations-post-mvp-refinements) |
-| 11 | Wave assignments are manual (no AI auto-assignment) | [phase-11.md — Known Limitations](phase-11.md#known-limitations-post-mvp-refinements) |
+| 11 | Wave assignments are manual (no AI auto-assignment) *(accepted limitation — explicit is better than implicit)* | [phase-11.md — Known Limitations](phase-11.md#known-limitations-post-mvp-refinements) |
 | 11 | ~~Integration gain caps at 4 scans~~ *(resolved Phase 26c — configurable max_integration_scans)* | [phase-11.md — Known Limitations](phase-11.md#known-limitations-post-mvp-refinements) |
 | 11 | ~~Armor type YAML data missing~~ *(resolved Phase 26c — armor_type field + 6 YAML files)* | [phase-11.md — Known Limitations](phase-11.md#known-limitations-post-mvp-refinements) |
 | 16 | ~~EW engines not yet wired into simulation engine tick loop~~ *(resolved Phase 25c)* | [phase-16.md — Known Limitations](phase-16.md#known-limitations-future-work) |
-| 16 | No DRFM detailed waveform modeling (simplified effectiveness parameter) | [phase-16.md — Known Limitations](phase-16.md#known-limitations-future-work) |
-| 16 | TDOA geolocation uses simplified centroid-shift algorithm | [phase-16.md — Known Limitations](phase-16.md#known-limitations-future-work) |
-| 16 | No cooperative jamming between multiple platforms | [phase-16.md — Known Limitations](phase-16.md#known-limitations-future-work) |
-| 16 | Campaign-level EW validation deferred (component-level only) | [phase-16.md — Known Limitations](phase-16.md#known-limitations-future-work) |
-| 17 | Simplified Keplerian orbits (no SGP4/TLE, no atmospheric drag for LEO decay) | [phase-17.md — Known Limitations](phase-17.md#known-limitations-future-work) |
-| 17 | No detailed satellite bus modeling (power, thermal, attitude control) | [phase-17.md — Known Limitations](phase-17.md#known-limitations-future-work) |
+| 16 | No DRFM detailed waveform modeling (simplified effectiveness parameter) *(accepted limitation — captures key jamming effects without specialist depth)* | [phase-16.md — Known Limitations](phase-16.md#known-limitations-future-work) |
+| 16 | TDOA geolocation uses simplified centroid-shift algorithm *(accepted limitation — captures geolocation accuracy without DSP complexity)* | [phase-16.md — Known Limitations](phase-16.md#known-limitations-future-work) |
+| 16 | No cooperative jamming between multiple platforms *(accepted limitation — single-jammer model captures key dynamics)* | [phase-16.md — Known Limitations](phase-16.md#known-limitations-future-work) |
+| 16 | ~~Campaign-level EW validation deferred (component-level only)~~ *(resolved — EW wired into engine tick loop Phase 25c; 4 scenarios with ew_config exercise campaign-level EW)* | [phase-16.md — Known Limitations](phase-16.md#known-limitations-future-work) |
+| 17 | Simplified Keplerian orbits (no SGP4/TLE, no atmospheric drag for LEO decay) *(accepted limitation — captures pass timing and coverage gaps)* | [phase-17.md — Known Limitations](phase-17.md#known-limitations-future-work) |
+| 17 | No detailed satellite bus modeling (power, thermal, attitude control) *(accepted limitation — below simulation granularity)* | [phase-17.md — Known Limitations](phase-17.md#known-limitations-future-work) |
 | 17 | ~~No space-based SIGINT integration with Phase 16 SIGINT engine~~ *(resolved Phase 52d — inverse-variance weighted fusion in engine.py tick loop)* | [phase-17.md — Known Limitations](phase-17.md#known-limitations-future-work) |
-| 17 | Debris cascade model is statistical (no individual fragment tracking) | [phase-17.md — Known Limitations](phase-17.md#known-limitations-future-work) |
-| 17 | No satellite maneuvering or station-keeping fuel limits | [phase-17.md — Known Limitations](phase-17.md#known-limitations-future-work) |
-| 17 | No space weather effects (solar flares, radiation belt variations) | [phase-17.md — Known Limitations](phase-17.md#known-limitations-future-work) |
-| 17 | EMEnvironment GPS accuracy is not per-side (uses worst-case aggregation) | [phase-17.md — Postmortem](phase-17.md#postmortem) |
+| 17 | Debris cascade model is statistical (no individual fragment tracking) *(accepted limitation — below simulation granularity)* | [phase-17.md — Known Limitations](phase-17.md#known-limitations-future-work) |
+| 17 | No satellite maneuvering or station-keeping fuel limits *(accepted limitation — captures orbital mechanics without propulsion modeling)* | [phase-17.md — Known Limitations](phase-17.md#known-limitations-future-work) |
+| 17 | No space weather effects (solar flares, radiation belt variations) *(accepted limitation — below simulation granularity)* | [phase-17.md — Known Limitations](phase-17.md#known-limitations-future-work) |
+| 17 | EMEnvironment GPS accuracy is not per-side (uses worst-case aggregation) *(accepted limitation — worst-case aggregation is conservative)* | [phase-17.md — Postmortem](phase-17.md#postmortem) |
 | 16/17 | ~~ScenarioLoader doesn't auto-wire EWEngine or SpaceEngine from YAML~~ *(resolved Phase 25a)* | [phase-17.md — Postmortem](phase-17.md#postmortem) |
 | 16/17/18 | ~~ScenarioLoader doesn't auto-wire CBRNEngine from YAML~~ *(resolved Phase 25a)* | [phase-18.md — Postmortem](phase-18.md#postmortem) |
 | 18 | ~~`mopp_speed_factor` parameter exists in movement engine but never passed from battle loop~~ *(resolved Phase 25c)* | [phase-18.md — Postmortem](phase-18.md#postmortem) |
@@ -177,13 +178,13 @@ Known limitations and deferred improvements logged during implementation. Review
 | 16/17/18/19 | ~~ScenarioLoader doesn't auto-wire SchoolRegistry from YAML~~ *(resolved Phase 25a)* | [phase-19.md — Known Limitations](phase-19.md#known-limitations) |
 | 19 | ~~`get_coa_score_weight_overrides()` hook not called in battle loop~~ *(resolved Phase 25b)* / ~~`get_stratagem_affinity()` still deferred~~ *(resolved Phase 53c — called in DECIDE phase with school affinity weights)* | [phase-19.md — Postmortem](phase-19.md#postmortem) |
 | 19 | ~~`CommanderPersonality.school_id` field defined but never read — schools assigned via SchoolRegistry instead~~ *(resolved Phase 53c — auto-assigns via SchoolRegistry in _apply_commander_assignments())* | [phase-19.md — Postmortem](phase-19.md#postmortem) |
-| 20 | Convoy engine does not model individual escort positions (abstract effectiveness parameter) | [phase-20.md — Known Limitations](phase-20.md#known-limitations) |
-| 20 | Strategic bombing target regeneration is linear (no industrial interdependency graph) | [phase-20.md — Known Limitations](phase-20.md#known-limitations) |
-| 20 | Fighter escort in strategic bombing is probability modifier, not full air combat sub-simulation | [phase-20.md — Known Limitations](phase-20.md#known-limitations) |
+| 20 | Convoy engine does not model individual escort positions (abstract effectiveness parameter) *(accepted limitation — campaign-scale abstraction)* | [phase-20.md — Known Limitations](phase-20.md#known-limitations) |
+| 20 | Strategic bombing target regeneration is linear (no industrial interdependency graph) *(accepted limitation — captures key targeting dynamics)* | [phase-20.md — Known Limitations](phase-20.md#known-limitations) |
+| 20 | Fighter escort in strategic bombing is probability modifier, not full air combat sub-simulation *(accepted limitation — campaign-scale abstraction)* | [phase-20.md — Known Limitations](phase-20.md#known-limitations) |
 | 16/17/18/19/20 | ~~ScenarioLoader doesn't auto-wire era-specific engines from YAML~~ *(resolved Phase 25a)* | [phase-20.md — Postmortem](phase-20.md#postmortem) |
 | 21 | ~~Barrage drift is purely random walk — no systematic correction for observer feedback~~ *(resolved Phase 27d — observer correction)* | [phase-21.md — Known Limitations](phase-21.md#known-limitations) |
 | 21 | ~~Gas warfare engine does not model gas mask don time delay (units gain instant protection)~~ *(resolved Phase 27d — compute_exposure_during_don + get_effective_mopp_level)* | [phase-21.md — Known Limitations](phase-21.md#known-limitations) |
-| 21 | Trench system has no wire-cutting mechanic (wire is a query attribute only, not a movement blocker) | [phase-21.md — Known Limitations](phase-21.md#known-limitations) |
+| 21 | Trench system has no wire-cutting mechanic (wire is a query attribute only, not a movement blocker) *(accepted limitation — wire as defensive query attribute is sufficient)* | [phase-21.md — Known Limitations](phase-21.md#known-limitations) |
 | 16/17/18/19/20/21 | ~~ScenarioLoader doesn't auto-wire WW1 engines from YAML~~ *(resolved Phase 25a)* | [phase-21.md — Known Limitations](phase-21.md#known-limitations) |
 | 21 | ~~Gas warfare wind direction tolerance (60°) hardcoded — should be configurable in GasWarfareConfig~~ *(resolved Phase 26b — GasWarfareConfig.max_wind_angle_deg)* | [phase-21.md — Postmortem](phase-21.md#postmortem) |
 | 21 | ~~Barrage/gas engines use hardcoded fallback RNG seed (42) when no RNG injected~~ *(resolved Phase 26a — rng required on all 23 engines)* | [phase-21.md — Postmortem](phase-21.md#postmortem) |
@@ -195,8 +196,8 @@ Known limitations and deferred improvements logged during implementation. Review
 | 16/17/18/19/20/21/22/23 | ~~ScenarioLoader doesn't auto-wire Ancient/Medieval engines from YAML~~ *(resolved Phase 25a)* | [phase-23.md — Postmortem](phase-23.md#postmortem) |
 | 28.5 | ~~DEWEngagementEvent has zero subscribers in production code (events published but never consumed)~~ *(closed Phase 37 — SimulationRecorder subscribes to base Event)* | [phase-28.5.md — Postmortem](phase-28.5.md#postmortem) |
 | 28.5 | ~~dew_engine not used in simulation/engine.py or simulation/battle.py tick loops (wired in scenario only)~~ *(resolved Phase 37 — battle.py routes DEW via route_engagement)* | [phase-28.5.md — Postmortem](phase-28.5.md#postmortem) |
-| 28.5 | No scenario YAML references dew_config (engine can be created but no scenarios exercise it) | [phase-28.5.md — Postmortem](phase-28.5.md#postmortem) |
-| 28.5 | ADUnitType.DEW not handled in air defense engagement logic (enum exists but no routing) | [phase-28.5.md — Postmortem](phase-28.5.md#postmortem) |
+| 28.5 | ~~No scenario YAML references dew_config (engine can be created but no scenarios exercise it)~~ *(resolved — taiwan_strait scenario uses dew_config)* | [phase-28.5.md — Postmortem](phase-28.5.md#postmortem) |
+| 28.5 | ADUnitType.DEW not handled in air defense engagement logic (enum exists but no routing) *(accepted limitation — DEW routes via weapon category, functionally complete)* | [phase-28.5.md — Postmortem](phase-28.5.md#postmortem) |
 | 28.5 | ~~route_engagement() not called from battle.py (uses execute_engagement directly) — DEW routing untested in loop~~ *(resolved Phase 37 — battle.py calls route_engagement for all engagements)* | [phase-28.5.md — Postmortem](phase-28.5.md#postmortem) |
 | 32 | ~~`config_overrides` accepted and stored but not applied to engine (calibration_overrides not injected before ScenarioLoader.load)~~ *(resolved Phase 37 — deep merge before load)* | [phase-32.md — Postmortem](phase-32.md#postmortem) |
 | 32 | ~~`GET /api/meta/terrain-types` returns hardcoded list instead of deriving from TerrainConfig or data~~ *(resolved Phase 39d — uses LandCover enum)* | [phase-32.md — Postmortem](phase-32.md#postmortem) |
@@ -205,23 +206,23 @@ Known limitations and deferred improvements logged during implementation. Review
 | 34 | ~~Analysis API responses untyped (`Record<string, unknown>`) — compare/sweep return free-form dicts~~ *(resolved Phase 39a — typed CompareResult/SweepResult)* | [phase-34.md — Postmortem](phase-34.md#postmortem) |
 | 34 | ~~Hardcoded morale state names and event type strings in eventProcessing.ts~~ *(resolved Phase 39a — exported constants ENGAGEMENT_EVENTS, MORALE_EVENTS)* | [phase-34.md — Postmortem](phase-34.md#postmortem) |
 | 34 | ~~Force time series reconstruction assumes no reinforcements (only counts destructions)~~ *(resolved Phase 37 — handles ReinforcementArrivedEvent)* | [phase-34.md — Postmortem](phase-34.md#postmortem) |
-| 35 | Frame data uses compact keys in storage but API expands to full names — slight redundancy | [phase-35.md — Known Limitations](phase-35.md#known-limitations) |
-| 35 | `terrain_json` and `frames_json` stored as TEXT blobs — no indexing, large runs may produce 2MB+ frames | [phase-35.md — Known Limitations](phase-35.md#known-limitations) |
+| 35 | Frame data uses compact keys in storage but API expands to full names — slight redundancy *(accepted limitation — cosmetic, no impact on functionality)* | [phase-35.md — Known Limitations](phase-35.md#known-limitations) |
+| 35 | `terrain_json` and `frames_json` stored as TEXT blobs — no indexing, large runs may produce 2MB+ frames *(accepted limitation — sufficient for current scenario sizes)* | [phase-35.md — Known Limitations](phase-35.md#known-limitations) |
 | 35 | ~~`useViewportControls` hook has no dedicated test file (exercised indirectly via TacticalMap)~~ *(resolved Phase 39a — 4 dedicated tests)* | [phase-35.md — Known Limitations](phase-35.md#known-limitations) |
 | 35 | ~~Only `ForceStrengthChart` shows the tick sync marker line — other charts don't~~ *(resolved Phase 38c — all 4 charts show tick sync + bidirectional click)* | [phase-35.md — Known Limitations](phase-35.md#known-limitations) |
 | 35 | ~~Frame capture interval is not configurable~~ *(resolved Phase 39b — RunSubmitRequest.frame_interval)* | [phase-35.md — Known Limitations](phase-35.md#known-limitations) |
-| 35 | No keyboard shortcuts for playback (deferred to Phase 36) | [phase-35.md — Known Limitations](phase-35.md#known-limitations) |
-| 37 | 8 legacy-format scenarios can't load through API (missing campaign schema fields) | [phase-37.md — Known Limitations](phase-37.md#known-limitations) |
-| 37 | DEW hit in battle loop always results in destruction (no partial damage/disable) | [phase-37.md — Known Limitations](phase-37.md#known-limitations) |
-| 38 | Plotly charts don't use `plotly_dark` template when dark mode is active (cosmetic) | [phase-38.md — Known Limitations](phase-38.md#known-limitations) |
-| 38 | No separate dark terrain color palette (elevation shading brightness modulation covers the need) | [phase-38.md — Known Limitations](phase-38.md#known-limitations) |
+| 35 | No keyboard shortcuts for playback (deferred to Phase 36) *(accepted limitation — cosmetic)* | [phase-35.md — Known Limitations](phase-35.md#known-limitations) |
+| 37 | ~~8 legacy-format scenarios can't load through API (missing campaign schema fields)~~ *(resolved Phase 55b — scenario migration)* | [phase-37.md — Known Limitations](phase-37.md#known-limitations) |
+| 37 | ~~DEW hit in battle loop always results in destruction (no partial damage/disable)~~ *(resolved Phase 51c — dew_disable_threshold)* | [phase-37.md — Known Limitations](phase-37.md#known-limitations) |
+| 38 | Plotly charts don't use `plotly_dark` template when dark mode is active (cosmetic) *(accepted limitation — cosmetic)* | [phase-38.md — Known Limitations](phase-38.md#known-limitations) |
+| 38 | No separate dark terrain color palette (elevation shading brightness modulation covers the need) *(accepted limitation — cosmetic; brightness modulation covers the need)* | [phase-38.md — Known Limitations](phase-38.md#known-limitations) |
 | 40 | ~~No fire-on-move accuracy penalty (only deployed weapon skip)~~ *(resolved Phase 48a — speed-based crew_skill degradation, up to 50% at max speed)* | [phase-40.md — Known Limitations](phase-40.md#known-limitations) |
 | 40 | ~~Posture doesn't affect movement speed~~ *(resolved Phase 50a — DUG_IN/FORTIFIED=0x, DEFENSIVE=0.5x, 2-tick un-dig transition)* | [phase-40.md — Known Limitations](phase-40.md#known-limitations) |
-| 41 | Cover from buildings/fortifications additive with terrain cover (potential double-count) | [phase-41.md — Known Limitations](phase-41.md#known-limitations) |
-| 42 | Suwalki Gap and Taiwan Strait stall at max_ticks — need additional victory conditions | [phase-42.md — Known Limitations](phase-42.md#known-limitations) |
+| 41 | ~~Cover from buildings/fortifications additive with terrain cover (potential double-count)~~ *(resolved — code uses max() not addition; highest cover source wins, max 0.85)* | [phase-41.md — Known Limitations](phase-41.md#known-limitations) |
+| 42 | ~~Suwalki Gap and Taiwan Strait stall at max_ticks — need additional victory conditions~~ *(resolved Phase 55a — closing range guard + OPERATIONAL engagement detection + calibration tuning)* | [phase-42.md — Known Limitations](phase-42.md#known-limitations) |
 | 42 | ~~Rally radius (500m) and friendly count threshold hardcoded, not configurable~~ *(resolved Phase 48b — uses RoutConfig.cascade_radius_m)* | [phase-42.md — Known Limitations](phase-42.md#known-limitations) |
 | 42 | ~~No per-scenario ROE configuration in existing scenario YAMLs~~ *(resolved Phase 48c — roe_level added to Srebrenica, Hybrid Gray Zone)* | [phase-42.md — Known Limitations](phase-42.md#known-limitations) |
-| 47 | Naval engines are phantom references (4 engines referenced in `_route_naval_engagement()` don't exist) | [phase-47.md — Known Remaining Issues](phase-47.md#known-remaining-issues) |
+| 47 | ~~Naval engines are phantom references (4 engines referenced in `_route_naval_engagement()` don't exist)~~ *(resolved Phase 51a — all naval engines instantiated)* | [phase-47.md — Known Remaining Issues](phase-47.md#known-remaining-issues) |
 | 47 | ~~`_check_morale_collapsed` ignores `cond.params` (reads global config only)~~ *(resolved Phase 48a — reads cond.params.threshold)* | [phase-47.md — Postmortem](phase-47.md#postmortem) |
 | 47 | ~~Hardcoded naval Pk values in `_route_naval_engagement()` (torpedo_pk=0.4, attacker_pk=0.7)~~ *(resolved Phase 48a — NavalEngagementConfig)* | [phase-47.md — Postmortem](phase-47.md#postmortem) |
 | 47 | ~~Some historical scenarios win via time_expired rather than decisive combat~~ *(resolved Phase 55a — closing range guard + OPERATIONAL engagement detection)* | [phase-47.md — Known Remaining Issues](phase-47.md#known-remaining-issues) |
@@ -236,7 +237,7 @@ Known limitations and deferred improvements logged during implementation. Review
 | 48 | ~~Resolution switching causes long-range battles to resolve via time_expired instead of combat~~ *(resolved Phase 55a — closing range guard + OPERATIONAL engagement detection)* | [phase-48.md — Postmortem](phase-48.md#postmortem) |
 | 51 | ~~Naval posture detection modifiers not implemented~~ *(resolved Phase 56e — detection range multipliers per posture)* | [phase-51.md — Known Limitations](phase-51.md#known-limitations) |
 | 51 | ~~Blockade throughput reduction not integrated into supply_network.py route costs~~ *(resolved Phase 56g — SEA route condition degradation)* | [phase-51.md — Known Limitations](phase-51.md#known-limitations) |
-| 51 | No scenarios exercise VLS magazine_capacity or mine encounters end-to-end | [phase-51.md — Known Limitations](phase-51.md#known-limitations) |
+| 51 | No scenarios exercise VLS magazine_capacity or mine encounters end-to-end *(accepted limitation — structurally wired; unit tests verify code paths)* | [phase-51.md — Known Limitations](phase-51.md#known-limitations) |
 | 48 | ~~Calibration audit test lists `advance_speed` in `_EXTERNAL_KEYS` but it's not consumed — false pass~~ *(resolved Phase 49b — schema-based validation)* | [phase-48.md — Postmortem](phase-48.md#postmortem) |
 | 48 | ~~`calibration_overrides` is free-form `dict[str, Any]` — no schema validation, mistyped keys pass silently~~ *(resolved Phase 49a — typed CalibrationSchema pydantic model)* | [phase-48.md — Postmortem](phase-48.md#postmortem) |
 | 53 | ~~`sead_arm_effectiveness` defined on IadsConfig but never consumed in any code path~~ *(resolved Phase 55c-3 — ARM vs non-radar differentiation in iads.py)* | [phase-53.md — Postmortem](phase-53.md#postmortem) |

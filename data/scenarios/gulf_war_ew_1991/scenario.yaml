@@ -118,13 +118,30 @@ documented_outcomes:
     source_quality: 2
     notes: "Estimated HARM effectiveness against radiating targets"
 
+victory_conditions:
+  - type: force_destroyed
+    side: ""
+    params:
+      threshold: 0.3
+  - type: morale_collapsed
+    side: ""
+  - type: time_expired
+    side: blue
+    params:
+      max_duration_s: 21600
+
 calibration_overrides:
   iads_degradation_rate: 0.15
   sead_arm_effectiveness: 0.65
   jammer_coverage_mult: 1.3
   stealth_detection_penalty: 0.8
-  blue_force_ratio_modifier: 1.5
+  blue_force_ratio_modifier: 2.0
   observation_decay_rate: 0.03
+  destruction_threshold: 0.3
+  morale_degrade_rate_modifier: 3.0
+  morale_base_degrade_rate: 0.01
+  morale_casualty_weight: 0.5
+  roe_level: WEAPONS_FREE
   weapon_assignments:
     "M61A1 Vulcan 20mm": m61a1_vulcan
     "M230 Chain Gun 30mm": m61a1_vulcan

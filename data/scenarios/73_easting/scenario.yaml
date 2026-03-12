@@ -104,17 +104,30 @@ documented_outcomes:
     source_quality: 0
     notes: "~23 minutes"
 
+victory_conditions:
+  - type: force_destroyed
+    side: ""
+    params:
+      threshold: 0.4
+  - type: morale_collapsed
+    side: ""
+  - type: time_expired
+    side: blue
+    params:
+      max_duration_s: 1800
+
 calibration_overrides:
   hit_probability_modifier: 1.0
   target_size_modifier: 1.0
   thermal_contrast: 1.5
   # Morale calibration — Eagle Troop was elite and aggressive; Iraqi units
   # were poorly trained and collapsed quickly once taking fire.
-  morale_degrade_rate_modifier: 0.3
+  morale_degrade_rate_modifier: 0.5
   morale_force_ratio_weight: 0.1
-  morale_base_degrade_rate: 0.01
-  morale_casualty_weight: 0.5
-  morale_check_interval: 12
+  morale_base_degrade_rate: 0.015
+  morale_casualty_weight: 0.6
+  morale_check_interval: 10
+  destruction_threshold: 0.4
   blue_force_ratio_modifier: 2.5
   red_force_ratio_modifier: 1.0
   blue_cohesion: 0.9

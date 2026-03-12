@@ -371,8 +371,13 @@ class SimulationEngine:
                     self._set_resolution(TickResolution.TACTICAL)
 
         # 4b. Phase 55a: engagement detection at OPERATIONAL resolution
-        # (prevents forces overshooting each other between STRATEGIC ticks)
+        # (prevents forces overshooting each other between STRATEGIC ticks).
+        # Phase 57: Also run strategic movement at OPERATIONAL to prevent
+        # deadlock — the closing range guard can hold resolution at
+        # OPERATIONAL while forces are still beyond engagement range.
+        # Without movement here, units freeze in the 15–30 km gap.
         if self._resolution == TickResolution.OPERATIONAL:
+            self._campaign.update_strategic(ctx, dt)
             new_battles = self._campaign.detect_engagements(ctx, self._battle)
             if new_battles:
                 remaining = []

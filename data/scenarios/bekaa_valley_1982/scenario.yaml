@@ -51,9 +51,9 @@ red_forces:
   morale_initial: STEADY
 
 terrain:
-  width_m: 200000
-  height_m: 100000
-  cell_size_m: 1000.0
+  width_m: 60000
+  height_m: 40000
+  cell_size_m: 500.0
   base_elevation_m: 800.0
   terrain_type: open_field
 
@@ -110,18 +110,34 @@ documented_outcomes:
     source_quality: 2
     notes: "Estimated SIGINT geolocation rate of SAM radars"
 
+victory_conditions:
+  - type: force_destroyed
+    side: ""
+    params:
+      threshold: 0.3
+  - type: morale_collapsed
+    side: ""
+  - type: time_expired
+    side: blue
+    params:
+      max_duration_s: 7200
+
 calibration_overrides:
   sam_suppression_modifier: 1.2
   sead_effectiveness: 0.9
   drone_provocation_prob: 0.85
   sigint_detection_bonus: 0.15
   roe_level: WEAPONS_FREE
-  blue_start_x: 180000.0
-  blue_start_y: 50000.0
-  red_start_x: 20000.0
-  red_start_y: 50000.0
-  blue_force_ratio_modifier: 1.5
+  blue_start_x: 50000.0
+  blue_start_y: 20000.0
+  red_start_x: 10000.0
+  red_start_y: 20000.0
+  blue_force_ratio_modifier: 2.5
   observation_decay_rate: 0.03
+  destruction_threshold: 0.3
+  morale_degrade_rate_modifier: 3.0
+  morale_base_degrade_rate: 0.01
+  morale_casualty_weight: 0.5
   weapon_assignments:
     "M61A1 Vulcan 20mm": m61a1_vulcan
     "2K12 Launcher": sa6_3m9

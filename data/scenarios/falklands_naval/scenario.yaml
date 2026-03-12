@@ -1,6 +1,6 @@
 name: "Falklands Naval - Sheffield Exocet Attack"
 date: "1982-05-04T14:00:00Z"
-duration_hours: 0.25
+duration_hours: 0.5
 tick_duration_seconds: 2.0
 latitude: -51.8
 longitude: -59.0
@@ -78,10 +78,22 @@ documented_outcomes:
     source_quality: 1
     notes: "1 hit out of 2 launched (Sheffield attack)"
 
+victory_conditions:
+  - type: force_destroyed
+    side: ""
+    params:
+      threshold: 0.3
+  - type: morale_collapsed
+    side: ""
+  - type: time_expired
+    side: blue
+    params:
+      max_duration_s: 1800
+
 calibration_overrides:
-  hit_probability_modifier: 1.0
+  hit_probability_modifier: 1.5
   target_size_modifier: 1.0
-  morale_degrade_rate_modifier: 0.1
+  morale_degrade_rate_modifier: 1.5
   morale_force_ratio_weight: 0.0
   morale_base_degrade_rate: 0.005
   morale_casualty_weight: 0.3

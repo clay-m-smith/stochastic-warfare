@@ -122,9 +122,9 @@ calibration_overrides:
   target_size_modifier_blue: 0.3
   target_size_modifier_red: 2.0
   destruction_threshold: 0.15
-  blue_start_x: 15000.0
+  blue_start_x: 20000.0
   blue_start_y: 30000.0
-  red_start_x: 45000.0
+  red_start_x: 40000.0
   red_start_y: 30000.0
   defensive_sides: [blue]
   max_engagers_per_side: 5

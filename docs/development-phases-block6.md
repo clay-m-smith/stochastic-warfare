@@ -745,9 +745,11 @@ Expand ROE coverage, fix data gaps, replace proxy units.
 
 ---
 
-## Phase 57: Full Validation & Regression
+## Phase 57: Full Validation & Regression — COMPLETE
 
 **Goal**: Validate ALL scenarios against historical outcomes. Exercise ALL calibration parameters. Zero-deficit audit. Full documentation sync.
+
+**Status**: **COMPLETE** — 51 new tests. OPERATIONAL resolution deadlock fixed, checkpoint migrated to JSON, 14 deficits resolved, 34 accepted limitations dispositioned, 1 dormant capability. Zero unresolved deficits.
 
 **Dependencies**: Phases 49--56 (all changes must be wired).
 
@@ -790,7 +792,25 @@ Close every open item in `devlog/index.md`.
 - **No items remain in "unresolved" state** -- Everything has a disposition.
 - **Update deficit count** in CLAUDE.md, MEMORY.md, README.md.
 
-### 57d: Documentation Sync and Cross-Doc Audit
+### 57d: OPERATIONAL Resolution Deadlock Fix
+
+The Phase 55a closing range guard created a deadlock for forces between 15-30km apart: STRATEGIC switched to OPERATIONAL, but no battles were created, and `update_strategic()` only ran at STRATEGIC resolution. Forces were frozen.
+
+- **`stochastic_warfare/simulation/engine.py`** (modified) -- Run `update_strategic()` at OPERATIONAL resolution when no active battles exist, allowing forces to advance to TACTICAL engagement range.
+- **6 scenario recalibrations**: bekaa_valley_1982, gulf_war_ew_1991, falklands_naval, korean_peninsula, 73_easting, taiwan_strait.
+
+### 57e: Checkpoint Migration (Pickle to JSON)
+
+Migrated checkpoint serialization from pickle to JSON for security and portability.
+
+- **`stochastic_warfare/core/checkpoint.py`** (modified) -- `NumpyEncoder` for JSON serialization (arrays, integer/float/bool subtypes). Legacy pickle fallback on restore.
+- **`tests/unit/test_checkpoint.py`** -- 10 new tests (JSON round-trip, NumpyEncoder, legacy fallback, error handling).
+
+### 57f: Phase 55 Test Update
+
+- Korean Peninsula scenario ROE changed from `WEAPONS_TIGHT` to `WEAPONS_FREE` in Phase 55 resolution tests.
+
+### 57g: Documentation Sync and Cross-Doc Audit
 
 Synchronize all documentation.
 
@@ -808,8 +828,10 @@ Synchronize all documentation.
 - All CalibrationSchema fields exercised
 - Zero unresolved deficits in devlog/index.md
 - Cross-doc audit passes all 19 checks
-- ~25 new tests
-- **Block 6 target: ~8,800+ total tests** (Python + frontend)
+- OPERATIONAL resolution deadlock fixed
+- Checkpoint serialization migrated to JSON
+- ~51 new tests
+- **Block 6 total: ~8,655 tests** (8,383 Python + 272 frontend)
 
 ---
 
@@ -901,7 +923,7 @@ Synchronize all documentation.
 | 54 | Era & Domain Sub-Engine Wiring | 53 | 8,259 | **Complete** |
 | 55 | Resolution & Scenario Migration | 43 | 8,302 | **Complete** |
 | 56 | Performance & Logistics | 39 | 8,341 | **Complete** |
-| 57 | Full Validation & Regression | ~25 | ~8,366 | Planned |
+| 57 | Full Validation & Regression | 51 | 8,383 | **Complete** |
 
-**Block 6 total**: ~364 new tests across 9 phases (339 delivered, ~25 remaining).
-**Target cumulative**: ~8,600+ Python tests + 272 frontend = ~8,870+ total.
+**Block 6 total**: 390 new tests across 9 phases.
+**Cumulative**: 8,383 Python tests + 272 frontend = 8,655 total.

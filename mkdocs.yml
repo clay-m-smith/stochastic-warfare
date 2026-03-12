@@ -137,6 +137,7 @@ nav:
     - Phase 54 - Era-Specific & Domain Sub-Engine Wiring: devlog/phase-54.md
     - Phase 55 - Resolution & Scenario Migration: devlog/phase-55.md
     - Phase 56 - Performance & Logistics: devlog/phase-56.md
+    - Phase 57 - Full Validation & Regression: devlog/phase-57.md
   - Specifications:
     - Project Structure: specs/project-structure.md
     - Skills & Hooks: skills-and-hooks.md

@@ -125,12 +125,12 @@ calibration_overrides:
   morale_base_degrade_rate: 0.008
   morale_casualty_weight: 0.4
   morale_check_interval: 25
-  blue_force_ratio_modifier: 3.0
+  blue_force_ratio_modifier: 3.5
   red_force_ratio_modifier: 1.0
   blue_cohesion: 0.8
-  red_cohesion: 0.3
-  destruction_threshold: 0.25
-  roe_level: WEAPONS_TIGHT
+  red_cohesion: 0.25
+  destruction_threshold: 0.2
+  roe_level: WEAPONS_FREE
   defensive_sides:
     - blue
   blue_start_x: 3000.0

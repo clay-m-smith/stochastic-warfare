@@ -1,9 +1,13 @@
-"""Phase 47g: Historical accuracy regression tests.
+"""Phase 47g+57a: Historical accuracy regression tests.
 
 Validates that all scenarios complete without error and that historical
 scenarios produce the correct winner.  The MC test (marked slow) runs
-N=5 seeds and asserts >=60% correct — a lightweight smoke check that
-calibration hasn't regressed.
+N=10 seeds and asserts >=80% correct — a statistical validation that
+calibration produces correct historical outcomes.
+
+Phase 57 additions: tighter MC thresholds (60%→80%, 5→10 seeds),
+victory condition checks, scenario coverage assertion, YAML load validation.
+Shared module-scoped evaluation fixture to avoid redundant evaluator runs.
 """
 
 from __future__ import annotations
@@ -14,6 +18,7 @@ import sys
 from pathlib import Path
 
 import pytest
+import yaml
 
 # ---------------------------------------------------------------------------
 # Expected winners for historical scenarios (from Phase 47 calibration)
@@ -48,6 +53,7 @@ HISTORICAL_WINNERS: dict[str, str] = {
     "falklands_goose_green": "blue",
     "falklands_naval": "blue",
     "falklands_san_carlos": "blue",
+    "falklands_campaign": "blue",
     "korean_peninsula": "blue",
     "suwalki_gap": "blue",
     "taiwan_strait": "blue",
@@ -73,6 +79,15 @@ KNOWN_ISSUES: set[str] = set()
 
 SCRIPTS_DIR = Path(__file__).resolve().parents[2] / "scripts"
 EVALUATE_SCRIPT = SCRIPTS_DIR / "evaluate_scenarios.py"
+DATA_DIR = Path(__file__).resolve().parents[2] / "data"
+
+# Scenarios that should resolve via decisive combat, not time_expired
+DECISIVE_COMBAT_SCENARIOS: set[str] = {
+    "73_easting", "bekaa_valley_1982", "korean_peninsula",
+    "suwalki_gap", "taiwan_strait", "eastern_front_1943",
+    "normandy_bocage", "stalingrad", "austerlitz", "waterloo",
+    "cambrai", "somme_july1", "hastings",
+}
 
 
 def _run_evaluation(output_path: Path, seed: int = 42) -> list[dict]:
@@ -89,7 +104,7 @@ def _run_evaluation(output_path: Path, seed: int = 42) -> list[dict]:
         cmd,
         capture_output=True,
         text=True,
-        timeout=600,
+        timeout=900,
         cwd=str(SCRIPTS_DIR.parent),
     )
     if result.returncode != 0:
@@ -98,41 +113,44 @@ def _run_evaluation(output_path: Path, seed: int = 42) -> list[dict]:
         return json.load(f)
 
 
+# ---------------------------------------------------------------------------
+# Module-scoped fixture: run evaluator ONCE for seed=42, share across classes
+# ---------------------------------------------------------------------------
+
+@pytest.fixture(scope="module")
+def eval_results_seed42(tmp_path_factory):
+    """Single evaluator run shared by all test classes in this module."""
+    out = tmp_path_factory.mktemp("eval_shared") / "results.json"
+    return _run_evaluation(out, seed=42)
+
+
+@pytest.fixture(scope="module")
+def results_by_name_seed42(eval_results_seed42):
+    """Results indexed by scenario name."""
+    return {r["scenario_name"]: r for r in eval_results_seed42}
+
+
 class TestAllScenariosComplete:
     """Every scenario must complete without error (seed=42)."""
 
-    @pytest.fixture(scope="class")
-    def eval_results(self, tmp_path_factory):
-        out = tmp_path_factory.mktemp("eval") / "results.json"
-        return _run_evaluation(out, seed=42)
-
-    def test_no_failures(self, eval_results):
-        failed = [r for r in eval_results if not r["success"]]
+    def test_no_failures(self, eval_results_seed42):
+        failed = [r for r in eval_results_seed42 if not r["success"]]
         assert not failed, f"Failed scenarios: {[r['scenario_name'] for r in failed]}"
 
-    def test_minimum_scenario_count(self, eval_results):
-        assert len(eval_results) >= 35, f"Only {len(eval_results)} scenarios ran"
+    def test_minimum_scenario_count(self, eval_results_seed42):
+        assert len(eval_results_seed42) >= 35, f"Only {len(eval_results_seed42)} scenarios ran"
 
 
 class TestHistoricalWinnersSeed42:
     """Historical scenarios produce correct winner with seed=42."""
 
-    @pytest.fixture(scope="class")
-    def eval_results(self, tmp_path_factory):
-        out = tmp_path_factory.mktemp("eval") / "results.json"
-        return _run_evaluation(out, seed=42)
-
-    @pytest.fixture(scope="class")
-    def results_by_name(self, eval_results):
-        return {r["scenario_name"]: r for r in eval_results}
-
     @pytest.mark.parametrize("scenario,expected_winner", list(HISTORICAL_WINNERS.items()))
-    def test_correct_winner(self, results_by_name, scenario, expected_winner):
+    def test_correct_winner(self, results_by_name_seed42, scenario, expected_winner):
         if scenario in KNOWN_ISSUES:
             pytest.skip(f"Known engine limitation: {scenario}")
-        if scenario not in results_by_name:
+        if scenario not in results_by_name_seed42:
             pytest.skip(f"Scenario {scenario} not in evaluation results")
-        result = results_by_name[scenario]
+        result = results_by_name_seed42[scenario]
         actual = result.get("victory_side", "") or "draw"
         assert actual == expected_winner, (
             f"{scenario}: expected {expected_winner}, got {actual} "
@@ -140,10 +158,10 @@ class TestHistoricalWinnersSeed42:
         )
 
     @pytest.mark.parametrize("scenario", sorted(DRAW_SCENARIOS))
-    def test_draw_scenarios(self, results_by_name, scenario):
-        if scenario not in results_by_name:
+    def test_draw_scenarios(self, results_by_name_seed42, scenario):
+        if scenario not in results_by_name_seed42:
             pytest.skip(f"Scenario {scenario} not in evaluation results")
-        result = results_by_name[scenario]
+        result = results_by_name_seed42[scenario]
         actual = result.get("victory_side", "") or "draw"
         assert actual == "draw", (
             f"{scenario}: expected draw, got {actual}"
@@ -152,13 +170,13 @@ class TestHistoricalWinnersSeed42:
 
 @pytest.mark.slow
 class TestHistoricalAccuracyMC:
-    """Monte Carlo validation: correct winner in >=60% of N=5 runs.
+    """Monte Carlo validation: correct winner in >=80% of N=10 runs.
 
     Marked slow — run with ``pytest -m slow``.
     """
 
-    N_SEEDS = 5
-    MIN_CORRECT_FRACTION = 0.6
+    N_SEEDS = 10
+    MIN_CORRECT_FRACTION = 0.8
 
     @pytest.fixture(scope="class")
     def mc_results(self, tmp_path_factory):
@@ -186,3 +204,58 @@ class TestHistoricalAccuracyMC:
             f"({fraction:.0%}) — need {self.MIN_CORRECT_FRACTION:.0%}. "
             f"Winners: {winners}"
         )
+
+
+class TestVictoryConditions:
+    """Modern/historical combat scenarios should resolve decisively."""
+
+    @pytest.mark.parametrize("scenario", sorted(DECISIVE_COMBAT_SCENARIOS))
+    def test_not_time_expired(self, results_by_name_seed42, scenario):
+        """Scenario resolves via force_destroyed or morale_collapsed, not time_expired."""
+        if scenario not in results_by_name_seed42:
+            pytest.skip(f"Scenario {scenario} not in evaluation results")
+        result = results_by_name_seed42[scenario]
+        condition = result.get("victory_condition", "")
+        assert condition != "time_expired", (
+            f"{scenario} resolved via time_expired — should reach decisive outcome"
+        )
+
+
+class TestScenarioCoverage:
+    """Every scenario YAML is tracked in the regression suite."""
+
+    def _find_all_scenario_names(self) -> set[str]:
+        """Discover all scenario directory names."""
+        names: set[str] = set()
+        for path in DATA_DIR.rglob("scenario.yaml"):
+            name = path.parent.name
+            if "test_campaign" in name:
+                continue
+            names.add(name)
+        return names
+
+    def test_all_scenarios_in_regression(self):
+        """Every scenario YAML has an entry in HISTORICAL_WINNERS or DRAW_SCENARIOS."""
+        all_names = self._find_all_scenario_names()
+        tracked = set(HISTORICAL_WINNERS.keys()) | DRAW_SCENARIOS
+        untracked = all_names - tracked
+        assert not untracked, (
+            f"Scenarios not tracked in regression suite: {sorted(untracked)}. "
+            f"Add them to HISTORICAL_WINNERS or DRAW_SCENARIOS."
+        )
+
+    def test_all_scenarios_load_cleanly(self):
+        """All scenario YAMLs parse without error."""
+        failures = []
+        for path in sorted(DATA_DIR.rglob("scenario.yaml")):
+            name = path.parent.name
+            if "test_campaign" in name:
+                continue
+            try:
+                with open(path) as f:
+                    data = yaml.safe_load(f)
+                assert data is not None, f"Empty YAML: {name}"
+                assert "sides" in data or "forces" in data, f"No sides/forces: {name}"
+            except Exception as exc:
+                failures.append(f"{name}: {exc}")
+        assert not failures, f"Scenario YAML load failures:\n" + "\n".join(failures)
