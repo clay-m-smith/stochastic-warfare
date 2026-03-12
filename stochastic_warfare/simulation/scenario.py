@@ -1165,6 +1165,16 @@ class ScenarioLoader:
         supply_network_engine = SupplyNetworkEngine(bus, logistics_rng)
         maintenance_engine = MaintenanceEngine(bus, logistics_rng)
 
+        # Phase 56c: per-subsystem Weibull shapes from calibration
+        _cal = config.calibration_overrides
+        _weibull = (
+            _cal.get("subsystem_weibull_shapes", {})
+            if hasattr(_cal, "get") else {}
+        )
+        if _weibull:
+            maintenance_engine._config.use_weibull = True
+            maintenance_engine.set_subsystem_shapes(_weibull)
+
         # Aggregation (Phase 13a-7)
         from stochastic_warfare.simulation.aggregation import (
             AggregationConfig,
@@ -1232,12 +1242,38 @@ class ScenarioLoader:
                 elif "visibility_m" not in cal:
                     cal["visibility_m"] = wc["visibility_m"]
 
-        # Phase 44c: Medical & engineering engines
-        from stochastic_warfare.logistics.medical import MedicalEngine
-        from stochastic_warfare.logistics.engineering import EngineeringEngine
+        # Phase 44c / 56c: Medical & engineering engines (era-aware)
+        from stochastic_warfare.logistics.medical import MedicalConfig, MedicalEngine
+        from stochastic_warfare.logistics.engineering import (
+            EngineeringConfig,
+            EngineeringEngine,
+        )
 
-        medical_engine = MedicalEngine(bus, logistics_rng)
-        engineering_engine = EngineeringEngine(bus, logistics_rng)
+        _era_cfg = getattr(config, "era_config", None)
+        if _era_cfg is None:
+            _era_cfg = getattr(config, "era", None)
+            if _era_cfg is not None and not hasattr(_era_cfg, "physics_overrides"):
+                _era_cfg = None
+        _med_kw: dict[str, Any] = {}
+        _eng_kw: dict[str, Any] = {}
+        if _era_cfg is not None:
+            _po = getattr(_era_cfg, "physics_overrides", {})
+            for _mk in (
+                "treatment_hours_minor",
+                "treatment_hours_serious",
+                "treatment_hours_critical",
+            ):
+                if _mk in _po:
+                    _med_kw[_mk] = _po[_mk]
+            if "repair_time_hours" in _po:
+                _eng_kw["repair_time_hours"] = _po["repair_time_hours"]
+
+        medical_config = MedicalConfig(**_med_kw) if _med_kw else None
+        engineering_config = EngineeringConfig(**_eng_kw) if _eng_kw else None
+        medical_engine = MedicalEngine(bus, logistics_rng, config=medical_config)
+        engineering_engine = EngineeringEngine(
+            bus, logistics_rng, config=engineering_config,
+        )
 
         result = {
             "los_engine": los_engine,

@@ -27,6 +27,9 @@ from stochastic_warfare.entities.events import UnitDestroyedEvent, UnitDisabledE
 from stochastic_warfare.detection.sensors import SensorType
 from stochastic_warfare.morale.state import MoraleState, _MORALE_EFFECTS
 
+from shapely import STRtree
+from shapely.geometry import Point
+
 logger = get_logger(__name__)
 
 # Sensor types that bypass visual weather degradation
@@ -141,6 +144,14 @@ _NAVAL_POSTURE_SPEED_MULT: dict[int, float] = {
     1: 1.0,   # UNDERWAY
     2: 1.2,   # TRANSIT
     3: 0.9,   # BATTLE_STATIONS
+}
+
+# Phase 56e: naval posture → target detection range multiplier
+_NAVAL_POSTURE_DETECT_MULT: dict[int, float] = {
+    0: 1.2,   # ANCHORED — easier to detect (stationary, no wake)
+    1: 1.0,   # UNDERWAY — baseline
+    2: 0.85,  # TRANSIT — reduced signature at speed
+    3: 1.3,   # BATTLE_STATIONS — active radar/emissions increase signature
 }
 
 # Phase 43b: weapon categories that route to indirect fire
@@ -359,6 +370,7 @@ def _route_naval_engagement(
             uid = attacker.entity_id
             launched = vls_launches.get(uid, 0) if vls_launches is not None else 0
             if launched >= mag_cap:
+                logger.info("VLS exhausted: unit %s (%d/%d)", uid, launched, mag_cap)
                 return True, None  # magazine exhausted
         engine = getattr(ctx, "naval_surface_engine", None)
         if engine is not None:
@@ -1278,11 +1290,13 @@ class BattleManager:
                 for bid, b in self._battles.items()
             },
             "next_battle_id": self._next_battle_id,
+            "vls_launches": dict(self._vls_launches),
         }
 
     def set_state(self, state: dict[str, Any]) -> None:
         """Restore battle manager state from checkpoint."""
         self._next_battle_id = state.get("next_battle_id", 0)
+        self._vls_launches = dict(state.get("vls_launches", {}))
         self._battles.clear()
         self._cached_assessments.clear()
         for bid, bdata in state.get("battles", {}).items():
@@ -1636,6 +1650,18 @@ class BattleManager:
                     effective_speed *= _NAVAL_POSTURE_SPEED_MULT.get(int(np_val), 1.0)
                     if effective_speed <= 0:
                         continue
+
+                # Phase 56b: readiness-based movement speed penalty
+                _maint = getattr(ctx, "maintenance_engine", None)
+                if _maint is not None:
+                    try:
+                        _rdns = _maint.get_unit_readiness(u.entity_id)
+                        if _rdns < 1.0:
+                            effective_speed *= max(0.3, _rdns)
+                            if effective_speed <= 0:
+                                continue
+                    except (KeyError, Exception):
+                        pass
 
                 # Wave gating: check if this unit's wave has been released
                 wave = wave_assignments.get(u.entity_id, 0)
@@ -2075,6 +2101,11 @@ class BattleManager:
                         )
                     except Exception:
                         pass
+
+                # Phase 56e: naval posture modifies target detectability
+                _tnp = getattr(best_target, "naval_posture", None)
+                if _tnp is not None:
+                    detection_range *= _NAVAL_POSTURE_DETECT_MULT.get(int(_tnp), 1.0)
 
                 if best_range > detection_range:
                     continue
@@ -2619,7 +2650,9 @@ class BattleManager:
                         if _gas_protection > 0 and any(
                             kw in _ammo_id_lower for kw in ("gas", "chlorine", "phosgene", "mustard")
                         ):
-                            _gas_cas_mod = max(0.1, 1.0 - _gas_protection * 0.8)
+                            _gas_floor = cal.get("gas_casualty_floor", 0.1)
+                            _gas_scale = cal.get("gas_protection_scaling", 0.8)
+                            _gas_cas_mod = max(_gas_floor, 1.0 - _gas_protection * _gas_scale)
 
                         # Phase 54b: barrage zone suppression on defender
                         barrage_eng = getattr(ctx, "barrage_engine", None)
@@ -2858,31 +2891,55 @@ class BattleManager:
         morale_degrade_mod = cal.get("morale_degrade_rate_modifier", 1.0)
         rout_engine = getattr(ctx, "rout_engine", None)
 
-        # Phase 42c: rally check for routing units
+        # Phase 56a: build per-side STRtree for rally + cascade (O(n log n))
+        _side_trees: dict[str, tuple[STRtree, list[Unit]]] = {}
         if rout_engine is not None:
+            for _sn, _su in units_by_side.items():
+                _eligible = [
+                    u for u in _su
+                    if u.status in (UnitStatus.ACTIVE, UnitStatus.ROUTING)
+                ]
+                if _eligible:
+                    _pts = [
+                        Point(u.position.easting, u.position.northing)
+                        for u in _eligible
+                    ]
+                    _side_trees[_sn] = (STRtree(_pts), _eligible)
+
+        # Phase 42c / 56a: rally check for routing units (STRtree)
+        if rout_engine is not None:
+            _rally_r = rout_engine._config.cascade_radius_m
             for side_name, side_units in units_by_side.items():
+                tree_data = _side_trees.get(side_name)
                 for u in side_units:
                     if u.status != UnitStatus.ROUTING:
                         continue
                     ms = ctx.morale_states.get(u.entity_id)
                     if ms is None or int(ms) != MoraleState.ROUTED:
                         continue
-                    # Count nearby friendly active units
                     nearby_count = 0
                     leader_present = False
-                    for other in side_units:
-                        if other.entity_id == u.entity_id or other.status != UnitStatus.ACTIVE:
-                            continue
-                        dx = other.position.easting - u.position.easting
-                        dy = other.position.northing - u.position.northing
-                        _rally_r = rout_engine._config.cascade_radius_m
-                    if math.sqrt(dx * dx + dy * dy) < _rally_r:
-                            nearby_count += 1
-                            st = getattr(other, "support_type", None)
-                            if st is not None:
-                                st_name = st.name if hasattr(st, "name") else str(st)
-                                if st_name == "HQ":
-                                    leader_present = True
+                    if tree_data is not None:
+                        tree, eligible = tree_data
+                        query_geom = Point(
+                            u.position.easting, u.position.northing,
+                        ).buffer(_rally_r)
+                        idxs = tree.query(query_geom)
+                        for idx in idxs:
+                            other = eligible[idx]
+                            if other.entity_id == u.entity_id:
+                                continue
+                            if other.status != UnitStatus.ACTIVE:
+                                continue
+                            dx = other.position.easting - u.position.easting
+                            dy = other.position.northing - u.position.northing
+                            if math.sqrt(dx * dx + dy * dy) < _rally_r:
+                                nearby_count += 1
+                                st = getattr(other, "support_type", None)
+                                if st is not None:
+                                    st_name = st.name if hasattr(st, "name") else str(st)
+                                    if st_name == "HQ":
+                                        leader_present = True
                     if rout_engine.check_rally(u.entity_id, nearby_count, leader_present):
                         ctx.morale_states[u.entity_id] = MoraleState.SHAKEN
                         object.__setattr__(u, "status", UnitStatus.ACTIVE)
@@ -2926,8 +2983,9 @@ class BattleManager:
                 elif new_morale == MoraleState.SURRENDERED:
                     object.__setattr__(u, "status", UnitStatus.SURRENDERED)
 
-        # Phase 42c: rout cascade — newly routed units may trigger adjacent routs
+        # Phase 42c / 56a: rout cascade — STRtree spatial query
         if rout_engine is not None:
+            _cascade_r = rout_engine._config.cascade_radius_m
             newly_routed: list[tuple[str, Unit]] = []
             for side_name, side_units in units_by_side.items():
                 for u in side_units:
@@ -2940,17 +2998,27 @@ class BattleManager:
                 same_side = units_by_side.get(side_name, [])
                 adjacent_morale: dict[str, int] = {}
                 distances: dict[str, float] = {}
-                for other in same_side:
-                    if other.entity_id == routing_unit.entity_id:
-                        continue
-                    if other.status not in (UnitStatus.ACTIVE, UnitStatus.ROUTING):
-                        continue
-                    ms = ctx.morale_states.get(other.entity_id)
-                    if ms is not None:
-                        adjacent_morale[other.entity_id] = int(ms)
-                    dx = other.position.easting - routing_unit.position.easting
-                    dy = other.position.northing - routing_unit.position.northing
-                    distances[other.entity_id] = math.sqrt(dx * dx + dy * dy)
+                tree_data = _side_trees.get(side_name)
+                if tree_data is not None:
+                    tree, eligible = tree_data
+                    query_geom = Point(
+                        routing_unit.position.easting,
+                        routing_unit.position.northing,
+                    ).buffer(_cascade_r)
+                    idxs = tree.query(query_geom)
+                    for idx in idxs:
+                        other = eligible[idx]
+                        if other.entity_id == routing_unit.entity_id:
+                            continue
+                        if other.status not in (UnitStatus.ACTIVE, UnitStatus.ROUTING):
+                            continue
+                        dx = other.position.easting - routing_unit.position.easting
+                        dy = other.position.northing - routing_unit.position.northing
+                        dist = math.sqrt(dx * dx + dy * dy)
+                        distances[other.entity_id] = dist
+                        ms = ctx.morale_states.get(other.entity_id)
+                        if ms is not None:
+                            adjacent_morale[other.entity_id] = int(ms)
 
                 cascaded_ids = rout_engine.rout_cascade(
                     routing_unit_id=routing_unit.entity_id,

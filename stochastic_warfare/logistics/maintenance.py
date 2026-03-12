@@ -129,6 +129,40 @@ class MaintenanceEngine:
         self._config = config or MaintenanceConfig()
         self._records: dict[str, dict[str, MaintenanceRecord]] = {}  # unit_id -> {eq_id -> record}
         self._sim_time: float = 0.0
+        # Phase 56c: per-subsystem Weibull shapes
+        self._subsystem_shapes: dict[str, float] = {}
+
+    def set_subsystem_shapes(self, shapes: dict[str, float]) -> None:
+        """Set per-subsystem Weibull shape parameters.
+
+        Keys are subsystem categories (e.g. ``"engine"``, ``"transmission"``,
+        ``"electronics"``).  Equipment IDs are categorized by prefix.
+        """
+        self._subsystem_shapes = dict(shapes)
+
+    def _get_subsystem_shape(self, eq_id: str) -> float:
+        """Return Weibull shape k for an equipment ID based on prefix."""
+        if not self._subsystem_shapes:
+            return self._config.weibull_shape_k
+        eq_lower = eq_id.lower()
+        _PREFIX_MAP = {
+            "engine_": "engine",
+            "trans_": "transmission",
+            "elec_": "electronics",
+            "radar_": "electronics",
+            "radio_": "electronics",
+            "optic_": "optics",
+            "track_": "drivetrain",
+            "wheel_": "drivetrain",
+            "turret_": "turret",
+            "weapon_": "weapon",
+        }
+        for prefix, category in _PREFIX_MAP.items():
+            if eq_lower.startswith(prefix):
+                return self._subsystem_shapes.get(
+                    category, self._config.weibull_shape_k,
+                )
+        return self._config.weibull_shape_k
 
     def register_equipment(
         self,
@@ -191,7 +225,7 @@ class MaintenanceEngine:
 
                 # Breakdown check: exponential or Weibull
                 if mtbf > 0:
-                    k = self._config.weibull_shape_k
+                    k = self._get_subsystem_shape(eq_id)
                     if self._config.use_weibull and k != 1.0:
                         # Weibull hazard: h(t) = (k/η)(t/η)^(k-1)
                         # P(fail in dt) = 1 - exp(-h(t) * dt)

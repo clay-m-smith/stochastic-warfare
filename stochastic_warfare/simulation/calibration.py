@@ -119,6 +119,13 @@ class CalibrationSchema(BaseModel):
     rout_cascade_base_chance: float | None = None
     rout_cascade_shaken_susceptibility: float | None = None
 
+    # -- Gas casualty (Phase 56f) ------------------------------------------
+    gas_casualty_floor: float = 0.1
+    gas_protection_scaling: float = 0.8
+
+    # -- Weibull per-subsystem (Phase 56c) ---------------------------------
+    subsystem_weibull_shapes: dict[str, float] = {}
+
     # -- Collections ------------------------------------------------------
     weapon_assignments: dict[str, str] = {}
     victory_weights: dict[str, float] | None = None

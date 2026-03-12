@@ -86,6 +86,12 @@ WW2_ERA_CONFIG = EraConfig(
         "PASSIVE_SONAR",
         "ACTIVE_SONAR",
     },
+    physics_overrides={
+        "treatment_hours_minor": 3.0,
+        "treatment_hours_serious": 12.0,
+        "treatment_hours_critical": 36.0,
+        "repair_time_hours": 6.0,
+    },
 )
 
 WW1_ERA_CONFIG = EraConfig(
@@ -102,6 +108,10 @@ WW1_ERA_CONFIG = EraConfig(
     physics_overrides={
         "c2_delay_multiplier": 5.0,
         "cbrn_nuclear_enabled": False,
+        "treatment_hours_minor": 4.0,
+        "treatment_hours_serious": 24.0,
+        "treatment_hours_critical": 72.0,
+        "repair_time_hours": 8.0,
     },
 )
 
@@ -120,6 +130,9 @@ NAPOLEONIC_ERA_CONFIG = EraConfig(
     physics_overrides={
         "c2_delay_multiplier": 8.0,
         "cbrn_nuclear_enabled": False,
+        "treatment_hours_minor": 8.0,
+        "treatment_hours_serious": 48.0,
+        "treatment_hours_critical": 168.0,
     },
 )
 
@@ -138,6 +151,9 @@ ANCIENT_MEDIEVAL_ERA_CONFIG = EraConfig(
     physics_overrides={
         "c2_delay_multiplier": 12.0,
         "cbrn_nuclear_enabled": False,
+        "treatment_hours_minor": 24.0,
+        "treatment_hours_serious": 168.0,
+        "treatment_hours_critical": 336.0,
     },
 )
 

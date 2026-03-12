@@ -379,19 +379,33 @@ class CampaignManager:
     def _update_supply_network(self, ctx: Any, dt: float) -> None:
         """Update the supply network — transport and routing.
 
-        Phase 51d: queries active blockades via DisruptionEngine for
-        sea-zone interdiction effects.
+        Phase 51d/56g: queries active blockades via DisruptionEngine for
+        sea-zone interdiction and degrades SEA transport routes.
         """
         disruption = getattr(ctx, "disruption_engine", None)
+        supply_net = getattr(ctx, "supply_network_engine", None)
         if disruption is not None:
             for blockade in disruption.active_blockades():
+                max_eff = 0.0
                 for zone_id in blockade.sea_zone_ids:
                     eff = disruption.check_blockade(zone_id)
+                    max_eff = max(max_eff, eff)
                     if eff > 0:
                         logger.debug(
                             "Blockade %s zone %s eff=%.2f",
                             blockade.blockade_id, zone_id, eff,
                         )
+                # Phase 56g: degrade SEA transport routes by blockade effectiveness
+                if max_eff > 0 and supply_net is not None:
+                    from stochastic_warfare.logistics.supply_network import TransportMode
+                    for _rid in list(supply_net._routes):
+                        _route = supply_net._routes[_rid]
+                        if _route.transport_mode == TransportMode.SEA:
+                            _penalty = max(0.01, 1.0 - max_eff)
+                            supply_net.update_route_condition(
+                                _rid, _route.condition * _penalty,
+                            )
+                    logger.debug("Blockade eff=%.2f degraded SEA routes", max_eff)
 
     def _consume_idle_supplies(self, ctx: Any, dt: float) -> None:
         """Consume supplies at idle/march rate during strategic ticks."""
@@ -418,8 +432,26 @@ class CampaignManager:
 
     def _run_maintenance(self, ctx: Any, dt: float) -> None:
         """Run maintenance/breakdown checks during strategic ticks."""
-        # Thin delegation to maintenance engine
-        pass
+        maint = getattr(ctx, "maintenance_engine", None)
+        if maint is None:
+            return
+        dt_hours = dt / 3600.0
+        temp_c = 20.0
+        try:
+            if getattr(ctx, "weather_engine", None) is not None:
+                temp_c = ctx.weather_engine.current.temperature
+        except Exception:
+            pass
+        try:
+            maint.update(
+                dt_hours=dt_hours, temperature_c=temp_c,
+                timestamp=ctx.clock.current_time,
+            )
+            maint.complete_repairs(
+                dt_hours=dt_hours, timestamp=ctx.clock.current_time,
+            )
+        except Exception:
+            logger.debug("Maintenance update failed", exc_info=True)
 
     # ── Engagement detection ────────────────────────────────────────
 

@@ -69,6 +69,7 @@ Rolling record of implementation decisions, changes, and lessons learned across 
 | 53 | C2 & AI Completeness | **Complete** | [phase-53.md](phase-53.md) |
 | 54 | Era-Specific & Domain Sub-Engine Wiring | **Complete** | [phase-54.md](phase-54.md) |
 | 55 | Resolution & Scenario Migration | **Complete** | [phase-55.md](phase-55.md) |
+| 56 | Performance & Logistics | **Complete** | [phase-56.md](phase-56.md) |
 
 ## Post-MVP Refinement Index
 
@@ -110,7 +111,7 @@ Known limitations and deferred improvements logged during implementation. Review
 | 6 | Captured supply efficiency flat 50% (no compatibility check) | [phase-6.md — Known Limitations](phase-6.md#known-limitations) |
 | 6 | No local water procurement (always from rear depots) | [phase-6.md — Known Limitations](phase-6.md#known-limitations) |
 | 6 | No ammunition production (scenario-defined depots only) | [phase-6.md — Known Limitations](phase-6.md#known-limitations) |
-| 6 | VLS non-reloadable-at-sea enforcement deferred to naval combat integration | [phase-6.md — Known Limitations](phase-6.md#known-limitations) |
+| 6 | ~~VLS non-reloadable-at-sea enforcement deferred to naval combat integration~~ *(resolved Phase 56d — exhaustion enforced, port reload deferred)* | [phase-6.md — Known Limitations](phase-6.md#known-limitations) |
 | 7 | ~~73 Easting exchange_ratio = inf (detection asymmetry prevents blue losses)~~ *(resolved Phase 30 — calibration tuning: visibility 800m, red engagement 1500m, thermal_contrast 1.5)* | [phase-7.md — Known Limitations](phase-7.md#known-limitations-post-mvp-refinements) |
 | 7 | ~~No fire rate limiting (units fire once per tick regardless of ROF)~~ *(resolved Phase 11a)* | [phase-7.md — Known Limitations](phase-7.md#known-limitations-post-mvp-refinements) |
 | 7 | ~~Uniform target_size_modifier (applies to both sides equally)~~ *(resolved Phase 11a)* | [phase-7.md — Known Limitations](phase-7.md#known-limitations-post-mvp-refinements) |
@@ -233,8 +234,8 @@ Known limitations and deferred improvements logged during implementation. Review
 | 48 | ~~`victory_weights` consumed by engine.py but no scenario uses it — composite victory scoring untested~~ *(resolved Phase 49c — exercised in test)* | [phase-48.md — Postmortem](phase-48.md#postmortem) |
 | 48 | ~~4 SEAD/IADS/Escalation params unresolved~~ — ~~`sead_effectiveness`~~ *(resolved Phase 53e — wired into apply_sead_damage)*, ~~`iads_degradation_rate`~~ *(resolved Phase 53e — wired into IadsConfig)*, ~~`sead_arm_effectiveness`~~ *(resolved Phase 55c-3 — ARM vs non-radar differentiation in iads.py)*, ~~`drone_provocation_prob`~~ *(resolved Phase 55c-4 — escalation trigger in engine.py)* | [phase-48.md — Postmortem](phase-48.md#postmortem) |
 | 48 | ~~Resolution switching causes long-range battles to resolve via time_expired instead of combat~~ *(resolved Phase 55a — closing range guard + OPERATIONAL engagement detection)* | [phase-48.md — Postmortem](phase-48.md#postmortem) |
-| 51 | Naval posture detection modifiers not implemented (ANCHORED cross-section, TRANSIT reduced emissions, BATTLE_STATIONS active sensors) | [phase-51.md — Known Limitations](phase-51.md#known-limitations) |
-| 51 | Blockade throughput reduction not integrated into supply_network.py route costs | [phase-51.md — Known Limitations](phase-51.md#known-limitations) |
+| 51 | ~~Naval posture detection modifiers not implemented~~ *(resolved Phase 56e — detection range multipliers per posture)* | [phase-51.md — Known Limitations](phase-51.md#known-limitations) |
+| 51 | ~~Blockade throughput reduction not integrated into supply_network.py route costs~~ *(resolved Phase 56g — SEA route condition degradation)* | [phase-51.md — Known Limitations](phase-51.md#known-limitations) |
 | 51 | No scenarios exercise VLS magazine_capacity or mine encounters end-to-end | [phase-51.md — Known Limitations](phase-51.md#known-limitations) |
 | 48 | ~~Calibration audit test lists `advance_speed` in `_EXTERNAL_KEYS` but it's not consumed — false pass~~ *(resolved Phase 49b — schema-based validation)* | [phase-48.md — Postmortem](phase-48.md#postmortem) |
 | 48 | ~~`calibration_overrides` is free-form `dict[str, Any]` — no schema validation, mistyped keys pass silently~~ *(resolved Phase 49a — typed CalibrationSchema pydantic model)* | [phase-48.md — Postmortem](phase-48.md#postmortem) |
@@ -242,7 +243,7 @@ Known limitations and deferred improvements logged during implementation. Review
 | 53 | ~~`drone_provocation_prob` in CalibrationSchema but never consumed by any engine~~ *(resolved Phase 55c-4 — escalation trigger in engine.py)* | [phase-53.md — Postmortem](phase-53.md#postmortem) |
 | 54 | ~~GasWarfareEngine instantiated in scenario.py but zero call sites in battle/engine/campaign~~ *(resolved Phase 55c-1 — MOPP query in battle.py WW1 barrage path)* | [phase-54.md — Postmortem](phase-54.md#postmortem) |
 | 54 | ~~`seeker_fov_deg` dead YAML field~~ *(resolved Phase 55c-2 — FOV cone check in battle.py guided munition path)* | [phase-54.md — Postmortem](phase-54.md#postmortem) |
-| 55 | Gas casualty modifier has hardcoded floor (0.1) and scaling (0.8) — should be CalibrationSchema fields | [phase-55.md — Postmortem](phase-55.md#postmortem) |
+| 55 | ~~Gas casualty modifier has hardcoded floor (0.1) and scaling (0.8)~~ *(resolved Phase 56f — CalibrationSchema fields)* | [phase-55.md — Postmortem](phase-55.md#postmortem) |
 
 ## Conventions
 

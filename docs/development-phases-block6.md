@@ -12,7 +12,7 @@ This block wires every orphaned engine, hardens every schema, exercises every ca
 
 ---
 
-## Phase 49: Calibration Schema Hardening
+## Phase 49: Calibration Schema Hardening -- COMPLETE
 
 **Goal**: Replace the free-form `calibration_overrides: dict[str, Any]` with a typed pydantic `CalibrationSchema` validated at parse time. Clean up dead calibration data. Exercise all untested calibration paths in test scenarios.
 
@@ -90,7 +90,7 @@ Create test scenarios that exercise every calibration parameter that currently h
 
 ---
 
-## Phase 50: Combat Fidelity Polish
+## Phase 50: Combat Fidelity Polish -- COMPLETE
 
 **Goal**: Wire posture → movement speed, air posture, continuous concealment, training level data, WW1 barrage penalty fix, configurable target value weights, and melee weapon range verification.
 
@@ -297,7 +297,7 @@ Wire mine engagements and blockade mechanics.
 
 ---
 
-## Phase 52: Environmental Continuity
+## Phase 52: Environmental Continuity -- COMPLETE
 
 **Goal**: Replace binary environmental gates with continuous functions. Night gradation, weather → ballistics, terrain-based comms LOS, space/EW SIGINT fusion.
 
@@ -390,7 +390,7 @@ Fuse space-based SIGINT detections with ground-based EW SIGINT into unified targ
 
 ---
 
-## Phase 53: C2 & AI Completeness
+## Phase 53: C2 & AI Completeness -- COMPLETE
 
 **Goal**: Wire FogOfWarManager (critical), PlanningProcessEngine, OrderPropagationEngine, StratagemEngine, ATOPlanningEngine. Compute C2 effectiveness from comms state. Wire school_id auto-assignment and SEAD/IADS parameters. Wire escalation sub-engines.
 
@@ -700,93 +700,48 @@ Expand ROE coverage, fix data gaps, replace proxy units.
 
 ---
 
-## Phase 56: Performance & Logistics
+## Phase 56: Performance & Logistics — COMPLETE
 
-**Goal**: Rally spatial indexing, maintenance → readiness wiring, per-era medical/engineering data, Weibull per-subsystem, VLS reload enforcement.
+**Goal**: Rally spatial indexing, maintenance → readiness wiring, per-era medical/engineering data, Weibull per-subsystem, VLS exhaustion enforcement, naval posture detection, gas casualty calibration, blockade throughput.
 
-**Dependencies**: Phase 51 (naval engines for VLS enforcement).
+**Status**: **COMPLETE** — 39 new tests. 8 deficits resolved.
 
-### 56a: Rally Spatial Index
+### 56a: Rally STRtree Spatial Index — COMPLETE
 
-Replace O(n^2) rally cascade with STRtree spatial query.
+- **`battle.py`**: Replaced O(n^2) rally + rout cascade with STRtree spatial queries. Per-side trees built once at start of `_execute_morale`. Also fixed indentation bug that only checked last unit's distance.
 
-- **`stochastic_warfare/simulation/battle.py`** (modified) -- In rally mechanic:
-  - Build STRtree from friendly unit positions at start of rally phase
-  - Query within `rally_radius` instead of iterating all units
-  - Same results, O(n log n) instead of O(n^2)
+### 56b: Maintenance → Readiness Wiring — COMPLETE
 
-**Tests** (~6):
-- Rally with STRtree produces same results as brute force
-- Performance: 100 units rally in <1ms (vs ~10ms brute force)
-- Edge case: no friendly units within radius → no rally
+- **`engine.py`**: `complete_repairs()` call + readiness=0 → DISABLED transition.
+- **`campaign.py`**: Filled `_run_maintenance` stub with actual delegation.
+- **`battle.py`**: Readiness-based movement speed penalty.
 
-**Resolves deficit**: D5.
+### 56c: Medical/Engineering Per-Era + Weibull Per-Subsystem — COMPLETE
 
-### 56b: Maintenance → Readiness Wiring
+- **`era.py`**: `physics_overrides` for treatment/repair times per era (WW2/WW1/Napoleonic/Ancient).
+- **`scenario.py`**: Reads era overrides when constructing MedicalConfig/EngineeringConfig.
+- **`maintenance.py`**: Per-subsystem Weibull shapes via prefix categorization.
+- **`calibration.py`**: `subsystem_weibull_shapes: dict[str, float]` field.
 
-Wire maintenance failure events to unit readiness state.
+### 56d: VLS Exhaustion Enforcement — COMPLETE
 
-- **`stochastic_warfare/simulation/engine.py`** (modified) -- Subscribe to `MaintenanceFailureEvent`:
-  - On failure: set unit to MAINTENANCE state (can't engage, 0.3x movement)
-  - After `repair_time_s` (from Weibull failure model): restore to OPERATIONAL
-- **`stochastic_warfare/simulation/battle.py`** (modified) -- Check unit readiness before engagement: MAINTENANCE state units cannot initiate engagements.
+- **`battle.py`**: Exhaustion logging + `_vls_launches` checkpoint persistence. Port reload deferred.
 
-**Tests** (~6):
-- Maintenance failure → unit transitions to MAINTENANCE state
-- MAINTENANCE unit cannot engage
-- After repair time → unit returns to OPERATIONAL
-- No maintenance engine → all units OPERATIONAL (backward compat)
+### 56e: Naval Posture Detection Modifiers — COMPLETE
 
-**Resolves deficit**: D10.
+- **`battle.py`**: `_NAVAL_POSTURE_DETECT_MULT` table (ANCHORED=1.2x, UNDERWAY=1.0x, TRANSIT=0.85x, BATTLE_STATIONS=1.3x).
 
-### 56c: Medical/Engineering Per-Era Data and Weibull Per-Subsystem
+### 56f: Gas Casualty Calibration — COMPLETE
 
-Replace hardcoded recovery times with era-appropriate values. Replace global Weibull shape with per-subsystem shapes.
+- **`calibration.py`**: `gas_casualty_floor`, `gas_protection_scaling` fields.
+- **`battle.py`**: Replaced hardcoded values with `cal.get()` lookups.
 
-- **`data/eras/*/config.yaml`** (modified) -- Add era-specific medical/engineering times:
-  - Modern: CASEVAC 900s (15min), repair 1800s (30min)
-  - WW2: stretcher 2700s (45min), repair 3600s (1hr)
-  - WW1: trench evacuation 7200s (2hr), repair 7200s
-  - Napoleonic: field surgery 14400s (4hr), repair N/A
-  - Ancient: camp treatment 86400s (1 day), repair N/A
-- **`stochastic_warfare/logistics/maintenance.py`** (modified) -- Accept per-subsystem Weibull shape parameters from unit type YAML:
-  - Engine: k=1.2 (infant mortality)
-  - Transmission: k=2.0 (wear-out)
-  - Electronics: k=1.0 (random)
-  - Default: k=1.5 (current value)
-- **Unit type YAML** (modified) -- Add `subsystem_reliability` dict to unit definitions that need per-subsystem Weibull.
+### 56g: Blockade Throughput Reduction — COMPLETE
 
-**Tests** (~8):
-- Modern CASEVAC time = 900s
-- WW1 trench evacuation time = 7200s
-- Engine with k=1.2 has different failure distribution than k=2.0
-- Default k=1.5 matches current behavior
+- **`campaign.py`**: Blockade effectiveness degrades SEA transport route conditions.
 
-**Resolves deficits**: D11, D13.
-
-### 56d: VLS Reload Enforcement
-
-Naval units with VLS launchers can't reload at sea.
-
-- **`stochastic_warfare/entities/unit_classes/naval.py`** (modified) -- Add `vls_cells_remaining: int` field, initialized from weapon definition `magazine_size`.
-- **`stochastic_warfare/simulation/battle.py`** (modified) -- Before VLS missile engagement: check `vls_cells_remaining > 0`. Decrement on fire. Block engagement when exhausted.
-- **Port visit mechanic**: VLS reloads when unit is ANCHORED in friendly port zone for `vls_reload_time_s`.
-
-**Tests** (~6):
-- VLS engagement decrements cell count
-- Exhausted VLS blocks missile engagement
-- Port visit reloads VLS
-- Non-VLS naval weapons unaffected
-
-**Resolves deficit**: Phase 6 VLS.
-
-### Exit Criteria
-- Rally uses STRtree spatial index (O(n log n))
-- Maintenance failures affect unit readiness
-- Medical/engineering times era-appropriate
-- Weibull shape per-subsystem
-- VLS reload enforcement operational
-- ~26 new tests
+### Deficits Resolved
+- D5 (O(n^2) rally), D10 (maintenance→readiness), D11 (medical/eng sparse), D13 (Weibull global), Phase 6 VLS, Phase 51 naval posture detection, Phase 55 gas casualty hardcoded, Phase 51 blockade throughput.
 
 ---
 
@@ -871,7 +826,7 @@ Synchronize all documentation.
 | E5 | `roe_level` sparse coverage | Phase 49c + 55c |
 | E6 | Morale config weights unused | Phase 49c |
 | E7 | `victory_weights` untested | Phase 49c |
-| ~~E8~~ | ~~4 SEAD/IADS params unwired~~ | ~~Phase 53e~~ (**partial** — sead_effectiveness + iads_degradation_rate wired; sead_arm_effectiveness unconsumed, drone_provocation_prob unconsumed) |
+| E8 | 4 SEAD/IADS params unwired | Phase 53e (sead_effectiveness + iads_degradation_rate) + Phase 55c (sead_arm_effectiveness + drone_provocation_prob) — **fully resolved** |
 | E9 | Resolution switching time_expired | Phase 55a |
 | E10 | Calibration audit false pass | Phase 49b |
 
@@ -901,8 +856,8 @@ Synchronize all documentation.
 | Deficit | Resolved In |
 |---------|-------------|
 | Messenger intercept risk | Phase 53 (low priority) |
-| ~~Blockade effectiveness~~ | Phase 51d (wired, throughput reduction deferred to Phase 56) |
-| VLS reload enforcement | Phase 56d |
+| ~~Blockade effectiveness~~ | Phase 51d (wired), ~~throughput reduction~~ Phase 56g |
+| ~~VLS reload enforcement~~ | Phase 56d (exhaustion enforced, port reload deferred) |
 | Stratagems not proactively planned | Phase 53c (opportunity-evaluated, not COA-planned) |
 | ~~Space SIGINT + EW SIGINT fusion~~ | Phase 52d (**resolved**) |
 | ~~school_id dead data~~ | Phase 53c (**resolved**) |
@@ -926,11 +881,11 @@ Synchronize all documentation.
 | ~~Dead YAML fields (10)~~ | Phase 54f (**resolved** — traverse_deg/elevation/terminal_maneuver wired, data-only fields documented) |
 | ~~Dead context fields (3)~~ | Phase 54f (**resolved** — seasons_engine/obscurants_engine annotated TODO, conditions_engine kept) |
 | ~~Fragile private API access~~ | Phase 54e (**resolved** — get_gps_cep() public convenience method) |
-| Naval posture detection modifiers | Phase 56 |
-| sead_arm_effectiveness unconsumed | Phase 55 |
-| drone_provocation_prob unconsumed | Phase 55 |
-| GasWarfareEngine unwired (instantiated, zero call sites) | Phase 55 |
-| seeker_fov_deg dead YAML field | Phase 55 |
+| ~~Naval posture detection modifiers~~ | Phase 56e |
+| ~~sead_arm_effectiveness unconsumed~~ | Phase 55c-3 (**resolved**) |
+| ~~drone_provocation_prob unconsumed~~ | Phase 55c-4 (**resolved**) |
+| ~~GasWarfareEngine unwired~~ | Phase 55c-1 (**resolved**) |
+| ~~seeker_fov_deg dead YAML field~~ | Phase 55c-2 (**resolved**) |
 
 ---
 
@@ -944,9 +899,9 @@ Synchronize all documentation.
 | 52 | Environmental Continuity | 32 | 8,162 | **Complete** |
 | 53 | C2 & AI Completeness | 44 | 8,206 | **Complete** |
 | 54 | Era & Domain Sub-Engine Wiring | 53 | 8,259 | **Complete** |
-| 55 | Resolution & Scenario Migration | ~26 | ~8,285 | Planned |
-| 56 | Performance & Logistics | ~26 | ~8,311 | Planned |
-| 57 | Full Validation & Regression | ~25 | ~8,336 | Planned |
+| 55 | Resolution & Scenario Migration | 43 | 8,302 | **Complete** |
+| 56 | Performance & Logistics | 39 | 8,341 | **Complete** |
+| 57 | Full Validation & Regression | ~25 | ~8,366 | Planned |
 
-**Block 6 total**: ~330 new tests across 9 phases (257 delivered, ~77 remaining).
+**Block 6 total**: ~364 new tests across 9 phases (339 delivered, ~25 remaining).
 **Target cumulative**: ~8,600+ Python tests + 272 frontend = ~8,870+ total.

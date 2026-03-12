@@ -602,7 +602,7 @@ class SimulationEngine:
                 except Exception:
                     logger.debug("Visual signal update failed", exc_info=True)
 
-        # Phase 44c: Maintenance engine — equipment breakdowns
+        # Phase 44c / 56b: Maintenance engine — equipment breakdowns + readiness
         if ctx.maintenance_engine is not None:
             try:
                 dt_hours = dt / 3600.0
@@ -616,6 +616,25 @@ class SimulationEngine:
                     dt_hours=dt_hours, temperature_c=temp_c,
                     timestamp=ctx.clock.current_time,
                 )
+                # Phase 56b: complete in-progress repairs
+                ctx.maintenance_engine.complete_repairs(
+                    dt_hours=dt_hours, timestamp=ctx.clock.current_time,
+                )
+                # Phase 56b: readiness = 0 → DISABLED
+                for _su_list in getattr(ctx, "units_by_side", {}).values():
+                    for _u in _su_list:
+                        if _u.status != UnitStatus.ACTIVE:
+                            continue
+                        try:
+                            _rd = ctx.maintenance_engine.get_unit_readiness(
+                                _u.entity_id,
+                            )
+                            if _rd <= 0.0:
+                                object.__setattr__(
+                                    _u, "status", UnitStatus.DISABLED,
+                                )
+                        except (KeyError, Exception):
+                            pass
             except Exception:
                 logger.error("Maintenance update failed", exc_info=True)
                 if self._strict_mode:
