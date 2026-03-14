@@ -167,10 +167,14 @@ class DamageEngine:
         event_bus: EventBus,
         rng: np.random.Generator,
         config: DamageConfig | None = None,
+        posture_blast_overrides: dict[str, float] | None = None,
+        posture_frag_overrides: dict[str, float] | None = None,
     ) -> None:
         self._event_bus = event_bus
         self._rng = rng
         self._config = config or DamageConfig()
+        self._posture_blast = posture_blast_overrides or _POSTURE_BLAST_PROTECT
+        self._posture_frag = posture_frag_overrides or _POSTURE_FRAG_PROTECT
 
     def compute_penetration(
         self,
@@ -344,7 +348,7 @@ class DamageEngine:
         # Blast damage
         if ammo.blast_radius_m > 0:
             cfg = self._config
-            protection = _POSTURE_BLAST_PROTECT.get(posture, 1.0)
+            protection = self._posture_blast.get(posture, 1.0)
 
             if cfg.use_overpressure_blast:
                 # Determine charge weight
@@ -389,7 +393,7 @@ class DamageEngine:
         # Fragmentation: 1/r^2 falloff (physically correct, unchanged)
         if ammo.fragmentation_radius_m > 0 and distance_m < ammo.fragmentation_radius_m:
             frag_factor = 1.0 - (distance_m / ammo.fragmentation_radius_m) ** 2
-            frag_protection = _POSTURE_FRAG_PROTECT.get(posture, 1.0)
+            frag_protection = self._posture_frag.get(posture, 1.0)
             frag_damage = frag_factor * frag_protection
             damage_fraction = max(damage_fraction, frag_damage)
 
@@ -476,7 +480,7 @@ class DamageEngine:
             # provides the only protection.
             result.damage_type = DamageType.KINETIC
             result.penetrated = True
-            posture_protect = _POSTURE_BLAST_PROTECT.get(posture, 1.0)
+            posture_protect = self._posture_blast.get(posture, 1.0)
             # Base lethality from kinetic energy (caliber-scaled)
             base_damage = min(1.0, 0.3 + 0.07 * ammo.penetration_mm_rha)
             result.damage_fraction = base_damage * posture_protect

@@ -82,6 +82,7 @@ class CalibrationSchema(BaseModel):
     wave_interval_s: float = 300.0
     target_selection_mode: str = "threat_scored"
     roe_level: str | None = None
+    enable_air_routing: bool = False
 
     # -- EW / SEAD --------------------------------------------------------
     jammer_coverage_mult: float = 1.0
@@ -125,6 +126,10 @@ class CalibrationSchema(BaseModel):
 
     # -- Weibull per-subsystem (Phase 56c) ---------------------------------
     subsystem_weibull_shapes: dict[str, float] = {}
+
+    # -- Posture protection (Phase 58d) ------------------------------------
+    posture_blast_protection: dict[str, float] | None = None
+    posture_frag_protection: dict[str, float] | None = None
 
     # -- Collections ------------------------------------------------------
     weapon_assignments: dict[str, str] = {}

@@ -10,10 +10,11 @@ from __future__ import annotations
 
 import enum
 from dataclasses import dataclass, field
+from typing import ClassVar
 
 from stochastic_warfare.core.types import Domain, Position, Side
 from stochastic_warfare.entities.equipment import EquipmentItem
-from stochastic_warfare.entities.personnel import CrewMember
+from stochastic_warfare.entities.personnel import CrewMember, InjuryState
 
 
 class UnitStatus(enum.IntEnum):
@@ -108,3 +109,49 @@ class Unit(Entity):
             e = EquipmentItem(equipment_id="", name="", category=0)
             e.set_state(es)
             self.equipment.append(e)
+
+    # -- Phase 58c: damage detail application --------------------------
+
+    _SEVERITY_MAP: ClassVar[dict[str, InjuryState]] = {
+        "minor": InjuryState.MINOR_WOUND,
+        "serious": InjuryState.SERIOUS_WOUND,
+        "critical": InjuryState.CRITICAL,
+        "kia": InjuryState.KIA,
+    }
+
+    def apply_casualties(self, casualties: list) -> int:
+        """Mark personnel as wounded/KIA based on DamageResult.casualties.
+
+        Parameters
+        ----------
+        casualties:
+            List of CasualtyResult (member_index, severity, cause).
+
+        Returns count of personnel affected.
+        """
+        affected = 0
+        for cas in casualties:
+            idx = cas.member_index
+            if idx < len(self.personnel) and self.personnel[idx].is_effective():
+                injury = self._SEVERITY_MAP.get(cas.severity, InjuryState.SERIOUS_WOUND)
+                self.personnel[idx].injury = injury
+                affected += 1
+        return affected
+
+    def degrade_equipment(self, system_ids: list[str]) -> int:
+        """Disable equipment by ID based on DamageResult.systems_damaged.
+
+        Parameters
+        ----------
+        system_ids:
+            List of equipment_id strings to mark non-operational.
+
+        Returns count of equipment items degraded.
+        """
+        affected = 0
+        id_set = set(system_ids)
+        for equip in self.equipment:
+            if equip.equipment_id in id_set and equip.operational:
+                equip.operational = False
+                affected += 1
+        return affected

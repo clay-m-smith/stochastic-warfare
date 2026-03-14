@@ -375,6 +375,11 @@ class SimulationContext:
     # ATO Planning (Phase 53d)
     ato_engine: Any = None
 
+    # Air Combat Engines (Phase 58b)
+    air_combat_engine: Any = None
+    air_ground_engine: Any = None
+    air_defense_engine: Any = None
+
     # Directed Energy (Phase 28.5)
     dew_engine: Any = None
 
@@ -1015,7 +1020,12 @@ class ScenarioLoader:
 
         bal = BallisticsEngine(combat_rng)
         hit_engine = HitProbabilityEngine(bal, combat_rng)
-        dmg_engine = DamageEngine(bus, combat_rng)
+        cal = config.calibration_overrides
+        dmg_engine = DamageEngine(
+            bus, combat_rng,
+            posture_blast_overrides=cal.get("posture_blast_protection") if cal else None,
+            posture_frag_overrides=cal.get("posture_frag_protection") if cal else None,
+        )
         sup_engine = SuppressionEngine(bus, combat_rng)
         frat_engine = FratricideEngine(bus, combat_rng)
         engagement_engine = EngagementEngine(
@@ -1039,6 +1049,19 @@ class ScenarioLoader:
             indirect_fire_engine, bus, combat_rng,
         )
         mine_warfare_engine = MineWarfareEngine(dmg_engine, bus, combat_rng)
+
+        # Air combat engines (Phase 58b) — only when enable_air_routing is set
+        air_combat_engine = None
+        air_ground_engine = None
+        air_defense_engine = None
+        if cal and cal.get("enable_air_routing", False):
+            from stochastic_warfare.combat.air_combat import AirCombatEngine
+            from stochastic_warfare.combat.air_ground import AirGroundEngine
+            from stochastic_warfare.combat.air_defense import AirDefenseEngine
+
+            air_combat_engine = AirCombatEngine(bus, combat_rng)
+            air_ground_engine = AirGroundEngine(bus, combat_rng)
+            air_defense_engine = AirDefenseEngine(bus, combat_rng)
 
         # Disruption engine (Phase 51d — blockade / interdiction)
         from stochastic_warfare.logistics.disruption import DisruptionEngine
@@ -1303,6 +1326,9 @@ class ScenarioLoader:
             "naval_subsurface_engine": naval_subsurface_engine,
             "naval_gunfire_support_engine": naval_gunfire_support_engine,
             "mine_warfare_engine": mine_warfare_engine,
+            "air_combat_engine": air_combat_engine,
+            "air_ground_engine": air_ground_engine,
+            "air_defense_engine": air_defense_engine,
             "disruption_engine": disruption_engine,
             "obstacle_manager": obstacle_mgr,
             "hydrography_manager": hydro_mgr,

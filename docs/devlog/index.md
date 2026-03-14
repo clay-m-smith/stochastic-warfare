@@ -71,6 +71,8 @@ Rolling record of implementation decisions, changes, and lessons learned across 
 | 55 | Resolution & Scenario Migration | **Complete** | [phase-55.md](phase-55.md) |
 | 56 | Performance & Logistics | **Complete** | [phase-56.md](phase-56.md) |
 | 57 | Full Validation & Regression | **Complete** | [phase-57.md](phase-57.md) |
+| | | | |
+| 58 | Structural Verification & Core Combat Wiring | **Complete** | [phase-58.md](phase-58.md) |
 
 ## Post-MVP Refinement Index
 
@@ -245,6 +247,9 @@ Known limitations and deferred improvements logged during implementation. Review
 | 54 | ~~GasWarfareEngine instantiated in scenario.py but zero call sites in battle/engine/campaign~~ *(resolved Phase 55c-1 — MOPP query in battle.py WW1 barrage path)* | [phase-54.md — Postmortem](phase-54.md#postmortem) |
 | 54 | ~~`seeker_fov_deg` dead YAML field~~ *(resolved Phase 55c-2 — FOV cone check in battle.py guided munition path)* | [phase-54.md — Postmortem](phase-54.md#postmortem) |
 | 55 | ~~Gas casualty modifier has hardcoded floor (0.1) and scaling (0.8)~~ *(resolved Phase 56f — CalibrationSchema fields)* | [phase-55.md — Postmortem](phase-55.md#postmortem) |
+| 58 | `apply_casualties` / `degrade_equipment` unwired — methods exist on Unit but not called from battle.py. Behavioral application deferred to calibration phase that accounts for progressive unit degradation. | [phase-58.md — Known Limitations](phase-58.md#known-limitations--deferred-items) |
+| 58 | Fuel consumption unwired — fuel gate (check) works but fuel depletion (consumption) commented out in battle.py movement loop. Rate needs per-vehicle-type calibration and resolution-aware scaling. | [phase-58.md — Known Limitations](phase-58.md#known-limitations--deferred-items) |
+| 58 | Air routing uses hardcoded Pk values (missile_pk=0.5, weapon_pk=0.4, interceptor_pk=0.4) — should read from weapon definitions when scenarios enable `enable_air_routing: true`. | [phase-58.md — Known Limitations](phase-58.md#known-limitations--deferred-items) |
 
 ## Conventions
 

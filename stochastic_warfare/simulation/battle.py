@@ -446,6 +446,93 @@ def _route_naval_engagement(
     return False, None  # Not a naval-specific weapon, fall through
 
 
+def _route_air_engagement(
+    ctx: Any,
+    attacker: Unit,
+    target: Unit,
+    wpn_inst: Any,
+    best_range: float,
+    dt: float,
+    timestamp: Any,
+    force_ratio_mod: float = 1.0,
+) -> tuple[bool, UnitStatus | None]:
+    """Route air-domain engagement to the appropriate engine.
+
+    Returns ``(handled, status)`` — same pattern as naval routing.
+
+    Priority:
+    - Both AERIAL → air_combat_engine (BVR/WVR)
+    - Attacker AERIAL, target GROUND/NAVAL → air_ground_engine (CAS)
+    - Target AERIAL, attacker non-AERIAL → air_defense_engine (SAM/AAA)
+    """
+    atk_air = attacker.domain == Domain.AERIAL
+    tgt_air = target.domain == Domain.AERIAL
+    wpn_cat = getattr(wpn_inst.definition, "category", "").upper()
+
+    # Air-to-air: route missile engagements through air combat engine
+    if atk_air and tgt_air and wpn_cat == "MISSILE_LAUNCHER":
+        engine = getattr(ctx, "air_combat_engine", None)
+        if engine is None:
+            return False, None
+        missile_pk = min(1.0, 0.5 * force_ratio_mod)
+        pilot_skill = getattr(attacker, "training_level", 0.5)
+        result = engine.resolve_air_engagement(
+            attacker_id=attacker.entity_id,
+            defender_id=target.entity_id,
+            attacker_pos=attacker.position,
+            defender_pos=target.position,
+            missile_pk=missile_pk,
+            pilot_skill=pilot_skill,
+            timestamp=timestamp,
+        )
+        if result.hit:
+            return True, UnitStatus.DESTROYED
+        return True, None
+
+    # Air-to-ground (CAS): route bombs and missiles through air-ground engine
+    if atk_air and not tgt_air and wpn_cat in (
+        "BOMB", "GUIDED_BOMB", "MISSILE_LAUNCHER",
+    ):
+        engine = getattr(ctx, "air_ground_engine", None)
+        if engine is None:
+            return False, None
+        weapon_pk = min(1.0, 0.4 * force_ratio_mod)
+        result = engine.execute_cas(
+            aircraft_id=attacker.entity_id,
+            target_id=target.entity_id,
+            aircraft_pos=attacker.position,
+            target_pos=target.position,
+            weapon_pk=weapon_pk,
+            timestamp=timestamp,
+        )
+        if result.aborted:
+            return True, None
+        if result.hit:
+            return True, UnitStatus.DISABLED
+        return True, None
+
+    # Ground/Naval-to-air (air defense): route SAM/missile weapons
+    if tgt_air and not atk_air and wpn_cat in (
+        "MISSILE_LAUNCHER", "SAM",
+    ):
+        engine = getattr(ctx, "air_defense_engine", None)
+        if engine is None:
+            return False, None
+        interceptor_pk = min(1.0, 0.4 * force_ratio_mod)
+        result = engine.fire_interceptor(
+            ad_id=attacker.entity_id,
+            target_id=target.entity_id,
+            interceptor_pk=interceptor_pk,
+            range_m=best_range,
+            timestamp=timestamp,
+        )
+        if result.hit:
+            return True, UnitStatus.DESTROYED
+        return True, None
+
+    return False, None  # Non-air weapon category, fall through to direct fire
+
+
 def _apply_indirect_fire_result(
     fm_result: Any,
     target: Unit,
@@ -1739,9 +1826,25 @@ class BattleManager:
                 move_dist = min(effective_speed * dt * mopp_speed_factor, dist, max_close)
                 if move_dist <= 0:
                     continue
+
+                # Phase 58e: fuel gate — vehicles with no fuel cannot move
+                _fuel = getattr(u, "fuel_remaining", 1.0)
+                _is_vehicle = getattr(u, "max_speed", 0) > 5.0
+                if _fuel <= 0.0 and _is_vehicle:
+                    continue
+
                 nx = u.position.easting + (dx / dist) * move_dist
                 ny = u.position.northing + (dy / dist) * move_dist
                 object.__setattr__(u, "position", Position(nx, ny, u.position.altitude))
+
+                # Phase 58e: consume fuel proportional to distance (vehicles only)
+                # NOTE: fuel consumption deferred to dedicated logistics tick —
+                # consuming in the movement hot loop causes vehicles to stall
+                # mid-battle before calibration accounts for it.
+                # if _is_vehicle and hasattr(u, "fuel_remaining"):
+                #     _fuel_rate = 0.0001
+                #     _new_fuel = max(0.0, _fuel - move_dist * _fuel_rate)
+                #     object.__setattr__(u, "fuel_remaining", _new_fuel)
 
     # ------------------------------------------------------------------
     # Phase 41a: Terrain combat modifiers
@@ -2469,6 +2572,25 @@ class BattleManager:
                         side_engagements += 1
                         routed_aggregate = True
 
+                # Phase 58b: air domain routing (opt-in via enable_air_routing)
+                if (
+                    not routed_aggregate
+                    and cal.get("enable_air_routing", False)
+                    and (attacker.domain == Domain.AERIAL
+                         or best_target.domain == Domain.AERIAL)
+                    and getattr(ctx, "air_combat_engine", None) is not None
+                ):
+                    handled, air_status = _route_air_engagement(
+                        ctx, attacker, best_target, wpn_inst,
+                        best_range, dt, timestamp,
+                        force_ratio_mod=force_ratio_mod,
+                    )
+                    if handled:
+                        if air_status is not None:
+                            pending_damage.append((best_target, air_status))
+                        side_engagements += 1
+                        routed_aggregate = True
+
                 # Phase 43a: era-aware aggregate model routing
                 # Phase 47: aggregate effectiveness modifier — terrain cover
                 # reduces effective casualties, elevation advantage boosts them,
@@ -2837,6 +2959,25 @@ class BattleManager:
                                 pending_damage.append((best_target, UnitStatus.DESTROYED))
                             elif result.damage_result.damage_fraction >= dis_thresh:
                                 pending_damage.append((best_target, UnitStatus.DISABLED))
+
+                            # Phase 58c: extract damage detail (logged;
+                            # behavioral application deferred to calibration)
+                            _dmg = result.damage_result
+                            if _dmg.casualties:
+                                logger.debug(
+                                    "%d casualties on %s",
+                                    len(_dmg.casualties), best_target.entity_id,
+                                )
+                            if _dmg.systems_damaged:
+                                logger.debug(
+                                    "%d systems_damaged on %s",
+                                    len(_dmg.systems_damaged), best_target.entity_id,
+                                )
+                            if _dmg.fire_started:
+                                logger.debug(
+                                    "Fire started at %s from hit on %s",
+                                    best_target.position, best_target.entity_id,
+                                )
 
         return pending_damage
 

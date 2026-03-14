@@ -48,6 +48,7 @@ class GroundUnit(Unit):
     armor_front: float = 0.0  # mm RHA equivalent
     armor_side: float = 0.0
     armor_type: str = "RHA"
+    fuel_remaining: float = 1.0  # 0.0–1.0 fraction; 1.0 = full tank
 
     def __post_init__(self) -> None:
         self.domain = Domain.GROUND
@@ -63,6 +64,7 @@ class GroundUnit(Unit):
                 "armor_front": self.armor_front,
                 "armor_side": self.armor_side,
                 "armor_type": self.armor_type,
+                "fuel_remaining": self.fuel_remaining,
             }
         )
         return state
@@ -76,3 +78,4 @@ class GroundUnit(Unit):
         self.armor_front = state["armor_front"]
         self.armor_side = state["armor_side"]
         self.armor_type = state.get("armor_type", "RHA")
+        self.fuel_remaining = state.get("fuel_remaining", 1.0)
