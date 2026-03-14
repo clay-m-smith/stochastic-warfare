@@ -1,0 +1,4395 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="High-fidelity stochastic wargame simulator — multi-scale, multi-domain, multi-era">
+      
+      
+        <meta name="author" content="Clay Smith">
+      
+      
+        <link rel="canonical" href="https://clay-m-smith.github.io/stochastic-warfare/devlog/phase-4/">
+      
+      
+        <link rel="prev" href="../phase-3/">
+      
+      
+        <link rel="next" href="../phase-5/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.5">
+    
+    
+      
+        <title>Phase 4 - Combat & Morale - Stochastic Warfare</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="blue-grey" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#phase-4-combat-resolution-morale" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="Stochastic Warfare" class="md-header__button md-logo" aria-label="Stochastic Warfare" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Stochastic Warfare
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Phase 4 - Combat & Morale
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="blue-grey" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="blue-grey" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/clay-m-smith/stochastic-warfare" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    clay-m-smith/stochastic-warfare
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../guide/getting-started/" class="md-tabs__link">
+          
+  
+  
+  Guide
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../concepts/architecture/" class="md-tabs__link">
+          
+  
+  
+  Concepts
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../reference/api/" class="md-tabs__link">
+          
+  
+  
+  Reference
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../brainstorm/" class="md-tabs__link">
+          
+  
+  
+  Architecture (Internal)
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../development-phases/" class="md-tabs__link">
+          
+  
+  
+  Development Phases
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../" class="md-tabs__link">
+          
+  
+  
+  Devlog
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../specs/project-structure/" class="md-tabs__link">
+          
+  
+  
+  Specifications
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="Stochastic Warfare" class="md-nav__button md-logo" aria-label="Stochastic Warfare" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Stochastic Warfare
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/clay-m-smith/stochastic-warfare" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    clay-m-smith/stochastic-warfare
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Guide
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Guide
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guide/getting-started/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting Started
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guide/web-ui/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Web UI
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guide/scenarios/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Scenario Library
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Concepts
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Concepts
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../concepts/architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../concepts/models/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Mathematical Models
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/eras/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Eras
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/units/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Units & Equipment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture (Internal)
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Architecture (Internal)
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../brainstorm/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Core Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../brainstorm-post-mvp/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Post-MVP Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../brainstorm-block2/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 2 Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../brainstorm-block3/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 3 Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../brainstorm-block4/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 4 Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../brainstorm-block5/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 5 Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../brainstorm-block6/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 6 Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../brainstorm-block7/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 7 Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Development Phases
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Development Phases
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development-phases/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MVP (0-10)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development-phases-post-mvp/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Post-MVP (11-24)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development-phases-block2/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 2 (25-30)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development-phases-block3/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 3 (31-36)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development-phases-block4/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 4 (37-39)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development-phases-block5/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 5 (40-48)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development-phases-block6/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 6 (49-57)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development-phases-block7/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 7 (58-67)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Devlog
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Devlog
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-0/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 0 - Scaffolding
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-1/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 1 - Terrain & Environment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-2/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 2 - Entities & Movement
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-3/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 3 - Detection & Intelligence
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 4 - Combat & Morale
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 4 - Combat & Morale
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#summary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Summary
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-was-built" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What Was Built
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="What Was Built">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#step-1-direct-fire-fundamentals-7-modules" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 1: Direct Fire &amp; Fundamentals (7 modules)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-2-indirect-fire-deep-fires-1-module" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 2: Indirect Fire &amp; Deep Fires (1 module)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-3-surface-to-surface-missiles-1-module" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 3: Surface-to-Surface Missiles (1 module)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-4-air-combat-air-ground-2-modules" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 4: Air Combat &amp; Air-Ground (2 modules)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-5-air-defense-missile-defense-2-modules" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 5: Air Defense &amp; Missile Defense (2 modules)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-6-naval-combat-6-modules" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 6: Naval Combat (6 modules)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-7-morale-system-6-modules" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 7: Morale System (6 modules)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-8-support-files-integration-3-files" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 8: Support Files &amp; Integration (3 files)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#yaml-data-files-47-files" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        YAML Data Files (47 files)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#visualization" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Visualization
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#design-decisions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Design Decisions
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#deviations-from-plan" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Deviations from Plan
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#key-physics" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Key Physics
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#issues-fixes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Issues &amp; Fixes
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#known-limitations-post-mvp-refinements" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Known Limitations / Post-MVP Refinements
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#modules-created" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Modules Created
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#file-count-summary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        File Count Summary
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#test-coverage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Test Coverage
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#exit-criteria-verification" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Exit Criteria Verification
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#lessons-learned" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Lessons Learned
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-5/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 5 - C2 Infrastructure
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-6/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 6 - Logistics & Supply
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-7/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 7 - Engagement Validation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-8/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 8 - AI & Planning
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-9/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 9 - Simulation Orchestration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-10/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 10 - Campaign Validation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-11/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 11 - Core Fidelity Fixes
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-12/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 12 - Deep Systems Rework
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-13/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 13 - Performance Optimization
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-14/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 14 - Tooling & Dev Experience
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-15/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 15 - Real-World Terrain
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-16/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 16 - Electronic Warfare
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-17/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 17 - Space & Satellite
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-18/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 18 - CBRN Effects
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-19/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 19 - Doctrinal AI Schools
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-20/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 20 - WW2 Era
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-21/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 21 - WW1 Era
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-22/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 22 - Napoleonic Era
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-23/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 23 - Ancient & Medieval Era
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-24/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 24 - Unconventional Warfare
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-25/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 25 - Engine Wiring
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-26/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 26 - Core Polish
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-27/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 27 - Combat Completeness
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-28/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 28 - Modern Data Package
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-28.5/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 28.5 - Directed Energy
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-29/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 29 - Historical Data Expansion
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-30/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 30 - Scenario Library
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-31/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 31 - Documentation Site
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-32/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 32 - API & Service Foundation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-33/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 33 - Frontend Foundation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-34/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 34 - Run Results & Analysis
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-35/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 35 - Tactical Map
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-36/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 36 - Scenario Tweaker & Polish
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-37/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 37 - Integration Fixes & E2E
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-38/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 38 - Map & Chart Enhancements
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-39/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 39 - Quality & Packaging
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-40/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 40 - Battle Loop Foundation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-41/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 41 - Combat Depth
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-42/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 42 - Tactical Behavior
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-43/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 43 - Domain-Specific Resolution
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-44/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 44 - Environmental & Subsystem Integration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-45/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 45 - Mathematical Model Audit & Hardening
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-46/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 46 - Scenario Data Cleanup & Expansion
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-47/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 47 - Full Recalibration & Validation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-48/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 48 - Block 5 Deficit Resolution
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-49/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 49 - Calibration Schema Hardening
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-50/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 50 - Combat Fidelity Polish
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-51/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 51 - Naval Combat Completeness
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-52/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 52 - Environmental Continuity
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-53/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 53 - C2 & AI Completeness
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-54/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 54 - Era-Specific & Domain Sub-Engine Wiring
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-55/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 55 - Resolution & Scenario Migration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-56/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 56 - Performance & Logistics
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-57/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 57 - Full Validation & Regression
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-58/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 58 - Structural Verification & Core Combat Wiring
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_8" >
+        
+          
+          <label class="md-nav__link" for="__nav_8" id="__nav_8_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Specifications
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_8">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Specifications
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../specs/project-structure/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Project Structure
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../skills-and-hooks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Skills & Hooks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#summary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Summary
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-was-built" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What Was Built
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="What Was Built">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#step-1-direct-fire-fundamentals-7-modules" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 1: Direct Fire &amp; Fundamentals (7 modules)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-2-indirect-fire-deep-fires-1-module" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 2: Indirect Fire &amp; Deep Fires (1 module)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-3-surface-to-surface-missiles-1-module" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 3: Surface-to-Surface Missiles (1 module)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-4-air-combat-air-ground-2-modules" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 4: Air Combat &amp; Air-Ground (2 modules)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-5-air-defense-missile-defense-2-modules" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 5: Air Defense &amp; Missile Defense (2 modules)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-6-naval-combat-6-modules" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 6: Naval Combat (6 modules)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-7-morale-system-6-modules" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 7: Morale System (6 modules)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-8-support-files-integration-3-files" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 8: Support Files &amp; Integration (3 files)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#yaml-data-files-47-files" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        YAML Data Files (47 files)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#visualization" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Visualization
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#design-decisions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Design Decisions
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#deviations-from-plan" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Deviations from Plan
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#key-physics" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Key Physics
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#issues-fixes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Issues &amp; Fixes
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#known-limitations-post-mvp-refinements" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Known Limitations / Post-MVP Refinements
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#modules-created" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Modules Created
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#file-count-summary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        File Count Summary
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#test-coverage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Test Coverage
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#exit-criteria-verification" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Exit Criteria Verification
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#lessons-learned" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Lessons Learned
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="phase-4-combat-resolution-morale">Phase 4: Combat Resolution &amp; Morale<a class="headerlink" href="#phase-4-combat-resolution-morale" title="Permanent link">&para;</a></h1>
+<p><strong>Status</strong>: Complete
+<strong>Date</strong>: 2026-03-01</p>
+<hr />
+<h2 id="summary">Summary<a class="headerlink" href="#summary" title="Permanent link">&para;</a></h2>
+<p>Phase 4 implements the combat resolution and morale systems — the core of what makes this a wargame. Units can now engage each other across every domain: direct fire (kinetic rounds, HEAT), indirect fire (tube and rocket artillery), surface-to-surface missiles (TBMs, cruise missiles, SSMs), air-to-air (BVR/WVR/guns), air-to-ground (CAS, SEAD/DEAD), air defense (SAMs with shoot-look-shoot, EMCON), missile defense (layered BMD, cruise missile defense, C-RAM), naval surface (Wayne Hughes salvo model), naval subsurface (torpedo engagements, evasion), mine warfare, naval gunfire support, amphibious assault, and carrier operations. Combat outcomes feed into a 5-state Markov morale model that drives rout cascades, surrender, and rally mechanics.</p>
+<p><strong>Test count</strong>: 634 new tests -&gt; 1,721 total (1,087 Phase 0-3 + 634 Phase 4).</p>
+<h2 id="what-was-built">What Was Built<a class="headerlink" href="#what-was-built" title="Permanent link">&para;</a></h2>
+<h3 id="step-1-direct-fire-fundamentals-7-modules">Step 1: Direct Fire &amp; Fundamentals (7 modules)<a class="headerlink" href="#step-1-direct-fire-fundamentals-7-modules" title="Permanent link">&para;</a></h3>
+<p><strong><code>combat/engagement.py</code></strong> — Engagement orchestrator. Sequences the kill chain: target selection, range determination, weapon-ammo pairing, hit probability, damage assessment. Delegates to physics (ballistics), probability (hit_probability), and effects (damage) engines. Publishes <code>EngagementEvent</code> to EventBus for morale/intel subscribers.</p>
+<p><strong><code>combat/ballistics.py</code></strong> — Projectile trajectory computation via RK4 numerical integration. Models drag (simplified constant Cd), Coriolis deflection (latitude-dependent), wind drift, and propellant temperature effects on muzzle velocity. Computes time of flight, impact angle, and terminal velocity.</p>
+<p><strong><code>combat/hit_probability.py</code></strong> — P(hit) computation from weapon accuracy, range, crew skill, target motion (crossing rate penalty), target size, environmental modifiers (visibility, wind), and posture (hull-down, defilade). Returns probability used as Bernoulli trial parameter.</p>
+<p><strong><code>combat/damage.py</code></strong> — Terminal effects engine. DeMarre penetration model for kinetic energy rounds (penetration proportional to projectile mass, velocity squared, and caliber). HEAT penetration is range-independent (shaped charge jet). Behind-armor effects: spalling, fire, crew casualties. Hull/equipment damage tracking.</p>
+<p><strong><code>combat/suppression.py</code></strong> — Suppression from incoming fire volume and caliber. Exponential time decay. Spatial spreading from impact point. Suppressed units suffer accuracy, speed, and morale penalties. Stacks with existing suppression up to a cap.</p>
+<p><strong><code>combat/ammunition.py</code></strong> — Weapon and ammunition separated: a weapon can fire multiple ammo types (e.g., M1A2 fires M829 APFSDS, M830 HEAT-MP, M1028 canister). Ammo consumption tracking per type. High-value munitions (missiles, guided rounds) individually tracked. Magazine/rack management.</p>
+<p><strong><code>combat/fratricide.py</code></strong> — IFF uncertainty model. Fratricide probability increases when identification confidence is low (from Phase 3 detection pipeline), engagement range is long, and environmental conditions degrade identification. Deconfliction checks against known friendly positions.</p>
+<h3 id="step-2-indirect-fire-deep-fires-1-module">Step 2: Indirect Fire &amp; Deep Fires (1 module)<a class="headerlink" href="#step-2-indirect-fire-deep-fires-1-module" title="Permanent link">&para;</a></h3>
+<p><strong><code>combat/indirect_fire.py</code></strong> — Tube artillery fire missions (adjust fire, fire for effect, final protective fires) with CEP-based dispersion. Rocket artillery (MLRS/HIMARS) with pod-based ammunition, wider dispersal patterns, and shoot-and-scoot timing. GMLRS precision guidance reduces CEP to near-zero. Counterbattery fire: radar-detected launch point as target. Gaussian blast attenuation model: P_kill = exp(-d^2 / (2 * sigma^2)) where sigma derives from warhead lethality radius. Ammo selection: HE, DPICM, smoke, illumination, FASCAM.</p>
+<h3 id="step-3-surface-to-surface-missiles-1-module">Step 3: Surface-to-Surface Missiles (1 module)<a class="headerlink" href="#step-3-surface-to-surface-missiles-1-module" title="Permanent link">&para;</a></h3>
+<p><strong><code>combat/missiles.py</code></strong> — Kill chain phases: detect -&gt; localize -&gt; authorize -&gt; launch -&gt; flight -&gt; terminal. TBM ballistic trajectory (boost-midcourse-reentry), land-attack cruise missiles (terrain-following flight profile), coastal defense SSMs (sea-skimming terminal). Flight time from range and missile speed profile. Terminal hit probability with countermeasure degradation. TEL reload cycle timing. Missile inventory tracking (links to future logistics).</p>
+<h3 id="step-4-air-combat-air-ground-2-modules">Step 4: Air Combat &amp; Air-Ground (2 modules)<a class="headerlink" href="#step-4-air-combat-air-ground-2-modules" title="Permanent link">&para;</a></h3>
+<p><strong><code>combat/air_combat.py</code></strong> — Beyond Visual Range (BVR): missile Pk from range, aspect, countermeasures (chaff/flare/ECM), target maneuver. Within Visual Range (WVR): merge dynamics simplified to Pk roll with energy advantage modifier. Gun engagement at close range with tracking solution quality. Missile expenditure tracking. Engagement geometry: head-on, beam, tail aspect.</p>
+<p><strong><code>combat/air_ground.py</code></strong> — Close Air Support (CAS): weapon delivery accuracy modified by FAC/JTAC guidance, weather, target marking. SEAD (Suppression of Enemy Air Defenses): anti-radiation missile homing on radar emissions — only effective when radar is radiating. DEAD (Destruction of Enemy Air Defenses): direct attack on AD sites. Air interdiction: strike missions against fixed/mobile targets with BDA assessment.</p>
+<h3 id="step-5-air-defense-missile-defense-2-modules">Step 5: Air Defense &amp; Missile Defense (2 modules)<a class="headerlink" href="#step-5-air-defense-missile-defense-2-modules" title="Permanent link">&para;</a></h3>
+<p><strong><code>combat/air_defense.py</code></strong> — 3D engagement envelope (min/max range, min/max altitude). Shoot-look-shoot doctrine: fire, assess via radar, fire again if miss. EMCON states (RADIATE/STANDBY/SILENT) — silent AD invisible to SEAD but cannot engage. Engagement capacity: simultaneous target limit. IAMD shared mechanics: common track management, weapon-target pairing, engagement authority. SAM Pk from range within envelope, target speed, countermeasures, crew skill.</p>
+<p><strong><code>combat/missile_defense.py</code></strong> — Extends air_defense core with BMD-specific mechanics. Layered defense: upper tier (THAAD/SM-3 exoatmospheric), lower tier (Patriot PAC-3 endoatmospheric). Cruise missile defense. C-RAM (Iron Dome, Phalanx CIWS): very short range, high rate of fire, optimized for rockets/artillery/mortars. Interceptor inventory tracking with sustainability concerns. Salvo sizing based on threat assessment and inventory.</p>
+<h3 id="step-6-naval-combat-6-modules">Step 6: Naval Combat (6 modules)<a class="headerlink" href="#step-6-naval-combat-6-modules" title="Permanent link">&para;</a></h3>
+<p><strong><code>combat/naval_surface.py</code></strong> — Wayne Hughes salvo model for anti-ship missile exchange: offensive power (missiles launched x Pk) vs defensive power (interceptors x Pk_intercept) + staying power (hits to sink). Naval gunfire: range-dependent accuracy, rate of fire, caliber effects. Point defense (CIWS, SeaRAM) as last-ditch layer. Chaff and decoy deployment. Ship damage model: mission kill vs mobility kill vs sinking. Damage control: crew-dependent repair rate, flooding progression (abstracted).</p>
+<p><strong><code>combat/naval_subsurface.py</code></strong> — Torpedo engagement: launch from bearing/range, torpedo speed and endurance, wire-guided correction, terminal homing. Evasion: decoys (noisemakers, Nixie), maneuvering (knuckle turn), depth change. Submarine-launched missile (SLCM) missions. Probability-based torpedo hit model accounting for evasion quality, torpedo type, and water conditions.</p>
+<p><strong><code>combat/naval_mine.py</code></strong> — Mine types: contact, magnetic influence, acoustic influence, pressure, combination. Laying operations (surface, submarine, air-delivered). Sweeping (mechanical, influence). Hunting (sonar-based detection and neutralization). Risk-based transit: P(detonation) per mine based on ship signature vs mine trigger threshold.</p>
+<p><strong><code>combat/naval_gunfire_support.py</code></strong> — Shore bombardment fire missions. Fire support coordination: naval surface fire zone (NSFZ), fire support coordination line (FSCL). Accuracy model: range-dependent CEP with spotter correction. Target types: fixed fortifications, area suppression, troop concentrations.</p>
+<p><strong><code>combat/amphibious_assault.py</code></strong> — Beach assault resolution. Shore defense fire against approaching landing craft. Attrition during ship-to-shore movement. Beach obstacle clearance. Buildup phase: combat power ashore vs defender strength. Integrates with Phase 2 amphibious movement phases.</p>
+<p><strong><code>combat/carrier_ops.py</code></strong> — Sortie generation rate from deck cycle time, aircraft availability, and crew readiness. Combat Air Patrol (CAP) station management. Strike package launch and recovery. Deck cycle abstraction: spot, launch, recover, rearm/refuel (no individual aircraft spot tracking). Aircraft attrition and replacement from air wing inventory.</p>
+<h3 id="step-7-morale-system-6-modules">Step 7: Morale System (6 modules)<a class="headerlink" href="#step-7-morale-system-6-modules" title="Permanent link">&para;</a></h3>
+<p><strong><code>morale/state.py</code></strong> — 5-state Markov machine: STEADY -&gt; SHAKEN -&gt; BROKEN -&gt; ROUTED -&gt; SURRENDERED. 5x5 transition matrix with modifiers from casualties (recent and cumulative), suppression level, force ratio (local), leadership quality, cohesion, fatigue, and surprise. Transitions evaluated per tick. Recovery possible (SHAKEN-&gt;STEADY, BROKEN-&gt;SHAKEN) with leadership and rally modifiers.</p>
+<p><strong><code>morale/cohesion.py</code></strong> — Unit cohesion from shared experience, time together, casualties absorbed, nearby friendly units, parent unit status. Cohesion modifies the morale transition matrix: high cohesion resists breakdown, low cohesion accelerates it. Isolation penalty when no friendly units within cohesion radius.</p>
+<p><strong><code>morale/stress.py</code></strong> — Stress accumulation as random walk with drift: combat exposure, incoming fire, casualties witnessed, sleep deprivation, environmental hardship (cold, heat, altitude). Stress recovery during rest periods. Stress level feeds into morale transition modifiers and hit probability degradation.</p>
+<p><strong><code>morale/experience.py</code></strong> — Training level (GREEN/TRAINED/VETERAN/ELITE) as baseline. Combat experience learning curve: diminishing returns, fastest learning in first engagements. Experience gain from successful engagements, observation, and surviving combat. Experience modifies hit probability, suppression resistance, and morale resilience.</p>
+<p><strong><code>morale/psychology.py</code></strong> — PSYOP effects: leaflet drops, loudspeaker broadcasts, social media (modern conflicts). Effectiveness roll modified by target morale state, isolation, supply status, and cultural factors. Surrender inducement when conditions are met. Civilian reaction model for stability operations.</p>
+<p><strong><code>morale/rout.py</code></strong> — Rout cascade: when a unit routs, adjacent units receive a morale penalty proportional to the routing unit's size and proximity. Rally mechanics: leadership check to halt rout at rally point. Surrender: units in SURRENDERED state become POW candidates (links to future logistics/prisoners module). Rout movement: away from threat, ignoring formation.</p>
+<h3 id="step-8-support-files-integration-3-files">Step 8: Support Files &amp; Integration (3 files)<a class="headerlink" href="#step-8-support-files-integration-3-files" title="Permanent link">&para;</a></h3>
+<p><strong><code>combat/__init__.py</code></strong> — Package init with public API exports.</p>
+<p><strong><code>combat/events.py</code></strong> — EventBus event classes: <code>EngagementEvent</code>, <code>HitEvent</code>, <code>DamageEvent</code>, <code>KillEvent</code>, <code>SuppressionEvent</code>, <code>AmmunitionExpendedEvent</code>, <code>MissileFlightEvent</code>, <code>AirDefenseEngagementEvent</code>, <code>NavalSalvoEvent</code>, <code>TorpedoEvent</code>, <code>MineDetonationEvent</code>.</p>
+<p><strong><code>morale/events.py</code></strong> — EventBus event classes: <code>MoraleChangedEvent</code>, <code>RoutEvent</code>, <code>RallyEvent</code>, <code>SurrenderEvent</code>, <code>CohesionChangedEvent</code>, <code>StressEvent</code>.</p>
+<h3 id="yaml-data-files-47-files">YAML Data Files (47 files)<a class="headerlink" href="#yaml-data-files-47-files" title="Permanent link">&para;</a></h3>
+<p><strong>24 weapon definitions</strong> (<code>data/weapons/</code>): m256_120mm (M1A2 main gun), m240_coax (coaxial MG), m2_50cal (heavy MG), m242_25mm (Bradley chain gun), m109_155mm (Paladin howitzer), m777_155mm (towed howitzer), mlrs_227mm (MLRS launcher), himars_227mm (HIMARS launcher), mk45_5in (naval gun), mk15_ciws (Phalanx CIWS), mk41_vls (vertical launch system), mk32_torpedo (torpedo tube), m61_vulcan (F-16 gun), aim120_amraam (BVR AAA missile), aim9x_sidewinder (WVR AAA missile), agm65_maverick (air-to-ground missile), agm88_harm (anti-radiation missile), agm84_harpoon (anti-ship missile), gbu12_paveway (laser-guided bomb), bgm109_tomahawk (cruise missile), rim161_sm3 (BMD interceptor), rim162_essm (ship self-defense), pac3_mse (Patriot interceptor), mk48_torpedo (heavyweight torpedo).</p>
+<p><strong>23 ammunition definitions</strong> (<code>data/ammunition/</code>): m829a4_apfsds, m830a1_heat, m1028_canister, m855_556nato, m33_50bmg, m795_155mm_he, m549a1_155mm_rap, m864_155mm_dpicm, m483a1_155mm_dpicm, m825_155mm_smoke, m485_155mm_illum, m31_gmlrs, m30_gmlrs_dpicm, mk82_500lb, mk84_2000lb, mk48_adcap_torpedo, mk46_lightweight_torpedo, rim7_seasparrow, tamir_iron_dome, atacms_block1a, srbm_scud, jdam_gbu31, pgm_excalibur.</p>
+<h3 id="visualization">Visualization<a class="headerlink" href="#visualization" title="Permanent link">&para;</a></h3>
+<p><strong><code>scripts/visualize/combat_viz.py</code></strong> — Engagement outcome distributions, suppression zones, artillery impact patterns (CEP ellipses), missile flight profiles, air defense engagement envelopes, naval salvo exchange outcomes, morale state transitions over time.</p>
+<h2 id="design-decisions">Design Decisions<a class="headerlink" href="#design-decisions" title="Permanent link">&para;</a></h2>
+<ol>
+<li>
+<p><strong>Engagement module as orchestrator</strong>: <code>engagement.py</code> sequences the kill chain but delegates all physics to <code>ballistics.py</code>, all probability to <code>hit_probability.py</code>, and all effects to <code>damage.py</code>. This keeps each module focused and testable in isolation.</p>
+</li>
+<li>
+<p><strong>Wayne Hughes salvo model for naval missile exchange</strong>: The salvo model (offensive power vs defensive power vs staying power) is the standard analytical framework for modern naval surface combat. It naturally captures the alpha-strike nature of missile warfare and the importance of defense-in-depth.</p>
+</li>
+<li>
+<p><strong>Morale decoupled via EventBus</strong>: Combat modules publish events (casualties, suppression, kills); morale modules subscribe. No direct import from combat to morale or vice versa. This preserves the dependency graph: combat and morale are peers, not parent-child.</p>
+</li>
+<li>
+<p><strong>Weapon + ammo separated</strong>: A weapon definition specifies mechanical properties (rate of fire, accuracy, range). Ammunition definitions specify terminal effects (penetration, blast radius, fragmentation). A weapon references compatible ammo types. This mirrors real-world logistics and allows realistic ammo selection.</p>
+</li>
+<li>
+<p><strong>IAMD shared mechanics</strong>: <code>air_defense.py</code> provides the core engagement loop (detect, track, engage, assess) used by all air/missile defense. <code>missile_defense.py</code> extends this with BMD-specific mechanics (exo/endo-atmospheric interception, salvo sizing) and C-RAM (high-rate-of-fire point defense). No code duplication between AD and BMD.</p>
+</li>
+<li>
+<p><strong>All randomness via np.random.Generator</strong>: Every stochastic outcome (hit/miss, penetration, suppression, morale transition, blast damage, torpedo evasion) uses <code>RNGManager.get_stream(ModuleId)</code>. Deterministic replay from seed verified across all combat domains.</p>
+</li>
+<li>
+<p><strong>DeMarre for kinetic penetration</strong>: The DeMarre formula (penetration ~ mass * velocity^2 / caliber) is the standard simplified model for armor penetration by kinetic energy projectiles. It captures the essential physics without requiring finite element analysis.</p>
+</li>
+<li>
+<p><strong>Gaussian blast attenuation</strong>: P_kill = exp(-d^2 / (2 * sigma^2)) provides a physically reasonable model for blast/fragmentation lethality that drops off smoothly with distance. Sigma derived from warhead characteristics.</p>
+</li>
+<li>
+<p><strong>Morale as Markov chain</strong>: The 5-state model (STEADY/SHAKEN/BROKEN/ROUTED/SURRENDERED) captures the key behavioral transitions observed in combat. Transition probabilities are modified by tactical context, not hard-coded — this allows calibration against historical data in Phase 8.</p>
+</li>
+<li>
+<p><strong>Kill chain timing for missiles</strong>: Missiles are not instantaneous. The detect-localize-authorize-launch-flight-terminal chain introduces realistic delays that matter for time-sensitive targets and defensive response windows.</p>
+</li>
+</ol>
+<h2 id="deviations-from-plan">Deviations from Plan<a class="headerlink" href="#deviations-from-plan" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Phase 4 was originally scoped as combat only (4a-4e), with morale as part of Phase 5. The development phases document was updated to include morale (4f) in Phase 4 since morale is tightly coupled to combat outcomes and cannot be meaningfully tested without the combat event stream.</li>
+<li>Test count (634) slightly below the aggressive plan estimate, but all exit criteria met and all combat domains functional.</li>
+</ul>
+<h2 id="key-physics">Key Physics<a class="headerlink" href="#key-physics" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Ballistic trajectory</strong>: RK4 integration of equations of motion with constant Cd drag, Coriolis force (2 * omega * v * sin(lat)), and wind vector addition. Propellant temperature modifies muzzle velocity by ~1 m/s per degree C.</li>
+<li><strong>DeMarre penetration</strong>: P = k * m * v^2 / (d * sigma_armor) where k is a form factor, m is projectile mass, v is impact velocity, d is caliber, sigma_armor is armor quality factor.</li>
+<li><strong>HEAT penetration</strong>: Penetration = liner_diameter * standoff_factor. Range-independent (shaped charge jet velocity &gt;&gt; projectile velocity).</li>
+<li><strong>Blast attenuation</strong>: P_kill = exp(-d^2 / (2 * sigma^2)). For DPICM: individual submunition lethal radii with random scatter across target area.</li>
+<li><strong>Radar range equation (from Phase 3)</strong>: Drives detection ranges for fire control radars, AD radars, and counterbattery radars.</li>
+<li><strong>Wayne Hughes salvo model</strong>: Damage = (alpha * A_missiles * P_hit - beta * B_interceptors * P_intercept) / staying_power. Negative damage clamped to zero.</li>
+<li><strong>Torpedo Pk</strong>: Base Pk modified by evasion quality (decoys, maneuver), water conditions (thermocline hiding), and torpedo type (wire-guided vs autonomous).</li>
+<li><strong>Suppression</strong>: S = sum(caliber_factor * rounds) with exponential decay tau and spatial Gaussian falloff from impact point.</li>
+<li><strong>Morale transitions</strong>: P(transition) from 5x5 Markov matrix, modified per-tick by: casualties_factor * suppression_factor * force_ratio_factor * leadership_factor * cohesion_factor * fatigue_factor * surprise_factor.</li>
+</ul>
+<h2 id="issues-fixes">Issues &amp; Fixes<a class="headerlink" href="#issues-fixes" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Issue</th>
+<th>Resolution</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Morale dependency direction unclear</td>
+<td>Decoupled via EventBus — combat publishes, morale subscribes, no circular imports</td>
+</tr>
+<tr>
+<td>IAMD code duplication between AD and BMD</td>
+<td>Extracted shared engagement loop into <code>air_defense.py</code>, <code>missile_defense.py</code> extends it</td>
+</tr>
+<tr>
+<td>Weapon-ammo coupling too tight in initial design</td>
+<td>Separated into independent YAML definitions with compatibility references</td>
+</tr>
+<tr>
+<td>Blast damage double-counting for area weapons</td>
+<td>Unified Gaussian attenuation model, each target evaluated once per detonation</td>
+</tr>
+<tr>
+<td>Rout cascade infinite loop risk</td>
+<td>Cascade depth limit and visited-unit set prevent re-triggering</td>
+</tr>
+<tr>
+<td>Torpedo engagement needed submarine depth</td>
+<td>Threaded depth from Phase 2 <code>SubmarineMovementEngine</code> state into engagement context</td>
+</tr>
+<tr>
+<td>Carrier sortie rate unrealistic without deck constraints</td>
+<td>Added deck cycle time, simultaneous operations limit, and crew fatigue</td>
+</tr>
+</tbody>
+</table>
+<h2 id="known-limitations-post-mvp-refinements">Known Limitations / Post-MVP Refinements<a class="headerlink" href="#known-limitations-post-mvp-refinements" title="Permanent link">&para;</a></h2>
+<p>These are deliberate simplifications made during initial implementation. All are functional but could benefit from refinement after MVP is complete.</p>
+<ol>
+<li>
+<p><strong>Ballistic trajectory uses simplified drag model (no Mach-dependent Cd curve)</strong>: The constant-Cd approximation is reasonable for subsonic/low-supersonic projectiles but diverges at transonic speeds where Cd varies significantly. A Mach-dependent Cd lookup table would improve accuracy for long-range artillery and high-velocity rounds.</p>
+</li>
+<li>
+<p><strong>Penetration model is DeMarre approximation -- not full finite element</strong>: DeMarre captures the essential scaling (mass, velocity squared, caliber) but doesn't model obliquity effects, composite armor, reactive armor, or spaced armor in detail. Sufficient for aggregate combat resolution but not for detailed armor-vs-projectile analysis.</p>
+</li>
+<li>
+<p><strong>HEAT penetration is range-independent</strong>: This is a reasonable simplification for shaped charge warheads where jet velocity far exceeds projectile velocity. In reality, standoff distance optimization and precursor charges (ERA defeat) introduce minor range dependencies. Not significant at simulation resolution.</p>
+</li>
+<li>
+<p><strong>Submarine evasion uses simplified probability model</strong>: Evasion outcome is a single Bernoulli trial with Pk modified by evasion actions, rather than a physics-based torpedo-vs-submarine pursuit simulation. Adequate for campaign-level resolution but lacks the fidelity for detailed submarine tactical analysis.</p>
+</li>
+<li>
+<p><strong>Mine warfare trigger model doesn't account for detailed ship magnetic/acoustic signatures</strong>: Mine triggering uses a simplified threshold comparison against ship displacement class rather than modeling the full magnetic/acoustic/pressure signature interaction. The Phase 3 signature profiles could be extended to provide mine-relevant signatures.</p>
+</li>
+<li>
+<p><strong>Carrier ops deck management is abstracted</strong>: No individual aircraft spot tracking on the flight deck. Sortie generation uses aggregate rates from deck cycle time and aircraft availability. A detailed deck model would track individual aircraft positions, fuel/arm status, and spot conflicts.</p>
+</li>
+<li>
+<p><strong>Morale Markov transitions use single-step discrete chain (not continuous-time)</strong>: Transitions are evaluated once per tick. A continuous-time Markov chain would allow transitions at sub-tick resolution, which matters when tick duration is large. The current model is correct for fine-grained ticks.</p>
+</li>
+<li>
+<p><strong>Psychology/PSYOP model is simplified effectiveness roll</strong>: PSYOP effectiveness is a single modified Bernoulli trial rather than a multi-stage influence model with message crafting, delivery, reception, and behavioral change. Sufficient for representing PSYOP as a force modifier but not for detailed information operations analysis.</p>
+</li>
+<li>
+<p><strong>Naval damage control doesn't model individual compartment flooding progression</strong>: Ship damage uses an aggregate hull integrity model with crew-dependent repair rate. A compartment-based flooding model (progressive flooding, counterflooding, damage control teams) would provide higher fidelity for capital ship engagements.</p>
+</li>
+<li>
+<p><strong>Air combat doesn't model detailed flight dynamics or energy-maneuverability</strong>: WVR combat uses a simplified Pk roll with energy advantage modifier rather than modeling specific fighter maneuvers (BFM), turn rates, energy states, or corner velocities. The BVR model (missile Pk from range/aspect/countermeasures) is more detailed since BVR is the dominant modern air combat mode.</p>
+</li>
+<li>
+<p><strong>Environment→combat coupling is partial</strong>: Only three combat modules consume environmental conditions: <code>hit_probability</code> (visibility), <code>ballistics</code> (wind, temperature, latitude), and <code>air_ground</code> (weather_penalty, night). The remaining combat modules (<code>air_combat</code>, <code>air_defense</code>, <code>naval_surface</code>, <code>indirect_fire</code>) accept conditions parameters but either don't use them or don't accept them at all. Sea state should affect naval point defense, radar propagation should affect air defense range, and wind should affect indirect fire CEP. Integration tests for the existing couplings were added post-Phase 4; remaining couplings should be wired when the simulation loop (Phase 7) brings all modules together.</p>
+</li>
+</ol>
+<h2 id="modules-created">Modules Created<a class="headerlink" href="#modules-created" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Module</th>
+<th>Subphase</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>combat/__init__.py</code></td>
+<td>—</td>
+<td>Package init, public API exports</td>
+</tr>
+<tr>
+<td><code>combat/events.py</code></td>
+<td>—</td>
+<td>Combat EventBus event classes</td>
+</tr>
+<tr>
+<td><code>combat/engagement.py</code></td>
+<td>4a</td>
+<td>Engagement orchestrator, kill chain sequencing</td>
+</tr>
+<tr>
+<td><code>combat/ballistics.py</code></td>
+<td>4a</td>
+<td>Projectile trajectory (RK4), drag, Coriolis, wind</td>
+</tr>
+<tr>
+<td><code>combat/hit_probability.py</code></td>
+<td>4a</td>
+<td>P(hit) from weapon, range, skill, conditions</td>
+</tr>
+<tr>
+<td><code>combat/damage.py</code></td>
+<td>4a</td>
+<td>Terminal effects, DeMarre penetration, HEAT, blast</td>
+</tr>
+<tr>
+<td><code>combat/suppression.py</code></td>
+<td>4a</td>
+<td>Fire volume suppression with decay and spreading</td>
+</tr>
+<tr>
+<td><code>combat/ammunition.py</code></td>
+<td>4a</td>
+<td>Weapon-ammo pairing, consumption, magazine tracking</td>
+</tr>
+<tr>
+<td><code>combat/fratricide.py</code></td>
+<td>4a</td>
+<td>IFF uncertainty, deconfliction</td>
+</tr>
+<tr>
+<td><code>combat/indirect_fire.py</code></td>
+<td>4b</td>
+<td>Tube and rocket artillery fire missions</td>
+</tr>
+<tr>
+<td><code>combat/missiles.py</code></td>
+<td>4c</td>
+<td>TBM, cruise, SSM kill chain and flight</td>
+</tr>
+<tr>
+<td><code>combat/air_combat.py</code></td>
+<td>4d</td>
+<td>BVR, WVR, gun air-to-air engagements</td>
+</tr>
+<tr>
+<td><code>combat/air_ground.py</code></td>
+<td>4d</td>
+<td>CAS, SEAD/DEAD, air interdiction</td>
+</tr>
+<tr>
+<td><code>combat/air_defense.py</code></td>
+<td>4d</td>
+<td>SAM/AAA, shoot-look-shoot, EMCON, IAMD core</td>
+</tr>
+<tr>
+<td><code>combat/missile_defense.py</code></td>
+<td>4d</td>
+<td>Layered BMD, cruise missile defense, C-RAM</td>
+</tr>
+<tr>
+<td><code>combat/naval_surface.py</code></td>
+<td>4e</td>
+<td>Wayne Hughes salvo model, naval gunfire, point defense</td>
+</tr>
+<tr>
+<td><code>combat/naval_subsurface.py</code></td>
+<td>4e</td>
+<td>Torpedo engagements, evasion, SLCM</td>
+</tr>
+<tr>
+<td><code>combat/naval_mine.py</code></td>
+<td>4e</td>
+<td>Mine laying, sweeping, hunting, transit risk</td>
+</tr>
+<tr>
+<td><code>combat/naval_gunfire_support.py</code></td>
+<td>4e</td>
+<td>Shore bombardment, fire support coordination</td>
+</tr>
+<tr>
+<td><code>combat/amphibious_assault.py</code></td>
+<td>4e</td>
+<td>Beach assault resolution, shore defense</td>
+</tr>
+<tr>
+<td><code>combat/carrier_ops.py</code></td>
+<td>4e</td>
+<td>Sortie generation, CAP, deck cycle</td>
+</tr>
+<tr>
+<td><code>morale/__init__.py</code></td>
+<td>—</td>
+<td>Package init</td>
+</tr>
+<tr>
+<td><code>morale/events.py</code></td>
+<td>—</td>
+<td>Morale EventBus event classes</td>
+</tr>
+<tr>
+<td><code>morale/state.py</code></td>
+<td>4f</td>
+<td>5-state Markov morale machine</td>
+</tr>
+<tr>
+<td><code>morale/cohesion.py</code></td>
+<td>4f</td>
+<td>Unit cohesion, nearby friendlies, isolation</td>
+</tr>
+<tr>
+<td><code>morale/stress.py</code></td>
+<td>4f</td>
+<td>Stress/fatigue random walk with drift</td>
+</tr>
+<tr>
+<td><code>morale/experience.py</code></td>
+<td>4f</td>
+<td>Training level, combat experience learning curve</td>
+</tr>
+<tr>
+<td><code>morale/psychology.py</code></td>
+<td>4f</td>
+<td>PSYOP effects, surrender inducement</td>
+</tr>
+<tr>
+<td><code>morale/rout.py</code></td>
+<td>4f</td>
+<td>Rout cascade, rally, surrender, POW generation</td>
+</tr>
+</tbody>
+</table>
+<h2 id="file-count-summary">File Count Summary<a class="headerlink" href="#file-count-summary" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Category</th>
+<th>Files</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Source modules (combat)</td>
+<td>19</td>
+</tr>
+<tr>
+<td>Source modules (morale)</td>
+<td>6</td>
+</tr>
+<tr>
+<td>Support files (<strong>init</strong>, events)</td>
+<td>3</td>
+</tr>
+<tr>
+<td>YAML data files (weapons)</td>
+<td>24</td>
+</tr>
+<tr>
+<td>YAML data files (ammunition)</td>
+<td>23</td>
+</tr>
+<tr>
+<td>Test files</td>
+<td>~25 (unit + integration)</td>
+</tr>
+<tr>
+<td>Visualization</td>
+<td>1</td>
+</tr>
+<tr>
+<td><strong>Total</strong></td>
+<td><strong>~101</strong></td>
+</tr>
+</tbody>
+</table>
+<h2 id="test-coverage">Test Coverage<a class="headerlink" href="#test-coverage" title="Permanent link">&para;</a></h2>
+<p>1,721 tests total, all passing:
+- Phase 0-3: 1,087 tests (unchanged)
+- Phase 4 unit tests: ~600 across 25 test files
+  - Step 1 (direct fire fundamentals): ~140 tests (engagement, ballistics, hit_probability, damage, suppression, ammunition, fratricide)
+  - Step 2 (indirect fire): ~55 tests (tube artillery, rocket artillery, GMLRS precision, counterbattery, blast model)
+  - Step 3 (missiles): ~45 tests (TBM trajectory, cruise missile flight, SSM, kill chain timing, inventory)
+  - Step 4 (air combat/air-ground): ~65 tests (BVR, WVR, gun, CAS, SEAD, DEAD, air interdiction)
+  - Step 5 (air defense/missile defense): ~60 tests (SAM envelope, shoot-look-shoot, EMCON, BMD layers, C-RAM, interceptor inventory)
+  - Step 6 (naval combat): ~115 tests (salvo model, naval gunfire, torpedo, evasion, mines, NGFS, amphibious, carrier ops)
+  - Step 7 (morale): ~120 tests (Markov transitions, cohesion, stress, experience, psychology, rout cascade, rally, surrender)
+- Phase 4 integration: ~34 tests (combined arms, naval task force engagement, air-ground coordination, morale under fire, deterministic replay, checkpoint/restore)</p>
+<h2 id="exit-criteria-verification">Exit Criteria Verification<a class="headerlink" href="#exit-criteria-verification" title="Permanent link">&para;</a></h2>
+<ol>
+<li><strong>Direct fire</strong>: Engagement orchestrator resolves kinetic/HEAT rounds with ballistic trajectory, hit probability, and penetration model ✅</li>
+<li><strong>Indirect fire (tube)</strong>: Artillery fire missions with CEP dispersion, adjust/FFE, counterbattery ✅</li>
+<li><strong>Indirect fire (rocket)</strong>: MLRS/HIMARS with pod-based ammo, GMLRS precision, shoot-and-scoot ✅</li>
+<li><strong>Missiles</strong>: TBM/cruise/SSM with kill chain phases and flight time modeling ✅</li>
+<li><strong>Air-to-air</strong>: BVR and WVR engagements with missile Pk and countermeasures ✅</li>
+<li><strong>Air-to-ground</strong>: CAS with JTAC, SEAD/DEAD with ARM homing, air interdiction ✅</li>
+<li><strong>Air defense</strong>: 3D engagement envelope, shoot-look-shoot, EMCON states ✅</li>
+<li><strong>Missile defense</strong>: Layered BMD (upper/lower tier), C-RAM, interceptor inventory ✅</li>
+<li><strong>Naval surface</strong>: Wayne Hughes salvo model, naval gunfire, point defense, damage control ✅</li>
+<li><strong>Naval subsurface</strong>: Torpedo engagement and evasion, SLCM ✅</li>
+<li><strong>Mine warfare</strong>: Laying, sweeping, hunting, risk-based transit ✅</li>
+<li><strong>Amphibious</strong>: Beach assault with shore defense attrition ✅</li>
+<li><strong>Carrier ops</strong>: Sortie generation, CAP, deck cycle ✅</li>
+<li><strong>NGFS</strong>: Shore bombardment with fire support coordination ✅</li>
+<li><strong>Suppression</strong>: Fire volume drives suppression with decay ✅</li>
+<li><strong>Fratricide</strong>: IFF uncertainty produces friendly fire when identification is low ✅</li>
+<li><strong>Morale</strong>: 5-state Markov with contextual modifiers ✅</li>
+<li><strong>Rout cascade</strong>: Routing units degrade adjacent unit morale ✅</li>
+<li><strong>Ammo consumption</strong>: By type, missiles individually tracked ✅</li>
+<li><strong>Combined arms</strong>: Multiple combat domains interact correctly ✅</li>
+<li><strong>Deterministic replay from seed</strong> ✅</li>
+<li><strong>All modules state round-trip</strong> ✅</li>
+</ol>
+<h2 id="lessons-learned">Lessons Learned<a class="headerlink" href="#lessons-learned" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Engagement orchestration is key</strong>: Keeping <code>engagement.py</code> as a thin orchestrator that delegates to specialized modules prevents monolithic combat code. Each physics/probability/damage module can be tested and tuned independently.</li>
+<li><strong>Wayne Hughes salvo model scales well</strong>: The offensive/defensive/staying power framework handles everything from small corvette actions to carrier strike group engagements by parameterizing the missile counts and Pk values.</li>
+<li><strong>Morale decoupling via EventBus works cleanly</strong>: Publishing combat events and letting morale subscribe eliminates circular dependencies. The morale system doesn't need to know about weapon types or physics — it only cares about outcomes (casualties, suppression, kills).</li>
+<li><strong>YAML weapon/ammo separation pays off</strong>: Being able to mix weapon-ammo combinations (e.g., same 155mm howitzer firing HE, DPICM, smoke, illumination, or Excalibur) without code changes makes scenario authoring much more flexible.</li>
+<li><strong>Rout cascade needs depth limiting</strong>: Without a visited-set and depth limit, cascading morale checks can theoretically loop through a dense formation. The fix is straightforward (BFS with visited set) but the failure mode is subtle.</li>
+<li><strong>Kill chain timing matters</strong>: Missiles that take minutes to reach their target create windows for defensive response. Modeling this explicitly (rather than instant resolution) is essential for realistic IAMD and naval combat.</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs", "navigation.sections", "navigation.expand", "navigation.top", "search.suggest", "search.highlight", "content.code.copy"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>
