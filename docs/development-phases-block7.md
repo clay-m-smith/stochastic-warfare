@@ -157,11 +157,15 @@ Prevent combat actions when resources are depleted. Wire fuel consumption to mov
 
 ---
 
-## Phase 59: Atmospheric & Ground Environment Wiring
+## Phase 59: Atmospheric & Ground Environment Wiring ✓
+
+**Status**: Complete — 48 tests, 5 new test files, 6 modified source files.
 
 **Goal**: Wire all computed-but-unconsumed atmospheric and ground parameters. Seasons, weather, and terrain fully contribute to movement, detection, and combat.
 
 **Dependencies**: Phase 58 (structural tests running; damage detail extraction provides fire_started hook).
+
+**Partial deferrals**: Ice crossing, vegetation LOS blocking, bridge capacity, ford crossing, road snow degradation — all require pathfinding/data model changes beyond wiring scope.
 
 ### 59a: Seasons → Movement & Infrastructure
 

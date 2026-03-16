@@ -267,7 +267,7 @@ class SimulationContext:
     # Environment engines
     weather_engine: Any = None
     time_of_day_engine: Any = None
-    seasons_engine: Any = None  # TODO: SeasonsEngine not implemented
+    seasons_engine: Any = None
     sea_state_engine: Any = None
     obscurants_engine: Any = None  # TODO: ObscurantsEngine not implemented
     conditions_engine: Any = None  # Used by SpaceEngine — keep
@@ -1222,6 +1222,7 @@ class ScenarioLoader:
         weather_engine = None
         time_of_day_engine = None
         sea_state_engine = None
+        seasons_engine = None
 
         if clock is not None:
             from stochastic_warfare.environment.weather import (
@@ -1253,6 +1254,13 @@ class ScenarioLoader:
             sea_state_engine = SeaStateEngine(
                 SeaStateConfig(), clock, astronomy_engine, weather_engine,
                 sea_state_rng,
+            )
+
+            # Phase 59: SeasonsEngine instantiation
+            from stochastic_warfare.environment.seasons import SeasonsConfig, SeasonsEngine
+            seasons_engine = SeasonsEngine(
+                SeasonsConfig(latitude=config.latitude),
+                clock, weather_engine, astronomy_engine,
             )
 
             # Merge weather visibility into calibration if not already set
@@ -1335,6 +1343,7 @@ class ScenarioLoader:
             "weather_engine": weather_engine,
             "time_of_day_engine": time_of_day_engine,
             "sea_state_engine": sea_state_engine,
+            "seasons_engine": seasons_engine,
             "medical_engine": medical_engine,
             "engineering_engine": engineering_engine,
             "stratagem_engine": stratagem_engine,

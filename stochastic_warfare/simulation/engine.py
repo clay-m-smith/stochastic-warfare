@@ -509,7 +509,7 @@ class SimulationEngine:
 
         if ctx.seasons_engine is not None and hasattr(ctx.seasons_engine, "update"):
             try:
-                ctx.seasons_engine.update(clock)
+                ctx.seasons_engine.update(dt)
             except Exception:
                 logger.error("Seasons engine update failed", exc_info=True)
                 if self._strict_mode:

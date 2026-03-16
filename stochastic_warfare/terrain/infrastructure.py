@@ -307,6 +307,22 @@ class InfrastructureManager:
         return max(b.height * b.condition for b in bldgs)
 
     # ------------------------------------------------------------------
+    # Spatial queries — bridges (Phase 59d)
+    # ------------------------------------------------------------------
+
+    def bridges_near(self, pos: Position, radius: Meters) -> list[Bridge]:
+        """Return bridges within *radius* metres of *pos*."""
+        pt = Point(pos.easting, pos.northing)
+        return [
+            b for b in self._bridges.values()
+            if b.condition > 0
+            and math.sqrt(
+                (pos.easting - b.position[0]) ** 2
+                + (pos.northing - b.position[1]) ** 2,
+            ) <= radius
+        ]
+
+    # ------------------------------------------------------------------
     # Spatial queries — airfields
     # ------------------------------------------------------------------
 

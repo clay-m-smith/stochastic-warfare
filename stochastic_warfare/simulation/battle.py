@@ -1811,6 +1811,39 @@ class BattleManager:
                     except Exception:
                         pass
 
+                # Phase 59a: seasonal ground condition speed modifier
+                _seasons = getattr(ctx, "seasons_engine", None)
+                if _seasons is not None and cal.get("enable_seasonal_effects", False):
+                    _domain = getattr(u, "domain", None)
+                    if _domain not in (Domain.NAVAL, Domain.AERIAL, Domain.SUBMARINE):
+                        _sc = _seasons.current
+                        _ms = getattr(u, "max_speed", 0)
+                        if _ms > 15:  # wheeled
+                            _mud_mult = max(0.1, 1.0 - _sc.mud_depth / 0.3)
+                        elif _ms > 5:  # tracked
+                            _mud_mult = max(0.3, 1.0 - _sc.mud_depth / 0.5)
+                        else:  # foot
+                            _mud_mult = max(0.4, 1.0 - _sc.mud_depth / 0.4)
+                        _snow_mult = max(0.4, 1.0 - _sc.snow_depth / 0.5)
+                        _traf_mult = _sc.ground_trafficability
+                        effective_speed *= _mud_mult * _snow_mult * _traf_mult
+                        if effective_speed <= 0:
+                            continue
+
+                # Phase 59c: wind gust operational gates
+                _wx = getattr(ctx, "weather_engine", None)
+                if _wx is not None and cal.get("enable_seasonal_effects", False):
+                    _gust = getattr(_wx.current.wind, "gust", 0)
+                    _domain = getattr(u, "domain", None)
+                    if _domain == Domain.AERIAL:
+                        _utype = str(getattr(u, "unit_type", ""))
+                        if "HELO" in _utype.upper() or "HELICOPTER" in _utype.upper():
+                            if _gust > 15.0:
+                                continue
+                    if _domain in (None, Domain.GROUND) and getattr(u, "max_speed", 0) <= 5.0:
+                        if _gust > 25.0:
+                            continue
+
                 # MOPP speed factor (Phase 25c)
                 mopp_speed_factor = 1.0
                 cbrn = getattr(ctx, "cbrn_engine", None)
@@ -1832,6 +1865,21 @@ class BattleManager:
                 _is_vehicle = getattr(u, "max_speed", 0) > 5.0
                 if _fuel <= 0.0 and _is_vehicle:
                     continue
+
+                # Phase 59d: obstacle traversal speed reduction
+                if cal.get("enable_obstacle_effects", False):
+                    _obs_mgr = getattr(ctx, "obstacle_manager", None)
+                    if _obs_mgr is not None:
+                        try:
+                            _obstacles = _obs_mgr.obstacles_at(u.position)
+                            for _obs in _obstacles:
+                                _tmult = getattr(_obs, "traversal_time_multiplier", 1.0)
+                                if _tmult > 1.0:
+                                    move_dist /= _tmult
+                        except Exception:
+                            pass
+                    if move_dist <= 0:
+                        continue
 
                 nx = u.position.easting + (dx / dist) * move_dist
                 ny = u.position.northing + (dy / dist) * move_dist
@@ -1858,6 +1906,7 @@ class BattleManager:
         *,
         elevation_cap: float = 0.3,
         elevation_floor: float = -0.1,
+        seasonal_vegetation: float = 0.0,
     ) -> tuple[float, float, float]:
         """Query terrain at positions and return (cover, elevation_mod, concealment).
 
@@ -1874,6 +1923,13 @@ class BattleManager:
                 props = classification.properties_at(target_pos)
                 cover = max(cover, props.cover)
                 concealment = props.concealment
+                # Phase 59b: seasonal vegetation concealment bonus
+                if seasonal_vegetation > 0:
+                    _lc_name = getattr(
+                        getattr(props, "land_cover", None), "name", "",
+                    )
+                    if "FOREST" in _lc_name or "SHRUB" in _lc_name:
+                        concealment = min(1.0, concealment + seasonal_vegetation * 0.3)
             except (IndexError, ValueError, AttributeError):
                 pass
 
@@ -2128,10 +2184,16 @@ class BattleManager:
                 best_target = enemies[best_idx]
 
                 # Phase 41a: terrain modifiers
+                # Phase 59b: pass seasonal vegetation for concealment bonus
+                _sv = 0.0
+                _seas59 = getattr(ctx, "seasons_engine", None)
+                if _seas59 is not None and cal.get("enable_seasonal_effects", False):
+                    _sv = _seas59.current.vegetation_density
                 terrain_cover, elevation_mod, concealment = self._compute_terrain_modifiers(
                     ctx, best_target.position, attacker.position,
                     elevation_cap=self._config.elevation_advantage_cap,
                     elevation_floor=self._config.elevation_disadvantage_floor,
+                    seasonal_vegetation=_sv,
                 )
 
                 # Detection check
@@ -2475,6 +2537,24 @@ class BattleManager:
                 if readiness < 0.3:
                     continue  # Too degraded to engage
                 crew_skill *= max(0.5, readiness)
+
+                # Phase 59d: equipment temperature stress → weapon jam
+                if cal.get("enable_equipment_stress", False):
+                    _wx59d = getattr(ctx, "weather_engine", None)
+                    if _wx59d is not None:
+                        _temp59d = _wx59d.current.temperature
+                        _wpn_equip = getattr(wpn_inst, "equipment", None)
+                        if _wpn_equip is not None:
+                            from stochastic_warfare.entities.equipment import EquipmentManager
+                            _stress = EquipmentManager.environment_stress(
+                                _wpn_equip, _temp59d,
+                            )
+                            if _stress > 0:
+                                _jam_rng = getattr(ctx, "rng_manager", None)
+                                if _jam_rng is not None:
+                                    _jam_stream = _jam_rng.get_stream(ModuleId.COMBAT)
+                                    if _jam_stream.random() < min(0.5, _stress * 0.1):
+                                        continue  # weapon jam from temperature stress
 
                 # Phase 50e: compute weapon category early for fire-on-move exemption
                 _early_wpn_cat = getattr(

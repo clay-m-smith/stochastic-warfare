@@ -131,6 +131,11 @@ class CalibrationSchema(BaseModel):
     posture_blast_protection: dict[str, float] | None = None
     posture_frag_protection: dict[str, float] | None = None
 
+    # -- Seasonal & environment effects (Phase 59) -------------------------
+    enable_seasonal_effects: bool = False
+    enable_equipment_stress: bool = False
+    enable_obstacle_effects: bool = False
+
     # -- Collections ------------------------------------------------------
     weapon_assignments: dict[str, str] = {}
     victory_weights: dict[str, float] | None = None

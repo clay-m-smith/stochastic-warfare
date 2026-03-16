@@ -271,9 +271,19 @@ class BallisticsEngine:
         self._rng = rng
         self._config = config or BallisticsConfig()
 
-    def _air_density(self, altitude_m: float) -> float:
-        """ISA air density model — decreases with altitude."""
-        rho0 = self._config.air_density_sea_level
+    def _air_density(
+        self, altitude_m: float, rho0_override: float | None = None,
+    ) -> float:
+        """ISA air density model — decreases with altitude.
+
+        Parameters
+        ----------
+        altitude_m:
+            Altitude in metres above sea level.
+        rho0_override:
+            If provided, override sea-level density (e.g. from weather).
+        """
+        rho0 = rho0_override if rho0_override is not None else self._config.air_density_sea_level
         # Simplified exponential model
         scale_height = 8500.0  # meters
         return rho0 * math.exp(-altitude_m / scale_height)
@@ -372,7 +382,8 @@ class BallisticsEngine:
         mv = weapon.muzzle_velocity_mps
         if ammo.max_speed_mps > 0:
             mv = max(mv, ammo.max_speed_mps)
-        mv *= 1.0 + 0.0005 * (temp_c - 21.0)
+        # Phase 59c: propellant temperature coefficient (MIL-STD-1474)
+        mv *= 1.0 + 0.001 * (temp_c - 21.0)
 
         el_rad = math.radians(elevation_deg)
         az_rad = math.radians(azimuth_deg)
@@ -393,6 +404,10 @@ class BallisticsEngine:
         radius_m = ammo.diameter_mm / 2000.0
         area = math.pi * radius_m * radius_m
         sos = _speed_of_sound(temp_c)
+        # Phase 59c: allow weather-derived air density override
+        rho0 = conditions.get(
+            "air_density_sea_level", self._config.air_density_sea_level,
+        )
 
         fx, fy, fz, fvx, fvy, fvz, tof, max_alt, impact_angle = _rk4_trajectory_kernel(
             x, y, z, vx, vy, vz,
@@ -400,7 +415,7 @@ class BallisticsEngine:
             int(self._config.enable_drag), int(self._config.enable_mach_drag),
             int(self._config.enable_wind), int(self._config.enable_coriolis),
             ammo.drag_coefficient, ammo.mass_kg, area,
-            self._config.air_density_sea_level, 8500.0, sos,
+            rho0, 8500.0, sos,
             wind_e, wind_n,
             lat_rad, self._config.earth_rotation_rad_s, STANDARD_GRAVITY,
         )

@@ -73,6 +73,7 @@ Rolling record of implementation decisions, changes, and lessons learned across 
 | 57 | Full Validation & Regression | **Complete** | [phase-57.md](phase-57.md) |
 | | | | |
 | 58 | Structural Verification & Core Combat Wiring | **Complete** | [phase-58.md](phase-58.md) |
+| 59 | Atmospheric & Ground Environment Wiring | **Complete** | [phase-59.md](phase-59.md) |
 
 ## Post-MVP Refinement Index
 
@@ -250,6 +251,11 @@ Known limitations and deferred improvements logged during implementation. Review
 | 58 | `apply_casualties` / `degrade_equipment` unwired — methods exist on Unit but not called from battle.py. Behavioral application deferred to calibration phase that accounts for progressive unit degradation. | [phase-58.md — Known Limitations](phase-58.md#known-limitations--deferred-items) |
 | 58 | Fuel consumption unwired — fuel gate (check) works but fuel depletion (consumption) commented out in battle.py movement loop. Rate needs per-vehicle-type calibration and resolution-aware scaling. | [phase-58.md — Known Limitations](phase-58.md#known-limitations--deferred-items) |
 | 58 | Air routing uses hardcoded Pk values (missile_pk=0.5, weapon_pk=0.4, interceptor_pk=0.4) — should read from weapon definitions when scenarios enable `enable_air_routing: true`. | [phase-58.md — Known Limitations](phase-58.md#known-limitations--deferred-items) |
+| 59 | Ice crossing pathfinding — frozen water bodies not traversable (requires pathfinding graph changes to add temporary edges) | [phase-59.md — Deferrals](phase-59.md#deferrals-planned--deferred) |
+| 59 | Vegetation height LOS blocking — tall vegetation (>2m) should block ground-level LOS (requires DDA raycaster modification) | [phase-59.md — Deferrals](phase-59.md#deferrals-planned--deferred) |
+| 59 | Bridge capacity enforcement — units lack weight field, so capacity_tons gate cannot be applied | [phase-59.md — Deferrals](phase-59.md#deferrals-planned--deferred) |
+| 59 | Ford crossing routing — river ford traversal requires pathfinding integration | [phase-59.md — Deferrals](phase-59.md#deferrals-planned--deferred) |
+| 59 | Road snow degradation — `_ROAD_SPEED_FACTORS` hardcoded table needs per-snow-depth refactoring | [phase-59.md — Deferrals](phase-59.md#deferrals-planned--deferred) |
 
 ## Conventions
 
