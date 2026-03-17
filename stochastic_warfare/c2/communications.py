@@ -249,6 +249,8 @@ class CommunicationsEngine:
         self._network_loads: dict[int, float] = {}
         # Phase 17: SATCOM reliability factor from space constellation health
         self._satcom_reliability_factor: float = 1.0
+        # Phase 61: EM environment for HF quality, radio horizon, rain atten
+        self._em_environment: Any | None = None
 
     # -- Registration -------------------------------------------------------
 
@@ -293,6 +295,10 @@ class CommunicationsEngine:
     def set_satcom_reliability(self, factor: float) -> None:
         """Set SATCOM reliability factor from space constellation health [0.0-1.0]."""
         self._satcom_reliability_factor = max(0.0, min(1.0, factor))
+
+    def set_em_environment(self, em_env: Any) -> None:
+        """Set EM environment for HF quality, radio horizon, rain attenuation."""
+        self._em_environment = em_env
 
     # -- Jamming ------------------------------------------------------------
 
@@ -503,6 +509,26 @@ class CommunicationsEngine:
         # Phase 17: SATCOM reliability degradation from constellation health
         if equip.comm_type_enum == CommType.SATELLITE:
             r *= self._satcom_reliability_factor
+
+        # Phase 61c: EM propagation effects on comms reliability
+        if self._em_environment is not None:
+            try:
+                ct = equip.comm_type_enum
+                distance = self._compute_range(from_pos, to_pos)
+                # HF skywave quality (day/night D-layer/F-layer)
+                if ct == CommType.RADIO_HF:
+                    r *= self._em_environment.hf_propagation_quality()
+                # VHF/UHF radio horizon (line-of-sight)
+                elif ct in (CommType.RADIO_VHF, CommType.RADIO_UHF, CommType.DATA_LINK):
+                    _ant_h = max(2.0, from_pos.altitude)
+                    _radio_hz = self._em_environment.radar_horizon(_ant_h)
+                    _rx_h = max(2.0, to_pos.altitude)
+                    _radio_hz += self._em_environment.radar_horizon(_rx_h)
+                    if distance > _radio_hz:
+                        r *= 0.1  # beyond radio horizon
+            except Exception:
+                pass
+
         return max(0.0, min(1.0, r))
 
     def _channel_latency(

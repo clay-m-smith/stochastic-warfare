@@ -150,6 +150,12 @@ class CBRNEngine:
         heightmap: Any = None,
         time_of_day: Any = None,
         timestamp: Any = None,
+        *,
+        enable_cbrn_environment: bool = False,
+        washout_coefficient: float = 1e-4,
+        arrhenius_ea_j: float = 50000.0,
+        inversion_multiplier: float = 8.0,
+        uv_degradation_rate: float = 0.1,
     ) -> None:
         """Full CBRN update cycle for one tick.
 
@@ -179,8 +185,26 @@ class CBRNEngine:
         )
 
         # 1. Advect puffs and deposit to contamination grid
+        _is_day = getattr(time_of_day, "is_daytime", True) if time_of_day else True
+        _stability_str = stability.name if hasattr(stability, "name") else str(stability)
         for puff in self._dispersal.puffs:
             self._dispersal.advect_puff(puff, dt_s, wind_speed, wind_direction)
+
+            # Phase 62c: apply weather-dependent decay/trapping
+            if enable_cbrn_environment:
+                _cur = getattr(weather_conditions, "current", weather_conditions)
+                self._dispersal.apply_weather_effects(
+                    puff, dt_s,
+                    precipitation_rate_mm_hr=getattr(_cur, "precipitation_rate", 0.0),
+                    temperature_c=getattr(_cur, "temperature", 20.0),
+                    is_daytime=_is_day,
+                    cloud_cover=cloud_cover,
+                    stability_class=_stability_str,
+                    washout_coefficient=washout_coefficient,
+                    arrhenius_ea_j=arrhenius_ea_j,
+                    inversion_multiplier=inversion_multiplier,
+                    uv_degradation_rate=uv_degradation_rate,
+                )
 
             # Deposit concentration to contamination grid cells
             if self._contamination is not None:

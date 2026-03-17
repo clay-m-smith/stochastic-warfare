@@ -142,6 +142,36 @@ class CalibrationSchema(BaseModel):
     enable_thermal_crossover: bool = False
     enable_nvg_detection: bool = False
 
+    # -- Maritime, acoustic, & EM environment (Phase 61) -------------------
+    enable_sea_state_ops: bool = False
+    enable_acoustic_layers: bool = False
+    enable_em_propagation: bool = False
+
+    # -- Human factors & altitude (Phase 62) --------------------------------
+    enable_human_factors: bool = False
+    heat_casualty_base_rate: float = 0.02
+    cold_casualty_base_rate: float = 0.015
+    mopp_fov_reduction_4: float = 0.7
+    mopp_reload_factor_4: float = 1.5
+    mopp_comms_factor_4: float = 0.5
+    altitude_sickness_threshold_m: float = 2500.0
+    altitude_sickness_rate: float = 0.03
+
+    # -- CBRN-environment interaction (Phase 62) -----------------------------
+    enable_cbrn_environment: bool = False
+    cbrn_washout_coefficient: float = 1e-4
+    cbrn_arrhenius_ea: float = 50000.0
+    cbrn_inversion_multiplier: float = 8.0
+    cbrn_uv_degradation_rate: float = 0.1
+
+    # -- Air combat environmental coupling (Phase 62) -----------------------
+    enable_air_combat_environment: bool = False
+    cloud_ceiling_min_attack_m: float = 500.0
+    icing_maneuver_penalty: float = 0.15
+    icing_power_penalty: float = 0.10
+    icing_radar_penalty_db: float = 3.0
+    wind_bvr_missile_speed_mps: float = 1000.0
+
     # -- Collections ------------------------------------------------------
     weapon_assignments: dict[str, str] = {}
     victory_weights: dict[str, float] | None = None

@@ -143,6 +143,8 @@ nav:
     - Phase 58 - Structural Verification & Core Combat Wiring: devlog/phase-58.md
     - Phase 59 - Atmospheric & Ground Environment Wiring: devlog/phase-59.md
     - Phase 60 - Obscurants, Fire, & Visual Environment: devlog/phase-60.md
+    - Phase 61 - Maritime, Acoustic, & EM Environment: devlog/phase-61.md
+    - Phase 62 - Human Factors, CBRN, & Air Combat Environment: devlog/phase-62.md
   - Specifications:
     - Project Structure: specs/project-structure.md
     - Skills & Hooks: skills-and-hooks.md

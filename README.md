@@ -1,8 +1,8 @@
 # Stochastic Warfare
 
 ![Python](https://img.shields.io/badge/python-%3E%3D3.12-blue)
-![Tests](https://img.shields.io/badge/tests-8%2C545_passing-brightgreen)
-![Phase](https://img.shields.io/badge/phase-60_Block--7-brightgreen)
+![Tests](https://img.shields.io/badge/tests-8%2C700_passing-brightgreen)
+![Phase](https://img.shields.io/badge/phase-62_Block--7-brightgreen)
 
 High-fidelity, high-resolution wargame simulator built as a headless Python engine. Models warfare across multiple scales — from individual unit engagements up through tactical battles, operational battlefields, and multi-day strategic campaigns — with stochastic and signal-processing-inspired models throughout.
 
@@ -236,7 +236,10 @@ All 11 MVP phases (0-10) are complete. Post-MVP Phases 11-24 are complete (deep 
 | 57 | Full Validation & Regression (Block 6) | 51 | **Complete** |
 | 58 | Structural Verification & Core Combat Wiring (Block 7) | 60 | **Complete** |
 | 59 | Atmospheric & Ground Environment Wiring (Block 7) | 48 | **Complete** |
-| | **Total** | **~8,220** | |
+| 60 | Obscurants, Fire, & Visual Environment (Block 7) | 53 | **Complete** |
+| 61 | Maritime, Acoustic, & EM Environment (Block 7) | 71 | **Complete** |
+| 62 | Human Factors, CBRN, & Air Combat Environment (Block 7) | 85 | **Complete** |
+| | **Total** | **~8,428** | |
 
 For the full phase roadmap, see [`docs/development-phases.md`](docs/development-phases.md) (MVP), [`docs/development-phases-post-mvp.md`](docs/development-phases-post-mvp.md) (post-MVP), [`docs/development-phases-block4.md`](docs/development-phases-block4.md) (Block 4), [`docs/development-phases-block5.md`](docs/development-phases-block5.md) (Block 5), [`docs/development-phases-block6.md`](docs/development-phases-block6.md) (Block 6), and [`docs/development-phases-block7.md`](docs/development-phases-block7.md) (Block 7). For per-phase implementation logs, see [`docs/devlog/`](docs/devlog/).
 

@@ -369,6 +369,8 @@ class EngagementEngine:
         current_time_s: float = 0.0,
         terrain_cover: float = 0.0,
         elevation_mod: float = 1.0,
+        humidity: float = 0.5,
+        precipitation_rate: float = 0.0,
     ) -> EngagementResult:
         """Dispatch an engagement to the appropriate handler.
 
@@ -454,6 +456,8 @@ class EngagementEngine:
                 weapon=weapon,
                 ammo_id=ammo_id,
                 ammo_def=ammo_def,
+                humidity=humidity,
+                precipitation_rate=precipitation_rate,
                 current_time_s=current_time_s,
                 timestamp=timestamp,
             )

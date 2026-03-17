@@ -288,6 +288,67 @@ class DispersalEngine:
         self._puffs = [p for p in self._puffs if p.age_s < max_age]
         return before - len(self._puffs)
 
+    # ── Phase 62c: CBRN-environment weather coupling ────────────────
+
+    def apply_weather_effects(
+        self,
+        puff: PuffState,
+        dt_s: float,
+        *,
+        precipitation_rate_mm_hr: float = 0.0,
+        temperature_c: float = 20.0,
+        is_daytime: bool = True,
+        cloud_cover: float = 0.5,
+        stability_class: str = "D",
+        washout_coefficient: float = 1e-4,
+        arrhenius_ea_j: float = 50000.0,
+        inversion_multiplier: float = 8.0,
+        uv_degradation_rate: float = 0.1,
+    ) -> None:
+        """Apply weather-dependent decay/amplification to a puff.
+
+        Four effects (all compound multiplicatively on ``puff.mass_kg``):
+
+        1. **Rain washout** — exponential mass removal proportional to
+           precipitation rate.
+        2. **Arrhenius thermal decay** — temperature-dependent chemical
+           breakdown (higher T → faster decay).
+        3. **Inversion trapping** — stable atmosphere (class E/F)
+           concentrates agent near ground level.
+        4. **UV photo-degradation** — clear daytime sunlight breaks down
+           agent (gated by cloud cover < 0.5).
+        """
+        if puff.mass_kg <= 0:
+            return
+
+        # 1. Rain washout: mass *= exp(-coeff * precip_rate * dt)
+        if precipitation_rate_mm_hr > 0:
+            puff.mass_kg *= math.exp(
+                -washout_coefficient * precipitation_rate_mm_hr * dt_s
+            )
+
+        # 2. Arrhenius thermal decay: k = exp(-Ea / (R * T_K))
+        R = 8.314  # J/(mol·K)
+        T_k = temperature_c + 273.15
+        if T_k > 0:
+            k = math.exp(-arrhenius_ea_j / (R * T_k))
+            puff.mass_kg *= math.exp(-k * dt_s)
+
+        # 3. Inversion trapping: stable classes E/F boost concentration
+        #    Applied as a one-time multiplier per inversion event (tracked
+        #    by caller via _inversion_applied set — we just apply the factor
+        #    every tick the inversion holds, limited to prevent unbounded growth)
+        if stability_class in ("E", "F"):
+            # Apply a mild per-tick concentration factor (inversion holds agent)
+            # Capped so it doesn't grow forever — represents reduced vertical mixing
+            _inv_dt = dt_s / 3600.0  # fraction of an hour
+            _inv_factor = 1.0 + (inversion_multiplier - 1.0) * _inv_dt
+            puff.mass_kg *= min(_inv_factor, inversion_multiplier)
+
+        # 4. UV photo-degradation: clear daytime only
+        if is_daytime and cloud_cover < 0.5:
+            puff.mass_kg *= math.exp(-uv_degradation_rate * dt_s / 3600.0)
+
     # ── State persistence ────────────────────────────────────────────
 
     def get_state(self) -> dict[str, Any]:

@@ -515,6 +515,16 @@ class SimulationEngine:
                 if self._strict_mode:
                     raise
 
+        # Phase 61: Underwater acoustics engine (future-proofs per-tick update)
+        _ua = getattr(ctx, "underwater_acoustics_engine", None)
+        if _ua is not None:
+            try:
+                _ua.update(dt)
+            except Exception:
+                logger.error("Underwater acoustics engine update failed", exc_info=True)
+                if self._strict_mode:
+                    raise
+
         # Phase 60: Obscurants engine (smoke/dust/fog drift + decay)
         if getattr(ctx, "obscurants_engine", None) is not None:
             try:
@@ -543,6 +553,19 @@ class SimulationEngine:
         if ctx.cbrn_engine is not None and hasattr(ctx.cbrn_engine, "update"):
             try:
                 elapsed = clock.elapsed.total_seconds()
+                _cal_cbrn = getattr(ctx, "calibration", None)
+                _cbrn_env = False
+                _cbrn_kw: dict = {}
+                if _cal_cbrn is not None:
+                    _cbrn_env = _cal_cbrn.get("enable_cbrn_environment", False)
+                    if _cbrn_env:
+                        _cbrn_kw = {
+                            "enable_cbrn_environment": True,
+                            "washout_coefficient": _cal_cbrn.cbrn_washout_coefficient,
+                            "arrhenius_ea_j": _cal_cbrn.cbrn_arrhenius_ea,
+                            "inversion_multiplier": _cal_cbrn.cbrn_inversion_multiplier,
+                            "uv_degradation_rate": _cal_cbrn.cbrn_uv_degradation_rate,
+                        }
                 ctx.cbrn_engine.update(
                     dt, elapsed,
                     units_by_side=ctx.units_by_side,
@@ -551,6 +574,7 @@ class SimulationEngine:
                     heightmap=ctx.heightmap,
                     time_of_day=ctx.time_of_day_engine,
                     timestamp=clock.current_time,
+                    **_cbrn_kw,
                 )
             except Exception:
                 logger.error("CBRN engine update failed", exc_info=True)

@@ -380,6 +380,12 @@ class SimulationContext:
     air_ground_engine: Any = None
     air_defense_engine: Any = None
 
+    # Underwater Acoustics (Phase 61)
+    underwater_acoustics_engine: Any = None
+
+    # Carrier Ops (Phase 61)
+    carrier_ops_engine: Any = None
+
     # Directed Energy (Phase 28.5)
     dew_engine: Any = None
 
@@ -513,6 +519,8 @@ class SimulationContext:
             ("stratagem_engine", self.stratagem_engine),
             ("iads_engine", self.iads_engine),
             ("ato_engine", self.ato_engine),
+            ("underwater_acoustics_engine", self.underwater_acoustics_engine),
+            ("carrier_ops_engine", self.carrier_ops_engine),
         ]
         for name, eng in engines:
             if eng is not None and hasattr(eng, "get_state"):
@@ -588,6 +596,8 @@ class SimulationContext:
             ("stratagem_engine", self.stratagem_engine),
             ("iads_engine", self.iads_engine),
             ("ato_engine", self.ato_engine),
+            ("underwater_acoustics_engine", self.underwater_acoustics_engine),
+            ("carrier_ops_engine", self.carrier_ops_engine),
         ]
         for name, eng in engines:
             if eng is not None and name in state and hasattr(eng, "set_state"):
@@ -1223,6 +1233,8 @@ class ScenarioLoader:
         time_of_day_engine = None
         sea_state_engine = None
         seasons_engine = None
+        underwater_acoustics_engine = None
+        conditions_engine = None
 
         if clock is not None:
             from stochastic_warfare.environment.weather import (
@@ -1270,6 +1282,19 @@ class ScenarioLoader:
                 weather_engine, time_of_day_engine, clock, obs_rng,
             )
 
+            # Phase 61: UnderwaterAcousticsEngine instantiation
+            from stochastic_warfare.environment.underwater_acoustics import UnderwaterAcousticsEngine
+            ua_rng = rng_mgr.get_stream(ModuleId.ENVIRONMENT)
+            underwater_acoustics_engine = UnderwaterAcousticsEngine(
+                sea_state_engine, clock, ua_rng,
+            )
+
+            # Phase 61: EMEnvironment instantiation (conditions_engine)
+            from stochastic_warfare.environment.electromagnetic import EMEnvironment
+            conditions_engine = EMEnvironment(
+                weather_engine, sea_state_engine, clock,
+            )
+
             # Merge weather visibility into calibration if not already set
             cal = config.calibration_overrides
             if "visibility_m" in wc:
@@ -1313,6 +1338,18 @@ class ScenarioLoader:
             bus, logistics_rng, config=engineering_config,
         )
 
+        # Phase 61: CarrierOpsEngine instantiation
+        from stochastic_warfare.combat.carrier_ops import CarrierOpsEngine
+        carrier_ops_rng = rng_mgr.get_stream(ModuleId.COMBAT)
+        carrier_ops_engine = CarrierOpsEngine(
+            event_bus=bus,
+            rng=carrier_ops_rng,
+        )
+
+        # Phase 61c: wire EM environment to comms engine
+        if conditions_engine is not None:
+            comms_engine.set_em_environment(conditions_engine)
+
         result = {
             "los_engine": los_engine,
             "engagement_engine": engagement_engine,
@@ -1352,6 +1389,9 @@ class ScenarioLoader:
             "sea_state_engine": sea_state_engine,
             "seasons_engine": seasons_engine,
             "obscurants_engine": obscurants_engine,
+            "underwater_acoustics_engine": underwater_acoustics_engine,
+            "conditions_engine": conditions_engine,
+            "carrier_ops_engine": carrier_ops_engine,
             "medical_engine": medical_engine,
             "engineering_engine": engineering_engine,
             "stratagem_engine": stratagem_engine,

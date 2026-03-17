@@ -75,6 +75,8 @@ Rolling record of implementation decisions, changes, and lessons learned across 
 | 58 | Structural Verification & Core Combat Wiring | **Complete** | [phase-58.md](phase-58.md) |
 | 59 | Atmospheric & Ground Environment Wiring | **Complete** | [phase-59.md](phase-59.md) |
 | 60 | Obscurants, Fire, & Visual Environment | **Complete** | [phase-60.md](phase-60.md) |
+| 61 | Maritime, Acoustic, & EM Environment | **Complete** | [phase-61.md](phase-61.md) |
+| 62 | Human Factors, CBRN, & Air Combat Environment | **Complete** | [phase-62.md](phase-62.md) |
 
 ## Post-MVP Refinement Index
 
@@ -263,6 +265,20 @@ Known limitations and deferred improvements logged during implementation. Review
 | 60 | Fire damage application to units — `units_in_fire()` called/logged, burn damage not applied | [phase-60.md — Deferrals](phase-60.md#deferrals-planned--deferred) |
 | 60 | Road surface dust suppression — dust generation doesn't distinguish paved roads | [phase-60.md — Deferrals](phase-60.md#deferrals-planned--deferred) |
 | 60 | Artificial illumination / flares — no flare deployment mechanic exists | [phase-60.md — Deferrals](phase-60.md#deferrals-planned--deferred) |
+| 61 | CarrierOpsEngine full battle loop wiring — instantiated but CAP/sortie/recovery needs air sortie dispatch | [phase-61.md — Deferrals](phase-61.md#deferrals-planned--deferred) |
+| 61 | Beaufort > 6 helicopter deck landing abort — no helicopter-carrier recovery tracking | [phase-61.md — Deferrals](phase-61.md#deferrals-planned--deferred) |
+| 61 | Beaufort > 7 carrier flight ops suspension — requires CarrierOpsEngine battle loop integration | [phase-61.md — Deferrals](phase-61.md#deferrals-planned--deferred) |
+| 61 | Landing craft 10% casualty risk at Beaufort > 5 — no landing craft type detection | [phase-61.md — Deferrals](phase-61.md#deferrals-planned--deferred) |
+| 61 | Sea spray/salt fog maritime obscurant — needs ObscurantsEngine integration | [phase-61.md — Deferrals](phase-61.md#deferrals-planned--deferred) |
+| 61 | SHF/EHF rain attenuation for comms — needs per-equipment frequency tracking | [phase-61.md — Deferrals](phase-61.md#deferrals-planned--deferred) |
+| 61 | Ionospheric storm effects on HF — needs space weather events | [phase-61.md — Deferrals](phase-61.md#deferrals-planned--deferred) |
+| 61 | Hull natural period per ship class — hardcoded ~10s/~12s, should come from YAML | [phase-61.md — Deferrals](phase-61.md#deferrals-planned--deferred) |
+| 62 | Dehydration/water consumption — needs water supply tracking in logistics | [phase-62.md — Deferrals](phase-62.md#deferrals-planned--deferred) |
+| 62 | Environmental fatigue acceleration — temperature-driven fatigue needs fatigue accumulation wiring | [phase-62.md — Deferrals](phase-62.md#deferrals-planned--deferred) |
+| 62 | MOPP comms → C2 effectiveness full chain — voice clarity → order execution | [phase-62.md — Deferrals](phase-62.md#deferrals-planned--deferred) |
+| 62 | Turbulence → gun accuracy — no turbulence model in WeatherEngine | [phase-62.md — Deferrals](phase-62.md#deferrals-planned--deferred) |
+| 62 | Wind shear (altitude-dependent wind) — needs new wind profile model | [phase-62.md — Deferrals](phase-62.md#deferrals-planned--deferred) |
+| 62 | Surface roughness → CBRN mixing height — needs per-terrain roughness data | [phase-62.md — Deferrals](phase-62.md#deferrals-planned--deferred) |
 
 ## Conventions
 

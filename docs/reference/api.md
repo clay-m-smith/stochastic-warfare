@@ -211,7 +211,7 @@ Records all simulation events for post-run analysis. Subscribes to the `EventBus
 | `start()` | -- | Begin recording |
 | `stop()` | -- | Stop recording |
 | `events()` | `list` | All recorded events |
-| `events_by_type(event_type)` | `list` | Events filtered by type |
+| `events_of_type(event_type_name)` | `list` | Events filtered by type |
 | `snapshots()` | `list[dict]` | State snapshots (captured at `snapshot_interval_ticks`) |
 
 ---
@@ -412,7 +412,7 @@ The top-level pydantic model for scenario YAML files. Key fields:
 | `objectives` | `list[ObjectiveConfig]` | Spatial objectives |
 | `victory_conditions` | `list[VictoryConditionConfig]` | Win conditions |
 | `reinforcements` | `list[ReinforcementConfig]` | Scheduled arrivals |
-| `calibration_overrides` | `dict \| None` | Parameter overrides for tuning |
+| `calibration_overrides` | `CalibrationSchema \| None` | Typed calibration overrides (see below) |
 | `ew_config` | `dict \| None` | Electronic warfare configuration |
 | `space_config` | `dict \| None` | Space/satellite configuration |
 | `cbrn_config` | `dict \| None` | CBRN effects configuration |
@@ -420,6 +420,52 @@ The top-level pydantic model for scenario YAML files. Key fields:
 | `school_config` | `dict \| None` | Doctrinal school assignments |
 | `dew_config` | `dict \| None` | Directed energy weapon configuration |
 | `documented_outcomes` | `dict \| None` | Historical reference data for validation |
+
+---
+
+### CalibrationSchema
+
+```python
+from stochastic_warfare.simulation.calibration import CalibrationSchema
+```
+
+Pydantic model (`extra="forbid"`) for all scenario tuning parameters. Replaces free-form `dict` overrides — mistyped keys are caught at parse time. Key fields organized by domain:
+
+**Combat & Engagement:**
+
+| Field | Type | Default | Description |
+|-------|------|---------|-------------|
+| `hit_probability_modifier` | `dict[str, float]` | `{}` | Per-side Pk multiplier (e.g. `{"blue": 1.2}`) |
+| `force_ratio_modifier` | `dict[str, float]` | `{}` | Per-side Dupuy CEV (e.g. `{"blue": 2.0}`) |
+| `target_selection_mode` | `str` | `"nearest"` | Target selection: `"nearest"`, `"threat"`, `"weakest"` |
+| `enable_burst_fire` | `bool` | `False` | Enable burst fire engagement model |
+| `enable_air_routing` | `bool` | `False` | Enable air combat routing via AirCombatEngine |
+
+**Environmental Coupling (Phase 58--62):**
+
+| Field | Type | Default | Description |
+|-------|------|---------|-------------|
+| `enable_human_factors` | `bool` | `False` | Heat/cold casualties, expanded MOPP, altitude sickness |
+| `heat_casualty_base_rate` | `float` | `0.02` | Fraction/hr above WBGT threshold |
+| `cold_casualty_base_rate` | `float` | `0.015` | Fraction/hr below wind chill threshold |
+| `mopp_fov_reduction_4` | `float` | `0.7` | Detection range multiplier at MOPP-4 |
+| `mopp_reload_factor_4` | `float` | `1.5` | Reload time multiplier at MOPP-4 |
+| `mopp_comms_factor_4` | `float` | `0.5` | Comms quality multiplier at MOPP-4 |
+| `altitude_sickness_threshold_m` | `float` | `2500.0` | Altitude above which sickness applies |
+| `altitude_sickness_rate` | `float` | `0.03` | Performance loss per 100m above threshold |
+| `enable_cbrn_environment` | `bool` | `False` | Weather effects on CBRN agent dispersal |
+| `cbrn_washout_coefficient` | `float` | `1e-4` | Rain washout rate per mm/hr |
+| `cbrn_arrhenius_ea` | `float` | `50000.0` | Activation energy (J/mol) for thermal decay |
+| `cbrn_inversion_multiplier` | `float` | `8.0` | Concentration boost during temperature inversion |
+| `cbrn_uv_degradation_rate` | `float` | `0.1` | UV photo-degradation rate per hour |
+| `enable_air_combat_environment` | `bool` | `False` | Cloud ceiling, icing, density altitude, wind BVR |
+| `cloud_ceiling_min_attack_m` | `float` | `500.0` | Minimum ceiling for visual CAS delivery |
+| `icing_maneuver_penalty` | `float` | `0.15` | Stall speed increase fraction from icing |
+| `icing_power_penalty` | `float` | `0.10` | Engine power reduction from icing |
+| `icing_radar_penalty_db` | `float` | `3.0` | Radar detection loss in dB from radome ice |
+| `wind_bvr_missile_speed_mps` | `float` | `1000.0` | Reference missile speed for wind range modifier |
+
+All `enable_*` flags default to `False` for backward compatibility. Enable them in scenario YAML to activate the corresponding effects.
 
 ---
 

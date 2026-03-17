@@ -355,9 +355,11 @@ Wire physics-based thermal detection and NVG night detection recovery.
 
 ---
 
-## Phase 61: Maritime, Acoustic, & EM Environment
+## Phase 61: Maritime, Acoustic, & EM Environment — COMPLETE
 
 **Goal**: Wire all maritime, underwater acoustic, and electromagnetic propagation parameters. Wire CarrierOpsEngine. Wire rain detection factor.
+
+**Result**: 71 tests, 6 modified source files, 5 test files. Sea state ops (Beaufort penalty, tidal current, wave resonance, swell roll), acoustic layers (thermocline, surface duct, CZ), EM propagation (radar horizon, ducting, HF quality, radio horizon, DEW atmosphere). CarrierOpsEngine instantiated (structural only). EMEnvironment populates conditions_engine. All effects gated by enable_*=False.
 
 **Dependencies**: Phase 60 (obscurants system for sea spray interaction).
 
@@ -455,7 +457,9 @@ Wire radar horizon, ducting, atmospheric attenuation, HF propagation, and rain d
 
 ---
 
-## Phase 62: Human Factors, CBRN, & Air Combat Environment
+## Phase 62: Human Factors, CBRN, & Air Combat Environment ✓
+
+**Status**: Complete — 85 tests, 6 new test files, 5 modified source files.
 
 **Goal**: Environmental effects on personnel, CBRN-environment interaction, and air domain environmental coupling.
 

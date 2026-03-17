@@ -100,6 +100,31 @@ def _compute_crosswind_penalty(
     return max(0.7, 1.0 - crosswind * scale)
 
 
+# Phase 62a: WBGT and wind chill helpers for heat/cold casualties
+def _compute_wbgt(temperature_c: float, humidity: float) -> float:
+    """Simplified Wet Bulb Globe Temperature estimate.
+
+    WBGT ≈ 0.7·T·√(humidity) + 0.3·T.  Threshold for heat stress ~28°C.
+    """
+    return 0.7 * temperature_c * math.sqrt(max(0.0, min(1.0, humidity))) + 0.3 * temperature_c
+
+
+def _compute_wind_chill(temperature_c: float, wind_speed_mps: float) -> float:
+    """NWS wind chill formula (valid for T ≤ 10°C, V ≥ 4.8 km/h).
+
+    Returns wind chill temperature in °C.
+    """
+    v_kmh = wind_speed_mps * 3.6
+    if temperature_c > 10.0 or v_kmh < 4.8:
+        return temperature_c
+    return (
+        13.12
+        + 0.6215 * temperature_c
+        - 11.37 * (v_kmh ** 0.16)
+        + 0.3965 * temperature_c * (v_kmh ** 0.16)
+    )
+
+
 # Phase 52b: ITU-R P.838 rain attenuation for radar sensors
 def _compute_rain_detection_factor(precip_rate_mmhr: float, range_km: float) -> float:
     """Return detection range multiplier due to rain [0.1–1.0].
@@ -469,6 +494,10 @@ def _route_air_engagement(
     tgt_air = target.domain == Domain.AERIAL
     wpn_cat = getattr(wpn_inst.definition, "category", "").upper()
 
+    # Phase 62d: air combat environmental coupling
+    cal = getattr(ctx, "calibration", None)
+    _ace = cal is not None and cal.get("enable_air_combat_environment", False)
+
     # Air-to-air: route missile engagements through air combat engine
     if atk_air and tgt_air and wpn_cat == "MISSILE_LAUNCHER":
         engine = getattr(ctx, "air_combat_engine", None)
@@ -476,6 +505,59 @@ def _route_air_engagement(
             return False, None
         missile_pk = min(1.0, 0.5 * force_ratio_mod)
         pilot_skill = getattr(attacker, "training_level", 0.5)
+
+        # Phase 62d: environmental modifiers for A2A
+        _atk_energy = None
+        _def_energy = None
+        if _ace:
+            # Icing penalty
+            _cond = getattr(ctx, "conditions_engine", None)
+            if _cond is not None:
+                try:
+                    _air_c = _cond.air()
+                    _icing = getattr(_air_c, "icing_risk", 0.0)
+                    if _icing > 0.5:
+                        missile_pk *= (1.0 - cal.icing_maneuver_penalty)
+                except Exception:
+                    pass
+
+            # Density altitude → reduced thrust
+            _wx_aa = getattr(ctx, "weather_engine", None)
+            if _wx_aa is not None:
+                try:
+                    _alt_aa = getattr(attacker.position, "altitude", 0.0)
+                    _rho = _wx_aa.atmospheric_density(_alt_aa)
+                    _density_factor = min(1.0, _rho / 1.225)
+                    missile_pk *= _density_factor
+                except Exception:
+                    pass
+
+            # Wind → BVR range modification
+            if _wx_aa is not None:
+                try:
+                    _w_cur = _wx_aa.current.wind
+                    _w_spd = _w_cur.speed
+                    _w_dir = _w_cur.direction
+                    # Wind component along attacker→target axis
+                    _dx = target.position.easting - attacker.position.easting
+                    _dy = target.position.northing - attacker.position.northing
+                    _hdg = math.atan2(_dx, _dy)
+                    _wind_along = _w_spd * math.cos(_w_dir - _hdg)
+                    # Tailwind extends range, headwind reduces
+                    _range_mod = 1.0 + _wind_along / cal.wind_bvr_missile_speed_mps
+                    best_range /= max(0.5, _range_mod)
+                except Exception:
+                    pass
+
+            # Altitude energy advantage
+            from stochastic_warfare.combat.air_combat import EnergyState
+            _atk_alt = getattr(attacker.position, "altitude", 0.0)
+            _atk_spd = getattr(attacker, "speed", 250.0)
+            _def_alt = getattr(target.position, "altitude", 0.0)
+            _def_spd = getattr(target, "speed", 250.0)
+            _atk_energy = EnergyState(altitude_m=_atk_alt, speed_mps=_atk_spd)
+            _def_energy = EnergyState(altitude_m=_def_alt, speed_mps=_def_spd)
+
         result = engine.resolve_air_engagement(
             attacker_id=attacker.entity_id,
             defender_id=target.entity_id,
@@ -484,6 +566,8 @@ def _route_air_engagement(
             missile_pk=missile_pk,
             pilot_skill=pilot_skill,
             timestamp=timestamp,
+            attacker_energy=_atk_energy,
+            defender_energy=_def_energy,
         )
         if result.hit:
             return True, UnitStatus.DESTROYED
@@ -493,10 +577,56 @@ def _route_air_engagement(
     if atk_air and not tgt_air and wpn_cat in (
         "BOMB", "GUIDED_BOMB", "MISSILE_LAUNCHER",
     ):
+        # Phase 62d: cloud ceiling gate — unguided weapons need visual delivery
+        if _ace:
+            _wx_cas = getattr(ctx, "weather_engine", None)
+            if _wx_cas is not None:
+                try:
+                    _ceiling = getattr(_wx_cas.current, "cloud_ceiling", 10000.0)
+                    _guidance = getattr(
+                        getattr(wpn_inst, "definition", None), "guidance_type",
+                        getattr(
+                            # check ammo guidance if weapon has no guidance_type
+                            getattr(wpn_inst, "current_ammo", None), "guidance_type",
+                            "none",
+                        ),
+                    )
+                    _pgm_types = ("gps", "laser", "radar", "combined", "gps_ins", "semi_active", "active")
+                    _is_pgm = str(_guidance).lower() in _pgm_types
+                    if _ceiling < cal.cloud_ceiling_min_attack_m and not _is_pgm:
+                        logger.debug(
+                            "CAS aborted: cloud ceiling %.0fm < %.0fm (unguided)",
+                            _ceiling, cal.cloud_ceiling_min_attack_m,
+                        )
+                        return True, None  # mission aborted
+                except Exception:
+                    pass
+
         engine = getattr(ctx, "air_ground_engine", None)
         if engine is None:
             return False, None
         weapon_pk = min(1.0, 0.4 * force_ratio_mod)
+
+        # Phase 62d: icing + density penalties on CAS Pk
+        if _ace:
+            _cond_cas = getattr(ctx, "conditions_engine", None)
+            if _cond_cas is not None:
+                try:
+                    _air_cas = _cond_cas.air()
+                    _icing_cas = getattr(_air_cas, "icing_risk", 0.0)
+                    if _icing_cas > 0.5:
+                        weapon_pk *= (1.0 - cal.icing_power_penalty)
+                except Exception:
+                    pass
+            _wx_cas2 = getattr(ctx, "weather_engine", None)
+            if _wx_cas2 is not None:
+                try:
+                    _alt_cas = getattr(attacker.position, "altitude", 0.0)
+                    _rho_cas = _wx_cas2.atmospheric_density(_alt_cas)
+                    weapon_pk *= min(1.0, _rho_cas / 1.225)
+                except Exception:
+                    pass
+
         result = engine.execute_cas(
             aircraft_id=attacker.entity_id,
             target_id=target.entity_id,
@@ -853,6 +983,8 @@ class BattleManager:
         self._concealment_scores: dict[str, float] = {}
         # Phase 51a: VLS magazine tracking (entity_id → missiles launched)
         self._vls_launches: dict[str, int] = {}
+        # Phase 62a: fractional environmental casualty accumulator
+        self._env_casualty_accum: dict[str, float] = {}
 
     # ── Engagement detection ────────────────────────────────────────
 
@@ -1116,6 +1248,67 @@ class BattleManager:
                                     pending_mine_damage.append((u, UnitStatus.DESTROYED))
                                 elif mr.damage_fraction >= dis_thresh_m:
                                     pending_mine_damage.append((u, UnitStatus.DISABLED))
+
+        # 4f. Phase 62a: Heat/cold environmental casualties
+        if cal.get("enable_human_factors", False):
+            _wx62 = getattr(ctx, "weather_engine", None)
+            if _wx62 is not None:
+                try:
+                    _cur62 = _wx62.current
+                    _temp62 = _cur62.temperature
+                    _humid62 = getattr(_cur62, "humidity", 0.5)
+                    _wind62 = getattr(_cur62.wind, "speed", 0.0)
+                    _wbgt = _compute_wbgt(_temp62, _humid62)
+                    _wc = _compute_wind_chill(_temp62, _wind62)
+
+                    for _su62 in units_by_side.values():
+                        for _u62 in _su62:
+                            if _u62.status != UnitStatus.ACTIVE:
+                                continue
+                            _uid62 = _u62.entity_id
+                            _env_rate = 0.0
+
+                            # Heat stress
+                            if _wbgt > 28.0:
+                                _hr = cal.heat_casualty_base_rate * (_wbgt - 28.0) / 10.0
+                                # MOPP multiplier: gear traps heat
+                                _cbrn62 = getattr(ctx, "cbrn_engine", None)
+                                _mopp62 = 0
+                                if _cbrn62 is not None:
+                                    _mopp62 = getattr(_cbrn62, "_mopp_levels", {}).get(_uid62, 0)
+                                _hr *= 1.0 + _mopp62 * 0.5
+                                # Exertion: moving units generate more heat
+                                _pre62 = pre_positions.get(_uid62)
+                                if _pre62 is not None:
+                                    _cur_pos62 = (_u62.position.easting, _u62.position.northing)
+                                    if abs(_cur_pos62[0] - _pre62[0]) > 0.01 or abs(_cur_pos62[1] - _pre62[1]) > 0.01:
+                                        _hr *= 1.5
+                                _env_rate += _hr
+
+                            # Cold injury
+                            if _wc < -20.0:
+                                _cr = cal.cold_casualty_base_rate * (abs(_wc) - 20.0) / 20.0
+                                _env_rate += _cr
+
+                            if _env_rate > 0:
+                                _frac = _env_rate * (dt / 3600.0)
+                                self._env_casualty_accum[_uid62] = (
+                                    self._env_casualty_accum.get(_uid62, 0.0) + _frac
+                                )
+                                if self._env_casualty_accum[_uid62] >= 1.0:
+                                    _cas = int(self._env_casualty_accum[_uid62])
+                                    self._env_casualty_accum[_uid62] -= _cas
+                                    _pers = _u62.personnel
+                                    if _pers and len(_pers) > _cas:
+                                        object.__setattr__(
+                                            _u62, "personnel", _pers[:-_cas],
+                                        )
+                                        logger.debug(
+                                            "Env casualty: %s lost %d personnel (heat/cold)",
+                                            _uid62, _cas,
+                                        )
+                except Exception:
+                    logger.debug("Phase 62a env casualty failed", exc_info=True)
 
         # 5. Rebuild enemy data after movement — position arrays from step 1
         #    are stale (captured pre-movement coordinates).  The Unit object
@@ -1752,6 +1945,35 @@ class BattleManager:
                     if effective_speed <= 0:
                         continue
 
+                # Phase 61a: sea state ops — Beaufort speed penalty + tidal current
+                if cal.get("enable_sea_state_ops", False):
+                    _domain_61 = getattr(u, "domain", None)
+                    if _domain_61 in (Domain.NAVAL, Domain.SUBMARINE, Domain.AMPHIBIOUS):
+                        _sse = getattr(ctx, "sea_state_engine", None)
+                        if _sse is not None:
+                            try:
+                                _sea = _sse.current
+                                _bf = _sea.beaufort_scale
+                                # Small craft speed penalty: −20% per Beaufort above 3
+                                _disp = getattr(u, "displacement_tons", 0)
+                                _is_small = _disp > 0 and _disp < 1000
+                                if not _is_small:
+                                    _is_small = effective_speed > 0 and getattr(u, "max_speed", 0) < 15
+                                if _is_small and _bf > 3:
+                                    _bf_pen = max(0.0, 1.0 - 0.2 * (_bf - 3))
+                                    effective_speed *= _bf_pen
+                                # Tidal current adjustment along movement heading
+                                if dist > 0:
+                                    _heading = math.atan2(dx, dy)
+                                    _tc_spd = _sea.tidal_current_speed
+                                    _tc_dir = _sea.tidal_current_direction
+                                    _tc_effect = _tc_spd * math.cos(_tc_dir - _heading)
+                                    effective_speed = max(0.0, effective_speed + _tc_effect)
+                            except Exception:
+                                pass
+                        if effective_speed <= 0:
+                            continue
+
                 # Phase 56b: readiness-based movement speed penalty
                 _maint = getattr(ctx, "maintenance_engine", None)
                 if _maint is not None:
@@ -2160,10 +2382,16 @@ class BattleManager:
 
         # Phase 44a: Sea state effects (computed once per tick)
         sea_dispersion_modifier = 1.0
+        _sea_wave_period = 0.0
+        _sea_wave_dir = 0.0
+        _sea_beaufort = 0
         sea_state_engine = getattr(ctx, "sea_state_engine", None)
         if sea_state_engine is not None:
             try:
                 sea = sea_state_engine.current
+                _sea_beaufort = sea.beaufort_scale
+                _sea_wave_period = sea.wave_period
+                _sea_wave_dir = sea.tidal_current_direction  # swell direction
                 if sea.beaufort_scale > 4:
                     sea_dispersion_modifier = 1.0 + 0.2 * (
                         sea.beaufort_scale - 4
@@ -2264,6 +2492,46 @@ class BattleManager:
                         if sensor.sensor_type in _WEATHER_BYPASS_TYPES:
                             weather_independent = True
 
+                # Phase 61c: radar horizon gate + EM ducting
+                if cal.get("enable_em_propagation", False) and weather_independent:
+                    _best_st_em = getattr(
+                        sensors[0] if sensors else None, "sensor_type", None,
+                    )
+                    if _best_st_em == SensorType.RADAR:
+                        _em_env = getattr(ctx, "conditions_engine", None)
+                        if _em_env is not None:
+                            try:
+                                # Antenna height: aircraft=altitude, ship~30m, ground~10m
+                                _att_domain = getattr(attacker, "domain", None)
+                                if _att_domain == Domain.AERIAL:
+                                    _ant_h = max(10.0, attacker.position.altitude)
+                                elif _att_domain in (Domain.NAVAL, Domain.SUBMARINE):
+                                    _ant_h = 30.0
+                                else:
+                                    _ant_h = 10.0
+                                _tgt_alt = best_target.position.altitude
+                                _radar_hz = _em_env.radar_horizon(_ant_h)
+                                _tgt_hz = _em_env.radar_horizon(max(0, _tgt_alt))
+                                _total_hz = _radar_hz + _tgt_hz
+                                if best_range > _total_hz and _tgt_alt < 500:
+                                    detection_range = 0.0  # below radar horizon
+                                # EM ducting: extend range in maritime environments
+                                from stochastic_warfare.environment.electromagnetic import FrequencyBand
+                                _prop = _em_env.propagation(
+                                    FrequencyBand.SHF,
+                                    best_range / 1000.0,
+                                )
+                                if _prop.ducting_possible and _att_domain in (
+                                    Domain.NAVAL, Domain.SUBMARINE,
+                                ):
+                                    _duct_ext = min(
+                                        2.0,
+                                        _em_env.effective_earth_radius_factor() / (4.0 / 3.0),
+                                    )
+                                    detection_range *= _duct_ext
+                            except Exception:
+                                pass
+
                 # Phase 50c: continuous concealment — persistent per-target,
                 # decays with sustained observation, resets on target movement
                 tid = best_target.entity_id
@@ -2321,8 +2589,25 @@ class BattleManager:
                     _rain_scale = cal.get("rain_attenuation_factor", 1.0)
                     detection_range *= _rain_f ** _rain_scale
 
+                # Phase 62d: icing degrades radar detection (ice on radome)
+                if cal.get("enable_air_combat_environment", False) and weather_independent:
+                    _cond62r = getattr(ctx, "conditions_engine", None)
+                    if _cond62r is not None:
+                        try:
+                            _air62r = _cond62r.air()
+                            _icing62r = getattr(_air62r, "icing_risk", 0.0)
+                            if _icing62r > 0.5:
+                                _ice_db = cal.icing_radar_penalty_db
+                                # Convert dB loss to linear factor on range
+                                # Radar range eq: R^4, so factor = 10^(-dB/40)
+                                _ice_factor = 10.0 ** (-_ice_db / 40.0)
+                                detection_range *= _ice_factor
+                        except Exception:
+                            pass
+
                 # Phase 44b: CBRN MOPP detection degradation
                 mopp_fatigue_factor = 1.0
+                _mopp_level_62 = 0
                 cbrn_engine = getattr(ctx, "cbrn_engine", None)
                 if cbrn_engine is not None:
                     try:
@@ -2331,8 +2616,31 @@ class BattleManager:
                         )
                         detection_range *= _det
                         mopp_fatigue_factor = _fat
+                        _mopp_level_62 = getattr(cbrn_engine, "_mopp_levels", {}).get(
+                            attacker.entity_id, 0,
+                        )
                     except Exception:
                         pass
+
+                # Phase 62b: MOPP FOV reduction (beyond existing detection_factor)
+                if cal.get("enable_human_factors", False) and _mopp_level_62 > 0:
+                    _fov_full = cal.mopp_fov_reduction_4  # MOPP-4 multiplier
+                    _fov_scale = _mopp_level_62 / 4.0
+                    _fov_mod = 1.0 - _fov_scale * (1.0 - _fov_full)
+                    detection_range *= _fov_mod
+
+                # Phase 62b: altitude sickness → detection range penalty
+                if cal.get("enable_human_factors", False):
+                    _alt62 = getattr(attacker.position, "altitude", 0.0)
+                    if _alt62 > cal.altitude_sickness_threshold_m:
+                        _alt_perf = max(
+                            0.5,
+                            1.0 - cal.altitude_sickness_rate
+                            * (_alt62 - cal.altitude_sickness_threshold_m) / 100.0,
+                        )
+                        if getattr(attacker, "acclimatized", False):
+                            _alt_perf = 1.0 - (1.0 - _alt_perf) * 0.5
+                        detection_range *= _alt_perf
 
                 # Phase 55c-1: WW1 gas warfare MOPP — query gas mask protection
                 _gas_protection = 0.0
@@ -2368,6 +2676,51 @@ class BattleManager:
                                 detection_range *= (1.0 - _opacity.radar)
                     except Exception:
                         pass
+
+                # Phase 61b: acoustic layer modifiers for sonar sensors
+                if cal.get("enable_acoustic_layers", False) and sensors:
+                    _best_st61 = getattr(
+                        sensors[0] if sensors else None, "sensor_type", None,
+                    )
+                    _SONAR_TYPES_61 = frozenset({
+                        SensorType.ACTIVE_SONAR,
+                        SensorType.PASSIVE_SONAR,
+                        SensorType.PASSIVE_ACOUSTIC,
+                    })
+                    if _best_st61 in _SONAR_TYPES_61:
+                        _ua61 = getattr(ctx, "underwater_acoustics_engine", None)
+                        if _ua61 is not None:
+                            try:
+                                _ac = _ua61.conditions
+                                _obs_depth = getattr(attacker, "depth", 0.0)
+                                _tgt_depth = getattr(best_target, "depth", 0.0)
+                                _layer_mod = 1.0
+                                # Thermocline: target below, observer above
+                                if (_ac.thermocline_depth
+                                        and _tgt_depth > _ac.thermocline_depth
+                                        and _obs_depth <= _ac.thermocline_depth):
+                                    _layer_mod *= 0.1  # ~20 dB loss
+                                # Surface duct
+                                if _ac.surface_duct_depth:
+                                    if (_obs_depth < _ac.surface_duct_depth
+                                            and _tgt_depth < _ac.surface_duct_depth):
+                                        _layer_mod *= 3.0  # +10 dB gain
+                                    elif (_obs_depth < _ac.surface_duct_depth
+                                            and _tgt_depth > _ac.surface_duct_depth):
+                                        _layer_mod *= 0.06  # +15 dB loss
+                                # Convergence zones
+                                _cz_ranges = _ua61.convergence_zone_ranges(_obs_depth)
+                                _in_cz = any(
+                                    abs(best_range - cz_r) < 5000
+                                    for cz_r in _cz_ranges
+                                )
+                                if _cz_ranges and best_range > 30000 and not _in_cz:
+                                    _layer_mod *= 0.05  # acoustic shadow
+                                elif _in_cz:
+                                    _layer_mod *= 2.0  # CZ spike
+                                detection_range *= _layer_mod
+                            except Exception:
+                                pass
 
                 if best_range > detection_range:
                     continue
@@ -2629,6 +2982,26 @@ class BattleManager:
                 if mopp_fatigue_factor > 1.0:
                     crew_skill /= mopp_fatigue_factor
 
+                # Phase 62b: MOPP reload factor (additional penalty on crew skill)
+                if cal.get("enable_human_factors", False) and _mopp_level_62 > 0:
+                    _rl_full = cal.mopp_reload_factor_4  # MOPP-4 divisor
+                    _rl_scale = _mopp_level_62 / 4.0
+                    _rl_mod = 1.0 + _rl_scale * (_rl_full - 1.0)
+                    crew_skill /= _rl_mod
+
+                # Phase 62b: altitude sickness → crew skill penalty
+                if cal.get("enable_human_factors", False):
+                    _alt62e = getattr(attacker.position, "altitude", 0.0)
+                    if _alt62e > cal.altitude_sickness_threshold_m:
+                        _alt_perf_e = max(
+                            0.5,
+                            1.0 - cal.altitude_sickness_rate
+                            * (_alt62e - cal.altitude_sickness_threshold_m) / 100.0,
+                        )
+                        if getattr(attacker, "acclimatized", False):
+                            _alt_perf_e = 1.0 - (1.0 - _alt_perf_e) * 0.5
+                        crew_skill *= _alt_perf_e
+
                 # Phase 44c: Equipment readiness gate
                 readiness = 1.0
                 maint_engine = getattr(ctx, "maintenance_engine", None)
@@ -2697,6 +3070,27 @@ class BattleManager:
                 # Phase 44a: Sea state degrades naval target accuracy
                 if best_target.domain in (Domain.NAVAL, Domain.SUBMARINE):
                     target_size_mod /= sea_dispersion_modifier
+
+                # Phase 61a: wave period resonance + swell direction → gunnery
+                if cal.get("enable_sea_state_ops", False):
+                    if (attacker.domain in (Domain.NAVAL, Domain.SUBMARINE)
+                            or best_target.domain in (Domain.NAVAL, Domain.SUBMARINE)):
+                        # Wave period resonance: hull natural period ~8–12s
+                        _hull_period = 10.0  # typical destroyer
+                        _disp_a = getattr(attacker, "displacement_tons", 0)
+                        if _disp_a and _disp_a > 10000:
+                            _hull_period = 12.0  # larger ships
+                        if _sea_wave_period > 0 and abs(_sea_wave_period - _hull_period) < 0.1 * _hull_period:
+                            crew_skill *= max(0.3, 1.0 / 1.5)  # resonance penalty
+                        # Swell direction: beam seas = max roll
+                        _att_heading = 0.0
+                        if dist > 0:
+                            _att_heading = math.atan2(
+                                best_target.position.easting - attacker.position.easting,
+                                best_target.position.northing - attacker.position.northing,
+                            )
+                        _roll_factor = math.sin(_sea_wave_dir - _att_heading) ** 2
+                        crew_skill *= max(0.5, 1.0 - _roll_factor * 0.5)
 
                 # Current time for fire rate limiting
                 current_time_s = ctx.clock.elapsed.total_seconds()
@@ -3098,6 +3492,19 @@ class BattleManager:
                     target_posture_val = getattr(best_target, "posture", None)
                     target_posture_str = target_posture_val.name if target_posture_val is not None else "MOVING"
 
+                    # Phase 61c: extract humidity/precipitation for DEW
+                    _dew_humidity = 0.5
+                    _dew_precip = 0.0
+                    if cal.get("enable_em_propagation", False):
+                        _wx_61 = getattr(ctx, "weather_engine", None)
+                        if _wx_61 is not None:
+                            try:
+                                _wc = _wx_61.current
+                                _dew_humidity = getattr(_wc, "humidity", 0.5)
+                                _dew_precip = getattr(_wc, "precipitation_rate", 0.0)
+                            except Exception:
+                                pass
+
                     result = ctx.engagement_engine.route_engagement(
                         engagement_type=engagement_type,
                         attacker_id=attacker.entity_id,
@@ -3118,6 +3525,8 @@ class BattleManager:
                         current_time_s=current_time_s,
                         terrain_cover=terrain_cover,
                         elevation_mod=elevation_mod,
+                        humidity=_dew_humidity,
+                        precipitation_rate=_dew_precip,
                     )
 
                     # Phase 40e: apply fire volume to target suppression
@@ -3452,11 +3861,22 @@ class BattleManager:
         if cal is not None:
             min_eff = cal.get("c2_min_effectiveness", 0.3)
         try:
-            return comms.compute_c2_effectiveness(
+            eff = comms.compute_c2_effectiveness(
                 unit_id, positions, min_effectiveness=min_eff,
             )
         except Exception:
-            return 1.0
+            eff = 1.0
+        # Phase 62b: MOPP comms degradation
+        if cal is not None and cal.get("enable_human_factors", False):
+            _cbrn_c2 = getattr(ctx, "cbrn_engine", None)
+            if _cbrn_c2 is not None:
+                _ml_c2 = getattr(_cbrn_c2, "_mopp_levels", {}).get(unit_id, 0)
+                if _ml_c2 > 0:
+                    _cf = cal.mopp_comms_factor_4
+                    _sc = _ml_c2 / 4.0
+                    _comms_mod = 1.0 - _sc * (1.0 - _cf)
+                    eff *= _comms_mod
+        return eff
 
     @staticmethod
     def _get_unit_morale_level(ctx: Any, unit_id: str) -> float:
