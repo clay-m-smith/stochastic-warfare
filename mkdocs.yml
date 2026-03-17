@@ -142,6 +142,7 @@ nav:
     - Phase 57 - Full Validation & Regression: devlog/phase-57.md
     - Phase 58 - Structural Verification & Core Combat Wiring: devlog/phase-58.md
     - Phase 59 - Atmospheric & Ground Environment Wiring: devlog/phase-59.md
+    - Phase 60 - Obscurants, Fire, & Visual Environment: devlog/phase-60.md
   - Specifications:
     - Project Structure: specs/project-structure.md
     - Skills & Hooks: skills-and-hooks.md

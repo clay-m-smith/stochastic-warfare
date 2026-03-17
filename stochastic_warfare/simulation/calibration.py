@@ -136,6 +136,12 @@ class CalibrationSchema(BaseModel):
     enable_equipment_stress: bool = False
     enable_obstacle_effects: bool = False
 
+    # -- Obscurants, fire, & visual environment (Phase 60) -----------------
+    enable_obscurants: bool = False
+    enable_fire_zones: bool = False
+    enable_thermal_crossover: bool = False
+    enable_nvg_detection: bool = False
+
     # -- Collections ------------------------------------------------------
     weapon_assignments: dict[str, str] = {}
     victory_weights: dict[str, float] | None = None

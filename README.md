@@ -1,8 +1,8 @@
 # Stochastic Warfare
 
 ![Python](https://img.shields.io/badge/python-%3E%3D3.12-blue)
-![Tests](https://img.shields.io/badge/tests-8%2C492_passing-brightgreen)
-![Phase](https://img.shields.io/badge/phase-59_Block--7-brightgreen)
+![Tests](https://img.shields.io/badge/tests-8%2C545_passing-brightgreen)
+![Phase](https://img.shields.io/badge/phase-60_Block--7-brightgreen)
 
 High-fidelity, high-resolution wargame simulator built as a headless Python engine. Models warfare across multiple scales — from individual unit engagements up through tactical battles, operational battlefields, and multi-day strategic campaigns — with stochastic and signal-processing-inspired models throughout.
 

@@ -269,7 +269,7 @@ class SimulationContext:
     time_of_day_engine: Any = None
     seasons_engine: Any = None
     sea_state_engine: Any = None
-    obscurants_engine: Any = None  # TODO: ObscurantsEngine not implemented
+    obscurants_engine: Any = None
     conditions_engine: Any = None  # Used by SpaceEngine — keep
 
     # Combat
@@ -1263,6 +1263,13 @@ class ScenarioLoader:
                 clock, weather_engine, astronomy_engine,
             )
 
+            # Phase 60: ObscurantsEngine instantiation
+            from stochastic_warfare.environment.obscurants import ObscurantsEngine
+            obs_rng = rng_mgr.get_stream(ModuleId.ENVIRONMENT)
+            obscurants_engine = ObscurantsEngine(
+                weather_engine, time_of_day_engine, clock, obs_rng,
+            )
+
             # Merge weather visibility into calibration if not already set
             cal = config.calibration_overrides
             if "visibility_m" in wc:
@@ -1344,6 +1351,7 @@ class ScenarioLoader:
             "time_of_day_engine": time_of_day_engine,
             "sea_state_engine": sea_state_engine,
             "seasons_engine": seasons_engine,
+            "obscurants_engine": obscurants_engine,
             "medical_engine": medical_engine,
             "engineering_engine": engineering_engine,
             "stratagem_engine": stratagem_engine,

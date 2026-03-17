@@ -259,11 +259,15 @@ Wire equipment temperature range stress and terrain obstacle/ford/bridge feature
 
 ---
 
-## Phase 60: Obscurants, Fire, & Visual Environment
+## Phase 60: Obscurants, Fire, & Visual Environment ✓
+
+**Status**: Complete — 53 tests, 5 new test files, 4 modified source files.
 
 **Goal**: Instantiate and wire ObscurantsEngine. Create fire zone system from Phase 58 damage detail. Wire thermal environment and NVG detection.
 
 **Dependencies**: Phase 59 (vegetation data for fire); Phase 58 (fire_started extraction from DamageResult).
+
+**Partial deferrals**: Fire spread cellular automaton, environment_config scenario YAML, burned zone concealment reduction, fire damage application, road dust suppression, artificial illumination — all require calibration or data model changes beyond wiring scope.
 
 ### 60a: ObscurantsEngine Instantiation & Wiring
 

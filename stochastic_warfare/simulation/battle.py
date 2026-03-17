@@ -1133,6 +1133,20 @@ class BattleManager:
         # 7. Apply deferred damage
         self._apply_deferred_damage(pending_damage, ctx.event_bus, timestamp)
 
+        # 7b. Phase 60b: fire zone damage (logged; behavioral application deferred)
+        cal = getattr(getattr(ctx, "config", None), "calibration_overrides", None)
+        if cal is not None and cal.get("enable_fire_zones", False):
+            _inc_eng_fz = getattr(ctx, "incendiary_engine", None)
+            if _inc_eng_fz is not None and _inc_eng_fz._active_zones:
+                _unit_positions: dict[str, Position] = {}
+                for _side_units in units_by_side.values():
+                    for _fu in _side_units:
+                        if _fu.status == UnitStatus.ACTIVE:
+                            _unit_positions[_fu.entity_id] = _fu.position
+                _fire_hits = _inc_eng_fz.units_in_fire(_unit_positions)
+                for _fu_id, _burn_rate in _fire_hits.items():
+                    logger.debug("Unit %s in fire zone: %.3f dmg/s", _fu_id, _burn_rate)
+
         # 8. Morale checks
         if battle.ticks_executed % self._config.morale_check_interval == 0:
             self._execute_morale(ctx, units_by_side, active_enemies, timestamp)
@@ -1881,9 +1895,42 @@ class BattleManager:
                     if move_dist <= 0:
                         continue
 
+                # Phase 60b: fire zones block movement
+                if cal.get("enable_fire_zones", False):
+                    _inc_eng_mv = getattr(ctx, "incendiary_engine", None)
+                    if _inc_eng_mv is not None and _inc_eng_mv._active_zones:
+                        _tent_nx = u.position.easting + (dx / dist) * move_dist
+                        _tent_ny = u.position.northing + (dy / dist) * move_dist
+                        for _fz in _inc_eng_mv._active_zones:
+                            _fz_dx = _tent_nx - _fz.center[0]
+                            _fz_dy = _tent_ny - _fz.center[1]
+                            if math.sqrt(_fz_dx**2 + _fz_dy**2) < _fz.current_radius_m:
+                                move_dist = 0
+                                break
+                        if move_dist <= 0:
+                            continue
+
                 nx = u.position.easting + (dx / dist) * move_dist
                 ny = u.position.northing + (dy / dist) * move_dist
                 object.__setattr__(u, "position", Position(nx, ny, u.position.altitude))
+
+                # Phase 60b: vehicle movement dust trail on dry ground
+                _obs_engine_mv = getattr(ctx, "obscurants_engine", None)
+                if _obs_engine_mv is not None and cal.get("enable_obscurants", False):
+                    _domain = getattr(u, "domain", None)
+                    if _domain not in (Domain.NAVAL, Domain.AERIAL, Domain.SUBMARINE):
+                        if _is_vehicle and move_dist > 5.0:
+                            _seasons_mv = getattr(ctx, "seasons_engine", None)
+                            _is_dry = True
+                            if _seasons_mv is not None:
+                                from stochastic_warfare.environment.seasons import GroundState
+                                _is_dry = _seasons_mv.current.ground_state == GroundState.DRY
+                            if _is_dry:
+                                try:
+                                    _dust_r = 10.0 + effective_speed * 0.5
+                                    _obs_engine_mv.add_dust(u.position, radius=_dust_r)
+                                except Exception:
+                                    pass
 
                 # Phase 58e: consume fuel proportional to distance (vehicles only)
                 # NOTE: fuel consumption deferred to dedicated logistics tick —
@@ -2088,15 +2135,26 @@ class BattleManager:
         night_visual_modifier = 1.0
         night_thermal_modifier = 1.0
         tod_engine = getattr(ctx, "time_of_day_engine", None)
+        lat = getattr(ctx.config, "latitude", 0.0)
+        lon = getattr(ctx.config, "longitude", 0.0)
         if tod_engine is not None:
             try:
-                lat = getattr(ctx.config, "latitude", 0.0)
-                lon = getattr(ctx.config, "longitude", 0.0)
                 illum = tod_engine.illumination_at(lat, lon)
                 _thermal_floor = cal.get("night_thermal_floor", 0.8)
                 night_visual_modifier, night_thermal_modifier = (
                     _compute_night_modifiers(illum, _thermal_floor)
                 )
+            except Exception:
+                pass
+
+        # Phase 60c: physics-based thermal ΔT model (computed once per tick)
+        thermal_dt_contrast = 1.0
+        if cal.get("enable_thermal_crossover", False) and tod_engine is not None:
+            try:
+                _therm = tod_engine.thermal_environment(lat, lon)
+                thermal_dt_contrast = _therm.thermal_contrast
+                if _therm.crossover_in_hours < 0.5:
+                    thermal_dt_contrast *= max(0.1, _therm.crossover_in_hours / 0.5)
             except Exception:
                 pass
 
@@ -2228,11 +2286,32 @@ class BattleManager:
                 elif effective_concealment > 0 and weather_independent:
                     detection_range *= (1.0 - effective_concealment * 0.3)
 
-                # Phase 52a: Night degrades visual detection; thermal barely affected
+                # Phase 52a / 60c: Night degrades visual detection; thermal barely affected
                 if not weather_independent:
                     detection_range *= night_visual_modifier
+                    # Phase 60c: NVG detection recovery
+                    if cal.get("enable_nvg_detection", False) and night_visual_modifier < 1.0:
+                        _has_nvg = any(
+                            getattr(s, "sensor_type", None) == SensorType.NVG
+                            for s in sensors
+                        )
+                        if _has_nvg and tod_engine is not None:
+                            try:
+                                _nvg_eff = tod_engine.nvg_effectiveness(lat, lon)
+                                _nvg_recovery = _nvg_eff * 0.5
+                                _nvg_visual = night_visual_modifier + _nvg_recovery * (1.0 - night_visual_modifier)
+                                detection_range /= night_visual_modifier
+                                detection_range *= _nvg_visual
+                            except Exception:
+                                pass
                 else:
-                    detection_range *= night_thermal_modifier
+                    if cal.get("enable_thermal_crossover", False):
+                        _tdc = thermal_dt_contrast
+                        if _tdc < 0.5 and getattr(best_target, "speed", 0) > 1.0:
+                            _tdc = max(_tdc, 0.5)
+                        detection_range *= _tdc
+                    else:
+                        detection_range *= night_thermal_modifier
 
                 # Phase 52b: Rain attenuates radar/weather-independent sensors
                 if weather_independent and precipitation_rate_mmhr > 0:
@@ -2271,6 +2350,24 @@ class BattleManager:
                 _tnp = getattr(best_target, "naval_posture", None)
                 if _tnp is not None:
                     detection_range *= _NAVAL_POSTURE_DETECT_MULT.get(int(_tnp), 1.0)
+
+                # Phase 60a: obscurant opacity at target position
+                _obs_engine = getattr(ctx, "obscurants_engine", None)
+                if _obs_engine is not None and cal.get("enable_obscurants", False):
+                    try:
+                        _opacity = _obs_engine.opacity_at(best_target.position)
+                        if not weather_independent:
+                            detection_range *= (1.0 - _opacity.visual)
+                        else:
+                            _best_st = getattr(
+                                sensors[0] if sensors else None, "sensor_type", None,
+                            )
+                            if _best_st == SensorType.THERMAL:
+                                detection_range *= (1.0 - _opacity.thermal)
+                            elif _best_st == SensorType.RADAR:
+                                detection_range *= (1.0 - _opacity.radar)
+                    except Exception:
+                        pass
 
                 if best_range > detection_range:
                     continue
@@ -2347,6 +2444,14 @@ class BattleManager:
 
                 vis_mod = 1.0 if weather_independent else (min(visibility_m / best_range, 1.0) if best_range > 0 else 1.0)
                 vis_mod = vis_mod * detection_quality_mod
+
+                # Phase 60a: obscurant Pk reduction
+                if _obs_engine is not None and cal.get("enable_obscurants", False):
+                    try:
+                        _opacity_pk = _obs_engine.opacity_at(best_target.position)
+                        vis_mod *= (1.0 - _opacity_pk.visual)
+                    except Exception:
+                        pass
 
                 # Phase 42a: ROE gate
                 if roe_engine is not None:
@@ -2957,6 +3062,13 @@ class BattleManager:
                                     _agg_modifier,
                                     lethal_radius_m=_ifire_radius,
                                 )
+                                # Phase 60a: artillery impact dust
+                                if _obs_engine is not None and cal.get("enable_obscurants", False):
+                                    try:
+                                        _blast_r = getattr(ammo_def, "blast_radius_m", 20.0) or 20.0
+                                        _obs_engine.add_dust(best_target.position, radius=_blast_r)
+                                    except Exception:
+                                        pass
                             side_engagements += 1
                             routed_aggregate = True
                             _apply_aggregate_suppression(
@@ -3058,6 +3170,40 @@ class BattleManager:
                                     "Fire started at %s from hit on %s",
                                     best_target.position, best_target.entity_id,
                                 )
+                                # Phase 60b: create fire zone on combustible terrain
+                                if cal.get("enable_fire_zones", False):
+                                    _inc_eng = getattr(ctx, "incendiary_engine", None)
+                                    _classif = getattr(ctx, "classification", None)
+                                    if _inc_eng is not None:
+                                        try:
+                                            _combustibility = 0.5
+                                            if _classif is not None:
+                                                _tp = _classif.properties_at(best_target.position)
+                                                _combustibility = _tp.combustibility
+                                            if _combustibility > 0.3:
+                                                _wx = getattr(ctx, "weather_engine", None)
+                                                _ws, _wd = 0.0, 0.0
+                                                if _wx is not None:
+                                                    _ws = _wx.current.wind.speed
+                                                    _wd = _wx.current.wind.direction
+                                                _inc_eng.create_fire_zone(
+                                                    position=best_target.position,
+                                                    radius_m=20.0 * _combustibility,
+                                                    fuel_load=_combustibility,
+                                                    wind_speed_mps=_ws,
+                                                    wind_dir_rad=_wd,
+                                                    duration_s=1800.0 * _combustibility,
+                                                    timestamp=ctx.clock.elapsed.total_seconds(),
+                                                )
+                                                # Cross-engine: fire produces smoke
+                                                _obs_fe = getattr(ctx, "obscurants_engine", None)
+                                                if _obs_fe is not None:
+                                                    _obs_fe.deploy_smoke(
+                                                        best_target.position,
+                                                        radius=_inc_eng._config.smoke_obscurant_radius_m,
+                                                    )
+                                        except Exception:
+                                            logger.debug("Fire zone creation failed", exc_info=True)
 
         return pending_damage
 

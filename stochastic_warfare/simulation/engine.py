@@ -515,6 +515,15 @@ class SimulationEngine:
                 if self._strict_mode:
                     raise
 
+        # Phase 60: Obscurants engine (smoke/dust/fog drift + decay)
+        if getattr(ctx, "obscurants_engine", None) is not None:
+            try:
+                ctx.obscurants_engine.update(dt)
+            except Exception:
+                logger.error("Obscurants engine update failed", exc_info=True)
+                if self._strict_mode:
+                    raise
+
         # Phase 17: Space domain
         if ctx.space_engine is not None and hasattr(ctx.space_engine, "update"):
             try:

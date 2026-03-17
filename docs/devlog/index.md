@@ -74,6 +74,7 @@ Rolling record of implementation decisions, changes, and lessons learned across 
 | | | | |
 | 58 | Structural Verification & Core Combat Wiring | **Complete** | [phase-58.md](phase-58.md) |
 | 59 | Atmospheric & Ground Environment Wiring | **Complete** | [phase-59.md](phase-59.md) |
+| 60 | Obscurants, Fire, & Visual Environment | **Complete** | [phase-60.md](phase-60.md) |
 
 ## Post-MVP Refinement Index
 
@@ -256,6 +257,12 @@ Known limitations and deferred improvements logged during implementation. Review
 | 59 | Bridge capacity enforcement — units lack weight field, so capacity_tons gate cannot be applied | [phase-59.md — Deferrals](phase-59.md#deferrals-planned--deferred) |
 | 59 | Ford crossing routing — river ford traversal requires pathfinding integration | [phase-59.md — Deferrals](phase-59.md#deferrals-planned--deferred) |
 | 59 | Road snow degradation — `_ROAD_SPEED_FACTORS` hardcoded table needs per-snow-depth refactoring | [phase-59.md — Deferrals](phase-59.md#deferrals-planned--deferred) |
+| 60 | Fire spread cellular automaton (wind-biased spread between cells) — fire zone creation wired, spread deferred to calibration | [phase-60.md — Deferrals](phase-60.md#deferrals-planned--deferred) |
+| 60 | `environment_config` scenario YAML — pre-placed smoke/fog zones and season overrides | [phase-60.md — Deferrals](phase-60.md#deferrals-planned--deferred) |
+| 60 | Burned zone concealment reduction — `BurnedZone.concealment_reduction=0.5` exists but not consumed in detection | [phase-60.md — Deferrals](phase-60.md#deferrals-planned--deferred) |
+| 60 | Fire damage application to units — `units_in_fire()` called/logged, burn damage not applied | [phase-60.md — Deferrals](phase-60.md#deferrals-planned--deferred) |
+| 60 | Road surface dust suppression — dust generation doesn't distinguish paved roads | [phase-60.md — Deferrals](phase-60.md#deferrals-planned--deferred) |
+| 60 | Artificial illumination / flares — no flare deployment mechanic exists | [phase-60.md — Deferrals](phase-60.md#deferrals-planned--deferred) |
 
 ## Conventions
 
