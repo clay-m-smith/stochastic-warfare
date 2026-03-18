@@ -675,6 +675,8 @@ Wire MISSILE engagement type and comms-loss behavior.
 
 ## Phase 64: C2 Friction & Command Delay
 
+**Status**: Complete — 60 tests, 6 test files, 4 modified source files.
+
 **Goal**: Wire the three dormant C2 engines to create realistic command friction.
 
 **Dependencies**: Phase 63 (comms → C2 degradation provides comms check for order propagation).

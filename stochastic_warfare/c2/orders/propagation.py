@@ -154,17 +154,18 @@ class OrderPropagationEngine:
         Returns a ``PropagationResult`` with delay, misinterpretation, and
         success status.
         """
-        # Check if sender can issue the order
-        if not self._command.can_issue_order(order.issuer_id, order.recipient_id):
-            logger.warning(
-                "Order %s: %s has no authority over %s",
-                order.order_id, order.issuer_id, order.recipient_id,
-            )
-            return PropagationResult(
-                success=False, total_delay_s=0.0,
-                was_misinterpreted=False, misinterpretation_type="",
-                comms_quality=0.0, degraded=False,
-            )
+        # Check if sender can issue the order (skip if no command engine)
+        if self._command is not None:
+            if not self._command.can_issue_order(order.issuer_id, order.recipient_id):
+                logger.warning(
+                    "Order %s: %s has no authority over %s",
+                    order.order_id, order.issuer_id, order.recipient_id,
+                )
+                return PropagationResult(
+                    success=False, total_delay_s=0.0,
+                    was_misinterpreted=False, misinterpretation_type="",
+                    comms_quality=0.0, degraded=False,
+                )
 
         # Check comms availability
         comms_success, comms_latency = self._comms.send_message(
@@ -182,13 +183,15 @@ class OrderPropagationEngine:
             )
 
         # Compute delay
-        staff_eff = self._command.get_effectiveness(order.recipient_id)
+        staff_eff = self._command.get_effectiveness(order.recipient_id) if self._command is not None else 1.0
         delay = self.compute_delay(order.echelon_level, staff_eff, order)
 
         # Check C2 degradation of sender
-        sender_degraded = (
-            self._command.get_status(order.issuer_id) != CommandStatus.FULLY_OPERATIONAL
-        )
+        sender_degraded = False
+        if self._command is not None:
+            sender_degraded = (
+                self._command.get_status(order.issuer_id) != CommandStatus.FULLY_OPERATIONAL
+            )
 
         # Compute comms quality (best channel reliability proxy)
         channel = self._comms.get_best_channel(

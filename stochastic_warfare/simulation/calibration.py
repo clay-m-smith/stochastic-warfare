@@ -178,6 +178,13 @@ class CalibrationSchema(BaseModel):
     enable_c2_friction: bool = False
     degraded_equipment_threshold: float = 0.3
 
+    # -- C2 friction & command delay (Phase 64) ----------------------------
+    planning_available_time_s: float = 7200.0
+    stratagem_concentration_bonus: float = 0.08
+    stratagem_deception_bonus: float = 0.10
+    order_propagation_delay_sigma: float = 0.4
+    order_misinterpretation_base: float = 0.05
+
     # -- Collections ------------------------------------------------------
     weapon_assignments: dict[str, str] = {}
     victory_weights: dict[str, float] | None = None

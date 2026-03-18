@@ -196,6 +196,20 @@ _INDIRECT_FIRE_CATEGORIES = frozenset({"HOWITZER", "MORTAR", "ARTILLERY"})
 
 
 # ---------------------------------------------------------------------------
+# Phase 64 helper — unit position lookup
+# ---------------------------------------------------------------------------
+
+
+def _get_unit_position(ctx: Any, unit_id: str) -> Position:
+    """Return the position of a unit, or a default origin position."""
+    for units in ctx.units_by_side.values():
+        for u in units:
+            if u.entity_id == unit_id and u.position is not None:
+                return u.position
+    return Position(0.0, 0.0, 0.0)
+
+
+# ---------------------------------------------------------------------------
 # Phase 43 helpers — aggregate engagement routing
 # ---------------------------------------------------------------------------
 
@@ -509,6 +523,14 @@ def _route_air_engagement(
     # Phase 62d: air combat environmental coupling
     cal = getattr(ctx, "calibration", None)
     _ace = cal is not None and cal.get("enable_air_combat_environment", False)
+
+    # Phase 64c: ATO sortie gate — check available sorties before air engagement
+    _ato_64 = getattr(ctx, "ato_engine", None)
+    if _ato_64 is not None and cal is not None and cal.get("enable_c2_friction", False):
+        _sim_time = ctx.clock.elapsed.total_seconds() if hasattr(ctx.clock, "elapsed") else 0.0
+        if _ato_64.get_available_sorties(_sim_time) <= 0:
+            logger.debug("ATO: no sorties available, air engagement skipped")
+            return (True, None)
 
     # Air-to-air: route missile engagements through air combat engine
     if atk_air and tgt_air and wpn_cat == "MISSILE_LAUNCHER":
@@ -1757,6 +1779,34 @@ class BattleManager:
                                          unit_id, _c2_eff, _c2_min)
                             continue
 
+                # Phase 64b: Planning delay — skip DECIDE if unit is still planning
+                _planning_64 = getattr(ctx, "planning_engine", None)
+                if _planning_64 is not None and _cal_c2 is not None and _cal_c2.get("enable_c2_friction", False):
+                    from stochastic_warfare.c2.planning.process import PlanningPhase as _PP64
+                    _plan_status = _planning_64.get_planning_status(unit_id)
+                    if _plan_status not in (_PP64.IDLE, _PP64.COMPLETE):
+                        logger.debug("Planning delay: unit %s in phase %s, DECIDE deferred",
+                                     unit_id, _plan_status.name)
+                        continue
+                    if _plan_status == _PP64.IDLE:
+                        from stochastic_warfare.c2.orders.types import Order as _Ord64b, OrderType as _OT64b, OrderPriority as _OP64b
+                        _plan_order = _Ord64b(
+                            order_id=f"plan_{unit_id}_{timestamp}",
+                            issuer_id=unit_id, recipient_id=unit_id,
+                            timestamp=timestamp, order_type=_OT64b.FRAGO,
+                            echelon_level=5, priority=_OP64b.PRIORITY,
+                            mission_type=0,
+                        )
+                        _avail_time = _cal_c2.get("planning_available_time_s", 7200.0)
+                        try:
+                            _method = _planning_64.initiate_planning(
+                                unit_id, _plan_order, _avail_time, timestamp,
+                            )
+                            logger.debug("Initiated %s planning for %s", _method.name, unit_id)
+                        except Exception:
+                            logger.debug("Planning initiation failed for %s", unit_id, exc_info=True)
+                        continue  # Wait for planning to complete
+
                 # Run decision engine with real assessment + personality
                 if ctx.decision_engine is not None:
                     # Retrieve cached assessment from OBSERVE phase
@@ -1800,17 +1850,9 @@ class BattleManager:
                                     temp_scores, opponent_prediction,
                                 )
                                 school_adjustments = adjusted
-                    ctx.decision_engine.decide(
-                        unit_id=unit_id,
-                        echelon=5,
-                        assessment=assessment,
-                        personality=personality,
-                        doctrine=None,
-                        ts=timestamp,
-                        school_adjustments=school_adjustments,
-                    )
 
-                    # Phase 53c: Evaluate stratagem opportunities
+                    # Phase 53c/64d: Evaluate + activate stratagem opportunities
+                    # (before decide() so bonuses flow into school_adjustments)
                     if getattr(ctx, "stratagem_engine", None) is not None and assessment is not None:
                         side = self._find_unit_side(ctx, unit_id)
                         if side:
@@ -1819,6 +1861,11 @@ class BattleManager:
                             affinity: dict[str, float] = {}
                             if school is not None:
                                 affinity = school.get_stratagem_affinity()
+                            _strat_activate = (
+                                _cal_c2 is not None and _cal_c2.get("enable_c2_friction", False)
+                            )
+                            conc_viable = False
+                            dec_viable = False
                             try:
                                 conc_viable, _ = ctx.stratagem_engine.evaluate_concentration_opportunity(
                                     assessment, unit_ids, echelon=5, experience=experience,
@@ -1842,13 +1889,84 @@ class BattleManager:
                             except Exception:
                                 pass
 
-                    # Phase 53d: Order propagation (structural — log availability)
+                            # Phase 64d: Activate stratagems when c2_friction enabled
+                            if _strat_activate:
+                                if conc_viable:
+                                    _enemy_sides = [s for s in ctx.side_names() if s != side]
+                                    _enemy_units_64 = []
+                                    for _es in _enemy_sides:
+                                        _enemy_units_64.extend(ctx.active_units(_es))
+                                    if _enemy_units_64:
+                                        _avg_e = sum((getattr(e, "position", None) or Position(0, 0, 0)).easting for e in _enemy_units_64) / len(_enemy_units_64)
+                                        _avg_n = sum((getattr(e, "position", None) or Position(0, 0, 0)).northing for e in _enemy_units_64) / len(_enemy_units_64)
+                                        _conc_point = Position(_avg_e, _avg_n, 0.0)
+                                        _economy = unit_ids[-2:] if len(unit_ids) > 4 else []
+                                        _conc_units = [u for u in unit_ids if u not in _economy]
+                                        try:
+                                            _plan = ctx.stratagem_engine.plan_concentration(_conc_units, _conc_point, _economy)
+                                            ctx.stratagem_engine.activate_stratagem(unit_id, _plan, timestamp)
+                                            if school_adjustments is not None:
+                                                _bonus = _cal_c2.get("stratagem_concentration_bonus", 0.08)
+                                                school_adjustments["ATTACK"] = school_adjustments.get("ATTACK", 0.0) + _bonus
+                                        except Exception:
+                                            logger.debug("Concentration activation failed for %s", unit_id, exc_info=True)
+                                if dec_viable:
+                                    _feint = unit_ids[:1]
+                                    _main = unit_ids[1:]
+                                    try:
+                                        _plan = ctx.stratagem_engine.plan_deception(_feint, "enemy_front", _main)
+                                        ctx.stratagem_engine.activate_stratagem(unit_id, _plan, timestamp)
+                                        if school_adjustments is not None:
+                                            _bonus = _cal_c2.get("stratagem_deception_bonus", 0.10)
+                                            school_adjustments["ATTACK"] = school_adjustments.get("ATTACK", 0.0) + _bonus
+                                    except Exception:
+                                        logger.debug("Deception activation failed for %s", unit_id, exc_info=True)
+
+                    ctx.decision_engine.decide(
+                        unit_id=unit_id,
+                        echelon=5,
+                        assessment=assessment,
+                        personality=personality,
+                        doctrine=None,
+                        ts=timestamp,
+                        school_adjustments=school_adjustments,
+                    )
+
+                    # Phase 64a: Order propagation — compute delay + misinterpretation
                     if getattr(ctx, "order_propagation", None) is not None:
-                        _cmd_avail = getattr(ctx.order_propagation, "_command_engine", None) is not None
-                        logger.debug(
-                            "Order propagation available for %s (command=%s)",
-                            unit_id, _cmd_avail,
-                        )
+                        _cal_64a = getattr(ctx, "calibration", None)
+                        if _cal_64a is not None and _cal_64a.get("enable_c2_friction", False):
+                            from stochastic_warfare.c2.orders.types import Order as _Order64a, OrderType as _OT64a, OrderPriority as _OP64a
+                            _order_64a = _Order64a(
+                                order_id=f"decide_{unit_id}_{timestamp}",
+                                issuer_id=unit_id,
+                                recipient_id=unit_id,
+                                timestamp=timestamp,
+                                order_type=_OT64a.FRAGO,
+                                echelon_level=5,
+                                priority=_OP64a.PRIORITY,
+                                mission_type=0,
+                            )
+                            _sender_pos = _get_unit_position(ctx, unit_id)
+                            # Forward calibration tuning to propagation config
+                            _prop_cfg = getattr(ctx.order_propagation, "_config", None)
+                            if _prop_cfg is not None:
+                                _prop_cfg.delay_sigma = _cal_64a.get("order_propagation_delay_sigma", 0.4)
+                                _prop_cfg.base_misinterpretation = _cal_64a.get("order_misinterpretation_base", 0.05)
+                            try:
+                                _result_64a = ctx.order_propagation.propagate_order(
+                                    _order_64a, _sender_pos, _sender_pos, timestamp,
+                                )
+                                if not _result_64a.success:
+                                    logger.debug("Order propagation failed for %s", unit_id)
+                                    continue
+                                if _result_64a.was_misinterpreted:
+                                    logger.debug("Order misinterpreted for %s: %s", unit_id, _result_64a.misinterpretation_type)
+                                logger.debug("Order delay for %s: %.1fs", unit_id, _result_64a.total_delay_s)
+                            except Exception:
+                                logger.debug("Order propagation error for %s", unit_id, exc_info=True)
+                        else:
+                            logger.debug("Order propagation available for %s", unit_id)
 
             # Advance to the next OODA phase and start its timer
             if ctx.ooda_engine is not None:

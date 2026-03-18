@@ -361,20 +361,34 @@ class SimulationEngine:
             if ctx.escalation_engine is not None:
                 self._update_escalation(dt)
 
-            # Phase 53d: Planning process update (structural)
+            # Phase 64b: Planning process update — tick timers + auto-advance
             if ctx.planning_engine is not None:
+                _cal_64b = getattr(ctx, "calibration", None)
+                _c2_on = _cal_64b is not None and _cal_64b.get("enable_c2_friction", False)
                 try:
                     _plan_completions = ctx.planning_engine.update(dt, ts=timestamp)
                     if _plan_completions:
                         logger.debug("Planning completions: %d", len(_plan_completions))
+                        if _c2_on:
+                            from stochastic_warfare.c2.planning.process import PlanningPhase as _PP64e
+                            for _pid, _phase in _plan_completions:
+                                try:
+                                    _next = ctx.planning_engine.advance_phase(_pid)
+                                    if _next == _PP64e.ISSUING_ORDERS:
+                                        ctx.planning_engine.complete_planning(_pid, timestamp)
+                                except Exception:
+                                    logger.debug("Planning advance failed for %s", _pid, exc_info=True)
                 except Exception:
                     logger.debug("Planning engine update failed", exc_info=True)
 
-            # Phase 53d: ATO generation (structural — auto-register aerial units)
+            # Phase 64c: ATO management — register aircraft + periodic generation
             if getattr(ctx, "ato_engine", None) is not None:
+                _cal_64c = getattr(ctx, "calibration", None)
+                _ato_c2 = _cal_64c is not None and _cal_64c.get("enable_c2_friction", False)
                 try:
                     from stochastic_warfare.c2.orders.air_orders import AircraftAvailability
                     from stochastic_warfare.core.types import Domain
+                    # Lazy aircraft registration (every strategic tick for simplicity)
                     for _side_units in ctx.units_by_side.values():
                         for _u in _side_units:
                             if getattr(_u, "domain", None) == Domain.AIR and _u.status == UnitStatus.ACTIVE:
@@ -384,8 +398,12 @@ class SimulationEngine:
                                     )
                                 except Exception:
                                     pass  # already registered or invalid
+                    _sim_time_s = ctx.clock.elapsed.total_seconds()
+                    if _ato_c2:
+                        _available = ctx.ato_engine.get_available_sorties(_sim_time_s)
+                        logger.debug("ATO: %d sorties available at t=%.0fs", _available, _sim_time_s)
                     _ato_entries = ctx.ato_engine.generate_ato(
-                        current_time_s=ctx.clock.elapsed.total_seconds(),
+                        current_time_s=_sim_time_s,
                         timestamp=timestamp,
                     )
                     if _ato_entries:

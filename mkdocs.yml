@@ -146,6 +146,7 @@ nav:
     - Phase 61 - Maritime, Acoustic, & EM Environment: devlog/phase-61.md
     - Phase 62 - Human Factors, CBRN, & Air Combat Environment: devlog/phase-62.md
     - Phase 63 - Cross-Module Feedback Loops: devlog/phase-63.md
+    - Phase 64 - C2 Friction & Command Delay: devlog/phase-64.md
   - Specifications:
     - Project Structure: specs/project-structure.md
     - Skills & Hooks: skills-and-hooks.md

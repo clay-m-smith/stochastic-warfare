@@ -78,6 +78,7 @@ Rolling record of implementation decisions, changes, and lessons learned across 
 | 61 | Maritime, Acoustic, & EM Environment | **Complete** | [phase-61.md](phase-61.md) |
 | 62 | Human Factors, CBRN, & Air Combat Environment | **Complete** | [phase-62.md](phase-62.md) |
 | 63 | Cross-Module Feedback Loops | **Complete** | [phase-63.md](phase-63.md) |
+| 64 | C2 Friction & Command Delay | **Complete** | [phase-64.md](phase-64.md) |
 
 ## Post-MVP Refinement Index
 
@@ -286,6 +287,17 @@ Known limitations and deferred improvements logged during implementation. Review
 | 63 | FOW confidence-weighted assessment — uses simple contact count, not confidence mapping | [phase-63.md — Deferrals](phase-63.md#deferrals) |
 | 63 | RTD to HEALTHY — restores to MINOR_WOUND only, full rehabilitation deferred | [phase-63.md — Deferrals](phase-63.md#deferrals) |
 | 63 | Logistics event feedback — SupplyDelivered/RouteInterdicted/ConvoyDestroyed events unsubscribed | [phase-63.md — Deferrals](phase-63.md#deferrals) |
+| 64 | CommandEngine full hierarchy wiring — authority check skipped when command_engine=None | [phase-64.md — D1](phase-64.md#known-limitations--deferrals) |
+| 64 | Order delay enforcement queue — delay computed but not enforced | [phase-64.md — D2](phase-64.md#known-limitations--deferrals) |
+| 64 | Misinterpretation parameter modification — logged but order params unchanged | [phase-64.md — D3](phase-64.md#known-limitations--deferrals) |
+| 64 | Planning result injection — auto-advances without COA/wargaming results | [phase-64.md — D4](phase-64.md#known-limitations--deferrals) |
+| 64 | ATO entry consumption — sorties_today never incremented after air engagement | [phase-64.md — D5](phase-64.md#known-limitations--deferrals) |
+| 64 | Stratagem duration and expiry — active stratagems never expire | [phase-64.md — D6](phase-64.md#known-limitations--deferrals) |
+| 64 | Deception effect on enemy AI — no false force disposition in FOW | [phase-64.md — D7](phase-64.md#known-limitations--deferrals) |
+| 64 | Hardcoded echelon_level=5 for all units in DECIDE handler | [phase-64.md — D8](phase-64.md#known-limitations--deferrals) |
+| 64 | Hardcoded mission_type=0 (ATTACK) for all orders | [phase-64.md — D9](phase-64.md#known-limitations--deferrals) |
+| 64 | Economy-of-force/feint unit selection by list position | [phase-64.md — D10](phase-64.md#known-limitations--deferrals) |
+| 64 | PropagationConfig private attribute mutation from battle.py | [phase-64.md — D11](phase-64.md#known-limitations--deferrals) |
 
 ## Conventions
 
