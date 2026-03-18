@@ -155,3 +155,21 @@ class Unit(Entity):
                 equip.operational = False
                 affected += 1
         return affected
+
+    # -- Phase 63b: medical RTD restoration --------------------------------
+
+    def restore_crew_member(
+        self, member_id: str, to_state: InjuryState = InjuryState.MINOR_WOUND,
+    ) -> bool:
+        """Restore crew member injury state (e.g., after medical RTD).
+
+        KIA is permanent — returns False for KIA members.
+        Returns True if member found and restored, False otherwise.
+        """
+        for m in self.personnel:
+            if m.member_id == member_id:
+                if m.injury == InjuryState.KIA:
+                    return False
+                m.injury = to_state
+                return True
+        return False

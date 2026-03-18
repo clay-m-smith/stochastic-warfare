@@ -171,6 +171,9 @@ class SimulationEngine:
         # Checkpoints
         self._checkpoints: list[dict[str, Any]] = []
 
+        # Phase 63b: subscribe to logistics events if enabled
+        self._register_event_handlers()
+
     # ── Properties ────────────────────────────────────────────────────
 
     @property
@@ -197,6 +200,70 @@ class SimulationEngine:
     def recorder(self) -> SimulationRecorder | None:
         """The event recorder, if any."""
         return self._recorder
+
+    # ── Phase 63b: event feedback ────────────────────────────────────
+
+    def _register_event_handlers(self) -> None:
+        """Subscribe to logistics events when enable_event_feedback is set."""
+        cal = getattr(self._ctx, "calibration", None)
+        if cal is None or not cal.get("enable_event_feedback", False):
+            return
+        bus = self._ctx.event_bus
+        from stochastic_warfare.logistics.events import (
+            ReturnToDutyEvent,
+            EquipmentBreakdownEvent,
+            MaintenanceCompletedEvent,
+        )
+        bus.subscribe(ReturnToDutyEvent, self._handle_return_to_duty)
+        bus.subscribe(EquipmentBreakdownEvent, self._handle_equipment_breakdown)
+        bus.subscribe(MaintenanceCompletedEvent, self._handle_maintenance_completed)
+
+    def _find_unit_by_id(self, unit_id: str) -> Any:
+        """Find a unit across all sides by entity_id."""
+        for units in self._ctx.units_by_side.values():
+            for u in units:
+                if u.entity_id == unit_id:
+                    return u
+        return None
+
+    def _handle_return_to_duty(self, event: Any) -> None:
+        """Restore crew member after medical RTD."""
+        unit = self._find_unit_by_id(event.unit_id)
+        if unit is None:
+            return
+        if hasattr(unit, "restore_crew_member"):
+            unit.restore_crew_member(event.member_id)
+
+    def _handle_equipment_breakdown(self, event: Any) -> None:
+        """Mark equipment as non-operational after breakdown."""
+        unit = self._find_unit_by_id(event.unit_id)
+        if unit is None:
+            return
+        for equip in getattr(unit, "equipment", []):
+            if equip.equipment_id == event.equipment_id:
+                equip.operational = False
+                break
+        # Check degraded equipment threshold
+        equipment = getattr(unit, "equipment", [])
+        if equipment:
+            broken = sum(1 for e in equipment if not e.operational)
+            cal = getattr(self._ctx, "calibration", None)
+            threshold = cal.degraded_equipment_threshold if cal else 0.3
+            if broken / len(equipment) > threshold:
+                logger.debug(
+                    "Unit %s degraded: %d/%d equipment broken (threshold %.1f%%)",
+                    event.unit_id, broken, len(equipment), threshold * 100,
+                )
+
+    def _handle_maintenance_completed(self, event: Any) -> None:
+        """Restore equipment after maintenance."""
+        unit = self._find_unit_by_id(event.unit_id)
+        if unit is None:
+            return
+        for equip in getattr(unit, "equipment", []):
+            if equip.equipment_id == event.equipment_id:
+                equip.operational = True
+                break
 
     # ── Run ───────────────────────────────────────────────────────────
 

@@ -77,6 +77,7 @@ Rolling record of implementation decisions, changes, and lessons learned across 
 | 60 | Obscurants, Fire, & Visual Environment | **Complete** | [phase-60.md](phase-60.md) |
 | 61 | Maritime, Acoustic, & EM Environment | **Complete** | [phase-61.md](phase-61.md) |
 | 62 | Human Factors, CBRN, & Air Combat Environment | **Complete** | [phase-62.md](phase-62.md) |
+| 63 | Cross-Module Feedback Loops | **Complete** | [phase-63.md](phase-63.md) |
 
 ## Post-MVP Refinement Index
 
@@ -279,6 +280,12 @@ Known limitations and deferred improvements logged during implementation. Review
 | 62 | Turbulence → gun accuracy — no turbulence model in WeatherEngine | [phase-62.md — Deferrals](phase-62.md#deferrals-planned--deferred) |
 | 62 | Wind shear (altitude-dependent wind) — needs new wind profile model | [phase-62.md — Deferrals](phase-62.md#deferrals-planned--deferred) |
 | 62 | Surface roughness → CBRN mixing height — needs per-terrain roughness data | [phase-62.md — Deferrals](phase-62.md#deferrals-planned--deferred) |
+| 63 | MissileEngine per-tick update — launch ships but flight-to-impact resolution deferred | [phase-63.md — Deferrals](phase-63.md#deferrals) |
+| 63 | MissileDefenseEngine intercept — requires missile-as-contact detection | [phase-63.md — Deferrals](phase-63.md#deferrals) |
+| 63 | Formal DEGRADED unit status — threshold logging only, no enum value or auto Pk/movement penalties | [phase-63.md — Deferrals](phase-63.md#deferrals) |
+| 63 | FOW confidence-weighted assessment — uses simple contact count, not confidence mapping | [phase-63.md — Deferrals](phase-63.md#deferrals) |
+| 63 | RTD to HEALTHY — restores to MINOR_WOUND only, full rehabilitation deferred | [phase-63.md — Deferrals](phase-63.md#deferrals) |
+| 63 | Logistics event feedback — SupplyDelivered/RouteInterdicted/ConvoyDestroyed events unsubscribed | [phase-63.md — Deferrals](phase-63.md#deferrals) |
 
 ## Conventions
 

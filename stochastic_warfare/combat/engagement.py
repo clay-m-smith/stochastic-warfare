@@ -510,6 +510,29 @@ class EngagementEngine:
                 range_m=first.range_m if first else 0.0,
             )
 
+        # Phase 63d: MISSILE type routing
+        if engagement_type == EngagementType.MISSILE:
+            if missile_engine is None:
+                return EngagementResult(
+                    engaged=False, attacker_id=attacker_id,
+                    target_id=target_id, aborted_reason="no_missile_engine",
+                )
+            from stochastic_warfare.combat.missiles import MissileType
+            missile_engine.launch_missile(
+                launcher_id=attacker_id,
+                missile_id=f"{attacker_id}_missile_{current_time_s:.0f}",
+                target_pos=target_pos,
+                launch_pos=attacker_pos,
+                ammo=ammo_def,
+                missile_type=MissileType.CRUISE_SUBSONIC,
+                timestamp=timestamp,
+            )
+            return EngagementResult(
+                engaged=True, engagement_type=engagement_type,
+                attacker_id=attacker_id, target_id=target_id,
+                weapon_id=weapon.weapon_id, ammo_id=ammo_id,
+            )
+
         if engagement_type == EngagementType.ATGM_VS_ROTARY:
             return self._resolve_atgm_vs_rotary(
                 attacker_id=attacker_id,

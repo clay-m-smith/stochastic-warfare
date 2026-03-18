@@ -386,6 +386,9 @@ class SimulationContext:
     # Carrier Ops (Phase 61)
     carrier_ops_engine: Any = None
 
+    # Missile (Phase 63d)
+    missile_engine: Any = None
+
     # Directed Energy (Phase 28.5)
     dew_engine: Any = None
 
@@ -521,6 +524,11 @@ class SimulationContext:
             ("ato_engine", self.ato_engine),
             ("underwater_acoustics_engine", self.underwater_acoustics_engine),
             ("carrier_ops_engine", self.carrier_ops_engine),
+            # Phase 63c: previously missing engines
+            ("comms_engine", self.comms_engine),
+            ("detection_engine", self.detection_engine),
+            ("movement_engine", self.movement_engine),
+            ("conditions_engine", self.conditions_engine),
         ]
         for name, eng in engines:
             if eng is not None and hasattr(eng, "get_state"):
@@ -598,6 +606,11 @@ class SimulationContext:
             ("ato_engine", self.ato_engine),
             ("underwater_acoustics_engine", self.underwater_acoustics_engine),
             ("carrier_ops_engine", self.carrier_ops_engine),
+            # Phase 63c: previously missing engines
+            ("comms_engine", self.comms_engine),
+            ("detection_engine", self.detection_engine),
+            ("movement_engine", self.movement_engine),
+            ("conditions_engine", self.conditions_engine),
         ]
         for name, eng in engines:
             if eng is not None and name in state and hasattr(eng, "set_state"):
@@ -1042,6 +1055,11 @@ class ScenarioLoader:
             hit_engine, dmg_engine, sup_engine, frat_engine, bus, combat_rng,
         )
 
+        # Missile engine (Phase 63d)
+        from stochastic_warfare.combat.missiles import MissileEngine
+
+        missile_engine = MissileEngine(dmg_engine, bus, combat_rng)
+
         # Indirect fire (Phase 43b)
         from stochastic_warfare.combat.indirect_fire import IndirectFireEngine
 
@@ -1353,6 +1371,7 @@ class ScenarioLoader:
         result = {
             "los_engine": los_engine,
             "engagement_engine": engagement_engine,
+            "missile_engine": missile_engine,
             "detection_engine": det_engine,
             "fog_of_war": fog_of_war,
             "morale_machine": morale_machine,

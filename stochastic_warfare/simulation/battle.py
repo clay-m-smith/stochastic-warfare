@@ -125,6 +125,18 @@ def _compute_wind_chill(temperature_c: float, wind_speed_mps: float) -> float:
     )
 
 
+# Phase 63a: unit signature lookup for FOW detection
+def _get_unit_signature(ctx: Any, unit: Any) -> Any:
+    """Retrieve signature profile for a unit, or None if unavailable."""
+    _sl = getattr(ctx, "sig_loader", None)
+    if _sl is None:
+        return None
+    try:
+        return _sl.get_profile(getattr(unit, "unit_type", ""))
+    except (KeyError, AttributeError, Exception):
+        return None
+
+
 # Phase 52b: ITU-R P.838 rain attenuation for radar sensors
 def _compute_rain_detection_factor(precip_rate_mmhr: float, range_km: float) -> float:
     """Return detection range multiplier due to rain [0.1–1.0].
@@ -1081,7 +1093,7 @@ class BattleManager:
                         continue
                     _own_data.append({
                         "position": _u.position,
-                        "sensors": [],
+                        "sensors": ctx.unit_sensors.get(_u.entity_id, []),
                         "observer_height": 1.8,
                     })
                 _enemy_data = []
@@ -1094,7 +1106,7 @@ class BattleManager:
                         _enemy_data.append({
                             "unit_id": _eu.entity_id,
                             "position": _eu.position,
-                            "signature": None,
+                            "signature": _get_unit_signature(ctx, _eu),
                             "unit": _eu,
                             "target_height": 0.0,
                         })
@@ -1733,6 +1745,18 @@ class BattleManager:
                         # Cache assessment for DECIDE phase
                         self._cached_assessments[unit_id] = assessment
             elif completed_phase == OODAPhase.DECIDE:
+                # Phase 63d: C2 friction — skip DECIDE when comms too degraded
+                _cal_c2 = getattr(ctx, "calibration", None)
+                if _cal_c2 is not None and _cal_c2.get("enable_c2_friction", False):
+                    _c2_side = self._find_unit_side(ctx, unit_id)
+                    if _c2_side:
+                        _c2_eff = self._compute_c2_effectiveness(ctx, unit_id, _c2_side)
+                        _c2_min = _cal_c2.get("c2_min_effectiveness", 0.3)
+                        if _c2_eff < _c2_min:
+                            logger.debug("C2 friction: unit %s DECIDE skipped (eff=%.2f < min=%.2f)",
+                                         unit_id, _c2_eff, _c2_min)
+                            continue
+
                 # Run decision engine with real assessment + personality
                 if ctx.decision_engine is not None:
                     # Retrieve cached assessment from OBSERVE phase
@@ -3484,6 +3508,17 @@ class BattleManager:
                     except (KeyError, ValueError):
                         pass
 
+                    # Phase 63d: MISSILE type inference for guided missile launchers
+                    if engagement_type == EngagementType.DIRECT_FIRE and cal.get("enable_missile_routing", False):
+                        try:
+                            if wpn_inst.definition.parsed_category() == WeaponCategory.MISSILE_LAUNCHER:
+                                from stochastic_warfare.combat.ammunition import GuidanceType
+                                _g = ammo_def.parsed_guidance()
+                                if _g != GuidanceType.NONE:
+                                    engagement_type = EngagementType.MISSILE
+                        except (KeyError, ValueError, AttributeError):
+                            pass
+
                     # Phase 54f: terminal maneuver hit probability bonus
                     if getattr(ammo_def, "terminal_maneuver", False) is True:
                         crew_skill *= 1.05
@@ -3514,6 +3549,7 @@ class BattleManager:
                         weapon=wpn_inst,
                         ammo_id=ammo_id,
                         ammo_def=ammo_def,
+                        missile_engine=getattr(ctx, 'missile_engine', None),
                         dew_engine=getattr(ctx, 'dew_engine', None),
                         crew_skill=crew_skill,
                         target_size_m2=8.5 * target_size_mod,

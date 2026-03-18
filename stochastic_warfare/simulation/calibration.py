@@ -172,6 +172,12 @@ class CalibrationSchema(BaseModel):
     icing_radar_penalty_db: float = 3.0
     wind_bvr_missile_speed_mps: float = 1000.0
 
+    # -- Cross-module feedback loops (Phase 63) ----------------------------
+    enable_event_feedback: bool = False
+    enable_missile_routing: bool = False
+    enable_c2_friction: bool = False
+    degraded_equipment_threshold: float = 0.3
+
     # -- Collections ------------------------------------------------------
     weapon_assignments: dict[str, str] = {}
     victory_weights: dict[str, float] | None = None
