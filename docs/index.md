@@ -3,8 +3,8 @@
 **High-fidelity stochastic wargame simulator** -- multi-scale, multi-domain, multi-era.
 
 ![Python](https://img.shields.io/badge/python-%3E%3D3.12-blue)
-![Tests](https://img.shields.io/badge/tests-8%2C878_passing-brightgreen)
-![Phase](https://img.shields.io/badge/phase-65_Block--7-brightgreen)
+![Tests](https://img.shields.io/badge/tests-8%2C908_passing-brightgreen)
+![Phase](https://img.shields.io/badge/phase-66_Block--7-brightgreen)
 
 ---
 

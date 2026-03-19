@@ -147,6 +147,8 @@ nav:
     - Phase 62 - Human Factors, CBRN, & Air Combat Environment: devlog/phase-62.md
     - Phase 63 - Cross-Module Feedback Loops: devlog/phase-63.md
     - Phase 64 - C2 Friction & Command Delay: devlog/phase-64.md
+    - Phase 65 - Space & EW Sub-Engine Activation: devlog/phase-65.md
+    - Phase 66 - Unconventional, Naval, & Cleanup: devlog/phase-66.md
   - Specifications:
     - Project Structure: specs/project-structure.md
     - Skills & Hooks: skills-and-hooks.md

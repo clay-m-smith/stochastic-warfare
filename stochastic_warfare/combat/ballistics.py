@@ -409,12 +409,19 @@ class BallisticsEngine:
             "air_density_sea_level", self._config.air_density_sea_level,
         )
 
+        # Phase 66b: propulsion reduces effective drag for powered munitions
+        _eff_drag = ammo.drag_coefficient
+        _propulsion = getattr(ammo, "propulsion", "none")
+        if _propulsion and _propulsion != "none":
+            _prop_factors = {"rocket": 0.3, "turbojet": 0.2, "ramjet": 0.15}
+            _eff_drag *= _prop_factors.get(_propulsion, 0.5)
+
         fx, fy, fz, fvx, fvy, fvz, tof, max_alt, impact_angle = _rk4_trajectory_kernel(
             x, y, z, vx, vy, vz,
             dt, max_t, fire_pos.altitude,
             int(self._config.enable_drag), int(self._config.enable_mach_drag),
             int(self._config.enable_wind), int(self._config.enable_coriolis),
-            ammo.drag_coefficient, ammo.mass_kg, area,
+            _eff_drag, ammo.mass_kg, area,
             rho0, 8500.0, sos,
             wind_e, wind_n,
             lat_rad, self._config.earth_rotation_rad_s, STANDARD_GRAVITY,

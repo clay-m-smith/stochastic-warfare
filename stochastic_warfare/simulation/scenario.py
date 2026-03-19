@@ -389,6 +389,9 @@ class SimulationContext:
     # Missile (Phase 63d)
     missile_engine: Any = None
 
+    # Conditions facade (Phase 66b)
+    conditions_facade: Any = None
+
     # Directed Energy (Phase 28.5)
     dew_engine: Any = None
 
@@ -1313,6 +1316,21 @@ class ScenarioLoader:
                 weather_engine, sea_state_engine, clock,
             )
 
+            # Phase 66b: ConditionsEngine facade — composites all env sub-engines
+            from stochastic_warfare.environment.conditions import ConditionsEngine as _CondFacade
+            try:
+                conditions_facade = _CondFacade(
+                    weather=weather_engine,
+                    time_of_day=time_of_day_engine,
+                    seasons=seasons_engine,
+                    obscurants=obscurants_engine,
+                    sea_state=sea_state_engine,
+                    acoustics=underwater_acoustics_engine,
+                    em=conditions_engine,
+                )
+            except Exception:
+                conditions_facade = None
+
             # Merge weather visibility into calibration if not already set
             cal = config.calibration_overrides
             if "visibility_m" in wc:
@@ -1410,6 +1428,7 @@ class ScenarioLoader:
             "obscurants_engine": obscurants_engine,
             "underwater_acoustics_engine": underwater_acoustics_engine,
             "conditions_engine": conditions_engine,
+            "conditions_facade": locals().get("conditions_facade"),
             "carrier_ops_engine": carrier_ops_engine,
             "medical_engine": medical_engine,
             "engineering_engine": engineering_engine,

@@ -805,6 +805,36 @@ class SimulationEngine:
                 if self._strict_mode:
                     raise
 
+        # Phase 66a: mine persistence — battery decay for armed mines
+        _cal_66 = getattr(ctx, "calibration", None)
+        if _cal_66 is not None and _cal_66.get("enable_mine_persistence", False):
+            _mine_eng = getattr(ctx, "mine_warfare_engine", None)
+            if _mine_eng is not None:
+                try:
+                    _mine_eng.update_mine_persistence(dt / 3600.0)
+                except Exception:
+                    logger.debug("Mine persistence update failed", exc_info=True)
+
+            # Phase 66a: mine sweeping — minesweeper units clear nearby mines
+            if _mine_eng is not None:
+                for _side_units_ms in getattr(ctx, "units_by_side", {}).values():
+                    for _u_ms in _side_units_ms:
+                        if getattr(_u_ms, "status", None) != UnitStatus.ACTIVE:
+                            continue
+                        if "minesweep" in getattr(_u_ms, "unit_type", "").lower():
+                            _pos_ms = getattr(_u_ms, "position", None)
+                            if _pos_ms is not None:
+                                try:
+                                    from stochastic_warfare.combat.naval_mine import MineType
+                                    _mine_eng.sweep_mines(
+                                        _u_ms.entity_id, area_m2=500_000,
+                                        mine_type=MineType.CONTACT,
+                                        dt=dt, sweep_center=_pos_ms,
+                                        sweep_radius_m=2000.0,
+                                    )
+                                except Exception:
+                                    logger.debug("Mine sweeping failed", exc_info=True)
+
         # Phase 44c: Medical engine — casualty processing
         if ctx.medical_engine is not None:
             try:

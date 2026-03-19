@@ -80,6 +80,7 @@ Rolling record of implementation decisions, changes, and lessons learned across 
 | 63 | Cross-Module Feedback Loops | **Complete** | [phase-63.md](phase-63.md) |
 | 64 | C2 Friction & Command Delay | **Complete** | [phase-64.md](phase-64.md) |
 | 65 | Space & EW Sub-Engine Activation | **Complete** | [phase-65.md](phase-65.md) |
+| 66 | Unconventional, Naval, & Cleanup | **Complete** | [phase-66.md](phase-66.md) |
 
 ## Post-MVP Refinement Index
 
@@ -299,6 +300,16 @@ Known limitations and deferred improvements logged during implementation. Review
 | 64 | Hardcoded mission_type=0 (ATTACK) for all orders | [phase-64.md — D9](phase-64.md#known-limitations--deferrals) |
 | 64 | Economy-of-force/feint unit selection by list position | [phase-64.md — D10](phase-64.md#known-limitations--deferrals) |
 | 64 | PropagationConfig private attribute mutation from battle.py | [phase-64.md — D11](phase-64.md#known-limitations--deferrals) |
+| 66 | Guerrilla retreat movement — disengage evaluated but unit doesn't physically relocate | [phase-66.md — D1](phase-66.md#known-limitations--deferrals) |
+| 66 | Population center spatial lookup — falls back to 0.0 density when population_engine absent | [phase-66.md — D2](phase-66.md#known-limitations--deferrals) |
+| 66 | IED auto-emplacement by insurgent AI — only pre-placed IEDs supported | [phase-66.md — D3](phase-66.md#known-limitations--deferrals) |
+| 66 | Mine sweeping hardcoded to CONTACT type only | [phase-66.md — D4](phase-66.md#known-limitations--deferrals) |
+| 66 | AmphibiousAssaultEngine — full beach assault state machine deferred (needs scenario infrastructure) | [phase-66.md — D5](phase-66.md#known-limitations--deferrals) |
+| 66 | ConditionsEngine replacing EMEnvironment — `conditions_facade` added alongside, migration deferred | [phase-66.md — D6](phase-66.md#known-limitations--deferrals) |
+| 66 | P4 dead code (shadow_azimuth, solar/lunar, deep_channel_depth) — allowlisted not removed | [phase-66.md — D7](phase-66.md#known-limitations--deferrals) |
+| 66 | Data link range degradation — binary gate only, gradual C2 loss deferred | [phase-66.md — D8](phase-66.md#known-limitations--deferrals) |
+| 66 | Propulsion altitude performance — cruise_altitude_m not wired to altitude-dependent Pk | [phase-66.md — D9](phase-66.md#known-limitations--deferrals) |
+| 66 | SimulationContext TODO cleanup — cosmetic, deferred | [phase-66.md — D10](phase-66.md#known-limitations--deferrals) |
 
 ## Conventions
 

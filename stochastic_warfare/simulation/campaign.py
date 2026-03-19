@@ -205,6 +205,14 @@ class CampaignManager:
                     for sid in list(getattr(siege_eng, "_sieges", {}).keys()):
                         siege_eng.advance_day(sid)
                         siege_eng.check_starvation(sid)
+                        # Phase 66b: assault and sally wiring
+                        _siege_state = getattr(siege_eng, "_sieges", {}).get(sid)
+                        if _siege_state is not None:
+                            _phase = _siege_state.phase
+                            from stochastic_warfare.combat.siege import SiegePhase
+                            if _phase == SiegePhase.BREACH:
+                                siege_eng.attempt_assault(sid)
+                            siege_eng.sally_sortie(sid)
                 except Exception:
                     logger.debug("Siege advance failed", exc_info=True)
 

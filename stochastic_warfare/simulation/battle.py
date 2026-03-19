@@ -1283,7 +1283,59 @@ class BattleManager:
                                 elif mr.damage_fraction >= dis_thresh_m:
                                     pending_mine_damage.append((u, UnitStatus.DISABLED))
 
-        # 4f. Phase 62a: Heat/cold environmental casualties
+        # 4f. Phase 66a: IED encounters during ground movement
+        _uw_eng = getattr(ctx, "unconventional_engine", None)
+        if (
+            cal.get("enable_unconventional_warfare", False)
+            and _uw_eng is not None
+            and _uw_eng._ieds
+        ):
+            for _ied_id, _ied_data in list(_uw_eng._ieds.items()):
+                if not _ied_data["active"]:
+                    continue
+                _ied_pos = _ied_data["position"]
+                for side_units_ied in units_by_side.values():
+                    for _u_ied in side_units_ied:
+                        if _u_ied.status != UnitStatus.ACTIVE:
+                            continue
+                        if getattr(_u_ied, "domain", None) in (
+                            Domain.NAVAL, Domain.SUBMARINE, Domain.AMPHIBIOUS,
+                        ):
+                            continue  # naval mines handled above
+                        # Only units that moved this tick
+                        _pre_ied = pre_positions.get(_u_ied.entity_id)
+                        if _pre_ied is None:
+                            continue
+                        _cur_ied = (_u_ied.position.easting, _u_ied.position.northing)
+                        if abs(_cur_ied[0] - _pre_ied[0]) < 0.01 and abs(_cur_ied[1] - _pre_ied[1]) < 0.01:
+                            continue  # didn't move
+                        _dx_ied = _u_ied.position.easting - _ied_pos.easting
+                        _dy_ied = _u_ied.position.northing - _ied_pos.northing
+                        _dist_ied = math.sqrt(_dx_ied * _dx_ied + _dy_ied * _dy_ied)
+                        if _dist_ied > _ied_data["blast_radius_m"] * 2:
+                            continue
+                        # Check EW jamming for remote IEDs
+                        if _ied_data["subtype"] == "remote":
+                            _ew_eng_ied = getattr(ctx, "ew_engine", None)
+                            _jammed = _uw_eng.check_ew_jamming(
+                                _ied_id, _ew_eng_ied is not None, 0.5,
+                            )
+                            if _jammed:
+                                continue
+                        # Detection roll — speed-based
+                        _speed_ied = getattr(_u_ied, "current_speed_mps", getattr(_u_ied, "speed", 5.0))
+                        _has_eng = "engineer" in getattr(_u_ied, "unit_type", "").lower()
+                        if _uw_eng.check_ied_detection(_speed_ied, _has_eng, _u_ied.entity_id):
+                            continue
+                        # Detonation
+                        _result_ied = _uw_eng.detonate_ied(_ied_id, _u_ied.entity_id, timestamp=timestamp)
+                        logger.info(
+                            "IED %s detonated on %s (blast=%.1fm)",
+                            _ied_id, _u_ied.entity_id, _result_ied.blast_radius_m,
+                        )
+                        break  # one IED per tick per location
+
+        # 4g. Phase 62a: Heat/cold environmental casualties
         if cal.get("enable_human_factors", False):
             _wx62 = getattr(ctx, "weather_engine", None)
             if _wx62 is not None:
@@ -2585,6 +2637,24 @@ class BattleManager:
                     if ms in (MoraleState.ROUTED, MoraleState.SURRENDERED):
                         continue
 
+                # Phase 66b: data link range gates UAV engagement
+                if cal.get("enable_unconventional_warfare", False):
+                    _dlr = getattr(attacker, "data_link_range", None)
+                    if _dlr is not None and _dlr > 0:
+                        _cmd_pos_dlr = None
+                        _cmd_id_dlr = getattr(attacker, "parent_id", None)
+                        if _cmd_id_dlr:
+                            for _su_dlr in units_by_side.get(side_name, []):
+                                if _su_dlr.entity_id == _cmd_id_dlr:
+                                    _cmd_pos_dlr = getattr(_su_dlr, "position", None)
+                                    break
+                        if _cmd_pos_dlr is not None:
+                            _dx_dlr = attacker.position.easting - _cmd_pos_dlr.easting
+                            _dy_dlr = attacker.position.northing - _cmd_pos_dlr.northing
+                            if math.sqrt(_dx_dlr * _dx_dlr + _dy_dlr * _dy_dlr) > _dlr:
+                                logger.debug("UAV %s beyond data link range (%.0fm)", attacker.entity_id, _dlr)
+                                continue  # skip engagement
+
                 weapons = ctx.unit_weapons.get(attacker.entity_id, [])
                 if not weapons or pos_arr.shape[0] == 0:
                     continue
@@ -3282,6 +3352,28 @@ class BattleManager:
                 if gps_cep_factor > 1.0:
                     crew_skill /= gps_cep_factor
 
+                # Phase 66a: human shield — reduce crew_skill when civilian
+                # population near target (proxy for ROE constraint)
+                _uw_eng_hs = getattr(ctx, "unconventional_engine", None)
+                _civ_density_66 = 0.0
+                if (
+                    cal.get("enable_unconventional_warfare", False)
+                    and _uw_eng_hs is not None
+                ):
+                    _pop_eng_66 = getattr(ctx, "population_engine", None)
+                    if _pop_eng_66 is not None:
+                        _tgt_pos_66 = getattr(best_target, "position", None)
+                        if _tgt_pos_66 is not None:
+                            _civ_density_66 = getattr(
+                                _pop_eng_66, "get_density_at", lambda p: 0.0,
+                            )(_tgt_pos_66)
+                    if _civ_density_66 > 0:
+                        _shield_val = _uw_eng_hs.evaluate_human_shield(
+                            best_target.position, _civ_density_66,
+                        )
+                        _pk_red = cal.get("human_shield_pk_reduction", 0.5) * _shield_val
+                        crew_skill *= max(0.1, 1.0 - _pk_red)
+
                 # ── Phase 43: domain-specific engagement routing ──────
                 routed_aggregate = False
                 wpn_cat_str = getattr(
@@ -3787,6 +3879,41 @@ class BattleManager:
                                                     )
                                         except Exception:
                                             logger.debug("Fire zone creation failed", exc_info=True)
+
+        # Phase 66a: guerrilla disengage evaluation — post-engagement pass
+        if cal.get("enable_unconventional_warfare", False):
+            _uw_eng_guer = getattr(ctx, "unconventional_engine", None)
+            if _uw_eng_guer is not None:
+                _pop_eng_guer = getattr(ctx, "population_engine", None)
+                for _su_guer in units_by_side.values():
+                    for _u_guer in _su_guer:
+                        if _u_guer.status != UnitStatus.ACTIVE:
+                            continue
+                        _att_type_guer = getattr(_u_guer, "unit_type", "").lower()
+                        if not any(kw in _att_type_guer for kw in ("insurgent", "militia", "guerrilla")):
+                            continue
+                        # Compute casualty fraction from cumulative tracking
+                        _cas_key = _u_guer.entity_id
+                        _total_pers = len(_u_guer.personnel) if _u_guer.personnel else 4
+                        _cum = self._cumulative_casualties.get(_cas_key, 0)
+                        _cas_frac = _cum / max(1, _total_pers + _cum)
+                        # Override engine threshold with calibration value
+                        _guer_thresh = cal.get("guerrilla_disengage_threshold", 0.3)
+                        _uw_eng_guer._cfg_guer.disengage_threshold = _guer_thresh
+                        _in_pop = False
+                        if _pop_eng_guer is not None:
+                            _gp = getattr(_u_guer, "position", None)
+                            if _gp is not None:
+                                _gd = getattr(_pop_eng_guer, "get_density_at", lambda p: 0.0)(_gp)
+                                _in_pop = _gd > 0
+                        _disengage, _blend = _uw_eng_guer.evaluate_guerrilla_disengage(
+                            _u_guer.entity_id, _cas_frac, _in_pop,
+                        )
+                        if _disengage:
+                            logger.debug(
+                                "Guerrilla %s disengaging (blend=%.2f)",
+                                _u_guer.entity_id, _blend,
+                            )
 
         return pending_damage
 

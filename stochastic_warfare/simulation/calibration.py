@@ -188,6 +188,12 @@ class CalibrationSchema(BaseModel):
     # -- Space & EW sub-engine activation (Phase 65) -----------------------
     enable_space_effects: bool = False
 
+    # -- Unconventional & mine warfare (Phase 66) -------------------------
+    enable_unconventional_warfare: bool = False
+    enable_mine_persistence: bool = False
+    guerrilla_disengage_threshold: float = 0.3
+    human_shield_pk_reduction: float = 0.5
+
     # -- Collections ------------------------------------------------------
     weapon_assignments: dict[str, str] = {}
     victory_weights: dict[str, float] | None = None

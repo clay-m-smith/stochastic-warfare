@@ -830,11 +830,15 @@ Wire electronic protection to EW jamming calculations.
 
 ---
 
-## Phase 66: Unconventional, Naval, & Cleanup
+## Phase 66: Unconventional, Naval, & Cleanup ✓
+
+**Status**: Complete — 50 tests, 5 new test files, 6 modified source files.
 
 **Goal**: Wire remaining dormant engines, wire P2 engines if schedule permits, clean up dead code.
 
 **Dependencies**: Phase 65 (all major systems wired; this phase handles remaining items).
+
+**Partial deferrals**: AmphibiousAssaultEngine (needs beach scenario infrastructure), P4 dead code removal (6-line methods with zero maintenance burden — allowlisted), SimulationContext TODO cleanup (cosmetic).
 
 ### 66a: Unconventional Warfare & Mine Warfare
 
