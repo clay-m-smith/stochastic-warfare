@@ -50,6 +50,8 @@ class SpaceISREngine:
         self._rng = rng
         self._clock = clock
         self._last_overpass_time: dict[str, float] = {}  # sat_id → last time
+        # Phase 65: buffer ISR reports for downstream fusion
+        self._recent_reports: list[dict[str, Any]] = []
 
     def _timestamp(self) -> datetime:
         """Get simulation timestamp from clock, or epoch fallback."""
@@ -159,8 +161,12 @@ class SpaceISREngine:
                     "resolution_m": cdef.sensor_resolution_m,
                     "delay_s": self._config.isr_processing_delay_s,
                     "sensor_type": cdef.sensor_type,
+                    "target_position": getattr(target, "position", None),
+                    "timestamp": sim_time_s,
                 })
 
+        # Phase 65: buffer reports for downstream fusion
+        self._recent_reports.extend(reports)
         return reports
 
     def _estimate_unit_size(self, target: Any) -> str:
@@ -197,10 +203,21 @@ class SpaceISREngine:
                         sim_time_s, cloud_cover,
                     )
 
+    def get_recent_reports(self, *, clear: bool = True) -> list[dict[str, Any]]:
+        """Return buffered ISR reports, optionally clearing the buffer."""
+        reports = list(self._recent_reports)
+        if clear:
+            self._recent_reports.clear()
+        return reports
+
     # ── State persistence ────────────────────────────────────────────
 
     def get_state(self) -> dict[str, Any]:
-        return {"last_overpass_time": dict(self._last_overpass_time)}
+        return {
+            "last_overpass_time": dict(self._last_overpass_time),
+            "recent_reports": list(self._recent_reports),
+        }
 
     def set_state(self, state: dict[str, Any]) -> None:
         self._last_overpass_time = state.get("last_overpass_time", {})
+        self._recent_reports = state.get("recent_reports", [])

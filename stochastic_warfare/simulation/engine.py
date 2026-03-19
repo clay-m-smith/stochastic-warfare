@@ -206,17 +206,25 @@ class SimulationEngine:
     def _register_event_handlers(self) -> None:
         """Subscribe to logistics events when enable_event_feedback is set."""
         cal = getattr(self._ctx, "calibration", None)
-        if cal is None or not cal.get("enable_event_feedback", False):
-            return
-        bus = self._ctx.event_bus
-        from stochastic_warfare.logistics.events import (
-            ReturnToDutyEvent,
-            EquipmentBreakdownEvent,
-            MaintenanceCompletedEvent,
-        )
-        bus.subscribe(ReturnToDutyEvent, self._handle_return_to_duty)
-        bus.subscribe(EquipmentBreakdownEvent, self._handle_equipment_breakdown)
-        bus.subscribe(MaintenanceCompletedEvent, self._handle_maintenance_completed)
+        if cal is not None and cal.get("enable_event_feedback", False):
+            bus = self._ctx.event_bus
+            from stochastic_warfare.logistics.events import (
+                ReturnToDutyEvent,
+                EquipmentBreakdownEvent,
+                MaintenanceCompletedEvent,
+            )
+            bus.subscribe(ReturnToDutyEvent, self._handle_return_to_duty)
+            bus.subscribe(EquipmentBreakdownEvent, self._handle_equipment_breakdown)
+            bus.subscribe(MaintenanceCompletedEvent, self._handle_maintenance_completed)
+
+        # Phase 65a: early warning — subscribe to missile launches
+        if cal is not None and cal.get("enable_space_effects", False):
+            space = getattr(self._ctx, "space_engine", None)
+            if space is not None and getattr(space, "early_warning_engine", None) is not None:
+                from stochastic_warfare.combat.events import MissileLaunchEvent
+                self._ctx.event_bus.subscribe(
+                    MissileLaunchEvent, self._handle_missile_launch,
+                )
 
     def _find_unit_by_id(self, unit_id: str) -> Any:
         """Find a unit across all sides by entity_id."""
@@ -264,6 +272,34 @@ class SimulationEngine:
             if equip.equipment_id == event.equipment_id:
                 equip.operational = True
                 break
+
+    # ── Phase 65a: early warning ──────────────────────────────────────
+
+    def _handle_missile_launch(self, event: Any) -> None:
+        """Forward missile launch to early warning engine for detection."""
+        ctx = self._ctx
+        space = getattr(ctx, "space_engine", None)
+        if space is None or space.early_warning_engine is None:
+            return
+        launcher = self._find_unit_by_id(event.launcher_id)
+        if launcher is None:
+            return
+        pos = getattr(launcher, "position", None)
+        if pos is None:
+            return
+        launcher_side = getattr(launcher, "side", None) or ""
+        sim_time = ctx.clock.elapsed.total_seconds()
+        for side_name in ctx.side_names():
+            if side_name == launcher_side:
+                continue
+            detected, delay = space.early_warning_engine.check_launch_detection(
+                pos.easting, pos.northing, side_name, sim_time,
+            )
+            if detected:
+                logger.info(
+                    "Early warning: missile launch detected (delay=%.1fs) for %s",
+                    delay, side_name,
+                )
 
     # ── Run ───────────────────────────────────────────────────────────
 
@@ -669,8 +705,14 @@ class SimulationEngine:
         # Phase 25: EW domain
         self._update_ew(dt)
 
+        # Phase 65b: SIGINT intercept pass (after EW, before fusion)
+        self._run_sigint_intercepts()
+
         # Phase 52d: SIGINT fusion (after space + EW updates)
         self._fuse_sigint()
+
+        # Phase 65b: ASAT structural routing
+        self._attempt_asat_engagements()
 
         # Phase 54: era-specific per-tick engine updates
         era = getattr(ctx.config, "era", "modern")
@@ -794,22 +836,98 @@ class SimulationEngine:
                 if self._strict_mode:
                     raise
 
+    # ── Phase 65b: SIGINT intercept pass ──────────────────────────────
+
+    def _run_sigint_intercepts(self) -> None:
+        """Run SIGINT collectors against enemy emitters."""
+        ctx = self._ctx
+        _cal_65 = getattr(ctx, "calibration", None)
+        if _cal_65 is None or not _cal_65.get("enable_space_effects", False):
+            return
+        sigint = getattr(ctx, "sigint_engine", None)
+        ew = getattr(ctx, "ew_engine", None)
+        if sigint is None or ew is None:
+            return
+        collectors = getattr(sigint, "_collectors", {})
+        if not collectors:
+            return
+
+        from stochastic_warfare.ew.emitters import Emitter, EmitterType, WaveformType
+
+        timestamp = ctx.clock.current_time
+        active_jammers = getattr(ew, "_jammers", {})
+
+        for collector in collectors.values():
+            # Update collector position from its unit
+            unit = self._find_unit_by_id(collector.unit_id)
+            if unit is not None:
+                pos = getattr(unit, "position", None)
+                if pos is not None:
+                    collector.position = pos
+
+            # Attempt intercept against each active jammer
+            for jammer_id, jammer in active_jammers.items():
+                if not getattr(jammer, "active", False):
+                    continue
+                # Synthesize Emitter from JammerInstance
+                j_def = getattr(jammer, "definition", None)
+                emitter = Emitter(
+                    emitter_id=jammer_id,
+                    unit_id=jammer_id,
+                    emitter_type=EmitterType.JAMMER,
+                    position=getattr(jammer, "position", Position(0, 0, 0)),
+                    frequency_ghz=getattr(jammer, "target_frequency_ghz", 10.0) or (
+                        (j_def.frequency_min_ghz + j_def.frequency_max_ghz) / 2.0
+                        if j_def else 10.0
+                    ),
+                    bandwidth_ghz=j_def.bandwidth_ghz if j_def else 0.1,
+                    power_dbm=j_def.power_dbm if j_def else 40.0,
+                    antenna_gain_dbi=j_def.antenna_gain_dbi if j_def else 10.0,
+                    waveform=WaveformType.CW,
+                    active=True,
+                    side="",
+                )
+                try:
+                    sigint.attempt_intercept(collector, emitter, timestamp)
+                except Exception:
+                    logger.debug("SIGINT intercept failed", exc_info=True)
+
+    # ── Phase 65b: ASAT structural wiring ─────────────────────────────
+
+    def _attempt_asat_engagements(self) -> None:
+        """Route ASAT engagements (structural, data-dormant)."""
+        ctx = self._ctx
+        _cal_65 = getattr(ctx, "calibration", None)
+        if _cal_65 is None or not _cal_65.get("enable_space_effects", False):
+            return
+        space = getattr(ctx, "space_engine", None)
+        if space is None or getattr(space, "asat_engine", None) is None:
+            return
+        # ASAT engagements are strategic — triggered by AI orders, not automatic
+        # Structural placeholder for when ASAT weapon data is available
+        logger.debug("ASAT engine available for engagement routing")
+
     # ── Phase 52d: SIGINT fusion ──────────────────────────────────────
 
     def _fuse_sigint(self) -> None:
         """Fuse space-based and EW SIGINT reports into unified tracks."""
         ctx = self._ctx
+        # Phase 65a: gate on enable_space_effects
+        _cal_65 = getattr(ctx, "calibration", None)
+        if _cal_65 is None or not _cal_65.get("enable_space_effects", False):
+            return
         space = getattr(ctx, "space_engine", None)
         ew = getattr(ctx, "ew_engine", None)
-        fusion = getattr(ctx, "intel_fusion_engine", None)
+        # Phase 65a: fix — fusion engine lives in fog_of_war, not ctx
+        _fow_65 = getattr(ctx, "fog_of_war", None)
+        fusion = getattr(_fow_65, "intel_fusion", None) if _fow_65 is not None else None
         if space is None or ew is None or fusion is None:
             return
-        sigint_engine = getattr(ew, "sigint_engine", None)
+        # Phase 65a: fix — sigint_engine is on ctx, not on ew_engine
+        sigint_engine = getattr(ctx, "sigint_engine", None)
         if sigint_engine is None:
             return
         ew_raw = sigint_engine.get_recent_reports(clear=True)
-        if not ew_raw:
-            return
 
         from stochastic_warfare.detection.intel_fusion import IntelReport, IntelSource
 
@@ -826,29 +944,29 @@ class SimulationEngine:
                 position_uncertainty_m=r.position_uncertainty_m,
             ))
 
-        # Collect space SIGINT reports (from ISR engine if available)
+        # Collect space ISR reports (from ISR engine if available)
         space_isr = getattr(space, "isr_engine", None)
         space_reports: list[IntelReport] = []
         if space_isr is not None:
             raw_space = getattr(space_isr, "get_recent_reports", None)
             if raw_space is not None:
+                # Phase 65a: ISR reports are dicts with target_position key
                 for sr in raw_space(clear=True):
-                    if getattr(sr, "target_position", None) is not None:
+                    _tpos = sr.get("target_position") if isinstance(sr, dict) else getattr(sr, "target_position", None)
+                    if _tpos is not None:
                         space_reports.append(IntelReport(
                             source=IntelSource.SIGINT,
-                            timestamp=getattr(sr, "timestamp", 0.0) or 0.0,
+                            timestamp=sr.get("timestamp", 0.0) if isinstance(sr, dict) else getattr(sr, "timestamp", 0.0) or 0.0,
                             reliability=0.7,
-                            target_position=sr.target_position,
-                            position_uncertainty_m=getattr(
-                                sr, "position_uncertainty_m", 1000.0,
-                            ),
+                            target_position=_tpos,
+                            position_uncertainty_m=sr.get("resolution_m", 1000.0) if isinstance(sr, dict) else getattr(sr, "position_uncertainty_m", 1000.0),
                         ))
 
         if not space_reports and not ew_reports:
             return
 
         # Fuse for each side
-        for side in getattr(ctx, "side_names", []):
+        for side in ctx.side_names():
             try:
                 fusion.fuse_sigint_tracks(
                     side, space_reports, ew_reports,

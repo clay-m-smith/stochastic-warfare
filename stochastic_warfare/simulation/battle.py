@@ -2909,6 +2909,26 @@ class BattleManager:
                             target_range_m=best_range,
                         )
                         if snr_penalty_db > 0:
+                            # Phase 65c: ECCM reduces jamming effectiveness
+                            _eccm_65 = getattr(ctx, "eccm_engine", None)
+                            if _eccm_65 is not None:
+                                _eccm_suite = _eccm_65.get_suite_for_unit(
+                                    attacker.entity_id,
+                                )
+                                if _eccm_suite is not None and _eccm_suite.active:
+                                    _eccm_reduction = _eccm_65.compute_jam_reduction(
+                                        _eccm_suite,
+                                        jammer_freq_ghz=getattr(
+                                            sensors[0], "frequency_ghz", 10.0,
+                                        ) if sensors else 10.0,
+                                        jammer_bw_ghz=getattr(
+                                            sensors[0], "bandwidth_ghz", 0.1,
+                                        ) if sensors else 0.1,
+                                        js_ratio_db=snr_penalty_db,
+                                    )
+                                    snr_penalty_db = max(
+                                        0.0, snr_penalty_db - _eccm_reduction,
+                                    )
                             # Phase 48: jammer_coverage_mult scales EW effect
                             jammer_mult = cal.get("jammer_coverage_mult", 1.0)
                             ew_factor = max(

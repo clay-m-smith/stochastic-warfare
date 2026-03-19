@@ -1,8 +1,8 @@
 # Stochastic Warfare
 
 ![Python](https://img.shields.io/badge/python-%3E%3D3.12-blue)
-![Tests](https://img.shields.io/badge/tests-8%2C835_passing-brightgreen)
-![Phase](https://img.shields.io/badge/phase-64_Block--7-brightgreen)
+![Tests](https://img.shields.io/badge/tests-8%2C878_passing-brightgreen)
+![Phase](https://img.shields.io/badge/phase-65_Block--7-brightgreen)
 
 High-fidelity, high-resolution wargame simulator built as a headless Python engine. Models warfare across multiple scales — from individual unit engagements up through tactical battles, operational battlefields, and multi-day strategic campaigns — with stochastic and signal-processing-inspired models throughout.
 
@@ -143,7 +143,7 @@ stochastic_warfare/       # simulation engine (19 modules, ~226 source files)
   cbrn/                   # CBRN effects: agents, dispersal, contamination, protection, nuclear
   tools/                  # MCP server, analysis (narrative, tempo, comparison, sensitivity), visualization
 
-data/                     # ~700 YAML data files
+data/                     # ~735 YAML data files
   units/                  # 46 unit definitions (ground, air, naval, support)
   weapons/                # 51 weapon definitions (guns, artillery, missiles, torpedoes)
   ammunition/             # 63 ammunition definitions
@@ -163,7 +163,7 @@ data/                     # ~700 YAML data files
   eras/                    # Era-specific data packages (WW2, WW1, Napoleonic, Ancient/Medieval)
   scenarios/              # 27 modern scenarios (engagement, campaign, EW, space, CBRN, escalation, joint) + 5 test
 
-tests/                    # 8,835 engine+API+frontend tests across ~350 test files
+tests/                    # 8,878 engine+API+frontend tests across ~350 test files
 docs/                     # specs, brainstorm, devlog, development phases
 ```
 
@@ -171,7 +171,7 @@ For the full package tree and module decomposition, see [`docs/specs/project-str
 
 ## Development Status
 
-All 11 MVP phases (0-10) are complete. Post-MVP Phases 11-24 are complete (deep systems rework + performance optimization + developer tooling + real-world terrain + electronic warfare + space & satellite domain + CBRN effects + doctrinal AI schools + WW2 era + WW1 era + Napoleonic era + Ancient & Medieval era + unconventional & prohibited warfare). Block 2 Phases 25-30 complete (Engine Wiring & Integration Sprint + Core Polish & Configuration + Combat System Completeness + Modern Era Data Package + Directed Energy Weapons + Historical Era Data Expansion + Scenario & Campaign Library). Block 3 complete (Phases 31-36: Documentation Site + API + Frontend + Charts + Tactical Map + Scenario Tweaker). Block 4 complete (Phases 37-39: Integration Fixes + E2E Validation + Map & Chart Enhancements + Quality, Performance & Packaging). Block 5 complete (Phases 40-48: Battle Loop Foundation + Combat Depth + Tactical Behavior + Domain-Specific Resolution + Environmental & Subsystem Integration + Mathematical Model Audit + Scenario Data Cleanup + Full Recalibration + Deficit Resolution). Block 6 complete (Phases 49-57: Calibration Schema Hardening + Combat Fidelity Polish + Naval Combat Completeness + Environmental Continuity + C2 & AI Completeness + Era-Specific & Domain Sub-Engine Wiring + Resolution & Scenario Migration + Performance & Logistics + Full Validation & Regression). Block 7 in progress (Phase 64: C2 Friction & Command Delay).
+All 11 MVP phases (0-10) are complete. Post-MVP Phases 11-24 are complete (deep systems rework + performance optimization + developer tooling + real-world terrain + electronic warfare + space & satellite domain + CBRN effects + doctrinal AI schools + WW2 era + WW1 era + Napoleonic era + Ancient & Medieval era + unconventional & prohibited warfare). Block 2 Phases 25-30 complete (Engine Wiring & Integration Sprint + Core Polish & Configuration + Combat System Completeness + Modern Era Data Package + Directed Energy Weapons + Historical Era Data Expansion + Scenario & Campaign Library). Block 3 complete (Phases 31-36: Documentation Site + API + Frontend + Charts + Tactical Map + Scenario Tweaker). Block 4 complete (Phases 37-39: Integration Fixes + E2E Validation + Map & Chart Enhancements + Quality, Performance & Packaging). Block 5 complete (Phases 40-48: Battle Loop Foundation + Combat Depth + Tactical Behavior + Domain-Specific Resolution + Environmental & Subsystem Integration + Mathematical Model Audit + Scenario Data Cleanup + Full Recalibration + Deficit Resolution). Block 6 complete (Phases 49-57: Calibration Schema Hardening + Combat Fidelity Polish + Naval Combat Completeness + Environmental Continuity + C2 & AI Completeness + Era-Specific & Domain Sub-Engine Wiring + Resolution & Scenario Migration + Performance & Logistics + Full Validation & Regression). Block 7 in progress (Phase 65: Space & EW Sub-Engine Activation).
 
 | Phase | Focus | Tests | Status |
 |-------|-------|-------|--------|
@@ -241,7 +241,8 @@ All 11 MVP phases (0-10) are complete. Post-MVP Phases 11-24 are complete (deep 
 | 62 | Human Factors, CBRN, & Air Combat Environment (Block 7) | 85 | **Complete** |
 | 63 | Cross-Module Feedback Loops (Block 7) | 74 | **Complete** |
 | 64 | C2 Friction & Command Delay (Block 7) | 60 | **Complete** |
-| | **Total** | **~8,562** | |
+| 65 | Space & EW Sub-Engine Activation (Block 7) | 43 | **Complete** |
+| | **Total** | **~8,605** | |
 
 For the full phase roadmap, see [`docs/development-phases.md`](docs/development-phases.md) (MVP), [`docs/development-phases-post-mvp.md`](docs/development-phases-post-mvp.md) (post-MVP), [`docs/development-phases-block4.md`](docs/development-phases-block4.md) (Block 4), [`docs/development-phases-block5.md`](docs/development-phases-block5.md) (Block 5), [`docs/development-phases-block6.md`](docs/development-phases-block6.md) (Block 6), and [`docs/development-phases-block7.md`](docs/development-phases-block7.md) (Block 7). For per-phase implementation logs, see [`docs/devlog/`](docs/devlog/).
 

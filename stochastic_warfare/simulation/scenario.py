@@ -1497,6 +1497,45 @@ class ScenarioLoader:
         sigint_engine = SIGINTEngine(bus, ew_rng)
         ew_decoy_engine = EWDecoyEngine(bus, ew_rng)
 
+        # Phase 65b: Load SIGINT collectors from scenario ew_config
+        from stochastic_warfare.ew.sigint import SIGINTCollector
+        for side_key in ("blue_sigint_collectors", "red_sigint_collectors"):
+            for coll_data in ew_cfg.get(side_key, []):
+                side = "blue" if "blue" in side_key else "red"
+                collector = SIGINTCollector(
+                    collector_id=coll_data["collector_id"],
+                    unit_id=coll_data.get("unit_id", coll_data["collector_id"]),
+                    position=Position(0.0, 0.0, 0.0),
+                    receiver_sensitivity_dbm=coll_data["receiver_sensitivity_dbm"],
+                    frequency_range_ghz=tuple(coll_data["frequency_range_ghz"]),
+                    bandwidth_ghz=coll_data["bandwidth_ghz"],
+                    df_accuracy_deg=coll_data["df_accuracy_deg"],
+                    has_tdoa=coll_data.get("has_tdoa", False),
+                    side=side,
+                    aperture_m=coll_data.get("aperture_m", 1.0),
+                )
+                sigint_engine.register_collector(collector)
+
+        # Phase 65c: Load ECCM suites from scenario ew_config
+        from stochastic_warfare.ew.eccm import ECCMSuite, ECCMTechnique
+        for side_key in ("blue_eccm_suites", "red_eccm_suites"):
+            for suite_data in ew_cfg.get(side_key, []):
+                suite = ECCMSuite(
+                    suite_id=suite_data["suite_id"],
+                    unit_id=suite_data.get("unit_id", suite_data["suite_id"]),
+                    techniques=[ECCMTechnique(t) for t in suite_data.get("techniques", [])],
+                    hop_bandwidth_ghz=suite_data.get("hop_bandwidth_ghz", 0.0),
+                    hop_rate_hz=suite_data.get("hop_rate_hz", 0.0),
+                    spread_bandwidth_ghz=suite_data.get("spread_bandwidth_ghz", 0.0),
+                    signal_bandwidth_ghz=suite_data.get("signal_bandwidth_ghz", 0.001),
+                    processing_gain_db=suite_data.get("processing_gain_db", 0.0),
+                    sidelobe_ratio_db=suite_data.get("sidelobe_ratio_db", 25.0),
+                    null_depth_db=suite_data.get("null_depth_db", 30.0),
+                    num_elements=suite_data.get("num_elements", 1),
+                    max_nulls=suite_data.get("max_nulls", 1),
+                )
+                eccm_engine.register_suite(suite)
+
         logger.info("Created EW engines (jamming, ECCM, SIGINT, decoys)")
         return {
             "ew_engine": ew_engine,

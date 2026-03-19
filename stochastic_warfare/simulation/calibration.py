@@ -185,6 +185,9 @@ class CalibrationSchema(BaseModel):
     order_propagation_delay_sigma: float = 0.4
     order_misinterpretation_base: float = 0.05
 
+    # -- Space & EW sub-engine activation (Phase 65) -----------------------
+    enable_space_effects: bool = False
+
     # -- Collections ------------------------------------------------------
     weapon_assignments: dict[str, str] = {}
     victory_weights: dict[str, float] | None = None

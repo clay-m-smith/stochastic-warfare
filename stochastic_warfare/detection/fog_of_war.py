@@ -149,6 +149,11 @@ class FogOfWarManager:
         # unit_id → set of network names
         self._unit_networks: dict[str, set[str]] = {}
 
+    @property
+    def intel_fusion(self) -> IntelFusionEngine:
+        """Expose intel fusion engine for SIGINT/ISR track injection."""
+        return self._intel_fusion
+
     # ------------------------------------------------------------------
     # World view access
     # ------------------------------------------------------------------

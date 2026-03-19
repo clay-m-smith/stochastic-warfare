@@ -824,6 +824,10 @@ Wire electronic protection to EW jamming calculations.
 - ECCMEngine reduces jamming effectiveness for equipped units
 - ~40 new tests
 
+### Status: COMPLETE
+
+43 tests across 5 test files. 6 modified source files, zero new source files. 2 latent bugs fixed (`_fuse_sigint()` dead since Phase 52d). 1 CalibrationSchema field (`enable_space_effects`). 8 deferrals (D1-D8: traffic analysis, BMD cueing, ASAT routing/data, nulling direction, ISR→FOW injection, collector auto-registration, decoy deployment).
+
 ---
 
 ## Phase 66: Unconventional, Naval, & Cleanup

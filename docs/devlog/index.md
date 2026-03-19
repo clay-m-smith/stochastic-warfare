@@ -79,6 +79,7 @@ Rolling record of implementation decisions, changes, and lessons learned across 
 | 62 | Human Factors, CBRN, & Air Combat Environment | **Complete** | [phase-62.md](phase-62.md) |
 | 63 | Cross-Module Feedback Loops | **Complete** | [phase-63.md](phase-63.md) |
 | 64 | C2 Friction & Command Delay | **Complete** | [phase-64.md](phase-64.md) |
+| 65 | Space & EW Sub-Engine Activation | **Complete** | [phase-65.md](phase-65.md) |
 
 ## Post-MVP Refinement Index
 
