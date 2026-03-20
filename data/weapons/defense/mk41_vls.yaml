@@ -23,5 +23,5 @@ reliability: 0.92
 barrel_life_rounds: 0
 requires_deployed: false
 traverse_deg: 0.0
-elevation_min_deg: 90.0
-elevation_max_deg: 90.0
+elevation_min_deg: -5.0
+elevation_max_deg: 85.0

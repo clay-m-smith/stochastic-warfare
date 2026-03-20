@@ -119,6 +119,12 @@ reinforcements:
     position: [1000, 10000]
 
 calibration_overrides:
+  # Phase 67: Block 7 flag enablement — NATO joint, air, C2 friction
+  enable_seasonal_effects: true
+  enable_fog_of_war: true
+  enable_air_routing: true
+  enable_air_combat_environment: true
+  enable_c2_friction: true
   hit_probability_modifier: 1.5
   target_size_modifier: 1.0
   morale_degrade_rate_modifier: 3.0

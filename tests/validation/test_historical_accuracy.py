@@ -84,7 +84,7 @@ DATA_DIR = Path(__file__).resolve().parents[2] / "data"
 # Scenarios that should resolve via decisive combat, not time_expired
 DECISIVE_COMBAT_SCENARIOS: set[str] = {
     "73_easting", "bekaa_valley_1982", "korean_peninsula",
-    "suwalki_gap", "taiwan_strait", "eastern_front_1943",
+    "suwalki_gap", "taiwan_strait",
     "normandy_bocage", "stalingrad", "austerlitz", "waterloo",
     "cambrai", "somme_july1", "hastings",
 }

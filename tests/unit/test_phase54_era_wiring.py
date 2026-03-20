@@ -595,7 +595,7 @@ class TestAncientEngineWiring:
 
         af_eng = MagicMock()
         af_eng.update.return_value = ["unit1"]
-        ctx = _make_ctx("ancient", formation_ancient_engine=af_eng)
+        ctx = _make_ctx("ancient_medieval", formation_ancient_engine=af_eng)
 
         engine = SimulationEngine.__new__(SimulationEngine)
         engine._ctx = ctx
@@ -625,7 +625,7 @@ class TestAncientEngineWiring:
         from stochastic_warfare.simulation.engine import SimulationEngine
 
         oar_eng = MagicMock()
-        ctx = _make_ctx("ancient", naval_oar_engine=oar_eng)
+        ctx = _make_ctx("ancient_medieval", naval_oar_engine=oar_eng)
 
         engine = SimulationEngine.__new__(SimulationEngine)
         engine._ctx = ctx
@@ -641,7 +641,7 @@ class TestAncientEngineWiring:
 
         vs_eng = MagicMock()
         vs_eng.update.return_value = []
-        ctx = _make_ctx("ancient", visual_signals_engine=vs_eng)
+        ctx = _make_ctx("ancient_medieval", visual_signals_engine=vs_eng)
 
         engine = SimulationEngine.__new__(SimulationEngine)
         engine._ctx = ctx
@@ -657,7 +657,7 @@ class TestAncientEngineWiring:
 
         siege_eng = MagicMock()
         siege_eng._sieges = {"siege1": MagicMock()}
-        ctx = _make_ctx("ancient", siege_engine=siege_eng)
+        ctx = _make_ctx("ancient_medieval", siege_engine=siege_eng)
         ctx.side_names = _side_names_func
 
         mgr = CampaignManager(ctx.event_bus, np.random.default_rng(42))
@@ -719,7 +719,7 @@ class TestAncientEngineWiring:
         from stochastic_warfare.simulation.engine import SimulationEngine
         from stochastic_warfare.simulation.campaign import CampaignManager
 
-        ctx = _make_ctx("ancient")
+        ctx = _make_ctx("ancient_medieval")
         ctx.side_names = _side_names_func
 
         engine = SimulationEngine.__new__(SimulationEngine)

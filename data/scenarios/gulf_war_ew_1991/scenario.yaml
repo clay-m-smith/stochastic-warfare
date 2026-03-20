@@ -131,6 +131,12 @@ victory_conditions:
       max_duration_s: 21600
 
 calibration_overrides:
+  # Phase 67: Block 7 flag enablement — air campaign, EW, desert dust, fire zones
+  enable_air_routing: true
+  enable_air_combat_environment: true
+  enable_fog_of_war: true
+  enable_obscurants: true
+  enable_fire_zones: true
   iads_degradation_rate: 0.15
   sead_arm_effectiveness: 0.65
   jammer_coverage_mult: 1.3

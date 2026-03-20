@@ -100,8 +100,13 @@ calibration_overrides:
     - carthaginian
   carthaginian_start_x: 500.0
   carthaginian_start_y: 1500.0
+  # Spread Carthaginian line across the field (4 units × 300m ≈ 900m)
+  carthaginian_formation_spacing_m: 300.0
   roman_start_x: 3500.0
   roman_start_y: 1500.0
+  # Roman triplex acies: 5 units × 250m ≈ 1000m frontage
+  # prevents legions + equites collapsing onto a single point
+  roman_formation_spacing_m: 250.0
   weapon_assignments:
     "Gladius": gladius
     "Pilum": pilum

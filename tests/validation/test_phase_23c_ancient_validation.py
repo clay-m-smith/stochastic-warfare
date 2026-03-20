@@ -158,10 +158,10 @@ class TestHastingsScenarioLoading:
         cfg = _load_scenario_config("hastings")
         assert cfg.era == "ancient_medieval"
 
-    def test_terrain_type_hilly(self) -> None:
-        """Hastings uses hilly_defense (Senlac Hill)."""
+    def test_terrain_type_open_field(self) -> None:
+        """Hastings uses open_field terrain."""
         cfg = _load_scenario_config("hastings")
-        assert cfg.terrain.terrain_type == "hilly_defense"
+        assert cfg.terrain.terrain_type == "open_field"
 
     def test_two_sides(self) -> None:
         cfg = _load_scenario_config("hastings")

@@ -14,6 +14,14 @@ equipment:
     category: WEAPON
     weight_kg: 112.0
     reliability: 0.94
+  - name: "AIM-120 AMRAAM"
+    category: WEAPON
+    weight_kg: 152.0
+    reliability: 0.92
+  - name: "AIM-9X Sidewinder"
+    category: WEAPON
+    weight_kg: 85.0
+    reliability: 0.94
   - name: "AN/APG-68 Radar"
     category: SENSOR
     weight_kg: 164.0

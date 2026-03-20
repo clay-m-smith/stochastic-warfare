@@ -2204,24 +2204,31 @@ class BattleManager:
                 if dist < 1.0:
                     continue
 
-                # Perpendicular offset: preserve each unit's lateral
-                # displacement relative to its own side's centroid.
-                # This keeps units in a rough line rather than collapsing.
-                own_units = [ou for ou in units
-                             if ou.status == UnitStatus.ACTIVE]
-                if len(own_units) > 1:
-                    own_cx = sum(ou.position.easting for ou in own_units) / len(own_units)
-                    own_cy = sum(ou.position.northing for ou in own_units) / len(own_units)
-                    # Unit's lateral offset from its own centroid
-                    lat_dx = u.position.easting - own_cx
-                    lat_dy = u.position.northing - own_cy
-                    # Project onto perpendicular of advance direction
-                    # perp = (-dy, dx) / dist
+                # Index-based formation offset: assign each unit a fixed
+                # lateral position based on formation_spacing_m to prevent
+                # centroid collapse.  Units are sorted by entity_id for
+                # stability across ticks.
+                own_units = sorted(
+                    [ou for ou in units if ou.status == UnitStatus.ACTIVE],
+                    key=lambda ou: ou.entity_id,
+                )
+                n_own = len(own_units)
+                if n_own > 1:
+                    _spacing = cal.get(
+                        f"{side}_formation_spacing_m",
+                        cal.get("formation_spacing_m", 50.0),
+                    )
+                    _idx = next(
+                        (i for i, ou in enumerate(own_units)
+                         if ou.entity_id == u.entity_id), 0
+                    )
+                    # Lateral offset: center the formation around the advance
+                    # axis so units stay evenly spaced perpendicular to the
+                    # direction of movement.
+                    _lat_offset = (_idx - (n_own - 1) / 2.0) * _spacing
                     perp_x, perp_y = -dy / dist, dx / dist
-                    lat_proj = lat_dx * perp_x + lat_dy * perp_y
-                    # Add lateral offset to target (preserves formation width)
-                    tx += perp_x * lat_proj
-                    ty += perp_y * lat_proj
+                    tx += perp_x * _lat_offset
+                    ty += perp_y * _lat_offset
                     # Recompute advance vector
                     dx = tx - u.position.easting
                     dy = ty - u.position.northing
@@ -2568,7 +2575,11 @@ class BattleManager:
         if cal.get("enable_thermal_crossover", False) and tod_engine is not None:
             try:
                 _therm = tod_engine.thermal_environment(lat, lon)
-                thermal_dt_contrast = _therm.thermal_contrast
+                # Base contrast from solar-elevation model, scaled by scenario
+                # calibration (thermal_contrast > 1 = superior thermal sights,
+                # e.g. M1A1 in desert night).
+                _cal_tc = cal.get("thermal_contrast", 1.0)
+                thermal_dt_contrast = min(1.0, _therm.thermal_contrast * _cal_tc)
                 if _therm.crossover_in_hours < 0.5:
                     thermal_dt_contrast *= max(0.1, _therm.crossover_in_hours / 0.5)
             except Exception:
@@ -3115,19 +3126,23 @@ class BattleManager:
                         if _elev_deg < _elev_min or _elev_deg > _elev_max:
                             continue  # target outside weapon elevation arc
                     # Phase 55c-2: seeker FOV constraint — guided munitions
-                    # must acquire target within seeker cone
+                    # must acquire target within seeker cone.
+                    # Phase 67: aircraft can turn to face targets before firing,
+                    # so seeker FOV only constrains non-aerial platforms.
                     _seeker_fov = getattr(ammo_def, "seeker_fov_deg", 0.0)
                     if isinstance(_seeker_fov, (int, float)) and _seeker_fov > 0:
-                        _launch_bearing = math.atan2(
-                            best_target.position.easting - attacker.position.easting,
-                            best_target.position.northing - attacker.position.northing,
-                        )
-                        _att_heading_sk = getattr(attacker, "heading", 0.0) or 0.0
-                        _seeker_diff = abs(_launch_bearing - _att_heading_sk)
-                        if _seeker_diff > math.pi:
-                            _seeker_diff = 2 * math.pi - _seeker_diff
-                        if _seeker_diff > math.radians(_seeker_fov / 2):
-                            continue  # target outside seeker acquisition cone
+                        _att_domain_sk = getattr(attacker, "domain", None)
+                        if _att_domain_sk != Domain.AERIAL:
+                            _launch_bearing = math.atan2(
+                                best_target.position.easting - attacker.position.easting,
+                                best_target.position.northing - attacker.position.northing,
+                            )
+                            _att_heading_sk = getattr(attacker, "heading", 0.0) or 0.0
+                            _seeker_diff = abs(_launch_bearing - _att_heading_sk)
+                            if _seeker_diff > math.pi:
+                                _seeker_diff = 2 * math.pi - _seeker_diff
+                            if _seeker_diff > math.radians(_seeker_fov / 2):
+                                continue  # target outside seeker acquisition cone
                     # Score: prefer weapon whose max range best fits current
                     # distance.  Ranged weapons score higher when target is
                     # far; melee weapons score higher when target is very
@@ -3316,11 +3331,11 @@ class BattleManager:
                             crew_skill *= max(0.3, 1.0 / 1.5)  # resonance penalty
                         # Swell direction: beam seas = max roll
                         _att_heading = 0.0
-                        if dist > 0:
-                            _att_heading = math.atan2(
-                                best_target.position.easting - attacker.position.easting,
-                                best_target.position.northing - attacker.position.northing,
-                            )
+                        _dx_sw = best_target.position.easting - attacker.position.easting
+                        _dy_sw = best_target.position.northing - attacker.position.northing
+                        _dist_sw = math.sqrt(_dx_sw * _dx_sw + _dy_sw * _dy_sw)
+                        if _dist_sw > 0:
+                            _att_heading = math.atan2(_dx_sw, _dy_sw)
                         _roll_factor = math.sin(_sea_wave_dir - _att_heading) ** 2
                         crew_skill *= max(0.5, 1.0 - _roll_factor * 0.5)
 
@@ -3524,7 +3539,7 @@ class BattleManager:
                                     side_engagements += 1
                                     routed_aggregate = True
 
-                    elif era == "ancient":
+                    elif era == "ancient_medieval":
                         # Phase 54d: ancient formation modifiers
                         af_eng = getattr(ctx, "formation_ancient_engine", None)
                         if wpn_cat_str == "RIFLE" and best_range > _MELEE_RANGE_M:

@@ -1,6 +1,6 @@
 name: "Taiwan Strait Crisis - Carrier Strike vs Amphibious Assault"
 date: "2025-03-15T06:00:00Z"
-duration_hours: 72.0
+duration_hours: 24.0
 latitude: 24.5
 longitude: 120.5
 era: modern
@@ -90,17 +90,17 @@ victory_conditions:
   - type: force_destroyed
     side: ""
     params:
-      threshold: 0.3
+      threshold: 0.5
   - type: time_expired
     side: blue
     params:
-      max_duration_s: 259200
+      max_duration_s: 86400
   - type: morale_collapsed
     side: ""
 
 reinforcements:
   - side: blue
-    arrival_time_s: 86400
+    arrival_time_s: 43200  # 12 hours
     units:
       - unit_type: ddg51
         count: 2
@@ -109,26 +109,57 @@ reinforcements:
     position: [5000, 30000]
 
 calibration_overrides:
-  roe_level: WEAPONS_TIGHT
-  hit_probability_modifier: 3.0
-  target_size_modifier: 2.0
-  morale_degrade_rate_modifier: 5.0
-  morale_base_degrade_rate: 0.01
+  # Phase 67: Block 7 flag enablement — naval+air+space, full joint ops
+  enable_sea_state_ops: true
+  enable_acoustic_layers: true
+  enable_em_propagation: true
+  enable_air_routing: true
+  enable_air_combat_environment: true
+  enable_fog_of_war: true
+  enable_space_effects: true
+  enable_missile_routing: true
+  roe_level: WEAPONS_FREE
+  hit_probability_modifier: 1.5
+  target_size_modifier: 1.0
+  morale_degrade_rate_modifier: 2.5
+  morale_base_degrade_rate: 0.008
   morale_casualty_weight: 0.5
-  morale_check_interval: 5
+  morale_check_interval: 15
   blue_cohesion: 0.85
   red_cohesion: 0.65
   blue_force_ratio_modifier: 1.8
-  target_size_modifier_blue: 0.3
-  target_size_modifier_red: 2.0
-  destruction_threshold: 0.15
+  target_size_modifier_blue: 0.5
+  target_size_modifier_red: 1.5
+  destruction_threshold: 0.3
   blue_start_x: 20000.0
   blue_start_y: 30000.0
+  blue_formation_spacing_m: 1000.0
   red_start_x: 40000.0
   red_start_y: 30000.0
+  red_formation_spacing_m: 1000.0
   defensive_sides: [blue]
-  max_engagers_per_side: 5
+  max_engagers_per_side: 10
   observation_decay_rate: 0.02
+  weapon_assignments:
+    "M61A1 Vulcan 20mm": m61a1_vulcan
+    "AN/APG-68 Radar": m61a1_vulcan
+    "GSh-23 23mm Cannon": m61a1_vulcan
+    "AIM-120 AMRAAM": aim120_amraam
+    "AIM-9X Sidewinder": aim9x_sidewinder
+    "R-77 AA-12 Adder": r77
+    "R-73 AA-11 Archer": r73
+    "Mk 41 VLS": mk41_vls
+    "Mk 45 5-inch Naval Gun": mk45_5inch
+    "Mk 48 ADCAP Torpedo": mk48_adcap
+    "AK-130 130mm Twin Gun": mk45_5inch
+    "3M80 Moskit Launcher": rgm84_harpoon
+    "533mm Torpedo Tubes": mk48_adcap
+    "5P85 TEL": mim104_pac3
+    "M256 120mm Smoothbore Gun": m256_120mm
+    "M2HB .50 Cal HMG": m2hb_50cal
+    "2A42 30mm Autocannon": m242_bushmaster
+    "9P135M ATGM Launcher": at3_sagger
+    "M901 Launching Station": mim104_pac3
 
 ew_config:
   enable_ew: true

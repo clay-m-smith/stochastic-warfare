@@ -38,6 +38,8 @@ victory_conditions:
     side: draw
     params: {max_duration_s: 2592000}
 calibration_overrides:
+  # Phase 67: Block 7 flag enablement — IED/guerrilla mechanics
+  enable_unconventional_warfare: true
   blue_start_x: 2000
   blue_start_y: 7500
   red_start_x: 13000

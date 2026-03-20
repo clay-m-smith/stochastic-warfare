@@ -24,7 +24,7 @@ terrain:
   height_m: 1000
   cell_size_m: 50.0
   base_elevation_m: 80.0
-  terrain_type: hilly_defense
+  terrain_type: open_field
 
 sides:
   - side: saxon
@@ -52,7 +52,7 @@ sides:
         overrides:
           display_name: "Norman Infantry"
       - unit_type: english_longbowman
-        count: 1
+        count: 3
         overrides:
           display_name: "Norman Archers"
     experience_level: 0.60
@@ -80,31 +80,38 @@ victory_conditions:
     side: ""
     params:
       threshold: 0.5
+      count_disabled: true
   - type: morale_collapsed
     side: ""
     params:
-      threshold: 0.6
+      threshold: 0.7
   - type: time_expired
     side: norman
     params:
       max_duration_s: 32400
 
 calibration_overrides:
-  hit_probability_modifier: 0.7
-  target_size_modifier: 0.7
-  morale_degrade_rate_modifier: 0.5
-  morale_base_degrade_rate: 0.010
-  morale_casualty_weight: 0.5
-  morale_check_interval: 20
+  defensive_sides: [saxon]
+  hit_probability_modifier: 1.2
+  target_size_modifier: 0.8
+  morale_degrade_rate_modifier: 1.0
+  morale_base_degrade_rate: 0.005
+  morale_casualty_weight: 0.4
+  morale_check_interval: 25
   saxon_force_ratio_modifier: 1.2
-  norman_force_ratio_modifier: 1.0
+  norman_force_ratio_modifier: 1.5
   saxon_cohesion: 0.70
   norman_cohesion: 0.65
+  # Lower threshold after formation fix — battles now resolve more decisively
   destruction_threshold: 0.5
   saxon_start_x: 300.0
   saxon_start_y: 500.0
-  norman_start_x: 1700.0
+  # Saxon shield wall spread across Senlac Hill
+  saxon_formation_spacing_m: 150.0
+  norman_start_x: 1200.0
   norman_start_y: 500.0
+  # Norman combined arms: 6 units × 100m ≈ 500m frontage
+  norman_formation_spacing_m: 100.0
   weapon_assignments:
     "Sword (Medieval)": sword_medieval
     "Shield": sword_medieval

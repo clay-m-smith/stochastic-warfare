@@ -716,7 +716,7 @@ class TestEraEngines:
 
         loader = ScenarioLoader.__new__(ScenarioLoader)
         loader._data_dir = None
-        cfg = _minimal_config(era="ancient")
+        cfg = _minimal_config(era="ancient_medieval")
         result = loader._create_era_engines(_make_rng_mgr(), _make_bus(), cfg)
         assert result["archery_engine"] is not None
         assert result["siege_engine"] is not None

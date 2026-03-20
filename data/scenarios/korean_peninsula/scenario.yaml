@@ -119,6 +119,15 @@ reinforcements:
     position: [19500, 7500]
 
 calibration_overrides:
+  # Phase 67: Block 7 flag enablement — joint ops, cold weather, GPS, CBRN, C2
+  enable_seasonal_effects: true
+  enable_human_factors: true
+  enable_fog_of_war: true
+  enable_c2_friction: true
+  enable_space_effects: true
+  enable_event_feedback: true
+  enable_obstacle_effects: true
+  enable_cbrn_environment: true
   hit_probability_modifier: 1.8
   target_size_modifier: 0.6
   morale_degrade_rate_modifier: 0.25

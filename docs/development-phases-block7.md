@@ -892,11 +892,15 @@ Wire SiegeEngine, AmphibiousAssaultEngine (if schedule permits). Clean up dead c
 
 ---
 
-## Phase 67: Integration Validation & Recalibration
+## Phase 67: Integration Validation & Recalibration — COMPLETE
+
+**Status**: Complete — ~30 tests (10 structural + 3 cross-doc + 6 evaluator + 7 MC slow), 2 source files modified, 10 scenario YAMLs modified, 9 docs updated.
 
 **Goal**: Validate all scenarios still produce correct outcomes with all new systems active. Run structural verification tests to confirm zero remaining integration gaps. This is the final hardening pass for Block 7.
 
 **Dependencies**: All previous Block 7 phases (58-66).
+
+**Result**: All 21 `enable_*` flags enabled across 10 curated modern scenarios. Two bugs fixed (thermal crossover wraparound, calibration multiplier missing from crossover path). All scenarios produce correct winners. Block 7 COMPLETE.
 
 ### 67a: Full Scenario Evaluation
 
@@ -966,19 +970,19 @@ Synchronize all documentation. Block 7 postmortem.
 
 | Phase | Focus | Tests | Cumulative | Status |
 |-------|-------|-------|------------|--------|
-| 58 | Structural Verification & Core Combat Wiring | ~60 | ~8,443 | Planned |
-| 59 | Atmospheric & Ground Environment | ~50 | ~8,493 | Planned |
-| 60 | Obscurants, Fire, & Visual Environment | ~50 | ~8,543 | Planned |
-| 61 | Maritime, Acoustic, & EM Environment | ~55 | ~8,598 | Planned |
-| 62 | Human Factors, CBRN, & Air Combat | ~45 | ~8,643 | Planned |
-| 63 | Cross-Module Feedback Loops | ~45 | ~8,688 | Planned |
-| 64 | C2 Friction & Command Delay | ~40 | ~8,728 | Planned |
-| 65 | Space & EW Sub-Engine Activation | ~40 | ~8,768 | Planned |
-| 66 | Unconventional, Naval, & Cleanup | ~30 | ~8,798 | Planned |
-| 67 | Integration Validation & Recalibration | ~40 | ~8,838 | Planned |
+| 58 | Structural Verification & Core Combat Wiring | 60 | ~8,443 | Complete |
+| 59 | Atmospheric & Ground Environment | 48 | ~8,491 | Complete |
+| 60 | Obscurants, Fire, & Visual Environment | 53 | ~8,544 | Complete |
+| 61 | Maritime, Acoustic, & EM Environment | 71 | ~8,615 | Complete |
+| 62 | Human Factors, CBRN, & Air Combat | 85 | ~8,700 | Complete |
+| 63 | Cross-Module Feedback Loops | 74 | ~8,774 | Complete |
+| 64 | C2 Friction & Command Delay | 60 | ~8,834 | Complete |
+| 65 | Space & EW Sub-Engine Activation | 43 | ~8,877 | Complete |
+| 66 | Unconventional, Naval, & Cleanup | 50 | ~8,927 | Complete |
+| 67 | Integration Validation & Recalibration | ~30 | ~8,957 | Complete |
 
-**Block 7 total**: ~455 new tests across 10 phases.
-**Projected cumulative**: ~8,838 Python tests + 272 frontend = ~9,110 total.
+**Block 7 total**: ~574 new tests across 10 phases. **BLOCK 7 COMPLETE.**
+**Cumulative**: ~8,957 Python tests + 272 frontend = ~9,229 total.
 
 ---
 

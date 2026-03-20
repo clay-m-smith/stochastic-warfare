@@ -1817,7 +1817,7 @@ class ScenarioLoader:
             result["foraging_engine"] = ForagingEngine(rng=logistics_rng)
             logger.info("Created Napoleonic era engines")
 
-        elif era == "ancient":
+        elif era == "ancient_medieval":
             from stochastic_warfare.combat.archery import ArcheryEngine
             from stochastic_warfare.combat.melee import MeleeEngine
             from stochastic_warfare.combat.siege import SiegeEngine

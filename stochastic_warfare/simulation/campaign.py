@@ -197,7 +197,7 @@ class CampaignManager:
                 except Exception:
                     logger.debug("Foraging recovery failed", exc_info=True)
 
-        elif era == "ancient":
+        elif era == "ancient_medieval":
             # Phase 54d: siege advancement
             siege_eng = getattr(ctx, "siege_engine", None)
             if siege_eng is not None:

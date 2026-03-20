@@ -118,6 +118,9 @@ documented_outcomes:
     notes: "18 hours of fighting"
 
 calibration_overrides:
+  # Phase 67: Block 7 flag enablement — dust/smoke, October weather
+  enable_obscurants: true
+  enable_seasonal_effects: true
   hit_probability_modifier: 1.0
   # Hull-down defensive positions reduce target size moderately.
   # 0.55 = ~4.7m² vs full 8.5m² — accounts for hull-down positions

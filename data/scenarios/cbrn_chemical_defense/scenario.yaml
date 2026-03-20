@@ -59,11 +59,15 @@ calibration_overrides:
   # Blue starts in the contaminated zone (objective area)
   blue_start_x: 5000.0
   blue_start_y: 5000.0
-  # Red artillery positioned 8km away (well within 30km howitzer range,
+  # Blue advances through contaminated zone toward red artillery.
+  # Red holds — standoff range (30km howitzer) keeps them stationary.
+  defensive_sides: [red]
+  # Spread blue squads to prevent centroid collapse (4 × 200m ≈ 600m)
+  blue_formation_spacing_m: 200.0
+  # Red artillery positioned 4km away (well within 30km howitzer range,
   # well beyond 3km minimum range)
   red_start_x: 5000.0
   red_start_y: 1000.0
-  defensive_sides: [red]
   weapon_assignments:
     "M284 155mm Howitzer": m284_155mm
     "M4A1 Carbine": m4_556mm

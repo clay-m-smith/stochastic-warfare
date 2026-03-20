@@ -18,6 +18,17 @@
             "prompt": "Check if the file being written is a YAML file (.yaml or .yml) inside a unit definitions or config directory (units/, config/, scenarios/, data/). If it is, check for these issues:\n\n1. Does it have an 'id' field (for non-scenario files)?\n2. Are numeric values actually numbers (not strings)?\n3. Are probability values between 0 and 1?\n4. UNIT YAML files (inside units/ directories): Check equipment entries.\n   a. Every `category` value must be one of: WEAPON, SENSOR, PROPULSION, PROTECTION, COMMUNICATION, NAVIGATION, UTILITY, POWER. NOT 'TOOL' (use UTILITY instead).\n   b. The unit SHOULD have at least one equipment entry with `category: SENSOR`. If not, warn that units without sensors will not be detectable in simulation. Suggest adding a default sensor: 'Mk 1 Eyeball' (modern/WW2), 'Field Binoculars' (WW1), or 'Naked Eye Observation' (Napoleonic/Ancient).\n   c. Equipment names with `category: WEAPON` should be checked against known weapon names. Common patterns: caliber + type (e.g., '120mm Smoothbore', '7.62mm Coaxial'). Flag obviously malformed names.\n5. SCENARIO YAML files: Check that `unit_type` values in `sides[].units[]` look like valid unit type identifiers (snake_case, no spaces). Flag any that look like display names rather than IDs.\n\nIf the file is NOT a YAML unit/config file, ALLOW the write.\nIf no issues found, ALLOW the write.\nIf issues found, BLOCK and describe the problems."
           }
         ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": ".claude/hooks/force-background-tests.sh",
+            "timeout": 5,
+            "statusMessage": "Checking if command should run in background..."
+          }
+        ]
       }
     ],
     "PostToolUse": [

@@ -81,6 +81,7 @@ Rolling record of implementation decisions, changes, and lessons learned across 
 | 64 | C2 Friction & Command Delay | **Complete** | [phase-64.md](phase-64.md) |
 | 65 | Space & EW Sub-Engine Activation | **Complete** | [phase-65.md](phase-65.md) |
 | 66 | Unconventional, Naval, & Cleanup | **Complete** | [phase-66.md](phase-66.md) |
+| 67 | Integration Validation & Recalibration | **Complete** | [phase-67.md](phase-67.md) |
 
 ## Post-MVP Refinement Index
 

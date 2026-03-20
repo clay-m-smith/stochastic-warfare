@@ -86,14 +86,15 @@ objectives:
     type: territory
 
 victory_conditions:
-  - type: territory_control
-    side: french
-    params:
-      threshold: 0.6
   - type: force_destroyed
     side: ""
     params:
-      threshold: 0.7
+      threshold: 0.5
+      count_disabled: true
+  - type: territory_control
+    side: french
+    params:
+      threshold: 0.8
   - type: time_expired
     side: british
     params:
@@ -108,13 +109,18 @@ calibration_overrides:
   morale_check_interval: 20
   french_cohesion: 0.55
   british_cohesion: 0.8
+  british_force_ratio_modifier: 2.5
   target_size_modifier_french: 2.0
   target_size_modifier_british: 0.3
   destruction_threshold: 0.3
   french_start_x: 1500.0
   french_start_y: 2000.0
+  # 11 French units × 200m ≈ 2000m frontage across 4000m terrain height
+  french_formation_spacing_m: 200.0
   british_start_x: 4500.0
   british_start_y: 2000.0
+  # 9 British units × 200m ≈ 1600m defensive frontage
+  british_formation_spacing_m: 200.0
   defensive_sides: [british]
   weapon_assignments:
     "Charleville 1777 Musket": charleville_1777

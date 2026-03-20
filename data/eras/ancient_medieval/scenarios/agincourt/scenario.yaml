@@ -98,8 +98,13 @@ calibration_overrides:
   destruction_threshold: 0.4
   english_start_x: 300.0
   english_start_y: 500.0
+  # Spread English longbow line across the 1km frontage
+  english_formation_spacing_m: 150.0
   french_start_x: 1700.0
   french_start_y: 500.0
+  # Wide formation prevents cavalry converging on a single point;
+  # 200m spacing across 4 units ≈ 600m frontage (historical narrow field)
+  french_formation_spacing_m: 200.0
   weapon_assignments:
     "Longbow": longbow
     "Sword (Medieval)": sword_medieval

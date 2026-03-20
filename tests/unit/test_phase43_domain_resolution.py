@@ -386,7 +386,7 @@ class TestArcheryRouting:
         target = _make_unit("tgt", "red", personnel_count=200, position=Position(100.0, 0.0, 0.0))
         wpn = _make_wpn("english_longbow", "RIFLE", max_range_m=250.0)
 
-        ctx = _make_ctx(era="ancient", archery_engine=ae, units=[attacker, target])
+        ctx = _make_ctx(era="ancient_medieval", archery_engine=ae, units=[attacker, target])
         ctx.unit_weapons = {"att": [(wpn, [_make_ammo()])]}
         ctx.unit_sensors = {}
         ctx.units_by_side = {"blue": [attacker], "red": [target]}
@@ -417,7 +417,7 @@ class TestMeleeRouting:
         # max_range_m=0 so weapon selection doesn't filter by range
         wpn = _make_wpn("gladius", "MELEE", max_range_m=0)
 
-        ctx = _make_ctx(era="ancient", melee_engine=me, units=[attacker, target])
+        ctx = _make_ctx(era="ancient_medieval", melee_engine=me, units=[attacker, target])
         ctx.unit_weapons = {"att": [(wpn, [_make_ammo()])]}
         ctx.unit_sensors = {}
         ctx.units_by_side = {"blue": [attacker], "red": [target]}

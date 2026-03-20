@@ -70,7 +70,7 @@ class TestFalklandsScenarioLoading:
 
     def test_terrain_ocean(self, falklands_campaign):
         assert falklands_campaign.terrain.terrain_type == "open_ocean"
-        assert falklands_campaign.terrain.width_m == 20000
+        assert falklands_campaign.terrain.width_m == 100000
 
 
 # ===========================================================================

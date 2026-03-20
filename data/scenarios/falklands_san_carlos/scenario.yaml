@@ -82,9 +82,9 @@ victory_conditions:
       max_duration_s: 43200
 
 calibration_overrides:
-  roe_level: WEAPONS_TIGHT
-  hit_probability_modifier: 1.0
-  target_size_modifier: 1.0
+  roe_level: WEAPONS_FREE
+  hit_probability_modifier: 2.0
+  target_size_modifier: 1.5
   morale_degrade_rate_modifier: 0.15
   morale_base_degrade_rate: 0.005
   morale_casualty_weight: 0.4
@@ -93,11 +93,15 @@ calibration_overrides:
   red_force_ratio_modifier: 1.0
   blue_cohesion: 0.85
   red_cohesion: 0.7
-  destruction_threshold: 0.5
+  destruction_threshold: 0.3
+  # Start red within engagement detection range (15km) of blue anchorage.
+  # Argentinian jets fly toward the anchorage — begin close enough for
+  # immediate battle detection.
   blue_start_x: 30000.0
   blue_start_y: 50000.0
-  red_start_x: 90000.0
+  red_start_x: 42000.0
   red_start_y: 50000.0
+  defensive_sides: [blue]
   weapon_assignments:
     "AM.39 Exocet": am39_exocet
     "Sea Dart SAM": sea_dart

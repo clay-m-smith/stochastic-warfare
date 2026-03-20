@@ -514,8 +514,8 @@ class TestDataFixes:
             data = yaml.safe_load(f)
         assert data["ground_type"] == "CAVALRY"
 
-    def test_falklands_campaign_roe_weapons_tight(self):
-        """Falklands campaign has ROE set to WEAPONS_TIGHT."""
+    def test_falklands_campaign_roe_weapons_free(self):
+        """Falklands campaign has ROE set to WEAPONS_FREE."""
         from pathlib import Path
         import yaml
 
@@ -524,10 +524,10 @@ class TestDataFixes:
             pytest.skip("Scenario not found")
         with open(path) as f:
             data = yaml.safe_load(f)
-        assert data["calibration_overrides"]["roe_level"] == "WEAPONS_TIGHT"
+        assert data["calibration_overrides"]["roe_level"] == "WEAPONS_FREE"
 
-    def test_taiwan_strait_roe_weapons_tight(self):
-        """Taiwan Strait scenario has ROE set to WEAPONS_TIGHT."""
+    def test_taiwan_strait_roe_weapons_free(self):
+        """Taiwan Strait scenario has ROE set to WEAPONS_FREE."""
         from pathlib import Path
         import yaml
 
@@ -536,7 +536,7 @@ class TestDataFixes:
             pytest.skip("Scenario not found")
         with open(path) as f:
             data = yaml.safe_load(f)
-        assert data["calibration_overrides"]["roe_level"] == "WEAPONS_TIGHT"
+        assert data["calibration_overrides"]["roe_level"] == "WEAPONS_FREE"
 
     def test_halabja_has_cbrn_config(self):
         """Halabja 1988 scenario has cbrn_config with agent releases."""
@@ -591,8 +591,8 @@ class TestDataFixes:
             data = yaml.safe_load(f)
         assert data["calibration_overrides"]["roe_level"] == "WEAPONS_FREE"
 
-    def test_hybrid_gray_zone_roe_weapons_hold(self):
-        """Hybrid Gray Zone scenario has ROE set to WEAPONS_HOLD."""
+    def test_hybrid_gray_zone_roe_weapons_tight(self):
+        """Hybrid Gray Zone scenario has ROE set to WEAPONS_TIGHT."""
         from pathlib import Path
         import yaml
 
@@ -601,10 +601,10 @@ class TestDataFixes:
             pytest.skip("Scenario not found")
         with open(path) as f:
             data = yaml.safe_load(f)
-        assert data["calibration_overrides"]["roe_level"] == "WEAPONS_HOLD"
+        assert data["calibration_overrides"]["roe_level"] == "WEAPONS_TIGHT"
 
-    def test_falklands_san_carlos_roe_weapons_tight(self):
-        """Falklands San Carlos scenario has ROE set to WEAPONS_TIGHT."""
+    def test_falklands_san_carlos_roe_weapons_free(self):
+        """Falklands San Carlos scenario has ROE set to WEAPONS_FREE."""
         from pathlib import Path
         import yaml
 
@@ -613,7 +613,7 @@ class TestDataFixes:
             pytest.skip("Scenario not found")
         with open(path) as f:
             data = yaml.safe_load(f)
-        assert data["calibration_overrides"]["roe_level"] == "WEAPONS_TIGHT"
+        assert data["calibration_overrides"]["roe_level"] == "WEAPONS_FREE"
 
     def test_a4_skyhawk_bomb_rack_mapped(self):
         """A-4 Skyhawk bomb rack is mapped in San Carlos weapon_assignments."""

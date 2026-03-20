@@ -14,6 +14,14 @@ equipment:
     category: WEAPON
     weight_kg: 50.0
     reliability: 0.88
+  - name: "R-77 AA-12 Adder"
+    category: WEAPON
+    weight_kg: 175.0
+    reliability: 0.88
+  - name: "R-73 AA-11 Archer"
+    category: WEAPON
+    weight_kg: 105.0
+    reliability: 0.90
   - name: "KLJ-3A Pulse-Doppler Radar"
     category: SENSOR
     weight_kg: 280.0

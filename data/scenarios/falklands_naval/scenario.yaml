@@ -1,6 +1,6 @@
 name: "Falklands Naval - Sheffield Exocet Attack"
 date: "1982-05-04T14:00:00Z"
-duration_hours: 0.5
+duration_hours: 1.5
 tick_duration_seconds: 2.0
 latitude: -51.8
 longitude: -59.0
@@ -83,16 +83,22 @@ victory_conditions:
     side: ""
     params:
       threshold: 0.3
+      count_disabled: true
   - type: morale_collapsed
     side: ""
   - type: time_expired
     side: blue
     params:
-      max_duration_s: 1800
+      max_duration_s: 5400
 
 calibration_overrides:
-  hit_probability_modifier: 1.5
-  target_size_modifier: 1.0
+  # Phase 67: Block 7 flag enablement — pure naval, South Atlantic conditions
+  enable_sea_state_ops: true
+  enable_acoustic_layers: true
+  enable_em_propagation: true
+  enable_mine_persistence: true
+  hit_probability_modifier: 2.0
+  target_size_modifier: 1.5
   morale_degrade_rate_modifier: 1.5
   morale_force_ratio_weight: 0.0
   morale_base_degrade_rate: 0.005
@@ -102,12 +108,16 @@ calibration_overrides:
   red_force_ratio_modifier: 4.0
   blue_cohesion: 0.9
   red_cohesion: 0.9
-  # Positions — Super Etendards approach from ~40km (within Exocet range).
-  # Short engagement window: fire and egress.
+  destruction_threshold: 0.3
+  # Positions — Super Etendards start ~25km out.  Within closing range
+  # (30km) so engine uses OPERATIONAL (dt=2s).  Blue holds; red advances
+  # at 340×0.3=102 m/s, closing 10km in ~49 ticks (98s).  1.5-hour
+  # scenario gives ample time for engagement.
   blue_start_x: 50000.0
   blue_start_y: 50000.0
-  red_start_x: 90000.0
+  red_start_x: 75000.0
   red_start_y: 50000.0
+  defensive_sides: [blue]
   weapon_assignments:
     "AM.39 Exocet": am39_exocet
     "Sea Dart SAM": sea_dart

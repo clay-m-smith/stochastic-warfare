@@ -92,9 +92,9 @@ class TestTaiwanStrait:
         )
         assert len(raw.get("documented_outcomes", [])) >= 2
 
-    def test_duration_72h(self):
+    def test_duration_24h(self):
         cfg = _load_scenario_by_name("taiwan_strait")
-        assert cfg.duration_hours == 72.0
+        assert cfg.duration_hours == 24.0
 
 
 class TestKoreanPeninsula:

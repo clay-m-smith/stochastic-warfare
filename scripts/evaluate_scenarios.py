@@ -166,7 +166,7 @@ def run_scenario(scenario_path: Path, data_dir: Path, verbose: bool = False, see
             )
 
         # Set up engine
-        engine_config = EngineConfig(max_ticks=50000)
+        engine_config = EngineConfig(max_ticks=20000, snapshot_interval_ticks=0)
         engine = SimulationEngine(
             ctx,
             config=engine_config,
@@ -317,15 +317,26 @@ def run_scenario(scenario_path: Path, data_dir: Path, verbose: bool = False, see
                 result.issues.append(f"CENTROID_COLLAPSE_{side}")
 
         # Check for stuck units (active, have weapons, didn't move much)
+        # Exclude defensive-side units — they are supposed to hold position
+        _def_sides = set()
+        _cal_ov = getattr(cfg, 'calibration_overrides', None)
+        if isinstance(_cal_ov, dict):
+            _def_sides = set(_cal_ov.get('defensive_sides', []))
+        elif _cal_ov is not None:
+            _def_sides = set(getattr(_cal_ov, 'defensive_sides', None) or [])
         stuck_count = 0
+        non_defensive_total = 0
         for d in unit_details:
+            if d['side'] in _def_sides:
+                continue  # defensive units hold position by design
+            non_defensive_total += 1
             if (d['status'] == 'ACTIVE'
                     and d['distance_moved'] < 10
                     and d['weapons_count'] > 0
                     and d['best_weapon_range'] > 0):
                 stuck_count += 1
-        if stuck_count > result.initial_total * 0.5 and result.initial_total > 4:
-            result.issues.append(f"MANY_STUCK_UNITS({stuck_count}/{result.initial_total})")
+        if stuck_count > non_defensive_total * 0.5 and non_defensive_total > 4:
+            result.issues.append(f"MANY_STUCK_UNITS({stuck_count}/{non_defensive_total})")
 
     except Exception as exc:
         result.success = False

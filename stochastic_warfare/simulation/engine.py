@@ -740,7 +740,7 @@ class SimulationEngine:
                     logger.debug("Courier update failed", exc_info=True)
 
         # Phase 54d: Ancient formation transitions + naval oar fatigue + visual signals
-        if era == "ancient":
+        if era == "ancient_medieval":
             af_eng = getattr(ctx, "formation_ancient_engine", None)
             if af_eng is not None:
                 try:

@@ -143,13 +143,15 @@ class TimeOfDayEngine:
             # Estimate hours to sunset
             day_len = self._astronomy.day_length_hours(lat, lon)
             local_hour = (self._clock.hour_utc + lon / 15.0) % 24.0
-            crossover = max(0, (12 + day_len / 2) - local_hour)
+            crossover = (12 + day_len / 2) - local_hour
+            if crossover <= 0:
+                crossover += 24.0
         else:
             # Estimate hours to sunrise
             day_len = self._astronomy.day_length_hours(lat, lon)
             local_hour = (self._clock.hour_utc + lon / 15.0) % 24.0
-            crossover = max(0, (12 - day_len / 2) - local_hour)
-            if crossover < 0:
+            crossover = (12 - day_len / 2) - local_hour
+            if crossover <= 0:
                 crossover += 24.0
 
         return ThermalEnvironment(

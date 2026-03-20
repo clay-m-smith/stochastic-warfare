@@ -103,14 +103,16 @@ calibration_overrides:
   destruction_threshold: 0.3
   british_start_x: 1500.0
   british_start_y: 2500.0
+  british_formation_spacing_m: 300.0
   german_start_x: 5000.0
   german_start_y: 2500.0
+  german_formation_spacing_m: 200.0
   defensive_sides: [german]
   weapon_assignments:
     "Lee-Enfield SMLE Mk III Rifle": lee_enfield
     "Mills Bomb No. 5 Grenade": mills_bomb
     "Webley Mk VI Revolver": lee_enfield
-    "QF 6-pounder 6 cwt Hotchkiss Gun": 18pdr_field_gun
+    "QF 6-pounder 6 cwt Hotchkiss Gun": lewis_gun
     "Lewis Gun Sponson Mount": lewis_gun
     "Gewehr 98 Rifle": gewehr_98
     "Stielhandgranate M1917 Grenade": mills_bomb

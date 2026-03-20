@@ -3,8 +3,8 @@
 **High-fidelity stochastic wargame simulator** -- multi-scale, multi-domain, multi-era.
 
 ![Python](https://img.shields.io/badge/python-%3E%3D3.12-blue)
-![Tests](https://img.shields.io/badge/tests-8%2C908_passing-brightgreen)
-![Phase](https://img.shields.io/badge/phase-66_Block--7-brightgreen)
+![Tests](https://img.shields.io/badge/tests-8%2C977_passing-brightgreen)
+![Phase](https://img.shields.io/badge/phase-67_Block--7--COMPLETE-brightgreen)
 
 ---
 
@@ -72,9 +72,9 @@ See the [Getting Started Guide](guide/getting-started.md) for a complete tutoria
 | Block 4 | 37--39 | Integration fixes, map enhancements, packaging | **Complete** |
 | Block 5 | 40--48 | Core combat fidelity — battle loop wiring, terrain interaction, ROE, composite victory, deficit resolution | **Complete** |
 | Block 6 | 49--57 | Final tightening — calibration hardening, combat polish, engine wiring, validation | **Complete** |
-| Block 7 | 58--67 | Final engine hardening — structural verification, environment wiring, engine integration | **In Progress** |
+| Block 7 | 58--67 | Final engine hardening — structural verification, environment wiring, engine integration | **Complete** |
 
-**~8,878 tests** (~8,605 Python + 272 frontend) across ~350 test files. **~735 YAML data files** defining 133 units, 115 weapons, 131 ammunition types, sensors, signatures, 34 doctrines, 30 commanders, and 41 scenarios.
+**~9,249 tests** (~8,977 Python + 272 frontend) across ~350 test files. **~735 YAML data files** defining units, weapons, ammunition types, sensors, signatures, doctrines, commanders, and 41 scenarios across 5 eras.
 
 ## License
 

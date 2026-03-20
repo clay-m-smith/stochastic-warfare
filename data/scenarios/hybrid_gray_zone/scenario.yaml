@@ -73,11 +73,12 @@ victory_conditions:
       max_duration_s: 2592000
 
 calibration_overrides:
-  roe_level: WEAPONS_HOLD
-  hit_probability_modifier: 0.1
-  target_size_modifier: 0.1
-  max_engagers_per_side: 1
-  morale_degrade_rate_modifier: 0.05
+  # WEAPONS_TIGHT: positive ID required (not HOLD which blocks all fire)
+  roe_level: WEAPONS_TIGHT
+  hit_probability_modifier: 0.5
+  target_size_modifier: 0.5
+  max_engagers_per_side: 2
+  morale_degrade_rate_modifier: 0.1
   morale_base_degrade_rate: 0.003
   morale_casualty_weight: 0.3
   morale_check_interval: 50
@@ -85,11 +86,16 @@ calibration_overrides:
   red_force_ratio_modifier: 1.0
   blue_cohesion: 0.7
   red_cohesion: 0.2
-  destruction_threshold: 0.9
+  destruction_threshold: 0.5
+  # Start forces closer — 11km apart on 15km map, within engagement
+  # detection range.  Gray zone ops feature limited contact.
   blue_start_x: 2000.0
   blue_start_y: 7500.0
+  blue_formation_spacing_m: 200.0
   red_start_x: 13000.0
   red_start_y: 7500.0
+  red_formation_spacing_m: 200.0
+  enable_unconventional_warfare: true
   weapon_assignments:
     "M4A1 Carbine": m4_556mm
     "M4A1 SOPMOD": m4_556mm
