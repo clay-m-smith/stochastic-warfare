@@ -1,0 +1,5714 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="High-fidelity stochastic wargame simulator — multi-scale, multi-domain, multi-era">
+      
+      
+        <meta name="author" content="Clay Smith">
+      
+      
+        <link rel="canonical" href="https://clay-m-smith.github.io/stochastic-warfare/reference/api/">
+      
+      
+        <link rel="prev" href="../../concepts/models/">
+      
+      
+        <link rel="next" href="../eras/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>API Reference - Stochastic Warfare</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="blue-grey" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#api-reference" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="Stochastic Warfare" class="md-header__button md-logo" aria-label="Stochastic Warfare" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Stochastic Warfare
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              API Reference
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="blue-grey" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="blue-grey" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/clay-m-smith/stochastic-warfare" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    clay-m-smith/stochastic-warfare
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../guide/getting-started/" class="md-tabs__link">
+          
+  
+  
+  Guide
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../concepts/architecture/" class="md-tabs__link">
+          
+  
+  
+  Concepts
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="./" class="md-tabs__link">
+          
+  
+  
+  Reference
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../brainstorm/" class="md-tabs__link">
+          
+  
+  
+  Architecture (Internal)
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../development-phases/" class="md-tabs__link">
+          
+  
+  
+  Development Phases
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../devlog/" class="md-tabs__link">
+          
+  
+  
+  Devlog
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../specs/project-structure/" class="md-tabs__link">
+          
+  
+  
+  Specifications
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="Stochastic Warfare" class="md-nav__button md-logo" aria-label="Stochastic Warfare" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Stochastic Warfare
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/clay-m-smith/stochastic-warfare" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    clay-m-smith/stochastic-warfare
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Guide
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Guide
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guide/getting-started/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting Started
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guide/web-ui/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Web UI
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guide/scenarios/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Scenario Library
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Concepts
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Concepts
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../concepts/architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../concepts/models/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Mathematical Models
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API Reference
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#rest-api" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        REST API
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="REST API">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#setup" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Setup
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#endpoints" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Endpoints
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Configuration
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#python-api" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Python API
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#core-simulation-classes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Core Simulation Classes
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Core Simulation Classes">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#scenarioloader" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ScenarioLoader
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#simulationengine" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SimulationEngine
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#engineconfig" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        EngineConfig
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#simulationrunresult" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SimulationRunResult
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#simulationrecorder" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SimulationRecorder
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#victoryevaluator" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        VictoryEvaluator
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#victoryresult" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        VictoryResult
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#validation-classes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Validation Classes
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Validation Classes">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#montecarloharness" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MonteCarloHarness
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#montecarloconfig" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MonteCarloConfig
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#montecarloresult" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MonteCarloResult
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#infrastructure-classes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Infrastructure Classes
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Infrastructure Classes">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#rngmanager" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        RNGManager
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#eventbus" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        EventBus
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#simulationclock" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SimulationClock
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#configuration-stack" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Configuration Stack
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Configuration Stack">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#campaignscenarioconfig" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CampaignScenarioConfig
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#calibrationschema" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CalibrationSchema
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#usage-patterns" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Usage Patterns
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Usage Patterns">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#basic-single-run" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Basic Single Run
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#monte-carlo-batch" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Monte Carlo Batch
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-by-step-execution" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step-by-Step Execution
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#checkpoint-and-restore" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Checkpoint and Restore
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../eras/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Eras
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../units/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Units & Equipment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture (Internal)
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Architecture (Internal)
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../brainstorm/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Core Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../brainstorm-post-mvp/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Post-MVP Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../brainstorm-block2/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 2 Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../brainstorm-block3/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 3 Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../brainstorm-block4/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 4 Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../brainstorm-block5/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 5 Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../brainstorm-block6/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 6 Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../brainstorm-block7/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 7 Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Development Phases
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Development Phases
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development-phases/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MVP (0-10)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development-phases-post-mvp/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Post-MVP (11-24)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development-phases-block2/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 2 (25-30)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development-phases-block3/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 3 (31-36)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development-phases-block4/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 4 (37-39)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development-phases-block5/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 5 (40-48)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development-phases-block6/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 6 (49-57)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development-phases-block7/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 7 (58-67)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Devlog
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Devlog
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devlog/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devlog/phase-0/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 0 - Scaffolding
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devlog/phase-1/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 1 - Terrain & Environment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devlog/phase-2/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 2 - Entities & Movement
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devlog/phase-3/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 3 - Detection & Intelligence
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devlog/phase-4/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 4 - Combat & Morale
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devlog/phase-5/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 5 - C2 Infrastructure
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devlog/phase-6/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 6 - Logistics & Supply
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devlog/phase-7/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 7 - Engagement Validation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devlog/phase-8/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 8 - AI & Planning
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devlog/phase-9/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 9 - Simulation Orchestration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devlog/phase-10/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 10 - Campaign Validation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devlog/phase-11/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 11 - Core Fidelity Fixes
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devlog/phase-12/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 12 - Deep Systems Rework
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devlog/phase-13/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 13 - Performance Optimization
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devlog/phase-14/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 14 - Tooling & Dev Experience
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devlog/phase-15/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 15 - Real-World Terrain
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devlog/phase-16/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 16 - Electronic Warfare
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devlog/phase-17/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 17 - Space & Satellite
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devlog/phase-18/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 18 - CBRN Effects
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devlog/phase-19/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 19 - Doctrinal AI Schools
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devlog/phase-20/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 20 - WW2 Era
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devlog/phase-21/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 21 - WW1 Era
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devlog/phase-22/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 22 - Napoleonic Era
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devlog/phase-23/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 23 - Ancient & Medieval Era
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devlog/phase-24/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 24 - Unconventional Warfare
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devlog/phase-25/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 25 - Engine Wiring
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devlog/phase-26/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 26 - Core Polish
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devlog/phase-27/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 27 - Combat Completeness
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devlog/phase-28/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 28 - Modern Data Package
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devlog/phase-28.5/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 28.5 - Directed Energy
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devlog/phase-29/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 29 - Historical Data Expansion
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devlog/phase-30/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 30 - Scenario Library
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devlog/phase-31/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 31 - Documentation Site
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devlog/phase-32/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 32 - API & Service Foundation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devlog/phase-33/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 33 - Frontend Foundation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devlog/phase-34/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 34 - Run Results & Analysis
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devlog/phase-35/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 35 - Tactical Map
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devlog/phase-36/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 36 - Scenario Tweaker & Polish
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devlog/phase-37/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 37 - Integration Fixes & E2E
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devlog/phase-38/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 38 - Map & Chart Enhancements
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devlog/phase-39/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 39 - Quality & Packaging
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devlog/phase-40/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 40 - Battle Loop Foundation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devlog/phase-41/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 41 - Combat Depth
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devlog/phase-42/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 42 - Tactical Behavior
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devlog/phase-43/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 43 - Domain-Specific Resolution
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devlog/phase-44/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 44 - Environmental & Subsystem Integration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devlog/phase-45/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 45 - Mathematical Model Audit & Hardening
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devlog/phase-46/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 46 - Scenario Data Cleanup & Expansion
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devlog/phase-47/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 47 - Full Recalibration & Validation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devlog/phase-48/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 48 - Block 5 Deficit Resolution
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devlog/phase-49/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 49 - Calibration Schema Hardening
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devlog/phase-50/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 50 - Combat Fidelity Polish
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devlog/phase-51/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 51 - Naval Combat Completeness
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devlog/phase-52/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 52 - Environmental Continuity
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devlog/phase-53/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 53 - C2 & AI Completeness
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devlog/phase-54/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 54 - Era-Specific & Domain Sub-Engine Wiring
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devlog/phase-55/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 55 - Resolution & Scenario Migration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devlog/phase-56/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 56 - Performance & Logistics
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devlog/phase-57/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 57 - Full Validation & Regression
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devlog/phase-58/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 58 - Structural Verification & Core Combat Wiring
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devlog/phase-59/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 59 - Atmospheric & Ground Environment Wiring
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devlog/phase-60/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 60 - Obscurants, Fire, & Visual Environment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devlog/phase-61/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 61 - Maritime, Acoustic, & EM Environment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devlog/phase-62/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 62 - Human Factors, CBRN, & Air Combat Environment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devlog/phase-63/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 63 - Cross-Module Feedback Loops
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devlog/phase-64/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 64 - C2 Friction & Command Delay
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devlog/phase-65/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 65 - Space & EW Sub-Engine Activation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devlog/phase-66/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 66 - Unconventional, Naval, & Cleanup
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devlog/phase-67/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 67 - Integration Validation & Recalibration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devlog/phase-68/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 68 - Consequence Enforcement
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_8" >
+        
+          
+          <label class="md-nav__link" for="__nav_8" id="__nav_8_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Specifications
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_8">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Specifications
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../specs/project-structure/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Project Structure
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../skills-and-hooks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Skills & Hooks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#rest-api" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        REST API
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="REST API">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#setup" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Setup
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#endpoints" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Endpoints
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Configuration
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#python-api" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Python API
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#core-simulation-classes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Core Simulation Classes
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Core Simulation Classes">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#scenarioloader" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ScenarioLoader
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#simulationengine" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SimulationEngine
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#engineconfig" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        EngineConfig
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#simulationrunresult" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SimulationRunResult
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#simulationrecorder" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SimulationRecorder
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#victoryevaluator" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        VictoryEvaluator
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#victoryresult" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        VictoryResult
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#validation-classes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Validation Classes
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Validation Classes">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#montecarloharness" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MonteCarloHarness
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#montecarloconfig" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MonteCarloConfig
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#montecarloresult" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MonteCarloResult
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#infrastructure-classes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Infrastructure Classes
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Infrastructure Classes">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#rngmanager" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        RNGManager
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#eventbus" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        EventBus
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#simulationclock" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SimulationClock
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#configuration-stack" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Configuration Stack
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Configuration Stack">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#campaignscenarioconfig" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CampaignScenarioConfig
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#calibrationschema" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CalibrationSchema
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#usage-patterns" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Usage Patterns
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Usage Patterns">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#basic-single-run" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Basic Single Run
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#monte-carlo-batch" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Monte Carlo Batch
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-by-step-execution" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step-by-Step Execution
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#checkpoint-and-restore" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Checkpoint and Restore
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="api-reference">API Reference<a class="headerlink" href="#api-reference" title="Permanent link">&para;</a></h1>
+<p>This page documents both the REST API for web-based access and the Python API for direct programmatic use.</p>
+<hr />
+<h2 id="rest-api">REST API<a class="headerlink" href="#rest-api" title="Permanent link">&para;</a></h2>
+<p>The project includes a FastAPI-based REST API for running simulations, browsing scenarios/units, and accessing results over HTTP.</p>
+<h3 id="setup">Setup<a class="headerlink" href="#setup" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>uv<span class="w"> </span>sync<span class="w"> </span>--extra<span class="w"> </span>api<span class="w">              </span><span class="c1"># install API dependencies</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>uv<span class="w"> </span>run<span class="w"> </span>uvicorn<span class="w"> </span>api.main:app<span class="w">      </span><span class="c1"># start at http://localhost:8000</span>
+</code></pre></div>
+<p>OpenAPI docs are available at <code>/api/docs</code> (Swagger UI) and <code>/api/redoc</code>.</p>
+<h3 id="endpoints">Endpoints<a class="headerlink" href="#endpoints" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Path</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>GET</td>
+<td><code>/api/health</code></td>
+<td>Service health check (version, scenario/unit counts)</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/api/meta/eras</code></td>
+<td>Available eras with disabled modules</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/api/meta/doctrines</code></td>
+<td>Doctrine templates</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/api/meta/terrain-types</code></td>
+<td>Terrain type list</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/api/scenarios</code></td>
+<td>List all scenarios (base + era)</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/api/scenarios/{name}</code></td>
+<td>Full scenario config as JSON</td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/api/scenarios/validate</code></td>
+<td>Validate a scenario config against pydantic schema</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/api/units?domain=&amp;era=&amp;category=</code></td>
+<td>List units with optional filters</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/api/units/{type}</code></td>
+<td>Full unit definition</td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/api/runs</code></td>
+<td>Submit simulation run (202 Accepted)</td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/api/runs/from-config</code></td>
+<td>Submit run from inline config dict (no saved scenario required)</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/api/runs?limit=&amp;offset=&amp;scenario=&amp;status=</code></td>
+<td>List runs (paginated)</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/api/runs/{id}</code></td>
+<td>Run detail with result</td>
+</tr>
+<tr>
+<td>DELETE</td>
+<td><code>/api/runs/{id}</code></td>
+<td>Delete run record</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/api/runs/{id}/forces</code></td>
+<td>Side force states</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/api/runs/{id}/events?offset=&amp;limit=&amp;event_type=</code></td>
+<td>Paginated event log</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/api/runs/{id}/narrative?side=&amp;style=&amp;max_ticks=</code></td>
+<td>Battle narrative text</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/api/runs/{id}/snapshots</code></td>
+<td>State snapshots</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/api/runs/{id}/terrain</code></td>
+<td>Terrain grid data (land cover, objectives, extent)</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/api/runs/{id}/frames?start_tick=&amp;end_tick=</code></td>
+<td>Unit position replay frames</td>
+</tr>
+<tr>
+<td>WS</td>
+<td><code>/api/runs/{id}/progress</code></td>
+<td>Live tick-level progress stream</td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/api/runs/batch</code></td>
+<td>Monte Carlo batch run</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/api/runs/batch/{id}</code></td>
+<td>Batch status and aggregated metrics</td>
+</tr>
+<tr>
+<td>WS</td>
+<td><code>/api/runs/batch/{id}/progress</code></td>
+<td>Batch iteration progress</td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/api/analysis/compare</code></td>
+<td>A/B configuration comparison</td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/api/analysis/sweep</code></td>
+<td>Parameter sensitivity sweep</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/api/analysis/tempo/{id}</code></td>
+<td>Operational tempo analysis</td>
+</tr>
+</tbody>
+</table>
+<h3 id="configuration">Configuration<a class="headerlink" href="#configuration" title="Permanent link">&para;</a></h3>
+<p>All settings are overridable via environment variables with the <code>SW_API_</code> prefix:</p>
+<table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>SW_API_HOST</code></td>
+<td><code>127.0.0.1</code></td>
+<td>Bind address</td>
+</tr>
+<tr>
+<td><code>SW_API_PORT</code></td>
+<td><code>8000</code></td>
+<td>Port</td>
+</tr>
+<tr>
+<td><code>SW_API_DB_PATH</code></td>
+<td><code>data/api_runs.db</code></td>
+<td>SQLite database path</td>
+</tr>
+<tr>
+<td><code>SW_API_MAX_CONCURRENT_RUNS</code></td>
+<td><code>4</code></td>
+<td>Max parallel simulation runs</td>
+</tr>
+<tr>
+<td><code>SW_API_CORS_ORIGINS</code></td>
+<td><code>["http://localhost:5173"]</code></td>
+<td>Allowed CORS origins</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="python-api">Python API<a class="headerlink" href="#python-api" title="Permanent link">&para;</a></h2>
+<p>The following classes are in the <code>stochastic_warfare</code> package for direct programmatic use.</p>
+<hr />
+<h2 id="core-simulation-classes">Core Simulation Classes<a class="headerlink" href="#core-simulation-classes" title="Permanent link">&para;</a></h2>
+<h3 id="scenarioloader">ScenarioLoader<a class="headerlink" href="#scenarioloader" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">stochastic_warfare.simulation.scenario</span><span class="w"> </span><span class="kn">import</span> <span class="n">ScenarioLoader</span>
+</code></pre></div>
+<p>Factory that loads a scenario YAML and creates a fully-wired <code>SimulationContext</code>.</p>
+<p><strong>Constructor:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>data_dir</code></td>
+<td><code>Path</code></td>
+<td>Root data directory containing <code>units/</code>, <code>weapons/</code>, <code>sensors/</code>, etc.</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Methods:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Parameters</th>
+<th>Returns</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>load()</code></td>
+<td><code>scenario_path: Path, seed: int = 42</code></td>
+<td><code>SimulationContext</code></td>
+<td>Parse YAML, load all definitions, wire all engines, return context</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Example:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">stochastic_warfare.simulation.scenario</span><span class="w"> </span><span class="kn">import</span> <span class="n">ScenarioLoader</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="n">loader</span> <span class="o">=</span> <span class="n">ScenarioLoader</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="s2">&quot;data&quot;</span><span class="p">))</span>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="n">ctx</span> <span class="o">=</span> <span class="n">loader</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="s2">&quot;data/scenarios/73_easting/scenario.yaml&quot;</span><span class="p">),</span> <span class="n">seed</span><span class="o">=</span><span class="mi">42</span><span class="p">)</span>
+</code></pre></div>
+<p>The loader automatically:</p>
+<ul>
+<li>Validates the YAML against <code>CampaignScenarioConfig</code></li>
+<li>Loads unit, weapon, ammo, sensor, and signature definitions</li>
+<li>Creates terrain, environment, detection, combat, movement, morale, C2, and logistics engines</li>
+<li>Wires optional subsystems (EW, Space, CBRN, Schools, Escalation, DEW) if configured</li>
+<li>Loads era-specific data and engines if an era is specified</li>
+</ul>
+<hr />
+<h3 id="simulationengine">SimulationEngine<a class="headerlink" href="#simulationengine" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">stochastic_warfare.simulation.engine</span><span class="w"> </span><span class="kn">import</span> <span class="n">SimulationEngine</span>
+</code></pre></div>
+<p>Top-level simulation orchestrator. Manages the master tick loop, automatic resolution switching, and campaign/battle management.</p>
+<p><strong>Constructor:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Type</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>ctx</code></td>
+<td><code>SimulationContext</code></td>
+<td>required</td>
+<td>Fully-wired context from <code>ScenarioLoader</code></td>
+</tr>
+<tr>
+<td><code>config</code></td>
+<td><code>EngineConfig \| None</code></td>
+<td><code>None</code></td>
+<td>Engine tuning parameters</td>
+</tr>
+<tr>
+<td><code>campaign_config</code></td>
+<td><code>CampaignConfig \| None</code></td>
+<td><code>None</code></td>
+<td>Campaign manager parameters</td>
+</tr>
+<tr>
+<td><code>battle_config</code></td>
+<td><code>BattleConfig \| None</code></td>
+<td><code>None</code></td>
+<td>Battle manager parameters</td>
+</tr>
+<tr>
+<td><code>victory_evaluator</code></td>
+<td><code>VictoryEvaluator \| None</code></td>
+<td><code>None</code></td>
+<td>Victory condition checker</td>
+</tr>
+<tr>
+<td><code>recorder</code></td>
+<td><code>SimulationRecorder \| None</code></td>
+<td><code>None</code></td>
+<td>Event recorder</td>
+</tr>
+<tr>
+<td><code>strict_mode</code></td>
+<td><code>bool</code></td>
+<td><code>False</code></td>
+<td>Re-raise engine errors instead of logging (useful for debugging)</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Methods:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Parameters</th>
+<th>Returns</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>run()</code></td>
+<td>--</td>
+<td><code>SimulationRunResult</code></td>
+<td>Run to completion (victory or max ticks)</td>
+</tr>
+<tr>
+<td><code>step()</code></td>
+<td>--</td>
+<td><code>bool</code></td>
+<td>Execute one tick. Returns <code>True</code> if simulation should continue</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Example:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">stochastic_warfare.simulation.engine</span><span class="w"> </span><span class="kn">import</span> <span class="n">SimulationEngine</span><span class="p">,</span> <span class="n">EngineConfig</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="n">engine</span> <span class="o">=</span> <span class="n">SimulationEngine</span><span class="p">(</span>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>    <span class="n">ctx</span><span class="p">,</span>
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>    <span class="n">config</span><span class="o">=</span><span class="n">EngineConfig</span><span class="p">(</span><span class="n">max_ticks</span><span class="o">=</span><span class="mi">10_000</span><span class="p">),</span>
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>    <span class="n">victory_evaluator</span><span class="o">=</span><span class="n">victory</span><span class="p">,</span>
+<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a>    <span class="n">recorder</span><span class="o">=</span><span class="n">recorder</span><span class="p">,</span>
+<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a><span class="p">)</span>
+<a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a><span class="n">result</span> <span class="o">=</span> <span class="n">engine</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
+</code></pre></div>
+<hr />
+<h3 id="engineconfig">EngineConfig<a class="headerlink" href="#engineconfig" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">stochastic_warfare.simulation.engine</span><span class="w"> </span><span class="kn">import</span> <span class="n">EngineConfig</span>
+</code></pre></div>
+<p>Pydantic model for engine tuning parameters.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>checkpoint_interval_ticks</code></td>
+<td><code>int</code></td>
+<td><code>0</code></td>
+<td>Ticks between auto-checkpoints. 0 disables.</td>
+</tr>
+<tr>
+<td><code>max_ticks</code></td>
+<td><code>int</code></td>
+<td><code>1_000_000</code></td>
+<td>Safety limit -- stop after this many ticks</td>
+</tr>
+<tr>
+<td><code>snapshot_interval_ticks</code></td>
+<td><code>int</code></td>
+<td><code>100</code></td>
+<td>Ticks between recorder state snapshots</td>
+</tr>
+<tr>
+<td><code>enable_selective_los_invalidation</code></td>
+<td><code>bool</code></td>
+<td><code>False</code></td>
+<td>Use selective cell invalidation for LOS cache</td>
+</tr>
+<tr>
+<td><code>resolution_closing_range_mult</code></td>
+<td><code>float</code></td>
+<td><code>2.0</code></td>
+<td>Multiplier on engagement range for closing-range guard (prevents STRATEGIC overshoot)</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h3 id="simulationrunresult">SimulationRunResult<a class="headerlink" href="#simulationrunresult" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">stochastic_warfare.simulation.engine</span><span class="w"> </span><span class="kn">import</span> <span class="n">SimulationRunResult</span>
+</code></pre></div>
+<p>Dataclass returned by <code>SimulationEngine.run()</code>.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>ticks_executed</code></td>
+<td><code>int</code></td>
+<td>Total simulation ticks completed</td>
+</tr>
+<tr>
+<td><code>duration_s</code></td>
+<td><code>float</code></td>
+<td>Wall-clock execution time in seconds</td>
+</tr>
+<tr>
+<td><code>victory_result</code></td>
+<td><code>VictoryResult</code></td>
+<td>Who won, how, and when</td>
+</tr>
+<tr>
+<td><code>campaign_summary</code></td>
+<td><code>Any</code></td>
+<td>Campaign-level statistics (or <code>None</code>)</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h3 id="simulationrecorder">SimulationRecorder<a class="headerlink" href="#simulationrecorder" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">stochastic_warfare.simulation.recorder</span><span class="w"> </span><span class="kn">import</span> <span class="n">SimulationRecorder</span>
+</code></pre></div>
+<p>Records all simulation events for post-run analysis. Subscribes to the <code>EventBus</code> and captures events by type.</p>
+<p><strong>Constructor:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Type</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>event_bus</code></td>
+<td><code>EventBus</code></td>
+<td>required</td>
+<td>Event bus to subscribe to</td>
+</tr>
+<tr>
+<td><code>config</code></td>
+<td><code>RecorderConfig \| None</code></td>
+<td><code>None</code></td>
+<td>Optional recorder configuration</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Key Methods:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Returns</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>start()</code></td>
+<td>--</td>
+<td>Begin recording</td>
+</tr>
+<tr>
+<td><code>stop()</code></td>
+<td>--</td>
+<td>Stop recording</td>
+</tr>
+<tr>
+<td><code>events()</code></td>
+<td><code>list</code></td>
+<td>All recorded events</td>
+</tr>
+<tr>
+<td><code>events_of_type(event_type_name)</code></td>
+<td><code>list</code></td>
+<td>Events filtered by type</td>
+</tr>
+<tr>
+<td><code>snapshots()</code></td>
+<td><code>list[dict]</code></td>
+<td>State snapshots (captured at <code>snapshot_interval_ticks</code>)</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h3 id="victoryevaluator">VictoryEvaluator<a class="headerlink" href="#victoryevaluator" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">stochastic_warfare.simulation.victory</span><span class="w"> </span><span class="kn">import</span> <span class="n">VictoryEvaluator</span>
+</code></pre></div>
+<p>Evaluates victory conditions each tick. Supports multiple condition types.</p>
+<p><strong>Constructor:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>objectives</code></td>
+<td><code>list[ObjectiveState]</code></td>
+<td>Spatial objectives on the map</td>
+</tr>
+<tr>
+<td><code>conditions</code></td>
+<td><code>list[VictoryConditionConfig]</code></td>
+<td>Active victory conditions per side</td>
+</tr>
+<tr>
+<td><code>event_bus</code></td>
+<td><code>EventBus</code></td>
+<td>For publishing victory events</td>
+</tr>
+<tr>
+<td><code>config</code></td>
+<td><code>VictoryEvaluatorConfig \| None</code></td>
+<td>Tunable thresholds</td>
+</tr>
+<tr>
+<td><code>max_duration_s</code></td>
+<td><code>float</code></td>
+<td>Scenario time limit in seconds (0.0 = no limit)</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Victory Condition Types:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Triggers When</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>territory</code></td>
+<td>Side controls all assigned objectives</td>
+</tr>
+<tr>
+<td><code>force_destroyed</code></td>
+<td>Opponent loses &gt; 70% of forces (configurable)</td>
+</tr>
+<tr>
+<td><code>morale_collapsed</code></td>
+<td>Opponent has &gt; 60% units routed/surrendered</td>
+</tr>
+<tr>
+<td><code>supply_exhausted</code></td>
+<td>Opponent's average supply &lt; 20%</td>
+</tr>
+<tr>
+<td><code>time_expired</code></td>
+<td>Scenario duration exceeded -- uses composite scoring</td>
+</tr>
+<tr>
+<td><code>ceasefire</code></td>
+<td>Negotiated war termination (escalation system)</td>
+</tr>
+<tr>
+<td><code>capitulation</code></td>
+<td>Unilateral surrender at extreme desperation</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Composite Victory Scoring (time_expired):</strong></p>
+<p>When a scenario reaches its time limit, <code>evaluate_force_advantage()</code> determines the winner using a composite score:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="n">VictoryEvaluator</span><span class="o">.</span><span class="n">evaluate_force_advantage</span><span class="p">(</span>
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>    <span class="n">units_by_side</span><span class="p">,</span>
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>    <span class="n">morale_states</span><span class="o">=</span><span class="n">ctx</span><span class="o">.</span><span class="n">morale_states</span><span class="p">,</span>       <span class="c1"># dict of unit_id -&gt; MoraleState</span>
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a>    <span class="n">weights</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;force_ratio&quot;</span><span class="p">:</span> <span class="mf">1.0</span><span class="p">,</span>           <span class="c1"># quality-weighted survival</span>
+<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a>             <span class="s2">&quot;morale_ratio&quot;</span><span class="p">:</span> <span class="mf">0.3</span><span class="p">,</span>          <span class="c1"># 1 - (routed_count / total)</span>
+<a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a>             <span class="s2">&quot;casualty_exchange&quot;</span><span class="p">:</span> <span class="mf">0.2</span><span class="p">},</span>    <span class="c1"># survival as proxy</span>
+<a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a><span class="p">)</span>
+</code></pre></div>
+<p>When called without <code>weights</code> (or with <code>None</code>), defaults to force-ratio-only scoring for backward compatibility.</p>
+<h3 id="victoryresult">VictoryResult<a class="headerlink" href="#victoryresult" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>game_over</code></td>
+<td><code>bool</code></td>
+<td>Whether a terminal condition was reached</td>
+</tr>
+<tr>
+<td><code>winning_side</code></td>
+<td><code>str</code></td>
+<td>Side name (e.g., "blue", "red")</td>
+</tr>
+<tr>
+<td><code>condition_type</code></td>
+<td><code>str</code></td>
+<td>What triggered victory</td>
+</tr>
+<tr>
+<td><code>message</code></td>
+<td><code>str</code></td>
+<td>Human-readable description</td>
+</tr>
+<tr>
+<td><code>tick</code></td>
+<td><code>int</code></td>
+<td>Tick at which victory was declared</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="validation-classes">Validation Classes<a class="headerlink" href="#validation-classes" title="Permanent link">&para;</a></h2>
+<h3 id="montecarloharness">MonteCarloHarness<a class="headerlink" href="#montecarloharness" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">stochastic_warfare.validation.monte_carlo</span><span class="w"> </span><span class="kn">import</span> <span class="n">MonteCarloHarness</span>
+</code></pre></div>
+<p>Runs multiple independent simulation iterations for statistical analysis.</p>
+<p><strong>Constructor:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Type</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>runner</code></td>
+<td><code>ScenarioRunner</code></td>
+<td>required</td>
+<td>Scenario runner for each iteration</td>
+</tr>
+<tr>
+<td><code>config</code></td>
+<td><code>MonteCarloConfig \| None</code></td>
+<td><code>None</code></td>
+<td>Batch run configuration</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Methods:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Parameters</th>
+<th>Returns</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>run()</code></td>
+<td><code>engagement: HistoricalEngagement, blue_side: str = "blue", red_side: str = "red"</code></td>
+<td><code>MonteCarloResult</code></td>
+<td>Execute all iterations and return aggregate statistics</td>
+</tr>
+</tbody>
+</table>
+<h3 id="montecarloconfig">MonteCarloConfig<a class="headerlink" href="#montecarloconfig" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>num_iterations</code></td>
+<td><code>int</code></td>
+<td><code>100</code></td>
+<td>Number of independent runs</td>
+</tr>
+<tr>
+<td><code>max_workers</code></td>
+<td><code>int</code></td>
+<td><code>1</code></td>
+<td>Parallel workers (&gt;1 uses ProcessPoolExecutor)</td>
+</tr>
+<tr>
+<td><code>base_seed</code></td>
+<td><code>int</code></td>
+<td><code>42</code></td>
+<td>Base seed for per-iteration PRNG streams</td>
+</tr>
+<tr>
+<td><code>confidence_level</code></td>
+<td><code>float</code></td>
+<td><code>0.95</code></td>
+<td>Default confidence level for intervals</td>
+</tr>
+</tbody>
+</table>
+<h3 id="montecarloresult">MonteCarloResult<a class="headerlink" href="#montecarloresult" title="Permanent link">&para;</a></h3>
+<p><strong>Key Methods:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Parameters</th>
+<th>Returns</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>mean()</code></td>
+<td><code>metric: str</code></td>
+<td><code>float</code></td>
+<td>Mean value across runs</td>
+</tr>
+<tr>
+<td><code>median()</code></td>
+<td><code>metric: str</code></td>
+<td><code>float</code></td>
+<td>Median value</td>
+</tr>
+<tr>
+<td><code>std()</code></td>
+<td><code>metric: str</code></td>
+<td><code>float</code></td>
+<td>Standard deviation</td>
+</tr>
+<tr>
+<td><code>percentile()</code></td>
+<td><code>metric: str, p: float</code></td>
+<td><code>float</code></td>
+<td>Percentile (0-100)</td>
+</tr>
+<tr>
+<td><code>confidence_interval()</code></td>
+<td><code>metric: str, level: float = 0.95</code></td>
+<td><code>tuple[float, float]</code></td>
+<td>Confidence interval</td>
+</tr>
+<tr>
+<td><code>compare_to_historical()</code></td>
+<td><code>historical: list[HistoricalMetric]</code></td>
+<td><code>ComparisonReport</code></td>
+<td>Compare against reference data</td>
+</tr>
+<tr>
+<td><code>distribution()</code></td>
+<td><code>metric: str</code></td>
+<td><code>list[float]</code></td>
+<td>Raw values across all runs</td>
+</tr>
+</tbody>
+</table>
+<table>
+<thead>
+<tr>
+<th>Property</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>num_runs</code></td>
+<td><code>int</code></td>
+<td>Number of completed runs</td>
+</tr>
+<tr>
+<td><code>runs</code></td>
+<td><code>list[RunResult]</code></td>
+<td>Per-iteration results</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="infrastructure-classes">Infrastructure Classes<a class="headerlink" href="#infrastructure-classes" title="Permanent link">&para;</a></h2>
+<h3 id="rngmanager">RNGManager<a class="headerlink" href="#rngmanager" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">stochastic_warfare.core.rng</span><span class="w"> </span><span class="kn">import</span> <span class="n">RNGManager</span>
+</code></pre></div>
+<p>Central PRNG management. Creates independent per-module random number generator streams from a single seed.</p>
+<p><strong>Constructor:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>seed</code></td>
+<td><code>int</code></td>
+<td>Master seed for reproducibility</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Methods:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Parameters</th>
+<th>Returns</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>get_stream()</code></td>
+<td><code>module_id: ModuleId</code></td>
+<td><code>np.random.Generator</code></td>
+<td>Independent PRNG stream for a module</td>
+</tr>
+</tbody>
+</table>
+<p><strong>PRNG Discipline:</strong></p>
+<ul>
+<li>Every module gets its own stream via <code>get_stream(ModuleId.COMBAT)</code>, <code>get_stream(ModuleId.DETECTION)</code>, etc.</li>
+<li>Streams are independent -- adding randomness in one module doesn't affect others</li>
+<li>Same seed always produces the same sequence per module</li>
+</ul>
+<hr />
+<h3 id="eventbus">EventBus<a class="headerlink" href="#eventbus" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">stochastic_warfare.core.events</span><span class="w"> </span><span class="kn">import</span> <span class="n">EventBus</span>
+</code></pre></div>
+<p>Publish/subscribe event system. Decouples modules -- combat publishes damage events, morale subscribes without combat knowing about morale.</p>
+<p><strong>Key Methods:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Parameters</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>subscribe()</code></td>
+<td><code>event_type: type, handler: Callable</code></td>
+<td>Register handler for event type</td>
+</tr>
+<tr>
+<td><code>publish()</code></td>
+<td><code>event: Event</code></td>
+<td>Dispatch event to all subscribers</td>
+</tr>
+</tbody>
+</table>
+<p>Events use class hierarchy for type matching -- subscribing to a base class receives all subclass events.</p>
+<hr />
+<h3 id="simulationclock">SimulationClock<a class="headerlink" href="#simulationclock" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">stochastic_warfare.core.clock</span><span class="w"> </span><span class="kn">import</span> <span class="n">SimulationClock</span>
+</code></pre></div>
+<p>Manages simulation time with variable-resolution ticks.</p>
+<p><strong>Key Methods:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Parameters</th>
+<th>Returns</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>tick()</code></td>
+<td>--</td>
+<td>--</td>
+<td>Advance by one tick at current resolution</td>
+</tr>
+<tr>
+<td><code>current_time_s()</code></td>
+<td>--</td>
+<td><code>float</code></td>
+<td>Current simulation time in seconds</td>
+</tr>
+<tr>
+<td><code>current_tick()</code></td>
+<td>--</td>
+<td><code>int</code></td>
+<td>Current tick number</td>
+</tr>
+<tr>
+<td><code>set_resolution()</code></td>
+<td><code>seconds: float</code></td>
+<td>--</td>
+<td>Change tick resolution</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="configuration-stack">Configuration Stack<a class="headerlink" href="#configuration-stack" title="Permanent link">&para;</a></h2>
+<h3 id="campaignscenarioconfig">CampaignScenarioConfig<a class="headerlink" href="#campaignscenarioconfig" title="Permanent link">&para;</a></h3>
+<p>The top-level pydantic model for scenario YAML files. Key fields:</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>name</code></td>
+<td><code>str</code></td>
+<td>Scenario display name</td>
+</tr>
+<tr>
+<td><code>date</code></td>
+<td><code>str</code></td>
+<td>Historical date (if applicable)</td>
+</tr>
+<tr>
+<td><code>duration_s</code></td>
+<td><code>float</code></td>
+<td>Maximum scenario duration in seconds</td>
+</tr>
+<tr>
+<td><code>era</code></td>
+<td><code>str \| None</code></td>
+<td>Era name (modern, ww2, ww1, napoleonic, ancient_medieval)</td>
+</tr>
+<tr>
+<td><code>terrain</code></td>
+<td><code>TerrainConfig</code></td>
+<td>Terrain dimensions, type, features</td>
+</tr>
+<tr>
+<td><code>sides</code></td>
+<td><code>list[SideConfig]</code></td>
+<td>Force composition per side</td>
+</tr>
+<tr>
+<td><code>objectives</code></td>
+<td><code>list[ObjectiveConfig]</code></td>
+<td>Spatial objectives</td>
+</tr>
+<tr>
+<td><code>victory_conditions</code></td>
+<td><code>list[VictoryConditionConfig]</code></td>
+<td>Win conditions</td>
+</tr>
+<tr>
+<td><code>reinforcements</code></td>
+<td><code>list[ReinforcementConfig]</code></td>
+<td>Scheduled arrivals</td>
+</tr>
+<tr>
+<td><code>calibration_overrides</code></td>
+<td><code>CalibrationSchema \| None</code></td>
+<td>Typed calibration overrides (see below)</td>
+</tr>
+<tr>
+<td><code>ew_config</code></td>
+<td><code>dict \| None</code></td>
+<td>Electronic warfare configuration</td>
+</tr>
+<tr>
+<td><code>space_config</code></td>
+<td><code>dict \| None</code></td>
+<td>Space/satellite configuration</td>
+</tr>
+<tr>
+<td><code>cbrn_config</code></td>
+<td><code>dict \| None</code></td>
+<td>CBRN effects configuration</td>
+</tr>
+<tr>
+<td><code>escalation_config</code></td>
+<td><code>dict \| None</code></td>
+<td>Escalation ladder configuration</td>
+</tr>
+<tr>
+<td><code>school_config</code></td>
+<td><code>dict \| None</code></td>
+<td>Doctrinal school assignments</td>
+</tr>
+<tr>
+<td><code>dew_config</code></td>
+<td><code>dict \| None</code></td>
+<td>Directed energy weapon configuration</td>
+</tr>
+<tr>
+<td><code>documented_outcomes</code></td>
+<td><code>dict \| None</code></td>
+<td>Historical reference data for validation</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h3 id="calibrationschema">CalibrationSchema<a class="headerlink" href="#calibrationschema" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">stochastic_warfare.simulation.calibration</span><span class="w"> </span><span class="kn">import</span> <span class="n">CalibrationSchema</span>
+</code></pre></div>
+<p>Pydantic model (<code>extra="forbid"</code>) for all scenario tuning parameters. Replaces free-form <code>dict</code> overrides — mistyped keys are caught at parse time. Key fields organized by domain:</p>
+<p><strong>Combat &amp; Engagement:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>hit_probability_modifier</code></td>
+<td><code>dict[str, float]</code></td>
+<td><code>{}</code></td>
+<td>Per-side Pk multiplier (e.g. <code>{"blue": 1.2}</code>)</td>
+</tr>
+<tr>
+<td><code>force_ratio_modifier</code></td>
+<td><code>dict[str, float]</code></td>
+<td><code>{}</code></td>
+<td>Per-side Dupuy CEV (e.g. <code>{"blue": 2.0}</code>)</td>
+</tr>
+<tr>
+<td><code>target_selection_mode</code></td>
+<td><code>str</code></td>
+<td><code>"nearest"</code></td>
+<td>Target selection: <code>"nearest"</code>, <code>"threat"</code>, <code>"weakest"</code></td>
+</tr>
+<tr>
+<td><code>enable_burst_fire</code></td>
+<td><code>bool</code></td>
+<td><code>False</code></td>
+<td>Enable burst fire engagement model</td>
+</tr>
+<tr>
+<td><code>enable_air_routing</code></td>
+<td><code>bool</code></td>
+<td><code>False</code></td>
+<td>Enable air combat routing via AirCombatEngine</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Environmental Coupling (Phase 58--62):</strong></p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>enable_human_factors</code></td>
+<td><code>bool</code></td>
+<td><code>False</code></td>
+<td>Heat/cold casualties, expanded MOPP, altitude sickness</td>
+</tr>
+<tr>
+<td><code>heat_casualty_base_rate</code></td>
+<td><code>float</code></td>
+<td><code>0.02</code></td>
+<td>Fraction/hr above WBGT threshold</td>
+</tr>
+<tr>
+<td><code>cold_casualty_base_rate</code></td>
+<td><code>float</code></td>
+<td><code>0.015</code></td>
+<td>Fraction/hr below wind chill threshold</td>
+</tr>
+<tr>
+<td><code>mopp_fov_reduction_4</code></td>
+<td><code>float</code></td>
+<td><code>0.7</code></td>
+<td>Detection range multiplier at MOPP-4</td>
+</tr>
+<tr>
+<td><code>mopp_reload_factor_4</code></td>
+<td><code>float</code></td>
+<td><code>1.5</code></td>
+<td>Reload time multiplier at MOPP-4</td>
+</tr>
+<tr>
+<td><code>mopp_comms_factor_4</code></td>
+<td><code>float</code></td>
+<td><code>0.5</code></td>
+<td>Comms quality multiplier at MOPP-4</td>
+</tr>
+<tr>
+<td><code>altitude_sickness_threshold_m</code></td>
+<td><code>float</code></td>
+<td><code>2500.0</code></td>
+<td>Altitude above which sickness applies</td>
+</tr>
+<tr>
+<td><code>altitude_sickness_rate</code></td>
+<td><code>float</code></td>
+<td><code>0.03</code></td>
+<td>Performance loss per 100m above threshold</td>
+</tr>
+<tr>
+<td><code>enable_cbrn_environment</code></td>
+<td><code>bool</code></td>
+<td><code>False</code></td>
+<td>Weather effects on CBRN agent dispersal</td>
+</tr>
+<tr>
+<td><code>cbrn_washout_coefficient</code></td>
+<td><code>float</code></td>
+<td><code>1e-4</code></td>
+<td>Rain washout rate per mm/hr</td>
+</tr>
+<tr>
+<td><code>cbrn_arrhenius_ea</code></td>
+<td><code>float</code></td>
+<td><code>50000.0</code></td>
+<td>Activation energy (J/mol) for thermal decay</td>
+</tr>
+<tr>
+<td><code>cbrn_inversion_multiplier</code></td>
+<td><code>float</code></td>
+<td><code>8.0</code></td>
+<td>Concentration boost during temperature inversion</td>
+</tr>
+<tr>
+<td><code>cbrn_uv_degradation_rate</code></td>
+<td><code>float</code></td>
+<td><code>0.1</code></td>
+<td>UV photo-degradation rate per hour</td>
+</tr>
+<tr>
+<td><code>enable_air_combat_environment</code></td>
+<td><code>bool</code></td>
+<td><code>False</code></td>
+<td>Cloud ceiling, icing, density altitude, wind BVR</td>
+</tr>
+<tr>
+<td><code>cloud_ceiling_min_attack_m</code></td>
+<td><code>float</code></td>
+<td><code>500.0</code></td>
+<td>Minimum ceiling for visual CAS delivery</td>
+</tr>
+<tr>
+<td><code>icing_maneuver_penalty</code></td>
+<td><code>float</code></td>
+<td><code>0.15</code></td>
+<td>Stall speed increase fraction from icing</td>
+</tr>
+<tr>
+<td><code>icing_power_penalty</code></td>
+<td><code>float</code></td>
+<td><code>0.10</code></td>
+<td>Engine power reduction from icing</td>
+</tr>
+<tr>
+<td><code>icing_radar_penalty_db</code></td>
+<td><code>float</code></td>
+<td><code>3.0</code></td>
+<td>Radar detection loss in dB from radome ice</td>
+</tr>
+<tr>
+<td><code>wind_bvr_missile_speed_mps</code></td>
+<td><code>float</code></td>
+<td><code>1000.0</code></td>
+<td>Reference missile speed for wind range modifier</td>
+</tr>
+</tbody>
+</table>
+<p>All <code>enable_*</code> flags default to <code>False</code> for backward compatibility. Enable them in scenario YAML to activate the corresponding effects.</p>
+<hr />
+<h2 id="usage-patterns">Usage Patterns<a class="headerlink" href="#usage-patterns" title="Permanent link">&para;</a></h2>
+<h3 id="basic-single-run">Basic Single Run<a class="headerlink" href="#basic-single-run" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">stochastic_warfare.simulation.scenario</span><span class="w"> </span><span class="kn">import</span> <span class="n">ScenarioLoader</span>
+<a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a><span class="kn">from</span><span class="w"> </span><span class="nn">stochastic_warfare.simulation.engine</span><span class="w"> </span><span class="kn">import</span> <span class="n">SimulationEngine</span><span class="p">,</span> <span class="n">EngineConfig</span>
+<a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a><span class="kn">from</span><span class="w"> </span><span class="nn">stochastic_warfare.simulation.recorder</span><span class="w"> </span><span class="kn">import</span> <span class="n">SimulationRecorder</span>
+<a id="__codelineno-15-5" name="__codelineno-15-5" href="#__codelineno-15-5"></a><span class="kn">from</span><span class="w"> </span><span class="nn">stochastic_warfare.simulation.victory</span><span class="w"> </span><span class="kn">import</span> <span class="n">VictoryEvaluator</span>
+<a id="__codelineno-15-6" name="__codelineno-15-6" href="#__codelineno-15-6"></a>
+<a id="__codelineno-15-7" name="__codelineno-15-7" href="#__codelineno-15-7"></a><span class="n">loader</span> <span class="o">=</span> <span class="n">ScenarioLoader</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="s2">&quot;data&quot;</span><span class="p">))</span>
+<a id="__codelineno-15-8" name="__codelineno-15-8" href="#__codelineno-15-8"></a><span class="n">ctx</span> <span class="o">=</span> <span class="n">loader</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="s2">&quot;data/scenarios/73_easting/scenario.yaml&quot;</span><span class="p">),</span> <span class="n">seed</span><span class="o">=</span><span class="mi">42</span><span class="p">)</span>
+<a id="__codelineno-15-9" name="__codelineno-15-9" href="#__codelineno-15-9"></a>
+<a id="__codelineno-15-10" name="__codelineno-15-10" href="#__codelineno-15-10"></a><span class="n">recorder</span> <span class="o">=</span> <span class="n">SimulationRecorder</span><span class="p">(</span><span class="n">ctx</span><span class="o">.</span><span class="n">event_bus</span><span class="p">)</span>
+<a id="__codelineno-15-11" name="__codelineno-15-11" href="#__codelineno-15-11"></a><span class="n">victory</span> <span class="o">=</span> <span class="n">VictoryEvaluator</span><span class="p">(</span>
+<a id="__codelineno-15-12" name="__codelineno-15-12" href="#__codelineno-15-12"></a>    <span class="n">objectives</span><span class="o">=</span><span class="n">ctx</span><span class="o">.</span><span class="n">objectives</span><span class="p">,</span>
+<a id="__codelineno-15-13" name="__codelineno-15-13" href="#__codelineno-15-13"></a>    <span class="n">conditions</span><span class="o">=</span><span class="n">ctx</span><span class="o">.</span><span class="n">victory_conditions</span><span class="p">,</span>
+<a id="__codelineno-15-14" name="__codelineno-15-14" href="#__codelineno-15-14"></a>    <span class="n">event_bus</span><span class="o">=</span><span class="n">ctx</span><span class="o">.</span><span class="n">event_bus</span><span class="p">,</span>
+<a id="__codelineno-15-15" name="__codelineno-15-15" href="#__codelineno-15-15"></a>    <span class="n">max_duration_s</span><span class="o">=</span><span class="n">ctx</span><span class="o">.</span><span class="n">scenario_config</span><span class="o">.</span><span class="n">duration_s</span><span class="p">,</span>
+<a id="__codelineno-15-16" name="__codelineno-15-16" href="#__codelineno-15-16"></a><span class="p">)</span>
+<a id="__codelineno-15-17" name="__codelineno-15-17" href="#__codelineno-15-17"></a>
+<a id="__codelineno-15-18" name="__codelineno-15-18" href="#__codelineno-15-18"></a><span class="n">engine</span> <span class="o">=</span> <span class="n">SimulationEngine</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">config</span><span class="o">=</span><span class="n">EngineConfig</span><span class="p">(</span><span class="n">max_ticks</span><span class="o">=</span><span class="mi">10_000</span><span class="p">),</span>
+<a id="__codelineno-15-19" name="__codelineno-15-19" href="#__codelineno-15-19"></a>                          <span class="n">victory_evaluator</span><span class="o">=</span><span class="n">victory</span><span class="p">,</span> <span class="n">recorder</span><span class="o">=</span><span class="n">recorder</span><span class="p">)</span>
+<a id="__codelineno-15-20" name="__codelineno-15-20" href="#__codelineno-15-20"></a><span class="n">result</span> <span class="o">=</span> <span class="n">engine</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
+<a id="__codelineno-15-21" name="__codelineno-15-21" href="#__codelineno-15-21"></a><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">result</span><span class="o">.</span><span class="n">victory_result</span><span class="o">.</span><span class="n">winning_side</span><span class="si">}</span><span class="s2"> wins by </span><span class="si">{</span><span class="n">result</span><span class="o">.</span><span class="n">victory_result</span><span class="o">.</span><span class="n">condition_type</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</code></pre></div>
+<h3 id="monte-carlo-batch">Monte Carlo Batch<a class="headerlink" href="#monte-carlo-batch" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">stochastic_warfare.validation.scenario_runner</span><span class="w"> </span><span class="kn">import</span> <span class="n">ScenarioRunner</span>
+<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">stochastic_warfare.validation.monte_carlo</span><span class="w"> </span><span class="kn">import</span> <span class="n">MonteCarloHarness</span><span class="p">,</span> <span class="n">MonteCarloConfig</span>
+<a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a><span class="kn">from</span><span class="w"> </span><span class="nn">stochastic_warfare.validation.historical_data</span><span class="w"> </span><span class="kn">import</span> <span class="n">HistoricalEngagement</span>
+<a id="__codelineno-16-4" name="__codelineno-16-4" href="#__codelineno-16-4"></a>
+<a id="__codelineno-16-5" name="__codelineno-16-5" href="#__codelineno-16-5"></a><span class="n">runner</span> <span class="o">=</span> <span class="n">ScenarioRunner</span><span class="p">(</span><span class="n">data_dir</span><span class="o">=</span><span class="n">Path</span><span class="p">(</span><span class="s2">&quot;data&quot;</span><span class="p">))</span>
+<a id="__codelineno-16-6" name="__codelineno-16-6" href="#__codelineno-16-6"></a><span class="n">harness</span> <span class="o">=</span> <span class="n">MonteCarloHarness</span><span class="p">(</span><span class="n">runner</span><span class="p">,</span> <span class="n">config</span><span class="o">=</span><span class="n">MonteCarloConfig</span><span class="p">(</span><span class="n">num_iterations</span><span class="o">=</span><span class="mi">100</span><span class="p">))</span>
+<a id="__codelineno-16-7" name="__codelineno-16-7" href="#__codelineno-16-7"></a>
+<a id="__codelineno-16-8" name="__codelineno-16-8" href="#__codelineno-16-8"></a><span class="n">engagement</span> <span class="o">=</span> <span class="n">HistoricalEngagement</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="s2">&quot;data/scenarios/73_easting/scenario.yaml&quot;</span><span class="p">))</span>
+<a id="__codelineno-16-9" name="__codelineno-16-9" href="#__codelineno-16-9"></a><span class="n">mc_result</span> <span class="o">=</span> <span class="n">harness</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">engagement</span><span class="p">)</span>
+<a id="__codelineno-16-10" name="__codelineno-16-10" href="#__codelineno-16-10"></a><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Mean exchange ratio: </span><span class="si">{</span><span class="n">mc_result</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="s1">&#39;exchange_ratio&#39;</span><span class="p">)</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</code></pre></div>
+<h3 id="step-by-step-execution">Step-by-Step Execution<a class="headerlink" href="#step-by-step-execution" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a><span class="n">engine</span> <span class="o">=</span> <span class="n">SimulationEngine</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">config</span><span class="o">=</span><span class="n">EngineConfig</span><span class="p">(</span><span class="n">max_ticks</span><span class="o">=</span><span class="mi">10_000</span><span class="p">),</span>
+<a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a>                         <span class="n">victory_evaluator</span><span class="o">=</span><span class="n">victory</span><span class="p">,</span> <span class="n">recorder</span><span class="o">=</span><span class="n">recorder</span><span class="p">)</span>
+<a id="__codelineno-17-3" name="__codelineno-17-3" href="#__codelineno-17-3"></a>
+<a id="__codelineno-17-4" name="__codelineno-17-4" href="#__codelineno-17-4"></a><span class="c1"># Run tick by tick for custom control</span>
+<a id="__codelineno-17-5" name="__codelineno-17-5" href="#__codelineno-17-5"></a><span class="k">while</span> <span class="n">engine</span><span class="o">.</span><span class="n">step</span><span class="p">():</span>
+<a id="__codelineno-17-6" name="__codelineno-17-6" href="#__codelineno-17-6"></a>    <span class="n">tick</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">clock</span><span class="o">.</span><span class="n">current_tick</span><span class="p">()</span>
+<a id="__codelineno-17-7" name="__codelineno-17-7" href="#__codelineno-17-7"></a>    <span class="k">if</span> <span class="n">tick</span> <span class="o">%</span> <span class="mi">100</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+<a id="__codelineno-17-8" name="__codelineno-17-8" href="#__codelineno-17-8"></a>        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Tick </span><span class="si">{</span><span class="n">tick</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">recorder</span><span class="o">.</span><span class="n">events</span><span class="p">())</span><span class="si">}</span><span class="s2"> events so far&quot;</span><span class="p">)</span>
+</code></pre></div>
+<h3 id="checkpoint-and-restore">Checkpoint and Restore<a class="headerlink" href="#checkpoint-and-restore" title="Permanent link">&para;</a></h3>
+<p>All stateful classes support <code>get_state()</code> / <code>set_state()</code>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a><span class="c1"># Save state at tick 500</span>
+<a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a><span class="n">state</span> <span class="o">=</span> <span class="n">engine</span><span class="o">.</span><span class="n">get_state</span><span class="p">()</span>
+<a id="__codelineno-18-3" name="__codelineno-18-3" href="#__codelineno-18-3"></a>
+<a id="__codelineno-18-4" name="__codelineno-18-4" href="#__codelineno-18-4"></a><span class="c1"># Continue running...</span>
+<a id="__codelineno-18-5" name="__codelineno-18-5" href="#__codelineno-18-5"></a><span class="n">result</span> <span class="o">=</span> <span class="n">engine</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
+<a id="__codelineno-18-6" name="__codelineno-18-6" href="#__codelineno-18-6"></a>
+<a id="__codelineno-18-7" name="__codelineno-18-7" href="#__codelineno-18-7"></a><span class="c1"># Restore to tick 500 and try different parameters</span>
+<a id="__codelineno-18-8" name="__codelineno-18-8" href="#__codelineno-18-8"></a><span class="n">engine</span><span class="o">.</span><span class="n">set_state</span><span class="p">(</span><span class="n">state</span><span class="p">)</span>
+</code></pre></div>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs", "navigation.sections", "navigation.expand", "navigation.top", "search.suggest", "search.highlight", "content.code.copy"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>

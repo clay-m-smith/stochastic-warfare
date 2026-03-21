@@ -1,0 +1,5228 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="High-fidelity stochastic wargame simulator — multi-scale, multi-domain, multi-era">
+      
+      
+        <meta name="author" content="Clay Smith">
+      
+      
+        <link rel="canonical" href="https://clay-m-smith.github.io/stochastic-warfare/reference/eras/">
+      
+      
+        <link rel="prev" href="../api/">
+      
+      
+        <link rel="next" href="../units/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>Eras - Stochastic Warfare</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="blue-grey" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#eras" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="Stochastic Warfare" class="md-header__button md-logo" aria-label="Stochastic Warfare" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Stochastic Warfare
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Eras
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="blue-grey" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="blue-grey" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/clay-m-smith/stochastic-warfare" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    clay-m-smith/stochastic-warfare
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../guide/getting-started/" class="md-tabs__link">
+          
+  
+  
+  Guide
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../concepts/architecture/" class="md-tabs__link">
+          
+  
+  
+  Concepts
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../api/" class="md-tabs__link">
+          
+  
+  
+  Reference
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../brainstorm/" class="md-tabs__link">
+          
+  
+  
+  Architecture (Internal)
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../development-phases/" class="md-tabs__link">
+          
+  
+  
+  Development Phases
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../devlog/" class="md-tabs__link">
+          
+  
+  
+  Devlog
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../specs/project-structure/" class="md-tabs__link">
+          
+  
+  
+  Specifications
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="Stochastic Warfare" class="md-nav__button md-logo" aria-label="Stochastic Warfare" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Stochastic Warfare
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/clay-m-smith/stochastic-warfare" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    clay-m-smith/stochastic-warfare
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Guide
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Guide
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guide/getting-started/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting Started
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guide/web-ui/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Web UI
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guide/scenarios/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Scenario Library
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Concepts
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Concepts
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../concepts/architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../concepts/models/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Mathematical Models
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Eras
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Eras
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#era-framework" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Era Framework
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Era Framework">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#era-enum" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Era Enum
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#eraconfig" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        EraConfig
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#modern-era-cold-war-present" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Modern Era (Cold War -- Present)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Modern Era (Cold War -- Present)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#enabled-modules" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Enabled Modules
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#available-sensor-types" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Available Sensor Types
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#c2-delay" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        C2 Delay
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#key-unit-categories" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Key Unit Categories
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#available-doctrines" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Available Doctrines
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#available-scenarios" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Available Scenarios
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ww2-era-1939-1945" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        WW2 Era (1939--1945)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="WW2 Era (1939--1945)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#enabled-modules_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Enabled Modules
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#available-sensor-types_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Available Sensor Types
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#c2-delay_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        C2 Delay
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#era-specific-mechanics" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Era-Specific Mechanics
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#key-units" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Key Units
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#available-scenarios_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Available Scenarios
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ww1-era-1914-1918" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        WW1 Era (1914--1918)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="WW1 Era (1914--1918)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#enabled-modules_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Enabled Modules
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#available-sensor-types_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Available Sensor Types
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#c2-delay_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        C2 Delay
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#era-specific-mechanics_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Era-Specific Mechanics
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#key-units_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Key Units
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#available-scenarios_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Available Scenarios
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#napoleonic-era-1792-1815" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Napoleonic Era (1792--1815)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Napoleonic Era (1792--1815)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#enabled-modules_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Enabled Modules
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#available-sensor-types_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Available Sensor Types
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#c2-delay_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        C2 Delay
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#era-specific-mechanics_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Era-Specific Mechanics
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#key-units_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Key Units
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#available-scenarios_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Available Scenarios
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ancient-medieval-era-3000-bc-1500-ad" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Ancient &amp; Medieval Era (3000 BC -- 1500 AD)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Ancient &amp; Medieval Era (3000 BC -- 1500 AD)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#enabled-modules_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Enabled Modules
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#available-sensor-types_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Available Sensor Types
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#c2-delay_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        C2 Delay
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#era-specific-mechanics_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Era-Specific Mechanics
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#melee-extensions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Melee Extensions
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#key-units_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Key Units
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#available-scenarios_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Available Scenarios
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#creating-era-specific-scenarios" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Creating Era-Specific Scenarios
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../units/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Units & Equipment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture (Internal)
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Architecture (Internal)
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../brainstorm/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Core Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../brainstorm-post-mvp/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Post-MVP Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../brainstorm-block2/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 2 Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../brainstorm-block3/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 3 Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../brainstorm-block4/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 4 Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../brainstorm-block5/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 5 Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../brainstorm-block6/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 6 Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../brainstorm-block7/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 7 Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Development Phases
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Development Phases
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development-phases/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MVP (0-10)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development-phases-post-mvp/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Post-MVP (11-24)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development-phases-block2/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 2 (25-30)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development-phases-block3/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 3 (31-36)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development-phases-block4/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 4 (37-39)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development-phases-block5/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 5 (40-48)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development-phases-block6/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 6 (49-57)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development-phases-block7/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 7 (58-67)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Devlog
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Devlog
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devlog/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devlog/phase-0/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 0 - Scaffolding
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devlog/phase-1/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 1 - Terrain & Environment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devlog/phase-2/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 2 - Entities & Movement
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devlog/phase-3/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 3 - Detection & Intelligence
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devlog/phase-4/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 4 - Combat & Morale
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devlog/phase-5/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 5 - C2 Infrastructure
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devlog/phase-6/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 6 - Logistics & Supply
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devlog/phase-7/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 7 - Engagement Validation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devlog/phase-8/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 8 - AI & Planning
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devlog/phase-9/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 9 - Simulation Orchestration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devlog/phase-10/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 10 - Campaign Validation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devlog/phase-11/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 11 - Core Fidelity Fixes
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devlog/phase-12/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 12 - Deep Systems Rework
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devlog/phase-13/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 13 - Performance Optimization
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devlog/phase-14/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 14 - Tooling & Dev Experience
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devlog/phase-15/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 15 - Real-World Terrain
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devlog/phase-16/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 16 - Electronic Warfare
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devlog/phase-17/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 17 - Space & Satellite
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devlog/phase-18/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 18 - CBRN Effects
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devlog/phase-19/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 19 - Doctrinal AI Schools
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devlog/phase-20/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 20 - WW2 Era
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devlog/phase-21/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 21 - WW1 Era
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devlog/phase-22/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 22 - Napoleonic Era
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devlog/phase-23/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 23 - Ancient & Medieval Era
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devlog/phase-24/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 24 - Unconventional Warfare
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devlog/phase-25/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 25 - Engine Wiring
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devlog/phase-26/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 26 - Core Polish
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devlog/phase-27/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 27 - Combat Completeness
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devlog/phase-28/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 28 - Modern Data Package
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devlog/phase-28.5/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 28.5 - Directed Energy
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devlog/phase-29/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 29 - Historical Data Expansion
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devlog/phase-30/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 30 - Scenario Library
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devlog/phase-31/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 31 - Documentation Site
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devlog/phase-32/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 32 - API & Service Foundation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devlog/phase-33/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 33 - Frontend Foundation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devlog/phase-34/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 34 - Run Results & Analysis
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devlog/phase-35/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 35 - Tactical Map
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devlog/phase-36/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 36 - Scenario Tweaker & Polish
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devlog/phase-37/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 37 - Integration Fixes & E2E
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devlog/phase-38/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 38 - Map & Chart Enhancements
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devlog/phase-39/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 39 - Quality & Packaging
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devlog/phase-40/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 40 - Battle Loop Foundation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devlog/phase-41/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 41 - Combat Depth
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devlog/phase-42/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 42 - Tactical Behavior
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devlog/phase-43/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 43 - Domain-Specific Resolution
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devlog/phase-44/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 44 - Environmental & Subsystem Integration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devlog/phase-45/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 45 - Mathematical Model Audit & Hardening
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devlog/phase-46/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 46 - Scenario Data Cleanup & Expansion
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devlog/phase-47/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 47 - Full Recalibration & Validation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devlog/phase-48/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 48 - Block 5 Deficit Resolution
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devlog/phase-49/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 49 - Calibration Schema Hardening
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devlog/phase-50/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 50 - Combat Fidelity Polish
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devlog/phase-51/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 51 - Naval Combat Completeness
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devlog/phase-52/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 52 - Environmental Continuity
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devlog/phase-53/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 53 - C2 & AI Completeness
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devlog/phase-54/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 54 - Era-Specific & Domain Sub-Engine Wiring
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devlog/phase-55/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 55 - Resolution & Scenario Migration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devlog/phase-56/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 56 - Performance & Logistics
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devlog/phase-57/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 57 - Full Validation & Regression
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devlog/phase-58/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 58 - Structural Verification & Core Combat Wiring
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devlog/phase-59/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 59 - Atmospheric & Ground Environment Wiring
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devlog/phase-60/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 60 - Obscurants, Fire, & Visual Environment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devlog/phase-61/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 61 - Maritime, Acoustic, & EM Environment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devlog/phase-62/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 62 - Human Factors, CBRN, & Air Combat Environment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devlog/phase-63/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 63 - Cross-Module Feedback Loops
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devlog/phase-64/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 64 - C2 Friction & Command Delay
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devlog/phase-65/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 65 - Space & EW Sub-Engine Activation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devlog/phase-66/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 66 - Unconventional, Naval, & Cleanup
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devlog/phase-67/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 67 - Integration Validation & Recalibration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devlog/phase-68/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 68 - Consequence Enforcement
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_8" >
+        
+          
+          <label class="md-nav__link" for="__nav_8" id="__nav_8_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Specifications
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_8">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Specifications
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../specs/project-structure/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Project Structure
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../skills-and-hooks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Skills & Hooks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#era-framework" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Era Framework
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Era Framework">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#era-enum" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Era Enum
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#eraconfig" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        EraConfig
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#modern-era-cold-war-present" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Modern Era (Cold War -- Present)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Modern Era (Cold War -- Present)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#enabled-modules" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Enabled Modules
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#available-sensor-types" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Available Sensor Types
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#c2-delay" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        C2 Delay
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#key-unit-categories" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Key Unit Categories
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#available-doctrines" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Available Doctrines
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#available-scenarios" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Available Scenarios
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ww2-era-1939-1945" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        WW2 Era (1939--1945)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="WW2 Era (1939--1945)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#enabled-modules_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Enabled Modules
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#available-sensor-types_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Available Sensor Types
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#c2-delay_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        C2 Delay
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#era-specific-mechanics" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Era-Specific Mechanics
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#key-units" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Key Units
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#available-scenarios_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Available Scenarios
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ww1-era-1914-1918" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        WW1 Era (1914--1918)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="WW1 Era (1914--1918)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#enabled-modules_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Enabled Modules
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#available-sensor-types_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Available Sensor Types
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#c2-delay_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        C2 Delay
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#era-specific-mechanics_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Era-Specific Mechanics
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#key-units_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Key Units
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#available-scenarios_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Available Scenarios
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#napoleonic-era-1792-1815" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Napoleonic Era (1792--1815)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Napoleonic Era (1792--1815)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#enabled-modules_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Enabled Modules
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#available-sensor-types_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Available Sensor Types
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#c2-delay_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        C2 Delay
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#era-specific-mechanics_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Era-Specific Mechanics
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#key-units_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Key Units
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#available-scenarios_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Available Scenarios
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ancient-medieval-era-3000-bc-1500-ad" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Ancient &amp; Medieval Era (3000 BC -- 1500 AD)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Ancient &amp; Medieval Era (3000 BC -- 1500 AD)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#enabled-modules_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Enabled Modules
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#available-sensor-types_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Available Sensor Types
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#c2-delay_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        C2 Delay
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#era-specific-mechanics_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Era-Specific Mechanics
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#melee-extensions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Melee Extensions
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#key-units_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Key Units
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#available-scenarios_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Available Scenarios
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#creating-era-specific-scenarios" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Creating Era-Specific Scenarios
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="eras">Eras<a class="headerlink" href="#eras" title="Permanent link">&para;</a></h1>
+<p>Stochastic Warfare supports 5 historical eras, each with different available technologies, unit types, and combat mechanics. The era framework gates module availability and loads era-specific data.</p>
+<h2 id="era-framework">Era Framework<a class="headerlink" href="#era-framework" title="Permanent link">&para;</a></h2>
+<h3 id="era-enum">Era Enum<a class="headerlink" href="#era-enum" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Value</th>
+<th>Period</th>
+<th>Data Directory</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>MODERN</code></td>
+<td>Cold War -- present</td>
+<td><code>data/</code> (base)</td>
+</tr>
+<tr>
+<td><code>WW2</code></td>
+<td>1939 -- 1945</td>
+<td><code>data/eras/ww2/</code></td>
+</tr>
+<tr>
+<td><code>WW1</code></td>
+<td>1914 -- 1918</td>
+<td><code>data/eras/ww1/</code></td>
+</tr>
+<tr>
+<td><code>NAPOLEONIC</code></td>
+<td>1792 -- 1815</td>
+<td><code>data/eras/napoleonic/</code></td>
+</tr>
+<tr>
+<td><code>ANCIENT_MEDIEVAL</code></td>
+<td>3000 BC -- 1500 AD</td>
+<td><code>data/eras/ancient_medieval/</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="eraconfig">EraConfig<a class="headerlink" href="#eraconfig" title="Permanent link">&para;</a></h3>
+<p>Each era defines an <code>EraConfig</code> that specifies:</p>
+<ul>
+<li><strong>Enabled modules</strong> -- which subsystems are available (e.g., no radar before WW2)</li>
+<li><strong>Available sensor types</strong> -- what sensor modalities exist (e.g., visual only in Ancient)</li>
+<li><strong>C2 delay multiplier</strong> -- how slow command propagation is (courier &gt;&gt; radio)</li>
+<li><strong>Era-specific engine extensions</strong> -- custom combat models for the period</li>
+</ul>
+<p>Setting <code>era</code> in a scenario YAML automatically applies these constraints.</p>
+<hr />
+<h2 id="modern-era-cold-war-present">Modern Era (Cold War -- Present)<a class="headerlink" href="#modern-era-cold-war-present" title="Permanent link">&para;</a></h2>
+<p>The default era with full access to all subsystems.</p>
+<h3 id="enabled-modules">Enabled Modules<a class="headerlink" href="#enabled-modules" title="Permanent link">&para;</a></h3>
+<p>All modules enabled: EW, Space, CBRN, directed energy, full sensor suite, digital C2.</p>
+<h3 id="available-sensor-types">Available Sensor Types<a class="headerlink" href="#available-sensor-types" title="Permanent link">&para;</a></h3>
+<p>Visual, thermal/IR, radar, acoustic, sonar, UV MAWS, laser warning, SIGINT.</p>
+<h3 id="c2-delay">C2 Delay<a class="headerlink" href="#c2-delay" title="Permanent link">&para;</a></h3>
+<p>Baseline (1.0x multiplier). Digital communications, Link 16, SATCOM.</p>
+<h3 id="key-unit-categories">Key Unit Categories<a class="headerlink" href="#key-unit-categories" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Domain</th>
+<th>Examples</th>
+<th>Count</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Armor</td>
+<td>M1A2 Abrams, T-72B3, T-90A, Leopard 2A6, Challenger 2</td>
+<td>5+</td>
+</tr>
+<tr>
+<td>Infantry</td>
+<td>Rifle squad, mechanized, Javelin team, Kornet team</td>
+<td>4+</td>
+</tr>
+<tr>
+<td>Artillery</td>
+<td>M109 Paladin, MLRS/HIMARS, mortar team</td>
+<td>3+</td>
+</tr>
+<tr>
+<td>Fixed-Wing Air</td>
+<td>F-16C, A-10C, Su-27S, MiG-29A, J-10A, B-52H, EA-18G</td>
+<td>7+</td>
+</tr>
+<tr>
+<td>Rotary-Wing</td>
+<td>AH-64D Apache, UH-60 Black Hawk, Mi-24V</td>
+<td>3+</td>
+</tr>
+<tr>
+<td>Air Defense</td>
+<td>Patriot, S-300PMU, SA-11 Buk, MANPADS</td>
+<td>4+</td>
+</tr>
+<tr>
+<td>Naval Surface</td>
+<td>Arleigh Burke DDG, Sovremenny DDG, Ticonderoga CG</td>
+<td>3+</td>
+</tr>
+<tr>
+<td>Naval Subsurface</td>
+<td>Los Angeles SSN, Kilo-636 SSK</td>
+<td>2+</td>
+</tr>
+<tr>
+<td>Support</td>
+<td>Engineers, logistics, HQ, medical, C-17</td>
+<td>5+</td>
+</tr>
+</tbody>
+</table>
+<h3 id="available-doctrines">Available Doctrines<a class="headerlink" href="#available-doctrines" title="Permanent link">&para;</a></h3>
+<p>US FM 3-0, Russian Deep Operations, NATO Procedures, PLA Active Defense, IDF Preemptive Strike, Airborne, Amphibious, Naval Sea Control.</p>
+<h3 id="available-scenarios">Available Scenarios<a class="headerlink" href="#available-scenarios" title="Permanent link">&para;</a></h3>
+<p>27 modern scenarios including 73 Easting, Falklands Naval, Golan Heights, Taiwan Strait, Korean Peninsula, Suwalki Gap, and more. All scenarios validated against historical outcomes in Phase 47 (seed=42 deterministic + Monte Carlo).</p>
+<hr />
+<h2 id="ww2-era-1939-1945">WW2 Era (1939--1945)<a class="headerlink" href="#ww2-era-1939-1945" title="Permanent link">&para;</a></h2>
+<h3 id="enabled-modules_1">Enabled Modules<a class="headerlink" href="#enabled-modules_1" title="Permanent link">&para;</a></h3>
+<p>Most modules enabled. No EW (electronic warfare), no space, no directed energy. CBRN limited (no nuclear in most scenarios). Radar available but primitive.</p>
+<h3 id="available-sensor-types_1">Available Sensor Types<a class="headerlink" href="#available-sensor-types_1" title="Permanent link">&para;</a></h3>
+<p>Visual, radar, passive sonar, active sonar (no thermal/IR targeting, no GPS).</p>
+<h3 id="c2-delay_1">C2 Delay<a class="headerlink" href="#c2-delay_1" title="Permanent link">&para;</a></h3>
+<p>Baseline (1.0x multiplier). Radio communications available but less reliable. No digital data links.</p>
+<h3 id="era-specific-mechanics">Era-Specific Mechanics<a class="headerlink" href="#era-specific-mechanics" title="Permanent link">&para;</a></h3>
+<p><strong>Naval Gunnery Bracket Firing</strong></p>
+<p>WW2 naval guns use bracket firing -- observing fall of shot and adjusting. The engine models:</p>
+<ul>
+<li>Initial salvo spread based on fire control quality</li>
+<li>Bracket adjustment (long/short alternation to find range)</li>
+<li>Convergence to target over successive salvos</li>
+<li>Fire control radar bonus for equipped ships</li>
+</ul>
+<p><strong>Convoy / Wolf Pack</strong></p>
+<p>Submarine warfare modeled as:</p>
+<ul>
+<li>Convoy formations with escort positions</li>
+<li>Wolf pack tactics (multiple submarines coordinating attacks)</li>
+<li>Escort effectiveness based on numbers and sonar quality</li>
+<li>Night surface attacks vs submerged daylight attacks</li>
+</ul>
+<p><strong>Strategic Bombing CEP</strong></p>
+<p>High-altitude bombing with circular error probable (CEP):</p>
+<ul>
+<li>Unguided bombs with large CEP (hundreds of meters)</li>
+<li>Target area coverage using Gaussian scatter</li>
+<li>Fighter escort modifying bomber attrition</li>
+<li>Target regeneration over time (industrial recovery)</li>
+</ul>
+<h3 id="key-units">Key Units<a class="headerlink" href="#key-units" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Domain</th>
+<th>Examples</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Armor</td>
+<td>Tiger I, Panther, Sherman M4A3, Panzer IV, T-34/85</td>
+</tr>
+<tr>
+<td>Infantry</td>
+<td>US/Soviet/Wehrmacht rifle squads</td>
+</tr>
+<tr>
+<td>Air</td>
+<td>P-51D Mustang, Bf 109G, B-17G, A6M Zero, Spitfire</td>
+</tr>
+<tr>
+<td>Naval</td>
+<td>Essex CV, Bismarck BB, Fletcher DD, Type VII U-boat, Shokaku CV</td>
+</tr>
+<tr>
+<td>Artillery</td>
+<td>105mm howitzer, Katyusha, Nebelwerfer</td>
+</tr>
+</tbody>
+</table>
+<h3 id="available-scenarios_1">Available Scenarios<a class="headerlink" href="#available-scenarios_1" title="Permanent link">&para;</a></h3>
+<p>Kursk 1943 (largest tank battle), Normandy Bocage 1944 (hedgerow fighting), Stalingrad 1942 (urban combat), Midway 1942 (carrier battle). All validated against historical outcomes in Phase 47.</p>
+<hr />
+<h2 id="ww1-era-1914-1918">WW1 Era (1914--1918)<a class="headerlink" href="#ww1-era-1914-1918" title="Permanent link">&para;</a></h2>
+<h3 id="enabled-modules_2">Enabled Modules<a class="headerlink" href="#enabled-modules_2" title="Permanent link">&para;</a></h3>
+<p>Limited modules. No EW, no space, no CBRN (except gas warfare via adapter), no directed energy. Basic visual detection only. Very slow C2.</p>
+<h3 id="available-sensor-types_2">Available Sensor Types<a class="headerlink" href="#available-sensor-types_2" title="Permanent link">&para;</a></h3>
+<p>Visual only. No radar, no thermal, no acoustic sensors.</p>
+<h3 id="c2-delay_2">C2 Delay<a class="headerlink" href="#c2-delay_2" title="Permanent link">&para;</a></h3>
+<p>5.0x multiplier. Telephone/telegraph to HQ, runners and couriers forward. Significant communication friction.</p>
+<h3 id="era-specific-mechanics_1">Era-Specific Mechanics<a class="headerlink" href="#era-specific-mechanics_1" title="Permanent link">&para;</a></h3>
+<p><strong>Trench System Overlay</strong></p>
+<p>Trenches modeled as spatial overlays using Shapely LineString geometries:</p>
+<ul>
+<li>STRtree for fast spatial queries</li>
+<li>Trench segments provide cover and concealment bonuses</li>
+<li>Wire obstacles slow movement</li>
+<li>Communication trenches enable covered movement between positions</li>
+<li>No-man's-land exposure zones</li>
+</ul>
+<p><strong>Creeping Barrage</strong></p>
+<p>Aggregate fire model for massed artillery:</p>
+<ul>
+<li>Fire density measured in rounds per hectare</li>
+<li>Barrage line advances at configurable rate</li>
+<li>Random walk drift with observer correction</li>
+<li>Casualties proportional to troop density in beaten zone</li>
+</ul>
+<p><strong>Volley Fire &amp; Melee</strong></p>
+<p>WW1 bolt-action rifles route to the volley fire aggregate model (coordinated fire), while close-quarters combat uses the melee engine for bayonet charges and trench raids. Machine guns use the standard direct-fire model for sustained suppressive fire.</p>
+<p><strong>Gas Warfare</strong></p>
+<p>Chemical weapons via CBRN adapter:</p>
+<ul>
+<li>Wind direction/speed gating (gas blows back in wrong wind)</li>
+<li>Pasquill-Gifford dispersal model (shared with modern CBRN)</li>
+<li>Gas mask don time enforcement (delay before protection)</li>
+<li>Persistent vs non-persistent agents</li>
+</ul>
+<h3 id="key-units_1">Key Units<a class="headerlink" href="#key-units_1" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Domain</th>
+<th>Examples</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Infantry</td>
+<td>British/German/French rifle squads</td>
+</tr>
+<tr>
+<td>Artillery</td>
+<td>18-pounder, 15cm howitzer</td>
+</tr>
+<tr>
+<td>Air</td>
+<td>SPAD XIII, Fokker Dr.I, SE.5a</td>
+</tr>
+<tr>
+<td>Naval</td>
+<td>HMS Dreadnought, SMS Konig, HMS Iron Duke</td>
+</tr>
+</tbody>
+</table>
+<h3 id="available-scenarios_2">Available Scenarios<a class="headerlink" href="#available-scenarios_2" title="Permanent link">&para;</a></h3>
+<p>Somme July 1 1916 (first day of the Somme), Cambrai 1917 (first mass tank assault), Jutland 1916 (dreadnought fleet action). All validated against historical outcomes in Phase 47.</p>
+<hr />
+<h2 id="napoleonic-era-1792-1815">Napoleonic Era (1792--1815)<a class="headerlink" href="#napoleonic-era-1792-1815" title="Permanent link">&para;</a></h2>
+<h3 id="enabled-modules_3">Enabled Modules<a class="headerlink" href="#enabled-modules_3" title="Permanent link">&para;</a></h3>
+<p>Minimal modules. No electronic anything. Visual detection only. Courier-based C2 with extreme delays. Foraging-based logistics.</p>
+<h3 id="available-sensor-types_3">Available Sensor Types<a class="headerlink" href="#available-sensor-types_3" title="Permanent link">&para;</a></h3>
+<p>Visual only. Detection range limited by terrain and weather.</p>
+<h3 id="c2-delay_3">C2 Delay<a class="headerlink" href="#c2-delay_3" title="Permanent link">&para;</a></h3>
+<p>8.0x multiplier. Courier on horseback. Orders take hours to propagate. Fog of war is extreme.</p>
+<h3 id="era-specific-mechanics_2">Era-Specific Mechanics<a class="headerlink" href="#era-specific-mechanics_2" title="Permanent link">&para;</a></h3>
+<p><strong>Volley Fire</strong></p>
+<p>Aggregate model using binomial trials:</p>
+<ul>
+<li>Musket accuracy varies by range (effective only within ~100m)</li>
+<li>Formation affects volley effectiveness (line &gt; column for firepower)</li>
+<li>Rate of fire: ~3 rounds per minute for trained troops</li>
+<li>Smoke accumulation degrades accuracy over sustained fire</li>
+</ul>
+<p><strong>Melee Combat</strong></p>
+<p>Close-quarters combat model:</p>
+<ul>
+<li>Bayonet charges, saber engagements</li>
+<li>Morale is the primary determinant (most melee resolved by one side breaking)</li>
+<li>Formation effects (square is devastating to cavalry)</li>
+<li>Reach advantage for longer weapons</li>
+</ul>
+<p><strong>Cavalry Charge State Machine</strong></p>
+<p>Multi-phase cavalry engagement:</p>
+<ol>
+<li><strong>Approach</strong> -- accelerating toward enemy, taking fire</li>
+<li><strong>Contact</strong> -- melee if defenders hold, rout if they break</li>
+<li><strong>Pursuit</strong> -- chasing broken enemy (most casualties here)</li>
+<li><strong>Rally</strong> -- reforming after charge (vulnerable period)</li>
+</ol>
+<p>Pre-contact morale is the key mechanic -- most charges decided before physical contact.</p>
+<p><strong>Napoleonic Formations</strong></p>
+<p>Rock-paper-scissors formation system:</p>
+<table>
+<thead>
+<tr>
+<th>Formation</th>
+<th>Strong Against</th>
+<th>Weak Against</th>
+<th>Best For</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>LINE</td>
+<td>Column (firepower)</td>
+<td>Cavalry (flanks exposed)</td>
+<td>Defensive fire</td>
+</tr>
+<tr>
+<td>COLUMN</td>
+<td>Rapid movement</td>
+<td>Line (narrow frontage)</td>
+<td>Assault</td>
+</tr>
+<tr>
+<td>SQUARE</td>
+<td>Cavalry (all-round defense)</td>
+<td>Artillery (dense target)</td>
+<td>Anti-cavalry</td>
+</tr>
+<tr>
+<td>SKIRMISH</td>
+<td>All (hard to hit)</td>
+<td>Cavalry (no mass)</td>
+<td>Screening</td>
+</tr>
+</tbody>
+</table>
+<p>Transitioning between formations takes time and creates vulnerability.</p>
+<p><strong>Courier C2</strong></p>
+<p>Orders delivered by mounted courier:</p>
+<ul>
+<li>Travel time proportional to distance</li>
+<li>Risk of interception or courier loss</li>
+<li>Message delay = distance / courier_speed + lognormal noise</li>
+<li>Initiative doctrine: commanders act on last received orders</li>
+</ul>
+<p><strong>Foraging Logistics</strong></p>
+<p>Supply through local foraging:</p>
+<ul>
+<li>Daily foraging radius around unit position</li>
+<li>Region exhaustion over time (devastated areas produce nothing)</li>
+<li>Ambush risk during foraging operations</li>
+<li>Strategic implications of supply lines vs living off the land</li>
+</ul>
+<h3 id="key-units_2">Key Units<a class="headerlink" href="#key-units_2" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Domain</th>
+<th>Examples</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Infantry</td>
+<td>French ligne, British line, Austrian grenadier, Prussian musketeer</td>
+</tr>
+<tr>
+<td>Cavalry</td>
+<td>French cuirassier, British light dragoon, Cossack, lancer</td>
+</tr>
+<tr>
+<td>Artillery</td>
+<td>6-pounder, 12-pounder, howitzer</td>
+</tr>
+<tr>
+<td>Naval</td>
+<td>Ship of the line (1st/3rd rate), frigate</td>
+</tr>
+</tbody>
+</table>
+<h3 id="available-scenarios_3">Available Scenarios<a class="headerlink" href="#available-scenarios_3" title="Permanent link">&para;</a></h3>
+<p>Austerlitz 1805 (Napoleon's masterpiece), Waterloo 1815 (Coalition defeat of Napoleon), Trafalgar 1805 (Nelson vs Franco-Spanish fleet). All validated against historical outcomes in Phase 47.</p>
+<hr />
+<h2 id="ancient-medieval-era-3000-bc-1500-ad">Ancient &amp; Medieval Era (3000 BC -- 1500 AD)<a class="headerlink" href="#ancient-medieval-era-3000-bc-1500-ad" title="Permanent link">&para;</a></h2>
+<h3 id="enabled-modules_4">Enabled Modules<a class="headerlink" href="#enabled-modules_4" title="Permanent link">&para;</a></h3>
+<p>Minimal modules. Visual detection only. Visual signals C2 (flags, trumpets). No logistics automation.</p>
+<h3 id="available-sensor-types_4">Available Sensor Types<a class="headerlink" href="#available-sensor-types_4" title="Permanent link">&para;</a></h3>
+<p>Visual only. Very short detection ranges.</p>
+<h3 id="c2-delay_4">C2 Delay<a class="headerlink" href="#c2-delay_4" title="Permanent link">&para;</a></h3>
+<p>12.0x multiplier. Visual signals (flags, horns, drums) for nearby units. Messengers on foot for distant commands. Extremely limited command span.</p>
+<h3 id="era-specific-mechanics_3">Era-Specific Mechanics<a class="headerlink" href="#era-specific-mechanics_3" title="Permanent link">&para;</a></h3>
+<p><strong>Massed Archery</strong></p>
+<p>Aggregate volley model for massed bowmen:</p>
+<ul>
+<li>Arrows per volley tracked per archer (typically 24 arrows total)</li>
+<li>Effective range varies by bow type (longbow &gt; short bow)</li>
+<li>Formation density affects casualties</li>
+<li>Shield wall and armor reduce effectiveness</li>
+<li>Arrow supply exhaustion is a key constraint</li>
+</ul>
+<p><strong>Ancient Formations</strong></p>
+<p>7 formation types with distinct mechanics:</p>
+<table>
+<thead>
+<tr>
+<th>Formation</th>
+<th>Type</th>
+<th>Effect</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>PHALANX</td>
+<td>Dense spear wall</td>
+<td>Devastating frontal defense, vulnerable to flanks</td>
+</tr>
+<tr>
+<td>SHIELD_WALL</td>
+<td>Overlapping shields</td>
+<td>Strong defense, slow movement</td>
+</tr>
+<tr>
+<td>WEDGE</td>
+<td>Triangular assault</td>
+<td>Penetration bonus on charge</td>
+</tr>
+<tr>
+<td>TESTUDO</td>
+<td>Roman turtle</td>
+<td>Near-immune to missiles, very slow</td>
+</tr>
+<tr>
+<td>SKIRMISH_LINE</td>
+<td>Dispersed</td>
+<td>Hard to hit, weak in melee</td>
+</tr>
+<tr>
+<td>SQUARE</td>
+<td>All-round defense</td>
+<td>Anti-cavalry, slow</td>
+</tr>
+<tr>
+<td>OPEN_ORDER</td>
+<td>Flexible spacing</td>
+<td>Balanced, standard</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Siege State Machine</strong></p>
+<p>Campaign-scale daily resolution for sieges lasting weeks to months:</p>
+<ol>
+<li><strong>Approach</strong> -- moving siege equipment into position</li>
+<li><strong>Investment</strong> -- surrounding the fortification</li>
+<li><strong>Bombardment</strong> -- siege engines degrading walls</li>
+<li><strong>Assault</strong> -- storming breaches (high casualties)</li>
+<li><strong>Resolution</strong> -- surrender, relief, or starvation</li>
+</ol>
+<h3 id="melee-extensions">Melee Extensions<a class="headerlink" href="#melee-extensions" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Reach advantage</strong> -- longer weapons (pikes, spears) get first strike</li>
+<li><strong>Flanking bonus</strong> -- attacks from side or rear multiply damage</li>
+<li><strong>Charge momentum</strong> -- cavalry and wedge formations gain impact bonus</li>
+</ul>
+<p><strong>Oar-Powered Naval</strong></p>
+<p>Ancient/medieval naval combat:</p>
+<ul>
+<li>Ram attacks (primary weapon for triremes)</li>
+<li>Boarding actions (melee combat on deck)</li>
+<li>Oar speed vs sail speed tradeoffs</li>
+<li>Ram damage proportional to relative velocity</li>
+</ul>
+<p><strong>Visual Signals C2</strong></p>
+<p>Command and control via visual/audible signals:</p>
+<ul>
+<li>Flags, standards, horns, drums</li>
+<li>Signal range limited by terrain and weather</li>
+<li>Misinterpretation probability increases with distance</li>
+<li>Commander must be visible to troops for morale effects</li>
+</ul>
+<h3 id="key-units_3">Key Units<a class="headerlink" href="#key-units_3" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Domain</th>
+<th>Examples</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Infantry</td>
+<td>Hoplite, Roman legionary, Viking huscarl, English longbowman</td>
+</tr>
+<tr>
+<td>Cavalry</td>
+<td>Companion cavalry, cataphract, knight, horse archer</td>
+</tr>
+<tr>
+<td>Siege</td>
+<td>Trebuchet, battering ram, siege tower</td>
+</tr>
+<tr>
+<td>Naval</td>
+<td>Trireme, quinquereme, longship, cog</td>
+</tr>
+</tbody>
+</table>
+<h3 id="available-scenarios_4">Available Scenarios<a class="headerlink" href="#available-scenarios_4" title="Permanent link">&para;</a></h3>
+<p>Cannae 216 BC (Hannibal's double envelopment), Salamis 480 BC (Greek trireme victory), Hastings 1066 (Norman conquest), Agincourt 1415 (English longbow vs French knights). All validated against historical outcomes in Phase 47.</p>
+<hr />
+<h2 id="creating-era-specific-scenarios">Creating Era-Specific Scenarios<a class="headerlink" href="#creating-era-specific-scenarios" title="Permanent link">&para;</a></h2>
+<p>To create a scenario for a specific era, set the <code>era</code> field in the scenario YAML:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;Battle</span><span class="nv"> </span><span class="s">of</span><span class="nv"> </span><span class="s">Austerlitz&quot;</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="nt">era</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">napoleonic</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="nt">duration_s</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">28800</span><span class="w">  </span><span class="c1"># 8 hours</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="nt">terrain</span><span class="p">:</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="w">  </span><span class="nt">width</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">8000</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="w">  </span><span class="nt">height</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">6000</span>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="w">  </span><span class="nt">cell_size</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">100</span>
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="w">  </span><span class="nt">terrain_type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">rolling_hills</span>
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="nt">sides</span><span class="p">:</span>
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">french</span>
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="w">    </span><span class="nt">units</span><span class="p">:</span>
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">unit_type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">french_ligne</span>
+<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span class="w">        </span><span class="nt">count</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">12</span>
+<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a><span class="w">        </span><span class="c1"># ...</span>
+</code></pre></div>
+<p>The <code>ScenarioLoader</code> will:</p>
+<ol>
+<li>Apply the era's <code>EraConfig</code> (disable unavailable modules, set C2 delays)</li>
+<li>Load unit definitions from <code>data/eras/napoleonic/units/</code> instead of <code>data/units/</code></li>
+<li>Wire era-specific engines (volley fire, melee, cavalry, formations, courier, foraging)</li>
+</ol>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs", "navigation.sections", "navigation.expand", "navigation.top", "search.suggest", "search.highlight", "content.code.copy"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>

@@ -1,0 +1,5691 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="High-fidelity stochastic wargame simulator — multi-scale, multi-domain, multi-era">
+      
+      
+        <meta name="author" content="Clay Smith">
+      
+      
+        <link rel="canonical" href="https://clay-m-smith.github.io/stochastic-warfare/development-phases/">
+      
+      
+        <link rel="prev" href="../brainstorm-block7/">
+      
+      
+        <link rel="next" href="../development-phases-post-mvp/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>MVP (0-10) - Stochastic Warfare</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="blue-grey" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#stochastic-warfare-development-phases" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="Stochastic Warfare" class="md-header__button md-logo" aria-label="Stochastic Warfare" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Stochastic Warfare
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              MVP (0-10)
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="blue-grey" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="blue-grey" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/clay-m-smith/stochastic-warfare" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    clay-m-smith/stochastic-warfare
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href=".." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../guide/getting-started/" class="md-tabs__link">
+          
+  
+  
+  Guide
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../concepts/architecture/" class="md-tabs__link">
+          
+  
+  
+  Concepts
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../reference/api/" class="md-tabs__link">
+          
+  
+  
+  Reference
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../brainstorm/" class="md-tabs__link">
+          
+  
+  
+  Architecture (Internal)
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="./" class="md-tabs__link">
+          
+  
+  
+  Development Phases
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../devlog/" class="md-tabs__link">
+          
+  
+  
+  Devlog
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../specs/project-structure/" class="md-tabs__link">
+          
+  
+  
+  Specifications
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="Stochastic Warfare" class="md-nav__button md-logo" aria-label="Stochastic Warfare" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Stochastic Warfare
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/clay-m-smith/stochastic-warfare" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    clay-m-smith/stochastic-warfare
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Guide
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Guide
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../guide/getting-started/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting Started
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../guide/web-ui/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Web UI
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../guide/scenarios/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Scenario Library
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Concepts
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Concepts
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../concepts/architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../concepts/models/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Mathematical Models
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/eras/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Eras
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/units/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Units & Equipment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture (Internal)
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Architecture (Internal)
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../brainstorm/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Core Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../brainstorm-post-mvp/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Post-MVP Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../brainstorm-block2/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 2 Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../brainstorm-block3/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 3 Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../brainstorm-block4/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 4 Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../brainstorm-block5/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 5 Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../brainstorm-block6/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 6 Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../brainstorm-block7/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 7 Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Development Phases
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Development Phases
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MVP (0-10)
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MVP (0-10)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#philosophy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Philosophy
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#phase-0-project-scaffolding" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 0: Project Scaffolding ✅
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#phase-1-terrain-environment-spatial-foundation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 1: Terrain, Environment &amp; Spatial Foundation ✅
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Phase 1: Terrain, Environment &amp; Spatial Foundation ✅">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1a-core-terrain" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1a: Core Terrain
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#1b-extended-terrain-layers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1b: Extended Terrain Layers
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#1c-environment-foundation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1c: Environment Foundation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#1d-remaining-coordinate-utilities" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1d: Remaining Coordinate Utilities
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#phase-2-entities-organization-movement" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 2: Entities, Organization &amp; Movement ✅
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Phase 2: Entities, Organization &amp; Movement ✅">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#2a-entity-system" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2a: Entity System
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2b-organization" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2b: Organization
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2c-movement" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2c: Movement
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#phase-3-detection-intelligence" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 3: Detection &amp; Intelligence ✅
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#phase-4-combat-resolution" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 4: Combat Resolution ✅
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Phase 4: Combat Resolution ✅">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#4a-direct-fire-fundamentals" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4a: Direct Fire &amp; Fundamentals
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4b-indirect-fire-deep-fires" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4b: Indirect Fire &amp; Deep Fires
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4c-surface-to-surface-missiles" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4c: Surface-to-Surface Missiles
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4d-air-combat-air-defense-missile-defense" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4d: Air Combat, Air Defense &amp; Missile Defense
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4e-naval-combat" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4e: Naval Combat
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4f-morale-human-factors" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4f: Morale &amp; Human Factors
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#phase-5-c2-infrastructure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 5: C2 Infrastructure ✅
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Phase 5: C2 Infrastructure ✅">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#5a-command-authority-communications" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5a: Command Authority &amp; Communications
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5b-orders-system" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5b: Orders System
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5c-roe-coordination-mission-command" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5c: ROE, Coordination &amp; Mission Command
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#phase-6-logistics-supply" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 6: Logistics &amp; Supply ✅
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Phase 6: Logistics &amp; Supply ✅">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#6a-supply-network-consumption" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6a: Supply Network &amp; Consumption
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#6b-transport-stockpiles" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6b: Transport &amp; Stockpiles
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#6c-maintenance-engineering-medical" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6c: Maintenance, Engineering &amp; Medical
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#6d-naval-logistics" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6d: Naval Logistics
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#6e-disruption-special-topics" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6e: Disruption &amp; Special Topics
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#phase-7-engagement-validation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 7: Engagement Validation ✅
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Phase 7: Engagement Validation ✅">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#7a-validation-infrastructure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7a: Validation Infrastructure
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#7b-engagement-scenario-packs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7b: Engagement Scenario Packs
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#7c-calibration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7c: Calibration
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#phase-8-ai-planning" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 8: AI &amp; Planning ✅
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Phase 8: AI &amp; Planning ✅">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#8a-ai-decision-making" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8a: AI Decision-Making
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#8b-planning-process" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8b: Planning Process
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#phase-9-simulation-orchestration-integration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 9: Simulation Orchestration &amp; Integration ✅
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#phase-10-full-campaign-validation-backtesting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 10: Full Campaign Validation &amp; Backtesting ✅
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#future-phases-post-mvp" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Future Phases (Post-MVP)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#module-to-phase-index" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Module-to-Phase Index
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../development-phases-post-mvp/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Post-MVP (11-24)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../development-phases-block2/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 2 (25-30)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../development-phases-block3/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 3 (31-36)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../development-phases-block4/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 4 (37-39)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../development-phases-block5/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 5 (40-48)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../development-phases-block6/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 6 (49-57)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../development-phases-block7/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 7 (58-67)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Devlog
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Devlog
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-0/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 0 - Scaffolding
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-1/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 1 - Terrain & Environment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-2/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 2 - Entities & Movement
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-3/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 3 - Detection & Intelligence
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-4/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 4 - Combat & Morale
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-5/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 5 - C2 Infrastructure
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-6/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 6 - Logistics & Supply
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-7/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 7 - Engagement Validation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-8/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 8 - AI & Planning
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-9/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 9 - Simulation Orchestration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-10/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 10 - Campaign Validation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-11/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 11 - Core Fidelity Fixes
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-12/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 12 - Deep Systems Rework
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-13/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 13 - Performance Optimization
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-14/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 14 - Tooling & Dev Experience
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-15/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 15 - Real-World Terrain
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-16/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 16 - Electronic Warfare
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-17/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 17 - Space & Satellite
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-18/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 18 - CBRN Effects
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-19/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 19 - Doctrinal AI Schools
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-20/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 20 - WW2 Era
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-21/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 21 - WW1 Era
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-22/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 22 - Napoleonic Era
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-23/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 23 - Ancient & Medieval Era
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-24/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 24 - Unconventional Warfare
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-25/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 25 - Engine Wiring
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-26/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 26 - Core Polish
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-27/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 27 - Combat Completeness
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-28/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 28 - Modern Data Package
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-28.5/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 28.5 - Directed Energy
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-29/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 29 - Historical Data Expansion
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-30/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 30 - Scenario Library
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-31/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 31 - Documentation Site
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-32/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 32 - API & Service Foundation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-33/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 33 - Frontend Foundation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-34/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 34 - Run Results & Analysis
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-35/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 35 - Tactical Map
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-36/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 36 - Scenario Tweaker & Polish
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-37/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 37 - Integration Fixes & E2E
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-38/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 38 - Map & Chart Enhancements
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-39/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 39 - Quality & Packaging
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-40/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 40 - Battle Loop Foundation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-41/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 41 - Combat Depth
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-42/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 42 - Tactical Behavior
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-43/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 43 - Domain-Specific Resolution
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-44/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 44 - Environmental & Subsystem Integration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-45/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 45 - Mathematical Model Audit & Hardening
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-46/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 46 - Scenario Data Cleanup & Expansion
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-47/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 47 - Full Recalibration & Validation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-48/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 48 - Block 5 Deficit Resolution
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-49/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 49 - Calibration Schema Hardening
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-50/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 50 - Combat Fidelity Polish
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-51/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 51 - Naval Combat Completeness
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-52/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 52 - Environmental Continuity
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-53/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 53 - C2 & AI Completeness
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-54/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 54 - Era-Specific & Domain Sub-Engine Wiring
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-55/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 55 - Resolution & Scenario Migration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-56/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 56 - Performance & Logistics
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-57/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 57 - Full Validation & Regression
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-58/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 58 - Structural Verification & Core Combat Wiring
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-59/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 59 - Atmospheric & Ground Environment Wiring
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-60/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 60 - Obscurants, Fire, & Visual Environment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-61/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 61 - Maritime, Acoustic, & EM Environment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-62/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 62 - Human Factors, CBRN, & Air Combat Environment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-63/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 63 - Cross-Module Feedback Loops
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-64/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 64 - C2 Friction & Command Delay
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-65/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 65 - Space & EW Sub-Engine Activation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-66/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 66 - Unconventional, Naval, & Cleanup
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-67/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 67 - Integration Validation & Recalibration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-68/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 68 - Consequence Enforcement
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_8" >
+        
+          
+          <label class="md-nav__link" for="__nav_8" id="__nav_8_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Specifications
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_8">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Specifications
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../specs/project-structure/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Project Structure
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../skills-and-hooks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Skills & Hooks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#philosophy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Philosophy
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#phase-0-project-scaffolding" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 0: Project Scaffolding ✅
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#phase-1-terrain-environment-spatial-foundation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 1: Terrain, Environment &amp; Spatial Foundation ✅
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Phase 1: Terrain, Environment &amp; Spatial Foundation ✅">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1a-core-terrain" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1a: Core Terrain
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#1b-extended-terrain-layers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1b: Extended Terrain Layers
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#1c-environment-foundation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1c: Environment Foundation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#1d-remaining-coordinate-utilities" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1d: Remaining Coordinate Utilities
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#phase-2-entities-organization-movement" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 2: Entities, Organization &amp; Movement ✅
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Phase 2: Entities, Organization &amp; Movement ✅">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#2a-entity-system" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2a: Entity System
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2b-organization" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2b: Organization
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2c-movement" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2c: Movement
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#phase-3-detection-intelligence" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 3: Detection &amp; Intelligence ✅
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#phase-4-combat-resolution" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 4: Combat Resolution ✅
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Phase 4: Combat Resolution ✅">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#4a-direct-fire-fundamentals" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4a: Direct Fire &amp; Fundamentals
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4b-indirect-fire-deep-fires" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4b: Indirect Fire &amp; Deep Fires
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4c-surface-to-surface-missiles" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4c: Surface-to-Surface Missiles
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4d-air-combat-air-defense-missile-defense" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4d: Air Combat, Air Defense &amp; Missile Defense
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4e-naval-combat" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4e: Naval Combat
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4f-morale-human-factors" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4f: Morale &amp; Human Factors
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#phase-5-c2-infrastructure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 5: C2 Infrastructure ✅
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Phase 5: C2 Infrastructure ✅">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#5a-command-authority-communications" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5a: Command Authority &amp; Communications
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5b-orders-system" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5b: Orders System
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5c-roe-coordination-mission-command" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5c: ROE, Coordination &amp; Mission Command
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#phase-6-logistics-supply" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 6: Logistics &amp; Supply ✅
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Phase 6: Logistics &amp; Supply ✅">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#6a-supply-network-consumption" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6a: Supply Network &amp; Consumption
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#6b-transport-stockpiles" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6b: Transport &amp; Stockpiles
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#6c-maintenance-engineering-medical" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6c: Maintenance, Engineering &amp; Medical
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#6d-naval-logistics" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6d: Naval Logistics
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#6e-disruption-special-topics" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6e: Disruption &amp; Special Topics
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#phase-7-engagement-validation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 7: Engagement Validation ✅
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Phase 7: Engagement Validation ✅">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#7a-validation-infrastructure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7a: Validation Infrastructure
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#7b-engagement-scenario-packs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7b: Engagement Scenario Packs
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#7c-calibration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7c: Calibration
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#phase-8-ai-planning" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 8: AI &amp; Planning ✅
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Phase 8: AI &amp; Planning ✅">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#8a-ai-decision-making" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8a: AI Decision-Making
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#8b-planning-process" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8b: Planning Process
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#phase-9-simulation-orchestration-integration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 9: Simulation Orchestration &amp; Integration ✅
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#phase-10-full-campaign-validation-backtesting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 10: Full Campaign Validation &amp; Backtesting ✅
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#future-phases-post-mvp" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Future Phases (Post-MVP)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#module-to-phase-index" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Module-to-Phase Index
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="stochastic-warfare-development-phases">Stochastic Warfare — Development Phases<a class="headerlink" href="#stochastic-warfare-development-phases" title="Permanent link">&para;</a></h1>
+<h2 id="philosophy">Philosophy<a class="headerlink" href="#philosophy" title="Permanent link">&para;</a></h2>
+<p>Build the nuts and bolts first. Every phase produces runnable, testable code. Validation via basic Python visualization (matplotlib) throughout. No UI work until the engine is solid. Naval warfare is integrated across phases, not deferred.</p>
+<p><strong>Cross-document alignment</strong>: This document must stay synchronized with <code>specs/project-structure.md</code> (module definitions), <code>brainstorm.md</code> (architecture decisions), and <code>devlog/</code> (implementation record). Every module file in project-structure.md must appear in exactly one phase below. Run <code>/update-docs</code> after any structural change.</p>
+<hr />
+<h2 id="phase-0-project-scaffolding">Phase 0: Project Scaffolding ✅<a class="headerlink" href="#phase-0-project-scaffolding" title="Permanent link">&para;</a></h2>
+<p><strong>Goal</strong>: Establish the project skeleton, tooling, and foundational infrastructure.</p>
+<p><strong>Modules built</strong>:
+- <code>core/types.py</code> — shared types, enums (ModuleId, TickResolution), physical constants
+- <code>core/logging.py</code> — centralized logging framework
+- <code>core/rng.py</code> — central RNG manager (seeded numpy Generators, per-subsystem stream forking)
+- <code>core/clock.py</code> — calendar-aware simulation clock (UTC, Julian date via Meeus)
+- <code>core/events.py</code> — typed pub-sub event bus for inter-module communication
+- <code>core/config.py</code> — YAML config loading with pydantic validation
+- <code>core/checkpoint.py</code> — state serialization, checkpoint/restore
+- <code>coordinates/transforms.py</code> — geodetic ↔ UTM ↔ ENU conversions via pyproj
+- <code>coordinates/spatial.py</code> — distance, bearing, point_at utilities
+- <code>entities/base.py</code> — minimal base entity class (stub for Phase 2)</p>
+<p><strong>Also</strong>: <code>pyproject.toml</code>, package structure, pytest framework, uv-managed venv</p>
+<p><strong>Exit Criteria</strong>: Can instantiate the simulation framework, create a seeded RNG, load a YAML config, tick a clock with calendar queries (Julian date), publish/subscribe events, transform coordinates (geodetic ↔ ENU round-trip), and serialize/restore full state. All tests pass. Deterministic replay verified.</p>
+<hr />
+<h2 id="phase-1-terrain-environment-spatial-foundation">Phase 1: Terrain, Environment &amp; Spatial Foundation ✅<a class="headerlink" href="#phase-1-terrain-environment-spatial-foundation" title="Permanent link">&para;</a></h2>
+<p><strong>Goal</strong>: Build the world the simulation operates in — both the static physical terrain and the dynamic environmental conditions that vary with time, date, and geography.</p>
+<h3 id="1a-core-terrain">1a: Core Terrain<a class="headerlink" href="#1a-core-terrain" title="Permanent link">&para;</a></h3>
+<ul>
+<li><code>terrain/heightmap.py</code> — DEM loading, elevation queries, slope, aspect</li>
+<li><code>terrain/classification.py</code> — land cover, soil type, trafficability, concealment vs cover</li>
+<li><code>terrain/los.py</code> — line-of-sight and line-of-fire computation (terrain + structures)</li>
+<li><code>terrain/strategic_map.py</code> — graph-based strategic terrain (nodes + edges, including maritime routes)</li>
+</ul>
+<h3 id="1b-extended-terrain-layers">1b: Extended Terrain Layers<a class="headerlink" href="#1b-extended-terrain-layers" title="Permanent link">&para;</a></h3>
+<ul>
+<li><code>terrain/hydrography.py</code> — rivers (depth, current, ford points), lakes, flooding, watersheds</li>
+<li><code>terrain/infrastructure.py</code> — roads, bridges, rail, buildings, utilities, tunnels, airfields</li>
+<li><code>terrain/obstacles.py</code> — natural (ravines, cliffs) and man-made (minefields, barriers, wire, ditches, fortifications)</li>
+<li><code>terrain/population.py</code> — civilian population density, disposition (friendly/neutral/hostile)</li>
+<li><code>terrain/bathymetry.py</code> — ocean/sea floor depth, bottom type, navigation hazards (reefs/shoals)</li>
+<li><code>terrain/maritime_geography.py</code> — coastline, ports, straits, chokepoints, sea lanes, anchorages</li>
+</ul>
+<h3 id="1c-environment-foundation">1c: Environment Foundation<a class="headerlink" href="#1c-environment-foundation" title="Permanent link">&para;</a></h3>
+<ul>
+<li><code>environment/astronomy.py</code> — solar/lunar position, rise/set, twilight, phase, tidal forcing (Meeus algorithms)</li>
+<li><code>environment/time_of_day.py</code> — illumination model (sun + moon + cloud + artificial), thermal crossover, NVG effectiveness, shadow modeling</li>
+<li><code>environment/weather.py</code> — weather state and stochastic transitions (precip, wind, temp, cloud, humidity, pressure), conditioned on climate zone/geography/season</li>
+<li><code>environment/seasons.py</code> — ground state (frozen/mud/dry), vegetation cycle, snow cover, sea ice, wildfire risk</li>
+<li><code>environment/obscurants.py</code> — smoke, dust, fog (radiation/advection/sea), multi-spectral blocking properties, drift</li>
+<li><code>environment/sea_state.py</code> — wave height/period, tidal model (astronomical + local harmonics), tidal currents, storm surge, SST, ocean currents</li>
+<li><code>environment/underwater_acoustics.py</code> — sound velocity profile, thermoclines, convergence zones, bottom bounce, ambient noise</li>
+<li><code>environment/electromagnetic.py</code> — RF propagation (HF sky wave, VHF LOS, radar ducting, evaporation ducts), ionospheric conditions, GPS accuracy</li>
+<li><code>environment/conditions.py</code> — unified condition queries compositing all modifiers for land, air, and maritime consumers</li>
+</ul>
+<h3 id="1d-remaining-coordinate-utilities">1d: Remaining Coordinate Utilities<a class="headerlink" href="#1d-remaining-coordinate-utilities" title="Permanent link">&para;</a></h3>
+<ul>
+<li><code>coordinates/magnetic.py</code> — magnetic declination (WMM), true ↔ magnetic bearing conversion</li>
+</ul>
+<p><strong>Visualization</strong>: elevation heatmaps, LOS plots, weather state, illumination timeline, tidal curves</p>
+<p><strong>Exit Criteria</strong>: Can load terrain (elevation + classification + infrastructure + hydrography + bathymetry), compute LOS between two points, calculate movement costs. Environment initializes from scenario date/time/location: astronomical positions correct, weather evolves stochastically, illumination model produces day/night/twilight cycle, tidal model produces realistic curves, conditions module composites modifiers for all consumers. Multi-scale terrain representations interoperable. All reproducible from seed.</p>
+<hr />
+<h2 id="phase-2-entities-organization-movement">Phase 2: Entities, Organization &amp; Movement ✅<a class="headerlink" href="#phase-2-entities-organization-movement" title="Permanent link">&para;</a></h2>
+<p><strong>Goal</strong>: Define what simulation entities ARE, how they're organized, and how they move.</p>
+<h3 id="2a-entity-system">2a: Entity System<a class="headerlink" href="#2a-entity-system" title="Permanent link">&para;</a></h3>
+<ul>
+<li><code>entities/events.py</code> — entity lifecycle events (creation, destruction, status changes)</li>
+<li><code>entities/personnel.py</code> — crew/individual modeling: roles, skills, experience, casualties</li>
+<li><code>entities/equipment.py</code> — equipment state: degradation, maintenance, breakdown probability, environmental hardening</li>
+<li><code>entities/unit_classes/ground.py</code> — armor, infantry, mechanized, artillery</li>
+<li><code>entities/unit_classes/aerial.py</code> — fixed-wing and rotary-wing (including UAV/drone subtypes with data link dependency)</li>
+<li><code>entities/unit_classes/air_defense.py</code> — SAM, AAA, MANPADS, radar (land and shipborne)</li>
+<li><code>entities/unit_classes/naval.py</code> — surface combatants, submarines, amphibious, mine warfare, auxiliary</li>
+<li><code>entities/unit_classes/support.py</code> — logistics vehicles, HQ, engineers, comms, medical</li>
+<li><code>entities/loader.py</code> — YAML → pydantic → unit instance factory</li>
+<li><code>entities/capabilities.py</code> — combat power assessment: weighted factors, force ratios, readiness</li>
+</ul>
+<h3 id="2b-organization">2b: Organization<a class="headerlink" href="#2b-organization" title="Permanent link">&para;</a></h3>
+<ul>
+<li><code>entities/organization/events.py</code> — organization events (attach, detach, task org changes)</li>
+<li><code>entities/organization/hierarchy.py</code> — configurable echelon hierarchy (nation/era-agnostic)</li>
+<li><code>entities/organization/echelons.py</code> — echelon type definitions (fire team through theater)</li>
+<li><code>entities/organization/task_org.py</code> — dynamic task organization: attach/detach, OPCON/TACON</li>
+<li><code>entities/organization/staff.py</code> — staff functions (S1-S6) as capabilities affecting C2</li>
+<li><code>entities/organization/orbat.py</code> — order of battle loading, TO&amp;E definitions</li>
+<li><code>entities/organization/special_org.py</code> — SOF, irregular/insurgent (cell/network), coalition/joint</li>
+</ul>
+<h3 id="2c-movement">2c: Movement<a class="headerlink" href="#2c-movement" title="Permanent link">&para;</a></h3>
+<ul>
+<li><code>movement/events.py</code> — movement events (waypoint reached, formation change, mount/dismount)</li>
+<li><code>movement/engine.py</code> — movement execution (terrain speed, stochastic deviation, load effects)</li>
+<li><code>movement/pathfinding.py</code> — A* route planning (terrain, obstacle, threat-aware)</li>
+<li><code>movement/fatigue.py</code> — fatigue/sleep deprivation accumulation, recovery</li>
+<li><code>movement/formation.py</code> — formation movement, spacing, coherence</li>
+<li><code>movement/obstacles.py</code> — obstacle interaction: breaching, bridging, clearing, bypassing</li>
+<li><code>movement/mount_dismount.py</code> — mounted/dismounted transitions, embark/debark</li>
+<li><code>movement/naval_movement.py</code> — ship speed-fuel curves, formation steaming, turning circles, draft constraints</li>
+<li><code>movement/submarine_movement.py</code> — depth management, speed-noise tradeoff, snorkel, periscope depth</li>
+<li><code>movement/amphibious_movement.py</code> — ship-to-shore movement, beach approach, landing craft</li>
+<li><code>movement/airborne.py</code> — parachute drop, helicopter insertion, DZ/LZ selection, assembly</li>
+</ul>
+<p><strong>Visualization</strong>: unit positions on terrain, movement paths, formation display, organizational hierarchy tree</p>
+<p><strong>Exit Criteria</strong>: Can load unit definitions from YAML, create organizational hierarchies with task organization, place units on terrain, and execute movement across all domains (ground, aerial, naval, submarine, amphibious, airborne). Movement respects terrain, weather, fatigue, formation, and obstacles. Pathfinding avoids threats and minimizes cost. Equipment degrades with use. Personnel have skills and roles. All state serializable and reproducible from seed.</p>
+<hr />
+<h2 id="phase-3-detection-intelligence">Phase 3: Detection &amp; Intelligence ✅<a class="headerlink" href="#phase-3-detection-intelligence" title="Permanent link">&para;</a></h2>
+<p><strong>Goal</strong>: Units become aware of each other through realistic sensor models across all domains.</p>
+<ul>
+<li><code>detection/events.py</code> — detection events (new contact, track update, track lost, identification)</li>
+<li><code>detection/sensors.py</code> — sensor models: visual, thermal, radar, acoustic, seismic, sonar (parameterized via YAML)</li>
+<li><code>detection/signatures.py</code> — unit signature profiles: visual, thermal, RCS, acoustic, EM emission</li>
+<li><code>detection/detection.py</code> — SNR-based detection probability engine (Pd, Pfa, ROC curves)</li>
+<li><code>detection/identification.py</code> — detection → classification → identification pipeline, confidence levels</li>
+<li><code>detection/estimation.py</code> — Kalman/particle filter state estimation (per-side belief state)</li>
+<li><code>detection/intel_fusion.py</code> — multi-source fusion (SIGINT, HUMINT, IMINT, sensor data), satellite overflight schedules</li>
+<li><code>detection/deception.py</code> — decoys, feints, false signals, camouflage effectiveness</li>
+<li><code>detection/sonar.py</code> — active/passive sonar, towed array, hull-mounted, sonobuoy, dipping sonar</li>
+<li><code>detection/underwater_detection.py</code> — submarine detection: acoustic propagation, MAD, wake detection, periscope detection</li>
+<li><code>detection/fog_of_war.py</code> — per-side world view manager (land, air, and maritime)</li>
+</ul>
+<p><strong>Visualization</strong>: detection probability maps, belief state vs ground truth overlay, sensor coverage, sonar propagation</p>
+<p><strong>Exit Criteria</strong>: Units detect each other probabilistically based on range, terrain, sensor type, signature, and environmental conditions (weather, illumination, thermal contrast, acoustic propagation, radar ducting). Detection → classification → identification pipeline produces confidence levels. Each side maintains a noisy, decaying belief state via Kalman filtering. Multi-source intel fusion combines sensor data with SIGINT/HUMINT/IMINT. Deception degrades enemy belief accuracy. Sonar models produce realistic submarine detection in varying acoustic environments. All reproducible from seed.</p>
+<hr />
+<h2 id="phase-4-combat-resolution">Phase 4: Combat Resolution ✅<a class="headerlink" href="#phase-4-combat-resolution" title="Permanent link">&para;</a></h2>
+<p><strong>Goal</strong>: Units engage and the simulation resolves outcomes across all combat domains.</p>
+<h3 id="4a-direct-fire-fundamentals">4a: Direct Fire &amp; Fundamentals<a class="headerlink" href="#4a-direct-fire-fundamentals" title="Permanent link">&para;</a></h3>
+<ul>
+<li><code>combat/events.py</code> — combat events (engagement, hit, damage, suppression, fratricide)</li>
+<li><code>combat/engagement.py</code> — engagement sequencing, target selection, range determination</li>
+<li><code>combat/ballistics.py</code> — projectile physics: trajectory, drag, wind, Coriolis (long range)</li>
+<li><code>combat/hit_probability.py</code> — P(hit): range, weapon, skill, target motion, conditions</li>
+<li><code>combat/damage.py</code> — terminal effects: lethality, armor penetration, behind-armor effects</li>
+<li><code>combat/suppression.py</code> — fire volume → suppression state</li>
+<li><code>combat/ammunition.py</code> — ammo types, consumption, selection (missiles individually tracked)</li>
+<li><code>combat/fratricide.py</code> — IFF uncertainty, deconfliction, identification errors</li>
+</ul>
+<h3 id="4b-indirect-fire-deep-fires">4b: Indirect Fire &amp; Deep Fires<a class="headerlink" href="#4b-indirect-fire-deep-fires" title="Permanent link">&para;</a></h3>
+<ul>
+<li><code>combat/indirect_fire.py</code> — tube artillery (fire missions, counterbattery, ammo selection) AND rocket artillery (MLRS dispersal, pod-based ammo, GMLRS precision, shoot-and-scoot)</li>
+</ul>
+<h3 id="4c-surface-to-surface-missiles">4c: Surface-to-Surface Missiles<a class="headerlink" href="#4c-surface-to-surface-missiles" title="Permanent link">&para;</a></h3>
+<ul>
+<li><code>combat/missiles.py</code> — TBMs, land-attack cruise missiles, coastal defense SSMs, kill chain modeling, missile logistics</li>
+</ul>
+<h3 id="4d-air-combat-air-defense-missile-defense">4d: Air Combat, Air Defense &amp; Missile Defense<a class="headerlink" href="#4d-air-combat-air-defense-missile-defense" title="Permanent link">&para;</a></h3>
+<ul>
+<li><code>combat/air_combat.py</code> — air-to-air BVR and WVR, missile Pk, countermeasures</li>
+<li><code>combat/air_ground.py</code> — CAS, SEAD/DEAD, air interdiction</li>
+<li><code>combat/air_defense.py</code> — SAM/AAA envelopes (3D), shoot-look-shoot, EMCON, IAMD shared mechanics</li>
+<li><code>combat/missile_defense.py</code> — BMD (Patriot/THAAD/Aegis), cruise missile defense, C-RAM (Iron Dome/Phalanx)</li>
+</ul>
+<h3 id="4e-naval-combat">4e: Naval Combat<a class="headerlink" href="#4e-naval-combat" title="Permanent link">&para;</a></h3>
+<ul>
+<li><code>combat/naval_surface.py</code> — anti-ship missile (salvo model), naval gunfire, torpedo, point defense, chaff, ship damage/DC</li>
+<li><code>combat/naval_subsurface.py</code> — torpedo engagements, submarine-launched missiles, evasion</li>
+<li><code>combat/naval_mine.py</code> — mine types, laying, sweeping, hunting, risk-based transit</li>
+<li><code>combat/naval_gunfire_support.py</code> — shore bombardment, fire support coordination</li>
+<li><code>combat/amphibious_assault.py</code> — beach assault resolution, shore defenses</li>
+<li><code>combat/carrier_ops.py</code> — sortie generation, deck cycle, CAP management</li>
+</ul>
+<h3 id="4f-morale-human-factors">4f: Morale &amp; Human Factors<a class="headerlink" href="#4f-morale-human-factors" title="Permanent link">&para;</a></h3>
+<ul>
+<li><code>morale/events.py</code> — morale events (state transition, rout, surrender, rally)</li>
+<li><code>morale/state.py</code> — Markov state machine (steady/shaken/broken/routed/surrendered)</li>
+<li><code>morale/cohesion.py</code> — unit cohesion, nearby friendlies, leadership, unit history</li>
+<li><code>morale/stress.py</code> — stress/fatigue/sleep deprivation (random walk with drift)</li>
+<li><code>morale/experience.py</code> — training level, combat experience learning curve</li>
+<li><code>morale/psychology.py</code> — PSYOP effects, propaganda, surrender inducement, civilian reaction</li>
+<li><code>morale/rout.py</code> — rout, rally, surrender mechanics, POW generation</li>
+</ul>
+<p><strong>Visualization</strong>: engagement outcomes, suppression zones, morale heatmaps, artillery impact areas, missile flight paths, air defense coverage, naval engagement tracks</p>
+<p><strong>Exit Criteria</strong>: Forces can engage across all domains — direct fire, indirect fire (tube and rocket artillery), surface-to-surface missiles (TBM, cruise, coastal defense), air-to-air, air-to-ground, air defense, missile defense (BMD + C-RAM), and naval (surface, subsurface, mine, amphibious, carrier ops). Ballistic physics model produces realistic trajectories. Kill chain timing constrains missile responsiveness. Suppression and morale resolve stochastically with Markov transitions. Fratricide occurs when identification confidence is low. Ammo (including missiles) consumed by type. Combined arms matter. All reproducible from seed.</p>
+<hr />
+<h2 id="phase-5-c2-infrastructure">Phase 5: C2 Infrastructure ✅<a class="headerlink" href="#phase-5-c2-infrastructure" title="Permanent link">&para;</a></h2>
+<p><strong>Goal</strong>: Orders flow through a chain of command with realistic delays, degradation, and constraints. The plumbing — not the brains.</p>
+<p><strong>Rationale for split</strong>: The original Phase 5 had 27 modules (larger than Phase 4's 25). Phase 4 showed that &gt;20 modules per phase creates API mismatch risk when parallelizing. AI decision-making (now Phase 8) also benefits from seeing logistics state (Phase 6), so deferring AI until after logistics gives it richer inputs.</p>
+<h3 id="5a-command-authority-communications">5a: Command Authority &amp; Communications<a class="headerlink" href="#5a-command-authority-communications" title="Permanent link">&para;</a></h3>
+<ul>
+<li><code>c2/events.py</code> — C2 events (order issued, comms failure, authority change, succession)</li>
+<li><code>c2/command.py</code> — command authority, relationships (OPCON/TACON/ADCON/support), succession</li>
+<li><code>c2/communications.py</code> — comms reliability, bandwidth, degradation, EMCON, means (radio/wire/messenger/data link)</li>
+<li><code>c2/naval_c2.py</code> — fleet organization (TF/TG/TU), naval data links, submarine comms (VLF/ELF)</li>
+</ul>
+<h3 id="5b-orders-system">5b: Orders System<a class="headerlink" href="#5b-orders-system" title="Permanent link">&para;</a></h3>
+<ul>
+<li><code>c2/orders/types.py</code> — order type hierarchy: OPORD, FRAGO, WARNO</li>
+<li><code>c2/orders/individual.py</code> — individual/fire team orders: move to, engage, take cover, suppress, breach</li>
+<li><code>c2/orders/tactical.py</code> — squad through battalion: assault, defend, ambush, patrol, recon</li>
+<li><code>c2/orders/operational.py</code> — brigade through corps: main effort, reserve commit, deep ops</li>
+<li><code>c2/orders/strategic.py</code> — theater/campaign: force allocation, strategic objectives, political constraints</li>
+<li><code>c2/orders/naval_orders.py</code> — formation orders, ASW prosecution, strike assignment, convoy routing, blockade</li>
+<li><code>c2/orders/air_orders.py</code> — ATO, ACO, SPINS, strike packages, CAS integration, CAP assignments</li>
+<li><code>c2/orders/propagation.py</code> — order transmission: delays, degradation, misinterpretation probability</li>
+<li><code>c2/orders/execution.py</code> — order execution tracking: compliance, adaptation, deviation reporting</li>
+</ul>
+<h3 id="5c-roe-coordination-mission-command">5c: ROE, Coordination &amp; Mission Command<a class="headerlink" href="#5c-roe-coordination-mission-command" title="Permanent link">&para;</a></h3>
+<ul>
+<li><code>c2/roe.py</code> — rules of engagement, escalation, political constraints, law of armed conflict</li>
+<li><code>c2/coordination.py</code> — fire support coordination (FSCL/CFL/NFA/RFA, HPTL/AGM, missile flight corridors), airspace deconfliction, boundaries</li>
+<li><code>c2/mission_command.py</code> — commander's intent, mission-type orders, subordinate initiative/adaptation</li>
+</ul>
+<p><strong>Visualization</strong>: command hierarchy tree, order propagation timeline, C2 link status</p>
+<p><strong>Exit Criteria</strong>: Orders propagate through chain of command at all echelons (individual through strategic, plus naval and air) with realistic delays and degradation. Communication means have distinct reliability/speed/intercept profiles. ROE constrains engagements. Fire support and airspace coordination function. C2 disruption (HQ destruction) degrades unit effectiveness with succession mechanics. All reproducible from seed.</p>
+<hr />
+<h2 id="phase-6-logistics-supply">Phase 6: Logistics &amp; Supply ✅<a class="headerlink" href="#phase-6-logistics-supply" title="Permanent link">&para;</a></h2>
+<p><strong>Goal</strong>: Sustaining the force — armies need beans, bullets, fuel, and maintenance.</p>
+<h3 id="6a-supply-network-consumption">6a: Supply Network &amp; Consumption<a class="headerlink" href="#6a-supply-network-consumption" title="Permanent link">&para;</a></h3>
+<ul>
+<li><code>logistics/events.py</code> — logistics events (supply, transport, maintenance, engineering, medical, POW, naval, disruption)</li>
+<li><code>logistics/supply_network.py</code> — supply chain graph (networkx), leverages terrain infrastructure</li>
+<li><code>logistics/supply_classes.py</code> — military supply classification (Class I-X), ammo types, fuel types</li>
+<li><code>logistics/consumption.py</code> — per-unit consumption models (ammo by type, fuel by activity, environmentally variable)</li>
+</ul>
+<h3 id="6b-transport-stockpiles">6b: Transport &amp; Stockpiles<a class="headerlink" href="#6b-transport-stockpiles" title="Permanent link">&para;</a></h3>
+<ul>
+<li><code>logistics/transport.py</code> — truck convoys, airlift, aerial resupply/airdrop, rail</li>
+<li><code>logistics/stockpile.py</code> — depot and stockpile management, captured supplies/equipment</li>
+</ul>
+<h3 id="6c-maintenance-engineering-medical">6c: Maintenance, Engineering &amp; Medical<a class="headerlink" href="#6c-maintenance-engineering-medical" title="Permanent link">&para;</a></h3>
+<ul>
+<li><code>logistics/maintenance.py</code> — equipment maintenance cycles, repair, breakdown probability, spare parts</li>
+<li><code>logistics/engineering.py</code> — bridging, road building, fortification, obstacle emplacement/clearing</li>
+<li><code>logistics/medical.py</code> — casualty evacuation chain, triage queueing, treatment, return-to-duty</li>
+<li><code>logistics/prisoners.py</code> — POW handling, processing, resource cost</li>
+</ul>
+<h3 id="6d-naval-logistics">6d: Naval Logistics<a class="headerlink" href="#6d-naval-logistics" title="Permanent link">&para;</a></h3>
+<ul>
+<li><code>logistics/naval_logistics.py</code> — UNREP/RAS, port operations, sealift, LOTS</li>
+<li><code>logistics/naval_basing.py</code> — naval bases, FOBs, anchorage, port capacity/throughput</li>
+</ul>
+<h3 id="6e-disruption-special-topics">6e: Disruption &amp; Special Topics<a class="headerlink" href="#6e-disruption-special-topics" title="Permanent link">&para;</a></h3>
+<ul>
+<li><code>logistics/disruption.py</code> — interdiction, route destruction, sabotage, blockade, seasonal route degradation</li>
+<li>Missile/guided munition logistics: TEL reload cycles, VLS non-reloadable at sea, interceptor inventory sustainability (tracked via supply_classes + consumption)</li>
+</ul>
+<p><strong>Visualization</strong>: supply network graph, stockpile levels, flow rates, bottleneck identification, route status, naval logistics overlay</p>
+<p><strong>Exit Criteria</strong>: Units consume supplies by class (ammo by type, fuel, food/water, medical, spare parts) with environmentally variable rates. Supply flows through a network from depots to front-line units via transport modes (truck, air, rail, sea). Route throughput depends on terrain infrastructure and seasonal conditions. Equipment requires maintenance; deferred maintenance increases breakdown probability. Engineering units build/repair infrastructure and emplace/clear obstacles. Medical system evacuates and treats casualties. Naval logistics (UNREP, port ops, sealift) sustain fleet operations. Interdiction disrupts supply. Units degrade when supplies run out. All reproducible from seed.</p>
+<hr />
+<h2 id="phase-7-engagement-validation">Phase 7: Engagement Validation ✅<a class="headerlink" href="#phase-7-engagement-validation" title="Permanent link">&para;</a></h2>
+<p><strong>Goal</strong>: Prove the combat model produces realistic results BEFORE building AI on top of it. Early validation catches calibration issues while fixes are cheap.</p>
+<p><strong>Rationale</strong>: With Phases 0-6 complete, we have terrain, weather, entities, movement, detection, combat, morale, C2 plumbing, and logistics — everything needed to run realistic engagement-level scenarios without AI commanders. Validating now means the AI (Phase 8) is built on a proven combat foundation.</p>
+<h3 id="7a-validation-infrastructure">7a: Validation Infrastructure<a class="headerlink" href="#7a-validation-infrastructure" title="Permanent link">&para;</a></h3>
+<ul>
+<li><code>validation/scenario_runner.py</code> — lightweight runner: loads terrain + forces + objectives, wires modules, executes time steps</li>
+<li><code>validation/monte_carlo.py</code> — Monte Carlo harness: run N iterations with different seeds, collect statistics</li>
+<li><code>validation/metrics.py</code> — engagement-level metrics: casualty exchange ratios, duration, ammunition expenditure, territorial outcomes</li>
+<li><code>validation/historical_data.py</code> — structured historical data loader (JSON/YAML format for engagement parameters)</li>
+</ul>
+<h3 id="7b-engagement-scenario-packs">7b: Engagement Scenario Packs<a class="headerlink" href="#7b-engagement-scenario-packs" title="Permanent link">&para;</a></h3>
+<p>Build 2-3 scenario packs from well-documented historical engagements:</p>
+<ol>
+<li><strong>73 Easting (1991)</strong> — US armor vs Iraqi armor in open desert. Tests: direct fire, hit probability at range, DeMarre penetration, crew quality asymmetry, morale collapse. Well-documented casualty ratios and engagement duration.</li>
+<li><strong>Falklands — naval engagements (1982)</strong> — Exocet ASM vs Type 42 destroyers, Argentine air attacks on the task force. Tests: Wayne Hughes salvo model, air defense (Sea Dart/Sea Wolf), ship damage/DC, sortie generation. Well-documented ship losses and missile expenditure.</li>
+<li><strong>Golan Heights (1973)</strong> — Israeli defense against Syrian armor. Tests: defensive position advantage, combined arms (tanks + ATGMs + artillery), force ratio survivability, morale under pressure. Well-documented force ratios and casualty exchanges.</li>
+</ol>
+<h3 id="7c-calibration">7c: Calibration<a class="headerlink" href="#7c-calibration" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Compare Monte Carlo distributions against historical outcomes</li>
+<li>Identify parameters that need tuning (hit probability modifiers, damage scaling, morale transition rates)</li>
+<li>Document model deficiencies by domain with severity rating</li>
+<li>Adjust combat parameters to produce statistically plausible outcomes</li>
+</ul>
+<p><strong>Visualization</strong>: Monte Carlo outcome distributions, casualty ratio histograms, engagement timeline comparisons, parameter sensitivity plots</p>
+<p><strong>Exit Criteria</strong>: All 2-3 engagement scenarios produce casualty exchange ratios within 2x of historical outcomes across 1000-run Monte Carlo. Major model deficiencies documented with severity. Combat parameter calibration applied. Validation infrastructure reusable for Phase 10.</p>
+<p><strong>Post-completion performance work</strong>: Vectorized LOS raycasting (<code>los.py</code> + <code>heightmap.py</code> batch methods), vectorized nearest-enemy distance (<code>scenario_runner.py</code>), O(1) fog_of_war contact lookup, pathfinding cell cost cache + closed set, pre-sorted weapons. Created <code>tests/conftest.py</code> with shared fixtures for Phase 8+. Created <code>/simplify</code> and <code>/profile</code> skills. Validation tests 86s → 57s (34% faster). See <code>docs/devlog/phase-7.md</code> Post-Phase Post-Mortem.</p>
+<hr />
+<h2 id="phase-8-ai-planning">Phase 8: AI &amp; Planning ✅<a class="headerlink" href="#phase-8-ai-planning" title="Permanent link">&para;</a></h2>
+<p><strong>Goal</strong>: AI commanders make echelon-appropriate decisions informed by doctrine and personality. The brains.</p>
+<p><strong>Rationale for position</strong>: AI decision-making is the most conceptually complex phase. By this point, the AI has access to: combat state (Phase 4), detection/intel (Phase 3), morale state (Phase 4), C2 plumbing (Phase 5), logistics state (Phase 6), AND validated combat parameters (Phase 7). Building AI last among the domain modules ensures it reasons about real, calibrated data rather than untested approximations.</p>
+<h3 id="8a-ai-decision-making">8a: AI Decision-Making<a class="headerlink" href="#8a-ai-decision-making" title="Permanent link">&para;</a></h3>
+<ul>
+<li><code>c2/ai/ooda.py</code> — OODA loop implementation (observe-orient-decide-act cycle with time costs)</li>
+<li><code>c2/ai/commander.py</code> — commander personality model: risk tolerance, aggression, initiative, experience</li>
+<li><code>c2/ai/assessment.py</code> — situation assessment: combat power, terrain, supply, morale, intel, environment</li>
+<li><code>c2/ai/decisions.py</code> — echelon-appropriate decision logic (individual through strategic)</li>
+<li><code>c2/ai/adaptation.py</code> — reacting to changed situations, plan adjustment, opportunity exploitation</li>
+<li><code>c2/ai/doctrine.py</code> — doctrinal templates per nation/era (offensive, defensive, retrograde, stability, enabling)</li>
+<li><code>c2/ai/stratagems.py</code> — deception plans, economy of force, concentration, surprise, tempo control</li>
+</ul>
+<h3 id="8b-planning-process">8b: Planning Process<a class="headerlink" href="#8b-planning-process" title="Permanent link">&para;</a></h3>
+<ul>
+<li><code>c2/planning/process.py</code> — configurable planning (MDMP, rapid planning, intuitive decision)</li>
+<li><code>c2/planning/mission_analysis.py</code> — specified/implied tasks, constraints, risk assessment</li>
+<li><code>c2/planning/coa.py</code> — COA development, analysis (wargaming), comparison, selection</li>
+<li><code>c2/planning/estimates.py</code> — running estimates: personnel, intel, operations, logistics, comms</li>
+<li><code>c2/planning/phases.py</code> — operation phasing: shaping, decisive, exploitation, transition</li>
+</ul>
+<p><strong>Note on scope</strong>: <code>c2/ai/doctrine.py</code> and <code>c2/ai/commander.py</code> provide the <em>framework</em> for doctrinal and personality-driven AI. Named doctrinal schools (Clausewitzian AI, Sun Tzu AI, etc.) as described in brainstorm.md are deferred to Future Phases — they build ON TOP of this framework.</p>
+<p><strong>Visualization</strong>: OODA cycle timing, situation assessment overlay, COA comparison matrix, planning process flow</p>
+<p><strong>Performance tasks (deferred from Phase 7 post-mortem)</strong>:
+- <del>Cache <code>SensorInstance.sensor_type</code> in <code>__init__</code></del> <em>(completed in Phase 7 Pass 3)</em>
+- <del>Promote <code>math.sqrt(2.0)</code> to module-level <code>_SQRT_2</code></del> <em>(completed in Phase 7 Pass 3)</em>
+- <del>Pre-allocate Kalman H/I₄ matrices</del> <em>(completed in Phase 7 Pass 3; dt-dependent F/Q still deferred)</em>
+- <del>Compute morale transition matrix once per side per tick</del> <em>(completed in Phase 7 Pass 3)</em>
+- Add Shapely STRtree for static infrastructure spatial queries</p>
+<p><strong>Exit Criteria</strong>: AI commanders make echelon-appropriate decisions via OODA cycle, informed by doctrine templates and personality. Planning process produces COAs from mission analysis with wargaming. Commanders adapt to changing situations. Situation assessment integrates combat, logistics, intel, morale, and terrain. All reproducible from seed.</p>
+<hr />
+<h2 id="phase-9-simulation-orchestration-integration">Phase 9: Simulation Orchestration &amp; Integration ✅<a class="headerlink" href="#phase-9-simulation-orchestration-integration" title="Permanent link">&para;</a></h2>
+<p><strong>Goal</strong>: All systems work together. The master simulation loop ties everything into coherent multi-scale campaigns.</p>
+<ul>
+<li><code>simulation/engine.py</code> — master simulation loop (hybrid tick + event), tick sequencing (environment first, then domain modules)</li>
+<li><code>simulation/campaign.py</code> — campaign-level management, strategic AI, reinforcement pipeline</li>
+<li><code>simulation/battle.py</code> — tactical battle resolution manager</li>
+<li><code>simulation/scenario.py</code> — scenario loading, setup, initialization (terrain + forces + objectives + environment)</li>
+<li><code>simulation/victory.py</code> — victory conditions, war termination criteria, objective evaluation</li>
+<li><code>simulation/recorder.py</code> — event/state recording for replay and analysis</li>
+<li><code>simulation/metrics.py</code> — simulation output metrics, statistical aggregation, analysis hooks</li>
+</ul>
+<p><strong>Also delivered</strong>: tick resolution switching (STRATEGIC 3600s / OPERATIONAL 300s / TACTICAL 5s) via clock, full checkpoint/replay validation across all modules, per-tick LOS and pathfinding caches</p>
+<p><strong>Deferred from original scope</strong>: force aggregation/disaggregation (all units at individual resolution), multi-scale spatial transitions (strategic graph ↔ tactical grid ↔ unit continuous — resolution switching is temporal only), complete env→combat wiring for remaining domains (partial from Phase 4)</p>
+<p><strong>Performance tasks (deferred from Phase 7 post-mortem)</strong>:
+- <del>Add LOS result caching (per-tick cache keyed on observer/target grid cells)</del> <em>(completed)</em>
+- Vectorize <code>visible_area</code> viewshed (horizon-angle sweep or van Kreveld's algorithm) — deferred, lower priority
+- <del>Add pathfinding closed set (already done) + threat cost grid pre-computation</del> <em>(completed)</em>
+- Profile full campaign loop and optimize based on cProfile results — deferred to Phase 10</p>
+<p><strong>Visualization</strong>: comprehensive multi-scale display, campaign overview, drill-down to tactical engagements</p>
+<p><strong>Exit Criteria</strong>: Can define and run a complete multi-day campaign scenario with: full tactical resolution of all engagements, logistics flowing, intel updating, C2 functioning with AI commanders, environment evolving, and all domain modules interacting correctly. Victory conditions evaluate. Campaign-level AI makes strategic decisions. Scenario can be checkpointed, restored, and replayed identically from seed. Recorder captures full event history. Metrics provide statistical summaries.</p>
+<hr />
+<h2 id="phase-10-full-campaign-validation-backtesting">Phase 10: Full Campaign Validation &amp; Backtesting ✅<a class="headerlink" href="#phase-10-full-campaign-validation-backtesting" title="Permanent link">&para;</a></h2>
+<p><strong>Goal</strong>: Prove the complete simulation produces realistic campaign-level results.</p>
+<p>Building on Phase 7's engagement-level validation infrastructure and Phase 9's simulation engine:</p>
+<p>5 new source modules + 2 modified + 2 campaign YAML scenarios + 9 test files (196 tests):
+- <strong>Campaign Data</strong> (1 module): <code>campaign_data.py</code> — <code>HistoricalCampaign</code> model, <code>AIExpectation</code>, <code>CampaignDataLoader</code>
+- <strong>Campaign Runner</strong> (1 module): <code>campaign_runner.py</code> — wraps <code>ScenarioLoader</code> + <code>SimulationEngine</code>
+- <strong>Campaign Metrics</strong> (1 module): <code>campaign_metrics.py</code> — campaign-level metric extraction
+- <strong>AI Validation</strong> (1 module): <code>ai_validation.py</code> — AI decision quality analysis from recorder events
+- <strong>Performance</strong> (1 module): <code>performance.py</code> — cProfile + tracemalloc campaign profiling
+- <strong>Monte Carlo</strong> (modified): <code>monte_carlo.py</code> + <code>CampaignMonteCarloHarness</code>
+- <strong>Scenarios</strong> (2 YAML): Golan Heights 4-day campaign, Falklands San Carlos 5-day campaign</p>
+<p><strong>Exit Criteria</strong>: ✅ Simulation produces statistically plausible outcomes for 2 historical scenarios at campaign scale across domains (land: Golan Heights, naval: Falklands). AI commanders make contextually appropriate decisions validated via recorder events. Model deficiencies documented with severity in devlog. Performance acceptable for campaign-length runs (profiler integrated).</p>
+<hr />
+<h2 id="future-phases-post-mvp">Future Phases (Post-MVP)<a class="headerlink" href="#future-phases-post-mvp" title="Permanent link">&para;</a></h2>
+<p><strong>See <code>development-phases-post-mvp.md</code></strong> for the full phased roadmap (Phases 11–24) and <strong><code>brainstorm-post-mvp.md</code></strong> for design thinking.</p>
+<p>Summary of post-MVP scope:
+- <strong>Phases 11–12</strong>: Deficit remediation (fire rate limiting, fuel gating, multi-hop C2, multi-echelon logistics, combat depth)
+- <strong>Phase 13</strong>: Performance optimization (STRtree, Numba JIT, force aggregation, auto-resolve)
+- <strong>Phase 14</strong>: Tooling &amp; developer experience (MCP server, analysis tools, visualization, new Claude skills)
+- <strong>Phase 15</strong>: Real-world terrain &amp; data pipeline (SRTM, OSM, GEBCO via rasterio/xarray)
+- <strong>Phase 16</strong>: Electronic warfare (jamming, ECCM, SIGINT)
+- <strong>Phase 17</strong>: Space &amp; satellite domain (GPS dependency, ISR, SATCOM, ASAT)
+- <strong>Phase 18</strong>: NBC/CBRN effects (contamination, MOPP, dispersal, nuclear)
+- <strong>Phase 19</strong>: Doctrinal AI schools (Clausewitzian, Sun Tzu, Maneuverist, Attrition, Deep Battle, Maritime)
+- <strong>Phases 20–23</strong>: Historical era expansion (WW2, WW1, Napoleonic, Ancient/Medieval)
+- <strong>Phase 24</strong>: Unconventional &amp; prohibited warfare (escalation dynamics, prohibited weapons, insurgency/COIN, war crimes consequences)</p>
+<p>Also planned but not yet phased:
+- Full UI (separate language/framework)
+- Cyber operations
+- Multi-player / networked simulation
+- Modding and scenario editor tools</p>
+<hr />
+<h2 id="module-to-phase-index">Module-to-Phase Index<a class="headerlink" href="#module-to-phase-index" title="Permanent link">&para;</a></h2>
+<p>Every non-<code>__init__</code> module file from <code>project-structure.md</code> and its phase assignment:</p>
+<table>
+<thead>
+<tr>
+<th>Module</th>
+<th>Phase</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>core/types.py</code></td>
+<td>0</td>
+</tr>
+<tr>
+<td><code>core/logging.py</code></td>
+<td>0</td>
+</tr>
+<tr>
+<td><code>core/rng.py</code></td>
+<td>0</td>
+</tr>
+<tr>
+<td><code>core/clock.py</code></td>
+<td>0</td>
+</tr>
+<tr>
+<td><code>core/events.py</code></td>
+<td>0</td>
+</tr>
+<tr>
+<td><code>core/config.py</code></td>
+<td>0</td>
+</tr>
+<tr>
+<td><code>core/checkpoint.py</code></td>
+<td>0</td>
+</tr>
+<tr>
+<td><code>coordinates/transforms.py</code></td>
+<td>0</td>
+</tr>
+<tr>
+<td><code>coordinates/spatial.py</code></td>
+<td>0</td>
+</tr>
+<tr>
+<td><code>coordinates/magnetic.py</code></td>
+<td>1d</td>
+</tr>
+<tr>
+<td><code>terrain/heightmap.py</code></td>
+<td>1a</td>
+</tr>
+<tr>
+<td><code>terrain/classification.py</code></td>
+<td>1a</td>
+</tr>
+<tr>
+<td><code>terrain/los.py</code></td>
+<td>1a</td>
+</tr>
+<tr>
+<td><code>terrain/strategic_map.py</code></td>
+<td>1a</td>
+</tr>
+<tr>
+<td><code>terrain/hydrography.py</code></td>
+<td>1b</td>
+</tr>
+<tr>
+<td><code>terrain/infrastructure.py</code></td>
+<td>1b</td>
+</tr>
+<tr>
+<td><code>terrain/obstacles.py</code></td>
+<td>1b</td>
+</tr>
+<tr>
+<td><code>terrain/population.py</code></td>
+<td>1b</td>
+</tr>
+<tr>
+<td><code>terrain/bathymetry.py</code></td>
+<td>1b</td>
+</tr>
+<tr>
+<td><code>terrain/maritime_geography.py</code></td>
+<td>1b</td>
+</tr>
+<tr>
+<td><code>environment/astronomy.py</code></td>
+<td>1c</td>
+</tr>
+<tr>
+<td><code>environment/time_of_day.py</code></td>
+<td>1c</td>
+</tr>
+<tr>
+<td><code>environment/weather.py</code></td>
+<td>1c</td>
+</tr>
+<tr>
+<td><code>environment/seasons.py</code></td>
+<td>1c</td>
+</tr>
+<tr>
+<td><code>environment/obscurants.py</code></td>
+<td>1c</td>
+</tr>
+<tr>
+<td><code>environment/sea_state.py</code></td>
+<td>1c</td>
+</tr>
+<tr>
+<td><code>environment/underwater_acoustics.py</code></td>
+<td>1c</td>
+</tr>
+<tr>
+<td><code>environment/electromagnetic.py</code></td>
+<td>1c</td>
+</tr>
+<tr>
+<td><code>environment/conditions.py</code></td>
+<td>1c</td>
+</tr>
+<tr>
+<td><code>entities/base.py</code></td>
+<td>0 (stub), 2a (full)</td>
+</tr>
+<tr>
+<td><code>entities/events.py</code></td>
+<td>2a</td>
+</tr>
+<tr>
+<td><code>entities/personnel.py</code></td>
+<td>2a</td>
+</tr>
+<tr>
+<td><code>entities/equipment.py</code></td>
+<td>2a</td>
+</tr>
+<tr>
+<td><code>entities/unit_classes/ground.py</code></td>
+<td>2a</td>
+</tr>
+<tr>
+<td><code>entities/unit_classes/aerial.py</code></td>
+<td>2a</td>
+</tr>
+<tr>
+<td><code>entities/unit_classes/air_defense.py</code></td>
+<td>2a</td>
+</tr>
+<tr>
+<td><code>entities/unit_classes/naval.py</code></td>
+<td>2a</td>
+</tr>
+<tr>
+<td><code>entities/unit_classes/support.py</code></td>
+<td>2a</td>
+</tr>
+<tr>
+<td><code>entities/loader.py</code></td>
+<td>2a</td>
+</tr>
+<tr>
+<td><code>entities/capabilities.py</code></td>
+<td>2a</td>
+</tr>
+<tr>
+<td><code>entities/organization/hierarchy.py</code></td>
+<td>2b</td>
+</tr>
+<tr>
+<td><code>entities/organization/echelons.py</code></td>
+<td>2b</td>
+</tr>
+<tr>
+<td><code>entities/organization/task_org.py</code></td>
+<td>2b</td>
+</tr>
+<tr>
+<td><code>entities/organization/staff.py</code></td>
+<td>2b</td>
+</tr>
+<tr>
+<td><code>entities/organization/orbat.py</code></td>
+<td>2b</td>
+</tr>
+<tr>
+<td><code>entities/organization/special_org.py</code></td>
+<td>2b</td>
+</tr>
+<tr>
+<td><code>entities/organization/events.py</code></td>
+<td>2b</td>
+</tr>
+<tr>
+<td><code>movement/events.py</code></td>
+<td>2c</td>
+</tr>
+<tr>
+<td><code>movement/engine.py</code></td>
+<td>2c</td>
+</tr>
+<tr>
+<td><code>movement/pathfinding.py</code></td>
+<td>2c</td>
+</tr>
+<tr>
+<td><code>movement/fatigue.py</code></td>
+<td>2c</td>
+</tr>
+<tr>
+<td><code>movement/formation.py</code></td>
+<td>2c</td>
+</tr>
+<tr>
+<td><code>movement/obstacles.py</code></td>
+<td>2c</td>
+</tr>
+<tr>
+<td><code>movement/mount_dismount.py</code></td>
+<td>2c</td>
+</tr>
+<tr>
+<td><code>movement/naval_movement.py</code></td>
+<td>2c</td>
+</tr>
+<tr>
+<td><code>movement/submarine_movement.py</code></td>
+<td>2c</td>
+</tr>
+<tr>
+<td><code>movement/amphibious_movement.py</code></td>
+<td>2c</td>
+</tr>
+<tr>
+<td><code>movement/airborne.py</code></td>
+<td>2c</td>
+</tr>
+<tr>
+<td><code>detection/events.py</code></td>
+<td>3</td>
+</tr>
+<tr>
+<td><code>detection/sensors.py</code></td>
+<td>3</td>
+</tr>
+<tr>
+<td><code>detection/signatures.py</code></td>
+<td>3</td>
+</tr>
+<tr>
+<td><code>detection/detection.py</code></td>
+<td>3</td>
+</tr>
+<tr>
+<td><code>detection/identification.py</code></td>
+<td>3</td>
+</tr>
+<tr>
+<td><code>detection/estimation.py</code></td>
+<td>3</td>
+</tr>
+<tr>
+<td><code>detection/intel_fusion.py</code></td>
+<td>3</td>
+</tr>
+<tr>
+<td><code>detection/deception.py</code></td>
+<td>3</td>
+</tr>
+<tr>
+<td><code>detection/sonar.py</code></td>
+<td>3</td>
+</tr>
+<tr>
+<td><code>detection/underwater_detection.py</code></td>
+<td>3</td>
+</tr>
+<tr>
+<td><code>detection/fog_of_war.py</code></td>
+<td>3</td>
+</tr>
+<tr>
+<td><code>combat/events.py</code></td>
+<td>4a</td>
+</tr>
+<tr>
+<td><code>combat/engagement.py</code></td>
+<td>4a</td>
+</tr>
+<tr>
+<td><code>combat/ballistics.py</code></td>
+<td>4a</td>
+</tr>
+<tr>
+<td><code>combat/hit_probability.py</code></td>
+<td>4a</td>
+</tr>
+<tr>
+<td><code>combat/damage.py</code></td>
+<td>4a</td>
+</tr>
+<tr>
+<td><code>combat/suppression.py</code></td>
+<td>4a</td>
+</tr>
+<tr>
+<td><code>combat/ammunition.py</code></td>
+<td>4a</td>
+</tr>
+<tr>
+<td><code>combat/fratricide.py</code></td>
+<td>4a</td>
+</tr>
+<tr>
+<td><code>combat/indirect_fire.py</code></td>
+<td>4b</td>
+</tr>
+<tr>
+<td><code>combat/missiles.py</code></td>
+<td>4c</td>
+</tr>
+<tr>
+<td><code>combat/air_combat.py</code></td>
+<td>4d</td>
+</tr>
+<tr>
+<td><code>combat/air_ground.py</code></td>
+<td>4d</td>
+</tr>
+<tr>
+<td><code>combat/air_defense.py</code></td>
+<td>4d</td>
+</tr>
+<tr>
+<td><code>combat/missile_defense.py</code></td>
+<td>4d</td>
+</tr>
+<tr>
+<td><code>combat/naval_surface.py</code></td>
+<td>4e</td>
+</tr>
+<tr>
+<td><code>combat/naval_subsurface.py</code></td>
+<td>4e</td>
+</tr>
+<tr>
+<td><code>combat/naval_mine.py</code></td>
+<td>4e</td>
+</tr>
+<tr>
+<td><code>combat/naval_gunfire_support.py</code></td>
+<td>4e</td>
+</tr>
+<tr>
+<td><code>combat/amphibious_assault.py</code></td>
+<td>4e</td>
+</tr>
+<tr>
+<td><code>combat/carrier_ops.py</code></td>
+<td>4e</td>
+</tr>
+<tr>
+<td><code>morale/events.py</code></td>
+<td>4f</td>
+</tr>
+<tr>
+<td><code>morale/state.py</code></td>
+<td>4f</td>
+</tr>
+<tr>
+<td><code>morale/cohesion.py</code></td>
+<td>4f</td>
+</tr>
+<tr>
+<td><code>morale/stress.py</code></td>
+<td>4f</td>
+</tr>
+<tr>
+<td><code>morale/experience.py</code></td>
+<td>4f</td>
+</tr>
+<tr>
+<td><code>morale/psychology.py</code></td>
+<td>4f</td>
+</tr>
+<tr>
+<td><code>morale/rout.py</code></td>
+<td>4f</td>
+</tr>
+<tr>
+<td><code>c2/events.py</code></td>
+<td>5a</td>
+</tr>
+<tr>
+<td><code>c2/command.py</code></td>
+<td>5a</td>
+</tr>
+<tr>
+<td><code>c2/communications.py</code></td>
+<td>5a</td>
+</tr>
+<tr>
+<td><code>c2/naval_c2.py</code></td>
+<td>5a</td>
+</tr>
+<tr>
+<td><code>c2/orders/types.py</code></td>
+<td>5b</td>
+</tr>
+<tr>
+<td><code>c2/orders/individual.py</code></td>
+<td>5b</td>
+</tr>
+<tr>
+<td><code>c2/orders/tactical.py</code></td>
+<td>5b</td>
+</tr>
+<tr>
+<td><code>c2/orders/operational.py</code></td>
+<td>5b</td>
+</tr>
+<tr>
+<td><code>c2/orders/strategic.py</code></td>
+<td>5b</td>
+</tr>
+<tr>
+<td><code>c2/orders/naval_orders.py</code></td>
+<td>5b</td>
+</tr>
+<tr>
+<td><code>c2/orders/air_orders.py</code></td>
+<td>5b</td>
+</tr>
+<tr>
+<td><code>c2/orders/propagation.py</code></td>
+<td>5b</td>
+</tr>
+<tr>
+<td><code>c2/orders/execution.py</code></td>
+<td>5b</td>
+</tr>
+<tr>
+<td><code>c2/roe.py</code></td>
+<td>5c</td>
+</tr>
+<tr>
+<td><code>c2/coordination.py</code></td>
+<td>5c</td>
+</tr>
+<tr>
+<td><code>c2/mission_command.py</code></td>
+<td>5c</td>
+</tr>
+<tr>
+<td><code>logistics/events.py</code></td>
+<td>6a</td>
+</tr>
+<tr>
+<td><code>logistics/supply_network.py</code></td>
+<td>6a</td>
+</tr>
+<tr>
+<td><code>logistics/supply_classes.py</code></td>
+<td>6a</td>
+</tr>
+<tr>
+<td><code>logistics/consumption.py</code></td>
+<td>6a</td>
+</tr>
+<tr>
+<td><code>logistics/transport.py</code></td>
+<td>6b</td>
+</tr>
+<tr>
+<td><code>logistics/stockpile.py</code></td>
+<td>6b</td>
+</tr>
+<tr>
+<td><code>logistics/maintenance.py</code></td>
+<td>6c</td>
+</tr>
+<tr>
+<td><code>logistics/engineering.py</code></td>
+<td>6c</td>
+</tr>
+<tr>
+<td><code>logistics/medical.py</code></td>
+<td>6c</td>
+</tr>
+<tr>
+<td><code>logistics/prisoners.py</code></td>
+<td>6c</td>
+</tr>
+<tr>
+<td><code>logistics/naval_logistics.py</code></td>
+<td>6d</td>
+</tr>
+<tr>
+<td><code>logistics/naval_basing.py</code></td>
+<td>6d</td>
+</tr>
+<tr>
+<td><code>logistics/disruption.py</code></td>
+<td>6e</td>
+</tr>
+<tr>
+<td><code>validation/scenario_runner.py</code></td>
+<td>7a</td>
+</tr>
+<tr>
+<td><code>validation/monte_carlo.py</code></td>
+<td>7a</td>
+</tr>
+<tr>
+<td><code>validation/metrics.py</code></td>
+<td>7a</td>
+</tr>
+<tr>
+<td><code>validation/historical_data.py</code></td>
+<td>7a</td>
+</tr>
+<tr>
+<td><code>c2/ai/ooda.py</code></td>
+<td>8a</td>
+</tr>
+<tr>
+<td><code>c2/ai/commander.py</code></td>
+<td>8a</td>
+</tr>
+<tr>
+<td><code>c2/ai/assessment.py</code></td>
+<td>8a</td>
+</tr>
+<tr>
+<td><code>c2/ai/decisions.py</code></td>
+<td>8a</td>
+</tr>
+<tr>
+<td><code>c2/ai/adaptation.py</code></td>
+<td>8a</td>
+</tr>
+<tr>
+<td><code>c2/ai/doctrine.py</code></td>
+<td>8a</td>
+</tr>
+<tr>
+<td><code>c2/ai/stratagems.py</code></td>
+<td>8a</td>
+</tr>
+<tr>
+<td><code>c2/planning/process.py</code></td>
+<td>8b</td>
+</tr>
+<tr>
+<td><code>c2/planning/mission_analysis.py</code></td>
+<td>8b</td>
+</tr>
+<tr>
+<td><code>c2/planning/coa.py</code></td>
+<td>8b</td>
+</tr>
+<tr>
+<td><code>c2/planning/estimates.py</code></td>
+<td>8b</td>
+</tr>
+<tr>
+<td><code>c2/planning/phases.py</code></td>
+<td>8b</td>
+</tr>
+<tr>
+<td><code>simulation/engine.py</code></td>
+<td>9</td>
+</tr>
+<tr>
+<td><code>simulation/campaign.py</code></td>
+<td>9</td>
+</tr>
+<tr>
+<td><code>simulation/battle.py</code></td>
+<td>9</td>
+</tr>
+<tr>
+<td><code>simulation/scenario.py</code></td>
+<td>9</td>
+</tr>
+<tr>
+<td><code>simulation/victory.py</code></td>
+<td>9</td>
+</tr>
+<tr>
+<td><code>simulation/recorder.py</code></td>
+<td>9</td>
+</tr>
+<tr>
+<td><code>simulation/metrics.py</code></td>
+<td>9</td>
+</tr>
+<tr>
+<td><code>validation/campaign_data.py</code></td>
+<td>10</td>
+</tr>
+<tr>
+<td><code>validation/campaign_runner.py</code></td>
+<td>10</td>
+</tr>
+<tr>
+<td><code>validation/campaign_metrics.py</code></td>
+<td>10</td>
+</tr>
+<tr>
+<td><code>validation/ai_validation.py</code></td>
+<td>10</td>
+</tr>
+<tr>
+<td><code>validation/performance.py</code></td>
+<td>10</td>
+</tr>
+</tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.tabs", "navigation.sections", "navigation.expand", "navigation.top", "search.suggest", "search.highlight", "content.code.copy"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>
