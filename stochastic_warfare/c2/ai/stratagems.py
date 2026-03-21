@@ -99,6 +99,8 @@ class StratagemEngine:
         self._event_bus = event_bus
         self._rng = rng
         self._active_plans: dict[str, StratagemPlan] = {}
+        # Phase 68f: track when each stratagem was activated (tick number)
+        self._activation_ticks: dict[str, int] = {}
 
     # -- Eligibility --------------------------------------------------------
 
@@ -351,6 +353,7 @@ class StratagemEngine:
         unit_id: str,
         plan: StratagemPlan,
         ts: datetime | None = None,
+        tick: int = 0,
     ) -> None:
         """Activate a stratagem, publishing :class:`StratagemActivatedEvent`.
 
@@ -362,9 +365,14 @@ class StratagemEngine:
             The plan to activate.
         ts : datetime | None
             Event timestamp.  Defaults to UTC now.
+        tick : int
+            Current simulation tick — used for expiry tracking (Phase 68f).
         """
         if ts is None:
             ts = datetime.now(tz=timezone.utc)
+
+        self._active_plans[plan.stratagem_id] = plan
+        self._activation_ticks[plan.stratagem_id] = tick
 
         self._event_bus.publish(
             StratagemActivatedEvent(
@@ -377,11 +385,31 @@ class StratagemEngine:
         )
 
         logger.debug(
-            "Activated %s stratagem for %s at %s",
+            "Activated %s stratagem for %s at %s (tick=%d)",
             plan.stratagem_type.name,
             unit_id,
             plan.target_area,
+            tick,
         )
+
+    def expire_stratagems(self, current_tick: int, duration: int) -> list[str]:
+        """Remove stratagems that have exceeded their duration.
+
+        Returns list of expired stratagem IDs.
+        """
+        expired: list[str] = []
+        for sid, activated_at in list(self._activation_ticks.items()):
+            if current_tick - activated_at >= duration:
+                expired.append(sid)
+        for sid in expired:
+            self._active_plans.pop(sid, None)
+            self._activation_ticks.pop(sid, None)
+            logger.debug("Stratagem %s expired at tick %d", sid, current_tick)
+        return expired
+
+    def is_active(self, stratagem_id: str) -> bool:
+        """Check whether a stratagem is currently active."""
+        return stratagem_id in self._active_plans
 
     # -- State protocol -----------------------------------------------------
 
@@ -398,11 +426,15 @@ class StratagemEngine:
                 "estimated_effect": plan.estimated_effect,
                 "risk": plan.risk,
             }
-        return {"active_plans": plans}
+        return {
+            "active_plans": plans,
+            "activation_ticks": dict(self._activation_ticks),
+        }
 
     def set_state(self, state: dict) -> None:
         """Restore from checkpoint."""
         self._active_plans.clear()
+        self._activation_ticks.clear()
         for sid, d in state.get("active_plans", {}).items():
             plan = StratagemPlan(
                 stratagem_id=d["stratagem_id"],
@@ -414,3 +446,4 @@ class StratagemEngine:
                 risk=d["risk"],
             )
             self._active_plans[sid] = plan
+        self._activation_ticks = dict(state.get("activation_ticks", {}))

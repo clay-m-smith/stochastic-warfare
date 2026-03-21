@@ -60,7 +60,7 @@ class TestPhase60Structural:
         """battle.py logs units in fire zones after damage step."""
         src = Path("stochastic_warfare/simulation/battle.py").read_text()
         assert "units_in_fire(" in src
-        assert "Unit %s in fire zone" in src
+        assert "Unit %s fire damage" in src
 
     def test_all_four_calibration_flags_exist(self) -> None:
         """CalibrationSchema has all 4 Phase 60 flags."""

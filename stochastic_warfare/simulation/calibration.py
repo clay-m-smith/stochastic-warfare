@@ -188,6 +188,14 @@ class CalibrationSchema(BaseModel):
     # -- Space & EW sub-engine activation (Phase 65) -----------------------
     enable_space_effects: bool = False
 
+    # -- Consequence enforcement (Phase 68) --------------------------------
+    enable_fuel_consumption: bool = False
+    enable_ammo_gate: bool = False
+    fire_damage_per_tick: float = 0.01
+    stratagem_duration_ticks: int = 100
+    retreat_distance_m: float = 2000.0
+    misinterpretation_radius_m: float = 500.0
+
     # -- Unconventional & mine warfare (Phase 66) -------------------------
     enable_unconventional_warfare: bool = False
     enable_mine_persistence: bool = False

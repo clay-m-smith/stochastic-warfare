@@ -150,6 +150,7 @@ nav:
     - Phase 65 - Space & EW Sub-Engine Activation: devlog/phase-65.md
     - Phase 66 - Unconventional, Naval, & Cleanup: devlog/phase-66.md
     - Phase 67 - Integration Validation & Recalibration: devlog/phase-67.md
+    - Phase 68 - Consequence Enforcement: devlog/phase-68.md
   - Specifications:
     - Project Structure: specs/project-structure.md
     - Skills & Hooks: skills-and-hooks.md

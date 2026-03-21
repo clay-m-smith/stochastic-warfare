@@ -1019,6 +1019,12 @@ class BattleManager:
         self._vls_launches: dict[str, int] = {}
         # Phase 62a: fractional environmental casualty accumulator
         self._env_casualty_accum: dict[str, float] = {}
+        # Phase 68b: general ammo expenditure tracking (unit_id:weapon_name → rounds fired)
+        self._ammo_expended: dict[str, int] = {}
+        # Phase 68c: pending order decisions (unit_id → execute_at_elapsed_s)
+        self._pending_decisions: dict[str, float] = {}
+        # Phase 68d: misinterpreted order info (unit_id → PropagationResult)
+        self._misinterpreted_orders: dict[str, Any] = {}
 
     # ── Engagement detection ────────────────────────────────────────
 
@@ -1412,19 +1418,41 @@ class BattleManager:
         # 7. Apply deferred damage
         self._apply_deferred_damage(pending_damage, ctx.event_bus, timestamp)
 
-        # 7b. Phase 60b: fire zone damage (logged; behavioral application deferred)
+        # 7b. Phase 60b/68e: fire zone damage — apply burn damage to units
         cal = getattr(getattr(ctx, "config", None), "calibration_overrides", None)
         if cal is not None and cal.get("enable_fire_zones", False):
             _inc_eng_fz = getattr(ctx, "incendiary_engine", None)
             if _inc_eng_fz is not None and _inc_eng_fz._active_zones:
                 _unit_positions: dict[str, Position] = {}
+                _unit_lookup: dict[str, Unit] = {}
                 for _side_units in units_by_side.values():
                     for _fu in _side_units:
                         if _fu.status == UnitStatus.ACTIVE:
                             _unit_positions[_fu.entity_id] = _fu.position
+                            _unit_lookup[_fu.entity_id] = _fu
                 _fire_hits = _inc_eng_fz.units_in_fire(_unit_positions)
+                _fire_damage_base = cal.get("fire_damage_per_tick", 0.01)
+                _fire_pending: list[tuple[Unit, UnitStatus]] = []
+                _fire_dest = cal.get("destruction_threshold", self._config.destruction_threshold)
+                _fire_dis = cal.get("disable_threshold", self._config.disable_threshold)
                 for _fu_id, _burn_rate in _fire_hits.items():
-                    logger.debug("Unit %s in fire zone: %.3f dmg/s", _fu_id, _burn_rate)
+                    _fu_unit = _unit_lookup.get(_fu_id)
+                    if _fu_unit is None:
+                        continue
+                    _fire_dmg = _fire_damage_base * _burn_rate
+                    # Posture protection: DUG_IN halves fire damage
+                    _fu_posture = getattr(_fu_unit, "posture", None)
+                    if _fu_posture is not None and int(_fu_posture) >= 3:
+                        _fire_dmg *= 0.5
+                    _fire_cas = max(1, int(_fire_dmg * max(1, len(_fu_unit.personnel) if _fu_unit.personnel else 4)))
+                    _apply_aggregate_casualties(
+                        _fire_cas, _fu_unit, _fire_pending,
+                        _fire_dest, _fire_dis,
+                        self._cumulative_casualties,
+                    )
+                    logger.debug("Unit %s fire damage: %.3f (burn_rate=%.3f)", _fu_id, _fire_dmg, _burn_rate)
+                if _fire_pending:
+                    self._apply_deferred_damage(_fire_pending, ctx.event_bus, timestamp)
 
         # 8. Morale checks
         if battle.ticks_executed % self._config.morale_check_interval == 0:
@@ -1671,12 +1699,16 @@ class BattleManager:
             },
             "next_battle_id": self._next_battle_id,
             "vls_launches": dict(self._vls_launches),
+            "ammo_expended": dict(self._ammo_expended),
+            "pending_decisions": dict(self._pending_decisions),
         }
 
     def set_state(self, state: dict[str, Any]) -> None:
         """Restore battle manager state from checkpoint."""
         self._next_battle_id = state.get("next_battle_id", 0)
         self._vls_launches = dict(state.get("vls_launches", {}))
+        self._ammo_expended = dict(state.get("ammo_expended", {}))
+        self._pending_decisions = dict(state.get("pending_decisions", {}))
         self._battles.clear()
         self._cached_assessments.clear()
         for bid, bdata in state.get("battles", {}).items():
@@ -1903,6 +1935,15 @@ class BattleManager:
                                 )
                                 school_adjustments = adjusted
 
+                    # Phase 68f: expire old stratagems before evaluating new ones
+                    if getattr(ctx, "stratagem_engine", None) is not None and battle is not None:
+                        _strat_dur = _cal_c2.get("stratagem_duration_ticks", 100) if _cal_c2 is not None else 100
+                        _expired = ctx.stratagem_engine.expire_stratagems(
+                            battle.ticks_executed, _strat_dur,
+                        )
+                        for _exp_id in _expired:
+                            logger.debug("Stratagem %s expired at tick %d", _exp_id, battle.ticks_executed)
+
                     # Phase 53c/64d: Evaluate + activate stratagem opportunities
                     # (before decide() so bonuses flow into school_adjustments)
                     if getattr(ctx, "stratagem_engine", None) is not None and assessment is not None:
@@ -1956,7 +1997,8 @@ class BattleManager:
                                         _conc_units = [u for u in unit_ids if u not in _economy]
                                         try:
                                             _plan = ctx.stratagem_engine.plan_concentration(_conc_units, _conc_point, _economy)
-                                            ctx.stratagem_engine.activate_stratagem(unit_id, _plan, timestamp)
+                                            _strat_tick = battle.ticks_executed if battle is not None else 0
+                                            ctx.stratagem_engine.activate_stratagem(unit_id, _plan, timestamp, tick=_strat_tick)
                                             if school_adjustments is not None:
                                                 _bonus = _cal_c2.get("stratagem_concentration_bonus", 0.08)
                                                 school_adjustments["ATTACK"] = school_adjustments.get("ATTACK", 0.0) + _bonus
@@ -1967,12 +2009,120 @@ class BattleManager:
                                     _main = unit_ids[1:]
                                     try:
                                         _plan = ctx.stratagem_engine.plan_deception(_feint, "enemy_front", _main)
-                                        ctx.stratagem_engine.activate_stratagem(unit_id, _plan, timestamp)
+                                        _strat_tick = battle.ticks_executed if battle is not None else 0
+                                        ctx.stratagem_engine.activate_stratagem(unit_id, _plan, timestamp, tick=_strat_tick)
                                         if school_adjustments is not None:
                                             _bonus = _cal_c2.get("stratagem_deception_bonus", 0.10)
                                             school_adjustments["ATTACK"] = school_adjustments.get("ATTACK", 0.0) + _bonus
                                     except Exception:
                                         logger.debug("Deception activation failed for %s", unit_id, exc_info=True)
+
+                    # Phase 64a/68c: Order propagation — compute delay + misinterpretation
+                    # When c2_friction is enabled, orders may be delayed or misinterpreted.
+                    _order_delayed_68c = False
+                    _result_68c = None
+                    if getattr(ctx, "order_propagation", None) is not None:
+                        _cal_64a = getattr(ctx, "calibration", None)
+                        if _cal_64a is not None and _cal_64a.get("enable_c2_friction", False):
+                            # Phase 68c: check if unit has a pending delayed decision
+                            _pending_at = self._pending_decisions.get(unit_id)
+                            _elapsed_s = battle.battle_elapsed_s if battle is not None else 0.0
+                            if _pending_at is not None:
+                                if _elapsed_s < _pending_at:
+                                    logger.debug("Order pending for %s (%.1fs remaining)",
+                                                 unit_id, _pending_at - _elapsed_s)
+                                    continue  # still waiting
+                                else:
+                                    # Delay matured — pop and execute
+                                    self._pending_decisions.pop(unit_id, None)
+                                    logger.debug("Order delay matured for %s", unit_id)
+                            else:
+                                # First time: propagate order to determine delay
+                                from stochastic_warfare.c2.orders.types import Order as _Order64a, OrderType as _OT64a, OrderPriority as _OP64a
+                                _order_64a = _Order64a(
+                                    order_id=f"decide_{unit_id}_{timestamp}",
+                                    issuer_id=unit_id,
+                                    recipient_id=unit_id,
+                                    timestamp=timestamp,
+                                    order_type=_OT64a.FRAGO,
+                                    echelon_level=5,
+                                    priority=_OP64a.PRIORITY,
+                                    mission_type=0,
+                                )
+                                _sender_pos = _get_unit_position(ctx, unit_id)
+                                _prop_cfg = getattr(ctx.order_propagation, "_config", None)
+                                if _prop_cfg is not None:
+                                    _prop_cfg.delay_sigma = _cal_64a.get("order_propagation_delay_sigma", 0.4)
+                                    _prop_cfg.base_misinterpretation = _cal_64a.get("order_misinterpretation_base", 0.05)
+                                try:
+                                    _result_68c = ctx.order_propagation.propagate_order(
+                                        _order_64a, _sender_pos, _sender_pos, timestamp,
+                                    )
+                                    if not _result_68c.success:
+                                        logger.debug("Order propagation failed for %s", unit_id)
+                                        continue
+                                    # Phase 68c: enforce delay by deferring decide
+                                    if _result_68c.total_delay_s > 0:
+                                        self._pending_decisions[unit_id] = _elapsed_s + _result_68c.total_delay_s
+                                        logger.debug("Order delayed for %s: %.1fs", unit_id, _result_68c.total_delay_s)
+                                        _order_delayed_68c = True
+                                    # Phase 68d: store misinterpretation for enforcement
+                                    if _result_68c.was_misinterpreted:
+                                        self._misinterpreted_orders[unit_id] = _result_68c
+                                        logger.debug("Order misinterpreted for %s: %s", unit_id, _result_68c.misinterpretation_type)
+                                except Exception:
+                                    logger.debug("Order propagation error for %s", unit_id, exc_info=True)
+                        else:
+                            logger.debug("Order propagation available for %s", unit_id)
+
+                    if _order_delayed_68c:
+                        continue  # skip decide until delay matures
+
+                    # Phase 68d: apply misinterpretation effects before decide
+                    _misinterp = self._misinterpreted_orders.pop(unit_id, None)
+                    if _misinterp is not None and hasattr(_misinterp, "misinterpretation_type"):
+                        _mistype = _misinterp.misinterpretation_type
+                        if _mistype == "timing":
+                            # Double the remaining delay — re-queue
+                            _elapsed_s = battle.battle_elapsed_s if battle is not None else 0.0
+                            _extra = _misinterp.total_delay_s
+                            self._pending_decisions[unit_id] = _elapsed_s + _extra
+                            logger.debug("Timing misinterpretation: %s re-delayed %.1fs", unit_id, _extra)
+                            continue
+                        elif _mistype == "unit_designation":
+                            # Wrong unit addressed — skip this decide cycle
+                            logger.debug("Unit designation misinterpretation: %s skipped", unit_id)
+                            continue
+                        elif _mistype == "objective" and school_adjustments is not None:
+                            # Swap ATTACK ↔ DEFEND
+                            _atk = school_adjustments.get("ATTACK", 0.0)
+                            _def = school_adjustments.get("DEFEND", 0.0)
+                            school_adjustments["ATTACK"] = _def
+                            school_adjustments["DEFEND"] = _atk
+                            logger.debug("Objective misinterpretation: %s ATTACK/DEFEND swapped", unit_id)
+                        elif _mistype == "position":
+                            # Offset movement target (handled post-decide via position perturbation)
+                            _misinterp_radius = (_cal_c2 or {}).get("misinterpretation_radius_m", 500.0)
+                            _rng_mis = getattr(ctx, "rng_manager", None)
+                            if _rng_mis is not None:
+                                _mis_stream = _rng_mis.get_stream(ModuleId.C2)
+                                _angle = _mis_stream.random() * 2 * math.pi
+                                _offset_e = math.cos(_angle) * _misinterp_radius
+                                _offset_n = math.sin(_angle) * _misinterp_radius
+                                _upos = _get_unit_position(ctx, unit_id)
+                                if _upos is not None:
+                                    _new_pos = Position(
+                                        _upos.easting + _offset_e,
+                                        _upos.northing + _offset_n,
+                                        _upos.altitude,
+                                    )
+                                    # Find unit and offset its position
+                                    for _side_units_68d in units_by_side.values():
+                                        for _u_68d in _side_units_68d:
+                                            if _u_68d.entity_id == unit_id:
+                                                object.__setattr__(_u_68d, "position", _new_pos)
+                                                break
+                                    logger.debug("Position misinterpretation: %s offset by %.0fm", unit_id, _misinterp_radius)
 
                     ctx.decision_engine.decide(
                         unit_id=unit_id,
@@ -1983,42 +2133,6 @@ class BattleManager:
                         ts=timestamp,
                         school_adjustments=school_adjustments,
                     )
-
-                    # Phase 64a: Order propagation — compute delay + misinterpretation
-                    if getattr(ctx, "order_propagation", None) is not None:
-                        _cal_64a = getattr(ctx, "calibration", None)
-                        if _cal_64a is not None and _cal_64a.get("enable_c2_friction", False):
-                            from stochastic_warfare.c2.orders.types import Order as _Order64a, OrderType as _OT64a, OrderPriority as _OP64a
-                            _order_64a = _Order64a(
-                                order_id=f"decide_{unit_id}_{timestamp}",
-                                issuer_id=unit_id,
-                                recipient_id=unit_id,
-                                timestamp=timestamp,
-                                order_type=_OT64a.FRAGO,
-                                echelon_level=5,
-                                priority=_OP64a.PRIORITY,
-                                mission_type=0,
-                            )
-                            _sender_pos = _get_unit_position(ctx, unit_id)
-                            # Forward calibration tuning to propagation config
-                            _prop_cfg = getattr(ctx.order_propagation, "_config", None)
-                            if _prop_cfg is not None:
-                                _prop_cfg.delay_sigma = _cal_64a.get("order_propagation_delay_sigma", 0.4)
-                                _prop_cfg.base_misinterpretation = _cal_64a.get("order_misinterpretation_base", 0.05)
-                            try:
-                                _result_64a = ctx.order_propagation.propagate_order(
-                                    _order_64a, _sender_pos, _sender_pos, timestamp,
-                                )
-                                if not _result_64a.success:
-                                    logger.debug("Order propagation failed for %s", unit_id)
-                                    continue
-                                if _result_64a.was_misinterpreted:
-                                    logger.debug("Order misinterpreted for %s: %s", unit_id, _result_64a.misinterpretation_type)
-                                logger.debug("Order delay for %s: %.1fs", unit_id, _result_64a.total_delay_s)
-                            except Exception:
-                                logger.debug("Order propagation error for %s", unit_id, exc_info=True)
-                        else:
-                            logger.debug("Order propagation available for %s", unit_id)
 
             # Advance to the next OODA phase and start its timer
             if ctx.ooda_engine is not None:
@@ -2355,14 +2469,22 @@ class BattleManager:
                                 except Exception:
                                     pass
 
-                # Phase 58e: consume fuel proportional to distance (vehicles only)
-                # NOTE: fuel consumption deferred to dedicated logistics tick —
-                # consuming in the movement hot loop causes vehicles to stall
-                # mid-battle before calibration accounts for it.
-                # if _is_vehicle and hasattr(u, "fuel_remaining"):
-                #     _fuel_rate = 0.0001
-                #     _new_fuel = max(0.0, _fuel - move_dist * _fuel_rate)
-                #     object.__setattr__(u, "fuel_remaining", _new_fuel)
+                # Phase 68a: consume fuel proportional to distance moved
+                if cal.get("enable_fuel_consumption", False) and _is_vehicle and hasattr(u, "fuel_remaining"):
+                    _domain_fuel = getattr(u, "domain", None)
+                    _fuel_rate = getattr(u, "fuel_consumption_rate", None)
+                    if _fuel_rate is None:
+                        if _domain_fuel == Domain.AERIAL:
+                            _fuel_rate = 0.0005
+                        elif _domain_fuel == Domain.NAVAL:
+                            _fuel_rate = 0.00005
+                        else:
+                            _fuel_rate = 0.0001  # ground default
+                    _new_fuel = max(0.0, u.fuel_remaining - move_dist * _fuel_rate)
+                    object.__setattr__(u, "fuel_remaining", _new_fuel)
+                    if _new_fuel <= 0.0:
+                        object.__setattr__(u, "speed", 0.0)
+                        logger.warning("Unit %s out of fuel — speed set to 0", u.entity_id)
 
     # ------------------------------------------------------------------
     # Phase 41a: Terrain combat modifiers
@@ -3177,6 +3299,20 @@ class BattleManager:
                 ammo_def = selected_ammo_def
                 ammo_id = selected_ammo_id
 
+                # Phase 68b: ammo depletion gate — skip if magazine exhausted
+                if cal.get("enable_ammo_gate", False):
+                    _mag_cap = getattr(wpn_inst.definition, "magazine_capacity", 0)
+                    if _mag_cap > 0:
+                        _ammo_key = f"{attacker.entity_id}:{wpn_inst.definition.weapon_id}"
+                        _rounds_fired = self._ammo_expended.get(_ammo_key, 0)
+                        if _rounds_fired >= _mag_cap:
+                            logger.debug(
+                                "Ammo depleted: %s weapon %s (%d/%d)",
+                                attacker.entity_id, wpn_inst.definition.weapon_id,
+                                _rounds_fired, _mag_cap,
+                            )
+                            continue
+
                 target_armor = getattr(best_target, "armor_front", 0.0)
                 crew_count = len(best_target.personnel) if best_target.personnel else 4
 
@@ -3388,6 +3524,13 @@ class BattleManager:
                         )
                         _pk_red = cal.get("human_shield_pk_reduction", 0.5) * _shield_val
                         crew_skill *= max(0.1, 1.0 - _pk_red)
+
+                # Phase 68b: track ammo expenditure for this engagement
+                if cal.get("enable_ammo_gate", False):
+                    _mag_cap_trk = getattr(wpn_inst.definition, "magazine_capacity", 0)
+                    if _mag_cap_trk > 0:
+                        _ammo_key_trk = f"{attacker.entity_id}:{wpn_inst.definition.weapon_id}"
+                        self._ammo_expended[_ammo_key_trk] = self._ammo_expended.get(_ammo_key_trk, 0) + 1
 
                 # ── Phase 43: domain-specific engagement routing ──────
                 routed_aggregate = False
@@ -3895,12 +4038,14 @@ class BattleManager:
                                         except Exception:
                                             logger.debug("Fire zone creation failed", exc_info=True)
 
-        # Phase 66a: guerrilla disengage evaluation — post-engagement pass
+        # Phase 66a/68g: guerrilla disengage + retreat movement
         if cal.get("enable_unconventional_warfare", False):
             _uw_eng_guer = getattr(ctx, "unconventional_engine", None)
             if _uw_eng_guer is not None:
                 _pop_eng_guer = getattr(ctx, "population_engine", None)
-                for _su_guer in units_by_side.values():
+                _retreat_dist = cal.get("retreat_distance_m", 2000.0)
+                for _guer_side, _su_guer in units_by_side.items():
+                    _guer_enemies = active_enemies.get(_guer_side, [])
                     for _u_guer in _su_guer:
                         if _u_guer.status != UnitStatus.ACTIVE:
                             continue
@@ -3929,6 +4074,41 @@ class BattleManager:
                                 "Guerrilla %s disengaging (blend=%.2f)",
                                 _u_guer.entity_id, _blend,
                             )
+                            # Phase 68g: move unit away from nearest enemy
+                            _gp = getattr(_u_guer, "position", None)
+                            if _gp is not None and _guer_enemies:
+                                # Find nearest enemy direction
+                                _ne_dist = float("inf")
+                                _ne_dx, _ne_dy = 0.0, 0.0
+                                for _ge in _guer_enemies:
+                                    _gdx = _ge.position.easting - _gp.easting
+                                    _gdy = _ge.position.northing - _gp.northing
+                                    _gd2 = _gdx * _gdx + _gdy * _gdy
+                                    if _gd2 < _ne_dist:
+                                        _ne_dist = _gd2
+                                        _ne_dx, _ne_dy = _gdx, _gdy
+                                _ne_dist_m = math.sqrt(_ne_dist) if _ne_dist > 0 else 1.0
+                                # Retreat vector: opposite of enemy direction
+                                _rx = -_ne_dx / _ne_dist_m * _retreat_dist
+                                _ry = -_ne_dy / _ne_dist_m * _retreat_dist
+                                _new_pos = Position(
+                                    _gp.easting + _rx,
+                                    _gp.northing + _ry,
+                                    _gp.altitude,
+                                )
+                                object.__setattr__(_u_guer, "position", _new_pos)
+                                logger.debug(
+                                    "Guerrilla %s retreated %.0fm to (%s)",
+                                    _u_guer.entity_id, _retreat_dist, _new_pos,
+                                )
+                            # Blend probability → set ROUTING status
+                            if _blend > 0:
+                                _rng_guer = getattr(ctx, "rng_manager", None)
+                                if _rng_guer is not None:
+                                    _guer_stream = _rng_guer.get_stream(ModuleId.COMBAT)
+                                    if _guer_stream.random() < _blend:
+                                        object.__setattr__(_u_guer, "status", UnitStatus.ROUTING)
+                                        logger.debug("Guerrilla %s routing", _u_guer.entity_id)
 
         return pending_damage
 

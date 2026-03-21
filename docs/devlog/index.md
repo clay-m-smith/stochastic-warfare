@@ -82,6 +82,8 @@ Rolling record of implementation decisions, changes, and lessons learned across 
 | 65 | Space & EW Sub-Engine Activation | **Complete** | [phase-65.md](phase-65.md) |
 | 66 | Unconventional, Naval, & Cleanup | **Complete** | [phase-66.md](phase-66.md) |
 | 67 | Integration Validation & Recalibration | **Complete** | [phase-67.md](phase-67.md) |
+| **Block 8: Consequence Enforcement & Scenario Expansion** ||||
+| 68 | Consequence Enforcement | **Complete** | [phase-68.md](phase-68.md) |
 
 ## Post-MVP Refinement Index
 
