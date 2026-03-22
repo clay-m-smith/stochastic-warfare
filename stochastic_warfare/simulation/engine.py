@@ -421,6 +421,13 @@ class SimulationEngine:
             if getattr(ctx, "ato_engine", None) is not None:
                 _cal_64c = getattr(ctx, "calibration", None)
                 _ato_c2 = _cal_64c is not None and _cal_64c.get("enable_c2_friction", False)
+                # Phase 69a: daily sortie reset at day boundary
+                _cur_day_69a = int(_sim_time_s / 86400)
+                if not hasattr(self, "_last_ato_day"):
+                    self._last_ato_day = _cur_day_69a
+                if _cur_day_69a > self._last_ato_day:
+                    ctx.ato_engine.reset_daily_sorties(_sim_time_s)
+                    self._last_ato_day = _cur_day_69a
                 try:
                     from stochastic_warfare.c2.orders.air_orders import AircraftAvailability
                     from stochastic_warfare.core.types import Domain

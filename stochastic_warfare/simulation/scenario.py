@@ -737,7 +737,7 @@ class ScenarioLoader:
 
         # 7. Create domain engines (era-gated)
         disabled = era_config.disabled_modules
-        engines = self._create_engines(rng_mgr, bus, heightmap, loaders, config, clock)
+        engines = self._create_engines(rng_mgr, bus, heightmap, loaders, config, clock, units_by_side)
 
         # 8. Assemble context
         real_ctx = self._real_terrain_ctx
@@ -1027,6 +1027,7 @@ class ScenarioLoader:
         loaders: dict[str, Any],
         config: CampaignScenarioConfig,
         clock: SimulationClock | None = None,
+        units_by_side: dict[str, list] | None = None,
     ) -> dict[str, Any]:
         """Create all domain engine instances."""
         combat_rng = rng_mgr.get_stream(ModuleId.COMBAT)
@@ -1157,11 +1158,39 @@ class ScenarioLoader:
         from stochastic_warfare.c2.orders.execution import OrderExecutionEngine
 
         comms_engine = CommunicationsEngine(bus, c2_rng)
-        # CommandEngine requires hierarchy/task_org — create minimal stubs
-        # for now; full C2 wiring happens in campaign/battle managers
+
+        # Phase 69d: Command hierarchy enforcement
+        _command_engine_69d = None
+        if cal.get("enable_command_hierarchy", False) and units_by_side:
+            from stochastic_warfare.entities.organization.hierarchy import HierarchyTree
+            from stochastic_warfare.entities.organization.task_org import TaskOrgManager
+            from stochastic_warfare.entities.organization.echelons import EchelonLevel
+            from stochastic_warfare.c2.command import CommandEngine, CommandConfig
+
+            _hierarchy = HierarchyTree()
+            # Build virtual HQ per side + add each unit as child
+            for _side_key, _side_units in units_by_side.items():
+                _hq_id = f"{_side_key}_hq"
+                _hierarchy.add_unit(_hq_id, EchelonLevel.DIVISION, side=_side_key)
+                for _u in _side_units:
+                    try:
+                        _hierarchy.add_unit(
+                            _u.entity_id, EchelonLevel.COMPANY,
+                            parent_id=_hq_id, side=_side_key,
+                        )
+                    except (ValueError, KeyError):
+                        pass  # duplicate or missing parent — skip
+            _task_org = TaskOrgManager(_hierarchy)
+            _command_engine_69d = CommandEngine(
+                _hierarchy, _task_org, {},
+                bus, c2_rng, CommandConfig(),
+            )
+            logger.info("Command hierarchy built with %d units",
+                         sum(len(u) for u in units_by_side.values()))
+
         order_propagation = OrderPropagationEngine(
             comms_engine=comms_engine,
-            command_engine=None,
+            command_engine=_command_engine_69d,
             event_bus=bus,
             rng=c2_rng,
         )
@@ -1435,6 +1464,7 @@ class ScenarioLoader:
             "stratagem_engine": stratagem_engine,
             "ato_engine": ato_engine,
             "iads_engine": iads_engine,
+            "command_engine": _command_engine_69d,
         }
 
         # ── Optional engine wiring (Phase 25) ────────────────────────

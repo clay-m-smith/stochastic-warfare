@@ -84,6 +84,7 @@ Rolling record of implementation decisions, changes, and lessons learned across 
 | 67 | Integration Validation & Recalibration | **Complete** | [phase-67.md](phase-67.md) |
 | **Block 8: Consequence Enforcement & Scenario Expansion** ||||
 | 68 | Consequence Enforcement | **Complete** | [phase-68.md](phase-68.md) |
+| 69 | C2 Depth | **Complete** | [phase-69.md](phase-69.md) |
 
 ## Post-MVP Refinement Index
 

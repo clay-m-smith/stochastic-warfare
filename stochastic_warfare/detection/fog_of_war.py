@@ -172,6 +172,33 @@ class FogOfWarManager:
         return wv.contacts.get(contact_id)
 
     # ------------------------------------------------------------------
+    # Phase 69c: Deception passthrough API
+    # ------------------------------------------------------------------
+
+    def deploy_decoy(
+        self,
+        position: Position,
+        deception_type: "DeceptionType | int" = 4,
+        effectiveness: float = 1.0,
+        signature: "SignatureProfile | None" = None,
+    ) -> Decoy:
+        """Deploy a decoy via the internal deception engine."""
+        from stochastic_warfare.detection.deception import DeceptionType
+        if isinstance(deception_type, int):
+            deception_type = DeceptionType(deception_type)
+        return self._deception.deploy_decoy(
+            position, deception_type, effectiveness, signature,
+        )
+
+    def get_active_decoys(self) -> list[Decoy]:
+        """Return all currently active decoys."""
+        return self._deception.active_decoys()
+
+    def update_decoys(self, dt: float) -> None:
+        """Degrade all active decoys over time."""
+        self._deception.update_decoys(dt)
+
+    # ------------------------------------------------------------------
     # Update cycle
     # ------------------------------------------------------------------
 

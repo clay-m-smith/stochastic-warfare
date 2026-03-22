@@ -41,9 +41,9 @@ class TestEnableFlagConsumers:
     """Block 7 criterion #2: every enable_* flag consumed by downstream code."""
 
     def test_all_enable_flags_have_consumers(self):
-        """Every enable_* field in CalibrationSchema appears in battle.py or engine.py."""
+        """Every enable_* field in CalibrationSchema appears in battle.py, engine.py, or scenario.py."""
         flags = _get_enable_flags()
-        combined = _read("simulation/battle.py") + _read("simulation/engine.py")
+        combined = _read("simulation/battle.py") + _read("simulation/engine.py") + _read("simulation/scenario.py")
         missing = [f for f in flags if f not in combined]
         assert not missing, f"Unconsumed enable_* flags: {missing}"
 
@@ -53,9 +53,9 @@ class TestEnableFlagConsumers:
         Phase 68 flags are excluded — they default to False and will be
         enabled in a future integration phase.
         """
-        # Phase 68 consequence flags not yet enabled in scenarios
-        _PHASE_68_FLAGS = {"enable_fuel_consumption", "enable_ammo_gate"}
-        flags = set(_get_enable_flags()) - _PHASE_68_FLAGS
+        # Phase 68/69 consequence flags not yet enabled in scenarios
+        _DEFERRED_FLAGS = {"enable_fuel_consumption", "enable_ammo_gate", "enable_command_hierarchy"}
+        flags = set(_get_enable_flags()) - _DEFERRED_FLAGS
         enabled: set[str] = set()
         for path in _DATA.rglob("scenario.yaml"):
             if "test_campaign" in path.parent.name:

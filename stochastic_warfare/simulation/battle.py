@@ -1454,6 +1454,14 @@ class BattleManager:
                 if _fire_pending:
                     self._apply_deferred_damage(_fire_pending, ctx.event_bus, timestamp)
 
+        # 7c. Phase 69c: degrade active decoys each tick
+        _fow_69c_tick = getattr(ctx, "fog_of_war", None)
+        if _fow_69c_tick is not None and cal is not None and cal.get("enable_fog_of_war", False):
+            try:
+                _fow_69c_tick.update_decoys(dt)
+            except (AttributeError, TypeError):
+                pass
+
         # 8. Morale checks
         if battle.ticks_executed % self._config.morale_check_interval == 0:
             self._execute_morale(ctx, units_by_side, active_enemies, timestamp)
@@ -1835,6 +1843,20 @@ class BattleManager:
                             weight_overrides = school.get_assessment_weight_overrides() or None
                         # Phase 53b: C2 effectiveness from comms state
                         c2_eff = self._compute_c2_effectiveness(ctx, unit_id, side)
+                        # Phase 69c: inflate enemy_power by active decoy count
+                        _enemy_power_69c = float(enemies)
+                        _fow_69c_obs = getattr(ctx, "fog_of_war", None)
+                        if _fow_69c_obs is not None:
+                            _cal_69c = getattr(ctx, "calibration", None)
+                            if _cal_69c is not None and _cal_69c.get("enable_fog_of_war", False):
+                                try:
+                                    _active_decoys = _fow_69c_obs.get_active_decoys()
+                                    _enemy_power_69c += sum(
+                                        1.0 for d in _active_decoys if d.effectiveness > 0
+                                    )
+                                except (AttributeError, TypeError):
+                                    pass
+
                         assessment = ctx.assessor.assess(
                             unit_id=unit_id,
                             echelon=5,
@@ -1844,7 +1866,7 @@ class BattleManager:
                             supply_level=supply_level,
                             c2_effectiveness=c2_eff,
                             contacts=enemies,
-                            enemy_power=float(enemies),
+                            enemy_power=_enemy_power_69c,
                             ts=timestamp,
                             weight_overrides=weight_overrides,
                         )
@@ -1935,6 +1957,17 @@ class BattleManager:
                                 )
                                 school_adjustments = adjusted
 
+                    # Phase 69b: planning result injection — bias school_adjustments
+                    if _planning_64 is not None and _cal_c2 is not None and _cal_c2.get("enable_c2_friction", False):
+                        _plan_result_69b = _planning_64.consume_result(unit_id)
+                        if _plan_result_69b is not None and school_adjustments is not None:
+                            _planning_bonus = 0.10
+                            school_adjustments[_plan_result_69b] = (
+                                school_adjustments.get(_plan_result_69b, 0.0) + _planning_bonus
+                            )
+                            logger.debug("Planning result '%s' injected for %s (+%.2f)",
+                                         _plan_result_69b, unit_id, _planning_bonus)
+
                     # Phase 68f: expire old stratagems before evaluating new ones
                     if getattr(ctx, "stratagem_engine", None) is not None and battle is not None:
                         _strat_dur = _cal_c2.get("stratagem_duration_ticks", 100) if _cal_c2 is not None else 100
@@ -2014,6 +2047,29 @@ class BattleManager:
                                         if school_adjustments is not None:
                                             _bonus = _cal_c2.get("stratagem_deception_bonus", 0.10)
                                             school_adjustments["ATTACK"] = school_adjustments.get("ATTACK", 0.0) + _bonus
+                                        # Phase 69c: deploy phantom decoys via FOW
+                                        _fow_69c = getattr(ctx, "fog_of_war", None)
+                                        if _fow_69c is not None and _cal_c2 is not None and _cal_c2.get("enable_fog_of_war", False):
+                                            _phantom_count = _cal_c2.get("deception_phantom_count", 3)
+                                            _feint_pos_list = []
+                                            for _fid in _feint:
+                                                _fp = _get_unit_position(ctx, _fid)
+                                                if _fp is not None:
+                                                    _feint_pos_list.append(_fp)
+                                            if _feint_pos_list:
+                                                _rng_69c = getattr(ctx, "rng_manager", None)
+                                                _dec_stream = _rng_69c.get_stream(ModuleId.C2) if _rng_69c is not None else None
+                                                for _pi in range(_phantom_count):
+                                                    _base = _feint_pos_list[_pi % len(_feint_pos_list)]
+                                                    _dist = 500.0 + 1000.0 * (_dec_stream.random() if _dec_stream else 0.5)
+                                                    _ang = 2 * math.pi * (_dec_stream.random() if _dec_stream else 0.25 * _pi)
+                                                    _dec_pos = Position(
+                                                        _base.easting + math.cos(_ang) * _dist,
+                                                        _base.northing + math.sin(_ang) * _dist,
+                                                        _base.altitude,
+                                                    )
+                                                    _fow_69c.deploy_decoy(_dec_pos)
+                                                logger.debug("Deception: %d phantoms deployed for %s", _phantom_count, unit_id)
                                     except Exception:
                                         logger.debug("Deception activation failed for %s", unit_id, exc_info=True)
 
@@ -2569,6 +2625,18 @@ class BattleManager:
                 raw = delta / 330.0
                 elevation_mod = 1.0 + max(elevation_floor, min(elevation_cap, raw))
             except (IndexError, ValueError):
+                pass
+
+        # 6. Phase 69e: Burned zone concealment reduction
+        _inc_eng_69e = getattr(ctx, "incendiary_engine", None)
+        if _inc_eng_69e is not None:
+            try:
+                for _bz in _inc_eng_69e.get_burned_zones():
+                    _dx = target_pos.easting - _bz.center.easting
+                    _dy = target_pos.northing - _bz.center.northing
+                    if _dx * _dx + _dy * _dy <= _bz.radius_m * _bz.radius_m:
+                        concealment = max(0.0, concealment - _bz.concealment_reduction)
+            except (AttributeError, TypeError):
                 pass
 
         return cover, elevation_mod, concealment
@@ -3581,6 +3649,11 @@ class BattleManager:
                             pending_damage.append((best_target, air_status))
                         side_engagements += 1
                         routed_aggregate = True
+                        # Phase 69a: record sortie consumption
+                        _ato_69a = getattr(ctx, "ato_engine", None)
+                        if _ato_69a is not None:
+                            _sim_time_69a = ctx.clock.elapsed.total_seconds() if hasattr(ctx.clock, "elapsed") else 0.0
+                            _ato_69a.record_sortie(attacker.entity_id, _sim_time_69a)
 
                 # Phase 43a: era-aware aggregate model routing
                 # Phase 47: aggregate effectiveness modifier — terrain cover

@@ -424,6 +424,31 @@ class PlanningProcessEngine:
             return None
         return state.method
 
+    # -- Phase 69b: result retrieval ----------------------------------------
+
+    def get_planning_result(self, unit_id: str) -> str | None:
+        """Return the posture recommendation if planning is COMPLETE.
+
+        Returns ``None`` if no result or planning is not complete.
+        """
+        state = self._states.get(unit_id)
+        if state is None or state.phase != PlanningPhase.COMPLETE:
+            return None
+        coa = state.selected_coa
+        if coa is None:
+            return None
+        # Extract posture string from COA (may be raw str or object)
+        return getattr(coa, "posture", str(coa)) if not isinstance(coa, str) else coa
+
+    def consume_result(self, unit_id: str) -> str | None:
+        """Return and clear the planning result (one-shot consumption)."""
+        result = self.get_planning_result(unit_id)
+        if result is not None:
+            state = self._states.get(unit_id)
+            if state is not None:
+                state.selected_coa = None
+        return result
+
     # -- Result injection (called by orchestration layer) -------------------
 
     def set_analysis_result(self, unit_id: str, result: Any) -> None:
@@ -460,6 +485,11 @@ class PlanningProcessEngine:
         """
         state = self._states[unit_id]
         state.phase = PlanningPhase.COMPLETE
+
+        # Phase 69b: auto-generate COA if none was injected
+        if state.selected_coa is None:
+            # Bias toward action after planning delay
+            state.selected_coa = "ATTACK"
 
         # Extract COA info for the event
         selected_coa_id = ""

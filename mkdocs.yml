@@ -151,6 +151,7 @@ nav:
     - Phase 66 - Unconventional, Naval, & Cleanup: devlog/phase-66.md
     - Phase 67 - Integration Validation & Recalibration: devlog/phase-67.md
     - Phase 68 - Consequence Enforcement: devlog/phase-68.md
+    - Phase 69 - C2 Depth: devlog/phase-69.md
   - Specifications:
     - Project Structure: specs/project-structure.md
     - Skills & Hooks: skills-and-hooks.md

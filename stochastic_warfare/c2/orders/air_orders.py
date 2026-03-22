@@ -457,3 +457,61 @@ class ATOPlanningEngine:
         self._requests.clear()
 
         return entries
+
+    # -- Phase 69a: sortie tracking -----------------------------------------
+
+    def record_sortie(self, unit_id: str, end_time_s: float) -> bool:
+        """Record a completed sortie for *unit_id*.
+
+        Increments ``sorties_today`` and updates ``last_sortie_end_time_s``.
+        Returns ``False`` if the unit is not registered.
+        """
+        ac = self._aircraft.get(unit_id)
+        if ac is None:
+            return False
+        ac.sorties_today += 1
+        ac.last_sortie_end_time_s = end_time_s
+        logger.debug(
+            "ATO: recorded sortie for %s (sorties_today=%d, end_time=%.0fs)",
+            unit_id, ac.sorties_today, end_time_s,
+        )
+        return True
+
+    def reset_daily_sorties(self, current_time_s: float) -> int:
+        """Reset ``sorties_today`` for all aircraft.  Returns count reset."""
+        count = 0
+        for ac in self._aircraft.values():
+            if ac.sorties_today > 0:
+                ac.sorties_today = 0
+                count += 1
+        if count:
+            logger.debug("ATO: reset daily sorties for %d aircraft at t=%.0fs",
+                         count, current_time_s)
+        return count
+
+    def get_state(self) -> dict:
+        """Serialize engine state for checkpoint/restore."""
+        aircraft: dict[str, dict] = {}
+        for uid, ac in self._aircraft.items():
+            aircraft[uid] = {
+                "unit_id": ac.unit_id,
+                "mission_capable": ac.mission_capable,
+                "sorties_today": ac.sorties_today,
+                "max_sorties_per_day": ac.max_sorties_per_day,
+                "turnaround_time_s": ac.turnaround_time_s,
+                "last_sortie_end_time_s": ac.last_sortie_end_time_s,
+            }
+        return {"aircraft": aircraft}
+
+    def set_state(self, state: dict) -> None:
+        """Restore engine state from checkpoint."""
+        self._aircraft.clear()
+        for uid, data in state.get("aircraft", {}).items():
+            self._aircraft[uid] = AircraftAvailability(
+                unit_id=data["unit_id"],
+                mission_capable=data.get("mission_capable", True),
+                sorties_today=data.get("sorties_today", 0),
+                max_sorties_per_day=data.get("max_sorties_per_day", 2),
+                turnaround_time_s=data.get("turnaround_time_s", 7200.0),
+                last_sortie_end_time_s=data.get("last_sortie_end_time_s", -1e9),
+            )
