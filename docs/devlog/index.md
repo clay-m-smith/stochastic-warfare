@@ -86,6 +86,7 @@ Rolling record of implementation decisions, changes, and lessons learned across 
 | 68 | Consequence Enforcement | **Complete** | [phase-68.md](phase-68.md) |
 | 69 | C2 Depth | **Complete** | [phase-69.md](phase-69.md) |
 | 70 | Performance Optimization | **Complete** | [phase-70.md](phase-70.md) |
+| 71 | Missile & Carrier Ops Completion | **Complete** | [phase-71.md](phase-71.md) |
 
 ## Post-MVP Refinement Index
 

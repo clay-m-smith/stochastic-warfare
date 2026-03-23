@@ -417,6 +417,9 @@ class SimulationEngine:
                 except Exception:
                     logger.debug("Planning engine update failed", exc_info=True)
 
+            # Phase 71a: compute sim time early — needed by sortie reset below
+            _sim_time_s = ctx.clock.elapsed.total_seconds()
+
             # Phase 64c: ATO management — register aircraft + periodic generation
             if getattr(ctx, "ato_engine", None) is not None:
                 _cal_64c = getattr(ctx, "calibration", None)
@@ -441,7 +444,6 @@ class SimulationEngine:
                                     )
                                 except Exception:
                                     pass  # already registered or invalid
-                    _sim_time_s = ctx.clock.elapsed.total_seconds()
                     if _ato_c2:
                         _available = ctx.ato_engine.get_available_sorties(_sim_time_s)
                         logger.debug("ATO: %d sorties available at t=%.0fs", _available, _sim_time_s)

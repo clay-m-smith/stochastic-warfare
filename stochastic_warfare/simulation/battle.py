@@ -1444,6 +1444,178 @@ class BattleManager:
                 except Exception:
                     logger.debug("Phase 62a env casualty failed", exc_info=True)
 
+        # 4h. Phase 71b: missile flight resolution — advance in-flight missiles
+        _missile_eng_71 = getattr(ctx, "missile_engine", None)
+        _enable_missile_routing_71 = cal.get("enable_missile_routing", False)
+        _pending_missile_damage: list[tuple[Unit, UnitStatus]] = []
+        if _missile_eng_71 is not None and _enable_missile_routing_71:
+            _gps_acc_71 = 5.0
+            _space_eng_71 = getattr(ctx, "space_engine", None)
+            if _space_eng_71 is not None:
+                _gps_acc_71 = getattr(_space_eng_71, "get_gps_cep", lambda: 5.0)()
+
+            # Phase 71c: missile defense intercept — check AD units
+            _md_eng_71 = getattr(ctx, "missile_defense_engine", None)
+            if _md_eng_71 is not None:
+                for _m71 in list(_missile_eng_71.active_missiles):
+                    if not _m71.active:
+                        continue
+                    # Find which side launched this missile, defenders are the other side
+                    _launcher_side_71 = None
+                    for _s71, _su71 in units_by_side.items():
+                        for _u71 in _su71:
+                            if _u71.entity_id == _m71.launcher_id:
+                                _launcher_side_71 = _s71
+                                break
+                        if _launcher_side_71 is not None:
+                            break
+                    if _launcher_side_71 is None:
+                        continue
+                    for _ds71, _du71 in units_by_side.items():
+                        if _ds71 == _launcher_side_71:
+                            continue
+                        for _ad71 in _du71:
+                            if _ad71.status != UnitStatus.ACTIVE:
+                                continue
+                            # Check if unit has AD weapons
+                            _has_ad = False
+                            for _w71 in getattr(_ad71, "weapons", []):
+                                _wcat71 = getattr(getattr(_w71, "definition", _w71), "category", "")
+                                if _wcat71 in ("SAM", "CIWS", "MISSILE_LAUNCHER"):
+                                    _has_ad = True
+                                    break
+                            if not _has_ad:
+                                continue
+                            _dx71 = _ad71.position.easting - _m71.current_pos.easting
+                            _dy71 = _ad71.position.northing - _m71.current_pos.northing
+                            _dist71 = math.sqrt(_dx71 * _dx71 + _dy71 * _dy71)
+                            _ad_range_71 = getattr(_ad71, "max_engagement_range_m", 50000.0)
+                            if _dist71 > _ad_range_71:
+                                continue
+                            _ad_pk_71 = 0.7  # base Pk for AD systems
+                            from stochastic_warfare.combat.missiles import MissileType as _MT71
+                            if _m71.flight_profile.missile_type in (
+                                _MT71.CRUISE_SUBSONIC, _MT71.CRUISE_SUPERSONIC,
+                                _MT71.COASTAL_DEFENSE_SSM,
+                            ):
+                                _cmd_result = _md_eng_71.engage_cruise_missile(
+                                    defender_pk=_ad_pk_71,
+                                    missile_speed_mps=_m71.flight_profile.speed_mps,
+                                    sea_skimming=_m71.flight_profile.cruise_altitude_m < 20.0,
+                                    defender_id=_ad71.entity_id,
+                                    missile_id=_m71.missile_id,
+                                )
+                                if _cmd_result.hit:
+                                    _m71.active = False
+                                    logger.info(
+                                        "Missile %s intercepted by %s (cruise defense)",
+                                        _m71.missile_id, _ad71.entity_id,
+                                    )
+                                    break
+                            else:
+                                _bmd_result = _md_eng_71.engage_ballistic_missile(
+                                    defender_pks=[_ad_pk_71],
+                                    missile_speed_mps=_m71.flight_profile.speed_mps,
+                                    defender_id=_ad71.entity_id,
+                                    missile_id=_m71.missile_id,
+                                )
+                                if _bmd_result.intercepted:
+                                    _m71.active = False
+                                    logger.info(
+                                        "Missile %s intercepted by %s (BMD)",
+                                        _m71.missile_id, _ad71.entity_id,
+                                    )
+                                    break
+
+            # Advance missiles and resolve impacts
+            _impacts_71 = _missile_eng_71.update_missiles_in_flight(dt, gps_accuracy_m=_gps_acc_71)
+            _dest_thresh_71 = cal.get("destruction_threshold", self._config.destruction_threshold)
+            _dis_thresh_71 = cal.get("disable_threshold", self._config.disable_threshold)
+            for _impact_71 in _impacts_71:
+                if not _impact_71.hit:
+                    continue
+                # Find nearest unit to impact position
+                _best_unit_71: Unit | None = None
+                _best_dist_71 = 100.0  # max 100m search radius
+                for _su71b in units_by_side.values():
+                    for _u71b in _su71b:
+                        if _u71b.status != UnitStatus.ACTIVE:
+                            continue
+                        _dx71b = _u71b.position.easting - _impact_71.impact_pos.easting
+                        _dy71b = _u71b.position.northing - _impact_71.impact_pos.northing
+                        _d71b = math.sqrt(_dx71b * _dx71b + _dy71b * _dy71b)
+                        if _d71b < _best_dist_71:
+                            _best_dist_71 = _d71b
+                            _best_unit_71 = _u71b
+                if _best_unit_71 is not None:
+                    _apply_aggregate_casualties(
+                        max(1, int(_impact_71.damage_fraction * max(1, len(_best_unit_71.personnel) if _best_unit_71.personnel else 4))),
+                        _best_unit_71,
+                        _pending_missile_damage,
+                        _dest_thresh_71,
+                        _dis_thresh_71,
+                        self._cumulative_casualties,
+                    )
+                    logger.debug(
+                        "Missile %s hit unit %s (dmg=%.2f)",
+                        _impact_71.missile_id, _best_unit_71.entity_id,
+                        _impact_71.damage_fraction,
+                    )
+
+        # 4i. Phase 71d: carrier ops — CAP management and sortie rate
+        _carrier_eng_71 = getattr(ctx, "carrier_ops_engine", None)
+        _enable_carrier_ops_71 = cal.get("enable_carrier_ops", False)
+        if _carrier_eng_71 is not None and _enable_carrier_ops_71:
+            # Update CAP stations
+            try:
+                _cap_updates_71 = _carrier_eng_71.update_cap_stations(dt)
+                for _cap71 in _cap_updates_71:
+                    if _cap71.relief_needed:
+                        logger.debug("CAP station %s needs relief", _cap71.station_id)
+            except Exception:
+                logger.debug("CAP station update failed", exc_info=True)
+
+            # Process carrier units
+            _weather_eng_71 = getattr(ctx, "weather_engine", None)
+            for _side_name_71, _side_units_71 in units_by_side.items():
+                for _cu71 in _side_units_71:
+                    _ut71 = getattr(_cu71, "unit_type", "")
+                    if not ("carrier" in _ut71.lower() or "cv" in _ut71.lower()):
+                        continue
+                    if _cu71.status != UnitStatus.ACTIVE:
+                        continue
+                    # Sea state check — Beaufort > 7 suspends flight ops
+                    _sea_state_71 = 0.0
+                    if _weather_eng_71 is not None:
+                        _sea_state_71 = getattr(
+                            getattr(_weather_eng_71, "current", None), "sea_state", 0.0,
+                        )
+                    if _sea_state_71 > 7.0:
+                        logger.info(
+                            "Carrier %s: flight ops suspended (Beaufort %.0f)",
+                            _cu71.entity_id, _sea_state_71,
+                        )
+                        continue
+                    # Count aircraft assigned to this carrier
+                    _ac_count_71 = 0
+                    for _u71c in _side_units_71:
+                        if (
+                            getattr(_u71c, "parent_id", None) == _cu71.entity_id
+                            and getattr(_u71c, "domain", None) == Domain.AIR
+                        ):
+                            _ac_count_71 += 1
+                    from stochastic_warfare.combat.carrier_ops import DeckState
+                    _sortie_rate_71 = _carrier_eng_71.compute_sortie_rate(
+                        aircraft_available=_ac_count_71,
+                        deck_crew_quality=getattr(_cu71, "training_level", 0.7),
+                        weather_factor=max(0.0, 1.0 - _sea_state_71 * 0.1),
+                        deck_state=DeckState.IDLE,
+                    )
+                    logger.debug(
+                        "Carrier %s sortie rate: %.1f/hr (aircraft=%d)",
+                        _cu71.entity_id, _sortie_rate_71, _ac_count_71,
+                    )
+
         # 5. Rebuild enemy data after movement — position arrays from step 1
         #    are stale (captured pre-movement coordinates).  The Unit object
         #    references in active_enemies point to updated positions, but the
@@ -1455,8 +1627,9 @@ class BattleManager:
             ctx, units_by_side, active_enemies, enemy_pos_arrays, dt, timestamp,
             _unit_index=_unit_index,
         )
-        # Include mine damage
+        # Include mine damage and missile impact damage
         pending_damage.extend(pending_mine_damage)
+        pending_damage.extend(_pending_missile_damage)
 
         # 7. Apply deferred damage
         self._apply_deferred_damage(pending_damage, ctx.event_bus, timestamp)

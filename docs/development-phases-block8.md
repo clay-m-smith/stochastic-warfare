@@ -322,72 +322,56 @@ End-to-end performance benchmarks.
 
 ## Phase 71: Missile & Carrier Ops Completion
 
-**Status**: Not started.
+**Status**: Complete. 46 tests across 4 test files. 5 source files modified, 0 new source files.
 
-**Goal**: Close the two largest remaining engine gaps — missile flight-to-impact and carrier air operations.
+**Goal**: Close the two largest remaining engine gaps — missile flight-to-impact and carrier air operations. Fix 2 pre-existing bugs.
 
 **Dependencies**: Phase 70 (performance baseline established).
 
-### 71a: Missile Flight Resolution
+### 71a: Bug Fixes
 
-Wire MissileEngine per-tick flight update for launched missiles.
+Fix 2 pre-existing issues discovered during implementation planning.
 
-- **`stochastic_warfare/simulation/engine.py`** (modified) -- Each tick:
-  - For each in-flight missile: advance position along trajectory
-  - When missile reaches terminal phase (distance < terminal_range): resolve impact via MissileEngine
-  - On impact: apply damage to target, remove missile from tracking
-  - MISSILE engagement type routed through MissileEngine in battle.py
-- **`stochastic_warfare/simulation/battle.py`** (modified) -- MISSILE EngagementType routing:
-  - `_infer_engagement_type()` returns MISSILE for missile-category weapons
-  - Routing dispatches to MissileEngine terminal resolution
+- **`stochastic_warfare/simulation/engine.py`** (modified) -- Move `_sim_time_s` assignment before ATO sortie reset; remove duplicate
+- **`stochastic_warfare/combat/engagement.py`** (modified) -- Add missing `launcher_id`/`missile_id` args to COASTAL_DEFENSE and AIR_LAUNCHED_ASHM `launch_missile()` calls
 
-**Tests** (~12):
-- Missile launched → tracked in flight list
-- Missile advances position each tick (velocity * dt)
-- Terminal phase → impact resolved via MissileEngine Pk
-- Hit → target takes damage; miss → missile removed
-- Multiple simultaneous missiles tracked independently
+**Tests** (8): Source structure verification, arg presence in 3 engagement types
 
-### 71b: Missile Defense Intercept
+### 71b: Missile Flight Resolution
 
-Wire MissileDefenseEngine to detect and engage incoming missiles.
+Wire `MissileEngine.update_missiles_in_flight()` into battle.py execute_tick.
 
-- **`stochastic_warfare/simulation/engine.py`** (modified) -- Each tick:
-  - AD units with missile defense capability detect incoming missiles as contacts
-  - If contact within engagement envelope: roll intercept via MissileDefenseEngine
-  - Successful intercept → remove missile from flight list
-  - Failed intercept → missile continues to target
+- **`stochastic_warfare/simulation/battle.py`** (modified) -- Per-tick flight update after movement:
+  - Advance all active missiles, resolve impacts via CEP dispersion
+  - GPS accuracy from SpaceEngine feeds into missile CEP
+  - Impact damage applied via `_apply_aggregate_casualties()` to nearest unit within 100m
+  - Gated behind `enable_missile_routing` flag
 
-**Tests** (~10):
-- Incoming missile detected by AD radar
-- AD unit fires interceptor → intercept Pk applied
-- Successful intercept removes missile
-- Failed intercept → missile impacts target
-- Multiple intercept attempts on same missile (layered defense)
+**Tests** (12): Flight mechanics, impact resolution, GPS accuracy, battle loop integration
 
-### 71c: Carrier Ops Battle Loop
+### 71c: Missile Defense Intercept
 
-Wire CarrierOpsEngine into the battle loop for CAP, sortie dispatch, and recovery.
+Instantiate `MissileDefenseEngine` and wire AD intercept into missile flight update.
 
-- **`stochastic_warfare/simulation/battle.py`** (modified) -- Per tick for carrier units:
-  - CAP station management: launch fighters to designated CAP stations
-  - Sortie dispatch: launch strike aircraft per ATO plan
-  - Recovery window: aircraft return at fuel threshold, deck recovery timing
-  - Gate behind `enable_air_routing` flag
-- **`stochastic_warfare/simulation/engine.py`** (modified) -- CarrierOpsEngine.update() called each tick
+- **`stochastic_warfare/simulation/scenario.py`** (modified) -- Add `missile_defense_engine` field to SimulationContext + instantiation
+- **`stochastic_warfare/simulation/battle.py`** (modified) -- Per-tick: AD units (SAM/CIWS/MISSILE_LAUNCHER) attempt cruise/BMD intercept on active missiles
 
-**Tests** (~10):
-- Carrier launches CAP aircraft to designated station
-- CAP aircraft return when fuel below threshold
-- Sortie aircraft launch per ATO schedule
-- Recovery window blocks new launches during deck recovery
-- Carrier with no aircraft → no operations
+**Tests** (12): Instantiation, cruise/BMD intercept, sea-skimming penalty, multilayer defense
+
+### 71d: Carrier Ops Battle Loop
+
+Wire `CarrierOpsEngine` into battle loop for CAP management and sortie rate.
+
+- **`stochastic_warfare/simulation/calibration.py`** (modified) -- Add `enable_carrier_ops: bool = False`
+- **`stochastic_warfare/simulation/battle.py`** (modified) -- Per-tick carrier ops: CAP updates, sortie rate, Beaufort > 7 gate
+
+**Tests** (14): CAP station, sortie rate, sea state, CalibrationSchema field, battle loop integration
 
 ### Exit Criteria
-- Missile flight-to-impact resolution functional
-- Missile defense intercept functional
-- Carrier CAP/sortie/recovery cycle operational
-- ~32 new tests
+- Missile flight-to-impact resolution functional ✓
+- Missile defense intercept functional ✓
+- Carrier CAP/sortie/recovery cycle operational ✓
+- 46 new tests (vs ~32 planned)
 
 ---
 

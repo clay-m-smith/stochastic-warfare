@@ -196,6 +196,9 @@ class CalibrationSchema(BaseModel):
     retreat_distance_m: float = 2000.0
     misinterpretation_radius_m: float = 500.0
 
+    # -- Missile & carrier ops (Phase 71) -----------------------------------
+    enable_carrier_ops: bool = False
+
     # -- C2 depth (Phase 69) -----------------------------------------------
     enable_command_hierarchy: bool = False
     deception_phantom_count: int = 3

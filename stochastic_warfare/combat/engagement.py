@@ -410,6 +410,8 @@ class EngagementEngine:
                 )
             from stochastic_warfare.combat.missiles import MissileType
             missile_engine.launch_missile(
+                launcher_id=attacker_id,
+                missile_id=f"{attacker_id}_coastal_{current_time_s:.0f}",
                 ammo=ammo_def,
                 launch_pos=attacker_pos,
                 target_pos=target_pos,
@@ -430,6 +432,8 @@ class EngagementEngine:
                 )
             from stochastic_warfare.combat.missiles import MissileType
             missile_engine.launch_missile(
+                launcher_id=attacker_id,
+                missile_id=f"{attacker_id}_ashm_{current_time_s:.0f}",
                 ammo=ammo_def,
                 launch_pos=attacker_pos,
                 target_pos=target_pos,

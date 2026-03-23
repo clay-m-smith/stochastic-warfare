@@ -389,6 +389,9 @@ class SimulationContext:
     # Missile (Phase 63d)
     missile_engine: Any = None
 
+    # Missile Defense (Phase 71c)
+    missile_defense_engine: Any = None
+
     # Conditions facade (Phase 66b)
     conditions_facade: Any = None
 
@@ -1064,6 +1067,14 @@ class ScenarioLoader:
 
         missile_engine = MissileEngine(dmg_engine, bus, combat_rng)
 
+        # Missile defense engine (Phase 71c)
+        from stochastic_warfare.combat.missile_defense import MissileDefenseEngine
+
+        missile_defense_engine = MissileDefenseEngine(
+            event_bus=bus,
+            rng=combat_rng,
+        )
+
         # Indirect fire (Phase 43b)
         from stochastic_warfare.combat.indirect_fire import IndirectFireEngine
 
@@ -1419,6 +1430,7 @@ class ScenarioLoader:
             "los_engine": los_engine,
             "engagement_engine": engagement_engine,
             "missile_engine": missile_engine,
+            "missile_defense_engine": missile_defense_engine,
             "detection_engine": det_engine,
             "fog_of_war": fog_of_war,
             "morale_machine": morale_machine,

@@ -70,6 +70,7 @@ nav:
     - Block 5 Design: brainstorm-block5.md
     - Block 6 Design: brainstorm-block6.md
     - Block 7 Design: brainstorm-block7.md
+    - Block 8 Design: brainstorm-block8.md
   - Development Phases:
     - MVP (0-10): development-phases.md
     - Post-MVP (11-24): development-phases-post-mvp.md
@@ -79,6 +80,7 @@ nav:
     - Block 5 (40-48): development-phases-block5.md
     - Block 6 (49-57): development-phases-block6.md
     - Block 7 (58-67): development-phases-block7.md
+    - Block 8 (68-82): development-phases-block8.md
   - Devlog:
     - Overview: devlog/index.md
     - Phase 0 - Scaffolding: devlog/phase-0.md
@@ -153,6 +155,7 @@ nav:
     - Phase 68 - Consequence Enforcement: devlog/phase-68.md
     - Phase 69 - C2 Depth: devlog/phase-69.md
     - Phase 70 - Performance Optimization: devlog/phase-70.md
+    - Phase 71 - Missile & Carrier Ops Completion: devlog/phase-71.md
   - Specifications:
     - Project Structure: specs/project-structure.md
     - Skills & Hooks: skills-and-hooks.md

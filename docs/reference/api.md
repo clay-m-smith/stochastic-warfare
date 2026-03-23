@@ -465,6 +465,20 @@ Pydantic model (`extra="forbid"`) for all scenario tuning parameters. Replaces f
 | `icing_radar_penalty_db` | `float` | `3.0` | Radar detection loss in dB from radome ice |
 | `wind_bvr_missile_speed_mps` | `float` | `1000.0` | Reference missile speed for wind range modifier |
 
+**Consequence Enforcement & Ops (Phase 68--71):**
+
+| Field | Type | Default | Description |
+|-------|------|---------|-------------|
+| `enable_fuel_consumption` | `bool` | `False` | Consume fuel proportional to distance moved |
+| `enable_ammo_gate` | `bool` | `False` | Skip engagement when magazine exhausted |
+| `enable_missile_routing` | `bool` | `False` | Missile flight resolution + defense intercept |
+| `enable_carrier_ops` | `bool` | `False` | Carrier CAP/sortie rate/sea state gating |
+| `enable_command_hierarchy` | `bool` | `False` | Enforce command hierarchy for order propagation |
+| `fire_damage_per_tick` | `float` | `0.01` | Base fire zone damage fraction per tick |
+| `stratagem_duration_ticks` | `int` | `100` | Ticks before active stratagems expire |
+| `retreat_distance_m` | `float` | `2000.0` | Distance guerrilla units retreat after disengage |
+| `misinterpretation_radius_m` | `float` | `500.0` | Position offset for misinterpreted orders |
+
 All `enable_*` flags default to `False` for backward compatibility. Enable them in scenario YAML to activate the corresponding effects.
 
 ---
