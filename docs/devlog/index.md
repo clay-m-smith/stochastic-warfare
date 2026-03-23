@@ -88,6 +88,7 @@ Rolling record of implementation decisions, changes, and lessons learned across 
 | 70 | Performance Optimization | **Complete** | [phase-70.md](phase-70.md) |
 | 71 | Missile & Carrier Ops Completion | **Complete** | [phase-71.md](phase-71.md) |
 | 72 | Checkpoint & State Completeness | **Complete** | [phase-72.md](phase-72.md) |
+| 73 | Historical Scenario Correctness | **Complete** | [phase-73.md](phase-73.md) |
 
 ## Post-MVP Refinement Index
 

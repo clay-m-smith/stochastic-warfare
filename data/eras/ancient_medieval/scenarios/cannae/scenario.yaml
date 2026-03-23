@@ -70,10 +70,13 @@ objectives:
     type: key_terrain
 
 victory_conditions:
+  # Carthaginian wins by destroying/disabling Roman legions — historically ~85% Roman casualties
   - type: force_destroyed
-    side: ""
+    side: carthaginian
     params:
-      threshold: 0.7
+      threshold: 0.5
+      target_side: roman
+      count_disabled: true
   - type: morale_collapsed
     side: roman
     params:
@@ -85,24 +88,29 @@ victory_conditions:
 
 calibration_overrides:
   hit_probability_modifier: 0.6
-  target_size_modifier: 0.7
-  morale_degrade_rate_modifier: 2.0
+  # Dupuy CEV: Hannibal's double envelopment at Cannae is history's most decisive tactical
+  # victory — 3.0:0.5 reflects encirclement trapping dense Roman maniples
+  # (Goldsworthy, *Cannae*; Daly, *Cannae: The Experience of Battle*).
+  carthaginian_force_ratio_modifier: 3.0
+  roman_force_ratio_modifier: 0.5
+  # Romans packed in dense formation, trapped by envelopment = extremely vulnerable
+  target_size_modifier_roman: 2.5
+  target_size_modifier_carthaginian: 0.4
+  morale_degrade_rate_modifier: 3.0
   morale_base_degrade_rate: 0.015
-  morale_casualty_weight: 0.6
+  morale_casualty_weight: 0.9
   morale_check_interval: 15
-  carthaginian_force_ratio_modifier: 1.8
-  roman_force_ratio_modifier: 1.0
   carthaginian_cohesion: 0.9
   roman_cohesion: 0.4
   destruction_threshold: 0.3
   max_engagers_per_side: 3
-  defensive_sides:
-    - carthaginian
+  # Neither side purely defensive — Carthaginian center deliberately gave ground
   carthaginian_start_x: 500.0
   carthaginian_start_y: 1500.0
   # Spread Carthaginian line across the field (4 units × 300m ≈ 900m)
   carthaginian_formation_spacing_m: 300.0
-  roman_start_x: 3500.0
+  # Reduced from 3500 to 1500 — 1000m separation for faster melee engagement
+  roman_start_x: 1500.0
   roman_start_y: 1500.0
   # Roman triplex acies: 5 units × 250m ≈ 1000m frontage
   # prevents legions + equites collapsing onto a single point

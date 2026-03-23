@@ -1,6 +1,6 @@
 # Mathematical Models
 
-Stochastic Warfare uses 10 mathematical and stochastic models to drive simulation behavior. Each model is grounded in established operations research, signal processing, or military science literature.
+Stochastic Warfare uses 11 mathematical and stochastic models to drive simulation behavior. Each model is grounded in established operations research, signal processing, or military science literature.
 
 ---
 
@@ -403,6 +403,63 @@ Damage occurs when power density exceeds the target's damage threshold for a suf
 
 ---
 
+## 11. Calibration Methodology (Dupuy CEV)
+
+### What It Models
+
+Per-scenario calibration of combat effectiveness using **Dupuy's Combat Effectiveness Value (CEV)** concept from *Numbers, Predictions, and War* (1979). CEV captures the aggregate quality advantage of one force over another — encompassing training, morale, leadership, technology, tactical situation, and terrain advantage as a single scalar multiplier.
+
+### Key Concept
+
+Each side in a scenario has a `force_ratio_modifier` in `calibration_overrides`. This is the CEV scalar:
+
+```yaml
+calibration_overrides:
+  french_force_ratio_modifier: 2.5   # French CEV
+  coalition_force_ratio_modifier: 1.0  # Coalition CEV (baseline)
+```
+
+The ratio of CEVs (here 2.5:1) determines how effectively each side converts its numerical strength into combat power. A CEV of 2.5 means that side fights as if it had 2.5x its actual numbers.
+
+### Calibration Parameters
+
+The full calibration toolkit includes:
+
+| Parameter | Purpose | Typical Range |
+|-----------|---------|---------------|
+| `force_ratio_modifier` | Per-side CEV (Dupuy quality scalar) | 0.4 – 3.0 |
+| `target_size_modifier_{side}` | Per-side vulnerability (formation density, exposure) | 0.3 – 3.0 |
+| `hit_probability_modifier` | Global Pk scaling | 0.5 – 1.8 |
+| `destruction_threshold` | Fraction of force lost to trigger force_destroyed | 0.25 – 0.7 |
+| `morale_degrade_rate_modifier` | Speed of morale degradation | 0.3 – 3.0 |
+| `morale_casualty_weight` | How much casualties affect morale | 0.4 – 0.9 |
+| `target_side` | Which side's losses trigger force_destroyed | side name |
+| `count_disabled` | Include DISABLED units in loss calculation | true/false |
+
+### Per-Scenario CEV Table
+
+| Scenario | Winner CEV | Loser CEV | Ratio | Source |
+|----------|-----------|-----------|-------|--------|
+| Austerlitz | 2.5 (French) | 1.0 (Coalition) | 2.5:1 | Chandler, *Campaigns of Napoleon* |
+| Trafalgar | 2.5 (British) | 0.6 (French-Spanish) | 4.2:1 | Lambert, *Nelson* |
+| Agincourt | 3.0 (English) | 0.4 (French) | 7.5:1 | Barker, *Agincourt*; Keegan, *Face of Battle* |
+| Cannae | 3.0 (Carthaginian) | 0.5 (Roman) | 6.0:1 | Goldsworthy, *Cannae* |
+| Salamis | 3.0 (Greek) | 0.4 (Persian) | 7.5:1 | Strauss, *Battle of Salamis* |
+| Midway | 3.0 (USN) | 0.5 (IJN) | 6.0:1 | Parshall & Tully, *Shattered Sword* |
+| Hastings | 1.5 (Norman) | 1.2 (Saxon) | 1.25:1 | Gravett, *Hastings 1066* |
+
+### Note on Circular Calibration
+
+CEV values are calibrated to produce correct historical outcomes — the same outcomes they are derived from. This circularity is acceptable for **historical validation** (confirming the engine can reproduce known results with plausible parameters) but does not constitute **predictive validation**. Predictive validation requires testing against engagements not used for calibration, which is done via the Monte Carlo regression suite with multiple seeds.
+
+### Where Used
+
+- `calibration_overrides` in every scenario YAML
+- `simulation/calibration.py` — `CalibrationSchema` pydantic model
+- `simulation/battle.py` — applied during engagement resolution
+
+---
+
 ## Summary Table
 
 | Model | Module | Purpose | Key Formula |
@@ -417,3 +474,4 @@ Damage occurs when power density exceeds the target's damage threshold for a suf
 | Wayne Hughes | combat | Naval missile exchange | leakers = max(0, aA - bD) |
 | Boyd OODA | ai | Commander decision cycle | phase_time * modifiers * lognormal |
 | Beer-Lambert | combat | DEW transmittance | tau = exp(-alpha * R) |
+| Dupuy CEV | calibration | Per-scenario force quality | force_ratio_modifier per side |

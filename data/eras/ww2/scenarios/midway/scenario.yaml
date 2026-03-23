@@ -20,8 +20,9 @@ weather_conditions:
   humidity: 0.70
 
 terrain:
-  width_m: 100000
-  height_m: 80000
+  # Reduced from 100km×80km to bring forces within carrier strike range faster
+  width_m: 50000
+  height_m: 40000
   cell_size_m: 1000.0
   base_elevation_m: 0.0
   terrain_type: open_ocean
@@ -49,15 +50,19 @@ sides:
 
 objectives:
   - objective_id: midway_atoll
-    position: [50000, 40000]
+    position: [25000, 20000]
     radius_m: 5000
     type: territory
 
 victory_conditions:
+  # USN wins by destroying/disabling IJN carriers — historically all 4 sunk
   - type: force_destroyed
-    side: ""
+    side: usn
     params:
-      threshold: 0.5
+      # 4 carriers disabled/destroyed out of 14 IJN units = 28.6%; threshold 0.25 captures this
+      threshold: 0.25
+      target_side: ijn
+      count_disabled: true
   - type: time_expired
     side: usn
     params:
@@ -66,18 +71,25 @@ victory_conditions:
 calibration_overrides:
   hit_probability_modifier: 0.8
   target_size_modifier: 1.0
-  morale_degrade_rate_modifier: 0.3
+  # Dupuy CEV: USN had ULTRA intelligence + caught IJN carriers with armed aircraft on deck
+  # (Parshall & Tully, *Shattered Sword*). CEV 3.0:0.5 reflects decisive surprise advantage.
+  usn_force_ratio_modifier: 3.0
+  ijn_force_ratio_modifier: 0.5
+  # IJN carriers with fueled/armed aircraft = catastrophically vulnerable (magazine detonations)
+  target_size_modifier_ijn: 2.0
+  target_size_modifier_usn: 0.5
+  morale_degrade_rate_modifier: 1.5
   morale_base_degrade_rate: 0.005
-  morale_casualty_weight: 0.5
+  morale_casualty_weight: 0.8
   morale_check_interval: 30
-  usn_force_ratio_modifier: 1.5
-  ijn_force_ratio_modifier: 1.0
   usn_cohesion: 0.8
   ijn_cohesion: 0.7
-  usn_start_x: 20000.0
-  usn_start_y: 40000.0
-  ijn_start_x: 80000.0
-  ijn_start_y: 40000.0
+  destruction_threshold: 0.25
+  # 30km separation — within carrier strike range (~16km weapon range)
+  usn_start_x: 10000.0
+  usn_start_y: 20000.0
+  ijn_start_x: 40000.0
+  ijn_start_y: 20000.0
   weapon_assignments:
     "5-inch/38 Mk 12 Gun (4x2 turrets)": 5in38_naval
     "5-inch/38 Mk 12 Gun (x5)": 5in38_naval

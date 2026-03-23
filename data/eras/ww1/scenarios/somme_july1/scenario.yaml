@@ -75,10 +75,13 @@ victory_conditions:
     side: british
     params:
       threshold: 0.5
+  # British wins only if German force is destroyed (historically implausible)
   - type: force_destroyed
-    side: ""
+    side: british
     params:
       threshold: 0.7
+      target_side: german
+  # German defensive victory if British offensive fails to break through
   - type: time_expired
     side: german
     params:
@@ -95,7 +98,8 @@ calibration_overrides:
   german_cohesion: 0.85
   target_size_modifier_british: 3.0
   target_size_modifier_german: 0.2
-  destruction_threshold: 0.25
+  # Raised from 0.25 to prevent premature British annihilation triggering generic force_destroyed
+  destruction_threshold: 0.4
   observation_decay_rate: 0.02
   german_force_ratio_modifier: 1.3
   british_start_x: 2000.0

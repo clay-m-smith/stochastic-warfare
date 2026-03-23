@@ -75,7 +75,7 @@ See the [Getting Started Guide](guide/getting-started.md) for a complete tutoria
 | Block 7 | 58--67 | Final engine hardening — structural verification, environment wiring, engine integration | **Complete** |
 | Block 8 | 68-- | Consequence enforcement, scenario expansion | **In Progress** |
 
-**~9,566 tests** (~9,294 Python + 272 frontend) across ~360 test files. **~735 YAML data files** defining units, weapons, ammunition types, sensors, signatures, doctrines, commanders, and 41 scenarios across 5 eras.
+**~9,588 tests** (~9,316 Python + 272 frontend) across ~360 test files. **~735 YAML data files** defining units, weapons, ammunition types, sensors, signatures, doctrines, commanders, and 41 scenarios across 5 eras.
 
 ## License
 

@@ -70,10 +70,13 @@ objectives:
     type: territory
 
 victory_conditions:
+  # English wins by destroying/disabling French force — historically ~50% French casualties + mass prisoners
   - type: force_destroyed
-    side: ""
+    side: english
     params:
-      threshold: 0.7
+      threshold: 0.3
+      target_side: french
+      count_disabled: true
   - type: morale_collapsed
     side: french
     params:
@@ -85,22 +88,28 @@ victory_conditions:
 
 calibration_overrides:
   defensive_sides: [english]
-  hit_probability_modifier: 0.7
-  target_size_modifier: 0.8
-  morale_degrade_rate_modifier: 0.5
+  # Dupuy CEV: English longbows devastated massed French cavalry in narrow muddy field.
+  # 3.0:0.4 reflects terrain advantage + longbow lethality + French disorder
+  # (Barker, *Agincourt*; Keegan, *The Face of Battle*).
+  english_force_ratio_modifier: 3.0
+  french_force_ratio_modifier: 0.4
+  hit_probability_modifier: 1.2
+  # French massed cavalry in dense formation = extremely large targets
+  target_size_modifier_french: 2.5
+  target_size_modifier_english: 0.3
+  morale_degrade_rate_modifier: 2.0
   morale_base_degrade_rate: 0.012
-  morale_casualty_weight: 0.5
+  morale_casualty_weight: 0.8
   morale_check_interval: 20
-  english_force_ratio_modifier: 1.0
-  french_force_ratio_modifier: 0.8
   english_cohesion: 0.80
   french_cohesion: 0.45
-  destruction_threshold: 0.4
+  destruction_threshold: 0.3
   english_start_x: 300.0
   english_start_y: 500.0
   # Spread English longbow line across the 1km frontage
   english_formation_spacing_m: 150.0
-  french_start_x: 1700.0
+  # Reduced from 1700 to 600 — within longbow effective range (~250m) from start
+  french_start_x: 600.0
   french_start_y: 500.0
   # Wide formation prevents cavalry converging on a single point;
   # 200m spacing across 4 units ≈ 600m frontage (historical narrow field)

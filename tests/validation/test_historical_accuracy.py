@@ -86,7 +86,9 @@ DECISIVE_COMBAT_SCENARIOS: set[str] = {
     "73_easting", "bekaa_valley_1982", "korean_peninsula",
     "suwalki_gap", "taiwan_strait",
     "normandy_bocage", "stalingrad", "austerlitz", "waterloo",
-    "cambrai", "somme_july1", "hastings",
+    "cambrai", "hastings",
+    # Phase 73: historical scenarios fixed to produce decisive outcomes
+    "agincourt", "cannae", "salamis", "midway",
 }
 
 
@@ -218,6 +220,30 @@ class TestVictoryConditions:
         condition = result.get("victory_condition", "")
         assert condition != "time_expired", (
             f"{scenario} resolved via time_expired — should reach decisive outcome"
+        )
+
+
+class TestVictoryConditionTypes:
+    """Phase 73: Specific victory condition type assertions."""
+
+    def test_somme_is_time_expired(self, results_by_name_seed42):
+        """Somme should resolve via time_expired (German defensive victory)."""
+        if "somme_july1" not in results_by_name_seed42:
+            pytest.skip("somme_july1 not in evaluation results")
+        result = results_by_name_seed42["somme_july1"]
+        condition = result.get("victory_condition", "")
+        assert condition == "time_expired", (
+            f"Somme should be time_expired (German defense held), got {condition}"
+        )
+
+    def test_somme_not_force_destroyed(self, results_by_name_seed42):
+        """Somme must NOT resolve via force_destroyed."""
+        if "somme_july1" not in results_by_name_seed42:
+            pytest.skip("somme_july1 not in evaluation results")
+        result = results_by_name_seed42["somme_july1"]
+        condition = result.get("victory_condition", "")
+        assert condition != "force_destroyed", (
+            f"Somme should not resolve via force_destroyed — historically a failed offensive"
         )
 
 

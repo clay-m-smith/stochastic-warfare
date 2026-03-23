@@ -436,7 +436,7 @@ Remove or mark get_state/set_state implementations that serve no purpose.
 
 ## Phase 73: Historical Scenario Correctness
 
-**Status**: Not started.
+**Status**: Complete. ~22 tests (18 structural + 4 validation). 5 scenario YAMLs modified, 1 doc modified, 1 test file modified, 1 new test file.
 
 **Goal**: Make historical scenarios resolve via historically accurate victory conditions, not `time_expired` clock runout.
 

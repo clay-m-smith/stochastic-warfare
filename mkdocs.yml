@@ -157,6 +157,7 @@ nav:
     - Phase 70 - Performance Optimization: devlog/phase-70.md
     - Phase 71 - Missile & Carrier Ops Completion: devlog/phase-71.md
     - Phase 72 - Checkpoint & State Completeness: devlog/phase-72.md
+    - Phase 73 - Historical Scenario Correctness: devlog/phase-73.md
   - Specifications:
     - Project Structure: specs/project-structure.md
     - Skills & Hooks: skills-and-hooks.md
