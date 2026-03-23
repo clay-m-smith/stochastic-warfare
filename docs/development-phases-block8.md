@@ -506,7 +506,7 @@ Document the Dupuy CEV rationale for each historical scenario.
 
 ## Phase 74: Combat Engine Unit Tests
 
-**Status**: Not started.
+**Status**: Complete — 472 tests across 32 test files + conftest.py.
 
 **Goal**: Add dedicated unit tests for all 33 combat engine files — currently 0% unit test coverage.
 

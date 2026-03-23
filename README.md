@@ -1,8 +1,8 @@
 # Stochastic Warfare
 
 ![Python](https://img.shields.io/badge/python-%3E%3D3.12-blue)
-![Tests](https://img.shields.io/badge/tests-9%2C294_passing-brightgreen)
-![Phase](https://img.shields.io/badge/phase-72_Block--8--IN_PROGRESS-orange)
+![Tests](https://img.shields.io/badge/tests-9%2C729_passing-brightgreen)
+![Phase](https://img.shields.io/badge/phase-74_Block--8--IN_PROGRESS-orange)
 
 High-fidelity, high-resolution wargame simulator built as a headless Python engine. Models warfare across multiple scales — from individual unit engagements up through tactical battles, operational battlefields, and multi-day strategic campaigns — with stochastic and signal-processing-inspired models throughout.
 
@@ -163,7 +163,7 @@ data/                     # ~735 YAML data files
   eras/                    # Era-specific data packages (WW2, WW1, Napoleonic, Ancient/Medieval)
   scenarios/              # 27 modern scenarios (engagement, campaign, EW, space, CBRN, escalation, joint) + 5 test
 
-tests/                    # ~9,295 engine+API+frontend tests across ~350 test files
+tests/                    # ~9,750 engine+API+frontend tests across ~400 test files
 docs/                     # specs, brainstorm, devlog, development phases
 ```
 
@@ -250,6 +250,7 @@ All 11 MVP phases (0-10) are complete. Post-MVP Phases 11-24 are complete (deep 
 | 71 | Missile & Carrier Ops Completion (Block 8) | 46 | **Complete** |
 | 72 | Checkpoint & State Completeness (Block 8) | 139 | **Complete** |
 | 73 | Historical Scenario Correctness (Block 8) | ~22 | **Complete** |
+| 74 | Combat Engine Unit Tests (Block 8) | 472 | **Complete** |
 | | **Total** | **~9,316** | |
 
 For the full phase roadmap, see [`docs/development-phases.md`](docs/development-phases.md) (MVP), [`docs/development-phases-post-mvp.md`](docs/development-phases-post-mvp.md) (post-MVP), [`docs/development-phases-block4.md`](docs/development-phases-block4.md) (Block 4), [`docs/development-phases-block5.md`](docs/development-phases-block5.md) (Block 5), [`docs/development-phases-block6.md`](docs/development-phases-block6.md) (Block 6), [`docs/development-phases-block7.md`](docs/development-phases-block7.md) (Block 7), and [`docs/development-phases-block8.md`](docs/development-phases-block8.md) (Block 8). For per-phase implementation logs, see [`docs/devlog/`](docs/devlog/).

@@ -158,6 +158,7 @@ nav:
     - Phase 71 - Missile & Carrier Ops Completion: devlog/phase-71.md
     - Phase 72 - Checkpoint & State Completeness: devlog/phase-72.md
     - Phase 73 - Historical Scenario Correctness: devlog/phase-73.md
+    - Phase 74 - Combat Engine Unit Tests: devlog/phase-74.md
   - Specifications:
     - Project Structure: specs/project-structure.md
     - Skills & Hooks: skills-and-hooks.md

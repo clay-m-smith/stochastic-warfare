@@ -324,8 +324,8 @@ class TestSalamis:
 
     def test_narrow_terrain(self):
         cfg = _load_era_scenario("ancient_medieval", "salamis")
-        assert cfg.terrain.width_m == 8000
-        assert cfg.terrain.height_m == 4000
+        assert cfg.terrain.width_m == 3000
+        assert cfg.terrain.height_m == 2000
 
     def test_has_documented_outcomes(self):
         raw = yaml.safe_load(
