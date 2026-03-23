@@ -535,6 +535,34 @@ class SimulationContext:
             ("detection_engine", self.detection_engine),
             ("movement_engine", self.movement_engine),
             ("conditions_engine", self.conditions_engine),
+            # Phase 72a: previously missing engines — Combat
+            ("engagement_engine", self.engagement_engine),
+            ("suppression_engine", self.suppression_engine),
+            ("air_combat_engine", self.air_combat_engine),
+            ("air_ground_engine", self.air_ground_engine),
+            ("air_defense_engine", self.air_defense_engine),
+            ("missile_engine", self.missile_engine),
+            ("missile_defense_engine", self.missile_defense_engine),
+            # Phase 72a: previously missing engines — WW2
+            ("naval_gunnery_engine", self.naval_gunnery_engine),
+            ("convoy_engine", self.convoy_engine),
+            ("strategic_bombing_engine", self.strategic_bombing_engine),
+            # Phase 72a: previously missing engines — Environment
+            ("time_of_day_engine", self.time_of_day_engine),
+            ("seasons_engine", self.seasons_engine),
+            ("obscurants_engine", self.obscurants_engine),
+            # Phase 72a: previously missing engines — C2/AI
+            ("order_propagation", self.order_propagation),
+            ("assessor", self.assessor),
+            ("decision_engine", self.decision_engine),
+            ("adaptation_engine", self.adaptation_engine),
+            ("roe_engine", self.roe_engine),
+            # Phase 72a: previously missing engines — Other
+            ("rout_engine", self.rout_engine),
+            ("ew_engine", self.ew_engine),
+            ("consumption_engine", self.consumption_engine),
+            ("supply_network_engine", self.supply_network_engine),
+            ("command_engine", self.command_engine),
         ]
         for name, eng in engines:
             if eng is not None and hasattr(eng, "get_state"):
@@ -617,6 +645,34 @@ class SimulationContext:
             ("detection_engine", self.detection_engine),
             ("movement_engine", self.movement_engine),
             ("conditions_engine", self.conditions_engine),
+            # Phase 72a: previously missing engines — Combat
+            ("engagement_engine", self.engagement_engine),
+            ("suppression_engine", self.suppression_engine),
+            ("air_combat_engine", self.air_combat_engine),
+            ("air_ground_engine", self.air_ground_engine),
+            ("air_defense_engine", self.air_defense_engine),
+            ("missile_engine", self.missile_engine),
+            ("missile_defense_engine", self.missile_defense_engine),
+            # Phase 72a: previously missing engines — WW2
+            ("naval_gunnery_engine", self.naval_gunnery_engine),
+            ("convoy_engine", self.convoy_engine),
+            ("strategic_bombing_engine", self.strategic_bombing_engine),
+            # Phase 72a: previously missing engines — Environment
+            ("time_of_day_engine", self.time_of_day_engine),
+            ("seasons_engine", self.seasons_engine),
+            ("obscurants_engine", self.obscurants_engine),
+            # Phase 72a: previously missing engines — C2/AI
+            ("order_propagation", self.order_propagation),
+            ("assessor", self.assessor),
+            ("decision_engine", self.decision_engine),
+            ("adaptation_engine", self.adaptation_engine),
+            ("roe_engine", self.roe_engine),
+            # Phase 72a: previously missing engines — Other
+            ("rout_engine", self.rout_engine),
+            ("ew_engine", self.ew_engine),
+            ("consumption_engine", self.consumption_engine),
+            ("supply_network_engine", self.supply_network_engine),
+            ("command_engine", self.command_engine),
         ]
         for name, eng in engines:
             if eng is not None and name in state and hasattr(eng, "set_state"):

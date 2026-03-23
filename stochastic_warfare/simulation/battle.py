@@ -1924,6 +1924,17 @@ class BattleManager:
             "vls_launches": dict(self._vls_launches),
             "ammo_expended": dict(self._ammo_expended),
             "pending_decisions": dict(self._pending_decisions),
+            # Phase 72b: previously missing state
+            "ticks_stationary": dict(self._ticks_stationary),
+            "suppression_states": {
+                uid: s.get_state()
+                for uid, s in self._suppression_states.items()
+            },
+            "cumulative_casualties": dict(self._cumulative_casualties),
+            "undigging": dict(self._undigging),
+            "concealment_scores": dict(self._concealment_scores),
+            "env_casualty_accum": dict(self._env_casualty_accum),
+            "misinterpreted_orders": dict(self._misinterpreted_orders),
         }
 
     def set_state(self, state: dict[str, Any]) -> None:
@@ -1946,6 +1957,22 @@ class BattleManager:
                 wave_assignments=bdata.get("wave_assignments", {}),
                 battle_elapsed_s=bdata.get("battle_elapsed_s", 0.0),
             )
+        # Phase 72b: restore previously missing state
+        self._ticks_stationary = dict(state.get("ticks_stationary", {}))
+        self._cumulative_casualties = dict(state.get("cumulative_casualties", {}))
+        self._undigging = dict(state.get("undigging", {}))
+        self._concealment_scores = {
+            k: float(v) for k, v in state.get("concealment_scores", {}).items()
+        }
+        self._env_casualty_accum = {
+            k: float(v) for k, v in state.get("env_casualty_accum", {}).items()
+        }
+        self._misinterpreted_orders = dict(state.get("misinterpreted_orders", {}))
+        self._suppression_states = {}
+        for uid, sdata in state.get("suppression_states", {}).items():
+            s = UnitSuppressionState()
+            s.set_state(sdata)
+            self._suppression_states[uid] = s
 
     @property
     def active_battles(self) -> list[BattleContext]:

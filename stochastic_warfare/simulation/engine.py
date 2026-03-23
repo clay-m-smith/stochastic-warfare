@@ -20,6 +20,7 @@ from typing import Any
 
 from pydantic import BaseModel
 
+from stochastic_warfare.core.checkpoint import NumpyEncoder, _numpy_object_hook
 from stochastic_warfare.core.logging import get_logger
 from stochastic_warfare.core.types import Position
 from stochastic_warfare.entities.base import UnitStatus
@@ -170,6 +171,9 @@ class SimulationEngine:
 
         # Checkpoints
         self._checkpoints: list[dict[str, Any]] = []
+
+        # Phase 72c: proper init for checkpoint (replaces hasattr guard)
+        self._last_ato_day: int = -1
 
         # Phase 63b: subscribe to logistics events if enabled
         self._register_event_handlers()
@@ -426,7 +430,7 @@ class SimulationEngine:
                 _ato_c2 = _cal_64c is not None and _cal_64c.get("enable_c2_friction", False)
                 # Phase 69a: daily sortie reset at day boundary
                 _cur_day_69a = int(_sim_time_s / 86400)
-                if not hasattr(self, "_last_ato_day"):
+                if self._last_ato_day < 0:
                     self._last_ato_day = _cur_day_69a
                 if _cur_day_69a > self._last_ato_day:
                     ctx.ato_engine.reset_daily_sorties(_sim_time_s)
@@ -1273,6 +1277,8 @@ class SimulationEngine:
             "context": self._ctx.get_state(),
             "campaign": self._campaign.get_state(),
             "battle": self._battle.get_state(),
+            # Phase 72c: proper checkpoint of _last_ato_day
+            "last_ato_day": self._last_ato_day,
         }
         if self._victory is not None:
             state["victory"] = self._victory.get_state()
@@ -1289,6 +1295,8 @@ class SimulationEngine:
         self._ctx.set_state(state["context"])
         self._campaign.set_state(state.get("campaign", {}))
         self._battle.set_state(state.get("battle", {}))
+        # Phase 72c: restore _last_ato_day
+        self._last_ato_day = state.get("last_ato_day", -1)
 
         if self._victory is not None and "victory" in state:
             self._victory.set_state(state["victory"])
@@ -1298,11 +1306,11 @@ class SimulationEngine:
     def checkpoint(self) -> bytes:
         """Serialize engine state to bytes."""
         state = self.get_state()
-        return json.dumps(state, default=str).encode("utf-8")
+        return json.dumps(state, cls=NumpyEncoder).encode("utf-8")
 
     def restore(self, data: bytes) -> None:
         """Restore engine state from serialized bytes."""
-        state = json.loads(data.decode("utf-8"))
+        state = json.loads(data.decode("utf-8"), object_hook=_numpy_object_hook)
         self.set_state(state)
 
     # ── Internal state ───────────────────────────────────────────────

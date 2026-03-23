@@ -377,7 +377,7 @@ Wire `CarrierOpsEngine` into battle loop for CAP management and sortie rate.
 
 ## Phase 72: Checkpoint & State Completeness
 
-**Status**: Not started.
+**Status**: **Complete**. 139 tests across 4 test files. 3 modified source files, 0 new.
 
 **Goal**: Make checkpoint/restore produce identical simulation state by registering all engine state with CheckpointManager.
 
