@@ -152,6 +152,7 @@ nav:
     - Phase 67 - Integration Validation & Recalibration: devlog/phase-67.md
     - Phase 68 - Consequence Enforcement: devlog/phase-68.md
     - Phase 69 - C2 Depth: devlog/phase-69.md
+    - Phase 70 - Performance Optimization: devlog/phase-70.md
   - Specifications:
     - Project Structure: specs/project-structure.md
     - Skills & Hooks: skills-and-hooks.md

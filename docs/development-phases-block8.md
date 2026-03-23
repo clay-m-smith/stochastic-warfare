@@ -251,7 +251,7 @@ Wire `BurnedZone.concealment_reduction` into the detection pipeline.
 
 ## Phase 70: Performance Optimization
 
-**Status**: Not started.
+**Status**: Complete.
 
 **Goal**: Eliminate O(n^2) hot paths in battle.py. Target: Golan Heights from 417s to <120s.
 
@@ -1100,9 +1100,9 @@ Update memory and verify cross-document consistency.
 
 | Phase | Focus | Est. Tests | Cumulative | Status |
 |-------|-------|------------|------------|--------|
-| 68 | Consequence Enforcement | ~54 | ~9,031 | Not started |
-| 69 | C2 Depth | ~36 | ~9,067 | Not started |
-| 70 | Performance Optimization | ~20 | ~9,087 | Not started |
+| 68 | Consequence Enforcement | 67 | ~9,085 | Complete |
+| 69 | C2 Depth | 41 | ~9,085 | Complete |
+| 70 | Performance Optimization | 24 | ~9,109 | Complete |
 | 71 | Missile & Carrier Ops | ~32 | ~9,119 | Not started |
 | 72 | Checkpoint & State | ~26 | ~9,145 | Not started |
 | 73 | Historical Scenario Correctness | ~22 | ~9,167 | Not started |

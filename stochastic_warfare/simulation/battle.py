@@ -832,6 +832,7 @@ def _movement_target(
     unit_pos: Position,
     enemies: list[Unit],
     centroid_weight: float = 0.5,
+    enemy_pos_arr: np.ndarray | None = None,
 ) -> tuple[float, float]:
     """Compute a blended movement target from centroid and nearest enemy.
 
@@ -839,12 +840,24 @@ def _movement_target(
     (general advance toward the line) and the nearest enemy (local
     threat response).  This produces natural "lines closing" behavior
     rather than all units collapsing onto a single point.
+
+    Phase 70a: vectorized path when *enemy_pos_arr* (shape (m,2)) is provided.
     """
-    # Centroid
+    if enemy_pos_arr is not None and enemy_pos_arr.shape[0] > 0:
+        centroid = np.mean(enemy_pos_arr, axis=0)
+        upos = np.array([unit_pos.easting, unit_pos.northing])
+        diffs = enemy_pos_arr - upos
+        nearest = enemy_pos_arr[int(np.argmin(np.sum(diffs * diffs, axis=1)))]
+        w = centroid_weight
+        return (
+            float(centroid[0] * w + nearest[0] * (1 - w)),
+            float(centroid[1] * w + nearest[1] * (1 - w)),
+        )
+
+    # Scalar fallback
     cx = sum(e.position.easting for e in enemies) / len(enemies)
     cy = sum(e.position.northing for e in enemies) / len(enemies)
 
-    # Nearest enemy
     best_dist_sq = float("inf")
     nx, ny = cx, cy
     ux, uy = unit_pos.easting, unit_pos.northing
@@ -856,13 +869,24 @@ def _movement_target(
             best_dist_sq = d2
             nx, ny = e.position.easting, e.position.northing
 
-    # Blend
     w = centroid_weight
     return cx * w + nx * (1 - w), cy * w + ny * (1 - w)
 
 
-def _nearest_enemy_dist(unit_pos: Position, enemies: list[Unit]) -> float:
-    """Return distance to the closest enemy."""
+def _nearest_enemy_dist(
+    unit_pos: Position,
+    enemies: list[Unit],
+    enemy_pos_arr: np.ndarray | None = None,
+) -> float:
+    """Return distance to the closest enemy.
+
+    Phase 70a: vectorized path when *enemy_pos_arr* (shape (m,2)) is provided.
+    """
+    if enemy_pos_arr is not None and enemy_pos_arr.shape[0] > 0:
+        upos = np.array([unit_pos.easting, unit_pos.northing])
+        diffs = enemy_pos_arr - upos
+        return float(np.sqrt(np.min(np.sum(diffs * diffs, axis=1))))
+
     best = float("inf")
     ux, uy = unit_pos.easting, unit_pos.northing
     for e in enemies:
@@ -1025,6 +1049,8 @@ class BattleManager:
         self._pending_decisions: dict[str, float] = {}
         # Phase 68d: misinterpreted order info (unit_id → PropagationResult)
         self._misinterpreted_orders: dict[str, Any] = {}
+        # Phase 70c: signature cache (unit_type → signature profile, immutable)
+        self._signature_cache: dict[str, Any] = {}
 
     # ── Engagement detection ────────────────────────────────────────
 
@@ -1110,6 +1136,12 @@ class BattleManager:
         # 1. Pre-build per-side active enemy lists and position arrays
         active_enemies, enemy_pos_arrays = self._build_enemy_data(units_by_side)
 
+        # 1a. Phase 70b: entity_id → Unit index for O(1) lookups
+        _unit_index: dict[str, Unit] = {}
+        for _side_units_idx in units_by_side.values():
+            for _u_idx in _side_units_idx:
+                _unit_index[_u_idx.entity_id] = _u_idx
+
         # 1b. Phase 53a: Fog of war — per-side detection picture
         _enable_fow = cal.get("enable_fog_of_war", False)
         if _enable_fow and getattr(ctx, "fog_of_war", None) is not None:
@@ -1131,10 +1163,14 @@ class BattleManager:
                     for _eu in _other_units:
                         if _eu.status != UnitStatus.ACTIVE:
                             continue
+                        # Phase 70c: cached signature lookup
+                        _eu_ut = getattr(_eu, "unit_type", "")
+                        if _eu_ut not in self._signature_cache:
+                            self._signature_cache[_eu_ut] = _get_unit_signature(ctx, _eu)
                         _enemy_data.append({
                             "unit_id": _eu.entity_id,
                             "position": _eu.position,
-                            "signature": _get_unit_signature(ctx, _eu),
+                            "signature": self._signature_cache[_eu_ut],
                             "unit": _eu,
                             "target_height": 0.0,
                         })
@@ -1178,7 +1214,10 @@ class BattleManager:
                 if u.status == UnitStatus.ACTIVE:
                     pre_positions[u.entity_id] = (u.position.easting, u.position.northing)
 
-        self._execute_movement(ctx, units_by_side, active_enemies, dt, battle, behavior_rules)
+        self._execute_movement(
+            ctx, units_by_side, active_enemies, dt, battle, behavior_rules,
+            enemy_pos_arrays=enemy_pos_arrays,
+        )
 
         # 4b. Update posture based on movement (Phase 40b)
         defensive_sides = set(cal.get("defensive_sides", []))
@@ -1245,7 +1284,10 @@ class BattleManager:
                         if int(np_attr) == 3:  # BATTLE_STATIONS → UNDERWAY
                             object.__setattr__(u, "naval_posture", NavalPosture.UNDERWAY)
                         continue
-                    min_dist = _nearest_enemy_dist(u.position, enemies)
+                    min_dist = _nearest_enemy_dist(
+                        u.position, enemies,
+                        enemy_pos_arr=enemy_pos_arrays.get(side_name),
+                    )
                     if min_dist < self._config.engagement_range_m * 2:
                         object.__setattr__(u, "naval_posture", NavalPosture.BATTLE_STATIONS)
                     elif int(np_attr) == 3:  # No longer in threat range
@@ -1411,6 +1453,7 @@ class BattleManager:
         # 6. Engagement — detection + combat
         pending_damage = self._execute_engagements(
             ctx, units_by_side, active_enemies, enemy_pos_arrays, dt, timestamp,
+            _unit_index=_unit_index,
         )
         # Include mine damage
         pending_damage.extend(pending_mine_damage)
@@ -1423,13 +1466,12 @@ class BattleManager:
         if cal is not None and cal.get("enable_fire_zones", False):
             _inc_eng_fz = getattr(ctx, "incendiary_engine", None)
             if _inc_eng_fz is not None and _inc_eng_fz._active_zones:
-                _unit_positions: dict[str, Position] = {}
-                _unit_lookup: dict[str, Unit] = {}
-                for _side_units in units_by_side.values():
-                    for _fu in _side_units:
-                        if _fu.status == UnitStatus.ACTIVE:
-                            _unit_positions[_fu.entity_id] = _fu.position
-                            _unit_lookup[_fu.entity_id] = _fu
+                # Phase 70b: reuse _unit_index for O(1) lookup
+                _unit_positions: dict[str, Position] = {
+                    uid: u.position for uid, u in _unit_index.items()
+                    if u.status == UnitStatus.ACTIVE
+                }
+                _unit_lookup = _unit_index
                 _fire_hits = _inc_eng_fz.units_in_fire(_unit_positions)
                 _fire_damage_base = cal.get("fire_damage_per_tick", 0.01)
                 _fire_pending: list[tuple[Unit, UnitStatus]] = []
@@ -2240,6 +2282,7 @@ class BattleManager:
         dt: float,
         battle: BattleContext | None = None,
         behavior_rules: dict[str, Any] | None = None,
+        enemy_pos_arrays: dict[str, np.ndarray] | None = None,
     ) -> None:
         """Execute movement for all active units."""
         cal = ctx.calibration
@@ -2251,10 +2294,29 @@ class BattleManager:
         # Sides that should hold position (defensive doctrine)
         defensive_sides = set(cal.get("defensive_sides", []))
 
+        # Phase 70c: hoist movement-loop calibration lookups
+        _mv_enable_sea_state = cal.get("enable_sea_state_ops", False)
+        _mv_enable_seasonal = cal.get("enable_seasonal_effects", False)
+        _mv_enable_obstacle = cal.get("enable_obstacle_effects", False)
+        _mv_enable_fire_zones = cal.get("enable_fire_zones", False)
+        _mv_enable_obscurants = cal.get("enable_obscurants", False)
+        _mv_enable_fuel = cal.get("enable_fuel_consumption", False)
+
+        # Phase 70c: hoist movement-loop engine references
+        _mv_maint_eng = getattr(ctx, "maintenance_engine", None)
+        _mv_seasons_eng = getattr(ctx, "seasons_engine", None)
+        _mv_weather_eng = getattr(ctx, "weather_engine", None)
+        _mv_trench_eng = getattr(ctx, "trench_engine", None)
+        _mv_obs_eng = getattr(ctx, "obscurants_engine", None)
+        _mv_inc_eng = getattr(ctx, "incendiary_engine", None)
+        _mv_obstacle_mgr = getattr(ctx, "obstacle_manager", None)
+
         for side, units in units_by_side.items():
             enemies = active_enemies.get(side, [])
             if not enemies:
                 continue
+            # Phase 70a: pre-fetched numpy position array for vectorized helpers
+            _epa = enemy_pos_arrays.get(side) if enemy_pos_arrays is not None else None
 
             # If behavior_rules explicitly say hold_position, skip this side
             side_rules = _rules.get(side, {})
@@ -2264,6 +2326,21 @@ class BattleManager:
             # Defensive sides don't advance
             if side in defensive_sides:
                 continue
+
+            # Phase 70b: hoist formation sort — compute once per side, not per unit
+            _sorted_active = sorted(
+                [ou for ou in units if ou.status == UnitStatus.ACTIVE],
+                key=lambda ou: ou.entity_id,
+            )
+            _unit_formation_idx: dict[str, int] = {
+                ou.entity_id: i for i, ou in enumerate(_sorted_active)
+            }
+            _n_sorted = len(_sorted_active)
+            # Phase 70c: hoist side-specific formation spacing
+            _spacing_side = cal.get(
+                f"{side}_formation_spacing_m",
+                cal.get("formation_spacing_m", 50.0),
+            )
 
             for u in units:
                 if u.status != UnitStatus.ACTIVE:
@@ -2310,7 +2387,7 @@ class BattleManager:
                         continue
 
                 # Phase 61a: sea state ops — Beaufort speed penalty + tidal current
-                if cal.get("enable_sea_state_ops", False):
+                if _mv_enable_sea_state:
                     _domain_61 = getattr(u, "domain", None)
                     if _domain_61 in (Domain.NAVAL, Domain.SUBMARINE, Domain.AMPHIBIOUS):
                         _sse = getattr(ctx, "sea_state_engine", None)
@@ -2339,10 +2416,9 @@ class BattleManager:
                             continue
 
                 # Phase 56b: readiness-based movement speed penalty
-                _maint = getattr(ctx, "maintenance_engine", None)
-                if _maint is not None:
+                if _mv_maint_eng is not None:
                     try:
-                        _rdns = _maint.get_unit_readiness(u.entity_id)
+                        _rdns = _mv_maint_eng.get_unit_readiness(u.entity_id)
                         if _rdns < 1.0:
                             effective_speed *= max(0.3, _rdns)
                             if effective_speed <= 0:
@@ -2360,42 +2436,27 @@ class BattleManager:
                 # Standoff: stop closing once within best weapon range
                 # of the nearest enemy
                 standoff = _standoff_range(u, ctx)
-                nearest_dist = _nearest_enemy_dist(u.position, enemies)
+                nearest_dist = _nearest_enemy_dist(u.position, enemies, enemy_pos_arr=_epa)
                 if nearest_dist <= standoff:
                     continue
 
                 # Blend centroid + nearest enemy for movement target,
                 # then add a perpendicular offset to maintain formation
                 # spacing and prevent centroid collapse.
-                tx, ty = _movement_target(u.position, enemies)
+                tx, ty = _movement_target(u.position, enemies, enemy_pos_arr=_epa)
                 dx = tx - u.position.easting
                 dy = ty - u.position.northing
                 dist = math.sqrt(dx * dx + dy * dy)
                 if dist < 1.0:
                     continue
 
-                # Index-based formation offset: assign each unit a fixed
-                # lateral position based on formation_spacing_m to prevent
-                # centroid collapse.  Units are sorted by entity_id for
-                # stability across ticks.
-                own_units = sorted(
-                    [ou for ou in units if ou.status == UnitStatus.ACTIVE],
-                    key=lambda ou: ou.entity_id,
-                )
-                n_own = len(own_units)
-                if n_own > 1:
-                    _spacing = cal.get(
-                        f"{side}_formation_spacing_m",
-                        cal.get("formation_spacing_m", 50.0),
-                    )
-                    _idx = next(
-                        (i for i, ou in enumerate(own_units)
-                         if ou.entity_id == u.entity_id), 0
-                    )
+                # Phase 70b: hoisted formation index — O(1) lookup per unit
+                if _n_sorted > 1:
+                    _idx = _unit_formation_idx.get(u.entity_id, 0)
                     # Lateral offset: center the formation around the advance
                     # axis so units stay evenly spaced perpendicular to the
                     # direction of movement.
-                    _lat_offset = (_idx - (n_own - 1) / 2.0) * _spacing
+                    _lat_offset = (_idx - (_n_sorted - 1) / 2.0) * _spacing_side
                     perp_x, perp_y = -dy / dist, dx / dist
                     tx += perp_x * _lat_offset
                     ty += perp_y * _lat_offset
@@ -2407,10 +2468,9 @@ class BattleManager:
                         continue
 
                 # Phase 54b: trench movement factor (WW1)
-                trench_eng = getattr(ctx, "trench_engine", None)
-                if trench_eng is not None and u.position is not None:
+                if _mv_trench_eng is not None and u.position is not None:
                     try:
-                        mvt_factor = trench_eng.movement_factor_at(
+                        mvt_factor = _mv_trench_eng.movement_factor_at(
                             u.position.easting, u.position.northing,
                         )
                         if mvt_factor < 1.0:
@@ -2419,11 +2479,10 @@ class BattleManager:
                         pass
 
                 # Phase 59a: seasonal ground condition speed modifier
-                _seasons = getattr(ctx, "seasons_engine", None)
-                if _seasons is not None and cal.get("enable_seasonal_effects", False):
+                if _mv_seasons_eng is not None and _mv_enable_seasonal:
                     _domain = getattr(u, "domain", None)
                     if _domain not in (Domain.NAVAL, Domain.AERIAL, Domain.SUBMARINE):
-                        _sc = _seasons.current
+                        _sc = _mv_seasons_eng.current
                         _ms = getattr(u, "max_speed", 0)
                         if _ms > 15:  # wheeled
                             _mud_mult = max(0.1, 1.0 - _sc.mud_depth / 0.3)
@@ -2438,9 +2497,8 @@ class BattleManager:
                             continue
 
                 # Phase 59c: wind gust operational gates
-                _wx = getattr(ctx, "weather_engine", None)
-                if _wx is not None and cal.get("enable_seasonal_effects", False):
-                    _gust = getattr(_wx.current.wind, "gust", 0)
+                if _mv_weather_eng is not None and _mv_enable_seasonal:
+                    _gust = getattr(_mv_weather_eng.current.wind, "gust", 0)
                     _domain = getattr(u, "domain", None)
                     if _domain == Domain.AERIAL:
                         _utype = str(getattr(u, "unit_type", ""))
@@ -2474,11 +2532,10 @@ class BattleManager:
                     continue
 
                 # Phase 59d: obstacle traversal speed reduction
-                if cal.get("enable_obstacle_effects", False):
-                    _obs_mgr = getattr(ctx, "obstacle_manager", None)
-                    if _obs_mgr is not None:
+                if _mv_enable_obstacle:
+                    if _mv_obstacle_mgr is not None:
                         try:
-                            _obstacles = _obs_mgr.obstacles_at(u.position)
+                            _obstacles = _mv_obstacle_mgr.obstacles_at(u.position)
                             for _obs in _obstacles:
                                 _tmult = getattr(_obs, "traversal_time_multiplier", 1.0)
                                 if _tmult > 1.0:
@@ -2489,12 +2546,11 @@ class BattleManager:
                         continue
 
                 # Phase 60b: fire zones block movement
-                if cal.get("enable_fire_zones", False):
-                    _inc_eng_mv = getattr(ctx, "incendiary_engine", None)
-                    if _inc_eng_mv is not None and _inc_eng_mv._active_zones:
+                if _mv_enable_fire_zones:
+                    if _mv_inc_eng is not None and _mv_inc_eng._active_zones:
                         _tent_nx = u.position.easting + (dx / dist) * move_dist
                         _tent_ny = u.position.northing + (dy / dist) * move_dist
-                        for _fz in _inc_eng_mv._active_zones:
+                        for _fz in _mv_inc_eng._active_zones:
                             _fz_dx = _tent_nx - _fz.center[0]
                             _fz_dy = _tent_ny - _fz.center[1]
                             if math.sqrt(_fz_dx**2 + _fz_dy**2) < _fz.current_radius_m:
@@ -2508,25 +2564,23 @@ class BattleManager:
                 object.__setattr__(u, "position", Position(nx, ny, u.position.altitude))
 
                 # Phase 60b: vehicle movement dust trail on dry ground
-                _obs_engine_mv = getattr(ctx, "obscurants_engine", None)
-                if _obs_engine_mv is not None and cal.get("enable_obscurants", False):
+                if _mv_obs_eng is not None and _mv_enable_obscurants:
                     _domain = getattr(u, "domain", None)
                     if _domain not in (Domain.NAVAL, Domain.AERIAL, Domain.SUBMARINE):
                         if _is_vehicle and move_dist > 5.0:
-                            _seasons_mv = getattr(ctx, "seasons_engine", None)
                             _is_dry = True
-                            if _seasons_mv is not None:
+                            if _mv_seasons_eng is not None:
                                 from stochastic_warfare.environment.seasons import GroundState
-                                _is_dry = _seasons_mv.current.ground_state == GroundState.DRY
+                                _is_dry = _mv_seasons_eng.current.ground_state == GroundState.DRY
                             if _is_dry:
                                 try:
                                     _dust_r = 10.0 + effective_speed * 0.5
-                                    _obs_engine_mv.add_dust(u.position, radius=_dust_r)
+                                    _mv_obs_eng.add_dust(u.position, radius=_dust_r)
                                 except Exception:
                                     pass
 
                 # Phase 68a: consume fuel proportional to distance moved
-                if cal.get("enable_fuel_consumption", False) and _is_vehicle and hasattr(u, "fuel_remaining"):
+                if _mv_enable_fuel and _is_vehicle and hasattr(u, "fuel_remaining"):
                     _domain_fuel = getattr(u, "domain", None)
                     _fuel_rate = getattr(u, "fuel_consumption_rate", None)
                     if _fuel_rate is None:
@@ -2705,6 +2759,7 @@ class BattleManager:
         enemy_pos_arrays: dict[str, np.ndarray],
         dt: float,
         timestamp: datetime,
+        _unit_index: dict[str, Unit] | None = None,
     ) -> list[tuple[Unit, UnitStatus]]:
         """Run detection + engagement for all units. Returns deferred damage."""
         pending_damage: list[tuple[Unit, UnitStatus]] = []
@@ -2808,6 +2863,56 @@ class BattleManager:
         if ctx.engagement_engine is None:
             return pending_damage
 
+        # Phase 70c: hoist calibration lookups (each cal.get checks 4 patterns)
+        _enable_seasonal = cal.get("enable_seasonal_effects", False)
+        _enable_em_prop = cal.get("enable_em_propagation", False)
+        _enable_nvg = cal.get("enable_nvg_detection", False)
+        _enable_thermal_xo = cal.get("enable_thermal_crossover", False)
+        _enable_obscurants = cal.get("enable_obscurants", False)
+        _enable_acoustic = cal.get("enable_acoustic_layers", False)
+        _enable_human_factors = cal.get("enable_human_factors", False)
+        _enable_air_combat_env = cal.get("enable_air_combat_environment", False)
+        _enable_unconventional = cal.get("enable_unconventional_warfare", False)
+        _enable_ammo_gate = cal.get("enable_ammo_gate", False)
+        _enable_fire_zones = cal.get("enable_fire_zones", False)
+        _enable_missile_routing = cal.get("enable_missile_routing", False)
+        _enable_air_routing = cal.get("enable_air_routing", False)
+        _enable_sea_state_ops = cal.get("enable_sea_state_ops", False)
+        _enable_equip_stress = cal.get("enable_equipment_stress", False)
+        _observation_decay = cal.get("observation_decay_rate", 0.05)
+        _rain_atten_factor = cal.get("rain_attenuation_factor", 1.0)
+        _stealth_penalty = cal.get("stealth_detection_penalty", 0.0)
+        _sigint_bonus = cal.get("sigint_detection_bonus", 0.0)
+        _eng_conceal_thresh = cal.get("engagement_concealment_threshold", 0.5)
+        _dest_thresh = cal.get("destruction_threshold", self._config.destruction_threshold)
+        _dis_thresh = cal.get("disable_threshold", self._config.disable_threshold)
+        _sam_supp = cal.get("sam_suppression_modifier", 0.0)
+        _wind_accuracy_scale = cal.get("wind_accuracy_penalty_scale", 0.03)
+        _jammer_mult = cal.get("jammer_coverage_mult", 1.0)
+        _dew_disable_thresh = cal.get("dew_disable_threshold", 0.5)
+        _night_thermal_floor = cal.get("night_thermal_floor", 0.8)
+
+        # Phase 70c: hoist engine references (each getattr is O(1) but ~95 per tick)
+        _weather_eng = getattr(ctx, "weather_engine", None)
+        _tod_eng = getattr(ctx, "time_of_day_engine", None)
+        _sea_eng = getattr(ctx, "sea_state_engine", None)
+        _cbrn_eng = getattr(ctx, "cbrn_engine", None)
+        _obs_eng = getattr(ctx, "obscurants_engine", None)
+        _ua_eng = getattr(ctx, "underwater_acoustics_engine", None)
+        _ew_eng = getattr(ctx, "ew_engine", None)
+        _eccm_eng = getattr(ctx, "eccm_engine", None)
+        _det_eng = getattr(ctx, "detection_engine", None)
+        _space_eng = getattr(ctx, "space_engine", None)
+        _seasons_eng = getattr(ctx, "seasons_engine", None)
+        _maint_eng = getattr(ctx, "maintenance_engine", None)
+        _inc_eng = getattr(ctx, "incendiary_engine", None)
+        _conditions_eng = getattr(ctx, "conditions_engine", None)
+        _gas_eng = getattr(ctx, "gas_warfare_engine", None)
+        _uw_eng = getattr(ctx, "unconventional_engine", None)
+        _pop_eng = getattr(ctx, "population_engine", None)
+        _sup_eng = getattr(ctx, "suppression_engine", None)
+        _air_combat_eng = getattr(ctx, "air_combat_engine", None)
+
         for side_name, side_units in units_by_side.items():
             enemies = active_enemies.get(side_name, [])
             pos_arr = enemy_pos_arrays.get(side_name, np.empty((0, 2)))
@@ -2839,16 +2944,16 @@ class BattleManager:
                         continue
 
                 # Phase 66b: data link range gates UAV engagement
-                if cal.get("enable_unconventional_warfare", False):
+                if _enable_unconventional:
                     _dlr = getattr(attacker, "data_link_range", None)
                     if _dlr is not None and _dlr > 0:
+                        # Phase 70b: O(1) parent lookup via _unit_index
                         _cmd_pos_dlr = None
                         _cmd_id_dlr = getattr(attacker, "parent_id", None)
                         if _cmd_id_dlr:
-                            for _su_dlr in units_by_side.get(side_name, []):
-                                if _su_dlr.entity_id == _cmd_id_dlr:
-                                    _cmd_pos_dlr = getattr(_su_dlr, "position", None)
-                                    break
+                            _parent_dlr = _unit_index.get(_cmd_id_dlr)
+                            if _parent_dlr is not None:
+                                _cmd_pos_dlr = getattr(_parent_dlr, "position", None)
                         if _cmd_pos_dlr is not None:
                             _dx_dlr = attacker.position.easting - _cmd_pos_dlr.easting
                             _dy_dlr = attacker.position.northing - _cmd_pos_dlr.northing
@@ -2885,9 +2990,8 @@ class BattleManager:
                 # Phase 41a: terrain modifiers
                 # Phase 59b: pass seasonal vegetation for concealment bonus
                 _sv = 0.0
-                _seas59 = getattr(ctx, "seasons_engine", None)
-                if _seas59 is not None and cal.get("enable_seasonal_effects", False):
-                    _sv = _seas59.current.vegetation_density
+                if _seasons_eng is not None and _enable_seasonal:
+                    _sv = _seasons_eng.current.vegetation_density
                 terrain_cover, elevation_mod, concealment = self._compute_terrain_modifiers(
                     ctx, best_target.position, attacker.position,
                     elevation_cap=self._config.elevation_advantage_cap,
@@ -2906,12 +3010,12 @@ class BattleManager:
                             weather_independent = True
 
                 # Phase 61c: radar horizon gate + EM ducting
-                if cal.get("enable_em_propagation", False) and weather_independent:
+                if _enable_em_prop and weather_independent:
                     _best_st_em = getattr(
                         sensors[0] if sensors else None, "sensor_type", None,
                     )
                     if _best_st_em == SensorType.RADAR:
-                        _em_env = getattr(ctx, "conditions_engine", None)
+                        _em_env = _conditions_eng
                         if _em_env is not None:
                             try:
                                 # Antenna height: aircraft=altitude, ship~30m, ground~10m
@@ -2955,7 +3059,7 @@ class BattleManager:
                 if best_target.speed > 0.5:
                     self._concealment_scores[tid] = terrain_concealment * 0.5
                 # Decay with sustained observation
-                decay = cal.get("observation_decay_rate", 0.05)
+                decay = _observation_decay
                 self._concealment_scores[tid] = max(
                     0.0, self._concealment_scores[tid] - decay,
                 )
@@ -2971,7 +3075,7 @@ class BattleManager:
                 if not weather_independent:
                     detection_range *= night_visual_modifier
                     # Phase 60c: NVG detection recovery
-                    if cal.get("enable_nvg_detection", False) and night_visual_modifier < 1.0:
+                    if _enable_nvg and night_visual_modifier < 1.0:
                         _has_nvg = any(
                             getattr(s, "sensor_type", None) == SensorType.NVG
                             for s in sensors
@@ -2986,7 +3090,7 @@ class BattleManager:
                             except Exception:
                                 pass
                 else:
-                    if cal.get("enable_thermal_crossover", False):
+                    if _enable_thermal_xo:
                         _tdc = thermal_dt_contrast
                         if _tdc < 0.5 and getattr(best_target, "speed", 0) > 1.0:
                             _tdc = max(_tdc, 0.5)
@@ -2999,12 +3103,12 @@ class BattleManager:
                     _rain_f = _compute_rain_detection_factor(
                         precipitation_rate_mmhr, detection_range / 1000.0,
                     )
-                    _rain_scale = cal.get("rain_attenuation_factor", 1.0)
+                    _rain_scale = _rain_atten_factor
                     detection_range *= _rain_f ** _rain_scale
 
                 # Phase 62d: icing degrades radar detection (ice on radome)
-                if cal.get("enable_air_combat_environment", False) and weather_independent:
-                    _cond62r = getattr(ctx, "conditions_engine", None)
+                if _enable_air_combat_env and weather_independent:
+                    _cond62r = _conditions_eng
                     if _cond62r is not None:
                         try:
                             _air62r = _cond62r.air()
@@ -3021,29 +3125,28 @@ class BattleManager:
                 # Phase 44b: CBRN MOPP detection degradation
                 mopp_fatigue_factor = 1.0
                 _mopp_level_62 = 0
-                cbrn_engine = getattr(ctx, "cbrn_engine", None)
-                if cbrn_engine is not None:
+                if _cbrn_eng is not None:
                     try:
-                        _spd, _det, _fat = cbrn_engine.get_mopp_effects(
+                        _spd, _det, _fat = _cbrn_eng.get_mopp_effects(
                             attacker.entity_id,
                         )
                         detection_range *= _det
                         mopp_fatigue_factor = _fat
-                        _mopp_level_62 = getattr(cbrn_engine, "_mopp_levels", {}).get(
+                        _mopp_level_62 = getattr(_cbrn_eng, "_mopp_levels", {}).get(
                             attacker.entity_id, 0,
                         )
                     except Exception:
                         pass
 
                 # Phase 62b: MOPP FOV reduction (beyond existing detection_factor)
-                if cal.get("enable_human_factors", False) and _mopp_level_62 > 0:
+                if _enable_human_factors and _mopp_level_62 > 0:
                     _fov_full = cal.mopp_fov_reduction_4  # MOPP-4 multiplier
                     _fov_scale = _mopp_level_62 / 4.0
                     _fov_mod = 1.0 - _fov_scale * (1.0 - _fov_full)
                     detection_range *= _fov_mod
 
                 # Phase 62b: altitude sickness → detection range penalty
-                if cal.get("enable_human_factors", False):
+                if _enable_human_factors:
                     _alt62 = getattr(attacker.position, "altitude", 0.0)
                     if _alt62 > cal.altitude_sickness_threshold_m:
                         _alt_perf = max(
@@ -3057,10 +3160,9 @@ class BattleManager:
 
                 # Phase 55c-1: WW1 gas warfare MOPP — query gas mask protection
                 _gas_protection = 0.0
-                _gas_engine = getattr(ctx, "gas_warfare_engine", None)
-                if _gas_engine is not None:
+                if _gas_eng is not None:
                     try:
-                        _mopp, _gas_protection = _gas_engine.get_effective_mopp_level(
+                        _mopp, _gas_protection = _gas_eng.get_effective_mopp_level(
                             best_target.entity_id,
                             time_since_alert_s=ctx.clock.elapsed.total_seconds(),
                         )
@@ -3073,10 +3175,9 @@ class BattleManager:
                     detection_range *= _NAVAL_POSTURE_DETECT_MULT.get(int(_tnp), 1.0)
 
                 # Phase 60a: obscurant opacity at target position
-                _obs_engine = getattr(ctx, "obscurants_engine", None)
-                if _obs_engine is not None and cal.get("enable_obscurants", False):
+                if _obs_eng is not None and _enable_obscurants:
                     try:
-                        _opacity = _obs_engine.opacity_at(best_target.position)
+                        _opacity = _obs_eng.opacity_at(best_target.position)
                         if not weather_independent:
                             detection_range *= (1.0 - _opacity.visual)
                         else:
@@ -3091,7 +3192,7 @@ class BattleManager:
                         pass
 
                 # Phase 61b: acoustic layer modifiers for sonar sensors
-                if cal.get("enable_acoustic_layers", False) and sensors:
+                if _enable_acoustic and sensors:
                     _best_st61 = getattr(
                         sensors[0] if sensors else None, "sensor_type", None,
                     )
@@ -3101,10 +3202,9 @@ class BattleManager:
                         SensorType.PASSIVE_ACOUSTIC,
                     })
                     if _best_st61 in _SONAR_TYPES_61:
-                        _ua61 = getattr(ctx, "underwater_acoustics_engine", None)
-                        if _ua61 is not None:
+                        if _ua_eng is not None:
                             try:
-                                _ac = _ua61.conditions
+                                _ac = _ua_eng.conditions
                                 _obs_depth = getattr(attacker, "depth", 0.0)
                                 _tgt_depth = getattr(best_target, "depth", 0.0)
                                 _layer_mod = 1.0
@@ -3122,7 +3222,7 @@ class BattleManager:
                                             and _tgt_depth > _ac.surface_duct_depth):
                                         _layer_mod *= 0.06  # +15 dB loss
                                 # Convergence zones
-                                _cz_ranges = _ua61.convergence_zone_ranges(_obs_depth)
+                                _cz_ranges = _ua_eng.convergence_zone_ranges(_obs_depth)
                                 _in_cz = any(
                                     abs(best_range - cz_r) < 5000
                                     for cz_r in _cz_ranges
@@ -3140,14 +3240,13 @@ class BattleManager:
 
                 # Phase 41d: detection quality modulates engagement effectiveness
                 detection_quality_mod = 1.0
-                det_engine = getattr(ctx, "detection_engine", None)
-                if det_engine is not None and sensors:
+                if _det_eng is not None and sensors:
                     best_snr = -100.0
                     for sensor in sensors:
                         if best_range > getattr(sensor, "effective_range", 0.0):
                             continue
                         try:
-                            snr = det_engine.compute_snr_visual(
+                            snr = _det_eng.compute_snr_visual(
                                 sensor, 1.0, best_range, visibility_m=visibility_m,
                             )
                             if snr > best_snr:
@@ -3160,10 +3259,9 @@ class BattleManager:
                         detection_quality_mod = min(1.0, max(0.3, snr_linear / 10.0))
 
                 # Phase 44b: EW jamming degrades radar/electronic detection
-                ew_engine = getattr(ctx, "ew_engine", None)
-                if ew_engine is not None and weather_independent:
+                if _ew_eng is not None and weather_independent:
                     try:
-                        snr_penalty_db = ew_engine.compute_radar_snr_penalty(
+                        snr_penalty_db = _ew_eng.compute_radar_snr_penalty(
                             sensor_pos=attacker.position,
                             sensor_freq_ghz=getattr(
                                 sensors[0], "frequency_ghz", 10.0,
@@ -3181,13 +3279,12 @@ class BattleManager:
                         )
                         if snr_penalty_db > 0:
                             # Phase 65c: ECCM reduces jamming effectiveness
-                            _eccm_65 = getattr(ctx, "eccm_engine", None)
-                            if _eccm_65 is not None:
-                                _eccm_suite = _eccm_65.get_suite_for_unit(
+                            if _eccm_eng is not None:
+                                _eccm_suite = _eccm_eng.get_suite_for_unit(
                                     attacker.entity_id,
                                 )
                                 if _eccm_suite is not None and _eccm_suite.active:
-                                    _eccm_reduction = _eccm_65.compute_jam_reduction(
+                                    _eccm_reduction = _eccm_eng.compute_jam_reduction(
                                         _eccm_suite,
                                         jammer_freq_ghz=getattr(
                                             sensors[0], "frequency_ghz", 10.0,
@@ -3201,9 +3298,8 @@ class BattleManager:
                                         0.0, snr_penalty_db - _eccm_reduction,
                                     )
                             # Phase 48: jammer_coverage_mult scales EW effect
-                            jammer_mult = cal.get("jammer_coverage_mult", 1.0)
                             ew_factor = max(
-                                0.1, 1.0 - (snr_penalty_db * jammer_mult) / 40.0,
+                                0.1, 1.0 - (snr_penalty_db * _jammer_mult) / 40.0,
                             )
                             detection_quality_mod *= ew_factor
                     except Exception:
@@ -3211,20 +3307,18 @@ class BattleManager:
 
                 # Phase 48: stealth_detection_penalty — reduce detection
                 # quality for stealth-configured targets
-                stealth_penalty = cal.get("stealth_detection_penalty", 0.0)
-                if stealth_penalty > 0:
+                if _stealth_penalty > 0:
                     target_rcs = getattr(best_target, "radar_cross_section_m2", None)
                     if target_rcs is not None and target_rcs < 1.0:
-                        detection_quality_mod *= max(0.1, 1.0 - stealth_penalty)
+                        detection_quality_mod *= max(0.1, 1.0 - _stealth_penalty)
 
                 # Phase 48: sigint_detection_bonus — boost detection for
                 # SIGINT-capable sensors
-                sigint_bonus = cal.get("sigint_detection_bonus", 0.0)
-                if sigint_bonus > 0 and sensors:
+                if _sigint_bonus > 0 and sensors:
                     for sensor in sensors:
                         if getattr(sensor, "sensor_type", None) == SensorType.ESM:
                             detection_quality_mod = min(
-                                1.0, detection_quality_mod * (1.0 + sigint_bonus),
+                                1.0, detection_quality_mod * (1.0 + _sigint_bonus),
                             )
                             break
 
@@ -3232,9 +3326,9 @@ class BattleManager:
                 vis_mod = vis_mod * detection_quality_mod
 
                 # Phase 60a: obscurant Pk reduction
-                if _obs_engine is not None and cal.get("enable_obscurants", False):
+                if _obs_eng is not None and _enable_obscurants:
                     try:
-                        _opacity_pk = _obs_engine.opacity_at(best_target.position)
+                        _opacity_pk = _obs_eng.opacity_at(best_target.position)
                         vis_mod *= (1.0 - _opacity_pk.visual)
                     except Exception:
                         pass
@@ -3254,9 +3348,6 @@ class BattleManager:
                         continue
 
                 # Phase 50c: concealment engagement threshold
-                _eng_conceal_thresh = cal.get(
-                    "engagement_concealment_threshold", 0.5,
-                )
                 if effective_concealment > _eng_conceal_thresh:
                     continue
 
@@ -3368,7 +3459,7 @@ class BattleManager:
                 ammo_id = selected_ammo_id
 
                 # Phase 68b: ammo depletion gate — skip if magazine exhausted
-                if cal.get("enable_ammo_gate", False):
+                if _enable_ammo_gate:
                     _mag_cap = getattr(wpn_inst.definition, "magazine_capacity", 0)
                     if _mag_cap > 0:
                         _ammo_key = f"{attacker.entity_id}:{wpn_inst.definition.weapon_id}"
@@ -3421,7 +3512,7 @@ class BattleManager:
 
                 # Phase 52b: crosswind accuracy penalty
                 if wind_e != 0.0 or wind_n != 0.0:
-                    _wind_scale = cal.get("wind_accuracy_penalty_scale", 0.03)
+                    _wind_scale = _wind_accuracy_scale
                     crew_skill *= _compute_crosswind_penalty(
                         wind_e, wind_n,
                         attacker.position.easting, attacker.position.northing,
@@ -3434,14 +3525,14 @@ class BattleManager:
                     crew_skill /= mopp_fatigue_factor
 
                 # Phase 62b: MOPP reload factor (additional penalty on crew skill)
-                if cal.get("enable_human_factors", False) and _mopp_level_62 > 0:
+                if _enable_human_factors and _mopp_level_62 > 0:
                     _rl_full = cal.mopp_reload_factor_4  # MOPP-4 divisor
                     _rl_scale = _mopp_level_62 / 4.0
                     _rl_mod = 1.0 + _rl_scale * (_rl_full - 1.0)
                     crew_skill /= _rl_mod
 
                 # Phase 62b: altitude sickness → crew skill penalty
-                if cal.get("enable_human_factors", False):
+                if _enable_human_factors:
                     _alt62e = getattr(attacker.position, "altitude", 0.0)
                     if _alt62e > cal.altitude_sickness_threshold_m:
                         _alt_perf_e = max(
@@ -3455,10 +3546,9 @@ class BattleManager:
 
                 # Phase 44c: Equipment readiness gate
                 readiness = 1.0
-                maint_engine = getattr(ctx, "maintenance_engine", None)
-                if maint_engine is not None:
+                if _maint_eng is not None:
                     try:
-                        readiness = maint_engine.get_unit_readiness(
+                        readiness = _maint_eng.get_unit_readiness(
                             attacker.entity_id,
                         )
                     except Exception:
@@ -3468,7 +3558,7 @@ class BattleManager:
                 crew_skill *= max(0.5, readiness)
 
                 # Phase 59d: equipment temperature stress → weapon jam
-                if cal.get("enable_equipment_stress", False):
+                if _enable_equip_stress:
                     _wx59d = getattr(ctx, "weather_engine", None)
                     if _wx59d is not None:
                         _temp59d = _wx59d.current.temperature
@@ -3503,13 +3593,12 @@ class BattleManager:
 
                 # Phase 48: sam_suppression_modifier — SEAD degrades AD
                 # unit effectiveness (SAM crews forced to shut down radar)
-                sam_supp = cal.get("sam_suppression_modifier", 0.0)
-                if sam_supp > 0:
+                if _sam_supp > 0:
                     _wpn_cat = getattr(wpn_inst.definition, "category", "").upper()
                     if _wpn_cat in ("SAM", "AAA", "MISSILE_LAUNCHER"):
                         att_type = getattr(attacker, "unit_type_id", "")
                         if any(k in att_type.lower() for k in ("sa-", "sam", "s-300", "buk", "patriot")):
-                            crew_skill *= max(0.1, 1.0 - sam_supp)
+                            crew_skill *= max(0.1, 1.0 - _sam_supp)
 
                 # Per-side target_size_modifier: use target's side
                 target_side = self._find_unit_side(ctx, best_target.entity_id)
@@ -3523,7 +3612,7 @@ class BattleManager:
                     target_size_mod /= sea_dispersion_modifier
 
                 # Phase 61a: wave period resonance + swell direction → gunnery
-                if cal.get("enable_sea_state_ops", False):
+                if _enable_sea_state_ops:
                     if (attacker.domain in (Domain.NAVAL, Domain.SUBMARINE)
                             or best_target.domain in (Domain.NAVAL, Domain.SUBMARINE)):
                         # Wave period resonance: hull natural period ~8–12s
@@ -3548,9 +3637,8 @@ class BattleManager:
 
                 # Phase 44b: GPS accuracy affects guided weapon Pk
                 gps_cep_factor = 1.0
-                space_engine = getattr(ctx, "space_engine", None)
-                if space_engine is not None:
-                    gps_eng = getattr(space_engine, "gps_engine", None)
+                if _space_eng is not None:
+                    gps_eng = getattr(_space_eng, "gps_engine", None)
                     if gps_eng is not None:
                         try:
                             guidance = getattr(
@@ -3573,28 +3661,23 @@ class BattleManager:
 
                 # Phase 66a: human shield — reduce crew_skill when civilian
                 # population near target (proxy for ROE constraint)
-                _uw_eng_hs = getattr(ctx, "unconventional_engine", None)
                 _civ_density_66 = 0.0
-                if (
-                    cal.get("enable_unconventional_warfare", False)
-                    and _uw_eng_hs is not None
-                ):
-                    _pop_eng_66 = getattr(ctx, "population_engine", None)
-                    if _pop_eng_66 is not None:
+                if _enable_unconventional and _uw_eng is not None:
+                    if _pop_eng is not None:
                         _tgt_pos_66 = getattr(best_target, "position", None)
                         if _tgt_pos_66 is not None:
                             _civ_density_66 = getattr(
-                                _pop_eng_66, "get_density_at", lambda p: 0.0,
+                                _pop_eng, "get_density_at", lambda p: 0.0,
                             )(_tgt_pos_66)
                     if _civ_density_66 > 0:
-                        _shield_val = _uw_eng_hs.evaluate_human_shield(
+                        _shield_val = _uw_eng.evaluate_human_shield(
                             best_target.position, _civ_density_66,
                         )
                         _pk_red = cal.get("human_shield_pk_reduction", 0.5) * _shield_val
                         crew_skill *= max(0.1, 1.0 - _pk_red)
 
                 # Phase 68b: track ammo expenditure for this engagement
-                if cal.get("enable_ammo_gate", False):
+                if _enable_ammo_gate:
                     _mag_cap_trk = getattr(wpn_inst.definition, "magazine_capacity", 0)
                     if _mag_cap_trk > 0:
                         _ammo_key_trk = f"{attacker.entity_id}:{wpn_inst.definition.weapon_id}"
@@ -3605,12 +3688,8 @@ class BattleManager:
                 wpn_cat_str = getattr(
                     wpn_inst.definition, "category", "",
                 ).upper()
-                dest_thresh = cal.get(
-                    "destruction_threshold", self._config.destruction_threshold,
-                )
-                dis_thresh = cal.get(
-                    "disable_threshold", self._config.disable_threshold,
-                )
+                dest_thresh = _dest_thresh
+                dis_thresh = _dis_thresh
 
                 # Phase 43c: naval domain routing (all eras, highest priority)
                 if (
@@ -3634,10 +3713,10 @@ class BattleManager:
                 # Phase 58b: air domain routing (opt-in via enable_air_routing)
                 if (
                     not routed_aggregate
-                    and cal.get("enable_air_routing", False)
+                    and _enable_air_routing
                     and (attacker.domain == Domain.AERIAL
                          or best_target.domain == Domain.AERIAL)
-                    and getattr(ctx, "air_combat_engine", None) is not None
+                    and _air_combat_eng is not None
                 ):
                     handled, air_status = _route_air_engagement(
                         ctx, attacker, best_target, wpn_inst,
@@ -3942,10 +4021,10 @@ class BattleManager:
                                     lethal_radius_m=_ifire_radius,
                                 )
                                 # Phase 60a: artillery impact dust
-                                if _obs_engine is not None and cal.get("enable_obscurants", False):
+                                if _obs_eng is not None and _enable_obscurants:
                                     try:
                                         _blast_r = getattr(ammo_def, "blast_radius_m", 20.0) or 20.0
-                                        _obs_engine.add_dust(best_target.position, radius=_blast_r)
+                                        _obs_eng.add_dust(best_target.position, radius=_blast_r)
                                     except Exception:
                                         pass
                             side_engagements += 1
@@ -3970,7 +4049,7 @@ class BattleManager:
                         pass
 
                     # Phase 63d: MISSILE type inference for guided missile launchers
-                    if engagement_type == EngagementType.DIRECT_FIRE and cal.get("enable_missile_routing", False):
+                    if engagement_type == EngagementType.DIRECT_FIRE and _enable_missile_routing:
                         try:
                             if wpn_inst.definition.parsed_category() == WeaponCategory.MISSILE_LAUNCHER:
                                 from stochastic_warfare.combat.ammunition import GuidanceType
@@ -3991,11 +4070,10 @@ class BattleManager:
                     # Phase 61c: extract humidity/precipitation for DEW
                     _dew_humidity = 0.5
                     _dew_precip = 0.0
-                    if cal.get("enable_em_propagation", False):
-                        _wx_61 = getattr(ctx, "weather_engine", None)
-                        if _wx_61 is not None:
+                    if _enable_em_prop:
+                        if _weather_eng is not None:
                             try:
-                                _wc = _wx_61.current
+                                _wc = _weather_eng.current
                                 _dew_humidity = getattr(_wc, "humidity", 0.5)
                                 _dew_precip = getattr(_wc, "precipitation_rate", 0.0)
                             except Exception:
@@ -4029,12 +4107,11 @@ class BattleManager:
                     # Phase 40e: apply fire volume to target suppression
                     if result.engaged:
                         side_engagements += 1
-                        sup_eng = getattr(ctx, "suppression_engine", None)
-                        if sup_eng is not None:
+                        if _sup_eng is not None:
                             tid = best_target.entity_id
                             if tid not in self._suppression_states:
                                 self._suppression_states[tid] = UnitSuppressionState()
-                            sup_eng.apply_fire_volume(
+                            _sup_eng.apply_fire_volume(
                                 state=self._suppression_states[tid],
                                 rounds_per_minute=wpn_inst.definition.rate_of_fire_rpm,
                                 caliber_mm=wpn_inst.definition.caliber_mm,
@@ -4046,7 +4123,7 @@ class BattleManager:
                         if engagement_type in (EngagementType.DEW_LASER, EngagementType.DEW_HPM):
                             # Phase 51c: DEW disable path — threshold-based
                             dew_pk = result.hit_result.p_hit if hasattr(result.hit_result, "p_hit") else 0.5
-                            dew_thresh = cal.get("dew_disable_threshold", 0.5)
+                            dew_thresh = _dew_disable_thresh
                             if dew_pk >= dew_thresh:
                                 pending_damage.append((best_target, UnitStatus.DESTROYED))
                             else:
@@ -4077,8 +4154,7 @@ class BattleManager:
                                     best_target.position, best_target.entity_id,
                                 )
                                 # Phase 60b: create fire zone on combustible terrain
-                                if cal.get("enable_fire_zones", False):
-                                    _inc_eng = getattr(ctx, "incendiary_engine", None)
+                                if _enable_fire_zones:
                                     _classif = getattr(ctx, "classification", None)
                                     if _inc_eng is not None:
                                         try:
@@ -4087,11 +4163,10 @@ class BattleManager:
                                                 _tp = _classif.properties_at(best_target.position)
                                                 _combustibility = _tp.combustibility
                                             if _combustibility > 0.3:
-                                                _wx = getattr(ctx, "weather_engine", None)
                                                 _ws, _wd = 0.0, 0.0
-                                                if _wx is not None:
-                                                    _ws = _wx.current.wind.speed
-                                                    _wd = _wx.current.wind.direction
+                                                if _weather_eng is not None:
+                                                    _ws = _weather_eng.current.wind.speed
+                                                    _wd = _weather_eng.current.wind.direction
                                                 _inc_eng.create_fire_zone(
                                                     position=best_target.position,
                                                     radius_m=20.0 * _combustibility,
@@ -4102,9 +4177,8 @@ class BattleManager:
                                                     timestamp=ctx.clock.elapsed.total_seconds(),
                                                 )
                                                 # Cross-engine: fire produces smoke
-                                                _obs_fe = getattr(ctx, "obscurants_engine", None)
-                                                if _obs_fe is not None:
-                                                    _obs_fe.deploy_smoke(
+                                                if _obs_eng is not None:
+                                                    _obs_eng.deploy_smoke(
                                                         best_target.position,
                                                         radius=_inc_eng._config.smoke_obscurant_radius_m,
                                                     )
@@ -4112,10 +4186,8 @@ class BattleManager:
                                             logger.debug("Fire zone creation failed", exc_info=True)
 
         # Phase 66a/68g: guerrilla disengage + retreat movement
-        if cal.get("enable_unconventional_warfare", False):
-            _uw_eng_guer = getattr(ctx, "unconventional_engine", None)
-            if _uw_eng_guer is not None:
-                _pop_eng_guer = getattr(ctx, "population_engine", None)
+        if _enable_unconventional:
+            if _uw_eng is not None:
                 _retreat_dist = cal.get("retreat_distance_m", 2000.0)
                 for _guer_side, _su_guer in units_by_side.items():
                     _guer_enemies = active_enemies.get(_guer_side, [])
@@ -4132,14 +4204,14 @@ class BattleManager:
                         _cas_frac = _cum / max(1, _total_pers + _cum)
                         # Override engine threshold with calibration value
                         _guer_thresh = cal.get("guerrilla_disengage_threshold", 0.3)
-                        _uw_eng_guer._cfg_guer.disengage_threshold = _guer_thresh
+                        _uw_eng._cfg_guer.disengage_threshold = _guer_thresh
                         _in_pop = False
-                        if _pop_eng_guer is not None:
+                        if _pop_eng is not None:
                             _gp = getattr(_u_guer, "position", None)
                             if _gp is not None:
-                                _gd = getattr(_pop_eng_guer, "get_density_at", lambda p: 0.0)(_gp)
+                                _gd = getattr(_pop_eng, "get_density_at", lambda p: 0.0)(_gp)
                                 _in_pop = _gd > 0
-                        _disengage, _blend = _uw_eng_guer.evaluate_guerrilla_disengage(
+                        _disengage, _blend = _uw_eng.evaluate_guerrilla_disengage(
                             _u_guer.entity_id, _cas_frac, _in_pop,
                         )
                         if _disengage:
