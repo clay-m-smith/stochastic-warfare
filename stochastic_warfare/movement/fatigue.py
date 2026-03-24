@@ -59,6 +59,8 @@ class FatigueManager:
         hours: float,
         activity: str = "march",
         altitude: float = 0.0,
+        *,
+        temperature_stress: float = 0.0,
     ) -> FatigueState:
         """Accumulate fatigue for *hours* of *activity*.
 
@@ -68,6 +70,8 @@ class FatigueManager:
             One of "march", "combat", "idle".
         altitude:
             Meters above sea level — penalty above threshold.
+        temperature_stress:
+            Heat/cold stress multiplier (0.0 = neutral, positive = faster fatigue).
         """
         s = self._ensure(unit_id)
         cfg = self._config
@@ -82,6 +86,10 @@ class FatigueManager:
         # Altitude penalty
         if altitude > cfg.altitude_threshold:
             rate *= cfg.altitude_fatigue_multiplier
+
+        # Phase 78c: temperature stress penalty (heat or cold)
+        if temperature_stress > 0:
+            rate *= (1.0 + temperature_stress)
 
         physical = min(cfg.max_physical, s.physical + rate * hours)
         mental = min(cfg.max_mental, s.mental + rate * 0.5 * hours)

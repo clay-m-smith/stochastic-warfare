@@ -1,8 +1,8 @@
 # Stochastic Warfare
 
 ![Python](https://img.shields.io/badge/python-%3E%3D3.12-blue)
-![Tests](https://img.shields.io/badge/tests-10%2C415_passing-brightgreen)
-![Phase](https://img.shields.io/badge/phase-77_Block--8--IN_PROGRESS-orange)
+![Tests](https://img.shields.io/badge/tests-10%2C464_passing-brightgreen)
+![Phase](https://img.shields.io/badge/phase-78_Block--8--IN_PROGRESS-orange)
 
 High-fidelity, high-resolution wargame simulator built as a headless Python engine. Models warfare across multiple scales — from individual unit engagements up through tactical battles, operational battlefields, and multi-day strategic campaigns — with stochastic and signal-processing-inspired models throughout.
 
@@ -163,7 +163,7 @@ data/                     # ~735 YAML data files
   eras/                    # Era-specific data packages (WW2, WW1, Napoleonic, Ancient/Medieval)
   scenarios/              # 27 modern scenarios (engagement, campaign, EW, space, CBRN, escalation, joint) + 5 test
 
-tests/                    # ~10,414 engine+API+frontend tests across ~400 test files
+tests/                    # ~10,464 engine+API+frontend tests across ~400 test files
 docs/                     # specs, brainstorm, devlog, development phases
 ```
 

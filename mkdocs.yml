@@ -162,6 +162,7 @@ nav:
     - Phase 75 - Simulation Core & Domain Unit Tests: devlog/phase-75.md
     - Phase 76 - API Robustness: devlog/phase-76.md
     - Phase 77 - Frontend Accessibility: devlog/phase-77.md
+    - Phase 78 - P2 Environment Wiring: devlog/phase-78.md
   - Specifications:
     - Project Structure: specs/project-structure.md
     - Skills & Hooks: skills-and-hooks.md

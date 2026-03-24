@@ -80,6 +80,19 @@ class MovementEngine:
         self._rng = rng
         self._config = config or MovementConfig()
 
+    def is_on_ice(self, pos: Position, seasons_snapshot=None) -> bool:
+        """True if position is a water cell with sufficient ice thickness (>0.3m)."""
+        if seasons_snapshot is None or self._classification is None:
+            return False
+        try:
+            from stochastic_warfare.terrain.classification import LandCover
+            lc = self._classification.land_cover_at(pos)
+            if lc != LandCover.WATER:
+                return False
+            return seasons_snapshot.sea_ice_thickness > 0.3
+        except (IndexError, ValueError, AttributeError):
+            return False
+
     def terrain_speed_factor(self, pos: Position) -> float:
         """Return 0.0–1.0 trafficability-based speed factor at *pos*."""
         if self._classification is None:

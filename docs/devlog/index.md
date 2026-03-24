@@ -93,6 +93,7 @@ Rolling record of implementation decisions, changes, and lessons learned across 
 | 75 | Simulation Core & Domain Unit Tests | **Complete** | [phase-75.md](phase-75.md) |
 | 76 | API Robustness | **Complete** | [phase-76.md](phase-76.md) |
 | 77 | Frontend Accessibility | **Complete** | [phase-77.md](phase-77.md) |
+| 78 | P2 Environment Wiring | **Complete** | [phase-78.md](phase-78.md) |
 
 ## Post-MVP Refinement Index
 

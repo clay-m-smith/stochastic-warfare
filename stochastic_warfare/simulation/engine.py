@@ -381,6 +381,15 @@ class SimulationEngine:
         if not selective_los and ctx.los_engine is not None and hasattr(ctx.los_engine, "clear_los_cache"):
             ctx.los_engine.clear_los_cache()
 
+        # Phase 78a: update vegetation density for LOS blocking
+        if ctx.los_engine is not None and hasattr(ctx.los_engine, "set_vegetation_density"):
+            _seasons_los = getattr(ctx, "seasons_engine", None)
+            if _seasons_los is not None:
+                try:
+                    ctx.los_engine.set_vegetation_density(_seasons_los.current.vegetation_density)
+                except Exception:
+                    pass
+
         # Record pre-move grid cells for selective LOS invalidation
         pre_move_cells: dict[str, tuple[int, int]] | None = None
         if selective_los:
@@ -1033,6 +1042,28 @@ class SimulationEngine:
         # Update incendiary fire zones
         if ctx.incendiary_engine is not None:
             ctx.incendiary_engine.update_fire_zones(dt)
+
+            # Phase 78c: fire spread cellular automaton
+            if (ctx.incendiary_engine._active_zones
+                    and getattr(ctx, "classification", None) is not None
+                    and getattr(getattr(ctx, "calibration", None), "get", None) is not None
+                    and ctx.calibration.get("enable_fire_zones", False)):
+                _veg_moist_78 = 0.5
+                _wind_spd_78 = 0.0
+                _wind_dir_78 = 0.0
+                _seasons_78 = getattr(ctx, "seasons_engine", None)
+                if _seasons_78 is not None:
+                    _veg_moist_78 = _seasons_78.current.vegetation_moisture
+                _wx_78 = getattr(ctx, "weather_engine", None)
+                if _wx_78 is not None:
+                    try:
+                        _wind_spd_78 = _wx_78.current.wind.speed
+                        _wind_dir_78 = _wx_78.current.wind.direction
+                    except AttributeError:
+                        pass
+                ctx.incendiary_engine.spread_fire(
+                    ctx.classification, _veg_moist_78, _wind_spd_78, _wind_dir_78, dt,
+                )
 
         # Update SOF missions
         if ctx.sof_engine is not None:

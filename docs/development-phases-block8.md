@@ -814,7 +814,7 @@ Fix color-only indicators and add reduced-motion support.
 
 ## Phase 78: P2 Environment Wiring
 
-**Status**: Not started.
+**Status**: Complete. 49 tests across 5 test files. 8 modified source files. Zero new source files.
 
 **Goal**: Wire remaining P2-priority environment items that improve simulation fidelity.
 

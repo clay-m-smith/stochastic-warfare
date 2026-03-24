@@ -763,6 +763,86 @@ class IncendiaryDamageEngine:
                     break  # one zone is enough to cause damage
         return result
 
+    def spread_fire(
+        self,
+        classification,
+        vegetation_moisture: float = 0.5,
+        wind_speed: float = 0.0,
+        wind_dir_rad: float = 0.0,
+        dt: float = 1.0,
+    ) -> list["FireZone"]:
+        """Spread fire to adjacent cells (cellular automaton).
+
+        For each active zone, checks positions at the zone boundary in
+        cardinal/ordinal directions.  Spread probability is proportional
+        to combustibility x (1 - vegetation_moisture) x wind_factor.
+        New fire zones are created at spread positions.
+
+        Returns list of newly created fire zones.
+        """
+        _MAX_ZONES = 50
+        if len(self._active_zones) >= _MAX_ZONES:
+            return []
+
+        new_zones: list[FireZone] = []
+        cell_size = 30.0  # default spread check distance (metres)
+
+        # Wind direction unit vector (downwind)
+        wind_dx = math.cos(wind_dir_rad) if wind_speed > 0 else 0.0
+        wind_dy = math.sin(wind_dir_rad) if wind_speed > 0 else 0.0
+
+        # 8 directions: N, NE, E, SE, S, SW, W, NW
+        _DIRS = [
+            (0, 1), (1, 1), (1, 0), (1, -1),
+            (0, -1), (-1, -1), (-1, 0), (-1, 1),
+        ]
+
+        for zone in list(self._active_zones):
+            for ddx, ddy in _DIRS:
+                if len(self._active_zones) + len(new_zones) >= _MAX_ZONES:
+                    break
+
+                check_dist = zone.current_radius_m + cell_size
+                cx = zone.center[0] + ddx * check_dist
+                cy = zone.center[1] + ddy * check_dist
+                check_pos = Position(cx, cy)
+
+                # Query terrain combustibility
+                try:
+                    props = classification.properties_at(check_pos)
+                    combustibility = props.combustibility
+                except (IndexError, ValueError):
+                    continue
+                if combustibility < 0.1:
+                    continue
+
+                # Wind factor: 2x downwind, 0.5x upwind, 1x crosswind
+                wind_factor = 1.0
+                if wind_speed > 0:
+                    dir_len = math.sqrt(ddx * ddx + ddy * ddy)
+                    if dir_len > 0:
+                        dot = (ddx * wind_dx + ddy * wind_dy) / dir_len
+                        wind_factor = 1.0 + dot  # range: 0 (upwind) to 2 (downwind)
+                        wind_factor = max(0.3, wind_factor)
+
+                # Spread probability
+                p_spread = combustibility * (1.0 - vegetation_moisture) * wind_factor * dt / 60.0
+                p_spread = min(1.0, p_spread)
+
+                if self._rng.random() < p_spread:
+                    new_zone = self.create_fire_zone(
+                        position=check_pos,
+                        radius_m=zone.radius_m * 0.5,
+                        fuel_load=combustibility,
+                        wind_speed_mps=wind_speed,
+                        wind_dir_rad=wind_dir_rad,
+                        duration_s=zone.duration_s * 0.5,
+                        timestamp=0.0,
+                    )
+                    new_zones.append(new_zone)
+
+        return new_zones
+
     def get_state(self) -> dict[str, Any]:
         """Serialize engine state for checkpointing."""
         return {

@@ -199,6 +199,11 @@ class CalibrationSchema(BaseModel):
     # -- Missile & carrier ops (Phase 71) -----------------------------------
     enable_carrier_ops: bool = False
 
+    # -- P2 environment wiring (Phase 78) -----------------------------------
+    enable_ice_crossing: bool = False
+    enable_bridge_capacity: bool = False
+    enable_environmental_fatigue: bool = False
+
     # -- C2 depth (Phase 69) -----------------------------------------------
     enable_command_hierarchy: bool = False
     deception_phantom_count: int = 3

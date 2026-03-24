@@ -1444,6 +1444,39 @@ class BattleManager:
                 except Exception:
                     logger.debug("Phase 62a env casualty failed", exc_info=True)
 
+        # 4g2. Phase 78c: environmental fatigue acceleration (heat/cold)
+        if cal.get("enable_environmental_fatigue", False):
+            _fatigue_mgr_78 = getattr(ctx, "fatigue_manager", None)
+            if _fatigue_mgr_78 is not None:
+                _wx78 = getattr(ctx, "weather_engine", None)
+                if _wx78 is not None:
+                    try:
+                        _cur78 = _wx78.current
+                        _temp78 = _cur78.temperature
+                        _humid78 = getattr(_cur78, "humidity", 0.5)
+                        _wind78 = getattr(_cur78.wind, "speed", 0.0)
+                        _wbgt78 = _compute_wbgt(_temp78, _humid78)
+                        _wc78 = _compute_wind_chill(_temp78, _wind78)
+
+                        _temp_stress78 = 0.0
+                        if _wbgt78 > 28.0:
+                            _temp_stress78 = (_wbgt78 - 28.0) / 10.0
+                        elif _wc78 < -20.0:
+                            _temp_stress78 = (-20.0 - _wc78) / 20.0
+
+                        if _temp_stress78 > 0:
+                            for _su_fat78 in units_by_side.values():
+                                for _u_fat78 in _su_fat78:
+                                    if _u_fat78.status == UnitStatus.ACTIVE:
+                                        _fatigue_mgr_78.accumulate(
+                                            _u_fat78.entity_id,
+                                            dt / 3600.0,
+                                            "march",
+                                            temperature_stress=_temp_stress78,
+                                        )
+                    except Exception:
+                        logger.debug("Phase 78c env fatigue failed", exc_info=True)
+
         # 4h. Phase 71b: missile flight resolution — advance in-flight missiles
         _missile_eng_71 = getattr(ctx, "missile_engine", None)
         _enable_missile_routing_71 = cal.get("enable_missile_routing", False)
@@ -2501,6 +2534,8 @@ class BattleManager:
         _mv_enable_fire_zones = cal.get("enable_fire_zones", False)
         _mv_enable_obscurants = cal.get("enable_obscurants", False)
         _mv_enable_fuel = cal.get("enable_fuel_consumption", False)
+        _mv_enable_ice_crossing = cal.get("enable_ice_crossing", False)
+        _mv_enable_bridge = cal.get("enable_bridge_capacity", False)
 
         # Phase 70c: hoist movement-loop engine references
         _mv_maint_eng = getattr(ctx, "maintenance_engine", None)
@@ -2510,6 +2545,18 @@ class BattleManager:
         _mv_obs_eng = getattr(ctx, "obscurants_engine", None)
         _mv_inc_eng = getattr(ctx, "incendiary_engine", None)
         _mv_obstacle_mgr = getattr(ctx, "obstacle_manager", None)
+        _mv_hydro = getattr(ctx, "hydrography_manager", None)
+        _mv_infra = getattr(ctx, "infrastructure", None)
+        _mv_movement_eng = getattr(ctx, "movement_engine", None)
+        _mv_classif = getattr(ctx, "classification", None)
+
+        # Phase 78b: weight defaults for bridge capacity enforcement
+        _WEIGHT_DEFAULTS: dict[str, float] = {
+            "m1a2_abrams": 62.0, "t72b": 41.0, "t90a": 46.5,
+            "leopard_2a6": 62.3, "challenger_2": 62.5,
+            "m2_bradley": 27.6, "bmp2": 14.3, "btr80": 13.6,
+            "m113": 12.3, "stryker": 18.0,
+        }
 
         for side, units in units_by_side.items():
             enemies = active_enemies.get(side, [])
@@ -2740,6 +2787,69 @@ class BattleManager:
                                 _tmult = getattr(_obs, "traversal_time_multiplier", 1.0)
                                 if _tmult > 1.0:
                                     move_dist /= _tmult
+                        except Exception:
+                            pass
+                    if move_dist <= 0:
+                        continue
+
+                # Phase 78a: ice crossing speed penalty + water cell gate
+                if _mv_enable_ice_crossing and _mv_seasons_eng is not None:
+                    _tent_ix = u.position.easting + (dx / dist) * move_dist
+                    _tent_iy = u.position.northing + (dy / dist) * move_dist
+                    _tent_pos_ice = Position(_tent_ix, _tent_iy)
+                    if _mv_movement_eng is not None:
+                        _ice_snap = _mv_seasons_eng.current
+                        if _mv_movement_eng.is_on_ice(u.position, _ice_snap):
+                            move_dist *= 0.5  # 50% speed on ice
+                        # Block movement into unfrozen water
+                        if _mv_classif is not None:
+                            try:
+                                from stochastic_warfare.terrain.classification import LandCover as _LC78
+                                _tent_lc = _mv_classif.land_cover_at(_tent_pos_ice)
+                                if _tent_lc == _LC78.WATER:
+                                    if not _mv_movement_eng.is_on_ice(_tent_pos_ice, _ice_snap):
+                                        continue
+                            except (IndexError, ValueError):
+                                pass
+                    if move_dist <= 0:
+                        continue
+
+                # Phase 78b: bridge capacity + ford crossing
+                if _mv_enable_bridge:
+                    _tent_bx = u.position.easting + (dx / dist) * move_dist
+                    _tent_by = u.position.northing + (dy / dist) * move_dist
+                    _tent_bpos = Position(_tent_bx, _tent_by)
+                    _u_weight = getattr(u, "weight_tons", 0.0) or _WEIGHT_DEFAULTS.get(u.unit_type, 0.0)
+                    # Check bridge capacity
+                    _blocked_bridge = False
+                    if _mv_infra is not None and _u_weight > 0:
+                        try:
+                            _bridges = _mv_infra.bridges_near(_tent_bpos, 50.0)
+                            for _br in _bridges:
+                                if _u_weight > _br.capacity_tons:
+                                    logger.debug(
+                                        "Unit %s (%.1ft) blocked by bridge %s (%.1ft capacity)",
+                                        u.entity_id, _u_weight, _br.bridge_id, _br.capacity_tons,
+                                    )
+                                    _blocked_bridge = True
+                                    break
+                        except Exception:
+                            pass
+                    if _blocked_bridge:
+                        continue
+                    # Ford crossing: allow at 30% speed
+                    if _mv_hydro is not None:
+                        try:
+                            if _mv_hydro.is_in_water(_tent_bpos):
+                                _fords = _mv_hydro.ford_points_near(_tent_bpos, 500.0)
+                                if _fords:
+                                    move_dist *= 0.3
+                                else:
+                                    # No ford — block unless ice allows
+                                    if not (_mv_enable_ice_crossing and _mv_seasons_eng is not None
+                                            and _mv_movement_eng is not None
+                                            and _mv_movement_eng.is_on_ice(_tent_bpos, _mv_seasons_eng.current)):
+                                        continue
                         except Exception:
                             pass
                     if move_dist <= 0:

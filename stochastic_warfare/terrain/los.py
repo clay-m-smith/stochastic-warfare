@@ -128,13 +128,20 @@ class LOSEngine:
         self,
         heightmap: Heightmap,
         infrastructure: InfrastructureManager | None = None,
+        classification: "TerrainClassification | None" = None,
     ) -> None:
         self._hm = heightmap
         self._infra = infrastructure
+        self._classification = classification
+        self._vegetation_density: float = 1.0  # seasonal modulation (0-1)
         # Per-tick LOS result cache.
         # Key: (obs_row, obs_col, tgt_row, tgt_col, obs_height_cm, tgt_height_cm)
         # Value: LOSResult
         self._los_cache: dict[tuple[int, int, int, int, int, int], LOSResult] = {}
+
+    def set_vegetation_density(self, factor: float) -> None:
+        """Set seasonal vegetation density (0-1) for LOS blocking modulation."""
+        self._vegetation_density = max(0.0, min(1.0, factor))
 
     # ------------------------------------------------------------------
     # Cache management
@@ -229,7 +236,7 @@ class LOSEngine:
 
         num_steps = max(2, int(total_dist / (self._hm.cell_size / 2.0)))
 
-        if self._infra is None:
+        if self._infra is None and self._classification is None:
             result = self._check_los_vectorized(
                 observer, obs_elev, tgt_elev, dx, dy, total_dist,
                 num_steps, _K_FACTOR, _R_EARTH,
@@ -327,7 +334,16 @@ class LOSEngine:
             if self._infra is not None:
                 building_h = self._infra.max_building_height_at(sample_pos)
 
-            surface_elev = terrain_elev + building_h
+            # Phase 78a: vegetation height blocks ground-level LOS
+            veg_h = 0.0
+            if self._classification is not None:
+                try:
+                    props = self._classification.properties_at(sample_pos)
+                    veg_h = props.vegetation_height * self._vegetation_density
+                except (IndexError, ValueError):
+                    pass
+
+            surface_elev = terrain_elev + max(building_h, veg_h)
 
             curvature_drop = (d * (total_dist - d)) / (2 * k_factor * r_earth)
             ray_elev = obs_elev + (tgt_elev - obs_elev) * frac - curvature_drop
@@ -337,7 +353,12 @@ class LOSEngine:
                 min_clearance = clearance
 
             if clearance < 0:
-                blocked_by = "building" if building_h > 0 else "terrain"
+                if building_h > 0 and building_h >= veg_h:
+                    blocked_by = "building"
+                elif veg_h > 0:
+                    blocked_by = "vegetation"
+                else:
+                    blocked_by = "terrain"
                 return LOSResult(False, sample_pos, blocked_by, 0.0)
 
         grazing = min_clearance if min_clearance < float("inf") else None

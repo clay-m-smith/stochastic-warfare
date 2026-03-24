@@ -66,6 +66,7 @@ class Unit(Entity):
     personnel: list[CrewMember] = field(default_factory=list)
     equipment: list[EquipmentItem] = field(default_factory=list)
     training_level: float = 0.5  # 0.0-1.0 unit quality
+    weight_tons: float = 0.0  # metric tons, 0 = no weight limit enforcement
 
     def get_state(self) -> dict:
         state = super().get_state()
@@ -80,6 +81,7 @@ class Unit(Entity):
                 "speed": self.speed,
                 "max_speed": self.max_speed,
                 "training_level": self.training_level,
+                "weight_tons": self.weight_tons,
                 "personnel": [m.get_state() for m in self.personnel],
                 "equipment": [e.get_state() for e in self.equipment],
             }
@@ -97,6 +99,7 @@ class Unit(Entity):
         self.speed = state["speed"]
         self.max_speed = state["max_speed"]
         self.training_level = state.get("training_level", 0.5)
+        self.weight_tons = state.get("weight_tons", 0.0)
 
         self.personnel = []
         for ms in state["personnel"]:
