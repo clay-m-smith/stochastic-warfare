@@ -5,7 +5,23 @@ from __future__ import annotations
 from enum import Enum
 from typing import Any
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
+
+
+def _check_dict_depth(
+    d: dict,
+    max_depth: int = 5,
+    max_keys: int = 200,
+    _current: int = 0,
+) -> None:
+    """Validate nesting depth and key count of a dict tree."""
+    if _current > max_depth:
+        raise ValueError(f"Nesting exceeds max depth {max_depth}")
+    if len(d) > max_keys:
+        raise ValueError(f"More than {max_keys} keys at one level")
+    for v in d.values():
+        if isinstance(v, dict):
+            _check_dict_depth(v, max_depth, max_keys, _current + 1)
 
 
 # ---------------------------------------------------------------------------
@@ -78,11 +94,19 @@ class RunStatus(str, Enum):
 class RunSubmitRequest(BaseModel):
     """Request to start a simulation run."""
 
+    model_config = ConfigDict(str_max_length=100_000)
+
     scenario: str
     seed: int = 42
-    max_ticks: int = 10_000
+    max_ticks: int = Field(default=10_000, ge=1, le=1_000_000)
     config_overrides: dict[str, Any] = Field(default_factory=dict)
     frame_interval: int | None = None
+
+    @field_validator("config_overrides")
+    @classmethod
+    def _validate_overrides(cls, v: dict[str, Any]) -> dict[str, Any]:
+        _check_dict_depth(v)
+        return v
 
 
 class RunSubmitResponse(BaseModel):
@@ -223,10 +247,12 @@ class TerrainResponse(BaseModel):
 class BatchSubmitRequest(BaseModel):
     """Request to run Monte Carlo batch."""
 
+    model_config = ConfigDict(str_max_length=100_000)
+
     scenario: str
-    num_iterations: int = 20
+    num_iterations: int = Field(default=20, ge=1, le=1_000)
     base_seed: int = 42
-    max_ticks: int = 1000
+    max_ticks: int = Field(default=1000, ge=1, le=1_000_000)
 
 
 class BatchSubmitResponse(BaseModel):
@@ -258,23 +284,27 @@ class BatchDetail(BaseModel):
 class CompareRequest(BaseModel):
     """Request for A/B comparison."""
 
+    model_config = ConfigDict(str_max_length=100_000)
+
     scenario: str
     overrides_a: dict[str, Any] = Field(default_factory=dict)
     overrides_b: dict[str, Any] = Field(default_factory=dict)
     label_a: str = "A"
     label_b: str = "B"
-    num_iterations: int = 20
-    max_ticks: int = 100
+    num_iterations: int = Field(default=20, ge=1, le=500)
+    max_ticks: int = Field(default=100, ge=1, le=1_000_000)
 
 
 class SweepRequest(BaseModel):
     """Request for parameter sweep."""
 
+    model_config = ConfigDict(str_max_length=100_000)
+
     scenario: str
     parameter_name: str
-    values: list[float]
-    num_iterations: int = 10
-    max_ticks: int = 100
+    values: list[float] = Field(max_length=50)
+    num_iterations: int = Field(default=10, ge=1, le=500)
+    max_ticks: int = Field(default=100, ge=1, le=1_000_000)
 
 
 # ---------------------------------------------------------------------------
@@ -289,6 +319,22 @@ class HealthResponse(BaseModel):
     version: str = ""
     scenario_count: int = 0
     unit_count: int = 0
+
+
+class HealthLiveResponse(BaseModel):
+    """Liveness probe response — instant, no external checks."""
+
+    status: str = "ok"
+
+
+class HealthReadyResponse(BaseModel):
+    """Readiness probe response — includes DB connectivity check."""
+
+    status: str = "ok"
+    version: str = ""
+    scenario_count: int = 0
+    unit_count: int = 0
+    db_connected: bool = False
 
 
 class EraInfo(BaseModel):
@@ -307,9 +353,17 @@ class EraInfo(BaseModel):
 class RunFromConfigRequest(BaseModel):
     """Request to start a run from an inline config dict."""
 
+    model_config = ConfigDict(str_max_length=100_000)
+
     config: dict[str, Any]
     seed: int = 42
-    max_ticks: int = 10_000
+    max_ticks: int = Field(default=10_000, ge=1, le=1_000_000)
+
+    @field_validator("config")
+    @classmethod
+    def _validate_config(cls, v: dict[str, Any]) -> dict[str, Any]:
+        _check_dict_depth(v)
+        return v
 
 
 class ValidateConfigRequest(BaseModel):

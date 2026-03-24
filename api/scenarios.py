@@ -11,6 +11,56 @@ from pathlib import Path
 from typing import Any
 
 
+class _ScanCache:
+    """Mtime-based filesystem scan cache."""
+
+    def __init__(self) -> None:
+        self._scenarios: list[dict[str, Any]] | None = None
+        self._scenarios_mtime: float = 0.0
+        self._units: list[dict[str, Any]] | None = None
+        self._units_mtime: float = 0.0
+
+    @staticmethod
+    def _dir_mtime(*dirs: Path) -> float:
+        max_mt = 0.0
+        for d in dirs:
+            if d.exists():
+                try:
+                    max_mt = max(max_mt, d.stat().st_mtime)
+                except OSError:
+                    pass
+        return max_mt
+
+    def get_scenarios(self, data_dir: Path) -> list[dict[str, Any]] | None:
+        mt = self._dir_mtime(data_dir / "scenarios", data_dir / "eras")
+        if self._scenarios is not None and mt == self._scenarios_mtime:
+            return self._scenarios
+        return None
+
+    def set_scenarios(self, data_dir: Path, results: list[dict[str, Any]]) -> None:
+        self._scenarios = results
+        self._scenarios_mtime = self._dir_mtime(data_dir / "scenarios", data_dir / "eras")
+
+    def get_units(self, data_dir: Path) -> list[dict[str, Any]] | None:
+        mt = self._dir_mtime(data_dir / "units", data_dir / "eras")
+        if self._units is not None and mt == self._units_mtime:
+            return self._units
+        return None
+
+    def set_units(self, data_dir: Path, results: list[dict[str, Any]]) -> None:
+        self._units = results
+        self._units_mtime = self._dir_mtime(data_dir / "units", data_dir / "eras")
+
+
+_cache = _ScanCache()
+
+
+def invalidate_cache() -> None:
+    """Reset scan cache. Used by tests."""
+    global _cache
+    _cache = _ScanCache()
+
+
 def resolve_scenario(name: str, data_dir: Path) -> Path:
     """Find a scenario YAML by directory name.
 
@@ -36,7 +86,12 @@ def scan_scenarios(data_dir: Path) -> list[dict[str, Any]]:
     """Scan all scenario directories and load YAML headers.
 
     Returns list of dicts with keys: name, path, config (parsed YAML).
+    Results are cached until the scenario directories' mtime changes.
     """
+    cached = _cache.get_scenarios(data_dir)
+    if cached is not None:
+        return cached
+
     import yaml
 
     results: list[dict[str, Any]] = []
@@ -77,6 +132,7 @@ def scan_scenarios(data_dir: Path) -> list[dict[str, Any]]:
                     except Exception:
                         results.append({"name": d.name, "path": str(yaml_path), "config": {}})
 
+    _cache.set_scenarios(data_dir, results)
     return results
 
 
@@ -85,7 +141,12 @@ def scan_units(data_dir: Path) -> list[dict[str, Any]]:
 
     Returns list of dicts with keys: unit_type, display_name, domain,
     category, era, max_speed, crew_size, path.
+    Results are cached until the unit directories' mtime changes.
     """
+    cached = _cache.get_units(data_dir)
+    if cached is not None:
+        return cached
+
     import yaml
 
     results: list[dict[str, Any]] = []
@@ -123,4 +184,5 @@ def scan_units(data_dir: Path) -> list[dict[str, Any]]:
             if era_dir.is_dir():
                 _scan_dir(era_dir / "units", era=era_dir.name)
 
+    _cache.set_units(data_dir, results)
     return results

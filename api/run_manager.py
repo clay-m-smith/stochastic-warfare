@@ -26,7 +26,7 @@ class RunManager:
         self._semaphore = asyncio.Semaphore(max_concurrent)
         self._max_stored_events = max_stored_events
         self._default_max_ticks = default_max_ticks
-        self._progress_queues: dict[str, asyncio.Queue] = {}
+        self._progress_queues: dict[str, list[asyncio.Queue]] = {}
         self._cancel_flags: dict[str, bool] = {}
         self._tasks: dict[str, asyncio.Task] = {}
 
@@ -44,16 +44,29 @@ class RunManager:
         await self._db.create_run(
             run_id, scenario_name, scenario_path, seed, max_ticks, config_overrides,
         )
-        queue: asyncio.Queue = asyncio.Queue(maxsize=100)
-        self._progress_queues[run_id] = queue
+        self._progress_queues[run_id] = []
         self._cancel_flags[run_id] = False
         task = asyncio.create_task(self._execute_run(run_id, scenario_path, seed, max_ticks, config_overrides or {}, frame_interval))
         self._tasks[run_id] = task
         return run_id
 
-    def get_progress_queue(self, run_id: str) -> asyncio.Queue | None:
-        """Get the progress queue for a run, if it exists."""
-        return self._progress_queues.get(run_id)
+    def subscribe(self, run_id: str) -> asyncio.Queue | None:
+        """Subscribe to progress updates for a run. Returns a Queue or None if not active."""
+        queues = self._progress_queues.get(run_id)
+        if queues is None:
+            return None
+        q: asyncio.Queue = asyncio.Queue(maxsize=100)
+        queues.append(q)
+        return q
+
+    def unsubscribe(self, run_id: str, queue: asyncio.Queue) -> None:
+        """Unsubscribe a queue from progress updates."""
+        queues = self._progress_queues.get(run_id)
+        if queues is not None:
+            try:
+                queues.remove(queue)
+            except ValueError:
+                pass
 
     async def cancel(self, run_id: str) -> bool:
         """Request cancellation of a running job."""
@@ -61,6 +74,18 @@ class RunManager:
             self._cancel_flags[run_id] = True
             return True
         return False
+
+    async def shutdown(self, timeout: float = 5.0) -> None:
+        """Cancel all running tasks and wait for completion."""
+        for run_id in list(self._cancel_flags):
+            self._cancel_flags[run_id] = True
+        tasks = list(self._tasks.values())
+        if tasks:
+            done, pending = await asyncio.wait(tasks, timeout=timeout)
+            for task in pending:
+                task.cancel()
+            if pending:
+                await asyncio.wait(pending, timeout=1.0)
 
     async def _execute_run(
         self,
@@ -73,7 +98,6 @@ class RunManager:
     ) -> None:
         """Execute a simulation run in a background thread."""
         loop = asyncio.get_running_loop()
-        queue = self._progress_queues.get(run_id)
 
         await self._db.update_run_status(
             run_id, "running",
@@ -86,7 +110,7 @@ class RunManager:
                     None,
                     self._run_sync,
                     run_id, scenario_path, seed, max_ticks, config_overrides,
-                    loop, queue, frame_interval,
+                    loop, None, frame_interval,
                 )
 
             now = datetime.now(timezone.utc).isoformat()
@@ -107,10 +131,10 @@ class RunManager:
                 error_message=str(exc),
             )
         finally:
-            # Send terminal sentinel
-            if queue is not None:
+            # Send terminal sentinel to all subscribers
+            for q in list(self._progress_queues.get(run_id, [])):
                 try:
-                    queue.put_nowait(None)
+                    q.put_nowait(None)
                 except asyncio.QueueFull:
                     pass
             # Cleanup
@@ -217,8 +241,8 @@ class RunManager:
             if tick % fi == 0 or game_over:
                 map_frames.append(self._capture_frame(tick, ctx))
 
-            # Emit progress
-            if queue is not None and (tick % progress_interval == 0 or game_over):
+            # Emit progress to all subscribers
+            if tick % progress_interval == 0 or game_over:
                 active_units: dict[str, int] = {}
                 for side, units in ctx.units_by_side.items():
                     active_units[side] = sum(1 for u in units if u.status == UnitStatus.ACTIVE)
@@ -231,10 +255,11 @@ class RunManager:
                     "active_units": active_units,
                     "game_over": game_over,
                 }
-                try:
-                    loop.call_soon_threadsafe(queue.put_nowait, progress)
-                except (RuntimeError, asyncio.QueueFull):
-                    pass
+                for q in list(self._progress_queues.get(run_id, [])):
+                    try:
+                        loop.call_soon_threadsafe(q.put_nowait, progress)
+                    except (RuntimeError, asyncio.QueueFull):
+                        pass
 
         recorder.stop()
 
@@ -440,8 +465,7 @@ class RunManager:
             batch_id, scenario_name, scenario_path,
             num_iterations, base_seed, max_ticks,
         )
-        queue: asyncio.Queue = asyncio.Queue(maxsize=100)
-        self._progress_queues[batch_id] = queue
+        self._progress_queues[batch_id] = []
         self._cancel_flags[batch_id] = False
         task = asyncio.create_task(
             self._execute_batch(batch_id, scenario_path, num_iterations, base_seed, max_ticks),
@@ -461,7 +485,6 @@ class RunManager:
         import numpy as np
 
         loop = asyncio.get_running_loop()
-        queue = self._progress_queues.get(batch_id)
 
         await self._db.update_batch(batch_id, status="running")
 
@@ -474,12 +497,13 @@ class RunManager:
                     raise RuntimeError("Batch cancelled by user")
 
                 seed = base_seed + i
-                result = await loop.run_in_executor(
-                    None,
-                    self._run_sync,
-                    f"batch_{batch_id}_{i}", scenario_path, seed, max_ticks, {},
-                    loop, None,
-                )
+                async with self._semaphore:
+                    result = await loop.run_in_executor(
+                        None,
+                        self._run_sync,
+                        f"batch_{batch_id}_{i}", scenario_path, seed, max_ticks, {},
+                        loop, None,
+                    )
 
                 # Extract metrics
                 for side, data in result["summary"].get("sides", {}).items():
@@ -490,16 +514,16 @@ class RunManager:
                 completed += 1
                 await self._db.update_batch(batch_id, completed_iterations=completed)
 
-                # Emit progress
-                if queue is not None:
-                    progress = {
-                        "type": "iteration",
-                        "iteration": i + 1,
-                        "total": num_iterations,
-                        "seed": seed,
-                    }
+                # Emit progress to all subscribers
+                progress = {
+                    "type": "iteration",
+                    "iteration": i + 1,
+                    "total": num_iterations,
+                    "seed": seed,
+                }
+                for q in list(self._progress_queues.get(batch_id, [])):
                     try:
-                        queue.put_nowait(progress)
+                        q.put_nowait(progress)
                     except asyncio.QueueFull:
                         pass
 
@@ -534,9 +558,9 @@ class RunManager:
                 error_message=str(exc),
             )
         finally:
-            if queue is not None:
+            for q in list(self._progress_queues.get(batch_id, [])):
                 try:
-                    queue.put_nowait(None)
+                    q.put_nowait(None)
                 except asyncio.QueueFull:
                     pass
             self._progress_queues.pop(batch_id, None)

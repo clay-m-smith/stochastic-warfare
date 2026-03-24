@@ -18,7 +18,7 @@ pytestmark = pytest.mark.api
 
 class _FakeHeightmap:
     def __init__(self, cell_size: float = 50.0, shape: tuple = (10, 12),
-                 extent: tuple = (1000.0, 2000.0, 1600.0, 2500.0)):
+                 extent: tuple = (1000.0, 1600.0, 2000.0, 2500.0)):
         self.cell_size = cell_size
         self.shape = shape
         self.extent = extent
@@ -87,13 +87,16 @@ def test_capture_terrain_no_classification():
     from api.run_manager import RunManager
 
     ctx = SimpleNamespace(
-        heightmap=_FakeHeightmap(cell_size=100.0, shape=(20, 30), extent=(0, 0, 3000, 2000)),
+        heightmap=_FakeHeightmap(cell_size=100.0, shape=(20, 30), extent=(0, 3000, 0, 2000)),
         classification=None,
     )
     result = RunManager._capture_terrain(ctx, {})
     assert result["width_cells"] == 30
     assert result["height_cells"] == 20
-    assert result["land_cover"] == []
+    # With no classification, a default grid is generated (flat_desert = code 11)
+    assert len(result["land_cover"]) == 20
+    assert all(len(row) == 30 for row in result["land_cover"])
+    assert result["land_cover"][0][0] == 11
 
 
 def test_capture_terrain_numpy_land_cover():

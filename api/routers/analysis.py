@@ -15,6 +15,16 @@ from api.schemas import CompareRequest, SweepRequest
 
 router = APIRouter(prefix="/analysis", tags=["analysis"])
 
+_ANALYSIS_SEMAPHORE: asyncio.Semaphore | None = None
+
+
+def _get_analysis_semaphore() -> asyncio.Semaphore:
+    """Lazily initialize analysis concurrency semaphore."""
+    global _ANALYSIS_SEMAPHORE
+    if _ANALYSIS_SEMAPHORE is None:
+        _ANALYSIS_SEMAPHORE = asyncio.Semaphore(2)
+    return _ANALYSIS_SEMAPHORE
+
 
 @router.post("/compare")
 async def run_compare(
@@ -39,7 +49,8 @@ async def run_compare(
         num_iterations=req.num_iterations,
         max_ticks=req.max_ticks,
     )
-    result = await asyncio.to_thread(run_comparison, config)
+    async with _get_analysis_semaphore():
+        result = await asyncio.to_thread(run_comparison, config)
     return serialize_to_dict(result)
 
 
@@ -64,7 +75,8 @@ async def run_sweep(
         iterations_per_point=req.num_iterations,
         max_ticks=req.max_ticks,
     )
-    result = await asyncio.to_thread(_run_sweep, config)
+    async with _get_analysis_semaphore():
+        result = await asyncio.to_thread(_run_sweep, config)
     return serialize_to_dict(result)
 
 

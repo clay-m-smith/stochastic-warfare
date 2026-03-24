@@ -57,9 +57,9 @@ async def test_terrain_types_endpoint(client):
     assert resp.status_code == 200
     data = resp.json()
     assert isinstance(data, list)
-    assert "flat" in data
-    assert "urban" in data
-    assert "desert" in data
+    assert "OPEN" in data
+    assert "URBAN_DENSE" in data
+    assert "DESERT_SAND" in data
     assert len(data) >= 10
 
 

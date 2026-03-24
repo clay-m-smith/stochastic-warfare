@@ -91,6 +91,7 @@ Rolling record of implementation decisions, changes, and lessons learned across 
 | 73 | Historical Scenario Correctness | **Complete** | [phase-73.md](phase-73.md) |
 | 74 | Combat Engine Unit Tests | **Complete** | [phase-74.md](phase-74.md) |
 | 75 | Simulation Core & Domain Unit Tests | **Complete** | [phase-75.md](phase-75.md) |
+| 76 | API Robustness | **Complete** | [phase-76.md](phase-76.md) |
 
 ## Post-MVP Refinement Index
 

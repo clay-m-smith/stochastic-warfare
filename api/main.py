@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 from contextlib import asynccontextmanager
 from typing import AsyncIterator
 
@@ -13,6 +14,8 @@ from api.config import ApiSettings
 from api.database import Database
 from api.dependencies import get_settings
 from api.routers import analysis, meta, runs, scenarios, units
+
+logger = logging.getLogger(__name__)
 
 
 @asynccontextmanager
@@ -32,6 +35,10 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         default_max_ticks=settings.default_max_ticks,
     )
     yield
+    # Graceful shutdown
+    mgr = app.state.run_manager
+    logger.info("Shutting down: cancelling %d active tasks", len(mgr._tasks))
+    await mgr.shutdown(timeout=5.0)
     await db.close()
 
 

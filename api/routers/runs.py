@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import json
 from pathlib import Path
 from typing import Any
@@ -77,8 +78,8 @@ async def submit_run_from_config(
     except (ValidationError, Exception) as exc:
         raise HTTPException(status_code=422, detail=str(exc))
 
-    # Write config to temp YAML
-    tmp_dir = tempfile.mkdtemp(prefix="sw_custom_")
+    # Write config to temp YAML (off event loop)
+    tmp_dir = await asyncio.to_thread(tempfile.mkdtemp, prefix="sw_custom_")
     tmp_path = Path(tmp_dir) / "custom_scenario.yaml"
     with open(tmp_path, "w") as f:
         yaml.dump(req.config, f, default_flow_style=False)
@@ -311,7 +312,7 @@ async def get_run_frames(
 @router.websocket("/{run_id}/progress")
 async def run_progress_ws(run_id: str, websocket: WebSocket) -> None:
     mgr: RunManager = websocket.app.state.run_manager
-    queue = mgr.get_progress_queue(run_id)
+    queue = mgr.subscribe(run_id)
 
     await websocket.accept()
 
@@ -332,6 +333,7 @@ async def run_progress_ws(run_id: str, websocket: WebSocket) -> None:
     except WebSocketDisconnect:
         pass
     finally:
+        mgr.unsubscribe(run_id, queue)
         await websocket.close()
 
 
@@ -377,7 +379,7 @@ async def get_batch(batch_id: str, db: Database = Depends(get_db)) -> BatchDetai
 @router.websocket("/batch/{batch_id}/progress")
 async def batch_progress_ws(batch_id: str, websocket: WebSocket) -> None:
     mgr: RunManager = websocket.app.state.run_manager
-    queue = mgr.get_progress_queue(batch_id)
+    queue = mgr.subscribe(batch_id)
 
     await websocket.accept()
 
@@ -396,4 +398,5 @@ async def batch_progress_ws(batch_id: str, websocket: WebSocket) -> None:
     except WebSocketDisconnect:
         pass
     finally:
+        mgr.unsubscribe(batch_id, queue)
         await websocket.close()

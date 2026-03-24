@@ -658,7 +658,7 @@ Tests for scenario loader, campaign manager, victory evaluator, etc.
 
 ## Phase 76: API Robustness
 
-**Status**: Not started.
+**Status**: Complete. 25 tests across 3 test files. 8 source files modified, 0 new source files.
 
 **Goal**: Fix critical concurrency bugs in the API server and harden for reliable multi-user use.
 

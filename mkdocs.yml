@@ -160,6 +160,7 @@ nav:
     - Phase 73 - Historical Scenario Correctness: devlog/phase-73.md
     - Phase 74 - Combat Engine Unit Tests: devlog/phase-74.md
     - Phase 75 - Simulation Core & Domain Unit Tests: devlog/phase-75.md
+    - Phase 76 - API Robustness: devlog/phase-76.md
   - Specifications:
     - Project Structure: specs/project-structure.md
     - Skills & Hooks: skills-and-hooks.md

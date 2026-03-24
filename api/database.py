@@ -3,10 +3,13 @@
 from __future__ import annotations
 
 import json
+import logging
 from datetime import datetime, timezone
 from typing import Any
 
 import aiosqlite
+
+logger = logging.getLogger(__name__)
 
 _SCHEMA = """
 CREATE TABLE IF NOT EXISTS runs (
@@ -56,6 +59,9 @@ class Database:
         """Open connection and create tables."""
         self._conn = await aiosqlite.connect(self._db_path)
         self._conn.row_factory = aiosqlite.Row
+        # Enable WAL mode + busy timeout for concurrent access
+        await self._conn.execute("PRAGMA journal_mode=WAL")
+        await self._conn.execute("PRAGMA busy_timeout=5000")
         await self._conn.executescript(_SCHEMA)
         await self._conn.commit()
         # Migrate: add Phase 35 map data columns if missing
@@ -63,8 +69,8 @@ class Database:
             try:
                 await self._conn.execute(f"ALTER TABLE runs ADD COLUMN {col} TEXT")
                 await self._conn.commit()
-            except Exception:
-                pass  # Column already exists
+            except Exception as exc:
+                logger.debug("Migration column %s: %s", col, exc)
 
     async def close(self) -> None:
         """Close the database connection."""
@@ -74,7 +80,8 @@ class Database:
 
     @property
     def conn(self) -> aiosqlite.Connection:
-        assert self._conn is not None, "Database not initialized"
+        if self._conn is None:
+            raise RuntimeError("Database not initialized — call initialize() first")
         return self._conn
 
     # ── Run CRUD ─────────────────────────────────────────────────────

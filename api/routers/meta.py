@@ -8,9 +8,10 @@ from fastapi import APIRouter, Depends
 
 from api import __version__
 from api.config import ApiSettings
-from api.dependencies import get_settings
+from api.database import Database
+from api.dependencies import get_db, get_settings
 from api.scenarios import scan_scenarios, scan_units
-from api.schemas import EraInfo, HealthResponse
+from api.schemas import EraInfo, HealthLiveResponse, HealthReadyResponse, HealthResponse
 
 router = APIRouter(tags=["meta"])
 
@@ -25,6 +26,35 @@ async def health(settings: ApiSettings = Depends(get_settings)) -> HealthRespons
         version=__version__,
         scenario_count=len(scenarios),
         unit_count=len(units),
+    )
+
+
+@router.get("/health/live", response_model=HealthLiveResponse)
+async def health_live() -> HealthLiveResponse:
+    """Liveness probe — instant 200, no external checks."""
+    return HealthLiveResponse(status="ok")
+
+
+@router.get("/health/ready", response_model=HealthReadyResponse)
+async def health_ready(
+    settings: ApiSettings = Depends(get_settings),
+    db: Database = Depends(get_db),
+) -> HealthReadyResponse:
+    """Readiness probe — DB connectivity + cached scenario/unit counts."""
+    db_ok = False
+    try:
+        await db.conn.execute("SELECT 1")
+        db_ok = True
+    except Exception:
+        pass
+    scenarios = scan_scenarios(Path(settings.data_dir))
+    units = scan_units(Path(settings.data_dir))
+    return HealthReadyResponse(
+        status="ok" if db_ok else "degraded",
+        version=__version__,
+        scenario_count=len(scenarios),
+        unit_count=len(units),
+        db_connected=db_ok,
     )
 
 
