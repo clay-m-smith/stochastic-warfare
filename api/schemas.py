@@ -42,6 +42,8 @@ class ScenarioSummary(BaseModel):
     has_cbrn: bool = False
     has_escalation: bool = False
     has_schools: bool = False
+    has_space: bool = False
+    has_dew: bool = False
 
 
 class ScenarioDetail(BaseModel):
@@ -99,7 +101,13 @@ class RunSubmitRequest(BaseModel):
     scenario: str
     seed: int = 42
     max_ticks: int = Field(default=10_000, ge=1, le=1_000_000)
-    config_overrides: dict[str, Any] = Field(default_factory=dict)
+    config_overrides: dict[str, Any] = Field(
+        default_factory=dict,
+        description="CalibrationSchema overrides. Supports 29 enable_* boolean flags, "
+        "50+ numeric modifiers (hit_probability_modifier, thermal_contrast, etc.), "
+        "nested morale calibration, per-side overrides, and weapon_assignments. "
+        "See stochastic_warfare.simulation.calibration.CalibrationSchema for full reference.",
+    )
     frame_interval: int | None = None
 
     @field_validator("config_overrides")

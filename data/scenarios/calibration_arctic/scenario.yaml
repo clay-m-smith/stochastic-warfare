@@ -1,0 +1,78 @@
+name: "Calibration - Arctic Winter Patrol"
+date: "2024-01-15T08:00:00Z"
+duration_hours: 4.0
+tick_duration_seconds: 10.0
+latitude: 69.0
+longitude: 25.5
+
+weather_conditions:
+  visibility_m: 2000
+  wind_speed_mps: 12.0
+  wind_direction_deg: 0
+  temperature_c: -25.0
+  precipitation: snow
+  cloud_cover: 0.8
+  humidity: 0.60
+
+sides:
+  - side: blue
+    units:
+      - unit_type: us_rifle_squad
+        count: 4
+        overrides:
+          training_level: 0.7
+    experience_level: 0.6
+    morale_initial: STEADY
+  - side: red
+    units:
+      - unit_type: us_rifle_squad
+        count: 4
+        overrides:
+          training_level: 0.6
+    experience_level: 0.5
+    morale_initial: STEADY
+
+terrain:
+  width_m: 4000
+  height_m: 4000
+  cell_size_m: 100.0
+  base_elevation_m: 300.0
+  terrain_type: hilly_defense
+
+victory_conditions:
+  - type: force_destroyed
+    side: ""
+    params:
+      threshold: 0.5
+  - type: morale_collapsed
+    side: ""
+  - type: time_expired
+    side: blue
+    params:
+      max_duration_s: 14400
+
+calibration_overrides:
+  # Exercise cold/weather/night parameters (6 never-set-to-non-default fields)
+  cold_casualty_base_rate: 0.03         # default 0.015 — harsh arctic cold
+  night_thermal_floor: 0.6              # default 0.8 — extended arctic darkness
+  wind_accuracy_penalty_scale: 0.06     # default 0.03 — high winds
+  rain_attenuation_factor: 2.0          # default 1.0 — snow/ice attenuation
+  dig_in_ticks: 60                      # default 30 — frozen ground
+  observation_decay_rate: 0.02          # default 0.05 — slow position changes
+  # Enable relevant environmental flags
+  enable_seasonal_effects: true
+  enable_equipment_stress: true
+  enable_human_factors: true
+  enable_obscurants: true
+  enable_nvg_detection: true
+  # Standard calibration
+  hit_probability_modifier: 0.8
+  morale_degrade_rate_modifier: 1.2
+  blue_start_x: 1000
+  blue_start_y: 2000
+  red_start_x: 3000
+  red_start_y: 2000
+  weapon_assignments:
+    "M4A1 Carbine": m4a1
+    "M249 SAW": m249_saw
+    "M67 Fragmentation Grenade": m67_grenade

@@ -929,7 +929,7 @@ Archive stale scripts and clean up test infrastructure.
 
 ## Phase 80: API & Frontend Sync
 
-**Status**: Not started.
+**Status**: Complete.
 
 **Goal**: Bring API schemas and frontend components current with engine state. Fix scenario data issues.
 

@@ -17,6 +17,8 @@ const MOCK_SCENARIOS: ScenarioSummary[] = [
     has_cbrn: false,
     has_escalation: false,
     has_schools: false,
+    has_space: false,
+    has_dew: false,
   },
 ]
 

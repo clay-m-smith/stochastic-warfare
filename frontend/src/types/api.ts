@@ -13,6 +13,8 @@ export interface ScenarioSummary {
   has_cbrn: boolean
   has_escalation: boolean
   has_schools: boolean
+  has_space: boolean
+  has_dew: boolean
 }
 
 export interface ForceSummaryEntry {

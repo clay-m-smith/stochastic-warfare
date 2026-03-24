@@ -5,7 +5,7 @@ import { renderWithProviders } from '../helpers'
 import { BatchPanel } from '../../pages/analysis/BatchPanel'
 
 const MOCK_SCENARIOS = [
-  { name: '73_easting', display_name: '73 Easting', era: 'modern', duration_hours: 4, sides: ['blue', 'red'], terrain_type: 'desert', has_ew: false, has_cbrn: false, has_escalation: false, has_schools: false },
+  { name: '73_easting', display_name: '73 Easting', era: 'modern', duration_hours: 4, sides: ['blue', 'red'], terrain_type: 'desert', has_ew: false, has_cbrn: false, has_escalation: false, has_schools: false, has_space: false, has_dew: false },
 ]
 
 beforeEach(() => {

@@ -1,8 +1,8 @@
 # Stochastic Warfare
 
 ![Python](https://img.shields.io/badge/python-%3E%3D3.12-blue)
-![Tests](https://img.shields.io/badge/tests-10%2C141_passing-brightgreen)
-![Phase](https://img.shields.io/badge/phase-79_Block--8--IN_PROGRESS-orange)
+![Tests](https://img.shields.io/badge/tests-10%2C167_passing-brightgreen)
+![Phase](https://img.shields.io/badge/phase-80_Block--8--IN_PROGRESS-orange)
 
 High-fidelity, high-resolution wargame simulator built as a headless Python engine. Models warfare across multiple scales — from individual unit engagements up through tactical battles, operational battlefields, and multi-day strategic campaigns — with stochastic and signal-processing-inspired models throughout.
 
@@ -143,7 +143,7 @@ stochastic_warfare/       # simulation engine (19 modules, ~226 source files)
   cbrn/                   # CBRN effects: agents, dispersal, contamination, protection, nuclear
   tools/                  # MCP server, analysis (narrative, tempo, comparison, sensitivity), visualization
 
-data/                     # ~735 YAML data files
+data/                     # ~748 YAML data files
   units/                  # 46 unit definitions (ground, air, naval, support)
   weapons/                # 51 weapon definitions (guns, artillery, missiles, torpedoes)
   ammunition/             # 63 ammunition definitions
@@ -163,7 +163,7 @@ data/                     # ~735 YAML data files
   eras/                    # Era-specific data packages (WW2, WW1, Napoleonic, Ancient/Medieval)
   scenarios/              # 27 modern scenarios (engagement, campaign, EW, space, CBRN, escalation, joint) + 5 test
 
-tests/                    # ~10,464 engine+API+frontend tests across ~400 test files
+tests/                    # ~10,167 engine+API+frontend tests across ~400 test files
 docs/                     # specs, brainstorm, devlog, development phases
 ```
 
@@ -251,7 +251,13 @@ All 11 MVP phases (0-10) are complete. Post-MVP Phases 11-24 are complete (deep 
 | 72 | Checkpoint & State Completeness (Block 8) | 139 | **Complete** |
 | 73 | Historical Scenario Correctness (Block 8) | ~22 | **Complete** |
 | 74 | Combat Engine Unit Tests (Block 8) | 472 | **Complete** |
-| | **Total** | **~9,316** | |
+| 75 | Simulation Core & Domain Unit Tests (Block 8) | 293 | **Complete** |
+| 76 | API Robustness (Block 8) | 25 | **Complete** |
+| 77 | Frontend Accessibility (Block 8) | 36 | **Complete** |
+| 78 | P2 Environment Wiring (Block 8) | 49 | **Complete** |
+| 79 | CI/CD & Packaging (Block 8) | 31 | **Complete** |
+| 80 | API & Frontend Sync (Block 8) | 26 | **Complete** |
+| | **Total** | **~9,776** | |
 
 For the full phase roadmap, see [`docs/development-phases.md`](docs/development-phases.md) (MVP), [`docs/development-phases-post-mvp.md`](docs/development-phases-post-mvp.md) (post-MVP), [`docs/development-phases-block4.md`](docs/development-phases-block4.md) (Block 4), [`docs/development-phases-block5.md`](docs/development-phases-block5.md) (Block 5), [`docs/development-phases-block6.md`](docs/development-phases-block6.md) (Block 6), [`docs/development-phases-block7.md`](docs/development-phases-block7.md) (Block 7), and [`docs/development-phases-block8.md`](docs/development-phases-block8.md) (Block 8). For per-phase implementation logs, see [`docs/devlog/`](docs/devlog/).
 

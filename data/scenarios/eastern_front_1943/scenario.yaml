@@ -67,12 +67,12 @@ calibration_overrides:
     "MG 34 Coaxial": mg42
     "MG 34 Hull Mount": mg42
     "MG 42 Light Machine Gun": mg42
-    "Mosin-Nagant M91/30 Rifle": lee_enfield
-    "Karabiner 98k Rifle": gewehr_98
+    "Mosin-Nagant M91/30 Rifle": mosin_nagant
+    "Karabiner 98k Rifle": kar98k
     "DP-28 Light Machine Gun": mg42
-    "PPSh-41 Submachine Gun": lee_enfield
-    "Stielhandgranate 24": mills_bomb
-    "RGD-33 Fragmentation Grenade": mills_bomb
+    "PPSh-41 Submachine Gun": ppsh41
+    "Stielhandgranate 24": stielhandgranate
+    "RGD-33 Fragmentation Grenade": rgd33
 escalation_config:
   entry_thresholds: [0.0, 0.15, 0.25, 0.35, 0.50, 0.60, 0.70, 0.80, 0.85, 0.90, 0.95]
   hysteresis_factor: 0.7

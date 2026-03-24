@@ -95,6 +95,7 @@ Rolling record of implementation decisions, changes, and lessons learned across 
 | 77 | Frontend Accessibility | **Complete** | [phase-77.md](phase-77.md) |
 | 78 | P2 Environment Wiring | **Complete** | [phase-78.md](phase-78.md) |
 | 79 | CI/CD & Packaging | **Complete** | [phase-79.md](phase-79.md) |
+| 80 | API & Frontend Sync | **Complete** | [phase-80.md](phase-80.md) |
 
 ## Post-MVP Refinement Index
 

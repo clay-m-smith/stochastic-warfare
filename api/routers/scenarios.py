@@ -44,6 +44,8 @@ def _extract_summary(name: str, cfg: dict[str, Any]) -> ScenarioSummary:
         has_cbrn="cbrn_config" in cfg,
         has_escalation="escalation_config" in cfg,
         has_schools="schools_config" in cfg,
+        has_space="space_config" in cfg,
+        has_dew="dew_config" in cfg,
     )
 
 

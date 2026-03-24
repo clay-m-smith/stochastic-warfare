@@ -65,6 +65,9 @@ HISTORICAL_WINNERS: dict[str, str] = {
 
 # Scenarios expected to produce a draw
 DRAW_SCENARIOS: set[str] = {
+    "calibration_air_ground",
+    "calibration_arctic",
+    "calibration_urban_cbrn",
     "coin_campaign",
     "halabja_1988",
     "hybrid_gray_zone",

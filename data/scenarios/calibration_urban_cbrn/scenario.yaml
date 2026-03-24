@@ -1,0 +1,84 @@
+name: "Calibration - Urban CBRN Response"
+date: "2024-06-20T14:00:00Z"
+duration_hours: 3.0
+tick_duration_seconds: 10.0
+latitude: 48.85
+longitude: 2.35
+
+weather_conditions:
+  visibility_m: 1500
+  wind_speed_mps: 3.0
+  wind_direction_deg: 180
+  temperature_c: 32.0
+  precipitation: none
+  cloud_cover: 0.3
+  humidity: 0.70
+
+sides:
+  - side: blue
+    units:
+      - unit_type: us_rifle_squad
+        count: 6
+        overrides:
+          training_level: 0.8
+    experience_level: 0.7
+    morale_initial: STEADY
+  - side: red
+    units:
+      - unit_type: insurgent_squad
+        count: 8
+        overrides:
+          training_level: 0.4
+    experience_level: 0.4
+    morale_initial: STEADY
+
+terrain:
+  width_m: 3000
+  height_m: 3000
+  cell_size_m: 50.0
+  base_elevation_m: 50.0
+  terrain_type: flat_desert
+
+victory_conditions:
+  - type: force_destroyed
+    side: ""
+    params:
+      threshold: 0.5
+  - type: morale_collapsed
+    side: ""
+  - type: time_expired
+    side: blue
+    params:
+      max_duration_s: 10800
+
+cbrn_config:
+  enable_cbrn: true
+
+calibration_overrides:
+  # Exercise CBRN/human factors/C2 parameters (6 never-set-to-non-default fields)
+  gas_casualty_floor: 0.15              # default 0.1 — confined urban spaces
+  gas_protection_scaling: 0.6           # default 0.8 — older MOPP equipment
+  heat_casualty_base_rate: 0.04         # default 0.02 — MOPP + urban heat island
+  c2_min_effectiveness: 0.2             # default 0.3 — urban comms degradation
+  engagement_concealment_threshold: 0.7  # default 0.5 — dense urban cover
+  fire_damage_per_tick: 0.02            # default 0.01 — building fires
+  # Enable relevant flags
+  enable_cbrn_environment: true
+  enable_human_factors: true
+  enable_fire_zones: true
+  enable_c2_friction: true
+  enable_obscurants: true
+  enable_fog_of_war: true
+  # Standard calibration
+  hit_probability_modifier: 0.9
+  morale_degrade_rate_modifier: 1.5
+  blue_start_x: 500
+  blue_start_y: 1500
+  red_start_x: 2500
+  red_start_y: 1500
+  weapon_assignments:
+    "M4A1 Carbine": m4a1
+    "M249 SAW": m249_saw
+    "M67 Fragmentation Grenade": m67_grenade
+    "AK-47 Assault Rifle": ak47
+    "RPG-7 Launcher": rpg7

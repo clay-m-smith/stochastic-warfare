@@ -1,0 +1,88 @@
+name: "Calibration - Air-Ground Combined Arms"
+date: "2024-03-10T06:00:00Z"
+duration_hours: 2.0
+tick_duration_seconds: 5.0
+latitude: 35.0
+longitude: 45.0
+
+weather_conditions:
+  visibility_m: 8000
+  wind_speed_mps: 6.0
+  wind_direction_deg: 270
+  temperature_c: 10.0
+  precipitation: none
+  cloud_cover: 0.6
+  humidity: 0.45
+
+sides:
+  - side: blue
+    units:
+      - unit_type: m1a1
+        count: 4
+        overrides:
+          training_level: 0.8
+      - unit_type: f16c
+        count: 2
+        overrides:
+          training_level: 0.85
+    experience_level: 0.7
+    morale_initial: STEADY
+  - side: red
+    units:
+      - unit_type: t72m
+        count: 8
+        overrides:
+          training_level: 0.5
+      - unit_type: sa11_buk
+        count: 2
+        overrides:
+          training_level: 0.5
+    experience_level: 0.4
+    morale_initial: STEADY
+
+terrain:
+  width_m: 10000
+  height_m: 8000
+  cell_size_m: 100.0
+  base_elevation_m: 400.0
+  terrain_type: flat_desert
+
+victory_conditions:
+  - type: force_destroyed
+    side: ""
+    params:
+      threshold: 0.4
+  - type: morale_collapsed
+    side: ""
+  - type: time_expired
+    side: blue
+    params:
+      max_duration_s: 7200
+
+calibration_overrides:
+  # Exercise air combat/targeting/detection parameters (6 never-set-to-non-default fields)
+  cloud_ceiling_min_attack_m: 800       # default 500 — conservative CAS rules
+  icing_maneuver_penalty: 0.25          # default 0.15 — ice-prone altitude
+  planning_available_time_s: 3600       # default 7200 — time-compressed operation
+  disable_threshold: 0.2                # default 0.3 — lower damage tolerance
+  wave_interval_s: 180                  # default 300 — faster wave tempo
+  target_selection_mode: nearest         # default threat_scored — simplified targeting
+  # Enable relevant flags
+  enable_air_routing: true
+  enable_air_combat_environment: true
+  enable_fog_of_war: true
+  enable_obscurants: true
+  enable_em_propagation: true
+  enable_event_feedback: true
+  # Standard calibration
+  hit_probability_modifier: 1.0
+  thermal_contrast: 1.2
+  blue_force_ratio_modifier: 2.0
+  red_force_ratio_modifier: 1.0
+  blue_start_x: 1000
+  blue_start_y: 4000
+  red_start_x: 9000
+  red_start_y: 4000
+  weapon_assignments:
+    "M256 120mm Smoothbore": m256_120mm
+    "2A46M 125mm Smoothbore": 2a46m_125mm

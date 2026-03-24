@@ -17,6 +17,8 @@ const MOCK_SCENARIOS: ScenarioSummary[] = [
     has_cbrn: false,
     has_escalation: false,
     has_schools: false,
+    has_space: false,
+    has_dew: false,
   },
   {
     name: 'jutland_1916',
@@ -29,6 +31,8 @@ const MOCK_SCENARIOS: ScenarioSummary[] = [
     has_cbrn: false,
     has_escalation: false,
     has_schools: false,
+    has_space: false,
+    has_dew: false,
   },
   {
     name: 'taiwan_strait',
@@ -41,6 +45,8 @@ const MOCK_SCENARIOS: ScenarioSummary[] = [
     has_cbrn: false,
     has_escalation: true,
     has_schools: false,
+    has_space: false,
+    has_dew: false,
   },
 ]
 

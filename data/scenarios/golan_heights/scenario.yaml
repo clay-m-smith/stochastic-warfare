@@ -117,6 +117,18 @@ documented_outcomes:
     source_quality: 1
     notes: "18 hours of fighting"
 
+victory_conditions:
+  - type: force_destroyed
+    side: ""
+    params:
+      threshold: 0.4
+  - type: morale_collapsed
+    side: ""
+  - type: time_expired
+    side: blue
+    params:
+      max_duration_s: 64800
+
 calibration_overrides:
   # Phase 67: Block 7 flag enablement — dust/smoke, October weather
   enable_obscurants: true

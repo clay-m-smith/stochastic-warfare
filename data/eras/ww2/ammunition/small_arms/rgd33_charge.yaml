@@ -1,0 +1,15 @@
+ammo_id: rgd33_charge
+display_name: "RGD-33 TNT Charge"
+ammo_type: HE
+mass_kg: 0.750
+diameter_mm: 0.0
+drag_coefficient: 0.50
+penetration_mm_rha: 0.0
+penetration_reference_range_m: 0.0
+blast_radius_m: 8.0
+fragmentation_radius_m: 25.0
+explosive_fill_kg: 0.085
+guidance: NONE
+propulsion: none
+max_speed_mps: 14.0
+unit_cost_factor: 0.2

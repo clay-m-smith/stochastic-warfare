@@ -1,0 +1,14 @@
+ammo_id: 792x57mm_mauser
+display_name: "7.92x57mm Mauser Ball"
+ammo_type: AP
+mass_kg: 0.0128
+diameter_mm: 7.92
+drag_coefficient: 0.35
+penetration_mm_rha: 8.0
+penetration_reference_range_m: 100.0
+blast_radius_m: 0.0
+fragmentation_radius_m: 0.0
+guidance: NONE
+propulsion: none
+max_speed_mps: 760.0
+unit_cost_factor: 0.01

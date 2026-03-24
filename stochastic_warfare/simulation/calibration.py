@@ -214,6 +214,9 @@ class CalibrationSchema(BaseModel):
     guerrilla_disengage_threshold: float = 0.3
     human_shield_pk_reduction: float = 0.5
 
+    # -- Meta-flag (Phase 80) ---------------------------------------------
+    enable_all_modern: bool = False
+
     # -- Collections ------------------------------------------------------
     weapon_assignments: dict[str, str] = {}
     victory_weights: dict[str, float] | None = None
@@ -324,6 +327,25 @@ class CalibrationSchema(BaseModel):
             result["side_overrides"] = side_overrides
 
         return result
+
+    # 21 non-deferred flags validated in Phase 67.  Deferred flags
+    # (fuel_consumption, ammo_gate, command_hierarchy, carrier_ops,
+    # ice_crossing, bridge_capacity, environmental_fatigue) excluded.
+    _MODERN_FLAGS: ClassVar[list[str]] = [
+        "enable_air_routing", "enable_fog_of_war", "enable_seasonal_effects",
+        "enable_equipment_stress", "enable_obstacle_effects", "enable_obscurants",
+        "enable_fire_zones", "enable_thermal_crossover", "enable_nvg_detection",
+        "enable_sea_state_ops", "enable_acoustic_layers", "enable_em_propagation",
+        "enable_human_factors", "enable_cbrn_environment", "enable_air_combat_environment",
+        "enable_event_feedback", "enable_missile_routing", "enable_c2_friction",
+        "enable_space_effects", "enable_unconventional_warfare", "enable_mine_persistence",
+    ]
+
+    def model_post_init(self, __context: Any) -> None:
+        """If enable_all_modern is True, set all 21 validated enable_* flags."""
+        if self.enable_all_modern:
+            for flag in self._MODERN_FLAGS:
+                object.__setattr__(self, flag, True)
 
     def get(self, key: str, default: Any = None) -> Any:
         """Dict-compatible accessor for backward compatibility.

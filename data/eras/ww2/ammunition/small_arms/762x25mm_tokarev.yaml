@@ -1,0 +1,14 @@
+ammo_id: 762x25mm_tokarev
+display_name: "7.62x25mm Tokarev Ball"
+ammo_type: AP
+mass_kg: 0.0055
+diameter_mm: 7.62
+drag_coefficient: 0.40
+penetration_mm_rha: 5.0
+penetration_reference_range_m: 50.0
+blast_radius_m: 0.0
+fragmentation_radius_m: 0.0
+guidance: NONE
+propulsion: none
+max_speed_mps: 490.0
+unit_cost_factor: 0.01

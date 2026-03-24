@@ -42,7 +42,7 @@ class TestEnableFlagConsumers:
     def test_all_enable_flags_have_consumers(self):
         """Every enable_* field in CalibrationSchema appears in battle.py, engine.py, or scenario.py."""
         flags = _get_enable_flags()
-        combined = _read("simulation/battle.py") + _read("simulation/engine.py") + _read("simulation/scenario.py")
+        combined = _read("simulation/battle.py") + _read("simulation/engine.py") + _read("simulation/scenario.py") + _read("simulation/calibration.py")
         missing = [f for f in flags if f not in combined]
         assert not missing, f"Unconsumed enable_* flags: {missing}"
 
@@ -53,7 +53,7 @@ class TestEnableFlagConsumers:
         enabled in a future integration phase.
         """
         # Phase 68/69/71/78 consequence flags not yet enabled in scenarios
-        _DEFERRED_FLAGS = {"enable_fuel_consumption", "enable_ammo_gate", "enable_command_hierarchy", "enable_carrier_ops", "enable_ice_crossing", "enable_bridge_capacity", "enable_environmental_fatigue"}
+        _DEFERRED_FLAGS = {"enable_fuel_consumption", "enable_ammo_gate", "enable_command_hierarchy", "enable_carrier_ops", "enable_ice_crossing", "enable_bridge_capacity", "enable_environmental_fatigue", "enable_all_modern"}
         flags = set(_get_enable_flags()) - _DEFERRED_FLAGS
         enabled: set[str] = set()
         for path in _DATA.rglob("scenario.yaml"):

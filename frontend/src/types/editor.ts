@@ -39,5 +39,5 @@ export type EditorAction =
   | { type: 'REMOVE_UNIT'; sideIndex: number; unitIndex: number }
   | { type: 'SET_UNIT_COUNT'; sideIndex: number; unitIndex: number; count: number }
   | { type: 'TOGGLE_CONFIG'; key: string; enabled: boolean }
-  | { type: 'SET_CALIBRATION'; key: string; value: number }
+  | { type: 'SET_CALIBRATION'; key: string; value: number | boolean }
   | { type: 'SET_VALIDATION'; errors: string[] }

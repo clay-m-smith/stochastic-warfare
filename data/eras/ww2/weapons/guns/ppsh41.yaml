@@ -1,0 +1,19 @@
+weapon_id: ppsh41
+display_name: "PPSh-41 Submachine Gun"
+category: SUBMACHINE_GUN
+caliber_mm: 7.62
+muzzle_velocity_mps: 490.0
+max_range_m: 200.0
+min_range_m: 0.0
+rate_of_fire_rpm: 900.0
+burst_size: 5
+base_accuracy_mrad: 3.0
+guidance: NONE
+magazine_capacity: 71
+reload_time_s: 6.0
+compatible_ammo:
+  - 762x25mm_tokarev
+weight_kg: 3.6
+reliability: 0.90
+barrel_life_rounds: 8000
+requires_deployed: false
