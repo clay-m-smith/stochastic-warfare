@@ -48,9 +48,14 @@ export function Sidebar({ open, onClose, theme, onToggleTheme }: SidebarProps) {
         <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
           <span
             className={`h-2 w-2 rounded-full ${health?.status === 'ok' ? 'bg-green-500' : 'bg-red-500'}`}
+            aria-hidden="true"
           />
           {health
-            ? `${health.scenario_count} scenarios, ${health.unit_count} units`
+            ? <>
+                <span className="font-medium">{health.status === 'ok' ? 'Connected' : 'Disconnected'}</span>
+                <span className="mx-1">&mdash;</span>
+                {`${health.scenario_count} scenarios, ${health.unit_count} units`}
+              </>
             : 'Connecting...'}
         </div>
         {health?.version && (
@@ -77,7 +82,7 @@ export function Sidebar({ open, onClose, theme, onToggleTheme }: SidebarProps) {
       {/* Mobile sidebar: overlay */}
       {open && (
         <div className="fixed inset-0 z-30 md:hidden">
-          <div className="fixed inset-0 bg-black/30" onClick={onClose} />
+          <div className="fixed inset-0 bg-black/30" onClick={onClose} role="presentation" />
           <div className="fixed left-0 top-0 h-full z-40">
             {sidebar}
           </div>

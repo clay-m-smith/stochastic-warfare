@@ -16,14 +16,14 @@ export function StatisticsTable({ metrics, className }: StatisticsTableProps) {
       <table className="min-w-full text-sm">
         <thead>
           <tr className="border-b border-gray-200 text-left text-gray-500">
-            <th className="px-4 py-3 font-medium">Metric</th>
-            <th className="px-4 py-3 font-medium text-right">Mean</th>
-            <th className="px-4 py-3 font-medium text-right">Median</th>
-            <th className="px-4 py-3 font-medium text-right">Std</th>
-            <th className="px-4 py-3 font-medium text-right">Min</th>
-            <th className="px-4 py-3 font-medium text-right">Max</th>
-            <th className="px-4 py-3 font-medium text-right">P5</th>
-            <th className="px-4 py-3 font-medium text-right">P95</th>
+            <th className="px-4 py-3 font-medium" scope="col">Metric</th>
+            <th className="px-4 py-3 font-medium text-right" scope="col">Mean</th>
+            <th className="px-4 py-3 font-medium text-right" scope="col">Median</th>
+            <th className="px-4 py-3 font-medium text-right" scope="col">Std</th>
+            <th className="px-4 py-3 font-medium text-right" scope="col">Min</th>
+            <th className="px-4 py-3 font-medium text-right" scope="col">Max</th>
+            <th className="px-4 py-3 font-medium text-right" scope="col">P5</th>
+            <th className="px-4 py-3 font-medium text-right" scope="col">P95</th>
           </tr>
         </thead>
         <tbody>

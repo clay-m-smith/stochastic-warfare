@@ -28,6 +28,7 @@ export function KeyboardShortcutHelp({ open, onClose, shortcuts }: KeyboardShort
           </div>
           <button
             onClick={onClose}
+            aria-label="Close keyboard shortcuts"
             className="mt-4 w-full rounded-md bg-gray-100 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200"
           >
             Close

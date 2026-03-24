@@ -17,19 +17,21 @@ export function GeneralSection({ config, dispatch }: GeneralSectionProps) {
     <section>
       <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">General</h3>
       <div className="grid grid-cols-2 gap-4">
-        <label className="block">
-          <span className="text-sm text-gray-700 dark:text-gray-300">Name</span>
+        <div className="block">
+          <label htmlFor="general-name" className="text-sm text-gray-700 dark:text-gray-300">Name</label>
           <input
+            id="general-name"
             type="text"
             className="mt-1 block w-full rounded border-gray-300 text-sm shadow-sm dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200"
             value={(config.name as string) ?? ''}
             onChange={(e) => set(['name'], e.target.value)}
           />
-        </label>
+        </div>
 
-        <label className="block">
-          <span className="text-sm text-gray-700 dark:text-gray-300">Duration (hours)</span>
+        <div className="block">
+          <label htmlFor="general-duration" className="text-sm text-gray-700 dark:text-gray-300">Duration (hours)</label>
           <input
+            id="general-duration"
             type="number"
             min={0.1}
             step={0.5}
@@ -37,11 +39,12 @@ export function GeneralSection({ config, dispatch }: GeneralSectionProps) {
             value={(config.duration_hours as number) ?? 4}
             onChange={(e) => set(['duration_hours'], parseFloat(e.target.value) || 1)}
           />
-        </label>
+        </div>
 
-        <label className="block">
-          <span className="text-sm text-gray-700 dark:text-gray-300">Era</span>
+        <div className="block">
+          <label htmlFor="general-era" className="text-sm text-gray-700 dark:text-gray-300">Era</label>
           <select
+            id="general-era"
             className="mt-1 block w-full rounded border-gray-300 text-sm shadow-sm dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200"
             value={(config.era as string) ?? 'modern'}
             onChange={(e) => set(['era'], e.target.value)}
@@ -54,17 +57,18 @@ export function GeneralSection({ config, dispatch }: GeneralSectionProps) {
                 ))
               : <option value="modern">Modern</option>}
           </select>
-        </label>
+        </div>
 
-        <label className="block">
-          <span className="text-sm text-gray-700 dark:text-gray-300">Date</span>
+        <div className="block">
+          <label htmlFor="general-date" className="text-sm text-gray-700 dark:text-gray-300">Date</label>
           <input
+            id="general-date"
             type="text"
             className="mt-1 block w-full rounded border-gray-300 text-sm shadow-sm dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200"
             value={(config.date as string) ?? ''}
             onChange={(e) => set(['date'], e.target.value)}
           />
-        </label>
+        </div>
       </div>
     </section>
   )

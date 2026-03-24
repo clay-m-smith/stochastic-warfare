@@ -12,10 +12,14 @@ interface TabBarProps {
 export function TabBar({ tabs, activeTab, onTabChange }: TabBarProps) {
   return (
     <div className="border-b border-gray-200 dark:border-gray-700">
-      <nav className="-mb-px flex gap-4" aria-label="Tabs">
+      <nav className="-mb-px flex gap-4" aria-label="Tabs" role="tablist">
         {tabs.map((tab) => (
           <button
             key={tab.id}
+            id={`tab-${tab.id}`}
+            role="tab"
+            aria-selected={activeTab === tab.id}
+            aria-controls={`tabpanel-${tab.id}`}
             onClick={() => onTabChange(tab.id)}
             className={`whitespace-nowrap border-b-2 px-1 py-3 text-sm font-medium ${
               activeTab === tab.id

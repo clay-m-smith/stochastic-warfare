@@ -58,6 +58,8 @@ export function RunConfigPage() {
             type="number"
             value={seed}
             onChange={(e) => setSeed(Number(e.target.value))}
+            required
+            aria-required="true"
             className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200"
           />
         </div>
@@ -71,6 +73,8 @@ export function RunConfigPage() {
             value={maxTicks}
             onChange={(e) => setMaxTicks(Number(e.target.value))}
             min={1}
+            required
+            aria-required="true"
             className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200"
           />
         </div>

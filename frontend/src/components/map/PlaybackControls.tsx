@@ -70,6 +70,7 @@ export function PlaybackControls({
         onChange={(e) => onSeek(Number(e.target.value))}
         className="mx-2 flex-1"
         aria-label="Timeline scrubber"
+        aria-describedby="playback-time-display"
       />
 
       <select
@@ -85,7 +86,7 @@ export function PlaybackControls({
         ))}
       </select>
 
-      <span className="ml-1 font-mono text-gray-500 dark:text-gray-400">
+      <span id="playback-time-display" className="ml-1 font-mono text-gray-500 dark:text-gray-400">
         {elapsedTime && totalTime
           ? `${elapsedTime} / ${totalTime}`
           : currentTick != null

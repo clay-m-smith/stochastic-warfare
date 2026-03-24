@@ -84,7 +84,7 @@ function StatusIcon({ type }: { type: 'active' | 'disabled' | 'destroyed' }) {
   const size = 12
   const opacity = type === 'destroyed' ? 0.35 : type === 'disabled' ? 0.55 : 1.0
   return (
-    <svg width={size} height={size} viewBox="0 0 12 12">
+    <svg width={size} height={size} viewBox="0 0 12 12" aria-hidden="true">
       <rect x="1" y="1" width="10" height="10" fill="#666" stroke="#000" strokeWidth="0.5" opacity={opacity} />
       {type === 'disabled' && (
         <line x1="10" y1="2" x2="2" y2="10" stroke="#FF8800" strokeWidth="2" />
@@ -102,7 +102,7 @@ function StatusIcon({ type }: { type: 'active' | 'disabled' | 'destroyed' }) {
 function DomainIcon({ shape }: { shape: string }) {
   const size = 12
   return (
-    <svg width={size} height={size} viewBox="0 0 12 12">
+    <svg width={size} height={size} viewBox="0 0 12 12" aria-hidden="true">
       {shape === 'rectangle' && (
         <rect x="1" y="1" width="10" height="10" fill="#666" stroke="#000" strokeWidth="0.5" />
       )}

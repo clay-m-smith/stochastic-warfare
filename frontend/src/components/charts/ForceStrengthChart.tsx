@@ -28,6 +28,28 @@ export function ForceStrengthChart({ data, className, layoutOverrides, onClick }
     hovertemplate: '%{text}<br>%{y} units<extra>%{fullData.name}</extra>',
   }))
 
+  const sampleStep = Math.max(1, Math.floor(data.length / 10))
+  const sampledData = data.filter((_, i) => i % sampleStep === 0 || i === data.length - 1)
+
+  const dataSummary = (
+    <table className="min-w-full text-xs">
+      <thead>
+        <tr>
+          <th scope="col" className="px-2 py-1 text-left">Time (s)</th>
+          {sides.map(s => <th key={s} scope="col" className="px-2 py-1 text-right">{s}</th>)}
+        </tr>
+      </thead>
+      <tbody>
+        {sampledData.map((p, i) => (
+          <tr key={i}>
+            <td className="px-2 py-1">{p.time_s.toFixed(0)}</td>
+            {sides.map(s => <td key={s} className="px-2 py-1 text-right">{((p[s] as number) ?? 0)}</td>)}
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  )
+
   return (
     <PlotlyChart
       data={traces}
@@ -40,6 +62,7 @@ export function ForceStrengthChart({ data, className, layoutOverrides, onClick }
       }}
       className={className}
       onClick={onClick}
+      dataSummary={dataSummary}
     />
   )
 }

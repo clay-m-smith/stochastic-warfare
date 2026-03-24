@@ -421,7 +421,18 @@ export function TacticalMap({ terrain, frames, engagementArcs = [], onTickChange
           onMouseUp={onMouseUp}
           onMouseLeave={onMouseUp}
           onClick={handleCanvasClick}
+          role="application"
+          aria-label="Tactical map"
+          aria-describedby="tactical-map-summary"
+          tabIndex={0}
         />
+        <div id="tactical-map-summary" className="sr-only" aria-live="polite">
+          {currentFrameData
+            ? `Frame ${currentFrame + 1} of ${frames.length}. ${
+                currentFrameData.units.filter(u => u.status === 0).length
+              } active units.`
+            : 'No frame data available.'}
+        </div>
         {/* Legend overlay */}
         <div className="pointer-events-none absolute bottom-2 left-2">
           <div className="pointer-events-auto">

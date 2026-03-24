@@ -18,7 +18,12 @@ export function AnalysisPage() {
     <div>
       <PageHeader title="Analysis" />
       <TabBar tabs={TABS} activeTab={activeTab} onTabChange={setActiveTab} />
-      <div className="mt-6">
+      <div
+        className="mt-6"
+        role="tabpanel"
+        id={`tabpanel-${activeTab}`}
+        aria-labelledby={`tab-${activeTab}`}
+      >
         {activeTab === 'batch' && <BatchPanel />}
         {activeTab === 'compare' && <ComparePanel />}
         {activeTab === 'sweep' && <SweepPanel />}

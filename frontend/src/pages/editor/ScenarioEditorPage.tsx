@@ -89,7 +89,7 @@ function EditorContent({ initialConfig, scenarioName }: { initialConfig: Record<
 
       {/* Validation errors */}
       {state.validationErrors.length > 0 && (
-        <div className="mt-4 rounded-md bg-red-50 dark:bg-red-900/30 p-4">
+        <div className="mt-4 rounded-md bg-red-50 dark:bg-red-900/30 p-4" role="alert" aria-live="assertive">
           <h4 className="text-sm font-medium text-red-800 dark:text-red-300">Validation Errors</h4>
           <ul className="mt-1 list-inside list-disc text-sm text-red-700 dark:text-red-400">
             {state.validationErrors.map((err, i) => (
