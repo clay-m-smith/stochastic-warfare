@@ -578,9 +578,9 @@ Unit tests for era-specific and unconventional combat engines.
 
 ## Phase 75: Simulation Core & Domain Unit Tests
 
-**Status**: Not started.
+**Status**: Complete (293 tests across 15 test files).
 
-**Goal**: Add unit tests for engine.py, battle.py private methods, and all domain modules (environment, terrain, detection, movement, morale, logistics).
+**Goal**: Add unit tests for engine.py, battle.py private methods, and all domain modules (movement, terrain, logistics, simulation support).
 
 **Dependencies**: Phase 74 (combat tests complete; pattern established).
 
