@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import math
 
 import numpy as np
 import pytest
@@ -12,7 +11,6 @@ from stochastic_warfare.combat.ballistics import (
     BallisticsConfig,
     BallisticsEngine,
     ImpactResult,
-    TrajectoryResult,
 )
 from stochastic_warfare.core.types import Position
 

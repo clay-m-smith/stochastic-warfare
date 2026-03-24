@@ -1,6 +1,5 @@
 """Tests for entities/base.py — Entity and Unit classes."""
 
-import numpy as np
 
 from stochastic_warfare.core.types import Domain, Position, Side
 from stochastic_warfare.entities.base import Entity, Unit, UnitStatus

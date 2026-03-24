@@ -7,7 +7,6 @@ import pytest
 from stochastic_warfare.combat.missile_defense import (
     BMDResult,
     CRAMResult,
-    CruiseMissileDefenseResult,
     MissileDefenseConfig,
     MissileDefenseEngine,
 )

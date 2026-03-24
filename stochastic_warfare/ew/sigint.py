@@ -16,7 +16,7 @@ from __future__ import annotations
 import enum
 import math
 from dataclasses import dataclass
-from typing import Any, NamedTuple
+from typing import Any
 
 import numpy as np
 from pydantic import BaseModel

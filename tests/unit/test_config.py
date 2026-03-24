@@ -1,6 +1,6 @@
 """Tests for core/config.py — YAML loading and pydantic validation."""
 
-from datetime import datetime, timedelta, timezone
+from datetime import timedelta
 from pathlib import Path
 
 import pytest

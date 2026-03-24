@@ -8,8 +8,7 @@ compatibility (no school assigned = no change).
 from __future__ import annotations
 
 import types
-from dataclasses import dataclass, replace
-from datetime import datetime, timedelta, timezone
+from datetime import timedelta
 
 import numpy as np
 import pytest
@@ -23,9 +22,7 @@ from stochastic_warfare.c2.ai.schools import SchoolRegistry
 from stochastic_warfare.c2.ai.schools.base import DoctrinalSchool, SchoolDefinition
 from stochastic_warfare.c2.planning.coa import (
     COA,
-    COAConfig,
     COAEngine,
-    COAScore,
     ManeuverType,
     TaskAssignment,
     WargameResult,

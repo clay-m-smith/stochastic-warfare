@@ -4,23 +4,20 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 
-import numpy as np
 import pytest
 
-from stochastic_warfare.core.events import Event, EventBus
+from stochastic_warfare.core.events import EventBus
 from stochastic_warfare.core.rng import RNGManager
-from stochastic_warfare.core.types import ModuleId, Position
+from stochastic_warfare.core.types import ModuleId
 from stochastic_warfare.c2.communications import (
     CommEquipmentLoader,
     CommunicationsEngine,
 )
 from stochastic_warfare.c2.events import CommandStatusChangeEvent
 from stochastic_warfare.c2.naval_c2 import (
-    DataLinkNetwork,
     NavalC2Config,
     NavalC2Engine,
     NavalDataLinkType,
-    NavalFormation,
     NavalFormationType,
     SubCommMethod,
 )

@@ -6,7 +6,7 @@ from datetime import datetime, timezone
 
 import pytest
 
-from stochastic_warfare.core.events import Event, EventBus
+from stochastic_warfare.core.events import EventBus
 from stochastic_warfare.core.rng import RNGManager
 from stochastic_warfare.core.types import ModuleId
 from stochastic_warfare.c2.events import InitiativeActionEvent

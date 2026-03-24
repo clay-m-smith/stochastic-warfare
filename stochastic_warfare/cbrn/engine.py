@@ -19,7 +19,7 @@ from stochastic_warfare.cbrn.decontamination import DecontaminationEngine
 from stochastic_warfare.cbrn.dispersal import DispersalEngine
 from stochastic_warfare.cbrn.events import CBRNReleaseEvent, MOPPLevelChangedEvent
 from stochastic_warfare.cbrn.nuclear import NuclearEffectsEngine
-from stochastic_warfare.cbrn.protection import MOPPLevel, ProtectionEngine
+from stochastic_warfare.cbrn.protection import ProtectionEngine
 from stochastic_warfare.core.events import EventBus
 from stochastic_warfare.core.logging import get_logger
 from stochastic_warfare.core.types import ModuleId, Position

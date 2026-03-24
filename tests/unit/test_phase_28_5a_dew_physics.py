@@ -9,7 +9,6 @@ from __future__ import annotations
 import math
 
 import numpy as np
-import pytest
 
 from stochastic_warfare.combat.ammunition import (
     AmmoDefinition,
@@ -23,7 +22,6 @@ from stochastic_warfare.combat.damage import DamageType
 from stochastic_warfare.combat.directed_energy import (
     DEWConfig,
     DEWEngine,
-    DEWEngagementResult,
     DEWType,
 )
 from stochastic_warfare.combat.events import DEWEngagementEvent

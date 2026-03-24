@@ -7,7 +7,7 @@ No ATO planning cycle (Phase 8).
 from __future__ import annotations
 
 import enum
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import datetime, timedelta
 from typing import Any
 
@@ -279,7 +279,6 @@ class ATOPlanningEngine:
         event_bus: EventBus,
         config: ATOPlanningConfig | None = None,
     ) -> None:
-        from stochastic_warfare.c2.events import ATOGeneratedEvent
 
         self._event_bus = event_bus
         self._config = config or ATOPlanningConfig()

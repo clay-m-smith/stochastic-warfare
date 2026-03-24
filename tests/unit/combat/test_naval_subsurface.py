@@ -7,15 +7,10 @@ import pytest
 from stochastic_warfare.combat.damage import DamageEngine
 from stochastic_warfare.combat.naval_subsurface import (
     ASROCResult,
-    DepthChargeResult,
-    EvasionResult,
     NavalSubsurfaceConfig,
     NavalSubsurfaceEngine,
-    TorpedoCountermeasureResult,
-    TorpedoResult,
 )
 from stochastic_warfare.core.events import EventBus
-from stochastic_warfare.core.types import Position
 
 from .conftest import _rng
 

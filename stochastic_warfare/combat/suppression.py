@@ -8,17 +8,14 @@ formations.
 from __future__ import annotations
 
 import enum
-import math
 from dataclasses import dataclass
 from typing import Any
 
 import numpy as np
 from pydantic import BaseModel
 
-from stochastic_warfare.combat.events import SuppressionEvent
 from stochastic_warfare.core.events import EventBus
 from stochastic_warfare.core.logging import get_logger
-from stochastic_warfare.core.types import ModuleId
 
 logger = get_logger(__name__)
 

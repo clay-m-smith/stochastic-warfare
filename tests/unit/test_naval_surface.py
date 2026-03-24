@@ -11,7 +11,6 @@ from stochastic_warfare.combat.damage import DamageEngine
 from stochastic_warfare.combat.naval_surface import (
     NavalSurfaceConfig,
     NavalSurfaceEngine,
-    SalvoResult,
     ShipDamageState,
 )
 from stochastic_warfare.core.events import Event, EventBus

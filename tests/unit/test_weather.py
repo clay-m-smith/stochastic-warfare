@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
 
-import numpy as np
 import pytest
 
 from stochastic_warfare.core.clock import SimulationClock
@@ -14,7 +13,6 @@ from stochastic_warfare.environment.weather import (
     ClimateZone,
     WeatherConfig,
     WeatherEngine,
-    WeatherState,
 )
 
 

@@ -1,8 +1,6 @@
 """Phase 63c: Checkpoint State Completeness tests."""
 
-import pytest
 
-from stochastic_warfare.simulation.scenario import SimulationContext
 
 
 def _read_scenario_source():

@@ -5,7 +5,6 @@ from __future__ import annotations
 import matplotlib
 import matplotlib.figure
 import numpy as np
-import pytest
 
 from stochastic_warfare.tools.charts import (
     engagement_network,

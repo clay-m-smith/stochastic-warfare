@@ -10,8 +10,7 @@ from __future__ import annotations
 
 import os
 from concurrent.futures import ProcessPoolExecutor, as_completed
-from dataclasses import dataclass, field
-from pathlib import Path
+from dataclasses import dataclass
 from typing import Any
 
 import numpy as np
@@ -24,7 +23,7 @@ from stochastic_warfare.validation.historical_data import (
     HistoricalEngagement,
     HistoricalMetric,
 )
-from stochastic_warfare.validation.metrics import EngagementMetrics, SimulationResult
+from stochastic_warfare.validation.metrics import EngagementMetrics
 from stochastic_warfare.validation.scenario_runner import ScenarioRunner, ScenarioRunnerConfig
 
 logger = get_logger(__name__)

@@ -6,9 +6,7 @@ battle loop and that missile impacts resolve to damage on nearby units.
 
 from __future__ import annotations
 
-import math
-import types
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 from unittest.mock import MagicMock
 
 import numpy as np
@@ -17,7 +15,6 @@ import pytest
 from stochastic_warfare.combat.missiles import (
     MissileEngine,
     MissileImpactResult,
-    MissileType,
 )
 from stochastic_warfare.core.events import EventBus
 from stochastic_warfare.core.types import Position

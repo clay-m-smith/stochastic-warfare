@@ -33,7 +33,6 @@ from stochastic_warfare.combat.siege import (
     SiegeConfig,
     SiegeEngine,
     SiegePhase,
-    SiegeState,
 )
 from stochastic_warfare.movement.formation_ancient import (
     AncientFormationConfig,

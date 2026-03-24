@@ -12,16 +12,12 @@ import numpy as np
 import pytest
 
 from stochastic_warfare.core.events import EventBus
-from stochastic_warfare.core.types import ModuleId, Position
+from stochastic_warfare.core.types import Position
 from stochastic_warfare.ew.decoys_ew import (
-    EWDecoy,
-    EWDecoyConfig,
     EWDecoyEngine,
-    EWDecoyType,
     SeekerType,
 )
 from stochastic_warfare.ew.events import (
-    DecoyDeployedEvent,
     JammingActivatedEvent,
     JammingDeactivatedEvent,
 )
@@ -29,7 +25,6 @@ from stochastic_warfare.ew.jamming import (
     JammerDefinitionModel,
     JammerInstance,
     JamTechnique,
-    JammingConfig,
     JammingEngine,
 )
 from stochastic_warfare.ew.spoofing import (

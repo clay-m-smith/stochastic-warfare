@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import math
 from types import SimpleNamespace
 
 import numpy as np
@@ -16,7 +15,6 @@ from stochastic_warfare.detection.detection import (
 )
 from stochastic_warfare.detection.sensors import SensorDefinition, SensorInstance, SensorType
 from stochastic_warfare.detection.signatures import (
-    AcousticSignature,
     EMSignature,
     RadarSignature,
     SignatureProfile,

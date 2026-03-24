@@ -10,12 +10,10 @@ Tests cover:
 
 from __future__ import annotations
 
-from datetime import datetime, timedelta, timezone
+from datetime import timedelta
 
-import numpy as np
-import pytest
 
-from tests.conftest import TS, make_rng
+from tests.conftest import TS
 
 from stochastic_warfare.core.clock import SimulationClock
 from stochastic_warfare.core.events import EventBus

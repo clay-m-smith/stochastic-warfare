@@ -13,7 +13,7 @@ and state collection.
 from __future__ import annotations
 
 import json
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import timedelta
 from enum import IntEnum
 from typing import Any
@@ -24,7 +24,7 @@ from stochastic_warfare.core.checkpoint import NumpyEncoder, _numpy_object_hook
 from stochastic_warfare.core.logging import get_logger
 from stochastic_warfare.core.types import Position
 from stochastic_warfare.entities.base import UnitStatus
-from stochastic_warfare.simulation.battle import BattleConfig, BattleContext, BattleManager
+from stochastic_warfare.simulation.battle import BattleConfig, BattleManager
 from stochastic_warfare.simulation.campaign import CampaignConfig, CampaignManager
 from stochastic_warfare.simulation.recorder import SimulationRecorder
 from stochastic_warfare.simulation.scenario import SimulationContext

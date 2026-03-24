@@ -6,9 +6,7 @@ sortie rate computation, Beaufort sea state gating, and enable_carrier_ops flag.
 
 from __future__ import annotations
 
-import types
 from datetime import datetime, timezone
-from unittest.mock import MagicMock
 
 import numpy as np
 import pytest

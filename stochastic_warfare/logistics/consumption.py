@@ -8,14 +8,13 @@ environmental conditions (temperature, ground state), and unit composition
 from __future__ import annotations
 
 import enum
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 import numpy as np
 from pydantic import BaseModel
 
 from stochastic_warfare.core.events import EventBus
 from stochastic_warfare.core.logging import get_logger
-from stochastic_warfare.core.types import ModuleId
 from stochastic_warfare.logistics.supply_classes import SupplyClass
 
 logger = get_logger(__name__)

@@ -2,17 +2,13 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 from types import SimpleNamespace
-from unittest.mock import MagicMock, patch
 
 import numpy as np
-import pytest
 
-from stochastic_warfare.core.clock import SimulationClock
 from stochastic_warfare.core.events import EventBus
-from stochastic_warfare.core.types import ModuleId, Position
-from stochastic_warfare.simulation.calibration import CalibrationSchema
+from stochastic_warfare.core.types import Position
 
 
 # ---------------------------------------------------------------------------

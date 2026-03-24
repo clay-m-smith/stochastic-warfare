@@ -6,7 +6,6 @@ import numpy as np
 import pytest
 
 from stochastic_warfare.core.events import EventBus
-from stochastic_warfare.core.types import ModuleId
 from stochastic_warfare.space.constellations import (
     ConstellationDefinition,
     ConstellationManager,
@@ -16,7 +15,7 @@ from stochastic_warfare.space.constellations import (
 from stochastic_warfare.space.gps import GPSEngine, GPSFixQuality, GPSState
 from stochastic_warfare.space.orbits import OrbitalMechanicsEngine
 
-from tests.conftest import TS, make_rng, make_clock
+from tests.conftest import make_rng, make_clock
 
 
 def _rng(seed: int = 42) -> np.random.Generator:

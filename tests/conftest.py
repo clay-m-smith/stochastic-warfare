@@ -9,7 +9,7 @@ files — they do not replace existing helpers.
 
 Usage in a test file::
 
-    def test_something(rng, event_bus, sim_clock):
+    def test_something(rng, event_bus):
         engine = SomeEngine(event_bus, rng)
         ...
 """
@@ -23,8 +23,7 @@ import pytest
 
 from stochastic_warfare.core.clock import SimulationClock
 from stochastic_warfare.core.events import EventBus
-from stochastic_warfare.core.rng import RNGManager
-from stochastic_warfare.core.types import ModuleId, Position
+from stochastic_warfare.core.types import Position
 
 # ---------------------------------------------------------------------------
 # Common constants (importable, not fixtures)
@@ -59,21 +58,6 @@ def event_bus() -> EventBus:
     return EventBus()
 
 
-@pytest.fixture
-def sim_clock() -> SimulationClock:
-    """SimulationClock starting at the reference timestamp, 10s ticks."""
-    return SimulationClock(
-        start=TS,
-        tick_duration=timedelta(seconds=10),
-    )
-
-
-@pytest.fixture
-def rng_manager() -> RNGManager:
-    """RNGManager seeded at 42."""
-    return RNGManager(DEFAULT_SEED)
-
-
 # ---------------------------------------------------------------------------
 # Parameterized fixtures
 # ---------------------------------------------------------------------------
@@ -104,14 +88,3 @@ def make_clock(
     return clock
 
 
-def make_stream(
-    module: ModuleId,
-    seed: int = DEFAULT_SEED,
-) -> np.random.Generator:
-    """Create an RNG stream for a specific module via RNGManager.
-
-    Matches the pattern used by logistics/C2 tests::
-
-        rng = RNGManager(seed).get_stream(ModuleId.LOGISTICS)
-    """
-    return RNGManager(seed).get_stream(module)

@@ -10,7 +10,6 @@ from stochastic_warfare.combat.air_defense import (
     AirDefenseEngine,
     EngagementDoctrine,
     InterceptResult,
-    ThreatAssessment,
 )
 from stochastic_warfare.core.events import EventBus
 from stochastic_warfare.core.types import Position

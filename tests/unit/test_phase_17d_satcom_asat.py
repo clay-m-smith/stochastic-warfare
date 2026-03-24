@@ -8,7 +8,6 @@ import numpy as np
 import pytest
 
 from stochastic_warfare.core.events import EventBus
-from stochastic_warfare.core.types import ModuleId, Position
 from stochastic_warfare.space.asat import ASATEngine, ASATType, ASATWeaponDefinition, DebrisCloud
 from stochastic_warfare.space.constellations import (
     ConstellationDefinition,
@@ -16,8 +15,8 @@ from stochastic_warfare.space.constellations import (
     ConstellationType,
     SpaceConfig,
 )
-from stochastic_warfare.space.events import ASATEngagementEvent, DebrisCascadeEvent
-from stochastic_warfare.space.orbits import OrbitalMechanicsEngine, R_EARTH
+from stochastic_warfare.space.events import DebrisCascadeEvent
+from stochastic_warfare.space.orbits import OrbitalMechanicsEngine
 from stochastic_warfare.space.satcom import SATCOMEngine
 
 from tests.conftest import TS, make_clock, make_rng

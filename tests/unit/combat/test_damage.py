@@ -2,15 +2,12 @@
 
 from __future__ import annotations
 
-import numpy as np
-import pytest
 
 from stochastic_warfare.combat.damage import (
     BurnedZone,
     DamageConfig,
     DamageEngine,
     DamageType,
-    IncendiaryConfig,
     IncendiaryDamageEngine,
     UXOEngine,
 )

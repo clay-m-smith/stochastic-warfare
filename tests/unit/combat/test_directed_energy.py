@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import math
 
 import pytest
 
@@ -10,12 +9,11 @@ from stochastic_warfare.combat.ammunition import AmmoDefinition, WeaponDefinitio
 from stochastic_warfare.combat.directed_energy import (
     DEWConfig,
     DEWEngine,
-    DEWEngagementResult,
 )
 from stochastic_warfare.core.events import EventBus
 from stochastic_warfare.core.types import Position
 
-from .conftest import _make_gun, _make_weapon_instance, _make_ap, _rng
+from .conftest import _rng
 
 
 # ---------------------------------------------------------------------------

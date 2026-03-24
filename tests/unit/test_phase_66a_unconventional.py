@@ -4,16 +4,11 @@ guerrilla routing, and human shields in the battle loop.
 
 from __future__ import annotations
 
-import math
 from datetime import datetime, timezone
-from types import SimpleNamespace
-from unittest.mock import MagicMock, patch
 
 import numpy as np
-import pytest
 
 from stochastic_warfare.combat.unconventional import (
-    GuerrillaConfig,
     IEDConfig,
     UnconventionalWarfareEngine,
 )

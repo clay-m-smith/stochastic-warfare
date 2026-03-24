@@ -25,7 +25,6 @@ from stochastic_warfare.combat.engagement import EngagementEngine
 from stochastic_warfare.combat.fratricide import FratricideEngine
 from stochastic_warfare.combat.hit_probability import HitProbabilityEngine
 from stochastic_warfare.combat.indirect_fire import FireMissionType, IndirectFireEngine
-from stochastic_warfare.combat.missiles import MissileEngine, MissileType
 from stochastic_warfare.combat.suppression import SuppressionEngine, UnitSuppressionState
 from stochastic_warfare.combat.air_combat import AirCombatEngine, AirCombatMode
 from stochastic_warfare.combat.air_defense import AirDefenseEngine
@@ -36,10 +35,9 @@ from stochastic_warfare.combat.carrier_ops import CarrierOpsEngine, DeckState
 from stochastic_warfare.morale.state import MoraleState, MoraleStateMachine
 from stochastic_warfare.morale.cohesion import CohesionEngine
 from stochastic_warfare.morale.stress import StressEngine
-from stochastic_warfare.morale.experience import ExperienceEngine
 from stochastic_warfare.morale.rout import RoutEngine
 from stochastic_warfare.core.events import Event, EventBus
-from stochastic_warfare.core.types import ModuleId, Position
+from stochastic_warfare.core.types import Position
 
 _DATA_ROOT = Path(__file__).resolve().parents[2] / "data"
 _TS = datetime(2024, 6, 15, 12, 0, 0, tzinfo=timezone.utc)

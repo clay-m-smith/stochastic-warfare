@@ -8,8 +8,7 @@ and regenerates targets over time.
 from __future__ import annotations
 
 import math
-from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from dataclasses import dataclass
 from typing import Any
 
 import numpy as np
@@ -17,7 +16,7 @@ from pydantic import BaseModel
 
 from stochastic_warfare.core.events import EventBus
 from stochastic_warfare.core.logging import get_logger
-from stochastic_warfare.core.types import ModuleId, Position
+from stochastic_warfare.core.types import Position
 
 logger = get_logger(__name__)
 

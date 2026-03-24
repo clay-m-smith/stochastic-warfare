@@ -2,16 +2,13 @@
 
 from __future__ import annotations
 
-from types import SimpleNamespace
 
 import numpy as np
-import pytest
 
 from stochastic_warfare.core.events import EventBus
-from stochastic_warfare.core.types import ModuleId, Position
+from stochastic_warfare.core.types import Position
 from stochastic_warfare.ew.emitters import Emitter, EmitterType, WaveformType
 from stochastic_warfare.ew.sigint import SIGINTCollector, SIGINTEngine
-from stochastic_warfare.simulation.calibration import CalibrationSchema
 
 
 # ---------------------------------------------------------------------------
@@ -135,7 +132,7 @@ def test_sigint_skipped_when_space_effects_disabled():
 
 
 def _make_asat_engine():
-    from stochastic_warfare.space.asat import ASATEngine, ASATWeaponDefinition
+    from stochastic_warfare.space.asat import ASATEngine
     from stochastic_warfare.space.constellations import (
         ConstellationDefinition,
         ConstellationManager,

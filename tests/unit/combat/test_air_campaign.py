@@ -8,7 +8,6 @@ from stochastic_warfare.combat.air_campaign import (
     AirCampaignConfig,
     AirCampaignEngine,
     CampaignPhase,
-    PilotState,
 )
 from stochastic_warfare.core.events import EventBus
 

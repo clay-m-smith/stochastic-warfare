@@ -2,22 +2,18 @@
 
 from __future__ import annotations
 
-import math
 from pathlib import Path
-from types import SimpleNamespace
 
 import numpy as np
 import pytest
 
-from stochastic_warfare.core.types import Domain, Position, Side
-from stochastic_warfare.detection.deception import Decoy, DeceptionEngine, DeceptionType
+from stochastic_warfare.core.types import Position
+from stochastic_warfare.detection.deception import DeceptionEngine, DeceptionType
 from stochastic_warfare.detection.detection import DetectionEngine
 from stochastic_warfare.detection.estimation import (
-    EstimationConfig,
     StateEstimator,
-    TrackStatus,
 )
-from stochastic_warfare.detection.fog_of_war import FogOfWarManager, SideWorldView
+from stochastic_warfare.detection.fog_of_war import FogOfWarManager
 from stochastic_warfare.detection.identification import (
     ContactInfo,
     ContactLevel,
@@ -28,18 +24,13 @@ from stochastic_warfare.detection.sensors import (
     SensorDefinition,
     SensorInstance,
     SensorLoader,
-    SensorSuite,
     SensorType,
 )
 from stochastic_warfare.detection.signatures import (
     SignatureLoader,
     SignatureProfile,
-    SignatureResolver,
     VisualSignature,
     ThermalSignature,
-    RadarSignature,
-    AcousticSignature,
-    EMSignature,
 )
 from stochastic_warfare.detection.sonar import SonarEngine
 from stochastic_warfare.detection.underwater_detection import UnderwaterDetectionEngine

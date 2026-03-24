@@ -9,7 +9,6 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
-import yaml
 
 from stochastic_warfare.core.logging import get_logger
 from stochastic_warfare.tools.result_store import ResultStore

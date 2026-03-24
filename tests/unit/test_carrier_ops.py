@@ -8,12 +8,9 @@ import numpy as np
 import pytest
 
 from stochastic_warfare.combat.carrier_ops import (
-    CAPStatus,
     CarrierOpsConfig,
     CarrierOpsEngine,
     DeckState,
-    LaunchResult,
-    RecoveryResult,
 )
 from stochastic_warfare.core.events import Event, EventBus
 

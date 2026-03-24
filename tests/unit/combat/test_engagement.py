@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from types import SimpleNamespace
 
 import pytest
 
@@ -19,7 +18,7 @@ from stochastic_warfare.combat.suppression import SuppressionEngine
 from stochastic_warfare.core.events import EventBus
 from stochastic_warfare.core.types import Position
 
-from .conftest import _make_ap, _make_gun, _make_he, _make_weapon_instance, _rng
+from .conftest import _make_ap, _make_gun, _make_weapon_instance, _rng
 
 
 def _make_engagement_engine(

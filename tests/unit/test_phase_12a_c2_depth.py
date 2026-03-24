@@ -13,8 +13,7 @@
 
 from __future__ import annotations
 
-import math
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 from types import SimpleNamespace
 from typing import Any
 
@@ -22,7 +21,7 @@ import numpy as np
 import pytest
 
 from stochastic_warfare.core.events import EventBus
-from stochastic_warfare.core.types import ModuleId, Position
+from stochastic_warfare.core.types import Position
 
 _TS = datetime(2024, 6, 15, 12, 0, 0, tzinfo=timezone.utc)
 
@@ -192,7 +191,7 @@ class _MockLOSEngine:
 class TestCommsLOS:
     def _make_engine(self, los_engine=None):
         from stochastic_warfare.c2.communications import (
-            CommEquipmentDefinition, CommunicationsConfig, CommunicationsEngine,
+            CommunicationsConfig, CommunicationsEngine,
         )
         loader = _MockEquipLoader()
         eng = CommunicationsEngine(
@@ -291,7 +290,7 @@ class TestCommsLOS:
 class TestNetworkDegradation:
     def _make_engine(self, **kwargs):
         from stochastic_warfare.c2.communications import (
-            CommunicationsConfig, CommunicationsEngine, CommType,
+            CommunicationsConfig, CommunicationsEngine,
         )
         cfg = CommunicationsConfig(enable_network_degradation=True, **kwargs)
         eng = CommunicationsEngine(

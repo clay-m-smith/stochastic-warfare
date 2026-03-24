@@ -12,7 +12,6 @@ Tests for:
 
 from __future__ import annotations
 
-import numpy as np
 import pytest
 
 from tests.conftest import make_rng
@@ -370,7 +369,6 @@ class TestCavalryEngine:
         assert state.phase == ChargePhase.CHARGE
 
     def test_walk_to_trot_transition(self, engine) -> None:
-        from stochastic_warfare.movement.cavalry import ChargePhase
         engine.initiate_charge("c1", "u1", "t1", 200.0)
         # Walk at 2 m/s, after 30s = 60m moved → 140m remaining
         engine.update_charge("c1", 30.0)
@@ -420,7 +418,6 @@ class TestCavalryEngine:
         assert state.phase == ChargePhase.PURSUIT
 
     def test_get_charge_speed(self, engine) -> None:
-        from stochastic_warfare.movement.cavalry import ChargePhase
         state = engine.initiate_charge("c1", "u1", "t1", 500.0)
         speed = engine.get_charge_speed("c1")
         assert speed == pytest.approx(2.0)  # WALK speed

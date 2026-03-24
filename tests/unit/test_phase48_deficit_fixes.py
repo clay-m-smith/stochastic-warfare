@@ -4,7 +4,6 @@ configurable constants, and data completeness.
 
 from __future__ import annotations
 
-import math
 from types import SimpleNamespace
 from typing import Any
 
@@ -13,7 +12,7 @@ import pytest
 from stochastic_warfare.combat.ammunition import WeaponCategory, _CATEGORY_DEFAULT_DOMAINS
 from stochastic_warfare.core.events import EventBus
 from stochastic_warfare.core.types import Domain, Position
-from stochastic_warfare.entities.base import Unit, UnitStatus
+from stochastic_warfare.entities.base import UnitStatus
 
 
 # ---------------------------------------------------------------------------

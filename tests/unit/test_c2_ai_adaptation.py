@@ -2,10 +2,8 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
 
 import numpy as np
-import pytest
 
 from tests.conftest import DEFAULT_SEED, TS, make_rng
 

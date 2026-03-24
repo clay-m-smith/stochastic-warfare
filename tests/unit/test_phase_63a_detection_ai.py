@@ -1,10 +1,9 @@
 """Phase 63a: Detection → AI Assessment — FOW sensor/signature wiring tests."""
 
-import pytest
 from types import SimpleNamespace
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
-from stochastic_warfare.simulation.battle import BattleManager, _get_unit_signature
+from stochastic_warfare.simulation.battle import _get_unit_signature
 from stochastic_warfare.entities.base import Unit, UnitStatus
 from stochastic_warfare.core.types import Position, Domain
 

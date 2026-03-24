@@ -13,7 +13,6 @@ from stochastic_warfare.combat.naval_surface import (
     NavalGunResult,
 )
 from stochastic_warfare.core.events import EventBus
-from stochastic_warfare.core.types import Position
 
 from .conftest import _rng
 

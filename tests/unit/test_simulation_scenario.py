@@ -5,7 +5,7 @@ Uses shared fixtures from conftest.py: rng, event_bus, sim_clock, rng_manager.
 
 from __future__ import annotations
 
-from datetime import datetime, timedelta, timezone
+from datetime import timedelta, timezone
 from pathlib import Path
 from typing import Any
 
@@ -16,7 +16,6 @@ import yaml
 from stochastic_warfare.core.clock import SimulationClock
 from stochastic_warfare.core.events import EventBus
 from stochastic_warfare.core.rng import RNGManager
-from stochastic_warfare.core.types import ModuleId, Position
 from stochastic_warfare.simulation.scenario import (
     CampaignScenarioConfig,
     DepotConfig,
@@ -31,9 +30,8 @@ from stochastic_warfare.simulation.scenario import (
     VictoryConditionConfig,
     _parse_start_time,
 )
-from stochastic_warfare.terrain.heightmap import Heightmap, HeightmapConfig
 
-from tests.conftest import DEFAULT_SEED, POS_ORIGIN, TS, make_rng
+from tests.conftest import DEFAULT_SEED, POS_ORIGIN, TS
 
 
 # ---------------------------------------------------------------------------

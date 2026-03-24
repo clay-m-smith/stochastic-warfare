@@ -7,7 +7,6 @@ overpressure blast model (45a), exponential threat cost (45e-3).
 
 from __future__ import annotations
 
-import math
 
 import numpy as np
 import pytest
@@ -139,7 +138,6 @@ class TestHitProbabilityFloor:
         from stochastic_warfare.combat.ammunition import WeaponDefinition, AmmoDefinition
         from stochastic_warfare.combat.ballistics import BallisticsEngine
         from stochastic_warfare.combat.hit_probability import (
-            HitProbabilityConfig,
             HitProbabilityEngine,
         )
 

@@ -5,27 +5,25 @@ Uses shared fixtures from conftest.py.
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
-from datetime import datetime, timedelta, timezone
+from datetime import timedelta
 from typing import Any
 
-import numpy as np
 import pytest
 
 from stochastic_warfare.core.clock import SimulationClock
 from stochastic_warfare.core.events import EventBus
 from stochastic_warfare.core.rng import RNGManager
-from stochastic_warfare.core.types import ModuleId, Position
+from stochastic_warfare.core.types import Position
 from stochastic_warfare.entities.base import Unit, UnitStatus
-from stochastic_warfare.simulation.battle import BattleConfig, BattleContext, BattleManager
-from stochastic_warfare.simulation.campaign import CampaignConfig, CampaignManager
+from stochastic_warfare.simulation.battle import BattleConfig, BattleContext
+from stochastic_warfare.simulation.campaign import CampaignConfig
 from stochastic_warfare.simulation.engine import (
     EngineConfig,
     SimulationEngine,
     SimulationRunResult,
     TickResolution,
 )
-from stochastic_warfare.simulation.recorder import RecorderConfig, SimulationRecorder
+from stochastic_warfare.simulation.recorder import SimulationRecorder
 from stochastic_warfare.simulation.scenario import (
     CampaignScenarioConfig,
     ReinforcementConfig,
@@ -39,11 +37,10 @@ from stochastic_warfare.simulation.scenario import (
 from stochastic_warfare.simulation.victory import (
     ObjectiveState,
     VictoryEvaluator,
-    VictoryEvaluatorConfig,
     VictoryResult,
 )
 
-from tests.conftest import DEFAULT_SEED, POS_ORIGIN, TS, make_clock, make_rng
+from tests.conftest import DEFAULT_SEED, TS
 
 
 # ---------------------------------------------------------------------------

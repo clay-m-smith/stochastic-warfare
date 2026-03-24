@@ -10,12 +10,9 @@ import pytest
 from stochastic_warfare.combat.damage import DamageEngine
 from stochastic_warfare.combat.naval_mine import (
     Mine,
-    MineResult,
     MineType,
     MineWarfareConfig,
     MineWarfareEngine,
-    SweepResult,
-    TransitRisk,
 )
 from stochastic_warfare.core.events import Event, EventBus
 from stochastic_warfare.core.types import Position

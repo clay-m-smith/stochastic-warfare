@@ -19,7 +19,7 @@ from pydantic import BaseModel
 
 from stochastic_warfare.core.events import EventBus
 from stochastic_warfare.core.logging import get_logger
-from stochastic_warfare.core.types import ModuleId, Position
+from stochastic_warfare.core.types import Position
 from stochastic_warfare.entities.base import Unit, UnitStatus
 from stochastic_warfare.morale.state import MoraleState
 

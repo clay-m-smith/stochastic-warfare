@@ -3,14 +3,11 @@
 from __future__ import annotations
 
 import numpy as np
-import pytest
 
 from stochastic_warfare.combat.ammunition import AmmoDefinition, WeaponDefinition
 from stochastic_warfare.combat.ballistics import BallisticsEngine
 from stochastic_warfare.combat.hit_probability import (
-    HitProbabilityConfig,
     HitProbabilityEngine,
-    HitResult,
 )
 
 

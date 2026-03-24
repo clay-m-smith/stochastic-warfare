@@ -8,17 +8,16 @@ flow through, and structural engines are called.
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from types import SimpleNamespace
 from typing import Any
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 import numpy as np
 import pytest
 
 from stochastic_warfare.core.events import EventBus
-from stochastic_warfare.core.types import Domain, ModuleId, Position
+from stochastic_warfare.core.types import Domain, Position
 from stochastic_warfare.entities.base import Unit, UnitStatus
 
 
@@ -671,7 +670,7 @@ class TestFogOfWarWiring:
     def test_fow_detected_count_used_in_assessment(self):
         """Assessment uses detected enemy count when fog_of_war enabled."""
         from stochastic_warfare.simulation.calibration import CalibrationSchema
-        from stochastic_warfare.simulation.battle import BattleManager, BattleContext
+        from stochastic_warfare.simulation.battle import BattleManager
         from stochastic_warfare.c2.ai.ooda import OODAPhase
 
         cal = CalibrationSchema(enable_fog_of_war=True)

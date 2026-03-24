@@ -6,7 +6,6 @@ and deterministic replay for Bekaa Valley 1982 and Gulf War EW 1991.
 
 from __future__ import annotations
 
-import math
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -15,8 +14,8 @@ import pytest
 import yaml
 
 from stochastic_warfare.core.events import EventBus
-from stochastic_warfare.core.types import ModuleId, Position
-from stochastic_warfare.ew.decoys_ew import EWDecoyEngine, EWDecoyType, SeekerType
+from stochastic_warfare.core.types import Position
+from stochastic_warfare.ew.decoys_ew import EWDecoyEngine, SeekerType
 from stochastic_warfare.ew.eccm import ECCMEngine, ECCMSuite, ECCMTechnique
 from stochastic_warfare.ew.emitters import Emitter, EmitterRegistry, EmitterType, WaveformType
 from stochastic_warfare.ew.jamming import (
@@ -27,8 +26,6 @@ from stochastic_warfare.ew.jamming import (
     JammingEngine,
 )
 from stochastic_warfare.ew.sigint import SIGINTCollector, SIGINTEngine
-from stochastic_warfare.ew.spectrum import FrequencyAllocation, SpectrumManager
-from stochastic_warfare.ew.spoofing import ReceiverType, SpoofingEngine
 
 TS = datetime(2024, 6, 15, 12, 0, 0, tzinfo=timezone.utc)
 DATA_DIR = Path(__file__).resolve().parent.parent.parent / "data"

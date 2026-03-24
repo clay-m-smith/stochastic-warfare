@@ -2,13 +2,11 @@
 
 from __future__ import annotations
 
-import pytest
 
 from stochastic_warfare.combat.amphibious_assault import (
     AmphibiousAssaultConfig,
     AmphibiousAssaultEngine,
     BeachCombatResult,
-    WaveResult,
 )
 from stochastic_warfare.combat.ballistics import BallisticsEngine
 from stochastic_warfare.combat.damage import DamageEngine
@@ -16,7 +14,6 @@ from stochastic_warfare.combat.indirect_fire import IndirectFireEngine
 from stochastic_warfare.combat.naval_gunfire_support import NavalGunfireSupportEngine
 from stochastic_warfare.combat.naval_surface import NavalSurfaceEngine
 from stochastic_warfare.core.events import EventBus
-from stochastic_warfare.core.types import Position
 
 from .conftest import _rng
 

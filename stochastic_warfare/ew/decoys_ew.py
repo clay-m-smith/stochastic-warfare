@@ -7,7 +7,6 @@ EW-specific decoy types that interact with missile seekers and radar systems.
 from __future__ import annotations
 
 import enum
-import math
 from dataclasses import dataclass
 from typing import Any
 

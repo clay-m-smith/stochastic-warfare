@@ -8,7 +8,6 @@ Outputs PNG files to scripts/visualize/output/.
 
 from __future__ import annotations
 
-import math
 import sys
 from pathlib import Path
 
@@ -22,7 +21,6 @@ from stochastic_warfare.entities.base import Unit
 from stochastic_warfare.entities.loader import UnitLoader
 from stochastic_warfare.entities.organization.echelons import EchelonLevel
 from stochastic_warfare.entities.organization.hierarchy import HierarchyTree
-from stochastic_warfare.entities.organization.orbat import OrbatLoader
 from stochastic_warfare.movement.engine import MovementConfig, MovementEngine
 from stochastic_warfare.movement.formation import FormationManager, FormationType
 

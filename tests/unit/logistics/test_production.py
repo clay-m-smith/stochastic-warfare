@@ -5,7 +5,6 @@ Phase 75d: Tests facility registration, condition, production output, state.
 
 from __future__ import annotations
 
-from types import SimpleNamespace
 
 import pytest
 

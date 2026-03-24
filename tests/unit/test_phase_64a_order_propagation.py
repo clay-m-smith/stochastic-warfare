@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from datetime import datetime, timezone
-from types import SimpleNamespace
 from unittest.mock import MagicMock
 
 import numpy as np
@@ -12,11 +11,10 @@ import pytest
 from stochastic_warfare.c2.orders.propagation import (
     OrderPropagationEngine,
     PropagationConfig,
-    PropagationResult,
 )
 from stochastic_warfare.c2.orders.types import Order, OrderPriority, OrderType
 from stochastic_warfare.core.events import EventBus
-from stochastic_warfare.core.types import ModuleId, Position
+from stochastic_warfare.core.types import Position
 
 
 def _make_rng(seed: int = 42) -> np.random.Generator:

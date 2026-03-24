@@ -13,7 +13,6 @@ from stochastic_warfare.detection.sonar import SonarEngine
 from stochastic_warfare.detection.underwater_detection import (
     UnderwaterDetectionEngine,
     UnderwaterDetectionMethod,
-    UnderwaterDetectionResult,
 )
 
 

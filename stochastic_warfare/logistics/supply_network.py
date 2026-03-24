@@ -8,7 +8,6 @@ with available stock and dispatches via the shortest route.  No LP solver
 from __future__ import annotations
 
 import enum
-import math
 from dataclasses import dataclass, field
 
 import networkx as nx
@@ -17,7 +16,7 @@ from pydantic import BaseModel
 
 from stochastic_warfare.core.events import EventBus
 from stochastic_warfare.core.logging import get_logger
-from stochastic_warfare.core.types import ModuleId, Position
+from stochastic_warfare.core.types import Position
 
 logger = get_logger(__name__)
 
@@ -267,7 +266,6 @@ class SupplyNetworkEngine:
 
         Sets condition to 0, effectively removing the route from pathfinding.
         """
-        from stochastic_warfare.logistics.events import SupplyShortageEvent
 
         route = self._routes.get(route_id)
         if route is None:

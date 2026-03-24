@@ -21,7 +21,7 @@ import numpy as np
 
 from stochastic_warfare.core.events import EventBus
 from stochastic_warfare.core.rng import RNGManager
-from stochastic_warfare.core.types import ModuleId, Position
+from stochastic_warfare.core.types import ModuleId
 from stochastic_warfare.c2.command import CommandEngine
 from stochastic_warfare.c2.communications import (
     CommEquipmentLoader,
@@ -29,7 +29,6 @@ from stochastic_warfare.c2.communications import (
 )
 from stochastic_warfare.c2.orders.propagation import (
     OrderPropagationEngine,
-    PropagationConfig,
 )
 from stochastic_warfare.c2.orders.types import (
     MissionType,

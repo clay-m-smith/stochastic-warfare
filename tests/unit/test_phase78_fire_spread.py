@@ -2,14 +2,10 @@
 
 from __future__ import annotations
 
-import math
 
 import numpy as np
-import pytest
 
 from stochastic_warfare.combat.damage import (
-    FireZone,
-    IncendiaryConfig,
     IncendiaryDamageEngine,
 )
 from stochastic_warfare.core.types import Position

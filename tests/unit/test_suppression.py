@@ -6,10 +6,8 @@ import numpy as np
 import pytest
 
 from stochastic_warfare.combat.suppression import (
-    SuppressionConfig,
     SuppressionEngine,
     SuppressionLevel,
-    SuppressionResult,
     UnitSuppressionState,
 )
 from stochastic_warfare.core.events import EventBus

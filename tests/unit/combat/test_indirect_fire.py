@@ -9,12 +9,9 @@ import pytest
 from stochastic_warfare.combat.ballistics import BallisticsEngine
 from stochastic_warfare.combat.damage import DamageEngine
 from stochastic_warfare.combat.indirect_fire import (
-    FireMissionResult,
     FireMissionType,
     IndirectFireConfig,
     IndirectFireEngine,
-    SalvoResult,
-    TOTFirePlan,
 )
 from stochastic_warfare.core.events import EventBus
 from stochastic_warfare.core.types import Position

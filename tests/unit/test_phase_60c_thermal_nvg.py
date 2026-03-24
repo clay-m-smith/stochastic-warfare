@@ -3,15 +3,12 @@
 from __future__ import annotations
 
 import math
-import pytest
 from unittest.mock import MagicMock
 
 from stochastic_warfare.environment.time_of_day import (
     TimeOfDayEngine,
     ThermalEnvironment,
-    IlluminationLevel,
 )
-from stochastic_warfare.detection.sensors import SensorType
 
 
 def _make_tod(solar_elevation_deg: float, lux: float = 100000.0) -> MagicMock:

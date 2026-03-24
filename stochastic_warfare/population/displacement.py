@@ -15,7 +15,7 @@ from pydantic import BaseModel
 from stochastic_warfare.core.events import EventBus
 from stochastic_warfare.core.logging import get_logger
 from stochastic_warfare.core.types import ModuleId, Position
-from stochastic_warfare.population.civilians import CivilianManager, CivilianRegion
+from stochastic_warfare.population.civilians import CivilianManager
 from stochastic_warfare.population.events import DisplacementEvent
 
 logger = get_logger(__name__)

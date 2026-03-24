@@ -2,15 +2,11 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
-from datetime import datetime, timezone
 from types import SimpleNamespace
-from typing import Any
 
-import pytest
 
 from stochastic_warfare.entities.base import UnitStatus
-from stochastic_warfare.simulation.recorder import RecordedEvent, SimulationRecorder
+from stochastic_warfare.simulation.recorder import SimulationRecorder
 from stochastic_warfare.simulation.victory import VictoryResult
 from stochastic_warfare.validation.campaign_metrics import CampaignValidationMetrics
 from stochastic_warfare.validation.campaign_runner import CampaignRunResult

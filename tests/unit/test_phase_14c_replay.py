@@ -2,9 +2,6 @@
 
 from __future__ import annotations
 
-import matplotlib
-import matplotlib.figure
-import pytest
 
 from stochastic_warfare.tools.replay import (
     EngagementFrame,

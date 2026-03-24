@@ -1,11 +1,10 @@
 """Phase 13a-4: Multi-tick LOS cache with selective invalidation."""
 
 import numpy as np
-import pytest
 
 from stochastic_warfare.core.types import Position
 from stochastic_warfare.terrain.heightmap import Heightmap, HeightmapConfig
-from stochastic_warfare.terrain.los import LOSEngine, LOSResult
+from stochastic_warfare.terrain.los import LOSEngine
 
 
 def _make_los(rows: int = 20, cols: int = 20, cell_size: float = 100.0) -> LOSEngine:

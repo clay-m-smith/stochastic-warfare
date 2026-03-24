@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 
-import numpy as np
 import pytest
 
 from stochastic_warfare.core.events import Event, EventBus
@@ -18,7 +17,6 @@ from stochastic_warfare.logistics.events import (
 from stochastic_warfare.logistics.maintenance import (
     MaintenanceConfig,
     MaintenanceEngine,
-    MaintenanceRecord,
     MaintenanceStatus,
 )
 

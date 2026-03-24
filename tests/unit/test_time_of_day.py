@@ -2,10 +2,8 @@
 
 from __future__ import annotations
 
-import math
 from datetime import datetime, timedelta, timezone
 
-import pytest
 
 from stochastic_warfare.core.clock import SimulationClock
 from stochastic_warfare.core.rng import RNGManager

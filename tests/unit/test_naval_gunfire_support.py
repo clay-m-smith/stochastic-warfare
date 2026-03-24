@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import math
 from datetime import datetime, timezone
 
 import numpy as np
@@ -12,7 +11,6 @@ from stochastic_warfare.combat.ballistics import BallisticsEngine
 from stochastic_warfare.combat.damage import DamageEngine
 from stochastic_warfare.combat.indirect_fire import IndirectFireEngine
 from stochastic_warfare.combat.naval_gunfire_support import (
-    BombardmentResult,
     NavalGunfireSupportConfig,
     NavalGunfireSupportEngine,
 )

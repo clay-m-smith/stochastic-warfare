@@ -9,11 +9,10 @@ from __future__ import annotations
 from datetime import datetime, timezone
 
 import numpy as np
-import pytest
 
 from stochastic_warfare.core.events import EventBus
 from stochastic_warfare.core.types import ModuleId
-from stochastic_warfare.morale.events import MoraleStateChangeEvent, PsyopAppliedEvent
+from stochastic_warfare.morale.events import PsyopAppliedEvent
 from stochastic_warfare.morale.psychology import PsychologyConfig, PsychologyEngine, PsyopResult
 from stochastic_warfare.morale.state import MoraleConfig, MoraleState, MoraleStateMachine
 

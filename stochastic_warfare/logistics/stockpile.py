@@ -7,7 +7,7 @@ inventories.  Handles issuing, receiving, spoilage, and depot capture.
 from __future__ import annotations
 
 import enum
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import datetime
 
 import numpy as np
@@ -17,7 +17,6 @@ from stochastic_warfare.core.events import EventBus
 from stochastic_warfare.core.logging import get_logger
 from stochastic_warfare.core.types import ModuleId, Position
 from stochastic_warfare.logistics.events import (
-    SupplyDeliveredEvent,
     SupplyDepletedEvent,
     SupplyShortageEvent,
 )

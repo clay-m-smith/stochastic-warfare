@@ -7,7 +7,6 @@ weapons without capacity fire unlimited.
 
 from __future__ import annotations
 
-import pytest
 
 from stochastic_warfare.simulation.battle import BattleManager
 from stochastic_warfare.simulation.calibration import CalibrationSchema

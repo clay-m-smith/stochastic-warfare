@@ -7,27 +7,22 @@ population engine wiring (44d).
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
 from types import SimpleNamespace
 from typing import Any
 
 import numpy as np
-import pytest
 
 from stochastic_warfare.combat.ammunition import (
     AmmoDefinition,
-    WeaponCategory,
     WeaponDefinition,
 )
-from stochastic_warfare.combat.engagement import EngagementEngine, EngagementType
 from stochastic_warfare.core.events import EventBus
 from stochastic_warfare.core.types import Domain, Position
 from stochastic_warfare.entities.base import Unit, UnitStatus
 from stochastic_warfare.morale.state import MoraleState
 from stochastic_warfare.simulation.battle import (
     BattleConfig,
-    BattleContext,
     BattleManager,
     _compute_weather_pk_modifier,
 )

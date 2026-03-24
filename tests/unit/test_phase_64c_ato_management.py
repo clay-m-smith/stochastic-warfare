@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 
-import pytest
 
 from stochastic_warfare.c2.orders.air_orders import (
     ATOPlanningEngine,

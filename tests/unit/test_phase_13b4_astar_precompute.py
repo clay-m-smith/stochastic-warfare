@@ -4,7 +4,7 @@ import numpy as np
 import pytest
 
 from stochastic_warfare.core.types import Position
-from stochastic_warfare.movement.pathfinding import Pathfinder, PathResult
+from stochastic_warfare.movement.pathfinding import Pathfinder
 
 
 class TestDifficultyGrid:

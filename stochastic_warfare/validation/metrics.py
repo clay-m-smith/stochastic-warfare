@@ -8,9 +8,7 @@ output.  The extracted metrics are keyed by name for comparison against
 
 from __future__ import annotations
 
-import math
 from dataclasses import dataclass, field
-from typing import Any
 
 from stochastic_warfare.core.events import Event
 from stochastic_warfare.core.logging import get_logger

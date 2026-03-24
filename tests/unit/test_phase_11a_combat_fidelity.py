@@ -12,12 +12,11 @@ Uses shared fixtures from conftest.py.
 from __future__ import annotations
 
 import math
-from typing import Any
 
 import numpy as np
 import pytest
 
-from tests.conftest import DEFAULT_SEED, TS, make_rng
+from tests.conftest import make_rng
 
 from stochastic_warfare.combat.ammunition import (
     AmmoDefinition,
@@ -33,19 +32,16 @@ from stochastic_warfare.combat.ballistics import (
 )
 from stochastic_warfare.combat.damage import (
     ArmorType,
-    DamageConfig,
     DamageEngine,
-    PenetrationResult,
 )
-from stochastic_warfare.combat.air_combat import AirCombatConfig, AirCombatEngine, AirCombatMode
-from stochastic_warfare.combat.air_defense import AirDefenseConfig, AirDefenseEngine
-from stochastic_warfare.combat.naval_surface import NavalSurfaceConfig, NavalSurfaceEngine
+from stochastic_warfare.combat.air_combat import AirCombatEngine, AirCombatMode
+from stochastic_warfare.combat.air_defense import AirDefenseEngine
+from stochastic_warfare.combat.naval_surface import NavalSurfaceEngine
 from stochastic_warfare.combat.indirect_fire import (
     FireMissionType,
-    IndirectFireConfig,
     IndirectFireEngine,
 )
-from stochastic_warfare.combat.engagement import EngagementEngine, EngagementConfig
+from stochastic_warfare.combat.engagement import EngagementEngine
 from stochastic_warfare.combat.fratricide import FratricideEngine
 from stochastic_warfare.combat.hit_probability import HitProbabilityEngine
 from stochastic_warfare.combat.suppression import SuppressionEngine

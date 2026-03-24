@@ -1,14 +1,12 @@
 """Phase 13a-3: Kalman F/Q matrix caching tests."""
 
 import numpy as np
-import pytest
 
 from stochastic_warfare.detection.estimation import (
     EstimationConfig,
     StateEstimator,
     Track,
     TrackState,
-    TrackStatus,
 )
 from stochastic_warfare.detection.identification import ContactInfo, ContactLevel
 

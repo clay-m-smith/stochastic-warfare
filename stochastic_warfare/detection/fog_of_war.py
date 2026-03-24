@@ -17,11 +17,10 @@ from pydantic import BaseModel
 from stochastic_warfare.core.logging import get_logger
 from stochastic_warfare.core.types import Position
 from stochastic_warfare.detection.deception import Decoy, DeceptionEngine
-from stochastic_warfare.detection.detection import DetectionEngine, DetectionResult
+from stochastic_warfare.detection.detection import DetectionEngine
 from stochastic_warfare.detection.estimation import (
     StateEstimator,
     Track,
-    TrackStatus,
 )
 from stochastic_warfare.detection.identification import (
     ContactInfo,
@@ -29,7 +28,6 @@ from stochastic_warfare.detection.identification import (
     IdentificationEngine,
 )
 from stochastic_warfare.detection.intel_fusion import IntelFusionEngine
-from stochastic_warfare.detection.sensors import SensorInstance, SensorSuite
 from stochastic_warfare.detection.signatures import SignatureProfile
 
 logger = get_logger(__name__)

@@ -2,15 +2,13 @@
 
 from __future__ import annotations
 
-import math
 from types import SimpleNamespace
 
 import numpy as np
-import pytest
 
 from stochastic_warfare.core.types import Position
 from stochastic_warfare.terrain.heightmap import Heightmap, HeightmapConfig
-from stochastic_warfare.terrain.los import LOSEngine, LOSResult
+from stochastic_warfare.terrain.los import LOSEngine
 
 
 # ---------------------------------------------------------------------------

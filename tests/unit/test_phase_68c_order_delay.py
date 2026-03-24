@@ -6,10 +6,9 @@ returns a delay, ``decide()`` is deferred until the delay matures.
 
 from __future__ import annotations
 
-import pytest
 
 from stochastic_warfare.core.events import EventBus
-from stochastic_warfare.simulation.battle import BattleManager, BattleContext
+from stochastic_warfare.simulation.battle import BattleManager
 from stochastic_warfare.simulation.calibration import CalibrationSchema
 
 

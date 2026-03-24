@@ -6,10 +6,8 @@ import numpy as np
 import pytest
 
 from stochastic_warfare.combat.air_combat import (
-    AirCombatConfig,
     AirCombatEngine,
     AirCombatMode,
-    AirCombatResult,
 )
 from stochastic_warfare.core.events import EventBus
 from stochastic_warfare.core.types import Position

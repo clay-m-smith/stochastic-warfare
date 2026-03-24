@@ -8,8 +8,6 @@ from __future__ import annotations
 import pytest
 
 from stochastic_warfare.terrain.trenches import (
-    TrenchConfig,
-    TrenchSegment,
     TrenchSystemEngine,
     TrenchType,
 )

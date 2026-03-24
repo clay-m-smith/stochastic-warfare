@@ -7,7 +7,6 @@ lifting and provides a clean, scenario-scoped API.
 
 from __future__ import annotations
 
-import math
 
 from pyproj import Transformer
 

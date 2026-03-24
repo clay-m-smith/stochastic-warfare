@@ -7,10 +7,8 @@ strategic bombing (CEP damage, flak, escort, target regeneration).
 
 from __future__ import annotations
 
-import numpy as np
-import pytest
 
-from tests.conftest import DEFAULT_SEED, make_rng
+from tests.conftest import make_rng
 
 # ---------------------------------------------------------------------------
 # Naval Gunnery

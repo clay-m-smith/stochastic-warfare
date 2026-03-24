@@ -12,7 +12,6 @@ from stochastic_warfare.detection.deception import (
     DeceptionType,
 )
 from stochastic_warfare.detection.signatures import (
-    EMSignature,
     SignatureProfile,
     VisualSignature,
 )

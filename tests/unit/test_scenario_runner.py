@@ -2,25 +2,15 @@
 
 from __future__ import annotations
 
-import math
-import types
-from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
-from pathlib import Path
-from typing import Any
 
 import numpy as np
 import pytest
 
 from stochastic_warfare.core.clock import SimulationClock
-from stochastic_warfare.core.events import Event, EventBus
-from stochastic_warfare.core.types import ModuleId, Position
+from stochastic_warfare.core.types import Position
 from stochastic_warfare.entities.base import Unit, UnitStatus
-from stochastic_warfare.terrain.heightmap import HeightmapConfig
 from stochastic_warfare.validation.historical_data import (
-    ForceDefinition,
-    HistoricalEngagement,
-    HistoricalMetric,
     TerrainSpec,
 )
 from stochastic_warfare.validation.scenario_runner import (

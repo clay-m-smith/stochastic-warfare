@@ -14,7 +14,6 @@ from stochastic_warfare.core.types import Position
 from stochastic_warfare.simulation.aggregation import (
     AggregationConfig,
     AggregationEngine,
-    UnitSnapshot,
 )
 from stochastic_warfare.morale.state import MoraleState
 

@@ -9,7 +9,6 @@ Tests for:
 
 from __future__ import annotations
 
-import math
 from datetime import datetime, timezone
 from types import SimpleNamespace
 from unittest.mock import MagicMock
@@ -18,12 +17,10 @@ import numpy as np
 import pytest
 
 from stochastic_warfare.combat.hit_probability import (
-    HitProbabilityConfig,
     HitProbabilityEngine,
 )
-from stochastic_warfare.combat.engagement import EngagementType
 from stochastic_warfare.core.events import EventBus
-from stochastic_warfare.core.types import Domain, Position
+from stochastic_warfare.core.types import Position
 from stochastic_warfare.entities.base import Unit, UnitStatus
 
 TS = datetime(2024, 6, 15, 12, 0, 0, tzinfo=timezone.utc)

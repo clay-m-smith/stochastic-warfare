@@ -5,7 +5,6 @@ from __future__ import annotations
 import pytest
 
 from stochastic_warfare.combat.volley_fire import (
-    VolleyFireConfig,
     VolleyFireEngine,
     VolleyResult,
     VolleyType,

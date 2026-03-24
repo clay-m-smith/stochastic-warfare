@@ -3,15 +3,11 @@
 from __future__ import annotations
 
 import json
-import math
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from enum import IntEnum
-from types import SimpleNamespace
-from typing import Any
 
 import numpy as np
-import pytest
 
 from stochastic_warfare.core.types import Position
 from stochastic_warfare.tools.serializers import (

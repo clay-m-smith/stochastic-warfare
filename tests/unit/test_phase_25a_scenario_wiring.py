@@ -8,9 +8,7 @@ engines (or leaves them None) based on those blocks.
 from __future__ import annotations
 
 from typing import Any
-from unittest.mock import MagicMock, patch
 
-import numpy as np
 import pytest
 
 from stochastic_warfare.core.events import EventBus
@@ -19,7 +17,6 @@ from stochastic_warfare.core.types import ModuleId
 from stochastic_warfare.simulation.scenario import (
     CampaignScenarioConfig,
     SimulationContext,
-    TerrainConfig,
 )
 
 # ---------------------------------------------------------------------------

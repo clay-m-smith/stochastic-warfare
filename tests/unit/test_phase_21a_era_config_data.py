@@ -13,7 +13,6 @@ from pathlib import Path
 
 import pytest
 
-from tests.conftest import make_rng
 
 # ---------------------------------------------------------------------------
 # Era config tests

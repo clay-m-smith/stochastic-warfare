@@ -3,29 +3,23 @@
 from __future__ import annotations
 
 import math
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timezone
 from types import SimpleNamespace
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
-import numpy as np
-import pytest
 
 from stochastic_warfare.core.types import Domain, Position
-from stochastic_warfare.detection.sensors import SensorType
 from stochastic_warfare.simulation.calibration import CalibrationSchema
 from stochastic_warfare.environment.electromagnetic import EMEnvironment, FrequencyBand
 from stochastic_warfare.environment.weather import WeatherConfig, WeatherEngine
-from stochastic_warfare.environment.astronomy import AstronomyEngine
-from stochastic_warfare.core.clock import SimulationClock
 from stochastic_warfare.core.events import EventBus
 from stochastic_warfare.c2.communications import (
     CommunicationsEngine,
     CommEquipmentDefinition,
-    CommType,
     CommEquipmentLoader,
 )
 
-from tests.conftest import make_rng, make_clock, TS
+from tests.conftest import make_rng, make_clock
 
 
 # ---------------------------------------------------------------------------

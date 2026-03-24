@@ -6,16 +6,9 @@ in the battle movement loop, gated by enable_seasonal_effects.
 
 from __future__ import annotations
 
-import math
-from dataclasses import dataclass, field
-from types import SimpleNamespace
-from typing import Any
-from unittest.mock import MagicMock
 
 import pytest
 
-from stochastic_warfare.core.types import Domain, Position
-from stochastic_warfare.entities.base import Unit, UnitStatus
 from stochastic_warfare.simulation.calibration import CalibrationSchema
 
 

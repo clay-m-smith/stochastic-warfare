@@ -18,7 +18,6 @@ import math
 from dataclasses import dataclass, field
 from typing import Any
 
-from pydantic import BaseModel
 
 from stochastic_warfare.core.events import EventBus
 from stochastic_warfare.core.logging import get_logger

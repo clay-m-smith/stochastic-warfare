@@ -24,6 +24,7 @@ dev = [
     "matplotlib>=3.8",
     "httpx>=0.27",
     "pytest-asyncio>=0.23",
+    "ruff>=0.8",
 ]
 perf = [
     "numba>=0.59",
@@ -48,7 +49,7 @@ api = [
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 strict_markers = true
-addopts = "-m 'not slow and not benchmark and not terrain and not api and not e2e'"
+addopts = "-m 'not slow and not benchmark and not terrain and not api and not e2e' --ignore=tests/api --ignore=tests/e2e"
 markers = [
     "slow: marks tests as slow (1000-run Monte Carlo, run explicitly with '-m slow')",
     "benchmark: marks tests as performance benchmarks (run explicitly with '-m benchmark')",
@@ -60,6 +61,31 @@ markers = [
 [project.scripts]
 stochastic-warfare-mcp = "stochastic_warfare.tools.mcp_server:main"
 stochastic-warfare-api = "api.main:run"
+
+[tool.ruff]
+target-version = "py312"
+line-length = 120
+extend-exclude = ["scripts/archive"]
+
+[tool.ruff.lint]
+select = [
+    "E",     # pycodestyle errors
+    "F",     # pyflakes
+]
+ignore = [
+    "E402",  # module-level import not at top — conditional/optional imports
+    "E501",  # line too long — defer to format check
+    "E701",  # multiple statements on one line (colon)
+    "E702",  # multiple statements on one line (semicolon)
+    "E731",  # lambda assignment — acceptable in callbacks
+    "E741",  # ambiguous variable name — common in math code
+    "F401",  # unused import — false positives on try/except optional deps
+    "F821",  # undefined name — false positives from string annotations + complex scope
+    "F841",  # local variable assigned but never used — common in simulation
+]
+
+[tool.ruff.lint.isort]
+known-first-party = ["stochastic_warfare", "api"]
 
 [tool.setuptools.packages.find]
 include = ["stochastic_warfare*", "api*"]

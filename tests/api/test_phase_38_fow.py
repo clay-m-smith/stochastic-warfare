@@ -6,7 +6,6 @@ from types import SimpleNamespace
 from typing import Any
 from unittest.mock import MagicMock
 
-import pytest
 
 from api.run_manager import RunManager
 

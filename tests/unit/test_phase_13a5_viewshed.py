@@ -1,7 +1,6 @@
 """Phase 13a-5: Vectorized viewshed computation tests."""
 
 import numpy as np
-import pytest
 
 from stochastic_warfare.core.types import Position
 from stochastic_warfare.terrain.heightmap import Heightmap, HeightmapConfig

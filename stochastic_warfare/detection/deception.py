@@ -8,7 +8,7 @@ detectability.  Effectiveness degrades over time.
 from __future__ import annotations
 
 import enum
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Any
 
 import numpy as np
@@ -21,7 +21,6 @@ from stochastic_warfare.detection.signatures import (
     VisualSignature,
     ThermalSignature,
     RadarSignature,
-    AcousticSignature,
 )
 
 logger = get_logger(__name__)

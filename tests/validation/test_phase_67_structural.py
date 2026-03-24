@@ -16,7 +16,6 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
-import pytest
 import yaml
 
 _ROOT = Path(__file__).resolve().parents[2]
@@ -53,8 +52,8 @@ class TestEnableFlagConsumers:
         Phase 68 flags are excluded — they default to False and will be
         enabled in a future integration phase.
         """
-        # Phase 68/69/71 consequence flags not yet enabled in scenarios
-        _DEFERRED_FLAGS = {"enable_fuel_consumption", "enable_ammo_gate", "enable_command_hierarchy", "enable_carrier_ops"}
+        # Phase 68/69/71/78 consequence flags not yet enabled in scenarios
+        _DEFERRED_FLAGS = {"enable_fuel_consumption", "enable_ammo_gate", "enable_command_hierarchy", "enable_carrier_ops", "enable_ice_crossing", "enable_bridge_capacity", "enable_environmental_fatigue"}
         flags = set(_get_enable_flags()) - _DEFERRED_FLAGS
         enabled: set[str] = set()
         for path in _DATA.rglob("scenario.yaml"):

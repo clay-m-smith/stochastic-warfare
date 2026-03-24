@@ -20,7 +20,6 @@ from stochastic_warfare.core.events import EventBus
 from stochastic_warfare.core.logging import get_logger
 from stochastic_warfare.core.types import ModuleId
 from stochastic_warfare.c2.communications import (
-    CommType,
     CommunicationsEngine,
 )
 from stochastic_warfare.c2.events import CommandStatusChangeEvent

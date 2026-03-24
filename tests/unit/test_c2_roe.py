@@ -4,9 +4,8 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 
-import pytest
 
-from stochastic_warfare.core.events import Event, EventBus
+from stochastic_warfare.core.events import EventBus
 from stochastic_warfare.c2.events import RoeChangeEvent, RoeViolationEvent
 from stochastic_warfare.c2.roe import (
     RoeAreaOverride,

@@ -11,7 +11,6 @@ import pytest
 
 from stochastic_warfare.combat.damage import (
     DamageEngine,
-    DamageResult,
     _POSTURE_BLAST_PROTECT,
     _POSTURE_FRAG_PROTECT,
 )

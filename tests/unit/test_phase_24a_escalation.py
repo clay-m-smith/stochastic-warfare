@@ -12,7 +12,7 @@ Covers:
 
 from __future__ import annotations
 
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 
 import numpy as np
 import pytest
@@ -35,7 +35,6 @@ from stochastic_warfare.escalation.events import (
 from stochastic_warfare.escalation.ladder import (
     DesperationWeights,
     EscalationLadder,
-    EscalationLadderConfig,
     EscalationLevel,
 )
 from stochastic_warfare.escalation.political import (
@@ -47,7 +46,6 @@ from stochastic_warfare.escalation.political import (
 from stochastic_warfare.escalation.consequences import (
     ConsequenceConfig,
     ConsequenceEngine,
-    ConsequenceResult,
 )
 
 

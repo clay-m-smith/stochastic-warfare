@@ -9,14 +9,13 @@ from __future__ import annotations
 from types import SimpleNamespace
 from datetime import datetime, timezone
 
-import numpy as np
 import pytest
 
 from stochastic_warfare.core.events import EventBus
-from stochastic_warfare.core.types import Domain, Position
+from stochastic_warfare.core.types import Position
 from stochastic_warfare.entities.base import UnitStatus
 from stochastic_warfare.entities.unit_classes.ground import GroundUnit
-from stochastic_warfare.simulation.battle import BattleManager, BattleConfig, _apply_aggregate_casualties
+from stochastic_warfare.simulation.battle import BattleManager, _apply_aggregate_casualties
 from stochastic_warfare.simulation.calibration import CalibrationSchema
 
 TS = datetime(2024, 6, 15, 12, 0, 0, tzinfo=timezone.utc)

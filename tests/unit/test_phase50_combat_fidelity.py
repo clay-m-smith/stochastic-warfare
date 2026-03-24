@@ -9,9 +9,8 @@
 
 from __future__ import annotations
 
-import math
 import os
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import datetime
 from types import SimpleNamespace
 from typing import Any
@@ -21,15 +20,13 @@ import pytest
 
 from stochastic_warfare.core.events import EventBus
 from stochastic_warfare.core.types import Domain, Position
-from stochastic_warfare.entities.base import Unit, UnitStatus
+from stochastic_warfare.entities.base import Unit
 from stochastic_warfare.entities.unit_classes.aerial import (
     AerialUnit,
-    AerialUnitType,
     AirPosture,
     FlightState,
 )
 from stochastic_warfare.simulation.battle import (
-    BattleConfig,
     BattleContext,
     BattleManager,
     _INDIRECT_FIRE_CATEGORIES,
@@ -526,7 +523,6 @@ class TestTrainingLevelPopulation:
 
     def test_all_unit_files_have_training_level(self, _data_root: str) -> None:
         """Spot-check: all era unit files have training_level in range."""
-        import yaml
 
         unit_dirs = [
             os.path.join(_data_root, "units"),

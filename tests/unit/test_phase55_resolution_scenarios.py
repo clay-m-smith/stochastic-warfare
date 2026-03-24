@@ -11,12 +11,12 @@ from __future__ import annotations
 
 import math
 from types import SimpleNamespace
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 import numpy as np
 import pytest
 
-from stochastic_warfare.core.types import Domain, ModuleId, Position
+from stochastic_warfare.core.types import Domain, Position
 from stochastic_warfare.entities.base import Unit, UnitStatus
 
 
@@ -69,9 +69,8 @@ class TestResolutionSwitching:
         from stochastic_warfare.simulation.engine import (
             EngineConfig,
             SimulationEngine,
-            TickResolution,
         )
-        from stochastic_warfare.simulation.battle import BattleConfig, BattleManager
+        from stochastic_warfare.simulation.battle import BattleConfig
         from stochastic_warfare.simulation.campaign import CampaignConfig
         from stochastic_warfare.simulation.calibration import CalibrationSchema
 
@@ -152,7 +151,6 @@ class TestResolutionSwitching:
 
     def test_forces_far_apart_stays_strategic(self):
         """Units >2x engagement range → allows STRATEGIC."""
-        from stochastic_warfare.simulation.engine import TickResolution
 
         units = {
             "blue": [_make_unit("b1", "blue", (0, 0))],
@@ -361,7 +359,7 @@ class TestDeficitWiring:
 
     def test_no_gas_mask_zero_protection(self):
         """Units without gas mask get zero protection."""
-        from stochastic_warfare.combat.gas_warfare import GasWarfareEngine, GasMaskType
+        from stochastic_warfare.combat.gas_warfare import GasWarfareEngine
 
         rng = np.random.default_rng(42)
         engine = GasWarfareEngine(rng=rng)

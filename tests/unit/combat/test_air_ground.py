@@ -7,9 +7,6 @@ import pytest
 from stochastic_warfare.combat.air_ground import (
     AirGroundConfig,
     AirGroundEngine,
-    CASDesignationResult,
-    CASResult,
-    SEADResult,
 )
 from stochastic_warfare.core.events import EventBus
 from stochastic_warfare.core.types import Position

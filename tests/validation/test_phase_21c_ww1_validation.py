@@ -254,7 +254,7 @@ class TestDeterministicReplay:
 
     def test_trench_query_deterministic(self) -> None:
         from stochastic_warfare.terrain.trenches import (
-            TrenchConfig, TrenchSegment, TrenchSystemEngine, TrenchType,
+            TrenchSegment, TrenchSystemEngine, TrenchType,
         )
         results = []
         for _ in range(2):

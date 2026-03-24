@@ -24,10 +24,10 @@ from types import SimpleNamespace
 import numpy as np
 import pytest
 
-from stochastic_warfare.core.types import Domain, Position, Side
-from stochastic_warfare.entities.base import Unit, UnitStatus
+from stochastic_warfare.core.types import Position, Side
+from stochastic_warfare.entities.base import Unit
 from stochastic_warfare.entities.capabilities import CombatPowerCalculator
-from stochastic_warfare.entities.equipment import EquipmentCategory, EquipmentItem, EquipmentManager
+from stochastic_warfare.entities.equipment import EquipmentManager
 from stochastic_warfare.entities.loader import UnitLoader
 from stochastic_warfare.entities.organization.echelons import EchelonLevel
 from stochastic_warfare.entities.organization.hierarchy import HierarchyTree
@@ -37,13 +37,9 @@ from stochastic_warfare.entities.organization.task_org import (
     TaskOrgManager,
 )
 from stochastic_warfare.entities.personnel import (
-    CrewMember,
-    CrewRole,
     InjuryState,
     PersonnelManager,
-    SkillLevel,
 )
-from stochastic_warfare.entities.unit_classes.aerial import AerialUnit, AerialUnitType
 from stochastic_warfare.entities.unit_classes.ground import GroundUnit, GroundUnitType
 from stochastic_warfare.entities.unit_classes.naval import NavalUnit, NavalUnitType
 from stochastic_warfare.movement.airborne import AirborneMethod, AirborneMovementEngine

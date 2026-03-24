@@ -8,7 +8,6 @@ from stochastic_warfare.combat.air_combat import (
     AirCombatConfig,
     AirCombatEngine,
     AirCombatMode,
-    AirCombatResult,
     EnergyState,
 )
 from stochastic_warfare.core.events import EventBus

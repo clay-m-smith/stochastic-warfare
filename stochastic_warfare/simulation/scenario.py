@@ -15,7 +15,7 @@ from typing import Any
 
 import numpy as np
 import yaml
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, field_validator
 
 from stochastic_warfare.core.clock import SimulationClock
 from stochastic_warfare.core.events import EventBus
@@ -889,7 +889,6 @@ class ScenarioLoader:
         if spec.terrain_source == "real":
             return self._build_real_terrain(spec, config)
 
-        from stochastic_warfare.terrain.heightmap import HeightmapConfig
         from stochastic_warfare.validation.scenario_runner import build_terrain
         from stochastic_warfare.validation.historical_data import TerrainSpec
 

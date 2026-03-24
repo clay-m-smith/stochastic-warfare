@@ -12,7 +12,7 @@ import numpy as np
 import pytest
 
 from stochastic_warfare.core.events import EventBus
-from stochastic_warfare.core.types import ModuleId, Position
+from stochastic_warfare.core.types import Position
 from stochastic_warfare.ew.emitters import Emitter, EmitterType, WaveformType
 from stochastic_warfare.ew.events import EmitterDetectedEvent, SIGINTReportEvent
 from stochastic_warfare.ew.sigint import SIGINTCollector, SIGINTEngine, SIGINTType

@@ -7,21 +7,16 @@ commander personality influencing outcomes.
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
 
 import numpy as np
-import pytest
 
 from stochastic_warfare.core.events import EventBus
-from stochastic_warfare.core.types import ModuleId, Position
+from stochastic_warfare.core.types import Position
 
 # AI modules
-from stochastic_warfare.c2.ai.ooda import OODALoopEngine, OODAPhase, OODAConfig
+from stochastic_warfare.c2.ai.ooda import OODALoopEngine, OODAPhase
 from stochastic_warfare.c2.ai.commander import (
-    CommanderEngine,
     CommanderPersonality,
-    CommanderProfileLoader,
-    CommanderConfig,
 )
 from stochastic_warfare.c2.ai.doctrine import (
     DoctrineEngine,
@@ -39,7 +34,6 @@ from stochastic_warfare.c2.ai.decisions import (
 from stochastic_warfare.c2.ai.adaptation import (
     AdaptationEngine,
     AdaptationAction,
-    AdaptationTrigger,
 )
 from stochastic_warfare.c2.ai.stratagems import (
     StratagemEngine,
@@ -50,7 +44,6 @@ from stochastic_warfare.c2.ai.stratagems import (
 from stochastic_warfare.c2.planning.estimates import EstimatesEngine
 from stochastic_warfare.c2.planning.mission_analysis import (
     MissionAnalysisEngine,
-    MissionAnalysisResult,
 )
 from stochastic_warfare.c2.planning.coa import COAEngine
 from stochastic_warfare.c2.planning.phases import PhasingEngine
@@ -71,13 +64,9 @@ from stochastic_warfare.c2.orders.types import (
 # Events
 from stochastic_warfare.c2.events import (
     OODAPhaseChangeEvent,
-    SituationAssessedEvent,
-    DecisionMadeEvent,
     PlanAdaptedEvent,
     PlanningStartedEvent,
     PlanningCompletedEvent,
-    COASelectedEvent,
-    PhaseTransitionEvent,
 )
 
 # Shared test fixtures

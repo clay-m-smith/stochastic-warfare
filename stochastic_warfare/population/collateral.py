@@ -8,7 +8,6 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 
-import numpy as np
 from pydantic import BaseModel
 
 from stochastic_warfare.core.events import EventBus

@@ -8,7 +8,6 @@ import numpy as np
 import pytest
 
 from stochastic_warfare.c2.planning.process import (
-    PlanningMethod,
     PlanningPhase,
     PlanningProcessEngine,
 )

@@ -8,7 +8,6 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 from stochastic_warfare.simulation.scenario import ScenarioLoader
 from stochastic_warfare.simulation.engine import SimulationEngine, EngineConfig
 from stochastic_warfare.simulation.recorder import SimulationRecorder
-from stochastic_warfare.entities.base import UnitStatus
 
 scenario = sys.argv[1] if len(sys.argv) > 1 else "cannae"
 
@@ -49,14 +48,14 @@ engine = SimulationEngine(ctx, config=EngineConfig(max_ticks=50000), recorder=re
 print(f"\nStarting resolution: {engine.resolution}")
 
 run_result = engine.run()
-print(f"\n=== RESULT ===")
+print("\n=== RESULT ===")
 print(f"Ticks: {run_result.ticks_executed}")
 print(f"Duration: {run_result.duration_s:.0f}s")
 print(f"Victory: {run_result.victory_result}")
 
 # Event analysis
 event_types = Counter(e.event_type for e in recorder._events)
-print(f"\n=== EVENT TYPES ===")
+print("\n=== EVENT TYPES ===")
 for et, count in event_types.most_common(20):
     print(f"  {et}: {count}")
 
@@ -67,15 +66,15 @@ for e in recorder._events:
     if e.event_type == 'EngagementEvent':
         engagement_results[e.data.get('result', 'unknown')] += 1
         weapon_usage[e.data.get('weapon_id', '?')] += 1
-print(f"\n=== ENGAGEMENT RESULTS ===")
+print("\n=== ENGAGEMENT RESULTS ===")
 for r, c in engagement_results.most_common():
     print(f"  {r}: {c}")
-print(f"\n=== WEAPON USAGE ===")
+print("\n=== WEAPON USAGE ===")
 for w, c in weapon_usage.most_common():
     print(f"  {w}: {c}")
 
 # Check damage events
-print(f"\n=== DAMAGE EVENTS ===")
+print("\n=== DAMAGE EVENTS ===")
 for e in recorder._events:
     if e.event_type == 'DamageEvent':
         print(f"  tick={e.tick} target={e.data.get('target_id', '?')} "
@@ -83,7 +82,7 @@ for e in recorder._events:
               f"type={e.data.get('damage_type', '?')}")
 
 # Final unit status
-print(f"\n=== FINAL STATUS ===")
+print("\n=== FINAL STATUS ===")
 for side, units in ctx.units_by_side.items():
     for u in units:
         print(f"  {u.entity_id}: {u.status.name}")

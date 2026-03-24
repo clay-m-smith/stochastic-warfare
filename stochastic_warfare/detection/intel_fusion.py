@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import enum
 import math
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Any
 
 import numpy as np
@@ -22,7 +22,6 @@ from stochastic_warfare.detection.detection import DetectionResult
 from stochastic_warfare.detection.estimation import (
     StateEstimator,
     Track,
-    TrackStatus,
 )
 from stochastic_warfare.detection.identification import ContactInfo, ContactLevel
 

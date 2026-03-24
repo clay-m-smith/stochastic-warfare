@@ -15,7 +15,7 @@ import numpy as np
 from stochastic_warfare.core.logging import get_logger
 from stochastic_warfare.core.types import Position
 from stochastic_warfare.detection.sensors import SensorInstance, SensorType
-from stochastic_warfare.detection.sonar import SonarEngine, SonarType
+from stochastic_warfare.detection.sonar import SonarEngine
 
 logger = get_logger(__name__)
 

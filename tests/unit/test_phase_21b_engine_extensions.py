@@ -9,7 +9,6 @@ Tests for:
 
 from __future__ import annotations
 
-from types import SimpleNamespace
 from unittest.mock import MagicMock
 
 import numpy as np
@@ -563,7 +562,7 @@ class TestCrossEngineIntegration:
 
     def test_bombardment_degrades_trench_cover(self) -> None:
         from stochastic_warfare.terrain.trenches import (
-            TrenchConfig, TrenchSegment, TrenchSystemEngine, TrenchType,
+            TrenchSegment, TrenchSystemEngine, TrenchType,
         )
         eng = TrenchSystemEngine()
         eng.add_trench(TrenchSegment(

@@ -6,12 +6,11 @@ Uses shared fixtures from conftest.py.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 from typing import Any
 
 import pytest
 
-from stochastic_warfare.core.types import Position
 from stochastic_warfare.entities.base import Unit, UnitStatus
 from stochastic_warfare.simulation.metrics import (
     CampaignMetrics,

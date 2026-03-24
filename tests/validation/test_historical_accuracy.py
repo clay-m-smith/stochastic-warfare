@@ -243,7 +243,7 @@ class TestVictoryConditionTypes:
         result = results_by_name_seed42["somme_july1"]
         condition = result.get("victory_condition", "")
         assert condition != "force_destroyed", (
-            f"Somme should not resolve via force_destroyed — historically a failed offensive"
+            "Somme should not resolve via force_destroyed — historically a failed offensive"
         )
 
 
@@ -284,4 +284,4 @@ class TestScenarioCoverage:
                 assert "sides" in data or "forces" in data, f"No sides/forces: {name}"
             except Exception as exc:
                 failures.append(f"{name}: {exc}")
-        assert not failures, f"Scenario YAML load failures:\n" + "\n".join(failures)
+        assert not failures, "Scenario YAML load failures:\n" + "\n".join(failures)

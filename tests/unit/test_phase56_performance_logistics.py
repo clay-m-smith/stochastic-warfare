@@ -12,22 +12,19 @@ Tests cover:
 
 from __future__ import annotations
 
-import math
-from datetime import datetime, timedelta, timezone
+from datetime import timedelta
 from types import SimpleNamespace
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
-import numpy as np
 import pytest
 
 from stochastic_warfare.core.clock import SimulationClock
 from stochastic_warfare.core.events import EventBus
-from stochastic_warfare.core.types import Domain, ModuleId, Position
+from stochastic_warfare.core.types import Domain, Position
 from stochastic_warfare.entities.base import Unit, UnitStatus
 from stochastic_warfare.logistics.maintenance import (
     MaintenanceConfig,
     MaintenanceEngine,
-    MaintenanceRecord,
     MaintenanceStatus,
 )
 from stochastic_warfare.morale.state import MoraleState

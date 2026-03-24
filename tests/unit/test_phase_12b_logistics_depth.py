@@ -9,13 +9,12 @@
 from __future__ import annotations
 
 from datetime import datetime, timezone
-from types import SimpleNamespace
 
 import numpy as np
 import pytest
 
 from stochastic_warfare.core.events import EventBus
-from stochastic_warfare.core.types import ModuleId, Position
+from stochastic_warfare.core.types import Position
 
 _TS = datetime(2024, 6, 15, 12, 0, 0, tzinfo=timezone.utc)
 

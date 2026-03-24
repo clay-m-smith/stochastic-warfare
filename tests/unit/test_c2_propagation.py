@@ -4,13 +4,11 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 
-import numpy as np
-import pytest
 
-from stochastic_warfare.core.events import Event, EventBus
+from stochastic_warfare.core.events import EventBus
 from stochastic_warfare.core.rng import RNGManager
 from stochastic_warfare.core.types import ModuleId, Position
-from stochastic_warfare.c2.command import CommandConfig, CommandEngine, CommandStatus
+from stochastic_warfare.c2.command import CommandEngine
 from stochastic_warfare.c2.communications import (
     CommEquipmentDefinition,
     CommEquipmentLoader,
@@ -24,7 +22,6 @@ from stochastic_warfare.c2.events import (
 from stochastic_warfare.c2.orders.propagation import (
     OrderPropagationEngine,
     PropagationConfig,
-    PropagationResult,
 )
 from stochastic_warfare.c2.orders.types import (
     MissionType,

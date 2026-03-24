@@ -7,15 +7,14 @@ storage, berths, repair docks, and throughput limits.
 from __future__ import annotations
 
 import enum
-import math
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 import numpy as np
 from pydantic import BaseModel
 
 from stochastic_warfare.core.events import EventBus
 from stochastic_warfare.core.logging import get_logger
-from stochastic_warfare.core.types import ModuleId, Position
+from stochastic_warfare.core.types import Position
 
 logger = get_logger(__name__)
 

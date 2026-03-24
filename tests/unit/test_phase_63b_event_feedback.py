@@ -1,8 +1,6 @@
 """Phase 63b: Medical → Strength & Maintenance → Readiness tests."""
 
 import pytest
-from types import SimpleNamespace
-from unittest.mock import MagicMock, patch
 
 from stochastic_warfare.entities.base import Unit, UnitStatus
 from stochastic_warfare.entities.personnel import CrewMember, InjuryState
@@ -96,7 +94,6 @@ class TestEventFeedbackHandlers:
 
     def test_event_feedback_disabled_no_subscription(self):
         """When enable_event_feedback=False, no event handlers registered."""
-        from stochastic_warfare.simulation.engine import SimulationEngine
         import stochastic_warfare.simulation.engine as eng_mod
         src = open(eng_mod.__file__).read()
         assert "enable_event_feedback" in src

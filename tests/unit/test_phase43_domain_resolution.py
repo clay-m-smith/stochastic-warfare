@@ -6,12 +6,10 @@ and naval domain routing (43c).
 
 from __future__ import annotations
 
-import math
-from dataclasses import dataclass, field
 from datetime import datetime
 from types import SimpleNamespace
 from typing import Any
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 import numpy as np
 import pytest
@@ -28,8 +26,6 @@ from stochastic_warfare.simulation.battle import (
     _infer_melee_type,
     _infer_missile_type,
     _route_naval_engagement,
-    _MELEE_RANGE_M,
-    _INDIRECT_FIRE_CATEGORIES,
 )
 
 

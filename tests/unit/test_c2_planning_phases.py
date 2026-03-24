@@ -2,9 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
 
-import pytest
 
 from stochastic_warfare.c2.events import PhaseTransitionEvent
 from stochastic_warfare.c2.orders.types import MissionType

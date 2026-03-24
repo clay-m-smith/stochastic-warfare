@@ -9,7 +9,6 @@ from __future__ import annotations
 
 import pathlib
 
-import pytest
 
 _SRC = pathlib.Path(__file__).resolve().parents[2] / "stochastic_warfare"
 

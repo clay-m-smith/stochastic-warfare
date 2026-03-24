@@ -7,8 +7,6 @@ import pytest
 from stochastic_warfare.combat.air_defense import (
     AirDefenseConfig,
     AirDefenseEngine,
-    InterceptResult,
-    ThreatAssessment,
 )
 from stochastic_warfare.core.events import EventBus
 from stochastic_warfare.core.types import Position

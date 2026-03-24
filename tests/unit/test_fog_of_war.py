@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from types import SimpleNamespace
 
 import numpy as np
 import pytest
@@ -207,7 +206,7 @@ class TestGroundTruthComparison:
         """If all enemies are in contacts, missed should be 0."""
         fow = _fow(seed=1)
         # Manually add a contact
-        from stochastic_warfare.detection.estimation import Track, TrackState, TrackStatus
+        from stochastic_warfare.detection.estimation import Track, TrackState
         track = Track(
             track_id="t-1", side="blue",
             contact_info=ContactInfo(ContactLevel.DETECTED, None, None, None, 0.5),

@@ -11,7 +11,6 @@ from stochastic_warfare.combat.ammunition import AmmoDefinition
 from stochastic_warfare.combat.damage import DamageEngine
 from stochastic_warfare.combat.missiles import (
     KillChainPhase,
-    MissileConfig,
     MissileEngine,
     MissileFlightState,
     MissileType,

@@ -7,7 +7,6 @@ using the Mann-Whitney U test, and reports effect sizes.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from pathlib import Path
 from typing import Any
 
 import numpy as np

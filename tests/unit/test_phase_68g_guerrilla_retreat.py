@@ -7,14 +7,12 @@ disengage, and optionally transition to ROUTING status.
 from __future__ import annotations
 
 import math
-from types import SimpleNamespace
-from datetime import datetime, timezone
 
 import numpy as np
 import pytest
 
 from stochastic_warfare.core.events import EventBus
-from stochastic_warfare.core.types import Domain, Position, ModuleId
+from stochastic_warfare.core.types import Position
 from stochastic_warfare.entities.base import UnitStatus
 from stochastic_warfare.entities.unit_classes.ground import GroundUnit
 from stochastic_warfare.simulation.calibration import CalibrationSchema

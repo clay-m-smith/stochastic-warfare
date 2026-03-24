@@ -4,7 +4,6 @@ from pathlib import Path
 
 import numpy as np
 
-from stochastic_warfare.core.types import Position
 from stochastic_warfare.entities.loader import UnitLoader
 from stochastic_warfare.entities.organization.echelons import EchelonLevel
 from stochastic_warfare.entities.organization.orbat import OrbatLoader, TOEDefinition

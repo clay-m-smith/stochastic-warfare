@@ -12,21 +12,10 @@ import numpy as np
 
 from stochastic_warfare.core.events import EventBus
 from stochastic_warfare.core.rng import RNGManager
-from stochastic_warfare.core.types import ModuleId, Position
+from stochastic_warfare.core.types import ModuleId
 from stochastic_warfare.logistics.consumption import (
     ActivityLevel,
-    ConsumptionConfig,
     ConsumptionEngine,
-    EnvironmentConditions,
-    GroundState,
-)
-from stochastic_warfare.logistics.stockpile import DepotType, StockpileManager
-from stochastic_warfare.logistics.supply_classes import SupplyClass, SupplyInventory
-from stochastic_warfare.logistics.supply_network import (
-    SupplyNetworkEngine,
-    SupplyNode,
-    SupplyRoute,
-    TransportMode,
 )
 
 OUTPUT_DIR = Path(__file__).parent / "output"

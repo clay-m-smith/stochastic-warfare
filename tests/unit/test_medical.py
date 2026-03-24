@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 
-import numpy as np
 import pytest
 
 from stochastic_warfare.core.events import Event, EventBus
@@ -15,11 +14,9 @@ from stochastic_warfare.logistics.events import (
     ReturnToDutyEvent,
 )
 from stochastic_warfare.logistics.medical import (
-    CasualtyRecord,
     MedicalConfig,
     MedicalEngine,
     MedicalFacility,
-    MedicalFacilityDefinition,
     MedicalFacilityLoader,
     MedicalFacilityType,
     TriagePriority,

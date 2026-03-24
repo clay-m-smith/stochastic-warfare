@@ -18,7 +18,6 @@ from stochastic_warfare.core.types import ModuleId, Position
 from stochastic_warfare.population.civilians import (
     CivilianDisposition,
     CivilianManager,
-    CivilianRegion,
 )
 from stochastic_warfare.population.events import HumintTipEvent
 

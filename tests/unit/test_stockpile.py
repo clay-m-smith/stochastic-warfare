@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 
-import numpy as np
 import pytest
 
 from stochastic_warfare.core.events import Event, EventBus
@@ -15,7 +14,6 @@ from stochastic_warfare.logistics.events import (
     SupplyShortageEvent,
 )
 from stochastic_warfare.logistics.stockpile import (
-    Depot,
     DepotType,
     StockpileConfig,
     StockpileManager,
@@ -23,7 +21,6 @@ from stochastic_warfare.logistics.stockpile import (
 from stochastic_warfare.logistics.supply_classes import (
     SupplyClass,
     SupplyInventory,
-    SupplyItemLoader,
 )
 
 _TS = datetime(2024, 6, 15, 12, 0, 0, tzinfo=timezone.utc)

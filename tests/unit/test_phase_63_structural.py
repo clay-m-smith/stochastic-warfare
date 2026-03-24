@@ -1,6 +1,5 @@
 """Phase 63 Step S: Structural verification tests."""
 
-import pytest
 
 
 def _read_source(module_path: str) -> str:

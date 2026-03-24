@@ -8,7 +8,7 @@ required.
 from __future__ import annotations
 
 import math
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 from typing import NamedTuple
 
 from stochastic_warfare.core.clock import SimulationClock

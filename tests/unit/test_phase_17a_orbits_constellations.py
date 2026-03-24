@@ -17,12 +17,8 @@ from stochastic_warfare.space.constellations import (
     SpaceEngine,
 )
 from stochastic_warfare.space.events import (
-    ASATEngagementEvent,
     ConstellationDegradedEvent,
-    DebrisCascadeEvent,
-    EarlyWarningDetectionEvent,
     GPSAccuracyChangedEvent,
-    SATCOMWindowEvent,
     SatelliteOverpassEvent,
 )
 from stochastic_warfare.space.orbits import (
@@ -30,7 +26,6 @@ from stochastic_warfare.space.orbits import (
     R_EARTH,
     OrbitalElements,
     OrbitalMechanicsEngine,
-    OrbitType,
     SatelliteState,
 )
 

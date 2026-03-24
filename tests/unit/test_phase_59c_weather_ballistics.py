@@ -6,11 +6,9 @@ and wind gust operational gates.
 
 from __future__ import annotations
 
-import math
 
 import pytest
 
-from stochastic_warfare.simulation.calibration import CalibrationSchema
 
 
 class TestPropellantTemperatureCoefficient:

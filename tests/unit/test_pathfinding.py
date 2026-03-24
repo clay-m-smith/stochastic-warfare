@@ -2,7 +2,6 @@
 
 import math
 
-import pytest
 
 from stochastic_warfare.core.types import Position
 from stochastic_warfare.movement.pathfinding import Pathfinder

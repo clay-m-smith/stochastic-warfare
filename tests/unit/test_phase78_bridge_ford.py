@@ -5,7 +5,7 @@ from __future__ import annotations
 import pytest
 
 from stochastic_warfare.core.types import Position
-from stochastic_warfare.entities.base import Unit, UnitStatus
+from stochastic_warfare.entities.base import Unit
 
 
 # ---------------------------------------------------------------------------

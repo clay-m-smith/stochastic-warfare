@@ -14,9 +14,7 @@ from stochastic_warfare.combat.ammunition import (
 from stochastic_warfare.combat.ballistics import BallisticsEngine
 from stochastic_warfare.combat.damage import DamageEngine
 from stochastic_warfare.combat.engagement import (
-    EngagementConfig,
     EngagementEngine,
-    EngagementResult,
     EngagementType,
 )
 from stochastic_warfare.combat.fratricide import FratricideEngine

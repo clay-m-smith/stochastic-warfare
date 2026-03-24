@@ -6,7 +6,6 @@ import numpy as np
 import pytest
 
 from stochastic_warfare.core.events import EventBus
-from stochastic_warfare.core.types import ModuleId
 from stochastic_warfare.morale.events import MoraleStateChangeEvent
 from stochastic_warfare.morale.state import (
     MoraleConfig,

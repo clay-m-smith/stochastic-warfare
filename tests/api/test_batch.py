@@ -5,7 +5,6 @@ from __future__ import annotations
 import asyncio
 
 import pytest
-import pytest_asyncio
 
 pytestmark = [pytest.mark.api, pytest.mark.asyncio]
 

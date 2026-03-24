@@ -3,7 +3,6 @@
 import math
 from types import SimpleNamespace
 
-import numpy as np
 import pytest
 
 from stochastic_warfare.core.types import Position

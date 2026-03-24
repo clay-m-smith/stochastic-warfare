@@ -9,8 +9,7 @@ defensive strength, sea conditions, and terrain advantage.
 from __future__ import annotations
 
 import enum
-import math
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Any
 
 import numpy as np

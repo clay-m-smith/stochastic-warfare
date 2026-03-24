@@ -8,16 +8,14 @@ protocol compatibility.
 from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
-from types import SimpleNamespace
 
 import numpy as np
-import pytest
 
 from stochastic_warfare.core.clock import SimulationClock
 from stochastic_warfare.core.events import EventBus
-from stochastic_warfare.core.types import ModuleId, Position
+from stochastic_warfare.core.types import Position
 from stochastic_warfare.detection.detection import DetectionConfig, DetectionEngine
-from stochastic_warfare.detection.sensors import SensorDefinition, SensorInstance, SensorType
+from stochastic_warfare.detection.sensors import SensorDefinition, SensorInstance
 from stochastic_warfare.detection.signatures import (
     RadarSignature,
     SignatureProfile,
@@ -30,10 +28,8 @@ from stochastic_warfare.ew.eccm import ECCMEngine, ECCMSuite, ECCMTechnique
 from stochastic_warfare.ew.jamming import (
     JammerDefinitionModel,
     JammerInstance,
-    JamTechnique,
     JammingEngine,
 )
-from stochastic_warfare.ew.spoofing import GPSSpoofZone, ReceiverType, SpoofingEngine
 
 TS = datetime(2024, 6, 15, 12, 0, 0, tzinfo=timezone.utc)
 

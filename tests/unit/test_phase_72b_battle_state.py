@@ -6,11 +6,8 @@ in checkpoint state and correctly restored.
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
-from types import SimpleNamespace
 from typing import Any
 
-import pytest
 
 from stochastic_warfare.combat.suppression import UnitSuppressionState
 from stochastic_warfare.core.events import EventBus

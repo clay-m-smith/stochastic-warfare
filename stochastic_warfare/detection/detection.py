@@ -16,7 +16,7 @@ from pydantic import BaseModel
 from scipy.special import erfc  # type: ignore[import-untyped]
 
 from stochastic_warfare.core.logging import get_logger
-from stochastic_warfare.core.types import Meters, Position
+from stochastic_warfare.core.types import Position
 from stochastic_warfare.detection.sensors import SensorInstance, SensorType
 from stochastic_warfare.detection.signatures import (
     SignatureProfile,

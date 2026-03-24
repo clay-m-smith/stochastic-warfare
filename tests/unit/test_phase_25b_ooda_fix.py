@@ -9,16 +9,14 @@ from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
 from typing import Any
-from unittest.mock import MagicMock, patch, call
+from unittest.mock import MagicMock
 
-import numpy as np
-import pytest
 
 from stochastic_warfare.core.clock import SimulationClock
 from stochastic_warfare.core.events import EventBus
 from stochastic_warfare.core.rng import RNGManager
-from stochastic_warfare.core.types import ModuleId, Position
-from stochastic_warfare.entities.base import Unit, UnitStatus
+from stochastic_warfare.core.types import Position
+from stochastic_warfare.entities.base import Unit
 from stochastic_warfare.simulation.battle import BattleManager
 from stochastic_warfare.simulation.scenario import (
     CampaignScenarioConfig,

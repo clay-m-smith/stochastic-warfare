@@ -7,7 +7,6 @@ and terrain manager instantiation (40g).
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
 from types import SimpleNamespace
 from typing import Any
@@ -17,9 +16,7 @@ import pytest
 
 from stochastic_warfare.combat.ammunition import (
     AmmoDefinition,
-    WeaponCategory,
     WeaponDefinition,
-    _CATEGORY_DEFAULT_DOMAINS,
 )
 from stochastic_warfare.combat.engagement import EngagementEngine, EngagementType
 from stochastic_warfare.combat.suppression import (
@@ -31,7 +28,7 @@ from stochastic_warfare.core.types import Domain, Position
 from stochastic_warfare.entities.base import Unit, UnitStatus
 from stochastic_warfare.entities.unit_classes.ground import GroundUnit, Posture
 from stochastic_warfare.morale.state import MoraleState, _MORALE_EFFECTS
-from stochastic_warfare.simulation.battle import BattleConfig, BattleContext, BattleManager
+from stochastic_warfare.simulation.battle import BattleContext, BattleManager
 from stochastic_warfare.simulation.victory import VictoryEvaluator
 
 # ---------------------------------------------------------------------------

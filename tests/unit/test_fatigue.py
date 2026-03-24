@@ -1,8 +1,7 @@
 """Tests for movement/fatigue.py."""
 
-import pytest
 
-from stochastic_warfare.movement.fatigue import FatigueConfig, FatigueManager
+from stochastic_warfare.movement.fatigue import FatigueManager
 
 
 class TestFatigueAccumulate:

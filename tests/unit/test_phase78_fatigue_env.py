@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from stochastic_warfare.movement.fatigue import FatigueConfig, FatigueManager, FatigueState
+from stochastic_warfare.movement.fatigue import FatigueManager
 
 
 # ---------------------------------------------------------------------------

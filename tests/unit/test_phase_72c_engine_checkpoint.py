@@ -12,7 +12,6 @@ import inspect
 import json
 
 import numpy as np
-import pytest
 
 
 class TestNumpyEncoderUsage:

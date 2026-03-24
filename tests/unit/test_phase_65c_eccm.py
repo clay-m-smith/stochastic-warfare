@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import numpy as np
-import pytest
 
 from stochastic_warfare.core.events import EventBus
 from stochastic_warfare.ew.eccm import ECCMEngine, ECCMSuite, ECCMTechnique

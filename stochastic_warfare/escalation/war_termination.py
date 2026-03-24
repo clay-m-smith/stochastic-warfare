@@ -6,14 +6,12 @@ ceasefire when both sides cross threshold during stalemate.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 from datetime import datetime
 
 from pydantic import BaseModel
 
 from stochastic_warfare.core.events import EventBus
 from stochastic_warfare.core.logging import get_logger
-from stochastic_warfare.core.types import ModuleId
 
 logger = get_logger(__name__)
 

@@ -9,7 +9,6 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
-import yaml
 
 from stochastic_warfare.combat.ammunition import WeaponLoader, AmmoLoader
 from stochastic_warfare.detection.sensors import SensorLoader

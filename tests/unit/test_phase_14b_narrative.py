@@ -5,17 +5,14 @@ from __future__ import annotations
 from types import SimpleNamespace
 from typing import Any
 
-import pytest
 
 from stochastic_warfare.tools.narrative import (
     NarrativeEntry,
     NarrativeTick,
-    _SIGNIFICANT_TYPES,
     format_event,
     format_narrative,
     generate_narrative,
     get_formatter,
-    register_formatter,
     registered_event_types,
 )
 

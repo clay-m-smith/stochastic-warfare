@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import pytest
 
 from stochastic_warfare.simulation.calibration import CalibrationSchema
 

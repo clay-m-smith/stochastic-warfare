@@ -2,17 +2,13 @@
 
 from __future__ import annotations
 
-import pytest
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 import numpy as np
 
 from stochastic_warfare.core.types import Position
 from stochastic_warfare.environment.obscurants import (
     ObscurantsEngine,
-    ObscurantType,
-    SpectralBlocking,
 )
-from stochastic_warfare.detection.sensors import SensorType
 
 
 def _make_obs_engine(wind_speed: float = 0.0) -> ObscurantsEngine:

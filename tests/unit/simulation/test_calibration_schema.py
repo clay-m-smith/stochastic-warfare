@@ -9,8 +9,6 @@ import pytest
 
 from stochastic_warfare.simulation.calibration import (
     CalibrationSchema,
-    MoraleCalibration,
-    SideCalibration,
 )
 
 

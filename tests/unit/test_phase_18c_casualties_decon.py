@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import types
 from datetime import datetime, timezone
 
 import numpy as np
@@ -12,11 +11,9 @@ from stochastic_warfare.cbrn.agents import AgentCategory, AgentDefinition
 from stochastic_warfare.cbrn.casualties import (
     CBRNCasualtyEngine,
     CasualtyConfig,
-    DosageRecord,
 )
 from stochastic_warfare.cbrn.decontamination import (
     DeconType,
-    DecontaminationConfig,
     DecontaminationEngine,
 )
 from stochastic_warfare.core.events import EventBus

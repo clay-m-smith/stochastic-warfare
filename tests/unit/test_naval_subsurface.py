@@ -9,10 +9,8 @@ import pytest
 
 from stochastic_warfare.combat.damage import DamageEngine
 from stochastic_warfare.combat.naval_subsurface import (
-    EvasionResult,
     NavalSubsurfaceConfig,
     NavalSubsurfaceEngine,
-    TorpedoResult,
 )
 from stochastic_warfare.core.events import Event, EventBus
 

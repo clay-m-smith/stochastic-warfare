@@ -7,9 +7,6 @@ school adjustments, opponent prediction, and CommanderPersonality school_id.
 
 from __future__ import annotations
 
-import textwrap
-from datetime import datetime, timezone
-from pathlib import Path
 
 import numpy as np
 import pytest

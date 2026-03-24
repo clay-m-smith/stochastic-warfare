@@ -7,11 +7,7 @@ execute_engagement (→ ballistic physics).
 
 from __future__ import annotations
 
-from types import SimpleNamespace
-from unittest.mock import MagicMock, patch
 
-import numpy as np
-import pytest
 
 from stochastic_warfare.combat.ammunition import (
     AmmoDefinition,
@@ -23,10 +19,8 @@ from stochastic_warfare.combat.ammunition import (
 from stochastic_warfare.combat.directed_energy import DEWEngine
 from stochastic_warfare.combat.engagement import (
     EngagementEngine,
-    EngagementResult,
     EngagementType,
 )
-from stochastic_warfare.combat.hit_probability import HitResult
 from stochastic_warfare.core.events import EventBus
 from stochastic_warfare.core.types import Position
 

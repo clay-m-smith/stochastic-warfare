@@ -8,12 +8,10 @@ stratagem requirements, and desperation/consequence assessment helpers.
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
 from pathlib import Path
 
 import pytest
 
-from tests.conftest import TS
 
 # ---------------------------------------------------------------------------
 # Imports under test

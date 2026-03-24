@@ -12,7 +12,6 @@ from stochastic_warfare.combat.ballistics import BallisticsEngine
 from stochastic_warfare.combat.damage import DamageEngine
 from stochastic_warfare.combat.indirect_fire import (
     FireMissionType,
-    IndirectFireConfig,
     IndirectFireEngine,
 )
 from stochastic_warfare.core.events import EventBus

@@ -5,12 +5,10 @@ from __future__ import annotations
 import math
 from datetime import datetime, timezone
 
-import numpy as np
 import pytest
 
 from stochastic_warfare.cbrn.agents import AgentCategory, AgentDefinition, AgentRegistry
 from stochastic_warfare.cbrn.dispersal import (
-    DispersalConfig,
     DispersalEngine,
     PuffState,
     StabilityClass,

@@ -6,11 +6,8 @@ and enum extensions for directed energy weapons.
 
 from __future__ import annotations
 
-from types import SimpleNamespace
-from typing import Any
 
 import numpy as np
-import pytest
 
 from stochastic_warfare.combat.ammunition import (
     AmmoDefinition,
@@ -19,13 +16,12 @@ from stochastic_warfare.combat.ammunition import (
     WeaponInstance,
 )
 
-from stochastic_warfare.combat.directed_energy import DEWConfig, DEWEngine
+from stochastic_warfare.combat.directed_energy import DEWEngine
 from stochastic_warfare.combat.engagement import EngagementType
 from stochastic_warfare.entities.unit_classes.air_defense import ADUnitType, AirDefenseUnit
 from stochastic_warfare.core.events import EventBus
 from stochastic_warfare.core.types import Position
 
-from tests.conftest import TS
 
 
 # ---------------------------------------------------------------------------
@@ -42,7 +38,7 @@ def _bus() -> EventBus:
 
 def _make_engagement_engine():
     """Minimal EngagementEngine for routing tests."""
-    from stochastic_warfare.combat.engagement import EngagementConfig, EngagementEngine
+    from stochastic_warfare.combat.engagement import EngagementEngine
     from stochastic_warfare.combat.ballistics import BallisticsEngine
     from stochastic_warfare.combat.hit_probability import HitProbabilityEngine
     from stochastic_warfare.combat.damage import DamageEngine
@@ -253,7 +249,7 @@ class TestADUnitTypeDEW:
 
 class TestScenarioWiring:
     def test_ctx_dew_engine_default_none(self) -> None:
-        from stochastic_warfare.simulation.scenario import SimulationContext, CampaignScenarioConfig
+        from stochastic_warfare.simulation.scenario import SimulationContext
         # Verify the field exists and defaults to None
         import dataclasses
         fields = {f.name: f for f in dataclasses.fields(SimulationContext)}

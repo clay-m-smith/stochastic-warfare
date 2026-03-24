@@ -2,16 +2,13 @@
 
 from __future__ import annotations
 
-import types
 
 import numpy as np
-import pytest
 
 from stochastic_warfare.core.events import EventBus
-from stochastic_warfare.core.types import ModuleId
 from stochastic_warfare.simulation.scenario import SimulationContext, CampaignScenarioConfig
 
-from tests.conftest import TS, make_rng, make_clock
+from tests.conftest import make_rng, make_clock
 
 
 def _rng(seed: int = 42) -> np.random.Generator:
@@ -81,7 +78,7 @@ class TestSATCOMDegrades:
 
     def test_wire_unaffected(self) -> None:
         """Non-SATELLITE comm types not degraded by satcom factor."""
-        from stochastic_warfare.c2.communications import CommunicationsEngine, CommType
+        from stochastic_warfare.c2.communications import CommunicationsEngine
 
         comms = CommunicationsEngine(_bus(), _rng())
         comms.set_satcom_reliability(0.0)

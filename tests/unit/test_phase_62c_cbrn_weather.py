@@ -6,7 +6,6 @@ Arrhenius thermal decay, inversion trapping, and UV photo-degradation.
 
 from __future__ import annotations
 
-import math
 
 import pytest
 

@@ -8,7 +8,6 @@ from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
 
-import numpy as np
 
 from stochastic_warfare.core.clock import SimulationClock
 from stochastic_warfare.core.rng import RNGManager

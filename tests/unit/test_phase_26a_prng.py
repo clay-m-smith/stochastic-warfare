@@ -200,7 +200,7 @@ class TestNoDefaultRNGInSource:
             for i, line in enumerate(text.splitlines(), 1):
                 if pattern.search(line):
                     violations.append(f"{py_file.relative_to(SRC_ROOT)}:{i}: {line.strip()}")
-        assert violations == [], f"default_rng found in source:\n" + "\n".join(violations)
+        assert violations == [], "default_rng found in source:\n" + "\n".join(violations)
 
 
 # ---------------------------------------------------------------------------
@@ -211,7 +211,7 @@ class TestNoDefaultRNGInSource:
 class TestDeterministicInjection:
     def test_same_seed_produces_same_result(self) -> None:
         """Two engines with same-seeded RNG produce identical output."""
-        from stochastic_warfare.combat.volley_fire import VolleyFireConfig, VolleyFireEngine
+        from stochastic_warfare.combat.volley_fire import VolleyFireEngine
 
         results = []
         for _ in range(2):

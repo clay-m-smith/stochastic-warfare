@@ -11,7 +11,6 @@ from datetime import datetime, timezone
 import pytest
 
 from stochastic_warfare.core.events import EventBus
-from stochastic_warfare.core.types import ModuleId
 from stochastic_warfare.ew.eccm import ECCMEngine, ECCMSuite, ECCMTechnique
 from stochastic_warfare.ew.events import ECCMActivatedEvent
 

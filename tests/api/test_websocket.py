@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import asyncio
 
 import pytest
 from httpx import ASGITransport, AsyncClient
@@ -23,7 +22,6 @@ async def test_websocket_nonexistent_run(app):
 async def test_websocket_progress_stream(app):
     """Submit a run and stream progress via WebSocket."""
     from starlette.testclient import TestClient
-    import time
 
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as client:

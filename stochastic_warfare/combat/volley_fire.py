@@ -16,7 +16,6 @@ Physics
 from __future__ import annotations
 
 import enum
-import math
 from dataclasses import dataclass
 from typing import Any
 

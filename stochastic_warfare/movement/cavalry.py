@@ -9,7 +9,7 @@ takes 120 s (cavalry is disordered after a charge).
 from __future__ import annotations
 
 import enum
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Any
 
 import numpy as np

@@ -11,11 +11,9 @@ import pytest
 from stochastic_warfare.c2.events import MissionAnalysisCompleteEvent
 from stochastic_warfare.c2.orders.types import MissionType, Order, OrderPriority, OrderType
 from stochastic_warfare.c2.planning.mission_analysis import (
-    IntelRequirement,
     IntelRequirementType,
     MissionAnalysisEngine,
     MissionAnalysisResult,
-    RiskAssessment,
     RiskLevel,
     Task,
     TaskType,

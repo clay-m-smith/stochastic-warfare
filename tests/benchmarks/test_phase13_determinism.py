@@ -10,7 +10,7 @@ import numpy as np
 import pytest
 
 from stochastic_warfare.core.types import Position
-from stochastic_warfare.entities.base import Unit, UnitStatus
+from stochastic_warfare.entities.base import Unit
 from stochastic_warfare.morale.state import MoraleState
 
 
@@ -118,7 +118,6 @@ class TestKalmanCacheDeterminism:
             StateEstimator,
             Track,
             TrackState,
-            TrackStatus,
         )
         from stochastic_warfare.detection.identification import ContactInfo, ContactLevel
 

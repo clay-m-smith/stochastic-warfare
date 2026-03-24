@@ -2,10 +2,8 @@
 
 from __future__ import annotations
 
-import numpy as np
-import pytest
 
-from tests.conftest import TS, make_clock, make_rng
+from tests.conftest import make_clock, make_rng
 
 from stochastic_warfare.simulation.calibration import CalibrationSchema
 from stochastic_warfare.environment.weather import WeatherConfig, WeatherEngine

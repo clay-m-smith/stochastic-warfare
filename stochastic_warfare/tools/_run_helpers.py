@@ -15,7 +15,6 @@ import yaml
 from stochastic_warfare.core.logging import get_logger
 from stochastic_warfare.entities.base import UnitStatus
 from stochastic_warfare.simulation.engine import EngineConfig, SimulationEngine
-from stochastic_warfare.simulation.recorder import RecorderConfig, SimulationRecorder
 from stochastic_warfare.simulation.scenario import ScenarioLoader
 from stochastic_warfare.simulation.victory import VictoryEvaluator, ObjectiveState
 from stochastic_warfare.core.types import Position

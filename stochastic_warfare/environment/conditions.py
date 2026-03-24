@@ -9,7 +9,6 @@ from __future__ import annotations
 
 from typing import NamedTuple
 
-import numpy as np
 
 from stochastic_warfare.core.types import Meters, Position
 from stochastic_warfare.environment.electromagnetic import EMEnvironment, FrequencyBand

@@ -5,7 +5,6 @@ Uses shared fixtures from conftest.py: event_bus, sim_clock.
 
 from __future__ import annotations
 
-from datetime import timedelta
 
 import pytest
 
@@ -25,7 +24,7 @@ from stochastic_warfare.simulation.victory import (
     VictoryResult,
 )
 
-from tests.conftest import TS, make_clock
+from tests.conftest import make_clock
 
 
 # ---------------------------------------------------------------------------

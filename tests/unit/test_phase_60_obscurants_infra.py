@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import pytest
 from unittest.mock import MagicMock
 
 from stochastic_warfare.simulation.calibration import CalibrationSchema

@@ -7,7 +7,6 @@ import os
 import tempfile
 
 import pytest
-import pytest_asyncio
 
 from api.database import Database
 from api.run_manager import RunManager

@@ -2,13 +2,10 @@
 
 from __future__ import annotations
 
-import math
 
 import numpy as np
-import pytest
 
 from stochastic_warfare.combat.fratricide import (
-    FratricideConfig,
     FratricideEngine,
     FratricideRisk,
 )

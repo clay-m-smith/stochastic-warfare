@@ -6,12 +6,10 @@ on fuel, and ammo gating works (regression).
 
 from __future__ import annotations
 
-import numpy as np
 import pytest
 
-from stochastic_warfare.core.types import Domain, Position
-from stochastic_warfare.entities.base import UnitStatus
-from stochastic_warfare.entities.unit_classes.ground import GroundUnit, Posture
+from stochastic_warfare.core.types import Position
+from stochastic_warfare.entities.unit_classes.ground import GroundUnit
 
 
 class TestGroundUnitFuel:

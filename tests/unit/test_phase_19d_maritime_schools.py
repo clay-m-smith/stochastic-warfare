@@ -8,7 +8,6 @@ from __future__ import annotations
 
 import pytest
 
-from tests.conftest import TS, make_rng
 
 from stochastic_warfare.c2.ai.schools.base import SchoolDefinition
 from stochastic_warfare.c2.ai.schools.maritime import CorbettianSchool, MahanianSchool

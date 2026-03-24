@@ -7,7 +7,7 @@ from pathlib import Path
 import pytest
 
 from stochastic_warfare.simulation.engine import EngineConfig
-from stochastic_warfare.validation.campaign_data import CampaignDataLoader, HistoricalCampaign
+from stochastic_warfare.validation.campaign_data import HistoricalCampaign
 from stochastic_warfare.validation.campaign_runner import CampaignRunner, CampaignRunnerConfig
 from stochastic_warfare.validation.monte_carlo import (
     CampaignMonteCarloHarness,

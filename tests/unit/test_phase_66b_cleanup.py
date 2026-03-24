@@ -5,11 +5,10 @@ siege assault/sally, ConditionsEngine facade.
 from __future__ import annotations
 
 import math
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 from types import SimpleNamespace
 
 import numpy as np
-import pytest
 
 from stochastic_warfare.core.types import Position
 from stochastic_warfare.simulation.calibration import CalibrationSchema

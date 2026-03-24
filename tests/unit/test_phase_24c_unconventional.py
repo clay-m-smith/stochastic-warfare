@@ -525,7 +525,6 @@ class TestSOFHVT:
         from stochastic_warfare.c2.ai.sof_ops import (
             SOFConfig,
             SOFMission,
-            SOFMissionStatus,
             SOFOperationType,
             SOFOpsEngine,
         )
@@ -680,7 +679,6 @@ class TestPrisonerTreatment:
 
     def test_interrogation_no_stress_slower_more_reliable(self):
         from stochastic_warfare.logistics.prisoners import (
-            InterrogationResult,
             PrisonerConfig,
             PrisonerEngine,
         )

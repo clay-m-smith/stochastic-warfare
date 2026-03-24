@@ -12,7 +12,7 @@ from stochastic_warfare.combat.ammunition import (
 )
 from stochastic_warfare.entities.equipment import EquipmentCategory, EquipmentItem
 
-from .conftest import _make_ap, _make_gun, _make_heat, _make_weapon_instance
+from .conftest import _make_ap, _make_gun, _make_weapon_instance
 
 
 # ---------------------------------------------------------------------------

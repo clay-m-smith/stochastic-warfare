@@ -8,7 +8,7 @@ and RTD probability decreases.
 from __future__ import annotations
 
 import enum
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import datetime
 
 import numpy as np
@@ -18,7 +18,6 @@ from stochastic_warfare.core.events import EventBus
 from stochastic_warfare.core.logging import get_logger
 from stochastic_warfare.core.types import ModuleId, Position
 from stochastic_warfare.logistics.events import (
-    CasualtyEvacuatedEvent,
     CasualtyTreatedEvent,
     ReturnToDutyEvent,
 )
@@ -123,7 +122,6 @@ class MedicalFacilityLoader:
 
     def load_definition(self, path) -> MedicalFacilityDefinition:
         import yaml
-        from pathlib import Path
 
         with open(path) as f:
             data = yaml.safe_load(f)
@@ -132,7 +130,6 @@ class MedicalFacilityLoader:
         return defn
 
     def load_all(self) -> None:
-        from pathlib import Path
 
         for path in sorted(self._data_dir.rglob("*.yaml")):
             self.load_definition(path)

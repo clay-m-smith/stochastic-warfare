@@ -8,12 +8,11 @@ the simulation engine.
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any
 
 import pytest
 import yaml
 
-from stochastic_warfare.core.era import Era, WW2_ERA_CONFIG, get_era_config
+from stochastic_warfare.core.era import Era, get_era_config
 from stochastic_warfare.simulation.scenario import CampaignScenarioConfig
 
 # ---------------------------------------------------------------------------

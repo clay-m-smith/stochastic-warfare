@@ -6,16 +6,15 @@ Usage:
 
 from __future__ import annotations
 
-import math
 from pathlib import Path
 
 import matplotlib.pyplot as plt
 import numpy as np
 
 from stochastic_warfare.detection.detection import DetectionEngine
-from stochastic_warfare.detection.estimation import StateEstimator, TrackState
+from stochastic_warfare.detection.estimation import StateEstimator
 from stochastic_warfare.detection.identification import ContactInfo, ContactLevel
-from stochastic_warfare.detection.sensors import SensorDefinition, SensorInstance, SensorLoader
+from stochastic_warfare.detection.sensors import SensorInstance, SensorLoader
 from stochastic_warfare.detection.signatures import SignatureLoader, SignatureResolver
 
 SIG_DIR = Path(__file__).resolve().parents[2] / "data" / "signatures"

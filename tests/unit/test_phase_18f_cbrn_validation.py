@@ -19,7 +19,7 @@ from stochastic_warfare.cbrn.engine import CBRNConfig, CBRNEngine
 from stochastic_warfare.cbrn.nuclear import NuclearEffectsEngine
 from stochastic_warfare.cbrn.protection import ProtectionEngine
 from stochastic_warfare.core.events import EventBus
-from stochastic_warfare.core.types import ModuleId, Position
+from stochastic_warfare.core.types import Position
 
 TS = datetime(2024, 1, 1, tzinfo=timezone.utc)
 

@@ -11,8 +11,7 @@ from stochastic_warfare.c2.orders.strategic import (
     create_strategic_order,
     get_planning_time,
 )
-from stochastic_warfare.c2.orders.types import Order, OrderType, StrategicOrder
-from stochastic_warfare.core.types import Position
+from stochastic_warfare.c2.orders.types import Order, StrategicOrder
 from stochastic_warfare.entities.organization.echelons import EchelonLevel
 
 _TS = datetime(2024, 6, 15, 12, 0, 0, tzinfo=timezone.utc)

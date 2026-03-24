@@ -1,6 +1,5 @@
 """Phase 13 performance benchmarks — baseline and post-optimization."""
 
-import math
 import time
 
 import numpy as np
@@ -43,7 +42,6 @@ class TestBaselineBenchmarks:
             StateEstimator,
             Track,
             TrackState,
-            TrackStatus,
         )
         from stochastic_warfare.detection.identification import ContactInfo, ContactLevel
 
@@ -147,7 +145,6 @@ class TestBaselineBenchmarks:
         """Time a single Monte Carlo iteration (serial baseline)."""
         # Just measure import + setup overhead
         t0 = time.perf_counter()
-        from stochastic_warfare.validation.monte_carlo import MonteCarloConfig
         elapsed = time.perf_counter() - t0
         print(f"\nMC import overhead: {elapsed:.4f}s")
         assert elapsed >= 0

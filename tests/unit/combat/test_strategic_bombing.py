@@ -5,10 +5,8 @@ from __future__ import annotations
 import pytest
 
 from stochastic_warfare.combat.strategic_bombing import (
-    BomberStreamState,
     StrategicBombingConfig,
     StrategicBombingEngine,
-    TargetDamageState,
 )
 
 from .conftest import _rng

@@ -9,7 +9,6 @@ defense, and warhead discrimination against decoys.
 from __future__ import annotations
 
 import enum
-import math
 from dataclasses import dataclass, field
 from typing import Any
 

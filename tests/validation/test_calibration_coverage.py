@@ -6,7 +6,6 @@ and is exercised by at least one scenario or test.
 
 from __future__ import annotations
 
-import ast
 from pathlib import Path
 
 import pytest

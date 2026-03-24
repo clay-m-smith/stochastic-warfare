@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import types
 from datetime import datetime, timezone
 
 import numpy as np
@@ -10,9 +9,9 @@ import pytest
 
 from stochastic_warfare.cbrn.agents import AgentCategory, AgentDefinition
 from stochastic_warfare.cbrn.contamination import ContaminationConfig, ContaminationManager
-from stochastic_warfare.cbrn.protection import MOPPLevel, ProtectionConfig, ProtectionEngine
+from stochastic_warfare.cbrn.protection import ProtectionConfig, ProtectionEngine
 from stochastic_warfare.core.events import EventBus
-from stochastic_warfare.core.types import ModuleId, Position
+from stochastic_warfare.core.types import Position
 
 TS = datetime(2024, 1, 1, tzinfo=timezone.utc)
 

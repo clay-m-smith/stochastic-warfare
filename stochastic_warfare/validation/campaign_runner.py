@@ -9,7 +9,7 @@ and packages the result for metric extraction and historical comparison.
 from __future__ import annotations
 
 import tempfile
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
@@ -17,7 +17,6 @@ import yaml
 from pydantic import BaseModel
 
 from stochastic_warfare.core.logging import get_logger
-from stochastic_warfare.entities.base import UnitStatus
 from stochastic_warfare.simulation.engine import EngineConfig, SimulationEngine, SimulationRunResult
 from stochastic_warfare.simulation.battle import BattleConfig
 from stochastic_warfare.simulation.campaign import CampaignConfig
@@ -26,7 +25,6 @@ from stochastic_warfare.simulation.scenario import ScenarioLoader, SimulationCon
 from stochastic_warfare.simulation.victory import (
     ObjectiveState,
     VictoryEvaluator,
-    VictoryEvaluatorConfig,
     VictoryResult,
 )
 from stochastic_warfare.validation.campaign_data import CampaignDataLoader, HistoricalCampaign

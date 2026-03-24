@@ -12,7 +12,7 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from stochastic_warfare.core.logging import get_logger
-from stochastic_warfare.simulation.recorder import RecordedEvent, SimulationRecorder
+from stochastic_warfare.simulation.recorder import SimulationRecorder
 from stochastic_warfare.validation.campaign_data import AIExpectation
 
 logger = get_logger(__name__)

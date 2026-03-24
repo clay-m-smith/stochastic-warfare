@@ -7,7 +7,6 @@ to the original scalar Python loops.
 from __future__ import annotations
 
 import numpy as np
-import pytest
 
 from stochastic_warfare.core.types import Position
 from stochastic_warfare.simulation.battle import (

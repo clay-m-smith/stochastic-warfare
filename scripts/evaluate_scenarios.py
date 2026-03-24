@@ -20,7 +20,6 @@ import time
 import traceback
 from dataclasses import dataclass, field, asdict
 from pathlib import Path
-from typing import Any
 
 # Add project root to path
 project_root = Path(__file__).parent.parent
@@ -428,7 +427,7 @@ def print_summary(results: list[ScenarioResult]) -> None:
             stuck = [d for d in r.unit_details
                      if d['status'] == 'ACTIVE' and d['distance_moved'] < 10]
             if stuck and len(stuck) <= 20:
-                print(f"  Stuck active units:")
+                print("  Stuck active units:")
                 for d in stuck:
                     print(f"    {d['entity_id']} ({d['unit_type']}, {d['side']}) "
                           f"pos=({d['end_pos'][0]:.0f}, {d['end_pos'][1]:.0f}) "
@@ -440,7 +439,7 @@ def print_summary(results: list[ScenarioResult]) -> None:
     print(f"TOTALS: {len(results)} scenarios — "
           f"{len(ok_scenarios)} OK, "
           f"{len(issue_scenarios)} with issues")
-    print(f"  Issues breakdown:")
+    print("  Issues breakdown:")
     from collections import Counter
     all_issues = []
     for r in results:

@@ -5,7 +5,6 @@ Uses shared fixtures from conftest.py.
 
 from __future__ import annotations
 
-import math
 
 import numpy as np
 import pytest
@@ -29,8 +28,8 @@ from stochastic_warfare.c2.planning.mission_analysis import (
     TaskType,
 )
 from stochastic_warfare.core.events import EventBus
-from stochastic_warfare.core.types import ModuleId, Position
-from tests.conftest import DEFAULT_SEED, TS, make_rng
+from stochastic_warfare.core.types import Position
+from tests.conftest import TS, make_rng
 
 
 # ---------------------------------------------------------------------------

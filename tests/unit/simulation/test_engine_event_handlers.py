@@ -8,9 +8,7 @@ from __future__ import annotations
 
 from types import SimpleNamespace
 
-import pytest
 
-from stochastic_warfare.core.types import Position
 
 from .conftest import _make_unit
 

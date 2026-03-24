@@ -3,13 +3,11 @@
 from __future__ import annotations
 
 import types
-from datetime import timedelta
 
 import numpy as np
 import pytest
 
 from stochastic_warfare.core.events import EventBus
-from stochastic_warfare.core.types import ModuleId
 from stochastic_warfare.space.constellations import (
     ConstellationDefinition,
     ConstellationManager,
@@ -19,12 +17,11 @@ from stochastic_warfare.space.constellations import (
 from stochastic_warfare.space.early_warning import EarlyWarningEngine
 from stochastic_warfare.space.events import (
     EarlyWarningDetectionEvent,
-    SatelliteOverpassEvent,
 )
 from stochastic_warfare.space.isr import SpaceISREngine, _RESOLUTION_THRESHOLD
 from stochastic_warfare.space.orbits import OrbitalMechanicsEngine, R_EARTH
 
-from tests.conftest import TS, make_clock, make_rng
+from tests.conftest import make_clock, make_rng
 
 
 def _rng(seed: int = 42) -> np.random.Generator:

@@ -24,9 +24,9 @@ from stochastic_warfare.logistics.engineering import (
     EngineeringEngine,
     EngineeringTask,
 )
-from stochastic_warfare.movement.engine import MovementConfig, MovementEngine, MovementResult
+from stochastic_warfare.movement.engine import MovementConfig, MovementEngine
 from stochastic_warfare.simulation.battle import BattleContext, BattleManager
-from stochastic_warfare.simulation.campaign import CampaignManager, ReinforcementEntry
+from stochastic_warfare.simulation.campaign import CampaignManager
 from stochastic_warfare.simulation.scenario import ReinforcementConfig
 
 

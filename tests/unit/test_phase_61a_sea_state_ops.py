@@ -12,7 +12,6 @@ and the gunnery loop when ``enable_sea_state_ops=True``:
 from __future__ import annotations
 
 import math
-from types import SimpleNamespace
 
 import pytest
 

@@ -17,7 +17,7 @@ from stochastic_warfare.c2.orders.air_orders import (
     create_ato_entry,
     create_cas_request,
 )
-from stochastic_warfare.c2.orders.types import AirOrder, Order, OrderPriority, OrderType
+from stochastic_warfare.c2.orders.types import AirOrder, Order, OrderPriority
 from stochastic_warfare.core.types import Position
 
 _TS = datetime(2024, 6, 15, 12, 0, 0, tzinfo=timezone.utc)

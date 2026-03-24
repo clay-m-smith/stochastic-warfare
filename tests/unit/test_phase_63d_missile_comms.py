@@ -1,12 +1,10 @@
 """Phase 63d: MISSILE Routing & Comms → C2 friction tests."""
 
 import pytest
-from types import SimpleNamespace
 from unittest.mock import MagicMock
 
 from stochastic_warfare.combat.engagement import (
     EngagementEngine,
-    EngagementResult,
     EngagementType,
 )
 from stochastic_warfare.combat.ammunition import (

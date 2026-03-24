@@ -16,7 +16,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from stochastic_warfare.validation.historical_data import HistoricalDataLoader
-from stochastic_warfare.validation.metrics import EngagementMetrics
 from stochastic_warfare.validation.monte_carlo import MonteCarloConfig, MonteCarloHarness
 from stochastic_warfare.validation.scenario_runner import ScenarioRunner, ScenarioRunnerConfig
 

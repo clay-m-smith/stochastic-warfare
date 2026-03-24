@@ -10,7 +10,6 @@ Distinct from :mod:`validation.metrics` which operates on engagement-level
 
 from __future__ import annotations
 
-import math
 from typing import Any
 
 from stochastic_warfare.core.logging import get_logger

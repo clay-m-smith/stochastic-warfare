@@ -94,6 +94,7 @@ Rolling record of implementation decisions, changes, and lessons learned across 
 | 76 | API Robustness | **Complete** | [phase-76.md](phase-76.md) |
 | 77 | Frontend Accessibility | **Complete** | [phase-77.md](phase-77.md) |
 | 78 | P2 Environment Wiring | **Complete** | [phase-78.md](phase-78.md) |
+| 79 | CI/CD & Packaging | **Complete** | [phase-79.md](phase-79.md) |
 
 ## Post-MVP Refinement Index
 

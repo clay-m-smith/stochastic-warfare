@@ -8,7 +8,6 @@ from __future__ import annotations
 
 import pytest
 
-from tests.conftest import TS, make_rng
 
 from stochastic_warfare.c2.ai.assessment import predict_opponent_action_lanchester
 from stochastic_warfare.c2.ai.schools.base import SchoolDefinition

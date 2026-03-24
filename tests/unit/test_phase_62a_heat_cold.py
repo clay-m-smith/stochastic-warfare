@@ -7,8 +7,6 @@ accumulation logic wired into BattleManager.execute_tick() when
 
 from __future__ import annotations
 
-import math
-from types import SimpleNamespace
 
 import pytest
 

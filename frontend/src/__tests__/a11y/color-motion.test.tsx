@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest'
+import { describe, it, expect } from 'vitest'
 import { render } from '@testing-library/react'
 import { MapLegend } from '../../components/map/MapLegend'
 import * as fs from 'fs'

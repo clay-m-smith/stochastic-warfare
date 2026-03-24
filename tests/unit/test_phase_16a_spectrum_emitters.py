@@ -20,12 +20,8 @@ from stochastic_warfare.ew.emitters import (
     WaveformType,
 )
 from stochastic_warfare.ew.events import (
-    DecoyDeployedEvent,
-    ECCMActivatedEvent,
     EmitterDetectedEvent,
-    GPSSpoofingDetectedEvent,
     JammingActivatedEvent,
-    JammingDeactivatedEvent,
     SIGINTReportEvent,
 )
 from stochastic_warfare.ew.spectrum import FrequencyAllocation, SpectrumManager

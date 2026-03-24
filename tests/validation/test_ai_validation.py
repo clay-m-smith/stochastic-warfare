@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 
-import pytest
 
 from stochastic_warfare.core.events import EventBus
 from stochastic_warfare.simulation.recorder import RecordedEvent, SimulationRecorder

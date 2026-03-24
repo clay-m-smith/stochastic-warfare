@@ -15,12 +15,11 @@ from types import SimpleNamespace
 from typing import Any
 
 import numpy as np
-import pytest
 
 from stochastic_warfare.core.events import EventBus
-from stochastic_warfare.core.types import ModuleId, Position
+from stochastic_warfare.core.types import Position
 
-from tests.conftest import TS, make_rng
+from tests.conftest import make_rng
 
 # ---------------------------------------------------------------------------
 # Helpers

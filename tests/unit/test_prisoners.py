@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 
-import numpy as np
 import pytest
 
 from stochastic_warfare.core.events import Event, EventBus
@@ -17,7 +16,6 @@ from stochastic_warfare.logistics.events import (
 from stochastic_warfare.logistics.prisoners import (
     PrisonerConfig,
     PrisonerEngine,
-    PrisonerGroup,
 )
 
 _TS = datetime(2024, 6, 15, 12, 0, 0, tzinfo=timezone.utc)

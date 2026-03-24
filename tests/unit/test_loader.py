@@ -6,7 +6,6 @@ import numpy as np
 import pytest
 
 from stochastic_warfare.core.types import Domain, Position, Side
-from stochastic_warfare.entities.base import Unit
 from stochastic_warfare.entities.loader import UnitDefinition, UnitLoader
 from stochastic_warfare.entities.unit_classes.aerial import AerialUnit
 from stochastic_warfare.entities.unit_classes.air_defense import AirDefenseUnit

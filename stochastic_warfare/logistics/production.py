@@ -9,7 +9,6 @@ Phase 12b-2.
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from typing import Any
 
@@ -18,8 +17,6 @@ from pydantic import BaseModel
 
 from stochastic_warfare.core.events import EventBus
 from stochastic_warfare.core.logging import get_logger
-from stochastic_warfare.core.types import ModuleId
-from stochastic_warfare.logistics.events import SupplyDeliveredEvent
 
 logger = get_logger(__name__)
 

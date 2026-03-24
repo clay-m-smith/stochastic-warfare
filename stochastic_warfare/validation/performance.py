@@ -13,12 +13,10 @@ import time
 import tracemalloc
 from dataclasses import dataclass, field
 from io import StringIO
-from pathlib import Path
-from typing import Any
 
 from stochastic_warfare.core.logging import get_logger
 from stochastic_warfare.validation.campaign_data import HistoricalCampaign
-from stochastic_warfare.validation.campaign_runner import CampaignRunner, CampaignRunResult
+from stochastic_warfare.validation.campaign_runner import CampaignRunner
 
 logger = get_logger(__name__)
 

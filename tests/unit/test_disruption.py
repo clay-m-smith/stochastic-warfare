@@ -4,17 +4,14 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 
-import numpy as np
 import pytest
 
 from stochastic_warfare.core.events import Event, EventBus
 from stochastic_warfare.core.rng import RNGManager
 from stochastic_warfare.core.types import ModuleId, Position
 from stochastic_warfare.logistics.disruption import (
-    Blockade,
     DisruptionConfig,
     DisruptionEngine,
-    InterdictionZone,
 )
 from stochastic_warfare.logistics.events import (
     BlockadeEstablishedEvent,

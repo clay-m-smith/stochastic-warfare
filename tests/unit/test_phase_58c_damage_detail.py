@@ -6,11 +6,10 @@ correctly and that battle.py now consumes DamageResult detail fields.
 
 from __future__ import annotations
 
-import pytest
 
 from stochastic_warfare.combat.damage import CasualtyResult, DamageResult, DamageType
-from stochastic_warfare.core.types import Domain, Position
-from stochastic_warfare.entities.base import Unit, UnitStatus
+from stochastic_warfare.core.types import Position
+from stochastic_warfare.entities.base import Unit
 from stochastic_warfare.entities.equipment import EquipmentCategory, EquipmentItem
 from stochastic_warfare.entities.personnel import (
     CrewMember,

@@ -2,14 +2,12 @@
 
 from __future__ import annotations
 
-import math
-import pytest
 from unittest.mock import MagicMock
 import numpy as np
 
 from stochastic_warfare.core.types import Position
 from stochastic_warfare.environment.obscurants import ObscurantsEngine
-from stochastic_warfare.combat.damage import IncendiaryDamageEngine, IncendiaryConfig
+from stochastic_warfare.combat.damage import IncendiaryDamageEngine
 
 
 def _make_obs_engine() -> ObscurantsEngine:

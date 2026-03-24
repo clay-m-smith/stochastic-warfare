@@ -2,10 +2,8 @@
 
 from __future__ import annotations
 
-import math
 
 import numpy as np
-import pytest
 
 from stochastic_warfare.core.types import Position
 from stochastic_warfare.detection.detection import DetectionResult

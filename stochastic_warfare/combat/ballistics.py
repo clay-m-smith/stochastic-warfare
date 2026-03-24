@@ -16,7 +16,7 @@ from pydantic import BaseModel
 from stochastic_warfare.combat.ammunition import AmmoDefinition, WeaponDefinition
 from stochastic_warfare.core.logging import get_logger
 from stochastic_warfare.core.numba_utils import optional_jit
-from stochastic_warfare.core.types import EARTH_MEAN_RADIUS, STANDARD_GRAVITY, Position
+from stochastic_warfare.core.types import STANDARD_GRAVITY, Position
 
 logger = get_logger(__name__)
 

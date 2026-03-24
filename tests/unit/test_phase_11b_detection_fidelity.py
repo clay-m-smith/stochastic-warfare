@@ -35,7 +35,7 @@ from stochastic_warfare.detection.signatures import (
     ThermalSignature,
     VisualSignature,
 )
-from stochastic_warfare.detection.sonar import SonarEngine, SonarType
+from stochastic_warfare.detection.sonar import SonarEngine
 
 
 # ── helpers ──────────────────────────────────────────────────────────

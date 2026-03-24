@@ -9,16 +9,14 @@ Tests for:
 
 from __future__ import annotations
 
-import math
-from types import SimpleNamespace
 
 import numpy as np
 import pytest
 
 from stochastic_warfare.core.events import EventBus
-from stochastic_warfare.core.types import ModuleId, Position
+from stochastic_warfare.core.types import Position
 
-from tests.conftest import TS, make_rng
+from tests.conftest import make_rng
 
 # ---------------------------------------------------------------------------
 # Helpers

@@ -9,7 +9,6 @@ from __future__ import annotations
 from types import SimpleNamespace
 from typing import Any
 
-import pytest
 
 from stochastic_warfare.core.events import EventBus
 from stochastic_warfare.simulation.battle import BattleManager, _get_unit_signature

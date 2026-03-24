@@ -5,10 +5,9 @@ from __future__ import annotations
 import math
 from pathlib import Path
 
-import numpy as np
 import pytest
 
-from tests.conftest import TS, make_rng
+from tests.conftest import make_rng
 
 
 # ---------------------------------------------------------------------------
@@ -96,7 +95,6 @@ class TestCBRNCleanupWiring:
         """CBRNEngine.update() calls cleanup_aged_puffs at end of cycle."""
         from stochastic_warfare.cbrn.agents import AgentRegistry
         from stochastic_warfare.cbrn.casualties import CBRNCasualtyEngine
-        from stochastic_warfare.cbrn.contamination import ContaminationManager
         from stochastic_warfare.cbrn.decontamination import DecontaminationEngine
         from stochastic_warfare.cbrn.dispersal import DispersalConfig, DispersalEngine
         from stochastic_warfare.cbrn.engine import CBRNConfig, CBRNEngine
@@ -334,7 +332,6 @@ class TestArmorType:
 class TestArmorTypeYAML:
     def test_m1a1_composite(self) -> None:
         from stochastic_warfare.entities.loader import UnitLoader
-        from stochastic_warfare.core.types import Position
 
         loader = UnitLoader(Path("data/units/armor"))
         defn = loader.load_definition(Path("data/units/armor/m1a1_abrams.yaml"))

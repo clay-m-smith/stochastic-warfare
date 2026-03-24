@@ -8,7 +8,6 @@ from __future__ import annotations
 import pytest
 
 from stochastic_warfare.movement.formation_ancient import (
-    AncientFormationConfig,
     AncientFormationEngine,
     AncientFormationType,
 )

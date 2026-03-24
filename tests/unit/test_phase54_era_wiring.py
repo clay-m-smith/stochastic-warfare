@@ -9,14 +9,13 @@ from __future__ import annotations
 import math
 from datetime import datetime, timedelta
 from types import SimpleNamespace
-from typing import Any
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 import numpy as np
 import pytest
 
 from stochastic_warfare.core.events import EventBus
-from stochastic_warfare.core.types import Domain, ModuleId, Position
+from stochastic_warfare.core.types import Domain, Position
 from stochastic_warfare.entities.base import Unit, UnitStatus
 
 
@@ -353,7 +352,6 @@ class TestWW1EngineWiring:
 
     def test_barrage_suppression_logged(self):
         """Barrage zone suppression on defender is logged."""
-        from stochastic_warfare.simulation.battle import BattleManager
 
         barrage_eng = MagicMock()
         barrage_zone = MagicMock()
@@ -377,7 +375,7 @@ class TestWW1EngineWiring:
 
     def test_trench_movement_factor_reduces_speed(self):
         """Trench movement_factor_at reduces effective speed inside trenches."""
-        from stochastic_warfare.simulation.battle import BattleManager, BattleConfig, BattleContext
+        from stochastic_warfare.simulation.battle import BattleManager, BattleContext
 
         trench_eng = MagicMock()
         trench_eng.movement_factor_at.return_value = 0.4  # 40% speed in trench

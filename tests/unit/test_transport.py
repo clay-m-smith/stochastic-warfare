@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 
-import numpy as np
 import pytest
 
 from stochastic_warfare.core.events import Event, EventBus
@@ -21,8 +20,6 @@ from stochastic_warfare.logistics.supply_network import SupplyRoute, TransportMo
 from stochastic_warfare.logistics.transport import (
     TransportConfig,
     TransportEngine,
-    TransportMission,
-    TransportProfile,
     TransportProfileLoader,
 )
 

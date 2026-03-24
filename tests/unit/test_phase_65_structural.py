@@ -7,7 +7,6 @@ from __future__ import annotations
 
 import inspect
 
-import pytest
 
 
 def test_engine_sigint_uses_ctx_not_ew():

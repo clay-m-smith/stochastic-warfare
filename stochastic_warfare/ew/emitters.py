@@ -8,7 +8,7 @@ the electromagnetic order of battle (EOB).
 from __future__ import annotations
 
 import enum
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Any
 
 from stochastic_warfare.core.logging import get_logger

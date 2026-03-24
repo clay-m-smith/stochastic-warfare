@@ -5,7 +5,6 @@ from __future__ import annotations
 from datetime import datetime, timezone
 
 import numpy as np
-import pytest
 
 from stochastic_warfare.c2.orders.types import Order, OrderPriority, OrderType
 from stochastic_warfare.c2.planning.process import (

@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import enum
 import math
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
@@ -23,7 +23,6 @@ from stochastic_warfare.core.logging import get_logger
 from stochastic_warfare.core.types import ModuleId, Position
 from stochastic_warfare.c2.events import (
     CommsLostEvent,
-    CommsRestoredEvent,
     EmconStateChangeEvent,
 )
 

@@ -11,8 +11,6 @@ from stochastic_warfare.combat.amphibious_assault import (
     AmphibiousAssaultConfig,
     AmphibiousAssaultEngine,
     AssaultPhase,
-    BeachCombatResult,
-    WaveResult,
 )
 from stochastic_warfare.combat.ballistics import BallisticsEngine
 from stochastic_warfare.combat.damage import DamageEngine

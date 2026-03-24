@@ -2,12 +2,9 @@
 
 from __future__ import annotations
 
-import math
 
-import numpy as np
-import pytest
 
-from tests.conftest import TS, make_rng
+from tests.conftest import make_rng
 from stochastic_warfare.core.types import Position
 
 

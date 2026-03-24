@@ -1,8 +1,6 @@
 """Phase 13a-2: STRtree spatial indexing tests."""
 
-import math
 
-import numpy as np
 import pytest
 
 from stochastic_warfare.core.types import Position

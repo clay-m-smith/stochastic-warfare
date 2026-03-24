@@ -27,7 +27,7 @@ from stochastic_warfare.c2.planning.process import (
     PlanningProcessEngine,
 )
 from stochastic_warfare.core.events import EventBus
-from stochastic_warfare.core.types import ModuleId, Position
+from stochastic_warfare.core.types import Position
 from tests.conftest import DEFAULT_SEED, TS, make_rng
 
 

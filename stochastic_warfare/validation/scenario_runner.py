@@ -8,7 +8,6 @@ follow pre-scripted behavioral rules rather than AI-driven planning.
 from __future__ import annotations
 
 import math
-from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, Protocol
@@ -20,7 +19,6 @@ from stochastic_warfare.combat.ammunition import (
     AmmoDefinition,
     AmmoLoader,
     AmmoState,
-    WeaponDefinition,
     WeaponInstance,
     WeaponLoader,
 )
@@ -34,7 +32,7 @@ from stochastic_warfare.core.clock import SimulationClock
 from stochastic_warfare.core.events import Event, EventBus
 from stochastic_warfare.core.logging import get_logger
 from stochastic_warfare.core.rng import RNGManager
-from stochastic_warfare.core.types import ModuleId, Position, Side
+from stochastic_warfare.core.types import ModuleId, Position
 from stochastic_warfare.detection.detection import DetectionEngine
 from stochastic_warfare.detection.sensors import SensorInstance, SensorLoader, SensorType
 from stochastic_warfare.detection.signatures import SignatureLoader
@@ -48,7 +46,6 @@ from stochastic_warfare.validation.historical_data import (
     TerrainSpec,
 )
 from stochastic_warfare.validation.metrics import (
-    EngagementMetrics,
     SimulationResult,
     UnitFinalState,
 )

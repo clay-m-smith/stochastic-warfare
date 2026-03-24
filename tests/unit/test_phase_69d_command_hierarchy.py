@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import numpy as np
-import pytest
 
 from stochastic_warfare.c2.command import CommandConfig, CommandEngine
 from stochastic_warfare.core.events import EventBus

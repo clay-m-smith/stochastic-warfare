@@ -2,14 +2,11 @@
 
 from __future__ import annotations
 
-import math
-from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from types import SimpleNamespace
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 import numpy as np
-import pytest
 
 from stochastic_warfare.core.events import EventBus
 from stochastic_warfare.core.types import Domain, Position, Side
@@ -343,7 +340,7 @@ class TestNavalPosture:
         assert u2.naval_posture == NavalPosture.BATTLE_STATIONS
 
     def test_default_naval_posture_underway(self):
-        from stochastic_warfare.entities.unit_classes.naval import NavalPosture, NavalUnit, NavalUnitType
+        from stochastic_warfare.entities.unit_classes.naval import NavalPosture, NavalUnit
 
         u = NavalUnit(
             entity_id="dd1", unit_type="destroyer", name="Destroyer",
@@ -468,7 +465,6 @@ class TestMineWarfareWiring:
     def test_naval_unit_triggers_mine(self):
         """Moving naval unit within trigger radius of armed mine → encounter."""
         from stochastic_warfare.combat.naval_mine import Mine, MineType, MineWarfareEngine
-        from stochastic_warfare.combat.damage import DamageEngine
 
         rng = _rng(seed=100)
         bus = EventBus()

@@ -1,6 +1,5 @@
 """Tests for movement/engine.py."""
 
-import math
 
 import numpy as np
 import pytest

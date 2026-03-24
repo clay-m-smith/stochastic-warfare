@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from typing import Any
 
 import numpy as np
 import pytest
@@ -12,7 +11,6 @@ import pytest
 from stochastic_warfare.simulation.scenario import TerrainConfig, CampaignScenarioConfig
 from stochastic_warfare.terrain.data_pipeline import (
     BoundingBox,
-    RealTerrainContext,
     TerrainDataConfig,
     load_real_terrain,
 )

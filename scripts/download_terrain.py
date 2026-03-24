@@ -24,7 +24,6 @@ from __future__ import annotations
 import argparse
 import json
 import math
-import sys
 import urllib.request
 from pathlib import Path
 
@@ -79,8 +78,8 @@ def download_srtm(
         url = f"{base_url}/{tile}.SRTMGL1.hgt.zip"
         print(f"  Downloading {tile} from USGS …")
         print(f"    URL: {url}")
-        print(f"    NOTE: USGS requires Earthdata credentials.")
-        print(f"    Manual download: visit https://search.earthdata.nasa.gov")
+        print("    NOTE: USGS requires Earthdata credentials.")
+        print("    Manual download: visit https://search.earthdata.nasa.gov")
         print(f"    Place {tile}.hgt in {srtm_dir}")
 
 
@@ -234,7 +233,7 @@ def main() -> None:
     output.mkdir(parents=True, exist_ok=True)
     sources = {s.strip() for s in args.sources.split(",")}
 
-    print(f"Terrain data download")
+    print("Terrain data download")
     print(f"  BBox: S={south}, W={west}, N={north}, E={east}")
     print(f"  Output: {output}")
     print(f"  Sources: {sources}")

@@ -879,7 +879,7 @@ Wire fire spread cellular automaton and temperature-driven fatigue.
 
 ## Phase 79: CI/CD & Packaging
 
-**Status**: Not started.
+**Status**: **Complete.**
 
 **Goal**: Automated test pipeline, script cleanup, packaging hygiene.
 

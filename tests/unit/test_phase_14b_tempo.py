@@ -2,19 +2,11 @@
 
 from __future__ import annotations
 
-import math
 from types import SimpleNamespace
 from typing import Any
 
-import numpy as np
-import pytest
 
 from stochastic_warfare.tools.tempo_analysis import (
-    CATEGORIES,
-    OODACycleStats,
-    SpectralPeak,
-    TempoResult,
-    TempoTimeSeries,
     classify_event,
     compute_tempo,
     plot_tempo,

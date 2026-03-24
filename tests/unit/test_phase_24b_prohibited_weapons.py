@@ -11,7 +11,6 @@ Tests cover:
 from __future__ import annotations
 
 import math
-from datetime import datetime, timezone
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -24,12 +23,9 @@ from stochastic_warfare.combat.ammunition import (
     AmmoType,
 )
 from stochastic_warfare.combat.damage import (
-    BurnedZone,
-    FireZone,
     IncendiaryConfig,
     IncendiaryDamageEngine,
     UXOEngine,
-    UXOField,
 )
 from stochastic_warfare.combat.engagement import (
     check_prohibited_compliance,
@@ -41,7 +37,7 @@ from stochastic_warfare.c2.roe import (
 from stochastic_warfare.core.types import Position
 
 # Import shared fixtures
-from tests.conftest import TS, DEFAULT_SEED, make_rng
+from tests.conftest import DEFAULT_SEED, make_rng
 
 # ---------------------------------------------------------------------------
 # Helpers

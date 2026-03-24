@@ -13,7 +13,7 @@ import pytest
 from stochastic_warfare.simulation.engine import EngineConfig
 from stochastic_warfare.validation.campaign_data import CampaignDataLoader
 from stochastic_warfare.validation.campaign_runner import CampaignRunner, CampaignRunnerConfig
-from stochastic_warfare.validation.performance import PerformanceProfiler, PerformanceResult
+from stochastic_warfare.validation.performance import PerformanceProfiler
 
 
 # ---------------------------------------------------------------------------

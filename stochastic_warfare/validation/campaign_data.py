@@ -18,7 +18,6 @@ from stochastic_warfare.simulation.calibration import CalibrationSchema
 from stochastic_warfare.core.logging import get_logger
 from stochastic_warfare.simulation.scenario import (
     CampaignScenarioConfig,
-    DepotConfig,
     ObjectiveConfig,
     ReinforcementConfig,
     SideConfig,

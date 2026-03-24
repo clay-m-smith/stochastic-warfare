@@ -6,18 +6,16 @@ Uses shared fixtures from conftest.py.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any
 
-import numpy as np
-import pytest
 
 from stochastic_warfare.core.events import EventBus
 from stochastic_warfare.core.rng import RNGManager
-from stochastic_warfare.core.types import ModuleId, Position
+from stochastic_warfare.core.types import Position
 from stochastic_warfare.entities.base import Unit, UnitStatus
-from stochastic_warfare.simulation.battle import BattleConfig, BattleManager
+from stochastic_warfare.simulation.battle import BattleManager
 from stochastic_warfare.simulation.campaign import (
     CampaignConfig,
     CampaignManager,
@@ -28,7 +26,7 @@ from stochastic_warfare.simulation.scenario import (
     ReinforcementUnitConfig,
 )
 
-from tests.conftest import DEFAULT_SEED, POS_ORIGIN, TS, make_clock, make_rng
+from tests.conftest import DEFAULT_SEED, TS, make_rng
 
 
 # ---------------------------------------------------------------------------

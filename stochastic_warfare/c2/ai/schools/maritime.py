@@ -14,7 +14,7 @@ Two complementary naval warfare philosophies:
 
 from __future__ import annotations
 
-from stochastic_warfare.c2.ai.schools.base import DoctrinalSchool, SchoolDefinition
+from stochastic_warfare.c2.ai.schools.base import DoctrinalSchool
 from stochastic_warfare.core.logging import get_logger
 
 logger = get_logger(__name__)

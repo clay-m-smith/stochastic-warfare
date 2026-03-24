@@ -5,7 +5,6 @@ Uses shared fixtures from conftest.py: rng, event_bus, sim_clock, rng_manager.
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
 
 import numpy as np
 import pytest
@@ -16,7 +15,7 @@ from stochastic_warfare.core.events import EventBus
 from stochastic_warfare.core.types import ModuleId
 from stochastic_warfare.entities.organization.echelons import EchelonLevel
 
-from tests.conftest import DEFAULT_SEED, TS, make_rng
+from tests.conftest import TS, make_rng
 
 
 # ---------------------------------------------------------------------------

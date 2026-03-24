@@ -13,16 +13,9 @@ from stochastic_warfare.core.types import ModuleId, Position
 from stochastic_warfare.logistics.consumption import (
     ActivityLevel,
     ConsumptionEngine,
-    EnvironmentConditions,
-    GroundState,
 )
 from stochastic_warfare.logistics.disruption import DisruptionEngine
 from stochastic_warfare.logistics.engineering import EngineeringEngine, EngineeringTask
-from stochastic_warfare.logistics.events import (
-    ConvoyArrivedEvent,
-    SupplyDepletedEvent,
-    SupplyShortageEvent,
-)
 from stochastic_warfare.logistics.maintenance import MaintenanceConfig, MaintenanceEngine
 from stochastic_warfare.logistics.medical import (
     MedicalConfig,
@@ -30,7 +23,7 @@ from stochastic_warfare.logistics.medical import (
     MedicalFacility,
     MedicalFacilityType,
 )
-from stochastic_warfare.logistics.naval_logistics import NavalLogisticsEngine, NavalSupplyOp
+from stochastic_warfare.logistics.naval_logistics import NavalLogisticsEngine
 from stochastic_warfare.logistics.stockpile import DepotType, StockpileManager
 from stochastic_warfare.logistics.supply_classes import SupplyClass, SupplyInventory
 from stochastic_warfare.logistics.supply_network import (

@@ -6,17 +6,15 @@ proportional to distance moved, and that fuel exhaustion sets speed to 0.
 
 from __future__ import annotations
 
-import math
 from types import SimpleNamespace
 
-import numpy as np
 import pytest
 
 from stochastic_warfare.core.events import EventBus
 from stochastic_warfare.core.types import Domain, Position
 from stochastic_warfare.entities.base import UnitStatus
 from stochastic_warfare.entities.unit_classes.ground import GroundUnit
-from stochastic_warfare.simulation.battle import BattleManager, BattleConfig, BattleContext
+from stochastic_warfare.simulation.battle import BattleManager, BattleContext
 
 
 def _make_unit(

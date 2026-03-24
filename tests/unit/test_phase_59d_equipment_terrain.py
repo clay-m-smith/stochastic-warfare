@@ -6,10 +6,6 @@ traversal → movement reduction, and bridges_near API exists.
 
 from __future__ import annotations
 
-import math
-from dataclasses import dataclass
-from types import SimpleNamespace
-from typing import Any
 
 import pytest
 

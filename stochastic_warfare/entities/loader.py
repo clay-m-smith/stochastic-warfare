@@ -14,7 +14,7 @@ import numpy as np
 from pydantic import BaseModel, field_validator
 
 from stochastic_warfare.core.logging import get_logger
-from stochastic_warfare.core.types import Domain, Position, Side
+from stochastic_warfare.core.types import Domain, Position
 from stochastic_warfare.entities.base import Unit
 from stochastic_warfare.entities.equipment import EquipmentCategory, EquipmentItem
 from stochastic_warfare.entities.personnel import CrewMember, CrewRole, SkillLevel

@@ -3,10 +3,8 @@
 from __future__ import annotations
 
 import numpy as np
-import pytest
 
 from stochastic_warfare.tools.comparison import (
-    ComparisonConfig,
     ComparisonResult,
     MetricComparison,
     compare_distributions,

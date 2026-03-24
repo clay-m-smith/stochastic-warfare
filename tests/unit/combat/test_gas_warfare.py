@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import pytest
 
 from stochastic_warfare.combat.gas_warfare import (
     GasMaskType,

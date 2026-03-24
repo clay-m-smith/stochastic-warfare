@@ -6,19 +6,15 @@ intercept wiring in the battle loop.
 
 from __future__ import annotations
 
-import types
 from datetime import datetime, timezone
-from unittest.mock import MagicMock
 
 import numpy as np
 import pytest
 
 from stochastic_warfare.combat.missile_defense import (
     MissileDefenseEngine,
-    MissileDefenseConfig,
 )
 from stochastic_warfare.core.events import EventBus
-from stochastic_warfare.core.types import Position
 
 TS = datetime(2024, 6, 15, 12, 0, 0, tzinfo=timezone.utc)
 

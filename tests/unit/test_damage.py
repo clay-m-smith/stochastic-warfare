@@ -3,13 +3,10 @@
 from __future__ import annotations
 
 import numpy as np
-import pytest
 
 from stochastic_warfare.combat.ammunition import AmmoDefinition
 from stochastic_warfare.combat.damage import (
-    DamageConfig,
     DamageEngine,
-    DamageResult,
     DamageType,
     PenetrationResult,
 )

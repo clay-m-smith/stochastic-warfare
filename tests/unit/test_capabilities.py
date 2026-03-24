@@ -2,12 +2,10 @@
 
 import pytest
 
-from stochastic_warfare.core.types import Domain, Position, Side
+from stochastic_warfare.core.types import Position, Side
 from stochastic_warfare.entities.base import Unit, UnitStatus
 from stochastic_warfare.entities.capabilities import (
-    CombatPowerAssessment,
     CombatPowerCalculator,
-    CombatPowerFactors,
 )
 from stochastic_warfare.entities.equipment import EquipmentCategory, EquipmentItem
 from stochastic_warfare.entities.personnel import (

@@ -1,7 +1,7 @@
 """Tests for entities/unit_classes/ground.py."""
 
 from stochastic_warfare.core.types import Domain, Position, Side
-from stochastic_warfare.entities.base import Entity, Unit, UnitStatus
+from stochastic_warfare.entities.base import Entity, Unit
 from stochastic_warfare.entities.unit_classes.ground import (
     GroundUnit,
     GroundUnitType,

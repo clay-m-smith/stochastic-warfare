@@ -9,7 +9,6 @@ from __future__ import annotations
 from datetime import datetime, timezone
 
 import numpy as np
-import pytest
 
 from stochastic_warfare.c2.ai.stratagems import (
     StratagemEngine,
