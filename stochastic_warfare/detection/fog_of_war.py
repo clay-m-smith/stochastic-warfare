@@ -11,6 +11,8 @@ from dataclasses import dataclass, field
 from typing import Any
 
 import numpy as np
+from shapely import STRtree
+from shapely.geometry import Point
 
 from pydantic import BaseModel
 
@@ -208,6 +210,9 @@ class FogOfWarManager:
         dt: float,
         current_time: float = 0.0,
         decoys: list[Decoy] | None = None,
+        detection_culling: bool = True,
+        scan_scheduling: bool = False,
+        current_tick: int = 0,
     ) -> SideWorldView:
         """Run one detection cycle for *side*.
 
@@ -224,6 +229,12 @@ class FogOfWarManager:
             Current simulation time.
         decoys:
             Active enemy decoys.
+        detection_culling:
+            Use STRtree spatial index to skip out-of-range targets.
+        scan_scheduling:
+            Respect per-sensor ``scan_interval_ticks`` scheduling.
+        current_tick:
+            Current simulation tick (for scan scheduling).
 
         Returns the updated :class:`SideWorldView`.
         """
@@ -245,13 +256,40 @@ class FogOfWarManager:
                         "posture": 0,
                     })
 
+        # Phase 84a: Build spatial index for range-limited detection
+        _target_tree = None
+        _target_points = None
+        if detection_culling and len(all_targets) > 1:
+            _target_points = [
+                Point(t["position"].easting, t["position"].northing)
+                for t in all_targets
+            ]
+            _target_tree = STRtree(_target_points)
+
         # For each own unit's sensors, scan each target
         for own in own_units:
             obs_pos = own["position"]
             sensors = own.get("sensors", [])
             obs_height = own.get("observer_height", 1.8)
 
-            for target in all_targets:
+            # Phase 84a: determine targets in range via spatial index
+            if _target_tree is not None:
+                _op_sensors = [s for s in sensors if s.operational]
+                _max_range = max(
+                    (s.effective_range for s in _op_sensors), default=0.0,
+                )
+                if _max_range > 0:
+                    _obs_pt = Point(obs_pos.easting, obs_pos.northing)
+                    _cand_idxs = sorted(
+                        _target_tree.query(_obs_pt.buffer(_max_range)),
+                    )
+                    _scan_targets = [all_targets[i] for i in _cand_idxs]
+                else:
+                    _scan_targets = []
+            else:
+                _scan_targets = all_targets
+
+            for target in _scan_targets:
                 tgt_id = target["unit_id"]
                 tgt_pos = target["position"]
                 tgt_sig = target["signature"]
@@ -263,6 +301,16 @@ class FogOfWarManager:
                 for sensor in sensors:
                     if not sensor.operational:
                         continue
+
+                    # Phase 84b: scan scheduling — skip sensor on off-ticks
+                    if scan_scheduling and sensor.definition.scan_interval_ticks > 1:
+                        _interval = sensor.definition.scan_interval_ticks
+                        _offset = (
+                            sum(ord(c) for c in sensor.definition.sensor_id)
+                            % _interval
+                        )
+                        if (current_tick + _offset) % _interval != 0:
+                            continue
 
                     result = self._detection.check_detection(
                         obs_pos, tgt_pos, sensor, tgt_sig,

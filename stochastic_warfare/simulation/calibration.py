@@ -214,6 +214,10 @@ class CalibrationSchema(BaseModel):
     guerrilla_disengage_threshold: float = 0.3
     human_shield_pk_reduction: float = 0.5
 
+    # -- Spatial culling & scan scheduling (Phase 84) --------------------
+    enable_detection_culling: bool = True
+    enable_scan_scheduling: bool = False
+
     # -- Meta-flag (Phase 80) ---------------------------------------------
     enable_all_modern: bool = False
 

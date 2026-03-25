@@ -5,6 +5,7 @@ max_range_m: 3000.0
 detection_threshold: 12.0
 false_alarm_rate: 3.0e-4
 scan_time_s: 5.0
+scan_interval_ticks: 1
 antenna_height_m: 2.5
 min_range_m: 0.0
 fov_deg: 180.0

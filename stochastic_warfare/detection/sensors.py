@@ -12,7 +12,7 @@ import enum
 from pathlib import Path
 from typing import Any
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from stochastic_warfare.core.logging import get_logger
 from stochastic_warfare.detection.signatures import SignatureDomain
@@ -69,6 +69,7 @@ class SensorDefinition(BaseModel):
     detection_threshold: float  # minimum SNR for detection (dB)
     false_alarm_rate: float = 1e-6
     scan_time_s: float = 1.0
+    scan_interval_ticks: int = Field(default=1, ge=1)
 
     # Radar-specific
     frequency_mhz: float | None = None

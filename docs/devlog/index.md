@@ -100,6 +100,7 @@ Rolling record of implementation decisions, changes, and lessons learned across 
 | 82 | Block 8 Postmortem & Documentation | **Complete** | [phase-82.md](phase-82.md) |
 | **Block 9: Performance at Scale** ||||
 | 83 | Profiling Infrastructure | **Complete** | [phase-83.md](phase-83.md) |
+| 84 | Spatial Culling & Scan Scheduling | **Complete** | [phase-84.md](phase-84.md) |
 
 ## Post-MVP Refinement Index
 

@@ -1144,6 +1144,8 @@ class BattleManager:
 
         # 1b. Phase 53a: Fog of war — per-side detection picture
         _enable_fow = cal.get("enable_fog_of_war", False)
+        _enable_det_culling = cal.get("enable_detection_culling", True)
+        _enable_scan_sched = cal.get("enable_scan_scheduling", False)
         if _enable_fow and getattr(ctx, "fog_of_war", None) is not None:
             _fow_time = getattr(timestamp, "timestamp", lambda: 0.0)()
             for _fow_side, _fow_units in units_by_side.items():
@@ -1181,6 +1183,9 @@ class BattleManager:
                         enemy_units=_enemy_data,
                         dt=dt,
                         current_time=_fow_time,
+                        detection_culling=_enable_det_culling,
+                        scan_scheduling=_enable_scan_sched,
+                        current_tick=battle.ticks_executed,
                     )
                 except Exception:
                     logger.debug("FogOfWar update failed for %s", _fow_side, exc_info=True)
@@ -3226,6 +3231,19 @@ class BattleManager:
         _sup_eng = getattr(ctx, "suppression_engine", None)
         _air_combat_eng = getattr(ctx, "air_combat_engine", None)
 
+        # Phase 84c: Build per-side enemy STRtrees for engagement culling
+        _eng_trees: dict[str, STRtree | None] = {}
+        for _et_side in units_by_side:
+            _et_pos = enemy_pos_arrays.get(_et_side)
+            if _et_pos is not None and _et_pos.shape[0] > 0:
+                _et_pts = [
+                    Point(_et_pos[i, 0], _et_pos[i, 1])
+                    for i in range(_et_pos.shape[0])
+                ]
+                _eng_trees[_et_side] = STRtree(_et_pts)
+            else:
+                _eng_trees[_et_side] = None
+
         for side_name, side_units in units_by_side.items():
             enemies = active_enemies.get(side_name, [])
             pos_arr = enemy_pos_arrays.get(side_name, np.empty((0, 2)))
@@ -3287,9 +3305,26 @@ class BattleManager:
                 if target_selection_mode == "closest":
                     best_idx = int(np.argmin(dists))
                 else:
+                    # Phase 84c: pre-filter candidates within weapon range
+                    _eng_tree = _eng_trees.get(side_name)
+                    _max_wpn_range = max(
+                        (w[0].definition.max_range_m for w in weapons),
+                        default=1000.0,
+                    )
+                    if _eng_tree is not None:
+                        _cand_idxs = sorted(_eng_tree.query(
+                            Point(
+                                attacker.position.easting,
+                                attacker.position.northing,
+                            ).buffer(_max_wpn_range),
+                        ))
+                    else:
+                        _cand_idxs = list(range(len(enemies)))
+                    if not _cand_idxs:
+                        _cand_idxs = list(range(len(enemies)))
                     best_score = -1.0
-                    best_idx = 0
-                    for ei in range(len(enemies)):
+                    best_idx = _cand_idxs[0]
+                    for ei in _cand_idxs:
                         score = self._score_target(
                             attacker, enemies[ei], float(dists[ei]), weapons, ctx,
                         )

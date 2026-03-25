@@ -5,6 +5,7 @@ max_range_m: 15000.0
 detection_threshold: 14.0
 false_alarm_rate: 1.0e-6
 scan_time_s: 4.0
+scan_interval_ticks: 2
 frequency_mhz: 3000.0
 peak_power_w: 90000.0
 antenna_gain_dbi: 20.0

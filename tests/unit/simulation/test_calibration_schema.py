@@ -89,10 +89,12 @@ class TestCalibrationGet:
     def test_enable_flags_all_false(self):
         """All enable_* flags default to False."""
         cal = CalibrationSchema()
+        # enable_air_routing, enable_fog_of_war, enable_detection_culling
+        # default to True — exclude from this check
+        _TRUE_DEFAULTS = {"enable_air_routing", "enable_fog_of_war", "enable_detection_culling"}
         enable_fields = [
             f for f in CalibrationSchema.model_fields
-            if f.startswith("enable_") and f != "enable_air_routing"
-            and f != "enable_fog_of_war"
+            if f.startswith("enable_") and f not in _TRUE_DEFAULTS
         ]
         for field_name in enable_fields:
             assert getattr(cal, field_name) is False, f"{field_name} should default to False"
