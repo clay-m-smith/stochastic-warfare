@@ -102,6 +102,7 @@ Rolling record of implementation decisions, changes, and lessons learned across 
 | 83 | Profiling Infrastructure | **Complete** | [phase-83.md](phase-83.md) |
 | 84 | Spatial Culling & Scan Scheduling | **Complete** | [phase-84.md](phase-84.md) |
 | 85 | LOD & Aggregation | **Complete** | [phase-85.md](phase-85.md) |
+| 86 | Engagement & Calibration Optimization | **Complete** | [phase-86.md](phase-86.md) |
 
 ## Post-MVP Refinement Index
 

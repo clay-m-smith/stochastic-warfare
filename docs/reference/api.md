@@ -496,6 +496,10 @@ Pydantic model (`extra="forbid"`) for all scenario tuning parameters. Replaces f
 | `lod_distant_interval` | `int` | `20` | Update frequency (ticks) for DISTANT-tier units |
 | `lod_hysteresis_ticks` | `int` | `3` | Ticks before downgrade from higher tier (immediate promotion) |
 
+**Flat Dict Optimization (Phase 86):**
+
+CalibrationSchema provides a `to_flat_dict(sides)` method that expands all fields (including nested morale and per-side overrides) into a plain `dict[str, Any]` for O(1) battle-loop access. This is generated once at scenario load time and stored as `ctx.cal_flat` on SimulationContext.
+
 **Meta-Flags (Phase 80):**
 
 | Field | Type | Default | Description |

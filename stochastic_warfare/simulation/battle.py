@@ -28,10 +28,55 @@ from stochastic_warfare.entities.events import UnitDestroyedEvent, UnitDisabledE
 from stochastic_warfare.detection.sensors import SensorType
 from stochastic_warfare.morale.state import MoraleState, _MORALE_EFFECTS
 
+from typing import NamedTuple
+
 from shapely import STRtree
 from shapely.geometry import Point
 
+from stochastic_warfare.simulation.calibration import CalibrationSchema
+
+
+class _ObserverModifiers(NamedTuple):
+    """Pre-computed per-observer modifiers (Phase 86b).
+
+    Batched once per attacker at tick start to avoid redundant engine
+    queries when an attacker engages multiple targets.
+    """
+
+    mopp_detection: float = 1.0   # MOPP detection factor [0-1]
+    mopp_fov_mod: float = 1.0     # MOPP FOV reduction [0-1]
+    mopp_fatigue: float = 1.0     # MOPP fatigue divisor [1.0+]
+    mopp_reload_mod: float = 1.0  # MOPP reload multiplier [1.0+]
+    mopp_level: int = 0           # MOPP level [0-4]
+    altitude_factor: float = 1.0  # Altitude sickness [0.5-1.0]
+    readiness: float = 1.0        # Equipment readiness [0-1]
+
+
+_DEFAULT_OBS_MODS = _ObserverModifiers()
+
 logger = get_logger(__name__)
+
+
+def _resolve_cal_flat(ctx: Any) -> dict[str, Any]:
+    """Get or build the flat calibration dict from *ctx*.
+
+    Returns ``ctx.cal_flat`` when available (the fast path set up by
+    :class:`ScenarioLoader`).  Falls back to building one on-the-fly
+    for backward compatibility with tests that pass raw dicts or
+    ``SimpleNamespace`` contexts.
+    """
+    flat = getattr(ctx, "cal_flat", None)
+    if flat:
+        return flat
+    cal = getattr(ctx, "calibration", None)
+    if cal is None:
+        return {}
+    if isinstance(cal, CalibrationSchema):
+        sides = list(getattr(ctx, "units_by_side", {}).keys())
+        return cal.to_flat_dict(sorted(sides) if sides else ["blue", "red"])
+    if isinstance(cal, dict):
+        return cal
+    return {}
 
 
 class UnitLodTier(IntEnum):
@@ -531,12 +576,12 @@ def _route_air_engagement(
     wpn_cat = getattr(wpn_inst.definition, "category", "").upper()
 
     # Phase 62d: air combat environmental coupling
-    cal = getattr(ctx, "calibration", None)
-    _ace = cal is not None and cal.get("enable_air_combat_environment", False)
+    cal_flat = _resolve_cal_flat(ctx)
+    _ace = cal_flat.get("enable_air_combat_environment", False)
 
     # Phase 64c: ATO sortie gate — check available sorties before air engagement
     _ato_64 = getattr(ctx, "ato_engine", None)
-    if _ato_64 is not None and cal is not None and cal.get("enable_c2_friction", False):
+    if _ato_64 is not None and cal_flat.get("enable_c2_friction", False):
         _sim_time = ctx.clock.elapsed.total_seconds() if hasattr(ctx.clock, "elapsed") else 0.0
         if _ato_64.get_available_sorties(_sim_time) <= 0:
             logger.debug("ATO: no sorties available, air engagement skipped")
@@ -561,7 +606,7 @@ def _route_air_engagement(
                     _air_c = _cond.air()
                     _icing = getattr(_air_c, "icing_risk", 0.0)
                     if _icing > 0.5:
-                        missile_pk *= (1.0 - cal.icing_maneuver_penalty)
+                        missile_pk *= (1.0 - cal_flat.get("icing_maneuver_penalty", 0.15))
                 except Exception:
                     pass
 
@@ -588,7 +633,7 @@ def _route_air_engagement(
                     _hdg = math.atan2(_dx, _dy)
                     _wind_along = _w_spd * math.cos(_w_dir - _hdg)
                     # Tailwind extends range, headwind reduces
-                    _range_mod = 1.0 + _wind_along / cal.wind_bvr_missile_speed_mps
+                    _range_mod = 1.0 + _wind_along / cal_flat.get("wind_bvr_missile_speed_mps", 1000.0)
                     best_range /= max(0.5, _range_mod)
                 except Exception:
                     pass
@@ -637,10 +682,10 @@ def _route_air_engagement(
                     )
                     _pgm_types = ("gps", "laser", "radar", "combined", "gps_ins", "semi_active", "active")
                     _is_pgm = str(_guidance).lower() in _pgm_types
-                    if _ceiling < cal.cloud_ceiling_min_attack_m and not _is_pgm:
+                    if _ceiling < cal_flat.get("cloud_ceiling_min_attack_m", 500.0) and not _is_pgm:
                         logger.debug(
                             "CAS aborted: cloud ceiling %.0fm < %.0fm (unguided)",
-                            _ceiling, cal.cloud_ceiling_min_attack_m,
+                            _ceiling, cal_flat.get("cloud_ceiling_min_attack_m", 500.0),
                         )
                         return True, None  # mission aborted
                 except Exception:
@@ -659,7 +704,7 @@ def _route_air_engagement(
                     _air_cas = _cond_cas.air()
                     _icing_cas = getattr(_air_cas, "icing_risk", 0.0)
                     if _icing_cas > 0.5:
-                        weapon_pk *= (1.0 - cal.icing_power_penalty)
+                        weapon_pk *= (1.0 - cal_flat.get("icing_power_penalty", 0.10))
                 except Exception:
                     pass
             _wx_cas2 = getattr(ctx, "weather_engine", None)
@@ -1145,7 +1190,7 @@ class BattleManager:
         battle.ticks_executed += 1
         battle.battle_elapsed_s += dt
         units_by_side = ctx.units_by_side
-        cal = ctx.calibration
+        cal_flat = _resolve_cal_flat(ctx)
         timestamp = ctx.clock.current_time
 
         # 1. Pre-build per-side active enemy lists and position arrays
@@ -1163,9 +1208,9 @@ class BattleManager:
         )
 
         # 1b. Phase 53a: Fog of war — per-side detection picture
-        _enable_fow = cal.get("enable_fog_of_war", False)
-        _enable_det_culling = cal.get("enable_detection_culling", True)
-        _enable_scan_sched = cal.get("enable_scan_scheduling", False)
+        _enable_fow = cal_flat.get("enable_fog_of_war", False)
+        _enable_det_culling = cal_flat.get("enable_detection_culling", True)
+        _enable_scan_sched = cal_flat.get("enable_scan_scheduling", False)
         if _enable_fow and getattr(ctx, "fog_of_war", None) is not None:
             _fow_time = getattr(timestamp, "timestamp", lambda: 0.0)()
             for _fow_side, _fow_units in units_by_side.items():
@@ -1213,7 +1258,7 @@ class BattleManager:
                     logger.debug("FogOfWar update failed for %s", _fow_side, exc_info=True)
 
             # Phase 85: promote non-ACTIVE-tier units that detected contacts
-            if cal.get("enable_lod", False):
+            if cal_flat.get("enable_lod", False):
                 for _fow_side, _fow_units in units_by_side.items():
                     try:
                         _wv = ctx.fog_of_war.get_world_view(_fow_side)
@@ -1274,8 +1319,8 @@ class BattleManager:
         )
 
         # 4b. Update posture based on movement (Phase 40b)
-        defensive_sides = set(cal.get("defensive_sides", []))
-        dig_in_ticks = cal.get("dig_in_ticks", 30)
+        defensive_sides = set(cal_flat.get("defensive_sides", []))
+        dig_in_ticks = cal_flat.get("dig_in_ticks", 30)
         for side_name, side_units in units_by_side.items():
             for u in side_units:
                 if u.status != UnitStatus.ACTIVE:
@@ -1351,10 +1396,10 @@ class BattleManager:
         mine_engine = getattr(ctx, "mine_warfare_engine", None)
         pending_mine_damage: list[tuple[Unit, UnitStatus]] = []
         if mine_engine is not None and mine_engine._mines:
-            dest_thresh_m = cal.get(
+            dest_thresh_m = cal_flat.get(
                 "destruction_threshold", self._config.destruction_threshold,
             )
-            dis_thresh_m = cal.get(
+            dis_thresh_m = cal_flat.get(
                 "disable_threshold", self._config.disable_threshold,
             )
             for side_units in units_by_side.values():
@@ -1388,7 +1433,7 @@ class BattleManager:
         # 4f. Phase 66a: IED encounters during ground movement
         _uw_eng = getattr(ctx, "unconventional_engine", None)
         if (
-            cal.get("enable_unconventional_warfare", False)
+            cal_flat.get("enable_unconventional_warfare", False)
             and _uw_eng is not None
             and _uw_eng._ieds
         ):
@@ -1438,7 +1483,7 @@ class BattleManager:
                         break  # one IED per tick per location
 
         # 4g. Phase 62a: Heat/cold environmental casualties
-        if cal.get("enable_human_factors", False):
+        if cal_flat.get("enable_human_factors", False):
             _wx62 = getattr(ctx, "weather_engine", None)
             if _wx62 is not None:
                 try:
@@ -1458,7 +1503,7 @@ class BattleManager:
 
                             # Heat stress
                             if _wbgt > 28.0:
-                                _hr = cal.heat_casualty_base_rate * (_wbgt - 28.0) / 10.0
+                                _hr = cal_flat.get("heat_casualty_base_rate", 0.02) * (_wbgt - 28.0) / 10.0
                                 # MOPP multiplier: gear traps heat
                                 _cbrn62 = getattr(ctx, "cbrn_engine", None)
                                 _mopp62 = 0
@@ -1475,7 +1520,7 @@ class BattleManager:
 
                             # Cold injury
                             if _wc < -20.0:
-                                _cr = cal.cold_casualty_base_rate * (abs(_wc) - 20.0) / 20.0
+                                _cr = cal_flat.get("cold_casualty_base_rate", 0.015) * (abs(_wc) - 20.0) / 20.0
                                 _env_rate += _cr
 
                             if _env_rate > 0:
@@ -1499,7 +1544,7 @@ class BattleManager:
                     logger.debug("Phase 62a env casualty failed", exc_info=True)
 
         # 4g2. Phase 78c: environmental fatigue acceleration (heat/cold)
-        if cal.get("enable_environmental_fatigue", False):
+        if cal_flat.get("enable_environmental_fatigue", False):
             _fatigue_mgr_78 = getattr(ctx, "fatigue_manager", None)
             if _fatigue_mgr_78 is not None:
                 _wx78 = getattr(ctx, "weather_engine", None)
@@ -1533,7 +1578,7 @@ class BattleManager:
 
         # 4h. Phase 71b: missile flight resolution — advance in-flight missiles
         _missile_eng_71 = getattr(ctx, "missile_engine", None)
-        _enable_missile_routing_71 = cal.get("enable_missile_routing", False)
+        _enable_missile_routing_71 = cal_flat.get("enable_missile_routing", False)
         _pending_missile_damage: list[tuple[Unit, UnitStatus]] = []
         if _missile_eng_71 is not None and _enable_missile_routing_71:
             _gps_acc_71 = 5.0
@@ -1616,8 +1661,8 @@ class BattleManager:
 
             # Advance missiles and resolve impacts
             _impacts_71 = _missile_eng_71.update_missiles_in_flight(dt, gps_accuracy_m=_gps_acc_71)
-            _dest_thresh_71 = cal.get("destruction_threshold", self._config.destruction_threshold)
-            _dis_thresh_71 = cal.get("disable_threshold", self._config.disable_threshold)
+            _dest_thresh_71 = cal_flat.get("destruction_threshold", self._config.destruction_threshold)
+            _dis_thresh_71 = cal_flat.get("disable_threshold", self._config.disable_threshold)
             for _impact_71 in _impacts_71:
                 if not _impact_71.hit:
                     continue
@@ -1651,7 +1696,7 @@ class BattleManager:
 
         # 4i. Phase 71d: carrier ops — CAP management and sortie rate
         _carrier_eng_71 = getattr(ctx, "carrier_ops_engine", None)
-        _enable_carrier_ops_71 = cal.get("enable_carrier_ops", False)
+        _enable_carrier_ops_71 = cal_flat.get("enable_carrier_ops", False)
         if _carrier_eng_71 is not None and _enable_carrier_ops_71:
             # Update CAP stations
             try:
@@ -1723,13 +1768,13 @@ class BattleManager:
         self._apply_deferred_damage(pending_damage, ctx.event_bus, timestamp)
 
         # 7a. Phase 85: instant promotion for damaged units
-        if ctx.calibration.get("enable_lod", False):
+        if cal_flat.get("enable_lod", False):
             for _dmg_unit, _dmg_status in pending_damage:
                 self._lod_promoted.add(_dmg_unit.entity_id)
 
         # 7b. Phase 60b/68e: fire zone damage — apply burn damage to units
-        cal = getattr(getattr(ctx, "config", None), "calibration_overrides", None)
-        if cal is not None and cal.get("enable_fire_zones", False):
+        _fz_cal = getattr(getattr(ctx, "config", None), "calibration_overrides", None)
+        if _fz_cal is not None and _fz_cal.get("enable_fire_zones", False):
             _inc_eng_fz = getattr(ctx, "incendiary_engine", None)
             if _inc_eng_fz is not None and _inc_eng_fz._active_zones:
                 # Phase 70b: reuse _unit_index for O(1) lookup
@@ -1739,10 +1784,10 @@ class BattleManager:
                 }
                 _unit_lookup = _unit_index
                 _fire_hits = _inc_eng_fz.units_in_fire(_unit_positions)
-                _fire_damage_base = cal.get("fire_damage_per_tick", 0.01)
+                _fire_damage_base = _fz_cal.get("fire_damage_per_tick", 0.01)
                 _fire_pending: list[tuple[Unit, UnitStatus]] = []
-                _fire_dest = cal.get("destruction_threshold", self._config.destruction_threshold)
-                _fire_dis = cal.get("disable_threshold", self._config.disable_threshold)
+                _fire_dest = _fz_cal.get("destruction_threshold", self._config.destruction_threshold)
+                _fire_dis = _fz_cal.get("disable_threshold", self._config.disable_threshold)
                 for _fu_id, _burn_rate in _fire_hits.items():
                     _fu_unit = _unit_lookup.get(_fu_id)
                     if _fu_unit is None:
@@ -1764,7 +1809,7 @@ class BattleManager:
 
         # 7c. Phase 69c: degrade active decoys each tick
         _fow_69c_tick = getattr(ctx, "fog_of_war", None)
-        if _fow_69c_tick is not None and cal is not None and cal.get("enable_fog_of_war", False):
+        if _fow_69c_tick is not None and cal_flat.get("enable_fog_of_war", False):
             try:
                 _fow_69c_tick.update_decoys(dt)
             except (AttributeError, TypeError):
@@ -2111,8 +2156,8 @@ class BattleManager:
         battle: Any,
     ) -> set[str]:
         """Classify units into LOD tiers. Returns entity_ids for full update this tick."""
-        cal = ctx.calibration
-        if not cal.get("enable_lod", False):
+        cal_flat = _resolve_cal_flat(ctx)
+        if not cal_flat.get("enable_lod", False):
             return {
                 u.entity_id
                 for su in units_by_side.values()
@@ -2120,9 +2165,9 @@ class BattleManager:
                 if u.status == UnitStatus.ACTIVE
             }
 
-        nearby_interval = cal.get("lod_nearby_interval", 5)
-        distant_interval = cal.get("lod_distant_interval", 20)
-        hysteresis = cal.get("lod_hysteresis_ticks", 3)
+        nearby_interval = cal_flat.get("lod_nearby_interval", 5)
+        distant_interval = cal_flat.get("lod_distant_interval", 20)
+        hysteresis = cal_flat.get("lod_hysteresis_ticks", 3)
         tick = battle.ticks_executed
         full_update: set[str] = set()
 
@@ -2241,6 +2286,8 @@ class BattleManager:
         """
         from stochastic_warfare.c2.ai.ooda import OODAPhase
 
+        cal_flat = _resolve_cal_flat(ctx)
+
         # Tactical acceleration multiplier (< 1 = faster decisions in battle)
         tactical_mult = 1.0
         if ctx.ooda_engine is not None:
@@ -2259,8 +2306,7 @@ class BattleManager:
                     if side:
                         friendly = len(ctx.active_units(side))
                         # Phase 53a: Use fog-of-war detected count if enabled
-                        _cal = getattr(ctx, "calibration", None)
-                        _fow_enabled = _cal.get("enable_fog_of_war", False) if _cal is not None else False
+                        _fow_enabled = cal_flat.get("enable_fog_of_war", False)
                         if _fow_enabled and getattr(ctx, "fog_of_war", None) is not None:
                             try:
                                 _wv = ctx.fog_of_war.get_world_view(side)
@@ -2690,24 +2736,24 @@ class BattleManager:
         enemy_pos_arrays: dict[str, np.ndarray] | None = None,
     ) -> None:
         """Execute movement for all active units."""
-        cal = ctx.calibration
-        wave_interval = cal.get("wave_interval_s", 300.0)
+        cal_flat = _resolve_cal_flat(ctx)
+        wave_interval = cal_flat.get("wave_interval_s", 300.0)
         battle_elapsed = battle.battle_elapsed_s if battle is not None else 0.0
         wave_assignments = battle.wave_assignments if battle is not None else {}
         _rules = behavior_rules or {}
 
         # Sides that should hold position (defensive doctrine)
-        defensive_sides = set(cal.get("defensive_sides", []))
+        defensive_sides = set(cal_flat.get("defensive_sides", []))
 
         # Phase 70c: hoist movement-loop calibration lookups
-        _mv_enable_sea_state = cal.get("enable_sea_state_ops", False)
-        _mv_enable_seasonal = cal.get("enable_seasonal_effects", False)
-        _mv_enable_obstacle = cal.get("enable_obstacle_effects", False)
-        _mv_enable_fire_zones = cal.get("enable_fire_zones", False)
-        _mv_enable_obscurants = cal.get("enable_obscurants", False)
-        _mv_enable_fuel = cal.get("enable_fuel_consumption", False)
-        _mv_enable_ice_crossing = cal.get("enable_ice_crossing", False)
-        _mv_enable_bridge = cal.get("enable_bridge_capacity", False)
+        _mv_enable_sea_state = cal_flat.get("enable_sea_state_ops", False)
+        _mv_enable_seasonal = cal_flat.get("enable_seasonal_effects", False)
+        _mv_enable_obstacle = cal_flat.get("enable_obstacle_effects", False)
+        _mv_enable_fire_zones = cal_flat.get("enable_fire_zones", False)
+        _mv_enable_obscurants = cal_flat.get("enable_obscurants", False)
+        _mv_enable_fuel = cal_flat.get("enable_fuel_consumption", False)
+        _mv_enable_ice_crossing = cal_flat.get("enable_ice_crossing", False)
+        _mv_enable_bridge = cal_flat.get("enable_bridge_capacity", False)
 
         # Phase 70c: hoist movement-loop engine references
         _mv_maint_eng = getattr(ctx, "maintenance_engine", None)
@@ -2756,9 +2802,9 @@ class BattleManager:
             }
             _n_sorted = len(_sorted_active)
             # Phase 70c: hoist side-specific formation spacing
-            _spacing_side = cal.get(
+            _spacing_side = cal_flat.get(
                 f"{side}_formation_spacing_m",
-                cal.get("formation_spacing_m", 50.0),
+                cal_flat.get("formation_spacing_m", 50.0),
             )
 
             for u in units:
@@ -3210,8 +3256,8 @@ class BattleManager:
         # Value: target type priority (configurable weights)
         # Phase 50e: calibration can override BattleConfig target weights
         cfg = self._config
-        cal = getattr(ctx, "calibration", None)
-        _tvw = cal.get("target_value_weights", None) if cal is not None else None
+        cal_flat = _resolve_cal_flat(ctx)
+        _tvw = cal_flat.get("target_value_weights")
         if _tvw is not None:
             value = _target_value(
                 target,
@@ -3249,15 +3295,15 @@ class BattleManager:
     ) -> list[tuple[Unit, UnitStatus]]:
         """Run detection + engagement for all units. Returns deferred damage."""
         pending_damage: list[tuple[Unit, UnitStatus]] = []
-        cal = ctx.calibration
-        visibility_m = cal.get("visibility_m", self._config.default_visibility_m)
-        hit_prob_mod = cal.get("hit_probability_modifier", 1.0)
+        cal_flat = _resolve_cal_flat(ctx)
+        visibility_m = cal_flat.get("visibility_m", self._config.default_visibility_m)
+        hit_prob_mod = cal_flat.get("hit_probability_modifier", 1.0)
         # Per-side target_size_modifier: look up target_size_modifier_{side}, fall back to uniform
-        target_size_mod_default = cal.get("target_size_modifier", 1.0)
+        target_size_mod_default = cal_flat.get("target_size_modifier", 1.0)
         # Phase 41a: force channeling
-        max_engagers = cal.get("max_engagers_per_side", 0)
+        max_engagers = cal_flat.get("max_engagers_per_side", 0)
         # Phase 41c: target selection mode
-        target_selection_mode = cal.get("target_selection_mode", "threat_scored")
+        target_selection_mode = cal_flat.get("target_selection_mode", "threat_scored")
 
         # Phase 44a/52b: Weather combat effects (computed once per tick)
         weather_pk_modifier = 1.0
@@ -3294,7 +3340,7 @@ class BattleManager:
         if tod_engine is not None:
             try:
                 illum = tod_engine.illumination_at(lat, lon)
-                _thermal_floor = cal.get("night_thermal_floor", 0.8)
+                _thermal_floor = cal_flat.get("night_thermal_floor", 0.8)
                 night_visual_modifier, night_thermal_modifier = (
                     _compute_night_modifiers(illum, _thermal_floor)
                 )
@@ -3303,13 +3349,13 @@ class BattleManager:
 
         # Phase 60c: physics-based thermal ΔT model (computed once per tick)
         thermal_dt_contrast = 1.0
-        if cal.get("enable_thermal_crossover", False) and tod_engine is not None:
+        if cal_flat.get("enable_thermal_crossover", False) and tod_engine is not None:
             try:
                 _therm = tod_engine.thermal_environment(lat, lon)
                 # Base contrast from solar-elevation model, scaled by scenario
                 # calibration (thermal_contrast > 1 = superior thermal sights,
                 # e.g. M1A1 in desert night).
-                _cal_tc = cal.get("thermal_contrast", 1.0)
+                _cal_tc = cal_flat.get("thermal_contrast", 1.0)
                 thermal_dt_contrast = min(1.0, _therm.thermal_contrast * _cal_tc)
                 if _therm.crossover_in_hours < 0.5:
                     thermal_dt_contrast *= max(0.1, _therm.crossover_in_hours / 0.5)
@@ -3337,7 +3383,7 @@ class BattleManager:
 
         # Phase 42a: ROE engine and hold-fire discipline
         roe_engine = getattr(ctx, "roe_engine", None)
-        roe_level_str = cal.get("roe_level", None)
+        roe_level_str = cal_flat.get("roe_level", None)
         if roe_engine is not None and roe_level_str is not None:
             from stochastic_warfare.c2.roe import RoeLevel
             try:
@@ -3349,34 +3395,34 @@ class BattleManager:
         if ctx.engagement_engine is None:
             return pending_damage
 
-        # Phase 70c: hoist calibration lookups (each cal.get checks 4 patterns)
-        _enable_seasonal = cal.get("enable_seasonal_effects", False)
-        _enable_em_prop = cal.get("enable_em_propagation", False)
-        _enable_nvg = cal.get("enable_nvg_detection", False)
-        _enable_thermal_xo = cal.get("enable_thermal_crossover", False)
-        _enable_obscurants = cal.get("enable_obscurants", False)
-        _enable_acoustic = cal.get("enable_acoustic_layers", False)
-        _enable_human_factors = cal.get("enable_human_factors", False)
-        _enable_air_combat_env = cal.get("enable_air_combat_environment", False)
-        _enable_unconventional = cal.get("enable_unconventional_warfare", False)
-        _enable_ammo_gate = cal.get("enable_ammo_gate", False)
-        _enable_fire_zones = cal.get("enable_fire_zones", False)
-        _enable_missile_routing = cal.get("enable_missile_routing", False)
-        _enable_air_routing = cal.get("enable_air_routing", False)
-        _enable_sea_state_ops = cal.get("enable_sea_state_ops", False)
-        _enable_equip_stress = cal.get("enable_equipment_stress", False)
-        _observation_decay = cal.get("observation_decay_rate", 0.05)
-        _rain_atten_factor = cal.get("rain_attenuation_factor", 1.0)
-        _stealth_penalty = cal.get("stealth_detection_penalty", 0.0)
-        _sigint_bonus = cal.get("sigint_detection_bonus", 0.0)
-        _eng_conceal_thresh = cal.get("engagement_concealment_threshold", 0.5)
-        _dest_thresh = cal.get("destruction_threshold", self._config.destruction_threshold)
-        _dis_thresh = cal.get("disable_threshold", self._config.disable_threshold)
-        _sam_supp = cal.get("sam_suppression_modifier", 0.0)
-        _wind_accuracy_scale = cal.get("wind_accuracy_penalty_scale", 0.03)
-        _jammer_mult = cal.get("jammer_coverage_mult", 1.0)
-        _dew_disable_thresh = cal.get("dew_disable_threshold", 0.5)
-        _night_thermal_floor = cal.get("night_thermal_floor", 0.8)
+        # Phase 70c/86a: hoist calibration lookups into local variables
+        _enable_seasonal = cal_flat.get("enable_seasonal_effects", False)
+        _enable_em_prop = cal_flat.get("enable_em_propagation", False)
+        _enable_nvg = cal_flat.get("enable_nvg_detection", False)
+        _enable_thermal_xo = cal_flat.get("enable_thermal_crossover", False)
+        _enable_obscurants = cal_flat.get("enable_obscurants", False)
+        _enable_acoustic = cal_flat.get("enable_acoustic_layers", False)
+        _enable_human_factors = cal_flat.get("enable_human_factors", False)
+        _enable_air_combat_env = cal_flat.get("enable_air_combat_environment", False)
+        _enable_unconventional = cal_flat.get("enable_unconventional_warfare", False)
+        _enable_ammo_gate = cal_flat.get("enable_ammo_gate", False)
+        _enable_fire_zones = cal_flat.get("enable_fire_zones", False)
+        _enable_missile_routing = cal_flat.get("enable_missile_routing", False)
+        _enable_air_routing = cal_flat.get("enable_air_routing", False)
+        _enable_sea_state_ops = cal_flat.get("enable_sea_state_ops", False)
+        _enable_equip_stress = cal_flat.get("enable_equipment_stress", False)
+        _observation_decay = cal_flat.get("observation_decay_rate", 0.05)
+        _rain_atten_factor = cal_flat.get("rain_attenuation_factor", 1.0)
+        _stealth_penalty = cal_flat.get("stealth_detection_penalty", 0.0)
+        _sigint_bonus = cal_flat.get("sigint_detection_bonus", 0.0)
+        _eng_conceal_thresh = cal_flat.get("engagement_concealment_threshold", 0.5)
+        _dest_thresh = cal_flat.get("destruction_threshold", self._config.destruction_threshold)
+        _dis_thresh = cal_flat.get("disable_threshold", self._config.disable_threshold)
+        _sam_supp = cal_flat.get("sam_suppression_modifier", 0.0)
+        _wind_accuracy_scale = cal_flat.get("wind_accuracy_penalty_scale", 0.03)
+        _jammer_mult = cal_flat.get("jammer_coverage_mult", 1.0)
+        _dew_disable_thresh = cal_flat.get("dew_disable_threshold", 0.5)
+        _night_thermal_floor = cal_flat.get("night_thermal_floor", 0.8)
 
         # Phase 70c: hoist engine references (each getattr is O(1) but ~95 per tick)
         _weather_eng = getattr(ctx, "weather_engine", None)
@@ -3411,6 +3457,62 @@ class BattleManager:
                 _eng_trees[_et_side] = STRtree(_et_pts)
             else:
                 _eng_trees[_et_side] = None
+
+        # Phase 86b: Batch per-observer modifiers — compute once per unit,
+        # reuse across all targets/weapons.
+        _observer_mods: dict[str, _ObserverModifiers] = {}
+        _obs_alt_thresh = cal_flat.get("altitude_sickness_threshold_m", 2500.0)
+        _obs_alt_rate = cal_flat.get("altitude_sickness_rate", 0.03)
+        _obs_fov_full = cal_flat.get("mopp_fov_reduction_4", 0.7)
+        _obs_rl_full = cal_flat.get("mopp_reload_factor_4", 1.5)
+        for _obs_units in units_by_side.values():
+            for _obs_u in _obs_units:
+                if _obs_u.status != UnitStatus.ACTIVE:
+                    continue
+                _obs_uid = _obs_u.entity_id
+                # MOPP
+                _obs_mopp_det = 1.0
+                _obs_mopp_fat = 1.0
+                _obs_mopp_lvl = 0
+                if _cbrn_eng is not None:
+                    try:
+                        _s, _obs_mopp_det, _obs_mopp_fat = _cbrn_eng.get_mopp_effects(_obs_uid)
+                        _obs_mopp_lvl = getattr(_cbrn_eng, "_mopp_levels", {}).get(_obs_uid, 0)
+                    except Exception:
+                        pass
+                _obs_mopp_fov = 1.0
+                _obs_mopp_rl = 1.0
+                if _obs_mopp_lvl > 0 and _enable_human_factors:
+                    _fov_sc = _obs_mopp_lvl / 4.0
+                    _obs_mopp_fov = 1.0 - _fov_sc * (1.0 - _obs_fov_full)
+                    _obs_mopp_rl = 1.0 + _fov_sc * (_obs_rl_full - 1.0)
+                # Altitude
+                _obs_alt_f = 1.0
+                if _enable_human_factors:
+                    _obs_alt = getattr(_obs_u.position, "altitude", 0.0) or 0.0
+                    if _obs_alt > _obs_alt_thresh:
+                        _obs_alt_f = max(
+                            0.5,
+                            1.0 - _obs_alt_rate * (_obs_alt - _obs_alt_thresh) / 100.0,
+                        )
+                        if getattr(_obs_u, "acclimatized", False):
+                            _obs_alt_f = 1.0 - (1.0 - _obs_alt_f) * 0.5
+                # Readiness
+                _obs_rdns = 1.0
+                if _maint_eng is not None:
+                    try:
+                        _obs_rdns = _maint_eng.get_unit_readiness(_obs_uid)
+                    except Exception:
+                        pass
+                _observer_mods[_obs_uid] = _ObserverModifiers(
+                    mopp_detection=_obs_mopp_det,
+                    mopp_fov_mod=_obs_mopp_fov,
+                    mopp_fatigue=_obs_mopp_fat,
+                    mopp_reload_mod=_obs_mopp_rl,
+                    mopp_level=_obs_mopp_lvl,
+                    altitude_factor=_obs_alt_f,
+                    readiness=_obs_rdns,
+                )
 
         for side_name, side_units in units_by_side.items():
             enemies = active_enemies.get(side_name, [])
@@ -3634,7 +3736,7 @@ class BattleManager:
                             _air62r = _cond62r.air()
                             _icing62r = getattr(_air62r, "icing_risk", 0.0)
                             if _icing62r > 0.5:
-                                _ice_db = cal.icing_radar_penalty_db
+                                _ice_db = cal_flat.get("icing_radar_penalty_db", 3.0)
                                 # Convert dB loss to linear factor on range
                                 # Radar range eq: R^4, so factor = 10^(-dB/40)
                                 _ice_factor = 10.0 ** (-_ice_db / 40.0)
@@ -3642,41 +3744,13 @@ class BattleManager:
                         except Exception:
                             pass
 
-                # Phase 44b: CBRN MOPP detection degradation
-                mopp_fatigue_factor = 1.0
-                _mopp_level_62 = 0
-                if _cbrn_eng is not None:
-                    try:
-                        _spd, _det, _fat = _cbrn_eng.get_mopp_effects(
-                            attacker.entity_id,
-                        )
-                        detection_range *= _det
-                        mopp_fatigue_factor = _fat
-                        _mopp_level_62 = getattr(_cbrn_eng, "_mopp_levels", {}).get(
-                            attacker.entity_id, 0,
-                        )
-                    except Exception:
-                        pass
-
-                # Phase 62b: MOPP FOV reduction (beyond existing detection_factor)
-                if _enable_human_factors and _mopp_level_62 > 0:
-                    _fov_full = cal.mopp_fov_reduction_4  # MOPP-4 multiplier
-                    _fov_scale = _mopp_level_62 / 4.0
-                    _fov_mod = 1.0 - _fov_scale * (1.0 - _fov_full)
-                    detection_range *= _fov_mod
-
-                # Phase 62b: altitude sickness → detection range penalty
-                if _enable_human_factors:
-                    _alt62 = getattr(attacker.position, "altitude", 0.0)
-                    if _alt62 > cal.altitude_sickness_threshold_m:
-                        _alt_perf = max(
-                            0.5,
-                            1.0 - cal.altitude_sickness_rate
-                            * (_alt62 - cal.altitude_sickness_threshold_m) / 100.0,
-                        )
-                        if getattr(attacker, "acclimatized", False):
-                            _alt_perf = 1.0 - (1.0 - _alt_perf) * 0.5
-                        detection_range *= _alt_perf
+                # Phase 86b: MOPP + altitude modifiers from pre-computed batch
+                _obs = _observer_mods.get(attacker.entity_id, _DEFAULT_OBS_MODS)
+                detection_range *= _obs.mopp_detection
+                detection_range *= _obs.mopp_fov_mod
+                detection_range *= _obs.altitude_factor
+                mopp_fatigue_factor = _obs.mopp_fatigue
+                _mopp_level_62 = _obs.mopp_level
 
                 # Phase 55c-1: WW1 gas warfare MOPP — query gas mask protection
                 _gas_protection = 0.0
@@ -4014,14 +4088,14 @@ class BattleManager:
                 unit_training = getattr(attacker, "training_level", 0.5)
                 effective_skill = base_skill * (0.5 + 0.5 * unit_training)
                 # Per-side hit probability modifier (Phase 48)
-                side_hit_prob = cal.get(
+                side_hit_prob = cal_flat.get(
                     f"hit_probability_modifier_{side_name}", hit_prob_mod,
                 )
                 # Phase 48: force_ratio_modifier — Dupuy CEV (Combat
                 # Effectiveness Value).  Captures training, doctrine,
                 # weapon superiority, and C2 quality as a single scalar.
                 # Values >1 = more effective than raw numbers suggest.
-                force_ratio_mod = cal.get(
+                force_ratio_mod = cal_flat.get(
                     f"{side_name}_force_ratio_modifier", 1.0,
                 )
                 crew_skill = (
@@ -4040,42 +4114,15 @@ class BattleManager:
                         _wind_scale,
                     )
 
-                # Phase 44b: MOPP fatigue degrades crew skill
-                if mopp_fatigue_factor > 1.0:
-                    crew_skill /= mopp_fatigue_factor
-
-                # Phase 62b: MOPP reload factor (additional penalty on crew skill)
-                if _enable_human_factors and _mopp_level_62 > 0:
-                    _rl_full = cal.mopp_reload_factor_4  # MOPP-4 divisor
-                    _rl_scale = _mopp_level_62 / 4.0
-                    _rl_mod = 1.0 + _rl_scale * (_rl_full - 1.0)
-                    crew_skill /= _rl_mod
-
-                # Phase 62b: altitude sickness → crew skill penalty
-                if _enable_human_factors:
-                    _alt62e = getattr(attacker.position, "altitude", 0.0)
-                    if _alt62e > cal.altitude_sickness_threshold_m:
-                        _alt_perf_e = max(
-                            0.5,
-                            1.0 - cal.altitude_sickness_rate
-                            * (_alt62e - cal.altitude_sickness_threshold_m) / 100.0,
-                        )
-                        if getattr(attacker, "acclimatized", False):
-                            _alt_perf_e = 1.0 - (1.0 - _alt_perf_e) * 0.5
-                        crew_skill *= _alt_perf_e
-
-                # Phase 44c: Equipment readiness gate
-                readiness = 1.0
-                if _maint_eng is not None:
-                    try:
-                        readiness = _maint_eng.get_unit_readiness(
-                            attacker.entity_id,
-                        )
-                    except Exception:
-                        pass
-                if readiness < 0.3:
+                # Phase 86b: MOPP + altitude + readiness from batched modifiers
+                if _obs.mopp_fatigue > 1.0:
+                    crew_skill /= _obs.mopp_fatigue
+                if _obs.mopp_reload_mod > 1.0:
+                    crew_skill /= _obs.mopp_reload_mod
+                crew_skill *= _obs.altitude_factor
+                if _obs.readiness < 0.3:
                     continue  # Too degraded to engage
-                crew_skill *= max(0.5, readiness)
+                crew_skill *= max(0.5, _obs.readiness)
 
                 # Phase 59d: equipment temperature stress → weapon jam
                 if _enable_equip_stress:
@@ -4122,7 +4169,7 @@ class BattleManager:
 
                 # Per-side target_size_modifier: use target's side
                 target_side = self._find_unit_side(ctx, best_target.entity_id)
-                target_size_mod = cal.get(
+                target_size_mod = cal_flat.get(
                     f"target_size_modifier_{target_side}",
                     target_size_mod_default,
                 )
@@ -4193,7 +4240,7 @@ class BattleManager:
                         _shield_val = _uw_eng.evaluate_human_shield(
                             best_target.position, _civ_density_66,
                         )
-                        _pk_red = cal.get("human_shield_pk_reduction", 0.5) * _shield_val
+                        _pk_red = cal_flat.get("human_shield_pk_reduction", 0.5) * _shield_val
                         crew_skill *= max(0.1, 1.0 - _pk_red)
 
                 # Phase 68b: track ammo expenditure for this engagement
@@ -4435,8 +4482,8 @@ class BattleManager:
                         if _gas_protection > 0 and any(
                             kw in _ammo_id_lower for kw in ("gas", "chlorine", "phosgene", "mustard")
                         ):
-                            _gas_floor = cal.get("gas_casualty_floor", 0.1)
-                            _gas_scale = cal.get("gas_protection_scaling", 0.8)
+                            _gas_floor = cal_flat.get("gas_casualty_floor", 0.1)
+                            _gas_scale = cal_flat.get("gas_protection_scaling", 0.8)
                             _gas_cas_mod = max(_gas_floor, 1.0 - _gas_protection * _gas_scale)
 
                         # Phase 54b: barrage zone suppression on defender
@@ -4708,7 +4755,7 @@ class BattleManager:
         # Phase 66a/68g: guerrilla disengage + retreat movement
         if _enable_unconventional:
             if _uw_eng is not None:
-                _retreat_dist = cal.get("retreat_distance_m", 2000.0)
+                _retreat_dist = cal_flat.get("retreat_distance_m", 2000.0)
                 for _guer_side, _su_guer in units_by_side.items():
                     _guer_enemies = active_enemies.get(_guer_side, [])
                     for _u_guer in _su_guer:
@@ -4723,7 +4770,7 @@ class BattleManager:
                         _cum = self._cumulative_casualties.get(_cas_key, 0)
                         _cas_frac = _cum / max(1, _total_pers + _cum)
                         # Override engine threshold with calibration value
-                        _guer_thresh = cal.get("guerrilla_disengage_threshold", 0.3)
+                        _guer_thresh = cal_flat.get("guerrilla_disengage_threshold", 0.3)
                         _uw_eng._cfg_guer.disengage_threshold = _guer_thresh
                         _in_pop = False
                         if _pop_eng is not None:
@@ -4825,8 +4872,8 @@ class BattleManager:
         if ctx.morale_machine is None:
             return
 
-        cal = ctx.calibration
-        morale_degrade_mod = cal.get("morale_degrade_rate_modifier", 1.0)
+        cal_flat = _resolve_cal_flat(ctx)
+        morale_degrade_mod = cal_flat.get("morale_degrade_rate_modifier", 1.0)
         rout_engine = getattr(ctx, "rout_engine", None)
 
         # Phase 56a: build per-side STRtree for rally + cascade (O(n log n))
@@ -4895,7 +4942,7 @@ class BattleManager:
             active_enemy = len(enemies)
             force_ratio = active_own / active_enemy if active_enemy > 0 else 10.0
 
-            cohesion = cal.get(f"{side_name}_cohesion", 0.7)
+            cohesion = cal_flat.get(f"{side_name}_cohesion", 0.7)
 
             for u in side_units:
                 if u.status not in (UnitStatus.ACTIVE, UnitStatus.ROUTING):
@@ -5030,10 +5077,8 @@ class BattleManager:
                 positions[u.entity_id] = u.position
         if not positions:
             return 1.0
-        cal = getattr(ctx, "calibration", None)
-        min_eff = 0.3
-        if cal is not None:
-            min_eff = cal.get("c2_min_effectiveness", 0.3)
+        cal_flat = _resolve_cal_flat(ctx)
+        min_eff = cal_flat.get("c2_min_effectiveness", 0.3)
         try:
             eff = comms.compute_c2_effectiveness(
                 unit_id, positions, min_effectiveness=min_eff,
@@ -5041,12 +5086,12 @@ class BattleManager:
         except Exception:
             eff = 1.0
         # Phase 62b: MOPP comms degradation
-        if cal is not None and cal.get("enable_human_factors", False):
+        if cal_flat.get("enable_human_factors", False):
             _cbrn_c2 = getattr(ctx, "cbrn_engine", None)
             if _cbrn_c2 is not None:
                 _ml_c2 = getattr(_cbrn_c2, "_mopp_levels", {}).get(unit_id, 0)
                 if _ml_c2 > 0:
-                    _cf = cal.mopp_comms_factor_4
+                    _cf = cal_flat.get("mopp_comms_factor_4", 0.5)
                     _sc = _ml_c2 / 4.0
                     _comms_mod = 1.0 - _sc * (1.0 - _cf)
                     eff *= _comms_mod

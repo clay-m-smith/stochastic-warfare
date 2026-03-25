@@ -117,7 +117,7 @@ class TestFOWWiring:
         import stochastic_warfare.simulation.battle as battle_mod
         src = open(battle_mod.__file__).read()
         # The FOW block is gated by enable_fog_of_war — when False, no sensor/sig lookup
-        assert 'cal.get("enable_fog_of_war", False)' in src
+        assert 'cal_flat.get("enable_fog_of_war", False)' in src
         assert "_enable_fow" in src
 
     def test_assessment_uses_fow_contacts_when_enabled(self):

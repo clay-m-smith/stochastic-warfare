@@ -357,6 +357,47 @@ class CalibrationSchema(BaseModel):
             for flag in self._MODERN_FLAGS:
                 object.__setattr__(self, flag, True)
 
+    def to_flat_dict(self, sides: list[str]) -> dict[str, Any]:
+        """Expand all fields into a flat ``dict[str, Any]`` for O(1) lookup.
+
+        Flattens nested morale fields and expands side overrides for each
+        side name.  Called once at scenario load time.  The resulting dict
+        is used by :class:`BattleManager` as a fast replacement for
+        repeated ``.get()`` calls during the tick loop.
+
+        For side-overridable fields the resolution order is:
+        1. ``side_overrides[side].field`` if present and not None
+        2. The matching top-level field on CalibrationSchema (if one exists)
+        3. ``None`` (caller supplies default via ``dict.get(key, default)``)
+        """
+        d = self.model_dump()
+
+        # ── Flatten morale sub-object ────────────────────────────────
+        morale_data = d.pop("morale", {})
+        for flat_key, nested_key in self._MORALE_KEY_MAP.items():
+            d[flat_key] = morale_data.get(nested_key, getattr(self.morale, nested_key))
+
+        # ── Expand side overrides ────────────────────────────────────
+        side_data = d.pop("side_overrides", {})
+        for side in sides:
+            so = side_data.get(side, {})
+            # Side-suffix: {side}_{field}
+            for suffix in self._SIDE_SUFFIX_FIELDS:
+                val = so.get(suffix)
+                if val is None:
+                    # Fallback to global field if one exists
+                    val = d.get(suffix)
+                d[f"{side}_{suffix}"] = val
+            # Side-prefix: {field}_{side}
+            for prefix in self._SIDE_PREFIX_FIELDS:
+                val = so.get(prefix)
+                if val is None:
+                    val = d.get(prefix)
+                d[f"{prefix}_{side}"] = val
+
+        # Strip None values — callers use dict.get(key, default)
+        return {k: v for k, v in d.items() if v is not None}
+
     def get(self, key: str, default: Any = None) -> Any:
         """Dict-compatible accessor for backward compatibility.
 

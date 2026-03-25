@@ -259,7 +259,7 @@ Verify the compound effect of LOD and aggregation together.
 
 ## Phase 86: Engagement & Calibration Optimization
 
-**Status**: Not started.
+**Status**: Complete.
 
 **Goal**: Optimize engagement selection and CalibrationSchema access patterns. Low-effort, low-risk improvements.
 
@@ -684,7 +684,7 @@ Update all living documents for Block 9 completion.
 | 83 | Profiling Infrastructure | ~12 | ~9,883 | Not started |
 | 84 | Spatial Culling & Scan Scheduling | ~30 | ~9,913 | Not started |
 | 85 | LOD & Aggregation | ~30 | ~9,943 | Not started |
-| 86 | Engagement & Calibration Optimization | ~14 | ~9,957 | Not started |
+| 86 | Engagement & Calibration Optimization | 19 | ~9,957 | Complete |
 | 87 | Expanded Numba JIT | ~20 | ~9,977 | Not started |
 | 88 | SoA Data Layer | ~26 | ~10,003 | Not started |
 | 89 | Per-Side Parallelism | ~18 | ~10,021 | Not started |

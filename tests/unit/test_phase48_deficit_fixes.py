@@ -676,25 +676,25 @@ class TestEWCalibrationParams:
         """jammer_coverage_mult is consumed via cal.get() in battle.py."""
         from pathlib import Path
         src = Path("stochastic_warfare/simulation/battle.py").read_text()
-        assert 'cal.get("jammer_coverage_mult"' in src
+        assert 'cal_flat.get("jammer_coverage_mult"' in src
 
     def test_stealth_detection_penalty_read(self):
         """stealth_detection_penalty is consumed via cal.get() in battle.py."""
         from pathlib import Path
         src = Path("stochastic_warfare/simulation/battle.py").read_text()
-        assert 'cal.get("stealth_detection_penalty"' in src
+        assert 'cal_flat.get("stealth_detection_penalty"' in src
 
     def test_sigint_detection_bonus_read(self):
         """sigint_detection_bonus is consumed via cal.get() in battle.py."""
         from pathlib import Path
         src = Path("stochastic_warfare/simulation/battle.py").read_text()
-        assert 'cal.get("sigint_detection_bonus"' in src
+        assert 'cal_flat.get("sigint_detection_bonus"' in src
 
     def test_sam_suppression_modifier_read(self):
         """sam_suppression_modifier is consumed via cal.get() in battle.py."""
         from pathlib import Path
         src = Path("stochastic_warfare/simulation/battle.py").read_text()
-        assert 'cal.get("sam_suppression_modifier"' in src
+        assert 'cal_flat.get("sam_suppression_modifier"' in src
 
     def test_per_side_hit_probability_modifier_read(self):
         """Per-side hit_probability_modifier is consumed via cal.get()."""

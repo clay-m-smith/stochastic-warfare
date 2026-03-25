@@ -431,6 +431,9 @@ class SimulationContext:
     # Calibration
     calibration: CalibrationSchema | dict[str, Any] = field(default_factory=CalibrationSchema)
 
+    # Flat calibration dict for O(1) battle-loop access (Phase 86)
+    cal_flat: dict[str, Any] = field(default_factory=dict)
+
     # ── Helpers ──────────────────────────────────────────────────────
 
     def all_units(self) -> list[Unit]:
@@ -582,6 +585,9 @@ class SimulationContext:
             if isinstance(cal_data, dict)
             else cal_data
         )
+        # Regenerate flat dict (Phase 86)
+        if isinstance(self.calibration, CalibrationSchema):
+            self.cal_flat = self.calibration.to_flat_dict(self.side_names())
 
         # Restore engine states
         engines = [
@@ -819,7 +825,12 @@ class ScenarioLoader:
             **loaders,
         )
 
-        # 9. Commander assignments (Phase 25d)
+        # 9. Flat calibration dict (Phase 86 — O(1) battle-loop access)
+        if isinstance(ctx.calibration, CalibrationSchema):
+            side_names = sorted(units_by_side.keys())
+            ctx.cal_flat = ctx.calibration.to_flat_dict(side_names)
+
+        # 10. Commander assignments (Phase 25d)
         self._apply_commander_assignments(ctx, config)
 
         return ctx
