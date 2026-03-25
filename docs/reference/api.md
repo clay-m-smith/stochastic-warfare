@@ -487,6 +487,15 @@ Pydantic model (`extra="forbid"`) for all scenario tuning parameters. Replaces f
 | `enable_bridge_capacity` | `bool` | `False` | Bridges enforce weight limits |
 | `enable_environmental_fatigue` | `bool` | `False` | Heat/cold stress from WBGT/wind-chill degrades performance |
 
+**LOD Tuning (Phase 85):**
+
+| Field | Type | Default | Description |
+|-------|------|---------|-------------|
+| `enable_lod` | `bool` | `False` | Enable level-of-detail unit resolution tiering (ACTIVE/NEARBY/DISTANT) |
+| `lod_nearby_interval` | `int` | `5` | Update frequency (ticks) for NEARBY-tier units |
+| `lod_distant_interval` | `int` | `20` | Update frequency (ticks) for DISTANT-tier units |
+| `lod_hysteresis_ticks` | `int` | `3` | Ticks before downgrade from higher tier (immediate promotion) |
+
 **Meta-Flags (Phase 80):**
 
 | Field | Type | Default | Description |

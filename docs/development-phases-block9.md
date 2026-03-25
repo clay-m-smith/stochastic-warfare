@@ -179,7 +179,7 @@ Use the same spatial index from 84a to pre-filter engagement targets in the batt
 
 ## Phase 85: LOD & Aggregation
 
-**Status**: Not started.
+**Status**: Complete.
 
 **Goal**: Reduce effective unit count by classifying units into resolution tiers and activating the existing aggregation engine. Target: 5-6x tick reduction for 1,000+ unit scenarios.
 

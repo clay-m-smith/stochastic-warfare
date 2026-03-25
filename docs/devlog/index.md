@@ -101,6 +101,7 @@ Rolling record of implementation decisions, changes, and lessons learned across 
 | **Block 9: Performance at Scale** ||||
 | 83 | Profiling Infrastructure | **Complete** | [phase-83.md](phase-83.md) |
 | 84 | Spatial Culling & Scan Scheduling | **Complete** | [phase-84.md](phase-84.md) |
+| 85 | LOD & Aggregation | **Complete** | [phase-85.md](phase-85.md) |
 
 ## Post-MVP Refinement Index
 
@@ -330,6 +331,8 @@ Known limitations and deferred improvements logged during implementation. Review
 | 66 | Data link range degradation — binary gate only, gradual C2 loss deferred | [phase-66.md — D8](phase-66.md#known-limitations--deferrals) |
 | 66 | Propulsion altitude performance — cruise_altitude_m not wired to altitude-dependent Pk | [phase-66.md — D9](phase-66.md#known-limitations--deferrals) |
 | 66 | SimulationContext TODO cleanup — cosmetic, deferred | [phase-66.md — D10](phase-66.md#known-limitations--deferrals) |
+| 85 | Aggregation engine.py wiring deferred — automatic LOD-tier-based aggregate/disaggregate in campaign tick not wired | [phase-85.md — Accepted Limitations](phase-85.md#accepted-limitations) |
+| 85 | 1000-unit performance benchmark not validated — no 1000-unit scenario exists yet | [phase-85.md — Accepted Limitations](phase-85.md#accepted-limitations) |
 
 ## Conventions
 

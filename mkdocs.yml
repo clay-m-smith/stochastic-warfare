@@ -171,6 +171,7 @@ nav:
     - Phase 82 - Block 8 Postmortem & Documentation: devlog/phase-82.md
     - Phase 83 - Profiling Infrastructure: devlog/phase-83.md
     - Phase 84 - Spatial Culling & Scan Scheduling: devlog/phase-84.md
+    - Phase 85 - LOD & Aggregation: devlog/phase-85.md
   - Specifications:
     - Project Structure: specs/project-structure.md
     - Skills & Hooks: skills-and-hooks.md

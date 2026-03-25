@@ -60,6 +60,7 @@ class UnitSnapshot:
     sensor_states: list[dict] = field(default_factory=list)
     supply_inventory: dict | None = None
     original_side: str = ""
+    order_records: list[dict] = field(default_factory=list)  # Phase 85
 
 
 @dataclass
@@ -148,6 +149,19 @@ class AggregationEngine:
             except Exception:
                 pass
 
+        # Orders (Phase 85)
+        order_records: list[dict] = []
+        _order_exec = getattr(ctx, "order_execution", None)
+        if _order_exec is not None:
+            for rec in (
+                _order_exec.get_active_orders(unit.entity_id)
+                + _order_exec.get_pending_orders(unit.entity_id)
+            ):
+                try:
+                    order_records.append(rec.get_state())
+                except Exception:
+                    pass
+
         return UnitSnapshot(
             unit_state=unit_state,
             morale_state=morale_val,
@@ -155,6 +169,7 @@ class AggregationEngine:
             sensor_states=sensor_states,
             supply_inventory=supply_inv,
             original_side=unit.side if isinstance(unit.side, str) else str(unit.side),
+            order_records=order_records,
         )
 
     def aggregate(
@@ -343,6 +358,21 @@ class AggregationEngine:
             if ctx.morale_states is not None:
                 ctx.morale_states[unit.entity_id] = MoraleState(snap.morale_state)
 
+            # Restore orders (Phase 85)
+            _order_exec = getattr(ctx, "order_execution", None)
+            if _order_exec is not None and snap.order_records:
+                from stochastic_warfare.c2.orders.types import OrderExecutionRecord
+                for rec_state in snap.order_records:
+                    try:
+                        rec = OrderExecutionRecord(
+                            order_id=rec_state.get("order_id", ""),
+                            recipient_id=rec_state.get("recipient_id", ""),
+                        )
+                        rec.set_state(rec_state)
+                        _order_exec._records[rec.order_id] = rec
+                    except Exception:
+                        pass
+
             restored_ids.append(unit.entity_id)
 
         logger.info(
@@ -458,6 +488,7 @@ class AggregationEngine:
                             "sensor_states": s.sensor_states,
                             "supply_inventory": s.supply_inventory,
                             "original_side": s.original_side,
+                            "order_records": s.order_records,
                         }
                         for s in agg.constituent_snapshots
                     ],
@@ -479,6 +510,7 @@ class AggregationEngine:
                     sensor_states=s.get("sensor_states", []),
                     supply_inventory=s.get("supply_inventory"),
                     original_side=s.get("original_side", ""),
+                    order_records=s.get("order_records", []),
                 )
                 for s in adata["snapshots"]
             ]

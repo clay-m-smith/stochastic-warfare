@@ -11,6 +11,7 @@ from __future__ import annotations
 import math
 from dataclasses import dataclass, field
 from datetime import datetime
+from enum import IntEnum
 from typing import Any
 
 import numpy as np
@@ -31,6 +32,15 @@ from shapely import STRtree
 from shapely.geometry import Point
 
 logger = get_logger(__name__)
+
+
+class UnitLodTier(IntEnum):
+    """Level-of-detail tier for per-unit update frequency (Phase 85)."""
+
+    ACTIVE = 0    # Full processing every tick
+    NEARBY = 1    # Reduced: full update every N ticks
+    DISTANT = 2   # Minimal: full update every M ticks
+
 
 # Sensor types that bypass visual weather degradation
 _WEATHER_BYPASS_TYPES: frozenset[SensorType] = frozenset({
@@ -1051,6 +1061,11 @@ class BattleManager:
         self._misinterpreted_orders: dict[str, Any] = {}
         # Phase 70c: signature cache (unit_type → signature profile, immutable)
         self._signature_cache: dict[str, Any] = {}
+        # Phase 85: LOD tier tracking
+        self._lod_tiers: dict[str, int] = {}
+        self._lod_pending_tiers: dict[str, int] = {}
+        self._lod_pending_counts: dict[str, int] = {}
+        self._lod_promoted: set[str] = set()
 
     # ── Engagement detection ────────────────────────────────────────
 
@@ -1142,6 +1157,11 @@ class BattleManager:
             for _u_idx in _side_units_idx:
                 _unit_index[_u_idx.entity_id] = _u_idx
 
+        # 1c. Phase 85: LOD tier classification
+        _lod_full_update = self._classify_lod_tiers(
+            ctx, units_by_side, enemy_pos_arrays, battle,
+        )
+
         # 1b. Phase 53a: Fog of war — per-side detection picture
         _enable_fow = cal.get("enable_fog_of_war", False)
         _enable_det_culling = cal.get("enable_detection_culling", True)
@@ -1153,6 +1173,8 @@ class BattleManager:
                 for _u in _fow_units:
                     if _u.status != UnitStatus.ACTIVE:
                         continue
+                    if _u.entity_id not in _lod_full_update:
+                        continue  # Phase 85: LOD skip (non-update tick)
                     _own_data.append({
                         "position": _u.position,
                         "sensors": ctx.unit_sensors.get(_u.entity_id, []),
@@ -1189,6 +1211,33 @@ class BattleManager:
                     )
                 except Exception:
                     logger.debug("FogOfWar update failed for %s", _fow_side, exc_info=True)
+
+            # Phase 85: promote non-ACTIVE-tier units that detected contacts
+            if cal.get("enable_lod", False):
+                for _fow_side, _fow_units in units_by_side.items():
+                    try:
+                        _wv = ctx.fog_of_war.get_world_view(_fow_side)
+                        for _u in _fow_units:
+                            _uid = _u.entity_id
+                            if self._lod_tiers.get(_uid, 0) == UnitLodTier.ACTIVE:
+                                continue
+                            if _uid not in _lod_full_update:
+                                continue  # didn't scan this tick
+                            _max_wpn = max(
+                                (w[0].definition.max_range_m
+                                 for w in ctx.unit_weapons.get(_uid, [])),
+                                default=0,
+                            )
+                            for _ct in _wv.contacts.values():
+                                _cp = _ct.estimated_position
+                                if _cp is not None:
+                                    _dx = _u.position.easting - _cp.easting
+                                    _dy = _u.position.northing - _cp.northing
+                                    if math.sqrt(_dx * _dx + _dy * _dy) <= _max_wpn * 2:
+                                        self._lod_promoted.add(_uid)
+                                        break
+                    except Exception:
+                        pass
 
         # 2. AI OODA loop update → completions trigger assess/decide
         if ctx.ooda_engine is not None:
@@ -1664,6 +1713,7 @@ class BattleManager:
         pending_damage = self._execute_engagements(
             ctx, units_by_side, active_enemies, enemy_pos_arrays, dt, timestamp,
             _unit_index=_unit_index,
+            _lod_full_update=_lod_full_update,
         )
         # Include mine damage and missile impact damage
         pending_damage.extend(pending_mine_damage)
@@ -1671,6 +1721,11 @@ class BattleManager:
 
         # 7. Apply deferred damage
         self._apply_deferred_damage(pending_damage, ctx.event_bus, timestamp)
+
+        # 7a. Phase 85: instant promotion for damaged units
+        if ctx.calibration.get("enable_lod", False):
+            for _dmg_unit, _dmg_status in pending_damage:
+                self._lod_promoted.add(_dmg_unit.entity_id)
 
         # 7b. Phase 60b/68e: fire zone damage — apply burn damage to units
         cal = getattr(getattr(ctx, "config", None), "calibration_overrides", None)
@@ -1717,11 +1772,13 @@ class BattleManager:
 
         # 8. Morale checks
         if battle.ticks_executed % self._config.morale_check_interval == 0:
-            self._execute_morale(ctx, units_by_side, active_enemies, timestamp)
+            self._execute_morale(ctx, units_by_side, active_enemies, timestamp,
+                                _lod_full_update=_lod_full_update)
 
         # 9. Supply consumption (combat rate)
         if ctx.consumption_engine is not None and ctx.stockpile_manager is not None:
-            self._execute_supply_consumption(ctx, units_by_side, dt)
+            self._execute_supply_consumption(ctx, units_by_side, dt,
+                                              _lod_full_update=_lod_full_update)
 
     # ── Battle termination ──────────────────────────────────────────
 
@@ -1973,6 +2030,10 @@ class BattleManager:
             "concealment_scores": dict(self._concealment_scores),
             "env_casualty_accum": dict(self._env_casualty_accum),
             "misinterpreted_orders": dict(self._misinterpreted_orders),
+            # Phase 85: LOD tier state
+            "lod_tiers": dict(self._lod_tiers),
+            "lod_pending_tiers": dict(self._lod_pending_tiers),
+            "lod_pending_counts": dict(self._lod_pending_counts),
         }
 
     def set_state(self, state: dict[str, Any]) -> None:
@@ -2011,6 +2072,11 @@ class BattleManager:
             s = UnitSuppressionState()
             s.set_state(sdata)
             self._suppression_states[uid] = s
+        # Phase 85: LOD tier state
+        self._lod_tiers = {k: int(v) for k, v in state.get("lod_tiers", {}).items()}
+        self._lod_pending_tiers = {k: int(v) for k, v in state.get("lod_pending_tiers", {}).items()}
+        self._lod_pending_counts = {k: int(v) for k, v in state.get("lod_pending_counts", {}).items()}
+        self._lod_promoted = set()
 
     @property
     def active_battles(self) -> list[BattleContext]:
@@ -2036,6 +2102,107 @@ class BattleManager:
         diffs = pos_a[:, np.newaxis, :] - pos_b[np.newaxis, :, :]
         dists = np.sqrt(np.sum(diffs * diffs, axis=2))
         return float(np.min(dists))
+
+    def _classify_lod_tiers(
+        self,
+        ctx: Any,
+        units_by_side: dict[str, list[Unit]],
+        enemy_pos_arrays: dict[str, np.ndarray],
+        battle: Any,
+    ) -> set[str]:
+        """Classify units into LOD tiers. Returns entity_ids for full update this tick."""
+        cal = ctx.calibration
+        if not cal.get("enable_lod", False):
+            return {
+                u.entity_id
+                for su in units_by_side.values()
+                for u in su
+                if u.status == UnitStatus.ACTIVE
+            }
+
+        nearby_interval = cal.get("lod_nearby_interval", 5)
+        distant_interval = cal.get("lod_distant_interval", 20)
+        hysteresis = cal.get("lod_hysteresis_ticks", 3)
+        tick = battle.ticks_executed
+        full_update: set[str] = set()
+
+        for side_name, side_units in units_by_side.items():
+            pos_arr = enemy_pos_arrays.get(side_name, np.empty((0, 2)))
+
+            for u in side_units:
+                if u.status != UnitStatus.ACTIVE:
+                    continue
+                uid = u.entity_id
+
+                # 1. Compute raw tier from distance to nearest enemy
+                if uid in self._lod_promoted:
+                    raw_tier = UnitLodTier.ACTIVE
+                elif pos_arr.shape[0] == 0:
+                    raw_tier = UnitLodTier.DISTANT
+                else:
+                    upos = np.array([u.position.easting, u.position.northing])
+                    diffs = pos_arr - upos
+                    nearest_dist = float(np.sqrt(np.min(np.sum(diffs * diffs, axis=1))))
+
+                    # Max weapon range for ACTIVE threshold
+                    max_wpn = max(
+                        (w[0].definition.max_range_m for w in ctx.unit_weapons.get(uid, [])),
+                        default=0.0,
+                    )
+                    # Max sensor range for NEARBY threshold
+                    max_sensor = max(
+                        (s.effective_range for s in ctx.unit_sensors.get(uid, [])),
+                        default=0.0,
+                    )
+
+                    active_thresh = max(max_wpn * 2.0, 100.0)
+                    nearby_thresh = max(max_sensor, active_thresh)
+
+                    if nearest_dist <= active_thresh:
+                        raw_tier = UnitLodTier.ACTIVE
+                    elif nearest_dist <= nearby_thresh:
+                        raw_tier = UnitLodTier.NEARBY
+                    else:
+                        raw_tier = UnitLodTier.DISTANT
+
+                # 2. Apply hysteresis (immediate promotion, delayed demotion)
+                is_new = uid not in self._lod_tiers
+                current = self._lod_tiers.get(uid, UnitLodTier.ACTIVE)
+                if is_new:  # first classification — assign directly
+                    final = raw_tier
+                elif raw_tier < current:  # promotion (lower tier value = higher priority)
+                    final = raw_tier
+                    self._lod_pending_tiers.pop(uid, None)
+                    self._lod_pending_counts.pop(uid, None)
+                elif raw_tier > current:  # demotion
+                    if self._lod_pending_tiers.get(uid) == raw_tier:
+                        count = self._lod_pending_counts.get(uid, 0) + 1
+                        self._lod_pending_counts[uid] = count
+                        final = raw_tier if count >= hysteresis else current
+                        if count >= hysteresis:
+                            self._lod_pending_tiers.pop(uid, None)
+                            self._lod_pending_counts.pop(uid, None)
+                    else:
+                        self._lod_pending_tiers[uid] = raw_tier
+                        self._lod_pending_counts[uid] = 1
+                        final = current
+                else:
+                    final = raw_tier
+                    self._lod_pending_tiers.pop(uid, None)
+                    self._lod_pending_counts.pop(uid, None)
+
+                self._lod_tiers[uid] = final
+
+                # 3. Determine if this unit gets full update this tick
+                if final == UnitLodTier.ACTIVE:
+                    full_update.add(uid)
+                elif final == UnitLodTier.NEARBY and tick % nearby_interval == 0:
+                    full_update.add(uid)
+                elif final == UnitLodTier.DISTANT and tick % distant_interval == 0:
+                    full_update.add(uid)
+
+        self._lod_promoted.clear()
+        return full_update
 
     @staticmethod
     def _build_enemy_data(
@@ -3078,6 +3245,7 @@ class BattleManager:
         dt: float,
         timestamp: datetime,
         _unit_index: dict[str, Unit] | None = None,
+        _lod_full_update: set[str] | None = None,
     ) -> list[tuple[Unit, UnitStatus]]:
         """Run detection + engagement for all units. Returns deferred damage."""
         pending_damage: list[tuple[Unit, UnitStatus]] = []
@@ -3251,6 +3419,10 @@ class BattleManager:
 
             for attacker in side_units:
                 if attacker.status != UnitStatus.ACTIVE:
+                    continue
+
+                # Phase 85: LOD gate — only full-update units initiate
+                if _lod_full_update is not None and attacker.entity_id not in _lod_full_update:
                     continue
 
                 # Phase 41a: force channeling — limit engagers per side
@@ -4647,6 +4819,7 @@ class BattleManager:
         units_by_side: dict[str, list[Unit]],
         active_enemies: dict[str, list[Unit]],
         timestamp: datetime,
+        _lod_full_update: set[str] | None = None,
     ) -> None:
         """Run morale checks for all active/routing units."""
         if ctx.morale_machine is None:
@@ -4728,6 +4901,15 @@ class BattleManager:
                 if u.status not in (UnitStatus.ACTIVE, UnitStatus.ROUTING):
                     continue
 
+                # Phase 85: LOD skip for morale degradation (ROUTING
+                # units always checked so rally works regardless of tier)
+                if (
+                    _lod_full_update is not None
+                    and u.status == UnitStatus.ACTIVE
+                    and u.entity_id not in _lod_full_update
+                ):
+                    continue
+
                 # Phase 40e: use actual suppression level
                 sup_state = self._suppression_states.get(u.entity_id)
                 suppression_level = sup_state.value if sup_state is not None else 0.0
@@ -4802,6 +4984,7 @@ class BattleManager:
         ctx: Any,
         units_by_side: dict[str, list[Unit]],
         dt: float,
+        _lod_full_update: set[str] | None = None,
     ) -> None:
         """Consume supplies for active units during combat."""
         dt_hours = dt / 3600.0
@@ -4809,6 +4992,8 @@ class BattleManager:
             for u in side_units:
                 if u.status != UnitStatus.ACTIVE:
                     continue
+                if _lod_full_update is not None and u.entity_id not in _lod_full_update:
+                    continue  # Phase 85: LOD skip
                 personnel = len(u.personnel) if u.personnel else 4
                 equipment = len(u.equipment) if u.equipment else 1
                 try:

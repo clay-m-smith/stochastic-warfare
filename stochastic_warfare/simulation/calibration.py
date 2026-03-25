@@ -218,6 +218,12 @@ class CalibrationSchema(BaseModel):
     enable_detection_culling: bool = True
     enable_scan_scheduling: bool = False
 
+    # -- LOD tiering (Phase 85) -------------------------------------------
+    enable_lod: bool = False
+    lod_nearby_interval: int = 5
+    lod_distant_interval: int = 20
+    lod_hysteresis_ticks: int = 3
+
     # -- Meta-flag (Phase 80) ---------------------------------------------
     enable_all_modern: bool = False
 
