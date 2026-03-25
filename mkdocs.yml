@@ -165,6 +165,7 @@ nav:
     - Phase 78 - P2 Environment Wiring: devlog/phase-78.md
     - Phase 79 - CI/CD & Packaging: devlog/phase-79.md
     - Phase 80 - API & Frontend Sync: devlog/phase-80.md
+    - Phase 81 - Recalibration & Validation: devlog/phase-81.md
   - Specifications:
     - Project Structure: specs/project-structure.md
     - Skills & Hooks: skills-and-hooks.md

@@ -109,7 +109,7 @@ reinforcements:
     position: [5000, 30000]
 
 calibration_overrides:
-  # Phase 67: Block 7 flag enablement — naval+air+space, full joint ops
+  # Phase 67 flags + Phase 81 deferred enforcement
   enable_sea_state_ops: true
   enable_acoustic_layers: true
   enable_em_propagation: true
@@ -118,6 +118,9 @@ calibration_overrides:
   enable_fog_of_war: true
   enable_space_effects: true
   enable_missile_routing: true
+  enable_fuel_consumption: true
+  enable_ammo_gate: true
+  enable_carrier_ops: true
   roe_level: WEAPONS_FREE
   hit_probability_modifier: 1.5
   target_size_modifier: 1.0

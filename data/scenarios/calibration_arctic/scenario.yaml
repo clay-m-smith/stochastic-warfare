@@ -33,8 +33,8 @@ sides:
     morale_initial: STEADY
 
 terrain:
-  width_m: 4000
-  height_m: 4000
+  width_m: 8000
+  height_m: 8000
   cell_size_m: 100.0
   base_elevation_m: 300.0
   terrain_type: hilly_defense
@@ -59,19 +59,25 @@ calibration_overrides:
   rain_attenuation_factor: 2.0          # default 1.0 — snow/ice attenuation
   dig_in_ticks: 60                      # default 30 — frozen ground
   observation_decay_rate: 0.02          # default 0.05 — slow position changes
-  # Enable relevant environmental flags
+  # Phase 81: selective enforcement flags + environmental
   enable_seasonal_effects: true
   enable_equipment_stress: true
   enable_human_factors: true
   enable_obscurants: true
   enable_nvg_detection: true
+  enable_fuel_consumption: true
+  enable_ammo_gate: true
+  enable_environmental_fatigue: true
+  enable_ice_crossing: true
   # Standard calibration
   hit_probability_modifier: 0.8
   morale_degrade_rate_modifier: 1.2
-  blue_start_x: 1000
-  blue_start_y: 2000
-  red_start_x: 3000
-  red_start_y: 2000
+  blue_start_x: 2000
+  blue_start_y: 4000
+  blue_formation_spacing_m: 200
+  red_start_x: 6000
+  red_start_y: 4000
+  red_formation_spacing_m: 200
   weapon_assignments:
     "M4A1 Carbine": m4a1
     "M249 SAW": m249_saw

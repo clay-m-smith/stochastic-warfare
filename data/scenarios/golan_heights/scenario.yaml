@@ -130,9 +130,11 @@ victory_conditions:
       max_duration_s: 64800
 
 calibration_overrides:
-  # Phase 67: Block 7 flag enablement — dust/smoke, October weather
+  # Phase 81: selective flags only (performance benchmark scenario — enable_all_modern adds ~6x overhead)
   enable_obscurants: true
   enable_seasonal_effects: true
+  enable_fuel_consumption: true
+  enable_ammo_gate: true
   hit_probability_modifier: 1.0
   # Hull-down defensive positions reduce target size moderately.
   # 0.55 = ~4.7m² vs full 8.5m² — accounts for hull-down positions

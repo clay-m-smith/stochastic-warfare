@@ -78,34 +78,35 @@ victory_conditions:
   - type: force_destroyed
     side: ""
     params:
-      threshold: 0.5
+      threshold: 0.08
       target_side: franco_spanish
+      count_disabled: true
   - type: morale_collapsed
     side: franco_spanish
     params:
-      threshold: 0.6
+      threshold: 0.3
   - type: time_expired
     side: british
     params:
       max_duration_s: 28800
 
 calibration_overrides:
-  hit_probability_modifier: 0.9
-  target_size_modifier: 1.5
+  hit_probability_modifier: 2.0
+  target_size_modifier: 2.0
   # British gunnery 3:1 superior — Dupuy CEV (Adkin, *Trafalgar Companion*)
-  british_force_ratio_modifier: 2.5
-  franco_spanish_force_ratio_modifier: 0.6
-  morale_degrade_rate_modifier: 1.2
-  morale_base_degrade_rate: 0.015
-  morale_casualty_weight: 0.8
-  morale_check_interval: 10
-  british_cohesion: 0.9
-  franco_spanish_cohesion: 0.4
+  british_force_ratio_modifier: 3.0
+  franco_spanish_force_ratio_modifier: 0.5
+  morale_degrade_rate_modifier: 3.0
+  morale_base_degrade_rate: 0.05
+  morale_casualty_weight: 1.0
+  morale_check_interval: 5
+  british_cohesion: 0.95
+  franco_spanish_cohesion: 0.15
   destruction_threshold: 0.35
-  british_start_x: 3000.0
+  british_start_x: 5000.0
   british_start_y: 7500.0
   british_formation_spacing_m: 80.0
-  franco_spanish_start_x: 17000.0
+  franco_spanish_start_x: 10000.0
   franco_spanish_start_y: 7500.0
   franco_spanish_formation_spacing_m: 300.0
   weapon_assignments:

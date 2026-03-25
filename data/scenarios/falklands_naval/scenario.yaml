@@ -92,11 +92,14 @@ victory_conditions:
       max_duration_s: 5400
 
 calibration_overrides:
-  # Phase 67: Block 7 flag enablement — pure naval, South Atlantic conditions
+  # Phase 67 flags + Phase 81 deferred enforcement
   enable_sea_state_ops: true
   enable_acoustic_layers: true
   enable_em_propagation: true
   enable_mine_persistence: true
+  enable_fuel_consumption: true
+  enable_ammo_gate: true
+  enable_carrier_ops: true
   hit_probability_modifier: 2.0
   target_size_modifier: 1.5
   morale_degrade_rate_modifier: 1.5

@@ -1,6 +1,6 @@
 name: "Suwalki Gap - NATO Defense of the Baltic Corridor"
 date: "2025-09-01T05:00:00Z"
-duration_hours: 120.0
+duration_hours: 24.0
 latitude: 54.1
 longitude: 23.0
 era: modern
@@ -104,7 +104,7 @@ victory_conditions:
   - type: time_expired
     side: blue
     params:
-      max_duration_s: 432000
+      max_duration_s: 86400
   - type: morale_collapsed
     side: ""
 
@@ -119,12 +119,14 @@ reinforcements:
     position: [1000, 10000]
 
 calibration_overrides:
-  # Phase 67: Block 7 flag enablement — NATO joint, air, C2 friction
+  # Phase 67 flags + Phase 81 deferred enforcement
   enable_seasonal_effects: true
   enable_fog_of_war: true
   enable_air_routing: true
   enable_air_combat_environment: true
   enable_c2_friction: true
+  enable_fuel_consumption: true
+  enable_ammo_gate: true
   hit_probability_modifier: 1.5
   target_size_modifier: 1.0
   morale_degrade_rate_modifier: 3.0
@@ -133,13 +135,14 @@ calibration_overrides:
   morale_check_interval: 10
   blue_cohesion: 0.9
   red_cohesion: 0.35
-  target_size_modifier_blue: 0.05
-  target_size_modifier_red: 3.0
-  max_engagers_per_side: 5
-  destruction_threshold: 0.25
-  blue_start_x: 8000.0
+  target_size_modifier_blue: 0.5
+  target_size_modifier_red: 1.5
+  max_engagers_per_side: 8
+  destruction_threshold: 0.2
+  blue_force_ratio_modifier: 3.0
+  blue_start_x: 13000.0
   blue_start_y: 10000.0
-  red_start_x: 22000.0
+  red_start_x: 16000.0
   red_start_y: 10000.0
   defensive_sides: [blue]
 

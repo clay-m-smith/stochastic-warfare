@@ -96,6 +96,8 @@ calibration_overrides:
   red_start_y: 7500.0
   red_formation_spacing_m: 200.0
   enable_unconventional_warfare: true
+  enable_fuel_consumption: true
+  enable_ammo_gate: true
   weapon_assignments:
     "M4A1 Carbine": m4_556mm
     "M4A1 SOPMOD": m4_556mm

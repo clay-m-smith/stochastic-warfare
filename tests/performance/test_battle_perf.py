@@ -104,10 +104,10 @@ class TestGolanBenchmark:
     """Golan Heights scenario performance benchmark."""
 
     def test_golan_heights_benchmark(self) -> None:
-        """Golan Heights (290 units, 18hr) completes in < 180s."""
+        """Golan Heights (290 units, 18hr) completes in < 120s."""
         result = _run_scenario("golan_heights")
-        assert result["elapsed_s"] < 180.0, (
-            f"Golan Heights took {result['elapsed_s']:.1f}s (limit: 180s)"
+        assert result["elapsed_s"] < 120.0, (
+            f"Golan Heights took {result['elapsed_s']:.1f}s (limit: 120s)"
         )
 
     def test_determinism_golan_heights(self) -> None:

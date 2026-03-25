@@ -123,10 +123,12 @@ victory_conditions:
       max_duration_s: 7200
 
 calibration_overrides:
-  # Phase 67: Block 7 flag enablement — air-heavy SEAD, BVR engagement
+  # Phase 67 flags + Phase 81 deferred enforcement
   enable_air_routing: true
   enable_air_combat_environment: true
   enable_fog_of_war: true
+  enable_fuel_consumption: true
+  enable_ammo_gate: true
   sam_suppression_modifier: 1.2
   sead_effectiveness: 0.9
   drone_provocation_prob: 0.85

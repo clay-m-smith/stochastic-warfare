@@ -92,7 +92,7 @@ class TestFuelConsumption:
     """Fuel consumed proportional to distance when enabled."""
 
     def test_fuel_consumed_on_movement(self):
-        """Unit moves 100m at ground rate 0.0001 → fuel drops by 0.01."""
+        """Unit moves toward enemy and consumes fuel proportionally."""
         tank = _make_unit(fuel_remaining=1.0)
         enemy = _make_enemy(position=Position(200, 0, 0))  # close enough to trigger movement
         ctx = _make_ctx({"enable_fuel_consumption": True})
@@ -123,7 +123,8 @@ class TestFuelConsumption:
     def test_fuel_exhaustion_sets_speed_zero(self):
         """When fuel hits 0, unit speed is set to 0."""
         # Very low fuel — will exhaust on first movement
-        tank = _make_unit(fuel_remaining=0.001, max_speed=15.0)
+        # Ground rate 0.000002/m, move ~150m/tick → need < 0.0003 fuel
+        tank = _make_unit(fuel_remaining=0.0001, max_speed=15.0)
         enemy = _make_enemy(position=Position(5000, 0, 0))
         ctx = _make_ctx({"enable_fuel_consumption": True})
 
@@ -135,8 +136,12 @@ class TestFuelConsumption:
         assert tank.fuel_remaining == 0.0
         assert tank.speed == 0.0
 
-    def test_air_unit_consumes_at_higher_rate(self):
-        """Air domain uses 0.0005 vs ground 0.0001."""
+    def test_air_and_ground_consume_at_different_rates(self):
+        """Air and ground domains use distinct fuel rates per meter.
+
+        Ground: 0.000002/m (~500km range).  Aerial: 0.0000003/m (~3333km range).
+        Aircraft are more fuel-efficient per meter (larger tanks, higher range).
+        """
         ground = _make_unit(entity_id="gnd", fuel_remaining=1.0)
         air = _make_unit(entity_id="air", fuel_remaining=1.0)
         # Force air domain (GroundUnit.__init__ sets GROUND)
@@ -155,13 +160,15 @@ class TestFuelConsumption:
         mgr._execute_movement(ctx, {"blue": [air]}, {"blue": [enemy_a]}, dt=10.0, battle=battle)
         fuel_air = air.fuel_remaining
 
-        # Both moved same distance (~150m in 10s at 15 m/s), air uses 5x rate
+        # Both moved same distance (~150m in 10s at 15 m/s)
         ground_consumed = 1.0 - fuel_ground
         air_consumed = 1.0 - fuel_air
         assert ground_consumed > 0, "Ground unit should have consumed fuel"
         assert air_consumed > 0, "Air unit should have consumed fuel"
-        ratio = air_consumed / ground_consumed
-        assert ratio == pytest.approx(5.0, rel=0.1)
+        # Ground rate is higher per meter than air (ground vehicles less fuel-efficient)
+        assert ground_consumed > air_consumed, (
+            f"Ground should consume more per meter: ground={ground_consumed}, air={air_consumed}"
+        )
 
     def test_infantry_not_fuel_gated(self):
         """Infantry (max_speed <= 5) doesn't consume fuel even when enabled."""

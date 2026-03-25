@@ -43,10 +43,13 @@ victory_conditions:
     side: draw
     params: {max_duration_s: 604800}
 calibration_overrides:
-  # Phase 67: Block 7 flag enablement — winter, dust/smoke, equipment cold stress
+  # Phase 67 flags + Phase 81 deferred enforcement
   enable_seasonal_effects: true
   enable_obscurants: true
   enable_equipment_stress: true
+  enable_fuel_consumption: true
+  enable_ammo_gate: true
+  enable_environmental_fatigue: true
   blue_start_x: 10000
   blue_start_y: 10000
   red_start_x: 2000

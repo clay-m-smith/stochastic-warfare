@@ -117,10 +117,12 @@ victory_conditions:
       max_duration_s: 1800
 
 calibration_overrides:
-  # Phase 67: Block 7 flag enablement — night desert, thermal sights, dust
+  # Phase 67 flags + Phase 81 deferred enforcement
   enable_obscurants: true
   enable_thermal_crossover: true
   enable_nvg_detection: true
+  enable_fuel_consumption: true
+  enable_ammo_gate: true
   hit_probability_modifier: 1.0
   target_size_modifier: 1.0
   thermal_contrast: 1.5

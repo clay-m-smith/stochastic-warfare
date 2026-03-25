@@ -82,6 +82,9 @@ victory_conditions:
       max_duration_s: 43200
 
 calibration_overrides:
+  # Phase 81: selective enforcement flags
+  enable_fuel_consumption: true
+  enable_ammo_gate: true
   roe_level: WEAPONS_FREE
   hit_probability_modifier: 2.0
   target_size_modifier: 1.5

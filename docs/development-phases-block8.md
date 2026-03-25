@@ -991,7 +991,7 @@ Fix data issues identified in audit.
 
 ## Phase 81: Recalibration & Validation
 
-**Status**: Not started.
+**Status**: Complete.
 
 **Goal**: Full recalibration after all behavioral changes from Phases 68–80.
 

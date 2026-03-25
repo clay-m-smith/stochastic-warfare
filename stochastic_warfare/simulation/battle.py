@@ -2894,12 +2894,15 @@ class BattleManager:
                     _domain_fuel = getattr(u, "domain", None)
                     _fuel_rate = getattr(u, "fuel_consumption_rate", None)
                     if _fuel_rate is None:
+                        # Rates per meter of 0.0–1.0 fuel fraction.
+                        # Ground: ~500km range → 0.000002/m.  Aerial: ~3000km → 0.0000003/m.
+                        # Naval: ~10,000km → 0.0000001/m.
                         if _domain_fuel == Domain.AERIAL:
-                            _fuel_rate = 0.0005
+                            _fuel_rate = 0.0000003
                         elif _domain_fuel == Domain.NAVAL:
-                            _fuel_rate = 0.00005
+                            _fuel_rate = 0.0000001
                         else:
-                            _fuel_rate = 0.0001  # ground default
+                            _fuel_rate = 0.000002  # ground default ~500km range
                     _new_fuel = max(0.0, u.fuel_remaining - move_dist * _fuel_rate)
                     object.__setattr__(u, "fuel_remaining", _new_fuel)
                     if _new_fuel <= 0.0:

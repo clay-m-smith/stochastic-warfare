@@ -83,6 +83,9 @@ victory_conditions:
     side: ""
 
 calibration_overrides:
+  # Phase 81: selective enforcement flags
+  enable_fuel_consumption: true
+  enable_ammo_gate: true
   hit_probability_modifier: 2.0
   target_size_modifier: 0.3
   target_size_modifier_blue: 0.1

@@ -311,8 +311,13 @@ def run_scenario(scenario_path: Path, data_dir: Path, verbose: bool = False, see
             result.issues.append("ENGAGEMENTS_BUT_NO_DAMAGE")
 
         # Check for centroid collapse (all active units within 50m)
+        # Skip if side lost >50% — survivors naturally cluster after collapse
         for side, spread in result.final_position_spread.items():
-            if spread < 50 and result.final_active.get(side, 0) > 2:
+            active = result.final_active.get(side, 0)
+            total = result.sides.get(side, 0)
+            if total > 0 and (total - active) / total > 0.5:
+                continue  # side lost majority — clustering is expected
+            if spread < 50 and active > 2:
                 result.issues.append(f"CENTROID_COLLAPSE_{side}")
 
         # Check for stuck units (active, have weapons, didn't move much)

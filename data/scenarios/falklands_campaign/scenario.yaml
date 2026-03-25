@@ -89,6 +89,9 @@ reinforcements:
     position: [90000, 50000]
 
 calibration_overrides:
+  # Phase 81: selective enforcement flags
+  enable_fuel_consumption: true
+  enable_ammo_gate: true
   roe_level: WEAPONS_FREE
   hit_probability_modifier: 0.3
   target_size_modifier: 0.5

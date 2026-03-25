@@ -38,12 +38,16 @@ victory_conditions:
     side: draw
     params: {max_duration_s: 2592000}
 calibration_overrides:
-  # Phase 67: Block 7 flag enablement — IED/guerrilla mechanics
+  # Phase 81: selective enforcement flags + unconventional warfare
   enable_unconventional_warfare: true
-  blue_start_x: 2000
+  enable_fuel_consumption: true
+  enable_ammo_gate: true
+  blue_start_x: 4000
   blue_start_y: 7500
-  red_start_x: 13000
+  red_start_x: 8000
   red_start_y: 7500
+  hit_probability_modifier: 0.5
+  morale_degrade_rate_modifier: 0.3
   roe_level: WEAPONS_TIGHT
   weapon_assignments:
     "M4A1 Carbine": m4_556mm

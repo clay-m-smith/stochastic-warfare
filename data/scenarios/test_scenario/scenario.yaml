@@ -50,3 +50,8 @@ victory_conditions:
     side: blue
     params:
       max_duration_s: 43200
+
+calibration_overrides:
+  # Phase 81: selective enforcement flags
+  enable_fuel_consumption: true
+  enable_ammo_gate: true

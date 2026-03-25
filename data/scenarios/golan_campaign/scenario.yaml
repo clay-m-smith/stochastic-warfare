@@ -117,6 +117,9 @@ reinforcements:
     position: [500, 12000]
 
 calibration_overrides:
+  # Phase 81: deferred enforcement flags
+  enable_fuel_consumption: true
+  enable_ammo_gate: true
   hit_probability_modifier: 1.5
   target_size_modifier: 0.55
   target_size_modifier_blue: 0.1

@@ -173,9 +173,9 @@ class TestSuwalkiGap:
         )
         assert len(raw.get("documented_outcomes", [])) >= 2
 
-    def test_duration_120h(self):
+    def test_duration_24h(self):
         cfg = _load_scenario_by_name("suwalki_gap")
-        assert cfg.duration_hours == 120.0
+        assert cfg.duration_hours == 24.0
 
 
 class TestHybridGrayZone:

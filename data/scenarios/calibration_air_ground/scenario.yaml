@@ -67,13 +67,15 @@ calibration_overrides:
   disable_threshold: 0.2                # default 0.3 — lower damage tolerance
   wave_interval_s: 180                  # default 300 — faster wave tempo
   target_selection_mode: nearest         # default threat_scored — simplified targeting
-  # Enable relevant flags
+  # Phase 81: selective enforcement flags + environmental
   enable_air_routing: true
   enable_air_combat_environment: true
   enable_fog_of_war: true
   enable_obscurants: true
   enable_em_propagation: true
   enable_event_feedback: true
+  enable_fuel_consumption: true
+  enable_ammo_gate: true
   # Standard calibration
   hit_probability_modifier: 1.0
   thermal_contrast: 1.2
