@@ -142,6 +142,7 @@ def results_by_name_seed42(eval_results_seed42):
     return {r["scenario_name"]: r for r in eval_results_seed42}
 
 
+@pytest.mark.slow
 class TestAllScenariosComplete:
     """Every scenario must complete without error (seed=42)."""
 
@@ -153,6 +154,7 @@ class TestAllScenariosComplete:
         assert len(eval_results_seed42) >= 35, f"Only {len(eval_results_seed42)} scenarios ran"
 
 
+@pytest.mark.slow
 class TestHistoricalWinnersSeed42:
     """Historical scenarios produce correct winner with seed=42."""
 
@@ -218,6 +220,7 @@ class TestHistoricalAccuracyMC:
         )
 
 
+@pytest.mark.slow
 class TestVictoryConditions:
     """Modern/historical combat scenarios should resolve decisively."""
 
@@ -233,6 +236,7 @@ class TestVictoryConditions:
         )
 
 
+@pytest.mark.slow
 class TestVictoryConditionTypes:
     """Phase 73: Specific victory condition type assertions."""
 

@@ -1,0 +1,46 @@
+name: Benchmarks
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      run_golan:
+        description: 'Run Golan Heights benchmark (slow)'
+        type: boolean
+        default: false
+
+concurrency:
+  group: benchmark-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  benchmark:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          enable-cache: true
+
+      - name: Install dependencies
+        run: uv sync --extra dev
+
+      - name: 73 Easting benchmark
+        run: uv run python -m pytest tests/benchmarks/test_benchmarks.py::TestBenchmark73Easting --override-ini="addopts=" -v --tb=short
+
+      - name: Golan Heights benchmark (manual only)
+        if: github.event_name == 'workflow_dispatch' && github.event.inputs.run_golan == 'true'
+        run: uv run python -m pytest tests/benchmarks/test_benchmarks.py::TestBenchmarkGolanHeights --override-ini="addopts=" -v --tb=short
+
+      - name: Infrastructure tests
+        run: uv run python -m pytest tests/benchmarks/test_benchmarks.py::TestBenchmarkInfra --override-ini="addopts=" -v --tb=short

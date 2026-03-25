@@ -1,0 +1,20 @@
+{
+  "_meta": {
+    "format_version": 1,
+    "description": "Performance benchmark baselines for regression detection. Measured locally (Windows) with profile=False. Update from CI for ubuntu-latest baselines."
+  },
+  "73_easting": {
+    "wall_clock_s": 8.0,
+    "ticks_executed": 185,
+    "peak_memory_mb": 5.0,
+    "commit": "c76d63e",
+    "timestamp": "2026-03-24T00:00:00Z"
+  },
+  "golan_heights": {
+    "wall_clock_s": 500.0,
+    "ticks_executed": 6480,
+    "peak_memory_mb": 20.0,
+    "commit": "c76d63e",
+    "timestamp": "2026-03-24T00:00:00Z"
+  }
+}

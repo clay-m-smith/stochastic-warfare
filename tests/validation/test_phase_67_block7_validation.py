@@ -106,6 +106,7 @@ def results_by_name(eval_results):
     return {r["scenario_name"]: r for r in eval_results}
 
 
+@pytest.mark.slow
 class TestFlaggedScenariosComplete:
     """All flagged scenarios complete without error."""
 
@@ -131,6 +132,7 @@ class TestFlaggedScenariosComplete:
         )
 
 
+@pytest.mark.slow
 class TestFlaggedWinners:
     """Flagged scenarios still produce correct winners at seed=42."""
 
@@ -154,6 +156,7 @@ class TestFlaggedWinners:
         assert actual == "draw", f"{scenario}: expected draw, got {actual}"
 
 
+@pytest.mark.slow
 class TestFlaggedVictoryConditions:
     """Decisive flagged scenarios resolve via combat, not time expiry."""
 

@@ -1,8 +1,8 @@
 # Stochastic Warfare
 
 ![Python](https://img.shields.io/badge/python-%3E%3D3.12-blue)
-![Tests](https://img.shields.io/badge/tests-10%2C187_passing-brightgreen)
-![Phase](https://img.shields.io/badge/phase-82_Block--8--COMPLETE-brightgreen)
+![Tests](https://img.shields.io/badge/tests-10%2C372_passing-brightgreen)
+![Phase](https://img.shields.io/badge/phase-83_Block--9-blue)
 
 High-fidelity, high-resolution wargame simulator built as a headless Python engine. Models warfare across multiple scales — from individual unit engagements up through tactical battles, operational battlefields, and multi-day strategic campaigns — with stochastic and signal-processing-inspired models throughout.
 
@@ -171,7 +171,7 @@ For the full package tree and module decomposition, see [`docs/specs/project-str
 
 ## Development Status
 
-All 11 MVP phases (0-10) are complete. Post-MVP Phases 11-24 are complete (deep systems rework + performance optimization + developer tooling + real-world terrain + electronic warfare + space & satellite domain + CBRN effects + doctrinal AI schools + WW2 era + WW1 era + Napoleonic era + Ancient & Medieval era + unconventional & prohibited warfare). Block 2 Phases 25-30 complete (Engine Wiring & Integration Sprint + Core Polish & Configuration + Combat System Completeness + Modern Era Data Package + Directed Energy Weapons + Historical Era Data Expansion + Scenario & Campaign Library). Block 3 complete (Phases 31-36: Documentation Site + API + Frontend + Charts + Tactical Map + Scenario Tweaker). Block 4 complete (Phases 37-39: Integration Fixes + E2E Validation + Map & Chart Enhancements + Quality, Performance & Packaging). Block 5 complete (Phases 40-48: Battle Loop Foundation + Combat Depth + Tactical Behavior + Domain-Specific Resolution + Environmental & Subsystem Integration + Mathematical Model Audit + Scenario Data Cleanup + Full Recalibration + Deficit Resolution). Block 6 complete (Phases 49-57: Calibration Schema Hardening + Combat Fidelity Polish + Naval Combat Completeness + Environmental Continuity + C2 & AI Completeness + Era-Specific & Domain Sub-Engine Wiring + Resolution & Scenario Migration + Performance & Logistics + Full Validation & Regression). Block 7 COMPLETE (Phases 58-67: Structural Verification + Environment Wiring + Engine Integration + Integration Validation & Recalibration). Block 8 COMPLETE (Phases 68-82: Consequence Enforcement + Scenario Expansion + Postmortem & Documentation). 82 phases delivered across 8 blocks.
+All 11 MVP phases (0-10) are complete. Post-MVP Phases 11-24 are complete (deep systems rework + performance optimization + developer tooling + real-world terrain + electronic warfare + space & satellite domain + CBRN effects + doctrinal AI schools + WW2 era + WW1 era + Napoleonic era + Ancient & Medieval era + unconventional & prohibited warfare). Block 2 Phases 25-30 complete (Engine Wiring & Integration Sprint + Core Polish & Configuration + Combat System Completeness + Modern Era Data Package + Directed Energy Weapons + Historical Era Data Expansion + Scenario & Campaign Library). Block 3 complete (Phases 31-36: Documentation Site + API + Frontend + Charts + Tactical Map + Scenario Tweaker). Block 4 complete (Phases 37-39: Integration Fixes + E2E Validation + Map & Chart Enhancements + Quality, Performance & Packaging). Block 5 complete (Phases 40-48: Battle Loop Foundation + Combat Depth + Tactical Behavior + Domain-Specific Resolution + Environmental & Subsystem Integration + Mathematical Model Audit + Scenario Data Cleanup + Full Recalibration + Deficit Resolution). Block 6 complete (Phases 49-57: Calibration Schema Hardening + Combat Fidelity Polish + Naval Combat Completeness + Environmental Continuity + C2 & AI Completeness + Era-Specific & Domain Sub-Engine Wiring + Resolution & Scenario Migration + Performance & Logistics + Full Validation & Regression). Block 7 COMPLETE (Phases 58-67: Structural Verification + Environment Wiring + Engine Integration + Integration Validation & Recalibration). Block 8 COMPLETE (Phases 68-82: Consequence Enforcement + Scenario Expansion + Postmortem & Documentation). Block 9 IN PROGRESS (Phases 83-91: Performance at Scale). 83 phases delivered across 9 blocks.
 
 | Phase | Focus | Tests | Status |
 |-------|-------|-------|--------|
@@ -259,9 +259,10 @@ All 11 MVP phases (0-10) are complete. Post-MVP Phases 11-24 are complete (deep 
 | 80 | API & Frontend Sync (Block 8) | 26 | **Complete** |
 | 81 | Recalibration & Validation (Block 8) | ~20 | **Complete** |
 | 82 | Postmortem & Documentation (Block 8) | 0 | **Complete** |
-| | **Total** | **~9,796** | |
+| 83 | Profiling Infrastructure (Block 9) | 13 | **Complete** |
+| | **Total** | **~9,809** | |
 
-For the full phase roadmap, see [`docs/development-phases.md`](docs/development-phases.md) (MVP), [`docs/development-phases-post-mvp.md`](docs/development-phases-post-mvp.md) (post-MVP), [`docs/development-phases-block4.md`](docs/development-phases-block4.md) (Block 4), [`docs/development-phases-block5.md`](docs/development-phases-block5.md) (Block 5), [`docs/development-phases-block6.md`](docs/development-phases-block6.md) (Block 6), [`docs/development-phases-block7.md`](docs/development-phases-block7.md) (Block 7), and [`docs/development-phases-block8.md`](docs/development-phases-block8.md) (Block 8). For per-phase implementation logs, see [`docs/devlog/`](docs/devlog/).
+For the full phase roadmap, see [`docs/development-phases.md`](docs/development-phases.md) (MVP), [`docs/development-phases-post-mvp.md`](docs/development-phases-post-mvp.md) (post-MVP), [`docs/development-phases-block4.md`](docs/development-phases-block4.md) (Block 4), [`docs/development-phases-block5.md`](docs/development-phases-block5.md) (Block 5), [`docs/development-phases-block6.md`](docs/development-phases-block6.md) (Block 6), [`docs/development-phases-block7.md`](docs/development-phases-block7.md) (Block 7), [`docs/development-phases-block8.md`](docs/development-phases-block8.md) (Block 8), and [`docs/development-phases-block9.md`](docs/development-phases-block9.md) (Block 9). For per-phase implementation logs, see [`docs/devlog/`](docs/devlog/).
 
 ## Key Dependencies
 

@@ -98,6 +98,8 @@ Rolling record of implementation decisions, changes, and lessons learned across 
 | 80 | API & Frontend Sync | **Complete** | [phase-80.md](phase-80.md) |
 | 81 | Recalibration & Validation | **Complete** | [phase-81.md](phase-81.md) |
 | 82 | Block 8 Postmortem & Documentation | **Complete** | [phase-82.md](phase-82.md) |
+| **Block 9: Performance at Scale** ||||
+| 83 | Profiling Infrastructure | **Complete** | [phase-83.md](phase-83.md) |
 
 ## Post-MVP Refinement Index
 
