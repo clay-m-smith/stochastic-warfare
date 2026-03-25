@@ -479,7 +479,21 @@ Pydantic model (`extra="forbid"`) for all scenario tuning parameters. Replaces f
 | `retreat_distance_m` | `float` | `2000.0` | Distance guerrilla units retreat after disengage |
 | `misinterpretation_radius_m` | `float` | `500.0` | Position offset for misinterpreted orders |
 
-All `enable_*` flags default to `False` for backward compatibility. Enable them in scenario YAML to activate the corresponding effects.
+**Environment Wiring (Phase 78):**
+
+| Field | Type | Default | Description |
+|-------|------|---------|-------------|
+| `enable_ice_crossing` | `bool` | `False` | Units on ice move at 50% speed |
+| `enable_bridge_capacity` | `bool` | `False` | Bridges enforce weight limits |
+| `enable_environmental_fatigue` | `bool` | `False` | Heat/cold stress from WBGT/wind-chill degrades performance |
+
+**Meta-Flags (Phase 80):**
+
+| Field | Type | Default | Description |
+|-------|------|---------|-------------|
+| `enable_all_modern` | `bool` | `False` | Activates all 21 non-deferred `enable_*` flags at once (convenience meta-flag) |
+
+All `enable_*` flags default to `False` for backward compatibility. Enable them in scenario YAML to activate the corresponding effects. The `enable_all_modern` meta-flag is available for frontend convenience but per-scenario selective flags are preferred for performance.
 
 ---
 

@@ -231,6 +231,27 @@ Key pages: Scenario Browser, Unit Catalog, Run Results (charts + narrative + map
 
 See the [Web UI Guide](../guide/web-ui.md) for usage documentation.
 
+## Consequence Enforcement Gates
+
+The engine uses an opt-in pattern for behavioral enforcement of resource consumption and C2 friction. Each consequence is gated behind an `enable_*` flag in `CalibrationSchema` (default `False`), so enabling a new behavior never breaks existing scenarios.
+
+Key enforcement gates:
+
+| Flag | Effect | Phase |
+|------|--------|-------|
+| `enable_fuel_consumption` | Units consume fuel proportional to distance moved; immobilized when empty | 68 |
+| `enable_ammo_gate` | Engagements skipped when magazine exhausted | 68 |
+| `enable_command_hierarchy` | Orders must propagate through command chain | 69 |
+| `enable_missile_routing` | Missile flight resolved per-tick with defense intercept | 71 |
+| `enable_carrier_ops` | Carrier CAP/sortie rate limited by sea state | 71 |
+| `enable_ice_crossing` | Units on ice move at 50% speed | 78 |
+| `enable_bridge_capacity` | Bridges enforce weight limits | 78 |
+| `enable_environmental_fatigue` | Heat/cold stress degrades unit performance | 78 |
+
+Additional non-flag consequences include fire zone damage (`fire_damage_per_tick`), stratagem expiry (`stratagem_duration_ticks`), guerrilla retreat distance, and order misinterpretation effects.
+
+The `enable_all_modern` meta-flag activates all 21 non-deferred flags at once for convenience, but individual flag control is preferred in scenario YAMLs for performance (selective flags avoid ~6x overhead from unused subsystems).
+
 ## Checkpointing
 
 All stateful classes implement the checkpoint protocol:

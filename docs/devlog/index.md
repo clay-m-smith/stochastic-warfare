@@ -97,6 +97,7 @@ Rolling record of implementation decisions, changes, and lessons learned across 
 | 79 | CI/CD & Packaging | **Complete** | [phase-79.md](phase-79.md) |
 | 80 | API & Frontend Sync | **Complete** | [phase-80.md](phase-80.md) |
 | 81 | Recalibration & Validation | **Complete** | [phase-81.md](phase-81.md) |
+| 82 | Block 8 Postmortem & Documentation | **Complete** | [phase-82.md](phase-82.md) |
 
 ## Post-MVP Refinement Index
 

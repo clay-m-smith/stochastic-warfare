@@ -63,7 +63,7 @@ US FM 3-0, Russian Deep Operations, NATO Procedures, PLA Active Defense, IDF Pre
 
 ### Available Scenarios
 
-27 modern scenarios including 73 Easting, Falklands Naval, Golan Heights, Taiwan Strait, Korean Peninsula, Suwalki Gap, and more. All scenarios validated against historical outcomes in Phase 47 (seed=42 deterministic + Monte Carlo).
+30 modern scenarios including 73 Easting, Falklands Naval, Golan Heights, Taiwan Strait, Korean Peninsula, Suwalki Gap, and 3 calibration exercise scenarios (arctic, urban CBRN, air-ground). All scenarios validated against historical outcomes in Phase 47 (seed=42 deterministic + Monte Carlo).
 
 ---
 

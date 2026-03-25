@@ -167,7 +167,7 @@ documented_outcomes:
 
 ---
 
-## Modern Scenarios (27 total)
+## Modern Scenarios (30 total)
 
 ### Engagement Scenarios
 
@@ -205,6 +205,14 @@ documented_outcomes:
 | **Srebrenica 1995** | Escalation and war crimes | 72 hr | Escalation, consequences |
 | **Eastern Front 1943** | WWII Eastern Front | 72 hr | Large-scale combined arms |
 | **COIN Campaign** | Counterinsurgency operations | 720 hr | Insurgency, SOF, population |
+
+### Calibration & Exercise Scenarios
+
+| Scenario | Description | Duration | Key Features |
+|----------|-------------|----------|--------------|
+| **Calibration Arctic** | Cold weather engagement exercise | 4 hr | Ice crossing, environmental fatigue, cold weather |
+| **Calibration Urban CBRN** | Urban CBRN defense exercise | 4 hr | CBRN, MOPP, urban terrain, environmental fatigue |
+| **Calibration Air-Ground** | Combined air-ground exercise | 4 hr | Air routing, fuel consumption, ammo gate |
 
 ### Test Scenarios
 

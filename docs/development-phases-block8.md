@@ -1040,7 +1040,7 @@ Full validation against all Block 8 exit criteria.
 
 ## Phase 82: Block 8 Postmortem & Documentation
 
-**Status**: Not started.
+**Status**: Complete.
 
 **Goal**: Update all living documents, run cross-doc audit, capture lessons learned.
 
@@ -1082,26 +1082,26 @@ Update memory and verify cross-document consistency.
 
 ## Phase Summary
 
-| Phase | Focus | Est. Tests | Cumulative | Status |
-|-------|-------|------------|------------|--------|
-| 68 | Consequence Enforcement | 67 | ~9,085 | Complete |
-| 69 | C2 Depth | 41 | ~9,085 | Complete |
-| 70 | Performance Optimization | 24 | ~9,109 | Complete |
-| 71 | Missile & Carrier Ops | ~32 | ~9,119 | Not started |
-| 72 | Checkpoint & State | ~26 | ~9,145 | Not started |
-| 73 | Historical Scenario Correctness | ~22 | ~9,167 | Not started |
-| 74 | Combat Engine Unit Tests | ~243 | ~9,410 | Not started |
-| 75 | Simulation Core & Domain Tests | ~283 | ~9,693 | Not started |
-| 76 | API Robustness | ~24 | ~9,717 | Not started |
-| 77 | Frontend Accessibility | ~32 | ~9,749 | Not started |
-| 78 | P2 Environment Wiring | ~28 | ~9,777 | Not started |
-| 79 | CI/CD & Packaging | ~2 | ~9,779 | Not started |
-| 80 | API & Frontend Sync | ~18 | ~9,797 | Not started |
-| 81 | Recalibration & Validation | ~20 | ~9,817 | Not started |
-| 82 | Postmortem & Documentation | 0 | ~9,817 | Not started |
+| Phase | Focus | Tests | Cumulative | Status |
+|-------|-------|-------|------------|--------|
+| 68 | Consequence Enforcement | 67 | ~8,647 | Complete |
+| 69 | C2 Depth | 41 | ~8,688 | Complete |
+| 70 | Performance Optimization | 24 | ~8,712 | Complete |
+| 71 | Missile & Carrier Ops | 46 | ~8,758 | Complete |
+| 72 | Checkpoint & State | 139 | ~8,897 | Complete |
+| 73 | Historical Scenario Correctness | ~22 | ~8,919 | Complete |
+| 74 | Combat Engine Unit Tests | 472 | ~9,391 | Complete |
+| 75 | Simulation Core & Domain Tests | 293 | ~9,684 | Complete |
+| 76 | API Robustness | 25 | ~9,709 | Complete |
+| 77 | Frontend Accessibility | 36 | ~9,745 | Complete |
+| 78 | P2 Environment Wiring | 49 | ~9,794 | Complete |
+| 79 | CI/CD & Packaging | 31 | ~9,825 | Complete |
+| 80 | API & Frontend Sync | 26 | ~9,851 | Complete |
+| 81 | Recalibration & Validation | ~20 | ~9,871 | Complete |
+| 82 | Postmortem & Documentation | 0 | ~9,871 | Complete |
 
-**Block 8 total**: ~840 new tests across 15 phases.
-**Cumulative**: ~9,817 Python tests + ~304 frontend vitest = ~10,121 total.
+**Block 8 total**: ~1,291 new tests across 15 phases.
+**Cumulative**: ~9,871 Python tests + ~316 frontend vitest = ~10,187 total.
 
 ---
 
