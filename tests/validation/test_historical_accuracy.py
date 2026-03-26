@@ -80,6 +80,8 @@ CALIBRATION_SCENARIOS: set[str] = {
     "calibration_air_ground",
     "calibration_arctic",
     "calibration_urban_cbrn",
+    "benchmark_battalion",
+    "benchmark_brigade",
 }
 
 # Scenarios with known engine limitations

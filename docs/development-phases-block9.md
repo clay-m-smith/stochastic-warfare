@@ -525,7 +525,7 @@ Engagement resolution remains sequential for determinism. Document why and verif
 
 ## Phase 90: Validation & Benchmarking
 
-**Status**: Not started.
+**Status**: Complete.
 
 **Goal**: Create large-scale benchmark scenarios (1,000 and 5,000 units), validate performance targets, establish baselines for the new scale.
 
@@ -688,11 +688,11 @@ Update all living documents for Block 9 completion.
 | 87 | Expanded Numba JIT | 40 | ~10,176 | Complete |
 | 88 | SoA Data Layer | 43 | ~10,219 | Complete |
 | 89 | Per-Side Parallelism | 21 | ~10,240 | Complete |
-| 90 | Validation & Benchmarking | ~18 | ~10,255 | Not started |
+| 90 | Validation & Benchmarking | ~25 | ~10,265 | Complete |
 | 91 | Scenario Recalibration & Regression | ~63 | ~10,318 | Not started |
 
-**Block 9 total (so far)**: 197 new tests across 7 completed phases, ~81 estimated for remaining 2.
-**Cumulative**: ~10,240 Python tests + ~316 frontend vitest = ~10,556 total.
+**Block 9 total (so far)**: ~222 new tests across 8 completed phases, ~63 estimated for remaining 1.
+**Cumulative**: ~10,265 Python tests + ~316 frontend vitest = ~10,581 total.
 
 ---
 
@@ -714,7 +714,7 @@ Update all living documents for Block 9 completion.
 | `entities/equipment.py` | 84 | `scan_interval_ticks` on sensor model |
 | `data/sensors/*.yaml` | 84 | `scan_interval_ticks` field (~16 files) |
 | `tools/profiling.py` | 83 | Flame graph, hotspot reports, profile comparison |
-| `tests/benchmarks/` | 83, 90 | Benchmark suite, baselines, flag impact matrix |
+| `tests/benchmarks/` | 83, 90 | Benchmark suite, baselines, flag impact matrix, battalion/brigade benchmarks |
 | `.github/workflows/` | 83 | benchmark.yml |
 | `data/scenarios/benchmark_*/` | 90 | Battalion (1K) and brigade (5K) scenarios |
 

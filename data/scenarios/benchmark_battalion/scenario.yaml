@@ -1,0 +1,176 @@
+name: "Benchmark - Battalion Task Force (1,000 units)"
+date: "2025-06-15T06:00:00Z"
+duration_hours: 6.0
+latitude: 49.5
+longitude: 11.5
+era: modern
+
+tick_resolution:
+  strategic_s: 3600
+  operational_s: 300
+  tactical_s: 5
+
+weather_conditions:
+  visibility_m: 8000
+  wind_speed_mps: 3.0
+  wind_direction_deg: 270
+  temperature_c: 18.0
+  precipitation: none
+  cloud_cover: 0.3
+  humidity: 0.50
+
+terrain:
+  width_m: 20000
+  height_m: 20000
+  cell_size_m: 100.0
+  base_elevation_m: 300.0
+  terrain_type: hilly_defense
+  features:
+    - type: ridge
+      position: [7000, 0]
+      params:
+        height_m: 50.0
+        width_m: 300.0
+    - type: ridge
+      position: [13000, 0]
+      params:
+        height_m: 35.0
+        width_m: 250.0
+
+sides:
+  - side: blue
+    units:
+      - unit_type: m1a2
+        count: 58
+      - unit_type: m1a1
+        count: 56
+      - unit_type: m3a2_bradley
+        count: 120
+      - unit_type: us_rifle_squad
+        count: 80
+      - unit_type: m109a6
+        count: 24
+      - unit_type: patriot
+        count: 8
+      - unit_type: f16c
+        count: 16
+      - unit_type: ah64d
+        count: 12
+      - unit_type: javelin_team
+        count: 40
+      - unit_type: hemtt
+        count: 60
+      - unit_type: engineer_squad
+        count: 22
+      - unit_type: ea18g
+        count: 4
+    experience_level: 0.75
+    morale_initial: STEADY
+    depots:
+      - depot_id: blue_main_depot
+        position: [2000, 10000]
+        capacity_tons: 8000
+        throughput_tons_per_hour: 100.0
+
+  - side: red
+    units:
+      - unit_type: t90a
+        count: 80
+      - unit_type: t72m
+        count: 60
+      - unit_type: bmp2
+        count: 100
+      - unit_type: btr80
+        count: 80
+      - unit_type: bmp1
+        count: 32
+      - unit_type: kornet_team
+        count: 40
+      - unit_type: sa11_buk
+        count: 8
+      - unit_type: sa6_gainful
+        count: 8
+      - unit_type: mig29a
+        count: 12
+      - unit_type: su27s
+        count: 8
+      - unit_type: mi24v
+        count: 12
+      - unit_type: hemtt
+        count: 60
+    experience_level: 0.50
+    morale_initial: STEADY
+    depots:
+      - depot_id: red_main_depot
+        position: [18000, 10000]
+        capacity_tons: 6000
+        throughput_tons_per_hour: 80.0
+
+objectives:
+  - objective_id: central_ridge
+    position: [10000, 10000]
+    radius_m: 2000
+    type: key_terrain
+
+victory_conditions:
+  - type: force_destroyed
+    side: ""
+    params:
+      threshold: 0.35
+      count_disabled: true
+  - type: morale_collapsed
+    side: ""
+  - type: time_expired
+    side: blue
+    params:
+      max_duration_s: 21600
+
+calibration_overrides:
+  # Performance flags (Phase 84-89) — all enabled for benchmarking
+  enable_detection_culling: true
+  enable_scan_scheduling: true
+  enable_lod: true
+  enable_soa: true
+  enable_parallel_detection: true
+  # FOW required for detection optimizations
+  enable_fog_of_war: true
+  # Behavioral flags
+  enable_fuel_consumption: true
+  enable_ammo_gate: true
+  # Force quality — NATO 2:1 advantage
+  hit_probability_modifier: 1.2
+  target_size_modifier: 0.8
+  blue_force_ratio_modifier: 2.0
+  red_force_ratio_modifier: 1.0
+  blue_cohesion: 0.85
+  red_cohesion: 0.45
+  # Morale — red side should break under sustained pressure
+  morale_degrade_rate_modifier: 0.3
+  morale_base_degrade_rate: 0.008
+  morale_base_recover_rate: 0.10
+  morale_casualty_weight: 0.4
+  morale_force_ratio_weight: 0.08
+  morale_check_interval: 20
+  # Destruction threshold
+  destruction_threshold: 0.35
+  # Starting positions — 10km gap
+  blue_start_x: 5000.0
+  blue_start_y: 10000.0
+  red_start_x: 15000.0
+  red_start_y: 10000.0
+  blue_formation_spacing_m: 200.0
+  red_formation_spacing_m: 200.0
+  defensive_sides:
+    - blue
+
+behavior_rules:
+  blue:
+    hold_position: true
+    engagement_range_m: 3000
+  red:
+    advance_speed_mps: 2.0
+    engagement_range_m: 2000
+
+sources:
+  - "Performance benchmark scenario — 1,000 units (Phase 90)"
+  - "Unit compositions based on US ABCT and Russian BTG force structures"

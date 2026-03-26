@@ -30,10 +30,10 @@ class TestBenchmark73Easting:
     """73 Easting scenario benchmarks."""
 
     def test_wall_clock(self) -> None:
-        """73 Easting completes in <30s."""
+        """73 Easting completes in <15s (tightened Phase 90)."""
         result = run_benchmark(SCENARIOS_DIR / "73_easting" / "scenario.yaml", profile=False)
-        assert result.wall_clock_s < 30.0, (
-            f"73 Easting took {result.wall_clock_s:.1f}s (limit: 30s)"
+        assert result.wall_clock_s < 15.0, (
+            f"73 Easting took {result.wall_clock_s:.1f}s (limit: 15s)"
         )
 
     def test_regression(self) -> None:
@@ -64,10 +64,10 @@ class TestBenchmarkGolanHeights:
     """Golan Heights scenario benchmarks (slow)."""
 
     def test_wall_clock(self) -> None:
-        """Golan Heights completes in <120s."""
+        """Golan Heights completes in <60s (tightened Phase 90)."""
         result = run_benchmark(SCENARIOS_DIR / "golan_heights" / "scenario.yaml", profile=False)
-        assert result.wall_clock_s < 120.0, (
-            f"Golan Heights took {result.wall_clock_s:.1f}s (limit: 120s)"
+        assert result.wall_clock_s < 60.0, (
+            f"Golan Heights took {result.wall_clock_s:.1f}s (limit: 60s)"
         )
 
     def test_regression(self) -> None:
@@ -183,15 +183,159 @@ class TestBenchmarkInfra:
         assert "OK" in msg
 
     def test_baselines_json_valid(self) -> None:
-        """Checked-in baselines.json parses and contains both scenarios."""
+        """Checked-in baselines.json parses and contains all benchmark scenarios."""
         path = Path(__file__).parent / "baselines.json"
         assert path.exists(), f"baselines.json not found at {path}"
         with open(path) as f:
             data = json.load(f)
-        assert "73_easting" in data, "Missing 73_easting baseline"
-        assert "golan_heights" in data, "Missing golan_heights baseline"
-        for scenario in ("73_easting", "golan_heights"):
+        for scenario in (
+            "73_easting",
+            "golan_heights",
+            "benchmark_battalion",
+            "benchmark_brigade",
+        ):
+            assert scenario in data, f"Missing {scenario} baseline"
             entry = data[scenario]
             assert "wall_clock_s" in entry
             assert "ticks_executed" in entry
             assert "peak_memory_mb" in entry
+
+
+# ---------------------------------------------------------------------------
+# Benchmark scenario schema validation (fast — load only, no run)
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.benchmark
+class TestBenchmarkScenarioValidation:
+    """Validate benchmark scenario YAML loads against pydantic schema."""
+
+    def test_battalion_loads(self) -> None:
+        """Battalion scenario loads and parses without error."""
+        from stochastic_warfare.simulation.scenario import ScenarioLoader
+
+        path = SCENARIOS_DIR / "benchmark_battalion" / "scenario.yaml"
+        assert path.exists(), f"Scenario not found: {path}"
+        loader = ScenarioLoader(SCENARIOS_DIR.parent)
+        ctx = loader.load(path, seed=42)
+        unit_count = sum(len(u) for u in ctx.units_by_side.values())
+        assert unit_count == 1000, f"Expected 1000 units, got {unit_count}"
+
+    def test_brigade_loads(self) -> None:
+        """Brigade scenario loads and parses without error."""
+        from stochastic_warfare.simulation.scenario import ScenarioLoader
+
+        path = SCENARIOS_DIR / "benchmark_brigade" / "scenario.yaml"
+        assert path.exists(), f"Scenario not found: {path}"
+        loader = ScenarioLoader(SCENARIOS_DIR.parent)
+        ctx = loader.load(path, seed=42)
+        unit_count = sum(len(u) for u in ctx.units_by_side.values())
+        assert unit_count == 5000, f"Expected 5000 units, got {unit_count}"
+
+
+# ---------------------------------------------------------------------------
+# Battalion benchmarks (slow — manual CI only)
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.benchmark
+@pytest.mark.slow
+class TestBenchmarkBattalion:
+    """Battalion (1,000 unit) benchmark tests."""
+
+    def test_wall_clock(self) -> None:
+        """Battalion scenario completes in <5 min (300s)."""
+        result = run_benchmark(
+            SCENARIOS_DIR / "benchmark_battalion" / "scenario.yaml", profile=False,
+        )
+        assert result.wall_clock_s < 300.0, (
+            f"Battalion took {result.wall_clock_s:.1f}s (limit: 300s)"
+        )
+
+    def test_determinism(self) -> None:
+        """Same seed produces same winner and ticks."""
+        r1 = run_benchmark(
+            SCENARIOS_DIR / "benchmark_battalion" / "scenario.yaml",
+            seed=42, profile=False,
+        )
+        r2 = run_benchmark(
+            SCENARIOS_DIR / "benchmark_battalion" / "scenario.yaml",
+            seed=42, profile=False,
+        )
+        assert r1.winner == r2.winner, f"Winner diverged: {r1.winner} vs {r2.winner}"
+        assert r1.ticks_executed == r2.ticks_executed, (
+            f"Ticks diverged: {r1.ticks_executed} vs {r2.ticks_executed}"
+        )
+
+    def test_victory_condition(self) -> None:
+        """Battalion produces a decisive outcome (not engine max_ticks)."""
+        result = run_benchmark(
+            SCENARIOS_DIR / "benchmark_battalion" / "scenario.yaml", profile=False,
+        )
+        assert result.winner is not None, (
+            f"No winner after {result.ticks_executed} ticks — "
+            f"likely hit max_ticks safety limit"
+        )
+
+    def test_regression(self) -> None:
+        """Battalion does not regress >20% vs baseline."""
+        result = run_benchmark(
+            SCENARIOS_DIR / "benchmark_battalion" / "scenario.yaml", profile=False,
+        )
+        baseline = BenchmarkBaseline()
+        is_regression, msg = baseline.check_regression("benchmark_battalion", result)
+        assert not is_regression, msg
+
+
+# ---------------------------------------------------------------------------
+# Brigade benchmarks (very slow — manual only)
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.benchmark
+@pytest.mark.slow
+class TestBenchmarkBrigade:
+    """Brigade (5,000 unit) benchmark tests."""
+
+    def test_wall_clock(self) -> None:
+        """Brigade scenario completes in <30 min (1800s)."""
+        result = run_benchmark(
+            SCENARIOS_DIR / "benchmark_brigade" / "scenario.yaml", profile=False,
+        )
+        assert result.wall_clock_s < 1800.0, (
+            f"Brigade took {result.wall_clock_s:.1f}s (limit: 1800s)"
+        )
+
+    def test_determinism(self) -> None:
+        """Same seed produces same winner and ticks."""
+        r1 = run_benchmark(
+            SCENARIOS_DIR / "benchmark_brigade" / "scenario.yaml",
+            seed=42, profile=False,
+        )
+        r2 = run_benchmark(
+            SCENARIOS_DIR / "benchmark_brigade" / "scenario.yaml",
+            seed=42, profile=False,
+        )
+        assert r1.winner == r2.winner, f"Winner diverged: {r1.winner} vs {r2.winner}"
+        assert r1.ticks_executed == r2.ticks_executed, (
+            f"Ticks diverged: {r1.ticks_executed} vs {r2.ticks_executed}"
+        )
+
+    def test_victory_condition(self) -> None:
+        """Brigade produces a decisive outcome (not engine max_ticks)."""
+        result = run_benchmark(
+            SCENARIOS_DIR / "benchmark_brigade" / "scenario.yaml", profile=False,
+        )
+        assert result.winner is not None, (
+            f"No winner after {result.ticks_executed} ticks — "
+            f"likely hit max_ticks safety limit"
+        )
+
+    def test_regression(self) -> None:
+        """Brigade does not regress >20% vs baseline."""
+        result = run_benchmark(
+            SCENARIOS_DIR / "benchmark_brigade" / "scenario.yaml", profile=False,
+        )
+        baseline = BenchmarkBaseline()
+        is_regression, msg = baseline.check_regression("benchmark_brigade", result)
+        assert not is_regression, msg

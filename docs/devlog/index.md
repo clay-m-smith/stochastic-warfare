@@ -106,6 +106,7 @@ Rolling record of implementation decisions, changes, and lessons learned across 
 | 87 | Expanded Numba JIT | **Complete** | [phase-87.md](phase-87.md) |
 | 88 | SoA Data Layer | **Complete** | [phase-88.md](phase-88.md) |
 | 89 | Per-Side Parallelism | **Complete** | [phase-89.md](phase-89.md) |
+| 90 | Validation & Benchmarking | **Complete** | [phase-90.md](phase-90.md) |
 
 ## Post-MVP Refinement Index
 

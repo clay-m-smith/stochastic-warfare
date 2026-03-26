@@ -16,5 +16,19 @@
     "peak_memory_mb": 20.0,
     "commit": "c76d63e",
     "timestamp": "2026-03-24T00:00:00Z"
+  },
+  "benchmark_battalion": {
+    "wall_clock_s": 300.0,
+    "ticks_executed": 2160,
+    "peak_memory_mb": 100.0,
+    "commit": "placeholder",
+    "timestamp": "2026-03-25T00:00:00Z"
+  },
+  "benchmark_brigade": {
+    "wall_clock_s": 1800.0,
+    "ticks_executed": 2160,
+    "peak_memory_mb": 500.0,
+    "commit": "placeholder",
+    "timestamp": "2026-03-25T00:00:00Z"
   }
 }

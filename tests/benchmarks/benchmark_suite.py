@@ -197,6 +197,7 @@ def run_benchmark(
     seed: int = 42,
     profile: bool = True,
     top_n_hotspots: int = 20,
+    calibration_overrides: dict[str, object] | None = None,
 ) -> BenchmarkResult:
     """Run a scenario benchmark with optional profiling.
 
@@ -211,6 +212,9 @@ def run_benchmark(
         If False, use only wall clock (faster, for regression-only checks).
     top_n_hotspots:
         Number of hotspots to extract from cProfile stats.
+    calibration_overrides:
+        Optional dict of CalibrationSchema fields to override after loading.
+        Used by flag impact tests to toggle individual performance flags.
 
     Returns
     -------
@@ -219,6 +223,7 @@ def run_benchmark(
     """
     from stochastic_warfare.core.types import Position
     from stochastic_warfare.entities.base import UnitStatus
+    from stochastic_warfare.simulation.calibration import CalibrationSchema
     from stochastic_warfare.simulation.engine import EngineConfig, SimulationEngine
     from stochastic_warfare.simulation.recorder import SimulationRecorder
     from stochastic_warfare.simulation.scenario import ScenarioLoader
@@ -230,6 +235,20 @@ def run_benchmark(
     # Load scenario
     loader = ScenarioLoader(DATA_DIR)
     ctx = loader.load(scenario_path, seed=seed)
+
+    # Apply calibration overrides if provided (Phase 90 — flag impact tests)
+    if calibration_overrides:
+        existing = (
+            ctx.calibration.model_dump()
+            if isinstance(ctx.calibration, CalibrationSchema)
+            else dict(ctx.calibration)
+        )
+        merged = {**existing, **calibration_overrides}
+        ctx.calibration = CalibrationSchema(
+            **{k: v for k, v in merged.items() if k in CalibrationSchema.model_fields}
+        )
+        side_names = list(ctx.units_by_side.keys())
+        ctx.cal_flat = ctx.calibration.to_flat_dict(side_names)
 
     recorder = SimulationRecorder(ctx.event_bus)
 
