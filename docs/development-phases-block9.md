@@ -461,7 +461,7 @@ Extend UnitArrays usage to movement and morale phases.
 
 ## Phase 89: Per-Side Parallelism
 
-**Status**: Not started.
+**Status**: Complete.
 
 **Goal**: Thread-based parallelism for detection and movement phases. Each side's detection/movement is independent until engagement resolution.
 
@@ -687,12 +687,12 @@ Update all living documents for Block 9 completion.
 | 86 | Engagement & Calibration Optimization | 19 | ~10,083 | Complete |
 | 87 | Expanded Numba JIT | 40 | ~10,176 | Complete |
 | 88 | SoA Data Layer | 43 | ~10,219 | Complete |
-| 89 | Per-Side Parallelism | ~18 | ~10,237 | Not started |
+| 89 | Per-Side Parallelism | 21 | ~10,240 | Complete |
 | 90 | Validation & Benchmarking | ~18 | ~10,255 | Not started |
 | 91 | Scenario Recalibration & Regression | ~63 | ~10,318 | Not started |
 
-**Block 9 total (so far)**: 176 new tests across 6 completed phases, ~99 estimated for remaining 3.
-**Cumulative**: ~10,219 Python tests + ~316 frontend vitest = ~10,535 total.
+**Block 9 total (so far)**: 197 new tests across 7 completed phases, ~81 estimated for remaining 2.
+**Cumulative**: ~10,240 Python tests + ~316 frontend vitest = ~10,556 total.
 
 ---
 
@@ -700,9 +700,10 @@ Update all living documents for Block 9 completion.
 
 | Module | Phases | Changes |
 |--------|--------|---------|
-| `detection/fog_of_war.py` | 84, 87, 88 | STRtree culling, scan scheduling, vectorized detection, SoA integration |
+| `detection/fog_of_war.py` | 84, 87, 88, 89 | STRtree culling, scan scheduling, vectorized detection, SoA integration, rng param |
+| `detection/detection.py` | 87, 89 | JIT SNR kernels (4 sensor types), rng param for parallel detection |
 | `simulation/battle.py` | 84, 85, 86, 88, 89 | Engagement culling, LOD tiers, flat cal dict, modifier batching, SoA sync, per-side threads |
-| `simulation/calibration.py` | 84, 85, 86, 89 | `enable_detection_culling`, `enable_scan_scheduling`, `enable_lod`, `enable_soa`, `enable_parallel_*`, flat dict API |
+| `simulation/calibration.py` | 84, 85, 86, 88, 89 | `enable_detection_culling`, `enable_scan_scheduling`, `enable_lod`, `enable_soa`, `enable_parallel_detection`, flat dict API |
 | `simulation/unit_arrays.py` | 88 | New: SoA data structure with sync protocol |
 | `simulation/aggregation.py` | 85 | Order preservation fix, LOD-triggered activation |
 | `simulation/engine.py` | 85 | Aggregation wiring in campaign tick |

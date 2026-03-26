@@ -175,6 +175,7 @@ nav:
     - Phase 86 - Engagement & Calibration Optimization: devlog/phase-86.md
     - Phase 87 - Expanded Numba JIT: devlog/phase-87.md
     - Phase 88 - SoA Data Layer: devlog/phase-88.md
+    - Phase 89 - Per-Side Parallelism: devlog/phase-89.md
   - Specifications:
     - Project Structure: specs/project-structure.md
     - Skills & Hooks: skills-and-hooks.md

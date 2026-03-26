@@ -214,6 +214,7 @@ class FogOfWarManager:
         scan_scheduling: bool = False,
         current_tick: int = 0,
         unit_arrays: Any | None = None,
+        rng: np.random.Generator | None = None,
     ) -> SideWorldView:
         """Run one detection cycle for *side*.
 
@@ -342,6 +343,7 @@ class FogOfWarManager:
                         target_height=tgt_height,
                         concealment=concealment,
                         posture=posture,
+                        rng=rng,
                     )
 
                     if result.detected:

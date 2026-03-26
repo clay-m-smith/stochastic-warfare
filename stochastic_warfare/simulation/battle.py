@@ -9,6 +9,7 @@ No domain logic lives here — only sequencing and data routing.
 from __future__ import annotations
 
 import math
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import IntEnum
@@ -1226,10 +1227,14 @@ class BattleManager:
         _enable_fow = cal_flat.get("enable_fog_of_war", False)
         _enable_det_culling = cal_flat.get("enable_detection_culling", True)
         _enable_scan_sched = cal_flat.get("enable_scan_scheduling", False)
+        _enable_parallel_det = cal_flat.get("enable_parallel_detection", False)
         if _enable_fow and getattr(ctx, "fog_of_war", None) is not None:
             _fow_time = getattr(timestamp, "timestamp", lambda: 0.0)()
+
+            # Pre-build per-side input data (sequential)
+            _side_fow_inputs: dict[str, tuple[list, list]] = {}
             for _fow_side, _fow_units in units_by_side.items():
-                _own_data = []
+                _own_data: list[dict[str, Any]] = []
                 for _u in _fow_units:
                     if _u.status != UnitStatus.ACTIVE:
                         continue
@@ -1240,7 +1245,7 @@ class BattleManager:
                         "sensors": ctx.unit_sensors.get(_u.entity_id, []),
                         "observer_height": 1.8,
                     })
-                _enemy_data = []
+                _enemy_data: list[dict[str, Any]] = []
                 for _other_side, _other_units in units_by_side.items():
                     if _other_side == _fow_side:
                         continue
@@ -1258,20 +1263,59 @@ class BattleManager:
                             "unit": _eu,
                             "target_height": 0.0,
                         })
-                try:
-                    ctx.fog_of_war.update(
-                        side=_fow_side,
-                        own_units=_own_data,
-                        enemy_units=_enemy_data,
-                        dt=dt,
-                        current_time=_fow_time,
-                        detection_culling=_enable_det_culling,
-                        scan_scheduling=_enable_scan_sched,
-                        current_tick=battle.ticks_executed,
-                        unit_arrays=_unit_arrays,
-                    )
-                except Exception:
-                    logger.debug("FogOfWar update failed for %s", _fow_side, exc_info=True)
+                _side_fow_inputs[_fow_side] = (_own_data, _enemy_data)
+
+            # Phase 89: per-side parallel detection
+            if _enable_parallel_det and len(_side_fow_inputs) >= 2:
+                _det_rng = ctx.fog_of_war._rng
+                _n_sides = len(_side_fow_inputs)
+                _side_seeds = _det_rng.integers(0, 2**63, size=_n_sides)
+                _side_rngs = {
+                    _s: np.random.Generator(np.random.PCG64(int(_sd)))
+                    for _s, _sd in zip(_side_fow_inputs, _side_seeds)
+                }
+                with ThreadPoolExecutor(
+                    max_workers=min(_n_sides, 4),
+                ) as _pool:
+                    _futures = {}
+                    for _side, (_own, _enemies) in _side_fow_inputs.items():
+                        _f = _pool.submit(
+                            ctx.fog_of_war.update,
+                            side=_side,
+                            own_units=_own,
+                            enemy_units=_enemies,
+                            dt=dt,
+                            current_time=_fow_time,
+                            detection_culling=_enable_det_culling,
+                            scan_scheduling=_enable_scan_sched,
+                            current_tick=battle.ticks_executed,
+                            unit_arrays=_unit_arrays,
+                            rng=_side_rngs[_side],
+                        )
+                        _futures[_f] = _side
+                    for _f in as_completed(_futures):
+                        _f.result()  # propagate exceptions
+            else:
+                # Sequential path
+                for _fow_side, (_own_data, _enemy_data) in _side_fow_inputs.items():
+                    try:
+                        ctx.fog_of_war.update(
+                            side=_fow_side,
+                            own_units=_own_data,
+                            enemy_units=_enemy_data,
+                            dt=dt,
+                            current_time=_fow_time,
+                            detection_culling=_enable_det_culling,
+                            scan_scheduling=_enable_scan_sched,
+                            current_tick=battle.ticks_executed,
+                            unit_arrays=_unit_arrays,
+                        )
+                    except Exception:
+                        logger.debug(
+                            "FogOfWar update failed for %s",
+                            _fow_side,
+                            exc_info=True,
+                        )
 
             # Phase 85: promote non-ACTIVE-tier units that detected contacts
             if cal_flat.get("enable_lod", False):

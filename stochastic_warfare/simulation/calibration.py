@@ -223,6 +223,10 @@ class CalibrationSchema(BaseModel):
 
     # -- SoA data layer (Phase 88) ----------------------------------------
     enable_soa: bool = False
+
+    # -- Per-side parallelism (Phase 89) -----------------------------------
+    enable_parallel_detection: bool = False
+
     lod_nearby_interval: int = 5
     lod_distant_interval: int = 20
     lod_hysteresis_ticks: int = 3

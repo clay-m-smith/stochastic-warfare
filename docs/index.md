@@ -76,7 +76,7 @@ See the [Getting Started Guide](guide/getting-started.md) for a complete tutoria
 | Block 8 | 68--82 | Consequence enforcement, scenario expansion, postmortem & documentation | **Complete** |
 | Block 9 | 83--91 | Performance at scale — profiling, spatial culling, LOD, parallelism | **In Progress** |
 
-**~10,535 tests** (~10,219 Python + 316 frontend) across ~400 test files. **~748 YAML data files** defining units, weapons, ammunition types, sensors, signatures, doctrines, commanders, and 44 scenarios across 5 eras.
+**~10,556 tests** (~10,240 Python + 316 frontend) across ~400 test files. **~748 YAML data files** defining units, weapons, ammunition types, sensors, signatures, doctrines, commanders, and 44 scenarios across 5 eras.
 
 ## License
 

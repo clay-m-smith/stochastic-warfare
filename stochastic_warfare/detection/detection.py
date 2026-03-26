@@ -369,6 +369,7 @@ class DetectionEngine:
         observer_heading_deg: float = 0.0,
         target_id: str = "",
         jam_snr_penalty_db: float = 0.0,
+        rng: np.random.Generator | None = None,
     ) -> DetectionResult:
         """Run a single sensor check against a target.
 
@@ -456,7 +457,8 @@ class DetectionEngine:
         pd = self.detection_probability(snr, threshold)
 
         # 7. Stochastic roll
-        roll = float(self._rng.random())
+        _rng = rng or self._rng
+        roll = float(_rng.random())
         detected = roll < pd
 
         return DetectionResult(detected, pd, snr, rng_m, st, bearing)
