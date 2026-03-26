@@ -220,6 +220,9 @@ class CalibrationSchema(BaseModel):
 
     # -- LOD tiering (Phase 85) -------------------------------------------
     enable_lod: bool = False
+
+    # -- SoA data layer (Phase 88) ----------------------------------------
+    enable_soa: bool = False
     lod_nearby_interval: int = 5
     lod_distant_interval: int = 20
     lod_hysteresis_ticks: int = 3

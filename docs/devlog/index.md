@@ -104,6 +104,7 @@ Rolling record of implementation decisions, changes, and lessons learned across 
 | 85 | LOD & Aggregation | **Complete** | [phase-85.md](phase-85.md) |
 | 86 | Engagement & Calibration Optimization | **Complete** | [phase-86.md](phase-86.md) |
 | 87 | Expanded Numba JIT | **Complete** | [phase-87.md](phase-87.md) |
+| 88 | SoA Data Layer | **Complete** | [phase-88.md](phase-88.md) |
 
 ## Post-MVP Refinement Index
 
@@ -335,6 +336,9 @@ Known limitations and deferred improvements logged during implementation. Review
 | 66 | SimulationContext TODO cleanup — cosmetic, deferred | [phase-66.md — D10](phase-66.md#known-limitations--deferrals) |
 | 85 | Aggregation engine.py wiring deferred — automatic LOD-tier-based aggregate/disaggregate in campaign tick not wired | [phase-85.md — Accepted Limitations](phase-85.md#accepted-limitations) |
 | 85 | 1000-unit performance benchmark not validated — no 1000-unit scenario exists yet | [phase-85.md — Accepted Limitations](phase-85.md#accepted-limitations) |
+| 88 | SoA morale/engagement integration structural only — arrays available but not driving batch computation yet | [phase-88.md — Known Limitations](phase-88.md#known-limitations) |
+| 88 | `sync_positions_to_units()` exists but unused — movement updates Unit objects directly | [phase-88.md — Known Limitations](phase-88.md#known-limitations) |
+| 88 | `max_range` extraction requires `unit_weapons` dict — not always available | [phase-88.md — Known Limitations](phase-88.md#known-limitations) |
 
 ## Conventions
 

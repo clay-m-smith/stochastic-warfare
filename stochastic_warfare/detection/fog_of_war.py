@@ -213,6 +213,7 @@ class FogOfWarManager:
         detection_culling: bool = True,
         scan_scheduling: bool = False,
         current_tick: int = 0,
+        unit_arrays: Any | None = None,
     ) -> SideWorldView:
         """Run one detection cycle for *side*.
 
@@ -256,6 +257,14 @@ class FogOfWarManager:
                         "posture": 0,
                     })
 
+        # Phase 88: Pre-build target position array for vectorized ops
+        _target_pos_arr: np.ndarray | None = None
+        if unit_arrays is not None and len(all_targets) > 0:
+            _target_pos_arr = np.array(
+                [(t["position"].easting, t["position"].northing) for t in all_targets],
+                dtype=np.float64,
+            )
+
         # Phase 84a: Build spatial index for range-limited detection
         _target_tree = None
         _target_points = None
@@ -284,6 +293,20 @@ class FogOfWarManager:
                         _target_tree.query(_obs_pt.buffer(_max_range)),
                     )
                     _scan_targets = [all_targets[i] for i in _cand_idxs]
+                else:
+                    _scan_targets = []
+            elif _target_pos_arr is not None and _target_pos_arr.shape[0] > 0:
+                # Phase 88b: vectorized range check via numpy
+                _op_sensors = [s for s in sensors if s.operational]
+                _max_range = max(
+                    (s.effective_range for s in _op_sensors), default=0.0,
+                )
+                if _max_range > 0:
+                    _obs_arr = np.array([obs_pos.easting, obs_pos.northing])
+                    _diffs = _target_pos_arr - _obs_arr
+                    _dists = np.sqrt(np.sum(_diffs * _diffs, axis=1))
+                    _in_range = np.where(_dists <= _max_range)[0]
+                    _scan_targets = [all_targets[i] for i in _in_range]
                 else:
                     _scan_targets = []
             else:

@@ -591,7 +591,8 @@ stochastic-warfare/
         ├── recorder.py               # Event/state recording for replay & analysis
         ├── metrics.py                # Simulation output metrics, statistical aggregation, analysis hooks
         ├── aggregation.py           # Force aggregation/disaggregation engine for campaign-scale [Phase 13a]
-        └── calibration.py           # Typed CalibrationSchema pydantic model replacing free-form dict [Phase 49]
+        ├── calibration.py           # Typed CalibrationSchema pydantic model replacing free-form dict [Phase 49]
+        └── unit_arrays.py           # Structure-of-Arrays (SoA) data layer for hot-path unit data [Phase 88]
 ```
 
 ---

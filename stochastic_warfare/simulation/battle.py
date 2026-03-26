@@ -34,6 +34,7 @@ from shapely import STRtree
 from shapely.geometry import Point
 
 from stochastic_warfare.simulation.calibration import CalibrationSchema
+from stochastic_warfare.simulation.unit_arrays import UnitArrays
 
 
 class _ObserverModifiers(NamedTuple):
@@ -1196,6 +1197,20 @@ class BattleManager:
         # 1. Pre-build per-side active enemy lists and position arrays
         active_enemies, enemy_pos_arrays = self._build_enemy_data(units_by_side)
 
+        # Phase 88: Build UnitArrays for SoA operations
+        _unit_arrays: UnitArrays | None = None
+        if cal_flat.get("enable_soa", False):
+            _unit_arrays = UnitArrays.from_units(
+                units_by_side,
+                morale_states=getattr(ctx, "morale_states", None),
+                unit_weapons=getattr(ctx, "unit_weapons", None),
+            )
+            # Override enemy_pos_arrays with SoA-derived versions
+            enemy_pos_arrays = {
+                side: _unit_arrays.get_enemy_positions(side)
+                for side in units_by_side
+            }
+
         # 1a. Phase 70b: entity_id → Unit index for O(1) lookups
         _unit_index: dict[str, Unit] = {}
         for _side_units_idx in units_by_side.values():
@@ -1253,6 +1268,7 @@ class BattleManager:
                         detection_culling=_enable_det_culling,
                         scan_scheduling=_enable_scan_sched,
                         current_tick=battle.ticks_executed,
+                        unit_arrays=_unit_arrays,
                     )
                 except Exception:
                     logger.debug("FogOfWar update failed for %s", _fow_side, exc_info=True)
@@ -1753,6 +1769,18 @@ class BattleManager:
         #    references in active_enemies point to updated positions, but the
         #    numpy arrays are snapshots that must be refreshed.
         active_enemies, enemy_pos_arrays = self._build_enemy_data(units_by_side)
+
+        # Phase 88: Rebuild UnitArrays after movement
+        if _unit_arrays is not None:
+            _unit_arrays = UnitArrays.from_units(
+                units_by_side,
+                morale_states=getattr(ctx, "morale_states", None),
+                unit_weapons=getattr(ctx, "unit_weapons", None),
+            )
+            enemy_pos_arrays = {
+                side: _unit_arrays.get_enemy_positions(side)
+                for side in units_by_side
+            }
 
         # 6. Engagement — detection + combat
         pending_damage = self._execute_engagements(

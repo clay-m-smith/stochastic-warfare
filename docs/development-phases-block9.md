@@ -389,7 +389,7 @@ JIT-compile the continuous-time Markov morale transition computation.
 
 ## Phase 88: SoA Data Layer
 
-**Status**: Not started.
+**Status**: Complete.
 
 **Goal**: Introduce Structure-of-Arrays for hot-path unit data. Prerequisite for vectorized bulk operations and Numba `prange` parallelism.
 
@@ -679,20 +679,20 @@ Update all living documents for Block 9 completion.
 
 ## Phase Summary
 
-| Phase | Focus | Est. Tests | Cumulative | Status |
-|-------|-------|------------|------------|--------|
-| 83 | Profiling Infrastructure | ~12 | ~9,883 | Not started |
-| 84 | Spatial Culling & Scan Scheduling | ~30 | ~9,913 | Not started |
-| 85 | LOD & Aggregation | ~30 | ~9,943 | Not started |
-| 86 | Engagement & Calibration Optimization | 19 | ~9,957 | Complete |
+| Phase | Focus | Tests | Cumulative | Status |
+|-------|-------|-------|------------|--------|
+| 83 | Profiling Infrastructure | 13 | ~10,003 | Complete |
+| 84 | Spatial Culling & Scan Scheduling | 31 | ~10,034 | Complete |
+| 85 | LOD & Aggregation | 30 | ~10,064 | Complete |
+| 86 | Engagement & Calibration Optimization | 19 | ~10,083 | Complete |
 | 87 | Expanded Numba JIT | 40 | ~10,176 | Complete |
-| 88 | SoA Data Layer | ~26 | ~10,003 | Not started |
-| 89 | Per-Side Parallelism | ~18 | ~10,021 | Not started |
-| 90 | Validation & Benchmarking | ~18 | ~10,039 | Not started |
-| 91 | Scenario Recalibration & Regression | ~63 | ~10,102 | Not started |
+| 88 | SoA Data Layer | 43 | ~10,219 | Complete |
+| 89 | Per-Side Parallelism | ~18 | ~10,237 | Not started |
+| 90 | Validation & Benchmarking | ~18 | ~10,255 | Not started |
+| 91 | Scenario Recalibration & Regression | ~63 | ~10,318 | Not started |
 
-**Block 9 total**: ~231 new tests across 9 phases.
-**Cumulative**: ~10,102 Python tests + ~316 frontend vitest = ~10,418 total.
+**Block 9 total (so far)**: 176 new tests across 6 completed phases, ~99 estimated for remaining 3.
+**Cumulative**: ~10,219 Python tests + ~316 frontend vitest = ~10,535 total.
 
 ---
 
