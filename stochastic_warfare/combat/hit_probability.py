@@ -17,8 +17,102 @@ from pydantic import BaseModel
 from stochastic_warfare.combat.ammunition import AmmoDefinition, WeaponDefinition
 from stochastic_warfare.combat.ballistics import BallisticsEngine
 from stochastic_warfare.core.logging import get_logger
+from stochastic_warfare.core.numba_utils import optional_jit
 
 logger = get_logger(__name__)
+
+
+# ---------------------------------------------------------------------------
+# JIT-compiled hit probability kernel (Phase 87b)
+# ---------------------------------------------------------------------------
+
+
+@optional_jit
+def _hit_probability_kernel(
+    base_accuracy_mrad: float,
+    range_m: float,
+    target_size_m2: float,
+    base_hit_fraction: float,
+    crew_skill: float,
+    crew_skill_weight: float,
+    target_speed_mps: float,
+    target_motion_penalty: float,
+    shooter_speed_mps: float,
+    shooter_motion_penalty: float,
+    visibility: float,
+    posture_mod: float,
+    weapon_condition: float,
+    position_uncertainty_m: float,
+    uncertainty_penalty_scale: float,
+    terrain_cover: float,
+    elevation_mod: float,
+    moderate_condition_floor: float,
+    min_phit: float,
+    max_phit: float,
+) -> float:
+    """Pure-math hit probability computation (JIT-compilable).
+
+    Returns the final P(hit) after all modifiers and clamping.
+    """
+    # Base dispersion
+    sigma_m = base_accuracy_mrad * 0.001 * range_m
+    if sigma_m > 0.0:
+        p = 1.0 - math.exp(-target_size_m2 / (2.0 * math.pi * sigma_m * sigma_m))
+    else:
+        p = base_hit_fraction
+
+    # Crew skill
+    p *= 0.5 + crew_skill_weight * crew_skill
+
+    # Target motion
+    if target_speed_mps > 1.0:
+        motion_pen = 1.0 - target_motion_penalty * (target_speed_mps / 10.0)
+        if motion_pen < 0.5:
+            motion_pen = 0.5
+        p *= motion_pen
+
+    # Shooter motion
+    if shooter_speed_mps > 0.5:
+        shoot_pen = 1.0 - shooter_motion_penalty * (shooter_speed_mps / 10.0)
+        if shoot_pen < 0.3:
+            shoot_pen = 0.3
+        p *= shoot_pen
+
+    # Visibility
+    p *= 0.3 + 0.7 * visibility
+
+    # Posture
+    p *= posture_mod
+
+    # Position uncertainty
+    if position_uncertainty_m > 0.0:
+        unc_pen = 1.0 - uncertainty_penalty_scale * position_uncertainty_m
+        if unc_pen < 0.3:
+            unc_pen = 0.3
+        p *= unc_pen
+
+    # Weapon condition
+    p *= 0.5 + 0.5 * weapon_condition
+
+    # Terrain cover
+    if terrain_cover > 0.0:
+        p *= 1.0 - terrain_cover
+
+    # Elevation
+    if elevation_mod != 1.0:
+        p *= elevation_mod
+
+    # Moderate condition floor
+    if p < moderate_condition_floor:
+        p = moderate_condition_floor
+
+    # Clamp
+    if p < min_phit:
+        p = min_phit
+    if p > max_phit:
+        p = max_phit
+
+    return p
 
 
 class HitProbabilityConfig(BaseModel):
@@ -136,76 +230,44 @@ class HitProbabilityEngine:
             Weapon condition 0.0–1.0.
         """
         cfg = self._config
-        modifiers: dict[str, float] = {}
 
-        # Base: dispersion-based P(hit)
-        # Area ratio: target area vs dispersion area at range
+        posture_mod = self._posture_mods.get(target_posture, 1.0)
+
+        p = _hit_probability_kernel(
+            weapon.base_accuracy_mrad, range_m, target_size_m2,
+            cfg.base_hit_fraction,
+            crew_skill, cfg.crew_skill_weight,
+            target_speed_mps, cfg.target_motion_penalty,
+            shooter_speed_mps, cfg.shooter_motion_penalty,
+            visibility, posture_mod, weapon_condition,
+            position_uncertainty_m, cfg.uncertainty_penalty_scale,
+            terrain_cover, elevation_mod,
+            cfg.moderate_condition_floor, cfg.min_phit, cfg.max_phit,
+        )
+
+        # Build modifiers dict for diagnostics (not in JIT path)
+        modifiers: dict[str, float] = {}
         sigma_m = weapon.base_accuracy_mrad * 0.001 * range_m
         if sigma_m > 0:
-            # P(hit) ≈ 1 - exp(-target_area / (2π σ²))
-            dispersion_phit = 1.0 - math.exp(
+            modifiers["base_dispersion"] = 1.0 - math.exp(
                 -target_size_m2 / (2.0 * math.pi * sigma_m * sigma_m)
             )
         else:
-            dispersion_phit = cfg.base_hit_fraction
-        modifiers["base_dispersion"] = dispersion_phit
-
-        p = dispersion_phit
-
-        # Crew skill modifier
-        skill_mod = 0.5 + cfg.crew_skill_weight * crew_skill
-        p *= skill_mod
-        modifiers["crew_skill"] = skill_mod
-
-        # Target motion penalty
+            modifiers["base_dispersion"] = cfg.base_hit_fraction
+        modifiers["crew_skill"] = 0.5 + cfg.crew_skill_weight * crew_skill
         if target_speed_mps > 1.0:
-            motion_pen = max(0.5, 1.0 - cfg.target_motion_penalty * (target_speed_mps / 10.0))
-            p *= motion_pen
-            modifiers["target_motion"] = motion_pen
-
-        # Shooter motion penalty
+            modifiers["target_motion"] = max(0.5, 1.0 - cfg.target_motion_penalty * (target_speed_mps / 10.0))
         if shooter_speed_mps > 0.5:
-            shoot_pen = max(0.3, 1.0 - cfg.shooter_motion_penalty * (shooter_speed_mps / 10.0))
-            p *= shoot_pen
-            modifiers["shooter_motion"] = shoot_pen
-
-        # Visibility
-        vis_mod = 0.3 + 0.7 * visibility
-        p *= vis_mod
-        modifiers["visibility"] = vis_mod
-
-        # Target posture — dug-in targets present smaller area
-        posture_mod = self._posture_mods.get(target_posture, 1.0)
-        p *= posture_mod
+            modifiers["shooter_motion"] = max(0.3, 1.0 - cfg.shooter_motion_penalty * (shooter_speed_mps / 10.0))
+        modifiers["visibility"] = 0.3 + 0.7 * visibility
         modifiers["posture"] = posture_mod
-
-        # Position uncertainty penalty
         if position_uncertainty_m > 0:
-            unc_penalty = max(0.3, 1.0 - cfg.uncertainty_penalty_scale * position_uncertainty_m)
-            p *= unc_penalty
-            modifiers["uncertainty"] = unc_penalty
-
-        # Weapon condition
-        cond_mod = 0.5 + 0.5 * weapon_condition
-        p *= cond_mod
-        modifiers["weapon_condition"] = cond_mod
-
-        # Terrain cover — reduces hit probability (target behind cover)
+            modifiers["uncertainty"] = max(0.3, 1.0 - cfg.uncertainty_penalty_scale * position_uncertainty_m)
+        modifiers["weapon_condition"] = 0.5 + 0.5 * weapon_condition
         if terrain_cover > 0:
-            cover_mod = 1.0 - terrain_cover
-            p *= cover_mod
-            modifiers["terrain_cover"] = cover_mod
-
-        # Elevation advantage — high ground bonus
+            modifiers["terrain_cover"] = 1.0 - terrain_cover
         if elevation_mod != 1.0:
-            p *= elevation_mod
             modifiers["elevation"] = elevation_mod
-
-        # Moderate condition floor — prevents extreme penalty stacking
-        p = max(p, cfg.moderate_condition_floor)
-
-        # Clamp
-        p = max(cfg.min_phit, min(cfg.max_phit, p))
 
         return HitResult(p_hit=p, range_m=range_m, modifiers=modifiers)
 

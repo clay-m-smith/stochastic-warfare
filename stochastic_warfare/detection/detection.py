@@ -16,6 +16,7 @@ from pydantic import BaseModel
 from scipy.special import erfc  # type: ignore[import-untyped]
 
 from stochastic_warfare.core.logging import get_logger
+from stochastic_warfare.core.numba_utils import optional_jit
 from stochastic_warfare.core.types import Position
 from stochastic_warfare.detection.sensors import SensorInstance, SensorType
 from stochastic_warfare.detection.signatures import (
@@ -24,6 +25,123 @@ from stochastic_warfare.detection.signatures import (
 )
 
 logger = get_logger(__name__)
+
+
+# ---------------------------------------------------------------------------
+# JIT-compiled SNR kernels (Phase 87a)
+# ---------------------------------------------------------------------------
+
+
+@optional_jit
+def _snr_visual_kernel(
+    effective_signature: float,
+    range_m: float,
+    illumination_lux: float,
+    visibility_m: float,
+) -> float:
+    """Pure-math visual SNR computation (JIT-compilable)."""
+    if range_m <= 0.0:
+        return 100.0
+    vis = visibility_m if visibility_m > 1.0 else 1.0
+    extinction = 3.0 / vis
+    atm_loss = math.exp(-extinction * range_m)
+    signal = effective_signature * illumination_lux * atm_loss
+    noise = range_m * range_m * 1e-3
+    if noise <= 0.0 or signal <= 0.0:
+        return -100.0
+    return 10.0 * math.log10(signal / noise)
+
+
+@optional_jit
+def _snr_thermal_kernel(
+    effective_signature: float,
+    range_m: float,
+    thermal_contrast: float,
+) -> float:
+    """Pure-math thermal/IR SNR computation (JIT-compilable)."""
+    if range_m <= 0.0:
+        return 100.0
+    ir_loss_db_per_km = 0.2
+    ir_loss_linear = 10.0 ** (ir_loss_db_per_km * range_m / 1000.0 / 10.0)
+    signal = effective_signature * thermal_contrast
+    noise = range_m * range_m * ir_loss_linear * 1e-6
+    if noise <= 0.0 or signal <= 0.0:
+        return -100.0
+    return 10.0 * math.log10(signal / noise)
+
+
+@optional_jit
+def _snr_radar_kernel(
+    peak_power_w: float,
+    antenna_gain_dbi: float,
+    frequency_mhz: float,
+    effective_rcs: float,
+    range_m: float,
+    atmospheric_atten_db_per_km: float,
+) -> float:
+    """Pure-math radar SNR computation (JIT-compilable).
+
+    Uses the radar range equation:
+    SNR = (Pt * Gt^2 * lam^2 * sigma) / ((4pi)^3 * R^4 * kTB) - atm_loss
+    """
+    if range_m <= 0.0:
+        return 100.0
+    c = 299_792_458.0
+    four_pi_cubed = (4.0 * math.pi) ** 3
+    kTB = 1.380649e-23 * 290.0 * 1e6
+
+    wavelength = c / (frequency_mhz * 1e6)
+    gt_linear = 10.0 ** (antenna_gain_dbi / 10.0)
+
+    numerator = peak_power_w * gt_linear * gt_linear * wavelength * wavelength * effective_rcs
+    denominator = four_pi_cubed * range_m ** 4 * kTB
+
+    if denominator <= 0.0:
+        return -100.0
+    snr_linear = numerator / denominator
+    if snr_linear <= 0.0:
+        return -100.0
+
+    snr_db = 10.0 * math.log10(snr_linear)
+    atm_loss = atmospheric_atten_db_per_km * range_m / 1000.0
+    return snr_db - atm_loss
+
+
+@optional_jit
+def _snr_acoustic_kernel(
+    source_level_db: float,
+    range_m: float,
+    ambient_noise_db: float,
+    directivity_index_db: float,
+    transmission_loss_override: float,
+) -> float:
+    """Pure-math acoustic signal excess computation (JIT-compilable).
+
+    SE = SL - TL - (NL - DI).
+    Pass ``transmission_loss_override < 0`` to use the built-in TL model.
+    """
+    if range_m <= 0.0:
+        return 100.0
+    if transmission_loss_override >= 0.0:
+        tl = transmission_loss_override
+    else:
+        r = range_m if range_m >= 1.0 else 1.0
+        absorption = 0.001 * range_m / 1000.0
+        tl = 20.0 * math.log10(r) + absorption
+    return source_level_db - tl - (ambient_noise_db - directivity_index_db)
+
+
+@optional_jit
+def _detection_probability_kernel(snr_db: float, threshold_db: float) -> float:
+    """Pure-math detection probability via erfc (JIT-compilable).
+
+    Pd = 0.5 * erfc(-(SNR - threshold) / sqrt(2)), clamped to [0, 1].
+    """
+    sqrt_2 = 1.4142135623730951
+    excess = snr_db - threshold_db
+    pd = 0.5 * math.erfc(-excess / sqrt_2)
+    return max(0.0, min(1.0, pd))
+
 
 # ---------------------------------------------------------------------------
 # Result types
@@ -150,18 +268,9 @@ class DetectionEngine:
         """Compute visual SNR in dB.
 
         SNR = (cross_section * illumination) / (range² * atmospheric_extinction)
+        Delegates to JIT-compiled ``_snr_visual_kernel``.
         """
-        if range_m <= 0:
-            return 100.0
-        # Atmospheric extinction: Beer-Lambert, visibility = range at which
-        # transmission drops to 5%.  extinction coeff = 3.0 / visibility.
-        extinction = 3.0 / max(visibility_m, 1.0)
-        atm_loss = math.exp(-extinction * range_m)
-        signal = effective_signature * illumination_lux * atm_loss
-        noise = range_m * range_m * 1e-3  # scaling factor
-        if noise <= 0 or signal <= 0:
-            return -100.0
-        return 10.0 * math.log10(signal / noise)
+        return _snr_visual_kernel(effective_signature, range_m, illumination_lux, visibility_m)
 
     @staticmethod
     def compute_snr_thermal(
@@ -172,18 +281,9 @@ class DetectionEngine:
     ) -> float:
         """Compute thermal/IR SNR in dB.
 
-        SNR = heat_signature / (range² * IR_atmospheric_loss)
+        Delegates to JIT-compiled ``_snr_thermal_kernel``.
         """
-        if range_m <= 0:
-            return 100.0
-        # IR atmospheric loss: roughly 0.2 dB/km at medium IR
-        ir_loss_db_per_km = 0.2
-        ir_loss_linear = 10.0 ** (ir_loss_db_per_km * range_m / 1000.0 / 10.0)
-        signal = effective_signature * thermal_contrast
-        noise = range_m * range_m * ir_loss_linear * 1e-6
-        if noise <= 0 or signal <= 0:
-            return -100.0
-        return 10.0 * math.log10(signal / noise)
+        return _snr_thermal_kernel(effective_signature, range_m, thermal_contrast)
 
     @staticmethod
     def compute_snr_radar(
@@ -194,36 +294,13 @@ class DetectionEngine:
     ) -> float:
         """Compute radar SNR in dB using the radar range equation.
 
-        SNR = (Pt * Gt² * λ² * σ) / ((4π)³ * R⁴ * k*T*B) - atmospheric_loss
+        Delegates to JIT-compiled ``_snr_radar_kernel``.
         """
         defn = sensor.definition
         pt = defn.peak_power_w or 1000.0
         gt_dbi = defn.antenna_gain_dbi or 0.0
         freq_mhz = defn.frequency_mhz or 3000.0
-
-        if range_m <= 0:
-            return 100.0
-
-        wavelength = _C / (freq_mhz * 1e6)
-        gt_linear = 10.0 ** (gt_dbi / 10.0)
-
-        numerator = pt * gt_linear * gt_linear * wavelength * wavelength * effective_rcs
-        denominator = _FOUR_PI_CUBED * range_m ** 4 * _BOLTZMANN_290_1E6
-
-        if denominator <= 0:
-            return -100.0
-
-        snr_linear = numerator / denominator
-        if snr_linear <= 0:
-            return -100.0
-
-        snr_db = 10.0 * math.log10(snr_linear)
-
-        # Atmospheric loss
-        atm_loss = atmospheric_atten_db_per_km * range_m / 1000.0
-        snr_db -= atm_loss
-
-        return snr_db
+        return _snr_radar_kernel(pt, gt_dbi, freq_mhz, effective_rcs, range_m, atmospheric_atten_db_per_km)
 
     @staticmethod
     def compute_snr_acoustic(
@@ -235,22 +312,13 @@ class DetectionEngine:
     ) -> float:
         """Compute acoustic signal excess (SE) in dB.
 
-        SE = SL - TL - (NL - DI)
+        Delegates to JIT-compiled ``_snr_acoustic_kernel``.
         """
-        if range_m <= 0:
-            return 100.0
-
-        # Transmission loss: spherical spreading + absorption
-        if transmission_loss is not None:
-            tl = transmission_loss
-        else:
-            # Simple model: 20*log10(R) + absorption
-            absorption = 0.001 * range_m / 1000.0  # ~1 dB/km
-            tl = 20.0 * math.log10(max(range_m, 1.0)) + absorption
-
-        di = sensor.definition.directivity_index_db
-        se = source_level_db - tl - (ambient_noise_db - di)
-        return se
+        tl_override = transmission_loss if transmission_loss is not None else -1.0
+        return _snr_acoustic_kernel(
+            source_level_db, range_m, ambient_noise_db,
+            sensor.definition.directivity_index_db, tl_override,
+        )
 
     # ------------------------------------------------------------------
     # Detection probability
@@ -260,12 +328,9 @@ class DetectionEngine:
     def detection_probability(snr_db: float, threshold_db: float) -> float:
         """Compute Pd given SNR and detection threshold (both in dB).
 
-        Uses the Gaussian model: Pd = 0.5 * erfc(-(SNR - threshold) / sqrt(2))
-        Clamped to [0, 1].
+        Delegates to JIT-compiled ``_detection_probability_kernel``.
         """
-        excess = snr_db - threshold_db
-        pd = float(0.5 * erfc(-excess / _SQRT_2))
-        return _clamp(pd, 0.0, 1.0)
+        return _detection_probability_kernel(snr_db, threshold_db)
 
     @staticmethod
     def false_alarm_probability(threshold_db: float) -> float:

@@ -103,6 +103,7 @@ Rolling record of implementation decisions, changes, and lessons learned across 
 | 84 | Spatial Culling & Scan Scheduling | **Complete** | [phase-84.md](phase-84.md) |
 | 85 | LOD & Aggregation | **Complete** | [phase-85.md](phase-85.md) |
 | 86 | Engagement & Calibration Optimization | **Complete** | [phase-86.md](phase-86.md) |
+| 87 | Expanded Numba JIT | **Complete** | [phase-87.md](phase-87.md) |
 
 ## Post-MVP Refinement Index
 

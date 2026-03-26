@@ -8,6 +8,7 @@ SURRENDERED is an absorbing state.
 from __future__ import annotations
 
 import enum
+import math
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from typing import Any
@@ -17,10 +18,168 @@ from pydantic import BaseModel
 
 from stochastic_warfare.core.events import EventBus
 from stochastic_warfare.core.logging import get_logger
+from stochastic_warfare.core.numba_utils import optional_jit
 from stochastic_warfare.core.types import ModuleId
 from stochastic_warfare.morale.events import MoraleStateChangeEvent
 
 logger = get_logger(__name__)
+
+
+# ---------------------------------------------------------------------------
+# JIT-compiled morale kernels (Phase 87c)
+# ---------------------------------------------------------------------------
+
+_N_MORALE_STATES = 5
+
+
+@optional_jit
+def _transition_matrix_kernel(
+    casualty_rate: float,
+    suppression_level: float,
+    leadership_present_f: float,
+    cohesion: float,
+    force_ratio: float,
+    cbrn_stress: float,
+    base_degrade_rate: float,
+    casualty_weight: float,
+    suppression_weight: float,
+    force_ratio_weight: float,
+    base_recover_rate: float,
+    leadership_weight: float,
+    cohesion_weight: float,
+) -> np.ndarray:
+    """Pure-math discrete morale transition matrix (JIT-compilable).
+
+    Returns a 5x5 row-stochastic matrix.
+    ``leadership_present_f`` is 1.0 if leader present, 0.0 otherwise.
+    """
+    n = _N_MORALE_STATES
+    matrix = np.zeros((n, n), dtype=np.float64)
+
+    # Degradation pressure
+    degrade = base_degrade_rate
+    degrade += casualty_weight * casualty_rate
+    degrade += suppression_weight * suppression_level
+    if force_ratio < 1.0:
+        degrade += force_ratio_weight * (1.0 - force_ratio)
+    degrade += cbrn_stress
+    if degrade < 0.0:
+        degrade = 0.0
+    if degrade > 0.8:
+        degrade = 0.8
+
+    # Recovery pressure
+    recover = base_recover_rate
+    if leadership_present_f > 0.5:
+        recover += leadership_weight
+    recover += cohesion_weight * cohesion
+    if force_ratio > 1.0:
+        bonus = force_ratio - 1.0
+        if bonus > 1.0:
+            bonus = 1.0
+        recover += force_ratio_weight * bonus * 0.5
+    if recover < 0.0:
+        recover = 0.0
+    if recover > 0.8:
+        recover = 0.8
+
+    for i in range(n):
+        if i == n - 1:
+            # SURRENDERED — absorbing state
+            matrix[i, i] = 1.0
+            continue
+
+        p_down = degrade * (1.0 + 0.2 * i)
+        if p_down > 0.9:
+            p_down = 0.9
+
+        p_up = recover * max(0.1, 1.0 - 0.3 * i) if i > 0 else 0.0
+
+        total_trans = p_down + p_up
+        if total_trans > 0.95:
+            scale = 0.95 / total_trans
+            p_down *= scale
+            p_up *= scale
+
+        if i < n - 1:
+            matrix[i, i + 1] = p_down
+        if i > 0:
+            matrix[i, i - 1] = p_up
+        matrix[i, i] = 1.0 - p_down - p_up
+
+    return matrix
+
+
+@optional_jit
+def _continuous_transition_kernel(
+    casualty_rate: float,
+    suppression_level: float,
+    leadership_present_f: float,
+    cohesion: float,
+    force_ratio: float,
+    dt: float,
+    base_degrade_rate: float,
+    casualty_weight: float,
+    suppression_weight: float,
+    force_ratio_weight: float,
+    base_recover_rate: float,
+    leadership_weight: float,
+    cohesion_weight: float,
+) -> np.ndarray:
+    """Pure-math continuous-time morale transition matrix (JIT-compilable).
+
+    Uses P(transition) = 1 - exp(-lambda * dt).
+    Returns a 5x5 row-stochastic matrix.
+    """
+    n = _N_MORALE_STATES
+    matrix = np.zeros((n, n), dtype=np.float64)
+
+    # Degradation rate
+    degrade_rate = base_degrade_rate
+    degrade_rate += casualty_weight * casualty_rate
+    degrade_rate += suppression_weight * suppression_level
+    if force_ratio < 1.0:
+        degrade_rate += force_ratio_weight * (1.0 - force_ratio)
+    if degrade_rate > 2.0:
+        degrade_rate = 2.0
+
+    # Recovery rate
+    recover_rate = base_recover_rate
+    if leadership_present_f > 0.5:
+        recover_rate += leadership_weight
+    recover_rate += cohesion_weight * cohesion
+    if force_ratio > 1.0:
+        bonus = force_ratio - 1.0
+        if bonus > 1.0:
+            bonus = 1.0
+        recover_rate += force_ratio_weight * bonus * 0.5
+    if recover_rate > 2.0:
+        recover_rate = 2.0
+
+    for i in range(n):
+        if i == n - 1:
+            matrix[i, i] = 1.0
+            continue
+
+        lambda_down = degrade_rate * (1.0 + 0.2 * i)
+        lambda_up = recover_rate * max(0.1, 1.0 - 0.3 * i) if i > 0 else 0.0
+
+        p_down = 1.0 - math.exp(-lambda_down * dt)
+        p_up = 1.0 - math.exp(-lambda_up * dt)
+
+        total_trans = p_down + p_up
+        if total_trans > 0.95:
+            scale = 0.95 / total_trans
+            p_down *= scale
+            p_up *= scale
+
+        if i < n - 1:
+            matrix[i, i + 1] = p_down
+        if i > 0:
+            matrix[i, i - 1] = p_up
+        matrix[i, i] = 1.0 - p_down - p_up
+
+    return matrix
 
 # ---------------------------------------------------------------------------
 # Morale state enum
@@ -201,57 +360,14 @@ class MoraleStateMachine:
         key = (casualty_rate, suppression_level, float(leadership_present), cohesion, force_ratio, cbrn_stress)
         if self._cached_matrix_key == key and self._cached_matrix is not None:
             return self._cached_matrix
-        n = len(MoraleState)
-        matrix = np.zeros((n, n), dtype=np.float64)
 
-        # Degradation pressure
-        degrade = cfg.base_degrade_rate
-        degrade += cfg.casualty_weight * casualty_rate
-        degrade += cfg.suppression_weight * suppression_level
-        if force_ratio < 1.0:
-            degrade += cfg.force_ratio_weight * (1.0 - force_ratio)
-        degrade += cbrn_stress  # CBRN environmental stress
-        degrade = np.clip(degrade, 0.0, 0.8)
-
-        # Recovery pressure
-        recover = cfg.base_recover_rate
-        if leadership_present:
-            recover += cfg.leadership_weight
-        recover += cfg.cohesion_weight * cohesion
-        if force_ratio > 1.0:
-            recover += cfg.force_ratio_weight * min(force_ratio - 1.0, 1.0) * 0.5
-        recover = np.clip(recover, 0.0, 0.8)
-
-        for i in range(n):
-            state = MoraleState(i)
-
-            if state == MoraleState.SURRENDERED:
-                # Absorbing state — never leaves
-                matrix[i, i] = 1.0
-                continue
-
-            # Probability of degrading one step
-            p_down = degrade * (1.0 + 0.2 * i)  # Worse states degrade faster
-            p_down = min(p_down, 0.9)
-
-            # Probability of recovering one step
-            p_up = recover * max(0.1, 1.0 - 0.3 * i)  # Worse states recover harder
-            if i == 0:
-                p_up = 0.0  # Can't improve from STEADY
-
-            # Clamp total transition probability
-            total_trans = p_down + p_up
-            if total_trans > 0.95:
-                scale = 0.95 / total_trans
-                p_down *= scale
-                p_up *= scale
-
-            # Fill row
-            if i < n - 1:
-                matrix[i, i + 1] = p_down
-            if i > 0:
-                matrix[i, i - 1] = p_up
-            matrix[i, i] = 1.0 - p_down - p_up
+        matrix = _transition_matrix_kernel(
+            casualty_rate, suppression_level, float(leadership_present),
+            cohesion, force_ratio, cbrn_stress,
+            cfg.base_degrade_rate, cfg.casualty_weight, cfg.suppression_weight,
+            cfg.force_ratio_weight, cfg.base_recover_rate,
+            cfg.leadership_weight, cfg.cohesion_weight,
+        )
 
         self._cached_matrix_key = key
         self._cached_matrix = matrix
@@ -286,56 +402,13 @@ class MoraleStateMachine:
             5x5 row-stochastic transition matrix.
         """
         cfg = self._config
-
-        # Degradation rate (per second)
-        degrade_rate = cfg.base_degrade_rate
-        degrade_rate += cfg.casualty_weight * casualty_rate
-        degrade_rate += cfg.suppression_weight * suppression_level
-        if force_ratio < 1.0:
-            degrade_rate += cfg.force_ratio_weight * (1.0 - force_ratio)
-        degrade_rate = min(degrade_rate, 2.0)
-
-        # Recovery rate (per second)
-        recover_rate = cfg.base_recover_rate
-        if leadership_present:
-            recover_rate += cfg.leadership_weight
-        recover_rate += cfg.cohesion_weight * cohesion
-        if force_ratio > 1.0:
-            recover_rate += cfg.force_ratio_weight * min(force_ratio - 1.0, 1.0) * 0.5
-        recover_rate = min(recover_rate, 2.0)
-
-        n = len(MoraleState)
-        matrix = np.zeros((n, n), dtype=np.float64)
-
-        for i in range(n):
-            state = MoraleState(i)
-
-            if state == MoraleState.SURRENDERED:
-                matrix[i, i] = 1.0
-                continue
-
-            # State-dependent rate scaling (same shape as discrete version)
-            lambda_down = degrade_rate * (1.0 + 0.2 * i)
-            lambda_up = recover_rate * max(0.1, 1.0 - 0.3 * i) if i > 0 else 0.0
-
-            # Convert rate to probability over dt
-            p_down = 1.0 - np.exp(-lambda_down * dt)
-            p_up = 1.0 - np.exp(-lambda_up * dt)
-
-            # Clamp total transition probability
-            total_trans = p_down + p_up
-            if total_trans > 0.95:
-                scale = 0.95 / total_trans
-                p_down *= scale
-                p_up *= scale
-
-            if i < n - 1:
-                matrix[i, i + 1] = p_down
-            if i > 0:
-                matrix[i, i - 1] = p_up
-            matrix[i, i] = 1.0 - p_down - p_up
-
-        return matrix
+        return _continuous_transition_kernel(
+            casualty_rate, suppression_level, float(leadership_present),
+            cohesion, force_ratio, dt,
+            cfg.base_degrade_rate, cfg.casualty_weight, cfg.suppression_weight,
+            cfg.force_ratio_weight, cfg.base_recover_rate,
+            cfg.leadership_weight, cfg.cohesion_weight,
+        )
 
     def check_transition(
         self,

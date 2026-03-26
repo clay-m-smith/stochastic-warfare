@@ -320,7 +320,7 @@ Batch the 20+ detection range modifiers into a single pre-computed multiplier pe
 
 ## Phase 87: Expanded Numba JIT
 
-**Status**: Not started.
+**Status**: Complete.
 
 **Goal**: JIT-compile detection SNR computation, engagement resolution math, and morale state transitions. Target: 5-10x speedup on JIT-able paths.
 
@@ -685,7 +685,7 @@ Update all living documents for Block 9 completion.
 | 84 | Spatial Culling & Scan Scheduling | ~30 | ~9,913 | Not started |
 | 85 | LOD & Aggregation | ~30 | ~9,943 | Not started |
 | 86 | Engagement & Calibration Optimization | 19 | ~9,957 | Complete |
-| 87 | Expanded Numba JIT | ~20 | ~9,977 | Not started |
+| 87 | Expanded Numba JIT | 40 | ~10,176 | Complete |
 | 88 | SoA Data Layer | ~26 | ~10,003 | Not started |
 | 89 | Per-Side Parallelism | ~18 | ~10,021 | Not started |
 | 90 | Validation & Benchmarking | ~18 | ~10,039 | Not started |

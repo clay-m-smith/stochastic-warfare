@@ -18,9 +18,64 @@ from stochastic_warfare.combat.ammunition import AmmoDefinition
 from stochastic_warfare.combat.events import DamageEvent, HitEvent
 from stochastic_warfare.core.events import EventBus
 from stochastic_warfare.core.logging import get_logger
+from stochastic_warfare.core.numba_utils import optional_jit
 from stochastic_warfare.core.types import ModuleId, Position
 
 logger = get_logger(__name__)
+
+
+# ---------------------------------------------------------------------------
+# JIT-compiled penetration kernel (Phase 87b)
+# ---------------------------------------------------------------------------
+
+
+@optional_jit
+def _penetration_kernel(
+    penetration_mm_rha: float,
+    armor_mm: float,
+    impact_angle_deg: float,
+    range_m: float,
+    drag_coefficient: float,
+    pen_reference_range_m: float,
+    demare_exponent: float,
+    armor_effectiveness: float,
+    is_heat: bool,
+) -> tuple[bool, float, float, float]:
+    """Pure-math penetration computation (JIT-compilable).
+
+    Returns (penetrated, penetration_mm, armor_effective_mm, margin_mm).
+    """
+    if penetration_mm_rha <= 0.0:
+        return (False, 0.0, armor_mm, -armor_mm)
+
+    # Effective armor thickness (obliquity)
+    angle = abs(impact_angle_deg)
+    if angle > 80.0:
+        angle = 80.0
+    cos_angle = math.cos(math.radians(angle))
+    if cos_angle < 0.1:
+        cos_angle = 0.1
+    armor_eff = armor_mm / cos_angle
+
+    # Ricochet at extreme obliquity
+    if abs(impact_angle_deg) > 75.0:
+        return (False, 0.0, armor_eff, -armor_eff)
+
+    armor_eff *= armor_effectiveness
+
+    # Penetration calculation
+    if is_heat:
+        penetration = penetration_mm_rha
+    elif pen_reference_range_m > 0.0 and range_m > 0.0:
+        decay = 1.0 - drag_coefficient * range_m / 100000.0
+        if decay < 0.3:
+            decay = 0.3
+        penetration = penetration_mm_rha * decay ** demare_exponent
+    else:
+        penetration = penetration_mm_rha
+
+    margin = penetration - armor_eff
+    return (margin > 0.0, penetration, armor_eff, margin)
 
 # Posture protection factors (blast and fragmentation).
 # Source: FM 5-103 "Survivability" (1985), Table 2-1 (protection factors by
@@ -199,29 +254,7 @@ class DamageEngine:
         armor_type:
             Armor composition type (RHA, COMPOSITE, REACTIVE, SPACED).
         """
-        if ammo.penetration_mm_rha <= 0:
-            return PenetrationResult(
-                penetrated=False, penetration_mm=0.0,
-                armor_effective_mm=armor_mm, margin_mm=-armor_mm,
-            )
-
-        # Effective armor thickness (obliquity)
-        angle_rad = math.radians(min(abs(impact_angle_deg), 80.0))
-        cos_angle = math.cos(angle_rad)
-        if cos_angle < 0.1:
-            cos_angle = 0.1
-        armor_eff = armor_mm / cos_angle
-
-        # Ricochet check: extreme obliquity causes round to skip off surface
-        if abs(impact_angle_deg) > 75.0:
-            return PenetrationResult(
-                penetrated=False,
-                penetration_mm=0.0,
-                armor_effective_mm=armor_eff,
-                margin_mm=-armor_eff,
-            )
-
-        # Armor effectiveness multiplier based on composition and ammo category
+        # Extract primitives for JIT kernel
         ammo_type_str = ammo.ammo_type.upper()
         ammo_category = "HEAT" if ammo_type_str == "HEAT" else "KE"
         try:
@@ -229,25 +262,13 @@ class DamageEngine:
         except KeyError:
             at_enum = ArmorType.RHA
         effectiveness = _ARMOR_EFFECTIVENESS.get((at_enum, ammo_category), 1.0)
-        armor_eff *= effectiveness
 
-        # Penetration calculation
-        pen_ref = ammo.penetration_mm_rha
-
-        if ammo_type_str == "HEAT":
-            # HEAT: penetration independent of range (shaped charge)
-            penetration = pen_ref
-        elif ammo.penetration_reference_range_m > 0 and range_m > 0:
-            # DeMarre variant: pen = pen_ref × (v/v_ref)^1.5
-            # Approximate velocity decay: v/v_ref ≈ 1 - drag_factor * range
-            decay = 1.0 - ammo.drag_coefficient * range_m / 100000.0
-            decay = max(0.3, decay)
-            penetration = pen_ref * decay ** self._config.demare_exponent
-        else:
-            penetration = pen_ref
-
-        margin = penetration - armor_eff
-        penetrated = margin > 0
+        penetrated, penetration, armor_eff, margin = _penetration_kernel(
+            ammo.penetration_mm_rha, armor_mm, impact_angle_deg, range_m,
+            ammo.drag_coefficient, ammo.penetration_reference_range_m,
+            self._config.demare_exponent, effectiveness,
+            ammo_type_str == "HEAT",
+        )
 
         return PenetrationResult(
             penetrated=penetrated,

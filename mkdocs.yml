@@ -173,6 +173,7 @@ nav:
     - Phase 84 - Spatial Culling & Scan Scheduling: devlog/phase-84.md
     - Phase 85 - LOD & Aggregation: devlog/phase-85.md
     - Phase 86 - Engagement & Calibration Optimization: devlog/phase-86.md
+    - Phase 87 - Expanded Numba JIT: devlog/phase-87.md
   - Specifications:
     - Project Structure: specs/project-structure.md
     - Skills & Hooks: skills-and-hooks.md
