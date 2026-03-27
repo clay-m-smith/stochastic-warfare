@@ -146,7 +146,7 @@ calibration_overrides:
   blue_force_ratio_modifier: 2.0
   observation_decay_rate: 0.03
   destruction_threshold: 0.3
-  morale_degrade_rate_modifier: 3.0
+  morale_degrade_rate_modifier: 1.5
   morale_base_degrade_rate: 0.01
   morale_casualty_weight: 0.5
   roe_level: WEAPONS_FREE

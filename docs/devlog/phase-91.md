@@ -78,7 +78,7 @@ Investigated scenarios resolving unrealistically fast. Root causes: extreme forc
 | Bekaa Valley | 33 ticks (~3min) | 45 ticks (~4min) | threshold 0.3→0.5, distance 40km→50km, morale 3.0→1.5 |
 | Agincourt | 5 ticks (~instant) | 35 ticks (several hrs) | moderated CEV/target modifiers, distance 300m→1.3km |
 
-**Ancient/Medieval 0-engagement deficit discovered**: All 4 ancient/medieval scenarios (Agincourt, Hastings, Cannae, Salamis) have 0 engagements. Casualties happen through morale collapse, not combat. The era-specific engagement routing (archery, melee) isn't connecting weapons to targets in the battle loop. This is a pre-existing issue, not introduced by Phase 91. Logged as D91.1.
+**Ancient/Medieval 0-engagement deficit FIXED**: Aggregate models (archery, melee, volley fire) were applying damage directly without publishing `EngagementEvent`/`DamageEvent`. Fixed `_apply_aggregate_casualties()` and `_apply_melee_result()` to publish events. All 6 era-specific call sites updated. Verified: Cannae now shows 39 engagements + 34 damage events (was 0/0).
 
 ## Known Limitations
 
@@ -86,9 +86,9 @@ Investigated scenarios resolving unrealistically fast. Root causes: extreme forc
 - `enable_parallel_detection=True` produces different RNG sequences — per-seed results may differ from sequential mode, but correct winner should dominate across seeds
 - Flag impact measurements (Phase 90) not yet run with actual solo measurements
 - `baselines.json` entries for battalion/brigade are placeholders
-- **D91.1**: All ancient/medieval scenarios have 0 engagements — casualties from morale only, not combat. Era engagement routing issue.
 - Performance flags add overhead at <1000 units — only enabled on benchmark scenarios
 - Evaluator timeout increased 900s→7200s due to long-running scenarios (Taiwan Strait: 95min)
+- Taiwan Strait runtime improvement not yet measured (starting distance fix from 20km→40km should prevent tactical resolution lock)
 
 ---
 

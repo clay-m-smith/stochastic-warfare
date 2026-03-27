@@ -122,11 +122,11 @@ calibration_overrides:
   enable_ammo_gate: true
   hit_probability_modifier: 1.5
   target_size_modifier: 0.55
-  target_size_modifier_blue: 0.1
-  target_size_modifier_red: 3.0
+  target_size_modifier_blue: 0.4
+  target_size_modifier_red: 1.8
   max_engagers_per_side: 5
   thermal_contrast: 0.8
-  morale_degrade_rate_modifier: 2.5
+  morale_degrade_rate_modifier: 1.5
   morale_force_ratio_weight: 0.0
   morale_base_degrade_rate: 0.008
   morale_base_recover_rate: 0.15

@@ -102,12 +102,12 @@ calibration_overrides:
   # Dupuy CEV: Greek seamanship in narrow waters was devastatingly superior.
   # 3.0:0.4 reflects tactical advantage of fighting in confined strait
   # (Strauss, *Battle of Salamis*; Herodotus, *Histories*).
-  greek_force_ratio_modifier: 3.0
-  persian_force_ratio_modifier: 0.4
+  greek_force_ratio_modifier: 2.5
+  persian_force_ratio_modifier: 0.6
   hit_probability_modifier: 0.8
-  target_size_modifier_persian: 2.0
+  target_size_modifier_persian: 1.8
   target_size_modifier_greek: 0.5
-  morale_degrade_rate_modifier: 2.0
+  morale_degrade_rate_modifier: 1.5
   morale_base_degrade_rate: 0.02
   morale_casualty_weight: 0.8
   morale_check_interval: 10

@@ -110,7 +110,7 @@ reinforcements:
 calibration_overrides:
   hit_probability_modifier: 1.2
   target_size_modifier: 0.4
-  morale_degrade_rate_modifier: 3.0
+  morale_degrade_rate_modifier: 1.5
   morale_base_degrade_rate: 0.01
   morale_casualty_weight: 0.5
   morale_check_interval: 5

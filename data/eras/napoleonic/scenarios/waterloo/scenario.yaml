@@ -110,8 +110,8 @@ calibration_overrides:
   french_cohesion: 0.55
   british_cohesion: 0.8
   british_force_ratio_modifier: 2.5
-  target_size_modifier_french: 2.0
-  target_size_modifier_british: 0.3
+  target_size_modifier_french: 1.8
+  target_size_modifier_british: 0.4
   destruction_threshold: 0.3
   french_start_x: 1500.0
   french_start_y: 2000.0

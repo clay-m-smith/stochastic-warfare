@@ -76,7 +76,7 @@ calibration_overrides:
   usn_force_ratio_modifier: 2.5
   ijn_force_ratio_modifier: 0.7
   # IJN carriers with fueled/armed aircraft = catastrophically vulnerable (magazine detonations)
-  target_size_modifier_ijn: 2.0
+  target_size_modifier_ijn: 1.8
   target_size_modifier_usn: 0.5
   morale_degrade_rate_modifier: 1.5
   morale_base_degrade_rate: 0.005

@@ -87,11 +87,11 @@ calibration_overrides:
   enable_fuel_consumption: true
   enable_ammo_gate: true
   hit_probability_modifier: 2.0
-  target_size_modifier: 0.3
-  target_size_modifier_blue: 0.1
-  target_size_modifier_red: 4.0
+  target_size_modifier: 0.4
+  target_size_modifier_blue: 0.4
+  target_size_modifier_red: 1.8
   max_engagers_per_side: 3
-  morale_degrade_rate_modifier: 3.0
+  morale_degrade_rate_modifier: 1.5
   morale_base_degrade_rate: 0.015
   morale_casualty_weight: 0.6
   morale_check_interval: 10

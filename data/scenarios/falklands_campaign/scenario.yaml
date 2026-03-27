@@ -95,7 +95,7 @@ calibration_overrides:
   roe_level: WEAPONS_FREE
   hit_probability_modifier: 0.15
   target_size_modifier: 0.5
-  target_size_modifier_blue: 0.3
+  target_size_modifier_blue: 0.4
   target_size_modifier_red: 0.5
   max_engagers_per_side: 1
   morale_degrade_rate_modifier: 0.3

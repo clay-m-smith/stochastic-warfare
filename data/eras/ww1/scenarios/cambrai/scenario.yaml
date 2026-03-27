@@ -92,14 +92,14 @@ victory_conditions:
 calibration_overrides:
   hit_probability_modifier: 1.5
   target_size_modifier: 0.5
-  morale_degrade_rate_modifier: 2.0
+  morale_degrade_rate_modifier: 1.5
   morale_base_degrade_rate: 0.008
   morale_casualty_weight: 0.45
   morale_check_interval: 20
   british_cohesion: 0.75
   german_cohesion: 0.5
-  target_size_modifier_british: 0.3
-  target_size_modifier_german: 2.0
+  target_size_modifier_british: 0.4
+  target_size_modifier_german: 1.8
   destruction_threshold: 0.3
   british_start_x: 1500.0
   british_start_y: 2500.0

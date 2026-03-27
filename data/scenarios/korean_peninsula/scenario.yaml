@@ -139,7 +139,7 @@ calibration_overrides:
   morale_base_degrade_rate: 0.008
   morale_casualty_weight: 0.4
   morale_check_interval: 25
-  blue_force_ratio_modifier: 3.5
+  blue_force_ratio_modifier: 2.5
   red_force_ratio_modifier: 1.0
   blue_cohesion: 0.8
   red_cohesion: 0.25

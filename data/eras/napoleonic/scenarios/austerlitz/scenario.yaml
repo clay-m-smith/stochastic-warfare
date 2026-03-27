@@ -107,8 +107,8 @@ calibration_overrides:
   french_cohesion: 0.85
   coalition_cohesion: 0.4
   french_force_ratio_modifier: 2.5
-  target_size_modifier_french: 0.3
-  target_size_modifier_coalition: 2.0
+  target_size_modifier_french: 0.4
+  target_size_modifier_coalition: 1.8
   destruction_threshold: 0.3
   french_start_x: 3000.0
   french_start_y: 4000.0

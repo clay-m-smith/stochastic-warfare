@@ -92,11 +92,11 @@ victory_conditions:
 
 calibration_overrides:
   hit_probability_modifier: 2.0
-  target_size_modifier: 2.0
+  target_size_modifier: 1.8
   # British gunnery 3:1 superior — Dupuy CEV (Adkin, *Trafalgar Companion*)
-  british_force_ratio_modifier: 3.0
-  franco_spanish_force_ratio_modifier: 0.5
-  morale_degrade_rate_modifier: 3.0
+  british_force_ratio_modifier: 2.5
+  franco_spanish_force_ratio_modifier: 0.6
+  morale_degrade_rate_modifier: 1.5
   morale_base_degrade_rate: 0.05
   morale_casualty_weight: 1.0
   morale_check_interval: 5

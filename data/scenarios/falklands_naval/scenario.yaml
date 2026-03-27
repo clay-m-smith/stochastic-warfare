@@ -108,7 +108,7 @@ calibration_overrides:
   morale_casualty_weight: 0.3
   morale_check_interval: 50
   blue_force_ratio_modifier: 1.0
-  red_force_ratio_modifier: 4.0
+  red_force_ratio_modifier: 2.5
   blue_cohesion: 0.9
   red_cohesion: 0.9
   destruction_threshold: 0.3

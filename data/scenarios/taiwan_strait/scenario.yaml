@@ -124,7 +124,7 @@ calibration_overrides:
   roe_level: WEAPONS_FREE
   hit_probability_modifier: 1.5
   target_size_modifier: 1.0
-  morale_degrade_rate_modifier: 2.5
+  morale_degrade_rate_modifier: 1.5
   morale_base_degrade_rate: 0.008
   morale_casualty_weight: 0.5
   morale_check_interval: 15
@@ -134,10 +134,12 @@ calibration_overrides:
   target_size_modifier_blue: 0.5
   target_size_modifier_red: 1.5
   destruction_threshold: 0.3
-  blue_start_x: 20000.0
+  # Start 40km apart — beyond 30km closing range threshold so engine
+  # begins at strategic (3600s) resolution, not tactical (5s)
+  blue_start_x: 10000.0
   blue_start_y: 30000.0
   blue_formation_spacing_m: 1000.0
-  red_start_x: 40000.0
+  red_start_x: 50000.0
   red_start_y: 30000.0
   red_formation_spacing_m: 1000.0
   defensive_sides: [blue]

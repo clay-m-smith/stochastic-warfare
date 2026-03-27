@@ -323,6 +323,11 @@ def _apply_aggregate_casualties(
     destruction_threshold: float = 0.5,
     disable_threshold: float = 0.3,
     cumulative_tracker: dict[str, int] | None = None,
+    *,
+    event_bus: Any | None = None,
+    attacker: Unit | None = None,
+    wpn_inst: Any | None = None,
+    best_range: float = 0.0,
 ) -> None:
     """Convert aggregate casualty count to pending unit status changes.
 
@@ -330,9 +335,39 @@ def _apply_aggregate_casualties(
     ticks and thresholds are evaluated against the running total.  This is
     essential for aggregate models (volley fire, archery) where a single
     volley rarely exceeds the threshold on its own.
+
+    When *event_bus* is provided, publishes ``EngagementEvent`` and
+    ``DamageEvent`` so aggregate combat is visible to the recorder, UI, and
+    evaluator.
     """
     if casualties <= 0:
         return
+
+    # Publish engagement + damage events for aggregate models
+    if event_bus is not None and attacker is not None:
+        from stochastic_warfare.combat.events import DamageEvent, EngagementEvent
+
+        _wpn_id = getattr(
+            getattr(wpn_inst, "definition", None), "weapon_id", "aggregate",
+        ) if wpn_inst else "aggregate"
+        event_bus.publish(EngagementEvent(
+            timestamp=datetime.min,
+            source=ModuleId.COMBAT,
+            attacker_id=attacker.entity_id,
+            target_id=target.entity_id,
+            weapon_id=_wpn_id,
+            ammo_type="aggregate",
+            result="hit",
+        ))
+        event_bus.publish(DamageEvent(
+            timestamp=datetime.min,
+            source=ModuleId.COMBAT,
+            target_id=target.entity_id,
+            damage_amount=float(casualties),
+            damage_type="aggregate_casualties",
+            location="personnel",
+        ))
+
     total = max(1, len(target.personnel))
     if cumulative_tracker is not None:
         cumulative_tracker[target.entity_id] = (
@@ -355,10 +390,42 @@ def _apply_melee_result(
     morale_states: dict[str, Any],
     destruction_threshold: float = 0.5,
     disable_threshold: float = 0.3,
+    *,
+    event_bus: Any | None = None,
+    wpn_inst: Any | None = None,
 ) -> None:
     """Convert melee result to damage entries for both sides."""
+    _wpn_id = getattr(
+        getattr(wpn_inst, "definition", None), "weapon_id", "melee",
+    ) if wpn_inst else "melee"
+
+    # Publish engagement event for melee
+    if event_bus is not None and (mr.defender_casualties > 0 or mr.attacker_casualties > 0):
+        from stochastic_warfare.combat.events import DamageEvent, EngagementEvent
+
+        event_bus.publish(EngagementEvent(
+            timestamp=datetime.min,
+            source=ModuleId.COMBAT,
+            attacker_id=attacker.entity_id,
+            target_id=defender.entity_id,
+            weapon_id=_wpn_id,
+            ammo_type="melee",
+            result="hit",
+        ))
+
     # Defender casualties
     if mr.defender_casualties > 0:
+        if event_bus is not None:
+            from stochastic_warfare.combat.events import DamageEvent
+
+            event_bus.publish(DamageEvent(
+                timestamp=datetime.min,
+                source=ModuleId.COMBAT,
+                target_id=defender.entity_id,
+                damage_amount=float(mr.defender_casualties),
+                damage_type="melee_casualties",
+                location="personnel",
+            ))
         def_total = max(1, len(defender.personnel))
         frac = mr.defender_casualties / def_total
         if frac >= destruction_threshold:
@@ -367,6 +434,17 @@ def _apply_melee_result(
             pending_damage.append((defender, UnitStatus.DISABLED))
     # Attacker casualties
     if mr.attacker_casualties > 0:
+        if event_bus is not None:
+            from stochastic_warfare.combat.events import DamageEvent
+
+            event_bus.publish(DamageEvent(
+                timestamp=datetime.min,
+                source=ModuleId.COMBAT,
+                target_id=attacker.entity_id,
+                damage_amount=float(mr.attacker_casualties),
+                damage_type="melee_casualties",
+                location="personnel",
+            ))
         att_total = max(1, len(attacker.personnel))
         frac = mr.attacker_casualties / att_total
         if frac >= destruction_threshold:
@@ -582,12 +660,16 @@ def _route_air_engagement(
     _ace = cal_flat.get("enable_air_combat_environment", False)
 
     # Phase 64c: ATO sortie gate — check available sorties before air engagement
+    # Only gate when the ATO has a configured sortie limit (daily_sortie_limit > 0).
+    # Without explicit limits, aircraft engage freely.
     _ato_64 = getattr(ctx, "ato_engine", None)
     if _ato_64 is not None and cal_flat.get("enable_c2_friction", False):
-        _sim_time = ctx.clock.elapsed.total_seconds() if hasattr(ctx.clock, "elapsed") else 0.0
-        if _ato_64.get_available_sorties(_sim_time) <= 0:
-            logger.debug("ATO: no sorties available, air engagement skipped")
-            return (True, None)
+        _daily_limit = getattr(_ato_64, "_daily_sortie_limit", 0)
+        if _daily_limit > 0:
+            _sim_time = ctx.clock.elapsed.total_seconds() if hasattr(ctx.clock, "elapsed") else 0.0
+            if _ato_64.get_available_sorties(_sim_time) <= 0:
+                logger.debug("ATO: no sorties available, air engagement skipped")
+                return (True, None)
 
     # Air-to-air: route missile engagements through air combat engine
     if atk_air and tgt_air and wpn_cat == "MISSILE_LAUNCHER":
@@ -2468,7 +2550,16 @@ class BattleManager:
                             echelon_level=5, priority=_OP64b.PRIORITY,
                             mission_type=0,
                         )
-                        _avail_time = _cal_c2.get("planning_available_time_s", 7200.0)
+                        # Planning time scales with C2 effectiveness — healthy
+                        # comms mean fast planning (60s), degraded comms mean
+                        # slower planning (up to the configured maximum).
+                        _plan_max = _cal_c2.get("planning_available_time_s", 7200.0)
+                        _c2_plan_side2 = self._find_unit_side(ctx, unit_id)
+                        _c2_plan_eff2 = self._compute_c2_effectiveness(
+                            ctx, unit_id, _c2_plan_side2,
+                        ) if _c2_plan_side2 else 1.0
+                        # Scale: eff=1.0 → 60s, eff=0.3 → full planning time
+                        _avail_time = max(60.0, _plan_max * (1.0 - _c2_plan_eff2))
                         try:
                             _method = _planning_64.initiate_planning(
                                 unit_id, _plan_order, _avail_time, timestamp,
@@ -2673,8 +2764,16 @@ class BattleManager:
                                 _sender_pos = _get_unit_position(ctx, unit_id)
                                 _prop_cfg = getattr(ctx.order_propagation, "_config", None)
                                 if _prop_cfg is not None:
-                                    _prop_cfg.delay_sigma = _cal_64a.get("order_propagation_delay_sigma", 0.4)
-                                    _prop_cfg.base_misinterpretation = _cal_64a.get("order_misinterpretation_base", 0.05)
+                                    # Scale delay/misinterpretation with C2 effectiveness:
+                                    # healthy comms (eff=1.0) → minimal friction,
+                                    # degraded comms (eff→0) → full friction
+                                    _c2_delay_side = self._find_unit_side(ctx, unit_id)
+                                    _c2_delay_eff = self._compute_c2_effectiveness(
+                                        ctx, unit_id, _c2_delay_side,
+                                    ) if _c2_delay_side else 1.0
+                                    _c2_friction_scale = max(0.0, 1.0 - _c2_delay_eff)
+                                    _prop_cfg.delay_sigma = _cal_64a.get("order_propagation_delay_sigma", 0.4) * _c2_friction_scale
+                                    _prop_cfg.base_misinterpretation = _cal_64a.get("order_misinterpretation_base", 0.05) * _c2_friction_scale
                                 try:
                                     _result_68c = ctx.order_propagation.propagate_order(
                                         _order_64a, _sender_pos, _sender_pos, timestamp,
@@ -4403,6 +4502,9 @@ class BattleManager:
                                     best_target, pending_damage,
                                     dest_thresh, dis_thresh,
                                     self._cumulative_casualties,
+                                    event_bus=getattr(ctx, "event_bus", None),
+                                    attacker=attacker,
+                                    wpn_inst=wpn_inst,
                                 )
                                 side_engagements += 1
                                 routed_aggregate = True
@@ -4469,6 +4571,8 @@ class BattleManager:
                                     _apply_melee_result(
                                         mr, attacker, best_target, pending_damage,
                                         ctx.morale_states, dest_thresh, dis_thresh,
+                                        event_bus=getattr(ctx, "event_bus", None),
+                                        wpn_inst=wpn_inst,
                                     )
                                     side_engagements += 1
                                     routed_aggregate = True
@@ -4500,6 +4604,9 @@ class BattleManager:
                                     best_target, pending_damage,
                                     dest_thresh, dis_thresh,
                                     self._cumulative_casualties,
+                                    event_bus=getattr(ctx, "event_bus", None),
+                                    attacker=attacker,
+                                    wpn_inst=wpn_inst,
                                 )
                                 side_engagements += 1
                                 routed_aggregate = True
@@ -4542,6 +4649,8 @@ class BattleManager:
                                 _apply_melee_result(
                                     mr, attacker, best_target, pending_damage,
                                     ctx.morale_states, dest_thresh, dis_thresh,
+                                    event_bus=getattr(ctx, "event_bus", None),
+                                    wpn_inst=wpn_inst,
                                 )
                                 side_engagements += 1
                                 routed_aggregate = True
@@ -4600,6 +4709,9 @@ class BattleManager:
                                     best_target, pending_damage,
                                     dest_thresh, dis_thresh,
                                     self._cumulative_casualties,
+                                    event_bus=getattr(ctx, "event_bus", None),
+                                    attacker=attacker,
+                                    wpn_inst=wpn_inst,
                                 )
                                 side_engagements += 1
                                 routed_aggregate = True
@@ -4620,6 +4732,8 @@ class BattleManager:
                                 _apply_melee_result(
                                     mr, attacker, best_target, pending_damage,
                                     ctx.morale_states, dest_thresh, dis_thresh,
+                                    event_bus=getattr(ctx, "event_bus", None),
+                                    wpn_inst=wpn_inst,
                                 )
                                 side_engagements += 1
                                 routed_aggregate = True
