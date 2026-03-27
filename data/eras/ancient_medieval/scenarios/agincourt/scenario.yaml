@@ -91,25 +91,27 @@ calibration_overrides:
   # Dupuy CEV: English longbows devastated massed French cavalry in narrow muddy field.
   # 3.0:0.4 reflects terrain advantage + longbow lethality + French disorder
   # (Barker, *Agincourt*; Keegan, *The Face of Battle*).
-  english_force_ratio_modifier: 3.0
-  french_force_ratio_modifier: 0.4
-  hit_probability_modifier: 1.2
-  # French massed cavalry in dense formation = extremely large targets
-  target_size_modifier_french: 2.5
-  target_size_modifier_english: 0.3
-  morale_degrade_rate_modifier: 2.0
-  morale_base_degrade_rate: 0.012
-  morale_casualty_weight: 0.8
-  morale_check_interval: 20
+  english_force_ratio_modifier: 2.0
+  french_force_ratio_modifier: 0.8
+  hit_probability_modifier: 0.8
+  # French massed cavalry in dense formation = larger targets, but not absurdly so
+  target_size_modifier_french: 1.5
+  target_size_modifier_english: 0.5
+  morale_degrade_rate_modifier: 1.2
+  morale_base_degrade_rate: 0.008
+  morale_casualty_weight: 0.6
+  morale_check_interval: 30
   english_cohesion: 0.80
   french_cohesion: 0.45
-  destruction_threshold: 0.3
-  english_start_x: 300.0
+  destruction_threshold: 0.6
+  english_start_x: 200.0
   english_start_y: 500.0
   # Spread English longbow line across the 1km frontage
   english_formation_spacing_m: 150.0
-  # Reduced from 1700 to 600 — within longbow effective range (~250m) from start
-  french_start_x: 600.0
+  # French start ~1.3km away — cavalry approach across muddy field
+  # At ~7 m/s cavalry, ~170s approach. Note: 0-engagement issue across all ancient
+  # scenarios — casualties from morale collapse, not combat. See D91 deficit.
+  french_start_x: 1500.0
   french_start_y: 500.0
   # Wide formation prevents cavalry converging on a single point;
   # 200m spacing across 4 units ≈ 600m frontage (historical narrow field)

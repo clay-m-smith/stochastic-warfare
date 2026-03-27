@@ -52,9 +52,17 @@ class TestDeferredFlag:
         assert "enable_parallel_detection" in flat
         assert flat["enable_parallel_detection"] is False
 
-    def test_enable_parallel_detection_in_deferred_flags(self) -> None:
-        """Structural: flag is in _DEFERRED_FLAGS in test_phase_67_structural.py."""
+    def test_enable_parallel_detection_exercised_in_scenarios(self) -> None:
+        """Structural: flag is exercised (set True) in at least one scenario."""
         from pathlib import Path
-        structural = Path(__file__).resolve().parents[1] / "validation" / "test_phase_67_structural.py"
-        src = structural.read_text(encoding="utf-8")
-        assert "enable_parallel_detection" in src
+        import yaml
+        data_dir = Path(__file__).resolve().parents[2] / "data"
+        found = False
+        for path in data_dir.rglob("scenario.yaml"):
+            with open(path) as f:
+                data = yaml.safe_load(f)
+            cal = data.get("calibration_overrides") or {}
+            if cal.get("enable_parallel_detection") is True:
+                found = True
+                break
+        assert found, "enable_parallel_detection not set True in any scenario"

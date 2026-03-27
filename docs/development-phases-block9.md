@@ -600,7 +600,7 @@ Measure the individual and combined impact of each optimization flag.
 
 ## Phase 91: Scenario Recalibration & Regression
 
-**Status**: Not started.
+**Status**: Complete.
 
 **Goal**: Full recalibration pass across all 44+ scenarios. Verify that performance optimizations haven't shifted outcomes, recalibrate where they have, and validate large-scale scenarios produce militarily plausible results.
 
@@ -689,10 +689,11 @@ Update all living documents for Block 9 completion.
 | 88 | SoA Data Layer | 43 | ~10,219 | Complete |
 | 89 | Per-Side Parallelism | 21 | ~10,240 | Complete |
 | 90 | Validation & Benchmarking | ~25 | ~10,265 | Complete |
-| 91 | Scenario Recalibration & Regression | ~63 | ~10,318 | Not started |
+| 91 | Scenario Recalibration & Regression | ~58 | ~10,322 | Complete |
 
-**Block 9 total (so far)**: ~222 new tests across 8 completed phases, ~63 estimated for remaining 1.
-**Cumulative**: ~10,265 Python tests + ~316 frontend vitest = ~10,581 total.
+**Block 9 total**: ~279 new tests across 9 completed phases.
+**Cumulative**: ~10,322 Python tests + ~316 frontend vitest = ~10,638 total.
+**Block 9 COMPLETE.**
 
 ---
 

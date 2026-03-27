@@ -177,6 +177,7 @@ nav:
     - Phase 88 - SoA Data Layer: devlog/phase-88.md
     - Phase 89 - Per-Side Parallelism: devlog/phase-89.md
     - Phase 90 - Validation & Benchmarking: devlog/phase-90.md
+    - Phase 91 - Scenario Recalibration & Regression: devlog/phase-91.md
   - Specifications:
     - Project Structure: specs/project-structure.md
     - Skills & Hooks: skills-and-hooks.md

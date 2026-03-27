@@ -93,19 +93,19 @@ calibration_overrides:
   enable_fuel_consumption: true
   enable_ammo_gate: true
   roe_level: WEAPONS_FREE
-  hit_probability_modifier: 0.3
+  hit_probability_modifier: 0.15
   target_size_modifier: 0.5
   target_size_modifier_blue: 0.3
-  target_size_modifier_red: 0.7
-  max_engagers_per_side: 2
-  morale_degrade_rate_modifier: 0.5
+  target_size_modifier_red: 0.5
+  max_engagers_per_side: 1
+  morale_degrade_rate_modifier: 0.3
   morale_force_ratio_weight: 0.0
-  morale_base_degrade_rate: 0.005
+  morale_base_degrade_rate: 0.003
   morale_casualty_weight: 0.3
   morale_check_interval: 30
   blue_cohesion: 0.95
   red_cohesion: 0.5
-  destruction_threshold: 0.5
+  destruction_threshold: 0.7
   rout_cascade_radius_m: 200.0
   rout_cascade_base_chance: 0.05
   defensive_sides: [blue]
@@ -113,9 +113,9 @@ calibration_overrides:
   # outside engagement detection range (15km).  Red must close ~30km
   # before standoff, creating approach/engagement phases.
   # Blue holds San Carlos anchorage; red raids from mainland.
-  blue_start_x: 15000.0
+  blue_start_x: 10000.0
   blue_start_y: 50000.0
-  red_start_x: 85000.0
+  red_start_x: 90000.0
   red_start_y: 50000.0
   blue_formation_spacing_m: 500.0
   red_formation_spacing_m: 1000.0

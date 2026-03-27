@@ -124,22 +124,24 @@ calibration_overrides:
   enable_fog_of_war: true
   enable_air_routing: true
   enable_air_combat_environment: true
-  enable_c2_friction: true
+  # C2 friction disabled — EW already models comms degradation;
+  # enabling both compounds the effect and makes engagements near-zero
+  enable_c2_friction: false
   enable_fuel_consumption: true
   enable_ammo_gate: true
   hit_probability_modifier: 1.5
   target_size_modifier: 1.0
-  morale_degrade_rate_modifier: 3.0
+  morale_degrade_rate_modifier: 1.5
   morale_base_degrade_rate: 0.008
-  morale_casualty_weight: 0.4
-  morale_check_interval: 10
-  blue_cohesion: 0.9
-  red_cohesion: 0.35
-  target_size_modifier_blue: 0.5
-  target_size_modifier_red: 1.5
-  max_engagers_per_side: 8
-  destruction_threshold: 0.2
-  blue_force_ratio_modifier: 3.0
+  morale_casualty_weight: 0.5
+  morale_check_interval: 15
+  blue_cohesion: 0.85
+  red_cohesion: 0.40
+  target_size_modifier_blue: 0.7
+  target_size_modifier_red: 1.2
+  max_engagers_per_side: 6
+  destruction_threshold: 0.3
+  blue_force_ratio_modifier: 2.5
   blue_start_x: 13000.0
   blue_start_y: 10000.0
   red_start_x: 16000.0

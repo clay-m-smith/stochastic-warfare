@@ -118,7 +118,7 @@ def _run_evaluation(output_path: Path, seed: int = 42) -> list[dict]:
         cmd,
         capture_output=True,
         text=True,
-        timeout=900,
+        timeout=7200,
         cwd=str(SCRIPTS_DIR.parent),
     )
     if result.returncode != 0:

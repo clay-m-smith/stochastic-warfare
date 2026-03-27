@@ -52,8 +52,8 @@ class TestEnableFlagConsumers:
         Phase 68 flags are excluded — they default to False and will be
         enabled in a future integration phase.
         """
-        # Phase 81: most deferred flags now enabled; only bridge_capacity + meta-flag remain
-        _DEFERRED_FLAGS = {"enable_bridge_capacity", "enable_all_modern", "enable_scan_scheduling", "enable_detection_culling", "enable_lod", "enable_soa", "enable_parallel_detection"}
+        # Phase 91: perf flags now exercised in scenarios; only bridge_capacity + meta-flag remain
+        _DEFERRED_FLAGS = {"enable_bridge_capacity", "enable_all_modern"}
         flags = set(_get_enable_flags()) - _DEFERRED_FLAGS
         enabled: set[str] = set()
         for path in _DATA.rglob("scenario.yaml"):

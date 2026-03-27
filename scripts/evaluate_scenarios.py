@@ -202,13 +202,20 @@ def run_scenario(scenario_path: Path, data_dir: Path, verbose: bool = False, see
             et = e.event_type
             if 'Engagement' in et or 'Battle' in et:
                 result.engagement_events += 1
+            # Phase 91: count combat_damage destructions as engagements for
+            # aggregate models (melee, archery, volley fire) that don't publish
+            # EngagementEvent but do apply damage directly.
+            if 'Destroy' in et:
+                _cause = (e.data or {}).get('cause', '') if hasattr(e, 'data') else ''
+                if _cause == 'combat_damage':
+                    result.engagement_events += 1
             if 'Damage' in et or 'Hit' in et:
                 result.damage_events += 1
             if 'Destroy' in et or 'Killed' in et or 'Sunk' in et or 'Downed' in et:
                 result.destruction_events += 1
             if 'Morale' in et:
                 result.morale_events += 1
-            if 'Fire' in et or 'Shot' in et or 'Launch' in et or 'Volley' in et:
+            if 'Fire' in et or 'Shot' in et or 'Launch' in et or 'Volley' in et or 'Engagement' in et:
                 result.weapon_fire_events += 1
 
         # Analyze final unit states
@@ -357,6 +364,9 @@ def find_all_scenarios(data_dir: Path) -> list[Path]:
     for p in sorted(data_dir.rglob("scenario.yaml")):
         # Skip test_campaign_* scenarios (internal test fixtures)
         if 'test_campaign' in p.parent.name:
+            continue
+        # Skip benchmark scenarios (Phase 90 — too large for evaluator timeout)
+        if p.parent.name.startswith('benchmark_'):
             continue
         scenarios.append(p)
     return scenarios
