@@ -22,6 +22,16 @@ const defaultProps = {
   onZoomToFit: vi.fn(),
   mouseWorldX: 1234.5,
   mouseWorldY: 5678.9,
+  showMorale: false,
+  onToggleMorale: vi.fn(),
+  showHealth: true,
+  onToggleHealth: vi.fn(),
+  showPosture: false,
+  onTogglePosture: vi.fn(),
+  showSuppression: true,
+  onToggleSuppression: vi.fn(),
+  showLogistics: false,
+  onToggleLogistics: vi.fn(),
 }
 
 describe('MapControls', () => {

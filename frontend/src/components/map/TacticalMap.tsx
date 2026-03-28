@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { MapUnitFrame, ReplayFrame, TerrainData, EngagementArc } from '../../types/map'
 import { useViewportControls } from './useViewportControls'
 import { LAND_COVER_COLORS, worldToScreen, screenToWorld, getVisibleCellRange, applyElevationShading } from '../../lib/terrain'
-import { drawUnit, hitTestUnit } from '../../lib/unitRendering'
+import { drawUnit, hitTestUnit, type OverlayOptions } from '../../lib/unitRendering'
 import { getSideColor, initSidesForScenario } from '../../lib/sideColors'
 import { MapControls } from './MapControls'
 import { MapLegend } from './MapLegend'
@@ -41,6 +41,11 @@ export function TacticalMap({ terrain, frames, engagementArcs = [], onTickChange
   const [showSensors, setShowSensors] = useState(false)
   const [showFow, setShowFow] = useState(false)
   const [fowSide, setFowSide] = useState('')
+  const [showMorale, setShowMorale] = useState(false)
+  const [showHealth, setShowHealth] = useState(true)
+  const [showPosture, setShowPosture] = useState(false)
+  const [showSuppression, setShowSuppression] = useState(true)
+  const [showLogistics, setShowLogistics] = useState(false)
   const terrainVersionRef = useRef(0)
   const lastTerrainDrawRef = useRef<string>('')
 
@@ -107,6 +112,11 @@ export function TacticalMap({ terrain, frames, engagementArcs = [], onTickChange
       setFowSide(availableSides[0]!)
     }
   }, [fowAvailable, fowSide, availableSides])
+
+  // Memoize overlay options
+  const overlays = useMemo<OverlayOptions>(() => ({
+    showMorale, showHealth, showPosture, showSuppression, showLogistics,
+  }), [showMorale, showHealth, showPosture, showSuppression, showLogistics])
 
   // Memoize elevation min/max
   const elevRange = useMemo(() => {
@@ -319,7 +329,7 @@ export function TacticalMap({ terrain, frames, engagementArcs = [], onTickChange
         if (!showDestroyed && unit.status >= 2) continue
         if (detectedSet && unit.side !== fowSide && !detectedSet.has(unit.id)) continue
         const isSelected = selectedUnit?.id === unit.id
-        drawUnit(ctx2d, unit, transform, canvasSize.height, isSelected, showLabels)
+        drawUnit(ctx2d, unit, transform, canvasSize.height, isSelected, showLabels, overlays)
       }
     }
 
@@ -340,7 +350,7 @@ export function TacticalMap({ terrain, frames, engagementArcs = [], onTickChange
   }, [
     currentFrame, currentFrameData, transform, canvasSize,
     showLabels, showDestroyed, showEngagements, showTrails,
-    showSensors, showFow, fowSide, selectedUnit,
+    showSensors, showFow, fowSide, selectedUnit, overlays,
     terrain.objectives, frames, engagementArcs,
     // eslint-disable-next-line react-hooks/exhaustive-deps
     terrainVersionRef.current,
@@ -407,6 +417,16 @@ export function TacticalMap({ terrain, frames, engagementArcs = [], onTickChange
         onZoomToFit={handleZoomToFit}
         mouseWorldX={mouseWorld?.x ?? null}
         mouseWorldY={mouseWorld?.y ?? null}
+        showMorale={showMorale}
+        onToggleMorale={() => setShowMorale((v) => !v)}
+        showHealth={showHealth}
+        onToggleHealth={() => setShowHealth((v) => !v)}
+        showPosture={showPosture}
+        onTogglePosture={() => setShowPosture((v) => !v)}
+        showSuppression={showSuppression}
+        onToggleSuppression={() => setShowSuppression((v) => !v)}
+        showLogistics={showLogistics}
+        onToggleLogistics={() => setShowLogistics((v) => !v)}
       />
 
       <div className="relative flex-1" ref={containerRef}>
@@ -436,7 +456,7 @@ export function TacticalMap({ terrain, frames, engagementArcs = [], onTickChange
         {/* Legend overlay */}
         <div className="pointer-events-none absolute bottom-2 left-2">
           <div className="pointer-events-auto">
-            <MapLegend sides={allSides} />
+            <MapLegend sides={allSides} overlays={overlays} />
           </div>
         </div>
         {/* Unit detail sidebar */}

@@ -1,8 +1,8 @@
 # Stochastic Warfare
 
 ![Python](https://img.shields.io/badge/python-%3E%3D3.12-blue)
-![Tests](https://img.shields.io/badge/tests-10%2C652_passing-brightgreen)
-![Phase](https://img.shields.io/badge/phase-93_Block--10-blue)
+![Tests](https://img.shields.io/badge/tests-10%2C694_passing-brightgreen)
+![Phase](https://img.shields.io/badge/phase-94_Block--10-blue)
 
 High-fidelity, high-resolution wargame simulator built as a headless Python engine. Models warfare across multiple scales — from individual unit engagements up through tactical battles, operational battlefields, and multi-day strategic campaigns — with stochastic and signal-processing-inspired models throughout.
 
@@ -313,7 +313,7 @@ cd frontend && npm install && npm run dev
 Frontend commands:
 - `npm run dev` — Vite dev server at localhost:5173
 - `npm run build` — Production build (TypeScript + Vite)
-- `npm test` — Run vitest tests (316 tests, no API server required)
+- `npm test` — Run vitest tests (372 tests, no API server required)
 - `npm run lint` — ESLint
 
 ## Documentation

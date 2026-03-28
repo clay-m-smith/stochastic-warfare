@@ -112,6 +112,7 @@ Rolling record of implementation decisions, changes, and lessons learned across 
 | **Block 10: UI Depth & Engine Exposure** ||||
 | 92 | API Analytics & Frame Enrichment | **Complete** | [phase-92.md](phase-92.md) |
 | 93 | Results Dashboard Depth | **Complete** | [phase-93.md](phase-93.md) |
+| 94 | Tactical Map Enrichment | **Complete** | [phase-94.md](phase-94.md) |
 
 ## Post-MVP Refinement Index
 

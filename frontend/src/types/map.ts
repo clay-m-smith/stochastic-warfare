@@ -10,6 +10,14 @@ export interface MapUnitFrame {
   heading: number
   type: string
   sensor_range?: number
+  // Phase 92 enriched fields (Phase 94 visualization)
+  morale?: number      // 0=STEADY, 1=SHAKEN, 2=BROKEN, 3=ROUTED, 4=SURRENDERED
+  posture?: string     // MOVING, DEFENSIVE, DUG_IN, etc.
+  health?: number      // 0.0–1.0
+  fuel_pct?: number    // 0.0–1.0
+  ammo_pct?: number    // 0.0–1.0
+  suppression?: number // 0–4
+  engaged?: boolean
 }
 
 export interface ReplayFrame {

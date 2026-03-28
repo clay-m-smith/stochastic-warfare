@@ -18,6 +18,16 @@ interface MapControlsProps {
   onZoomToFit: () => void
   mouseWorldX: number | null
   mouseWorldY: number | null
+  showMorale: boolean
+  onToggleMorale: () => void
+  showHealth: boolean
+  onToggleHealth: () => void
+  showPosture: boolean
+  onTogglePosture: () => void
+  showSuppression: boolean
+  onToggleSuppression: () => void
+  showLogistics: boolean
+  onToggleLogistics: () => void
 }
 
 export function MapControls({
@@ -40,6 +50,16 @@ export function MapControls({
   onZoomToFit,
   mouseWorldX,
   mouseWorldY,
+  showMorale,
+  onToggleMorale,
+  showHealth,
+  onToggleHealth,
+  showPosture,
+  onTogglePosture,
+  showSuppression,
+  onToggleSuppression,
+  showLogistics,
+  onToggleLogistics,
 }: MapControlsProps) {
   return (
     <div className="flex flex-wrap items-center gap-3 rounded bg-white/90 px-3 py-2 text-xs shadow dark:bg-gray-800/90 dark:text-gray-200">
@@ -69,6 +89,12 @@ export function MapControls({
           ))}
         </select>
       )}
+      <span className="text-gray-300 dark:text-gray-600">|</span>
+      <Toggle label="Morale" checked={showMorale} onChange={onToggleMorale} />
+      <Toggle label="Health" checked={showHealth} onChange={onToggleHealth} />
+      <Toggle label="Posture" checked={showPosture} onChange={onTogglePosture} />
+      <Toggle label="Suppression" checked={showSuppression} onChange={onToggleSuppression} />
+      <Toggle label="Logistics" checked={showLogistics} onChange={onToggleLogistics} />
       <button
         onClick={onZoomToFit}
         className="rounded bg-gray-200 px-2 py-1 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600"

@@ -17,6 +17,30 @@ const STATUS_NAMES: Record<number, string> = {
   5: 'Surrendered',
 }
 
+const MORALE_NAMES: Record<number, string> = {
+  0: 'Steady',
+  1: 'Shaken',
+  2: 'Broken',
+  3: 'Routed',
+  4: 'Surrendered',
+}
+
+const MORALE_TEXT_COLORS: Record<number, string> = {
+  0: 'text-green-600 dark:text-green-400',
+  1: 'text-yellow-600 dark:text-yellow-400',
+  2: 'text-orange-500 dark:text-orange-400',
+  3: 'text-red-600 dark:text-red-400',
+  4: 'text-gray-500 dark:text-gray-400',
+}
+
+const SUPPRESSION_NAMES: Record<number, string> = {
+  0: 'None',
+  1: 'Light',
+  2: 'Moderate',
+  3: 'Heavy',
+  4: 'Pinned',
+}
+
 interface UnitDetailSidebarProps {
   unit: MapUnitFrame
   onClose: () => void
@@ -43,6 +67,29 @@ export function UnitDetailSidebar({ unit, onClose }: UnitDetailSidebarProps) {
         <Row label="Status" value={STATUS_NAMES[unit.status] ?? String(unit.status)} />
         <Row label="Position" value={`E ${unit.x.toFixed(0)}, N ${unit.y.toFixed(0)}`} />
         <Row label="Heading" value={`${unit.heading.toFixed(0)}\u00B0`} />
+        {unit.morale != null && (
+          <ColorRow
+            label="Morale"
+            value={MORALE_NAMES[unit.morale] ?? String(unit.morale)}
+            colorClass={MORALE_TEXT_COLORS[unit.morale] ?? ''}
+          />
+        )}
+        {unit.posture ? <Row label="Posture" value={unit.posture} /> : null}
+        {unit.health != null && (
+          <Row label="Health" value={`${Math.round(unit.health * 100)}%`} />
+        )}
+        {unit.fuel_pct != null && (
+          <Row label="Fuel" value={`${Math.round(unit.fuel_pct * 100)}%`} />
+        )}
+        {unit.ammo_pct != null && (
+          <Row label="Ammo" value={`${Math.round(unit.ammo_pct * 100)}%`} />
+        )}
+        {unit.suppression != null && (
+          <Row label="Suppression" value={SUPPRESSION_NAMES[unit.suppression] ?? String(unit.suppression)} />
+        )}
+        {unit.engaged != null && (
+          <Row label="Engaged" value={unit.engaged ? 'Yes' : 'No'} />
+        )}
       </dl>
     </div>
   )
@@ -53,6 +100,15 @@ function Row({ label, value }: { label: string; value: string }) {
     <div className="flex justify-between">
       <dt className="text-gray-500 dark:text-gray-400">{label}</dt>
       <dd className="font-mono">{value}</dd>
+    </div>
+  )
+}
+
+function ColorRow({ label, value, colorClass }: { label: string; value: string; colorClass: string }) {
+  return (
+    <div className="flex justify-between">
+      <dt className="text-gray-500 dark:text-gray-400">{label}</dt>
+      <dd className={`font-mono ${colorClass}`}>{value}</dd>
     </div>
   )
 }

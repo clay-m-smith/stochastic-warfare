@@ -182,6 +182,7 @@ nav:
     - Phase 91 - Scenario Recalibration & Regression: devlog/phase-91.md
     - Phase 92 - API Analytics & Frame Enrichment: devlog/phase-92.md
     - Phase 93 - Results Dashboard Depth: devlog/phase-93.md
+    - Phase 94 - Tactical Map Enrichment: devlog/phase-94.md
   - Specifications:
     - Project Structure: specs/project-structure.md
     - Skills & Hooks: skills-and-hooks.md

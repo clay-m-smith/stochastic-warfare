@@ -205,7 +205,7 @@ Add a summary card to the results overview tab showing key diagnostic metrics at
 
 ## Phase 94: Tactical Map Enrichment
 
-**Status**: Not started.
+**Status**: Complete.
 
 **Goal**: Enhance the tactical map to visualize unit state using the enriched frame data from Phase 92. Transform the map from a position tracker into a battlefield status display.
 

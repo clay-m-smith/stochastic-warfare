@@ -3,8 +3,8 @@
 **High-fidelity stochastic wargame simulator** -- multi-scale, multi-domain, multi-era.
 
 ![Python](https://img.shields.io/badge/python-%3E%3D3.12-blue)
-![Tests](https://img.shields.io/badge/tests-10%2C652_passing-brightgreen)
-![Phase](https://img.shields.io/badge/phase-93_Block--10-blue)
+![Tests](https://img.shields.io/badge/tests-10%2C694_passing-brightgreen)
+![Phase](https://img.shields.io/badge/phase-94_Block--10-blue)
 
 ---
 
@@ -77,7 +77,7 @@ See the [Getting Started Guide](guide/getting-started.md) for a complete tutoria
 | Block 9 | 83--91 | Performance at scale — profiling, spatial culling, LOD, parallelism | **Complete** |
 | Block 10 | 92--97 | UI depth & engine exposure — analytics, frame enrichment, metadata | **In Progress** |
 
-**~10,638 tests** (~10,322 Python + 316 frontend) across ~400 test files. **~748 YAML data files** defining units, weapons, ammunition types, sensors, signatures, doctrines, commanders, and 46 scenarios across 5 eras.
+**~10,694 tests** (~10,322 Python + 372 frontend) across ~400 test files. **~748 YAML data files** defining units, weapons, ammunition types, sensors, signatures, doctrines, commanders, and 46 scenarios across 5 eras.
 
 ## License
 
