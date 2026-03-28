@@ -1,0 +1,6683 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="High-fidelity stochastic wargame simulator — multi-scale, multi-domain, multi-era">
+      
+      
+        <meta name="author" content="Clay Smith">
+      
+      
+        <link rel="canonical" href="https://clay-m-smith.github.io/stochastic-warfare/development-phases-block9/">
+      
+      
+        <link rel="prev" href="../development-phases-block8/">
+      
+      
+        <link rel="next" href="../development-phases-block10/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.4">
+    
+    
+      
+        <title>Block 9 (83-91) - Stochastic Warfare</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="blue-grey" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#stochastic-warfare-block-9-development-phases-83-91" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="Stochastic Warfare" class="md-header__button md-logo" aria-label="Stochastic Warfare" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Stochastic Warfare
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Block 9 (83-91)
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="blue-grey" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="blue-grey" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/clay-m-smith/stochastic-warfare" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    clay-m-smith/stochastic-warfare
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href=".." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../guide/getting-started/" class="md-tabs__link">
+          
+  
+  
+  Guide
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../concepts/architecture/" class="md-tabs__link">
+          
+  
+  
+  Concepts
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../reference/api/" class="md-tabs__link">
+          
+  
+  
+  Reference
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../brainstorm/" class="md-tabs__link">
+          
+  
+  
+  Architecture (Internal)
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../development-phases/" class="md-tabs__link">
+          
+  
+  
+  Development Phases
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../devlog/" class="md-tabs__link">
+          
+  
+  
+  Devlog
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../specs/project-structure/" class="md-tabs__link">
+          
+  
+  
+  Specifications
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="Stochastic Warfare" class="md-nav__button md-logo" aria-label="Stochastic Warfare" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Stochastic Warfare
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/clay-m-smith/stochastic-warfare" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    clay-m-smith/stochastic-warfare
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Guide
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Guide
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../guide/getting-started/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting Started
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../guide/web-ui/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Web UI
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../guide/scenarios/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Scenario Library
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Concepts
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Concepts
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../concepts/architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../concepts/models/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Mathematical Models
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/eras/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Eras
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/units/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Units & Equipment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture (Internal)
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Architecture (Internal)
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../brainstorm/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Core Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../brainstorm-post-mvp/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Post-MVP Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../brainstorm-block2/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 2 Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../brainstorm-block3/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 3 Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../brainstorm-block4/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 4 Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../brainstorm-block5/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 5 Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../brainstorm-block6/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 6 Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../brainstorm-block7/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 7 Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../brainstorm-block8/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 8 Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../brainstorm-block9/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 9 Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../brainstorm-block10/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 10 Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Development Phases
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Development Phases
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../development-phases/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MVP (0-10)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../development-phases-post-mvp/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Post-MVP (11-24)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../development-phases-block2/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 2 (25-30)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../development-phases-block3/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 3 (31-36)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../development-phases-block4/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 4 (37-39)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../development-phases-block5/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 5 (40-48)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../development-phases-block6/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 6 (49-57)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../development-phases-block7/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 7 (58-67)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../development-phases-block8/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 8 (68-82)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 9 (83-91)
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 9 (83-91)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#philosophy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Philosophy
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#phase-83-profiling-infrastructure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 83: Profiling Infrastructure
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Phase 83: Profiling Infrastructure">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#83a-benchmark-suite" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        83a: Benchmark Suite
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#83b-profiling-tooling" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        83b: Profiling Tooling
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#83c-ci-benchmark-workflow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        83c: CI Benchmark Workflow
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#exit-criteria" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Exit Criteria
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#phase-84-spatial-culling-scan-scheduling" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 84: Spatial Culling &amp; Scan Scheduling
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Phase 84: Spatial Culling &amp; Scan Scheduling">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#84a-strtree-detection-culling" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        84a: STRtree Detection Culling
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#84b-sensor-scan-scheduling" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        84b: Sensor Scan Scheduling
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#84c-engagement-candidate-culling" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        84c: Engagement Candidate Culling
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#exit-criteria_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Exit Criteria
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#phase-85-lod-aggregation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 85: LOD &amp; Aggregation
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Phase 85: LOD &amp; Aggregation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#85a-unit-resolution-tiers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        85a: Unit Resolution Tiers
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#85b-aggregation-activation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        85b: Aggregation Activation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#85c-lod-aggregation-integration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        85c: LOD + Aggregation Integration
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#exit-criteria_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Exit Criteria
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#phase-86-engagement-calibration-optimization" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 86: Engagement &amp; Calibration Optimization
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Phase 86: Engagement &amp; Calibration Optimization">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#86a-calibrationschema-flat-dict" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        86a: CalibrationSchema Flat Dict
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#86b-detection-modifier-batching" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        86b: Detection Modifier Batching
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#exit-criteria_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Exit Criteria
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#phase-87-expanded-numba-jit" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 87: Expanded Numba JIT
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Phase 87: Expanded Numba JIT">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#87a-detection-snr-kernels" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        87a: Detection SNR Kernels
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#87b-engagement-math-kernels" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        87b: Engagement Math Kernels
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#87c-morale-state-machine-kernel" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        87c: Morale State Machine Kernel
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#exit-criteria_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Exit Criteria
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#phase-88-soa-data-layer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 88: SoA Data Layer
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Phase 88: SoA Data Layer">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#88a-unitarrays-core" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        88a: UnitArrays Core
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#88b-soa-detection-integration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        88b: SoA Detection Integration
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#88c-soa-movement-morale-integration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        88c: SoA Movement &amp; Morale Integration
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#exit-criteria_5" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Exit Criteria
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#phase-89-per-side-parallelism" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 89: Per-Side Parallelism
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Phase 89: Per-Side Parallelism">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#89a-per-side-detection-threading" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        89a: Per-Side Detection Threading
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#89b-per-side-movement-threading" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        89b: Per-Side Movement Threading
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#89c-engagement-resolution-sequential" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        89c: Engagement Resolution (Sequential)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#exit-criteria_6" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Exit Criteria
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#phase-90-validation-benchmarking" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 90: Validation &amp; Benchmarking
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Phase 90: Validation &amp; Benchmarking">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#90a-large-scale-benchmark-scenarios" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        90a: Large-Scale Benchmark Scenarios
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#90b-performance-target-validation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        90b: Performance Target Validation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#90c-optimization-flag-impact-matrix" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        90c: Optimization Flag Impact Matrix
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#exit-criteria_7" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Exit Criteria
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#phase-91-scenario-recalibration-regression" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 91: Scenario Recalibration &amp; Regression
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Phase 91: Scenario Recalibration &amp; Regression">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#91a-behavioral-impact-assessment" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        91a: Behavioral Impact Assessment
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#91b-timing-sensitive-scenario-recalibration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        91b: Timing-Sensitive Scenario Recalibration
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#91c-large-scale-scenario-validation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        91c: Large-Scale Scenario Validation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#91d-documentation-lockstep" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        91d: Documentation &amp; Lockstep
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#exit-criteria_8" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Exit Criteria
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#phase-summary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase Summary
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#module-index-block-9-contributions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Module Index: Block 9 Contributions
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#risk-assessment" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Risk Assessment
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../development-phases-block10/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 10 (92-97)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Devlog
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Devlog
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-0/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 0 - Scaffolding
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-1/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 1 - Terrain & Environment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-2/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 2 - Entities & Movement
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-3/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 3 - Detection & Intelligence
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-4/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 4 - Combat & Morale
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-5/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 5 - C2 Infrastructure
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-6/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 6 - Logistics & Supply
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-7/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 7 - Engagement Validation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-8/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 8 - AI & Planning
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-9/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 9 - Simulation Orchestration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-10/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 10 - Campaign Validation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-11/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 11 - Core Fidelity Fixes
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-12/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 12 - Deep Systems Rework
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-13/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 13 - Performance Optimization
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-14/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 14 - Tooling & Dev Experience
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-15/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 15 - Real-World Terrain
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-16/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 16 - Electronic Warfare
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-17/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 17 - Space & Satellite
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-18/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 18 - CBRN Effects
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-19/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 19 - Doctrinal AI Schools
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-20/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 20 - WW2 Era
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-21/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 21 - WW1 Era
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-22/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 22 - Napoleonic Era
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-23/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 23 - Ancient & Medieval Era
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-24/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 24 - Unconventional Warfare
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-25/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 25 - Engine Wiring
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-26/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 26 - Core Polish
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-27/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 27 - Combat Completeness
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-28/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 28 - Modern Data Package
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-28.5/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 28.5 - Directed Energy
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-29/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 29 - Historical Data Expansion
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-30/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 30 - Scenario Library
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-31/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 31 - Documentation Site
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-32/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 32 - API & Service Foundation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-33/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 33 - Frontend Foundation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-34/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 34 - Run Results & Analysis
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-35/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 35 - Tactical Map
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-36/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 36 - Scenario Tweaker & Polish
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-37/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 37 - Integration Fixes & E2E
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-38/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 38 - Map & Chart Enhancements
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-39/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 39 - Quality & Packaging
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-40/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 40 - Battle Loop Foundation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-41/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 41 - Combat Depth
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-42/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 42 - Tactical Behavior
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-43/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 43 - Domain-Specific Resolution
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-44/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 44 - Environmental & Subsystem Integration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-45/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 45 - Mathematical Model Audit & Hardening
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-46/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 46 - Scenario Data Cleanup & Expansion
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-47/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 47 - Full Recalibration & Validation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-48/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 48 - Block 5 Deficit Resolution
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-49/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 49 - Calibration Schema Hardening
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-50/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 50 - Combat Fidelity Polish
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-51/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 51 - Naval Combat Completeness
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-52/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 52 - Environmental Continuity
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-53/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 53 - C2 & AI Completeness
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-54/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 54 - Era-Specific & Domain Sub-Engine Wiring
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-55/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 55 - Resolution & Scenario Migration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-56/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 56 - Performance & Logistics
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-57/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 57 - Full Validation & Regression
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-58/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 58 - Structural Verification & Core Combat Wiring
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-59/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 59 - Atmospheric & Ground Environment Wiring
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-60/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 60 - Obscurants, Fire, & Visual Environment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-61/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 61 - Maritime, Acoustic, & EM Environment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-62/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 62 - Human Factors, CBRN, & Air Combat Environment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-63/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 63 - Cross-Module Feedback Loops
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-64/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 64 - C2 Friction & Command Delay
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-65/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 65 - Space & EW Sub-Engine Activation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-66/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 66 - Unconventional, Naval, & Cleanup
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-67/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 67 - Integration Validation & Recalibration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-68/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 68 - Consequence Enforcement
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-69/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 69 - C2 Depth
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-70/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 70 - Performance Optimization
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-71/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 71 - Missile & Carrier Ops Completion
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-72/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 72 - Checkpoint & State Completeness
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-73/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 73 - Historical Scenario Correctness
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-74/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 74 - Combat Engine Unit Tests
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-75/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 75 - Simulation Core & Domain Unit Tests
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-76/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 76 - API Robustness
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-77/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 77 - Frontend Accessibility
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-78/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 78 - P2 Environment Wiring
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-79/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 79 - CI/CD & Packaging
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-80/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 80 - API & Frontend Sync
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-81/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 81 - Recalibration & Validation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-82/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 82 - Block 8 Postmortem & Documentation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-83/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 83 - Profiling Infrastructure
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-84/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 84 - Spatial Culling & Scan Scheduling
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-85/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 85 - LOD & Aggregation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-86/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 86 - Engagement & Calibration Optimization
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-87/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 87 - Expanded Numba JIT
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-88/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 88 - SoA Data Layer
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-89/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 89 - Per-Side Parallelism
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-90/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 90 - Validation & Benchmarking
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-91/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 91 - Scenario Recalibration & Regression
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-92/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 92 - API Analytics & Frame Enrichment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-93/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 93 - Results Dashboard Depth
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-94/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 94 - Tactical Map Enrichment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_8" >
+        
+          
+          <label class="md-nav__link" for="__nav_8" id="__nav_8_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Specifications
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_8">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Specifications
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../specs/project-structure/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Project Structure
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../skills-and-hooks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Skills & Hooks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#philosophy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Philosophy
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#phase-83-profiling-infrastructure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 83: Profiling Infrastructure
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Phase 83: Profiling Infrastructure">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#83a-benchmark-suite" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        83a: Benchmark Suite
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#83b-profiling-tooling" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        83b: Profiling Tooling
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#83c-ci-benchmark-workflow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        83c: CI Benchmark Workflow
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#exit-criteria" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Exit Criteria
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#phase-84-spatial-culling-scan-scheduling" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 84: Spatial Culling &amp; Scan Scheduling
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Phase 84: Spatial Culling &amp; Scan Scheduling">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#84a-strtree-detection-culling" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        84a: STRtree Detection Culling
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#84b-sensor-scan-scheduling" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        84b: Sensor Scan Scheduling
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#84c-engagement-candidate-culling" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        84c: Engagement Candidate Culling
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#exit-criteria_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Exit Criteria
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#phase-85-lod-aggregation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 85: LOD &amp; Aggregation
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Phase 85: LOD &amp; Aggregation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#85a-unit-resolution-tiers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        85a: Unit Resolution Tiers
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#85b-aggregation-activation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        85b: Aggregation Activation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#85c-lod-aggregation-integration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        85c: LOD + Aggregation Integration
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#exit-criteria_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Exit Criteria
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#phase-86-engagement-calibration-optimization" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 86: Engagement &amp; Calibration Optimization
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Phase 86: Engagement &amp; Calibration Optimization">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#86a-calibrationschema-flat-dict" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        86a: CalibrationSchema Flat Dict
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#86b-detection-modifier-batching" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        86b: Detection Modifier Batching
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#exit-criteria_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Exit Criteria
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#phase-87-expanded-numba-jit" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 87: Expanded Numba JIT
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Phase 87: Expanded Numba JIT">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#87a-detection-snr-kernels" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        87a: Detection SNR Kernels
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#87b-engagement-math-kernels" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        87b: Engagement Math Kernels
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#87c-morale-state-machine-kernel" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        87c: Morale State Machine Kernel
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#exit-criteria_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Exit Criteria
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#phase-88-soa-data-layer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 88: SoA Data Layer
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Phase 88: SoA Data Layer">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#88a-unitarrays-core" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        88a: UnitArrays Core
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#88b-soa-detection-integration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        88b: SoA Detection Integration
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#88c-soa-movement-morale-integration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        88c: SoA Movement &amp; Morale Integration
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#exit-criteria_5" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Exit Criteria
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#phase-89-per-side-parallelism" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 89: Per-Side Parallelism
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Phase 89: Per-Side Parallelism">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#89a-per-side-detection-threading" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        89a: Per-Side Detection Threading
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#89b-per-side-movement-threading" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        89b: Per-Side Movement Threading
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#89c-engagement-resolution-sequential" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        89c: Engagement Resolution (Sequential)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#exit-criteria_6" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Exit Criteria
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#phase-90-validation-benchmarking" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 90: Validation &amp; Benchmarking
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Phase 90: Validation &amp; Benchmarking">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#90a-large-scale-benchmark-scenarios" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        90a: Large-Scale Benchmark Scenarios
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#90b-performance-target-validation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        90b: Performance Target Validation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#90c-optimization-flag-impact-matrix" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        90c: Optimization Flag Impact Matrix
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#exit-criteria_7" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Exit Criteria
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#phase-91-scenario-recalibration-regression" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 91: Scenario Recalibration &amp; Regression
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Phase 91: Scenario Recalibration &amp; Regression">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#91a-behavioral-impact-assessment" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        91a: Behavioral Impact Assessment
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#91b-timing-sensitive-scenario-recalibration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        91b: Timing-Sensitive Scenario Recalibration
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#91c-large-scale-scenario-validation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        91c: Large-Scale Scenario Validation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#91d-documentation-lockstep" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        91d: Documentation &amp; Lockstep
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#exit-criteria_8" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Exit Criteria
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#phase-summary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase Summary
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#module-index-block-9-contributions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Module Index: Block 9 Contributions
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#risk-assessment" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Risk Assessment
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="stochastic-warfare-block-9-development-phases-83-91">Stochastic Warfare -- Block 9 Development Phases (83--91)<a class="headerlink" href="#stochastic-warfare-block-9-development-phases-83-91" title="Permanent link">&para;</a></h1>
+<h2 id="philosophy">Philosophy<a class="headerlink" href="#philosophy" title="Permanent link">&para;</a></h2>
+<p>Block 9 is the <strong>performance at scale block</strong>. The engine produces historically validated results for scenarios up to ~300 units (Golan Heights: 120s). Real-world operational scenarios involve thousands of units. The tick loop is single-threaded, detection scales quadratically, and there is no level-of-detail system. Every future development direction — more scenarios, larger campaigns, real-time visualization, interactive play — depends on the engine handling 1,000+ units at reasonable speed.</p>
+<p>This block measures first, then attacks the dominant O(n²) bottleneck (FOW detection), reduces effective unit count via LOD and aggregation, optimizes engagement selection and calibration lookups, expands JIT compilation, introduces SoA data for vectorization, adds per-side parallelism, and validates everything at scale.</p>
+<p><strong>Performance targets</strong>:</p>
+<table>
+<thead>
+<tr>
+<th>Scale</th>
+<th>Target</th>
+<th>Current (projected)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1,000 units, 6h scenario</td>
+<td>&lt;5 min</td>
+<td>~45 min</td>
+</tr>
+<tr>
+<td>5,000 units, 6h scenario</td>
+<td>&lt;30 min</td>
+<td>~18 hr</td>
+</tr>
+<tr>
+<td>10,000 units, 6h scenario</td>
+<td>&lt;2 hr</td>
+<td>infeasible</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Exit criteria</strong>:
+1. Golan Heights (290 units) under 60s (from 120s)
+2. New 1,000-unit benchmark scenario completes in &lt;5 min
+3. New 5,000-unit benchmark scenario completes in &lt;30 min
+4. All 44 existing scenarios produce correct winners (recalibrated if needed)
+5. Deterministic reproducibility preserved (same seed = same result)
+6. Profiling CI catches regressions (&gt;20% slowdown fails build)
+7. All existing tests pass (no behavioral regressions)</p>
+<p><strong>Cross-document alignment</strong>: This document must stay synchronized with <code>brainstorm-block9.md</code> (design thinking), <code>devlog/index.md</code> (phase status), and <code>specs/project-structure.md</code> (module definitions). Run <code>/cross-doc-audit</code> after any structural change.</p>
+<p><strong>No new simulation capabilities</strong>: Block 9 makes existing capabilities faster. No new combat models, eras, or subsystems. All changes are internal optimizations gated behind <code>enable_*</code> flags where they affect behavior.</p>
+<hr />
+<h2 id="phase-83-profiling-infrastructure">Phase 83: Profiling Infrastructure<a class="headerlink" href="#phase-83-profiling-infrastructure" title="Permanent link">&para;</a></h2>
+<p><strong>Status</strong>: Complete.</p>
+<p><strong>Goal</strong>: Establish measurement infrastructure before optimizing. Automated benchmarks, baseline tracking, regression detection, flame graph generation.</p>
+<p><strong>Dependencies</strong>: Block 8 complete (Phase 82).</p>
+<h3 id="83a-benchmark-suite">83a: Benchmark Suite<a class="headerlink" href="#83a-benchmark-suite" title="Permanent link">&para;</a></h3>
+<p>Formalize the existing ad-hoc performance tests into a structured benchmark suite with JSON baseline tracking.</p>
+<ul>
+<li><strong><code>tests/benchmarks/benchmark_suite.py</code></strong> (new) -- Structured benchmark runner:</li>
+<li><code>BenchmarkResult</code> dataclass: scenario name, unit count, wall_clock_s, ticks_executed, ticks_per_second, peak_memory_mb, hotspots (top 20 by cumulative time)</li>
+<li><code>BenchmarkBaseline</code> class: loads/saves JSON baselines (<code>tests/benchmarks/baselines.json</code>)</li>
+<li><code>run_benchmark(scenario_path, seed=42) -&gt; BenchmarkResult</code>: cProfile + tracemalloc wrapper</li>
+<li>Regression check: <code>result.wall_clock_s &gt; baseline * 1.2</code> → FAIL</li>
+<li><strong><code>tests/benchmarks/baselines.json</code></strong> (new) -- Baseline results per scenario:</li>
+<li><code>73_easting</code>: wall_clock_s, ticks, memory</li>
+<li><code>golan_heights</code>: wall_clock_s, ticks, memory</li>
+<li>Format: <code>{"scenario": {"wall_clock_s": float, "ticks_executed": int, "peak_memory_mb": float, "commit": str}}</code></li>
+<li><strong><code>tests/benchmarks/test_benchmarks.py</code></strong> (new) -- Parametrized benchmark tests:</li>
+<li><code>@pytest.mark.benchmark</code> marker (excluded by default, run via <code>pytest -m benchmark</code>)</li>
+<li>73 Easting benchmark (&lt;30s assertion + baseline comparison)</li>
+<li>Golan Heights benchmark (&lt;120s assertion + baseline comparison)</li>
+<li>Determinism verification (same seed = same winner + casualties)</li>
+</ul>
+<p><strong>Tests</strong> (~6):
+- Benchmark suite runs and produces BenchmarkResult
+- Baseline JSON loads/saves correctly
+- Regression detection triggers on &gt;20% slowdown
+- Determinism check verifies identical results across runs</p>
+<h3 id="83b-profiling-tooling">83b: Profiling Tooling<a class="headerlink" href="#83b-profiling-tooling" title="Permanent link">&para;</a></h3>
+<p>Extend the existing <code>/profile</code> skill with flame graph support and structured hotspot reporting.</p>
+<ul>
+<li><strong><code>stochastic_warfare/tools/profiling.py</code></strong> (modified) -- Add:</li>
+<li><code>generate_hotspot_report(result: BenchmarkResult) -&gt; str</code>: Formatted top-20 hotspots with % of total time</li>
+<li><code>save_flame_graph(scenario_path, output_path)</code>: Optional <code>py-spy</code> integration (requires <code>py-spy</code> installed)</li>
+<li><code>compare_profiles(before: BenchmarkResult, after: BenchmarkResult) -&gt; str</code>: Side-by-side comparison</li>
+</ul>
+<p><strong>Tests</strong> (~4):
+- Hotspot report formatting
+- Profile comparison output
+- Flame graph path generation (no assertion on py-spy availability)</p>
+<h3 id="83c-ci-benchmark-workflow">83c: CI Benchmark Workflow<a class="headerlink" href="#83c-ci-benchmark-workflow" title="Permanent link">&para;</a></h3>
+<p>Add a GitHub Actions workflow for automated performance regression detection.</p>
+<ul>
+<li><strong><code>.github/workflows/benchmark.yml</code></strong> (new) -- Benchmark CI:</li>
+<li>Trigger: push to main, PR to main</li>
+<li>Steps: checkout, uv sync, run 73 Easting benchmark, compare against baselines.json</li>
+<li>Fail if &gt;20% regression</li>
+<li>Upload benchmark results as artifact</li>
+<li>Golan Heights benchmark on <code>workflow_dispatch</code> only (too slow for every PR)</li>
+</ul>
+<p><strong>Tests</strong> (~2):
+- Workflow YAML is valid
+- Baseline file exists and is parseable</p>
+<h3 id="exit-criteria">Exit Criteria<a class="headerlink" href="#exit-criteria" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Benchmark suite runs and produces structured results</li>
+<li>Baseline JSON established for 73 Easting and Golan Heights</li>
+<li>CI workflow detects &gt;20% regressions</li>
+<li><code>/profile</code> skill generates hotspot reports</li>
+</ul>
+<hr />
+<h2 id="phase-84-spatial-culling-scan-scheduling">Phase 84: Spatial Culling &amp; Scan Scheduling<a class="headerlink" href="#phase-84-spatial-culling-scan-scheduling" title="Permanent link">&para;</a></h2>
+<p><strong>Status</strong>: Complete.</p>
+<p><strong>Goal</strong>: Address the #1 bottleneck — O(n²) FOW detection — with STRtree range culling and sensor scan intervals. Target: 10-30x detection speedup.</p>
+<p><strong>Dependencies</strong>: Phase 83 (profiling baseline established).</p>
+<h3 id="84a-strtree-detection-culling">84a: STRtree Detection Culling<a class="headerlink" href="#84a-strtree-detection-culling" title="Permanent link">&para;</a></h3>
+<p>Build a per-tick spatial index of unit positions. Cull FOW detection loop to only check targets within sensor max range.</p>
+<ul>
+<li><strong><code>stochastic_warfare/detection/fog_of_war.py</code></strong> (modified) -- In detection sweep:</li>
+<li>At start of tick: build <code>STRtree</code> from all unit positions (one tree per side, or one global tree with side filtering)</li>
+<li>For each sensor: query tree for units within <code>sensor.max_range_m</code> radius</li>
+<li>Pass only matching targets to <code>check_detection()</code> instead of all enemies</li>
+<li>Gate behind <code>enable_detection_culling: bool = True</code> CalibrationSchema flag (default True — safe optimization, no behavioral change for targets outside sensor range)</li>
+<li><strong><code>stochastic_warfare/simulation/calibration.py</code></strong> (modified) -- Add <code>enable_detection_culling: bool = True</code></li>
+</ul>
+<p><strong>Tests</strong> (~12):
+- Unit outside sensor range is not checked (verify reduced call count)
+- Unit inside sensor range is still detected (no false negatives)
+- STRtree build + query faster than brute-force at 100, 500, 1000 units
+- Edge case: unit exactly at max range boundary (include, not exclude)
+- Edge case: sensor with unlimited range (no culling applied)
+- Determinism: identical results with and without culling for all existing scenarios
+- Performance: Golan Heights tick time reduced (measure, don't assert specific %)</p>
+<h3 id="84b-sensor-scan-scheduling">84b: Sensor Scan Scheduling<a class="headerlink" href="#84b-sensor-scan-scheduling" title="Permanent link">&para;</a></h3>
+<p>Stagger sensor scans across ticks based on scan interval. Not every sensor scans every tick.</p>
+<ul>
+<li><strong><code>data/sensors/*.yaml</code></strong> + <strong><code>data/eras/*/sensors/*.yaml</code></strong> (modified, 33 files) -- Add <code>scan_interval_ticks: int</code> field to sensor YAML:</li>
+<li>Radar: 2-4 ticks (rotating antenna, 5-12s scan period at 5s/tick)</li>
+<li>Visual: 1 tick (continuous observation)</li>
+<li>Thermal/IR: 1-2 ticks (near-continuous)</li>
+<li>Sonar: 3-5 ticks (acoustic integration time)</li>
+<li>Default: 1 (backward compatible — every tick)</li>
+<li><strong><code>stochastic_warfare/detection/sensors.py</code></strong> (modified) -- Add <code>scan_interval_ticks</code> to <code>SensorDefinition</code> model (<code>Field(default=1, ge=1)</code>)</li>
+<li><strong><code>stochastic_warfare/detection/fog_of_war.py</code></strong> (modified) -- In detection sweep:</li>
+<li>Before scanning with a sensor: check <code>current_tick % sensor.scan_interval_ticks == offset</code></li>
+<li><code>offset</code> derived from <code>hash(sensor_id) % scan_interval_ticks</code> to distribute scans evenly</li>
+<li>Last detection result persists until next scan (no "forgetting" between scans)</li>
+<li>Gate behind <code>enable_scan_scheduling: bool = False</code> CalibrationSchema flag (default False — opt-in since this changes detection timing)</li>
+<li><strong><code>stochastic_warfare/simulation/calibration.py</code></strong> (modified) -- Add <code>enable_scan_scheduling: bool = False</code></li>
+</ul>
+<p><strong>Tests</strong> (~10):
+- Radar sensor with interval=3 only scans on ticks 0, 3, 6, 9, ...
+- Visual sensor with interval=1 scans every tick (backward compat)
+- Detection result persists between scans (target remains "detected" until next scan says otherwise)
+- Scan offset distributes multiple radars evenly (not all on same tick)
+- <code>enable_scan_scheduling=False</code> → all sensors scan every tick (backward compat)
+- Performance: detection checks reduced by ~50-67% with typical sensor mix</p>
+<h3 id="84c-engagement-candidate-culling">84c: Engagement Candidate Culling<a class="headerlink" href="#84c-engagement-candidate-culling" title="Permanent link">&para;</a></h3>
+<p>Use the same spatial index from 84a to pre-filter engagement targets in the battle loop.</p>
+<ul>
+<li><strong><code>stochastic_warfare/simulation/battle.py</code></strong> (modified) -- In <code>_execute_engagements()</code>:</li>
+<li>Before threat scoring: query spatial index for enemies within attacker's <code>max_weapon_range_m</code></li>
+<li>Score only candidate set (not all enemies)</li>
+<li>Reuse per-tick STRtree built in 84a (pass via context or battle manager attribute)</li>
+<li>No new flag (pure optimization — scoring subset of enemies produces identical best-target selection since out-of-range enemies would score 0)</li>
+</ul>
+<p><strong>Tests</strong> (~8):
+- Same target selected with and without culling (determinism)
+- Candidate set size matches manual range filter
+- Zero-candidate case: no enemies in range → skip engagement (already handled)
+- Performance: threat scoring time reduced proportionally to candidate reduction</p>
+<h3 id="exit-criteria_1">Exit Criteria<a class="headerlink" href="#exit-criteria_1" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Golan Heights benchmark &lt;90s (from 120s baseline — conservative 25% improvement)</li>
+<li>73 Easting benchmark unchanged (small scenario, no benefit from culling)</li>
+<li>All 44 scenarios produce identical results (culling is transparent)</li>
+<li>Profiling shows detection phase dropped from ~70% to &lt;30% of tick time</li>
+</ul>
+<hr />
+<h2 id="phase-85-lod-aggregation">Phase 85: LOD &amp; Aggregation<a class="headerlink" href="#phase-85-lod-aggregation" title="Permanent link">&para;</a></h2>
+<p><strong>Status</strong>: Complete.</p>
+<p><strong>Goal</strong>: Reduce effective unit count by classifying units into resolution tiers and activating the existing aggregation engine. Target: 5-6x tick reduction for 1,000+ unit scenarios.</p>
+<p><strong>Dependencies</strong>: Phase 84 (spatial index available for tier classification).</p>
+<h3 id="85a-unit-resolution-tiers">85a: Unit Resolution Tiers<a class="headerlink" href="#85a-unit-resolution-tiers" title="Permanent link">&para;</a></h3>
+<p>Classify units each tick into Active/Nearby/Distant tiers with different update frequencies.</p>
+<ul>
+<li><strong><code>stochastic_warfare/simulation/battle.py</code></strong> (modified) -- Add LOD tier system:</li>
+<li><code>_classify_unit_tier(unit, enemy_positions, spatial_index) -&gt; Tier</code> using spatial index from Phase 84:<ul>
+<li><code>ACTIVE</code>: in engagement or within 2× max weapon range of any enemy</li>
+<li><code>NEARBY</code>: within max sensor range of any enemy but not ACTIVE</li>
+<li><code>DISTANT</code>: beyond any sensor range of any enemy</li>
+</ul>
+</li>
+<li>Tier update frequency: ACTIVE=every tick, NEARBY=every 5 ticks, DISTANT=every 20 ticks</li>
+<li>On non-update ticks for NEARBY/DISTANT: skip detection, morale, logistics; run movement only</li>
+<li>Hysteresis: unit must be in new tier for 3 consecutive ticks before reclassification (prevents flickering)</li>
+<li>Instant promotion: any unit that takes damage or detects a new contact → immediately ACTIVE</li>
+<li>Gate behind <code>enable_lod: bool = False</code> CalibrationSchema flag</li>
+<li><strong><code>stochastic_warfare/simulation/calibration.py</code></strong> (modified) -- Add:</li>
+<li><code>enable_lod: bool = False</code></li>
+<li><code>lod_nearby_interval: int = 5</code> — tick interval for NEARBY tier</li>
+<li><code>lod_distant_interval: int = 20</code> — tick interval for DISTANT tier</li>
+<li><code>lod_hysteresis_ticks: int = 3</code> — ticks before tier downgrade</li>
+</ul>
+<p><strong>Tests</strong> (~14):
+- Unit in engagement classified as ACTIVE
+- Unit far from all enemies classified as DISTANT
+- DISTANT unit only updated every 20 ticks (verify skip)
+- NEARBY unit only updated every 5 ticks
+- Hysteresis prevents single-tick flickering
+- Unit that takes damage instantly promoted to ACTIVE
+- <code>enable_lod=False</code> → all units processed every tick (backward compat)
+- Tier boundaries correct at 2× weapon range (ACTIVE) and sensor range (NEARBY)
+- Performance: 1000-unit scenario with LOD vs without (measure improvement)</p>
+<h3 id="85b-aggregation-activation">85b: Aggregation Activation<a class="headerlink" href="#85b-aggregation-activation" title="Permanent link">&para;</a></h3>
+<p>Fix order preservation in ForceAggregationEngine and activate it.</p>
+<ul>
+<li><strong><code>stochastic_warfare/simulation/aggregation.py</code></strong> (modified) -- Fix disaggregation:</li>
+<li>Before aggregation: snapshot each unit's current order in <code>_pre_aggregation_orders: dict[str, Order | None]</code></li>
+<li>On disaggregation: restore orders from snapshot</li>
+<li>Units that were idle (no order) before aggregation remain idle after</li>
+<li>Clear snapshot after successful disaggregation</li>
+<li><strong><code>stochastic_warfare/simulation/engine.py</code></strong> (modified) -- Wire aggregation into campaign tick:</li>
+<li>When <code>enable_aggregation=True</code>: aggregate distant units (reuse LOD tier from 85a — DISTANT units aggregate)</li>
+<li>Disaggregate when aggregate enters NEARBY range</li>
+<li>Existing <code>enable_aggregation</code> flag (Phase 13, default False)</li>
+</ul>
+<p><strong>Tests</strong> (~10):
+- Aggregation preserves unit orders (snapshot/restore roundtrip)
+- Idle units remain idle after disaggregation
+- Aggregate moves at weighted average speed of component units
+- Disaggregation triggers when aggregate enters NEARBY range (from LOD spatial index)
+- Aggregate supply consumption matches sum of component unit rates
+- Aggregate detection signature is sum of component signatures (larger = easier to detect)
+- <code>enable_aggregation=False</code> → no aggregation (backward compat)</p>
+<h3 id="85c-lod-aggregation-integration">85c: LOD + Aggregation Integration<a class="headerlink" href="#85c-lod-aggregation-integration" title="Permanent link">&para;</a></h3>
+<p>Verify the compound effect of LOD and aggregation together.</p>
+<ul>
+<li><strong>Tests</strong> (~6):</li>
+<li>1000-unit scenario: measure effective unit count with LOD only vs LOD+aggregation</li>
+<li>Distant aggregate of 50 units updated every 20 ticks (compound effect: 50 units → 1 entity × 1/20 frequency = 1000x reduction)</li>
+<li>Aggregation respects LOD tier transitions (disaggregate → ACTIVE, don't skip to DISTANT)</li>
+<li>Full scenario: results within acceptable tolerance of non-LOD results (not identical due to update frequency changes, but same winner)</li>
+</ul>
+<h3 id="exit-criteria_2">Exit Criteria<a class="headerlink" href="#exit-criteria_2" title="Permanent link">&para;</a></h3>
+<ul>
+<li>1000-unit benchmark with LOD+aggregation: effective processing load &lt;200 units/tick</li>
+<li>Golan Heights: &lt;80s (LOD has limited effect at 290 units since most are engaged)</li>
+<li>All existing scenarios correct with <code>enable_lod=False</code> (default, backward compat)</li>
+<li>Order preservation roundtrip verified</li>
+</ul>
+<hr />
+<h2 id="phase-86-engagement-calibration-optimization">Phase 86: Engagement &amp; Calibration Optimization<a class="headerlink" href="#phase-86-engagement-calibration-optimization" title="Permanent link">&para;</a></h2>
+<p><strong>Status</strong>: Complete.</p>
+<p><strong>Goal</strong>: Optimize engagement selection and CalibrationSchema access patterns. Low-effort, low-risk improvements.</p>
+<p><strong>Dependencies</strong>: Phase 84 (spatial index for candidate culling already done in 84c).</p>
+<h3 id="86a-calibrationschema-flat-dict">86a: CalibrationSchema Flat Dict<a class="headerlink" href="#86a-calibrationschema-flat-dict" title="Permanent link">&para;</a></h3>
+<p>Pre-compute a flat lookup dict at scenario load time for O(1) calibration access.</p>
+<ul>
+<li><strong><code>stochastic_warfare/simulation/calibration.py</code></strong> (modified) -- Add:</li>
+<li><code>CalibrationSchema.to_flat_dict(sides: list[str]) -&gt; dict[str, Any]</code>: expand all fields including side-prefixed variants into flat dict</li>
+<li>Side-prefixed keys: <code>"{side}_{field}"</code> for <code>hit_probability_modifier</code>, <code>force_ratio_modifier</code>, <code>cohesion</code>, <code>target_size_modifier</code></li>
+<li>Called once at scenario load time in <code>ScenarioLoader</code></li>
+<li><strong><code>stochastic_warfare/simulation/battle.py</code></strong> (modified) -- Replace <code>cal.get("key", default)</code> with <code>cal_flat["key"]</code>:</li>
+<li>~100 replacements in engagement loop, movement loop, morale loop</li>
+<li>Side-prefixed keys now resolved at lookup time (<code>cal_flat[f"{side}_force_ratio_modifier"]</code>)</li>
+<li>Preserve <code>cal.get()</code> API for backward compat in external callers (flat dict is internal optimization)</li>
+<li><strong><code>stochastic_warfare/simulation/scenario.py</code></strong> (modified) -- Generate flat dict at load time:</li>
+<li><code>ctx.cal_flat = cal_schema.to_flat_dict(side_names)</code> on SimulationContext</li>
+</ul>
+<p><strong>Tests</strong> (~8):
+- Flat dict contains all 125+ fields
+- Side-prefixed keys generated correctly for both sides
+- <code>cal_flat["enable_fuel_consumption"]</code> matches <code>cal.enable_fuel_consumption</code>
+- Flat dict is immutable after creation (dict, not defaultdict)
+- Performance: measure <code>cal_flat["key"]</code> vs <code>cal.get("key", default)</code> × 10K lookups
+- Full scenario: identical results with flat dict vs pydantic access</p>
+<h3 id="86b-detection-modifier-batching">86b: Detection Modifier Batching<a class="headerlink" href="#86b-detection-modifier-batching" title="Permanent link">&para;</a></h3>
+<p>Batch the 20+ detection range modifiers into a single pre-computed multiplier per unit.</p>
+<ul>
+<li><strong><code>stochastic_warfare/simulation/battle.py</code></strong> (modified) -- In engagement loop:</li>
+<li>Pre-compute <code>_detection_modifier: dict[str, float]</code> per unit at start of tick:<ul>
+<li>Weather visibility factor</li>
+<li>Night/thermal factor</li>
+<li>Concealment factor (terrain-dependent, already per-target)</li>
+<li>MOPP factor</li>
+<li>Icing factor</li>
+<li>Naval posture factor</li>
+<li>Obscurant spectral factor</li>
+</ul>
+</li>
+<li>During engagement: multiply sensor range by pre-computed modifier instead of evaluating each check inline</li>
+<li>Concealment remains per-target (depends on target position), all other modifiers are per-observer</li>
+</ul>
+<p><strong>Tests</strong> (~6):
+- Pre-computed modifier matches inline computation for all modifier types
+- Per-target concealment still computed inline (not pre-computed)
+- Identical results for all existing scenarios
+- Performance: engagement modifier cascade time reduced</p>
+<h3 id="exit-criteria_3">Exit Criteria<a class="headerlink" href="#exit-criteria_3" title="Permanent link">&para;</a></h3>
+<ul>
+<li>CalibrationSchema flat dict generates correctly for all scenarios</li>
+<li>Detection modifier batching produces identical results</li>
+<li>Measurable tick time reduction (profile before/after)</li>
+<li>All existing tests pass</li>
+</ul>
+<hr />
+<h2 id="phase-87-expanded-numba-jit">Phase 87: Expanded Numba JIT<a class="headerlink" href="#phase-87-expanded-numba-jit" title="Permanent link">&para;</a></h2>
+<p><strong>Status</strong>: Complete.</p>
+<p><strong>Goal</strong>: JIT-compile detection SNR computation, engagement resolution math, and morale state transitions. Target: 5-10x speedup on JIT-able paths.</p>
+<p><strong>Dependencies</strong>: Phase 86 (flat dict provides simple data types for Numba compatibility).</p>
+<h3 id="87a-detection-snr-kernels">87a: Detection SNR Kernels<a class="headerlink" href="#87a-detection-snr-kernels" title="Permanent link">&para;</a></h3>
+<p>JIT-compile the SNR computation functions for all sensor types.</p>
+<ul>
+<li><strong><code>stochastic_warfare/detection/detection.py</code></strong> (modified) -- Add <code>@optional_jit</code> to:</li>
+<li><code>compute_snr_visual(signal, noise, range_m, ...) -&gt; float</code></li>
+<li><code>compute_snr_thermal(signal, noise, range_m, ...) -&gt; float</code></li>
+<li><code>compute_snr_radar(rcs, power, range_m, ...) -&gt; float</code></li>
+<li><code>compute_snr_acoustic(sl, tl, nl, ...) -&gt; float</code></li>
+<li>All are pure scalar math — ideal Numba targets</li>
+<li>Ensure function signatures use only primitive types (float64, int64, bool)</li>
+<li><strong><code>stochastic_warfare/detection/fog_of_war.py</code></strong> (modified) -- Add vectorized detection sweep:</li>
+<li><code>_batch_snr_check(observer_pos, target_positions, sensor_params, ...) -&gt; np.ndarray[bool]</code></li>
+<li>Numba <code>@guvectorize</code> or <code>prange</code> over target array</li>
+<li>Returns boolean mask of detected targets (replaces per-target Python loop)</li>
+</ul>
+<p><strong>Tests</strong> (~8):
+- JIT SNR matches Python SNR for all 4 sensor types (value equality within float tolerance)
+- Batch detection produces same results as per-target loop
+- Performance: batch detection 5-10x faster than loop at 500+ targets
+- Graceful fallback when Numba not installed</p>
+<h3 id="87b-engagement-math-kernels">87b: Engagement Math Kernels<a class="headerlink" href="#87b-engagement-math-kernels" title="Permanent link">&para;</a></h3>
+<p>JIT-compile engagement resolution math (hit probability, penetration, damage).</p>
+<ul>
+<li><strong><code>stochastic_warfare/combat/damage.py</code></strong> (modified) -- Add <code>@optional_jit</code> to:</li>
+<li><code>compute_hit_probability(range_m, accuracy, modifiers, ...) -&gt; float</code></li>
+<li><code>compute_penetration(velocity, caliber, armor, obliquity, ...) -&gt; float</code></li>
+<li><code>compute_damage_fraction(penetration, armor, ...) -&gt; float</code></li>
+<li><strong><code>stochastic_warfare/combat/ballistics.py</code></strong> (already JIT) -- Verify existing RK4 kernel coverage</li>
+</ul>
+<p><strong>Tests</strong> (~6):
+- JIT hit probability matches Python computation
+- JIT penetration matches DeMarre formula
+- Performance: engagement resolution 3-5x faster per engagement
+- Graceful fallback</p>
+<h3 id="87c-morale-state-machine-kernel">87c: Morale State Machine Kernel<a class="headerlink" href="#87c-morale-state-machine-kernel" title="Permanent link">&para;</a></h3>
+<p>JIT-compile the continuous-time Markov morale transition computation.</p>
+<ul>
+<li><strong><code>stochastic_warfare/morale/state.py</code></strong> (modified) -- Add <code>@optional_jit</code> to:</li>
+<li><code>compute_transition_rates(current_state, stress, cohesion, ...) -&gt; np.ndarray</code></li>
+<li><code>_evaluate_transition(rates, dt, rng_value) -&gt; int</code> — returns new state ordinal</li>
+<li>Batch version: <code>_batch_morale_update(states, stresses, cohesions, dt, rng_values) -&gt; np.ndarray</code></li>
+</ul>
+<p><strong>Tests</strong> (~6):
+- JIT transition matches Python transition for all 5 morale states
+- Batch morale update produces same results as per-unit loop
+- Performance: morale phase 3-5x faster at 500+ units
+- Graceful fallback</p>
+<h3 id="exit-criteria_4">Exit Criteria<a class="headerlink" href="#exit-criteria_4" title="Permanent link">&para;</a></h3>
+<ul>
+<li>All JIT kernels produce identical results to Python equivalents</li>
+<li>Numba available: measurable speedup on profiled paths</li>
+<li>Numba not available: zero behavioral change (fallback works)</li>
+<li>All existing tests pass with and without Numba</li>
+</ul>
+<hr />
+<h2 id="phase-88-soa-data-layer">Phase 88: SoA Data Layer<a class="headerlink" href="#phase-88-soa-data-layer" title="Permanent link">&para;</a></h2>
+<p><strong>Status</strong>: Complete.</p>
+<p><strong>Goal</strong>: Introduce Structure-of-Arrays for hot-path unit data. Prerequisite for vectorized bulk operations and Numba <code>prange</code> parallelism.</p>
+<p><strong>Dependencies</strong>: Phase 87 (JIT kernels ready to consume array data).</p>
+<h3 id="88a-unitarrays-core">88a: UnitArrays Core<a class="headerlink" href="#88a-unitarrays-core" title="Permanent link">&para;</a></h3>
+<p>Create the SoA data structure and sync protocol.</p>
+<ul>
+<li><strong><code>stochastic_warfare/simulation/unit_arrays.py</code></strong> (new) -- <code>UnitArrays</code> class:</li>
+<li>Fields: <code>positions (n,2)</code>, <code>health (n,)</code>, <code>ammo (n,)</code>, <code>fuel (n,)</code>, <code>morale_state (n,) int8</code>, <code>side (n,) int8</code>, <code>operational (n,) bool</code>, <code>max_range (n,)</code>, <code>unit_ids (n,) str array</code></li>
+<li><code>from_units(units: list[Unit]) -&gt; UnitArrays</code>: build arrays from Unit objects (start-of-tick sync)</li>
+<li><code>sync_to_units(units: list[Unit])</code>: write array values back to Unit objects (end-of-tick sync)</li>
+<li><code>filter_by_side(side: int) -&gt; tuple[UnitArrays, np.ndarray]</code>: return filtered view + original indices</li>
+<li><code>filter_operational() -&gt; tuple[UnitArrays, np.ndarray]</code>: exclude non-operational units</li>
+<li><strong><code>stochastic_warfare/simulation/battle.py</code></strong> (modified) -- Build UnitArrays at start of <code>execute_tick()</code>:</li>
+<li>Replace <code>enemy_pos_arrays</code> dict with UnitArrays (superset of existing Phase 70 position arrays)</li>
+<li>Vectorized distance matrix: <code>cdist(blue.positions, red.positions)</code> (scipy) or broadcast</li>
+<li>Gate behind <code>enable_soa: bool = False</code> CalibrationSchema flag</li>
+</ul>
+<p><strong>Tests</strong> (~12):
+- Round-trip sync: Unit → UnitArrays → Unit produces identical state
+- Positions array matches Unit.position.easting/northing
+- Side filtering produces correct subsets
+- Operational filtering excludes destroyed units
+- Distance matrix matches per-pair computation
+- Performance: vectorized distance 10x+ faster than Python loop at 500 units
+- <code>enable_soa=False</code> → existing behavior (backward compat)</p>
+<h3 id="88b-soa-detection-integration">88b: SoA Detection Integration<a class="headerlink" href="#88b-soa-detection-integration" title="Permanent link">&para;</a></h3>
+<p>Use UnitArrays in the FOW detection loop for vectorized range checks.</p>
+<ul>
+<li><strong><code>stochastic_warfare/detection/fog_of_war.py</code></strong> (modified) -- When UnitArrays available:</li>
+<li>Vectorized range check: <code>np.linalg.norm(observer_pos - targets.positions, axis=1) &lt; max_range</code> (single numpy op)</li>
+<li>Combined with STRtree culling (Phase 84): STRtree filters to ~100 candidates, then vectorized SNR across candidates</li>
+<li>Integration with Numba batch kernels (Phase 87): pass array slices to JIT functions</li>
+</ul>
+<p><strong>Tests</strong> (~6):
+- Vectorized range check matches per-target check
+- SoA detection produces identical detections to non-SoA path
+- Performance: detection phase with SoA + culling + JIT combined</p>
+<h3 id="88c-soa-movement-morale-integration">88c: SoA Movement &amp; Morale Integration<a class="headerlink" href="#88c-soa-movement-morale-integration" title="Permanent link">&para;</a></h3>
+<p>Extend UnitArrays usage to movement and morale phases.</p>
+<ul>
+<li><strong><code>stochastic_warfare/simulation/battle.py</code></strong> (modified) -- Movement phase:</li>
+<li>Vectorized position updates: <code>positions += velocity * dt</code> for all units in one operation</li>
+<li>Fuel consumption: <code>fuel -= distance * rate</code> vectorized across all units</li>
+<li>Sync back to Unit objects after movement phase</li>
+<li><strong><code>stochastic_warfare/simulation/battle.py</code></strong> (modified) -- Morale phase:</li>
+<li>Batch morale kernel from Phase 87c consumes <code>morale_state</code> and <code>stress</code> arrays directly</li>
+<li>Sync back morale states to Unit objects after morale phase</li>
+</ul>
+<p><strong>Tests</strong> (~8):
+- Vectorized movement matches per-unit movement (position + fuel)
+- Vectorized morale matches per-unit morale transitions
+- Full scenario: identical results with and without SoA
+- Performance: movement + morale phases measurably faster</p>
+<h3 id="exit-criteria_5">Exit Criteria<a class="headerlink" href="#exit-criteria_5" title="Permanent link">&para;</a></h3>
+<ul>
+<li>UnitArrays round-trip sync verified</li>
+<li>SoA integrated into detection, movement, and morale phases</li>
+<li>All existing scenarios produce identical results with <code>enable_soa=False</code></li>
+<li>Measurable speedup at 500+ units</li>
+</ul>
+<hr />
+<h2 id="phase-89-per-side-parallelism">Phase 89: Per-Side Parallelism<a class="headerlink" href="#phase-89-per-side-parallelism" title="Permanent link">&para;</a></h2>
+<p><strong>Status</strong>: Complete.</p>
+<p><strong>Goal</strong>: Thread-based parallelism for detection and movement phases. Each side's detection/movement is independent until engagement resolution.</p>
+<p><strong>Dependencies</strong>: Phase 88 (SoA data layer enables independent per-side array operations).</p>
+<h3 id="89a-per-side-detection-threading">89a: Per-Side Detection Threading<a class="headerlink" href="#89a-per-side-detection-threading" title="Permanent link">&para;</a></h3>
+<p>Run blue-side and red-side detection sweeps in parallel threads.</p>
+<ul>
+<li><strong><code>stochastic_warfare/simulation/battle.py</code></strong> (modified) -- In detection phase:</li>
+<li>Split UnitArrays by side</li>
+<li>Submit blue detection + red detection to <code>ThreadPoolExecutor(max_workers=2)</code></li>
+<li>Each thread: build side-specific STRtree, run JIT detection sweep on its own UnitArrays slice</li>
+<li>GIL released during numpy/Numba operations → true parallelism for the vectorized paths</li>
+<li>Join results before engagement phase</li>
+<li>Gate behind <code>enable_parallel_detection: bool = False</code> CalibrationSchema flag</li>
+<li><strong>PRNG determinism</strong>: Each side uses its own pre-spawned RNG stream (already separate via ModuleId). Thread scheduling order doesn't affect PRNG sequences because each side consumes its own stream.</li>
+</ul>
+<p><strong>Tests</strong> (~8):
+- Parallel detection produces identical results to sequential (determinism)
+- Both sides' detections complete before engagement phase begins
+- PRNG streams are independent (no cross-contamination)
+- Performance: detection phase ~1.5-1.8x faster (not 2x due to GIL contention on Python overhead)
+- <code>enable_parallel_detection=False</code> → sequential (backward compat)
+- Thread safety: no shared mutable state between detection threads</p>
+<h3 id="89b-per-side-movement-threading">89b: Per-Side Movement Threading<a class="headerlink" href="#89b-per-side-movement-threading" title="Permanent link">&para;</a></h3>
+<p>Run blue-side and red-side movement in parallel.</p>
+<ul>
+<li><strong><code>stochastic_warfare/simulation/battle.py</code></strong> (modified) -- In movement phase:</li>
+<li>Split UnitArrays by side</li>
+<li>Submit blue movement + red movement to <code>ThreadPoolExecutor(max_workers=2)</code></li>
+<li>Each thread: apply vectorized position + fuel updates on its own UnitArrays slice</li>
+<li>Join and sync back to Unit objects before detection phase</li>
+<li>Gate behind <code>enable_parallel_movement: bool = False</code> CalibrationSchema flag</li>
+</ul>
+<p><strong>Tests</strong> (~6):
+- Parallel movement produces identical results to sequential
+- PRNG determinism preserved
+- Performance: movement phase ~1.5x faster
+- <code>enable_parallel_movement=False</code> → sequential (backward compat)</p>
+<h3 id="89c-engagement-resolution-sequential">89c: Engagement Resolution (Sequential)<a class="headerlink" href="#89c-engagement-resolution-sequential" title="Permanent link">&para;</a></h3>
+<p>Engagement resolution remains sequential for determinism. Document why and verify.</p>
+<ul>
+<li><strong>Tests</strong> (~4):</li>
+<li>Engagement order is deterministic (sorted by unit_id or position)</li>
+<li>First-mover advantage is consistent across runs with same seed</li>
+<li>Engagement results identical regardless of parallel detection/movement flags</li>
+<li>Full scenario: all 44 scenarios produce correct results with all parallel flags enabled</li>
+</ul>
+<h3 id="exit-criteria_6">Exit Criteria<a class="headerlink" href="#exit-criteria_6" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Per-side parallelism produces identical results to sequential</li>
+<li>PRNG determinism preserved across all parallel configurations</li>
+<li>Detection + movement each ~1.5x faster with parallelism</li>
+<li>All existing scenarios correct with parallel flags enabled</li>
+</ul>
+<hr />
+<h2 id="phase-90-validation-benchmarking">Phase 90: Validation &amp; Benchmarking<a class="headerlink" href="#phase-90-validation-benchmarking" title="Permanent link">&para;</a></h2>
+<p><strong>Status</strong>: Complete.</p>
+<p><strong>Goal</strong>: Create large-scale benchmark scenarios (1,000 and 5,000 units), validate performance targets, establish baselines for the new scale.</p>
+<p><strong>Dependencies</strong>: Phase 89 (all optimizations in place).</p>
+<h3 id="90a-large-scale-benchmark-scenarios">90a: Large-Scale Benchmark Scenarios<a class="headerlink" href="#90a-large-scale-benchmark-scenarios" title="Permanent link">&para;</a></h3>
+<p>Create two new scenarios designed for performance testing at scale.</p>
+<ul>
+<li><strong><code>data/scenarios/benchmark_battalion/scenario.yaml</code></strong> (new) -- 1,000-unit battalion engagement:</li>
+<li>Blue: 500 units (mixed armor/infantry/artillery/air defense)</li>
+<li>Red: 500 units (mixed armor/infantry/artillery)</li>
+<li>Terrain: 20km × 20km rolling terrain</li>
+<li>Duration: 6 hours</li>
+<li>Calibration: <code>enable_detection_culling: true</code>, <code>enable_scan_scheduling: true</code>, <code>enable_lod: true</code>, <code>enable_soa: true</code></li>
+<li>Expected outcome: decisive combat (not time_expired)</li>
+<li><strong><code>data/scenarios/benchmark_brigade/scenario.yaml</code></strong> (new) -- 5,000-unit brigade engagement:</li>
+<li>Blue: 2,500 units (full combined arms brigade with logistics tail)</li>
+<li>Red: 2,500 units (mechanized brigade)</li>
+<li>Terrain: 50km × 50km</li>
+<li>Duration: 6 hours</li>
+<li>Calibration: all performance flags enabled + <code>enable_aggregation: true</code></li>
+<li>Expected outcome: decisive combat</li>
+<li><strong>Unit YAML</strong>: Reuse existing modern unit types with <code>count</code> multipliers (no new unit definitions needed)</li>
+</ul>
+<p><strong>Tests</strong> (~6):
+- Both scenarios load and validate against pydantic schema
+- Battalion scenario completes (seed=42, any outcome acceptable for first run)
+- Brigade scenario completes (seed=42, any outcome acceptable)
+- Victory condition triggered (not max_ticks safety limit)</p>
+<h3 id="90b-performance-target-validation">90b: Performance Target Validation<a class="headerlink" href="#90b-performance-target-validation" title="Permanent link">&para;</a></h3>
+<p>Run benchmarks and verify performance targets from brainstorm.</p>
+<ul>
+<li><strong><code>tests/benchmarks/test_benchmarks.py</code></strong> (modified) -- Add:</li>
+<li>Battalion benchmark: &lt;5 min assertion (<code>@pytest.mark.benchmark</code>)</li>
+<li>Brigade benchmark: &lt;30 min assertion (<code>@pytest.mark.benchmark</code>)</li>
+<li>Golan Heights regression: &lt;60s assertion (improved from 120s baseline)</li>
+<li>Profile hotspot comparison: before/after for each optimization phase</li>
+<li><strong><code>tests/benchmarks/baselines.json</code></strong> (modified) -- Add battalion and brigade baselines</li>
+</ul>
+<p><strong>Tests</strong> (~4):
+- Battalion &lt;5 min
+- Brigade &lt;30 min
+- Golan Heights &lt;60s
+- 73 Easting &lt;15s (should be faster too)</p>
+<h3 id="90c-optimization-flag-impact-matrix">90c: Optimization Flag Impact Matrix<a class="headerlink" href="#90c-optimization-flag-impact-matrix" title="Permanent link">&para;</a></h3>
+<p>Measure the individual and combined impact of each optimization flag.</p>
+<ul>
+<li><strong><code>tests/benchmarks/test_flag_impact.py</code></strong> (new) -- Parametrized tests:</li>
+<li>Run Golan Heights with each flag individually enabled, then all combined</li>
+<li>Flags: <code>enable_detection_culling</code>, <code>enable_scan_scheduling</code>, <code>enable_lod</code>, <code>enable_soa</code>, <code>enable_parallel_detection</code>, <code>enable_parallel_movement</code>, <code>enable_aggregation</code></li>
+<li>Record wall_clock_s for each combination</li>
+<li>Generate impact matrix (which flags help most, any negative interactions)</li>
+</ul>
+<p><strong>Tests</strong> (~8):
+- Individual flag impact measured for each of 7 flags
+- Combined flag impact measured
+- No negative interactions (no flag makes things slower)</p>
+<h3 id="exit-criteria_7">Exit Criteria<a class="headerlink" href="#exit-criteria_7" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Battalion scenario &lt;5 min</li>
+<li>Brigade scenario &lt;30 min</li>
+<li>Golan Heights &lt;60s</li>
+<li>Impact matrix shows which optimizations contribute most</li>
+<li>Baselines established for new scenarios</li>
+</ul>
+<hr />
+<h2 id="phase-91-scenario-recalibration-regression">Phase 91: Scenario Recalibration &amp; Regression<a class="headerlink" href="#phase-91-scenario-recalibration-regression" title="Permanent link">&para;</a></h2>
+<p><strong>Status</strong>: Complete.</p>
+<p><strong>Goal</strong>: Full recalibration pass across all 44+ scenarios. Verify that performance optimizations haven't shifted outcomes, recalibrate where they have, and validate large-scale scenarios produce militarily plausible results.</p>
+<p><strong>Dependencies</strong>: Phase 90 (all benchmarks established, performance targets met).</p>
+<h3 id="91a-behavioral-impact-assessment">91a: Behavioral Impact Assessment<a class="headerlink" href="#91a-behavioral-impact-assessment" title="Permanent link">&para;</a></h3>
+<p>Run all 44 scenarios with and without performance flags to identify outcome shifts.</p>
+<ul>
+<li><strong><code>tests/validation/test_block9_regression.py</code></strong> (new) -- For each scenario:</li>
+<li>Run with all performance flags OFF (baseline behavior)</li>
+<li>Run with all performance flags ON</li>
+<li>Compare: winner, victory condition type, tick count, casualty counts</li>
+<li>Flag any scenario where winner changes or victory type changes</li>
+<li>Expected: spatial culling (84a) and engagement culling (84c) are transparent (identical results)</li>
+<li>Expected: scan scheduling (84b) and LOD (85a) may shift timing-sensitive outcomes</li>
+</ul>
+<p><strong>Tests</strong> (~44):
+- One parametrized test per scenario (44 scenarios × 2 configurations)
+- Winner comparison: PASS if same, FLAG if different</p>
+<h3 id="91b-timing-sensitive-scenario-recalibration">91b: Timing-Sensitive Scenario Recalibration<a class="headerlink" href="#91b-timing-sensitive-scenario-recalibration" title="Permanent link">&para;</a></h3>
+<p>For scenarios where scan scheduling or LOD shifts outcomes, recalibrate.</p>
+<ul>
+<li><strong>Likely candidates</strong> (based on brainstorm analysis):</li>
+<li><strong>73 Easting</strong>: Thermal detection timing is decisive — scan interval changes could shift first-detection advantage</li>
+<li><strong>Golan Heights</strong>: Defensive timing (who detects whom first at long range) — scan scheduling may shift initial contact timing</li>
+<li><strong>Falklands Naval</strong>: Missile exchange windows are narrow — scan latency could change Exocet detection timing</li>
+<li><strong>Bekaa Valley</strong>: SEAD timing against IADS — radar scan interval directly affects engagement sequence</li>
+<li><strong>Process</strong>: For each flagged scenario:</li>
+<li>Run MC at 10+ seeds with performance flags ON</li>
+<li>If correct winner rate drops below 80%: adjust <code>calibration_overrides</code> (CEV, hit modifiers, morale rates)</li>
+<li>If correct winner rate is 80%+: accept (within statistical noise)</li>
+<li>Document all recalibrations in devlog</li>
+</ul>
+<p><strong>Tests</strong> (~13 decisive + variable):
+- All 13 decisive combat scenarios produce correct winner at 80%+ MC rate
+- Recalibrated scenarios documented with rationale
+- Non-decisive scenarios (time_expired) maintain plausible composite scores</p>
+<h3 id="91c-large-scale-scenario-validation">91c: Large-Scale Scenario Validation<a class="headerlink" href="#91c-large-scale-scenario-validation" title="Permanent link">&para;</a></h3>
+<p>Verify battalion and brigade benchmark scenarios produce militarily plausible outcomes.</p>
+<ul>
+<li><strong>Process</strong>:</li>
+<li>Run MC at 5+ seeds for each benchmark scenario</li>
+<li>Verify: engagements occur (not just movement), casualties are non-trivial, victory condition triggers before max_ticks</li>
+<li>Verify: force ratio outcomes align with Lanchester expectations (larger/better-equipped side wins)</li>
+<li>Adjust calibration if outcomes are implausible (e.g., 5000-unit battle with 0 casualties)</li>
+</ul>
+<p><strong>Tests</strong> (~6):
+- Battalion scenario: non-zero casualties on both sides
+- Battalion scenario: decisive victory (not time_expired or max_ticks)
+- Brigade scenario: non-zero casualties on both sides
+- Brigade scenario: decisive victory
+- Both scenarios: winner consistent across 5 seeds (&gt;60% same winner)</p>
+<h3 id="91d-documentation-lockstep">91d: Documentation &amp; Lockstep<a class="headerlink" href="#91d-documentation-lockstep" title="Permanent link">&para;</a></h3>
+<p>Update all living documents for Block 9 completion.</p>
+<ul>
+<li><strong>Files</strong>: CLAUDE.md, README.md, docs/index.md, docs/devlog/index.md, mkdocs.yml, MEMORY.md</li>
+<li><strong>Phase devlog</strong>: <code>docs/devlog/phase-91.md</code> with Block 9 retrospective</li>
+<li>Run <code>/cross-doc-audit</code> to verify all 19 checks pass</li>
+</ul>
+<h3 id="exit-criteria_8">Exit Criteria<a class="headerlink" href="#exit-criteria_8" title="Permanent link">&para;</a></h3>
+<ul>
+<li>All 44 existing scenarios produce correct winners (recalibrated where needed)</li>
+<li>All 13 decisive scenarios at 80%+ MC correctness</li>
+<li>Battalion and brigade scenarios produce plausible outcomes</li>
+<li>All documentation updated</li>
+<li>Cross-doc audit passes (19/19)</li>
+<li>Block 9 COMPLETE</li>
+</ul>
+<hr />
+<h2 id="phase-summary">Phase Summary<a class="headerlink" href="#phase-summary" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Phase</th>
+<th>Focus</th>
+<th>Tests</th>
+<th>Cumulative</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>83</td>
+<td>Profiling Infrastructure</td>
+<td>13</td>
+<td>~10,003</td>
+<td>Complete</td>
+</tr>
+<tr>
+<td>84</td>
+<td>Spatial Culling &amp; Scan Scheduling</td>
+<td>31</td>
+<td>~10,034</td>
+<td>Complete</td>
+</tr>
+<tr>
+<td>85</td>
+<td>LOD &amp; Aggregation</td>
+<td>30</td>
+<td>~10,064</td>
+<td>Complete</td>
+</tr>
+<tr>
+<td>86</td>
+<td>Engagement &amp; Calibration Optimization</td>
+<td>19</td>
+<td>~10,083</td>
+<td>Complete</td>
+</tr>
+<tr>
+<td>87</td>
+<td>Expanded Numba JIT</td>
+<td>40</td>
+<td>~10,176</td>
+<td>Complete</td>
+</tr>
+<tr>
+<td>88</td>
+<td>SoA Data Layer</td>
+<td>43</td>
+<td>~10,219</td>
+<td>Complete</td>
+</tr>
+<tr>
+<td>89</td>
+<td>Per-Side Parallelism</td>
+<td>21</td>
+<td>~10,240</td>
+<td>Complete</td>
+</tr>
+<tr>
+<td>90</td>
+<td>Validation &amp; Benchmarking</td>
+<td>~25</td>
+<td>~10,265</td>
+<td>Complete</td>
+</tr>
+<tr>
+<td>91</td>
+<td>Scenario Recalibration &amp; Regression</td>
+<td>~58</td>
+<td>~10,322</td>
+<td>Complete</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Block 9 total</strong>: ~279 new tests across 9 completed phases.
+<strong>Cumulative</strong>: ~10,322 Python tests + ~316 frontend vitest = ~10,638 total.
+<strong>Block 9 COMPLETE.</strong></p>
+<hr />
+<h2 id="module-index-block-9-contributions">Module Index: Block 9 Contributions<a class="headerlink" href="#module-index-block-9-contributions" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Module</th>
+<th>Phases</th>
+<th>Changes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>detection/fog_of_war.py</code></td>
+<td>84, 87, 88, 89</td>
+<td>STRtree culling, scan scheduling, vectorized detection, SoA integration, rng param</td>
+</tr>
+<tr>
+<td><code>detection/detection.py</code></td>
+<td>87, 89</td>
+<td>JIT SNR kernels (4 sensor types), rng param for parallel detection</td>
+</tr>
+<tr>
+<td><code>simulation/battle.py</code></td>
+<td>84, 85, 86, 88, 89</td>
+<td>Engagement culling, LOD tiers, flat cal dict, modifier batching, SoA sync, per-side threads</td>
+</tr>
+<tr>
+<td><code>simulation/calibration.py</code></td>
+<td>84, 85, 86, 88, 89</td>
+<td><code>enable_detection_culling</code>, <code>enable_scan_scheduling</code>, <code>enable_lod</code>, <code>enable_soa</code>, <code>enable_parallel_detection</code>, flat dict API</td>
+</tr>
+<tr>
+<td><code>simulation/unit_arrays.py</code></td>
+<td>88</td>
+<td>New: SoA data structure with sync protocol</td>
+</tr>
+<tr>
+<td><code>simulation/aggregation.py</code></td>
+<td>85</td>
+<td>Order preservation fix, LOD-triggered activation</td>
+</tr>
+<tr>
+<td><code>simulation/engine.py</code></td>
+<td>85</td>
+<td>Aggregation wiring in campaign tick</td>
+</tr>
+<tr>
+<td><code>simulation/scenario.py</code></td>
+<td>86</td>
+<td>Flat cal dict generation at load time</td>
+</tr>
+<tr>
+<td><code>detection/detection.py</code></td>
+<td>87</td>
+<td>JIT SNR kernels (4 sensor types)</td>
+</tr>
+<tr>
+<td><code>combat/damage.py</code></td>
+<td>87</td>
+<td>JIT hit probability, penetration, damage</td>
+</tr>
+<tr>
+<td><code>morale/state.py</code></td>
+<td>87</td>
+<td>JIT morale transition kernel</td>
+</tr>
+<tr>
+<td><code>entities/equipment.py</code></td>
+<td>84</td>
+<td><code>scan_interval_ticks</code> on sensor model</td>
+</tr>
+<tr>
+<td><code>data/sensors/*.yaml</code></td>
+<td>84</td>
+<td><code>scan_interval_ticks</code> field (~16 files)</td>
+</tr>
+<tr>
+<td><code>tools/profiling.py</code></td>
+<td>83</td>
+<td>Flame graph, hotspot reports, profile comparison</td>
+</tr>
+<tr>
+<td><code>tests/benchmarks/</code></td>
+<td>83, 90</td>
+<td>Benchmark suite, baselines, flag impact matrix, battalion/brigade benchmarks</td>
+</tr>
+<tr>
+<td><code>.github/workflows/</code></td>
+<td>83</td>
+<td>benchmark.yml</td>
+</tr>
+<tr>
+<td><code>data/scenarios/benchmark_*/</code></td>
+<td>90</td>
+<td>Battalion (1K) and brigade (5K) scenarios</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="risk-assessment">Risk Assessment<a class="headerlink" href="#risk-assessment" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Risk</th>
+<th>Severity</th>
+<th>Mitigation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>STRtree rebuild cost at 5,000+ units</td>
+<td>Medium</td>
+<td>Measure in Phase 84; fall back to grid spatial hash if &gt;10ms/tick</td>
+</tr>
+<tr>
+<td>Scan scheduling shifts detection timing</td>
+<td>High</td>
+<td><code>enable_scan_scheduling=False</code> default; recalibrate in Phase 91</td>
+</tr>
+<tr>
+<td>LOD tier misclassification (ambush missed)</td>
+<td>High</td>
+<td>Instant promotion on damage/contact; hysteresis prevents over-eager downgrade</td>
+</tr>
+<tr>
+<td>SoA sync bugs (two representations of same data)</td>
+<td>High</td>
+<td>Explicit sync points (start/end of tick); round-trip tests</td>
+</tr>
+<tr>
+<td>Numba compilation overhead on first call</td>
+<td>Low</td>
+<td><code>cache=True</code> on all JIT decorators; amortized over scenario</td>
+</tr>
+<tr>
+<td>Per-side threading breaks determinism</td>
+<td>High</td>
+<td>Independent PRNG streams per side; sequential engagement resolution; extensive determinism tests</td>
+</tr>
+<tr>
+<td>Aggregation order loss on disaggregation</td>
+<td>Medium</td>
+<td>Phase 85b explicitly snapshots/restores orders; tested</td>
+</tr>
+<tr>
+<td>Large-scale scenarios produce implausible outcomes</td>
+<td>Medium</td>
+<td>Phase 91c validates with MC; recalibrate if needed</td>
+</tr>
+<tr>
+<td>GIL limits threading benefit</td>
+<td>Medium</td>
+<td>Focus parallel work on numpy/Numba ops which release GIL; expect 1.5x not 2x</td>
+</tr>
+</tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.tabs", "navigation.sections", "navigation.expand", "navigation.top", "search.suggest", "search.highlight", "content.code.copy"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>

@@ -1,0 +1,6787 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="High-fidelity stochastic wargame simulator — multi-scale, multi-domain, multi-era">
+      
+      
+        <meta name="author" content="Clay Smith">
+      
+      
+        <link rel="canonical" href="https://clay-m-smith.github.io/stochastic-warfare/development-phases-block2/">
+      
+      
+        <link rel="prev" href="../development-phases-post-mvp/">
+      
+      
+        <link rel="next" href="../development-phases-block3/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.4">
+    
+    
+      
+        <title>Block 2 (25-30) - Stochastic Warfare</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="blue-grey" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#stochastic-warfare-block-2-development-phases-2530" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="Stochastic Warfare" class="md-header__button md-logo" aria-label="Stochastic Warfare" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Stochastic Warfare
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Block 2 (25-30)
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="blue-grey" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="blue-grey" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/clay-m-smith/stochastic-warfare" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    clay-m-smith/stochastic-warfare
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href=".." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../guide/getting-started/" class="md-tabs__link">
+          
+  
+  
+  Guide
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../concepts/architecture/" class="md-tabs__link">
+          
+  
+  
+  Concepts
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../reference/api/" class="md-tabs__link">
+          
+  
+  
+  Reference
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../brainstorm/" class="md-tabs__link">
+          
+  
+  
+  Architecture (Internal)
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../development-phases/" class="md-tabs__link">
+          
+  
+  
+  Development Phases
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../devlog/" class="md-tabs__link">
+          
+  
+  
+  Devlog
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../specs/project-structure/" class="md-tabs__link">
+          
+  
+  
+  Specifications
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="Stochastic Warfare" class="md-nav__button md-logo" aria-label="Stochastic Warfare" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Stochastic Warfare
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/clay-m-smith/stochastic-warfare" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    clay-m-smith/stochastic-warfare
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Guide
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Guide
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../guide/getting-started/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting Started
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../guide/web-ui/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Web UI
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../guide/scenarios/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Scenario Library
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Concepts
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Concepts
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../concepts/architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../concepts/models/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Mathematical Models
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/eras/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Eras
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/units/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Units & Equipment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture (Internal)
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Architecture (Internal)
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../brainstorm/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Core Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../brainstorm-post-mvp/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Post-MVP Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../brainstorm-block2/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 2 Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../brainstorm-block3/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 3 Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../brainstorm-block4/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 4 Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../brainstorm-block5/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 5 Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../brainstorm-block6/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 6 Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../brainstorm-block7/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 7 Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../brainstorm-block8/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 8 Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../brainstorm-block9/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 9 Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../brainstorm-block10/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 10 Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Development Phases
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Development Phases
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../development-phases/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MVP (0-10)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../development-phases-post-mvp/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Post-MVP (11-24)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 2 (25-30)
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 2 (25-30)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#philosophy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Philosophy
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#phase-25-engine-wiring-integration-sprint-complete-152-tests-6477-total" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 25: Engine Wiring &amp; Integration Sprint — COMPLETE (152 tests, 6,477 total)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Phase 25: Engine Wiring &amp; Integration Sprint — COMPLETE (152 tests, 6,477 total)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#25a-scenarioloader-auto-wiring-est-60-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        25a: ScenarioLoader Auto-Wiring (est. ~60 tests)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#25b-battle-loop-ooda-fix-est-40-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        25b: Battle Loop OODA Fix (est. ~40 tests)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#25c-tick-loop-integration-est-35-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        25c: Tick Loop Integration (est. ~35 tests)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#25d-commanderengine-wiring-est-25-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        25d: CommanderEngine Wiring (est. ~25 tests)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tests-testsunittest_phase_25a_scenario_wiringpy-testsunittest_phase_25b_ooda_fixpy-testsunittest_phase_25c_tick_looppy-testsunittest_phase_25d_commander_wiringpy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tests: tests/unit/test_phase_25a_scenario_wiring.py, tests/unit/test_phase_25b_ooda_fix.py, tests/unit/test_phase_25c_tick_loop.py, tests/unit/test_phase_25d_commander_wiring.py
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#exit-criteria" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Exit Criteria
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#phase-26-core-polish-configuration-complete-82-tests-6559-total" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 26: Core Polish &amp; Configuration — COMPLETE (82 tests, 6,559 total)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Phase 26: Core Polish &amp; Configuration — COMPLETE (82 tests, 6,559 total)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#26a-prng-discipline-25-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        26a: PRNG Discipline (25 tests)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#26b-configurable-constants-34-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        26b: Configurable Constants (34 tests)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#26c-engine-lifecycle-cleanup-23-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        26c: Engine Lifecycle &amp; Cleanup (23 tests)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tests-testsunittest_phase_26a_prngpy-25-testsunittest_phase_26b_configpy-34-testsunittest_phase_26c_lifecyclepy-23" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tests: tests/unit/test_phase_26a_prng.py (25), tests/unit/test_phase_26b_config.py (34), tests/unit/test_phase_26c_lifecycle.py (23)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#exit-criteria-all-met" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Exit Criteria — All Met
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#phase-27-combat-system-completeness-complete-139-tests-6698-total" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 27: Combat System Completeness — COMPLETE (139 tests, 6,698 total)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Phase 27: Combat System Completeness — COMPLETE (139 tests, 6,698 total)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#27a-cross-domain-engagement-paths-31-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        27a: Cross-Domain Engagement Paths (31 tests)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#27b-engagement-engine-enhancements-47-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        27b: Engagement Engine Enhancements (47 tests)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#27c-naval-combat-completion-31-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        27c: Naval Combat Completion (31 tests)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#27d-selective-fidelity-items-30-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        27d: Selective Fidelity Items (30 tests)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tests-testsunittest_phase_27d_fidelitypy-30-testsunittest_phase_27a_cross_domainpy-31-testsunittest_phase_27c_navalpy-31-testsunittest_phase_27b_engagementpy-47" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tests: tests/unit/test_phase_27d_fidelity.py (30), tests/unit/test_phase_27a_cross_domain.py (31), tests/unit/test_phase_27c_naval.py (31), tests/unit/test_phase_27b_engagement.py (47)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#exit-criteria-all-met_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Exit Criteria — All Met
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#phase-28-modern-era-data-package-complete-137-tests-6835-total" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 28: Modern Era Data Package — COMPLETE (137 tests, 6,835 total)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Phase 28: Modern Era Data Package — COMPLETE (137 tests, 6,835 total)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#28a-adversary-allied-units-est-25-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        28a: Adversary &amp; Allied Units (est. ~25 tests)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#28b-weapons-ammunition-sensors-est-20-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        28b: Weapons, Ammunition &amp; Sensors (est. ~20 tests)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#28c-organizations-doctrine-est-15-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        28c: Organizations &amp; Doctrine (est. ~15 tests)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#28d-missing-signatures-armor-data-est-10-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        28d: Missing Signatures &amp; Armor Data (est. ~10 tests)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tests-testsunittest_phase_28_data_loadingpy-yaml-validation-all-files-load-pydantic-validates-cross-references-resolve" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tests: tests/unit/test_phase_28_data_loading.py (YAML validation: all files load, pydantic validates, cross-references resolve)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#exit-criteria_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Exit Criteria
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#phase-285-directed-energy-weapons-complete-112-tests-6947-total" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 28.5: Directed Energy Weapons — COMPLETE (112 tests, 6,947 total)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Phase 28.5: Directed Energy Weapons — COMPLETE (112 tests, 6,947 total)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#285a-core-dew-engine-enum-extensions-57-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        28.5a: Core DEW Engine + Enum Extensions (57 tests)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#285b-engagement-routing-scenario-wiring-20-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        28.5b: Engagement Routing &amp; Scenario Wiring (20 tests)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#285c-yaml-data-package-38-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        28.5c: YAML Data Package (38 tests)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#phase-29-historical-era-data-expansion-complete-164-tests-7111-total" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 29: Historical Era Data Expansion — COMPLETE (164 tests, 7,111 total)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Phase 29: Historical Era Data Expansion — COMPLETE (164 tests, 7,111 total)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#29a-ww2-naval-missing-types-est-25-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        29a: WW2 Naval &amp; Missing Types (est. ~25 tests)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#29b-ww1-expansion-est-20-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        29b: WW1 Expansion (est. ~20 tests)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#29c-napoleonic-naval-expansion-est-20-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        29c: Napoleonic Naval &amp; Expansion (est. ~20 tests)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#29d-ancientmedieval-naval-expansion-est-20-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        29d: Ancient/Medieval Naval &amp; Expansion (est. ~20 tests)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tests-testsunittest_phase_29_era_datapy-yaml-validation-per-era-loads-validates-cross-references" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tests: tests/unit/test_phase_29_era_data.py (YAML validation per era: loads, validates, cross-references)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#exit-criteria_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Exit Criteria
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#phase-30-scenario-campaign-library-complete-196-tests-7307-total" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 30: Scenario &amp; Campaign Library — COMPLETE (196 tests, 7,307 total)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Phase 30: Scenario &amp; Campaign Library — COMPLETE (196 tests, 7,307 total)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#30a-modern-joint-scenarios-32-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        30a: Modern Joint Scenarios (32 tests)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#30b-historical-scenarios-28-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        30b: Historical Scenarios (28 tests)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#30c-existing-scenario-fixes-23-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        30c: Existing Scenario Fixes (23 tests)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#30d-cross-scenario-validation-113-parametrized-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        30d: Cross-Scenario Validation (113 parametrized tests)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tests-testsvalidationtest_phase_30_scenariospy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tests: tests/validation/test_phase_30_scenarios.py
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#exit-criteria-all-met_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Exit Criteria — All Met
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#deficit-resolution-map" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Deficit Resolution Map
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Deficit Resolution Map">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#resolved-by-phase-25" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Resolved by Phase 25
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#resolved-by-phase-26" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Resolved by Phase 26
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#resolved-by-phase-27" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Resolved by Phase 27
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#resolved-by-phase-30" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Resolved by Phase 30
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#deliberately-deferred-wont-fix-in-block-2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Deliberately Deferred (won't fix in Block 2)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#introduced-by-phase-285-dew-open-deficits" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Introduced by Phase 28.5 (DEW — open deficits)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#estimated-test-counts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Estimated Test Counts
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#verification" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Verification
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../development-phases-block3/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 3 (31-36)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../development-phases-block4/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 4 (37-39)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../development-phases-block5/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 5 (40-48)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../development-phases-block6/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 6 (49-57)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../development-phases-block7/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 7 (58-67)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../development-phases-block8/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 8 (68-82)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../development-phases-block9/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 9 (83-91)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../development-phases-block10/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 10 (92-97)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Devlog
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Devlog
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-0/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 0 - Scaffolding
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-1/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 1 - Terrain & Environment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-2/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 2 - Entities & Movement
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-3/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 3 - Detection & Intelligence
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-4/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 4 - Combat & Morale
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-5/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 5 - C2 Infrastructure
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-6/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 6 - Logistics & Supply
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-7/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 7 - Engagement Validation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-8/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 8 - AI & Planning
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-9/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 9 - Simulation Orchestration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-10/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 10 - Campaign Validation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-11/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 11 - Core Fidelity Fixes
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-12/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 12 - Deep Systems Rework
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-13/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 13 - Performance Optimization
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-14/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 14 - Tooling & Dev Experience
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-15/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 15 - Real-World Terrain
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-16/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 16 - Electronic Warfare
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-17/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 17 - Space & Satellite
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-18/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 18 - CBRN Effects
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-19/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 19 - Doctrinal AI Schools
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-20/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 20 - WW2 Era
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-21/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 21 - WW1 Era
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-22/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 22 - Napoleonic Era
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-23/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 23 - Ancient & Medieval Era
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-24/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 24 - Unconventional Warfare
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-25/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 25 - Engine Wiring
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-26/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 26 - Core Polish
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-27/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 27 - Combat Completeness
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-28/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 28 - Modern Data Package
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-28.5/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 28.5 - Directed Energy
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-29/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 29 - Historical Data Expansion
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-30/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 30 - Scenario Library
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-31/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 31 - Documentation Site
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-32/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 32 - API & Service Foundation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-33/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 33 - Frontend Foundation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-34/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 34 - Run Results & Analysis
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-35/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 35 - Tactical Map
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-36/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 36 - Scenario Tweaker & Polish
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-37/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 37 - Integration Fixes & E2E
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-38/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 38 - Map & Chart Enhancements
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-39/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 39 - Quality & Packaging
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-40/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 40 - Battle Loop Foundation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-41/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 41 - Combat Depth
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-42/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 42 - Tactical Behavior
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-43/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 43 - Domain-Specific Resolution
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-44/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 44 - Environmental & Subsystem Integration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-45/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 45 - Mathematical Model Audit & Hardening
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-46/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 46 - Scenario Data Cleanup & Expansion
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-47/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 47 - Full Recalibration & Validation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-48/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 48 - Block 5 Deficit Resolution
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-49/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 49 - Calibration Schema Hardening
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-50/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 50 - Combat Fidelity Polish
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-51/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 51 - Naval Combat Completeness
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-52/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 52 - Environmental Continuity
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-53/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 53 - C2 & AI Completeness
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-54/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 54 - Era-Specific & Domain Sub-Engine Wiring
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-55/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 55 - Resolution & Scenario Migration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-56/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 56 - Performance & Logistics
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-57/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 57 - Full Validation & Regression
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-58/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 58 - Structural Verification & Core Combat Wiring
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-59/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 59 - Atmospheric & Ground Environment Wiring
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-60/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 60 - Obscurants, Fire, & Visual Environment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-61/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 61 - Maritime, Acoustic, & EM Environment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-62/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 62 - Human Factors, CBRN, & Air Combat Environment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-63/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 63 - Cross-Module Feedback Loops
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-64/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 64 - C2 Friction & Command Delay
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-65/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 65 - Space & EW Sub-Engine Activation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-66/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 66 - Unconventional, Naval, & Cleanup
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-67/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 67 - Integration Validation & Recalibration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-68/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 68 - Consequence Enforcement
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-69/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 69 - C2 Depth
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-70/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 70 - Performance Optimization
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-71/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 71 - Missile & Carrier Ops Completion
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-72/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 72 - Checkpoint & State Completeness
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-73/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 73 - Historical Scenario Correctness
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-74/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 74 - Combat Engine Unit Tests
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-75/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 75 - Simulation Core & Domain Unit Tests
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-76/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 76 - API Robustness
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-77/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 77 - Frontend Accessibility
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-78/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 78 - P2 Environment Wiring
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-79/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 79 - CI/CD & Packaging
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-80/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 80 - API & Frontend Sync
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-81/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 81 - Recalibration & Validation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-82/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 82 - Block 8 Postmortem & Documentation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-83/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 83 - Profiling Infrastructure
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-84/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 84 - Spatial Culling & Scan Scheduling
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-85/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 85 - LOD & Aggregation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-86/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 86 - Engagement & Calibration Optimization
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-87/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 87 - Expanded Numba JIT
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-88/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 88 - SoA Data Layer
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-89/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 89 - Per-Side Parallelism
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-90/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 90 - Validation & Benchmarking
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-91/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 91 - Scenario Recalibration & Regression
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-92/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 92 - API Analytics & Frame Enrichment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-93/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 93 - Results Dashboard Depth
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-94/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 94 - Tactical Map Enrichment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_8" >
+        
+          
+          <label class="md-nav__link" for="__nav_8" id="__nav_8_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Specifications
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_8">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Specifications
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../specs/project-structure/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Project Structure
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../skills-and-hooks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Skills & Hooks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#philosophy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Philosophy
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#phase-25-engine-wiring-integration-sprint-complete-152-tests-6477-total" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 25: Engine Wiring &amp; Integration Sprint — COMPLETE (152 tests, 6,477 total)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Phase 25: Engine Wiring &amp; Integration Sprint — COMPLETE (152 tests, 6,477 total)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#25a-scenarioloader-auto-wiring-est-60-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        25a: ScenarioLoader Auto-Wiring (est. ~60 tests)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#25b-battle-loop-ooda-fix-est-40-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        25b: Battle Loop OODA Fix (est. ~40 tests)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#25c-tick-loop-integration-est-35-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        25c: Tick Loop Integration (est. ~35 tests)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#25d-commanderengine-wiring-est-25-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        25d: CommanderEngine Wiring (est. ~25 tests)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tests-testsunittest_phase_25a_scenario_wiringpy-testsunittest_phase_25b_ooda_fixpy-testsunittest_phase_25c_tick_looppy-testsunittest_phase_25d_commander_wiringpy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tests: tests/unit/test_phase_25a_scenario_wiring.py, tests/unit/test_phase_25b_ooda_fix.py, tests/unit/test_phase_25c_tick_loop.py, tests/unit/test_phase_25d_commander_wiring.py
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#exit-criteria" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Exit Criteria
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#phase-26-core-polish-configuration-complete-82-tests-6559-total" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 26: Core Polish &amp; Configuration — COMPLETE (82 tests, 6,559 total)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Phase 26: Core Polish &amp; Configuration — COMPLETE (82 tests, 6,559 total)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#26a-prng-discipline-25-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        26a: PRNG Discipline (25 tests)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#26b-configurable-constants-34-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        26b: Configurable Constants (34 tests)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#26c-engine-lifecycle-cleanup-23-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        26c: Engine Lifecycle &amp; Cleanup (23 tests)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tests-testsunittest_phase_26a_prngpy-25-testsunittest_phase_26b_configpy-34-testsunittest_phase_26c_lifecyclepy-23" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tests: tests/unit/test_phase_26a_prng.py (25), tests/unit/test_phase_26b_config.py (34), tests/unit/test_phase_26c_lifecycle.py (23)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#exit-criteria-all-met" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Exit Criteria — All Met
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#phase-27-combat-system-completeness-complete-139-tests-6698-total" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 27: Combat System Completeness — COMPLETE (139 tests, 6,698 total)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Phase 27: Combat System Completeness — COMPLETE (139 tests, 6,698 total)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#27a-cross-domain-engagement-paths-31-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        27a: Cross-Domain Engagement Paths (31 tests)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#27b-engagement-engine-enhancements-47-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        27b: Engagement Engine Enhancements (47 tests)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#27c-naval-combat-completion-31-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        27c: Naval Combat Completion (31 tests)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#27d-selective-fidelity-items-30-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        27d: Selective Fidelity Items (30 tests)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tests-testsunittest_phase_27d_fidelitypy-30-testsunittest_phase_27a_cross_domainpy-31-testsunittest_phase_27c_navalpy-31-testsunittest_phase_27b_engagementpy-47" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tests: tests/unit/test_phase_27d_fidelity.py (30), tests/unit/test_phase_27a_cross_domain.py (31), tests/unit/test_phase_27c_naval.py (31), tests/unit/test_phase_27b_engagement.py (47)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#exit-criteria-all-met_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Exit Criteria — All Met
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#phase-28-modern-era-data-package-complete-137-tests-6835-total" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 28: Modern Era Data Package — COMPLETE (137 tests, 6,835 total)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Phase 28: Modern Era Data Package — COMPLETE (137 tests, 6,835 total)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#28a-adversary-allied-units-est-25-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        28a: Adversary &amp; Allied Units (est. ~25 tests)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#28b-weapons-ammunition-sensors-est-20-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        28b: Weapons, Ammunition &amp; Sensors (est. ~20 tests)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#28c-organizations-doctrine-est-15-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        28c: Organizations &amp; Doctrine (est. ~15 tests)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#28d-missing-signatures-armor-data-est-10-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        28d: Missing Signatures &amp; Armor Data (est. ~10 tests)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tests-testsunittest_phase_28_data_loadingpy-yaml-validation-all-files-load-pydantic-validates-cross-references-resolve" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tests: tests/unit/test_phase_28_data_loading.py (YAML validation: all files load, pydantic validates, cross-references resolve)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#exit-criteria_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Exit Criteria
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#phase-285-directed-energy-weapons-complete-112-tests-6947-total" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 28.5: Directed Energy Weapons — COMPLETE (112 tests, 6,947 total)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Phase 28.5: Directed Energy Weapons — COMPLETE (112 tests, 6,947 total)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#285a-core-dew-engine-enum-extensions-57-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        28.5a: Core DEW Engine + Enum Extensions (57 tests)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#285b-engagement-routing-scenario-wiring-20-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        28.5b: Engagement Routing &amp; Scenario Wiring (20 tests)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#285c-yaml-data-package-38-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        28.5c: YAML Data Package (38 tests)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#phase-29-historical-era-data-expansion-complete-164-tests-7111-total" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 29: Historical Era Data Expansion — COMPLETE (164 tests, 7,111 total)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Phase 29: Historical Era Data Expansion — COMPLETE (164 tests, 7,111 total)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#29a-ww2-naval-missing-types-est-25-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        29a: WW2 Naval &amp; Missing Types (est. ~25 tests)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#29b-ww1-expansion-est-20-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        29b: WW1 Expansion (est. ~20 tests)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#29c-napoleonic-naval-expansion-est-20-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        29c: Napoleonic Naval &amp; Expansion (est. ~20 tests)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#29d-ancientmedieval-naval-expansion-est-20-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        29d: Ancient/Medieval Naval &amp; Expansion (est. ~20 tests)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tests-testsunittest_phase_29_era_datapy-yaml-validation-per-era-loads-validates-cross-references" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tests: tests/unit/test_phase_29_era_data.py (YAML validation per era: loads, validates, cross-references)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#exit-criteria_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Exit Criteria
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#phase-30-scenario-campaign-library-complete-196-tests-7307-total" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 30: Scenario &amp; Campaign Library — COMPLETE (196 tests, 7,307 total)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Phase 30: Scenario &amp; Campaign Library — COMPLETE (196 tests, 7,307 total)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#30a-modern-joint-scenarios-32-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        30a: Modern Joint Scenarios (32 tests)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#30b-historical-scenarios-28-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        30b: Historical Scenarios (28 tests)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#30c-existing-scenario-fixes-23-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        30c: Existing Scenario Fixes (23 tests)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#30d-cross-scenario-validation-113-parametrized-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        30d: Cross-Scenario Validation (113 parametrized tests)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tests-testsvalidationtest_phase_30_scenariospy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tests: tests/validation/test_phase_30_scenarios.py
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#exit-criteria-all-met_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Exit Criteria — All Met
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#deficit-resolution-map" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Deficit Resolution Map
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Deficit Resolution Map">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#resolved-by-phase-25" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Resolved by Phase 25
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#resolved-by-phase-26" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Resolved by Phase 26
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#resolved-by-phase-27" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Resolved by Phase 27
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#resolved-by-phase-30" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Resolved by Phase 30
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#deliberately-deferred-wont-fix-in-block-2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Deliberately Deferred (won't fix in Block 2)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#introduced-by-phase-285-dew-open-deficits" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Introduced by Phase 28.5 (DEW — open deficits)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#estimated-test-counts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Estimated Test Counts
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#verification" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Verification
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="stochastic-warfare-block-2-development-phases-2530">Stochastic Warfare — Block 2 Development Phases (25–30)<a class="headerlink" href="#stochastic-warfare-block-2-development-phases-2530" title="Permanent link">&para;</a></h1>
+<h2 id="philosophy">Philosophy<a class="headerlink" href="#philosophy" title="Permanent link">&para;</a></h2>
+<p>Block 2 turns individually excellent subsystems into a connected, data-rich whole. No new domains or architectural rewrites. Three priorities: (1) wire all existing engines into the scenario loading and tick loop pipeline, (2) fill missing cross-domain combat interaction paths, (3) populate YAML data packages to enable rich scenario authoring.</p>
+<p><strong>Cross-document alignment</strong>: This document must stay synchronized with <code>brainstorm-block2.md</code> (design thinking), <code>devlog/index.md</code> (deficit inventory), and <code>specs/project-structure.md</code> (module definitions). Run <code>/cross-doc-audit</code> after any structural change.</p>
+<p><strong>Deficit traceability</strong>: Every open item in <code>devlog/index.md</code> Post-MVP Refinement Index is either addressed in a phase below, or explicitly marked as "deferred" or "won't fix" with rationale.</p>
+<hr />
+<h2 id="phase-25-engine-wiring-integration-sprint-complete-152-tests-6477-total">Phase 25: Engine Wiring &amp; Integration Sprint — <strong>COMPLETE</strong> (152 tests, 6,477 total)<a class="headerlink" href="#phase-25-engine-wiring-integration-sprint-complete-152-tests-6477-total" title="Permanent link">&para;</a></h2>
+<p><strong>Goal</strong>: Wire all post-MVP standalone engines into ScenarioLoader and the simulation tick loop. Fix the broken OODA DECIDE path. Make a scenario YAML the single source of truth for instantiating a fully-connected simulation.</p>
+<p><strong>Dependencies</strong>: None (builds on all existing engines).</p>
+<h3 id="25a-scenarioloader-auto-wiring-est-60-tests">25a: ScenarioLoader Auto-Wiring (est. ~60 tests)<a class="headerlink" href="#25a-scenarioloader-auto-wiring-est-60-tests" title="Permanent link">&para;</a></h3>
+<p>Extend <code>CampaignScenarioConfig</code> and <code>ScenarioLoader.load()</code> to parse and instantiate:</p>
+<ul>
+<li><strong><code>simulation/scenario.py</code></strong> (modified) — New config blocks: <code>ew_config</code>, <code>space_config</code>, <code>cbrn_config</code>, <code>school_config</code>, <code>commander_config</code>. Era engines gated by existing <code>era</code> field. Escalation engines gated by existing <code>escalation_config</code>.</li>
+<li><strong><code>simulation/scenario.py</code></strong> (modified) — <code>ScenarioLoader.load()</code> instantiation logic: for each config block present and non-null, instantiate the corresponding engine(s) and assign to SimulationContext fields.</li>
+<li><strong>Engine instantiation order</strong>: RNGManager streams first, then engines in dependency order (EW before detection, CBRN before movement, commanders before AI decisions).</li>
+<li><strong>YAML schema additions</strong>: Each config block maps directly to the engine's pydantic Config class. Example: <code>ew_config: {jam_to_signal_threshold_db: -3.0}</code> → <code>EWConfig(jam_to_signal_threshold_db=-3.0)</code>.</li>
+</ul>
+<p><strong>Resolves deficits</strong>: 1.1 (ScenarioLoader auto-wiring — accumulated across Phases 16–24), 1.6 (era engines not wired), 5.1 (EW engines not wired).</p>
+<h3 id="25b-battle-loop-ooda-fix-est-40-tests">25b: Battle Loop OODA Fix (est. ~40 tests)<a class="headerlink" href="#25b-battle-loop-ooda-fix-est-40-tests" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong><code>simulation/battle.py</code></strong> (modified) — Build <code>AssessmentResult</code> from battle state: friendly/enemy unit lists, force ratios per sector, threat axes from enemy positions, supply state from stockpile manager, morale averages. Pass to <code>decide()</code> instead of <code>None</code>.</li>
+<li><strong><code>simulation/battle.py</code></strong> (modified) — Wire <code>get_coa_score_weight_overrides()</code> from SchoolRegistry (if present on context) into COA scoring in <code>_process_ooda_completions()</code>.</li>
+<li><strong><code>simulation/battle.py</code></strong> (modified) — Wire <code>get_stratagem_affinity()</code> into stratagem evaluation during DECIDE phase.</li>
+<li><strong><code>c2/ai/assessment.py</code></strong> (modified, if needed) — Ensure <code>AssessmentResult</code> has all fields that <code>decide()</code> and school weight overrides expect.</li>
+</ul>
+<p><strong>Resolves deficits</strong>: 1.3 (assessment=None), 2.8 (COA weight overrides not called), 1.2 (CommanderEngine not wired — addressed as part of this wiring pass).</p>
+<h3 id="25c-tick-loop-integration-est-35-tests">25c: Tick Loop Integration (est. ~35 tests)<a class="headerlink" href="#25c-tick-loop-integration-est-35-tests" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong><code>simulation/engine.py</code></strong> (modified) — Add conditional calls in tick loop for:</li>
+<li>EW update (jamming state refresh, SIGINT collection) — after detection, before engagement</li>
+<li>MOPP speed factor query (contamination state → movement engine parameter)</li>
+<li>Air campaign → ATO planning cycle integration</li>
+<li>Insurgency engine wired with real collateral events and aid data from ongoing simulation</li>
+<li><strong><code>simulation/engine.py</code></strong> (modified) — Replace bare <code>except Exception: pass</code> with:</li>
+<li><code>logger.error()</code> with traceback</li>
+<li>Configurable <code>strict_mode</code> (default False): if True, re-raise; if False, continue with warning</li>
+<li><strong><code>simulation/battle.py</code></strong> (modified) — Pass <code>mopp_speed_factor</code> from CBRN contamination state to movement engine in <code>_execute_movement()</code>.</li>
+</ul>
+<p><strong>Resolves deficits</strong>: 1.4 (air campaign not wired to ATO), 1.5 (MOPP speed factor never passed), 1.7 (bare except), 4.13 (insurgency needs real data).</p>
+<h3 id="25d-commanderengine-wiring-est-25-tests">25d: CommanderEngine Wiring (est. ~25 tests)<a class="headerlink" href="#25d-commanderengine-wiring-est-25-tests" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong><code>simulation/scenario.py</code></strong> (modified) — Add <code>commander_engine</code> field to SimulationContext. ScenarioLoader creates CommanderProfileLoader, loads profiles, creates CommanderEngine, assigns personalities to units per scenario YAML <code>commander_assignments</code> block.</li>
+<li><strong><code>simulation/battle.py</code></strong> (modified) — Query <code>commander_engine.get_personality(unit_id)</code> for OODA speed, decision noise, risk threshold. Replace all <code>personality=None</code> call sites.</li>
+<li><strong><code>c2/ai/commander.py</code></strong> (modified, if needed) — <code>CommanderPersonality.school_id</code> field → SchoolRegistry auto-assignment when both engines present.</li>
+</ul>
+<p><strong>Resolves deficits</strong>: 1.2 (CommanderEngine not wired).</p>
+<h3 id="tests-testsunittest_phase_25a_scenario_wiringpy-testsunittest_phase_25b_ooda_fixpy-testsunittest_phase_25c_tick_looppy-testsunittest_phase_25d_commander_wiringpy">Tests: <code>tests/unit/test_phase_25a_scenario_wiring.py</code>, <code>tests/unit/test_phase_25b_ooda_fix.py</code>, <code>tests/unit/test_phase_25c_tick_loop.py</code>, <code>tests/unit/test_phase_25d_commander_wiring.py</code><a class="headerlink" href="#tests-testsunittest_phase_25a_scenario_wiringpy-testsunittest_phase_25b_ooda_fixpy-testsunittest_phase_25c_tick_looppy-testsunittest_phase_25d_commander_wiringpy" title="Permanent link">&para;</a></h3>
+<h3 id="exit-criteria">Exit Criteria<a class="headerlink" href="#exit-criteria" title="Permanent link">&para;</a></h3>
+<ul>
+<li>A scenario YAML with EW/Space/CBRN/Schools/Era/Escalation config blocks produces a SimulationContext with all corresponding engines instantiated</li>
+<li><code>decide()</code> receives a real AssessmentResult with force ratios and threat data</li>
+<li>COA weight overrides and stratagem affinity hooks are invoked when SchoolRegistry present</li>
+<li>EW engines called each tick, MOPP speed factor passed to movement</li>
+<li>No bare <code>except Exception: pass</code> remains in engine.py</li>
+<li>CommanderEngine on SimulationContext; personality queried in battle loop</li>
+<li>All 6,325+ existing tests pass unchanged</li>
+</ul>
+<hr />
+<h2 id="phase-26-core-polish-configuration-complete-82-tests-6559-total">Phase 26: Core Polish &amp; Configuration — <strong>COMPLETE</strong> (82 tests, 6,559 total)<a class="headerlink" href="#phase-26-core-polish-configuration-complete-82-tests-6559-total" title="Permanent link">&para;</a></h2>
+<p><strong>Goal</strong>: Fix PRNG discipline violations, replace all hardcoded magic numbers with configurable pydantic fields, and address remaining core engine quality items.</p>
+<p><strong>Dependencies</strong>: Phase 25 (wiring must work before polishing).</p>
+<h3 id="26a-prng-discipline-25-tests">26a: PRNG Discipline (25 tests)<a class="headerlink" href="#26a-prng-discipline-25-tests" title="Permanent link">&para;</a></h3>
+<p>Removed all fallback <code>np.random.default_rng()</code> from 23 engine constructors across combat (8), detection (7), C2 (3), movement (3), logistics (1), simulation (1). Made <code>rng</code> a required parameter (keyword-only via <code>*,</code> where needed). Updated 12 existing test files to pass explicit <code>rng=</code> arguments.</p>
+<ul>
+<li><code>combat/archery.py</code>, <code>combat/barrage.py</code>, <code>combat/gas_warfare.py</code>, <code>combat/melee.py</code>, <code>combat/naval_gunnery.py</code>, <code>combat/siege.py</code>, <code>combat/strategic_bombing.py</code>, <code>combat/volley_fire.py</code></li>
+<li><code>detection/deception.py</code>, <code>detection/detection.py</code>, <code>detection/estimation.py</code>, <code>detection/fog_of_war.py</code>, <code>detection/intel_fusion.py</code>, <code>detection/sonar.py</code>, <code>detection/underwater_detection.py</code></li>
+<li><code>c2/coordination.py</code>, <code>c2/courier.py</code>, <code>c2/visual_signals.py</code></li>
+<li><code>movement/cavalry.py</code>, <code>movement/convoy.py</code>, <code>movement/naval_oar.py</code></li>
+<li><code>logistics/foraging.py</code></li>
+<li><code>simulation/aggregation.py</code></li>
+</ul>
+<p><strong>Resolves deficits</strong>: 8.1 (hardcoded fallback RNG seeds).</p>
+<h3 id="26b-configurable-constants-34-tests">26b: Configurable Constants (34 tests)<a class="headerlink" href="#26b-configurable-constants-34-tests" title="Permanent link">&para;</a></h3>
+<p>Replaced hardcoded magic numbers with pydantic Config fields in 9 source files:</p>
+<table>
+<thead>
+<tr>
+<th>Module</th>
+<th>New Config Field</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>cbrn/dispersal.py</code></td>
+<td><code>DispersalConfig.terrain_channel_offset_m</code>, <code>terrain_channel_height_m</code></td>
+<td>50.0, 5.0</td>
+</tr>
+<tr>
+<td><code>cbrn/engine.py</code></td>
+<td><code>CBRNConfig.fallback_wind_speed_mps</code>, <code>fallback_wind_direction_rad</code>, <code>fallback_cloud_cover</code></td>
+<td>2.0, 0.0, 0.5</td>
+</tr>
+<tr>
+<td><code>combat/gas_warfare.py</code></td>
+<td><code>GasWarfareConfig.max_wind_angle_deg</code></td>
+<td>60.0</td>
+</tr>
+<tr>
+<td><code>terrain/trenches.py</code></td>
+<td><code>TrenchConfig.along_angle_threshold_deg</code>, <code>crossing_angle_threshold_deg</code></td>
+<td>30.0, 60.0</td>
+</tr>
+<tr>
+<td><code>logistics/foraging.py</code></td>
+<td><code>ForagingConfig.ambush_casualty_rate</code></td>
+<td>0.1</td>
+</tr>
+<tr>
+<td><code>ew/jamming.py</code></td>
+<td><code>JammingConfig.jamming_event_radius_m</code></td>
+<td>50000.0</td>
+</tr>
+<tr>
+<td><code>ew/spoofing.py</code></td>
+<td><code>check_spoof_detection(unit_id="")</code> parameter</td>
+<td>""</td>
+</tr>
+<tr>
+<td><code>ew/decoys_ew.py</code></td>
+<td><code>EWDecoyConfig.decoy_seeker_effectiveness</code> dict</td>
+<td>{CHAFF→RADAR/ANTI_RAD, FLARE→IR/EO, TOWED→RADAR, DRFM→RADAR/ANTI_RAD}</td>
+</tr>
+<tr>
+<td><code>ew/sigint.py</code></td>
+<td><code>SIGINTConfig.activity_sigmoid_center</code>, <code>activity_sigmoid_scale</code></td>
+<td>10.0, 10.0</td>
+</tr>
+</tbody>
+</table>
+<p>J/S sigmoid in <code>ew/jamming.py</code> deliberately NOT changed — standard dB power conversion (physics, not tunable).</p>
+<p><strong>Resolves deficits</strong>: 5.6 (GPS spoofing unit_id), 5.7 (EW magic numbers), 7.1 (terrain channeling), 7.2 (weather defaults), 8.2 (gas wind angle), 8.3 (trench angles), 8.4 (foraging ambush).</p>
+<h3 id="26c-engine-lifecycle-cleanup-23-tests">26c: Engine Lifecycle &amp; Cleanup (23 tests)<a class="headerlink" href="#26c-engine-lifecycle-cleanup-23-tests" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong><code>cbrn/dispersal.py</code></strong> — <code>DispersalConfig.max_puff_age_s</code> (default 3600.0), <code>cleanup_aged_puffs()</code> method.</li>
+<li><strong><code>cbrn/engine.py</code></strong> — Wires <code>cleanup_aged_puffs()</code> at end of <code>update()</code>.</li>
+<li><strong><code>detection/detection.py</code></strong> — <code>DetectionConfig.max_integration_scans</code> (default 4), caps scan count before computing gain.</li>
+<li><strong><code>entities/unit_classes/ground.py</code></strong> — <code>armor_type: str = "RHA"</code> field with get_state/set_state (backward-compat default).</li>
+<li><strong><code>entities/loader.py</code></strong> — <code>UnitDefinition.armor_type</code> field, passed to GroundUnit in <code>create_unit()</code>.</li>
+<li><strong>6 armor YAML files</strong> — m1a1_abrams (COMPOSITE), m1a2 (COMPOSITE), shot_kal (RHA), t55a (RHA), t62 (RHA), t72m (COMPOSITE).</li>
+</ul>
+<p><strong>Resolves deficits</strong>: 7.3 (puff cleanup), 10.4 (integration gain cap), 10.5 (armor type YAML).</p>
+<h3 id="tests-testsunittest_phase_26a_prngpy-25-testsunittest_phase_26b_configpy-34-testsunittest_phase_26c_lifecyclepy-23">Tests: <code>tests/unit/test_phase_26a_prng.py</code> (25), <code>tests/unit/test_phase_26b_config.py</code> (34), <code>tests/unit/test_phase_26c_lifecycle.py</code> (23)<a class="headerlink" href="#tests-testsunittest_phase_26a_prngpy-25-testsunittest_phase_26b_configpy-34-testsunittest_phase_26c_lifecyclepy-23" title="Permanent link">&para;</a></h3>
+<h3 id="exit-criteria-all-met">Exit Criteria — All Met<a class="headerlink" href="#exit-criteria-all-met" title="Permanent link">&para;</a></h3>
+<ul>
+<li><code>grep -r "default_rng" stochastic_warfare/</code> returns zero matches ✓</li>
+<li>All previously hardcoded constants are pydantic Config fields with documented defaults ✓</li>
+<li>CBRN puff cleanup runs each tick, respects max_puff_age_s ✓</li>
+<li>GPS spoofing events carry actual unit_id ✓</li>
+<li>Armor type specified in all armored unit YAML files ✓</li>
+<li>All 6,559 tests pass ✓</li>
+</ul>
+<hr />
+<h2 id="phase-27-combat-system-completeness-complete-139-tests-6698-total">Phase 27: Combat System Completeness — <strong>COMPLETE</strong> (139 tests, 6,698 total)<a class="headerlink" href="#phase-27-combat-system-completeness-complete-139-tests-6698-total" title="Permanent link">&para;</a></h2>
+<p><strong>Goal</strong>: Fill all missing cross-domain engagement paths, enhance the engagement engine with burst fire and submunition scatter, and complete naval combat mechanics.</p>
+<p><strong>Dependencies</strong>: Phase 25 (engine wiring), Phase 26 (PRNG discipline — new code must follow conventions).</p>
+<h3 id="27a-cross-domain-engagement-paths-31-tests">27a: Cross-Domain Engagement Paths (31 tests)<a class="headerlink" href="#27a-cross-domain-engagement-paths-31-tests" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong><code>combat/engagement.py</code></strong> (modified) — New engagement types: <code>COASTAL_DEFENSE = 9</code>, <code>AIR_LAUNCHED_ASHM = 10</code>, <code>ATGM_VS_ROTARY = 11</code>. New <code>route_engagement()</code> dispatcher, <code>_resolve_atgm_vs_rotary()</code>. New config: <code>atgm_max_altitude_m</code>, <code>atgm_range_decay_factor</code>.</li>
+<li><strong><code>combat/air_ground.py</code></strong> (modified) — <code>AirGroundMission.ASHM = 5</code>, <code>execute_ashm()</code> launch-only method, <code>AirASHMResult</code> dataclass.</li>
+<li><strong><code>combat/air_combat.py</code></strong> (modified) — <code>compute_ew_countermeasure_reduction()</code>, EW engine integration in <code>resolve_air_engagement()</code> (optional <code>ew_decoy_engine</code>, <code>jamming_engine</code> params). New config: <code>enable_ew_countermeasures</code>.</li>
+<li><strong><code>combat/air_defense.py</code></strong> (modified) — EW integration in <code>fire_interceptor()</code> (optional <code>ew_decoy_engine</code>, <code>jamming_engine</code> params). New config: <code>enable_ew_countermeasures</code>.</li>
+</ul>
+<h3 id="27b-engagement-engine-enhancements-47-tests">27b: Engagement Engine Enhancements (47 tests)<a class="headerlink" href="#27b-engagement-engine-enhancements-47-tests" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong><code>combat/engagement.py</code></strong> (modified) — <code>execute_burst_engagement()</code>: N rounds as independent Bernoulli trials, single cooldown, damage per hit. <code>BurstEngagementResult</code> dataclass. New config: <code>enable_burst_fire</code>, <code>max_burst_size</code>. When disabled, caps burst to 1.</li>
+<li><strong><code>combat/damage.py</code></strong> (modified) — <code>resolve_submunition_damage()</code>: scatter N submunitions (rng.normal per sub), check lethal radius per target, accumulate damage, create UXO field for duds. New config: <code>enable_submunition_scatter</code>, <code>submunition_scatter_sigma_fraction</code>.</li>
+<li><strong><code>combat/air_combat.py</code></strong> (modified) — <code>apply_countermeasures_multi()</code>: multiplicative stacking <code>combined = 1 - product(1 - individual)</code>. Supports chaff, flare, dircm. New config: <code>dircm_effectiveness</code>.</li>
+<li><strong><code>combat/indirect_fire.py</code></strong> (modified) — <code>TOTFirePlan</code> dataclass, <code>compute_tot_plan()</code> (ToF per battery, fire times for simultaneous impact), <code>execute_tot_mission()</code> (fires batteries whose fire_time &lt;= current_time). New config: <code>tot_max_batteries</code>, <code>tot_time_of_flight_variation_s</code>.</li>
+<li><strong><code>combat/air_ground.py</code></strong> (modified) — <code>compute_cas_designation()</code>: JTAC designation delay enforcement, laser bonus, talk-on latency ramp, comm quality. <code>CASDesignationResult</code> dataclass. New config: <code>jtac_designation_delay_s</code>, <code>laser_acquisition_window_s</code>, <code>talk_on_latency_s</code>, <code>designation_accuracy_bonus</code>.</li>
+</ul>
+<h3 id="27c-naval-combat-completion-31-tests">27c: Naval Combat Completion (31 tests)<a class="headerlink" href="#27c-naval-combat-completion-31-tests" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong><code>combat/naval_surface.py</code></strong> (modified) — <code>naval_gun_engagement()</code>: radar-directed Pk = base × FC_bonus × FC_quality × range_factor × sea_factor × size_factor, Bernoulli per round. <code>NavalGunResult</code> dataclass. New config: <code>naval_gun_base_pk_per_round</code>, <code>naval_gun_fire_control_bonus</code>, <code>naval_gun_max_range_m</code>, <code>naval_gun_rate_of_fire_rpm</code>, <code>naval_gun_damage_per_hit</code>.</li>
+<li><strong><code>combat/naval_subsurface.py</code></strong> (modified) — <code>asroc_engagement()</code> (0.9 flight reliability → torpedo phase), <code>depth_charge_attack()</code> (pattern scatter, Bernoulli within lethal radius), <code>resolve_torpedo_countermeasures()</code> (NIXIE → acoustic CM → evasion layers). <code>ASROCResult</code>, <code>DepthChargeResult</code>, <code>TorpedoCountermeasureResult</code> dataclasses. New config: <code>asroc_max_range_m</code>, <code>asroc_torpedo_pk</code>, <code>depth_charge_*</code>, <code>nixie_seduction_probability</code>, <code>acoustic_cm_confusion_probability</code>, <code>enable_torpedo_countermeasures</code>.</li>
+<li><strong><code>combat/carrier_ops.py</code></strong> (modified) — <code>create_cap_station()</code>, <code>update_cap_stations()</code>, <code>schedule_recovery_window()</code>. <code>CAPStation</code>, <code>RecoveryWindow</code> dataclasses. New config: <code>cap_aircraft_per_station</code>, <code>cap_relief_margin_s</code>, <code>recovery_window_duration_s</code>, <code>recovery_window_interval_s</code>.</li>
+</ul>
+<h3 id="27d-selective-fidelity-items-30-tests">27d: Selective Fidelity Items (30 tests)<a class="headerlink" href="#27d-selective-fidelity-items-30-tests" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong><code>combat/barrage.py</code></strong> (modified) — Observer correction: <code>has_observer</code> + <code>observer_quality</code> on BarrageZone, drift reduced by <code>observer_correction_factor * observer_quality</code> each update. New config: <code>observer_correction_factor</code>, <code>observer_quality_default</code>.</li>
+<li><strong><code>combat/melee.py</code></strong> (modified) — <code>compute_cavalry_terrain_modifier()</code>: slope penalty, soft ground, obstacle abort. <code>compute_frontage_constraint()</code>: limits engaged strengths, reserves at <code>second_rank_effectiveness</code>. Both integrated into <code>resolve_melee_round()</code>. New config: <code>cavalry_slope_penalty_per_deg</code>, <code>cavalry_soft_ground_penalty</code>, <code>cavalry_obstacle_abort_threshold</code>, <code>cavalry_uphill_casualty_bonus</code>, <code>max_frontage_m</code>, <code>combatant_spacing_m</code>, <code>second_rank_effectiveness</code>.</li>
+<li><strong><code>combat/gas_warfare.py</code></strong> (modified) — <code>compute_exposure_during_don()</code>: linear ramp from full exposure (t=0) to zero (t=don_time). <code>get_effective_mopp_level()</code>: returns (mopp_level, protection_factor) tuple with ramp.</li>
+</ul>
+<p><strong>Resolves deficits</strong>: 2.10 (no frontage/depth), 2.11 (cavalry terrain), 2.12 (barrage drift), 2.13 (gas mask don time).</p>
+<h3 id="tests-testsunittest_phase_27d_fidelitypy-30-testsunittest_phase_27a_cross_domainpy-31-testsunittest_phase_27c_navalpy-31-testsunittest_phase_27b_engagementpy-47">Tests: <code>tests/unit/test_phase_27d_fidelity.py</code> (30), <code>tests/unit/test_phase_27a_cross_domain.py</code> (31), <code>tests/unit/test_phase_27c_naval.py</code> (31), <code>tests/unit/test_phase_27b_engagement.py</code> (47)<a class="headerlink" href="#tests-testsunittest_phase_27d_fidelitypy-30-testsunittest_phase_27a_cross_domainpy-31-testsunittest_phase_27c_navalpy-31-testsunittest_phase_27b_engagementpy-47" title="Permanent link">&para;</a></h3>
+<h3 id="exit-criteria-all-met_1">Exit Criteria — All Met<a class="headerlink" href="#exit-criteria-all-met_1" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Ground units can engage naval targets via coastal defense missiles ✓</li>
+<li>Air-launched ASHMs fly realistic profiles and face ship point defense ✓</li>
+<li>ATGMs can engage hovering helicopters ✓</li>
+<li>EW jamming effectiveness affects air combat missile Pk ✓</li>
+<li>Burst fire resolves N rounds per engagement ✓</li>
+<li>DPICM submunitions scatter and create UXO fields ✓</li>
+<li>Surface ships can launch ASW weapons against submarines ✓</li>
+<li>Torpedo countermeasures (NIXIE) modeled ✓</li>
+<li>Barrage drift corrects with observer feedback ✓</li>
+<li>Cavalry charge speed affected by terrain ✓</li>
+<li>All 6,698 tests pass ✓</li>
+</ul>
+<hr />
+<h2 id="phase-28-modern-era-data-package-complete-137-tests-6835-total">Phase 28: Modern Era Data Package — <strong>COMPLETE</strong> (137 tests, 6,835 total)<a class="headerlink" href="#phase-28-modern-era-data-package-complete-137-tests-6835-total" title="Permanent link">&para;</a></h2>
+<p><strong>Goal</strong>: Fill all modern era YAML data gaps — adversary forces, missing signatures, ammunition types, sensors, organizations, doctrine templates, and commander profiles.</p>
+<p><strong>Dependencies</strong>: Phase 27 (new engagement paths should exist before writing data for them).</p>
+<h3 id="28a-adversary-allied-units-est-25-tests">28a: Adversary &amp; Allied Units (est. ~25 tests)<a class="headerlink" href="#28a-adversary-allied-units-est-25-tests" title="Permanent link">&para;</a></h3>
+<p>New unit YAML + matching signature YAML for each:</p>
+<p><strong>Adversary air</strong> (minimum viable OPFOR):
+- MiG-29A Fulcrum (4th gen fighter, Russian)
+- Su-27S Flanker (heavy fighter, Russian)
+- J-10A Vigorous Dragon (Chinese 4th gen)</p>
+<p><strong>Adversary ground</strong>:
+- BTR-80 (Russian APC, complement BMP-1)
+- BMP-2 (Russian IFV, upgrade from BMP-1)
+- T-90A (modern Russian MBT)</p>
+<p><strong>Adversary naval</strong>:
+- Sovremenny-class DDG (Russian, SSN-22 Sunburn ASHMs)
+- Kilo-class SSK (Russian diesel-electric sub)</p>
+<p><strong>Adversary air defense</strong>:
+- SA-11 Buk (medium-range SAM, brigade level)
+- S-300PMU (long-range SAM, strategic)</p>
+<p><strong>Allied/NATO</strong>:
+- Leopard 2A6 (German MBT)
+- Challenger 2 (British MBT)</p>
+<p><strong>Force multipliers</strong>:
+- B-52H Stratofortress (strategic bomber)
+- EA-18G Growler (EW aircraft)
+- Mi-24V Hind (Russian attack helicopter)
+- C-17 Globemaster (strategic airlift)</p>
+<p><strong>Missing unit-level definitions</strong>:
+- M109A6 Paladin SP artillery battery (unit exists as weapon platform, needs org-level battery definition)
+- ATGM team (Javelin, Kornet)
+- Engineer squad/platoon</p>
+<h3 id="28b-weapons-ammunition-sensors-est-20-tests">28b: Weapons, Ammunition &amp; Sensors (est. ~20 tests)<a class="headerlink" href="#28b-weapons-ammunition-sensors-est-20-tests" title="Permanent link">&para;</a></h3>
+<p><strong>Weapons</strong>:
+- AGM-88 HARM (anti-radiation missile — SEAD)
+- R-77 (Russian BVRAAM)
+- R-73 (Russian WVRAAM)
+- 9K38 Igla (Russian MANPAD)
+- 2A42 30mm autocannon (BMP-2, Ka-52)
+- Javelin ATGM
+- 9M133 Kornet ATGM
+- ASROC (ASW rocket-torpedo)
+- Mk54 lightweight torpedo</p>
+<p><strong>Ammunition</strong>:
+- 30mm M789 HEDP (Apache/Bradley)
+- 30mm 3UOR6 HEI (Russian 30mm)
+- Mk-82 500lb GP bomb
+- Mk-84 2000lb GP bomb
+- GBU-12 Paveway II (LGB)
+- GBU-38 JDAM (GPS-guided)
+- M720 60/81mm mortar HE
+- M853A1 mortar illumination
+- Mk54 lightweight torpedo warhead
+- ASROC payload</p>
+<p><strong>Sensors</strong>:
+- AN/APG-68 fire control radar (F-16)
+- AN/APY-1 maritime patrol radar
+- AN/AAQ-33 Sniper targeting pod
+- AN/SQR-19 towed sonar array
+- UV missile approach warning system</p>
+<h3 id="28c-organizations-doctrine-est-15-tests">28c: Organizations &amp; Doctrine (est. ~15 tests)<a class="headerlink" href="#28c-organizations-doctrine-est-15-tests" title="Permanent link">&para;</a></h3>
+<p><strong>Organization TO&amp;E</strong> (new files in <code>data/organizations/</code>):
+- US combined arms battalion task force
+- US Stryker infantry company
+- Russian battalion tactical group (BTG)
+- Chinese combined arms brigade
+- UK armoured battlegroup
+- Generic mechanized infantry company (template)
+- Generic tank company (template)</p>
+<p><strong>Doctrine templates</strong> (new files in <code>data/doctrine/</code>):
+- <code>pla_active_defense.yaml</code> — Chinese PLA doctrine
+- <code>idf_preemptive.yaml</code> — Israeli doctrine (preemptive, short war)
+- <code>airborne_vertical_envelopment.yaml</code> — Airborne/air assault
+- <code>amphibious_ship_to_shore.yaml</code> — Amphibious assault doctrine
+- <code>naval_sea_control.yaml</code> — Naval warfare operational template</p>
+<p><strong>Commander profiles</strong> (new files in <code>data/commander_profiles/</code>):
+- <code>joint_campaign.yaml</code> — Joint/combined arms commander
+- <code>naval_aviation.yaml</code> — Carrier air wing commander
+- <code>logistics_sustainment.yaml</code> — Sustainment-focused commander</p>
+<p><strong>Escalation configs</strong> (new files in <code>data/escalation/</code>):
+- <code>peer_competitor.yaml</code> — US-China/US-Russia thresholds
+- <code>conventional_only.yaml</code> — No WMD escalation
+- <code>nato_article5.yaml</code> — NATO collective defense thresholds</p>
+<h3 id="28d-missing-signatures-armor-data-est-10-tests">28d: Missing Signatures &amp; Armor Data (est. ~10 tests)<a class="headerlink" href="#28d-missing-signatures-armor-data-est-10-tests" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Fill signature YAML for all existing units lacking them: bmp1, m3a2_bradley, sea_harrier, type22_frigate, t55a, t62</li>
+<li>Add <code>armor_type</code> field to all armored unit YAML files (Phase 26c prerequisite complete)</li>
+<li>Create signature YAML for all units added in 28a</li>
+</ul>
+<h3 id="tests-testsunittest_phase_28_data_loadingpy-yaml-validation-all-files-load-pydantic-validates-cross-references-resolve">Tests: <code>tests/unit/test_phase_28_data_loading.py</code> (YAML validation: all files load, pydantic validates, cross-references resolve)<a class="headerlink" href="#tests-testsunittest_phase_28_data_loadingpy-yaml-validation-all-files-load-pydantic-validates-cross-references-resolve" title="Permanent link">&para;</a></h3>
+<h3 id="exit-criteria_1">Exit Criteria<a class="headerlink" href="#exit-criteria_1" title="Permanent link">&para;</a></h3>
+<ul>
+<li>At least 3 adversary fighter aircraft in YAML</li>
+<li>At least 2 adversary ground vehicles beyond T-72M</li>
+<li>At least 2 adversary naval platforms</li>
+<li>HARM anti-radiation missile and Russian BVRAAM exist</li>
+<li>Unguided bombs (Mk-82, Mk-84) and guided bombs (GBU-12, GBU-38) exist</li>
+<li>At least 5 organization TO&amp;E files</li>
+<li>All unit YAML files have matching signature files</li>
+<li>All armored units have armor_type specified</li>
+<li>All YAML validates via pydantic</li>
+</ul>
+<hr />
+<h2 id="phase-285-directed-energy-weapons-complete-112-tests-6947-total">Phase 28.5: Directed Energy Weapons — <strong>COMPLETE</strong> (112 tests, 6,947 total)<a class="headerlink" href="#phase-285-directed-energy-weapons-complete-112-tests-6947-total" title="Permanent link">&para;</a></h2>
+<p><strong>Goal</strong>: Add directed energy weapon modeling (high-energy lasers and high-power microwave) to the modern era simulator. Fills counter-UAS/RAM and counter-swarm gap.</p>
+<p><strong>Dependencies</strong>: Phase 28 (Modern Era Data Package).</p>
+<h3 id="285a-core-dew-engine-enum-extensions-57-tests">28.5a: Core DEW Engine + Enum Extensions (57 tests)<a class="headerlink" href="#285a-core-dew-engine-enum-extensions-57-tests" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong><code>combat/directed_energy.py</code></strong> (new) — DEWEngine with Beer-Lambert atmospheric transmittance, laser Pk (dwell-time exponential), HPM Pk (inverse-square), engagement execution</li>
+<li><strong><code>combat/ammunition.py</code></strong> (modified) — <code>WeaponCategory.DIRECTED_ENERGY = 12</code>, <code>AmmoType.DIRECTED_ENERGY = 14</code>, 4 new WeaponDefinition fields</li>
+<li><strong><code>combat/damage.py</code></strong> (modified) — <code>DamageType.THERMAL_ENERGY = 5</code>, <code>DamageType.ELECTRONIC = 6</code></li>
+<li><strong><code>combat/events.py</code></strong> (modified) — <code>DEWEngagementEvent</code> frozen dataclass</li>
+</ul>
+<h3 id="285b-engagement-routing-scenario-wiring-20-tests">28.5b: Engagement Routing &amp; Scenario Wiring (20 tests)<a class="headerlink" href="#285b-engagement-routing-scenario-wiring-20-tests" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong><code>combat/engagement.py</code></strong> (modified) — <code>EngagementType.DEW_LASER = 12</code>, <code>DEW_HPM = 13</code>, routing in <code>route_engagement()</code></li>
+<li><strong><code>entities/unit_classes/air_defense.py</code></strong> (modified) — <code>ADUnitType.DEW = 8</code></li>
+<li><strong><code>simulation/scenario.py</code></strong> (modified) — <code>dew_engine</code> on SimulationContext, <code>dew_config</code> on CampaignScenarioConfig, factory method</li>
+</ul>
+<h3 id="285c-yaml-data-package-38-tests">28.5c: YAML Data Package (38 tests)<a class="headerlink" href="#285c-yaml-data-package-38-tests" title="Permanent link">&para;</a></h3>
+<ul>
+<li>5 weapon YAML (<code>data/weapons/dew/</code>): DE-SHORAD 50kW, HELIOS 60kW, Iron Beam 100kW, GLWS Dazzler, PHASER HPM</li>
+<li>5 ammo YAML (<code>data/ammunition/dew/</code>): energy charges + HPM pulse</li>
+<li>3 unit YAML: DE-SHORAD, Iron Beam, DDG w/ HELIOS</li>
+<li>5 signature YAML, 2 sensor YAML</li>
+</ul>
+<hr />
+<h2 id="phase-29-historical-era-data-expansion-complete-164-tests-7111-total">Phase 29: Historical Era Data Expansion — <strong>COMPLETE</strong> (164 tests, 7,111 total)<a class="headerlink" href="#phase-29-historical-era-data-expansion-complete-164-tests-7111-total" title="Permanent link">&para;</a></h2>
+<p><strong>Goal</strong>: Add naval units to all pre-modern eras, fill remaining unit type gaps, add missing comms/organization data, and enable naval scenarios for each era.</p>
+<p><strong>Dependencies</strong>: Phase 27 (naval combat completion provides engagement paths).</p>
+<h3 id="29a-ww2-naval-missing-types-est-25-tests">29a: WW2 Naval &amp; Missing Types (est. ~25 tests)<a class="headerlink" href="#29a-ww2-naval-missing-types-est-25-tests" title="Permanent link">&para;</a></h3>
+<p><strong>Naval units</strong> (critical gap — Midway uses DD as carrier proxy):
+- Essex-class CV (US fleet carrier)
+- Shokaku-class CV (IJN fleet carrier)
+- Type IXC U-boat (long-range, Atlantic)
+- Flower-class corvette (convoy escort)
+- LST (landing craft, tank)</p>
+<p><strong>Other missing types</strong>:
+- M1 105mm howitzer battery (US artillery)
+- sFH 18 150mm battery (German artillery)
+- Pak 40 75mm AT gun (German)
+- 6-pdr AT gun (British)
+- A6M Zero (IJN fighter)
+- Bf 109G (weapon YAML for MG151 + MG131)
+- P-51D (weapon YAML for M2 .50 cal)</p>
+<p><strong>Comms</strong> (WW2 is the only era without comms):
+- <code>field_telephone_ww2.yaml</code>
+- <code>radio_scr300_ww2.yaml</code></p>
+<p><strong>WW2 aircraft weapon data</strong> (fighters have units but no gun YAML):
+- MG151/20 20mm cannon
+- M2 Browning .50 cal (aircraft mount)
+- Type 99 20mm cannon (IJN)</p>
+<h3 id="29b-ww1-expansion-est-20-tests">29b: WW1 Expansion (est. ~20 tests)<a class="headerlink" href="#29b-ww1-expansion-est-20-tests" title="Permanent link">&para;</a></h3>
+<p><strong>Naval units</strong> (Jutland-era):
+- Iron Duke-class dreadnought (British)
+- König-class dreadnought (German)
+- Invincible-class battlecruiser (British)
+- G-class torpedo boat destroyer (German)
+- U-boat (submarine)</p>
+<p><strong>Other missing types</strong>:
+- 18-pdr battery unit (British artillery — weapon exists, no unit)
+- 7.7cm FK 96 battery unit (German artillery)
+- SPAD XIII (French/Allied fighter)
+- Fokker D.VII (German fighter)
+- US AEF infantry squad</p>
+<h3 id="29c-napoleonic-naval-expansion-est-20-tests">29c: Napoleonic Naval &amp; Expansion (est. ~20 tests)<a class="headerlink" href="#29c-napoleonic-naval-expansion-est-20-tests" title="Permanent link">&para;</a></h3>
+<p><strong>Naval units</strong> (Trafalgar-era):
+- 74-gun ship of the line (standard battleship)
+- First-rate ship of the line (100+ guns, flagships)
+- Frigate (32-gun, scout/raider)
+- Corvette (escort, dispatch)
+- Fire ship</p>
+<p><strong>Other missing types</strong>:
+- Dragoon squadron (medium cavalry)
+- Austrian line infantry
+- Russian line infantry
+- Congreve rocket battery
+- Pontoon engineer section
+- Supply train unit</p>
+<h3 id="29d-ancientmedieval-naval-expansion-est-20-tests">29d: Ancient/Medieval Naval &amp; Expansion (est. ~20 tests)<a class="headerlink" href="#29d-ancientmedieval-naval-expansion-est-20-tests" title="Permanent link">&para;</a></h3>
+<p><strong>Naval units</strong>:
+- Greek trireme (Salamis, Actium)
+- Roman quinquereme
+- Viking longship
+- Byzantine dromon
+- Medieval cog (transport)
+- Mediterranean war galley (Lepanto)</p>
+<p><strong>Other missing types</strong>:
+- Byzantine kataphraktoi (heavy cavalry)
+- Saracen/Mamluk cavalry
+- Mongol commander profile (Genghis Khan / Subutai)
+- Dedicated siege engineer unit
+- Byzantine infantry (skutatoi)</p>
+<h3 id="tests-testsunittest_phase_29_era_datapy-yaml-validation-per-era-loads-validates-cross-references">Tests: <code>tests/unit/test_phase_29_era_data.py</code> (YAML validation per era: loads, validates, cross-references)<a class="headerlink" href="#tests-testsunittest_phase_29_era_datapy-yaml-validation-per-era-loads-validates-cross-references" title="Permanent link">&para;</a></h3>
+<h3 id="exit-criteria_2">Exit Criteria<a class="headerlink" href="#exit-criteria_2" title="Permanent link">&para;</a></h3>
+<ul>
+<li>WW2 has at least 2 carrier units and carrier-capable aircraft</li>
+<li>WW1 has at least 3 capital ship types</li>
+<li>Napoleonic era has ship of the line and frigate</li>
+<li>Ancient/Medieval era has trireme and longship</li>
+<li>WW2 has comms subdirectory</li>
+<li>All new unit YAML has matching signature + weapon YAML</li>
+<li>All era YAML validates via pydantic</li>
+</ul>
+<hr />
+<h2 id="phase-30-scenario-campaign-library-complete-196-tests-7307-total">Phase 30: Scenario &amp; Campaign Library — <strong>COMPLETE</strong> (196 tests, 7,307 total)<a class="headerlink" href="#phase-30-scenario-campaign-library-complete-196-tests-7307-total" title="Permanent link">&para;</a></h2>
+<p><strong>Goal</strong>: Build comprehensive scenarios that exercise the full wired engine across all domains and eras. Expand existing scenarios. Add cross-domain joint scenarios.</p>
+<p><strong>Dependencies</strong>: Phases 28–29 (data must exist for scenarios to reference), Phase 25 (wiring must work for scenarios to run).</p>
+<h3 id="30a-modern-joint-scenarios-32-tests">30a: Modern Joint Scenarios (32 tests)<a class="headerlink" href="#30a-modern-joint-scenarios-32-tests" title="Permanent link">&para;</a></h3>
+<ul>
+<li><code>taiwan_strait/scenario.yaml</code> — Joint air-naval (PLAN vs US CSG). Exercises EW + escalation. 72h campaign.</li>
+<li><code>korean_peninsula/scenario.yaml</code> — Combined arms defense vs massed armor. Exercises CBRN threat. 96h campaign.</li>
+<li><code>suwalki_gap/scenario.yaml</code> — NATO vs Russia in Baltic. Exercises EW + doctrinal schools (maneuverist vs deep_battle). 120h campaign.</li>
+<li><code>hybrid_gray_zone/scenario.yaml</code> — Gerasimov-style with SOF. Exercises escalation ladder. 720h (30-day) campaign.</li>
+</ul>
+<h3 id="30b-historical-scenarios-28-tests">30b: Historical Scenarios (28 tests)<a class="headerlink" href="#30b-historical-scenarios-28-tests" title="Permanent link">&para;</a></h3>
+<ul>
+<li><code>data/eras/ww1/scenarios/jutland/</code> — WW1 grand fleet dreadnought action (12h).</li>
+<li><code>data/eras/napoleonic/scenarios/trafalgar/</code> — Nelson's column attack (8h).</li>
+<li><code>data/eras/ancient_medieval/scenarios/salamis/</code> — Greek triremes vs Persian fleet in narrows (8h).</li>
+<li><code>data/eras/ww2/scenarios/stalingrad/</code> — Urban combat, infantry + armor (168h).</li>
+</ul>
+<h3 id="30c-existing-scenario-fixes-23-tests">30c: Existing Scenario Fixes (23 tests)<a class="headerlink" href="#30c-existing-scenario-fixes-23-tests" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>73 Easting</strong> — visibility 400→800m, red engagement_range 800→1500m, thermal_contrast 2.0→1.5, added BMP-2 ×4.</li>
+<li><strong>Midway</strong> — Replaced fletcher_dd proxy with essex_cv (USN) and shokaku_cv + a6m_zero (IJN).</li>
+<li><strong>Golan campaign</strong> — Added BMP-2 ×10 to red forces.</li>
+<li><strong>Falklands San Carlos</strong> — Air raids on anchorage (Type 42/22 vs Super Etendard/Skyhawk proxy). 12h.</li>
+<li><strong>Falklands Goose Green</strong> — Ground engagement (2 Para proxy vs Argentine garrison). 18h.</li>
+</ul>
+<h3 id="30d-cross-scenario-validation-113-parametrized-tests">30d: Cross-Scenario Validation (113 parametrized tests)<a class="headerlink" href="#30d-cross-scenario-validation-113-parametrized-tests" title="Permanent link">&para;</a></h3>
+<ul>
+<li>All scenario YAMLs load and validate</li>
+<li>Modern scenarios have documented_outcomes</li>
+<li>Era scenarios have non-modern era field</li>
+<li>EW/escalation/naval scenarios have correct config blocks</li>
+<li>Documented outcomes format validation</li>
+</ul>
+<h3 id="tests-testsvalidationtest_phase_30_scenariospy">Tests: <code>tests/validation/test_phase_30_scenarios.py</code><a class="headerlink" href="#tests-testsvalidationtest_phase_30_scenariospy" title="Permanent link">&para;</a></h3>
+<p><strong>Resolves deficits</strong>: 2.20 (73 Easting inf), 4.3 (simplified OOB), 4.4 (Falklands Sheffield only).</p>
+<h3 id="exit-criteria-all-met_2">Exit Criteria — All Met<a class="headerlink" href="#exit-criteria-all-met_2" title="Permanent link">&para;</a></h3>
+<ul>
+<li>4 new modern joint scenarios (Taiwan, Korea, Suwalki, Hybrid) ✓</li>
+<li>4 new historical scenarios (Jutland, Trafalgar, Salamis, Stalingrad) ✓</li>
+<li>73 Easting calibration tuned (visibility/engagement/thermal) ✓</li>
+<li>Falklands has San Carlos + Goose Green variants ✓</li>
+<li>Midway uses actual carrier units (essex_cv + shokaku_cv) ✓</li>
+<li>All scenarios exercise multiple engine subsystems (EW, CBRN, escalation, schools) ✓</li>
+<li>All 7,307 tests pass ✓</li>
+</ul>
+<hr />
+<h2 id="deficit-resolution-map">Deficit Resolution Map<a class="headerlink" href="#deficit-resolution-map" title="Permanent link">&para;</a></h2>
+<h3 id="resolved-by-phase-25">Resolved by Phase 25<a class="headerlink" href="#resolved-by-phase-25" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Deficit</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1.1</td>
+<td>ScenarioLoader auto-wiring (accumulated Phases 16–24)</td>
+</tr>
+<tr>
+<td>1.2</td>
+<td>CommanderEngine not on SimulationContext</td>
+</tr>
+<tr>
+<td>1.3</td>
+<td>battle.py assessment=None</td>
+</tr>
+<tr>
+<td>1.4</td>
+<td>Air campaign not wired to ATO</td>
+</tr>
+<tr>
+<td>1.5</td>
+<td>MOPP speed factor never passed</td>
+</tr>
+<tr>
+<td>1.6</td>
+<td>Era engines not wired into _create_engines()</td>
+</tr>
+<tr>
+<td>1.7</td>
+<td>Bare except in engine.py</td>
+</tr>
+<tr>
+<td>2.8</td>
+<td>COA weight overrides not called</td>
+</tr>
+<tr>
+<td>4.13</td>
+<td>Insurgency needs real data</td>
+</tr>
+<tr>
+<td>5.1</td>
+<td>EW engines not wired into tick loop</td>
+</tr>
+</tbody>
+</table>
+<h3 id="resolved-by-phase-26">Resolved by Phase 26<a class="headerlink" href="#resolved-by-phase-26" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Deficit</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>5.6</td>
+<td>GPS spoofing unit_id=""</td>
+</tr>
+<tr>
+<td>5.7</td>
+<td>Hardcoded EW magic numbers</td>
+</tr>
+<tr>
+<td>7.1</td>
+<td>Hardcoded terrain channeling thresholds</td>
+</tr>
+<tr>
+<td>7.2</td>
+<td>Hardcoded fallback weather defaults</td>
+</tr>
+<tr>
+<td>7.3</td>
+<td>No puff aging/cleanup</td>
+</tr>
+<tr>
+<td>8.1</td>
+<td>Hardcoded fallback RNG seed (42)</td>
+</tr>
+<tr>
+<td>8.2</td>
+<td>Gas wind direction tolerance hardcoded</td>
+</tr>
+<tr>
+<td>8.3</td>
+<td>Trench direction angles hardcoded</td>
+</tr>
+<tr>
+<td>8.4</td>
+<td>Foraging ambush rate hardcoded</td>
+</tr>
+<tr>
+<td>10.4</td>
+<td>Integration gain caps at 4</td>
+</tr>
+<tr>
+<td>10.5</td>
+<td>Armor type YAML data missing</td>
+</tr>
+</tbody>
+</table>
+<h3 id="resolved-by-phase-27">Resolved by Phase 27<a class="headerlink" href="#resolved-by-phase-27" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Deficit</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>2.10</td>
+<td>No frontage/depth in melee</td>
+</tr>
+<tr>
+<td>2.11</td>
+<td>Cavalry charge ignores terrain</td>
+</tr>
+<tr>
+<td>2.12</td>
+<td>Barrage drift no observer correction</td>
+</tr>
+<tr>
+<td>2.13</td>
+<td>Gas mask don time not modeled</td>
+</tr>
+</tbody>
+</table>
+<h3 id="resolved-by-phase-30">Resolved by Phase 30<a class="headerlink" href="#resolved-by-phase-30" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Deficit</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>2.20</td>
+<td>73 Easting exchange ratio = infinity</td>
+</tr>
+<tr>
+<td>4.3</td>
+<td>Simplified force compositions</td>
+</tr>
+<tr>
+<td>4.4</td>
+<td>Falklands Sheffield only</td>
+</tr>
+</tbody>
+</table>
+<h3 id="deliberately-deferred-wont-fix-in-block-2">Deliberately Deferred (won't fix in Block 2)<a class="headerlink" href="#deliberately-deferred-wont-fix-in-block-2" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Deficit</th>
+<th>Rationale</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>2.1</td>
+<td>HEAT range-independence — physically correct</td>
+</tr>
+<tr>
+<td>2.2</td>
+<td>Carrier deck management — excessive detail</td>
+</tr>
+<tr>
+<td>2.3</td>
+<td>COA Lanchester wargaming — adequate for planning</td>
+</tr>
+<tr>
+<td>2.4</td>
+<td>Terrain-specific COA — large scope, future block</td>
+</tr>
+<tr>
+<td>2.5</td>
+<td>Stratagems proactively planned — future AI enhancement</td>
+</tr>
+<tr>
+<td>2.6</td>
+<td>Multi-echelon simultaneous planning — requires architectural rework</td>
+</tr>
+<tr>
+<td>2.7</td>
+<td>Reactive estimates — adequate with periodic update</td>
+</tr>
+<tr>
+<td>2.9</td>
+<td>Fire zone cellular automaton — center+radius adequate</td>
+</tr>
+<tr>
+<td>2.15</td>
+<td>Biological incubation — adequate for sim</td>
+</tr>
+<tr>
+<td>2.16</td>
+<td>RDD distributed source — adequate for sim</td>
+</tr>
+<tr>
+<td>2.17</td>
+<td>Strategic bombing interdependency — future depth</td>
+</tr>
+<tr>
+<td>2.18</td>
+<td>Fighter escort sub-simulation — probability modifier adequate</td>
+</tr>
+<tr>
+<td>2.19</td>
+<td>Convoy escort geometry — abstract parameter adequate</td>
+</tr>
+<tr>
+<td>3.1–3.6</td>
+<td>Logistics detail items — low impact</td>
+</tr>
+<tr>
+<td>4.1</td>
+<td>Messenger terrain traversal — low impact</td>
+</tr>
+<tr>
+<td>4.2</td>
+<td>Wave auto-assignment — future AI</td>
+</tr>
+<tr>
+<td>4.6–4.12</td>
+<td>Various C2/scenario infrastructure — adequate or low impact</td>
+</tr>
+<tr>
+<td>5.2–5.5</td>
+<td>EW fidelity depth (DRFM, TDOA, cooperative jamming, campaign validation) — future EW depth</td>
+</tr>
+<tr>
+<td>6.1–6.7</td>
+<td>Space domain depth — future space depth</td>
+</tr>
+<tr>
+<td>7.4</td>
+<td>Validation CBRN wiring — component validation sufficient</td>
+</tr>
+<tr>
+<td>9.1–9.5</td>
+<td>Terrain pipeline depth — real-world data adequate</td>
+</tr>
+<tr>
+<td>10.1–10.3</td>
+<td>Core infrastructure (pickle, threading, coverage) — won't fix / by design</td>
+</tr>
+<tr>
+<td>10.6</td>
+<td>Single-threaded loop — required for PRNG determinism</td>
+</tr>
+</tbody>
+</table>
+<h3 id="introduced-by-phase-285-dew-open-deficits">Introduced by Phase 28.5 (DEW — open deficits)<a class="headerlink" href="#introduced-by-phase-285-dew-open-deficits" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Deficit</th>
+<th>Description</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>11.1</td>
+<td>DEWEngagementEvent has zero subscribers in production code</td>
+<td>Deferred — future DEW integration</td>
+</tr>
+<tr>
+<td>11.2</td>
+<td>dew_engine not used in simulation/engine.py or battle.py tick loops</td>
+<td>Deferred — future DEW integration</td>
+</tr>
+<tr>
+<td>11.3</td>
+<td>No scenario YAML references dew_config</td>
+<td>Deferred — future DEW scenarios</td>
+</tr>
+<tr>
+<td>11.4</td>
+<td>ADUnitType.DEW not handled in air defense engagement logic</td>
+<td>Deferred — future DEW integration</td>
+</tr>
+<tr>
+<td>11.5</td>
+<td>route_engagement() not called from battle.py — DEW routing untested in loop</td>
+<td>Deferred — future DEW integration</td>
+</tr>
+<tr>
+<td>11.1–11.4</td>
+<td>Deferred domains (cyber, 4GW schools, amphibious depth, FM 5-0) — future blocks</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="estimated-test-counts">Estimated Test Counts<a class="headerlink" href="#estimated-test-counts" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Phase</th>
+<th>Sub-phases</th>
+<th>Tests</th>
+<th>Running Total</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>25</td>
+<td>25a–25d</td>
+<td>152</td>
+<td>6,477</td>
+</tr>
+<tr>
+<td>26</td>
+<td>26a–26c</td>
+<td>82</td>
+<td>6,559</td>
+</tr>
+<tr>
+<td>27</td>
+<td>27a–27d</td>
+<td>139</td>
+<td>6,698</td>
+</tr>
+<tr>
+<td>28</td>
+<td>28a–28d</td>
+<td>137</td>
+<td>6,835</td>
+</tr>
+<tr>
+<td>28.5</td>
+<td>28.5a–28.5c</td>
+<td>112</td>
+<td>6,947</td>
+</tr>
+<tr>
+<td>29</td>
+<td>29a–29d</td>
+<td>164</td>
+<td>7,111</td>
+</tr>
+<tr>
+<td>30</td>
+<td>30a–30d</td>
+<td>196</td>
+<td>7,307</td>
+</tr>
+<tr>
+<td><strong>Total</strong></td>
+<td></td>
+<td><strong>982</strong></td>
+<td><strong>7,307</strong></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="verification">Verification<a class="headerlink" href="#verification" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="c1"># Per-phase</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>uv<span class="w"> </span>run<span class="w"> </span>python<span class="w"> </span>-m<span class="w"> </span>pytest<span class="w"> </span>tests/unit/test_phase_25*.py<span class="w"> </span>--tb<span class="o">=</span>short<span class="w"> </span>-q
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>uv<span class="w"> </span>run<span class="w"> </span>python<span class="w"> </span>-m<span class="w"> </span>pytest<span class="w"> </span>tests/unit/test_phase_26*.py<span class="w"> </span>--tb<span class="o">=</span>short<span class="w"> </span>-q
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>uv<span class="w"> </span>run<span class="w"> </span>python<span class="w"> </span>-m<span class="w"> </span>pytest<span class="w"> </span>tests/unit/test_phase_27*.py<span class="w"> </span>--tb<span class="o">=</span>short<span class="w"> </span>-q
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>uv<span class="w"> </span>run<span class="w"> </span>python<span class="w"> </span>-m<span class="w"> </span>pytest<span class="w"> </span>tests/unit/test_phase_28*.py<span class="w"> </span>--tb<span class="o">=</span>short<span class="w"> </span>-q
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>uv<span class="w"> </span>run<span class="w"> </span>python<span class="w"> </span>-m<span class="w"> </span>pytest<span class="w"> </span>tests/unit/test_phase_29*.py<span class="w"> </span>--tb<span class="o">=</span>short<span class="w"> </span>-q
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>uv<span class="w"> </span>run<span class="w"> </span>python<span class="w"> </span>-m<span class="w"> </span>pytest<span class="w"> </span>tests/validation/test_phase_30*.py<span class="w"> </span>--tb<span class="o">=</span>short<span class="w"> </span>-q
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="c1"># Full regression</span>
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>uv<span class="w"> </span>run<span class="w"> </span>python<span class="w"> </span>-m<span class="w"> </span>pytest<span class="w"> </span>--tb<span class="o">=</span>short<span class="w"> </span>-q
+</code></pre></div>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.tabs", "navigation.sections", "navigation.expand", "navigation.top", "search.suggest", "search.highlight", "content.code.copy"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>
