@@ -87,7 +87,7 @@ describe('Card accessibility', () => {
 describe('StatisticsTable accessibility', () => {
   it('all th elements have scope=col', () => {
     const metrics: Record<string, MetricStats> = {
-      casualties: { mean: 5, median: 4, std: 1.2, min: 2, max: 8, p5: 2.5, p95: 7.5 },
+      casualties: { mean: 5, median: 4, std: 1.2, min: 2, max: 8, p5: 2.5, p95: 7.5, n: 10 },
     }
     const { container } = render(<StatisticsTable metrics={metrics} />)
     const thElements = container.querySelectorAll('th')

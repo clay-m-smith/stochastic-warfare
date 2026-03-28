@@ -1,11 +1,16 @@
 import { useCallback } from 'react'
 import { useSearchParams } from 'react-router-dom'
+import { CasualtyBreakdownChart } from '../../../components/charts/CasualtyBreakdownChart'
+import { EngagementSummaryChart } from '../../../components/charts/EngagementSummaryChart'
 import { EventActivityChart } from '../../../components/charts/EventActivityChart'
 import { EngagementTimeline } from '../../../components/charts/EngagementTimeline'
 import { ForceStrengthChart } from '../../../components/charts/ForceStrengthChart'
 import { MoraleChart } from '../../../components/charts/MoraleChart'
+import { MoraleDistributionChart } from '../../../components/charts/MoraleDistributionChart'
+import { SuppressionChart } from '../../../components/charts/SuppressionChart'
 import { EmptyState } from '../../../components/EmptyState'
 import { LoadingSpinner } from '../../../components/LoadingSpinner'
+import { useAnalyticsSummary } from '../../../hooks/useAnalytics'
 import { useRunEvents } from '../../../hooks/useRuns'
 import {
   buildEngagementData,
@@ -25,6 +30,7 @@ export function ChartsTab({ runId, result }: ChartsTabProps) {
   const [searchParams, setSearchParams] = useSearchParams()
   const currentTick = searchParams.get('tick') ? Number(searchParams.get('tick')) : null
   const { data: eventsData, isLoading } = useRunEvents(runId, { limit: 10000 })
+  const { data: analytics } = useAnalyticsSummary(runId)
   const dt = tickToSeconds(result)
 
   const handleChartClick = useCallback(
@@ -84,6 +90,16 @@ export function ChartsTab({ runId, result }: ChartsTabProps) {
       <EngagementTimeline data={engagementData} layoutOverrides={tickOverrides} onClick={handleChartClick} />
       <EventActivityChart data={activityData} layoutOverrides={tickOverrides} onClick={handleChartClick} />
       <MoraleChart data={moraleData} layoutOverrides={tickOverrides} onClick={handleChartClick} />
+
+      {/* Phase 93: Server-side analytics charts */}
+      {analytics && (
+        <>
+          <CasualtyBreakdownChart data={analytics.casualties} layoutOverrides={tickOverrides} onClick={handleChartClick} />
+          <EngagementSummaryChart data={analytics.engagements} />
+          <SuppressionChart data={analytics.suppression} dt={dt} layoutOverrides={tickOverrides} onClick={handleChartClick} />
+          <MoraleDistributionChart data={analytics.morale} dt={dt} layoutOverrides={tickOverrides} onClick={handleChartClick} />
+        </>
+      )}
     </div>
   )
 }

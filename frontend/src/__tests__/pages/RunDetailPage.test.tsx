@@ -42,8 +42,8 @@ const COMPLETED_RUN = {
     duration_s: 59,
     victory: { status: 'decisive', winner: 'blue' },
     sides: {
-      blue: { total: 10, active: 8, destroyed: 2 },
-      red: { total: 8, active: 2, destroyed: 6 },
+      blue: { total: 10, active: 8, disabled: 0, destroyed: 2 },
+      red: { total: 8, active: 2, disabled: 0, destroyed: 6 },
     },
   },
   error_message: null,

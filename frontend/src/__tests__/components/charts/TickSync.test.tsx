@@ -55,8 +55,8 @@ const RESULT: RunResult = {
   duration_s: 5.0,
   victory: { status: 'max_ticks' },
   sides: {
-    blue: { total: 5, active: 4, destroyed: 1 },
-    red: { total: 5, active: 3, destroyed: 2 },
+    blue: { total: 5, active: 4, disabled: 0, destroyed: 1 },
+    red: { total: 5, active: 3, disabled: 0, destroyed: 2 },
   },
 }
 

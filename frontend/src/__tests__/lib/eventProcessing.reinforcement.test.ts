@@ -20,8 +20,8 @@ const MOCK_RESULT: RunResult = {
   duration_s: 10,
   victory: { status: 'decisive', winner: 'blue' },
   sides: {
-    blue: { total: 10, active: 8, destroyed: 2 },
-    red: { total: 8, active: 3, destroyed: 5 },
+    blue: { total: 10, active: 8, disabled: 0, destroyed: 2 },
+    red: { total: 8, active: 3, disabled: 0, destroyed: 5 },
   },
 }
 

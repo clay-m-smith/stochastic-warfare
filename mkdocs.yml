@@ -181,6 +181,7 @@ nav:
     - Phase 90 - Validation & Benchmarking: devlog/phase-90.md
     - Phase 91 - Scenario Recalibration & Regression: devlog/phase-91.md
     - Phase 92 - API Analytics & Frame Enrichment: devlog/phase-92.md
+    - Phase 93 - Results Dashboard Depth: devlog/phase-93.md
   - Specifications:
     - Project Structure: specs/project-structure.md
     - Skills & Hooks: skills-and-hooks.md
