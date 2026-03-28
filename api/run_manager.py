@@ -239,7 +239,22 @@ class RunManager:
 
             # Capture position frame at dynamic intervals (Phase 35)
             if tick % fi == 0 or game_over:
-                map_frames.append(self._capture_frame(tick, ctx))
+                # Phase 92: build engaged set from events recorded this tick
+                _engaged: set[str] = set()
+                for _ev in recorder.events:
+                    if _ev.tick == tick and _ev.event_type == "EngagementEvent":
+                        _engaged.add(_ev.data.get("attacker_id", ""))
+                        _engaged.add(_ev.data.get("target_id", ""))
+                _engaged.discard("")
+
+                _bm = getattr(engine, "battle_manager", None)
+                map_frames.append(self._capture_frame(
+                    tick, ctx,
+                    morale_states=getattr(ctx, "morale_states", None),
+                    suppression_states=getattr(_bm, "_suppression_states", None) if _bm else None,
+                    engaged_ids=_engaged,
+                    unit_weapons=getattr(ctx, "unit_weapons", None),
+                ))
 
             # Emit progress to all subscribers
             if tick % progress_interval == 0 or game_over:
@@ -407,13 +422,22 @@ class RunManager:
         return terrain
 
     @staticmethod
-    def _capture_frame(tick: int, ctx: Any) -> dict[str, Any]:
-        """Capture unit positions for a single tick."""
+    def _capture_frame(
+        tick: int,
+        ctx: Any,
+        *,
+        morale_states: dict | None = None,
+        suppression_states: dict | None = None,
+        engaged_ids: set[str] | None = None,
+        unit_weapons: dict | None = None,
+    ) -> dict[str, Any]:
+        """Capture unit positions and enriched state for a single tick."""
         units = []
         for side, unit_list in ctx.units_by_side.items():
             for u in unit_list:
+                uid = str(u.entity_id)
                 unit_entry: dict[str, Any] = {
-                    "id": str(u.entity_id),
+                    "id": uid,
                     "side": side,
                     "x": float(u.position.easting),
                     "y": float(u.position.northing),
@@ -424,7 +448,7 @@ class RunManager:
                 }
                 # Sensor range (Phase 38b)
                 unit_sensors = getattr(ctx, "unit_sensors", {})
-                sensors = unit_sensors.get(str(u.entity_id), [])
+                sensors = unit_sensors.get(uid, [])
                 if sensors:
                     max_range = max(
                         (getattr(s, "effective_range", 0.0) for s in sensors),
@@ -432,6 +456,65 @@ class RunManager:
                     )
                     if max_range > 0:
                         unit_entry["sr"] = round(max_range, 0)
+
+                # Phase 92: enriched unit state
+                # Morale
+                if morale_states is not None:
+                    ms = morale_states.get(uid, 0)
+                    unit_entry["mo"] = int(ms.value) if hasattr(ms, "value") else int(ms)
+
+                # Posture (domain-specific)
+                for attr in ("posture", "air_posture", "naval_posture"):
+                    p = getattr(u, attr, None)
+                    if p is not None:
+                        unit_entry["po"] = p.name if hasattr(p, "name") else str(p)
+                        break
+
+                # Health (fraction of effective personnel)
+                personnel = getattr(u, "personnel", None)
+                if personnel:
+                    eff = sum(1 for p in personnel if getattr(p, "is_effective", lambda: True)())
+                    unit_entry["hp"] = round(eff / len(personnel), 2)
+                else:
+                    # No personnel — infer from status
+                    status_val = unit_entry["s"]
+                    unit_entry["hp"] = 0.0 if status_val >= 3 else 1.0  # DESTROYED=3+
+
+                # Fuel
+                fuel = getattr(u, "fuel_remaining", None)
+                if fuel is not None:
+                    unit_entry["fp"] = round(float(fuel), 2)
+
+                # Ammo (aggregate across all weapons)
+                if unit_weapons is not None:
+                    wpns = unit_weapons.get(uid, [])
+                    total_remaining = 0
+                    total_initial = 0
+                    for wpn in wpns:
+                        ammo_state = getattr(wpn, "ammo_state", None)
+                        if ammo_state is None:
+                            continue
+                        rbt = getattr(ammo_state, "rounds_by_type", {})
+                        remaining = sum(rbt.values()) if rbt else 0
+                        fired = getattr(ammo_state, "total_rounds_fired", 0)
+                        total_remaining += remaining
+                        total_initial += remaining + fired
+                    if total_initial > 0:
+                        unit_entry["ap"] = round(total_remaining / total_initial, 2)
+
+                # Suppression
+                if suppression_states is not None:
+                    ss = suppression_states.get(uid)
+                    if ss is not None:
+                        # UnitSuppressionState.value is float 0.0-1.0; map to int 0-4
+                        sv = getattr(ss, "value", 0.0)
+                        if isinstance(sv, (int, float)):
+                            unit_entry["su"] = min(4, int(sv * 4))
+
+                # Engaged
+                if engaged_ids and uid in engaged_ids:
+                    unit_entry["eg"] = True
+
                 units.append(unit_entry)
         # FOW detection data (Phase 38a)
         detected: dict[str, list[str]] = {}

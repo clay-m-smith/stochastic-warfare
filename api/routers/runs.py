@@ -295,6 +295,14 @@ async def get_run_frames(
                     heading=u.get("h", 0),
                     type=u.get("t", ""),
                     sensor_range=u.get("sr", 0.0),
+                    # Phase 92: enriched state
+                    morale=u.get("mo", 0),
+                    posture=u.get("po", ""),
+                    health=u.get("hp", 1.0),
+                    fuel_pct=u.get("fp", 1.0),
+                    ammo_pct=u.get("ap", 1.0),
+                    suppression=u.get("su", 0),
+                    engaged=u.get("eg", False),
                 )
                 for u in f.get("units", [])
             ],

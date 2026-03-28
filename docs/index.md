@@ -4,7 +4,7 @@
 
 ![Python](https://img.shields.io/badge/python-%3E%3D3.12-blue)
 ![Tests](https://img.shields.io/badge/tests-10%2C638_passing-brightgreen)
-![Phase](https://img.shields.io/badge/phase-91_Block--9-blue)
+![Phase](https://img.shields.io/badge/phase-92_Block--10-blue)
 
 ---
 
@@ -75,6 +75,7 @@ See the [Getting Started Guide](guide/getting-started.md) for a complete tutoria
 | Block 7 | 58--67 | Final engine hardening — structural verification, environment wiring, engine integration | **Complete** |
 | Block 8 | 68--82 | Consequence enforcement, scenario expansion, postmortem & documentation | **Complete** |
 | Block 9 | 83--91 | Performance at scale — profiling, spatial culling, LOD, parallelism | **Complete** |
+| Block 10 | 92--97 | UI depth & engine exposure — analytics, frame enrichment, metadata | **In Progress** |
 
 **~10,638 tests** (~10,322 Python + 316 frontend) across ~400 test files. **~748 YAML data files** defining units, weapons, ammunition types, sensors, signatures, doctrines, commanders, and 46 scenarios across 5 eras.
 

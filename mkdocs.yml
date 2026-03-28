@@ -72,6 +72,7 @@ nav:
     - Block 7 Design: brainstorm-block7.md
     - Block 8 Design: brainstorm-block8.md
     - Block 9 Design: brainstorm-block9.md
+    - Block 10 Design: brainstorm-block10.md
   - Development Phases:
     - MVP (0-10): development-phases.md
     - Post-MVP (11-24): development-phases-post-mvp.md
@@ -83,6 +84,7 @@ nav:
     - Block 7 (58-67): development-phases-block7.md
     - Block 8 (68-82): development-phases-block8.md
     - Block 9 (83-91): development-phases-block9.md
+    - Block 10 (92-97): development-phases-block10.md
   - Devlog:
     - Overview: devlog/index.md
     - Phase 0 - Scaffolding: devlog/phase-0.md
@@ -178,6 +180,7 @@ nav:
     - Phase 89 - Per-Side Parallelism: devlog/phase-89.md
     - Phase 90 - Validation & Benchmarking: devlog/phase-90.md
     - Phase 91 - Scenario Recalibration & Regression: devlog/phase-91.md
+    - Phase 92 - API Analytics & Frame Enrichment: devlog/phase-92.md
   - Specifications:
     - Project Structure: specs/project-structure.md
     - Skills & Hooks: skills-and-hooks.md

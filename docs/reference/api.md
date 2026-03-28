@@ -45,6 +45,15 @@ OpenAPI docs are available at `/api/docs` (Swagger UI) and `/api/redoc`.
 | POST | `/api/runs/batch` | Monte Carlo batch run |
 | GET | `/api/runs/batch/{id}` | Batch status and aggregated metrics |
 | WS | `/api/runs/batch/{id}/progress` | Batch iteration progress |
+| GET | `/api/runs/{id}/analytics/casualties?group_by=&side=` | Casualty breakdown by weapon/side/tick |
+| GET | `/api/runs/{id}/analytics/suppression` | Suppression timeline, peak count, rout cascades |
+| GET | `/api/runs/{id}/analytics/morale` | Morale state distribution by tick |
+| GET | `/api/runs/{id}/analytics/engagements` | Engagement summary with hit rates by type |
+| GET | `/api/runs/{id}/analytics/summary` | Combined analytics (all 4 above) |
+| GET | `/api/meta/schools` | Doctrinal schools (9) with OODA multiplier |
+| GET | `/api/meta/commanders` | Commander profiles with personality traits |
+| GET | `/api/meta/weapons` | Weapon catalog (all eras) |
+| GET | `/api/meta/weapons/{id}` | Full weapon definition |
 | POST | `/api/analysis/compare` | A/B configuration comparison |
 | POST | `/api/analysis/sweep` | Parameter sensitivity sweep |
 | GET | `/api/analysis/tempo/{id}` | Operational tempo analysis |

@@ -108,6 +108,9 @@ Rolling record of implementation decisions, changes, and lessons learned across 
 | 89 | Per-Side Parallelism | **Complete** | [phase-89.md](phase-89.md) |
 | 90 | Validation & Benchmarking | **Complete** | [phase-90.md](phase-90.md) |
 | 91 | Scenario Recalibration & Regression | **Complete** | [phase-91.md](phase-91.md) |
+| | | | |
+| **Block 10: UI Depth & Engine Exposure** ||||
+| 92 | API Analytics & Frame Enrichment | **Complete** | [phase-92.md](phase-92.md) |
 
 ## Post-MVP Refinement Index
 

@@ -75,3 +75,71 @@ async def test_doctrines_have_categories(client):
     data = resp.json()
     categories = {d["category"] for d in data}
     assert len(categories) >= 2
+
+
+# ---------------------------------------------------------------------------
+# Phase 92: Schools, Commanders, Weapons metadata
+# ---------------------------------------------------------------------------
+
+
+async def test_schools_endpoint(client):
+    resp = await client.get("/api/meta/schools")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert len(data) == 9
+    ids = {s["school_id"] for s in data}
+    assert "maneuverist" in ids
+    assert "clausewitzian" in ids
+    assert "sun_tzu" in ids
+    for s in data:
+        assert s["display_name"]
+        assert s["description"]
+        assert isinstance(s["ooda_multiplier"], float)
+
+
+async def test_commanders_endpoint(client):
+    resp = await client.get("/api/meta/commanders")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert len(data) >= 10
+    ids = {c["profile_id"] for c in data}
+    assert "aggressive_armor" in ids
+    assert "balanced_default" in ids
+    for c in data:
+        assert c["display_name"]
+        assert isinstance(c["traits"], dict)
+        if c["profile_id"] == "aggressive_armor":
+            assert "aggression" in c["traits"]
+            assert c["traits"]["aggression"] == pytest.approx(0.85)
+
+
+async def test_weapons_endpoint(client):
+    resp = await client.get("/api/meta/weapons")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert len(data) >= 40
+    ids = {w["weapon_id"] for w in data}
+    assert "m256_smoothbore" in ids or any("m256" in wid for wid in ids)
+    for w in data:
+        assert w["weapon_id"]
+        assert isinstance(w["max_range_m"], float)
+
+
+async def test_weapon_detail(client):
+    # Find a known weapon first
+    resp = await client.get("/api/meta/weapons")
+    data = resp.json()
+    assert len(data) > 0
+    first_id = data[0]["weapon_id"]
+
+    resp2 = await client.get(f"/api/meta/weapons/{first_id}")
+    assert resp2.status_code == 200
+    detail = resp2.json()
+    assert detail["weapon_id"] == first_id
+    assert isinstance(detail["definition"], dict)
+    assert len(detail["definition"]) > 0
+
+
+async def test_weapon_detail_not_found(client):
+    resp = await client.get("/api/meta/weapons/nonexistent_weapon_xyz")
+    assert resp.status_code == 404

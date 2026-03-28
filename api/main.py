@@ -13,7 +13,7 @@ from api import __version__
 from api.config import ApiSettings
 from api.database import Database
 from api.dependencies import get_settings
-from api.routers import analysis, meta, runs, scenarios, units
+from api.routers import analysis, analytics, meta, runs, scenarios, units
 
 logger = logging.getLogger(__name__)
 
@@ -68,6 +68,7 @@ def create_app(settings: ApiSettings | None = None) -> FastAPI:
     app.include_router(scenarios.router, prefix="/api")
     app.include_router(units.router, prefix="/api")
     app.include_router(runs.router, prefix="/api")
+    app.include_router(analytics.router, prefix="/api")
     app.include_router(analysis.router, prefix="/api")
 
     # Serve built frontend if available (Phase 39c)

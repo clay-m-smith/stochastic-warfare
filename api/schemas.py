@@ -207,6 +207,14 @@ class MapUnitFrame(BaseModel):
     heading: float = 0.0
     type: str = ""
     sensor_range: float = 0.0
+    # Phase 92: enriched unit state for tactical map overlays
+    morale: int = 0  # 0=STEADY..4=SURRENDERED
+    posture: str = ""  # MOVING, DEFENSIVE, DUG_IN, ASSAULT, etc.
+    health: float = 1.0  # 0.0–1.0
+    fuel_pct: float = 1.0  # 0.0–1.0
+    ammo_pct: float = 1.0  # 0.0–1.0
+    suppression: int = 0  # 0–4
+    engaged: bool = False
 
 
 class ReplayFrame(BaseModel):
@@ -385,3 +393,121 @@ class ValidateConfigResponse(BaseModel):
 
     valid: bool = True
     errors: list[str] = Field(default_factory=list)
+
+
+# ---------------------------------------------------------------------------
+# Analytics (Phase 92)
+# ---------------------------------------------------------------------------
+
+
+class CasualtyGroup(BaseModel):
+    """A group of casualties (by weapon, side, or tick)."""
+
+    label: str
+    count: int = 0
+    side: str = ""
+
+
+class CasualtyAnalytics(BaseModel):
+    """Casualty breakdown for a completed run."""
+
+    groups: list[CasualtyGroup] = Field(default_factory=list)
+    total: int = 0
+
+
+class SuppressionTimelinePoint(BaseModel):
+    """Suppression count at a single tick."""
+
+    tick: int
+    count: int = 0
+
+
+class SuppressionAnalytics(BaseModel):
+    """Suppression metrics for a completed run."""
+
+    peak_suppressed: int = 0
+    peak_tick: int = 0
+    rout_cascades: int = 0
+    timeline: list[SuppressionTimelinePoint] = Field(default_factory=list)
+
+
+class MoraleTimelinePoint(BaseModel):
+    """Morale state distribution at a single tick."""
+
+    tick: int
+    steady: int = 0
+    shaken: int = 0
+    broken: int = 0
+    routed: int = 0
+    surrendered: int = 0
+
+
+class MoraleAnalytics(BaseModel):
+    """Morale state distribution over time."""
+
+    timeline: list[MoraleTimelinePoint] = Field(default_factory=list)
+
+
+class EngagementTypeGroup(BaseModel):
+    """Engagement count and hit rate for one engagement type."""
+
+    type: str
+    count: int = 0
+    hit_rate: float = 0.0
+
+
+class EngagementAnalytics(BaseModel):
+    """Engagement summary for a completed run."""
+
+    by_type: list[EngagementTypeGroup] = Field(default_factory=list)
+    total: int = 0
+
+
+class AnalyticsSummary(BaseModel):
+    """Combined analytics for a completed run."""
+
+    casualties: CasualtyAnalytics = Field(default_factory=CasualtyAnalytics)
+    suppression: SuppressionAnalytics = Field(default_factory=SuppressionAnalytics)
+    morale: MoraleAnalytics = Field(default_factory=MoraleAnalytics)
+    engagements: EngagementAnalytics = Field(default_factory=EngagementAnalytics)
+
+
+# ---------------------------------------------------------------------------
+# Metadata (Phase 92)
+# ---------------------------------------------------------------------------
+
+
+class SchoolInfo(BaseModel):
+    """Doctrinal school summary."""
+
+    school_id: str
+    display_name: str = ""
+    description: str = ""
+    ooda_multiplier: float = 1.0
+    risk_tolerance: str = ""
+
+
+class CommanderInfo(BaseModel):
+    """Commander profile summary."""
+
+    profile_id: str
+    display_name: str = ""
+    description: str = ""
+    traits: dict[str, float] = Field(default_factory=dict)
+
+
+class WeaponSummary(BaseModel):
+    """Weapon listing entry."""
+
+    weapon_id: str
+    display_name: str = ""
+    category: str = ""
+    max_range_m: float = 0.0
+    caliber_mm: float = 0.0
+
+
+class WeaponDetail(BaseModel):
+    """Full weapon definition."""
+
+    weapon_id: str
+    definition: dict[str, Any] = Field(default_factory=dict)
