@@ -11,7 +11,7 @@ from api.config import ApiSettings
 from api.database import Database
 from api.dependencies import get_db, get_settings
 from api.scenarios import resolve_scenario
-from api.schemas import CompareRequest, SweepRequest
+from api.schemas import CompareRequest, DoctrineCompareRequest, SweepRequest
 
 router = APIRouter(prefix="/analysis", tags=["analysis"])
 
@@ -77,6 +77,35 @@ async def run_sweep(
     )
     async with _get_analysis_semaphore():
         result = await asyncio.to_thread(_run_sweep, config)
+    return serialize_to_dict(result)
+
+
+@router.post("/doctrine-compare")
+async def run_doctrine_compare(
+    req: DoctrineCompareRequest,
+    settings: ApiSettings = Depends(get_settings),
+) -> dict:
+    data_dir = Path(settings.data_dir)
+    try:
+        path = resolve_scenario(req.scenario, data_dir)
+    except FileNotFoundError:
+        raise HTTPException(status_code=404, detail=f"Scenario '{req.scenario}' not found")
+
+    from stochastic_warfare.tools.doctrine_compare import (
+        DoctrineCompareConfig,
+        run_doctrine_comparison,
+    )
+    from stochastic_warfare.tools.serializers import serialize_to_dict
+
+    config = DoctrineCompareConfig(
+        scenario_path=str(path),
+        side_to_vary=req.side_to_vary,
+        schools=req.schools,
+        num_iterations=req.num_iterations,
+        max_ticks=req.max_ticks,
+    )
+    async with _get_analysis_semaphore():
+        result = await asyncio.to_thread(run_doctrine_comparison, config)
     return serialize_to_dict(result)
 
 

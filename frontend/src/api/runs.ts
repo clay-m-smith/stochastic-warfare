@@ -37,12 +37,24 @@ export function deleteRun(runId: string): Promise<void> {
 
 export function fetchRunEvents(
   runId: string,
-  params?: { offset?: number; limit?: number; event_type?: string },
+  params?: {
+    offset?: number
+    limit?: number
+    event_type?: string
+    side?: string
+    tick_min?: number
+    tick_max?: number
+    search?: string
+  },
 ): Promise<EventsResponse> {
   const sp = new URLSearchParams()
   if (params?.offset != null) sp.set('offset', String(params.offset))
   if (params?.limit != null) sp.set('limit', String(params.limit))
   if (params?.event_type) sp.set('event_type', params.event_type)
+  if (params?.side) sp.set('side', params.side)
+  if (params?.tick_min != null) sp.set('tick_min', String(params.tick_min))
+  if (params?.tick_max != null) sp.set('tick_max', String(params.tick_max))
+  if (params?.search) sp.set('search', params.search)
   const qs = sp.toString()
   return apiGet<EventsResponse>(
     `/api/runs/${encodeURIComponent(runId)}/events${qs ? `?${qs}` : ''}`,

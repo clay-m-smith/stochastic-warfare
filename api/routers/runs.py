@@ -158,6 +158,10 @@ async def get_run_events(
     offset: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=50000),
     event_type: str | None = Query(None),
+    side: str | None = Query(None),
+    tick_min: int | None = Query(None, ge=0),
+    tick_max: int | None = Query(None, ge=0),
+    search: str | None = Query(None),
     db: Database = Depends(get_db),
 ) -> EventsResponse:
     row = await db.get_run(run_id)
@@ -169,6 +173,26 @@ async def get_run_events(
     all_events = json.loads(row["events_json"])
     if event_type:
         all_events = [e for e in all_events if e.get("event_type") == event_type]
+    if side:
+        side_lower = side.lower()
+        all_events = [
+            e for e in all_events
+            if str(e.get("data", {}).get("side", "")).lower() == side_lower
+            or str(e.get("data", {}).get("attacker_side", "")).lower() == side_lower
+            or side_lower in str(e.get("source", "")).lower()
+        ]
+    if tick_min is not None:
+        all_events = [e for e in all_events if e.get("tick", 0) >= tick_min]
+    if tick_max is not None:
+        all_events = [e for e in all_events if e.get("tick", 0) <= tick_max]
+    if search:
+        search_lower = search.lower()
+        all_events = [
+            e for e in all_events
+            if search_lower in str(e.get("event_type", "")).lower()
+            or search_lower in str(e.get("source", "")).lower()
+            or search_lower in json.dumps(e.get("data", {})).lower()
+        ]
 
     total = len(all_events)
     page = all_events[offset:offset + limit]

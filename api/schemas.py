@@ -323,6 +323,41 @@ class SweepRequest(BaseModel):
     max_ticks: int = Field(default=100, ge=1, le=1_000_000)
 
 
+class DoctrineCompareRequest(BaseModel):
+    """Request for doctrine school comparison."""
+
+    model_config = ConfigDict(str_max_length=100_000)
+
+    scenario: str
+    side_to_vary: str = "blue"
+    schools: list[str] = Field(min_length=1, max_length=20)
+    num_iterations: int = Field(default=10, ge=1, le=500)
+    max_ticks: int = Field(default=100, ge=1, le=1_000_000)
+
+
+class DoctrineSchoolResult(BaseModel):
+    """Per-school result from doctrine comparison."""
+
+    school_id: str
+    display_name: str = ""
+    win_rate: float = 0.0
+    mean_blue_destroyed: float = 0.0
+    mean_red_destroyed: float = 0.0
+    mean_duration_ticks: float = 0.0
+    std_blue_destroyed: float = 0.0
+    std_red_destroyed: float = 0.0
+    std_duration_ticks: float = 0.0
+
+
+class DoctrineCompareResult(BaseModel):
+    """Result from doctrine comparison analysis."""
+
+    scenario: str
+    side_to_vary: str
+    num_iterations: int
+    results: list[DoctrineSchoolResult] = Field(default_factory=list)
+
+
 # ---------------------------------------------------------------------------
 # Meta
 # ---------------------------------------------------------------------------

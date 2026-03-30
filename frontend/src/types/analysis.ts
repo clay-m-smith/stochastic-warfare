@@ -37,3 +37,22 @@ export interface SweepResult {
   parameter_name: string
   points: SweepPoint[]
 }
+
+export interface DoctrineSchoolResult {
+  school_id: string
+  display_name: string
+  win_rate: number
+  mean_blue_destroyed: number
+  mean_red_destroyed: number
+  mean_duration_ticks: number
+  std_blue_destroyed: number
+  std_red_destroyed: number
+  std_duration_ticks: number
+}
+
+export interface DoctrineCompareResult {
+  scenario: string
+  side_to_vary: string
+  num_iterations: number
+  results: DoctrineSchoolResult[]
+}

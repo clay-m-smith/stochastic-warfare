@@ -1,8 +1,8 @@
 # Stochastic Warfare
 
 ![Python](https://img.shields.io/badge/python-%3E%3D3.12-blue)
-![Tests](https://img.shields.io/badge/tests-10%2C718_passing-brightgreen)
-![Phase](https://img.shields.io/badge/phase-95_Block--10-blue)
+![Tests](https://img.shields.io/badge/tests-10%2C732_passing-brightgreen)
+![Phase](https://img.shields.io/badge/phase-96_Block--10-blue)
 
 High-fidelity, high-resolution wargame simulator built as a headless Python engine. Models warfare across multiple scales — from individual unit engagements up through tactical battles, operational battlefields, and multi-day strategic campaigns — with stochastic and signal-processing-inspired models throughout.
 
@@ -163,7 +163,7 @@ data/                     # ~748 YAML data files
   eras/                    # Era-specific data packages (WW2, WW1, Napoleonic, Ancient/Medieval)
   scenarios/              # 32 modern scenarios (engagement, campaign, EW, space, CBRN, escalation, joint, calibration, benchmark) + 5 test
 
-tests/                    # ~10,718 engine+API+frontend tests across ~400 test files
+tests/                    # ~10,732 engine+API+frontend tests across ~400 test files
 docs/                     # specs, brainstorm, devlog, development phases
 ```
 
@@ -171,7 +171,7 @@ For the full package tree and module decomposition, see [`docs/specs/project-str
 
 ## Development Status
 
-95 phases delivered across 10 blocks. Blocks 1–9 COMPLETE. Block 10 IN PROGRESS (Phases 92–97: UI depth & engine exposure). See devlogs and phase roadmaps for full detail.
+96 phases delivered across 10 blocks. Blocks 1–9 COMPLETE. Block 10 IN PROGRESS (Phases 92–97: UI depth & engine exposure). See devlogs and phase roadmaps for full detail.
 
 | Phase | Focus | Tests | Status |
 |-------|-------|-------|--------|
@@ -272,7 +272,8 @@ For the full package tree and module decomposition, see [`docs/specs/project-str
 | 93 | Results Dashboard Depth (Block 10) | 14 | **Complete** |
 | 94 | Tactical Map Enrichment (Block 10) | 42 | **Complete** |
 | 95 | Calibration & Scenario Editor Depth (Block 10) | 24 | **Complete** |
-| | **Total** | **~10,718** | |
+| 96 | Analysis & Event Interaction (Block 10) | 13 | **Complete** |
+| | **Total** | **~10,732** | |
 
 For the full phase roadmap, see [`docs/development-phases.md`](docs/development-phases.md) (MVP), [`docs/development-phases-post-mvp.md`](docs/development-phases-post-mvp.md) (post-MVP), and `docs/development-phases-block{N}.md` for Blocks 2–10. For per-phase implementation logs, see [`docs/devlog/`](docs/devlog/).
 
@@ -319,7 +320,7 @@ cd frontend && npm install && npm run dev
 Frontend commands:
 - `npm run dev` — Vite dev server at localhost:5173
 - `npm run build` — Production build (TypeScript + Vite)
-- `npm test` — Run vitest tests (396 tests, no API server required)
+- `npm test` — Run vitest tests (409 tests, no API server required)
 - `npm run lint` — ESLint
 
 ## Documentation

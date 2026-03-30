@@ -1,7 +1,8 @@
 import { useMutation } from '@tanstack/react-query'
-import { runCompare, runSweep } from '../api/analysis'
+import { runCompare, runDoctrineCompare, runSweep } from '../api/analysis'
+import type { DoctrineCompareRequest } from '../api/analysis'
 import type { CompareRequest, SweepRequest } from '../types/api'
-import type { CompareResult, SweepResult } from '../types/analysis'
+import type { CompareResult, DoctrineCompareResult, SweepResult } from '../types/analysis'
 
 export function useCompare() {
   return useMutation<CompareResult, Error, CompareRequest>({
@@ -12,5 +13,11 @@ export function useCompare() {
 export function useSweep() {
   return useMutation<SweepResult, Error, SweepRequest>({
     mutationFn: runSweep,
+  })
+}
+
+export function useDoctrineCompare() {
+  return useMutation<DoctrineCompareResult, Error, DoctrineCompareRequest>({
+    mutationFn: runDoctrineCompare,
   })
 }

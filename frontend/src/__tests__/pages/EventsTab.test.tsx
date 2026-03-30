@@ -62,4 +62,47 @@ describe('EventsTab', () => {
       expect(screen.getByPlaceholderText('Filter by event type...')).toBeInTheDocument()
     })
   })
+
+  it('renders side filter dropdown', async () => {
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      new Response(JSON.stringify(MOCK_EVENTS), { status: 200 }),
+    )
+    renderWithProviders(<EventsTab runId="r1" />)
+    await waitFor(() => {
+      expect(screen.getByLabelText('Side filter')).toBeInTheDocument()
+    })
+  })
+
+  it('renders tick range inputs', async () => {
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      new Response(JSON.stringify(MOCK_EVENTS), { status: 200 }),
+    )
+    renderWithProviders(<EventsTab runId="r1" />)
+    await waitFor(() => {
+      expect(screen.getByLabelText('Tick minimum')).toBeInTheDocument()
+      expect(screen.getByLabelText('Tick maximum')).toBeInTheDocument()
+    })
+  })
+
+  it('renders search input', async () => {
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      new Response(JSON.stringify(MOCK_EVENTS), { status: 200 }),
+    )
+    renderWithProviders(<EventsTab runId="r1" />)
+    await waitFor(() => {
+      expect(screen.getByLabelText('Event search')).toBeInTheDocument()
+    })
+  })
+
+  it('shows clear filters button when filters are active', async () => {
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      new Response(JSON.stringify(MOCK_EVENTS), { status: 200 }),
+    )
+    renderWithProviders(<EventsTab runId="r1" />)
+    await waitFor(() => {
+      expect(screen.getByLabelText('Side filter')).toBeInTheDocument()
+    })
+    // No clear button when no filters
+    expect(screen.queryByText('Clear Filters')).not.toBeInTheDocument()
+  })
 })

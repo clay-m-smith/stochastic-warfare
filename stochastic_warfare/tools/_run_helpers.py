@@ -76,6 +76,15 @@ def _extract_metrics(
         elif name == "ticks_executed":
             metrics[name] = float(engine._tick)
 
+        elif name.startswith("win_"):
+            target_side = name[4:]
+            victory = getattr(engine, "_last_victory", None)
+            if victory and getattr(victory, "game_over", False):
+                winning = getattr(victory, "winning_side", "") or ""
+                metrics[name] = 1.0 if target_side in winning.lower() else 0.0
+            else:
+                metrics[name] = 0.0
+
         elif name == "exchange_ratio":
             # blue_destroyed / red_destroyed (avoid div by zero)
             blue_d = 0

@@ -4,11 +4,13 @@ import { TabBar } from '../../components/TabBar'
 import { BatchPanel } from './BatchPanel'
 import { ComparePanel } from './ComparePanel'
 import { SweepPanel } from './SweepPanel'
+import { DoctrineComparePanel } from './DoctrineComparePanel'
 
 const TABS = [
   { id: 'batch', label: 'Batch MC' },
   { id: 'compare', label: 'A/B Compare' },
   { id: 'sweep', label: 'Sensitivity Sweep' },
+  { id: 'doctrine', label: 'Doctrine Compare' },
 ]
 
 export function AnalysisPage() {
@@ -27,6 +29,7 @@ export function AnalysisPage() {
         {activeTab === 'batch' && <BatchPanel />}
         {activeTab === 'compare' && <ComparePanel />}
         {activeTab === 'sweep' && <SweepPanel />}
+        {activeTab === 'doctrine' && <DoctrineComparePanel />}
       </div>
     </div>
   )

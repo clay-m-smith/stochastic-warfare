@@ -3,7 +3,7 @@
 ## Project Overview
 High-fidelity, high-resolution wargame simulator. Multi-scale (campaign → battlefield → battle → unit level) with stochastic/signal-processing-inspired models (Markov chains, Monte Carlo, Kalman filters, noise models, queueing theory). Headless Python engine first; matplotlib for validation; full UI deferred. Modern era (Cold War–present) as prototype. Maritime warfare fully integrated, not deferred.
 
-**Current status**: Phase 95 complete — Block 10 IN PROGRESS (92–97). ~10,718 tests (~10,322 Python + 396 frontend vitest). 95 phases delivered across 10 blocks. Blocks 1–9 COMPLETE.
+**Current status**: Phase 96 complete — Block 10 IN PROGRESS (92–97). ~10,732 tests (~10,323 Python + 409 frontend vitest). 96 phases delivered across 10 blocks. Blocks 1–9 COMPLETE.
 
 ## Python & Package Management
 **Requires Python >=3.12** (pinned to 3.12.10 via `.python-version`).
@@ -163,5 +163,5 @@ All phase details are in `docs/devlog/` (one file per phase). Per-phase tables i
 | 93 | Complete | 4 Plotly chart components + analytics summary card + TanStack Query hooks |
 | 94 | Complete | 5 map overlay toggles + engagement flash + enhanced sidebar + map legend |
 | 95 | Complete | Per-side calibration (4 sliders), morale (5) + rout cascade (2) sliders, doctrine/commander pickers, victory weights editor |
-| 96 | Not started | Event filtering/search, engagement detail panel, doctrine comparison analysis |
+| 96 | Complete | Event filtering (side/tick/search), engagement detail modal, doctrine comparison analysis (backend + frontend) |
 | 97 | Not started | Weapon/doctrine catalog pages, regression validation, documentation lockstep |

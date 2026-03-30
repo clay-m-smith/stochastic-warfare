@@ -69,7 +69,15 @@ export function useDeleteRun() {
 
 export function useRunEvents(
   runId: string,
-  params?: { offset?: number; limit?: number; event_type?: string },
+  params?: {
+    offset?: number
+    limit?: number
+    event_type?: string
+    side?: string
+    tick_min?: number
+    tick_max?: number
+    search?: string
+  },
 ) {
   return useQuery<EventsResponse>({
     queryKey: ['runs', runId, 'events', params],
