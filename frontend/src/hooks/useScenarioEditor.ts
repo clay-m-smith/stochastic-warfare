@@ -29,6 +29,7 @@ const CONFIG_DEFAULTS: Record<string, Record<string, unknown>> = {
   school_config: { enable_schools: true },
   space_config: { enable_space: true },
   dew_config: { enable_dew: true },
+  commander_config: {},
 }
 
 function editorReducer(state: EditorState, action: EditorAction): EditorState {
@@ -113,6 +114,67 @@ function editorReducer(state: EditorState, action: EditorAction): EditorState {
       return {
         ...state,
         config: { ...state.config, calibration_overrides: { ...cal, [action.key]: action.value } },
+        isDirty: true,
+      }
+    }
+
+    case 'SET_SIDE_CALIBRATION': {
+      const cal = (state.config.calibration_overrides as Record<string, unknown>) ?? {}
+      const so = (cal.side_overrides as Record<string, Record<string, unknown>>) ?? {}
+      const sideObj = so[action.side] ?? {}
+      return {
+        ...state,
+        config: {
+          ...state.config,
+          calibration_overrides: {
+            ...cal,
+            side_overrides: { ...so, [action.side]: { ...sideObj, [action.field]: action.value } },
+          },
+        },
+        isDirty: true,
+      }
+    }
+
+    case 'SET_VICTORY_WEIGHT': {
+      const cal = (state.config.calibration_overrides as Record<string, unknown>) ?? {}
+      const vw = (cal.victory_weights as Record<string, number>) ?? {}
+      return {
+        ...state,
+        config: {
+          ...state.config,
+          calibration_overrides: {
+            ...cal,
+            victory_weights: { ...vw, [action.key]: action.value },
+          },
+        },
+        isDirty: true,
+      }
+    }
+
+    case 'SET_SCHOOL': {
+      const sc = (state.config.school_config as Record<string, unknown>) ?? CONFIG_DEFAULTS.school_config ?? {}
+      return {
+        ...state,
+        config: {
+          ...state.config,
+          school_config: { ...sc, [`${action.side}_school`]: action.school_id || undefined },
+        },
+        isDirty: true,
+      }
+    }
+
+    case 'SET_COMMANDER': {
+      const cc = (state.config.commander_config as Record<string, unknown>) ?? CONFIG_DEFAULTS.commander_config ?? {}
+      const sd = (cc.side_defaults as Record<string, unknown>) ?? {}
+      return {
+        ...state,
+        config: {
+          ...state.config,
+          commander_config: {
+            ...cc,
+            side_defaults: { ...sd, [action.side]: action.profile_id || undefined },
+          },
+        },
         isDirty: true,
       }
     }

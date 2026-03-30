@@ -113,6 +113,7 @@ Rolling record of implementation decisions, changes, and lessons learned across 
 | 92 | API Analytics & Frame Enrichment | **Complete** | [phase-92.md](phase-92.md) |
 | 93 | Results Dashboard Depth | **Complete** | [phase-93.md](phase-93.md) |
 | 94 | Tactical Map Enrichment | **Complete** | [phase-94.md](phase-94.md) |
+| 95 | Calibration & Scenario Editor Depth | **Complete** | [phase-95.md](phase-95.md) |
 
 ## Post-MVP Refinement Index
 

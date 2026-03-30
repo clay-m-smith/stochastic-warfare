@@ -13,6 +13,9 @@ import { WeatherSection } from './WeatherSection'
 import { ForceEditor } from './ForceEditor'
 import { ConfigToggles } from './ConfigToggles'
 import { CalibrationSliders } from './CalibrationSliders'
+import { DoctrinePicker } from './DoctrinePicker'
+import { CommanderPicker } from './CommanderPicker'
+import { VictoryWeightsEditor } from './VictoryWeightsEditor'
 import { YamlPreview } from './YamlPreview'
 import { TerrainPreview } from './TerrainPreview'
 import { ConfigDiff } from './ConfigDiff'
@@ -75,8 +78,11 @@ function EditorContent({ initialConfig, scenarioName }: { initialConfig: Record<
           <TerrainSection config={config} dispatch={dispatch} />
           <WeatherSection config={config} dispatch={dispatch} />
           <ForceEditor config={config} dispatch={dispatch} />
+          <DoctrinePicker config={config} dispatch={dispatch} />
+          <CommanderPicker config={config} dispatch={dispatch} />
           <ConfigToggles config={config} dispatch={dispatch} />
           <CalibrationSliders config={config} dispatch={dispatch} />
+          <VictoryWeightsEditor config={config} dispatch={dispatch} />
         </div>
 
         {/* Right column: previews (sticky) */}

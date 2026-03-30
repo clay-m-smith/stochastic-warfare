@@ -1,4 +1,4 @@
-import type { Dispatch } from 'react'
+import { useState, type Dispatch } from 'react'
 import type { EditorAction } from '../../types/editor'
 
 interface CalibrationSlidersProps {
@@ -96,6 +96,14 @@ const SLIDER_GROUPS: Record<string, SliderDef[]> = {
   ],
   Morale: [
     { key: 'morale_degrade_rate_modifier', label: 'Morale Degrade Rate', min: 0.1, max: 5.0, step: 0.1, default: 1.0 },
+    { key: 'morale_base_degrade_rate', label: 'Base Degrade Rate', min: 0.001, max: 0.1, step: 0.001, default: 0.05 },
+    { key: 'morale_casualty_weight', label: 'Casualty Weight', min: 0.1, max: 5.0, step: 0.1, default: 2.0 },
+    { key: 'morale_force_ratio_weight', label: 'Force Ratio Weight', min: 0.0, max: 2.0, step: 0.1, default: 0.5 },
+    { key: 'morale_check_interval', label: 'Check Interval', min: 1, max: 60, step: 1, default: 1 },
+  ],
+  'Rout Cascade': [
+    { key: 'rout_cascade_radius_m', label: 'Cascade Radius (m)', min: 100, max: 5000, step: 100, default: 200 },
+    { key: 'rout_cascade_base_chance', label: 'Cascade Base Chance', min: 0.01, max: 0.5, step: 0.01, default: 0.05 },
   ],
   'EW / SEAD': [
     { key: 'jammer_coverage_mult', label: 'Jammer Coverage', min: 0.0, max: 5.0, step: 0.1, default: 1.0 },
@@ -132,8 +140,21 @@ const SLIDER_GROUPS: Record<string, SliderDef[]> = {
 // Component
 // ---------------------------------------------------------------------------
 
+const SIDE_CALIBRATION_SLIDERS: SliderDef[] = [
+  { key: 'cohesion', label: 'Cohesion', min: 0, max: 1, step: 0.05, default: 0.7 },
+  { key: 'force_ratio_modifier', label: 'Force Ratio Modifier', min: 0.1, max: 5.0, step: 0.1, default: 1.0 },
+  { key: 'hit_probability_modifier', label: 'Hit Probability Modifier', min: 0.1, max: 3.0, step: 0.1, default: 1.0 },
+  { key: 'target_size_modifier', label: 'Target Size Modifier', min: 0.1, max: 3.0, step: 0.1, default: 1.0 },
+]
+
 export function CalibrationSliders({ config, dispatch }: CalibrationSlidersProps) {
   const cal = (config.calibration_overrides as Record<string, unknown>) ?? {}
+  const [activeSide, setActiveSide] = useState('blue')
+
+  const sides = Array.isArray(config.sides)
+    ? (config.sides as Record<string, unknown>[]).map((s) => (s.side as string) ?? '')
+    : ['blue', 'red']
+  const sideOverrides = (cal.side_overrides as Record<string, Record<string, unknown>>) ?? {}
 
   const isAllModern = MODERN_FLAGS.every((k) => cal[k] === true)
 
@@ -224,6 +245,70 @@ export function CalibrationSliders({ config, dispatch }: CalibrationSlidersProps
             </div>
           </details>
         ))}
+      </div>
+
+      {/* Per-Side Overrides */}
+      <div className="mt-4">
+        <details>
+          <summary className="cursor-pointer text-sm font-semibold text-gray-700 dark:text-gray-300">
+            Per-Side Overrides
+          </summary>
+          <div className="mt-2 pl-2">
+            <div className="mb-2 flex gap-1">
+              {sides.map((side) => (
+                <button
+                  key={side}
+                  type="button"
+                  className={`rounded px-3 py-1 text-xs font-medium ${
+                    activeSide === side
+                      ? side === 'blue'
+                        ? 'bg-blue-600 text-white'
+                        : 'bg-red-600 text-white'
+                      : 'bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300'
+                  }`}
+                  onClick={() => setActiveSide(side)}
+                  aria-label={`${side} side`}
+                >
+                  {side.charAt(0).toUpperCase() + side.slice(1)}
+                </button>
+              ))}
+            </div>
+            <div className="space-y-2">
+              {SIDE_CALIBRATION_SLIDERS.map((s) => {
+                const sideObj = sideOverrides[activeSide] ?? {}
+                const raw = sideObj[s.key]
+                const value = typeof raw === 'number' ? raw : s.default
+                return (
+                  <div key={s.key}>
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-gray-700 dark:text-gray-300">{s.label}</span>
+                      <span className="font-mono text-gray-500 dark:text-gray-400">
+                        {Number.isInteger(s.step) ? value : value.toFixed(2)}
+                      </span>
+                    </div>
+                    <input
+                      type="range"
+                      min={s.min}
+                      max={s.max}
+                      step={s.step}
+                      value={value}
+                      onChange={(e) =>
+                        dispatch({
+                          type: 'SET_SIDE_CALIBRATION',
+                          side: activeSide,
+                          field: s.key,
+                          value: parseFloat(e.target.value),
+                        })
+                      }
+                      className="mt-0.5 w-full"
+                      aria-label={`${activeSide} ${s.label}`}
+                    />
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        </details>
       </div>
     </section>
   )

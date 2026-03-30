@@ -1,5 +1,5 @@
 import { apiGet } from './client'
-import type { EraInfo, HealthResponse } from '../types/api'
+import type { CommanderInfo, EraInfo, HealthResponse, SchoolInfo } from '../types/api'
 
 export function fetchHealth(): Promise<HealthResponse> {
   return apiGet<HealthResponse>('/api/health')
@@ -15,4 +15,12 @@ export function fetchDoctrines(): Promise<{ name: string; category: string; disp
 
 export function fetchTerrainTypes(): Promise<string[]> {
   return apiGet<string[]>('/api/meta/terrain-types')
+}
+
+export function fetchSchools(): Promise<SchoolInfo[]> {
+  return apiGet<SchoolInfo[]>('/api/meta/schools')
+}
+
+export function fetchCommanders(): Promise<CommanderInfo[]> {
+  return apiGet<CommanderInfo[]>('/api/meta/commanders')
 }

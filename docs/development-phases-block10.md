@@ -317,7 +317,7 @@ Add a legend panel explaining all visual indicators.
 
 ## Phase 95: Calibration & Scenario Editor Depth
 
-**Status**: Not started.
+**Status**: Complete.
 
 **Goal**: Expose hidden calibration parameters and scenario configuration options in the editor UI. Highest-value additions: per-side calibration, doctrine/commander pickers, and expanded morale tuning.
 
@@ -401,9 +401,9 @@ Add dropdown selectors for doctrinal school and commander profile in the scenari
 Add sliders for victory condition weights.
 
 - **`frontend/src/pages/editor/VictoryWeightsEditor.tsx`** (new):
-  - Sliders for `victory_weights.casualties` (0.0–1.0), `.morale` (0.0–1.0), `.territory` (0.0–1.0)
-  - Display normalized percentages (e.g., 0.5/0.3/0.2 → 50%/30%/20%)
-  - Visual: stacked bar showing relative weights
+  - Sliders for `victory_weights.force_ratio` (0.0–1.0, default 1.0), `.morale_ratio` (0.0–1.0, default 0.0), `.casualty_exchange` (0.0–1.0, default 0.0)
+  - Display normalized percentages (e.g., 0.6/0.3/0.1 → 60%/30%/10%)
+  - Warning message when all weights are zero
   - Maps to `config.calibration_overrides.victory_weights`
 - **`frontend/src/pages/editor/ScenarioEditorPage.tsx`** (modified):
   - Add VictoryWeightsEditor section

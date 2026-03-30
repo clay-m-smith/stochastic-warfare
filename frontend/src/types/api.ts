@@ -101,6 +101,21 @@ export interface EraInfo {
   disabled_modules: string[]
 }
 
+export interface SchoolInfo {
+  school_id: string
+  display_name: string
+  description: string
+  ooda_multiplier: number
+  risk_tolerance: string
+}
+
+export interface CommanderInfo {
+  profile_id: string
+  display_name: string
+  description: string
+  traits: Record<string, number>
+}
+
 // --- Events ---
 
 export interface EventItem {
