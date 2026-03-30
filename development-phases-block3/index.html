@@ -1,0 +1,6194 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="High-fidelity stochastic wargame simulator — multi-scale, multi-domain, multi-era">
+      
+      
+        <meta name="author" content="Clay Smith">
+      
+      
+        <link rel="canonical" href="https://clay-m-smith.github.io/stochastic-warfare/development-phases-block3/">
+      
+      
+        <link rel="prev" href="../development-phases-block2/">
+      
+      
+        <link rel="next" href="../development-phases-block4/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.4">
+    
+    
+      
+        <title>Block 3 (31-36) - Stochastic Warfare</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="blue-grey" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#stochastic-warfare-block-3-development-phases-3136" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="Stochastic Warfare" class="md-header__button md-logo" aria-label="Stochastic Warfare" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Stochastic Warfare
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Block 3 (31-36)
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="blue-grey" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="blue-grey" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/clay-m-smith/stochastic-warfare" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    clay-m-smith/stochastic-warfare
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href=".." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../guide/getting-started/" class="md-tabs__link">
+          
+  
+  
+  Guide
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../concepts/architecture/" class="md-tabs__link">
+          
+  
+  
+  Concepts
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../reference/api/" class="md-tabs__link">
+          
+  
+  
+  Reference
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../brainstorm/" class="md-tabs__link">
+          
+  
+  
+  Architecture (Internal)
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../development-phases/" class="md-tabs__link">
+          
+  
+  
+  Development Phases
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../devlog/" class="md-tabs__link">
+          
+  
+  
+  Devlog
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../specs/project-structure/" class="md-tabs__link">
+          
+  
+  
+  Specifications
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="Stochastic Warfare" class="md-nav__button md-logo" aria-label="Stochastic Warfare" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Stochastic Warfare
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/clay-m-smith/stochastic-warfare" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    clay-m-smith/stochastic-warfare
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Guide
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Guide
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../guide/getting-started/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting Started
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../guide/web-ui/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Web UI
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../guide/scenarios/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Scenario Library
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Concepts
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Concepts
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../concepts/architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../concepts/models/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Mathematical Models
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/eras/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Eras
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/units/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Units & Equipment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture (Internal)
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Architecture (Internal)
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../brainstorm/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Core Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../brainstorm-post-mvp/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Post-MVP Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../brainstorm-block2/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 2 Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../brainstorm-block3/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 3 Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../brainstorm-block4/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 4 Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../brainstorm-block5/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 5 Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../brainstorm-block6/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 6 Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../brainstorm-block7/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 7 Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../brainstorm-block8/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 8 Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../brainstorm-block9/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 9 Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../brainstorm-block10/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 10 Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Development Phases
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Development Phases
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../development-phases/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MVP (0-10)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../development-phases-post-mvp/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Post-MVP (11-24)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../development-phases-block2/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 2 (25-30)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 3 (31-36)
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 3 (31-36)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#philosophy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Philosophy
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#phase-31-documentation-site-github-pages-complete" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 31: Documentation Site (GitHub Pages) — COMPLETE
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Phase 31: Documentation Site (GitHub Pages) — COMPLETE">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#31a-mkdocs-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        31a: MkDocs Configuration
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#31b-site-content-navigation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        31b: Site Content &amp; Navigation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#31c-github-actions-deployment" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        31c: GitHub Actions Deployment
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#new-dependencies" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        New Dependencies
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#exit-criteria" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Exit Criteria
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#phase-32-api-service-foundation-complete" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 32: API &amp; Service Foundation — COMPLETE
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Phase 32: API &amp; Service Foundation — COMPLETE">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#32a-core-api-scaffolding" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        32a: Core API Scaffolding
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#32b-run-execution-persistence" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        32b: Run Execution &amp; Persistence
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#32c-websocket-progress-batch-runs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        32c: WebSocket Progress &amp; Batch Runs
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#32d-testing-documentation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        32d: Testing &amp; Documentation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#new-dependencies_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        New Dependencies
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#exit-criteria_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Exit Criteria
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#phase-33-frontend-foundation-scenario-browser-complete" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 33: Frontend Foundation &amp; Scenario Browser — COMPLETE
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Phase 33: Frontend Foundation &amp; Scenario Browser — COMPLETE">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#33a-frontend-scaffolding" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        33a: Frontend Scaffolding
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#33b-scenario-browser" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        33b: Scenario Browser
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#33c-unit-catalog" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        33c: Unit Catalog
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#33d-run-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        33d: Run Configuration
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#exit-criteria_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Exit Criteria
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#phase-34-run-results-analysis-dashboard-complete" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 34: Run Results &amp; Analysis Dashboard — COMPLETE
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Phase 34: Run Results &amp; Analysis Dashboard — COMPLETE">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#34a-run-status-history" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        34a: Run Status &amp; History
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#34b-interactive-charts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        34b: Interactive Charts
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#34c-narrative-view" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        34c: Narrative View
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#34d-monte-carlo-comparison" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        34d: Monte Carlo &amp; Comparison
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#exit-criteria_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Exit Criteria
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#phase-35-tactical-map-spatial-visualization" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 35: Tactical Map &amp; Spatial Visualization
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Phase 35: Tactical Map &amp; Spatial Visualization">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#35a-map-renderer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        35a: Map Renderer
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#35b-unit-layer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        35b: Unit Layer
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#35c-engagement-movement-overlays" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        35c: Engagement &amp; Movement Overlays
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#35d-playback-controls" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        35d: Playback Controls
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#exit-criteria_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Exit Criteria
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#phase-36-scenario-tweaker-polish" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 36: Scenario Tweaker &amp; Polish
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Phase 36: Scenario Tweaker &amp; Polish">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#36a-scenario-tweaker" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        36a: Scenario Tweaker
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#36b-terrain-preview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        36b: Terrain Preview
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#36c-export-reporting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        36c: Export &amp; Reporting
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#36d-polish" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        36d: Polish
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#exit-criteria_5" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Exit Criteria
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#project-structure-new-directories" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Project Structure (New Directories)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#estimated-scope" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Estimated Scope
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#verification" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Verification
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../development-phases-block4/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 4 (37-39)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../development-phases-block5/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 5 (40-48)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../development-phases-block6/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 6 (49-57)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../development-phases-block7/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 7 (58-67)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../development-phases-block8/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 8 (68-82)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../development-phases-block9/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 9 (83-91)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../development-phases-block10/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 10 (92-97)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Devlog
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Devlog
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-0/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 0 - Scaffolding
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-1/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 1 - Terrain & Environment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-2/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 2 - Entities & Movement
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-3/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 3 - Detection & Intelligence
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-4/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 4 - Combat & Morale
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-5/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 5 - C2 Infrastructure
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-6/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 6 - Logistics & Supply
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-7/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 7 - Engagement Validation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-8/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 8 - AI & Planning
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-9/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 9 - Simulation Orchestration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-10/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 10 - Campaign Validation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-11/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 11 - Core Fidelity Fixes
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-12/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 12 - Deep Systems Rework
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-13/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 13 - Performance Optimization
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-14/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 14 - Tooling & Dev Experience
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-15/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 15 - Real-World Terrain
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-16/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 16 - Electronic Warfare
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-17/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 17 - Space & Satellite
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-18/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 18 - CBRN Effects
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-19/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 19 - Doctrinal AI Schools
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-20/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 20 - WW2 Era
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-21/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 21 - WW1 Era
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-22/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 22 - Napoleonic Era
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-23/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 23 - Ancient & Medieval Era
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-24/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 24 - Unconventional Warfare
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-25/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 25 - Engine Wiring
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-26/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 26 - Core Polish
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-27/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 27 - Combat Completeness
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-28/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 28 - Modern Data Package
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-28.5/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 28.5 - Directed Energy
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-29/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 29 - Historical Data Expansion
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-30/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 30 - Scenario Library
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-31/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 31 - Documentation Site
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-32/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 32 - API & Service Foundation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-33/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 33 - Frontend Foundation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-34/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 34 - Run Results & Analysis
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-35/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 35 - Tactical Map
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-36/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 36 - Scenario Tweaker & Polish
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-37/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 37 - Integration Fixes & E2E
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-38/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 38 - Map & Chart Enhancements
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-39/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 39 - Quality & Packaging
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-40/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 40 - Battle Loop Foundation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-41/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 41 - Combat Depth
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-42/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 42 - Tactical Behavior
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-43/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 43 - Domain-Specific Resolution
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-44/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 44 - Environmental & Subsystem Integration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-45/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 45 - Mathematical Model Audit & Hardening
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-46/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 46 - Scenario Data Cleanup & Expansion
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-47/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 47 - Full Recalibration & Validation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-48/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 48 - Block 5 Deficit Resolution
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-49/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 49 - Calibration Schema Hardening
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-50/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 50 - Combat Fidelity Polish
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-51/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 51 - Naval Combat Completeness
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-52/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 52 - Environmental Continuity
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-53/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 53 - C2 & AI Completeness
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-54/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 54 - Era-Specific & Domain Sub-Engine Wiring
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-55/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 55 - Resolution & Scenario Migration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-56/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 56 - Performance & Logistics
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-57/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 57 - Full Validation & Regression
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-58/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 58 - Structural Verification & Core Combat Wiring
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-59/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 59 - Atmospheric & Ground Environment Wiring
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-60/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 60 - Obscurants, Fire, & Visual Environment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-61/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 61 - Maritime, Acoustic, & EM Environment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-62/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 62 - Human Factors, CBRN, & Air Combat Environment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-63/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 63 - Cross-Module Feedback Loops
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-64/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 64 - C2 Friction & Command Delay
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-65/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 65 - Space & EW Sub-Engine Activation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-66/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 66 - Unconventional, Naval, & Cleanup
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-67/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 67 - Integration Validation & Recalibration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-68/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 68 - Consequence Enforcement
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-69/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 69 - C2 Depth
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-70/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 70 - Performance Optimization
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-71/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 71 - Missile & Carrier Ops Completion
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-72/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 72 - Checkpoint & State Completeness
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-73/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 73 - Historical Scenario Correctness
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-74/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 74 - Combat Engine Unit Tests
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-75/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 75 - Simulation Core & Domain Unit Tests
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-76/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 76 - API Robustness
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-77/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 77 - Frontend Accessibility
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-78/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 78 - P2 Environment Wiring
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-79/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 79 - CI/CD & Packaging
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-80/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 80 - API & Frontend Sync
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-81/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 81 - Recalibration & Validation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-82/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 82 - Block 8 Postmortem & Documentation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-83/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 83 - Profiling Infrastructure
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-84/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 84 - Spatial Culling & Scan Scheduling
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-85/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 85 - LOD & Aggregation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-86/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 86 - Engagement & Calibration Optimization
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-87/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 87 - Expanded Numba JIT
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-88/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 88 - SoA Data Layer
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-89/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 89 - Per-Side Parallelism
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-90/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 90 - Validation & Benchmarking
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-91/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 91 - Scenario Recalibration & Regression
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-92/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 92 - API Analytics & Frame Enrichment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-93/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 93 - Results Dashboard Depth
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-94/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 94 - Tactical Map Enrichment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-95/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 95 - Calibration & Scenario Editor Depth
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-96/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 96 - Analysis & Event Interaction
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-97/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 97 - Data Catalog & Block 10 Validation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_8" >
+        
+          
+          <label class="md-nav__link" for="__nav_8" id="__nav_8_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Specifications
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_8">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Specifications
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../specs/project-structure/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Project Structure
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../skills-and-hooks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Skills & Hooks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#philosophy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Philosophy
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#phase-31-documentation-site-github-pages-complete" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 31: Documentation Site (GitHub Pages) — COMPLETE
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Phase 31: Documentation Site (GitHub Pages) — COMPLETE">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#31a-mkdocs-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        31a: MkDocs Configuration
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#31b-site-content-navigation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        31b: Site Content &amp; Navigation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#31c-github-actions-deployment" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        31c: GitHub Actions Deployment
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#new-dependencies" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        New Dependencies
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#exit-criteria" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Exit Criteria
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#phase-32-api-service-foundation-complete" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 32: API &amp; Service Foundation — COMPLETE
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Phase 32: API &amp; Service Foundation — COMPLETE">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#32a-core-api-scaffolding" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        32a: Core API Scaffolding
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#32b-run-execution-persistence" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        32b: Run Execution &amp; Persistence
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#32c-websocket-progress-batch-runs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        32c: WebSocket Progress &amp; Batch Runs
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#32d-testing-documentation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        32d: Testing &amp; Documentation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#new-dependencies_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        New Dependencies
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#exit-criteria_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Exit Criteria
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#phase-33-frontend-foundation-scenario-browser-complete" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 33: Frontend Foundation &amp; Scenario Browser — COMPLETE
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Phase 33: Frontend Foundation &amp; Scenario Browser — COMPLETE">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#33a-frontend-scaffolding" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        33a: Frontend Scaffolding
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#33b-scenario-browser" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        33b: Scenario Browser
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#33c-unit-catalog" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        33c: Unit Catalog
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#33d-run-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        33d: Run Configuration
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#exit-criteria_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Exit Criteria
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#phase-34-run-results-analysis-dashboard-complete" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 34: Run Results &amp; Analysis Dashboard — COMPLETE
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Phase 34: Run Results &amp; Analysis Dashboard — COMPLETE">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#34a-run-status-history" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        34a: Run Status &amp; History
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#34b-interactive-charts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        34b: Interactive Charts
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#34c-narrative-view" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        34c: Narrative View
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#34d-monte-carlo-comparison" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        34d: Monte Carlo &amp; Comparison
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#exit-criteria_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Exit Criteria
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#phase-35-tactical-map-spatial-visualization" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 35: Tactical Map &amp; Spatial Visualization
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Phase 35: Tactical Map &amp; Spatial Visualization">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#35a-map-renderer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        35a: Map Renderer
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#35b-unit-layer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        35b: Unit Layer
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#35c-engagement-movement-overlays" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        35c: Engagement &amp; Movement Overlays
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#35d-playback-controls" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        35d: Playback Controls
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#exit-criteria_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Exit Criteria
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#phase-36-scenario-tweaker-polish" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 36: Scenario Tweaker &amp; Polish
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Phase 36: Scenario Tweaker &amp; Polish">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#36a-scenario-tweaker" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        36a: Scenario Tweaker
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#36b-terrain-preview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        36b: Terrain Preview
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#36c-export-reporting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        36c: Export &amp; Reporting
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#36d-polish" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        36d: Polish
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#exit-criteria_5" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Exit Criteria
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#project-structure-new-directories" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Project Structure (New Directories)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#estimated-scope" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Estimated Scope
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#verification" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Verification
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="stochastic-warfare-block-3-development-phases-3136">Stochastic Warfare — Block 3 Development Phases (31–36)<a class="headerlink" href="#stochastic-warfare-block-3-development-phases-3136" title="Permanent link">&para;</a></h1>
+<h2 id="philosophy">Philosophy<a class="headerlink" href="#philosophy" title="Permanent link">&para;</a></h2>
+<p>Block 3 turns the headless simulation engine into an interactive product. Five priorities: (1) establish a professional public documentation site, (2) build a clean API boundary between the engine and any consumer, (3) make scenario configuration visual, (4) make results explorable, (5) make the spatial simulation visible.</p>
+<p><strong>Cross-document alignment</strong>: This document must stay synchronized with <code>brainstorm-block3.md</code> (design thinking), <code>devlog/index.md</code> (deficit inventory), and <code>specs/project-structure.md</code> (module definitions). Run <code>/cross-doc-audit</code> after any structural change.</p>
+<p><strong>Engine stability</strong>: Zero modifications to <code>stochastic_warfare/</code> simulation core modules. All adaptation happens at the API layer. Engine bugs discovered during UI work are fixed in the engine and counted as Block 3 work, but architectural changes are not.</p>
+<hr />
+<h2 id="phase-31-documentation-site-github-pages-complete">Phase 31: Documentation Site (GitHub Pages) — COMPLETE<a class="headerlink" href="#phase-31-documentation-site-github-pages-complete" title="Permanent link">&para;</a></h2>
+<p><strong>Goal</strong>: Deploy a professional documentation site at <code>clay-m-smith.github.io/stochastic-warfare</code> using MkDocs + Material for MkDocs. Renders the existing <code>docs/</code> markdown as a navigable, searchable site. Adds comprehensive user-facing documentation (Getting Started, Scenario Library, Architecture, Mathematical Models, API Reference, Era Reference, Units &amp; Equipment).</p>
+<p><strong>Dependencies</strong>: None (builds on existing docs/).</p>
+<p><strong>Delivered</strong>: <code>mkdocs.yml</code> + <code>.github/workflows/docs.yml</code> + 8 new user-facing docs + <code>docs/index.md</code> landing page. <code>pyproject.toml</code> <code>docs</code> extra. Zero engine changes, zero new tests.</p>
+<h3 id="31a-mkdocs-configuration">31a: MkDocs Configuration<a class="headerlink" href="#31a-mkdocs-configuration" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong><code>mkdocs.yml</code></strong> (new) — Site configuration:</li>
+<li>Site name, description, author, repo URL</li>
+<li>Material theme with color scheme, navigation, search</li>
+<li>Nav structure mapping existing docs to site sections:<ul>
+<li><strong>Home</strong> — README.md (or a custom index.md)</li>
+<li><strong>Architecture</strong> — brainstorm.md, brainstorm-post-mvp.md, brainstorm-block2.md, brainstorm-block3.md</li>
+<li><strong>Development Phases</strong> — development-phases.md, development-phases-post-mvp.md, development-phases-block2.md, development-phases-block3.md</li>
+<li><strong>Specifications</strong> — docs/specs/*.md</li>
+<li><strong>Devlog</strong> — docs/devlog/index.md, per-phase logs</li>
+<li><strong>Skills &amp; Hooks</strong> — docs/skills-and-hooks.md</li>
+</ul>
+</li>
+<li>Plugins: search (built-in)</li>
+<li>Markdown extensions: tables, code highlighting, admonitions, task lists</li>
+<li><strong><code>docs/index.md</code></strong> (new) — Landing page for the docs site. Project overview, quick links to key sections, getting started summary. Distinct from README.md (which targets GitHub visitors), this targets docs site visitors.</li>
+</ul>
+<h3 id="31b-site-content-navigation">31b: Site Content &amp; Navigation<a class="headerlink" href="#31b-site-content-navigation" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Review and organize existing docs for public consumption</strong>:</li>
+<li>Ensure all docs render cleanly in MkDocs (fix any relative links, image paths)</li>
+<li>Add front matter or section headers where needed for navigation clarity</li>
+<li>Create a concise landing page (<code>docs/index.md</code>) with:<ul>
+<li>What the project is (1-paragraph summary)</li>
+<li>Key capabilities (multi-scale, multi-era, multi-domain, stochastic models)</li>
+<li>Architecture overview (module dependency chain diagram)</li>
+<li>Quick links: Getting Started, Architecture, Phases, Devlog</li>
+</ul>
+</li>
+<li>Verify code blocks, tables, and diagrams render correctly in Material theme</li>
+</ul>
+<h3 id="31c-github-actions-deployment">31c: GitHub Actions Deployment<a class="headerlink" href="#31c-github-actions-deployment" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong><code>.github/workflows/docs.yml</code></strong> (new) — GitHub Actions workflow:</li>
+<li>Triggers on push to <code>main</code> (paths: <code>docs/**</code>, <code>mkdocs.yml</code>, <code>README.md</code>)</li>
+<li>Sets up Python, installs <code>mkdocs-material</code></li>
+<li>Runs <code>mkdocs build --strict</code> (catches broken links)</li>
+<li>Deploys to <code>gh-pages</code> branch via <code>mkdocs gh-deploy</code></li>
+<li><strong>GitHub repo settings</strong>:</li>
+<li>Enable GitHub Pages, source: <code>gh-pages</code> branch</li>
+<li>Custom domain (optional, deferred)</li>
+</ul>
+<h3 id="new-dependencies">New Dependencies<a class="headerlink" href="#new-dependencies" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="k">[project.optional-dependencies]</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="n">docs</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;mkdocs-material&gt;=9.5&quot;</span><span class="p">]</span>
+</code></pre></div>
+<h3 id="exit-criteria">Exit Criteria<a class="headerlink" href="#exit-criteria" title="Permanent link">&para;</a></h3>
+<ul>
+<li><code>mkdocs serve</code> renders the full docs site locally with working navigation and search</li>
+<li>GitHub Actions deploys to <code>gh-pages</code> on push to main</li>
+<li>Site is live at <code>clay-m-smith.github.io/stochastic-warfare</code></li>
+<li>All existing docs render correctly (tables, code blocks, links)</li>
+<li>Landing page provides a clear project overview for first-time visitors</li>
+<li>No content duplication — site builds from existing <code>docs/</code> files</li>
+</ul>
+<hr />
+<h2 id="phase-32-api-service-foundation-complete">Phase 32: API &amp; Service Foundation — COMPLETE<a class="headerlink" href="#phase-32-api-service-foundation-complete" title="Permanent link">&para;</a></h2>
+<p><strong>Goal</strong>: Build a FastAPI service layer wrapping the simulation engine. Async run execution, WebSocket progress streaming, persistent result storage, and a documented REST API that any frontend can consume.</p>
+<p><strong>Dependencies</strong>: None (builds on existing engine and tools/).</p>
+<p><strong>Delivered</strong>: <code>api/</code> package (13 source files) — FastAPI app, SQLite persistence (aiosqlite), RunManager with step-based progress streaming, 23 REST endpoints + 2 WebSocket endpoints. <code>pyproject.toml</code> <code>api</code> extra. 77 new tests. Zero engine changes.</p>
+<h3 id="32a-core-api-scaffolding">32a: Core API Scaffolding<a class="headerlink" href="#32a-core-api-scaffolding" title="Permanent link">&para;</a></h3>
+<p>Set up the FastAPI application structure, configuration, and basic endpoints.</p>
+<ul>
+<li><strong><code>api/</code></strong> package (new) — API layer lives alongside <code>stochastic_warfare/</code>, not inside it</li>
+<li><code>api/main.py</code> — FastAPI app factory, CORS config, lifespan events</li>
+<li><code>api/config.py</code> — API configuration (pydantic Settings: host, port, db_path, max_concurrent_runs, cors_origins)</li>
+<li><code>api/dependencies.py</code> — Dependency injection (ScenarioLoader, ResultStore, RunManager)</li>
+<li><strong>Scenario endpoints</strong>:</li>
+<li><code>GET /api/scenarios</code> — List all scenarios (name, path, era, duration, side count). Scans <code>data/scenarios/</code> and <code>data/eras/*/scenarios/</code>.</li>
+<li><code>GET /api/scenarios/{name}</code> — Full scenario config as JSON (CampaignScenarioConfig serialized). Includes force summary, terrain, duration, optional configs present.</li>
+<li><strong>Unit catalog endpoints</strong>:</li>
+<li><code>GET /api/units</code> — List unit definitions with filters (domain, era, category). Returns name, domain, key stats.</li>
+<li><code>GET /api/units/{type}</code> — Full unit definition as JSON.</li>
+<li><strong>Health &amp; metadata</strong>:</li>
+<li><code>GET /api/health</code> — Service status, engine version, scenario count, total tests</li>
+<li><code>GET /api/meta/eras</code> — Available eras</li>
+<li><code>GET /api/meta/doctrines</code> — Available doctrine templates</li>
+<li><code>GET /api/meta/terrain-types</code> — Available terrain types</li>
+</ul>
+<h3 id="32b-run-execution-persistence">32b: Run Execution &amp; Persistence<a class="headerlink" href="#32b-run-execution-persistence" title="Permanent link">&para;</a></h3>
+<p>Async simulation execution with SQLite result storage.</p>
+<ul>
+<li><strong><code>api/run_manager.py</code></strong> (new) — <code>RunManager</code> class:</li>
+<li><code>submit(scenario_path, config_overrides, seed) -&gt; run_id</code> — queue a run</li>
+<li><code>get_status(run_id) -&gt; RunStatus</code> — PENDING / RUNNING / COMPLETED / FAILED</li>
+<li><code>get_result(run_id) -&gt; RunResult</code> — full result after completion</li>
+<li><code>cancel(run_id)</code> — cancel a running simulation (best-effort)</li>
+<li><code>list_runs(limit, offset, scenario_filter) -&gt; list[RunSummary]</code></li>
+<li>Background execution via <code>asyncio.to_thread()</code> (simulation is CPU-bound, runs in thread pool)</li>
+<li><strong><code>api/database.py</code></strong> (new) — SQLite schema and access layer:</li>
+<li><code>runs</code> table: id, scenario_name, scenario_path, seed, config_json, status, created_at, started_at, completed_at, result_json, error_message</li>
+<li>Async access via <code>aiosqlite</code></li>
+<li><strong>Run endpoints</strong>:</li>
+<li><code>POST /api/runs</code> — Submit run → 202 Accepted + <code>{run_id, status: "pending"}</code></li>
+<li><code>GET /api/runs</code> — List runs (paginated, filterable by scenario/status)</li>
+<li><code>GET /api/runs/{id}</code> — Run detail: status, config, result (if complete), timing</li>
+<li><code>DELETE /api/runs/{id}</code> — Delete run record</li>
+<li><strong>Result detail endpoints</strong>:</li>
+<li><code>GET /api/runs/{id}/forces</code> — Force strength time series</li>
+<li><code>GET /api/runs/{id}/events</code> — Event log (paginated, filterable by type)</li>
+<li><code>GET /api/runs/{id}/narrative</code> — Generated narrative text (uses existing <code>narrative.py</code>)</li>
+<li><code>GET /api/runs/{id}/snapshots</code> — State snapshots (tick-indexed)</li>
+</ul>
+<h3 id="32c-websocket-progress-batch-runs">32c: WebSocket Progress &amp; Batch Runs<a class="headerlink" href="#32c-websocket-progress-batch-runs" title="Permanent link">&para;</a></h3>
+<p>Live progress streaming and Monte Carlo batch execution.</p>
+<ul>
+<li><strong>WebSocket endpoint</strong>:</li>
+<li><code>WS /api/runs/{id}/progress</code> — Stream tick updates: <code>{tick, elapsed_s, active_units, events_this_tick}</code>. Closes when run completes.</li>
+<li>Progress callback injected into engine via <code>SimulationRecorder</code> event hooks</li>
+<li><strong>Batch endpoints</strong>:</li>
+<li><code>POST /api/runs/batch</code> — Monte Carlo batch: <code>{scenario, num_iterations, base_seed, max_ticks}</code> → batch_id</li>
+<li><code>GET /api/runs/batch/{id}</code> — Batch status + aggregated statistics</li>
+<li><code>WS /api/runs/batch/{id}/progress</code> — Stream per-iteration completion</li>
+<li><strong>Analysis endpoints</strong> (wrapping existing tools):</li>
+<li><code>POST /api/analysis/compare</code> — A/B comparison (wraps <code>comparison.py</code>)</li>
+<li><code>POST /api/analysis/sweep</code> — Parameter sensitivity (wraps <code>sensitivity.py</code>)</li>
+<li><code>GET /api/analysis/tempo/{run_id}</code> — Tempo analysis (wraps <code>tempo_analysis.py</code>)</li>
+</ul>
+<h3 id="32d-testing-documentation">32d: Testing &amp; Documentation<a class="headerlink" href="#32d-testing-documentation" title="Permanent link">&para;</a></h3>
+<ul>
+<li>API tests via <code>httpx.AsyncClient</code> (FastAPI test client)</li>
+<li>WebSocket tests via <code>websockets</code> test client</li>
+<li>OpenAPI spec auto-generated and served at <code>/api/docs</code> (Swagger UI) and <code>/api/redoc</code></li>
+<li>API configuration via environment variables and/or <code>.env</code> file</li>
+</ul>
+<h3 id="new-dependencies_1">New Dependencies<a class="headerlink" href="#new-dependencies_1" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="k">[project.optional-dependencies]</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="n">api</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;fastapi&gt;=0.115&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;uvicorn[standard]&gt;=0.34&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;aiosqlite&gt;=0.20&quot;</span><span class="p">]</span>
+</code></pre></div>
+<h3 id="exit-criteria_1">Exit Criteria<a class="headerlink" href="#exit-criteria_1" title="Permanent link">&para;</a></h3>
+<ul>
+<li><code>GET /api/scenarios</code> returns all 30+ scenarios with metadata</li>
+<li><code>POST /api/runs</code> accepts a scenario, returns run_id, runs in background</li>
+<li><code>GET /api/runs/{id}</code> returns complete result after run finishes</li>
+<li>WebSocket streams tick-level progress during execution</li>
+<li>SQLite stores run history across server restarts</li>
+<li><code>POST /api/runs/batch</code> executes Monte Carlo batch with statistics</li>
+<li>OpenAPI spec serves at <code>/api/docs</code></li>
+<li>All existing 7,307 engine tests pass unchanged</li>
+</ul>
+<hr />
+<h2 id="phase-33-frontend-foundation-scenario-browser-complete">Phase 33: Frontend Foundation &amp; Scenario Browser — COMPLETE<a class="headerlink" href="#phase-33-frontend-foundation-scenario-browser-complete" title="Permanent link">&para;</a></h2>
+<p><strong>Goal</strong>: Stand up the React frontend application with routing, layout, and the first functional page: a scenario browser that lets users explore and select scenarios.</p>
+<p><strong>Dependencies</strong>: Phase 32 (API must serve scenario and unit data).</p>
+<p><strong>Delivered</strong>: <code>frontend/</code> directory (~50 new files) — Vite + React 18 + TypeScript 5.7, Tailwind v3, TanStack Query v5, React Router v6, Headless UI v2. Scenario browser (list + detail), unit catalog with detail modal, run config + run list pages, 10 shared components. 58 vitest tests. Zero engine/API changes.</p>
+<h3 id="33a-frontend-scaffolding">33a: Frontend Scaffolding<a class="headerlink" href="#33a-frontend-scaffolding" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong><code>frontend/</code></strong> directory (new, separate from Python package):</li>
+<li>Vite + React + TypeScript project</li>
+<li>Tailwind CSS configuration</li>
+<li>TanStack Query for API data fetching</li>
+<li>React Router for navigation</li>
+<li>API client generated from OpenAPI spec (or hand-written typed client)</li>
+<li><strong>Layout</strong>:</li>
+<li>App shell: sidebar navigation + main content area</li>
+<li>Pages: Scenarios, Runs, Analysis (initially stubs)</li>
+<li>Responsive layout (works at 1280px+ desktop, degrades gracefully)</li>
+</ul>
+<h3 id="33b-scenario-browser">33b: Scenario Browser<a class="headerlink" href="#33b-scenario-browser" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Scenario list page</strong>:</li>
+<li>Card grid of available scenarios</li>
+<li>Each card: name, era badge, duration, force count summary, terrain type</li>
+<li>Filter by era (Modern, WW2, WW1, Napoleonic, Ancient)</li>
+<li>Search by name</li>
+<li>Sort by name, duration, era</li>
+<li><strong>Scenario detail page</strong>:</li>
+<li>Full configuration display (terrain, weather, objectives, victory conditions)</li>
+<li>Force composition table per side (unit type, count, stats)</li>
+<li>Optional config indicators (EW, CBRN, escalation, schools — present/absent badges)</li>
+<li>Documented outcomes (if available)</li>
+<li>"Run This Scenario" button → navigates to run configuration</li>
+</ul>
+<h3 id="33c-unit-catalog">33c: Unit Catalog<a class="headerlink" href="#33c-unit-catalog" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Unit browser page</strong>:</li>
+<li>Searchable, filterable catalog of all unit definitions</li>
+<li>Filter by domain (ground, air, naval, submarine), era</li>
+<li>Unit cards with key stats (speed, armor, detection range, weapons)</li>
+<li>Unit detail modal/page with full specification</li>
+</ul>
+<h3 id="33d-run-configuration">33d: Run Configuration<a class="headerlink" href="#33d-run-configuration" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Pre-run configuration page</strong>:</li>
+<li>Selected scenario displayed at top</li>
+<li>Editable parameters: seed, max_ticks, calibration overrides</li>
+<li>Optional config toggles (enable/disable EW, CBRN, escalation)</li>
+<li>"Start Run" button → POST to API → redirect to run status page</li>
+</ul>
+<h3 id="exit-criteria_2">Exit Criteria<a class="headerlink" href="#exit-criteria_2" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Frontend builds and serves via Vite dev server</li>
+<li>Scenario list page shows all scenarios from API</li>
+<li>Scenario detail page shows full configuration</li>
+<li>Unit catalog is browsable and searchable</li>
+<li>Run configuration page can submit a run to the API</li>
+<li>Navigation between pages works via React Router</li>
+</ul>
+<hr />
+<h2 id="phase-34-run-results-analysis-dashboard-complete">Phase 34: Run Results &amp; Analysis Dashboard — COMPLETE<a class="headerlink" href="#phase-34-run-results-analysis-dashboard-complete" title="Permanent link">&para;</a></h2>
+<p><strong>Goal</strong>: Display simulation results interactively. Replace static matplotlib charts with web-based interactive visualizations. Build the post-run analysis experience.</p>
+<p><strong>Dependencies</strong>: Phase 32 (run results API), Phase 33 (frontend framework).</p>
+<p><strong>Delivered</strong>: ~45 new files — RunDetailPage with live WebSocket progress, 5 Plotly chart types (force strength, engagement timeline, morale, event activity, comparison), narrative view with side/style filters, Analysis page with Batch MC / A/B Compare / Sensitivity Sweep tabs. <code>react-plotly.js</code> + <code>plotly.js-dist-min</code> dependencies. 65 new vitest tests (127 total). Zero engine/API changes.</p>
+<h3 id="34a-run-status-history">34a: Run Status &amp; History<a class="headerlink" href="#34a-run-status-history" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Run list page</strong>:</li>
+<li>Table of past runs: scenario, seed, status, duration, victor, timestamp</li>
+<li>Status badges: pending (gray), running (blue), completed (green), failed (red)</li>
+<li>Click to view run detail</li>
+<li>Delete runs</li>
+<li><strong>Live run tracking</strong>:</li>
+<li>WebSocket connection to <code>/runs/{id}/progress</code></li>
+<li>Progress bar showing tick advancement</li>
+<li>Live event count and active unit count</li>
+<li>Auto-transition to results when complete</li>
+</ul>
+<h3 id="34b-interactive-charts">34b: Interactive Charts<a class="headerlink" href="#34b-interactive-charts" title="Permanent link">&para;</a></h3>
+<p>Replace matplotlib with Plotly.js (or equivalent) interactive charts:</p>
+<ul>
+<li><strong>Force strength chart</strong>: Interactive area chart with hover tooltips, legend toggle per side, zoom/pan</li>
+<li><strong>Engagement timeline</strong>: Interactive scatter with hover showing attacker, target, weapon, result, range</li>
+<li><strong>Morale progression</strong>: Interactive step chart with unit filtering</li>
+<li><strong>Supply flow</strong>: Interactive line chart with threshold annotations</li>
+<li><strong>Engagement network</strong>: Interactive graph (Plotly network or vis.js) with node click → unit detail</li>
+</ul>
+<p>Data served from API endpoints (<code>/runs/{id}/forces</code>, <code>/runs/{id}/events</code>). Chart rendering is client-side from JSON data.</p>
+<h3 id="34c-narrative-view">34c: Narrative View<a class="headerlink" href="#34c-narrative-view" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Battle narrative panel</strong>:</li>
+<li>Scrollable timeline of events formatted by <code>narrative.py</code></li>
+<li>Filter by event type (combat, detection, C2, morale, movement)</li>
+<li>Filter by side</li>
+<li>Style toggle: full / summary / timeline</li>
+<li>Click event → highlight corresponding tick in charts</li>
+</ul>
+<h3 id="34d-monte-carlo-comparison">34d: Monte Carlo &amp; Comparison<a class="headerlink" href="#34d-monte-carlo-comparison" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>MC results page</strong>:</li>
+<li>Histogram grid of metric distributions (exchange ratio, force destroyed, duration)</li>
+<li>Summary statistics table</li>
+<li>Historical reference lines (where documented_outcomes exist)</li>
+<li>Convergence plot (running mean by iteration)</li>
+<li><strong>A/B comparison page</strong>:</li>
+<li>Side-by-side force strength charts</li>
+<li>Statistical comparison table (Mann-Whitney U, p-value, effect size)</li>
+<li>Parameter diff highlighting</li>
+<li><strong>Sensitivity sweep page</strong>:</li>
+<li>Errorbar chart of metric vs parameter value</li>
+<li>Interactive: hover for individual run values</li>
+</ul>
+<h3 id="exit-criteria_3">Exit Criteria<a class="headerlink" href="#exit-criteria_3" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Completed runs display interactive force strength, engagement timeline, and morale charts</li>
+<li>Live run tracking shows progress via WebSocket</li>
+<li>Battle narrative renders with filtering</li>
+<li>MC batch results show distribution histograms and statistics</li>
+<li>A/B comparison shows side-by-side charts with statistical testing</li>
+<li>All charts support zoom, hover, and legend filtering</li>
+</ul>
+<hr />
+<h2 id="phase-35-tactical-map-spatial-visualization">Phase 35: Tactical Map &amp; Spatial Visualization<a class="headerlink" href="#phase-35-tactical-map-spatial-visualization" title="Permanent link">&para;</a></h2>
+<p><strong>Goal</strong>: Build a 2D tactical map showing unit positions, terrain, engagements, and movement over time. Add playback controls for stepping through a completed simulation tick by tick (post-hoc replay).</p>
+<p><strong>Dependencies</strong>: Phase 34 (results infrastructure and charting), Phase 32 (snapshot data API).</p>
+<h3 id="35a-map-renderer">35a: Map Renderer<a class="headerlink" href="#35a-map-renderer" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Canvas-based map component</strong>:</li>
+<li>Terrain grid rendering (cells colored by terrain type: desert/tan, forest/green, urban/gray, water/blue, mountain/brown)</li>
+<li>Grid coordinates and scale bar</li>
+<li>Zoom (mouse wheel) and pan (drag)</li>
+<li>Viewport culling (only render visible cells)</li>
+<li>Resolution-adaptive: show grid lines at high zoom, solid fills at low zoom</li>
+</ul>
+<h3 id="35b-unit-layer">35b: Unit Layer<a class="headerlink" href="#35b-unit-layer" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Unit rendering</strong>:</li>
+<li>Side-colored markers (blue/red) at unit positions</li>
+<li>Unit type icons or symbols (NATO APP-6 style if feasible, otherwise simple shapes: tank=diamond, infantry=circle, aircraft=triangle, ship=pentagon)</li>
+<li>Unit labels (toggleable)</li>
+<li>Selection: click unit → sidebar shows unit detail (type, health, morale, ammo, position)</li>
+<li>Active vs destroyed visual distinction (opacity/cross-out)</li>
+</ul>
+<h3 id="35c-engagement-movement-overlays">35c: Engagement &amp; Movement Overlays<a class="headerlink" href="#35c-engagement-movement-overlays" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Engagement arcs</strong>: Lines from attacker to target on engagement events, colored by result (red=hit, gray=miss), fade over time</li>
+<li><strong>Movement trails</strong>: Fading polylines showing recent unit movement paths</li>
+<li><strong>Objective zones</strong>: Highlighted circles/polygons at objective positions with capture status</li>
+<li><strong>Detection ranges</strong>: Optional semi-transparent circles showing sensor ranges (toggleable)</li>
+<li><strong>FOW toggle</strong>: Show only one side's known contacts vs omniscient view</li>
+</ul>
+<h3 id="35d-playback-controls">35d: Playback Controls<a class="headerlink" href="#35d-playback-controls" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Timeline scrubber</strong>: Horizontal bar spanning all ticks, draggable cursor</li>
+<li><strong>Transport controls</strong>: Play, pause, step forward, step backward, speed control (1x, 2x, 5x, 10x)</li>
+<li><strong>Event markers</strong>: Engagement clusters marked on the scrub bar</li>
+<li><strong>Sync with charts</strong>: Moving the playback cursor updates the vertical reference line on force strength and engagement timeline charts</li>
+<li><strong>Tick info panel</strong>: Current tick number, simulation time, active units per side</li>
+</ul>
+<h3 id="exit-criteria_4">Exit Criteria<a class="headerlink" href="#exit-criteria_4" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Terrain grid renders with type-appropriate colors</li>
+<li>Units display at correct positions with side coloring</li>
+<li>Engagements show as attacker-target arcs</li>
+<li>Movement trails visible</li>
+<li>Playback controls step through ticks</li>
+<li>Zoom/pan works smoothly at 200+ units</li>
+<li>Map syncs with charts (scrubber position)</li>
+</ul>
+<hr />
+<h2 id="phase-36-scenario-tweaker-polish">Phase 36: Scenario Tweaker &amp; Polish<a class="headerlink" href="#phase-36-scenario-tweaker-polish" title="Permanent link">&para;</a></h2>
+<p><strong>Goal</strong>: Add clone-and-tweak scenario editing. Polish the full application: keyboard shortcuts, responsive refinements, error handling, export capabilities. Full scenario creation from scratch is not a UI concern — the Claude Code CLI skills (<code>/scenario</code>, <code>/orbat</code>) handle that workflow.</p>
+<p><strong>Dependencies</strong>: Phase 33 (scenario browser provides read-only foundation), Phase 35 (map component for terrain preview).</p>
+<h3 id="36a-scenario-tweaker">36a: Scenario Tweaker<a class="headerlink" href="#36a-scenario-tweaker" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Clone and modify existing scenarios</strong>:</li>
+<li>Clone scenario → editable copy with auto-generated name</li>
+<li>Modify forces: adjust unit counts, add/remove unit types from catalog</li>
+<li>Modify duration, weather conditions</li>
+<li>Toggle optional configs (EW, CBRN, escalation, schools)</li>
+<li>Adjust calibration overrides (sliders for key parameters)</li>
+<li>Real-time pydantic validation with inline error display</li>
+<li><strong>YAML preview</strong>:</li>
+<li>Side panel showing live YAML as the user tweaks</li>
+<li>Copy-to-clipboard</li>
+<li>Save to disk (via API endpoint that writes to <code>data/scenarios/</code>)</li>
+<li><strong>Unit picker</strong>:</li>
+<li>Searchable dropdown sourced from unit catalog API</li>
+<li>Shows key stats (domain, speed, armor) inline</li>
+<li>Era-filtered (only show era-compatible units)</li>
+</ul>
+<h3 id="36b-terrain-preview">36b: Terrain Preview<a class="headerlink" href="#36b-terrain-preview" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Mini-map in scenario tweaker</strong>:</li>
+<li>Renders terrain grid based on selected terrain type and dimensions</li>
+<li>Shows objective positions</li>
+<li>Visual feedback when terrain type or dimensions change</li>
+</ul>
+<h3 id="36c-export-reporting">36c: Export &amp; Reporting<a class="headerlink" href="#36c-export-reporting" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Run report export</strong>:</li>
+<li>PDF: Summary + charts + narrative + key statistics</li>
+<li>CSV: Event log, force strength time series, MC metrics</li>
+<li>JSON: Full run result for programmatic consumption</li>
+<li>Image: Individual charts as PNG/SVG</li>
+<li><strong>Scenario export</strong>:</li>
+<li>Download scenario as YAML file</li>
+</ul>
+<h3 id="36d-polish">36d: Polish<a class="headerlink" href="#36d-polish" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Error handling</strong>: Graceful error states for failed runs, API errors, WebSocket disconnects</li>
+<li><strong>Loading states</strong>: Skeleton screens for data fetching</li>
+<li><strong>Keyboard shortcuts</strong>: Space (play/pause), arrow keys (step), number keys (speed)</li>
+<li><strong>URL routing</strong>: Deep-linkable pages (scenario detail, run result, comparison)</li>
+<li><strong>Responsive tweaks</strong>: Sidebar collapse on narrow screens</li>
+<li><strong>Performance</strong>: Lazy loading for large event logs, virtualized lists</li>
+</ul>
+<h3 id="exit-criteria_5">Exit Criteria<a class="headerlink" href="#exit-criteria_5" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Users can clone and modify existing scenarios (force counts, params, config toggles)</li>
+<li>YAML preview updates in real-time during editing</li>
+<li>Terrain preview shows grid with objectives</li>
+<li>Run reports exportable as PDF/CSV</li>
+<li>Keyboard shortcuts work for playback</li>
+<li>Error states handled gracefully throughout</li>
+</ul>
+<hr />
+<h2 id="project-structure-new-directories">Project Structure (New Directories)<a class="headerlink" href="#project-structure-new-directories" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>docs/index.md               # NEW — docs site landing page
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>mkdocs.yml                  # NEW — MkDocs configuration
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>.github/workflows/docs.yml  # NEW — GitHub Actions for docs deployment
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>api/                        # FastAPI backend (NEW — Phase 32)
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>  main.py                   # App factory, CORS, lifespan
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>  config.py                 # API configuration (pydantic Settings)
+<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>  dependencies.py           # Dependency injection
+<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a>  run_manager.py            # Async run execution + state management
+<a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a>  database.py               # SQLite schema + access layer
+<a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a>  routers/                  # Route modules
+<a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a>    scenarios.py            # /api/scenarios endpoints
+<a id="__codelineno-2-13" name="__codelineno-2-13" href="#__codelineno-2-13"></a>    runs.py                 # /api/runs endpoints
+<a id="__codelineno-2-14" name="__codelineno-2-14" href="#__codelineno-2-14"></a>    units.py                # /api/units endpoints
+<a id="__codelineno-2-15" name="__codelineno-2-15" href="#__codelineno-2-15"></a>    analysis.py             # /api/analysis endpoints
+<a id="__codelineno-2-16" name="__codelineno-2-16" href="#__codelineno-2-16"></a>    meta.py                 # /api/meta endpoints
+<a id="__codelineno-2-17" name="__codelineno-2-17" href="#__codelineno-2-17"></a>
+<a id="__codelineno-2-18" name="__codelineno-2-18" href="#__codelineno-2-18"></a>frontend/                   # React frontend (NEW — Phase 33)
+<a id="__codelineno-2-19" name="__codelineno-2-19" href="#__codelineno-2-19"></a>  package.json              # npm/pnpm dependencies
+<a id="__codelineno-2-20" name="__codelineno-2-20" href="#__codelineno-2-20"></a>  vite.config.ts            # Build configuration
+<a id="__codelineno-2-21" name="__codelineno-2-21" href="#__codelineno-2-21"></a>  tsconfig.json             # TypeScript configuration
+<a id="__codelineno-2-22" name="__codelineno-2-22" href="#__codelineno-2-22"></a>  tailwind.config.js        # Tailwind CSS configuration
+<a id="__codelineno-2-23" name="__codelineno-2-23" href="#__codelineno-2-23"></a>  src/
+<a id="__codelineno-2-24" name="__codelineno-2-24" href="#__codelineno-2-24"></a>    App.tsx                 # Root component + routing
+<a id="__codelineno-2-25" name="__codelineno-2-25" href="#__codelineno-2-25"></a>    api/                    # API client (typed, from OpenAPI)
+<a id="__codelineno-2-26" name="__codelineno-2-26" href="#__codelineno-2-26"></a>    components/             # Shared components (layout, cards, charts)
+<a id="__codelineno-2-27" name="__codelineno-2-27" href="#__codelineno-2-27"></a>    pages/                  # Page components
+<a id="__codelineno-2-28" name="__codelineno-2-28" href="#__codelineno-2-28"></a>      Scenarios/            # Scenario browser + detail
+<a id="__codelineno-2-29" name="__codelineno-2-29" href="#__codelineno-2-29"></a>      Runs/                 # Run list + detail + live tracking
+<a id="__codelineno-2-30" name="__codelineno-2-30" href="#__codelineno-2-30"></a>      Analysis/             # MC, comparison, sweep, tempo
+<a id="__codelineno-2-31" name="__codelineno-2-31" href="#__codelineno-2-31"></a>      Map/                  # Tactical map + playback
+<a id="__codelineno-2-32" name="__codelineno-2-32" href="#__codelineno-2-32"></a>      Editor/               # Scenario tweaker
+<a id="__codelineno-2-33" name="__codelineno-2-33" href="#__codelineno-2-33"></a>    hooks/                  # Custom React hooks (useRun, useWebSocket, etc.)
+<a id="__codelineno-2-34" name="__codelineno-2-34" href="#__codelineno-2-34"></a>    types/                  # TypeScript type definitions
+<a id="__codelineno-2-35" name="__codelineno-2-35" href="#__codelineno-2-35"></a>
+<a id="__codelineno-2-36" name="__codelineno-2-36" href="#__codelineno-2-36"></a>stochastic_warfare/         # UNCHANGED — simulation engine
+<a id="__codelineno-2-37" name="__codelineno-2-37" href="#__codelineno-2-37"></a>data/                       # UNCHANGED — YAML data files
+<a id="__codelineno-2-38" name="__codelineno-2-38" href="#__codelineno-2-38"></a>tests/                      # Existing engine tests UNCHANGED
+<a id="__codelineno-2-39" name="__codelineno-2-39" href="#__codelineno-2-39"></a>tests/api/                  # NEW — API integration tests
+</code></pre></div>
+<hr />
+<h2 id="estimated-scope">Estimated Scope<a class="headerlink" href="#estimated-scope" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Phase</th>
+<th>Focus</th>
+<th>Key Deliverables</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>31</td>
+<td>Documentation Site</td>
+<td>MkDocs + Material theme, GitHub Actions deployment, 8 user-facing docs, docs site live at GitHub Pages. <strong>COMPLETE</strong></td>
+</tr>
+<tr>
+<td>32</td>
+<td>API &amp; Service Foundation</td>
+<td>FastAPI app, async runs, SQLite persistence, WebSocket progress, batch/MC/analysis endpoints, OpenAPI docs. <strong>COMPLETE</strong></td>
+</tr>
+<tr>
+<td>33</td>
+<td>Frontend Foundation &amp; Scenario Browser</td>
+<td>React app, scenario list/detail, unit catalog, run configuration page. 62 vitest tests. <strong>COMPLETE</strong></td>
+</tr>
+<tr>
+<td>34</td>
+<td>Run Results &amp; Analysis Dashboard</td>
+<td>Interactive charts (Plotly), narrative view, MC results, A/B comparison, live run tracking. 65 vitest tests. <strong>COMPLETE</strong></td>
+</tr>
+<tr>
+<td>35</td>
+<td>Tactical Map &amp; Spatial Visualization</td>
+<td>Canvas terrain renderer, unit positions, engagement arcs, movement trails, playback controls, chart sync. 71 new tests. <strong>COMPLETE</strong></td>
+</tr>
+<tr>
+<td>36</td>
+<td>Scenario Tweaker &amp; Polish</td>
+<td>Clone-and-tweak editor, terrain preview, JSON/CSV/YAML export, print report, keyboard shortcuts, responsive sidebar, WS reconnect. ~59 new tests. <strong>COMPLETE</strong></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Implementation order</strong>: 31 → 32 → 33 → 34 → 35 → 36. Phase 31 (docs site) is independent and should ship first — it gives the newly-public repo a professional face. Phase 32 (API) is the foundation for all UI work. Phases 33–34 can potentially overlap (scenario browser doesn't depend on charting, and vice versa). Phase 35 (map) depends on snapshot data from Phase 32 and the frontend from Phase 33. Phase 36 (tweaker + polish) is the capstone.</p>
+<hr />
+<h2 id="verification">Verification<a class="headerlink" href="#verification" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="c1"># Docs site (local preview)</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>uv<span class="w"> </span>run<span class="w"> </span>mkdocs<span class="w"> </span>serve<span class="w">                      </span><span class="c1"># preview at localhost:8000</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="c1"># API tests</span>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>uv<span class="w"> </span>run<span class="w"> </span>python<span class="w"> </span>-m<span class="w"> </span>pytest<span class="w"> </span>tests/api/<span class="w"> </span>--tb<span class="o">=</span>short<span class="w"> </span>-q
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="c1"># Frontend (from frontend/ directory)</span>
+<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>npm<span class="w"> </span>run<span class="w"> </span>build<span class="w">        </span><span class="c1"># TypeScript compilation + bundle</span>
+<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a>npm<span class="w"> </span>run<span class="w"> </span><span class="nb">test</span><span class="w">         </span><span class="c1"># Component tests (vitest)</span>
+<a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a>npm<span class="w"> </span>run<span class="w"> </span>lint<span class="w">         </span><span class="c1"># ESLint</span>
+<a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a>npm<span class="w"> </span>run<span class="w"> </span>typecheck<span class="w">    </span><span class="c1"># tsc --noEmit</span>
+<a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a>
+<a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a><span class="c1"># Full engine regression (must still pass)</span>
+<a id="__codelineno-3-14" name="__codelineno-3-14" href="#__codelineno-3-14"></a>uv<span class="w"> </span>run<span class="w"> </span>python<span class="w"> </span>-m<span class="w"> </span>pytest<span class="w"> </span>--tb<span class="o">=</span>short<span class="w"> </span>-q
+<a id="__codelineno-3-15" name="__codelineno-3-15" href="#__codelineno-3-15"></a>
+<a id="__codelineno-3-16" name="__codelineno-3-16" href="#__codelineno-3-16"></a><span class="c1"># Run the full stack locally</span>
+<a id="__codelineno-3-17" name="__codelineno-3-17" href="#__codelineno-3-17"></a>uv<span class="w"> </span>run<span class="w"> </span>uvicorn<span class="w"> </span>api.main:app<span class="w"> </span>--reload<span class="w">        </span><span class="c1"># API server on :8000</span>
+<a id="__codelineno-3-18" name="__codelineno-3-18" href="#__codelineno-3-18"></a><span class="nb">cd</span><span class="w"> </span>frontend<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>npm<span class="w"> </span>run<span class="w"> </span>dev<span class="w">                   </span><span class="c1"># Vite dev server on :5173</span>
+</code></pre></div>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.tabs", "navigation.sections", "navigation.expand", "navigation.top", "search.suggest", "search.highlight", "content.code.copy"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>
