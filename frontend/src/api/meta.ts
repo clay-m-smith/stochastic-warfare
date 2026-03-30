@@ -1,5 +1,5 @@
 import { apiGet } from './client'
-import type { CommanderInfo, EraInfo, HealthResponse, SchoolInfo } from '../types/api'
+import type { CommanderInfo, EraInfo, HealthResponse, SchoolInfo, WeaponDetail, WeaponSummary } from '../types/api'
 
 export function fetchHealth(): Promise<HealthResponse> {
   return apiGet<HealthResponse>('/api/health')
@@ -23,4 +23,12 @@ export function fetchSchools(): Promise<SchoolInfo[]> {
 
 export function fetchCommanders(): Promise<CommanderInfo[]> {
   return apiGet<CommanderInfo[]>('/api/meta/commanders')
+}
+
+export function fetchWeapons(): Promise<WeaponSummary[]> {
+  return apiGet<WeaponSummary[]>('/api/meta/weapons')
+}
+
+export function fetchWeaponDetail(weaponId: string): Promise<WeaponDetail> {
+  return apiGet<WeaponDetail>(`/api/meta/weapons/${encodeURIComponent(weaponId)}`)
 }

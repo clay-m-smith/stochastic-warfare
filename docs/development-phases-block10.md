@@ -519,7 +519,7 @@ Add a new analysis type: run the same scenario with different doctrinal schools 
 
 ## Phase 97: Data Catalog & Block 10 Validation
 
-**Status**: Not started.
+**Status**: Complete.
 
 **Goal**: Add weapon and doctrine browsing pages (extending the existing unit catalog pattern), then validate all Block 10 changes with regression testing and documentation.
 

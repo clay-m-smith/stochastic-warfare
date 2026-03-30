@@ -116,6 +116,19 @@ export interface CommanderInfo {
   traits: Record<string, number>
 }
 
+export interface WeaponSummary {
+  weapon_id: string
+  display_name: string
+  category: string
+  max_range_m: number
+  caliber_mm: number
+}
+
+export interface WeaponDetail {
+  weapon_id: string
+  definition: Record<string, unknown>
+}
+
 // --- Events ---
 
 export interface EventItem {

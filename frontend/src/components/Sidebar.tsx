@@ -4,6 +4,8 @@ import { useHealth } from '../hooks/useMeta'
 const NAV_ITEMS = [
   { to: '/scenarios', label: 'Scenarios' },
   { to: '/units', label: 'Units' },
+  { to: '/weapons', label: 'Weapons' },
+  { to: '/doctrines', label: 'Doctrines' },
   { to: '/runs', label: 'Runs' },
   { to: '/analysis', label: 'Analysis' },
 ]

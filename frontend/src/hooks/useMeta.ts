@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
-import { fetchCommanders, fetchEras, fetchHealth, fetchSchools } from '../api/meta'
-import type { CommanderInfo, EraInfo, HealthResponse, SchoolInfo } from '../types/api'
+import { fetchCommanders, fetchDoctrines, fetchEras, fetchHealth, fetchSchools, fetchWeaponDetail, fetchWeapons } from '../api/meta'
+import type { CommanderInfo, EraInfo, HealthResponse, SchoolInfo, WeaponDetail, WeaponSummary } from '../types/api'
 
 export function useHealth() {
   return useQuery<HealthResponse>({
@@ -32,5 +32,30 @@ export function useCommanders() {
     queryKey: ['commanders'],
     queryFn: fetchCommanders,
     staleTime: 10 * 60 * 1000,
+  })
+}
+
+export function useDoctrines() {
+  return useQuery<{ name: string; category: string; display_name?: string }[]>({
+    queryKey: ['doctrines'],
+    queryFn: fetchDoctrines,
+    staleTime: 10 * 60 * 1000,
+  })
+}
+
+export function useWeapons() {
+  return useQuery<WeaponSummary[]>({
+    queryKey: ['weapons'],
+    queryFn: fetchWeapons,
+    staleTime: 5 * 60 * 1000,
+  })
+}
+
+export function useWeaponDetail(weaponId: string) {
+  return useQuery<WeaponDetail>({
+    queryKey: ['weapons', weaponId],
+    queryFn: () => fetchWeaponDetail(weaponId),
+    staleTime: 5 * 60 * 1000,
+    enabled: !!weaponId,
   })
 }

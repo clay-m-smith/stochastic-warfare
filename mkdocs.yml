@@ -185,6 +185,7 @@ nav:
     - Phase 94 - Tactical Map Enrichment: devlog/phase-94.md
     - Phase 95 - Calibration & Scenario Editor Depth: devlog/phase-95.md
     - Phase 96 - Analysis & Event Interaction: devlog/phase-96.md
+    - Phase 97 - Data Catalog & Block 10 Validation: devlog/phase-97.md
   - Specifications:
     - Project Structure: specs/project-structure.md
     - Skills & Hooks: skills-and-hooks.md
