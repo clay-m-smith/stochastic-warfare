@@ -116,6 +116,13 @@ Rolling record of implementation decisions, changes, and lessons learned across 
 | 95 | Calibration & Scenario Editor Depth | **Complete** | [phase-95.md](phase-95.md) |
 | 96 | Analysis & Event Interaction | **Complete** | [phase-96.md](phase-96.md) |
 | 97 | Data Catalog & Block 10 Validation | **Complete** | [phase-97.md](phase-97.md) |
+| | | | |
+| **Block 11: Golden Scenarios & End-to-End Engine Validation** ||||
+| 98 | Shared Prework — Gap Audit, Calibration Conventions, Depth Framework | **Pending** | — |
+| 99 | Debecka Pass (2003) | **Pending** | — |
+| 100 | Khafji (1991) | **Pending** | — |
+| 101 | Fallujah Phase Line Fran (2004) | **Pending** | — |
+| 102 | Bint Jbeil + INS Hanit Vignette + Block 11 Validation (2006) | **Pending** | — |
 
 ## Post-MVP Refinement Index
 

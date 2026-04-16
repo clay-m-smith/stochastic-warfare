@@ -3,7 +3,7 @@
 ## Project Overview
 High-fidelity, high-resolution wargame simulator. Multi-scale (campaign → battlefield → battle → unit level) with stochastic/signal-processing-inspired models (Markov chains, Monte Carlo, Kalman filters, noise models, queueing theory). Headless Python engine first; matplotlib for validation; full UI deferred. Modern era (Cold War–present) as prototype. Maritime warfare fully integrated, not deferred.
 
-**Current status**: Phase 97 complete — Block 10 COMPLETE (92–97). ~10,739 tests (~10,323 Python + 416 frontend vitest). 97 phases delivered across 10 blocks. Blocks 1–10 COMPLETE.
+**Current status**: Phase 97 complete — Block 10 COMPLETE (92–97). ~10,739 tests (~10,323 Python + 416 frontend vitest). 97 phases delivered across 10 blocks. Blocks 1–10 COMPLETE. Block 11 planning complete (Phases 98–102: Golden Scenarios).
 
 ## Python & Package Management
 **Requires Python >=3.12** (pinned to 3.12.10 via `.python-version`).
@@ -126,6 +126,10 @@ Layered hybrid — graph (strategic), grid (operational/tactical), continuous (u
 | `docs/development-phases-block8.md` | Block 8 phase roadmap (68–82), consequence enforcement + scenario expansion |
 | `docs/brainstorm-block9.md` | Block 9 design thinking (performance at scale, 9 themes) |
 | `docs/development-phases-block9.md` | Block 9 phase roadmap (83–91), performance at scale |
+| `docs/brainstorm-block10.md` | Block 10 design thinking (UI depth & engine exposure) |
+| `docs/development-phases-block10.md` | Block 10 phase roadmap (92–97), UI depth |
+| `docs/brainstorm-block11.md` | Block 11 design thinking (golden scenarios, engine validation through UI) |
+| `docs/development-phases-block11.md` | Block 11 phase roadmap (98–102), golden scenarios |
 | `docs/specs/project-structure.md` | Full package tree, module decomposition, dependency graph |
 | `docs/devlog/` | Per-phase implementation logs (`index.md` tracks status) |
 | `docs/skills-and-hooks.md` | Dev infrastructure documentation |
@@ -154,14 +158,14 @@ All phase details are in `docs/devlog/` (one file per phase). Per-phase tables i
 | Block 8 | 68–82 | Consequence enforcement, C2 depth, perf optimization, missile/carrier ops, test coverage, CI/CD, accessibility | ~1,291 |
 | Block 9 | 83–91 | Profiling, spatial culling, LOD, Numba JIT, SoA data layer, per-side parallelism, benchmarking | ~279 |
 | Block 10 | 92–97 | UI depth: analytics endpoints, dashboard charts, map overlays, calibration editor, event filtering, data catalogs | ~120 |
+| Block 11 | 98–102 | Golden scenarios (Debecka, Khafji, Fallujah, Bint Jbeil) — historical modern-era engagements, each calibrated + regression-tested + UI walkthrough | TBD |
 
-### Block 10 Detail (Current)
+### Block 11 Detail (Current)
 
 | Phase | Status | Focus |
 |-------|--------|-------|
-| 92 | Complete | API analytics endpoints (5) + enriched MapUnitFrame (7 fields) + metadata endpoints (4) |
-| 93 | Complete | 4 Plotly chart components + analytics summary card + TanStack Query hooks |
-| 94 | Complete | 5 map overlay toggles + engagement flash + enhanced sidebar + map legend |
-| 95 | Complete | Per-side calibration (4 sliders), morale (5) + rout cascade (2) sliders, doctrine/commander pickers, victory weights editor |
-| 96 | Complete | Event filtering (side/tick/search), engagement detail modal, doctrine comparison analysis (backend + frontend) |
-| 97 | Complete | Weapon catalog (cards + detail modal + filters), doctrine catalog (cards + search), navigation, regression validation |
+| 98 | Pending | Shared prework — gap audit, envelope helpers, depth checklist framework |
+| 99 | Pending | Debecka Pass (2003) — ATGM, CAS, blue-on-blue; smallest template validator |
+| 100 | Pending | Khafji (1991) — naval gunfire (Wisconsin), multi-domain, morale cascade |
+| 101 | Pending | Fallujah Phase Line Fran (2004) — urban + IED/UW, AC-130, fire zones |
+| 102 | Pending | Bint Jbeil + INS Hanit (2006) — ATGM vs. MBT, naval missile; Block 11 validation |

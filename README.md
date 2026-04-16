@@ -171,7 +171,7 @@ For the full package tree and module decomposition, see [`docs/specs/project-str
 
 ## Development Status
 
-97 phases delivered across 10 blocks. Blocks 1–10 COMPLETE. See devlogs and phase roadmaps for full detail.
+97 phases delivered across 10 blocks. Blocks 1–10 COMPLETE. Block 11 planning complete (Phases 98–102: golden scenarios). See devlogs and phase roadmaps for full detail.
 
 | Phase | Focus | Tests | Status |
 |-------|-------|-------|--------|
@@ -274,9 +274,14 @@ For the full package tree and module decomposition, see [`docs/specs/project-str
 | 95 | Calibration & Scenario Editor Depth (Block 10) | 24 | **Complete** |
 | 96 | Analysis & Event Interaction (Block 10) | 13 | **Complete** |
 | 97 | Data Catalog & Block 10 Validation (Block 10) | 7 | **Complete** |
+| 98 | Shared Prework — Gap Audit, Envelope Helpers, Depth Framework (Block 11) | TBD | Pending |
+| 99 | Debecka Pass (2003) (Block 11) | TBD | Pending |
+| 100 | Khafji (1991) (Block 11) | TBD | Pending |
+| 101 | Fallujah Phase Line Fran (2004) (Block 11) | TBD | Pending |
+| 102 | Bint Jbeil + INS Hanit Vignette (2006) (Block 11) | TBD | Pending |
 | | **Total** | **~10,739** | |
 
-For the full phase roadmap, see [`docs/development-phases.md`](docs/development-phases.md) (MVP), [`docs/development-phases-post-mvp.md`](docs/development-phases-post-mvp.md) (post-MVP), and `docs/development-phases-block{N}.md` for Blocks 2–10. For per-phase implementation logs, see [`docs/devlog/`](docs/devlog/).
+For the full phase roadmap, see [`docs/development-phases.md`](docs/development-phases.md) (MVP), [`docs/development-phases-post-mvp.md`](docs/development-phases-post-mvp.md) (post-MVP), and `docs/development-phases-block{N}.md` for Blocks 2–11. For per-phase implementation logs, see [`docs/devlog/`](docs/devlog/).
 
 ## Key Dependencies
 
