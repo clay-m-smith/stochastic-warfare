@@ -527,7 +527,7 @@ class TestMeleeResultApplication:
         pending: list[tuple[Unit, UnitStatus]] = []
         morale_states: dict[str, Any] = {}
         _apply_melee_result(mr, attacker, defender, pending, morale_states, 0.5, 0.3)
-        statuses = {u.entity_id: s for u, s in pending}
+        statuses = {entry[0].entity_id: entry[1] for entry in pending}
         assert statuses["att"] == UnitStatus.DISABLED  # 35%
         assert statuses["def"] == UnitStatus.DESTROYED  # 60%
 
@@ -740,7 +740,7 @@ class TestNavalRouting:
             {"blue": np.array([[2000.0, 0.0]])}, dt=10.0, timestamp=datetime(2000, 1, 1),
         )
         nse.torpedo_engagement.assert_called_once()
-        assert any(s == UnitStatus.DESTROYED for _, s in pending)
+        assert any(entry[1] == UnitStatus.DESTROYED for entry in pending)
 
     def test_torpedo_miss_no_damage(self):
         nse = MagicMock()
@@ -789,7 +789,7 @@ class TestNavalRouting:
             {"blue": np.array([[50000.0, 0.0]])}, dt=10.0, timestamp=datetime(2000, 1, 1),
         )
         nse.salvo_exchange.assert_called_once()
-        assert any(s == UnitStatus.DESTROYED for _, s in pending)
+        assert any(entry[1] == UnitStatus.DESTROYED for entry in pending)
 
     def test_naval_gun_routes_to_gunnery_engine(self):
         nge = MagicMock()
@@ -818,7 +818,7 @@ class TestNavalRouting:
             {"blue": np.array([[15000.0, 0.0]])}, dt=10.0, timestamp=datetime(2000, 1, 1),
         )
         nge.fire_salvo.assert_called_once()
-        assert any(s == UnitStatus.DISABLED for _, s in pending)
+        assert any(entry[1] == UnitStatus.DISABLED for entry in pending)
 
     def test_naval_routing_precedes_standard(self):
         """Naval engagement skips standard route_engagement()."""

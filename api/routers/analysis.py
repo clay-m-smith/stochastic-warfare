@@ -103,6 +103,7 @@ async def run_doctrine_compare(
         schools=req.schools,
         num_iterations=req.num_iterations,
         max_ticks=req.max_ticks,
+        data_dir=str(data_dir),
     )
     async with _get_analysis_semaphore():
         result = await asyncio.to_thread(run_doctrine_comparison, config)

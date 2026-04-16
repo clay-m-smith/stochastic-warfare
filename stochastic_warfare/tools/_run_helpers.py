@@ -74,7 +74,7 @@ def _extract_metrics(
                 metrics[name] = 0.0
 
         elif name == "ticks_executed":
-            metrics[name] = float(engine._tick)
+            metrics[name] = float(ctx.clock.tick_count)
 
         elif name.startswith("win_"):
             target_side = name[4:]
@@ -113,6 +113,7 @@ def run_scenario_batch(
     base_seed: int,
     max_ticks: int,
     metric_names: list[str],
+    data_dir: str | Path | None = None,
 ) -> dict[str, list[float]]:
     """Run a scenario multiple times with overrides, collecting metrics.
 
@@ -130,6 +131,11 @@ def run_scenario_batch(
         Maximum ticks per run.
     metric_names:
         Metrics to extract from each run.
+    data_dir:
+        Root of the ``data/`` tree for resolving unit/weapon YAML. When
+        omitted, inferred as ``scenario_path.parent.parent`` — which is
+        only correct when the scenario lives under ``<data_dir>/scenarios/<name>/``.
+        Callers using temp-file scenarios must pass this explicitly.
 
     Returns
     -------
@@ -152,8 +158,8 @@ def run_scenario_batch(
             tmp_path = Path(tmp.name)
 
         try:
-            data_dir = Path(scenario_path).parent.parent
-            loader = ScenarioLoader(data_dir)
+            resolved_data_dir = Path(data_dir) if data_dir is not None else Path(scenario_path).parent.parent
+            loader = ScenarioLoader(resolved_data_dir)
             ctx = loader.load(tmp_path, seed=seed)
         finally:
             try:

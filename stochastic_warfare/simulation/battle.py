@@ -319,7 +319,7 @@ def _infer_missile_type(wpn_inst: Any) -> Any:
 def _apply_aggregate_casualties(
     casualties: int,
     target: Unit,
-    pending_damage: list[tuple[Unit, UnitStatus]],
+    pending_damage: list[tuple[Unit, UnitStatus, str]],
     destruction_threshold: float = 0.5,
     disable_threshold: float = 0.3,
     cumulative_tracker: dict[str, int] | None = None,
@@ -343,13 +343,14 @@ def _apply_aggregate_casualties(
     if casualties <= 0:
         return
 
+    _wpn_id = getattr(
+        getattr(wpn_inst, "definition", None), "weapon_id", "aggregate",
+    ) if wpn_inst else "aggregate"
+
     # Publish engagement + damage events for aggregate models
     if event_bus is not None and attacker is not None:
         from stochastic_warfare.combat.events import DamageEvent, EngagementEvent
 
-        _wpn_id = getattr(
-            getattr(wpn_inst, "definition", None), "weapon_id", "aggregate",
-        ) if wpn_inst else "aggregate"
         event_bus.publish(EngagementEvent(
             timestamp=datetime.min,
             source=ModuleId.COMBAT,
@@ -377,16 +378,16 @@ def _apply_aggregate_casualties(
     else:
         fraction = casualties / total
     if fraction >= destruction_threshold:
-        pending_damage.append((target, UnitStatus.DESTROYED))
+        pending_damage.append((target, UnitStatus.DESTROYED, _wpn_id))
     elif fraction >= disable_threshold:
-        pending_damage.append((target, UnitStatus.DISABLED))
+        pending_damage.append((target, UnitStatus.DISABLED, _wpn_id))
 
 
 def _apply_melee_result(
     mr: Any,
     attacker: Unit,
     defender: Unit,
-    pending_damage: list[tuple[Unit, UnitStatus]],
+    pending_damage: list[tuple[Unit, UnitStatus, str]],
     morale_states: dict[str, Any],
     destruction_threshold: float = 0.5,
     disable_threshold: float = 0.3,
@@ -429,9 +430,9 @@ def _apply_melee_result(
         def_total = max(1, len(defender.personnel))
         frac = mr.defender_casualties / def_total
         if frac >= destruction_threshold:
-            pending_damage.append((defender, UnitStatus.DESTROYED))
+            pending_damage.append((defender, UnitStatus.DESTROYED, _wpn_id))
         elif frac >= disable_threshold:
-            pending_damage.append((defender, UnitStatus.DISABLED))
+            pending_damage.append((defender, UnitStatus.DISABLED, _wpn_id))
     # Attacker casualties
     if mr.attacker_casualties > 0:
         if event_bus is not None:
@@ -448,9 +449,9 @@ def _apply_melee_result(
         att_total = max(1, len(attacker.personnel))
         frac = mr.attacker_casualties / att_total
         if frac >= destruction_threshold:
-            pending_damage.append((attacker, UnitStatus.DESTROYED))
+            pending_damage.append((attacker, UnitStatus.DESTROYED, _wpn_id))
         elif frac >= disable_threshold:
-            pending_damage.append((attacker, UnitStatus.DISABLED))
+            pending_damage.append((attacker, UnitStatus.DISABLED, _wpn_id))
     # Morale effects — rout
     if mr.defender_routed:
         morale_states[defender.entity_id] = 3  # ROUTED
@@ -839,13 +840,14 @@ def _route_air_engagement(
 def _apply_indirect_fire_result(
     fm_result: Any,
     target: Unit,
-    pending_damage: list[tuple[Unit, UnitStatus]],
+    pending_damage: list[tuple[Unit, UnitStatus, str]],
     destruction_threshold: float = 0.5,
     disable_threshold: float = 0.3,
     cumulative_tracker: dict[str, int] | None = None,
     terrain_modifier: float = 1.0,
     lethal_radius_m: float = 50.0,
     casualty_per_hit: float = 0.15,
+    weapon_id: str = "",
 ) -> None:
     """Convert indirect fire impacts to damage.
 
@@ -873,9 +875,9 @@ def _apply_indirect_fire_result(
         else:
             fraction = min(1.0, hits_near * per_hit)
         if fraction >= destruction_threshold:
-            pending_damage.append((target, UnitStatus.DESTROYED))
+            pending_damage.append((target, UnitStatus.DESTROYED, weapon_id))
         elif fraction >= disable_threshold:
-            pending_damage.append((target, UnitStatus.DISABLED))
+            pending_damage.append((target, UnitStatus.DISABLED, weapon_id))
 
 
 # ---------------------------------------------------------------------------
@@ -1536,7 +1538,7 @@ class BattleManager:
 
         # 4e. Phase 51d: mine warfare — check moving naval units against minefields
         mine_engine = getattr(ctx, "mine_warfare_engine", None)
-        pending_mine_damage: list[tuple[Unit, UnitStatus]] = []
+        pending_mine_damage: list[tuple[Unit, UnitStatus, str]] = []
         if mine_engine is not None and mine_engine._mines:
             dest_thresh_m = cal_flat.get(
                 "destruction_threshold", self._config.destruction_threshold,
@@ -1568,9 +1570,9 @@ class BattleManager:
                             )
                             if mr.detonated and mr.damage_fraction > 0:
                                 if mr.damage_fraction >= dest_thresh_m:
-                                    pending_mine_damage.append((u, UnitStatus.DESTROYED))
+                                    pending_mine_damage.append((u, UnitStatus.DESTROYED, "mine"))
                                 elif mr.damage_fraction >= dis_thresh_m:
-                                    pending_mine_damage.append((u, UnitStatus.DISABLED))
+                                    pending_mine_damage.append((u, UnitStatus.DISABLED, "mine"))
 
         # 4f. Phase 66a: IED encounters during ground movement
         _uw_eng = getattr(ctx, "unconventional_engine", None)
@@ -1721,7 +1723,7 @@ class BattleManager:
         # 4h. Phase 71b: missile flight resolution — advance in-flight missiles
         _missile_eng_71 = getattr(ctx, "missile_engine", None)
         _enable_missile_routing_71 = cal_flat.get("enable_missile_routing", False)
-        _pending_missile_damage: list[tuple[Unit, UnitStatus]] = []
+        _pending_missile_damage: list[tuple[Unit, UnitStatus, str]] = []
         if _missile_eng_71 is not None and _enable_missile_routing_71:
             _gps_acc_71 = 5.0
             _space_eng_71 = getattr(ctx, "space_engine", None)
@@ -1923,8 +1925,8 @@ class BattleManager:
 
         # 7a. Phase 85: instant promotion for damaged units
         if cal_flat.get("enable_lod", False):
-            for _dmg_unit, _dmg_status in pending_damage:
-                self._lod_promoted.add(_dmg_unit.entity_id)
+            for _pd_entry in pending_damage:
+                self._lod_promoted.add(_pd_entry[0].entity_id)
 
         # 7b. Phase 60b/68e: fire zone damage — apply burn damage to units
         _fz_cal = getattr(getattr(ctx, "config", None), "calibration_overrides", None)
@@ -1939,7 +1941,7 @@ class BattleManager:
                 _unit_lookup = _unit_index
                 _fire_hits = _inc_eng_fz.units_in_fire(_unit_positions)
                 _fire_damage_base = _fz_cal.get("fire_damage_per_tick", 0.01)
-                _fire_pending: list[tuple[Unit, UnitStatus]] = []
+                _fire_pending: list[tuple[Unit, UnitStatus, str]] = []
                 _fire_dest = _fz_cal.get("destruction_threshold", self._config.destruction_threshold)
                 _fire_dis = _fz_cal.get("disable_threshold", self._config.disable_threshold)
                 for _fu_id, _burn_rate in _fire_hits.items():
@@ -3463,9 +3465,9 @@ class BattleManager:
         timestamp: datetime,
         _unit_index: dict[str, Unit] | None = None,
         _lod_full_update: set[str] | None = None,
-    ) -> list[tuple[Unit, UnitStatus]]:
+    ) -> list[tuple[Unit, UnitStatus, str]]:
         """Run detection + engagement for all units. Returns deferred damage."""
-        pending_damage: list[tuple[Unit, UnitStatus]] = []
+        pending_damage: list[tuple[Unit, UnitStatus, str]] = []
         cal_flat = _resolve_cal_flat(ctx)
         visibility_m = cal_flat.get("visibility_m", self._config.default_visibility_m)
         hit_prob_mod = cal_flat.get("hit_probability_modifier", 1.0)
@@ -4444,7 +4446,7 @@ class BattleManager:
                     )
                     if handled:
                         if naval_status is not None:
-                            pending_damage.append((best_target, naval_status))
+                            pending_damage.append((best_target, naval_status, wpn_inst.definition.weapon_id))
                         side_engagements += 1
                         routed_aggregate = True
 
@@ -4463,7 +4465,7 @@ class BattleManager:
                     )
                     if handled:
                         if air_status is not None:
-                            pending_damage.append((best_target, air_status))
+                            pending_damage.append((best_target, air_status, wpn_inst.definition.weapon_id))
                         side_engagements += 1
                         routed_aggregate = True
                         # Phase 69a: record sortie consumption
@@ -4772,6 +4774,7 @@ class BattleManager:
                                     self._cumulative_casualties,
                                     _agg_modifier,
                                     lethal_radius_m=_ifire_radius,
+                                    weapon_id=wpn_inst.definition.weapon_id,
                                 )
                                 # Phase 60a: artillery impact dust
                                 if _obs_eng is not None and _enable_obscurants:
@@ -4873,20 +4876,21 @@ class BattleManager:
                             )
 
                     if result.engaged and result.hit_result and result.hit_result.hit:
+                        _df_wpn_id = wpn_inst.definition.weapon_id
                         if engagement_type in (EngagementType.DEW_LASER, EngagementType.DEW_HPM):
                             # Phase 51c: DEW disable path — threshold-based
                             dew_pk = result.hit_result.p_hit if hasattr(result.hit_result, "p_hit") else 0.5
                             dew_thresh = _dew_disable_thresh
                             if dew_pk >= dew_thresh:
-                                pending_damage.append((best_target, UnitStatus.DESTROYED))
+                                pending_damage.append((best_target, UnitStatus.DESTROYED, _df_wpn_id))
                             else:
-                                pending_damage.append((best_target, UnitStatus.DISABLED))
+                                pending_damage.append((best_target, UnitStatus.DISABLED, _df_wpn_id))
                         elif (result.damage_result
                                 and result.damage_result.damage_fraction > 0):
                             if result.damage_result.damage_fraction >= dest_thresh:
-                                pending_damage.append((best_target, UnitStatus.DESTROYED))
+                                pending_damage.append((best_target, UnitStatus.DESTROYED, _df_wpn_id))
                             elif result.damage_result.damage_fraction >= dis_thresh:
-                                pending_damage.append((best_target, UnitStatus.DISABLED))
+                                pending_damage.append((best_target, UnitStatus.DISABLED, _df_wpn_id))
 
                             # Phase 58c: extract damage detail (logged;
                             # behavioral application deferred to calibration)
@@ -5012,19 +5016,22 @@ class BattleManager:
 
     @staticmethod
     def _apply_deferred_damage(
-        pending_damage: list[tuple[Unit, UnitStatus]],
+        pending_damage: list[tuple[Unit, UnitStatus, str]] | list[tuple[Unit, UnitStatus]],
         event_bus: Any | None = None,
         timestamp: datetime | None = None,
     ) -> None:
         """Apply deferred damage — worst outcome wins per unit."""
         applied: dict[str, UnitStatus] = {}
-        for target, new_status in pending_damage:
+        for entry in pending_damage:
+            target, new_status = entry[0], entry[1]
             prev = applied.get(target.entity_id)
             if prev is None or new_status.value > prev.value:
                 applied[target.entity_id] = new_status
 
         ts = timestamp or datetime.min
-        for target, new_status in pending_damage:
+        for entry in pending_damage:
+            target, new_status = entry[0], entry[1]
+            weapon_id = entry[2] if len(entry) >= 3 else ""
             if applied.get(target.entity_id) == new_status:
                 object.__setattr__(target, "status", new_status)
                 applied.pop(target.entity_id, None)
@@ -5036,6 +5043,7 @@ class BattleManager:
                             unit_id=target.entity_id,
                             cause="combat_damage",
                             side=target.side,
+                            weapon_id=weapon_id,
                         ))
                     elif new_status == UnitStatus.DISABLED:
                         event_bus.publish(UnitDisabledEvent(
@@ -5044,6 +5052,7 @@ class BattleManager:
                             unit_id=target.entity_id,
                             cause="combat_damage",
                             side=target.side,
+                            weapon_id=weapon_id,
                         ))
 
     def _execute_morale(

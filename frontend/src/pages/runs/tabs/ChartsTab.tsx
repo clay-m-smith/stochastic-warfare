@@ -94,7 +94,7 @@ export function ChartsTab({ runId, result }: ChartsTabProps) {
       {/* Phase 93: Server-side analytics charts */}
       {analytics && (
         <>
-          <CasualtyBreakdownChart data={analytics.casualties} layoutOverrides={tickOverrides} onClick={handleChartClick} />
+          <CasualtyBreakdownChart data={analytics.casualties} />
           <EngagementSummaryChart data={analytics.engagements} />
           <SuppressionChart data={analytics.suppression} dt={dt} layoutOverrides={tickOverrides} onClick={handleChartClick} />
           <MoraleDistributionChart data={analytics.morale} dt={dt} layoutOverrides={tickOverrides} onClick={handleChartClick} />

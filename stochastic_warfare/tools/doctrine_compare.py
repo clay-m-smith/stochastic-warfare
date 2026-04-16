@@ -25,6 +25,7 @@ class DoctrineCompareConfig:
     num_iterations: int = 10
     base_seed: int = 42
     max_ticks: int = 100
+    data_dir: str | None = None
 
 
 @dataclass
@@ -77,6 +78,8 @@ def run_doctrine_comparison(config: DoctrineCompareConfig) -> DoctrineCompareRes
     win_metric = f"win_{config.side_to_vary}"
     metric_names = ["blue_destroyed", "red_destroyed", "ticks_executed", win_metric]
 
+    data_dir = Path(config.data_dir) if config.data_dir else Path(config.scenario_path).parents[2]
+
     school_results: list[SchoolResult] = []
 
     for school_id in config.schools:
@@ -100,6 +103,7 @@ def run_doctrine_comparison(config: DoctrineCompareConfig) -> DoctrineCompareRes
                 base_seed=config.base_seed,
                 max_ticks=config.max_ticks,
                 metric_names=metric_names,
+                data_dir=data_dir,
             )
         finally:
             try:

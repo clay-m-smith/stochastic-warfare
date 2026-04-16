@@ -26,6 +26,7 @@ class UnitDisabledEvent(Event):
     unit_id: str
     cause: str
     side: str = ""
+    weapon_id: str = ""
 
 
 @dataclass(frozen=True)
@@ -35,6 +36,7 @@ class UnitDestroyedEvent(Event):
     unit_id: str
     cause: str
     side: str = ""
+    weapon_id: str = ""
 
 
 @dataclass(frozen=True)
