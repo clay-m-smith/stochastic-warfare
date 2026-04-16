@@ -1,0 +1,54 @@
+# MT-LB (Mnogotselevoy Tyagach Legkiy Bronirovannyy)
+# Soviet-designed amphibious multipurpose armored tracked vehicle, widely
+# exported to Iraq. Used as APC/dismount transport and command vehicle by
+# Iraqi 1st Mechanized Infantry Division at Debecka Pass (6 April 2003).
+#
+# Sources:
+#   - Briscoe, Kiper, Schroder, Sepp. "Weapon of Choice: U.S. Army Special
+#     Operations Forces in Afghanistan." ARSOF Veritas v1n1 (Tier 1) —
+#     Debecka Pass engagement, Iraqi counterattack composition.
+#   - Jane's Armour and Artillery, MT-LB entry (Tier 3) — technical
+#     specifications (crew, armor, speed, armament).
+unit_type: iraqi_mtlb
+domain: ground
+display_name: "MT-LB Armored Personnel Carrier"
+ground_type: MECHANIZED_INFANTRY
+max_speed: 17.0
+training_level: 0.3
+armor_front: 14.0
+armor_side: 7.0
+crew:
+  - role: COMMANDER
+    count: 1
+    skill: BASIC
+  - role: DRIVER
+    count: 1
+    skill: BASIC
+  - role: GUNNER
+    count: 1
+    skill: BASIC
+  - role: GENERIC
+    count: 11
+    skill: BASIC
+equipment:
+  - name: "PKT 7.62mm Machine Gun"
+    category: WEAPON
+    weight_kg: 10.5
+    reliability: 0.85
+  - name: "YaMZ-238V Diesel Engine"
+    category: PROPULSION
+    weight_kg: 650.0
+    reliability: 0.74
+    temperature_range: [-40.0, 45.0]
+  - name: "TNPO-170A Driver Periscope"
+    category: SENSOR
+    weight_kg: 5.0
+    reliability: 0.80
+  - name: "R-123 Radio"
+    category: COMMUNICATION
+    weight_kg: 16.0
+    reliability: 0.78
+  - name: "Aluminum Alloy Hull"
+    category: PROTECTION
+    weight_kg: 600.0
+    reliability: 0.99

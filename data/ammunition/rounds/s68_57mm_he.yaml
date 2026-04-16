@@ -1,0 +1,20 @@
+# S-68 57mm HE-T Round
+# Soviet 57mm HE-Tracer round for the S-68 (and S-60 parent) autocannon.
+# Fired at the Battle of Debecka Pass (2003) from ZSU-57-2s engaging SF
+# GMVs in direct-fire ground role. Muzzle velocity ~1,020 m/s.
+# Sources:
+#   - Jane's Armour and Artillery, ZSU-57-2 / S-60/68 entries (Tier 3)
+ammo_id: s68_57mm_he
+display_name: "S-68 57mm HE-T"
+ammo_type: HE
+mass_kg: 2.8
+diameter_mm: 57.0
+drag_coefficient: 0.30
+penetration_mm_rha: 15.0
+penetration_reference_range_m: 1000.0
+blast_radius_m: 4.0
+fragmentation_radius_m: 12.0
+guidance: NONE
+propulsion: none
+max_speed_mps: 1020.0
+unit_cost_factor: 0.4

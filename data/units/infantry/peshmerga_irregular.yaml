@@ -1,0 +1,43 @@
+# Source: Briscoe et al., "The Battle for Debecka Crossroads," ARSOF Veritas v1n1 (Tier 1)
+# Cross-ref: GlobalSecurity, "Iraqi Kurdistan Regional Guard Forces (Peshmerga)" (Tier 3)
+# KDP Peshmerga irregular fighters at Debecka Pass, 6 April 2003.
+# State-supported militia — higher fidelity than insurgents, below conventional infantry.
+unit_type: peshmerga_irregular
+domain: ground
+display_name: "Peshmerga Irregular Squad"
+ground_type: LIGHT_INFANTRY
+max_speed: 1.2  # m/s (~4.3 km/h, light infantry march pace)
+training_level: 0.5
+armor_front: 0.0
+armor_side: 0.0
+crew:
+  - role: COMMANDER
+    count: 1
+    skill: TRAINED
+  - role: RIFLEMAN
+    count: 6
+    skill: BASIC
+  - role: GUNNER
+    count: 1
+    skill: BASIC
+equipment:
+  - name: "AKM"
+    category: WEAPON
+    weight_kg: 3.1
+    reliability: 0.95
+  - name: "PKM GPMG"
+    category: WEAPON
+    weight_kg: 7.5
+    reliability: 0.90
+  - name: "RPG-7"
+    category: WEAPON
+    weight_kg: 6.3
+    reliability: 0.88
+  - name: "Naked Eye Observation"
+    category: SENSOR
+    weight_kg: 0.5
+    reliability: 0.99
+  - name: "Handheld Radio"
+    category: COMMUNICATION
+    weight_kg: 0.5
+    reliability: 0.70

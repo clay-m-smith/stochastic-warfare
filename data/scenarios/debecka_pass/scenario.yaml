@@ -1,0 +1,280 @@
+# Battle of Debecka Pass — 6 April 2003
+#
+# US 3rd/10th SFG ODAs + ~300 Peshmerga defend Objective Rock crossroads
+# against Iraqi 1st Mechanized Infantry Division counterattack.  Javelin
+# ATGMs engage at 2200–4200 m; multi-service CAS (B-52H, F-14B, F/A-18C)
+# finishes survivors.  Historical outcome: decisive Coalition victory;
+# 8–12 Iraqi vehicles destroyed; 0 Coalition direct-combat KIA.
+#
+# Sources:
+# - Briscoe et al., "The Battle for Debecka Crossroads," ARSOF Veritas v1n1,
+#   USASOC 2005 (Tier 1)
+# - Wong, "A Different Kind of War," Combat Studies Institute 2011 (Tier 1)
+# - Kopp, "OIF Air Analysis," Australian Aviation June 2003 (Tier 2)
+# - Defense Media Network, "The Battle of Debecka Pass: Roughnecks at War" (Tier 3)
+
+name: "Debecka Pass 2003 — Task Force Viking vs. Iraqi 1st Mech"
+date: "2003-04-06T09:00:00+03:00"
+duration_hours: 4
+tick_duration_seconds: 5.0
+
+# ~35.77°N, 43.47°E (Makhmur district, Erbil Governorate, N. Iraq)
+latitude: 35.77
+longitude: 43.47
+
+weather_conditions:
+  # Per AAR narrative — no NWS archive; weather inferred from operational
+  # record: optical Javelin engagements at 4200 m, SOFLAM laser use, full
+  # CAS availability (no abort).  Northern Iraq early April climatology.
+  visibility_m: 10000
+  wind_speed_mps: 3.0
+  wind_direction_deg: 270
+  temperature_c: 20.0
+  precipitation: none
+  cloud_cover: 0.2
+  humidity: 0.30
+
+terrain:
+  # Dog Ridge (Zurqah Ziraw Dagh) runs E-W; ~400 m elevation above the
+  # plain; Iraqi approach road crosses beneath the ridge at the Debecka
+  # crossroads.  Map has Blue on ridge (north), Red advancing from south
+  # along the road.  Javelin engagement range 2200–4200 m requires
+  # ridgeline-to-road separation in that band.
+  width_m: 8000
+  height_m: 5000
+  cell_size_m: 50.0
+  base_elevation_m: 300.0
+  terrain_type: hilly_defense
+
+sides:
+  # ── Blue: Coalition (US SF + Peshmerga + on-call naval/USAF CAS) ──────
+  - side: blue
+    units:
+      # Objective Rock axis — ODA 391/392/044-B/394/395 + AOB
+      - unit_type: sf_oda
+        count: 6
+        overrides:
+          training_level: 0.95
+      # Objective Stone axis — ODA 043
+      - unit_type: sf_oda
+        count: 1
+        overrides:
+          training_level: 0.95
+      # Dedicated Javelin ATGM teams attached to the ODAs
+      - unit_type: javelin_team
+        count: 6
+        overrides:
+          training_level: 0.9
+      # Peshmerga on Objective Rock (with ODA 044) ~ 150 fighters
+      - unit_type: peshmerga_irregular
+        count: 19
+      # Peshmerga on Objective Stone (with ODA 043) ~ 150 fighters
+      - unit_type: peshmerga_irregular
+        count: 19
+      # On-call naval CAS (pulled from regional stack)
+      - unit_type: f14b
+        count: 2
+      - unit_type: fa18c
+        count: 2
+      # Preplanned B-52H strike on Objective Stone
+      - unit_type: b52h
+        count: 1
+    experience_level: 0.85
+    morale_initial: STEADY
+    commander_profile: aggressive_armor
+    doctrine_template: combined_arms_defense
+
+  # ── Red: Iraqi 1st Mechanized Infantry Division counterattack ────────
+  - side: red
+    units:
+      - unit_type: t55a
+        count: 5
+        overrides:
+          training_level: 0.3
+      - unit_type: bmp1
+        count: 3
+        overrides:
+          training_level: 0.3
+      - unit_type: iraqi_mtlb
+        count: 2
+      - unit_type: zsu_57_2
+        count: 1
+      # 1 company (~150 men) of Iraqi 1st Mech dismounts
+      - unit_type: iraqi_1st_mech_dismount
+        count: 17
+    experience_level: 0.3
+    morale_initial: STEADY
+    commander_profile: attritional_defender
+    doctrine_template: attritional_defense
+
+blue_forces:
+  side: blue
+  units:
+    - unit_type: sf_oda
+      count: 7
+    - unit_type: javelin_team
+      count: 6
+    - unit_type: peshmerga_irregular
+      count: 38
+    - unit_type: f14b
+      count: 2
+    - unit_type: fa18c
+      count: 2
+    - unit_type: b52h
+      count: 1
+  personnel_total: 396
+  experience_level: 0.85
+  morale_initial: STEADY
+
+red_forces:
+  side: red
+  units:
+    - unit_type: t55a
+      count: 5
+    - unit_type: bmp1
+      count: 3
+    - unit_type: iraqi_mtlb
+      count: 2
+    - unit_type: zsu_57_2
+      count: 1
+    - unit_type: iraqi_1st_mech_dismount
+      count: 17
+  personnel_total: 230
+  experience_level: 0.3
+  morale_initial: STEADY
+
+# Historical outcome — for regression envelope assertions
+documented_outcomes:
+  - name: red_units_destroyed
+    value: 10.0
+    tolerance_factor: 1.5
+    unit: "vehicles"
+    source: "ARSOF Veritas v1n1 — Javelin kills + CAS-destroyed armor"
+    source_quality: 0
+    notes: "8-12 armored vehicles + additional trucks; modal 10"
+  - name: blue_units_destroyed
+    value: 0.0
+    tolerance_factor: 3.0
+    unit: "vehicles"
+    source: "ARSOF Veritas v1n1 — 0 Coalition direct-combat KIA"
+    source_quality: 0
+    notes: "Ceiling ≤3 (envelope tolerance, not target)"
+  - name: duration_s
+    value: 14400.0
+    tolerance_factor: 1.4
+    unit: "seconds"
+    source: "Defense Media Network — ~4 hour main engagement"
+    source_quality: 1
+    notes: "3-6 hour envelope; modal 4h"
+  - name: javelin_share_of_armor_kills
+    value: 0.8
+    tolerance_factor: 1.4
+    unit: "fraction"
+    source: "ARSOF Veritas — 19 shots/17 hits (of ~10 armor kills, ≥50% Javelin)"
+    source_quality: 0
+    notes: "Javelin dominance is the key dynamic"
+
+victory_conditions:
+  # Winner is the non-losing side; target_side restricts threshold check
+  # to red so Iraqi counterattack collapse triggers blue victory.
+  # Threshold 0.7 (not 0.5) — Iraqi force must take heavy losses before
+  # withdrawal; matches historical pattern where Iraqi 1st Mech persisted
+  # after initial losses and required multiple CAS passes to break.
+  - type: force_destroyed
+    side: blue
+    params:
+      threshold: 0.7
+      target_side: red
+  - type: morale_collapsed
+    side: blue
+    params:
+      target_side: red
+  # Fallback — if neither side collapses within 6 hours, call it blue
+  # (defending the crossroads = blue objective).
+  - type: time_expired
+    side: blue
+    params:
+      max_duration_s: 21600  # 6 hours
+
+calibration_overrides:
+  # Per Phase 67 / Phase 81 / Block 7: default modern engine flags
+  enable_obscurants: true
+  enable_thermal_crossover: true
+  enable_nvg_detection: true
+  enable_fuel_consumption: true
+  enable_ammo_gate: true
+  enable_air_routing: true
+
+  # Combat fidelity
+  hit_probability_modifier: 1.0
+  target_size_modifier: 1.0
+  thermal_contrast: 1.5
+
+  # Morale — Iraqi 1st Mech was regular army post-sanctions; brittle under
+  # fire.  SF + Peshmerga aggressive, high cohesion.
+  morale_degrade_rate_modifier: 0.5
+  morale_force_ratio_weight: 0.15
+  morale_base_degrade_rate: 0.018
+  morale_casualty_weight: 0.7
+  morale_check_interval: 10
+
+  # Engagement thresholds
+  destruction_threshold: 0.4
+  disable_threshold: 0.25
+
+  # Force-ratio / CEV — per Phase 99 research brief.  Documented CEV band
+  # for elite SOF + massive CAS vs. degraded conscript is 2.0–2.5; we use
+  # 2.5 reflecting Javelin precision + air dominance at Debecka.
+  blue_force_ratio_modifier: 2.5
+  red_force_ratio_modifier: 0.4
+  blue_cohesion: 0.95
+  red_cohesion: 0.35
+
+  # Starting positions — Blue on Dog Ridge (north); Red counterattacking
+  # from south along approach road.  4000 m separation matches historical
+  # Javelin engagement range at the upper bound (4200 m at Debecka was
+  # beyond nominal 2500 m CLU spec — operational reality vs. datasheet).
+  blue_start_x: 4000.0
+  blue_start_y: 4500.0
+  red_start_x: 4000.0
+  red_start_y: 500.0
+
+  # Weapon assignments — map equipment names to weapon_ids
+  weapon_assignments:
+    # US SF ODAs
+    "M4A1 SOPMOD": m4_556mm
+    "M4A1 Carbine": m4_556mm
+    "M249 SAW": m4_556mm  # Approx: 5.56mm squad automatic
+    "M240B GPMG": m240_762mm
+    # Javelin team
+    "FGM-148 Javelin CLU": javelin_clm
+    "Javelin Missile Round": javelin_clm
+    # Peshmerga + insurgent-pattern
+    "AKM": ak47
+    "AK-47": ak47
+    "PKM GPMG": m240_762mm  # 7.62mm GPMG approx
+    "RPG-7": rpg7
+    # Iraqi armor
+    "D-10T 100mm Rifled Gun": d10t_100mm
+    "SGMT 7.62mm Coaxial": m240_762mm
+    "2A28 73mm Grom": 2a28_grom_73mm
+    "9M14 Malyutka ATGM Launcher": at3_sagger  # BMP-1 Sagger
+    "PKT 7.62mm Coaxial": m240_762mm
+    "2× S-68 57mm Autocannon": s68_57mm
+    # Aircraft (guns only — bombs loaded as mission ammo)
+    "M61A1 Vulcan": m61a1_vulcan
+
+# Behavior rules — Iraqi scripted frontal advance along approach road;
+# Blue defends ridgeline firing positions.
+behavior_rules:
+  blue:
+    posture: DEFENSIVE
+    advance_speed_mps: 0.5
+    engagement_range_m: 4200  # max Javelin engagement range
+    roe: WEAPONS_FREE
+  red:
+    posture: MOVING
+    advance_speed_mps: 2.5  # T-55 road speed in column
+    engagement_range_m: 2000  # Iraqi optical/gun-ranged engagement limit
+    roe: WEAPONS_FREE
+    axis_of_advance: 0  # due north (toward ridge)

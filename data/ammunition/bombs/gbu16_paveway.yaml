@@ -1,0 +1,26 @@
+# GBU-16 Paveway II 1000lb Laser-Guided Bomb
+# Mk 83 (~447 kg) base warhead with Paveway II semi-active laser seeker
+# kit. Requires continuous laser designation from airborne or ground spotter.
+# At the Battle of Debecka Pass (2003), an F-14B (VF-32) delivered a GBU-16
+# in the friendly-fire incident at ~T+3 hours. Vulnerable to smoke/obscurants
+# and laser-lost events relative to GPS-guided JDAMs.
+# Sources:
+#   - USAF Fact Sheet GBU-16 (Tier 1)
+#   - Jane's Air-Launched Weapons (Tier 3)
+ammo_id: gbu16_paveway
+display_name: "GBU-16 Paveway II 1000lb Laser-Guided Bomb"
+ammo_type: GUIDED
+mass_kg: 450.0
+diameter_mm: 356.0
+drag_coefficient: 0.32
+penetration_mm_rha: 0.0
+blast_radius_m: 80.0
+fragmentation_radius_m: 250.0
+guidance: LASER
+seeker_fov_deg: 30.0
+seeker_range_m: 10000.0
+pk_at_reference: 0.75
+countermeasure_susceptibility: 0.15
+propulsion: none
+max_speed_mps: 0.0
+unit_cost_factor: 20.0

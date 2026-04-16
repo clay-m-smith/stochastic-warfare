@@ -98,7 +98,7 @@ The `CALIBRATION_SCENARIOS` registry (Phase 90) is how validation batch runs dis
 
 ## Phase 99: Debecka Pass (Iraq, April 6, 2003)
 
-**Status**: Pending.
+**Status**: Complete. See [phase-99.md](devlog/phase-99.md).
 
 **Goal**: First golden scenario. Demonstrates the scenario-authoring pipeline end-to-end on the simplest case. 31 US Special Forces + ~80 Peshmerga defenders engage an Iraqi mechanized battalion advance. Javelin ATGM employment is the defining tactical event; CAS support from F-14D, F-15E, A-10, F-16 layers multi-service joint fires.
 

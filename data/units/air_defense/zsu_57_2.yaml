@@ -1,0 +1,61 @@
+# ZSU-57-2 Self-Propelled Anti-Aircraft Gun
+# Soviet twin 57mm S-68 autocannon on T-54 chassis. Optical sights only
+# (no radar — this is the 57-2, not later radar-directed variants). At
+# Debecka Pass (6 April 2003), Iraqi 1st Mechanized Infantry Division used
+# the ZSU-57-2 in a DIRECT-FIRE ground role against ODA 392 on the ridge
+# line at 1,500–3,000 m — not as an anti-air weapon.
+#
+# Sources:
+#   - Briscoe, Kiper, Schroder, Sepp. "Weapon of Choice: U.S. Army Special
+#     Operations Forces in Afghanistan." ARSOF Veritas v1n1 (Tier 1) —
+#     Debecka Pass engagement, direct-fire suppression of the ridge.
+#   - Jane's Armour and Artillery, ZSU-57-2 entry (Tier 3) — technical
+#     specifications (crew, armor, speed, twin 57mm S-68 armament, ROF).
+unit_type: zsu_57_2
+domain: ground
+display_name: "ZSU-57-2 Self-Propelled Anti-Aircraft Gun"
+ad_type: AAA
+max_speed: 14.0
+training_level: 0.3
+min_engagement_altitude: 0.0
+max_engagement_altitude: 4500.0
+max_engagement_range: 6000.0
+ready_missiles: 0
+reload_time: 0.0
+armor_front: 15.0
+armor_side: 15.0
+crew:
+  - role: COMMANDER
+    count: 1
+    skill: BASIC
+  - role: DRIVER
+    count: 1
+    skill: BASIC
+  - role: GUNNER
+    count: 2
+    skill: BASIC
+  - role: LOADER
+    count: 2
+    skill: BASIC
+equipment:
+  - name: "2x S-68 57mm Autocannon"
+    category: WEAPON
+    weight_kg: 4500.0
+    reliability: 0.78
+  - name: "V-54 Diesel Engine"
+    category: PROPULSION
+    weight_kg: 895.0
+    reliability: 0.75
+    temperature_range: [-30.0, 45.0]
+  - name: "Optical Reflex Gun Sight"
+    category: SENSOR
+    weight_kg: 25.0
+    reliability: 0.80
+  - name: "R-113 Radio"
+    category: COMMUNICATION
+    weight_kg: 18.0
+    reliability: 0.75
+  - name: "Welded Steel Hull"
+    category: PROTECTION
+    weight_kg: 1800.0
+    reliability: 0.99

@@ -1,0 +1,64 @@
+# F/A-18C Hornet — US Navy / US Marine Corps multirole strike fighter
+#
+# Single-seat C variant (D is two-seat). Carrier or land based. At Debecka
+# Pass (Apr 2003) an F/A-18 pair arrived after the F-14B friendly-fire
+# incident and delivered precision-guided bombs to drive off the remaining
+# Iraqi T-55s threatening ODA 391. The Hornet's AN/APG-73 radar paired with
+# an AAQ-28 LITENING or AAQ-14 LANTIRN targeting pod enables laser
+# designation of GBU-12/16 and JDAM delivery (GBU-31/32/38).
+#
+# Sources:
+#   - Tier 1: Briscoe et al., "All Roads Lead to Debecka," ARSOF Veritas v1n1
+#             (US Army Special Operations Command historical journal)
+#   - Tier 2: Carlo Kopp, "Operation Iraqi Freedom Air Power Analysis,"
+#             Australian Aviation, June 2003
+#   - Tier 3: Jane's All the World's Aircraft (airframe / sensor specs)
+unit_type: fa18c
+domain: aerial
+display_name: "F/A-18C Hornet"
+aerial_type: FIGHTER
+max_speed: 585.0  # m/s (~Mach 1.8 at altitude)
+training_level: 0.85  # US Navy / USMC — elite aircrew
+service_ceiling: 15240.0
+crew:
+  - role: PILOT
+    count: 1
+    skill: EXPERIENCED
+equipment:
+  - name: "AN/APG-73 Radar"
+    category: SENSOR
+    weight_kg: 155.0
+    reliability: 0.89
+  - name: "AN/AAQ-28 LITENING Targeting Pod"
+    category: SENSOR
+    weight_kg: 208.0
+    reliability: 0.88
+  - name: "AN/ALR-67 RWR"
+    category: SENSOR
+    weight_kg: 25.0
+    reliability: 0.90
+  - name: "AN/ALQ-165 ASPJ ECM"
+    category: SENSOR
+    weight_kg: 145.0
+    reliability: 0.85
+  - name: "M61A1 Vulcan 20mm"
+    category: WEAPON
+    weight_kg: 112.0
+    reliability: 0.94
+  - name: "Wing/Fuselage Ordnance Stations"
+    category: WEAPON
+    weight_kg: 550.0
+    reliability: 0.92
+  - name: "F404-GE-402 Turbofan x2"
+    category: PROPULSION
+    weight_kg: 2180.0
+    reliability: 0.92
+    temperature_range: [-54.0, 71.0]
+  - name: "AN/ARC-210 UHF/VHF Radio"
+    category: COMMUNICATION
+    weight_kg: 11.0
+    reliability: 0.92
+  - name: "Link 16 Terminal"
+    category: COMMUNICATION
+    weight_kg: 30.0
+    reliability: 0.91

@@ -3,8 +3,8 @@
 **High-fidelity stochastic wargame simulator** -- multi-scale, multi-domain, multi-era.
 
 ![Python](https://img.shields.io/badge/python-%3E%3D3.12-blue)
-![Tests](https://img.shields.io/badge/tests-10%2C765_passing-brightgreen)
-![Phase](https://img.shields.io/badge/phase-98_Block--11-blue)
+![Tests](https://img.shields.io/badge/tests-10%2C772_passing-brightgreen)
+![Phase](https://img.shields.io/badge/phase-99_Block--11-blue)
 
 ---
 
@@ -78,7 +78,7 @@ See the [Getting Started Guide](guide/getting-started.md) for a complete tutoria
 | Block 10 | 92--97 | UI depth & engine exposure — analytics, frame enrichment, metadata | **Complete** |
 | Block 11 | 98--102 | Golden scenarios — Debecka Pass, Khafji, Fallujah PL Fran, Bint Jbeil + INS Hanit | **In Progress** |
 
-**~10,765 tests** (~10,349 Python + 416 frontend) across ~400 test files. **~750 YAML data files** defining units, weapons, ammunition types, sensors, signatures, doctrines, commanders, and 46 scenarios across 5 eras.
+**~10,772 tests** (~10,356 Python + 416 frontend) across ~400 test files. **~766 YAML data files** defining units, weapons, ammunition types, sensors, signatures, doctrines, commanders, and 47 scenarios across 5 eras.
 
 ## License
 

@@ -1,0 +1,67 @@
+# F-14B Tomcat — US Navy carrier-based supersonic interceptor / precision strike
+#
+# Variant note: F-14B (GE F110-powered upgrade of F-14A), NOT F-14D. The F-14A
+# was retired; at Debecka Pass (Apr 2003) VF-32 "Swordsmen" off USS Harry S.
+# Truman (CVN-75) flew F-14Bs equipped with LANTIRN targeting pods. The F-14B
+# retains the AWG-9 fire control (not the APG-71 of the F-14D). A VF-32 F-14B
+# delivered the GBU-16 Paveway II LGB involved in the friendly-fire incident
+# on ODA 391's position.
+#
+# Sources:
+#   - Tier 1: Briscoe et al., "All Roads Lead to Debecka," ARSOF Veritas v1n1
+#             (US Army Special Operations Command historical journal)
+#   - Tier 2: Carlo Kopp, "Operation Iraqi Freedom Air Power Analysis,"
+#             Australian Aviation, June 2003
+#   - Tier 3: Jane's All the World's Aircraft (airframe / sensor specs)
+unit_type: f14b
+domain: aerial
+display_name: "F-14B Tomcat"
+aerial_type: FIGHTER
+max_speed: 680.0  # m/s (~Mach 2.3 at altitude; ~Mach 1.2 at low level)
+training_level: 0.85  # US Navy carrier pilots — elite (VF-32 "Swordsmen")
+service_ceiling: 16000.0
+crew:
+  - role: PILOT
+    count: 1
+    skill: EXPERIENCED
+  - role: SENSOR_OPERATOR  # RIO (Radar Intercept Officer) — back seat
+    count: 1
+    skill: EXPERIENCED
+equipment:
+  - name: "AN/AWG-9 Fire Control Radar"
+    category: SENSOR
+    weight_kg: 590.0
+    reliability: 0.85
+  - name: "AN/AAQ-14 LANTIRN Targeting Pod"
+    category: SENSOR
+    weight_kg: 200.0
+    reliability: 0.87
+  - name: "AN/ALR-67 RWR"
+    category: SENSOR
+    weight_kg: 25.0
+    reliability: 0.90
+  - name: "AN/ALQ-167 ECM"
+    category: SENSOR
+    weight_kg: 160.0
+    reliability: 0.84
+  - name: "M61A1 Vulcan 20mm"
+    category: WEAPON
+    weight_kg: 112.0
+    reliability: 0.94
+  - name: "Wing/Fuselage Ordnance Stations"
+    category: WEAPON
+    weight_kg: 600.0
+    reliability: 0.92
+  - name: "F110-GE-400 Turbofan x2"
+    category: PROPULSION
+    weight_kg: 3860.0
+    reliability: 0.90
+    temperature_range: [-54.0, 71.0]
+  - name: "AN/ARC-182 UHF/VHF Radio"
+    category: COMMUNICATION
+    weight_kg: 12.0
+    reliability: 0.91
+  - name: "Link 16 Terminal"
+    category: COMMUNICATION
+    weight_kg: 30.0
+    reliability: 0.91

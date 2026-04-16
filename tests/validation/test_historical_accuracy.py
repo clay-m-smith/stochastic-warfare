@@ -46,6 +46,7 @@ HISTORICAL_WINNERS: dict[str, str] = {
     "eastern_front_1943": "blue",
     # Modern
     "73_easting": "blue",
+    "debecka_pass": "blue",
     "bekaa_valley_1982": "blue",
     "golan_campaign": "blue",
     "golan_heights": "blue",

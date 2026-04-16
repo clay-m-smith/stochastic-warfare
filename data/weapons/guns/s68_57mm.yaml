@@ -1,0 +1,33 @@
+# S-68 57mm L/70 Autocannon (ZSU-57-2 armament)
+# Soviet 57mm twin-mount autocannon derived from the S-60 towed AA gun.
+# At the Battle of Debecka Pass (2003), ZSU-57-2s engaged ODA 392 GMVs in
+# direct-fire ground role at ~2,000-3,000 m. Twin-barrel mount gives
+# effective 240 rpm; per-barrel cyclic ~120 rpm. 4-round clip-fed loading.
+# Represented here as the combined twin mount (single weapon instance).
+# Sources:
+#   - Jane's Armour and Artillery, ZSU-57-2 / S-60/68 entries (Tier 3)
+weapon_id: s68_57mm
+display_name: "S-68 57mm L/70 Autocannon (Twin Mount)"
+category: CANNON
+caliber_mm: 57.0
+muzzle_velocity_mps: 1000.0
+max_range_m: 4000.0
+min_range_m: 100.0
+rate_of_fire_rpm: 240.0
+burst_size: 4
+base_accuracy_mrad: 2.5
+cep_m: 0.0
+min_engagement_altitude_m: 0.0
+max_engagement_altitude_m: 6000.0
+guidance: NONE
+magazine_capacity: 316
+reload_time_s: 6.0
+compatible_ammo:
+  - s68_57mm_he
+weight_kg: 4500.0
+reliability: 0.80
+barrel_life_rounds: 3000
+requires_deployed: false
+traverse_deg: 360.0
+elevation_min_deg: -5.0
+elevation_max_deg: 85.0

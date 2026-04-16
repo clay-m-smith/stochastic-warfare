@@ -3,7 +3,7 @@
 ## Project Overview
 High-fidelity, high-resolution wargame simulator. Multi-scale (campaign → battlefield → battle → unit level) with stochastic/signal-processing-inspired models (Markov chains, Monte Carlo, Kalman filters, noise models, queueing theory). Headless Python engine first; matplotlib for validation; full UI deferred. Modern era (Cold War–present) as prototype. Maritime warfare fully integrated, not deferred.
 
-**Current status**: Phase 98 complete — Block 11 in progress. ~10,765 tests (~10,349 Python + 416 frontend vitest). 98 phases delivered across 11 blocks. Blocks 1–10 COMPLETE. Block 11 Phase 98 complete (shared prework); Phases 99–102 pending (Debecka, Khafji, Fallujah, Bint Jbeil).
+**Current status**: Phase 99 complete — Block 11 in progress. ~10,772 tests (~10,356 Python + 416 frontend vitest). 99 phases delivered across 11 blocks. Blocks 1–10 COMPLETE. Block 11 Phases 98–99 complete (prework + Debecka Pass); Phases 100–102 pending (Khafji, Fallujah, Bint Jbeil).
 
 ## Python & Package Management
 **Requires Python >=3.12** (pinned to 3.12.10 via `.python-version`).
@@ -165,7 +165,7 @@ All phase details are in `docs/devlog/` (one file per phase). Per-phase tables i
 | Phase | Status | Focus |
 |-------|--------|-------|
 | 98 | Complete | Shared prework — gap audit (4 OOB briefs), envelope helpers (6 fns + 26 tests), calibration template, depth checklist template |
-| 99 | Pending | Debecka Pass (2003) — ATGM, CAS, blue-on-blue; smallest template validator |
+| 99 | Complete | Debecka Pass (2003) — 12 new YAMLs (6 units + 3 weapons + 5 ammo), scenario YAML, 7 regression tests, 3 documented engine-fidelity gaps (Javelin non-engagement, CAS bombs, Peshmerga granularity) |
 | 100 | Pending | Khafji (1991) — naval gunfire (Wisconsin), multi-domain, morale cascade |
 | 101 | Pending | Fallujah Phase Line Fran (2004) — urban + IED/UW, AC-130, fire zones |
 | 102 | Pending | Bint Jbeil + INS Hanit (2006) — ATGM vs. MBT, naval missile; Block 11 validation |

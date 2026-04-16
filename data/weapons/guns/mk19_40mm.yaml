@@ -1,0 +1,32 @@
+# Mk 19 Mod 3 40mm Automatic Grenade Launcher
+# Belt-fed crew-served automatic grenade launcher; vehicle-mounted on SF
+# GMVs at the Battle of Debecka Pass (2003) alongside the M2HB .50 cal.
+# Fires 40x53mm high-velocity grenades from 32/48-round linked belts.
+# Cyclic 325-375 rpm; sustained ~40 rpm; max effective area 2,212 m.
+# Modeled as ROCKET_LAUNCHER (WeaponCategory), matching rpg7.yaml pattern
+# for HE-projecting ground weapons using 40mm grenade munitions.
+# Sources:
+#   - FM 3-22.27 "MK 19 40-mm Grenade Machine Gun, MOD 3" (Tier 1)
+#   - Jane's Infantry Weapons (Tier 3)
+weapon_id: mk19_40mm
+display_name: "Mk 19 Mod 3 40mm Automatic Grenade Launcher"
+category: ROCKET_LAUNCHER
+caliber_mm: 40.0
+muzzle_velocity_mps: 241.0
+max_range_m: 2212.0
+min_range_m: 30.0
+rate_of_fire_rpm: 60.0
+burst_size: 6
+base_accuracy_mrad: 4.0
+guidance: NONE
+magazine_capacity: 48
+reload_time_s: 15.0
+compatible_ammo:
+  - mk19_40mm_he
+weight_kg: 35.3
+reliability: 0.90
+barrel_life_rounds: 25000
+requires_deployed: false
+traverse_deg: 360.0
+elevation_min_deg: -20.0
+elevation_max_deg: 40.0

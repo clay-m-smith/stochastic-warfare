@@ -1,0 +1,19 @@
+# M720 60mm Mortar HE Round
+# Standard 60mm HE round fired from the M224 lightweight mortar.
+# Anti-personnel fragmentation with ~3.8 kg round mass.
+# Sources:
+#   - FM 3-22.90 "Mortars" (Tier 1)
+#   - USMC MCRP 3-15.2B (Tier 1)
+ammo_id: m720_60mm_he
+display_name: "M720 60mm Mortar HE"
+ammo_type: HE
+mass_kg: 1.7
+diameter_mm: 60.0
+drag_coefficient: 0.35
+penetration_mm_rha: 0.0
+blast_radius_m: 20.0
+fragmentation_radius_m: 50.0
+guidance: NONE
+propulsion: none
+max_speed_mps: 223.0
+unit_cost_factor: 0.3

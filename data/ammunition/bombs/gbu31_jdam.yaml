@@ -1,0 +1,26 @@
+# GBU-31 JDAM 2000lb GPS-Guided Bomb
+# Mk 84 (~894 kg) base warhead with JDAM tail kit (~40 kg) providing
+# inertial + GPS midcourse guidance. All-weather, fire-and-forget.
+# Delivered by B-52H against Objective Stone in preparatory strike at
+# the Battle of Debecka Pass (2003). No terminal seeker (all-inertial).
+# Sources:
+#   - USAF Fact Sheet GBU-31 JDAM (Tier 1)
+#   - Jane's Air-Launched Weapons (Tier 3)
+#   - OIF after-action reporting (Tier 2/3)
+ammo_id: gbu31_jdam
+display_name: "GBU-31 JDAM 2000lb GPS-Guided Bomb"
+ammo_type: GUIDED
+mass_kg: 930.0
+diameter_mm: 457.0
+drag_coefficient: 0.35
+penetration_mm_rha: 0.0
+blast_radius_m: 120.0
+fragmentation_radius_m: 400.0
+guidance: GPS
+seeker_fov_deg: 0.0
+seeker_range_m: 0.0
+pk_at_reference: 0.85
+countermeasure_susceptibility: 0.02
+propulsion: none
+max_speed_mps: 0.0
+unit_cost_factor: 30.0
