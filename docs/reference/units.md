@@ -70,6 +70,9 @@ equipment:
 | `insurgent_squad` | Insurgent Squad | infantry | 1.1 | AK-47 + RPG-7 |
 | `javelin_team` | Javelin ATGM Team | infantry | 1.5 | FGM-148 Javelin |
 | `kornet_team` | Kornet ATGM Team | infantry | 1.5 | 9M133 Kornet |
+| `peshmerga_irregular` | KDP Peshmerga Irregular | infantry | 1.2 | AKM + PKM + RPG-7 |
+| `iraqi_1st_mech_dismount` | Iraqi 1st Mech Inf Dismount (2003) | infantry | 2.2 | AKM + PKM + RPG-7 |
+| `iraqi_mtlb` | MT-LB (Iraqi) | infantry | 17.0 | PKT 7.62mm |
 | `civilian_noncombatant` | Civilian Noncombatant | civilian | 1.4 | None |
 | `engineer_squad` | Engineer Squad | support | 1.4 | Small arms |
 | `m109_paladin` | M109A6 Paladin | artillery | 16.0 | M284 155mm |
@@ -81,6 +84,8 @@ equipment:
 | Unit Type | Display Name | Category | Speed (m/s) | Key Weapon |
 |-----------|-------------|----------|-------------|------------|
 | `f16c` | F-16C Fighting Falcon | fixed_wing | 590 | AIM-120 AMRAAM |
+| `f14b` | F-14B Tomcat (VF-32) | fixed_wing | 680 | AIM-54/LANTIRN + GBU-16 |
+| `fa18c` | F/A-18C Hornet | fixed_wing | 585 | AGM-65/LITENING + GBU-31 |
 | `a10c` | A-10C Thunderbolt II | fixed_wing | 210 | GAU-8 30mm |
 | `su27s` | Su-27S Flanker | fixed_wing | 680 | R-27/R-73 |
 | `mig29a` | MiG-29A Fulcrum | fixed_wing | 650 | R-73/R-77 |
@@ -101,6 +106,7 @@ equipment:
 | `s300pmu` | S-300PMU | air_defense | 48N6 missile |
 | `sa6_gainful` | SA-6 Gainful (2K12 Kub) | air_defense | 3M9 missile |
 | `sa11_buk` | SA-11 Buk | air_defense | 9M38 missile |
+| `zsu_57_2` | ZSU-57-2 SPAAG | air_defense | 2× 57mm S-68 (direct-fire) |
 | `manpads` | MANPADS Team | air_defense | Stinger/Igla |
 
 ### Naval Domain

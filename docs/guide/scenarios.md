@@ -167,13 +167,14 @@ documented_outcomes:
 
 ---
 
-## Modern Scenarios (30 total)
+## Modern Scenarios (33 total)
 
 ### Engagement Scenarios
 
 | Scenario | Description | Duration | Key Features |
 |----------|-------------|----------|--------------|
 | **73 Easting** | Eagle Troop vs Iraqi armor, 1991 | 30 min | Desert, thermal advantage, validated |
+| **Debecka Pass** | US SF + Peshmerga vs Iraqi 1st Mech, 2003 | 4 hr | Javelin ATGM, CAS, ridgeline defense, golden-scenario (Block 11) |
 | **Falklands Naval** | Sheffield vs Exocet attack, 1982 | 1 hr | Naval, missile exchange |
 | **Golan Heights** | Israeli defense vs Syrian armor, 1973 | 6 hr | Prepared defense, force ratio |
 | **Bekaa Valley 1982** | Israeli SEAD vs Syrian IADS | 2 hr | EW, SEAD, air defense |
