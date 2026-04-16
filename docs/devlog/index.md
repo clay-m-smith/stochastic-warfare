@@ -118,7 +118,7 @@ Rolling record of implementation decisions, changes, and lessons learned across 
 | 97 | Data Catalog & Block 10 Validation | **Complete** | [phase-97.md](phase-97.md) |
 | | | | |
 | **Block 11: Golden Scenarios & End-to-End Engine Validation** ||||
-| 98 | Shared Prework — Gap Audit, Calibration Conventions, Depth Framework | **Pending** | — |
+| 98 | Shared Prework — Gap Audit, Calibration Conventions, Depth Framework | **Complete** | [phase-98.md](phase-98.md) |
 | 99 | Debecka Pass (2003) | **Pending** | — |
 | 100 | Khafji (1991) | **Pending** | — |
 | 101 | Fallujah Phase Line Fran (2004) | **Pending** | — |

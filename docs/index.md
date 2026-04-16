@@ -3,8 +3,8 @@
 **High-fidelity stochastic wargame simulator** -- multi-scale, multi-domain, multi-era.
 
 ![Python](https://img.shields.io/badge/python-%3E%3D3.12-blue)
-![Tests](https://img.shields.io/badge/tests-10%2C739_passing-brightgreen)
-![Phase](https://img.shields.io/badge/phase-97_Block--10-blue)
+![Tests](https://img.shields.io/badge/tests-10%2C765_passing-brightgreen)
+![Phase](https://img.shields.io/badge/phase-98_Block--11-blue)
 
 ---
 
@@ -75,9 +75,10 @@ See the [Getting Started Guide](guide/getting-started.md) for a complete tutoria
 | Block 7 | 58--67 | Final engine hardening — structural verification, environment wiring, engine integration | **Complete** |
 | Block 8 | 68--82 | Consequence enforcement, scenario expansion, postmortem & documentation | **Complete** |
 | Block 9 | 83--91 | Performance at scale — profiling, spatial culling, LOD, parallelism | **Complete** |
-| Block 10 | 92--97 | UI depth & engine exposure — analytics, frame enrichment, metadata | **In Progress** |
+| Block 10 | 92--97 | UI depth & engine exposure — analytics, frame enrichment, metadata | **Complete** |
+| Block 11 | 98--102 | Golden scenarios — Debecka Pass, Khafji, Fallujah PL Fran, Bint Jbeil + INS Hanit | **In Progress** |
 
-**~10,694 tests** (~10,322 Python + 372 frontend) across ~400 test files. **~748 YAML data files** defining units, weapons, ammunition types, sensors, signatures, doctrines, commanders, and 46 scenarios across 5 eras.
+**~10,765 tests** (~10,349 Python + 416 frontend) across ~400 test files. **~750 YAML data files** defining units, weapons, ammunition types, sensors, signatures, doctrines, commanders, and 46 scenarios across 5 eras.
 
 ## License
 

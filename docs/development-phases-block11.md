@@ -22,7 +22,7 @@ Block 11 is the **golden scenarios block**. The engine has ~60 domain engines an
 
 ## Phase 98: Shared Prework — Gap Audit, Calibration Conventions, Depth Framework
 
-**Status**: Pending.
+**Status**: Complete. See [phase-98.md](devlog/phase-98.md).
 
 **Goal**: Build the shared infrastructure all four scenarios will consume — a gap audit of missing units/weapons, a calibration target template, and a depth checklist framework. This phase produces no scenario YAML; it produces the scaffolding that makes scenario authoring mechanical.
 

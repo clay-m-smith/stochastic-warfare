@@ -73,6 +73,7 @@ nav:
     - Block 8 Design: brainstorm-block8.md
     - Block 9 Design: brainstorm-block9.md
     - Block 10 Design: brainstorm-block10.md
+    - Block 11 Design: brainstorm-block11.md
   - Development Phases:
     - MVP (0-10): development-phases.md
     - Post-MVP (11-24): development-phases-post-mvp.md
@@ -85,6 +86,7 @@ nav:
     - Block 8 (68-82): development-phases-block8.md
     - Block 9 (83-91): development-phases-block9.md
     - Block 10 (92-97): development-phases-block10.md
+    - Block 11 (98-102): development-phases-block11.md
   - Devlog:
     - Overview: devlog/index.md
     - Phase 0 - Scaffolding: devlog/phase-0.md
@@ -186,6 +188,7 @@ nav:
     - Phase 95 - Calibration & Scenario Editor Depth: devlog/phase-95.md
     - Phase 96 - Analysis & Event Interaction: devlog/phase-96.md
     - Phase 97 - Data Catalog & Block 10 Validation: devlog/phase-97.md
+    - Phase 98 - Shared Prework (Block 11 Golden Scenarios): devlog/phase-98.md
   - Specifications:
     - Project Structure: specs/project-structure.md
     - Skills & Hooks: skills-and-hooks.md
