@@ -1007,6 +1007,9 @@ _WEAPON_NAME_MAP: dict[str, str] = {
     "M61A1 Vulcan 20mm": "m61a1_vulcan",
     "M230 Chain Gun 30mm": "m61a1_vulcan",
     "AN/ALQ-99 Jamming Pods": "m61a1_vulcan",  # EW pod, mapped to placeholder
+    "Wing/Fuselage Ordnance Stations": "bomb_rack_generic",
+    "CSRL Rotary Launcher": "bomb_rack_generic",  # B-52H internal bomb launcher
+    "Bomb Rack": "bomb_rack_generic",
     "M299 Launcher": "agm114_hellfire",
     "AIM-9L Sidewinder": "aim9x_sidewinder",
     "DEFA 553 30mm Cannon": "m61a1_vulcan",
@@ -1228,6 +1231,8 @@ _SENSOR_NAME_MAP: dict[str, str] = {
     "AN/PVS-31 NVG": "nvg",
     "Multi-Function Sensor Suite": "thermal_sight",
     "Mine Detection Set": "ground_search_radar",
+    "Javelin CLU Thermal Sight": "thermal_sight",
+    "SOFLAM AN/PEQ-1 Laser Designator": "thermal_sight",
     # ── Modern air ───────────────────────────────────────────────────
     "AN/APG-68 Radar": "apg68_radar",
     "AN/APG-79 AESA Radar": "apg68_radar",

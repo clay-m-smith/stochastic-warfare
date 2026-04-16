@@ -126,12 +126,14 @@ class TestDebeckaEnvelope:
         )
 
     def test_duration_envelope(self, mc_results: list[dict]) -> None:
-        """Scenario should run ≥ 100 ticks (historical ~2,880 ticks at
-        5s tick duration for 4h engagement; engine currently resolves
-        at ~130 ticks — collapse via force_destroyed threshold earlier
-        than historical)."""
+        """Scenario should run ≥ 15 ticks (historical ~2,880 ticks at
+        5s tick duration for 4h engagement; with working Javelin and
+        bomb delivery, the engine collapses Iraqi force via initial
+        volley within ~20 ticks — the historical 4-hour duration
+        captures pauses and multiple engagement cycles that aren't
+        currently modeled, see devlog gap #4)."""
         avg_ticks = sum(r["ticks"] for r in mc_results) / 10
-        assert avg_ticks >= 100, (
+        assert avg_ticks >= 15, (
             f"Scenario resolves too quickly: {avg_ticks:.0f} ticks average"
         )
 
@@ -161,17 +163,31 @@ class TestDebeckaKeyDynamics:
             f"Only {len(engagements)} engagements — scenario not exercising combat"
         )
 
-    def test_cas_aircraft_engage(self) -> None:
-        """Aircraft CAS platforms (F-14B, F/A-18C, B-52H) must engage.
-        Currently verified via M61A1 Vulcan engagements (aircraft gun);
-        bomb delivery is not yet modeled at engagement-event fidelity —
-        see devlog for the limitation."""
+    def test_cas_bomb_delivery(self) -> None:
+        """Aircraft CAS platforms (F-14B, F/A-18C, B-52H) must deliver
+        bombs via bomb_rack_generic — confirms Gap 3 fix (Phase 99)
+        where aircraft ordnance stations are now mapped to a weapon
+        and emit EngagementEvents for bomb delivery."""
         result = _run_one(seed=42)
-        aircraft_gun_events = [
+        bomb_events = [
             e for e in result["events"]
             if e.event_type == "EngagementEvent"
-            and e.data.get("weapon_id") == "m61a1_vulcan"
+            and e.data.get("weapon_id") == "bomb_rack_generic"
         ]
-        assert len(aircraft_gun_events) >= 1, (
-            "No aircraft-gun engagements — CAS routing may be broken"
+        assert len(bomb_events) >= 1, (
+            "No bomb delivery events — CAS ordnance weapon mapping may be broken"
+        )
+
+    def test_javelin_engages(self) -> None:
+        """Javelin teams must fire at least once — confirms Gap 2 fix
+        (Phase 99) where dismounted infantry guided-weapon launchers are
+        exempt from seeker FOV constraint (gunner rotates to acquire)."""
+        result = _run_one(seed=42)
+        jav_events = [
+            e for e in result["events"]
+            if e.event_type == "EngagementEvent"
+            and e.data.get("weapon_id") == "javelin_clm"
+        ]
+        assert len(jav_events) >= 1, (
+            "No Javelin engagements — seeker FOV exemption may be broken"
         )

@@ -231,13 +231,16 @@ calibration_overrides:
   red_cohesion: 0.35
 
   # Starting positions — Blue on Dog Ridge (north); Red counterattacking
-  # from south along approach road.  4000 m separation matches historical
-  # Javelin engagement range at the upper bound (4200 m at Debecka was
-  # beyond nominal 2500 m CLU spec — operational reality vs. datasheet).
+  # from south along approach road.  build_forces stacks units at 50m
+  # spacing centered on start_y, so with 28 red units spanning ~1400m,
+  # red_start_y=2500 places Iraqi armor at y~1800–2000 — within Javelin
+  # effective range (2000 m reference Pk=0.94 band) from blue_javelin_teams
+  # at y~3500.  Combat ranges land in the 1500–2500 m band, close to the
+  # lower bound of historical Debecka employment.
   blue_start_x: 4000.0
   blue_start_y: 4500.0
   red_start_x: 4000.0
-  red_start_y: 500.0
+  red_start_y: 2500.0
 
   # Weapon assignments — map equipment names to weapon_ids
   weapon_assignments:

@@ -26,6 +26,7 @@ from stochastic_warfare.core.logging import get_logger
 from stochastic_warfare.core.types import Domain, ModuleId, Position
 from stochastic_warfare.entities.base import Unit, UnitStatus
 from stochastic_warfare.entities.events import UnitDestroyedEvent, UnitDisabledEvent
+from stochastic_warfare.entities.unit_classes.ground import GroundUnitType
 from stochastic_warfare.detection.sensors import SensorType
 from stochastic_warfare.morale.state import MoraleState, _MORALE_EFFECTS
 
@@ -4175,12 +4176,20 @@ class BattleManager:
                             continue  # target outside weapon elevation arc
                     # Phase 55c-2: seeker FOV constraint — guided munitions
                     # must acquire target within seeker cone.
-                    # Phase 67: aircraft can turn to face targets before firing,
-                    # so seeker FOV only constrains non-aerial platforms.
+                    # Phase 67: aircraft can turn to face targets before firing.
+                    # Phase 99: dismounted infantry (shoulder/tripod-fired guided
+                    # weapons — Javelin, Stinger, Kornet teams) can rotate to
+                    # acquire; the constraint applies to fixed/turret-mounted
+                    # launchers only.
                     _seeker_fov = getattr(ammo_def, "seeker_fov_deg", 0.0)
                     if isinstance(_seeker_fov, (int, float)) and _seeker_fov > 0:
                         _att_domain_sk = getattr(attacker, "domain", None)
-                        if _att_domain_sk != Domain.AERIAL:
+                        _att_ground_sk = getattr(attacker, "ground_type", None)
+                        _seeker_exempt = (
+                            _att_domain_sk == Domain.AERIAL
+                            or _att_ground_sk == GroundUnitType.LIGHT_INFANTRY
+                        )
+                        if not _seeker_exempt:
                             _launch_bearing = math.atan2(
                                 best_target.position.easting - attacker.position.easting,
                                 best_target.position.northing - attacker.position.northing,

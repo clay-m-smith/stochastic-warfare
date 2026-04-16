@@ -15,6 +15,10 @@ reload_time_s: 0.0
 compatible_ammo:
   - mk82_500lb
   - mk84_2000lb
+  - gbu12_paveway
+  - gbu16_paveway
+  - gbu31_jdam
+  - gbu38_jdam
 weight_kg: 150.0
 reliability: 0.90
 barrel_life_rounds: 0

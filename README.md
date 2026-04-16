@@ -163,7 +163,7 @@ data/                     # ~748 YAML data files
   eras/                    # Era-specific data packages (WW2, WW1, Napoleonic, Ancient/Medieval)
   scenarios/              # 32 modern scenarios (engagement, campaign, EW, space, CBRN, escalation, joint, calibration, benchmark) + 5 test
 
-tests/                    # ~10,772 engine+API+frontend tests across ~400 test files
+tests/                    # ~10,773 engine+API+frontend tests across ~400 test files
 docs/                     # specs, brainstorm, devlog, development phases
 ```
 
@@ -275,11 +275,11 @@ For the full package tree and module decomposition, see [`docs/specs/project-str
 | 96 | Analysis & Event Interaction (Block 10) | 13 | **Complete** |
 | 97 | Data Catalog & Block 10 Validation (Block 10) | 7 | **Complete** |
 | 98 | Shared Prework — Gap Audit, Envelope Helpers, Depth Framework (Block 11) | 26 | **Complete** |
-| 99 | Debecka Pass (2003) (Block 11) | 7 | **Complete** |
+| 99 | Debecka Pass (2003) (Block 11) | 8 | **Complete** |
 | 100 | Khafji (1991) (Block 11) | TBD | **Pending** |
 | 101 | Fallujah Phase Line Fran (2004) (Block 11) | TBD | Pending |
 | 102 | Bint Jbeil + INS Hanit Vignette (2006) (Block 11) | TBD | Pending |
-| | **Total** | **~10,772** | |
+| | **Total** | **~10,773** | |
 
 For the full phase roadmap, see [`docs/development-phases.md`](docs/development-phases.md) (MVP), [`docs/development-phases-post-mvp.md`](docs/development-phases-post-mvp.md) (post-MVP), and `docs/development-phases-block{N}.md` for Blocks 2–11. For per-phase implementation logs, see [`docs/devlog/`](docs/devlog/).
 
