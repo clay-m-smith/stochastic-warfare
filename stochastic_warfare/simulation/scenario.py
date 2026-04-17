@@ -75,6 +75,69 @@ class ReinforcementConfig(BaseModel):
         return v
 
 
+class InitialIEDConfig(BaseModel):
+    """Pre-emplaced IED / HBIED at scenario start (Phase 101).
+
+    Used for urban scenarios where insurgents have pre-prepared the
+    battlespace (e.g. Fallujah house-borne IEDs, Chechnya wired blocks).
+    """
+
+    position: list[float]  # [easting, northing]
+    subtype: str = "command_wire"  # command_wire | pressure_plate | remote | vbied | hbied
+    blast_radius_m: float = 10.0
+    concealment: float = 0.7
+    emplaced_by: str = "pre_emplaced"  # placeholder unit id
+
+    @field_validator("subtype")
+    @classmethod
+    def _known_subtype(cls, v: str) -> str:
+        allowed = {"command_wire", "pressure_plate", "remote", "vbied", "hbied"}
+        if v not in allowed:
+            raise ValueError(f"IED subtype must be one of {allowed}; got {v!r}")
+        return v
+
+    @field_validator("concealment")
+    @classmethod
+    def _clamp_concealment(cls, v: float) -> float:
+        if not 0.0 <= v <= 1.0:
+            raise ValueError(f"concealment must be in [0, 1]; got {v}")
+        return v
+
+
+class ScriptedEventConfig(BaseModel):
+    """Timed scripted event (Phase 101).
+
+    Fired once at the configured ``time_s`` by the campaign manager.
+    ``event_type`` selects the handler and ``params`` is forwarded to it.
+    Honest types only — each handler invokes real engine APIs so outcomes
+    are not magic (no scripted kills/wins).
+    """
+
+    time_s: float
+    event_type: str
+    params: dict[str, Any] = {}
+
+    @field_validator("time_s")
+    @classmethod
+    def _non_negative_time(cls, v: float) -> float:
+        if v < 0:
+            raise ValueError("time_s must be non-negative")
+        return v
+
+    @field_validator("event_type")
+    @classmethod
+    def _known_event_type(cls, v: str) -> str:
+        allowed = {
+            "hbied_detonation",   # params: obstacle_id, target_unit_id
+            "wp_fire_zone",       # params: center (list), radius_m, duration_s?, fuel_load?
+            "unit_teleport",      # params: unit_id, position (list)
+            "casualty_pulse",     # params: unit_id, casualties (int)
+        }
+        if v not in allowed:
+            raise ValueError(f"event_type must be one of {allowed}; got {v!r}")
+        return v
+
+
 class ObjectiveConfig(BaseModel):
     """Campaign objective definition."""
 
@@ -201,6 +264,8 @@ class CampaignScenarioConfig(BaseModel):
     objectives: list[ObjectiveConfig] = []
     victory_conditions: list[VictoryConditionConfig] = []
     reinforcements: list[ReinforcementConfig] = []
+    initial_ieds: list[InitialIEDConfig] = []  # Phase 101 — pre-emplaced IEDs/HBIEDs
+    scripted_events: list[ScriptedEventConfig] = []  # Phase 101 — timed scripted events
     calibration_overrides: CalibrationSchema = CalibrationSchema()
     escalation_config: dict[str, Any] | None = None
     ew_config: dict[str, Any] | None = None
@@ -433,6 +498,10 @@ class SimulationContext:
 
     # Flat calibration dict for O(1) battle-loop access (Phase 86)
     cal_flat: dict[str, Any] = field(default_factory=dict)
+
+    # Phase 101 — Fallujah urban scenario support
+    scripted_events: list[Any] = field(default_factory=list)
+    initial_ied_obstacle_ids: list[str] = field(default_factory=list)
 
     # ── Helpers ──────────────────────────────────────────────────────
 
@@ -833,9 +902,52 @@ class ScenarioLoader:
         # 10. Commander assignments (Phase 25d)
         self._apply_commander_assignments(ctx, config)
 
+        # 11. Pre-emplaced IEDs / HBIEDs (Phase 101)
+        self._emplace_initial_ieds(ctx, config)
+
+        # 12. Scripted events — stash on context for campaign manager (Phase 101)
+        ctx.scripted_events = list(config.scripted_events)
+
         return ctx
 
     # ── Private helpers ──────────────────────────────────────────────
+
+    def _emplace_initial_ieds(
+        self,
+        ctx: SimulationContext,
+        config: CampaignScenarioConfig,
+    ) -> None:
+        """Emplace pre-prepared IEDs / HBIEDs (Phase 101).
+
+        Used for urban scenarios where insurgents have pre-wired the
+        battlespace before coalition forces arrive (e.g. Fallujah 2004).
+        Each entry calls ``unconventional_engine.emplace_ied`` and the
+        returned obstacle IDs are registered on the context in order so
+        scripted events can reference them by index.
+        """
+        if not config.initial_ieds:
+            return
+        uw_eng = getattr(ctx, "unconventional_engine", None)
+        if uw_eng is None:
+            logger.warning(
+                "initial_ieds configured but unconventional_engine is None — skipping",
+            )
+            return
+        from stochastic_warfare.core.types import Position
+        obstacle_ids: list[str] = []
+        for idx, ied in enumerate(config.initial_ieds):
+            pos = Position(easting=ied.position[0], northing=ied.position[1], altitude=0.0)
+            obs_id = uw_eng.emplace_ied(
+                position=pos,
+                subtype=ied.subtype,
+                blast_radius_m=ied.blast_radius_m,
+                concealment=ied.concealment,
+                emplaced_by=ied.emplaced_by or f"pre_emplaced_{idx}",
+                timestamp=ctx.clock.current_time,
+            )
+            obstacle_ids.append(obs_id)
+        ctx.initial_ied_obstacle_ids = obstacle_ids
+        logger.info("Emplaced %d pre-prepared IEDs/HBIEDs", len(obstacle_ids))
 
     def _apply_commander_assignments(
         self,
@@ -1593,6 +1705,21 @@ class ScenarioLoader:
             pop_rng = rng_mgr.get_stream(ModuleId.POPULATION)
             result["population_manager"] = CivilianManager(bus, pop_rng)
             result["collateral_engine"] = CollateralEngine(bus)
+        else:
+            # Phase 101 — unconventional_engine is needed for initial_ieds /
+            # urban scenarios even without a full escalation_config.  Lightweight
+            # engines (bus + rng only) so zero cost when unused.
+            if config.initial_ieds:
+                from stochastic_warfare.combat.unconventional import (
+                    UnconventionalWarfareEngine,
+                )
+                from stochastic_warfare.combat.damage import IncendiaryDamageEngine
+                combat_rng = rng_mgr.get_stream(ModuleId.COMBAT)
+                result["unconventional_engine"] = UnconventionalWarfareEngine(
+                    bus, combat_rng,
+                )
+                if "incendiary_engine" not in result:
+                    result["incendiary_engine"] = IncendiaryDamageEngine(combat_rng)
 
         # 7. Era engines
         if config.era != "modern":

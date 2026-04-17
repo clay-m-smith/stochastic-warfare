@@ -248,7 +248,7 @@ Depth checklist per template, scenario-specific observations for naval engagemen
 
 ## Phase 101: Fallujah Phase Line Fran (Iraq, November 9–13, 2004)
 
-**Status**: Pending.
+**Status**: Complete. See [phase-101.md](devlog/phase-101.md).
 
 **Goal**: Third golden scenario. Urban combat showcase with unconventional warfare elements. 3rd Battalion, 5th Marines + 2nd Battalion, 7th Cavalry sector advance from Phase Line Fran to Phase Line Jena during Operation Al-Fajr. Heavy IED emplacement, booby-trapped structures, AC-130 gunship support, M1A2 + AAV + LAV-25 combined arms, Iraqi National Guard blocking force.
 

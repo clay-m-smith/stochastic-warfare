@@ -1,0 +1,82 @@
+# ScanEagle — Boeing/Insitu contractor-operated long-endurance UAV
+#
+# Boeing/Insitu (now Boeing Insitu) ScanEagle is a small, long-endurance,
+# fixed-wing ISR UAV derived from the Insitu SeaScan civil airframe.
+# It is the archetype of the contractor-operated tactical UAV —
+# launched from a pneumatic catapult, recovered via the "Skyhook"
+# sky-retrieval system (cable + boom; no runway required), and
+# commonly operated from a ship, from an FOB, or from a small land
+# launch/recovery site. At Fallujah ScanEagle provided persistent
+# overhead ISR at the regimental/MEF level, complementing the
+# squad-level Dragon Eye and the theater-level Predator/Global Hawk.
+#
+# Platform:
+#   Wingspan ~3.1 m, length ~1.5 m, MTOW ~20 kg
+#   Max speed ~35 m/s (~126 km/h, ~68 kt)
+#   Max altitude ~4,900 m (16,000 ft ceiling)
+#   Endurance 22+ hours (the signature ScanEagle capability —
+#     enables multi-shift persistent orbit over a target area)
+#   Launch: pneumatic catapult (SuperWedge); recovery: Skyhook
+#   (cable-retrieval system — captures the aircraft by wingtip hook)
+#
+# Sensors:
+#   EO/IR gimbaled turret (stabilized; sensor ball with daylight
+#     camera + thermal imager); laser rangefinder on later blocks
+#   No weapons — pure ISR
+#
+# Control:
+#   2-person ground station (pilot + sensor operator), line-of-sight
+#   or SATCOM-relayed data link. Contractor crew (Boeing/Insitu
+#   employees, not uniformed aircrew).
+#
+# Fallujah (Operation Al-Fajr, Nov 2004):
+#   DVIDS DoD release "ScanEagle Proves Worth in Fallujah Fight"
+#   documents ScanEagle's ISR contribution during Al-Fajr —
+#   persistent overhead surveillance, IED-emplacement detection,
+#   battle-damage assessment, and cueing of manned CAS and attack
+#   helicopters. The 22-hour endurance allowed a 2-3 airframe
+#   rotation to maintain a continuous orbit over the city.
+#
+# Contractor operation is modeled as 0.85 training — professional
+# operators, typically prior-service, with long operational
+# continuity. Higher than Marine Dragon Eye operators who rotate
+# through 2-week courses.
+#
+# Sources:
+#   - Tier 1: DVIDS DoD release, "ScanEagle Proves Worth in Fallujah
+#             Fight" (combat employment, endurance, contractor ops).
+#   - Tier 3: Boeing / Insitu ScanEagle fact sheet (airframe specs,
+#             catapult/Skyhook launch-recovery, sensor suite).
+unit_type: scaneagle_uav
+domain: aerial
+display_name: "ScanEagle UAV"
+aerial_type: UAV_RECON
+max_speed: 35.0  # m/s (~126 km/h)
+training_level: 0.85  # contractor operators — professional continuity
+service_ceiling: 4900.0  # ~16,000 ft ceiling
+data_link_range: 100000.0  # ~100 km LOS typical; longer via relay
+crew:
+  - role: PILOT  # ground-station pilot (contractor)
+    count: 1
+    skill: EXPERIENCED
+  - role: SENSOR_OPERATOR  # EO/IR turret operator (contractor)
+    count: 1
+    skill: EXPERIENCED
+equipment:
+  - name: "ScanEagle EO/IR Gimbal"
+    category: SENSOR
+    weight_kg: 2.5  # stabilized EO/IR sensor ball; daylight + thermal
+    reliability: 0.86
+  - name: "3W-28 Two-Stroke Engine"
+    category: PROPULSION
+    weight_kg: 1.8  # ~28cc two-stroke pusher
+    reliability: 0.87
+    temperature_range: [-20.0, 50.0]
+  - name: "Line-of-Sight Data Link"
+    category: COMMUNICATION
+    weight_kg: 1.2
+    reliability: 0.87
+  - name: "GPS/INS Navigation"
+    category: SENSOR
+    weight_kg: 0.5
+    reliability: 0.90

@@ -1,0 +1,83 @@
+# Iraqi Foreign Fighter Cell (AQI / Chechen-trained) — Fallujah, Nov 2004
+#
+# 6-10 man foreign-fighter cell, representative of the al-Qaeda in Iraq
+# (AQI) and Chechen-linked element that formed the hardened defensive
+# core of Fallujah during Operation Al-Fajr. Post-battle detainee and
+# KIA nationality analysis indicated roughly 20% of defenders were
+# non-Iraqi (Saudi, Syrian, Chechen, Yemeni, North African), with
+# disproportionate combat impact per fighter — many were veterans of
+# Chechnya or Afghanistan, and several cells were trained by Chechen
+# instructors who had transferred urban-defense TTPs into Fallujah
+# preparations. Training_level 0.60 sits between standard insurgent
+# (0.35) and conventional infantry (0.80), reflecting genuine combat
+# experience without formal-military doctrinal grounding. Cohesion is
+# very high: died-in-place detainee data suggests near-total commitment
+# to the defender role, with ideology and suicide-vest options reducing
+# the probability of surrender or rout.
+#
+# Weapons mix emphasizes AK-74 (preferred by Chechen-trained fighters),
+# PKM, and RPG-7. Suicide-vest (SVEST) option modeled as an
+# additional VBIED/IED risk in the consequence framework; not all cells
+# carried them but a meaningful minority did.
+#
+# Sources:
+#   - Matthews, Matt M. "Operation AL FAJR: A Study in Army and Marine
+#     Corps Joint Operations." Combat Studies Institute Press, Fort
+#     Leavenworth, 2006 (Tier 1) — foreign fighter demographics,
+#     Chechen trainer presence, AQI cell behavior.
+#   - Estes, Kenneth W. "U.S. Marines in Iraq, 2004-2005: Into the
+#     Fray." USMC History Division, 2011 (Tier 1) — defender fanaticism,
+#     died-in-place behavior.
+#   - RAND Corporation, "Lessons from the Iraq War, 2003-2011," RR-1602,
+#     2017 (Tier 2) — foreign fighter training tier, AQI organization.
+#   - RUSI, "The Sunni Insurgency in Iraq" (Tier 2) — AQI cell structure
+#     and foreign fighter pipeline analysis.
+#   - Washington Institute, "Faces of Battle: Iraqi Insurgents in
+#     Fallujah" (Tier 2) — cross-ref on foreign fighter nationality mix.
+unit_type: iraqi_foreign_fighter
+domain: ground
+display_name: "Iraqi Foreign Fighter Cell (AQI/Chechen)"
+ground_type: LIGHT_INFANTRY
+max_speed: 1.2  # m/s (~4.3 km/h, trained cell, better tactical movement)
+training_level: 0.60
+armor_front: 0.2  # some cells had body armor from prior caches
+armor_side: 0.1
+crew:
+  - role: COMMANDER
+    count: 1
+    skill: EXPERIENCED  # veteran of Chechnya/Afghanistan
+  - role: RIFLEMAN
+    count: 5
+    skill: TRAINED
+  - role: GUNNER
+    count: 2  # PKM gunner + RPG gunner
+    skill: TRAINED
+equipment:
+  - name: "AKM"
+    category: WEAPON
+    weight_kg: 3.1
+    reliability: 0.94
+  - name: "AK-74"
+    category: WEAPON
+    weight_kg: 3.3
+    reliability: 0.94
+  - name: "PKM GPMG"
+    category: WEAPON
+    weight_kg: 7.5
+    reliability: 0.88
+  - name: "RPG-7"
+    category: WEAPON
+    weight_kg: 6.3
+    reliability: 0.92
+  - name: "Suicide Vest (SVEST)"
+    category: WEAPON
+    weight_kg: 8.0
+    reliability: 0.95
+  - name: "Handheld Radio"
+    category: COMMUNICATION
+    weight_kg: 0.5
+    reliability: 0.75
+  - name: "Naked Eye Observation"
+    category: SENSOR
+    weight_kg: 0.5
+    reliability: 0.99

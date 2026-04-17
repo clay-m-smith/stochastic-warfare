@@ -1,0 +1,34 @@
+# Mk 153 Shoulder-Launched Multipurpose Assault Weapon (SMAW)
+# USMC reloadable 83.5mm rocket launcher. Used extensively in 2nd Fallujah
+# (Nov 2004) for bunker-busting, wall breaching, and anti-personnel strikes.
+# Fires HEDP (smaw_hedp) and the novel-explosive thermobaric NE round
+# (smaw_ne_thermobaric). ~500m point target / ~1000m area; min-arm ~10m.
+# Reload ~30s; sustained 3-5 rpm; 12.6kg launcher + ~6kg per rocket.
+# Sources:
+#   - TM 08670A-10/1 "Mk 153 Mod 0 SMAW" (Tier 1)
+#   - USMC Lessons Learned, 2nd Bn 1st Marines Fallujah AAR (Tier 1)
+#   - Jane's Infantry Weapons (Tier 3)
+#   - GlobalSecurity.org "SMAW-NE" (Tier 3; NE-round performance)
+weapon_id: mk153_smaw
+display_name: "Mk 153 SMAW 83.5mm Rocket Launcher"
+category: ROCKET_LAUNCHER
+caliber_mm: 83.5
+muzzle_velocity_mps: 220.0
+max_range_m: 500.0
+min_range_m: 10.0
+rate_of_fire_rpm: 4.0
+burst_size: 1
+base_accuracy_mrad: 4.0
+guidance: NONE
+magazine_capacity: 1
+reload_time_s: 30.0
+compatible_ammo:
+  - smaw_hedp
+  - smaw_ne_thermobaric
+weight_kg: 12.6
+reliability: 0.92
+barrel_life_rounds: 500
+requires_deployed: false
+traverse_deg: 360.0
+elevation_min_deg: -10.0
+elevation_max_deg: 60.0

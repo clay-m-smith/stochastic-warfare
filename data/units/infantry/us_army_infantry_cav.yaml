@@ -1,0 +1,88 @@
+# US Army TF 2-7 CAV Dismounted Infantry Squad — Operation Al-Fajr, Nov 2004
+#
+# 9-man mechanized infantry squad drawn from 2nd Battalion, 7th Cavalry
+# Regiment (1st Cavalry Division), one of two Army mechanized task forces
+# attached to Regimental Combat Teams 1 and 7 for Operation Al-Fajr.
+# Dismounts from M2A3 Bradley; operated in direct coordination with
+# M1A2 SEP tanks. Organization reflects the standard Army IN squad of
+# the period: squad leader + two fire teams (alpha/bravo) of 4 each.
+#
+# Organization:
+#   1 squad leader (M4A1)
+#   2 fire teams x 4 soldiers:
+#     - team leader (M4A1)
+#     - automatic rifleman (M249 SAW)
+#     - grenadier (M4A1 + M203 UGL)
+#     - rifleman / AT specialist (M4A1, carries AT-4)
+#   M240B GPMG fires from Bradley or attached at platoon level.
+#   Javelin CLU kept at platoon level (limited rounds, shared).
+#
+# Sources:
+#   - Matthews, Matt M. "Operation AL FAJR: A Study in Army and Marine
+#     Corps Joint Operations." Combat Studies Institute Press, Fort
+#     Leavenworth, 2006 (Tier 1) — TF 2-7 CAV composition, employment,
+#     Army-Marine joint ops.
+#   - Estes, Kenneth W. "U.S. Marines in Iraq, 2004-2005: Into the
+#     Fray." USMC History Division, 2011 (Tier 1) — Army task force
+#     integration into RCT battlespace.
+#   - FM 3-21.8, "The Infantry Rifle Platoon and Squad," US Army, 2007
+#     (Tier 1) — squad composition baseline.
+unit_type: us_army_infantry_cav
+domain: ground
+display_name: "US Army 2-7 CAV Dismount Squad"
+ground_type: MECHANIZED_INFANTRY
+max_speed: 1.3  # m/s (~5 km/h dismounted; mounted speed via Bradley)
+training_level: 0.80
+armor_front: 0.5  # IBA with SAPI
+armor_side: 0.3
+crew:
+  - role: COMMANDER
+    count: 1
+    skill: EXPERIENCED
+  - role: RIFLEMAN
+    count: 6
+    skill: TRAINED
+  - role: GUNNER
+    count: 2  # automatic riflemen (one per fire team)
+    skill: TRAINED
+equipment:
+  - name: "M4A1 SOPMOD"
+    category: WEAPON
+    weight_kg: 3.4
+    reliability: 0.95
+  - name: "M249 SAW"
+    category: WEAPON
+    weight_kg: 7.5
+    reliability: 0.90
+  - name: "M240B GPMG"
+    category: WEAPON
+    weight_kg: 12.5
+    reliability: 0.92
+  - name: "M203 40mm Grenade Launcher"
+    category: WEAPON
+    weight_kg: 1.4
+    reliability: 0.92
+  - name: "AT-4 LAW"
+    category: WEAPON
+    weight_kg: 6.7
+    reliability: 0.90
+  - name: "FGM-148 Javelin CLU"
+    category: WEAPON
+    weight_kg: 6.4
+    reliability: 0.92
+  - name: "Javelin Missile Round"
+    category: WEAPON
+    weight_kg: 15.9
+    reliability: 0.94
+  - name: "AN/PRC-148 MBITR"
+    category: COMMUNICATION
+    weight_kg: 1.0
+    reliability: 0.94
+  - name: "AN/PVS-14 NVG"
+    category: SENSOR
+    weight_kg: 0.4
+    reliability: 0.88
+  - name: "AN/PEQ-2 IR Aiming Laser"
+    category: SENSOR
+    weight_kg: 0.3
+    reliability: 0.90

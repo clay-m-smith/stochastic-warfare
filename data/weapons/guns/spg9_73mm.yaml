@@ -1,0 +1,33 @@
+# SPG-9 73mm Recoilless Rifle
+# Soviet tripod-mounted 73mm recoilless gun. Iraqi insurgent heavy infantry
+# weapon at 2nd Fallujah (Nov 2004) — used for building-to-building
+# anti-vehicle and anti-bunker shots. Classed as ROCKET_LAUNCHER here to
+# mirror the existing rpg7 pattern (spin-stabilised HEAT fin-stabilised round;
+# no automatic-fire behaviour). PG-9V HEAT round; MV ~435 m/s; max 1,300m
+# point / 6,000m area; min-arm ~100m; sustained 6 rpm; 47.5kg tripod+tube.
+# Sources:
+#   - Soviet SPG-9 TM (translated, via FAS) (Tier 3)
+#   - Jane's Infantry Weapons — Mounted Weapons (Tier 3)
+#   - DoD Worldwide Equipment Guide Vol. 1 (Tier 1)
+weapon_id: spg9_73mm
+display_name: "SPG-9 73mm Recoilless Rifle"
+category: ROCKET_LAUNCHER
+caliber_mm: 73.0
+muzzle_velocity_mps: 435.0
+max_range_m: 1300.0
+min_range_m: 100.0
+rate_of_fire_rpm: 6.0
+burst_size: 1
+base_accuracy_mrad: 3.0
+guidance: NONE
+magazine_capacity: 1
+reload_time_s: 10.0
+compatible_ammo:
+  - spg9_pg9v
+weight_kg: 47.5
+reliability: 0.88
+barrel_life_rounds: 800
+requires_deployed: true
+traverse_deg: 360.0
+elevation_min_deg: -3.0
+elevation_max_deg: 25.0

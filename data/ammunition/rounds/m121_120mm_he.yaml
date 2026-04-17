@@ -1,0 +1,24 @@
+# M934 120mm Mortar HE Round (M121 / M120 mortar family)
+# Standard HE mortar round for the US M120/M121 120mm mortar system. Used
+# by TF 2-7 CAV (M1064 carriers) at 2nd Fallujah for indirect fire support.
+# ~13.5kg round, ~2.98kg Comp B fill (~7.05kg TNT-equivalent); blast ~30m,
+# fragmentation lethality out to ~60m.
+# Sources:
+#   - TM 9-1315-257-10 "M120/M121 120mm Mortar" (Tier 1)
+#   - TM 43-0001-28 "Army Ammunition Data Sheets: Artillery" (Tier 1)
+#   - Jane's Ammunition Handbook (Tier 3)
+ammo_id: m121_120mm_he
+display_name: "M934 120mm Mortar HE Round"
+ammo_type: HE
+mass_kg: 13.5
+diameter_mm: 120.0
+drag_coefficient: 0.30
+penetration_mm_rha: 0.0
+penetration_reference_range_m: 0.0
+blast_radius_m: 30.0
+fragmentation_radius_m: 60.0
+explosive_fill_kg: 2.98
+guidance: NONE
+propulsion: none
+max_speed_mps: 318.0
+unit_cost_factor: 0.8

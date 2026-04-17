@@ -1,0 +1,22 @@
+# M72A7 66mm HEAT Warhead
+# Shaped-charge warhead for the Nammo M72A7 LAW. ~350mm RHA penetration;
+# ~1.0kg warhead; lightweight anti-armor / anti-bunker use by USMC at
+# Fallujah. Single-shot expendable.
+# Sources:
+#   - TM 9-1340-222-13&P "M72A7 LAW" (Tier 1)
+#   - Nammo M72A7 Product Datasheet (Tier 3)
+#   - Jane's Ammunition Handbook (Tier 3)
+ammo_id: m72a7_warhead
+display_name: "M72A7 66mm HEAT Warhead"
+ammo_type: HEAT
+mass_kg: 1.0
+diameter_mm: 66.0
+drag_coefficient: 0.35
+penetration_mm_rha: 350.0
+penetration_reference_range_m: 200.0
+blast_radius_m: 2.5
+fragmentation_radius_m: 5.0
+guidance: NONE
+propulsion: solid_rocket
+max_speed_mps: 200.0
+unit_cost_factor: 0.3

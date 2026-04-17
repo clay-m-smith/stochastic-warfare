@@ -1,0 +1,64 @@
+# M1064 Self-Propelled 120mm Mortar Carrier (organic to 2-7 CAV)
+#
+# M113-family APC chassis (armored aluminum hull, ~38 mm equivalent) mounting
+# the M121 120mm mortar system. The mortar fires through a roof hatch from
+# an internal turntable; crew loads manually. Max range ~7,200 m HE,
+# rate-of-fire ~4-5 rpm sustained. Role at Fallujah was organic, responsive
+# indirect-fire support to the maneuver company team — inside the range
+# envelope where 155mm tube artillery was often held back by airspace and
+# collateral-damage ROE.
+#
+# Sources:
+#   - Matthews, M.M. "Operation AL FAJR: A Study in Army and Marine Corps
+#     Joint Operations" (CSI Occasional Paper, Tier 1 — 2-7 CAV mortar
+#     employment inside Fallujah).
+#   - Jane's Armour and Artillery, M1064 entry (Tier 3, technical specs).
+
+unit_type: us_m1064_mortar
+domain: ground
+display_name: "M1064 120mm SP Mortar (2-7 CAV)"
+ground_type: ARTILLERY_SP
+max_speed: 17.0  # m/s (~61 km/h road; M113 chassis)
+training_level: 0.80
+armor_front: 38.0  # mm aluminum (M113 baseline)
+armor_side: 30.0
+armor_type: ALUMINUM
+crew:
+  - role: COMMANDER
+    count: 1
+    skill: TRAINED
+  - role: GUNNER
+    count: 1
+    skill: TRAINED
+  - role: LOADER
+    count: 1
+    skill: BASIC
+  - role: DRIVER
+    count: 1
+    skill: TRAINED
+equipment:
+  - name: "M121 120mm Mortar"
+    category: WEAPON
+    weight_kg: 320.0
+    reliability: 0.93
+  - name: "M2 .50 Cal"
+    category: WEAPON
+    weight_kg: 38.0
+    reliability: 0.92
+  - name: "Detroit Diesel 6V53T"
+    category: PROPULSION
+    weight_kg: 650.0
+    reliability: 0.86
+    temperature_range: [-40.0, 52.0]
+  - name: "Mortar Fire Control System (MFCS)"
+    category: NAVIGATION
+    weight_kg: 22.0
+    reliability: 0.92
+  - name: "Mk 1 Eyeball"
+    category: SENSOR
+    weight_kg: 0.5
+    reliability: 0.99
+  - name: "AN/PRC-152 Radio"
+    category: COMMUNICATION
+    weight_kg: 1.6
+    reliability: 0.93

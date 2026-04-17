@@ -1,0 +1,123 @@
+# AC-130U Spooky II — USAF Special Operations Command fixed-wing gunship
+#
+# Lockheed C-130H airframe converted to a side-firing gunship by the
+# 4th Special Operations Squadron, 16th Special Operations Wing
+# (Hurlburt Field, FL). The AC-130U ("U-model") is a modernized variant
+# of the AC-130H Spectre with substantially upgraded fire control and
+# sensor suites.
+#
+# Key differences from AC-130H (Phase 100):
+#   - 25mm GAU-12/U Equalizer (5-barrel rotary, 1,800 rpm) replaces the
+#     H-model's twin 20mm M61A1 Vulcans. (The AC-130H actually carried
+#     the GAU-12 from 1991 until its 1994 removal; the U-model retains it.)
+#   - AN/APQ-180 Strike Radar (U-model exclusive) — derived from the
+#     F-15E's APG-70; enables all-weather, through-cloud target
+#     acquisition and precision targeting in IMC.
+#   - ALLTV (All-Light-Level TV) replaces the H's AN/AVQ-19 LLLTV —
+#     wider dynamic range across night/twilight/overcast conditions.
+#   - Dual-target fire control — can engage two separate targets
+#     simultaneously (e.g., 25mm + 105mm on different aimpoints);
+#     the H-model is single-target.
+#   - Crew 13 (U) vs 14 (H).
+#
+# Typical CAS orbit: left-hand pylon turn at 2,100-3,000 m (7,000-10,000 ft)
+# MSL and ~230 KTAS — same vulnerability envelope to MANPADS as the H.
+#
+# Fallujah (Operation Al-Fajr, Nov 2004):
+#   AC-130Us of the 4th SOS flew heavily during the assault phase but
+#   were restricted to NIGHT-ONLY engagements per ROE — daylight CAS
+#   requests by ground forces were denied to the gunship. Grossman
+#   ("Inside the Pentagon") reports Marine ground commanders
+#   repeatedly lost bids for daytime AC-130 fire support despite
+#   clearly identified insurgent strongpoints.
+#
+# The 13-person crew is modeled here in aggregate using the available
+# CrewRole enum values (no gunship-specific roles in the base schema).
+# `aerial_type: ATTACK` is used because `GUNSHIP` is not a member of
+# `AerialUnitType`; the 4th SOS fire-support role maps most closely to
+# ATTACK within the current aerial taxonomy.
+#
+# Sources:
+#   - Tier 1: 1st SOW / AFSOC fact sheets (via af.mil / afsoc.af.mil) —
+#             airframe specs, crew composition, armament, sensor suite.
+#   - Tier 1 / Tier 2 (archived): Elaine M. Grossman, "Troops in Fallujah
+#             Lost Bid for Daytime AC-130 Gunship Fire Support,"
+#             Inside the Pentagon, 2004 (ROE / night-only restriction).
+#   - Tier 3: GlobalSecurity.org AC-130U profile (APQ-180, ALLTV,
+#             dual-target FC details).
+#   - Tier 3: Jane's All the World's Aircraft (airframe / propulsion).
+unit_type: ac130u
+domain: aerial
+display_name: "AC-130U Spooky II"
+aerial_type: ATTACK
+max_speed: 130.0  # m/s (~470 km/h); orbit speed ~115 m/s
+training_level: 0.92  # 4th SOS — AFSOC, elite; slightly higher than AC-130H baseline
+service_ceiling: 7600.0  # Hercules practical ceiling with full armament
+crew:
+  - role: PILOT
+    count: 1
+    skill: VETERAN
+  - role: COPILOT
+    count: 1
+    skill: EXPERIENCED
+  - role: NAVIGATOR
+    count: 1
+    skill: EXPERIENCED
+  - role: SENSOR_OPERATOR  # Fire Control Officer + Electronic Warfare Officer (dual-target FC)
+    count: 2
+    skill: EXPERIENCED
+  - role: CREW_CHIEF  # Flight Engineer
+    count: 1
+    skill: EXPERIENCED
+  - role: GUNNER  # 5 gunners + 1 TV operator (dropped 1 illuminator vs H-model)
+    count: 6
+    skill: EXPERIENCED
+  - role: GENERIC  # Loadmaster
+    count: 1
+    skill: TRAINED
+equipment:
+  - name: "GAU-12 Equalizer 25mm"
+    category: WEAPON
+    weight_kg: 122.0  # 5-barrel Gatling; heavier than M61A1
+    reliability: 0.92
+  - name: "40mm Bofors L/60 Automatic Gun"
+    category: WEAPON
+    weight_kg: 522.0
+    reliability: 0.90
+  - name: "105mm M102 Howitzer (direct-fire mount)"
+    category: WEAPON
+    weight_kg: 1496.0
+    reliability: 0.88
+  - name: "AN/APQ-180 Strike Radar"
+    category: SENSOR
+    weight_kg: 220.0  # derived from APG-70; all-weather strike radar (U-model exclusive)
+    reliability: 0.87
+  - name: "AN/AAQ-17 FLIR"
+    category: SENSOR
+    weight_kg: 180.0
+    reliability: 0.86
+  - name: "ALLTV All-Light-Level TV"
+    category: SENSOR
+    weight_kg: 120.0  # replaces H-model AN/AVQ-19 LLLTV
+    reliability: 0.85
+  - name: "AN/ALR-69 RWR"
+    category: SENSOR
+    weight_kg: 28.0
+    reliability: 0.86
+  - name: "AN/ALE-40 Chaff/Flare Dispenser"
+    category: PROTECTION
+    weight_kg: 60.0
+    reliability: 0.85
+  - name: "T56-A-15 Turboprop x4"
+    category: PROPULSION
+    weight_kg: 7560.0
+    reliability: 0.91
+    temperature_range: [-54.0, 71.0]
+  - name: "AN/ARC-190 HF Radio"
+    category: COMMUNICATION
+    weight_kg: 40.0
+    reliability: 0.90
+  - name: "SATCOM Terminal"
+    category: COMMUNICATION
+    weight_kg: 45.0
+    reliability: 0.90

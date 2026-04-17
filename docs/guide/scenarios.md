@@ -167,7 +167,7 @@ documented_outcomes:
 
 ---
 
-## Modern Scenarios (34 total)
+## Modern Scenarios (35 total)
 
 ### Engagement Scenarios
 
@@ -176,6 +176,7 @@ documented_outcomes:
 | **73 Easting** | Eagle Troop vs Iraqi armor, 1991 | 30 min | Desert, thermal advantage, validated |
 | **Debecka Pass** | US SF + Peshmerga vs Iraqi 1st Mech, 2003 | 4 hr | Javelin ATGM, CAS, ridgeline defense, golden-scenario (Block 11) |
 | **Khafji** | Iraqi III Corps vs Saudi/Qatari/USMC/coalition air + USS Missouri, 1991 | 72 hr | Full-OOB 233 units, hybrid tick resolution, naval gunfire, AC-130, multi-domain, golden-scenario (Block 11) |
+| **Fallujah Phase Line Fran** | USMC RCT-1/RCT-7 + Army TF 2-7 CAV vs insurgent defenders, 2004 | 120 hr | Urban combat, HBIED pre-emplacement, WP shake-and-bake, AC-130U, scripted events (mosque seizure, armored thrust), golden-scenario (Block 11) |
 | **Falklands Naval** | Sheffield vs Exocet attack, 1982 | 1 hr | Naval, missile exchange |
 | **Golan Heights** | Israeli defense vs Syrian armor, 1973 | 6 hr | Prepared defense, force ratio |
 | **Bekaa Valley 1982** | Israeli SEAD vs Syrian IADS | 2 hr | EW, SEAD, air defense |

@@ -1,0 +1,85 @@
+# USMC Rifle Squad — Urban / Fallujah Loadout (Operation Al-Fajr, Nov 2004)
+#
+# 13-man squad in the USMC urban configuration used during Phase 101
+# Battle of Fallujah (Operation Al-Fajr, 9-13 November 2004). Differs from
+# the generic us_rifle_squad: M16A4 as primary rifle (with ACOG 4x),
+# Mk 153 SMAW at squad level for bunker / fortified-room reduction,
+# Benelli M1014 shotgun for door breaching, and AT-4 LAWs distributed
+# through the fire teams. Post-April-Fallujah lessons drove deliberate
+# urban-combat adaptation; training_level 0.80 reflects USMC line
+# infantry baseline with urban refresher.
+#
+# Organization:
+#   1 squad leader (M4A1 SOPMOD)
+#   3 fire teams x 4 Marines each:
+#     - team leader (M16A4 + M203 grenadier alternating)
+#     - rifleman / grenadier (M16A4 + M203 UGL)
+#     - automatic rifleman (M249 SAW)
+#     - rifleman (M16A4)
+#
+# Sources:
+#   - Estes, Kenneth W. "U.S. Marines in Iraq, 2004-2005: Into the Fray."
+#     USMC History Division, 2011 (Tier 1) — squad composition, urban
+#     loadouts, Mk 153 SMAW employment, shotgun breachers in Al-Fajr.
+#   - MCWP 3-35.3, "Military Operations on Urbanized Terrain (MOUT),"
+#     USMC, 1998 (Tier 1) — squad urban TTPs.
+#   - Camp, Dick. "Operation Phantom Fury: The Assault and Capture of
+#     Fallujah, Iraq." Zenith Press, 2009 (Tier 2) — 3/5 and 3/1 urban
+#     squad employment, SMAW / AT-4 expenditure.
+#   - Marine Corps Association, "3/5 Darkhorse in Fallujah," Marine Corps
+#     Gazette Part II, 2005 (Tier 3) — cross-ref for loadout.
+unit_type: us_marine_rifle_squad_urban
+domain: ground
+display_name: "USMC Rifle Squad (Urban)"
+ground_type: LIGHT_INFANTRY
+max_speed: 1.3  # m/s (~5 km/h dismounted; slower in urban clear)
+training_level: 0.80
+armor_front: 0.5  # IBA with SAPI plates
+armor_side: 0.3
+crew:
+  - role: COMMANDER
+    count: 1
+    skill: EXPERIENCED
+  - role: RIFLEMAN
+    count: 9
+    skill: TRAINED
+  - role: GUNNER
+    count: 3  # automatic riflemen (one per fire team)
+    skill: TRAINED
+equipment:
+  - name: "M4A1 SOPMOD"
+    category: WEAPON
+    weight_kg: 3.4
+    reliability: 0.95
+  - name: "M16A4 Rifle"
+    category: WEAPON
+    weight_kg: 3.9
+    reliability: 0.95
+  - name: "M249 SAW"
+    category: WEAPON
+    weight_kg: 7.5
+    reliability: 0.90
+  - name: "M203 40mm Grenade Launcher"
+    category: WEAPON
+    weight_kg: 1.4
+    reliability: 0.92
+  - name: "Mk 153 SMAW"
+    category: WEAPON
+    weight_kg: 13.4
+    reliability: 0.88
+  - name: "AT-4 LAW"
+    category: WEAPON
+    weight_kg: 6.7
+    reliability: 0.90
+  - name: "Benelli M1014 Shotgun"
+    category: WEAPON
+    weight_kg: 3.8
+    reliability: 0.93
+  - name: "AN/PRC-148 MBITR"
+    category: COMMUNICATION
+    weight_kg: 1.0
+    reliability: 0.94
+  - name: "AN/PVS-14 NVG"
+    category: SENSOR
+    weight_kg: 0.4
+    reliability: 0.88

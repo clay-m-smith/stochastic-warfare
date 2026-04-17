@@ -1,0 +1,32 @@
+# M16A4 Rifle
+# USMC primary service rifle at 2nd Battle of Fallujah (Nov 2004). Longer
+# 20-inch barrel than the M4A1 carbine improves velocity and effective range.
+# Standard issue in USMC rifle companies until the M4A1 transition (2015+).
+# Chambered for 5.56x45mm NATO; semi-auto + 3-round burst (no full auto on
+# standard M16A4). STANAG 30-round magazine. Effective range ~550m point.
+# Sources:
+#   - TM 05538C-23&P/2 "M16A4 Service Rifle" (Tier 1)
+#   - USMC MCRP 3-01A "Rifle Marksmanship" (Tier 1)
+#   - Jane's Infantry Weapons (Tier 3)
+weapon_id: m16a4
+display_name: "M16A4 5.56mm Rifle"
+category: MACHINE_GUN
+caliber_mm: 5.56
+muzzle_velocity_mps: 948.0
+max_range_m: 550.0
+min_range_m: 0.0
+rate_of_fire_rpm: 45.0
+burst_size: 3
+base_accuracy_mrad: 0.9
+guidance: NONE
+magazine_capacity: 30
+reload_time_s: 3.0
+compatible_ammo:
+  - 556_ball
+weight_kg: 3.9
+reliability: 0.95
+barrel_life_rounds: 15000
+requires_deployed: false
+traverse_deg: 360.0
+elevation_min_deg: -30.0
+elevation_max_deg: 80.0

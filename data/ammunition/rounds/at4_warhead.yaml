@@ -1,0 +1,22 @@
+# AT-4 84mm HEAT Warhead
+# Shaped-charge warhead for the Saab Bofors AT-4 (US M136) disposable LAW.
+# ~440mm RHA penetration; ~1.8kg warhead; effective against light armored
+# vehicles, APCs, and fortifications. Single-shot expendable.
+# Sources:
+#   - TM 9-1340-214-12&P "Rocket, HEAT, 84mm, M136" (Tier 1)
+#   - Saab Bofors AT-4 Product Datasheet (Tier 3)
+#   - Jane's Ammunition Handbook (Tier 3)
+ammo_id: at4_warhead
+display_name: "AT-4 84mm HEAT Warhead"
+ammo_type: HEAT
+mass_kg: 1.8
+diameter_mm: 84.0
+drag_coefficient: 0.35
+penetration_mm_rha: 440.0
+penetration_reference_range_m: 300.0
+blast_radius_m: 3.0
+fragmentation_radius_m: 6.0
+guidance: NONE
+propulsion: solid_rocket
+max_speed_mps: 290.0
+unit_cost_factor: 0.4

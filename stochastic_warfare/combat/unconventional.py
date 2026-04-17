@@ -246,7 +246,7 @@ class UnconventionalWarfareEngine:
         """
         ied = self._ieds[obstacle_id]
         subtype = ied["subtype"]
-        if subtype in ("command_wire", "pressure_plate"):
+        if subtype in ("command_wire", "pressure_plate", "hbied"):
             return False
         if not jammer_active:
             return False

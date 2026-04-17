@@ -1,0 +1,82 @@
+# M1A2 SEP Abrams — Army variant (Task Force 2-7 CAV, 1st Cavalry Division)
+#
+# Differs from data/units/armor/m1a2.yaml by adding SEP (System Enhancement
+# Program) upgrades actually employed at Fallujah (Operation Al-Fajr, Nov 2004):
+#   - CITV (Commander's Independent Thermal Viewer): enables hunter-killer
+#     engagement (commander scans 360 deg thermal while gunner engages).
+#   - FBCB2 (Force XXI Battle Command Brigade & Below) digital tactical terminal.
+#   - 2nd-gen FLIR in Gunner's Primary Sight (upgrade from 1st-gen on M1A1).
+#   - Uprated armor package (~960 mm RHA equivalent frontal, Chobham + DU).
+#
+# Sources:
+#   - Estes, K.W. "U.S. Marines in Battle: Fallujah" (USMC History Division,
+#     Tier 1 — primary operational narrative naming TF 2-7 CAV M1A2 SEP employment).
+#   - Matthews, M.M. "Operation AL FAJR: A Study in Army and Marine Corps Joint
+#     Operations" (CSI Occasional Paper, Tier 1).
+#   - DRS Technologies 2004 FBCB2 contract announcements (Tier 3).
+#   - Army-Guide technical summary, M1A2 SEP entry (Tier 3).
+
+unit_type: us_m1a2_sep
+domain: ground
+display_name: "M1A2 SEP Abrams MBT (TF 2-7 CAV)"
+ground_type: ARMOR
+max_speed: 20.0  # m/s (~72 km/h; 67 km/h governed road speed)
+training_level: 0.90
+armor_front: 960.0  # mm RHA equivalent (Chobham + DU array)
+armor_side: 280.0
+armor_type: COMPOSITE
+crew:
+  - role: COMMANDER
+    count: 1
+    skill: TRAINED
+  - role: GUNNER
+    count: 1
+    skill: TRAINED
+  - role: LOADER
+    count: 1
+    skill: BASIC
+  - role: DRIVER
+    count: 1
+    skill: TRAINED
+equipment:
+  - name: "M256 120mm Smoothbore"
+    category: WEAPON
+    weight_kg: 1800.0
+    reliability: 0.95
+  - name: "M240 7.62mm Coaxial"
+    category: WEAPON
+    weight_kg: 12.2
+    reliability: 0.94
+  - name: "M2 .50 Cal"
+    category: WEAPON
+    weight_kg: 38.0
+    reliability: 0.92
+  - name: "M240 7.62mm Loader"
+    category: WEAPON
+    weight_kg: 12.2
+    reliability: 0.94
+  - name: "CITV Commander's Independent Thermal Viewer"
+    category: SENSOR
+    weight_kg: 62.0
+    reliability: 0.93
+  - name: "GPS 2nd-Gen FLIR Gunner's Sight"
+    category: SENSOR
+    weight_kg: 55.0
+    reliability: 0.92
+  - name: "Eyesafe Laser Rangefinder"
+    category: SENSOR
+    weight_kg: 8.0
+    reliability: 0.95
+  - name: "FBCB2 Digital Terminal"
+    category: COMMUNICATION
+    weight_kg: 18.0
+    reliability: 0.90
+  - name: "AGT-1500 Gas Turbine"
+    category: PROPULSION
+    weight_kg: 1134.0
+    reliability: 0.88
+    temperature_range: [-40.0, 52.0]
+  - name: "Chobham+DU Composite Armor Array"
+    category: PROTECTION
+    weight_kg: 6200.0
+    reliability: 0.99

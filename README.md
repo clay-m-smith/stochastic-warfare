@@ -1,8 +1,8 @@
 # Stochastic Warfare
 
 ![Python](https://img.shields.io/badge/python-%3E%3D3.12-blue)
-![Tests](https://img.shields.io/badge/tests-10%2C739_passing-brightgreen)
-![Phase](https://img.shields.io/badge/phase-97_Block--10-blue)
+![Tests](https://img.shields.io/badge/tests-10%2C790_passing-brightgreen)
+![Phase](https://img.shields.io/badge/phase-101_Block--11-blue)
 
 High-fidelity, high-resolution wargame simulator built as a headless Python engine. Models warfare across multiple scales — from individual unit engagements up through tactical battles, operational battlefields, and multi-day strategic campaigns — with stochastic and signal-processing-inspired models throughout.
 
@@ -163,7 +163,7 @@ data/                     # ~748 YAML data files
   eras/                    # Era-specific data packages (WW2, WW1, Napoleonic, Ancient/Medieval)
   scenarios/              # 32 modern scenarios (engagement, campaign, EW, space, CBRN, escalation, joint, calibration, benchmark) + 5 test
 
-tests/                    # ~10,780 engine+API+frontend tests across ~400 test files
+tests/                    # ~10,790 engine+API+frontend tests across ~400 test files
 docs/                     # specs, brainstorm, devlog, development phases
 ```
 
@@ -171,7 +171,7 @@ For the full package tree and module decomposition, see [`docs/specs/project-str
 
 ## Development Status
 
-100 phases delivered across 11 blocks. Blocks 1–10 COMPLETE. Block 11 Phases 98–100 complete (prework + Debecka Pass + Khafji); Phases 101–102 pending. See devlogs and phase roadmaps for full detail.
+101 phases delivered across 11 blocks. Blocks 1–10 COMPLETE. Block 11 Phases 98–101 complete (prework + Debecka Pass + Khafji + Fallujah); Phase 102 pending (Bint Jbeil + INS Hanit). See devlogs and phase roadmaps for full detail.
 
 | Phase | Focus | Tests | Status |
 |-------|-------|-------|--------|
@@ -277,9 +277,9 @@ For the full package tree and module decomposition, see [`docs/specs/project-str
 | 98 | Shared Prework — Gap Audit, Envelope Helpers, Depth Framework (Block 11) | 26 | **Complete** |
 | 99 | Debecka Pass (2003) (Block 11) | 8 | **Complete** |
 | 100 | Khafji (1991) (Block 11) | 7 | **Complete** |
-| 101 | Fallujah Phase Line Fran (2004) (Block 11) | TBD | Pending |
+| 101 | Fallujah Phase Line Fran (2004) (Block 11) | 13 | **Complete** |
 | 102 | Bint Jbeil + INS Hanit Vignette (2006) (Block 11) | TBD | Pending |
-| | **Total** | **~10,780** | |
+| | **Total** | **~10,790** | |
 
 For the full phase roadmap, see [`docs/development-phases.md`](docs/development-phases.md) (MVP), [`docs/development-phases-post-mvp.md`](docs/development-phases-post-mvp.md) (post-MVP), and `docs/development-phases-block{N}.md` for Blocks 2–11. For per-phase implementation logs, see [`docs/devlog/`](docs/devlog/).
 

@@ -1,0 +1,82 @@
+# USMC Combat Engineer Urban Section — Operation Al-Fajr, Nov 2004
+#
+# 6-man USMC combat engineer section (split platoon strength, one per
+# rifle company) attached down for urban breaching and counter-mobility
+# during Phase 101 Battle of Fallujah. Equipped for explosive breaching
+# (C4 blocks, bangalore torpedoes, linear-shaped charges), ballistic
+# breaching (Benelli M1014 shotgun), and MICLIC employment. A D9
+# bulldozer operator team is attached for rubble reduction and counter-
+# VBIED berm-building on major avenues of approach. USMC combat engineers
+# are cross-trained in EOD basics; training_level 0.85 reflects demolition
+# specialty plus urban breach rehearsal.
+#
+# Sources:
+#   - MCWP 3-35.3, "Military Operations on Urbanized Terrain (MOUT),"
+#     USMC, 1998 (Tier 1) — breaching TTPs, engineer task organization.
+#   - "1st Marine Division After Action Report, Operation Al-Fajr,"
+#     MARDIV Lessons Learned, 2005 (Tier 1) — D9 employment, MICLIC
+#     use, shotgun breacher distribution.
+#   - Estes, Kenneth W. "U.S. Marines in Iraq, 2004-2005: Into the
+#     Fray." USMC History Division, 2011 (Tier 1) — engineer section
+#     attachment to rifle companies.
+#   - MCRP 3-17.7A, "Military Operations on Urbanized Terrain —
+#     Engineer Operations" (Tier 1) — cross-ref on breaching loads.
+unit_type: us_combat_engineer_urban
+domain: ground
+display_name: "USMC Combat Engineer Section (Urban)"
+ground_type: ENGINEER
+max_speed: 1.2  # m/s (~4.3 km/h; slower under breach load)
+training_level: 0.85
+armor_front: 0.5  # IBA with SAPI
+armor_side: 0.3
+crew:
+  - role: COMMANDER
+    count: 1
+    skill: EXPERIENCED
+  - role: ENGINEER
+    count: 4
+    skill: TRAINED
+  - role: GENERIC
+    count: 1  # D9 operator (attached)
+    skill: TRAINED
+equipment:
+  - name: "M4A1 SOPMOD"
+    category: WEAPON
+    weight_kg: 3.4
+    reliability: 0.95
+  - name: "M16A4 Rifle"
+    category: WEAPON
+    weight_kg: 3.9
+    reliability: 0.95
+  - name: "Benelli M1014 Shotgun"
+    category: WEAPON
+    weight_kg: 3.8
+    reliability: 0.93
+  - name: "C4 Demolition Block (M112)"
+    category: WEAPON
+    weight_kg: 0.57  # per block; section carries 10-20 lb total capacity
+    reliability: 0.98
+  - name: "Bangalore Torpedo (M1A2)"
+    category: WEAPON
+    weight_kg: 6.1
+    reliability: 0.95
+  - name: "MICLIC Line Charge"
+    category: WEAPON
+    weight_kg: 770.0  # trailer-mounted, deployed via attached vehicle
+    reliability: 0.90
+  - name: "Mine Detection Set"
+    category: SENSOR
+    weight_kg: 4.5
+    reliability: 0.85
+  - name: "AN/PRC-148 MBITR"
+    category: COMMUNICATION
+    weight_kg: 1.0
+    reliability: 0.94
+  - name: "AN/PVS-14 NVG"
+    category: SENSOR
+    weight_kg: 0.4
+    reliability: 0.88
+  - name: "Pioneer Tool Kit"
+    category: UTILITY
+    weight_kg: 25.0
+    reliability: 0.98

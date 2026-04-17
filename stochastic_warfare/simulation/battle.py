@@ -5000,6 +5000,17 @@ class BattleManager:
                                     "%d systems_damaged on %s",
                                     len(_dmg.systems_damaged), best_target.entity_id,
                                 )
+                            # Phase 101: INCENDIARY_WEAPON ammo always starts a fire
+                            # on hit (WP, thermobaric, napalm). Force fire_started
+                            # so the existing fire-zone branch runs — honest WP
+                            # "shake and bake" semantics.
+                            try:
+                                from stochastic_warfare.combat.ammunition import AmmoType as _AT
+                                if ammo_def is not None and ammo_def.parsed_ammo_type() == _AT.INCENDIARY_WEAPON:
+                                    object.__setattr__(_dmg, "fire_started", True)
+                            except Exception:
+                                pass
+
                             if _dmg.fire_started:
                                 logger.debug(
                                     "Fire started at %s from hit on %s",

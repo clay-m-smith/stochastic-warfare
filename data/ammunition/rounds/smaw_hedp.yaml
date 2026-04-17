@@ -1,0 +1,24 @@
+# SMAW HEDP (High-Explosive Dual-Purpose) 83.5mm Rocket
+# Primary general-purpose round for the Mk 153 SMAW. Dual-purpose: fuzed to
+# penetrate ~200mm RHA-equivalent (light armor / concrete bunker face) and
+# produce significant fragmentation against infantry in the open. ~1.8kg HE
+# fill; ~6kg rocket weight; blast radius ~8m; frag ~15m.
+# Sources:
+#   - TM 08670A-10/1 "Mk 153 Mod 0 SMAW" (Tier 1)
+#   - USMC Lessons Learned, 2nd Bn 1st Marines Fallujah AAR (Tier 1)
+#   - Jane's Infantry Weapons (Tier 3)
+ammo_id: smaw_hedp
+display_name: "SMAW HEDP 83.5mm Rocket"
+ammo_type: HE
+mass_kg: 6.0
+diameter_mm: 83.5
+drag_coefficient: 0.40
+penetration_mm_rha: 200.0
+penetration_reference_range_m: 100.0
+blast_radius_m: 8.0
+fragmentation_radius_m: 15.0
+explosive_fill_kg: 1.8
+guidance: NONE
+propulsion: solid_rocket
+max_speed_mps: 220.0
+unit_cost_factor: 0.6

@@ -398,6 +398,15 @@ class SimulationEngine:
         # 2. Update environment
         self._update_environment(dt)
 
+        # 2b. Scripted events (Phase 101) — fire at all resolutions,
+        #     gated by elapsed time so tactical ticks during combat can
+        #     trigger planned moments (mosque seizure, HBIED detonation).
+        try:
+            _elapsed = ctx.clock.elapsed.total_seconds()
+            self._campaign.check_scripted_events(ctx, _elapsed)
+        except Exception:
+            logger.debug("Scripted events check failed", exc_info=True)
+
         # 3. Determine and apply tick resolution
         self._update_resolution()
 

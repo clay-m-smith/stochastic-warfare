@@ -1,0 +1,98 @@
+# OH-58D(R) Kiowa Warrior — U.S. Army scout/attack helicopter
+#
+# Bell OH-58D(R) Kiowa Warrior tandem-seat (pilot + co-pilot/observer)
+# light armed scout helicopter. Primary role is reconnaissance; attack
+# is secondary. The signature feature is the Mast-Mounted Sight (MMS),
+# a ball sensor (thermal + daylight TV + laser rangefinder/designator)
+# mounted ABOVE the main rotor — allowing the aircraft to hover
+# nap-of-earth, concealed behind terrain or vegetation, while the MMS
+# "peeks over" to detect and designate targets. This is the tactical
+# signature of the Kiowa Warrior: maximum survivability via terrain
+# masking combined with laser-designation support for other shooters
+# (attack helicopters, CAS, artillery PGMs).
+#
+# Platform (OH-58D(R) block configuration, 2004):
+#   Crew 2 (pilot + co-pilot/observer, side-by-side)
+#   Max speed ~60 m/s (~220 km/h, ~118 kt)
+#   Service ceiling ~4,500 m
+#
+# Armament (stub-wing pylons; typical loadouts vary):
+#   2x AGM-114 Hellfire (laser-guided ATGM; self-lased or lased by others)
+#   7-tube M260 2.75" rocket pod (Hydra 70 FFAR)
+#   M296 .50 caliber machine gun pod (modeled to m2hb_50cal)
+#   AIM-92 Stinger (air-to-air self-defense; not modeled as primary)
+#
+# Sensors:
+#   MMS mast-mounted sight (thermal + TV + laser designator/rangefinder)
+#   AN/APR-39 radar warning receiver
+#
+# Countermeasures:
+#   AN/ALQ-144 IR jammer (pulsed IR against early-gen IR seekers)
+#   Chaff/flare dispenser
+#
+# Fallujah (Operation Al-Fajr, Nov 2004):
+#   Scout platoons of the 1st Cavalry Division provided reconnaissance
+#   and overwatch for TF 2-7 CAV's advance into the Jolan district.
+#   Primary employment was scout/overwatch and laser designation for
+#   attack helicopters and CAS; limited direct Hellfire engagements.
+#   Low altitude + terrain masking + MMS made the Kiowa survivable in
+#   the urban RPG/small-arms threat environment.
+#
+# Sources:
+#   - Tier 1: Matthews, "Operation AL FAJR: A Study in Army and Marine
+#             Corps Joint Operations," Combat Studies Institute Press,
+#             Fort Leavenworth, KS (2006).
+#   - Tier 3: Jane's All the World's Aircraft (airframe / armament /
+#             sensor specs).
+unit_type: oh58d_kiowa
+domain: aerial
+display_name: "OH-58D(R) Kiowa Warrior"
+aerial_type: RECON_HELO  # reconnaissance primary; attack secondary
+max_speed: 60.0  # m/s (~220 km/h, ~118 kt)
+training_level: 0.85  # 1st Cav Div scout platoons
+service_ceiling: 4500.0
+crew:
+  - role: PILOT
+    count: 1
+    skill: EXPERIENCED
+  - role: COPILOT  # co-pilot / observer (weapons & MMS operation)
+    count: 1
+    skill: EXPERIENCED
+equipment:
+  - name: "AGM-114 Hellfire Launcher"
+    category: WEAPON
+    weight_kg: 55.0
+    reliability: 0.92
+  - name: "M260 2.75-inch Rocket Pod"
+    category: WEAPON
+    weight_kg: 64.0
+    reliability: 0.88
+  - name: "M296 .50 Cal MG"
+    category: WEAPON
+    weight_kg: 38.0  # M296 variant of M2HB optimized for helicopter mount
+    reliability: 0.90
+  - name: "MMS Mast-Mounted Sight"
+    category: SENSOR
+    weight_kg: 84.0  # thermal + TV + laser designator/rangefinder
+    reliability: 0.87
+  - name: "AN/APR-39 Radar Warning Receiver"
+    category: SENSOR
+    weight_kg: 6.0
+    reliability: 0.87
+  - name: "AN/ALQ-144 IR Jammer"
+    category: PROTECTION
+    weight_kg: 19.0
+    reliability: 0.86
+  - name: "Chaff/Flare Dispenser"
+    category: PROTECTION
+    weight_kg: 18.0
+    reliability: 0.88
+  - name: "Allison 250-C30R Turboshaft"
+    category: PROPULSION
+    weight_kg: 108.0
+    reliability: 0.89
+    temperature_range: [-40.0, 52.0]
+  - name: "AN/ARC-201 VHF Radio"
+    category: COMMUNICATION
+    weight_kg: 14.0
+    reliability: 0.89

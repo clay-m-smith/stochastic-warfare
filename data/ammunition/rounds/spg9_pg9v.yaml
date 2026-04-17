@@ -1,0 +1,23 @@
+# SPG-9 PG-9V HEAT Round
+# Standard HEAT round for the Soviet SPG-9 73mm recoilless rifle. ~300mm
+# RHA penetration; ~4.4kg round mass; fin-stabilised, rocket-assisted
+# trajectory. Used by Iraqi insurgents at 2nd Fallujah against light armor,
+# HMMWVs, and fortifications.
+# Sources:
+#   - DoD Worldwide Equipment Guide Vol. 1 (Tier 1)
+#   - Soviet SPG-9 TM (translated, via FAS) (Tier 3)
+#   - Jane's Ammunition Handbook (Tier 3)
+ammo_id: spg9_pg9v
+display_name: "SPG-9 PG-9V HEAT Round"
+ammo_type: HEAT
+mass_kg: 4.4
+diameter_mm: 73.0
+drag_coefficient: 0.38
+penetration_mm_rha: 300.0
+penetration_reference_range_m: 500.0
+blast_radius_m: 4.0
+fragmentation_radius_m: 8.0
+guidance: NONE
+propulsion: solid_rocket
+max_speed_mps: 435.0
+unit_cost_factor: 0.5

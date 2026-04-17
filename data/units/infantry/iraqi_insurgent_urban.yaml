@@ -1,0 +1,78 @@
+# Iraqi Insurgent Urban Defender Cell — Fallujah, November 2004
+#
+# Typical 8-man (range 6-12) Iraqi insurgent defensive cell operating in
+# the fortified-house / defender-home role during Operation Al-Fajr.
+# Composition reflects the mix observed in post-battle intelligence
+# exploitation: AKM-equipped riflemen, a PKM gunner, an SVD Dragunov
+# marksman, and RPG-7 gunners carrying a mix of PG-7V HEAT, TBG-7V
+# thermobaric, and OG-7V fragmentation rounds. Heavier cells added an
+# SPG-9 73mm recoilless rifle, typically ground-mounted in a prepared
+# first-floor firing position. Training 0.35 reflects the baseline
+# Iraqi insurgent by November 2004 — combat-experienced from the
+# First Battle of Fallujah (April 2004), the Sadr uprising, and
+# ongoing Anbar resistance, but without formal soldiering pipeline.
+# Cohesion in the defender-home role is moderate-to-high; many cells
+# fortified houses with tunnels, firing loopholes, and pre-staged
+# ammunition caches, indicating prepared intent to die in place.
+#
+# Sources:
+#   - National Ground Intelligence Center (NGIC), "Complex Environments
+#     Assessment: Fallujah I," 2004 (Tier 1) — insurgent cell TO&E,
+#     weapons mix, defensive fortification practices.
+#   - Estes, Kenneth W. "U.S. Marines in Iraq, 2004-2005: Into the
+#     Fray." USMC History Division, 2011 (Tier 1) — defender weapons
+#     and employment observed in Al-Fajr.
+#   - West, Bing. "No True Glory: A Frontline Account of the Battle
+#     for Fallujah." Bantam, 2005 (Tier 2) — defender behavior, cell
+#     sizes, weapons caches.
+#   - RAND Corporation, "Lessons from the Iraq War, 2003-2011," RR-1602,
+#     2017 (Tier 2) — insurgent training tier analysis.
+#   - Washington Institute, "Faces of Battle: Iraqi Insurgents in
+#     Fallujah" (Tier 2) — cell composition cross-ref.
+unit_type: iraqi_insurgent_urban
+domain: ground
+display_name: "Iraqi Insurgent Urban Cell"
+ground_type: LIGHT_INFANTRY
+max_speed: 1.1  # m/s (~4 km/h, irregular fighters, defender-home posture)
+training_level: 0.35
+armor_front: 0.0
+armor_side: 0.0
+crew:
+  - role: COMMANDER
+    count: 1
+    skill: BASIC
+  - role: RIFLEMAN
+    count: 5
+    skill: BASIC
+  - role: GUNNER
+    count: 2  # PKM gunner + SVD marksman
+    skill: TRAINED
+equipment:
+  - name: "AKM"
+    category: WEAPON
+    weight_kg: 3.1
+    reliability: 0.92
+  - name: "PKM GPMG"
+    category: WEAPON
+    weight_kg: 7.5
+    reliability: 0.85
+  - name: "SVD Dragunov"
+    category: WEAPON
+    weight_kg: 4.3
+    reliability: 0.88
+  - name: "RPG-7"
+    category: WEAPON
+    weight_kg: 6.3
+    reliability: 0.90
+  - name: "SPG-9 73mm Recoilless Rifle"
+    category: WEAPON
+    weight_kg: 47.5
+    reliability: 0.85
+  - name: "Handheld Radio"
+    category: COMMUNICATION
+    weight_kg: 0.5
+    reliability: 0.70
+  - name: "Naked Eye Observation"
+    category: SENSOR
+    weight_kg: 0.5
+    reliability: 0.99

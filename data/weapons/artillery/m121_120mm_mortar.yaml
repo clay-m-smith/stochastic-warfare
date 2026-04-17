@@ -1,0 +1,32 @@
+# M121 120mm Mortar (M1064 Mortar Carrier-mounted)
+# US Army/USMC 120mm mortar, mounted in the M1064A3 mortar carrier at
+# 2nd Fallujah (Nov 2004) for Task Force 2-7 Cavalry; also dismountable.
+# Fires M934 HE (m121_120mm_he) to 7,200m; min range 200m; 4-5 rpm sustained.
+# Crew of 5 in the carrier; round-by-round loading (no internal magazine).
+# Sources:
+#   - FM 3-22.90 "Mortars" (Tier 1)
+#   - TM 9-1015-257-10 "M120/M121 120mm Mortar" (Tier 1)
+#   - Jane's Infantry Weapons — Mortars (Tier 3)
+weapon_id: m121_120mm_mortar
+display_name: "M121 120mm Mortar"
+category: MORTAR
+caliber_mm: 120.0
+muzzle_velocity_mps: 318.0
+max_range_m: 7200.0
+min_range_m: 200.0
+rate_of_fire_rpm: 4.0
+burst_size: 1
+base_accuracy_mrad: 2.0
+cep_m: 136.0
+guidance: NONE
+magazine_capacity: 69
+reload_time_s: 8.0
+compatible_ammo:
+  - m121_120mm_he
+weight_kg: 144.0
+reliability: 0.95
+barrel_life_rounds: 5000
+requires_deployed: true
+traverse_deg: 14.0
+elevation_min_deg: 45.0
+elevation_max_deg: 85.0

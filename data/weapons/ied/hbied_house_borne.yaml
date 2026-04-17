@@ -1,0 +1,52 @@
+# House-Borne IED (HBIED) / Booby-Trapped Structure
+#
+# A building (typically a residential house) that insurgents have rigged
+# with daisy-chained 155mm artillery shells, propane cylinders, and
+# gasoline drums, detonated either by a command wire / cell from an
+# observer in an adjacent structure OR by pressure/tripwire on entry.
+# Used extensively by insurgent cells at 2nd Fallujah (Nov 2004) against
+# USMC clearing teams. Distinct from VBIED: static, high-yield, and
+# amplified by the enclosing structure.
+#
+# Tuning (Phase 101):
+#   - tnt_eq_kg: ~75 kg mid-band (range 50-100)
+#   - trigger_mode: "hybrid" (either command detonation OR pressure)
+#   - confined_blast_multiplier: 2.5 (engine may or may not read this
+#     field; retained as documentation until a structure-interior blast
+#     amplification path is added — accepted limitation per Phase 101)
+#   - Category: ROCKET_LAUNCHER mirrors VBIED pattern (explosion producer,
+#     not a guided/fed munition launcher). MINE_LAYER would also have
+#     worked but we keep ROCKET_LAUNCHER so the engine routes direct-
+#     damage rather than persistent-mine behaviour.
+#
+# Sources:
+#   - USMC Lessons Learned, Ops Vigilant Resolve / Phantom Fury (Tier 1)
+#   - National Defense Magazine, July 2005, "Fallujah's House Bombs" (Tier 1)
+#   - Marine Corps Gazette (Nov 2005) "Urban IEDs at Fallujah" (Tier 3)
+#   - West, Bing — "No True Glory" (Tier 2)
+weapon_id: hbied_house_borne
+display_name: "House-Borne IED (Booby-Trapped Structure)"
+category: ROCKET_LAUNCHER
+caliber_mm: 0.0
+muzzle_velocity_mps: 0.0
+max_range_m: 30.0
+min_range_m: 0.0
+rate_of_fire_rpm: 0.0
+burst_size: 1
+base_accuracy_mrad: 0.0
+guidance: NONE
+magazine_capacity: 1
+reload_time_s: 0.0
+compatible_ammo: []
+weight_kg: 500.0
+reliability: 0.85
+barrel_life_rounds: 1
+requires_deployed: true
+traverse_deg: 0.0
+elevation_min_deg: 0.0
+elevation_max_deg: 0.0
+# --- HBIED-specific fields (documentation; engine may or may not consume) ---
+trigger_mode: "hybrid"
+tnt_eq_kg: 75.0
+confined_blast_multiplier: 2.5
+concealment: 0.90

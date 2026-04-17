@@ -1,0 +1,76 @@
+# M2A3 Bradley IFV — Army infantry fighting variant (TF 2-7 CAV, 1st Cav Div)
+#
+# Differs from data/units/infantry/m3a2_bradley.yaml:
+#   - M3A2 is the cavalry scout variant (2 scouts, TOW ammo storage focus).
+#   - M2A3 is the infantry-carrier variant with a 6-7 man dismount bay and
+#     the IBAS (Improved Bradley Acquisition Subsystem): 2nd-gen FLIR thermal
+#     plus a Commander's Independent Viewer (CIV) and FBCB2 digital display.
+#   - Ground type is MECHANIZED_INFANTRY because it carries dismounts into the
+#     fight (this was the primary Bradley employment inside Fallujah).
+#
+# Sources:
+#   - Matthews, M.M. "Operation AL FAJR: A Study in Army and Marine Corps Joint
+#     Operations" (CSI Occasional Paper, Tier 1 — names M2A3 TF 2-7 CAV usage).
+#   - Estes, K.W. "U.S. Marines in Battle: Fallujah" (USMC HistDiv, Tier 1).
+#   - Army-Guide M2A3 Bradley entry (Tier 3, technical specs).
+
+unit_type: us_m2a3_bradley
+domain: ground
+display_name: "M2A3 Bradley IFV (TF 2-7 CAV)"
+ground_type: MECHANIZED_INFANTRY
+max_speed: 18.3  # m/s (~66 km/h road)
+training_level: 0.85
+armor_front: 30.0  # mm RHA equivalent (light IFV frontal; reactive tiles on some hulls)
+armor_side: 25.0
+armor_type: ALUMINUM
+crew:
+  - role: COMMANDER
+    count: 1
+    skill: TRAINED
+  - role: GUNNER
+    count: 1
+    skill: TRAINED
+  - role: DRIVER
+    count: 1
+    skill: TRAINED
+  - role: GENERIC
+    count: 7  # 6-7 dismount infantry (squad)
+    skill: BASIC
+equipment:
+  - name: "M242 25mm Chain Gun"
+    category: WEAPON
+    weight_kg: 109.0
+    reliability: 0.90
+  - name: "BGM-71 TOW-2 Launcher"
+    category: WEAPON
+    weight_kg: 93.0
+    reliability: 0.88
+  - name: "M240 7.62mm Coaxial"
+    category: WEAPON
+    weight_kg: 12.2
+    reliability: 0.92
+  - name: "IBAS Thermal Sight"
+    category: SENSOR
+    weight_kg: 52.0
+    reliability: 0.92
+  - name: "CIV Commander's Independent Viewer"
+    category: SENSOR
+    weight_kg: 40.0
+    reliability: 0.91
+  - name: "Eyesafe Laser Rangefinder"
+    category: SENSOR
+    weight_kg: 6.0
+    reliability: 0.94
+  - name: "FBCB2 Digital Terminal"
+    category: COMMUNICATION
+    weight_kg: 18.0
+    reliability: 0.90
+  - name: "Cummins VTA-903T Diesel"
+    category: PROPULSION
+    weight_kg: 570.0
+    reliability: 0.87
+    temperature_range: [-40.0, 52.0]
+  - name: "Laminate Armor + ERA"
+    category: PROTECTION
+    weight_kg: 2400.0
+    reliability: 0.97

@@ -1,0 +1,75 @@
+# Dragon Eye — USMC squad-to-company small tactical UAV
+#
+# AeroVironment / Lockheed Martin Dragon Eye is a hand-launched,
+# battery-powered, foam-airframed mini-UAV designed for organic
+# Marine rifle company / squad-level ISR. Dragon Eye was fielded
+# specifically to put a small tactical UAV in the hands of small-unit
+# leaders — "over-the-hill" reconnaissance for patrols, urban
+# overwatch, and route scouting, controlled from a rugged laptop
+# ground station via line-of-sight data link.
+#
+# Platform:
+#   Wingspan ~1.1 m, weight ~2.4 kg (empty), pusher electric motor
+#   Max speed ~16 m/s (~60 km/h)
+#   Max altitude ~150 m AGL (low-altitude tactical)
+#   Endurance ~60 min (battery-limited; some sources cite up to 2 hr
+#     with extended-life batteries — conservative 60 min modeled here)
+#   Hand-launch (bungee-assisted), belly-landing recovery
+#
+# Sensors:
+#   Color EO camera (forward or side) — primary
+#   IR camera option (later variants; not all airframes)
+#   No weapons — pure ISR
+#
+# Control:
+#   Rugged laptop ground control station, line-of-sight RF comms
+#   (~5-10 km range). Manual or waypoint autopilot.
+#
+# Fallujah (Operation Al-Fajr, Nov 2004):
+#   Dragon Eye was employed at the rifle company level during the
+#   assault. DTIC ADA505441 ("Dragon Eye into Combat Operations")
+#   documents its combat employment during this period — roughly
+#   one Dragon Eye airframe per rifle company, operated by trained
+#   Marines (2-week operator course). Used for urban overwatch,
+#   battle-damage assessment, and detecting insurgent movement
+#   between buildings ahead of the advance.
+#
+# The 2-person crew is modeled as PILOT + SENSOR_OPERATOR but in
+# practice both roles are the same Marine operator at the laptop
+# ground station; SENSOR_OPERATOR captures the second Marine on the
+# team assisting with launch/recovery/observation handoff.
+#
+# Sources:
+#   - Tier 1: DTIC ADA505441, "Dragon Eye into Combat Operations"
+#             (combat employment, operator training, one-per-company).
+#   - Tier 3: Wikipedia / AeroVironment fact sheet (airframe specs,
+#             sensor options, control station).
+unit_type: dragon_eye_uav
+domain: aerial
+display_name: "Dragon Eye UAV"
+aerial_type: UAV_RECON
+max_speed: 16.0  # m/s (~60 km/h)
+training_level: 0.80  # 2-week Marine operator course
+service_ceiling: 150.0  # low-altitude tactical (~150 m AGL)
+data_link_range: 10000.0  # ~10 km line-of-sight RF
+crew:
+  - role: PILOT  # laptop ground-station operator
+    count: 1
+    skill: TRAINED
+  - role: SENSOR_OPERATOR  # launch/recovery assistant + observer
+    count: 1
+    skill: TRAINED
+equipment:
+  - name: "Dragon Eye EO/IR Camera"
+    category: SENSOR
+    weight_kg: 0.4  # small color EO + optional IR; gimbal-less
+    reliability: 0.82
+  - name: "Electric Pusher Motor"
+    category: PROPULSION
+    weight_kg: 0.6  # battery + brushless motor + propeller
+    reliability: 0.85
+    temperature_range: [-10.0, 45.0]  # battery-temperature limited
+  - name: "Line-of-Sight Data Link"
+    category: COMMUNICATION
+    weight_kg: 0.3
+    reliability: 0.84

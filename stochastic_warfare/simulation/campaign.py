@@ -381,6 +381,136 @@ class CampaignManager:
 
         return units
 
+    # ── Scripted events (Phase 101) ─────────────────────────────────
+
+    def check_scripted_events(
+        self,
+        ctx: Any,
+        elapsed_s: float,
+    ) -> int:
+        """Fire scripted events whose time has elapsed (Phase 101).
+
+        Looks up ``ctx.scripted_events`` (list of ``ScriptedEventConfig``)
+        and a ``ctx._fired_scripted_events`` set of indices used as
+        once-only gating. Returns the number of events fired this call.
+
+        Honest semantics: each handler invokes real engine APIs
+        (IED detonation, fire-zone creation, unit teleport, casualty
+        application). No magic kills or forced victory.
+        """
+        events = getattr(ctx, "scripted_events", None)
+        if not events:
+            return 0
+        fired_set = getattr(ctx, "_fired_scripted_events", None)
+        if fired_set is None:
+            fired_set = set()
+            ctx._fired_scripted_events = fired_set
+        fired_count = 0
+        for idx, ev in enumerate(events):
+            if idx in fired_set:
+                continue
+            if elapsed_s < ev.time_s:
+                continue
+            try:
+                self._dispatch_scripted_event(ctx, ev, idx)
+                fired_set.add(idx)
+                fired_count += 1
+                logger.info(
+                    "Scripted event fired: idx=%d type=%s t=%.0fs",
+                    idx, ev.event_type, elapsed_s,
+                )
+            except Exception:
+                logger.warning(
+                    "Scripted event %d (%s) failed", idx, ev.event_type, exc_info=True,
+                )
+                fired_set.add(idx)  # don't retry failed events
+        return fired_count
+
+    def _dispatch_scripted_event(
+        self,
+        ctx: Any,
+        ev: Any,  # ScriptedEventConfig
+        idx: int,
+    ) -> None:
+        """Dispatch one scripted event to its handler."""
+        etype = ev.event_type
+        params = ev.params or {}
+        clock = getattr(ctx, "clock", None)
+        ts = clock.current_time if clock is not None else datetime.min
+
+        if etype == "hbied_detonation":
+            uw_eng = getattr(ctx, "unconventional_engine", None)
+            if uw_eng is None:
+                return
+            obstacle_id = params.get("obstacle_id")
+            # Support index-based lookup: obstacle_index -> initial_ied_obstacle_ids[i]
+            if obstacle_id is None:
+                oi = params.get("obstacle_index")
+                ids = getattr(ctx, "initial_ied_obstacle_ids", [])
+                if oi is not None and 0 <= oi < len(ids):
+                    obstacle_id = ids[oi]
+            target_unit_id = params.get("target_unit_id", "")
+            if obstacle_id:
+                uw_eng.detonate_ied(obstacle_id, target_unit_id, timestamp=ts)
+
+        elif etype == "wp_fire_zone":
+            inc_eng = getattr(ctx, "incendiary_engine", None)
+            if inc_eng is None:
+                return
+            center = params.get("center", [0.0, 0.0])
+            radius_m = float(params.get("radius_m", 50.0))
+            fuel_load = float(params.get("fuel_load", 0.6))
+            duration_s = float(params.get("duration_s", 1800.0))
+            pos = Position(float(center[0]), float(center[1]), 0.0)
+            _weather = getattr(ctx, "weather_engine", None)
+            _ws, _wd = 0.0, 0.0
+            if _weather is not None:
+                try:
+                    _ws = _weather.current.wind.speed
+                    _wd = _weather.current.wind.direction
+                except Exception:
+                    pass
+            inc_eng.create_fire_zone(
+                position=pos,
+                radius_m=radius_m,
+                fuel_load=fuel_load,
+                wind_speed_mps=_ws,
+                wind_dir_rad=_wd,
+                duration_s=duration_s,
+                timestamp=ctx.clock.elapsed.total_seconds(),
+            )
+
+        elif etype == "unit_teleport":
+            unit_id = params.get("unit_id", "")
+            target = params.get("position", [0.0, 0.0])
+            unit = self._find_unit(ctx, unit_id)
+            if unit is None:
+                return
+            new_pos = Position(float(target[0]), float(target[1]), unit.position.altitude)
+            object.__setattr__(unit, "position", new_pos)
+
+        elif etype == "casualty_pulse":
+            unit_id = params.get("unit_id", "")
+            casualties = int(params.get("casualties", 1))
+            unit = self._find_unit(ctx, unit_id)
+            if unit is None or not unit.personnel:
+                return
+            # Remove up to N personnel from the back of the roster
+            for _ in range(min(casualties, len(unit.personnel))):
+                try:
+                    unit.personnel.pop()
+                except Exception:
+                    break
+
+    def _find_unit(self, ctx: Any, unit_id: str) -> Unit | None:
+        if not unit_id:
+            return None
+        for units in ctx.units_by_side.values():
+            for u in units:
+                if u.entity_id == unit_id:
+                    return u
+        return None
+
     # ── Supply network ──────────────────────────────────────────────
 
     def _update_supply_network(self, ctx: Any, dt: float) -> None:

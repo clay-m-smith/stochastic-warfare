@@ -1,0 +1,32 @@
+# DShK 12.7mm Heavy Machine Gun (Dushka / "Daisy")
+# 1938 Soviet heavy machine gun in 12.7x108mm. Widely used by Iraqi
+# insurgents at 2nd Fallujah (Nov 2004), typically tripod-mounted or
+# technical-mounted at window/rooftop positions. Belt-fed, 50-round links;
+# 34kg gun + tripod. MV ~850 m/s; max effective 2,000m ground / 1,500m AA;
+# cyclic ~600 rpm, sustained ~125 rpm.
+# Sources:
+#   - DoD Worldwide Equipment Guide Vol. 1 (Tier 1)
+#   - Jane's Infantry Weapons (Tier 3)
+#   - Soviet TM on DShK/DShKM (translated) (Tier 3)
+weapon_id: dshk_127mm
+display_name: "DShK 12.7mm Heavy Machine Gun"
+category: MACHINE_GUN
+caliber_mm: 12.7
+muzzle_velocity_mps: 850.0
+max_range_m: 2000.0
+min_range_m: 0.0
+rate_of_fire_rpm: 125.0
+burst_size: 8
+base_accuracy_mrad: 1.5
+guidance: NONE
+magazine_capacity: 50
+reload_time_s: 12.0
+compatible_ammo:
+  - 556_ball
+weight_kg: 34.0
+reliability: 0.90
+barrel_life_rounds: 10000
+requires_deployed: true
+traverse_deg: 360.0
+elevation_min_deg: -10.0
+elevation_max_deg: 85.0

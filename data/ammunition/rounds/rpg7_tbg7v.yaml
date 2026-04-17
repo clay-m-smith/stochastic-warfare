@@ -1,0 +1,31 @@
+# RPG-7 TBG-7V Thermobaric Round
+# Russian thermobaric "bunker-buster" round for the RPG-7, fielded by some
+# Iraqi insurgent cells by late 2004. ~2.0kg thermobaric warhead; optimised
+# for anti-personnel and structure-clearance rather than anti-armor.
+#
+# ENGINE LIMITATION (accepted, Phase 101): No dedicated thermobaric /
+# overpressure path; authored as an INFLATED-RADIUS HE (ammo_type: HE).
+# Blast radius ~10m and fragmentation ~20m approximate open-area
+# lethality; confined-space amplification is handled elsewhere (structure
+# layer / engine gap). Propagate updates if/when a thermobaric path is
+# added (Block 11+).
+#
+# Sources:
+#   - DoD Worldwide Equipment Guide Vol. 1 (Tier 1)
+#   - Bazalt (manufacturer) TBG-7V Product Sheet (Tier 3)
+#   - Jane's Infantry Weapons — RPG-7 variants (Tier 3)
+ammo_id: rpg7_tbg7v
+display_name: "RPG-7 TBG-7V Thermobaric Round"
+ammo_type: HE
+mass_kg: 4.5
+diameter_mm: 105.0
+drag_coefficient: 0.45
+penetration_mm_rha: 0.0
+penetration_reference_range_m: 0.0
+blast_radius_m: 10.0
+fragmentation_radius_m: 20.0
+explosive_fill_kg: 2.0
+guidance: NONE
+propulsion: solid_rocket
+max_speed_mps: 115.0
+unit_cost_factor: 1.0

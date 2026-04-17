@@ -1,0 +1,58 @@
+# D9 Armored Bulldozer — USMC urban breaching asset (Operation Al-Fajr)
+#
+# Caterpillar D9R/D9T earthmover fitted with an IDF-style armor kit (adopted
+# by USMC engineers for Iraq urban operations). Gross weight ~60-65 tons
+# (52 t base + armor + blade). Primary contribution is NOT gunnery: the
+# blade and ripper shank break walls, plow roads through rubble, and open
+# main supply routes under fire. Some hulls mount an M2 .50 for operator
+# self-defense; it is a secondary capability and not represented here.
+#
+# At Fallujah the D9s worked directly with engineer squads and Marine
+# infantry to defeat the dense wall-and-alley urban pattern — they cleared
+# rubble MSRs and knocked down reinforced compound walls rather than
+# assaulting buildings by fire.
+#
+# Sources:
+#   - Marine Corps Gazette, "Bulldozers to Baghdad" (Tier 1 — Marine operator
+#     employment doctrine for armored D9).
+#   - Estes, K.W. "U.S. Marines in Battle: Fallujah" (USMC HistDiv, Tier 1).
+
+unit_type: us_d9_bulldozer
+domain: ground
+display_name: "D9 Armored Bulldozer (USMC Engineer)"
+ground_type: ENGINEER
+max_speed: 3.0  # m/s (~11 km/h — tracked earthmover)
+training_level: 0.85
+armor_front: 80.0  # mm RHA equivalent (reinforced cab + blade acts as extra frontal)
+armor_side: 50.0
+armor_type: COMPOSITE
+crew:
+  - role: ENGINEER
+    count: 1
+    skill: TRAINED
+equipment:
+  - name: "D9 Blade & Rippers"
+    category: WEAPON  # display-only; no weapon mapping — primary contribution is breaching, not fires
+    weight_kg: 4200.0
+    reliability: 0.97
+  - name: "Cat C-18 Diesel"
+    category: PROPULSION
+    weight_kg: 2100.0
+    reliability: 0.92
+    temperature_range: [-30.0, 55.0]
+  - name: "IDF-Style Armor Kit"
+    category: PROTECTION
+    weight_kg: 14000.0
+    reliability: 0.99
+  - name: "Mk 1 Eyeball"
+    category: SENSOR
+    weight_kg: 0.5
+    reliability: 0.99
+  - name: "AN/PRC-152 Radio"
+    category: COMMUNICATION
+    weight_kg: 1.6
+    reliability: 0.93
+  - name: "Pioneer Tool Kit"
+    category: UTILITY
+    weight_kg: 25.0
+    reliability: 0.98

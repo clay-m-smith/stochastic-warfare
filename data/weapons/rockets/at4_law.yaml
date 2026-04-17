@@ -1,0 +1,31 @@
+# AT-4 84mm Disposable LAW
+# Saab Bofors single-shot 84mm unguided rocket launcher. Fielded extensively
+# by US ground forces in Iraq (M136 US designation). Effective against light
+# armor, fighting positions, and structures. 440mm RHA HEAT penetration;
+# ~500m point target, 2,100m max; min-arm ~30m; muzzle velocity ~290 m/s.
+# Sources:
+#   - TM 9-1340-214-12&P "Rocket, HEAT, 84mm, M136" (Tier 1)
+#   - Saab Bofors AT-4 Product Datasheet (Tier 3)
+#   - Jane's Infantry Weapons (Tier 3)
+weapon_id: at4_law
+display_name: "AT-4 84mm LAW"
+category: ROCKET_LAUNCHER
+caliber_mm: 84.0
+muzzle_velocity_mps: 290.0
+max_range_m: 500.0
+min_range_m: 30.0
+rate_of_fire_rpm: 0.0
+burst_size: 1
+base_accuracy_mrad: 5.0
+guidance: NONE
+magazine_capacity: 1
+reload_time_s: 0.0
+compatible_ammo:
+  - at4_warhead
+weight_kg: 6.7
+reliability: 0.93
+barrel_life_rounds: 1
+requires_deployed: false
+traverse_deg: 360.0
+elevation_min_deg: -10.0
+elevation_max_deg: 60.0

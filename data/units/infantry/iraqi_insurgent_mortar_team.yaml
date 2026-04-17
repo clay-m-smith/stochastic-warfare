@@ -1,0 +1,63 @@
+# Iraqi Insurgent Mortar Team — Fallujah, November 2004
+#
+# 3-man insurgent indirect-fire team operating a captured Iraqi Army
+# 60mm or 82mm mortar (2B14 / M224 equivalent) during Operation Al-Fajr.
+# Organization:
+#   1 gunner (tube operator)
+#   1 assistant gunner (rounds, sight)
+#   1 spotter / observer (often displaced to an upper-story window or
+#     adjacent rooftop for adjust-fire)
+#
+# Tubes were almost exclusively captured Iraqi Army stock — the 82mm
+# Soviet pattern 2B14 or the lighter 60mm class tube — firing HE only.
+# No illumination, no smoke, no precision-guided rounds. Effective range
+# ~3500m for 60mm and ~5000m for 82mm, but Coalition counter-battery
+# radar (Q-36 / Q-37) and persistent UAV / AC-130 coverage meant
+# insurgent mortar teams typically fired short 1-3 round missions before
+# displacing. Training_level 0.30 reflects former Iraqi conscript
+# crews with degraded gunnery since 2003 dissolution.
+#
+# Sources:
+#   - Estes, Kenneth W. "U.S. Marines in Iraq, 2004-2005: Into the
+#     Fray." USMC History Division, 2011 (Tier 1) — insurgent indirect
+#     fire patterns, counter-battery response.
+#   - Matthews, Matt M. "Operation AL FAJR: A Study in Army and Marine
+#     Corps Joint Operations." Combat Studies Institute Press, Fort
+#     Leavenworth, 2006 (Tier 1) — insurgent mortar threat assessment.
+#   - NGIC, "Complex Environments Assessment: Fallujah I," 2004
+#     (Tier 1) — mortar tube provenance and training profile.
+unit_type: iraqi_insurgent_mortar_team
+domain: ground
+display_name: "Iraqi Insurgent Mortar Team"
+ground_type: LIGHT_INFANTRY
+max_speed: 1.0  # m/s (burdened by tube + baseplate + rounds)
+training_level: 0.30
+armor_front: 0.0
+armor_side: 0.0
+crew:
+  - role: GUNNER
+    count: 1
+    skill: BASIC
+  - role: LOADER
+    count: 1
+    skill: BASIC
+  - role: GENERIC
+    count: 1  # spotter / observer
+    skill: BASIC
+equipment:
+  - name: "Iraqi 82mm 2B14 Mortar"
+    category: WEAPON
+    weight_kg: 41.0
+    reliability: 0.82
+  - name: "AKM"
+    category: WEAPON
+    weight_kg: 3.1
+    reliability: 0.90
+  - name: "Handheld Radio"
+    category: COMMUNICATION
+    weight_kg: 0.5
+    reliability: 0.65
+  - name: "Naked Eye Observation"
+    category: SENSOR
+    weight_kg: 0.5
+    reliability: 0.99

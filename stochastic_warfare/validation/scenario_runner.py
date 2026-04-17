@@ -1046,6 +1046,32 @@ _WEAPON_NAME_MAP: dict[str, str] = {
     "BM-21 Grad 122mm MRL": "bm21_grad",
     "2S1 Gvozdika 122mm SP": "2s1_gvozdika",
     "2S3 Akatsiya 152mm SP": "2s3_akatsiya",
+    # ── Phase 101 Fallujah — USMC / Army urban infantry ──────────────
+    "M16A4 Rifle": "m16a4",
+    "Benelli M1014 Shotgun": "m4_556mm",
+    "M203 40mm Grenade Launcher": "m4_556mm",
+    "Mk 153 SMAW": "mk153_smaw",
+    "AT-4 LAW": "at4_law",
+    "M72A7 LAW": "m72a7_law",
+    "M240 7.62mm Coaxial": "m240_762mm",
+    "M240 7.62mm Loader": "m240_762mm",
+    "M2 .50 Cal": "m2hb_50cal",
+    "M296 .50 Cal MG": "m2hb_50cal",
+    "M121 120mm Mortar": "m121_120mm_mortar",
+    # ── Phase 101 Fallujah — Engineer / demolition ───────────────────
+    "C4 Demolition Block (M112)": "m4_556mm",  # demo placeholder (same pattern as M18A1 Claymore Kit)
+    "Bangalore Torpedo (M1A2)": "m4_556mm",
+    "MICLIC Line Charge": "m4_556mm",
+    "D9 Blade & Rippers": "m4_556mm",  # bulldozer blade — doc-only, placeholder
+    # ── Phase 101 Fallujah — Iraqi insurgents / foreign fighters ─────
+    "AKM": "ak47",
+    "AK-74": "ak47",
+    "SVD Dragunov": "ak47",
+    "RPG-7": "rpg7",
+    "SPG-9 73mm Recoilless Rifle": "spg9_73mm",
+    "DShK 12.7mm HMG": "dshk_127mm",
+    "Iraqi 82mm 2B14 Mortar": "m252_81mm_mortar",  # 82mm proxies to 81mm western mortar
+    "Suicide Vest (SVEST)": "vbied",  # handheld VBIED analog for IED/suicide vest modeling
     # ── Phase 100 Khafji — Naval (USS Missouri Iowa-class) ───────────
     "16 inch/50 Mk 7 Gun": "16in50_naval",
     "5 inch/38 Mk 12 Gun": "mk38_5in38",
@@ -1298,6 +1324,21 @@ _SENSOR_NAME_MAP: dict[str, str] = {
     "Aerial Observer Binoculars": "mk1_eyeball",
     "RQ-2 Pioneer UAV Detachment": "ground_search_radar",  # aerial surveillance proxy
     "AN/ASQ-145 Beacon Tracker": "thermal_sight",
+    # ── Phase 101 Fallujah — Modern ground / tank sensors ────────────
+    "CITV Commander's Independent Thermal Viewer": "thermal_sight",
+    "CIV Commander's Independent Viewer": "thermal_sight",
+    "IBAS Thermal Sight": "thermal_sight",
+    "GPS 2nd-Gen FLIR Gunner's Sight": "thermal_sight",
+    "Eyesafe Laser Rangefinder": "thermal_sight",
+    "AN/PEQ-2 IR Aiming Laser": "nvg",
+    "Mine Detection Set": "ground_search_radar",  # already present above but listed here for clarity
+    # ── Phase 101 Fallujah — AC-130U / Kiowa / UAV sensors ───────────
+    "AN/APQ-180 Strike Radar": "apg68_radar",
+    "ALLTV All-Light-Level TV": "thermal_sight",
+    "MMS Mast-Mounted Sight": "thermal_sight",
+    "Dragon Eye EO/IR Camera": "thermal_sight",
+    "ScanEagle EO/IR Gimbal": "thermal_sight",
+    "GPS/INS Navigation": "mk1_eyeball",  # nav-only, not detection — minimal proxy
     # ── Modern air ───────────────────────────────────────────────────
     "AN/APG-68 Radar": "apg68_radar",
     "AN/APG-79 AESA Radar": "apg68_radar",

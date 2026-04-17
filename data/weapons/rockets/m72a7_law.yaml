@@ -1,0 +1,32 @@
+# M72A7 66mm LAW
+# Nammo M72A7 Light Anti-armor Weapon — modern improved variant of the
+# Vietnam-era M72. Disposable single-shot, 66mm HEAT. Lightweight (~3.5kg)
+# with ~350mm RHA penetration. ~350m point target; min-arm ~10m; MV ~200 m/s.
+# Widely issued to USMC rifle squads at Fallujah as a lightweight alternative
+# when an AT-4 or SMAW was unavailable.
+# Sources:
+#   - TM 9-1340-222-13&P "M72A7 LAW" (Tier 1)
+#   - Nammo M72A7 Product Datasheet (Tier 3)
+#   - Jane's Infantry Weapons (Tier 3)
+weapon_id: m72a7_law
+display_name: "M72A7 66mm LAW"
+category: ROCKET_LAUNCHER
+caliber_mm: 66.0
+muzzle_velocity_mps: 200.0
+max_range_m: 350.0
+min_range_m: 10.0
+rate_of_fire_rpm: 0.0
+burst_size: 1
+base_accuracy_mrad: 6.0
+guidance: NONE
+magazine_capacity: 1
+reload_time_s: 0.0
+compatible_ammo:
+  - m72a7_warhead
+weight_kg: 3.5
+reliability: 0.92
+barrel_life_rounds: 1
+requires_deployed: false
+traverse_deg: 360.0
+elevation_min_deg: -10.0
+elevation_max_deg: 60.0
