@@ -67,7 +67,7 @@ async def get_scenario(name: str, settings: ApiSettings = Depends(get_settings))
     import yaml
     from stochastic_warfare.tools.serializers import serialize_to_dict
 
-    with open(path) as f:
+    with open(path, encoding="utf-8") as f:
         config_dict = yaml.safe_load(f)
 
     # Build force summary from sides (supports list or dict format)

@@ -103,7 +103,7 @@ def scan_scenarios(data_dir: Path) -> list[dict[str, Any]]:
             yaml_path = d / "scenario.yaml"
             if yaml_path.exists():
                 try:
-                    with open(yaml_path) as f:
+                    with open(yaml_path, encoding="utf-8") as f:
                         cfg = yaml.safe_load(f)
                     results.append({"name": d.name, "path": str(yaml_path), "config": cfg})
                 except Exception:
@@ -122,7 +122,7 @@ def scan_scenarios(data_dir: Path) -> list[dict[str, Any]]:
                 yaml_path = d / "scenario.yaml"
                 if yaml_path.exists():
                     try:
-                        with open(yaml_path) as f:
+                        with open(yaml_path, encoding="utf-8") as f:
                             cfg = yaml.safe_load(f)
                         results.append({
                             "name": d.name,
@@ -156,7 +156,7 @@ def scan_units(data_dir: Path) -> list[dict[str, Any]]:
             return
         for yaml_file in sorted(units_dir.rglob("*.yaml")):
             try:
-                with open(yaml_file) as f:
+                with open(yaml_file, encoding="utf-8") as f:
                     defn = yaml.safe_load(f)
                 if not isinstance(defn, dict):
                     continue

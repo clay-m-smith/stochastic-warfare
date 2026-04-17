@@ -164,7 +164,7 @@ class RunManager:
         import yaml
 
         path = Path(scenario_path)
-        with open(path) as f:
+        with open(path, encoding="utf-8") as f:
             config_dict = yaml.safe_load(f)
 
         if config_overrides:

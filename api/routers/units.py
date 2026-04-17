@@ -45,7 +45,7 @@ async def get_unit(unit_type: str, settings: ApiSettings = Depends(get_settings)
     for u in raw:
         if u["unit_type"] == unit_type:
             import yaml
-            with open(u["path"]) as f:
+            with open(u["path"], encoding="utf-8") as f:
                 defn = yaml.safe_load(f)
             return UnitDetail(unit_type=unit_type, definition=defn)
 

@@ -94,7 +94,7 @@ async def list_doctrines(settings: ApiSettings = Depends(get_settings)) -> list[
             if sub.is_dir():
                 for yaml_file in sorted(sub.glob("*.yaml")):
                     try:
-                        with open(yaml_file) as f:
+                        with open(yaml_file, encoding="utf-8") as f:
                             cfg = yaml.safe_load(f)
                         results.append({
                             "name": yaml_file.stem,
@@ -128,7 +128,7 @@ async def list_schools(settings: ApiSettings = Depends(get_settings)) -> list[Sc
     if schools_dir.exists():
         for yaml_file in sorted(schools_dir.glob("*.yaml")):
             try:
-                with open(yaml_file) as f:
+                with open(yaml_file, encoding="utf-8") as f:
                     cfg = yaml.safe_load(f)
                 if not isinstance(cfg, dict):
                     continue
@@ -154,7 +154,7 @@ async def list_commanders(settings: ApiSettings = Depends(get_settings)) -> list
     if cmd_dir.exists():
         for yaml_file in sorted(cmd_dir.glob("*.yaml")):
             try:
-                with open(yaml_file) as f:
+                with open(yaml_file, encoding="utf-8") as f:
                     cfg = yaml.safe_load(f)
                 if not isinstance(cfg, dict):
                     continue
@@ -196,7 +196,7 @@ async def list_weapons(settings: ApiSettings = Depends(get_settings)) -> list[We
             continue
         for yaml_file in sorted(wdir.rglob("*.yaml")):
             try:
-                with open(yaml_file) as f:
+                with open(yaml_file, encoding="utf-8") as f:
                     cfg = yaml.safe_load(f)
                 if not isinstance(cfg, dict):
                     continue
@@ -233,7 +233,7 @@ async def get_weapon(
             continue
         for yaml_file in wdir.rglob("*.yaml"):
             if yaml_file.stem == weapon_id:
-                with open(yaml_file) as f:
+                with open(yaml_file, encoding="utf-8") as f:
                     cfg = yaml.safe_load(f)
                 return WeaponDetail(
                     weapon_id=weapon_id,
