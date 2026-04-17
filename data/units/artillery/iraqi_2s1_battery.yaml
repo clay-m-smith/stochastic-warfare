@@ -1,0 +1,44 @@
+# Source: Janes Armour and Artillery (Tier 3) for 2S1 Gvozdika specs.
+# Cross-ref: Westermeyer, "U.S. Marines in Battle: Al-Khafji," USMC History Div 2014
+# (Tier 1) for Iraqi III Corps OOB context. Phase 103 OOB closure — authored weapon
+# (Phase 100) previously lacked a carrier unit.
+# Iraqi 2S1 Gvozdika 122mm self-propelled howitzer battery. Tracked amphibious chassis
+# derived from MT-LB, light aluminum armor, fully-enclosed turret. 40 rounds stowed.
+unit_type: iraqi_2s1_battery
+domain: ground
+display_name: "Iraqi 2S1 Gvozdika 122mm SP Battery"
+ground_type: ARTILLERY_SP
+max_speed: 17.0  # m/s (~60 km/h road)
+training_level: 0.30
+armor_front: 20.0
+armor_side: 15.0
+crew:
+  - role: COMMANDER
+    count: 1
+    skill: BASIC
+  - role: GUNNER
+    count: 1
+    skill: BASIC
+  - role: LOADER
+    count: 1
+    skill: BASIC
+  - role: DRIVER
+    count: 1
+    skill: BASIC
+equipment:
+  - name: "2S1 Gvozdika 122mm SP"
+    category: WEAPON
+    weight_kg: 15700.0
+    reliability: 0.80
+  - name: "MT-LB Chassis"
+    category: PROPULSION
+    weight_kg: 11900.0
+    reliability: 0.75
+  - name: "Field Radio"
+    category: COMMUNICATION
+    weight_kg: 5.0
+    reliability: 0.65
+  - name: "TSh2B-32P Gunner Sight"
+    category: SENSOR
+    weight_kg: 5.0
+    reliability: 0.75

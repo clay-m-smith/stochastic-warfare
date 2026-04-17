@@ -496,6 +496,9 @@ def _route_naval_engagement(
                 range_m=best_range,
                 timestamp=timestamp,
             )
+            _publish_naval_engagement_event(
+                ctx, attacker, target, wpn_inst, timestamp, bool(result.hit),
+            )
             if result.hit:
                 status = (
                     UnitStatus.DESTROYED
@@ -517,6 +520,9 @@ def _route_naval_engagement(
                 target_range_m=best_range,
                 timestamp=timestamp,
             )
+            _publish_naval_engagement_event(
+                ctx, attacker, target, wpn_inst, timestamp, result.hits > 0,
+            )
             if result.hits > 0:
                 status = (
                     UnitStatus.DESTROYED
@@ -536,6 +542,9 @@ def _route_naval_engagement(
                 range_m=best_range,
                 target_depth_m=getattr(target, "depth", 100.0),
                 timestamp=timestamp,
+            )
+            _publish_naval_engagement_event(
+                ctx, attacker, target, wpn_inst, timestamp, bool(result.torpedo_hit),
             )
             if result.torpedo_hit:
                 status = (
@@ -573,6 +582,9 @@ def _route_naval_engagement(
             if mag_cap > 0 and vls_launches is not None:
                 uid = attacker.entity_id
                 vls_launches[uid] = vls_launches.get(uid, 0) + missiles_fired
+            _publish_naval_engagement_event(
+                ctx, attacker, target, wpn_inst, timestamp, salvo.hits > 0,
+            )
             if salvo.hits > 0:
                 status = (
                     UnitStatus.DESTROYED if salvo.hits >= 2
@@ -709,6 +721,52 @@ def _publish_naval_engagement_event(
     ))
 
 
+def _publish_air_engagement_event(
+    ctx: Any,
+    attacker: Unit,
+    target: Unit,
+    wpn_inst: Any,
+    timestamp: Any,
+    hit: bool,
+) -> None:
+    """Publish generic EngagementEvent for air-routed engagements.
+
+    Phase 103 gap fix: ``_route_air_engagement`` dispatches to sub-engines
+    (air_combat / air_ground / air_defense) that emit ``AirEngagementEvent``
+    — not ``EngagementEvent``.  The ``/analytics/engagements`` chart filters
+    on ``EngagementEvent`` only, so air-routed weapon fires (AGM-65, AMRAAM,
+    AIM-9, Hellfire from AERIAL attacker, SAM intercepts, etc.) are invisible
+    in the Casualties-by-Weapon and Engagement-Summary charts even when they
+    score kills (which surface via UnitDestroyedEvent / UnitDisabledEvent).
+
+    This helper emits a unified ``EngagementEvent`` alongside the sub-engine's
+    ``AirEngagementEvent`` so analytics queries return a complete picture.
+    Both events are kept — ``AirEngagementEvent`` retains air-domain detail
+    (BVR/WVR, pilot skill, energy state) while ``EngagementEvent`` gives the
+    generic shape charts already consume.
+    """
+    event_bus = getattr(ctx, "event_bus", None)
+    if event_bus is None:
+        return
+    from stochastic_warfare.combat.events import EngagementEvent
+    ammo_type = ""
+    try:
+        compat = getattr(wpn_inst.definition, "compatible_ammo", []) or []
+        if compat:
+            ammo_type = str(compat[0])
+    except Exception:
+        pass
+    event_bus.publish(EngagementEvent(
+        timestamp=timestamp or datetime.min,
+        source=ModuleId.COMBAT,
+        attacker_id=attacker.entity_id,
+        target_id=target.entity_id,
+        weapon_id=wpn_inst.definition.weapon_id,
+        ammo_type=ammo_type,
+        result="hit" if hit else "miss",
+    ))
+
+
 def _route_air_engagement(
     ctx: Any,
     attacker: Unit,
@@ -819,6 +877,7 @@ def _route_air_engagement(
             attacker_energy=_atk_energy,
             defender_energy=_def_energy,
         )
+        _publish_air_engagement_event(ctx, attacker, target, wpn_inst, timestamp, bool(result.hit))
         if result.hit:
             return True, UnitStatus.DESTROYED
         return True, None
@@ -887,6 +946,7 @@ def _route_air_engagement(
         )
         if result.aborted:
             return True, None
+        _publish_air_engagement_event(ctx, attacker, target, wpn_inst, timestamp, bool(result.hit))
         if result.hit:
             return True, UnitStatus.DISABLED
         return True, None
@@ -906,6 +966,7 @@ def _route_air_engagement(
             range_m=best_range,
             timestamp=timestamp,
         )
+        _publish_air_engagement_event(ctx, attacker, target, wpn_inst, timestamp, bool(result.hit))
         if result.hit:
             return True, UnitStatus.DESTROYED
         return True, None

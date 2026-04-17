@@ -123,6 +123,7 @@ Rolling record of implementation decisions, changes, and lessons learned across 
 | 100 | Khafji (1991) | **Complete** | [phase-100.md](phase-100.md) |
 | 101 | Fallujah Phase Line Fran (2004) | **Complete** | [phase-101.md](phase-101.md) |
 | 102 | Bint Jbeil + INS Hanit Vignette + Block 11 Validation (2006) | **Complete** | [phase-102.md](phase-102.md) |
+| 103 | Block 11 Polish — OOB + engine gap tightening | **Complete** | [phase-103.md](phase-103.md) |
 
 ## Post-MVP Refinement Index
 

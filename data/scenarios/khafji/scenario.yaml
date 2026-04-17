@@ -185,6 +185,13 @@ sides:
         count: 2
       - unit_type: iraqi_bm21_grad
         count: 1
+      # Phase 103: 2S1 + 2S3 SP howitzer batteries + FROG-7 TEL
+      - unit_type: iraqi_2s1_battery
+        count: 2
+      - unit_type: iraqi_2s3_battery
+        count: 1
+      - unit_type: iraqi_frog7_tel
+        count: 1
     experience_level: 0.30
     morale_initial: STEADY
     commander_profile: attritional_defender

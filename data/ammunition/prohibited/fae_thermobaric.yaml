@@ -1,6 +1,9 @@
 ammo_id: fae_thermobaric
 display_name: "FAE Thermobaric Warhead"
-ammo_type: HE
+# Phase 103: retagged HE -> INCENDIARY_WEAPON so FAE/thermobaric impacts
+# trigger the fire-zone branch (Phase 101 INCENDIARY_WEAPON -> fire_started
+# forcing) for honest thermobaric shake-and-bake semantics.
+ammo_type: INCENDIARY_WEAPON
 mass_kg: 300.0
 diameter_mm: 300.0
 blast_radius_m: 40.0

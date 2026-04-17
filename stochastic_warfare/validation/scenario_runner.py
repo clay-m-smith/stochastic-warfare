@@ -1010,6 +1010,9 @@ _WEAPON_NAME_MAP: dict[str, str] = {
     "Wing/Fuselage Ordnance Stations": "bomb_rack_generic",
     "CSRL Rotary Launcher": "bomb_rack_generic",  # B-52H internal bomb launcher
     "Bomb Rack": "bomb_rack_generic",
+    "Mk 20 Rockeye II CBU": "bomb_rack_generic",  # Phase 103: CBU dispenser uses bomb rack path
+    "AIM-120 AMRAAM": "aim120_amraam",  # Phase 103: F-16C medium-range A2A
+    "AIM-7M Sparrow": "aim120_amraam",  # Phase 103: medium-range A2A proxy
     # ── Phase 100 Khafji — Coalition air ─────────────────────────────
     "GAU-8/A Avenger 30mm": "gau8_30mm",
     "GAU-12 Equalizer 25mm": "gau12_25mm",
@@ -1040,6 +1043,7 @@ _WEAPON_NAME_MAP: dict[str, str] = {
     # ── Phase 100 Khafji — Iraqi ─────────────────────────────────────
     "9K32 Strela-2 MANPADS": "sa7_strela2",
     "SA-7 Strela-2": "sa7_strela2",
+    "SA-7 Missile Round": "sa7_strela2",  # Phase 103: missile-round alias for sa7_team roster
     "9K52 Luna-M FROG-7 TEL": "frog7_launcher",
     "FROG-7 Launcher": "frog7_launcher",
     "D-30 122mm Howitzer": "d30_122mm",

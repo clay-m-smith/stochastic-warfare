@@ -19,6 +19,7 @@ compatible_ammo:
   - gbu16_paveway
   - gbu31_jdam
   - gbu38_jdam
+  - mk20_rockeye  # Phase 103: CBU dispenser carriage (A-10, AV-8B, F/A-18C)
 weight_kg: 150.0
 reliability: 0.90
 barrel_life_rounds: 0

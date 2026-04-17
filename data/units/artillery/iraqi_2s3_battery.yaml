@@ -1,0 +1,43 @@
+# Source: Janes Armour and Artillery (Tier 3) for 2S3 Akatsiya specs.
+# Cross-ref: Westermeyer, "U.S. Marines in Battle: Al-Khafji," USMC History Div 2014
+# (Tier 1) for Iraqi III Corps OOB context. Phase 103 OOB closure.
+# Iraqi 2S3 Akatsiya 152mm self-propelled howitzer battery. Object 303 chassis with
+# modified tracks, 40 rounds stowed, 15 kg HE shell. Heavier than 2S1.
+unit_type: iraqi_2s3_battery
+domain: ground
+display_name: "Iraqi 2S3 Akatsiya 152mm SP Battery"
+ground_type: ARTILLERY_SP
+max_speed: 17.0  # m/s
+training_level: 0.30
+armor_front: 30.0
+armor_side: 20.0
+crew:
+  - role: COMMANDER
+    count: 1
+    skill: BASIC
+  - role: GUNNER
+    count: 1
+    skill: BASIC
+  - role: LOADER
+    count: 2
+    skill: BASIC
+  - role: DRIVER
+    count: 1
+    skill: BASIC
+equipment:
+  - name: "2S3 Akatsiya 152mm SP"
+    category: WEAPON
+    weight_kg: 27500.0
+    reliability: 0.80
+  - name: "Object 303 Chassis"
+    category: PROPULSION
+    weight_kg: 18000.0
+    reliability: 0.75
+  - name: "Field Radio"
+    category: COMMUNICATION
+    weight_kg: 5.0
+    reliability: 0.65
+  - name: "TSh2B-32P Gunner Sight"
+    category: SENSOR
+    weight_kg: 5.0
+    reliability: 0.75

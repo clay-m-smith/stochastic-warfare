@@ -1,0 +1,43 @@
+# Source: Janes Strategic Weapon Systems (Tier 3) for 9K52 Luna-M FROG-7 specs.
+# Cross-ref: Westermeyer, "U.S. Marines in Battle: Al-Khafji," USMC History Div 2014
+# (Tier 1) for Iraqi III Corps OOB context. Phase 103 OOB closure.
+# Iraqi 9K52 Luna-M (FROG-7) unguided tactical rocket launcher. ZIL-135 8x8 chassis,
+# single 9M21 rocket on rail, 70 km max range, ~450 kg HE warhead. Conscript operator.
+unit_type: iraqi_frog7_tel
+domain: ground
+display_name: "Iraqi FROG-7 TEL (9K52 Luna-M)"
+ground_type: ROCKET_ARTILLERY
+max_speed: 18.0  # m/s (~65 km/h road)
+training_level: 0.30
+armor_front: 8.0
+armor_side: 5.0
+crew:
+  - role: COMMANDER
+    count: 1
+    skill: BASIC
+  - role: GUNNER
+    count: 2
+    skill: BASIC
+  - role: LOADER
+    count: 2
+    skill: BASIC
+  - role: DRIVER
+    count: 1
+    skill: BASIC
+equipment:
+  - name: "9K52 Luna-M FROG-7 TEL"
+    category: WEAPON
+    weight_kg: 2500.0
+    reliability: 0.75
+  - name: "ZIL-135 Chassis"
+    category: PROPULSION
+    weight_kg: 10500.0
+    reliability: 0.75
+  - name: "Field Radio"
+    category: COMMUNICATION
+    weight_kg: 5.0
+    reliability: 0.65
+  - name: "Naked Eye Observation"
+    category: SENSOR
+    weight_kg: 0.5
+    reliability: 0.99
