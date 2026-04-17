@@ -531,6 +531,19 @@ class EngagementEngine:
                 missile_type=MissileType.CRUISE_SUBSONIC,
                 timestamp=timestamp,
             )
+            # Phase 100 gap 4 fix: emit EngagementEvent at missile launch
+            # so analytics capture the fact that a guided missile weapon
+            # (AGM-65, Kornet, TOW fired via MISSILE routing, etc.) engaged.
+            # Hit/miss resolves later when missile_engine runs flight
+            # resolution; this event marks the launch with result="fired"
+            # to distinguish from direct-fire hit/miss semantics.
+            if timestamp is not None:
+                self._event_bus.publish(EngagementEvent(
+                    timestamp=timestamp, source=ModuleId.COMBAT,
+                    attacker_id=attacker_id, target_id=target_id,
+                    weapon_id=weapon.weapon_id, ammo_type=ammo_id,
+                    result="fired",
+                ))
             return EngagementResult(
                 engaged=True, engagement_type=engagement_type,
                 attacker_id=attacker_id, target_id=target_id,

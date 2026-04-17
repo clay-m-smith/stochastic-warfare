@@ -117,15 +117,19 @@ The user explicitly requested Spirit 03 as emergent behavior. Required dependenc
 
 **Fix applied**: authored `iraqi_sa7_team.yaml` (2-man LIGHT_INFANTRY MANPADS team, max_speed 1.1 m/s, training 0.35, two-weapon pattern matching `javelin_team` — "9K32 Strela-2 MANPADS" launcher + "SA-7 Missile Round" both mapped to `sa7_strela2` weapon). Added 6 teams to Iraqi OOB. Scenario now carries the ingredients for emergent Spirit 03-class losses: AC-130H operating at 2,100 m MSL + SA-7 max altitude 2,300 m + daylight exposure past sunrise. Engine gaps on aircraft altitude/aspect-dependent PK and time-of-day IR modifier (flagged in Phase 100 research brief section K) remain deferred — the emergent behavior is now *possible* but its frequency is driven by whatever PK the current engine assigns.
 
-### Gap 4: AGM-65 Maverick authored but not firing — PARTIALLY RESOLVED
+### Gap 4: AGM-65 Maverick not firing — RESOLVED
 
-A-10 and AV-8B carry AGM-65 historically — primary anti-armor munition at Khafji. Aircraft equipment uses generic "Wing/Fuselage Ordnance Stations" mapped to `bomb_rack_generic` (compatible only with dumb bombs + LGB + JDAM). AGM-65 is a `MISSILE_LAUNCHER` category weapon that doesn't fit the bomb_rack pattern.
+**Root cause (multi-layer)**:
 
-**Root cause (partial)**: A-10 equipment already lists "AGM-65 Maverick"; `_WEAPON_NAME_MAP` maps it to `agm65_maverick`; `unit_weapons` loads it with correct range and ammo. However **weapon-level `traverse_deg` constraint** was filtering it out — AGM-65 has `traverse_deg: 30.0` (forward-cone mount), and aircraft default heading = 0° (north). Targets south of the aircraft fail the 15° half-cone check (180° bearing diff). Same pattern as Phase 99's `seeker_fov_deg` bug, different constraint field.
+1. **Traverse constraint filter** (analogous to Phase 99's seeker FOV): AGM-65 has `traverse_deg: 30.0` (forward-cone mount). Aircraft default heading = 0° (north). Targets south of the aircraft produce 180° bearing diff > 15° half-cone → weapon-selection loop silently skips AGM-65. **Fix**: added AERIAL + LIGHT_INFANTRY exemption to the `traverse_deg` check in `battle.py`.
 
-**Partial fix applied**: added AERIAL + LIGHT_INFANTRY exemption to the `traverse_deg` check in `battle.py` (analogous to the Phase 99 seeker-FOV exemption). Aircraft can maneuver to face targets; shoulder-fired launchers rotate bodily. Regression tests (9,354) pass with no regressions.
+2. **MISSILE engagement path didn't emit EngagementEvent**: with `enable_missile_routing: true` (Khafji), MISSILE_LAUNCHER weapons with guided ammo route through `engagement_type = MISSILE` → `missile_engine.launch_missile()`. The MISSILE branch in `execute_engagement` returned `engaged=True` but never published an EngagementEvent (only the DIRECT_FIRE branch did). **Fix**: added `EngagementEvent(result="fired")` at missile launch (engagement.py). "fired" distinguishes from direct-fire hit/miss semantics — impact resolution happens later in missile flight.
 
-**Status after fix**: AGM-65 still shows 0 engagements in a 400-tick verification run despite the traverse exemption. Further investigation needed — possibly rate-of-fire cadence (10 rpm = 1 shot per 6s; tactical tick = 5s, so AGM-65 is cooldown-gated every other tick) combined with GAU-8 being preferred by the tie-breaking in weapon selection. Filed as a follow-on investigation; commit documents partial fix + open question.
+3. **Air routing dominates for AERIAL attackers**: for AERIAL attacker + non-AERIAL target, `_route_air_engagement` is called BEFORE the MISSILE path, routing CAS engagements through `air_ground_engine`. This engine emits `AirEngagementEvent` (not generic `EngagementEvent`) and publishes `UnitDisabledEvent` with correct `weapon_id=agm65_maverick`. No direct EngagementEvent, but **kill attribution is correct** via the disabled/destroyed events.
+
+**Verified**: 610-tick Khafji run shows **AGM-65 disabled 6 Iraqi T-72Ms** (`UnitDisabledEvent` with `weapon_id=agm65_maverick`). Initial "0 engagements" reading in previous investigation was counting only `EngagementEvent`, missing the AirEngagementEvent + UnitDisabledEvent pair that the air-routing path produces. AGM-65 now demonstrably engages and kills.
+
+**Broader architectural observation (filed as follow-on)**: Specialized engagement events (`AirEngagementEvent`, `NavalEngagementEvent`, `DEWEngagementEvent`, `ASATEngagementEvent`) are emitted by their respective engines instead of the generic `EngagementEvent`. The `/analytics/engagements` endpoint filters only `EngagementEvent`, so specialized engagements don't show up in the Engagements-by-Type chart. **Casualties-by-Weapon is unaffected** (uses `UnitDestroyedEvent`/`UnitDisabledEvent`, both carry correct `weapon_id`). Future work: either publish both specialized + generic events, or extend analytics to include specialized event classes.
 
 ### Gap 5: Performance at full-OOB scale
 
