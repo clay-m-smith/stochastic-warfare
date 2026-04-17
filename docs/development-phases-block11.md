@@ -406,6 +406,18 @@ Depth checklist includes naval engagement events, ATGM kill events distinguishab
 | `tests/validation/test_bint_jbeil.py` | 102 | Regression test |
 | `tests/validation/test_ins_hanit.py` | 102 | Regression test |
 | (Many unit/weapon YAMLs) | 99–102 | Per gap audit |
+| `tests/validation/test_phase_103_polish.py` | 103 | OOB + engine gap regression (AGM-65 emission, Iraqi artillery carriers, AIM-7M remap, FAE retagging) |
+| `data/units/artillery/iraqi_2s1_battery.yaml` | 103 | Iraqi 2S1 Gvozdika SP battery (closes Phase 100 orphan-weapon gap) |
+| `data/units/artillery/iraqi_2s3_battery.yaml` | 103 | Iraqi 2S3 Akatsiya SP battery |
+| `data/units/artillery/iraqi_frog7_tel.yaml` | 103 | Iraqi FROG-7 TEL |
+| `stochastic_warfare/simulation/deployment.py` | 104 | Configurable deployment modes (legacy / bounding_box / clustered / doctrinal / manual) + DeploymentConfig + FormationTemplateLoader |
+| `data/formations/brigade_attack.yaml` | 104 | Doctrinal formation template (Tier 1: FM 3-90-1, Leonhard) |
+| `data/formations/brigade_defense.yaml` | 104 | Doctrinal formation template |
+| `data/formations/battalion_urban_defense.yaml` | 104 | Doctrinal formation template (Bint Jbeil Hezbollah) |
+| `data/formations/marine_urban_assault.yaml` | 104 | Doctrinal formation template (Fallujah RCT) |
+| `data/formations/mechanized_thrust.yaml` | 104 | Doctrinal formation template (Khafji Iraqi III Corps three-column) |
+| `data/formations/naval_patrol_station.yaml` | 104 | Doctrinal formation template (Hanit Sa'ar 5) |
+| `tests/validation/test_phase_104_deployment.py` | 104 | Deployment-mode regression + all-golden scenario regression guard |
 
 ---
 

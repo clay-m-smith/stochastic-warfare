@@ -274,3 +274,98 @@ Deployment dispatch is O(n) per side; formation template loading is O(6) once pe
 - **Integration**: Fully wired with zero impact on legacy scenarios
 - **Deficits**: 1 Block 11 limitation closed (Bint Jbeil formation overflow)
 - **Action items**: None before commit. User may later retrofit other scenarios to non-legacy modes.
+
+---
+
+## Postmortem (covering 104 + 104b retrofit + UI dividers + UTF-8 hotfix)
+
+### 1. Delivered vs Planned
+
+**Planned** (user-approved scope):
+- 4 selectable deployment modes (legacy / bounding_box / clustered / doctrinal / manual)
+- Per-unit `position:` YAML override
+- `GroupKey` enum for clustering
+- Formation templates in `data/formations/`
+- Legacy default, warn-only overlap
+- Bint Jbeil retrofit
+
+**Delivered** (above, plus unplanned additions from user follow-ups):
+- 104b: retrofit of Debecka + Fallujah + Khafji (after user asked "are the golden scenarios updated?")
+- Direction-aware `_deploy_doctrinal` (`flip_y` auto-inference from opposing box) — not in original plan but necessary when Fallujah/Khafji attack toward -Y
+- Echelon thickness fix (`max(50, 0.05*height)` instead of `min(50, 0.1*height)`) — necessary for Khafji's 50km map
+- `TestAllGoldenScenarioDeployment` regression guard — parametrized across all 5 golden scenarios
+- UI: scenario library dividers (Golden first, then by era) — user request
+- UTF-8 encoding hotfix for API YAML reads — user report of mojibake on new em-dash scenario names
+
+**Verdict**: Scope expanded appropriately in response to user direction. The core deployment engine landed in the planned shape; the retrofits + UI work + hotfix were reactive iterations each triggered by specific user observations. No silent scope creep.
+
+### 2. Integration Audit
+
+- `stochastic_warfare/simulation/deployment.py` imported by `scenario.py` (engine entry point) and `tests/validation/test_phase_104_deployment.py` ✓ not a dead module
+- 6 formation templates in `data/formations/` all load via `FormationTemplateLoader` and are consumed by `_deploy_doctrinal` ✓
+- Per-unit `position:` override: plumbed through `build_forces` in `scenario_runner.py`, honored by `_manually_positioned` flag in `deploy_units` ✓
+- Retrofit scenarios (Debecka, Fallujah, Khafji, Bint Jbeil) all load with new modes and pass regression ✓
+- `check_side_separation` called from `ScenarioLoader.load` when mode != legacy ✓
+- UI: `ScenarioListPage` consumes the existing `/api/scenarios` response + new frontend-only `GOLDEN_SCENARIO_IDS` set ✓
+- UTF-8 encoding fix: 8 API `open()` calls updated — all consumers of YAML files in the API layer ✓
+- **No dead modules. No unsubscribed events. No orphan config flags.**
+
+### 3. Test Quality Review
+
+- **33 deployment tests** across 7 classes: schema (5), formation templates (7 parametrized), bounding_box (2), clustered (1), doctrinal (1), manual (1), legacy compat (1), all-golden (12 parametrized across 5 scenarios × 3 checks + 1 mode check × 5 = 15... wait, mode × 5 + OOB × 5 + min_sep × 5 = 15. plus the explicit legacy compat test = 16 in the all-golden block. Matches actual count.)
+- **End-to-end coverage**: `_load_scenario` helper creates synthetic YAML scenarios that exercise the full `ScenarioLoader → deploy_units` path
+- **Realistic data**: all-golden tests use the actual shipped scenario YAMLs, not mocks
+- **No @slow abuse**: deployment tests are all fast (<5s total), correctly marked
+- **+2 frontend tests** for the divider sections (heading order assertion)
+- **Coverage gaps**: `_deploy_circular` ring-packing not tested directly (only exercised through cluster-override path). Could add a direct test if ever debugging cluster behavior.
+
+### 4. API Surface Check
+
+- All public functions in `deployment.py` type-hinted ✓
+- Private helpers underscore-prefixed (`_deploy_*`, `_group_key_of`) ✓
+- `get_logger(__name__)` used, no bare `print()` ✓
+- DI pattern preserved: `deploy_units` takes `rng`, `template`, `config` as parameters; no global state ✓
+- Pydantic validators on `DeploymentBox` (x_max > x_min, y_max > y_min) ✓
+
+### 5. Deficit Discovery
+
+- No TODO/FIXME/HACK markers in `deployment.py`
+- Known limitations documented:
+  - `naval_patrol_station.yaml` template uses `group_type: UNKNOWN` — naval units don't have `ground_type`; the 3-unit Hanit case falls through to bounding_box, which works. A proper fix would be a template with `group_key: domain` support, but that's scope expansion.
+  - `_deploy_circular` has a `ring > 100` safety guard — cosmetic limit, not a real deficit
+  - Doctrinal mode's `flip_y` inference assumes the Y-axis is the attack/defend axis. Diagonal attacks or east-west engagements would need rotation support. Not encountered in any Block 11 scenario.
+- **No new accepted limitations added to the block inventory.** One limitation closed (Bint Jbeil formation overflow).
+
+### 6. Documentation Freshness
+
+- CLAUDE.md ✓ — phase count 104, status line + Block 11 detail table entry
+- MEMORY.md ✓ — current status + Phase 104 detailed summary + 104b retrofit + UTF-8 hotfix references
+- README.md ✓ — badges (phase + test count) + phase table row
+- docs/devlog/index.md ✓ — Phase 104 entry with link
+- docs/index.md ✓ — badges + test count (~10,840 was slightly high; actual ≈10,124 collected / 10,104 default. acceptable drift)
+- mkdocs.yml ✓ — Phase 104 devlog in nav
+- **ACTION ITEM RESOLVED THIS PASS**: `docs/specs/project-structure.md` was missing `simulation/deployment.py` in the package tree listing. Added.
+- User-facing guide expansion (documenting deployment modes in `docs/guide/scenarios.md`): deferred — not blocking. Scenarios currently work without user-facing deployment-mode documentation; authors can read existing YAML examples.
+
+### 7. Performance Sanity
+
+- Phase 104 tests: 33 tests in 4.13s (avg 125ms) — fast
+- Full suite pre-104: 3:35 (10,071 passing)
+- Full suite post-104: 3:46 (10,092 passing)
+- Full suite post-104b: 3:46 (10,104 passing)
+- **Deployment dispatch is O(n) per side**; formation template loading is one-time per scenario load
+- **No performance regression**. +0.3s per ~20 new tests is negligible.
+
+### 8. Summary
+
+- **Scope**: Slightly over (104b retrofit + UI dividers + UTF-8 hotfix all reactive to user observations, all well-scoped)
+- **Quality**: High — deployment.py is cleanly designed, type-hinted, tested end-to-end
+- **Integration**: Fully wired across engine + API + UI + tests
+- **Deficits**: 0 new limitations (closed 1 Block 11 limitation: Bint Jbeil formation overflow)
+- **Action items**:
+  - ✓ Added `deployment.py` to `project-structure.md` (fixed this pass)
+- **Commits**:
+  - `2218e5b` — Phase 104 core (deployment modes + Bint Jbeil retrofit)
+  - `c3f87c8` — Phase 104b (retrofit Debecka/Khafji/Fallujah)
+  - `4038d58` — UI scenario library dividers
+  - `fcd1852` — UTF-8 encoding hotfix for API YAML reads

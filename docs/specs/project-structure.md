@@ -592,7 +592,8 @@ stochastic-warfare/
         ├── metrics.py                # Simulation output metrics, statistical aggregation, analysis hooks
         ├── aggregation.py           # Force aggregation/disaggregation engine for campaign-scale [Phase 13a]
         ├── calibration.py           # Typed CalibrationSchema pydantic model replacing free-form dict [Phase 49]
-        └── unit_arrays.py           # Structure-of-Arrays (SoA) data layer for hot-path unit data [Phase 88]
+        ├── unit_arrays.py           # Structure-of-Arrays (SoA) data layer for hot-path unit data [Phase 88]
+        └── deployment.py            # Configurable deployment modes (legacy/bounding_box/clustered/doctrinal/manual) + DeploymentConfig + FormationTemplateLoader consuming data/formations/*.yaml [Phase 104]
 ```
 
 ---

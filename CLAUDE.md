@@ -3,7 +3,7 @@
 ## Project Overview
 High-fidelity, high-resolution wargame simulator. Multi-scale (campaign → battlefield → battle → unit level) with stochastic/signal-processing-inspired models (Markov chains, Monte Carlo, Kalman filters, noise models, queueing theory). Headless Python engine first; matplotlib for validation; full UI deferred. Modern era (Cold War–present) as prototype. Maritime warfare fully integrated, not deferred.
 
-**Current status**: Phase 104 complete — Block 11 COMPLETE + polish passes. ~10,840 tests (~10,425 Python + 416 frontend vitest). 104 phases delivered across 11 blocks. Blocks 1–11 ALL COMPLETE.
+**Current status**: Phase 104 complete — Block 11 COMPLETE + polish passes. ~10,522 tests (~10,104 Python + 418 frontend vitest). 104 phases delivered across 11 blocks. Blocks 1–11 ALL COMPLETE.
 
 ## Python & Package Management
 **Requires Python >=3.12** (pinned to 3.12.10 via `.python-version`).

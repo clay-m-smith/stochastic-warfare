@@ -1,7 +1,7 @@
 # Stochastic Warfare
 
 ![Python](https://img.shields.io/badge/python-%3E%3D3.12-blue)
-![Tests](https://img.shields.io/badge/tests-10%2C840_passing-brightgreen)
+![Tests](https://img.shields.io/badge/tests-10%2C522_passing-brightgreen)
 ![Phase](https://img.shields.io/badge/phase-104_Block--11--COMPLETE-brightgreen)
 
 High-fidelity, high-resolution wargame simulator built as a headless Python engine. Models warfare across multiple scales — from individual unit engagements up through tactical battles, operational battlefields, and multi-day strategic campaigns — with stochastic and signal-processing-inspired models throughout.
@@ -163,7 +163,7 @@ data/                     # ~748 YAML data files
   eras/                    # Era-specific data packages (WW2, WW1, Napoleonic, Ancient/Medieval)
   scenarios/              # 32 modern scenarios (engagement, campaign, EW, space, CBRN, escalation, joint, calibration, benchmark) + 5 test
 
-tests/                    # ~10,840 engine+API+frontend tests across ~400 test files
+tests/                    # ~10,522 engine+API+frontend tests across ~400 test files
 docs/                     # specs, brainstorm, devlog, development phases
 ```
 
@@ -281,7 +281,7 @@ For the full package tree and module decomposition, see [`docs/specs/project-str
 | 102 | Bint Jbeil + INS Hanit Vignette (2006) (Block 11) | 15 | **Complete** |
 | 103 | Block 11 Polish — OOB + engine gap tightening | 17 | **Complete** |
 | 104 | Configurable Deployment Modes (Block 11 polish) | 21 | **Complete** |
-| | **Total** | **~10,840** | |
+| | **Total** | **~10,522** | |
 
 For the full phase roadmap, see [`docs/development-phases.md`](docs/development-phases.md) (MVP), [`docs/development-phases-post-mvp.md`](docs/development-phases-post-mvp.md) (post-MVP), and `docs/development-phases-block{N}.md` for Blocks 2–11. For per-phase implementation logs, see [`docs/devlog/`](docs/devlog/).
 
