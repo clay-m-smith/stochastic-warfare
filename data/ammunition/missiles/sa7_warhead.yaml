@@ -1,0 +1,33 @@
+# SA-7 Strela-2 (9M32) Missile + Warhead
+# First-generation shoulder-fired IR-homing SAM. Small 1.15 kg HE-fragmentation
+# warhead with impact/graze fuze. Defeated by hot-exhaust deflectors, flares,
+# and all-aspect aircraft. Rear-quarter only seeker. Credited in AC-130H
+# Spirit 03 loss (31 Jan 1991) — wing damage from fragmentation hit.
+#
+# NOTE: Uses AmmoDefinition schema (ammo_id) — same as igla_warhead.yaml.
+#
+# Sources:
+#   - Jane's Land-Based Air Defence, 9K32 Strela-2 entry (Tier 3)
+#   - NATO AAP-6 allied technical publications (Tier 1)
+#   - JASP "Spirit of Survivability" AC-130 loss study, 2021 (Tier 1)
+ammo_id: sa7_warhead
+display_name: "9M32 Strela-2 (SA-7) Missile"
+ammo_type: MISSILE
+mass_kg: 9.8
+diameter_mm: 72.0
+drag_coefficient: 0.30
+penetration_mm_rha: 0.0
+blast_radius_m: 2.0
+fragmentation_radius_m: 6.0
+explosive_fill_kg: 0.37
+guidance: IR
+seeker_fov_deg: 1.7
+seeker_range_m: 4200.0
+pk_at_reference: 0.30
+countermeasure_susceptibility: 0.40
+propulsion: rocket
+max_speed_mps: 580.0
+flight_time_s: 14.0
+cruise_altitude_m: 0.0
+terminal_maneuver: false
+unit_cost_factor: 3.0

@@ -1,0 +1,32 @@
+# AC-130H 40mm Bofors L/60 Automatic Cannon (Gunship Side-Mount)
+# Single-barrel Bofors 40x311mmR cannon (L/60 pattern) side-firing from the
+# AC-130H. Used against soft and light-armor point targets in conjunction
+# with the 105mm howitzer and 20mm Vulcan. Spirit 03 employed 40mm Bofors
+# during its final mission against Iraqi armor near Khafji.
+# Sources:
+#   - GWAPS Vol. IV "Weapons, Tactics, and Training" (Tier 1)
+#   - USAF AFSOC gunship studies (Tier 1)
+#   - Jane's Ammunition Handbook, 40mm Bofors entry (Tier 3)
+weapon_id: ac130_40mm_bofors
+display_name: "AC-130H 40mm Bofors L/60 (Gunship Mount)"
+category: AIRCRAFT_GUN
+caliber_mm: 40.0
+muzzle_velocity_mps: 880.0
+max_range_m: 7200.0
+effective_range_m: 4000.0
+min_range_m: 200.0
+rate_of_fire_rpm: 120.0
+burst_size: 3
+base_accuracy_mrad: 2.5
+guidance: NONE
+magazine_capacity: 256
+reload_time_s: 4.0
+compatible_ammo:
+  - ac130_40mm_he
+weight_kg: 1981.0
+reliability: 0.93
+barrel_life_rounds: 9000
+requires_deployed: false
+traverse_deg: 0.0
+elevation_min_deg: 0.0
+elevation_max_deg: 0.0

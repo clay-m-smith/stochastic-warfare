@@ -1,0 +1,34 @@
+# Mk 20 Rockeye II Anti-Tank Cluster Bomb Unit
+# 222 kg cluster bomb dispensing 247x Mk 118 shaped-charge bomblets from a
+# Mk 7 SUU-76 dispenser. Each bomblet: ~0.6 kg with HEAT warhead capable of
+# ~190 mm RHA penetration (top attack on light armor, turret decks, and
+# APC/thin-skinned targets). At Khafji, A-10s, F/A-18s, and USMC A-6s
+# dropped Rockeye against Iraqi armor columns — especially effective
+# against T-55/T-62 top armor. Note: Mk 20 submunitions have a high UXO
+# rate and are now restricted under CCM-compatible doctrine.
+#
+# NOTE: Uses AmmoDefinition schema (ammo_id) — same as gbu12_paveway.yaml.
+# ammo_type=CLUSTER (AmmoType.CLUSTER=10) per enum in ammunition.py.
+#
+# Sources:
+#   - GWAPS Vol. IV "Weapons, Tactics, and Training" (Tier 1)
+#   - TM 43-0001-28 (Tier 1)
+#   - Jane's Air-Launched Weapons, Mk 20 Rockeye entry (Tier 3)
+#   - HRW "Cluster Munitions in the Gulf" (Tier 2)
+ammo_id: mk20_rockeye
+display_name: "Mk 20 Rockeye II CBU (247x Mk 118)"
+ammo_type: CLUSTER
+mass_kg: 222.0
+diameter_mm: 336.0
+drag_coefficient: 0.40
+penetration_mm_rha: 190.0
+penetration_reference_range_m: 0.0
+blast_radius_m: 0.0
+fragmentation_radius_m: 0.0
+guidance: NONE
+submunition_count: 247
+submunition_lethal_radius_m: 6.0
+propulsion: none
+max_speed_mps: 0.0
+uxo_rate: 0.05
+unit_cost_factor: 5.0

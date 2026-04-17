@@ -1,0 +1,32 @@
+# GAU-8/A Avenger 30mm Rotary Cannon
+# Primary armament of the A-10 Thunderbolt II. Seven-barrel rotary (gatling)
+# cannon firing 30x173mm ammunition. Muzzle cluster mounted along aircraft
+# centerline. At Khafji (1991), A-10s engaged Iraqi armor with PGU-14/B DU API
+# rounds in 1-2 second bursts from ~1 km slant range.
+# Sources:
+#   - GWAPS Vol. IV "Weapons, Tactics, and Training" (Tier 1)
+#   - Jane's Air-Launched Weapons, GAU-8/A entry (Tier 3)
+#   - General Dynamics / General Electric technical data (Tier 2)
+weapon_id: gau8_30mm
+display_name: "GAU-8/A Avenger 30mm Rotary Cannon"
+category: AIRCRAFT_GUN
+caliber_mm: 30.0
+muzzle_velocity_mps: 1050.0
+max_range_m: 6500.0
+effective_range_m: 1220.0
+min_range_m: 150.0
+rate_of_fire_rpm: 3900.0
+burst_size: 65
+base_accuracy_mrad: 5.0
+guidance: NONE
+magazine_capacity: 1174
+reload_time_s: 0.0
+compatible_ammo:
+  - gau8_apfsds
+weight_kg: 281.0
+reliability: 0.94
+barrel_life_rounds: 21000
+requires_deployed: false
+traverse_deg: 0.0
+elevation_min_deg: 0.0
+elevation_max_deg: 0.0

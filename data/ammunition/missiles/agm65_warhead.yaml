@@ -1,0 +1,35 @@
+# AGM-65 Maverick Warhead (D/G Variant Representative — 136 kg SAP)
+# The Maverick family has two warhead classes:
+#   - WDU-20 conical shaped-charge, 57 kg (AGM-65A/B/D/H/K) — anti-armor
+#   - WDU-24 penetrating / semi-armor-piercing, 136 kg (AGM-65E/F/G/J)
+# This file represents the heavy WDU-24 SAP warhead as carried on the
+# AGM-65D/G models dominant at Khafji against Iraqi armor columns.
+#
+# NOTE: Uses AmmoDefinition schema (ammo_id) — same as tow2_warhead.yaml.
+#
+# Sources:
+#   - GWAPS Vol. IV "Weapons, Tactics, and Training" (Tier 1)
+#   - Grant, Rebecca. "The War Report: Khafji" Air Force Magazine (Tier 2)
+#   - Jane's Air-Launched Weapons, AGM-65 entry (Tier 3)
+ammo_id: agm65_warhead
+display_name: "AGM-65 Maverick Warhead (WDU-24 SAP, D/G Variant)"
+ammo_type: MISSILE
+mass_kg: 307.0
+diameter_mm: 305.0
+drag_coefficient: 0.30
+penetration_mm_rha: 600.0
+penetration_reference_range_m: 0.0
+blast_radius_m: 15.0
+fragmentation_radius_m: 30.0
+explosive_fill_kg: 38.0
+guidance: IR
+seeker_fov_deg: 5.0
+seeker_range_m: 10000.0
+pk_at_reference: 0.80
+countermeasure_susceptibility: 0.12
+propulsion: rocket
+max_speed_mps: 330.0
+flight_time_s: 90.0
+cruise_altitude_m: 50.0
+terminal_maneuver: true
+unit_cost_factor: 80.0

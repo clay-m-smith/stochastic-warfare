@@ -1,0 +1,36 @@
+# M197 20mm Three-Barrel Rotary Cannon
+# Shortened (3-barrel) derivative of the M61 Vulcan used as the chin-turret
+# gun of the USMC AH-1W SuperCobra. Fires 20x102mm ammunition from a linkless
+# feed. At Khafji, AH-1W Cobras flew close air support for USMC and Saudi
+# forces, strafing Iraqi armor with the M197 alongside TOW and Hellfire.
+#
+# NOTE: Uses WeaponDefinition schema (weapon_id, not id) — same as
+# data/weapons/guns/m61a1_vulcan.yaml.
+#
+# Sources:
+#   - GWAPS Vol. IV "Weapons, Tactics, and Training" (Tier 1)
+#   - USMC MCRP 3-20C.1 (Tier 1)
+#   - Jane's Air-Launched Weapons, M197 entry (Tier 3)
+weapon_id: m197_20mm
+display_name: "M197 20mm 3-Barrel Rotary Cannon"
+category: AIRCRAFT_GUN
+caliber_mm: 20.0
+muzzle_velocity_mps: 1030.0
+max_range_m: 4000.0
+effective_range_m: 2000.0
+min_range_m: 50.0
+rate_of_fire_rpm: 750.0
+burst_size: 25
+base_accuracy_mrad: 3.0
+guidance: NONE
+magazine_capacity: 750
+reload_time_s: 0.0
+compatible_ammo:
+  - gau12_apds
+weight_kg: 60.3
+reliability: 0.92
+barrel_life_rounds: 25000
+requires_deployed: false
+traverse_deg: 220.0
+elevation_min_deg: -50.0
+elevation_max_deg: 20.0

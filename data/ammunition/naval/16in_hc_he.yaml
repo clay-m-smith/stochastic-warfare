@@ -1,0 +1,14 @@
+ammo_id: 16in_hc_he
+display_name: "16\"/50 HC HE"
+ammo_type: HE
+mass_kg: 862.0
+diameter_mm: 406.0
+drag_coefficient: 0.35
+penetration_mm_rha: 0.0
+penetration_reference_range_m: 0.0
+blast_radius_m: 50.0
+fragmentation_radius_m: 100.0
+guidance: NONE
+propulsion: none
+max_speed_mps: 820.0
+unit_cost_factor: 15.0

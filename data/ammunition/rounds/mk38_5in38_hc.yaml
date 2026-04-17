@@ -1,0 +1,27 @@
+# 5"/38 Mk 12 HC (High Capacity) Round
+# Standard shore-bombardment round for the Mk 12 5"/38 naval gun. HC
+# projectile ~24.5 kg with ~3.3 kg TNT/Composition B fill. Fired by USS
+# Missouri's secondary battery during naval gunfire support missions
+# off Khafji/Kuwait coast, supplementing 16"/50 Mk 7 main battery fires.
+#
+# NOTE: Uses AmmoDefinition schema (ammo_id) — same as mk45_he.yaml.
+#
+# Sources:
+#   - Naval History and Heritage Command DANFS (Tier 1)
+#   - NavWeaps.com 5"/38 Mk 12 entry (Tier 3)
+#   - Friedman, Norman. "U.S. Naval Weapons" (Tier 2)
+ammo_id: mk38_5in38_hc
+display_name: "5\"/38 HC (High Capacity) Round"
+ammo_type: HE
+mass_kg: 24.5
+diameter_mm: 127.0
+drag_coefficient: 0.30
+penetration_mm_rha: 0.0
+penetration_reference_range_m: 0.0
+blast_radius_m: 25.0
+fragmentation_radius_m: 80.0
+explosive_fill_kg: 3.3
+guidance: NONE
+propulsion: none
+max_speed_mps: 792.0
+unit_cost_factor: 1.5

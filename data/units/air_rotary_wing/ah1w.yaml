@@ -1,0 +1,80 @@
+# USMC AH-1W SuperCobra attack helicopter
+#
+# Bell AH-1W tandem-seat (pilot + gunner) attack helicopter.
+# USMC anti-armor CAS platform; at Khafji flown by HMLA-369 / HMLA-169
+# detachments providing overhead anti-armor CAS against Iraqi armor
+# columns 29-31 Jan 1991.
+#
+# Platform:
+#   Crew 2 (pilot + gunner, tandem)
+#   Max speed ~80 m/s (~295 km/h, ~160 kt)
+#   Service ceiling ~5,500 m
+#
+# Armament (1991 era):
+#   1x M197 20 mm 3-barrel rotary cannon in A/A1 turret (chin; 750 rds)
+#   8x BGM-71 TOW-2 ATGM (4 per stub-wing pylon) — primary Khafji weapon
+#   4x AGM-114 Hellfire (limited availability at Khafji; mostly TOW)
+#   2.75" FFAR rocket pods (M260 7-tube or M261 19-tube)
+#   AIM-9 Sidewinder A-A (limited deployment)
+#
+# Sensors:
+#   M65 TOW sight — telescopic + thermal; NIGHT CAPABLE (key at Khafji)
+#
+# Countermeasures:
+#   AN/ALE-39 chaff/flare dispenser
+#   AN/APR-39 radar warning receiver
+#
+# Sources:
+#   Tier 1: Cureton, "U.S. Marines in the Persian Gulf, 1990-1991:
+#           With the 1st Marine Division in Desert Shield and Desert
+#           Storm" (History and Museums Div, USMC, 1993)
+#   Tier 3: Jane's All the World's Aircraft 1990-91
+
+unit_type: ah1w
+domain: aerial
+display_name: "AH-1W SuperCobra"
+aerial_type: ATTACK_HELO
+max_speed: 80.0  # m/s (~295 km/h, ~160 kt)
+training_level: 0.85  # USMC attack helo aircrew
+service_ceiling: 5500.0
+crew:
+  - role: PILOT
+    count: 1
+    skill: EXPERIENCED
+  - role: COPILOT
+    count: 1
+    skill: EXPERIENCED
+equipment:
+  - name: "M197 20mm Rotary Cannon"
+    category: WEAPON
+    weight_kg: 60.0
+    reliability: 0.90
+  - name: "BGM-71 TOW-2 Launcher"
+    category: WEAPON
+    weight_kg: 95.0  # quad launcher per pylon
+    reliability: 0.91
+  - name: "AGM-114 Hellfire Launcher"
+    category: WEAPON
+    weight_kg: 55.0
+    reliability: 0.92
+  - name: "M260 2.75-inch Rocket Pod"
+    category: WEAPON
+    weight_kg: 64.0
+    reliability: 0.88
+  - name: "M65 TOW Sight"
+    category: SENSOR
+    weight_kg: 78.0
+    reliability: 0.88  # telescopic + thermal; night-capable
+  - name: "AN/APR-39 Radar Warning Receiver"
+    category: SENSOR
+    weight_kg: 6.0
+    reliability: 0.87
+  - name: "AN/ALE-39 Chaff/Flare Dispenser"
+    category: PROTECTION
+    weight_kg: 24.0
+    reliability: 0.89
+  - name: "T700-GE-401 Turboshaft x2"
+    category: PROPULSION
+    weight_kg: 310.0  # twin-engine; ~155 kg per
+    reliability: 0.89
+    temperature_range: [-46.0, 52.0]

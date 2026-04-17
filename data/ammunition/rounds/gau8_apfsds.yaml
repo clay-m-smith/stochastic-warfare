@@ -1,0 +1,27 @@
+# PGU-14/B 30mm API (Depleted Uranium Armor-Piercing Incendiary)
+# A-10's primary armor-defeat round — depleted-uranium penetrator sabot with
+# aluminum casing. Penetrates ~69mm RHA @ 500m at 0°. At Khafji, A-10s fired
+# 4,000–8,000 round bursts against Iraqi T-55/T-62/T-72 armor columns
+# retreating from the town.
+#
+# NOTE: Uses AmmoDefinition schema (ammo_id) — same as 30mm_m789_hedp.yaml.
+# ammo_type=AP for penetrator round (GAU-8 API is kinetic AP, not HE).
+#
+# Sources:
+#   - GWAPS Vol. IV "Weapons, Tactics, and Training" (Tier 1)
+#   - TM 43-0001-28 (Tier 1)
+#   - Jane's Ammunition Handbook, PGU-14 entry (Tier 3)
+ammo_id: gau8_apfsds
+display_name: "PGU-14/B 30mm API (Depleted Uranium)"
+ammo_type: AP
+mass_kg: 0.425
+diameter_mm: 30.0
+drag_coefficient: 0.25
+penetration_mm_rha: 69.0
+penetration_reference_range_m: 500.0
+blast_radius_m: 0.0
+fragmentation_radius_m: 0.0
+guidance: NONE
+propulsion: none
+max_speed_mps: 1050.0
+unit_cost_factor: 0.6

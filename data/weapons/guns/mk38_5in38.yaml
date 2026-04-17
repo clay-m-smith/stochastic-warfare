@@ -1,0 +1,43 @@
+# 5"/38 Mk 12 Dual-Purpose Gun (Iowa-Class Secondary Battery)
+# 5-inch/38-caliber dual-purpose gun in Mk 28 twin enclosed mounts. USS
+# Missouri (BB-63) carried ten Mk 12 barrels in five twin mounts during
+# Desert Storm, providing secondary naval gunfire support alongside the
+# 16"/50 Mk 7 main battery. Mk 12 engaged coastal Iraqi targets near
+# Khafji with HC (high-capacity) rounds.
+#
+# NOTE: Uses WeaponDefinition schema (weapon_id, not id) — same as
+# data/weapons/guns/mk45_5inch.yaml.
+#
+# Sources:
+#   - Naval History and Heritage Command DANFS — USS Missouri (Tier 1)
+#   - NavWeaps.com 5"/38 Mk 12 entry (Tier 3)
+#   - Friedman, Norman. "U.S. Naval Weapons" (Tier 2)
+weapon_id: mk38_5in38
+display_name: "5\"/38 Mk 12 Dual-Purpose Naval Gun"
+category: NAVAL_GUN
+caliber_mm: 127.0
+muzzle_velocity_mps: 792.0
+max_range_m: 16640.0
+effective_range_m: 13000.0
+min_range_m: 500.0
+rate_of_fire_rpm: 18.0
+burst_size: 1
+base_accuracy_mrad: 0.6
+cep_m: 80.0
+guidance: NONE
+magazine_capacity: 400
+reload_time_s: 0.0
+compatible_ammo:
+  - mk38_5in38_hc
+weight_kg: 17700.0
+reliability: 0.92
+barrel_life_rounds: 4600
+requires_deployed: false
+traverse_deg: 300.0
+elevation_min_deg: -15.0
+elevation_max_deg: 85.0
+# Dual-purpose gun — engaged shore targets during NGFS at Khafji.
+target_domains:
+  - NAVAL
+  - GROUND
+  - AERIAL

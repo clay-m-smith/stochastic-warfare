@@ -1010,6 +1010,47 @@ _WEAPON_NAME_MAP: dict[str, str] = {
     "Wing/Fuselage Ordnance Stations": "bomb_rack_generic",
     "CSRL Rotary Launcher": "bomb_rack_generic",  # B-52H internal bomb launcher
     "Bomb Rack": "bomb_rack_generic",
+    # ── Phase 100 Khafji — Coalition air ─────────────────────────────
+    "GAU-8/A Avenger 30mm": "gau8_30mm",
+    "GAU-12 Equalizer 25mm": "gau12_25mm",
+    "M197 20mm Rotary Cannon": "m197_20mm",
+    "105mm M102 Howitzer (direct-fire mount)": "ac130_105mm",
+    "40mm Bofors L/60 Automatic Gun": "ac130_40mm_bofors",
+    "AGM-65 Maverick": "agm65_maverick",
+    "AGM-114 Hellfire Launcher": "agm114_hellfire",
+    "AIM-9L Sidewinder": "aim9x_sidewinder",
+    "AIM-7M Sparrow": "aim9x_sidewinder",  # air-to-air placeholder
+    "M260 2.75-inch Rocket Pod": "bomb_rack_generic",  # free-fall rockets proxy
+    "127mm Zuni Rocket Pod": "bomb_rack_generic",  # unguided rockets proxy
+    "5-inch HVAR Rockets": "bomb_rack_generic",  # unguided rockets proxy
+    "BGM-71 TOW-2 Launcher": "tow2_atgm",
+    # ── Phase 100 Khafji — Coalition ground ──────────────────────────
+    "M901 TOW-2 Launcher": "tow2_atgm",
+    "AKMS": "ak47",
+    "M16A2 Rifle": "m4_556mm",
+    "M203 40mm Grenade Launcher": "m4_556mm",
+    "M40A1 Sniper Rifle": "m4_556mm",  # sniper rifle placeholder
+    "Barrett M82A1 .50 Rifle": "m2hb_50cal",  # anti-materiel rifle proxy
+    "M60 7.62mm MG (sponson x4)": "m240_762mm",
+    "PKM GPMG": "m240_762mm",
+    "F1 105mm Rifled Gun": "l7_105mm",  # functional equivalent 105mm
+    "20mm M693 Coaxial": "m242_bushmaster",  # AMX-30B2 coax
+    "KPVT 14.5mm HMG": "m2hb_50cal",
+    "7.62mm AA Machine Gun": "m240_762mm",
+    # ── Phase 100 Khafji — Iraqi ─────────────────────────────────────
+    "9K32 Strela-2 MANPADS": "sa7_strela2",
+    "SA-7 Strela-2": "sa7_strela2",
+    "9K52 Luna-M FROG-7 TEL": "frog7_launcher",
+    "FROG-7 Launcher": "frog7_launcher",
+    "D-30 122mm Howitzer": "d30_122mm",
+    "BM-21 Grad 122mm MRL": "bm21_grad",
+    "2S1 Gvozdika 122mm SP": "2s1_gvozdika",
+    "2S3 Akatsiya 152mm SP": "2s3_akatsiya",
+    # ── Phase 100 Khafji — Naval (USS Missouri Iowa-class) ───────────
+    "16 inch/50 Mk 7 Gun": "16in50_naval",
+    "5 inch/38 Mk 12 Gun": "mk38_5in38",
+    "Mk 141 Harpoon Quad Launcher": "rgm84_harpoon",
+    "Mk 143 Armored Box Launcher (Tomahawk)": "bgm109_tomahawk",
     "M299 Launcher": "agm114_hellfire",
     "AIM-9L Sidewinder": "aim9x_sidewinder",
     "DEFA 553 30mm Cannon": "m61a1_vulcan",
@@ -1233,6 +1274,30 @@ _SENSOR_NAME_MAP: dict[str, str] = {
     "Mine Detection Set": "ground_search_radar",
     "Javelin CLU Thermal Sight": "thermal_sight",
     "SOFLAM AN/PEQ-1 Laser Designator": "thermal_sight",
+    # ── Phase 100 Khafji ─────────────────────────────────────────────
+    "AN/AAQ-13 LANTIRN Navigation Pod": "thermal_sight",
+    "AN/AAQ-14 LANTIRN Targeting Pod": "thermal_sight",
+    "AN/AAQ-17 FLIR": "thermal_sight",
+    "AN/AAS-35 Pave Penny Laser Spot Tracker": "thermal_sight",
+    "AN/AVQ-19 Low-Light-Level TV": "thermal_sight",
+    "ARBS TV/Laser Spot Tracker": "thermal_sight",
+    "AN/APG-70 Radar": "apg68_radar",
+    "AN/ALR-46 RWR": "laser_warning_receiver",
+    "AN/ALR-56C RWR": "laser_warning_receiver",
+    "AN/ALR-69 RWR": "laser_warning_receiver",
+    "AN/APR-39 Radar Warning Receiver": "laser_warning_receiver",
+    "AN/ALQ-119 ECM Pod": "esm_suite",
+    "AN/ALQ-135 ECM": "esm_suite",
+    "AN/SLQ-32(V)3 EW Suite": "esm_suite",
+    "AN/SPS-49 Air Search Radar": "air_search_radar",
+    "AN/SPS-67 Surface Search Radar": "ground_search_radar",
+    "Mk 37 GFCS with Mk 25 Fire Control Radar": "ground_search_radar",
+    "Mk 38 GFCS with Mk 13 Fire Control Radar": "ground_search_radar",
+    "M65 TOW Sight": "thermal_sight",
+    "Starlight Scope": "nvg",
+    "Aerial Observer Binoculars": "mk1_eyeball",
+    "RQ-2 Pioneer UAV Detachment": "ground_search_radar",  # aerial surveillance proxy
+    "AN/ASQ-145 Beacon Tracker": "thermal_sight",
     # ── Modern air ───────────────────────────────────────────────────
     "AN/APG-68 Radar": "apg68_radar",
     "AN/APG-79 AESA Radar": "apg68_radar",

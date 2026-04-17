@@ -1,0 +1,81 @@
+# USMC Marine Reconnaissance Stay-Behind Team (6-Man)
+# Six-man reconnaissance element drawn from 1st Force Reconnaissance
+# Company and 1st Reconnaissance Battalion. During the Battle of Khafji
+# (29 Jan - 1 Feb 1991), two such teams (Corporal Ingraham's and Captain
+# Lentz's) were trapped inside the town when Iraqi forces overran it.
+# Operating from rooftop hides, the teams directed coalition close air
+# support and artillery fires onto Iraqi armor and infantry in the
+# streets below for roughly 36 hours — a decisive fire-control role.
+#
+# Equipment reflects a tailored stay-behind loadout: standard rifles
+# plus precision long-range fires (M40A1 7.62 sniper, Barrett M82A1 .50
+# anti-materiel) and the AN/TVQ-2 MULE laser designator for guided
+# munitions terminal homing. The MULE is modeled here under the
+# "Multi-Function Sensor Suite" alias, which maps to a thermal sight
+# sensor_id for LOS and designation purposes.
+#
+# Sources:
+#   - Westermeyer, Paul W. "U.S. Marines in Battle: Al-Khafji, 1991."
+#     USMC History Division, 2014 (Tier 1) — recon team composition,
+#     stay-behind mission, fire direction from rooftops, equipment.
+#   - Cureton, Charles H. "U.S. Marines in the Persian Gulf, 1990-1991."
+#     History and Museums Division, USMC, 1993 (Tier 1) — cross-reference
+#     on recon employment and CAS coordination.
+unit_type: us_marine_recon_team
+domain: ground
+display_name: "USMC Marine Recon Stay-Behind Team"
+ground_type: RECON
+max_speed: 1.4  # m/s (dismounted patrol pace)
+training_level: 0.95
+armor_front: 1.0
+armor_side: 0.5
+crew:
+  - role: COMMANDER
+    count: 1
+    skill: ELITE
+  - role: RIFLEMAN
+    count: 3
+    skill: EXPERIENCED
+  - role: GUNNER
+    count: 1
+    skill: EXPERIENCED
+  - role: GENERIC
+    count: 1
+    skill: EXPERIENCED
+equipment:
+  - name: "M16A2 Rifle"
+    category: WEAPON
+    weight_kg: 3.4
+    reliability: 0.94
+  - name: "M249 SAW"
+    category: WEAPON
+    weight_kg: 7.5
+    reliability: 0.90
+  - name: "M203 40mm Grenade Launcher"
+    category: WEAPON
+    weight_kg: 1.6
+    reliability: 0.92
+  - name: "M40A1 Sniper Rifle"
+    category: WEAPON
+    weight_kg: 6.6
+    reliability: 0.95
+  - name: "Barrett M82A1 .50 Rifle"
+    category: WEAPON
+    weight_kg: 14.0
+    reliability: 0.90
+  - name: "Multi-Function Sensor Suite"
+    category: SENSOR
+    weight_kg: 5.4
+    reliability: 0.90
+  - name: "AN/PVS-14 NVG"
+    category: SENSOR
+    weight_kg: 0.4
+    reliability: 0.90
+  - name: "Field Binoculars"
+    category: SENSOR
+    weight_kg: 1.0
+    reliability: 0.99
+  - name: "AN/PRC-77 Radio"
+    category: COMMUNICATION
+    weight_kg: 6.0
+    reliability: 0.85

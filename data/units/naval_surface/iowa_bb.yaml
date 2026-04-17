@@ -1,0 +1,125 @@
+# Iowa-class Battleship (BB-61/62/63/64) — 1991 modernized configuration
+#
+# Canonical platform for USS Missouri (BB-63), USS Wisconsin (BB-64),
+# USS Iowa (BB-61), and USS New Jersey (BB-62). Scenario overrides set
+# the display_name for a specific hull (e.g., "USS Missouri (BB-63)" at
+# Battle of Khafji, 27 Jan – 6 Feb 1991).
+#
+# NavalUnitType note: the engine enum lacks BATTLESHIP; CRUISER is the
+# closest available category (next-largest surface combatant after CARRIER).
+#
+# Platform (post-1980s reactivation / modernization):
+#   Length 270 m, beam 33 m, draft 11.6 m
+#   Full-load displacement ~57,500 t
+#   Max speed ~15 m/s (~33 kn)
+#   Crew ~1,850 (modernized; ~2,700 in WW2)
+#   Armor: 12.1 in (~305 mm) belt, 17 in (~432 mm) turret faces
+#
+# Armament (1991):
+#   9x 16"/50 Mark 7 guns in 3x triple turrets (main battery; WW2 era;
+#     used at Khafji — first 16"/50 combat shots since Korea 1953)
+#   12x 5"/38 Mark 12 in 6x twin Mk 28 mounts (secondary)
+#   32x BGM-109 Tomahawk in 8x Armored Box Launchers (ABL)
+#   16x RGM-84 Harpoon in 4x quad Mk 141 launchers
+#   4x Mk 15 Phalanx CIWS (20 mm gatling)
+#   No torpedoes (obsolete on Iowa-class by 1991)
+#
+# Sensors/EW:
+#   SPS-49 2D air search, SPS-67 surface search
+#   Mk 38 GFCS (16"/50) with Mk 13 fire-control radars
+#   Mk 37 GFCS (5"/38) with Mk 25 radars
+#   SLQ-32(V)3 EW suite
+#   No effective hull sonar
+#
+# Aviation:
+#   1x RQ-2 Pioneer UAV detachment for NGFS spotting (first UAV combat
+#   employment at Khafji). Helo deck supports SH-60B but no routine
+#   embark during 1991.
+#
+# Use at Khafji: gun line 27 Jan – 6 Feb; C2 bunker + artillery
+# suppression + area fire; ~30–60 rounds during main battle.
+#
+# Sources:
+#   Tier 1: NHHC DANFS, "Missouri III (BB-63)"
+#   Tier 1: Gulf War Air Power Survey (GWAPS) Vol II (naval fires summary)
+#   Tier 3: Jane's Fighting Ships 1990-91
+
+unit_type: iowa_bb
+domain: naval
+display_name: "Iowa-class Battleship (BB-63/64 class)"
+naval_type: CRUISER  # enum lacks BATTLESHIP; CRUISER is nearest surface combatant
+max_speed: 15.0  # m/s (~33 kn)
+training_level: 0.85  # USN; reactivated crew with many Iowa-class veterans
+draft: 11.6
+displacement: 57500.0
+fuel_capacity: 8800.0  # FOB bunker capacity
+noise_signature_base: 145.0  # large hull, steam turbines; louder than modern DDG
+crew:
+  - role: COMMANDER
+    count: 1
+    skill: EXPERIENCED
+  - role: NAVIGATOR
+    count: 4
+    skill: EXPERIENCED
+  - role: SENSOR_OPERATOR
+    count: 30
+    skill: TRAINED
+  - role: GUNNER
+    count: 140  # 16"/50 turret + 5"/38 mount crews (heavy)
+    skill: EXPERIENCED
+  - role: ENGINEER
+    count: 80  # eight boilers, four shafts
+    skill: TRAINED
+  - role: GENERIC
+    count: 1595
+    skill: BASIC
+equipment:
+  - name: "16 inch/50 Mk 7 Gun"
+    category: WEAPON
+    weight_kg: 108000.0  # per gun barrel; turret assembly much heavier
+    reliability: 0.82  # WW2-vintage, but well-maintained after reactivation
+  - name: "5 inch/38 Mk 12 Gun"
+    category: WEAPON
+    weight_kg: 15500.0
+    reliability: 0.86
+  - name: "Mk 143 Armored Box Launcher (Tomahawk)"
+    category: WEAPON
+    weight_kg: 26000.0
+    reliability: 0.90
+  - name: "Mk 141 Harpoon Quad Launcher"
+    category: WEAPON
+    weight_kg: 5800.0
+    reliability: 0.89
+  - name: "Mk 15 Phalanx CIWS"
+    category: WEAPON
+    weight_kg: 6200.0
+    reliability: 0.88
+  - name: "AN/SPS-49 Air Search Radar"
+    category: SENSOR
+    weight_kg: 5700.0
+    reliability: 0.86
+  - name: "AN/SPS-67 Surface Search Radar"
+    category: SENSOR
+    weight_kg: 1100.0
+    reliability: 0.88
+  - name: "Mk 38 GFCS with Mk 13 Fire Control Radar"
+    category: SENSOR
+    weight_kg: 4200.0
+    reliability: 0.84
+  - name: "Mk 37 GFCS with Mk 25 Fire Control Radar"
+    category: SENSOR
+    weight_kg: 2400.0
+    reliability: 0.84
+  - name: "AN/SLQ-32(V)3 EW Suite"
+    category: SENSOR
+    weight_kg: 2100.0
+    reliability: 0.87
+  - name: "RQ-2 Pioneer UAV Detachment"
+    category: SENSOR
+    weight_kg: 205.0  # per airframe; detachment includes multiple
+    reliability: 0.78  # early UAV; mechanical and link reliability limited
+  - name: "GE Steam Turbines (4 shaft)"
+    category: PROPULSION
+    weight_kg: 212000.0
+    reliability: 0.84
+    temperature_range: [-40.0, 50.0]

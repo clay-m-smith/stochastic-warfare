@@ -1,0 +1,14 @@
+ammo_id: 16in_ap_mk8
+display_name: "16\"/50 AP Mk 8"
+ammo_type: AP
+mass_kg: 1225.0
+diameter_mm: 406.0
+drag_coefficient: 0.35
+penetration_mm_rha: 500.0
+penetration_reference_range_m: 18000.0
+blast_radius_m: 0.0
+fragmentation_radius_m: 0.0
+guidance: NONE
+propulsion: none
+max_speed_mps: 762.0
+unit_cost_factor: 20.0

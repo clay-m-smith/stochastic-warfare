@@ -1,0 +1,35 @@
+# FROG-7 (9K52 Luna-M) Unguided Tactical Rocket Launcher
+# Soviet short-range unguided artillery rocket on 9P113 TEL (ZIL-135 8x8).
+# Single-rail launcher firing the 9M21 spin-stabilized rocket with ~450 kg
+# HE fragmentation warhead. Highly inaccurate (CEP ~700 m at max range);
+# used operationally for area saturation. At Khafji, Iraqi FROG batteries
+# engaging the Saudi border were the target of AC-130H Spirit 03's final
+# mission (dawn 31 Jan 1991) when the gunship was lost to IR-SAM fire.
+# Sources:
+#   - Jane's Strategic Weapon Systems, 9K52 Luna-M entry (Tier 3)
+#   - GWAPS Vol. IV "Weapons, Tactics, and Training" (Tier 1)
+#   - FM 100-2-3 "The Soviet Army: Troops, Organization, and Equipment" (Tier 1)
+weapon_id: frog7_launcher
+display_name: "FROG-7 (9K52 Luna-M) Tactical Rocket Launcher"
+category: ROCKET_LAUNCHER
+caliber_mm: 544.0
+muzzle_velocity_mps: 0.0
+max_range_m: 70000.0
+effective_range_m: 45000.0
+min_range_m: 15000.0
+rate_of_fire_rpm: 0.1
+burst_size: 1
+base_accuracy_mrad: 10.0
+cep_m: 700.0
+guidance: NONE
+magazine_capacity: 1
+reload_time_s: 600.0
+compatible_ammo:
+  - frog7_warhead
+weight_kg: 18600.0
+reliability: 0.80
+barrel_life_rounds: 0
+requires_deployed: true
+traverse_deg: 14.0
+elevation_min_deg: 15.0
+elevation_max_deg: 65.0

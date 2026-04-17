@@ -1,0 +1,64 @@
+# Cadillac Gage V-150 Commando (TOW Variant)
+# 4x4 amphibious armored car — Saudi Arabian National Guard (SANG) primary
+# mounted infantry platform in 1991. TOW-armed variant used for anti-armor
+# overwatch by TF Abu Bakr (2nd SANG Bde: 7th, 5th, and 8th battalions) at
+# the Battle of Khafji, 29 January – 1 February 1991.
+#
+# Sources:
+#   - Westermeyer, Paul W. "U.S. Marines in Battle: Al-Khafji, 1991."
+#     USMC History Division, 2014 (Tier 1) — SANG composition, V-150
+#     employment, training baseline and performance.
+#   - Jane's Armour and Artillery, 1990-91 (Tier 3) — technical
+#     specifications (crew, armor, speed, armament, amphibious capability).
+unit_type: saudi_v150
+domain: ground
+display_name: "V-150 Commando (TOW) Armored Car"
+ground_type: MECHANIZED_INFANTRY
+max_speed: 25.0  # m/s (~88 km/h road); amphibious swim speed lower
+training_level: 0.55
+armor_front: 10.0
+armor_side: 8.0
+armor_type: RHA
+crew:
+  - role: COMMANDER
+    count: 1
+    skill: BASIC
+  - role: GUNNER
+    count: 1
+    skill: BASIC
+  - role: DRIVER
+    count: 1
+    skill: BASIC
+  - role: GENERIC
+    count: 2
+    skill: BASIC
+equipment:
+  - name: "M901 TOW-2 Launcher"
+    category: WEAPON
+    weight_kg: 93.0
+    reliability: 0.88
+  - name: "TOW-2 ATGM"
+    category: WEAPON
+    weight_kg: 22.6
+    reliability: 0.88
+  - name: "M240 7.62mm Coaxial"
+    category: WEAPON
+    weight_kg: 12.2
+    reliability: 0.92
+  - name: "Chrysler 361 V-8 Gasoline"
+    category: PROPULSION
+    weight_kg: 340.0
+    reliability: 0.85
+    temperature_range: [-20.0, 52.0]
+  - name: "Multi-Function Sensor Suite"
+    category: SENSOR
+    weight_kg: 20.0
+    reliability: 0.85
+  - name: "AN/PRC-77 Radio"
+    category: COMMUNICATION
+    weight_kg: 6.0
+    reliability: 0.82
+  - name: "Welded Steel Hull"
+    category: PROTECTION
+    weight_kg: 450.0
+    reliability: 0.99

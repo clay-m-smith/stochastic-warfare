@@ -1,0 +1,37 @@
+# 2S1 Gvozdika 122mm Self-Propelled Howitzer
+# 2A31 (D-32) 122mm howitzer on a lengthened MT-LB-derived tracked chassis.
+# Amphibious, NBC-protected, fires the same family of 122mm munitions as
+# the D-30 towed piece. Present in Iraqi mechanized/armored divisions at
+# Khafji providing organic indirect fire support.
+#
+# NOTE: Uses WeaponDefinition schema (weapon_id, not id) — same as
+# data/weapons/artillery/m284_155mm.yaml.
+#
+# Sources:
+#   - Jane's Armour and Artillery, 2S1 entry (Tier 3)
+#   - FM 100-2-3 "The Soviet Army" (Tier 1)
+#   - TRADOC Soviet Artillery Weapons & Ammunition Handbook (Tier 1)
+weapon_id: 2s1_gvozdika
+display_name: "2S1 Gvozdika 122mm SP Howitzer"
+category: HOWITZER
+caliber_mm: 121.92
+muzzle_velocity_mps: 690.0
+max_range_m: 15300.0
+effective_range_m: 12200.0
+min_range_m: 1000.0
+rate_of_fire_rpm: 5.0
+burst_size: 1
+base_accuracy_mrad: 0.8
+cep_m: 150.0
+guidance: NONE
+magazine_capacity: 40
+reload_time_s: 12.0
+compatible_ammo:
+  - d30_122mm_he
+weight_kg: 15700.0
+reliability: 0.88
+barrel_life_rounds: 3000
+requires_deployed: false
+traverse_deg: 360.0
+elevation_min_deg: -3.0
+elevation_max_deg: 70.0

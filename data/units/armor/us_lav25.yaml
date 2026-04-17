@@ -1,0 +1,63 @@
+# LAV-25 Light Armored Vehicle (USMC, Standard 25mm Variant)
+# 8x8 light armored vehicle built by General Dynamics Land Systems Canada.
+# Primary platform of USMC Task Force Shepherd (1st Light Armored Infantry
+# Battalion, Companies A/B/C/D) at the Battle of Khafji. Combines a 25mm
+# Bushmaster chain gun with 1st-generation thermal gunsight — critical for
+# detecting Iraqi armor in the night engagement at Observation Post 4.
+#
+# Sources:
+#   - Cureton, Charles H. "U.S. Marines in the Persian Gulf, 1990-1991:
+#     With the 1st Marine Division in Desert Shield and Desert Storm."
+#     History and Museums Division, USMC, 1993 (Tier 1) — TF Shepherd
+#     employment, OP-4 engagement, thermal sight performance.
+#   - Westermeyer, Paul W. "U.S. Marines in Battle: Al-Khafji, 1991."
+#     USMC History Division, 2014 (Tier 1) — LAV OOB and casualties.
+#   - Jane's Armour and Artillery, 1990-91 (Tier 3) — LAV-25 specs.
+unit_type: us_lav25
+domain: ground
+display_name: "LAV-25 Light Armored Vehicle"
+ground_type: MECHANIZED_INFANTRY
+max_speed: 27.0  # m/s (~100 km/h road)
+training_level: 0.85
+armor_front: 10.0
+armor_side: 8.0
+armor_type: RHA
+crew:
+  - role: COMMANDER
+    count: 1
+    skill: TRAINED
+  - role: GUNNER
+    count: 1
+    skill: TRAINED
+  - role: DRIVER
+    count: 1
+    skill: TRAINED
+  - role: GENERIC
+    count: 6
+    skill: TRAINED
+equipment:
+  - name: "M242 25mm Chain Gun"
+    category: WEAPON
+    weight_kg: 109.0
+    reliability: 0.92
+  - name: "M240 7.62mm Coaxial"
+    category: WEAPON
+    weight_kg: 12.2
+    reliability: 0.92
+  - name: "Detroit Diesel 6V-53T"
+    category: PROPULSION
+    weight_kg: 700.0
+    reliability: 0.88
+    temperature_range: [-32.0, 52.0]
+  - name: "Multi-Function Sensor Suite"
+    category: SENSOR
+    weight_kg: 30.0
+    reliability: 0.88
+  - name: "AN/VRC-12 Radio"
+    category: COMMUNICATION
+    weight_kg: 18.0
+    reliability: 0.90
+  - name: "Welded Steel Hull"
+    category: PROTECTION
+    weight_kg: 600.0
+    reliability: 0.99

@@ -1,0 +1,36 @@
+# 9M21 (FROG-7 / Luna-M) HE-Fragmentation Warhead
+# Large unguided tactical rocket with ~457 kg HE-fragmentation warhead
+# (9M21-F variant). Range ~70 km with CEP ~700 m — inaccurate area weapon.
+# Iraqi FROG-7 batteries near the Saudi border were the target of AC-130H
+# Spirit 03's final mission at Khafji (dawn 31 Jan 1991). Also used as
+# placeholder warhead reference for Iraqi BM-21 122mm rockets (aggregated
+# Grad salvo representation; individual 9M22 warhead is ~6.4 kg HE).
+#
+# NOTE: Uses AmmoDefinition schema (ammo_id) — same as m26_mlrs_rocket.yaml.
+#
+# Sources:
+#   - Jane's Strategic Weapon Systems, 9K52 Luna-M entry (Tier 3)
+#   - GWAPS Vol. IV "Weapons, Tactics, and Training" (Tier 1)
+#   - FM 100-2-3 "The Soviet Army" (Tier 1)
+ammo_id: frog7_warhead
+display_name: "9M21 FROG-7 HE-Fragmentation Warhead"
+ammo_type: ROCKET
+mass_kg: 2300.0
+diameter_mm: 544.0
+drag_coefficient: 0.35
+penetration_mm_rha: 0.0
+penetration_reference_range_m: 0.0
+blast_radius_m: 80.0
+fragmentation_radius_m: 250.0
+explosive_fill_kg: 200.0
+guidance: NONE
+seeker_fov_deg: 0.0
+seeker_range_m: 0.0
+pk_at_reference: 0.0
+countermeasure_susceptibility: 0.0
+propulsion: rocket
+max_speed_mps: 1200.0
+flight_time_s: 180.0
+cruise_altitude_m: 0.0
+terminal_maneuver: false
+unit_cost_factor: 25.0

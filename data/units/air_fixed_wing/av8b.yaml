@@ -1,0 +1,69 @@
+# AV-8B Harrier II — USMC V/STOL ground-attack aircraft
+#
+# McDonnell Douglas (later Boeing) second-generation Harrier, single-seat,
+# with a GAU-12 Equalizer 25mm rotary cannon in a belly pod and 7 external
+# hardpoints. Primary air-to-ground sensor is the Hughes Angle Rate Bombing
+# System (ARBS) — a dual-mode TV/laser spot tracker combined with a weapon-
+# release computer. During the Battle of Khafji (29 Jan – 1 Feb 1991)
+# AV-8Bs from VMA-231, VMA-311, VMA-542 and VMA-331 operated from King
+# Abdul Aziz Air Base and LHA-4 USS Nassau offshore, delivering Mk 20
+# Rockeye CBUs and AGM-65E (laser) Mavericks against the Iraqi armored
+# columns pushing on Khafji and OP-4. The type flew roughly 25% of all
+# Marine fixed-wing sorties during the engagement.
+#
+# Sources:
+#   - Tier 1: Cureton, "U.S. Marines in the Persian Gulf 1990–1991 — With
+#             the 1st Marine Division in Desert Shield and Desert Storm"
+#             (USMC History & Museums Division, 1993)
+#   - Tier 2: Westermeyer, "U.S. Marines in Battle: Al-Khafji"
+#             (USMC History Division, 2014)
+#   - Tier 3: Jane's All the World's Aircraft (airframe / sensor specs)
+unit_type: av8b
+domain: aerial
+display_name: "AV-8B Harrier II"
+aerial_type: ATTACK
+max_speed: 290.0  # m/s (~1,040 km/h)
+training_level: 0.82  # USMC VMA pilots
+service_ceiling: 15200.0
+crew:
+  - role: PILOT
+    count: 1
+    skill: EXPERIENCED
+equipment:
+  - name: "GAU-12 Equalizer 25mm"
+    category: WEAPON
+    weight_kg: 122.0
+    reliability: 0.92
+  - name: "Mk 20 Rockeye II CBU"
+    category: WEAPON
+    weight_kg: 222.0
+    reliability: 0.87
+  - name: "AGM-65 Maverick"
+    category: WEAPON
+    weight_kg: 210.0
+    reliability: 0.88
+  - name: "AIM-9L Sidewinder"
+    category: WEAPON
+    weight_kg: 85.4
+    reliability: 0.90
+  - name: "Wing/Fuselage Ordnance Stations"
+    category: WEAPON
+    weight_kg: 450.0
+    reliability: 0.92
+  - name: "ARBS TV/Laser Spot Tracker"
+    category: SENSOR
+    weight_kg: 72.0
+    reliability: 0.86
+  - name: "AN/ALR-67 RWR"
+    category: SENSOR
+    weight_kg: 25.0
+    reliability: 0.90
+  - name: "F402-RR-406 Pegasus Vectored Turbofan"
+    category: PROPULSION
+    weight_kg: 1746.0
+    reliability: 0.88
+    temperature_range: [-54.0, 60.0]
+  - name: "AN/ARC-182 UHF/VHF Radio"
+    category: COMMUNICATION
+    weight_kg: 12.0
+    reliability: 0.91

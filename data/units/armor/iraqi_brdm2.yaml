@@ -1,0 +1,60 @@
+# BRDM-2 Armored Scout Car (Iraqi Army)
+# Soviet-designed 4x4 amphibious armored reconnaissance vehicle widely
+# fielded by Iraqi mechanized and armored divisions. Employed in a
+# reconnaissance and screening role during the Iraqi 5th Mechanized
+# Division's advance on Khafji (29 January 1991).
+#
+# Sources:
+#   - Westermeyer, Paul W. "U.S. Marines in Battle: Al-Khafji, 1991."
+#     USMC History Division, 2014 (Tier 1) — Iraqi OOB and scheme of
+#     maneuver for the Khafji incursion.
+#   - Jane's Armour and Artillery, 1990-91 (Tier 3) — BRDM-2 technical
+#     specifications (armament, armor, speed, amphibious capability).
+unit_type: iraqi_brdm2
+domain: ground
+display_name: "BRDM-2 Armored Scout Car"
+ground_type: RECON
+max_speed: 25.0  # m/s (~90 km/h road); amphibious swim speed lower
+training_level: 0.3
+armor_front: 10.0
+armor_side: 7.0
+armor_type: RHA
+crew:
+  - role: COMMANDER
+    count: 1
+    skill: BASIC
+  - role: GUNNER
+    count: 1
+    skill: BASIC
+  - role: DRIVER
+    count: 1
+    skill: BASIC
+  - role: GENERIC
+    count: 1
+    skill: BASIC
+equipment:
+  - name: "KPVT 14.5mm HMG"
+    category: WEAPON
+    weight_kg: 49.0
+    reliability: 0.85
+  - name: "PKT 7.62mm Coaxial"
+    category: WEAPON
+    weight_kg: 10.5
+    reliability: 0.85
+  - name: "GAZ-41 V-8 Gasoline"
+    category: PROPULSION
+    weight_kg: 330.0
+    reliability: 0.75
+    temperature_range: [-40.0, 45.0]
+  - name: "Mk 1 Eyeball"
+    category: SENSOR
+    weight_kg: 0.5
+    reliability: 0.99
+  - name: "R-123 Radio"
+    category: COMMUNICATION
+    weight_kg: 16.0
+    reliability: 0.70
+  - name: "Welded Steel Hull"
+    category: PROTECTION
+    weight_kg: 400.0
+    reliability: 0.99

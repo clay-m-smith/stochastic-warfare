@@ -1,0 +1,26 @@
+# OF-462 122mm HE Round (Iraqi D-30 / 2S1 standard HE)
+# Soviet 122mm high-explosive fragmentation round, ~21.76 kg projectile with
+# ~3.6 kg TNT fill. Standard round for D-30 towed and 2S1 Gvozdika SP
+# howitzers in Iraqi service at Khafji.
+#
+# NOTE: Uses AmmoDefinition schema (ammo_id) — same as m795_he.yaml.
+#
+# Sources:
+#   - Jane's Ammunition Handbook, OF-462 entry (Tier 3)
+#   - TRADOC Soviet Artillery Weapons & Ammunition Handbook (Tier 1)
+#   - FM 100-2-3 "The Soviet Army" (Tier 1)
+ammo_id: d30_122mm_he
+display_name: "OF-462 122mm HE-FRAG"
+ammo_type: HE
+mass_kg: 21.76
+diameter_mm: 121.92
+drag_coefficient: 0.30
+penetration_mm_rha: 0.0
+penetration_reference_range_m: 0.0
+blast_radius_m: 30.0
+fragmentation_radius_m: 90.0
+explosive_fill_kg: 3.6
+guidance: NONE
+propulsion: none
+max_speed_mps: 690.0
+unit_cost_factor: 0.6

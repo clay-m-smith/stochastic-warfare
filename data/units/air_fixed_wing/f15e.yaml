@@ -1,0 +1,84 @@
+# F-15E Strike Eagle — USAF dual-role air-to-ground / air-to-air fighter
+#
+# McDonnell Douglas two-seat (pilot + WSO) derivative of the F-15 with
+# conformal fuel tanks carrying tangential weapons stations. Primary
+# air-to-ground sensor suite in 1991 was LANTIRN — AN/AAQ-13 navigation
+# pod (terrain-following radar + wide-FOV FLIR) and AN/AAQ-14 targeting
+# pod (narrow-FOV FLIR + laser designator/rangefinder). Radar is the
+# AN/APG-70 with air-to-ground mapping and synthetic aperture modes.
+# At Khafji (29 Jan – 1 Feb 1991) F-15Es from the 4th TFW (Provisional)
+# based at Al Kharj AB were among the first LANTIRN-equipped strike
+# aircraft to detect and attack the Iraqi III Corps columns at night;
+# two F-15Es were repositioned onto OP-4 during the opening engagement
+# per Grant 1998.
+#
+# Sources:
+#   - Tier 1: GWAPS Vol II Pt II "Effects and Effectiveness" — F-15E
+#             night strike sorties during Khafji
+#   - Tier 2: Rebecca Grant, "The Epic Little Battle of Khafji,"
+#             Air Force Magazine, Feb 1998
+#   - Tier 3: Jane's All the World's Aircraft (airframe / sensor specs)
+unit_type: f15e
+domain: aerial
+display_name: "F-15E Strike Eagle"
+aerial_type: ATTACK
+max_speed: 735.0  # m/s (~Mach 2.5 at altitude)
+training_level: 0.85  # USAF — elite dual-role aircrew
+service_ceiling: 18300.0
+crew:
+  - role: PILOT
+    count: 1
+    skill: EXPERIENCED
+  - role: SENSOR_OPERATOR  # Weapon Systems Officer (WSO), back seat
+    count: 1
+    skill: EXPERIENCED
+equipment:
+  - name: "M61A1 Vulcan 20mm"
+    category: WEAPON
+    weight_kg: 112.0
+    reliability: 0.94
+  - name: "AIM-9L Sidewinder"
+    category: WEAPON
+    weight_kg: 85.4
+    reliability: 0.90
+  - name: "AIM-7M Sparrow"
+    category: WEAPON
+    weight_kg: 230.0
+    reliability: 0.85
+  - name: "AGM-65 Maverick"
+    category: WEAPON
+    weight_kg: 210.0
+    reliability: 0.88
+  - name: "Wing/Fuselage Ordnance Stations"
+    category: WEAPON
+    weight_kg: 700.0
+    reliability: 0.92
+  - name: "AN/APG-70 Radar"
+    category: SENSOR
+    weight_kg: 220.0
+    reliability: 0.88
+  - name: "AN/AAQ-13 LANTIRN Navigation Pod"
+    category: SENSOR
+    weight_kg: 209.0
+    reliability: 0.86
+  - name: "AN/AAQ-14 LANTIRN Targeting Pod"
+    category: SENSOR
+    weight_kg: 200.0
+    reliability: 0.87
+  - name: "AN/ALR-56C RWR"
+    category: SENSOR
+    weight_kg: 24.0
+    reliability: 0.90
+  - name: "AN/ALQ-135 ECM"
+    category: SENSOR
+    weight_kg: 180.0
+    reliability: 0.85
+  - name: "F100-PW-220 Turbofan x2"
+    category: PROPULSION
+    weight_kg: 3180.0
+    reliability: 0.91
+    temperature_range: [-54.0, 71.0]
+  - name: "Link 16 Terminal"
+    category: COMMUNICATION
+    weight_kg: 30.0
+    reliability: 0.91

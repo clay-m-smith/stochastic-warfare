@@ -1,0 +1,34 @@
+# AGM-65 Maverick Air-to-Ground Guided Missile
+# Family of standoff precision munitions with multiple seekers: AGM-65A/B
+# (TV-guided, 57 kg WDU-20 HE), AGM-65D/G (imaging IR, 136 kg WDU-24 SAP),
+# AGM-65E (semi-active laser). At Khafji, A-10s and F-16s launched Maverick
+# D/G (IIR) against Iraqi armor; ~5,000 AGM-65s were fired in Desert Storm,
+# most from A-10s, producing the highest air-to-ground Pk of the war.
+# Sources:
+#   - GWAPS Vol. IV "Weapons, Tactics, and Training" (Tier 1)
+#   - Grant, Rebecca. "The War Report: Khafji" Air Force Magazine (Tier 2)
+#   - Jane's Air-Launched Weapons, AGM-65 entry (Tier 3)
+weapon_id: agm65_maverick
+display_name: "AGM-65 Maverick Air-to-Ground Missile"
+category: MISSILE_LAUNCHER
+caliber_mm: 305.0
+muzzle_velocity_mps: 0.0
+max_range_m: 27000.0
+effective_range_m: 15000.0
+min_range_m: 600.0
+rate_of_fire_rpm: 10.0
+burst_size: 1
+base_accuracy_mrad: 0.0
+cep_m: 3.0
+guidance: IR
+magazine_capacity: 6
+reload_time_s: 0.0
+compatible_ammo:
+  - agm65_warhead
+weight_kg: 307.0
+reliability: 0.92
+barrel_life_rounds: 0
+requires_deployed: false
+traverse_deg: 30.0
+elevation_min_deg: -45.0
+elevation_max_deg: 10.0

@@ -1,0 +1,26 @@
+# M1 105mm HE Round (AC-130H M102 Howitzer)
+# Standard 105mm semi-fixed HE round as fired from the M102 howitzer.
+# Projectile mass ~14.97 kg with ~2.18 kg TNT fill. Used by AC-130H
+# Spectre gunships against Iraqi armor and FROG-7 TELs at Khafji.
+#
+# NOTE: Uses AmmoDefinition schema (ammo_id) — same as m795_he.yaml.
+#
+# Sources:
+#   - TM 43-0001-28 "Army Ammunition Data Sheets: Artillery" (Tier 1)
+#   - GWAPS Vol. IV "Weapons, Tactics, and Training" (Tier 1)
+#   - Jane's Ammunition Handbook (Tier 3)
+ammo_id: ac130_105mm_he
+display_name: "M1 105mm HE Round"
+ammo_type: HE
+mass_kg: 14.97
+diameter_mm: 105.0
+drag_coefficient: 0.30
+penetration_mm_rha: 0.0
+penetration_reference_range_m: 0.0
+blast_radius_m: 25.0
+fragmentation_radius_m: 75.0
+explosive_fill_kg: 2.18
+guidance: NONE
+propulsion: none
+max_speed_mps: 494.0
+unit_cost_factor: 0.5

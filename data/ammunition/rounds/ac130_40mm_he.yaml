@@ -1,0 +1,27 @@
+# 40x311mmR HE Round (AC-130H Bofors L/60)
+# High-explosive round for the Bofors 40mm L/60 gun. Projectile mass ~0.89 kg
+# with ~68 g Composition A-3 HE fill. Fragmentation pattern lethal to troops
+# in open and soft-skinned vehicles at point-of-burst. Used by AC-130H
+# Spirit 03 against Iraqi armor and FROG-7 TEL targets at Khafji.
+#
+# NOTE: Uses AmmoDefinition schema (ammo_id) — same as mk19_40mm_he.yaml.
+#
+# Sources:
+#   - TM 43-0001-27 "Army Ammunition Data Sheets" (Tier 1)
+#   - Jane's Ammunition Handbook, Bofors 40mm entry (Tier 3)
+#   - GWAPS Vol. IV "Weapons, Tactics, and Training" (Tier 1)
+ammo_id: ac130_40mm_he
+display_name: "40mm Bofors L/60 HE-T"
+ammo_type: HE
+mass_kg: 0.89
+diameter_mm: 40.0
+drag_coefficient: 0.30
+penetration_mm_rha: 20.0
+penetration_reference_range_m: 1000.0
+blast_radius_m: 4.0
+fragmentation_radius_m: 12.0
+explosive_fill_kg: 0.068
+guidance: NONE
+propulsion: none
+max_speed_mps: 880.0
+unit_cost_factor: 0.4

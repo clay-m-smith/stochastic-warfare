@@ -1,0 +1,104 @@
+# AC-130H Spectre — USAF Special Operations Command fixed-wing gunship
+#
+# Lockheed C-130 Hercules airframe converted to a side-firing gunship by
+# the 16th Special Operations Squadron, 1st Special Operations Wing
+# (Hurlburt Field, FL). The 1991 AC-130H configuration carried a mixed
+# battery: two M61A1 Vulcan 20mm rotary cannons, one 40mm Bofors L/60
+# automatic gun, and one 105mm M102 howitzer on a direct-fire mount — all
+# aimed by a Fire Control Officer via AN/AAQ-17 FLIR, AN/AVQ-19 Low-Light-
+# Level TV, and AN/ASQ-145 beacon tracker, firing through the port side.
+# Typical CAS orbit: left-hand pylon turn at 2,000–3,000 m (7,000–10,000 ft)
+# MSL and ~230 KTAS. This orbit profile is the aircraft's signature
+# vulnerability to MANPADS, which is ultimately what brought down
+# Spirit 03 (callsign, tail AC-130H 69-6567) over Khafji at 0635L on
+# 31 January 1991 — struck by an Iraqi SA-7 Strela-2 while covering the
+# withdrawal of friendly ground forces; wing separation; 14 crew KIA
+# (the largest single combat loss of aircrew during Desert Storm).
+#
+# The 14-person crew is modeled here in aggregate using the available
+# CrewRole enum values (no gunship-specific roles in the base schema).
+# `aerial_type: ATTACK` is used because `GUNSHIP` is not a member of
+# `AerialUnitType`; the 16th SOS fire-support role maps most closely to
+# ATTACK within the current aerial taxonomy.
+#
+# Sources:
+#   - Tier 2: Rebecca Grant, "The Epic Little Battle of Khafji,"
+#             Air Force Magazine, Feb 1998 (Spirit 03 account)
+#   - Tier 3: Special Operations Warrior Foundation — Spirit 03 crew
+#             tribute and loss report
+#   - Tier 3: Jane's All the World's Aircraft (airframe / armament specs)
+unit_type: ac130h
+domain: aerial
+display_name: "AC-130H Spectre"
+aerial_type: ATTACK
+max_speed: 130.0  # m/s (~470 km/h) — orbit speed much lower (~115 m/s)
+training_level: 0.90  # 16th SOS — USAF Special Operations Command, elite
+service_ceiling: 7600.0  # Hercules practical ceiling with full armament
+crew:
+  - role: PILOT
+    count: 1
+    skill: VETERAN
+  - role: COPILOT
+    count: 1
+    skill: EXPERIENCED
+  - role: NAVIGATOR
+    count: 1
+    skill: EXPERIENCED
+  - role: SENSOR_OPERATOR  # Fire Control Officer + Electronic Warfare Officer
+    count: 2
+    skill: EXPERIENCED
+  - role: CREW_CHIEF  # Flight Engineer
+    count: 1
+    skill: EXPERIENCED
+  - role: GUNNER  # 5 gunners + 2 illuminator operators
+    count: 7
+    skill: EXPERIENCED
+  - role: GENERIC  # Loadmaster
+    count: 1
+    skill: TRAINED
+equipment:
+  - name: "M61A1 Vulcan 20mm"
+    category: WEAPON
+    weight_kg: 112.0
+    reliability: 0.94
+  - name: "40mm Bofors L/60 Automatic Gun"
+    category: WEAPON
+    weight_kg: 522.0
+    reliability: 0.90
+  - name: "105mm M102 Howitzer (direct-fire mount)"
+    category: WEAPON
+    weight_kg: 1496.0
+    reliability: 0.88
+  - name: "AN/AAQ-17 FLIR"
+    category: SENSOR
+    weight_kg: 180.0
+    reliability: 0.86
+  - name: "AN/AVQ-19 Low-Light-Level TV"
+    category: SENSOR
+    weight_kg: 120.0
+    reliability: 0.84
+  - name: "AN/ASQ-145 Beacon Tracker"
+    category: SENSOR
+    weight_kg: 50.0
+    reliability: 0.85
+  - name: "AN/ALR-69 RWR"
+    category: SENSOR
+    weight_kg: 28.0
+    reliability: 0.86
+  - name: "AN/ALE-40 Chaff/Flare Dispenser"
+    category: PROTECTION
+    weight_kg: 60.0
+    reliability: 0.85
+  - name: "T56-A-15 Turboprop x4"
+    category: PROPULSION
+    weight_kg: 7560.0
+    reliability: 0.91
+    temperature_range: [-54.0, 71.0]
+  - name: "AN/ARC-190 HF Radio"
+    category: COMMUNICATION
+    weight_kg: 40.0
+    reliability: 0.90
+  - name: "SATCOM Terminal"
+    category: COMMUNICATION
+    weight_kg: 45.0
+    reliability: 0.90

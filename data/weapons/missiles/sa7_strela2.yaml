@@ -1,0 +1,38 @@
+# SA-7 Strela-2 (9K32) IR-Homing Shoulder MANPADS
+# First-generation Soviet shoulder-fired surface-to-air missile. Passive IR
+# seeker homes on hot engine exhaust (tail-aspect only). Defeated by flares,
+# hot-exhaust deflectors, and all-aspect aircraft like later threats. Still
+# widespread in Iraqi inventory at Khafji (1991). Credited — among other
+# Iraqi IR-SAMs — with downing Spirit 03 (AC-130H) at dawn 31 Jan 1991
+# after the gunship overstayed in its orbit engaging FROG-7 launchers.
+# Sources:
+#   - Jane's Land-Based Air Defence, 9K32 Strela-2 entry (Tier 3)
+#   - NATO AAP-6 allied technical publications (Tier 1)
+#   - JASP "Spirit of Survivability" AC-130 loss study, 2021 (Tier 1)
+#   - GWAPS Vol. IV "Weapons, Tactics, and Training" (Tier 1)
+weapon_id: sa7_strela2
+display_name: "SA-7 Strela-2 (9K32) MANPADS"
+category: MISSILE_LAUNCHER
+caliber_mm: 72.0
+muzzle_velocity_mps: 28.0
+max_range_m: 4200.0
+effective_range_m: 3600.0
+min_range_m: 500.0
+rate_of_fire_rpm: 2.0
+burst_size: 1
+base_accuracy_mrad: 0.0
+cep_m: 0.0
+min_engagement_altitude_m: 50.0
+max_engagement_altitude_m: 2300.0
+guidance: IR
+magazine_capacity: 1
+reload_time_s: 15.0
+compatible_ammo:
+  - sa7_warhead
+weight_kg: 15.0
+reliability: 0.85
+barrel_life_rounds: 0
+requires_deployed: false
+traverse_deg: 360.0
+elevation_min_deg: 0.0
+elevation_max_deg: 80.0

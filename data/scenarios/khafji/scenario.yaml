@@ -1,0 +1,433 @@
+# Battle of Khafji — 29 January – 1 February 1991
+#
+# Iraqi III Corps (MajGen Salah Aboud Mahmoud) launches a multi-axis
+# mechanized thrust from occupied Kuwait into Khafji, Saudi Arabia —
+# the first major ground engagement of Desert Storm.  Three Iraqi
+# divisions (3rd Armored "Salahuddin", 5th Mechanized, 1st Mechanized
+# elements) commit via three corridors: coastal road into Khafji town,
+# western flank via al-Wafra forest, and OP-4 axis toward SW Saudi
+# observation posts.
+#
+# Coalition defenders: Saudi TF Abu Bakr (2nd SANG Brigade), Qatari
+# Armored Battalion, USMC TF Shepherd (1st LAI Bn), 3rd SFG ODAs
+# embedded, two Marine Recon stay-behind teams trapped in Khafji,
+# 11th Marines artillery, USAF/USN CAS stack, USS Missouri BB-63 on
+# gun line 18km offshore (first 16"/50 combat rounds since Korea).
+#
+# Historical outcome: decisive Coalition victory; Iraqi force broken
+# by 1 Feb; mass surrenders (~400 EPWs); ~100-200 Iraqi AFVs destroyed
+# including air interdiction of follow-on columns.  Coalition 43 KIA
+# (11 US Marines, 18 Saudis, 14 Qataris), plus Spirit 03 AC-130H lost
+# 31 Jan 0635L to SA-7 MANPADS (14 crew KIA).
+#
+# Sources:
+# - Westermeyer, "U.S. Marines in Battle: Al-Khafji," USMC History
+#   Division 2014 (Tier 1)
+# - Cureton, "With the 1st Marine Division in Desert Shield and Desert
+#   Storm," USMC History 1993 (Tier 1)
+# - Titus, "The Battle of Khafji: An Overview and Preliminary Analysis,"
+#   AFSAA 1996 / DTIC ADA360696 (Tier 1)
+# - Grant, "The Epic Little Battle of Khafji," Air Force Magazine
+#   Feb 1998 (Tier 2)
+# - Gulf War Air Power Survey Vol II, Office of Air Force History 1993
+#   (Tier 1)
+
+name: "Khafji 1991 — Iraqi III Corps vs Coalition TF Abu Bakr"
+date: "1991-01-29T20:00:00+03:00"
+duration_hours: 72
+tick_duration_seconds: 5.0
+
+# Hybrid tick resolution — strategic for approach/retreat phases,
+# operational for maneuver, tactical for urban firefight.
+tick_resolution:
+  strategic_s: 1800     # 30-min tick during Iraqi approach / retreat
+  operational_s: 300    # 5-min tick during maneuver phase
+  tactical_s: 5         # 5-sec tick during Khafji urban + OP-4 firefight
+
+# ~28.43°N, 48.50°E — Al-Khafji, Eastern Province, Saudi Arabia
+latitude: 28.43
+longitude: 48.50
+
+weather_conditions:
+  # Patchy fog and haze throughout engagement window (Grant 1998).
+  # Smoke from Kuwaiti oil fires adds haze aloft (Iraqi arson started
+  # ~22 Jan).  Moon near full at 98.7% on night of 30 Jan.
+  visibility_m: 8000
+  wind_speed_mps: 4.0
+  wind_direction_deg: 330
+  temperature_c: 12.0
+  precipitation: none
+  cloud_cover: 0.4
+  humidity: 0.55
+
+terrain:
+  # Khafji AO: coastal Saudi Arabia, Kuwait border corridor, Al-Wafra
+  # staging area, coastline to east with USS Missouri on gun line.
+  # Map sized to accommodate 40-50 km Iraqi approach + 15-18 km offshore
+  # Missouri standoff.
+  width_m: 60000
+  height_m: 50000
+  cell_size_m: 100.0
+  base_elevation_m: 50.0
+  terrain_type: flat_desert
+
+sides:
+  # ── Blue: Coalition defenders + carrier/land-based CAS + NGFS ─────
+  - side: blue
+    units:
+      # SANG TF Abu Bakr — 2nd Brigade (7th/5th/8th Battalions)
+      - unit_type: saudi_v150
+        count: 20
+        overrides:
+          training_level: 0.55
+      - unit_type: saudi_sang_squad
+        count: 15
+      # Qatari Armored Battalion (attached) — 105mm AMX-30B2 tank company
+      - unit_type: qatari_amx30b2
+        count: 10
+        overrides:
+          training_level: 0.60
+      # USMC TF Shepherd — 1st Light Armored Infantry Battalion at OP-4
+      - unit_type: us_lav25
+        count: 14
+      - unit_type: us_lav_at
+        count: 4
+      # US 3rd SFG ODAs embedded with SANG
+      - unit_type: sf_oda
+        count: 4
+      # Marine Recon stay-behind teams (Ingraham + Lentz)
+      - unit_type: us_marine_recon_team
+        count: 2
+      # 11th Marines M198 artillery in direct support
+      - unit_type: m109a6
+        count: 4
+      # Coalition CAS stack
+      - unit_type: a10a
+        count: 4
+      - unit_type: fa18c
+        count: 4
+      - unit_type: f14b
+        count: 2
+      - unit_type: f15e
+        count: 2
+      - unit_type: f16c
+        count: 2
+      - unit_type: av8b
+        count: 2
+      - unit_type: ac130h
+        count: 3
+      - unit_type: ov10a
+        count: 2
+      - unit_type: b52h
+        count: 2
+      - unit_type: ah1w
+        count: 4
+      # USS Missouri (BB-63) on gun line — first 16"/50 combat since Korea
+      - unit_type: iowa_bb
+        count: 1
+        overrides:
+          display_name: "USS Missouri (BB-63)"
+    experience_level: 0.80
+    morale_initial: STEADY
+    commander_profile: aggressive_armor
+    doctrine_template: combined_arms_defense
+
+  # ── Red: Iraqi III Corps (III Corps + attached 1st Mech) ──────────
+  - side: red
+    units:
+      # 3rd Armored Division "Salahuddin" — non-RG T-72M force
+      - unit_type: t72m
+        count: 15
+        overrides:
+          training_level: 0.30
+      - unit_type: bmp1
+        count: 8
+        overrides:
+          training_level: 0.30
+      # 5th Mechanized Division — main effort into Khafji town
+      - unit_type: t55a
+        count: 20
+        overrides:
+          training_level: 0.30
+      - unit_type: bmp1
+        count: 15
+        overrides:
+          training_level: 0.30
+      - unit_type: iraqi_mtlb
+        count: 10
+      - unit_type: iraqi_1st_mech_dismount
+        count: 20
+      # 1st Mechanized Division elements — OP-4 axis
+      - unit_type: t55a
+        count: 8
+        overrides:
+          training_level: 0.30
+      - unit_type: bmp1
+        count: 6
+        overrides:
+          training_level: 0.30
+      - unit_type: iraqi_mtlb
+        count: 4
+      - unit_type: iraqi_1st_mech_dismount
+        count: 10
+      # Reconnaissance (divisional scouts)
+      - unit_type: iraqi_brdm2
+        count: 8
+      # Air defense (AAA + MANPADS)
+      - unit_type: zsu_57_2
+        count: 3
+      # Artillery (mixed towed + SP)
+      - unit_type: iraqi_1st_mech_dismount
+        count: 5  # artillery crews as dismount proxy
+    experience_level: 0.30
+    morale_initial: STEADY
+    commander_profile: attritional_defender
+    doctrine_template: attritional_defense
+
+blue_forces:
+  side: blue
+  units:
+    - unit_type: saudi_v150
+      count: 20
+    - unit_type: saudi_sang_squad
+      count: 15
+    - unit_type: qatari_amx30b2
+      count: 10
+    - unit_type: us_lav25
+      count: 14
+    - unit_type: us_lav_at
+      count: 4
+    - unit_type: sf_oda
+      count: 4
+    - unit_type: us_marine_recon_team
+      count: 2
+    - unit_type: m109a6
+      count: 4
+    - unit_type: a10a
+      count: 4
+    - unit_type: fa18c
+      count: 4
+    - unit_type: f14b
+      count: 2
+    - unit_type: f15e
+      count: 2
+    - unit_type: f16c
+      count: 2
+    - unit_type: av8b
+      count: 2
+    - unit_type: ac130h
+      count: 3
+    - unit_type: ov10a
+      count: 2
+    - unit_type: b52h
+      count: 2
+    - unit_type: ah1w
+      count: 4
+    - unit_type: iowa_bb
+      count: 1
+  personnel_total: 3500
+  experience_level: 0.80
+  morale_initial: STEADY
+
+red_forces:
+  side: red
+  units:
+    - unit_type: t72m
+      count: 15
+    - unit_type: bmp1
+      count: 29
+    - unit_type: t55a
+      count: 28
+    - unit_type: iraqi_mtlb
+      count: 14
+    - unit_type: iraqi_1st_mech_dismount
+      count: 35
+    - unit_type: iraqi_brdm2
+      count: 8
+    - unit_type: zsu_57_2
+      count: 3
+  personnel_total: 3500
+  experience_level: 0.30
+  morale_initial: STEADY
+
+# Historical outcome — for regression envelope assertions
+documented_outcomes:
+  - name: red_units_destroyed
+    value: 40.0
+    tolerance_factor: 2.0
+    unit: "vehicles"
+    source: "Westermeyer 2014; GWAPS — ~90-200 Iraqi AFVs destroyed in battle area"
+    source_quality: 0
+    notes: "Narrow bracket: urban + direct CAS; wider interdiction up to 600"
+  - name: red_prisoners
+    value: 400.0
+    tolerance_factor: 1.5
+    unit: "personnel"
+    source: "USMC History ~400 EPWs captured"
+    source_quality: 0
+    notes: "Mass surrender cascade is the key dynamic"
+  - name: blue_units_destroyed
+    value: 8.0
+    tolerance_factor: 2.0
+    unit: "vehicles"
+    source: "2 LAV-AT destroyed (1 TOW fratricide, 1 Maverick) + Saudi/Qatari losses"
+    source_quality: 0
+    notes: "11 US Marine KIA includes 7 from LAV-AT incident"
+  - name: duration_s
+    value: 259200.0
+    tolerance_factor: 1.3
+    unit: "seconds"
+    source: "72-hour main engagement 29 Jan 2000L – 1 Feb 2000L"
+    source_quality: 0
+  - name: naval_gunfire_rounds
+    value: 45.0
+    tolerance_factor: 2.0
+    unit: "16in rounds"
+    source: "Missouri fired ~30-60 16\" rounds during main battle"
+    source_quality: 1
+
+victory_conditions:
+  # Coalition wins when Iraqi force is destroyed ≥40% OR Iraqi morale
+  # collapses (mass-surrender cascade is the historical outcome; Iraqi
+  # III Corps broke after ~40% losses + isolation from rear echelon).
+  - type: force_destroyed
+    side: blue
+    params:
+      threshold: 0.4
+      target_side: red
+  - type: morale_collapsed
+    side: blue
+    params:
+      target_side: red
+  # Time fallback: coalition holds Khafji if Iraqi advance doesn't break
+  # within 72 hours.
+  - type: time_expired
+    side: blue
+    params:
+      max_duration_s: 259200  # 72 hours
+
+calibration_overrides:
+  # Phase 67+ flags — modern engine defaults
+  enable_obscurants: true
+  enable_thermal_crossover: true
+  enable_nvg_detection: true
+  enable_fuel_consumption: true
+  enable_ammo_gate: true
+  enable_air_routing: true
+  enable_missile_routing: true  # for SA-7 (emergent Spirit 03 loss)
+
+  # Combat fidelity
+  hit_probability_modifier: 1.0
+  target_size_modifier: 1.0
+  thermal_contrast: 1.3  # smoke from Kuwaiti oil fires reduces thermal
+
+  # Morale — Iraqi III Corps was conscript/mixed, pre-battle readiness
+  # degraded by 12 days of strategic air campaign (since 17 Jan).  Mass
+  # surrender cascade is the defining dynamic — tune aggressively.
+  morale_degrade_rate_modifier: 0.8
+  morale_force_ratio_weight: 0.25
+  morale_base_degrade_rate: 0.022
+  morale_casualty_weight: 0.75
+  morale_check_interval: 10
+
+  # Rout-cascade: captures Iraqi company/platoon-level surrenders once
+  # SANG closes to grenade range.  (Phase 95 calibration schema params)
+  rout_cascade_radius_m: 500.0
+  rout_cascade_base_chance: 0.35
+  rout_cascade_shaken_susceptibility: 0.7
+
+  # Engagement thresholds
+  destruction_threshold: 0.4
+  disable_threshold: 0.25
+
+  # Force-ratio / CEV — per research brief:
+  # Coalition ~2.0 CEV advantage (elite USMC + Saudi home-terrain + air
+  # dominance); Iraqi ~0.5 (conscript, post-air-campaign, brittle).
+  blue_force_ratio_modifier: 2.0
+  red_force_ratio_modifier: 0.5
+  blue_cohesion: 0.85
+  red_cohesion: 0.45
+
+  # Starting positions — scenario opens at the tactical engagement
+  # phase, not the 4-hour Iraqi approach drive.  Historical analog:
+  # 30 Jan ~0030L Iraqis just crossed into Khafji sector and are in
+  # contact with TF Shepherd at OP-4 and SANG screening forces outside
+  # Khafji town.  Wider formation spacing (100m) to prevent the large
+  # full-OOB force from sprawling across the whole map; Red start
+  # offset 10km north of Blue center to avoid formation overlap.
+  blue_start_x: 30000.0
+  blue_start_y: 15000.0
+  blue_formation_spacing_m: 100.0
+  red_start_x: 30000.0
+  red_start_y: 32000.0
+  red_formation_spacing_m: 100.0
+
+  # Weapon assignments — map equipment names to weapon_ids
+  weapon_assignments:
+    # Coalition ground
+    "M242 25mm Chain Gun": m242_bushmaster
+    "M240 7.62mm Coaxial": m240_762mm
+    "M240B GPMG": m240_762mm
+    "M249 SAW": m4_556mm
+    "M4A1 SOPMOD": m4_556mm
+    "M16A2 Rifle": m4_556mm
+    "M203 40mm Grenade Launcher": m4_556mm
+    "M40A1 Sniper Rifle": m4_556mm
+    "Barrett M82A1 .50 Rifle": m2hb_50cal
+    "M901 TOW-2 Launcher": tow2_atgm
+    "BGM-71 TOW-2 Launcher": tow2_atgm
+    "TOW-2 ATGM": tow2_atgm
+    "F1 105mm Rifled Gun": l7_105mm
+    "20mm M693 Coaxial": m242_bushmaster
+    "7.62mm AA Machine Gun": m240_762mm
+    "AKMS": ak47
+    "PKM GPMG": m240_762mm
+    "RPG-7": rpg7
+    # Coalition air
+    "GAU-8/A Avenger 30mm": gau8_30mm
+    "GAU-12 Equalizer 25mm": gau12_25mm
+    "M197 20mm Rotary Cannon": m197_20mm
+    "M61A1 Vulcan 20mm": m61a1_vulcan
+    "105mm M102 Howitzer (direct-fire mount)": ac130_105mm
+    "40mm Bofors L/60 Automatic Gun": ac130_40mm_bofors
+    "AGM-65 Maverick": agm65_maverick
+    "AGM-114 Hellfire Launcher": agm114_hellfire
+    "AIM-9L Sidewinder": aim9x_sidewinder
+    "AIM-7M Sparrow": aim9x_sidewinder
+    "M260 2.75-inch Rocket Pod": bomb_rack_generic
+    "127mm Zuni Rocket Pod": bomb_rack_generic
+    "5-inch HVAR Rockets": bomb_rack_generic
+    "M60 7.62mm MG (sponson x4)": m240_762mm
+    "Wing/Fuselage Ordnance Stations": bomb_rack_generic
+    "CSRL Rotary Launcher": bomb_rack_generic
+    # Coalition naval (USS Missouri)
+    "16 inch/50 Mk 7 Gun": 16in50_naval
+    "5 inch/38 Mk 12 Gun": mk38_5in38
+    "Mk 15 Phalanx CIWS": mk15_phalanx
+    "Mk 141 Harpoon Quad Launcher": rgm84_harpoon
+    "Mk 143 Armored Box Launcher (Tomahawk)": bgm109_tomahawk
+    # Iraqi armor
+    "D-10T 100mm Rifled Gun": d10t_100mm
+    "SGMT 7.62mm Coaxial": m240_762mm
+    "PKT 7.62mm Coaxial": m240_762mm
+    "KPVT 14.5mm HMG": m2hb_50cal
+    "2A46M 125mm Smoothbore": 2a46m_125mm
+    "73mm 2A28 Grom": 2a28_grom_73mm
+    "AT-3 Sagger ATGM": at3_sagger
+    "2× S-68 57mm Autocannon": s68_57mm
+    # Iraqi air defense / MANPADS / artillery
+    "9K32 Strela-2 MANPADS": sa7_strela2
+    "SA-7 Strela-2": sa7_strela2
+
+behavior_rules:
+  blue:
+    posture: DEFENSIVE
+    advance_speed_mps: 1.0
+    engagement_range_m: 4000
+    roe: WEAPONS_FREE
+  red:
+    posture: MOVING
+    advance_speed_mps: 5.0  # Iraqi mech column road speed
+    engagement_range_m: 2500
+    roe: WEAPONS_FREE
+    axis_of_advance: 180  # south, toward Khafji and OP-4

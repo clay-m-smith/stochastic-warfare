@@ -1,0 +1,67 @@
+# A-10A Thunderbolt II — USAF daylight close air support (CAS) aircraft
+#
+# Fairchild Republic single-seat, twin-engine, armored attack aircraft built
+# around the GAU-8/A 30mm Avenger cannon. During the Battle of Khafji
+# (29 Jan – 1 Feb 1991) A-10A flights from the 23rd TFW (Provisional)
+# operating out of King Fahd IAP delivered sustained daylight CAS against
+# the Iraqi III Corps mechanized columns attempting to exploit the Khafji
+# penetration. The 1991 A-model predates the A-10C upgrade — it lacks an
+# internal FLIR/thermal sight; target acquisition is via Mk 1 Eyeball and
+# the AN/AAS-35 Pave Penny laser spot tracker (passive receive-only; the
+# lasing is done by a ground FAC, OV-10 Bronco, or another aircraft).
+#
+# Sources:
+#   - Tier 1: GWAPS Vol II Pt II "Effects and Effectiveness" — Khafji CAS
+#             sortie counts and target engagement
+#   - Tier 2: Rebecca Grant, "The Epic Little Battle of Khafji,"
+#             Air Force Magazine, Feb 1998
+#   - Tier 3: Jane's All the World's Aircraft (airframe / sensor specs)
+unit_type: a10a
+domain: aerial
+display_name: "A-10A Thunderbolt II"
+aerial_type: ATTACK
+max_speed: 210.0  # m/s (~705 km/h, Mach ~0.56 — slow, intentionally)
+training_level: 0.80  # USAF attack pilots, many Desert Storm veterans
+service_ceiling: 13700.0
+crew:
+  - role: PILOT
+    count: 1
+    skill: EXPERIENCED
+equipment:
+  - name: "GAU-8/A Avenger 30mm"
+    category: WEAPON
+    weight_kg: 1828.0
+    reliability: 0.93
+  - name: "AGM-65 Maverick"
+    category: WEAPON
+    weight_kg: 210.0
+    reliability: 0.88
+  - name: "Mk 20 Rockeye II CBU"
+    category: WEAPON
+    weight_kg: 222.0
+    reliability: 0.87
+  - name: "Wing/Fuselage Ordnance Stations"
+    category: WEAPON
+    weight_kg: 500.0
+    reliability: 0.92
+  - name: "AN/AAS-35 Pave Penny Laser Spot Tracker"
+    category: SENSOR
+    weight_kg: 14.0
+    reliability: 0.88
+  - name: "AN/ALR-46 RWR"
+    category: SENSOR
+    weight_kg: 22.0
+    reliability: 0.88
+  - name: "AN/ALQ-119 ECM Pod"
+    category: SENSOR
+    weight_kg: 220.0
+    reliability: 0.82
+  - name: "TF34-GE-100 Turbofan x2"
+    category: PROPULSION
+    weight_kg: 1420.0
+    reliability: 0.92
+    temperature_range: [-54.0, 71.0]
+  - name: "AN/ARC-164 UHF Radio"
+    category: COMMUNICATION
+    weight_kg: 10.0
+    reliability: 0.91

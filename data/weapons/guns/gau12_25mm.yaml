@@ -1,0 +1,31 @@
+# GAU-12/U Equalizer 25mm Rotary Cannon
+# Five-barrel 25x137mm rotary gun mounted in the AV-8B Harrier II's belly pod
+# (GPU-5/A gunpod or integrated GAU-12). USMC Harriers used it at Khafji to
+# strafe Iraqi armored columns alongside A-10s and AH-1Ws.
+# Sources:
+#   - GWAPS Vol. IV "Weapons, Tactics, and Training" (Tier 1)
+#   - Jane's Air-Launched Weapons (Tier 3)
+#   - General Dynamics Ordnance & Tactical Systems data (Tier 2)
+weapon_id: gau12_25mm
+display_name: "GAU-12/U Equalizer 25mm Rotary Cannon"
+category: AIRCRAFT_GUN
+caliber_mm: 25.0
+muzzle_velocity_mps: 1100.0
+max_range_m: 4000.0
+effective_range_m: 2000.0
+min_range_m: 100.0
+rate_of_fire_rpm: 3600.0
+burst_size: 60
+base_accuracy_mrad: 5.0
+guidance: NONE
+magazine_capacity: 300
+reload_time_s: 0.0
+compatible_ammo:
+  - gau12_apds
+weight_kg: 122.0
+reliability: 0.93
+barrel_life_rounds: 18000
+requires_deployed: false
+traverse_deg: 0.0
+elevation_min_deg: 0.0
+elevation_max_deg: 0.0

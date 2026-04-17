@@ -191,7 +191,7 @@ Document calibration iterations in devlog.
 
 ## Phase 100: Khafji (Saudi Arabia, January 29 – February 1, 1991)
 
-**Status**: Pending.
+**Status**: Complete. See [phase-100.md](devlog/phase-100.md).
 
 **Goal**: Second golden scenario. Expands to multi-domain with naval gunfire support. Iraqi 3rd Armored Division and 5th Mechanized Division make a cross-border thrust into Khafji, meet Saudi Task Force Abu Bakr + USMC Marine Reconnaissance + Qatari armor + coalition CAS. First major ground engagement of the Gulf War and a textbook morale cascade as Iraqi units surrender en masse.
 

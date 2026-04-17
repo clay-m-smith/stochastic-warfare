@@ -1,0 +1,65 @@
+# LAV-AT Anti-Tank Variant (USMC)
+# LAV-25 chassis fitted with the M901 Emerson TOW-2 twin-tube launcher
+# (2 ready tubes, 13 total missiles stowed). Serves as the dedicated
+# anti-armor element of the USMC Light Armored Infantry battalion. M65
+# thermal sight integrated into the TOW turret provides excellent
+# night engagement capability.
+#
+# At Khafji (29-30 Jan 1991), two LAV-ATs of TF Shepherd were lost at
+# Observation Post 4: one to fratricidal TOW fire (call sign "Green 2")
+# and one to an AGM-65 Maverick from an A-10A Thunderbolt II ("Red 2"),
+# killing seven Marines total — the costliest US loss of the battle.
+#
+# Sources:
+#   - Cureton, Charles H. "U.S. Marines in the Persian Gulf, 1990-1991."
+#     History and Museums Division, USMC, 1993 (Tier 1) — OP-4 fratricide.
+#   - Westermeyer, Paul W. "U.S. Marines in Battle: Al-Khafji, 1991."
+#     USMC History Division, 2014 (Tier 1) — LAV-AT role, casualties,
+#     thermal sight significance at night.
+#   - Jane's Armour and Artillery, 1990-91 (Tier 3) — LAV-AT technical
+#     specifications.
+unit_type: us_lav_at
+domain: ground
+display_name: "LAV-AT Anti-Tank Vehicle"
+ground_type: ARMOR
+max_speed: 27.0  # m/s (~100 km/h road)
+training_level: 0.85
+armor_front: 10.0
+armor_side: 8.0
+armor_type: RHA
+crew:
+  - role: COMMANDER
+    count: 1
+    skill: TRAINED
+  - role: GUNNER
+    count: 1
+    skill: TRAINED
+  - role: DRIVER
+    count: 1
+    skill: TRAINED
+equipment:
+  - name: "M901 TOW-2 Launcher"
+    category: WEAPON
+    weight_kg: 93.0
+    reliability: 0.90
+  - name: "TOW-2 ATGM"
+    category: WEAPON
+    weight_kg: 22.6
+    reliability: 0.90
+  - name: "Detroit Diesel 6V-53T"
+    category: PROPULSION
+    weight_kg: 700.0
+    reliability: 0.88
+    temperature_range: [-32.0, 52.0]
+  - name: "Multi-Function Sensor Suite"
+    category: SENSOR
+    weight_kg: 40.0
+    reliability: 0.90
+  - name: "AN/VRC-12 Radio"
+    category: COMMUNICATION
+    weight_kg: 18.0
+    reliability: 0.90
+  - name: "Welded Steel Hull"
+    category: PROTECTION
+    weight_kg: 600.0
+    reliability: 0.99

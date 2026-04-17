@@ -1,0 +1,84 @@
+# OV-10A Bronco — USMC/USN light twin-turboprop forward air controller
+#
+# North American Rockwell two-seat (pilot + observer) light observation
+# aircraft. In USMC service the type equipped VMO-1 and VMO-2 in the
+# tactical air control / FAC(A) role. At Khafji (29 Jan – 1 Feb 1991)
+# VMO-1 and VMO-2 Broncos out of King Abdul Aziz Air Base overhead the
+# Iraqi columns directed AV-8B Harriers, F/A-18 Hornets, A-6 Intruders,
+# and USS Missouri 16-inch naval gunfire onto target. The OV-10 marks
+# targets with 127mm Zuni white-phosphorus rockets and 5-inch HVAR, and
+# self-defends with four sponson-mounted M60 7.62mm machine guns. The
+# 1991 OV-10A lacks the full FLIR/laser-designator suite of the later
+# OV-10D — night operations rely on naked-eye observation and starlight
+# scope, which is why most Bronco Khafji sorties were daylight.
+#
+# Two OV-10As (VMO-2 BuNo 155427 piloted by Capt Jonathan Edwards and
+# another VMO-2 aircraft) were lost to Iraqi SA-9/SA-16 MANPADS during
+# the broader Al-Khafji engagement window; both two-man crews were KIA
+# or taken POW, reinforcing that even low-speed FAC(A) overhead of a
+# massed mechanized column is high-risk against modern MANPADS.
+#
+# Sources:
+#   - Tier 1: Westermeyer, "U.S. Marines in Battle: Al-Khafji"
+#             (USMC History Division, 2014)
+#   - Tier 1: Cureton, "U.S. Marines in the Persian Gulf 1990–1991"
+#             (USMC History & Museums Division, 1993)
+#   - Tier 3: Jane's All the World's Aircraft (airframe specs)
+unit_type: ov10a
+domain: aerial
+display_name: "OV-10A Bronco"
+# FAC(A) / light observation — no GUNSHIP enum in AerialUnitType; RECON
+# is the closest match for the forward air controller / observation role.
+aerial_type: RECON
+max_speed: 130.0  # m/s (~470 km/h) — slow, intentional for FAC overhead work
+training_level: 0.85  # USMC VMO pilots
+service_ceiling: 7300.0
+crew:
+  - role: PILOT
+    count: 1
+    skill: EXPERIENCED
+  - role: SENSOR_OPERATOR  # aerial observer / FAC(A)
+    count: 1
+    skill: EXPERIENCED
+equipment:
+  - name: "M60 7.62mm MG (sponson x4)"
+    category: WEAPON
+    weight_kg: 45.0
+    reliability: 0.89
+  - name: "127mm Zuni Rocket Pod"
+    category: WEAPON
+    weight_kg: 260.0
+    reliability: 0.88
+  - name: "5-inch HVAR Rockets"
+    category: WEAPON
+    weight_kg: 64.0
+    reliability: 0.86
+  - name: "Wing/Fuselage Ordnance Stations"
+    category: WEAPON
+    weight_kg: 200.0
+    reliability: 0.90
+  - name: "Mk 1 Eyeball"
+    category: SENSOR
+    weight_kg: 0.0
+    reliability: 0.95
+  - name: "Aerial Observer Binoculars"
+    category: SENSOR
+    weight_kg: 1.5
+    reliability: 0.94
+  - name: "Starlight Scope"
+    category: SENSOR
+    weight_kg: 3.0
+    reliability: 0.82
+  - name: "AN/ARC-51 UHF Radio"
+    category: COMMUNICATION
+    weight_kg: 15.0
+    reliability: 0.88
+  - name: "AN/ARC-159 UHF Radio"
+    category: COMMUNICATION
+    weight_kg: 10.0
+    reliability: 0.89
+  - name: "T76-G-416/417 Turboprop x2"
+    category: PROPULSION
+    weight_kg: 770.0
+    reliability: 0.90
+    temperature_range: [-40.0, 60.0]

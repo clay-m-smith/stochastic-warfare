@@ -1,0 +1,26 @@
+# PGU-32/U 25mm APDS/API (AV-8B Harrier / AH-1W / USMC)
+# 25x137mm armor-piercing discarding-sabot / API round for the GAU-12
+# Equalizer rotary cannon. Used by USMC AV-8B Harriers at Khafji to strafe
+# Iraqi armored columns. M197 20mm cannon on AH-1W uses 20x102mm (smaller)
+# but shares a common light-armor-defeat role in this simulation.
+#
+# NOTE: Uses AmmoDefinition schema (ammo_id) — same as 25mm_m791_apds.yaml.
+#
+# Sources:
+#   - GWAPS Vol. IV "Weapons, Tactics, and Training" (Tier 1)
+#   - TM 43-0001-27 (Tier 1)
+#   - Jane's Ammunition Handbook, 25mm PGU-32 entry (Tier 3)
+ammo_id: gau12_apds
+display_name: "PGU-32/U 25mm APDS/API"
+ammo_type: AP
+mass_kg: 0.184
+diameter_mm: 25.0
+drag_coefficient: 0.25
+penetration_mm_rha: 45.0
+penetration_reference_range_m: 1000.0
+blast_radius_m: 0.0
+fragmentation_radius_m: 0.0
+guidance: NONE
+propulsion: none
+max_speed_mps: 1100.0
+unit_cost_factor: 0.5
