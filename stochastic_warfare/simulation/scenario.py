@@ -24,6 +24,13 @@ from stochastic_warfare.core.rng import RNGManager
 from stochastic_warfare.core.types import ModuleId, Position
 from stochastic_warfare.entities.base import Unit, UnitStatus
 from stochastic_warfare.simulation.calibration import CalibrationSchema
+from stochastic_warfare.simulation.deployment import (
+    DeploymentConfig,
+    DeploymentMode,
+    FormationTemplateLoader,
+    deploy_units,
+    check_side_separation,
+)
 from stochastic_warfare.terrain.heightmap import Heightmap
 
 logger = get_logger(__name__)
@@ -266,6 +273,7 @@ class CampaignScenarioConfig(BaseModel):
     reinforcements: list[ReinforcementConfig] = []
     initial_ieds: list[InitialIEDConfig] = []  # Phase 101 — pre-emplaced IEDs/HBIEDs
     scripted_events: list[ScriptedEventConfig] = []  # Phase 101 — timed scripted events
+    deployment: DeploymentConfig = DeploymentConfig()  # Phase 104 — deployment modes
     calibration_overrides: CalibrationSchema = CalibrationSchema()
     escalation_config: dict[str, Any] | None = None
     ew_config: dict[str, Any] | None = None
@@ -899,6 +907,14 @@ class ScenarioLoader:
             side_names = sorted(units_by_side.keys())
             ctx.cal_flat = ctx.calibration.to_flat_dict(side_names)
 
+        # Phase 104: warn if deployment boxes are too close or overlap
+        if config.deployment.mode.value != "legacy":
+            check_side_separation(
+                config.deployment.blue_box,
+                config.deployment.red_box,
+                config.deployment.min_side_separation_m,
+            )
+
         # 10. Commander assignments (Phase 25d)
         self._apply_commander_assignments(ctx, config)
 
@@ -1182,6 +1198,36 @@ class ScenarioLoader:
                 start_y=start_y,
                 spacing_m=spacing,
             )
+            # Phase 104: apply configured deployment mode (legacy preserves
+            # the line-abreast positions already assigned by build_forces).
+            # Per-unit `_manually_positioned` flag skips auto-deployment.
+            if config.deployment.mode.value != "legacy":
+                # Load formation template if doctrinal mode
+                template = None
+                if config.deployment.mode == DeploymentMode.DOCTRINAL:
+                    tpl_id = (
+                        config.deployment.blue_template if side_cfg.side == "blue"
+                        else config.deployment.red_template
+                    )
+                    if tpl_id is not None:
+                        tpl_loader = FormationTemplateLoader(self._data_dir / "formations")
+                        tpl_loader.load_all()
+                        template = tpl_loader.get(tpl_id)
+                        if template is None:
+                            logger.warning(
+                                "formation template %r not found for side=%s — available: %s",
+                                tpl_id, side_cfg.side, tpl_loader.available(),
+                            )
+                deploy_units(
+                    units=units,
+                    side=side_cfg.side,
+                    config=config.deployment,
+                    legacy_start_x=start_x,
+                    legacy_start_y=start_y,
+                    legacy_spacing_m=spacing,
+                    template=template,
+                    rng=entities_rng,
+                )
             units_by_side[side_cfg.side] = units
 
         # Assign weapons and sensors

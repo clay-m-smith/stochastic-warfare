@@ -1,0 +1,38 @@
+# Battalion-scale urban defense: dispersed strongpoints across the frontage, ATGM
+# ambush teams forward, mortar/rocket cells deep.  Doesn't cluster as densely as
+# brigade_defense — urban defenders spread across city blocks.
+#
+# Used by Hezbollah defenders in Bint Jbeil 2006 (tank-hunter teams on armor
+# approach routes, main body in stone buildings, mortars mobile between positions).
+#
+# Source: Biddle and Friedman "2006 Lebanon Campaign" USAWC 2008 (Tier 1);
+# Matthews CSI 2008 (Tier 1)
+template_id: battalion_urban_defense
+description: "Battalion urban defense (decentralized strongpoints)"
+depth_m: 2500.0
+frontage_m: 2500.0
+echelons:
+  - name: atgm_ambush
+    offset_y_frac: 0.85
+    offset_x_frac: 0.50
+    frontage_frac: 1.00
+    units:
+      - {group_type: LIGHT_INFANTRY, count_frac: 0.2}
+  - name: strongpoints
+    offset_y_frac: 0.55
+    offset_x_frac: 0.50
+    frontage_frac: 1.00
+    units:
+      - {group_type: LIGHT_INFANTRY, count_frac: 1.0}
+      - {group_type: MILITIA, count_frac: 1.0}
+      - {group_type: MECHANIZED_INFANTRY, count_frac: 1.0}
+  - name: indirect_fires
+    offset_y_frac: 0.20
+    offset_x_frac: 0.50
+    frontage_frac: 0.60
+    units:
+      - {group_type: MORTAR, count_frac: 1.0}
+      - {group_type: ARTILLERY, count_frac: 1.0}
+      - {group_type: ARTILLERY_SP, count_frac: 1.0}
+      - {group_type: ARTILLERY_TOWED, count_frac: 1.0}
+      - {group_type: ROCKET_ARTILLERY, count_frac: 1.0}

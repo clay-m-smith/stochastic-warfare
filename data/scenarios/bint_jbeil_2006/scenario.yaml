@@ -71,6 +71,19 @@ terrain:
   base_elevation_m: 850.0
   terrain_type: hilly_defense
 
+# Phase 104 — doctrinal deployment: IDF brigade attacking from south,
+# Hezbollah battalion urban defense from village core.  Replaces legacy
+# line-abreast placement that caused forces to engage at tick 0 at 5m
+# range (249-unit force + 80m spacing overflowed the 9km map).
+deployment:
+  mode: doctrinal
+  blue_box: {x_min: 500, y_min: 500, x_max: 8500, y_max: 3000}
+  red_box: {x_min: 500, y_min: 4000, x_max: 8500, y_max: 6500}
+  blue_template: brigade_attack
+  red_template: battalion_urban_defense
+  min_spacing_m: 50.0
+  min_side_separation_m: 500.0
+
 sides:
   - side: blue
     units:

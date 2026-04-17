@@ -1,0 +1,18 @@
+# Naval patrol station — single ship on station with support layer offshore.
+# Depth and frontage capture a 10-15 km patrol box.
+#
+# Used by INS Hanit 2006 (Sa'ar 5 corvette on blockade station; coastal TEL
+# on opposing force modeled as separate deployment box on shore).
+#
+# Source: ONI Iranian Naval Capabilities (Tier 1)
+template_id: naval_patrol_station
+description: "Naval corvette/destroyer on patrol station"
+depth_m: 15000.0
+frontage_m: 15000.0
+echelons:
+  - name: patrol_station
+    offset_y_frac: 0.50
+    offset_x_frac: 0.50
+    frontage_frac: 0.20
+    units:
+      - {group_type: UNKNOWN, count_frac: 1.0}

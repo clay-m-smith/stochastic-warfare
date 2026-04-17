@@ -124,6 +124,7 @@ Rolling record of implementation decisions, changes, and lessons learned across 
 | 101 | Fallujah Phase Line Fran (2004) | **Complete** | [phase-101.md](phase-101.md) |
 | 102 | Bint Jbeil + INS Hanit Vignette + Block 11 Validation (2006) | **Complete** | [phase-102.md](phase-102.md) |
 | 103 | Block 11 Polish — OOB + engine gap tightening | **Complete** | [phase-103.md](phase-103.md) |
+| 104 | Configurable Deployment Modes (Block 11 polish) | **Complete** | [phase-104.md](phase-104.md) |
 
 ## Post-MVP Refinement Index
 

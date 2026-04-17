@@ -1,0 +1,42 @@
+# Brigade-scale defensive formation: main line of contact forward with engagement
+# area observation, fires in depth, reserve rearmost.
+#
+# Source: FM 3-90-1 Offense and Defense; Leonhard "Art of Maneuver" (Tier 1 doctrinal)
+template_id: brigade_defense
+description: "Brigade defending in depth with engagement area"
+depth_m: 3000.0
+frontage_m: 3000.0
+echelons:
+  - name: security_zone
+    offset_y_frac: 0.85
+    offset_x_frac: 0.50
+    frontage_frac: 0.90
+    units:
+      - {group_type: RECON, count_frac: 1.0}
+      - {group_type: CAVALRY, count_frac: 0.5}
+  - name: main_defensive_line
+    offset_y_frac: 0.55
+    offset_x_frac: 0.50
+    frontage_frac: 0.90
+    units:
+      - {group_type: MECHANIZED_INFANTRY, count_frac: 1.0}
+      - {group_type: LIGHT_INFANTRY, count_frac: 0.7}
+      - {group_type: ARMOR, count_frac: 0.5}
+  - name: fires
+    offset_y_frac: 0.30
+    offset_x_frac: 0.50
+    frontage_frac: 0.60
+    units:
+      - {group_type: ARTILLERY_SP, count_frac: 1.0}
+      - {group_type: ARTILLERY_TOWED, count_frac: 1.0}
+      - {group_type: ROCKET_ARTILLERY, count_frac: 1.0}
+      - {group_type: MORTAR, count_frac: 1.0}
+      - {group_type: ARTILLERY, count_frac: 1.0}
+  - name: reserve
+    offset_y_frac: 0.10
+    offset_x_frac: 0.50
+    frontage_frac: 0.40
+    units:
+      - {group_type: ARMOR, count_frac: 1.0}
+      - {group_type: LIGHT_INFANTRY, count_frac: 1.0}
+      - {group_type: CAVALRY, count_frac: 1.0}

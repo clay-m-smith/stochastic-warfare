@@ -1,0 +1,53 @@
+# Brigade-scale offensive formation: column of battalions with recon screen forward,
+# main body in two echelons, fires/artillery rear.
+#
+# Frontage ~2km, depth ~4km. Maps ground_type groups to echelon positions.
+# offset_y_frac: 0 = rear (y_min), 1 = forward (y_max).  offset_x_frac centered.
+#
+# Source: FM 3-90-1 Offense and Defense; Robert Leonhard "Art of Maneuver" (Tier 1 doctrinal)
+template_id: brigade_attack
+description: "Brigade attacking in column of battalions"
+depth_m: 4000.0
+frontage_m: 2000.0
+echelons:
+  - name: advance_guard
+    offset_y_frac: 0.90
+    offset_x_frac: 0.50
+    frontage_frac: 0.80
+    units:
+      - {group_type: RECON, count_frac: 1.0}
+      - {group_type: CAVALRY, count_frac: 1.0}
+  - name: main_body_1
+    offset_y_frac: 0.65
+    offset_x_frac: 0.50
+    frontage_frac: 0.80
+    units:
+      - {group_type: ARMOR, count_frac: 0.6}
+      - {group_type: MECHANIZED_INFANTRY, count_frac: 0.5}
+  - name: main_body_2
+    offset_y_frac: 0.40
+    offset_x_frac: 0.50
+    frontage_frac: 0.70
+    units:
+      - {group_type: ARMOR, count_frac: 1.0}
+      - {group_type: MECHANIZED_INFANTRY, count_frac: 1.0}
+      - {group_type: LIGHT_INFANTRY, count_frac: 0.5}
+  - name: fires
+    offset_y_frac: 0.15
+    offset_x_frac: 0.50
+    frontage_frac: 0.50
+    units:
+      - {group_type: ARTILLERY_SP, count_frac: 1.0}
+      - {group_type: ARTILLERY_TOWED, count_frac: 1.0}
+      - {group_type: ROCKET_ARTILLERY, count_frac: 1.0}
+      - {group_type: MORTAR, count_frac: 1.0}
+      - {group_type: ARTILLERY, count_frac: 1.0}
+  - name: support
+    offset_y_frac: 0.05
+    offset_x_frac: 0.50
+    frontage_frac: 0.30
+    units:
+      - {group_type: ENGINEER, count_frac: 1.0}
+      - {group_type: LIGHT_INFANTRY, count_frac: 1.0}
+      - {group_type: MOTORIZED, count_frac: 1.0}
+      - {group_type: MILITIA, count_frac: 1.0}

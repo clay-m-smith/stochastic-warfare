@@ -194,6 +194,7 @@ nav:
     - Phase 101 - Fallujah Phase Line Fran 2004 (Block 11): devlog/phase-101.md
     - Phase 102 - Bint Jbeil + INS Hanit 2006 (Block 11): devlog/phase-102.md
     - Phase 103 - Block 11 Polish - OOB + engine gap tightening: devlog/phase-103.md
+    - Phase 104 - Configurable Deployment Modes: devlog/phase-104.md
   - Specifications:
     - Project Structure: specs/project-structure.md
     - Skills & Hooks: skills-and-hooks.md

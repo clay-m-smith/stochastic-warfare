@@ -1,0 +1,47 @@
+# USMC regimental combat team urban assault: breach teams forward, rifle squads
+# clearing, armor in support, engineers + CAS in depth, fires rearmost.
+#
+# Used by RCT-1/RCT-7 in Fallujah Phase Line Fran 2004.
+#
+# Source: Estes "US Marines in Iraq" USMC History Div 2011 (Tier 1);
+# Matthews CSI "Operation AL FAJR" 2006 (Tier 1)
+template_id: marine_urban_assault
+description: "USMC RCT urban clear-hold"
+depth_m: 2000.0
+frontage_m: 3000.0
+echelons:
+  - name: breach_teams
+    offset_y_frac: 0.90
+    offset_x_frac: 0.50
+    frontage_frac: 0.80
+    units:
+      - {group_type: ENGINEER, count_frac: 1.0}
+  - name: assault_infantry
+    offset_y_frac: 0.70
+    offset_x_frac: 0.50
+    frontage_frac: 0.90
+    units:
+      - {group_type: LIGHT_INFANTRY, count_frac: 1.0}
+      - {group_type: MECHANIZED_INFANTRY, count_frac: 0.6}
+  - name: armor_support
+    offset_y_frac: 0.50
+    offset_x_frac: 0.50
+    frontage_frac: 0.60
+    units:
+      - {group_type: ARMOR, count_frac: 1.0}
+      - {group_type: MECHANIZED_INFANTRY, count_frac: 1.0}
+  - name: fires
+    offset_y_frac: 0.15
+    offset_x_frac: 0.50
+    frontage_frac: 0.50
+    units:
+      - {group_type: ARTILLERY_SP, count_frac: 1.0}
+      - {group_type: ARTILLERY_TOWED, count_frac: 1.0}
+      - {group_type: MORTAR, count_frac: 1.0}
+      - {group_type: ARTILLERY, count_frac: 1.0}
+  - name: uav_and_recon
+    offset_y_frac: 0.95
+    offset_x_frac: 0.50
+    frontage_frac: 0.40
+    units:
+      - {group_type: RECON, count_frac: 1.0}

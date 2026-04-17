@@ -1,0 +1,58 @@
+# Three-column mechanized thrust, used by Iraqi III Corps at Khafji 1991 (3rd
+# Armored + 5th Mech + 1st Mech elements advancing on 3 separate axes).
+#
+# Each column is a narrow strip at a different x-offset.  This template creates
+# three echelons at offset_x_frac = 0.2, 0.5, 0.8 with armor forward, infantry
+# mid-column, air defense rear.
+#
+# Source: Westermeyer "USMC in Battle: Al-Khafji" USMC History Div 2014 (Tier 1);
+# GWAPS Vol II 1993 (Tier 1)
+template_id: mechanized_thrust
+description: "Three-column mechanized attack (Khafji pattern)"
+depth_m: 4000.0
+frontage_m: 5000.0
+echelons:
+  - name: left_column_armor
+    offset_y_frac: 0.80
+    offset_x_frac: 0.20
+    frontage_frac: 0.20
+    units:
+      - {group_type: ARMOR, count_frac: 0.35}
+  - name: center_column_armor
+    offset_y_frac: 0.80
+    offset_x_frac: 0.50
+    frontage_frac: 0.25
+    units:
+      - {group_type: ARMOR, count_frac: 0.6}
+      - {group_type: RECON, count_frac: 1.0}
+  - name: right_column_armor
+    offset_y_frac: 0.80
+    offset_x_frac: 0.80
+    frontage_frac: 0.20
+    units:
+      - {group_type: ARMOR, count_frac: 1.0}
+  - name: mech_infantry_middle
+    offset_y_frac: 0.55
+    offset_x_frac: 0.50
+    frontage_frac: 0.80
+    units:
+      - {group_type: MECHANIZED_INFANTRY, count_frac: 1.0}
+      - {group_type: MOTORIZED, count_frac: 1.0}
+      - {group_type: LIGHT_INFANTRY, count_frac: 1.0}
+  - name: fires
+    offset_y_frac: 0.25
+    offset_x_frac: 0.50
+    frontage_frac: 0.60
+    units:
+      - {group_type: ARTILLERY_SP, count_frac: 1.0}
+      - {group_type: ARTILLERY_TOWED, count_frac: 1.0}
+      - {group_type: ROCKET_ARTILLERY, count_frac: 1.0}
+      - {group_type: MORTAR, count_frac: 1.0}
+      - {group_type: ARTILLERY, count_frac: 1.0}
+  - name: air_defense_engineers
+    offset_y_frac: 0.05
+    offset_x_frac: 0.50
+    frontage_frac: 0.60
+    units:
+      - {group_type: CAVALRY, count_frac: 1.0}
+      - {group_type: ENGINEER, count_frac: 1.0}

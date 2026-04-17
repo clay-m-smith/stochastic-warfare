@@ -295,15 +295,36 @@ def build_forces(
         unit_type = entry["unit_type"]
         count = entry.get("count", 1)
         overrides = entry.get("overrides", {})
+        # Phase 104: per-unit YAML `position: [x, y]` override.  Applied once
+        # (to every unit in the entry) — mostly useful for count=1 scripted-
+        # start entries.  Sets `_manually_positioned = True` so the Phase 104
+        # deployment dispatcher skips these units.
+        manual_pos_raw = entry.get("position")
+        manual_pos: Position | None = None
+        if manual_pos_raw is not None:
+            if isinstance(manual_pos_raw, (list, tuple)) and len(manual_pos_raw) >= 2:
+                manual_pos = Position(
+                    float(manual_pos_raw[0]),
+                    float(manual_pos_raw[1]),
+                    float(manual_pos_raw[2]) if len(manual_pos_raw) >= 3 else 0.0,
+                )
+            else:
+                logger.warning(
+                    "unit entry %r has invalid position %r — ignoring",
+                    unit_type, manual_pos_raw,
+                )
 
         for i in range(count):
             eid = f"{force_def.side}_{unit_type}_{unit_idx:04d}"
-            offset_y = (unit_idx - total_units / 2) * spacing_m
-            pos = Position(
-                start_x,
-                start_y + offset_y,
-                0.0,
-            )
+            if manual_pos is not None:
+                pos = manual_pos
+            else:
+                offset_y = (unit_idx - total_units / 2) * spacing_m
+                pos = Position(
+                    start_x,
+                    start_y + offset_y,
+                    0.0,
+                )
             try:
                 unit = unit_loader.create_unit(
                     unit_type=unit_type,
@@ -316,6 +337,9 @@ def build_forces(
                 for key, val in overrides.items():
                     if hasattr(unit, key):
                         object.__setattr__(unit, key, val)
+                # Phase 104: flag manually-positioned units so deploy_units skips them
+                if manual_pos is not None:
+                    object.__setattr__(unit, "_manually_positioned", True)
                 units.append(unit)
             except KeyError:
                 logger.warning(
