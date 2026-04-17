@@ -5,9 +5,30 @@ import { ErrorMessage } from '../../components/ErrorMessage'
 import { LoadingSpinner } from '../../components/LoadingSpinner'
 import { PageHeader } from '../../components/PageHeader'
 import { useScenarios } from '../../hooks/useScenarios'
-import { eraOrder } from '../../lib/era'
+import { eraDisplayName, eraOrder } from '../../lib/era'
+import type { ScenarioSummary } from '../../types/api'
 import { ScenarioCard } from './ScenarioCard'
 import { ScenarioFilters } from './ScenarioFilters'
+
+// Block 11 golden scenarios — shown first in the library as the
+// highest-fidelity reference set (historically calibrated, regression-
+// tested against historical outcome envelopes).
+const GOLDEN_SCENARIO_IDS: ReadonlySet<string> = new Set([
+  'debecka_pass',
+  'khafji',
+  'fallujah_phase_line_fran',
+  'bint_jbeil_2006',
+  'ins_hanit_2006',
+])
+
+const ERA_SECTION_ORDER = ['modern', 'ww2', 'ww1', 'napoleonic', 'ancient_medieval']
+
+interface ScenarioSection {
+  key: string
+  title: string
+  subtitle?: string
+  scenarios: ScenarioSummary[]
+}
 
 export function ScenarioListPage() {
   const { data: scenarios, isLoading, error, refetch } = useScenarios()
@@ -58,6 +79,51 @@ export function ScenarioListPage() {
     return sorted
   }, [scenarios, era, search, sort])
 
+  // Partition filtered scenarios into sections: Golden first, then by era.
+  // Respects existing sort within each section.
+  const sections = useMemo<ScenarioSection[]>(() => {
+    const golden: ScenarioSummary[] = []
+    const byEra: Record<string, ScenarioSummary[]> = {}
+    for (const s of filtered) {
+      if (GOLDEN_SCENARIO_IDS.has(s.name)) {
+        golden.push(s)
+      } else {
+        const key = s.era || 'other'
+        if (!byEra[key]) byEra[key] = []
+        byEra[key].push(s)
+      }
+    }
+    const result: ScenarioSection[] = []
+    if (golden.length > 0) {
+      result.push({
+        key: 'golden',
+        title: 'Golden Scenarios',
+        subtitle: 'Block 11 reference set — historically calibrated, regression-tested against outcome envelopes',
+        scenarios: golden,
+      })
+    }
+    for (const eraKey of ERA_SECTION_ORDER) {
+      if (byEra[eraKey]?.length) {
+        result.push({
+          key: `era-${eraKey}`,
+          title: eraDisplayName(eraKey),
+          scenarios: byEra[eraKey],
+        })
+      }
+    }
+    // Any eras not in ERA_SECTION_ORDER (defensive)
+    for (const [eraKey, items] of Object.entries(byEra)) {
+      if (!ERA_SECTION_ORDER.includes(eraKey) && items.length > 0) {
+        result.push({
+          key: `era-${eraKey}`,
+          title: eraDisplayName(eraKey),
+          scenarios: items,
+        })
+      }
+    }
+    return result
+  }, [filtered])
+
   return (
     <div>
       <PageHeader title="Scenarios" />
@@ -74,11 +140,26 @@ export function ScenarioListPage() {
       {!isLoading && !error && filtered.length === 0 && (
         <EmptyState message="No scenarios match your filters." />
       )}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {filtered.map((s) => (
-          <ScenarioCard key={s.name} scenario={s} />
-        ))}
-      </div>
+      {sections.map((section, idx) => (
+        <section key={section.key} className={idx > 0 ? 'mt-8' : ''}>
+          <div className="mb-3 border-b border-gray-200 pb-2 dark:border-gray-700">
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+              {section.title}
+              <span className="ml-2 text-sm font-normal text-gray-500 dark:text-gray-400">
+                ({section.scenarios.length})
+              </span>
+            </h2>
+            {section.subtitle && (
+              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{section.subtitle}</p>
+            )}
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {section.scenarios.map((s) => (
+              <ScenarioCard key={s.name} scenario={s} />
+            ))}
+          </div>
+        </section>
+      ))}
     </div>
   )
 }

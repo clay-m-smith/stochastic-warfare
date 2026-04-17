@@ -48,6 +48,20 @@ const MOCK_SCENARIOS: ScenarioSummary[] = [
     has_space: false,
     has_dew: false,
   },
+  {
+    name: 'bint_jbeil_2006',
+    display_name: 'Bint Jbeil 2006',
+    era: 'modern',
+    duration_hours: 240,
+    sides: ['blue', 'red'],
+    terrain_type: 'hilly_defense',
+    has_ew: false,
+    has_cbrn: false,
+    has_escalation: false,
+    has_schools: false,
+    has_space: false,
+    has_dew: false,
+  },
 ]
 
 beforeEach(() => {
@@ -138,7 +152,32 @@ describe('ScenarioListPage', () => {
     const sortSelect = screen.getAllByRole('combobox')[1]!
     await user.selectOptions(sortSelect, 'era')
     const cards = screen.getAllByRole('heading', { level: 3 })
-    // Modern scenarios first (73 Easting, Taiwan Strait), then WW1 (Jutland)
+    // Modern scenarios first (73 Easting, Bint Jbeil, Taiwan Strait), then WW1 (Jutland)
     expect(cards[cards.length - 1]!.textContent).toBe('Jutland 1916')
+  })
+
+  it('shows Golden Scenarios section first with Bint Jbeil', async () => {
+    renderWithProviders(<ScenarioListPage />)
+    await waitFor(() => {
+      expect(screen.getByText('73 Easting')).toBeInTheDocument()
+    })
+    const headings = screen.getAllByRole('heading', { level: 2 })
+    expect(headings[0]!.textContent).toMatch(/Golden Scenarios/)
+    // Bint Jbeil should appear in the Golden Scenarios section (1 match)
+    // Modern section should appear second
+    expect(headings[1]!.textContent).toMatch(/Modern/)
+  })
+
+  it('shows era sections ordered Modern → WW1', async () => {
+    renderWithProviders(<ScenarioListPage />)
+    await waitFor(() => {
+      expect(screen.getByText('73 Easting')).toBeInTheDocument()
+    })
+    const headings = screen.getAllByRole('heading', { level: 2 })
+    const titles = headings.map((h) => h.textContent)
+    const modernIdx = titles.findIndex((t) => t?.match(/Modern/))
+    const ww1Idx = titles.findIndex((t) => t?.match(/WW1/))
+    expect(modernIdx).toBeGreaterThan(-1)
+    expect(ww1Idx).toBeGreaterThan(modernIdx)
   })
 })
