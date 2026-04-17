@@ -73,11 +73,20 @@ equipment:
 | `peshmerga_irregular` | KDP Peshmerga Irregular | infantry | 1.2 | AKM + PKM + RPG-7 |
 | `iraqi_1st_mech_dismount` | Iraqi 1st Mech Inf Dismount (2003) | infantry | 2.2 | AKM + PKM + RPG-7 |
 | `iraqi_mtlb` | MT-LB (Iraqi) | infantry | 17.0 | PKT 7.62mm |
+| `saudi_sang_squad` | Saudi SANG Infantry Section | infantry | 1.3 | AKMS + PKM + RPG-7 |
+| `saudi_v150` | V-150 Commando (TOW) Armored Car | infantry | 25.0 | M901 TOW-2 + M240 coax |
+| `qatari_amx30b2` | AMX-30B2 MBT (Qatari) | armor | 18.0 | F1 105mm + 20mm coax |
+| `us_lav25` | LAV-25 Light Armored Vehicle | infantry | 27.0 | M242 25mm + M240 coax |
+| `us_lav_at` | LAV-AT Anti-Tank Vehicle | armor | 27.0 | BGM-71 TOW-2 |
+| `iraqi_brdm2` | BRDM-2 Armored Scout | recon | 25.0 | KPVT 14.5mm + PKT 7.62mm |
+| `us_marine_recon_team` | USMC Marine Recon Stay-Behind Team | sof | 1.5 | M16A2 + M249 + M40/M82 snipers |
 | `civilian_noncombatant` | Civilian Noncombatant | civilian | 1.4 | None |
 | `engineer_squad` | Engineer Squad | support | 1.4 | Small arms |
 | `m109_paladin` | M109A6 Paladin | artillery | 16.0 | M284 155mm |
 | `mlrs` | M270 MLRS | artillery | 17.9 | M26 rockets |
 | `mortar_team` | 81mm Mortar Team | artillery | 1.4 | M252 81mm |
+| `iraqi_d30_battery` | Iraqi D-30 122mm Towed Battery | artillery | 8.0 | 6× D-30 122mm howitzer |
+| `iraqi_bm21_grad` | Iraqi BM-21 Grad MRL | artillery | 15.0 | 4× BM-21 122mm MRL (40 tubes each) |
 
 ### Air Domain
 
@@ -86,7 +95,13 @@ equipment:
 | `f16c` | F-16C Fighting Falcon | fixed_wing | 590 | AIM-120 AMRAAM |
 | `f14b` | F-14B Tomcat (VF-32) | fixed_wing | 680 | AIM-54/LANTIRN + GBU-16 |
 | `fa18c` | F/A-18C Hornet | fixed_wing | 585 | AGM-65/LITENING + GBU-31 |
+| `a10a` | A-10A Thunderbolt II | fixed_wing | 210 | GAU-8 30mm + AGM-65 + CBU-87 |
 | `a10c` | A-10C Thunderbolt II | fixed_wing | 210 | GAU-8 30mm |
+| `av8b` | AV-8B Harrier II (VSTOL) | fixed_wing | 290 | GAU-12 25mm + Rockeye + Maverick |
+| `ac130h` | AC-130H Spectre gunship | fixed_wing | 130 | 105mm + 40mm Bofors + 20mm Vulcans |
+| `f15e` | F-15E Strike Eagle (LANTIRN) | fixed_wing | 735 | GBU-10/12/24/28 + AGM-65 + AIM-9 |
+| `ov10a` | OV-10A Bronco (FAC) | fixed_wing | 130 | Zuni + HVAR + M60 MGs |
+| `ah1w` | AH-1W SuperCobra (USMC) | rotary_wing | 80 | M197 20mm + TOW-2 + Hellfire |
 | `su27s` | Su-27S Flanker | fixed_wing | 680 | R-27/R-73 |
 | `mig29a` | MiG-29A Fulcrum | fixed_wing | 650 | R-73/R-77 |
 | `j10a` | J-10A | fixed_wing | 620 | PL-12 |
@@ -107,6 +122,7 @@ equipment:
 | `sa6_gainful` | SA-6 Gainful (2K12 Kub) | air_defense | 3M9 missile |
 | `sa11_buk` | SA-11 Buk | air_defense | 9M38 missile |
 | `zsu_57_2` | ZSU-57-2 SPAAG | air_defense | 2× 57mm S-68 (direct-fire) |
+| `iraqi_sa7_team` | Iraqi SA-7 Strela-2 MANPADS Team | air_defense | 9K32 Strela-2 (IR homing) |
 | `manpads` | MANPADS Team | air_defense | Stinger/Igla |
 
 ### Naval Domain
@@ -116,6 +132,7 @@ equipment:
 | `arleigh_burke` | Arleigh Burke DDG | surface | SM-2/Harpoon/Mk 45 |
 | `sovremenny` | Sovremenny DDG | surface | SS-N-22 Sunburn |
 | `ticonderoga` | Ticonderoga CG | surface | SM-2/Tomahawk |
+| `iowa_bb` | Iowa-class Battleship (BB-63/64) | surface | 16"/50 Mk 7 + 5"/38 + Harpoon + Tomahawk |
 | `los_angeles` | Los Angeles SSN | subsurface | Mk 48 torpedo |
 | `kilo_636` | Kilo-636 SSK | subsurface | 53-65 torpedo |
 
