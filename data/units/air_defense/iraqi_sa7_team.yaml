@@ -1,0 +1,38 @@
+# Source: Special Operations Warrior Foundation, Spirit 03 AC-130H report (Tier 3)
+# Cross-ref: JASP "Spirit of Survivability," 2021 (Tier 3); Jane's Land-Based Air Defense (Tier 3)
+# Cross-ref: Westermeyer, "U.S. Marines in Battle: Al-Khafji," USMC History Div 2014 (Tier 1)
+# Iraqi MANPADS team — Soviet 9K32 Strela-2, first-gen IR-homing tail-aspect shoulder
+# missile. Organic AA for mech battalions. A team hit AC-130H "Spirit 03" on 31 Jan 1991
+# 0635L at Khafji. Basic-level Iraqi conscript crew; no thermal sights, visual only.
+unit_type: iraqi_sa7_team
+domain: ground
+display_name: "Iraqi SA-7 Strela-2 MANPADS Team"
+ground_type: LIGHT_INFANTRY
+max_speed: 1.1  # m/s (~4 km/h dismounted, slower than western infantry)
+training_level: 0.35
+armor_front: 0.0
+armor_side: 0.0
+crew:
+  - role: GUNNER
+    count: 1
+    skill: BASIC
+  - role: LOADER
+    count: 1
+    skill: BASIC
+equipment:
+  - name: "9K32 Strela-2 MANPADS"
+    category: WEAPON
+    weight_kg: 9.8
+    reliability: 0.75
+  - name: "SA-7 Missile Round"
+    category: WEAPON
+    weight_kg: 9.15
+    reliability: 0.75
+  - name: "Handheld Radio"
+    category: COMMUNICATION
+    weight_kg: 1.2
+    reliability: 0.70
+  - name: "Mk 1 Eyeball"
+    category: SENSOR
+    weight_kg: 0.5
+    reliability: 0.99

@@ -1,0 +1,46 @@
+# Source: Westermeyer, "U.S. Marines in Battle: Al-Khafji," USMC History Div 2014 (Tier 1)
+# Cross-ref: Jane's Armour and Artillery (Tier 3) for BM-21 Grad specs.
+# Iraqi MRL battery — Soviet BM-21 Grad 40-tube 122mm rocket launcher on Ural-375D 6x6
+# truck. Supported III Corps advance at Khafji with area saturation fires. Light truck
+# cab armor only; conscript-tier training in 1991.
+unit_type: iraqi_bm21_grad
+domain: ground
+display_name: "Iraqi BM-21 Grad 122mm MRL Battery"
+ground_type: ROCKET_ARTILLERY
+max_speed: 21.0  # m/s (~75 km/h road, self-propelled Ural-375D)
+training_level: 0.30
+armor_front: 8.0
+armor_side: 5.0
+crew:
+  - role: COMMANDER
+    count: 1
+    skill: BASIC
+  - role: GUNNER
+    count: 4
+    skill: BASIC
+  - role: LOADER
+    count: 4
+    skill: BASIC
+  - role: DRIVER
+    count: 4
+    skill: BASIC
+  - role: GENERIC
+    count: 8
+    skill: BASIC
+equipment:
+  - name: "BM-21 Grad 122mm MRL"
+    category: WEAPON
+    weight_kg: 13700.0
+    reliability: 0.80
+  - name: "Ural-375D Chassis"
+    category: PROPULSION
+    weight_kg: 8400.0
+    reliability: 0.75
+  - name: "Field Radio"
+    category: COMMUNICATION
+    weight_kg: 5.0
+    reliability: 0.65
+  - name: "Naked Eye Observation"
+    category: SENSOR
+    weight_kg: 0.5
+    reliability: 0.99

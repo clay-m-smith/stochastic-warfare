@@ -93,33 +93,39 @@ All files carry source-citation comment blocks (Tier 1/2/3) per Phase 98 calibra
 
 **Fix**: added `target_domains: [NAVAL, GROUND]` explicit override to `16in50_naval.yaml`, and `[NAVAL, GROUND, AERIAL]` to `mk38_5in38.yaml` (dual-purpose gun used at both surface and shore targets; also engaged air targets historically). The `WeaponDefinition.effective_target_domains()` method already supports explicit `target_domains` override; we just needed to use it.
 
-## Engine gaps (accepted limitations — candidates for future-block work)
+## Engine gaps
 
-### Gap 1: Naval-gunfire routing doesn't emit EngagementEvents
+Four gaps were surfaced by this phase. **Three resolved in a follow-up fix commit**; one (AGM-65) partially addressed and still under investigation; performance (Gap 5) remains an accepted limitation.
+
+### Gap 1: Naval-gunfire routing doesn't emit EngagementEvents — RESOLVED
 
 **Symptom**: Even with 16"/50 loaded and target_domains including GROUND, Missouri didn't register any engagements in the event stream.
 
 **Root cause**: `_route_naval_engagement()` in `battle.py` routes `NAVAL_GUN` category weapons through `naval_gunnery_engine` or `naval_surface_engine` (both ship-to-ship oriented). If those engines handle the engagement (return `(True, status)`), the result gets appended to `pending_damage` with the naval weapon_id — but no `EngagementEvent` is published. The shore-bombardment fallback (lines 615-632) only fires if the ship-to-ship routes return no engine, AND it uses `naval_gunfire_support_engine` which may not be wired in all scenarios.
 
-**Future fix pattern** (analogous to Phase 99 gap 3): publish an `EngagementEvent` from the naval routing path when the weapon kills or hits, so naval gunfire shows up in Casualties-by-Weapon analytics.
+**Fix applied**: added `_publish_naval_engagement_event()` helper in `battle.py`; `_route_naval_engagement()` now publishes `EngagementEvent` for every NAVAL_GUN routing path (shore bombardment, ship-to-ship gunnery, fallback modern naval gun engagement). Verified in-scenario: USS Missouri fires 16"/50 at 61 engagements in 400 ticks at the coastal-road Iraqi column. Also fixed a subtle ordering bug: the shore-bombardment block was after the ship-to-ship block, so `naval_gunnery_engine` would intercept BB vs ground engagements before the NGSE code path could run. Re-ordered so ground targets always try NGSE first.
 
-### Gap 2: Iraqi artillery weapons authored but no Iraqi artillery unit carries them
+### Gap 2: Iraqi artillery weapons authored but no Iraqi artillery unit carries them — RESOLVED
 
 Authored D-30, BM-21, 2S1, 2S3, FROG-7 weapons — but no `iraqi_artillery_battery` unit was authored. Iraqi indirect fire doesn't occur in the scenario. Pattern: weapons exist, no equipment → no wiring.
 
-**Future fix**: author `iraqi_artillery_battery.yaml` and `iraqi_manpads_team.yaml` units. Add them to the scenario OOB. Part of a follow-on "Iraqi OOB fleshout" pass.
+**Fix applied**: authored `iraqi_d30_battery.yaml` (6-gun D-30 towed howitzer battery, 43 crew, ARTILLERY_TOWED) and `iraqi_bm21_grad.yaml` (4-launcher BM-21 Grad MRL battery, ROCKET_ARTILLERY). Added to Khafji scenario OOB. Indirect fire can now engage via the engine's existing `_INDIRECT_FIRE_CATEGORIES` routing path.
 
-### Gap 3: SA-7 MANPADS not in Iraqi equipment — precludes emergent Spirit 03 loss
+### Gap 3: SA-7 MANPADS not in Iraqi equipment — RESOLVED
 
 The user explicitly requested Spirit 03 as emergent behavior. Required dependency: Iraqi MANPADS present in Red force. SA-7 weapon is authored but no Iraqi unit carries it. Emergent behavior cannot occur.
 
-**Future fix**: author `iraqi_manpads_team.yaml` with SA-7 in equipment; add 6-10 teams to scenario OOB. Also requires engine gaps on (a) aircraft altitude/aspect-dependent PK and (b) time-of-day IR modifier — both flagged in Phase 100 research brief section K.
+**Fix applied**: authored `iraqi_sa7_team.yaml` (2-man LIGHT_INFANTRY MANPADS team, max_speed 1.1 m/s, training 0.35, two-weapon pattern matching `javelin_team` — "9K32 Strela-2 MANPADS" launcher + "SA-7 Missile Round" both mapped to `sa7_strela2` weapon). Added 6 teams to Iraqi OOB. Scenario now carries the ingredients for emergent Spirit 03-class losses: AC-130H operating at 2,100 m MSL + SA-7 max altitude 2,300 m + daylight exposure past sunrise. Engine gaps on aircraft altitude/aspect-dependent PK and time-of-day IR modifier (flagged in Phase 100 research brief section K) remain deferred — the emergent behavior is now *possible* but its frequency is driven by whatever PK the current engine assigns.
 
-### Gap 4: AGM-65 Maverick authored but not in aircraft equipment
+### Gap 4: AGM-65 Maverick authored but not firing — PARTIALLY RESOLVED
 
 A-10 and AV-8B carry AGM-65 historically — primary anti-armor munition at Khafji. Aircraft equipment uses generic "Wing/Fuselage Ordnance Stations" mapped to `bomb_rack_generic` (compatible only with dumb bombs + LGB + JDAM). AGM-65 is a `MISSILE_LAUNCHER` category weapon that doesn't fit the bomb_rack pattern.
 
-**Future fix**: add explicit "AGM-65 Maverick Launcher" equipment to A-10, AV-8B, F-15E, F-16C units. Map to the `agm65_maverick` weapon.
+**Root cause (partial)**: A-10 equipment already lists "AGM-65 Maverick"; `_WEAPON_NAME_MAP` maps it to `agm65_maverick`; `unit_weapons` loads it with correct range and ammo. However **weapon-level `traverse_deg` constraint** was filtering it out — AGM-65 has `traverse_deg: 30.0` (forward-cone mount), and aircraft default heading = 0° (north). Targets south of the aircraft fail the 15° half-cone check (180° bearing diff). Same pattern as Phase 99's `seeker_fov_deg` bug, different constraint field.
+
+**Partial fix applied**: added AERIAL + LIGHT_INFANTRY exemption to the `traverse_deg` check in `battle.py` (analogous to the Phase 99 seeker-FOV exemption). Aircraft can maneuver to face targets; shoulder-fired launchers rotate bodily. Regression tests (9,354) pass with no regressions.
+
+**Status after fix**: AGM-65 still shows 0 engagements in a 400-tick verification run despite the traverse exemption. Further investigation needed — possibly rate-of-fire cadence (10 rpm = 1 shot per 6s; tactical tick = 5s, so AGM-65 is cooldown-gated every other tick) combined with GAU-8 being preferred by the tie-breaking in weapon selection. Filed as a follow-on investigation; commit documents partial fix + open question.
 
 ### Gap 5: Performance at full-OOB scale
 

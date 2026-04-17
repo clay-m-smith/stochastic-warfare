@@ -583,6 +583,30 @@ def _route_naval_engagement(
 
     # Naval gun
     if wpn_cat_str == "NAVAL_GUN":
+        # Phase 100 gap 1 fix: shore bombardment (naval gun vs ground)
+        # routes to naval_gunfire_support_engine when available; falls
+        # through to ship-to-ship gunnery for naval targets.
+        if (target.domain == Domain.GROUND
+                and attacker.domain in (Domain.NAVAL, Domain.SUBMARINE)):
+            ngse = getattr(ctx, "naval_gunfire_support_engine", None)
+            if ngse is not None:
+                bom_result = ngse.shore_bombardment(
+                    ship_id=attacker.entity_id,
+                    ship_pos=attacker.position,
+                    target_pos=target.position,
+                    round_count=max(
+                        1, int(wpn_inst.definition.rate_of_fire_rpm * dt / 60),
+                    ),
+                    timestamp=timestamp,
+                )
+                hit = bom_result.hits_in_lethal_radius > 0
+                _publish_naval_engagement_event(
+                    ctx, attacker, target, wpn_inst, timestamp, hit,
+                )
+                return (True, UnitStatus.DISABLED) if hit else (True, None)
+            # No NGSE engine — fall through to direct-fire path so
+            # shore bombardment still resolves via the standard pipeline.
+            return False, None
         gunnery = getattr(ctx, "naval_gunnery_engine", None)
         if gunnery is not None:
             salvo = gunnery.fire_salvo(
@@ -593,9 +617,11 @@ def _route_naval_engagement(
                 target_beam_m=nc.default_target_beam_m,
                 num_guns=max(1, int(wpn_inst.definition.rate_of_fire_rpm)),
             )
-            if salvo.get("hits", 0) > 0:
-                return True, UnitStatus.DISABLED
-            return True, None
+            hit = salvo.get("hits", 0) > 0
+            _publish_naval_engagement_event(
+                ctx, attacker, target, wpn_inst, timestamp, hit,
+            )
+            return (True, UnitStatus.DISABLED) if hit else (True, None)
         # Fallback: modern naval gun engagement
         ns_engine = getattr(ctx, "naval_surface_engine", None)
         if ns_engine is not None:
@@ -608,12 +634,15 @@ def _route_naval_engagement(
                 ),
                 timestamp=timestamp,
             )
-            if gun_result.hits > 0:
-                return True, UnitStatus.DISABLED
-            return True, None
+            hit = gun_result.hits > 0
+            _publish_naval_engagement_event(
+                ctx, attacker, target, wpn_inst, timestamp, hit,
+            )
+            return (True, UnitStatus.DISABLED) if hit else (True, None)
 
-    # Shore bombardment: naval gun vs ground target (attacker must be naval)
-    if (wpn_cat_str in ("NAVAL_GUN", "CANNON")
+    # Shore bombardment for non-NAVAL_GUN platforms (e.g., CANNON
+    # category battleship secondaries treated as NGFS).
+    if (wpn_cat_str == "CANNON"
             and target.domain == Domain.GROUND
             and attacker.domain in (Domain.NAVAL, Domain.SUBMARINE)):
         ngse = getattr(ctx, "naval_gunfire_support_engine", None)
@@ -627,11 +656,57 @@ def _route_naval_engagement(
                 ),
                 timestamp=timestamp,
             )
-            if bom_result.hits_in_lethal_radius > 0:
-                return True, UnitStatus.DISABLED
-            return True, None
+            hit = bom_result.hits_in_lethal_radius > 0
+            _publish_naval_engagement_event(
+                ctx, attacker, target, wpn_inst, timestamp, hit,
+            )
+            return (True, UnitStatus.DISABLED) if hit else (True, None)
 
     return False, None  # Not a naval-specific weapon, fall through
+
+
+def _publish_naval_engagement_event(
+    ctx: Any,
+    attacker: Unit,
+    target: Unit,
+    wpn_inst: Any,
+    timestamp: Any,
+    hit: bool,
+) -> None:
+    """Publish EngagementEvent for naval routing paths.
+
+    Phase 100 gap fix: _route_naval_engagement previously swallowed
+    engagements silently.  Without this event, naval gunfire (16"/50,
+    5"/38) and naval missile salvos don't surface in Casualties-by-
+    Weapon analytics or Engagement summaries.  Now emitted for all
+    naval-routed engagements (hit or miss), with attacker/target/
+    weapon/ammo/result fields matching the direct-fire EngagementEvent
+    shape.
+    """
+    event_bus = getattr(ctx, "event_bus", None)
+    if event_bus is None:
+        return
+    from stochastic_warfare.combat.events import EngagementEvent
+
+    # Best-effort ammo type — naval weapons typically have a single
+    # compatible_ammo entry in practice.
+    ammo_type = ""
+    try:
+        compat = getattr(wpn_inst.definition, "compatible_ammo", []) or []
+        if compat:
+            ammo_type = str(compat[0])
+    except Exception:
+        pass
+
+    event_bus.publish(EngagementEvent(
+        timestamp=timestamp or datetime.min,
+        source=ModuleId.COMBAT,
+        attacker_id=attacker.entity_id,
+        target_id=target.entity_id,
+        weapon_id=wpn_inst.definition.weapon_id,
+        ammo_type=ammo_type,
+        result="hit" if hit else "miss",
+    ))
 
 
 def _route_air_engagement(
@@ -4145,18 +4220,29 @@ class BattleManager:
                         continue
                     # Phase 54f: weapon traverse arc constraint
                     # traverse_deg 0 or 360 = no constraint (platform-aimed)
+                    # Phase 100 gap 4: aircraft can maneuver to face target;
+                    # exempt AERIAL platforms from fixed-forward traverse like
+                    # Phase 99 did for seeker FOV.  Also exempt dismounted
+                    # infantry (they rotate bodily like Javelin/Stinger crews).
                     _traverse = getattr(wpn_inst.definition, "traverse_deg", 360.0)
                     if isinstance(_traverse, (int, float)) and 0 < _traverse < 360.0:
-                        _att_heading = getattr(attacker, "heading", 0.0) or 0.0
-                        _tgt_bearing = math.atan2(
-                            best_target.position.easting - attacker.position.easting,
-                            best_target.position.northing - attacker.position.northing,
+                        _att_domain_tv = getattr(attacker, "domain", None)
+                        _att_ground_tv = getattr(attacker, "ground_type", None)
+                        _traverse_exempt = (
+                            _att_domain_tv == Domain.AERIAL
+                            or _att_ground_tv == GroundUnitType.LIGHT_INFANTRY
                         )
-                        _bearing_diff = abs(_tgt_bearing - _att_heading)
-                        if _bearing_diff > math.pi:
-                            _bearing_diff = 2 * math.pi - _bearing_diff
-                        if _bearing_diff > math.radians(_traverse / 2):
-                            continue  # target outside weapon traverse arc
+                        if not _traverse_exempt:
+                            _att_heading = getattr(attacker, "heading", 0.0) or 0.0
+                            _tgt_bearing = math.atan2(
+                                best_target.position.easting - attacker.position.easting,
+                                best_target.position.northing - attacker.position.northing,
+                            )
+                            _bearing_diff = abs(_tgt_bearing - _att_heading)
+                            if _bearing_diff > math.pi:
+                                _bearing_diff = 2 * math.pi - _bearing_diff
+                            if _bearing_diff > math.radians(_traverse / 2):
+                                continue  # target outside weapon traverse arc
                     # Phase 54f: weapon elevation constraint — only for
                     # weapons with explicitly set (non-default) elevation arcs
                     _elev_min = getattr(wpn_inst.definition, "elevation_min_deg", -5.0)

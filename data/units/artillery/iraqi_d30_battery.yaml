@@ -1,0 +1,46 @@
+# Source: Westermeyer, "U.S. Marines in Battle: Al-Khafji," USMC History Div 2014 (Tier 1)
+# Cross-ref: Jane's Armour and Artillery (Tier 3) for D-30 specs; Ural-375 prime mover.
+# Iraqi divisional artillery battery — Soviet D-30 122mm towed howitzer on three-trail
+# carriage (360 deg traverse). At Khafji supported III Corps mechanized advance with
+# indirect fires. Conscript-tier training in 1991; towed pieces have no armor.
+unit_type: iraqi_d30_battery
+domain: ground
+display_name: "Iraqi D-30 122mm Howitzer Battery"
+ground_type: ARTILLERY_TOWED
+max_speed: 8.0  # m/s (~29 km/h road, towed by Ural-375)
+training_level: 0.30
+armor_front: 0.0
+armor_side: 0.0
+crew:
+  - role: COMMANDER
+    count: 1
+    skill: BASIC
+  - role: GUNNER
+    count: 6
+    skill: BASIC
+  - role: LOADER
+    count: 6
+    skill: BASIC
+  - role: GENERIC
+    count: 24
+    skill: BASIC
+  - role: DRIVER
+    count: 6
+    skill: BASIC
+equipment:
+  - name: "D-30 122mm Howitzer"
+    category: WEAPON
+    weight_kg: 3210.0
+    reliability: 0.82
+  - name: "Ural-375 Prime Mover"
+    category: PROPULSION
+    weight_kg: 8400.0
+    reliability: 0.75
+  - name: "Field Radio"
+    category: COMMUNICATION
+    weight_kg: 5.0
+    reliability: 0.65
+  - name: "Naked Eye Observation"
+    category: SENSOR
+    weight_kg: 0.5
+    reliability: 0.99

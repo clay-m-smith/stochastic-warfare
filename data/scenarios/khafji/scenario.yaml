@@ -176,9 +176,15 @@ sides:
       # Air defense (AAA + MANPADS)
       - unit_type: zsu_57_2
         count: 3
-      # Artillery (mixed towed + SP)
-      - unit_type: iraqi_1st_mech_dismount
-        count: 5  # artillery crews as dismount proxy
+      # SA-7 MANPADS teams — organic AA for Iraqi mech battalions; one
+      # of these teams scored the Spirit 03 AC-130H kill 31 Jan 0635L.
+      - unit_type: iraqi_sa7_team
+        count: 6
+      # Iraqi divisional artillery — D-30 howitzers + BM-21 Grad MRL
+      - unit_type: iraqi_d30_battery
+        count: 2
+      - unit_type: iraqi_bm21_grad
+        count: 1
     experience_level: 0.30
     morale_initial: STEADY
     commander_profile: attritional_defender
@@ -246,6 +252,12 @@ red_forces:
       count: 8
     - unit_type: zsu_57_2
       count: 3
+    - unit_type: iraqi_sa7_team
+      count: 6
+    - unit_type: iraqi_d30_battery
+      count: 2
+    - unit_type: iraqi_bm21_grad
+      count: 1
   personnel_total: 3500
   experience_level: 0.30
   morale_initial: STEADY
