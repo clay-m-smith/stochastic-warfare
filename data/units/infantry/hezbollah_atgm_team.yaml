@@ -1,0 +1,98 @@
+# Hezbollah Kornet Tank-Hunter Team — Bint Jbeil, July-August 2006
+#
+# 3-man Hezbollah ATGM team operating the Iranian-supplied 9M133 Kornet-E
+# (Kornet laser-beam-riding ATGM, 5500m maximum range, tandem-HEAT
+# warhead defeating ERA + ~1200mm RHA). This unit_type represents THE
+# signature capability of the 2006 Lebanon War — the Kornet and AT-14
+# Spriggan teams that inflicted the majority of IDF Merkava Mk II / III /
+# IV kills and mission kills across the southern Lebanon engagement area.
+# Matthews and the IDF post-war inquiry (Winograd Commission references)
+# documented that Hezbollah ATGM doctrine was explicitly tank-hunter:
+# concealed pre-surveyed firing positions inside village buildings, on
+# reverse slopes, and in treelines; patient target discrimination for
+# side/rear shots; displacement after 1-2 salvos to pre-designated
+# alternate positions. Iranian IRGC cadre trained these crews
+# specifically on Kornet employment — simulator time, live-fire
+# exercises in the Bekaa, and doctrinal indoctrination on defeating
+# Western MBTs. Training_level 0.65 captures this specialist
+# proficiency: lower than a regular army ATGM platoon (0.80) due to
+# limited live-fire allowance, but well above generic infantry because
+# these crews were selected and trained specifically for the tank-
+# killing role.
+#
+# Composition (gunner + commander + assistant per IDF post-war analysis):
+#   - 1 commander (acquisition, tracking, fire order)
+#   - 1 gunner (laser designator / trigger)
+#   - 1 assistant (reload, rear security, spotter)
+#
+# Payload: Kornet-E launcher tripod + 4× 9M133 missile tubes (one on the
+# launcher + 3 spare reloads carried). Thermal sight is integrated with
+# the 9P163-2 launcher (already mapped to kornet_9m133 in scenario_runner
+# equipment table). Personal-defense AKM and Iranian-sourced night-vision
+# for the assistant / spotter.
+#
+# Sources:
+#   - Matthews, Matt M. "We Were Caught Unprepared: The 2006 Hezbollah-
+#     Israeli War." Long War Series Occasional Paper 26, Combat Studies
+#     Institute Press, Fort Leavenworth, 2008 (Tier 1) — Kornet /
+#     Spriggan ATGM doctrine, Merkava engagement results, crew
+#     composition, IRGC training.
+#   - Biddle, Stephen and Friedman, Jeffrey A. "The 2006 Lebanon Campaign
+#     and the Future of Warfare: Implications for Army and Defense Policy."
+#     US Army War College / Strategic Studies Institute, 2008 (Tier 1) —
+#     ATGM-centric Hezbollah combined-arms assessment.
+#   - Cordesman, Anthony H. "Preliminary 'Lessons' of the Israeli-
+#     Hezbollah War." CSIS, 2006 (Tier 1) — Kornet / AT-14 provenance,
+#     IDF vehicle-loss attribution to ATGM strikes.
+#   - Harel, Amos and Issacharoff, Avi. "34 Days: Israel, Hezbollah, and
+#     the War in Lebanon." Palgrave Macmillan, 2008 (Tier 1) — Merkava
+#     kills at Debel, Ayta al-Shab, Bint Jbeil; ambush-position pattern.
+#   - Jane's Land Warfare Platforms: Artillery & Air Defence — Kornet-E
+#     (Tier 2) — system performance, range, warhead characterization.
+unit_type: hezbollah_atgm_team
+domain: ground
+display_name: "Hezbollah Kornet Tank-Hunter Team"
+ground_type: LIGHT_INFANTRY
+max_speed: 1.0  # m/s (~3.6 km/h, encumbered by launcher + 4 missile tubes)
+training_level: 0.65
+armor_front: 0.2  # modest body armor, IRGC-supplied
+armor_side: 0.1
+crew:
+  - role: COMMANDER
+    count: 1
+    skill: TRAINED
+  - role: GUNNER
+    count: 1
+    skill: TRAINED
+  - role: GENERIC
+    count: 1  # assistant / spotter / reload
+    skill: TRAINED
+equipment:
+  - name: "9P163-2 Kornet Launcher"
+    category: WEAPON
+    weight_kg: 26.0  # launcher + tripod + battery
+    reliability: 0.90
+  - name: "9M133 Missile"
+    category: WEAPON
+    weight_kg: 27.0  # per missile tube; team carries 4× reloads
+    reliability: 0.90
+  - name: "AKM"
+    category: WEAPON
+    weight_kg: 3.1
+    reliability: 0.92
+  - name: "Handheld Radio"
+    category: COMMUNICATION
+    weight_kg: 0.6
+    reliability: 0.85
+  - name: "Javelin CLU Thermal Sight"
+    category: SENSOR
+    weight_kg: 3.0  # Kornet-integrated thermal sight (1PN79-1); mapped to thermal_sight
+    reliability: 0.90
+  - name: "AN/PEQ-2 IR Aiming Laser"
+    category: SENSOR
+    weight_kg: 0.3  # Iranian IR laser aid for spotter
+    reliability: 0.85
+  - name: "Naked Eye Observation"
+    category: SENSOR
+    weight_kg: 0.5
+    reliability: 0.99

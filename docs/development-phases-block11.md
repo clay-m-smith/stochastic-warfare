@@ -308,7 +308,7 @@ Depth checklist includes IED events filterable in Analysis tab, fire zone overla
 
 ## Phase 102: Bint Jbeil + INS Hanit Vignette + Block 11 Validation (Lebanon, July-August 2006)
 
-**Status**: Pending.
+**Status**: Complete. See [phase-102.md](devlog/phase-102.md).
 
 **Goal**: Fourth golden scenario — the "hardest" one modeling-wise. ATGM-heavy defense against MBT (Kornet vs. Merkava Mk IV), limited EW, urban terrain, Israeli reserve mobilization morale effects. Paired with INS Hanit Harpoon/C-802 Noor missile strike as a naval vignette scenario — technically separate but loaded as the same Block 11 case study for naval missile engagement.
 

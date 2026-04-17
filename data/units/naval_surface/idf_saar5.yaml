@@ -1,0 +1,134 @@
+# Sa'ar 5 Eilat-class Corvette (IDF Navy) — INS Hanit (hull 503)
+#
+# Canonical platform for INS Hanit (hull 503), INS Lahav (501), and
+# INS Eilat (502). Scenario overrides set the display_name for a
+# specific hull (e.g., "INS Hanit (503)" for the 14 July 2006
+# C-802 Noor engagement off Beirut).
+#
+# Platform (commissioned 1994–1995; Northrop Grumman Ingalls, Pascagoula):
+#   Length 85.6 m, beam 11.9 m, draft 3.2 m
+#   Displacement ~1,075 t standard / ~1,230 t full load
+#   Max speed ~17.0 m/s (~33 kn) — 2x GE LM2500 + 2x MTU diesel (CODOG)
+#   Crew ~74 (accommodation up to 64 + 10 air-det)
+#   Hull + superstructure partially stealth-shaped (low RCS)
+#   Embarked helo: 1x SH-60 Seahawk (small flight deck, no hangar
+#     dedicated to Seahawk; Dolphin class actually embarks smaller)
+#
+# Armament (as-equipped during 2006 Lebanon blockade):
+#   32x Barak-1 VLS SAM in 2x 16-cell vertical launch arrays (point-
+#     defense against air + anti-ship missile threats, 12 km range)
+#   8x RGM-84 Harpoon Block 1C in 2x quad canister launchers
+#     (anti-surface, 124 km range)
+#   6x Gabriel Mk2/3 sea-skimming ASCM (older missile system retained
+#     on some hulls; OMITTED here as accepted limitation — Barak-1 +
+#     Harpoon captures the critical defensive + offensive loadout for
+#     the INS Hanit engagement)
+#   1x Oto Melara 76mm/62 Super Rapid naval gun (dual-purpose AA +
+#     surface; 120 rpm; 16 km range)
+#   2x Mk 15 Phalanx CIWS Block 1 (20mm Gatling; 1x fore, 1x aft)
+#     NB: Israeli media reporting and later ONI assessments indicate
+#     Phalanx/Barak were NOT in automatic engagement mode during the
+#     14 July 2006 strike; the task "training_level" is the peacetime
+#     IDF-Navy baseline and the scenario YAML applies calibration
+#     overrides to reflect the alert-posture gap.
+#
+# Sensors/EW:
+#   EL/M-2218S 3D S-band air-search radar (IAI Elta)
+#   EL/M-2221 STGR fire-control radar (IAI Elta)
+#   Elisra NS-9003/9005 ESM suite (radar-warning receiver)
+#   Rafael Deseaver chaff/decoy launcher (128mm chaff + IR decoys)
+#   EDO 796 hull sonar (limited ASW capability)
+#
+# Engagement — 14 July 2006, ~16 km off Beirut coast, evening:
+#   Hezbollah fires 2x C-802 Noor ASCMs from truck-mounted TEL on
+#   Beirut shore. One missile strikes INS Hanit's aft crane/flight
+#   deck area (4 KIA; ship returns under own power). Second missile
+#   strikes Cambodian-flag merchantman "Moonlight" ~60 km away
+#   (sunk, 12 crew KIA). Hanit's defensive suite was reportedly "off"
+#   or "in standby" for reasons contested in open-source reporting.
+#
+# Sources:
+#   Tier 1: ONI "Iran's Naval Forces: From Guerrilla Warfare to a
+#           Modern Naval Strategy" (2009, updated 2017)
+#   Tier 1: IDF Navy official statements (14–16 July 2006)
+#   Tier 2: USNI Proceedings, "The Hanit Hit" (ongoing analyses
+#           2007–2010)
+#   Tier 2: CNA (Center for Naval Analyses) reports on littoral
+#           anti-ship missile engagements
+#   Tier 3: Jane's Fighting Ships 2006 (Sa'ar 5 entry)
+#   Tier 3: IAI Elta public datasheets on EL/M-2218S / EL/M-2221
+#   Tier 3: Rafael / Elisra public product data (Deseaver, NS-9003)
+
+unit_type: idf_saar5
+domain: naval
+display_name: "INS Hanit (Sa'ar 5 Eilat-class)"
+naval_type: CORVETTE
+max_speed: 17.0  # m/s (~33 kn)
+training_level: 0.82  # IDF Navy baseline; scenario calibration reduces
+                     # effective alert posture for 14 Jul 2006 engagement
+draft: 3.2
+displacement: 1230.0  # full load
+fuel_capacity: 450.0
+noise_signature_base: 115.0  # quieter than a destroyer; small hull,
+                             # partial stealth shaping, CODOG
+crew:
+  - role: COMMANDER
+    count: 1
+    skill: EXPERIENCED
+  - role: NAVIGATOR
+    count: 2
+    skill: TRAINED
+  - role: SENSOR_OPERATOR
+    count: 4
+    skill: TRAINED
+  - role: GUNNER
+    count: 4
+    skill: TRAINED
+  - role: ENGINEER
+    count: 6
+    skill: TRAINED
+  - role: GENERIC
+    count: 57
+    skill: BASIC
+equipment:
+  - name: "Barak-1 VLS SAM"
+    category: WEAPON
+    weight_kg: 98.0  # per missile; 32 missiles in 2x 16-cell VLS
+    reliability: 0.84
+  - name: "Harpoon Block 1C ASCM"
+    category: WEAPON
+    weight_kg: 691.0  # per missile; 8 rounds in 2x quad canister
+    reliability: 0.89
+  - name: "Oto Melara 76mm/62 Super Rapid"
+    category: WEAPON
+    weight_kg: 7500.0  # mount weight
+    reliability: 0.91
+  - name: "Mk 15 Phalanx CIWS"
+    category: WEAPON
+    weight_kg: 6200.0
+    reliability: 0.88
+  - name: "EL/M-2218S 3D Air Search Radar"
+    category: SENSOR
+    weight_kg: 900.0
+    reliability: 0.87
+  - name: "EL/M-2221 STGR Fire Control Radar"
+    category: SENSOR
+    weight_kg: 420.0
+    reliability: 0.86
+  - name: "Elisra NS-9003/9005 ESM"
+    category: SENSOR
+    weight_kg: 380.0
+    reliability: 0.84
+  - name: "Rafael Deseaver Chaff/Decoy Launcher"
+    category: PROTECTION
+    weight_kg: 280.0
+    reliability: 0.83
+  - name: "EDO 796 Hull Sonar"
+    category: SENSOR
+    weight_kg: 1200.0
+    reliability: 0.78
+  - name: "GE LM2500 Gas Turbine + MTU Diesel (CODOG)"
+    category: PROPULSION
+    weight_kg: 4670.0
+    reliability: 0.88
+    temperature_range: [-20.0, 50.0]

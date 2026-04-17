@@ -1,0 +1,100 @@
+# Hezbollah Special Forces Cell — Bint Jbeil, July-August 2006
+#
+# 8-man elite Hezbollah cell drawn from the organization's "regular"
+# (non-militia, full-time) cadre and hardcore Bekaa Valley-trained tier.
+# These fighters are the ones who fought IDF Golani and Maglan
+# reconnaissance elements inside Bint Jbeil and the Maroun al-Ras ridge
+# and demonstrated the level of small-unit proficiency that shocked the
+# IDF post-war analysis — bounding overwatch, fire-and-maneuver under
+# contact, disciplined ambush withdrawal, and integrated small-arms /
+# RPG / PKM suppression. Composition reflects Matthews and Biddle/
+# Friedman's "regular fighter" tier: Iranian IRGC training cycles
+# (typically 6-12 months in the Bekaa or in Iran), universal night-vision
+# (Iranian-sourced PVS-14 equivalents plus captured Israeli gear), and
+# body armor distributed across the cell. Training_level 0.70 sits just
+# below conventional infantry (0.80): Bekaa cadres achieved genuine
+# small-unit competence — confirmed in IDF AARs — but lack the full
+# combined-arms, fires-integration, and logistics pipeline of a regular
+# army. Cohesion is very high; religious commitment, organizational
+# discipline, and prepared bunker/cache networks support sustained
+# defensive combat. Sniper capability is the one capability this cell
+# retains that the local fighters typically do not — SVD marksmen
+# inflicted meaningful IDF casualties at the tree-line west of Bint
+# Jbeil on 25-26 July 2006.
+#
+# Sources:
+#   - Matthews, Matt M. "We Were Caught Unprepared: The 2006 Hezbollah-
+#     Israeli War." Long War Series Occasional Paper 26, Combat Studies
+#     Institute Press, Fort Leavenworth, 2008 (Tier 1) — regular-fighter
+#     tier, Bekaa training pipeline, tactical performance vs IDF.
+#   - Biddle, Stephen and Friedman, Jeffrey A. "The 2006 Lebanon Campaign
+#     and the Future of Warfare: Implications for Army and Defense Policy."
+#     US Army War College / Strategic Studies Institute, 2008 (Tier 1) —
+#     elite-tier competence assessment, small-unit TTPs, hybrid model.
+#   - Cordesman, Anthony H. "Preliminary 'Lessons' of the Israeli-
+#     Hezbollah War." CSIS, 2006 (Tier 1) — cadre structure, IRGC
+#     training, equipment provenance (Iranian NVGs, AK-74, RPG-29).
+#   - Harel, Amos and Issacharoff, Avi. "34 Days: Israel, Hezbollah, and
+#     the War in Lebanon." Palgrave Macmillan, 2008 (Tier 1) — Bint
+#     Jbeil ambush accounts, sniper employment, night-vision parity.
+#   - Exum, Andrew. "Hizballah at War: A Military Assessment." Washington
+#     Institute Policy Focus 63, 2006 (Tier 2) — cross-ref on elite-tier
+#     training and operational performance.
+unit_type: hezbollah_special_forces
+domain: ground
+display_name: "Hezbollah Special Forces Cell"
+ground_type: LIGHT_INFANTRY
+armor_front: 0.3  # commercial body armor, IRGC-supplied plate carriers
+armor_side: 0.2
+max_speed: 1.3  # m/s (~4.7 km/h dismounted)
+training_level: 0.70
+crew:
+  - role: COMMANDER
+    count: 1
+    skill: EXPERIENCED  # Bekaa-trained, multi-year cadre
+  - role: RIFLEMAN
+    count: 5
+    skill: TRAINED
+  - role: GUNNER
+    count: 1  # PKM gunner
+    skill: TRAINED
+  - role: MEDIC
+    count: 1
+    skill: TRAINED
+equipment:
+  - name: "AK-74"
+    category: WEAPON
+    weight_kg: 3.3
+    reliability: 0.94
+  - name: "AKM"
+    category: WEAPON
+    weight_kg: 3.1
+    reliability: 0.94
+  - name: "PKM GPMG"
+    category: WEAPON
+    weight_kg: 7.5
+    reliability: 0.90
+  - name: "SVD Dragunov"
+    category: WEAPON
+    weight_kg: 4.3
+    reliability: 0.90
+  - name: "RPG-29"
+    category: WEAPON
+    weight_kg: 11.5
+    reliability: 0.88
+  - name: "Handheld Radio"
+    category: COMMUNICATION
+    weight_kg: 0.6
+    reliability: 0.85
+  - name: "AN/PVS-14 NVG"
+    category: SENSOR
+    weight_kg: 0.4
+    reliability: 0.86
+  - name: "AN/PEQ-2 IR Aiming Laser"
+    category: SENSOR
+    weight_kg: 0.3
+    reliability: 0.86
+  - name: "Naked Eye Observation"
+    category: SENSOR
+    weight_kg: 0.5
+    reliability: 0.99

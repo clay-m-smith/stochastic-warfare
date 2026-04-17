@@ -1,0 +1,76 @@
+# Hezbollah Mortar Cell — Bint Jbeil, July-August 2006
+#
+# 4-man Hezbollah indirect-fire cell operating a Soviet-pattern 82mm
+# 2B14 mortar (or close Iranian / Syrian derivative). Hezbollah's
+# indirect-fire layer in 2006 was tiered:
+#   - Strategic / operational: Fajr-3/5 and Zelzal-2 long-range rockets
+#     (deep fires into northern Israel — not this unit_type).
+#   - Operational: 107mm / 122mm Grad-family rockets, Katyusha-type
+#     harassing fires — separate unit types.
+#   - Tactical (this unit): man-portable 82mm mortar cells providing
+#     direct village / ambush support, harassing IDF staging areas,
+#     and engaging IDF infantry in defilade.
+# Mortar cells in the Bint Jbeil sector used pre-surveyed baseplate
+# positions (some prepared during 2000-2006 with concrete pads and
+# cache-adjacent ammo storage), fired 2-4 round missions, and displaced
+# to avoid IDF Mk 93 / TPQ-36 counter-battery. Training_level 0.50
+# reflects competent but not elite gunnery: IRGC cadres ran meaningful
+# live-fire training, but cells typically used direct-lay or pre-
+# registered fires rather than full TOT (time-on-target) doctrine.
+#
+# Composition:
+#   1 commander / FO (observer link + fire order)
+#   1 gunner (tube operator, sight)
+#   2 ammo bearers / loaders (rounds from cache, deflection/elevation)
+#
+# Sources:
+#   - Matthews, Matt M. "We Were Caught Unprepared: The 2006 Hezbollah-
+#     Israeli War." Long War Series Occasional Paper 26, Combat Studies
+#     Institute Press, Fort Leavenworth, 2008 (Tier 1) — Hezbollah
+#     indirect-fire tier, mortar / Katyusha employment, counter-battery
+#     avoidance TTPs.
+#   - Cordesman, Anthony H. "Preliminary 'Lessons' of the Israeli-
+#     Hezbollah War." CSIS, 2006 (Tier 1) — rocket / mortar inventory,
+#     baseplate pre-survey, displacement doctrine.
+#   - Biddle, Stephen and Friedman, Jeffrey A. "The 2006 Lebanon Campaign
+#     and the Future of Warfare: Implications for Army and Defense Policy."
+#     US Army War College / Strategic Studies Institute, 2008 (Tier 1) —
+#     indirect-fire integration into hybrid defensive doctrine.
+#   - Harel, Amos and Issacharoff, Avi. "34 Days: Israel, Hezbollah, and
+#     the War in Lebanon." Palgrave Macmillan, 2008 (Tier 1) — IDF
+#     reported indirect fires in Bint Jbeil / Maroun al-Ras sector.
+unit_type: hezbollah_mortar_cell
+domain: ground
+display_name: "Hezbollah Mortar Cell"
+ground_type: LIGHT_INFANTRY
+max_speed: 1.0  # m/s (burdened by tube + baseplate + rounds)
+training_level: 0.50
+armor_front: 0.0
+armor_side: 0.0
+crew:
+  - role: COMMANDER
+    count: 1
+    skill: BASIC
+  - role: GUNNER
+    count: 1
+    skill: TRAINED
+  - role: GENERIC
+    count: 2  # ammo bearers / loaders
+    skill: BASIC
+equipment:
+  - name: "Iraqi 82mm 2B14 Mortar"
+    category: WEAPON
+    weight_kg: 41.0
+    reliability: 0.85
+  - name: "AKM"
+    category: WEAPON
+    weight_kg: 3.1
+    reliability: 0.92
+  - name: "Handheld Radio"
+    category: COMMUNICATION
+    weight_kg: 0.5
+    reliability: 0.75
+  - name: "Naked Eye Observation"
+    category: SENSOR
+    weight_kg: 0.5
+    reliability: 0.99

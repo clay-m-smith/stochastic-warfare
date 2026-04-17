@@ -1,0 +1,56 @@
+# PG-29V Tandem-HEAT Warhead for RPG-29 Vampir
+#
+# Primary (and effectively sole) warhead for the RPG-29 launcher.
+# Tandem-HEAT configuration: a precursor shaped charge defeats reactive
+# armor (ERA), followed by the main shaped charge which penetrates
+# the underlying RHA plate. Manufacturer / open-source penetration
+# figures on the PG-29V are typically cited as ~650-750mm RHA-equivalent
+# behind ERA, with some sources citing ~600mm against modern composite
+# armor. Consensus-mean used here: 750mm RHA-equivalent (tandem result).
+# This single value captures the engine-modeled armor defeat; the
+# engine does not currently simulate ERA precursor/main-charge stages
+# separately, so the post-ERA penetration is expressed as the effective
+# RHA-equivalent against a non-ERA target.
+#
+# The 2006 Bint Jbeil / Ayta al-Shab engagements validated the PG-29V's
+# effectiveness against Merkava side and rear armor, and documented
+# at least one penetration of the Merkava Mk IV frontal hull — the
+# most heavily armored Israeli MBT at the time — under favorable
+# geometry. Against Merkava Mk II/III side/rear the PG-29V reliably
+# produced mobility and firepower kills.
+#
+# Specifications:
+#   - Rocket body mass: ~6.7 kg (loaded round weight)
+#   - HE equivalent / explosive fill: ~2.5 kg (tandem total)
+#   - Blast radius (HEAT, focused jet): ~3m effective frag
+#   - Fragmentation radius (casing): ~6m (secondary anti-personnel)
+#   - Caliber: 105mm (warhead nominal)
+#
+# Sources:
+#   - Bazalt (manufacturer) PG-29V Product Sheet (Tier 3) — warhead
+#     weight, penetration figures, tandem configuration.
+#   - Jane's Infantry Weapons — RPG-29 / PG-29V (Tier 2) — system
+#     performance, ERA defeat capability.
+#   - DoD Worldwide Equipment Guide, Vol. 1 (Tier 1) — round weight,
+#     penetration-versus-RHA data.
+#   - Matthews, Matt M. "We Were Caught Unprepared: The 2006 Hezbollah-
+#     Israeli War." CSI Press, 2008 (Tier 1) — Merkava engagement
+#     outcomes validating tandem-HEAT effectiveness.
+#   - Cordesman, Anthony H. "Preliminary 'Lessons' of the Israeli-
+#     Hezbollah War." CSIS, 2006 (Tier 1) — PG-29V penetration claims
+#     and Merkava damage assessment.
+ammo_id: rpg29_pg29v_tandem
+display_name: "PG-29V Tandem HEAT"
+ammo_type: HEAT
+mass_kg: 6.7
+diameter_mm: 105.0
+drag_coefficient: 0.42
+penetration_mm_rha: 750.0
+penetration_reference_range_m: 500.0
+blast_radius_m: 3.0
+fragmentation_radius_m: 6.0
+explosive_fill_kg: 2.5
+guidance: NONE
+propulsion: solid_rocket
+max_speed_mps: 280.0
+unit_cost_factor: 1.2

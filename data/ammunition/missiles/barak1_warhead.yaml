@@ -1,0 +1,42 @@
+# Barak-1 Warhead — 22 kg HE Fragmentation
+#
+# Point-defense SAM warhead: 22 kg HE-frag with proximity fuze for
+# AA engagement; direct-hit contact fuze backup for ASM terminal
+# defense. Designed to defeat both aircraft (fragment pattern at
+# proximity-fuze detonation, ~8 m lethal blast / ~20 m frag) and
+# sea-skimming anti-ship missiles (contact fuze / direct intercept).
+#
+# Effectiveness:
+#   Against aircraft: high single-shot Pk given proximity fuze and
+#     9+ m fragmentation radius.
+#   Against sea-skimming ASCM: moderate Pk — geometry-dependent;
+#     requires CLOS accuracy within ~3 m CEP for contact-fuze hit
+#     or dense fragment pattern crossing the ASCM flight path.
+#
+# Sources:
+#   Tier 1: Rafael manufacturer datasheet (public release)
+#   Tier 3: Jane's Land-Based Air Defence — Barak warhead entry
+
+ammo_id: barak1_warhead
+display_name: "Barak-1 HE-Frag Warhead (22kg)"
+ammo_type: HE
+mass_kg: 22.0
+diameter_mm: 170.0
+drag_coefficient: 0.28
+penetration_mm_rha: 0.0
+penetration_reference_range_m: 0.0
+blast_radius_m: 8.0
+fragmentation_radius_m: 20.0
+explosive_fill_kg: 6.5
+guidance: COMMAND
+seeker_fov_deg: 0.0  # CLOS — no onboard seeker
+seeker_range_m: 0.0
+pk_at_reference: 0.70  # vs aircraft; lower vs ASCM
+countermeasure_susceptibility: 0.15  # CLOS is jam-resistant (radar-
+                                    # based but ship-radar-driven)
+propulsion: rocket
+max_speed_mps: 600.0  # ~Mach 1.8
+flight_time_s: 20.0  # 12 km at avg ~600 m/s
+cruise_altitude_m: 0.0  # variable (engagement-dependent)
+terminal_maneuver: true
+unit_cost_factor: 12.0

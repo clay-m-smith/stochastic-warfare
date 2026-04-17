@@ -1,0 +1,90 @@
+# IDF Golani Brigade Rifle Squad (10-man) — Second Lebanon War, 2006
+#
+# Golani Brigade (Brigade 1, "HaGolani") is one of the IDF's five regular
+# infantry brigades. Its 51st Battalion led the assault into Bint Jbeil
+# on 24-26 July 2006 and suffered heavy casualties in the engagement
+# known in Israel as "The Battle at the Saraya" (Bint Jbeil town hall),
+# where deputy battalion commander Maj. Roi Klein was killed along with
+# seven others in a Hezbollah ATGM / small-arms ambush. Golani squads
+# in 2006 operated in the standard 10-man configuration (squad leader
+# plus two four-man fire teams, sometimes task-organized into three
+# smaller teams in urban clearance).
+#
+# Equipment reflects 2006 IDF standard:
+#   - Tavor TAR-21 bullpup as primary rifle (general issue from 2003;
+#     fully distributed to Golani by 2006). Integrated Meprolight red-
+#     dot sight standard.
+#   - IMI Negev 5.56mm light machine gun × 2 (one per fire team;
+#     replaced older FN MAG-based sections in the LMG role).
+#   - FN MAG 7.62mm general-purpose machine gun × 1 (support role;
+#     mapped under "M240 7.62mm" for mapping compatibility with the
+#     NATO 7.62x51mm family).
+#   - M203 40mm Grenade Launcher × 2 (under-barrel on alternating
+#     Tavors in each fire team).
+#   - IMI Rabintex / Rafael ballistic vest (Level III soft + plates).
+#   - AN/PVS-14 monocular NVG (US-procured, widely fielded by 2006).
+#   - Israeli tactical radio (IDF "Rakevet" squad net — mapped under
+#     AN/PRC-148 alias for NATO-comparable squad radio).
+#
+# Sources:
+#   - Matthews, Matt M. "We Were Caught Unprepared: The 2006 Hezbollah-
+#     Israeli War" (CSI Occasional Paper 26, 2008, Tier 1) — Golani
+#     51st Bn task organization, Bint Jbeil assault composition.
+#   - Harel, Amos and Avi Issacharoff. "34 Days: Israel, Hezbollah,
+#     and the War in Lebanon" (Palgrave Macmillan, 2008, Tier 1) —
+#     Saraya battle narrative, squad tactics, casualty reports.
+#   - Cordesman, Anthony H. "Preliminary 'Lessons' of the Israeli-
+#     Hezbollah War" (CSIS, September 2006, Tier 1) — IDF infantry
+#     equipment and small-arms inventory.
+#   - IDF Ground Forces Command factsheets, Golani Brigade organization
+#     (Tier 1) — squad size and structure.
+#   - Jane's Infantry Weapons 2005-2006, Tavor TAR-21 and IMI Negev
+#     (Tier 2) — individual weapon specifications.
+
+unit_type: idf_golani_squad
+domain: ground
+display_name: "IDF Golani Rifle Squad"
+ground_type: LIGHT_INFANTRY
+max_speed: 1.2  # m/s (~4.3 km/h dismounted; slower in urban clear)
+training_level: 0.80
+armor_front: 0.5  # IMI ballistic vest with plates
+armor_side: 0.3
+crew:
+  - role: COMMANDER
+    count: 1
+    skill: EXPERIENCED
+  - role: RIFLEMAN
+    count: 7
+    skill: TRAINED
+  - role: GUNNER
+    count: 2  # Negev LMG gunners (one per fire team)
+    skill: TRAINED
+equipment:
+  - name: "Tavor TAR-21 Rifle"
+    category: WEAPON
+    weight_kg: 3.3
+    reliability: 0.94
+  - name: "IMI Negev 5.56mm LMG"
+    category: WEAPON
+    weight_kg: 7.4
+    reliability: 0.91
+  - name: "M240 7.62mm"
+    category: WEAPON
+    weight_kg: 12.2
+    reliability: 0.93
+  - name: "M203 40mm Grenade Launcher"
+    category: WEAPON
+    weight_kg: 1.4
+    reliability: 0.92
+  - name: "IMI Ballistic Vest"
+    category: PROTECTION
+    weight_kg: 10.0
+    reliability: 0.99
+  - name: "AN/PVS-14 NVG"
+    category: SENSOR
+    weight_kg: 0.4
+    reliability: 0.88
+  - name: "AN/PRC-148 MBITR"
+    category: COMMUNICATION
+    weight_kg: 1.0
+    reliability: 0.93

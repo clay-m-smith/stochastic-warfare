@@ -1,0 +1,107 @@
+# IDF Egoz Counter-Guerrilla Reconnaissance Team (5-man)
+#
+# Egoz ("Nut") is the IDF's Northern Command specialized counter-
+# guerrilla / reconnaissance unit, raised in 1995 specifically for
+# Hezbollah-centric operations in the Lebanon security zone and
+# formally part of the Golani Brigade's order of battle after 2000.
+# During the Second Lebanon War (2006) Egoz teams conducted deep
+# observation and direct-action missions in the Maroun al-Ras and
+# Bint Jbeil sectors, designating targets for IAF precision strikes
+# and engaging Hezbollah ATGM teams with sniper / Javelin fires.
+# This file also serves as a rough proxy for Maglan (the IDF's
+# deep-reconnaissance long-range unit) — their 2006 employment
+# and equipment overlap substantially.
+#
+# 5-man team composition (doctrinal minimum for an independent
+# observation / fire-control cell):
+#   - 1 team leader / commander (Tavor TAR-21 CTAR compact)
+#   - 3 riflemen (Tavor TAR-21 CTAR × 2, suppressed M4A1 × 1 for
+#     sniper overwatch)
+#   - 1 LMG gunner (IMI Negev 5.56mm)
+# Team carries FGM-148 Javelin CLU with one missile round for
+# defensive counter-armor, AN/PEQ-1 SOFLAM laser designator for
+# IAF / artillery terminal guidance, AN/PRC-148 MBITR, AN/PVS-14
+# NVGs, and an Elbit MARS (Modular Advanced Reconnaissance System)
+# thermal viewer for long-range observation.
+#
+# Training level 0.92 reflects elite selection and a 12-month
+# qualification pipeline (Golani basic + parachute + Egoz-specific
+# counter-guerrilla course).
+#
+# Sources:
+#   - Matthews, Matt M. "We Were Caught Unprepared: The 2006 Hezbollah-
+#     Israeli War" (CSI Occasional Paper 26, 2008, Tier 1) — Egoz
+#     observation and fire-direction role in Maroun al-Ras / Bint
+#     Jbeil sector.
+#   - Harel, Amos and Avi Issacharoff. "34 Days: Israel, Hezbollah,
+#     and the War in Lebanon" (Palgrave Macmillan, 2008, Tier 1) —
+#     Egoz / Maglan reconnaissance operations, Javelin employment.
+#   - Cordesman, Anthony H. "Preliminary 'Lessons' of the Israeli-
+#     Hezbollah War" (CSIS, September 2006, Tier 1) — SOF equipment
+#     distribution, laser-designator employment.
+#   - IDF Ground Forces Command public factsheets, Egoz Unit (Tier 1)
+#     — organization, mission, Golani Brigade affiliation.
+#   - Elbit Systems public product documentation, MARS thermal
+#     reconnaissance viewer (Tier 3) — sensor weight and role.
+#   - Jane's Infantry Weapons 2005-2006, Tavor CTAR, IMI Negev,
+#     FGM-148 Javelin entries (Tier 2) — weapon specifications.
+
+unit_type: idf_egoz_team
+domain: ground
+display_name: "IDF Egoz Counter-Guerrilla Team"
+ground_type: RECON
+max_speed: 1.4  # m/s (dismounted patrol pace; faster than line infantry)
+training_level: 0.92
+armor_front: 0.5  # lightweight plate carrier (mobility-prioritized)
+armor_side: 0.3
+crew:
+  - role: COMMANDER
+    count: 1
+    skill: ELITE
+  - role: RIFLEMAN
+    count: 3
+    skill: EXPERIENCED
+  - role: GUNNER
+    count: 1  # Negev LMG gunner
+    skill: EXPERIENCED
+equipment:
+  - name: "Tavor TAR-21 CTAR"
+    category: WEAPON
+    weight_kg: 3.0
+    reliability: 0.94
+  - name: "Suppressed M4A1 Rifle"
+    category: WEAPON
+    weight_kg: 3.9
+    reliability: 0.94
+  - name: "IMI Negev 5.56mm LMG"
+    category: WEAPON
+    weight_kg: 7.4
+    reliability: 0.91
+  - name: "FGM-148 Javelin CLU"
+    category: WEAPON
+    weight_kg: 6.4
+    reliability: 0.92
+  - name: "Javelin Missile Round"
+    category: WEAPON
+    weight_kg: 15.9
+    reliability: 0.94
+  - name: "Javelin CLU Thermal Sight"
+    category: SENSOR
+    weight_kg: 6.4
+    reliability: 0.92
+  - name: "AN/PEQ-1 SOFLAM Laser Designator"
+    category: SENSOR
+    weight_kg: 5.3
+    reliability: 0.90
+  - name: "Elbit MARS Thermal Viewer"
+    category: SENSOR
+    weight_kg: 3.8
+    reliability: 0.92
+  - name: "AN/PVS-14 NVG"
+    category: SENSOR
+    weight_kg: 0.4
+    reliability: 0.90
+  - name: "AN/PRC-148 MBITR"
+    category: COMMUNICATION
+    weight_kg: 1.0
+    reliability: 0.94

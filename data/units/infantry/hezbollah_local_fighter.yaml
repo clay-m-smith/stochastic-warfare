@@ -1,0 +1,84 @@
+# Hezbollah Local Fighter Cell — Bint Jbeil, July-August 2006
+#
+# 8-man (range 6-10) Hezbollah village-level defensive cell representative
+# of the local Shia tribal militia layer that held the Bint Jbeil sector
+# during the 2006 Lebanon War (Second Lebanon War). These are the part-
+# time fighters — day-job shopkeepers, farmers, laborers in Bint Jbeil,
+# Aynata, Maroun al-Ras, and the surrounding villages — who were mobilized
+# by Hezbollah's local command when IDF ground operations began. They
+# formed the outer ring of the defense: village fire positions, checkpoint
+# overwatch, RPG ambushes from rooftops and alleys. The Bekaa-trained
+# Kornet specialists and Special Forces cells (separate unit_types) held
+# the decisive tank-killing positions; the local fighters generated depth,
+# denied movement corridors, and forced IDF armor to close with dismounted
+# infantry. Training_level 0.45 sits meaningfully above standard Iraqi
+# insurgent (0.35) because Iranian IRGC cadre oversight during the
+# 2000-2006 rearmament program drove genuine unit-level weapons training
+# (rifle marksmanship, RPG employment, basic small-unit fire-and-move) —
+# but remains well short of conventional (0.80) due to part-time status,
+# no formal doctrine pipeline, and limited combined-arms exposure.
+# Cohesion in the defender-home role is high: religious-cadre indoctri-
+# nation, family-network unit composition, and defense-of-village
+# motivation all reduce rout probability versus secular irregulars.
+#
+# Sources:
+#   - Matthews, Matt M. "We Were Caught Unprepared: The 2006 Hezbollah-
+#     Israeli War." Long War Series Occasional Paper 26, Combat Studies
+#     Institute Press, Fort Leavenworth, 2008 (Tier 1) — Hezbollah
+#     mobilization tiers, village-defender TTPs, Bint Jbeil engagement.
+#   - Biddle, Stephen and Friedman, Jeffrey A. "The 2006 Lebanon Campaign
+#     and the Future of Warfare: Implications for Army and Defense Policy."
+#     US Army War College / Strategic Studies Institute, 2008 (Tier 1) —
+#     Hezbollah force-structure tiers (local / regular / elite), training
+#     assessment, hybrid-warfare framework.
+#   - Cordesman, Anthony H. "Preliminary 'Lessons' of the Israeli-
+#     Hezbollah War." CSIS, 2006 (Tier 1) — local-fighter weapons mix,
+#     mobilization patterns, cadre structure.
+#   - Harel, Amos and Issacharoff, Avi. "34 Days: Israel, Hezbollah, and
+#     the War in Lebanon." Palgrave Macmillan, 2008 (Tier 1) — ground
+#     engagement accounts, village defender behavior in Bint Jbeil.
+#   - Jane's World Insurgency and Terrorism — Hezbollah entry (Tier 2) —
+#     weapons inventory, tier structure, IRGC training pipeline.
+unit_type: hezbollah_local_fighter
+domain: ground
+display_name: "Hezbollah Local Fighter Cell"
+ground_type: LIGHT_INFANTRY
+max_speed: 1.2  # m/s (~4.3 km/h, part-time fighter, light load)
+training_level: 0.45
+armor_front: 0.0
+armor_side: 0.0
+crew:
+  - role: COMMANDER
+    count: 1
+    skill: BASIC
+  - role: RIFLEMAN
+    count: 5
+    skill: BASIC
+  - role: GUNNER
+    count: 2  # PKM gunner + RPG gunner
+    skill: BASIC
+equipment:
+  - name: "AKM"
+    category: WEAPON
+    weight_kg: 3.1
+    reliability: 0.92
+  - name: "PKM GPMG"
+    category: WEAPON
+    weight_kg: 7.5
+    reliability: 0.88
+  - name: "RPG-7"
+    category: WEAPON
+    weight_kg: 6.3
+    reliability: 0.90
+  - name: "Handheld Radio"
+    category: COMMUNICATION
+    weight_kg: 0.5
+    reliability: 0.70
+  - name: "AN/PVS-14 NVG"
+    category: SENSOR
+    weight_kg: 0.4
+    reliability: 0.80
+  - name: "Naked Eye Observation"
+    category: SENSOR
+    weight_kg: 0.5
+    reliability: 0.99

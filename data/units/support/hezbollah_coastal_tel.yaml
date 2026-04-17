@@ -1,0 +1,81 @@
+# Hezbollah C-802 Noor Coastal TEL (Transporter-Erector-Launcher)
+#
+# Truck-mounted anti-ship missile launcher — KAMAZ 6x6 chassis (or
+# similar Soviet-pattern heavy truck), two-round ready rack with
+# erect-to-launch hydraulic rails. Emplaced on Beirut beach the
+# evening of 14 July 2006 for the strike on IDF blockade units.
+#
+# Platform (based on Iranian YJ-83 export package; Hezbollah acquired
+# a small number via Iran/Syria transfer, est. 2002–2006):
+#   Chassis: KAMAZ-43101 6x6 or TATRA 815 tactical truck
+#   Crew: 4 (commander, 2 launcher operators, driver)
+#   Launch rails: 2 (two ready missiles)
+#   Reload time: ~30–60 min (dockyard/prepared site only; not reloaded
+#     during a single engagement in practice)
+#   Fire control: coastal surveillance radar (truck-mounted or
+#     pre-positioned) providing target bearing/range; missile uses
+#     inertial + radio-altimeter mid-course and active-radar terminal.
+#   Mobility: drive-to-hide-in-urban after launch; makes Counter-TEL
+#     strike extremely difficult.
+#
+# Training level: 0.65 — Hezbollah Radwan-unit caliber operators,
+# Iranian IRGC-Navy trained; higher than conscript-tier but below
+# professional-navy standard. Operators had only limited practice
+# firings with Noor before operational use.
+#
+# NOTE on unit classification:
+#   The engine enum has no COASTAL_DEFENSE or TEL type; ARTILLERY_SP
+#   (truck-mounted self-propelled indirect-fire launcher) is the
+#   closest functional analog and is used by the FROG-7 TEL +
+#   BM-21 TEL entries in the Khafji dataset (data/units/artillery/).
+#   This unit sits under data/units/support/ rather than
+#   data/units/artillery/ to group it with other non-ground-maneuver
+#   expeditionary support; the engine resolves domain+ground_type
+#   from the fields below, not from directory location.
+#
+# Sources:
+#   Tier 1: ONI "Iran's Anti-Ship Capabilities — Open Source Study"
+#           (Noor = YJ-83 Iranian domestic variant, produced at Shahid
+#           Bagheri Industries, 2001+)
+#   Tier 1: ONI "Iran's Naval Forces" (2009; Hezbollah-Iran missile
+#           transfers documented)
+#   Tier 2: USNI Proceedings, littoral ASM proliferation analyses
+#   Tier 3: Jane's Weapons: Naval (YJ-83/C-802 TEL variants)
+#   Tier 3: Global Security — "C-802/YJ-83 Noor" reference
+
+unit_type: hezbollah_coastal_tel
+domain: ground
+display_name: "Hezbollah C-802 Coastal TEL"
+ground_type: ARTILLERY_SP
+max_speed: 15.0  # m/s (~54 km/h on paved road)
+training_level: 0.65
+armor_front: 5.0  # soft-skin truck cab only
+armor_side: 3.0
+crew:
+  - role: COMMANDER
+    count: 1
+    skill: TRAINED
+  - role: GUNNER
+    count: 2
+    skill: TRAINED
+  - role: DRIVER
+    count: 1
+    skill: BASIC
+equipment:
+  - name: "C-802 Noor Launcher"
+    category: WEAPON
+    weight_kg: 1500.0  # per missile; 2 ready rounds
+    reliability: 0.80
+  - name: "Coastal Surveillance Radar"
+    category: SENSOR
+    weight_kg: 450.0
+    reliability: 0.72
+  - name: "HF/VHF Field Radio"
+    category: COMMUNICATION
+    weight_kg: 12.0
+    reliability: 0.78
+  - name: "KAMAZ 6x6 Chassis"
+    category: PROPULSION
+    weight_kg: 9200.0
+    reliability: 0.78
+    temperature_range: [-15.0, 50.0]

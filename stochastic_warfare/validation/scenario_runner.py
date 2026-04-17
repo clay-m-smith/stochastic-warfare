@@ -1072,6 +1072,21 @@ _WEAPON_NAME_MAP: dict[str, str] = {
     "DShK 12.7mm HMG": "dshk_127mm",
     "Iraqi 82mm 2B14 Mortar": "m252_81mm_mortar",  # 82mm proxies to 81mm western mortar
     "Suicide Vest (SVEST)": "vbied",  # handheld VBIED analog for IED/suicide vest modeling
+    # ── Phase 102 Bint Jbeil — IDF ground (Golani / Paratrooper / Egoz) ──
+    "Tavor TAR-21 Rifle": "m4_556mm",
+    "Tavor TAR-21 CTAR": "m4_556mm",
+    "Suppressed M4A1 Rifle": "m4_556mm",
+    "IMI Negev 5.56mm LMG": "m240_762mm",
+    "M240 7.62mm": "m240_762mm",  # bare MAG without "Coaxial" suffix (IDF dismounts)
+    "MATADOR 90mm Anti-Structure Munition": "rpg7",  # proxy: shoulder-fired anti-structure
+    "Soltam 60mm Internal Mortar": "m252_81mm_mortar",  # 60mm proxies to 81mm mortar
+    # ── Phase 102 Bint Jbeil — Hezbollah ─────────────────────────────
+    "RPG-29": "rpg29_vampir",  # new Phase 102 weapon
+    # ── Phase 102 INS Hanit — Sa'ar 5 / Coastal TEL ──────────────────
+    "Barak-1 VLS SAM": "barak1_sam",
+    "Harpoon Block 1C ASCM": "rgm84_harpoon",
+    "Oto Melara 76mm/62 Super Rapid": "oto_melara_76mm",
+    "C-802 Noor Launcher": "c802_noor",
     # ── Phase 100 Khafji — Naval (USS Missouri Iowa-class) ───────────
     "16 inch/50 Mk 7 Gun": "16in50_naval",
     "5 inch/38 Mk 12 Gun": "mk38_5in38",
@@ -1339,6 +1354,20 @@ _SENSOR_NAME_MAP: dict[str, str] = {
     "Dragon Eye EO/IR Camera": "thermal_sight",
     "ScanEagle EO/IR Gimbal": "thermal_sight",
     "GPS/INS Navigation": "mk1_eyeball",  # nav-only, not detection — minimal proxy
+    # ── Phase 102 Bint Jbeil — IDF armor / dismount / SOF ────────────
+    "El-Op Knight Mark 4 Fire Control": "thermal_sight",
+    "El-Op Gill Fire Control": "thermal_sight",
+    "Commander's Independent Thermal Viewer": "thermal_sight",
+    "Commander's Thermal Viewer": "thermal_sight",
+    "Amcoram LWS-2 Laser Warning Receiver": "laser_warning_receiver",
+    "Elbit MARS Thermal Viewer": "thermal_sight",
+    "AN/PEQ-1 SOFLAM Laser Designator": "thermal_sight",
+    # ── Phase 102 INS Hanit — Sa'ar 5 radar / ESM / sonar ────────────
+    "EL/M-2218S 3D Air Search Radar": "air_search_radar",
+    "EL/M-2221 STGR Fire Control Radar": "ground_search_radar",
+    "Elisra NS-9003/9005 ESM": "esm_suite",
+    "EDO 796 Hull Sonar": "active_sonar",
+    "Coastal Surveillance Radar": "ground_search_radar",
     # ── Modern air ───────────────────────────────────────────────────
     "AN/APG-68 Radar": "apg68_radar",
     "AN/APG-79 AESA Radar": "apg68_radar",

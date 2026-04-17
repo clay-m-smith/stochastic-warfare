@@ -1,0 +1,95 @@
+# IDF 35th Paratrooper Brigade Rifle Squad (10-man) — Second Lebanon War, 2006
+#
+# The 35th Brigade ("HaTzanhanim" / "The Paratroopers") is the IDF's
+# principal airborne / air-assault brigade. During the Second Lebanon
+# War (2006) its 101st ("Cobra"), 202nd, and 890th battalions conducted
+# heliborne and overland insertions into southern Lebanon, including
+# operations around Bint Jbeil, Maroun al-Ras, and the Litani crossings
+# in Operation Change of Direction 11. Paratrooper squads use the same
+# 10-man baseline as Golani but draw from a slightly more selective
+# recruitment pipeline and complete a longer infantry qualification —
+# modeled here with a small training-level premium over Golani.
+#
+# Loadout differs from Golani by the addition of the IMI MATADOR (Man-
+# portable Anti-Tank / Anti-DOOR) 90mm recoilless munition — a shoulder-
+# fired, single-shot, reloadable anti-structure weapon jointly developed
+# by IMI / Dynamit Nobel / ST Kinetics and fielded to paratrooper
+# assault squads by 2006 specifically for urban / bunker-busting work.
+# MATADOR distribution at the company level (not every squad carried
+# one every day), so a single tube is the squad assumption here.
+#
+# Other equipment follows Golani:
+#   - Tavor TAR-21 × 7
+#   - IMI Negev 5.56mm LMG × 2
+#   - FN MAG 7.62mm × 1 (mapped under "M240 7.62mm" alias)
+#   - M203 40mm UGL × 2
+#   - MATADOR 90mm anti-structure munition × 1 (the distinguishing item)
+#   - IMI ballistic vest, PVS-14, squad radio
+#
+# Sources:
+#   - Matthews, Matt M. "We Were Caught Unprepared: The 2006 Hezbollah-
+#     Israeli War" (CSI Occasional Paper 26, 2008, Tier 1) — 35th
+#     Paratrooper Brigade employment in Second Lebanon War, squad task
+#     organization.
+#   - Harel, Amos and Avi Issacharoff. "34 Days: Israel, Hezbollah, and
+#     the War in Lebanon" (Palgrave Macmillan, 2008, Tier 1) — 101st,
+#     202nd, and 890th paratroop battalion operations.
+#   - Cordesman, Anthony H. "Preliminary 'Lessons' of the Israeli-
+#     Hezbollah War" (CSIS, September 2006, Tier 1) — urban equipment
+#     distribution, MATADOR fielding.
+#   - IMI / IAI product documentation, MATADOR 90mm system (Tier 3) —
+#     weapon specifications and role.
+#   - Jane's Infantry Weapons 2005-2006, MATADOR entry (Tier 2) —
+#     weight, warhead, engagement envelope.
+
+unit_type: idf_paratrooper_squad
+domain: ground
+display_name: "IDF 35th Paratrooper Rifle Squad"
+ground_type: LIGHT_INFANTRY
+max_speed: 1.2  # m/s (~4.3 km/h dismounted)
+training_level: 0.82
+armor_front: 0.5  # IMI ballistic vest with plates
+armor_side: 0.3
+crew:
+  - role: COMMANDER
+    count: 1
+    skill: EXPERIENCED
+  - role: RIFLEMAN
+    count: 7
+    skill: TRAINED
+  - role: GUNNER
+    count: 2  # Negev LMG gunners (one per fire team)
+    skill: TRAINED
+equipment:
+  - name: "Tavor TAR-21 Rifle"
+    category: WEAPON
+    weight_kg: 3.3
+    reliability: 0.94
+  - name: "IMI Negev 5.56mm LMG"
+    category: WEAPON
+    weight_kg: 7.4
+    reliability: 0.91
+  - name: "M240 7.62mm"
+    category: WEAPON
+    weight_kg: 12.2
+    reliability: 0.93
+  - name: "M203 40mm Grenade Launcher"
+    category: WEAPON
+    weight_kg: 1.4
+    reliability: 0.92
+  - name: "MATADOR 90mm Anti-Structure Munition"
+    category: WEAPON
+    weight_kg: 8.9
+    reliability: 0.90
+  - name: "IMI Ballistic Vest"
+    category: PROTECTION
+    weight_kg: 10.0
+    reliability: 0.99
+  - name: "AN/PVS-14 NVG"
+    category: SENSOR
+    weight_kg: 0.4
+    reliability: 0.88
+  - name: "AN/PRC-148 MBITR"
+    category: COMMUNICATION
+    weight_kg: 1.0
+    reliability: 0.93

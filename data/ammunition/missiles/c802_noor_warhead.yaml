@@ -1,0 +1,54 @@
+# C-802 Noor Warhead — 165 kg Semi-Armor-Piercing High-Explosive
+#
+# Ship-killer warhead carried on the C-802 Noor / YJ-83 ASCM family.
+# 165 kg semi-AP-HE design: delayed-action fuze allows the warhead
+# to penetrate unarmored ship structure (1–2 bulkheads) before
+# detonation, maximising internal blast + fragmentation damage.
+# Effective against unarmored surface combatants; capable of
+# mission-killing a frigate-or-smaller vessel with a single hit.
+#
+# NOTE on penetration_mm_rha:
+#   60 mm RHA-equivalent is a nominal engine value for ship-deck
+#   penetration against thin-skinned modern combatants (Sa'ar 5-class
+#   hull plating). Ship structure is NOT RHA; this is a proxy figure
+#   for the damage model to route through the standard penetration
+#   check, since modern surface combatants carry <25 mm hull plate
+#   above the waterline and the semi-AP warhead penetrates
+#   comfortably.
+#
+# Engagement — 14 July 2006 INS Hanit strike:
+#   Warhead detonated in aft crane/flight deck area. 4 sailors KIA,
+#   flight deck structurally damaged, helo operations lost; ship
+#   returned under own power to Ashdod (critical systems intact).
+#   Hit above waterline was the primary factor in non-catastrophic
+#   outcome — had the warhead struck lower, a mission kill was
+#   plausible.
+#
+# Sources:
+#   Tier 1: ONI "Iran's Anti-Ship Capabilities" (warhead data)
+#   Tier 2: CNA ASM lethality studies
+#   Tier 3: Jane's Weapons: Naval (YJ-83 warhead entry)
+
+ammo_id: c802_noor_warhead
+display_name: "C-802 Noor SAP Warhead (165kg)"
+ammo_type: HE
+mass_kg: 165.0
+diameter_mm: 360.0
+drag_coefficient: 0.30
+penetration_mm_rha: 60.0  # nominal ship-deck penetration proxy
+penetration_reference_range_m: 0.0
+blast_radius_m: 25.0
+fragmentation_radius_m: 50.0
+explosive_fill_kg: 45.0  # HE filler (semi-AP warhead retains casing mass)
+guidance: RADAR_ACTIVE
+seeker_fov_deg: 40.0
+seeker_range_m: 20000.0  # terminal-seeker acquisition range
+pk_at_reference: 0.65  # against undefended surface combatant
+countermeasure_susceptibility: 0.35  # vulnerable to chaff + soft-kill;
+                                     # less to hard-kill PD at low alt
+propulsion: turbojet
+max_speed_mps: 310.0  # terminal sprint speed
+flight_time_s: 420.0  # ~120 km at ~290 m/s
+cruise_altitude_m: 7.0  # sea-skimming
+terminal_maneuver: true
+unit_cost_factor: 45.0

@@ -1,0 +1,61 @@
+# RPG-29 Vampir — 105mm reusable anti-tank rocket launcher
+#
+# Soviet/Russian tandem-HEAT anti-tank rocket launcher introduced in
+# 1989 (Bazalt design bureau). Two-piece reusable tube, 105mm caliber,
+# shoulder- or tripod-fired. Primary warhead PG-29V tandem-HEAT defeats
+# reactive armor (front precursor) then penetrates main armor
+# (~600-750mm RHA-equivalent). Delivered to Hezbollah via Iranian and
+# Syrian pipelines in the 2000-2006 rearmament window; used with
+# significant effect against IDF Merkava Mk II / III in the Bint Jbeil
+# and Ayta al-Shab engagements, inflicting at least several confirmed
+# Merkava kills and numerous mobility / firepower kills. Unlike the
+# RPG-7 (40mm rocket sleeve + ~105mm HEAT warhead, rated ~260-500mm RHA
+# with single-HEAT rounds, less vs ERA), the RPG-29's tandem warhead
+# is the key capability that made 2006 a wake-up call for Western
+# MBT protection assumptions. Launcher ~11.5 kg unloaded + 6.7 kg
+# per loaded PG-29V round.
+#
+# Engagement envelope:
+#   - Effective direct-fire: 500m (optically-aimed, 1PN51-2 NVD compatible)
+#   - Maximum: ~800m (practical precision ~500m, self-destruct ~800-1000m)
+#   - Minimum arming range: ~50m
+#   - Rate of fire: ~4 rpm sustained (reload + lay)
+#   - Reload: ~15s (two-piece separation + new rocket insertion)
+#
+# Sources:
+#   - Matthews, Matt M. "We Were Caught Unprepared: The 2006 Hezbollah-
+#     Israeli War." Long War Series Occasional Paper 26, Combat Studies
+#     Institute Press, Fort Leavenworth, 2008 (Tier 1) — RPG-29 kills
+#     on Merkava, Hezbollah RPG-29 employment doctrine.
+#   - Cordesman, Anthony H. "Preliminary 'Lessons' of the Israeli-
+#     Hezbollah War." CSIS, 2006 (Tier 1) — RPG-29 provenance, tandem-
+#     HEAT defeat of Merkava side/rear, TTPs.
+#   - Biddle, Stephen and Friedman, Jeffrey A. "The 2006 Lebanon Campaign
+#     and the Future of Warfare." US Army War College, 2008 (Tier 1) —
+#     RPG-29 in Hezbollah hybrid-warfare anti-armor layering.
+#   - Jane's Infantry Weapons — RPG-29 entry (Tier 2) — system
+#     specifications, warhead performance, reload timing.
+#   - DoD Worldwide Equipment Guide, Vol. 1 (Tier 1) — launcher weight,
+#     caliber, effective range confirmation.
+weapon_id: rpg29_vampir
+display_name: "RPG-29 Vampir"
+category: ROCKET_LAUNCHER
+caliber_mm: 105.0
+muzzle_velocity_mps: 280.0
+max_range_m: 500.0
+min_range_m: 50.0
+rate_of_fire_rpm: 4.0
+burst_size: 1
+base_accuracy_mrad: 3.5
+guidance: NONE
+magazine_capacity: 1
+reload_time_s: 15.0
+compatible_ammo:
+  - rpg29_pg29v_tandem
+weight_kg: 11.5
+reliability: 0.90
+barrel_life_rounds: 300
+requires_deployed: false
+traverse_deg: 30.0
+elevation_min_deg: -10.0
+elevation_max_deg: 45.0

@@ -167,7 +167,7 @@ documented_outcomes:
 
 ---
 
-## Modern Scenarios (35 total)
+## Modern Scenarios (37 total)
 
 ### Engagement Scenarios
 
@@ -177,6 +177,8 @@ documented_outcomes:
 | **Debecka Pass** | US SF + Peshmerga vs Iraqi 1st Mech, 2003 | 4 hr | Javelin ATGM, CAS, ridgeline defense, golden-scenario (Block 11) |
 | **Khafji** | Iraqi III Corps vs Saudi/Qatari/USMC/coalition air + USS Missouri, 1991 | 72 hr | Full-OOB 233 units, hybrid tick resolution, naval gunfire, AC-130, multi-domain, golden-scenario (Block 11) |
 | **Fallujah Phase Line Fran** | USMC RCT-1/RCT-7 + Army TF 2-7 CAV vs insurgent defenders, 2004 | 120 hr | Urban combat, HBIED pre-emplacement, WP shake-and-bake, AC-130U, scripted events (mosque seizure, armored thrust), golden-scenario (Block 11) |
+| **Bint Jbeil 2006** | IDF Golani/Paratrooper/Armor + Egoz SOF vs Hezbollah tank hunters, 2006 | 240 hr | ATGM-vs-MBT (Kornet + RPG-29 vs Merkava Mk III/IV), urban hills, reserve-mobilization morale gap, contested outcome (DRAW_SCENARIO), golden-scenario (Block 11) |
+| **INS Hanit 2006** | Sa'ar 5 corvette vs Hezbollah coastal C-802 Noor ASCM strike, 2006 | 2 hr | Naval ASCM engagement, degraded-ECM posture, sea-skimming cruise missile, Barak-1 PD SAM, golden-scenario (Block 11) |
 | **Falklands Naval** | Sheffield vs Exocet attack, 1982 | 1 hr | Naval, missile exchange |
 | **Golan Heights** | Israeli defense vs Syrian armor, 1973 | 6 hr | Prepared defense, force ratio |
 | **Bekaa Valley 1982** | Israeli SEAD vs Syrian IADS | 2 hr | EW, SEAD, air defense |

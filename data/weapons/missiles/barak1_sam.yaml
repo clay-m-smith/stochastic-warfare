@@ -1,0 +1,69 @@
+# Barak-1 VLS Point-Defense SAM (Rafael / IAI, Israel)
+#
+# Short-range vertical-launch point-defense surface-to-air / anti-ship-
+# missile-defense system jointly developed by Rafael and IAI for IDF
+# Navy and export customers (India, Singapore, Chile, etc.). Entered
+# service on Sa'ar 5 corvettes circa 1995. Fire-and-forget launch
+# with command-to-line-of-sight (CLOS) terminal homing. Optimized
+# for sea-skimming ASCM engagement at close range (<12 km).
+#
+# Performance:
+#   Length: 2.175 m, body diameter: 170 mm, wingspan: 685 mm
+#   Mass: 98 kg (launch), 22 kg warhead (HE-frag)
+#   Range: 500 m – 12 km
+#   Max altitude: ~5,500 m (designed for AA + ASM defense envelope)
+#   Speed: ~Mach 1.8 (~600 m/s)
+#   Guidance: command (CLOS via ship radar); fire-and-forget after
+#     lock-on acquired by ship fire-control radar
+#   Reaction time: ~5 s from detection to launch
+#   VLS reload: ~3 s cycle between launches from 16-cell block
+#
+# Engagement — 14 July 2006 INS Hanit strike (role-in-absence):
+#   Open-source reporting indicates Barak-1 was NOT in automatic
+#   engagement mode at the time of the C-802 Noor strike (reasons
+#   contested — rules-of-engagement for the blockade posture,
+#   training-cycle gap, or deliberate standby to avoid false-target
+#   engagements near civilian air traffic). Had it been in auto, a
+#   low-RCS sea-skimmer at <10 km would have been within envelope
+#   but at the edge of reaction-time margin. Model neutral — the
+#   scenario YAML applies calibration to reflect the operational
+#   alert-posture gap rather than encoding "Barak is broken."
+#
+# Sources:
+#   Tier 1: IAI / Rafael manufacturer datasheets (public release)
+#   Tier 1: ONI surface-warfare assessments referencing Barak-1
+#   Tier 2: USNI Proceedings, "The Hanit Hit" (SAM envelope context)
+#   Tier 3: Jane's Land-Based Air Defence — Barak entry
+#   Tier 3: Naval-Technology.com — Sa'ar 5 weapons fit
+
+weapon_id: barak1_sam
+display_name: "Barak-1 VLS SAM"
+category: MISSILE_LAUNCHER
+caliber_mm: 170.0
+muzzle_velocity_mps: 0.0
+max_range_m: 12000.0
+min_range_m: 500.0
+rate_of_fire_rpm: 12.0  # VLS cycle (3 s between launches within block)
+burst_size: 1
+base_accuracy_mrad: 0.0
+cep_m: 3.0  # CLOS terminal with ship FCR
+min_engagement_altitude_m: 5.0  # can engage sea-skimmers down to ~5 m
+max_engagement_altitude_m: 5500.0
+guidance: COMMAND  # CLOS via ship fire-control radar
+magazine_capacity: 32  # 2x 16-cell VLS blocks
+reload_time_s: 3.0
+compatible_ammo:
+  - barak1_warhead
+weight_kg: 98.0  # per missile (launch mass)
+reliability: 0.84
+barrel_life_rounds: 0
+requires_deployed: false
+traverse_deg: 360.0  # VLS omnidirectional
+elevation_min_deg: 0.0
+elevation_max_deg: 90.0
+# Dual-target: aerial threats (aircraft, helicopters) and sea-skimming
+# anti-ship missiles (point-defense primary role). Not effective
+# against surface-ship targets.
+target_domains:
+  - AERIAL
+  - NAVAL

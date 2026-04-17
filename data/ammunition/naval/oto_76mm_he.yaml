@@ -1,0 +1,30 @@
+# 76mm/62 HE-PFF Round (Oto Melara baseline HE)
+#
+# Standard high-explosive round for the Oto Melara 76mm/62 naval gun.
+# HE-PFF (High-Explosive Pre-Fragmented) design: ~6.3 kg total round
+# mass, ~0.75–1.0 kg explosive filler, pre-scored fragmentation
+# matrix for uniform lethality against soft targets and aircraft.
+# Baseline round (no proximity fuze for AA, no guidance) — engine
+# treats this as the standard surface/shore bombardment round fired
+# by INS Hanit's forward 76mm mount during normal patrol gunnery.
+#
+# Sources:
+#   Tier 3: Oto Melara / Leonardo ammunition datasheet
+#   Tier 3: Jane's Naval Weapon Systems — 76mm ammunition entry
+#   Tier 3: NavWeaps.com — Italy 76 mm ammunition table
+
+ammo_id: oto_76mm_he
+display_name: "76mm/62 HE-PFF Round"
+ammo_type: HE
+mass_kg: 6.3  # complete round mass
+diameter_mm: 76.0
+drag_coefficient: 0.30
+penetration_mm_rha: 0.0
+penetration_reference_range_m: 0.0
+blast_radius_m: 4.0
+fragmentation_radius_m: 12.0
+explosive_fill_kg: 0.85
+guidance: NONE
+propulsion: none
+max_speed_mps: 915.0
+unit_cost_factor: 1.2

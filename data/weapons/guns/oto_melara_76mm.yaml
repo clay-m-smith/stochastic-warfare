@@ -1,0 +1,69 @@
+# Oto Melara 76mm/62 Super Rapid Naval Gun
+#
+# Ubiquitous Western light-corvette / frigate main gun. Single-barrel
+# automatic dual-purpose (DP) gun capable of surface, shore-bombardment
+# and anti-aircraft / ASM terminal defense. The "Super Rapid" variant
+# (introduced 1988) increases rate of fire from the baseline
+# "Compact" 85 rpm to 120 rpm, making it effective against
+# sea-skimming anti-ship missiles as a last-layer hard-kill system
+# when coupled with guided/programmable ammo (DART, Vulcano).
+#
+# Platform employment:
+#   - INS Hanit (Sa'ar 5) — 1 mount forward
+#   - Many NATO frigates/corvettes (FREMM, Ambassador, Sa'ar 5/6,
+#     Turkish MILGEM, etc.)
+#
+# Performance:
+#   Caliber: 76 mm (3 inch), 62 calibers (L/62)
+#   Barrel length: ~4.72 m
+#   Muzzle velocity: ~915 m/s (HE-PFF), up to 1,200 m/s (DART)
+#   Rate of fire: 120 rpm (Super Rapid) — 85 rpm (Compact)
+#   Max range (surface, HE-PFF): ~16 km
+#   Max range (AA, conventional HE): ~12 km
+#   Magazine: 80 ready rounds in automatic drum + reloads
+#   Training: 360° continuous; elevation -15° to +85°
+#
+# Ammo types (not all modeled): HE-PFF (proximity-fuzed HE),
+# MOM (multi-role OTO munition), SAPOMER (AP), DART (guided sub-
+# caliber for ASM defense), Vulcano (guided long-range up to 40 km).
+# This YAML lists the baseline HE round (oto_76mm_he).
+#
+# Sources:
+#   Tier 1: Oto Melara / Leonardo product datasheet (manufacturer,
+#           Tier 3 effectively, but includes authoritative specs)
+#   Tier 2: USNI Proceedings, light-combatant armament analyses
+#   Tier 3: Jane's Naval Weapon Systems — "OTO Melara 76/62"
+#   Tier 3: NavWeaps.com — "Italy 76 mm / 62 Compact / Super Rapido"
+
+weapon_id: oto_melara_76mm
+display_name: "Oto Melara 76mm/62 Super Rapid"
+category: NAVAL_GUN
+caliber_mm: 76.0
+muzzle_velocity_mps: 915.0
+max_range_m: 16000.0  # effective surface bombardment range
+effective_range_m: 12000.0  # typical AA / surface engagement
+min_range_m: 300.0
+rate_of_fire_rpm: 120.0  # Super Rapid variant
+burst_size: 1
+base_accuracy_mrad: 0.4
+cep_m: 35.0
+min_engagement_altitude_m: 0.0
+max_engagement_altitude_m: 5500.0  # AA envelope (conventional HE)
+guidance: NONE
+magazine_capacity: 80  # ready rounds in automatic drum
+reload_time_s: 0.5  # per round through autoloader
+compatible_ammo:
+  - oto_76mm_he
+weight_kg: 7500.0  # complete mount + turret (Super Rapid variant)
+reliability: 0.91
+barrel_life_rounds: 5000
+requires_deployed: false
+traverse_deg: 360.0
+elevation_min_deg: -15.0
+elevation_max_deg: 85.0
+# Dual-purpose: surface, shore bombardment, and close-in AA (including
+# terminal ASM defense with programmable ammo). Full tri-domain.
+target_domains:
+  - NAVAL
+  - GROUND
+  - AERIAL

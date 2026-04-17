@@ -1,0 +1,109 @@
+# Merkava Mk III Baz — IDF Main Battle Tank (Second Lebanon War, 2006)
+#
+# Merkava Mk III "Baz" (hebrew for "Falcon") — digital fire control
+# upgrade of the base Mk III (introduced 1989, Baz upgrade rolled out
+# from the mid-1990s). Served alongside the newer Mk IV during the
+# Second Lebanon War (2006) and the Battle of Bint Jbeil. Older
+# reservist-manned battalions of the 401st Armored Brigade and
+# northern-command regional armor used predominantly Mk III Baz hulls;
+# Mk IV distribution skewed to active-duty heavy brigades.
+#
+# Distinguishing Mk III Baz features (vs Mk IV):
+#   - Same MG253 120mm smoothbore main gun (mapped under "M256 120mm
+#     Smoothbore" alias for ammo compatibility).
+#   - El-Op Gill fire control (earlier digital generation; 2nd-gen FLIR
+#     vs the Mk IV's 3rd-gen).
+#   - Modular composite armor — thinner than Mk IV; frontal ~700-800
+#     mm RHA-eq vs HEAT (no dedicated reactive side packs standard).
+#   - AVDS-1790-9AR turbocharged diesel, 1200 hp (vs 1500 hp on Mk IV).
+#   - Amcoram LWS-2 Laser Warning Receiver (retrofitted in Baz
+#     standard).
+#   - FN MAG 7.62mm coaxial ("M240 7.62mm Coaxial" alias).
+#   - 12.7mm M2HB roof MG and Soltam 60mm internal mortar (common
+#     with Mk IV).
+#   - Same 4-man crew (commander, gunner, driver, loader) and rear
+#     dismount compartment.
+#
+# Sources:
+#   - Matthews, Matt M. "We Were Caught Unprepared: The 2006 Hezbollah-
+#     Israeli War" (CSI Long War Series Occasional Paper 26, 2008,
+#     Tier 1) — reservist-heavy Mk III Baz presence in 2006 campaign.
+#   - Cordesman, Anthony H. "Preliminary 'Lessons' of the Israeli-
+#     Hezbollah War" (CSIS, September 2006, Tier 1) — armor mix.
+#   - Jane's Armour and Artillery 2005-2006, Merkava Mk III Baz entry
+#     (Tier 2) — armor spec, Gill FCS, powerpack.
+#   - IDF Official Site / Israel MOD public factsheets, Merkava Mk 3
+#     (Tier 1) — crew, speed, armament.
+
+unit_type: idf_merkava_mk3
+domain: ground
+display_name: "Merkava Mk III Baz"
+ground_type: ARMOR
+max_speed: 18.0  # m/s (~64 km/h road)
+training_level: 0.80
+armor_front: 750.0  # mm RHA-eq vs HEAT (modular composite, mid-spec Baz)
+armor_side: 280.0   # mm RHA-eq (no reactive pack by default)
+armor_type: COMPOSITE
+crew:
+  - role: COMMANDER
+    count: 1
+    skill: TRAINED
+  - role: GUNNER
+    count: 1
+    skill: TRAINED
+  - role: DRIVER
+    count: 1
+    skill: TRAINED
+  - role: GENERIC
+    count: 1  # loader
+    skill: TRAINED
+equipment:
+  - name: "M256 120mm Smoothbore"
+    category: WEAPON
+    weight_kg: 1800.0
+    reliability: 0.94
+  - name: "M240 7.62mm Coaxial"
+    category: WEAPON
+    weight_kg: 11.8
+    reliability: 0.94
+  - name: "M2 .50 Cal"
+    category: WEAPON
+    weight_kg: 38.0
+    reliability: 0.92
+  - name: "Soltam 60mm Internal Mortar"
+    category: WEAPON
+    weight_kg: 42.0
+    reliability: 0.90
+  - name: "El-Op Gill Fire Control"
+    category: SENSOR
+    weight_kg: 70.0
+    reliability: 0.91
+  - name: "Commander's Thermal Viewer"
+    category: SENSOR
+    weight_kg: 55.0
+    reliability: 0.90
+  - name: "Eyesafe Laser Rangefinder"
+    category: SENSOR
+    weight_kg: 8.0
+    reliability: 0.94
+  - name: "Amcoram LWS-2 Laser Warning Receiver"
+    category: SENSOR
+    weight_kg: 6.0
+    reliability: 0.92
+  - name: "IDF Tactical Net"
+    category: COMMUNICATION
+    weight_kg: 16.0
+    reliability: 0.90
+  - name: "AVDS-1790-9AR Turbocharged Diesel"
+    category: PROPULSION
+    weight_kg: 1400.0
+    reliability: 0.88
+    temperature_range: [-30.0, 55.0]
+  - name: "Modular Composite Armor Array"
+    category: PROTECTION
+    weight_kg: 5800.0
+    reliability: 0.99
+  - name: "Rear Compartment Dismount Capacity"
+    category: UTILITY
+    weight_kg: 50.0
+    reliability: 1.00

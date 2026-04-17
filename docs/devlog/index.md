@@ -122,7 +122,7 @@ Rolling record of implementation decisions, changes, and lessons learned across 
 | 99 | Debecka Pass (2003) | **Complete** | [phase-99.md](phase-99.md) |
 | 100 | Khafji (1991) | **Complete** | [phase-100.md](phase-100.md) |
 | 101 | Fallujah Phase Line Fran (2004) | **Complete** | [phase-101.md](phase-101.md) |
-| 102 | Bint Jbeil + INS Hanit Vignette + Block 11 Validation (2006) | **Pending** | — |
+| 102 | Bint Jbeil + INS Hanit Vignette + Block 11 Validation (2006) | **Complete** | [phase-102.md](phase-102.md) |
 
 ## Post-MVP Refinement Index
 

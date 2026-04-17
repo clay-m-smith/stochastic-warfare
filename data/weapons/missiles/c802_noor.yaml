@@ -1,0 +1,71 @@
+# C-802 Noor Anti-Ship Cruise Missile (Iranian YJ-83 variant)
+#
+# Chinese-origin YJ-83 / C-802A / CSS-N-8 Saccade family; Iranian
+# licensed-production variant designated "Noor". Sea-skimming
+# subsonic ASCM with inertial + radio-altimeter mid-course and
+# active-radar terminal seeker. Replaced the earlier CSS-N-4 Sardine
+# (C-802 baseline) with improved turbojet range, reduced RCS, and
+# harder-to-jam J-band active radar seeker.
+#
+# Performance (open-source, Iranian production variant):
+#   Length ~6.8 m, body diameter 360 mm, wingspan 1.22 m folded
+#   Launch mass ~715 kg (including booster)
+#   Warhead: 165 kg semi-armor-piercing HE
+#   Range: ~120 km (Noor variant; some sources report 170 km for
+#     later Ghader development — use 120 km for C-802 Noor)
+#   Cruise altitude: 5–7 m ASL (sea-skimming)
+#   Cruise speed: ~0.85 Mach (~290 m/s)
+#   Terminal speed: ~0.92 Mach (~310 m/s, subsonic throughout)
+#   Guidance: INS + radio altimeter mid-course, active radar
+#     terminal (~20 km acquisition)
+#   Propulsion: solid booster + turbojet sustainer
+#
+# Engagement — 14 July 2006:
+#   2x Noor fired from Beirut shore TEL. First missile strikes INS
+#   Hanit aft crane/flight deck (4 KIA); hit above the waterline did
+#   not cause catastrophic hull damage. Second missile over-flies
+#   Hanit and strikes Cambodian merchantman "Moonlight" ~60 km
+#   beyond, demonstrating Noor's range + homing logic selecting the
+#   largest available radar return after seeker activation.
+#
+# Sources:
+#   Tier 1: ONI "Iran's Anti-Ship Capabilities" (2009)
+#   Tier 1: CNA "Anti-Ship Missile Threat to Surface Combatants"
+#   Tier 2: USNI Proceedings, "The Hanit Hit"
+#   Tier 2: RAND Corporation reports on Iranian missile development
+#   Tier 3: Jane's Weapons: Naval — YJ-83 / C-802 entry
+#   Tier 3: Global Security — C-802 Noor entry
+
+weapon_id: c802_noor
+display_name: "C-802 Noor (YJ-83 variant)"
+category: MISSILE_LAUNCHER
+caliber_mm: 360.0  # body diameter
+muzzle_velocity_mps: 290.0  # cruise speed (turbojet sustainer)
+max_range_m: 120000.0
+min_range_m: 5000.0
+rate_of_fire_rpm: 0.5  # salvo launch interval (~2 min between rails)
+burst_size: 1
+base_accuracy_mrad: 0.0
+cep_m: 8.0  # active-radar terminal on ship-sized target
+min_engagement_altitude_m: 0.0
+max_engagement_altitude_m: 0.0  # N/A — sea-skimming AShM
+guidance: COMBINED  # INS + radar-altimeter + active-radar terminal
+magazine_capacity: 2  # per TEL rail configuration
+reload_time_s: 300.0  # between launches from same rail (not operationally
+                     # reloaded in a single engagement)
+compatible_ammo:
+  - c802_noor_warhead
+weight_kg: 715.0  # launch mass including booster
+reliability: 0.82
+barrel_life_rounds: 0
+requires_deployed: true  # TEL must erect rails before launch
+traverse_deg: 45.0  # TEL rails slew ~±22.5° before launch; target
+                    # bearing commanded from coastal surveillance radar
+elevation_min_deg: 10.0
+elevation_max_deg: 30.0
+# Dual-capable target set: naval surface primary; Noor can also be
+# employed against large shore targets (coastal infrastructure, docked
+# ships). Not used against aerial or submerged targets.
+target_domains:
+  - NAVAL
+  - GROUND

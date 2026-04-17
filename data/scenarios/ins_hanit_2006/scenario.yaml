@@ -1,0 +1,171 @@
+# INS Hanit Missile Strike — 14 July 2006
+#
+# Naval vignette scenario — Hezbollah C-802 Noor anti-ship cruise
+# missile attack on Israeli Navy Sa'ar 5 corvette INS Hanit (hull 503)
+# on blockade station ~16 km off Beirut coast during the 2006 Lebanon
+# War.
+#
+# Engagement summary:
+# - 14 Jul 2006 evening, ~2030L
+# - Two C-802 "Noor" (Iranian YJ-83 variant) missiles launched from
+#   truck-mounted TEL on Beirut beach
+# - First missile hit INS Hanit aft (crane/helipad area); 4 IDF Navy
+#   sailors KIA, ship damaged but returned to port under own power
+# - Second missile continued past Hanit and struck Cambodian-flag
+#   merchantman "Moonlight" ~60 km offshore; ship sunk, crew of 12 KIA
+# - Hanit defensive suite reportedly "degraded" — ONI reports describe
+#   Barak-1 and Phalanx CIWS systems as "off" or "in standby mode" due
+#   to crew training gap or SOP for blockade posture (contested —
+#   model as reduced posture without claiming specific cause)
+#
+# Key dynamic: sea-skimming ASCM defeating reduced-alert naval
+# defensive posture. The engagement is a textbook case of why PD +
+# CIWS must be manned and ready at all times in a permissive threat
+# environment — the Phalanx was physically mounted but not activated.
+#
+# Political sensitivity guardrails:
+# - Vignette framing — document the missile-vs-ship engagement
+#   mechanics, not broader strategic context
+# - Source discipline — cite ONI + IDF Navy + Janes only
+#
+# Sources:
+# - ONI, "Iranian Naval Capabilities" reports 2006-2009 (Tier 1)
+# - IDF Navy official incident statements (Tier 1)
+# - Raska & Bitzinger, "Iranian Missile and Space Program," RSIS
+#   working paper 2010 (Tier 2)
+# - Janes Fighting Ships, Saar 5 Eilat-class entry (Tier 2)
+# - USNI Proceedings, "Hanit Missile Strike Lessons," 2007 (Tier 2)
+
+name: "INS Hanit 2006 — C-802 Noor Strike on Sa'ar 5 Corvette"
+date: "2006-07-14T20:30:00+03:00"
+duration_hours: 2
+tick_duration_seconds: 5.0
+
+tick_resolution:
+  strategic_s: 5        # single tactical engagement — no resolution switching
+  operational_s: 5
+  tactical_s: 5
+
+# ~33.90°N, 35.45°E — ~16 km off Beirut coast, eastern Mediterranean
+latitude: 33.90
+longitude: 35.45
+
+weather_conditions:
+  visibility_m: 12000
+  wind_speed_mps: 4.0
+  wind_direction_deg: 225  # southwest summer Mediterranean
+  temperature_c: 26.0
+  precipitation: none
+  cloud_cover: 0.10
+  humidity: 0.65
+
+terrain:
+  # Open sea — Sa'ar 5 on blockade station 16 km off Beirut.
+  # Hezbollah coastal TEL positioned on shore (Beirut beach).
+  # Map is 30km x 20km to capture launch + flight profile + target.
+  width_m: 30000
+  height_m: 20000
+  cell_size_m: 100.0
+  base_elevation_m: 0.0
+  terrain_type: open_ocean
+
+sides:
+  - side: blue
+    units:
+      - unit_type: idf_saar5
+        count: 1
+        overrides:
+          display_name: "INS Hanit (503)"
+          training_level: 0.55   # reduced alert — historical degraded posture
+    experience_level: 0.55
+    morale_initial: STEADY
+    commander_profile: defensive_posture
+    doctrine_template: naval_patrol
+
+  - side: red
+    units:
+      - unit_type: hezbollah_coastal_tel
+        count: 2
+        overrides:
+          training_level: 0.65
+    experience_level: 0.55
+    morale_initial: STEADY
+    commander_profile: opportunistic_strike
+    doctrine_template: coastal_missile_attack
+
+objectives:
+  - objective_id: hanit_station
+    position: [15000.0, 8000.0]
+    radius_m: 500.0
+    type: key_terrain
+  - objective_id: beirut_beach
+    position: [15000.0, 19000.0]
+    radius_m: 200.0
+    type: territory
+
+victory_conditions:
+  # Engagement-level vignette. Red "wins" the tactical engagement if
+  # C-802 hits Hanit (historical: yes, ship damaged but survived).
+  # Blue "wins" (survives) if Hanit not destroyed.
+  # Historical outcome: ship hit but not destroyed — model as contested.
+  - type: force_destroyed
+    side: red
+    params:
+      threshold: 0.3
+      target_side: blue
+  - type: time_expired
+    side: blue
+    params:
+      max_duration_s: 7200
+
+calibration_overrides:
+  enable_obscurants: false
+  enable_thermal_crossover: false
+  enable_nvg_detection: false
+  enable_fuel_consumption: false
+  enable_ammo_gate: true
+  enable_air_routing: false
+  enable_missile_routing: true
+
+  # Degraded-ECM posture — Hanit Barak-1 + Phalanx not in active
+  # engagement state.  Model via reduced hit_probability_modifier for
+  # blue (defensive effectiveness degraded) — not a perfect mapping
+  # but captures the dynamic.
+  hit_probability_modifier: 0.9
+  target_size_modifier: 1.0
+  thermal_contrast: 1.0
+
+  # Morale — neither side rout-prone in this vignette (2-hour engagement).
+  morale_degrade_rate_modifier: 0.3
+  morale_force_ratio_weight: 0.10
+  morale_base_degrade_rate: 0.005
+  morale_casualty_weight: 0.50
+  morale_check_interval: 30
+
+  rout_cascade_radius_m: 100.0
+  rout_cascade_base_chance: 0.05
+  rout_cascade_shaken_susceptibility: 0.2
+
+  destruction_threshold: 0.5
+  disable_threshold: 0.25
+
+  blue_force_ratio_modifier: 1.0
+  red_force_ratio_modifier: 1.0
+  blue_cohesion: 0.70
+  red_cohesion: 0.65
+
+  blue_start_x: 15000.0
+  blue_start_y: 8000.0     # Hanit on station, 16km off coast
+  blue_formation_spacing_m: 100.0
+  red_start_x: 15000.0
+  red_start_y: 19000.0     # coastal TEL on Beirut beach
+  red_formation_spacing_m: 500.0
+
+  weapon_assignments:
+    # INS Hanit loadout
+    "Barak-1 VLS SAM": barak1_sam
+    "Harpoon Block 1C ASCM": rgm84_harpoon
+    "Oto Melara 76mm/62 Super Rapid": oto_melara_76mm
+    "Mk 15 Phalanx CIWS": mk15_phalanx
+    # Coastal TEL
+    "C-802 Noor Launcher": c802_noor

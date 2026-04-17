@@ -1,0 +1,243 @@
+# Battle of Bint Jbeil — 24 July – 3 August 2006
+#
+# IDF Northern Command (Galei Tzahal sector) vs Hezbollah defenders in
+# the stone-built hilltop town of Bint Jbeil, southern Lebanon
+# (~900 m elevation, 4 km north of Israel-Lebanon border). Part of the
+# broader 2006 Lebanon War (Second Lebanon War / July War).
+#
+# Forces:
+# - Blue: IDF Division 91 Golani Brigade + 35th Paratroopers + Merkava
+#   Mk III/Mk IV from 7th and 401st Armored Brigades, Egoz + Maglan SOF,
+#   M109 and M270 MLRS fires, F-16I + AH-64 Saraph + AH-1 Tzefa CAS.
+# - Red: Hezbollah "Nasr Force" (Southern Lebanon command) — local
+#   defenders + IRGC-trained SF cadre + Kornet ATGM tank-hunter teams
+#   + mortar cells. ~60-100 local + 40 SF + 5-8 ATGM teams (IDF est).
+#
+# Historical outcome (Matthews CSI 2008, Harel & Issacharoff 2008,
+# Cordesman CSIS 2006, Biddle & Friedman USAWC 2008):
+# - CONTESTED. IDF held ground but did not decisively clear town
+#   within battle window. Hezbollah ATGM ambushes (26 Jul Goliath
+#   ambush on Golani Recon) were the defining tactical narrative.
+# - Duration ~10 days intermittent combat; main thrust 26-28 Jul
+# - IDF: 8 KIA in 26 Jul ambush alone; ~15 KIA + ~50 WIA overall
+# - Hezbollah: ~30-40 KIA in sector (IDF claim, disputed)
+# - Merkava Mk IV: 2-3 hits in Bint Jbeil sector (first serious
+#   Mk IV combat-loss record; Trophy APS not yet fielded in 2006)
+# - Key dynamic: Kornet 9M133 + RPG-29 tandem-HEAT defeat Merkava
+#   side/rear armor from prepared ambushes in stone buildings.
+#
+# Political sensitivity guardrails (per Block 11 brainstorm):
+# - Tactical framing only
+# - Source discipline — all data cited to Tier 1-2 sources
+# - Neutral language — "contested" modeled as DRAW_SCENARIO
+#
+# Sources:
+# - Matthews, "We Were Caught Unprepared: The 2006 Hezbollah-Israeli
+#   War," Combat Studies Institute 2008 (Tier 1)
+# - Harel & Issacharoff, "34 Days: Israel, Hezbollah, and the War in
+#   Lebanon," Palgrave Macmillan 2008 (Tier 2)
+# - Cordesman, "Preliminary Lessons of the Israeli-Hezbollah War,"
+#   CSIS 2006 (Tier 1)
+# - Biddle & Friedman, "The 2006 Lebanon Campaign and the Future of
+#   Warfare," US Army War College 2008 (Tier 1)
+# - Blanford, "Warriors of God," Random House 2011 (Tier 2)
+
+name: "Bint Jbeil 2006 — IDF Golani/Paratrooper/Armor vs Hezbollah Tank Hunters"
+date: "2006-07-24T16:00:00+03:00"
+duration_hours: 240
+tick_duration_seconds: 5.0
+
+tick_resolution:
+  strategic_s: 1800
+  operational_s: 300
+  tactical_s: 5
+
+latitude: 33.12
+longitude: 35.43
+
+weather_conditions:
+  visibility_m: 9000
+  wind_speed_mps: 3.5
+  wind_direction_deg: 270
+  temperature_c: 28.0
+  precipitation: none
+  cloud_cover: 0.15
+  humidity: 0.50
+
+terrain:
+  width_m: 9000
+  height_m: 7000
+  cell_size_m: 50.0
+  base_elevation_m: 850.0
+  terrain_type: hilly_defense
+
+sides:
+  - side: blue
+    units:
+      - unit_type: idf_golani_squad
+        count: 36
+        overrides:
+          training_level: 0.80
+      - unit_type: idf_paratrooper_squad
+        count: 24
+        overrides:
+          training_level: 0.82
+      - unit_type: idf_egoz_team
+        count: 8
+        overrides:
+          training_level: 0.92
+      - unit_type: idf_merkava_mk4
+        count: 14
+        overrides:
+          training_level: 0.85
+      - unit_type: idf_merkava_mk3
+        count: 12
+        overrides:
+          training_level: 0.80
+      - unit_type: m109a6
+        count: 8
+      - unit_type: f16c
+        count: 4
+        overrides:
+          display_name: "F-16I Sufa"
+      - unit_type: ah64d
+        count: 4
+        overrides:
+          display_name: "AH-64A Saraph"
+      - unit_type: ah1w
+        count: 4
+        overrides:
+          display_name: "AH-1F/S Tzefa"
+      - unit_type: idf_golani_squad
+        count: 36
+        overrides:
+          training_level: 0.65
+    experience_level: 0.80
+    morale_initial: STEADY
+    commander_profile: aggressive_armor
+    doctrine_template: combined_arms_offense
+
+  - side: red
+    units:
+      - unit_type: hezbollah_local_fighter
+        count: 55
+        overrides:
+          training_level: 0.45
+      - unit_type: hezbollah_special_forces
+        count: 30
+        overrides:
+          training_level: 0.70
+      - unit_type: hezbollah_atgm_team
+        count: 8
+        overrides:
+          training_level: 0.65
+      - unit_type: hezbollah_mortar_cell
+        count: 6
+        overrides:
+          training_level: 0.50
+    experience_level: 0.55
+    morale_initial: STEADY
+    commander_profile: attritional_defender
+    doctrine_template: attritional_defense
+
+objectives:
+  - objective_id: bint_jbeil_center
+    position: [4500.0, 4500.0]
+    radius_m: 400.0
+    type: key_terrain
+  - objective_id: maroun_al_ras
+    position: [3500.0, 2500.0]
+    radius_m: 300.0
+    type: key_terrain
+  - objective_id: saluki_valley
+    position: [6000.0, 3500.0]
+    radius_m: 500.0
+    type: territory
+
+victory_conditions:
+  - type: force_destroyed
+    side: blue
+    params:
+      threshold: 0.7
+      target_side: red
+  - type: morale_collapsed
+    side: blue
+    params:
+      target_side: red
+  - type: time_expired
+    side: blue
+    params:
+      max_duration_s: 864000
+
+calibration_overrides:
+  enable_obscurants: true
+  enable_thermal_crossover: true
+  enable_nvg_detection: true
+  enable_fuel_consumption: true
+  enable_ammo_gate: true
+  enable_air_routing: true
+  enable_missile_routing: true
+  enable_unconventional_warfare: true
+
+  hit_probability_modifier: 0.80
+  target_size_modifier: 0.75
+  thermal_contrast: 1.1
+
+  morale_degrade_rate_modifier: 0.5
+  morale_force_ratio_weight: 0.18
+  morale_base_degrade_rate: 0.012
+  morale_casualty_weight: 0.75
+  morale_check_interval: 15
+
+  rout_cascade_radius_m: 150.0
+  rout_cascade_base_chance: 0.10
+  rout_cascade_shaken_susceptibility: 0.35
+
+  destruction_threshold: 0.5
+  disable_threshold: 0.30
+
+  blue_force_ratio_modifier: 1.2
+  red_force_ratio_modifier: 0.9
+  blue_cohesion: 0.75
+  red_cohesion: 0.65
+
+  blue_start_x: 4500.0
+  blue_start_y: 1500.0
+  blue_formation_spacing_m: 80.0
+  red_start_x: 4500.0
+  red_start_y: 4500.0
+  red_formation_spacing_m: 150.0
+
+  weapon_assignments:
+    "Tavor TAR-21 Rifle": m4_556mm
+    "Tavor TAR-21 CTAR": m4_556mm
+    "Suppressed M4A1 Rifle": m4_556mm
+    "M4A1 SOPMOD": m4_556mm
+    "IMI Negev 5.56mm LMG": m240_762mm
+    "M240 7.62mm": m240_762mm
+    "M240 7.62mm Coaxial": m240_762mm
+    "M240B GPMG": m240_762mm
+    "M203 40mm Grenade Launcher": m4_556mm
+    "M2 .50 Cal": m2hb_50cal
+    "MATADOR 90mm Anti-Structure Munition": rpg7
+    "FGM-148 Javelin CLU": javelin_clm
+    "Javelin Missile Round": javelin_clm
+    "M256 120mm Smoothbore": m256_120mm
+    "Soltam 60mm Internal Mortar": m252_81mm_mortar
+    "M284 155mm Howitzer": m284_155mm
+    "M61A1 Vulcan 20mm": m61a1_vulcan
+    "AGM-114 Hellfire Launcher": agm114_hellfire
+    "M197 20mm Rotary Cannon": m197_20mm
+    "M260 2.75-inch Rocket Pod": bomb_rack_generic
+    "Wing/Fuselage Ordnance Stations": bomb_rack_generic
+    "AIM-9L Sidewinder": aim9x_sidewinder
+    "AIM-9M Sidewinder": aim9x_sidewinder
+    "AKM": ak47
+    "AK-74": ak47
+    "SVD Dragunov": ak47
+    "PKM GPMG": m240_762mm
+    "RPG-7": rpg7
+    "RPG-29": rpg29_vampir
+    "Iraqi 82mm 2B14 Mortar": m252_81mm_mortar
+    "9P163-2 Kornet Launcher": kornet_9m133
+    "9M133 Missile": kornet_9m133

@@ -1,0 +1,127 @@
+# Merkava Mk IV — IDF Main Battle Tank (Second Lebanon War, 2006)
+#
+# First combat use of the Merkava Mk IV during the Second Lebanon War
+# (12 Jul – 14 Aug 2006), including the Battle of Bint Jbeil (24 Jul –
+# 3 Aug 2006). Employed by the 401st Armored Brigade and attached
+# to the Golani / 35th Paratrooper Brigade task forces. Notably the
+# Mk IV was fielded WITHOUT the Trophy active protection system — Trophy
+# did not achieve operational capability until 2009 (IDF Merkava-4M
+# standard). Hezbollah ATGM (AT-14 Kornet, AT-5 Konkurs, AT-3 Sagger)
+# teams scored dozens of mobility / mission kills during the campaign;
+# Israeli post-war reviews attribute most penetrations to Kornet tandem-
+# HEAT warheads against the side / rear aspect.
+#
+# Distinguishing Mk IV features modeled here:
+#   - MG253 120mm smoothbore main gun (Israeli Military Industries) —
+#     mapped under the "M256 120mm Smoothbore" alias for engine mapping
+#     compatibility with existing 120mm ammo (M829A3 KE, M830A1 HEAT,
+#     M908 HE-OR).
+#   - El-Op "Knight" Mark 4 fire control with 3rd-gen FLIR, hunter-
+#     killer engagement, and automatic target tracker.
+#   - Amcoram LWS-2 Laser Warning Receiver (passive RWR for laser
+#     designators / rangefinders — feeds TC for evasive maneuver).
+#   - Modular composite armor ("special armor" blocks bolted to hull /
+#     turret, swappable after damage) — frontal ~1000 mm RHA-eq vs
+#     HEAT; side arrays include reactive armor packs.
+#   - FN MAG 7.62mm coaxial (standard NATO round; mapped under
+#     "M240 7.62mm Coaxial" for compat).
+#   - 12.7mm M2HB roof machine gun (TC cupola).
+#   - 60mm internal breech-loading mortar (Soltam) — indirect support
+#     for infantry in defilade; limited rounds.
+#   - AVDS-1790-9AR turbocharged diesel, 1500 hp (vs 1200 hp on Mk III).
+#   - Engine forward (Merkava signature layout) — rear compartment
+#     can carry 4-10 dismounts or stretcher casualties; flagged here
+#     in equipment notes but not modeled as a separate transport slot.
+#
+# Sources:
+#   - Matthews, Matt M. "We Were Caught Unprepared: The 2006 Hezbollah-
+#     Israeli War" (CSI Long War Series Occasional Paper 26, 2008,
+#     Tier 1) — Merkava Mk IV first combat use, ATGM engagement losses,
+#     401st Armored Brigade Bint Jbeil employment.
+#   - Cordesman, Anthony H. "Preliminary 'Lessons' of the Israeli-
+#     Hezbollah War" (CSIS working draft, September 2006, Tier 1) —
+#     armor deployment and kill breakdown.
+#   - Harel, Amos and Avi Issacharoff. "34 Days: Israel, Hezbollah,
+#     and the War in Lebanon" (Palgrave Macmillan, 2008, Tier 1) —
+#     Merkava employment at Bint Jbeil and Wadi Saluki.
+#   - Jane's Armour and Artillery 2005-2006, Merkava Mk IV entry
+#     (Tier 2) — armor spec, sight suite, LWS, gun data.
+#   - IDF Official Site / Israel MOD public factsheets, Merkava Mk 4
+#     (Tier 1) — crew, speed, powerpack.
+
+unit_type: idf_merkava_mk4
+domain: ground
+display_name: "Merkava Mk IV"
+ground_type: ARMOR
+max_speed: 18.0  # m/s (~64 km/h road; governed)
+training_level: 0.85
+armor_front: 1000.0  # mm RHA-eq vs HEAT (modular composite array)
+armor_side: 450.0    # mm RHA-eq (with reactive side packs)
+armor_type: COMPOSITE
+crew:
+  - role: COMMANDER
+    count: 1
+    skill: EXPERIENCED
+  - role: GUNNER
+    count: 1
+    skill: TRAINED
+  - role: DRIVER
+    count: 1
+    skill: TRAINED
+  - role: GENERIC
+    count: 1  # loader
+    skill: TRAINED
+equipment:
+  - name: "M256 120mm Smoothbore"
+    category: WEAPON
+    weight_kg: 1800.0
+    reliability: 0.95
+  - name: "M240 7.62mm Coaxial"
+    category: WEAPON
+    weight_kg: 11.8
+    reliability: 0.94
+  - name: "M2 .50 Cal"
+    category: WEAPON
+    weight_kg: 38.0
+    reliability: 0.92
+  - name: "Soltam 60mm Internal Mortar"
+    category: WEAPON
+    weight_kg: 42.0
+    reliability: 0.90
+  - name: "El-Op Knight Mark 4 Fire Control"
+    category: SENSOR
+    weight_kg: 75.0
+    reliability: 0.93
+  - name: "Commander's Independent Thermal Viewer"
+    category: SENSOR
+    weight_kg: 60.0
+    reliability: 0.92
+  - name: "Eyesafe Laser Rangefinder"
+    category: SENSOR
+    weight_kg: 8.0
+    reliability: 0.95
+  - name: "Amcoram LWS-2 Laser Warning Receiver"
+    category: SENSOR
+    weight_kg: 6.0
+    reliability: 0.92
+  - name: "IDF Digital Tactical Net"
+    category: COMMUNICATION
+    weight_kg: 16.0
+    reliability: 0.91
+  - name: "AVDS-1790-9AR Turbocharged Diesel"
+    category: PROPULSION
+    weight_kg: 1400.0
+    reliability: 0.89
+    temperature_range: [-30.0, 55.0]
+  - name: "Modular Composite Armor Array"
+    category: PROTECTION
+    weight_kg: 7000.0
+    reliability: 0.99
+  - name: "Reactive Side Armor Packs"
+    category: PROTECTION
+    weight_kg: 1200.0
+    reliability: 0.98
+  - name: "Rear Compartment Dismount Capacity"
+    category: UTILITY
+    weight_kg: 50.0
+    reliability: 1.00

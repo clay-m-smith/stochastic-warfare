@@ -49,6 +49,7 @@ HISTORICAL_WINNERS: dict[str, str] = {
     "debecka_pass": "blue",
     "khafji": "blue",
     "fallujah_phase_line_fran": "blue",
+    "ins_hanit_2006": "blue",
     "bekaa_valley_1982": "blue",
     "golan_campaign": "blue",
     "golan_heights": "blue",
@@ -68,6 +69,7 @@ HISTORICAL_WINNERS: dict[str, str] = {
 
 # Scenarios expected to produce a draw
 DRAW_SCENARIOS: set[str] = {
+    "bint_jbeil_2006",
     "coin_campaign",
     "halabja_1988",
     "hybrid_gray_zone",

@@ -3,7 +3,7 @@
 ## Project Overview
 High-fidelity, high-resolution wargame simulator. Multi-scale (campaign → battlefield → battle → unit level) with stochastic/signal-processing-inspired models (Markov chains, Monte Carlo, Kalman filters, noise models, queueing theory). Headless Python engine first; matplotlib for validation; full UI deferred. Modern era (Cold War–present) as prototype. Maritime warfare fully integrated, not deferred.
 
-**Current status**: Phase 101 complete — Block 11 in progress. ~10,790 tests (~10,374 Python + 416 frontend vitest). 101 phases delivered across 11 blocks. Blocks 1–10 COMPLETE. Block 11 Phases 98–101 complete (prework + Debecka Pass + Khafji + Fallujah); Phase 102 pending (Bint Jbeil + INS Hanit).
+**Current status**: Phase 102 complete — Block 11 COMPLETE. ~10,805 tests (~10,389 Python + 416 frontend vitest). 102 phases delivered across 11 blocks. Blocks 1–11 ALL COMPLETE.
 
 ## Python & Package Management
 **Requires Python >=3.12** (pinned to 3.12.10 via `.python-version`).
@@ -158,9 +158,9 @@ All phase details are in `docs/devlog/` (one file per phase). Per-phase tables i
 | Block 8 | 68–82 | Consequence enforcement, C2 depth, perf optimization, missile/carrier ops, test coverage, CI/CD, accessibility | ~1,291 |
 | Block 9 | 83–91 | Profiling, spatial culling, LOD, Numba JIT, SoA data layer, per-side parallelism, benchmarking | ~279 |
 | Block 10 | 92–97 | UI depth: analytics endpoints, dashboard charts, map overlays, calibration editor, event filtering, data catalogs | ~120 |
-| Block 11 | 98–102 | Golden scenarios (Debecka, Khafji, Fallujah, Bint Jbeil) — historical modern-era engagements, each calibrated + regression-tested + UI walkthrough | TBD |
+| Block 11 | 98–102 | Golden scenarios (Debecka, Khafji, Fallujah, Bint Jbeil + INS Hanit) — historical modern-era engagements, each calibrated + regression-tested + UI walkthrough | ~66 |
 
-### Block 11 Detail (Current)
+### Block 11 Detail (COMPLETE)
 
 | Phase | Status | Focus |
 |-------|--------|-------|
@@ -168,4 +168,4 @@ All phase details are in `docs/devlog/` (one file per phase). Per-phase tables i
 | 99 | Complete | Debecka Pass (2003) — 12 new YAMLs (6 units + 3 weapons + 5 ammo), scenario YAML, 8 regression tests. **Engine fixes**: LIGHT_INFANTRY exempt from seeker FOV (Javelin fires), `"Ordnance Stations"` / `"CSRL Rotary Launcher"` mapped to bomb_rack_generic (CAS bombs emit EngagementEvents). 1 accepted limitation (Peshmerga squad granularity). |
 | 100 | Complete | Khafji (1991) — 37 new YAMLs (14 units + 13 weapons + 10 ammo), scenario YAML with hybrid tick resolution + full OOB (233 units), 7 regression tests. Engine fixes: 16"/50 cross-era availability + NAVAL_GUN target_domains override for shore bombardment. 5 accepted limitations (naval-gunfire EngagementEvent, Iraqi artillery unit, SA-7/Spirit 03, AGM-65, full-OOB performance). |
 | 101 | Complete | Fallujah Phase Line Fran (2004) — 29 new YAMLs (14 units + 7 weapons + 7 ammo + 1 HBIED device), 333-unit scenario (198 blue + 135 red at full Al-Fajr scale), **2 new scenario-level config fields** (`initial_ieds` + `scripted_events`) backed by real engine APIs (HBIED detonation, WP fire zone, unit teleport, casualty pulse). Engine fixes: `hbied` subtype (non-jammable), `INCENDIARY_WEAPON` ammo now forces fire_started for honest WP shake-and-bake semantics, `unconventional_engine` auto-created when initial_ieds non-empty. 13 tests (6 fast + 7 @slow). |
-| 102 | Pending | Bint Jbeil + INS Hanit (2006) — ATGM vs. MBT, naval missile; Block 11 validation |
+| 102 | Complete | Bint Jbeil + INS Hanit (2006) — 19 new YAMLs (11 units + 4 weapons + 4 ammo) via 3 parallel authoring agents. Two scenarios: Bint Jbeil (249 units, IDF Golani/Paratrooper/Armor vs Hezbollah, DRAW_SCENARIO) + INS Hanit vignette (3 units, Sa'ar 5 vs C-802 Noor, HISTORICAL_WINNERS.blue). 15 tests (9 fast + 6 @slow). **Zero engine fixes** — all new classes fit existing schemas (CORVETTE naval_type, NAVAL_GUN category, RADAR_ACTIVE guidance all existed). Block 11 COMPLETE. |
