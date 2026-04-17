@@ -92,6 +92,19 @@ terrain:
   base_elevation_m: 35.0
   terrain_type: hilly_defense
 
+# Phase 104b retrofit — doctrinal deployment. Coalition stages north of Phase
+# Line Henry, attacks south into urban core. Insurgents dispersed through city.
+# auto-flip-y: opposing box center is at lower y, so attack direction auto-
+# inverts offset_y_frac semantics (advance guard forward = toward enemy = -Y).
+deployment:
+  mode: doctrinal
+  blue_box: {x_min: 500,  y_min: 6400, x_max: 9500, y_max: 7800}
+  red_box:  {x_min: 500,  y_min: 1500, x_max: 9500, y_max: 6000}
+  blue_template: marine_urban_assault
+  red_template:  battalion_urban_defense
+  min_spacing_m: 50.0
+  min_side_separation_m: 400.0
+
 sides:
   # ── Blue: Coalition (RCT-1, RCT-7, TF 2-7 CAV) ───────────────────
   - side: blue

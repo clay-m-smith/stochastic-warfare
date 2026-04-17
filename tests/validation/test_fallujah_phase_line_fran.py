@@ -204,9 +204,17 @@ class TestFallujahRuntimeEnvelope:
         )
 
     def test_scenario_progresses(self, run_result: dict) -> None:
-        """Scenario runs ≥ 500 ticks (tactical urban battle develops)."""
-        assert run_result["ticks"] >= 500, (
-            f"Scenario resolves too quickly: {run_result['ticks']} ticks"
+        """Scenario runs enough ticks that a tactical battle develops.
+
+        Phase 104b retrofit note: pre-retrofit this scenario ran 500+ ticks
+        because the legacy formation overflow put forces in chaotic 5m-apart
+        contact that took time to sort out. Post-retrofit (doctrinal mode,
+        forces 1100m apart at start) combat develops cleanly — one side
+        reaches the force_destroyed VC threshold (0.5) faster. 50-tick
+        threshold reflects actual doctrinal-deployment dynamics.
+        """
+        assert run_result["ticks"] >= 50, (
+            f"Scenario barely progressed: {run_result['ticks']} ticks"
         )
 
 

@@ -71,6 +71,19 @@ terrain:
   base_elevation_m: 50.0
   terrain_type: flat_desert
 
+# Phase 104b retrofit — doctrinal deployment. Iraqi III Corps attacking south
+# from Kuwait border on three axes (coastal + western + OP-4). Coalition TF
+# Abu Bakr in brigade defense in the Saudi sector. 60km x 50km map
+# accommodates the 18km Missouri NGFS standoff + Iraqi approach depth.
+deployment:
+  mode: doctrinal
+  blue_box: {x_min: 10000, y_min: 3000,  x_max: 50000, y_max: 18000}
+  red_box:  {x_min: 10000, y_min: 28000, x_max: 50000, y_max: 48000}
+  blue_template: brigade_defense
+  red_template:  mechanized_thrust
+  min_spacing_m: 200.0
+  min_side_separation_m: 500.0
+
 sides:
   # ── Blue: Coalition defenders + carrier/land-based CAS + NGFS ─────
   - side: blue

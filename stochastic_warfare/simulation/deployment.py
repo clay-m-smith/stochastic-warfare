@@ -236,8 +236,18 @@ def deploy_units(
             else:
                 _deploy_legacy(auto, legacy_start_x, legacy_start_y, legacy_spacing_m)
             return
+        # Phase 104b: infer forward direction from opposing box position.
+        # Templates author offset_y_frac with "1 = forward / toward enemy".
+        # If opposing box is at lower y than this side's box, the scenario
+        # is attacking toward -Y and we flip offset_y_frac.
+        opposing_box = config.red_box if side == "blue" else config.blue_box
+        flip_y = False
+        if opposing_box is not None:
+            if opposing_box.center_y < box.center_y:
+                flip_y = True
         _deploy_doctrinal(
             auto, box, template, config.group_key, config.min_spacing_m,
+            flip_y=flip_y,
         )
         return
 
@@ -382,6 +392,7 @@ def _deploy_doctrinal(
     template: Any,
     group_key: GroupKey,
     min_spacing_m: float,
+    flip_y: bool = False,
 ) -> None:
     """Follow a formation template — echelons with offset_y_frac + group_type
     allocations within the box's frontage/depth.
@@ -428,10 +439,14 @@ def _deploy_doctrinal(
         ech_units_spec = ech.get("units", []) if isinstance(ech, dict) else getattr(ech, "units", [])
 
         # Derive echelon bounding box
+        # flip_y=True inverts offset_y_frac (attack toward -Y instead of +Y)
+        eff_off_y = (1.0 - off_y) if flip_y else off_y
         ech_cx = box.x_min + off_x * box.width_m
-        ech_cy = box.y_min + off_y * box.height_m
+        ech_cy = box.y_min + eff_off_y * box.height_m
         ech_half_w = (front_f * box.width_m) / 2.0
-        ech_half_h = min(50.0, 0.1 * box.height_m)  # thin band
+        # Phase 104b: scale echelon thickness with box size so large-map
+        # scenarios (Khafji 50km) don't pack a full echelon into a 100m band.
+        ech_half_h = max(50.0, 0.05 * box.height_m)
         sub_box = DeploymentBox(
             x_min=max(box.x_min, ech_cx - ech_half_w),
             y_min=max(box.y_min, ech_cy - ech_half_h),

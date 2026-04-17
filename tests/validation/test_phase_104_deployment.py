@@ -289,10 +289,10 @@ victory_conditions:
 
 
 class TestLegacyBackwardCompat:
-    """Existing scenarios without `deployment:` block keep working."""
+    """Scenarios without a `deployment:` block keep working as LEGACY."""
 
     @pytest.mark.parametrize("scenario", [
-        "khafji", "fallujah_phase_line_fran", "ins_hanit_2006",
+        "ins_hanit_2006",  # only golden scenario still on legacy post-104b
     ])
     def test_loads_with_legacy_default(self, scenario: str) -> None:
         loader = ScenarioLoader(DATA_DIR)
@@ -303,27 +303,73 @@ class TestLegacyBackwardCompat:
 
 
 # ---------------------------------------------------------------------------
-# Bint Jbeil retrofit: force_separation > 500m at tick 0
+# All golden scenarios: no OOB, tick-0 separation > 500m
 # ---------------------------------------------------------------------------
 
 
-class TestBintJbeilDoctrinalRetrofit:
-    """Bint Jbeil retrofit to doctrinal mode — the Phase 104 motivating case."""
+class TestAllGoldenScenarioDeployment:
+    """Phase 104b retrofit — every golden scenario must deploy cleanly:
 
-    def test_min_side_separation(self) -> None:
+    - zero out-of-bounds units (formation stays inside map)
+    - tick-0 minimum side separation >= 500m (no tick-0 TACTICAL trigger)
+
+    Prevents the class of bug that caused Bint Jbeil's 8-tick over-resolution
+    (Phase 102) from recurring in any Block 11 scenario.
+    """
+
+    GOLDEN_SCENARIOS = [
+        ("debecka_pass", DeploymentMode.BOUNDING_BOX),
+        ("khafji", DeploymentMode.DOCTRINAL),
+        ("fallujah_phase_line_fran", DeploymentMode.DOCTRINAL),
+        ("bint_jbeil_2006", DeploymentMode.DOCTRINAL),
+        ("ins_hanit_2006", DeploymentMode.LEGACY),
+    ]
+
+    @pytest.mark.parametrize("scenario,expected_mode", GOLDEN_SCENARIOS)
+    def test_expected_mode(self, scenario: str, expected_mode: DeploymentMode) -> None:
         loader = ScenarioLoader(DATA_DIR)
         ctx = loader.load(
-            DATA_DIR / "scenarios" / "bint_jbeil_2006" / "scenario.yaml",
-            seed=42,
+            DATA_DIR / "scenarios" / scenario / "scenario.yaml", seed=42,
         )
-        assert ctx.config.deployment.mode == DeploymentMode.DOCTRINAL
+        assert ctx.config.deployment.mode == expected_mode, (
+            f"{scenario}: expected mode={expected_mode.value}, got {ctx.config.deployment.mode.value}"
+        )
+
+    @pytest.mark.parametrize("scenario,_mode", GOLDEN_SCENARIOS)
+    def test_no_units_out_of_map_bounds(self, scenario: str, _mode: DeploymentMode) -> None:
+        loader = ScenarioLoader(DATA_DIR)
+        ctx = loader.load(
+            DATA_DIR / "scenarios" / scenario / "scenario.yaml", seed=42,
+        )
+        w = ctx.config.terrain.width_m
+        h = ctx.config.terrain.height_m
+        oob = [
+            u for units in ctx.units_by_side.values() for u in units
+            if not (0 <= u.position.easting <= w and 0 <= u.position.northing <= h)
+        ]
+        assert len(oob) == 0, (
+            f"{scenario}: {len(oob)} units outside map {w}x{h} — "
+            f"formation overflow bug"
+        )
+
+    @pytest.mark.parametrize("scenario,_mode", GOLDEN_SCENARIOS)
+    def test_min_side_separation(self, scenario: str, _mode: DeploymentMode) -> None:
+        loader = ScenarioLoader(DATA_DIR)
+        ctx = loader.load(
+            DATA_DIR / "scenarios" / scenario / "scenario.yaml", seed=42,
+        )
+        sides = [s for s in ctx.units_by_side.values() if s]
+        if len(sides) < 2:
+            pytest.skip(f"{scenario}: fewer than 2 populated sides")
+        # Check separation between the two largest sides
+        sides.sort(key=len, reverse=True)
+        s1, s2 = sides[0], sides[1]
         min_d = min(
-            math.hypot(b.position.easting - r.position.easting,
-                       b.position.northing - r.position.northing)
-            for b in ctx.units_by_side["blue"]
-            for r in ctx.units_by_side["red"]
+            math.hypot(a.position.easting - b.position.easting,
+                       a.position.northing - b.position.northing)
+            for a in s1 for b in s2
         )
-        assert min_d > 500.0, (
-            f"Bint Jbeil tick-0 separation {min_d:.0f}m < 500m — "
-            f"formation-overflow bug not fixed"
+        assert min_d >= 500.0, (
+            f"{scenario}: tick-0 min side separation {min_d:.0f}m < 500m — "
+            f"forces will engage at TACTICAL resolution on tick 0"
         )

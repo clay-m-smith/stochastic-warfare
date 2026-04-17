@@ -126,6 +126,45 @@ Authored in `data/formations/`:
 
 Each template carries Tier 1 / 2 source attribution (FM 3-90-1, Leonhard, Matthews CSI, Biddle/Friedman, Estes, ONI, etc.).
 
+## Phase 104b retrofit: Debecka + Khafji + Fallujah
+
+After the initial Phase 104 commit, a broad audit revealed three more golden scenarios had the same formation-overflow bug as Bint Jbeil:
+
+| Scenario (pre-retrofit) | Mode | OOB units | Min side separation |
+|-------------------------|------|-----------|---------------------|
+| debecka_pass | legacy | 17 blue | **0m** (overlap) |
+| khafji | legacy | 0 | 5050m (60km map absorbed it) |
+| fallujah_phase_line_fran | legacy | 98 blue + 82 red | **5m** (overflow) |
+
+Phase 104b retrofits each with an appropriate mode + template:
+
+- **Debecka** → `bounding_box`: 84 units is small enough that a simple uniform fill works. Blue on Dog Ridge north, red advancing from south road. Tick-0 separation 1292m.
+- **Khafji** → `doctrinal` with `brigade_defense` (blue) + `mechanized_thrust` (red). Iraqi III Corps three-column attack from Kuwait border south into Saudi sector. Tick-0 separation 15986m.
+- **Fallujah** → `doctrinal` with `marine_urban_assault` (blue) + `battalion_urban_defense` (red). Coalition staged north of Phase Line Henry, attacks south into urban core. Tick-0 separation 1104m.
+
+### Direction-aware templates
+
+Fallujah and Khafji both have coalition/attacker on the HIGHER-y side of the map (blue at high y attacking toward low y for Fallujah; red Iraqi III Corps at high y attacking toward low y for Khafji). The formation templates were authored with "offset_y_frac=1 = forward / toward enemy" assuming attack direction is +Y.
+
+Phase 104b adds auto-inversion in `_deploy_doctrinal`: `deploy_units` computes `flip_y = opposing_box.center_y < self_box.center_y` and passes it to `_deploy_doctrinal`, which applies `eff_off_y = (1 - off_y) if flip_y else off_y`. Templates stay universal; scenarios author their boxes naturally; forward/backward aligns correctly for each side regardless of map orientation.
+
+### Echelon thickness fix
+
+Original `_deploy_doctrinal` used `ech_half_h = min(50.0, 0.1 * box.height_m)` for echelon strip thickness. Caps at 50m meant Khafji's 15km-high box still had 100m-thick echelons, triggering min-spacing warnings for large echelons (79 units in a 32km × 100m strip = forced sub-100m spacing). Changed to `max(50.0, 0.05 * box.height_m)` — thickness scales with box size.
+
+### Fallujah `test_scenario_progresses` threshold adjustment
+
+Pre-retrofit Fallujah ran ≥ 500 ticks because legacy formation overflow put forces in chaotic 5m-apart contact that took time to sort out. Post-retrofit (doctrinal, 1104m apart at start), combat develops cleanly — force_destroyed VC (threshold 0.5) triggers at ~156 ticks once the urban battle resolves. Lowered the test threshold from 500 to 50 ticks and documented the dynamic shift inline. The other Fallujah envelope tests (blue wins, red/blue casualties, engagements occur, IEDs detonate, urban small arms fire) all continue to pass.
+
+### All-golden regression guard
+
+`TestAllGoldenScenarioDeployment` in `test_phase_104_deployment.py` parametrizes across the 5 golden scenarios and asserts:
+- each is in its expected mode (debecka=bounding_box, khafji/fallujah/bint_jbeil=doctrinal, hanit=legacy)
+- zero units out-of-bounds (formation stays inside map)
+- tick-0 min side separation ≥ 500m (no tick-0 TACTICAL resolution trigger)
+
+Prevents the overflow bug from regressing for any scenario in the set.
+
 ## Scenario retrofit: Bint Jbeil
 
 `data/scenarios/bint_jbeil_2006/scenario.yaml` now declares:

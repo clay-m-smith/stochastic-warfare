@@ -46,6 +46,16 @@ terrain:
   base_elevation_m: 300.0
   terrain_type: hilly_defense
 
+# Phase 104 retrofit — bounding_box deployment keeps the 84 units inside the
+# 8km x 5km map.  Blue on Dog Ridge / Zurqah Ziraw Dagh to the north; red
+# (Iraqi 1st Mech) advancing from the south along the approach road.
+deployment:
+  mode: bounding_box
+  blue_box: {x_min: 1000, y_min: 3200, x_max: 7000, y_max: 4600}
+  red_box:  {x_min: 1000, y_min: 500,  x_max: 7000, y_max: 2400}
+  min_spacing_m: 50.0
+  min_side_separation_m: 500.0
+
 sides:
   # ── Blue: Coalition (US SF + Peshmerga + on-call naval/USAF CAS) ──────
   - side: blue
