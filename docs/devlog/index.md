@@ -127,7 +127,7 @@ Rolling record of implementation decisions, changes, and lessons learned across 
 | 104 | Configurable Deployment Modes (Block 11 polish) | **Complete** | [phase-104.md](phase-104.md) |
 | | | | |
 | **Block 12: Integrity Remediation** ||||
-| 105 | Checkpoint State Integrity | **Complete** | [phase-105.md](phase-105.md) |
+| 105 | Checkpoint State Integrity | **Reopened** | [phase-105.md](phase-105.md) |
 
 ## Post-MVP Refinement Index
 

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Implementation Specification"
+  short_description: "Define an evidence-ready implementation contract"
+  default_prompt: "Use $spec to define the contract and proof obligations for this change before implementation."

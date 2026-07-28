@@ -1,0 +1,4 @@
+interface:
+  display_name: "Order of Battle Builder"
+  short_description: "Build sourced TO&E and scenario force structures"
+  default_prompt: "Use $orbat to design this force structure from valid repository data and cited assumptions."

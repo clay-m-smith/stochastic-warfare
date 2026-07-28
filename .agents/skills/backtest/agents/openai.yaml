@@ -1,0 +1,4 @@
+interface:
+  display_name: "Historical Backtest"
+  short_description: "Design source-backed historical simulation tests"
+  default_prompt: "Use $backtest to define and run a reproducible historical validation for this scenario."

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Simplify Phase Diff"
+  short_description: "Review phase changes for focused code quality"
+  default_prompt: "Use $simplify to review the current phase diff for focused, behavior-preserving improvements."

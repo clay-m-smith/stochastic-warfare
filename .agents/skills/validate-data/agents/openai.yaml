@@ -1,0 +1,4 @@
+interface:
+  display_name: "Validate Data"
+  short_description: "Validate scenario and equipment data integrity"
+  default_prompt: "Use $validate-data to verify these data changes through schemas, loaders, and runtime behavior."

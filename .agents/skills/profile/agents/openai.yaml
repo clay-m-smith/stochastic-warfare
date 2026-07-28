@@ -1,0 +1,4 @@
+interface:
+  display_name: "Profile Performance"
+  short_description: "Measure production simulation performance"
+  default_prompt: "Use $profile to measure this production simulation path and identify evidence-backed performance work."

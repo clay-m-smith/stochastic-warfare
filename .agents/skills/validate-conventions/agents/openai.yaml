@@ -1,0 +1,4 @@
+interface:
+  display_name: "Validate Conventions"
+  short_description: "Check simulation code against repository rules"
+  default_prompt: "Use $validate-conventions to review the current Python changes against repository invariants."

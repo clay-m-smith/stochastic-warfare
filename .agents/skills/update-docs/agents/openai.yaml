@@ -1,0 +1,4 @@
+interface:
+  display_name: "Documentation Synchronizer"
+  short_description: "Synchronize verified behavior across project docs"
+  default_prompt: "Use $update-docs to reconcile the affected documentation with the verified implementation."

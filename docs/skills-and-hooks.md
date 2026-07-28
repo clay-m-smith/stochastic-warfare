@@ -1,4 +1,33 @@
-# Stochastic Warfare — Claude Skills & Hooks
+# Stochastic Warfare — Repository Skills & Hooks
+
+The phase workflows are available on both supported agent surfaces:
+
+- Codex discovers the maintained repository routes in `.agents/skills/`;
+  invoke them as `$skill-name`.
+- Claude Code retains the legacy routes in `.claude/skills/`; invoke them as
+  `/skill-name`.
+
+`CODEX.md` defines where each Codex skill belongs in the phase workflow. The
+Codex ports preserve the useful domain procedures while replacing
+Claude-specific tool metadata, `$ARGUMENTS` placeholders, and stale completion
+rules with the current production-path evidence contract.
+
+## Codex Phase Routing
+
+| Phase gate | Codex skills |
+|---|---|
+| Define | `$spec`; add `$research-military`, `$research-models`, and `$design-review` when their evidence domains apply |
+| Implement | Task-specific routes such as `$scenario` and `$orbat` |
+| Validate | `$validate-conventions`, `$audit-determinism`, `$validate-data`, and `$profile` when applicable |
+| Prove outcomes | `$evaluate-scenarios`, `$backtest`, `$compare`, `$what-if`, `$calibrate`, and `$timeline` when applicable |
+| Review | `$simplify` for production-code phase diffs |
+| Close | `$update-docs` → `$cross-doc-audit` → `$postmortem` → verified phase commit |
+
+The route details and applicability rules in `CODEX.md` are authoritative.
+Skills augment that contract; they do not replace production-path behavioral
+evidence. `tests/unit/test_repository_skills.py` verifies that every legacy
+Claude route has a discoverable Codex port with portable frontmatter and
+matching UI metadata.
 
 ## Custom Skills
 
@@ -33,10 +62,15 @@
   - `docs/development-phases-post-mvp.md` — phase status + deficit mapping (post-MVP)
   - `docs/specs/<module>.md` — module specifications
   - `docs/devlog/index.md` — phase status + deficit inventory
-  - Memory files — stable patterns and conventions
+  - `CODEX.md` and `AGENTS.md` — durable repository workflow when it changes
+  - `docs/remediation-backlog.md` — current implementation gaps and evidence
   - **User-facing docs** (Phase 31+) — `docs/index.md`, `docs/guide/`, `docs/concepts/`, `docs/reference/`, `mkdocs.yml`
-- Enforces post-MVP lockstep: completing Phase 11+ requires updating CLAUDE.md, project-structure.md, development-phases-post-mvp.md, devlog/index.md, phase devlog, README.md, and MEMORY.md together
-- New deficits discovered during post-MVP work must be added to both devlog/index.md AND the deficit-to-phase mapping
+- Discovers the current block roadmap instead of assuming the original
+  post-MVP document owns later phases
+- Updates only affected documents, using fresh verification for status and test
+  counts
+- New deficits are recorded in the remediation backlog and assigned to a
+  roadmap phase
 - **User-facing doc rules** (Phase 31+): new modules update architecture.md; new scenarios update scenarios.md + eras.md; new units update units.md; API changes update api.md; new devlogs require mkdocs.yml nav entry; test count changes update index.md
 - Keeps documentation in sync with implementation
 
@@ -63,12 +97,15 @@
 - Keeps implementation honest against the theoretical foundations we've committed to
 
 ### /cross-doc-audit
-- Audits alignment across all documentation layers — MVP, post-MVP, AND user-facing docs site:
-  - MVP: development-phases.md, project-structure.md, brainstorm.md, devlog, MEMORY.md, README.md
-  - Post-MVP: development-phases-post-mvp.md, brainstorm-post-mvp.md, devlog/index.md deficit inventory
+- Audits alignment across all documentation layers — every discovered block
+  roadmap, current specifications, remediation evidence, and user-facing docs:
+  - Internal: CODEX.md, development-phases*.md, project-structure.md, brainstorm docs, phase devlogs, remediation backlog, README.md
+  - Historical provider context: CLAUDE.md, checked for alignment but never used
+    as behavioral authority
   - User-facing (Phase 31+): index.md, guide/, concepts/, reference/, mkdocs.yml
-- 19 checks: original 13 + 6 user-facing checks (status/counts, architecture accuracy, API accuracy, scenario catalog completeness, era/unit accuracy, MkDocs nav completeness)
-- Output: PASS/FAIL per check with severity (CRITICAL/HIGH/MEDIUM/LOW)
+- Verifies capability and status claims against source and fresh command
+  evidence rather than repeated documentation text
+- Output: PASS/FAIL/N/A per applicable check with severity and exact evidence
 - Run after completing phases, adding modules, or changing architecture
 
 ### /simplify
@@ -87,9 +124,14 @@
 ### /scenario (Phase 14, updated)
 - Interactive walkthrough for creating or editing campaign scenario YAML files
 - Guides user through sides, units, terrain, objectives, victory conditions, and calibration
-- **Mandatory equipment mapping validation** (Step 3): verifies all WEAPON/SENSOR equipment names have entries in `_WEAPON_NAME_MAP`/`_SENSOR_NAME_MAP` in `scenario_runner.py`. Missing mappings are added before YAML generation.
-- **Mandatory sensor presence check**: ensures every unit type has at least one `category: SENSOR` equipment entry. Adds era-appropriate defaults if missing.
-- **Mandatory load test** (Step 7): runs `scripts/validate_scenario_data.py --file` and verifies armed > 0, sensored > 0 through ScenarioLoader
+- Verifies all equipment against authoritative definitions and traces mapping
+  semantics into the production loader; never adds an unrelated proxy mapping
+  or invented default merely to satisfy a validator
+- Runs `scripts/validate_scenario_data.py --file`, verifies exact roster and
+  loadouts through `ScenarioLoader`, and exercises required behavior through a
+  bounded `SimulationEngine` run
+- Treats mapping presence and aggregate armed/sensored counts as structural
+  diagnostics, not outcome evidence
 - Validates against `CampaignScenarioConfig` schema
 - Outputs complete scenario YAML to `data/scenarios/{name}/scenario.yaml`
 
@@ -98,12 +140,15 @@
 - Uses `tools/comparison.py` with Mann-Whitney U test
 - Interprets p-values and effect sizes in military context
 - Outputs formatted comparison table
+- Hard-blocked by REM-017 until production batch loading, metric rejection, and
+  outcome-affecting override behavior are proven
 
 ### /what-if (Phase 14)
 - Quick parameter sensitivity analysis from natural language questions
 - Identifies parameter and range from user's question
 - Uses `tools/sensitivity.py` for sweep, generates errorbar plot
 - Summarizes sensitivity level and key inflection points
+- Hard-blocked by REM-017 until its production preflight is behaviorally proven
 
 ### /timeline (Phase 14)
 - Runs a scenario and generates human-readable battle narrative
@@ -121,29 +166,39 @@
 - Sweeps influential parameters via `tools/sensitivity.py`
 - Uses binary search refinement to narrow to target value
 - Validates with statistical test against historical data
+- Requires a frozen source-backed backtest envelope and held-out validation
+  seeds; hard-blocked by REM-017 until the shared batch route is trustworthy
 
 ### /validate-data
 - Validates unit YAML and scenario YAML data integrity
 - Catches equipment name → weapon/sensor ID mapping drift, missing sensor entries, invalid unit type references, broken ScenarioLoader loads
 - Runs `scripts/validate_scenario_data.py` (standalone validation script)
-- Diagnoses and fixes common issues: unmapped weapon/sensor names, missing default sensors, non-existent unit types, invalid equipment categories
+- Diagnoses mapping, schema, loader, and runtime attachment defects without
+  guessing substitutions or generic defaults
 - **Run after**: adding new units, weapons, scenarios, or modifying equipment entries
-- Key files: `_WEAPON_NAME_MAP` and `_SENSOR_NAME_MAP` in `scenario_runner.py`, `scripts/validate_scenario_data.py`
+- The simplified-runner maps are static diagnostics; production evidence comes
+  from `ScenarioLoader`, exact affected loadouts, and behavioral execution
 
 ### /evaluate-scenarios (Phase 42)
 - Runs all scenarios through simulation engine and compares against previous baseline
 - Reports winner changes, casualty deltas, condition changes, new/resolved issues
 - Classifies changes as improvements, regressions, stalls, or neutral
 - Saves new baseline for future comparisons
+- Records explicit seed/revision/catalog provenance and requires investigation
+  before promoting a baseline
+- Uses a real engine path but does not by itself prove API wiring,
+  reinforcement registration, deterministic replay, or stochastic fidelity
 - **Run after**: completing any phase that modifies battle loop, engagement resolution, or victory evaluation
 - Key files: `scripts/evaluate_scenarios.py`, `scripts/evaluation_results_v*.json`
 
 ### /postmortem (Phase 14)
 - Structured retrospective to run after completing each implementation phase
-- 8-step process: delivered vs planned, integration audit, test quality review, API surface check, deficit discovery, documentation freshness (including user-facing docs staleness check), performance sanity, summary
+- Gates phase closure against the completion evidence matrix, production-path
+  tests, negative controls, relevant excluded suites, final diff, and
+  adversarial review
 - Catches integration gaps, dead modules, missing wiring, undocumented limitations
-- Documentation freshness now checks user-facing docs: architecture.md, api.md, scenarios.md, eras.md, units.md, models.md, index.md, mkdocs.yml
-- Updates phase devlog with findings and action items
+- Adds newly found gaps to the remediation backlog, updates the phase devlog,
+  and permits the coherent phase commit only after all applicable gates pass
 
 ---
 

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Scenario Calibration"
+  short_description: "Calibrate against sourced historical envelopes"
+  default_prompt: "Use $calibrate to tune this scenario against its predeclared historical outcome envelope."

@@ -10,6 +10,9 @@ The live issue inventory and evidence matrix are in
 
 ## Phase 105 - Checkpoint State Integrity
 
+Status: **Reopened** after the Codex skill-port postmortem found an unarmed
+checkpoint-only unit topology rejection.
+
 Restore the original Phase 72 behavioral contract.
 
 - Restore exact unit roster, concrete class, ordering, mutable entity state,
@@ -80,10 +83,12 @@ the production loop.
 
 - Make excluded Python suites explicit in CI and developer documentation.
 - Audit critical structural/no-assert tests and replace false behavioral claims.
+- Repair analysis batch loading and metric validation so sensitivity,
+  comparison, and calibration cannot emit false-green zero results.
 - Preserve the passing strict documentation baseline established during Phase
   105 and make its coverage routine.
 - Reconcile public capability and status claims with the remediation evidence.
 
-Exit criteria: REM-013 and REM-014 are closed, REM-015 remains green, all
-relevant suites are reported explicitly, and the final Block 12 postmortem
+Exit criteria: REM-013, REM-014, and REM-017 are closed, REM-015 remains green,
+all relevant suites are reported explicitly, and the final Block 12 postmortem
 identifies any newly discovered backlog items.

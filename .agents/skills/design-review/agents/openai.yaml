@@ -1,0 +1,4 @@
+interface:
+  display_name: "Design Review"
+  short_description: "Review architecture and domain-model alignment"
+  default_prompt: "Use $design-review to assess this subsystem design against current architecture and evidence."

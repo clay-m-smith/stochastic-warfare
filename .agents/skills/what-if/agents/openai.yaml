@@ -1,0 +1,4 @@
+interface:
+  display_name: "What-If Analysis"
+  short_description: "Run guarded scenario parameter sensitivity analysis"
+  default_prompt: "Use $what-if to analyze how this scenario responds to a defensible parameter range."

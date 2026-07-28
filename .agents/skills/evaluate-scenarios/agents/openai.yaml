@@ -1,0 +1,4 @@
+interface:
+  display_name: "Evaluate Scenarios"
+  short_description: "Compare scenario outcomes against a baseline"
+  default_prompt: "Use $evaluate-scenarios to compare affected production-engine scenarios against an explicit baseline."

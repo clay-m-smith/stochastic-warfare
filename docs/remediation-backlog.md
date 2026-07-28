@@ -22,7 +22,7 @@ Audit baseline: 2026-07-28 at `68acd4b`
 
 | ID | Priority | Phase | Area | Behavioral gap | Status | D | L | W | E | X | O | P | Next proof |
 |---|---:|---:|---|---|---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|---|
-| REM-001 | P0 | 105 | Checkpointing | `SimulationContext.set_state()` did not restore saved units, morale, or loadout runtime state | **Closed** | Yes | N/A | Yes | N/A | Yes | Yes | Yes | [Phase 105 evidence](devlog/phase-105.md) |
+| REM-001 | P0 | 105 | Checkpointing | Exact restore still rejects a checkpoint-only unarmed unit when production-shaped loadout maps contain empty entries | **Reopened** | Yes | N/A | Yes | N/A | Yes | Yes | - | Empty-loadout fresh restore, continuation, and repeated postmortem |
 | REM-002 | P0 | 106 | API execution | `config_overrides` are merged for validation but the run reloads the unchanged scenario file | Queued | Yes | - | - | N/A | - | - | - | API run with an outcome-affecting override |
 | REM-003 | P0 | 106 | API lifecycle | Background run teardown can use a closed database session | Queued | Yes | N/A | Yes | N/A | - | - | - | API task lifecycle regression without teardown exceptions |
 | REM-004 | P0 | 107 | Reinforcements | Scenario reinforcements are not registered automatically with `CampaignManager` | Queued | Yes | Yes | - | N/A | - | - | - | Production engine arrival test |
@@ -38,6 +38,7 @@ Audit baseline: 2026-07-28 at `68acd4b`
 | REM-014 | P1 | 112 | Test quality | Structural and no-assert tests can support false completion claims | Queued | Yes | N/A | Yes | N/A | - | - | N/A | Audit critical contracts and add behavioral assertions |
 | REM-015 | P2 | 112 | Documentation | Strict documentation build was not part of the verified baseline | **Closed early** | Yes | N/A | Yes | N/A | Yes | N/A | N/A | [Phase 105 verification](devlog/phase-105.md#broader-verification) |
 | REM-016 | P1 | TBD | Aggregation | Disaggregation recreates every constituent as base `Unit` and does not restore captured weapon, sensor, or supply attachments | Queued | Yes | Yes | Yes | N/A | - | - | - | Subclass/loadout round trip across aggregation |
+| REM-017 | P0 | 112 | Analysis tooling | Scenario batch helpers infer the wrong data root, can run with zero loaded units, and silently turn unsupported metrics into zero | Queued | Yes | - | Yes | N/A | Yes | Yes | N/A | Real-unit batch run, unknown-metric rejection, and outcome-affecting sweep/comparison |
 
 ## REM-001 - Exact checkpoint restoration
 
@@ -87,10 +88,17 @@ absent.
 
 ### Verification
 
-Closed by 19 Phase 105 behavioral tests covering exact entity, morale,
+Initially closed by 19 Phase 105 behavioral tests covering exact entity, morale,
 weapon/sensor, configuration, corruption, atomic-rejection, legacy, bytes,
 continuation, and fully loaded production-scenario behavior. See
 [`phase-105.md`](devlog/phase-105.md) for exact commands and broader results.
+
+Reopened during the Codex skill-port forward test. A production-shaped
+checkpoint with `unit_weapon_states={"u": []}` and
+`unit_sensor_states={"u": []}` rejects reconstruction of checkpoint-only unit
+`u` as an incompatible extra topology. The contract permits fresh
+reconstruction for an empty loadout; only non-empty serialized loadouts require
+compatible prebuilt runtime instances.
 
 ### Residual boundaries
 
@@ -98,3 +106,37 @@ continuation, and fully loaded production-scenario behavior. See
   embed hashes of external unit, weapon, ammunition, sensor, or era definitions.
 - Dynamic reinforcement loadout construction remains REM-004/REM-005.
 - Aggregation constituent reconstruction remains REM-016.
+
+## REM-017 - Analysis tools can manufacture false-green results
+
+### Reproduction
+
+A one-iteration `run_sweep()` against
+`data/scenarios/test_campaign/scenario.yaml` completed successfully while
+logging that all ten scenario units were unknown. It returned zero destroyed
+units for both sides instead of rejecting an invalid run.
+
+### Cause
+
+- `run_scenario_batch()` infers the loader root as
+  `scenario_path.parent.parent`, which resolves to `data/scenarios` for the
+  normal repository layout; `ScenarioLoader` requires `data`.
+- The batch does not reject a scenario whose declared roster loads as zero
+  units.
+- `_extract_metrics()` returns `0.0` for unknown metrics.
+- Existing sensitivity/comparison tests cover result structures and statistics,
+  not real `run_sweep()`, `run_comparison()`, or production-loaded forces.
+
+### Required proof
+
+- Resolve or explicitly require the correct data root for every supported
+  scenario layout.
+- Reject missing declared units, empty invalid runs, and unsupported metric
+  names.
+- Exercise sensitivity and comparison through real `ScenarioLoader` and
+  `SimulationEngine` runs.
+- Show that a controlled override changes an intended metric and that invalid
+  configuration cannot produce an authoritative-looking zero result.
+
+Until REM-017 closes, `$calibrate`, `$compare`, and `$what-if` must preflight a
+real loaded roster and stop rather than report unverified results.

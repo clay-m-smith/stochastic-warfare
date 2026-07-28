@@ -75,6 +75,29 @@ If documentation, tests, and production behavior disagree, record the
 discrepancy. Do not silently choose the easiest interpretation when it
 materially changes the result.
 
+## Phase Skill Routes
+
+Repository-scoped Codex skills live in `.agents/skills/` and are invoked as
+`$skill-name`. Read a selected skill completely before acting. A skill defines
+a repeatable route; its output is not completion evidence until the coordinating
+agent verifies the resulting source, tests, and diff.
+
+Use these gates for every numbered implementation phase:
+
+| Gate | Required routes |
+|---|---|
+| Define | Use `$spec` before changing a behavioral contract. Add `$research-military`, `$research-models`, and `$design-review` when doctrine, historical claims, mathematics, or architecture are material. |
+| Implement | Follow the relevant task route. Use `$scenario` and `$orbat` for scenario/OOB work rather than editing data ad hoc. |
+| Validate | Use `$validate-conventions` after simulation-core changes, `$audit-determinism` after stochastic/state-order changes, and `$validate-data` after data changes. Use `$profile` for performance-sensitive work. |
+| Prove outcomes | Use `$evaluate-scenarios` when battle behavior or scenario data can change outcomes. Use `$backtest`, `$compare`, `$what-if`, or `$calibrate` for historical or statistical claims; use `$timeline` when narrative/AAR exposure is part of the requirement. |
+| Review | Use `$simplify` for a phase's production-code diff before closure. Re-run the relevant behavioral tests after any review fix. |
+| Close | Use `$update-docs`, then `$cross-doc-audit`, then `$postmortem`. Resolve or track every finding before marking the phase complete and committing it. |
+
+Skill use is conditional where the table says "when" or "for." Do not run a
+route as ceremony when its evidence category is genuinely inapplicable; record
+the reason in the phase log. Conversely, do not skip an applicable route merely
+because focused tests are green.
+
 ## Completion Evidence Matrix
 
 For a feature, configuration field, or subsystem, verify each applicable stage:

@@ -3,7 +3,7 @@
 ## Project Overview
 High-fidelity, high-resolution wargame simulator. Multi-scale (campaign → battlefield → battle → unit level) with stochastic/signal-processing-inspired models (Markov chains, Monte Carlo, Kalman filters, noise models, queueing theory). Headless Python engine first; matplotlib for validation; full UI deferred. Modern era (Cold War–present) as prototype. Maritime warfare fully integrated, not deferred.
 
-**Current status**: Phase 105 complete — Block 12 integrity remediation is in progress. The fresh default Python verification is 10,123 passed, 21 skipped, and 346 deselected; the frontend baseline is 418 passing vitest tests. Blocks 1–11 remain complete. See `docs/remediation-backlog.md` for current evidence and unresolved gaps.
+**Current status**: Phase 105 reopened by an adversarial skill-port review — Block 12 integrity remediation is in progress. The fresh default Python verification is 10,164 passed, 21 skipped, and 346 deselected; the frontend baseline is 418 passing vitest tests. Blocks 1–11 remain complete. See `docs/remediation-backlog.md` for current evidence and unresolved gaps.
 
 ## Python & Package Management
 **Requires Python >=3.12** (pinned to 3.12.10 via `.python-version`).
@@ -81,6 +81,11 @@ Layered hybrid — graph (strategic), grid (operational/tactical), continuous (u
 - **Post-MVP lockstep**: When completing Phase 11+, update ALL of: CLAUDE.md, project-structure.md, `development-phases-post-mvp.md` (phase status + module index), `devlog/index.md` (phase status + refinement entries), phase devlog, README.md, MEMORY.md. New deficits must be added to both devlog index AND deficit-to-phase mapping.
 
 ## Available Skills
+
+Claude routes remain under `.claude/skills/`. Maintained Codex ports live under
+`.agents/skills/`; `CODEX.md` and `AGENTS.md` define their phase-gate order and
+production-evidence requirements.
+
 | Skill | Purpose |
 |-------|---------|
 | `/research-military` | Military doctrine, historical data, theorist/philosopher writings (tiered sources) |
@@ -161,7 +166,7 @@ All phase details are in `docs/devlog/` (one file per phase). Per-phase tables i
 | Block 9 | 83–91 | Profiling, spatial culling, LOD, Numba JIT, SoA data layer, per-side parallelism, benchmarking | ~279 |
 | Block 10 | 92–97 | UI depth: analytics endpoints, dashboard charts, map overlays, calibration editor, event filtering, data catalogs | ~120 |
 | Block 11 | 98–104 | Golden scenarios plus OOB, engine, and deployment polish | ~107 |
-| Block 12 | 105–112 | Production-path integrity remediation; Phase 105 complete | 19 so far |
+| Block 12 | 105–112 | Production-path integrity remediation; Phase 105 reopened | 19 so far |
 
 ### Block 11 Detail (COMPLETE)
 

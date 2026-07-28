@@ -1,0 +1,4 @@
+interface:
+  display_name: "Phase Postmortem"
+  short_description: "Gate phase closure with adversarial evidence review"
+  default_prompt: "Use $postmortem to determine whether this phase is genuinely ready for its phase commit."

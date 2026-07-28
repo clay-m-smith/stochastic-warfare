@@ -1,0 +1,4 @@
+interface:
+  display_name: "Configuration Comparison"
+  short_description: "Compare scenario configurations with sound statistics"
+  default_prompt: "Use $compare to run a reproducible A/B comparison of these scenario configurations."

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Military Research"
+  short_description: "Source military doctrine and operational evidence"
+  default_prompt: "Use $research-military to research authoritative military evidence for this subsystem."

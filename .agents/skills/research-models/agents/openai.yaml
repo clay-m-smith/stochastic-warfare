@@ -1,0 +1,4 @@
+interface:
+  display_name: "Model Research"
+  short_description: "Research defensible quantitative simulation models"
+  default_prompt: "Use $research-models to select and justify a quantitative model for this simulation behavior."

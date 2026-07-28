@@ -1,0 +1,4 @@
+interface:
+  display_name: "Battle Timeline"
+  short_description: "Turn recorded simulation events into an accurate AAR"
+  default_prompt: "Use $timeline to run this scenario and produce an evidence-grounded after-action report."

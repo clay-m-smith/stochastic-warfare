@@ -1,0 +1,4 @@
+interface:
+  display_name: "Cross-Document Audit"
+  short_description: "Audit documentation against code and current evidence"
+  default_prompt: "Use $cross-doc-audit to find contradictions between the documentation, implementation, and current evidence."

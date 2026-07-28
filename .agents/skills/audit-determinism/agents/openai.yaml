@@ -1,0 +1,4 @@
+interface:
+  display_name: "Audit Determinism"
+  short_description: "Trace reproducibility and RNG state"
+  default_prompt: "Use $audit-determinism to audit this simulation change for reproducible execution and checkpoint continuation."

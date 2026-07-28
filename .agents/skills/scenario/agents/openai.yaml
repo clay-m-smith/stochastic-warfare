@@ -1,0 +1,4 @@
+interface:
+  display_name: "Campaign Scenario Author"
+  short_description: "Author and prove production scenario behavior"
+  default_prompt: "Use $scenario to create or revise this scenario and verify it through the production engine."

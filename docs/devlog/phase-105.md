@@ -1,10 +1,12 @@
 # Phase 105 - Checkpoint State Integrity
 
-**Status:** Complete
+**Status:** Reopened
 
 **Started:** 2026-07-28
 
 **Completed:** 2026-07-28
+
+**Reopened:** 2026-07-28
 
 ## Why this phase exists
 
@@ -115,3 +117,21 @@ Acceptance criteria:
   attachments; this common-mode defect is REM-016.
 - API, E2E, slow, terrain, and benchmark suites were not required for this
   core checkpoint boundary and remain outside the default suite as documented.
+
+## Reopened finding
+
+The Codex skill-port forward test used `$postmortem` against the committed phase
+and found a missed fresh-runtime case. Production-shaped loadout maps contain a
+key for an unarmed/unsensored unit with an empty list. Restoring that
+checkpoint-only unit into a fresh runtime rejects the empty serialized entry as
+an incompatible extra topology:
+
+```text
+ValueError: Incompatible weapon unit topology: missing=[], extra=['u']
+```
+
+The checkpoint contract permits reconstruction when the serialized loadout is
+empty; only a non-empty loadout requires a compatible prebuilt runtime. REM-001
+is reopened until this case has a failing regression, a minimal atomic fix, the
+focused and broader checkpoint evidence is rerun, and the phase postmortem
+passes again.
