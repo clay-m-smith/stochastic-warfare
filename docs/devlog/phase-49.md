@@ -1,8 +1,14 @@
 # Phase 49: Calibration Schema Hardening
 
+> **Phase 106 correction (2026-07-28):** Phase 49 proved that
+> `target_selection_mode` could be parsed, but its test did not distinguish the
+> production target-selection branches. The accepted `nearest` value silently
+> followed threat scoring until Phase 106 wired it as the `closest` alias and
+> proved the behavior through the production API and battle loop.
+
 ## Summary
 
-Replaced the free-form `calibration_overrides: dict[str, Any]` with a typed pydantic `CalibrationSchema` validated at parse time. All ~37 scenario YAMLs migrated from `calibration_overrides:` to `calibration_overrides:` with schema-validated keys. Dead `advance_speed` data removed from 7 historical scenarios. Previously-untested calibration paths (dig_in_ticks, wave_interval_s, target_selection_mode, victory_weights, morale config weights, roe_level) exercised in new test scenarios.
+Replaced the free-form `calibration_overrides: dict[str, Any]` with a typed pydantic `CalibrationSchema` validated at parse time. All ~37 scenario YAMLs migrated from `calibration_overrides:` to `calibration_overrides:` with schema-validated keys. Dead `advance_speed` data removed from 7 historical scenarios. Most previously untested calibration paths were exercised; the target-selection behavioral proof was completed in Phase 106.
 
 ## What Was Built
 
@@ -15,7 +21,9 @@ Replaced the free-form `calibration_overrides: dict[str, Any]` with a typed pyda
 - Calibration audit test updated to use schema-based validation
 
 ### 49c: Untested Calibration Path Exercise
-- Test scenarios exercising dig_in_ticks, wave_interval_s, target_selection_mode, victory_weights, morale config weights, roe_level, EW params
+- Test scenarios exercising dig_in_ticks, wave_interval_s, victory_weights,
+  morale config weights, roe_level, and EW parameters; target-selection parsing
+  was covered, but its behavioral branch remained unproved until Phase 106
 
 ## Design Decisions
 
@@ -36,7 +44,8 @@ Replaced the free-form `calibration_overrides: dict[str, Any]` with a typed pyda
 - E1: `advance_speed` dead data (removed)
 - E2: `dig_in_ticks` untested (exercised)
 - E3: `wave_interval_s` untested (exercised)
-- E4: `target_selection_mode` untested (exercised)
+- E4: `target_selection_mode` parsing exercised; behavioral closure superseded
+  by Phase 106
 - E5: `roe_level` sparse coverage (expanded)
 - E6: Morale config weights unused (exercised)
 - E7: `victory_weights` untested (exercised)

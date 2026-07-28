@@ -51,7 +51,7 @@ Block 8 spanned 15 phases (68-82) and delivered ~1,291 new Python tests. The blo
 6. **Historical scenario correctness** (Phase 73) — 5 scenarios recalibrated with Dupuy CEV documentation
 7. **Combat engine unit tests** (Phase 74) — 472 tests across 32 files covering all 33 combat engine source files
 8. **Simulation core & domain tests** (Phase 75) — 293 tests across 15 files (battle.py, engine.py, movement, terrain, logistics, simulation)
-9. **API robustness** (Phase 76) — Semaphores, WAL mode, graceful shutdown, health probes, request limits
+9. **API robustness** (Phase 76; lifecycle ownership hardened in Phase 106) — Semaphores, WAL mode, graceful shutdown, health probes, request limits
 10. **Frontend accessibility** (Phase 77) — WCAG 2.1 AA compliance across ~20 components
 11. **P2 environment wiring** (Phase 78) — Ice crossing, vegetation LOS, bridge capacity, ford crossing, fire spread, environmental fatigue
 12. **CI/CD & packaging** (Phase 79) — GitHub Actions workflows (test/lint/build), ruff linter (~1,087 auto-fixes)

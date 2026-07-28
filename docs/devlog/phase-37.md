@@ -9,6 +9,13 @@
 
 Phase 37 fixes three critical integration bugs that surface during real web UI use and adds an E2E smoke test across all 41 scenarios. Zero new engine subsystems — purely wiring and fixing existing code.
 
+> **Phase 106 correction (2026-07-28):** The Phase 37
+> `config_overrides` closure was a false positive. `_apply_overrides()` changed
+> an API-side dictionary, but `ScenarioLoader.load(path)` reopened the unchanged
+> YAML, so the production context ignored the patch. The structural merge tests
+> did not exercise the loader or an outcome. REM-002 was behaviorally repaired
+> and verified in [Phase 106](phase-106.md).
+
 ## What Was Built
 
 ### 37a: Bug Fixes (6 modified files)

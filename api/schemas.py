@@ -7,6 +7,8 @@ from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
+from stochastic_warfare.simulation.calibration import CalibrationSchema
+
 
 def _check_dict_depth(
     d: dict,
@@ -101,19 +103,24 @@ class RunSubmitRequest(BaseModel):
     scenario: str
     seed: int = 42
     max_ticks: int = Field(default=10_000, ge=1, le=1_000_000)
-    config_overrides: dict[str, Any] = Field(
-        default_factory=dict,
-        description="CalibrationSchema overrides. Supports 29 enable_* boolean flags, "
-        "50+ numeric modifiers (hit_probability_modifier, thermal_contrast, etc.), "
-        "nested morale calibration, per-side overrides, and weapon_assignments. "
-        "See stochastic_warfare.simulation.calibration.CalibrationSchema for full reference.",
+    config_overrides: CalibrationSchema = Field(
+        default_factory=CalibrationSchema,
+        description="Sparse CalibrationSchema overlay. Supports enable_* boolean flags, "
+        "numeric modifiers, nested morale calibration, per-side overrides, and "
+        "weapon assignments. Absent fields preserve scenario values.",
     )
     frame_interval: int | None = None
 
-    @field_validator("config_overrides")
+    @field_validator("config_overrides", mode="before")
     @classmethod
-    def _validate_overrides(cls, v: dict[str, Any]) -> dict[str, Any]:
-        _check_dict_depth(v)
+    def _validate_overrides(cls, v: Any) -> Any:
+        if isinstance(v, dict):
+            _check_dict_depth(v)
+            if "advance_speed" in v:
+                raise ValueError(
+                    "advance_speed is unsupported dead calibration data",
+                )
+            return CalibrationSchema.model_validate(v, strict=True)
         return v
 
 

@@ -1,10 +1,14 @@
 # Stochastic Warfare
 
 ![Python](https://img.shields.io/badge/python-%3E%3D3.12-blue)
-![Tests](https://img.shields.io/badge/tests-10%2C522_passing-brightgreen)
-![Phase](https://img.shields.io/badge/phase-104_Block--11--COMPLETE-brightgreen)
+![Tests](https://img.shields.io/badge/tests-10%2C168_passing-brightgreen)
+![Phase](https://img.shields.io/badge/phase-106_COMPLETE-brightgreen)
 
-High-fidelity, high-resolution wargame simulator built as a headless Python engine. Models warfare across multiple scales — from individual unit engagements up through tactical battles, operational battlefields, and multi-day strategic campaigns — with stochastic and signal-processing-inspired models throughout.
+High-fidelity, high-resolution wargame simulator with a headless Python engine,
+FastAPI service, and React frontend. Models warfare across multiple scales —
+from individual engagements through tactical battles, operational battlefields,
+and multi-day strategic campaigns — with stochastic and
+signal-processing-inspired models throughout.
 
 The simulator covers the modern era (Cold War to present) as its prototype period and treats maritime warfare as a fully integrated domain alongside land and air operations, not a deferred add-on. Validated against historical engagements (73 Easting, Falklands Naval, Golan Heights) at both engagement and campaign levels.
 
@@ -171,10 +175,9 @@ For the full package tree and module decomposition, see [`docs/specs/project-str
 
 ## Development Status
 
-Phase 105 is complete after an adversarial skill-port review and follow-up
-repair; Block 12 integrity remediation continues with Phase 106. Blocks 1–11
-remain complete. See the remediation backlog, devlogs, and phase roadmaps for
-full detail.
+Phases 105 and 106 are complete; Block 12 integrity remediation continues with
+Phase 107. Blocks 1–11 remain complete. See the remediation backlog, devlogs,
+and phase roadmaps for full detail.
 
 | Phase | Focus | Tests | Status |
 |-------|-------|-------|--------|
@@ -285,6 +288,7 @@ full detail.
 | 103 | Block 11 Polish — OOB + engine gap tightening | 17 | **Complete** |
 | 104 | Configurable Deployment Modes (Block 11 polish) | 21 | **Complete** |
 | 105 | Checkpoint State Integrity (Block 12) | 23 | **Complete** |
+| 106 | API Execution Integrity (Block 12) | 25 | **Complete** |
 | | **Verified passing baseline** | **10,168 Python + 418 frontend** | |
 
 The Python figure is the fresh default-suite result; that run also reported 21
@@ -353,7 +357,7 @@ Frontend commands:
 | [`docs/development-phases-block3.md`](docs/development-phases-block3.md) | Block 3 UX/UI phase roadmap (31–36) |
 | [`docs/specs/project-structure.md`](docs/specs/project-structure.md) | Full package tree, module decomposition, dependency graph |
 | [`docs/devlog/`](docs/devlog/) | Per-phase implementation logs (`index.md` tracks status) |
-| [`docs/skills-and-hooks.md`](docs/skills-and-hooks.md) | Dev infrastructure (Claude skills, hooks, research tiers) |
+| [`docs/skills-and-hooks.md`](docs/skills-and-hooks.md) | Dev infrastructure (Codex/Claude skills, hooks, research tiers) |
 | [`docs/specs/`](docs/specs/) | Per-module specifications (written before implementation) |
 | [`CLAUDE.md`](CLAUDE.md) | Full project conventions and coding standards |
 

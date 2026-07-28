@@ -460,7 +460,7 @@ Phase 37 is strictly sequential: fix bugs, wire DEW, then smoke-test everything.
 | No scenario YAML references dew_config | Phase 28.5 | Deferred |
 | ADUnitType.DEW not handled in air defense | Phase 28.5 | Deferred |
 | ~~route_engagement() not called from battle.py~~ | Phase 28.5 | **37 ✅** |
-| ~~config_overrides accepted but not applied~~ | Phase 32 | **37 ✅** |
+| ~~config_overrides accepted but not applied~~ | Phase 32 | Phase 37 claim superseded; **106 verified** |
 | GET /api/meta/terrain-types hardcoded | Phase 32 | 39d |
 | ~~Force time series assumes no reinforcements~~ | Phase 34 | **37 ✅** |
 | useBatchProgress no dedicated test | Phase 34 | 39a |

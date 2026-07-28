@@ -198,6 +198,7 @@ nav:
     - Phase 103 - Block 11 Polish - OOB + engine gap tightening: devlog/phase-103.md
     - Phase 104 - Configurable Deployment Modes: devlog/phase-104.md
     - Phase 105 - Checkpoint State Integrity: devlog/phase-105.md
+    - Phase 106 - API Execution Integrity: devlog/phase-106.md
   - Specifications:
     - Project Structure: specs/project-structure.md
     - Checkpoint State Contract: specs/checkpoint-state.md

@@ -1,6 +1,6 @@
 # Project Structure & Module Decomposition
-**Status**: Complete (Phase 36). Blocks 4--7 complete (through Phase 67).
-**Last Updated**: 2026-03-19
+**Status**: Living reference, current through Phase 106.
+**Last Updated**: 2026-07-28
 
 ---
 
@@ -8,6 +8,8 @@
 
 ```
 stochastic-warfare/
+├── AGENTS.md                         # Agent entry point; delegates to CODEX.md
+├── CODEX.md                          # Canonical repository workflow and invariants
 ├── pyproject.toml                    # Build config, dependencies, metadata
 ├── mkdocs.yml                        # MkDocs site configuration [Phase 31]
 ├── README.md
@@ -17,9 +19,9 @@ stochastic-warfare/
 │   ├── schemas.py                    # Request/response Pydantic models
 │   ├── dependencies.py               # FastAPI dependency injection
 │   ├── scenarios.py                  # Scenario/unit discovery helpers
-│   ├── database.py                   # SQLite persistence (aiosqlite)
-│   ├── run_manager.py                # Async run execution, progress streaming
-│   ├── main.py                       # App factory, lifespan, CORS
+│   ├── database.py                   # Serialized SQLite persistence (aiosqlite)
+│   ├── run_manager.py                # Cooperative run/batch execution and progress
+│   ├── main.py                       # Settings-owned app factory, lifespan, CORS
 │   └── routers/                      # Route handlers
 │       ├── meta.py                   # Health, eras, doctrines, terrain types
 │       ├── scenarios.py              # Scenario listing/detail
@@ -131,10 +133,12 @@ stochastic-warfare/
 │       │   ├── yamlExport.ts          # configToYaml (js-yaml wrapper) [Phase 36]
 │       │   ├── unitRendering.ts       # drawUnit, hitTestUnit [Phase 35]
 │       │   └── engagementProcessing.ts # buildEngagementArcs [Phase 35]
-│       └── __tests__/                   # Vitest tests (231 total)
+│       └── __tests__/                   # Vitest tests (418 verified)
+├── .agents/
+│   └── skills/                       # Maintained Codex phase routes (20 total)
 ├── .claude/
 │   ├── settings.json                 # Project hooks
-│   └── skills/                       # Claude skills (17 total)
+│   └── skills/                       # Claude source routes (20 total)
 ├── .github/
 │   └── workflows/
 │       └── docs.yml                  # GitHub Actions — docs deployment [Phase 31]

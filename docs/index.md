@@ -3,14 +3,19 @@
 **High-fidelity stochastic wargame simulator** -- multi-scale, multi-domain, multi-era.
 
 ![Python](https://img.shields.io/badge/python-%3E%3D3.12-blue)
-![Tests](https://img.shields.io/badge/tests-10%2C522_passing-brightgreen)
-![Phase](https://img.shields.io/badge/phase-104_Block--11--COMPLETE-brightgreen)
+![Tests](https://img.shields.io/badge/tests-10%2C168_passing-brightgreen)
+![Phase](https://img.shields.io/badge/phase-106_COMPLETE-brightgreen)
 
 ---
 
 ## What Is This?
 
-Stochastic Warfare is a headless Python simulation engine that models warfare across multiple scales -- from individual unit engagements up through tactical battles, operational battlefields, and multi-day strategic campaigns. Every outcome is driven by stochastic and signal-processing-inspired models: Markov chains, Monte Carlo methods, Kalman filters, Poisson processes, queueing theory, and SNR-based detection theory.
+Stochastic Warfare combines a headless Python simulation engine, FastAPI
+service, and React web application. It models warfare across multiple scales --
+from individual unit engagements through tactical battles, operational
+battlefields, and multi-day strategic campaigns. Outcomes use stochastic and
+signal-processing-inspired models including Markov chains, Monte Carlo methods,
+Kalman filters, Poisson processes, queueing theory, and SNR-based detection.
 
 ## Key Capabilities
 
@@ -78,6 +83,8 @@ See the [Getting Started Guide](guide/getting-started.md) for a complete tutoria
 | Block 10 | 92--97 | UI depth & engine exposure — analytics, frame enrichment, metadata | **Complete** |
 | Block 11 | 98--104 | Golden scenarios and deployment polish | **Complete** |
 | Block 12 | 105--112 | Integrity remediation against production-path evidence | **In progress** |
+
+Phases 105 and 106 are complete; Phase 107 is next.
 
 Fresh verified baseline: **10,168 default-selected Python tests passed** (21
 skipped, 346 deselected) plus **418 frontend tests passed**. See the

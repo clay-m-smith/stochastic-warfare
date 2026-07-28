@@ -15,9 +15,14 @@ if TYPE_CHECKING:
 
 
 @lru_cache(maxsize=1)
-def get_settings() -> ApiSettings:
-    """Return cached application settings."""
+def get_default_settings() -> ApiSettings:
+    """Return cached settings for the default application factory."""
     return ApiSettings()
+
+
+def get_settings(request: Request) -> ApiSettings:
+    """Retrieve the exact settings owned by the current application."""
+    return request.app.state.settings
 
 
 def get_db(request: Request) -> Database:

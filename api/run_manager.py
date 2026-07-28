@@ -8,12 +8,27 @@ from __future__ import annotations
 
 import asyncio
 import json
+import logging
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any
+from threading import Event
+from typing import TYPE_CHECKING, Any
 
 from api.database import Database
+
+if TYPE_CHECKING:
+    from stochastic_warfare.simulation.scenario import CampaignScenarioConfig
+
+logger = logging.getLogger(__name__)
+
+
+class RunCancelledError(RuntimeError):
+    """Raised inside a worker when cooperative cancellation is requested."""
+
+
+class RunManagerClosedError(RuntimeError):
+    """Raised when work is submitted after manager shutdown begins."""
 
 
 class RunManager:
@@ -21,14 +36,20 @@ class RunManager:
 
     def __init__(self, db: Database, *, data_dir: str, max_concurrent: int = 4,
                  max_stored_events: int = 50_000, default_max_ticks: int = 10_000) -> None:
+        if max_concurrent < 1:
+            raise ValueError("max_concurrent must be at least 1")
         self._db = db
         self._data_dir = Path(data_dir)
         self._semaphore = asyncio.Semaphore(max_concurrent)
         self._max_stored_events = max_stored_events
         self._default_max_ticks = default_max_ticks
         self._progress_queues: dict[str, list[asyncio.Queue]] = {}
-        self._cancel_flags: dict[str, bool] = {}
-        self._tasks: dict[str, asyncio.Task] = {}
+        self._cancel_events: dict[str, Event] = {}
+        self._tasks: dict[str, asyncio.Task[None]] = {}
+        self._lifecycle_lock = asyncio.Lock()
+        self._shutdown_task: asyncio.Task[None] | None = None
+        self._closing = False
+        self._closed = False
 
     async def submit(
         self,
@@ -40,14 +61,58 @@ class RunManager:
         frame_interval: int | None = None,
     ) -> str:
         """Submit a run for background execution. Returns run_id."""
-        run_id = uuid.uuid4().hex[:12]
-        await self._db.create_run(
-            run_id, scenario_name, scenario_path, seed, max_ticks, config_overrides,
+        if self._closing or self._closed:
+            raise RunManagerClosedError("Run manager is shutting down")
+
+        from stochastic_warfare.simulation.scenario import (
+            load_campaign_scenario_config,
         )
-        self._progress_queues[run_id] = []
-        self._cancel_flags[run_id] = False
-        task = asyncio.create_task(self._execute_run(run_id, scenario_path, seed, max_ticks, config_overrides or {}, frame_interval))
-        self._tasks[run_id] = task
+
+        patch = dict(config_overrides or {})
+        effective_config = await asyncio.to_thread(
+            load_campaign_scenario_config,
+            Path(scenario_path),
+            patch,
+        )
+        run_id = uuid.uuid4().hex[:12]
+        async with self._lifecycle_lock:
+            if self._closing or self._closed:
+                raise RunManagerClosedError("Run manager is shutting down")
+            await self._db.create_run(
+                run_id,
+                scenario_name,
+                scenario_path,
+                seed,
+                max_ticks,
+                patch,
+            )
+            self._progress_queues[run_id] = []
+            cancel_event = Event()
+            self._cancel_events[run_id] = cancel_event
+            try:
+                task = asyncio.create_task(
+                    self._execute_run(
+                        run_id,
+                        scenario_path,
+                        seed,
+                        max_ticks,
+                        effective_config,
+                        cancel_event,
+                        frame_interval,
+                    ),
+                )
+            except Exception as exc:
+                self._progress_queues.pop(run_id, None)
+                self._cancel_events.pop(run_id, None)
+                await self._db.update_run_status(
+                    run_id,
+                    "failed",
+                    completed_at=datetime.now(timezone.utc).isoformat(),
+                    error_message=f"Could not schedule run: {exc}",
+                )
+                raise
+            self._tasks[run_id] = task
+            task.add_done_callback(self._retrieve_task_result)
         return run_id
 
     def subscribe(self, run_id: str) -> asyncio.Queue | None:
@@ -68,24 +133,145 @@ class RunManager:
             except ValueError:
                 pass
 
+    @staticmethod
+    def _retrieve_task_result(task: asyncio.Task[None]) -> None:
+        """Consume and report exceptions even after task bookkeeping is gone."""
+        try:
+            exception = task.exception()
+        except asyncio.CancelledError:
+            return
+        if exception is not None:
+            logger.error(
+                "Background task ended with an exception",
+                exc_info=(
+                    type(exception),
+                    exception,
+                    exception.__traceback__,
+                ),
+            )
+
+    @staticmethod
+    async def _await_worker(
+        worker_future: asyncio.Future[dict[str, Any]],
+        cancel_event: Event,
+    ) -> dict[str, Any]:
+        """Keep ownership until an executor worker stops, even if cancelled."""
+        try:
+            return await asyncio.shield(worker_future)
+        except asyncio.CancelledError:
+            cancel_event.set()
+            while not worker_future.done():
+                try:
+                    await asyncio.shield(worker_future)
+                except asyncio.CancelledError:
+                    cancel_event.set()
+                except BaseException:
+                    break
+            try:
+                worker_future.result()
+            except RunCancelledError:
+                pass
+            except BaseException as exception:
+                logger.error(
+                    "Executor worker failed while stopping after cancellation",
+                    exc_info=(
+                        type(exception),
+                        exception,
+                        exception.__traceback__,
+                    ),
+                )
+            raise
+
+    @staticmethod
+    def _put_progress(
+        queue: asyncio.Queue,
+        message: dict[str, Any],
+    ) -> None:
+        """Deliver best-effort progress without leaking QueueFull callbacks."""
+        try:
+            queue.put_nowait(message)
+        except asyncio.QueueFull:
+            pass
+
+    @staticmethod
+    def _signal_terminal(queue: asyncio.Queue) -> None:
+        """Guarantee room for the terminal sentinel on a bounded queue."""
+        try:
+            queue.put_nowait(None)
+            return
+        except asyncio.QueueFull:
+            pass
+        try:
+            queue.get_nowait()
+        except asyncio.QueueEmpty:
+            pass
+        queue.put_nowait(None)
+
     async def cancel(self, run_id: str) -> bool:
         """Request cancellation of a running job."""
-        if run_id in self._cancel_flags:
-            self._cancel_flags[run_id] = True
+        async with self._lifecycle_lock:
+            cancel_event = self._cancel_events.get(run_id)
+            if cancel_event is None:
+                return False
+            cancel_event.set()
             return True
-        return False
+
+    async def cancel_and_wait(self, run_id: str) -> bool:
+        """Cancel an active job and wait for its terminal persistence."""
+        async with self._lifecycle_lock:
+            cancel_event = self._cancel_events.get(run_id)
+            task = self._tasks.get(run_id)
+            if cancel_event is None or task is None:
+                return False
+            cancel_event.set()
+        await asyncio.shield(task)
+        return True
 
     async def shutdown(self, timeout: float = 5.0) -> None:
-        """Cancel all running tasks and wait for completion."""
-        for run_id in list(self._cancel_flags):
-            self._cancel_flags[run_id] = True
-        tasks = list(self._tasks.values())
-        if tasks:
-            done, pending = await asyncio.wait(tasks, timeout=timeout)
-            for task in pending:
-                task.cancel()
-            if pending:
-                await asyncio.wait(pending, timeout=1.0)
+        """Cooperatively stop all work before allowing database teardown."""
+        async with self._lifecycle_lock:
+            if self._shutdown_task is None:
+                self._closing = True
+                for cancel_event in self._cancel_events.values():
+                    cancel_event.set()
+                tasks = list(self._tasks.values())
+                self._shutdown_task = asyncio.create_task(
+                    self._finish_shutdown(tasks, timeout),
+                )
+            shutdown_task = self._shutdown_task
+
+        caller_cancelled = False
+        while True:
+            try:
+                await asyncio.shield(shutdown_task)
+                break
+            except asyncio.CancelledError:
+                if shutdown_task.done():
+                    raise
+                caller_cancelled = True
+
+        if caller_cancelled:
+            raise asyncio.CancelledError
+
+    async def _finish_shutdown(
+        self,
+        tasks: list[asyncio.Task[None]],
+        timeout: float,
+    ) -> None:
+        """Finish shared shutdown independently of cancelling callers."""
+        try:
+            if tasks:
+                _, pending = await asyncio.wait(tasks, timeout=timeout)
+                if pending:
+                    logger.warning(
+                        "Shutdown grace threshold reached; waiting for %d "
+                        "cooperative worker(s)",
+                        len(pending),
+                    )
+                await asyncio.gather(*tasks, return_exceptions=True)
+        finally:
+            async with self._lifecycle_lock:
+                self._closed = True
 
     async def _execute_run(
         self,
@@ -93,24 +279,36 @@ class RunManager:
         scenario_path: str,
         seed: int,
         max_ticks: int,
-        config_overrides: dict[str, Any],
+        effective_config: CampaignScenarioConfig,
+        cancel_event: Event,
         frame_interval: int | None = None,
     ) -> None:
         """Execute a simulation run in a background thread."""
         loop = asyncio.get_running_loop()
 
-        await self._db.update_run_status(
-            run_id, "running",
-            started_at=datetime.now(timezone.utc).isoformat(),
-        )
-
         try:
+            await self._db.update_run_status(
+                run_id,
+                "running",
+                started_at=datetime.now(timezone.utc).isoformat(),
+            )
             async with self._semaphore:
-                result = await loop.run_in_executor(
+                worker_future = loop.run_in_executor(
                     None,
                     self._run_sync,
-                    run_id, scenario_path, seed, max_ticks, config_overrides,
-                    loop, None, frame_interval,
+                    run_id,
+                    scenario_path,
+                    seed,
+                    max_ticks,
+                    effective_config,
+                    loop,
+                    None,
+                    frame_interval,
+                    cancel_event,
+                )
+                result = await self._await_worker(
+                    worker_future,
+                    cancel_event,
                 )
 
             now = datetime.now(timezone.utc).isoformat()
@@ -123,6 +321,22 @@ class RunManager:
                 terrain_json=json.dumps(result["terrain"], default=str),
                 frames_json=json.dumps(result["frames"], default=str),
             )
+        except RunCancelledError:
+            await self._db.update_run_status(
+                run_id,
+                "cancelled",
+                completed_at=datetime.now(timezone.utc).isoformat(),
+            )
+        except asyncio.CancelledError:
+            cancel_event.set()
+            await asyncio.shield(
+                self._db.update_run_status(
+                    run_id,
+                    "cancelled",
+                    completed_at=datetime.now(timezone.utc).isoformat(),
+                ),
+            )
+            raise
         except Exception as exc:
             now = datetime.now(timezone.utc).isoformat()
             await self._db.update_run_status(
@@ -133,13 +347,10 @@ class RunManager:
         finally:
             # Send terminal sentinel to all subscribers
             for q in list(self._progress_queues.get(run_id, [])):
-                try:
-                    q.put_nowait(None)
-                except asyncio.QueueFull:
-                    pass
+                self._signal_terminal(q)
             # Cleanup
             self._progress_queues.pop(run_id, None)
-            self._cancel_flags.pop(run_id, None)
+            self._cancel_events.pop(run_id, None)
             self._tasks.pop(run_id, None)
 
     def _run_sync(
@@ -148,10 +359,11 @@ class RunManager:
         scenario_path: str,
         seed: int,
         max_ticks: int,
-        config_overrides: dict[str, Any],
+        effective_config: CampaignScenarioConfig,
         loop: asyncio.AbstractEventLoop,
         queue: asyncio.Queue | None,
         frame_interval: int | None = None,
+        cancel_event: Event | None = None,
     ) -> dict[str, Any]:
         """Core synchronous simulation execution (runs in thread pool)."""
         from stochastic_warfare.entities.base import UnitStatus
@@ -161,17 +373,15 @@ class RunManager:
         from stochastic_warfare.simulation.victory import ObjectiveState, VictoryEvaluator
         from stochastic_warfare.core.types import Position
         from stochastic_warfare.tools.serializers import serialize_to_dict
-        import yaml
 
         path = Path(scenario_path)
-        with open(path, encoding="utf-8") as f:
-            config_dict = yaml.safe_load(f)
-
-        if config_overrides:
-            self._apply_overrides(config_dict, config_overrides)
-
         loader = ScenarioLoader(self._data_dir)
-        ctx = loader.load(path, seed=seed)
+        ctx = loader.load(
+            path,
+            seed=seed,
+            scenario_config=effective_config,
+        )
+        config_dict = ctx.config.model_dump(mode="json")
 
         # Capture static terrain data (Phase 35)
         terrain_data = self._capture_terrain(ctx, config_dict)
@@ -231,8 +441,8 @@ class RunManager:
 
         while not game_over:
             # Check cancellation
-            if self._cancel_flags.get(run_id, False):
-                raise RuntimeError("Run cancelled by user")
+            if cancel_event is not None and cancel_event.is_set():
+                raise RunCancelledError("Run cancelled by user")
 
             game_over = engine.step()
             tick = ctx.clock.tick_count
@@ -272,8 +482,12 @@ class RunManager:
                 }
                 for q in list(self._progress_queues.get(run_id, [])):
                     try:
-                        loop.call_soon_threadsafe(q.put_nowait, progress)
-                    except (RuntimeError, asyncio.QueueFull):
+                        loop.call_soon_threadsafe(
+                            self._put_progress,
+                            q,
+                            progress,
+                        )
+                    except RuntimeError:
                         pass
 
         recorder.stop()
@@ -331,17 +545,6 @@ class RunManager:
             "terrain": terrain_data,
             "frames": map_frames,
         }
-
-    # ── Config overrides (Phase 37) ─────────────────────────────────
-
-    @staticmethod
-    def _apply_overrides(base: dict, overrides: dict) -> None:
-        """Recursive deep-merge of *overrides* into *base* (mutates base)."""
-        for key, val in overrides.items():
-            if isinstance(val, dict) and isinstance(base.get(key), dict):
-                RunManager._apply_overrides(base[key], val)
-            else:
-                base[key] = val
 
     # ── Map data capture (Phase 35) ─────────────────────────────────
 
@@ -543,17 +746,56 @@ class RunManager:
         max_ticks: int,
     ) -> str:
         """Submit a Monte Carlo batch for background execution."""
+        if self._closing or self._closed:
+            raise RunManagerClosedError("Run manager is shutting down")
+
+        from stochastic_warfare.simulation.scenario import (
+            load_campaign_scenario_config,
+        )
+
+        effective_config = await asyncio.to_thread(
+            load_campaign_scenario_config,
+            Path(scenario_path),
+        )
         batch_id = uuid.uuid4().hex[:12]
-        await self._db.create_batch(
-            batch_id, scenario_name, scenario_path,
-            num_iterations, base_seed, max_ticks,
-        )
-        self._progress_queues[batch_id] = []
-        self._cancel_flags[batch_id] = False
-        task = asyncio.create_task(
-            self._execute_batch(batch_id, scenario_path, num_iterations, base_seed, max_ticks),
-        )
-        self._tasks[batch_id] = task
+        async with self._lifecycle_lock:
+            if self._closing or self._closed:
+                raise RunManagerClosedError("Run manager is shutting down")
+            await self._db.create_batch(
+                batch_id,
+                scenario_name,
+                scenario_path,
+                num_iterations,
+                base_seed,
+                max_ticks,
+            )
+            self._progress_queues[batch_id] = []
+            cancel_event = Event()
+            self._cancel_events[batch_id] = cancel_event
+            try:
+                task = asyncio.create_task(
+                    self._execute_batch(
+                        batch_id,
+                        scenario_path,
+                        num_iterations,
+                        base_seed,
+                        max_ticks,
+                        effective_config,
+                        cancel_event,
+                    ),
+                )
+            except Exception as exc:
+                self._progress_queues.pop(batch_id, None)
+                self._cancel_events.pop(batch_id, None)
+                await self._db.update_batch(
+                    batch_id,
+                    status="failed",
+                    completed_at=datetime.now(timezone.utc).isoformat(),
+                    error_message=f"Could not schedule batch: {exc}",
+                )
+                raise
+            self._tasks[batch_id] = task
+            task.add_done_callback(self._retrieve_task_result)
         return batch_id
 
     async def _execute_batch(
@@ -563,29 +805,41 @@ class RunManager:
         num_iterations: int,
         base_seed: int,
         max_ticks: int,
+        effective_config: CampaignScenarioConfig,
+        cancel_event: Event,
     ) -> None:
         """Execute a Monte Carlo batch sequentially."""
         import numpy as np
 
         loop = asyncio.get_running_loop()
 
-        await self._db.update_batch(batch_id, status="running")
-
         try:
+            await self._db.update_batch(batch_id, status="running")
             all_metrics: dict[str, list[float]] = {}
             completed = 0
 
             for i in range(num_iterations):
-                if self._cancel_flags.get(batch_id, False):
-                    raise RuntimeError("Batch cancelled by user")
+                if cancel_event.is_set():
+                    raise RunCancelledError("Batch cancelled by user")
 
                 seed = base_seed + i
                 async with self._semaphore:
-                    result = await loop.run_in_executor(
+                    worker_future = loop.run_in_executor(
                         None,
                         self._run_sync,
-                        f"batch_{batch_id}_{i}", scenario_path, seed, max_ticks, {},
-                        loop, None,
+                        f"batch_{batch_id}_{i}",
+                        scenario_path,
+                        seed,
+                        max_ticks,
+                        effective_config,
+                        loop,
+                        None,
+                        None,
+                        cancel_event,
+                    )
+                    result = await self._await_worker(
+                        worker_future,
+                        cancel_event,
                     )
 
                 # Extract metrics
@@ -605,10 +859,7 @@ class RunManager:
                     "seed": seed,
                 }
                 for q in list(self._progress_queues.get(batch_id, [])):
-                    try:
-                        q.put_nowait(progress)
-                    except asyncio.QueueFull:
-                        pass
+                    self._put_progress(q, progress)
 
             # Compute statistics
             stats: dict[str, Any] = {}
@@ -632,6 +883,22 @@ class RunManager:
                 completed_at=now,
                 metrics_json=json.dumps(stats, default=str),
             )
+        except RunCancelledError:
+            await self._db.update_batch(
+                batch_id,
+                status="cancelled",
+                completed_at=datetime.now(timezone.utc).isoformat(),
+            )
+        except asyncio.CancelledError:
+            cancel_event.set()
+            await asyncio.shield(
+                self._db.update_batch(
+                    batch_id,
+                    status="cancelled",
+                    completed_at=datetime.now(timezone.utc).isoformat(),
+                ),
+            )
+            raise
         except Exception as exc:
             now = datetime.now(timezone.utc).isoformat()
             await self._db.update_batch(
@@ -642,10 +909,7 @@ class RunManager:
             )
         finally:
             for q in list(self._progress_queues.get(batch_id, [])):
-                try:
-                    q.put_nowait(None)
-                except asyncio.QueueFull:
-                    pass
+                self._signal_terminal(q)
             self._progress_queues.pop(batch_id, None)
-            self._cancel_flags.pop(batch_id, None)
+            self._cancel_events.pop(batch_id, None)
             self._tasks.pop(batch_id, None)

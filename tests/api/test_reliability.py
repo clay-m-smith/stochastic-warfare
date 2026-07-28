@@ -116,20 +116,14 @@ async def test_unit_cache_same_object():
 # ── Shutdown ──────────────────────────────────────────────────────────────
 
 
-async def test_shutdown_cancels_tasks():
-    """shutdown() should cancel all running tasks."""
+async def test_shutdown_is_idempotent():
+    """Repeated shutdown should leave the manager closed."""
     db = Database(":memory:")
     await db.initialize()
     mgr = RunManager(db, data_dir="data", max_concurrent=4)
 
-    # Create a mock long-running task
-    async def slow_task():
-        await asyncio.sleep(60)
-
-    task = asyncio.create_task(slow_task())
-    mgr._tasks["fake_run"] = task
-    mgr._cancel_flags["fake_run"] = False
-
-    await mgr.shutdown(timeout=1.0)
-    assert task.cancelled() or task.done()
+    await mgr.shutdown(timeout=0.0)
+    await mgr.shutdown(timeout=0.0)
+    assert mgr._closed
+    assert mgr._tasks == {}
     await db.close()

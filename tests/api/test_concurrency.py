@@ -38,7 +38,8 @@ async def test_batch_semaphore_limits_concurrency(db):
     original_run_sync = RunManager._run_sync
 
     def mock_run_sync(self, run_id, scenario_path, seed, max_ticks,
-                      config_overrides, loop, queue, frame_interval=None):
+                      effective_config, loop, queue, frame_interval=None,
+                      cancel_event=None):
         nonlocal max_concurrent_seen, current
         # Use threading lock since this runs in thread pool
         # We approximate by tracking through a simple counter

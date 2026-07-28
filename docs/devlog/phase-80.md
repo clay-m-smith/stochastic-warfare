@@ -37,7 +37,11 @@ Created 10 new YAML files:
 Created 3 scenarios exercising 16 CalibrationSchema fields never set to non-default values:
 - **`calibration_arctic`**: Arctic infantry patrol — exercises `cold_casualty_base_rate`, `night_thermal_floor`, `wind_accuracy_penalty_scale`, `rain_attenuation_factor`, `dig_in_ticks`, `observation_decay_rate`
 - **`calibration_urban_cbrn`**: Urban CBRN response — exercises `gas_casualty_floor`, `gas_protection_scaling`, `heat_casualty_base_rate`, `c2_min_effectiveness`, `engagement_concealment_threshold`, `fire_damage_per_tick`
-- **`calibration_air_ground`**: Air-ground combined arms — exercises `cloud_ceiling_min_attack_m`, `icing_maneuver_penalty`, `planning_available_time_s`, `disable_threshold`, `wave_interval_s`, `target_selection_mode`
+- **`calibration_air_ground`**: Air-ground combined arms — declares
+  `cloud_ceiling_min_attack_m`, `icing_maneuver_penalty`,
+  `planning_available_time_s`, `disable_threshold`, `wave_interval_s`, and
+  `target_selection_mode`; the `nearest` target-selection behavior was repaired
+  and verified in Phase 106
 
 ## Test Summary
 

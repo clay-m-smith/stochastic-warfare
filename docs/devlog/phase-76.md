@@ -8,6 +8,13 @@
 
 Phase 76 addresses Block 8 exit criteria #7 (API schemas current) and #8 (API concurrency bugs fixed). It fixes 6 critical/high concurrency bugs, adds graceful shutdown, WAL mode, filesystem scan caching, request body limits, and health probe endpoints.
 
+> **Phase 106 correction (2026-07-28):** The original shutdown canceled
+> asyncio wrappers after a timeout but could not stop their executor threads;
+> fixture teardown could then close SQLite while work continued and leave a
+> permanent `running` row. The reliability test used an unrelated sleeping
+> asyncio task and did not prove worker ownership. REM-003 was behaviorally
+> repaired and verified in [Phase 106](phase-106.md).
+
 ## What Was Built
 
 ### 76a: Concurrency Fixes

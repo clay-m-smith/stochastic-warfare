@@ -9,6 +9,7 @@ modules together from a scenario definition.
 from __future__ import annotations
 
 import copy
+from collections.abc import Mapping
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -298,6 +299,66 @@ class CampaignScenarioConfig(BaseModel):
         if v <= 0:
             raise ValueError("duration_hours must be positive")
         return v
+
+
+def _merge_config_patch(
+    base: dict[str, Any],
+    patch: Mapping[str, Any],
+) -> None:
+    """Recursively merge one sparse configuration patch into ``base``."""
+    for key, value in patch.items():
+        if isinstance(value, Mapping) and isinstance(base.get(key), dict):
+            _merge_config_patch(base[key], value)
+        else:
+            base[key] = copy.deepcopy(value)
+
+
+def load_campaign_scenario_config(
+    scenario_path: Path,
+    calibration_overrides: Mapping[str, Any] | CalibrationSchema | None = None,
+) -> CampaignScenarioConfig:
+    """Parse one scenario and apply a sparse, typed calibration overlay."""
+    with open(scenario_path, encoding="utf-8") as config_file:
+        raw = yaml.safe_load(config_file)
+    config = CampaignScenarioConfig.model_validate(raw)
+    if calibration_overrides is None:
+        return config
+
+    if isinstance(calibration_overrides, CalibrationSchema):
+        patch = calibration_overrides.model_dump(
+            mode="json",
+            exclude_unset=True,
+        )
+    else:
+        raw_patch = dict(calibration_overrides)
+        dead_keys = sorted(
+            set(raw_patch) & CalibrationSchema._DEAD_KEYS,
+        )
+        if dead_keys:
+            raise ValueError(
+                f"Unsupported dead calibration overrides: {dead_keys!r}",
+            )
+        patch = CalibrationSchema.model_validate(
+            raw_patch,
+            strict=True,
+        ).model_dump(
+            mode="json",
+            exclude_unset=True,
+        )
+
+    scenario_sides = {side.side for side in config.sides}
+    referenced_sides = set(patch.get("side_overrides", {}))
+    referenced_sides.update(patch.get("defensive_sides", []))
+    unknown_sides = sorted(referenced_sides - scenario_sides)
+    if unknown_sides:
+        raise ValueError(
+            f"Calibration overrides reference unknown sides: {unknown_sides!r}",
+        )
+
+    merged = config.calibration_overrides.model_dump(mode="json")
+    _merge_config_patch(merged, patch)
+    config.calibration_overrides = CalibrationSchema.model_validate(merged)
+    return config
 
 
 # ---------------------------------------------------------------------------
@@ -1196,6 +1257,9 @@ class ScenarioLoader:
         self,
         scenario_path: Path,
         seed: int = 42,
+        *,
+        calibration_overrides: Mapping[str, Any] | CalibrationSchema | None = None,
+        scenario_config: CampaignScenarioConfig | None = None,
     ) -> SimulationContext:
         """Load a campaign scenario and create a fully-wired context.
 
@@ -1205,11 +1269,24 @@ class ScenarioLoader:
             Path to the campaign scenario YAML file.
         seed:
             Master PRNG seed for deterministic replay.
+        calibration_overrides:
+            Sparse ``CalibrationSchema`` overlay applied without mutating the
+            source scenario.
+        scenario_config:
+            Prevalidated effective configuration supplied by an orchestrator.
         """
         # 1. Parse config
-        with open(scenario_path) as f:
-            raw = yaml.safe_load(f)
-        config = CampaignScenarioConfig.model_validate(raw)
+        if scenario_config is not None and calibration_overrides is not None:
+            raise ValueError(
+                "scenario_config and calibration_overrides are mutually exclusive",
+            )
+        if scenario_config is None:
+            config = load_campaign_scenario_config(
+                scenario_path,
+                calibration_overrides,
+            )
+        else:
+            config = scenario_config.model_copy(deep=True)
         logger.info("Loaded campaign %r from %s", config.name, scenario_path)
 
         # 2. Core infrastructure

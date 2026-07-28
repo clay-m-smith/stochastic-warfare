@@ -105,7 +105,9 @@ Classify units each tick into resolution tiers:
 
 ## Theme 4: Engagement Selection Optimization
 
-**Problem**: Threat-scored target selection iterates all enemies per attacker. With `target_selection_mode: threat` (the default), each attacker computes a score for every enemy, making engagement selection O(n × m).
+**Problem**: Threat-scored target selection iterates all enemies per attacker.
+With `target_selection_mode: threat_scored` (the default), each attacker
+computes a score for every enemy, making engagement selection O(n × m).
 
 **Solution**: Pre-filter candidates before scoring.
 

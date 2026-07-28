@@ -9,6 +9,13 @@
 
 Added terrain-combat interaction (cover, concealment, elevation advantage), per-unit training level, threat-based target selection, and detection quality modifier to the engagement loop. These four subsystems deepen the combat model by making terrain, unit quality, target prioritization, and sensor performance all feed into engagement outcomes.
 
+> **Phase 106 correction (2026-07-28):** The historical mode names below were
+> not the delivered public contract. The current schema accepts `closest`,
+> `nearest`, and `threat_scored`; `nearest` is an alias for `closest`.
+> `random` is unsupported. Phase 49 only instantiated the schema and did not
+> behaviorally distinguish the nearest branch. Phase 106 wired and proved the
+> alias through the production API and battle loop.
+
 ## What Was Built
 
 ### 41a: Terrain Combat Modifiers (`battle.py`)
@@ -43,10 +50,10 @@ Added terrain-combat interaction (cover, concealment, elevation advantage), per-
 - **Pk**: Estimated probability of kill with best available weapon
 - **Value**: Target type priority weights — HQ=2.0, AD=1.8, Artillery=1.5, Armor=1.3, other=1.0
 - **Distance penalty**: Linear distance falloff to prefer closer targets
-- Configurable via `calibration.target_selection_mode`:
-  - `"threat"` — full composite scoring (default)
-  - `"nearest"` — distance only (legacy behavior)
-  - `"random"` — uniform random selection
+- Currently configurable via `calibration.target_selection_mode`:
+  - `"threat_scored"` — full composite scoring (default)
+  - `"closest"` — distance only
+  - `"nearest"` — alias for `"closest"`
 
 ### 41d: Detection Quality Modifier (`battle.py`)
 
@@ -66,7 +73,9 @@ Added terrain-combat interaction (cover, concealment, elevation advantage), per-
 
 3. **Training level as skill multiplier, not separate stat**: Rather than adding a parallel accuracy system, training level scales the existing `crew_skill` value. This means all downstream systems that consume crew skill automatically benefit from training level without modification.
 
-4. **Composite target scoring with configurable mode**: The default `"threat"` mode captures realistic target prioritization (kill the most dangerous target you can reliably hit). The `"nearest"` and `"random"` modes exist for backward compatibility and scenario testing.
+4. **Composite target scoring with configurable mode**: The default
+   `"threat_scored"` mode captures target prioritization. `"closest"` and its
+   `"nearest"` alias provide distance-only selection.
 
 5. **Detection quality floor at 0.3**: Even marginal detections allow some chance of engagement (30% accuracy modifier). A floor of 0.0 would make low-SNR contacts completely immune, which is unrealistic — units can still fire at approximate positions.
 

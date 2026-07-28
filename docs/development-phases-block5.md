@@ -287,7 +287,10 @@ Replace closest-enemy Euclidean distance with weighted threat scoring.
     - `value_factor` = target's tactical value (commander units, artillery, SAM, carriers)
     - `distance_penalty` = range normalized by weapon effective range
   - Select target with highest score (not closest)
-  - Configurable via `target_selection_mode: "closest" | "threat_scored"` (default: "threat_scored", "closest" for backward compat)
+  - Configurable via
+    `target_selection_mode: "closest" | "nearest" | "threat_scored"`
+    (default: `"threat_scored"`; `"nearest"` aliases `"closest"`, behaviorally
+    verified in Phase 106)
 - **`stochastic_warfare/simulation/battle.py`** (modified) -- Commander intent integration:
   - OODA DECIDE phase can set priority target types per unit
   - Priority targets get score bonus (2x multiplier)

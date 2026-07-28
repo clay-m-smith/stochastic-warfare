@@ -60,10 +60,9 @@ async def test_valid_config_overrides_accepted(client):
     resp = await client.post("/api/runs", json={
         "scenario": "test_campaign",
         "max_ticks": 50,
-        "config_overrides": {"calibration": {"hit_probability_modifier": 1.5}},
+        "config_overrides": {"hit_probability_modifier": 1.5},
     })
-    # 202 (accepted) or 404 (scenario not found) — not 422
-    assert resp.status_code in (202, 404)
+    assert resp.status_code == 202
 
 
 # ── Health endpoints ──────────────────────────────────────────────────────

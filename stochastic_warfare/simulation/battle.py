@@ -3886,7 +3886,7 @@ class BattleManager:
                 dists = np.sqrt(np.sum(diffs * diffs, axis=1))
 
                 # Phase 41c: threat-based or closest target selection
-                if target_selection_mode == "closest":
+                if target_selection_mode in {"closest", "nearest"}:
                     best_idx = int(np.argmin(dists))
                 else:
                     # Phase 84c: pre-filter candidates within weapon range

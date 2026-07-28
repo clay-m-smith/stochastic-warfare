@@ -11,7 +11,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, WebSocket, WebSock
 from api.config import ApiSettings
 from api.database import Database
 from api.dependencies import get_db, get_run_manager, get_settings
-from api.run_manager import RunManager
+from api.run_manager import RunManager, RunManagerClosedError
 from api.scenarios import resolve_scenario
 from api.schemas import (
     BatchDetail,
@@ -53,10 +53,23 @@ async def submit_run(
     except FileNotFoundError:
         raise HTTPException(status_code=404, detail=f"Scenario '{req.scenario}' not found")
 
-    run_id = await mgr.submit(
-        req.scenario, str(path), req.seed, req.max_ticks, req.config_overrides,
-        frame_interval=req.frame_interval,
+    patch = req.config_overrides.model_dump(
+        mode="json",
+        exclude_unset=True,
     )
+    try:
+        run_id = await mgr.submit(
+            req.scenario,
+            str(path),
+            req.seed,
+            req.max_ticks,
+            patch,
+            frame_interval=req.frame_interval,
+        )
+    except RunManagerClosedError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
     return RunSubmitResponse(run_id=run_id, status=RunStatus.PENDING)
 
 
@@ -84,9 +97,17 @@ async def submit_run_from_config(
         yaml.dump(req.config, f, default_flow_style=False)
 
     scenario_name = req.config.get("name", "[custom]")
-    run_id = await mgr.submit(
-        str(scenario_name), str(tmp_path), req.seed, req.max_ticks,
-    )
+    try:
+        run_id = await mgr.submit(
+            str(scenario_name),
+            str(tmp_path),
+            req.seed,
+            req.max_ticks,
+        )
+    except RunManagerClosedError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
     return RunSubmitResponse(run_id=run_id, status=RunStatus.PENDING)
 
 
@@ -135,7 +156,12 @@ async def get_run(run_id: str, db: Database = Depends(get_db)) -> RunDetail:
 
 
 @router.delete("/{run_id}", status_code=204)
-async def delete_run(run_id: str, db: Database = Depends(get_db)) -> None:
+async def delete_run(
+    run_id: str,
+    db: Database = Depends(get_db),
+    mgr: RunManager = Depends(get_run_manager),
+) -> None:
+    await mgr.cancel_and_wait(run_id)
     deleted = await db.delete_run(run_id)
     if not deleted:
         raise HTTPException(status_code=404, detail=f"Run '{run_id}' not found")
@@ -383,9 +409,18 @@ async def submit_batch(
     except FileNotFoundError:
         raise HTTPException(status_code=404, detail=f"Scenario '{req.scenario}' not found")
 
-    batch_id = await mgr.submit_batch(
-        req.scenario, str(path), req.num_iterations, req.base_seed, req.max_ticks,
-    )
+    try:
+        batch_id = await mgr.submit_batch(
+            req.scenario,
+            str(path),
+            req.num_iterations,
+            req.base_seed,
+            req.max_ticks,
+        )
+    except RunManagerClosedError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
     return BatchSubmitResponse(batch_id=batch_id, status=RunStatus.PENDING)
 
 

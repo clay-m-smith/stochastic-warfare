@@ -128,7 +128,8 @@ This means you can test combat resolution without a terrain engine, or test dete
 
 The `ScenarioLoader` is the central factory. Given a scenario YAML file, it:
 
-1. Parses the YAML into a `CampaignScenarioConfig` (pydantic-validated)
+1. Parses the YAML into a `CampaignScenarioConfig` (pydantic-validated), or
+   deep-copies a prevalidated effective config supplied by an orchestrator
 2. Creates terrain, environment, and weather engines
 3. Instantiates all units with their equipment, weapons, and sensors
 4. Creates detection, combat, movement, morale, C2, and logistics engines
@@ -211,11 +212,21 @@ A FastAPI service sits alongside the engine (not inside it). It provides:
 
 - **REST endpoints** for browsing scenarios, units, and run history
 - **WebSocket streaming** for live simulation progress
-- **Async run execution** via `asyncio.to_thread()` (CPU-bound simulation in thread pool)
+- **Async run execution** via executor workers (CPU-bound simulation in a
+  thread pool)
 - **SQLite persistence** for run results across server restarts
 - **Batch execution** for Monte Carlo statistical analysis
 
-The API layer imports `stochastic_warfare` as a library. It never modifies engine code.
+The application lifespan owns one settings object, database connection, and run
+manager. A run is accepted only after its effective scenario config validates
+and its pending row commits. Shutdown rejects new work, cooperatively signals
+run and batch workers, waits for the actual executor threads and terminal
+SQLite writes, then closes the database. The grace timeout reports slow
+workers; it does not abandon them.
+
+The API layer imports `stochastic_warfare` as a library. Sparse calibration
+overlays are merged into an isolated effective config before
+`ScenarioLoader`; source scenario YAML is not modified.
 
 ### Frontend (`frontend/`)
 

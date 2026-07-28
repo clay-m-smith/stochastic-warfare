@@ -424,12 +424,18 @@ class TestUntdCalibrPathExercise:
         assert cs.get("wave_interval_s", 300.0) == 120.0
 
     def test_target_selection_mode_options(self):
-        """E4: target_selection_mode supports closest and threat_scored."""
+        """E4: target selection accepts implemented modes and nearest alias."""
         cs_closest = CalibrationSchema(**{"target_selection_mode": "closest"})
         assert cs_closest.get("target_selection_mode", "threat_scored") == "closest"
 
+        cs_nearest = CalibrationSchema(**{"target_selection_mode": "nearest"})
+        assert cs_nearest.get("target_selection_mode", "threat_scored") == "nearest"
+
         cs_default = CalibrationSchema()
         assert cs_default.get("target_selection_mode", "threat_scored") == "threat_scored"
+
+        with pytest.raises(ValidationError):
+            CalibrationSchema(**{"target_selection_mode": "unsupported"})
 
     def test_roe_level_configurable(self):
         """E5: roe_level consumed via .get()."""

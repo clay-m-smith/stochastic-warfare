@@ -14,7 +14,8 @@ scenario.py, scenario_runner.py, and campaign.py.
 
 from __future__ import annotations
 
-from typing import Any, ClassVar
+import copy
+from typing import Any, ClassVar, Literal
 
 from pydantic import BaseModel, ConfigDict, model_validator
 
@@ -80,8 +81,16 @@ class CalibrationSchema(BaseModel):
     defensive_sides: list[str] = []
     dig_in_ticks: int = 30
     wave_interval_s: float = 300.0
-    target_selection_mode: str = "threat_scored"
-    roe_level: str | None = None
+    target_selection_mode: Literal[
+        "closest",
+        "nearest",
+        "threat_scored",
+    ] = "threat_scored"
+    roe_level: Literal[
+        "WEAPONS_HOLD",
+        "WEAPONS_TIGHT",
+        "WEAPONS_FREE",
+    ] | None = None
     enable_air_routing: bool = False
 
     # -- EW / SEAD --------------------------------------------------------
@@ -284,15 +293,30 @@ class CalibrationSchema(BaseModel):
         if not isinstance(data, dict):
             return data
 
-        # If already structured (from set_state/checkpoint), pass through
-        if "side_overrides" in data or "morale" in data:
-            return data
-
         result: dict[str, Any] = {}
+        raw_side_overrides = data.get("side_overrides", {})
+        raw_morale = data.get("morale", {})
+        if not isinstance(raw_side_overrides, dict):
+            return data
+        if isinstance(raw_morale, MoraleCalibration):
+            morale = raw_morale.model_dump()
+        elif isinstance(raw_morale, dict):
+            morale = copy.deepcopy(raw_morale)
+        else:
+            return data
         side_overrides: dict[str, dict[str, Any]] = {}
-        morale: dict[str, Any] = {}
+        for side_name, raw_side in raw_side_overrides.items():
+            if isinstance(raw_side, SideCalibration):
+                side_overrides[side_name] = raw_side.model_dump()
+            elif isinstance(raw_side, dict):
+                side_overrides[side_name] = copy.deepcopy(raw_side)
+            else:
+                return data
 
         for key, value in data.items():
+            if key in {"side_overrides", "morale"}:
+                continue
+
             # Dead keys — silently drop
             if key in cls._DEAD_KEYS:
                 continue
@@ -338,9 +362,9 @@ class CalibrationSchema(BaseModel):
             # Everything else → top-level field
             result[key] = value
 
-        if morale:
+        if morale or "morale" in data:
             result["morale"] = morale
-        if side_overrides:
+        if side_overrides or "side_overrides" in data:
             result["side_overrides"] = side_overrides
 
         return result

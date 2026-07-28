@@ -28,12 +28,21 @@ unreported checkpoint limitation was introduced.
 
 ## Phase 106 - API Execution Integrity
 
+Status: **Complete** (2026-07-28).
+
 - Apply `config_overrides` to the scenario actually used by a run.
 - Prove an override changes the intended production outcome.
 - Make background task/database ownership safe through task completion and
   teardown.
 
 Exit criteria: REM-002 and REM-003 are closed with API boundary tests.
+
+Delivered behavior includes strict sparse calibration overlays, one effective
+config shared by loader and API consumers, cooperative run/batch cancellation,
+cancellation-safe lifespan teardown, serialized SQLite writes, and explicit
+terminal persistence/notification. See
+[`phase-106.md`](devlog/phase-106.md) for the red reproductions, deterministic
+API A/B, scenario evaluation, and residual thread-executor boundary.
 
 ## Phase 107 - Scenario Configuration Wiring
 

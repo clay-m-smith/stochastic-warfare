@@ -128,6 +128,7 @@ Rolling record of implementation decisions, changes, and lessons learned across 
 | | | | |
 | **Block 12: Integrity Remediation** ||||
 | 105 | Checkpoint State Integrity | **Complete** | [phase-105.md](phase-105.md) |
+| 106 | API Execution Integrity | **Complete** | [phase-106.md](phase-106.md) |
 
 ## Post-MVP Refinement Index
 
@@ -256,7 +257,7 @@ Known limitations and deferred improvements logged during implementation. Review
 | 28.5 | ~~No scenario YAML references dew_config (engine can be created but no scenarios exercise it)~~ *(resolved — taiwan_strait scenario uses dew_config)* | [phase-28.5.md — Postmortem](phase-28.5.md#postmortem) |
 | 28.5 | ADUnitType.DEW not handled in air defense engagement logic (enum exists but no routing) *(accepted limitation — DEW routes via weapon category, functionally complete)* | [phase-28.5.md — Postmortem](phase-28.5.md#postmortem) |
 | 28.5 | ~~route_engagement() not called from battle.py (uses execute_engagement directly) — DEW routing untested in loop~~ *(resolved Phase 37 — battle.py calls route_engagement for all engagements)* | [phase-28.5.md — Postmortem](phase-28.5.md#postmortem) |
-| 32 | ~~`config_overrides` accepted and stored but not applied to engine (calibration_overrides not injected before ScenarioLoader.load)~~ *(resolved Phase 37 — deep merge before load)* | [phase-32.md — Postmortem](phase-32.md#postmortem) |
+| 32 | ~~`config_overrides` accepted and stored but not applied to engine~~ *(Phase 37's structural merge did not reach `ScenarioLoader`; behaviorally resolved Phase 106)* | [phase-106.md](phase-106.md) |
 | 32 | ~~`GET /api/meta/terrain-types` returns hardcoded list instead of deriving from TerrainConfig or data~~ *(resolved Phase 39d — uses LandCover enum)* | [phase-32.md — Postmortem](phase-32.md#postmortem) |
 | 34 | ~~`useBatchProgress` hook has no dedicated test file~~ *(resolved Phase 39a — 4 dedicated tests)* | [phase-34.md — Postmortem](phase-34.md#postmortem) |
 | 34 | ~~RunDetailPage tests don't cover cancelled/error run states~~ *(resolved Phase 39a — 2 tests)* | [phase-34.md — Postmortem](phase-34.md#postmortem) |
@@ -286,7 +287,7 @@ Known limitations and deferred improvements logged during implementation. Review
 | 48 | ~~`advance_speed` calibration key dead data — 7 historical scenarios declare it, no Python code reads it~~ *(resolved Phase 49b — removed from all scenarios)* | [phase-48.md — Postmortem](phase-48.md#postmortem) |
 | 48 | ~~`dig_in_ticks` consumed by battle.py but zero scenarios use it — untested calibration point~~ *(resolved Phase 49c — exercised in test)* | [phase-48.md — Postmortem](phase-48.md#postmortem) |
 | 48 | ~~`wave_interval_s` consumed by battle.py but zero scenarios use it — untested calibration point~~ *(resolved Phase 49c — exercised in test)* | [phase-48.md — Postmortem](phase-48.md#postmortem) |
-| 48 | ~~`target_selection_mode` consumed by battle.py, always defaults to threat-scored, no scenario overrides~~ *(resolved Phase 49c — exercised in test)* | [phase-48.md — Postmortem](phase-48.md#postmortem) |
+| 48 | ~~`target_selection_mode` consumed by battle.py, always defaults to threat-scored, no scenario overrides~~ *(Phase 49 proved parsing only; behaviorally resolved Phase 106 with real API and battle-loop controls)* | [phase-106.md](phase-106.md#determinism-and-scenario-evaluation) |
 | 48 | ~~`roe_level` only in 2 of ~37 scenarios; other candidates (COIN, peacekeeping) missing~~ *(resolved Phase 49c — expanded coverage)* | [phase-48.md — Postmortem](phase-48.md#postmortem) |
 | 48 | ~~Morale config weights (cohesion, leadership, suppression, transition_cooldown) consumed by scenario_runner but never tuned~~ *(resolved Phase 49c — exercised in test)* | [phase-48.md — Postmortem](phase-48.md#postmortem) |
 | 48 | ~~`victory_weights` consumed by engine.py but no scenario uses it — composite victory scoring untested~~ *(resolved Phase 49c — exercised in test)* | [phase-48.md — Postmortem](phase-48.md#postmortem) |

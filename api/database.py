@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import json
 import logging
 from datetime import datetime, timezone
@@ -54,6 +55,7 @@ class Database:
     def __init__(self, db_path: str) -> None:
         self._db_path = db_path
         self._conn: aiosqlite.Connection | None = None
+        self._write_lock = asyncio.Lock()
 
     async def initialize(self) -> None:
         """Open connection and create tables."""
@@ -74,15 +76,39 @@ class Database:
 
     async def close(self) -> None:
         """Close the database connection."""
-        if self._conn is not None:
-            await self._conn.close()
-            self._conn = None
+        async with self._write_lock:
+            if self._conn is not None:
+                await self._conn.close()
+                self._conn = None
 
     @property
     def conn(self) -> aiosqlite.Connection:
         if self._conn is None:
             raise RuntimeError("Database not initialized — call initialize() first")
         return self._conn
+
+    async def _execute_write(
+        self,
+        sql: str,
+        parameters: tuple[Any, ...],
+        *,
+        missing_message: str | None = None,
+    ) -> int:
+        """Serialize one statement and its commit/rollback transaction."""
+        async with self._write_lock:
+            conn = self.conn
+            try:
+                cursor = await conn.execute(sql, parameters)
+                if missing_message is not None and cursor.rowcount != 1:
+                    raise KeyError(missing_message)
+                await conn.commit()
+            except BaseException:
+                try:
+                    await conn.rollback()
+                except Exception:
+                    logger.exception("Failed to roll back database write")
+                raise
+            return cursor.rowcount
 
     # ── Run CRUD ─────────────────────────────────────────────────────
 
@@ -95,7 +121,7 @@ class Database:
         max_ticks: int,
         config_overrides: dict[str, Any] | None = None,
     ) -> None:
-        await self.conn.execute(
+        await self._execute_write(
             """INSERT INTO runs (id, scenario_name, scenario_path, seed,
                max_ticks, config_overrides, status, created_at)
                VALUES (?, ?, ?, ?, ?, ?, 'pending', ?)""",
@@ -109,7 +135,6 @@ class Database:
                 datetime.now(timezone.utc).isoformat(),
             ),
         )
-        await self.conn.commit()
 
     async def update_run_status(
         self,
@@ -152,11 +177,11 @@ class Database:
             fields.append("frames_json = ?")
             values.append(frames_json)
         values.append(run_id)
-        await self.conn.execute(
+        await self._execute_write(
             f"UPDATE runs SET {', '.join(fields)} WHERE id = ?",
             tuple(values),
+            missing_message=f"Run {run_id!r} does not exist",
         )
-        await self.conn.commit()
 
     async def get_run(self, run_id: str) -> dict[str, Any] | None:
         cursor = await self.conn.execute("SELECT * FROM runs WHERE id = ?", (run_id,))
@@ -191,9 +216,11 @@ class Database:
         return [dict(r) for r in rows]
 
     async def delete_run(self, run_id: str) -> bool:
-        cursor = await self.conn.execute("DELETE FROM runs WHERE id = ?", (run_id,))
-        await self.conn.commit()
-        return cursor.rowcount > 0
+        rowcount = await self._execute_write(
+            "DELETE FROM runs WHERE id = ?",
+            (run_id,),
+        )
+        return rowcount > 0
 
     async def count_runs(self) -> int:
         cursor = await self.conn.execute("SELECT COUNT(*) FROM runs")
@@ -211,7 +238,7 @@ class Database:
         base_seed: int,
         max_ticks: int,
     ) -> None:
-        await self.conn.execute(
+        await self._execute_write(
             """INSERT INTO batches (id, scenario_name, scenario_path,
                num_iterations, base_seed, max_ticks, status, created_at)
                VALUES (?, ?, ?, ?, ?, ?, 'pending', ?)""",
@@ -225,7 +252,6 @@ class Database:
                 datetime.now(timezone.utc).isoformat(),
             ),
         )
-        await self.conn.commit()
 
     async def update_batch(
         self,
@@ -257,11 +283,11 @@ class Database:
         if not fields:
             return
         values.append(batch_id)
-        await self.conn.execute(
+        await self._execute_write(
             f"UPDATE batches SET {', '.join(fields)} WHERE id = ?",
             tuple(values),
+            missing_message=f"Batch {batch_id!r} does not exist",
         )
-        await self.conn.commit()
 
     async def get_batch(self, batch_id: str) -> dict[str, Any] | None:
         cursor = await self.conn.execute("SELECT * FROM batches WHERE id = ?", (batch_id,))

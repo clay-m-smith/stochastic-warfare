@@ -1,9 +1,17 @@
 # Stochastic Warfare — Claude Code Instructions
 
 ## Project Overview
-High-fidelity, high-resolution wargame simulator. Multi-scale (campaign → battlefield → battle → unit level) with stochastic/signal-processing-inspired models (Markov chains, Monte Carlo, Kalman filters, noise models, queueing theory). Headless Python engine first; matplotlib for validation; full UI deferred. Modern era (Cold War–present) as prototype. Maritime warfare fully integrated, not deferred.
+High-fidelity, high-resolution wargame simulator. Multi-scale (campaign →
+battlefield → battle → unit level) with stochastic/signal-processing-inspired
+models, a headless Python engine, FastAPI service, and React frontend. Modern
+warfare is the primary data package, with four historical-era packages and
+integrated maritime warfare.
 
-**Current status**: Phase 105 is complete after its adversarial skill-port follow-up; Block 12 integrity remediation continues with Phase 106. The fresh default Python verification is 10,168 passed, 21 skipped, and 346 deselected; the frontend baseline is 418 passing vitest tests. Blocks 1–11 remain complete. See `docs/remediation-backlog.md` for current evidence and unresolved gaps.
+**Current status**: Phases 105 and 106 are complete; Block 12 integrity
+remediation continues with Phase 107. The fresh default Python verification is
+10,168 passed, 21 skipped, and 346 deselected; the frontend baseline is 418
+passing vitest tests. Blocks 1–11 remain complete. See
+`docs/remediation-backlog.md` for current evidence and unresolved gaps.
 
 ## Python & Package Management
 **Requires Python >=3.12** (pinned to 3.12.10 via `.python-version`).
@@ -63,7 +71,9 @@ Layered hybrid — graph (strategic), grid (operational/tactical), continuous (u
 - **Dev server**: `cd frontend && npm run dev` — Vite at localhost:5173, proxies `/api` to localhost:8000
 - **Tests**: `npm test` — vitest + RTL + jsdom. All tests mock `fetch`, no API server required.
 - **Build**: `npm run build` — TypeScript check + Vite production bundle
-- **API client**: Hand-written typed fetch wrappers in `src/api/`. Types mirror `api/schemas.py`.
+- **API client**: Hand-written fetch wrappers and response types in `src/api/`.
+  Runtime request validation and generated OpenAPI in `api/schemas.py` are
+  authoritative for dynamic configuration payloads.
 - **State management**: TanStack Query only. No Redux/Zustand. UI state via local state or URL search params.
 - **Charts**: Plotly.js via `react-plotly.js` + `plotly.js-dist-min`. Lazy-loaded via `React.lazy`. Mock `PlotlyChart` wrapper in tests.
 
@@ -78,7 +88,9 @@ Layered hybrid — graph (strategic), grid (operational/tactical), continuous (u
 - Run `/cross-doc-audit` after completing phases or changing architecture
 - Run `/validate-conventions` after writing simulation core code
 - All design docs are **living documents** — propagate implementation decisions back to all affected docs via `/update-docs`
-- **Post-MVP lockstep**: When completing Phase 11+, update ALL of: CLAUDE.md, project-structure.md, `development-phases-post-mvp.md` (phase status + module index), `devlog/index.md` (phase status + refinement entries), phase devlog, README.md, MEMORY.md. New deficits must be added to both devlog index AND deficit-to-phase mapping.
+- **Phase closure**: Update the current roadmap, phase devlog,
+  `docs/devlog/index.md`, remediation backlog, public status pages, and affected
+  reference/architecture documents. `CODEX.md` defines the Codex closure gates.
 
 ## Available Skills
 
@@ -166,7 +178,7 @@ All phase details are in `docs/devlog/` (one file per phase). Per-phase tables i
 | Block 9 | 83–91 | Profiling, spatial culling, LOD, Numba JIT, SoA data layer, per-side parallelism, benchmarking | ~279 |
 | Block 10 | 92–97 | UI depth: analytics endpoints, dashboard charts, map overlays, calibration editor, event filtering, data catalogs | ~120 |
 | Block 11 | 98–104 | Golden scenarios plus OOB, engine, and deployment polish | ~107 |
-| Block 12 | 105–112 | Production-path integrity remediation; Phase 105 complete | 23 so far |
+| Block 12 | 105–112 | Production-path integrity remediation; Phases 105–106 complete | 48 so far |
 
 ### Block 11 Detail (COMPLETE)
 

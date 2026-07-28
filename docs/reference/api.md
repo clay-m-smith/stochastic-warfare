@@ -58,6 +58,52 @@ OpenAPI docs are available at `/api/docs` (Swagger UI) and `/api/redoc`.
 | POST | `/api/analysis/sweep` | Parameter sensitivity sweep |
 | GET | `/api/analysis/tempo/{id}` | Operational tempo analysis |
 
+### Run submission contract
+
+`POST /api/runs` accepts a bare sparse `CalibrationSchema` overlay:
+
+| Field | Type | Default | Contract |
+|---|---|---|---|
+| `scenario` | `str` | required | Saved scenario name resolved under the configured data directory |
+| `seed` | `int` | `42` | Deterministic run seed |
+| `max_ticks` | `int` | `10_000` | Inclusive range 1--1,000,000 |
+| `config_overrides` | `CalibrationSchema` | `{}` | Strict sparse calibration overlay described below |
+| `frame_interval` | `int \| None` | `None` | Optional replay-frame cadence; supplied values are clamped to at least one tick |
+
+```json
+{
+  "scenario": "test_campaign",
+  "seed": 42,
+  "max_ticks": 100,
+  "config_overrides": {
+    "roe_level": "WEAPONS_HOLD",
+    "morale": {
+      "base_degrade_rate": 0.02
+    },
+    "side_overrides": {
+      "blue": {
+        "cohesion": 0.9
+      }
+    }
+  }
+}
+```
+
+Do not wrap the overlay in `calibration_overrides`, and do not submit arbitrary
+top-level scenario fields. Unknown/dead keys, coercible wrong JSON types,
+unsupported enum values, and references to sides absent from the scenario
+return HTTP 422 before a run row or task is created.
+
+Mappings merge recursively over the scenario's existing calibration; scalar
+and list values replace their predecessors. Missing fields preserve the
+scenario value. The source YAML is never modified, and the canonical sparse
+overlay is returned as `config_overrides` in run detail.
+
+A 202 response means the pending row is durable and the manager owns the
+background task. Deleting an active run first requests cooperative cancellation
+and waits for terminal persistence. During app shutdown, new submissions are
+rejected and the database remains open until run and batch workers stop.
+
 ### Configuration
 
 All settings are overridable via environment variables with the `SW_API_` prefix:
@@ -67,7 +113,7 @@ All settings are overridable via environment variables with the `SW_API_` prefix
 | `SW_API_HOST` | `127.0.0.1` | Bind address |
 | `SW_API_PORT` | `8000` | Port |
 | `SW_API_DB_PATH` | `data/api_runs.db` | SQLite database path |
-| `SW_API_MAX_CONCURRENT_RUNS` | `4` | Max parallel simulation runs |
+| `SW_API_MAX_CONCURRENT_RUNS` | `4` | Max parallel simulation runs; must be at least 1 |
 | `SW_API_CORS_ORIGINS` | `["http://localhost:5173"]` | Allowed CORS origins |
 
 ---
@@ -98,7 +144,7 @@ Factory that loads a scenario YAML and creates a fully-wired `SimulationContext`
 
 | Method | Parameters | Returns | Description |
 |--------|-----------|---------|-------------|
-| `load()` | `scenario_path: Path, seed: int = 42` | `SimulationContext` | Parse YAML, load all definitions, wire all engines, return context |
+| `load()` | `scenario_path: Path, seed: int = 42, *, calibration_overrides: Mapping \| CalibrationSchema \| None = None, scenario_config: CampaignScenarioConfig \| None = None` | `SimulationContext` | Parse or deep-copy one validated config, load all definitions, wire all engines, return context |
 
 **Example:**
 
@@ -113,6 +159,8 @@ ctx = loader.load(Path("data/scenarios/73_easting/scenario.yaml"), seed=42)
 The loader automatically:
 
 - Validates the YAML against `CampaignScenarioConfig`
+- Validates and merges a sparse calibration overlay without modifying YAML, or
+  accepts a mutually exclusive prevalidated effective config
 - Loads unit, weapon, ammo, sensor, and signature definitions
 - Creates terrain, environment, detection, combat, movement, morale, C2, and logistics engines
 - Wires optional subsystems (EW, Space, CBRN, Schools, Escalation, DEW) if configured
@@ -444,10 +492,11 @@ Pydantic model (`extra="forbid"`) for all scenario tuning parameters. Replaces f
 
 | Field | Type | Default | Description |
 |-------|------|---------|-------------|
-| `hit_probability_modifier` | `dict[str, float]` | `{}` | Per-side Pk multiplier (e.g. `{"blue": 1.2}`) |
-| `force_ratio_modifier` | `dict[str, float]` | `{}` | Per-side Dupuy CEV (e.g. `{"blue": 2.0}`) |
-| `target_selection_mode` | `str` | `"nearest"` | Target selection: `"nearest"`, `"threat"`, `"weakest"` |
-| `enable_burst_fire` | `bool` | `False` | Enable burst fire engagement model |
+| `hit_probability_modifier` | `float` | `1.0` | Global hit-probability multiplier |
+| `side_overrides` | `dict[str, SideCalibration]` | `{}` | Per-side cohesion, force ratio, deployment, hit probability, and target-size fields |
+| `defensive_sides` | `list[str]` | `[]` | Scenario sides that hold defensive posture |
+| `target_selection_mode` | `"closest" \| "nearest" \| "threat_scored"` | `"threat_scored"` | Closest-target selection (`nearest` is an alias) or threat scoring |
+| `roe_level` | `"WEAPONS_HOLD" \| "WEAPONS_TIGHT" \| "WEAPONS_FREE" \| None` | `None` | Scenario-wide initial rules of engagement |
 | `enable_air_routing` | `bool` | `False` | Enable air combat routing via AirCombatEngine |
 
 **Environmental Coupling (Phase 58--62):**

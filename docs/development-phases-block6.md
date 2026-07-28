@@ -14,6 +14,12 @@ This block wires every orphaned engine, hardens every schema, exercises every ca
 
 ## Phase 49: Calibration Schema Hardening -- COMPLETE
 
+> **Phase 106 correction (2026-07-28):** Phase 49 delivered schema validation,
+> but did not prove the target-selection branch described in 49c. The delivered
+> contract is `closest | nearest | threat_scored`; `nearest` is a `closest`
+> alias and `random` is unsupported. Phase 106 supplied the production-path
+> behavioral proof.
+
 **Goal**: Replace the free-form `calibration_overrides: dict[str, Any]` with a typed pydantic `CalibrationSchema` validated at parse time. Clean up dead calibration data. Exercise all untested calibration paths in test scenarios.
 
 **Dependencies**: Block 5 complete (Phases 40--48).
@@ -25,7 +31,7 @@ Create a typed calibration schema that replaces the free-form dict.
 - **`stochastic_warfare/simulation/calibration.py`** (new) -- `CalibrationSchema` pydantic model with ~100 known keys organized by subsystem:
   - `CombatCalibration`: `hit_probability_modifier`, `force_ratio_modifier`, `fire_on_move_penalty_mult`, `target_value_weights` (dict[str, float] with defaults HQ=2.0, AD=1.8, etc.), `blast_radius_to_fill_c` (dict[str, float] per munition category)
   - `MovementCalibration`: `advance_speed_mps` (replaces dead `advance_speed`), `dig_in_ticks`, `formation_spacing_m` (per-side prefixed)
-  - `EngagementCalibration`: `engagement_range_m`, `min_engagement_range_m`, `thermal_contrast`, `wave_interval_s`, `target_selection_mode` (enum: THREAT_SCORED, NEAREST, RANDOM)
+  - `EngagementCalibration`: `engagement_range_m`, `min_engagement_range_m`, `thermal_contrast`, `wave_interval_s`, `target_selection_mode` (delivered values: `threat_scored`, `closest`, `nearest`)
   - `VictoryCalibration`: `victory_weights` (morale/casualty/territory), `force_destroyed_threshold`, `morale_collapsed_threshold`
   - `MoraleCalibration`: `cohesion`, `leadership`, `suppression`, `transition_cooldown`, `rout_cascade_radius_m`, `rout_friendly_count_threshold`, `rout_morale_penalty`
   - `EnvironmentCalibration`: `visibility_km`, `weather_modifier`, `night_detection_modifier`
@@ -62,7 +68,8 @@ Create test scenarios that exercise every calibration parameter that currently h
 - **`data/scenarios/calibration_test/`** (new) -- Synthetic test scenarios designed to exercise:
   - `dig_in_ticks`: scenario with defensive units that should dig in after N ticks
   - `wave_interval_s`: scenario with wave attack timing
-  - `target_selection_mode`: scenario testing NEAREST vs THREAT_SCORED selection
+  - `target_selection_mode`: planned NEAREST vs THREAT_SCORED selection;
+    behavioral delivery superseded by Phase 106
   - `victory_weights`: scenario with composite victory scoring (morale + casualty weights)
   - `morale_config` weights: scenario with per-scenario morale tuning (cohesion, leadership, suppression)
   - `roe_level`: expand to 5+ additional scenarios (COIN, peacekeeping, hybrid gray zone)
@@ -70,8 +77,10 @@ Create test scenarios that exercise every calibration parameter that currently h
 **Tests** (~20):
 - dig_in_ticks: units transition to DUG_IN after configured ticks
 - wave_interval_s: engagements occur in waves with configured interval
-- target_selection_mode NEAREST: units engage closest target regardless of threat
-- target_selection_mode THREAT_SCORED: units engage highest-threat target
+- target_selection_mode NEAREST: planned closest-target control; behaviorally
+  proved in Phase 106
+- target_selection_mode THREAT_SCORED: planned highest-threat control;
+  behaviorally distinguished in Phase 106
 - victory_weights: morale-weighted victory differs from casualty-weighted
 - morale_config: custom cohesion/leadership values change morale transition rates
 - roe_level: WEAPONS_TIGHT prevents engagement below confidence threshold
@@ -844,7 +853,7 @@ Synchronize all documentation.
 | E1 | `advance_speed` dead data | Phase 49b |
 | E2 | `dig_in_ticks` untested | Phase 49c |
 | E3 | `wave_interval_s` untested | Phase 49c |
-| E4 | `target_selection_mode` untested | Phase 49c |
+| E4 | `target_selection_mode` untested | Phase 106 (Phase 49c proved parsing only) |
 | E5 | `roe_level` sparse coverage | Phase 49c + 55c |
 | E6 | Morale config weights unused | Phase 49c |
 | E7 | `victory_weights` untested | Phase 49c |
