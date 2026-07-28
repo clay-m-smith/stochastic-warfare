@@ -391,20 +391,17 @@ class TestReinforcementArrival:
             config=EngineConfig(resolution_closing_range_mult=0.0),
             campaign_config=CampaignConfig(engagement_detection_range_m=5000),
         )
-        engine.campaign_manager.set_reinforcements(cfg.reinforcements)
 
         initial_blue_count = len(ctx.units_by_side["blue"])
         assert initial_blue_count == 1
 
-        # After 1 tick (3600s), reinforcements should be checked
-        # Without unit_loader, no units actually spawn, but the
-        # entry should be marked as arrived
-        engine.step()
+        # A missing production dependency is explicit and retryable.
+        with pytest.raises(RuntimeError, match="without a unit loader"):
+            engine.step()
 
-        # The reinforcement entry is marked arrived even without a loader
         entries = engine.campaign_manager._reinforcements
         assert len(entries) == 1
-        assert entries[0].arrived is True
+        assert entries[0].arrived is False
 
     def test_reinforcement_not_arrived_before_time(self) -> None:
         cfg = _minimal_config(
@@ -420,16 +417,17 @@ class TestReinforcementArrival:
         )
         ctx = _make_ctx(config=cfg, tick_s=3600.0)
         engine = SimulationEngine(ctx)
-        engine.campaign_manager.set_reinforcements(cfg.reinforcements)
 
         # After 1 tick (3600s), reinforcement at 7200s has not arrived
         engine.step()
         entries = engine.campaign_manager._reinforcements
         assert entries[0].arrived is False
 
-        # After 2nd tick (7200s), it should arrive
-        engine.step()
-        assert entries[0].arrived is True
+        # At the due time, a missing loader fails explicitly without
+        # consuming the schedule entry.
+        with pytest.raises(RuntimeError, match="without a unit loader"):
+            engine.step()
+        assert entries[0].arrived is False
 
     @pytest.mark.skipif(
         not _scenario_data_available(),
@@ -452,7 +450,6 @@ class TestReinforcementArrival:
                 enable_strategic_movement=False,
             ),
         )
-        engine.campaign_manager.set_reinforcements(ctx.config.reinforcements)
 
         initial_blue = len(ctx.units_by_side["blue"])
 
@@ -1245,7 +1242,6 @@ class TestScenarioLoaderIntegration:
             victory_evaluator=ve,
             recorder=rec,
         )
-        engine.campaign_manager.set_reinforcements(ctx.config.reinforcements)
 
         result = engine.run()
 

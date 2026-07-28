@@ -9,17 +9,26 @@ modules together from a scenario definition.
 from __future__ import annotations
 
 import copy
+import enum
+import math
 from collections.abc import Mapping
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 import numpy as np
 import yaml
-from pydantic import BaseModel, field_validator
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    field_validator,
+    model_validator,
+)
 
 from stochastic_warfare.core.clock import SimulationClock
+from stochastic_warfare.core.era import EraConfig
 from stochastic_warfare.core.events import EventBus
 from stochastic_warfare.core.logging import get_logger
 from stochastic_warfare.core.rng import RNGManager
@@ -62,25 +71,93 @@ class DepotConfig(BaseModel):
 class ReinforcementUnitConfig(BaseModel):
     """Single unit entry in a reinforcement schedule."""
 
+    model_config = ConfigDict(extra="forbid")
+
     unit_type: str
     count: int = 1
-    overrides: dict[str, Any] = {}
+    overrides: dict[str, Any] = Field(default_factory=dict)
+
+    @field_validator("unit_type")
+    @classmethod
+    def _non_empty_unit_type(cls, v: str) -> str:
+        if not v:
+            raise ValueError("reinforcement unit_type must be non-empty")
+        return v
+
+    @field_validator("count")
+    @classmethod
+    def _positive_count(cls, v: int) -> int:
+        if v <= 0:
+            raise ValueError("reinforcement unit count must be positive")
+        return v
+
+    @field_validator("overrides")
+    @classmethod
+    def _preserve_structural_fields(
+        cls,
+        v: dict[str, Any],
+    ) -> dict[str, Any]:
+        if v:
+            raise ValueError(
+                "reinforcement unit overrides are not supported; define a "
+                "validated unit catalog variant instead",
+            )
+        return v
 
 
 class ReinforcementConfig(BaseModel):
     """Scheduled reinforcement arrival."""
 
+    model_config = ConfigDict(extra="forbid")
+
     side: str
     arrival_time_s: float
     units: list[ReinforcementUnitConfig]
-    position: list[float] = [0.0, 0.0]  # spawn position
+    position: list[float] = Field(
+        default_factory=lambda: [0.0, 0.0],
+    )  # spawn position
     arrival_sigma: float = 0.0  # log-normal sigma for stochastic arrival
 
     @field_validator("arrival_time_s")
     @classmethod
     def _positive_time(cls, v: float) -> float:
-        if v < 0:
-            raise ValueError("arrival_time_s must be non-negative")
+        if not math.isfinite(v) or v < 0:
+            raise ValueError(
+                "arrival_time_s must be finite and non-negative",
+            )
+        return v
+
+    @field_validator("arrival_sigma")
+    @classmethod
+    def _non_negative_sigma(cls, v: float) -> float:
+        if not math.isfinite(v) or v < 0:
+            raise ValueError(
+                "arrival_sigma must be finite and non-negative",
+            )
+        return v
+
+    @field_validator("units")
+    @classmethod
+    def _non_empty_units(
+        cls,
+        v: list[ReinforcementUnitConfig],
+    ) -> list[ReinforcementUnitConfig]:
+        if not v:
+            raise ValueError("reinforcement units must not be empty")
+        return v
+
+    @field_validator("position")
+    @classmethod
+    def _valid_position(cls, v: list[float]) -> list[float]:
+        if len(v) not in (2, 3):
+            raise ValueError(
+                "reinforcement position must contain [easting, northing] "
+                "and optional altitude",
+            )
+        if not all(math.isfinite(coordinate) for coordinate in v):
+            raise ValueError(
+                "reinforcement position coordinates must be finite",
+            )
         return v
 
 
@@ -199,13 +276,22 @@ class VictoryConditionConfig(BaseModel):
 class SideConfig(BaseModel):
     """One side of a campaign — units, AI profile, logistics."""
 
+    model_config = ConfigDict(extra="forbid")
+
     side: str
     units: list[dict[str, Any]]  # [{unit_type, count, overrides}]
     experience_level: float = 0.5
     morale_initial: str = "STEADY"
     commander_profile: str = ""  # YAML commander personality ID
     doctrine_template: str = ""  # YAML doctrine template ID
-    depots: list[DepotConfig] = []
+    # Legacy side-level value is retained for schema compatibility; runtime
+    # ROE is scenario-wide under calibration_overrides.
+    roe_level: Literal[
+        "WEAPONS_HOLD",
+        "WEAPONS_TIGHT",
+        "WEAPONS_FREE",
+    ] | None = Field(default=None, exclude=True)
+    depots: list[DepotConfig] = Field(default_factory=list)
 
     @field_validator("experience_level")
     @classmethod
@@ -213,6 +299,13 @@ class SideConfig(BaseModel):
         if not 0.0 <= v <= 1.0:
             raise ValueError(f"experience_level must be in [0, 1]; got {v}")
         return v
+
+    @field_validator("morale_initial")
+    @classmethod
+    def _known_morale(cls, v: str) -> str:
+        from stochastic_warfare.morale.state import validate_morale_state_name
+
+        return validate_morale_state_name(v)
 
 
 class TickResolutionConfig(BaseModel):
@@ -299,6 +392,39 @@ class CampaignScenarioConfig(BaseModel):
         if v <= 0:
             raise ValueError("duration_hours must be positive")
         return v
+
+    @field_validator("era")
+    @classmethod
+    def _registered_era(cls, v: str) -> str:
+        from stochastic_warfare.core.era import get_era_config
+
+        normalized = v.lower()
+        get_era_config(normalized)
+        return normalized
+
+    @model_validator(mode="before")
+    @classmethod
+    def _reject_misplaced_feature_gate(cls, data: Any) -> Any:
+        if isinstance(data, Mapping) and "disabled_modules" in data:
+            raise ValueError(
+                "disabled_modules belongs to the registered era configuration, "
+                "not the scenario root",
+            )
+        return data
+
+    @model_validator(mode="after")
+    def _validate_side_references(self) -> CampaignScenarioConfig:
+        side_names = [side.side for side in self.sides]
+        if len(side_names) != len(set(side_names)):
+            raise ValueError("scenario side names must be unique")
+        known_sides = set(side_names)
+        for index, reinforcement in enumerate(self.reinforcements):
+            if reinforcement.side not in known_sides:
+                raise ValueError(
+                    f"reinforcement {index} references unknown side "
+                    f"{reinforcement.side!r}",
+                )
+        return self
 
 
 def _merge_config_patch(
@@ -450,7 +576,7 @@ def _stage_runtime_instance_states(
     raw_states: Any,
     current_instances: dict[str, list[Any]],
     checkpoint_unit_ids: set[str],
-    reusable_unit_ids: set[str],
+    compatible_unit_ids: set[str],
     checkpoint_equipment: dict[str, dict[str, dict[str, Any]]] | None,
     *,
     kind: str,
@@ -459,7 +585,7 @@ def _stage_runtime_instance_states(
     if not isinstance(raw_states, dict):
         raise ValueError(f"Checkpoint {kind} states must be a mapping")
 
-    expected_ids = set(current_instances) & reusable_unit_ids
+    expected_ids = set(current_instances) & compatible_unit_ids
     serialized_ids = set(raw_states)
     missing = sorted(expected_ids - serialized_ids)
     if missing:
@@ -479,14 +605,14 @@ def _stage_runtime_instance_states(
             raise ValueError(
                 f"Checkpoint {kind} state for {entity_id!r} must be a list",
             )
-        if saved_instances and entity_id not in reusable_unit_ids:
+        if saved_instances and entity_id not in compatible_unit_ids:
             raise ValueError(
                 f"Cannot restore {kind} state for reconstructed unit "
                 f"{entity_id!r}; build a compatible runtime first",
             )
         runtime_entries = (
             current_instances.get(entity_id, [])
-            if entity_id in reusable_unit_ids
+            if entity_id in compatible_unit_ids
             else []
         )
         if len(runtime_entries) != len(saved_instances):
@@ -546,12 +672,202 @@ def _stage_runtime_instance_states(
     return staged
 
 
+def _json_compatible_value(value: Any) -> Any:
+    """Convert model values to deterministic JSON-compatible structures."""
+    if isinstance(value, enum.Enum):
+        return value.value
+    if isinstance(value, Mapping):
+        return {
+            key: _json_compatible_value(item)
+            for key, item in value.items()
+        }
+    if isinstance(value, (set, frozenset)):
+        converted = [_json_compatible_value(item) for item in value]
+        return sorted(converted, key=repr)
+    if isinstance(value, (list, tuple)):
+        return [_json_compatible_value(item) for item in value]
+    return value
+
+
 def _model_dump_json_compatible(model: Any) -> dict[str, Any]:
     """Dump Pydantic models canonically while supporting legacy test doubles."""
     try:
-        return model.model_dump(mode="json")
+        raw = model.model_dump(mode="python")
     except TypeError:
-        return model.model_dump()
+        raw = model.model_dump()
+    return _json_compatible_value(raw)
+
+
+def _json_values_equal(left: Any, right: Any) -> bool:
+    """Compare JSON-compatible values without bool/number coercion."""
+    if type(left) is not type(right):
+        return False
+    if isinstance(left, dict):
+        return left.keys() == right.keys() and all(
+            _json_values_equal(left[key], right[key])
+            for key in left
+        )
+    if isinstance(left, list):
+        return len(left) == len(right) and all(
+            _json_values_equal(left_item, right_item)
+            for left_item, right_item in zip(left, right, strict=True)
+        )
+    return bool(left == right)
+
+
+def _validate_era_loadouts(
+    units: list[Unit],
+    unit_weapons: dict[str, list[Any]],
+    unit_sensors: dict[str, list[Any]],
+    era_config: EraConfig,
+) -> None:
+    """Reject runtime attachments that contradict the effective era gate."""
+    available_sensor_types = {
+        str(sensor_type).upper()
+        for sensor_type in era_config.available_sensor_types
+    }
+    units_by_id = {unit.entity_id: unit for unit in units}
+
+    for unit_id, sensors in unit_sensors.items():
+        unit = units_by_id[unit_id]
+        for sensor in sensors:
+            definition = sensor.definition
+            sensor_type = str(definition.sensor_type).upper()
+            sensor_id = definition.sensor_id
+            if (
+                available_sensor_types
+                and sensor_type not in available_sensor_types
+            ):
+                raise ValueError(
+                    "available_sensor_types forbids "
+                    f"{sensor_type} sensor {sensor_id!r} on unit "
+                    f"{unit.unit_type!r}",
+                )
+            if (
+                not era_config.feature_enabled("thermal_sights")
+                and sensor_type == "THERMAL"
+            ):
+                raise ValueError(
+                    "Era feature 'thermal_sights' is disabled but unit "
+                    f"{unit.unit_type!r} loads THERMAL sensor {sensor_id!r}",
+                )
+
+    for unit_id, weapons in unit_weapons.items():
+        unit = units_by_id[unit_id]
+        for weapon, ammo_definitions in weapons:
+            weapon_guidance = str(
+                getattr(weapon.definition, "guidance", "NONE"),
+            ).upper()
+            ammo_guidance = [
+                str(getattr(ammo, "guidance", "NONE")).upper()
+                for ammo in ammo_definitions
+            ]
+            all_guidance = [weapon_guidance, *ammo_guidance]
+            if not era_config.feature_enabled("gps") and any(
+                guidance in {"GPS", "GPS_INS"}
+                for guidance in all_guidance
+            ):
+                raise ValueError(
+                    "Era feature 'gps' is disabled but unit "
+                    f"{unit.unit_type!r} loads GPS-guided weapon "
+                    f"{weapon.definition.weapon_id!r}",
+                )
+            if not era_config.feature_enabled("pgm") and any(
+                guidance != "NONE"
+                for guidance in all_guidance
+            ):
+                guided = next(
+                    guidance
+                    for guidance in all_guidance
+                    if guidance != "NONE"
+                )
+                raise ValueError(
+                    "Era feature 'pgm' is disabled but unit "
+                    f"{unit.unit_type!r} loads guided weapon "
+                    f"{weapon.definition.weapon_id!r} with "
+                    f"{guided} guidance",
+                )
+
+    if not era_config.feature_enabled("data_links"):
+        for unit in units:
+            data_link_range = getattr(unit, "data_link_range", None)
+            if data_link_range is not None and data_link_range > 0:
+                raise ValueError(
+                    "Era feature 'data_links' is disabled but unit "
+                    f"{unit.unit_type!r} declares data_link_range="
+                    f"{data_link_range}",
+                )
+
+
+def build_unit_loadouts(
+    units: list[Unit],
+    *,
+    weapon_loader: Any,
+    ammo_loader: Any,
+    sensor_loader: Any,
+    calibration: Any,
+    era_config: EraConfig,
+) -> tuple[dict[str, list[Any]], dict[str, list[Any]]]:
+    """Build canonical live weapon and sensor attachments for units."""
+    from stochastic_warfare.validation.scenario_runner import ScenarioRunner
+
+    if not isinstance(era_config, EraConfig):
+        raise TypeError(
+            "Canonical loadout construction requires an effective EraConfig",
+        )
+
+    unit_weapons = ScenarioRunner._assign_weapons(
+        units,
+        weapon_loader,
+        ammo_loader,
+        calibration,
+    )
+    for weapons in unit_weapons.values():
+        weapons.sort(
+            key=lambda weapon_entry: (
+                weapon_entry[0].definition.max_range_m
+            ),
+            reverse=True,
+        )
+
+    unit_sensors = ScenarioRunner._assign_sensors(units, sensor_loader)
+    _validate_era_loadouts(
+        units,
+        unit_weapons,
+        unit_sensors,
+        era_config,
+    )
+    return unit_weapons, unit_sensors
+
+
+def _initial_morale_for_units(
+    config: CampaignScenarioConfig,
+    units: list[Unit],
+) -> dict[str, Any]:
+    """Stage typed side morale and its corresponding initial unit status."""
+    from stochastic_warfare.morale.state import MoraleState
+
+    state_by_side = {
+        side.side: MoraleState[side.morale_initial]
+        for side in config.sides
+    }
+    result: dict[str, MoraleState] = {}
+    for unit in units:
+        side = unit.side if isinstance(unit.side, str) else unit.side.value
+        try:
+            morale = state_by_side[side]
+        except KeyError as exc:
+            raise ValueError(
+                f"Unit {unit.entity_id!r} references unknown side {side!r}",
+            ) from exc
+        if morale is MoraleState.ROUTED:
+            object.__setattr__(unit, "status", UnitStatus.ROUTING)
+        elif morale is MoraleState.SURRENDERED:
+            object.__setattr__(unit, "status", UnitStatus.SURRENDERED)
+        else:
+            object.__setattr__(unit, "status", UnitStatus.ACTIVE)
+        result[unit.entity_id] = morale
+    return result
 
 
 @dataclass
@@ -910,17 +1226,46 @@ class SimulationContext:
             state["era_config"] = _model_dump_json_compatible(self.era_config)
         return state
 
-    def set_state(self, state: dict[str, Any]) -> None:
+    def set_state(
+        self,
+        state: dict[str, Any],
+        *,
+        allow_legacy_morale: bool = False,
+    ) -> None:
         """Restore simulation state from checkpoint."""
-        checkpoint_config = state.get("config")
-        if checkpoint_config is not None:
+        if "config" in state:
+            checkpoint_config = state["config"]
             if (
                 not isinstance(checkpoint_config, dict)
-                or checkpoint_config != _model_dump_json_compatible(self.config)
+                or not _json_values_equal(
+                    checkpoint_config,
+                    _model_dump_json_compatible(self.config),
+                )
             ):
                 raise ValueError(
                     "Checkpoint configuration does not match the runtime "
                     "configuration",
+                )
+
+        if "era_config" in state:
+            from stochastic_warfare.core.era import EraConfig
+
+            raw_era_config = state["era_config"]
+            try:
+                checkpoint_era_config = EraConfig.model_validate(
+                    raw_era_config,
+                )
+            except (TypeError, ValueError) as exc:
+                raise ValueError(
+                    f"Invalid checkpoint era configuration: {exc}",
+                ) from exc
+            if (
+                self.era_config is None
+                or checkpoint_era_config != self.era_config
+            ):
+                raise ValueError(
+                    "Checkpoint effective era configuration or feature gates "
+                    "(including disabled_modules) do not match the runtime",
                 )
 
         clock_state = state["clock"]
@@ -932,11 +1277,9 @@ class SimulationContext:
             raise ValueError(f"Invalid checkpoint clock or RNG state: {exc}") from exc
 
         cal_data = state.get("calibration", {})
-        staged_calibration = (
-            CalibrationSchema(**cal_data)
-            if isinstance(cal_data, dict)
-            else cal_data
-        )
+        if not isinstance(cal_data, dict):
+            raise ValueError("Checkpoint calibration must be a mapping")
+        staged_calibration = CalibrationSchema(**cal_data)
 
         staged_units: dict[str, list[tuple[dict[str, Any], Unit]]] | None = None
         staged_morale: dict[str, Any] | None = None
@@ -989,15 +1332,188 @@ class SimulationContext:
                         "Checkpoint morale state keys must be entity IDs",
                     )
                 try:
+                    if not allow_legacy_morale and (
+                        isinstance(value, bool)
+                        or not isinstance(value, int)
+                    ):
+                        raise ValueError(
+                            "current checkpoint morale values must be integers",
+                        )
                     if isinstance(value, str):
                         morale = MoraleState[value]
                     else:
+                        if isinstance(value, bool) or not isinstance(value, int):
+                            raise ValueError(
+                                "checkpoint morale values must be integer "
+                                "enum values or legacy names",
+                            )
                         morale = MoraleState(value)
                 except (KeyError, TypeError, ValueError) as exc:
                     raise ValueError(
                         f"Invalid morale state for {entity_id!r}: {value!r}",
                     ) from exc
                 staged_morale[entity_id] = morale
+
+        staged_morale_machine_state: dict[str, Any] | None = None
+        if self.morale_machine is not None and "morale_machine" in state:
+            from stochastic_warfare.morale.state import MoraleState
+
+            morale_checkpoint_unit_ids = (
+                checkpoint_unit_ids
+                if staged_units is not None
+                else {unit.entity_id for unit in self.all_units()}
+            )
+            raw_machine_state = state["morale_machine"]
+            if not isinstance(raw_machine_state, dict):
+                raise ValueError(
+                    "Checkpoint morale_machine state must be a mapping",
+                )
+            staged_morale_machine_state = copy.deepcopy(raw_machine_state)
+            raw_machine_units = staged_morale_machine_state.get(
+                "unit_states",
+            )
+            if not isinstance(raw_machine_units, dict):
+                raise ValueError(
+                    "Checkpoint morale_machine.unit_states must be a mapping",
+                )
+
+            if staged_morale is not None:
+                morale_ids = set(staged_morale)
+                extra_morale_ids = morale_ids - morale_checkpoint_unit_ids
+                if extra_morale_ids:
+                    raise ValueError(
+                        "Checkpoint morale_states topology contains units "
+                        f"outside the force roster: "
+                        f"{sorted(extra_morale_ids)!r}",
+                    )
+                missing_morale_ids = (
+                    morale_checkpoint_unit_ids - morale_ids
+                )
+                if missing_morale_ids:
+                    if not allow_legacy_morale:
+                        raise ValueError(
+                            "Checkpoint morale_states topology is missing "
+                            f"active units: {sorted(missing_morale_ids)!r}",
+                        )
+                    state_by_side = {
+                        side.side: MoraleState[side.morale_initial]
+                        for side in self.config.sides
+                    }
+                    if staged_units is not None:
+                        checkpoint_sides = {
+                            staged.entity_id: side
+                            for side, side_units in staged_units.items()
+                            for _, staged in side_units
+                        }
+                    else:
+                        checkpoint_sides = {
+                            unit.entity_id: (
+                                unit.side
+                                if isinstance(unit.side, str)
+                                else unit.side.value
+                            )
+                            for unit in self.all_units()
+                        }
+                    try:
+                        staged_morale.update(
+                            {
+                                unit_id: state_by_side[
+                                    checkpoint_sides[unit_id]
+                                ]
+                                for unit_id in sorted(missing_morale_ids)
+                            },
+                        )
+                    except KeyError as exc:
+                        raise ValueError(
+                            "Cannot migrate legacy morale for unknown unit "
+                            f"or side {exc.args[0]!r}",
+                        ) from exc
+
+                aggregate_proxy_ids: set[str] = set()
+                raw_aggregation = state.get("aggregation_engine")
+                if isinstance(raw_aggregation, dict):
+                    raw_aggregates = raw_aggregation.get("aggregates", {})
+                    if isinstance(raw_aggregates, dict):
+                        aggregate_proxy_ids = {
+                            aggregate_id
+                            for aggregate_id in raw_aggregates
+                            if isinstance(aggregate_id, str)
+                        }
+                expected_machine_ids = (
+                    morale_checkpoint_unit_ids - aggregate_proxy_ids
+                )
+
+                extra_machine_ids = (
+                    set(raw_machine_units) - expected_machine_ids
+                )
+                if extra_machine_ids:
+                    raise ValueError(
+                        "Checkpoint morale_machine topology contains units "
+                        f"outside the force roster: "
+                        f"{sorted(extra_machine_ids)!r}",
+                    )
+                missing_machine_ids = (
+                    expected_machine_ids - set(raw_machine_units)
+                )
+                if missing_machine_ids:
+                    if not allow_legacy_morale:
+                        raise ValueError(
+                            "Checkpoint morale_machine topology is missing "
+                            f"active units: "
+                            f"{sorted(missing_machine_ids)!r}",
+                        )
+                    raw_machine_units.update(
+                        {
+                            unit_id: {
+                                "current_state": int(
+                                    staged_morale[unit_id],
+                                ),
+                                "transition_cooldown_s": 0.0,
+                                "last_transition_time": -1e9,
+                            }
+                            for unit_id in sorted(missing_machine_ids)
+                        },
+                    )
+
+                for unit_id in sorted(expected_machine_ids):
+                    raw_unit_state = raw_machine_units[unit_id]
+                    if not isinstance(raw_unit_state, dict):
+                        raise ValueError(
+                            "Checkpoint morale_machine unit states must be "
+                            "mappings",
+                        )
+                    try:
+                        raw_current_state = raw_unit_state["current_state"]
+                        if (
+                            isinstance(raw_current_state, bool)
+                            or not isinstance(raw_current_state, int)
+                        ):
+                            raise ValueError(
+                                "morale-machine current_state must be an "
+                                "integer enum value",
+                            )
+                        machine_morale = MoraleState(
+                            raw_current_state,
+                        )
+                    except (KeyError, TypeError, ValueError) as exc:
+                        raise ValueError(
+                            "Invalid checkpoint morale_machine state for "
+                            f"{unit_id!r}",
+                        ) from exc
+                    if machine_morale is not staged_morale[unit_id]:
+                        raise ValueError(
+                            "Checkpoint morale stores disagree for unit "
+                            f"{unit_id!r}",
+                        )
+
+            try:
+                copy.deepcopy(self.morale_machine).set_state(
+                    staged_morale_machine_state,
+                )
+            except (AttributeError, KeyError, TypeError, ValueError) as exc:
+                raise ValueError(
+                    f"Invalid checkpoint morale_machine state: {exc}",
+                ) from exc
 
         existing_by_id: dict[str, Unit] = {}
         for unit in self.all_units():
@@ -1023,13 +1539,51 @@ class SimulationContext:
 
         current_unit_weapons = getattr(self, "unit_weapons", {})
         current_unit_sensors = getattr(self, "unit_sensors", {})
+        runtime_unit_weapons = dict(current_unit_weapons)
+        runtime_unit_sensors = dict(current_unit_sensors)
+        compatible_weapon_ids = set(reusable_ids)
+        compatible_sensor_ids = set(reusable_ids)
+
+        if staged_units is not None:
+            reconstructed_units = [
+                staged
+                for staged_side in staged_units.values()
+                for _, staged in staged_side
+                if staged.entity_id not in reusable_ids
+            ]
+            can_rebuild_loadouts = all(
+                loader is not None
+                for loader in (
+                    self.weapon_loader,
+                    self.ammo_loader,
+                    self.sensor_loader,
+                )
+            )
+            if reconstructed_units and can_rebuild_loadouts:
+                rebuilt_weapons, rebuilt_sensors = build_unit_loadouts(
+                    reconstructed_units,
+                    weapon_loader=self.weapon_loader,
+                    ammo_loader=self.ammo_loader,
+                    sensor_loader=self.sensor_loader,
+                    calibration=staged_calibration,
+                    era_config=self.era_config,
+                )
+                runtime_unit_weapons.update(rebuilt_weapons)
+                runtime_unit_sensors.update(rebuilt_sensors)
+                rebuilt_ids = {
+                    unit.entity_id
+                    for unit in reconstructed_units
+                }
+                compatible_weapon_ids.update(rebuilt_ids)
+                compatible_sensor_ids.update(rebuilt_ids)
+
         staged_weapon_states: list[tuple[Any, dict[str, Any]]] = []
         if "unit_weapon_states" in state:
             staged_weapon_states = _stage_runtime_instance_states(
                 state["unit_weapon_states"],
-                current_unit_weapons,
+                runtime_unit_weapons,
                 checkpoint_unit_ids,
-                reusable_ids,
+                compatible_weapon_ids,
                 checkpoint_equipment,
                 kind="weapon",
             )
@@ -1038,9 +1592,9 @@ class SimulationContext:
         if "unit_sensor_states" in state:
             staged_sensor_states = _stage_runtime_instance_states(
                 state["unit_sensor_states"],
-                current_unit_sensors,
+                runtime_unit_sensors,
                 checkpoint_unit_ids,
-                reusable_ids,
+                compatible_sensor_ids,
                 checkpoint_equipment,
                 kind="sensor",
             )
@@ -1067,8 +1621,8 @@ class SimulationContext:
             if "unit_weapon_states" in state:
                 self.unit_weapons = {
                     entity_id: (
-                        current_unit_weapons.get(entity_id, [])
-                        if entity_id in reusable_ids
+                        runtime_unit_weapons.get(entity_id, [])
+                        if entity_id in compatible_weapon_ids
                         else []
                     )
                     for entity_id in state["unit_weapon_states"]
@@ -1076,14 +1630,14 @@ class SimulationContext:
             else:
                 self.unit_weapons = {
                     entity_id: weapons
-                    for entity_id, weapons in current_unit_weapons.items()
-                    if entity_id in reusable_ids
+                    for entity_id, weapons in runtime_unit_weapons.items()
+                    if entity_id in checkpoint_unit_ids
                 }
             if "unit_sensor_states" in state:
                 self.unit_sensors = {
                     entity_id: (
-                        current_unit_sensors.get(entity_id, [])
-                        if entity_id in reusable_ids
+                        runtime_unit_sensors.get(entity_id, [])
+                        if entity_id in compatible_sensor_ids
                         else []
                     )
                     for entity_id in state["unit_sensor_states"]
@@ -1091,12 +1645,14 @@ class SimulationContext:
             else:
                 self.unit_sensors = {
                     entity_id: sensors
-                    for entity_id, sensors in current_unit_sensors.items()
-                    if entity_id in reusable_ids
+                    for entity_id, sensors in runtime_unit_sensors.items()
+                    if entity_id in checkpoint_unit_ids
                 }
 
         if staged_morale is not None:
             self.morale_states = staged_morale
+        if staged_morale_machine_state is not None:
+            self.morale_machine.set_state(staged_morale_machine_state)
 
         for instance, saved_state in staged_weapon_states:
             instance.set_state(saved_state)
@@ -1109,6 +1665,7 @@ class SimulationContext:
 
         # Restore engine states
         engines = [
+            # Restored explicitly above after non-mutating preflight.
             ("morale_machine", self.morale_machine),
             ("ooda_engine", self.ooda_engine),
             ("planning_engine", self.planning_engine),
@@ -1199,6 +1756,8 @@ class SimulationContext:
             ("command_engine", self.command_engine),
         ]
         for name, eng in engines:
+            if name == "morale_machine":
+                continue
             if eng is not None and name in state and hasattr(eng, "set_state"):
                 eng.set_state(state[name])
 
@@ -1206,6 +1765,93 @@ class SimulationContext:
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
+
+def register_dynamic_units(
+    ctx: SimulationContext,
+    units: list[Unit],
+) -> None:
+    """Atomically register fully constructed units and their runtime state.
+
+    Loadouts and side-derived morale are staged before any context-owned
+    mapping changes.  A failed wave therefore remains retryable and cannot
+    leave partial roster, loadout, or morale state behind.
+    """
+    if not units:
+        return
+
+    unit_ids = [unit.entity_id for unit in units]
+    if any(not unit_id for unit_id in unit_ids):
+        raise ValueError("Dynamic units require non-empty entity IDs")
+    if len(unit_ids) != len(set(unit_ids)):
+        raise ValueError(
+            f"Dynamic unit wave contains duplicate entity IDs: {unit_ids!r}",
+        )
+
+    existing_ids = {unit.entity_id for unit in ctx.all_units()}
+    collisions = sorted(existing_ids & set(unit_ids))
+    if collisions:
+        raise ValueError(
+            f"Dynamic unit IDs already exist in the scenario: {collisions!r}",
+        )
+
+    unknown_sides = sorted(
+        {
+            unit.side if isinstance(unit.side, str) else unit.side.value
+            for unit in units
+        }
+        - set(ctx.units_by_side)
+    )
+    if unknown_sides:
+        raise ValueError(
+            f"Dynamic units reference unknown sides: {unknown_sides!r}",
+        )
+
+    incoming_weapons, incoming_sensors = build_unit_loadouts(
+        units,
+        weapon_loader=ctx.weapon_loader,
+        ammo_loader=ctx.ammo_loader,
+        sensor_loader=ctx.sensor_loader,
+        calibration=ctx.calibration,
+        era_config=ctx.era_config,
+    )
+    incoming_ids = set(unit_ids)
+    if set(incoming_weapons) != incoming_ids:
+        raise ValueError("Dynamic weapon loadout topology is incomplete")
+    if set(incoming_sensors) != incoming_ids:
+        raise ValueError("Dynamic sensor loadout topology is incomplete")
+
+    incoming_morale = _initial_morale_for_units(ctx.config, units)
+    if set(ctx.unit_weapons) & incoming_ids:
+        raise ValueError("Dynamic weapon loadout IDs already exist")
+    if set(ctx.unit_sensors) & incoming_ids:
+        raise ValueError("Dynamic sensor loadout IDs already exist")
+    if set(ctx.morale_states) & incoming_ids:
+        raise ValueError("Dynamic morale IDs already exist")
+    if ctx.morale_machine is None:
+        raise RuntimeError("Dynamic units require a morale state machine")
+
+    staged_units_by_side = {
+        side: list(side_units)
+        for side, side_units in ctx.units_by_side.items()
+    }
+    for unit in units:
+        side = unit.side if isinstance(unit.side, str) else unit.side.value
+        staged_units_by_side[side].append(unit)
+    staged_weapons = dict(ctx.unit_weapons)
+    staged_weapons.update(incoming_weapons)
+    staged_sensors = dict(ctx.unit_sensors)
+    staged_sensors.update(incoming_sensors)
+    staged_morale = dict(ctx.morale_states)
+    staged_morale.update(incoming_morale)
+
+    # initialize_units validates the complete batch before changing its
+    # internal mapping.  The assignments after it are non-throwing.
+    ctx.morale_machine.initialize_units(incoming_morale)
+    ctx.units_by_side = staged_units_by_side
+    ctx.unit_weapons = staged_weapons
+    ctx.unit_sensors = staged_sensors
+    ctx.morale_states = staged_morale
 
 
 def _parse_weather_state(precip: str) -> int:
@@ -1286,7 +1932,9 @@ class ScenarioLoader:
                 calibration_overrides,
             )
         else:
-            config = scenario_config.model_copy(deep=True)
+            config = CampaignScenarioConfig.model_validate(
+                scenario_config.model_dump(mode="python"),
+            )
         logger.info("Loaded campaign %r from %s", config.name, scenario_path)
 
         # 2. Core infrastructure
@@ -1320,23 +1968,36 @@ class ScenarioLoader:
         from stochastic_warfare.core.era import get_era_config
         era_config = get_era_config(config.era)
         loaders = self._create_loaders(era=config.era)
+        self._validate_reinforcement_unit_types(config, loaders["unit_loader"])
 
         # 5. Build forces
         entities_rng = rng_mgr.get_stream(ModuleId.ENTITIES)
         units_by_side, unit_weapons, unit_sensors = self._build_all_forces(
-            config, loaders, entities_rng,
+            config,
+            loaders,
+            entities_rng,
+            era_config,
         )
 
         # 6. Morale state tracking
-        from stochastic_warfare.morale.state import MoraleState
-        morale_states: dict[str, MoraleState] = {}
-        for units in units_by_side.values():
-            for u in units:
-                morale_states[u.entity_id] = MoraleState.STEADY
+        all_units = [
+            unit
+            for side_units in units_by_side.values()
+            for unit in side_units
+        ]
+        morale_states = _initial_morale_for_units(config, all_units)
 
         # 7. Create domain engines (era-gated)
-        disabled = era_config.disabled_modules
-        engines = self._create_engines(rng_mgr, bus, heightmap, loaders, config, clock, units_by_side)
+        engines = self._create_engines(
+            rng_mgr,
+            bus,
+            heightmap,
+            loaders,
+            config,
+            clock,
+            units_by_side,
+            era_config,
+        )
 
         # 8. Assemble context
         real_ctx = self._real_terrain_ctx
@@ -1358,6 +2019,9 @@ class ScenarioLoader:
             **engines,
             **loaders,
         )
+        if ctx.morale_machine is None:
+            raise RuntimeError("Scenario loader did not create a morale state machine")
+        ctx.morale_machine.initialize_units(morale_states)
 
         # 9. Flat calibration dict (Phase 86 — O(1) battle-loop access)
         if isinstance(ctx.calibration, CalibrationSchema):
@@ -1517,7 +2181,6 @@ class ScenarioLoader:
         projection = ScenarioProjection(lat, lon)
 
         # Compute bbox from lat/lon + width/height
-        import math
         meters_per_deg_lat = 111_320.0
         meters_per_deg_lon = 111_320.0 * math.cos(math.radians(lat))
         half_h = (spec.height_m / 2) / meters_per_deg_lat
@@ -1613,11 +2276,35 @@ class ScenarioLoader:
             "sensor_loader": sensor_loader,
         }
 
+    @staticmethod
+    def _validate_reinforcement_unit_types(
+        config: CampaignScenarioConfig,
+        unit_loader: Any,
+    ) -> None:
+        """Reject unresolved reinforcement definitions during scenario load."""
+        available = set(unit_loader.available_types())
+        unknown = [
+            (wave_index, unit_config.unit_type)
+            for wave_index, wave in enumerate(config.reinforcements)
+            for unit_config in wave.units
+            if unit_config.unit_type not in available
+        ]
+        if unknown:
+            details = ", ".join(
+                f"wave {wave_index}: {unit_type!r}"
+                for wave_index, unit_type in unknown
+            )
+            raise ValueError(
+                "Reinforcement schedule references unknown unit types "
+                f"({details})",
+            )
+
     def _build_all_forces(
         self,
         config: CampaignScenarioConfig,
         loaders: dict[str, Any],
         entities_rng: np.random.Generator,
+        era_config: EraConfig,
     ) -> tuple[dict[str, list[Unit]], dict[str, list[Any]], dict[str, list[Any]]]:
         """Build units for all sides and assign weapons/sensors."""
         from stochastic_warfare.validation.scenario_runner import build_forces
@@ -1689,16 +2376,13 @@ class ScenarioLoader:
 
         # Assign weapons and sensors
         all_units = [u for us in units_by_side.values() for u in us]
-        from stochastic_warfare.validation.scenario_runner import ScenarioRunner
-
-        unit_weapons = ScenarioRunner._assign_weapons(
-            all_units, loaders["weapon_loader"], loaders["ammo_loader"], cal,
-        )
-        for uid, wpns in unit_weapons.items():
-            wpns.sort(key=lambda w: w[0].definition.max_range_m, reverse=True)
-
-        unit_sensors = ScenarioRunner._assign_sensors(
-            all_units, loaders["sensor_loader"],
+        unit_weapons, unit_sensors = build_unit_loadouts(
+            all_units,
+            weapon_loader=loaders["weapon_loader"],
+            ammo_loader=loaders["ammo_loader"],
+            sensor_loader=loaders["sensor_loader"],
+            calibration=cal,
+            era_config=era_config,
         )
 
         return units_by_side, unit_weapons, unit_sensors
@@ -1712,6 +2396,7 @@ class ScenarioLoader:
         config: CampaignScenarioConfig,
         clock: SimulationClock | None = None,
         units_by_side: dict[str, list] | None = None,
+        era_config: Any = None,
     ) -> dict[str, Any]:
         """Create all domain engine instances."""
         combat_rng = rng_mgr.get_stream(ModuleId.COMBAT)
@@ -2161,7 +2846,15 @@ class ScenarioLoader:
         }
 
         # ── Optional engine wiring (Phase 25) ────────────────────────
-        result.update(self._create_optional_engines(rng_mgr, bus, config, c2_rng))
+        result.update(
+            self._create_optional_engines(
+                rng_mgr,
+                bus,
+                config,
+                c2_rng,
+                era_config,
+            ),
+        )
         return result
 
     def _create_optional_engines(
@@ -2170,23 +2863,62 @@ class ScenarioLoader:
         bus: EventBus,
         config: CampaignScenarioConfig,
         c2_rng: np.random.Generator,
+        era_config: Any = None,
     ) -> dict[str, Any]:
-        """Create optional domain engines based on config blocks.
+        """Create optional domain engines from explicit flags and era gates."""
+        if era_config is None:
+            from stochastic_warfare.core.era import get_era_config
 
-        Only instantiates engines whose config block is non-None.
-        """
+            era_config = get_era_config(config.era)
+        disabled = set(era_config.disabled_modules)
         result: dict[str, Any] = {}
 
         # 1. EW engines
-        if config.ew_config is not None:
+        ew_enabled = self._optional_suite_enabled(
+            config.ew_config,
+            enable_field="enable_ew",
+            config_field="ew_config",
+        )
+        if ew_enabled and "ew" in disabled:
+            raise ValueError(
+                "Era feature 'ew' is disabled but ew_config.enable_ew is true",
+            )
+        if ew_enabled:
             result.update(self._create_ew_engines(rng_mgr, bus, config.ew_config))
 
         # 2. Space engines
-        if config.space_config is not None:
-            result.update(self._create_space_engines(rng_mgr, bus, config.space_config))
+        space_enabled = self._optional_suite_enabled(
+            config.space_config,
+            enable_field="enable_space",
+            config_field="space_config",
+        )
+        if space_enabled and "space" in disabled:
+            raise ValueError(
+                "Era feature 'space' is disabled but "
+                "space_config.enable_space is true",
+            )
+        if space_enabled:
+            result.update(
+                self._create_space_engines(
+                    rng_mgr,
+                    bus,
+                    config.space_config,
+                    gps_enabled="gps" not in disabled,
+                ),
+            )
 
         # 3. CBRN engines
-        if config.cbrn_config is not None:
+        cbrn_enabled = self._optional_suite_enabled(
+            config.cbrn_config,
+            enable_field="enable_cbrn",
+            config_field="cbrn_config",
+        )
+        if cbrn_enabled and "cbrn" in disabled:
+            raise ValueError(
+                "Era feature 'cbrn' is disabled but "
+                "cbrn_config.enable_cbrn is true",
+            )
+        if cbrn_enabled:
             result.update(self._create_cbrn_engines(rng_mgr, bus, config))
 
         # 4. Schools
@@ -2233,6 +2965,23 @@ class ScenarioLoader:
             result.update(self._create_dew_engine(rng_mgr, bus, config.dew_config))
 
         return result
+
+    @staticmethod
+    def _optional_suite_enabled(
+        config_block: dict[str, Any] | None,
+        *,
+        enable_field: str,
+        config_field: str,
+    ) -> bool:
+        """Return an optional suite's explicit, validated enable flag."""
+        if config_block is None:
+            return False
+        enabled = config_block.get(enable_field, False)
+        if not isinstance(enabled, bool):
+            raise ValueError(
+                f"{config_field}.{enable_field} must be a boolean",
+            )
+        return enabled
 
     def _create_ew_engines(
         self,
@@ -2306,6 +3055,8 @@ class ScenarioLoader:
         rng_mgr: RNGManager,
         bus: EventBus,
         space_cfg: dict[str, Any],
+        *,
+        gps_enabled: bool = True,
     ) -> dict[str, Any]:
         """Create space domain engines from space_config."""
         space_rng = rng_mgr.get_stream(ModuleId.SPACE)
@@ -2326,7 +3077,11 @@ class ScenarioLoader:
         orbits = OrbitalMechanicsEngine()
         constellation = ConstellationManager(orbits, bus, space_rng, sc)
 
-        gps = GPSEngine(constellation, sc, bus, space_rng)
+        gps = (
+            GPSEngine(constellation, sc, bus, space_rng)
+            if gps_enabled
+            else None
+        )
         isr = SpaceISREngine(constellation, sc, bus, space_rng)
         ew_sat = EarlyWarningEngine(constellation, sc, bus, space_rng)
         satcom = SATCOMEngine(constellation, sc, bus, space_rng)
@@ -2342,7 +3097,10 @@ class ScenarioLoader:
             asat_engine=asat,
         )
 
-        logger.info("Created space engines (GPS, ISR, EW, SATCOM, ASAT)")
+        logger.info(
+            "Created space engines (%sGPS, ISR, EW, SATCOM, ASAT)",
+            "" if gps_enabled else "no ",
+        )
         return {"space_engine": space_engine}
 
     def _create_cbrn_engines(

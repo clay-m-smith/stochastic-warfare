@@ -1,5 +1,5 @@
 # Project Structure & Module Decomposition
-**Status**: Living reference, current through Phase 106.
+**Status**: Living reference, current through Phase 107.
 **Last Updated**: 2026-07-28
 
 ---
@@ -614,7 +614,10 @@ stochastic-warfare/
   - **Calendar-driven triggers**: exposes queries like "what month is it?" that environment modules use for seasonal transitions, storm season windows, monsoon timing, etc.
 - Config provides the pattern for all YAML loading
 - Checkpoint handles all serialization (modules register their state)
-- **Era framework** (`era.py`): Era enum (MODERN/WW2/WW1/NAPOLEONIC/ANCIENT_MEDIEVAL), EraConfig pydantic model (disabled modules, available sensor types, physics overrides, tick resolution overrides), pre-defined era configs, `get_era_config()` factory [Phase 20]
+- **Era framework** (`era.py`): Era enum
+  (MODERN/WW2/WW1/NAPOLEONIC/ANCIENT_MEDIEVAL), strict isolated
+  `EraConfig` registry, seven enforced capability gates, sensor allowlists, and
+  declared-but-not-yet-consumed physics/tick override metadata [Phases 20, 107]
 
 **Depends on**: Nothing (leaf dependency)
 
@@ -953,7 +956,10 @@ Orders exist at every echelon with fundamentally different character:
 - Manages scale transitions (campaign ↔ battle)
 - **Scenario initialization**: loads scenario date/time, computes initial astronomical state (where is the sun? what's the moon phase? what's the tidal state?), initializes weather from scenario starting conditions, establishes seasonal ground state, sets up the full environmental context before any unit acts.
 - **Victory conditions**: objective-based, attrition-based, time-based, political — configurable per scenario. War termination criteria for campaigns.
-- **Reinforcement pipeline**: at campaign level, manages the generation and arrival of reinforcements (units training and deploying over time)
+- **Reinforcement pipeline**: the engine installs the scenario schedule once;
+  campaign ticks admit due waves at every resolution with stable IDs, atomic
+  live loadout/morale registration, logical-time events, and exact checkpoint
+  continuation [Phase 107]
 - **Metrics and analysis**: statistical aggregation of simulation outputs (casualty rates, exchange ratios, supply consumption rates, environmental casualties, supply consumption by category, detection performance vs conditions, etc.) for post-run analysis. Environmental conditions logged alongside events for correlation analysis (e.g., "detection rates during ducting conditions" or "casualty rates during night vs day").
 - Does NOT contain domain logic — only sequencing and coordination
 

@@ -1,8 +1,8 @@
 # Stochastic Warfare
 
 ![Python](https://img.shields.io/badge/python-%3E%3D3.12-blue)
-![Tests](https://img.shields.io/badge/tests-10%2C168_passing-brightgreen)
-![Phase](https://img.shields.io/badge/phase-106_COMPLETE-brightgreen)
+![Tests](https://img.shields.io/badge/tests-10%2C279_passing-brightgreen)
+![Phase](https://img.shields.io/badge/phase-107_COMPLETE-brightgreen)
 
 High-fidelity, high-resolution wargame simulator with a headless Python engine,
 FastAPI service, and React frontend. Models warfare across multiple scales —
@@ -12,7 +12,7 @@ signal-processing-inspired models throughout.
 
 The simulator covers the modern era (Cold War to present) as its prototype period and treats maritime warfare as a fully integrated domain alongside land and air operations, not a deferred add-on. Validated against historical engagements (73 Easting, Falklands Naval, Golan Heights) at both engagement and campaign levels.
 
-Core mathematical models include Markov chains (morale state transitions, weather), Monte Carlo methods (engagement and campaign outcome analysis), Kalman filters (enemy state estimation from noisy sensor data), Poisson processes (equipment breakdown, reinforcement arrivals), queueing theory (medical evacuation, supply bottlenecks), and SNR-based detection theory (unified across visual, thermal, radar, and acoustic sensors).
+Core mathematical models include Markov chains (morale state transitions, weather), Monte Carlo methods (engagement and campaign outcome analysis), Kalman filters (enemy state estimation from noisy sensor data), Poisson processes (equipment breakdown), log-normal uncertainty (reinforcement arrival time), queueing theory (medical evacuation, supply bottlenecks), and SNR-based detection theory (unified across visual, thermal, radar, and acoustic sensors).
 
 ## Getting Started
 
@@ -167,7 +167,7 @@ data/                     # ~748 YAML data files
   eras/                    # Era-specific data packages (WW2, WW1, Napoleonic, Ancient/Medieval)
   scenarios/              # 32 modern scenarios (engagement, campaign, EW, space, CBRN, escalation, joint, calibration, benchmark) + 5 test
 
-tests/                    # 10,168 default-selected Python tests passing
+tests/                    # 10,279 default-selected Python tests passing
 docs/                     # specs, brainstorm, devlog, development phases
 ```
 
@@ -175,9 +175,9 @@ For the full package tree and module decomposition, see [`docs/specs/project-str
 
 ## Development Status
 
-Phases 105 and 106 are complete; Block 12 integrity remediation continues with
-Phase 107. Blocks 1–11 remain complete. See the remediation backlog, devlogs,
-and phase roadmaps for full detail.
+Phases 105 through 107 are complete; Phase 108 is next.
+Blocks 1–11 remain complete. See the remediation backlog, devlogs, and phase
+roadmaps for full detail.
 
 | Phase | Focus | Tests | Status |
 |-------|-------|-------|--------|
@@ -289,7 +289,8 @@ and phase roadmaps for full detail.
 | 104 | Configurable Deployment Modes (Block 11 polish) | 21 | **Complete** |
 | 105 | Checkpoint State Integrity (Block 12) | 23 | **Complete** |
 | 106 | API Execution Integrity (Block 12) | 25 | **Complete** |
-| | **Verified passing baseline** | **10,168 Python + 418 frontend** | |
+| 107 | Scenario Configuration Wiring (Block 12) | 103 | **Complete** |
+| | **Verified passing baseline** | **10,279 Python + 418 frontend** | |
 
 The Python figure is the fresh default-suite result; that run also reported 21
 skipped and 346 deselected tests. For the full phase roadmap, see
@@ -343,7 +344,7 @@ cd frontend && npm install && npm run dev
 Frontend commands:
 - `npm run dev` — Vite dev server at localhost:5173
 - `npm run build` — Production build (TypeScript + Vite)
-- `npm test` — Run vitest tests (416 tests, no API server required)
+- `npm test` — Run vitest tests (418 tests, no API server required)
 - `npm run lint` — ESLint
 
 ## Documentation

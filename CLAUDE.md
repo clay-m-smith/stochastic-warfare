@@ -7,9 +7,9 @@ models, a headless Python engine, FastAPI service, and React frontend. Modern
 warfare is the primary data package, with four historical-era packages and
 integrated maritime warfare.
 
-**Current status**: Phases 105 and 106 are complete; Block 12 integrity
-remediation continues with Phase 107. The fresh default Python verification is
-10,168 passed, 21 skipped, and 346 deselected; the frontend baseline is 418
+**Current status**: Phases 105 through 107 are complete; Block 12 integrity
+remediation continues with Phase 108. The fresh default Python verification is
+10,279 passed, 21 skipped, and 346 deselected; the frontend baseline is 418
 passing vitest tests. Blocks 1–11 remain complete. See
 `docs/remediation-backlog.md` for current evidence and unresolved gaps.
 
@@ -147,7 +147,7 @@ production-evidence requirements.
 | `docs/development-phases-block10.md` | Block 10 phase roadmap (92–97), UI depth |
 | `docs/brainstorm-block11.md` | Block 11 design thinking (golden scenarios, engine validation through UI) |
 | `docs/development-phases-block11.md` | Block 11 roadmap and polish history (98–104) |
-| `docs/development-phases-block12.md` | Block 12 phase roadmap (105–112), integrity remediation |
+| `docs/development-phases-block12.md` | Block 12 phase roadmap (105–114), integrity remediation |
 | `docs/remediation-backlog.md` | Audited implementation gaps and completion evidence |
 | `docs/specs/project-structure.md` | Full package tree, module decomposition, dependency graph |
 | `docs/devlog/` | Per-phase implementation logs (`index.md` tracks status) |
@@ -178,7 +178,7 @@ All phase details are in `docs/devlog/` (one file per phase). Per-phase tables i
 | Block 9 | 83–91 | Profiling, spatial culling, LOD, Numba JIT, SoA data layer, per-side parallelism, benchmarking | ~279 |
 | Block 10 | 92–97 | UI depth: analytics endpoints, dashboard charts, map overlays, calibration editor, event filtering, data catalogs | ~120 |
 | Block 11 | 98–104 | Golden scenarios plus OOB, engine, and deployment polish | ~107 |
-| Block 12 | 105–112 | Production-path integrity remediation; Phases 105–106 complete | 48 so far |
+| Block 12 | 105–114 | Production-path integrity remediation; Phases 105–107 complete | 151 so far |
 
 ### Block 11 Detail (COMPLETE)
 

@@ -7,6 +7,8 @@ and engagement detection.  No domain logic — only sequencing.
 
 from __future__ import annotations
 
+import copy
+import math
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Any
@@ -22,7 +24,12 @@ from stochastic_warfare.simulation.battle import (
     BattleContext, BattleManager,
     _movement_target, _should_hold_position,
 )
-from stochastic_warfare.simulation.scenario import ReinforcementConfig
+from stochastic_warfare.simulation.scenario import (
+    ReinforcementConfig,
+    ReinforcementUnitConfig,
+    _json_values_equal,
+    register_dynamic_units,
+)
 
 logger = get_logger(__name__)
 
@@ -64,8 +71,10 @@ class ReinforcementEntry:
     """Tracks a scheduled reinforcement."""
 
     config: ReinforcementConfig
+    wave_ordinal: int = 0
     arrived: bool = False
     actual_arrival_time_s: float = 0.0  # computed at setup (may differ from config)
+    legacy_ids: bool = False
 
 
 # ---------------------------------------------------------------------------
@@ -96,24 +105,67 @@ class CampaignManager:
         self._rng = rng
         self._config = config or CampaignConfig()
         self._reinforcements: list[ReinforcementEntry] = []
+        self._schedule_signature: list[dict[str, Any]] | None = None
 
     def set_reinforcements(self, reinforcements: list[ReinforcementConfig]) -> None:
         """Initialize the reinforcement schedule.
 
         When a reinforcement has ``arrival_sigma > 0``, the actual arrival
         time is sampled from a log-normal distribution centered on the
-        configured ``arrival_time_s``. Otherwise it matches exactly.
+        configured ``arrival_time_s``. Otherwise it matches exactly.  A
+        manager's schedule is immutable after initialization; setting the
+        same schedule again is an idempotent no-op that does not resample
+        stochastic arrival times.
         """
-        self._reinforcements = []
-        for r in reinforcements:
-            sigma = getattr(r, "arrival_sigma", 0.0)
-            if sigma > 0:
-                actual = r.arrival_time_s * float(self._rng.lognormal(0, sigma))
-            else:
-                actual = r.arrival_time_s
-            self._reinforcements.append(
-                ReinforcementEntry(config=r, actual_arrival_time_s=actual)
+        validated = [
+            ReinforcementConfig.model_validate(
+                reinforcement.model_dump(mode="python"),
             )
+            for reinforcement in reinforcements
+        ]
+        signature = [
+            reinforcement.model_dump(mode="json")
+            for reinforcement in validated
+        ]
+        if self._schedule_signature is not None:
+            if signature == self._schedule_signature:
+                return
+            raise ValueError(
+                "Reinforcement schedule is already initialized with "
+                "different topology",
+            )
+
+        rng_state = copy.deepcopy(self._rng.bit_generator.state)
+        staged: list[ReinforcementEntry] = []
+        try:
+            for wave_ordinal, reinforcement in enumerate(validated):
+                config = reinforcement.model_copy(deep=True)
+                r = config
+                sigma = getattr(r, "arrival_sigma", 0.0)
+                if sigma > 0:
+                    actual = (
+                        r.arrival_time_s
+                        * float(self._rng.lognormal(0, sigma))
+                    )
+                else:
+                    actual = r.arrival_time_s
+                if not math.isfinite(actual) or actual < 0.0:
+                    raise ValueError(
+                        "Reinforcement arrival sampling produced a non-finite "
+                        f"time at wave {wave_ordinal}",
+                    )
+                staged.append(
+                    ReinforcementEntry(
+                        config=r,
+                        wave_ordinal=wave_ordinal,
+                        actual_arrival_time_s=actual,
+                    )
+                )
+        except Exception:
+            self._rng.bit_generator.state = rng_state
+            raise
+        self._reinforcements = staged
+        self._schedule_signature = copy.deepcopy(signature)
 
     # ── Strategic tick ──────────────────────────────────────────────
 
@@ -124,8 +176,9 @@ class CampaignManager:
     ) -> None:
         """Execute one strategic tick.
 
-        Sequences: reinforcements → supply → strategic AI → movement →
-        maintenance → engagement detection.
+        Sequences: supply → strategic AI → movement → maintenance →
+        engagement detection. Reinforcements are checked by
+        :class:`SimulationEngine` before resolution-specific work.
 
         Parameters
         ----------
@@ -134,39 +187,29 @@ class CampaignManager:
         dt:
             Tick duration in seconds.
         """
-        elapsed_s = ctx.clock.elapsed.total_seconds()
         timestamp = ctx.clock.current_time
 
-        # 1. Check reinforcement schedule
-        new_units = self.check_reinforcements(ctx, elapsed_s)
-        for unit in new_units:
-            side = unit.side if isinstance(unit.side, str) else unit.side.value
-            if side in ctx.units_by_side:
-                ctx.units_by_side[side].append(unit)
-            else:
-                ctx.units_by_side[side] = [unit]
-
-        # 2. Supply network update
+        # 1. Supply network update
         if self._config.enable_supply_network and ctx.supply_network_engine is not None:
             self._update_supply_network(ctx, dt)
 
-        # 3. Strategic AI OODA cycles (corps/theater commanders)
+        # 2. Strategic AI OODA cycles (corps/theater commanders)
         if ctx.ooda_engine is not None:
             ctx.ooda_engine.update(dt, ts=timestamp)
 
-        # 4. Idle/march supply consumption
+        # 3. Idle/march supply consumption
         if ctx.consumption_engine is not None and ctx.stockpile_manager is not None:
             self._consume_idle_supplies(ctx, dt)
 
-        # 5. Strategic movement — march toward nearest enemy
+        # 4. Strategic movement — march toward nearest enemy
         if self._config.enable_strategic_movement:
             self._execute_strategic_movement(ctx, dt)
 
-        # 6. Maintenance checks
+        # 5. Maintenance checks
         if self._config.enable_maintenance and ctx.maintenance_engine is not None:
             self._run_maintenance(ctx, dt)
 
-        # 7. Phase 54: era-specific strategic engine updates
+        # 6. Phase 54: era-specific strategic engine updates
         era = getattr(ctx.config, "era", "modern")
         if era == "ww2":
             # Phase 54a: convoy updates
@@ -321,17 +364,38 @@ class CampaignManager:
             if entry.arrived:
                 continue
             if elapsed_s >= entry.actual_arrival_time_s:
+                clock = getattr(ctx, "clock", None)
+                if clock is None:
+                    raise RuntimeError(
+                        "Reinforcement arrival requires a simulation clock",
+                    )
+                timestamp = clock.current_time
+                entities_rng = ctx.rng_manager.get_stream(
+                    ModuleId.ENTITIES,
+                )
+                rng_state = copy.deepcopy(
+                    entities_rng.bit_generator.state,
+                )
+                try:
+                    units = self._spawn_reinforcements(
+                        ctx,
+                        entry,
+                        entities_rng,
+                    )
+                    register_dynamic_units(ctx, units)
+                except Exception:
+                    entities_rng.bit_generator.state = rng_state
+                    raise
+
+                entry.legacy_ids = False
                 entry.arrived = True
-                units = self._spawn_reinforcements(ctx, entry.config)
                 new_units.extend(units)
                 logger.info(
                     "Reinforcements arrived: %d units for %s at t=%.0fs",
                     len(units), entry.config.side, elapsed_s,
                 )
-                clock = getattr(ctx, "clock", None)
-                ts = clock.current_time if clock is not None else datetime.min
                 self._bus.publish(ReinforcementArrivedEvent(
-                    timestamp=ts,
+                    timestamp=timestamp,
                     source=ModuleId.CORE,
                     side=entry.config.side,
                     unit_count=len(units),
@@ -343,43 +407,64 @@ class CampaignManager:
     def _spawn_reinforcements(
         self,
         ctx: Any,
-        config: ReinforcementConfig,
+        entry: ReinforcementEntry,
+        entities_rng: np.random.Generator,
     ) -> list[Unit]:
-        """Create units from a reinforcement config."""
+        """Stage every unit in one reinforcement wave."""
         units: list[Unit] = []
         if ctx.unit_loader is None:
-            return units
+            raise RuntimeError(
+                "Cannot create reinforcements without a unit loader",
+            )
 
-        entities_rng = ctx.rng_manager.get_stream(ModuleId.ENTITIES)
+        config = entry.config
         spawn_x = config.position[0] if len(config.position) > 0 else 0.0
         spawn_y = config.position[1] if len(config.position) > 1 else 0.0
+        spawn_z = config.position[2] if len(config.position) > 2 else 0.0
 
-        unit_idx = 0
-        for unit_cfg in config.units:
-            for i in range(unit_cfg.count):
-                eid = f"reinforce_{config.side}_{unit_cfg.unit_type}_{unit_idx:04d}"
-                offset_y = unit_idx * 50.0
-                pos = Position(spawn_x, spawn_y + offset_y, 0.0)
-                try:
-                    unit = ctx.unit_loader.create_unit(
-                        unit_type=unit_cfg.unit_type,
-                        entity_id=eid,
-                        position=pos,
-                        side=config.side,
-                        rng=entities_rng,
-                    )
-                    # Apply overrides
-                    for key, val in unit_cfg.overrides.items():
-                        if hasattr(unit, key):
-                            object.__setattr__(unit, key, val)
-                    units.append(unit)
-                except KeyError:
-                    logger.warning(
-                        "Reinforcement unit type %r not found", unit_cfg.unit_type,
-                    )
-                unit_idx += 1
+        for unit_idx, eid, unit_cfg in self._reinforcement_unit_specs(entry):
+            if unit_cfg.overrides:
+                raise ValueError(
+                    "reinforcement unit overrides are not supported",
+                )
+            offset_y = unit_idx * 50.0
+            pos = Position(spawn_x, spawn_y + offset_y, spawn_z)
+            unit = ctx.unit_loader.create_unit(
+                unit_type=unit_cfg.unit_type,
+                entity_id=eid,
+                position=pos,
+                side=config.side,
+                rng=entities_rng,
+            )
+            units.append(unit)
 
         return units
+
+    @staticmethod
+    def _reinforcement_unit_specs(
+        entry: ReinforcementEntry,
+        *,
+        legacy_ids: bool = False,
+    ) -> list[tuple[int, str, ReinforcementUnitConfig]]:
+        """Return stable unit identities for one configured wave."""
+        specs: list[tuple[int, str, ReinforcementUnitConfig]] = []
+        unit_idx = 0
+        for unit_config in entry.config.units:
+            for _ in range(unit_config.count):
+                if legacy_ids:
+                    entity_id = (
+                        f"reinforce_{entry.config.side}_"
+                        f"{unit_config.unit_type}_{unit_idx:04d}"
+                    )
+                else:
+                    entity_id = (
+                        f"reinforce_{entry.config.side}_"
+                        f"{entry.wave_ordinal:04d}_"
+                        f"{unit_config.unit_type}_{unit_idx:04d}"
+                    )
+                specs.append((unit_idx, entity_id, unit_config))
+                unit_idx += 1
+        return specs
 
     # ── Scripted events (Phase 101) ─────────────────────────────────
 
@@ -601,6 +686,7 @@ class CampaignManager:
         return battle_manager.detect_engagement(
             ctx.units_by_side,
             engagement_range_m=self._config.engagement_detection_range_m,
+            timestamp=ctx.clock.current_time,
         )
 
     # ── State persistence ───────────────────────────────────────────
@@ -614,15 +700,274 @@ class CampaignManager:
                     "side": e.config.side,
                     "arrival_time_s": e.config.arrival_time_s,
                     "actual_arrival_time_s": e.actual_arrival_time_s,
+                    "wave_ordinal": e.wave_ordinal,
+                    "config": e.config.model_dump(mode="json"),
+                    **({"legacy_ids": True} if e.legacy_ids else {}),
                 }
                 for e in self._reinforcements
             ],
         }
 
-    def set_state(self, state: dict[str, Any]) -> None:
-        """Restore campaign manager state."""
-        for i, rdata in enumerate(state.get("reinforcements", [])):
-            if i < len(self._reinforcements):
-                self._reinforcements[i].arrived = rdata.get("arrived", False)
-                if "actual_arrival_time_s" in rdata:
-                    self._reinforcements[i].actual_arrival_time_s = rdata["actual_arrival_time_s"]
+    def _stage_state(
+        self,
+        state: dict[str, Any],
+        *,
+        allow_legacy: bool = False,
+    ) -> list[tuple[ReinforcementEntry, bool, float, bool]]:
+        """Validate checkpoint state and return a non-mutating commit plan."""
+        raw_reinforcements = state.get("reinforcements", [])
+        if not isinstance(raw_reinforcements, list):
+            raise ValueError("Checkpoint reinforcements must be a list")
+        if len(raw_reinforcements) != len(self._reinforcements):
+            raise ValueError(
+                "Incompatible reinforcement schedule topology: checkpoint "
+                f"has {len(raw_reinforcements)} waves, runtime has "
+                f"{len(self._reinforcements)}",
+            )
+
+        staged: list[tuple[ReinforcementEntry, bool, float, bool]] = []
+        for entry, rdata in zip(
+            self._reinforcements,
+            raw_reinforcements,
+            strict=True,
+        ):
+            if not isinstance(rdata, dict):
+                raise ValueError(
+                    "Checkpoint reinforcement entries must be mappings",
+                )
+            has_ordinal = "wave_ordinal" in rdata
+            has_config = "config" in rdata
+            if has_ordinal != has_config:
+                raise ValueError(
+                    "Checkpoint reinforcement topology must contain both "
+                    "wave_ordinal and config, or neither for a legacy entry",
+                )
+            is_legacy_shape = not has_ordinal
+            if is_legacy_shape:
+                if not allow_legacy:
+                    raise ValueError(
+                        "Legacy reinforcement checkpoint entries require a "
+                        "versionless engine checkpoint",
+                    )
+                if (
+                    rdata.get("side") != entry.config.side
+                    or rdata.get("arrival_time_s")
+                    != entry.config.arrival_time_s
+                ):
+                    raise ValueError(
+                        "Incompatible legacy reinforcement schedule topology "
+                        f"at wave {entry.wave_ordinal}",
+                    )
+            else:
+                raw_ordinal = rdata["wave_ordinal"]
+                if (
+                    isinstance(raw_ordinal, bool)
+                    or not isinstance(raw_ordinal, int)
+                    or raw_ordinal != entry.wave_ordinal
+                ):
+                    raise ValueError(
+                        "Incompatible reinforcement schedule topology at wave "
+                        f"{entry.wave_ordinal}: checkpoint ordinal is "
+                        f"{raw_ordinal!r}",
+                    )
+                expected_config = entry.config.model_dump(mode="json")
+                if not _json_values_equal(rdata["config"], expected_config):
+                    raise ValueError(
+                        "Incompatible reinforcement schedule topology at wave "
+                        f"{entry.wave_ordinal}: configuration differs",
+                    )
+                if (
+                    rdata.get("side") != entry.config.side
+                    or not _json_values_equal(
+                        rdata.get("arrival_time_s"),
+                        entry.config.arrival_time_s,
+                    )
+                ):
+                    raise ValueError(
+                        "Incompatible reinforcement schedule topology at wave "
+                        f"{entry.wave_ordinal}: side or arrival time differs",
+                    )
+
+            legacy_ids = rdata.get("legacy_ids", False)
+            if not isinstance(legacy_ids, bool):
+                raise ValueError(
+                    "Checkpoint reinforcement legacy_ids flag must be boolean "
+                    f"at wave {entry.wave_ordinal}",
+                )
+            if is_legacy_shape:
+                if "legacy_ids" in rdata and not legacy_ids:
+                    raise ValueError(
+                        "Legacy reinforcement checkpoint entries must use "
+                        "legacy IDs",
+                    )
+                legacy_ids = True
+            arrived = rdata.get("arrived")
+            if not isinstance(arrived, bool):
+                raise ValueError(
+                    "Checkpoint reinforcement arrived flag must be boolean "
+                    f"at wave {entry.wave_ordinal}",
+                )
+            actual_arrival = rdata.get("actual_arrival_time_s")
+            if (
+                isinstance(actual_arrival, bool)
+                or not isinstance(actual_arrival, (int, float))
+                or not math.isfinite(float(actual_arrival))
+                or float(actual_arrival) < 0.0
+            ):
+                raise ValueError(
+                    "Checkpoint reinforcement actual_arrival_time_s must be "
+                    f"a finite non-negative number at wave {entry.wave_ordinal}",
+                )
+            staged.append(
+                (entry, arrived, float(actual_arrival), legacy_ids),
+            )
+
+        return staged
+
+    def validate_checkpoint_roster(
+        self,
+        state: dict[str, Any],
+        context_state: dict[str, Any],
+        *,
+        allow_legacy: bool = False,
+    ) -> None:
+        """Cross-check arrival flags against the checkpoint force roster."""
+        staged = self._stage_state(state, allow_legacy=allow_legacy)
+        raw_forces = context_state.get("units_by_side")
+        if not isinstance(raw_forces, dict):
+            raise ValueError(
+                "Checkpoint context units_by_side must be a mapping",
+            )
+
+        unit_topology: dict[str, tuple[str, str]] = {}
+        for side, raw_units in raw_forces.items():
+            if not isinstance(side, str) or not isinstance(raw_units, list):
+                raise ValueError(
+                    "Checkpoint force sides must map names to unit lists",
+                )
+            for raw_unit in raw_units:
+                if not isinstance(raw_unit, dict):
+                    raise ValueError(
+                        "Checkpoint force entries must be mappings",
+                    )
+                entity_id = raw_unit.get("entity_id")
+                if not isinstance(entity_id, str):
+                    raise ValueError(
+                        "Checkpoint force entity_id values must be strings",
+                    )
+                unit_type = raw_unit.get("unit_type")
+                if not isinstance(unit_type, str):
+                    raise ValueError(
+                        "Checkpoint force unit_type values must be strings",
+                    )
+                if entity_id in unit_topology:
+                    raise ValueError(
+                        f"Duplicate checkpoint entity_id {entity_id!r}",
+                    )
+                unit_topology[entity_id] = (side, unit_type)
+
+        raw_aggregation = context_state.get("aggregation_engine")
+        if raw_aggregation is not None:
+            if not isinstance(raw_aggregation, dict):
+                raise ValueError(
+                    "Checkpoint aggregation_engine must be a mapping",
+                )
+            raw_aggregates = raw_aggregation.get("aggregates", {})
+            if not isinstance(raw_aggregates, dict):
+                raise ValueError(
+                    "Checkpoint aggregation_engine.aggregates must be a "
+                    "mapping",
+                )
+            for raw_aggregate in raw_aggregates.values():
+                if not isinstance(raw_aggregate, dict):
+                    raise ValueError(
+                        "Checkpoint aggregate entries must be mappings",
+                    )
+                raw_snapshots = raw_aggregate.get("snapshots", [])
+                if not isinstance(raw_snapshots, list):
+                    raise ValueError(
+                        "Checkpoint aggregate snapshots must be a list",
+                    )
+                for raw_snapshot in raw_snapshots:
+                    if not isinstance(raw_snapshot, dict):
+                        raise ValueError(
+                            "Checkpoint aggregate snapshots must be mappings",
+                        )
+                    raw_unit = raw_snapshot.get("unit_state")
+                    if not isinstance(raw_unit, dict):
+                        raise ValueError(
+                            "Checkpoint aggregate unit_state must be a mapping",
+                        )
+                    entity_id = raw_unit.get("entity_id")
+                    unit_type = raw_unit.get("unit_type")
+                    side = raw_snapshot.get(
+                        "original_side",
+                        raw_unit.get("side"),
+                    )
+                    if not all(
+                        isinstance(value, str)
+                        for value in (entity_id, unit_type, side)
+                    ):
+                        raise ValueError(
+                            "Checkpoint aggregate constituent identity fields "
+                            "must be strings",
+                        )
+                    if entity_id in unit_topology:
+                        raise ValueError(
+                            f"Duplicate checkpoint entity_id {entity_id!r}",
+                        )
+                    unit_topology[entity_id] = (side, unit_type)
+
+        expected_presence: dict[str, tuple[str, str, bool, int]] = {}
+        for entry, arrived, _, legacy_ids in staged:
+            for _, entity_id, unit_config in self._reinforcement_unit_specs(
+                entry,
+                legacy_ids=legacy_ids,
+            ):
+                prior = expected_presence.get(entity_id)
+                must_be_present = arrived or (
+                    prior is not None and prior[2]
+                )
+                expected_presence[entity_id] = (
+                    entry.config.side,
+                    unit_config.unit_type,
+                    must_be_present,
+                    entry.wave_ordinal,
+                )
+
+        for entity_id, (
+            expected_side,
+            expected_type,
+            must_be_present,
+            wave_ordinal,
+        ) in expected_presence.items():
+            actual_topology = unit_topology.get(entity_id)
+            if must_be_present and actual_topology != (
+                expected_side,
+                expected_type,
+            ):
+                raise ValueError(
+                    "Checkpoint reinforcement arrival flag or unit topology "
+                    "disagrees with force roster at wave "
+                    f"{wave_ordinal}: {entity_id!r} must be present as "
+                    f"{expected_side!r}/{expected_type!r}",
+                )
+            if not must_be_present and actual_topology is not None:
+                raise ValueError(
+                    "Checkpoint reinforcement arrival flag disagrees "
+                    f"with force roster at wave {wave_ordinal}: "
+                    f"{entity_id!r} is present before arrival",
+                )
+
+    def set_state(
+        self,
+        state: dict[str, Any],
+        *,
+        allow_legacy: bool = False,
+    ) -> None:
+        """Validate and atomically restore campaign manager state."""
+        staged = self._stage_state(state, allow_legacy=allow_legacy)
+        for entry, arrived, actual_arrival, legacy_ids in staged:
+            entry.arrived = arrived
+            entry.actual_arrival_time_s = actual_arrival
+            entry.legacy_ids = legacy_ids

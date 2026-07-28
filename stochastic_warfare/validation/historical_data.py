@@ -12,10 +12,11 @@ from pathlib import Path
 from typing import Any
 
 import yaml
-from stochastic_warfare.simulation.calibration import CalibrationSchema
 from pydantic import BaseModel, field_validator
 
 from stochastic_warfare.core.logging import get_logger
+from stochastic_warfare.morale.state import validate_morale_state_name
+from stochastic_warfare.simulation.calibration import CalibrationSchema
 
 logger = get_logger(__name__)
 
@@ -84,6 +85,11 @@ class ForceDefinition(BaseModel):
         if not 0.0 <= v <= 1.0:
             raise ValueError(f"experience_level must be in [0, 1]; got {v}")
         return v
+
+    @field_validator("morale_initial")
+    @classmethod
+    def _known_morale(cls, v: str) -> str:
+        return validate_morale_state_name(v)
 
 
 class TerrainSpec(BaseModel):

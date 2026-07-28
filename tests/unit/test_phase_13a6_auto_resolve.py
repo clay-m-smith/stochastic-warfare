@@ -13,7 +13,7 @@ from stochastic_warfare.simulation.battle import (
     BattleManager,
 )
 
-from datetime import datetime
+from tests.conftest import TS
 
 
 def _make_unit(entity_id: str, side: str, pos: Position = Position(0, 0)) -> Unit:
@@ -29,7 +29,7 @@ def _make_battle(sides: list[str] = None) -> BattleContext:
     return BattleContext(
         battle_id="test_battle",
         start_tick=0,
-        start_time=datetime.now(),
+        start_time=TS,
         involved_sides=sides,
     )
 
@@ -134,7 +134,7 @@ class TestAutoResolve:
         battle = BattleContext(
             battle_id="one_sided",
             start_tick=0,
-            start_time=datetime.now(),
+            start_time=TS,
             involved_sides=["blue"],
         )
         blue = _make_units("blue", 5)
@@ -255,5 +255,8 @@ class TestAutoResolve:
         # detect_engagement should still work
         blue = _make_units("blue", 5, Position(0, 0))
         red = _make_units("red", 5, Position(100, 0))
-        new_battles = mgr.detect_engagement({"blue": blue, "red": red})
+        new_battles = mgr.detect_engagement(
+            {"blue": blue, "red": red},
+            timestamp=TS,
+        )
         assert len(new_battles) > 0

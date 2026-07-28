@@ -48,11 +48,10 @@ uv run python scripts/evaluate_scenarios.py --output C:\tmp\scenario-evaluation-
 The evaluator excludes internal `test_campaign*` and `benchmark_*` scenarios.
 Report those exclusions and run separate tests when they matter.
 
-The harness manually constructs victory evaluation and registers reinforcement
-configuration. Its reinforcement setup can mask a failure in another production
-entry point. It also reads recorder internals for diagnostics. Supplement it
-with focused `SimulationEngine`, checkpoint, API, and end-to-end tests whenever
-the completion matrix requires those boundaries.
+The harness manually constructs victory evaluation and reads recorder internals
+for diagnostics. Reinforcement scheduling is owned by `SimulationEngine`, as in
+the production runtime. Supplement the harness with focused checkpoint, API,
+and end-to-end tests whenever the completion matrix requires those boundaries.
 
 ## Compare Semantic Results
 

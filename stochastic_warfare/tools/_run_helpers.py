@@ -22,6 +22,18 @@ from stochastic_warfare.core.types import Position
 logger = get_logger(__name__)
 
 
+def _infer_data_dir(scenario_path: str | Path) -> Path:
+    """Resolve the data root for a scenario under ``data/scenarios``."""
+    path = Path(scenario_path)
+    for parent in path.parents:
+        if parent.name == "scenarios":
+            return parent.parent
+    raise ValueError(
+        "Cannot infer data_dir from a scenario outside a scenarios directory; "
+        "pass data_dir explicitly",
+    )
+
+
 def _load_scenario_yaml(path: str) -> dict[str, Any]:
     """Load a scenario YAML file."""
     with open(path, "r") as f:
@@ -133,9 +145,10 @@ def run_scenario_batch(
         Metrics to extract from each run.
     data_dir:
         Root of the ``data/`` tree for resolving unit/weapon YAML. When
-        omitted, inferred as ``scenario_path.parent.parent`` — which is
-        only correct when the scenario lives under ``<data_dir>/scenarios/<name>/``.
-        Callers using temp-file scenarios must pass this explicitly.
+        omitted, inferred from the ``scenarios`` ancestor in
+        ``<data_dir>/scenarios/<name>/scenario.yaml``.
+        Callers using source scenarios outside a ``scenarios`` directory must
+        pass this explicitly.
 
     Returns
     -------
@@ -158,7 +171,11 @@ def run_scenario_batch(
             tmp_path = Path(tmp.name)
 
         try:
-            resolved_data_dir = Path(data_dir) if data_dir is not None else Path(scenario_path).parent.parent
+            resolved_data_dir = (
+                Path(data_dir)
+                if data_dir is not None
+                else _infer_data_dir(scenario_path)
+            )
             loader = ScenarioLoader(resolved_data_dir)
             ctx = loader.load(tmp_path, seed=seed)
         finally:

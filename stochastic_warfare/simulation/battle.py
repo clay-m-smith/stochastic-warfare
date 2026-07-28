@@ -1341,6 +1341,8 @@ class BattleManager:
         self,
         units_by_side: dict[str, list[Unit]],
         engagement_range_m: float | None = None,
+        *,
+        timestamp: datetime,
     ) -> list[BattleContext]:
         """Detect new engagements based on proximity between opposing forces.
 
@@ -1371,7 +1373,7 @@ class BattleManager:
                         battle = BattleContext(
                             battle_id=f"battle_{self._next_battle_id:04d}",
                             start_tick=0,
-                            start_time=datetime.now(),
+                            start_time=timestamp,
                             involved_sides=[side_a, side_b],
                             unit_ids={u.entity_id for u in active_a + active_b},
                         )

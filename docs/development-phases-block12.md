@@ -46,6 +46,8 @@ API A/B, scenario evaluation, and residual thread-executor boundary.
 
 ## Phase 107 - Scenario Configuration Wiring
 
+Status: **Complete** (2026-07-28).
+
 - Register scenario reinforcements automatically.
 - Assign arriving units their defined weapons and sensors.
 - Honor side initial morale.
@@ -53,6 +55,13 @@ API A/B, scenario evaluation, and residual thread-executor boundary.
 
 Exit criteria: REM-004 through REM-007 have enabled, disabled, and
 outcome-affecting controls where applicable.
+
+Delivered behavior includes automatic all-resolution reinforcement scheduling,
+atomic dynamic registration with live loadouts and typed side morale, strict
+era/capability gates, deterministic logical-time events, and exact dynamic
+checkpoint continuation. See
+[`phase-107.md`](devlog/phase-107.md) for the production battle proof,
+determinism audit, scenario evaluation, and residual boundaries.
 
 ## Phase 108 - Logistics Runtime Wiring
 
@@ -68,6 +77,10 @@ effects through production ticks.
 - Remove duplicate-key overwrite behavior.
 - Replace unrelated proxy mappings with semantically correct data or explicit
   unsupported errors.
+- Move production loadout construction out of private validation-runner helpers
+  and give the runtime one typed ownership boundary.
+- Resolve the 22 currently unmapped catalog entries and explicitly classify the
+  two no-sensor warnings.
 - Add uniqueness and semantic validation for equipment lookup maps.
 
 Exit criteria: REM-010 is closed and the relevant Ruff checks pass.
@@ -91,6 +104,9 @@ the production loop.
 ## Phase 112 - Validation and Documentation Trust
 
 - Make excluded Python suites explicit in CI and developer documentation.
+- Establish a green repository-wide Ruff baseline after Phase 109 removes the
+  six mapping-table duplicate-key errors; resolve the two remaining pre-existing
+  no-placeholder f-string findings in validation tests.
 - Audit critical structural/no-assert tests and replace false behavioral claims.
 - Repair analysis batch loading and metric validation so sensitivity,
   comparison, and calibration cannot emit false-green zero results.
@@ -99,5 +115,23 @@ the production loop.
 - Reconcile public capability and status claims with the remediation evidence.
 
 Exit criteria: REM-013, REM-014, and REM-017 are closed, REM-015 remains green,
-all relevant suites are reported explicitly, and the final Block 12 postmortem
+all relevant suites are reported explicitly, and the phase postmortem
 identifies any newly discovered backlog items.
+
+## Phase 113 - Morale State Ownership
+
+Replace the independently mutable context and state-machine morale stores with
+one authoritative runtime path. Route transitions, rout cascades, aggregation,
+dynamic registration, victory reads, and checkpointing through it.
+
+Exit criteria: REM-019 is closed with exact transition, cascade, aggregation,
+and checkpoint-continuation evidence.
+
+## Phase 114 - Era Override Execution
+
+Define the supported physics and tick-resolution override keys, reject unknown
+metadata, and apply each supported value at the production construction
+boundary.
+
+Exit criteria: REM-018 is closed with enabled/omitted controls that change the
+intended production clock or engine behavior and persist exactly.

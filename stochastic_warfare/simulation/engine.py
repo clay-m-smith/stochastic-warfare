@@ -32,6 +32,8 @@ from stochastic_warfare.simulation.victory import VictoryEvaluator, VictoryResul
 
 logger = get_logger(__name__)
 
+_CHECKPOINT_VERSION = 107
+
 
 # ---------------------------------------------------------------------------
 # Configuration
@@ -137,6 +139,9 @@ class SimulationEngine:
         )
         self._campaign = CampaignManager(
             ctx.event_bus, core_rng, campaign_config,
+        )
+        self._campaign.set_reinforcements(
+            getattr(ctx.config, "reinforcements", []),
         )
         self._battle = BattleManager(ctx.event_bus, battle_config)
         self._victory = victory_evaluator
@@ -371,6 +376,13 @@ class SimulationEngine:
         tick = clock.tick_count
         dt = clock.tick_duration.total_seconds()
         timestamp = clock.current_time
+
+        # Reinforcement arrivals are time-driven and must be checked at every
+        # resolution before environment, resolution, or tactical work.
+        self._campaign.check_reinforcements(
+            ctx,
+            clock.elapsed.total_seconds(),
+        )
 
         # 1b. LOS cache management
         selective_los = (
@@ -1312,9 +1324,14 @@ class SimulationEngine:
 
     def get_state(self) -> dict[str, Any]:
         """Capture full engine state for checkpointing."""
+        context_state = self._ctx.get_state()
+        # Format 107 distinguishes an intentionally absent morale machine from
+        # an omitted legacy field without changing direct context snapshots.
+        context_state.setdefault("morale_machine", None)
         state: dict[str, Any] = {
+            "checkpoint_version": _CHECKPOINT_VERSION,
             "resolution": self._resolution.value,
-            "context": self._ctx.get_state(),
+            "context": context_state,
             "campaign": self._campaign.get_state(),
             "battle": self._battle.get_state(),
             # Phase 72c: proper checkpoint of _last_ato_day
@@ -1328,19 +1345,88 @@ class SimulationEngine:
 
     def set_state(self, state: dict[str, Any]) -> None:
         """Restore engine state from a checkpoint dict."""
+        has_checkpoint_version = "checkpoint_version" in state
+        checkpoint_version = state.get("checkpoint_version")
+        if has_checkpoint_version and (
+            isinstance(checkpoint_version, bool)
+            or not isinstance(checkpoint_version, int)
+            or checkpoint_version != _CHECKPOINT_VERSION
+        ):
+            raise ValueError(
+                "Unsupported checkpoint version "
+                f"{checkpoint_version!r}; expected {_CHECKPOINT_VERSION}",
+            )
+        allow_legacy_checkpoint = not has_checkpoint_version
+        if not allow_legacy_checkpoint:
+            expected_engine_keys = set(self.get_state())
+            actual_engine_keys = set(state)
+            if actual_engine_keys != expected_engine_keys:
+                raise ValueError(
+                    "Checkpoint version 107 engine key topology does not "
+                    "match the runtime: "
+                    f"missing={sorted(expected_engine_keys - actual_engine_keys)!r}, "
+                    f"extra={sorted(actual_engine_keys - expected_engine_keys)!r}",
+                )
+        context_state = state.get("context")
+        if not isinstance(context_state, dict):
+            raise ValueError("Checkpoint context must be a mapping")
+        if not allow_legacy_checkpoint:
+            required_morale_keys = {"morale_states", "morale_machine"}
+            missing_morale_keys = sorted(
+                required_morale_keys - set(context_state),
+            )
+            if missing_morale_keys:
+                raise ValueError(
+                    "Checkpoint version 107 context is missing required "
+                    f"morale state: {missing_morale_keys!r}",
+                )
+            expected_context_keys = set(self._ctx.get_state())
+            expected_context_keys.add("morale_machine")
+            actual_context_keys = set(context_state)
+            if actual_context_keys != expected_context_keys:
+                raise ValueError(
+                    "Checkpoint version 107 context key topology does not "
+                    "match the runtime: "
+                    f"missing={sorted(expected_context_keys - actual_context_keys)!r}, "
+                    f"extra={sorted(actual_context_keys - expected_context_keys)!r}",
+                )
+            if (
+                self._ctx.morale_machine is None
+                and context_state["morale_machine"] is not None
+            ):
+                raise ValueError(
+                    "Checkpoint version 107 contains morale-machine state "
+                    "for a runtime without a morale machine",
+                )
+
         new_resolution = TickResolution(state["resolution"])
         new_dt = self._tick_durations[new_resolution]
-        saved_dt = state["context"]["clock"]["tick_duration_seconds"]
+        saved_dt = context_state["clock"]["tick_duration_seconds"]
         if float(saved_dt) != float(new_dt):
             raise ValueError(
                 "Checkpoint resolution and clock tick duration disagree: "
                 f"{new_resolution.name} requires {new_dt}s, got {saved_dt}s",
             )
 
-        self._ctx.set_state(state["context"])
+        # Validate manager-owned topology before the context restore can
+        # replace rosters, clocks, RNG streams, or runtime loadouts.
+        campaign_state = state.get("campaign", {})
+        self._campaign.validate_checkpoint_roster(
+            campaign_state,
+            context_state,
+            allow_legacy=allow_legacy_checkpoint,
+        )
+
+        self._ctx.set_state(
+            context_state,
+            allow_legacy_morale=allow_legacy_checkpoint,
+        )
         self._resolution = new_resolution
         self._ctx.clock.set_tick_duration(timedelta(seconds=new_dt))
-        self._campaign.set_state(state.get("campaign", {}))
+        self._campaign.set_state(
+            campaign_state,
+            allow_legacy=allow_legacy_checkpoint,
+        )
         self._battle.set_state(state.get("battle", {}))
         # Phase 72c: restore _last_ato_day
         self._last_ato_day = state.get("last_ato_day", -1)

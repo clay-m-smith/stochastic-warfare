@@ -18,12 +18,16 @@ Stochastic Warfare supports 5 historical eras, each with different available tec
 
 Each era defines an `EraConfig` that specifies:
 
-- **Enabled modules** -- which subsystems are available (e.g., no radar before WW2)
-- **Available sensor types** -- what sensor modalities exist (e.g., visual only in Ancient)
-- **C2 delay multiplier** -- how slow command propagation is (courier >> radio)
+- **Disabled capabilities** -- exactly `ew`, `space`, `cbrn`, `gps`,
+  `thermal_sights`, `data_links`, and `pgm`
+- **Available sensor types** -- an enforced allowlist of sensor modalities
+- **Physics and tick overrides** -- declared metadata that is not yet consumed
+  by the production runtime
 - **Era-specific engine extensions** -- custom combat models for the period
 
-Setting `era` in a scenario YAML automatically applies these constraints.
+Setting `era` in a scenario YAML selects a registered configuration. Unknown
+eras are rejected. The production loader enforces suite gates and rejects
+unit loadouts that require forbidden sensors, guidance, or data links.
 
 ---
 
@@ -392,6 +396,12 @@ sides:
 
 The `ScenarioLoader` will:
 
-1. Apply the era's `EraConfig` (disable unavailable modules, set C2 delays)
-2. Load unit definitions from `data/eras/napoleonic/units/` instead of `data/units/`
-3. Wire era-specific engines (volley fire, melee, cavalry, formations, courier, foraging)
+1. Resolve the named registered `EraConfig` and enforce its capability and
+   sensor gates.
+2. Load definitions from the base catalogs and overlay definitions from
+   `data/eras/napoleonic/`.
+3. Wire era-specific engines (volley fire, melee, cavalry, formations,
+   courier, and foraging).
+
+`physics_overrides` and `tick_resolution_overrides` remain declared metadata;
+they do not currently alter production behavior.

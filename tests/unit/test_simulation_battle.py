@@ -131,7 +131,7 @@ class TestEngagementDetection:
             [Position(1000, 5000, 0)],
             [Position(4000, 5000, 0)],
         )
-        battles = mgr.detect_engagement(units)
+        battles = mgr.detect_engagement(units, timestamp=TS)
         assert len(battles) == 1
 
     def test_forces_out_of_range_not_detected(self, event_bus: EventBus) -> None:
@@ -140,7 +140,7 @@ class TestEngagementDetection:
             [Position(0, 0, 0)],
             [Position(5000, 5000, 0)],
         )
-        battles = mgr.detect_engagement(units)
+        battles = mgr.detect_engagement(units, timestamp=TS)
         assert len(battles) == 0
 
     def test_no_duplicate_battles(self, event_bus: EventBus) -> None:
@@ -149,8 +149,8 @@ class TestEngagementDetection:
             [Position(0, 0, 0)],
             [Position(1000, 0, 0)],
         )
-        battles1 = mgr.detect_engagement(units)
-        battles2 = mgr.detect_engagement(units)
+        battles1 = mgr.detect_engagement(units, timestamp=TS)
+        battles2 = mgr.detect_engagement(units, timestamp=TS)
         assert len(battles1) == 1
         assert len(battles2) == 0  # Already tracked
 
@@ -160,19 +160,29 @@ class TestEngagementDetection:
             [Position(0, 0, 0)],
             [Position(500, 0, 0)],
         )
-        battles = mgr.detect_engagement(units, engagement_range_m=100)
+        battles = mgr.detect_engagement(
+            units,
+            engagement_range_m=100,
+            timestamp=TS,
+        )
         assert len(battles) == 0
 
     def test_destroyed_units_ignored(self, event_bus: EventBus) -> None:
         mgr = BattleManager(event_bus, BattleConfig(engagement_range_m=5000))
         blue = [_make_unit("b1", Position(0, 0, 0), "blue", UnitStatus.DESTROYED)]
         red = [_make_unit("r1", Position(1000, 0, 0), "red")]
-        battles = mgr.detect_engagement({"blue": blue, "red": red})
+        battles = mgr.detect_engagement(
+            {"blue": blue, "red": red},
+            timestamp=TS,
+        )
         assert len(battles) == 0
 
     def test_empty_side_no_battle(self, event_bus: EventBus) -> None:
         mgr = BattleManager(event_bus)
-        battles = mgr.detect_engagement({"blue": [], "red": []})
+        battles = mgr.detect_engagement(
+            {"blue": [], "red": []},
+            timestamp=TS,
+        )
         assert len(battles) == 0
 
     def test_multiple_units_closest_pair_used(self, event_bus: EventBus) -> None:
@@ -181,13 +191,13 @@ class TestEngagementDetection:
             [Position(0, 0, 0), Position(0, 1000, 0)],
             [Position(1500, 0, 0), Position(10000, 0, 0)],
         )
-        battles = mgr.detect_engagement(units)
+        battles = mgr.detect_engagement(units, timestamp=TS)
         assert len(battles) == 1
 
     def test_active_battles_property(self, event_bus: EventBus) -> None:
         mgr = BattleManager(event_bus, BattleConfig(engagement_range_m=10000))
         units = _units_by_side([Position(0, 0, 0)], [Position(1000, 0, 0)])
-        mgr.detect_engagement(units)
+        mgr.detect_engagement(units, timestamp=TS)
         assert len(mgr.active_battles) == 1
 
 
@@ -459,14 +469,22 @@ class TestCheckpointRestore:
     def test_get_state_captures_battles(self, event_bus: EventBus) -> None:
         mgr = BattleManager(event_bus)
         units = _units_by_side([POS_ORIGIN], [Position(1000, 0, 0)])
-        mgr.detect_engagement(units, engagement_range_m=5000)
+        mgr.detect_engagement(
+            units,
+            engagement_range_m=5000,
+            timestamp=TS,
+        )
         state = mgr.get_state()
         assert len(state["battles"]) == 1
 
     def test_set_state_restores_battles(self, event_bus: EventBus) -> None:
         mgr = BattleManager(event_bus)
         units = _units_by_side([POS_ORIGIN], [Position(1000, 0, 0)])
-        mgr.detect_engagement(units, engagement_range_m=5000)
+        mgr.detect_engagement(
+            units,
+            engagement_range_m=5000,
+            timestamp=TS,
+        )
         state = mgr.get_state()
 
         mgr2 = BattleManager(event_bus)
@@ -476,7 +494,11 @@ class TestCheckpointRestore:
     def test_round_trip(self, event_bus: EventBus) -> None:
         mgr = BattleManager(event_bus)
         units = _units_by_side([POS_ORIGIN], [Position(1000, 0, 0)])
-        mgr.detect_engagement(units, engagement_range_m=5000)
+        mgr.detect_engagement(
+            units,
+            engagement_range_m=5000,
+            timestamp=TS,
+        )
         state = mgr.get_state()
 
         mgr2 = BattleManager(event_bus)

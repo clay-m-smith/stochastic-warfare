@@ -9,9 +9,9 @@ engine gating.
 from __future__ import annotations
 
 from enum import Enum
-from typing import Any
+from typing import Any, Literal
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict, Field, field_serializer
 
 
 # ---------------------------------------------------------------------------
@@ -32,6 +32,16 @@ class Era(str, Enum):
 # ---------------------------------------------------------------------------
 # Era configuration
 # ---------------------------------------------------------------------------
+
+EraFeature = Literal[
+    "ew",
+    "space",
+    "cbrn",
+    "gps",
+    "thermal_sights",
+    "data_links",
+    "pgm",
+]
 
 
 class EraConfig(BaseModel):
@@ -56,11 +66,26 @@ class EraConfig(BaseModel):
         ``"operational_s"``, ``"tactical_s"``.
     """
 
+    model_config = ConfigDict(extra="forbid")
+
     era: Era = Era.MODERN
-    disabled_modules: set[str] = set()
-    available_sensor_types: set[str] = set()
-    physics_overrides: dict[str, Any] = {}
-    tick_resolution_overrides: dict[str, float] = {}
+    disabled_modules: set[EraFeature] = Field(default_factory=set)
+    available_sensor_types: set[str] = Field(default_factory=set)
+    physics_overrides: dict[str, Any] = Field(default_factory=dict)
+    tick_resolution_overrides: dict[str, float] = Field(default_factory=dict)
+
+    def feature_enabled(self, feature: EraFeature) -> bool:
+        """Return whether an era permits one declared runtime feature."""
+        return feature not in self.disabled_modules
+
+    @field_serializer(
+        "disabled_modules",
+        "available_sensor_types",
+        when_used="json",
+    )
+    def _serialize_sets(self, values: set[str]) -> list[str]:
+        """Serialize unordered capability sets in stable lexical order."""
+        return sorted(values)
 
 
 # ---------------------------------------------------------------------------
@@ -158,22 +183,36 @@ ANCIENT_MEDIEVAL_ERA_CONFIG = EraConfig(
 )
 
 _ERA_REGISTRY: dict[str, EraConfig] = {
-    "modern": MODERN_ERA_CONFIG,
-    "ww2": WW2_ERA_CONFIG,
-    "ww1": WW1_ERA_CONFIG,
-    "napoleonic": NAPOLEONIC_ERA_CONFIG,
-    "ancient_medieval": ANCIENT_MEDIEVAL_ERA_CONFIG,
+    "modern": MODERN_ERA_CONFIG.model_copy(deep=True),
+    "ww2": WW2_ERA_CONFIG.model_copy(deep=True),
+    "ww1": WW1_ERA_CONFIG.model_copy(deep=True),
+    "napoleonic": NAPOLEONIC_ERA_CONFIG.model_copy(deep=True),
+    "ancient_medieval": ANCIENT_MEDIEVAL_ERA_CONFIG.model_copy(deep=True),
 }
 
 
 def get_era_config(era_name: str) -> EraConfig:
-    """Look up a pre-defined era config by name.
+    """Return an isolated registered era configuration.
 
-    Returns :data:`MODERN_ERA_CONFIG` for unknown names.
+    Raises
+    ------
+    ValueError
+        If ``era_name`` is not registered.
     """
-    return _ERA_REGISTRY.get(era_name.lower(), MODERN_ERA_CONFIG)
+    normalized_name = era_name.lower()
+    try:
+        config = _ERA_REGISTRY[normalized_name]
+    except KeyError as exc:
+        registered = ", ".join(sorted(_ERA_REGISTRY))
+        raise ValueError(
+            f"Unknown era {era_name!r}; registered eras: {registered}",
+        ) from exc
+    return config.model_copy(deep=True)
 
 
 def register_era_config(era_name: str, config: EraConfig) -> None:
-    """Register a custom era configuration."""
-    _ERA_REGISTRY[era_name.lower()] = config
+    """Validate and register an isolated custom era configuration."""
+    validated = EraConfig.model_validate(
+        config.model_dump(mode="python"),
+    )
+    _ERA_REGISTRY[era_name.lower()] = validated.model_copy(deep=True)

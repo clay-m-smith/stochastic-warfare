@@ -87,7 +87,7 @@ nav:
     - Block 9 (83-91): development-phases-block9.md
     - Block 10 (92-97): development-phases-block10.md
     - Block 11 (98-104): development-phases-block11.md
-    - Block 12 (105-112): development-phases-block12.md
+    - Block 12 (105-114): development-phases-block12.md
     - Remediation Backlog: remediation-backlog.md
   - Devlog:
     - Overview: devlog/index.md
@@ -199,6 +199,7 @@ nav:
     - Phase 104 - Configurable Deployment Modes: devlog/phase-104.md
     - Phase 105 - Checkpoint State Integrity: devlog/phase-105.md
     - Phase 106 - API Execution Integrity: devlog/phase-106.md
+    - Phase 107 - Scenario Configuration Wiring: devlog/phase-107.md
   - Specifications:
     - Project Structure: specs/project-structure.md
     - Checkpoint State Contract: specs/checkpoint-state.md

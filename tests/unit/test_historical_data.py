@@ -7,6 +7,7 @@ import textwrap
 from pathlib import Path
 
 import pytest
+from pydantic import ValidationError
 
 from stochastic_warfare.validation.historical_data import (
     ComparisonResult,
@@ -95,6 +96,17 @@ class TestForceDefinition:
         with pytest.raises(Exception):
             ForceDefinition(
                 side="red", units=[], personnel_total=100, experience_level=-0.1
+            )
+
+    @pytest.mark.parametrize("morale", ["shaken", "PANICKED"])
+    def test_invalid_morale_rejected(self, morale: str) -> None:
+        with pytest.raises(ValidationError, match="morale_initial"):
+            ForceDefinition(
+                side="red",
+                units=[],
+                personnel_total=100,
+                experience_level=0.5,
+                morale_initial=morale,
             )
 
 

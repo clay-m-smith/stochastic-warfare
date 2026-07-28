@@ -129,6 +129,7 @@ Rolling record of implementation decisions, changes, and lessons learned across 
 | **Block 12: Integrity Remediation** ||||
 | 105 | Checkpoint State Integrity | **Complete** | [phase-105.md](phase-105.md) |
 | 106 | API Execution Integrity | **Complete** | [phase-106.md](phase-106.md) |
+| 107 | Scenario Configuration Wiring | **Complete** | [phase-107.md](phase-107.md) |
 
 ## Post-MVP Refinement Index
 

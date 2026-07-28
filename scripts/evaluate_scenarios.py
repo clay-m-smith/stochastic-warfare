@@ -176,10 +176,6 @@ def run_scenario(scenario_path: Path, data_dir: Path, verbose: bool = False, see
         # Record starting resolution
         result.started_tactical = str(engine.resolution) != "TickResolution.STRATEGIC"
 
-        # Set up reinforcements if any
-        if hasattr(cfg, 'reinforcements') and cfg.reinforcements:
-            engine.campaign_manager.set_reinforcements(cfg.reinforcements)
-
         # Run
         run_result = engine.run()
 

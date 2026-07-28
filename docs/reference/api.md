@@ -163,8 +163,11 @@ The loader automatically:
   accepts a mutually exclusive prevalidated effective config
 - Loads unit, weapon, ammo, sensor, and signature definitions
 - Creates terrain, environment, detection, combat, movement, morale, C2, and logistics engines
-- Wires optional subsystems (EW, Space, CBRN, Schools, Escalation, DEW) if configured
-- Loads era-specific data and engines if an era is specified
+- Wires Schools, Escalation, and DEW when their configuration enables them
+- Constructs EW, Space, and CBRN suites only when enabled and permitted by the
+  validated effective era; contradictory enabled blocks fail loading
+- Enforces the effective era's GPS, thermal-sight, data-link, PGM, and sensor
+  allowlist gates while building the runtime
 
 ---
 
@@ -635,6 +638,15 @@ state = engine.get_state()
 # Continue running...
 result = engine.run()
 
-# Restore to tick 500 and try different parameters
+# Restore the exact saved contract into a compatible runtime
 engine.set_state(state)
+
+# Continue deterministically from tick 500
+result = engine.run()
 ```
+
+Current-format checkpoints require an exact effective scenario configuration,
+era contract, and runtime topology. An incompatible restore fails before
+mutating the target. See the
+[checkpoint state contract](../specs/checkpoint-state.md) for the canonical
+schema and bounded legacy-migration rules.

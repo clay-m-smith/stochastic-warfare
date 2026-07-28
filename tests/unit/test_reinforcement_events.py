@@ -3,14 +3,16 @@
 from __future__ import annotations
 
 import types
-from datetime import datetime, timedelta
+from datetime import timedelta
 
 import numpy as np
+import pytest
 
 from stochastic_warfare.core.clock import SimulationClock
 from stochastic_warfare.core.events import EventBus
 from stochastic_warfare.core.rng import RNGManager
 from stochastic_warfare.core.types import ModuleId, Position
+import stochastic_warfare.simulation.campaign as campaign_module
 from stochastic_warfare.simulation.campaign import (
     CampaignManager,
     ReinforcementArrivedEvent,
@@ -50,6 +52,18 @@ def _ctx(clock: SimulationClock | None = None):
     )
 
 
+@pytest.fixture(autouse=True)
+def _ignore_loadout_registration(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Keep event tests isolated from production loadout registration."""
+    monkeypatch.setattr(
+        campaign_module,
+        "register_dynamic_units",
+        lambda _ctx, _units: None,
+    )
+
+
 class TestReinforcementEvent:
     """Verify ReinforcementArrivedEvent is published on reinforcement arrival."""
 
@@ -73,6 +87,7 @@ class TestReinforcementEvent:
         assert evt.side == "blue"
         assert evt.unit_count == 3
         assert evt.unit_types == ("tank", "tank", "tank")
+        assert evt.timestamp == ctx.clock.current_time
 
     def test_event_has_correct_source(self) -> None:
         bus = EventBus()
@@ -147,8 +162,8 @@ class TestReinforcementEvent:
 
         assert len(received) == 0
 
-    def test_no_clock_uses_fallback_timestamp(self) -> None:
-        """Ctx without clock still publishes event (backward compat)."""
+    def test_due_wave_requires_logical_clock_before_registration(self) -> None:
+        """A missing simulation clock cannot produce a dummy event time."""
         bus = EventBus()
         received: list[ReinforcementArrivedEvent] = []
         bus.subscribe(ReinforcementArrivedEvent, received.append)
@@ -156,34 +171,33 @@ class TestReinforcementEvent:
         mgr = CampaignManager(bus, make_rng(42))
         cfg = ReinforcementConfig(
             side="blue", arrival_time_s=50.0,
-            units=[],
+            units=[{"unit_type": "tank", "count": 1}],
         )
         mgr.set_reinforcements([cfg])
 
-        ctx = types.SimpleNamespace(unit_loader=None, rng_manager=None)
-        mgr.check_reinforcements(ctx, elapsed_s=100.0)
-
-        assert len(received) == 1
-        assert received[0].timestamp == datetime.min
-
-    def test_event_unit_count_zero_for_empty_units(self) -> None:
-        bus = EventBus()
-        received: list[ReinforcementArrivedEvent] = []
-        bus.subscribe(ReinforcementArrivedEvent, received.append)
-
-        mgr = CampaignManager(bus, make_rng(42))
-        cfg = ReinforcementConfig(
-            side="blue", arrival_time_s=50.0,
-            units=[],
+        ctx = types.SimpleNamespace(
+            unit_loader=_FakeUnitLoader(),
+            rng_manager=RNGManager(42),
         )
-        mgr.set_reinforcements([cfg])
+        rng_before = ctx.rng_manager.get_state()
 
-        ctx = _ctx()
-        mgr.check_reinforcements(ctx, elapsed_s=100.0)
+        with pytest.raises(RuntimeError, match="simulation clock"):
+            mgr.check_reinforcements(ctx, elapsed_s=100.0)
 
-        assert len(received) == 1
-        assert received[0].unit_count == 0
-        assert received[0].unit_types == ()
+        assert received == []
+        assert mgr.get_state()["reinforcements"][0]["arrived"] is False
+        assert ctx.rng_manager.get_state() == rng_before
+
+    def test_empty_unit_wave_is_rejected(self) -> None:
+        with pytest.raises(
+            ValueError,
+            match="reinforcement units must not be empty",
+        ):
+            ReinforcementConfig(
+                side="blue",
+                arrival_time_s=50.0,
+                units=[],
+            )
 
     def test_already_arrived_no_duplicate_event(self) -> None:
         bus = EventBus()

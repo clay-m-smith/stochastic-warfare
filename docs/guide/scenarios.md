@@ -65,7 +65,7 @@ sides:
       - unit_type: m3a2_bradley
         count: 12
     experience_level: 0.8            # 0.0 to 1.0
-    morale_initial: STEADY           # CONFIDENT | STEADY | SHAKEN | BROKEN | ROUTED
+    morale_initial: STEADY           # STEADY | SHAKEN | BROKEN | ROUTED | SURRENDERED
     commander_profile: aggressive    # references data/commander_profiles/
     doctrine_template: us_fm3_0      # references data/doctrine/
     depots:
@@ -100,10 +100,21 @@ victory_conditions:
 reinforcements:
   - side: blue
     arrival_time_s: 3600             # arrive at 1 hour
+    arrival_sigma: 0.15              # optional log-normal timing uncertainty
+    position: [500, 2000, 0]         # ENU metres; altitude is optional
     units:
       - unit_type: rifle_squad
         count: 4
 ```
+
+The production engine installs this schedule automatically. Due waves are
+checked at every simulation resolution, and each arriving unit receives the
+same declared weapon and sensor loadout as an initial unit. A wave is atomic:
+an invalid or failed unit leaves the whole wave pending for retry.
+
+Per-unit reinforcement `overrides` are not currently a typed runtime contract
+and are rejected. Define a distinct unit-catalog entry when a wave needs a
+different loadout or entity configuration.
 
 ### Calibration Overrides
 
@@ -121,18 +132,21 @@ calibration_overrides:
 
 ### Optional Subsystems
 
-Include these blocks to enable optional engines:
+Optional EW, space, and CBRN suites require an explicit true enable flag:
 
 ```yaml
 ew_config:                           # Electronic Warfare
+  enable_ew: true
   enable_jamming: true
   enable_spoofing: true
 
 space_config:                        # Space & Satellite
+  enable_space: true
   gps_constellation: gps_navstar
   enable_asat: false
 
 cbrn_config:                         # CBRN Effects
+  enable_cbrn: true
   enable_chemical: true
   enable_nuclear: false
 
@@ -148,7 +162,12 @@ dew_config:                          # Directed Energy Weapons
   enable_laser: true
 ```
 
-Omitting a config block disables that subsystem entirely (zero performance cost).
+Omitting a block, omitting its suite enable flag, or setting that flag to
+`false` leaves the suite absent from runtime and checkpoints. The registered
+era selected by `era` can also forbid `ew`, `space`, or `cbrn`; explicitly
+enabling a forbidden suite is a load error. Era gates additionally reject
+forbidden GPS/PGM guidance, thermal sensors, finite data links, and sensor
+types outside the era allowlist.
 
 ### Documented Outcomes
 

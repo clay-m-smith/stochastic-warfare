@@ -30,9 +30,13 @@ FOG      [0.10   0.15    0.05   0.70]
 
 If current weather is CLEAR, there's an 85% chance it stays clear, 10% chance of overcast, etc.
 
-### Morale (Continuous-Time)
+### Morale
 
-Morale uses a **continuous-time Markov chain** with 5 states: CONFIDENT, STEADY, SHAKEN, BROKEN, ROUTED. Transition rates (not probabilities) define how quickly units move between states based on combat stress, casualties, leadership, and cohesion.
+Morale uses a five-state Markov model: STEADY, SHAKEN, BROKEN, ROUTED,
+and SURRENDERED. The default mode evaluates a discrete transition matrix;
+an optional continuous-time mode converts transition rates over the configured
+tick duration. Combat stress, casualties, leadership, cohesion, force ratio,
+and CBRN stress affect the transition probabilities.
 
 ### Where Used
 
@@ -42,7 +46,7 @@ Morale uses a **continuous-time Markov chain** with 5 states: CONFIDENT, STEADY,
 ### Key Parameters
 
 - `transition_matrix` -- state transition probabilities (weather)
-- `rate_matrix` -- continuous-time transition rates (morale)
+- Morale transition matrices -- discrete by default, continuous-time when enabled
 - Morale modifiers: casualty rate, leadership quality, cohesion, suppression
 
 ---

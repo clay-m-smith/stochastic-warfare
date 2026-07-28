@@ -3,8 +3,8 @@
 **High-fidelity stochastic wargame simulator** -- multi-scale, multi-domain, multi-era.
 
 ![Python](https://img.shields.io/badge/python-%3E%3D3.12-blue)
-![Tests](https://img.shields.io/badge/tests-10%2C168_passing-brightgreen)
-![Phase](https://img.shields.io/badge/phase-106_COMPLETE-brightgreen)
+![Tests](https://img.shields.io/badge/tests-10%2C279_passing-brightgreen)
+![Phase](https://img.shields.io/badge/phase-107_COMPLETE-brightgreen)
 
 ---
 
@@ -82,16 +82,16 @@ See the [Getting Started Guide](guide/getting-started.md) for a complete tutoria
 | Block 9 | 83--91 | Performance at scale — profiling, spatial culling, LOD, parallelism | **Complete** |
 | Block 10 | 92--97 | UI depth & engine exposure — analytics, frame enrichment, metadata | **Complete** |
 | Block 11 | 98--104 | Golden scenarios and deployment polish | **Complete** |
-| Block 12 | 105--112 | Integrity remediation against production-path evidence | **In progress** |
+| Block 12 | 105--114 | Integrity remediation against production-path evidence | **In progress** |
 
-Phases 105 and 106 are complete; Phase 107 is next.
+Phases 105 through 107 are complete; Phase 108 is next.
 
-Fresh verified baseline: **10,168 default-selected Python tests passed** (21
+Fresh verified baseline: **10,279 default-selected Python tests passed** (21
 skipped, 346 deselected) plus **418 frontend tests passed**. See the
 [remediation backlog](remediation-backlog.md) for current evidence and known
 coverage boundaries. **~870 YAML data files** define units, weapons,
 ammunition types, sensors, signatures, doctrines, commanders, formation
-templates, and 51 scenarios across 5 eras.
+templates, and 37 scenarios across 5 eras.
 
 ## License
 

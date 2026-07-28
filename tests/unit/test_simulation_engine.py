@@ -776,10 +776,12 @@ class TestReinforcements:
         )
         ctx = _make_ctx(config=cfg, tick_s=3600.0)
         engine = SimulationEngine(ctx)
-        engine.campaign_manager.set_reinforcements(cfg.reinforcements)
-        # After 1 tick (3600s), reinforcements should arrive (if loader available)
-        # Without loader, they won't spawn but should not crash
-        engine.step()
+        assert len(engine.campaign_manager._reinforcements) == 1
+
+        with pytest.raises(RuntimeError, match="without a unit loader"):
+            engine.step()
+
+        assert engine.campaign_manager._reinforcements[0].arrived is False
 
 
 # ---------------------------------------------------------------------------

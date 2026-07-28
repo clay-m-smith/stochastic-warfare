@@ -66,11 +66,11 @@ class TestAncientMedievalEraConfig:
 
         assert Era.ANCIENT_MEDIEVAL.value == "ancient_medieval"
 
-    def test_unknown_era_returns_modern(self) -> None:
+    def test_unknown_era_is_rejected(self) -> None:
         from stochastic_warfare.core.era import get_era_config
 
-        cfg = get_era_config("totally_unknown_era")
-        assert cfg.era.value == "modern"
+        with pytest.raises(ValueError, match="Unknown era 'totally_unknown_era'"):
+            get_era_config("totally_unknown_era")
 
     def test_existing_eras_still_work(self) -> None:
         from stochastic_warfare.core.era import get_era_config

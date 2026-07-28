@@ -75,8 +75,13 @@ class TestEraConfig:
 
     def test_model_dump_roundtrip(self) -> None:
         cfg = WW2_ERA_CONFIG
-        data = cfg.model_dump()
+        data = cfg.model_dump(mode="json")
         restored = EraConfig.model_validate(data)
+        assert all(isinstance(module, str) for module in data["disabled_modules"])
+        assert data["disabled_modules"] == sorted(data["disabled_modules"])
+        assert data["available_sensor_types"] == sorted(
+            data["available_sensor_types"],
+        )
         assert restored.era == cfg.era
         assert restored.disabled_modules == cfg.disabled_modules
 
@@ -132,16 +137,18 @@ class TestGetEraConfig:
         cfg = get_era_config("WW2")
         assert cfg.era == Era.WW2
 
-    def test_unknown_returns_modern(self) -> None:
-        cfg = get_era_config("future_war")
-        assert cfg.era == Era.MODERN
+    def test_unknown_is_rejected(self) -> None:
+        with pytest.raises(ValueError, match="Unknown era 'future_war'"):
+            get_era_config("future_war")
 
     def test_register_custom_era(self) -> None:
         custom = EraConfig(era=Era.WW1, disabled_modules={"space", "ew", "cbrn", "gps"})
         register_era_config("ww1_custom_test", custom)
-        retrieved = get_era_config("ww1_custom_test")
+        custom.disabled_modules.add("pgm")
+        retrieved = get_era_config("WW1_CUSTOM_TEST")
         assert retrieved.era == Era.WW1
         assert "space" in retrieved.disabled_modules
+        assert "pgm" not in retrieved.disabled_modules
 
 
 # ---------------------------------------------------------------------------

@@ -16,11 +16,18 @@ export interface EditorUnitEntry {
   count: number
 }
 
+export type MoraleInitial =
+  | 'STEADY'
+  | 'SHAKEN'
+  | 'BROKEN'
+  | 'ROUTED'
+  | 'SURRENDERED'
+
 export interface EditorSideConfig {
   side: string
   units: EditorUnitEntry[]
   experience_level?: number
-  morale_initial?: string
+  morale_initial?: MoraleInitial
 }
 
 export interface EditorState {

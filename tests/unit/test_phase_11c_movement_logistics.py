@@ -18,6 +18,7 @@ import pytest
 from tests.conftest import make_rng
 
 from stochastic_warfare.core.events import EventBus
+from stochastic_warfare.core.rng import RNGManager
 from stochastic_warfare.core.types import Position
 from stochastic_warfare.logistics.engineering import (
     EngineeringConfig,
@@ -26,8 +27,12 @@ from stochastic_warfare.logistics.engineering import (
 )
 from stochastic_warfare.movement.engine import MovementConfig, MovementEngine
 from stochastic_warfare.simulation.battle import BattleContext, BattleManager
+import stochastic_warfare.simulation.campaign as campaign_module
 from stochastic_warfare.simulation.campaign import CampaignManager
-from stochastic_warfare.simulation.scenario import ReinforcementConfig
+from stochastic_warfare.simulation.scenario import (
+    ReinforcementConfig,
+    ReinforcementUnitConfig,
+)
 
 
 # ── helpers ──────────────────────────────────────────────────────────
@@ -312,7 +317,8 @@ class TestStochasticReinforcements:
         mgr = CampaignManager(_bus(), make_rng())
         config = ReinforcementConfig(
             side="blue", arrival_time_s=3600.0,
-            units=[], arrival_sigma=0.0,
+            units=[ReinforcementUnitConfig(unit_type="m1a2")],
+            arrival_sigma=0.0,
         )
         mgr.set_reinforcements([config])
         entry = mgr._reinforcements[0]
@@ -323,7 +329,8 @@ class TestStochasticReinforcements:
         mgr = CampaignManager(_bus(), make_rng(42))
         config = ReinforcementConfig(
             side="blue", arrival_time_s=3600.0,
-            units=[], arrival_sigma=0.3,
+            units=[ReinforcementUnitConfig(unit_type="m1a2")],
+            arrival_sigma=0.3,
         )
         mgr.set_reinforcements([config])
         entry = mgr._reinforcements[0]
@@ -332,12 +339,16 @@ class TestStochasticReinforcements:
         # Should be in a reasonable range (log-normal around 3600)
         assert 1000.0 < entry.actual_arrival_time_s < 10000.0
 
-    def test_check_uses_actual_arrival_time(self) -> None:
+    def test_check_uses_actual_arrival_time(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
         """check_reinforcements should use actual_arrival_time_s, not config."""
         mgr = CampaignManager(_bus(), make_rng(42))
         config = ReinforcementConfig(
             side="blue", arrival_time_s=3600.0,
-            units=[], arrival_sigma=0.0,
+            units=[ReinforcementUnitConfig(unit_type="m1a2")],
+            arrival_sigma=0.0,
         )
         mgr.set_reinforcements([config])
         # Manually set actual arrival earlier than config
@@ -345,8 +356,21 @@ class TestStochasticReinforcements:
 
         # Mock ctx
         ctx = types.SimpleNamespace(
+            clock=types.SimpleNamespace(
+                current_time=datetime(2025, 1, 1, tzinfo=timezone.utc),
+            ),
             unit_loader=None,
-            rng_manager=None,
+            rng_manager=RNGManager(42),
+        )
+        monkeypatch.setattr(
+            mgr,
+            "_spawn_reinforcements",
+            lambda _ctx, _entry, _rng: [],
+        )
+        monkeypatch.setattr(
+            campaign_module,
+            "register_dynamic_units",
+            lambda _ctx, _units: None,
         )
         mgr.check_reinforcements(ctx, elapsed_s=150.0)
         assert mgr._reinforcements[0].arrived is True
@@ -356,7 +380,8 @@ class TestStochasticReinforcements:
         mgr = CampaignManager(_bus(), make_rng(42))
         config = ReinforcementConfig(
             side="blue", arrival_time_s=3600.0,
-            units=[], arrival_sigma=0.3,
+            units=[ReinforcementUnitConfig(unit_type="m1a2")],
+            arrival_sigma=0.3,
         )
         mgr.set_reinforcements([config])
         original_actual = mgr._reinforcements[0].actual_arrival_time_s
@@ -372,6 +397,8 @@ class TestStochasticReinforcements:
     def test_default_sigma_is_zero(self) -> None:
         """Default arrival_sigma should be 0 (backward-compatible)."""
         config = ReinforcementConfig(
-            side="blue", arrival_time_s=3600.0, units=[],
+            side="blue",
+            arrival_time_s=3600.0,
+            units=[ReinforcementUnitConfig(unit_type="m1a2")],
         )
         assert config.arrival_sigma == 0.0

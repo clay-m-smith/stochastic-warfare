@@ -25,20 +25,22 @@ Audit baseline: 2026-07-28 at `68acd4b`
 | REM-001 | P0 | 105 | Checkpointing | Exact fresh restore, including empty production loadout entries | **Closed** | Yes | N/A | Yes | N/A | Yes | Yes | Yes | [Phase 105 follow-up](devlog/phase-105.md#reclosure-evidence) |
 | REM-002 | P0 | 106 | API execution | `config_overrides` are merged for validation but the run reloads the unchanged scenario file | **Closed** | Yes | Yes | Yes | N/A | Yes | Yes | Yes | [Phase 106](devlog/phase-106.md#postmortem) |
 | REM-003 | P0 | 106 | API lifecycle | Background run teardown can use a closed database session | **Closed** | Yes | N/A | Yes | N/A | Yes | N/A | Yes | [Phase 106](devlog/phase-106.md#postmortem) |
-| REM-004 | P0 | 107 | Reinforcements | Scenario reinforcements are not registered automatically with `CampaignManager` | Queued | Yes | Yes | - | N/A | - | - | - | Production engine arrival test |
-| REM-005 | P0 | 107 | Reinforcements | Arriving units do not receive their defined weapons and sensors | Queued | Yes | Yes | - | N/A | - | - | - | Armed reinforcement participates after arrival |
-| REM-006 | P1 | 107 | Morale | Side `morale_initial` is ignored; all units start steady | Queued | Yes | Yes | - | N/A | - | - | - | Contrasting scenario initialization test |
-| REM-007 | P1 | 107 | Feature gates | Scenario `disabled_modules` is loaded but does not disable runtime modules | Queued | Yes | Yes | - | - | - | - | - | Enabled/disabled production controls |
+| REM-004 | P0 | 107 | Reinforcements | Scenario reinforcements are not registered automatically with `CampaignManager` | **Closed** | Yes | Yes | Yes | N/A | Yes | Yes | Yes | [Phase 107](devlog/phase-107.md#postmortem) |
+| REM-005 | P0 | 107 | Reinforcements | Arriving units do not receive their defined weapons and sensors | **Closed** | Yes | Yes | Yes | N/A | Yes | Yes | Yes | [Phase 107](devlog/phase-107.md#postmortem) |
+| REM-006 | P1 | 107 | Morale | Side `morale_initial` is ignored; all units start steady | **Closed** | Yes | Yes | Yes | N/A | Yes | Yes | Yes | [Phase 107](devlog/phase-107.md#postmortem) |
+| REM-007 | P1 | 107 | Feature gates | Era `disabled_modules` selected by the scenario is loaded but does not gate runtime capabilities | **Closed** | Yes | Yes | Yes | Yes | Yes | Yes | Yes | [Phase 107](devlog/phase-107.md#postmortem) |
 | REM-008 | P0 | 108 | Logistics | Scenario depots do not initialize stock or a supply network | Queued | Yes | Yes | - | N/A | - | - | - | Depot-backed resupply through production loop |
 | REM-009 | P0 | 108 | Logistics | Supply-network updates and idle consumption are not applied by the production loop | Queued | Yes | Yes | - | N/A | - | - | - | Controlled inventory delta over engine ticks |
-| REM-010 | P0 | 109 | Equipment data | Duplicate weapon-map keys silently replace AIM-7M and CSRL mappings with unrelated weapons | Queued | Yes | Yes | Yes | N/A | - | - | - | Unique semantic mapping validation and Ruff |
+| REM-010 | P0 | 109 | Equipment data | Loadout mapping has duplicate/wrong keys, 22 unmapped catalog entries, and validation-layer ownership | Queued | Yes | Yes | Yes | N/A | - | - | - | Central typed mapping, clean data validation, and Ruff |
 | REM-011 | P1 | 110 | Space combat | The production ASAT hook is an explicit placeholder | Queued | Yes | Yes | - | - | - | - | - | Enabled/disabled satellite outcome test |
 | REM-012 | P1 | 111 | Indirect fire | Time-on-target uses dummy coordinates, has no executed state, and has no production caller | Queued | Yes | Yes | - | - | - | - | - | Scheduled mission executes once at its real target |
-| REM-013 | P1 | 112 | Validation trust | Default CI excludes API, E2E, slow, terrain, and benchmark suites without making the gap prominent | Queued | Yes | N/A | Yes | N/A | - | N/A | N/A | CI jobs and documented coverage boundaries |
+| REM-013 | P1 | 112 | Validation trust | Default CI hides excluded suites and does not maintain a green repository-wide lint baseline | Queued | Yes | N/A | Yes | N/A | - | N/A | N/A | Explicit CI suites, clean lint, and documented boundaries |
 | REM-014 | P1 | 112 | Test quality | Structural and no-assert tests can support false completion claims | Queued | Yes | N/A | Yes | N/A | - | - | N/A | Audit critical contracts and add behavioral assertions |
 | REM-015 | P2 | 112 | Documentation | Strict documentation build was not part of the verified baseline | **Closed early** | Yes | N/A | Yes | N/A | Yes | N/A | N/A | [Phase 105 verification](devlog/phase-105.md#final-broader-verification) |
 | REM-016 | P1 | TBD | Aggregation | Disaggregation recreates every constituent as base `Unit` and does not restore captured weapon, sensor, or supply attachments | Queued | Yes | Yes | Yes | N/A | - | - | - | Subclass/loadout round trip across aggregation |
-| REM-017 | P0 | 112 | Analysis tooling | Scenario batch helpers infer the wrong data root, can run with zero loaded units, and silently turn unsupported metrics into zero | Queued | Yes | - | Yes | N/A | Yes | Yes | N/A | Real-unit batch run, unknown-metric rejection, and outcome-affecting sweep/comparison |
+| REM-017 | P0 | 112 | Analysis tooling | Scenario batches can accept empty invalid rosters and silently turn unsupported metrics into zero | Queued | Yes | Yes | Yes | N/A | Yes | Yes | N/A | Real-unit batch run, unknown-metric rejection, and outcome-affecting sweep/comparison |
+| REM-018 | P1 | 114 | Era overrides | `physics_overrides` and `tick_resolution_overrides` are declared and documented but have no production consumer | Queued | Yes | Yes | - | N/A | - | - | Yes | Typed override changes its production engine/clock behavior |
+| REM-019 | P1 | 113 | Morale state | `SimulationContext.morale_states` and `MoraleStateMachine` are independently mutable and can diverge after rout or aggregation paths | Queued | Yes | Yes | Yes | N/A | - | - | Yes | One authoritative state survives transition, cascade, aggregation, and checkpoint |
 
 ## REM-001 - Exact checkpoint restoration
 
@@ -112,7 +114,6 @@ no remaining medium- or high-severity issue in the repair.
 
 - Restore requires the same repository/data-catalog revision. Checkpoints do not
   embed hashes of external unit, weapon, ammunition, sensor, or era definitions.
-- Dynamic reinforcement loadout construction remains REM-004/REM-005.
 - Aggregation constituent reconstruction remains REM-016.
 
 ## REM-002 - API overrides do not reach the loaded scenario
@@ -240,6 +241,194 @@ The grace timeout therefore warns and continues waiting; a bounded hard stop
 would require process isolation. A fatal SQLite write failure is surfaced and
 retrieved but cannot create a durable terminal row.
 
+## REM-004 - Scenario reinforcements are not registered automatically
+
+### Requirements
+
+- `SimulationEngine` owns exactly one registration of
+  `ctx.config.reinforcements`; callers must not resample or reset the schedule.
+- A wave becomes due on the first engine tick whose logical elapsed time is at
+  least its fixed or sampled arrival time, including tactical ticks.
+- Empty schedules consume no RNG and publish no event. Stochastic arrival keeps
+  the existing ordered log-normal multiplier and `CORE` stream contract.
+- Wave order and unit declaration order are stable. Entity IDs include the
+  schedule ordinal and within-wave ordinal so repeated same-side/type waves
+  cannot collide.
+- A whole wave is staged and committed atomically. Invalid sides, unit types,
+  counts, timing spread, positions, duplicate IDs, or runtime construction must
+  not leave a partial roster or publish a successful arrival event.
+- A successful wave is added once and publishes one
+  `ReinforcementArrivedEvent` after the complete runtime registration succeeds.
+- Before- and after-arrival checkpoints restore the exact sampled schedule,
+  roster, attachment state, and no-repeat behavior.
+
+### Production trace and failing proof
+
+`ScenarioLoader` parses `CampaignScenarioConfig.reinforcements`, but
+`SimulationEngine.__init__()` constructs a `CampaignManager` with an empty
+private schedule. Production API, MCP, validation, and batch paths never call
+`set_reinforcements()`. Historical tests and `scripts/evaluate_scenarios.py`
+manually call it, masking the gap.
+
+A real `test_campaign` load declares one wave, registers zero, and remains at
+four blue units after three strategic ticks. The three-wave reinforcement
+fixture also assigns the same IDs to both blue M1A2 waves because the local
+unit index restarts for every wave.
+
+### Non-goals
+
+- Do not replace the configured schedule with a Poisson process or change the
+  log-normal `arrival_sigma` model.
+- Do not tune scenario timing or force composition.
+- Broader dynamic aggregation reconstruction remains REM-016.
+
+### Closure evidence
+
+Phase 107 made `SimulationEngine` the sole schedule owner, checked due waves on
+every engine tick, assigned ordinal-stable IDs, and committed each wave only
+after full runtime registration. Before/after-arrival checkpoint tests cover
+sampled timing, arrival flags, exact roster topology, retry/no-repeat behavior,
+and legacy/current ID migration. Same-seed event and checkpoint bytes are
+identical.
+
+## REM-005 - Reinforcements do not receive runtime attachments
+
+### Requirements
+
+- Initial and reinforcement units use one production loadout builder and the
+  same scenario calibration/equipment mapping.
+- Every arriving unit receives its sorted live weapon/ammunition and sensor
+  instances, with each instance linked to that unit's equipment object, before
+  the wave is visible or its event is published.
+- Dynamic loadout maps have independent keys for every stable reinforcement ID.
+- A reinforcement must be able to detect or engage through the normal
+  production battle path; constructor presence alone is insufficient proof.
+- Fresh-runtime checkpoint restore must deterministically rebuild compatible
+  dynamic loadout topology without an RNG draw, then restore exact mutable
+  weapon, ammunition, sensor, and equipment state.
+- Unsupported or mismatched dynamic topology fails before checkpoint mutation.
+
+### Production trace and failing proof
+
+`ScenarioLoader._build_all_forces()` calls the validation runner's weapon and
+sensor assignment helpers for initial units. `CampaignManager` later calls only
+`UnitLoader.create_unit()`, so a diagnostic pair of arriving M1A2s contains
+weapon and sensor equipment but has no `ctx.unit_weapons` or
+`ctx.unit_sensors` entries. The Phase 105 restore path consequently rejects a
+checkpoint-only reinforcement with a non-empty loadout.
+
+### Non-goals
+
+- Phase 107 preserves the current equipment-name mapping semantics. Duplicate
+  or semantically wrong mappings remain REM-010/Phase 109.
+- Logistics, command hierarchy, and every optional engine's dynamic unit
+  registry are not implied by this loadout repair.
+
+### Closure evidence
+
+Initial and dynamic units now pass through one production loadout entry point.
+Two same-type waves receive independent keys and exact linked weapon,
+ammunition, sensor, and equipment state. A dynamically arrived M1A2 detects,
+fires, and consumes ammunition through the normal production battle path.
+Fresh-runtime restore rebuilds its declared topology without RNG and rejects a
+missing or mismatched attachment key before mutation.
+
+## REM-006 - Side initial morale is ignored
+
+### Requirements
+
+- `morale_initial` accepts exactly the runtime states `STEADY`, `SHAKEN`,
+  `BROKEN`, `ROUTED`, and `SURRENDERED`; the default is `STEADY` and invalid,
+  stale, or case-mismatched names fail scenario validation.
+- Initial and reinforcement units receive typed `MoraleState` values from
+  their side declaration in both `SimulationContext.morale_states` and
+  `MoraleStateMachine`, without an RNG draw or fabricated transition event.
+- Initial `ROUTED` and `SURRENDERED` morale synchronizes the corresponding unit
+  status; other initial states remain active.
+- The first morale update must begin from the configured state rather than
+  lazily replacing it with `STEADY`.
+- Contrasting same-seed production controls must show the configured state at
+  load, through checkpoint continuation, and in a morale-dependent outcome.
+
+### Production trace and failing proof
+
+`SideConfig.morale_initial` is an unrestricted string copied into an otherwise
+unused `ForceDefinition`. `ScenarioLoader.load()` then hard-codes every unit to
+`MoraleState.STEADY`, while the independently serialized morale machine starts
+empty and lazily creates another steady state.
+
+The production Goose Green scenario declares six red units `SHAKEN`; all
+twelve loaded units are currently steady and the machine contains no unit
+states.
+
+### Non-goals
+
+- This phase does not tune morale transition probabilities or historical
+  calibration.
+- Initial-state registration does not invent analytics transition events.
+
+### Closure evidence
+
+Scenario validation accepts exactly the five runtime names and initializes both
+morale stores for initial and dynamic units without an RNG draw or transition
+event. Routed/surrendered status synchronization, Goose Green's declared
+`SHAKEN` state, a controlled morale-collapse outcome, current-checkpoint strict
+topology, and bounded versionless migration are covered by behavioral tests.
+The remaining two-store ownership risk after later cascade/aggregation writes
+is recorded separately as REM-019.
+
+## REM-007 - Era feature gates are dead metadata
+
+### Requirements
+
+- The scenario `era` must resolve to a registered era. Unknown era names and
+  unknown disabled-feature names fail validation instead of falling back to
+  modern behavior or being ignored.
+- The supported gate keys are exactly `ew`, `space`, `cbrn`, `gps`,
+  `thermal_sights`, `data_links`, and `pgm`. The last four are capability
+  gates, not whole engine suites.
+- Registry lookups return an isolated effective era configuration. The same
+  effective gate is exposed on the context and compared during checkpoint
+  restore.
+- Whole-suite precedence is explicit: missing or `enable_*=false` configuration
+  creates no suite; enabled configuration creates it only when the era permits
+  it; an enabled block that contradicts the era fails scenario loading.
+- `space` removes the full space suite; `gps` removes its GPS child and must
+  never improve guided accuracy through a nominal fallback.
+- `thermal_sights`, `data_links`, and `pgm` reject forbidden production
+  loadouts. `available_sensor_types` is enforced at the same boundary.
+- Gates apply before optional engine RNG streams are allocated and before a
+  forbidden runtime object is committed.
+- Enabled/disabled production controls must prove observable engine, loadout,
+  event, state, or outcome behavior. Set membership or source inspection is
+  insufficient.
+
+### Production trace and failing proof
+
+`ScenarioLoader.load()` retrieves `era_config.disabled_modules` into a local
+`disabled` variable and never reads it again. Optional EW, space, and CBRN
+construction depends only on a config block, while the sensor allowlist and
+four capability keys have no production consumer. `EraConfig` accepts
+`{"bogus"}`, an unknown scenario era silently resolves to modern, and a
+top-level scenario `disabled_modules` key is not part of the schema.
+
+### Non-goals
+
+- Phase 107 does not add new disabled-feature names or redesign historical era
+  physics.
+- Era-specific combat models and data corrections remain separate work.
+- Feature rejection does not silently substitute an unrelated weapon, sensor,
+  or navigation model.
+
+### Closure evidence
+
+Era and feature names are strict and registry lookups are isolated. Missing,
+false, enabled, and era-forbidden EW/space/CBRN controls prove suite
+construction behavior; GPS-child, thermal, data-link, PGM, and sensor-allowlist
+controls prove capability rejection. The effective era contract is canonical
+in checkpoints and a mismatch fails before mutation. Declared but unconsumed
+physics/tick override metadata remains REM-018.
+
 ## REM-017 - Analysis tools can manufacture false-green results
 
 ### Reproduction
@@ -251,9 +440,6 @@ units for both sides instead of rejecting an invalid run.
 
 ### Cause
 
-- `run_scenario_batch()` infers the loader root as
-  `scenario_path.parent.parent`, which resolves to `data/scenarios` for the
-  normal repository layout; `ScenarioLoader` requires `data`.
 - The batch does not reject a scenario whose declared roster loads as zero
   units.
 - `_extract_metrics()` returns `0.0` for unknown metrics.
@@ -262,8 +448,6 @@ units for both sides instead of rejecting an invalid run.
 
 ### Required proof
 
-- Resolve or explicitly require the correct data root for every supported
-  scenario layout.
 - Reject missing declared units, empty invalid runs, and unsupported metric
   names.
 - Exercise sensitivity and comparison through real `ScenarioLoader` and
@@ -273,3 +457,46 @@ units for both sides instead of rejecting an invalid run.
 
 Until REM-017 closes, `$calibrate`, `$compare`, and `$what-if` must preflight a
 real loaded roster and stop rather than report unverified results.
+
+Phase 107 repaired the first independent defect: batch loading now derives the
+data root from the `scenarios` ancestor and requires an explicit `data_dir` for
+other layouts. The complete 200-test API suite covers that compatibility
+repair. REM-017 remains open because empty-roster rejection, metric validation,
+and real outcome-changing sweep/comparison proof still belong to Phase 112.
+
+## REM-018 - Era override metadata has no production consumer
+
+### Reproduction and cause
+
+`ScenarioLoader` exposes the selected `EraConfig`, but neither
+`physics_overrides` nor `tick_resolution_overrides` is applied while building
+the clock or domain engines. Current public era documentation historically
+described C2 delays and tick changes as effective behavior even though only the
+seven Phase 107 capability gates and sensor allowlist are enforced.
+
+### Required proof
+
+- Replace arbitrary override dictionaries with explicit supported keys and
+  typed value constraints, or reject unsupported keys.
+- Apply each supported override at the single production construction boundary.
+- Prove an enabled value changes the intended clock or engine behavior and that
+  omission preserves the baseline.
+- Persist and compare the effective override contract during checkpoint restore.
+
+## REM-019 - Morale has two independently mutable stores
+
+### Reproduction and cause
+
+Phase 107 initializes `SimulationContext.morale_states` and
+`MoraleStateMachine` consistently, but later code can write either store
+independently. In particular, rout-cascade and aggregation paths update the
+context mapping without updating the machine's internal `UnitMoraleState`.
+Subsequent machine transitions can therefore start from a stale state.
+
+### Required proof
+
+- Establish one authoritative owner for current morale and route all reads,
+  transitions, rout cascades, aggregation, and dynamic registration through it.
+- Keep unit status synchronization explicit for routed and surrendered states.
+- Prove transition, cascade, aggregation/disaggregation, and checkpoint
+  continuation cannot produce divergent morale views.

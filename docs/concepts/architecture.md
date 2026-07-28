@@ -133,29 +133,37 @@ The `ScenarioLoader` is the central factory. Given a scenario YAML file, it:
 2. Creates terrain, environment, and weather engines
 3. Instantiates all units with their equipment, weapons, and sensors
 4. Creates detection, combat, movement, morale, C2, and logistics engines
-5. Wires optional subsystems based on config presence:
-   - `ew_config` present -> creates EW engines (jamming, spoofing, ECCM, SIGINT)
-   - `space_config` present -> creates space engines (GPS, SATCOM, ISR, ASAT)
-   - `cbrn_config` present -> creates CBRN engines (dispersal, contamination, protection)
+5. Wires optional subsystems from explicit enable flags after applying the
+   selected era's capability gates:
+   - `ew_config.enable_ew: true` -> creates EW engines (jamming, spoofing, ECCM, SIGINT)
+   - `space_config.enable_space: true` -> creates space engines (GPS, SATCOM, ISR, ASAT)
+   - `cbrn_config.enable_cbrn: true` -> creates CBRN engines (dispersal, contamination, protection)
    - `school_config` present -> creates doctrinal school registry
    - `escalation_config` present -> creates escalation engine
    - `dew_config` present -> creates directed energy weapon engine
    - `era` specified -> loads era-specific data and engines
 6. Creates always-on behavioral engines: ROE engine (default WEAPONS_FREE), rout engine
-7. Returns a `SimulationContext` with everything wired together
+7. Seeds both morale views from each side's validated `morale_initial`
+8. Returns a `SimulationContext` with everything wired together
+
+`SimulationEngine` then installs the validated reinforcement schedule exactly
+once. Due waves are checked at every resolution and are committed atomically to
+the campaign roster, context force map, live loadout maps, and morale state.
 
 ### Null-Config Gating
 
 Every optional subsystem follows the same pattern:
 
 ```python
-if config.ew_config is not None:
+if config.ew_config is not None and config.ew_config.get("enable_ew") is True:
     # Create and wire EW engines
 else:
     ctx.ew_engine = None  # Disabled -- zero cost
 ```
 
-This means scenarios that don't use electronic warfare pay zero performance cost for it.
+The equivalent `enable_space` and `enable_cbrn` flags control their suites.
+The effective registered era is checked before construction, so a scenario
+cannot explicitly enable a suite forbidden by that era.
 
 ## Era Framework
 
@@ -171,9 +179,11 @@ The engine supports 5 historical eras, each with different available technologie
 
 Each era is defined by an `EraConfig` that specifies:
 
-- Which modules are enabled/disabled (e.g., no radar in WW1)
-- Available sensor types
-- C2 delay multipliers (Napoleonic courier >> modern radio)
+- Seven validated capability gates: EW, space, CBRN, GPS, thermal sights,
+  data links, and precision-guided munitions
+- An enforced sensor-type allowlist
+- Declared physics and tick-resolution override metadata (not yet consumed by
+  the production runtime; tracked separately in the remediation backlog)
 - Era-specific engine extensions
 
 Era data lives in `data/eras/{era_name}/` with the same directory structure as modern data.
@@ -188,6 +198,8 @@ Every simulation run is fully reproducible given the same seed:
 - Each module gets its own independent PRNG stream via `RNGManager.get_stream(ModuleId)`
 - No bare `random` module or `np.random` module-level calls anywhere in the codebase
 - Given the same seed, the same scenario produces identical results
+- Battle discovery and reinforcement events require the caller's simulation
+  clock timestamp; no wall-clock fallback participates in replay state
 
 ### Deterministic Iteration
 

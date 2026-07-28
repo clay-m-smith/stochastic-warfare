@@ -7,6 +7,8 @@ SURRENDERED is an absorbing state.
 
 from __future__ import annotations
 
+from collections.abc import Mapping
+import copy
 import enum
 import math
 from dataclasses import dataclass
@@ -196,6 +198,16 @@ class MoraleState(enum.IntEnum):
     SURRENDERED = 4
 
 
+def validate_morale_state_name(value: str) -> str:
+    """Validate and return one exact, case-sensitive morale state name."""
+    if value not in MoraleState.__members__:
+        allowed = ", ".join(MoraleState.__members__)
+        raise ValueError(
+            f"morale_initial must be one of {allowed}; got {value!r}",
+        )
+    return value
+
+
 # ---------------------------------------------------------------------------
 # Configuration
 # ---------------------------------------------------------------------------
@@ -268,9 +280,29 @@ class UnitMoraleState:
         }
 
     def set_state(self, state: dict[str, Any]) -> None:
-        self.current_state = MoraleState(state["current_state"])
-        self.transition_cooldown_s = state["transition_cooldown_s"]
-        self.last_transition_time = state["last_transition_time"]
+        current_state = MoraleState(state["current_state"])
+        transition_cooldown_s = state["transition_cooldown_s"]
+        last_transition_time = state["last_transition_time"]
+        if (
+            isinstance(transition_cooldown_s, bool)
+            or not isinstance(transition_cooldown_s, (int, float))
+            or not math.isfinite(float(transition_cooldown_s))
+            or float(transition_cooldown_s) < 0.0
+        ):
+            raise ValueError(
+                "transition_cooldown_s must be a finite non-negative number",
+            )
+        if (
+            isinstance(last_transition_time, bool)
+            or not isinstance(last_transition_time, (int, float))
+            or not math.isfinite(float(last_transition_time))
+        ):
+            raise ValueError(
+                "last_transition_time must be a finite number",
+            )
+        self.current_state = current_state
+        self.transition_cooldown_s = float(transition_cooldown_s)
+        self.last_transition_time = float(last_transition_time)
 
 
 # ---------------------------------------------------------------------------
@@ -324,6 +356,36 @@ class MoraleStateMachine:
         if unit_id not in self._unit_states:
             self._unit_states[unit_id] = UnitMoraleState()
         return self._unit_states[unit_id]
+
+    def initialize_units(
+        self,
+        initial_states: Mapping[str, MoraleState],
+    ) -> None:
+        """Register initial unit states without RNG draws or transition events.
+
+        Registration is atomic: every ID and state is validated before the
+        machine replaces its state mapping. Existing IDs are rejected so
+        dynamic-unit callers cannot silently reset live morale.
+        """
+        staged: dict[str, UnitMoraleState] = {}
+        for unit_id, state in initial_states.items():
+            if not isinstance(unit_id, str) or not unit_id:
+                raise ValueError("Morale unit IDs must be non-empty strings")
+            if unit_id in self._unit_states or unit_id in staged:
+                raise ValueError(
+                    f"Morale state already registered for unit {unit_id!r}",
+                )
+            try:
+                morale_state = MoraleState(state)
+            except (TypeError, ValueError) as exc:
+                raise ValueError(
+                    f"Invalid initial morale for unit {unit_id!r}: {state!r}",
+                ) from exc
+            staged[unit_id] = UnitMoraleState(current_state=morale_state)
+
+        updated = dict(self._unit_states)
+        updated.update(staged)
+        self._unit_states = updated
 
     def compute_transition_matrix(
         self,
@@ -509,9 +571,27 @@ class MoraleStateMachine:
         }
 
     def set_state(self, state: dict[str, Any]) -> None:
-        self._rng.bit_generator.state = state["rng_state"]
-        self._unit_states.clear()
-        for uid, ums_state in state["unit_states"].items():
-            ums = UnitMoraleState()
-            ums.set_state(ums_state)
-            self._unit_states[uid] = ums
+        try:
+            raw_states = state["unit_states"]
+            if not isinstance(raw_states, dict):
+                raise ValueError("unit_states must be a mapping")
+            staged_rng = copy.deepcopy(self._rng)
+            staged_rng.bit_generator.state = state["rng_state"]
+            staged_units: dict[str, UnitMoraleState] = {}
+            for uid, ums_state in raw_states.items():
+                if not isinstance(uid, str) or not uid:
+                    raise ValueError(
+                        "morale state keys must be non-empty unit IDs",
+                    )
+                if not isinstance(ums_state, dict):
+                    raise ValueError(
+                        f"morale state for {uid!r} must be a mapping",
+                    )
+                ums = UnitMoraleState()
+                ums.set_state(ums_state)
+                staged_units[uid] = ums
+        except (KeyError, TypeError, ValueError) as exc:
+            raise ValueError(f"Invalid morale checkpoint state: {exc}") from exc
+
+        self._rng.bit_generator.state = staged_rng.bit_generator.state
+        self._unit_states = staged_units

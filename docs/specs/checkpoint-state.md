@@ -2,7 +2,7 @@
 
 ## Status
 
-Phase 105 contract, adopted 2026-07-28.
+Phase 105 contract, extended through Phase 107 on 2026-07-28.
 
 ## Purpose
 
@@ -14,6 +14,17 @@ The restore target must be a structurally compatible runtime built from the same
 validated effective scenario configuration and repository/data-catalog
 revision. Checkpoint restore replaces mutable state; it does not rebuild engine
 topology or reinterpret a different scenario.
+
+`SimulationEngine` writes checkpoint format version `107`. Any explicit version
+other than `107` is rejected before runtime mutation. An absent version selects
+the bounded legacy-migration path described below; an explicitly present
+`null` value is malformed, not legacy.
+
+For version `107`, top-level engine keys and context-state keys must exactly
+match the compatible target runtime. Missing or extra keys fail before
+mutation. Serialized scenario and reinforcement configurations use type-aware
+JSON equality, so booleans cannot masquerade as integers and integers cannot
+masquerade as floats.
 
 ## Force state
 
@@ -49,7 +60,10 @@ Restore must:
 5. reconstruct missing units without drawing from any RNG stream;
 6. remove runtime-only units and preserve serialized side/unit ordering;
 7. discard stale weapon/sensor objects for units that could not be safely
-   reused while preserving serialized empty map entries exactly.
+   reused while preserving serialized empty map entries exactly;
+8. rebuild scenario-defined loadout topology for a checkpoint-only
+   reinforcement without consuming RNG, then restore its exact mutable
+   attachment state.
 
 The checkpoint's effective scenario configuration must match the runtime
 configuration. Weapon and sensor instance counts, ordering, and identities must
@@ -72,6 +86,19 @@ Both must round-trip:
   `get_state()` and `set_state()`.
 
 Unknown morale names or values are corrupt checkpoint data and must fail.
+For a current engine checkpoint, both context keys are required. In a
+production `ScenarioLoader` runtime, both stores must contain the expected
+active-unit topology and agree on every current state before either is mutated.
+A deliberately minimal engine runtime without a morale machine serializes the
+engine checkpoint's `morale_machine` key as `null`; a direct context snapshot
+keeps its legacy omission behavior. Aggregation proxies are excluded from
+state-machine topology because their constituents remain the simulated morale
+owners.
+
+Initial and dynamic units are seeded from their side's validated
+`morale_initial`. The two-store design itself remains a tracked ownership
+boundary: later rout-cascade and aggregation writes can still diverge until
+REM-019 is closed.
 
 ## RNG and derived state
 
@@ -81,10 +108,26 @@ regenerated after force restoration.
 
 ## Compatibility
 
-- Checkpoints containing `units_by_side` and `morale_states` use exact
-  replacement semantics, including an explicitly empty mapping.
-- Older checkpoints that omit either section leave that corresponding runtime
-  state unchanged.
+- Current engine checkpoints contain `checkpoint_version: 107`; an unknown,
+  malformed, boolean, older explicit, or newer explicit version is rejected.
+- Current reinforcement wave ordinals and both morale-store enum values use
+  non-boolean integers. Current wave side, configured arrival time, and full
+  typed configuration must agree with the target schedule.
+- Versionless engine checkpoints are treated as pre-107 only for bounded morale
+  and reinforcement-ID migration. Existing morale entries are still validated;
+  missing active-unit entries are reconstructed from the checkpoint roster and
+  the runtime's validated side configuration. A disagreement between present
+  context and machine morale is never repaired silently.
+- Legacy reinforcement entries without the current wave ordinal/config payload
+  retain legacy IDs for units that already arrived. A pending legacy wave uses
+  current stable IDs when it arrives, after which its next checkpoint is fully
+  current.
+- Direct `SimulationContext.set_state()` calls containing `units_by_side` or
+  `morale_states` use exact replacement semantics, including an explicitly
+  empty mapping. Direct legacy context calls that omit either section leave
+  that corresponding runtime state unchanged. `SimulationEngine` additionally
+  requires `units_by_side` for its campaign/roster preflight and both morale
+  keys for version 107.
 - Older unit snapshots without `unit_class` infer the class from its unique
   subclass field. A snapshot with no subclass field restores as `Unit`.
 - Unknown explicit discriminators fail; they never silently downgrade to
@@ -108,16 +151,21 @@ Completion requires:
 6. a fully loaded production scenario with real weapon state;
 7. empty checkpoint-only loadout entries, including a non-reusable same-ID
    runtime unit with stale attachments;
-8. relevant existing checkpoint, scenario, engine, and entity regression suites.
+8. exact fresh-runtime continuation after a dynamic reinforcement arrival,
+   including weapons, ammunition, sensors, morale, schedule state, and
+   no-repeat behavior;
+9. atomic rejection of campaign/roster, arrival-flag, loadout, era-gate, and
+   dual-morale topology mismatches;
+10. relevant existing checkpoint, scenario, engine, and entity regression
+    suites.
 
 ## Tracked boundaries
 
-Checkpoint-only units can reconstruct their entity and equipment state, but
-production weapon/sensor definitions and attachment topology remain
-scenario-derived. Runtime instance state is serialized, while restoring a
-non-empty loadout requires the compatible runtime to have constructed matching
-instances. Fully registering loadouts for dynamic reinforcement units is
-REM-005.
+Production weapon/sensor definitions and attachment topology remain
+scenario-derived. Runtime instance state is serialized, and Phase 107 can
+deterministically reconstruct a dynamic reinforcement's declared topology from
+the compatible catalog before applying that state. A changed or unsupported
+topology is rejected rather than substituted.
 
 Aggregation/disaggregation also owns constituent reconstruction and attachment
 restoration. Its current base-unit reconstruction gap is tracked separately and
