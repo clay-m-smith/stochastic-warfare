@@ -22,7 +22,7 @@ Audit baseline: 2026-07-28 at `68acd4b`
 
 | ID | Priority | Phase | Area | Behavioral gap | Status | D | L | W | E | X | O | P | Next proof |
 |---|---:|---:|---|---|---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|---|
-| REM-001 | P0 | 105 | Checkpointing | Exact restore still rejects a checkpoint-only unarmed unit when production-shaped loadout maps contain empty entries | **Reopened** | Yes | N/A | Yes | N/A | Yes | Yes | - | Empty-loadout fresh restore, continuation, and repeated postmortem |
+| REM-001 | P0 | 105 | Checkpointing | Exact fresh restore, including empty production loadout entries | **Closed** | Yes | N/A | Yes | N/A | Yes | Yes | Yes | [Phase 105 follow-up](devlog/phase-105.md#reclosure-evidence) |
 | REM-002 | P0 | 106 | API execution | `config_overrides` are merged for validation but the run reloads the unchanged scenario file | Queued | Yes | - | - | N/A | - | - | - | API run with an outcome-affecting override |
 | REM-003 | P0 | 106 | API lifecycle | Background run teardown can use a closed database session | Queued | Yes | N/A | Yes | N/A | - | - | - | API task lifecycle regression without teardown exceptions |
 | REM-004 | P0 | 107 | Reinforcements | Scenario reinforcements are not registered automatically with `CampaignManager` | Queued | Yes | Yes | - | N/A | - | - | - | Production engine arrival test |
@@ -36,7 +36,7 @@ Audit baseline: 2026-07-28 at `68acd4b`
 | REM-012 | P1 | 111 | Indirect fire | Time-on-target uses dummy coordinates, has no executed state, and has no production caller | Queued | Yes | Yes | - | - | - | - | - | Scheduled mission executes once at its real target |
 | REM-013 | P1 | 112 | Validation trust | Default CI excludes API, E2E, slow, terrain, and benchmark suites without making the gap prominent | Queued | Yes | N/A | Yes | N/A | - | N/A | N/A | CI jobs and documented coverage boundaries |
 | REM-014 | P1 | 112 | Test quality | Structural and no-assert tests can support false completion claims | Queued | Yes | N/A | Yes | N/A | - | - | N/A | Audit critical contracts and add behavioral assertions |
-| REM-015 | P2 | 112 | Documentation | Strict documentation build was not part of the verified baseline | **Closed early** | Yes | N/A | Yes | N/A | Yes | N/A | N/A | [Phase 105 verification](devlog/phase-105.md#broader-verification) |
+| REM-015 | P2 | 112 | Documentation | Strict documentation build was not part of the verified baseline | **Closed early** | Yes | N/A | Yes | N/A | Yes | N/A | N/A | [Phase 105 verification](devlog/phase-105.md#final-broader-verification) |
 | REM-016 | P1 | TBD | Aggregation | Disaggregation recreates every constituent as base `Unit` and does not restore captured weapon, sensor, or supply attachments | Queued | Yes | Yes | Yes | N/A | - | - | - | Subclass/loadout round trip across aggregation |
 | REM-017 | P0 | 112 | Analysis tooling | Scenario batch helpers infer the wrong data root, can run with zero loaded units, and silently turn unsupported metrics into zero | Queued | Yes | - | Yes | N/A | Yes | Yes | N/A | Real-unit batch run, unknown-metric rejection, and outcome-affecting sweep/comparison |
 
@@ -99,6 +99,14 @@ checkpoint with `unit_weapon_states={"u": []}` and
 `u` as an incompatible extra topology. The contract permits fresh
 reconstruction for an empty loadout; only non-empty serialized loadouts require
 compatible prebuilt runtime instances.
+
+Reclosed on 2026-07-28 after the restore path accepted and exactly preserved
+empty checkpoint loadout entries, ignored and pruned stale loadouts belonging
+to non-reusable same-ID units, and continued rejecting non-empty reconstructed
+weapon or sensor state before mutation. The final behavioral suite has 23
+tests; the checkpoint-wide selection passed 108 tests with 1 skipped, and the
+fresh default suite passed 10,168 tests. A repeated adversarial postmortem found
+no remaining medium- or high-severity issue in the repair.
 
 ### Residual boundaries
 

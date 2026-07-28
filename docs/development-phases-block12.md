@@ -10,8 +10,8 @@ The live issue inventory and evidence matrix are in
 
 ## Phase 105 - Checkpoint State Integrity
 
-Status: **Reopened** after the Codex skill-port postmortem found an unarmed
-checkpoint-only unit topology rejection.
+Status: **Complete** (reclosed 2026-07-28 after the Codex skill-port
+postmortem and follow-up repair).
 
 Restore the original Phase 72 behavioral contract.
 

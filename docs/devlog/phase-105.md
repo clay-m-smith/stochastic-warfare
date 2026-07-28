@@ -1,12 +1,14 @@
 # Phase 105 - Checkpoint State Integrity
 
-**Status:** Reopened
+**Status:** Complete
 
 **Started:** 2026-07-28
 
 **Completed:** 2026-07-28
 
 **Reopened:** 2026-07-28
+
+**Reclosed:** 2026-07-28
 
 ## Why this phase exists
 
@@ -41,6 +43,8 @@ Acceptance criteria:
 7. A production `SimulationEngine` run continued after fresh restore matches an
    uninterrupted control run.
 8. A fully loaded scenario restores real weapon state and continues identically.
+9. Empty weapon/sensor map entries survive checkpoint-only reconstruction
+   exactly; non-empty entries still require a compatible reusable runtime.
 
 ## Non-goals
 
@@ -66,7 +70,7 @@ Acceptance criteria:
   ordering from `BattleContext.unit_ids`; both were repaired and regression
   tested.
 
-### Green
+### Initial green
 
 - Phase 105 behavioral suite: **19 passed in 1.70s**.
 - Covers every concrete unit class, stable nested references, typed morale,
@@ -77,7 +81,7 @@ Acceptance criteria:
 - The loaded-scenario round trip was repeated five times to exercise stable
   battle serialization: **5/5 passed**.
 
-### Broader verification
+### Initial broader verification
 
 - All checkpoint-selected tests, with default exclusions disabled:
   **103 passed, 1 skipped**.
@@ -135,3 +139,40 @@ empty; only a non-empty loadout requires a compatible prebuilt runtime. REM-001
 is reopened until this case has a failing regression, a minimal atomic fix, the
 focused and broader checkpoint evidence is rerun, and the phase postmortem
 passes again.
+
+## Reclosure evidence
+
+### Follow-up red
+
+- Adding the empty production-loadout regression produced **2 failed, 19
+  passed**: both a valid empty restore and the non-empty atomic rejection hit
+  the aggregate topology guard too early.
+- The first repair reached **21 passed**, then a fresh `$postmortem` found that
+  a wrong-class same-ID runtime unit could still block reconstruction through
+  its stale loadout.
+- That finding received a dedicated regression. Non-empty checkpoint-only
+  weapon and sensor rejection became a two-case test, and failed restore now
+  asserts live unit identity as well as serialized equality.
+
+### Follow-up green
+
+- Final Phase 105 behavioral suite: **23 passed in 1.60s**.
+- Empty weapon/sensor entries are preserved exactly for checkpoint-only units.
+- Stale loadouts are ignored and pruned when a same-ID runtime unit has an
+  incompatible concrete class.
+- Non-empty checkpoint-only weapon and sensor state is rejected before mutation.
+- A second independent `$postmortem` reported no remaining medium- or
+  high-severity findings.
+
+### Final broader verification
+
+- All checkpoint-selected tests, with default exclusions disabled:
+  **108 passed, 1 skipped**.
+- Entity, concrete-unit, ammunition, and detection regressions:
+  **167 passed**.
+- Full default Python suite from the final source state:
+  **10,168 passed, 21 skipped, 346 deselected** in 3m47s.
+- Focused Ruff over the implementation and behavioral suite: **passed**.
+- Strict MkDocs build with the docs extra: **passed**.
+- `git diff --check`: **passed**; Git emitted only repository line-ending
+  conversion notices.

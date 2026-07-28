@@ -48,12 +48,15 @@ Restore must:
    concrete types match;
 5. reconstruct missing units without drawing from any RNG stream;
 6. remove runtime-only units and preserve serialized side/unit ordering;
-7. remove weapon/sensor map entries for units that could not be safely reused.
+7. discard stale weapon/sensor objects for units that could not be safely
+   reused while preserving serialized empty map entries exactly.
 
 The checkpoint's effective scenario configuration must match the runtime
 configuration. Weapon and sensor instance counts, ordering, and identities must
-match for every non-empty serialized loadout. An incompatible runtime fails
-before context-owned clock, RNG, force, morale, or loadout state is committed.
+match for every non-empty serialized loadout. An empty serialized loadout needs
+no prebuilt runtime instance, including when the unit is reconstructed. An
+incompatible runtime fails before context-owned clock, RNG, force, morale, or
+loadout state is committed.
 
 Stable-object reuse is required because weapon, sensor, and subsystem instances
 can hold references to a unit's equipment.
@@ -86,6 +89,8 @@ regenerated after force restoration.
   subclass field. A snapshot with no subclass field restores as `Unit`.
 - Unknown explicit discriminators fail; they never silently downgrade to
   `Unit`.
+- Checkpoints containing `unit_weapon_states` or `unit_sensor_states` replace
+  the corresponding runtime map keys exactly, including explicit empty lists.
 - Older checkpoints without `unit_weapon_states` or `unit_sensor_states` retain
   the compatible runtime's existing instance state.
 
@@ -101,7 +106,9 @@ Completion requires:
 5. a bytes checkpoint through `SimulationEngine`, followed by equivalent
    continuation and full serialized-state comparison;
 6. a fully loaded production scenario with real weapon state;
-7. relevant existing checkpoint, scenario, engine, and entity regression suites.
+7. empty checkpoint-only loadout entries, including a non-reusable same-ID
+   runtime unit with stale attachments;
+8. relevant existing checkpoint, scenario, engine, and entity regression suites.
 
 ## Tracked boundaries
 

@@ -3,7 +3,7 @@
 ## Project Overview
 High-fidelity, high-resolution wargame simulator. Multi-scale (campaign → battlefield → battle → unit level) with stochastic/signal-processing-inspired models (Markov chains, Monte Carlo, Kalman filters, noise models, queueing theory). Headless Python engine first; matplotlib for validation; full UI deferred. Modern era (Cold War–present) as prototype. Maritime warfare fully integrated, not deferred.
 
-**Current status**: Phase 105 reopened by an adversarial skill-port review — Block 12 integrity remediation is in progress. The fresh default Python verification is 10,164 passed, 21 skipped, and 346 deselected; the frontend baseline is 418 passing vitest tests. Blocks 1–11 remain complete. See `docs/remediation-backlog.md` for current evidence and unresolved gaps.
+**Current status**: Phase 105 is complete after its adversarial skill-port follow-up; Block 12 integrity remediation continues with Phase 106. The fresh default Python verification is 10,168 passed, 21 skipped, and 346 deselected; the frontend baseline is 418 passing vitest tests. Blocks 1–11 remain complete. See `docs/remediation-backlog.md` for current evidence and unresolved gaps.
 
 ## Python & Package Management
 **Requires Python >=3.12** (pinned to 3.12.10 via `.python-version`).
@@ -166,7 +166,7 @@ All phase details are in `docs/devlog/` (one file per phase). Per-phase tables i
 | Block 9 | 83–91 | Profiling, spatial culling, LOD, Numba JIT, SoA data layer, per-side parallelism, benchmarking | ~279 |
 | Block 10 | 92–97 | UI depth: analytics endpoints, dashboard charts, map overlays, calibration editor, event filtering, data catalogs | ~120 |
 | Block 11 | 98–104 | Golden scenarios plus OOB, engine, and deployment polish | ~107 |
-| Block 12 | 105–112 | Production-path integrity remediation; Phase 105 reopened | 19 so far |
+| Block 12 | 105–112 | Production-path integrity remediation; Phase 105 complete | 23 so far |
 
 ### Block 11 Detail (COMPLETE)
 

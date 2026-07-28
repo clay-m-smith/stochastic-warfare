@@ -79,7 +79,7 @@ See the [Getting Started Guide](guide/getting-started.md) for a complete tutoria
 | Block 11 | 98--104 | Golden scenarios and deployment polish | **Complete** |
 | Block 12 | 105--112 | Integrity remediation against production-path evidence | **In progress** |
 
-Fresh verified baseline: **10,164 default-selected Python tests passed** (21
+Fresh verified baseline: **10,168 default-selected Python tests passed** (21
 skipped, 346 deselected) plus **418 frontend tests passed**. See the
 [remediation backlog](remediation-backlog.md) for current evidence and known
 coverage boundaries. **~870 YAML data files** define units, weapons,

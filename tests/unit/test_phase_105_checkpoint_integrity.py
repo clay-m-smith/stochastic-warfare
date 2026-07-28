@@ -261,6 +261,101 @@ def test_fresh_restore_rebuilds_exact_order_and_all_concrete_classes() -> None:
     assert target.get_state()["units_by_side"] == checkpoint["units_by_side"]
 
 
+def test_fresh_restore_preserves_checkpoint_only_empty_loadout_entries() -> None:
+    unit = Unit("unarmed", Position(10, 20, 0), side="blue")
+    source = _context({"blue": [unit], "red": []})
+    source.unit_weapons = {"unarmed": []}
+    source.unit_sensors = {"unarmed": []}
+    checkpoint = copy.deepcopy(source.get_state())
+    target = _context(seed=999)
+
+    target.set_state(checkpoint)
+
+    assert _unit_ids(target) == {"blue": ["unarmed"], "red": []}
+    assert target.unit_weapons == {"unarmed": []}
+    assert target.unit_sensors == {"unarmed": []}
+    assert target.get_state() == checkpoint
+
+    target.set_state(checkpoint)
+    assert target.get_state() == checkpoint
+
+
+def test_fresh_restore_ignores_loadout_from_nonreusable_same_id_unit() -> None:
+    source_unit = Unit("unarmed", Position(10, 20, 0), side="blue")
+    source = _context({"blue": [source_unit], "red": []})
+    source.unit_weapons = {"unarmed": []}
+    source.unit_sensors = {"unarmed": []}
+    checkpoint = copy.deepcopy(source.get_state())
+
+    weapon_equipment = EquipmentItem(
+        equipment_id="stale-weapon",
+        name="Stale Gun",
+        category=EquipmentCategory.WEAPON,
+    )
+    sensor_equipment = EquipmentItem(
+        equipment_id="stale-sensor",
+        name="Stale Sensor",
+        category=EquipmentCategory.SENSOR,
+    )
+    stale = _ground("unarmed", "blue", Position(0, 0, 0))
+    stale.equipment = [weapon_equipment, sensor_equipment]
+    weapon, sensor = _loadout(weapon_equipment, sensor_equipment)
+    target = _context({"blue": [stale], "red": []}, seed=999)
+    target.unit_weapons = {"unarmed": [(weapon, [])]}
+    target.unit_sensors = {"unarmed": [sensor]}
+
+    target.set_state(checkpoint)
+
+    restored = target.units_by_side["blue"][0]
+    assert type(restored) is Unit
+    assert restored is not stale
+    assert target.unit_weapons == {"unarmed": []}
+    assert target.unit_sensors == {"unarmed": []}
+    assert target.get_state() == checkpoint
+
+
+@pytest.mark.parametrize("kind", ["weapon", "sensor"])
+def test_fresh_restore_rejects_checkpoint_only_nonempty_loadout_atomically(
+    kind: str,
+) -> None:
+    weapon_equipment = EquipmentItem(
+        equipment_id="weapon",
+        name="Test Gun",
+        category=EquipmentCategory.WEAPON,
+    )
+    sensor_equipment = EquipmentItem(
+        equipment_id="sensor",
+        name="Test Sensor",
+        category=EquipmentCategory.SENSOR,
+    )
+    unit = Unit("armed", Position(10, 20, 0), side="blue")
+    unit.equipment = [weapon_equipment, sensor_equipment]
+    weapon, sensor = _loadout(weapon_equipment, sensor_equipment)
+    source = _context({"blue": [unit], "red": []})
+    source.unit_weapons = {"armed": [(weapon, [])] if kind == "weapon" else []}
+    source.unit_sensors = {"armed": [sensor] if kind == "sensor" else []}
+    checkpoint = copy.deepcopy(source.get_state())
+
+    stale = Unit("stale", Position(0, 0, 0), side="blue")
+    target = _context(
+        {"blue": [stale], "red": []},
+        {"stale": MoraleState.SHAKEN},
+        seed=999,
+    )
+    target.clock.advance()
+    target.rng_manager.get_stream(ModuleId.CORE).random()
+    before = copy.deepcopy(target.get_state())
+
+    with pytest.raises(
+        ValueError,
+        match=rf"Cannot restore {kind} state for reconstructed unit 'armed'",
+    ):
+        target.set_state(checkpoint)
+
+    assert target.get_state() == before
+    assert target.units_by_side["blue"][0] is stale
+
+
 def test_legacy_unit_states_infer_concrete_classes() -> None:
     source = _context(
         {

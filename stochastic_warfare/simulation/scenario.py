@@ -400,8 +400,8 @@ def _stage_runtime_instance_states(
 
     expected_ids = set(current_instances) & reusable_unit_ids
     serialized_ids = set(raw_states)
-    if serialized_ids != expected_ids:
-        missing = sorted(expected_ids - serialized_ids)
+    missing = sorted(expected_ids - serialized_ids)
+    if missing:
         extra = sorted(serialized_ids - expected_ids)
         raise ValueError(
             f"Incompatible {kind} unit topology: missing={missing!r}, "
@@ -418,19 +418,21 @@ def _stage_runtime_instance_states(
             raise ValueError(
                 f"Checkpoint {kind} state for {entity_id!r} must be a list",
             )
-        runtime_entries = current_instances.get(entity_id)
-        if runtime_entries is None:
-            runtime_entries = []
+        if saved_instances and entity_id not in reusable_unit_ids:
+            raise ValueError(
+                f"Cannot restore {kind} state for reconstructed unit "
+                f"{entity_id!r}; build a compatible runtime first",
+            )
+        runtime_entries = (
+            current_instances.get(entity_id, [])
+            if entity_id in reusable_unit_ids
+            else []
+        )
         if len(runtime_entries) != len(saved_instances):
             raise ValueError(
                 f"Incompatible {kind} topology for unit {entity_id!r}: "
                 f"checkpoint has {len(saved_instances)}, runtime has "
                 f"{len(runtime_entries)}",
-            )
-        if saved_instances and entity_id not in reusable_unit_ids:
-            raise ValueError(
-                f"Cannot restore {kind} state for reconstructed unit "
-                f"{entity_id!r}; build a compatible runtime first",
             )
 
         for index, saved_state in enumerate(saved_instances):
@@ -1001,16 +1003,36 @@ class SimulationContext:
                     restored_by_side[side].append(restored)
 
             self.units_by_side = restored_by_side
-            self.unit_weapons = {
-                entity_id: weapons
-                for entity_id, weapons in current_unit_weapons.items()
-                if entity_id in reusable_ids
-            }
-            self.unit_sensors = {
-                entity_id: sensors
-                for entity_id, sensors in current_unit_sensors.items()
-                if entity_id in reusable_ids
-            }
+            if "unit_weapon_states" in state:
+                self.unit_weapons = {
+                    entity_id: (
+                        current_unit_weapons.get(entity_id, [])
+                        if entity_id in reusable_ids
+                        else []
+                    )
+                    for entity_id in state["unit_weapon_states"]
+                }
+            else:
+                self.unit_weapons = {
+                    entity_id: weapons
+                    for entity_id, weapons in current_unit_weapons.items()
+                    if entity_id in reusable_ids
+                }
+            if "unit_sensor_states" in state:
+                self.unit_sensors = {
+                    entity_id: (
+                        current_unit_sensors.get(entity_id, [])
+                        if entity_id in reusable_ids
+                        else []
+                    )
+                    for entity_id in state["unit_sensor_states"]
+                }
+            else:
+                self.unit_sensors = {
+                    entity_id: sensors
+                    for entity_id, sensors in current_unit_sensors.items()
+                    if entity_id in reusable_ids
+                }
 
         if staged_morale is not None:
             self.morale_states = staged_morale
