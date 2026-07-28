@@ -3,7 +3,7 @@
 ## Project Overview
 High-fidelity, high-resolution wargame simulator. Multi-scale (campaign → battlefield → battle → unit level) with stochastic/signal-processing-inspired models (Markov chains, Monte Carlo, Kalman filters, noise models, queueing theory). Headless Python engine first; matplotlib for validation; full UI deferred. Modern era (Cold War–present) as prototype. Maritime warfare fully integrated, not deferred.
 
-**Current status**: Phase 104 complete — Block 11 COMPLETE + polish passes. ~10,522 tests (~10,104 Python + 418 frontend vitest). 104 phases delivered across 11 blocks. Blocks 1–11 ALL COMPLETE.
+**Current status**: Phase 105 complete — Block 12 integrity remediation is in progress. The fresh default Python verification is 10,123 passed, 21 skipped, and 346 deselected; the frontend baseline is 418 passing vitest tests. Blocks 1–11 remain complete. See `docs/remediation-backlog.md` for current evidence and unresolved gaps.
 
 ## Python & Package Management
 **Requires Python >=3.12** (pinned to 3.12.10 via `.python-version`).
@@ -129,7 +129,9 @@ Layered hybrid — graph (strategic), grid (operational/tactical), continuous (u
 | `docs/brainstorm-block10.md` | Block 10 design thinking (UI depth & engine exposure) |
 | `docs/development-phases-block10.md` | Block 10 phase roadmap (92–97), UI depth |
 | `docs/brainstorm-block11.md` | Block 11 design thinking (golden scenarios, engine validation through UI) |
-| `docs/development-phases-block11.md` | Block 11 phase roadmap (98–102), golden scenarios |
+| `docs/development-phases-block11.md` | Block 11 roadmap and polish history (98–104) |
+| `docs/development-phases-block12.md` | Block 12 phase roadmap (105–112), integrity remediation |
+| `docs/remediation-backlog.md` | Audited implementation gaps and completion evidence |
 | `docs/specs/project-structure.md` | Full package tree, module decomposition, dependency graph |
 | `docs/devlog/` | Per-phase implementation logs (`index.md` tracks status) |
 | `docs/skills-and-hooks.md` | Dev infrastructure documentation |
@@ -141,7 +143,7 @@ Layered hybrid — graph (strategic), grid (operational/tactical), continuous (u
 | `docs/concepts/` | Architecture overview, mathematical models (Phase 31) |
 | `docs/reference/` | API reference, eras, units & equipment (Phase 31) |
 
-## Completed Phases
+## Phase Roadmap
 
 All phase details are in `docs/devlog/` (one file per phase). Per-phase tables in `docs/development-phases*.md`.
 
@@ -158,7 +160,8 @@ All phase details are in `docs/devlog/` (one file per phase). Per-phase tables i
 | Block 8 | 68–82 | Consequence enforcement, C2 depth, perf optimization, missile/carrier ops, test coverage, CI/CD, accessibility | ~1,291 |
 | Block 9 | 83–91 | Profiling, spatial culling, LOD, Numba JIT, SoA data layer, per-side parallelism, benchmarking | ~279 |
 | Block 10 | 92–97 | UI depth: analytics endpoints, dashboard charts, map overlays, calibration editor, event filtering, data catalogs | ~120 |
-| Block 11 | 98–102 | Golden scenarios (Debecka, Khafji, Fallujah, Bint Jbeil + INS Hanit) — historical modern-era engagements, each calibrated + regression-tested + UI walkthrough | ~66 |
+| Block 11 | 98–104 | Golden scenarios plus OOB, engine, and deployment polish | ~107 |
+| Block 12 | 105–112 | Production-path integrity remediation; Phase 105 complete | 19 so far |
 
 ### Block 11 Detail (COMPLETE)
 

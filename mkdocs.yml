@@ -86,7 +86,9 @@ nav:
     - Block 8 (68-82): development-phases-block8.md
     - Block 9 (83-91): development-phases-block9.md
     - Block 10 (92-97): development-phases-block10.md
-    - Block 11 (98-102): development-phases-block11.md
+    - Block 11 (98-104): development-phases-block11.md
+    - Block 12 (105-112): development-phases-block12.md
+    - Remediation Backlog: remediation-backlog.md
   - Devlog:
     - Overview: devlog/index.md
     - Phase 0 - Scaffolding: devlog/phase-0.md
@@ -195,6 +197,8 @@ nav:
     - Phase 102 - Bint Jbeil + INS Hanit 2006 (Block 11): devlog/phase-102.md
     - Phase 103 - Block 11 Polish - OOB + engine gap tightening: devlog/phase-103.md
     - Phase 104 - Configurable Deployment Modes: devlog/phase-104.md
+    - Phase 105 - Checkpoint State Integrity: devlog/phase-105.md
   - Specifications:
     - Project Structure: specs/project-structure.md
+    - Checkpoint State Contract: specs/checkpoint-state.md
     - Skills & Hooks: skills-and-hooks.md

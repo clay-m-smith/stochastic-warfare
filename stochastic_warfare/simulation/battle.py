@@ -2347,7 +2347,7 @@ class BattleManager:
                     "involved_sides": b.involved_sides,
                     "active": b.active,
                     "ticks_executed": b.ticks_executed,
-                    "unit_ids": list(b.unit_ids),
+                    "unit_ids": sorted(b.unit_ids),
                     "wave_assignments": b.wave_assignments,
                     "battle_elapsed_s": b.battle_elapsed_s,
                 }

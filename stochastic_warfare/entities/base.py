@@ -72,6 +72,7 @@ class Unit(Entity):
         state = super().get_state()
         state.update(
             {
+                "unit_class": type(self).__name__,
                 "name": self.name,
                 "unit_type": self.unit_type,
                 "side": self.side,
@@ -101,17 +102,37 @@ class Unit(Entity):
         self.training_level = state.get("training_level", 0.5)
         self.weight_tons = state.get("weight_tons", 0.0)
 
-        self.personnel = []
-        for ms in state["personnel"]:
-            m = CrewMember(member_id="", role=0, skill=0, experience=0.0)
+        personnel_states = state["personnel"]
+        personnel_ids = [ms["member_id"] for ms in personnel_states]
+        if len(personnel_ids) != len(set(personnel_ids)):
+            raise ValueError(
+                f"Duplicate personnel member_id in unit {state['entity_id']!r}",
+            )
+        existing_personnel = {member.member_id: member for member in self.personnel}
+        restored_personnel: list[CrewMember] = []
+        for ms in personnel_states:
+            m = existing_personnel.get(ms["member_id"])
+            if m is None:
+                m = CrewMember(member_id="", role=0, skill=0, experience=0.0)
             m.set_state(ms)
-            self.personnel.append(m)
+            restored_personnel.append(m)
+        self.personnel = restored_personnel
 
-        self.equipment = []
-        for es in state["equipment"]:
-            e = EquipmentItem(equipment_id="", name="", category=0)
+        equipment_states = state["equipment"]
+        equipment_ids = [es["equipment_id"] for es in equipment_states]
+        if len(equipment_ids) != len(set(equipment_ids)):
+            raise ValueError(
+                f"Duplicate equipment_id in unit {state['entity_id']!r}",
+            )
+        existing_equipment = {item.equipment_id: item for item in self.equipment}
+        restored_equipment: list[EquipmentItem] = []
+        for es in equipment_states:
+            e = existing_equipment.get(es["equipment_id"])
+            if e is None:
+                e = EquipmentItem(equipment_id="", name="", category=0)
             e.set_state(es)
-            self.equipment.append(e)
+            restored_equipment.append(e)
+        self.equipment = restored_equipment
 
     # -- Phase 58c: damage detail application --------------------------
 

@@ -8,6 +8,7 @@ modules together from a scenario definition.
 
 from __future__ import annotations
 
+import copy
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -304,6 +305,192 @@ class CampaignScenarioConfig(BaseModel):
 # ---------------------------------------------------------------------------
 
 
+def _unit_class_from_state(state: dict[str, Any]) -> type[Unit]:
+    """Resolve a serialized unit state through a fixed, safe class allowlist."""
+    from stochastic_warfare.entities.unit_classes.aerial import AerialUnit
+    from stochastic_warfare.entities.unit_classes.air_defense import AirDefenseUnit
+    from stochastic_warfare.entities.unit_classes.ground import GroundUnit
+    from stochastic_warfare.entities.unit_classes.naval import NavalUnit
+    from stochastic_warfare.entities.unit_classes.support import SupportUnit
+
+    classes: dict[str, type[Unit]] = {
+        "Unit": Unit,
+        "GroundUnit": GroundUnit,
+        "AerialUnit": AerialUnit,
+        "NavalUnit": NavalUnit,
+        "AirDefenseUnit": AirDefenseUnit,
+        "SupportUnit": SupportUnit,
+    }
+    discriminator = state.get("unit_class")
+    if discriminator is not None:
+        try:
+            return classes[discriminator]
+        except (KeyError, TypeError) as exc:
+            raise ValueError(
+                f"Unknown checkpoint unit_class {discriminator!r}",
+            ) from exc
+
+    legacy_fields = (
+        ("ground_type", GroundUnit),
+        ("aerial_type", AerialUnit),
+        ("naval_type", NavalUnit),
+        ("ad_type", AirDefenseUnit),
+        ("support_type", SupportUnit),
+    )
+    inferred_classes = [
+        unit_class
+        for field_name, unit_class in legacy_fields
+        if field_name in state
+    ]
+    if len(inferred_classes) > 1:
+        markers = [
+            field_name
+            for field_name, _ in legacy_fields
+            if field_name in state
+        ]
+        raise ValueError(
+            f"Ambiguous legacy checkpoint unit fields: {markers!r}",
+        )
+    if inferred_classes:
+        return inferred_classes[0]
+    return Unit
+
+
+def _stage_checkpoint_unit(state: Any, side: str) -> Unit:
+    """Validate and build one checkpoint unit without touching live state."""
+    if not isinstance(state, dict):
+        raise ValueError(
+            f"Checkpoint unit for side {side!r} must be a mapping",
+        )
+    entity_id = state.get("entity_id")
+    if not isinstance(entity_id, str) or not entity_id:
+        raise ValueError(
+            f"Checkpoint unit for side {side!r} has an invalid entity_id",
+        )
+    state_side = state.get("side")
+    if state_side != side:
+        raise ValueError(
+            f"Checkpoint unit {entity_id!r} is stored under side {side!r} "
+            f"but declares side {state_side!r}",
+        )
+
+    unit_class = _unit_class_from_state(state)
+    unit = unit_class(entity_id=entity_id, position=Position(0.0, 0.0, 0.0))
+    try:
+        unit.set_state(state)
+    except (KeyError, TypeError, ValueError) as exc:
+        raise ValueError(
+            f"Invalid checkpoint state for unit {entity_id!r}: {exc}",
+        ) from exc
+    return unit
+
+
+def _stage_runtime_instance_states(
+    raw_states: Any,
+    current_instances: dict[str, list[Any]],
+    checkpoint_unit_ids: set[str],
+    reusable_unit_ids: set[str],
+    checkpoint_equipment: dict[str, dict[str, dict[str, Any]]] | None,
+    *,
+    kind: str,
+) -> list[tuple[Any, dict[str, Any]]]:
+    """Validate weapon or sensor instance state without mutating live objects."""
+    if not isinstance(raw_states, dict):
+        raise ValueError(f"Checkpoint {kind} states must be a mapping")
+
+    expected_ids = set(current_instances) & reusable_unit_ids
+    serialized_ids = set(raw_states)
+    if serialized_ids != expected_ids:
+        missing = sorted(expected_ids - serialized_ids)
+        extra = sorted(serialized_ids - expected_ids)
+        raise ValueError(
+            f"Incompatible {kind} unit topology: missing={missing!r}, "
+            f"extra={extra!r}",
+        )
+
+    staged: list[tuple[Any, dict[str, Any]]] = []
+    for entity_id, saved_instances in raw_states.items():
+        if not isinstance(entity_id, str) or entity_id not in checkpoint_unit_ids:
+            raise ValueError(
+                f"Checkpoint {kind} state references unknown unit {entity_id!r}",
+            )
+        if not isinstance(saved_instances, list):
+            raise ValueError(
+                f"Checkpoint {kind} state for {entity_id!r} must be a list",
+            )
+        runtime_entries = current_instances.get(entity_id)
+        if runtime_entries is None:
+            runtime_entries = []
+        if len(runtime_entries) != len(saved_instances):
+            raise ValueError(
+                f"Incompatible {kind} topology for unit {entity_id!r}: "
+                f"checkpoint has {len(saved_instances)}, runtime has "
+                f"{len(runtime_entries)}",
+            )
+        if saved_instances and entity_id not in reusable_unit_ids:
+            raise ValueError(
+                f"Cannot restore {kind} state for reconstructed unit "
+                f"{entity_id!r}; build a compatible runtime first",
+            )
+
+        for index, saved_state in enumerate(saved_instances):
+            if not isinstance(saved_state, dict):
+                raise ValueError(
+                    f"Checkpoint {kind} state {entity_id!r}[{index}] "
+                    "must be a mapping",
+                )
+            runtime_entry = runtime_entries[index]
+            instance = runtime_entry[0] if kind == "weapon" else runtime_entry
+            identity_field = "weapon_id" if kind == "weapon" else "sensor_id"
+            runtime_id = getattr(instance, identity_field, None)
+            if saved_state.get(identity_field) != runtime_id:
+                raise ValueError(
+                    f"Incompatible {kind} identity for unit {entity_id!r} "
+                    f"at index {index}: checkpoint has "
+                    f"{saved_state.get(identity_field)!r}, runtime has "
+                    f"{runtime_id!r}",
+                )
+            equipment = getattr(instance, "equipment", None)
+            if equipment is not None and checkpoint_equipment is not None:
+                saved_equipment = checkpoint_equipment.get(
+                    entity_id, {},
+                ).get(equipment.equipment_id)
+                if saved_equipment is None:
+                    raise ValueError(
+                        f"Checkpoint {kind} {runtime_id!r} references "
+                        f"missing equipment {equipment.equipment_id!r}",
+                    )
+                if (
+                    saved_state.get("equipment_condition")
+                    != saved_equipment.get("condition")
+                    or saved_state.get("equipment_operational")
+                    != saved_equipment.get("operational")
+                ):
+                    raise ValueError(
+                        f"Conflicting checkpoint equipment state for "
+                        f"{kind} {runtime_id!r} on unit {entity_id!r}",
+                    )
+            try:
+                staged_instance = copy.deepcopy(instance)
+                staged_instance.set_state(saved_state)
+            except (AttributeError, KeyError, TypeError, ValueError) as exc:
+                raise ValueError(
+                    f"Invalid {kind} state for unit {entity_id!r} "
+                    f"at index {index}: {exc}",
+                ) from exc
+            staged.append((instance, saved_state))
+
+    return staged
+
+
+def _model_dump_json_compatible(model: Any) -> dict[str, Any]:
+    """Dump Pydantic models canonically while supporting legacy test doubles."""
+    try:
+        return model.model_dump(mode="json")
+    except TypeError:
+        return model.model_dump()
+
+
 @dataclass
 class SimulationContext:
     """Shared state for an in-progress simulation run.
@@ -536,7 +723,7 @@ class SimulationContext:
     def get_state(self) -> dict[str, Any]:
         """Capture full simulation state for checkpointing."""
         state: dict[str, Any] = {
-            "config": self.config.model_dump(),
+            "config": _model_dump_json_compatible(self.config),
             "clock": self.clock.get_state(),
             "rng": self.rng_manager.get_state(),
             "units_by_side": {
@@ -546,6 +733,14 @@ class SimulationContext:
             "morale_states": {
                 uid: (ms.value if hasattr(ms, "value") else ms)
                 for uid, ms in self.morale_states.items()
+            },
+            "unit_weapon_states": {
+                uid: [weapon.get_state() for weapon, _ in weapons]
+                for uid, weapons in getattr(self, "unit_weapons", {}).items()
+            },
+            "unit_sensor_states": {
+                uid: [sensor.get_state() for sensor in sensors]
+                for uid, sensors in getattr(self, "unit_sensors", {}).items()
             },
             "calibration": (
                 self.calibration.model_dump()
@@ -649,20 +844,183 @@ class SimulationContext:
                 state[name] = eng.get_state()
         # Era config
         if self.era_config is not None and hasattr(self.era_config, "model_dump"):
-            state["era_config"] = self.era_config.model_dump()
+            state["era_config"] = _model_dump_json_compatible(self.era_config)
         return state
 
     def set_state(self, state: dict[str, Any]) -> None:
         """Restore simulation state from checkpoint."""
-        self.clock.set_state(state["clock"])
-        self.rng_manager.set_state(state["rng"])
+        checkpoint_config = state.get("config")
+        if checkpoint_config is not None:
+            if (
+                not isinstance(checkpoint_config, dict)
+                or checkpoint_config != _model_dump_json_compatible(self.config)
+            ):
+                raise ValueError(
+                    "Checkpoint configuration does not match the runtime "
+                    "configuration",
+                )
+
+        clock_state = state["clock"]
+        rng_state = state["rng"]
+        try:
+            copy.deepcopy(self.clock).set_state(clock_state)
+            copy.deepcopy(self.rng_manager).set_state(rng_state)
+        except (KeyError, TypeError, ValueError) as exc:
+            raise ValueError(f"Invalid checkpoint clock or RNG state: {exc}") from exc
+
         cal_data = state.get("calibration", {})
-        self.calibration = (
+        staged_calibration = (
             CalibrationSchema(**cal_data)
             if isinstance(cal_data, dict)
             else cal_data
         )
-        # Regenerate flat dict (Phase 86)
+
+        staged_units: dict[str, list[tuple[dict[str, Any], Unit]]] | None = None
+        staged_morale: dict[str, Any] | None = None
+        checkpoint_unit_ids: set[str] = set()
+        checkpoint_equipment: (
+            dict[str, dict[str, dict[str, Any]]] | None
+        ) = None
+
+        if "units_by_side" in state:
+            raw_forces = state["units_by_side"]
+            if not isinstance(raw_forces, dict):
+                raise ValueError("Checkpoint units_by_side must be a mapping")
+            staged_units = {}
+            seen_ids: set[str] = set()
+            for side, raw_units in raw_forces.items():
+                if not isinstance(side, str) or not isinstance(raw_units, list):
+                    raise ValueError(
+                        "Checkpoint force sides must map names to unit lists",
+                    )
+                staged_units[side] = []
+                for raw_unit in raw_units:
+                    staged = _stage_checkpoint_unit(raw_unit, side)
+                    if staged.entity_id in seen_ids:
+                        raise ValueError(
+                            "Duplicate checkpoint entity_id "
+                            f"{staged.entity_id!r}",
+                        )
+                    seen_ids.add(staged.entity_id)
+                    staged_units[side].append((raw_unit, staged))
+            checkpoint_unit_ids = seen_ids
+            checkpoint_equipment = {
+                staged.entity_id: {
+                    equipment_state["equipment_id"]: equipment_state
+                    for equipment_state in raw_unit["equipment"]
+                }
+                for staged_side in staged_units.values()
+                for raw_unit, staged in staged_side
+            }
+
+        if "morale_states" in state:
+            from stochastic_warfare.morale.state import MoraleState
+
+            raw_morale = state["morale_states"]
+            if not isinstance(raw_morale, dict):
+                raise ValueError("Checkpoint morale_states must be a mapping")
+            staged_morale = {}
+            for entity_id, value in raw_morale.items():
+                if not isinstance(entity_id, str):
+                    raise ValueError(
+                        "Checkpoint morale state keys must be entity IDs",
+                    )
+                try:
+                    if isinstance(value, str):
+                        morale = MoraleState[value]
+                    else:
+                        morale = MoraleState(value)
+                except (KeyError, TypeError, ValueError) as exc:
+                    raise ValueError(
+                        f"Invalid morale state for {entity_id!r}: {value!r}",
+                    ) from exc
+                staged_morale[entity_id] = morale
+
+        existing_by_id: dict[str, Unit] = {}
+        for unit in self.all_units():
+            if unit.entity_id in existing_by_id:
+                raise ValueError(
+                    f"Duplicate runtime entity_id {unit.entity_id!r}",
+                )
+            existing_by_id[unit.entity_id] = unit
+
+        if staged_units is None:
+            checkpoint_unit_ids = set(existing_by_id)
+            reusable_ids = set(existing_by_id)
+        else:
+            reusable_ids = {
+                staged.entity_id
+                for staged_side in staged_units.values()
+                for _, staged in staged_side
+                if (
+                    staged.entity_id in existing_by_id
+                    and type(existing_by_id[staged.entity_id]) is type(staged)
+                )
+            }
+
+        current_unit_weapons = getattr(self, "unit_weapons", {})
+        current_unit_sensors = getattr(self, "unit_sensors", {})
+        staged_weapon_states: list[tuple[Any, dict[str, Any]]] = []
+        if "unit_weapon_states" in state:
+            staged_weapon_states = _stage_runtime_instance_states(
+                state["unit_weapon_states"],
+                current_unit_weapons,
+                checkpoint_unit_ids,
+                reusable_ids,
+                checkpoint_equipment,
+                kind="weapon",
+            )
+
+        staged_sensor_states: list[tuple[Any, dict[str, Any]]] = []
+        if "unit_sensor_states" in state:
+            staged_sensor_states = _stage_runtime_instance_states(
+                state["unit_sensor_states"],
+                current_unit_sensors,
+                checkpoint_unit_ids,
+                reusable_ids,
+                checkpoint_equipment,
+                kind="sensor",
+            )
+
+        # Commit only after all context-owned checkpoint state validates.
+        self.clock.set_state(clock_state)
+        self.rng_manager.set_state(rng_state)
+        self.calibration = staged_calibration
+
+        if staged_units is not None:
+            restored_by_side: dict[str, list[Unit]] = {}
+            for side, staged_side in staged_units.items():
+                restored_by_side[side] = []
+                for raw_unit, staged in staged_side:
+                    existing = existing_by_id.get(staged.entity_id)
+                    if existing is not None and type(existing) is type(staged):
+                        existing.set_state(raw_unit)
+                        restored = existing
+                    else:
+                        restored = staged
+                    restored_by_side[side].append(restored)
+
+            self.units_by_side = restored_by_side
+            self.unit_weapons = {
+                entity_id: weapons
+                for entity_id, weapons in current_unit_weapons.items()
+                if entity_id in reusable_ids
+            }
+            self.unit_sensors = {
+                entity_id: sensors
+                for entity_id, sensors in current_unit_sensors.items()
+                if entity_id in reusable_ids
+            }
+
+        if staged_morale is not None:
+            self.morale_states = staged_morale
+
+        for instance, saved_state in staged_weapon_states:
+            instance.set_state(saved_state)
+        for instance, saved_state in staged_sensor_states:
+            instance.set_state(saved_state)
+
+        # Regenerate flat dict after restoring forces (Phase 86).
         if isinstance(self.calibration, CalibrationSchema):
             self.cal_flat = self.calibration.to_flat_dict(self.side_names())
 

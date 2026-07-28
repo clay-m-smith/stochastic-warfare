@@ -76,9 +76,15 @@ See the [Getting Started Guide](guide/getting-started.md) for a complete tutoria
 | Block 8 | 68--82 | Consequence enforcement, scenario expansion, postmortem & documentation | **Complete** |
 | Block 9 | 83--91 | Performance at scale — profiling, spatial culling, LOD, parallelism | **Complete** |
 | Block 10 | 92--97 | UI depth & engine exposure — analytics, frame enrichment, metadata | **Complete** |
-| Block 11 | 98--102 | Golden scenarios — Debecka Pass, Khafji, Fallujah PL Fran, Bint Jbeil + INS Hanit | **Complete** |
+| Block 11 | 98--104 | Golden scenarios and deployment polish | **Complete** |
+| Block 12 | 105--112 | Integrity remediation against production-path evidence | **In progress** |
 
-**~10,522 tests** (~10,104 Python + 418 frontend) across ~400 test files. **~870 YAML data files** defining units, weapons, ammunition types, sensors, signatures, doctrines, commanders, formation templates, and 51 scenarios across 5 eras.
+Fresh verified baseline: **10,123 default-selected Python tests passed** (21
+skipped, 346 deselected) plus **418 frontend tests passed**. See the
+[remediation backlog](remediation-backlog.md) for current evidence and known
+coverage boundaries. **~870 YAML data files** define units, weapons,
+ammunition types, sensors, signatures, doctrines, commanders, formation
+templates, and 51 scenarios across 5 eras.
 
 ## License
 

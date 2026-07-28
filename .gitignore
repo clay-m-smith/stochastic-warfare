@@ -8,6 +8,7 @@ build/
 *.coverage
 scripts/visualize/output/
 .claude/settings.local.json
+.claude/scheduled_tasks.lock
 data/terrain_cache/
 site/
 node_modules/
@@ -28,3 +29,6 @@ scripts/test_taiwan_*.py
 scripts/test_napoleon_*.py
 scripts/check_winners.py
 scripts/eval_summary.py
+
+# Local verification output
+/test_results.json

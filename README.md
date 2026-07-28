@@ -163,7 +163,7 @@ data/                     # ~748 YAML data files
   eras/                    # Era-specific data packages (WW2, WW1, Napoleonic, Ancient/Medieval)
   scenarios/              # 32 modern scenarios (engagement, campaign, EW, space, CBRN, escalation, joint, calibration, benchmark) + 5 test
 
-tests/                    # ~10,522 engine+API+frontend tests across ~400 test files
+tests/                    # 10,123 default-selected Python tests passing
 docs/                     # specs, brainstorm, devlog, development phases
 ```
 
@@ -171,7 +171,9 @@ For the full package tree and module decomposition, see [`docs/specs/project-str
 
 ## Development Status
 
-104 phases delivered across 11 blocks. Blocks 1–11 ALL COMPLETE. See devlogs and phase roadmaps for full detail.
+Phase 105 is complete and Block 12 integrity remediation is in progress.
+Blocks 1–11 remain complete. See the remediation backlog, devlogs, and phase
+roadmaps for full detail.
 
 | Phase | Focus | Tests | Status |
 |-------|-------|-------|--------|
@@ -281,9 +283,17 @@ For the full package tree and module decomposition, see [`docs/specs/project-str
 | 102 | Bint Jbeil + INS Hanit Vignette (2006) (Block 11) | 15 | **Complete** |
 | 103 | Block 11 Polish — OOB + engine gap tightening | 17 | **Complete** |
 | 104 | Configurable Deployment Modes (Block 11 polish) | 21 | **Complete** |
-| | **Total** | **~10,522** | |
+| 105 | Checkpoint State Integrity (Block 12) | 19 | **Complete** |
+| | **Verified passing baseline** | **10,123 Python + 418 frontend** | |
 
-For the full phase roadmap, see [`docs/development-phases.md`](docs/development-phases.md) (MVP), [`docs/development-phases-post-mvp.md`](docs/development-phases-post-mvp.md) (post-MVP), and `docs/development-phases-block{N}.md` for Blocks 2–11. For per-phase implementation logs, see [`docs/devlog/`](docs/devlog/).
+The Python figure is the fresh default-suite result; that run also reported 21
+skipped and 346 deselected tests. For the full phase roadmap, see
+[`docs/development-phases.md`](docs/development-phases.md) (MVP),
+[`docs/development-phases-post-mvp.md`](docs/development-phases-post-mvp.md)
+(post-MVP), and `docs/development-phases-block{N}.md` for Blocks 2–12. The live
+integrity issue inventory is in
+[`docs/remediation-backlog.md`](docs/remediation-backlog.md). For per-phase
+implementation logs, see [`docs/devlog/`](docs/devlog/).
 
 ## Key Dependencies
 

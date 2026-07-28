@@ -1328,11 +1328,18 @@ class SimulationEngine:
 
     def set_state(self, state: dict[str, Any]) -> None:
         """Restore engine state from a checkpoint dict."""
-        self._resolution = TickResolution(state["resolution"])
-        new_dt = self._tick_durations[self._resolution]
-        self._ctx.clock.set_tick_duration(timedelta(seconds=new_dt))
+        new_resolution = TickResolution(state["resolution"])
+        new_dt = self._tick_durations[new_resolution]
+        saved_dt = state["context"]["clock"]["tick_duration_seconds"]
+        if float(saved_dt) != float(new_dt):
+            raise ValueError(
+                "Checkpoint resolution and clock tick duration disagree: "
+                f"{new_resolution.name} requires {new_dt}s, got {saved_dt}s",
+            )
 
         self._ctx.set_state(state["context"])
+        self._resolution = new_resolution
+        self._ctx.clock.set_tick_duration(timedelta(seconds=new_dt))
         self._campaign.set_state(state.get("campaign", {}))
         self._battle.set_state(state.get("battle", {}))
         # Phase 72c: restore _last_ato_day
