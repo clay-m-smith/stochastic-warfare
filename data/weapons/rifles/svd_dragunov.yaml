@@ -1,0 +1,39 @@
+# SVD Dragunov 7.62x54mmR designated-marksman/sniper rifle.
+#
+# Authoritative identity and performance:
+# - Russian Federal Service for Military-Technical Cooperation, "SVD (6V1 ID)
+#   and SVDS (6V3 ID) 7.62-mm Dragunov Sniper Rifle": 7.62x54R, 830 m/s,
+#   10-round magazine, up to 30 rounds/minute, 4.3 kg.
+#   https://www.fsvts.gov.ru/catalog/1030.en.html
+# - U.S. Army Infantry, Jan-Feb 1991, "The Iraqi Army": 800 m maximum
+#   effective range and four 10-round magazines.
+#   https://www.benning.army.mil/infantry/magazine/issues/1991/JAN-FEB/pdfs/JAN-FEB1991.pdf
+#
+# The 1.0 mrad dispersion is a conservative simulation abstraction used to
+# distinguish the SVD's precision-fire role from the AK-family rifle model;
+# neither source establishes a probability-of-hit calibration.
+weapon_id: svd_dragunov
+display_name: "SVD Dragunov 7.62x54mmR Rifle"
+category: RIFLE
+caliber_mm: 7.62
+muzzle_velocity_mps: 830.0
+max_range_m: 800.0
+effective_range_m: 800.0
+min_range_m: 0.0
+rate_of_fire_rpm: 30.0
+burst_size: 1
+base_accuracy_mrad: 1.0
+guidance: NONE
+magazine_capacity: 10
+reload_time_s: 4.0
+compatible_ammo:
+  - 7_62x54r_sniper_ball
+weight_kg: 4.3
+reliability: 0.90
+barrel_life_rounds: 8000
+requires_deployed: false
+traverse_deg: 360.0
+elevation_min_deg: -30.0
+elevation_max_deg: 80.0
+target_domains:
+  - GROUND

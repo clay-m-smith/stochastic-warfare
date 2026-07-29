@@ -10,6 +10,7 @@ import asyncio
 import json
 import logging
 import uuid
+from collections.abc import Mapping
 from datetime import datetime, timezone
 from pathlib import Path
 from threading import Event
@@ -18,6 +19,7 @@ from typing import TYPE_CHECKING, Any
 from api.database import Database
 
 if TYPE_CHECKING:
+    from stochastic_warfare.simulation.loadouts import WeaponAttachment
     from stochastic_warfare.simulation.scenario import CampaignScenarioConfig
 
 logger = logging.getLogger(__name__)
@@ -463,7 +465,7 @@ class RunManager:
                     morale_states=getattr(ctx, "morale_states", None),
                     suppression_states=getattr(_bm, "_suppression_states", None) if _bm else None,
                     engaged_ids=_engaged,
-                    unit_weapons=getattr(ctx, "unit_weapons", None),
+                    unit_weapons=ctx.unit_weapons,
                 ))
 
             # Emit progress to all subscribers
@@ -632,7 +634,7 @@ class RunManager:
         morale_states: dict | None = None,
         suppression_states: dict | None = None,
         engaged_ids: set[str] | None = None,
-        unit_weapons: dict | None = None,
+        unit_weapons: Mapping[str, tuple[WeaponAttachment, ...]] | None = None,
     ) -> dict[str, Any]:
         """Capture unit positions and enriched state for a single tick."""
         units = []
@@ -690,16 +692,13 @@ class RunManager:
 
                 # Ammo (aggregate across all weapons)
                 if unit_weapons is not None:
-                    wpns = unit_weapons.get(uid, [])
+                    attachments = unit_weapons.get(uid, ())
                     total_remaining = 0
                     total_initial = 0
-                    for wpn in wpns:
-                        ammo_state = getattr(wpn, "ammo_state", None)
-                        if ammo_state is None:
-                            continue
-                        rbt = getattr(ammo_state, "rounds_by_type", {})
-                        remaining = sum(rbt.values()) if rbt else 0
-                        fired = getattr(ammo_state, "total_rounds_fired", 0)
+                    for attachment in attachments:
+                        ammo_state = attachment.weapon.ammo_state
+                        remaining = sum(ammo_state.rounds_by_type.values())
+                        fired = ammo_state.total_rounds_fired
                         total_remaining += remaining
                         total_initial += remaining + fired
                     if total_initial > 0:

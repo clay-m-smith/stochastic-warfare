@@ -1,0 +1,36 @@
+# Gryazev-Shipunov GSh-23L twin-barrel 23mm aircraft cannon.
+#
+# Rosoboronexport publishes 23 mm caliber, 3,000-3,400 rounds/minute,
+# 715 +/- 15 m/s velocity, and air/ground target roles:
+# https://roe.ru/pdfs/pdf_7860.pdf
+# Arsenal JSCo identifies the matching 23x115mm HEI ammunition:
+# https://www.arsenal-bg.com/c/artillery-rounds-32/23x115-mm-169
+#
+# The 3,200 rpm midpoint and a 200-round internal-aircraft ready load bound the
+# authored J-10 installation; the ready load is not a universal GSh-23 mount.
+weapon_id: gsh23_23mm
+display_name: "GSh-23L 23mm Aircraft Cannon"
+category: AIRCRAFT_GUN
+caliber_mm: 23.0
+muzzle_velocity_mps: 715.0
+max_range_m: 2000.0
+effective_range_m: 1500.0
+min_range_m: 100.0
+rate_of_fire_rpm: 3200.0
+burst_size: 20
+base_accuracy_mrad: 2.0
+guidance: NONE
+magazine_capacity: 200
+reload_time_s: 0.0
+compatible_ammo:
+  - 23x115_hei
+weight_kg: 50.5
+reliability: 0.90
+barrel_life_rounds: 8000
+requires_deployed: false
+traverse_deg: 0.0
+elevation_min_deg: 0.0
+elevation_max_deg: 0.0
+target_domains:
+  - GROUND
+  - AERIAL

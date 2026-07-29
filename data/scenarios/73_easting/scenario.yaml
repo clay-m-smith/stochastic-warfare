@@ -146,13 +146,6 @@ calibration_overrides:
   red_start_x: 5900.0
   red_start_y: 2000.0
   # Weapon assignments — use correct weapon IDs for each platform.
-  weapon_assignments:
-    "M256 120mm Smoothbore": m256_120mm
-    "M242 25mm Chain Gun": m242_bushmaster
-    "2A46M 125mm Smoothbore": 2a46m_125mm
-    "73mm 2A28 Grom": 2a28_grom_73mm
-    "TOW-2 ATGM": tow2_atgm
-    "AT-3 Sagger ATGM": at3_sagger
 
 behavior_rules:
   blue:

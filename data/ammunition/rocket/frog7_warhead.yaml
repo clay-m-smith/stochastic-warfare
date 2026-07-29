@@ -2,9 +2,7 @@
 # Large unguided tactical rocket with ~457 kg HE-fragmentation warhead
 # (9M21-F variant). Range ~70 km with CEP ~700 m — inaccurate area weapon.
 # Iraqi FROG-7 batteries near the Saudi border were the target of AC-130H
-# Spirit 03's final mission at Khafji (dawn 31 Jan 1991). Also used as
-# placeholder warhead reference for Iraqi BM-21 122mm rockets (aggregated
-# Grad salvo representation; individual 9M22 warhead is ~6.4 kg HE).
+# Spirit 03's final mission at Khafji (dawn 31 Jan 1991).
 #
 # NOTE: Uses AmmoDefinition schema (ammo_id) — same as m26_mlrs_rocket.yaml.
 #

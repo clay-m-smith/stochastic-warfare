@@ -1,0 +1,26 @@
+# Functional role model for naval target tracking, illumination, and gun
+# fire-control radars. The cited sources identify EL/M-2221 STGR and MR-184M
+# Lev in those roles; Marconi's history identifies Type 910 as Sea Wolf's
+# tracking radar.
+# Sources:
+#   https://mod.gov.il/media/otaeo2yv/%D7%9E%D7%93%D7%A8%D7%99%D7%9A-%D7%94%D7%99%D7%A6%D7%95%D7%90_250811_080922-1-_compressed.pdf
+#   https://cgsc.contentdm.oclc.org/digital/api/collection/p4013coll11/id/2091/download
+#   https://marconiradarhistory.pbworks.com/w/page/53919157/Sea%20Wolf%20%28GWS%2025%29
+# RF/equation inputs reuse the catalog's fire-control archetype and do not
+# assert physical-performance equivalence among represented systems.
+sensor_id: short_range_naval_fire_control_radar
+sensor_type: RADAR
+display_name: "Short-Range Naval Fire-Control Radar (role model)"
+max_range_m: 30000.0
+detection_threshold: 10.0
+false_alarm_rate: 1.0e-6
+scan_time_s: 3.0
+scan_interval_ticks: 2
+frequency_mhz: 6000.0
+peak_power_w: 200000.0
+antenna_gain_dbi: 30.0
+antenna_height_m: 15.0
+min_range_m: 200.0
+fov_deg: 360.0
+requires_los: true
+detects_domain: ["RADAR"]

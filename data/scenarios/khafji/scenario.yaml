@@ -395,61 +395,6 @@ calibration_overrides:
   red_formation_spacing_m: 100.0
 
   # Weapon assignments — map equipment names to weapon_ids
-  weapon_assignments:
-    # Coalition ground
-    "M242 25mm Chain Gun": m242_bushmaster
-    "M240 7.62mm Coaxial": m240_762mm
-    "M240B GPMG": m240_762mm
-    "M249 SAW": m4_556mm
-    "M4A1 SOPMOD": m4_556mm
-    "M16A2 Rifle": m4_556mm
-    "M203 40mm Grenade Launcher": m4_556mm
-    "M40A1 Sniper Rifle": m4_556mm
-    "Barrett M82A1 .50 Rifle": m2hb_50cal
-    "M901 TOW-2 Launcher": tow2_atgm
-    "BGM-71 TOW-2 Launcher": tow2_atgm
-    "TOW-2 ATGM": tow2_atgm
-    "F1 105mm Rifled Gun": l7_105mm
-    "20mm M693 Coaxial": m242_bushmaster
-    "7.62mm AA Machine Gun": m240_762mm
-    "AKMS": ak47
-    "PKM GPMG": m240_762mm
-    "RPG-7": rpg7
-    # Coalition air
-    "GAU-8/A Avenger 30mm": gau8_30mm
-    "GAU-12 Equalizer 25mm": gau12_25mm
-    "M197 20mm Rotary Cannon": m197_20mm
-    "M61A1 Vulcan 20mm": m61a1_vulcan
-    "105mm M102 Howitzer (direct-fire mount)": ac130_105mm
-    "40mm Bofors L/60 Automatic Gun": ac130_40mm_bofors
-    "AGM-65 Maverick": agm65_maverick
-    "AGM-114 Hellfire Launcher": agm114_hellfire
-    "AIM-9L Sidewinder": aim9x_sidewinder
-    "AIM-7M Sparrow": aim9x_sidewinder
-    "M260 2.75-inch Rocket Pod": bomb_rack_generic
-    "127mm Zuni Rocket Pod": bomb_rack_generic
-    "5-inch HVAR Rockets": bomb_rack_generic
-    "M60 7.62mm MG (sponson x4)": m240_762mm
-    "Wing/Fuselage Ordnance Stations": bomb_rack_generic
-    "CSRL Rotary Launcher": bomb_rack_generic
-    # Coalition naval (USS Missouri)
-    "16 inch/50 Mk 7 Gun": 16in50_naval
-    "5 inch/38 Mk 12 Gun": mk38_5in38
-    "Mk 15 Phalanx CIWS": mk15_phalanx
-    "Mk 141 Harpoon Quad Launcher": rgm84_harpoon
-    "Mk 143 Armored Box Launcher (Tomahawk)": bgm109_tomahawk
-    # Iraqi armor
-    "D-10T 100mm Rifled Gun": d10t_100mm
-    "SGMT 7.62mm Coaxial": m240_762mm
-    "PKT 7.62mm Coaxial": m240_762mm
-    "KPVT 14.5mm HMG": m2hb_50cal
-    "2A46M 125mm Smoothbore": 2a46m_125mm
-    "73mm 2A28 Grom": 2a28_grom_73mm
-    "AT-3 Sagger ATGM": at3_sagger
-    "2× S-68 57mm Autocannon": s68_57mm
-    # Iraqi air defense / MANPADS / artillery
-    "9K32 Strela-2 MANPADS": sa7_strela2
-    "SA-7 Strela-2": sa7_strela2
 
 behavior_rules:
   blue:

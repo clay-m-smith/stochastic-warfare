@@ -1,0 +1,31 @@
+# One NSVT vehicle-mounted 12.7x108 mm heavy machine gun.
+# U.S. Army ODIN records the NSV family at 25 kg gun weight, 700-800 rpm,
+# 845 m/s, 50-round belt feed, and effective ranges of 2,000 m against ground
+# and 1,500 m against aerial targets. NSVT is the tank-mounted variant.
+# https://odin.tradoc.army.mil/exports/pdf/b4a680f616e1336d5bd423a4ba9d5282e3917b2d.pdf
+weapon_id: nsvt_127mm
+display_name: "NSVT 12.7 mm Tank Heavy Machine Gun"
+category: HEAVY_MG
+caliber_mm: 12.7
+muzzle_velocity_mps: 845.0
+max_range_m: 2000.0
+effective_range_m: 1500.0
+min_range_m: 0.0
+rate_of_fire_rpm: 750.0
+burst_size: 8
+base_accuracy_mrad: 1.5
+guidance: NONE
+magazine_capacity: 50
+reload_time_s: 10.0
+compatible_ammo:
+  - 12_7x108_api
+weight_kg: 25.0
+reliability: 0.90
+barrel_life_rounds: 10000
+requires_deployed: false
+traverse_deg: 360.0
+elevation_min_deg: -5.0
+elevation_max_deg: 75.0
+target_domains:
+  - GROUND
+  - AERIAL

@@ -7,6 +7,7 @@ from pathlib import Path
 
 import pytest
 
+from stochastic_warfare.core.strict_yaml import DuplicateKeyError
 from stochastic_warfare.simulation.scenario import CampaignScenarioConfig
 from stochastic_warfare.validation.campaign_data import (
     AIExpectation,
@@ -246,6 +247,37 @@ class TestCampaignDataLoader:
         assert campaign.name == "Test Campaign"
         assert len(campaign.documented_outcomes) == 1
         assert campaign.documented_outcomes[0].tolerance_factor == 3.0
+
+    def test_rejects_duplicate_weapon_assignment_keys(
+        self,
+        tmp_path: Path,
+    ) -> None:
+        yaml_content = textwrap.dedent("""\
+            name: "Duplicate Assignment"
+            date: "1973-10-06"
+            duration_hours: 1.0
+            terrain:
+              width_m: 1000
+              height_m: 1000
+              terrain_type: flat_desert
+            sides:
+              - side: blue
+                units: []
+              - side: red
+                units: []
+            calibration_overrides:
+              weapon_assignments:
+                Main Gun: first
+                Main Gun: second
+        """)
+        yaml_path = tmp_path / "duplicate-assignment.yaml"
+        yaml_path.write_text(yaml_content, encoding="utf-8")
+
+        with pytest.raises(
+            DuplicateKeyError,
+            match=r"Duplicate YAML mapping key 'Main Gun'",
+        ):
+            CampaignDataLoader().load(yaml_path)
 
     def test_load_with_ai_expectations(self, tmp_path: Path):
         yaml_content = textwrap.dedent("""\

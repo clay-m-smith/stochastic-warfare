@@ -1,0 +1,36 @@
+# U.S. M249 Squad Automatic Weapon.
+#
+# U.S. Army PEO Soldier publishes the 5.56mm identity, 18 lb mass, and point,
+# area, and suppressive ranges of 600 m, 800 m, and 1,000 m:
+# https://www.peosoldier.army.mil/Equipment/Equipment-Portfolio/Project-Manager-Soldier-Lethality-Portfolio/M249-Squad-Automatic-Weapon/
+# The Army direct-fire ammunition handbook identifies linked M855A1 as the
+# combat feed for the M249:
+# https://jpeoaa.army.mil/Portals/94/Documents/JPEOAAPortfolioBook_2025.pdf
+#
+# The 750 rpm cyclic midpoint and 200-round belt model the standard SAW
+# configuration; effective range is the Army's released point-target figure.
+weapon_id: m249_saw
+display_name: "M249 Squad Automatic Weapon"
+category: LIGHT_MG
+caliber_mm: 5.56
+muzzle_velocity_mps: 935.7
+max_range_m: 1000.0
+effective_range_m: 600.0
+min_range_m: 0.0
+rate_of_fire_rpm: 750.0
+burst_size: 7
+base_accuracy_mrad: 1.5
+guidance: NONE
+magazine_capacity: 200
+reload_time_s: 10.0
+compatible_ammo:
+  - 556_m855a1_linked
+weight_kg: 8.16
+reliability: 0.93
+barrel_life_rounds: 20000
+requires_deployed: false
+traverse_deg: 360.0
+elevation_min_deg: -30.0
+elevation_max_deg: 80.0
+target_domains:
+  - GROUND

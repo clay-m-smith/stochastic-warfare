@@ -1,0 +1,25 @@
+# Mk 46 Mod 5 lightweight anti-submarine torpedo.
+# The U.S. Navy fact file reports liquid-propellant propulsion, 12.75-inch
+# diameter, 518 lb total weight, a 100 lb HE warhead, and active/passive
+# operation. Seeker, speed, duration, and terminal radii retain the existing
+# conservative lightweight-torpedo model envelope pending dedicated calibration.
+ammo_id: mk46_lightweight_torpedo
+display_name: "Mk 46 Mod 5 Lightweight Torpedo"
+ammo_type: TORPEDO
+mass_kg: 235.0
+diameter_mm: 324.0
+drag_coefficient: 0.20
+penetration_mm_rha: 0.0
+penetration_reference_range_m: 0.0
+blast_radius_m: 15.0
+fragmentation_radius_m: 30.0
+guidance: COMBINED
+seeker_fov_deg: 120.0
+seeker_range_m: 2000.0
+pk_at_reference: 0.40
+countermeasure_susceptibility: 0.25
+propulsion: liquid_propellant
+max_speed_mps: 20.6
+flight_time_s: 450.0
+terminal_maneuver: true
+unit_cost_factor: 50.0

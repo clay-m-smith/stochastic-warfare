@@ -1,0 +1,28 @@
+# L27A1 CHARM 3 APFSDS projectile for the L30A1 rifled tank gun.
+#
+# UK Parliament identifies CHARM 3 as the Challenger 2's 120mm armour-piercing
+# ammunition:
+# https://questions-statements.parliament.uk/written-questions/detail/2021-09-07/44222/
+# Jane's published ammunition entry identifies L27A1 CHARM 3 and gives an
+# 8.5 kg projectile mass:
+# https://cdck-file-uploads-us1.s3.dualstack.us-west-2.amazonaws.com/flex016/uploads/cartridgecollectors/original/3X/1/a/1a1483e22e0f2a9d33d2f3337f63ac500fd9a1b6.pdf
+# A published L30 system reference reports 1,650 m/s with L27A1:
+# https://weaponsystems.net/system/889-120mm%2BRoyal%2BOrdnance%2BL30
+#
+# Authoritative public sources do not release an RHA acceptance value. The
+# 650 mm-at-2 km field is an explicit conservative runtime bound, not a
+# claimed measured result.
+ammo_id: l27a1_charm3_apfsds
+display_name: "L27A1 CHARM 3 APFSDS"
+ammo_type: AP
+mass_kg: 8.5
+diameter_mm: 120.0
+drag_coefficient: 0.15
+penetration_mm_rha: 650.0
+penetration_reference_range_m: 2000.0
+blast_radius_m: 0.0
+fragmentation_radius_m: 0.0
+guidance: NONE
+propulsion: none
+max_speed_mps: 1650.0
+unit_cost_factor: 6.0

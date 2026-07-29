@@ -117,9 +117,9 @@ class TestAmmoTypeExtension:
         assert ammo.parsed_ammo_type() == AmmoType.EXPANDING
 
     def test_yaml_loading_rockeye(self):
-        """Load a prohibited ammo YAML and verify treaty fields."""
+        """Load the canonical Rockeye ammo YAML and verify treaty fields."""
         loader = AmmoLoader(_DATA_DIR)
-        path = _DATA_DIR / "prohibited" / "mk20_rockeye_cluster.yaml"
+        path = _DATA_DIR / "rounds" / "mk20_rockeye.yaml"
         defn = loader.load_definition(path)
         assert defn.ammo_id == "mk20_rockeye"
         assert defn.parsed_ammo_type() == AmmoType.CLUSTER

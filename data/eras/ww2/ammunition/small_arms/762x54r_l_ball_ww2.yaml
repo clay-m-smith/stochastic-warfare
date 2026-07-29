@@ -1,0 +1,21 @@
+# Soviet 7.62x54R light-ball service cartridge for DP/DT machine guns.
+# US Army medical intelligence documents the standard 7.62 mm Soviet
+# DP/DPM/DTM family and their magazine capacities/effective ranges.
+# https://achh.army.mil/history/book-wwii-woundblstcs-chapter1/
+# 9.6 g and 840 m/s are the wartime light-ball catalog values. The small
+# 5 mm/100 m RHA analogue is a bounded simulator input, not an AP designation.
+ammo_id: 762x54r_l_ball_ww2
+display_name: "7.62x54R L Light Ball"
+ammo_type: BALL
+mass_kg: 0.0096
+diameter_mm: 7.62
+drag_coefficient: 0.28
+penetration_mm_rha: 5.0
+penetration_reference_range_m: 100.0
+blast_radius_m: 0.0
+fragmentation_radius_m: 0.0
+explosive_fill_kg: 0.0
+guidance: NONE
+propulsion: none
+max_speed_mps: 840.0
+unit_cost_factor: 0.1

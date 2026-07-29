@@ -1,0 +1,20 @@
+# French 8x50 mm R Lebel Balle D service cartridge.
+# Smithsonian identifies the Mle 1886/93 as an 8 mm rifle; U.S. Army history
+# identifies the French Chauchat as an 8 mm automatic rifle. The 12.8 g,
+# approximately 700 m/s Balle D values are the period service-ball baseline.
+# https://americanhistory.si.edu/collections/object/nmah_414502
+# https://history.army.mil/Portals/143/Images/Publications/Publication%20By%20Title%20Images/G%20Pdf/cmhPub_70-128.pdf
+ammo_id: 8x50r_lebel_balle_d
+display_name: "8x50 mm R Lebel Balle D"
+ammo_type: BALL
+mass_kg: 0.0128
+diameter_mm: 8.0
+drag_coefficient: 0.40
+penetration_mm_rha: 5.0
+penetration_reference_range_m: 100.0
+blast_radius_m: 0.0
+fragmentation_radius_m: 0.0
+guidance: NONE
+propulsion: none
+max_speed_mps: 700.0
+unit_cost_factor: 0.01

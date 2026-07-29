@@ -19,7 +19,7 @@ from tests.conftest import make_rng
 
 from stochastic_warfare.core.events import EventBus
 from stochastic_warfare.core.rng import RNGManager
-from stochastic_warfare.core.types import Position
+from stochastic_warfare.core.types import Domain, Position
 from stochastic_warfare.logistics.engineering import (
     EngineeringConfig,
     EngineeringEngine,
@@ -64,6 +64,7 @@ def _mock_unit(
         status=UnitStatus(status),
         entity_id=entity_id,
         side=side,
+        domain=Domain.GROUND,
         speed=speed,
         personnel=personnel,
         equipment=equipment,

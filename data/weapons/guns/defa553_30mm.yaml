@@ -1,0 +1,38 @@
+# DEFA 553 single 30mm aircraft cannon.
+#
+# KNDS identifies 30x113B ammunition as intended for DEFA weapons and
+# publishes the 775 m/s ammunition envelope:
+# https://knds.com/media/catalogue_munitions_85ae594873.pdf
+# A published defense equipment guide bounds the DEFA 553 at
+# 1,300 rounds/minute, 83 kg, and a 125-135-round aircraft installation:
+# https://defenceweb.co.za/wp-content/uploads/Repository/A-Guide-to-the-SANDF/A-guide-to-the-SANDF-chapter-10-saaf-app-c-equipment.pdf
+#
+# This definition is one cannon and the lower 125-round published feed bound.
+# An aircraft with two DEFA 553s must author two attachments rather than
+# doubling a hidden proxy.
+weapon_id: defa553_30mm
+display_name: "DEFA 553 30mm Aircraft Cannon"
+category: AIRCRAFT_GUN
+caliber_mm: 30.0
+muzzle_velocity_mps: 775.0
+max_range_m: 2000.0
+effective_range_m: 1200.0
+min_range_m: 100.0
+rate_of_fire_rpm: 1300.0
+burst_size: 10
+base_accuracy_mrad: 2.0
+guidance: NONE
+magazine_capacity: 125
+reload_time_s: 0.0
+compatible_ammo:
+  - 30x113b_defa_hei
+weight_kg: 83.0
+reliability: 0.90
+barrel_life_rounds: 3000
+requires_deployed: false
+traverse_deg: 0.0
+elevation_min_deg: 0.0
+elevation_max_deg: 0.0
+target_domains:
+  - GROUND
+  - AERIAL

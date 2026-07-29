@@ -1,0 +1,20 @@
+# 20x110 mm HE service shell for the British Hispano Mk II.
+# The Air Ministry's AP 1641F is the exact Mk I/II technical manual; the U.S.
+# Navy Bureau of Ordnance history documents the Birkigt/Hispano 20 mm system,
+# explosive shell, and approximately 2,750 ft/s service velocity.
+# https://www.awm.gov.au/collection/LIB100047788
+# https://www.ibiblio.org/hyperwar/USN/ref/MG/I/MG-5.html
+ammo_id: 20mm_hispano_mk_ii_he
+display_name: "20x110 mm Hispano High-Explosive Shell"
+ammo_type: HE
+mass_kg: 0.130
+diameter_mm: 20.0
+drag_coefficient: 0.36
+penetration_mm_rha: 4.0
+penetration_reference_range_m: 100.0
+blast_radius_m: 1.5
+fragmentation_radius_m: 3.0
+guidance: NONE
+propulsion: none
+max_speed_mps: 840.0
+unit_cost_factor: 0.05

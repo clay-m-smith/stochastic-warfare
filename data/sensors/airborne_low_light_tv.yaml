@@ -1,0 +1,20 @@
+# Airborne low-light television observation model.
+#
+# The AC-130 and OV-10 authored equipment identifies dedicated airborne
+# low-light television systems, not individual night-vision goggles. The
+# 3 km/40-degree values are conservative modeled ceilings for that role; they
+# are not asserted as published hardware performance. Each equipment mapping
+# owns an equal-or-narrower production envelope.
+sensor_id: airborne_low_light_tv
+sensor_type: NVG
+display_name: "Airborne Low-Light Television"
+max_range_m: 3000.0
+detection_threshold: 4.0
+false_alarm_rate: 1.0e-5
+scan_time_s: 2.0
+scan_interval_ticks: 1
+antenna_height_m: 3.0
+min_range_m: 0.0
+fov_deg: 40.0
+requires_los: true
+detects_domain: ["VISUAL"]

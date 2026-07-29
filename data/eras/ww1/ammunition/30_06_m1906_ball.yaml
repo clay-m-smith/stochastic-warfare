@@ -1,0 +1,23 @@
+# .30-06 M1906-pattern ball cartridge used by the M1903 Springfield.
+#
+# The National Park Service records a 150-grain service projectile at
+# 2,700 ft/s during Springfield Armory testing:
+# https://www.nps.gov/spar/learn/historyculture/testing-and-experimenting.htm
+#
+# The drag and 5 mm/100 m kinetic terminal fields are conservative same-role
+# catalog abstractions. The cited source does not establish rolled-homogeneous
+# armor penetration, and this definition makes no armor-piercing claim.
+ammo_id: 30_06_m1906_ball
+display_name: ".30-06 M1906 Ball"
+ammo_type: BALL
+mass_kg: 0.00972
+diameter_mm: 7.62
+drag_coefficient: 0.40
+penetration_mm_rha: 5.0
+penetration_reference_range_m: 100.0
+blast_radius_m: 0.0
+fragmentation_radius_m: 0.0
+guidance: NONE
+propulsion: none
+max_speed_mps: 823.0
+unit_cost_factor: 0.01

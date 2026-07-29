@@ -79,9 +79,3 @@ calibration_overrides:
   blue_start_y: 1500
   red_start_x: 2500
   red_start_y: 1500
-  weapon_assignments:
-    "M4A1 Carbine": m4a1
-    "M249 SAW": m249_saw
-    "M67 Fragmentation Grenade": m67_grenade
-    "AK-47 Assault Rifle": ak47
-    "RPG-7 Launcher": rpg7

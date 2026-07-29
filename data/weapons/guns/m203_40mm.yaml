@@ -1,0 +1,31 @@
+# M203 40mm low-velocity, single-shot grenade launcher.
+#
+# U.S. Army TM 3-22.31, Appendix D, Table D-1: 40 mm, 3.0 lb unloaded,
+# 250 ft/s muzzle velocity, 400 m maximum range, 350 m area / 150 m point
+# effective range, 14-38 m arming range, and 5-7 rounds/minute.
+# https://rdl.train.army.mil/catalog-ws/view/100.ATSC/A68088B6-C4DB-4843-B953-DF523C724AEE-1308745416792/tm3_22x31.pdf
+weapon_id: m203_40mm
+display_name: "M203 40mm Grenade Launcher"
+category: GRENADE
+caliber_mm: 40.0
+muzzle_velocity_mps: 76.0
+max_range_m: 400.0
+effective_range_m: 150.0
+min_range_m: 14.0
+rate_of_fire_rpm: 6.0
+burst_size: 1
+base_accuracy_mrad: 4.0
+guidance: NONE
+magazine_capacity: 1
+reload_time_s: 10.0
+compatible_ammo:
+  - m433_40mm_hedp
+weight_kg: 1.36
+reliability: 0.92
+barrel_life_rounds: 5000
+requires_deployed: false
+traverse_deg: 360.0
+elevation_min_deg: -30.0
+elevation_max_deg: 80.0
+target_domains:
+  - GROUND

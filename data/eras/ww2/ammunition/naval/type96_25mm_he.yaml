@@ -1,0 +1,21 @@
+# Japanese Type 96 25 mm common HE projectile.
+# Official US Navy ORD-ONI 9 documents the shipboard Type 96 battery; the
+# compiled Japanese service table gives 0.24 kg projectile, 0.01 kg filling,
+# and 900 m/s muzzle velocity.
+# https://www.ibiblio.org/hyperwar/USN/ref/ORD-ONI-9/index.html
+# https://www.navweaps.com/Weapons/WNJAP_25mm-60_mg.php
+ammo_id: type96_25mm_he
+display_name: "Type 96 25 mm Common HE"
+ammo_type: HE
+mass_kg: 0.24
+diameter_mm: 25.0
+drag_coefficient: 0.33
+penetration_mm_rha: 0.0
+penetration_reference_range_m: 0.0
+blast_radius_m: 3.0
+fragmentation_radius_m: 6.0
+explosive_fill_kg: 0.01
+guidance: NONE
+propulsion: none
+max_speed_mps: 900.0
+unit_cost_factor: 0.3

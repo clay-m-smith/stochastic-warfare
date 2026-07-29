@@ -31,10 +31,10 @@ Audit baseline: 2026-07-28 at `68acd4b`
 | REM-007 | P1 | 107 | Feature gates | Era `disabled_modules` selected by the scenario is loaded but does not gate runtime capabilities | **Closed** | Yes | Yes | Yes | Yes | Yes | Yes | Yes | [Phase 107](devlog/phase-107.md#postmortem) |
 | REM-008 | P0 | 108 | Logistics | Scenario depots do not initialize stock or a supply network | **Closed** | Yes | Yes | Yes | Yes | Yes | Yes | Yes | [Phase 108](devlog/phase-108.md#postmortem) |
 | REM-009 | P0 | 108 | Logistics | Supply-network updates and idle consumption are not applied by the production loop | **Closed** | Yes | Yes | Yes | Yes | Yes | Yes | Yes | [Phase 108](devlog/phase-108.md#postmortem) |
-| REM-010 | P0 | 109 | Equipment data | Loadout mapping has duplicate/wrong keys, 22 unmapped catalog entries, and validation-layer ownership | Queued | Yes | Yes | Yes | N/A | - | - | - | Central typed mapping, clean data validation, and Ruff |
+| REM-010 | P0 | 109 | Equipment data | Loadout mapping has duplicate/wrong keys, 22 unmapped catalog entries, and validation-layer ownership | **Closed** | Yes | Yes | Yes | N/A | Yes | Yes | Yes | [Phase 109](devlog/phase-109.md#postmortem) |
 | REM-011 | P1 | 110 | Space combat | The production ASAT hook is an explicit placeholder | Queued | Yes | Yes | - | - | - | - | - | Enabled/disabled satellite outcome test |
 | REM-012 | P1 | 111 | Indirect fire | Time-on-target uses dummy coordinates, has no executed state, and has no production caller | Queued | Yes | Yes | - | - | - | - | - | Scheduled mission executes once at its real target |
-| REM-013 | P1 | 112 | Validation trust | Default CI hides excluded suites and does not maintain a green repository-wide lint baseline | Queued | Yes | N/A | Yes | N/A | - | N/A | N/A | Explicit CI suites, clean lint, and documented boundaries |
+| REM-013 | P1 | 112 | Validation trust | Default CI hides excluded suites; Phase 109 established a green full Python Ruff baseline, but CI does not yet enforce the complete suite contract | Queued | Yes | N/A | Yes | N/A | - | N/A | N/A | Explicit CI suites and documented/enforced boundaries |
 | REM-014 | P1 | 112 | Test quality | Structural and no-assert tests can support false completion claims | Queued | Yes | N/A | Yes | N/A | - | - | N/A | Audit critical contracts and add behavioral assertions |
 | REM-015 | P2 | 112 | Documentation | Strict documentation build was not part of the verified baseline | **Closed early** | Yes | N/A | Yes | N/A | Yes | N/A | N/A | [Phase 105 verification](devlog/phase-105.md#final-broader-verification) |
 | REM-016 | P1 | TBD | Aggregation | Disaggregation recreates every constituent as base `Unit` and does not restore captured weapon, sensor, or supply attachments | Queued | Yes | Yes | Yes | N/A | - | - | - | Subclass/loadout round trip across aggregation |
@@ -45,6 +45,9 @@ Audit baseline: 2026-07-28 at `68acd4b`
 | REM-021 | P1 | TBD | Logistics | Abstract Class III/V inventory is independent of live entity fuel and weapon magazines | Queued | Yes | Yes | - | - | - | - | Yes | One explicit authority or conservative synchronization contract |
 | REM-022 | P2 | 112 | Documentation navigation | Strict MkDocs succeeds while seven historical devlog-index fragment links target missing anchors | Queued | Yes | N/A | Yes | N/A | Yes | N/A | N/A | Repair fragment targets and verify link resolution |
 | REM-023 | P1 | 112 | Scenario data trust | Missing commander profile references warn once per unit while scenario evaluation still reports OK | Queued | Yes | Yes | Yes | N/A | Yes | - | N/A | Strict profile-reference validation and corrected scenario data |
+| REM-024 | P1 | 112 | Unit data trust | Invalid crew-skill enums are hidden by a broad `KeyError` catch and silently drop historical units | Queued | Yes | Yes | Yes | N/A | Yes | Yes | N/A | Eager enum validation and narrow missing-definition handling |
+| REM-025 | P2 | 112 | Scenario diagnostics | `MANY_STUCK_UNITS` treats legitimate corrected weapon-range standoff as a movement failure | Queued | Yes | N/A | Yes | N/A | Yes | Yes | N/A | Semantic stuck-unit diagnostic with a Cambrai control |
+| REM-026 | P1 | 112 | Benchmark trust | A hard 60-second Golan assertion contradicts the checked-in 500-second baseline and fails code that is faster than that baseline | Queued | Yes | N/A | Yes | N/A | Yes | Yes | Yes | Hardware-aware threshold and reproducible before/after benchmark |
 
 ## REM-001 - Exact checkpoint restoration
 
@@ -644,6 +647,116 @@ state, events, and `supply_exhausted` outcomes as declared, while six legacy
 scenario rows remain identical to their phase-start baselines. See the
 [Phase 108 postmortem](devlog/phase-108.md#postmortem).
 
+## REM-010 - Equipment mappings and runtime loadout ownership are unsafe
+
+### Requirements
+
+- One immutable typed registry owns weapon and sensor name resolution.
+  Ordered mapping records reject duplicate category/name keys before an index
+  is built; identical duplicate values are still errors.
+- Each record is exact/variant, a constrained same-role functional analogue,
+  or explicitly unsupported with a reason. Mapping presence alone is not
+  semantic validity. Weapon records also distinguish live attachments from
+  carried stores and non-runtime equipment.
+- Supported targets exist in the effective catalog. Weapon category,
+  guidance/ammunition/domain constraints, compatible ammunition, sensor type,
+  and detection-domain constraints agree with the record.
+- Noncombat equipment is categorized honestly rather than mapped to a weapon
+  or surveillance proxy. An unsupported declared weapon/sensor fails
+  production loading explicitly.
+- Launcher/munition pairs create one launcher rather than two complete
+  launchers with independent full magazines. Store records resolve compatible
+  ammunition without constructing a second live attachment.
+- Scenario `weapon_assignments` use the same target and semantic validation.
+  Duplicate, stale, unknown, or conflicting assignments reject before runtime
+  mutation.
+- A typed runtime-owned builder is constructed once per effective scenario and
+  used for initial units, reinforcements, and checkpoint reconstruction.
+  Production no longer imports private validation-runner mapping/assignment
+  helpers.
+- Every unit gets exact keyed weapon/sensor output, stable ordering,
+  independent live instances, and links to its own `EquipmentItem`. Missing
+  mapping, target, ammunition, semantic agreement, or era permission raises
+  with unit/equipment context instead of silently skipping.
+- Construction consumes no RNG. Reinforcement and checkpoint failures remain
+  atomic, and fresh restore continues with exact attachment identity, state,
+  ordering, events, and RNG state.
+- Resolve all 22 phase-start mapping-error occurrences. Classify both
+  no-sensor units through a typed policy: the civilian remains explicitly
+  sensorless, while the armed insurgent receives explicit visual observation.
+- Full relevant data validation has no REM-010 error or unclassified warning,
+  and repository-wide Python Ruff is green.
+
+### Production trace and failing proof
+
+`unit/scenario YAML -> ScenarioLoader -> validation-layer private mapping
+helpers -> SimulationContext loadout maps -> battle/detection ->
+checkpoint/recorder/API`
+
+At the Phase 109 start, the production wrapper is typed as `Any` and calls
+`ScenarioRunner._assign_weapons()`/`_assign_sensors()`. Those helpers silently
+continue on missing mappings, missing target definitions, missing ammunition,
+and missing sensors. Six duplicate dictionary literals overwrite earlier
+values. In production this gives the B-52H CSRL rotary launcher a Stinger,
+gives an EA-18G jamming pod a Vulcan with rifle ammunition, and lets an SA-6
+load without its authored fire-control radar.
+
+The static validator reports 22 mapping-error occurrences across 184 unit
+files plus two no-sensor warnings, but it checks only source-name membership.
+Its scenario load check uses aggregate armed/sensored counts, so a correctly
+loaded peer hides an incomplete unit.
+
+### Required proof
+
+- Duplicate registry and scenario-assignment declarations reject before
+  overwrite; wrong-category/domain, unknown-target, missing-ammunition, and
+  unsupported controls reject atomically. Launcher-plus-store controls prove
+  exact attachment and magazine topology.
+- Exact per-unit production checks prove the corrected 22 occurrences and both
+  sensor-policy decisions.
+- A corrected sensor or weapon changes controlled production detection,
+  firing/ammunition, event, or battle state; former jammer/structure/utility
+  proxies cannot act as fake weapons or sensors.
+- Initial, reinforcement, and fresh-restore paths use the same injected
+  builder. Dynamic live fire and checkpoint continuation preserve exact
+  objects, ordering, mutable state, event order, and RNG state.
+- Representative affected scenarios are compared against pre-implementation
+  rows with identical seeds; every outcome difference is explained.
+
+### Phase 109 closure evidence
+
+The Phase 109 implementation replaces the private validation-runner maps with
+an ordered 442-record typed registry and one scenario-owned
+`RuntimeLoadoutBuilder`. All 184 unit files and 51 scenario files now traverse
+that production boundary. The final validator reports 442/442 authored keys
+covered by 442 registry keys, zero unmapped or stale entries, zero errors,
+zero warnings, and one explicitly sensorless classification. The formerly
+sensorless insurgent has visual observation; the civilian remains explicitly
+sensorless. Former jammer, navigation, engineering, flight-deck, and
+munition-store proxies cannot create unrelated live attachments.
+
+Strict duplicate-key loading covers scenarios, historical/campaign data, and
+batch helpers. Initial units, reinforcements, and fresh restore use the same
+builder; checkpoint schema 109 verifies its canonical fingerprint and ordered
+per-unit resolution topology before mutation. Production detection, live
+ammunition, events, API ammunition exposure, composite-system cadence, and
+deterministic continuation tests provide outcome and persistence evidence.
+Repository-wide Python Ruff, including `scripts/`, is green. The authoritative
+commands, scenario rows, exclusions, and review findings are recorded in the
+[Phase 109 devlog](devlog/phase-109.md).
+
+### Non-goals
+
+- No physical performance tuning, historical calibration, force-composition
+  change, or unrelated scenario outcome adjustment.
+- No new EW, mine-detection, breaching, navigation, carrier, or UAV-spotting
+  mechanic.
+- Aggregation reconstruction remains REM-016. Live Class III/V authority
+  remains REM-020/021. Analysis and broader validation trust remain Phase 112.
+
+The durable detailed contract is
+[`docs/specs/equipment-mapping.md`](specs/equipment-mapping.md).
+
 ## REM-020 - March and combat logistics demand is not applied
 
 ### Reproduction and required proof
@@ -737,6 +850,57 @@ correct the scenario to catalog-backed profiles or add independently justified
 definitions, and make a missing reference a validator/evaluator failure rather
 than a warning-only success. Negative and corrected production-load controls
 must prove the boundary.
+
+## REM-024 - Invalid crew skill silently drops historical units
+
+### Reproduction and required proof
+
+The Phase 109 era validation exposed a separate false-green path in the
+historical scenario force builder. French Old Guard data declares crew skill
+`EXPERT`, which is not a runtime `CrewSkill` member. `UnitLoader.create_unit()`
+therefore raises `KeyError`, but `build_forces()` catches that broad exception
+as though the unit definition were merely absent. Austerlitz requests ten
+French units and constructs nine; Waterloo requests eleven and constructs ten,
+while scenario evaluation can continue without identifying the dropped unit.
+
+Phase 112 must validate crew-skill enum values while loading unit definitions,
+narrow missing-definition handling so construction and enum errors propagate,
+correct or independently extend the affected data contract, and make roster
+cardinality part of scenario validation. Negative unit-load and corrected
+production-scenario controls must prove that an invalid crew skill cannot
+silently reduce a force.
+
+## REM-025 - Corrected standoff is reported as stuck movement
+
+### Reproduction and required proof
+
+Phase 109 corrected the Cambrai Mark IV's primary armament from an unrelated
+800 m Lewis-gun proxy to its exact 6-pounder definition with a 6,675 m modeled
+range. At seed 42 the production evaluator then reports
+`MANY_STUCK_UNITS(4/7)`, even though the affected units have moved and are
+holding a valid weapon-range standoff rather than failing movement.
+
+Phase 112 must distinguish true no-progress movement defects from intentional
+standoff, objective holding, destroyed/disabled state, and other legitimate
+tactical behavior. A corrected Cambrai control must retain its semantic
+outcome without the false diagnostic, while a deliberately immobile,
+out-of-position unit still raises an issue.
+
+## REM-026 - Benchmark wall-clock assertion contradicts its baseline
+
+### Reproduction and required proof
+
+The Phase 109 slow-suite audit measured the current Golan workload at
+140.744792 seconds on the same machine where the phase-start revision took
+214.77246345 seconds. The test nevertheless fails a hard 60-second assertion,
+while the checked-in benchmark baseline permits 500 seconds. This makes a
+material speedup fail and does not provide portable regression evidence.
+
+Phase 112 must establish one reproducible benchmark contract with declared
+hardware/environment metadata, warm-up and repetition policy, semantic outcome
+checks, and a threshold derived from an authoritative baseline or a
+hardware-normalized comparison. The hard assertion and stored baseline may
+not disagree.
 
 ## REM-018 - Era override metadata has no production consumer
 

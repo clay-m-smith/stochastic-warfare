@@ -54,7 +54,7 @@ equipment:
     weight_kg: 64.0
     reliability: 0.86
   - name: "Wing/Fuselage Ordnance Stations"
-    category: WEAPON
+    category: UTILITY
     weight_kg: 200.0
     reliability: 0.90
   - name: "Mk 1 Eyeball"

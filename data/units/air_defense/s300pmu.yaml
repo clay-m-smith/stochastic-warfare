@@ -20,7 +20,7 @@ crew:
     count: 8
     skill: BASIC
 equipment:
-  - name: "30N6E Flap Lid Radar"
+  - name: "30N6E Flap Lid Engagement Radar"
     category: SENSOR
     weight_kg: 8000.0
     reliability: 0.86
@@ -29,7 +29,7 @@ equipment:
     category: WEAPON
     weight_kg: 42000.0
     reliability: 0.88
-  - name: "76T6E Clam Shell Radar"
+  - name: "76N6E Clam Shell Low-Altitude Radar"
     category: SENSOR
     weight_kg: 3500.0
     reliability: 0.84

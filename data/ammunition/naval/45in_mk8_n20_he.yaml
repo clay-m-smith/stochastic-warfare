@@ -1,0 +1,25 @@
+# 4.5-inch (114 mm) N20-family HE ammunition for the Mk 8 naval gun.
+#
+# BAE Systems publishes a 37 kg complete round, up to 3 kg explosive payload,
+# and Mk 8 compatibility for its 4.5-inch naval ammunition:
+# https://www.baesystems.com/en-uk/product/4-5-inch-naval-ammunition
+# The Royal Navy publishes the Mk 8's 22 km standard / 27.5 km HE extended
+# range envelope:
+# https://www.royalnavy.mod.uk/news/2016/april/01/160401-hms-collingwood-takes-delivery-of-gate-guard
+#
+# This definition uses the conservative 22 km standard-round boundary. Blast
+# and fragmentation radii are modeled effects, while mass and maximum fill
+# come from the manufacturer.
+ammo_id: 45in_mk8_n20_he
+display_name: "4.5-inch Mk 8 N20 HE"
+ammo_type: HE
+mass_kg: 37.0
+diameter_mm: 114.3
+drag_coefficient: 0.26
+blast_radius_m: 16.0
+fragmentation_radius_m: 55.0
+explosive_fill_kg: 3.0
+guidance: NONE
+propulsion: none
+max_speed_mps: 693.0
+unit_cost_factor: 2.5

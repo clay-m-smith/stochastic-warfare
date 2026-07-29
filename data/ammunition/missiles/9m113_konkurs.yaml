@@ -1,0 +1,28 @@
+# Baseline 9M113 Konkurs/AT-5A missile, not the tandem Konkurs-M.
+# U.S. Army GTA 20-10-001 reports 135 mm caliber, 70-4,000 m engagement
+# envelope, 600 mm armor penetration, and SACLOS guidance. ODIN establishes
+# wire-transmitted launcher commands, roughly 200 m/s flight speed, and a
+# quoted 0.90 hit probability that is retained as a catalog abstraction.
+# https://irp.fas.org/world/russia/tradoc-refguide.pdf
+# https://odin.t2com.army.mil/WEG/Asset/9M113_Konkurs_
+ammo_id: 9m113_konkurs
+display_name: "9M113 Konkurs (AT-5A Spandrel) Missile"
+ammo_type: HEAT
+mass_kg: 14.6
+diameter_mm: 135.0
+drag_coefficient: 0.30
+penetration_mm_rha: 600.0
+penetration_reference_range_m: 0.0
+blast_radius_m: 3.0
+fragmentation_radius_m: 5.0
+guidance: WIRE
+seeker_fov_deg: 0.0
+seeker_range_m: 0.0
+pk_at_reference: 0.90
+countermeasure_susceptibility: 0.10
+propulsion: rocket
+max_speed_mps: 200.0
+flight_time_s: 20.0
+cruise_altitude_m: 1.0
+terminal_maneuver: false
+unit_cost_factor: 8.0

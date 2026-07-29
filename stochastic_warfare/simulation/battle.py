@@ -9,6 +9,7 @@ No domain logic lives here — only sequencing and data routing.
 from __future__ import annotations
 
 import math
+from collections.abc import Iterable
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -18,7 +19,11 @@ from typing import Any
 import numpy as np
 from pydantic import BaseModel
 
-from stochastic_warfare.combat.ammunition import WeaponCategory
+from stochastic_warfare.combat.ammunition import (
+    AmmoDefinition,
+    WeaponCategory,
+    WeaponInstance,
+)
 from stochastic_warfare.combat.engagement import EngagementType
 from stochastic_warfare.combat.suppression import UnitSuppressionState
 from stochastic_warfare.core.events import EventBus
@@ -36,6 +41,7 @@ from shapely import STRtree
 from shapely.geometry import Point
 
 from stochastic_warfare.simulation.calibration import CalibrationSchema
+from stochastic_warfare.simulation.loadouts import WeaponAttachment
 from stochastic_warfare.simulation.unit_arrays import UnitArrays
 
 
@@ -136,6 +142,42 @@ def _compute_night_modifiers(illum, night_thermal_floor: float = 0.8) -> tuple[f
     visual = _TWILIGHT_VISUAL_MODIFIER.get(stage, 0.2)
     thermal = max(night_thermal_floor, visual)
     return visual, thermal
+
+
+def _weapon_supports_domain(definition: Any, domain: Domain) -> bool:
+    """Return a typed weapon-domain decision with legacy-fixture support."""
+    effective_domains = getattr(definition, "effective_target_domains", None)
+    if callable(effective_domains):
+        return domain.name in effective_domains()
+    authored_domains = getattr(definition, "target_domains", None)
+    if authored_domains:
+        return domain.name in {
+            str(authored_domain).upper()
+            for authored_domain in authored_domains
+        }
+    return True
+
+
+def _max_weapon_range_for_domain(
+    attachments: Iterable[Any],
+    target_domain: Domain | None,
+) -> float:
+    """Return the longest mapped range applicable to *target_domain*."""
+    maximum = 0.0
+    for attachment in attachments:
+        weapon = getattr(attachment, "weapon", None)
+        if weapon is None:
+            weapon = attachment[0]
+        if (
+            target_domain is not None
+            and not _weapon_supports_domain(
+                weapon.definition,
+                target_domain,
+            )
+        ):
+            continue
+        maximum = max(maximum, weapon.definition.max_range_m)
+    return maximum
 
 
 # Phase 52b: cross-wind accuracy penalty
@@ -462,6 +504,97 @@ def _apply_melee_result(
         object.__setattr__(attacker, "status", UnitStatus.ROUTING)
 
 
+def _consume_routed_ammunition(
+    ctx: Any,
+    attacker: Unit,
+    wpn_inst: Any,
+    ammo_def: AmmoDefinition | None,
+    *,
+    quantity: int,
+    timestamp: Any,
+    current_time_s: float | None,
+    cooldown_multiplier: float = 1.0,
+) -> int:
+    """Consume selected live ammunition immediately before a routed shot.
+
+    Legacy direct helper tests do not pass an ammunition definition; those
+    callers retain their historical engine-dispatch behavior without
+    pretending that an untyped fixture has live ammunition. Production battle
+    selection always supplies the exact selected definition.
+    """
+    requested = max(1, int(quantity))
+    if (
+        not isinstance(ammo_def, AmmoDefinition)
+        or not isinstance(wpn_inst, WeaponInstance)
+    ):
+        return requested
+
+    ammo_id = ammo_def.ammo_id
+    if (
+        current_time_s is not None
+        and not wpn_inst.can_fire_timed(
+            current_time_s,
+            cooldown_multiplier=cooldown_multiplier,
+        )
+    ):
+        return 0
+    available = wpn_inst.ammo_state.available(ammo_id)
+    consumed = min(requested, available)
+    if consumed <= 0 or not wpn_inst.fire(ammo_id, consumed):
+        return 0
+    if current_time_s is not None:
+        wpn_inst.record_fire(current_time_s)
+
+    event_bus = getattr(ctx, "event_bus", None)
+    if event_bus is not None and timestamp is not None:
+        from stochastic_warfare.combat.events import AmmoExpendedEvent
+
+        event_bus.publish(AmmoExpendedEvent(
+            timestamp=timestamp,
+            source=ModuleId.COMBAT,
+            unit_id=attacker.entity_id,
+            ammo_type=ammo_id,
+            quantity=consumed,
+        ))
+    return consumed
+
+
+def _routed_shot_fired(
+    wpn_inst: Any,
+    ammo_id: str,
+    ammunition_before: Any,
+) -> bool:
+    """Report whether a routed production attachment consumed live ammunition."""
+    if not isinstance(wpn_inst, WeaponInstance):
+        # Preserve legacy direct fixtures that predate runtime attachments.
+        # ScenarioLoader production contexts always use WeaponInstance.
+        return True
+    return (
+        wpn_inst.ammo_state.available(ammo_id)
+        < ammunition_before
+    )
+
+
+def _routed_ammunition_ready(
+    wpn_inst: Any,
+    ammo_def: AmmoDefinition | None,
+    current_time_s: float | None,
+) -> bool:
+    """Preflight a routed production round without mutating its magazine."""
+    if (
+        not isinstance(ammo_def, AmmoDefinition)
+        or not isinstance(wpn_inst, WeaponInstance)
+    ):
+        return True
+    return (
+        (
+            current_time_s is None
+            or wpn_inst.can_fire_timed(current_time_s)
+        )
+        and wpn_inst.can_fire(ammo_def.ammo_id)
+    )
+
+
 def _route_naval_engagement(
     ctx: Any,
     attacker: Unit,
@@ -473,6 +606,9 @@ def _route_naval_engagement(
     naval_config: NavalEngagementConfig | None = None,
     force_ratio_mod: float = 1.0,
     vls_launches: dict[str, int] | None = None,
+    ammo_def: AmmoDefinition | None = None,
+    current_time_s: float | None = None,
+    runtime_system_multiplier: int = 1,
 ) -> tuple[bool, UnitStatus | None]:
     """Route naval engagement to appropriate engine.
 
@@ -483,26 +619,64 @@ def _route_naval_engagement(
     *force_ratio_mod* scales per-side Pk values (Dupuy CEV).
     """
     nc = naval_config or NavalEngagementConfig()
+    represented_systems = max(1, int(runtime_system_multiplier))
+    burst_per_system = max(
+        1,
+        int(getattr(wpn_inst.definition, "burst_size", 1)),
+    )
+    aggregate_salvo_size = burst_per_system * represented_systems
     wpn_cat_str = wpn_inst.definition.category.upper()
 
     # Torpedo
     if wpn_cat_str == "TORPEDO_TUBE":
         engine = getattr(ctx, "naval_subsurface_engine", None)
         if engine is not None:
-            result = engine.torpedo_engagement(
-                sub_id=attacker.entity_id,
-                target_id=target.entity_id,
-                torpedo_pk=min(1.0, nc.default_torpedo_pk * force_ratio_mod),
-                range_m=best_range,
+            torpedoes_fired = _consume_routed_ammunition(
+                ctx,
+                attacker,
+                wpn_inst,
+                ammo_def,
+                quantity=represented_systems,
                 timestamp=timestamp,
+                current_time_s=current_time_s,
+                cooldown_multiplier=represented_systems,
             )
+            if torpedoes_fired == 0:
+                return True, None
+            results = tuple(
+                engine.torpedo_engagement(
+                    sub_id=attacker.entity_id,
+                    target_id=target.entity_id,
+                    torpedo_pk=min(
+                        1.0,
+                        nc.default_torpedo_pk * force_ratio_mod,
+                    ),
+                    range_m=best_range,
+                    timestamp=timestamp,
+                )
+                for _ in range(torpedoes_fired)
+            )
+            hits = tuple(result for result in results if result.hit)
             _publish_naval_engagement_event(
-                ctx, attacker, target, wpn_inst, timestamp, bool(result.hit),
+                ctx,
+                attacker,
+                target,
+                wpn_inst,
+                timestamp,
+                bool(hits),
+                ammo_def,
             )
-            if result.hit:
+            if hits:
+                cumulative_damage = min(
+                    1.0,
+                    sum(
+                        float(getattr(result, "damage_fraction", 0.0))
+                        for result in hits
+                    ),
+                )
                 status = (
                     UnitStatus.DESTROYED
-                    if result.damage_fraction >= 0.6
+                    if cumulative_damage >= 0.6
                     else UnitStatus.DISABLED
                 )
                 return True, status
@@ -512,16 +686,34 @@ def _route_naval_engagement(
     if wpn_cat_str == "DEPTH_CHARGE":
         engine = getattr(ctx, "naval_subsurface_engine", None)
         if engine is not None:
+            charges_dropped = _consume_routed_ammunition(
+                ctx,
+                attacker,
+                wpn_inst,
+                ammo_def,
+                quantity=aggregate_salvo_size,
+                timestamp=timestamp,
+                current_time_s=current_time_s,
+                cooldown_multiplier=represented_systems,
+            )
+            if charges_dropped == 0:
+                return True, None
             result = engine.depth_charge_attack(
                 ship_id=attacker.entity_id,
                 target_id=target.entity_id,
-                num_charges=max(1, int(wpn_inst.definition.rate_of_fire_rpm)),
+                num_charges=charges_dropped,
                 target_depth_m=getattr(target, "depth", 100.0),
                 target_range_m=best_range,
                 timestamp=timestamp,
             )
             _publish_naval_engagement_event(
-                ctx, attacker, target, wpn_inst, timestamp, result.hits > 0,
+                ctx,
+                attacker,
+                target,
+                wpn_inst,
+                timestamp,
+                result.hits > 0,
+                ammo_def,
             )
             if result.hits > 0:
                 status = (
@@ -536,6 +728,16 @@ def _route_naval_engagement(
     if wpn_cat_str == "MISSILE_LAUNCHER" and target.domain == Domain.SUBMARINE:
         subsurface = getattr(ctx, "naval_subsurface_engine", None)
         if subsurface is not None:
+            if _consume_routed_ammunition(
+                ctx,
+                attacker,
+                wpn_inst,
+                ammo_def,
+                quantity=1,
+                timestamp=timestamp,
+                current_time_s=current_time_s,
+            ) == 0:
+                return True, None
             result = subsurface.asroc_engagement(
                 ship_id=attacker.entity_id,
                 target_id=target.entity_id,
@@ -544,7 +746,13 @@ def _route_naval_engagement(
                 timestamp=timestamp,
             )
             _publish_naval_engagement_event(
-                ctx, attacker, target, wpn_inst, timestamp, bool(result.torpedo_hit),
+                ctx,
+                attacker,
+                target,
+                wpn_inst,
+                timestamp,
+                bool(result.torpedo_hit),
+                ammo_def,
             )
             if result.torpedo_hit:
                 status = (
@@ -571,7 +779,29 @@ def _route_naval_engagement(
                 return True, None  # magazine exhausted
         engine = getattr(ctx, "naval_surface_engine", None)
         if engine is not None:
-            missiles_fired = max(1, int(wpn_inst.definition.rate_of_fire_rpm))
+            requested_missiles = aggregate_salvo_size
+            if mag_cap > 0:
+                launched = (
+                    vls_launches.get(attacker.entity_id, 0)
+                    if vls_launches is not None
+                    else 0
+                )
+                requested_missiles = min(
+                    requested_missiles,
+                    max(0, mag_cap - launched),
+                )
+            missiles_fired = _consume_routed_ammunition(
+                ctx,
+                attacker,
+                wpn_inst,
+                ammo_def,
+                quantity=requested_missiles,
+                timestamp=timestamp,
+                current_time_s=current_time_s,
+                cooldown_multiplier=represented_systems,
+            )
+            if missiles_fired == 0:
+                return True, None
             salvo = engine.salvo_exchange(
                 attacker_missiles=missiles_fired,
                 attacker_pk=min(1.0, nc.default_missile_pk * force_ratio_mod),
@@ -583,7 +813,13 @@ def _route_naval_engagement(
                 uid = attacker.entity_id
                 vls_launches[uid] = vls_launches.get(uid, 0) + missiles_fired
             _publish_naval_engagement_event(
-                ctx, attacker, target, wpn_inst, timestamp, salvo.hits > 0,
+                ctx,
+                attacker,
+                target,
+                wpn_inst,
+                timestamp,
+                salvo.hits > 0,
+                ammo_def,
             )
             if salvo.hits > 0:
                 status = (
@@ -602,18 +838,34 @@ def _route_naval_engagement(
                 and attacker.domain in (Domain.NAVAL, Domain.SUBMARINE)):
             ngse = getattr(ctx, "naval_gunfire_support_engine", None)
             if ngse is not None:
+                rounds_fired = _consume_routed_ammunition(
+                    ctx,
+                    attacker,
+                    wpn_inst,
+                    ammo_def,
+                    quantity=aggregate_salvo_size,
+                    timestamp=timestamp,
+                    current_time_s=current_time_s,
+                    cooldown_multiplier=represented_systems,
+                )
+                if rounds_fired == 0:
+                    return True, None
                 bom_result = ngse.shore_bombardment(
                     ship_id=attacker.entity_id,
                     ship_pos=attacker.position,
                     target_pos=target.position,
-                    round_count=max(
-                        1, int(wpn_inst.definition.rate_of_fire_rpm * dt / 60),
-                    ),
+                    round_count=rounds_fired,
                     timestamp=timestamp,
                 )
                 hit = bom_result.hits_in_lethal_radius > 0
                 _publish_naval_engagement_event(
-                    ctx, attacker, target, wpn_inst, timestamp, hit,
+                    ctx,
+                    attacker,
+                    target,
+                    wpn_inst,
+                    timestamp,
+                    hit,
+                    ammo_def,
                 )
                 return (True, UnitStatus.DISABLED) if hit else (True, None)
             # No NGSE engine — fall through to direct-fire path so
@@ -621,34 +873,68 @@ def _route_naval_engagement(
             return False, None
         gunnery = getattr(ctx, "naval_gunnery_engine", None)
         if gunnery is not None:
+            shells_fired = _consume_routed_ammunition(
+                ctx,
+                attacker,
+                wpn_inst,
+                ammo_def,
+                quantity=represented_systems,
+                timestamp=timestamp,
+                current_time_s=current_time_s,
+                cooldown_multiplier=represented_systems,
+            )
+            if shells_fired == 0:
+                return True, None
             salvo = gunnery.fire_salvo(
                 firer_id=attacker.entity_id,
                 target_id=target.entity_id,
                 range_m=best_range,
                 target_length_m=nc.default_target_length_m,
                 target_beam_m=nc.default_target_beam_m,
-                num_guns=max(1, int(wpn_inst.definition.rate_of_fire_rpm)),
+                num_guns=shells_fired,
             )
             hit = salvo.get("hits", 0) > 0
             _publish_naval_engagement_event(
-                ctx, attacker, target, wpn_inst, timestamp, hit,
+                ctx,
+                attacker,
+                target,
+                wpn_inst,
+                timestamp,
+                hit,
+                ammo_def,
             )
             return (True, UnitStatus.DISABLED) if hit else (True, None)
         # Fallback: modern naval gun engagement
         ns_engine = getattr(ctx, "naval_surface_engine", None)
         if ns_engine is not None:
+            rounds_fired = _consume_routed_ammunition(
+                ctx,
+                attacker,
+                wpn_inst,
+                ammo_def,
+                quantity=aggregate_salvo_size,
+                timestamp=timestamp,
+                current_time_s=current_time_s,
+                cooldown_multiplier=represented_systems,
+            )
+            if rounds_fired == 0:
+                return True, None
             gun_result = ns_engine.naval_gun_engagement(
                 ship_id=attacker.entity_id,
                 target_id=target.entity_id,
                 range_m=best_range,
-                rounds_fired=max(
-                    1, int(wpn_inst.definition.rate_of_fire_rpm * dt / 60),
-                ),
+                rounds_fired=rounds_fired,
                 timestamp=timestamp,
             )
             hit = gun_result.hits > 0
             _publish_naval_engagement_event(
-                ctx, attacker, target, wpn_inst, timestamp, hit,
+                ctx,
+                attacker,
+                target,
+                wpn_inst,
+                timestamp,
+                hit,
+                ammo_def,
             )
             return (True, UnitStatus.DISABLED) if hit else (True, None)
 
@@ -659,18 +945,34 @@ def _route_naval_engagement(
             and attacker.domain in (Domain.NAVAL, Domain.SUBMARINE)):
         ngse = getattr(ctx, "naval_gunfire_support_engine", None)
         if ngse is not None:
+            rounds_fired = _consume_routed_ammunition(
+                ctx,
+                attacker,
+                wpn_inst,
+                ammo_def,
+                quantity=aggregate_salvo_size,
+                timestamp=timestamp,
+                current_time_s=current_time_s,
+                cooldown_multiplier=represented_systems,
+            )
+            if rounds_fired == 0:
+                return True, None
             bom_result = ngse.shore_bombardment(
                 ship_id=attacker.entity_id,
                 ship_pos=attacker.position,
                 target_pos=target.position,
-                round_count=max(
-                    1, int(wpn_inst.definition.rate_of_fire_rpm * dt / 60),
-                ),
+                round_count=rounds_fired,
                 timestamp=timestamp,
             )
             hit = bom_result.hits_in_lethal_radius > 0
             _publish_naval_engagement_event(
-                ctx, attacker, target, wpn_inst, timestamp, hit,
+                ctx,
+                attacker,
+                target,
+                wpn_inst,
+                timestamp,
+                hit,
+                ammo_def,
             )
             return (True, UnitStatus.DISABLED) if hit else (True, None)
 
@@ -684,6 +986,7 @@ def _publish_naval_engagement_event(
     wpn_inst: Any,
     timestamp: Any,
     hit: bool,
+    ammo_def: AmmoDefinition | None = None,
 ) -> None:
     """Publish EngagementEvent for naval routing paths.
 
@@ -700,15 +1003,18 @@ def _publish_naval_engagement_event(
         return
     from stochastic_warfare.combat.events import EngagementEvent
 
-    # Best-effort ammo type — naval weapons typically have a single
-    # compatible_ammo entry in practice.
-    ammo_type = ""
-    try:
-        compat = getattr(wpn_inst.definition, "compatible_ammo", []) or []
-        if compat:
-            ammo_type = str(compat[0])
-    except Exception:
-        pass
+    ammo_type = (
+        ammo_def.ammo_id
+        if isinstance(ammo_def, AmmoDefinition)
+        else ""
+    )
+    if not ammo_type:
+        try:
+            compat = getattr(wpn_inst.definition, "compatible_ammo", []) or []
+            if compat:
+                ammo_type = str(compat[0])
+        except Exception:
+            pass
 
     event_bus.publish(EngagementEvent(
         timestamp=timestamp or datetime.min,
@@ -728,6 +1034,7 @@ def _publish_air_engagement_event(
     wpn_inst: Any,
     timestamp: Any,
     hit: bool,
+    ammo_def: AmmoDefinition | None = None,
 ) -> None:
     """Publish generic EngagementEvent for air-routed engagements.
 
@@ -749,13 +1056,18 @@ def _publish_air_engagement_event(
     if event_bus is None:
         return
     from stochastic_warfare.combat.events import EngagementEvent
-    ammo_type = ""
-    try:
-        compat = getattr(wpn_inst.definition, "compatible_ammo", []) or []
-        if compat:
-            ammo_type = str(compat[0])
-    except Exception:
-        pass
+    ammo_type = (
+        ammo_def.ammo_id
+        if isinstance(ammo_def, AmmoDefinition)
+        else ""
+    )
+    if not ammo_type:
+        try:
+            compat = getattr(wpn_inst.definition, "compatible_ammo", []) or []
+            if compat:
+                ammo_type = str(compat[0])
+        except Exception:
+            pass
     event_bus.publish(EngagementEvent(
         timestamp=timestamp or datetime.min,
         source=ModuleId.COMBAT,
@@ -776,6 +1088,8 @@ def _route_air_engagement(
     dt: float,
     timestamp: Any,
     force_ratio_mod: float = 1.0,
+    ammo_def: AmmoDefinition | None = None,
+    current_time_s: float | None = None,
 ) -> tuple[bool, UnitStatus | None]:
     """Route air-domain engagement to the appropriate engine.
 
@@ -866,6 +1180,16 @@ def _route_air_engagement(
             _atk_energy = EnergyState(altitude_m=_atk_alt, speed_mps=_atk_spd)
             _def_energy = EnergyState(altitude_m=_def_alt, speed_mps=_def_spd)
 
+        if _consume_routed_ammunition(
+            ctx,
+            attacker,
+            wpn_inst,
+            ammo_def,
+            quantity=1,
+            timestamp=timestamp,
+            current_time_s=current_time_s,
+        ) == 0:
+            return True, None
         result = engine.resolve_air_engagement(
             attacker_id=attacker.entity_id,
             defender_id=target.entity_id,
@@ -877,7 +1201,15 @@ def _route_air_engagement(
             attacker_energy=_atk_energy,
             defender_energy=_def_energy,
         )
-        _publish_air_engagement_event(ctx, attacker, target, wpn_inst, timestamp, bool(result.hit))
+        _publish_air_engagement_event(
+            ctx,
+            attacker,
+            target,
+            wpn_inst,
+            timestamp,
+            bool(result.hit),
+            ammo_def,
+        )
         if result.hit:
             return True, UnitStatus.DESTROYED
         return True, None
@@ -914,6 +1246,12 @@ def _route_air_engagement(
         engine = getattr(ctx, "air_ground_engine", None)
         if engine is None:
             return False, None
+        if not _routed_ammunition_ready(
+            wpn_inst,
+            ammo_def,
+            current_time_s,
+        ):
+            return True, None
         weapon_pk = min(1.0, 0.4 * force_ratio_mod)
 
         # Phase 62d: icing + density penalties on CAS Pk
@@ -946,7 +1284,25 @@ def _route_air_engagement(
         )
         if result.aborted:
             return True, None
-        _publish_air_engagement_event(ctx, attacker, target, wpn_inst, timestamp, bool(result.hit))
+        if _consume_routed_ammunition(
+            ctx,
+            attacker,
+            wpn_inst,
+            ammo_def,
+            quantity=1,
+            timestamp=timestamp,
+            current_time_s=current_time_s,
+        ) == 0:
+            return True, None
+        _publish_air_engagement_event(
+            ctx,
+            attacker,
+            target,
+            wpn_inst,
+            timestamp,
+            bool(result.hit),
+            ammo_def,
+        )
         if result.hit:
             return True, UnitStatus.DISABLED
         return True, None
@@ -959,6 +1315,16 @@ def _route_air_engagement(
         if engine is None:
             return False, None
         interceptor_pk = min(1.0, 0.4 * force_ratio_mod)
+        if _consume_routed_ammunition(
+            ctx,
+            attacker,
+            wpn_inst,
+            ammo_def,
+            quantity=1,
+            timestamp=timestamp,
+            current_time_s=current_time_s,
+        ) == 0:
+            return True, None
         result = engine.fire_interceptor(
             ad_id=attacker.entity_id,
             target_id=target.entity_id,
@@ -966,7 +1332,15 @@ def _route_air_engagement(
             range_m=best_range,
             timestamp=timestamp,
         )
-        _publish_air_engagement_event(ctx, attacker, target, wpn_inst, timestamp, bool(result.hit))
+        _publish_air_engagement_event(
+            ctx,
+            attacker,
+            target,
+            wpn_inst,
+            timestamp,
+            bool(result.hit),
+            ammo_def,
+        )
         if result.hit:
             return True, UnitStatus.DESTROYED
         return True, None
@@ -1160,33 +1534,64 @@ def _nearest_enemy_dist(
 
     Phase 70a: vectorized path when *enemy_pos_arr* (shape (m,2)) is provided.
     """
+    return _nearest_enemy_index_and_dist(
+        unit_pos,
+        enemies,
+        enemy_pos_arr,
+    )[1]
+
+
+def _nearest_enemy_index_and_dist(
+    unit_pos: Position,
+    enemies: list[Unit],
+    enemy_pos_arr: np.ndarray | None = None,
+) -> tuple[int | None, float]:
+    """Return the stable source index and distance of the closest enemy."""
     if enemy_pos_arr is not None and enemy_pos_arr.shape[0] > 0:
         upos = np.array([unit_pos.easting, unit_pos.northing])
         diffs = enemy_pos_arr - upos
-        return float(np.sqrt(np.min(np.sum(diffs * diffs, axis=1))))
+        distances_sq = np.sum(diffs * diffs, axis=1)
+        nearest_index = int(np.argmin(distances_sq))
+        return nearest_index, float(np.sqrt(distances_sq[nearest_index]))
 
     best = float("inf")
+    best_index: int | None = None
     ux, uy = unit_pos.easting, unit_pos.northing
-    for e in enemies:
+    for index, e in enumerate(enemies):
         dx = e.position.easting - ux
         dy = e.position.northing - uy
         d = math.sqrt(dx * dx + dy * dy)
         if d < best:
             best = d
-    return best
+            best_index = index
+    return best_index, best
 
 
-def _standoff_range(unit: Unit, ctx: Any) -> float:
+def _standoff_range(
+    unit: Unit,
+    ctx: Any,
+    target_domain: Domain | None = None,
+) -> float:
     """Return the range at which this unit should stop advancing.
 
     Uses 80% of the best *usable* weapon's max range so the unit parks
     comfortably within engagement distance.  Weapons with no ammo remaining
-    are ignored — a unit that has expended all ranged ammo will close to
-    melee range.  Units without weapons (or with only melee) close fully.
+    or that cannot engage *target_domain* are ignored — a unit that has
+    expended all applicable ranged ammo will close to melee range.  Units
+    without applicable weapons (or with only melee) close fully.  Omitting
+    *target_domain* preserves the unrestricted legacy-fixture query.
     """
     weapons = getattr(ctx, "unit_weapons", {}).get(unit.entity_id, [])
     best_range = 0.0
     for wpn_inst, ammo_defs in weapons:
+        if (
+            target_domain is not None
+            and not _weapon_supports_domain(
+                wpn_inst.definition,
+                target_domain,
+            )
+        ):
+            continue
         r = wpn_inst.definition.max_range_m
         if r <= 10:
             continue  # melee / point-blank — no standoff
@@ -1443,7 +1848,11 @@ class BattleManager:
 
         # 1c. Phase 85: LOD tier classification
         _lod_full_update = self._classify_lod_tiers(
-            ctx, units_by_side, enemy_pos_arrays, battle,
+            ctx,
+            units_by_side,
+            enemy_pos_arrays,
+            battle,
+            active_enemies=active_enemies,
         )
 
         # 1b. Phase 53a: Fog of war — per-side detection picture
@@ -1467,6 +1876,7 @@ class BattleManager:
                         "position": _u.position,
                         "sensors": ctx.unit_sensors.get(_u.entity_id, []),
                         "observer_height": 1.8,
+                        "observer_heading_deg": math.degrees(_u.heading) % 360.0,
                     })
                 _enemy_data: list[dict[str, Any]] = []
                 for _other_side, _other_units in units_by_side.items():
@@ -1551,14 +1961,21 @@ class BattleManager:
                                 continue
                             if _uid not in _lod_full_update:
                                 continue  # didn't scan this tick
-                            _max_wpn = max(
-                                (w[0].definition.max_range_m
-                                 for w in ctx.unit_weapons.get(_uid, [])),
-                                default=0,
-                            )
                             for _ct in _wv.contacts.values():
                                 _cp = _ct.estimated_position
                                 if _cp is not None:
+                                    _contact_unit = _unit_index.get(
+                                        _ct.contact_id,
+                                    )
+                                    _contact_domain = (
+                                        _contact_unit.domain
+                                        if _contact_unit is not None
+                                        else None
+                                    )
+                                    _max_wpn = _max_weapon_range_for_domain(
+                                        ctx.unit_weapons.get(_uid, ()),
+                                        _contact_domain,
+                                    )
                                     _dx = _u.position.easting - _cp.easting
                                     _dy = _u.position.northing - _cp.northing
                                     if math.sqrt(_dx * _dx + _dy * _dy) <= _max_wpn * 2:
@@ -2444,6 +2861,8 @@ class BattleManager:
         units_by_side: dict[str, list[Unit]],
         enemy_pos_arrays: dict[str, np.ndarray],
         battle: Any,
+        *,
+        active_enemies: dict[str, list[Unit]] | None = None,
     ) -> set[str]:
         """Classify units into LOD tiers. Returns entity_ids for full update this tick."""
         cal_flat = _resolve_cal_flat(ctx)
@@ -2463,6 +2882,18 @@ class BattleManager:
 
         for side_name, side_units in units_by_side.items():
             pos_arr = enemy_pos_arrays.get(side_name, np.empty((0, 2)))
+            enemy_positions_by_domain: dict[Domain, np.ndarray] = {}
+            if active_enemies is not None:
+                positions: dict[Domain, list[tuple[float, float]]] = {}
+                for enemy in active_enemies.get(side_name, ()):
+                    positions.setdefault(enemy.domain, []).append((
+                        enemy.position.easting,
+                        enemy.position.northing,
+                    ))
+                enemy_positions_by_domain = {
+                    domain: np.asarray(points, dtype=np.float64)
+                    for domain, points in positions.items()
+                }
 
             for u in side_units:
                 if u.status != UnitStatus.ACTIVE:
@@ -2474,6 +2905,71 @@ class BattleManager:
                     raw_tier = UnitLodTier.ACTIVE
                 elif pos_arr.shape[0] == 0:
                     raw_tier = UnitLodTier.DISTANT
+                elif active_enemies is not None:
+                    # Phase 109: only a weapon/sensor whose live mapping
+                    # permits a concrete enemy domain can promote update
+                    # cadence. An air-search radar must not make an unrelated
+                    # ground battle run at the nearby tier.
+                    raw_tier = UnitLodTier.DISTANT
+                    weapons = ctx.unit_weapons.get(uid, ())
+                    sensors = ctx.unit_sensors.get(uid, ())
+                    weapon_ranges = {
+                        domain: max(
+                            (
+                                attachment[0].definition.max_range_m
+                                for attachment in weapons
+                                if _weapon_supports_domain(
+                                    attachment[0].definition,
+                                    domain,
+                                )
+                            ),
+                            default=0.0,
+                        )
+                        for domain in enemy_positions_by_domain
+                    }
+                    sensor_ranges = {
+                        domain: max(
+                            (
+                                sensor.effective_range
+                                for sensor in sensors
+                                if (
+                                    sensor.operational
+                                    and sensor.sensor_type
+                                    is not SensorType.ESM
+                                    and sensor.supports_target_domain(domain)
+                                )
+                            ),
+                            default=0.0,
+                        )
+                        for domain in enemy_positions_by_domain
+                    }
+                    unit_position = np.asarray(
+                        [u.position.easting, u.position.northing],
+                        dtype=np.float64,
+                    )
+                    for domain, domain_positions in (
+                        enemy_positions_by_domain.items()
+                    ):
+                        offsets = domain_positions - unit_position
+                        nearest_distance_sq = float(np.min(
+                            np.sum(offsets * offsets, axis=1),
+                        ))
+                        active_threshold = max(
+                            weapon_ranges[domain] * 2.0,
+                            100.0,
+                        )
+                        nearby_threshold = max(
+                            sensor_ranges[domain],
+                            active_threshold,
+                        )
+                        if nearest_distance_sq <= active_threshold**2:
+                            raw_tier = UnitLodTier.ACTIVE
+                            break
+                        if (
+                            nearest_distance_sq <= nearby_threshold**2
+                            and raw_tier is UnitLodTier.DISTANT
+                        ):
+                            raw_tier = UnitLodTier.NEARBY
                 else:
                     upos = np.array([u.position.easting, u.position.northing])
                     diffs = pos_arr - upos
@@ -3207,8 +3703,18 @@ class BattleManager:
 
                 # Standoff: stop closing once within best weapon range
                 # of the nearest enemy
-                standoff = _standoff_range(u, ctx)
-                nearest_dist = _nearest_enemy_dist(u.position, enemies, enemy_pos_arr=_epa)
+                nearest_index, nearest_dist = _nearest_enemy_index_and_dist(
+                    u.position,
+                    enemies,
+                    enemy_pos_arr=_epa,
+                )
+                if nearest_index is None:
+                    continue
+                standoff = _standoff_range(
+                    u,
+                    ctx,
+                    target_domain=enemies[nearest_index].domain,
+                )
                 if nearest_dist <= standoff:
                     continue
 
@@ -3548,16 +4054,20 @@ class BattleManager:
         """Compute threat-based target score. Higher = more attractive."""
         # Threat: target's ability to damage us
         target_weapons = ctx.unit_weapons.get(target.entity_id, [])
-        target_max_range = max(
-            (w[0].definition.max_range_m for w in target_weapons), default=0.0
+        target_max_range = _max_weapon_range_for_domain(
+            target_weapons,
+            getattr(attacker, "domain", None),
         )
         attacker_armor = getattr(attacker, "armor_front", 0.0)
         threat = min(5.0, max(0.1, target_max_range / max(1.0, attacker_armor * 10.0)))
 
         # Pk: our hit likelihood at this range
-        best_wpn_range = max(
-            (w[0].definition.max_range_m for w in attacker_weapons), default=1000.0
+        best_wpn_range = _max_weapon_range_for_domain(
+            attacker_weapons,
+            getattr(target, "domain", None),
         )
+        if best_wpn_range <= 0.0:
+            best_wpn_range = 1_000.0
         pk = min(3.0, best_wpn_range / max(1.0, distance))
 
         # Value: target type priority (configurable weights)
@@ -3882,27 +4392,94 @@ class BattleManager:
                 diffs = pos_arr - att_pos
                 dists = np.sqrt(np.sum(diffs * diffs, axis=1))
 
+                # Phase 84c/109: spatially cull first, then apply semantic
+                # availability and detection filters only to candidates that
+                # at least one live weapon could reach.
+                _eng_tree = _eng_trees.get(side_name)
+                _max_wpn_range = max(
+                    (
+                        weapon_instance.definition.max_range_m
+                        for weapon_instance, _ in weapons
+                    ),
+                    default=0.0,
+                )
+                if _max_wpn_range <= 0.0:
+                    _range_candidate_idxs = list(range(len(enemies)))
+                elif _eng_tree is not None:
+                    _range_candidate_idxs = sorted(_eng_tree.query(
+                        Point(
+                            attacker.position.easting,
+                            attacker.position.northing,
+                        ).buffer(_max_wpn_range),
+                    ))
+                else:
+                    _range_candidate_idxs = [
+                        enemy_index
+                        for enemy_index in range(len(enemies))
+                        if float(dists[enemy_index]) <= _max_wpn_range
+                    ]
+                if not _range_candidate_idxs:
+                    continue
+
+                # Phase 109: mapping-owned weapon domains are a production
+                # eligibility contract, not merely post-selection metadata.
+                # Exclude targets no live attachment can ever engage before
+                # closest/threat selection so an incompatible target cannot
+                # starve a valid one.
+                _domain_compatible_idxs: list[int] = []
+                sensors = ctx.unit_sensors.get(attacker.entity_id, [])
+                for enemy_index in _range_candidate_idxs:
+                    enemy = enemies[enemy_index]
+                    enemy_distance = float(dists[enemy_index])
+                    usable_weapon = any(
+                        (
+                            _weapon_supports_domain(
+                                weapon_instance.definition,
+                                enemy.domain,
+                            )
+                            and (
+                                weapon_instance.definition.max_range_m <= 0.0
+                                or enemy_distance
+                                <= weapon_instance.definition.max_range_m
+                            )
+                            and any(
+                                weapon_instance.can_fire(ammo.ammo_id)
+                                for ammo in ammo_definitions
+                            )
+                        )
+                        for weapon_instance, ammo_definitions in weapons
+                    )
+                    if not usable_weapon:
+                        continue
+                    baseline_visible = (
+                        enemy.domain is not Domain.SUBMARINE
+                        and enemy_distance <= visibility_m
+                    )
+                    sensor_detectable = any(
+                        (
+                            sensor.operational
+                            and sensor.sensor_type is not SensorType.ESM
+                            and sensor.supports_target_domain(enemy.domain)
+                            and enemy_distance <= sensor.effective_range
+                        )
+                        for sensor in sensors
+                    )
+                    if baseline_visible or sensor_detectable:
+                        _domain_compatible_idxs.append(enemy_index)
+                if not _domain_compatible_idxs:
+                    continue
+
                 # Phase 41c: threat-based or closest target selection
                 if target_selection_mode in {"closest", "nearest"}:
-                    best_idx = int(np.argmin(dists))
-                else:
-                    # Phase 84c: pre-filter candidates within weapon range
-                    _eng_tree = _eng_trees.get(side_name)
-                    _max_wpn_range = max(
-                        (w[0].definition.max_range_m for w in weapons),
-                        default=1000.0,
+                    best_idx = min(
+                        _domain_compatible_idxs,
+                        key=lambda enemy_index: (
+                            float(dists[enemy_index]),
+                            enemy_index,
+                        ),
                     )
-                    if _eng_tree is not None:
-                        _cand_idxs = sorted(_eng_tree.query(
-                            Point(
-                                attacker.position.easting,
-                                attacker.position.northing,
-                            ).buffer(_max_wpn_range),
-                        ))
-                    else:
-                        _cand_idxs = list(range(len(enemies)))
-                    if not _cand_idxs:
-                        _cand_idxs = list(range(len(enemies)))
+                else:
+                    _cand_idxs = _domain_compatible_idxs
                     best_score = -1.0
                     best_idx = _cand_idxs[0]
                     for ei in _cand_idxs:
@@ -3929,54 +4506,27 @@ class BattleManager:
                 )
 
                 # Detection check
-                detection_range = visibility_m
-                weather_independent = False
-                sensors = ctx.unit_sensors.get(attacker.entity_id, [])
-                for sensor in sensors:
-                    if sensor.effective_range > detection_range:
-                        detection_range = sensor.effective_range
-                        if sensor.sensor_type in _WEATHER_BYPASS_TYPES:
-                            weather_independent = True
-
-                # Phase 61c: radar horizon gate + EM ducting
-                if _enable_em_prop and weather_independent:
-                    _best_st_em = getattr(
-                        sensors[0] if sensors else None, "sensor_type", None,
+                baseline_visual_range = (
+                    0.0
+                    if best_target.domain is Domain.SUBMARINE
+                    else visibility_m
+                )
+                eligible_sensors = [
+                    sensor
+                    for sensor in sensors
+                    if (
+                        sensor.operational
+                        # ESM is meaningful only when DetectionEngine resolves
+                        # an electromagnetic-emission signature. The
+                        # non-FOW range gate has no such target state, so it
+                        # must not turn a passive receiver into omniscient
+                        # generic detection.
+                        and sensor.sensor_type is not SensorType.ESM
+                        and sensor.supports_target_domain(best_target.domain)
                     )
-                    if _best_st_em == SensorType.RADAR:
-                        _em_env = _conditions_eng
-                        if _em_env is not None:
-                            try:
-                                # Antenna height: aircraft=altitude, ship~30m, ground~10m
-                                _att_domain = getattr(attacker, "domain", None)
-                                if _att_domain == Domain.AERIAL:
-                                    _ant_h = max(10.0, attacker.position.altitude)
-                                elif _att_domain in (Domain.NAVAL, Domain.SUBMARINE):
-                                    _ant_h = 30.0
-                                else:
-                                    _ant_h = 10.0
-                                _tgt_alt = best_target.position.altitude
-                                _radar_hz = _em_env.radar_horizon(_ant_h)
-                                _tgt_hz = _em_env.radar_horizon(max(0, _tgt_alt))
-                                _total_hz = _radar_hz + _tgt_hz
-                                if best_range > _total_hz and _tgt_alt < 500:
-                                    detection_range = 0.0  # below radar horizon
-                                # EM ducting: extend range in maritime environments
-                                from stochastic_warfare.environment.electromagnetic import FrequencyBand
-                                _prop = _em_env.propagation(
-                                    FrequencyBand.SHF,
-                                    best_range / 1000.0,
-                                )
-                                if _prop.ducting_possible and _att_domain in (
-                                    Domain.NAVAL, Domain.SUBMARINE,
-                                ):
-                                    _duct_ext = min(
-                                        2.0,
-                                        _em_env.effective_earth_radius_factor() / (4.0 / 3.0),
-                                    )
-                                    detection_range *= _duct_ext
-                            except Exception:
-                                pass
+                ]
+                best_sensor = None
+                weather_independent = False
 
                 # Phase 50c: continuous concealment — persistent per-target,
                 # decays with sustained observation, resets on target movement
@@ -3994,62 +4544,223 @@ class BattleManager:
                 )
                 effective_concealment = self._concealment_scores[tid]
 
-                # Concealment reduces detection range; thermal/radar get 0.3x effect
-                if effective_concealment > 0 and not weather_independent:
-                    detection_range *= (1.0 - effective_concealment)
-                elif effective_concealment > 0 and weather_independent:
-                    detection_range *= (1.0 - effective_concealment * 0.3)
+                # Resolve visual and sensor modalities independently. A
+                # shorter thermal/NVG catalog envelope must be allowed to
+                # beat night-degraded eyesight, but never beyond that
+                # mapping-owned envelope.
+                _opacity_visual = 0.0
+                _opacity_thermal = 0.0
+                _opacity_radar = 0.0
+                if _obs_eng is not None and _enable_obscurants:
+                    try:
+                        _opacity = _obs_eng.opacity_at(best_target.position)
+                        _opacity_visual = _opacity.visual
+                        _opacity_thermal = _opacity.thermal
+                        _opacity_radar = _opacity.radar
+                    except Exception:
+                        pass
 
-                # Phase 52a / 60c: Night degrades visual detection; thermal barely affected
-                if not weather_independent:
-                    detection_range *= night_visual_modifier
-                    # Phase 60c: NVG detection recovery
-                    if _enable_nvg and night_visual_modifier < 1.0:
-                        _has_nvg = any(
-                            getattr(s, "sensor_type", None) == SensorType.NVG
-                            for s in sensors
+                _visual_concealment = max(
+                    0.0,
+                    1.0 - effective_concealment,
+                )
+                _nonvisual_concealment = max(
+                    0.0,
+                    1.0 - effective_concealment * 0.3,
+                )
+                detection_range = (
+                    baseline_visual_range
+                    * _visual_concealment
+                    * night_visual_modifier
+                    * (1.0 - _opacity_visual)
+                )
+                _nvg_visual_modifier = night_visual_modifier
+                if (
+                    _enable_nvg
+                    and night_visual_modifier < 1.0
+                    and tod_engine is not None
+                ):
+                    try:
+                        _nvg_eff = tod_engine.nvg_effectiveness(lat, lon)
+                        _nvg_recovery = _nvg_eff * 0.5
+                        _nvg_visual_modifier = (
+                            night_visual_modifier
+                            + _nvg_recovery
+                            * (1.0 - night_visual_modifier)
                         )
-                        if _has_nvg and tod_engine is not None:
+                    except Exception:
+                        pass
+
+                _sonar_types = frozenset({
+                    SensorType.ACTIVE_SONAR,
+                    SensorType.PASSIVE_SONAR,
+                    SensorType.PASSIVE_ACOUSTIC,
+                })
+                for sensor in eligible_sensors:
+                    sensor_type = sensor.sensor_type
+                    sensor_range = float(sensor.effective_range)
+                    if sensor_type is SensorType.VISUAL:
+                        sensor_range = (
+                            min(sensor_range, visibility_m)
+                            * _visual_concealment
+                            * night_visual_modifier
+                            * (1.0 - _opacity_visual)
+                        )
+                    elif sensor_type is SensorType.NVG:
+                        sensor_range = (
+                            sensor_range
+                            * _visual_concealment
+                            * _nvg_visual_modifier
+                            * (1.0 - _opacity_visual)
+                        )
+                    elif sensor_type is SensorType.THERMAL:
+                        if _enable_thermal_xo:
+                            thermal_factor = thermal_dt_contrast
+                            if (
+                                thermal_factor < 0.5
+                                and getattr(best_target, "speed", 0) > 1.0
+                            ):
+                                thermal_factor = max(thermal_factor, 0.5)
+                        else:
+                            thermal_factor = night_thermal_modifier
+                        sensor_range *= (
+                            _nonvisual_concealment
+                            * thermal_factor
+                            * (1.0 - _opacity_thermal)
+                        )
+                    elif sensor_type is SensorType.RADAR:
+                        sensor_range *= (
+                            _nonvisual_concealment
+                            * (1.0 - _opacity_radar)
+                        )
+                        # Phase 61c: radar horizon gate + EM ducting.
+                        if _enable_em_prop and _conditions_eng is not None:
                             try:
-                                _nvg_eff = tod_engine.nvg_effectiveness(lat, lon)
-                                _nvg_recovery = _nvg_eff * 0.5
-                                _nvg_visual = night_visual_modifier + _nvg_recovery * (1.0 - night_visual_modifier)
-                                detection_range /= night_visual_modifier
-                                detection_range *= _nvg_visual
+                                _att_domain = getattr(attacker, "domain", None)
+                                if _att_domain is Domain.AERIAL:
+                                    _ant_h = max(
+                                        10.0,
+                                        attacker.position.altitude,
+                                    )
+                                elif _att_domain in (
+                                    Domain.NAVAL,
+                                    Domain.SUBMARINE,
+                                ):
+                                    _ant_h = 30.0
+                                else:
+                                    _ant_h = 10.0
+                                _tgt_alt = best_target.position.altitude
+                                _total_hz = (
+                                    _conditions_eng.radar_horizon(_ant_h)
+                                    + _conditions_eng.radar_horizon(
+                                        max(0.0, _tgt_alt),
+                                    )
+                                )
+                                if (
+                                    best_range > _total_hz
+                                    and _tgt_alt < 500.0
+                                ):
+                                    sensor_range = 0.0
+                                from stochastic_warfare.environment.electromagnetic import (
+                                    FrequencyBand,
+                                )
+
+                                _prop = _conditions_eng.propagation(
+                                    FrequencyBand.SHF,
+                                    best_range / 1000.0,
+                                )
+                                if (
+                                    _prop.ducting_possible
+                                    and _att_domain in (
+                                        Domain.NAVAL,
+                                        Domain.SUBMARINE,
+                                    )
+                                ):
+                                    sensor_range *= min(
+                                        2.0,
+                                        _conditions_eng.effective_earth_radius_factor()
+                                        / (4.0 / 3.0),
+                                    )
                             except Exception:
                                 pass
-                else:
-                    if _enable_thermal_xo:
-                        _tdc = thermal_dt_contrast
-                        if _tdc < 0.5 and getattr(best_target, "speed", 0) > 1.0:
-                            _tdc = max(_tdc, 0.5)
-                        detection_range *= _tdc
-                    else:
-                        detection_range *= night_thermal_modifier
-
-                # Phase 52b: Rain attenuates radar/weather-independent sensors
-                if weather_independent and precipitation_rate_mmhr > 0:
-                    _rain_f = _compute_rain_detection_factor(
-                        precipitation_rate_mmhr, detection_range / 1000.0,
-                    )
-                    _rain_scale = _rain_atten_factor
-                    detection_range *= _rain_f ** _rain_scale
-
-                # Phase 62d: icing degrades radar detection (ice on radome)
-                if _enable_air_combat_env and weather_independent:
-                    _cond62r = _conditions_eng
-                    if _cond62r is not None:
+                        if precipitation_rate_mmhr > 0.0:
+                            sensor_range *= _compute_rain_detection_factor(
+                                precipitation_rate_mmhr,
+                                sensor_range / 1000.0,
+                            ) ** _rain_atten_factor
+                        if (
+                            _enable_air_combat_env
+                            and _conditions_eng is not None
+                        ):
+                            try:
+                                _icing = _conditions_eng.air().icing_risk
+                                if _icing > 0.5:
+                                    _ice_db = cal_flat.get(
+                                        "icing_radar_penalty_db",
+                                        3.0,
+                                    )
+                                    sensor_range *= 10.0 ** (-_ice_db / 40.0)
+                            except Exception:
+                                pass
+                    elif (
+                        sensor_type in _sonar_types
+                        and _enable_acoustic
+                        and _ua_eng is not None
+                    ):
                         try:
-                            _air62r = _cond62r.air()
-                            _icing62r = getattr(_air62r, "icing_risk", 0.0)
-                            if _icing62r > 0.5:
-                                _ice_db = cal_flat.get("icing_radar_penalty_db", 3.0)
-                                # Convert dB loss to linear factor on range
-                                # Radar range eq: R^4, so factor = 10^(-dB/40)
-                                _ice_factor = 10.0 ** (-_ice_db / 40.0)
-                                detection_range *= _ice_factor
+                            _ac = _ua_eng.conditions
+                            _obs_depth = getattr(attacker, "depth", 0.0)
+                            _tgt_depth = getattr(best_target, "depth", 0.0)
+                            _layer_mod = 1.0
+                            if (
+                                _ac.thermocline_depth
+                                and _tgt_depth > _ac.thermocline_depth
+                                and _obs_depth <= _ac.thermocline_depth
+                            ):
+                                _layer_mod *= 0.1
+                            if _ac.surface_duct_depth:
+                                if (
+                                    _obs_depth < _ac.surface_duct_depth
+                                    and _tgt_depth < _ac.surface_duct_depth
+                                ):
+                                    _layer_mod *= 3.0
+                                elif (
+                                    _obs_depth < _ac.surface_duct_depth
+                                    and _tgt_depth > _ac.surface_duct_depth
+                                ):
+                                    _layer_mod *= 0.06
+                            _cz_ranges = _ua_eng.convergence_zone_ranges(
+                                _obs_depth,
+                            )
+                            _in_cz = any(
+                                abs(best_range - cz_range) < 5_000.0
+                                for cz_range in _cz_ranges
+                            )
+                            if (
+                                _cz_ranges
+                                and best_range > 30_000.0
+                                and not _in_cz
+                            ):
+                                _layer_mod *= 0.05
+                            elif _in_cz:
+                                _layer_mod *= 2.0
+                            sensor_range *= _layer_mod
                         except Exception:
                             pass
+
+                    if sensor_range > detection_range:
+                        detection_range = sensor_range
+                        best_sensor = sensor
+
+                selected_sensor_type = getattr(
+                    best_sensor,
+                    "sensor_type",
+                    None,
+                )
+                weather_independent = (
+                    selected_sensor_type in _WEATHER_BYPASS_TYPES
+                    or selected_sensor_type in _sonar_types
+                )
 
                 # Phase 86b: MOPP + altitude modifiers from pre-computed batch
                 _obs = _observer_mods.get(attacker.entity_id, _DEFAULT_OBS_MODS)
@@ -4075,76 +4786,25 @@ class BattleManager:
                 if _tnp is not None:
                     detection_range *= _NAVAL_POSTURE_DETECT_MULT.get(int(_tnp), 1.0)
 
-                # Phase 60a: obscurant opacity at target position
-                if _obs_eng is not None and _enable_obscurants:
-                    try:
-                        _opacity = _obs_eng.opacity_at(best_target.position)
-                        if not weather_independent:
-                            detection_range *= (1.0 - _opacity.visual)
-                        else:
-                            _best_st = getattr(
-                                sensors[0] if sensors else None, "sensor_type", None,
-                            )
-                            if _best_st == SensorType.THERMAL:
-                                detection_range *= (1.0 - _opacity.thermal)
-                            elif _best_st == SensorType.RADAR:
-                                detection_range *= (1.0 - _opacity.radar)
-                    except Exception:
-                        pass
-
-                # Phase 61b: acoustic layer modifiers for sonar sensors
-                if _enable_acoustic and sensors:
-                    _best_st61 = getattr(
-                        sensors[0] if sensors else None, "sensor_type", None,
-                    )
-                    _SONAR_TYPES_61 = frozenset({
-                        SensorType.ACTIVE_SONAR,
-                        SensorType.PASSIVE_SONAR,
-                        SensorType.PASSIVE_ACOUSTIC,
-                    })
-                    if _best_st61 in _SONAR_TYPES_61:
-                        if _ua_eng is not None:
-                            try:
-                                _ac = _ua_eng.conditions
-                                _obs_depth = getattr(attacker, "depth", 0.0)
-                                _tgt_depth = getattr(best_target, "depth", 0.0)
-                                _layer_mod = 1.0
-                                # Thermocline: target below, observer above
-                                if (_ac.thermocline_depth
-                                        and _tgt_depth > _ac.thermocline_depth
-                                        and _obs_depth <= _ac.thermocline_depth):
-                                    _layer_mod *= 0.1  # ~20 dB loss
-                                # Surface duct
-                                if _ac.surface_duct_depth:
-                                    if (_obs_depth < _ac.surface_duct_depth
-                                            and _tgt_depth < _ac.surface_duct_depth):
-                                        _layer_mod *= 3.0  # +10 dB gain
-                                    elif (_obs_depth < _ac.surface_duct_depth
-                                            and _tgt_depth > _ac.surface_duct_depth):
-                                        _layer_mod *= 0.06  # +15 dB loss
-                                # Convergence zones
-                                _cz_ranges = _ua_eng.convergence_zone_ranges(_obs_depth)
-                                _in_cz = any(
-                                    abs(best_range - cz_r) < 5000
-                                    for cz_r in _cz_ranges
-                                )
-                                if _cz_ranges and best_range > 30000 and not _in_cz:
-                                    _layer_mod *= 0.05  # acoustic shadow
-                                elif _in_cz:
-                                    _layer_mod *= 2.0  # CZ spike
-                                detection_range *= _layer_mod
-                            except Exception:
-                                pass
-
                 if best_range > detection_range:
                     continue
 
                 # Phase 41d: detection quality modulates engagement effectiveness
                 detection_quality_mod = 1.0
-                if _det_eng is not None and sensors:
+                if _det_eng is not None and eligible_sensors:
                     best_snr = -100.0
-                    for sensor in sensors:
+                    for sensor in eligible_sensors:
                         if best_range > getattr(sensor, "effective_range", 0.0):
+                            continue
+                        if sensor.sensor_type not in {
+                            SensorType.VISUAL,
+                            SensorType.NVG,
+                        }:
+                            # This fast battle gate has no target signature
+                            # from which to compute radar, thermal, acoustic,
+                            # or electromagnetic SNR. Keep its neutral quality
+                            # factor instead of applying the visual equation
+                            # to an unrelated interface.
                             continue
                         try:
                             snr = _det_eng.compute_snr_visual(
@@ -4159,23 +4819,28 @@ class BattleManager:
                         snr_linear = 10.0 ** (best_snr / 20.0)
                         detection_quality_mod = min(1.0, max(0.3, snr_linear / 10.0))
 
-                # Phase 44b: EW jamming degrades radar/electronic detection
-                if _ew_eng is not None and weather_independent:
+                # Phase 44b: EW jamming degrades radar detection. Thermal and
+                # acoustic modalities may also bypass visual weather, but
+                # they do not expose a radar carrier for this interface.
+                if (
+                    _ew_eng is not None
+                    and selected_sensor_type is SensorType.RADAR
+                ):
                     try:
                         snr_penalty_db = _ew_eng.compute_radar_snr_penalty(
                             sensor_pos=attacker.position,
                             sensor_freq_ghz=getattr(
-                                sensors[0], "frequency_ghz", 10.0,
-                            ) if sensors else 10.0,
+                                best_sensor, "frequency_ghz", 10.0,
+                            ) if best_sensor is not None else 10.0,
                             sensor_power_dbm=getattr(
-                                sensors[0], "power_dbm", 70.0,
-                            ) if sensors else 70.0,
+                                best_sensor, "power_dbm", 70.0,
+                            ) if best_sensor is not None else 70.0,
                             sensor_gain_dbi=getattr(
-                                sensors[0], "antenna_gain_dbi", 30.0,
-                            ) if sensors else 30.0,
+                                best_sensor, "antenna_gain_dbi", 30.0,
+                            ) if best_sensor is not None else 30.0,
                             sensor_bw_ghz=getattr(
-                                sensors[0], "bandwidth_ghz", 0.1,
-                            ) if sensors else 0.1,
+                                best_sensor, "bandwidth_ghz", 0.1,
+                            ) if best_sensor is not None else 0.1,
                             target_range_m=best_range,
                         )
                         if snr_penalty_db > 0:
@@ -4188,11 +4853,11 @@ class BattleManager:
                                     _eccm_reduction = _eccm_eng.compute_jam_reduction(
                                         _eccm_suite,
                                         jammer_freq_ghz=getattr(
-                                            sensors[0], "frequency_ghz", 10.0,
-                                        ) if sensors else 10.0,
+                                            best_sensor, "frequency_ghz", 10.0,
+                                        ) if best_sensor is not None else 10.0,
                                         jammer_bw_ghz=getattr(
-                                            sensors[0], "bandwidth_ghz", 0.1,
-                                        ) if sensors else 0.1,
+                                            best_sensor, "bandwidth_ghz", 0.1,
+                                        ) if best_sensor is not None else 0.1,
                                         js_ratio_db=snr_penalty_db,
                                     )
                                     snr_penalty_db = max(
@@ -4215,24 +4880,33 @@ class BattleManager:
 
                 # Phase 48: sigint_detection_bonus — boost detection for
                 # SIGINT-capable sensors
-                if _sigint_bonus > 0 and sensors:
-                    for sensor in sensors:
+                if _sigint_bonus > 0 and eligible_sensors:
+                    for sensor in eligible_sensors:
                         if getattr(sensor, "sensor_type", None) == SensorType.ESM:
                             detection_quality_mod = min(
                                 1.0, detection_quality_mod * (1.0 + _sigint_bonus),
                             )
                             break
 
-                vis_mod = 1.0 if weather_independent else (min(visibility_m / best_range, 1.0) if best_range > 0 else 1.0)
+                vis_mod = (
+                    1.0
+                    if weather_independent
+                    else (
+                        min(visibility_m / best_range, 1.0)
+                        if best_range > 0
+                        else 1.0
+                    )
+                )
                 vis_mod = vis_mod * detection_quality_mod
 
-                # Phase 60a: obscurant Pk reduction
-                if _obs_eng is not None and _enable_obscurants:
-                    try:
-                        _opacity_pk = _obs_eng.opacity_at(best_target.position)
-                        vis_mod *= (1.0 - _opacity_pk.visual)
-                    except Exception:
-                        pass
+                # Phase 60a: obscurant Pk reduction follows the modality that
+                # actually supplied the winning detection envelope.
+                if selected_sensor_type is SensorType.THERMAL:
+                    vis_mod *= 1.0 - _opacity_thermal
+                elif selected_sensor_type is SensorType.RADAR:
+                    vis_mod *= 1.0 - _opacity_radar
+                elif selected_sensor_type not in _sonar_types:
+                    vis_mod *= 1.0 - _opacity_visual
 
                 # Phase 42a: ROE gate
                 if roe_engine is not None:
@@ -4255,23 +4929,77 @@ class BattleManager:
                 # Select best weapon for current range — prefer ranged weapons
                 # at distance, melee weapons at close range.  Skip weapons
                 # that are out of ammo or out of range.
-                target_domain = best_target.domain.name
                 selected_wpn = None
                 selected_ammo_def = None
                 selected_ammo_id = None
+                selected_attachment: WeaponAttachment | None = None
                 best_wpn_score = -1.0
-                for wpn_inst, ammo_defs in weapons:
-                    if not ammo_defs:
+                for attachment in weapons:
+                    if isinstance(attachment, WeaponAttachment):
+                        wpn_inst = attachment.weapon
+                        ammo_defs = attachment.ammunition
+                    else:
+                        # Compatibility for older direct unit fixtures. The
+                        # production context publishes WeaponAttachment only.
+                        wpn_inst, ammo_defs = attachment
+                    excluded_ammo_ids: set[str] = set()
+                    if _enable_ammo_gate:
+                        _mag_cap = getattr(
+                            wpn_inst.definition,
+                            "magazine_capacity",
+                            0,
+                        )
+                        if _mag_cap > 0:
+                            _legacy_ammo_key = (
+                                f"{attacker.entity_id}:"
+                                f"{wpn_inst.definition.weapon_id}"
+                            )
+                            for candidate in ammo_defs:
+                                _ammo_key = (
+                                    f"{_legacy_ammo_key}:"
+                                    f"{candidate.ammo_id}"
+                                )
+                                _rounds_fired = self._ammo_expended.get(
+                                    _ammo_key,
+                                    self._ammo_expended.get(
+                                        _legacy_ammo_key,
+                                        0,
+                                    ),
+                                )
+                                if _rounds_fired >= _mag_cap:
+                                    excluded_ammo_ids.add(
+                                        candidate.ammo_id,
+                                    )
+                    if isinstance(attachment, WeaponAttachment):
+                        ammo_def = attachment.first_fireable_ammunition(
+                            excluded_ammo_ids=excluded_ammo_ids,
+                        )
+                    else:
+                        ammo_def = next(
+                            (
+                                candidate
+                                for candidate in ammo_defs
+                                if (
+                                    candidate.ammo_id
+                                    not in excluded_ammo_ids
+                                    and wpn_inst.can_fire(
+                                        candidate.ammo_id,
+                                    )
+                                )
+                            ),
+                            None,
+                        )
+                    if ammo_def is None:
                         continue
-                    ammo_def = ammo_defs[0]
                     ammo_id = ammo_def.ammo_id
-                    if not wpn_inst.can_fire(ammo_id):
-                        continue
                     max_r = wpn_inst.definition.max_range_m
                     if max_r > 0 and best_range > max_r:
                         continue
                     # Phase 40d: domain filtering
-                    if target_domain not in wpn_inst.definition.effective_target_domains():
+                    if not _weapon_supports_domain(
+                        wpn_inst.definition,
+                        best_target.domain,
+                    ):
                         continue
                     # Phase 40c: deployed weapons can't fire while moving
                     if attacker.speed > 0.5 and wpn_inst.definition.requires_deployed:
@@ -4307,6 +5035,11 @@ class BattleManager:
                     _elev_max = getattr(wpn_inst.definition, "elevation_max_deg", 85.0)
                     if (
                         best_range > 0
+                        # A missile launcher's rail/canister elevation defines
+                        # its launch attitude, not a direct line-of-sight firing
+                        # arc.  The guided flight path resolves downstream.
+                        and wpn_inst.definition.parsed_category()
+                        != WeaponCategory.MISSILE_LAUNCHER
                         and isinstance(_elev_min, (int, float))
                         and isinstance(_elev_max, (int, float))
                         and (_elev_min != -5.0 or _elev_max != 85.0)
@@ -4359,6 +5092,11 @@ class BattleManager:
                         selected_wpn = wpn_inst
                         selected_ammo_def = ammo_def
                         selected_ammo_id = ammo_id
+                        selected_attachment = (
+                            attachment
+                            if isinstance(attachment, WeaponAttachment)
+                            else None
+                        )
 
                 if selected_wpn is None:
                     continue
@@ -4377,20 +5115,11 @@ class BattleManager:
                 wpn_inst = selected_wpn
                 ammo_def = selected_ammo_def
                 ammo_id = selected_ammo_id
-
-                # Phase 68b: ammo depletion gate — skip if magazine exhausted
-                if _enable_ammo_gate:
-                    _mag_cap = getattr(wpn_inst.definition, "magazine_capacity", 0)
-                    if _mag_cap > 0:
-                        _ammo_key = f"{attacker.entity_id}:{wpn_inst.definition.weapon_id}"
-                        _rounds_fired = self._ammo_expended.get(_ammo_key, 0)
-                        if _rounds_fired >= _mag_cap:
-                            logger.debug(
-                                "Ammo depleted: %s weapon %s (%d/%d)",
-                                attacker.entity_id, wpn_inst.definition.weapon_id,
-                                _rounds_fired, _mag_cap,
-                            )
-                            continue
+                runtime_system_multiplier = (
+                    selected_attachment.runtime_system_multiplier
+                    if selected_attachment is not None
+                    else 1
+                )
 
                 target_armor = getattr(best_target, "armor_front", 0.0)
                 crew_count = len(best_target.personnel) if best_target.personnel else 4
@@ -4569,12 +5298,9 @@ class BattleManager:
                         _pk_red = cal_flat.get("human_shield_pk_reduction", 0.5) * _shield_val
                         crew_skill *= max(0.1, 1.0 - _pk_red)
 
-                # Phase 68b: track ammo expenditure for this engagement
-                if _enable_ammo_gate:
-                    _mag_cap_trk = getattr(wpn_inst.definition, "magazine_capacity", 0)
-                    if _mag_cap_trk > 0:
-                        _ammo_key_trk = f"{attacker.entity_id}:{wpn_inst.definition.weapon_id}"
-                        self._ammo_expended[_ammo_key_trk] = self._ammo_expended.get(_ammo_key_trk, 0) + 1
+                # Record the live-state delta only after an engine actually
+                # fires. Pre-routing intent is not ammunition expenditure.
+                _ammo_before_routing = wpn_inst.ammo_state.available(ammo_id)
 
                 # ── Phase 43: domain-specific engagement routing ──────
                 routed_aggregate = False
@@ -4587,6 +5313,7 @@ class BattleManager:
                 # Phase 43c: naval domain routing (all eras, highest priority)
                 if (
                     not routed_aggregate
+                    and best_target.domain is not Domain.AERIAL
                     and (attacker.domain in (Domain.NAVAL, Domain.SUBMARINE)
                          or best_target.domain in (Domain.NAVAL, Domain.SUBMARINE))
                 ):
@@ -4596,11 +5323,19 @@ class BattleManager:
                         naval_config=self._config.naval_config,
                         force_ratio_mod=force_ratio_mod,
                         vls_launches=self._vls_launches,
+                        ammo_def=ammo_def,
+                        current_time_s=current_time_s,
+                        runtime_system_multiplier=runtime_system_multiplier,
                     )
                     if handled:
                         if naval_status is not None:
                             pending_damage.append((best_target, naval_status, wpn_inst.definition.weapon_id))
-                        side_engagements += 1
+                        if _routed_shot_fired(
+                            wpn_inst,
+                            ammo_id,
+                            _ammo_before_routing,
+                        ):
+                            side_engagements += 1
                         routed_aggregate = True
 
                 # Phase 58b: air domain routing (opt-in via enable_air_routing)
@@ -4615,15 +5350,27 @@ class BattleManager:
                         ctx, attacker, best_target, wpn_inst,
                         best_range, dt, timestamp,
                         force_ratio_mod=force_ratio_mod,
+                        ammo_def=ammo_def,
+                        current_time_s=current_time_s,
                     )
                     if handled:
                         if air_status is not None:
                             pending_damage.append((best_target, air_status, wpn_inst.definition.weapon_id))
-                        side_engagements += 1
+                        routed_shot_fired = _routed_shot_fired(
+                            wpn_inst,
+                            ammo_id,
+                            _ammo_before_routing,
+                        )
+                        if routed_shot_fired:
+                            side_engagements += 1
                         routed_aggregate = True
                         # Phase 69a: record sortie consumption
                         _ato_69a = getattr(ctx, "ato_engine", None)
-                        if _ato_69a is not None:
+                        if (
+                            routed_shot_fired
+                            and attacker.domain is Domain.AERIAL
+                            and _ato_69a is not None
+                        ):
                             _sim_time_69a = ctx.clock.elapsed.total_seconds() if hasattr(ctx.clock, "elapsed") else 0.0
                             _ato_69a.record_sortie(attacker.entity_id, _sim_time_69a)
 
@@ -4905,7 +5652,11 @@ class BattleManager:
                             )
                             round_count = max(
                                 1,
-                                int(wpn_inst.definition.rate_of_fire_rpm * dt / 60),
+                                int(
+                                    wpn_inst.definition.rate_of_fire_rpm
+                                    * dt
+                                    / 60
+                                ),
                             )
                             fm_result = ife.fire_mission(
                                 battery_id=attacker.entity_id,
@@ -5022,7 +5773,9 @@ class BattleManager:
                                 self._suppression_states[tid] = UnitSuppressionState()
                             _sup_eng.apply_fire_volume(
                                 state=self._suppression_states[tid],
-                                rounds_per_minute=wpn_inst.definition.rate_of_fire_rpm,
+                                rounds_per_minute=(
+                                    wpn_inst.definition.rate_of_fire_rpm
+                                ),
                                 caliber_mm=wpn_inst.definition.caliber_mm,
                                 range_m=best_range,
                                 duration_s=dt,
@@ -5105,6 +5858,30 @@ class BattleManager:
                                                     )
                                         except Exception:
                                             logger.debug("Fire zone creation failed", exc_info=True)
+
+                if _enable_ammo_gate:
+                    _ammo_consumed = (
+                        _ammo_before_routing
+                        - wpn_inst.ammo_state.available(ammo_id)
+                    )
+                    if _ammo_consumed > 0:
+                        _legacy_ammo_key_trk = (
+                            f"{attacker.entity_id}:"
+                            f"{wpn_inst.definition.weapon_id}"
+                        )
+                        _ammo_key_trk = (
+                            f"{_legacy_ammo_key_trk}:{ammo_id}"
+                        )
+                        self._ammo_expended[_ammo_key_trk] = (
+                            self._ammo_expended.get(
+                                _ammo_key_trk,
+                                self._ammo_expended.get(
+                                    _legacy_ammo_key_trk,
+                                    0,
+                                ),
+                            )
+                            + _ammo_consumed
+                        )
 
         # Phase 66a/68g: guerrilla disengage + retreat movement
         if _enable_unconventional:

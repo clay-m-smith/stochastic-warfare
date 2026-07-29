@@ -13,9 +13,8 @@ guidance: NONE
 magazine_capacity: 80
 reload_time_s: 4.0
 compatible_ammo:
-  - m795_he
-  - m485_illumination
-  - m825_smoke
+  - m821_81mm_he
+  - m853a1_illumination
 weight_kg: 35.0
 reliability: 0.95
 barrel_life_rounds: 10000

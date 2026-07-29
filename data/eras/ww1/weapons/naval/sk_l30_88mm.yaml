@@ -1,0 +1,37 @@
+# Per-gun 8.8 cm SK L/30 U-boat deck-gun definition.
+#
+# NavWeaps' table, compiled from German service material, identifies the
+# U-boat weapon and supplies its 88 mm caliber, 500 kg gun weight, 15 rpm
+# rate, 590 m/s velocity, and 10,500 m maximum range. It also records
+# class-dependent outfits of 100-230 rounds; 116 is the documented UB 30-47
+# outfit used here as a bounded ready allotment, not an integral magazine.
+# https://www.navweaps.com/Weapons/WNGER_88mm-30_skc97.php
+# Official US Naval Historical Center archival analysis establishes the
+# operational WWI German submarine deck-gun context.
+# https://www.ibiblio.org/hyperwar/NHC/NewPDFs/GERMANY/GER%20German%20Submarines%20Atlantic%20Coast%20in%20WWI.pdf
+weapon_id: sk_l30_88mm
+display_name: "8.8 cm SK L/30 Deck Gun"
+category: NAVAL_GUN
+caliber_mm: 88.0
+muzzle_velocity_mps: 590.0
+max_range_m: 10500.0
+effective_range_m: 7000.0
+min_range_m: 0.0
+rate_of_fire_rpm: 15.0
+burst_size: 1
+base_accuracy_mrad: 2.5
+guidance: NONE
+magazine_capacity: 116
+reload_time_s: 4.0
+compatible_ammo:
+  - 88mm_c07_he
+weight_kg: 500.0
+reliability: 0.84
+barrel_life_rounds: 6000
+requires_deployed: false
+traverse_deg: 360.0
+elevation_min_deg: -10.0
+elevation_max_deg: 30.0
+target_domains:
+  - GROUND
+  - NAVAL

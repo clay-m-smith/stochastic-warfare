@@ -88,6 +88,9 @@ sides:
         count: 2
         overrides:
           training_level: 0.65
+          # Hanit is due south of the coastal launch position.  Preserve the
+          # TEL's fixed 45-degree traverse and point the deployed rails at sea.
+          heading: 3.141592653589793
     experience_level: 0.55
     morale_initial: STEADY
     commander_profile: opportunistic_strike
@@ -160,12 +163,3 @@ calibration_overrides:
   red_start_x: 15000.0
   red_start_y: 19000.0     # coastal TEL on Beirut beach
   red_formation_spacing_m: 500.0
-
-  weapon_assignments:
-    # INS Hanit loadout
-    "Barak-1 VLS SAM": barak1_sam
-    "Harpoon Block 1C ASCM": rgm84_harpoon
-    "Oto Melara 76mm/62 Super Rapid": oto_melara_76mm
-    "Mk 15 Phalanx CIWS": mk15_phalanx
-    # Coastal TEL
-    "C-802 Noor Launcher": c802_noor

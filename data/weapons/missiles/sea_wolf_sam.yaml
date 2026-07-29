@@ -1,0 +1,41 @@
+# Conventional trainable six-round GWS-25 Sea Wolf launcher.
+#
+# UK Parliament identifies Sea Wolf as an automatic all-weather point-defense
+# system protecting ships from missile and aircraft attack, and explicitly
+# distinguishes the conventional trainable six-barrel launcher from VL Sea
+# Wolf:
+# https://publications.parliament.uk/pa/cm198889/cmhansrd/1989-02-28/Debate-1.html
+# The bounded legacy GWS-25 missile envelope is 1-6 km and command guided:
+# https://weaponsystems.net/system/1389-GWS-25%20Sea%20Wolf
+#
+# Public government material does not disclose a standalone launcher mass, so
+# weight remains zero rather than copying the authored missile-item weight or
+# inventing a different naval mount.
+weapon_id: sea_wolf_sam
+display_name: "GWS-25 Sea Wolf Six-Round Launcher"
+category: MISSILE_LAUNCHER
+caliber_mm: 180.0
+muzzle_velocity_mps: 0.0
+max_range_m: 6000.0
+effective_range_m: 6000.0
+min_range_m: 1000.0
+rate_of_fire_rpm: 12.0
+burst_size: 1
+base_accuracy_mrad: 0.0
+cep_m: 0.0
+min_engagement_altitude_m: 10.0
+max_engagement_altitude_m: 3000.0
+guidance: COMMAND
+magazine_capacity: 6
+reload_time_s: 300.0
+compatible_ammo:
+  - sea_wolf_gws25
+weight_kg: 0.0
+reliability: 0.90
+barrel_life_rounds: 0
+requires_deployed: false
+traverse_deg: 360.0
+elevation_min_deg: -10.0
+elevation_max_deg: 85.0
+target_domains:
+  - AERIAL

@@ -1,0 +1,33 @@
+# Per-gun British BL 4-inch Mk IX corvette gun.
+# Gibraltar's Ministry for Heritage gives 10-12 rpm, 2,600 ft/s, and
+# 13,850 yards; NavWeaps gives 101.6 mm and 2,154 kg gun weight.
+# https://www.ministryforheritage.gi/heritage-and-antiquities/4-inch-naval-gun-mk-ix-1325
+# https://www.navweaps.com/Weapons/WNBR_4-45_mk9.php
+# No authoritative ship outfit was located for the generic authored corvette,
+# so capacity 1 means the loaded round and does not invent an integral store.
+weapon_id: bl_4in_mk_ix
+display_name: "BL 4-inch Mk IX Gun"
+category: NAVAL_GUN
+caliber_mm: 101.6
+muzzle_velocity_mps: 800.0
+max_range_m: 12660.0
+effective_range_m: 9000.0
+min_range_m: 0.0
+rate_of_fire_rpm: 11.0
+burst_size: 1
+base_accuracy_mrad: 2.2
+guidance: NONE
+magazine_capacity: 1
+reload_time_s: 5.5
+compatible_ammo:
+  - 4in_mk_ix_he
+weight_kg: 2154.0
+reliability: 0.86
+barrel_life_rounds: 3600
+requires_deployed: false
+traverse_deg: 300.0
+elevation_min_deg: -10.0
+elevation_max_deg: 30.0
+target_domains:
+  - GROUND
+  - NAVAL

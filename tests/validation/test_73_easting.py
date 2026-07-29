@@ -129,10 +129,9 @@ class TestDeterministicReplay:
     def test_different_seed_different_result(self, engagement, runner) -> None:
         r1 = runner.run(engagement, seed=42)
         r2 = runner.run(engagement, seed=999)
-        m1 = EngagementMetrics.extract_all(r1)
-        m2 = EngagementMetrics.extract_all(r2)
-        # At least some metrics should differ
-        assert m1 != m2 or r1.ticks_executed != r2.ticks_executed
+        # Aggregate envelopes can legitimately coincide.  The production
+        # event stream must still expose the seed's stochastic effect.
+        assert r1.event_log != r2.event_log
 
 
 # ── Monte Carlo (fast, 5 runs) ───────────────────────────────────────

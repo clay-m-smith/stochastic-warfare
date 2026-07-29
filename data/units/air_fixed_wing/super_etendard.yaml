@@ -18,7 +18,7 @@ equipment:
     category: WEAPON
     weight_kg: 80.0
     reliability: 0.88
-  - name: "Agave Radar"
+  - name: "Agave Maritime Search Radar"
     category: SENSOR
     weight_kg: 70.0
     reliability: 0.80

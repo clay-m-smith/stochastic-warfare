@@ -1,0 +1,25 @@
+# Functional role model for naval gun-laying fire-control radar.
+# The US Naval History and Heritage Command records Mk 4 on Mk 37 directors,
+# Mk 13 on Mk 38 directors, and Mk 25 acquisition by Mk 37 GFCS.
+# Sources:
+#   https://www.history.navy.mil/research/library/online-reading-room/title-list-alphabetically/u/operational-characteristics-of-radar-classified-by-tactical-application.html
+#   https://www.history.navy.mil/our-collections/photography/numerical-list-of-images/nhhc-series/nh-series/NH-70000/NH-70259.html
+#   https://www.history.navy.mil/research/library/online-reading-room/title-list-alphabetically/t/tonkin-gulf-crisis/tonkin-gulf-incidents-of-2-4-aug-1964/uss-maddox-reports-2-4-aug-1964.html
+# Equation inputs reuse the catalog's period gun-laying-radar archetype; the
+# 35,000-yard public Mk 4 reliable maximum is converted to 32,004 m.
+sensor_id: naval_gun_fire_control_radar
+sensor_type: RADAR
+display_name: "Naval Gun Fire-Control Radar (role model)"
+max_range_m: 32004.0
+detection_threshold: 13.0
+false_alarm_rate: 1.0e-6
+scan_time_s: 3.0
+scan_interval_ticks: 2
+frequency_mhz: 3000.0
+peak_power_w: 300000.0
+antenna_gain_dbi: 25.0
+antenna_height_m: 20.0
+min_range_m: 914.4
+fov_deg: 360.0
+requires_los: true
+detects_domain: ["RADAR"]

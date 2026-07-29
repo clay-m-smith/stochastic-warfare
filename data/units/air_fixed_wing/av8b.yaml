@@ -34,6 +34,12 @@ equipment:
     category: WEAPON
     weight_kg: 122.0
     reliability: 0.92
+  # USMC ASO 8000.1C lists Rockeye-family CBU-99B/B on AV-8B [BRU-36/A]:
+  # https://www.cherrypoint.marines.mil/Portals/86/Docs/Cherrypointorders/ASO%208000.1C%20Combined.pdf
+  - name: "BRU-36/A Bomb Ejector Rack"
+    category: WEAPON
+    weight_kg: 40.0
+    reliability: 0.90
   - name: "Mk 20 Rockeye II CBU"
     category: WEAPON
     weight_kg: 222.0
@@ -47,7 +53,7 @@ equipment:
     weight_kg: 85.4
     reliability: 0.90
   - name: "Wing/Fuselage Ordnance Stations"
-    category: WEAPON
+    category: UTILITY
     weight_kg: 450.0
     reliability: 0.92
   - name: "ARBS TV/Laser Spot Tracker"

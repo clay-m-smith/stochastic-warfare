@@ -14,7 +14,11 @@ crew:
     count: 599
     skill: BASIC
 equipment:
-  - name: "Augustin Musket M1798"
+  # "Augustin" denotes a later percussion system, not the 1798 flintlock.
+  # Austrian Academy of Sciences conference source identifies the Imperial-
+  # Royal M1798 infantry musket:
+  # https://www.oeaw.ac.at/fileadmin/Institute/INZ/img/forschung/Habsburgermonarchie/Napoleon-Tagung_Deutsch_Wagram.pdf
+  - name: "Austrian M1798 Infantry Musket"
     category: WEAPON
     weight_kg: 4.5
     reliability: 0.78

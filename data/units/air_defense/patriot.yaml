@@ -20,7 +20,7 @@ crew:
     count: 6
     skill: BASIC
 equipment:
-  - name: "AN/MPQ-53 Radar"
+  - name: "AN/MPQ-53 Patriot Multifunction Radar"
     category: SENSOR
     weight_kg: 6800.0
     reliability: 0.90

@@ -14,7 +14,7 @@ crew:
     skill: EXPERIENCED
 equipment:
   - name: "AN/ALQ-99 Jamming Pods"
-    category: WEAPON
+    category: UTILITY
     weight_kg: 480.0
     reliability: 0.85
   - name: "AN/APG-79 AESA Radar"

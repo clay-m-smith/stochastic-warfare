@@ -1,0 +1,25 @@
+# Functional role model for ground-based air-defense engagement/multifunction
+# radars. US Army, US Government, and IAI sources identify the 9S35,
+# AN/MPQ-53, and EL/M-2084 in tracking/fire-control or multifunction roles.
+# Sources:
+#   https://odin.t2com.army.mil/WEG/Asset/c7f1be46a22bc9b9aeb8179bbb71aa94
+#   https://www.govinfo.gov/content/pkg/GOVPUB-D101-PURL-LPS25699/pdf/GOVPUB-D101-PURL-LPS25699.pdf
+#   https://www.iai.co.il/wp-content/uploads/2025/10/MMR_family-full-AESA-4D-02.pdf
+# Range and RF/equation inputs preserve the existing ground-radar role model;
+# they do not assert physical-performance equivalence among represented radars.
+sensor_id: ground_air_defense_fire_control_radar
+sensor_type: RADAR
+display_name: "Ground Air-Defense Fire-Control Radar (role model)"
+max_range_m: 60000.0
+detection_threshold: 10.0
+false_alarm_rate: 1.0e-7
+scan_time_s: 4.0
+scan_interval_ticks: 2
+frequency_mhz: 9400.0
+peak_power_w: 20000.0
+antenna_gain_dbi: 30.0
+antenna_height_m: 6.0
+min_range_m: 200.0
+fov_deg: 360.0
+requires_los: true
+detects_domain: ["RADAR"]

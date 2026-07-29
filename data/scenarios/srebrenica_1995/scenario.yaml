@@ -53,9 +53,6 @@ calibration_overrides:
   blue_start_y: 6000
   red_start_x: 1000
   red_start_y: 6000
-  weapon_assignments:
-    "AK-47": ak47
-    "RPG-7": rpg7
 escalation_config:
   entry_thresholds: [0.0, 0.05, 0.10, 0.20, 0.30, 0.40, 0.50, 0.60, 0.70, 0.80, 0.90]
   hysteresis_factor: 0.7

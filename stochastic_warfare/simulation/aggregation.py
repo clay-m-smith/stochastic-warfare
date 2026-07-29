@@ -278,6 +278,10 @@ class AggregationEngine:
                 ]
             ctx.unit_weapons.pop(u.entity_id, None)
             ctx.unit_sensors.pop(u.entity_id, None)
+            getattr(ctx, "equipment_resolutions", {}).pop(
+                u.entity_id,
+                None,
+            )
             if ctx.morale_states is not None:
                 ctx.morale_states.pop(u.entity_id, None)
 
@@ -336,6 +340,10 @@ class AggregationEngine:
             ]
         ctx.unit_weapons.pop(aggregate_id, None)
         ctx.unit_sensors.pop(aggregate_id, None)
+        getattr(ctx, "equipment_resolutions", {}).pop(
+            aggregate_id,
+            None,
+        )
         if ctx.morale_states is not None:
             ctx.morale_states.pop(aggregate_id, None)
 

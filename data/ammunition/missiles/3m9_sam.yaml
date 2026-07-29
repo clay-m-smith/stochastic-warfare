@@ -6,7 +6,7 @@ diameter_mm: 330.0
 drag_coefficient: 0.28
 blast_radius_m: 15.0
 fragmentation_radius_m: 25.0
-guidance: RADAR_SEMI_ACTIVE
+guidance: RADAR_SEMI
 seeker_fov_deg: 20.0
 seeker_range_m: 24000.0
 pk_at_reference: 0.55

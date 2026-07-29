@@ -1,0 +1,22 @@
+# NUSC Technical Document 5436 records the Mark 15 Mod 3 at 3,841 lb
+# (1,742.25 kg), 21-inch diameter, 45 kn at its 6,000-yard high-speed setting,
+# with a Mark 7 Mod 3 warhead containing 825 lb (374.21 kg) of HBX:
+# https://www.maritime.org/doc/jolie/part2.php
+#
+# The ammunition mass is the complete launched torpedo. The model's legacy
+# blast-radius abstraction remains explicit; physical HBX mass is not written
+# to explosive_fill_kg because that field requires TNT-equivalent mass.
+ammo_id: mk15_torpedo_warhead
+display_name: "Mk 15 Mod 3 Torpedo"
+ammo_type: TORPEDO
+mass_kg: 1742.25
+diameter_mm: 533.4
+drag_coefficient: 0.30
+penetration_mm_rha: 0.0
+penetration_reference_range_m: 0.0
+blast_radius_m: 30.0
+fragmentation_radius_m: 50.0
+guidance: NONE
+propulsion: torpedo
+max_speed_mps: 23.15
+unit_cost_factor: 50.0

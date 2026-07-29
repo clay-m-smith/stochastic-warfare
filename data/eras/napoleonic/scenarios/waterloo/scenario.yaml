@@ -122,16 +122,6 @@ calibration_overrides:
   # 9 British units × 200m ≈ 1600m defensive frontage
   british_formation_spacing_m: 200.0
   defensive_sides: [british]
-  weapon_assignments:
-    "Charleville 1777 Musket": charleville_1777
-    "Brown Bess Musket": brown_bess
-    "Baker Rifle": baker_rifle
-    "6-Pounder Cannon": 6pdr_cannon
-    "12-Pounder Cannon": 12pdr_cannon
-    "Cavalry Saber": cavalry_saber
-    "Lance": lance
-    "Bayonet": bayonet
-    "Musketoon": cavalry_saber
 
 documented_outcomes:
   - name: french_casualty_fraction

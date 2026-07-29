@@ -1,0 +1,26 @@
+# 130mm high-explosive fragmentation ammunition for the AK-130.
+#
+# The Russian Arms 2000 catalog identifies the A3-UZS-44R / A3-ZS-44
+# ammunition family for AK-130:
+# https://www.studmed.ru/view/katalog-oruzhie-rossii-2000-c82-795_86e353198b8.html?page=52
+# A supplementary naval ordnance reference reports a 33.4 kg projectile and
+# 3.56 kg explosive load for the ZS-44 family:
+# https://www.navweaps.com/Weapons/WNRussian_51-70_ak130.php
+#
+# Effect radii are conservative runtime abstractions rather than a released
+# fragment-pattern claim.
+ammo_id: ak130_he_frag
+display_name: "AK-130 130mm HE Fragmentation Round"
+ammo_type: HE
+mass_kg: 33.4
+diameter_mm: 130.0
+drag_coefficient: 0.29
+penetration_mm_rha: 0.0
+penetration_reference_range_m: 0.0
+blast_radius_m: 18.0
+fragmentation_radius_m: 45.0
+explosive_fill_kg: 3.56
+guidance: NONE
+propulsion: none
+max_speed_mps: 850.0
+unit_cost_factor: 4.0

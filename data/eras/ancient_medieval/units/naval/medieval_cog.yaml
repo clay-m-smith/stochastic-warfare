@@ -17,9 +17,13 @@ crew:
     count: 19
     skill: BASIC
 equipment:
-  - name: "Crew Weapons (Swords and Crossbows)"
+  - name: "Crew Swords"
     category: WEAPON
-    weight_kg: 40.0
+    weight_kg: 20.0
+    reliability: 0.85
+  - name: "Crossbows"
+    category: WEAPON
+    weight_kg: 20.0
     reliability: 0.85
   - name: "Single Square Sail"
     category: PROPULSION

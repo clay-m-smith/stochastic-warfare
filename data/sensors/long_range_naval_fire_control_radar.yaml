@@ -1,0 +1,23 @@
+# Functional role model for long-range naval target tracking/illumination.
+# Type 909 is the target-tracking and illumination element of Sea Dart, not a
+# volume air-search radar.
+# Supplementary source:
+#   https://www.militaryperiscope.com/weapons/sensorselectronics/naval-radars/type-909/overview/
+# RF/equation inputs reuse the catalog's fire-control archetype and do not
+# assert Type 909 physical-performance equivalence.
+sensor_id: long_range_naval_fire_control_radar
+sensor_type: RADAR
+display_name: "Long-Range Naval Fire-Control Radar (role model)"
+max_range_m: 80000.0
+detection_threshold: 10.0
+false_alarm_rate: 1.0e-6
+scan_time_s: 3.0
+scan_interval_ticks: 2
+frequency_mhz: 6000.0
+peak_power_w: 200000.0
+antenna_gain_dbi: 30.0
+antenna_height_m: 20.0
+min_range_m: 500.0
+fov_deg: 360.0
+requires_los: true
+detects_domain: ["RADAR"]

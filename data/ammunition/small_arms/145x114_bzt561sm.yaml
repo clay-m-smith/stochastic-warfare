@@ -1,0 +1,24 @@
+# 14.5x114mm 57-BZT-561SM API-T cartridge for the KPVT.
+#
+# Rosoboronexport identifies this cartridge as KPVT ammunition and publishes a
+# 59.3-61.3 g projectile, V25 of 995-1015 m/s, and penetration of a 20 mm plate
+# at 100 m and 20 degrees from vertical:
+# https://roe.ru/en/production/land-forces/small-arms-sv/small-arms-ammunition-sv/14-5/57-bzt-561sm/
+#
+# Midpoints are used for the two released ranges. The model's RHA field cannot
+# encode plate material or obliquity, so the source test geometry remains
+# explicit here rather than being silently generalized.
+ammo_id: 145x114_bzt561sm
+display_name: "14.5x114mm 57-BZT-561SM API-T"
+ammo_type: AP
+mass_kg: 0.0603
+diameter_mm: 14.5
+drag_coefficient: 0.30
+penetration_mm_rha: 20.0
+penetration_reference_range_m: 100.0
+blast_radius_m: 0.0
+fragmentation_radius_m: 0.0
+guidance: NONE
+propulsion: none
+max_speed_mps: 1005.0
+unit_cost_factor: 0.10

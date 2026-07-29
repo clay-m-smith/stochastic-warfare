@@ -1,0 +1,24 @@
+# A distinct composite-bow catalog entry; it does not inherit the English
+# longbow's ammunition or performance.  The modeled envelope is conservative.
+# Museum construction reference (wood/horn/sinew composite):
+# https://www.britishmuseum.org/collection/object/W_As1954-07-6
+weapon_id: composite_bow
+display_name: "Composite Bow"
+category: RIFLE
+caliber_mm: 10.0
+muzzle_velocity_mps: 60.0
+max_range_m: 200.0
+min_range_m: 0.0
+rate_of_fire_rpm: 5.0
+burst_size: 1
+base_accuracy_mrad: 18.0
+guidance: NONE
+magazine_capacity: 24
+reload_time_s: 0.0
+compatible_ammo:
+  - composite_arrow
+weight_kg: 1.0
+reliability: 0.90
+barrel_life_rounds: 5000
+requires_deployed: false
+target_domains: ["GROUND", "NAVAL"]

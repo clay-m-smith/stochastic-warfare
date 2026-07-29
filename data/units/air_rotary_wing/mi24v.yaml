@@ -33,6 +33,12 @@ equipment:
     category: SENSOR
     weight_kg: 40.0
     reliability: 0.82
+  # Direct crew visual observation remains live; Raduga-Sh is classified
+  # separately as a non-runtime Shturm guidance/aiming channel.
+  - name: "Naked Eye Observation"
+    category: SENSOR
+    weight_kg: 0.5
+    reliability: 0.99
   - name: "R-863 Radio"
     category: COMMUNICATION
     weight_kg: 10.0

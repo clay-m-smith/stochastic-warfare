@@ -1,0 +1,18 @@
+# Source: U.S. Air Force Test Center History Office identifies the AWG-9/
+# Phoenix system as the F-14 derivative of the ASG-18 interceptor radar:
+# https://www.edwards.af.mil/News/Article/2059217/flashback-triplesonic-interceptors-the-f-103-f-108-yf-12a/
+# The range below is a conservative simulation cap, not a claim that the
+# source publishes a measured detection range for every target signature.
+sensor_id: awg9_fire_control_radar
+sensor_type: RADAR
+display_name: "AN/AWG-9 Fire-Control Radar"
+max_range_m: 185000.0
+detection_threshold: 12.0
+false_alarm_rate: 1.0e-7
+scan_time_s: 2.0
+scan_interval_ticks: 2
+min_range_m: 500.0
+fov_deg: 120.0
+requires_los: true
+detects_domain: ["RADAR"]
+target_domains: ["AERIAL"]

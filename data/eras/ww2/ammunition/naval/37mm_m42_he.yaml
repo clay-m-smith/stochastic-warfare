@@ -1,0 +1,19 @@
+# German 3.7 cm Flak M42 HE-tracer projectile.
+# The compiled service table gives 0.635 kg projectile, 0.026 kg filling, and
+# 865 m/s muzzle velocity.
+# https://www.navweaps.com/Weapons/WNGER_37mm-69_mk42.php
+ammo_id: 37mm_m42_he
+display_name: "3.7 cm Flak M42 HE-T"
+ammo_type: HE
+mass_kg: 0.635
+diameter_mm: 37.0
+drag_coefficient: 0.33
+penetration_mm_rha: 0.0
+penetration_reference_range_m: 0.0
+blast_radius_m: 4.0
+fragmentation_radius_m: 8.0
+explosive_fill_kg: 0.026
+guidance: NONE
+propulsion: none
+max_speed_mps: 865.0
+unit_cost_factor: 0.4

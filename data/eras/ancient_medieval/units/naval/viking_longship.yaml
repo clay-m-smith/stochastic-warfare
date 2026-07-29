@@ -16,13 +16,25 @@ crew:
     count: 59
     skill: TRAINED  # Viking warriors double as oarsmen
 equipment:
-  - name: "Viking Weapons (Swords, Axes, Spears)"
+  - name: "Viking Swords"
     category: WEAPON
-    weight_kg: 120.0
+    weight_kg: 40.0
     reliability: 0.92
-  - name: "Bows and Javelins"
+  - name: "Viking Battle Axes"
     category: WEAPON
-    weight_kg: 30.0
+    weight_kg: 40.0
+    reliability: 0.92
+  - name: "Viking Spears"
+    category: WEAPON
+    weight_kg: 40.0
+    reliability: 0.92
+  - name: "Composite Bow"
+    category: WEAPON
+    weight_kg: 15.0
+    reliability: 0.88
+  - name: "Viking Javelins"
+    category: WEAPON
+    weight_kg: 15.0
     reliability: 0.88
   - name: "Square Sail + Oar Banks (30 oars)"
     category: PROPULSION

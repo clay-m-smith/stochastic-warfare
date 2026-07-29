@@ -17,3 +17,4 @@ weight_kg: 3.5
 reliability: 0.90
 barrel_life_rounds: 5000
 requires_deployed: false
+target_domains: ["GROUND", "NAVAL"]

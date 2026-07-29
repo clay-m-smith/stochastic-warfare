@@ -1,0 +1,34 @@
+# Panther 7.5 cm KwK 42 L/70 tank gun.
+# Tank Museum identifies the Panther's exact main gun; official US Army
+# technical intelligence documents its APCBC range scale to 3,000 m.
+# https://tankmuseum.org/tank-nuts/tank-collection/panther/
+# https://www.ibiblio.org/hyperwar/Germany/HB/HB-8.html
+# An official US Army battle book gives the Panther's 79-round ammunition load.
+# https://www.govinfo.gov/content/pkg/GOVPUB-D101-PURL-gpo46222/pdf/GOVPUB-D101-PURL-gpo46222.pdf
+# The 6 rpm modeled service rate and 935 m/s shot velocity follow the published
+# French firing-table compilation cited by the ammunition definition.
+weapon_id: kwk42_75mm
+display_name: "7.5 cm KwK 42 L/70 Gun"
+category: CANNON
+caliber_mm: 75.0
+muzzle_velocity_mps: 935.0
+max_range_m: 10000.0
+effective_range_m: 3000.0
+min_range_m: 25.0
+rate_of_fire_rpm: 6.0
+burst_size: 1
+base_accuracy_mrad: 1.0
+guidance: NONE
+magazine_capacity: 79
+reload_time_s: 10.0
+compatible_ammo:
+  - 75mm_pzgr39_42_apcbc
+weight_kg: 1000.0
+reliability: 0.92
+barrel_life_rounds: 3000
+requires_deployed: false
+traverse_deg: 360.0
+elevation_min_deg: -8.0
+elevation_max_deg: 18.0
+target_domains:
+  - GROUND

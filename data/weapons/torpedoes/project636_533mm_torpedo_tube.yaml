@@ -1,0 +1,38 @@
+# One 533mm torpedo launching unit from the Project 636 submarine system.
+#
+# Rosoboronexport publishes six 533mm launching units and an 18-torpedo load
+# for Project 636:
+# https://roe.ru/pdfs/pdf_6484.pdf
+# Its UGST fact sheet confirms launch from submarine 533mm tubes:
+# https://roe.ru/pdfs/pdf_2253.pdf
+#
+# The authored equipment label records six tubes, but this catalog definition
+# represents one exact launching-unit identity. Tube multiplicity belongs to
+# unit equipment topology, not hidden mapping multiplication.
+weapon_id: project636_533mm_torpedo_tube
+display_name: "Project 636 533mm Torpedo Launching Unit"
+category: TORPEDO_TUBE
+caliber_mm: 533.0
+muzzle_velocity_mps: 0.0
+max_range_m: 50000.0
+effective_range_m: 50000.0
+min_range_m: 500.0
+rate_of_fire_rpm: 0.5
+burst_size: 1
+base_accuracy_mrad: 0.0
+cep_m: 0.0
+guidance: COMBINED
+magazine_capacity: 1
+reload_time_s: 120.0
+compatible_ammo:
+  - ugst_torpedo
+weight_kg: 0.0
+reliability: 0.90
+barrel_life_rounds: 0
+requires_deployed: false
+traverse_deg: 0.0
+elevation_min_deg: 0.0
+elevation_max_deg: 0.0
+target_domains:
+  - NAVAL
+  - SUBMARINE

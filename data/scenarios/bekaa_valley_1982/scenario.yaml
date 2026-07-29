@@ -144,6 +144,3 @@ calibration_overrides:
   morale_degrade_rate_modifier: 1.5
   morale_base_degrade_rate: 0.01
   morale_casualty_weight: 0.5
-  weapon_assignments:
-    "M61A1 Vulcan 20mm": m61a1_vulcan
-    "2K12 Launcher": sa6_3m9

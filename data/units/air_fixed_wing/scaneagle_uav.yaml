@@ -77,6 +77,6 @@ equipment:
     weight_kg: 1.2
     reliability: 0.87
   - name: "GPS/INS Navigation"
-    category: SENSOR
+    category: NAVIGATION
     weight_kg: 0.5
     reliability: 0.90

@@ -1,0 +1,38 @@
+# Royal Navy 4.5-inch Mk 8 medium-range naval gun.
+#
+# The Royal Navy publishes 23.8 tonnes for the Mod 0 mount, approximately
+# 25 rounds/minute, 22 km standard / 27.5 km HEER range, and 1973 entry:
+# https://www.royalnavy.mod.uk/news/2016/april/01/160401-hms-collingwood-takes-delivery-of-gate-guard
+# It separately publishes a 37 kg round and a five-second loading cadence:
+# https://www.royalnavy.mod.uk/news/2018/august/07/180807-university-students-meet-the-navy-big-guns
+#
+# Public sources do not release a universal ready-feed count. The 22-round
+# capacity is an explicit conservative runtime feed-ring allocation, not the
+# ship's deep-magazine total. The standard-round 22 km envelope is used.
+weapon_id: mk8_45in
+display_name: "4.5-inch Mk 8 Naval Gun"
+category: NAVAL_GUN
+caliber_mm: 114.3
+muzzle_velocity_mps: 693.0
+max_range_m: 22000.0
+effective_range_m: 18000.0
+min_range_m: 300.0
+rate_of_fire_rpm: 25.0
+burst_size: 1
+base_accuracy_mrad: 0.8
+guidance: NONE
+magazine_capacity: 22
+reload_time_s: 60.0
+compatible_ammo:
+  - 45in_mk8_n20_he
+weight_kg: 23800.0
+reliability: 0.92
+barrel_life_rounds: 2500
+requires_deployed: false
+traverse_deg: 340.0
+elevation_min_deg: -10.0
+elevation_max_deg: 55.0
+target_domains:
+  - GROUND
+  - NAVAL
+  - AERIAL

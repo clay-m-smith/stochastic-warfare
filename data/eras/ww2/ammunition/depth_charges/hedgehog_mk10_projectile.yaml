@@ -1,0 +1,21 @@
+# Mk 10 Hedgehog contact-fuzed ASW projectile.
+# US Naval History and Heritage Command gives 24 projectiles per salvo,
+# 7.2-inch diameter, 65 lb mass, and 35 lb explosive charge.
+# https://www.history.navy.mil/content/history/museums/nmusn/explore/photography/wwii/wwii-atlantic/battle-of-the-atlantic/anti-submarine-warfare/hedgehog.html
+# Official Bureau of Ordnance history records the 24-charge elliptical pattern.
+# https://www.ibiblio.org/hyperwar/NHC/NewPDFs/USN/USN%20Admin%20Histories/USN.Bureau.Ordnance.WWII.pdf
+ammo_id: hedgehog_mk10_projectile
+display_name: "Mk 10 Hedgehog Contact Projectile"
+ammo_type: HE
+mass_kg: 29.48
+diameter_mm: 182.88
+drag_coefficient: 0.50
+penetration_mm_rha: 0.0
+penetration_reference_range_m: 0.0
+blast_radius_m: 10.0
+fragmentation_radius_m: 0.0
+explosive_fill_kg: 15.88
+guidance: NONE
+propulsion: rocket
+max_speed_mps: 0.0
+unit_cost_factor: 2.0

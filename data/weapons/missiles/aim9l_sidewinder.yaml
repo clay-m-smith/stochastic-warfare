@@ -1,0 +1,39 @@
+# Four-station AIM-9L Sidewinder aircraft loadout boundary.
+#
+# The U.S. Air Force identifies the AIM-9L as the first all-aspect Sidewinder
+# and publishes its infrared guidance and family physical envelope:
+# https://www.af.mil/About-Us/Fact-Sheets/Display/Article/104557/aim-9-sidewinder/
+# An official F-15 fact sheet records the period four-AIM-9 station load:
+# https://www.eglin.af.mil/Portals/56/documents/history/AFD-141104-028.pdf
+#
+# Variant range is not released. The 18 km maximum is a conservative modeled
+# legacy-family bound; capacity represents four aircraft stations rather than
+# a hidden launcher magazine.
+weapon_id: aim9l_sidewinder
+display_name: "AIM-9L Sidewinder Four-Station Loadout"
+category: MISSILE_LAUNCHER
+caliber_mm: 130.0
+muzzle_velocity_mps: 0.0
+max_range_m: 18000.0
+effective_range_m: 15000.0
+min_range_m: 300.0
+rate_of_fire_rpm: 8.0
+burst_size: 1
+base_accuracy_mrad: 0.0
+cep_m: 0.0
+min_engagement_altitude_m: 15.0
+max_engagement_altitude_m: 18000.0
+guidance: IR
+magazine_capacity: 4
+reload_time_s: 0.0
+compatible_ammo:
+  - aim9l_sidewinder
+weight_kg: 0.0
+reliability: 0.91
+barrel_life_rounds: 0
+requires_deployed: false
+traverse_deg: 0.0
+elevation_min_deg: 0.0
+elevation_max_deg: 0.0
+target_domains:
+  - AERIAL

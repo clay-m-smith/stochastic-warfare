@@ -61,6 +61,16 @@ def _run_one(seed: int, max_ticks: int = 1500) -> dict:
         max_duration_s=7200.0,
     )
     recorder = SimulationRecorder(ctx.event_bus)
+    red_launchers = [
+        attachment
+        for unit in ctx.units_by_side["red"]
+        for attachment in ctx.unit_weapons[unit.entity_id]
+        if attachment.weapon.weapon_id == "c802_noor"
+    ]
+    c802_rounds_before = sum(
+        attachment.weapon.ammo_state.available("c802_noor_warhead")
+        for attachment in red_launchers
+    )
     engine = SimulationEngine(
         ctx,
         config=EngineConfig(max_ticks=max_ticks),
@@ -76,12 +86,29 @@ def _run_one(seed: int, max_ticks: int = 1500) -> dict:
     victory = getattr(engine, "_last_victory", None)
     winner = (getattr(victory, "winning_side", "") or "").lower()
     ticks = ctx.clock.tick_count
+    c802_events = [
+        event
+        for event in recorder.events
+        if event.event_type == "EngagementEvent"
+        and event.data.get("attacker_id", "").startswith(
+            "red_hezbollah_coastal_tel_",
+        )
+        and event.data.get("weapon_id") == "c802_noor"
+        and event.data.get("ammo_type") == "c802_noor_warhead"
+    ]
+    c802_rounds_after = sum(
+        attachment.weapon.ammo_state.available("c802_noor_warhead")
+        for attachment in red_launchers
+    )
     return {
         "hanit_status": hanit_status,
         "red_destroyed": red_d,
         "winner": winner,
         "ticks": ticks,
         "events": recorder.events,
+        "c802_events": c802_events,
+        "c802_rounds_before": c802_rounds_before,
+        "c802_rounds_after": c802_rounds_after,
     }
 
 
@@ -152,5 +179,16 @@ class TestInsHanitRuntime:
         """Historical outcome: Hanit damaged but not destroyed."""
         status = run_result["hanit_status"]
         assert status != UnitStatus.DESTROYED, (
-            f"Hanit destroyed — historical outcome was damage + survival"
+            "Hanit destroyed — historical outcome was damage + survival"
+        )
+
+    def test_c802_engages_hanit(self, run_result: dict) -> None:
+        """The red launchers exercise the production ASCM route."""
+        assert run_result["c802_events"]
+
+    def test_c802_consumes_live_ammunition(self, run_result: dict) -> None:
+        """A recorded launch must consume the launcher's live round."""
+        assert (
+            run_result["c802_rounds_after"]
+            < run_result["c802_rounds_before"]
         )

@@ -1,0 +1,33 @@
+# AK-74M 5.45x39mm assault rifle.
+#
+# Rosoboronexport publishes 5.45 mm caliber, 900 m/s muzzle velocity, 1,000 m
+# sighting range, 650 rounds/minute, 3.6 kg mass, and 30-round magazine:
+# https://roe.ru/en/production/land-forces/small-arms-sv/assault-rifles-sv/ak-74m/
+#
+# The 500 m effective range is a conservative runtime bound below the released
+# sight setting; the catalog's 1,000 m value remains max/sighting range.
+weapon_id: ak74_545mm
+display_name: "AK-74M 5.45mm Assault Rifle"
+category: RIFLE
+caliber_mm: 5.45
+muzzle_velocity_mps: 900.0
+max_range_m: 1000.0
+effective_range_m: 500.0
+min_range_m: 0.0
+rate_of_fire_rpm: 650.0
+burst_size: 3
+base_accuracy_mrad: 1.8
+guidance: NONE
+magazine_capacity: 30
+reload_time_s: 3.0
+compatible_ammo:
+  - 545x39_ball
+weight_kg: 3.6
+reliability: 0.94
+barrel_life_rounds: 15000
+requires_deployed: false
+traverse_deg: 360.0
+elevation_min_deg: -45.0
+elevation_max_deg: 80.0
+target_domains:
+  - GROUND

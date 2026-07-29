@@ -1,0 +1,33 @@
+# One physical 20 mm Oerlikon barrel, independent of authored xN labels.
+# Official Bureau of Ordnance history documents the naval weapon; the compiled
+# table gives 450 rpm cyclic, 250-320 rpm practical, 844 m/s new-gun velocity,
+# 4,389 m maximum range, 910 m effective range, and a 60-round drum.
+# https://www.ibiblio.org/hyperwar/USN/Admin-Hist/075-Ordnance/075-Ord5R.html
+# https://www.navweaps.com/Weapons/WNUS_2cm-70_mk234.php
+weapon_id: oerlikon_20mm_mk4
+display_name: "20 mm Oerlikon Mk 4 Gun"
+category: AAA
+caliber_mm: 20.0
+muzzle_velocity_mps: 844.0
+max_range_m: 4389.0
+effective_range_m: 910.0
+min_range_m: 25.0
+rate_of_fire_rpm: 280.0
+burst_size: 5
+base_accuracy_mrad: 3.0
+min_engagement_altitude_m: 0.0
+max_engagement_altitude_m: 3048.0
+guidance: NONE
+magazine_capacity: 60
+reload_time_s: 4.0
+compatible_ammo:
+  - oerlikon_20mm_he
+weight_kg: 68.0
+reliability: 0.88
+barrel_life_rounds: 9000
+requires_deployed: false
+traverse_deg: 360.0
+elevation_min_deg: -15.0
+elevation_max_deg: 90.0
+target_domains:
+  - AERIAL

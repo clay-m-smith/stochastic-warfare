@@ -6,7 +6,11 @@ import numpy as np
 import pytest
 
 from stochastic_warfare.core.types import Domain, Position, Side
-from stochastic_warfare.entities.loader import UnitDefinition, UnitLoader
+from stochastic_warfare.entities.loader import (
+    SensorPolicy,
+    UnitDefinition,
+    UnitLoader,
+)
 from stochastic_warfare.entities.unit_classes.aerial import AerialUnit
 from stochastic_warfare.entities.unit_classes.air_defense import AirDefenseUnit
 from stochastic_warfare.entities.unit_classes.ground import GroundUnit, GroundUnitType
@@ -28,6 +32,8 @@ class TestUnitDefinition:
             max_speed=5.0,
             crew=[{"role": "COMMANDER", "count": 1}],
             equipment=[{"name": "Gun", "category": "WEAPON"}],
+            sensor_policy=SensorPolicy.INTENTIONALLY_NONE,
+            sensor_policy_reason="Synthetic unit fixture intentionally has no sensor",
         )
         assert d.unit_type == "test"
         assert d.domain == "ground"
@@ -41,6 +47,10 @@ class TestUnitDefinition:
                 max_speed=5.0,
                 crew=[{"role": "COMMANDER", "count": 1}],
                 equipment=[{"name": "Gun", "category": "WEAPON"}],
+                sensor_policy=SensorPolicy.INTENTIONALLY_NONE,
+                sensor_policy_reason=(
+                    "Synthetic invalid-domain fixture intentionally has no sensor"
+                ),
             )
 
 

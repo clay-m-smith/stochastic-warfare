@@ -162,6 +162,9 @@ The loader automatically:
 - Validates and merges a sparse calibration overlay without modifying YAML, or
   accepts a mutually exclusive prevalidated effective config
 - Loads unit, weapon, ammo, sensor, and signature definitions
+- Preflights reachable initial and reinforcement equipment through the typed
+  registry, then retains one `RuntimeLoadoutBuilder` for initial, arriving, and
+  checkpoint-reconstructed loadouts
 - Creates terrain, environment, detection, combat, movement, morale, C2, and logistics engines
 - Wires Schools, Escalation, and DEW when their configuration enables them
 - Constructs EW, Space, and CBRN suites only when enabled and permitted by the

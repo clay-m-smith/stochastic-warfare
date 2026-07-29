@@ -8,6 +8,7 @@ follow pre-scripted behavioral rules rather than AI-driven planning.
 from __future__ import annotations
 
 import math
+from collections.abc import Mapping
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, Protocol
@@ -15,13 +16,7 @@ from typing import Any, Protocol
 import numpy as np
 from pydantic import BaseModel
 
-from stochastic_warfare.combat.ammunition import (
-    AmmoDefinition,
-    AmmoLoader,
-    AmmoState,
-    WeaponInstance,
-    WeaponLoader,
-)
+from stochastic_warfare.combat.ammunition import AmmoLoader, WeaponLoader
 from stochastic_warfare.combat.ballistics import BallisticsEngine
 from stochastic_warfare.combat.damage import DamageEngine
 from stochastic_warfare.combat.engagement import EngagementEngine
@@ -29,16 +24,24 @@ from stochastic_warfare.combat.fratricide import FratricideEngine
 from stochastic_warfare.combat.hit_probability import HitProbabilityEngine
 from stochastic_warfare.combat.suppression import SuppressionEngine
 from stochastic_warfare.core.clock import SimulationClock
+from stochastic_warfare.core.era import get_era_config
 from stochastic_warfare.core.events import Event, EventBus
 from stochastic_warfare.core.logging import get_logger
 from stochastic_warfare.core.rng import RNGManager
 from stochastic_warfare.core.types import ModuleId, Position
 from stochastic_warfare.detection.detection import DetectionEngine
-from stochastic_warfare.detection.sensors import SensorInstance, SensorLoader, SensorType
+from stochastic_warfare.detection.sensors import SensorLoader, SensorType
 from stochastic_warfare.detection.signatures import SignatureLoader
 from stochastic_warfare.entities.base import Unit, UnitStatus
 from stochastic_warfare.entities.loader import UnitLoader
 from stochastic_warfare.morale.state import MoraleConfig, MoraleState, MoraleStateMachine
+from stochastic_warfare.simulation.equipment_mappings import (
+    EQUIPMENT_MAPPING_REGISTRY,
+)
+from stochastic_warfare.simulation.loadouts import (
+    RuntimeLoadoutBuilder,
+    WeaponAttachment,
+)
 from stochastic_warfare.terrain.heightmap import Heightmap, HeightmapConfig
 from stochastic_warfare.validation.historical_data import (
     ForceDefinition,
@@ -480,17 +483,33 @@ class ScenarioRunner:
         sensor_loader = SensorLoader(self._data_dir / "sensors")
         sensor_loader.load_all()
 
-        # 4. Forces
+        calibration = engagement.calibration_overrides
+        reachable_unit_types = tuple(
+            entry["unit_type"]
+            for force in (engagement.blue_forces, engagement.red_forces)
+            for entry in force.units
+        )
+        loadout_builder = RuntimeLoadoutBuilder(
+            weapon_loader=weapon_loader,
+            ammo_loader=ammo_loader,
+            sensor_loader=sensor_loader,
+            unit_definitions=unit_loader.definitions(),
+            era_config=get_era_config("modern"),
+            assignment_overrides=calibration.weapon_assignments,
+            reachable_unit_types=reachable_unit_types,
+            registry=EQUIPMENT_MAPPING_REGISTRY,
+        )
+
+        # 4. Forces and their production loadouts
         entities_rng = rng_mgr.get_stream(ModuleId.ENTITIES)
-        cal = engagement.calibration_overrides
-        blue_start_x = cal.get("blue_start_x", 100.0)
-        blue_start_y = cal.get(
+        blue_start_x = calibration.get("blue_start_x", 100.0)
+        blue_start_y = calibration.get(
             "blue_start_y", engagement.terrain.height_m / 2,
         )
-        red_start_x = cal.get(
+        red_start_x = calibration.get(
             "red_start_x", engagement.terrain.width_m - 100.0,
         )
-        red_start_y = cal.get(
+        red_start_y = calibration.get(
             "red_start_y", engagement.terrain.height_m / 2,
         )
         blue_forces = build_forces(
@@ -507,6 +526,9 @@ class ScenarioRunner:
             start_x=red_start_x,
             start_y=red_start_y,
         )
+        runtime_loadouts = loadout_builder.build(blue_forces + red_forces)
+        unit_weapons = runtime_loadouts.unit_weapons
+        unit_sensors = runtime_loadouts.unit_sensors
 
         units_by_side: dict[str, list[Unit]] = {
             engagement.blue_forces.side: blue_forces,
@@ -536,22 +558,6 @@ class ScenarioRunner:
         morale_config = self._build_morale_config(engagement.calibration_overrides)
         morale_machine = MoraleStateMachine(bus, morale_rng, morale_config)
 
-        # Build weapon instances for each unit (pre-sorted by max_range
-        # descending so ATGMs fire before guns at distance)
-        unit_weapons = self._assign_weapons(
-            blue_forces + red_forces,
-            weapon_loader,
-            ammo_loader,
-            engagement.calibration_overrides,
-        )
-        for uid, wpns in unit_weapons.items():
-            wpns.sort(key=lambda w: w[0].definition.max_range_m, reverse=True)
-
-        # Build sensor instances
-        unit_sensors = self._assign_sensors(
-            blue_forces + red_forces, sensor_loader
-        )
-
         # Morale tracking
         unit_morale: dict[str, MoraleState] = {}
         for u in blue_forces + red_forces:
@@ -567,7 +573,7 @@ class ScenarioRunner:
             ]
 
         # Calibration overrides
-        cal = engagement.calibration_overrides
+        cal = calibration
         visibility_m = engagement.weather_conditions.get("visibility_m", 10000.0)
         thermal_contrast = cal.get("thermal_contrast", 1.0)
         hit_prob_mod = cal.get("hit_probability_modifier", 1.0)
@@ -689,14 +695,13 @@ class ScenarioRunner:
                     # Engage with longest-range available weapon (ATGMs
                     # before guns at distance, guns before ATGMs close in).
                     # Weapons pre-sorted at setup time.
-                    for wpn_inst, ammo_defs in weapons:
-                        if not ammo_defs:
+                    for attachment in weapons:
+                        wpn_inst = attachment.weapon
+                        ammo_def = attachment.first_fireable_ammunition()
+                        if ammo_def is None:
                             continue
-                        ammo_def = ammo_defs[0]
                         ammo_id = ammo_def.ammo_id
 
-                        if not wpn_inst.can_fire(ammo_id):
-                            continue
                         if wpn_inst.definition.max_range_m > 0 and best_range > wpn_inst.definition.max_range_m:
                             continue
 
@@ -857,81 +862,10 @@ class ScenarioRunner:
         return MoraleConfig(**kwargs) if kwargs else None
 
     @staticmethod
-    def _assign_weapons(
-        units: list[Unit],
-        weapon_loader: WeaponLoader,
-        ammo_loader: AmmoLoader,
-        calibration: Any,
-    ) -> dict[str, list[tuple[WeaponInstance, list[AmmoDefinition]]]]:
-        """Assign weapon instances to units based on their equipment."""
-        result: dict[str, list[tuple[WeaponInstance, list[AmmoDefinition]]]] = {}
-        weapon_map = calibration.get("weapon_assignments", {})
-
-        for unit in units:
-            weapons: list[tuple[WeaponInstance, list[AmmoDefinition]]] = []
-            for equip in unit.equipment:
-                if equip.category.name != "WEAPON":
-                    continue
-                # Try to find a matching weapon definition
-                wpn_id = weapon_map.get(equip.name, _guess_weapon_id(equip.name))
-                if wpn_id is None:
-                    continue
-                try:
-                    wpn_def = weapon_loader.get_definition(wpn_id)
-                except KeyError:
-                    continue
-
-                # Load compatible ammo
-                ammo_defs: list[AmmoDefinition] = []
-                rounds: dict[str, int] = {}
-                for ammo_id in wpn_def.compatible_ammo:
-                    try:
-                        adef = ammo_loader.get_definition(ammo_id)
-                        ammo_defs.append(adef)
-                        rounds[ammo_id] = wpn_def.magazine_capacity
-                    except KeyError:
-                        pass
-
-                if ammo_defs:
-                    ammo_state = AmmoState(rounds_by_type=rounds)
-                    wpn_inst = WeaponInstance(
-                        definition=wpn_def,
-                        ammo_state=ammo_state,
-                        equipment=equip,
-                    )
-                    weapons.append((wpn_inst, ammo_defs))
-
-            result[unit.entity_id] = weapons
-
-        return result
-
-    @staticmethod
-    def _assign_sensors(
-        units: list[Unit],
-        sensor_loader: SensorLoader,
-    ) -> dict[str, list[SensorInstance]]:
-        """Assign sensor instances to units based on their equipment."""
-        result: dict[str, list[SensorInstance]] = {}
-        for unit in units:
-            sensors: list[SensorInstance] = []
-            for equip in unit.equipment:
-                if equip.category.name == "SENSOR":
-                    # Try to match sensor
-                    sensor_id = _guess_sensor_id(equip.name)
-                    if sensor_id:
-                        try:
-                            sdef = sensor_loader.get_definition(sensor_id)
-                            sensors.append(SensorInstance(sdef, equip))
-                        except KeyError:
-                            pass
-            result[unit.entity_id] = sensors
-        return result
-
-    @staticmethod
     def _build_final_states(
         units: list[Unit],
         morale_map: dict[str, MoraleState],
-        weapon_map: dict[str, list[tuple[WeaponInstance, list[AmmoDefinition]]]],
+        weapon_map: Mapping[str, tuple[WeaponAttachment, ...]],
     ) -> list[UnitFinalState]:
         """Convert unit objects to UnitFinalState for metrics."""
         states: list[UnitFinalState] = []
@@ -942,7 +876,8 @@ class ScenarioRunner:
             equip_destroyed = equip_total if u.status == UnitStatus.DESTROYED else 0
 
             ammo_exp: dict[str, int] = {}
-            for wpn_inst, _ in weapon_map.get(u.entity_id, []):
+            for attachment in weapon_map.get(u.entity_id, ()):
+                wpn_inst = attachment.weapon
                 ammo_exp.update(
                     {
                         aid: wpn_inst.definition.magazine_capacity - wpn_inst.ammo_state.available(aid)
@@ -987,509 +922,3 @@ def _parse_start_time(date_str: str) -> datetime:
         int(parts[2]),
         tzinfo=timezone.utc,
     )
-
-
-_WEAPON_NAME_MAP: dict[str, str] = {
-    # ── Modern ground ────────────────────────────────────────────────
-    "M256 120mm Smoothbore": "m256_120mm",
-    "M242 25mm Chain Gun": "m242_bushmaster",
-    "2A46M 125mm Smoothbore": "2a46m_125mm",
-    "2A46M-5 125mm Smoothbore": "2a46m_125mm",
-    "73mm 2A28 Grom": "2a28_grom_73mm",
-    "L7 105mm Rifled Gun": "l7_105mm",
-    "D-10T 100mm Rifled Gun": "d10t_100mm",
-    "U-5TS 115mm Smoothbore": "u5ts_115mm",
-    "L30A1 120mm Rifled Gun": "m256_120mm",
-    "Rh-120 L/55 120mm Smoothbore": "m256_120mm",
-    "M2HB .50 Cal": "m2hb_50cal",
-    "M2HB .50 Cal AA Mount": "m2hb_50cal",
-    "NSVT 12.7mm HMG": "m2hb_50cal",
-    "KPVT 14.5mm HMG": "m2hb_50cal",
-    "M240B GPMG": "m240_762mm",
-    "M240C 7.62mm Coaxial": "m240_762mm",
-    "M249 SAW": "m240_762mm",
-    "L94A1 7.62mm Chain Gun": "m240_762mm",
-    "MG3 7.62mm Coaxial": "m240_762mm",
-    "PKT 7.62mm Coaxial": "m240_762mm",
-    "PKT 7.62mm MG": "m240_762mm",
-    "SGMT 7.62mm Coaxial": "m240_762mm",
-    "M4A1 Carbine": "m4_556mm",
-    "M4A1 SOPMOD": "m4_556mm",
-    "TOW-2 ATGM": "tow2_atgm",
-    "M901 Launching Station": "tow2_atgm",
-    "AT-3 Sagger ATGM": "at3_sagger",
-    "9P135M ATGM Launcher": "at3_sagger",
-    "FGM-148 Javelin CLU": "javelin_clm",
-    "Javelin Missile Round": "javelin_clm",
-    "Carl Gustaf M3": "javelin_clm",
-    "9M133 Missile": "kornet_9m133",
-    "9P163-2 Kornet Launcher": "kornet_9m133",
-    "M284 155mm Howitzer": "m284_155mm",
-    "M18A1 Claymore Kit": "m4_556mm",
-    "2A42 30mm Autocannon": "m242_bushmaster",
-    # ── Modern air ───────────────────────────────────────────────────
-    "M61A1 Vulcan 20mm": "m61a1_vulcan",
-    "M230 Chain Gun 30mm": "m61a1_vulcan",
-    "AN/ALQ-99 Jamming Pods": "m61a1_vulcan",  # EW pod, mapped to placeholder
-    "Wing/Fuselage Ordnance Stations": "bomb_rack_generic",
-    "CSRL Rotary Launcher": "bomb_rack_generic",  # B-52H internal bomb launcher
-    "Bomb Rack": "bomb_rack_generic",
-    "Mk 20 Rockeye II CBU": "bomb_rack_generic",  # Phase 103: CBU dispenser uses bomb rack path
-    "AIM-120 AMRAAM": "aim120_amraam",  # Phase 103: F-16C medium-range A2A
-    "AIM-7M Sparrow": "aim120_amraam",  # Phase 103: medium-range A2A proxy
-    # ── Phase 100 Khafji — Coalition air ─────────────────────────────
-    "GAU-8/A Avenger 30mm": "gau8_30mm",
-    "GAU-12 Equalizer 25mm": "gau12_25mm",
-    "M197 20mm Rotary Cannon": "m197_20mm",
-    "105mm M102 Howitzer (direct-fire mount)": "ac130_105mm",
-    "40mm Bofors L/60 Automatic Gun": "ac130_40mm_bofors",
-    "AGM-65 Maverick": "agm65_maverick",
-    "AGM-114 Hellfire Launcher": "agm114_hellfire",
-    "AIM-9L Sidewinder": "aim9x_sidewinder",
-    "AIM-7M Sparrow": "aim9x_sidewinder",  # air-to-air placeholder
-    "M260 2.75-inch Rocket Pod": "bomb_rack_generic",  # free-fall rockets proxy
-    "127mm Zuni Rocket Pod": "bomb_rack_generic",  # unguided rockets proxy
-    "5-inch HVAR Rockets": "bomb_rack_generic",  # unguided rockets proxy
-    "BGM-71 TOW-2 Launcher": "tow2_atgm",
-    # ── Phase 100 Khafji — Coalition ground ──────────────────────────
-    "M901 TOW-2 Launcher": "tow2_atgm",
-    "AKMS": "ak47",
-    "M16A2 Rifle": "m4_556mm",
-    "M203 40mm Grenade Launcher": "m4_556mm",
-    "M40A1 Sniper Rifle": "m4_556mm",  # sniper rifle placeholder
-    "Barrett M82A1 .50 Rifle": "m2hb_50cal",  # anti-materiel rifle proxy
-    "M60 7.62mm MG (sponson x4)": "m240_762mm",
-    "PKM GPMG": "m240_762mm",
-    "F1 105mm Rifled Gun": "l7_105mm",  # functional equivalent 105mm
-    "20mm M693 Coaxial": "m242_bushmaster",  # AMX-30B2 coax
-    "KPVT 14.5mm HMG": "m2hb_50cal",
-    "7.62mm AA Machine Gun": "m240_762mm",
-    # ── Phase 100 Khafji — Iraqi ─────────────────────────────────────
-    "9K32 Strela-2 MANPADS": "sa7_strela2",
-    "SA-7 Strela-2": "sa7_strela2",
-    "SA-7 Missile Round": "sa7_strela2",  # Phase 103: missile-round alias for sa7_team roster
-    "9K52 Luna-M FROG-7 TEL": "frog7_launcher",
-    "FROG-7 Launcher": "frog7_launcher",
-    "D-30 122mm Howitzer": "d30_122mm",
-    "BM-21 Grad 122mm MRL": "bm21_grad",
-    "2S1 Gvozdika 122mm SP": "2s1_gvozdika",
-    "2S3 Akatsiya 152mm SP": "2s3_akatsiya",
-    # ── Phase 101 Fallujah — USMC / Army urban infantry ──────────────
-    "M16A4 Rifle": "m16a4",
-    "Benelli M1014 Shotgun": "m4_556mm",
-    "M203 40mm Grenade Launcher": "m4_556mm",
-    "Mk 153 SMAW": "mk153_smaw",
-    "AT-4 LAW": "at4_law",
-    "M72A7 LAW": "m72a7_law",
-    "M240 7.62mm Coaxial": "m240_762mm",
-    "M240 7.62mm Loader": "m240_762mm",
-    "M2 .50 Cal": "m2hb_50cal",
-    "M296 .50 Cal MG": "m2hb_50cal",
-    "M121 120mm Mortar": "m121_120mm_mortar",
-    # ── Phase 101 Fallujah — Engineer / demolition ───────────────────
-    "C4 Demolition Block (M112)": "m4_556mm",  # demo placeholder (same pattern as M18A1 Claymore Kit)
-    "Bangalore Torpedo (M1A2)": "m4_556mm",
-    "MICLIC Line Charge": "m4_556mm",
-    "D9 Blade & Rippers": "m4_556mm",  # bulldozer blade — doc-only, placeholder
-    # ── Phase 101 Fallujah — Iraqi insurgents / foreign fighters ─────
-    "AKM": "ak47",
-    "AK-74": "ak47",
-    "SVD Dragunov": "ak47",
-    "RPG-7": "rpg7",
-    "SPG-9 73mm Recoilless Rifle": "spg9_73mm",
-    "DShK 12.7mm HMG": "dshk_127mm",
-    "Iraqi 82mm 2B14 Mortar": "m252_81mm_mortar",  # 82mm proxies to 81mm western mortar
-    "Suicide Vest (SVEST)": "vbied",  # handheld VBIED analog for IED/suicide vest modeling
-    # ── Phase 102 Bint Jbeil — IDF ground (Golani / Paratrooper / Egoz) ──
-    "Tavor TAR-21 Rifle": "m4_556mm",
-    "Tavor TAR-21 CTAR": "m4_556mm",
-    "Suppressed M4A1 Rifle": "m4_556mm",
-    "IMI Negev 5.56mm LMG": "m240_762mm",
-    "M240 7.62mm": "m240_762mm",  # bare MAG without "Coaxial" suffix (IDF dismounts)
-    "MATADOR 90mm Anti-Structure Munition": "rpg7",  # proxy: shoulder-fired anti-structure
-    "Soltam 60mm Internal Mortar": "m252_81mm_mortar",  # 60mm proxies to 81mm mortar
-    # ── Phase 102 Bint Jbeil — Hezbollah ─────────────────────────────
-    "RPG-29": "rpg29_vampir",  # new Phase 102 weapon
-    # ── Phase 102 INS Hanit — Sa'ar 5 / Coastal TEL ──────────────────
-    "Barak-1 VLS SAM": "barak1_sam",
-    "Harpoon Block 1C ASCM": "rgm84_harpoon",
-    "Oto Melara 76mm/62 Super Rapid": "oto_melara_76mm",
-    "C-802 Noor Launcher": "c802_noor",
-    # ── Phase 100 Khafji — Naval (USS Missouri Iowa-class) ───────────
-    "16 inch/50 Mk 7 Gun": "16in50_naval",
-    "5 inch/38 Mk 12 Gun": "mk38_5in38",
-    "Mk 141 Harpoon Quad Launcher": "rgm84_harpoon",
-    "Mk 143 Armored Box Launcher (Tomahawk)": "bgm109_tomahawk",
-    "M299 Launcher": "agm114_hellfire",
-    "AIM-9L Sidewinder": "aim9x_sidewinder",
-    "DEFA 553 30mm Cannon": "m61a1_vulcan",
-    "30mm ADEN": "aden_30mm",
-    "GSh-23 23mm Cannon": "m61a1_vulcan",
-    "GSh-30-1 30mm Cannon": "m61a1_vulcan",
-    "YakB-12.7 Gatling Gun": "m134_minigun",
-    "9M114 Shturm-V Launcher": "agm114_hellfire",
-    # ── Modern naval ─────────────────────────────────────────────────
-    "4.5 inch Mk 8 Naval Gun": "mk8_4_5inch",
-    "AM.39 Exocet": "am39_exocet",
-    "Sea Dart SAM": "sea_dart",
-    "Sea Wolf SAM": "sea_wolf",
-    "Mk 45 5-inch Gun": "mk45_5inch",
-    "Mk 41 VLS": "mk41_vls",
-    "Mk 48 Torpedo Tubes": "mk48_adcap",
-    "533mm Torpedo Tubes x6": "mk48_adcap",
-    "Mk 15 Phalanx CIWS": "mk15_phalanx",
-    "AK-130 130mm Twin Gun": "mk45_5inch",
-    "3M80 Moskit Launcher": "rgm84_harpoon",
-    "Depth Charge Racks and K-Guns": "depth_charge_mk7",
-    "Depth Charge Rails and Throwers (x4)": "depth_charge_mk7",
-    "Depth Charges (x4)": "depth_charge_mk7",
-    "Hedgehog ASW Mortar": "depth_charge_mk7",
-    # ── Modern air defense ───────────────────────────────────────────
-    "5P85 TEL": "mim104_pac3",
-    "9A310 TELAR": "mim104_pac3",
-    "RAM Launcher": "fim92_stinger",
-    "CSRL Rotary Launcher": "fim92_stinger",
-    # ── Modern DEW ───────────────────────────────────────────────────
-    "100kW Solid-State Laser": "iron_beam_100kw",
-    "50kW Fiber Laser": "de_shorad_50kw",
-    "HELIOS 60kW Laser": "helios_60kw",
-    # ── WW2 ──────────────────────────────────────────────────────────
-    "85mm ZIS-S-53 Gun": "85mm_zis_s53",
-    "88mm KwK 36 L/56 Gun": "88mm_kwk36",
-    "75mm KwK 42 L/70 Gun": "88mm_kwk36",
-    "75mm KwK 40 L/48 Gun": "75mm_m3",
-    "75mm M3 Gun": "75mm_m3",
-    "7.5cm PaK 40 L/46": "75mm_m3",
-    "QF 6-Pounder (57mm) L/50": "75mm_m3",
-    "M2 Browning .50 Cal (x13)": "m2_50cal_ww2",
-    "M2 Browning .50 Cal (x6)": "m2_50cal_ww2",
-    "MG 151/20 20mm Cannon": "mg151_20mm",
-    "MG 42 Light Machine Gun": "mg42",
-    "MG 34 Coaxial": "mg42",
-    "MG 34 Hull Mount": "mg42",
-    "MG 131 13mm Machine Gun (x2)": "mg42",
-    "DP-28 Light Machine Gun": "mg42",
-    "DT 7.62mm Coaxial MG": "mg42",
-    "Type 99 Model 2 20mm Cannon (x2)": "type99_20mm",
-    "Type 97 7.7mm MG (x2)": "type99_20mm",
-    "Vickers .303 Synchronized MG (x2)": "vickers_303",
-    "Browning .303 Machine Gun (x4)": "vickers_303",
-    "Hispano Mk II 20mm Cannon (x2)": "mg151_20mm",
-    "M1919A4 .30 Cal Coaxial": "m2_50cal_ww2",
-    "M1 Garand Rifle": "m4_556mm",
-    "M1903 Springfield Rifle": "m4_556mm",
-    "M1918 BAR": "m2_50cal_ww2",
-    "M1918A2 BAR": "m2_50cal_ww2",
-    "PPSh-41 Submachine Gun": "m4_556mm",
-    "Karabiner 98k Rifle": "gewehr_98",
-    "Mosin-Nagant M91/30 Rifle": "lee_enfield",
-    "G7e/T3 Torpedoes (x14)": "g7e_torpedo",
-    "G7e/T3 Torpedoes (x22)": "g7e_torpedo",
-    "53.3cm Torpedo Tubes (4 bow, 1 stern)": "g7e_torpedo",
-    "53.3cm Torpedo Tubes (4 bow, 2 stern)": "g7e_torpedo",
-    "10.5cm SK C/32 Deck Gun": "15cm_sk_l45",
-    "8.8cm SK C/35 Deck Gun": "15cm_sk_l45",
-    "8.8cm SK L/30 Deck Gun": "15cm_sk_l45",
-    "2cm FlaK C/30 AA Gun": "type99_20mm",
-    "3.7cm FlaK M42 AA Gun": "type99_20mm",
-    "Mk 15 Torpedo Tubes (2x5)": "mk14_torpedo",
-    "45cm Torpedo Tubes (x4)": "type93_torpedo",
-    "50cm Torpedo Tubes (x5)": "type93_torpedo",
-    "Flight Deck (72 aircraft capacity)": "m2_50cal_ww2",
-    "Flight Deck (90 aircraft capacity)": "m2_50cal_ww2",
-    "Internal Bomb Bay (4000 kg capacity)": "m2_50cal_aircraft",
-    "5-inch/38 Mk 12 Gun (10x2 turrets)": "5in38_naval",
-    "5-inch/38 Mk 12 Gun (4x2 turrets)": "5in38_naval",
-    "5-inch/38 Mk 12 Gun (x5)": "5in38_naval",
-    "16-inch/50 Mk 7 Gun (3x3 turrets)": "16in50_naval",
-    "Bofors 40mm Quad Mount (x20)": "5in38_naval",
-    "Bofors 40mm Quad Mount (x8)": "5in38_naval",
-    "Bofors 40mm Twin Mount (x2)": "5in38_naval",
-    "Bofors 40mm Twin Mount (x5)": "5in38_naval",
-    "Oerlikon 20mm (x46)": "type99_20mm",
-    "Oerlikon 20mm (x49)": "type99_20mm",
-    "Oerlikon 20mm (x6)": "type99_20mm",
-    "Oerlikon 20mm (x7)": "type99_20mm",
-    "Type 89 12.7cm AA Gun (8x2)": "5in38_naval",
-    "Type 96 25mm Triple Mount (x12)": "type99_20mm",
-    "2-pdr Pom-Pom": "type99_20mm",
-    "M2A1 105mm Howitzer (x4)": "m284_155mm",
-    "15cm sFH 18 Howitzer (x4)": "m284_155mm",
-    # ── WW2 infantry small arms ──────────────────────────────────────
-    "Mk 2 Fragmentation Grenade": "mills_bomb",
-    "Mk II Grenade": "mills_bomb",
-    "F1 Grenade": "mills_bomb",
-    "RGD-33 Fragmentation Grenade": "mills_bomb",
-    "Stielhandgranate 24": "mills_bomb",
-    "M1911A1 .45 Pistol": "m4_556mm",
-    "TT-33 Pistol": "m4_556mm",
-    "Walther P38 Pistol": "m4_556mm",
-    # ── WW1 ──────────────────────────────────────────────────────────
-    "Lee-Enfield SMLE Mk III Rifle": "lee_enfield",
-    "SMLE Cavalry Carbine": "lee_enfield",
-    "Gewehr 98 Rifle": "gewehr_98",
-    "Lebel Mle 1886 M93 Rifle": "lee_enfield",
-    "Lewis Gun Sponson Mount": "lewis_gun",
-    "Chauchat M1915 CSRG Light Machine Gun": "lewis_gun",
-    "MG 08 Machine Gun (x6)": "maxim_mg08",
-    "LMG 08/15 Spandau MG (x2)": "lmg08_spandau",
-    "Mills Bomb No. 5 Grenade": "mills_bomb",
-    "Stielhandgranate M1917 Grenade": "mills_bomb",
-    "QF 18-Pounder Field Gun (x4)": "18pdr_field_gun",
-    "7.7cm FK 96 n.A. Field Gun (x4)": "77mm_fk96",
-    "Webley Mk V Revolver": "lee_enfield",
-    "Webley Mk VI Revolver": "lee_enfield",
-    "Luger P08 Pistol": "gewehr_98",
-    "Ruby M1914 Pistol": "lee_enfield",
-    "MP 18 Submachine Gun": "lewis_gun",
-    "Pattern 1908 Cavalry Sabre": "cavalry_saber",
-    "Bayonet": "bayonet",
-    "QF 3-inch AA Gun (x2)": "18pdr_field_gun",
-    "57mm Maxim-Nordenfelt Gun": "18pdr_field_gun",
-    # WW1 naval
-    "30.5cm SK L/50 Gun (5x2 turrets)": "12in_bl_mk_x",
-    "15cm SK L/45 Gun (x14)": "15cm_sk_l45",
-    "8.8cm SK L/45 FlaK (x6)": "15cm_sk_l45",
-    "BL 12-inch Mk X Gun (4x2 turrets)": "12in_bl_mk_x",
-    "BL 13.5-inch Mk V Gun (5x2 turrets)": "12in_bl_mk_x",
-    "BL 6-inch Mk VII Gun (x12)": "15cm_sk_l45",
-    "BL 4-inch Mk III Gun (x16)": "15cm_sk_l45",
-    "QF 4-inch Mk IV Gun (x3)": "15cm_sk_l45",
-    "QF 6-pounder 6 cwt Hotchkiss Gun": "15cm_sk_l45",
-    "BL 4-inch Mk IX Gun": "15cm_sk_l45",
-    "18-inch Torpedo Tubes (x5)": "18in_torpedo_ww1",
-    "21-inch Torpedo Tubes (x4)": "18in_torpedo_ww1",
-    "21-inch Torpedo Tubes (x2x2)": "18in_torpedo_ww1",
-    # ── Napoleonic ───────────────────────────────────────────────────
-    "12-Pounder Cannon": "12pdr_cannon",
-    "6-Pounder Cannon": "6pdr_cannon",
-    "Baker Rifle": "baker_rifle",
-    "Brown Bess Musket": "brown_bess",
-    "Cavalry Saber": "cavalry_saber",
-    "Charleville 1777 Musket": "charleville_1777",
-    "Charleville Musket (personal arms)": "charleville_1777",
-    "Muskets (personal arms)": "brown_bess",
-    "Musketoon": "brown_bess",
-    "Musketoon (Dragoon)": "brown_bess",
-    "Augustin Musket M1798": "brown_bess",
-    "Tula Musket M1808": "brown_bess",
-    "Congreve Rocket Launcher Tripod (x4)": "congreve_rocket",
-    "Corvus Boarding Bridge": "corvus_boarding",
-    "24-pdr Long Guns (x26)": "24pdr_cannon",
-    "24-pdr Long Guns (middle deck, x34)": "24pdr_cannon",
-    "32-pdr Long Guns (lower deck, x28)": "32pdr_cannon",
-    "32-pdr Long Guns (lower deck, x32)": "32pdr_cannon",
-    "18-pdr Long Guns (upper deck, x30)": "24pdr_cannon",
-    "18-pdr Long Guns (upper deck, x34)": "24pdr_cannon",
-    "9-pdr Guns (quarterdeck/forecastle, x16)": "6pdr_cannon",
-    "9-pdr Long Guns (x18)": "6pdr_cannon",
-    "Carronades 24-pdr (x2)": "carronade_32pdr",
-    "Carronades 32-pdr (x6)": "carronade_32pdr",
-    "Bow Cannon (x3)": "6pdr_cannon",
-    # ── Ancient / Medieval ───────────────────────────────────────────
-    "Gladius": "gladius",
-    "Longbow": "longbow",
-    "Pike": "pike",
-    "Pilum": "pilum",
-    "Sarissa": "sarissa",
-    "Lance": "lance",
-    "Lance (Medieval)": "lance_medieval",
-    "Sword (Medieval)": "sword_medieval",
-    "Composite Bow": "longbow",
-    "Greek Fire Siphon": "greek_fire_siphon",
-    "Ballistae (x2)": "ballista",
-    "Bronze Ram Prow": "naval_ram",
-    "Ram Prow": "naval_ram",
-    "Kontarion Lance": "lance",
-    "Kontarion Spear": "lance",
-    "Saif Sword": "sword_medieval",
-    "Spathion Sword": "gladius",
-    "Legionary Weapons (Gladius and Pilum)": "gladius",
-    "Marine Javelins and Swords": "gladius",
-    "Marine Weapons (Swords and Javelins)": "gladius",
-    "Bows and Javelins": "longbow",
-    "Viking Weapons (Swords, Axes, Spears)": "sword_medieval",
-    "Shield": "sword_medieval",  # shield bash — melee placeholder
-    "Crew Weapons (Swords and Crossbows)": "crossbow",
-    "Arquebuses and Crossbows": "crossbow",
-    "Personal Weapons (Swords)": "sword_medieval",
-    "Combustible Materials and Incendiaries": "greek_fire_siphon",
-}
-
-
-def _guess_weapon_id(equipment_name: str) -> str | None:
-    """Try to map an equipment name to a weapon_id."""
-    return _WEAPON_NAME_MAP.get(equipment_name)
-
-
-_SENSOR_NAME_MAP: dict[str, str] = {
-    # ── Modern ground ────────────────────────────────────────────────
-    "AN/VVS-2 Commander Viewer": "thermal_sight",
-    "AN/TPS-80": "ground_search_radar",
-    "TPN-3-49 Night Sight": "active_ir_sight",
-    "1PN22M1 Gunner Sight": "active_ir_sight",
-    "TSh2B-32P Gunner Sight": "mk1_eyeball",
-    "TSh2B-41U Gunner Sight": "mk1_eyeball",
-    "Urdan Cupola Sight": "mk1_eyeball",
-    "TOGS II Thermal Sight": "thermal_sight",
-    "Essa Thermal Sight": "thermal_sight",
-    "EMES 15 Gunner Sight": "thermal_sight",
-    "PERI R17A2 Commander Sight": "thermal_sight",
-    "BPK-2-42 Sight": "mk1_eyeball",
-    "Raduga-Sh Sight": "mk1_eyeball",
-    "AN/PVS-14 NVG": "nvg",
-    "AN/PVS-31 NVG": "nvg",
-    "Multi-Function Sensor Suite": "thermal_sight",
-    "Mine Detection Set": "ground_search_radar",
-    "Javelin CLU Thermal Sight": "thermal_sight",
-    "SOFLAM AN/PEQ-1 Laser Designator": "thermal_sight",
-    # ── Phase 100 Khafji ─────────────────────────────────────────────
-    "AN/AAQ-13 LANTIRN Navigation Pod": "thermal_sight",
-    "AN/AAQ-14 LANTIRN Targeting Pod": "thermal_sight",
-    "AN/AAQ-17 FLIR": "thermal_sight",
-    "AN/AAS-35 Pave Penny Laser Spot Tracker": "thermal_sight",
-    "AN/AVQ-19 Low-Light-Level TV": "thermal_sight",
-    "ARBS TV/Laser Spot Tracker": "thermal_sight",
-    "AN/APG-70 Radar": "apg68_radar",
-    "AN/ALR-46 RWR": "laser_warning_receiver",
-    "AN/ALR-56C RWR": "laser_warning_receiver",
-    "AN/ALR-69 RWR": "laser_warning_receiver",
-    "AN/APR-39 Radar Warning Receiver": "laser_warning_receiver",
-    "AN/ALQ-119 ECM Pod": "esm_suite",
-    "AN/ALQ-135 ECM": "esm_suite",
-    "AN/SLQ-32(V)3 EW Suite": "esm_suite",
-    "AN/SPS-49 Air Search Radar": "air_search_radar",
-    "AN/SPS-67 Surface Search Radar": "ground_search_radar",
-    "Mk 37 GFCS with Mk 25 Fire Control Radar": "ground_search_radar",
-    "Mk 38 GFCS with Mk 13 Fire Control Radar": "ground_search_radar",
-    "M65 TOW Sight": "thermal_sight",
-    "Starlight Scope": "nvg",
-    "Aerial Observer Binoculars": "mk1_eyeball",
-    "RQ-2 Pioneer UAV Detachment": "ground_search_radar",  # aerial surveillance proxy
-    "AN/ASQ-145 Beacon Tracker": "thermal_sight",
-    # ── Phase 101 Fallujah — Modern ground / tank sensors ────────────
-    "CITV Commander's Independent Thermal Viewer": "thermal_sight",
-    "CIV Commander's Independent Viewer": "thermal_sight",
-    "IBAS Thermal Sight": "thermal_sight",
-    "GPS 2nd-Gen FLIR Gunner's Sight": "thermal_sight",
-    "Eyesafe Laser Rangefinder": "thermal_sight",
-    "AN/PEQ-2 IR Aiming Laser": "nvg",
-    "Mine Detection Set": "ground_search_radar",  # already present above but listed here for clarity
-    # ── Phase 101 Fallujah — AC-130U / Kiowa / UAV sensors ───────────
-    "AN/APQ-180 Strike Radar": "apg68_radar",
-    "ALLTV All-Light-Level TV": "thermal_sight",
-    "MMS Mast-Mounted Sight": "thermal_sight",
-    "Dragon Eye EO/IR Camera": "thermal_sight",
-    "ScanEagle EO/IR Gimbal": "thermal_sight",
-    "GPS/INS Navigation": "mk1_eyeball",  # nav-only, not detection — minimal proxy
-    # ── Phase 102 Bint Jbeil — IDF armor / dismount / SOF ────────────
-    "El-Op Knight Mark 4 Fire Control": "thermal_sight",
-    "El-Op Gill Fire Control": "thermal_sight",
-    "Commander's Independent Thermal Viewer": "thermal_sight",
-    "Commander's Thermal Viewer": "thermal_sight",
-    "Amcoram LWS-2 Laser Warning Receiver": "laser_warning_receiver",
-    "Elbit MARS Thermal Viewer": "thermal_sight",
-    "AN/PEQ-1 SOFLAM Laser Designator": "thermal_sight",
-    # ── Phase 102 INS Hanit — Sa'ar 5 radar / ESM / sonar ────────────
-    "EL/M-2218S 3D Air Search Radar": "air_search_radar",
-    "EL/M-2221 STGR Fire Control Radar": "ground_search_radar",
-    "Elisra NS-9003/9005 ESM": "esm_suite",
-    "EDO 796 Hull Sonar": "active_sonar",
-    "Coastal Surveillance Radar": "ground_search_radar",
-    # ── Modern air ───────────────────────────────────────────────────
-    "AN/APG-68 Radar": "apg68_radar",
-    "AN/APG-79 AESA Radar": "apg68_radar",
-    "AN/APG-78 Longbow Radar": "apg68_radar",
-    "AN/APN-242 Weather Radar": "apg68_radar",
-    "KLJ-3A Pulse-Doppler Radar": "apg68_radar",
-    "N001 Myech Radar": "apg68_radar",
-    "N019 Sapfir Radar": "apg68_radar",
-    "AN/ALR-56M RWR": "laser_warning_receiver",
-    "SPO-15 Beryoza RWR": "laser_warning_receiver",
-    "RKL800 RWR": "laser_warning_receiver",
-    "TADS/PNVS": "thermal_sight",
-    "MTS-B Targeting System": "thermal_sight",
-    "AN/DAS-1 EO/IR": "thermal_sight",
-    "AN/ASQ-176 OAS": "thermal_sight",
-    "OEPS-27 IRST": "thermal_sight",
-    # ── Modern air defense ───────────────────────────────────────────
-    "AN/MPQ-53 Radar": "ground_search_radar",
-    "EL/M-2084 Fire Control Radar": "ground_search_radar",
-    "30N6E Flap Lid Radar": "ground_search_radar",
-    "76T6E Clam Shell Radar": "ground_search_radar",
-    "9S35 Fire Dome Radar": "ground_search_radar",
-    # ── Modern naval ─────────────────────────────────────────────────
-    "Type 965 Air Search Radar": "air_search_radar",
-    "Type 909 Fire Control Radar": "air_search_radar",
-    "Type 910 Fire Control Radar": "air_search_radar",
-    "Type 967/968 Radar": "air_search_radar",
-    "Agave Radar": "air_search_radar",
-    "Blue Fox Radar": "air_search_radar",
-    "AN/SPY-1D Radar": "air_search_radar",
-    "AN/SPY-6 AMDR": "air_search_radar",
-    "AN/SPS-48E Radar": "air_search_radar",
-    "MR-184 Voskhod Radar": "air_search_radar",
-    "MRK-50 Albatros Radar": "air_search_radar",
-    "AN/BPS-15 Radar": "ground_search_radar",
-    "AN/SLQ-32 EW Suite": "esm_suite",
-    "AN/ALQ-172 ECM": "esm_suite",
-    "AN/ALQ-218 EW Receiver": "esm_suite",
-    "WLR-8 ESM": "esm_suite",
-    "AN/BQQ-5 Sonar": "active_sonar",
-    "AN/SQQ-89 Sonar": "active_sonar",
-    "MGK-335 Sonar": "active_sonar",
-    "MGK-400 Rubikon Sonar": "active_sonar",
-    "QC/JK Sonar": "active_sonar",
-    "Type 2016 Hull Sonar": "active_sonar",
-    "Type 184 Hull Sonar": "active_sonar",
-    "Lookout Mast": "ship_lookout",
-    "Lookout Masthead": "ship_lookout",
-    # ── WW2 ──────────────────────────────────────────────────────────
-    "TSh-16 Telescopic Sight": "mk1_eyeball_ww2",
-    "TZF 9b Binocular Sight": "mk1_eyeball_ww2",
-    "TZF 12a Monocular Sight": "mk1_eyeball_ww2",
-    "TZF 5f Telescope Sight": "mk1_eyeball_ww2",
-    "M55 Telescope": "mk1_eyeball_ww2",
-    "No. 22c Mk 1 Telescopic Sight": "mk1_eyeball_ww2",
-    "ZF 3x8 Telescopic Sight": "mk1_eyeball_ww2",
-    "M1 Panoramic Telescope": "mk1_eyeball_ww2",
-    "M4 Fire Control Instrument": "mk1_eyeball_ww2",
-    "K-14 Gyroscopic Gunsight": "mk1_eyeball_ww2",
-    "GM 2 Reflector Gunsight": "mk1_eyeball_ww2",
-    "Revi 16B Reflector Gunsight": "mk1_eyeball_ww2",
-    "Rblf 36 Panoramic Sight": "mk1_eyeball_ww2",
-    "Norden M-9B Bombsight": "mk1_eyeball_ww2",
-    "AN/APS-15 H2X Radar": "scr584_radar",
-    "SC-2 Air Search Radar": "air_search_radar",
-    "SK Air Search Radar": "air_search_radar",
-    "SK-2 Air Search Radar": "air_search_radar",
-    "SG Surface Search Radar": "ground_search_radar",
-    "Mk 37 Fire Control Director": "ground_search_radar",
-    "Mk 37 Fire Control Director (x2)": "ground_search_radar",
-    "Mk 38 Fire Control Director (x2)": "ground_search_radar",
-    "Mk 13 Fire Control Radar": "ground_search_radar",
-    "Type 21 Air Search Radar": "air_search_radar",
-    "Type 94 Fire Control Director": "ground_search_radar",
-    "FuMO 29 Radar": "ground_search_radar",
-    "FuMO 30 Radar": "ground_search_radar",
-    "Type 271 Surface Search Radar": "type271_naval_radar",
-    "Type 123A ASDIC (Sonar)": "active_sonar",
-    "Passive Hydrophone": "hydrophone_ww2",
-    "GHG Passive Hydrophone Array": "hydrophone_ww2",
-    # ── WW1 ──────────────────────────────────────────────────────────
-    "Barr & Stroud Rangefinder": "binoculars_ww1",
-    "Zeiss Entfernungsmesser Rangefinder": "binoculars_ww1",
-    "Panoramic Sight": "binoculars_ww1",
-    "No. 7 Dial Sight": "binoculars_ww1",
-    # ── Napoleonic ───────────────────────────────────────────────────
-    # (naval units have "Lookout Masthead" already mapped above)
-    # ── Default sensors (added to units that had none) ───────────────
-    "Field Binoculars": "binoculars_ww1",
-    "Mk 1 Eyeball": "mk1_eyeball",
-    "Naked Eye Observation": "mk1_eyeball",
-}
-
-
-def _guess_sensor_id(equipment_name: str) -> str | None:
-    """Try to map equipment name to a sensor_id."""
-    return _SENSOR_NAME_MAP.get(equipment_name)

@@ -46,6 +46,7 @@ def _make_mock_context():
     ctx.config = SimpleNamespace(model_dump=lambda: {})
     ctx.units_by_side = {}
     ctx.morale_states = {}
+    ctx.equipment_resolutions = {}
 
     # Set all engines to None by default
     engine_names = _all_context_engine_names()
@@ -115,6 +116,8 @@ class TestContextRoundTrip:
             "clock": {"tick": 0},
             "rng": {"seed": 42},
             "calibration": {},
+            "loadout_builder_fingerprint": None,
+            "loadout_topology": {},
             "missile_engine": {"missiles": []},
         }
         # Should not raise

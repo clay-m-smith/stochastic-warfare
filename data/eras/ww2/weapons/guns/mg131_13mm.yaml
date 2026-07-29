@@ -1,0 +1,33 @@
+# One physical Rheinmetall-Borsig MG 131, independent of xN.
+# Official U.S. Navy Bureau of Ordnance history gives 13 mm caliber, 40 lb
+# weapon/feed weight, 2,560 ft/s muzzle velocity, 960 rpm accepted cyclic
+# rate, belt feed, and high-explosive/AP ammunition. The Bundesarchiv catalog
+# preserves the original September 1941 weapon handbook.
+# https://www.ibiblio.org/hyperwar/USN/ref/MG/I/MG-4.html
+# https://www.deutsche-digitale-bibliothek.de/item/EWJF3HHQCXELFFSFPO5MF5AFAYBVUASR
+weapon_id: mg131_13mm
+display_name: "Rheinmetall-Borsig MG 131 13 mm Aircraft Gun"
+category: HEAVY_MG
+caliber_mm: 13.0
+muzzle_velocity_mps: 780.0
+max_range_m: 800.0
+effective_range_m: 400.0
+min_range_m: 0.0
+rate_of_fire_rpm: 960.0
+burst_size: 8
+base_accuracy_mrad: 2.0
+guidance: NONE
+magazine_capacity: 300
+reload_time_s: 0.0
+compatible_ammo:
+  - 13mm_mg131_he
+weight_kg: 18.1
+reliability: 0.89
+barrel_life_rounds: 10000
+requires_deployed: false
+traverse_deg: 0.0
+elevation_min_deg: 0.0
+elevation_max_deg: 0.0
+target_domains:
+  - GROUND
+  - AERIAL

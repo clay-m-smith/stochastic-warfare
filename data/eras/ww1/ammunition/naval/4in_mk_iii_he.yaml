@@ -1,0 +1,25 @@
+# British QF 4-inch Mk III 25 lb (11.3 kg) HE projectile.
+#
+# The 1902 H.M.S.O. Text Book of Gunnery, table XII (pp. 335-356 in the
+# Combined Arms Research Library scan), records the 4-inch QF service round
+# at 25 lb and 2,300 ft/s. The Invincible-specific service compilation records
+# 25 lb and 31 lb HE choices and 100 rounds per gun.
+# https://cgsc.contentdm.oclc.org/digital/collection/p4013coll11/id/233/
+# https://www.navweaps.com/Weapons/WNBR_4-40_mk3.php
+# The sources used here do not establish the explosive-fill mass. A zero fill
+# avoids inventing one; the simulator effect radii are explicit model envelopes.
+ammo_id: 4in_mk_iii_he
+display_name: "4-inch QF Mk III 25 lb HE"
+ammo_type: HE
+mass_kg: 11.3
+diameter_mm: 101.6
+drag_coefficient: 0.30
+penetration_mm_rha: 0.0
+penetration_reference_range_m: 0.0
+blast_radius_m: 13.0
+fragmentation_radius_m: 25.0
+explosive_fill_kg: 0.0
+guidance: NONE
+propulsion: none
+max_speed_mps: 701.0
+unit_cost_factor: 1.1

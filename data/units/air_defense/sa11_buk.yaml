@@ -20,7 +20,7 @@ crew:
     count: 3
     skill: BASIC
 equipment:
-  - name: "9S35 Fire Dome Radar"
+  - name: "9S35 Fire Dome Fire Control Radar"
     category: SENSOR
     weight_kg: 3200.0
     reliability: 0.84

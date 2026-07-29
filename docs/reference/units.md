@@ -11,26 +11,38 @@ Units are defined in YAML files and validated by pydantic. The engine defines be
 ### Unit YAML Schema
 
 ```yaml
-unit_type: "m1a2_abrams"           # unique identifier
-display_name: "M1A2 Abrams"        # human-readable name
-domain: ground                      # ground | air | naval_surface | naval_subsurface | ...
-category: armor                     # armor | infantry | artillery | air_defense | ...
-crew: 4
-speed_m_s: 18.0                     # maximum speed in m/s
-armor_mm: 600                       # effective armor thickness (mm RHA equivalent)
-armor_type: composite               # rha | composite | reactive | spaced | none
-health: 100.0
-signature_profile: m1a2_sig         # reference to signature YAML
-training_level: 0.8                  # 0.0–1.0 crew/unit proficiency (veteran)
+unit_type: m1a2
+domain: ground                      # ground | aerial | naval | submarine | amphibious
+display_name: "M1A2 Abrams MBT"
+ground_type: ARMOR
+max_speed: 18.0                    # meters per second
+training_level: 0.9
+armor_front: 600.0                 # mm RHA equivalent
+armor_side: 200.0
+armor_type: COMPOSITE
+crew:
+  - role: COMMANDER
+    count: 1
+    skill: TRAINED
+  - role: GUNNER
+    count: 1
+    skill: TRAINED
+  - role: LOADER
+    count: 1
+    skill: BASIC
+  - role: DRIVER
+    count: 1
+    skill: TRAINED
+sensor_policy: required
 equipment:
-  weapons:
-    - weapon_type: m256_120mm       # reference to weapon YAML
-      mount: turret
-  sensors:
-    - sensor_type: commanders_sight
-      mount: turret
-  comms:
-    - comms_type: sincgars
+  - name: "M256 120mm Smoothbore"
+    category: WEAPON
+    weight_kg: 1800.0
+    reliability: 0.95
+  - name: "AN/VVS-2 Commander Viewer"
+    category: SENSOR
+    weight_kg: 45.0
+    reliability: 0.90
 ```
 
 ### Key Fields
@@ -39,16 +51,29 @@ equipment:
 |-------|------|-------------|
 | `unit_type` | `str` | Unique identifier used in scenario references |
 | `display_name` | `str` | Human-readable name |
-| `domain` | `str` | Operational domain |
-| `category` | `str` | Unit category within domain |
-| `crew` | `int` | Number of crew members |
-| `speed_m_s` | `float` | Maximum speed (meters/second) |
-| `armor_mm` | `float` | Effective armor thickness |
-| `armor_type` | `str` | Armor material type |
-| `health` | `float` | Hit points |
-| `signature_profile` | `str` | Reference to signature definition |
+| `domain` | `str` | One of `ground`, `aerial`, `naval`, `submarine`, or `amphibious` |
+| `max_speed` | `float` | Maximum speed in meters per second |
+| `crew` | `list[object]` | Crew rows with `role`, positive `count`, and `skill` enum name |
+| `equipment` | `list[object]` | Named equipment rows with category, mass, reliability, and optional environmental limits |
 | `training_level` | `float` | Crew/unit proficiency (0.0–1.0). Scales effective skill via `base_skill * (0.5 + 0.5 * training_level)`. Typical values: Elite 0.9, Veteran 0.8, Regular 0.7, Green 0.6, Conscript 0.5, Poor 0.3–0.4 |
-| `equipment` | `dict` | Weapons, sensors, comms references |
+| `ground_type`, `aerial_type`, `naval_type`, `ad_type`, `support_type` | `str \| null` | Domain/subclass discriminator used by the unit factory |
+| `armor_front`, `armor_side` | `float` | Ground-unit armor thickness in mm RHA equivalent |
+| `armor_type` | `str` | Armor material enum name |
+| `sensor_policy` | `str` | Requires authored sensor equipment by default; `intentionally_none` forbids sensors |
+| `sensor_policy_reason` | `str` | Required justification when `sensor_policy` is `intentionally_none`; forbidden otherwise |
+| Other domain fields | numeric | Aerial ceiling/data-link range; naval draft, displacement, fuel, depth, and noise; air-defense altitude/range/missile/reload values; or support cargo capacity |
+
+### Runtime Equipment Resolution
+
+`WEAPON` and `SENSOR` names are exact, case-sensitive catalog keys. During
+scenario loading, one typed runtime registry resolves each row as a live
+attachment, carried ammunition store, or explicit non-runtime item. Unknown,
+unsupported, duplicate, stale-override, or semantically incompatible entries
+fail loading instead of disappearing from a unit. Explicit source-system
+counts are retained in the runtime topology and affect live cadence,
+ammunition, events, and checkpoint compatibility. See the
+[equipment-mapping contract](../specs/equipment-mapping.md) for the complete
+rules and accepted non-runtime boundaries.
 
 ---
 
@@ -184,16 +209,21 @@ equipment:
 ### Weapon YAML Schema
 
 ```yaml
-weapon_type: "m256_120mm"
+weapon_id: "m256_120mm"
 display_name: "M256 120mm Smoothbore"
-caliber_mm: 120
-range_m: 4000
+category: CANNON
+caliber_mm: 120.0
+muzzle_velocity_mps: 1750.0
+max_range_m: 4000.0
 rate_of_fire_rpm: 6.0
-guidance: none                      # none | command | semi_active | active | ir | gps
-domain: ground
-ammunition_types:
+burst_size: 1
+guidance: NONE
+magazine_capacity: 42
+target_domains:
+  - GROUND
+compatible_ammo:
   - m829a3_apfsds
-  - m830a1_heat
+  - m830a1_heat_mp
   - m1028_canister
 ```
 
@@ -201,12 +231,18 @@ ammunition_types:
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `weapon_type` | `str` | Unique identifier |
+| `weapon_id` | `str` | Unique identifier |
+| `display_name` | `str` | Human-readable weapon name |
+| `category` | `str` | `WeaponCategory` enum name |
 | `caliber_mm` | `float` | Bore diameter |
-| `range_m` | `float` | Maximum effective range |
+| `muzzle_velocity_mps` | `float` | Launch velocity |
+| `max_range_m` | `float` | Maximum modeled range |
 | `rate_of_fire_rpm` | `float` | Rounds per minute |
-| `guidance` | `str` | Guidance type |
-| `ammunition_types` | `list[str]` | Compatible ammo types |
+| `burst_size` | `int` | Per-system rounds in one synchronized firing action |
+| `guidance` | `str` | `GuidanceType` enum name |
+| `magazine_capacity` | `int` | Definition-level ammunition capacity |
+| `target_domains` | `list[str]` | Domains this weapon may engage |
+| `compatible_ammo` | `list[str]` | Compatible ammunition definition IDs |
 
 ---
 
@@ -215,26 +251,37 @@ ammunition_types:
 ### Ammo YAML Schema
 
 ```yaml
-ammo_type: "m829a3_apfsds"
+ammo_id: m829a3_apfsds
 display_name: "M829A3 APFSDS-T"
-category: ap                        # ap | heat | he | smoke | illum | guided | ...
-caliber_mm: 120
-muzzle_velocity_m_s: 1555
-penetration_mm: 750                 # at reference range
-blast_radius_m: 0
-pk_direct: 0.85                     # Pk given hit (direct fire)
+ammo_type: AP
+mass_kg: 8.9
+diameter_mm: 120.0
+drag_coefficient: 0.15
+penetration_mm_rha: 750.0
+penetration_reference_range_m: 2000.0
+blast_radius_m: 0.0
+fragmentation_radius_m: 0.0
+guidance: NONE
+propulsion: none
+max_speed_mps: 1750.0
+unit_cost_factor: 5.0
 ```
 
 ### Key Fields
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `ammo_type` | `str` | Unique identifier |
-| `category` | `str` | Ammunition category |
-| `muzzle_velocity_m_s` | `float` | Launch velocity |
-| `penetration_mm` | `float` | Armor penetration capability |
+| `ammo_id` | `str` | Unique identifier |
+| `display_name` | `str` | Human-readable ammunition name |
+| `ammo_type` | `str` | `AmmoType` enum name |
+| `mass_kg`, `diameter_mm`, `drag_coefficient` | `float` | Physical projectile properties |
+| `penetration_mm_rha` | `float` | Armor penetration in mm RHA equivalent |
+| `penetration_reference_range_m` | `float` | Reference range for the penetration value |
 | `blast_radius_m` | `float` | Area effect radius (HE/frag) |
-| `pk_direct` | `float` | Kill probability given hit |
+| `fragmentation_radius_m` | `float` | Fragmentation effect radius |
+| `guidance` | `str` | `GuidanceType` enum name |
+| `propulsion`, `max_speed_mps` | `str`, `float` | Propulsion mode and modeled maximum speed |
+| `pk_at_reference` | `float` | Optional probability at the ammunition reference condition |
 
 ---
 

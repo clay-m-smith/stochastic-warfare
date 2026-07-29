@@ -180,6 +180,7 @@ class TestBehavioralRegistration:
         ctx.config = SimpleNamespace(model_dump=lambda: {})
         ctx.units_by_side = {}
         ctx.morale_states = {}
+        ctx.equipment_resolutions = {}
 
         all_engines = PRE_EXISTING_ENGINES + PHASE_72A_ENGINES
         for eng in all_engines:
@@ -214,6 +215,8 @@ class TestBehavioralRegistration:
             "clock": {"t": 0},
             "rng": {"s": 0},
             "calibration": {},
+            "loadout_builder_fingerprint": None,
+            "loadout_topology": {},
             "roe_engine": {"level": "WEAPONS_FREE"},
         }
         ctx.set_state(state)

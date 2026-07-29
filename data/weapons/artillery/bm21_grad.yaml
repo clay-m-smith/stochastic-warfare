@@ -28,7 +28,7 @@ guidance: NONE
 magazine_capacity: 40
 reload_time_s: 480.0
 compatible_ammo:
-  - frog7_warhead
+  - 9m22_122mm_he
 weight_kg: 13700.0
 reliability: 0.85
 barrel_life_rounds: 0

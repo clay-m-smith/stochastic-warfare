@@ -1,0 +1,41 @@
+# QF 6-pounder 6 cwt Hotchkiss tank gun.
+#
+# Role and ammunition are fixed by the surviving-gun and ammunition records:
+# - Australian War Memorial RELAWM05041 identifies the Mk II 6 cwt gun as the
+#   Mark IV Male tank's main armament.
+#   https://www.awm.gov.au/collection/C240439
+# - Australian War Memorial REL37319.002 identifies the 57 mm Mk XIII AP
+#   projectile recovered from a First World War Male tank.
+#   https://www.awm.gov.au/collection/C1223104
+# - The Tank Museum records a 57 mm, 6 lb projectile and both HE and solid shot.
+#   https://tankmuseum.org/tank-armament-first-world-war/
+#
+# The 1,000 m effective envelope is a conservative tactical model boundary, not
+# a claim that the gun's ballistic maximum was only 1,000 m. It reflects the
+# Tank Museum's finding that firing accurately while moving was impractical.
+weapon_id: qf_6pdr_6cwt
+display_name: "QF 6-Pounder 6 cwt Hotchkiss Tank Gun"
+category: CANNON
+caliber_mm: 57.0
+muzzle_velocity_mps: 411.0
+max_range_m: 6675.0
+effective_range_m: 1000.0
+min_range_m: 25.0
+rate_of_fire_rpm: 10.0
+burst_size: 1
+base_accuracy_mrad: 4.0
+guidance: NONE
+magazine_capacity: 207
+reload_time_s: 6.0
+compatible_ammo:
+  - 6pdr_hotchkiss_ap
+  - 6pdr_hotchkiss_he
+weight_kg: 672.0
+reliability: 0.80
+barrel_life_rounds: 2500
+requires_deployed: false
+traverse_deg: 100.0
+elevation_min_deg: -10.0
+elevation_max_deg: 20.0
+target_domains:
+  - GROUND

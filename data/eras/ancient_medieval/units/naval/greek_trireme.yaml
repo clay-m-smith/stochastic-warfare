@@ -26,9 +26,13 @@ equipment:
     category: WEAPON
     weight_kg: 200.0
     reliability: 0.85
-  - name: "Marine Javelins and Swords"
+  - name: "Greek Marine Javelins"
     category: WEAPON
-    weight_kg: 50.0
+    weight_kg: 25.0
+    reliability: 0.90
+  - name: "Greek Marine Swords"
+    category: WEAPON
+    weight_kg: 25.0
     reliability: 0.90
   - name: "Lookout Mast"
     category: SENSOR

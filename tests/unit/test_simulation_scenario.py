@@ -605,9 +605,16 @@ class TestSimulationContext:
     def test_calibration_round_trip(self) -> None:
         ctx = _make_ctx(calibration={"hit_probability_modifier": 1.5})
         state = ctx.get_state()
-        ctx2 = _make_ctx()
+        ctx2 = _make_ctx(calibration={"hit_probability_modifier": 1.5})
         ctx2.set_state(state)
         assert ctx2.calibration.get("hit_probability_modifier", 1.0) == 1.5
+
+        mismatched = _make_ctx()
+        with pytest.raises(
+            ValueError,
+            match="calibration does not match",
+        ):
+            mismatched.set_state(state)
 
 
 # ---------------------------------------------------------------------------

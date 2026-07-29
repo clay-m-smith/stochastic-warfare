@@ -26,7 +26,7 @@ guidance: NONE
 magazine_capacity: 750
 reload_time_s: 0.0
 compatible_ammo:
-  - gau12_apds
+  - 20mm_pgu28_saphei
 weight_kg: 60.3
 reliability: 0.92
 barrel_life_rounds: 25000

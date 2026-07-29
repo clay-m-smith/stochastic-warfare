@@ -1,0 +1,19 @@
+# British QF 2-pounder Mk VIII high-velocity HE projectile.
+# The compiled service table gives 0.82 kg projectile and 732 m/s velocity,
+# but does not publish the HV bursting charge. Zero avoids inventing it.
+# https://www.navweaps.com/Weapons/WNBR_2pounder_m8.php
+ammo_id: 2pdr_pompom_he
+display_name: "QF 2-pounder Mk VIII HV HE"
+ammo_type: HE
+mass_kg: 0.82
+diameter_mm: 40.0
+drag_coefficient: 0.33
+penetration_mm_rha: 0.0
+penetration_reference_range_m: 0.0
+blast_radius_m: 4.0
+fragmentation_radius_m: 8.0
+explosive_fill_kg: 0.0
+guidance: NONE
+propulsion: none
+max_speed_mps: 732.0
+unit_cost_factor: 0.45

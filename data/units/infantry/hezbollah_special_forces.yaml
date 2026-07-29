@@ -91,7 +91,7 @@ equipment:
     weight_kg: 0.4
     reliability: 0.86
   - name: "AN/PEQ-2 IR Aiming Laser"
-    category: SENSOR
+    category: UTILITY
     weight_kg: 0.3
     reliability: 0.86
   - name: "Naked Eye Observation"

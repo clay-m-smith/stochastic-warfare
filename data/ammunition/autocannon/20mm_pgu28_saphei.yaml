@@ -1,0 +1,19 @@
+# PGU-28A/B 20x102mm SAPHEI cartridge for M61A1/A2 and M197 aircraft guns.
+# USMC MCBO 8020.1A declares both gun interfaces. The Navy Virginia Capes
+# ordnance sheet reports a 1,580 grain (0.102 kg) projectile and 0.79-inch
+# diameter. Unsourced terminal effects retain the conservative Mk 100 HEI
+# model bounds; HE is the closest supported functional category to SAPHEI.
+ammo_id: 20mm_pgu28_saphei
+display_name: "PGU-28A/B 20mm SAPHEI"
+ammo_type: HE
+mass_kg: 0.102
+diameter_mm: 20.0
+drag_coefficient: 0.35
+penetration_mm_rha: 0.0
+penetration_reference_range_m: 0.0
+blast_radius_m: 1.0
+fragmentation_radius_m: 3.0
+guidance: NONE
+propulsion: none
+max_speed_mps: 1030.0
+unit_cost_factor: 0.05

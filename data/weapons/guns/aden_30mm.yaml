@@ -1,0 +1,38 @@
+# ADEN Mk 4/5 30mm aircraft revolver cannon.
+#
+# KNDS identifies 30x113B ADEN ammunition as qualified for ADEN Mk 4/Mk 5
+# weapons and publishes its 2,000 m operational envelope:
+# https://knds.com/media/catalogue_munitions_85ae594873.pdf
+# The RAF Museum's conventional-weapons history describes ADEN as a revolver
+# cannon with a firing rate above 1,000 rounds/minute:
+# https://www.rafmuseum.org.uk/documents/Research/RAF-Historical-Society-Journals/Journal_45_Seminar_conventional_weapons.pdf
+#
+# This is one ADEN cannon and its 130-round Sea Harrier feed, not an aggregate
+# two-gun installation. The runtime burst and accuracy are bounded modeling
+# inputs.
+weapon_id: aden_30mm
+display_name: "ADEN Mk 4/5 30mm Aircraft Cannon"
+category: AIRCRAFT_GUN
+caliber_mm: 30.0
+muzzle_velocity_mps: 765.0
+max_range_m: 2000.0
+effective_range_m: 1200.0
+min_range_m: 100.0
+rate_of_fire_rpm: 1200.0
+burst_size: 10
+base_accuracy_mrad: 2.5
+guidance: NONE
+magazine_capacity: 130
+reload_time_s: 0.0
+compatible_ammo:
+  - 30x113b_aden_hei
+weight_kg: 87.0
+reliability: 0.90
+barrel_life_rounds: 0
+requires_deployed: false
+traverse_deg: 0.0
+elevation_min_deg: 0.0
+elevation_max_deg: 0.0
+target_domains:
+  - GROUND
+  - AERIAL

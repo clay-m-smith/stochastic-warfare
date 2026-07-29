@@ -1,0 +1,19 @@
+# Grape-shot package for the authored 139mm 24-pounder long-gun interface.
+# Naval History and Heritage Command documents grape/canister as the
+# 24-pounder's close-range scatter-shot load. Diameter follows this catalog's
+# weapon bore; remaining fields retain the generic naval grape-shot model
+# without asserting unsourced pellet count or terminal performance.
+ammo_id: grape_shot_24pdr
+display_name: "24-Pounder Grape Shot (Naval Anti-Personnel)"
+ammo_type: SHRAPNEL
+mass_kg: 4.0
+diameter_mm: 139.0
+drag_coefficient: 0.55
+penetration_mm_rha: 0.0
+penetration_reference_range_m: 0.0
+blast_radius_m: 0.0
+fragmentation_radius_m: 20.0
+guidance: NONE
+propulsion: none
+max_speed_mps: 350.0
+unit_cost_factor: 0.3

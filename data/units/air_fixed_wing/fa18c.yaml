@@ -38,7 +38,7 @@ equipment:
     weight_kg: 25.0
     reliability: 0.90
   - name: "AN/ALQ-165 ASPJ ECM"
-    category: SENSOR
+    category: PROTECTION
     weight_kg: 145.0
     reliability: 0.85
   - name: "M61A1 Vulcan 20mm"
@@ -46,7 +46,7 @@ equipment:
     weight_kg: 112.0
     reliability: 0.94
   - name: "Wing/Fuselage Ordnance Stations"
-    category: WEAPON
+    category: UTILITY
     weight_kg: 550.0
     reliability: 0.92
   - name: "F404-GE-402 Turbofan x2"

@@ -1,0 +1,33 @@
+# Per-gun British BL 6-inch Mk VII secondary naval gun.
+#
+# NavWeaps records the Iron Duke installation, 152.4 mm caliber, 7,517 kg gun
+# weight, 5-7 rpm service rate, 846 m/s heavy-charge velocity, and 14,450 m
+# maximum range. Iron Duke carried 130 rounds per gun, used here as the
+# runtime ready allotment.
+# https://www.navweaps.com/Weapons/WNBR_6-45_mk7.php
+weapon_id: bl_6in_mk_vii
+display_name: "BL 6-inch Mk VII Gun"
+category: NAVAL_GUN
+caliber_mm: 152.4
+muzzle_velocity_mps: 846.0
+max_range_m: 14450.0
+effective_range_m: 11000.0
+min_range_m: 0.0
+rate_of_fire_rpm: 6.0
+burst_size: 1
+base_accuracy_mrad: 1.8
+guidance: NONE
+magazine_capacity: 130
+reload_time_s: 10.0
+compatible_ammo:
+  - 6in_mk_vii_cpc
+weight_kg: 7517.0
+reliability: 0.87
+barrel_life_rounds: 800
+requires_deployed: false
+traverse_deg: 120.0
+elevation_min_deg: -7.0
+elevation_max_deg: 20.0
+target_domains:
+  - GROUND
+  - NAVAL

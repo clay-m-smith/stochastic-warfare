@@ -770,6 +770,6 @@ class TestScenarioFullLoad:
         ]
         assert sum(all_sensor_counts) > 0, (
             f"No units have sensors in {path} — "
-            "check _SENSOR_NAME_MAP in scenario_runner.py covers "
+            "check the production equipment registry covers "
             "all SENSOR equipment names used in unit YAML"
         )

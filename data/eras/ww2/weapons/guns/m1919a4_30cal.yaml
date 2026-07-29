@@ -1,0 +1,39 @@
+# Browning Machine Gun, Caliber .30, M1919A4.
+#
+# Source-backed identity and operating envelope:
+# - The U.S. Army SMDC World War II Staff Ride guide gives .30 caliber,
+#   30.8 lb gun weight, a 250-round belt, 2,805 ft/s, and 400-500 rounds/minute.
+#   https://www.smdc.army.mil/Portals/38/Documents/Publications/History/Staff%20Ride/CompleteBook.pdf
+# - The U.S. Army's Lost Patrol staff-ride notes give a 1,500-yard effective
+#   range and a 400-600 rounds/minute cyclic rate for the M1919A4.
+#   https://www.armyupress.army.mil/Portals/7/educational-services/staff-rides/3_The_Lost_Patrol_Instructor_Notes_Walkbook_Exportable.pdf
+#
+# The definition is valid for the Sherman's coaxial installation: it is a
+# ground-target machine gun and does not require a dismounted deployment step.
+# Accuracy, reliability, reload time, barrel life, and terminal effects remain
+# documented catalog abstractions rather than source-measured claims.
+weapon_id: m1919a4_30cal
+display_name: "M1919A4 .30-Caliber Machine Gun"
+category: MACHINE_GUN
+caliber_mm: 7.62
+muzzle_velocity_mps: 855.0
+max_range_m: 1371.6
+effective_range_m: 1371.6
+min_range_m: 0.0
+rate_of_fire_rpm: 450.0
+burst_size: 5
+base_accuracy_mrad: 1.5
+guidance: NONE
+magazine_capacity: 250
+reload_time_s: 10.0
+compatible_ammo:
+  - 30_06_m2_ball
+weight_kg: 13.97
+reliability: 0.92
+barrel_life_rounds: 10000
+requires_deployed: false
+traverse_deg: 360.0
+elevation_min_deg: -15.0
+elevation_max_deg: 45.0
+target_domains:
+  - GROUND

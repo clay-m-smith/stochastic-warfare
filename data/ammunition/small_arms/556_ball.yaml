@@ -1,6 +1,6 @@
 ammo_id: 556_ball
 display_name: "5.56x45mm NATO Ball M855"
-ammo_type: AP
+ammo_type: BALL
 mass_kg: 0.004
 diameter_mm: 5.56
 drag_coefficient: 0.30

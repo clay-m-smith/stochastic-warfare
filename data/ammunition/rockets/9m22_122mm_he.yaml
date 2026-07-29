@@ -1,0 +1,21 @@
+# 9M22/M-21OF 122mm HE-fragmentation rocket for the BM-21 Grad.
+# U.S. Army ODIN identifies the M-21OF/9M22 family and 122mm interface.
+# An Indian Ministry of Defence BM-21-compatible requirement gives a 66 kg
+# maximum rocket mass and about 21 kg filled warhead; the original 9M22
+# technical-description-derived 6.4 kg fill is retained from the prior catalog
+# note. Blast/fragmentation radii use the conservative OF-462 model bounds.
+ammo_id: 9m22_122mm_he
+display_name: "9M22 (M-21OF) 122mm HE-FRAG Rocket"
+ammo_type: ROCKET
+mass_kg: 66.0
+diameter_mm: 122.0
+drag_coefficient: 0.35
+penetration_mm_rha: 0.0
+penetration_reference_range_m: 0.0
+blast_radius_m: 30.0
+fragmentation_radius_m: 90.0
+explosive_fill_kg: 6.4
+guidance: NONE
+propulsion: rocket
+max_speed_mps: 690.0
+unit_cost_factor: 1.0

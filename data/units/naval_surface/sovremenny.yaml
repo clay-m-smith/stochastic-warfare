@@ -36,7 +36,7 @@ equipment:
     category: WEAPON
     weight_kg: 6000.0
     reliability: 0.85
-  - name: "MR-184 Voskhod Radar"
+  - name: "MR-184M Lev Fire Control Radar"
     category: SENSOR
     weight_kg: 4000.0
     reliability: 0.82

@@ -85,6 +85,8 @@ boundaries.
 
 ## Phase 109 - Equipment Mapping Integrity
 
+Status: **Complete** (2026-07-28).
+
 - Remove duplicate-key overwrite behavior.
 - Replace unrelated proxy mappings with semantically correct data or explicit
   unsupported errors.
@@ -95,6 +97,15 @@ boundaries.
 - Add uniqueness and semantic validation for equipment lookup maps.
 
 Exit criteria: REM-010 is closed and the relevant Ruff checks pass.
+
+Delivered behavior includes an ordered typed registry, strict duplicate-key
+YAML boundaries, one runtime-owned loadout builder for
+initial/reinforcement/restore paths, complete built-in catalog coverage,
+explicit sensor policy, semantic target/ammunition/domain checks, checkpointed
+topology/fingerprint compatibility, and production-tested composite weapon
+cadence. See
+[`phase-109.md`](devlog/phase-109.md) for the red proofs, scenario outcomes,
+validation counts, and residual trust items.
 
 ## Phase 110 - ASAT Production Integration
 
@@ -115,9 +126,9 @@ the production loop.
 ## Phase 112 - Validation and Documentation Trust
 
 - Make excluded Python suites explicit in CI and developer documentation.
-- Establish a green repository-wide Ruff baseline after Phase 109 removes the
-  six mapping-table duplicate-key errors; resolve the two remaining pre-existing
-  no-placeholder f-string findings in validation tests.
+- Preserve and enforce the green repository-wide Python Ruff baseline that
+  Phase 109 established after removing the six mapping-table duplicate-key
+  errors and the two no-placeholder f-string findings.
 - Audit critical structural/no-assert tests and replace false behavioral claims.
 - Repair analysis batch loading and metric validation so sensitivity,
   comparison, and calibration cannot emit false-green zero results.
@@ -127,11 +138,18 @@ the production loop.
   reports only as informational diagnostics.
 - Reject missing commander-profile references that currently warn per unit
   while the evaluator reports a successful scenario.
+- Validate crew-skill enums eagerly and stop historical force construction from
+  treating arbitrary `KeyError` failures as absent unit definitions.
+- Make scenario diagnostics distinguish legitimate corrected weapon-range
+  standoff from truly stuck units.
+- Reconcile hard wall-clock benchmark assertions with the authoritative stored
+  baseline and declared hardware/repetition policy.
 - Reconcile public capability and status claims with the remediation evidence.
 
-Exit criteria: REM-013, REM-014, REM-017, REM-022, and REM-023 are closed,
-REM-015 remains green, all relevant suites are reported explicitly, and the
-phase postmortem identifies any newly discovered backlog items.
+Exit criteria: REM-013, REM-014, REM-017, REM-022, REM-023, REM-024, REM-025,
+and REM-026 are closed, REM-015 remains green, all relevant suites are reported
+explicitly, and the phase postmortem identifies any newly discovered backlog
+items.
 
 ## Phase 113 - Morale State Ownership
 

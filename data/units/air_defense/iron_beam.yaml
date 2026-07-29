@@ -24,7 +24,7 @@ equipment:
     category: WEAPON
     weight_kg: 3500.0
     reliability: 0.92
-  - name: "EL/M-2084 Fire Control Radar"
+  - name: "EL/M-2084 Multi-Mission Radar"
     category: SENSOR
     weight_kg: 1200.0
     reliability: 0.90

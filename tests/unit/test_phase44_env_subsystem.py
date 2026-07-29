@@ -15,6 +15,7 @@ import numpy as np
 
 from stochastic_warfare.combat.ammunition import (
     AmmoDefinition,
+    AmmoState,
     WeaponDefinition,
 )
 from stochastic_warfare.core.events import EventBus
@@ -100,6 +101,9 @@ class FakeWeaponInstance:
     def __init__(self, definition: WeaponDefinition, ammo_count: int = 10):
         self.definition = definition
         self._ammo_count = ammo_count
+        self.ammo_state = AmmoState(
+            rounds_by_type={"ammo1": ammo_count},
+        )
         self._last_fire_time: float | None = None
 
     def can_fire(self, ammo_id: str) -> bool:
@@ -115,8 +119,13 @@ class FakeSensor:
         sensor_type: Any = None,
     ):
         self.effective_range = effective_range
+        self.operational = True
         from stochastic_warfare.detection.sensors import SensorType
         self.sensor_type = sensor_type or SensorType.VISUAL
+
+    def supports_target_domain(self, _domain: Any) -> bool:
+        """Implement the live SensorInstance eligibility boundary."""
+        return True
 
 
 def _make_ctx(

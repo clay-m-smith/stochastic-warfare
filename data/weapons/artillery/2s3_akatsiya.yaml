@@ -26,7 +26,7 @@ guidance: NONE
 magazine_capacity: 46
 reload_time_s: 15.0
 compatible_ammo:
-  - d30_122mm_he
+  - of540_152mm_he
 weight_kg: 27500.0
 reliability: 0.88
 barrel_life_rounds: 2500

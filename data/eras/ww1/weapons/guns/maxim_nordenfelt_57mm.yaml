@@ -1,0 +1,41 @@
+# 57 mm Maxim-Nordenfelt "Sockel" gun fitted to the A7V.
+#
+# - Imperial War Museums ORD 117 identifies the surviving 57 mm gun and its
+#   association with the German Army A7V.
+#   https://www.iwm.org.uk/collections/item/object/30025235
+# - The Tank Museum records the A7V using its 57 mm gun with grape shot against
+#   an entrenched quarry during the 21 March 1918 action.
+#   https://tankmuseum.org/action-debut-of-the-a7v-tank/
+# - The digitized British War Office land-service handbook documents the
+#   6-pounder Nordenfelt mechanism and common-shell ammunition family.
+#   https://books.google.com/books?id=rOgE_aL78vUC
+#
+# Numerical fields retain a conservative direct-fire fortress-gun envelope.
+# They are not a claim that this surviving gun was physically identical to a
+# field or naval 6-pounder.
+weapon_id: maxim_nordenfelt_57mm
+display_name: "57 mm Maxim-Nordenfelt A7V Gun"
+category: CANNON
+caliber_mm: 57.0
+muzzle_velocity_mps: 440.0
+max_range_m: 2500.0
+effective_range_m: 1000.0
+min_range_m: 25.0
+rate_of_fire_rpm: 10.0
+burst_size: 1
+base_accuracy_mrad: 4.0
+guidance: NONE
+magazine_capacity: 180
+reload_time_s: 6.0
+compatible_ammo:
+  - 57mm_nordenfelt_common
+  - 57mm_nordenfelt_grape
+weight_kg: 450.0
+reliability: 0.82
+barrel_life_rounds: 2500
+requires_deployed: false
+traverse_deg: 50.0
+elevation_min_deg: -5.0
+elevation_max_deg: 20.0
+target_domains:
+  - GROUND

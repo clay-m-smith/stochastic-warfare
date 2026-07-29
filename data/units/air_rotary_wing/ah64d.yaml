@@ -26,9 +26,13 @@ equipment:
     weight_kg: 219.0
     reliability: 0.89
     temperature_range: [-46.0, 52.0]
-  - name: "M299 Launcher"
+  # The Apache carries four M299 four-rail launchers; this aggregate row
+  # preserves the catalog attachment's sixteen-round runtime capacity.
+  # JAMS §2.2.1.4.3.1 identifies the M299 as a four-rail launcher:
+  # https://api.army.mil/e2/c/downloads/2022/03/01/e15e200e/jams.pdf
+  - name: "M299 Launchers (x4)"
     category: WEAPON
-    weight_kg: 64.0
+    weight_kg: 256.0
     reliability: 0.93
   - name: "TADS/PNVS"
     category: SENSOR

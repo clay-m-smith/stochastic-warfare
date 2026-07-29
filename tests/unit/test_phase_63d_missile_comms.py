@@ -38,8 +38,12 @@ def _make_weapon(category="MISSILE_LAUNCHER"):
         caliber_mm=0.0,
         rate_of_fire_rpm=1.0,
         max_range_m=10000.0,
+        magazine_capacity=1,
+        compatible_ammo=["missile_rd"],
     )
-    return WeaponInstance(definition=defn)
+    weapon = WeaponInstance(definition=defn)
+    weapon.ammo_state.add("missile_rd", 1)
+    return weapon
 
 
 def _make_engine():
@@ -91,7 +95,7 @@ class TestMissileRouting:
             attacker_pos=Position(0.0, 0.0, 0.0),
             target_pos=Position(1000.0, 0.0, 0.0),
             weapon=wpn,
-            ammo_id="ammo1",
+            ammo_id="missile_rd",
             ammo_def=ammo,
             missile_engine=missile_engine,
         )
@@ -112,7 +116,7 @@ class TestMissileRouting:
             attacker_pos=Position(0.0, 0.0, 0.0),
             target_pos=Position(1000.0, 0.0, 0.0),
             weapon=wpn,
-            ammo_id="ammo1",
+            ammo_id="missile_rd",
             ammo_def=ammo,
             missile_engine=None,
         )

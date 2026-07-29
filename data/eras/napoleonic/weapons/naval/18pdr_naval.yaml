@@ -1,0 +1,35 @@
+# British 18-pounder long gun.  USNI's period-ordnance table gives a 5.292-inch
+# bore, 42 cwt tube, 6 lb service charge, and distinguishes it from the much
+# shorter carronade.  The 515 m/s velocity follows the documented 1,690 fps
+# smoothbore service value; the range envelope is the repository's conservative
+# direct-fire naval model, not a claim of aimed fire at maximum ballistic range.
+# https://www.usni.org/magazines/proceedings/1973/august/carronade
+# https://en.wikisource.org/wiki/Page:EB1911_-_Volume_20.djvu/237
+weapon_id: 18pdr_naval
+display_name: "18-Pounder Naval Long Gun"
+category: NAVAL_GUN
+caliber_mm: 134.4
+muzzle_velocity_mps: 515.0
+max_range_m: 3200.0
+effective_range_m: 1600.0
+min_range_m: 50.0
+rate_of_fire_rpm: 1.5
+burst_size: 1
+base_accuracy_mrad: 8.0
+cep_m: 14.0
+guidance: NONE
+magazine_capacity: 60
+reload_time_s: 40.0
+compatible_ammo:
+  - round_shot_18pdr
+  - grape_shot_18pdr
+weight_kg: 2134.0
+reliability: 0.85
+barrel_life_rounds: 3000
+requires_deployed: false
+traverse_deg: 15.0
+elevation_min_deg: -5.0
+elevation_max_deg: 12.0
+target_domains:
+  - GROUND
+  - NAVAL

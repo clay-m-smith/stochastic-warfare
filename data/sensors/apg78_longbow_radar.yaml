@@ -1,0 +1,26 @@
+# AN/APG-78 Longbow fire-control radar.
+#
+# U.S. Army FY1999 Aircraft Procurement Budget Justification, Longbow item 13,
+# states that Ground Targeting Mode detects stationary targets to 6 km and
+# moving targets to 8 km (PDF page 150 / item page 8):
+# https://www.asafm.army.mil/Portals/72/Documents/BudgetMaterial/1999/base%20budget/justification%20book/aircraft.pdf
+#
+# The 8 km cap is therefore source-backed. RF/equation inputs below are
+# conservative catalog abstractions and are not asserted as published APG-78
+# hardware specifications.
+sensor_id: apg78_longbow_radar
+sensor_type: RADAR
+display_name: "AN/APG-78 Longbow Fire-Control Radar"
+max_range_m: 8000.0
+detection_threshold: 12.0
+false_alarm_rate: 1.0e-7
+scan_time_s: 2.0
+scan_interval_ticks: 2
+frequency_mhz: 35000.0
+peak_power_w: 1000.0
+antenna_gain_dbi: 30.0
+antenna_height_m: 4.0
+min_range_m: 100.0
+fov_deg: 360.0
+requires_los: true
+detects_domain: ["RADAR"]

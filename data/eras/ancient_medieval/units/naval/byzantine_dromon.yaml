@@ -26,9 +26,13 @@ equipment:
     category: WEAPON
     weight_kg: 300.0
     reliability: 0.65
-  - name: "Marine Weapons (Swords and Javelins)"
+  - name: "Byzantine Marine Swords"
     category: WEAPON
-    weight_kg: 100.0
+    weight_kg: 50.0
+    reliability: 0.90
+  - name: "Byzantine Marine Javelins"
+    category: WEAPON
+    weight_kg: 50.0
     reliability: 0.90
   - name: "Ballistae (x2)"
     category: WEAPON

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
@@ -13,6 +14,7 @@ from api.config import ApiSettings
 from api.database import Database
 from api.main import create_app
 from api.run_manager import RunManager
+from stochastic_warfare.simulation.scenario import ScenarioLoader
 
 
 # ---------------------------------------------------------------------------
@@ -133,6 +135,65 @@ def test_capture_frame_no_personnel():
     )
     u = frame["units"][0]
     assert u["hp"] == 1.0  # ACTIVE status -> 1.0
+
+
+def test_capture_frame_exposes_scenario_loader_ammunition_consumption():
+    """Frame ammunition is read from production typed loadout attachments."""
+    ctx = ScenarioLoader(Path("data")).load(
+        Path("data/scenarios/test_campaign/scenario.yaml"),
+        seed=109,
+    )
+    unit = ctx.units_by_side["blue"][0]
+    attachments = ctx.unit_weapons[unit.entity_id]
+    assert attachments
+
+    initial_frame = RunManager._capture_frame(
+        tick=0,
+        ctx=ctx,
+        unit_weapons=ctx.unit_weapons,
+    )
+    initial_entry = next(
+        entry
+        for entry in initial_frame["units"]
+        if entry["id"] == unit.entity_id
+    )
+    assert initial_entry["ap"] == 1.0
+
+    attachment = max(
+        attachments,
+        key=lambda item: sum(item.weapon.ammo_state.rounds_by_type.values()),
+    )
+    ammo_id, available = max(
+        attachment.weapon.ammo_state.rounds_by_type.items(),
+        key=lambda item: item[1],
+    )
+    consumed = max(1, available // 2)
+    assert attachment.weapon.ammo_state.consume(ammo_id, consumed)
+
+    total_remaining = sum(
+        sum(item.weapon.ammo_state.rounds_by_type.values())
+        for item in attachments
+    )
+    total_fired = sum(
+        item.weapon.ammo_state.total_rounds_fired
+        for item in attachments
+    )
+    consumed_frame = RunManager._capture_frame(
+        tick=1,
+        ctx=ctx,
+        unit_weapons=ctx.unit_weapons,
+    )
+    consumed_entry = next(
+        entry
+        for entry in consumed_frame["units"]
+        if entry["id"] == unit.entity_id
+    )
+
+    assert consumed_entry["ap"] == round(
+        total_remaining / (total_remaining + total_fired),
+        2,
+    )
+    assert consumed_entry["ap"] < initial_entry["ap"]
 
 
 # ---------------------------------------------------------------------------

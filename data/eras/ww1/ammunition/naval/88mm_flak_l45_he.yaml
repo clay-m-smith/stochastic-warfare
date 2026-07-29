@@ -1,0 +1,19 @@
+# WWI 8.8 cm AA projectile values follow the compiled service-manual table:
+# https://www.navweaps.com/Weapons/WNGER_88mm-45_skc13.php
+# The underlying official gun instruction is Bundesarchiv RM 6/1162:
+# https://www.deutsche-digitale-bibliothek.de/item/HNZAM4JZRSHXQIVNUMGIRKTY42I6ZSQS
+ammo_id: 88mm_flak_l45_he
+display_name: "8.8 cm L/3.9 HE Anti-Aircraft Shell"
+ammo_type: HE
+mass_kg: 9.63
+diameter_mm: 88.0
+drag_coefficient: 0.30
+penetration_mm_rha: 0.0
+penetration_reference_range_m: 0.0
+blast_radius_m: 12.0
+fragmentation_radius_m: 20.0
+explosive_fill_kg: 0.465
+guidance: NONE
+propulsion: none
+max_speed_mps: 840.0
+unit_cost_factor: 1.2

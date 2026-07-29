@@ -29,7 +29,7 @@ equipment:
     category: WEAPON
     weight_kg: 260000.0
     reliability: 0.87
-  - name: "BL 4-inch Mk III Gun (x16)"
+  - name: "QF 4-inch Mk III Gun (x16)"
     category: WEAPON
     weight_kg: 24000.0
     reliability: 0.86

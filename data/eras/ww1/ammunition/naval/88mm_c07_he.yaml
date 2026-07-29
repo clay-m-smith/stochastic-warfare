@@ -1,0 +1,22 @@
+# 8.8 cm Sprenggranate C/07 used by the SK L/30 U-boat deck gun.
+#
+# NavWeaps compiles the German service-manual figures: 9.80 kg projectile,
+# 1.42 kg explosive charge, and 590 m/s muzzle velocity.
+# https://www.navweaps.com/Weapons/WNGER_88mm-30_skc97.php
+# Blast/fragmentation radii are explicit simulator effect envelopes; the
+# published source does not claim those radii.
+ammo_id: 88mm_c07_he
+display_name: "8.8 cm Sprenggranate C/07 HE"
+ammo_type: HE
+mass_kg: 9.80
+diameter_mm: 88.0
+drag_coefficient: 0.30
+penetration_mm_rha: 0.0
+penetration_reference_range_m: 0.0
+blast_radius_m: 11.0
+fragmentation_radius_m: 20.0
+explosive_fill_kg: 1.42
+guidance: NONE
+propulsion: none
+max_speed_mps: 590.0
+unit_cost_factor: 1.0

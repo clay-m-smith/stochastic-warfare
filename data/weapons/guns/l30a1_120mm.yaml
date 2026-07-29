@@ -1,0 +1,39 @@
+# Royal Ordnance L30A1 120mm rifled tank gun.
+#
+# The British Army identifies Challenger 2's main armament as the 120mm rifled
+# L30A1:
+# https://www.army.mod.uk/learn-and-explore/equipment/combat-vehicles/challenger-2/
+# The UK Defence Safety Authority confirms the L30A1 identity and three-part
+# ammunition architecture:
+# https://www.gov.uk/government/uploads/system/uploads/attachment_data/file/727954/20180823-Challenger_SI_Castlemartin_Redacted_RT.pdf
+# A published system reference reports 1,650 m/s with L27A1 CHARM 3:
+# https://weaponsystems.net/system/889-120mm%2BRoyal%2BOrdnance%2BL30
+#
+# Public sources do not disclose authoritative penetration performance. The
+# compatible round records an explicit conservative model bound rather than
+# claiming a released acceptance-test value.
+weapon_id: l30a1_120mm
+display_name: "L30A1 120mm Rifled Tank Gun"
+category: CANNON
+caliber_mm: 120.0
+muzzle_velocity_mps: 1650.0
+max_range_m: 4000.0
+effective_range_m: 3000.0
+min_range_m: 50.0
+rate_of_fire_rpm: 6.0
+burst_size: 1
+base_accuracy_mrad: 0.25
+guidance: NONE
+magazine_capacity: 49
+reload_time_s: 8.0
+compatible_ammo:
+  - l27a1_charm3_apfsds
+weight_kg: 2100.0
+reliability: 0.94
+barrel_life_rounds: 0
+requires_deployed: false
+traverse_deg: 360.0
+elevation_min_deg: -10.0
+elevation_max_deg: 20.0
+target_domains:
+  - GROUND

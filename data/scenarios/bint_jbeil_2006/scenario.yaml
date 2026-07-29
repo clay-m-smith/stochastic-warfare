@@ -220,37 +220,3 @@ calibration_overrides:
   red_start_x: 4500.0
   red_start_y: 4500.0
   red_formation_spacing_m: 150.0
-
-  weapon_assignments:
-    "Tavor TAR-21 Rifle": m4_556mm
-    "Tavor TAR-21 CTAR": m4_556mm
-    "Suppressed M4A1 Rifle": m4_556mm
-    "M4A1 SOPMOD": m4_556mm
-    "IMI Negev 5.56mm LMG": m240_762mm
-    "M240 7.62mm": m240_762mm
-    "M240 7.62mm Coaxial": m240_762mm
-    "M240B GPMG": m240_762mm
-    "M203 40mm Grenade Launcher": m4_556mm
-    "M2 .50 Cal": m2hb_50cal
-    "MATADOR 90mm Anti-Structure Munition": rpg7
-    "FGM-148 Javelin CLU": javelin_clm
-    "Javelin Missile Round": javelin_clm
-    "M256 120mm Smoothbore": m256_120mm
-    "Soltam 60mm Internal Mortar": m252_81mm_mortar
-    "M284 155mm Howitzer": m284_155mm
-    "M61A1 Vulcan 20mm": m61a1_vulcan
-    "AGM-114 Hellfire Launcher": agm114_hellfire
-    "M197 20mm Rotary Cannon": m197_20mm
-    "M260 2.75-inch Rocket Pod": bomb_rack_generic
-    "Wing/Fuselage Ordnance Stations": bomb_rack_generic
-    "AIM-9L Sidewinder": aim9x_sidewinder
-    "AIM-9M Sidewinder": aim9x_sidewinder
-    "AKM": ak47
-    "AK-74": ak47
-    "SVD Dragunov": ak47
-    "PKM GPMG": m240_762mm
-    "RPG-7": rpg7
-    "RPG-29": rpg29_vampir
-    "Iraqi 82mm 2B14 Mortar": m252_81mm_mortar
-    "9P163-2 Kornet Launcher": kornet_9m133
-    "9M133 Missile": kornet_9m133

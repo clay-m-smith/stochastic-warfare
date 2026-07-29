@@ -1,0 +1,30 @@
+# Explicit WWII naval heavy anti-aircraft gun role model.
+#
+# The 127 mm Type 89 source and the existing 5-inch ammunition interface share
+# a heavy naval AA role and nominal bore. This target exposes only AERIAL
+# engagement and does not claim Mk 12 physical performance for the Type 89.
+weapon_id: ww2_naval_heavy_aa
+display_name: "WWII 127 mm Naval Heavy Anti-Aircraft Role Model"
+category: NAVAL_GUN
+caliber_mm: 127.0
+muzzle_velocity_mps: 792.0
+max_range_m: 16000.0
+min_range_m: 500.0
+rate_of_fire_rpm: 15.0
+burst_size: 1
+base_accuracy_mrad: 0.6
+guidance: NONE
+magazine_capacity: 500
+reload_time_s: 0.0
+compatible_ammo:
+  - 5in_hc_he
+  - 5in_common_ap
+weight_kg: 18000.0
+reliability: 0.91
+barrel_life_rounds: 4600
+requires_deployed: false
+traverse_deg: 300.0
+elevation_min_deg: -15.0
+elevation_max_deg: 85.0
+target_domains:
+  - AERIAL

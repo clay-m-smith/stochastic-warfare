@@ -13,7 +13,7 @@ guidance: COMBINED
 magazine_capacity: 6
 reload_time_s: 300.0
 compatible_ammo:
-  - mk48_torpedo_warhead
+  - mk46_lightweight_torpedo
 weight_kg: 232.0
 reliability: 0.88
 barrel_life_rounds: 0

@@ -1,0 +1,23 @@
+# Functional role model for a short-range surface-navigation/search radar.
+# The US Army WEG identifies MRK-50 Albatros as a navigation/search radar and
+# gives its public range as 11 nautical miles (20,372 m).
+# Source:
+#   https://cgsc.contentdm.oclc.org/digital/api/collection/p4013coll11/id/2091/download
+# RF/equation inputs reuse the existing X-band search archetype and do not
+# assert the physical specification of every represented radar.
+sensor_id: surface_navigation_search_radar
+sensor_type: RADAR
+display_name: "Surface Navigation/Search Radar (role model)"
+max_range_m: 20372.0
+detection_threshold: 10.0
+false_alarm_rate: 1.0e-7
+scan_time_s: 4.0
+scan_interval_ticks: 2
+frequency_mhz: 9400.0
+peak_power_w: 20000.0
+antenna_gain_dbi: 30.0
+antenna_height_m: 10.0
+min_range_m: 200.0
+fov_deg: 360.0
+requires_los: true
+detects_domain: ["RADAR"]

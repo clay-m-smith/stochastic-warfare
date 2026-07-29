@@ -1,0 +1,35 @@
+# Aggregate of four Mk 141 quad-canister launchers (sixteen missiles) in the
+# modernized Iowa-class fit.
+#
+# The federal Historic American Engineering Record for USS Missouri records
+# sixteen Harpoon missiles added in the 1980s:
+# https://tile.loc.gov/storage-services/master/pnp/habshaer/hi/hi0700/
+# hi0700/data/hi0700data.pdf
+# NAVSEA identifies Mk 141 as a Harpoon launcher:
+# https://www.navsea.navy.mil/Portals/103/Documents/Warfare_Centers/
+# WFC%20TECHNICAL%20CAPABILITIES%20%20Rev%207%20FINAL%202018Jan25.pdf
+weapon_id: mk141_harpoon_launchers_x4
+display_name: "Mk 141 Harpoon Launcher Battery (4x4)"
+category: MISSILE_LAUNCHER
+caliber_mm: 343.0
+muzzle_velocity_mps: 0.0
+max_range_m: 124000.0
+min_range_m: 5000.0
+rate_of_fire_rpm: 2.0
+burst_size: 1
+base_accuracy_mrad: 0.0
+cep_m: 0.0
+min_engagement_altitude_m: 0.0
+max_engagement_altitude_m: 0.0
+guidance: RADAR_ACTIVE
+magazine_capacity: 16
+reload_time_s: 0.0
+compatible_ammo:
+  - rgm84_harpoon
+weight_kg: 5800.0
+reliability: 0.89
+barrel_life_rounds: 0
+requires_deployed: false
+traverse_deg: 360.0
+elevation_min_deg: 0.0
+elevation_max_deg: 45.0

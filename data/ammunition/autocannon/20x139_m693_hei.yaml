@@ -1,0 +1,22 @@
+# KNDS 20x139mm HEI round qualified for the M693.
+#
+# KNDS publishes a 315 g cartridge, 120 g projectile, 9 g explosive payload,
+# 1,050 m/s velocity, and approximately 2,000 m operational range, and lists
+# the M693 among qualified weapons:
+# https://knds.com/en/products/ammunition/20x139-mm
+#
+# The effect radii are conservative simulation bounds; the fill, projectile
+# mass, velocity, and identity come directly from the manufacturer envelope.
+ammo_id: 20x139_m693_hei
+display_name: "20x139mm M693 HEI"
+ammo_type: HE
+mass_kg: 0.120
+diameter_mm: 20.0
+drag_coefficient: 0.29
+blast_radius_m: 1.5
+fragmentation_radius_m: 5.0
+explosive_fill_kg: 0.009
+guidance: NONE
+propulsion: none
+max_speed_mps: 1050.0
+unit_cost_factor: 0.18

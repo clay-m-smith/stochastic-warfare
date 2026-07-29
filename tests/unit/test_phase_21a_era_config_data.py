@@ -62,10 +62,10 @@ class TestWW1EraConfig:
         cfg = get_era_config("ww1")
         assert "cbrn" not in cfg.disabled_modules
 
-    def test_visual_only_sensor(self) -> None:
+    def test_available_pre_electronic_sensors(self) -> None:
         from stochastic_warfare.core.era import get_era_config
         cfg = get_era_config("ww1")
-        assert cfg.available_sensor_types == {"VISUAL"}
+        assert cfg.available_sensor_types == {"VISUAL", "PASSIVE_SONAR"}
 
     def test_c2_delay_multiplier(self) -> None:
         from stochastic_warfare.core.era import get_era_config

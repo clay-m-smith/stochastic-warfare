@@ -1,0 +1,32 @@
+# Imperial German C/06 D 45 cm torpedo interface.  The WWI technical table
+# records 450 mm, 5,900 m at 27 knots, and a 122 kg warhead; contemporary
+# USNI reporting independently bounds the 17.7-inch family's range and role.
+# https://uboat.net/history/wwi/part7.htm
+# https://www.usni.org/magazines/proceedings/1923/june/professional-notes
+weapon_id: c06d_45cm_torpedo_ww1
+display_name: "45 cm C/06 D Torpedo Tube"
+category: TORPEDO_TUBE
+caliber_mm: 450.0
+muzzle_velocity_mps: 0.0
+max_range_m: 5900.0
+effective_range_m: 4000.0
+min_range_m: 200.0
+rate_of_fire_rpm: 0.2
+burst_size: 1
+base_accuracy_mrad: 0.0
+cep_m: 0.0
+guidance: NONE
+magazine_capacity: 4
+reload_time_s: 1200.0
+compatible_ammo:
+  - c06d_45cm_warhead
+weight_kg: 0.0
+reliability: 0.68
+barrel_life_rounds: 0
+requires_deployed: false
+traverse_deg: 20.0
+elevation_min_deg: -5.0
+elevation_max_deg: 5.0
+target_domains:
+  - NAVAL
+  - SUBMARINE

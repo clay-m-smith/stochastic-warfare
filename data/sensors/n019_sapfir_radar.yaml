@@ -1,0 +1,18 @@
+# Source: the National Museum of the U.S. Air Force identifies the MiG-29's
+# Phazotron NIIR N019 Doppler radar and its look-down tracking role:
+# https://www.nationalmuseum.af.mil/Visit/Museum-Exhibits/Fact-Sheets/Display/Article/197174/mikoyan-gurevich-mig-29a/
+# The 70 km value is a conservative simulation cap below the public source's
+# stated detection distance, not an across-signature performance claim.
+sensor_id: n019_sapfir_radar
+sensor_type: RADAR
+display_name: "N019 Sapfir Fire-Control Radar"
+max_range_m: 70000.0
+detection_threshold: 12.0
+false_alarm_rate: 1.0e-7
+scan_time_s: 2.0
+scan_interval_ticks: 2
+min_range_m: 500.0
+fov_deg: 120.0
+requires_los: true
+detects_domain: ["RADAR"]
+target_domains: ["AERIAL"]

@@ -37,14 +37,14 @@ equipment:
     weight_kg: 10800.0
     reliability: 0.85
   - name: "Flight Deck (72 aircraft capacity)"
-    category: WEAPON
+    category: UTILITY
     weight_kg: 400000.0
     reliability: 0.90
   - name: "Type 21 Air Search Radar"
     category: SENSOR
     weight_kg: 1500.0
     reliability: 0.65
-  - name: "Type 94 Fire Control Director"
+  - name: "Type 94 High-Angle Optical Director"
     category: SENSOR
     weight_kg: 8000.0
     reliability: 0.78

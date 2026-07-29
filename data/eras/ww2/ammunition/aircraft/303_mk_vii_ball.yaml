@@ -1,0 +1,22 @@
+# British .303-inch Mark VII ball cartridge.
+# Imperial War Museums identifies the .303 Browning Mk II service weapon.
+# https://www.iwm.org.uk/collections/item/object/30034904
+# Official US Army technical intelligence gives the British .303 Mk VII ball
+# muzzle velocity as 2,450 ft/s (747 m/s). Projectile mass is 174 grains
+# (11.28 g), the Mark VII service specification.
+# https://www.ibiblio.org/hyperwar/Japan/IJA/HB/HB-4.html
+ammo_id: 303_mk_vii_ball
+display_name: ".303-inch Mark VII Ball"
+ammo_type: BALL
+mass_kg: 0.01128
+diameter_mm: 7.7
+drag_coefficient: 0.28
+penetration_mm_rha: 5.0
+penetration_reference_range_m: 100.0
+blast_radius_m: 0.0
+fragmentation_radius_m: 0.0
+explosive_fill_kg: 0.0
+guidance: NONE
+propulsion: none
+max_speed_mps: 747.0
+unit_cost_factor: 0.1

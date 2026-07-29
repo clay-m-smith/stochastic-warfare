@@ -14,7 +14,7 @@ magazine_capacity: 60
 reload_time_s: 40.0
 compatible_ammo:
   - chain_shot
-  - grape_shot_naval
+  - grape_shot_24pdr
 weight_kg: 2200.0
 reliability: 0.85
 barrel_life_rounds: 3000

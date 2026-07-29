@@ -1,0 +1,14 @@
+ammo_id: javelin_throw
+display_name: "Thrown Javelin"
+ammo_type: BALL
+mass_kg: 1.0
+diameter_mm: 20.0
+drag_coefficient: 0.70
+penetration_mm_rha: 3.0
+penetration_reference_range_m: 10.0
+blast_radius_m: 0.0
+fragmentation_radius_m: 0.0
+guidance: NONE
+propulsion: none
+max_speed_mps: 20.0
+unit_cost_factor: 0.001

@@ -1,0 +1,23 @@
+# British 4-inch BL Mk IX 31 lb (14.1 kg) HE projectile.
+# Gibraltar's Ministry for Heritage records the Mk IX projectile mass,
+# 2,600 ft/s muzzle velocity, and 13,850 yard range.
+# https://www.ministryforheritage.gi/heritage-and-antiquities/4-inch-naval-gun-mk-ix-1325
+# The compiled table corroborates 101.6 mm, 14.1 kg, and 800 m/s.
+# https://www.navweaps.com/Weapons/WNBR_4-45_mk9.php
+# Neither cited source publishes the bursting charge. A zero fill avoids
+# inventing one; the terminal radii remain explicit simulator envelopes.
+ammo_id: 4in_mk_ix_he
+display_name: "4-inch BL Mk IX 31 lb HE"
+ammo_type: HE
+mass_kg: 14.1
+diameter_mm: 101.6
+drag_coefficient: 0.30
+penetration_mm_rha: 0.0
+penetration_reference_range_m: 0.0
+blast_radius_m: 13.0
+fragmentation_radius_m: 25.0
+explosive_fill_kg: 0.0
+guidance: NONE
+propulsion: none
+max_speed_mps: 800.0
+unit_cost_factor: 1.1

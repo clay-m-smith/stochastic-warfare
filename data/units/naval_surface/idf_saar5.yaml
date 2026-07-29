@@ -58,6 +58,11 @@
 #   Tier 3: Jane's Fighting Ships 2006 (Sa'ar 5 entry)
 #   Tier 3: IAI Elta public datasheets on EL/M-2218S / EL/M-2221
 #   Tier 3: Rafael / Elisra public product data (Deseaver, NS-9003)
+#   System-role source: NAVAIR Harpoon product page:
+#     https://www.navair.navy.mil/product/Harpoon
+#   Platform topology source: Naval Technology, Sa'ar 5 entry (two
+#     four-cell Boeing launchers/eight RGM-84C rounds):
+#     https://www.naval-technology.com/projects/saar5/
 
 unit_type: idf_saar5
 domain: naval
@@ -95,9 +100,13 @@ equipment:
     category: WEAPON
     weight_kg: 98.0  # per missile; 32 missiles in 2x 16-cell VLS
     reliability: 0.84
-  - name: "Harpoon Block 1C ASCM"
+  - name: "Harpoon Quad Launchers (x2)"
     category: WEAPON
-    weight_kg: 691.0  # per missile; 8 rounds in 2x quad canister
+    weight_kg: 5800.0
+    reliability: 0.89
+  - name: "Harpoon Block 1C ASCM (x8)"
+    category: WEAPON
+    weight_kg: 5528.0
     reliability: 0.89
   - name: "Oto Melara 76mm/62 Super Rapid"
     category: WEAPON

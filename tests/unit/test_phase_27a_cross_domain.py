@@ -127,7 +127,7 @@ class TestEngagementRouter:
         result = eng.route_engagement(
             EngagementType.COASTAL_DEFENSE,
             "att1", "tgt1",
-            Position(0, 0, 0), Position(50000, 0, 0),
+            Position(0, 0, 0), Position(2000, 0, 0),
             wi, "atgm_round", ammo,
             missile_engine=mock_missile,
         )
@@ -144,7 +144,7 @@ class TestEngagementRouter:
         result = eng.route_engagement(
             EngagementType.AIR_LAUNCHED_ASHM,
             "att1", "tgt1",
-            Position(0, 0, 5000), Position(50000, 0, 0),
+            Position(0, 0, 5000), Position(2000, 0, 5000),
             wi, "atgm_round", ammo,
             missile_engine=mock_missile,
         )

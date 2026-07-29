@@ -12,7 +12,7 @@ guidance: NONE
 magazine_capacity: 511
 reload_time_s: 0.0
 compatible_ammo:
-  - 556_ball
+  - 20mm_pgu28_saphei
 weight_kg: 112.0
 reliability: 0.90
 barrel_life_rounds: 50000

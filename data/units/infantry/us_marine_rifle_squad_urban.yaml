@@ -72,7 +72,7 @@ equipment:
     weight_kg: 6.7
     reliability: 0.90
   - name: "Benelli M1014 Shotgun"
-    category: WEAPON
+    category: UTILITY
     weight_kg: 3.8
     reliability: 0.93
   - name: "AN/PRC-148 MBITR"

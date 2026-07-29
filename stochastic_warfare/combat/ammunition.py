@@ -9,13 +9,17 @@ weapon definition with runtime ammo state and equipment condition.
 from __future__ import annotations
 
 import enum
+import math
+from collections.abc import Mapping
 from dataclasses import dataclass, field
 from pathlib import Path
+from types import MappingProxyType
 from typing import Any
 
 from pydantic import BaseModel
 
 from stochastic_warfare.core.logging import get_logger
+from stochastic_warfare.core.strict_yaml import load_yaml_unique
 from stochastic_warfare.entities.equipment import EquipmentItem
 
 logger = get_logger(__name__)
@@ -41,6 +45,15 @@ class WeaponCategory(enum.IntEnum):
     MINE_LAYER = 10
     CIWS = 11
     DIRECTED_ENERGY = 12
+    RIFLE = 13
+    SUBMACHINE_GUN = 14
+    LIGHT_MG = 15
+    HEAVY_MG = 16
+    AUTOCANNON = 17
+    ARTILLERY = 18
+    GRENADE = 19
+    MELEE = 20
+    DEPTH_CHARGE = 21
 
 
 class GuidanceType(enum.IntEnum):
@@ -77,6 +90,10 @@ class AmmoType(enum.IntEnum):
     ANTI_PERSONNEL_MINE = 12
     EXPANDING = 13
     DIRECTED_ENERGY = 14
+    BALL = 15
+    SHRAPNEL = 16
+    CHEMICAL = 17
+    INCENDIARY = 18
 
 
 # ---------------------------------------------------------------------------
@@ -98,6 +115,15 @@ _CATEGORY_DEFAULT_DOMAINS: dict[int, set[str]] = {
     WeaponCategory.MINE_LAYER: {"GROUND", "NAVAL"},
     WeaponCategory.CIWS: {"AERIAL", "NAVAL"},
     WeaponCategory.DIRECTED_ENERGY: {"GROUND", "AERIAL", "NAVAL"},
+    WeaponCategory.RIFLE: {"GROUND"},
+    WeaponCategory.SUBMACHINE_GUN: {"GROUND"},
+    WeaponCategory.LIGHT_MG: {"GROUND", "AERIAL"},
+    WeaponCategory.HEAVY_MG: {"GROUND", "AERIAL"},
+    WeaponCategory.AUTOCANNON: {"GROUND", "AERIAL", "NAVAL"},
+    WeaponCategory.ARTILLERY: {"GROUND"},
+    WeaponCategory.GRENADE: {"GROUND"},
+    WeaponCategory.MELEE: {"GROUND", "NAVAL"},
+    WeaponCategory.DEPTH_CHARGE: {"SUBMARINE"},
 }
 
 
@@ -248,11 +274,13 @@ class WeaponLoader:
 
     def load_definition(self, path: Path) -> WeaponDefinition:
         """Load and validate a single YAML weapon definition."""
-        import yaml
-
-        with open(path) as f:
-            raw = yaml.safe_load(f)
+        with open(path, encoding="utf-8") as definition_file:
+            raw = load_yaml_unique(definition_file)
         defn = WeaponDefinition.model_validate(raw)
+        if defn.weapon_id in self._definitions:
+            raise ValueError(
+                f"Duplicate weapon_id {defn.weapon_id!r} while loading {path}",
+            )
         self._definitions[defn.weapon_id] = defn
         return defn
 
@@ -270,6 +298,10 @@ class WeaponLoader:
         """Return sorted list of loaded weapon identifiers."""
         return sorted(self._definitions.keys())
 
+    def definitions(self) -> Mapping[str, WeaponDefinition]:
+        """Return a read-only snapshot of loaded weapon definitions."""
+        return MappingProxyType(dict(self._definitions))
+
 
 class AmmoLoader:
     """Load and cache :class:`AmmoDefinition` instances from YAML files."""
@@ -280,11 +312,13 @@ class AmmoLoader:
 
     def load_definition(self, path: Path) -> AmmoDefinition:
         """Load and validate a single YAML ammo definition."""
-        import yaml
-
-        with open(path) as f:
-            raw = yaml.safe_load(f)
+        with open(path, encoding="utf-8") as definition_file:
+            raw = load_yaml_unique(definition_file)
         defn = AmmoDefinition.model_validate(raw)
+        if defn.ammo_id in self._definitions:
+            raise ValueError(
+                f"Duplicate ammo_id {defn.ammo_id!r} while loading {path}",
+            )
         self._definitions[defn.ammo_id] = defn
         return defn
 
@@ -301,6 +335,10 @@ class AmmoLoader:
     def available_ammo(self) -> list[str]:
         """Return sorted list of loaded ammo identifiers."""
         return sorted(self._definitions.keys())
+
+    def definitions(self) -> Mapping[str, AmmoDefinition]:
+        """Return a read-only snapshot of loaded ammunition definitions."""
+        return MappingProxyType(dict(self._definitions))
 
 
 # ---------------------------------------------------------------------------
@@ -412,7 +450,6 @@ class WeaponInstance:
         self.ammo_state = ammo_state or AmmoState()
         self.equipment = equipment
         self._rounds_since_maintenance: int = 0
-        # Fire rate limiting: cooldown computed from rate_of_fire_rpm
         self._last_fire_time_s: float = float("-inf")
         if definition.rate_of_fire_rpm > 0:
             self._cooldown_s: float = 60.0 / definition.rate_of_fire_rpm
@@ -450,19 +487,40 @@ class WeaponInstance:
             return False
         return self.ammo_state.available(ammo_id) > 0
 
-    def can_fire_timed(self, current_time_s: float) -> bool:
+    def can_fire_timed(
+        self,
+        current_time_s: float,
+        *,
+        cooldown_multiplier: float = 1.0,
+    ) -> bool:
         """Check if enough time has elapsed since last fire (rate-of-fire limit).
 
         Parameters
         ----------
         current_time_s : float
             Current simulation time in seconds.
+        cooldown_multiplier : float
+            Multiplier applied to the definition-derived cooldown. Aggregate
+            batteries use this when one routed salvo fires several represented
+            systems at once, preventing system-count scaling from being applied
+            both to salvo size and cadence.
 
         Returns ``True`` if the cooldown has elapsed or the weapon has no ROF limit.
         """
+        if (
+            isinstance(cooldown_multiplier, bool)
+            or not isinstance(cooldown_multiplier, (int, float))
+            or not math.isfinite(float(cooldown_multiplier))
+            or cooldown_multiplier <= 0.0
+        ):
+            raise ValueError(
+                "cooldown_multiplier must be a finite positive number",
+            )
         if self._cooldown_s <= 0:
             return True
-        return (current_time_s - self._last_fire_time_s) >= self._cooldown_s
+        return (
+            current_time_s - self._last_fire_time_s
+        ) >= self._cooldown_s * cooldown_multiplier
 
     def record_fire(self, current_time_s: float) -> None:
         """Record the time of a successful fire for cooldown tracking."""

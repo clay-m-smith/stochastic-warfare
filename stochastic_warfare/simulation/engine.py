@@ -32,7 +32,7 @@ from stochastic_warfare.simulation.victory import VictoryEvaluator, VictoryResul
 
 logger = get_logger(__name__)
 
-_CHECKPOINT_VERSION = 108
+_CHECKPOINT_VERSION = 109
 
 
 # ---------------------------------------------------------------------------
@@ -1397,7 +1397,7 @@ class SimulationEngine:
     def get_state(self) -> dict[str, Any]:
         """Capture full engine state for checkpointing."""
         context_state = self._ctx.get_state()
-        # Format 108 distinguishes an intentionally absent morale machine from
+        # Format 109 distinguishes an intentionally absent morale machine from
         # an omitted legacy field without changing direct context snapshots.
         context_state.setdefault("morale_machine", None)
         state: dict[str, Any] = {
@@ -1446,7 +1446,7 @@ class SimulationEngine:
             actual_engine_keys = set(state)
             if actual_engine_keys != expected_engine_keys:
                 raise ValueError(
-                    "Checkpoint version 108 engine key topology does not "
+                    "Checkpoint version 109 engine key topology does not "
                     "match the runtime: "
                     f"missing={sorted(expected_engine_keys - actual_engine_keys)!r}, "
                     f"extra={sorted(actual_engine_keys - expected_engine_keys)!r}",
@@ -1461,7 +1461,7 @@ class SimulationEngine:
             )
             if missing_morale_keys:
                 raise ValueError(
-                    "Checkpoint version 108 context is missing required "
+                    "Checkpoint version 109 context is missing required "
                     f"morale state: {missing_morale_keys!r}",
                 )
             expected_context_keys = set(self._ctx.get_state())
@@ -1469,7 +1469,7 @@ class SimulationEngine:
             actual_context_keys = set(context_state)
             if actual_context_keys != expected_context_keys:
                 raise ValueError(
-                    "Checkpoint version 108 context key topology does not "
+                    "Checkpoint version 109 context key topology does not "
                     "match the runtime: "
                     f"missing={sorted(expected_context_keys - actual_context_keys)!r}, "
                     f"extra={sorted(actual_context_keys - expected_context_keys)!r}",
@@ -1479,7 +1479,7 @@ class SimulationEngine:
                 and context_state["morale_machine"] is not None
             ):
                 raise ValueError(
-                    "Checkpoint version 108 contains morale-machine state "
+                    "Checkpoint version 109 contains morale-machine state "
                     "for a runtime without a morale machine",
                 )
 

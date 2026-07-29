@@ -1,0 +1,30 @@
+# 9M38M1 surface-to-air missile for the Buk-M1 9A310M1 TELAR.
+#
+# The U.S. DoD GulfLINK system profile identifies the 9A310M1, its four ready
+# 9M38 missiles, 400 mm missile diameter, solid propulsion, and semi-active
+# radar guidance:
+# https://www.gulflink.osd.mil/irfna/irfna_refs/n28en143/airdef.html
+#
+# Public government investigation and WEG envelopes place the M1 missile near
+# 690 kg, a 70 kg fragmentation-warhead assembly, and about 850 m/s. The model
+# does not equate warhead assembly mass with explosive fill; effect radii and
+# probability are conservative runtime bounds.
+ammo_id: 9m38m1_sam
+display_name: "9M38M1 Surface-to-Air Missile"
+ammo_type: MISSILE
+mass_kg: 690.0
+diameter_mm: 400.0
+drag_coefficient: 0.25
+blast_radius_m: 15.0
+fragmentation_radius_m: 80.0
+explosive_fill_kg: 0.0
+guidance: RADAR_SEMI
+seeker_fov_deg: 18.0
+seeker_range_m: 25000.0
+pk_at_reference: 0.75
+countermeasure_susceptibility: 0.20
+propulsion: rocket
+max_speed_mps: 850.0
+flight_time_s: 45.0
+terminal_maneuver: true
+unit_cost_factor: 75.0

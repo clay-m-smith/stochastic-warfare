@@ -1,0 +1,23 @@
+# British BL 6-inch Mk VII 100 lb (45.4 kg) common-pointed projectile.
+#
+# NavWeaps compiles the service projectile mass and 2,775 ft/s (846 m/s)
+# muzzle velocity for the heavy charge.
+# https://www.navweaps.com/Weapons/WNBR_6-45_mk7.php
+# The source gives a 3.4 kg CPC bursting charge. Terminal radii and the
+# conservative 51 mm RHA analogue are simulator inputs; the latter is tied to
+# the source's 2-inch armor figure at 3,000 yards.
+ammo_id: 6in_mk_vii_cpc
+display_name: "BL 6-inch Mk VII 100 lb CPC"
+ammo_type: AP
+mass_kg: 45.4
+diameter_mm: 152.4
+drag_coefficient: 0.29
+penetration_mm_rha: 51.0
+penetration_reference_range_m: 2743.0
+blast_radius_m: 14.0
+fragmentation_radius_m: 28.0
+explosive_fill_kg: 3.40
+guidance: NONE
+propulsion: none
+max_speed_mps: 846.0
+unit_cost_factor: 1.5

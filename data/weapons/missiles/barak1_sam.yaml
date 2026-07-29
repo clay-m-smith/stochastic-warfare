@@ -61,9 +61,8 @@ requires_deployed: false
 traverse_deg: 360.0  # VLS omnidirectional
 elevation_min_deg: 0.0
 elevation_max_deg: 90.0
-# Dual-target: aerial threats (aircraft, helicopters) and sea-skimming
-# anti-ship missiles (point-defense primary role). Not effective
-# against surface-ship targets.
+# Runtime target domains classify target units, not a missile's flight
+# profile. Aircraft and helicopters are AERIAL; this SAM is not a
+# surface-to-surface weapon.
 target_domains:
   - AERIAL
-  - NAVAL

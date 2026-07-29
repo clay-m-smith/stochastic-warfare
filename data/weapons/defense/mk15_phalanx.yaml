@@ -12,7 +12,7 @@ guidance: RADAR_ACTIVE
 magazine_capacity: 1550
 reload_time_s: 0.0
 compatible_ammo:
-  - 556_ball
+  - 20mm_mk244_apds
 weight_kg: 5625.0
 reliability: 0.90
 barrel_life_rounds: 50000

@@ -1,0 +1,31 @@
+# Bergmann MP 18,I submachine gun.
+#
+# Royal Armouries, "Arms of the First World War": entered service in 1918;
+# blowback; 9x19mm; 32 rounds; 329 m/s; 450 rounds/minute; 4.17 kg; 200 m
+# effective range. It reached front-line Stosstruppen in August 1918.
+# https://royalarmouries.org/objects-and-stories/stories/arms-of-the-first-world-war
+weapon_id: mp18
+display_name: "Bergmann MP 18,I Submachine Gun"
+category: SUBMACHINE_GUN
+caliber_mm: 9.0
+muzzle_velocity_mps: 329.0
+max_range_m: 200.0
+effective_range_m: 200.0
+min_range_m: 0.0
+rate_of_fire_rpm: 450.0
+burst_size: 3
+base_accuracy_mrad: 3.0
+guidance: NONE
+magazine_capacity: 32
+reload_time_s: 6.0
+compatible_ammo:
+  - 9x19mm_parabellum_ww1
+weight_kg: 4.17
+reliability: 0.82
+barrel_life_rounds: 10000
+requires_deployed: false
+traverse_deg: 360.0
+elevation_min_deg: -30.0
+elevation_max_deg: 80.0
+target_domains:
+  - GROUND

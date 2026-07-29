@@ -32,3 +32,10 @@ propulsion: none
 max_speed_mps: 0.0
 uxo_rate: 0.05
 unit_cost_factor: 5.0
+prohibited_under_treaties:
+  - "CCM"
+compliance_check: true
+
+# Sources:
+#   - Gulf War Air Power Survey, Vol. IV, Weapons, Tactics, and Training
+#   - TM 43-0001-28, Army Ammunition Data Sheets

@@ -1,0 +1,32 @@
+# One physical QF 2-pounder Mk VIII "pom-pom" barrel.
+# The compiled British service table gives 40 mm caliber, 115 rpm automatic
+# rate, 732 m/s HV velocity, 4,572 m maximum and 1,550 m effective range. The
+# single mounting's feed box held four 14-round belts (56 rounds).
+# https://www.navweaps.com/Weapons/WNBR_2pounder_m8.php
+weapon_id: qf_2pdr_mk_viii
+display_name: "QF 2-pounder Mk VIII Pom-Pom"
+category: AAA
+caliber_mm: 40.0
+muzzle_velocity_mps: 732.0
+max_range_m: 4572.0
+effective_range_m: 1550.0
+min_range_m: 25.0
+rate_of_fire_rpm: 115.0
+burst_size: 4
+base_accuracy_mrad: 3.0
+min_engagement_altitude_m: 0.0
+max_engagement_altitude_m: 3960.0
+guidance: NONE
+magazine_capacity: 56
+reload_time_s: 6.0
+compatible_ammo:
+  - 2pdr_pompom_he
+weight_kg: 385.6
+reliability: 0.84
+barrel_life_rounds: 7200
+requires_deployed: false
+traverse_deg: 360.0
+elevation_min_deg: -10.0
+elevation_max_deg: 70.0
+target_domains:
+  - AERIAL

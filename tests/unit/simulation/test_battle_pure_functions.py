@@ -11,7 +11,7 @@ from types import SimpleNamespace
 import numpy as np
 import pytest
 
-from stochastic_warfare.core.types import Position
+from stochastic_warfare.core.types import Domain, Position
 
 from .conftest import _make_ctx, _make_illumination, _make_unit, _make_weapon_instance
 
@@ -31,6 +31,7 @@ from stochastic_warfare.simulation.battle import (
     _get_unit_signature,
     _infer_melee_type,
     _infer_missile_type,
+    _max_weapon_range_for_domain,
     _movement_target,
     _nearest_enemy_dist,
     _should_hold_position,
@@ -495,3 +496,24 @@ class TestStandoffRange:
         ctx = SimpleNamespace(unit_weapons={"u1": [(wpn1, [ammo]), (wpn2, [ammo])]})
         u = _make_unit("u1")
         assert _standoff_range(u, ctx) == pytest.approx(4000.0)
+
+    def test_weapon_domain_limits_standoff(self):
+        wpn = _make_weapon_instance(weapon_id="sam", max_range_m=2000.0)
+        wpn.definition.target_domains = ["AERIAL"]
+        ammo = SimpleNamespace(ammo_id="test_ap")
+        ctx = SimpleNamespace(unit_weapons={"u1": [(wpn, [ammo])]})
+        u = _make_unit("u1")
+
+        assert _standoff_range(u, ctx, Domain.GROUND) == 0.0
+        assert _standoff_range(u, ctx, Domain.AERIAL) == pytest.approx(1600.0)
+
+
+def test_max_weapon_range_filters_mapping_owned_target_domain() -> None:
+    ground = _make_weapon_instance(weapon_id="gun", max_range_m=2_000.0)
+    ground.definition.target_domains = ["GROUND"]
+    aerial = _make_weapon_instance(weapon_id="sam", max_range_m=100_000.0)
+    aerial.definition.target_domains = ["AERIAL"]
+    attachments = ((ground, ()), (aerial, ()))
+
+    assert _max_weapon_range_for_domain(attachments, Domain.GROUND) == 2_000.0
+    assert _max_weapon_range_for_domain(attachments, Domain.AERIAL) == 100_000.0

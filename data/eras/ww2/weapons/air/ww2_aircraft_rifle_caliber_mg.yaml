@@ -1,0 +1,31 @@
+# Explicit WWII aircraft rifle-caliber machine-gun role model.
+#
+# The 7.92 mm catalog interface is a bounded functional analogue for the
+# authored 7.7 mm Type 97 aircraft gun. It preserves aircraft-gun behavior and
+# avoids the former 20 mm cannon identity; numerical values are catalog
+# abstractions rather than Type 97 performance claims.
+weapon_id: ww2_aircraft_rifle_caliber_mg
+display_name: "WWII Aircraft Rifle-Caliber Machine-Gun Role Model"
+category: AIRCRAFT_GUN
+caliber_mm: 7.92
+muzzle_velocity_mps: 755.0
+max_range_m: 800.0
+min_range_m: 0.0
+rate_of_fire_rpm: 900.0
+burst_size: 8
+base_accuracy_mrad: 3.0
+guidance: NONE
+magazine_capacity: 500
+reload_time_s: 0.0
+compatible_ammo:
+  - 792mm_sst_ap
+weight_kg: 12.0
+reliability: 0.85
+barrel_life_rounds: 8000
+requires_deployed: false
+traverse_deg: 0.0
+elevation_min_deg: -10.0
+elevation_max_deg: 30.0
+target_domains:
+  - GROUND
+  - AERIAL

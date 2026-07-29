@@ -129,7 +129,7 @@ WW1_ERA_CONFIG = EraConfig(
         "data_links",
         "pgm",
     },
-    available_sensor_types={"VISUAL"},
+    available_sensor_types={"VISUAL", "PASSIVE_SONAR"},
     physics_overrides={
         "c2_delay_multiplier": 5.0,
         "cbrn_nuclear_enabled": False,

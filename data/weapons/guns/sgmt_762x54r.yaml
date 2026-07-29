@@ -1,0 +1,38 @@
+# SGMT 7.62x54R tank machine gun.
+#
+# A U.S. Army Infantry magazine equipment table identifies the SGM as a
+# 7.62x54R weapon with a 1,000 m effective envelope, 250 rounds/min practical
+# rate, and 250-round belt:
+# https://www.benning.army.mil/infantry/magazine/issues/1991/JAN-FEB/pdfs/JAN-FEB1991.pdf
+# A current defense-supplier SGM(T) envelope publishes 10.24 kg, 600-700 rpm,
+# 800 m/s, and 250/500-round feeds:
+# https://vexcron.com/wp-content/uploads/2024/07/VEXCRON-COMPANY-PROFILE.pdf
+#
+# Because no accessible original SGMT manual was found, this definition is
+# explicitly bounded to the overlapping government/supplier envelope:
+# 1,000 m, 650 rpm, 800 m/s, and one 250-round belt.
+weapon_id: sgmt_762x54r
+display_name: "SGMT 7.62x54R Tank Machine Gun"
+category: MACHINE_GUN
+caliber_mm: 7.62
+muzzle_velocity_mps: 800.0
+max_range_m: 1000.0
+effective_range_m: 1000.0
+min_range_m: 0.0
+rate_of_fire_rpm: 650.0
+burst_size: 7
+base_accuracy_mrad: 1.7
+guidance: NONE
+magazine_capacity: 250
+reload_time_s: 15.0
+compatible_ammo:
+  - 762x54r_ball
+weight_kg: 10.24
+reliability: 0.91
+barrel_life_rounds: 20000
+requires_deployed: false
+traverse_deg: 360.0
+elevation_min_deg: -10.0
+elevation_max_deg: 60.0
+target_domains:
+  - GROUND

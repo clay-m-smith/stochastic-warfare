@@ -1,0 +1,18 @@
+# The Tank Museum documents 57 mm, 6 lb HE carried by British Male tanks:
+# https://tankmuseum.org/tank-armament-first-world-war/
+# Legacy blast/fragmentation radii are bounded effect-model inputs; the source
+# does not establish an exact explosive fill or casualty radius.
+ammo_id: 6pdr_hotchkiss_he
+display_name: "6-Pounder Hotchkiss HE Shell"
+ammo_type: HE
+mass_kg: 2.72
+diameter_mm: 57.0
+drag_coefficient: 0.34
+penetration_mm_rha: 0.0
+penetration_reference_range_m: 0.0
+blast_radius_m: 6.0
+fragmentation_radius_m: 10.0
+guidance: NONE
+propulsion: none
+max_speed_mps: 411.0
+unit_cost_factor: 0.6

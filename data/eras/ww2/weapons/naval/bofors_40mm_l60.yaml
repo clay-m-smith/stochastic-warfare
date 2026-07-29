@@ -1,0 +1,34 @@
+# One physical 40 mm Bofors L/60 barrel, independent of twin/quad mounting.
+# Official Bureau of Ordnance history documents naval employment and clip feed.
+# The compiled service table gives 40 mm, 120 rpm nominal rate, 881 m/s,
+# 10,076 m maximum range, 1,370 m effective range with Mk 51 control, and
+# four-round clips normally held as eight rounds in the feed guides.
+# https://www.ibiblio.org/hyperwar/USN/Admin-Hist/075-Ordnance/075-Ord6R.html
+# https://www.navweaps.com/Weapons/WNUS_4cm-56_mk12.php
+weapon_id: bofors_40mm_l60
+display_name: "40 mm Bofors L/60 Gun"
+category: AAA
+caliber_mm: 40.0
+muzzle_velocity_mps: 881.0
+max_range_m: 10076.0
+effective_range_m: 1370.0
+min_range_m: 50.0
+rate_of_fire_rpm: 120.0
+burst_size: 4
+base_accuracy_mrad: 2.5
+min_engagement_altitude_m: 0.0
+max_engagement_altitude_m: 7160.0
+guidance: NONE
+magazine_capacity: 8
+reload_time_s: 2.0
+compatible_ammo:
+  - bofors_40mm_he
+weight_kg: 522.0
+reliability: 0.90
+barrel_life_rounds: 10000
+requires_deployed: false
+traverse_deg: 360.0
+elevation_min_deg: -15.0
+elevation_max_deg: 90.0
+target_domains:
+  - AERIAL

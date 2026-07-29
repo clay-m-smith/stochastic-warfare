@@ -1,0 +1,24 @@
+# Functional role model for an airborne maritime-search radar such as Agave.
+# Dassault identifies Agave as the Super Etendard radar; Revista General de
+# Marina documents its maritime-detection role in the Falklands.
+# Sources:
+#   https://www.dassault-aviation.com/en/passion/aircraft/military-dassault-aircraft/mirage-50/
+#   https://publicaciones.defensa.gob.es/media/downloadable/files/links/r/g/rgm_266_2_marzo_2014.pdf
+# RF/equation inputs reuse the existing X-band search archetype and do not
+# assert the physical specification of any represented radar.
+sensor_id: airborne_maritime_search_radar
+sensor_type: RADAR
+display_name: "Airborne Maritime Search Radar (role model)"
+max_range_m: 55000.0
+detection_threshold: 10.0
+false_alarm_rate: 1.0e-7
+scan_time_s: 4.0
+scan_interval_ticks: 2
+frequency_mhz: 9400.0
+peak_power_w: 20000.0
+antenna_gain_dbi: 30.0
+antenna_height_m: 2.0
+min_range_m: 200.0
+fov_deg: 360.0
+requires_los: true
+detects_domain: ["RADAR"]

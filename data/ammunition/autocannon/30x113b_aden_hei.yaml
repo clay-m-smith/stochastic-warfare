@@ -1,0 +1,21 @@
+# 30x113B HEI ammunition for the ADEN Mk 4/Mk 5 cannon.
+#
+# KNDS publishes the exact ADEN HEI identity, a 245 g projectile, 22 g
+# explosive payload, 765 m/s muzzle velocity, and use to 2,000 m:
+# https://knds.com/media/catalogue_munitions_85ae594873.pdf
+#
+# Effect radii are conservative runtime abstractions rather than claims about
+# a released fragment distribution.
+ammo_id: 30x113b_aden_hei
+display_name: "30x113B ADEN HEI"
+ammo_type: HE
+mass_kg: 0.245
+diameter_mm: 30.0
+drag_coefficient: 0.29
+blast_radius_m: 2.0
+fragmentation_radius_m: 7.0
+explosive_fill_kg: 0.022
+guidance: NONE
+propulsion: none
+max_speed_mps: 765.0
+unit_cost_factor: 0.25

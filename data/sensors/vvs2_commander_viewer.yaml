@@ -1,0 +1,20 @@
+# AN/VVS-2 tank-driver night viewer.
+#
+# U.S. Army Research and Development News Magazine describes the AN/VVS-2 as
+# providing tank drivers vision to 1,000 m (Nov-Dec 1975, pp. 18-19):
+# https://asc.army.mil/docs/pubs/alt/archives/1975/Nov-Dec_1975.PDF
+# The narrow 10-degree field is a conservative modeled viewer envelope, not a
+# claim of a published optical specification.
+sensor_id: vvs2_commander_viewer
+sensor_type: NVG
+display_name: "AN/VVS-2 Commander/Driver Night Viewer"
+max_range_m: 1000.0
+detection_threshold: 5.0
+false_alarm_rate: 1.0e-5
+scan_time_s: 2.0
+scan_interval_ticks: 1
+antenna_height_m: 2.2
+min_range_m: 0.0
+fov_deg: 10.0
+requires_los: true
+detects_domain: ["VISUAL"]

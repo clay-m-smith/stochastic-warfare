@@ -78,7 +78,7 @@ equipment:
     weight_kg: 120.0
     reliability: 0.84
   - name: "AN/ASQ-145 Beacon Tracker"
-    category: SENSOR
+    category: NAVIGATION
     weight_kg: 50.0
     reliability: 0.85
   - name: "AN/ALR-69 RWR"

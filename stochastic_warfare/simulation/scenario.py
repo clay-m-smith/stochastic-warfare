@@ -18,7 +18,6 @@ from pathlib import Path
 from typing import Any, Literal
 
 import numpy as np
-import yaml
 from pydantic import (
     BaseModel,
     ConfigDict,
@@ -28,11 +27,12 @@ from pydantic import (
 )
 
 from stochastic_warfare.core.clock import SimulationClock
-from stochastic_warfare.core.era import EraConfig
 from stochastic_warfare.core.events import EventBus
 from stochastic_warfare.core.logging import get_logger
 from stochastic_warfare.core.rng import RNGManager
+from stochastic_warfare.core.strict_yaml import load_yaml_unique
 from stochastic_warfare.core.types import ModuleId, Position
+from stochastic_warfare.detection.sensors import SensorInstance
 from stochastic_warfare.entities.base import Unit, UnitStatus
 from stochastic_warfare.logistics.config import (
     LogisticsConfig,
@@ -46,6 +46,15 @@ from stochastic_warfare.simulation.deployment import (
     FormationTemplateLoader,
     deploy_units,
     check_side_separation,
+)
+from stochastic_warfare.simulation.equipment_mappings import (
+    EQUIPMENT_MAPPING_REGISTRY,
+)
+from stochastic_warfare.simulation.loadouts import (
+    EquipmentResolution,
+    RuntimeLoadoutBuilder,
+    RuntimeLoadouts,
+    WeaponAttachment,
 )
 from stochastic_warfare.terrain.heightmap import Heightmap
 
@@ -633,7 +642,7 @@ def load_campaign_scenario_config(
 ) -> CampaignScenarioConfig:
     """Parse one scenario and apply a sparse, typed calibration overlay."""
     with open(scenario_path, encoding="utf-8") as config_file:
-        raw = yaml.safe_load(config_file)
+        raw = load_yaml_unique(config_file)
     config = CampaignScenarioConfig.model_validate(raw)
     if calibration_overrides is None:
         return config
@@ -760,6 +769,75 @@ def _stage_checkpoint_unit(state: Any, side: str) -> Unit:
     return unit
 
 
+def _validate_checkpoint_ammunition_state(
+    saved_state: dict[str, Any],
+    runtime_entry: Any,
+    instance: Any,
+    *,
+    entity_id: str,
+    index: int,
+) -> None:
+    """Validate exact live ammunition topology before staging a weapon."""
+    compatible_ammo = tuple(instance.definition.compatible_ammo)
+    expected_ammo = compatible_ammo
+    if isinstance(runtime_entry, WeaponAttachment):
+        attachment_ammo = tuple(
+            ammunition.ammo_id
+            for ammunition in runtime_entry.ammunition
+        )
+        if attachment_ammo != compatible_ammo:
+            raise ValueError(
+                f"Runtime weapon ammunition topology for unit "
+                f"{entity_id!r} at index {index} is inconsistent: "
+                f"attachment={attachment_ammo!r}, "
+                f"compatible_ammo={compatible_ammo!r}",
+            )
+        expected_ammo = attachment_ammo
+
+    ammo_state = saved_state.get("ammo_state")
+    if not isinstance(ammo_state, dict):
+        raise ValueError(
+            f"Checkpoint weapon state {entity_id!r}[{index}] ammo_state "
+            "must be a mapping",
+        )
+    rounds_by_type = ammo_state.get("rounds_by_type")
+    if not isinstance(rounds_by_type, dict):
+        raise ValueError(
+            f"Checkpoint weapon state {entity_id!r}[{index}] "
+            "rounds_by_type must be a mapping",
+        )
+    expected_keys = set(expected_ammo)
+    saved_keys = set(rounds_by_type)
+    if saved_keys != expected_keys:
+        raise ValueError(
+            f"Incompatible weapon ammunition topology for unit "
+            f"{entity_id!r} at index {index}: "
+            f"missing={sorted(expected_keys - saved_keys, key=repr)!r}, "
+            f"extra={sorted(saved_keys - expected_keys, key=repr)!r}",
+        )
+    for ammo_id, rounds in rounds_by_type.items():
+        if (
+            not isinstance(rounds, int)
+            or isinstance(rounds, bool)
+            or rounds < 0
+        ):
+            raise ValueError(
+                f"Checkpoint weapon state {entity_id!r}[{index}] "
+                f"rounds_by_type[{ammo_id!r}] must be a non-negative "
+                "integer",
+            )
+    total_rounds_fired = ammo_state.get("total_rounds_fired")
+    if (
+        not isinstance(total_rounds_fired, int)
+        or isinstance(total_rounds_fired, bool)
+        or total_rounds_fired < 0
+    ):
+        raise ValueError(
+            f"Checkpoint weapon state {entity_id!r}[{index}] "
+            "total_rounds_fired must be a non-negative integer",
+        )
+
+
 def _stage_runtime_instance_states(
     raw_states: Any,
     current_instances: dict[str, list[Any]],
@@ -826,6 +904,14 @@ def _stage_runtime_instance_states(
                     f"at index {index}: checkpoint has "
                     f"{saved_state.get(identity_field)!r}, runtime has "
                     f"{runtime_id!r}",
+                )
+            if kind == "weapon":
+                _validate_checkpoint_ammunition_state(
+                    saved_state,
+                    runtime_entry,
+                    instance,
+                    entity_id=entity_id,
+                    index=index,
                 )
             equipment = getattr(instance, "equipment", None)
             if equipment is not None and checkpoint_equipment is not None:
@@ -903,131 +989,6 @@ def _json_values_equal(left: Any, right: Any) -> bool:
     return bool(left == right)
 
 
-def _validate_era_loadouts(
-    units: list[Unit],
-    unit_weapons: dict[str, list[Any]],
-    unit_sensors: dict[str, list[Any]],
-    era_config: EraConfig,
-) -> None:
-    """Reject runtime attachments that contradict the effective era gate."""
-    available_sensor_types = {
-        str(sensor_type).upper()
-        for sensor_type in era_config.available_sensor_types
-    }
-    units_by_id = {unit.entity_id: unit for unit in units}
-
-    for unit_id, sensors in unit_sensors.items():
-        unit = units_by_id[unit_id]
-        for sensor in sensors:
-            definition = sensor.definition
-            sensor_type = str(definition.sensor_type).upper()
-            sensor_id = definition.sensor_id
-            if (
-                available_sensor_types
-                and sensor_type not in available_sensor_types
-            ):
-                raise ValueError(
-                    "available_sensor_types forbids "
-                    f"{sensor_type} sensor {sensor_id!r} on unit "
-                    f"{unit.unit_type!r}",
-                )
-            if (
-                not era_config.feature_enabled("thermal_sights")
-                and sensor_type == "THERMAL"
-            ):
-                raise ValueError(
-                    "Era feature 'thermal_sights' is disabled but unit "
-                    f"{unit.unit_type!r} loads THERMAL sensor {sensor_id!r}",
-                )
-
-    for unit_id, weapons in unit_weapons.items():
-        unit = units_by_id[unit_id]
-        for weapon, ammo_definitions in weapons:
-            weapon_guidance = str(
-                getattr(weapon.definition, "guidance", "NONE"),
-            ).upper()
-            ammo_guidance = [
-                str(getattr(ammo, "guidance", "NONE")).upper()
-                for ammo in ammo_definitions
-            ]
-            all_guidance = [weapon_guidance, *ammo_guidance]
-            if not era_config.feature_enabled("gps") and any(
-                guidance in {"GPS", "GPS_INS"}
-                for guidance in all_guidance
-            ):
-                raise ValueError(
-                    "Era feature 'gps' is disabled but unit "
-                    f"{unit.unit_type!r} loads GPS-guided weapon "
-                    f"{weapon.definition.weapon_id!r}",
-                )
-            if not era_config.feature_enabled("pgm") and any(
-                guidance != "NONE"
-                for guidance in all_guidance
-            ):
-                guided = next(
-                    guidance
-                    for guidance in all_guidance
-                    if guidance != "NONE"
-                )
-                raise ValueError(
-                    "Era feature 'pgm' is disabled but unit "
-                    f"{unit.unit_type!r} loads guided weapon "
-                    f"{weapon.definition.weapon_id!r} with "
-                    f"{guided} guidance",
-                )
-
-    if not era_config.feature_enabled("data_links"):
-        for unit in units:
-            data_link_range = getattr(unit, "data_link_range", None)
-            if data_link_range is not None and data_link_range > 0:
-                raise ValueError(
-                    "Era feature 'data_links' is disabled but unit "
-                    f"{unit.unit_type!r} declares data_link_range="
-                    f"{data_link_range}",
-                )
-
-
-def build_unit_loadouts(
-    units: list[Unit],
-    *,
-    weapon_loader: Any,
-    ammo_loader: Any,
-    sensor_loader: Any,
-    calibration: Any,
-    era_config: EraConfig,
-) -> tuple[dict[str, list[Any]], dict[str, list[Any]]]:
-    """Build canonical live weapon and sensor attachments for units."""
-    from stochastic_warfare.validation.scenario_runner import ScenarioRunner
-
-    if not isinstance(era_config, EraConfig):
-        raise TypeError(
-            "Canonical loadout construction requires an effective EraConfig",
-        )
-
-    unit_weapons = ScenarioRunner._assign_weapons(
-        units,
-        weapon_loader,
-        ammo_loader,
-        calibration,
-    )
-    for weapons in unit_weapons.values():
-        weapons.sort(
-            key=lambda weapon_entry: (
-                weapon_entry[0].definition.max_range_m
-            ),
-            reverse=True,
-        )
-
-    unit_sensors = ScenarioRunner._assign_sensors(units, sensor_loader)
-    _validate_era_loadouts(
-        units,
-        unit_weapons,
-        unit_sensors,
-        era_config,
-    )
-    return unit_weapons, unit_sensors
-
-
 def _initial_morale_for_units(
     config: CampaignScenarioConfig,
     units: list[Unit],
@@ -1087,8 +1048,17 @@ class SimulationContext:
 
     # Forces
     units_by_side: dict[str, list[Unit]] = field(default_factory=dict)
-    unit_weapons: dict[str, list[Any]] = field(default_factory=dict)
-    unit_sensors: dict[str, list[Any]] = field(default_factory=dict)
+    unit_weapons: dict[str, tuple[WeaponAttachment, ...]] = field(
+        default_factory=dict,
+    )
+    unit_sensors: dict[str, tuple[SensorInstance, ...]] = field(
+        default_factory=dict,
+    )
+    equipment_resolutions: dict[
+        str,
+        tuple[EquipmentResolution, ...],
+    ] = field(default_factory=dict)
+    loadout_builder: RuntimeLoadoutBuilder | None = None
     morale_states: dict[str, Any] = field(default_factory=dict)
 
     # Environment engines
@@ -1311,6 +1281,20 @@ class SimulationContext:
                 uid: [sensor.get_state() for sensor in sensors]
                 for uid, sensors in getattr(self, "unit_sensors", {}).items()
             },
+            "loadout_builder_fingerprint": (
+                self.loadout_builder.fingerprint()
+                if self.loadout_builder is not None
+                else None
+            ),
+            "loadout_topology": {
+                unit_id: [
+                    resolution.topology()
+                    for resolution in resolutions
+                ]
+                for unit_id, resolutions in sorted(
+                    self.equipment_resolutions.items(),
+                )
+            },
             "calibration": (
                 self.calibration.model_dump()
                 if isinstance(self.calibration, CalibrationSchema)
@@ -1464,6 +1448,25 @@ class SimulationContext:
                     "(including disabled_modules) do not match the runtime",
                 )
 
+        if not allow_legacy_morale:
+            expected_builder_fingerprint = (
+                self.loadout_builder.fingerprint()
+                if self.loadout_builder is not None
+                else None
+            )
+            if (
+                state.get("loadout_builder_fingerprint")
+                != expected_builder_fingerprint
+            ):
+                raise ValueError(
+                    "Checkpoint loadout-builder fingerprint does not match "
+                    "the runtime mapping/catalog envelope",
+                )
+            if not isinstance(state.get("loadout_topology"), dict):
+                raise ValueError(
+                    "Checkpoint loadout_topology must be a mapping",
+                )
+
         clock_state = state["clock"]
         rng_state = state["rng"]
         try:
@@ -1477,6 +1480,16 @@ class SimulationContext:
         if not isinstance(cal_data, dict):
             raise ValueError("Checkpoint calibration must be a mapping")
         staged_calibration = CalibrationSchema(**cal_data)
+        current_calibration = (
+            self.calibration
+            if isinstance(self.calibration, CalibrationSchema)
+            else CalibrationSchema.model_validate(self.calibration)
+        )
+        if staged_calibration != current_calibration:
+            raise ValueError(
+                "Checkpoint calibration does not match the validated runtime "
+                "configuration",
+            )
 
         staged_units: dict[str, list[tuple[dict[str, Any], Unit]]] | None = None
         staged_morale: dict[str, Any] | None = None
@@ -1723,24 +1736,66 @@ class SimulationContext:
                 )
             existing_by_id[unit.entity_id] = unit
 
+        validated_staged_loadouts: RuntimeLoadouts | None = None
         if staged_units is None:
             checkpoint_unit_ids = set(existing_by_id)
             reusable_ids = set(existing_by_id)
         else:
-            reusable_ids = {
-                staged.entity_id
+            all_staged_units = [
+                staged
                 for staged_side in staged_units.values()
                 for _, staged in staged_side
-                if (
-                    staged.entity_id in existing_by_id
-                    and type(existing_by_id[staged.entity_id]) is type(staged)
+            ]
+            if not allow_legacy_morale and self.loadout_builder is not None:
+                validated_staged_loadouts = self.loadout_builder.build(
+                    all_staged_units,
                 )
-            }
+
+            reusable_ids: set[str] = set()
+            for staged in all_staged_units:
+                existing = existing_by_id.get(staged.entity_id)
+                if existing is None:
+                    continue
+                if allow_legacy_morale:
+                    if type(existing) is type(staged):
+                        reusable_ids.add(staged.entity_id)
+                    continue
+                if (
+                    type(existing) is not type(staged)
+                    or existing.unit_type != staged.unit_type
+                    or existing.domain is not staged.domain
+                ):
+                    raise ValueError(
+                        "Checkpoint unit identity topology does not match the "
+                        f"runtime for {staged.entity_id!r}",
+                    )
+                existing_equipment_ids = [
+                    equipment.equipment_id
+                    for equipment in existing.equipment
+                ]
+                staged_equipment_ids = [
+                    equipment.equipment_id
+                    for equipment in staged.equipment
+                ]
+                if staged_equipment_ids != existing_equipment_ids:
+                    raise ValueError(
+                        "Checkpoint equipment identity/order topology does not "
+                        f"match the runtime for {staged.entity_id!r}",
+                    )
+                reusable_ids.add(staged.entity_id)
 
         current_unit_weapons = getattr(self, "unit_weapons", {})
         current_unit_sensors = getattr(self, "unit_sensors", {})
+        current_equipment_resolutions = getattr(
+            self,
+            "equipment_resolutions",
+            {},
+        )
         runtime_unit_weapons = dict(current_unit_weapons)
         runtime_unit_sensors = dict(current_unit_sensors)
+        runtime_equipment_resolutions = dict(
+            current_equipment_resolutions,
+        )
         compatible_weapon_ids = set(reusable_ids)
         compatible_sensor_ids = set(reusable_ids)
 
@@ -1751,31 +1806,65 @@ class SimulationContext:
                 for _, staged in staged_side
                 if staged.entity_id not in reusable_ids
             ]
-            can_rebuild_loadouts = all(
-                loader is not None
-                for loader in (
-                    self.weapon_loader,
-                    self.ammo_loader,
-                    self.sensor_loader,
-                )
-            )
+            can_rebuild_loadouts = self.loadout_builder is not None
             if reconstructed_units and can_rebuild_loadouts:
-                rebuilt_weapons, rebuilt_sensors = build_unit_loadouts(
-                    reconstructed_units,
-                    weapon_loader=self.weapon_loader,
-                    ammo_loader=self.ammo_loader,
-                    sensor_loader=self.sensor_loader,
-                    calibration=staged_calibration,
-                    era_config=self.era_config,
+                rebuilt_loadouts = (
+                    validated_staged_loadouts
+                    if validated_staged_loadouts is not None
+                    else self.loadout_builder.build(reconstructed_units)
                 )
-                runtime_unit_weapons.update(rebuilt_weapons)
-                runtime_unit_sensors.update(rebuilt_sensors)
-                rebuilt_ids = {
+                reconstructed_ids = {
                     unit.entity_id
                     for unit in reconstructed_units
                 }
-                compatible_weapon_ids.update(rebuilt_ids)
-                compatible_sensor_ids.update(rebuilt_ids)
+                runtime_unit_weapons.update({
+                    entity_id: attachments
+                    for entity_id, attachments
+                    in rebuilt_loadouts.unit_weapons.items()
+                    if entity_id in reconstructed_ids
+                })
+                runtime_unit_sensors.update({
+                    entity_id: sensors
+                    for entity_id, sensors
+                    in rebuilt_loadouts.unit_sensors.items()
+                    if entity_id in reconstructed_ids
+                })
+                runtime_equipment_resolutions.update({
+                    entity_id: resolutions
+                    for entity_id, resolutions
+                    in rebuilt_loadouts.equipment_resolutions.items()
+                    if entity_id in reconstructed_ids
+                })
+                compatible_weapon_ids.update(reconstructed_ids)
+                compatible_sensor_ids.update(reconstructed_ids)
+
+        if not allow_legacy_morale:
+            topology_resolutions = (
+                validated_staged_loadouts.equipment_resolutions
+                if validated_staged_loadouts is not None
+                else runtime_equipment_resolutions
+            )
+            runtime_topology = {
+                entity_id: [
+                    resolution.topology()
+                    for resolution in topology_resolutions.get(
+                        entity_id,
+                        (),
+                    )
+                ]
+                for entity_id in sorted(
+                    set(topology_resolutions)
+                    & checkpoint_unit_ids,
+                )
+            }
+            if not _json_values_equal(
+                state["loadout_topology"],
+                runtime_topology,
+            ):
+                raise ValueError(
+                    "Checkpoint loadout resolution topology does not match "
+                    "the runtime builder output",
+                )
 
         staged_weapon_states: list[tuple[Any, dict[str, Any]]] = []
         if "unit_weapon_states" in state:
@@ -1831,7 +1920,6 @@ class SimulationContext:
         # Commit only after all context-owned checkpoint state validates.
         self.clock.set_state(clock_state)
         self.rng_manager.set_state(rng_state)
-        self.calibration = staged_calibration
 
         if staged_units is not None:
             restored_by_side: dict[str, list[Unit]] = {}
@@ -1850,9 +1938,9 @@ class SimulationContext:
             if "unit_weapon_states" in state:
                 self.unit_weapons = {
                     entity_id: (
-                        runtime_unit_weapons.get(entity_id, [])
+                        runtime_unit_weapons.get(entity_id, ())
                         if entity_id in compatible_weapon_ids
-                        else []
+                        else ()
                     )
                     for entity_id in state["unit_weapon_states"]
                 }
@@ -1865,9 +1953,9 @@ class SimulationContext:
             if "unit_sensor_states" in state:
                 self.unit_sensors = {
                     entity_id: (
-                        runtime_unit_sensors.get(entity_id, [])
+                        runtime_unit_sensors.get(entity_id, ())
                         if entity_id in compatible_sensor_ids
-                        else []
+                        else ()
                     )
                     for entity_id in state["unit_sensor_states"]
                 }
@@ -1877,6 +1965,12 @@ class SimulationContext:
                     for entity_id, sensors in runtime_unit_sensors.items()
                     if entity_id in checkpoint_unit_ids
                 }
+            self.equipment_resolutions = {
+                entity_id: resolutions
+                for entity_id, resolutions
+                in runtime_equipment_resolutions.items()
+                if entity_id in checkpoint_unit_ids
+            }
 
         if staged_morale is not None:
             self.morale_states = staged_morale
@@ -2044,14 +2138,14 @@ def register_dynamic_units(
             f"Dynamic units reference unknown sides: {unknown_sides!r}",
         )
 
-    incoming_weapons, incoming_sensors = build_unit_loadouts(
-        units,
-        weapon_loader=ctx.weapon_loader,
-        ammo_loader=ctx.ammo_loader,
-        sensor_loader=ctx.sensor_loader,
-        calibration=ctx.calibration,
-        era_config=ctx.era_config,
-    )
+    if ctx.loadout_builder is None:
+        raise RuntimeError(
+            "Dynamic units require the scenario's RuntimeLoadoutBuilder",
+        )
+    incoming_loadouts = ctx.loadout_builder.build(units)
+    incoming_weapons = incoming_loadouts.unit_weapons
+    incoming_sensors = incoming_loadouts.unit_sensors
+    incoming_resolutions = incoming_loadouts.equipment_resolutions
     incoming_ids = set(unit_ids)
     if set(incoming_weapons) != incoming_ids:
         raise ValueError("Dynamic weapon loadout topology is incomplete")
@@ -2063,6 +2157,8 @@ def register_dynamic_units(
         raise ValueError("Dynamic weapon loadout IDs already exist")
     if set(ctx.unit_sensors) & incoming_ids:
         raise ValueError("Dynamic sensor loadout IDs already exist")
+    if set(ctx.equipment_resolutions) & incoming_ids:
+        raise ValueError("Dynamic equipment-resolution IDs already exist")
     if set(ctx.morale_states) & incoming_ids:
         raise ValueError("Dynamic morale IDs already exist")
     if ctx.morale_machine is None:
@@ -2089,6 +2185,8 @@ def register_dynamic_units(
     staged_weapons.update(incoming_weapons)
     staged_sensors = dict(ctx.unit_sensors)
     staged_sensors.update(incoming_sensors)
+    staged_resolutions = dict(ctx.equipment_resolutions)
+    staged_resolutions.update(incoming_resolutions)
     staged_morale = dict(ctx.morale_states)
     staged_morale.update(incoming_morale)
 
@@ -2112,6 +2210,7 @@ def register_dynamic_units(
     ctx.units_by_side = staged_units_by_side
     ctx.unit_weapons = staged_weapons
     ctx.unit_sensors = staged_sensors
+    ctx.equipment_resolutions = staged_resolutions
     ctx.morale_states = staged_morale
 
 
@@ -2234,14 +2333,35 @@ class ScenarioLoader:
             config,
             loaders["supply_item_loader"],
         )
+        reachable_unit_types = tuple(
+            entry["unit_type"]
+            for side in config.sides
+            for entry in side.units
+        ) + tuple(
+            unit.unit_type
+            for wave in config.reinforcements
+            for unit in wave.units
+        )
+        loadout_builder = RuntimeLoadoutBuilder(
+            weapon_loader=loaders["weapon_loader"],
+            ammo_loader=loaders["ammo_loader"],
+            sensor_loader=loaders["sensor_loader"],
+            unit_definitions=loaders["unit_loader"].definitions(),
+            era_config=era_config,
+            assignment_overrides=(
+                config.calibration_overrides.weapon_assignments
+            ),
+            reachable_unit_types=reachable_unit_types,
+            registry=EQUIPMENT_MAPPING_REGISTRY,
+        )
 
         # 5. Build forces
         entities_rng = rng_mgr.get_stream(ModuleId.ENTITIES)
-        units_by_side, unit_weapons, unit_sensors = self._build_all_forces(
+        units_by_side, runtime_loadouts = self._build_all_forces(
             config,
             loaders,
             entities_rng,
-            era_config,
+            loadout_builder,
         )
 
         # 6. Morale state tracking
@@ -2276,8 +2396,12 @@ class ScenarioLoader:
             infrastructure_manager=real_ctx.infrastructure if real_ctx else None,
             bathymetry=real_ctx.bathymetry if real_ctx else None,
             units_by_side=units_by_side,
-            unit_weapons=unit_weapons,
-            unit_sensors=unit_sensors,
+            unit_weapons=dict(runtime_loadouts.unit_weapons),
+            unit_sensors=dict(runtime_loadouts.unit_sensors),
+            equipment_resolutions=dict(
+                runtime_loadouts.equipment_resolutions,
+            ),
+            loadout_builder=loadout_builder,
             morale_states=morale_states,
             calibration=config.calibration_overrides,
             era_config=era_config,
@@ -2643,8 +2767,8 @@ class ScenarioLoader:
         config: CampaignScenarioConfig,
         loaders: dict[str, Any],
         entities_rng: np.random.Generator,
-        era_config: EraConfig,
-    ) -> tuple[dict[str, list[Unit]], dict[str, list[Any]], dict[str, list[Any]]]:
+        loadout_builder: RuntimeLoadoutBuilder,
+    ) -> tuple[dict[str, list[Unit]], RuntimeLoadouts]:
         """Build units for all sides and assign weapons/sensors."""
         from stochastic_warfare.validation.scenario_runner import build_forces
         from stochastic_warfare.validation.historical_data import ForceDefinition
@@ -2715,16 +2839,9 @@ class ScenarioLoader:
 
         # Assign weapons and sensors
         all_units = [u for us in units_by_side.values() for u in us]
-        unit_weapons, unit_sensors = build_unit_loadouts(
-            all_units,
-            weapon_loader=loaders["weapon_loader"],
-            ammo_loader=loaders["ammo_loader"],
-            sensor_loader=loaders["sensor_loader"],
-            calibration=cal,
-            era_config=era_config,
-        )
+        runtime_loadouts = loadout_builder.build(all_units)
 
-        return units_by_side, unit_weapons, unit_sensors
+        return units_by_side, runtime_loadouts
 
     def _create_engines(
         self,

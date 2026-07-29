@@ -24,7 +24,7 @@ equipment:
     category: WEAPON
     weight_kg: 2500.0
     reliability: 0.90
-  - name: "Multi-Function Sensor Suite"
+  - name: "Ku-band Multi-Function RF Sensor (KuRFS)"
     category: SENSOR
     weight_kg: 200.0
     reliability: 0.92

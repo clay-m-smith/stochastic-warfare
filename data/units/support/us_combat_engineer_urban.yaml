@@ -49,23 +49,23 @@ equipment:
     weight_kg: 3.9
     reliability: 0.95
   - name: "Benelli M1014 Shotgun"
-    category: WEAPON
+    category: UTILITY
     weight_kg: 3.8
     reliability: 0.93
   - name: "C4 Demolition Block (M112)"
-    category: WEAPON
+    category: UTILITY
     weight_kg: 0.57  # per block; section carries 10-20 lb total capacity
     reliability: 0.98
   - name: "Bangalore Torpedo (M1A2)"
-    category: WEAPON
+    category: UTILITY
     weight_kg: 6.1
     reliability: 0.95
   - name: "MICLIC Line Charge"
-    category: WEAPON
+    category: UTILITY
     weight_kg: 770.0  # trailer-mounted, deployed via attached vehicle
     reliability: 0.90
   - name: "Mine Detection Set"
-    category: SENSOR
+    category: UTILITY
     weight_kg: 4.5
     reliability: 0.85
   - name: "AN/PRC-148 MBITR"

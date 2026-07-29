@@ -119,14 +119,6 @@ calibration_overrides:
   # 9 Coalition units × 200m ≈ 1600m defensive frontage
   coalition_formation_spacing_m: 200.0
   defensive_sides: [coalition]
-  weapon_assignments:
-    "Charleville 1777 Musket": charleville_1777
-    "Bayonet": bayonet
-    "Cavalry Saber": cavalry_saber
-    "Musketoon": cavalry_saber
-    "6-Pounder Cannon": 6pdr_cannon
-    "12-Pounder Cannon": 12pdr_cannon
-    "Brown Bess Musket": brown_bess
 
 documented_outcomes:
   - name: coalition_casualty_fraction

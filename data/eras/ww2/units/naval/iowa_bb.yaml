@@ -44,7 +44,7 @@ equipment:
     category: WEAPON
     weight_kg: 33320.0
     reliability: 0.87
-  - name: "Mk 38 Fire Control Director (x2)"
+  - name: "Mk 38 Optical Fire Control Director (x2)"
     category: SENSOR
     weight_kg: 35000.0
     reliability: 0.84

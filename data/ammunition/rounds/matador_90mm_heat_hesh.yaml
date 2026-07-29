@@ -1,0 +1,26 @@
+# MATADOR / RGW 90 HH dual-mode HEAT/HESH round.
+#
+# Singapore Army identifies the HEAT/HESH modes and 300 m effective range:
+# https://www.army.gov.sg/our-forces/formations/saf-ammunition-command/
+# Dynamit Nobel Defence specifies the 90 mm warhead and >500 mm RHA effect in
+# HEAT mode:
+# https://dn-defence.com/rgw-90/rgw-90-hh/?lang=en
+#
+# The current ammunition schema has one terminal-effect discriminator. HEAT
+# represents the modeled anti-armor mode; the HESH wall-breaching effect is
+# retained in the identity but is not claimed as a structure-breaching
+# mechanic.
+ammo_id: matador_90mm_heat_hesh
+display_name: "MATADOR 90mm HEAT/HESH Round"
+ammo_type: HEAT
+mass_kg: 2.6
+diameter_mm: 90.0
+drag_coefficient: 0.40
+penetration_mm_rha: 500.0
+penetration_reference_range_m: 0.0
+blast_radius_m: 0.0
+fragmentation_radius_m: 0.0
+guidance: NONE
+propulsion: solid_rocket
+max_speed_mps: 250.0
+unit_cost_factor: 1.0

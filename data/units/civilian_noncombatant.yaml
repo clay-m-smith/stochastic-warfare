@@ -6,6 +6,8 @@ max_speed: 1.4  # m/s (~5 km/h walking speed)
 training_level: 0.3
 armor_front: 0.0
 armor_side: 0.0
+sensor_policy: intentionally_none
+sensor_policy_reason: "Noncombatant group has no modeled surveillance equipment."
 crew:
   - role: GENERIC
     count: 20

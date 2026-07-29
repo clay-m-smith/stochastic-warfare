@@ -1,0 +1,36 @@
+# Barrett M82A1A Special Application Scoped Rifle (SASR).
+#
+# Authoritative identity and historical envelope:
+# - National Museum of the Marine Corps, Fortitudine 30(3), p. 10: the
+#   M82A1A is a semi-automatic .50-caliber anti-materiel rifle with a
+#   10-round box magazine, 28.5 lb weight, and documented Gulf War
+#   engagements to 1,800 m.
+#   https://www.marines.mil/portals/1/publications/fortitudine%20vol%2030%20no%203.pdf
+# - U.S. Army Infantry, Fall 2020: the M107-family long-range rifle is a
+#   2-3 MOA system; 0.75 mrad represents the midpoint (about 2.6 MOA).
+#   https://www.benning.army.mil/infantry/magazine/issues/2020/Fall/PDF/INFMag_Fall20.pdf
+weapon_id: m82a1_sasr
+display_name: "Barrett M82A1A .50 Caliber SASR"
+category: RIFLE
+caliber_mm: 12.7
+muzzle_velocity_mps: 890.0
+max_range_m: 1800.0
+effective_range_m: 1800.0
+min_range_m: 0.0
+rate_of_fire_rpm: 10.0
+burst_size: 1
+base_accuracy_mrad: 0.75
+guidance: NONE
+magazine_capacity: 10
+reload_time_s: 8.0
+compatible_ammo:
+  - 50bmg_m2_ap
+weight_kg: 12.9
+reliability: 0.90
+barrel_life_rounds: 3000
+requires_deployed: false
+traverse_deg: 360.0
+elevation_min_deg: -30.0
+elevation_max_deg: 80.0
+target_domains:
+  - GROUND

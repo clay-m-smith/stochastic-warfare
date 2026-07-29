@@ -1,0 +1,29 @@
+# Soviet DT 7.62 mm tank machine gun.
+# US Army medical intelligence documents the tank DT/DTM family and its
+# 60-round pan magazine; the authored T-34/85 mount is a coaxial ground weapon.
+# https://achh.army.mil/history/book-wwii-woundblstcs-chapter1/
+weapon_id: dt_762mm
+display_name: "DT 7.62 mm Tank Machine Gun"
+category: MACHINE_GUN
+caliber_mm: 7.62
+muzzle_velocity_mps: 840.0
+max_range_m: 805.0
+effective_range_m: 805.0
+min_range_m: 0.0
+rate_of_fire_rpm: 600.0
+burst_size: 6
+base_accuracy_mrad: 2.5
+guidance: NONE
+magazine_capacity: 60
+reload_time_s: 6.0
+compatible_ammo:
+  - 762x54r_l_ball_ww2
+weight_kg: 9.1
+reliability: 0.88
+barrel_life_rounds: 10000
+requires_deployed: false
+traverse_deg: 0.0
+elevation_min_deg: -10.0
+elevation_max_deg: 30.0
+target_domains:
+  - GROUND

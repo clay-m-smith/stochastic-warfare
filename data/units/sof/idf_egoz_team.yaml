@@ -90,7 +90,7 @@ equipment:
     weight_kg: 6.4
     reliability: 0.92
   - name: "AN/PEQ-1 SOFLAM Laser Designator"
-    category: SENSOR
+    category: UTILITY
     weight_kg: 5.3
     reliability: 0.90
   - name: "Elbit MARS Thermal Viewer"

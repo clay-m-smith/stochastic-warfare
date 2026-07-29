@@ -27,12 +27,16 @@ equipment:
     weight_kg: 300.0
     reliability: 0.85
   - name: "Corvus Boarding Bridge"
-    category: WEAPON
+    category: UTILITY  # boarding equipment, not a direct-fire attachment
     weight_kg: 500.0
     reliability: 0.75
-  - name: "Legionary Weapons (Gladius and Pilum)"
+  - name: "Gladii"
     category: WEAPON
-    weight_kg: 200.0
+    weight_kg: 100.0
+    reliability: 0.90
+  - name: "Pila"
+    category: WEAPON
+    weight_kg: 100.0
     reliability: 0.90
   - name: "Lookout Mast"
     category: SENSOR

@@ -13,7 +13,11 @@ import pytest
 import yaml
 
 from stochastic_warfare.entities.loader import UnitLoader
-from stochastic_warfare.combat.ammunition import WeaponLoader, AmmoLoader
+from stochastic_warfare.combat.ammunition import (
+    AmmoLoader,
+    GuidanceType,
+    WeaponLoader,
+)
 from stochastic_warfare.detection.sensors import SensorLoader
 from stochastic_warfare.detection.signatures import SignatureLoader
 
@@ -90,7 +94,7 @@ class TestSA6Gainful:
     def test_weapon_loads(self, weapon_loader: WeaponLoader) -> None:
         defn = weapon_loader.get_definition("sa6_3m9")
         assert defn.weapon_id == "sa6_3m9"
-        assert defn.guidance == "RADAR_SEMI_ACTIVE"
+        assert defn.parsed_guidance() is GuidanceType.RADAR_SEMI
         assert defn.max_range_m == 24000.0
 
     def test_ammo_loads(self, ammo_loader: AmmoLoader) -> None:

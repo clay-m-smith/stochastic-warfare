@@ -1,7 +1,14 @@
+# AN/PVS-14 night-vision monocular.
+#
+# The U.S. Army's 2010 Weapon Systems Handbook lists a 150 m recognition
+# range and 40-degree field of view for the AN/PVS-14 (PDF pp. 332-333):
+# https://asc.army.mil/docs/wsh2/2010-wsh.pdf
+# The registry may use this catalog entry for the PVS-31 only as an explicitly
+# labeled bounded variant; no 3 km generic night-vision reach is implied.
 sensor_id: nvg
 sensor_type: NVG
 display_name: "AN/PVS-14 Night Vision Goggles"
-max_range_m: 3000.0
+max_range_m: 150.0
 detection_threshold: 2.0
 false_alarm_rate: 1.0e-4
 scan_time_s: 1.5

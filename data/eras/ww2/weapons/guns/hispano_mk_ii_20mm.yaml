@@ -1,0 +1,34 @@
+# One physical British Hispano Mk II aircraft cannon, independent of xN.
+# The Air Ministry AP 1641F catalog record identifies the exact Mk II; the
+# Smithsonian records Mk II installations in Spitfire aircraft. U.S. Navy
+# Bureau of Ordnance history gives the parent 404's 20 mm, high-velocity
+# characteristics and explains the British Mk II development.
+# https://www.awm.gov.au/collection/LIB100047788
+# https://airandspace.si.edu/collections/collections-on-display?page=37
+# https://www.ibiblio.org/hyperwar/USN/ref/MG/I/MG-5.html
+weapon_id: hispano_mk_ii_20mm
+display_name: "Hispano Mk II 20 mm Aircraft Cannon"
+category: AUTOCANNON
+caliber_mm: 20.0
+muzzle_velocity_mps: 840.0
+max_range_m: 800.0
+effective_range_m: 400.0
+min_range_m: 0.0
+rate_of_fire_rpm: 600.0
+burst_size: 5
+base_accuracy_mrad: 2.0
+guidance: NONE
+magazine_capacity: 120
+reload_time_s: 0.0
+compatible_ammo:
+  - 20mm_hispano_mk_ii_he
+weight_kg: 43.0
+reliability: 0.87
+barrel_life_rounds: 10000
+requires_deployed: false
+traverse_deg: 0.0
+elevation_min_deg: 0.0
+elevation_max_deg: 0.0
+target_domains:
+  - GROUND
+  - AERIAL

@@ -1,0 +1,37 @@
+# One physical Japanese Type 97 7.7 mm fixed aircraft gun, independent of xN.
+# Australian War Memorial identifies the gun, caliber, Vickers lineage, and
+# A6M installation. Official US Army technical intelligence gives 700-900 rpm
+# for the fixed Vickers-pattern Japanese gun. Captured-aircraft technical
+# reporting records 500 rounds per gun on the A6M2.
+# https://www.awm.gov.au/collection/C144576
+# https://www.ibiblio.org/hyperwar/Japan/IJA/HB/HB-4.html
+# https://en.wikisource.org/wiki/The_New_Mitsubishi-Nagoya_Zero_Fighter
+# The 600 m effective envelope is the published fixed-gun value compiled from
+# the cited specialist gun table; it is not inferred from maximum ballistics.
+# https://en.wikipedia.org/wiki/Type_97_aircraft_machine_gun
+weapon_id: type97_77mm_aircraft_mg
+display_name: "Type 97 7.7 mm Aircraft Machine Gun"
+category: AIRCRAFT_GUN
+caliber_mm: 7.7
+muzzle_velocity_mps: 747.0
+max_range_m: 600.0
+effective_range_m: 600.0
+min_range_m: 0.0
+rate_of_fire_rpm: 700.0
+burst_size: 8
+base_accuracy_mrad: 3.0
+guidance: NONE
+magazine_capacity: 500
+reload_time_s: 0.0
+compatible_ammo:
+  - 77x56r_type97_ball
+weight_kg: 12.6
+reliability: 0.90
+barrel_life_rounds: 10000
+requires_deployed: false
+traverse_deg: 0.0
+elevation_min_deg: 0.0
+elevation_max_deg: 0.0
+target_domains:
+  - GROUND
+  - AERIAL

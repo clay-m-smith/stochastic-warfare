@@ -115,12 +115,6 @@ calibration_overrides:
   # Roman triplex acies: 5 units × 250m ≈ 1000m frontage
   # prevents legions + equites collapsing onto a single point
   roman_formation_spacing_m: 250.0
-  weapon_assignments:
-    "Gladius": gladius
-    "Pilum": pilum
-    "Composite Bow": longbow
-    "Saif Sword": sword_medieval
-    "Lance": lance_medieval
 
 documented_outcomes:
   - name: roman_casualty_fraction

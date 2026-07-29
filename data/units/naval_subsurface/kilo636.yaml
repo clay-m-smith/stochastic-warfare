@@ -39,7 +39,7 @@ equipment:
     weight_kg: 25000.0
     reliability: 0.88
     temperature_range: [-10.0, 40.0]
-  - name: "MRK-50 Albatros Radar"
+  - name: "MRK-50 Albatros Surface Navigation/Search Radar"
     category: SENSOR
     weight_kg: 400.0
     reliability: 0.86

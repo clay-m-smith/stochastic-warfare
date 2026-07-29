@@ -1,0 +1,19 @@
+# The Tank Museum records A7V 506 firing grape from its 57 mm gun against an
+# entrenched quarry on 21 March 1918:
+# https://tankmuseum.org/action-debut-of-the-a7v-tank/
+# The radius is the catalog's bounded anti-personnel effect abstraction; no
+# unsourced pellet count is asserted.
+ammo_id: 57mm_nordenfelt_grape
+display_name: "57 mm Maxim-Nordenfelt Grape Shot"
+ammo_type: SHRAPNEL
+mass_kg: 3.71
+diameter_mm: 57.0
+drag_coefficient: 0.55
+penetration_mm_rha: 0.0
+penetration_reference_range_m: 0.0
+blast_radius_m: 0.0
+fragmentation_radius_m: 15.0
+guidance: NONE
+propulsion: none
+max_speed_mps: 300.0
+unit_cost_factor: 0.3

@@ -1,0 +1,39 @@
+# Exact Fletcher-class surface-torpedo system. The U.S. Navy Bureau of
+# Ordnance history identifies Mark 15 as the normal surface-ship torpedo:
+# https://www.ibiblio.org/hyperwar/USN/Admin-Hist/BuOrd/BuOrd-6.html
+#
+# NUSC Technical Document 5436 records a 21-inch (533.4 mm), gyro-controlled
+# weapon and three selectable speed/range settings. The current catalog schema
+# has one range/speed envelope, so this definition uses the coherent high-speed
+# setting (45 kn at 6,000 yd), never a best-of-all-settings hybrid:
+# https://www.maritime.org/doc/jolie/part2.php
+#
+# The authored equipment is the complete pair of quintuple launchers. Ten
+# loaded tubes are therefore its finite magazine; no underway reload is
+# represented by this definition.
+weapon_id: mk15_torpedo_tubes
+display_name: "Mk 15 Torpedo Tubes (2x5)"
+category: TORPEDO_TUBE
+caliber_mm: 533.4
+muzzle_velocity_mps: 0.0
+max_range_m: 5486.4
+effective_range_m: 5486.4
+min_range_m: 0.0
+rate_of_fire_rpm: 0.5
+burst_size: 1
+base_accuracy_mrad: 0.0
+cep_m: 0.0
+guidance: NONE
+magazine_capacity: 10
+reload_time_s: 0.0
+compatible_ammo:
+  - mk15_torpedo_warhead
+weight_kg: 10200.0
+reliability: 0.85
+barrel_life_rounds: 0
+requires_deployed: false
+traverse_deg: 30.0
+elevation_min_deg: -5.0
+elevation_max_deg: 5.0
+target_domains:
+  - NAVAL

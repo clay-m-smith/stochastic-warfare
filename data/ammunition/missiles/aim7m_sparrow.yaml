@@ -1,0 +1,31 @@
+# AIM-7M Sparrow semi-active-radar air-to-air missile.
+#
+# The U.S. Air Force fact file identifies the AIM-7M, 225 kg launch mass,
+# 200 mm diameter, Mk 58 solid motor, annular blast-fragmentation warhead, and
+# semi-active radar guidance. It explicitly classifies speed and range:
+# https://www.af.mil/About-Us/Fact-Sheets/Display/Article/104575/aim-7-sparrow/
+# NAVAIR's public product envelope bounds the Sparrow family near 30 km and
+# Mach 4:
+# https://www.navair.navy.mil/product/Air-Intercept-Missile-AIM-7-Sparrow
+#
+# Effect radii and probability fields are conservative runtime inputs and are
+# not represented as released USAF performance.
+ammo_id: aim7m_sparrow
+display_name: "AIM-7M Sparrow"
+ammo_type: MISSILE
+mass_kg: 225.0
+diameter_mm: 200.0
+drag_coefficient: 0.24
+blast_radius_m: 12.0
+fragmentation_radius_m: 35.0
+explosive_fill_kg: 0.0
+guidance: RADAR_SEMI
+seeker_fov_deg: 20.0
+seeker_range_m: 30000.0
+pk_at_reference: 0.70
+countermeasure_susceptibility: 0.20
+propulsion: rocket
+max_speed_mps: 1372.0
+flight_time_s: 45.0
+terminal_maneuver: true
+unit_cost_factor: 40.0

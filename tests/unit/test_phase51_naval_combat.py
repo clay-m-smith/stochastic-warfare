@@ -268,7 +268,7 @@ class TestShoreBombardmentAndVLS:
             ctx, _make_unit("s1"), _make_unit("t1", Domain.NAVAL),
             wpn, 5000.0, 10.0, TS, vls_launches=vls,
         )
-        assert vls["s1"] == 4  # rate_of_fire_rpm = 4 missiles fired
+        assert vls["s1"] == 1  # one launcher burst; rate controls cadence
 
 
 # ---------------------------------------------------------------------------

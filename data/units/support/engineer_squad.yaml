@@ -17,13 +17,17 @@ equipment:
     weight_kg: 3.4
     reliability: 0.95
   - name: "M18A1 Claymore Kit"
-    category: WEAPON
+    category: UTILITY  # mine emplacement is not a direct-fire attachment
     weight_kg: 1.6
     reliability: 0.98
   - name: "Mine Detection Set"
-    category: SENSOR
+    category: UTILITY
     weight_kg: 4.5
     reliability: 0.85
+  - name: "Naked Eye Observation"
+    category: SENSOR
+    weight_kg: 0.0
+    reliability: 0.99
   - name: "AN/PRC-152 Radio"
     category: COMMUNICATION
     weight_kg: 1.6

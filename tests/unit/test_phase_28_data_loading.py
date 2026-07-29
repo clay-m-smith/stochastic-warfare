@@ -197,7 +197,7 @@ class TestPhase28bWeapons:
 _NEW_AMMO_IDS = [
     "30mm_m789_hedp", "30mm_3uor6_hei",
     "mk82_500lb", "mk84_2000lb", "gbu12_paveway", "gbu38_jdam",
-    "m720_mortar_he", "m853a1_illumination",
+    "m720_60mm_he", "m853a1_illumination",
     "mk54_warhead", "asroc_payload",
     "agm88_harm_warhead", "r77_warhead", "r73_warhead", "igla_warhead",
     "javelin_warhead", "kornet_warhead",

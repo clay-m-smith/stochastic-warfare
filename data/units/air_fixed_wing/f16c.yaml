@@ -27,7 +27,7 @@ equipment:
     weight_kg: 210.0
     reliability: 0.90
   - name: "Wing/Fuselage Ordnance Stations"
-    category: WEAPON
+    category: UTILITY
     weight_kg: 300.0
     reliability: 0.92
   - name: "AN/APG-68 Radar"

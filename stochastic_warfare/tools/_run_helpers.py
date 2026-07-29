@@ -13,6 +13,7 @@ from typing import Any
 import yaml
 
 from stochastic_warfare.core.logging import get_logger
+from stochastic_warfare.core.strict_yaml import load_yaml_unique
 from stochastic_warfare.entities.base import UnitStatus
 from stochastic_warfare.simulation.engine import EngineConfig, SimulationEngine
 from stochastic_warfare.simulation.scenario import ScenarioLoader
@@ -36,8 +37,8 @@ def _infer_data_dir(scenario_path: str | Path) -> Path:
 
 def _load_scenario_yaml(path: str) -> dict[str, Any]:
     """Load a scenario YAML file."""
-    with open(path, "r") as f:
-        return yaml.safe_load(f)
+    with open(path, encoding="utf-8") as scenario_file:
+        return load_yaml_unique(scenario_file)
 
 
 def _apply_overrides(config: dict[str, Any], overrides: dict[str, Any]) -> dict[str, Any]:

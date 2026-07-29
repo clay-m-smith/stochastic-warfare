@@ -9,11 +9,9 @@ engine gaps constrain fidelity (see ``docs/devlog/phase-100.md``):
   shore-bombardment path.
 - Iraqi artillery weapons (D-30, BM-21, 2S1, 2S3, FROG-7) are authored
   but no Iraqi artillery unit carries them in its equipment list.
-- SA-7 MANPADS is authored but no Iraqi unit carries it, precluding
-  emergent Spirit 03 AC-130 loss.
-- AGM-65 Maverick is authored but aircraft equipment
-  ``"Wing/Fuselage Ordnance Stations"`` maps to ``bomb_rack_generic``
-  (dumb bombs + LGB + JDAM), so AGM-65 isn't fired.
+- Phase 109 gives the Iraqi SA-7 teams and A-10 AGM-65 stores exact typed
+  production loadouts. Long-range Maverick employment can therefore precede
+  the A-10's GAU-8 range in the default run.
 
 Full 10-iteration MC is prohibitively slow at the full-OOB Khafji
 scale (~35 min per iteration × 10 = 5.8 hours). Tests run a 3-iteration
@@ -38,10 +36,14 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import numpy as np
 import pytest
 import yaml
 
+from stochastic_warfare.combat.events import EngagementEvent
+from stochastic_warfare.core.types import Position
 from stochastic_warfare.entities.base import UnitStatus
+from stochastic_warfare.simulation.battle import BattleManager
 from stochastic_warfare.simulation.engine import EngineConfig, SimulationEngine
 from stochastic_warfare.simulation.recorder import SimulationRecorder
 from stochastic_warfare.simulation.scenario import (
@@ -151,15 +153,15 @@ class TestKhafjiEnvelope:
 class TestKhafjiKeyDynamics:
     """Single-iteration dynamic checks — caught regressions fast."""
 
-    def test_scenario_loads_and_runs(self) -> None:
+    def test_scenario_loads_and_runs(self, mc_results: list[dict]) -> None:
         """Sanity: scenario YAML loads and produces a running simulation."""
-        result = _run_one(seed=42, max_ticks=500)
+        result = mc_results[0]
         assert result["ticks"] > 0, "No ticks executed"
         assert result["winner"], "No victory determined"
 
-    def test_engagements_occur(self) -> None:
+    def test_engagements_occur(self, mc_results: list[dict]) -> None:
         """Must produce engagement events — not a walkover."""
-        result = _run_one(seed=42, max_ticks=500)
+        result = mc_results[0]
         engagements = [
             e for e in result["events"] if e.event_type == "EngagementEvent"
         ]
@@ -168,14 +170,53 @@ class TestKhafjiKeyDynamics:
         )
 
     def test_cas_aircraft_engage(self) -> None:
-        """A-10 GAU-8 30mm cannon fires (primary daylight CAS weapon).
-        Confirms aircraft weapon-assignment plumbing works for Khafji."""
-        result = _run_one(seed=42, max_ticks=500)
-        gau8_events = [
-            e for e in result["events"]
-            if e.event_type == "EngagementEvent"
-            and e.data.get("weapon_id") == "gau8_30mm"
-        ]
-        assert len(gau8_events) >= 5, (
-            f"No/insufficient A-10 GAU-8 engagements ({len(gau8_events)})"
+        """The scenario's exact A-10 GAU-8 attachment fires in a controlled
+        production engagement.
+
+        Phase 109's exact Maverick mapping lets the default force engage from
+        standoff, so a GAU-8 event is no longer guaranteed before victory.
+        This control preserves the loaded aircraft, target, visual sensor,
+        battle routing, event publication, and live ammunition state.
+        """
+        ctx = ScenarioLoader(DATA_DIR).load(SCENARIO_PATH, seed=42)
+        attacker = next(
+            unit
+            for unit in ctx.units_by_side["blue"]
+            if unit.unit_type == "a10a"
         )
+        target = next(
+            unit
+            for unit in ctx.units_by_side["red"]
+            if unit.domain.name == "GROUND"
+        )
+        gau8 = next(
+            attachment
+            for attachment in ctx.unit_weapons[attacker.entity_id]
+            if attachment.weapon.weapon_id == "gau8_30mm"
+        )
+        ammo_id = gau8.ammunition[0].ammo_id
+        rounds_before = gau8.weapon.ammo_state.available(ammo_id)
+
+        attacker.position = Position(0.0, 0.0, 0.0)
+        attacker.speed = 0.0
+        target.position = Position(1_000.0, 0.0, 0.0)
+        target.speed = 0.0
+        ctx.units_by_side = {"blue": [attacker], "red": [target]}
+        ctx.unit_weapons[attacker.entity_id] = (gau8,)
+
+        events: list[EngagementEvent] = []
+        ctx.event_bus.subscribe(EngagementEvent, events.append)
+        BattleManager(ctx.event_bus)._execute_engagements(
+            ctx,
+            {"blue": [attacker]},
+            {"blue": [target]},
+            {"blue": np.asarray([(1_000.0, 0.0)], dtype=np.float64)},
+            1.0,
+            ctx.clock.current_time,
+        )
+
+        assert [
+            (event.attacker_id, event.target_id, event.weapon_id)
+            for event in events
+        ] == [(attacker.entity_id, target.entity_id, "gau8_30mm")]
+        assert gau8.weapon.ammo_state.available(ammo_id) < rounds_before

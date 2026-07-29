@@ -28,7 +28,7 @@ equipment:
     weight_kg: 494.0
     reliability: 0.89
   - name: "Internal Bomb Bay (4000 kg capacity)"
-    category: WEAPON
+    category: UTILITY
     weight_kg: 4000.0
     reliability: 0.96
   - name: "Wright R-1820-97 Cyclone (x4)"
@@ -41,6 +41,7 @@ equipment:
     weight_kg: 35.0
     reliability: 0.75
   - name: "AN/APS-15 H2X Radar"
-    category: SENSOR
+    # Blind-bombing/navigation aid rather than a tactical target sensor.
+    category: UTILITY
     weight_kg: 90.0
     reliability: 0.68

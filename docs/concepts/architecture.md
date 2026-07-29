@@ -141,7 +141,11 @@ The `ScenarioLoader` is the central factory. Given a scenario YAML file, it:
 1. Parses the YAML into a `CampaignScenarioConfig` (pydantic-validated), or
    deep-copies a prevalidated effective config supplied by an orchestrator
 2. Creates terrain, environment, and weather engines
-3. Instantiates all units with their equipment, weapons, and sensors
+3. Loads unit equipment, then preflights every reachable initial and
+   reinforcement unit through the ordered typed equipment registry and one
+   scenario-owned `RuntimeLoadoutBuilder`. Duplicate YAML keys, unmapped or
+   unsupported weapon/sensor entries, catalog/semantic mismatches, and
+   contradictory sensor policy fail before context publication.
 4. Creates detection, combat, movement, morale, C2, and logistics engines
    and, when `logistics.enabled` is true, materializes declared depot stock,
    unit inventories, supply nodes, and expanded direct routes
@@ -157,6 +161,13 @@ The `ScenarioLoader` is the central factory. Given a scenario YAML file, it:
 6. Creates always-on behavioral engines: ROE engine (default WEAPONS_FREE), rout engine
 7. Seeds both morale views from each side's validated `morale_initial`
 8. Returns a `SimulationContext` with everything wired together
+
+The retained loadout builder creates every initial, arriving, and
+checkpoint-reconstructed weapon/sensor attachment. Its immutable fingerprint
+and per-unit resolution topology are part of checkpoint compatibility, while
+live weapon, ammunition, sensor, and linked-equipment state remain the mutable
+checkpoint payload. The detailed contract is
+[Equipment Mapping and Runtime Loadouts](../specs/equipment-mapping.md).
 
 `SimulationEngine` then installs the validated reinforcement schedule exactly
 once. Due waves are checked at every resolution and are committed atomically to

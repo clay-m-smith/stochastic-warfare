@@ -26,7 +26,7 @@ equipment:
     weight_kg: 120.0
     reliability: 0.87
   - name: "AN/APN-242 Weather Radar"
-    category: SENSOR
+    category: NAVIGATION
     weight_kg: 80.0
     reliability: 0.90
   - name: "SATCOM Terminal"
@@ -37,3 +37,7 @@ equipment:
     category: NAVIGATION
     weight_kg: 15.0
     reliability: 0.95
+  - name: "Naked Eye Observation"
+    category: SENSOR
+    weight_kg: 0.5
+    reliability: 0.99

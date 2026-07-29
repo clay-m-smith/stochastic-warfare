@@ -32,7 +32,7 @@ crew:
     skill: TRAINED
 equipment:
   - name: "D9 Blade & Rippers"
-    category: WEAPON  # display-only; no weapon mapping — primary contribution is breaching, not fires
+    category: UTILITY  # primary contribution is breaching, not fires
     weight_kg: 4200.0
     reliability: 0.97
   - name: "Cat C-18 Diesel"

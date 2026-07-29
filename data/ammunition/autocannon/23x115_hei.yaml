@@ -1,0 +1,22 @@
+# 23x115mm HEI round for GSh-23-family aircraft cannon.
+#
+# Arsenal JSCo publishes a 174 g projectile and 715 m/s muzzle velocity for its
+# 23x115mm HEI round and explicitly lists the GSh-23L as compatible:
+# https://www.arsenal-bg.com/c/artillery-rounds-32/23x115-mm-169
+#
+# The public product sheet does not disclose explosive fill. The blast and
+# fragmentation radii are conservative simulation effect bounds for a
+# 174 g-class HEI projectile, not manufacturer claims.
+ammo_id: 23x115_hei
+display_name: "23x115mm HEI"
+ammo_type: HE
+mass_kg: 0.174
+diameter_mm: 23.0
+drag_coefficient: 0.29
+blast_radius_m: 1.5
+fragmentation_radius_m: 5.0
+explosive_fill_kg: 0.0
+guidance: NONE
+propulsion: none
+max_speed_mps: 715.0
+unit_cost_factor: 0.20

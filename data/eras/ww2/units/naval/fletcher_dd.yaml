@@ -60,7 +60,7 @@ equipment:
     category: SENSOR
     weight_kg: 1200.0
     reliability: 0.75
-  - name: "Mk 37 Fire Control Director"
+  - name: "Mk 37 GFCS with Mk 4 Fire Control Radar"
     category: SENSOR
     weight_kg: 8600.0
     reliability: 0.82

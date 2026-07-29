@@ -1,0 +1,35 @@
+# U.S. Rifle, Caliber .30, M1 (Garand).
+#
+# Source-backed identity and operating envelope:
+# - U.S. Army TRADOC's Evolution of Military Small Arms identifies the M1 as a
+#   semiautomatic .30-06 rifle with an eight-round clip, 40-50 rounds/minute,
+#   and a 500-yard range.
+#   https://www.tradoc.army.mil/wp-content/uploads/2021/11/evolution-of-military-small-arms-instructor-slides-v2.pdf
+# - The U.S. Army SMDC World War II Staff Ride guide gives 9.7 lb, eight
+#   rounds, 2,778 ft/s, and semiautomatic operation.
+#   https://www.smdc.army.mil/Portals/38/Documents/Publications/History/Staff%20Ride/CompleteBook.pdf
+#
+# Accuracy, reliability, reload time, barrel life, and terminal effects remain
+# documented catalog abstractions rather than source-measured claims.
+weapon_id: m1_garand
+display_name: "M1 Garand Semiautomatic Rifle"
+category: RIFLE
+caliber_mm: 7.62
+muzzle_velocity_mps: 846.7
+max_range_m: 457.2
+effective_range_m: 457.2
+min_range_m: 0.0
+rate_of_fire_rpm: 45.0
+burst_size: 1
+base_accuracy_mrad: 0.8
+guidance: NONE
+magazine_capacity: 8
+reload_time_s: 3.0
+compatible_ammo:
+  - 30_06_m2_ball
+weight_kg: 4.40
+reliability: 0.95
+barrel_life_rounds: 10000
+requires_deployed: false
+target_domains:
+  - GROUND

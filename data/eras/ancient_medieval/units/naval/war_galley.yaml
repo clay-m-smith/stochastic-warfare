@@ -22,14 +22,22 @@ crew:
     count: 50
     skill: TRAINED  # soldiers
 equipment:
-  - name: "Bow Cannon (x3)"
+  # One heterogeneous forward battery, not three identical cannon. A typical
+  # Mediterranean galley centered a heavy bow gun with lighter companions:
+  # https://gjh.ojs.chass.ncsu.edu/index.php/Graduate/article/download/13/pdf_7
+  - name: "Lepanto Galley Bow Gun Battery"
     category: WEAPON
     weight_kg: 3000.0
     reliability: 0.70
-  - name: "Arquebuses and Crossbows"
+  # Distinct firearms and crossbows construct distinct live attachments.
+  - name: "Arquebuses"
     category: WEAPON
-    weight_kg: 100.0
-    reliability: 0.80
+    weight_kg: 60.0
+    reliability: 0.75
+  - name: "Crossbows"
+    category: WEAPON
+    weight_kg: 40.0
+    reliability: 0.85
   - name: "Ram Prow"
     category: WEAPON
     weight_kg: 250.0

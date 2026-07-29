@@ -107,14 +107,6 @@ calibration_overrides:
   german_start_x: 7000.0
   german_start_y: 1500.0
   defensive_sides: [german]
-  weapon_assignments:
-    "Lee-Enfield SMLE Mk III Rifle": lee_enfield
-    "Mills Bomb No. 5 Grenade": mills_bomb
-    "Webley Mk VI Revolver": lee_enfield
-    "Gewehr 98 Rifle": gewehr_98
-    "Stielhandgranate M1917 Grenade": mills_bomb
-    "MP 18 Submachine Gun": gewehr_98
-    "Luger P08 Pistol": lee_enfield
 
 documented_outcomes:
   - name: british_casualties_ratio

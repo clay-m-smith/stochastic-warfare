@@ -41,7 +41,7 @@ equipment:
     weight_kg: 31280.0
     reliability: 0.87
   - name: "Flight Deck (90 aircraft capacity)"
-    category: WEAPON
+    category: UTILITY
     weight_kg: 500000.0
     reliability: 0.92
   - name: "SK-2 Air Search Radar"
@@ -52,7 +52,7 @@ equipment:
     category: SENSOR
     weight_kg: 680.0
     reliability: 0.78
-  - name: "Mk 37 Fire Control Director (x2)"
+  - name: "Mk 37 GFCS with Mk 4 Fire Control Radar (x2)"
     category: SENSOR
     weight_kg: 17200.0
     reliability: 0.82

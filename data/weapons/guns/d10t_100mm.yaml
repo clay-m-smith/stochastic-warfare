@@ -12,7 +12,7 @@ guidance: NONE
 magazine_capacity: 43
 reload_time_s: 7.5
 compatible_ammo:
-  - 105mm_l52_apds
+  - 100mm_bm8_apds
 weight_kg: 1948.0
 reliability: 0.82
 barrel_life_rounds: 800

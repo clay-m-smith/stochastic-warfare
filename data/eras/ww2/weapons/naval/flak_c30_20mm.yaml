@@ -1,0 +1,33 @@
+# One physical German 2 cm Flak C/30 naval AA gun.
+# The US Army German equipment handbook corroborates the 20-round magazine.
+# The compiled service table gives 280 rpm cyclic/120 practical, 875 m/s,
+# 4,900 m maximum, 3,700 m AA ceiling, and 20-round magazines.
+# https://www.ibiblio.org/hyperwar/Germany/HB/HB-7.html
+# https://www.navweaps.com/Weapons/WNGER_20mm-65_c30.php
+weapon_id: flak_c30_20mm
+display_name: "2 cm Flak C/30"
+category: AAA
+caliber_mm: 20.0
+muzzle_velocity_mps: 875.0
+max_range_m: 4900.0
+effective_range_m: 3700.0
+min_range_m: 25.0
+rate_of_fire_rpm: 120.0
+burst_size: 5
+base_accuracy_mrad: 3.0
+min_engagement_altitude_m: 0.0
+max_engagement_altitude_m: 3700.0
+guidance: NONE
+magazine_capacity: 20
+reload_time_s: 4.0
+compatible_ammo:
+  - 20mm_c30_hei
+weight_kg: 64.0
+reliability: 0.84
+barrel_life_rounds: 20000
+requires_deployed: false
+traverse_deg: 360.0
+elevation_min_deg: -11.0
+elevation_max_deg: 85.0
+target_domains:
+  - AERIAL

@@ -1,0 +1,24 @@
+# Aggregate round-shot allocation for a heterogeneous sixteenth-century
+# galley's forward battery. The scholarly armament review identifies a
+# 50-pounder centerline gun accompanied by lighter pieces, while the U.S.
+# Naval History and Heritage Command confirms forward fixed cannon on galleys:
+# https://gjh.ojs.chass.ncsu.edu/index.php/Graduate/article/download/13/pdf_7
+# https://www.history.navy.mil/research/library/online-reading-room/title-list-alphabetically/e/evolution-of-naval-weapons.html
+#
+# The public sources do not establish one common bore, projectile velocity, or
+# explosive fill for the heterogeneous battery. Diameter and unsupported
+# terminal-effect fields therefore remain zero. A 22.7 kg mass represents the
+# source's fifty-pound main round without pretending the lighter pieces shared
+# it.
+ammo_id: lepanto_galley_roundshot
+display_name: "Lepanto Galley Bow-Battery Round Shot"
+ammo_type: AP
+mass_kg: 22.7
+diameter_mm: 0.0
+drag_coefficient: 0.3
+penetration_mm_rha: 0.0
+penetration_reference_range_m: 0.0
+blast_radius_m: 0.0
+fragmentation_radius_m: 0.0
+explosive_fill_kg: 0.0
+guidance: NONE

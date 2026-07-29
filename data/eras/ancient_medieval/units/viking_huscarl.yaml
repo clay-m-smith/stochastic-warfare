@@ -19,7 +19,7 @@ equipment:
     weight_kg: 1.5
     reliability: 0.95
   - name: "Shield"
-    category: WEAPON
+    category: PROTECTION
     weight_kg: 4.0
     reliability: 0.90
 

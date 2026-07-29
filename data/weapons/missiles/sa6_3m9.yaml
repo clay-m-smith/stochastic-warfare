@@ -11,7 +11,7 @@ base_accuracy_mrad: 0.0
 cep_m: 0.0
 min_engagement_altitude_m: 100.0
 max_engagement_altitude_m: 12000.0
-guidance: RADAR_SEMI_ACTIVE
+guidance: RADAR_SEMI
 magazine_capacity: 3
 reload_time_s: 300.0
 compatible_ammo:

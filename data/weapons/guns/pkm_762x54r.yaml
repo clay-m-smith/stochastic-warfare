@@ -1,0 +1,33 @@
+# PKM 7.62x54R general-purpose machine gun.
+#
+# Rosoboronexport publishes 7.62x54R ammunition, 600-800 rounds/minute,
+# 1,500 m sighting range, 8.5 kg mass, and 100/200-round belt boxes:
+# https://roe.ru/pdfs/pdf_7081.pdf
+#
+# The cyclic midpoint and 200-round box represent the authored sustained-fire
+# configuration. The definition is not a 7.62x51mm NATO proxy.
+weapon_id: pkm_762x54r
+display_name: "PKM 7.62x54R General-Purpose Machine Gun"
+category: MACHINE_GUN
+caliber_mm: 7.62
+muzzle_velocity_mps: 830.0
+max_range_m: 1500.0
+effective_range_m: 1000.0
+min_range_m: 0.0
+rate_of_fire_rpm: 700.0
+burst_size: 7
+base_accuracy_mrad: 1.5
+guidance: NONE
+magazine_capacity: 200
+reload_time_s: 10.0
+compatible_ammo:
+  - 762x54r_ball
+weight_kg: 8.5
+reliability: 0.93
+barrel_life_rounds: 25000
+requires_deployed: false
+traverse_deg: 360.0
+elevation_min_deg: -30.0
+elevation_max_deg: 80.0
+target_domains:
+  - GROUND

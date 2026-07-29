@@ -1,0 +1,19 @@
+# German 2 cm Flak C/30 HE-incendiary projectile.
+# The compiled service table gives 0.120 kg projectile, 0.006 kg filling, and
+# 875 m/s muzzle velocity.
+# https://www.navweaps.com/Weapons/WNGER_20mm-65_c30.php
+ammo_id: 20mm_c30_hei
+display_name: "2 cm Flak C/30 HE-I"
+ammo_type: HE
+mass_kg: 0.120
+diameter_mm: 20.0
+drag_coefficient: 0.34
+penetration_mm_rha: 0.0
+penetration_reference_range_m: 0.0
+blast_radius_m: 2.5
+fragmentation_radius_m: 5.0
+explosive_fill_kg: 0.006
+guidance: NONE
+propulsion: none
+max_speed_mps: 875.0
+unit_cost_factor: 0.3

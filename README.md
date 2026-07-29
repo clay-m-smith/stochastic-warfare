@@ -172,7 +172,7 @@ data/                     # YAML data catalog
   eras/                    # Era-specific data packages (WW2, WW1, Napoleonic, Ancient/Medieval)
   scenarios/              # modern, test, and historical-era scenario definitions
 
-tests/                    # 10,428 default-selected Python tests passing
+tests/                    # 10,755 default-selected Python tests passing
 docs/                     # specs, brainstorm, devlog, development phases
 ```
 
@@ -180,9 +180,9 @@ For the full package tree and module decomposition, see [`docs/specs/project-str
 
 ## Development Status
 
-Phases 105 through 108 are complete; Phase 109 is next.
-Blocks 1–11 remain complete. See the remediation backlog, devlogs, and phase
-roadmaps for full detail.
+Phases 105 through 109 are complete; Phase 110 is next. Blocks 1–11 remain
+complete. See the remediation backlog, devlogs, and phase roadmaps for full
+detail.
 
 | Phase | Focus | Tests | Status |
 |-------|-------|-------|--------|
@@ -296,10 +296,13 @@ roadmaps for full detail.
 | 106 | API Execution Integrity (Block 12) | 25 | **Complete** |
 | 107 | Scenario Configuration Wiring (Block 12) | 103 | **Complete** |
 | 108 | Logistics Runtime Wiring (Block 12) | 115 | **Complete** |
-| | **Verified passing baseline** | **10,428 Python + 418 frontend** | |
+| 109 | Equipment Mapping Integrity (Block 12) | 322 | **Complete** |
+| | **Verified passing baseline** | **10,755 Python** | |
 
 The Python figure is the fresh default-suite result; that run also reported 21
-skipped and 346 deselected tests. For the full phase roadmap, see
+skipped and 348 deselected tests. Phase 109 changes no frontend contract, so
+the frontend suite was not rerun; its last Phase 108 baseline was 418 passing
+tests. For the full phase roadmap, see
 [`docs/development-phases.md`](docs/development-phases.md) (MVP),
 [`docs/development-phases-post-mvp.md`](docs/development-phases-post-mvp.md)
 (post-MVP), and `docs/development-phases-block{N}.md` for Blocks 2–12. The live

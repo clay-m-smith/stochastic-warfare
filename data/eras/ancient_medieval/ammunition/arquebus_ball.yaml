@@ -1,0 +1,14 @@
+ammo_id: arquebus_ball
+display_name: "Arquebus Lead Ball"
+ammo_type: BALL
+mass_kg: 0.025
+diameter_mm: 15.0
+drag_coefficient: 0.30
+penetration_mm_rha: 6.0
+penetration_reference_range_m: 50.0
+blast_radius_m: 0.0
+fragmentation_radius_m: 0.0
+guidance: NONE
+propulsion: none
+max_speed_mps: 400.0
+unit_cost_factor: 0.001

@@ -14,7 +14,6 @@ magazine_capacity: 680
 reload_time_s: 0.0
 compatible_ammo:
   - mk45_he
-  - m982_excalibur
 weight_kg: 21691.0
 reliability: 0.92
 barrel_life_rounds: 7000

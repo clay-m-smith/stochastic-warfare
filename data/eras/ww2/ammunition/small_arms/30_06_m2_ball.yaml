@@ -1,0 +1,25 @@
+# .30-06 M2 ball cartridge used by the M1 Garand and M1919A4.
+#
+# A U.S. federal explosive-material test specification identifies M2 ball as
+# a nominal 150-grain projectile at 2,700 ft/s (824 m/s):
+# https://tile.loc.gov/storage-services/service/ll/fedreg/fr053/fr053139/fr053139.pdf
+#
+# Weapon definitions retain their source-backed barrel-specific muzzle
+# velocities. The drag and 5 mm/100 m kinetic terminal fields are conservative
+# same-role catalog abstractions. The cited source does not establish
+# rolled-homogeneous armor penetration, and this definition makes no
+# armor-piercing claim.
+ammo_id: 30_06_m2_ball
+display_name: ".30-06 M2 Ball"
+ammo_type: BALL
+mass_kg: 0.00972
+diameter_mm: 7.62
+drag_coefficient: 0.40
+penetration_mm_rha: 5.0
+penetration_reference_range_m: 100.0
+blast_radius_m: 0.0
+fragmentation_radius_m: 0.0
+guidance: NONE
+propulsion: none
+max_speed_mps: 824.0
+unit_cost_factor: 0.01

@@ -1,0 +1,23 @@
+# M433 40mm low-velocity High-Explosive Dual-Purpose cartridge.
+#
+# U.S. Army JPEO Armaments & Ammunition Portfolio Book (2017), p. 157:
+# M203-compatible, 400 m maximum range, 76 m/s, and at least 2.5 inches
+# (63.5 mm) of steel penetration.
+# https://jpeoaa.army.mil/Portals/94/JPEOAA/Documents/JPEOAAPortfolioBook_2017.pdf
+# Singapore Army SAF Ammunition Command independently specifies the 2.5-inch
+# light-armor effect, 5 m lethal impact radius, and M203 compatibility.
+# https://www.army.gov.sg/our-forces/formations/saf-ammunition-command/
+ammo_id: m433_40mm_hedp
+display_name: "M433 40mm HEDP Grenade"
+ammo_type: HEAT
+mass_kg: 0.227
+diameter_mm: 40.0
+drag_coefficient: 0.45
+penetration_mm_rha: 63.5
+penetration_reference_range_m: 100.0
+blast_radius_m: 5.0
+fragmentation_radius_m: 5.0
+guidance: NONE
+propulsion: none
+max_speed_mps: 76.0
+unit_cost_factor: 0.25

@@ -20,3 +20,4 @@ requires_deployed: false
 traverse_deg: 60.0
 elevation_min_deg: -10.0
 elevation_max_deg: 30.0
+target_domains: ["NAVAL"]

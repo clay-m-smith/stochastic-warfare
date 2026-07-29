@@ -1,0 +1,29 @@
+# Explicit WWII naval light anti-aircraft battery role model.
+#
+# The represented 20-40 mm mounts differ physically. This bounded abstraction
+# models only their common close naval air-defense role and uses the existing
+# 20 mm HE interface; it is not an identity or performance-equivalence claim.
+weapon_id: ww2_naval_light_aa
+display_name: "WWII Naval Light Anti-Aircraft Battery Role Model"
+category: AAA
+caliber_mm: 20.0
+muzzle_velocity_mps: 750.0
+max_range_m: 3000.0
+min_range_m: 0.0
+rate_of_fire_rpm: 450.0
+burst_size: 5
+base_accuracy_mrad: 3.0
+guidance: NONE
+magazine_capacity: 400
+reload_time_s: 5.0
+compatible_ammo:
+  - 20mm_type99_he
+weight_kg: 2000.0
+reliability: 0.85
+barrel_life_rounds: 8000
+requires_deployed: false
+traverse_deg: 360.0
+elevation_min_deg: -10.0
+elevation_max_deg: 85.0
+target_domains:
+  - AERIAL

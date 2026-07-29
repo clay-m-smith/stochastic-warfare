@@ -18,7 +18,10 @@
 #   AIM-9 Sidewinder A-A (limited deployment)
 #
 # Sensors:
-#   M65 TOW sight — telescopic + thermal; NIGHT CAPABLE (key at Khafji)
+#   M65 TOW sight — daylight telescopic optical sight. Early airborne TOW
+#   lacked limited-visibility/night capability; AN/TAS-4 was a later,
+#   separately authored thermal system:
+#   https://history.redstone.army.mil/miss-tow.html
 #
 # Countermeasures:
 #   AN/ALE-39 chaff/flare dispenser
@@ -64,7 +67,7 @@ equipment:
   - name: "M65 TOW Sight"
     category: SENSOR
     weight_kg: 78.0
-    reliability: 0.88  # telescopic + thermal; night-capable
+    reliability: 0.88  # daylight optical targeting; not a thermal channel
   - name: "AN/APR-39 Radar Warning Receiver"
     category: SENSOR
     weight_kg: 6.0

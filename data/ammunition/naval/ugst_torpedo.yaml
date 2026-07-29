@@ -1,0 +1,33 @@
+# UGST multipurpose heavyweight torpedo for 533mm launching units.
+#
+# Rosoboronexport publishes launch from 533mm tubes, 534.4 mm body caliber,
+# 2,200 kg mass, up to 300 kg explosive, 50-knot high-speed mode, active-
+# passive homing, and up to 30 km of combined onboard/towed remote-control
+# wire:
+# https://roe.ru/pdfs/pdf_2253.pdf
+# Rosoboronexport publishes a 50 km UGST engagement range for its submarine
+# integration:
+# https://roe.ru/en/production/navy/submarines/diesel-electric-submarines/proekt-677e/?PAGEN_2=4&theme=theme-green
+#
+# COMBINED represents remote-control wire plus active/passive homing.
+# Probability and effect radii are conservative runtime abstractions.
+ammo_id: ugst_torpedo
+display_name: "UGST Multipurpose Deep-Sea Torpedo"
+ammo_type: TORPEDO
+mass_kg: 2200.0
+diameter_mm: 534.4
+drag_coefficient: 0.20
+blast_radius_m: 30.0
+fragmentation_radius_m: 60.0
+explosive_fill_kg: 300.0
+guidance: COMBINED
+seeker_fov_deg: 45.0
+seeker_range_m: 2500.0
+pk_at_reference: 0.70
+countermeasure_susceptibility: 0.20
+propulsion: thermal
+max_speed_mps: 25.7
+flight_time_s: 1946.0
+cruise_altitude_m: 0.0
+terminal_maneuver: true
+unit_cost_factor: 120.0

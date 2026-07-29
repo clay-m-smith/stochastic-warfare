@@ -1,0 +1,37 @@
+# One physical Browning .303 Mk II aircraft machine gun, independent of xN.
+# Imperial War Museums identifies the RAF .303 Browning Mk II; the RAF Museum
+# historical study documents its conventional aircraft armament role.
+# https://www.iwm.org.uk/collections/item/object/30034904
+# https://www.rafmuseum.org.uk/documents/Research/RAF-Historical-Society-Journals/Journal_45_Seminar_conventional_weapons.pdf
+# The archived Spitfire pilot's notes establish the installation context.
+# https://www.awm.gov.au/collection/LIB33055
+# The Spitfire wing installation carried 350 rounds per gun. The 1,150 rpm
+# rate is the Mk II aircraft-gun cyclic rate. A Canadian veterans archive
+# records about 300 yards as the harmonized combat range used here.
+# https://veterans.gc.ca/en/news-and-media/video-gallery/spitfire
+weapon_id: browning_303_mk_ii
+display_name: "Browning .303 Mk II Aircraft Gun"
+category: AIRCRAFT_GUN
+caliber_mm: 7.7
+muzzle_velocity_mps: 747.0
+max_range_m: 274.3
+effective_range_m: 274.3
+min_range_m: 0.0
+rate_of_fire_rpm: 1150.0
+burst_size: 8
+base_accuracy_mrad: 3.0
+guidance: NONE
+magazine_capacity: 350
+reload_time_s: 0.0
+compatible_ammo:
+  - 303_mk_vii_ball
+weight_kg: 10.2
+reliability: 0.90
+barrel_life_rounds: 10000
+requires_deployed: false
+traverse_deg: 0.0
+elevation_min_deg: 0.0
+elevation_max_deg: 0.0
+target_domains:
+  - GROUND
+  - AERIAL

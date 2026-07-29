@@ -1,0 +1,23 @@
+# Functional role model for DE M-SHORAD's Ku-band Multi-Function RF Sensor.
+# Army sources identify KuRFS as the system's UAS tracking/sensing and
+# fire-control radar. The 10 km cap is a conservative short-range model
+# boundary, not a claim of public KuRFS physical performance.
+# Sources:
+#   https://home.army.mil/hood/4817/4948/7151/2025_0609_Fort_Cavazos_Weapons_Modernization_PEA_Final_Public_Version_FONSI_508.pdf
+#   https://rdl.train.army.mil/catalog-ws/view/100.ATSC/B6A1625F-6975-4367-82C8-E67E901218C7-1753193840461/ATP3_01x81.pdf
+sensor_id: kurfs_fire_control_radar
+sensor_type: RADAR
+display_name: "KuRFS Short-Range Fire-Control Radar (role model)"
+max_range_m: 10000.0
+detection_threshold: 10.0
+false_alarm_rate: 1.0e-7
+scan_time_s: 2.0
+scan_interval_ticks: 1
+frequency_mhz: 9400.0
+peak_power_w: 20000.0
+antenna_gain_dbi: 30.0
+antenna_height_m: 3.0
+min_range_m: 100.0
+fov_deg: 360.0
+requires_los: true
+detects_domain: ["RADAR"]

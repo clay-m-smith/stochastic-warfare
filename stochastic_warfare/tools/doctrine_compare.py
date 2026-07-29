@@ -12,6 +12,7 @@ import statistics
 from dataclasses import dataclass, field
 from typing import Any
 
+from stochastic_warfare.core.strict_yaml import load_yaml_unique
 from stochastic_warfare.tools._run_helpers import run_scenario_batch
 
 
@@ -55,11 +56,10 @@ class DoctrineCompareResult:
 
 def _load_scenario_yaml(path: str) -> dict[str, Any]:
     """Load scenario YAML as a dict."""
-    import yaml
     from pathlib import Path
 
-    with Path(path).open() as f:
-        return yaml.safe_load(f)
+    with Path(path).open(encoding="utf-8") as scenario_file:
+        return load_yaml_unique(scenario_file)
 
 
 def run_doctrine_comparison(config: DoctrineCompareConfig) -> DoctrineCompareResult:

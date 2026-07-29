@@ -89,10 +89,12 @@ See the [Getting Started Guide](guide/getting-started.md) for a complete tutoria
 | Block 11 | 98--104 | Golden scenarios and deployment polish | **Complete** |
 | Block 12 | 105--114 | Integrity remediation against production-path evidence | **In progress** |
 
-Phases 105 through 108 are complete; Phase 109 is next.
+Phases 105 through 109 are complete; Phase 110 is next.
 
-Fresh verified baseline: **10,428 default-selected Python tests passed** (21
-skipped, 346 deselected) plus **418 frontend tests passed**. See the
+Fresh Phase 109 baseline: **10,755 default-selected Python tests passed** (21
+skipped, 348 deselected). The frontend was not rerun because Phase 109 changes
+no frontend contract; its last verified Phase 108 baseline remains 418 tests.
+See the
 [remediation backlog](remediation-backlog.md) for current evidence and known
 coverage boundaries. The YAML data catalog defines units, weapons, ammunition
 types, sensors, signatures, doctrines, commanders, formation templates, and

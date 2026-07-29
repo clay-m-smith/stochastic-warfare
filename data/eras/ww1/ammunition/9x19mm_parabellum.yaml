@@ -1,0 +1,23 @@
+# 9x19mm Parabellum ball cartridge for the MP 18,I.
+#
+# Royal Armouries specifies the MP 18's 9x19mm chambering and 329 m/s muzzle
+# velocity:
+# https://royalarmouries.org/objects-and-stories/stories/arms-of-the-first-world-war
+#
+# The 8 g projectile and 5 mm/25 m kinetic terminal fields are a conservative
+# same-role small-arms abstraction. The cited source does not establish armor
+# penetration, and this record makes no armor-piercing ammunition claim.
+ammo_id: 9x19mm_parabellum_ww1
+display_name: "9x19mm Parabellum Ball (WW1)"
+ammo_type: BALL
+mass_kg: 0.008
+diameter_mm: 9.0
+drag_coefficient: 0.40
+penetration_mm_rha: 5.0
+penetration_reference_range_m: 25.0
+blast_radius_m: 0.0
+fragmentation_radius_m: 0.0
+guidance: NONE
+propulsion: none
+max_speed_mps: 329.0
+unit_cost_factor: 0.01

@@ -9,10 +9,10 @@
 #
 # Equipment reflects a tailored stay-behind loadout: standard rifles
 # plus precision long-range fires (M40A1 7.62 sniper, Barrett M82A1 .50
-# anti-materiel) and the AN/TVQ-2 MULE laser designator for guided
-# munitions terminal homing. The MULE is modeled here under the
-# "Multi-Function Sensor Suite" alias, which maps to a thermal sight
-# sensor_id for LOS and designation purposes.
+# anti-materiel) and the AN/PAQ-3 MULE laser designator for guided
+# munitions terminal homing. Laser designation is outside the current
+# detection interface, so the MULE remains explicit utility
+# equipment rather than acquiring synthetic thermal-surveillance capability.
 #
 # Sources:
 #   - Westermeyer, Paul W. "U.S. Marines in Battle: Al-Khafji, 1991."
@@ -63,15 +63,15 @@ equipment:
     category: WEAPON
     weight_kg: 14.0
     reliability: 0.90
-  - name: "Multi-Function Sensor Suite"
-    category: SENSOR
+  - name: "AN/PAQ-3 MULE Laser Designator"
+    category: UTILITY
     weight_kg: 5.4
     reliability: 0.90
   - name: "AN/PVS-14 NVG"
     category: SENSOR
     weight_kg: 0.4
     reliability: 0.90
-  - name: "Field Binoculars"
+  - name: "Field Binoculars (Modern)"
     category: SENSOR
     weight_kg: 1.0
     reliability: 0.99

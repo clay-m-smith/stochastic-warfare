@@ -1,0 +1,17 @@
+# C/06 D dimensions, 122 kg warhead, and 27-knot speed:
+# https://uboat.net/history/wwi/part7.htm
+ammo_id: c06d_45cm_warhead
+display_name: "45 cm C/06 D Torpedo Warhead"
+ammo_type: HE
+mass_kg: 122.0
+diameter_mm: 450.0
+drag_coefficient: 0.30
+penetration_mm_rha: 0.0
+penetration_reference_range_m: 0.0
+blast_radius_m: 21.0
+fragmentation_radius_m: 34.0
+explosive_fill_kg: 122.0
+guidance: NONE
+propulsion: torpedo
+max_speed_mps: 13.89
+unit_cost_factor: 25.0

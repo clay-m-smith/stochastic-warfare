@@ -1,0 +1,24 @@
+# Dedicated arquebus boundary for the Lepanto-era galley instead of a crossbow
+# proxy. Numeric values are conservative early-firearm runtime envelopes.
+# British Museum arquebus collection reference:
+# https://www.britishmuseum.org/collection/object/H_WB-7
+weapon_id: arquebus
+display_name: "Arquebus"
+category: RIFLE
+caliber_mm: 15.0
+muzzle_velocity_mps: 400.0
+max_range_m: 100.0
+min_range_m: 0.0
+rate_of_fire_rpm: 1.0
+burst_size: 1
+base_accuracy_mrad: 25.0
+guidance: NONE
+magazine_capacity: 1
+reload_time_s: 60.0
+compatible_ammo:
+  - arquebus_ball
+weight_kg: 5.4
+reliability: 0.75
+barrel_life_rounds: 3000
+requires_deployed: false
+target_domains: ["GROUND", "NAVAL"]

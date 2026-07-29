@@ -1,0 +1,38 @@
+# 5P85SE/TE S-300PMU-1 surface-to-air missile launcher.
+#
+# The original Rosoboronexport S-300PMU-1 export catalog publishes up to
+# twelve 5P85SE/TE launchers, four 48N6E missiles per launcher, 5-150 km range,
+# 10 m-27 km altitude, and five-minute deployment:
+# https://www.revistaejercitos.com/wp-content/uploads/2020/03/S-300PMU1-2.pdf
+#
+# The authored "5P85 TEL" is resolved to this exact four-canister S-300PMU
+# family boundary. COMBINED represents the missile's midcourse command/update
+# and terminal radar phases; it is not PAC-3 active-radar behavior.
+weapon_id: s300pmu_5p85
+display_name: "5P85SE S-300PMU-1 Four-Round TEL"
+category: MISSILE_LAUNCHER
+caliber_mm: 500.0
+muzzle_velocity_mps: 0.0
+max_range_m: 150000.0
+effective_range_m: 150000.0
+min_range_m: 5000.0
+rate_of_fire_rpm: 2.0
+burst_size: 1
+base_accuracy_mrad: 0.0
+cep_m: 0.0
+min_engagement_altitude_m: 10.0
+max_engagement_altitude_m: 27000.0
+guidance: COMBINED
+magazine_capacity: 4
+reload_time_s: 3600.0
+compatible_ammo:
+  - 48n6_sam
+weight_kg: 42000.0
+reliability: 0.90
+barrel_life_rounds: 0
+requires_deployed: true
+traverse_deg: 360.0
+elevation_min_deg: 0.0
+elevation_max_deg: 90.0
+target_domains:
+  - AERIAL

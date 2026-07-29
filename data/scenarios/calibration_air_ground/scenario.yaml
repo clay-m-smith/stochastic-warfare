@@ -85,6 +85,3 @@ calibration_overrides:
   blue_start_y: 4000
   red_start_x: 9000
   red_start_y: 4000
-  weapon_assignments:
-    "M256 120mm Smoothbore": m256_120mm
-    "2A46M 125mm Smoothbore": 2a46m_125mm

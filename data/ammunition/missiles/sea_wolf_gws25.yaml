@@ -1,0 +1,31 @@
+# Conventional-launch GWS-25 Sea Wolf missile for Type 22 frigates.
+#
+# UK Parliament records Sea Wolf as the Type 22's automatic all-weather naval
+# point-defense system and identifies the conventional trainable six-barrel
+# launcher:
+# https://publications.parliament.uk/pa/cm198889/cmhansrd/1989-02-28/Debate-1.html
+# A public GWS-25 technical envelope reports 82 kg, 180 mm, radio-command
+# guidance, 14 kg HE-fragmentation warhead, Mach 2, and 1-6 km engagement:
+# https://weaponsystems.net/system/1389-GWS-25%20Sea%20Wolf
+#
+# The model records the bounded legacy GWS-25 envelope, not the longer-range
+# vertical-launch Sea Wolf that replaced it.
+ammo_id: sea_wolf_gws25
+display_name: "GWS-25 Sea Wolf Missile"
+ammo_type: MISSILE
+mass_kg: 82.0
+diameter_mm: 180.0
+drag_coefficient: 0.26
+blast_radius_m: 10.0
+fragmentation_radius_m: 35.0
+explosive_fill_kg: 0.0
+guidance: COMMAND
+seeker_fov_deg: 12.0
+seeker_range_m: 6000.0
+pk_at_reference: 0.78
+countermeasure_susceptibility: 0.18
+propulsion: rocket
+max_speed_mps: 686.0
+flight_time_s: 12.0
+terminal_maneuver: true
+unit_cost_factor: 45.0

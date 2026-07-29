@@ -83,11 +83,11 @@ equipment:
     weight_kg: 55.0
     reliability: 0.90
   - name: "Eyesafe Laser Rangefinder"
-    category: SENSOR
+    category: UTILITY
     weight_kg: 8.0
     reliability: 0.94
   - name: "Amcoram LWS-2 Laser Warning Receiver"
-    category: SENSOR
+    category: PROTECTION
     weight_kg: 6.0
     reliability: 0.92
   - name: "IDF Tactical Net"

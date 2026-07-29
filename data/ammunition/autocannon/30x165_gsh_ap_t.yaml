@@ -1,0 +1,23 @@
+# 30x165mm AP-T round for the GSh-30-1.
+#
+# Arsenal JSCo publishes compatibility with the GSh-301 used by MiG-29 and
+# Su-27 aircraft, a 400 g projectile, 840 +/- 10 m/s velocity, and penetration
+# of a 20 mm plate at 1,000 m and 60 degrees:
+# https://www.arsenal-bg.com/c/30x165-mm-rounds-for-aircraft-automatic-guns-gsh-30-gsh-30k-gsh-6-30-and-gsh-301-138/ap-t-223
+#
+# The model records the nominal velocity and source test plate. Its RHA field
+# cannot encode the published obliquity, which remains explicit here.
+ammo_id: 30x165_gsh_ap_t
+display_name: "30x165mm GSh AP-T"
+ammo_type: AP
+mass_kg: 0.400
+diameter_mm: 30.0
+drag_coefficient: 0.28
+penetration_mm_rha: 20.0
+penetration_reference_range_m: 1000.0
+blast_radius_m: 0.0
+fragmentation_radius_m: 0.0
+guidance: NONE
+propulsion: none
+max_speed_mps: 840.0
+unit_cost_factor: 0.25

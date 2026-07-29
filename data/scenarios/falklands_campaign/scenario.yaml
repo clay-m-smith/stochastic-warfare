@@ -119,14 +119,6 @@ calibration_overrides:
   red_start_y: 50000.0
   blue_formation_spacing_m: 500.0
   red_formation_spacing_m: 1000.0
-  weapon_assignments:
-    "AM.39 Exocet": am39_exocet
-    "Sea Dart SAM": sea_dart
-    "Sea Wolf SAM": sea_dart
-    "4.5 inch Mk 8 Naval Gun": mk45_5inch
-    "30mm ADEN": m61a1_vulcan
-    "DEFA 553 30mm Cannon": m61a1_vulcan
-    "AIM-9L Sidewinder": aim9x_sidewinder
 
 documented_outcomes:
   - name: blue_ships_sunk

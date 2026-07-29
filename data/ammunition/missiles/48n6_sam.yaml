@@ -1,0 +1,30 @@
+# 48N6E surface-to-air missile for the S-300PMU-1 export system.
+#
+# The original Rosoboronexport S-300PMU-1 catalog specifies four 48N6E rounds
+# per 5P85SE/TE launcher, a 5-150 km aerodynamic-target envelope, and
+# 0.01-27 km altitude envelope:
+# https://www.revistaejercitos.com/wp-content/uploads/2020/03/S-300PMU1-2.pdf
+#
+# The 1,800 kg / 500 mm / approximately 2,000 m/s public export envelope is
+# represented as a COMBINED inertial/radio-update/terminal-radar abstraction.
+# Effect radii and probability fields are conservative runtime inputs because
+# the public catalog does not disclose those outcome parameters.
+ammo_id: 48n6_sam
+display_name: "48N6E Surface-to-Air Missile"
+ammo_type: MISSILE
+mass_kg: 1800.0
+diameter_mm: 500.0
+drag_coefficient: 0.24
+blast_radius_m: 18.0
+fragmentation_radius_m: 100.0
+explosive_fill_kg: 0.0
+guidance: COMBINED
+seeker_fov_deg: 20.0
+seeker_range_m: 30000.0
+pk_at_reference: 0.82
+countermeasure_susceptibility: 0.15
+propulsion: rocket
+max_speed_mps: 2000.0
+flight_time_s: 75.0
+terminal_maneuver: true
+unit_cost_factor: 120.0

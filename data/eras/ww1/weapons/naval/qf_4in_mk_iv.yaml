@@ -1,0 +1,34 @@
+# Per-gun British QF 4-inch Mk IV naval gun.
+#
+# NavWeaps identifies the Mk IV on WWI G-class destroyers and gives 101.6 mm
+# caliber, 1,245 kg gun weight, 13 rpm, 722 m/s, and 8,780 m maximum range.
+# https://www.navweaps.com/Weapons/WNBR_4-40_mk4.php
+# The source does not establish a ship outfit for this authored generic class.
+# Capacity 1 therefore means the physically loaded round; ship stores remain
+# a separate logistics concern rather than an invented magazine figure.
+weapon_id: qf_4in_mk_iv
+display_name: "QF 4-inch Mk IV Gun"
+category: NAVAL_GUN
+caliber_mm: 101.6
+muzzle_velocity_mps: 722.0
+max_range_m: 8780.0
+effective_range_m: 7000.0
+min_range_m: 0.0
+rate_of_fire_rpm: 13.0
+burst_size: 1
+base_accuracy_mrad: 2.2
+guidance: NONE
+magazine_capacity: 1
+reload_time_s: 4.6
+compatible_ammo:
+  - 4in_mk_iv_he
+weight_kg: 1245.0
+reliability: 0.86
+barrel_life_rounds: 5000
+requires_deployed: false
+traverse_deg: 300.0
+elevation_min_deg: -10.0
+elevation_max_deg: 30.0
+target_domains:
+  - GROUND
+  - NAVAL

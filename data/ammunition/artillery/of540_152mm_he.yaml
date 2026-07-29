@@ -1,0 +1,20 @@
+# OF-540 152mm HE-fragmentation projectile for the 2A33 howitzer.
+# U.S. Army ODIN identifies OF-540 as standard 2S3 ammunition. U.S. foreign
+# ordnance guide DST-1160Z-029-94 reports a 43.56 kg projectile and 6.24 kg
+# TNT fill. Blast/fragmentation radii deliberately retain the smaller OF-462
+# model bounds until an effects calibration is sourced.
+ammo_id: of540_152mm_he
+display_name: "OF-540 152mm HE-FRAG"
+ammo_type: HE
+mass_kg: 43.56
+diameter_mm: 152.4
+drag_coefficient: 0.30
+penetration_mm_rha: 0.0
+penetration_reference_range_m: 0.0
+blast_radius_m: 30.0
+fragmentation_radius_m: 90.0
+explosive_fill_kg: 6.24
+guidance: NONE
+propulsion: none
+max_speed_mps: 655.0
+unit_cost_factor: 0.8

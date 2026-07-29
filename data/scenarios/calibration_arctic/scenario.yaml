@@ -78,7 +78,3 @@ calibration_overrides:
   red_start_x: 6000
   red_start_y: 4000
   red_formation_spacing_m: 200
-  weapon_assignments:
-    "M4A1 Carbine": m4a1
-    "M249 SAW": m249_saw
-    "M67 Fragmentation Grenade": m67_grenade

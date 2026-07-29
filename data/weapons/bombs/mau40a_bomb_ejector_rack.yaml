@@ -1,0 +1,31 @@
+# MAU-40/A bomb ejector rack, modeled as the A-10's physical carriage and
+# release boundary for one authored gravity-bomb store.  The 5 km delivery
+# envelope is a conservative simulation interface, not a rack specification.
+#
+# The U.S. Air Force identifies the MAU-40 as the A-10 bomb rack:
+# https://www.127wg.ang.af.mil/Media/Articles/Article-Display/Article/443763/cleaning-day-in-the-armaments-bay/
+# MIL-R-38957C defines it as a free-fall/forced-ejection store rack:
+# https://quicksearch.dla.mil/Transient/523C6F89FE04466A98C625A537788143.pdf
+weapon_id: mau40a_bomb_ejector_rack
+display_name: "MAU-40/A Bomb Ejector Rack"
+category: ROCKET_LAUNCHER
+caliber_mm: 274.0
+muzzle_velocity_mps: 0.0
+max_range_m: 5000.0
+min_range_m: 500.0
+rate_of_fire_rpm: 4.0
+burst_size: 1
+base_accuracy_mrad: 0.0
+cep_m: 50.0
+guidance: NONE
+magazine_capacity: 1
+reload_time_s: 0.0
+compatible_ammo:
+  - mk20_rockeye
+weight_kg: 29.5
+reliability: 0.90
+barrel_life_rounds: 0
+requires_deployed: false
+traverse_deg: 0.0
+elevation_min_deg: -90.0
+elevation_max_deg: 0.0

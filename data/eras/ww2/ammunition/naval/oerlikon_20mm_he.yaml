@@ -1,0 +1,21 @@
+# US Navy 20 mm Oerlikon HE projectile.
+# Official Bureau of Ordnance history documents the wartime Oerlikon program.
+# The compiled service table gives 0.123 kg HE projectile and 844 m/s new-gun
+# muzzle velocity.
+# https://www.ibiblio.org/hyperwar/USN/Admin-Hist/075-Ordnance/075-Ord5R.html
+# https://www.navweaps.com/Weapons/WNUS_2cm-70_mk234.php
+ammo_id: oerlikon_20mm_he
+display_name: "20 mm Oerlikon HE"
+ammo_type: HE
+mass_kg: 0.123
+diameter_mm: 20.0
+drag_coefficient: 0.34
+penetration_mm_rha: 0.0
+penetration_reference_range_m: 0.0
+blast_radius_m: 2.5
+fragmentation_radius_m: 5.0
+explosive_fill_kg: 0.011
+guidance: NONE
+propulsion: none
+max_speed_mps: 844.0
+unit_cost_factor: 0.3

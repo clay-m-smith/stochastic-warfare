@@ -50,9 +50,6 @@ calibration_overrides:
   blue_start_y: 5000
   red_start_x: 1000
   red_start_y: 5000
-  weapon_assignments:
-    "AK-47": ak47
-    "RPG-7": rpg7
 cbrn_config:
   enable_cbrn: true
   agent_releases:

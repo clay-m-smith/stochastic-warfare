@@ -7,13 +7,17 @@ Each unit type is defined in a YAML file under ``data/units/<category>/``.
 
 from __future__ import annotations
 
+import enum
+from collections.abc import Mapping
 from pathlib import Path
+from types import MappingProxyType
 from typing import Any
 
 import numpy as np
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel, field_validator, model_validator
 
 from stochastic_warfare.core.logging import get_logger
+from stochastic_warfare.core.strict_yaml import load_yaml_unique
 from stochastic_warfare.core.types import Domain, Position
 from stochastic_warfare.entities.base import Unit
 from stochastic_warfare.entities.equipment import EquipmentCategory, EquipmentItem
@@ -61,7 +65,13 @@ class EquipmentEntry(BaseModel):
     weight_kg: float = 0.0
     reliability: float = 0.95
     temperature_range: list[float] | None = None
-    weapon_ref: str | None = None  # References WeaponDefinition.weapon_id
+
+
+class SensorPolicy(str, enum.Enum):
+    """Whether a unit definition requires a runtime detection attachment."""
+
+    REQUIRED = "required"
+    INTENTIONALLY_NONE = "intentionally_none"
 
 
 class UnitDefinition(BaseModel):
@@ -73,6 +83,8 @@ class UnitDefinition(BaseModel):
     max_speed: float
     crew: list[CrewEntry]
     equipment: list[EquipmentEntry]
+    sensor_policy: SensorPolicy = SensorPolicy.REQUIRED
+    sensor_policy_reason: str | None = None
 
     # Domain-specific optional fields
     ground_type: str | None = None
@@ -114,6 +126,79 @@ class UnitDefinition(BaseModel):
         if v.lower() not in _DOMAIN_MAP:
             raise ValueError(f"Unknown domain {v!r}")
         return v.lower()
+
+    @model_validator(mode="after")
+    def _validate_sensor_policy(self) -> UnitDefinition:
+        """Require an explicit, internally consistent sensor disposition."""
+        sensor_entries = [
+            entry
+            for entry in self.equipment
+            if entry.category.upper() == "SENSOR"
+        ]
+        if self.sensor_policy is SensorPolicy.REQUIRED:
+            if not sensor_entries:
+                raise ValueError(
+                    "sensor_policy='required' needs at least one SENSOR "
+                    "equipment entry",
+                )
+            if self.sensor_policy_reason is not None:
+                raise ValueError(
+                    "sensor_policy_reason is only valid for "
+                    "sensor_policy='intentionally_none'",
+                )
+            return self
+
+        reason = (
+            self.sensor_policy_reason.strip()
+            if self.sensor_policy_reason is not None
+            else ""
+        )
+        if not reason:
+            raise ValueError(
+                "sensor_policy='intentionally_none' needs a non-empty "
+                "sensor_policy_reason",
+            )
+        if sensor_entries:
+            raise ValueError(
+                "sensor_policy='intentionally_none' forbids SENSOR "
+                "equipment entries",
+            )
+        self.sensor_policy_reason = reason
+        return self
+
+
+def runtime_domain_for_definition(definition: UnitDefinition) -> Domain:
+    """Return the domain the production unit subclass will publish."""
+    authored_domain = _DOMAIN_MAP[definition.domain]
+    if definition.ad_type is not None or definition.support_type is not None:
+        return Domain.GROUND
+    if authored_domain is Domain.AERIAL:
+        return Domain.AERIAL
+    if authored_domain in (
+        Domain.NAVAL,
+        Domain.SUBMARINE,
+        Domain.AMPHIBIOUS,
+    ):
+        naval_type = (
+            NavalUnitType[definition.naval_type.upper()]
+            if definition.naval_type is not None
+            else NavalUnitType.DESTROYER
+        )
+        if naval_type in (
+            NavalUnitType.SSN,
+            NavalUnitType.SSBN,
+            NavalUnitType.SSK,
+        ):
+            return Domain.SUBMARINE
+        if naval_type in (
+            NavalUnitType.LHD,
+            NavalUnitType.LPD,
+            NavalUnitType.LST,
+            NavalUnitType.LANDING_CRAFT,
+        ):
+            return Domain.AMPHIBIOUS
+        return Domain.NAVAL
+    return Domain.GROUND
 
 
 # ── Helpers ──────────────────────────────────────────────────────────
@@ -182,11 +267,13 @@ class UnitLoader:
 
     def load_definition(self, path: Path) -> UnitDefinition:
         """Load and validate a single YAML unit definition."""
-        import yaml
-
-        with open(path) as f:
-            raw = yaml.safe_load(f)
+        with open(path, encoding="utf-8") as definition_file:
+            raw = load_yaml_unique(definition_file)
         defn = UnitDefinition.model_validate(raw)
+        if defn.unit_type in self._definitions:
+            raise ValueError(
+                f"Duplicate unit_type {defn.unit_type!r} while loading {path}",
+            )
         self._definitions[defn.unit_type] = defn
         return defn
 
@@ -199,6 +286,10 @@ class UnitLoader:
     def available_types(self) -> list[str]:
         """Return sorted list of loaded unit type identifiers."""
         return sorted(self._definitions.keys())
+
+    def definitions(self) -> Mapping[str, UnitDefinition]:
+        """Return a read-only snapshot of the effective unit definitions."""
+        return MappingProxyType(dict(self._definitions))
 
     def get_definition(self, unit_type: str) -> UnitDefinition:
         """Return the definition for *unit_type*.
@@ -219,7 +310,7 @@ class UnitLoader:
         defn = self._definitions[unit_type]
         personnel = _parse_crew(defn.crew, rng)
         equipment = _parse_equipment(defn.equipment)
-        domain = _DOMAIN_MAP[defn.domain]
+        domain = runtime_domain_for_definition(defn)
 
         common: dict[str, Any] = dict(
             entity_id=entity_id,

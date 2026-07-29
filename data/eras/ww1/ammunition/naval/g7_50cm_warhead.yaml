@@ -1,0 +1,17 @@
+# G/7 dimensions, 195 kg warhead, and 27-knot setting:
+# https://uboat.net/history/wwi/part7.htm
+ammo_id: g7_50cm_warhead
+display_name: "50 cm G/7 Torpedo Warhead"
+ammo_type: HE
+mass_kg: 195.0
+diameter_mm: 500.0
+drag_coefficient: 0.30
+penetration_mm_rha: 0.0
+penetration_reference_range_m: 0.0
+blast_radius_m: 26.0
+fragmentation_radius_m: 42.0
+explosive_fill_kg: 195.0
+guidance: NONE
+propulsion: torpedo
+max_speed_mps: 13.89
+unit_cost_factor: 35.0

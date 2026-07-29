@@ -1,0 +1,35 @@
+# IWI Negev NG5 5.56x45mm light machine gun.
+#
+# IWI's manufacturer brochure publishes 5.56x45mm caliber, 8 kg mass,
+# 850-1,050 rounds/minute, and belt / assault-drum / NATO-magazine feeds:
+# https://iwi.net/wp-content/uploads/2023/12/IWI_negev_and_ulmg_brochure_04102021_8Pg20_compressed.pdf
+# FN identifies SS109 as 5.56 NATO ball ammunition for light support weapons:
+# https://fnherstal.com/en/defence/ammunition/556x45mm/
+#
+# The 950 rpm midpoint and 150-round assault-drum ready load model the authored
+# Negev LMG role. They do not constrain other belt or magazine configurations.
+weapon_id: negev_ng5_lmg
+display_name: "IWI Negev NG5 5.56mm Light Machine Gun"
+category: LIGHT_MG
+caliber_mm: 5.56
+muzzle_velocity_mps: 915.0
+max_range_m: 1000.0
+effective_range_m: 800.0
+min_range_m: 0.0
+rate_of_fire_rpm: 950.0
+burst_size: 7
+base_accuracy_mrad: 1.5
+guidance: NONE
+magazine_capacity: 150
+reload_time_s: 10.0
+compatible_ammo:
+  - 556_ss109_ball
+weight_kg: 8.0
+reliability: 0.93
+barrel_life_rounds: 20000
+requires_deployed: false
+traverse_deg: 360.0
+elevation_min_deg: -30.0
+elevation_max_deg: 80.0
+target_domains:
+  - GROUND

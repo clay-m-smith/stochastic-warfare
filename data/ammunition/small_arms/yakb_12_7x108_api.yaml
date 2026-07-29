@@ -1,0 +1,27 @@
+# B-32 12.7x108mm API aircraft cartridge for the YakB-12.7.
+#
+# The Indian Air Force Make-II project brief identifies B-32 (9-A-4427) and
+# BZT-44 (9-A-4012) linked cartridges as the operational Mi-35/YakB-12.7
+# ammunition. It also identifies the 22 mm plate at 90 m as the qualification
+# test condition while withholding velocity, mass, and pass threshold under
+# NDA:
+# https://makeinindiadefence.gov.in/upload/1/activity_file/1758085595.pdf
+#
+# Public B-32-family envelopes put the projectile near 48 g and V25 near
+# 810 m/s. Those two fields and the single-value 22 mm penetration abstraction
+# are conservative simulation bounds, not disclosure of the redacted IAF
+# acceptance limits.
+ammo_id: yakb_12_7x108_api
+display_name: "12.7x108mm B-32 API Aircraft Cartridge"
+ammo_type: AP
+mass_kg: 0.048
+diameter_mm: 12.7
+drag_coefficient: 0.31
+penetration_mm_rha: 22.0
+penetration_reference_range_m: 90.0
+blast_radius_m: 0.0
+fragmentation_radius_m: 0.0
+guidance: NONE
+propulsion: none
+max_speed_mps: 810.0
+unit_cost_factor: 0.08

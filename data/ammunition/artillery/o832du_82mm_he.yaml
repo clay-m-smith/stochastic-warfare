@@ -1,0 +1,24 @@
+# O-832DU 82mm high-explosive fragmentation mortar bomb.
+#
+# The GICHD Explosive Ordnance Guide identifies the O-832 family and improved
+# O-832DU, publishing 3.230 kg all-up mass, 82 mm diameter, and 440 g
+# TNT/TG-42 explosive fill:
+# https://www.bulletpicker.com/pdf/GICHD-Ukraine-Guide-Third-Edition.pdf
+#
+# Speed and effect radii are conservative runtime abstractions bounded by the
+# 2B14 firing envelope, not claims about one charge setting or fragment test.
+ammo_id: o832du_82mm_he
+display_name: "O-832DU 82mm HE Fragmentation Bomb"
+ammo_type: HE
+mass_kg: 3.23
+diameter_mm: 82.0
+drag_coefficient: 0.35
+penetration_mm_rha: 0.0
+penetration_reference_range_m: 0.0
+blast_radius_m: 20.0
+fragmentation_radius_m: 45.0
+explosive_fill_kg: 0.44
+guidance: NONE
+propulsion: none
+max_speed_mps: 270.0
+unit_cost_factor: 0.4

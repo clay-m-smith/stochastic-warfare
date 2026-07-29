@@ -1,0 +1,21 @@
+# Japanese 7.7x56R ball cartridge for the Type 97 fixed aircraft gun.
+# Australian War Memorial identifies the Type 97 as a Vickers-derived fixed
+# aircraft gun chambered for 7.7x56R. Official US Army technical intelligence
+# gives 2,450 ft/s (747 m/s) for the corresponding British-pattern ball.
+# https://www.awm.gov.au/collection/C144576
+# https://www.ibiblio.org/hyperwar/Japan/IJA/HB/HB-4.html
+ammo_id: 77x56r_type97_ball
+display_name: "7.7x56R Type 97 Ball"
+ammo_type: BALL
+mass_kg: 0.01128
+diameter_mm: 7.7
+drag_coefficient: 0.28
+penetration_mm_rha: 5.0
+penetration_reference_range_m: 100.0
+blast_radius_m: 0.0
+fragmentation_radius_m: 0.0
+explosive_fill_kg: 0.0
+guidance: NONE
+propulsion: none
+max_speed_mps: 747.0
+unit_cost_factor: 0.1

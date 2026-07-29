@@ -1,0 +1,18 @@
+# Source: the PLA's China Military Network identifies the J-10's domestically
+# developed full-waveform multifunction pulse-Doppler fire-control radar:
+# https://www.81.cn/bq_208581/jdt_208582/10009206.html
+# Public authoritative material does not substantiate the former "KLJ-3A"
+# designation. The range below remains a bounded simulation cap.
+sensor_id: j10a_pulse_doppler_fcr
+sensor_type: RADAR
+display_name: "J-10A Pulse-Doppler Fire-Control Radar"
+max_range_m: 100000.0
+detection_threshold: 12.0
+false_alarm_rate: 1.0e-7
+scan_time_s: 2.0
+scan_interval_ticks: 2
+min_range_m: 500.0
+fov_deg: 120.0
+requires_los: true
+detects_domain: ["RADAR"]
+target_domains: ["AERIAL"]

@@ -1,0 +1,40 @@
+# British Ordnance QF 6-pounder L/50 anti-tank gun.
+# The authored catalog says L/50 but does not name a Mark; this ID preserves
+# that bounded identity instead of inventing Mk III/Mk IV provenance.
+# Norfolk Tank Museum identifies the Mk IV as the British L/50 model, and
+# Australian War Memorial documents its AP/APC/APCBC/APCR/APDS ammunition.
+# https://norfolktankmuseum.co.uk/ordnance-qf-6-pounder/
+# https://www.awm.gov.au/collection/C239208
+# Official US War Department TM 9-1904 documents the ballistically compatible
+# licensed 57 mm M1 system.
+# https://www.ibiblio.org/hyperwar/USA/ref/TM/pdfs/TM9-1904.pdf
+# The official Standard Ordnance Items catalog gives about 30 rpm, 10,260 yard
+# maximum range, and 2,810 lb complete weapon weight.
+# https://www.ibiblio.org/hyperwar/NHC/NewPDFs/USArmy/US%20military%20Technical%20and%20Field%20manuals/Standard.Ordnance.Items.Catalog.Vol.2.1944.pdf
+# This manually loaded gun has no integral magazine. Capacity 1 represents the
+# chambered round; explicit crew-ready stores remain a logistics follow-up.
+weapon_id: qf_6pdr_l50
+display_name: "Ordnance QF 6-pounder (57 mm) L/50"
+category: CANNON
+caliber_mm: 57.0
+muzzle_velocity_mps: 831.0
+max_range_m: 9381.0
+effective_range_m: 1000.0
+min_range_m: 50.0
+rate_of_fire_rpm: 30.0
+burst_size: 1
+base_accuracy_mrad: 1.5
+guidance: NONE
+magazine_capacity: 1
+reload_time_s: 2.0
+compatible_ammo:
+  - 57mm_apcbc_mk9t
+weight_kg: 1274.6
+reliability: 0.92
+barrel_life_rounds: 5000
+requires_deployed: true
+traverse_deg: 90.0
+elevation_min_deg: -5.0
+elevation_max_deg: 15.0
+target_domains:
+  - GROUND

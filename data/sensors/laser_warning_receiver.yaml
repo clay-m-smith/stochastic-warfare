@@ -13,4 +13,4 @@ antenna_height_m: 2.0
 min_range_m: 0.0
 fov_deg: 360.0
 requires_los: true
-detects_domain: ["THERMAL"]
+detects_domain: ["ELECTROMAGNETIC"]

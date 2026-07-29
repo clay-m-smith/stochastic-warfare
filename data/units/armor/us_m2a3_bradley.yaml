@@ -58,7 +58,7 @@ equipment:
     weight_kg: 40.0
     reliability: 0.91
   - name: "Eyesafe Laser Rangefinder"
-    category: SENSOR
+    category: UTILITY
     weight_kg: 6.0
     reliability: 0.94
   - name: "FBCB2 Digital Terminal"

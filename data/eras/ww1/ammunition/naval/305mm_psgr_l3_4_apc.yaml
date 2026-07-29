@@ -1,0 +1,20 @@
+# Wartime 30.5 cm Psgr. L/3.4 APC projectile.  NavWeaps traces the 405 kg
+# identity and 11.34 kg burster to German M.Dv. ammunition documents and
+# Friedman's/Campbell's archival research.  Penetration remains a conservative
+# catalog abstraction, not an asserted historical homogeneous-armor test.
+# https://www.navweaps.com/Weapons/WNGER_12-50_skc12.php
+ammo_id: 305mm_psgr_l3_4_apc
+display_name: "30.5 cm Psgr. L/3.4 APC"
+ammo_type: AP
+mass_kg: 405.0
+diameter_mm: 305.0
+drag_coefficient: 0.30
+penetration_mm_rha: 305.0
+penetration_reference_range_m: 9000.0
+blast_radius_m: 8.0
+fragmentation_radius_m: 20.0
+explosive_fill_kg: 11.34
+guidance: NONE
+propulsion: none
+max_speed_mps: 855.0
+unit_cost_factor: 15.0

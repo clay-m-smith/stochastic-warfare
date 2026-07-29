@@ -1,0 +1,17 @@
+# Soviet-designed 12.7x108mm API cartridge for the DShK/NSV family.
+# JPEO Armaments & Ammunition's 2017 portfolio reports approximately 64 g
+# projectile mass, 818-833 m/s velocity, and 20 mm penetration at 300 m.
+ammo_id: 12_7x108_api
+display_name: "12.7x108mm Armor-Piercing Incendiary"
+ammo_type: AP
+mass_kg: 0.064
+diameter_mm: 12.7
+drag_coefficient: 0.35
+penetration_mm_rha: 20.0
+penetration_reference_range_m: 300.0
+blast_radius_m: 0.0
+fragmentation_radius_m: 0.0
+guidance: NONE
+propulsion: none
+max_speed_mps: 833.0
+unit_cost_factor: 0.05

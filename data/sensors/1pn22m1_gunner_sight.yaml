@@ -1,0 +1,24 @@
+# 1PN22M1 combined day/passive-night periscopic gunner sight.
+#
+# USSR Ministry of Defence, BMP-1 Technical Description and Operating
+# Instructions (1979), section 3 (printed pp. 17-18), gives 6.7x night
+# magnification, a 6-degree night field, and 400 m night viewing distance.
+# Section 7.1 (printed p. 190) explicitly describes the night channel as
+# non-illuminated/passive:
+# https://djvu.online/file/rh8waMenusmgI
+#
+# The runtime has one detection mode, so this entry conservatively represents
+# only the sourced passive-night envelope.  It does not infer a day range.
+sensor_id: 1pn22m1_gunner_sight
+sensor_type: NVG
+display_name: "1PN22M1 Passive Night Gunner Sight"
+max_range_m: 400.0
+detection_threshold: 6.0
+false_alarm_rate: 1.0e-4
+scan_time_s: 2.0
+scan_interval_ticks: 1
+antenna_height_m: 1.6
+min_range_m: 0.0
+fov_deg: 6.0
+requires_los: true
+detects_domain: ["VISUAL"]

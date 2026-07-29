@@ -1,0 +1,39 @@
+# 9A310M1 Buk-M1 transporter-erector-launcher-and-radar.
+#
+# The U.S. DoD GulfLINK profile identifies the 9A310M1 TELAR, four ready 9M38
+# missiles, full 360-degree traverse, semi-active radar guidance, and solid
+# propulsion:
+# https://www.gulflink.osd.mil/irfna/irfna_refs/n28en143/airdef.html
+# The authored Buk-M1 unit declares a conservative 35 km / 15-22,000 m
+# engagement boundary consistent with the public Buk-M1 family envelope.
+#
+# This exact four-round definition replaces the sixteen-round PAC-3 proxy and
+# does not infer PAC-3 active radar guidance.
+weapon_id: buk_m1_9a310
+display_name: "9A310M1 Buk-M1 Four-Round TELAR"
+category: MISSILE_LAUNCHER
+caliber_mm: 400.0
+muzzle_velocity_mps: 0.0
+max_range_m: 35000.0
+effective_range_m: 35000.0
+min_range_m: 3000.0
+rate_of_fire_rpm: 3.0
+burst_size: 1
+base_accuracy_mrad: 0.0
+cep_m: 0.0
+min_engagement_altitude_m: 15.0
+max_engagement_altitude_m: 22000.0
+guidance: RADAR_SEMI
+magazine_capacity: 4
+reload_time_s: 720.0
+compatible_ammo:
+  - 9m38m1_sam
+weight_kg: 32400.0
+reliability: 0.90
+barrel_life_rounds: 0
+requires_deployed: true
+traverse_deg: 360.0
+elevation_min_deg: 0.0
+elevation_max_deg: 85.0
+target_domains:
+  - AERIAL

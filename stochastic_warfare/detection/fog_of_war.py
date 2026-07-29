@@ -221,7 +221,8 @@ class FogOfWarManager:
         Parameters
         ----------
         own_units:
-            List of dicts with keys: position, sensors, observer_height.
+            List of dicts with keys: position, sensors, observer_height, and
+            observer_heading_deg.
         enemy_units:
             List of dicts with keys: unit_id, position, signature, unit,
             target_height, concealment, posture.
@@ -281,6 +282,7 @@ class FogOfWarManager:
             obs_pos = own["position"]
             sensors = own.get("sensors", [])
             obs_height = own.get("observer_height", 1.8)
+            obs_heading_deg = own.get("observer_heading_deg", 0.0)
 
             # Phase 84a: determine targets in range via spatial index
             if _target_tree is not None:
@@ -343,6 +345,7 @@ class FogOfWarManager:
                         target_height=tgt_height,
                         concealment=concealment,
                         posture=posture,
+                        observer_heading_deg=obs_heading_deg,
                         rng=rng,
                     )
 

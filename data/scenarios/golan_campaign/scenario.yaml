@@ -141,13 +141,6 @@ calibration_overrides:
   red_start_y: 10000.0
   defensive_sides:
     - blue
-  weapon_assignments:
-    "L7 105mm Rifled Gun": l7_105mm
-    "D-10T 100mm Rifled Gun": d10t_100mm
-    "U-5TS 115mm Smoothbore": u5ts_115mm
-    "73mm 2A28 Grom": 2a28_grom_73mm
-    "AT-3 Sagger ATGM": at3_sagger
-    "M256 120mm Smoothbore": m256_120mm
 
 documented_outcomes:
   - name: red_units_destroyed

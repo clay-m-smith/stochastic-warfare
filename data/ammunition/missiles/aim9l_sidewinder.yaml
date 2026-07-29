@@ -1,0 +1,31 @@
+# AIM-9L all-aspect infrared Sidewinder.
+#
+# The U.S. Air Force fact file identifies the L model as the first all-aspect
+# Sidewinder and publishes the family 85.5 kg mass, 130 mm diameter, solid
+# motor, infrared guidance, and annular blast-fragmentation warhead:
+# https://www.af.mil/About-Us/Fact-Sheets/Display/Article/104557/aim-9-sidewinder/
+# The Air Force Test Center independently records the AIM-9L all-aspect role:
+# https://www.aftc.af.mil/About-Us/History/On-This-Day-in-Test-History/Article-Display-Test-History/Article/2326942/september-26-2000-testing-the-sidewinder-coupled-with-joint-helmet-mounted-cuei/
+#
+# Variant-specific range remains undisclosed. The 18 km / Mach 2.5 values are
+# conservative legacy-family runtime bounds below the released AIM-9M maximum;
+# effect/probability fields are simulation abstractions.
+ammo_id: aim9l_sidewinder
+display_name: "AIM-9L Sidewinder"
+ammo_type: MISSILE
+mass_kg: 85.5
+diameter_mm: 130.0
+drag_coefficient: 0.25
+blast_radius_m: 8.0
+fragmentation_radius_m: 25.0
+explosive_fill_kg: 0.0
+guidance: IR
+seeker_fov_deg: 30.0
+seeker_range_m: 18000.0
+pk_at_reference: 0.65
+countermeasure_susceptibility: 0.28
+propulsion: rocket
+max_speed_mps: 857.5
+flight_time_s: 30.0
+terminal_maneuver: true
+unit_cost_factor: 32.0

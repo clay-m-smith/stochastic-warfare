@@ -1,7 +1,11 @@
+# M853A1 81mm visible-light illumination cartridge for the M252 mortar.
+# The 4.2 kg modeled mass is the rounded 9.25 lb published value; the
+# remaining trajectory fields retain the repository's conservative model.
+# Source: JPEO Armaments & Ammunition, 2025 Portfolio Book, Mortar Ammunition.
 ammo_id: m853a1_illumination
 display_name: "M853A1 81mm Illumination Round"
 ammo_type: ILLUMINATION
-mass_kg: 3.9
+mass_kg: 4.2
 diameter_mm: 81.0
 drag_coefficient: 0.35
 penetration_mm_rha: 0.0

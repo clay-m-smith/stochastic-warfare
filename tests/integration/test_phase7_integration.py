@@ -8,7 +8,11 @@ from __future__ import annotations
 
 from pathlib import Path
 
-
+from stochastic_warfare.entities.equipment import EquipmentCategory
+from stochastic_warfare.simulation.equipment_mappings import (
+    EQUIPMENT_MAPPING_REGISTRY,
+)
+from stochastic_warfare.simulation.loadouts import WeaponAttachmentMapping
 from stochastic_warfare.validation.historical_data import (
     HistoricalDataLoader,
 )
@@ -183,11 +187,17 @@ class TestCalibrationIntegration:
         eng = loader.load(Path("data/scenarios/73_easting/scenario.yaml"))
         assert eng.calibration_overrides.get("hit_probability_modifier") == 1.0
 
-    def test_weapon_assignments_present(self) -> None:
+    def test_production_registry_replaces_scenario_assignment(self) -> None:
         loader = HistoricalDataLoader()
         eng = loader.load(Path("data/scenarios/73_easting/scenario.yaml"))
         assignments = eng.calibration_overrides.get("weapon_assignments", {})
-        assert "M256 120mm Smoothbore" in assignments
+        assert assignments == {}
+        record = EQUIPMENT_MAPPING_REGISTRY.require(
+            EquipmentCategory.WEAPON,
+            "M256 120mm Smoothbore",
+        )
+        assert isinstance(record, WeaponAttachmentMapping)
+        assert record.weapon_id == "m256_120mm"
 
 
 # ── Deterministic replay integration ─────────────────────────────────

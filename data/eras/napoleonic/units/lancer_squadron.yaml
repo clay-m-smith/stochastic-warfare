@@ -14,7 +14,7 @@ crew:
     count: 119
     skill: BASIC  # lancer troopers
 equipment:
-  - name: "Lance"
+  - name: "Lance (Napoleonic)"
     category: WEAPON
     weight_kg: 2.5
     reliability: 0.90

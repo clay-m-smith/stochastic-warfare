@@ -1,0 +1,19 @@
+# Conservative original Mark II 21-inch warhead and 30-knot speed from the
+# source-traced British pre-WWII torpedo catalog.  Radius fields are explicit
+# simulation envelopes rather than measured period blast tests.
+# https://www.navweaps.com/Weapons/WTBR_PreWWII.php
+ammo_id: british_21in_mk_ii_warhead
+display_name: "British 21-inch Mark II Torpedo Warhead"
+ammo_type: HE
+mass_kg: 127.0
+diameter_mm: 533.0
+drag_coefficient: 0.30
+penetration_mm_rha: 0.0
+penetration_reference_range_m: 0.0
+blast_radius_m: 22.0
+fragmentation_radius_m: 36.0
+explosive_fill_kg: 127.0
+guidance: NONE
+propulsion: torpedo
+max_speed_mps: 15.43
+unit_cost_factor: 30.0

@@ -9,6 +9,7 @@ from pathlib import Path
 import pytest
 from pydantic import ValidationError
 
+from stochastic_warfare.core.strict_yaml import DuplicateKeyError
 from stochastic_warfare.validation.historical_data import (
     ComparisonResult,
     ForceDefinition,
@@ -432,3 +433,43 @@ class TestHistoricalDataLoaderYAML:
         eng = loader.load(yaml_path)
         assert eng.calibration_overrides.get("hit_probability_modifier", 1.0) == 1.2
         assert eng.calibration_overrides.get("morale_base_degrade_rate", 0.05) == 0.08
+
+    def test_rejects_duplicate_weapon_assignment_keys(
+        self,
+        tmp_path: Path,
+    ) -> None:
+        content = textwrap.dedent("""\
+            name: "Duplicate Assignment"
+            date: "2024-01-01"
+            duration_hours: 1.0
+            tick_duration_seconds: 5.0
+            latitude: 0.0
+            longitude: 0.0
+            weather_conditions: {}
+            blue_forces:
+              side: blue
+              units: []
+              personnel_total: 0
+              experience_level: 0.0
+            red_forces:
+              side: red
+              units: []
+              personnel_total: 0
+              experience_level: 0.0
+            terrain:
+              width_m: 1000
+              height_m: 1000
+            documented_outcomes: []
+            calibration_overrides:
+              weapon_assignments:
+                Main Gun: first
+                Main Gun: second
+        """)
+        yaml_path = tmp_path / "duplicate-assignment.yaml"
+        yaml_path.write_text(content, encoding="utf-8")
+
+        with pytest.raises(
+            DuplicateKeyError,
+            match=r"Duplicate YAML mapping key 'Main Gun'",
+        ):
+            HistoricalDataLoader().load(yaml_path)

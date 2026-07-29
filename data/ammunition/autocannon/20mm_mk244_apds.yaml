@@ -1,0 +1,19 @@
+# Mk 244 Mod 0 20x102mm APDS-EHC cartridge for Mk 15 Phalanx Block 1B.
+# The JPEO A&A portfolio reports a roughly 1,950 grain (0.126 kg) projectile
+# and 3,610 ft/s (~1,100 m/s) velocity; the Navy fact file independently
+# classifies Phalanx ammunition as 20mm APDS. Penetration retains the prior
+# conservative 12 mm-at-100 m model floor, not a claim of Mk 244 test results.
+ammo_id: 20mm_mk244_apds
+display_name: "Mk 244 Mod 0 20mm APDS-EHC"
+ammo_type: AP
+mass_kg: 0.126
+diameter_mm: 20.0
+drag_coefficient: 0.30
+penetration_mm_rha: 12.0
+penetration_reference_range_m: 100.0
+blast_radius_m: 0.0
+fragmentation_radius_m: 0.0
+guidance: NONE
+propulsion: none
+max_speed_mps: 1100.0
+unit_cost_factor: 0.1

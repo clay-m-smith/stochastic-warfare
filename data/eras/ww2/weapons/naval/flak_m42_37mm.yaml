@@ -1,0 +1,31 @@
+# One physical German 3.7 cm Flak M42 naval AA gun.
+# The compiled service table gives 160-180 rpm cyclic/60 practical, 865 m/s,
+# 6,400 m maximum, 4,800 m AA ceiling, and five-round loading strips.
+# https://www.navweaps.com/Weapons/WNGER_37mm-69_mk42.php
+weapon_id: flak_m42_37mm
+display_name: "3.7 cm Flak M42"
+category: AAA
+caliber_mm: 37.0
+muzzle_velocity_mps: 865.0
+max_range_m: 6400.0
+effective_range_m: 4800.0
+min_range_m: 25.0
+rate_of_fire_rpm: 60.0
+burst_size: 5
+base_accuracy_mrad: 2.8
+min_engagement_altitude_m: 0.0
+max_engagement_altitude_m: 4800.0
+guidance: NONE
+magazine_capacity: 5
+reload_time_s: 3.0
+compatible_ammo:
+  - 37mm_m42_he
+weight_kg: 109.0
+reliability: 0.86
+barrel_life_rounds: 7000
+requires_deployed: false
+traverse_deg: 360.0
+elevation_min_deg: -10.0
+elevation_max_deg: 90.0
+target_domains:
+  - AERIAL

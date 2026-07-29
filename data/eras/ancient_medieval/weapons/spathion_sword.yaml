@@ -1,0 +1,24 @@
+# Dedicated Byzantine spathion/sword boundary rather than a Roman gladius.
+# The source establishes early Byzantine spear-and-sword arms; numeric combat
+# values remain a conservative simulation envelope.
+# https://resources.metmuseum.org/resources/metpublications/pdf/The_Arts_of_Byzantium_The_Metropolitan_Museum_of_Art_Bulletin_v_58_no_4_Spring_2001.pdf
+weapon_id: spathion_sword
+display_name: "Byzantine Spathion Sword"
+category: MELEE
+caliber_mm: 0.0
+muzzle_velocity_mps: 0.0
+max_range_m: 1.5
+min_range_m: 0.0
+rate_of_fire_rpm: 30.0
+burst_size: 1
+base_accuracy_mrad: 0.0
+guidance: NONE
+magazine_capacity: 9999
+reload_time_s: 0.0
+compatible_ammo:
+  - sword_strike
+weight_kg: 1.2
+reliability: 0.95
+barrel_life_rounds: 100000
+requires_deployed: false
+target_domains: ["GROUND", "NAVAL"]

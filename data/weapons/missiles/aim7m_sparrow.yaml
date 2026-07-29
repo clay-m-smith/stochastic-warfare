@@ -1,0 +1,40 @@
+# Four-station AIM-7M Sparrow aircraft loadout boundary.
+#
+# The U.S. Air Force identifies the AIM-7M as a semi-active-radar air-to-air
+# missile and an official F-15 fact sheet records four AIM-7 plus four AIM-9
+# as the period loadout:
+# https://www.af.mil/About-Us/Fact-Sheets/Display/Article/104575/aim-7-sparrow/
+# https://www.eglin.af.mil/Portals/56/documents/history/AFD-141104-028.pdf
+# NAVAIR's public Sparrow envelope provides up to 30 km:
+# https://www.navair.navy.mil/product/Air-Intercept-Missile-AIM-7-Sparrow
+#
+# Capacity represents the authored aircraft's four missile stations, not a
+# four-round magazine inside one rail.
+weapon_id: aim7m_sparrow
+display_name: "AIM-7M Sparrow Four-Station Loadout"
+category: MISSILE_LAUNCHER
+caliber_mm: 200.0
+muzzle_velocity_mps: 0.0
+max_range_m: 30000.0
+effective_range_m: 25000.0
+min_range_m: 1000.0
+rate_of_fire_rpm: 6.0
+burst_size: 1
+base_accuracy_mrad: 0.0
+cep_m: 0.0
+min_engagement_altitude_m: 15.0
+max_engagement_altitude_m: 20000.0
+guidance: RADAR_SEMI
+magazine_capacity: 4
+reload_time_s: 0.0
+compatible_ammo:
+  - aim7m_sparrow
+weight_kg: 0.0
+reliability: 0.90
+barrel_life_rounds: 0
+requires_deployed: false
+traverse_deg: 0.0
+elevation_min_deg: 0.0
+elevation_max_deg: 0.0
+target_domains:
+  - AERIAL

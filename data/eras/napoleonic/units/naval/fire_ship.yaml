@@ -17,7 +17,7 @@ crew:
     skill: BASIC
 equipment:
   - name: "Combustible Materials and Incendiaries"
-    category: WEAPON
+    category: UTILITY
     weight_kg: 50000.0
     reliability: 0.70
   - name: "Canvas Sails (Reduced Rig)"

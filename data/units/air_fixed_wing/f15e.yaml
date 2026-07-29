@@ -50,7 +50,7 @@ equipment:
     weight_kg: 210.0
     reliability: 0.88
   - name: "Wing/Fuselage Ordnance Stations"
-    category: WEAPON
+    category: UTILITY
     weight_kg: 700.0
     reliability: 0.92
   - name: "AN/APG-70 Radar"
@@ -58,7 +58,8 @@ equipment:
     weight_kg: 220.0
     reliability: 0.88
   - name: "AN/AAQ-13 LANTIRN Navigation Pod"
-    category: SENSOR
+    # Navigation/terrain-following aid, not the AAQ-14 targeting sensor.
+    category: UTILITY
     weight_kg: 209.0
     reliability: 0.86
   - name: "AN/AAQ-14 LANTIRN Targeting Pod"
@@ -70,7 +71,7 @@ equipment:
     weight_kg: 24.0
     reliability: 0.90
   - name: "AN/ALQ-135 ECM"
-    category: SENSOR
+    category: PROTECTION
     weight_kg: 180.0
     reliability: 0.85
   - name: "F100-PW-220 Turbofan x2"

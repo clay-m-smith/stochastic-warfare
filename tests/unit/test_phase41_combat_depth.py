@@ -20,7 +20,7 @@ from stochastic_warfare.combat.hit_probability import (
     HitProbabilityEngine,
 )
 from stochastic_warfare.core.events import EventBus
-from stochastic_warfare.core.types import Position
+from stochastic_warfare.core.types import Domain, Position
 from stochastic_warfare.entities.base import Unit, UnitStatus
 
 TS = datetime(2024, 6, 15, 12, 0, 0, tzinfo=timezone.utc)
@@ -493,7 +493,7 @@ class TestTrainingLevel:
 
     def test_unit_definition_accepts_training_level(self):
         """UnitDefinition pydantic model accepts training_level."""
-        from stochastic_warfare.entities.loader import UnitDefinition
+        from stochastic_warfare.entities.loader import SensorPolicy, UnitDefinition
         defn = UnitDefinition(
             unit_type="test",
             domain="ground",
@@ -501,13 +501,15 @@ class TestTrainingLevel:
             max_speed=10.0,
             crew=[],
             equipment=[],
+            sensor_policy=SensorPolicy.INTENTIONALLY_NONE,
+            sensor_policy_reason="Synthetic training fixture intentionally has no sensor",
             training_level=0.9,
         )
         assert defn.training_level == 0.9
 
     def test_unit_definition_default(self):
         """UnitDefinition without training_level defaults to 0.5."""
-        from stochastic_warfare.entities.loader import UnitDefinition
+        from stochastic_warfare.entities.loader import SensorPolicy, UnitDefinition
         defn = UnitDefinition(
             unit_type="test",
             domain="ground",
@@ -515,6 +517,8 @@ class TestTrainingLevel:
             max_speed=10.0,
             crew=[],
             equipment=[],
+            sensor_policy=SensorPolicy.INTENTIONALLY_NONE,
+            sensor_policy_reason="Synthetic training fixture intentionally has no sensor",
         )
         assert defn.training_level == 0.5
 
@@ -637,6 +641,43 @@ class TestScoreTarget:
         score_hq = self._bm()._score_target(attacker, hq, 1000.0, weapons, ctx)
         score_inf = self._bm()._score_target(attacker, inf, 1000.0, weapons, ctx)
         assert score_hq > score_inf
+
+    def test_incompatible_weapon_domains_do_not_change_threat_score(self):
+        attacker = _make_unit("attacker", domain=Domain.GROUND)
+        target = _make_unit("target", domain=Domain.GROUND)
+        attacker.armor_front = 100.0
+        ground_weapon = _make_weapon_instance(3_000.0)
+        ground_weapon.definition.effective_target_domains = lambda: {"GROUND"}
+        aerial_weapon = _make_weapon_instance(100_000.0)
+        aerial_weapon.definition.effective_target_domains = lambda: {"AERIAL"}
+        ammo = [_make_ammo_def()]
+        ctx = SimpleNamespace(
+            unit_weapons={"target": [(ground_weapon, ammo)]},
+        )
+
+        baseline = self._bm()._score_target(
+            attacker,
+            target,
+            1_000.0,
+            [(ground_weapon, ammo)],
+            ctx,
+        )
+        with_incompatible = self._bm()._score_target(
+            attacker,
+            target,
+            1_000.0,
+            [(ground_weapon, ammo), (aerial_weapon, ammo)],
+            SimpleNamespace(
+                unit_weapons={
+                    "target": [
+                        (ground_weapon, ammo),
+                        (aerial_weapon, ammo),
+                    ],
+                },
+            ),
+        )
+
+        assert with_incompatible == pytest.approx(baseline)
 
     def test_default_mode_is_threat_scored(self):
         """No calibration → target_selection_mode defaults to 'threat_scored'."""

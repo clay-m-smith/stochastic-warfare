@@ -98,14 +98,6 @@ calibration_overrides:
   enable_unconventional_warfare: true
   enable_fuel_consumption: true
   enable_ammo_gate: true
-  weapon_assignments:
-    "M4A1 Carbine": m4_556mm
-    "M4A1 SOPMOD": m4_556mm
-    "M249 SAW": m240_762mm
-    "M240B GPMG": m240_762mm
-    "Carl Gustaf M3": javelin_clm
-    "AK-47": ak47
-    "RPG-7": rpg7
 
 escalation_config:
   entry_thresholds: [0.0, 0.15, 0.25, 0.35, 0.50, 0.60, 0.70, 0.80, 0.85, 0.90, 0.95]

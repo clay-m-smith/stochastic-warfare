@@ -1,0 +1,37 @@
+# Mi-24 Shturm-V launcher for the 9M114 / AT-6 Spiral.
+#
+# The U.S. Defense Intelligence-derived ATGM table identifies the helicopter
+# AT-6V as radio-command SACLOS, with a 1,000-6,000 m envelope:
+# https://man.fas.org/dod-101/sys/land/row/atgms.htm
+# The DoD Mi-24 profile records two to twelve AT-6 rounds:
+# https://man.fas.org/dod-101/sys/ac/row/mi-24.htm
+#
+# Eight ready rounds model the authored Mi-24 loadout within that released
+# carriage envelope. It is not a proxy TOW/Hellfire launcher or an assertion
+# that every Hind sortie carried eight missiles.
+weapon_id: shturm_v_9m114
+display_name: "Shturm-V 9M114 ATGM Launcher"
+category: MISSILE_LAUNCHER
+caliber_mm: 130.0
+muzzle_velocity_mps: 0.0
+max_range_m: 6000.0
+effective_range_m: 6000.0
+min_range_m: 1000.0
+rate_of_fire_rpm: 4.0
+burst_size: 1
+base_accuracy_mrad: 0.0
+cep_m: 2.0
+guidance: COMMAND
+magazine_capacity: 8
+reload_time_s: 0.0
+compatible_ammo:
+  - 9m114_shturm
+weight_kg: 48.0
+reliability: 0.88
+barrel_life_rounds: 0
+requires_deployed: false
+traverse_deg: 0.0
+elevation_min_deg: -20.0
+elevation_max_deg: 20.0
+target_domains:
+  - GROUND

@@ -1,0 +1,29 @@
+# French Fusil Mitrailleur Mle 1915 CSRG ("Chauchat") in 8 mm Lebel.
+# U.S. Army CMH identifies the 8 mm weapon and its replacement by the BAR.
+# The Army's American Military Heritage gives 20-round capacity, 300 rpm,
+# 19.5 lb weight, long-recoil operation, and the documented reliability
+# defects that justify retaining the unit catalog's 0.60 reliability.
+# https://history.army.mil/Portals/143/Images/Publications/Publication%20By%20Title%20Images/G%20Pdf/cmhPub_70-128.pdf
+# https://www.govinfo.gov/content/pkg/GOVPUB-D114-PURL-gpo108320/pdf/GOVPUB-D114-PURL-gpo108320.pdf
+weapon_id: chauchat_m1915
+display_name: "Chauchat M1915 CSRG Light Machine Gun"
+category: LIGHT_MG
+caliber_mm: 8.0
+muzzle_velocity_mps: 630.0
+max_range_m: 800.0
+effective_range_m: 400.0
+min_range_m: 0.0
+rate_of_fire_rpm: 300.0
+burst_size: 3
+base_accuracy_mrad: 3.0
+guidance: NONE
+magazine_capacity: 20
+reload_time_s: 6.0
+compatible_ammo:
+  - 8x50r_lebel_balle_d
+weight_kg: 8.85
+reliability: 0.60
+barrel_life_rounds: 10000
+requires_deployed: false
+target_domains:
+  - GROUND

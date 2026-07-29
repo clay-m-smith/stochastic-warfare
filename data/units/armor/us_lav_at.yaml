@@ -1,8 +1,8 @@
 # LAV-AT Anti-Tank Variant (USMC)
 # LAV-25 chassis fitted with the M901 Emerson TOW-2 twin-tube launcher
 # (2 ready tubes, 13 total missiles stowed). Serves as the dedicated
-# anti-armor element of the USMC Light Armored Infantry battalion. M65
-# thermal sight integrated into the TOW turret provides excellent
+# anti-armor element of the USMC Light Armored Infantry battalion. The
+# AN/TAS-4 thermal sight integrated into the TOW turret provides
 # night engagement capability.
 #
 # At Khafji (29-30 Jan 1991), two LAV-ATs of TF Shepherd were lost at
@@ -51,7 +51,7 @@ equipment:
     weight_kg: 700.0
     reliability: 0.88
     temperature_range: [-32.0, 52.0]
-  - name: "Multi-Function Sensor Suite"
+  - name: "AN/TAS-4 TOW Thermal Sight"
     category: SENSOR
     weight_kg: 40.0
     reliability: 0.90

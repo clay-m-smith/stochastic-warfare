@@ -1,0 +1,39 @@
+# Carl Gustaf M3 84mm reusable recoilless rifle.
+#
+# The U.S. Army describes the M3 as an 84mm reusable weapon, approximately
+# 21-22 lb, capable of four rounds/minute and engaging lightly armored targets
+# to 700 m:
+# https://www.army.mil/article/71764/longer_reach_m3_carl_gustaf_extends_lethality
+# Saab publishes HEAT 551 as an 84mm, 3.5 kg shaped-charge round effective to
+# 700 m:
+# https://www.saab.com/globalassets/event/aeroindia/84-mm-heat-551.pdf
+# A Hellenic Army technical table publishes HEAT 551's 255 m/s muzzle velocity
+# and approximately 400 mm armor effect:
+# https://army.gr/wp-content/uploads/2025/03/mag_20120401.pdf
+#
+# The accuracy field is a conservative crew/weapon runtime abstraction.
+weapon_id: carl_gustaf_m3
+display_name: "Carl Gustaf M3 84mm Recoilless Rifle"
+category: ROCKET_LAUNCHER
+caliber_mm: 84.0
+muzzle_velocity_mps: 255.0
+max_range_m: 700.0
+effective_range_m: 700.0
+min_range_m: 20.0
+rate_of_fire_rpm: 4.0
+burst_size: 1
+base_accuracy_mrad: 1.5
+guidance: NONE
+magazine_capacity: 1
+reload_time_s: 15.0
+compatible_ammo:
+  - carl_gustaf_heat551
+weight_kg: 9.5
+reliability: 0.92
+barrel_life_rounds: 0
+requires_deployed: false
+traverse_deg: 360.0
+elevation_min_deg: -20.0
+elevation_max_deg: 45.0
+target_domains:
+  - GROUND

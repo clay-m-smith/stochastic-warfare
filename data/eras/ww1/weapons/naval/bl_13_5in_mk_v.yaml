@@ -1,0 +1,32 @@
+# Per-gun British BL 13.5-inch Mk V(H) main-battery definition.
+#
+# NavWeaps identifies the Mk V(H) on Iron Duke and gives 343 mm caliber,
+# 76,102 kg gun weight, 1.5-2 rpm, 762 m/s with the 1,400 lb shell, 21,780 m
+# maximum range, 100 rounds per gun on Iron Duke, and 220-round barrel life.
+# https://www.navweaps.com/Weapons/WNBR_135-45_mk5.php
+weapon_id: bl_13_5in_mk_v
+display_name: "BL 13.5-inch Mk V(H) Gun"
+category: NAVAL_GUN
+caliber_mm: 343.0
+muzzle_velocity_mps: 762.0
+max_range_m: 21780.0
+effective_range_m: 18000.0
+min_range_m: 500.0
+rate_of_fire_rpm: 1.75
+burst_size: 1
+base_accuracy_mrad: 1.2
+guidance: NONE
+magazine_capacity: 100
+reload_time_s: 34.3
+compatible_ammo:
+  - 13_5in_apc_mk_ia
+weight_kg: 76102.0
+reliability: 0.88
+barrel_life_rounds: 220
+requires_deployed: false
+traverse_deg: 300.0
+elevation_min_deg: -3.0
+elevation_max_deg: 20.0
+target_domains:
+  - GROUND
+  - NAVAL

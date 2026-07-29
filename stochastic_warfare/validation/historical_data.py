@@ -11,10 +11,10 @@ import enum
 from pathlib import Path
 from typing import Any
 
-import yaml
 from pydantic import BaseModel, field_validator
 
 from stochastic_warfare.core.logging import get_logger
+from stochastic_warfare.core.strict_yaml import load_yaml_unique
 from stochastic_warfare.morale.state import validate_morale_state_name
 from stochastic_warfare.simulation.calibration import CalibrationSchema
 
@@ -162,8 +162,8 @@ class HistoricalDataLoader:
 
     def load(self, path: Path) -> HistoricalEngagement:
         """Load a single engagement definition from *path*."""
-        with open(path) as f:
-            raw = yaml.safe_load(f)
+        with open(path, encoding="utf-8") as data_file:
+            raw = load_yaml_unique(data_file)
         engagement = HistoricalEngagement.model_validate(raw)
         logger.info("Loaded engagement %r from %s", engagement.name, path)
         return engagement

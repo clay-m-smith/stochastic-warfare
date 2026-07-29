@@ -22,12 +22,18 @@ crew:
     count: 1
     skill: TRAINED
 equipment:
+  # Direct crew visual observation is the only live detection attachment
+  # authored here. AN/ASQ-176 remains avionics, not a thermal/search sensor.
+  - name: "Naked Eye Observation"
+    category: SENSOR
+    weight_kg: 0.5
+    reliability: 0.99
   - name: "AN/ASQ-176 OAS"
     category: SENSOR
     weight_kg: 200.0
     reliability: 0.88
   - name: "AN/ALQ-172 ECM"
-    category: SENSOR
+    category: PROTECTION
     weight_kg: 350.0
     reliability: 0.84
   - name: "TF33-P-3 Turbofan x8"

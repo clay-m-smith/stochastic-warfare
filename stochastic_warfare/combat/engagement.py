@@ -162,6 +162,54 @@ class EngagementEngine:
             return False
         return True
 
+    def _consume_routed_round(
+        self,
+        *,
+        attacker_id: str,
+        weapon: WeaponInstance,
+        ammo_id: str,
+        current_time_s: float,
+        timestamp: Any,
+    ) -> str:
+        """Consume one round for a routed launch, or return an abort reason."""
+        if not weapon.can_fire_timed(current_time_s):
+            return "cooldown"
+        if not weapon.fire(ammo_id):
+            return "no_ammo"
+        weapon.record_fire(current_time_s)
+        if timestamp is not None:
+            self._event_bus.publish(AmmoExpendedEvent(
+                timestamp=timestamp,
+                source=ModuleId.COMBAT,
+                unit_id=attacker_id,
+                ammo_type=ammo_id,
+                quantity=1,
+            ))
+        return ""
+
+    def _publish_routed_engagement(
+        self,
+        *,
+        attacker_id: str,
+        target_id: str,
+        weapon: WeaponInstance,
+        ammo_id: str,
+        result: str,
+        timestamp: Any,
+    ) -> None:
+        """Expose one routed launch through the generic engagement contract."""
+        if timestamp is None:
+            return
+        self._event_bus.publish(EngagementEvent(
+            timestamp=timestamp,
+            source=ModuleId.COMBAT,
+            attacker_id=attacker_id,
+            target_id=target_id,
+            weapon_id=weapon.weapon_id,
+            ammo_type=ammo_id,
+            result=result,
+        ))
+
     def select_target(
         self,
         contacts: list[dict[str, Any]],
@@ -408,6 +456,37 @@ class EngagementEngine:
                     engaged=False, attacker_id=attacker_id,
                     target_id=target_id, aborted_reason="no_missile_engine",
                 )
+            if not self.can_engage(
+                attacker_pos,
+                target_pos,
+                weapon.definition,
+            ):
+                return EngagementResult(
+                    engaged=False,
+                    engagement_type=engagement_type,
+                    attacker_id=attacker_id,
+                    target_id=target_id,
+                    weapon_id=weapon.weapon_id,
+                    ammo_id=ammo_id,
+                    aborted_reason="out_of_range",
+                )
+            abort_reason = self._consume_routed_round(
+                attacker_id=attacker_id,
+                weapon=weapon,
+                ammo_id=ammo_id,
+                current_time_s=current_time_s,
+                timestamp=timestamp,
+            )
+            if abort_reason:
+                return EngagementResult(
+                    engaged=False,
+                    engagement_type=engagement_type,
+                    attacker_id=attacker_id,
+                    target_id=target_id,
+                    weapon_id=weapon.weapon_id,
+                    ammo_id=ammo_id,
+                    aborted_reason=abort_reason,
+                )
             from stochastic_warfare.combat.missiles import MissileType
             missile_engine.launch_missile(
                 launcher_id=attacker_id,
@@ -416,6 +495,14 @@ class EngagementEngine:
                 launch_pos=attacker_pos,
                 target_pos=target_pos,
                 missile_type=MissileType.COASTAL_DEFENSE_SSM,
+                timestamp=timestamp,
+            )
+            self._publish_routed_engagement(
+                attacker_id=attacker_id,
+                target_id=target_id,
+                weapon=weapon,
+                ammo_id=ammo_id,
+                result="fired",
                 timestamp=timestamp,
             )
             return EngagementResult(
@@ -430,6 +517,37 @@ class EngagementEngine:
                     engaged=False, attacker_id=attacker_id,
                     target_id=target_id, aborted_reason="no_missile_engine",
                 )
+            if not self.can_engage(
+                attacker_pos,
+                target_pos,
+                weapon.definition,
+            ):
+                return EngagementResult(
+                    engaged=False,
+                    engagement_type=engagement_type,
+                    attacker_id=attacker_id,
+                    target_id=target_id,
+                    weapon_id=weapon.weapon_id,
+                    ammo_id=ammo_id,
+                    aborted_reason="out_of_range",
+                )
+            abort_reason = self._consume_routed_round(
+                attacker_id=attacker_id,
+                weapon=weapon,
+                ammo_id=ammo_id,
+                current_time_s=current_time_s,
+                timestamp=timestamp,
+            )
+            if abort_reason:
+                return EngagementResult(
+                    engaged=False,
+                    engagement_type=engagement_type,
+                    attacker_id=attacker_id,
+                    target_id=target_id,
+                    weapon_id=weapon.weapon_id,
+                    ammo_id=ammo_id,
+                    aborted_reason=abort_reason,
+                )
             from stochastic_warfare.combat.missiles import MissileType
             missile_engine.launch_missile(
                 launcher_id=attacker_id,
@@ -438,6 +556,14 @@ class EngagementEngine:
                 launch_pos=attacker_pos,
                 target_pos=target_pos,
                 missile_type=MissileType.CRUISE_SUBSONIC,
+                timestamp=timestamp,
+            )
+            self._publish_routed_engagement(
+                attacker_id=attacker_id,
+                target_id=target_id,
+                weapon=weapon,
+                ammo_id=ammo_id,
+                result="fired",
                 timestamp=timestamp,
             )
             return EngagementResult(
@@ -521,6 +647,37 @@ class EngagementEngine:
                     engaged=False, attacker_id=attacker_id,
                     target_id=target_id, aborted_reason="no_missile_engine",
                 )
+            if not self.can_engage(
+                attacker_pos,
+                target_pos,
+                weapon.definition,
+            ):
+                return EngagementResult(
+                    engaged=False,
+                    engagement_type=engagement_type,
+                    attacker_id=attacker_id,
+                    target_id=target_id,
+                    weapon_id=weapon.weapon_id,
+                    ammo_id=ammo_id,
+                    aborted_reason="out_of_range",
+                )
+            abort_reason = self._consume_routed_round(
+                attacker_id=attacker_id,
+                weapon=weapon,
+                ammo_id=ammo_id,
+                current_time_s=current_time_s,
+                timestamp=timestamp,
+            )
+            if abort_reason:
+                return EngagementResult(
+                    engaged=False,
+                    engagement_type=engagement_type,
+                    attacker_id=attacker_id,
+                    target_id=target_id,
+                    weapon_id=weapon.weapon_id,
+                    ammo_id=ammo_id,
+                    aborted_reason=abort_reason,
+                )
             from stochastic_warfare.combat.missiles import MissileType
             missile_engine.launch_missile(
                 launcher_id=attacker_id,
@@ -537,13 +694,14 @@ class EngagementEngine:
             # Hit/miss resolves later when missile_engine runs flight
             # resolution; this event marks the launch with result="fired"
             # to distinguish from direct-fire hit/miss semantics.
-            if timestamp is not None:
-                self._event_bus.publish(EngagementEvent(
-                    timestamp=timestamp, source=ModuleId.COMBAT,
-                    attacker_id=attacker_id, target_id=target_id,
-                    weapon_id=weapon.weapon_id, ammo_type=ammo_id,
-                    result="fired",
-                ))
+            self._publish_routed_engagement(
+                attacker_id=attacker_id,
+                target_id=target_id,
+                weapon=weapon,
+                ammo_id=ammo_id,
+                result="fired",
+                timestamp=timestamp,
+            )
             return EngagementResult(
                 engaged=True, engagement_type=engagement_type,
                 attacker_id=attacker_id, target_id=target_id,
@@ -561,6 +719,7 @@ class EngagementEngine:
                 ammo_def=ammo_def,
                 target_altitude_m=target_altitude_m,
                 target_speed_mps=target_speed_mps,
+                current_time_s=current_time_s,
                 timestamp=timestamp,
             )
 
@@ -581,6 +740,7 @@ class EngagementEngine:
         ammo_def: AmmoDefinition,
         target_altitude_m: float = 0.0,
         target_speed_mps: float = 0.0,
+        current_time_s: float = 0.0,
         timestamp: Any = None,
     ) -> EngagementResult:
         """Resolve ATGM engagement against rotary-wing aircraft."""
@@ -610,6 +770,17 @@ class EngagementEngine:
             result.aborted_reason = "out_of_range"
             return result
 
+        abort_reason = self._consume_routed_round(
+            attacker_id=attacker_id,
+            weapon=weapon,
+            ammo_id=ammo_id,
+            current_time_s=current_time_s,
+            timestamp=timestamp,
+        )
+        if abort_reason:
+            result.aborted_reason = abort_reason
+            return result
+
         # Base Pk from ammo
         base_pk = ammo_def.pk_at_reference if ammo_def.pk_at_reference > 0 else 0.3
 
@@ -635,6 +806,14 @@ class EngagementEngine:
         else:
             result.hit_result = HitResult(p_hit=effective_pk, range_m=range_m, modifiers={}, hit=False)
 
+        self._publish_routed_engagement(
+            attacker_id=attacker_id,
+            target_id=target_id,
+            weapon=weapon,
+            ammo_id=ammo_id,
+            result="hit" if hit else "miss",
+            timestamp=timestamp,
+        )
         return result
 
     def execute_burst_engagement(

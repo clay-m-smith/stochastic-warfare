@@ -2,7 +2,7 @@
 
 Validates:
 - Iraqi artillery carrier units (D-30, BM-21, 2S1, 2S3, FROG-7, SA-7) carry
-  their authored weapons and mappings resolve to weapon_ids
+  their authored weapons and mappings resolve through the production registry
 - AGM-65 Maverick mapping resolves on all carrier aircraft (A-10, F-15E,
   F-16C, AV-8B)
 - Mk 20 Rockeye II CBU mapping resolves and bomb_rack_generic includes it
@@ -17,15 +17,21 @@ Validates:
 
 from __future__ import annotations
 
-import sys
 from pathlib import Path
 
 import pytest
 import yaml
 
+from stochastic_warfare.entities.equipment import EquipmentCategory
+from stochastic_warfare.simulation.equipment_mappings import (
+    EQUIPMENT_MAPPING_REGISTRY,
+)
+from stochastic_warfare.simulation.loadouts import (
+    WeaponAttachmentMapping,
+    WeaponStoreMapping,
+)
+
 DATA_DIR = Path(__file__).resolve().parents[2] / "data"
-sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "stochastic_warfare" / "validation"))
-from scenario_runner import _WEAPON_NAME_MAP, _SENSOR_NAME_MAP  # noqa: E402
 
 
 # ---------------------------------------------------------------------------
@@ -37,13 +43,33 @@ class TestPhase103WeaponMappings:
     """Weapon name -> ID mappings added in Phase 103."""
 
     def test_sa7_missile_round_mapped(self) -> None:
-        assert _WEAPON_NAME_MAP.get("SA-7 Missile Round") == "sa7_strela2"
+        record = EQUIPMENT_MAPPING_REGISTRY.require(
+            EquipmentCategory.WEAPON,
+            "SA-7 Missile Round",
+        )
+        assert isinstance(record, WeaponStoreMapping)
+        assert record.ammo_id == "sa7_warhead"
+        assert record.compatible_weapon_ids == ("sa7_strela2",)
 
     def test_mk20_rockeye_mapped(self) -> None:
-        assert _WEAPON_NAME_MAP.get("Mk 20 Rockeye II CBU") == "bomb_rack_generic"
+        record = EQUIPMENT_MAPPING_REGISTRY.require(
+            EquipmentCategory.WEAPON,
+            "Mk 20 Rockeye II CBU",
+        )
+        assert isinstance(record, WeaponStoreMapping)
+        assert record.ammo_id == "mk20_rockeye"
+        assert record.compatible_weapon_ids == (
+            "bru36a_bomb_ejector_rack",
+            "mau40a_bomb_ejector_rack",
+        )
 
     def test_aim120_amraam_mapped(self) -> None:
-        assert _WEAPON_NAME_MAP.get("AIM-120 AMRAAM") == "aim120_amraam"
+        record = EQUIPMENT_MAPPING_REGISTRY.require(
+            EquipmentCategory.WEAPON,
+            "AIM-120 AMRAAM",
+        )
+        assert isinstance(record, WeaponAttachmentMapping)
+        assert record.weapon_id == "aim120_amraam"
 
 
 class TestPhase103IraqiArtilleryCarriers:
@@ -71,7 +97,11 @@ class TestPhase103IraqiArtilleryCarriers:
         d = self._load("data/units/air_defense/iraqi_sa7_team.yaml")
         weapons = [e["name"] for e in d["equipment"] if e["category"] == "WEAPON"]
         assert "SA-7 Missile Round" in weapons
-        assert _WEAPON_NAME_MAP.get("SA-7 Missile Round") is not None
+        record = EQUIPMENT_MAPPING_REGISTRY.require(
+            EquipmentCategory.WEAPON,
+            "SA-7 Missile Round",
+        )
+        assert isinstance(record, WeaponStoreMapping)
 
 
 class TestPhase103BombRackRockeyeCompat:
@@ -151,15 +181,38 @@ class TestPhase103AirEngagementEventEmission:
             DATA_DIR / "scenarios" / "ins_hanit_2006" / "scenario.yaml",
             seed=42,
         )
+        red_launchers = [
+            attachment
+            for unit in ctx.units_by_side["red"]
+            for attachment in ctx.unit_weapons[unit.entity_id]
+            if attachment.weapon.weapon_id == "c802_noor"
+        ]
+        assert len(red_launchers) == 2
+        rounds_before = sum(
+            attachment.weapon.ammo_state.available("c802_noor_warhead")
+            for attachment in red_launchers
+        )
         rec = SimulationRecorder(ctx.event_bus)
         rec.start()
         engine = SimulationEngine(ctx, EngineConfig(max_ticks=200))
         while not engine.step():
             pass
-        ee_count = sum(
-            1 for e in rec.events if e.event_type == "EngagementEvent"
+        c802_events = [
+            event
+            for event in rec.events
+            if event.event_type == "EngagementEvent"
+            and event.data.get("attacker_id", "").startswith(
+                "red_hezbollah_coastal_tel_",
+            )
+            and event.data.get("weapon_id") == "c802_noor"
+            and event.data.get("ammo_type") == "c802_noor_warhead"
+        ]
+        rounds_after = sum(
+            attachment.weapon.ammo_state.available("c802_noor_warhead")
+            for attachment in red_launchers
         )
-        assert ee_count >= 1, (
-            f"INS Hanit ASCM salvo must emit >=1 EngagementEvent "
-            f"(Phase 103 naval ASHM gap fix); got {ee_count}"
+        assert c802_events, (
+            "INS Hanit production run must expose a red C-802 "
+            "EngagementEvent"
         )
+        assert rounds_after < rounds_before

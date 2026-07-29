@@ -1,0 +1,37 @@
+# YakB-12.7 (9-A-624) four-barrel aircraft machine gun.
+#
+# The Indian Air Force's Mi-35 ammunition project identifies the exact
+# YakB-12.7 gun and its linked B-32/BZT-44 aircraft ammunition:
+# https://makeinindiadefence.gov.in/upload/1/activity_file/1758085595.pdf
+# The U.S. DoD Mi-24 profile publishes a 1,470-round load, practical 1,500 m
+# range, and cyclic rate up to 4,500 rounds/minute:
+# https://man.fas.org/dod-101/sys/ac/row/mi-24.htm
+#
+# The 40-round runtime burst is a bounded fire-control abstraction, not a
+# claim that the full belt is fired continuously.
+weapon_id: yakb_127mm
+display_name: "YakB-12.7 Four-Barrel Aircraft Machine Gun"
+category: AIRCRAFT_GUN
+caliber_mm: 12.7
+muzzle_velocity_mps: 810.0
+max_range_m: 1500.0
+effective_range_m: 1200.0
+min_range_m: 0.0
+rate_of_fire_rpm: 4500.0
+burst_size: 40
+base_accuracy_mrad: 2.5
+guidance: NONE
+magazine_capacity: 1470
+reload_time_s: 0.0
+compatible_ammo:
+  - yakb_12_7x108_api
+weight_kg: 45.0
+reliability: 0.88
+barrel_life_rounds: 12000
+requires_deployed: false
+traverse_deg: 120.0
+elevation_min_deg: -60.0
+elevation_max_deg: 20.0
+target_domains:
+  - GROUND
+  - AERIAL

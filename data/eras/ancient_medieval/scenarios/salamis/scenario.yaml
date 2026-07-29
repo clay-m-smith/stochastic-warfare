@@ -31,11 +31,11 @@ terrain:
 sides:
   - side: greek
     units:
-      # Reduced from 60 to 13 units for manageable battle resolution
+      # Abstracted as 13 period-compatible trireme formations. The former
+      # Lepanto-era gun galley entries introduced cannon and arquebuses into
+      # this 480 BC battle.
       - unit_type: greek_trireme
-        count: 8
-      - unit_type: war_galley
-        count: 5
+        count: 13
     experience_level: 0.7
     morale_initial: STEADY
     commander_profile: hannibal_barca
@@ -48,19 +48,13 @@ sides:
 
   - side: persian
     units:
-      # Reduced from 60 to 13 units — maintains ~1:1 numeric ratio
+      # Persian/Phoenician hull differences are represented by the display
+      # override and side-level training/doctrine, not anachronistic Roman or
+      # sixteenth-century weapon systems.
       - unit_type: greek_trireme
-        count: 5
+        count: 13
         overrides:
           display_name: "Persian Trireme"
-      - unit_type: war_galley
-        count: 5
-        overrides:
-          display_name: "Phoenician Galley"
-      - unit_type: roman_quinquereme
-        count: 3
-        overrides:
-          display_name: "Persian Heavy Ship"
     experience_level: 0.45
     morale_initial: STEADY
     commander_profile: william_conqueror
@@ -119,14 +113,6 @@ calibration_overrides:
   greek_start_y: 1000.0
   persian_start_x: 2500.0
   persian_start_y: 1000.0
-  weapon_assignments:
-    "Bronze Ram Prow": naval_ram
-    "Marine Javelins and Swords": pilum
-    "Bow Cannon (x3)": crossbow
-    "Arquebuses and Crossbows": crossbow
-    "Ram Prow": naval_ram
-    "Corvus Boarding Bridge": corvus_boarding
-    "Legionary Weapons (Gladius and Pilum)": gladius
 
 documented_outcomes:
   - name: persian_ships_destroyed

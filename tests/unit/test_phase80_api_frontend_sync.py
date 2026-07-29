@@ -104,23 +104,31 @@ class TestEnableAllModern:
 
 
 class TestEasternFrontWeapons:
-    """eastern_front_1943 uses WW2 weapon IDs, not WW1."""
+    """eastern_front_1943 production loadouts use WW2 weapon identities."""
 
     def _load(self):
+        from stochastic_warfare.simulation.scenario import ScenarioLoader
+
         path = SCENARIOS / "eastern_front_1943" / "scenario.yaml"
-        return yaml.safe_load(path.read_text())
+        return ScenarioLoader(DATA).load(path, seed=80)
 
     def test_no_ww1_weapon_ids(self):
-        cfg = self._load()
-        assignments = cfg.get("calibration_overrides", {}).get("weapon_assignments", {})
+        context = self._load()
         ww1_ids = {"lee_enfield", "gewehr_98", "mills_bomb"}
-        used_ids = set(assignments.values())
+        used_ids = {
+            attachment.weapon.weapon_id
+            for unit in context.all_units()
+            for attachment in context.unit_weapons[unit.entity_id]
+        }
         assert used_ids.isdisjoint(ww1_ids), f"WW1 IDs still referenced: {used_ids & ww1_ids}"
 
     def test_ww2_weapon_ids_present(self):
-        cfg = self._load()
-        assignments = cfg.get("calibration_overrides", {}).get("weapon_assignments", {})
-        used_ids = set(assignments.values())
+        context = self._load()
+        used_ids = {
+            attachment.weapon.weapon_id
+            for unit in context.all_units()
+            for attachment in context.unit_weapons[unit.entity_id]
+        }
         expected = {"mosin_nagant", "kar98k", "ppsh41", "stielhandgranate", "rgd33"}
         assert expected.issubset(used_ids), f"Missing WW2 IDs: {expected - used_ids}"
 

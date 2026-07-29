@@ -116,11 +116,6 @@ calibration_overrides:
   # Wide formation prevents cavalry converging on a single point;
   # 200m spacing across 4 units ≈ 600m frontage (historical narrow field)
   french_formation_spacing_m: 200.0
-  weapon_assignments:
-    "Longbow": longbow
-    "Sword (Medieval)": sword_medieval
-    "Lance (Medieval)": lance_medieval
-    "Shield": sword_medieval
 
 documented_outcomes:
   - name: french_casualty_fraction

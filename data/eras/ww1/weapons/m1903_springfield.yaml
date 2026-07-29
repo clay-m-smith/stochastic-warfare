@@ -1,0 +1,39 @@
+# U.S. Rifle, Caliber .30, Model of 1903.
+#
+# Source-backed identity and operating envelope:
+# - The National Park Service records the M1903's U.S. service history and
+#   bolt-action operation.
+#   https://www.nps.gov/spar/learn/historyculture/the-1903-springfield-rifle.htm
+# - U.S. Army TRADOC's Evolution of Military Small Arms gives .30-06 caliber,
+#   five-round capacity, 10-15 rounds/minute, 1,000-yard range, and 8.58 lb.
+#   https://www.tradoc.army.mil/wp-content/uploads/2021/11/evolution-of-military-small-arms-instructor-slides-v2.pdf
+# - The National Park Service records the service cartridge's 150-grain
+#   projectile and 2,700 ft/s velocity.
+#   https://www.nps.gov/spar/learn/historyculture/testing-and-experimenting.htm
+#
+# The 500 m effective range is a conservative tactical model boundary within
+# the cited 1,000-yard range. Accuracy, reliability, reload time, barrel life,
+# and terminal effects remain documented catalog abstractions rather than
+# source-measured claims.
+weapon_id: m1903_springfield
+display_name: "M1903 Springfield Bolt-Action Rifle"
+category: RIFLE
+caliber_mm: 7.62
+muzzle_velocity_mps: 823.0
+max_range_m: 914.4
+effective_range_m: 500.0
+min_range_m: 0.0
+rate_of_fire_rpm: 15.0
+burst_size: 1
+base_accuracy_mrad: 0.8
+guidance: NONE
+magazine_capacity: 5
+reload_time_s: 4.0
+compatible_ammo:
+  - 30_06_m1906_ball
+weight_kg: 3.89
+reliability: 0.95
+barrel_life_rounds: 10000
+requires_deployed: false
+target_domains:
+  - GROUND

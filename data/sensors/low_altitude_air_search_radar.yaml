@@ -1,0 +1,23 @@
+# Functional role model for a dedicated low-altitude air-search radar.
+# The US Army WEG identifies 76N6 Clam Shell as the S-300 low-altitude radar;
+# 76T6E was an incorrect authored designation.
+# Source:
+#   https://staging.odin.t2com.army.mil/WEG/Asset/8a47af4e88bf5bf8c7cbf0645a581465
+# Range and RF/equation inputs preserve the existing ground-radar role model
+# and do not assert the represented radar's physical specification.
+sensor_id: low_altitude_air_search_radar
+sensor_type: RADAR
+display_name: "Low-Altitude Air-Search Radar (role model)"
+max_range_m: 60000.0
+detection_threshold: 10.0
+false_alarm_rate: 1.0e-7
+scan_time_s: 4.0
+scan_interval_ticks: 2
+frequency_mhz: 9400.0
+peak_power_w: 20000.0
+antenna_gain_dbi: 30.0
+antenna_height_m: 6.0
+min_range_m: 200.0
+fov_deg: 360.0
+requires_los: true
+detects_domain: ["RADAR"]

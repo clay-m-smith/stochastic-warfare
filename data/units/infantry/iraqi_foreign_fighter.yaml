@@ -70,7 +70,7 @@ equipment:
     weight_kg: 6.3
     reliability: 0.92
   - name: "Suicide Vest (SVEST)"
-    category: WEAPON
+    category: UTILITY  # unconventional effects use the scenario obstacle path
     weight_kg: 8.0
     reliability: 0.95
   - name: "Handheld Radio"

@@ -1,0 +1,32 @@
+# Per-gun 10.5 cm SK C/32 Type IX U-boat deck gun.
+# The source table gives 105 mm caliber, 1,585 kg gun weight, 15 rpm, 785 m/s,
+# 15,175 m range, and the Type IX outfit of 110 rounds.
+# https://www.navweaps.com/Weapons/WNGER_41-45_skc32.php
+# Official ONI recognition material supplies the operational submarine context.
+# https://www.ibiblio.org/hyperwar/USN/ref/AxisSubs/index.html
+weapon_id: sk_c32_105mm
+display_name: "10.5 cm SK C/32 Deck Gun"
+category: NAVAL_GUN
+caliber_mm: 105.0
+muzzle_velocity_mps: 785.0
+max_range_m: 15175.0
+effective_range_m: 10000.0
+min_range_m: 0.0
+rate_of_fire_rpm: 15.0
+burst_size: 1
+base_accuracy_mrad: 2.0
+guidance: NONE
+magazine_capacity: 110
+reload_time_s: 4.0
+compatible_ammo:
+  - 105mm_c32_he
+weight_kg: 1585.0
+reliability: 0.85
+barrel_life_rounds: 4100
+requires_deployed: false
+traverse_deg: 360.0
+elevation_min_deg: -10.0
+elevation_max_deg: 30.0
+target_domains:
+  - GROUND
+  - NAVAL

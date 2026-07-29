@@ -1,0 +1,35 @@
+# One physical Type 89 12.7 cm barrel, independent of Shokaku's 8x2 mounts.
+# Official US Navy ORD-ONI 9 documents 16 guns in twin mounts on Shokaku. The
+# compiled service table gives 14 rpm initial/8 sustained, 720 m/s, 14,800 m
+# surface range, 9,400 m AA ceiling, and Shokaku's 250 rounds per gun.
+# https://www.ibiblio.org/hyperwar/USN/ref/ORD-ONI-9/index.html
+# https://www.navweaps.com/Weapons/WNJAP_5-40_t89.php
+# The authored equipment is specifically an AA battery, so this mapping exposes
+# only AERIAL despite the underlying dual-purpose gun's surface capability.
+weapon_id: type89_127mm
+display_name: "Type 89 12.7 cm AA Gun"
+category: AAA
+caliber_mm: 127.0
+muzzle_velocity_mps: 720.0
+max_range_m: 14800.0
+effective_range_m: 9400.0
+min_range_m: 100.0
+rate_of_fire_rpm: 8.0
+burst_size: 1
+base_accuracy_mrad: 2.0
+min_engagement_altitude_m: 0.0
+max_engagement_altitude_m: 9400.0
+guidance: NONE
+magazine_capacity: 250
+reload_time_s: 7.5
+compatible_ammo:
+  - type89_127mm_he
+weight_kg: 3100.0
+reliability: 0.84
+barrel_life_rounds: 1000
+requires_deployed: false
+traverse_deg: 360.0
+elevation_min_deg: -8.0
+elevation_max_deg: 85.0
+target_domains:
+  - AERIAL

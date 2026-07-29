@@ -1,0 +1,39 @@
+# QF 3-inch 20 cwt anti-aircraft gun in its First World War naval role.
+#
+# - The Australian War Memorial catalogs the 1916 British War Office gun drill
+#   specifically as a 3-inch (20-cwt.) Q.F. A.A. gun.
+#   https://www.awm.gov.au/collection/LIB12211
+# - Imperial War Museums documents the weapon being loaded and fired in its
+#   anti-aircraft role.
+#   https://www.iwm.org.uk/collections/item/object/1060009737
+#
+# This interface models the 1916 16 lb HE round at 610 m/s. The 4,900 m
+# effective ceiling and 6,700 m maximum ceiling are kept distinct; the gun is
+# not exposed as the unrelated 18-pounder field-artillery interface.
+weapon_id: qf_3in_20cwt_aa
+display_name: "QF 3-Inch 20 cwt Anti-Aircraft Gun"
+category: AAA
+caliber_mm: 76.2
+muzzle_velocity_mps: 610.0
+max_range_m: 6700.0
+effective_range_m: 4900.0
+min_range_m: 100.0
+rate_of_fire_rpm: 16.0
+burst_size: 1
+base_accuracy_mrad: 3.0
+min_engagement_altitude_m: 50.0
+max_engagement_altitude_m: 6700.0
+guidance: NONE
+magazine_capacity: 100
+reload_time_s: 3.75
+compatible_ammo:
+  - 3in_20cwt_he
+weight_kg: 1020.0
+reliability: 0.82
+barrel_life_rounds: 3000
+requires_deployed: false
+traverse_deg: 360.0
+elevation_min_deg: -10.0
+elevation_max_deg: 90.0
+target_domains:
+  - AERIAL

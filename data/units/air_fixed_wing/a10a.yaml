@@ -36,16 +36,22 @@ equipment:
     category: WEAPON
     weight_kg: 210.0
     reliability: 0.88
+  # The MAU-40/A is the A-10 bomb carriage/release boundary:
+  # https://www.127wg.ang.af.mil/Media/Articles/Article-Display/Article/443763/cleaning-day-in-the-armaments-bay/
+  - name: "MAU-40/A Bomb Ejector Rack"
+    category: WEAPON
+    weight_kg: 29.5
+    reliability: 0.90
   - name: "Mk 20 Rockeye II CBU"
     category: WEAPON
     weight_kg: 222.0
     reliability: 0.87
   - name: "Wing/Fuselage Ordnance Stations"
-    category: WEAPON
+    category: UTILITY
     weight_kg: 500.0
     reliability: 0.92
   - name: "AN/AAS-35 Pave Penny Laser Spot Tracker"
-    category: SENSOR
+    category: UTILITY
     weight_kg: 14.0
     reliability: 0.88
   - name: "AN/ALR-46 RWR"
@@ -53,7 +59,7 @@ equipment:
     weight_kg: 22.0
     reliability: 0.88
   - name: "AN/ALQ-119 ECM Pod"
-    category: SENSOR
+    category: UTILITY
     weight_kg: 220.0
     reliability: 0.82
   - name: "TF34-GE-100 Turbofan x2"
@@ -65,3 +71,7 @@ equipment:
     category: COMMUNICATION
     weight_kg: 10.0
     reliability: 0.91
+  - name: "Naked Eye Observation"
+    category: SENSOR
+    weight_kg: 0.5
+    reliability: 0.99

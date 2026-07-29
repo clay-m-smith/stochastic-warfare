@@ -1,0 +1,43 @@
+# Napoleonic-era 9-pounder naval long gun.
+#
+# - U.S. Naval History and Heritage Command documents 9-pounder chase long
+#   guns as shipboard combat weapons and distinguishes their longer-range role
+#   from carronades.
+#   https://www.history.navy.mil/about-us/leadership/director/directors-corner/h-grams/h-gram-097/h-097-1.html
+# - NHHC's Valcour Bay archaeology report identifies standard 9-pound round
+#   shot as 4 inches (10.1 cm) in diameter.
+#   https://www.history.navy.mil/content/dam/nhhc/research/underwater-archaeology/PDF/UA_ValcourBay.pdf
+# - NHHC's account of eighteenth-century naval operations documents warships
+#   using their cannon to bombard a town, supporting the general shore-fire
+#   capability of this period's naval long-gun interface.
+#   https://www.history.navy.mil/about-us/leadership/director/directors-corner/h-grams/h-gram-094/h-094-1.html
+#
+# Ballistic and accuracy fields use the same conservative black-powder
+# long-gun abstraction as the neighboring 24- and 32-pounder catalog entries;
+# this is not a claim of one exact national pattern or casting.
+weapon_id: 9pdr_naval
+display_name: "9-Pounder Naval Long Gun"
+category: NAVAL_GUN
+caliber_mm: 101.6
+muzzle_velocity_mps: 450.0
+max_range_m: 1800.0
+min_range_m: 50.0
+rate_of_fire_rpm: 1.5
+burst_size: 1
+base_accuracy_mrad: 8.0
+cep_m: 12.0
+guidance: NONE
+magazine_capacity: 60
+reload_time_s: 40.0
+compatible_ammo:
+  - round_shot_9pdr
+weight_kg: 1000.0
+reliability: 0.84
+barrel_life_rounds: 3000
+requires_deployed: false
+traverse_deg: 15.0
+elevation_min_deg: -5.0
+elevation_max_deg: 12.0
+target_domains:
+  - GROUND
+  - NAVAL

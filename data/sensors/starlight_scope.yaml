@@ -1,0 +1,21 @@
+# First-generation starlight observation scope.
+#
+# U.S. Army Combat Studies Institute history identifies AN/PVS-2 starlight
+# scopes as fielded long-range patrol night-observation equipment:
+# https://www.armyupress.army.mil/Portals/7/combat-studies-institute/csi-books/gebhardt_LRRP.pdf
+# The 500 m/12-degree values are deliberately conservative modeled ceilings;
+# the source establishes role and fielding, not those precise performance
+# figures.
+sensor_id: starlight_scope
+sensor_type: NVG
+display_name: "First-Generation Starlight Scope"
+max_range_m: 500.0
+detection_threshold: 6.0
+false_alarm_rate: 1.0e-4
+scan_time_s: 2.0
+scan_interval_ticks: 1
+antenna_height_m: 2.5
+min_range_m: 0.0
+fov_deg: 12.0
+requires_los: true
+detects_domain: ["VISUAL"]

@@ -1,0 +1,23 @@
+# British Shot, APCBC, 6-pounder Mk 9T for an L/50 gun.
+# Australian War Memorial documents that the QF 6-pounder fired APCBC, while
+# Norfolk Tank Museum identifies the Mk IV as the L/50 model.
+# https://www.awm.gov.au/collection/C239208
+# https://norfolktankmuseum.co.uk/ordnance-qf-6-pounder/
+# The published service-table compilation gives 3.23 kg, 831 m/s from L/50,
+# and 90 mm vertical-plate penetration at 1,000 m.
+# https://en.wikipedia.org/wiki/Ordnance_QF_6-pounder
+ammo_id: 57mm_apcbc_mk9t
+display_name: "6-pounder APCBC Shot Mk 9T"
+ammo_type: AP
+mass_kg: 3.23
+diameter_mm: 57.0
+drag_coefficient: 0.29
+penetration_mm_rha: 90.0
+penetration_reference_range_m: 1000.0
+blast_radius_m: 0.0
+fragmentation_radius_m: 0.0
+explosive_fill_kg: 0.0
+guidance: NONE
+propulsion: none
+max_speed_mps: 831.0
+unit_cost_factor: 1.1

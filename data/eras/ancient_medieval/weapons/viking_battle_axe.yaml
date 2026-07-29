@@ -1,0 +1,23 @@
+# Dedicated Viking battle-axe boundary, not a sword analogue.
+# British Museum late-Viking battle-axe reference:
+# https://www.britishmuseum.org/collection/object/H_1838-0110-2
+weapon_id: viking_battle_axe
+display_name: "Viking Battle Axe"
+category: MELEE
+caliber_mm: 0.0
+muzzle_velocity_mps: 0.0
+max_range_m: 1.8
+min_range_m: 0.0
+rate_of_fire_rpm: 20.0
+burst_size: 1
+base_accuracy_mrad: 0.0
+guidance: NONE
+magazine_capacity: 9999
+reload_time_s: 0.0
+compatible_ammo:
+  - axe_strike
+weight_kg: 1.5
+reliability: 0.92
+barrel_life_rounds: 100000
+requires_deployed: false
+target_domains: ["GROUND", "NAVAL"]

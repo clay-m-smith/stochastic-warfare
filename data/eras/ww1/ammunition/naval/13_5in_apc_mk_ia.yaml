@@ -1,0 +1,22 @@
+# British 13.5-inch 1,400 lb APC Mark Ia shell.
+#
+# NavWeaps compiles the Mark Ia 635 kg projectile, 20.2 kg lyddite burster,
+# 762 m/s velocity, and 12.5-inch (318 mm) plate result at 10,000 yards. The
+# source cautions that historical penetration tables differ in methodology;
+# this catalog retains the stated point rather than extrapolating it.
+# https://www.navweaps.com/Weapons/WNBR_135-45_mk5.php
+ammo_id: 13_5in_apc_mk_ia
+display_name: "13.5-inch 1,400 lb APC Mark Ia"
+ammo_type: AP
+mass_kg: 635.0
+diameter_mm: 343.0
+drag_coefficient: 0.27
+penetration_mm_rha: 318.0
+penetration_reference_range_m: 9144.0
+blast_radius_m: 24.0
+fragmentation_radius_m: 55.0
+explosive_fill_kg: 20.2
+guidance: NONE
+propulsion: none
+max_speed_mps: 762.0
+unit_cost_factor: 6.0

@@ -22,7 +22,7 @@ equipment:
     category: WEAPON
     weight_kg: 0.7
     reliability: 0.95
-  - name: "Lance"
+  - name: "Lance (Ancient)"
     category: WEAPON
     weight_kg: 2.5
     reliability: 0.85

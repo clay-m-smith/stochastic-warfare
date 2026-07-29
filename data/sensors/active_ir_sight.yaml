@@ -1,5 +1,11 @@
+# U.S. Army AL&T, Jan-Feb 1992, distinguishes Soviet active-IR sights and
+# searchlights from both thermal imaging and passive image intensification:
+# https://asc.army.mil/docs/pubs/alt/archives/1992/Jan-Feb_1992.PDF
+# Runtime limitation: NVG/VISUAL is the nearest supported spectral behavior.
+# The model deliberately caps this sight at 800 m and does not yet represent
+# active illumination, its emitted signature, or counter-detection.
 sensor_id: active_ir_sight
-sensor_type: THERMAL
+sensor_type: NVG
 display_name: "Active IR Night Sight (TPN-3-49)"
 max_range_m: 800.0
 detection_threshold: 8.0
@@ -10,4 +16,4 @@ antenna_height_m: 1.6
 min_range_m: 0.0
 fov_deg: 6.0
 requires_los: true
-detects_domain: ["THERMAL"]
+detects_domain: ["VISUAL"]

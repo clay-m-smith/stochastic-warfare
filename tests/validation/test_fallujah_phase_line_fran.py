@@ -33,10 +33,14 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import numpy as np
 import pytest
 import yaml
 
+from stochastic_warfare.combat.events import EngagementEvent
+from stochastic_warfare.core.types import Position
 from stochastic_warfare.entities.base import UnitStatus
+from stochastic_warfare.simulation.battle import BattleManager
 from stochastic_warfare.simulation.engine import EngineConfig, SimulationEngine
 from stochastic_warfare.simulation.recorder import SimulationRecorder
 from stochastic_warfare.simulation.scenario import (
@@ -238,25 +242,58 @@ class TestFallujahPhase101Infrastructure:
             if e.event_type == "IEDDetonationEvent"
         ]
         assert len(ied_events) >= 1, (
-            f"No IED detonations — initial_ieds pathway broken"
+            "No IED detonations — initial_ieds pathway broken"
         )
 
-    def test_marine_rifle_engages(self, run_result: dict) -> None:
-        """Marine urban rifle squads fire M16A4 rifles — confirms
-        Phase 101 weapon-assignment plumbing works."""
-        m16_events = [
-            e for e in run_result["events"]
-            if e.event_type == "EngagementEvent"
-            and e.data.get("weapon_id") == "m16a4"
-        ]
-        # m16a4 may not surface if suppressed/indirect paths dominate;
-        # check any urban small arms (m4, m240, m16a4) as a group
-        urban_sa = [
-            e for e in run_result["events"]
-            if e.event_type == "EngagementEvent"
-            and e.data.get("weapon_id") in ("m16a4", "m4_556mm", "m240_762mm")
-        ]
-        assert len(urban_sa) >= 5, (
-            f"Insufficient urban small arms fire: "
-            f"m16a4={len(m16_events)}, total urban_sa={len(urban_sa)}"
+    def test_marine_rifle_engages(self) -> None:
+        """The scenario's exact M16A4 attachment fires in a controlled
+        production engagement.
+
+        The default Phase 109 outcome is CAS-dominated and destroys the
+        defenders before Marine squads enter rifle range.  Isolating one
+        loaded squad and one loaded defender preserves production construction,
+        detection, battle routing, event publication, and live ammunition
+        while removing that unrelated force-timing dependency.
+        """
+        ctx = ScenarioLoader(DATA_DIR).load(SCENARIO_PATH, seed=42)
+        marine = next(
+            unit
+            for unit in ctx.units_by_side["blue"]
+            if unit.unit_type == "us_marine_rifle_squad_urban"
         )
+        defender = next(
+            unit
+            for unit in ctx.units_by_side["red"]
+            if unit.unit_type == "iraqi_insurgent_urban"
+        )
+        m16 = next(
+            attachment
+            for attachment in ctx.unit_weapons[marine.entity_id]
+            if attachment.weapon.weapon_id == "m16a4"
+        )
+        ammo_id = m16.ammunition[0].ammo_id
+        rounds_before = m16.weapon.ammo_state.available(ammo_id)
+
+        marine.position = Position(0.0, 0.0, 0.0)
+        defender.position = Position(300.0, 0.0, 0.0)
+        marine.speed = 0.0
+        defender.speed = 0.0
+        ctx.units_by_side = {"blue": [marine], "red": [defender]}
+        ctx.unit_weapons[marine.entity_id] = (m16,)
+
+        events: list[EngagementEvent] = []
+        ctx.event_bus.subscribe(EngagementEvent, events.append)
+        BattleManager(ctx.event_bus)._execute_engagements(
+            ctx,
+            {"blue": [marine]},
+            {"blue": [defender]},
+            {"blue": np.asarray([(300.0, 0.0)], dtype=np.float64)},
+            1.0,
+            ctx.clock.current_time,
+        )
+
+        assert [
+            (event.attacker_id, event.target_id, event.weapon_id)
+            for event in events
+        ] == [(marine.entity_id, defender.entity_id, "m16a4")]
+        assert m16.weapon.ammo_state.available(ammo_id) < rounds_before

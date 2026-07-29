@@ -24,6 +24,10 @@ equipment:
     category: WEAPON
     weight_kg: 109.0
     reliability: 0.90
+  - name: "BGM-71 TOW-2 Launcher"
+    category: WEAPON
+    weight_kg: 93.0
+    reliability: 0.88
   - name: "TOW-2 ATGM"
     category: WEAPON
     weight_kg: 22.6

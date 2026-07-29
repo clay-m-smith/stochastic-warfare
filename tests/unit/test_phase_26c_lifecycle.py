@@ -297,7 +297,7 @@ class TestArmorType:
         assert u.armor_type == "RHA"
 
     def test_unit_definition_armor_type_default(self) -> None:
-        from stochastic_warfare.entities.loader import UnitDefinition
+        from stochastic_warfare.entities.loader import SensorPolicy, UnitDefinition
 
         defn = UnitDefinition(
             unit_type="test",
@@ -306,11 +306,13 @@ class TestArmorType:
             max_speed=10.0,
             crew=[],
             equipment=[],
+            sensor_policy=SensorPolicy.INTENTIONALLY_NONE,
+            sensor_policy_reason="Synthetic armor fixture intentionally has no sensor",
         )
         assert defn.armor_type == "RHA"
 
     def test_unit_definition_custom_armor_type(self) -> None:
-        from stochastic_warfare.entities.loader import UnitDefinition
+        from stochastic_warfare.entities.loader import SensorPolicy, UnitDefinition
 
         defn = UnitDefinition(
             unit_type="test",
@@ -319,6 +321,8 @@ class TestArmorType:
             max_speed=10.0,
             crew=[],
             equipment=[],
+            sensor_policy=SensorPolicy.INTENTIONALLY_NONE,
+            sensor_policy_reason="Synthetic armor fixture intentionally has no sensor",
             armor_type="COMPOSITE",
         )
         assert defn.armor_type == "COMPOSITE"

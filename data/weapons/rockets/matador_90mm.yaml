@@ -1,0 +1,41 @@
+# MATADOR / RGW 90 HH disposable anti-armor and anti-structure weapon.
+#
+# Authoritative role and fielded envelope:
+# - Singapore Army SAF Ammunition Command: one-man shoulder-operated,
+#   dual-mode HEAT/HESH system, effective to 300 m against armored vehicles
+#   and unreinforced brick walls.
+#   https://www.army.gov.sg/our-forces/formations/saf-ammunition-command/
+# - Singapore National Archives, MINDEF MATADOR factsheet: 90 mm,
+#   man-portable and disposable.
+#   https://www.nas.gov.sg/archivesonline/data/pdfdoc/MINDEF_20040904001/MINDEF_20040904003.pdf
+# - Dynamit Nobel Defence RGW 90 HH product data corroborates the 90 mm
+#   HEAT/HESH identity and >500 mm RHA anti-armor effect.
+#   https://dn-defence.com/rgw-90/rgw-90-hh/?lang=en
+#
+# Guidance remains NONE: "fire and forget" in the Singapore description means
+# the unguided round needs no post-launch input, not that it has a seeker.
+weapon_id: matador_90mm
+display_name: "MATADOR 90mm HEAT/HESH"
+category: ROCKET_LAUNCHER
+caliber_mm: 90.0
+muzzle_velocity_mps: 250.0
+max_range_m: 300.0
+effective_range_m: 300.0
+min_range_m: 20.0
+rate_of_fire_rpm: 1.0
+burst_size: 1
+base_accuracy_mrad: 3.5
+guidance: NONE
+magazine_capacity: 1
+reload_time_s: 0.0
+compatible_ammo:
+  - matador_90mm_heat_hesh
+weight_kg: 8.9
+reliability: 0.90
+barrel_life_rounds: 1
+requires_deployed: false
+traverse_deg: 360.0
+elevation_min_deg: -10.0
+elevation_max_deg: 60.0
+target_domains:
+  - GROUND

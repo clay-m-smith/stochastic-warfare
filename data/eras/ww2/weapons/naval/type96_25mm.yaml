@@ -1,0 +1,33 @@
+# One physical Type 96 25 mm barrel, independent of triple-mount count.
+# Official US Navy ORD-ONI 9 documents the carrier battery. The compiled
+# Japanese service table gives 220 rpm cyclic/110-120 practical, 900 m/s,
+# 7,500 m maximum, 3,000 m effective AA ceiling, and 15-round magazines.
+# https://www.ibiblio.org/hyperwar/USN/ref/ORD-ONI-9/index.html
+# https://www.navweaps.com/Weapons/WNJAP_25mm-60_mg.php
+weapon_id: type96_25mm
+display_name: "Type 96 25 mm Gun"
+category: AAA
+caliber_mm: 25.0
+muzzle_velocity_mps: 900.0
+max_range_m: 7500.0
+effective_range_m: 3000.0
+min_range_m: 25.0
+rate_of_fire_rpm: 115.0
+burst_size: 5
+base_accuracy_mrad: 3.5
+min_engagement_altitude_m: 0.0
+max_engagement_altitude_m: 3000.0
+guidance: NONE
+magazine_capacity: 15
+reload_time_s: 3.0
+compatible_ammo:
+  - type96_25mm_he
+weight_kg: 115.0
+reliability: 0.80
+barrel_life_rounds: 12000
+requires_deployed: false
+traverse_deg: 360.0
+elevation_min_deg: -10.0
+elevation_max_deg: 85.0
+target_domains:
+  - AERIAL

@@ -1,0 +1,32 @@
+# 7.5 cm PaK 40 L/46.  US War Department TM-E 30-451 records the 75 mm
+# identity, 3,136 lb action weight, 2,530 fps APCBC velocity, 65-degree
+# traverse, -5/+22 elevation, 15 lb projectile, and 102 mm penetration at
+# 1,000 yards/30 degrees.  The 10 rpm service rate and 20-round modeled ready
+# inventory are conservative runtime boundaries, not cyclic/fire-unit claims.
+# https://www.ibiblio.org/hyperwar/Germany/HB/HB-7.html
+weapon_id: pak40_l46_75mm
+display_name: "7.5 cm PaK 40 L/46"
+category: CANNON
+caliber_mm: 75.0
+muzzle_velocity_mps: 771.0
+max_range_m: 2800.0
+effective_range_m: 1400.0
+min_range_m: 25.0
+rate_of_fire_rpm: 10.0
+burst_size: 1
+base_accuracy_mrad: 1.0
+guidance: NONE
+magazine_capacity: 20
+reload_time_s: 6.0
+compatible_ammo:
+  - 75mm_pzgr39_pak40_apcbc
+  - 75mm_sprgr34_pak40_he
+weight_kg: 1422.0
+reliability: 0.91
+barrel_life_rounds: 5000
+requires_deployed: true
+traverse_deg: 65.0
+elevation_min_deg: -5.0
+elevation_max_deg: 22.0
+target_domains:
+  - GROUND

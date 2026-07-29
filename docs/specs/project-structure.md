@@ -309,6 +309,7 @@ stochastic-warfare/
     │   ├── clock.py                  # Simulation clock, tick management, calendar-aware (real date/time, UTC)
     │   ├── events.py                 # Event system (MRO-based publish dispatch, within-tick event queue)
     │   ├── config.py                 # YAML config loading, pydantic base models
+    │   ├── strict_yaml.py            # Duplicate-key rejecting YAML input boundary [Phase 109]
     │   ├── checkpoint.py             # State serialization, checkpoint/restore
     │   ├── logging.py                # Project logging setup
     │   ├── types.py                  # Shared type definitions, enums, constants
@@ -593,6 +594,8 @@ stochastic-warfare/
         ├── campaign.py               # Campaign-level management, strategic AI, reinforcement pipeline
         ├── battle.py                 # Tactical battle resolution manager
         ├── scenario.py               # Scenario loading, setup, initialization; SimulationContext includes stratagem_engine, iads_engine, ato_engine [Phase 53]
+        ├── equipment_mappings.py     # Ordered typed equipment-name registry and reviewed data decisions [Phase 109]
+        ├── loadouts.py               # RuntimeLoadoutBuilder, semantic preflight, topology/fingerprint [Phase 109]
         ├── victory.py                # Victory conditions, war termination criteria, objective evaluation
         ├── recorder.py               # Event/state recording for replay & analysis
         ├── metrics.py                # Simulation output metrics, statistical aggregation, analysis hooks
@@ -978,6 +981,12 @@ the production scenario loop.
   campaign ticks admit due waves at every resolution with stable IDs, atomic
   live loadout/morale registration, logical-time events, and exact checkpoint
   continuation [Phase 107]
+- **Runtime loadouts**: one immutable typed mapping registry and one
+  scenario-owned `RuntimeLoadoutBuilder` preflight exact weapon, ammunition,
+  sensor, store/non-runtime, era-gate, and explicit system-count semantics.
+  Initial units, reinforcements, and fresh checkpoint reconstruction use that
+  same boundary; validation code consumes it rather than owning a parallel
+  mapping [Phase 109].
 - **Metrics and analysis**: statistical aggregation of simulation outputs (casualty rates, exchange ratios, supply consumption rates, environmental casualties, supply consumption by category, detection performance vs conditions, etc.) for post-run analysis. Environmental conditions logged alongside events for correlation analysis (e.g., "detection rates during ducting conditions" or "casualty rates during night vs day").
 - Does NOT contain domain logic — only sequencing and coordination
 

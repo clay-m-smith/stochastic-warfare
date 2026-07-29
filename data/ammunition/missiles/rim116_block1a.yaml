@@ -1,0 +1,30 @@
+# RIM-116B RAM Block 1A.
+#
+# The U.S. Navy fact file publishes the Block 1A identity, RF/IR guidance
+# modes, 74.4 kg mass, 127 mm diameter, solid propulsion, supersonic speed, and
+# 7.9 lb explosive weight:
+# https://www.navy.mil/Resources/Fact-Files/Display-FactFiles/Article/2168961/rim-116-rolling-airframe-missile-ram/
+#
+# The exact speed remains undisclosed; 686 m/s is a conservative Mach-2
+# runtime bound within the public supersonic family envelope. Effect radii and
+# probability fields are simulation abstractions, while explosive fill is the
+# Navy's released 7.9 lb value converted to kilograms.
+ammo_id: rim116_block1a
+display_name: "RIM-116B RAM Block 1A"
+ammo_type: MISSILE
+mass_kg: 74.4
+diameter_mm: 127.0
+drag_coefficient: 0.25
+blast_radius_m: 8.0
+fragmentation_radius_m: 25.0
+explosive_fill_kg: 3.58
+guidance: COMBINED
+seeker_fov_deg: 45.0
+seeker_range_m: 10000.0
+pk_at_reference: 0.82
+countermeasure_susceptibility: 0.12
+propulsion: rocket
+max_speed_mps: 686.0
+flight_time_s: 20.0
+terminal_maneuver: true
+unit_cost_factor: 55.0

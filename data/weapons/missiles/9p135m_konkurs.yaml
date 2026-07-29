@@ -1,0 +1,34 @@
+# One 9P135M launcher configured for the 9M113 Konkurs carried by BMP-2.
+# The U.S. Army ODIN record identifies 9M113 as integral to BMP-2 and explains
+# its SACLOS wire-command guidance; the Army GTA 20-10-001 reference gives
+# 135 mm caliber, 70-4,000 m range, and 600 mm RHA penetration.
+# https://odin.t2com.army.mil/WEG/Asset/9M113_Konkurs_
+# https://irp.fas.org/world/russia/tradoc-refguide.pdf
+# ODIN's Fagot-family record confirms later 9P135 launchers accept 9M113.
+# https://odin.t2com.army.mil/WEG/Asset/9K111_Fagot_%28AT-4_Spigot%29_Russian_Anti-Tank_Guided_Missile_%28ATGM%29
+weapon_id: 9p135m_konkurs
+display_name: "9P135M Launcher with 9M113 Konkurs"
+category: MISSILE_LAUNCHER
+caliber_mm: 135.0
+muzzle_velocity_mps: 80.0
+max_range_m: 4000.0
+effective_range_m: 4000.0
+min_range_m: 70.0
+rate_of_fire_rpm: 2.0
+burst_size: 1
+base_accuracy_mrad: 0.0
+cep_m: 3.0
+guidance: WIRE
+magazine_capacity: 4
+reload_time_s: 25.0
+compatible_ammo:
+  - 9m113_konkurs
+weight_kg: 22.0
+reliability: 0.85
+barrel_life_rounds: 0
+requires_deployed: false
+traverse_deg: 360.0
+elevation_min_deg: -5.0
+elevation_max_deg: 20.0
+target_domains:
+  - GROUND

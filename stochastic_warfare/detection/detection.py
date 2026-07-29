@@ -18,8 +18,13 @@ from scipy.special import erfc  # type: ignore[import-untyped]
 from stochastic_warfare.core.logging import get_logger
 from stochastic_warfare.core.numba_utils import optional_jit
 from stochastic_warfare.core.types import Position
-from stochastic_warfare.detection.sensors import SensorInstance, SensorType
+from stochastic_warfare.detection.sensors import (
+    SensorInstance,
+    SensorType,
+    signature_domain_for_sensor_type,
+)
 from stochastic_warfare.detection.signatures import (
+    SignatureDomain,
     SignatureProfile,
     SignatureResolver,
 )
@@ -379,10 +384,29 @@ class DetectionEngine:
         rng_m = _range_m(observer_pos, target_pos)
         bearing = _bearing_deg(observer_pos, target_pos)
         st = sensor.sensor_type
+        signature_domain = signature_domain_for_sensor_type(st)
 
         # 1. Operational check
         if not sensor.operational:
             return DetectionResult(False, 0.0, -100.0, rng_m, st, bearing)
+
+        # 1b. Mapping-owned target-domain policy. Production fog-of-war scans
+        # pass the concrete target unit, so an air-search radar cannot become
+        # a surface-search capability merely because both consume RCS.
+        if target_unit is not None:
+            target_domain = getattr(target_unit, "domain", None)
+            if (
+                target_domain is not None
+                and not sensor.supports_target_domain(target_domain)
+            ):
+                return DetectionResult(
+                    False,
+                    0.0,
+                    -100.0,
+                    rng_m,
+                    st,
+                    bearing,
+                )
 
         # 2. Range check
         if rng_m > sensor.effective_range:
@@ -410,33 +434,48 @@ class DetectionEngine:
 
         # 4. Compute SNR
         threshold = sensor.definition.detection_threshold
-        if st in (SensorType.VISUAL, SensorType.NVG):
+        if signature_domain is SignatureDomain.VISUAL:
             eff_sig = SignatureResolver.effective_visual(
                 target_sig, target_unit, concealment=concealment, posture=posture
             )
             snr = self.compute_snr_visual(sensor, eff_sig, rng_m, illumination_lux, visibility_m)
-        elif st == SensorType.THERMAL:
+        elif signature_domain is SignatureDomain.THERMAL:
             eff_sig = SignatureResolver.effective_thermal(
                 target_sig, target_unit, thermal_contrast=thermal_contrast, posture=posture
             )
             snr = self.compute_snr_thermal(sensor, eff_sig, rng_m, thermal_contrast)
-        elif st == SensorType.RADAR:
+        elif signature_domain is SignatureDomain.RADAR:
             eff_rcs = SignatureResolver.effective_rcs(target_sig, target_unit, bearing)
             snr = self.compute_snr_radar(sensor, eff_rcs, rng_m, atmospheric_atten_db_per_km)
-        elif st in (SensorType.PASSIVE_ACOUSTIC, SensorType.PASSIVE_SONAR):
-            sl = SignatureResolver.effective_acoustic(target_sig, target_unit)
+        elif signature_domain is SignatureDomain.ACOUSTIC:
+            if st is SensorType.ACTIVE_SONAR:
+                sl = sensor.definition.source_level_db or 200.0
+                # Two-way TL for active sonar (handled in sonar module for detail)
+            elif st in (
+                SensorType.PASSIVE_ACOUSTIC,
+                SensorType.PASSIVE_SONAR,
+            ):
+                sl = SignatureResolver.effective_acoustic(
+                    target_sig,
+                    target_unit,
+                )
+            else:  # pragma: no cover - domain function and dispatch stay paired
+                raise ValueError(
+                    f"SensorType {st.name} lacks an acoustic SNR implementation",
+                )
             snr = self.compute_snr_acoustic(sensor, sl, rng_m, ambient_noise_db, transmission_loss)
-        elif st == SensorType.ACTIVE_SONAR:
-            sl = sensor.definition.source_level_db or 200.0
-            # Two-way TL for active sonar (handled in sonar module for detail)
-            snr = self.compute_snr_acoustic(sensor, sl, rng_m, ambient_noise_db, transmission_loss)
-        elif st == SensorType.ESM:
+        elif (
+            signature_domain is SignatureDomain.ELECTROMAGNETIC
+            and st is SensorType.ESM
+        ):
             em_power = SignatureResolver.effective_em(target_sig, target_unit)
             if em_power == float("-inf"):
                 return DetectionResult(False, 0.0, -100.0, rng_m, st, bearing)
             snr = em_power - 20.0 * math.log10(max(rng_m, 1.0))
         else:
-            snr = -100.0
+            raise ValueError(
+                f"SensorType {st.name} lacks a production SNR implementation",
+            )
 
         # 4b. Jamming penalty (EW module)
         if jam_snr_penalty_db > 0.0:

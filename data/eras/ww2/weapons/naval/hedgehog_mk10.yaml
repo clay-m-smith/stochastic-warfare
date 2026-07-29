@@ -1,0 +1,37 @@
+# One complete Mk 10 Hedgehog projector, not one of its 24 spigots.
+# NHHC gives a 24-projectile salvo and 200-300 yard range; official Bureau of
+# Ordnance history records a roughly 250-yard pattern. The 24-round capacity
+# and burst therefore represent one physically loaded projector salvo.
+# https://www.history.navy.mil/content/history/museums/nmusn/explore/photography/wwii/wwii-atlantic/battle-of-the-atlantic/anti-submarine-warfare/hedgehog.html
+# https://www.history.navy.mil/about-us/leadership/director/directors-corner/h-grams/h-gram-030/h-030-1.html
+# https://www.ibiblio.org/hyperwar/NHC/NewPDFs/USN/USN%20Admin%20Histories/USN.Bureau.Ordnance.WWII.pdf
+# A period engineering paper documents the projector mechanics. The public
+# sources used here do not establish an installed-system mass, so none is
+# asserted. The three-minute reload is a secondary published value:
+# https://engineersatwar.ww2.imeche.org/wp-content/uploads/2019/08/imeche_proceedings_kirkby_anti_submarine_weapons.pdf
+# https://en.wikipedia.org/wiki/Hedgehog_(weapon)
+weapon_id: hedgehog_mk10
+display_name: "Mk 10 Hedgehog ASW Projector"
+category: DEPTH_CHARGE
+caliber_mm: 182.88
+muzzle_velocity_mps: 0.0
+max_range_m: 274.3
+effective_range_m: 228.6
+min_range_m: 182.9
+rate_of_fire_rpm: 0.33
+burst_size: 24
+base_accuracy_mrad: 0.0
+guidance: NONE
+magazine_capacity: 24
+reload_time_s: 180.0
+compatible_ammo:
+  - hedgehog_mk10_projectile
+weight_kg: 0.0
+reliability: 0.90
+barrel_life_rounds: 0
+requires_deployed: false
+traverse_deg: 0.0
+elevation_min_deg: 0.0
+elevation_max_deg: 0.0
+target_domains:
+  - SUBMARINE

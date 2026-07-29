@@ -49,7 +49,7 @@ equipment:
     weight_kg: 700.0
     reliability: 0.88
     temperature_range: [-32.0, 52.0]
-  - name: "Multi-Function Sensor Suite"
+  - name: "LAV-25 Day/Night Thermal Sight"
     category: SENSOR
     weight_kg: 30.0
     reliability: 0.88

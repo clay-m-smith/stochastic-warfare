@@ -1,0 +1,19 @@
+# Wartime 30.5 cm Spgr. L/3.8 base-fuzed HE projectile.  The source survey
+# reconciles German M.Dv. records at 405 kg and the wartime explosive loading;
+# blast/fragmentation radii are conservative simulation envelopes.
+# https://www.navweaps.com/Weapons/WNGER_12-50_skc12.php
+ammo_id: 305mm_spgr_l3_8_he
+display_name: "30.5 cm Spgr. L/3.8 HE"
+ammo_type: HE
+mass_kg: 405.0
+diameter_mm: 305.0
+drag_coefficient: 0.32
+penetration_mm_rha: 40.0
+penetration_reference_range_m: 1000.0
+blast_radius_m: 24.0
+fragmentation_radius_m: 55.0
+explosive_fill_kg: 26.4
+guidance: NONE
+propulsion: none
+max_speed_mps: 855.0
+unit_cost_factor: 12.0

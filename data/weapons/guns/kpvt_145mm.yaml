@@ -1,0 +1,37 @@
+# KPVT 14.5mm heavy machine gun installation.
+#
+# Rosoboronexport identifies the BTR-80's KPVT, 500-round ammunition load,
+# 360-degree traverse, and -4/+60 degree elevation:
+# https://roe.ru/en/production/land-forces/armored-combat-vehicles/bronetransporter-btr-80/
+# Its 57-BZT-561SM product page identifies exact KPVT ammunition and the
+# 995-1015 m/s V25 envelope:
+# https://roe.ru/en/production/land-forces/small-arms-sv/small-arms-ammunition-sv/14-5/57-bzt-561sm/
+#
+# The 600 rpm cyclic and 2,000 m effective boundary are conservative public
+# KPVT-family values; magazine capacity models the BTR-80 installation.
+weapon_id: kpvt_145mm
+display_name: "KPVT 14.5mm Heavy Machine Gun"
+category: HEAVY_MG
+caliber_mm: 14.5
+muzzle_velocity_mps: 1005.0
+max_range_m: 2000.0
+effective_range_m: 2000.0
+min_range_m: 0.0
+rate_of_fire_rpm: 600.0
+burst_size: 8
+base_accuracy_mrad: 1.5
+guidance: NONE
+magazine_capacity: 500
+reload_time_s: 30.0
+compatible_ammo:
+  - 145x114_bzt561sm
+weight_kg: 52.2
+reliability: 0.90
+barrel_life_rounds: 10000
+requires_deployed: false
+traverse_deg: 360.0
+elevation_min_deg: -4.0
+elevation_max_deg: 60.0
+target_domains:
+  - GROUND
+  - AERIAL

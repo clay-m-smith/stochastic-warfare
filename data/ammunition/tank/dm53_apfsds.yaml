@@ -1,0 +1,27 @@
+# Rheinmetall DM53 120mm APFSDS ammunition for the Rh-120 L/55.
+#
+# Rheinmetall identifies DM53/DM53A1 as 120mm kinetic-energy ammunition for
+# its L55 system:
+# https://www.rheinmetall.com/en/products/weapons-and-ammunition/large-calibre-weapons-and-ammunition
+# A published Leopard 2A6 system profile reports a 5 km engagement envelope
+# and muzzle velocity above 1,750 m/s:
+# https://www.army-technology.com/projects/leopard/
+#
+# Detailed penetration remains non-public. The 650 mm-at-2 km field is an
+# explicit conservative runtime bound, not a manufacturer acceptance result;
+# probability and countermeasure fields are inapplicable to this unguided
+# kinetic projectile.
+ammo_id: dm53_apfsds
+display_name: "DM53 120mm APFSDS"
+ammo_type: AP
+mass_kg: 8.35
+diameter_mm: 120.0
+drag_coefficient: 0.14
+penetration_mm_rha: 650.0
+penetration_reference_range_m: 2000.0
+blast_radius_m: 0.0
+fragmentation_radius_m: 0.0
+guidance: NONE
+propulsion: none
+max_speed_mps: 1750.0
+unit_cost_factor: 6.0

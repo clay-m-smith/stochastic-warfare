@@ -1,0 +1,38 @@
+# 3M80 Moskit anti-ship missile launcher.
+#
+# The Sovremenny installation has two four-container launchers; each carries
+# four 3M80E missiles with a 10-120 km published export engagement envelope:
+# https://www.naval-technology.com/projects/sovremenny/
+# A detailed 3M80 system reference gives the original missile a 10-12 km
+# minimum range, 90 km maximum range, inertial/autopilot cruise, and active
+# radar terminal homing:
+# https://en.missilery.info/missile/moskit
+#
+# This catalog object is one four-container launcher. Unit-level launcher
+# multiplicity is not multiplied into this definition.
+weapon_id: 3m80_moskit
+display_name: "3M80 Moskit Four-Container Launcher"
+category: MISSILE_LAUNCHER
+caliber_mm: 760.0
+muzzle_velocity_mps: 0.0
+max_range_m: 90000.0
+effective_range_m: 90000.0
+min_range_m: 10000.0
+rate_of_fire_rpm: 2.0
+burst_size: 1
+base_accuracy_mrad: 0.0
+cep_m: 0.0
+guidance: COMBINED
+magazine_capacity: 4
+reload_time_s: 0.0
+compatible_ammo:
+  - 3m80_moskit
+weight_kg: 6000.0
+reliability: 0.85
+barrel_life_rounds: 0
+requires_deployed: false
+traverse_deg: 0.0
+elevation_min_deg: 0.0
+elevation_max_deg: 20.0
+target_domains:
+  - NAVAL

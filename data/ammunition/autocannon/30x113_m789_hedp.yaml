@@ -1,0 +1,24 @@
+# M789 30x113mm High-Explosive Dual-Purpose ammunition for the M230.
+#
+# Northrop Grumman identifies M789 as the M230's fielded HEDP round and
+# publishes a 340 g cartridge, 229 g projectile, and 805 m/s muzzle velocity:
+# https://cdn.northropgrumman.com/-/media/Project/Northrop-Grumman/ngc/what-we-do/advanced-weapons/LW30x113-Ammo-Suite-Product-Brochure.pdf?rev=719281ef7e7c4bb58685cd9e4e2c4fc5
+# General Dynamics publishes 25.4 mm RHA defeat at 500 m:
+# https://www.gd-ots.com/wp-content/uploads/2017/11/30x113mm-HEDP-1.pdf
+#
+# HEAT is the closest available typed class for its shaped-charge armor
+# mechanism. Blast and fragmentation radii are conservative runtime effects.
+ammo_id: 30x113_m789_hedp
+display_name: "30x113mm M789 HEDP"
+ammo_type: HEAT
+mass_kg: 0.229
+diameter_mm: 30.0
+drag_coefficient: 0.30
+penetration_mm_rha: 25.4
+penetration_reference_range_m: 500.0
+blast_radius_m: 3.0
+fragmentation_radius_m: 8.0
+guidance: NONE
+propulsion: none
+max_speed_mps: 805.0
+unit_cost_factor: 0.4

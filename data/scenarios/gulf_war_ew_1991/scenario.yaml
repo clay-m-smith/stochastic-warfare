@@ -150,8 +150,3 @@ calibration_overrides:
   morale_base_degrade_rate: 0.01
   morale_casualty_weight: 0.5
   roe_level: WEAPONS_FREE
-  weapon_assignments:
-    "M61A1 Vulcan 20mm": m61a1_vulcan
-    "M230 Chain Gun 30mm": m61a1_vulcan
-    "M299 Launcher": agm114_hellfire
-    "2K12 Launcher": sa6_3m9

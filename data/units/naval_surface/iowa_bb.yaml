@@ -43,6 +43,9 @@
 #   Tier 1: NHHC DANFS, "Missouri III (BB-63)"
 #   Tier 1: Gulf War Air Power Survey (GWAPS) Vol II (naval fires summary)
 #   Tier 3: Jane's Fighting Ships 1990-91
+#   Federal HAER, USS Missouri (records sixteen Harpoon missiles):
+#     https://tile.loc.gov/storage-services/master/pnp/habshaer/hi/hi0700/
+#     hi0700/data/hi0700data.pdf
 
 unit_type: iowa_bb
 domain: naval
@@ -86,9 +89,13 @@ equipment:
     category: WEAPON
     weight_kg: 26000.0
     reliability: 0.90
-  - name: "Mk 141 Harpoon Quad Launcher"
+  - name: "Mk 141 Harpoon Quad Launchers (x4)"
     category: WEAPON
     weight_kg: 5800.0
+    reliability: 0.89
+  - name: "RGM-84 Harpoon Missiles (x16)"
+    category: WEAPON
+    weight_kg: 11056.0
     reliability: 0.89
   - name: "Mk 15 Phalanx CIWS"
     category: WEAPON
@@ -115,7 +122,7 @@ equipment:
     weight_kg: 2100.0
     reliability: 0.87
   - name: "RQ-2 Pioneer UAV Detachment"
-    category: SENSOR
+    category: UTILITY
     weight_kg: 205.0  # per airframe; detachment includes multiple
     reliability: 0.78  # early UAV; mechanical and link reliability limited
   - name: "GE Steam Turbines (4 shaft)"

@@ -264,27 +264,27 @@ def test_fresh_restore_rebuilds_exact_order_and_all_concrete_classes() -> None:
 def test_fresh_restore_preserves_checkpoint_only_empty_loadout_entries() -> None:
     unit = Unit("unarmed", Position(10, 20, 0), side="blue")
     source = _context({"blue": [unit], "red": []})
-    source.unit_weapons = {"unarmed": []}
-    source.unit_sensors = {"unarmed": []}
+    source.unit_weapons = {"unarmed": ()}
+    source.unit_sensors = {"unarmed": ()}
     checkpoint = copy.deepcopy(source.get_state())
     target = _context(seed=999)
 
     target.set_state(checkpoint)
 
     assert _unit_ids(target) == {"blue": ["unarmed"], "red": []}
-    assert target.unit_weapons == {"unarmed": []}
-    assert target.unit_sensors == {"unarmed": []}
+    assert target.unit_weapons == {"unarmed": ()}
+    assert target.unit_sensors == {"unarmed": ()}
     assert target.get_state() == checkpoint
 
     target.set_state(checkpoint)
     assert target.get_state() == checkpoint
 
 
-def test_fresh_restore_ignores_loadout_from_nonreusable_same_id_unit() -> None:
+def test_restore_rejects_nonreusable_same_id_unit_atomically() -> None:
     source_unit = Unit("unarmed", Position(10, 20, 0), side="blue")
     source = _context({"blue": [source_unit], "red": []})
-    source.unit_weapons = {"unarmed": []}
-    source.unit_sensors = {"unarmed": []}
+    source.unit_weapons = {"unarmed": ()}
+    source.unit_sensors = {"unarmed": ()}
     checkpoint = copy.deepcopy(source.get_state())
 
     weapon_equipment = EquipmentItem(
@@ -303,15 +303,13 @@ def test_fresh_restore_ignores_loadout_from_nonreusable_same_id_unit() -> None:
     target = _context({"blue": [stale], "red": []}, seed=999)
     target.unit_weapons = {"unarmed": [(weapon, [])]}
     target.unit_sensors = {"unarmed": [sensor]}
+    before = copy.deepcopy(target.get_state())
 
-    target.set_state(checkpoint)
+    with pytest.raises(ValueError, match="unit identity topology"):
+        target.set_state(checkpoint)
 
-    restored = target.units_by_side["blue"][0]
-    assert type(restored) is Unit
-    assert restored is not stale
-    assert target.unit_weapons == {"unarmed": []}
-    assert target.unit_sensors == {"unarmed": []}
-    assert target.get_state() == checkpoint
+    assert target.units_by_side["blue"][0] is stale
+    assert target.get_state() == before
 
 
 @pytest.mark.parametrize("kind", ["weapon", "sensor"])

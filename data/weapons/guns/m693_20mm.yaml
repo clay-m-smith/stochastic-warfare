@@ -1,0 +1,39 @@
+# GIAT/KNDS M693 20x139mm autocannon.
+#
+# KNDS publishes the M693's 20x139mm identity and 700 rounds/minute cyclic
+# rate in its ARX 20 integration sheet:
+# https://knds.com/media/NEX_214_2_VOL_ARX_20_EN_01_A_BDEF_0008785042.pdf
+# KNDS also publishes the matching HEI round's 1,050 m/s velocity and
+# approximately 2,000 m operational range:
+# https://knds.com/en/products/ammunition/20x139-mm
+# The U.S. Army WEG identifies the M693 as the AMX-30B2's coaxial autocannon:
+# https://man.fas.org/dod-101/sys/land/row/weg2001.pdf
+#
+# The 480-round ready load is the authored AMX-30B2 installation boundary, not
+# a universal magazine built into the cannon.
+weapon_id: m693_20mm
+display_name: "M693 20mm Autocannon"
+category: AUTOCANNON
+caliber_mm: 20.0
+muzzle_velocity_mps: 1050.0
+max_range_m: 2000.0
+effective_range_m: 1500.0
+min_range_m: 0.0
+rate_of_fire_rpm: 700.0
+burst_size: 8
+base_accuracy_mrad: 1.5
+guidance: NONE
+magazine_capacity: 480
+reload_time_s: 120.0
+compatible_ammo:
+  - 20x139_m693_hei
+weight_kg: 90.0
+reliability: 0.91
+barrel_life_rounds: 10000
+requires_deployed: false
+traverse_deg: 360.0
+elevation_min_deg: -8.0
+elevation_max_deg: 40.0
+target_domains:
+  - GROUND
+  - AERIAL

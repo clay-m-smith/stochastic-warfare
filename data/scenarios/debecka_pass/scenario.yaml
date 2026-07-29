@@ -253,29 +253,6 @@ calibration_overrides:
   red_start_y: 2500.0
 
   # Weapon assignments — map equipment names to weapon_ids
-  weapon_assignments:
-    # US SF ODAs
-    "M4A1 SOPMOD": m4_556mm
-    "M4A1 Carbine": m4_556mm
-    "M249 SAW": m4_556mm  # Approx: 5.56mm squad automatic
-    "M240B GPMG": m240_762mm
-    # Javelin team
-    "FGM-148 Javelin CLU": javelin_clm
-    "Javelin Missile Round": javelin_clm
-    # Peshmerga + insurgent-pattern
-    "AKM": ak47
-    "AK-47": ak47
-    "PKM GPMG": m240_762mm  # 7.62mm GPMG approx
-    "RPG-7": rpg7
-    # Iraqi armor
-    "D-10T 100mm Rifled Gun": d10t_100mm
-    "SGMT 7.62mm Coaxial": m240_762mm
-    "2A28 73mm Grom": 2a28_grom_73mm
-    "9M14 Malyutka ATGM Launcher": at3_sagger  # BMP-1 Sagger
-    "PKT 7.62mm Coaxial": m240_762mm
-    "2× S-68 57mm Autocannon": s68_57mm
-    # Aircraft (guns only — bombs loaded as mission ammo)
-    "M61A1 Vulcan": m61a1_vulcan
 
 # Behavior rules — Iraqi scripted frontal advance along approach road;
 # Blue defends ridgeline firing positions.

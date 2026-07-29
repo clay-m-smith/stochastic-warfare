@@ -1,0 +1,33 @@
+# French CN-105-F1 L/56 rifled tank gun fitted to the AMX-30.
+# The U.S. Army Worldwide Equipment Guide identifies the exact CN-105-F1;
+# ARMOR records its AMX-30 installation and 1,000 m/s baseline projectile
+# velocity. The French Service historique preserves the contemporary
+# CN-105-F1 ammunition and AMX-30 gun-test records.
+# https://man.fas.org/dod-101/sys/land/row/weg2001.pdf
+# https://www.benning.army.mil/armor/eARMOR/content/issues/1983/JAN_FEB/1983JanuaryFebruary.pdf
+# https://www.servicehistorique.sga.defense.gouv.fr/sites/default/files/notices_files/GR14W.pdf
+weapon_id: cn105_f1_105mm
+display_name: "CN-105-F1 105 mm Rifled Tank Gun"
+category: CANNON
+caliber_mm: 105.0
+muzzle_velocity_mps: 1000.0
+max_range_m: 3000.0
+effective_range_m: 3000.0
+min_range_m: 50.0
+rate_of_fire_rpm: 8.0
+burst_size: 1
+base_accuracy_mrad: 0.5
+guidance: NONE
+magazine_capacity: 47
+reload_time_s: 7.5
+compatible_ammo:
+  - occ_105_f1_heat
+weight_kg: 2470.0
+reliability: 0.88
+barrel_life_rounds: 1000
+requires_deployed: false
+traverse_deg: 360.0
+elevation_min_deg: -8.0
+elevation_max_deg: 20.0
+target_domains:
+  - GROUND

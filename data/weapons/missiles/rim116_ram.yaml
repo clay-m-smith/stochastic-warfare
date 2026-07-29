@@ -1,0 +1,41 @@
+# Mk 49 launcher with RIM-116B RAM Block 1A.
+#
+# The U.S. Navy publishes a 21-missile capacity, 5,201 kg loaded above-deck
+# weight, 360-degree train, -25/+80 degree elevation, and the Block 1A's
+# RF/IR guidance modes:
+# https://www.navy.mil/Resources/Fact-Files/Display-FactFiles/Article/2168961/rim-116-rolling-airframe-missile-ram/
+# A U.S. Navy carrier combat-systems account gives the operational 3-5
+# nautical-mile range:
+# https://www.navy.mil/DesktopModules/ArticleCS/Print.aspx?Article=2239841&ModuleId=523&PortalId=1
+#
+# The public 5-nautical-mile upper bound is modeled as 9,260 m. COMBINED
+# records RF/IR guidance without pretending RAM is a gun CIWS or an unrelated
+# SAM.
+weapon_id: rim116_ram
+display_name: "Mk 49 RIM-116 RAM Launcher"
+category: MISSILE_LAUNCHER
+caliber_mm: 127.0
+muzzle_velocity_mps: 0.0
+max_range_m: 9260.0
+effective_range_m: 8000.0
+min_range_m: 300.0
+rate_of_fire_rpm: 10.0
+burst_size: 1
+base_accuracy_mrad: 0.0
+cep_m: 0.0
+min_engagement_altitude_m: 3.0
+max_engagement_altitude_m: 6000.0
+guidance: COMBINED
+magazine_capacity: 21
+reload_time_s: 1800.0
+compatible_ammo:
+  - rim116_block1a
+weight_kg: 5201.0
+reliability: 0.94
+barrel_life_rounds: 0
+requires_deployed: false
+traverse_deg: 360.0
+elevation_min_deg: -25.0
+elevation_max_deg: 80.0
+target_domains:
+  - AERIAL

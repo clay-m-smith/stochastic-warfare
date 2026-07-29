@@ -12,7 +12,7 @@ guidance: NONE
 magazine_capacity: 100
 reload_time_s: 10.0
 compatible_ammo:
-  - 556_ball
+  - 50bmg_m2_ap
 weight_kg: 38.0
 reliability: 0.93
 barrel_life_rounds: 10000

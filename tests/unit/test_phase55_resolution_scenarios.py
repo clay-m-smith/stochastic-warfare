@@ -614,32 +614,40 @@ class TestDataFixes:
         assert data["calibration_overrides"]["roe_level"] == "WEAPONS_FREE"
 
     def test_a4_skyhawk_bomb_rack_mapped(self):
-        """A-4 Skyhawk bomb rack is mapped in San Carlos weapon_assignments."""
+        """A-4 bomb rack reaches the production loadout with its catalog ID."""
         from pathlib import Path
-        import yaml
+        from stochastic_warfare.simulation.scenario import ScenarioLoader
 
         path = Path("data/scenarios/falklands_san_carlos/scenario.yaml")
-        if not path.exists():
-            pytest.skip("Scenario not found")
-        with open(path) as f:
-            data = yaml.safe_load(f)
-        wa = data["calibration_overrides"]["weapon_assignments"]
-        assert wa.get("Generic Bomb Rack") == "bomb_rack_generic"
+        context = ScenarioLoader(Path("data")).load(path, seed=55)
+        skyhawk = next(
+            unit for unit in context.all_units()
+            if unit.unit_type == "a4_skyhawk"
+        )
+        mapped_weapons = {
+            attachment.source_equipment.name: attachment.weapon.weapon_id
+            for attachment in context.unit_weapons[skyhawk.entity_id]
+        }
+        assert mapped_weapons["Generic Bomb Rack"] == "bomb_rack_generic"
 
-    def test_eastern_front_has_weapon_assignments(self):
-        """Eastern Front 1943 scenario has weapon_assignments for WW2 units."""
+    def test_eastern_front_production_weapon_mappings(self):
+        """Eastern Front tank guns retain exact production loadout identities."""
         from pathlib import Path
-        import yaml
+        from stochastic_warfare.simulation.scenario import ScenarioLoader
 
         path = Path("data/scenarios/eastern_front_1943/scenario.yaml")
-        if not path.exists():
-            pytest.skip("Scenario not found")
-        with open(path) as f:
-            data = yaml.safe_load(f)
-        wa = data["calibration_overrides"]["weapon_assignments"]
-        assert "85mm ZIS-S-53 Gun" in wa
-        assert "88mm KwK 36 L/56 Gun" in wa
-        assert "75mm KwK 40 L/48 Gun" in wa
+        context = ScenarioLoader(Path("data")).load(path, seed=55)
+        mapped_weapons = {
+            attachment.source_equipment.name: attachment.weapon.weapon_id
+            for unit in context.all_units()
+            for attachment in context.unit_weapons[unit.entity_id]
+        }
+        assert mapped_weapons["85mm ZIS-S-53 Gun"] == "85mm_zis_s53"
+        assert mapped_weapons["88mm KwK 36 L/56 Gun"] == "88mm_kwk36"
+        assert (
+            mapped_weapons["75mm KwK 40 L/48 Gun"]
+            == "kwk40_l48_75mm"
+        )
 
 
 # ═══════════════════════════════════════════════════════════════════════════

@@ -1,7 +1,7 @@
 # AMX-30B2 Main Battle Tank (Qatari Armored Battalion)
 # French AMX-30B2 upgrade fielded by Qatar's Armored Battalion attached to
 # SANG at the Battle of Khafji. Features COTAC integrated fire control and
-# the Castor low-light sight. Qatari tanks destroyed three T-55s and
+# the Castor thermal sight. Qatari tanks destroyed three T-55s and
 # captured a fourth during the counterattack to retake Khafji (31 Jan 1991).
 #
 # Sources:
@@ -52,7 +52,7 @@ equipment:
     weight_kg: 1900.0
     reliability: 0.80
     temperature_range: [-20.0, 52.0]
-  - name: "Multi-Function Sensor Suite"
+  - name: "Castor Thermal Sight"
     category: SENSOR
     weight_kg: 30.0
     reliability: 0.82

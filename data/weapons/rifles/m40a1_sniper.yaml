@@ -1,0 +1,39 @@
+# USMC M40A1 7.62mm bolt-action sniper rifle.
+#
+# Authoritative identity and family envelope:
+# - National Museum of the Marine Corps, Fortitudine 31(3), p. 9: M40A1
+#   fiberglass stock and 10x Unertl optic; the succeeding M40A3 retains the
+#   M40A1 lineage with a five-round magazine and 1,000-yard envelope.
+#   https://www.marines.mil/portals/1/Publications/Fortitudine%20Vol%2031%20No%203.pdf
+# - U.S. Army TM 43-0001-27, p. 11-23: M118 Special Ball is specifically
+#   prepared for the M40A1, with a 172-grain projectile at 2,640 ft/s.
+#   https://www.bulletpicker.com/pdf/TM-43-0001-27.pdf
+#
+# The 10-round/minute practical rate and 0.5 mrad dispersion are conservative
+# simulation abstractions for a manually operated precision rifle, not a new
+# historical performance claim.
+weapon_id: m40a1_sniper
+display_name: "M40A1 7.62mm Sniper Rifle"
+category: RIFLE
+caliber_mm: 7.62
+muzzle_velocity_mps: 804.7
+max_range_m: 914.0
+effective_range_m: 800.0
+min_range_m: 0.0
+rate_of_fire_rpm: 10.0
+burst_size: 1
+base_accuracy_mrad: 0.5
+guidance: NONE
+magazine_capacity: 5
+reload_time_s: 8.0
+compatible_ammo:
+  - m118_special_ball
+weight_kg: 6.6
+reliability: 0.95
+barrel_life_rounds: 5000
+requires_deployed: false
+traverse_deg: 360.0
+elevation_min_deg: -30.0
+elevation_max_deg: 80.0
+target_domains:
+  - GROUND

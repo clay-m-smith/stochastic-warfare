@@ -1,0 +1,19 @@
+# TM-E 30-451 records the KwK 40 HE role/range scale.  The 5.74 kg projectile
+# and 550 m/s service envelope are kept distinct from the longer PaK cartridge;
+# blast fields are conservative simulation envelopes.
+# https://www.ibiblio.org/hyperwar/Germany/HB/HB-8.html
+ammo_id: 75mm_sprgr34_kwk40_he
+display_name: "7.5 cm Sprgr. 34 KwK 40 HE"
+ammo_type: HE
+mass_kg: 5.74
+diameter_mm: 75.0
+drag_coefficient: 0.32
+penetration_mm_rha: 12.0
+penetration_reference_range_m: 100.0
+blast_radius_m: 8.0
+fragmentation_radius_m: 18.0
+explosive_fill_kg: 0.66
+guidance: NONE
+propulsion: none
+max_speed_mps: 550.0
+unit_cost_factor: 0.8

@@ -1,0 +1,32 @@
+# Per-gun 8.8 cm SK C/35 Type VII U-boat deck gun.
+# The source table gives 88 mm caliber, 776 kg gun weight, 15 rpm, 700 m/s,
+# 11,950 m range, and the Type VII outfit of 220 rounds.
+# https://www.navweaps.com/Weapons/WNGER_88mm-45_skc35.php
+# Official ONI recognition material supplies the operational submarine context.
+# https://www.ibiblio.org/hyperwar/USN/ref/AxisSubs/index.html
+weapon_id: sk_c35_88mm
+display_name: "8.8 cm SK C/35 Deck Gun"
+category: NAVAL_GUN
+caliber_mm: 88.0
+muzzle_velocity_mps: 700.0
+max_range_m: 11950.0
+effective_range_m: 8000.0
+min_range_m: 0.0
+rate_of_fire_rpm: 15.0
+burst_size: 1
+base_accuracy_mrad: 2.2
+guidance: NONE
+magazine_capacity: 220
+reload_time_s: 4.0
+compatible_ammo:
+  - 88mm_c35_he
+weight_kg: 776.0
+reliability: 0.86
+barrel_life_rounds: 12000
+requires_deployed: false
+traverse_deg: 360.0
+elevation_min_deg: -10.0
+elevation_max_deg: 30.0
+target_domains:
+  - GROUND
+  - NAVAL

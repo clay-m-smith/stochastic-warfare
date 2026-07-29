@@ -1,0 +1,23 @@
+# FN SS109 5.56x45mm NATO ball cartridge.
+#
+# FN Herstal's technical sheet gives an approximately 4 g projectile, V25 of
+# approximately 915 m/s, and perforation of a 3.5 mm NATO mild-steel plate at
+# at least 570 m:
+# https://fnherstal.com/app/uploads/technical-data-fn-556x45mm.pdf
+#
+# `max_speed_mps` records the released V25 datum. The penetration field retains
+# FN's plate result and must not be read as a generalized RHA limit.
+ammo_id: 556_ss109_ball
+display_name: "5.56x45mm NATO SS109 Ball"
+ammo_type: BALL
+mass_kg: 0.004
+diameter_mm: 5.56
+drag_coefficient: 0.30
+penetration_mm_rha: 3.5
+penetration_reference_range_m: 570.0
+blast_radius_m: 0.0
+fragmentation_radius_m: 0.0
+guidance: NONE
+propulsion: none
+max_speed_mps: 915.0
+unit_cost_factor: 0.02

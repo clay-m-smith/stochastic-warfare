@@ -1,0 +1,17 @@
+# Source: the U.S. Army ODIN Su-27 entry identifies the aircraft's N001 radar:
+# https://odin.t2com.army.mil/WEG/Asset/Su-27_%28Flanker%29_Russian_Multirole_Fighter_Aircraft-1
+# The range below is a bounded simulation cap rather than a source-measured
+# claim for every target signature.
+sensor_id: n001_myech_radar
+sensor_type: RADAR
+display_name: "N001 Myech Fire-Control Radar"
+max_range_m: 100000.0
+detection_threshold: 12.0
+false_alarm_rate: 1.0e-7
+scan_time_s: 2.0
+scan_interval_ticks: 2
+min_range_m: 500.0
+fov_deg: 120.0
+requires_los: true
+detects_domain: ["RADAR"]
+target_domains: ["AERIAL"]

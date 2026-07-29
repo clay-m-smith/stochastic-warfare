@@ -22,7 +22,7 @@ equipment:
     category: WEAPON
     weight_kg: 105.0
     reliability: 0.90
-  - name: "KLJ-3A Pulse-Doppler Radar"
+  - name: "J-10A Pulse-Doppler Fire-Control Radar"
     category: SENSOR
     weight_kg: 280.0
     reliability: 0.83

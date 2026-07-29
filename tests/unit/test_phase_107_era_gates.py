@@ -278,13 +278,13 @@ def test_thermal_sights_gate_rejects_thermal_sensor_loadout(
         _load_custom_era(
             tmp_path,
             disabled_modules={"thermal_sights"},
-            blue_unit_type="m1a2",
+            blue_unit_type="us_m1a2_sep",
         )
 
     _assert_actionable_gate_error(
         error,
         feature="thermal_sights",
-        offending_clues=("thermal", "thermal_sight", "m1a2", "an/vvs-2"),
+        offending_clues=("thermal", "thermal_sight", "us_m1a2_sep", "citv"),
     )
 
 
@@ -295,13 +295,13 @@ def test_available_sensor_types_rejects_unavailable_loaded_sensor(
         _load_custom_era(
             tmp_path,
             available_sensor_types={"VISUAL"},
-            blue_unit_type="m1a2",
+            blue_unit_type="us_m1a2_sep",
         )
 
     _assert_actionable_gate_error(
         error,
         feature="available_sensor_types",
-        offending_clues=("thermal", "thermal_sight", "m1a2", "an/vvs-2"),
+        offending_clues=("nvg", "active_ir_sight", "t72m", "tpn-3-49"),
     )
 
 

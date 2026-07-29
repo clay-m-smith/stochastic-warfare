@@ -1,0 +1,22 @@
+# French OCC 105 F1 ("Obus G") spin-decoupled HEAT round for CN-105-F1.
+# The French defense archive catalogs the contemporary CN-105-F1 cartridge
+# records and filmed official trials identify Obus G testing on AMX-30.
+# U.S. Army WEG/ARMOR sources establish the parent gun and 1,000 m/s firing
+# regime; 400 mm RHA is the published baseline Obus G penetration.
+# https://www.servicehistorique.sga.defense.gouv.fr/sites/default/files/notices_files/GR14W.pdf
+# https://imagesdefense.gouv.fr/fr/experimentation-de-l-obus-g-sur-amx-30-a-bourges-et-salbris.html
+# https://man.fas.org/dod-101/sys/land/row/weg2001.pdf
+ammo_id: occ_105_f1_heat
+display_name: "OCC 105 F1 Obus G HEAT"
+ammo_type: HEAT
+mass_kg: 10.95
+diameter_mm: 105.0
+drag_coefficient: 0.32
+penetration_mm_rha: 400.0
+penetration_reference_range_m: 0.0
+blast_radius_m: 3.0
+fragmentation_radius_m: 5.0
+guidance: NONE
+propulsion: none
+max_speed_mps: 1000.0
+unit_cost_factor: 3.0

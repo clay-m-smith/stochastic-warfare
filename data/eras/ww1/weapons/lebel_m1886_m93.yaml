@@ -1,0 +1,28 @@
+# French Fusil Mle 1886 modified 1893 ("Lebel").
+# Smithsonian identifies the exact model as an 8 mm bolt-action rifle with an
+# eight-round tubular fore-stock magazine. U.S. Army TRADOC's small-arms
+# history independently places the Mle 1886 8 mm Lebel in the WWI lineage.
+# https://americanhistory.si.edu/collections/object/nmah_414502
+# https://www.tradoc.army.mil/wp-content/uploads/2021/09/evolution-of-military-small-arms-instructor-guide.pdf
+weapon_id: lebel_m1886_m93
+display_name: "Lebel Mle 1886 M93 Rifle"
+category: RIFLE
+caliber_mm: 8.0
+muzzle_velocity_mps: 700.0
+max_range_m: 800.0
+effective_range_m: 400.0
+min_range_m: 0.0
+rate_of_fire_rpm: 12.0
+burst_size: 1
+base_accuracy_mrad: 1.2
+guidance: NONE
+magazine_capacity: 8
+reload_time_s: 6.0
+compatible_ammo:
+  - 8x50r_lebel_balle_d
+weight_kg: 4.18
+reliability: 0.88
+barrel_life_rounds: 10000
+requires_deployed: false
+target_domains:
+  - GROUND

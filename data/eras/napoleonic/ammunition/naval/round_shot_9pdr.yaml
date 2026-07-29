@@ -1,0 +1,19 @@
+# NHHC Valcour Bay archaeology report: a standard 9-pound cannon round shot is
+# 4 inches (10.1 cm) in diameter.
+# https://www.history.navy.mil/content/dam/nhhc/research/underwater-archaeology/PDF/UA_ValcourBay.pdf
+# Penetration is the catalog's conservative wooden-hull/solid-shot abstraction,
+# not an empirical RHA test-table claim.
+ammo_id: round_shot_9pdr
+display_name: "9-Pounder Naval Round Shot"
+ammo_type: AP
+mass_kg: 4.08
+diameter_mm: 101.6
+drag_coefficient: 0.45
+penetration_mm_rha: 25.0
+penetration_reference_range_m: 500.0
+blast_radius_m: 0.0
+fragmentation_radius_m: 0.0
+guidance: NONE
+propulsion: none
+max_speed_mps: 450.0
+unit_cost_factor: 0.2

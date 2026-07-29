@@ -112,11 +112,6 @@ calibration_overrides:
   norman_start_y: 500.0
   # Norman combined arms: 6 units × 100m ≈ 500m frontage
   norman_formation_spacing_m: 100.0
-  weapon_assignments:
-    "Sword (Medieval)": sword_medieval
-    "Shield": sword_medieval
-    "Lance (Medieval)": lance_medieval
-    "Longbow": longbow
 
 documented_outcomes:
   - name: saxon_casualty_fraction

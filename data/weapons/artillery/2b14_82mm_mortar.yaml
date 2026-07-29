@@ -1,0 +1,36 @@
+# 2B14 Podnos 82mm light mortar.
+#
+# The UK Army Field Manual's former-Soviet equipment annex identifies the
+# 2B14 Podnos and its operating characteristics:
+# https://assets.publishing.service.gov.uk/government/uploads/system/uploads/attachment_data/file/455023/1996_AFM_Vol_2_Gen_En_Mob_Pt_2_OET.pdf
+# The public 2B14 envelope is 80-4,270 m, 41.88 kg, and up to 24-30 rounds/min:
+# https://weaponsystems.net/system/1135-82mm%2B2B14%2BPodnos
+#
+# Fifteen rounds/minute is a sustained rather than maximum cyclic rate. The
+# ten-round ready load is a runtime supply abstraction, not a tube magazine.
+weapon_id: 2b14_82mm_mortar
+display_name: "2B14 Podnos 82mm Mortar"
+category: MORTAR
+caliber_mm: 82.0
+muzzle_velocity_mps: 270.0
+max_range_m: 4270.0
+effective_range_m: 4000.0
+min_range_m: 80.0
+rate_of_fire_rpm: 15.0
+burst_size: 1
+base_accuracy_mrad: 2.0
+cep_m: 100.0
+guidance: NONE
+magazine_capacity: 10
+reload_time_s: 4.0
+compatible_ammo:
+  - o832du_82mm_he
+weight_kg: 41.88
+reliability: 0.88
+barrel_life_rounds: 0
+requires_deployed: true
+traverse_deg: 16.0
+elevation_min_deg: 45.0
+elevation_max_deg: 85.0
+target_domains:
+  - GROUND

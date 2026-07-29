@@ -89,7 +89,7 @@ equipment:
     weight_kg: 3.0  # Kornet-integrated thermal sight (1PN79-1); mapped to thermal_sight
     reliability: 0.90
   - name: "AN/PEQ-2 IR Aiming Laser"
-    category: SENSOR
+    category: UTILITY
     weight_kg: 0.3  # Iranian IR laser aid for spotter
     reliability: 0.85
   - name: "Naked Eye Observation"

@@ -26,6 +26,6 @@ equipment:
     weight_kg: 3.0
     reliability: 0.95
   - name: "M4 Fire Control Instrument"
-    category: SENSOR
+    category: UTILITY
     weight_kg: 15.0
     reliability: 0.90

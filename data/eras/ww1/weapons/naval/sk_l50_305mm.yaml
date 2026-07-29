@@ -1,0 +1,36 @@
+# Imperial German Navy 30.5 cm SK L/50.  Contemporary USNI reporting lists
+# the 12-inch/50 at 47 tons, an 851 lb projectile, and one round per minute;
+# the source-traced ordnance survey gives the wartime 405 kg projectile,
+# 855 m/s muzzle velocity, and 20.4 km range.
+# https://www.usni.org/magazines/proceedings/1918/may/professional-notes
+# https://www.navweaps.com/Weapons/WNGER_12-50_skc12.php
+# Magazine capacity is the documented approximate per-gun allowance on the
+# König class.  Runtime gun-count aggregation is intentionally not asserted.
+weapon_id: sk_l50_305mm
+display_name: "30.5 cm SK L/50 Naval Gun"
+category: NAVAL_GUN
+caliber_mm: 305.0
+muzzle_velocity_mps: 855.0
+max_range_m: 20400.0
+effective_range_m: 18000.0
+min_range_m: 1000.0
+rate_of_fire_rpm: 1.0
+burst_size: 1
+base_accuracy_mrad: 1.0
+cep_m: 150.0
+guidance: NONE
+magazine_capacity: 100
+reload_time_s: 60.0
+compatible_ammo:
+  - 305mm_psgr_l3_4_apc
+  - 305mm_spgr_l3_8_he
+weight_kg: 47750.0
+reliability: 0.87
+barrel_life_rounds: 340
+requires_deployed: false
+traverse_deg: 280.0
+elevation_min_deg: -5.5
+elevation_max_deg: 16.0
+target_domains:
+  - GROUND
+  - NAVAL

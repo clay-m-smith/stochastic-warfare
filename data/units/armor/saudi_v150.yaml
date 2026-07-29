@@ -50,7 +50,7 @@ equipment:
     weight_kg: 340.0
     reliability: 0.85
     temperature_range: [-20.0, 52.0]
-  - name: "Multi-Function Sensor Suite"
+  - name: "TOW Day/Night Thermal Sight"
     category: SENSOR
     weight_kg: 20.0
     reliability: 0.85

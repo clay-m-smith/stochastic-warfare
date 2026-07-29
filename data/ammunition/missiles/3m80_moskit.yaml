@@ -1,0 +1,33 @@
+# 3M80 Moskit ramjet anti-ship missile.
+#
+# A detailed system reference gives a 3,950 kg launch mass, 760 mm body
+# diameter, 300-320 kg warhead containing 150 kg explosive, Mach 2.35 cruise,
+# and inertial/autopilot cruise followed by active-radar terminal homing:
+# https://en.missilery.info/missile/moskit
+# The Sovremenny system description independently identifies its 3M80E
+# missiles, 300 kg warhead, and approximately Mach 2.5 speed:
+# https://www.naval-technology.com/projects/sovremenny/
+#
+# COMBINED represents inertial cruise plus active-radar terminal guidance.
+# Probability, countermeasure, and effect-radius fields are explicit bounded
+# simulation inputs, not published single-shot test results.
+ammo_id: 3m80_moskit
+display_name: "3M80 Moskit Anti-Ship Missile"
+ammo_type: MISSILE
+mass_kg: 3950.0
+diameter_mm: 760.0
+drag_coefficient: 0.25
+blast_radius_m: 35.0
+fragmentation_radius_m: 60.0
+explosive_fill_kg: 150.0
+guidance: COMBINED
+seeker_fov_deg: 45.0
+seeker_range_m: 10000.0
+pk_at_reference: 0.75
+countermeasure_susceptibility: 0.18
+propulsion: ramjet
+max_speed_mps: 800.0
+flight_time_s: 150.0
+cruise_altitude_m: 20.0
+terminal_maneuver: true
+unit_cost_factor: 180.0

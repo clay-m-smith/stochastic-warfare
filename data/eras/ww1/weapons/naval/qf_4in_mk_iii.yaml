@@ -1,0 +1,34 @@
+# Per-gun British QF 4-inch Mk III naval gun.
+#
+# The 1902 H.M.S.O. Text Book of Gunnery supplies the contemporary 25 lb
+# service projectile and 2,300 ft/s velocity. The Invincible-specific service
+# compilation identifies sixteen PI* single mounts and gives 101.6 mm caliber,
+# 1,339 kg gun weight, 8-10 rpm, 8,780 m WWI range, and 100 rounds per gun.
+# https://cgsc.contentdm.oclc.org/digital/collection/p4013coll11/id/233/
+# https://www.navweaps.com/Weapons/WNBR_4-40_mk3.php
+weapon_id: qf_4in_mk_iii
+display_name: "QF 4-inch Mk III Gun"
+category: NAVAL_GUN
+caliber_mm: 101.6
+muzzle_velocity_mps: 701.0
+max_range_m: 8780.0
+effective_range_m: 7000.0
+min_range_m: 0.0
+rate_of_fire_rpm: 9.0
+burst_size: 1
+base_accuracy_mrad: 2.2
+guidance: NONE
+magazine_capacity: 100
+reload_time_s: 6.7
+compatible_ammo:
+  - 4in_mk_iii_he
+weight_kg: 1339.0
+reliability: 0.86
+barrel_life_rounds: 5000
+requires_deployed: false
+traverse_deg: 360.0
+elevation_min_deg: -10.0
+elevation_max_deg: 20.0
+target_domains:
+  - GROUND
+  - NAVAL

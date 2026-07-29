@@ -1,0 +1,41 @@
+# AK-130 twin-barrel 130mm naval gun mount.
+#
+# The Sovremenny weapon description identifies the AK-130 twin 130mm mount,
+# automatic loading, a range beyond 22 km, and a 20-35-round/minute firing
+# rate:
+# https://www.naval-technology.com/projects/sovremenny/
+# The Russian Arms 2000 catalog records the AK-130 system's 90-round/minute
+# maximum cyclic rating:
+# https://www.studmed.ru/view/katalog-oruzhie-rossii-2000-c82-795_86e353198b8.html?page=52
+# A supplementary naval ordnance reference publishes the 98 t mount weight:
+# https://www.navweaps.com/Weapons/WNRussian_51-70_ak130.php
+#
+# The 35-round/minute value is a conservative sustained system rate. Ready
+# ammunition and effect radii are runtime abstractions; no additional unit
+# mount count is encoded here.
+weapon_id: ak130_130mm
+display_name: "AK-130 Twin 130mm Naval Gun"
+category: NAVAL_GUN
+caliber_mm: 130.0
+muzzle_velocity_mps: 850.0
+max_range_m: 23000.0
+effective_range_m: 22000.0
+min_range_m: 500.0
+rate_of_fire_rpm: 35.0
+burst_size: 2
+base_accuracy_mrad: 0.5
+guidance: NONE
+magazine_capacity: 150
+reload_time_s: 300.0
+compatible_ammo:
+  - ak130_he_frag
+weight_kg: 98000.0
+reliability: 0.88
+barrel_life_rounds: 0
+requires_deployed: false
+traverse_deg: 360.0
+elevation_min_deg: -12.0
+elevation_max_deg: 80.0
+target_domains:
+  - GROUND
+  - NAVAL

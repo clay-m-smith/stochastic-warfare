@@ -1,0 +1,39 @@
+# One aggregate heterogeneous forward gun battery for a sixteenth-century
+# Mediterranean war galley. This is not a single physical cannon and does not
+# reuse a ballista. The source review identifies a 50-pounder centerline gun
+# with accompanying lighter cannon; NHHC establishes the forward-gun role and
+# its anti-galley effect:
+# https://gjh.ojs.chass.ncsu.edu/index.php/Graduate/article/download/13/pdf_7
+# https://www.history.navy.mil/research/library/online-reading-room/title-list-alphabetically/e/evolution-of-naval-weapons.html
+#
+# The 500 m range, 0.2 rpm aggregate cadence, ten-round allocation, dispersion,
+# and reliability are explicit conservative modeled bounds because the public
+# sources do not publish a common ballistic table for this heterogeneous
+# battery. Caliber/muzzle velocity remain zero rather than inventing one bore.
+weapon_id: lepanto_galley_bow_battery
+display_name: "Lepanto Galley Bow Gun Battery"
+category: NAVAL_GUN
+caliber_mm: 0.0
+muzzle_velocity_mps: 0.0
+max_range_m: 500.0
+effective_range_m: 350.0
+min_range_m: 20.0
+rate_of_fire_rpm: 0.2
+burst_size: 1
+base_accuracy_mrad: 20.0
+cep_m: 0.0
+guidance: NONE
+magazine_capacity: 10
+reload_time_s: 300.0
+compatible_ammo:
+  - lepanto_galley_roundshot
+weight_kg: 3000.0
+reliability: 0.70
+barrel_life_rounds: 0
+requires_deployed: false
+traverse_deg: 10.0
+elevation_min_deg: 0.0
+elevation_max_deg: 10.0
+target_domains:
+  - GROUND
+  - NAVAL
