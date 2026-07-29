@@ -1,0 +1,6764 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="High-fidelity stochastic wargame simulator — multi-scale, multi-domain, multi-era">
+      
+      
+        <meta name="author" content="Clay Smith">
+      
+      
+        <link rel="canonical" href="https://clay-m-smith.github.io/stochastic-warfare/development-phases-block11/">
+      
+      
+        <link rel="prev" href="../development-phases-block10/">
+      
+      
+        <link rel="next" href="../development-phases-block12/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.4">
+    
+    
+      
+        <title>Block 11 (98-104) - Stochastic Warfare</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="blue-grey" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#stochastic-warfare-block-11-development-phases-98-102" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="Stochastic Warfare" class="md-header__button md-logo" aria-label="Stochastic Warfare" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Stochastic Warfare
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Block 11 (98-104)
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="blue-grey" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="blue-grey" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/clay-m-smith/stochastic-warfare" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    clay-m-smith/stochastic-warfare
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href=".." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../guide/getting-started/" class="md-tabs__link">
+          
+  
+  
+  Guide
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../concepts/architecture/" class="md-tabs__link">
+          
+  
+  
+  Concepts
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../reference/api/" class="md-tabs__link">
+          
+  
+  
+  Reference
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../brainstorm/" class="md-tabs__link">
+          
+  
+  
+  Architecture (Internal)
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../development-phases/" class="md-tabs__link">
+          
+  
+  
+  Development Phases
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../devlog/" class="md-tabs__link">
+          
+  
+  
+  Devlog
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../specs/project-structure/" class="md-tabs__link">
+          
+  
+  
+  Specifications
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="Stochastic Warfare" class="md-nav__button md-logo" aria-label="Stochastic Warfare" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Stochastic Warfare
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/clay-m-smith/stochastic-warfare" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    clay-m-smith/stochastic-warfare
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Guide
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Guide
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../guide/getting-started/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting Started
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../guide/web-ui/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Web UI
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../guide/scenarios/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Scenario Library
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Concepts
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Concepts
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../concepts/architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../concepts/models/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Mathematical Models
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/eras/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Eras
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/units/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Units & Equipment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture (Internal)
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Architecture (Internal)
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../brainstorm/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Core Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../brainstorm-post-mvp/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Post-MVP Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../brainstorm-block2/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 2 Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../brainstorm-block3/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 3 Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../brainstorm-block4/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 4 Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../brainstorm-block5/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 5 Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../brainstorm-block6/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 6 Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../brainstorm-block7/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 7 Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../brainstorm-block8/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 8 Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../brainstorm-block9/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 9 Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../brainstorm-block10/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 10 Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../brainstorm-block11/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 11 Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Development Phases
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Development Phases
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../development-phases/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MVP (0-10)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../development-phases-post-mvp/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Post-MVP (11-24)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../development-phases-block2/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 2 (25-30)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../development-phases-block3/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 3 (31-36)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../development-phases-block4/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 4 (37-39)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../development-phases-block5/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 5 (40-48)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../development-phases-block6/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 6 (49-57)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../development-phases-block7/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 7 (58-67)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../development-phases-block8/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 8 (68-82)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../development-phases-block9/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 9 (83-91)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../development-phases-block10/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 10 (92-97)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 11 (98-104)
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 11 (98-104)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#philosophy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Philosophy
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#phase-98-shared-prework-gap-audit-calibration-conventions-depth-framework" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 98: Shared Prework — Gap Audit, Calibration Conventions, Depth Framework
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Phase 98: Shared Prework — Gap Audit, Calibration Conventions, Depth Framework">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#98a-unitweaponsensor-gap-audit" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        98a: Unit/Weapon/Sensor Gap Audit
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#98b-calibration-target-template" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        98b: Calibration Target Template
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#98c-depth-checklist-framework" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        98c: Depth Checklist Framework
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#98d-calibration-scenarios-registration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        98d: Calibration Scenarios Registration
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#phase-99-debecka-pass-iraq-april-6-2003" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 99: Debecka Pass (Iraq, April 6, 2003)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Phase 99: Debecka Pass (Iraq, April 6, 2003)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#99a-research-research-military" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        99a: Research (/research-military)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#99b-data-authoring" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        99b: Data Authoring
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#99c-scenario-yaml" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        99c: Scenario YAML
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#99d-calibration-loop" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        99d: Calibration Loop
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#99e-regression-test" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        99e: Regression Test
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#99f-ui-walkthrough" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        99f: UI Walkthrough
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#phase-100-khafji-saudi-arabia-january-29-february-1-1991" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 100: Khafji (Saudi Arabia, January 29 – February 1, 1991)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Phase 100: Khafji (Saudi Arabia, January 29 – February 1, 1991)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#100a-research" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        100a: Research
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#100b-data-authoring" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        100b: Data Authoring
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#100c-scenario-yaml" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        100c: Scenario YAML
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#100d-calibration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        100d: Calibration
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#100e-regression-test" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        100e: Regression Test
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#100f-ui-walkthrough" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        100f: UI Walkthrough
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#phase-101-fallujah-phase-line-fran-iraq-november-913-2004" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 101: Fallujah Phase Line Fran (Iraq, November 9–13, 2004)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Phase 101: Fallujah Phase Line Fran (Iraq, November 9–13, 2004)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#101a-research" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        101a: Research
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#101b-data-authoring" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        101b: Data Authoring
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#101c-scenario-yaml" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        101c: Scenario YAML
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#101d-calibration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        101d: Calibration
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#101e-regression-test" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        101e: Regression Test
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#101f-ui-walkthrough" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        101f: UI Walkthrough
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#phase-102-bint-jbeil-ins-hanit-vignette-block-11-validation-lebanon-july-august-2006" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 102: Bint Jbeil + INS Hanit Vignette + Block 11 Validation (Lebanon, July-August 2006)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Phase 102: Bint Jbeil + INS Hanit Vignette + Block 11 Validation (Lebanon, July-August 2006)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#102a-research" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        102a: Research
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#102b-data-authoring" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        102b: Data Authoring
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#102c-scenario-yaml" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        102c: Scenario YAML
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#102d-calibration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        102d: Calibration
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#102e-regression-test" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        102e: Regression Test
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#102f-ui-walkthrough" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        102f: UI Walkthrough
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#102g-block-11-validation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        102g: Block 11 Validation
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#module-index-new-files-expected" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Module Index (New Files Expected)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#summary-table" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Summary Table
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../development-phases-block12/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 12 (105-114)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../remediation-backlog/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Remediation Backlog
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Devlog
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Devlog
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-0/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 0 - Scaffolding
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-1/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 1 - Terrain & Environment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-2/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 2 - Entities & Movement
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-3/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 3 - Detection & Intelligence
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-4/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 4 - Combat & Morale
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-5/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 5 - C2 Infrastructure
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-6/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 6 - Logistics & Supply
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-7/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 7 - Engagement Validation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-8/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 8 - AI & Planning
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-9/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 9 - Simulation Orchestration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-10/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 10 - Campaign Validation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-11/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 11 - Core Fidelity Fixes
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-12/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 12 - Deep Systems Rework
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-13/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 13 - Performance Optimization
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-14/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 14 - Tooling & Dev Experience
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-15/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 15 - Real-World Terrain
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-16/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 16 - Electronic Warfare
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-17/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 17 - Space & Satellite
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-18/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 18 - CBRN Effects
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-19/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 19 - Doctrinal AI Schools
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-20/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 20 - WW2 Era
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-21/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 21 - WW1 Era
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-22/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 22 - Napoleonic Era
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-23/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 23 - Ancient & Medieval Era
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-24/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 24 - Unconventional Warfare
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-25/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 25 - Engine Wiring
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-26/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 26 - Core Polish
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-27/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 27 - Combat Completeness
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-28/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 28 - Modern Data Package
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-28.5/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 28.5 - Directed Energy
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-29/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 29 - Historical Data Expansion
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-30/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 30 - Scenario Library
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-31/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 31 - Documentation Site
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-32/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 32 - API & Service Foundation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-33/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 33 - Frontend Foundation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-34/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 34 - Run Results & Analysis
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-35/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 35 - Tactical Map
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-36/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 36 - Scenario Tweaker & Polish
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-37/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 37 - Integration Fixes & E2E
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-38/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 38 - Map & Chart Enhancements
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-39/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 39 - Quality & Packaging
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-40/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 40 - Battle Loop Foundation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-41/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 41 - Combat Depth
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-42/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 42 - Tactical Behavior
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-43/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 43 - Domain-Specific Resolution
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-44/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 44 - Environmental & Subsystem Integration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-45/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 45 - Mathematical Model Audit & Hardening
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-46/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 46 - Scenario Data Cleanup & Expansion
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-47/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 47 - Full Recalibration & Validation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-48/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 48 - Block 5 Deficit Resolution
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-49/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 49 - Calibration Schema Hardening
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-50/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 50 - Combat Fidelity Polish
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-51/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 51 - Naval Combat Completeness
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-52/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 52 - Environmental Continuity
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-53/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 53 - C2 & AI Completeness
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-54/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 54 - Era-Specific & Domain Sub-Engine Wiring
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-55/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 55 - Resolution & Scenario Migration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-56/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 56 - Performance & Logistics
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-57/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 57 - Full Validation & Regression
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-58/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 58 - Structural Verification & Core Combat Wiring
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-59/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 59 - Atmospheric & Ground Environment Wiring
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-60/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 60 - Obscurants, Fire, & Visual Environment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-61/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 61 - Maritime, Acoustic, & EM Environment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-62/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 62 - Human Factors, CBRN, & Air Combat Environment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-63/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 63 - Cross-Module Feedback Loops
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-64/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 64 - C2 Friction & Command Delay
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-65/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 65 - Space & EW Sub-Engine Activation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-66/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 66 - Unconventional, Naval, & Cleanup
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-67/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 67 - Integration Validation & Recalibration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-68/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 68 - Consequence Enforcement
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-69/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 69 - C2 Depth
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-70/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 70 - Performance Optimization
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-71/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 71 - Missile & Carrier Ops Completion
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-72/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 72 - Checkpoint & State Completeness
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-73/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 73 - Historical Scenario Correctness
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-74/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 74 - Combat Engine Unit Tests
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-75/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 75 - Simulation Core & Domain Unit Tests
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-76/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 76 - API Robustness
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-77/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 77 - Frontend Accessibility
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-78/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 78 - P2 Environment Wiring
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-79/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 79 - CI/CD & Packaging
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-80/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 80 - API & Frontend Sync
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-81/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 81 - Recalibration & Validation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-82/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 82 - Block 8 Postmortem & Documentation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-83/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 83 - Profiling Infrastructure
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-84/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 84 - Spatial Culling & Scan Scheduling
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-85/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 85 - LOD & Aggregation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-86/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 86 - Engagement & Calibration Optimization
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-87/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 87 - Expanded Numba JIT
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-88/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 88 - SoA Data Layer
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-89/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 89 - Per-Side Parallelism
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-90/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 90 - Validation & Benchmarking
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-91/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 91 - Scenario Recalibration & Regression
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-92/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 92 - API Analytics & Frame Enrichment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-93/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 93 - Results Dashboard Depth
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-94/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 94 - Tactical Map Enrichment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-95/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 95 - Calibration & Scenario Editor Depth
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-96/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 96 - Analysis & Event Interaction
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-97/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 97 - Data Catalog & Block 10 Validation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-98/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 98 - Shared Prework (Block 11 Golden Scenarios)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-99/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 99 - Debecka Pass 2003 (Block 11)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-100/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 100 - Khafji 1991 (Block 11)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-101/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 101 - Fallujah Phase Line Fran 2004 (Block 11)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-102/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 102 - Bint Jbeil + INS Hanit 2006 (Block 11)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-103/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 103 - Block 11 Polish - OOB + engine gap tightening
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-104/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 104 - Configurable Deployment Modes
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-105/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 105 - Checkpoint State Integrity
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-106/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 106 - API Execution Integrity
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-107/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 107 - Scenario Configuration Wiring
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-108/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 108 - Logistics Runtime Wiring
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-109/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 109 - Equipment Mapping Integrity
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-110/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 110 - ASAT Production Integration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-111/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 111 - Time-on-Target Execution
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_8" >
+        
+          
+          <label class="md-nav__link" for="__nav_8" id="__nav_8_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Specifications
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_8">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Specifications
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../specs/project-structure/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Project Structure
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../specs/checkpoint-state/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Checkpoint State Contract
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../specs/equipment-mapping/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Equipment Mapping and Runtime Loadouts
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../specs/asat-production-integration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ASAT Production Integration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../specs/time-on-target-execution/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Time-on-Target Execution
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../skills-and-hooks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Skills & Hooks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#philosophy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Philosophy
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#phase-98-shared-prework-gap-audit-calibration-conventions-depth-framework" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 98: Shared Prework — Gap Audit, Calibration Conventions, Depth Framework
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Phase 98: Shared Prework — Gap Audit, Calibration Conventions, Depth Framework">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#98a-unitweaponsensor-gap-audit" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        98a: Unit/Weapon/Sensor Gap Audit
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#98b-calibration-target-template" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        98b: Calibration Target Template
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#98c-depth-checklist-framework" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        98c: Depth Checklist Framework
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#98d-calibration-scenarios-registration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        98d: Calibration Scenarios Registration
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#phase-99-debecka-pass-iraq-april-6-2003" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 99: Debecka Pass (Iraq, April 6, 2003)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Phase 99: Debecka Pass (Iraq, April 6, 2003)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#99a-research-research-military" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        99a: Research (/research-military)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#99b-data-authoring" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        99b: Data Authoring
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#99c-scenario-yaml" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        99c: Scenario YAML
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#99d-calibration-loop" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        99d: Calibration Loop
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#99e-regression-test" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        99e: Regression Test
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#99f-ui-walkthrough" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        99f: UI Walkthrough
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#phase-100-khafji-saudi-arabia-january-29-february-1-1991" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 100: Khafji (Saudi Arabia, January 29 – February 1, 1991)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Phase 100: Khafji (Saudi Arabia, January 29 – February 1, 1991)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#100a-research" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        100a: Research
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#100b-data-authoring" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        100b: Data Authoring
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#100c-scenario-yaml" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        100c: Scenario YAML
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#100d-calibration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        100d: Calibration
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#100e-regression-test" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        100e: Regression Test
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#100f-ui-walkthrough" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        100f: UI Walkthrough
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#phase-101-fallujah-phase-line-fran-iraq-november-913-2004" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 101: Fallujah Phase Line Fran (Iraq, November 9–13, 2004)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Phase 101: Fallujah Phase Line Fran (Iraq, November 9–13, 2004)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#101a-research" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        101a: Research
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#101b-data-authoring" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        101b: Data Authoring
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#101c-scenario-yaml" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        101c: Scenario YAML
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#101d-calibration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        101d: Calibration
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#101e-regression-test" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        101e: Regression Test
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#101f-ui-walkthrough" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        101f: UI Walkthrough
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#phase-102-bint-jbeil-ins-hanit-vignette-block-11-validation-lebanon-july-august-2006" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 102: Bint Jbeil + INS Hanit Vignette + Block 11 Validation (Lebanon, July-August 2006)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Phase 102: Bint Jbeil + INS Hanit Vignette + Block 11 Validation (Lebanon, July-August 2006)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#102a-research" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        102a: Research
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#102b-data-authoring" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        102b: Data Authoring
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#102c-scenario-yaml" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        102c: Scenario YAML
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#102d-calibration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        102d: Calibration
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#102e-regression-test" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        102e: Regression Test
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#102f-ui-walkthrough" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        102f: UI Walkthrough
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#102g-block-11-validation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        102g: Block 11 Validation
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#module-index-new-files-expected" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Module Index (New Files Expected)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#summary-table" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Summary Table
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="stochastic-warfare-block-11-development-phases-98-102">Stochastic Warfare -- Block 11 Development Phases (98--102)<a class="headerlink" href="#stochastic-warfare-block-11-development-phases-98-102" title="Permanent link">&para;</a></h1>
+<h2 id="philosophy">Philosophy<a class="headerlink" href="#philosophy" title="Permanent link">&para;</a></h2>
+<p>Block 11 is the <strong>golden scenarios block</strong>. The engine has ~60 domain engines and a UI capable of visualizing their output, but the existing scenario library is too narrow to exercise engine breadth. Block 11 builds four historically-grounded modern-era scenarios, each calibrated to reproduce a documented outcome envelope and each walked through the UI with an explicit depth checklist.</p>
+<p><strong>Design principle</strong>: Zero new engine capabilities. Every scenario uses existing systems. Missing unit/weapon YAML is authored from real-world data.</p>
+<p><strong>Exit criteria</strong>:
+1. Four scenario YAMLs (Debecka Pass, Khafji, Fallujah Phase Line Fran, Bint Jbeil) loadable and runnable
+2. Each scenario's 10-iteration MC matches historical winner in ≥70% of iterations
+3. Each scenario exercises its targeted engine cluster per the coverage matrix in <code>brainstorm-block11.md</code>
+4. Four regression tests in <code>tests/validation/</code> with bounded envelope assertions
+5. Four devlog entries with completed UI walkthrough depth checklists
+6. All new unit/weapon YAMLs have cited real-world sources
+7. No regressions on existing 40+ scenarios
+8. All existing tests pass</p>
+<p><strong>Cross-document alignment</strong>: This document must stay synchronized with <code>brainstorm-block11.md</code> (design thinking), <code>devlog/index.md</code> (phase status + new deficits), and <code>specs/project-structure.md</code> if new module files are added. Run <code>/cross-doc-audit</code> after any structural change.</p>
+<hr />
+<h2 id="phase-98-shared-prework-gap-audit-calibration-conventions-depth-framework">Phase 98: Shared Prework — Gap Audit, Calibration Conventions, Depth Framework<a class="headerlink" href="#phase-98-shared-prework-gap-audit-calibration-conventions-depth-framework" title="Permanent link">&para;</a></h2>
+<p><strong>Status</strong>: Complete. See <a href="../devlog/phase-98/">phase-98.md</a>.</p>
+<p><strong>Goal</strong>: Build the shared infrastructure all four scenarios will consume — a gap audit of missing units/weapons, a calibration target template, and a depth checklist framework. This phase produces no scenario YAML; it produces the scaffolding that makes scenario authoring mechanical.</p>
+<p><strong>Dependencies</strong>: Block 10 complete (Phase 97). UI functional.</p>
+<h3 id="98a-unitweaponsensor-gap-audit">98a: Unit/Weapon/Sensor Gap Audit<a class="headerlink" href="#98a-unitweaponsensor-gap-audit" title="Permanent link">&para;</a></h3>
+<p>Compare each scenario's required OOB against existing data. Produce an explicit gap list per scenario.</p>
+<ul>
+<li><strong>Preliminary research</strong> (one pass per scenario, light touch):</li>
+<li>Debecka Pass: required OOB from Wong (CSI), USASOC historical accounts</li>
+<li>Khafji: required OOB from USMC Gazette, USAF Gulf War studies</li>
+<li>Fallujah: required OOB from USMC History Division (Estes, <em>U.S. Marines in Iraq</em>)</li>
+<li>Bint Jbeil: required OOB from Harel &amp; Issacharoff <em>34 Days</em>, Matthews (CSI) <em>We Were Caught Unprepared</em></li>
+<li><strong>Gap inventory</strong> (one document):</li>
+<li><code>docs/scenarios/gap-audit.md</code> — table of required units/weapons/sensors per scenario, existing-or-missing status, authoring priority</li>
+<li><strong>Naming conventions</strong>:</li>
+<li>Unit type IDs follow existing modern-era pattern: <code>{nation}_{role}_{variant}</code> (e.g., <code>us_sf_odb_team</code>, <code>iraqi_t55_mech</code>)</li>
+<li>Weapon IDs follow: <code>{designation}_{caliber_or_model}</code> (e.g., <code>javelin_cmdl</code>, <code>bb_64_16in</code>)</li>
+<li>Sensor IDs follow: <code>{nation}_{role}_{type}</code> (existing pattern)</li>
+</ul>
+<h3 id="98b-calibration-target-template">98b: Calibration Target Template<a class="headerlink" href="#98b-calibration-target-template" title="Permanent link">&para;</a></h3>
+<p>Define the envelope-based target structure used by every scenario's regression test.</p>
+<ul>
+<li><strong><code>docs/scenarios/calibration-template.md</code></strong> (new) -- Documents:</li>
+<li>How to define a target envelope (winner rate, duration percentiles, casualty percentiles)</li>
+<li>Permitted vs. forbidden calibration overrides (from brainstorm)</li>
+<li>Citation format for historical figures</li>
+<li><strong><code>stochastic_warfare/tools/envelope_check.py</code></strong> (new) -- Helper functions:</li>
+<li><code>check_winner_envelope(results: dict, expected_winner: str, min_rate: float = 0.7) -&gt; tuple[bool, str]</code></li>
+<li><code>check_duration_envelope(results: dict, historical_s: float, tolerance: float = 0.5) -&gt; tuple[bool, str]</code></li>
+<li><code>check_casualty_envelope(results: dict, side: str, historical: int, tolerance: float = 0.4) -&gt; tuple[bool, str]</code></li>
+<li><code>count_destructions_by_weapon(scenario_path: str, weapon_id: str, seed: int) -&gt; int</code></li>
+<li>Used by all four regression tests — keeps assertions consistent</li>
+</ul>
+<h3 id="98c-depth-checklist-framework">98c: Depth Checklist Framework<a class="headerlink" href="#98c-depth-checklist-framework" title="Permanent link">&para;</a></h3>
+<p>Formalize the UI walkthrough checklist so each scenario's verification is reproducible.</p>
+<ul>
+<li><strong><code>docs/scenarios/depth-checklist-template.md</code></strong> (new) -- Template with:</li>
+<li>Results tab checks (Dominant Weapon, Hit Rate, Total Engagements, Peak Suppressed, Rout Cascades)</li>
+<li>Charts tab checks (all 8 charts show non-trivial data)</li>
+<li>Map tab checks (all 5 overlay toggles, engagement flash, 7 sidebar fields, legend)</li>
+<li>Analysis tab checks (filters, engagement detail modal, doctrine compare)</li>
+<li>Scenario-specific expected observations</li>
+<li>Each scenario phase (99–102) copies this template into its devlog entry, pre-filled with expected observations, then checks items off during the walkthrough.</li>
+</ul>
+<h3 id="98d-calibration-scenarios-registration">98d: Calibration Scenarios Registration<a class="headerlink" href="#98d-calibration-scenarios-registration" title="Permanent link">&para;</a></h3>
+<p>The <code>CALIBRATION_SCENARIOS</code> registry (Phase 90) is how validation batch runs discover scenarios. Block 11 scenarios register here after their regression tests pass.</p>
+<ul>
+<li><strong><code>stochastic_warfare/validation/calibration_scenarios.py</code></strong> (modified) -- Add entries for:</li>
+<li><code>debecka_pass_2003</code></li>
+<li><code>khafji_1991</code></li>
+<li><code>fallujah_phase_line_fran_2004</code></li>
+<li><code>bint_jbeil_2006</code></li>
+<li>Each entry is stub until its scenario phase completes; then the phase updates the entry with actual parameters.</li>
+</ul>
+<p><strong>Tests</strong> (~8):
+- <code>envelope_check</code> helpers produce correct pass/fail given synthetic results
+- <code>count_destructions_by_weapon</code> correctly tallies a synthetic event stream
+- Gap audit doc is loadable as structured data (if we format it as YAML or machine-readable table)</p>
+<p><strong>Deliverables summary</strong>:
+- Gap audit doc
+- Calibration template doc
+- Depth checklist template doc
+- Envelope check helper module + tests
+- Calibration scenarios registry stubs</p>
+<hr />
+<h2 id="phase-99-debecka-pass-iraq-april-6-2003">Phase 99: Debecka Pass (Iraq, April 6, 2003)<a class="headerlink" href="#phase-99-debecka-pass-iraq-april-6-2003" title="Permanent link">&para;</a></h2>
+<p><strong>Status</strong>: Complete. See <a href="../devlog/phase-99/">phase-99.md</a>.</p>
+<p><strong>Goal</strong>: First golden scenario. Demonstrates the scenario-authoring pipeline end-to-end on the simplest case. 31 US Special Forces + ~80 Peshmerga defenders engage an Iraqi mechanized battalion advance. Javelin ATGM employment is the defining tactical event; CAS support from F-14D, F-15E, A-10, F-16 layers multi-service joint fires.</p>
+<p><strong>Dependencies</strong>: Phase 98 complete.</p>
+<p><strong>Historical outcome</strong> (from Wong, <em>A Different Kind of War</em>, Combat Studies Institute 2011, and USASOC 3rd SFG AAR):
+- Winner: Blue (US/Peshmerga) — Iraqi force repulsed, withdrew
+- Duration: ~6 hours main engagement
+- Iraqi casualties: estimated 20–30 vehicles destroyed (of ~40 committed), ~100–200 dismounts
+- US casualties: 0 KIA (1 Navy A-10 pilot KIA earlier in war from a different incident) — <em>one friendly-fire JDAM strike wounded multiple team members and killed several Peshmerga; this is a key historical event we do not attempt to reproduce probabilistically</em>
+- Key dynamic: Javelin ATGMs from ~3000m destroyed T-55s and MT-LBs before the Iraqi force could close; CAS finished survivors</p>
+<h3 id="99a-research-research-military">99a: Research (<code>/research-military</code>)<a class="headerlink" href="#99a-research-research-military" title="Permanent link">&para;</a></h3>
+<p>Produce <code>docs/scenarios/debecka_pass.md</code> with:
+- Full OOB (US ODB team composition, Peshmerga strength estimate, Iraqi 34th Bde mech battalion)
+- Terrain description (plains north of Kirkuk, ridgeline, exposed road)
+- Weather (early April, clear, ~15°C)
+- Time of day (mid-day attack)
+- Commander profile (US team aggressive/defensive, Iraqi scripted advance)
+- Doctrine school assignment (US: combined_arms, Iraqi: mass_maneuver or similar)
+- Historical ROE (US: WEAPONS_FREE; Iraqi: scripted advance with organic fires)
+- Envelope parameters (from historical outcome above)</p>
+<h3 id="99b-data-authoring">99b: Data Authoring<a class="headerlink" href="#99b-data-authoring" title="Permanent link">&para;</a></h3>
+<p>Author units/weapons identified in Phase 98's gap audit. Expected:</p>
+<ul>
+<li><strong><code>data/units/infantry/us_sf_odb_team.yaml</code></strong> (new) -- 12-man SF team, M4A1/M240/MK19, Javelin, man-portable</li>
+<li><strong><code>data/units/infantry/peshmerga_infantry.yaml</code></strong> (new) -- Irregular infantry, AK-series, RPG-7, low training</li>
+<li><strong><code>data/units/armor/iraqi_t55_mech.yaml</code></strong> (new or reuse/rename) -- T-55 main gun tank with 100mm</li>
+<li><strong><code>data/units/armor/iraqi_bmp1_mech.yaml</code></strong> (new or confirm existing <code>bmp1.yaml</code> adequate)</li>
+<li><strong><code>data/units/armor/iraqi_mtlb.yaml</code></strong> (new) -- MT-LB APC</li>
+<li><strong><code>data/weapons/javelin_cmdl.yaml</code></strong> (confirm existing or author) -- FGM-148 Javelin, top-attack ATGM</li>
+<li><strong><code>data/weapons/bb_pintle_mk19.yaml</code></strong> (confirm existing)</li>
+<li><strong><code>data/units/air/us_f14d.yaml</code></strong> (new) -- F-14D CAS sortie (LANTIRN pod)</li>
+<li><strong><code>data/units/air/us_a10c.yaml</code></strong> (confirm existing)</li>
+</ul>
+<p>All files cite sources per brainstorm's data authoring discipline.</p>
+<p>Run <code>/validate-data</code> after authoring pass.</p>
+<h3 id="99c-scenario-yaml">99c: Scenario YAML<a class="headerlink" href="#99c-scenario-yaml" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong><code>data/scenarios/debecka_pass/scenario.yaml</code></strong> (new):</li>
+<li><code>duration_hours: 6</code>, <code>tick_duration_seconds: 5.0</code></li>
+<li>Lat/lon: ~35.5°N, 43.8°E</li>
+<li>Weather: clear, 15°C, wind 3 m/s</li>
+<li>Terrain: plains with ridgeline overlay</li>
+<li>Blue: 1× SF ODB team, 4× Peshmerga platoons at ridgeline</li>
+<li>Red: 10× T-55, 6× BMP-1, 4× MT-LB, 12× dismount platoons</li>
+<li>CAS: 2× F-14D sorties, 4× A-10 sorties available via ATO</li>
+<li>Objectives: ridgeline defense, road block</li>
+<li>Victory conditions: force_destroyed (70%), or time_expired</li>
+<li><code>calibration_overrides</code> block: minimal — rely on <code>enable_all_modern</code> and scenario-specific ROE/commander only</li>
+</ul>
+<h3 id="99d-calibration-loop">99d: Calibration Loop<a class="headerlink" href="#99d-calibration-loop" title="Permanent link">&para;</a></h3>
+<p>Run 10-iteration MC. Measure vs. envelope. Iterate.</p>
+<ul>
+<li>Expected first-pass issues: Javelin might not dominate if range/Pk defaults don't reflect top-attack geometry; Iraqi mech might close too fast without terrain channeling</li>
+<li>Permitted adjustments: commander CEV, ROE, weather visibility_m if it affects detection unrealistically</li>
+<li>Forbidden: tuning Javelin Pk above documented range</li>
+</ul>
+<p>Document calibration iterations in devlog.</p>
+<h3 id="99e-regression-test">99e: Regression Test<a class="headerlink" href="#99e-regression-test" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong><code>tests/validation/test_debecka_pass.py</code></strong> (new) -- Uses envelope helpers from Phase 98:</li>
+<li><code>test_debecka_pass_winner_envelope</code> (blue wins ≥7/10)</li>
+<li><code>test_debecka_pass_casualty_envelope</code> (Iraqi losses 15–40, SF losses ≤3)</li>
+<li><code>test_debecka_pass_javelin_dominance</code> (Javelin ≥50% of Iraqi armor kills)</li>
+<li><code>test_debecka_pass_cas_activation</code> (at least 1 CAS engagement per run)</li>
+<li>Marker: <code>@pytest.mark.slow</code> if runtime &gt; 10s</li>
+</ul>
+<h3 id="99f-ui-walkthrough">99f: UI Walkthrough<a class="headerlink" href="#99f-ui-walkthrough" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Spin up API + frontend</li>
+<li>Run scenario from Scenario Browser → Run page</li>
+<li>Walk Results / Charts / Map / Analysis tabs per depth checklist</li>
+<li>Document checklist results in <code>docs/devlog/phase-99.md</code></li>
+<li>File frontend-rendering issues found as follow-up items (do not block phase completion unless scenario unrunnable)</li>
+</ul>
+<p><strong>Tests</strong> (~8 new + regression):
+- Scenario YAML loads without errors
+- 4 regression tests (envelope, casualties, Javelin, CAS)
+- 3 data authoring tests (unit defs have required fields, weapon ranges plausible, ammo compatible)</p>
+<hr />
+<h2 id="phase-100-khafji-saudi-arabia-january-29-february-1-1991">Phase 100: Khafji (Saudi Arabia, January 29 – February 1, 1991)<a class="headerlink" href="#phase-100-khafji-saudi-arabia-january-29-february-1-1991" title="Permanent link">&para;</a></h2>
+<p><strong>Status</strong>: Complete. See <a href="../devlog/phase-100/">phase-100.md</a>.</p>
+<p><strong>Goal</strong>: Second golden scenario. Expands to multi-domain with naval gunfire support. Iraqi 3rd Armored Division and 5th Mechanized Division make a cross-border thrust into Khafji, meet Saudi Task Force Abu Bakr + USMC Marine Reconnaissance + Qatari armor + coalition CAS. First major ground engagement of the Gulf War and a textbook morale cascade as Iraqi units surrender en masse.</p>
+<p><strong>Dependencies</strong>: Phase 99 complete (template validated).</p>
+<p><strong>Historical outcome</strong> (from Grant &amp; Atkinson <em>Crusade</em>, USMC Historical Publication <em>With the 1st Marine Division in Desert Shield and Desert Storm</em>, USAF Gulf War Air Power Survey Vol II):
+- Winner: Coalition (Blue)
+- Duration: ~72 hours main engagement, ~36 hours decisive phase
+- Iraqi casualties: ~2000 KIA, ~400 captured, ~100 tanks/APCs destroyed (mostly by air)
+- Coalition casualties: 43 KIA (11 US Marines, 18 Saudis, 14 Qataris from reports; inc. friendly fire)
+- Naval: USS Wisconsin fired 11× 16" shells at Iraqi artillery positions — first BB gunfire since Korea
+- Key dynamics: air power dominated; Iraqi morale collapsed after initial advance stalled; large-scale surrenders</p>
+<h3 id="100a-research">100a: Research<a class="headerlink" href="#100a-research" title="Permanent link">&para;</a></h3>
+<p><code>docs/scenarios/khafji.md</code> with OOB, phases of battle (night advance, coalition counter, air interdiction, surrender cascade), terrain (urban Khafji + desert approach corridor), Wisconsin fire mission details.</p>
+<h3 id="100b-data-authoring">100b: Data Authoring<a class="headerlink" href="#100b-data-authoring" title="Permanent link">&para;</a></h3>
+<p>Expected gaps:</p>
+<ul>
+<li><strong><code>data/units/naval/us_iowa_class_bb.yaml</code></strong> (new) -- USS Wisconsin, 16"/50 guns, Tomahawk launchers</li>
+<li><strong><code>data/weapons/bb_mk7_16in.yaml</code></strong> (new) -- 16" naval rifle, AP + HC rounds</li>
+<li><strong><code>data/units/armor/saudi_v150_apc.yaml</code></strong> (new) -- Saudi V-150 Commando (Cadillac Gage)</li>
+<li><strong><code>data/units/armor/qatari_amx30.yaml</code></strong> (new) -- Qatari AMX-30B</li>
+<li><strong><code>data/units/air/us_ac130h.yaml</code></strong> (new) -- AC-130H Spectre (first employment in Gulf War)</li>
+<li><strong><code>data/weapons/ac130_105mm_gun.yaml</code></strong> (new)</li>
+<li>Existing unit reuse: Iraqi T-62, T-55, BMP-1, MTLB, dismounts</li>
+</ul>
+<h3 id="100c-scenario-yaml">100c: Scenario YAML<a class="headerlink" href="#100c-scenario-yaml" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Duration: 72 hours (campaign-scale for approach, tactical for town fight)</li>
+<li>Uses <code>tick_resolution</code> hybrid (strategic for approach, tactical for Khafji proper)</li>
+<li>Multi-phase objectives: defend town, interdict approach, eliminate pocketed units</li>
+<li><code>enable_naval_engagement_routing</code> and <code>enable_cas_routing</code> flags on</li>
+<li>Victory weights favor holding Khafji + Iraqi force destruction</li>
+</ul>
+<h3 id="100d-calibration">100d: Calibration<a class="headerlink" href="#100d-calibration" title="Permanent link">&para;</a></h3>
+<p>Expected issue: Iraqi morale cascade must fire. If it doesn't, use <code>morale_degrade_mod</code> and <code>cohesion</code> overrides within documented ranges. If Wisconsin's fire mission doesn't meaningfully shape outcome, investigate whether naval gunfire routing triggers at the engagement ranges involved (+20 km).</p>
+<h3 id="100e-regression-test">100e: Regression Test<a class="headerlink" href="#100e-regression-test" title="Permanent link">&para;</a></h3>
+<ul>
+<li><code>test_khafji_coalition_wins</code> (Coalition ≥7/10)</li>
+<li><code>test_khafji_iraqi_morale_cascade</code> (rout_cascades ≥2 per run)</li>
+<li><code>test_khafji_wisconsin_engagement</code> (at least 1 naval_gunfire event per run)</li>
+<li><code>test_khafji_cas_dominance</code> (air engagements &gt; ground direct fire engagements)</li>
+</ul>
+<h3 id="100f-ui-walkthrough">100f: UI Walkthrough<a class="headerlink" href="#100f-ui-walkthrough" title="Permanent link">&para;</a></h3>
+<p>Depth checklist per template, scenario-specific observations for naval engagement event type, multi-phase timeline, surrender cascades.</p>
+<hr />
+<h2 id="phase-101-fallujah-phase-line-fran-iraq-november-913-2004">Phase 101: Fallujah Phase Line Fran (Iraq, November 9–13, 2004)<a class="headerlink" href="#phase-101-fallujah-phase-line-fran-iraq-november-913-2004" title="Permanent link">&para;</a></h2>
+<p><strong>Status</strong>: Complete. See <a href="../devlog/phase-101/">phase-101.md</a>.</p>
+<p><strong>Goal</strong>: Third golden scenario. Urban combat showcase with unconventional warfare elements. 3rd Battalion, 5th Marines + 2nd Battalion, 7th Cavalry sector advance from Phase Line Fran to Phase Line Jena during Operation Al-Fajr. Heavy IED emplacement, booby-trapped structures, AC-130 gunship support, M1A2 + AAV + LAV-25 combined arms, Iraqi National Guard blocking force.</p>
+<p><strong>Dependencies</strong>: Phase 100 complete.</p>
+<p><strong>Historical outcome</strong> (from Estes, <em>U.S. Marines in Iraq: Anthology and Annotated Bibliography</em>; Bing West, <em>No True Glory</em>; 1st MARDIV Lessons Learned):
+- Winner: Coalition (Blue)
+- Sector: 3/5 Marines + 2/7 Cav took their phase line objectives
+- Duration: ~4 days for Phase Line Fran sector
+- Coalition casualties: ~95 KIA and ~560 WIA across entire Al-Fajr operation; scaled to Phase Line Fran sector: ~15 KIA, ~90 WIA estimated
+- Insurgent casualties: ~1200 KIA estimated across operation; sector: ~200–300
+- Key dynamics: IEDs accounted for ~30% of Marine casualties; AC-130 employment at night; booby-trapped buildings; methodical house-clearance</p>
+<h3 id="101a-research">101a: Research<a class="headerlink" href="#101a-research" title="Permanent link">&para;</a></h3>
+<p><code>docs/scenarios/fallujah_phase_line_fran.md</code> with sector OOB, phase lines, IED density estimates, house-clearance tempo.</p>
+<h3 id="101b-data-authoring">101b: Data Authoring<a class="headerlink" href="#101b-data-authoring" title="Permanent link">&para;</a></h3>
+<p>Expected gaps:</p>
+<ul>
+<li><strong><code>data/units/infantry/us_marine_rifle_squad_urban.yaml</code></strong> (new variant) -- 13-man squad, M16A4, M249, M203, shotgun breacher</li>
+<li><strong><code>data/units/armor/us_m1a2_tusk.yaml</code></strong> (confirm or new) -- TUSK-equipped M1A2 for urban</li>
+<li><strong><code>data/units/armor/us_lav25.yaml</code></strong> (confirm existing)</li>
+<li><strong><code>data/units/armor/us_aavp7.yaml</code></strong> (confirm or new)</li>
+<li><strong><code>data/units/air/us_ac130u.yaml</code></strong> (new) -- AC-130U Spooky with 25mm, 40mm, 105mm</li>
+<li><strong><code>data/units/infantry/iraqi_insurgent_urban.yaml</code></strong> (new variant) -- AK, RPG-7, SVD, IEDs</li>
+<li><strong>IED device definitions</strong> -- tied to existing <code>unconventional_engine</code> with documented density/yield patterns</li>
+<li><strong>Booby-trap building templates</strong> -- fire zone/obscurant interactions</li>
+</ul>
+<h3 id="101c-scenario-yaml">101c: Scenario YAML<a class="headerlink" href="#101c-scenario-yaml" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Duration: 96 hours</li>
+<li>Urban terrain with block-by-block objectives</li>
+<li><code>enable_unconventional_warfare: true</code>, <code>enable_fire_zones: true</code>, <code>enable_obscurants: true</code></li>
+<li>IED density parameter in <code>calibration_overrides</code> — documented from USMC Lessons Learned</li>
+<li>Victory conditions: all phase lines reached, insurgent resistance degraded</li>
+</ul>
+<h3 id="101d-calibration">101d: Calibration<a class="headerlink" href="#101d-calibration" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Expected issue: IED employment under moving units requires <code>enable_ied_trigger</code> from Phase 66 to actually resolve; verify events fire</li>
+<li>Expected issue: AC-130 sortie pattern — CAS queue must support night-only availability</li>
+<li>Forbidden: reducing IED density to "win faster"</li>
+</ul>
+<h3 id="101e-regression-test">101e: Regression Test<a class="headerlink" href="#101e-regression-test" title="Permanent link">&para;</a></h3>
+<ul>
+<li><code>test_fallujah_coalition_wins</code> (Coalition ≥7/10)</li>
+<li><code>test_fallujah_ied_casualties</code> (IED events ≥10 per run)</li>
+<li><code>test_fallujah_ac130_employment</code> (AC-130 engagement events present)</li>
+<li><code>test_fallujah_urban_terrain_effect</code> (engagement outcomes show urban modifier applied)</li>
+</ul>
+<h3 id="101f-ui-walkthrough">101f: UI Walkthrough<a class="headerlink" href="#101f-ui-walkthrough" title="Permanent link">&para;</a></h3>
+<p>Depth checklist includes IED events filterable in Analysis tab, fire zone overlay visible on map (if implemented), urban terrain modifier shown in engagement detail modal.</p>
+<hr />
+<h2 id="phase-102-bint-jbeil-ins-hanit-vignette-block-11-validation-lebanon-july-august-2006">Phase 102: Bint Jbeil + INS Hanit Vignette + Block 11 Validation (Lebanon, July-August 2006)<a class="headerlink" href="#phase-102-bint-jbeil-ins-hanit-vignette-block-11-validation-lebanon-july-august-2006" title="Permanent link">&para;</a></h2>
+<p><strong>Status</strong>: Complete. See <a href="../devlog/phase-102/">phase-102.md</a>.</p>
+<p><strong>Goal</strong>: Fourth golden scenario — the "hardest" one modeling-wise. ATGM-heavy defense against MBT (Kornet vs. Merkava Mk IV), limited EW, urban terrain, Israeli reserve mobilization morale effects. Paired with INS Hanit Harpoon/C-802 Noor missile strike as a naval vignette scenario — technically separate but loaded as the same Block 11 case study for naval missile engagement.</p>
+<p><strong>Dependencies</strong>: Phase 101 complete.</p>
+<p><strong>Historical outcome — Bint Jbeil</strong> (from Harel &amp; Issacharoff <em>34 Days</em>; Matthews CSI <em>We Were Caught Unprepared</em>; Cordesman CSIS):
+- Winner: Contested; operationally, IDF held ground but suffered heavy casualties and did not clear the town decisively within the battle period
+- Duration: ~10 days intermittent combat
+- IDF casualties: 8 KIA in single July 26 ambush; ~15 total for battle period
+- Hezbollah casualties: disputed; IDF claimed ~30-40, independent estimates vary
+- Key dynamics: Kornet and RPG-29 engagements penetrated Merkava armor in several cases; IDF reserve mobilization introduced training/readiness gaps</p>
+<p><strong>Historical outcome — INS Hanit</strong> (ONI reports, Karon <em>The Six-Day War and the Invention of Mass Media</em>):
+- Date: July 14, 2006
+- Missile: C-802 Noor (2 launched, 1 hit Hanit, 1 struck Cambodian freighter)
+- Hanit survival: yes, but 4 KIA, ship returned to port under own power
+- Key dynamic: ship's AEGIS equivalent defenses were reportedly off or misconfigured</p>
+<h3 id="102a-research">102a: Research<a class="headerlink" href="#102a-research" title="Permanent link">&para;</a></h3>
+<p><code>docs/scenarios/bint_jbeil.md</code> + <code>docs/scenarios/ins_hanit.md</code> with OOB, geography (Bint Jbeil town layout; Mediterranean engagement geometry), engagement sequence.</p>
+<p>Political sensitivity: follow guardrails from brainstorm (tactical framing, source discipline, neutral language).</p>
+<h3 id="102b-data-authoring">102b: Data Authoring<a class="headerlink" href="#102b-data-authoring" title="Permanent link">&para;</a></h3>
+<p>Expected gaps:</p>
+<ul>
+<li><strong><code>data/units/armor/idf_merkava_mk4.yaml</code></strong> (new) -- Merkava Mk IV, 120mm smoothbore, Trophy APS (if modeled; else disabled)</li>
+<li><strong><code>data/units/infantry/idf_golani_squad.yaml</code></strong> (new) -- Golani Brigade rifle squad</li>
+<li><strong><code>data/units/infantry/hezbollah_fighter_squad.yaml</code></strong> (new) -- Hezbollah small unit with Kornet/RPG-29/AK</li>
+<li><strong><code>data/weapons/at14_kornet.yaml</code></strong> (new) -- 9M133 Kornet-E ATGM</li>
+<li><strong><code>data/weapons/rpg29_vampir.yaml</code></strong> (new) -- RPG-29 with tandem HEAT</li>
+<li><strong><code>data/units/naval/idf_saar5.yaml</code></strong> (new) -- Sa'ar 5 corvette (INS Hanit)</li>
+<li><strong><code>data/weapons/c802_noor.yaml</code></strong> (new) -- C-802 Noor anti-ship missile</li>
+<li><strong><code>data/units/infantry/hezbollah_atgm_team.yaml</code></strong> (new)</li>
+</ul>
+<h3 id="102c-scenario-yaml">102c: Scenario YAML<a class="headerlink" href="#102c-scenario-yaml" title="Permanent link">&para;</a></h3>
+<p>Bint Jbeil: urban terrain, Hezbollah pre-prepared ATGM ambush positions, IDF armored thrust. Limited EW engagement (modest).</p>
+<p>INS Hanit vignette: naval surface engagement, Lebanese coast, single Harpoon-class inbound missile, defender's ECM/CIWS posture documentable.</p>
+<p>Consider: one combined scenario file with both vignettes, or two separate scenarios? Decision point during Phase 102a research.</p>
+<h3 id="102d-calibration">102d: Calibration<a class="headerlink" href="#102d-calibration" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Kornet Pk vs. Merkava frontal armor: documented from Russian export marketing + IDF AAR; do not tune to force specific outcome</li>
+<li>Hanit's defensive posture: documented as "off" — scenario should reflect that via ECM availability/ROE</li>
+</ul>
+<h3 id="102e-regression-test">102e: Regression Test<a class="headerlink" href="#102e-regression-test" title="Permanent link">&para;</a></h3>
+<ul>
+<li><code>test_bint_jbeil_kornet_penetrations</code> (Kornet destroys ≥1 Merkava per 2 runs)</li>
+<li><code>test_bint_jbeil_idf_casualties_envelope</code> (IDF casualties in historical range)</li>
+<li><code>test_ins_hanit_c802_hit</code> (C-802 hits ship in ≥50% of runs given historical ECM state)</li>
+<li><code>test_ins_hanit_damage_envelope</code> (ship damaged but survives)</li>
+</ul>
+<h3 id="102f-ui-walkthrough">102f: UI Walkthrough<a class="headerlink" href="#102f-ui-walkthrough" title="Permanent link">&para;</a></h3>
+<p>Depth checklist includes naval engagement events, ATGM kill events distinguishable from direct fire, morale effects visible on IDF reserve units.</p>
+<h3 id="102g-block-11-validation">102g: Block 11 Validation<a class="headerlink" href="#102g-block-11-validation" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Re-run all 40+ existing scenarios — confirm zero regressions</li>
+<li>Run full test suite including all four golden scenario tests</li>
+<li>Run <code>/cross-doc-audit</code> — all docs synchronized</li>
+<li>Update <code>MEMORY.md</code> and <code>CLAUDE.md</code> to mark Block 11 complete</li>
+<li>Close block: summary in <code>devlog/phase-102.md</code> with lessons learned across all four scenarios</li>
+</ul>
+<hr />
+<h2 id="module-index-new-files-expected">Module Index (New Files Expected)<a class="headerlink" href="#module-index-new-files-expected" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Module</th>
+<th>Phase</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>docs/brainstorm-block11.md</code></td>
+<td>Pre-98</td>
+<td>Design thinking</td>
+</tr>
+<tr>
+<td><code>docs/development-phases-block11.md</code></td>
+<td>Pre-98</td>
+<td>This document</td>
+</tr>
+<tr>
+<td><code>docs/scenarios/gap-audit.md</code></td>
+<td>98</td>
+<td>Cross-scenario unit/weapon gap inventory</td>
+</tr>
+<tr>
+<td><code>docs/scenarios/calibration-template.md</code></td>
+<td>98</td>
+<td>Envelope definition conventions</td>
+</tr>
+<tr>
+<td><code>docs/scenarios/depth-checklist-template.md</code></td>
+<td>98</td>
+<td>UI walkthrough template</td>
+</tr>
+<tr>
+<td><code>stochastic_warfare/tools/envelope_check.py</code></td>
+<td>98</td>
+<td>Regression test helpers</td>
+</tr>
+<tr>
+<td><code>docs/scenarios/debecka_pass.md</code></td>
+<td>99</td>
+<td>Research brief</td>
+</tr>
+<tr>
+<td><code>data/scenarios/debecka_pass/scenario.yaml</code></td>
+<td>99</td>
+<td>Scenario definition</td>
+</tr>
+<tr>
+<td><code>tests/validation/test_debecka_pass.py</code></td>
+<td>99</td>
+<td>Regression test</td>
+</tr>
+<tr>
+<td><code>docs/scenarios/khafji.md</code></td>
+<td>100</td>
+<td>Research brief</td>
+</tr>
+<tr>
+<td><code>data/scenarios/khafji/scenario.yaml</code></td>
+<td>100</td>
+<td>Scenario definition</td>
+</tr>
+<tr>
+<td><code>tests/validation/test_khafji.py</code></td>
+<td>100</td>
+<td>Regression test</td>
+</tr>
+<tr>
+<td><code>docs/scenarios/fallujah_phase_line_fran.md</code></td>
+<td>101</td>
+<td>Research brief</td>
+</tr>
+<tr>
+<td><code>data/scenarios/fallujah_phase_line_fran/scenario.yaml</code></td>
+<td>101</td>
+<td>Scenario definition</td>
+</tr>
+<tr>
+<td><code>tests/validation/test_fallujah_phase_line_fran.py</code></td>
+<td>101</td>
+<td>Regression test</td>
+</tr>
+<tr>
+<td><code>docs/scenarios/bint_jbeil.md</code></td>
+<td>102</td>
+<td>Research brief</td>
+</tr>
+<tr>
+<td><code>docs/scenarios/ins_hanit.md</code></td>
+<td>102</td>
+<td>Research brief (vignette)</td>
+</tr>
+<tr>
+<td><code>data/scenarios/bint_jbeil_2006/scenario.yaml</code></td>
+<td>102</td>
+<td>Scenario definition</td>
+</tr>
+<tr>
+<td><code>data/scenarios/ins_hanit_2006/scenario.yaml</code></td>
+<td>102</td>
+<td>Naval vignette</td>
+</tr>
+<tr>
+<td><code>tests/validation/test_bint_jbeil.py</code></td>
+<td>102</td>
+<td>Regression test</td>
+</tr>
+<tr>
+<td><code>tests/validation/test_ins_hanit.py</code></td>
+<td>102</td>
+<td>Regression test</td>
+</tr>
+<tr>
+<td>(Many unit/weapon YAMLs)</td>
+<td>99–102</td>
+<td>Per gap audit</td>
+</tr>
+<tr>
+<td><code>tests/validation/test_phase_103_polish.py</code></td>
+<td>103</td>
+<td>OOB + engine gap regression (AGM-65 emission, Iraqi artillery carriers, AIM-7M remap, FAE retagging)</td>
+</tr>
+<tr>
+<td><code>data/units/artillery/iraqi_2s1_battery.yaml</code></td>
+<td>103</td>
+<td>Iraqi 2S1 Gvozdika SP battery (closes Phase 100 orphan-weapon gap)</td>
+</tr>
+<tr>
+<td><code>data/units/artillery/iraqi_2s3_battery.yaml</code></td>
+<td>103</td>
+<td>Iraqi 2S3 Akatsiya SP battery</td>
+</tr>
+<tr>
+<td><code>data/units/artillery/iraqi_frog7_tel.yaml</code></td>
+<td>103</td>
+<td>Iraqi FROG-7 TEL</td>
+</tr>
+<tr>
+<td><code>stochastic_warfare/simulation/deployment.py</code></td>
+<td>104</td>
+<td>Configurable deployment modes (legacy / bounding_box / clustered / doctrinal / manual) + DeploymentConfig + FormationTemplateLoader</td>
+</tr>
+<tr>
+<td><code>data/formations/brigade_attack.yaml</code></td>
+<td>104</td>
+<td>Doctrinal formation template (Tier 1: FM 3-90-1, Leonhard)</td>
+</tr>
+<tr>
+<td><code>data/formations/brigade_defense.yaml</code></td>
+<td>104</td>
+<td>Doctrinal formation template</td>
+</tr>
+<tr>
+<td><code>data/formations/battalion_urban_defense.yaml</code></td>
+<td>104</td>
+<td>Doctrinal formation template (Bint Jbeil Hezbollah)</td>
+</tr>
+<tr>
+<td><code>data/formations/marine_urban_assault.yaml</code></td>
+<td>104</td>
+<td>Doctrinal formation template (Fallujah RCT)</td>
+</tr>
+<tr>
+<td><code>data/formations/mechanized_thrust.yaml</code></td>
+<td>104</td>
+<td>Doctrinal formation template (Khafji Iraqi III Corps three-column)</td>
+</tr>
+<tr>
+<td><code>data/formations/naval_patrol_station.yaml</code></td>
+<td>104</td>
+<td>Doctrinal formation template (Hanit Sa'ar 5)</td>
+</tr>
+<tr>
+<td><code>tests/validation/test_phase_104_deployment.py</code></td>
+<td>104</td>
+<td>Deployment-mode regression + all-golden scenario regression guard</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="summary-table">Summary Table<a class="headerlink" href="#summary-table" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Phase</th>
+<th>Focus</th>
+<th>Tests (est.)</th>
+<th>Primary Engines Exercised</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>98</td>
+<td>Shared prework</td>
+<td>~8</td>
+<td>(N/A — scaffolding)</td>
+</tr>
+<tr>
+<td>99</td>
+<td>Debecka Pass (2003)</td>
+<td>~8</td>
+<td>ATGM, CAS, air defense, C2, morale</td>
+</tr>
+<tr>
+<td>100</td>
+<td>Khafji (1991)</td>
+<td>~8</td>
+<td>Naval gunfire, multi-domain, morale cascade</td>
+</tr>
+<tr>
+<td>101</td>
+<td>Fallujah PL Fran (2004)</td>
+<td>~10</td>
+<td>Urban, IED/UW, AC-130, fire zones</td>
+</tr>
+<tr>
+<td>102</td>
+<td>Bint Jbeil + Hanit (2006)</td>
+<td>~12</td>
+<td>ATGM vs. MBT, naval missile, urban, limited EW</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Block 11 expected total</strong>: ~46 new tests, 4 new scenarios, ~15–25 new unit/weapon YAMLs, 6 new docs.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.tabs", "navigation.sections", "navigation.expand", "navigation.top", "search.suggest", "search.highlight", "content.code.copy"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>
