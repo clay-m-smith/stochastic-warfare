@@ -32,7 +32,7 @@ from stochastic_warfare.simulation.victory import VictoryEvaluator, VictoryResul
 
 logger = get_logger(__name__)
 
-_CHECKPOINT_VERSION = 109
+_CHECKPOINT_VERSION = 110
 
 
 # ---------------------------------------------------------------------------
@@ -779,6 +779,7 @@ class SimulationEngine:
                     em_environment=ctx.conditions_engine,
                     comms_engine=ctx.comms_engine,
                     targets_by_side=ctx.units_by_side,
+                    timestamp=clock.current_time,
                 )
             except Exception:
                 logger.error("Space engine update failed", exc_info=True)
@@ -825,9 +826,6 @@ class SimulationEngine:
 
         # Phase 52d: SIGINT fusion (after space + EW updates)
         self._fuse_sigint()
-
-        # Phase 65b: ASAT structural routing
-        self._attempt_asat_engagements()
 
         # Phase 54: era-specific per-tick engine updates
         era = getattr(ctx.config, "era", "modern")
@@ -1036,21 +1034,6 @@ class SimulationEngine:
                     sigint.attempt_intercept(collector, emitter, timestamp)
                 except Exception:
                     logger.debug("SIGINT intercept failed", exc_info=True)
-
-    # ── Phase 65b: ASAT structural wiring ─────────────────────────────
-
-    def _attempt_asat_engagements(self) -> None:
-        """Route ASAT engagements (structural, data-dormant)."""
-        ctx = self._ctx
-        _cal_65 = getattr(ctx, "calibration", None)
-        if _cal_65 is None or not _cal_65.get("enable_space_effects", False):
-            return
-        space = getattr(ctx, "space_engine", None)
-        if space is None or getattr(space, "asat_engine", None) is None:
-            return
-        # ASAT engagements are strategic — triggered by AI orders, not automatic
-        # Structural placeholder for when ASAT weapon data is available
-        logger.debug("ASAT engine available for engagement routing")
 
     # ── Phase 52d: SIGINT fusion ──────────────────────────────────────
 
@@ -1441,12 +1424,25 @@ class SimulationEngine:
                 "Versionless checkpoints cannot restore a logistics-enabled "
                 "runtime",
             )
+        if (
+            allow_legacy_checkpoint
+            and getattr(
+                getattr(self._ctx.config, "space_config", None),
+                "enable_space",
+                False,
+            )
+        ):
+            raise ValueError(
+                "Versionless checkpoints cannot restore a space-enabled "
+                "runtime",
+            )
         if not allow_legacy_checkpoint:
             expected_engine_keys = set(self.get_state())
             actual_engine_keys = set(state)
             if actual_engine_keys != expected_engine_keys:
                 raise ValueError(
-                    "Checkpoint version 109 engine key topology does not "
+                    f"Checkpoint version {_CHECKPOINT_VERSION} engine key "
+                    "topology does not "
                     "match the runtime: "
                     f"missing={sorted(expected_engine_keys - actual_engine_keys)!r}, "
                     f"extra={sorted(actual_engine_keys - expected_engine_keys)!r}",
@@ -1461,7 +1457,8 @@ class SimulationEngine:
             )
             if missing_morale_keys:
                 raise ValueError(
-                    "Checkpoint version 109 context is missing required "
+                    f"Checkpoint version {_CHECKPOINT_VERSION} context is "
+                    "missing required "
                     f"morale state: {missing_morale_keys!r}",
                 )
             expected_context_keys = set(self._ctx.get_state())
@@ -1469,7 +1466,8 @@ class SimulationEngine:
             actual_context_keys = set(context_state)
             if actual_context_keys != expected_context_keys:
                 raise ValueError(
-                    "Checkpoint version 109 context key topology does not "
+                    f"Checkpoint version {_CHECKPOINT_VERSION} context key "
+                    "topology does not "
                     "match the runtime: "
                     f"missing={sorted(expected_context_keys - actual_context_keys)!r}, "
                     f"extra={sorted(actual_context_keys - expected_context_keys)!r}",
@@ -1479,7 +1477,8 @@ class SimulationEngine:
                 and context_state["morale_machine"] is not None
             ):
                 raise ValueError(
-                    "Checkpoint version 109 contains morale-machine state "
+                    f"Checkpoint version {_CHECKPOINT_VERSION} contains "
+                    "morale-machine state "
                     "for a runtime without a morale machine",
                 )
 

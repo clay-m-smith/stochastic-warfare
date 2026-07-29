@@ -28,7 +28,7 @@ def _make_isr_engine():
 
     rng = np.random.Generator(np.random.PCG64(42))
     bus = EventBus()
-    sc = SpaceConfig()
+    sc = SpaceConfig(theater_lat=0.0, theater_lon=0.0)
     orbits = OrbitalMechanicsEngine()
     cm = ConstellationManager(orbits, bus, rng, sc)
     return SpaceISREngine(cm, sc, bus, rng)
@@ -44,7 +44,7 @@ def _make_early_warning_engine(bus, rng, *, has_ew_constellation=True):
     from stochastic_warfare.space.early_warning import EarlyWarningEngine
     from stochastic_warfare.space.orbits import OrbitalMechanicsEngine
 
-    sc = SpaceConfig()
+    sc = SpaceConfig(theater_lat=0.0, theater_lon=0.0)
     orbits = OrbitalMechanicsEngine()
     cm = ConstellationManager(orbits, bus, rng, sc)
 
@@ -62,6 +62,9 @@ def _make_early_warning_engine(bus, rng, *, has_ew_constellation=True):
                 "semi_major_axis_m": 42_164_000.0,
                 "eccentricity": 0.0,
                 "inclination_deg": 0.0,
+                "raan_deg": 0.0,
+                "arg_perigee_deg": 0.0,
+                "true_anomaly_deg": 0.0,
             },
             detection_delay_s=45.0,
             detection_confidence=0.95,

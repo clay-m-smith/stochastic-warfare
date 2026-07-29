@@ -7,11 +7,12 @@ models, a headless Python engine, FastAPI service, and React frontend. Modern
 warfare is the primary data package, with four historical-era packages and
 integrated maritime warfare.
 
-**Current status**: Phases 105 through 109 are complete; Phase 110 is next. The
-fresh default Python verification is 10,755 passed, 21 skipped, and 348
-deselected. Phase 109 did not change a frontend contract, so the last verified
-frontend baseline remains Phase 108's 418 passing Vitest tests. Blocks 1–11
-remain complete. See
+**Current status**: Phases 105 through 110 are complete. Phase 110 closed
+REM-011 after production validation and postmortem; Phase 111 is next and has
+not started. The fresh default Python verification is 10,804 passed, 21
+skipped, 348 deselected, and 6 warnings. Phase 110 did not change a frontend
+contract, so the last verified frontend baseline remains Phase 108's 418
+passing Vitest tests. Blocks 1–11 remain complete. See
 `docs/remediation-backlog.md` for current evidence and unresolved gaps.
 
 ## Python & Package Management
@@ -184,7 +185,7 @@ All phase details are in `docs/devlog/` (one file per phase). Per-phase tables i
 | Block 9 | 83–91 | Profiling, spatial culling, LOD, Numba JIT, SoA data layer, per-side parallelism, benchmarking | ~279 |
 | Block 10 | 92–97 | UI depth: analytics endpoints, dashboard charts, map overlays, calibration editor, event filtering, data catalogs | ~120 |
 | Block 11 | 98–104 | Golden scenarios plus OOB, engine, and deployment polish | ~107 |
-| Block 12 | 105–114 | Production-path integrity remediation; Phases 105–109 complete, Phase 110 next | 588 focused tests through Phase 109 |
+| Block 12 | 105–114 | Production-path integrity remediation; Phase 110 complete, Phase 111 next | 638 phase-focused tests through Phase 110 |
 
 ### Block 11 Detail (COMPLETE)
 

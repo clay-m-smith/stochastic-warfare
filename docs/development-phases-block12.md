@@ -109,11 +109,23 @@ validation counts, and residual trust items.
 
 ## Phase 110 - ASAT Production Integration
 
+**Status: Complete.**
+
 Replace the placeholder hook with a gated production path that uses real
 satellite and weapon state and persists its effects.
 
 Exit criteria: REM-011 has enabled/disabled controls and an observable satellite
 outcome.
+
+Delivered behavior includes strict typed constellation/weapon catalogs,
+scenario-owned finite ASAT assets and exact-target orders, deterministic
+logical-time execution, manager-owned satellite/debris transitions, same-tick
+space-service effects, recorder/API exposure, and schema-110 whole-runtime
+checkpoint continuation. Direct-ascent kinetic intercepts are the only
+supported production ASAT type; co-orbital and laser definitions fail
+explicitly. See
+[`phase-110.md`](devlog/phase-110.md) for production controls, scenario rows,
+validation counts, and accepted limits.
 
 ## Phase 111 - Time-on-Target Execution
 
@@ -138,6 +150,8 @@ the production loop.
   reports only as informational diagnostics.
 - Reject missing commander-profile references that currently warn per unit
   while the evaluator reports a successful scenario.
+- Replace generic Space ISR report checkpoint dictionaries with a typed,
+  semantically validated state/rehydration boundary.
 - Validate crew-skill enums eagerly and stop historical force construction from
   treating arbitrary `KeyError` failures as absent unit definitions.
 - Make scenario diagnostics distinguish legitimate corrected weapon-range
@@ -147,9 +161,9 @@ the production loop.
 - Reconcile public capability and status claims with the remediation evidence.
 
 Exit criteria: REM-013, REM-014, REM-017, REM-022, REM-023, REM-024, REM-025,
-and REM-026 are closed, REM-015 remains green, all relevant suites are reported
-explicitly, and the phase postmortem identifies any newly discovered backlog
-items.
+REM-026, and REM-027 are closed, REM-015 remains green, all relevant suites are
+reported explicitly, and the phase postmortem identifies any newly discovered
+backlog items.
 
 ## Phase 113 - Morale State Ownership
 

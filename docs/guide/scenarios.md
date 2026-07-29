@@ -207,7 +207,8 @@ ew_config:                           # Electronic Warfare
 
 space_config:                        # Space & Satellite
   enable_space: true
-  gps_constellation: gps_navstar
+  constellation_ids:
+    - gps_navstar
   enable_asat: false
 
 cbrn_config:                         # CBRN Effects
@@ -276,8 +277,8 @@ documented_outcomes:
 | **Falklands San Carlos** | San Carlos air raids | 8 hr | Air defense, naval |
 | **Falklands Goose Green** | 2 PARA assault | 12 hr | Infantry, combined arms |
 | **Golan Campaign** | Full Yom Kippur War Golan sector | Multi-day | Defensive campaign |
-| **Taiwan Strait** | Carrier strike vs amphibious assault | 72 hr | Air-naval, EW, escalation |
-| **Korean Peninsula** | Combined arms defense | 48 hr | CBRN, combined arms |
+| **Taiwan Strait** | Carrier strike vs amphibious assault | 24 hr | Air-naval, EW, escalation |
+| **Korean Peninsula** | Combined arms defense | 96 hr | CBRN, combined arms |
 | **Suwalki Gap** | NATO defense of Baltic corridor | 72 hr | EW, doctrinal schools |
 | **Hybrid Gray Zone** | SOF, insurgency, escalation | 168 hr | Unconventional, escalation |
 
@@ -287,7 +288,7 @@ documented_outcomes:
 |----------|-------------|----------|--------------|
 | **Space GPS Denial** | GPS jamming/spoofing effects | 4 hr | Space, EW |
 | **Space ISR Gap** | Satellite coverage gaps | 24 hr | Space ISR |
-| **Space ASAT Escalation** | Anti-satellite warfare | 48 hr | ASAT, debris, escalation |
+| **Space ASAT Escalation** | Hypothetical catalog-backed exact-target direct-ascent strike | 12 hr | Finite ASAT asset, debris, enabled/disabled control |
 | **CBRN Chemical Defense** | Chemical attack and protection | 4 hr | CBRN, MOPP |
 | **CBRN Nuclear Tactical** | Tactical nuclear exchange | 2 hr | Nuclear, EMP, fallout |
 | **Halabja 1988** | Chemical attack on civilians | 4 hr | CBRN, civilian population |

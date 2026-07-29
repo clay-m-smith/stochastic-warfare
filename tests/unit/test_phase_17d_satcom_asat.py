@@ -8,14 +8,24 @@ import numpy as np
 import pytest
 
 from stochastic_warfare.core.events import EventBus
-from stochastic_warfare.space.asat import ASATEngine, ASATType, ASATWeaponDefinition, DebrisCloud
+from stochastic_warfare.space.asat import ASATEngine, DebrisCloud
+from stochastic_warfare.space.config import (
+    ASATAssetConfig,
+    ASATOrderConfig,
+    ASATType,
+    ASATWeaponDefinition,
+)
 from stochastic_warfare.space.constellations import (
     ConstellationDefinition,
     ConstellationManager,
     ConstellationType,
     SpaceConfig,
 )
-from stochastic_warfare.space.events import DebrisCascadeEvent
+from stochastic_warfare.space.events import (
+    ASATEngagementEvent,
+    ConstellationDegradedEvent,
+    DebrisCascadeEvent,
+)
 from stochastic_warfare.space.orbits import OrbitalMechanicsEngine
 from stochastic_warfare.space.satcom import SATCOMEngine
 
@@ -42,7 +52,11 @@ def _satcom_constellation(side: str = "blue") -> ConstellationDefinition:
         num_satellites=10,
         orbital_elements_template={
             "semi_major_axis_m": 42_164_000.0,
+            "eccentricity": 0.0,
             "inclination_deg": 0.0,
+            "raan_deg": 0.0,
+            "arg_perigee_deg": 0.0,
+            "true_anomaly_deg": 0.0,
         },
         plane_count=1,
         sats_per_plane=10,
@@ -58,7 +72,11 @@ def _gps_constellation(side: str = "blue") -> ConstellationDefinition:
         num_satellites=24,
         orbital_elements_template={
             "semi_major_axis_m": 26_559_700.0,
+            "eccentricity": 0.0,
             "inclination_deg": 55.0,
+            "raan_deg": 0.0,
+            "arg_perigee_deg": 0.0,
+            "true_anomaly_deg": 0.0,
         },
         plane_count=6,
         sats_per_plane=4,
@@ -76,6 +94,8 @@ def _sm3_weapon() -> ASATWeaponDefinition:
         min_altitude_km=200.0,
         closing_velocity_mps=10000.0,
         reload_time_s=3600.0,
+        dazzle_duration_s=0.0,
+        dazzle_range_km=0.0,
     )
 
 
@@ -84,10 +104,56 @@ def _laser_dazzle_weapon() -> ASATWeaponDefinition:
         weapon_id="laser_dazzle",
         display_name="Ground Laser Dazzle",
         asat_type=int(ASATType.GROUND_LASER_DAZZLE),
+        lethal_radius_m=0.0,
+        guidance_sigma_m=0.0,
         max_altitude_km=2000.0,
         min_altitude_km=200.0,
+        closing_velocity_mps=0.0,
+        reload_time_s=0.0,
         dazzle_duration_s=300.0,
         dazzle_range_km=1000.0,
+    )
+
+
+def _laser_destruct_weapon() -> ASATWeaponDefinition:
+    return ASATWeaponDefinition(
+        weapon_id="laser_destruct",
+        display_name="Ground Laser Destruct",
+        asat_type=int(ASATType.GROUND_LASER_DESTRUCT),
+        lethal_radius_m=0.0,
+        guidance_sigma_m=0.0,
+        max_altitude_km=30000.0,
+        min_altitude_km=200.0,
+        closing_velocity_mps=0.0,
+        reload_time_s=0.0,
+        dazzle_duration_s=0.0,
+        dazzle_range_km=0.0,
+    )
+
+
+def _kinetic_weapon(
+    *,
+    weapon_id: str = "test_kkv",
+    lethal_radius_m: float = 5.0,
+    guidance_sigma_m: float = 0.1,
+    min_altitude_km: float = 200.0,
+    max_altitude_km: float = 30000.0,
+    closing_velocity_mps: float = 10000.0,
+    reload_time_s: float = 3600.0,
+    asat_type: ASATType = ASATType.DIRECT_ASCENT_KKV,
+) -> ASATWeaponDefinition:
+    return ASATWeaponDefinition(
+        weapon_id=weapon_id,
+        display_name=weapon_id,
+        asat_type=int(asat_type),
+        lethal_radius_m=lethal_radius_m,
+        guidance_sigma_m=guidance_sigma_m,
+        min_altitude_km=min_altitude_km,
+        max_altitude_km=max_altitude_km,
+        closing_velocity_mps=closing_velocity_mps,
+        reload_time_s=reload_time_s,
+        dazzle_duration_s=0.0,
+        dazzle_range_km=0.0,
     )
 
 
@@ -103,15 +169,69 @@ def _setup_satcom():
     return satcom, cm
 
 
-def _setup_asat():
+def _setup_asat(
+    *,
+    weapon: ASATWeaponDefinition | None = None,
+    target_ids: tuple[str, ...] = ("gps_navstar_p0_s0",),
+    execute_times_s: tuple[float, ...] | None = None,
+    rounds_available: int | None = None,
+    enable_asat: bool = True,
+    event_bus: EventBus | None = None,
+    rng_seed: int = 42,
+    **config_overrides,
+):
+    weapon = weapon or _kinetic_weapon()
+    execute_times_s = execute_times_s or tuple(
+        0.0 for _target_id in target_ids
+    )
+    if len(execute_times_s) != len(target_ids):
+        raise ValueError("one execution time is required for each target")
+    asset = ASATAssetConfig(
+        asset_id="blue_asat_1",
+        weapon_id=weapon.weapon_id,
+        side="blue",
+        rounds_available=(
+            len(target_ids)
+            if rounds_available is None
+            else rounds_available
+        ),
+    )
+    orders = [
+        ASATOrderConfig(
+            order_id=f"order_{index}",
+            asset_id=asset.asset_id,
+            target_satellite_id=target_id,
+            execute_at_s=execute_time_s,
+        )
+        for index, (target_id, execute_time_s) in enumerate(
+            zip(target_ids, execute_times_s, strict=True),
+        )
+    ]
     orbits = OrbitalMechanicsEngine()
-    bus = _bus()
-    rng = _rng()
-    cfg = _config(debris_fragment_mean=100.0)
+    bus = event_bus or _bus()
+    rng = _rng(rng_seed)
+    cfg = _config(
+        constellation_ids=["gps_navstar"],
+        enable_asat=enable_asat,
+        asat_assets=[asset],
+        asat_orders=orders,
+        debris_fragment_mean=100.0,
+        **config_overrides,
+    )
     clock = make_clock()
     cm = ConstellationManager(orbits, bus, rng, cfg)
-    cm.add_constellation(_gps_constellation())
-    asat = ASATEngine(cm, cfg, bus, rng, clock)
+    cm.add_constellation(_gps_constellation(side="red"))
+    asat = ASATEngine(
+        cm,
+        cfg,
+        bus,
+        rng,
+        clock,
+        weapon_definitions={weapon.weapon_id: weapon},
+        assets=cfg.asat_assets,
+        orders=cfg.asat_orders,
+        configuration_fingerprint="f" * 64,
+    )
     return asat, cm
 
 
@@ -190,76 +310,85 @@ class TestSATCOMReliability:
 
 class TestASATKinetic:
     def test_pk_computation(self) -> None:
-        """Kinetic Pk = 1 - exp(-(R_lethal/σ_eff)²/2)."""
+        """Kinetic Pk is the Rayleigh radial-error CDF."""
         asat, _ = _setup_asat()
         weapon = _sm3_weapon()
-        sigma_eff = weapon.guidance_sigma_m * (1.0 + weapon.closing_velocity_mps / 7500.0)
-        ratio = weapon.lethal_radius_m / sigma_eff
-        expected_pk = 1.0 - math.exp(-0.5 * ratio ** 2)
+        ratio = weapon.lethal_radius_m / weapon.guidance_sigma_m
+        expected_pk = 1.0 - math.exp(-0.5 * ratio**2)
         computed = asat._compute_kinetic_pk(weapon, 1000.0)
         assert abs(computed - expected_pk) < 1e-6
 
     def test_altitude_range(self) -> None:
         """Weapon can't engage below min or above max altitude."""
-        asat, cm = _setup_asat()
-        weapon = ASATWeaponDefinition(
+        weapon = _kinetic_weapon(
             weapon_id="short_range",
-            asat_type=int(ASATType.DIRECT_ASCENT_KKV),
             max_altitude_km=500.0,
             min_altitude_km=400.0,
             lethal_radius_m=1.0,
             guidance_sigma_m=0.5,
         )
-        asat.register_weapon(weapon, "blue")
+        asat, _ = _setup_asat(weapon=weapon)
         # GPS is at ~20200km — way above 500km max
-        sat = cm.get_satellite("gps_navstar_p0_s0")
-        result = asat.engage("short_range", sat.satellite_id, "blue", 0.0, TS)
-        assert result["error"] == "out_of_range"
+        result = asat.execute_due_orders(0.0, TS)[0]
+        assert result["launched"] is False
+        assert result["outcome"] == "rejected"
+        assert result["reason"] == "target_out_of_range"
+        assert result["rounds_remaining"] == 1
 
     def test_velocity_effect(self) -> None:
-        """Higher closing velocity → higher σ_eff → lower Pk."""
+        """Closing velocity does not alter the declared radial-error Pk."""
         asat, _ = _setup_asat()
-        w_slow = ASATWeaponDefinition(
-            weapon_id="slow", asat_type=0,
-            lethal_radius_m=1.0, guidance_sigma_m=0.5,
+        w_slow = _kinetic_weapon(
+            weapon_id="slow",
+            lethal_radius_m=1.0,
+            guidance_sigma_m=0.5,
             closing_velocity_mps=1000.0,
         )
-        w_fast = ASATWeaponDefinition(
-            weapon_id="fast", asat_type=0,
-            lethal_radius_m=1.0, guidance_sigma_m=0.5,
+        w_fast = _kinetic_weapon(
+            weapon_id="fast",
+            lethal_radius_m=1.0,
+            guidance_sigma_m=0.5,
             closing_velocity_mps=15000.0,
         )
         pk_slow = asat._compute_kinetic_pk(w_slow, 1000.0)
         pk_fast = asat._compute_kinetic_pk(w_fast, 1000.0)
-        assert pk_slow > pk_fast
+        assert pk_slow == pytest.approx(pk_fast)
 
     def test_reload(self) -> None:
-        """Can't fire again before reload time."""
-        asat, cm = _setup_asat()
-        weapon = _sm3_weapon()
-        weapon = ASATWeaponDefinition(
-            **{**weapon.model_dump(), "max_altitude_km": 30000.0}
+        """A finite asset cannot execute a second order before reload."""
+        weapon = _kinetic_weapon(
+            weapon_id="reload_kkv",
+            reload_time_s=3600.0,
         )
-        asat.register_weapon(weapon, "blue")
-        sat = cm.get_satellite("gps_navstar_p0_s0")
-        asat.engage(weapon.weapon_id, sat.satellite_id, "blue", 0.0, TS)
-        # Try immediately again
-        result = asat.engage(weapon.weapon_id, "gps_navstar_p0_s1", "blue", 1.0, TS)
-        assert result["error"] == "reloading"
+        asat, _ = _setup_asat(
+            weapon=weapon,
+            target_ids=("gps_navstar_p0_s0", "gps_navstar_p0_s1"),
+            execute_times_s=(0.0, 1.0),
+            rounds_available=2,
+        )
+        first = asat.execute_due_orders(0.0, TS)[0]
+        second = asat.execute_due_orders(1.0, TS)[0]
+        assert first["launched"] is True
+        assert first["rounds_remaining"] == 1
+        assert second["launched"] is False
+        assert second["outcome"] == "rejected"
+        assert second["reason"] == "asset_reloading"
+        assert second["rounds_remaining"] == 1
 
     def test_out_of_range_min(self) -> None:
         """Target below minimum altitude rejected."""
-        asat, cm = _setup_asat()
-        weapon = ASATWeaponDefinition(
-            weapon_id="hi_only", asat_type=0,
-            min_altitude_km=25000.0, max_altitude_km=30000.0,
-            lethal_radius_m=1.0, guidance_sigma_m=0.5,
+        weapon = _kinetic_weapon(
+            weapon_id="hi_only",
+            min_altitude_km=25000.0,
+            max_altitude_km=30000.0,
+            lethal_radius_m=1.0,
+            guidance_sigma_m=0.5,
         )
-        asat.register_weapon(weapon, "blue")
-        sat = cm.get_satellite("gps_navstar_p0_s0")
-        result = asat.engage("hi_only", sat.satellite_id, "blue", 0.0, TS)
+        asat, _ = _setup_asat(weapon=weapon)
+        result = asat.execute_due_orders(0.0, TS)[0]
         # GPS at ~20200km < 25000km min
-        assert result["error"] == "out_of_range"
+        assert result["launched"] is False
+        assert result["reason"] == "target_out_of_range"
 
 
 # ---------------------------------------------------------------------------
@@ -267,63 +396,45 @@ class TestASATKinetic:
 # ---------------------------------------------------------------------------
 
 
-class TestASATLaser:
-    def test_dazzle(self) -> None:
-        """Laser dazzle temporarily marks satellite as dazzled."""
-        asat, cm = _setup_asat()
-        weapon = _laser_dazzle_weapon()
-        weapon = ASATWeaponDefinition(
-            **{**weapon.model_dump(), "max_altitude_km": 30000.0}
-        )
-        asat.register_weapon(weapon, "blue")
-        sat = cm.get_satellite("gps_navstar_p0_s0")
-        result = asat.engage(weapon.weapon_id, sat.satellite_id, "blue", 0.0, TS)
-        assert result["hit"] is True
-        assert asat.is_dazzled(sat.satellite_id)
+class TestUnsupportedASATTypes:
+    def test_dazzle_is_explicitly_unsupported(self) -> None:
+        """Configured laser dazzle fails instead of proxying a kinetic action."""
+        with pytest.raises(
+            ValueError,
+            match="unsupported production type GROUND_LASER_DAZZLE",
+        ):
+            _setup_asat(weapon=_laser_dazzle_weapon())
 
-    def test_dazzle_duration(self) -> None:
-        """Dazzle expires after duration."""
-        asat, cm = _setup_asat()
-        weapon = _laser_dazzle_weapon()
-        weapon = ASATWeaponDefinition(
-            **{**weapon.model_dump(), "max_altitude_km": 30000.0}
-        )
-        asat.register_weapon(weapon, "blue")
-        sat = cm.get_satellite("gps_navstar_p0_s0")
-        asat.engage(weapon.weapon_id, sat.satellite_id, "blue", 0.0, TS)
-        # Before expiry
-        assert asat.is_dazzled(sat.satellite_id)
-        # After expiry
-        asat.update(0.0, 400.0)  # 400s > 300s dazzle
-        assert not asat.is_dazzled(sat.satellite_id)
+    def test_disabled_dazzle_topology_is_still_rejected(self) -> None:
+        """Disabling execution does not make unsupported topology valid."""
+        with pytest.raises(
+            ValueError,
+            match="unsupported production type GROUND_LASER_DAZZLE",
+        ):
+            _setup_asat(
+                weapon=_laser_dazzle_weapon(),
+                enable_asat=False,
+            )
 
-    def test_permanent_destruct(self) -> None:
-        """Laser destruct permanently kills satellite (no debris)."""
-        asat, cm = _setup_asat()
-        weapon = ASATWeaponDefinition(
-            weapon_id="laser_kill",
-            asat_type=int(ASATType.GROUND_LASER_DESTRUCT),
-            max_altitude_km=30000.0,
-            min_altitude_km=200.0,
-        )
-        asat.register_weapon(weapon, "blue")
-        sat = cm.get_satellite("gps_navstar_p0_s0")
-        result = asat.engage(weapon.weapon_id, sat.satellite_id, "blue", 0.0, TS)
-        assert result["debris_generated"] == 0
-        if result["hit"]:
-            assert not sat.is_active
+    def test_laser_destruct_is_explicitly_unsupported(self) -> None:
+        """Configured laser destruction is rejected at construction."""
+        with pytest.raises(
+            ValueError,
+            match="unsupported production type GROUND_LASER_DESTRUCT",
+        ):
+            _setup_asat(weapon=_laser_destruct_weapon())
 
-    def test_laser_range(self) -> None:
-        """Higher altitude reduces Pk for laser destruct."""
-        asat, cm = _setup_asat()
-        weapon = ASATWeaponDefinition(
-            weapon_id="lk", asat_type=int(ASATType.GROUND_LASER_DESTRUCT),
-            max_altitude_km=30000.0, min_altitude_km=200.0,
+    def test_coorbital_is_explicitly_unsupported(self) -> None:
+        """Configured co-orbital weapons are rejected at construction."""
+        weapon = _kinetic_weapon(
+            weapon_id="coorbital",
+            asat_type=ASATType.CO_ORBITAL,
         )
-        # Pk = max(0.1, min(0.9, 1 - alt/max_alt))
-        pk_low = max(0.1, min(0.9, 1.0 - 500.0 / 30000.0))  # 500km
-        pk_high = max(0.1, min(0.9, 1.0 - 20000.0 / 30000.0))  # 20000km
-        assert pk_low > pk_high
+        with pytest.raises(
+            ValueError,
+            match="unsupported production type CO_ORBITAL",
+        ):
+            _setup_asat(weapon=weapon)
 
 
 # ---------------------------------------------------------------------------
@@ -333,34 +444,31 @@ class TestASATLaser:
 
 class TestDebris:
     def test_poisson_count(self) -> None:
-        """Debris count is Poisson distributed."""
-        asat, cm = _setup_asat()
-        weapon = ASATWeaponDefinition(
-            weapon_id="kkv", asat_type=0,
-            lethal_radius_m=5.0, guidance_sigma_m=0.1,
-            max_altitude_km=30000.0,
-            closing_velocity_mps=10000.0,
-        )
-        asat.register_weapon(weapon, "blue")
-        sat = cm.get_satellite("gps_navstar_p0_s0")
-        result = asat.engage("kkv", sat.satellite_id, "blue", 0.0, TS)
-        if result["hit"]:
-            assert result["debris_generated"] > 0
+        """A configured high-Pk kinetic hit samples positive Poisson debris."""
+        received: list[ASATEngagementEvent] = []
+        bus = _bus()
+        bus.subscribe(ASATEngagementEvent, received.append)
+        asat, _ = _setup_asat(event_bus=bus)
+        result = asat.execute_due_orders(0.0, TS)[0]
+        assert result["hit"] is True
+        assert result["outcome"] == "hit"
+        assert result["debris_generated"] > 0
+        assert len(received) == 1
+        assert received[0].debris_generated == result["debris_generated"]
 
     def test_cloud_creation(self) -> None:
         """Kinetic kill creates a debris cloud."""
-        asat, cm = _setup_asat()
-        weapon = ASATWeaponDefinition(
-            weapon_id="kkv2", asat_type=0,
-            lethal_radius_m=5.0, guidance_sigma_m=0.1,
-            max_altitude_km=30000.0,
-            closing_velocity_mps=10000.0,
-        )
-        asat.register_weapon(weapon, "blue")
-        sat = cm.get_satellite("gps_navstar_p0_s0")
-        result = asat.engage("kkv2", sat.satellite_id, "blue", 0.0, TS)
-        if result["hit"]:
-            assert len(asat._debris_clouds) >= 1
+        asat, _ = _setup_asat()
+        result = asat.execute_due_orders(0.0, TS)[0]
+        state = asat.get_state()
+        assert result["hit"] is True
+        assert state["debris_clouds"] == [
+            {
+                "altitude_band_km": pytest.approx(20188.7, abs=1.0),
+                "debris_count": result["debris_generated"],
+                "age_s": 0.0,
+            },
+        ]
 
     def test_altitude_band(self) -> None:
         """Debris cloud is at the target satellite's altitude."""
@@ -372,17 +480,9 @@ class TestDebris:
         """Same seed → same debris count."""
         counts = []
         for _ in range(2):
-            asat, cm = _setup_asat()
-            weapon = ASATWeaponDefinition(
-                weapon_id="det", asat_type=0,
-                lethal_radius_m=5.0, guidance_sigma_m=0.1,
-                max_altitude_km=30000.0,
-                closing_velocity_mps=10000.0,
-            )
-            asat.register_weapon(weapon, "blue")
-            sat = cm.get_satellite("gps_navstar_p0_s0")
-            result = asat.engage("det", sat.satellite_id, "blue", 0.0, TS)
-            counts.append(result.get("debris_generated", 0))
+            asat, _ = _setup_asat()
+            result = asat.execute_due_orders(0.0, TS)[0]
+            counts.append(result["debris_generated"])
         assert counts[0] == counts[1]
 
 
@@ -403,11 +503,23 @@ class TestCascade:
 
     def test_cascade_bounded(self) -> None:
         """Collision probability capped at 0.1."""
-        asat, cm = _setup_asat()
-        # Add massive debris cloud
-        asat._debris_clouds.append(DebrisCloud(20000.0, 100000))
-        # Update should not crash
+        bus = _bus()
+        received: list[DebrisCascadeEvent] = []
+        bus.subscribe(DebrisCascadeEvent, received.append)
+        asat, _ = _setup_asat(
+            event_bus=bus,
+            debris_collision_prob_per_orbit=0.001,
+        )
+        state = asat.get_state()
+        state["debris_clouds"] = [{
+            "altitude_band_km": 20000.0,
+            "debris_count": 100000,
+            "age_s": 0.0,
+        }]
+        asat.set_state(state)
         asat.update_debris(3600.0, 3600.0)
+        assert received
+        assert received[0].collision_probability_per_orbit == 0.1
 
     def test_debris_aging(self) -> None:
         """Debris age tracks correctly."""
@@ -417,21 +529,31 @@ class TestCascade:
         assert cloud.age_s == 3600.0
 
     def test_cascade_event(self) -> None:
-        """High debris triggers DebrisCascadeEvent."""
+        """A real hit can cascade through the canonical manager boundary."""
         bus = _bus()
-        received = []
-        bus.subscribe(DebrisCascadeEvent, received.append)
+        cascades: list[DebrisCascadeEvent] = []
+        degradations: list[ConstellationDegradedEvent] = []
+        bus.subscribe(DebrisCascadeEvent, cascades.append)
+        bus.subscribe(ConstellationDegradedEvent, degradations.append)
+        asat, cm = _setup_asat(
+            event_bus=bus,
+            rng_seed=0,
+            debris_collision_prob_per_orbit=1.0,
+        )
+        result = asat.execute_due_orders(0.0, TS)[0]
+        assert result["hit"] is True
+        assert cm.active_count("gps_navstar") == 23
 
-        orbits = OrbitalMechanicsEngine()
-        rng = _rng()
-        cfg = _config(debris_collision_prob_per_orbit=0.01)
-        cm = ConstellationManager(orbits, bus, rng, cfg)
-        cm.add_constellation(_gps_constellation())
-        asat = ASATEngine(cm, cfg, bus, rng)
-        # Add debris cloud that triggers event (count * prob > 0.01)
-        asat._debris_clouds.append(DebrisCloud(20000.0, 10))
-        asat.update_debris(3600.0, 3600.0)
-        assert len(received) >= 1
+        asat.update_debris(3600.0, 3600.0, TS)
+
+        assert len(cascades) == 1
+        assert cascades[0].collision_probability_per_orbit == 0.1
+        assert [event.cause for event in degradations] == [
+            "asat_kinetic",
+            "debris",
+        ]
+        assert cm.active_count("gps_navstar") == 22
+        assert cm.get_satellite("gps_navstar_p0_s1").is_active is False
 
 
 # ---------------------------------------------------------------------------
@@ -485,16 +607,13 @@ class TestCommsIntegration:
 class TestASATState:
     def test_roundtrip(self) -> None:
         asat, _ = _setup_asat()
-        asat._last_fire_time["w1"] = 100.0
-        asat._dazzled_sats["s1"] = 500.0
-        asat._debris_clouds.append(DebrisCloud(500.0, 100))
-
+        result = asat.execute_due_orders(0.0, TS)[0]
+        assert result["hit"] is True
         state = asat.get_state()
         asat2, _ = _setup_asat()
         asat2.set_state(state)
-        assert asat2._last_fire_time["w1"] == 100.0
-        assert asat2._dazzled_sats["s1"] == 500.0
-        assert len(asat2._debris_clouds) == 1
+        assert asat2.get_state() == state
+        assert asat2.execute_due_orders(1.0, TS) == []
 
     def test_satcom_state(self) -> None:
         satcom, _ = _setup_satcom()

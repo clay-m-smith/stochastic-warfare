@@ -286,7 +286,7 @@ stochastic-warfare/
 │       ├── gulf_war_ew_1991/      # Phase 16: Gulf War EW campaign validation (Coalition vs Iraqi IADS)
 │       ├── space_gps_denial/      # Phase 17: PGM accuracy comparison (full GPS vs degraded vs denied)
 │       ├── space_isr_gap/         # Phase 17: Satellite overpass gap exploitation validation
-│       ├── space_asat_escalation/ # Phase 17: Kinetic ASAT cascading constellation degradation
+│       ├── space_asat_escalation/ # Phase 110: Catalog-backed exact-target direct-ascent ASAT validation
 │       ├── cbrn_chemical_defense/ # Phase 18: Chemical attack on defended position (dispersal, MOPP, casualties)
 │       ├── cbrn_nuclear_tactical/ # Phase 18: Tactical nuclear weapon blast/EMP/fallout validation
 │       ├── halabja_1988/         # Phase 24: Iraqi chemical escalation against Kurdish town
@@ -562,14 +562,16 @@ stochastic-warfare/
     │   └── sigint.py                  # SIGINT: intercept probability, AOA/TDOA geolocation, traffic analysis
     ├── space/                         # Space & Satellite Domain [Phase 17]
     │   ├── __init__.py
-    │   ├── events.py                  # Space events (SatelliteOverpass, GPSDegraded, SATCOMWindow, ASATEngagement, ConstellationDegraded)
+    │   ├── events.py                  # Space overpass, accuracy, SATCOM, ASAT, degradation, debris, and early-warning events
+    │   ├── config.py                  # Strict dependency-neutral constellation, ASAT definition/asset/order, and runtime schemas
+    │   ├── catalog.py                 # Duplicate-safe complete catalog loading, reference resolution, and topology fingerprint
     │   ├── orbits.py                  # Simplified Keplerian orbital mechanics: period, ground track, J2 precession
-    │   ├── constellations.py          # Constellation manager: satellite groups, coverage windows, health tracking
+    │   ├── constellations.py          # Manager-owned satellite transitions and ordered/checkpointed SpaceEngine orchestration
     │   ├── gps.py                     # GPS accuracy model: DOP from visible satellites, INS drift, CEP scaling
     │   ├── isr.py                     # Space-based ISR: imaging satellites, resolution thresholds, cloud blocking
     │   ├── early_warning.py           # Missile early warning: GEO/HEO IR detection, BMD Pk bonus
     │   ├── satcom.py                  # SATCOM availability: coverage windows, bandwidth capacity, reliability
-    │   └── asat.py                    # Anti-satellite warfare: kinetic KKV, laser dazzle/destruct, Poisson debris cascade
+    │   └── asat.py                    # Scheduled finite direct-ascent KKV actions, observable results, and Poisson debris cascade
     ├── cbrn/                          # CBRN Effects [Phase 18]
     │   ├── __init__.py
     │   ├── events.py                  # CBRN events (contamination, exposure, decontamination, nuclear, MOPP, casualty)

@@ -36,7 +36,7 @@ OpenAPI docs are available at `/api/docs` (Swagger UI) and `/api/redoc`.
 | GET | `/api/runs/{id}` | Run detail with result |
 | DELETE | `/api/runs/{id}` | Delete run record |
 | GET | `/api/runs/{id}/forces` | Side force states |
-| GET | `/api/runs/{id}/events?offset=&limit=&event_type=` | Paginated event log |
+| GET | `/api/runs/{id}/events?offset=&limit=&event_type=&side=&tick_min=&tick_max=&search=` | Filterable paginated event log |
 | GET | `/api/runs/{id}/narrative?side=&style=&max_ticks=` | Battle narrative text |
 | GET | `/api/runs/{id}/snapshots` | State snapshots |
 | GET | `/api/runs/{id}/terrain` | Terrain grid data (land cover, objectives, extent) |
@@ -468,21 +468,40 @@ The top-level pydantic model for scenario YAML files. Key fields:
 |-------|------|-------------|
 | `name` | `str` | Scenario display name |
 | `date` | `str` | Historical date (if applicable) |
-| `duration_s` | `float` | Maximum scenario duration in seconds |
-| `era` | `str \| None` | Era name (modern, ww2, ww1, napoleonic, ancient_medieval) |
+| `duration_hours` | `float` | Strict finite positive scenario duration in hours |
+| `era` | `str` | Registered era name; defaults to `modern` |
 | `terrain` | `TerrainConfig` | Terrain dimensions, type, features |
 | `sides` | `list[SideConfig]` | Force composition per side |
 | `objectives` | `list[ObjectiveConfig]` | Spatial objectives |
 | `victory_conditions` | `list[VictoryConditionConfig]` | Win conditions |
 | `reinforcements` | `list[ReinforcementConfig]` | Scheduled arrivals |
-| `calibration_overrides` | `CalibrationSchema \| None` | Typed calibration overrides (see below) |
+| `calibration_overrides` | `CalibrationSchema` | Typed calibration overrides (see below) |
 | `ew_config` | `dict \| None` | Electronic warfare configuration |
-| `space_config` | `dict \| None` | Space/satellite configuration |
+| `space_config` | `SpaceConfig \| None` | Strict selected constellations, space services, finite ASAT assets, and scheduled exact-target orders |
 | `cbrn_config` | `dict \| None` | CBRN effects configuration |
 | `escalation_config` | `dict \| None` | Escalation ladder configuration |
 | `school_config` | `dict \| None` | Doctrinal school assignments |
 | `dew_config` | `dict \| None` | Directed energy weapon configuration |
-| `documented_outcomes` | `dict \| None` | Historical reference data for validation |
+
+---
+
+### SpaceConfig and ASAT events
+
+`SpaceConfig` rejects unknown fields and owns `enable_space`,
+`constellation_ids`, `enable_asat`, `asat_assets`, and `asat_orders`.
+Each asset has a unique `asset_id`, exact catalog `weapon_id`, owning scenario
+side, and finite `rounds_available`. Each order has a unique `order_id`, exact
+asset and satellite IDs, and a finite `execute_at_s` within the scenario
+duration. Production supports catalog definitions of type
+`DIRECT_ASCENT_KKV`; co-orbital and laser ASAT assets fail explicitly.
+
+The generic run-events endpoint exposes each due action as
+`ASATEngagementEvent`. Its data includes order/asset/weapon IDs,
+`attacker_side`, target satellite/constellation IDs, scheduled and execution
+times, `launched`, `pk`, `hit`, exact `outcome`/`reason`, debris generated,
+rounds remaining, and before/after constellation counts. A successful hit
+records `ConstellationDegradedEvent` first. The existing `event_type` and
+`side` filters select these events without a specialized endpoint.
 
 ---
 

@@ -10,6 +10,7 @@ Usage:
     uv run python scripts/validate_scenario_data.py                  # all
     uv run python scripts/validate_scenario_data.py --units-only     # units
     uv run python scripts/validate_scenario_data.py --scenarios-only # scenarios
+    uv run python scripts/validate_scenario_data.py --space-only     # space
     uv run python scripts/validate_scenario_data.py --file path.yaml # single file
 """
 
@@ -43,6 +44,11 @@ from stochastic_warfare.simulation.loadouts import (  # noqa: E402
 )
 from stochastic_warfare.simulation.scenario import (  # noqa: E402
     ScenarioLoader,
+)
+from stochastic_warfare.space.catalog import (  # noqa: E402
+    SpaceCatalog,
+    validate_asat_weapon_file,
+    validate_constellation_file,
 )
 
 _ERA_NAMES = (
@@ -124,6 +130,14 @@ class CatalogValidationStats:
     distinct_authored_mapping_keys: int = 0
     sensor_required: int = 0
     sensor_intentionally_none: int = 0
+
+
+@dataclass(frozen=True, slots=True)
+class SpaceCatalogValidationStats:
+    """Exact strict space-catalog definition counts."""
+
+    constellations: int = 0
+    asat_weapons: int = 0
 
 
 def _unit_catalog_dir(era: str) -> Path:
@@ -428,6 +442,46 @@ def validate_unit_yaml(path: Path) -> ValidationResult:
     return result
 
 
+def validate_space_catalogs() -> tuple[
+    ValidationResult,
+    SpaceCatalogValidationStats,
+]:
+    """Validate all space catalogs through the production catalog boundary."""
+    try:
+        catalog = SpaceCatalog.load(DATA_DIR)
+    except (OSError, TypeError, ValueError) as exc:
+        return (
+            ValidationResult(
+                errors=[f"Space catalog production loading failed: {exc}"],
+            ),
+            SpaceCatalogValidationStats(),
+        )
+    return (
+        ValidationResult(),
+        SpaceCatalogValidationStats(
+            constellations=len(catalog.constellations),
+            asat_weapons=len(catalog.weapons),
+        ),
+    )
+
+
+def validate_space_yaml(path: Path) -> ValidationResult:
+    """Validate one space definition with its exact strict schema."""
+    try:
+        if path.parent.name == "constellations":
+            validate_constellation_file(path)
+        elif path.parent.name == "asat_weapons":
+            validate_asat_weapon_file(path)
+        else:
+            raise ValueError(
+                f"{path}: expected data/space/constellations or "
+                "data/space/asat_weapons",
+            )
+    except (OSError, TypeError, ValueError) as exc:
+        return ValidationResult(errors=[str(exc)])
+    return ValidationResult()
+
+
 def validate_scenario_yaml(path: Path, known_types: set[str]) -> ValidationResult:
     """Validate a scenario YAML for unit type references and structure."""
     result = ValidationResult()
@@ -514,10 +568,16 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="Validate scenario/unit data integrity")
     parser.add_argument("--units-only", action="store_true", help="Only check unit YAMLs")
     parser.add_argument("--scenarios-only", action="store_true", help="Only check scenario YAMLs")
+    parser.add_argument("--space-only", action="store_true", help="Only check space YAMLs")
     parser.add_argument("--file", type=Path, help="Check a single YAML file")
     parser.add_argument("--no-load", action="store_true", help="Skip ScenarioLoader load test")
     parser.add_argument("--quiet", action="store_true", help="Only show errors")
     args = parser.parse_args()
+    if sum((args.units_only, args.scenarios_only, args.space_only)) > 1:
+        parser.error(
+            "--units-only, --scenarios-only, and --space-only are mutually "
+            "exclusive",
+        )
 
     total_errors = 0
     total_warnings = 0
@@ -526,7 +586,9 @@ def main() -> int:
     if args.file:
         # Single file mode
         p = args.file.resolve()
-        if "scenario" in p.name:
+        if p.parent.name in {"constellations", "asat_weapons"}:
+            r = validate_space_yaml(p)
+        elif "scenario" in p.name:
             known = _known_unit_types()
             r = validate_scenario_yaml(p, known)
             if not args.no_load:
@@ -546,7 +608,7 @@ def main() -> int:
         return 0 if r.ok else 1
 
     # Unit validation
-    if not args.scenarios_only:
+    if not args.scenarios_only and not args.space_only:
         unit_paths = _collect_unit_yamls()
         print(
             f"Checking {len(unit_paths)} unit YAML files through the "
@@ -583,8 +645,26 @@ def main() -> int:
             if not args.quiet:
                 print(f"  CLASSIFIED: {classification}")
 
+    # Space catalog validation
+    if args.space_only or not (args.units_only or args.scenarios_only):
+        print(
+            "Checking space YAML files through the production SpaceCatalog...",
+        )
+        r, space_stats = validate_space_catalogs()
+        total_errors += len(r.errors)
+        total_warnings += len(r.warnings)
+        print(
+            f"  {space_stats.constellations} constellation definitions, "
+            f"{space_stats.asat_weapons} ASAT weapon definitions",
+        )
+        for error in r.errors:
+            print(f"  ERROR: {error}")
+        for warning in r.warnings:
+            if not args.quiet:
+                print(f"  WARN:  {warning}")
+
     # Scenario validation
-    if not args.units_only:
+    if not args.units_only and not args.space_only:
         known = _known_unit_types()
         scenario_paths = _collect_scenario_yamls()
         print(f"Checking {len(scenario_paths)} scenario YAML files...")

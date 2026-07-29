@@ -79,13 +79,25 @@ class SATCOMWindowEvent(Event):
 
 @dataclass(frozen=True)
 class ASATEngagementEvent(Event):
-    """Published when an ASAT weapon engages a satellite."""
+    """Published once for every due configured ASAT order."""
 
+    order_id: str
+    asset_id: str
     weapon_id: str
+    attacker_side: str
     target_satellite_id: str
+    target_constellation_id: str
+    scheduled_time_s: float
+    execution_time_s: float
+    launched: bool
     hit: bool
     pk: float
+    outcome: str
+    reason: str
     debris_generated: int
+    rounds_remaining: int
+    previous_constellation_count: int
+    new_constellation_count: int
 
 
 @dataclass(frozen=True)

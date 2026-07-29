@@ -89,7 +89,17 @@ def _load_custom_era(
     raw["era"] = _CUSTOM_ERA
     for field in ("ew_config", "space_config", "cbrn_config"):
         raw.pop(field, None)
-    raw.update(config_blocks or {})
+    effective_blocks = copy.deepcopy(config_blocks or {})
+    space_block = effective_blocks.get("space_config")
+    if (
+        isinstance(space_block, dict)
+        and space_block.get("enable_space") is True
+    ):
+        space_block.setdefault(
+            "constellation_ids",
+            ["keyhole_optical"],
+        )
+    raw.update(effective_blocks)
     if blue_unit_type is not None:
         raw["sides"][0]["units"] = [{"unit_type": blue_unit_type, "count": 1}]
 

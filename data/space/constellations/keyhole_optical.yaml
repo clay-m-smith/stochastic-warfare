@@ -9,6 +9,7 @@ orbital_elements_template:
   inclination_deg: 97.9  # sun-synchronous
   raan_deg: 0.0
   arg_perigee_deg: 0.0
+  true_anomaly_deg: 0.0
 plane_count: 2
 sats_per_plane: 2
 sensor_resolution_m: 0.3

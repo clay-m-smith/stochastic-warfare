@@ -56,6 +56,7 @@ from stochastic_warfare.simulation.loadouts import (
     RuntimeLoadouts,
     WeaponAttachment,
 )
+from stochastic_warfare.space.config import SpaceConfig
 from stochastic_warfare.terrain.heightmap import Heightmap
 
 logger = get_logger(__name__)
@@ -472,7 +473,7 @@ class CampaignScenarioConfig(BaseModel):
     calibration_overrides: CalibrationSchema = CalibrationSchema()
     escalation_config: dict[str, Any] | None = None
     ew_config: dict[str, Any] | None = None
-    space_config: dict[str, Any] | None = None
+    space_config: SpaceConfig | None = None
     cbrn_config: dict[str, Any] | None = None
     school_config: dict[str, Any] | None = None
     commander_config: dict[str, Any] | None = None
@@ -487,12 +488,24 @@ class CampaignScenarioConfig(BaseModel):
             raise ValueError("campaign requires at least 2 sides")
         return v
 
-    @field_validator("duration_hours")
+    @field_validator("duration_hours", mode="before")
     @classmethod
-    def _positive_duration(cls, v: float) -> float:
-        if v <= 0:
-            raise ValueError("duration_hours must be positive")
-        return v
+    def _positive_duration(cls, value: Any) -> float:
+        if isinstance(value, bool) or not isinstance(value, (int, float)):
+            raise ValueError(
+                "duration_hours must be a finite positive number",
+            )
+        try:
+            normalized = float(value)
+        except (OverflowError, ValueError) as exc:
+            raise ValueError(
+                "duration_hours must be a finite positive number",
+            ) from exc
+        if not math.isfinite(normalized) or normalized <= 0.0:
+            raise ValueError(
+                "duration_hours must be a finite positive number",
+            )
+        return normalized
 
     @field_validator("era")
     @classmethod
@@ -530,6 +543,39 @@ class CampaignScenarioConfig(BaseModel):
         if len(side_names) != len(set(side_names)):
             raise ValueError("scenario side names must be unique")
         known_sides = set(side_names)
+        if self.space_config is not None:
+            space_config = self.space_config
+            if space_config.enable_space and not space_config.constellation_ids:
+                raise ValueError(
+                    "space_config.enable_space requires at least one explicit "
+                    "constellation_id",
+                )
+            for asset in space_config.asat_assets:
+                if asset.side not in known_sides:
+                    raise ValueError(
+                        f"ASAT asset {asset.asset_id!r} references unknown "
+                        f"scenario side {asset.side!r}",
+                    )
+            maximum_time_s = self.duration_hours * 3600.0
+            for order in space_config.asat_orders:
+                if order.execute_at_s > maximum_time_s:
+                    raise ValueError(
+                        f"ASAT order {order.order_id!r} execute_at_s "
+                        f"{order.execute_at_s} exceeds scenario duration "
+                        f"{maximum_time_s}",
+                    )
+            theater_updates: dict[str, float] = {}
+            if space_config.theater_lat is None:
+                theater_updates["theater_lat"] = self.latitude
+            if space_config.theater_lon is None:
+                theater_updates["theater_lon"] = self.longitude
+            if theater_updates:
+                self.space_config = SpaceConfig.model_validate(
+                    {
+                        **space_config.model_dump(mode="python"),
+                        **theater_updates,
+                    },
+                )
         for index, reinforcement in enumerate(self.reinforcements):
             if reinforcement.side not in known_sides:
                 raise ValueError(
@@ -1917,6 +1963,26 @@ class SimulationContext:
                     f"Invalid checkpoint logistics runtime state: {exc}",
                 ) from exc
 
+        staged_space_plan: Any = None
+        if self.space_engine is not None and "space_engine" in state:
+            try:
+                staged_space_plan = self.space_engine.stage_state(
+                    state["space_engine"],
+                    expected_elapsed_s=(
+                        staged_clock.elapsed.total_seconds()
+                    ),
+                    expected_tick_count=staged_clock.tick_count,
+                )
+            except (KeyError, TypeError, ValueError) as exc:
+                raise ValueError(
+                    f"Invalid checkpoint space runtime state: {exc}",
+                ) from exc
+        elif self.space_engine is None and "space_engine" in state:
+            raise ValueError(
+                "Checkpoint contains space runtime state for a context without "
+                "a space engine",
+            )
+
         # Commit only after all context-owned checkpoint state validates.
         self.clock.set_state(clock_state)
         self.rng_manager.set_state(rng_state)
@@ -1983,6 +2049,8 @@ class SimulationContext:
             instance.set_state(saved_state)
         if staged_logistics_plan is not None:
             self.logistics_runtime.commit_state(staged_logistics_plan)
+        if staged_space_plan is not None:
+            self.space_engine.commit_state(staged_space_plan)
 
         # Regenerate flat dict after restoring forces (Phase 86).
         if isinstance(self.calibration, CalibrationSchema):
@@ -2082,7 +2150,11 @@ class SimulationContext:
             ("command_engine", self.command_engine),
         ]
         for name, eng in engines:
-            if name in {"morale_machine", "logistics_runtime"}:
+            if name in {
+                "morale_machine",
+                "logistics_runtime",
+                "space_engine",
+            }:
                 continue
             if (
                 name in {"stockpile_manager", "supply_network_engine"}
@@ -3334,6 +3406,7 @@ class ScenarioLoader:
                 config,
                 c2_rng,
                 era_config,
+                clock,
             ),
         )
         return result
@@ -3345,6 +3418,7 @@ class ScenarioLoader:
         config: CampaignScenarioConfig,
         c2_rng: np.random.Generator,
         era_config: Any = None,
+        clock: SimulationClock | None = None,
     ) -> dict[str, Any]:
         """Create optional domain engines from explicit flags and era gates."""
         if era_config is None:
@@ -3368,10 +3442,9 @@ class ScenarioLoader:
             result.update(self._create_ew_engines(rng_mgr, bus, config.ew_config))
 
         # 2. Space engines
-        space_enabled = self._optional_suite_enabled(
-            config.space_config,
-            enable_field="enable_space",
-            config_field="space_config",
+        space_enabled = (
+            config.space_config is not None
+            and config.space_config.enable_space
         )
         if space_enabled and "space" in disabled:
             raise ValueError(
@@ -3383,8 +3456,9 @@ class ScenarioLoader:
                 self._create_space_engines(
                     rng_mgr,
                     bus,
-                    config.space_config,
+                    config,
                     gps_enabled="gps" not in disabled,
+                    clock=clock,
                 ),
             )
 
@@ -3535,18 +3609,23 @@ class ScenarioLoader:
         self,
         rng_mgr: RNGManager,
         bus: EventBus,
-        space_cfg: dict[str, Any],
+        config: CampaignScenarioConfig,
         *,
         gps_enabled: bool = True,
+        clock: SimulationClock | None = None,
     ) -> dict[str, Any]:
-        """Create space domain engines from space_config."""
+        """Strictly resolve catalogs and create the space-domain runtime."""
+        if config.space_config is None:
+            raise ValueError(
+                "Cannot create space engines without space_config",
+            )
         space_rng = rng_mgr.get_stream(ModuleId.SPACE)
 
         from stochastic_warfare.space.constellations import (
             ConstellationManager,
-            SpaceConfig,
             SpaceEngine,
         )
+        from stochastic_warfare.space.catalog import SpaceCatalog
         from stochastic_warfare.space.orbits import OrbitalMechanicsEngine
         from stochastic_warfare.space.gps import GPSEngine
         from stochastic_warfare.space.isr import SpaceISREngine
@@ -3554,19 +3633,48 @@ class ScenarioLoader:
         from stochastic_warfare.space.satcom import SATCOMEngine
         from stochastic_warfare.space.asat import ASATEngine
 
-        sc = SpaceConfig.model_validate(space_cfg)
+        sc = config.space_config
+        catalog = SpaceCatalog.load(self._data_dir)
+        resolved = catalog.resolve(
+            sc,
+            scenario_sides={side.side for side in config.sides},
+        )
         orbits = OrbitalMechanicsEngine()
         constellation = ConstellationManager(orbits, bus, space_rng, sc)
+        for definition in resolved.constellations:
+            constellation.add_constellation(definition)
 
         gps = (
-            GPSEngine(constellation, sc, bus, space_rng)
+            GPSEngine(constellation, sc, bus, space_rng, clock=clock)
             if gps_enabled
             else None
         )
-        isr = SpaceISREngine(constellation, sc, bus, space_rng)
-        ew_sat = EarlyWarningEngine(constellation, sc, bus, space_rng)
-        satcom = SATCOMEngine(constellation, sc, bus, space_rng)
-        asat = ASATEngine(constellation, sc, bus, space_rng)
+        isr = SpaceISREngine(constellation, sc, bus, space_rng, clock=clock)
+        ew_sat = EarlyWarningEngine(
+            constellation,
+            sc,
+            bus,
+            space_rng,
+            clock=clock,
+        )
+        satcom = SATCOMEngine(
+            constellation,
+            sc,
+            bus,
+            space_rng,
+            clock=clock,
+        )
+        asat = ASATEngine(
+            constellation,
+            sc,
+            bus,
+            space_rng,
+            clock=clock,
+            weapon_definitions=resolved.weapon_definitions,
+            assets=resolved.assets,
+            orders=resolved.orders,
+            configuration_fingerprint=resolved.fingerprint,
+        )
 
         space_engine = SpaceEngine(
             config=sc,
@@ -3576,11 +3684,17 @@ class ScenarioLoader:
             early_warning_engine=ew_sat,
             satcom_engine=satcom,
             asat_engine=asat,
+            catalog_fingerprint=resolved.fingerprint,
         )
 
         logger.info(
-            "Created space engines (%sGPS, ISR, EW, SATCOM, ASAT)",
+            "Created space engines (%sGPS, ISR, EW, SATCOM, ASAT): "
+            "%d constellations, %d satellites, %d ASAT assets, %d orders",
             "" if gps_enabled else "no ",
+            len(resolved.constellations),
+            len(constellation.all_satellites()),
+            len(resolved.assets),
+            len(resolved.orders),
         )
         return {"space_engine": space_engine}
 

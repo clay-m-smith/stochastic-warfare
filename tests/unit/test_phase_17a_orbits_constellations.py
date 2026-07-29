@@ -57,7 +57,11 @@ def _gps_constellation(side: str = "blue") -> ConstellationDefinition:
         num_satellites=24,
         orbital_elements_template={
             "semi_major_axis_m": 26_559_700.0,
+            "eccentricity": 0.0,
             "inclination_deg": 55.0,
+            "raan_deg": 0.0,
+            "arg_perigee_deg": 0.0,
+            "true_anomaly_deg": 0.0,
         },
         plane_count=6,
         sats_per_plane=4,

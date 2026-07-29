@@ -32,7 +32,7 @@ Audit baseline: 2026-07-28 at `68acd4b`
 | REM-008 | P0 | 108 | Logistics | Scenario depots do not initialize stock or a supply network | **Closed** | Yes | Yes | Yes | Yes | Yes | Yes | Yes | [Phase 108](devlog/phase-108.md#postmortem) |
 | REM-009 | P0 | 108 | Logistics | Supply-network updates and idle consumption are not applied by the production loop | **Closed** | Yes | Yes | Yes | Yes | Yes | Yes | Yes | [Phase 108](devlog/phase-108.md#postmortem) |
 | REM-010 | P0 | 109 | Equipment data | Loadout mapping has duplicate/wrong keys, 22 unmapped catalog entries, and validation-layer ownership | **Closed** | Yes | Yes | Yes | N/A | Yes | Yes | Yes | [Phase 109](devlog/phase-109.md#postmortem) |
-| REM-011 | P1 | 110 | Space combat | The production ASAT hook is an explicit placeholder | Queued | Yes | Yes | - | - | - | - | - | Enabled/disabled satellite outcome test |
+| REM-011 | P1 | 110 | Space combat | The production ASAT hook is an explicit placeholder | **Closed** | Yes | Yes | Yes | Yes | Yes | Yes | Yes | [Phase 110](devlog/phase-110.md#postmortem) |
 | REM-012 | P1 | 111 | Indirect fire | Time-on-target uses dummy coordinates, has no executed state, and has no production caller | Queued | Yes | Yes | - | - | - | - | - | Scheduled mission executes once at its real target |
 | REM-013 | P1 | 112 | Validation trust | Default CI hides excluded suites; Phase 109 established a green full Python Ruff baseline, but CI does not yet enforce the complete suite contract | Queued | Yes | N/A | Yes | N/A | - | N/A | N/A | Explicit CI suites and documented/enforced boundaries |
 | REM-014 | P1 | 112 | Test quality | Structural and no-assert tests can support false completion claims | Queued | Yes | N/A | Yes | N/A | - | - | N/A | Audit critical contracts and add behavioral assertions |
@@ -48,6 +48,7 @@ Audit baseline: 2026-07-28 at `68acd4b`
 | REM-024 | P1 | 112 | Unit data trust | Invalid crew-skill enums are hidden by a broad `KeyError` catch and silently drop historical units | Queued | Yes | Yes | Yes | N/A | Yes | Yes | N/A | Eager enum validation and narrow missing-definition handling |
 | REM-025 | P2 | 112 | Scenario diagnostics | `MANY_STUCK_UNITS` treats legitimate corrected weapon-range standoff as a movement failure | Queued | Yes | N/A | Yes | N/A | Yes | Yes | N/A | Semantic stuck-unit diagnostic with a Cambrai control |
 | REM-026 | P1 | 112 | Benchmark trust | A hard 60-second Golan assertion contradicts the checked-in 500-second baseline and fails code that is faster than that baseline | Queued | Yes | N/A | Yes | N/A | Yes | Yes | Yes | Hardware-aware threshold and reproducible before/after benchmark |
+| REM-027 | P2 | 112 | Space ISR state | Buffered ISR checkpoint reports use generic JSON normalization rather than a typed semantic rehydration boundary | Queued | - | Yes | Yes | N/A | Yes | - | - | Typed report round trip and malformed-report rejection through production fusion |
 
 ## REM-001 - Exact checkpoint restoration
 
@@ -756,6 +757,110 @@ commands, scenario rows, exclusions, and review findings are recorded in the
 
 The durable detailed contract is
 [`docs/specs/equipment-mapping.md`](specs/equipment-mapping.md).
+
+## REM-011 - ASAT is not integrated into the production runtime
+
+### Reproduction and cause
+
+The real `ScenarioLoader` does not load any file from
+`data/space/constellations/` or `data/space/asat_weapons/`. It creates an empty
+`ConstellationManager` and `ASATEngine`. The campaign tick subsequently calls
+`_attempt_asat_engagements()`, which only logs that an ASAT engine exists.
+There is no production caller of `ASATEngine.engage()`.
+
+The advertised `space_asat_escalation` scenario has no `space_config` and its
+test directly deactivates six satellites. The claimed GPS target is also
+outside every authored weapon's altitude envelope. Component registration can
+silently overwrite weapon ownership by definition ID, callers can fire an
+opponent's weapon or attack a friendly satellite, rounds are infinite, and no
+typed action state exists to checkpoint. Laser dazzle changes only an internal
+dictionary that no production consumer reads.
+
+### Requirements
+
+- Replace the untyped space scenario block with strict explicit constellation,
+  asset, and scheduled exact-target order declarations.
+- Strictly load selected production catalogs and reject duplicate IDs, unknown
+  or friendly references, unsupported weapon types, and impossible altitude
+  envelopes.
+- Distinguish immutable weapon definitions from unique mutable assets with
+  owner, finite rounds, and per-asset cooldown.
+- Execute due direct-ascent kinetic orders once in deterministic logical-time
+  order, after orbit propagation and before same-tick downstream space
+  consumers.
+- Make `enable_asat` a real execution gate. A disabled control must leave the
+  target, asset state, action state, and ASAT RNG draws unchanged.
+- Route a hit through constellation-owned mutation and expose exact action,
+  asset, side, target, outcome, inventory, and before/after constellation state
+  through recorder/API events.
+- Persist and validate catalog topology, satellite state, asset state,
+  pending/completed actions, debris, and exact continuation.
+- Validate every shipped constellation and ASAT weapon catalog file through
+  the repository data validator.
+
+### Required proof
+
+A fixed-seed production `ScenarioLoader -> SimulationEngine` run must execute a
+real catalog-backed order against a reachable enemy LEO satellite exactly once,
+change its active/constellation state, consume finite asset state, and expose
+the result. The same declared world and action plan with `enable_asat: false`
+must preserve the target and consume no ASAT RNG. Strict negative controls,
+same-seed replay, fresh checkpoint continuation, recorder/API exposure,
+catalog-wide validation, scenario evaluation, and relevant regression suites
+must also pass.
+
+The durable contract is
+[`docs/specs/asat-production-integration.md`](specs/asat-production-integration.md).
+
+### Closure evidence
+
+Phase 110 replaces the logging hook and direct-fire bypasses with
+`ScenarioLoader -> SpaceEngine -> ASATEngine` scheduled execution. The loader
+strictly validates all 9 constellation and 3 ASAT weapon files, resolves
+selected definitions, and constructs unique side-owned assets with finite
+rounds/cooldowns plus exact-target orders. The shipped seed-42/110/111
+production runs execute the due Nudol order exactly once, change
+`keyhole_optical_p0_s0` and its constellation from 4 to 3 active satellites,
+consume the asset round, expose ordered degradation/engagement events, and
+advance only the SPACE RNG stream. Identical disabled controls preserve
+target, inventory, order, and RNG state.
+
+Checkpoint schema 110 validates catalog and runtime topology, clock-aligned
+satellite/service/ASAT state, order/result chronology, inventory, debris, and
+RNG continuation before whole-context mutation. Fresh before/after-action
+restore, hash-seed replay, recorder/API exposure, scenario evaluation, data
+validation, and relevant legacy/default/API/E2E suites are recorded in the
+[Phase 110 devlog](devlog/phase-110.md). The required postmortem accepted the
+scope, quality, integration, validation, and explicitly tracked follow-ups;
+REM-011 is closed.
+
+### Non-goals and follow-up
+
+Production supports direct-ascent kinetic actions only. Co-orbital,
+laser-dazzle, and laser-destruct assets fail explicitly; there is no autonomous
+target selection, tactical launcher/Class V ownership, historical calibration,
+or high-fidelity breakup model. REM-027 tracks a lower-priority legacy Space
+ISR buffered-report typing/rehydration gap independently of REM-011.
+
+## REM-027 - Space ISR buffered checkpoint reports are not typed
+
+`SpaceISREngine` stores buffered reports as dictionaries containing a
+`Position` tuple. The Phase 110 whole-space boundary safely normalizes generic
+JSON, but it does not provide a typed report schema or reconstruct `Position`
+on restore. An adversarial Taiwan Strait restore with an unknown-satellite,
+future-timestamp report was inert and cleared on the next tick with identical
+engine, SPACE RNG, and fog-of-war state, so it does not invalidate REM-011.
+Nevertheless, future consumers should not depend on silent generic
+normalization.
+
+`E` is N/A because report typing and checkpoint rehydration are an always-on
+state-integrity boundary, not an optional feature with enabled and disabled
+modes.
+
+Phase 112 must introduce a typed report state, reject malformed/unknown
+references and impossible times, rehydrate positions explicitly, and prove
+that a reachable buffered report produces identical fusion state across fresh
+checkpoint continuation.
 
 ## REM-020 - March and combat logistics demand is not applied
 

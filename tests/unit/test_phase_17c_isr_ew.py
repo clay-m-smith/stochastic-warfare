@@ -49,7 +49,11 @@ def _make_imaging_constellation(
         num_satellites=4,
         orbital_elements_template={
             "semi_major_axis_m": R_EARTH + 500_000.0,
+            "eccentricity": 0.0,
             "inclination_deg": 97.0,
+            "raan_deg": 0.0,
+            "arg_perigee_deg": 0.0,
+            "true_anomaly_deg": 0.0,
         },
         plane_count=2,
         sats_per_plane=2,
@@ -67,7 +71,11 @@ def _make_ew_constellation(side: str = "blue") -> ConstellationDefinition:
         num_satellites=6,
         orbital_elements_template={
             "semi_major_axis_m": 42_164_000.0,
+            "eccentricity": 0.0,
             "inclination_deg": 0.0,
+            "raan_deg": 0.0,
+            "arg_perigee_deg": 0.0,
+            "true_anomaly_deg": 0.0,
         },
         plane_count=1,
         sats_per_plane=6,

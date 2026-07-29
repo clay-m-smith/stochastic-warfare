@@ -202,8 +202,10 @@ nav:
     - Phase 107 - Scenario Configuration Wiring: devlog/phase-107.md
     - Phase 108 - Logistics Runtime Wiring: devlog/phase-108.md
     - Phase 109 - Equipment Mapping Integrity: devlog/phase-109.md
+    - Phase 110 - ASAT Production Integration: devlog/phase-110.md
   - Specifications:
     - Project Structure: specs/project-structure.md
     - Checkpoint State Contract: specs/checkpoint-state.md
     - Equipment Mapping and Runtime Loadouts: specs/equipment-mapping.md
+    - ASAT Production Integration: specs/asat-production-integration.md
     - Skills & Hooks: skills-and-hooks.md

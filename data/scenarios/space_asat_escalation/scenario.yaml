@@ -1,10 +1,11 @@
-# Space validation scenario: ASAT escalation
-# Tests: 6 ASAT strikes degrade GPS 24→~18, cascading DOP/CEP effects
+# Hypothetical space validation scenario: one catalog-backed direct-ascent
+# strike against an exact, reachable enemy LEO imaging satellite.
 name: "Space ASAT Escalation"
 date: "2024-06-15"
 duration_hours: 12.0
 latitude: 33.0
 longitude: 35.0
+tick_duration_seconds: 3600.0
 
 terrain:
   width_m: 10000.0
@@ -53,3 +54,19 @@ calibration_overrides:
   blue_start_y: 5000.0
   red_start_x: 8000.0
   red_start_y: 5000.0
+
+space_config:
+  enable_space: true
+  constellation_ids:
+    - keyhole_optical
+  enable_asat: true
+  asat_assets:
+    - asset_id: red_nudol_1
+      weapon_id: nudol_asat
+      side: red
+      rounds_available: 1
+  asat_orders:
+    - order_id: red_keyhole_strike_1
+      asset_id: red_nudol_1
+      target_satellite_id: keyhole_optical_p0_s0
+      execute_at_s: 7200.0

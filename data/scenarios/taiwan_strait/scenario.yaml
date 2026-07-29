@@ -175,6 +175,15 @@ escalation_config:
 # Phase 54e: space domain — GPS, ISR, SATCOM, ASAT
 space_config:
   enable_space: true
+  constellation_ids:
+    - gps_navstar
+    - keyhole_optical
+    - lacrosse_sar
+    - sigint_leo
+    - sbirs_ew
+    - milstar_satcom
+    - wgs_satcom
+  enable_asat: false
   gps_sigma_range_m: 5.0
   ins_drift_rate_m_per_s: 0.6
 

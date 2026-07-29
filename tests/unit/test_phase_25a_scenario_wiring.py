@@ -7,6 +7,7 @@ engines (or leaves them None) based on those blocks.
 
 from __future__ import annotations
 
+from pathlib import Path
 from typing import Any
 
 import pytest
@@ -27,6 +28,10 @@ _MINIMAL_SIDES = [
     {"side": "blue", "units": [{"unit_type": "infantry_platoon", "count": 1}]},
     {"side": "red", "units": [{"unit_type": "infantry_platoon", "count": 1}]},
 ]
+_SPACE_BLOCK = {
+    "enable_space": True,
+    "constellation_ids": ["keyhole_optical"],
+}
 
 
 def _minimal_config(**overrides: Any) -> CampaignScenarioConfig:
@@ -72,8 +77,10 @@ class TestConfigParsing:
         assert cfg.ew_config == {"enable_ew": True}
 
     def test_space_config_accepted(self) -> None:
-        cfg = _minimal_config(space_config={"enable_space": True})
-        assert cfg.space_config == {"enable_space": True}
+        cfg = _minimal_config(space_config=_SPACE_BLOCK)
+        assert cfg.space_config is not None
+        assert cfg.space_config.enable_space is True
+        assert cfg.space_config.constellation_ids == ["keyhole_optical"]
 
     def test_cbrn_config_accepted(self) -> None:
         cfg = _minimal_config(cbrn_config={"enable_cbrn": True})
@@ -220,10 +227,16 @@ class TestSpaceCreation:
         from stochastic_warfare.simulation.scenario import ScenarioLoader
 
         loader = ScenarioLoader.__new__(ScenarioLoader)
-        loader._data_dir = None
+        loader._data_dir = Path("data")
+        config = _minimal_config(
+            latitude=32.0,
+            longitude=35.0,
+            space_config=_SPACE_BLOCK,
+        )
         result = loader._create_space_engines(
-            _make_rng_mgr(), _make_bus(),
-            {"enable_space": True, "theater_lat": 32.0, "theater_lon": 35.0},
+            _make_rng_mgr(),
+            _make_bus(),
+            config,
         )
         assert result["space_engine"] is not None
 
@@ -242,9 +255,12 @@ class TestSpaceCreation:
         from stochastic_warfare.simulation.scenario import ScenarioLoader
 
         loader = ScenarioLoader.__new__(ScenarioLoader)
-        loader._data_dir = None
+        loader._data_dir = Path("data")
+        config = _minimal_config(space_config=_SPACE_BLOCK)
         result = loader._create_space_engines(
-            _make_rng_mgr(), _make_bus(), {"enable_space": True},
+            _make_rng_mgr(),
+            _make_bus(),
+            config,
         )
         assert isinstance(result["space_engine"], SpaceEngine)
 
@@ -252,9 +268,12 @@ class TestSpaceCreation:
         from stochastic_warfare.simulation.scenario import ScenarioLoader
 
         loader = ScenarioLoader.__new__(ScenarioLoader)
-        loader._data_dir = None
+        loader._data_dir = Path("data")
+        config = _minimal_config(space_config=_SPACE_BLOCK)
         result = loader._create_space_engines(
-            _make_rng_mgr(), _make_bus(), {"enable_space": True},
+            _make_rng_mgr(),
+            _make_bus(),
+            config,
         )
         engine = result["space_engine"]
         assert engine.gps_engine is not None
@@ -266,10 +285,17 @@ class TestSpaceCreation:
         from stochastic_warfare.simulation.scenario import ScenarioLoader
 
         loader = ScenarioLoader.__new__(ScenarioLoader)
-        loader._data_dir = None
+        loader._data_dir = Path("data")
+        config = _minimal_config(
+            space_config={
+                **_SPACE_BLOCK,
+                "theater_lat": 45.0,
+            },
+        )
         result = loader._create_space_engines(
-            _make_rng_mgr(), _make_bus(),
-            {"enable_space": True, "theater_lat": 45.0},
+            _make_rng_mgr(),
+            _make_bus(),
+            config,
         )
         assert result["space_engine"]._config.theater_lat == 45.0
 
@@ -277,11 +303,15 @@ class TestSpaceCreation:
         from stochastic_warfare.simulation.scenario import ScenarioLoader
 
         loader = ScenarioLoader.__new__(ScenarioLoader)
-        loader._data_dir = None
-        result = loader._create_space_engines(
-            _make_rng_mgr(), _make_bus(), {},
+        loader._data_dir = Path("data")
+        rng_manager = _make_rng_mgr()
+        result = loader._create_optional_engines(
+            rng_manager,
+            _make_bus(),
+            _minimal_config(),
+            rng_manager.get_stream(ModuleId.C2),
         )
-        assert result["space_engine"]._config.enable_space is False
+        assert "space_engine" not in result
 
 
 # =========================================================================

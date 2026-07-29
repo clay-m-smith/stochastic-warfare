@@ -9,6 +9,7 @@ orbital_elements_template:
   inclination_deg: 63.4  # critical inclination
   raan_deg: 0.0
   arg_perigee_deg: 270.0  # apogee over northern hemisphere
+  true_anomaly_deg: 0.0
 plane_count: 3
 sats_per_plane: 1
 sensor_resolution_m: 0.0

@@ -3,8 +3,8 @@
 **High-fidelity stochastic wargame simulator** -- multi-scale, multi-domain, multi-era.
 
 ![Python](https://img.shields.io/badge/python-%3E%3D3.12-blue)
-![Tests](https://img.shields.io/badge/tests-10%2C428_passing-brightgreen)
-![Phase](https://img.shields.io/badge/phase-108_COMPLETE-brightgreen)
+![Tests](https://img.shields.io/badge/tests-10%2C804_passing-brightgreen)
+![Phase](https://img.shields.io/badge/phase-110_COMPLETE-brightgreen)
 
 ---
 
@@ -20,7 +20,10 @@ Kalman filters, Poisson processes, queueing theory, and SNR-based detection.
 ## Key Capabilities
 
 - **Multi-scale simulation** -- strategic (hours), operational (minutes), and tactical (seconds) resolution with automatic scale switching
-- **Multi-domain warfare** -- ground, air, naval (surface + subsurface), space, electronic warfare, cyber, and CBRN effects fully integrated
+- **Multi-domain warfare** -- ground, air, and naval combat plus gated GPS,
+  SATCOM, ISR, early warning, direct-ascent kinetic ASAT, electronic warfare,
+  cyber, and CBRN effects; unsupported co-orbital/laser ASAT assets fail
+  explicitly
 - **Multi-era coverage** -- Modern (Cold War--present), WW2, WW1, Napoleonic, and Ancient/Medieval eras with era-specific mechanics
 - **Stochastic models throughout** -- 10+ mathematical models (Markov, Monte Carlo, Kalman, Poisson, queueing, Lanchester, Wayne Hughes salvo, Boyd OODA, Beer-Lambert DEW)
 - **AI commanders** -- 9 doctrinal schools (Clausewitz, Maneuver, Attrition, AirLand Battle, Air Power, Sun Tzu, Deep Battle, Mahanian, Corbettian) with OODA decision cycles
@@ -89,11 +92,14 @@ See the [Getting Started Guide](guide/getting-started.md) for a complete tutoria
 | Block 11 | 98--104 | Golden scenarios and deployment polish | **Complete** |
 | Block 12 | 105--114 | Integrity remediation against production-path evidence | **In progress** |
 
-Phases 105 through 109 are complete; Phase 110 is next.
+Phases 105 through 110 are complete. Phase 110 closed REM-011 after its
+production integration, validation, cross-document audit, and postmortem.
+Phase 111 is next and has not started.
 
-Fresh Phase 109 baseline: **10,755 default-selected Python tests passed** (21
-skipped, 348 deselected). The frontend was not rerun because Phase 109 changes
-no frontend contract; its last verified Phase 108 baseline remains 418 tests.
+Fresh Phase 110 closure baseline: **10,804 default-selected Python tests
+passed** (21 skipped, 348 deselected, 6 warnings). The frontend was not rerun
+because Phase 110 changes no frontend contract; its last verified Phase 108
+baseline remains 418 tests.
 See the
 [remediation backlog](remediation-backlog.md) for current evidence and known
 coverage boundaries. The YAML data catalog defines units, weapons, ammunition

@@ -132,6 +132,7 @@ Rolling record of implementation decisions, changes, and lessons learned across 
 | 107 | Scenario Configuration Wiring | **Complete** | [phase-107.md](phase-107.md) |
 | 108 | Logistics Runtime Wiring | **Complete** | [phase-108.md](phase-108.md) |
 | 109 | Equipment Mapping Integrity | **Complete** | [phase-109.md](phase-109.md) |
+| 110 | ASAT Production Integration | **Complete** | [phase-110.md](phase-110.md) |
 
 ## Post-MVP Refinement Index
 

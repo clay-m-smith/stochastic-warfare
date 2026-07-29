@@ -59,14 +59,27 @@ class SATCOMEngine:
         tuple[bool, float]
             (available, total_bandwidth_bps).
         """
+        return self._compute_satcom_availability(
+            self._cm,
+            side,
+            sim_time_s,
+        )
+
+    def _compute_satcom_availability(
+        self,
+        constellation_manager: ConstellationManager,
+        side: str,
+        sim_time_s: float,
+    ) -> tuple[bool, float]:
+        """Compute availability against an explicit constellation view."""
         satcom_type = int(ConstellationType.SATCOM)
         total_bw = 0.0
         any_visible = False
 
-        for cdef in self._cm.get_constellations_by_side(side):
+        for cdef in constellation_manager.get_constellations_by_side(side):
             if cdef.constellation_type != satcom_type:
                 continue
-            visible = self._cm.visible_satellites(
+            visible = constellation_manager.visible_satellites(
                 cdef.constellation_id,
                 self._config.theater_lat,
                 self._config.theater_lon,
@@ -81,7 +94,7 @@ class SATCOMEngine:
         # If no SATCOM constellations configured, assume always available
         has_satcom = any(
             cdef.constellation_type == satcom_type
-            for cdef in self._cm.get_constellations_by_side(side)
+            for cdef in constellation_manager.get_constellations_by_side(side)
         )
         if not has_satcom:
             return (True, 1e9)
@@ -145,6 +158,55 @@ class SATCOMEngine:
 
     def get_state(self) -> dict[str, Any]:
         return {"previous_available": dict(self._previous_available)}
+
+    def stage_state(
+        self,
+        state: dict[str, Any],
+        *,
+        constellation_manager: ConstellationManager,
+        sim_time_s: float,
+        expected_tick_count: int | None,
+    ) -> dict[str, Any]:
+        """Validate SATCOM history against the staged constellation snapshot."""
+        if set(state) != {"previous_available"}:
+            raise ValueError(
+                "satcom_engine state keys must be exactly "
+                "['previous_available']",
+            )
+        previous = state["previous_available"]
+        if not isinstance(previous, dict):
+            raise ValueError(
+                "SATCOM previous_available must be a mapping",
+            )
+        has_updated = (
+            expected_tick_count > 0
+            if expected_tick_count is not None
+            else sim_time_s > 0.0
+        )
+        expected_sides = {"blue", "red"} if has_updated else set()
+        if set(previous) != expected_sides:
+            raise ValueError(
+                "SATCOM previous_available side topology mismatch",
+            )
+        staged_previous: dict[str, bool] = {}
+        for side in sorted(expected_sides):
+            available = previous[side]
+            if type(available) is not bool:
+                raise ValueError(
+                    "SATCOM previous_available values must be boolean",
+                )
+            expected, _ = self._compute_satcom_availability(
+                constellation_manager,
+                side,
+                sim_time_s,
+            )
+            if available is not expected:
+                raise ValueError(
+                    f"SATCOM previous_available[{side!r}] disagrees with "
+                    "the staged constellation state",
+                )
+            staged_previous[side] = available
+        return {"previous_available": staged_previous}
 
     def set_state(self, state: dict[str, Any]) -> None:
         self._previous_available = state.get("previous_available", {})

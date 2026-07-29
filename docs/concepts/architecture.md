@@ -152,7 +152,11 @@ The `ScenarioLoader` is the central factory. Given a scenario YAML file, it:
 5. Wires optional subsystems from explicit enable flags after applying the
    selected era's capability gates:
    - `ew_config.enable_ew: true` -> creates EW engines (jamming, spoofing, ECCM, SIGINT)
-   - `space_config.enable_space: true` -> creates space engines (GPS, SATCOM, ISR, ASAT)
+   - `space_config.enable_space: true` -> strictly loads all space catalogs,
+     materializes the explicitly selected constellations, and creates GPS,
+     SATCOM, ISR, early-warning, and ASAT engines. Optional direct-ascent ASAT
+     execution uses finite side-owned assets and scheduled exact-target orders;
+     unsupported ASAT types fail during loading.
    - `cbrn_config.enable_cbrn: true` -> creates CBRN engines (dispersal, contamination, protection)
    - `school_config` present -> creates doctrinal school registry
    - `escalation_config` present -> creates escalation engine
@@ -168,6 +172,14 @@ and per-unit resolution topology are part of checkpoint compatibility, while
 live weapon, ammunition, sensor, and linked-equipment state remain the mutable
 checkpoint payload. The detailed contract is
 [Equipment Mapping and Runtime Loadouts](../specs/equipment-mapping.md).
+
+Space runtime state is orchestrated by one `SpaceEngine` boundary. Each tick
+propagates orbits, advances existing debris, executes newly due ASAT orders,
+then updates downstream GPS/ISR/early-warning/SATCOM consumers. The selected
+catalog topology, satellite state, ASAT inventory/orders/debris, service
+history, and SPACE RNG stream participate in whole-context checkpoint
+preflight. The detailed contract is
+[ASAT Production Integration](../specs/asat-production-integration.md).
 
 `SimulationEngine` then installs the validated reinforcement schedule exactly
 once. Due waves are checked at every resolution and are committed atomically to

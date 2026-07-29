@@ -8,14 +8,25 @@ provides per-type/per-side queries.
 
 from __future__ import annotations
 
-import enum
+import copy
+import math
 from typing import Any
 
 import numpy as np
-from pydantic import BaseModel
 
 from stochastic_warfare.core.events import EventBus
 from stochastic_warfare.core.logging import get_logger
+from stochastic_warfare.core.types import ModuleId
+from stochastic_warfare.space.config import (
+    ASATAssetConfig,
+    ASATOrderConfig,
+    ASATType,
+    ASATWeaponDefinition,
+    ConstellationDefinition,
+    ConstellationType,
+    OrbitalElementsTemplate,
+    SpaceConfig,
+)
 from stochastic_warfare.space.events import ConstellationDegradedEvent
 from stochastic_warfare.space.orbits import (
     OrbitalElements,
@@ -26,58 +37,41 @@ from stochastic_warfare.space.orbits import (
 logger = get_logger(__name__)
 
 
-# ---------------------------------------------------------------------------
-# Enums & config models
-# ---------------------------------------------------------------------------
+def _validated_float(
+    value: Any,
+    label: str,
+    *,
+    minimum: float | None = None,
+    maximum: float | None = None,
+) -> float:
+    """Normalize a finite real number without leaking conversion errors."""
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        raise ValueError(f"{label} must be finite")
+    try:
+        normalized = float(value)
+    except (OverflowError, ValueError) as exc:
+        raise ValueError(f"{label} must be finite") from exc
+    if not math.isfinite(normalized):
+        raise ValueError(f"{label} must be finite")
+    if minimum is not None and normalized < minimum:
+        raise ValueError(f"{label} is outside its valid range")
+    if maximum is not None and normalized > maximum:
+        raise ValueError(f"{label} is outside its valid range")
+    return normalized
 
 
-class ConstellationType(enum.IntEnum):
-    """Type of satellite constellation."""
-
-    GPS = 0
-    GLONASS = 1
-    IMAGING_OPTICAL = 2
-    IMAGING_SAR = 3
-    SIGINT = 4
-    EARLY_WARNING = 5
-    SATCOM = 6
-
-
-class ConstellationDefinition(BaseModel):
-    """YAML-loaded constellation definition."""
-
-    constellation_id: str
-    display_name: str = ""
-    constellation_type: int = 0  # ConstellationType value
-    side: str = "blue"
-    num_satellites: int = 24
-    orbital_elements_template: dict[str, float] = {}
-    plane_count: int = 6
-    sats_per_plane: int = 4
-    sensor_resolution_m: float = 0.0
-    sensor_swath_km: float = 0.0
-    sensor_type: str = "none"  # "optical" | "sar" | "ir" | "none"
-    bandwidth_bps: float = 0.0
-    detection_delay_s: float = 0.0
-    detection_confidence: float = 0.0
-
-
-class SpaceConfig(BaseModel):
-    """Configuration for the space domain."""
-
-    enable_space: bool = False
-    theater_lat: float = 0.0
-    theater_lon: float = 0.0
-    min_elevation_deg: float = 5.0
-    update_interval_s: float = 3600.0
-    gps_sigma_range_m: float = 3.0
-    ins_drift_rate_m_per_s: float = 0.514  # ~1 nmi/hr
-    ins_initial_sigma_m: float = 10.0
-    cloud_cover_blocks_optical: bool = True
-    isr_processing_delay_s: float = 300.0
-    ew_processing_delay_s: float = 60.0
-    debris_fragment_mean: float = 500.0
-    debris_collision_prob_per_orbit: float = 1e-6
+__all__ = [
+    "ASATAssetConfig",
+    "ASATOrderConfig",
+    "ASATType",
+    "ASATWeaponDefinition",
+    "ConstellationDefinition",
+    "ConstellationManager",
+    "ConstellationType",
+    "OrbitalElementsTemplate",
+    "SpaceConfig",
+    "SpaceEngine",
+]
 
 
 # ---------------------------------------------------------------------------
@@ -107,56 +101,73 @@ class ConstellationManager:
     def add_constellation(self, definition: ConstellationDefinition) -> None:
         """Add a constellation and distribute satellites across planes."""
         cid = definition.constellation_id
-        self._constellations[cid] = definition
-        self._constellation_sats[cid] = []
+        if cid in self._constellations:
+            raise ValueError(f"Duplicate constellation_id {cid!r}")
 
         template = definition.orbital_elements_template
-        a = template.get("semi_major_axis_m", 26_559_700.0)
-        e = template.get("eccentricity", 0.0)
-        inc = template.get("inclination_deg", 55.0)
-        arg_pe = template.get("arg_perigee_deg", 0.0)
-        base_raan = template.get("raan_deg", 0.0)
-
-        planes = max(1, definition.plane_count)
-        spp = max(1, definition.sats_per_plane)
-        total = min(definition.num_satellites, planes * spp)
-
-        idx = 0
-        for p in range(planes):
-            if idx >= total:
-                break
-            raan = (base_raan + 360.0 / planes * p) % 360.0
-            for s in range(spp):
-                if idx >= total:
-                    break
-                nu = (360.0 / spp * s) % 360.0
+        pending: list[SatelliteState] = []
+        pending_ids: set[str] = set()
+        for p in range(definition.plane_count):
+            raan = (
+                template.raan_deg
+                + 360.0 / definition.plane_count * p
+            ) % 360.0
+            for s in range(definition.sats_per_plane):
+                nu = (
+                    template.true_anomaly_deg
+                    + 360.0 / definition.sats_per_plane * s
+                ) % 360.0
                 sid = f"{cid}_p{p}_s{s}"
+                if sid in pending_ids or sid in self._satellites:
+                    raise ValueError(f"Duplicate generated satellite_id {sid!r}")
+                pending_ids.add(sid)
                 elems = OrbitalElements(
-                    semi_major_axis_m=a,
-                    eccentricity=e,
-                    inclination_deg=inc,
+                    semi_major_axis_m=template.semi_major_axis_m,
+                    eccentricity=template.eccentricity,
+                    inclination_deg=template.inclination_deg,
                     raan_deg=raan,
-                    arg_perigee_deg=arg_pe,
+                    arg_perigee_deg=template.arg_perigee_deg,
                     true_anomaly_deg=nu,
                 )
-                sat = SatelliteState(
+                pending.append(SatelliteState(
                     satellite_id=sid,
                     constellation_id=cid,
                     elements=elems,
                     side=definition.side,
                     current_true_anomaly_deg=nu,
                     current_raan_deg=raan,
-                )
-                self._satellites[sid] = sat
-                self._constellation_sats[cid].append(sid)
-                idx += 1
+                ))
+
+        if len(pending) != definition.num_satellites:
+            raise ValueError(
+                f"Constellation {cid!r} generated {len(pending)} satellites, "
+                f"expected {definition.num_satellites}",
+            )
+
+        self._constellations[cid] = definition
+        self._constellation_sats[cid] = [
+            satellite.satellite_id
+            for satellite in pending
+        ]
+        for satellite in pending:
+            self._satellites[satellite.satellite_id] = satellite
 
     def update(self, dt_s: float, sim_time_s: float) -> None:
         """Propagate all active satellites by *dt_s*."""
-        self._sim_time_s = sim_time_s
+        normalized_dt = _validated_float(
+            dt_s,
+            "dt_s",
+            minimum=0.0,
+        )
+        normalized_sim_time = _validated_float(
+            sim_time_s,
+            "sim_time_s",
+            minimum=0.0,
+        )
+        self._sim_time_s = normalized_sim_time
         for sat in self._satellites.values():
             if sat.is_active:
-                self._orbits.propagate(sat, dt_s)
+                self._orbits.propagate(sat, normalized_dt)
 
     def visible_satellites(
         self,
@@ -189,6 +200,36 @@ class ConstellationManager:
         """Return constellation definitions for a given side."""
         return [d for d in self._constellations.values() if d.side == side]
 
+    def deactivate_satellite(
+        self,
+        satellite_id: str,
+        cause: str,
+        timestamp: Any,
+    ) -> list[Exception]:
+        """Deactivate one exact active satellite and publish its degradation.
+
+        The transition is committed before observers are notified.  Observer
+        failures are returned so an orchestrator can finish publishing its
+        complete event batch before reporting them.
+        """
+        satellite = self._satellites.get(satellite_id)
+        if satellite is None:
+            raise ValueError(f"Unknown satellite_id {satellite_id!r}")
+        if not satellite.is_active:
+            raise ValueError(f"Satellite {satellite_id!r} is already inactive")
+
+        previous_count = self.active_count(satellite.constellation_id)
+        satellite.is_active = False
+        event = ConstellationDegradedEvent(
+            timestamp=timestamp,
+            source=ModuleId.SPACE,
+            constellation_id=satellite.constellation_id,
+            previous_count=previous_count,
+            new_count=previous_count - 1,
+            cause=cause,
+        )
+        return self._event_bus.publish_collecting(event)
+
     def degrade_constellation(
         self,
         constellation_id: str,
@@ -200,6 +241,10 @@ class ConstellationManager:
 
         Returns list of deactivated satellite IDs.
         """
+        if constellation_id not in self._constellations:
+            raise ValueError(f"Unknown constellation_id {constellation_id!r}")
+        if isinstance(count, bool) or not isinstance(count, int) or count < 0:
+            raise ValueError("count must be a non-negative integer")
         sids = self._constellation_sats.get(constellation_id, [])
         active = [sid for sid in sids if self._satellites[sid].is_active]
         prev_count = len(active)
@@ -213,16 +258,20 @@ class ConstellationManager:
             killed.append(sid)
 
         if killed and timestamp is not None:
-            self._event_bus.publish(ConstellationDegradedEvent(
+            failures = self._event_bus.publish_collecting(ConstellationDegradedEvent(
                 timestamp=timestamp,
-                source=__import__(
-                    "stochastic_warfare.core.types", fromlist=["ModuleId"],
-                ).ModuleId.SPACE,
+                source=ModuleId.SPACE,
                 constellation_id=constellation_id,
                 previous_count=prev_count,
                 new_count=prev_count - len(killed),
                 cause=cause,
             ))
+            if failures:
+                raise ExceptionGroup(
+                    "Constellation degradation subscriber failures after "
+                    "state commit",
+                    failures,
+                )
 
         return killed
 
@@ -261,13 +310,117 @@ class ConstellationManager:
             }
         return state
 
+    def stage_state(self, state: dict[str, Any]) -> dict[str, Any]:
+        """Validate a complete manager snapshot without mutating live state."""
+        if not isinstance(state, dict):
+            raise ValueError("Constellation state must be a mapping")
+        expected_keys = {"sim_time_s", "satellites"}
+        if set(state) != expected_keys:
+            raise ValueError(
+                "Constellation state keys must be exactly "
+                f"{sorted(expected_keys)!r}",
+            )
+
+        normalized_time = _validated_float(
+            state["sim_time_s"],
+            "Constellation sim_time_s",
+            minimum=0.0,
+        )
+
+        raw_satellites = state["satellites"]
+        if not isinstance(raw_satellites, dict):
+            raise ValueError("Constellation satellites state must be a mapping")
+        expected_ids = set(self._satellites)
+        actual_ids = set(raw_satellites)
+        if actual_ids != expected_ids:
+            raise ValueError(
+                "Constellation satellite topology mismatch: "
+                f"missing={sorted(expected_ids - actual_ids)!r}, "
+                f"extra={sorted(actual_ids - expected_ids)!r}",
+            )
+
+        staged_satellites: dict[str, dict[str, Any]] = {}
+        satellite_keys = {
+            "is_active",
+            "true_anomaly_deg",
+            "raan_deg",
+        }
+        for satellite_id in self._satellites:
+            raw_satellite = raw_satellites[satellite_id]
+            if not isinstance(raw_satellite, dict):
+                raise ValueError(
+                    f"State for satellite {satellite_id!r} must be a mapping",
+                )
+            if set(raw_satellite) != satellite_keys:
+                raise ValueError(
+                    f"State keys for satellite {satellite_id!r} must be "
+                    f"exactly {sorted(satellite_keys)!r}",
+                )
+            is_active = raw_satellite["is_active"]
+            if not isinstance(is_active, bool):
+                raise ValueError(
+                    f"Satellite {satellite_id!r} is_active must be boolean",
+                )
+            angles: dict[str, float] = {}
+            for field_name in ("true_anomaly_deg", "raan_deg"):
+                try:
+                    angle = _validated_float(
+                        raw_satellite[field_name],
+                        f"Satellite {satellite_id!r} {field_name}",
+                        minimum=0.0,
+                        maximum=360.0,
+                    )
+                except ValueError as exc:
+                    raise ValueError(
+                        f"Satellite {satellite_id!r} {field_name} must be "
+                        "finite and in [0, 360)",
+                    ) from exc
+                if angle >= 360.0:
+                    raise ValueError(
+                        f"Satellite {satellite_id!r} {field_name} must be "
+                        "finite and in [0, 360)",
+                    )
+                angles[field_name] = angle
+            staged_satellites[satellite_id] = {
+                "is_active": is_active,
+                **angles,
+            }
+
+        return {
+            "sim_time_s": normalized_time,
+            "satellites": staged_satellites,
+        }
+
+    def commit_state(self, staged_state: dict[str, Any]) -> None:
+        """Commit a snapshot previously returned by :meth:`stage_state`."""
+        self._sim_time_s = staged_state["sim_time_s"]
+        for satellite_id, satellite_state in staged_state["satellites"].items():
+            satellite = self._satellites[satellite_id]
+            satellite.is_active = satellite_state["is_active"]
+            satellite.current_true_anomaly_deg = satellite_state[
+                "true_anomaly_deg"
+            ]
+            satellite.current_raan_deg = satellite_state["raan_deg"]
+
+    def view_from_staged_state(
+        self,
+        staged_state: dict[str, Any],
+    ) -> ConstellationManager:
+        """Return an isolated manager view for cross-engine validation."""
+        view = ConstellationManager(
+            self._orbits,
+            self._event_bus,
+            self._rng,
+            self._config,
+        )
+        for definition in self._constellations.values():
+            view.add_constellation(definition)
+        view.commit_state(staged_state)
+        return view
+
     def set_state(self, state: dict[str, Any]) -> None:
-        self._sim_time_s = state.get("sim_time_s", 0.0)
-        for sid, sdata in state.get("satellites", {}).items():
-            if sid in self._satellites:
-                self._satellites[sid].is_active = sdata["is_active"]
-                self._satellites[sid].current_true_anomaly_deg = sdata["true_anomaly_deg"]
-                self._satellites[sid].current_raan_deg = sdata["raan_deg"]
+        """Validate and atomically restore a complete manager snapshot."""
+        self.commit_state(self.stage_state(state))
 
 
 # ---------------------------------------------------------------------------
@@ -291,7 +444,14 @@ class SpaceEngine:
         early_warning_engine: Any = None,
         satcom_engine: Any = None,
         asat_engine: Any = None,
+        catalog_fingerprint: str = "",
     ) -> None:
+        if not isinstance(catalog_fingerprint, str):
+            raise ValueError("catalog_fingerprint must be a string")
+        if catalog_fingerprint != catalog_fingerprint.strip():
+            raise ValueError(
+                "catalog_fingerprint must not contain surrounding whitespace",
+            )
         self._config = config
         self._constellation_manager = constellation_manager
         self._gps_engine = gps_engine
@@ -299,6 +459,7 @@ class SpaceEngine:
         self._early_warning_engine = early_warning_engine
         self._satcom_engine = satcom_engine
         self._asat_engine = asat_engine
+        self._catalog_fingerprint = catalog_fingerprint
 
     @property
     def constellation_manager(self) -> ConstellationManager:
@@ -324,6 +485,11 @@ class SpaceEngine:
     def asat_engine(self) -> Any:
         return self._asat_engine
 
+    @property
+    def catalog_fingerprint(self) -> str:
+        """Canonical fingerprint of the selected space runtime topology."""
+        return self._catalog_fingerprint
+
     def update(
         self,
         dt_s: float,
@@ -332,6 +498,7 @@ class SpaceEngine:
         comms_engine: Any = None,
         targets_by_side: dict[str, list[Any]] | None = None,
         cloud_cover: float = 0.0,
+        timestamp: Any = None,
     ) -> None:
         """Update all space sub-engines for the current tick."""
         if not self._config.enable_space:
@@ -340,7 +507,17 @@ class SpaceEngine:
         # 1. Propagate constellations
         self._constellation_manager.update(dt_s, sim_time_s)
 
-        # 2. GPS → drives EM environment
+        # 2. Advance existing ASAT timers/debris, then execute newly due
+        # actions.  Production supplies the logical scenario timestamp.
+        if self._asat_engine is not None:
+            if timestamp is None:
+                self._asat_engine.update(dt_s, sim_time_s)
+            else:
+                self._asat_engine.update(dt_s, sim_time_s, timestamp)
+            if getattr(self._config, "enable_asat", False):
+                self._asat_engine.execute_due_orders(sim_time_s, timestamp)
+
+        # 3. GPS → drives EM environment
         if self._gps_engine is not None:
             self._gps_engine.update(dt_s, sim_time_s)
             if em_environment is not None and hasattr(em_environment, "set_constellation_accuracy"):
@@ -352,25 +529,21 @@ class SpaceEngine:
                     worst_accuracy = max(worst_accuracy, gps_state.position_accuracy_m)
                 em_environment.set_constellation_accuracy(worst_accuracy)
 
-        # 3. ISR
+        # 4. ISR
         if self._isr_engine is not None:
             self._isr_engine.update(dt_s, sim_time_s, targets_by_side, cloud_cover)
 
-        # 4. Early warning
+        # 5. Early warning
         if self._early_warning_engine is not None:
             self._early_warning_engine.update(dt_s, sim_time_s)
 
-        # 5. SATCOM → drives comms engine
+        # 6. SATCOM → drives comms engine
         if self._satcom_engine is not None:
             self._satcom_engine.update(dt_s, sim_time_s)
             if comms_engine is not None and hasattr(comms_engine, "set_satcom_reliability"):
                 for side in ("blue", "red"):
                     factor = self._satcom_engine.get_reliability_factor(side, sim_time_s)
                     comms_engine.set_satcom_reliability(factor)
-
-        # 6. ASAT debris
-        if self._asat_engine is not None:
-            self._asat_engine.update(dt_s, sim_time_s)
 
     # ── Phase 54e: public GPS convenience API ───────────────────────
 
@@ -387,7 +560,9 @@ class SpaceEngine:
     # ── State persistence ────────────────────────────────────────────
 
     def get_state(self) -> dict[str, Any]:
-        state: dict[str, Any] = {}
+        state: dict[str, Any] = {
+            "catalog_fingerprint": self._catalog_fingerprint,
+        }
         state["constellation_manager"] = self._constellation_manager.get_state()
         for name, eng in [
             ("gps_engine", self._gps_engine),
@@ -400,9 +575,92 @@ class SpaceEngine:
                 state[name] = eng.get_state()
         return state
 
-    def set_state(self, state: dict[str, Any]) -> None:
-        if "constellation_manager" in state:
-            self._constellation_manager.set_state(state["constellation_manager"])
+    def stage_state(
+        self,
+        state: dict[str, Any],
+        *,
+        expected_elapsed_s: float | None = None,
+        expected_tick_count: int | None = None,
+    ) -> dict[str, Any]:
+        """Validate a complete space snapshot without mutating live engines."""
+        if not isinstance(state, dict):
+            raise ValueError("Space engine state must be a mapping")
+        normalized_elapsed: float | None = None
+        if expected_elapsed_s is not None:
+            normalized_elapsed = _validated_float(
+                expected_elapsed_s,
+                "Expected space elapsed time",
+                minimum=0.0,
+            )
+        normalized_tick_count: int | None = None
+        if expected_tick_count is not None:
+            if (
+                isinstance(expected_tick_count, bool)
+                or not isinstance(expected_tick_count, int)
+                or expected_tick_count < 0
+            ):
+                raise ValueError(
+                    "Expected space tick count must be a non-negative integer",
+                )
+            normalized_tick_count = expected_tick_count
+
+        engines = [
+            ("gps_engine", self._gps_engine),
+            ("isr_engine", self._isr_engine),
+            ("early_warning_engine", self._early_warning_engine),
+            ("satcom_engine", self._satcom_engine),
+            ("asat_engine", self._asat_engine),
+        ]
+        expected_keys = {
+            "catalog_fingerprint",
+            "constellation_manager",
+        }
+        expected_keys.update(
+            name
+            for name, engine in engines
+            if engine is not None and hasattr(engine, "get_state")
+        )
+        if set(state) != expected_keys:
+            raise ValueError(
+                "Space engine state topology mismatch: "
+                f"missing={sorted(expected_keys - set(state))!r}, "
+                f"extra={sorted(set(state) - expected_keys)!r}",
+            )
+        fingerprint = state["catalog_fingerprint"]
+        if not isinstance(fingerprint, str):
+            raise ValueError(
+                "Space engine catalog_fingerprint must be a string",
+            )
+        if fingerprint != self._catalog_fingerprint:
+            raise ValueError(
+                "Space engine catalog fingerprint does not match runtime "
+                "configuration",
+            )
+
+        staged: dict[str, Any] = {
+            "catalog_fingerprint": fingerprint,
+            "constellation_manager": (
+                self._constellation_manager.stage_state(
+                    state["constellation_manager"],
+                )
+            ),
+        }
+        if (
+            normalized_elapsed is not None
+            and not math.isclose(
+                staged["constellation_manager"]["sim_time_s"],
+                normalized_elapsed,
+                rel_tol=0.0,
+                abs_tol=1.0e-9,
+            )
+        ):
+            raise ValueError(
+                "Constellation simulation time does not match the checkpoint "
+                "clock elapsed time",
+            )
+        staged_manager = self._constellation_manager.view_from_staged_state(
+            staged["constellation_manager"],
+        )
         for name, eng in [
             ("gps_engine", self._gps_engine),
             ("isr_engine", self._isr_engine),
@@ -410,5 +668,247 @@ class SpaceEngine:
             ("satcom_engine", self._satcom_engine),
             ("asat_engine", self._asat_engine),
         ]:
-            if eng is not None and name in state and hasattr(eng, "set_state"):
-                eng.set_state(state[name])
+            if eng is None or name not in state:
+                continue
+            raw_engine_state = state[name]
+            if not isinstance(raw_engine_state, dict):
+                raise ValueError(f"{name} state must be a mapping")
+            if name in {"gps_engine", "satcom_engine"}:
+                staged[name] = eng.stage_state(
+                    raw_engine_state,
+                    constellation_manager=staged_manager,
+                    sim_time_s=staged[
+                        "constellation_manager"
+                    ]["sim_time_s"],
+                    expected_tick_count=normalized_tick_count,
+                )
+            elif hasattr(eng, "stage_state"):
+                staged[name] = eng.stage_state(raw_engine_state)
+            elif hasattr(eng, "validate_state"):
+                if name == "asat_engine":
+                    staged[name] = eng.validate_state(
+                        raw_engine_state,
+                        expected_elapsed_s=normalized_elapsed,
+                        expected_tick_count=normalized_tick_count,
+                    )
+                else:
+                    staged[name] = eng.validate_state(raw_engine_state)
+            else:
+                staged[name] = self._stage_service_state(
+                    name,
+                    raw_engine_state,
+                    constellation_manager=staged_manager,
+                    sim_time_s=staged[
+                        "constellation_manager"
+                    ]["sim_time_s"],
+                )
+        self._validate_cross_engine_state(staged)
+        return staged
+
+    def _stage_service_state(
+        self,
+        name: str,
+        state: dict[str, Any],
+        *,
+        constellation_manager: ConstellationManager,
+        sim_time_s: float,
+    ) -> dict[str, Any]:
+        """Strictly stage legacy space-service state at the runtime boundary."""
+        if name == "isr_engine":
+            expected = {"last_overpass_time", "recent_reports"}
+            if set(state) != expected:
+                raise ValueError(
+                    "isr_engine state keys must be exactly "
+                    f"{sorted(expected)!r}",
+                )
+            overpasses = self._stage_finite_mapping(
+                state["last_overpass_time"],
+                "ISR last_overpass_time",
+            )
+            known_satellites = {
+                satellite.satellite_id
+                for satellite in constellation_manager.all_satellites()
+            }
+            unknown_satellites = sorted(set(overpasses) - known_satellites)
+            if unknown_satellites:
+                raise ValueError(
+                    "ISR checkpoint references unknown satellites: "
+                    f"{unknown_satellites!r}",
+                )
+            future_overpasses = sorted(
+                satellite_id
+                for satellite_id, overpass_time in overpasses.items()
+                if overpass_time > sim_time_s
+            )
+            if future_overpasses:
+                raise ValueError(
+                    "ISR checkpoint has last_overpass_time after the staged "
+                    f"simulation time: {future_overpasses!r}",
+                )
+            reports = state["recent_reports"]
+            if not isinstance(reports, list):
+                raise ValueError("ISR recent_reports must be a list")
+            return {
+                "last_overpass_time": overpasses,
+                "recent_reports": [
+                    self._stage_json_value(
+                        report,
+                        f"ISR recent_reports[{index}]",
+                    )
+                    for index, report in enumerate(reports)
+                ],
+            }
+        if name == "early_warning_engine":
+            if state:
+                raise ValueError("early_warning_engine state must be empty")
+            return {}
+        raise ValueError(f"Unsupported space service state {name!r}")
+
+    @staticmethod
+    def _stage_finite_mapping(
+        value: Any,
+        label: str,
+    ) -> dict[str, float]:
+        if not isinstance(value, dict):
+            raise ValueError(f"{label} must be a mapping")
+        staged: dict[str, float] = {}
+        for key, raw in value.items():
+            if not isinstance(key, str) or not key:
+                raise ValueError(f"{label} keys must be non-empty strings")
+            staged[key] = _validated_float(
+                raw,
+                f"{label}[{key!r}]",
+                minimum=0.0,
+            )
+        return staged
+
+    @classmethod
+    def _stage_json_value(cls, value: Any, label: str) -> Any:
+        if value is None or type(value) in {bool, str, int}:
+            return copy.deepcopy(value)
+        if isinstance(value, float):
+            if not math.isfinite(value):
+                raise ValueError(f"{label} contains a non-finite number")
+            return value
+        if isinstance(value, (list, tuple)):
+            return [
+                cls._stage_json_value(item, f"{label}[]")
+                for item in value
+            ]
+        if isinstance(value, dict):
+            if not all(isinstance(key, str) for key in value):
+                raise ValueError(f"{label} mapping keys must be strings")
+            return {
+                key: cls._stage_json_value(item, f"{label}.{key}")
+                for key, item in value.items()
+            }
+        raise ValueError(
+            f"{label} contains unsupported value type "
+            f"{type(value).__name__}",
+        )
+
+    def _validate_cross_engine_state(self, staged: dict[str, Any]) -> None:
+        """Validate invariants jointly owned by ASAT and constellation state."""
+        asat_state = staged.get("asat_engine")
+        if not isinstance(asat_state, dict):
+            return
+        completed = asat_state.get("completed_orders")
+        if not isinstance(completed, dict):
+            return
+
+        satellite_state = staged["constellation_manager"]["satellites"]
+        total_by_constellation: dict[str, int] = {}
+        active_by_constellation: dict[str, int] = {}
+        for runtime_satellite in self._constellation_manager.all_satellites():
+            satellite_id = runtime_satellite.satellite_id
+            constellation_id = runtime_satellite.constellation_id
+            total_by_constellation[constellation_id] = (
+                total_by_constellation.get(constellation_id, 0) + 1
+            )
+            if satellite_state[satellite_id]["is_active"]:
+                active_by_constellation[constellation_id] = (
+                    active_by_constellation.get(constellation_id, 0) + 1
+                )
+
+        latest_count_by_constellation: dict[str, tuple[float, int]] = {}
+        for order_id, result in completed.items():
+            target_id = result["target_satellite_id"]
+            target_state = satellite_state.get(target_id)
+            if target_state is None:
+                raise ValueError(
+                    f"Completed ASAT order {order_id!r} references a target "
+                    "outside constellation state",
+                )
+            if result["hit"] and target_state["is_active"]:
+                raise ValueError(
+                    f"Completed ASAT hit {order_id!r} has an active target "
+                    f"{target_id!r} in constellation state",
+                )
+            if (
+                result["reason"] == "target_inactive"
+                and target_state["is_active"]
+            ):
+                raise ValueError(
+                    f"Completed ASAT target_inactive rejection {order_id!r} "
+                    f"has an active target {target_id!r} in constellation "
+                    "state",
+                )
+            constellation_id = result["target_constellation_id"]
+            total_count = total_by_constellation.get(constellation_id)
+            if total_count is None:
+                raise ValueError(
+                    f"Completed ASAT order {order_id!r} references unknown "
+                    f"constellation {constellation_id!r}",
+                )
+            final_active = active_by_constellation.get(constellation_id, 0)
+            prior_count = latest_count_by_constellation.get(constellation_id)
+            if prior_count is not None:
+                prior_execution_time, prior_new_count = prior_count
+                if (
+                    result["previous_constellation_count"] > prior_new_count
+                    or (
+                        result["execution_time_s"] == prior_execution_time
+                        and result["previous_constellation_count"]
+                        != prior_new_count
+                    )
+                ):
+                    raise ValueError(
+                        f"Completed ASAT order {order_id!r} constellation "
+                        "count history is not chronological",
+                    )
+            latest_count_by_constellation[constellation_id] = (
+                result["execution_time_s"],
+                result["new_constellation_count"],
+            )
+            if (
+                result["previous_constellation_count"] > total_count
+                or result["new_constellation_count"] > total_count
+                or final_active > result["new_constellation_count"]
+            ):
+                raise ValueError(
+                    f"Completed ASAT order {order_id!r} constellation counts "
+                    "disagree with staged constellation state",
+                )
+
+    def commit_state(self, staged_state: dict[str, Any]) -> None:
+        """Commit a plan previously returned by :meth:`stage_state`."""
+        self._constellation_manager.commit_state(
+            staged_state["constellation_manager"],
+        )
+        for name, eng in [
+            ("gps_engine", self._gps_engine),
+            ("isr_engine", self._isr_engine),
+            ("early_warning_engine", self._early_warning_engine),
+            ("satcom_engine", self._satcom_engine),
+            ("asat_engine", self._asat_engine),
+        ]:
+            if (
+                eng is not None
+                and name in staged_state
+                and hasattr(eng, "set_state")
+            ):
+                eng.set_state(staged_state[name])
+
+    def set_state(self, state: dict[str, Any]) -> None:
+        """Validate and atomically restore the complete space snapshot."""
+        self.commit_state(self.stage_state(state))

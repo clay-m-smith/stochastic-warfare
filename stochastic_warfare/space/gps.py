@@ -14,6 +14,7 @@ Key physics:
 from __future__ import annotations
 
 import enum
+import math
 from typing import Any
 
 import numpy as np
@@ -81,12 +82,25 @@ class GPSEngine:
 
     def compute_gps_accuracy(self, side: str, sim_time_s: float) -> GPSState:
         """Compute GPS accuracy for *side* at current time."""
+        return self._compute_gps_accuracy(
+            self._cm,
+            side,
+            sim_time_s,
+        )
+
+    def _compute_gps_accuracy(
+        self,
+        constellation_manager: ConstellationManager,
+        side: str,
+        sim_time_s: float,
+    ) -> GPSState:
+        """Compute GPS accuracy against an explicit constellation view."""
         # Find GPS/GLONASS constellations for this side
         visible_total = 0
         gps_types = {int(ConstellationType.GPS), int(ConstellationType.GLONASS)}
-        for cdef in self._cm.get_constellations_by_side(side):
+        for cdef in constellation_manager.get_constellations_by_side(side):
             if cdef.constellation_type in gps_types:
-                vis = self._cm.visible_satellites(
+                vis = constellation_manager.visible_satellites(
                     cdef.constellation_id,
                     self._config.theater_lat,
                     self._config.theater_lon,
@@ -98,7 +112,7 @@ class GPSEngine:
         # If no GPS constellations configured for this side, assume full GPS
         has_gps = any(
             cdef.constellation_type in gps_types
-            for cdef in self._cm.get_constellations_by_side(side)
+            for cdef in constellation_manager.get_constellations_by_side(side)
         )
         if not has_gps:
             visible_total = 24
@@ -180,6 +194,82 @@ class GPSEngine:
         return {
             "previous_accuracy": dict(self._previous_accuracy),
             "denial_start": dict(self._denial_start),
+        }
+
+    def stage_state(
+        self,
+        state: dict[str, Any],
+        *,
+        constellation_manager: ConstellationManager,
+        sim_time_s: float,
+        expected_tick_count: int | None,
+    ) -> dict[str, Any]:
+        """Validate GPS history against the staged constellation snapshot."""
+        expected_keys = {"previous_accuracy", "denial_start"}
+        if set(state) != expected_keys:
+            raise ValueError(
+                "gps_engine state keys must be exactly "
+                f"{sorted(expected_keys)!r}",
+            )
+        previous = state["previous_accuracy"]
+        denial_start = state["denial_start"]
+        if not isinstance(previous, dict):
+            raise ValueError("GPS previous_accuracy must be a mapping")
+        if denial_start != {}:
+            raise ValueError(
+                "GPS denial_start must be empty until denial tracking is "
+                "implemented",
+            )
+
+        has_updated = (
+            expected_tick_count > 0
+            if expected_tick_count is not None
+            else sim_time_s > 0.0
+        )
+        expected_sides = {"blue", "red"} if has_updated else set()
+        if set(previous) != expected_sides:
+            raise ValueError(
+                "GPS previous_accuracy side topology mismatch",
+            )
+
+        staged_previous: dict[str, float] = {}
+        for side in sorted(expected_sides):
+            value = previous[side]
+            if isinstance(value, bool) or not isinstance(value, (int, float)):
+                raise ValueError(
+                    f"GPS previous_accuracy[{side!r}] must be finite",
+                )
+            try:
+                normalized = float(value)
+            except (OverflowError, ValueError) as exc:
+                raise ValueError(
+                    f"GPS previous_accuracy[{side!r}] must be finite",
+                ) from exc
+            if not math.isfinite(normalized) or normalized < 0.0:
+                raise ValueError(
+                    f"GPS previous_accuracy[{side!r}] must be finite and "
+                    "non-negative",
+                )
+            expected = self._compute_gps_accuracy(
+                constellation_manager,
+                side,
+                sim_time_s,
+            ).position_accuracy_m
+            if not math.isclose(
+                normalized,
+                expected,
+                rel_tol=0.0,
+                abs_tol=1.0e-12,
+            ):
+                raise ValueError(
+                    f"GPS previous_accuracy[{side!r}] disagrees with the "
+                    "staged constellation state",
+                )
+            staged_previous[side] = normalized
+
+        return {
+            "previous_accuracy": staged_previous,
+            "denial_start": {},
         }
 
     def set_state(self, state: dict[str, Any]) -> None:

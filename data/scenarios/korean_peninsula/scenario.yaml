@@ -162,6 +162,15 @@ cbrn_config:
 # Phase 54e: space ISR + GPS + commander personalities
 space_config:
   enable_space: true
+  constellation_ids:
+    - gps_navstar
+    - keyhole_optical
+    - lacrosse_sar
+    - sigint_leo
+    - sbirs_ew
+    - milstar_satcom
+    - wgs_satcom
+  enable_asat: false
   gps_sigma_range_m: 3.0
 
 commander_config:

@@ -113,7 +113,14 @@ class TestGPSDenialScenario:
         cdef = ConstellationDefinition(
             constellation_id="gps", constellation_type=int(ConstellationType.GPS),
             side="blue", num_satellites=24,
-            orbital_elements_template={"semi_major_axis_m": 26559700.0, "inclination_deg": 55.0},
+            orbital_elements_template={
+                "semi_major_axis_m": 26559700.0,
+                "eccentricity": 0.0,
+                "inclination_deg": 55.0,
+                "raan_deg": 0.0,
+                "arg_perigee_deg": 0.0,
+                "true_anomaly_deg": 0.0,
+            },
             plane_count=6, sats_per_plane=4,
         )
         cm.add_constellation(cdef)
@@ -180,7 +187,14 @@ class TestASATEscalation:
         cm.add_constellation(ConstellationDefinition(
             constellation_id="gps", constellation_type=int(ConstellationType.GPS),
             side="blue", num_satellites=24,
-            orbital_elements_template={"semi_major_axis_m": 26559700.0, "inclination_deg": 55.0},
+            orbital_elements_template={
+                "semi_major_axis_m": 26559700.0,
+                "eccentricity": 0.0,
+                "inclination_deg": 55.0,
+                "raan_deg": 0.0,
+                "arg_perigee_deg": 0.0,
+                "true_anomaly_deg": 0.0,
+            },
             plane_count=6, sats_per_plane=4,
         ))
         assert cm.active_count("gps") == 24
@@ -205,7 +219,14 @@ class TestASATEscalation:
         cm.add_constellation(ConstellationDefinition(
             constellation_id="gps", constellation_type=int(ConstellationType.GPS),
             side="blue", num_satellites=24,
-            orbital_elements_template={"semi_major_axis_m": 26559700.0, "inclination_deg": 55.0},
+            orbital_elements_template={
+                "semi_major_axis_m": 26559700.0,
+                "eccentricity": 0.0,
+                "inclination_deg": 55.0,
+                "raan_deg": 0.0,
+                "arg_perigee_deg": 0.0,
+                "true_anomaly_deg": 0.0,
+            },
             plane_count=6, sats_per_plane=4,
         ))
         asat = ASATEngine(cm, cfg, bus, rng)
