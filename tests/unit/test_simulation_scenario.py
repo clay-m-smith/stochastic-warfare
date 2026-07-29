@@ -99,7 +99,7 @@ class TestDepotConfig:
         assert d.capacity_tons == 500.0
 
     def test_short_position_rejected(self) -> None:
-        with pytest.raises(ValueError, match="at least"):
+        with pytest.raises(ValueError, match="position"):
             DepotConfig(depot_id="d1", position=[100.0])
 
 

@@ -15,10 +15,17 @@ weather_conditions:
   temperature_c: 38.0
 
 terrain:
-  width_m: 15000
+  width_m: 30000
   height_m: 15000
   cell_size_m: 100
   terrain_type: "flat_desert"
+
+deployment:
+  mode: "bounding_box"
+  blue_box: {x_min: 500, y_min: 6500, x_max: 3500, y_max: 8500}
+  red_box: {x_min: 26500, y_min: 6500, x_max: 29500, y_max: 8500}
+  min_spacing_m: 100
+  min_side_separation_m: 20000
 
 sides:
   - side: "blue"
@@ -32,12 +39,24 @@ sides:
     depots:
       - depot_id: "blue_main_depot"
         position: [500, 7500]
+        depot_type: "DEPOT"
+        condition: 1.0
         capacity_tons: 1000
         throughput_tons_per_hour: 100
+        initial_inventory:
+          - supply_class: "CLASS_I"
+            item_id: "water_potable"
+            quantity: 20000
       - depot_id: "blue_forward_depot"
         position: [3000, 7500]
+        depot_type: "SUPPLY_POINT"
+        condition: 1.0
         capacity_tons: 200
         throughput_tons_per_hour: 30
+        initial_inventory:
+          - supply_class: "CLASS_I"
+            item_id: "water_potable"
+            quantity: 5000
 
   - side: "red"
     units:
@@ -49,13 +68,77 @@ sides:
     doctrine_template: "russian_deep_operations"
     depots:
       - depot_id: "red_depot"
-        position: [14500, 7500]
+        position: [29500, 7500]
+        depot_type: "DEPOT"
+        condition: 1.0
         capacity_tons: 800
         throughput_tons_per_hour: 60
+        initial_inventory:
+          - supply_class: "CLASS_I"
+            item_id: "water_potable"
+            quantity: 15000
+
+logistics:
+  enabled: true
+  update_interval_seconds: 3600
+  unit_profiles:
+    - side: "blue"
+      unit_type: "m1a2"
+      initial_inventory:
+        - supply_class: "CLASS_I"
+          item_id: "water_potable"
+          quantity: 20
+      maximum_inventory:
+        - supply_class: "CLASS_I"
+          item_id: "water_potable"
+          quantity: 100
+      idle_consumption_per_hour:
+        - supply_class: "CLASS_I"
+          item_id: "water_potable"
+          quantity: 5
+    - side: "red"
+      unit_type: "m1a2"
+      initial_inventory:
+        - supply_class: "CLASS_I"
+          item_id: "water_potable"
+          quantity: 20
+      maximum_inventory:
+        - supply_class: "CLASS_I"
+          item_id: "water_potable"
+          quantity: 100
+      idle_consumption_per_hour:
+        - supply_class: "CLASS_I"
+          item_id: "water_potable"
+          quantity: 5
+  route_templates:
+    - route_id: "blue_main_armor"
+      side: "blue"
+      depot_id: "blue_main_depot"
+      unit_types: ["m1a2"]
+      transport_mode: "ROAD"
+      transport_speed_kph: 40
+      capacity_tons_per_hour: 100
+      condition: 1.0
+    - route_id: "blue_forward_armor"
+      side: "blue"
+      depot_id: "blue_forward_depot"
+      unit_types: ["m1a2"]
+      transport_mode: "ROAD"
+      transport_speed_kph: 30
+      capacity_tons_per_hour: 30
+      condition: 1.0
+    - route_id: "red_armor"
+      side: "red"
+      depot_id: "red_depot"
+      unit_types: ["m1a2"]
+      transport_mode: "ROAD"
+      transport_speed_kph: 35
+      capacity_tons_per_hour: 60
+      condition: 1.0
 
 objectives:
   - objective_id: "obj_crossroads"
-    position: [7500, 7500]
+    position: [15000, 7500]
     radius_m: 600
     type: "key_terrain"
 

@@ -23,7 +23,7 @@ core -> coordinates -> terrain -> environment -> entities -> movement
 | **combat** | Ballistics (RK4), DeMarre penetration, missiles, naval salvo, air combat, IADS, DEW |
 | **morale** | Continuous-time Markov state transitions, cohesion, stress, psychology, rout |
 | **c2** | Command authority, communications (Bernoulli), EMCON, ROE, orders, mission command |
-| **logistics** | NATO supply classes, networkx routing, Poisson maintenance, M/M/c medical, engineering |
+| **logistics** | NATO supply classes, deterministic scenario topology/resupply, networkx routing, Poisson maintenance, M/M/c medical, engineering |
 | **simulation** | Scenario loading, battle/campaign managers, master engine, recording, metrics |
 
 **Key rule**: Dependencies flow downward only. Terrain never imports environment. Environment may read terrain (one-way). This prevents circular dependencies and makes the system testable in isolation.
@@ -63,20 +63,30 @@ The engine automatically switches resolution based on battle state. When forces 
 
 ### Tick Processing Order
 
-Within each tick, processing follows a fixed order:
+At the engine boundary, each tick follows a fixed order:
 
-1. **Environment** -- weather evolution, time-of-day updates
-2. **Detection** -- sensor scans, Kalman updates, fog of war refresh
-3. **AI/C2** -- OODA cycle, commander decisions, order propagation
-4. **Movement** -- pathfinding, formation maintenance, fatigue
-5. **Combat** -- engagement resolution, damage application (see Engagement Gate Sequence below)
-6. **Morale** -- state transitions, cohesion checks, rout cascade, rally
-7. **Logistics** -- supply consumption, transport, maintenance
-8. **Victory** -- condition evaluation
+1. **Reinforcements** -- admit due waves atomically at their logical arrival
+   time.
+2. **Environment** -- advance weather, time of day, and seasonal state.
+3. **Logistics** -- cross any fixed logical cadence boundaries, update direct
+   routes, resupply, then apply eligible idle demand. This call occurs at every
+   engine resolution.
+4. **Resolution-specific work** -- select the current resolution, then execute
+   strategic/operational campaign work or active tactical battles. Detection,
+   AI/C2, movement, combat, and morale are sequenced inside those managers.
+5. **Logistics activity latch** -- remember movement and battle participation
+   so a unit is not charged the idle rate at the next cadence boundary.
+6. **Victory** -- evaluate conditions against the committed force, morale, and
+   supply state.
+7. **Recorder** -- record the tick and any configured snapshot.
+
+The Phase 108 logistics path models direct aggregate resupply and stationary,
+non-battle idle demand only. March/combat demand and synchronization with live
+fuel tanks or weapon magazines remain explicit remediation boundaries.
 
 ### Engagement Gate Sequence
 
-Within combat, each potential engagement passes through a series of gates before resolving. If any gate rejects, the engagement is skipped. This gate sequence was wired in Phases 40--47 (Block 5: Core Combat Fidelity), connecting 40+ previously disconnected subsystems into the battle loop. All 41 scenarios are validated against historical outcomes (Phases 47, 57).
+Within combat, each potential engagement passes through a series of gates before resolving. If any gate rejects, the engagement is skipped. This gate sequence was wired in Phases 40--47 (Block 5: Core Combat Fidelity), connecting 40+ previously disconnected subsystems into the battle loop. Source-backed historical scenarios use separately declared outcome envelopes; synthetic, test, calibration, and benchmark scenarios are not historical validation claims.
 
 1. **Domain filtering** -- attacker's weapon must target the defender's domain (ground, air, naval)
 2. **Posture/status check** -- ROUTED/SURRENDERED units skip; morale accuracy multiplier applied
@@ -133,6 +143,8 @@ The `ScenarioLoader` is the central factory. Given a scenario YAML file, it:
 2. Creates terrain, environment, and weather engines
 3. Instantiates all units with their equipment, weapons, and sensors
 4. Creates detection, combat, movement, morale, C2, and logistics engines
+   and, when `logistics.enabled` is true, materializes declared depot stock,
+   unit inventories, supply nodes, and expanded direct routes
 5. Wires optional subsystems from explicit enable flags after applying the
    selected era's capability gates:
    - `ew_config.enable_ew: true` -> creates EW engines (jamming, spoofing, ECCM, SIGINT)
@@ -148,7 +160,8 @@ The `ScenarioLoader` is the central factory. Given a scenario YAML file, it:
 
 `SimulationEngine` then installs the validated reinforcement schedule exactly
 once. Due waves are checked at every resolution and are committed atomically to
-the campaign roster, context force map, live loadout maps, and morale state.
+the campaign roster, context force map, live loadout maps, morale state, and
+enabled logistics topology.
 
 ### Null-Config Gating
 
@@ -164,6 +177,14 @@ else:
 The equivalent `enable_space` and `enable_cbrn` flags control their suites.
 The effective registered era is checked before construction, so a scenario
 cannot explicitly enable a suite forbidden by that era.
+
+The root `logistics` block uses the same explicit gating rule. Omission or
+`enabled: false` retains an injected runtime/manager shell with canonical empty
+state and an O(1) disabled update gate; legacy `sides[].depots` metadata alone
+never invents stock or routes. Enabled logistics is strict: every initial and
+reinforcement unit type needs one same-side profile, every depot needs explicit
+type, condition, and inventory, and every connection comes from a declared
+direct route template.
 
 ## Era Framework
 

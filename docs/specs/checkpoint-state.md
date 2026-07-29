@@ -2,7 +2,7 @@
 
 ## Status
 
-Phase 105 contract, extended through Phase 107 on 2026-07-28.
+Phase 105 contract, extended through Phase 108 on 2026-07-28.
 
 ## Purpose
 
@@ -15,12 +15,12 @@ validated effective scenario configuration and repository/data-catalog
 revision. Checkpoint restore replaces mutable state; it does not rebuild engine
 topology or reinterpret a different scenario.
 
-`SimulationEngine` writes checkpoint format version `107`. Any explicit version
-other than `107` is rejected before runtime mutation. An absent version selects
+`SimulationEngine` writes checkpoint format version `108`. Any explicit version
+other than `108` is rejected before runtime mutation. An absent version selects
 the bounded legacy-migration path described below; an explicitly present
 `null` value is malformed, not legacy.
 
-For version `107`, top-level engine keys and context-state keys must exactly
+For version `108`, top-level engine keys and context-state keys must exactly
 match the compatible target runtime. Missing or extra keys fail before
 mutation. Serialized scenario and reinforcement configurations use type-aware
 JSON equality, so booleans cannot masquerade as integers and integers cannot
@@ -106,18 +106,47 @@ RNG streams restore before engine continuation. Reconstructing force objects
 must not consume a stream. Calibration's flattened, side-dependent view is
 regenerated after force restoration.
 
+## Logistics state
+
+`ScenarioLoader` injects one `LogisticsRuntime` for both enabled and disabled
+configurations. The context delegates logistics persistence to that owner, so
+the separately exposed stockpile and supply-network references are not
+serialized a second time.
+
+An enabled version 108 checkpoint preserves:
+
+- cadence remainder and the elapsed time of the last completed boundary;
+- each registered unit's eligibility time, last-accounted time, open-interval
+  activity disqualification, and last boundary position;
+- complete depot configuration, condition, inventory, and spoilage accumulator;
+- every unit inventory, configured maximum, and zero-stock item topology;
+- complete supply nodes and routes, including geometry, infrastructure,
+  throughput, condition, current flow, and transport fields.
+
+Restore validates the full logistics envelope against the compatible scenario,
+catalog, roster, profiles, depots, and expanded route topology. It stages both
+manager states and all cadence/accounting maps before any clock, RNG, roster,
+manager, recorder, or event state commits. Staging plans are runtime-owned and
+content-fingerprinted; a foreign or mutated plan cannot be committed.
+
+Disabled logistics serializes canonical empty managers and zero cadence state.
+Its production update is an O(1) gate and ignores elapsed simulation time.
+Versionless restore is permitted only for a logistics-disabled runtime because
+an enabled runtime cannot reconstruct elapsed inventory history or topology.
+
 ## Compatibility
 
-- Current engine checkpoints contain `checkpoint_version: 107`; an unknown,
+- Current engine checkpoints contain `checkpoint_version: 108`; an unknown,
   malformed, boolean, older explicit, or newer explicit version is rejected.
 - Current reinforcement wave ordinals and both morale-store enum values use
   non-boolean integers. Current wave side, configured arrival time, and full
   typed configuration must agree with the target schedule.
-- Versionless engine checkpoints are treated as pre-107 only for bounded morale
-  and reinforcement-ID migration. Existing morale entries are still validated;
-  missing active-unit entries are reconstructed from the checkpoint roster and
-  the runtime's validated side configuration. A disagreement between present
-  context and machine morale is never repaired silently.
+- Versionless engine checkpoints are treated as pre-108 only for bounded morale
+  and reinforcement-ID migration, and only when logistics is disabled.
+  Existing morale entries are still validated; missing active-unit entries are
+  reconstructed from the checkpoint roster and the runtime's validated side
+  configuration. A disagreement between present context and machine morale is
+  never repaired silently.
 - Legacy reinforcement entries without the current wave ordinal/config payload
   retain legacy IDs for units that already arrived. A pending legacy wave uses
   current stable IDs when it arrives, after which its next checkpoint is fully
@@ -127,7 +156,7 @@ regenerated after force restoration.
   empty mapping. Direct legacy context calls that omit either section leave
   that corresponding runtime state unchanged. `SimulationEngine` additionally
   requires `units_by_side` for its campaign/roster preflight and both morale
-  keys for version 107.
+  keys for version 108.
 - Older unit snapshots without `unit_class` infer the class from its unique
   subclass field. A snapshot with no subclass field restores as `Unit`.
 - Unknown explicit discriminators fail; they never silently downgrade to
@@ -156,8 +185,14 @@ Completion requires:
    no-repeat behavior;
 9. atomic rejection of campaign/roster, arrival-flag, loadout, era-gate, and
    dual-morale topology mismatches;
-10. relevant existing checkpoint, scenario, engine, and entity regression
-    suites.
+10. exact enabled-logistics restoration immediately before a cadence boundary
+    into a fresh compatible runtime, followed by equivalent stock, route flow,
+    event order, supply state, victory, and RNG continuation;
+11. rejection of incomplete, corrupt, scenario-incompatible, foreign-plan, and
+    mutated-plan logistics state without partial mutation;
+12. hash-seed-independent canonical checkpoint bytes and logistics event order;
+13. relevant existing checkpoint, scenario, engine, entity, and logistics
+    regression suites.
 
 ## Tracked boundaries
 

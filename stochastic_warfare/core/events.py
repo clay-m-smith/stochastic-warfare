@@ -7,6 +7,7 @@ priority).  Subscribing to a base ``Event`` type will receive *all* events.
 from __future__ import annotations
 
 from collections import defaultdict
+from collections.abc import Iterator
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Callable
@@ -58,6 +59,15 @@ class EventBus:
             (p, h) for p, h in subs if h != handler
         ]
 
+    def _matching_handlers(
+        self,
+        event: Event,
+    ) -> Iterator[Callable[[Event], None]]:
+        """Yield matching handlers in the canonical dispatch order."""
+        for cls in type(event).__mro__:
+            for _priority, handler in self._subscribers.get(cls, ()):
+                yield handler
+
     def publish(self, event: Event) -> None:
         """Dispatch *event* to all matching subscribers.
 
@@ -65,11 +75,23 @@ class EventBus:
         *and all subclasses*.  Uses MRO walk for O(depth) dispatch instead of
         O(num_subscribed_types) isinstance checks.
         """
-        for cls in type(event).__mro__:
-            handlers = self._subscribers.get(cls)
-            if handlers:
-                for _priority, handler in handlers:
-                    handler(event)
+        for handler in self._matching_handlers(event):
+            handler(event)
+
+    def publish_collecting(self, event: Event) -> list[Exception]:
+        """Dispatch to every subscriber and return raised handler errors.
+
+        This preserves normal MRO, priority, and registration ordering while
+        allowing a caller with an already committed state transition to finish
+        notifying non-failing observers before it reports subscriber failures.
+        """
+        errors: list[Exception] = []
+        for handler in self._matching_handlers(event):
+            try:
+                handler(event)
+            except Exception as exc:
+                errors.append(exc)
+        return errors
 
     def clear(self) -> None:
         """Remove all subscriptions."""

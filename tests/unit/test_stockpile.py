@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from datetime import datetime, timezone
 
 import pytest
@@ -10,6 +11,7 @@ from stochastic_warfare.core.events import Event, EventBus
 from stochastic_warfare.core.rng import RNGManager
 from stochastic_warfare.core.types import ModuleId, Position
 from stochastic_warfare.logistics.events import (
+    SupplyDeliveredEvent,
     SupplyDepletedEvent,
     SupplyShortageEvent,
 )
@@ -112,6 +114,35 @@ class TestDepotManagement:
         )
         assert depot.inventory.available(int(SupplyClass.CLASS_III), "fuel_diesel") == 5000.0
 
+    def test_duplicate_depot_rejected_without_overwrite(self) -> None:
+        mgr, _ = _make_manager()
+        original = mgr.create_depot("d1", _POS_A, DepotType.DEPOT, "blue")
+        with pytest.raises(ValueError, match="Duplicate depot ID"):
+            mgr.create_depot("d1", _POS_B, DepotType.DEPOT, "red")
+        assert mgr.get_depot("d1") is original
+
+    @pytest.mark.parametrize(
+        ("capacity", "throughput"),
+        [
+            (float("nan"), 1.0),
+            (1.0, float("inf")),
+            (0.0, 1.0),
+            (1.0, -1.0),
+        ],
+    )
+    def test_invalid_depot_limits_rejected(
+        self,
+        capacity: float,
+        throughput: float,
+    ) -> None:
+        mgr, _ = _make_manager()
+        with pytest.raises(ValueError):
+            mgr.create_depot(
+                "d1", _POS_A, DepotType.DEPOT, "blue",
+                capacity_tons=capacity,
+                throughput_tons_per_hour=throughput,
+            )
+
 
 # ---------------------------------------------------------------------------
 # Issue & receive
@@ -194,6 +225,104 @@ class TestUnitConsumption:
         assert len(events) == 1
         assert events[0].unit_id == "u1"
 
+    def test_exact_class_exhaustion_emits_depleted_transition(self) -> None:
+        mgr, bus = _make_manager()
+        events: list[Event] = []
+        bus.subscribe(SupplyDepletedEvent, events.append)
+        inv = _make_inventory(fuel_diesel=50.0)
+        mgr.register_unit_inventory("u1", inv)
+
+        mgr.consume_unit_supplies(
+            "u1",
+            {int(SupplyClass.CLASS_III): {"fuel_diesel": 50.0}},
+            timestamp=_TS,
+        )
+
+        assert len(events) == 1
+        assert events[0].supply_class == int(SupplyClass.CLASS_III)
+
+    def test_already_empty_class_does_not_repeat_depleted_event(self) -> None:
+        mgr, bus = _make_manager()
+        events: list[Event] = []
+        bus.subscribe(SupplyDepletedEvent, events.append)
+        inv = _make_inventory(fuel_diesel=10.0)
+        mgr.register_unit_inventory("u1", inv)
+
+        for _ in range(2):
+            mgr.consume_unit_supplies(
+                "u1",
+                {int(SupplyClass.CLASS_III): {"fuel_diesel": 20.0}},
+                timestamp=_TS,
+            )
+
+        assert len(events) == 1
+
+    def test_class_with_other_item_remaining_is_not_depleted(self) -> None:
+        mgr, bus = _make_manager()
+        events: list[Event] = []
+        bus.subscribe(SupplyDepletedEvent, events.append)
+        inv = SupplyInventory()
+        supply_class = int(SupplyClass.CLASS_III)
+        inv.add(supply_class, "fuel_diesel", 10.0)
+        inv.add(supply_class, "fuel_avgas", 10.0)
+        mgr.register_unit_inventory("u1", inv)
+
+        mgr.consume_unit_supplies(
+            "u1",
+            {supply_class: {"fuel_diesel": 20.0}},
+            timestamp=_TS,
+        )
+
+        assert events == []
+
+    def test_final_item_in_class_emits_one_depleted_event(self) -> None:
+        mgr, bus = _make_manager()
+        events: list[Event] = []
+        bus.subscribe(SupplyDepletedEvent, events.append)
+        inv = SupplyInventory()
+        supply_class = int(SupplyClass.CLASS_III)
+        inv.add(supply_class, "fuel_diesel", 10.0)
+        inv.add(supply_class, "fuel_avgas", 10.0)
+        mgr.register_unit_inventory("u1", inv)
+
+        mgr.consume_unit_supplies(
+            "u1",
+            {supply_class: {"fuel_diesel": 10.0}},
+            timestamp=_TS,
+        )
+        mgr.consume_unit_supplies(
+            "u1",
+            {supply_class: {"fuel_avgas": 10.0}},
+            timestamp=_TS,
+        )
+
+        assert [event.supply_class for event in events] == [supply_class]
+
+    def test_buffered_depleted_events_keep_sorted_class_order(self) -> None:
+        mgr, _ = _make_manager()
+        inv = _make_inventory(ration_mre=1.0, ammo_generic=1.0)
+        mgr.register_unit_inventory("u1", inv)
+        events: list[Event] = []
+
+        mgr.consume_unit_supplies(
+            "u1",
+            {
+                int(SupplyClass.CLASS_V): {"ammo_generic": 1.0},
+                int(SupplyClass.CLASS_I): {"ration_mre": 1.0},
+            },
+            timestamp=_TS,
+            event_sink=events,
+        )
+
+        assert [
+            event.supply_class
+            for event in events
+            if isinstance(event, SupplyDepletedEvent)
+        ] == [
+            int(SupplyClass.CLASS_I),
+            int(SupplyClass.CLASS_V),
+        ]
+
     def test_shortage_event(self) -> None:
         mgr, bus = _make_manager()
         events: list[Event] = []
@@ -220,6 +349,142 @@ class TestUnitConsumption:
         mgr, _ = _make_manager()
         with pytest.raises(KeyError):
             mgr.get_unit_inventory("nonexistent")
+
+    def test_duplicate_unit_inventory_rejected_without_overwrite(self) -> None:
+        mgr, _ = _make_manager()
+        original = _make_inventory(fuel_diesel=100.0)
+        mgr.register_unit_inventory("u1", original)
+        with pytest.raises(ValueError, match="Duplicate unit inventory"):
+            mgr.register_unit_inventory("u1", _make_inventory(fuel_diesel=1.0))
+        assert mgr.get_unit_inventory("u1") is original
+
+    def test_inventory_helpers_are_sorted_and_defensive(self) -> None:
+        mgr, _ = _make_manager()
+        inv = _make_inventory(fuel_diesel=25.0, water_potable=10.0)
+        maxima = {
+            int(SupplyClass.CLASS_III): {"fuel_diesel": 100.0},
+            int(SupplyClass.CLASS_I): {
+                "water_potable": 40.0,
+                "ration_mre": 20.0,
+            },
+        }
+        mgr.register_unit_inventory("z-unit", inv, maxima)
+        mgr.register_unit_inventory("a-unit", SupplyInventory(), {})
+
+        assert mgr.has_unit_inventory("z-unit")
+        assert not mgr.has_unit_inventory("missing")
+        assert mgr.registered_unit_ids() == ["a-unit", "z-unit"]
+        assert mgr.get_unit_deficits("z-unit") == {
+            int(SupplyClass.CLASS_I): {
+                "ration_mre": 20.0,
+                "water_potable": 30.0,
+            },
+            int(SupplyClass.CLASS_III): {"fuel_diesel": 75.0},
+        }
+
+        returned = mgr.get_unit_max_supplies("z-unit")
+        returned[int(SupplyClass.CLASS_III)]["fuel_diesel"] = 1.0
+        assert (
+            mgr.get_unit_max_supplies("z-unit")
+            [int(SupplyClass.CLASS_III)]["fuel_diesel"]
+            == 100.0
+        )
+
+
+# ---------------------------------------------------------------------------
+# Atomic depot-to-unit delivery
+# ---------------------------------------------------------------------------
+
+
+class TestDelivery:
+    def test_delivery_caps_native_quantity_by_deficit_stock_and_mass(self) -> None:
+        mgr, bus = _make_manager()
+        delivered_events: list[SupplyDeliveredEvent] = []
+        bus.subscribe(SupplyDeliveredEvent, delivered_events.append)
+        depot_inv = _make_inventory(fuel_diesel=1000.0)
+        mgr.create_depot(
+            "d1", _POS_A, DepotType.DEPOT, "blue",
+            initial_inventory=depot_inv,
+        )
+        unit_inv = _make_inventory(fuel_diesel=100.0)
+        mgr.register_unit_inventory(
+            "u1", unit_inv,
+            {int(SupplyClass.CLASS_III): {"fuel_diesel": 500.0}},
+        )
+
+        result = mgr.deliver_to_unit(
+            depot_id="d1",
+            unit_id="u1",
+            supply_class=int(SupplyClass.CLASS_III),
+            item_id="fuel_diesel",
+            requested_quantity=500.0,
+            max_quantity_tons=0.17,
+            timestamp=_TS,
+            transport_mode=0,
+            route_id="r1",
+        )
+
+        assert result.quantity == pytest.approx(200.0)
+        assert result.quantity_tons == pytest.approx(0.17)
+        assert depot_inv.available(
+            int(SupplyClass.CLASS_III), "fuel_diesel",
+        ) == pytest.approx(800.0)
+        assert unit_inv.available(
+            int(SupplyClass.CLASS_III), "fuel_diesel",
+        ) == pytest.approx(300.0)
+        assert len(delivered_events) == 1
+        assert delivered_events[0].depot_id == "d1"
+        assert delivered_events[0].recipient_id == "u1"
+        assert delivered_events[0].route_id == "r1"
+        assert delivered_events[0].item_id == "fuel_diesel"
+        assert delivered_events[0].quantity == pytest.approx(200.0)
+        assert delivered_events[0].quantity_tons == pytest.approx(0.17)
+
+    def test_invalid_delivery_is_rejected_before_mutation(self) -> None:
+        mgr, bus = _make_manager()
+        delivered_events: list[SupplyDeliveredEvent] = []
+        bus.subscribe(SupplyDeliveredEvent, delivered_events.append)
+        depot_inv = _make_inventory(fuel_diesel=1000.0)
+        unit_inv = SupplyInventory()
+        mgr.create_depot(
+            "d1", _POS_A, DepotType.DEPOT, "blue",
+            initial_inventory=depot_inv,
+        )
+        mgr.register_unit_inventory(
+            "u1", unit_inv,
+            {int(SupplyClass.CLASS_III): {"fuel_diesel": 500.0}},
+        )
+        before = mgr.get_state()
+
+        with pytest.raises(ValueError):
+            mgr.deliver_to_unit(
+                "d1", "u1", int(SupplyClass.CLASS_III), "fuel_diesel",
+                100.0, float("nan"), _TS, 0, "r1",
+            )
+
+        assert mgr.get_state() == before
+        assert delivered_events == []
+
+    def test_delivery_rejects_uncatalogued_item_without_mutation(self) -> None:
+        mgr, _ = _make_manager()
+        depot_inv = SupplyInventory()
+        depot_inv.add(int(SupplyClass.CLASS_V), "unknown_ammo", 10.0)
+        mgr.create_depot(
+            "d1", _POS_A, DepotType.DEPOT, "blue",
+            initial_inventory=depot_inv,
+        )
+        mgr.register_unit_inventory(
+            "u1", SupplyInventory(),
+            {int(SupplyClass.CLASS_V): {"unknown_ammo": 10.0}},
+        )
+        before = mgr.get_state()
+
+        with pytest.raises(KeyError):
+            mgr.deliver_to_unit(
+                "d1", "u1", int(SupplyClass.CLASS_V), "unknown_ammo",
+                10.0, 1.0, _TS, 0, "r1",
+            )
+        assert mgr.get_state() == before
 
 
 # ---------------------------------------------------------------------------
@@ -357,3 +622,59 @@ class TestStateProtocol:
         mgr.create_depot("d1", _POS_A, DepotType.DEPOT, "blue")
         mgr.set_state({"depots": {}, "unit_inventories": {}, "unit_max_supplies": {}})
         assert len(mgr.list_depots()) == 0
+
+    def test_json_round_trip_restores_integer_supply_class_keys(self) -> None:
+        mgr, _ = _make_manager()
+        mgr.register_unit_inventory(
+            "u1", _make_inventory(fuel_diesel=25.0),
+            {int(SupplyClass.CLASS_III): {"fuel_diesel": 100.0}},
+        )
+        state = json.loads(json.dumps(mgr.get_state()))
+
+        restored, _ = _make_manager()
+        restored.set_state(state)
+
+        assert restored.get_unit_max_supplies("u1") == {
+            int(SupplyClass.CLASS_III): {"fuel_diesel": 100.0},
+        }
+        assert restored.get_supply_state("u1") == pytest.approx(0.25)
+
+    def test_corrupt_state_rejects_atomically(self) -> None:
+        mgr, _ = _make_manager()
+        mgr.create_depot("d1", _POS_A, DepotType.DEPOT, "blue")
+        before = mgr.get_state()
+        corrupt = json.loads(json.dumps(before))
+        corrupt["depots"]["d1"]["condition"] = 2.0
+
+        with pytest.raises(ValueError):
+            mgr.set_state(corrupt)
+
+        assert mgr.get_state() == before
+
+    def test_boolean_depot_type_rejects_atomically(self) -> None:
+        mgr, _ = _make_manager()
+        mgr.create_depot("d1", _POS_A, DepotType.DEPOT, "blue")
+        before = mgr.get_state()
+        corrupt = json.loads(json.dumps(before))
+        corrupt["depots"]["d1"]["depot_type"] = False
+
+        with pytest.raises(ValueError, match="depot_type"):
+            mgr.set_state(corrupt)
+
+        assert mgr.get_state() == before
+
+    @pytest.mark.parametrize("invalid_type", [2.0, "2"])
+    def test_coercible_depot_type_rejects_atomically(
+        self,
+        invalid_type: object,
+    ) -> None:
+        mgr, _ = _make_manager()
+        mgr.create_depot("d1", _POS_A, DepotType.DEPOT, "blue")
+        before = mgr.get_state()
+        corrupt = json.loads(json.dumps(before))
+        corrupt["depots"]["d1"]["depot_type"] = invalid_type
+
+        with pytest.raises(ValueError, match="depot_type"):
+            mgr.set_state(corrupt)
+
+        assert mgr.get_state() == before

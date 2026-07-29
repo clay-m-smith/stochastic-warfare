@@ -1,8 +1,8 @@
 # Stochastic Warfare
 
 ![Python](https://img.shields.io/badge/python-%3E%3D3.12-blue)
-![Tests](https://img.shields.io/badge/tests-10%2C279_passing-brightgreen)
-![Phase](https://img.shields.io/badge/phase-107_COMPLETE-brightgreen)
+![Tests](https://img.shields.io/badge/tests-10%2C428_passing-brightgreen)
+![Phase](https://img.shields.io/badge/phase-108_COMPLETE-brightgreen)
 
 High-fidelity, high-resolution wargame simulator with a headless Python engine,
 FastAPI service, and React frontend. Models warfare across multiple scales —
@@ -30,11 +30,15 @@ uv sync --extra dev    # creates .venv, installs all deps including pytest/matpl
 ### Running Tests
 
 ```bash
-uv run python -m pytest --tb=short -q           # standard suite (excludes @pytest.mark.slow)
-uv run python -m pytest -m slow --tb=short -q   # 1000-run Monte Carlo validation only
+uv run python -m pytest --tb=short -q           # default-selected suite
+uv run python -m pytest -m slow --ignore=tests/api --ignore=tests/e2e -q --tb=short -o addopts=  # all slow-marked tests
 ```
 
-All commands use `uv run` to ensure the correct venv is used without manual activation.
+The default selection excludes `slow`, `benchmark`, `terrain`, `api`, and
+`e2e` markers and does not collect `tests/api` or `tests/e2e`; those boundaries
+must be run explicitly (usually with `-o addopts=`). REM-013 tracks making the
+excluded suites routine and explicit in CI. All Python commands use `uv run` so
+the project environment is selected without manual activation.
 
 ## Quick Start (Web UI)
 
@@ -124,7 +128,7 @@ frontend/                 # React frontend (Vite + TypeScript + Tailwind) [Phase
     lib/                  # Utility functions (format, era, domain)
     types/                # TypeScript interfaces mirroring api/schemas.py
 
-stochastic_warfare/       # simulation engine (19 modules, ~226 source files)
+stochastic_warfare/       # simulation engine
   core/                   # types, logging, RNG, clock, events, config, checkpoint
   coordinates/            # geodetic/UTM/ENU transforms, magnetic declination
   terrain/                # heightmap, classification, bathymetry, LOS, infrastructure
@@ -147,27 +151,28 @@ stochastic_warfare/       # simulation engine (19 modules, ~226 source files)
   cbrn/                   # CBRN effects: agents, dispersal, contamination, protection, nuclear
   tools/                  # MCP server, analysis (narrative, tempo, comparison, sensitivity), visualization
 
-data/                     # ~748 YAML data files
-  units/                  # 46 unit definitions (ground, air, naval, support)
-  weapons/                # 51 weapon definitions (guns, artillery, missiles, torpedoes)
-  ammunition/             # 63 ammunition definitions
-  sensors/                # 16 sensor definitions
-  signatures/             # 48 signature profiles
-  comms/                  # 8 communication equipment definitions
-  ew/                     # 12 EW equipment definitions (jammers, ECCM suites, SIGINT collectors)
-  space/                  # 12 space definitions (9 constellations, 3 ASAT weapons)
-  cbrn/                   # 16 CBRN definitions (agents, nuclear weapons, delivery systems)
-  organizations/          # 9 TO&E definitions
-  commanders/             # 13 commander personality profiles
-  doctrine/               # 21 doctrine templates (US, Russian, NATO, PLA, IDF, generic, unconventional)
-  schools/                # 9 doctrinal school definitions (Clausewitzian, Maneuverist, etc.)
-  supply/                 # 5 supply item definitions
-  transport/              # 4 transport profiles
-  medical/                # 2 medical facility definitions
+data/                     # YAML data catalog
+  units/                  # ground, air, naval, and support unit definitions
+  weapons/                # guns, artillery, missiles, torpedoes, and other weapons
+  ammunition/             # ammunition definitions
+  sensors/                # sensor definitions
+  signatures/             # signature profiles
+  comms/                  # communication equipment definitions
+  ew/                     # jammers, ECCM suites, SIGINT collectors, and decoys
+  space/                  # constellations and ASAT definitions
+  cbrn/                   # agents, nuclear weapons, and delivery systems
+  organizations/          # TO&E definitions
+  commander_profiles/     # commander personality profiles
+  doctrine/               # national and generic doctrine templates
+  schools/                # doctrinal school definitions
+  logistics/
+    supply_items/         # supply item definitions
+    transport_profiles/   # transport profiles
+    medical_facilities/   # medical facility definitions
   eras/                    # Era-specific data packages (WW2, WW1, Napoleonic, Ancient/Medieval)
-  scenarios/              # 32 modern scenarios (engagement, campaign, EW, space, CBRN, escalation, joint, calibration, benchmark) + 5 test
+  scenarios/              # modern, test, and historical-era scenario definitions
 
-tests/                    # 10,279 default-selected Python tests passing
+tests/                    # 10,428 default-selected Python tests passing
 docs/                     # specs, brainstorm, devlog, development phases
 ```
 
@@ -175,7 +180,7 @@ For the full package tree and module decomposition, see [`docs/specs/project-str
 
 ## Development Status
 
-Phases 105 through 107 are complete; Phase 108 is next.
+Phases 105 through 108 are complete; Phase 109 is next.
 Blocks 1–11 remain complete. See the remediation backlog, devlogs, and phase
 roadmaps for full detail.
 
@@ -290,7 +295,8 @@ roadmaps for full detail.
 | 105 | Checkpoint State Integrity (Block 12) | 23 | **Complete** |
 | 106 | API Execution Integrity (Block 12) | 25 | **Complete** |
 | 107 | Scenario Configuration Wiring (Block 12) | 103 | **Complete** |
-| | **Verified passing baseline** | **10,279 Python + 418 frontend** | |
+| 108 | Logistics Runtime Wiring (Block 12) | 115 | **Complete** |
+| | **Verified passing baseline** | **10,428 Python + 418 frontend** | |
 
 The Python figure is the fresh default-suite result; that run also reported 21
 skipped and 346 deselected tests. For the full phase roadmap, see
@@ -360,7 +366,8 @@ Frontend commands:
 | [`docs/devlog/`](docs/devlog/) | Per-phase implementation logs (`index.md` tracks status) |
 | [`docs/skills-and-hooks.md`](docs/skills-and-hooks.md) | Dev infrastructure (Codex/Claude skills, hooks, research tiers) |
 | [`docs/specs/`](docs/specs/) | Per-module specifications (written before implementation) |
-| [`CLAUDE.md`](CLAUDE.md) | Full project conventions and coding standards |
+| [`CODEX.md`](CODEX.md) / [`AGENTS.md`](AGENTS.md) | Canonical agent workflow, phase gates, and durable coding conventions |
+| [`CLAUDE.md`](CLAUDE.md) | Legacy Claude-provider context kept aligned where rules overlap |
 
 ## License
 
@@ -372,7 +379,8 @@ This project does not accept external contributions. See [CONTRIBUTING.md](CONTR
 
 ### Key Conventions
 
-For reference, the engine follows these conventions (see [`CLAUDE.md`](CLAUDE.md) for the complete list):
+For reference, the engine follows these conventions (see [`CODEX.md`](CODEX.md)
+for the canonical workflow and complete durable rule set):
 
 - **PRNG discipline** — all randomness via `RNGManager.get_stream(ModuleId)` returning `np.random.Generator`. No bare `random` module, no `np.random` module-level calls.
 - **Deterministic iteration** — no `set()` or unordered dict driving simulation logic.

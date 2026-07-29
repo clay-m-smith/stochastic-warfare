@@ -167,6 +167,11 @@ class CampaignManager:
         self._reinforcements = staged
         self._schedule_signature = copy.deepcopy(signature)
 
+    @property
+    def supply_network_enabled(self) -> bool:
+        """Whether configured logistics may update routes and resupply."""
+        return self._config.enable_supply_network
+
     # ── Strategic tick ──────────────────────────────────────────────
 
     def update_strategic(
@@ -176,9 +181,9 @@ class CampaignManager:
     ) -> None:
         """Execute one strategic tick.
 
-        Sequences: supply → strategic AI → movement → maintenance →
-        engagement detection. Reinforcements are checked by
-        :class:`SimulationEngine` before resolution-specific work.
+        Sequences strategic AI → movement → maintenance → engagement
+        detection. Reinforcements and the all-resolution logistics cadence are
+        sequenced by :class:`SimulationEngine` before resolution-specific work.
 
         Parameters
         ----------
@@ -189,27 +194,19 @@ class CampaignManager:
         """
         timestamp = ctx.clock.current_time
 
-        # 1. Supply network update
-        if self._config.enable_supply_network and ctx.supply_network_engine is not None:
-            self._update_supply_network(ctx, dt)
-
-        # 2. Strategic AI OODA cycles (corps/theater commanders)
+        # 1. Strategic AI OODA cycles (corps/theater commanders)
         if ctx.ooda_engine is not None:
             ctx.ooda_engine.update(dt, ts=timestamp)
 
-        # 3. Idle/march supply consumption
-        if ctx.consumption_engine is not None and ctx.stockpile_manager is not None:
-            self._consume_idle_supplies(ctx, dt)
-
-        # 4. Strategic movement — march toward nearest enemy
+        # 2. Strategic movement — march toward nearest enemy
         if self._config.enable_strategic_movement:
             self._execute_strategic_movement(ctx, dt)
 
-        # 5. Maintenance checks
+        # 3. Maintenance checks
         if self._config.enable_maintenance and ctx.maintenance_engine is not None:
             self._run_maintenance(ctx, dt)
 
-        # 6. Phase 54: era-specific strategic engine updates
+        # 4. Phase 54: era-specific strategic engine updates
         era = getattr(ctx.config, "era", "modern")
         if era == "ww2":
             # Phase 54a: convoy updates
@@ -595,60 +592,6 @@ class CampaignManager:
                 if u.entity_id == unit_id:
                     return u
         return None
-
-    # ── Supply network ──────────────────────────────────────────────
-
-    def _update_supply_network(self, ctx: Any, dt: float) -> None:
-        """Update the supply network — transport and routing.
-
-        Phase 51d/56g: queries active blockades via DisruptionEngine for
-        sea-zone interdiction and degrades SEA transport routes.
-        """
-        disruption = getattr(ctx, "disruption_engine", None)
-        supply_net = getattr(ctx, "supply_network_engine", None)
-        if disruption is not None:
-            for blockade in disruption.active_blockades():
-                max_eff = 0.0
-                for zone_id in blockade.sea_zone_ids:
-                    eff = disruption.check_blockade(zone_id)
-                    max_eff = max(max_eff, eff)
-                    if eff > 0:
-                        logger.debug(
-                            "Blockade %s zone %s eff=%.2f",
-                            blockade.blockade_id, zone_id, eff,
-                        )
-                # Phase 56g: degrade SEA transport routes by blockade effectiveness
-                if max_eff > 0 and supply_net is not None:
-                    from stochastic_warfare.logistics.supply_network import TransportMode
-                    for _rid in list(supply_net._routes):
-                        _route = supply_net._routes[_rid]
-                        if _route.transport_mode == TransportMode.SEA:
-                            _penalty = max(0.01, 1.0 - max_eff)
-                            supply_net.update_route_condition(
-                                _rid, _route.condition * _penalty,
-                            )
-                    logger.debug("Blockade eff=%.2f degraded SEA routes", max_eff)
-
-    def _consume_idle_supplies(self, ctx: Any, dt: float) -> None:
-        """Consume supplies at idle/march rate during strategic ticks."""
-        dt_hours = dt / 3600.0
-        for side_units in ctx.units_by_side.values():
-            for u in side_units:
-                if u.status != UnitStatus.ACTIVE:
-                    continue
-                personnel = len(u.personnel) if u.personnel else 4
-                equipment = len(u.equipment) if u.equipment else 1
-                activity = 2 if u.speed > 0 else 0  # MARCH or IDLE
-                try:
-                    ctx.consumption_engine.compute_consumption(
-                        personnel_count=personnel,
-                        equipment_count=equipment,
-                        base_fuel_rate_per_hour=10.0,
-                        activity=activity,
-                        dt_hours=dt_hours,
-                    )
-                except Exception:
-                    pass
 
     # ── Maintenance ─────────────────────────────────────────────────
 

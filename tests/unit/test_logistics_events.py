@@ -49,12 +49,28 @@ class TestSupplyEvents:
         e = SupplyDeliveredEvent(
             timestamp=_TS, source=_SRC,
             recipient_id="unit_1", supply_class=3, quantity=100.0,
-            transport_mode=0,
+            transport_mode=0, depot_id="depot_1", item_id="fuel_diesel",
+            route_id="route_1", quantity_tons=0.085,
         )
         assert e.recipient_id == "unit_1"
         assert e.supply_class == 3
         assert e.quantity == 100.0
         assert e.transport_mode == 0
+        assert e.depot_id == "depot_1"
+        assert e.item_id == "fuel_diesel"
+        assert e.route_id == "route_1"
+        assert e.quantity_tons == 0.085
+
+    def test_supply_delivered_identity_defaults_preserve_legacy_callers(self) -> None:
+        e = SupplyDeliveredEvent(
+            timestamp=_TS, source=_SRC,
+            recipient_id="unit_1", supply_class=3, quantity=100.0,
+            transport_mode=0,
+        )
+        assert e.depot_id == ""
+        assert e.item_id == ""
+        assert e.route_id == ""
+        assert e.quantity_tons == 0.0
 
     def test_supply_delivered_is_event(self) -> None:
         e = SupplyDeliveredEvent(

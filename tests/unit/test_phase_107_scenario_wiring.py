@@ -1090,7 +1090,7 @@ def test_arrived_legacy_reinforcement_checkpoint_migrates_without_repeat(
 
     migrated_checkpoint = target.checkpoint()
     migrated_state = json.loads(migrated_checkpoint.decode("utf-8"))
-    assert migrated_state["checkpoint_version"] == 107
+    assert migrated_state["checkpoint_version"] == 108
     migrated_first_wave = migrated_state["campaign"]["reinforcements"][0]
     assert migrated_first_wave["legacy_ids"] is True
     assert migrated_first_wave["wave_ordinal"] == 0

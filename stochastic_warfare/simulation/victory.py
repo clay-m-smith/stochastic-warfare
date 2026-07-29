@@ -526,7 +526,10 @@ class VictoryEvaluator:
         tick: int,
     ) -> VictoryResult:
         """Check if any side's average supply has dropped below threshold."""
-        threshold = self._config.supply_exhaustion_threshold
+        threshold = cond.params.get(
+            "threshold",
+            self._config.supply_exhaustion_threshold,
+        )
         winning_side = cond.side
 
         for side, units in units_by_side.items():

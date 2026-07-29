@@ -171,39 +171,13 @@ class TestLodMoraleIntegration:
         assert "u2" not in checked_ids
 
 
-class TestLodSupplyIntegration:
-    """LOD filtering in _execute_supply_consumption()."""
+class TestCombatConsumptionBoundary:
+    """Combat consumption remains an explicit, unwired residual gap."""
 
-    def test_lod_supply_skipped_for_distant(self):
-        """DISTANT unit supply not consumed on non-update tick."""
+    def test_compute_and_discard_hook_is_not_exposed(self):
+        """A non-mutating helper must not masquerade as supply consumption."""
         bm = BattleManager(event_bus=EventBus())
-        u1 = _make_unit("u1", 0.0)
-        u1.personnel = ["p1", "p2"]
-        u1.equipment = ["e1"]
-        u2 = _make_unit("u2", 50_000.0)
-        u2.personnel = ["p1", "p2"]
-        u2.equipment = ["e1"]
-
-        consumed_for: list[str] = []
-
-        def mock_compute(personnel_count, equipment_count, base_fuel_rate_per_hour, activity, dt_hours):
-            # We track that consumption was called via side effect
-            consumed_for.append("called")
-            return SimpleNamespace(food=1.0, fuel=1.0, ammo=1.0)
-
-        ctx = SimpleNamespace(
-            calibration={},
-            consumption_engine=SimpleNamespace(compute_consumption=mock_compute),
-            stockpile_manager=SimpleNamespace(),
-        )
-        units_by_side = {"blue": [u1, u2]}
-
-        bm._execute_supply_consumption(
-            ctx, units_by_side, dt=60.0,
-            _lod_full_update={"u1"},  # only u1
-        )
-        # Only u1 should have had supply consumed (1 call)
-        assert len(consumed_for) == 1
+        assert not hasattr(bm, "_execute_supply_consumption")
 
 
 class TestLodBackwardCompat:

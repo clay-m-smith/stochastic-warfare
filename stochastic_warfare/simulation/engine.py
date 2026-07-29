@@ -32,7 +32,7 @@ from stochastic_warfare.simulation.victory import VictoryEvaluator, VictoryResul
 
 logger = get_logger(__name__)
 
-_CHECKPOINT_VERSION = 107
+_CHECKPOINT_VERSION = 108
 
 
 # ---------------------------------------------------------------------------
@@ -376,6 +376,9 @@ class SimulationEngine:
         tick = clock.tick_count
         dt = clock.tick_duration.total_seconds()
         timestamp = clock.current_time
+        logistics_runtime = None
+        logistics_positions: dict[str, tuple[float, ...]] = {}
+        logistics_activity_unit_ids: set[str] = set()
 
         # Reinforcement arrivals are time-driven and must be checked at every
         # resolution before environment, resolution, or tactical work.
@@ -409,6 +412,45 @@ class SimulationEngine:
 
         # 2. Update environment
         self._update_environment(dt)
+
+        # 2a. Fixed logical logistics cadence (all resolutions). Reinforcements
+        # registered at this tick boundary carry an eligibility time and are
+        # therefore not charged or resupplied for the interval before arrival.
+        logistics_runtime = getattr(ctx, "logistics_runtime", None)
+        if (
+            logistics_runtime is not None
+            and logistics_runtime.enabled
+        ):
+            logistics_units = ctx.all_units()
+            logistics_positions = {
+                unit.entity_id: tuple(unit.position)
+                for unit in logistics_units
+            }
+            active_battle_unit_ids = {
+                unit_id
+                for battle in self._battle.active_battles
+                for unit_id in battle.unit_ids
+            }
+            logistics_activity_unit_ids.update(active_battle_unit_ids)
+            seasons = getattr(ctx, "seasons_engine", None)
+            ground_state = (
+                seasons.current.ground_state
+                if seasons is not None
+                else None
+            )
+            logistics_runtime.update(
+                dt_seconds=dt,
+                interval_end=timestamp,
+                interval_end_elapsed_seconds=(
+                    clock.elapsed.total_seconds()
+                ),
+                units=logistics_units,
+                active_battle_unit_ids=active_battle_unit_ids,
+                ground_state=ground_state,
+                enable_supply_network=(
+                    self._campaign.supply_network_enabled
+                ),
+            )
 
         # 2b. Scripted events (Phase 101) — fire at all resolutions,
         #     gated by elapsed time so tactical ticks during combat can
@@ -508,6 +550,11 @@ class SimulationEngine:
             # Detect new engagements
             new_battles = self._campaign.detect_engagements(ctx, self._battle)
             if new_battles:
+                logistics_activity_unit_ids.update(
+                    unit_id
+                    for battle in new_battles
+                    for unit_id in battle.unit_ids
+                )
                 # Phase 13a-6: Auto-resolve minor battles
                 remaining = []
                 for battle in new_battles:
@@ -544,6 +591,11 @@ class SimulationEngine:
             self._campaign.update_strategic(ctx, dt)
             new_battles = self._campaign.detect_engagements(ctx, self._battle)
             if new_battles:
+                logistics_activity_unit_ids.update(
+                    unit_id
+                    for battle in new_battles
+                    for unit_id in battle.unit_ids
+                )
                 remaining = []
                 for battle in new_battles:
                     total_units = sum(
@@ -571,6 +623,11 @@ class SimulationEngine:
         # 5. Tactical logic (active battles)
         active = self._battle.active_battles
         if active:
+            logistics_activity_unit_ids.update(
+                unit_id
+                for battle in active
+                for unit_id in battle.unit_ids
+            )
             for battle in active:
                 self._battle.execute_tick(ctx, battle, dt)
                 if self._battle.check_battle_termination(battle, ctx.units_by_side):
@@ -584,6 +641,21 @@ class SimulationEngine:
                         det_eng.reset_scan_counts()
                     logger.info("Battle %s resolved after %d ticks",
                                 battle.battle_id, battle.ticks_executed)
+
+        if (
+            logistics_runtime is not None
+            and logistics_runtime.enabled
+        ):
+            for unit in ctx.all_units():
+                previous = logistics_positions.get(unit.entity_id)
+                if (
+                    previous is not None
+                    and tuple(unit.position) != previous
+                ):
+                    logistics_activity_unit_ids.add(unit.entity_id)
+            logistics_runtime.note_interval_activity(
+                logistics_activity_unit_ids,
+            )
 
         # 5b. Selective LOS invalidation after movement
         if selective_los and pre_move_cells is not None:
@@ -1325,7 +1397,7 @@ class SimulationEngine:
     def get_state(self) -> dict[str, Any]:
         """Capture full engine state for checkpointing."""
         context_state = self._ctx.get_state()
-        # Format 107 distinguishes an intentionally absent morale machine from
+        # Format 108 distinguishes an intentionally absent morale machine from
         # an omitted legacy field without changing direct context snapshots.
         context_state.setdefault("morale_machine", None)
         state: dict[str, Any] = {
@@ -1357,12 +1429,24 @@ class SimulationEngine:
                 f"{checkpoint_version!r}; expected {_CHECKPOINT_VERSION}",
             )
         allow_legacy_checkpoint = not has_checkpoint_version
+        if (
+            allow_legacy_checkpoint
+            and getattr(
+                getattr(self._ctx.config, "logistics", None),
+                "enabled",
+                False,
+            )
+        ):
+            raise ValueError(
+                "Versionless checkpoints cannot restore a logistics-enabled "
+                "runtime",
+            )
         if not allow_legacy_checkpoint:
             expected_engine_keys = set(self.get_state())
             actual_engine_keys = set(state)
             if actual_engine_keys != expected_engine_keys:
                 raise ValueError(
-                    "Checkpoint version 107 engine key topology does not "
+                    "Checkpoint version 108 engine key topology does not "
                     "match the runtime: "
                     f"missing={sorted(expected_engine_keys - actual_engine_keys)!r}, "
                     f"extra={sorted(actual_engine_keys - expected_engine_keys)!r}",
@@ -1377,7 +1461,7 @@ class SimulationEngine:
             )
             if missing_morale_keys:
                 raise ValueError(
-                    "Checkpoint version 107 context is missing required "
+                    "Checkpoint version 108 context is missing required "
                     f"morale state: {missing_morale_keys!r}",
                 )
             expected_context_keys = set(self._ctx.get_state())
@@ -1385,7 +1469,7 @@ class SimulationEngine:
             actual_context_keys = set(context_state)
             if actual_context_keys != expected_context_keys:
                 raise ValueError(
-                    "Checkpoint version 107 context key topology does not "
+                    "Checkpoint version 108 context key topology does not "
                     "match the runtime: "
                     f"missing={sorted(expected_context_keys - actual_context_keys)!r}, "
                     f"extra={sorted(actual_context_keys - expected_context_keys)!r}",
@@ -1395,7 +1479,7 @@ class SimulationEngine:
                 and context_state["morale_machine"] is not None
             ):
                 raise ValueError(
-                    "Checkpoint version 107 contains morale-machine state "
+                    "Checkpoint version 108 contains morale-machine state "
                     "for a runtime without a morale machine",
                 )
 

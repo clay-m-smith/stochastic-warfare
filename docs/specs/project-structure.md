@@ -1,5 +1,5 @@
 # Project Structure & Module Decomposition
-**Status**: Living reference, current through Phase 107.
+**Status**: Living reference, current through Phase 108.
 **Last Updated**: 2026-07-28
 
 ---
@@ -279,7 +279,7 @@ stochastic-warfare/
 │       ├── test_campaign/           # Phase 9: Minimal campaign test (2 sides, 1 objective, 24h)
 │       ├── test_campaign_multi/     # Phase 9: Multiple engagement points (2 objectives, 48h)
 │       ├── test_campaign_reinforce/ # Phase 9: Reinforcement schedule test (3 waves)
-│       ├── test_campaign_logistics/ # Phase 9: Supply chain emphasis (multiple depots, 72h)
+│       ├── test_campaign_logistics/ # Phase 108: enabled deterministic logistics fixture
 │       ├── golan_campaign/         # Phase 10: Golan Heights 4-day campaign validation
 │       ├── falklands_campaign/     # Phase 10: Falklands San Carlos 5-day campaign validation
 │       ├── bekaa_valley_1982/     # Phase 16: Bekaa Valley SEAD validation (Israeli EW vs Syrian SAMs)
@@ -499,7 +499,9 @@ stochastic-warfare/
     │           └── maritime.py       # MahanianSchool + CorbettianSchool
     ├── logistics/                    # Supply & logistics
     │   ├── __init__.py
+    │   ├── config.py                 # Strict opt-in scenario logistics schema
     │   ├── events.py                 # Logistics events (supply delivery/shortage/depletion, convoy, maintenance, engineering, medical, POW, naval, disruption)
+    │   ├── runtime.py                # Fixed-cadence topology, direct resupply, idle demand, checkpoint state
     │   ├── supply_network.py         # Supply chain graph (networkx), leverages terrain infrastructure
     │   ├── supply_classes.py         # Military supply classification (Class I-X), ammo types, fuel types
     │   ├── consumption.py            # Per-unit consumption models (ammo by type, fuel by activity, food, water)
@@ -920,7 +922,23 @@ Orders exist at every echelon with fundamentally different character:
 **Depends on**: core/, entities/, detection/, environment/ (AI assessment queries environmental conditions for operational planning)
 
 ### logistics/
-**Owns**: Sustaining the force. Supply network, supply classification, consumption, transport, stockpiles, maintenance, engineering, medical evacuation, POW handling, disruption.
+**Package scope**: Sustaining the force. Supply network, supply classification, consumption, transport, stockpiles, maintenance, engineering, medical evacuation, POW handling, disruption.
+
+> **Production-status boundary (Phase 108):** The current scenario path uses
+> only explicit direct depot-to-unit route templates, abstract catalog-backed
+> inventory, deterministic bounded resupply, and stationary non-battle idle
+> demand on a fixed cadence. Seasonal ground state can degrade declared routes,
+> and existing blockade state can affect declared sea routes. The production
+> path does **not** discover routes/infrastructure from terrain, execute
+> transport missions or convoys, apply environmental/march/combat consumption,
+> source water locally, or synchronize abstract Class III/V stock with live
+> entity fuel and weapon magazines. Those boundaries are tracked in REM-020,
+> REM-021, and the Phase 108 non-goals.
+
+The bullets below inventory implemented subsystem APIs and longer-term design
+scope. Presence in the package is not evidence that a behavior is wired into
+the production scenario loop.
+
 - Reads entity consumption rates (by supply class, by activity level)
 - Modifies entity supply state (ammo by type, fuel, food, water, medical supplies, spare parts)
 - **Military supply classes**: Class I (food/water), Class III (fuel), Class V (ammo by type), Class VIII (medical), Class IX (spare parts), etc. Each has distinct consumption patterns, transport requirements, and criticality. **Consumption rates are environmentally variable**: Class I water consumption doubles or triples in extreme heat (from environment/weather temperature + humidity); Class III fuel consumption increases dramatically in cold weather (engine warming, heating) and in mud/snow conditions (higher resistance); Class VIII medical supply consumption increases with environmental casualties (heat, cold, altitude — not just combat casualties).

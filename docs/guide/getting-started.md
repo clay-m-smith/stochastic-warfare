@@ -36,9 +36,14 @@ uv run python -c "import stochastic_warfare; print('OK')"
 ## Running the Test Suite
 
 ```bash
-uv run python -m pytest --tb=short -q           # standard suite (~10,200 tests)
-uv run python -m pytest -m slow --tb=short -q   # 1000-run Monte Carlo only
+uv run python -m pytest --tb=short -q           # default-selected suite
+uv run python -m pytest -m slow --ignore=tests/api --ignore=tests/e2e -q --tb=short -o addopts=  # all slow-marked tests
 ```
+
+The default selection excludes `slow`, `benchmark`, `terrain`, `api`, and
+`e2e`, and ignores `tests/api` and `tests/e2e`. Run an excluded boundary
+explicitly with its required extra and `-o addopts=`. REM-013 tracks making
+those suites routine and explicit in CI.
 
 All commands use `uv run` to ensure the correct virtual environment is used.
 

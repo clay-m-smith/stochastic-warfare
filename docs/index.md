@@ -3,8 +3,8 @@
 **High-fidelity stochastic wargame simulator** -- multi-scale, multi-domain, multi-era.
 
 ![Python](https://img.shields.io/badge/python-%3E%3D3.12-blue)
-![Tests](https://img.shields.io/badge/tests-10%2C279_passing-brightgreen)
-![Phase](https://img.shields.io/badge/phase-107_COMPLETE-brightgreen)
+![Tests](https://img.shields.io/badge/tests-10%2C428_passing-brightgreen)
+![Phase](https://img.shields.io/badge/phase-108_COMPLETE-brightgreen)
 
 ---
 
@@ -48,8 +48,13 @@ Dependencies flow downward only. Entities hold data; modules implement behavior 
 
 ```bash
 uv sync --extra dev    # creates .venv, installs all deps including pytest/matplotlib
-uv run python -m pytest --tb=short -q   # run the test suite
+uv run python -m pytest --tb=short -q   # run the default-selected suite
 ```
+
+The default selection excludes the `slow`, `benchmark`, `terrain`, `api`, and
+`e2e` markers and ignores `tests/api` and `tests/e2e`. Run those boundaries
+explicitly with the needed extras and `-o addopts=`; REM-013 tracks their
+routine CI disclosure.
 
 See the [Getting Started Guide](guide/getting-started.md) for a complete tutorial including running your first scenario.
 
@@ -84,14 +89,14 @@ See the [Getting Started Guide](guide/getting-started.md) for a complete tutoria
 | Block 11 | 98--104 | Golden scenarios and deployment polish | **Complete** |
 | Block 12 | 105--114 | Integrity remediation against production-path evidence | **In progress** |
 
-Phases 105 through 107 are complete; Phase 108 is next.
+Phases 105 through 108 are complete; Phase 109 is next.
 
-Fresh verified baseline: **10,279 default-selected Python tests passed** (21
+Fresh verified baseline: **10,428 default-selected Python tests passed** (21
 skipped, 346 deselected) plus **418 frontend tests passed**. See the
 [remediation backlog](remediation-backlog.md) for current evidence and known
-coverage boundaries. **~870 YAML data files** define units, weapons,
-ammunition types, sensors, signatures, doctrines, commanders, formation
-templates, and 37 scenarios across 5 eras.
+coverage boundaries. The YAML data catalog defines units, weapons, ammunition
+types, sensors, signatures, doctrines, commanders, formation templates, and
+modern plus historical scenarios across five eras.
 
 ## License
 

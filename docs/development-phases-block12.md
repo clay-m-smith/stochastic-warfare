@@ -65,12 +65,23 @@ determinism audit, scenario evaluation, and residual boundaries.
 
 ## Phase 108 - Logistics Runtime Wiring
 
+Status: **Complete** (2026-07-28).
+
 - Initialize scenario depots, stock, nodes, and routes.
 - Advance supply-network state from the production loop.
 - Apply configured idle consumption at the correct simulation resolution.
 
 Exit criteria: REM-008 and REM-009 show controlled inventory and resupply
 effects through production ticks.
+
+Delivered behavior includes a strict opt-in logistics schema, loader-owned
+depot/unit/route topology, deterministic mass- and throughput-bounded direct
+resupply, fixed-cadence idle consumption at every engine resolution, atomic
+reinforcement admission, generic delivery-event exposure, and exact version
+108 checkpoint continuation. Legacy depot-only scenarios remain inert. See
+[`phase-108.md`](devlog/phase-108.md) for the production proof, determinism and
+performance audits, scenario comparisons, and residual activity/live-store
+boundaries.
 
 ## Phase 109 - Equipment Mapping Integrity
 
@@ -112,11 +123,15 @@ the production loop.
   comparison, and calibration cannot emit false-green zero results.
 - Preserve the passing strict documentation baseline established during Phase
   105 and make its coverage routine.
+- Repair historical devlog fragment links that the strict build currently
+  reports only as informational diagnostics.
+- Reject missing commander-profile references that currently warn per unit
+  while the evaluator reports a successful scenario.
 - Reconcile public capability and status claims with the remediation evidence.
 
-Exit criteria: REM-013, REM-014, and REM-017 are closed, REM-015 remains green,
-all relevant suites are reported explicitly, and the phase postmortem
-identifies any newly discovered backlog items.
+Exit criteria: REM-013, REM-014, REM-017, REM-022, and REM-023 are closed,
+REM-015 remains green, all relevant suites are reported explicitly, and the
+phase postmortem identifies any newly discovered backlog items.
 
 ## Phase 113 - Morale State Ownership
 

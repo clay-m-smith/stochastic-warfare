@@ -116,6 +116,71 @@ Per-unit reinforcement `overrides` are not currently a typed runtime contract
 and are rejected. Define a distinct unit-catalog entry when a wave needs a
 different loadout or entity configuration.
 
+### Logistics
+
+Production logistics is opt-in. Omission and `enabled: false` are equivalent;
+legacy `sides[].depots` metadata remains valid but does not create stock,
+invent unit capacity, or connect a supply network.
+
+An enabled excerpt declares the depot state on its owning side and the runtime
+profiles/routes at the scenario root:
+
+```yaml
+sides:
+  - side: blue
+    units:
+      - unit_type: m1a2
+        count: 4
+    depots:
+      - depot_id: blue_main
+        position: [500, 2000, 0]       # finite ENU metres
+        depot_type: DEPOT              # exact DepotType name
+        condition: 1.0
+        capacity_tons: 1000
+        throughput_tons_per_hour: 100
+        initial_inventory:
+          - supply_class: CLASS_I      # exact SupplyClass name
+            item_id: water_potable     # data/logistics/supply_items catalog ID
+            quantity: 20000            # item-native quantity
+
+logistics:
+  enabled: true
+  update_interval_seconds: 3600
+  unit_profiles:
+    - side: blue
+      unit_type: m1a2
+      initial_inventory:
+        - {supply_class: CLASS_I, item_id: water_potable, quantity: 20}
+      maximum_inventory:
+        - {supply_class: CLASS_I, item_id: water_potable, quantity: 100}
+      idle_consumption_per_hour:
+        - {supply_class: CLASS_I, item_id: water_potable, quantity: 5}
+  route_templates:
+    - route_id: blue_main_armor
+      side: blue
+      depot_id: blue_main
+      unit_types: [m1a2]
+      transport_mode: ROAD             # exact TransportMode name
+      transport_speed_kph: 40
+      capacity_tons_per_hour: 100
+      condition: 1.0
+```
+
+The enabled schema forbids unknown fields. Every initial and reinforcement unit
+type needs exactly one same-side profile. Items must exist in the effective
+supply catalog and match their declared class; maxima must cover initial and
+idle entries. Depot IDs are globally unique, explicit inventory may be empty,
+and declared inventory mass cannot exceed capacity. Route templates expand to
+same-side direct depot-to-unit routes only.
+
+At every crossed fixed-time boundary, the engine updates route state, performs
+deterministic mass/throughput/condition-bounded resupply, then debits the exact
+eligible idle rate. Only active units that stayed stationary and out of battle
+for the interval receive that rate. March/combat demand and synchronization
+with live fuel tanks or weapon magazines are not yet part of this contract.
+Delivery events and full topology/cadence state are exposed through the normal
+event and checkpoint boundaries.
+
 ### Calibration Overrides
 
 Fine-tune simulation parameters for historical accuracy:
@@ -246,7 +311,7 @@ documented_outcomes:
 | **test_campaign** | Basic campaign loop testing |
 | **test_campaign_multi** | Multi-battle campaign testing |
 | **test_campaign_reinforce** | Reinforcement arrival testing |
-| **test_campaign_logistics** | Logistics system testing |
+| **test_campaign_logistics** | Phase 108 enabled logistics topology, cadence, resupply, and idle-demand fixture |
 
 ---
 

@@ -24,6 +24,10 @@ class SupplyDeliveredEvent(Event):
     supply_class: int
     quantity: float
     transport_mode: int
+    depot_id: str = ""
+    item_id: str = ""
+    route_id: str = ""
+    quantity_tons: float = 0.0
 
 
 @dataclass(frozen=True)

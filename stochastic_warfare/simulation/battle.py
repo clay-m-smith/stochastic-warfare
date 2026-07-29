@@ -2115,11 +2115,6 @@ class BattleManager:
             self._execute_morale(ctx, units_by_side, active_enemies, timestamp,
                                 _lod_full_update=_lod_full_update)
 
-        # 9. Supply consumption (combat rate)
-        if ctx.consumption_engine is not None and ctx.stockpile_manager is not None:
-            self._execute_supply_consumption(ctx, units_by_side, dt,
-                                              _lod_full_update=_lod_full_update)
-
     # ── Battle termination ──────────────────────────────────────────
 
     def check_battle_termination(
@@ -5389,34 +5384,6 @@ class BattleManager:
                         if u.entity_id == cid:
                             object.__setattr__(u, "status", UnitStatus.ROUTING)
                             break
-
-    def _execute_supply_consumption(
-        self,
-        ctx: Any,
-        units_by_side: dict[str, list[Unit]],
-        dt: float,
-        _lod_full_update: set[str] | None = None,
-    ) -> None:
-        """Consume supplies for active units during combat."""
-        dt_hours = dt / 3600.0
-        for side_units in units_by_side.values():
-            for u in side_units:
-                if u.status != UnitStatus.ACTIVE:
-                    continue
-                if _lod_full_update is not None and u.entity_id not in _lod_full_update:
-                    continue  # Phase 85: LOD skip
-                personnel = len(u.personnel) if u.personnel else 4
-                equipment = len(u.equipment) if u.equipment else 1
-                try:
-                    result = ctx.consumption_engine.compute_consumption(
-                        personnel_count=personnel,
-                        equipment_count=equipment,
-                        base_fuel_rate_per_hour=10.0,
-                        activity=3,  # COMBAT
-                        dt_hours=dt_hours,
-                    )
-                except Exception:
-                    pass  # Non-critical — don't halt battle over supply math
 
     @staticmethod
     def _find_unit_side(ctx: Any, unit_id: str) -> str:

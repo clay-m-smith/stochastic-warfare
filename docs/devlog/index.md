@@ -130,6 +130,7 @@ Rolling record of implementation decisions, changes, and lessons learned across 
 | 105 | Checkpoint State Integrity | **Complete** | [phase-105.md](phase-105.md) |
 | 106 | API Execution Integrity | **Complete** | [phase-106.md](phase-106.md) |
 | 107 | Scenario Configuration Wiring | **Complete** | [phase-107.md](phase-107.md) |
+| 108 | Logistics Runtime Wiring | **Complete** | [phase-108.md](phase-108.md) |
 
 ## Post-MVP Refinement Index
 
@@ -371,5 +372,9 @@ Known limitations and deferred improvements logged during implementation. Review
 - Sections within a phase: Summary, What Was Built, Design Decisions, Deviations from Plan, Issues & Fixes, Open Questions, Known Limitations, Lessons Learned.
 - When a decision in one phase affects another, note it and cross-reference.
 - **Known Limitations / Post-MVP Refinements**: every phase should document deliberate simplifications. The index table above aggregates them for easy review.
-- **Post-MVP phases (11+)**: Same devlog conventions apply. Create `phase-{N}.md` when work begins. Update the table above from "Planned" → "In Progress" → "**Complete**" with link. New limitations discovered during post-MVP work must be added to both the phase devlog AND the refinement index above, AND the deficit-to-phase mapping in `development-phases-post-mvp.md`.
+- **Post-MVP phases (11+)**: Same devlog conventions apply. Create `phase-{N}.md` when work begins. Update the table above from "Planned" → "In Progress" → "**Complete**" with link.
+- **Block 12 remediation**: Record newly discovered limitations in the phase
+  devlog and the canonical `docs/remediation-backlog.md`. Do not duplicate them
+  into the historical post-MVP refinement table or
+  `development-phases-post-mvp.md`.
 - **Deficit resolution**: When a post-MVP phase resolves a deficit from the index above, mark it with a strikethrough and note which phase resolved it. Update the deficit-to-phase mapping in `development-phases-post-mvp.md` accordingly.

@@ -34,6 +34,11 @@ from stochastic_warfare.core.logging import get_logger
 from stochastic_warfare.core.rng import RNGManager
 from stochastic_warfare.core.types import ModuleId, Position
 from stochastic_warfare.entities.base import Unit, UnitStatus
+from stochastic_warfare.logistics.config import (
+    LogisticsConfig,
+    SupplyQuantityConfig,
+)
+from stochastic_warfare.logistics.stockpile import DepotType
 from stochastic_warfare.simulation.calibration import CalibrationSchema
 from stochastic_warfare.simulation.deployment import (
     DeploymentConfig,
@@ -47,6 +52,13 @@ from stochastic_warfare.terrain.heightmap import Heightmap
 logger = get_logger(__name__)
 
 
+def _looks_like_logistics_key(value: object) -> bool:
+    if not isinstance(value, str) or value == "logistics":
+        return False
+    normalized = value.lower().replace("-", "_")
+    return normalized.startswith("logist") or normalized == "logisitics"
+
+
 # ---------------------------------------------------------------------------
 # Pydantic config models (campaign YAML schema)
 # ---------------------------------------------------------------------------
@@ -55,16 +67,95 @@ logger = get_logger(__name__)
 class DepotConfig(BaseModel):
     """Supply depot definition within a scenario."""
 
+    model_config = ConfigDict(extra="forbid")
+
     depot_id: str
     position: list[float]  # [easting, northing]
+    depot_type: str | None = None
     capacity_tons: float = 1000.0
     throughput_tons_per_hour: float = 50.0
+    condition: float | None = None
+    initial_inventory: list[SupplyQuantityConfig] | None = None
 
-    @field_validator("position")
+    @field_validator("depot_id")
     @classmethod
-    def _two_coords(cls, v: list[float]) -> list[float]:
-        if len(v) < 2:
-            raise ValueError("position must have at least [easting, northing]")
+    def _nonempty_depot_id(cls, v: str) -> str:
+        if not isinstance(v, str) or not v.strip() or v != v.strip():
+            raise ValueError("depot_id must be a non-empty trimmed string")
+        return v
+
+    @field_validator("position", mode="before")
+    @classmethod
+    def _valid_position(cls, v: Any) -> list[float]:
+        if not isinstance(v, (list, tuple)) or len(v) not in (2, 3):
+            raise ValueError(
+                "position must contain [easting, northing] and optional altitude",
+            )
+        if any(
+            isinstance(coordinate, bool)
+            or not isinstance(coordinate, (int, float))
+            or not math.isfinite(float(coordinate))
+            for coordinate in v
+        ):
+            raise ValueError("position coordinates must be finite numbers")
+        return [float(coordinate) for coordinate in v]
+
+    @field_validator("depot_type")
+    @classmethod
+    def _known_depot_type(cls, v: str | None) -> str | None:
+        if v is not None and v not in DepotType.__members__:
+            raise ValueError(
+                "depot_type must be an exact DepotType name; "
+                f"got {v!r}",
+            )
+        return v
+
+    @field_validator(
+        "capacity_tons",
+        "throughput_tons_per_hour",
+        mode="before",
+    )
+    @classmethod
+    def _positive_rates(cls, v: Any, info: Any) -> float:
+        if (
+            isinstance(v, bool)
+            or not isinstance(v, (int, float))
+            or not math.isfinite(float(v))
+            or float(v) <= 0.0
+        ):
+            raise ValueError(f"{info.field_name} must be finite and positive")
+        return float(v)
+
+    @field_validator("condition", mode="before")
+    @classmethod
+    def _valid_condition(cls, v: Any) -> float | None:
+        if v is None:
+            return None
+        if (
+            isinstance(v, bool)
+            or not isinstance(v, (int, float))
+            or not math.isfinite(float(v))
+            or not 0.0 <= float(v) <= 1.0
+        ):
+            raise ValueError("condition must be finite and in [0, 1]")
+        return float(v)
+
+    @field_validator("initial_inventory")
+    @classmethod
+    def _unique_inventory_items(
+        cls,
+        v: list[SupplyQuantityConfig] | None,
+    ) -> list[SupplyQuantityConfig] | None:
+        if v is None:
+            return None
+        keys = [
+            (entry.supply_class_value, entry.item_id)
+            for entry in v
+        ]
+        if len(keys) != len(set(keys)):
+            raise ValueError(
+                "initial_inventory contains duplicate supply items",
+            )
         return v
 
 
@@ -378,6 +469,7 @@ class CampaignScenarioConfig(BaseModel):
     commander_config: dict[str, Any] | None = None
     dew_config: dict[str, Any] | None = None
     behavior_rules: dict[str, Any] = {}
+    logistics: LogisticsConfig = Field(default_factory=LogisticsConfig)
 
     @field_validator("sides")
     @classmethod
@@ -405,11 +497,22 @@ class CampaignScenarioConfig(BaseModel):
     @model_validator(mode="before")
     @classmethod
     def _reject_misplaced_feature_gate(cls, data: Any) -> Any:
-        if isinstance(data, Mapping) and "disabled_modules" in data:
-            raise ValueError(
-                "disabled_modules belongs to the registered era configuration, "
-                "not the scenario root",
+        if isinstance(data, Mapping):
+            if "disabled_modules" in data:
+                raise ValueError(
+                    "disabled_modules belongs to the registered era "
+                    "configuration, not the scenario root",
+                )
+            logistics_typos = sorted(
+                key
+                for key in data
+                if _looks_like_logistics_key(key)
             )
+            if logistics_typos:
+                raise ValueError(
+                    "Unknown scenario logistics field(s): "
+                    f"{logistics_typos!r}",
+                )
         return data
 
     @model_validator(mode="after")
@@ -424,6 +527,91 @@ class CampaignScenarioConfig(BaseModel):
                     f"reinforcement {index} references unknown side "
                     f"{reinforcement.side!r}",
                 )
+
+        depots_by_id: dict[str, str] = {}
+        declared_unit_types: dict[str, set[str]] = {
+            side.side: {
+                str(unit.get("unit_type", ""))
+                for unit in side.units
+            }
+            for side in self.sides
+        }
+        for reinforcement in self.reinforcements:
+            declared_unit_types[reinforcement.side].update(
+                unit.unit_type
+                for unit in reinforcement.units
+            )
+        for side in self.sides:
+            for depot in side.depots:
+                if depot.depot_id in depots_by_id:
+                    raise ValueError(
+                        f"depot_id {depot.depot_id!r} must be globally unique",
+                    )
+                depots_by_id[depot.depot_id] = side.side
+                if self.logistics.enabled and (
+                    depot.depot_type is None
+                    or depot.condition is None
+                    or depot.initial_inventory is None
+                ):
+                    raise ValueError(
+                        f"enabled logistics depot {depot.depot_id!r} requires "
+                        "explicit depot_type, condition, and initial_inventory",
+                    )
+
+        profile_keys = {
+            (profile.side, profile.unit_type)
+            for profile in self.logistics.unit_profiles
+        }
+        for side, unit_type in sorted(profile_keys):
+            if side not in known_sides:
+                raise ValueError(
+                    f"logistics profile references unknown side {side!r}",
+                )
+            if unit_type not in declared_unit_types[side]:
+                raise ValueError(
+                    "logistics profile references an undeclared unit type "
+                    f"{side!r}/{unit_type!r}",
+                )
+        if self.logistics.enabled:
+            expected_profiles = {
+                (side, unit_type)
+                for side, unit_types in declared_unit_types.items()
+                for unit_type in unit_types
+            }
+            missing_profiles = sorted(expected_profiles - profile_keys)
+            if missing_profiles:
+                raise ValueError(
+                    "enabled logistics requires profiles for every initial "
+                    "and reinforcement unit type; missing "
+                    f"{missing_profiles!r}",
+                )
+
+        expanded_template_keys: set[tuple[str, str]] = set()
+        for route in self.logistics.route_templates:
+            depot_side = depots_by_id.get(route.depot_id)
+            if depot_side is None:
+                raise ValueError(
+                    f"route {route.route_id!r} references unknown depot "
+                    f"{route.depot_id!r}",
+                )
+            if depot_side != route.side:
+                raise ValueError(
+                    f"route {route.route_id!r} crosses scenario sides",
+                )
+            for unit_type in route.unit_types:
+                if (route.side, unit_type) not in profile_keys:
+                    raise ValueError(
+                        f"route {route.route_id!r} references unit type "
+                        f"without a matching profile: "
+                        f"{route.side!r}/{unit_type!r}",
+                    )
+                key = (route.depot_id, unit_type)
+                if key in expanded_template_keys:
+                    raise ValueError(
+                        "parallel route templates for the same depot and "
+                        f"unit type are unsupported: {key!r}",
+                    )
+                expanded_template_keys.add(key)
         return self
 
 
@@ -1053,6 +1241,7 @@ class SimulationContext:
     consumption_engine: Any = None
     stockpile_manager: Any = None
     supply_network_engine: Any = None
+    logistics_runtime: Any = None
     maintenance_engine: Any = None
     medical_engine: Any = None
     engineering_engine: Any = None
@@ -1066,6 +1255,7 @@ class SimulationContext:
     ammo_loader: Any = None
     sensor_loader: Any = None
     sig_loader: Any = None
+    supply_item_loader: Any = None
 
     # Calibration
     calibration: CalibrationSchema | dict[str, Any] = field(default_factory=CalibrationSchema)
@@ -1133,6 +1323,7 @@ class SimulationContext:
             ("ooda_engine", self.ooda_engine),
             ("planning_engine", self.planning_engine),
             ("order_execution", self.order_execution),
+            ("logistics_runtime", self.logistics_runtime),
             ("stockpile_manager", self.stockpile_manager),
             ("fog_of_war", self.fog_of_war),
             ("aggregation_engine", self.aggregation_engine),
@@ -1219,6 +1410,11 @@ class SimulationContext:
             ("command_engine", self.command_engine),
         ]
         for name, eng in engines:
+            if (
+                name in {"stockpile_manager", "supply_network_engine"}
+                and self.logistics_runtime is not None
+            ):
+                continue
             if eng is not None and hasattr(eng, "get_state"):
                 state[name] = eng.get_state()
         # Era config
@@ -1271,7 +1467,8 @@ class SimulationContext:
         clock_state = state["clock"]
         rng_state = state["rng"]
         try:
-            copy.deepcopy(self.clock).set_state(clock_state)
+            staged_clock = copy.deepcopy(self.clock)
+            staged_clock.set_state(clock_state)
             copy.deepcopy(self.rng_manager).set_state(rng_state)
         except (KeyError, TypeError, ValueError) as exc:
             raise ValueError(f"Invalid checkpoint clock or RNG state: {exc}") from exc
@@ -1507,7 +1704,10 @@ class SimulationContext:
                         )
 
             try:
-                copy.deepcopy(self.morale_machine).set_state(
+                copy.deepcopy(
+                    self.morale_machine,
+                    {id(self.event_bus): self.event_bus},
+                ).set_state(
                     staged_morale_machine_state,
                 )
             except (AttributeError, KeyError, TypeError, ValueError) as exc:
@@ -1599,6 +1799,35 @@ class SimulationContext:
                 kind="sensor",
             )
 
+        staged_logistics_plan: Any = None
+        if (
+            self.logistics_runtime is not None
+            and "logistics_runtime" in state
+        ):
+            checkpoint_units = (
+                {
+                    staged.entity_id: staged
+                    for staged_side in staged_units.values()
+                    for _, staged in staged_side
+                }
+                if staged_units is not None
+                else existing_by_id
+            )
+            try:
+                staged_logistics_plan = (
+                    self.logistics_runtime.stage_state(
+                        state["logistics_runtime"],
+                        expected_units=checkpoint_units,
+                        expected_elapsed_seconds=(
+                            staged_clock.elapsed.total_seconds()
+                        ),
+                    )
+                )
+            except (KeyError, TypeError, ValueError) as exc:
+                raise ValueError(
+                    f"Invalid checkpoint logistics runtime state: {exc}",
+                ) from exc
+
         # Commit only after all context-owned checkpoint state validates.
         self.clock.set_state(clock_state)
         self.rng_manager.set_state(rng_state)
@@ -1658,6 +1887,8 @@ class SimulationContext:
             instance.set_state(saved_state)
         for instance, saved_state in staged_sensor_states:
             instance.set_state(saved_state)
+        if staged_logistics_plan is not None:
+            self.logistics_runtime.commit_state(staged_logistics_plan)
 
         # Regenerate flat dict after restoring forces (Phase 86).
         if isinstance(self.calibration, CalibrationSchema):
@@ -1670,6 +1901,7 @@ class SimulationContext:
             ("ooda_engine", self.ooda_engine),
             ("planning_engine", self.planning_engine),
             ("order_execution", self.order_execution),
+            ("logistics_runtime", self.logistics_runtime),
             ("stockpile_manager", self.stockpile_manager),
             ("fog_of_war", self.fog_of_war),
             ("aggregation_engine", self.aggregation_engine),
@@ -1756,7 +1988,12 @@ class SimulationContext:
             ("command_engine", self.command_engine),
         ]
         for name, eng in engines:
-            if name == "morale_machine":
+            if name in {"morale_machine", "logistics_runtime"}:
+                continue
+            if (
+                name in {"stockpile_manager", "supply_network_engine"}
+                and "logistics_runtime" in state
+            ):
                 continue
             if eng is not None and name in state and hasattr(eng, "set_state"):
                 eng.set_state(state[name])
@@ -1831,6 +2068,16 @@ def register_dynamic_units(
     if ctx.morale_machine is None:
         raise RuntimeError("Dynamic units require a morale state machine")
 
+    logistics_plan = None
+    logistics_before = None
+    if ctx.logistics_runtime is not None:
+        elapsed_seconds = ctx.clock.elapsed.total_seconds()
+        logistics_plan = ctx.logistics_runtime.prepare_unit_registration(
+            units,
+            eligible_from_seconds=elapsed_seconds,
+        )
+        logistics_before = ctx.logistics_runtime.get_state()
+
     staged_units_by_side = {
         side: list(side_units)
         for side, side_units in ctx.units_by_side.items()
@@ -1845,9 +2092,23 @@ def register_dynamic_units(
     staged_morale = dict(ctx.morale_states)
     staged_morale.update(incoming_morale)
 
-    # initialize_units validates the complete batch before changing its
-    # internal mapping.  The assignments after it are non-throwing.
-    ctx.morale_machine.initialize_units(incoming_morale)
+    # Both registration plans validate the complete batch before commit. If
+    # morale initialization unexpectedly fails, restore the no-event
+    # logistics snapshot so the reinforcement wave remains retryable.
+    if logistics_plan is not None:
+        ctx.logistics_runtime.commit_unit_registration(logistics_plan)
+    try:
+        ctx.morale_machine.initialize_units(incoming_morale)
+    except Exception:
+        if logistics_before is not None:
+            ctx.logistics_runtime.set_state(
+                logistics_before,
+                expected_units={
+                    unit.entity_id: unit
+                    for unit in ctx.all_units()
+                },
+            )
+        raise
     ctx.units_by_side = staged_units_by_side
     ctx.unit_weapons = staged_weapons
     ctx.unit_sensors = staged_sensors
@@ -1969,6 +2230,10 @@ class ScenarioLoader:
         era_config = get_era_config(config.era)
         loaders = self._create_loaders(era=config.era)
         self._validate_reinforcement_unit_types(config, loaders["unit_loader"])
+        self._validate_logistics_catalog(
+            config,
+            loaders["supply_item_loader"],
+        )
 
         # 5. Build forces
         entities_rng = rng_mgr.get_stream(ModuleId.ENTITIES)
@@ -2216,6 +2481,7 @@ class ScenarioLoader:
         from stochastic_warfare.combat.ammunition import AmmoLoader, WeaponLoader
         from stochastic_warfare.detection.signatures import SignatureLoader
         from stochastic_warfare.detection.sensors import SensorLoader
+        from stochastic_warfare.logistics.supply_classes import SupplyItemLoader
 
         unit_loader = UnitLoader(self._data_dir / "units")
         unit_loader.load_all()
@@ -2231,6 +2497,11 @@ class ScenarioLoader:
 
         sensor_loader = SensorLoader(self._data_dir / "sensors")
         sensor_loader.load_all()
+
+        supply_item_loader = SupplyItemLoader(
+            self._data_dir / "logistics" / "supply_items",
+        )
+        supply_item_loader.load_all()
 
         # Load era-specific data on top of base data
         if era != "modern":
@@ -2274,6 +2545,7 @@ class ScenarioLoader:
             "ammo_loader": ammo_loader,
             "sig_loader": sig_loader,
             "sensor_loader": sensor_loader,
+            "supply_item_loader": supply_item_loader,
         }
 
     @staticmethod
@@ -2298,6 +2570,73 @@ class ScenarioLoader:
                 "Reinforcement schedule references unknown unit types "
                 f"({details})",
             )
+
+    @staticmethod
+    def _validate_logistics_catalog(
+        config: CampaignScenarioConfig,
+        supply_item_loader: Any,
+    ) -> None:
+        """Validate configured logistics items and depot mass before RNG use."""
+
+        def definition_for(
+            entry: SupplyQuantityConfig,
+            location: str,
+        ) -> Any:
+            try:
+                definition = supply_item_loader.get_definition(entry.item_id)
+            except KeyError as exc:
+                raise ValueError(
+                    f"{location} references unknown supply item "
+                    f"{entry.item_id!r}",
+                ) from exc
+            if definition.supply_class != entry.supply_class:
+                raise ValueError(
+                    f"{location} declares {entry.supply_class} for "
+                    f"{entry.item_id!r}, but the catalog declares "
+                    f"{definition.supply_class}",
+                )
+            if (
+                isinstance(definition.weight_per_unit_kg, bool)
+                or not math.isfinite(definition.weight_per_unit_kg)
+                or definition.weight_per_unit_kg <= 0.0
+            ):
+                raise ValueError(
+                    f"Catalog item {entry.item_id!r} has invalid "
+                    "weight_per_unit_kg",
+                )
+            return definition
+
+        for profile in config.logistics.unit_profiles:
+            for field_name in (
+                "initial_inventory",
+                "maximum_inventory",
+                "idle_consumption_per_hour",
+            ):
+                entries = getattr(profile, field_name)
+                for entry in entries:
+                    definition_for(
+                        entry,
+                        f"profile {profile.side}/{profile.unit_type} "
+                        f"{field_name}",
+                    )
+
+        for side in config.sides:
+            for depot in side.depots:
+                total_kg = 0.0
+                for entry in depot.initial_inventory or []:
+                    definition = definition_for(
+                        entry,
+                        f"depot {depot.depot_id} initial_inventory",
+                    )
+                    total_kg += (
+                        entry.quantity * definition.weight_per_unit_kg
+                    )
+                if total_kg > depot.capacity_tons * 1000.0 + 1e-9:
+                    raise ValueError(
+                        f"depot {depot.depot_id!r} initial inventory weighs "
+                        f"{total_kg / 1000.0:.6g} tons and exceeds "
+                        f"capacity_tons={depot.capacity_tons:.6g}",
+                    )
 
     def _build_all_forces(
         self,
@@ -2621,8 +2960,32 @@ class ScenarioLoader:
         from stochastic_warfare.logistics.maintenance import MaintenanceEngine
 
         consumption_engine = ConsumptionEngine(bus, logistics_rng)
-        stockpile_manager = StockpileManager(bus, logistics_rng)
+        stockpile_manager = StockpileManager(
+            bus,
+            logistics_rng,
+            loader=loaders["supply_item_loader"],
+        )
         supply_network_engine = SupplyNetworkEngine(bus, logistics_rng)
+        from stochastic_warfare.logistics.runtime import LogisticsRuntime
+
+        logistics_runtime = LogisticsRuntime(
+            config=config.logistics,
+            stockpile_manager=stockpile_manager,
+            supply_network_engine=supply_network_engine,
+            supply_item_loader=loaders["supply_item_loader"],
+            disruption_engine=disruption_engine,
+        )
+        logistics_runtime.initialize(
+            {
+                side.side: side.depots
+                for side in config.sides
+            },
+            [
+                unit
+                for side in sorted(units_by_side or {})
+                for unit in (units_by_side or {})[side]
+            ],
+        )
         maintenance_engine = MaintenanceEngine(bus, logistics_rng)
 
         # Phase 56c: per-subsystem Weibull shapes from calibration
@@ -2814,6 +3177,7 @@ class ScenarioLoader:
             "consumption_engine": consumption_engine,
             "stockpile_manager": stockpile_manager,
             "supply_network_engine": supply_network_engine,
+            "logistics_runtime": logistics_runtime,
             "maintenance_engine": maintenance_engine,
             "aggregation_engine": aggregation_engine,
             "suppression_engine": sup_engine,

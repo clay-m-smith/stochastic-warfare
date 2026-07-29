@@ -639,6 +639,27 @@ class TestSupplyExhausted:
         )
         assert result.game_over is False
 
+    def test_condition_threshold_overrides_evaluator_default(
+        self,
+        event_bus: EventBus,
+    ) -> None:
+        units_red = [_make_unit("r1", Position(0, 0), "red")]
+        ev = VictoryEvaluator(
+            objectives=[],
+            conditions=[_vc("supply_exhausted", threshold=0.05)],
+            event_bus=event_bus,
+            config=VictoryEvaluatorConfig(supply_exhaustion_threshold=0.2),
+        )
+
+        result = ev.evaluate(
+            make_clock(),
+            {"blue": [], "red": units_red},
+            {},
+            {"r1": 0.1},
+        )
+
+        assert result.game_over is False
+
 
 # ---------------------------------------------------------------------------
 # TestObjectiveControl
