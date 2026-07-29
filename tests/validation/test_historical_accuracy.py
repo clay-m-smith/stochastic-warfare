@@ -89,6 +89,12 @@ CALIBRATION_SCENARIOS: set[str] = {
     "benchmark_brigade",
 }
 
+# Synthetic production-path fixtures have dedicated exact behavioral
+# assertions and must not be presented as historical calibration evidence.
+VALIDATION_SCENARIOS: set[str] = {
+    "time_on_target_validation",
+}
+
 # Scenarios with known engine limitations
 KNOWN_ISSUES: set[str] = set()
 
@@ -282,13 +288,19 @@ class TestScenarioCoverage:
         return names
 
     def test_all_scenarios_in_regression(self):
-        """Every scenario YAML has an entry in HISTORICAL_WINNERS or DRAW_SCENARIOS."""
+        """Every scenario YAML has an explicit regression classification."""
         all_names = self._find_all_scenario_names()
-        tracked = set(HISTORICAL_WINNERS.keys()) | DRAW_SCENARIOS | CALIBRATION_SCENARIOS
+        tracked = (
+            set(HISTORICAL_WINNERS)
+            | DRAW_SCENARIOS
+            | CALIBRATION_SCENARIOS
+            | VALIDATION_SCENARIOS
+        )
         untracked = all_names - tracked
         assert not untracked, (
             f"Scenarios not tracked in regression suite: {sorted(untracked)}. "
-            f"Add them to HISTORICAL_WINNERS or DRAW_SCENARIOS."
+            "Classify them as historical, draw, calibration, or validation "
+            "scenarios."
         )
 
     def test_all_scenarios_load_cleanly(self):

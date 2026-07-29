@@ -2,7 +2,7 @@
 
 ## Status
 
-Phase 105 contract, extended through Phase 108 on 2026-07-28.
+Phase 105 contract, extended through Phase 111 on 2026-07-29.
 
 ## Purpose
 
@@ -15,12 +15,12 @@ validated effective scenario configuration and repository/data-catalog
 revision. Checkpoint restore replaces mutable state; it does not rebuild engine
 topology or reinterpret a different scenario.
 
-`SimulationEngine` writes checkpoint format version `108`. Any explicit version
-other than `108` is rejected before runtime mutation. An absent version selects
+`SimulationEngine` writes checkpoint format version `111`. Any explicit version
+other than `111` is rejected before runtime mutation. An absent version selects
 the bounded legacy-migration path described below; an explicitly present
 `null` value is malformed, not legacy.
 
-For version `108`, top-level engine keys and context-state keys must exactly
+For version `111`, top-level engine keys and context-state keys must exactly
 match the compatible target runtime. Missing or extra keys fail before
 mutation. Serialized scenario and reinforcement configurations use type-aware
 JSON equality, so booleans cannot masquerade as integers and integers cannot
@@ -106,6 +106,17 @@ RNG streams restore before engine continuation. Reconstructing force objects
 must not consume a stream. Calibration's flattened, side-dependent view is
 regenerated after force restoration.
 
+## Runtime loadout topology
+
+The Phase 109 `RuntimeLoadoutBuilder` is the only owner of production weapon
+and sensor attachment construction for initial units, reinforcements, and fresh
+checkpoint reconstruction. Checkpoint compatibility validates the ordered
+mapping-registry fingerprint plus each unit's exact resolved attachment
+topology, source-equipment index/object relationship, runtime system
+multiplier, weapon/sensor identity, and ammunition topology before mutable
+instance state commits. A duplicate, missing, reordered, stale, or semantically
+different attachment fails; it is never substituted with a proxy.
+
 ## Logistics state
 
 `ScenarioLoader` injects one `LogisticsRuntime` for both enabled and disabled
@@ -113,7 +124,7 @@ configurations. The context delegates logistics persistence to that owner, so
 the separately exposed stockpile and supply-network references are not
 serialized a second time.
 
-An enabled version 108 checkpoint preserves:
+An enabled current checkpoint preserves:
 
 - cadence remainder and the elapsed time of the last completed boundary;
 - each registered unit's eligibility time, last-accounted time, open-interval
@@ -134,15 +145,69 @@ Its production update is an O(1) gate and ignores elapsed simulation time.
 Versionless restore is permitted only for a logistics-disabled runtime because
 an enabled runtime cannot reconstruct elapsed inventory history or topology.
 
+## Space state
+
+For a space-enabled runtime, one `SpaceEngine` envelope persists selected
+catalog topology, constellation/satellite state, GPS/SATCOM/ISR/early-warning
+state, finite ASAT asset inventory and cooldowns, pending/completed orders,
+debris, service history, and the SPACE RNG stream. Restore stages the complete
+envelope and validates exact catalog/action topology, satellite ownership and
+state, order/result chronology, inventory, cooldown, debris, service
+compatibility, and RNG agreement before committing any space owner. A
+versionless checkpoint cannot restore a space-enabled runtime.
+
+The detailed production/action contract is
+[ASAT Production Integration](asat-production-integration.md). The legacy
+generic buffered Space ISR report representation remains tracked by REM-027
+until Phase 112 gives it a typed semantic rehydration boundary.
+
+## Time-on-target state
+
+For every declared time-on-target plan, `IndirectFireEngine` persists the
+immutable plan fingerprint, enabled/dormant state, mission and battery
+lifecycle, exact processed times/reasons/impacts, resource and precondition
+snapshots, target transition, terminal result, and a read-only COMBAT RNG
+mirror. `SimulationContext` stages this state against the checkpoint clock,
+staged live `WeaponInstance` resources, unit statuses, exact attachment
+topology, and the authoritative `RNGManager` COMBAT stream.
+
+Validation independently recomputes chronology, rejection precedence, fired
+resource deltas, terminal assessment, target compatibility, shared-attachment
+history, and reservation/release state. Causally ordered public live-fire
+bridges are accepted before, between, or after scheduled transitions only when
+ammunition/counters/cooldown are monotonic, the finite last-fire time advances
+from the preceding observation, and it does not exceed checkpoint elapsed
+time. The latest preceding resource-bearing processed milestone is the lower
+bound even after mission release: impact processing does not sample the live
+weapon and cannot retroactively disqualify a public fire that occurred while
+reserved. Reservation blocks ordinary battle selection but does not invalidate
+a real lower-level `WeaponInstance` transition; the next scheduled milestone
+observes that resource state and records the resulting depletion/cooldown
+decision. Ammunition increases remain unsupported without the typed Class V
+resupply provenance tracked by REM-021. Destroyed and surrendered terminal
+targets cannot resurrect; a disabled target may only remain disabled or become
+destroyed, while routing may legitimately rally. A versionless checkpoint
+cannot restore any runtime with a declared plan, including a disabled
+populated plan.
+
+Time-on-target lifecycle round counts are non-boolean non-negative integers,
+processed times are canonical finite floats, and terminal-result plus COMBAT
+RNG-mirror scalar comparison is type-aware. Boolean aliases for integer
+counters reject before context mutation.
+
+The detailed contract is
+[Time-on-Target Execution](time-on-target-execution.md).
+
 ## Compatibility
 
-- Current engine checkpoints contain `checkpoint_version: 108`; an unknown,
+- Current engine checkpoints contain `checkpoint_version: 111`; an unknown,
   malformed, boolean, older explicit, or newer explicit version is rejected.
 - Current reinforcement wave ordinals and both morale-store enum values use
   non-boolean integers. Current wave side, configured arrival time, and full
   typed configuration must agree with the target schedule.
 - Versionless engine checkpoints are treated as pre-108 only for bounded morale
-  and reinforcement-ID migration, and only when logistics is disabled.
+  and reinforcement-ID migration, and only when logistics is disabled, space
+  is not enabled, and no time-on-target mission is declared.
   Existing morale entries are still validated; missing active-unit entries are
   reconstructed from the checkpoint roster and the runtime's validated side
   configuration. A disagreement between present context and machine morale is
@@ -156,7 +221,7 @@ an enabled runtime cannot reconstruct elapsed inventory history or topology.
   empty mapping. Direct legacy context calls that omit either section leave
   that corresponding runtime state unchanged. `SimulationEngine` additionally
   requires `units_by_side` for its campaign/roster preflight and both morale
-  keys for version 108.
+  keys for version 111.
 - Older unit snapshots without `unit_class` infer the class from its unique
   subclass field. A snapshot with no subclass field restores as `Unit`.
 - Unknown explicit discriminators fail; they never silently downgrade to
@@ -191,8 +256,16 @@ Completion requires:
 11. rejection of incomplete, corrupt, scenario-incompatible, foreign-plan, and
     mutated-plan logistics state without partial mutation;
 12. hash-seed-independent canonical checkpoint bytes and logistics event order;
-13. relevant existing checkpoint, scenario, engine, entity, and logistics
-    regression suites.
+13. ordered mapping-registry/runtime-loadout topology and exact mutable
+    weapon/sensor continuation;
+14. complete space/ASAT action, service, inventory, satellite, debris, RNG, and
+    before/after-action fresh continuation;
+15. time-on-target continuation before fire, after a causal reserved pre-fire
+    mutation, between fire and impact, during a shared-attachment plan, after
+    completion/release, and for a disabled populated plan, plus atomic
+    sentinel/lifecycle/resource/quantity-cooldown/target/RNG controls; and
+16. relevant existing checkpoint, scenario, engine, entity, logistics, space,
+    and indirect-fire regression suites.
 
 ## Tracked boundaries
 
@@ -207,6 +280,8 @@ restoration. Its current base-unit reconstruction gap is tracked separately and
 must be closed before checkpoint equivalence is claimed across an aggregation
 boundary.
 
-Checkpoint files do not currently embed hashes for external unit, weapon,
-ammunition, sensor, or era definitions. Cross-revision migration and catalog
-fingerprinting belong to a future versioned checkpoint-format phase.
+The mapping registry and subsystem topology carry compatibility fingerprints,
+but checkpoint files do not embed full content hashes for every external unit,
+weapon, ammunition, sensor, era, or space catalog definition. Cross-revision
+migration and complete catalog-content fingerprinting remain future
+checkpoint-format work.

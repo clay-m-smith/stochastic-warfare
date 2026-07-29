@@ -87,6 +87,45 @@ class ArtilleryFireEvent(Event):
     round_count: int
 
 
+@dataclass(frozen=True)
+class TimeOnTargetBatteryResult:
+    """Primitive terminal record for one scheduled firing attachment."""
+
+    battery_id: str
+    source_equipment_index: int
+    runtime_system_multiplier: int
+    weapon_id: str
+    ammo_id: str
+    planned_fire_position: tuple[float, float, float]
+    actual_fire_position: tuple[float, float, float]
+    scheduled_fire_time_s: float
+    predicted_time_of_flight_s: float
+    processing_time_s: float
+    status: str
+    reason: str
+    rounds_fired: int
+    generated_impact_count: int
+
+
+@dataclass(frozen=True)
+class TimeOnTargetMissionEvent(Event):
+    """Terminal observable result for one preplanned time-on-target mission."""
+
+    mission_id: str
+    attacker_side: str
+    target_unit_id: str
+    target_position: tuple[float, float, float]
+    scheduled_impact_time_s: float
+    processing_time_s: float
+    battery_results: tuple[TimeOnTargetBatteryResult, ...]
+    total_generated_impacts: int
+    near_target_impacts: int
+    outcome: str
+    target_effect: str
+    target_status_before: str
+    target_status_after: str
+
+
 # -- Missiles ------------------------------------------------------------
 
 

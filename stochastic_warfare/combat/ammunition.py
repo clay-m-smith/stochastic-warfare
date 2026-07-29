@@ -461,6 +461,11 @@ class WeaponInstance:
         return self.definition.weapon_id
 
     @property
+    def cooldown_s(self) -> float:
+        """Definition-derived cooldown for one aggregate firing share."""
+        return self._cooldown_s
+
+    @property
     def operational(self) -> bool:
         """True if the weapon is functional."""
         if self.equipment is None:

@@ -129,11 +129,22 @@ validation counts, and accepted limits.
 
 ## Phase 111 - Time-on-Target Execution
 
+Status: **Complete** (2026-07-29).
+
 Carry real mission target and timing data into the indirect-fire engine, execute
 each mission exactly once, and expose its result.
 
 Exit criteria: REM-012 is closed with scheduled and negative controls through
 the production loop.
+
+Delivered behavior includes a strict nested scenario schema, one
+runtime-loadout resolver for exact source attachments, fixed-cadence
+battery-specific fire scheduling, live ammunition/cooldown/maintenance
+mutation, exact target effects, reservation from ordinary battle selection,
+typed terminal recorder/API events, and atomic schema-111 checkpoint
+continuation. See [`phase-111.md`](devlog/phase-111.md) for production,
+negative, deterministic, scenario, persistence, and accepted postmortem
+evidence. REM-012 is closed.
 
 ## Phase 112 - Validation and Documentation Trust
 

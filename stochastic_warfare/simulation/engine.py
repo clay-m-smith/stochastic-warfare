@@ -32,7 +32,7 @@ from stochastic_warfare.simulation.victory import VictoryEvaluator, VictoryResul
 
 logger = get_logger(__name__)
 
-_CHECKPOINT_VERSION = 110
+_CHECKPOINT_VERSION = 111
 
 
 # ---------------------------------------------------------------------------
@@ -460,6 +460,15 @@ class SimulationEngine:
             self._campaign.check_scripted_events(ctx, _elapsed)
         except Exception:
             logger.debug("Scripted events check failed", exc_info=True)
+
+        # Phase 111: scheduled indirect fire observes every already-committed
+        # boundary transition before movement, detection, or autonomous
+        # combat. Authored milestones are validated against this fixed cadence.
+        if ctx.indirect_fire_engine is not None:
+            ctx.indirect_fire_engine.update_time_on_target(
+                ctx.clock.elapsed.total_seconds(),
+                timestamp,
+            )
 
         # 3. Determine and apply tick resolution
         self._update_resolution()
@@ -1435,6 +1444,15 @@ class SimulationEngine:
             raise ValueError(
                 "Versionless checkpoints cannot restore a space-enabled "
                 "runtime",
+            )
+        if (
+            allow_legacy_checkpoint
+            and self._ctx.indirect_fire_engine is not None
+            and self._ctx.indirect_fire_engine.has_declared_time_on_target_missions
+        ):
+            raise ValueError(
+                "Versionless checkpoints cannot restore a runtime with "
+                "declared time-on-target missions",
             )
         if not allow_legacy_checkpoint:
             expected_engine_keys = set(self.get_state())

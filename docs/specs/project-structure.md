@@ -411,7 +411,8 @@ stochastic-warfare/
     │   ├── hit_probability.py        # P(hit) model: range, weapon, skill, target motion, conditions
     │   ├── damage.py                 # Terminal effects: lethality, armor penetration, behind-armor effects
     │   ├── suppression.py            # Suppression mechanics: volume of fire → suppression state
-    │   ├── indirect_fire.py          # Artillery & rocket artillery: fire missions, adjustment, counterbattery, area effects, MLRS dispersal
+    │   ├── indirect_fire.py          # Artillery execution, including scheduled exact-attachment time-on-target lifecycle and terminal effects
+    │   ├── indirect_fire_config.py   # Strict time-on-target scenario declarations and immutable resolved combat plans [Phase 111]
     │   ├── missiles.py               # Surface-to-surface missiles: TBMs, cruise missiles, coastal defense SSMs, kill chain
     │   ├── missile_defense.py        # BMD, cruise missile defense, C-RAM/short-range air defense vs rockets & artillery
     │   ├── air_combat.py             # Air-to-air engagement model, BVR and WVR
@@ -598,6 +599,7 @@ stochastic-warfare/
         ├── scenario.py               # Scenario loading, setup, initialization; SimulationContext includes stratagem_engine, iads_engine, ato_engine [Phase 53]
         ├── equipment_mappings.py     # Ordered typed equipment-name registry and reviewed data decisions [Phase 109]
         ├── loadouts.py               # RuntimeLoadoutBuilder, semantic preflight, topology/fingerprint [Phase 109]
+        ├── time_on_target.py         # Initial-roster/runtime-loadout resolver for exact scheduled indirect-fire plans [Phase 111]
         ├── victory.py                # Victory conditions, war termination criteria, objective evaluation
         ├── recorder.py               # Event/state recording for replay & analysis
         ├── metrics.py                # Simulation output metrics, statistical aggregation, analysis hooks
@@ -817,6 +819,16 @@ The organizational model must be **nation-agnostic and era-agnostic** — it pro
 - **Ballistic physics**: projectile trajectory modeling including drag (function of atmospheric density from environment/weather — altitude and temperature affect air density, which affects drag coefficient), wind deflection (from environment/weather wind vector), Coriolis effect (at long range — magnitude depends on latitude from coordinates/ and projectile flight time), temperature effects on propellant (muzzle velocity varies ~1 fps per °F of propellant temperature), barrel wear (from entities/equipment degradation). Not just P(hit) tables — actual physics-based modeling where warranted by fidelity requirements.
 - **Indirect fire** (`indirect_fire.py`): covers BOTH tube artillery and rocket artillery, which have fundamentally different characteristics.
   - **Tube artillery** (howitzers, guns, mortars): fire missions (adjust fire, fire for effect, time-on-target, coordinated illumination), counterbattery radar (AN/TPQ-36/37 — detects incoming rounds, backtraces to firing position) and response, ammunition selection (HE, smoke, illumination, ICM/DPICM, precision-guided — Excalibur, Copperhead, Krasnopol). Fire mission processing time from request to rounds-on-target. Barrel wear and propellant temperature effects on accuracy.
+  - **Production time on target**: `indirect_fire_config.py` owns the strict
+    scenario declarations and immutable lower-layer plan records. The scheduled
+    executor accepts only exact initial live attachments, supported tube
+    artillery/mortars, and positive-radius lethal ammunition; it uses authored
+    whole-second fire-control times of flight, not a fabricated ballistic
+    fallback. Fire milestones consume live ammunition/cooldown/maintenance,
+    common impact resolves the exact target once, and one typed terminal event
+    carries ordered battery outcomes. Rocket-artillery time on target, automatic
+    firing-table solutions, and live-reload provenance remain unsupported
+    [Phase 111].
   - **Rocket artillery** (MLRS, HIMARS, BM-21 Grad, Smerch, etc.): distinct from tube artillery in key ways — fires in volleys/salvos from pod-based launchers (6/12 rockets per pod), large beaten zone for area fires (dispersal pattern modeled stochastically around aim point), rapid reload requires ammunition resupply vehicle, shoot-and-scoot doctrine (must displace quickly after firing to avoid counterbattery). Rocket types: unguided area-fire rockets (classic MLRS — large dispersion, area saturation), precision-guided rockets (GMLRS — GPS/INS, ~1m CEP, single-target precision), extended-range variants (ER-GMLRS). Rocket artillery ammo logistics differ from tube — pod-based, heavier per round, different resupply cycle.
   - **Counterbattery**: radar detection of incoming projectiles → backtrack trajectory to firing position → counterbattery fire mission. Time from detection to response is critical. Counterbattery radar coverage is limited and can be targeted. Shoot-and-scoot timing vs counterbattery response time is a key tactical dynamic.
 - **Surface-to-surface missiles** (`missiles.py`): a distinct combat category spanning multiple mission types, all sharing: launch platform, flight profile, guidance system, terminal effects, and vulnerability to missile defense.
@@ -989,6 +1001,13 @@ the production scenario loop.
   Initial units, reinforcements, and fresh checkpoint reconstruction use that
   same boundary; validation code consumes it rather than owning a parallel
   mapping [Phase 109].
+- **Time-on-target resolution**: after initial loadouts are built,
+  `TimeOnTargetMissionResolver` binds strict scenario declarations to the exact
+  initial units and source-equipment attachments. It validates identity, side,
+  domain, ammunition, range, inventory, quantity-aware cooldown, and fixed
+  cadence before injecting immutable plans into the combat engine. Simulation
+  owns only this construction/wiring boundary; lifecycle and effects remain in
+  `combat/` [Phase 111].
 - **Metrics and analysis**: statistical aggregation of simulation outputs (casualty rates, exchange ratios, supply consumption rates, environmental casualties, supply consumption by category, detection performance vs conditions, etc.) for post-run analysis. Environmental conditions logged alongside events for correlation analysis (e.g., "detection rates during ducting conditions" or "casualty rates during night vs day").
 - Does NOT contain domain logic — only sequencing and coordination
 

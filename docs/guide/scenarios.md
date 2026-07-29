@@ -181,6 +181,73 @@ with live fuel tanks or weapon magazines are not yet part of this contract.
 Delivery events and full topology/cadence state are exposed through the normal
 event and checkpoint boundaries.
 
+### Scheduled Time-on-Target Fire
+
+Preplanned time-on-target missions are opt-in under the strict
+`indirect_fire` block. A populated mission also requires one positive
+whole-second `tick_duration_seconds`; every derived fire time and common impact
+must align exactly to that cadence.
+
+Plausible misspellings or misplaced feature keys fail validation instead of
+silently selecting the disabled default. This includes snake/camel/compact
+forms such as `indrect_fire`, `timeOnTargetMissions`, `totPlan`,
+`enableTimeOnTarget`, and `enable_tot`; unrelated historical root metadata
+remains compatible.
+
+```yaml
+tick_duration_seconds: 5
+
+indirect_fire:
+  enable_time_on_target: true
+  time_on_target_missions:
+    - mission_id: blue_validation_tot
+      target_unit_id: red_hemtt_0000
+      target_position:                 # internal ENU metres
+        easting: 22000
+        northing: 10000
+        altitude: 0
+      impact_time_s: 120               # seconds from scenario start
+      rounds_per_battery: 1
+      batteries:
+        - unit_id: blue_m109a6_0000
+          source_equipment_index: 0    # exact Phase 109 attachment
+          weapon_id: m284_155mm
+          ammo_id: m982_excalibur
+          time_of_flight_s: 60         # authored fire-control hang time
+        - unit_id: blue_m109a6_0001
+          source_equipment_index: 0
+          weapon_id: m284_155mm
+          ammo_id: m982_excalibur
+          time_of_flight_s: 55
+```
+
+Mission IDs are unique, and battery unit IDs are unique within each mission;
+each mission has one to six batteries. Battery and target IDs name exact
+initial-roster units, and the source index must identify the declared weapon
+attachment on that unit. The round count cannot exceed the attachment's
+represented-system multiplier. The loader rejects friendly targets,
+unsupported categories or target domains, incompatible or nonlethal
+ammunition, impossible range/time data, aggregate magazine overbooking, and
+schedules that violate the attachment's quantity-aware firing rate.
+
+At runtime, each battery gets one scheduled fire attempt. A successful fire
+consumes its exact live magazine, advances cooldown and maintenance state, and
+stores its generated impacts. Inactive, moving, displaced, inoperable,
+depleted, or cooling-down batteries produce explicit terminal rejection
+reasons instead of retries. All fired batteries resolve against the target's
+then-current position at the common impact time. The recorder and
+`GET /api/runs/{run_id}/events` expose one `TimeOnTargetMissionEvent` with the
+ordered battery results, mission outcome, impact counts, target effect, and
+before/after status.
+
+The authored `time_of_flight_s` is a whole-second fire-direction input, not a
+simulated firing-table solution. The production path currently supports tube
+artillery/mortars with positive-radius lethal rounds, not rocket artillery,
+smoke, or illumination. It also cannot authenticate a later live-magazine
+increase as a reload because live Class V replenishment has no persisted
+production provenance; such checkpoint state rejects rather than being
+guessed valid.
+
 ### Calibration Overrides
 
 Fine-tune simulation parameters for historical accuracy:
@@ -252,7 +319,7 @@ documented_outcomes:
 
 ---
 
-## Modern Scenarios (37 total)
+## Modern Scenarios (38 total)
 
 ### Engagement Scenarios
 
@@ -313,6 +380,7 @@ documented_outcomes:
 | **test_campaign_multi** | Multi-battle campaign testing |
 | **test_campaign_reinforce** | Reinforcement arrival testing |
 | **test_campaign_logistics** | Phase 108 enabled logistics topology, cadence, resupply, and idle-demand fixture |
+| **time_on_target_validation** | Phase 111 exact two-battery scheduled-fire, resource, target-effect, event/API, and checkpoint fixture |
 
 ---
 

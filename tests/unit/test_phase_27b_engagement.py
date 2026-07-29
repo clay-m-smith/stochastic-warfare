@@ -443,150 +443,6 @@ class TestMultiSpectralCM:
 
 
 # ---------------------------------------------------------------------------
-# 4. TOT synchronization
-# ---------------------------------------------------------------------------
-
-
-class TestTOTSync:
-    def test_correct_fire_times(self) -> None:
-        eng = _make_indirect_fire_engine(rng=make_rng(1))
-        weapon = _make_howitzer_def()
-        ammo = _make_he_ammo()
-        batteries = {
-            "bat_a": Position(0, 0, 0),
-            "bat_b": Position(5000, 0, 0),
-        }
-        plan = eng.compute_tot_plan(
-            Position(10000, 0, 0), batteries, weapon, ammo, 1000.0,
-        )
-        assert "bat_a" in plan.fire_times
-        assert "bat_b" in plan.fire_times
-        # Both should fire before impact time
-        assert plan.fire_times["bat_a"] < plan.impact_time_s
-        assert plan.fire_times["bat_b"] < plan.impact_time_s
-
-    def test_closer_fires_later(self) -> None:
-        """Closer battery has shorter ToF so fires later."""
-        eng = _make_indirect_fire_engine(rng=make_rng(2), tot_time_of_flight_variation_s=0.0)
-        weapon = _make_howitzer_def()
-        ammo = _make_he_ammo()
-        batteries = {
-            "far": Position(0, 0, 0),
-            "close": Position(9000, 0, 0),
-        }
-        plan = eng.compute_tot_plan(
-            Position(10000, 0, 0), batteries, weapon, ammo, 1000.0,
-        )
-        # Close battery fires later (shorter ToF)
-        assert plan.fire_times["close"] > plan.fire_times["far"]
-
-    def test_jitter(self) -> None:
-        """Non-zero variation adds jitter to ToF."""
-        results_a = []
-        results_b = []
-        for seed in range(20):
-            eng = _make_indirect_fire_engine(
-                rng=make_rng(seed), tot_time_of_flight_variation_s=5.0,
-            )
-            weapon = _make_howitzer_def()
-            ammo = _make_he_ammo()
-            plan = eng.compute_tot_plan(
-                Position(10000, 0, 0), {"bat": Position(0, 0, 0)},
-                weapon, ammo, 1000.0,
-            )
-            results_a.append(plan.fire_times["bat"])
-        # Fire times should vary
-        assert max(results_a) - min(results_a) > 1.0
-
-    def test_execute_fires_ready(self) -> None:
-        eng = _make_indirect_fire_engine(rng=make_rng(3))
-        weapon = _make_howitzer_def()
-        ammo = _make_he_ammo()
-        batteries = {"bat_a": Position(0, 0, 0)}
-        plan = eng.compute_tot_plan(
-            Position(10000, 0, 0), batteries, weapon, ammo, 1000.0,
-        )
-        # Execute at impact_time (all batteries should have fired)
-        results = eng.execute_tot_mission(
-            plan, {"bat_a": weapon}, ammo, 5, plan.impact_time_s,
-        )
-        assert len(results) == 1
-        assert results[0].rounds_fired == 5
-
-    def test_execute_before_fire_time(self) -> None:
-        eng = _make_indirect_fire_engine(rng=make_rng(4))
-        weapon = _make_howitzer_def()
-        ammo = _make_he_ammo()
-        batteries = {"bat_a": Position(0, 0, 0)}
-        plan = eng.compute_tot_plan(
-            Position(10000, 0, 0), batteries, weapon, ammo, 1000.0,
-        )
-        # Execute way before fire time — nothing fires
-        results = eng.execute_tot_mission(
-            plan, {"bat_a": weapon}, ammo, 5, -1000.0,
-        )
-        assert len(results) == 0
-
-    def test_single_battery(self) -> None:
-        eng = _make_indirect_fire_engine(rng=make_rng(5))
-        weapon = _make_howitzer_def()
-        ammo = _make_he_ammo()
-        plan = eng.compute_tot_plan(
-            Position(10000, 0, 0), {"solo": Position(0, 0, 0)},
-            weapon, ammo, 500.0,
-        )
-        assert len(plan.batteries) == 1
-        assert "solo" in plan.fire_times
-
-    def test_max_battery_limit(self) -> None:
-        eng = _make_indirect_fire_engine(rng=make_rng(6), tot_max_batteries=3)
-        weapon = _make_howitzer_def()
-        ammo = _make_he_ammo()
-        batteries = {f"bat_{i}": Position(i * 1000, 0, 0) for i in range(10)}
-        plan = eng.compute_tot_plan(
-            Position(20000, 0, 0), batteries, weapon, ammo, 2000.0,
-        )
-        assert len(plan.batteries) == 3
-
-    def test_all_batteries_fire(self) -> None:
-        eng = _make_indirect_fire_engine(rng=make_rng(7))
-        weapon = _make_howitzer_def()
-        ammo = _make_he_ammo()
-        batteries = {
-            "a": Position(0, 0, 0),
-            "b": Position(5000, 0, 0),
-            "c": Position(8000, 0, 0),
-        }
-        plan = eng.compute_tot_plan(
-            Position(15000, 0, 0), batteries, weapon, ammo, 2000.0,
-        )
-        weapons_map = {bid: weapon for bid in batteries}
-        results = eng.execute_tot_mission(
-            plan, weapons_map, ammo, 3, plan.impact_time_s,
-        )
-        assert len(results) == 3
-
-    def test_tot_config_defaults(self) -> None:
-        from stochastic_warfare.combat.indirect_fire import IndirectFireConfig
-
-        cfg = IndirectFireConfig()
-        assert cfg.tot_max_batteries == 6
-        assert cfg.tot_time_of_flight_variation_s == 2.0
-
-    def test_plan_fields(self) -> None:
-        eng = _make_indirect_fire_engine(rng=make_rng(8))
-        weapon = _make_howitzer_def()
-        ammo = _make_he_ammo()
-        plan = eng.compute_tot_plan(
-            Position(10000, 0, 0), {"bat": Position(0, 0, 0)},
-            weapon, ammo, 1000.0,
-        )
-        assert plan.target_pos == Position(10000, 0, 0)
-        assert plan.impact_time_s == 1000.0
-        assert "bat" in plan.time_of_flight
-
-
-# ---------------------------------------------------------------------------
 # 5. CAS designation
 # ---------------------------------------------------------------------------
 
@@ -673,11 +529,16 @@ class TestBackwardCompat27b:
         assert cfg.submunition_scatter_sigma_fraction == 0.7
 
     def test_indirect_fire_config_defaults(self) -> None:
-        from stochastic_warfare.combat.indirect_fire import IndirectFireConfig
+        from stochastic_warfare.combat.indirect_fire import (
+            IndirectFireConfig,
+            IndirectFireEngine,
+        )
 
         cfg = IndirectFireConfig()
-        assert cfg.tot_max_batteries == 6
-        assert cfg.tot_time_of_flight_variation_s == 2.0
+        assert "tot_max_batteries" not in type(cfg).model_fields
+        assert "tot_time_of_flight_variation_s" not in type(cfg).model_fields
+        assert not hasattr(IndirectFireEngine, "compute_tot_plan")
+        assert not hasattr(IndirectFireEngine, "execute_tot_mission")
 
     def test_air_combat_config_defaults(self) -> None:
         from stochastic_warfare.combat.air_combat import AirCombatConfig

@@ -26,6 +26,10 @@ from pydantic import (
     model_validator,
 )
 
+from stochastic_warfare.combat.indirect_fire_config import (
+    IndirectFireScenarioConfig,
+    ResolvedTimeOnTargetMission,
+)
 from stochastic_warfare.core.clock import SimulationClock
 from stochastic_warfare.core.events import EventBus
 from stochastic_warfare.core.logging import get_logger
@@ -67,6 +71,58 @@ def _looks_like_logistics_key(value: object) -> bool:
         return False
     normalized = value.lower().replace("-", "_")
     return normalized.startswith("logist") or normalized == "logisitics"
+
+
+def _is_within_edit_distance(
+    value: str,
+    expected: str,
+    *,
+    maximum: int,
+) -> bool:
+    """Return whether two short normalized config keys are near matches."""
+    if abs(len(value) - len(expected)) > maximum:
+        return False
+    previous = list(range(len(expected) + 1))
+    for row, value_character in enumerate(value, start=1):
+        current = [row]
+        for column, expected_character in enumerate(expected, start=1):
+            current.append(
+                min(
+                    current[column - 1] + 1,
+                    previous[column] + 1,
+                    previous[column - 1]
+                    + (value_character != expected_character),
+                ),
+            )
+        previous = current
+    return previous[-1] <= maximum
+
+
+def _looks_like_indirect_fire_key(value: object) -> bool:
+    if not isinstance(value, str) or value == "indirect_fire":
+        return False
+    normalized = value.casefold().replace("-", "_")
+    compact = "".join(character for character in normalized if character.isalnum())
+    return (
+        "time_on_target" in normalized
+        or normalized.startswith("tot_")
+        or "indirectfire" in compact
+        or "timeontarget" in compact
+        or "totplan" in compact
+        or "totmission" in compact
+        or compact in {"enabletot", "totenabled"}
+        or any(
+            _is_within_edit_distance(compact, expected, maximum=2)
+            for expected in (
+                "indirectfire",
+                "enableindirectfire",
+                "enabletimeontarget",
+                "timeontarget",
+                "timeontargetmission",
+                "timeontargetmissions",
+            )
+        )
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -479,6 +535,9 @@ class CampaignScenarioConfig(BaseModel):
     commander_config: dict[str, Any] | None = None
     dew_config: dict[str, Any] | None = None
     behavior_rules: dict[str, Any] = {}
+    indirect_fire: IndirectFireScenarioConfig = Field(
+        default_factory=IndirectFireScenarioConfig,
+    )
     logistics: LogisticsConfig = Field(default_factory=LogisticsConfig)
 
     @field_validator("sides")
@@ -535,6 +594,35 @@ class CampaignScenarioConfig(BaseModel):
                     "Unknown scenario logistics field(s): "
                     f"{logistics_typos!r}",
                 )
+            indirect_fire_typos = sorted(
+                key
+                for key in data
+                if _looks_like_indirect_fire_key(key)
+            )
+            if indirect_fire_typos:
+                raise ValueError(
+                    "Unknown or misplaced scenario indirect-fire field(s): "
+                    f"{indirect_fire_typos!r}",
+                )
+            indirect_fire = data.get("indirect_fire")
+            declared_missions = (
+                indirect_fire.get("time_on_target_missions")
+                if isinstance(indirect_fire, Mapping)
+                else None
+            )
+            if declared_missions:
+                cadence = data.get("tick_duration_seconds")
+                if (
+                    isinstance(cadence, bool)
+                    or not isinstance(cadence, (int, float))
+                    or not math.isfinite(float(cadence))
+                    or float(cadence) <= 0.0
+                    or not float(cadence).is_integer()
+                ):
+                    raise ValueError(
+                        "declared time-on-target missions require a finite "
+                        "positive whole-second tick_duration_seconds",
+                    )
         return data
 
     @model_validator(mode="after")
@@ -667,6 +755,47 @@ class CampaignScenarioConfig(BaseModel):
                         f"unit type are unsupported: {key!r}",
                     )
                 expanded_template_keys.add(key)
+
+        missions = self.indirect_fire.time_on_target_missions
+        if missions:
+            cadence = self.tick_duration_seconds
+            if (
+                isinstance(cadence, bool)
+                or not isinstance(cadence, (int, float))
+                or not math.isfinite(float(cadence))
+                or float(cadence) <= 0.0
+                or not float(cadence).is_integer()
+            ):
+                raise ValueError(
+                    "declared time-on-target missions require a finite "
+                    "positive whole-second tick_duration_seconds",
+                )
+            cadence_seconds = int(cadence)
+            duration_seconds = self.duration_hours * 3600.0
+            for mission in missions:
+                if mission.impact_time_s > duration_seconds:
+                    raise ValueError(
+                        f"time-on-target mission {mission.mission_id!r} "
+                        f"impact_time_s {mission.impact_time_s:g} exceeds "
+                        f"scenario duration {duration_seconds:g}",
+                    )
+                if int(mission.impact_time_s) % cadence_seconds:
+                    raise ValueError(
+                        f"time-on-target mission {mission.mission_id!r} "
+                        "impact time is not aligned to "
+                        "tick_duration_seconds",
+                    )
+                for battery in mission.batteries:
+                    fire_time_s = (
+                        mission.impact_time_s
+                        - battery.time_of_flight_s
+                    )
+                    if int(fire_time_s) % cadence_seconds:
+                        raise ValueError(
+                            f"time-on-target mission {mission.mission_id!r} "
+                            f"battery {battery.unit_id!r} fire time is not "
+                            "aligned to tick_duration_seconds",
+                        )
         return self
 
 
@@ -1983,6 +2112,99 @@ class SimulationContext:
                 "a space engine",
             )
 
+        staged_indirect_fire_plan: Any = None
+        if (
+            self.indirect_fire_engine is not None
+            and "indirect_fire_engine" in state
+        ):
+            prospective_units = (
+                {
+                    staged.entity_id: staged
+                    for staged_side in staged_units.values()
+                    for _, staged in staged_side
+                }
+                if staged_units is not None
+                else existing_by_id
+            )
+            raw_weapon_states = state.get("unit_weapon_states")
+            if not isinstance(raw_weapon_states, dict):
+                raise ValueError(
+                    "Checkpoint with indirect-fire plans requires "
+                    "unit_weapon_states",
+                )
+            expected_resources: list[dict[str, Any]] = []
+            for (
+                unit_id,
+                source_equipment_index,
+                weapon_id,
+            ) in self.indirect_fire_engine.planned_attachment_keys:
+                attachments = runtime_unit_weapons.get(unit_id, ())
+                matches = [
+                    (index, attachment)
+                    for index, attachment in enumerate(attachments)
+                    if (
+                        attachment.source_equipment_index
+                        == source_equipment_index
+                        and attachment.weapon.weapon_id == weapon_id
+                    )
+                ]
+                if len(matches) != 1:
+                    raise ValueError(
+                        "Checkpoint indirect-fire attachment topology "
+                        f"mismatch for {(unit_id, source_equipment_index, weapon_id)!r}",
+                    )
+                attachment_index, _attachment = matches[0]
+                saved_unit_weapons = raw_weapon_states.get(unit_id)
+                if (
+                    not isinstance(saved_unit_weapons, list)
+                    or attachment_index >= len(saved_unit_weapons)
+                ):
+                    raise ValueError(
+                        "Checkpoint indirect-fire weapon state is missing "
+                        f"for {unit_id!r}",
+                    )
+                observation = (
+                    self.indirect_fire_engine
+                    .canonical_resource_observation(
+                        saved_unit_weapons[attachment_index],
+                    )
+                )
+                expected_resources.append({
+                    "unit_id": unit_id,
+                    "source_equipment_index": source_equipment_index,
+                    "weapon_id": weapon_id,
+                    **observation,
+                })
+            try:
+                staged_indirect_fire_plan = (
+                    self.indirect_fire_engine.stage_state(
+                        state["indirect_fire_engine"],
+                        expected_elapsed_s=(
+                            staged_clock.elapsed.total_seconds()
+                        ),
+                        expected_combat_rng_state=(
+                            rng_state["streams"][ModuleId.COMBAT.value]
+                        ),
+                        expected_resource_observations=expected_resources,
+                        expected_unit_statuses={
+                            unit_id: unit.status.name
+                            for unit_id, unit in prospective_units.items()
+                        },
+                    )
+                )
+            except (KeyError, TypeError, ValueError) as exc:
+                raise ValueError(
+                    f"Invalid checkpoint indirect-fire runtime state: {exc}",
+                ) from exc
+        elif (
+            self.indirect_fire_engine is None
+            and "indirect_fire_engine" in state
+        ):
+            raise ValueError(
+                "Checkpoint contains indirect-fire state for a context "
+                "without an indirect-fire engine",
+            )
+
         # Commit only after all context-owned checkpoint state validates.
         self.clock.set_state(clock_state)
         self.rng_manager.set_state(rng_state)
@@ -2047,6 +2269,10 @@ class SimulationContext:
             instance.set_state(saved_state)
         for instance, saved_state in staged_sensor_states:
             instance.set_state(saved_state)
+        if staged_indirect_fire_plan is not None:
+            self.indirect_fire_engine.commit_state(
+                staged_indirect_fire_plan,
+            )
         if staged_logistics_plan is not None:
             self.logistics_runtime.commit_state(staged_logistics_plan)
         if staged_space_plan is not None:
@@ -2154,6 +2380,7 @@ class SimulationContext:
                 "morale_machine",
                 "logistics_runtime",
                 "space_engine",
+                "indirect_fire_engine",
             }:
                 continue
             if (
@@ -2435,6 +2662,18 @@ class ScenarioLoader:
             entities_rng,
             loadout_builder,
         )
+        from stochastic_warfare.simulation.time_on_target import (
+            TimeOnTargetMissionResolver,
+        )
+
+        time_on_target_missions = TimeOnTargetMissionResolver.resolve(
+            config.indirect_fire,
+            units_by_side=units_by_side,
+            runtime_loadouts=runtime_loadouts,
+            terrain=heightmap,
+            duration_hours=config.duration_hours,
+            tick_duration_seconds=config.tick_duration_seconds,
+        )
 
         # 6. Morale state tracking
         all_units = [
@@ -2454,6 +2693,7 @@ class ScenarioLoader:
             clock,
             units_by_side,
             era_config,
+            time_on_target_missions=time_on_target_missions,
         )
 
         # 8. Assemble context
@@ -2925,6 +3165,8 @@ class ScenarioLoader:
         clock: SimulationClock | None = None,
         units_by_side: dict[str, list] | None = None,
         era_config: Any = None,
+        *,
+        time_on_target_missions: tuple[ResolvedTimeOnTargetMission, ...] = (),
     ) -> dict[str, Any]:
         """Create all domain engine instances."""
         combat_rng = rng_mgr.get_stream(ModuleId.COMBAT)
@@ -2972,7 +3214,24 @@ class ScenarioLoader:
         # Indirect fire (Phase 43b)
         from stochastic_warfare.combat.indirect_fire import IndirectFireEngine
 
-        indirect_fire_engine = IndirectFireEngine(bal, dmg_engine, bus, combat_rng)
+        indirect_fire_engine = IndirectFireEngine(
+            bal,
+            dmg_engine,
+            bus,
+            combat_rng,
+            time_on_target_enabled=(
+                config.indirect_fire.enable_time_on_target
+            ),
+            time_on_target_missions=time_on_target_missions,
+            destruction_threshold=cal.get(
+                "destruction_threshold",
+                0.5,
+            ),
+            disable_threshold=cal.get(
+                "disable_threshold",
+                0.3,
+            ),
+        )
 
         # Naval engines (Phase 43c)
         from stochastic_warfare.combat.naval_surface import NavalSurfaceEngine

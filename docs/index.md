@@ -3,8 +3,8 @@
 **High-fidelity stochastic wargame simulator** -- multi-scale, multi-domain, multi-era.
 
 ![Python](https://img.shields.io/badge/python-%3E%3D3.12-blue)
-![Tests](https://img.shields.io/badge/tests-10%2C804_passing-brightgreen)
-![Phase](https://img.shields.io/badge/phase-110_COMPLETE-brightgreen)
+![Tests](https://img.shields.io/badge/tests-10%2C958_passing-brightgreen)
+![Phase](https://img.shields.io/badge/phase-111_COMPLETE-brightgreen)
 
 ---
 
@@ -92,13 +92,12 @@ See the [Getting Started Guide](guide/getting-started.md) for a complete tutoria
 | Block 11 | 98--104 | Golden scenarios and deployment polish | **Complete** |
 | Block 12 | 105--114 | Integrity remediation against production-path evidence | **In progress** |
 
-Phases 105 through 110 are complete. Phase 110 closed REM-011 after its
-production integration, validation, cross-document audit, and postmortem.
-Phase 111 is next and has not started.
+Phases 105 through 111 are complete, including REM-012 time-on-target
+production execution. Phase 112 is next and has not started.
 
-Fresh Phase 110 closure baseline: **10,804 default-selected Python tests
+Fresh Phase 111 completion baseline: **10,958 default-selected Python tests
 passed** (21 skipped, 348 deselected, 6 warnings). The frontend was not rerun
-because Phase 110 changes no frontend contract; its last verified Phase 108
+because Phase 111 changed no frontend contract; its last verified Phase 108
 baseline remains 418 tests.
 See the
 [remediation backlog](remediation-backlog.md) for current evidence and known

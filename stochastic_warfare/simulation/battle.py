@@ -1360,7 +1360,7 @@ def _apply_indirect_fire_result(
     casualty_per_hit: float = 0.15,
     weapon_id: str = "",
 ) -> None:
-    """Convert indirect fire impacts to damage.
+    """Apply the public pure aggregate assessment to ordinary battle state.
 
     ``terrain_modifier`` scales the per-hit damage fraction — cover reduces
     effective indirect-fire lethality.
@@ -1369,26 +1369,48 @@ def _apply_indirect_fire_result(
     ``casualty_per_hit`` overrides the default 0.15 casualty fraction per
     impact within the lethal radius.
     """
-    hits_near = 0
-    for impact in fm_result.impacts:
-        dx = impact.position.easting - target.position.easting
-        dy = impact.position.northing - target.position.northing
-        dist = math.sqrt(dx * dx + dy * dy)
-        if dist < lethal_radius_m:
-            hits_near += 1
-    if hits_near > 0:
-        per_hit = casualty_per_hit * terrain_modifier
-        if cumulative_tracker is not None:
-            cumulative_tracker[target.entity_id] = (
-                cumulative_tracker.get(target.entity_id, 0) + hits_near
-            )
-            fraction = min(1.0, cumulative_tracker[target.entity_id] * per_hit)
-        else:
-            fraction = min(1.0, hits_near * per_hit)
-        if fraction >= destruction_threshold:
-            pending_damage.append((target, UnitStatus.DESTROYED, weapon_id))
-        elif fraction >= disable_threshold:
-            pending_damage.append((target, UnitStatus.DISABLED, weapon_id))
+    from stochastic_warfare.combat.indirect_fire import (
+        ImpactPoint,
+        assess_indirect_fire_impacts,
+    )
+
+    assessment_impacts = [
+        ImpactPoint(
+            position=impact.position,
+            ammo_id=getattr(impact, "ammo_id", "__ordinary_indirect__"),
+        )
+        for impact in fm_result.impacts
+    ]
+    prior_hits = (
+        cumulative_tracker.get(target.entity_id, 0)
+        if cumulative_tracker is not None
+        else 0
+    )
+    assessment = assess_indirect_fire_impacts(
+        assessment_impacts,
+        target.position,
+        {
+            impact.ammo_id: lethal_radius_m
+            for impact in assessment_impacts
+        },
+        prior_near_impact_count=prior_hits,
+        terrain_modifier=terrain_modifier,
+        casualty_per_impact=casualty_per_hit,
+        destruction_threshold=destruction_threshold,
+        disable_threshold=disable_threshold,
+    )
+    if assessment.near_impact_count <= 0:
+        return
+    if cumulative_tracker is not None:
+        cumulative_tracker[target.entity_id] = (
+            assessment.cumulative_near_impact_count
+        )
+    if assessment.resulting_status is not None:
+        pending_damage.append((
+            target,
+            assessment.resulting_status,
+            weapon_id,
+        ))
 
 
 # ---------------------------------------------------------------------------
@@ -4935,6 +4957,16 @@ class BattleManager:
                 selected_attachment: WeaponAttachment | None = None
                 best_wpn_score = -1.0
                 for attachment in weapons:
+                    if (
+                        isinstance(attachment, WeaponAttachment)
+                        and getattr(ctx, "indirect_fire_engine", None) is not None
+                        and ctx.indirect_fire_engine.is_attachment_reserved(
+                            attacker.entity_id,
+                            attachment.source_equipment_index,
+                            attachment.weapon.weapon_id,
+                        )
+                    ):
+                        continue
                     if isinstance(attachment, WeaponAttachment):
                         wpn_inst = attachment.weapon
                         ammo_defs = attachment.ammunition

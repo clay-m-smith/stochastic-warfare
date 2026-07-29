@@ -1,8 +1,8 @@
 # Stochastic Warfare
 
 ![Python](https://img.shields.io/badge/python-%3E%3D3.12-blue)
-![Tests](https://img.shields.io/badge/tests-10%2C804_passing-brightgreen)
-![Phase](https://img.shields.io/badge/phase-110_COMPLETE-brightgreen)
+![Tests](https://img.shields.io/badge/tests-10%2C958_passing-brightgreen)
+![Phase](https://img.shields.io/badge/phase-111_COMPLETE-brightgreen)
 
 High-fidelity, high-resolution wargame simulator with a headless Python engine,
 FastAPI service, and React frontend. Models warfare across multiple scales —
@@ -172,7 +172,7 @@ data/                     # YAML data catalog
   eras/                    # Era-specific data packages (WW2, WW1, Napoleonic, Ancient/Medieval)
   scenarios/              # modern, test, and historical-era scenario definitions
 
-tests/                    # 10,804 default-selected Python tests passing
+tests/                    # 10,958 default-selected Python tests passing
 docs/                     # specs, brainstorm, devlog, development phases
 ```
 
@@ -180,10 +180,10 @@ For the full package tree and module decomposition, see [`docs/specs/project-str
 
 ## Development Status
 
-Phases 105 through 110 are complete. Phase 110 closed REM-011 after its
-production integration, validation, cross-document audit, and postmortem;
-Phase 111 is next and has not started. Blocks 1–11 remain complete. See the
-remediation backlog, devlogs, and phase roadmaps for full detail.
+Phases 105 through 111 are complete, including REM-012 time-on-target
+production execution. Phase 112 is next and has not started. Blocks 1–11
+remain complete. See the remediation backlog, devlogs, and phase roadmaps for
+full detail.
 
 | Phase | Focus | Tests | Status |
 |-------|-------|-------|--------|
@@ -299,10 +299,11 @@ remediation backlog, devlogs, and phase roadmaps for full detail.
 | 108 | Logistics Runtime Wiring (Block 12) | 115 | **Complete** |
 | 109 | Equipment Mapping Integrity (Block 12) | 322 | **Complete** |
 | 110 | ASAT Production Integration (Block 12) | 50 (49 focused + 1 API) | **Complete** |
-| | **Verified passing baseline** | **10,804 Python** | |
+| 111 | Time-on-Target Execution (Block 12) | 165 (162 focused + 3 API) | **Complete** |
+| | **Verified passing baseline** | **10,958 Python** | |
 
 The Python figure is the fresh default-suite result; that run also reported 21
-skipped, 348 deselected tests, and 6 warnings. Phase 110 changes no frontend
+skipped, 348 deselected tests, and 6 warnings. Phase 111 changed no frontend
 contract, so the frontend suite was not rerun; its last Phase 108 baseline was
 418 passing tests. For the full phase roadmap, see
 [`docs/development-phases.md`](docs/development-phases.md) (MVP),

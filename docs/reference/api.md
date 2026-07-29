@@ -165,6 +165,8 @@ The loader automatically:
 - Preflights reachable initial and reinforcement equipment through the typed
   registry, then retains one `RuntimeLoadoutBuilder` for initial, arriving, and
   checkpoint-reconstructed loadouts
+- Resolves declared time-on-target missions against exact initial-roster
+  runtime attachments before constructing the indirect-fire engine
 - Creates terrain, environment, detection, combat, movement, morale, C2, and logistics engines
 - Wires Schools, Escalation, and DEW when their configuration enables them
 - Constructs EW, Space, and CBRN suites only when enabled and permitted by the
@@ -470,6 +472,7 @@ The top-level pydantic model for scenario YAML files. Key fields:
 | `date` | `str` | Historical date (if applicable) |
 | `duration_hours` | `float` | Strict finite positive scenario duration in hours |
 | `era` | `str` | Registered era name; defaults to `modern` |
+| `tick_duration_seconds` | `float \| None` | Fixed scenario cadence; declared time-on-target missions require a positive whole-second value |
 | `terrain` | `TerrainConfig` | Terrain dimensions, type, features |
 | `sides` | `list[SideConfig]` | Force composition per side |
 | `objectives` | `list[ObjectiveConfig]` | Spatial objectives |
@@ -482,6 +485,7 @@ The top-level pydantic model for scenario YAML files. Key fields:
 | `escalation_config` | `dict \| None` | Escalation ladder configuration |
 | `school_config` | `dict \| None` | Doctrinal school assignments |
 | `dew_config` | `dict \| None` | Directed energy weapon configuration |
+| `indirect_fire` | `IndirectFireScenarioConfig` | Strict gate and exact preplanned time-on-target missions |
 
 ---
 
@@ -502,6 +506,48 @@ times, `launched`, `pk`, `hit`, exact `outcome`/`reason`, debris generated,
 rounds remaining, and before/after constellation counts. A successful hit
 records `ConstellationDegradedEvent` first. The existing `event_type` and
 `side` filters select these events without a specialized endpoint.
+
+---
+
+### IndirectFireScenarioConfig and time-on-target events
+
+`IndirectFireScenarioConfig` rejects unknown fields and owns
+`enable_time_on_target` plus an ordered `time_on_target_missions` list. Each
+mission declares a unique ID, exact initial target unit, finite ENU target
+point, whole-second common impact time, positive rounds per battery, and one to
+six exact batteries. A battery identifies its initial unit,
+`source_equipment_index`, weapon, ammunition, and authored whole-second
+fire-control time of flight.
+
+`ScenarioLoader` resolves those declarations against the production
+`RuntimeLoadouts` product. Identity, side, weapon category/domain,
+ammunition lethality/compatibility, range, aggregate inventory,
+quantity-aware cooldown, and fixed-cadence failures are explicit load errors.
+For `POST /api/runs/from-config`, malformed nested schema fields return HTTP
+422; roster/catalog semantic failures can occur in the accepted background
+run and are then exposed as terminal `failed` run detail.
+
+The generic events endpoint exposes each terminal mission as
+`TimeOnTargetMissionEvent`:
+
+```text
+GET /api/runs/{id}/events?event_type=TimeOnTargetMissionEvent&side=blue
+```
+
+Its data includes mission/attacker/target identity, target point, scheduled and
+processing times, ordered exact-attachment battery results, generated and
+near-target impact counts, `outcome` (`completed`, `partial`, or `rejected`),
+`target_effect`, and before/after target status. Fired batteries expose their
+round and impact counts; rejected batteries expose one of
+`battery_inactive`, `battery_moving`, `battery_displaced`,
+`weapon_inoperable`, `insufficient_ammunition`, or `weapon_cooldown`. The
+normal `side` filter matches `attacker_side`; no specialized endpoint is
+required.
+
+The supported boundary uses authored whole-second times of flight and
+positive-radius lethal tube-artillery/mortar ammunition. Rocket-artillery time
+on target, automatic firing-table solutions, and live-magazine reload
+provenance are not supported.
 
 ---
 
@@ -672,3 +718,11 @@ era contract, and runtime topology. An incompatible restore fails before
 mutating the target. See the
 [checkpoint state contract](../specs/checkpoint-state.md) for the canonical
 schema and bounded legacy-migration rules.
+
+The current engine checkpoint schema is version 111. Declared time-on-target
+plans add their topology fingerprint, complete scheduled lifecycle, in-flight
+impacts, terminal result, exact live-resource observations, target transition,
+and reconciled COMBAT RNG state to the atomic restore contract. Version 110
+does not restore into this runtime, and versionless engine state is rejected
+when any time-on-target plan is declared, including a disabled populated
+control.

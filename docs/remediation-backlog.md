@@ -33,7 +33,7 @@ Audit baseline: 2026-07-28 at `68acd4b`
 | REM-009 | P0 | 108 | Logistics | Supply-network updates and idle consumption are not applied by the production loop | **Closed** | Yes | Yes | Yes | Yes | Yes | Yes | Yes | [Phase 108](devlog/phase-108.md#postmortem) |
 | REM-010 | P0 | 109 | Equipment data | Loadout mapping has duplicate/wrong keys, 22 unmapped catalog entries, and validation-layer ownership | **Closed** | Yes | Yes | Yes | N/A | Yes | Yes | Yes | [Phase 109](devlog/phase-109.md#postmortem) |
 | REM-011 | P1 | 110 | Space combat | The production ASAT hook is an explicit placeholder | **Closed** | Yes | Yes | Yes | Yes | Yes | Yes | Yes | [Phase 110](devlog/phase-110.md#postmortem) |
-| REM-012 | P1 | 111 | Indirect fire | Time-on-target uses dummy coordinates, has no executed state, and has no production caller | Queued | Yes | Yes | - | - | - | - | - | Scheduled mission executes once at its real target |
+| REM-012 | P1 | 111 | Indirect fire | Time-on-target uses dummy coordinates, has no executed state, and has no production caller | **Closed** | Yes | Yes | Yes | Yes | Yes | Yes | Yes | [Phase 111](devlog/phase-111.md#postmortem) |
 | REM-013 | P1 | 112 | Validation trust | Default CI hides excluded suites; Phase 109 established a green full Python Ruff baseline, but CI does not yet enforce the complete suite contract | Queued | Yes | N/A | Yes | N/A | - | N/A | N/A | Explicit CI suites and documented/enforced boundaries |
 | REM-014 | P1 | 112 | Test quality | Structural and no-assert tests can support false completion claims | Queued | Yes | N/A | Yes | N/A | - | - | N/A | Audit critical contracts and add behavioral assertions |
 | REM-015 | P2 | 112 | Documentation | Strict documentation build was not part of the verified baseline | **Closed early** | Yes | N/A | Yes | N/A | Yes | N/A | N/A | [Phase 105 verification](devlog/phase-105.md#final-broader-verification) |
@@ -841,6 +841,78 @@ laser-dazzle, and laser-destruct assets fail explicitly; there is no autonomous
 target selection, tactical launcher/Class V ownership, historical calibration,
 or high-fidelity breakup model. REM-027 tracks a lower-priority legacy Space
 ISR buffered-report typing/rehydration gap independently of REM-011.
+
+## REM-012 - Time-on-target has no production execution path
+
+### Reproduction and cause
+
+The Phase 27 component path accepted definitions rather than exact live
+attachments, discarded real firing positions, substituted the ENU origin,
+recomputed jittered firing times, silently skipped missing weapons, consumed no
+ammunition, changed no target, and repeated due batteries on every call.
+Neither the scenario schema nor `SimulationEngine.step()` supplied a production
+caller, and indirect-fire checkpoint state contained only a shared RNG mirror.
+
+### Requirements and required proof
+
+- Declare strict target, common impact time, exact source-equipment attachment,
+  weapon, ammunition, battery-specific time of flight, and rounds.
+- Resolve the declarations only after production runtime loadouts exist; reject
+  unknown, ambiguous, friendly, inactive, unsupported, out-of-range,
+  physically impossible, overbooked, off-cadence, or cooldown-conflicting
+  plans before context publication.
+- Execute each aligned battery fire and common impact exactly once through the
+  production loop, with explicit runtime rejection precedence and no RNG or
+  resource mutation on rejection.
+- Consume the authoritative live magazine, cooldown, and maintenance state;
+  reserve every planned exact attachment from autonomous battle selection
+  until its final using mission completes.
+- Change the real target under a fixed-seed enabled control while the identical
+  disabled control remains inert.
+- Persist exact lifecycle, impacts, resource/precondition history, target
+  transition, terminal result, and COMBAT RNG reconciliation atomically.
+- Expose a typed complete terminal result through the recorder and real HTTP
+  API, with same-seed replay and fresh checkpoint continuation.
+
+### Closure evidence
+
+Phase 111 replaces the three stateless helper APIs with
+`CampaignScenarioConfig -> TimeOnTargetMissionResolver ->
+IndirectFireEngine -> SimulationEngine.step()`. The shipped validation scenario
+resolves two exact M109A6/M284/M982 attachments at real positions, fires at 60
+and 65 seconds, processes one common 120-second impact, consumes one live round
+and maintenance count from each attachment, records exact cooldown times, and
+changes the real HEMTT from active to disabled. Disabled, empty, moved,
+inactive, inoperable, depleted, cooldown, partial, missed, already-inactive,
+extra-tick, observer-failure, and ordinary-fire controls establish the negative
+and compatibility boundaries.
+
+Checkpoint schema 111 validates plan topology, milestone chronology, exact
+resource and target transitions, staged authority reconciliation, shared
+attachment reservation, causally chained public live-resource bridges, and
+atomic fresh restore before fire, after a reserved pre-fire mutation, between
+fire and impact, during a shared-attachment plan, after completion, and for a
+disabled populated plan. A legal public fire between scheduled fire and impact
+survives exact continuation through release and fresh terminal restore. It
+rejects invalid never-fired sentinel forms, boolean scalar aliases,
+reload/counter/time contradictions, terminal-target regression, and a forged
+three-round quantity-cooldown history. Same-tick follow-on fire is permanently
+ordered before the earlier mission's impact/status/terminal events.
+Recorder/API retrieval exposes the typed terminal battery results. The
+complete command evidence, data counts, deterministic hashes, scenario
+outcomes, warnings, and exclusions are recorded in the
+[Phase 111 devlog](devlog/phase-111.md). The required postmortem accepted
+Phase 111 with no new deficit or closure blocker; REM-012 is closed.
+
+### Non-goals and follow-up
+
+Authored whole-second time of flight is a fire-control input, not an automatic
+firing-table solution or calibration. Rocket TOT, smoke/illumination effects,
+forward-observer/C2 clearance, moving-target prediction, and a richer terminal
+effects model remain unsupported. Ordinary indirect fire still does not own a
+live Class V consumption path. Planned-attachment reload restore is rejected
+until typed resupply provenance exists; live Class V synchronization remains
+REM-021 rather than being claimed by REM-012.
 
 ## REM-027 - Space ISR buffered checkpoint reports are not typed
 

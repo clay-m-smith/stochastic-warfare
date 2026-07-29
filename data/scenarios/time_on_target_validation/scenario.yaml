@@ -1,0 +1,76 @@
+name: "Time-on-Target Production Validation"
+date: "2024-06-15T12:00:00Z"
+duration_hours: 1
+latitude: 32.0
+longitude: 44.0
+era: modern
+tick_duration_seconds: 5
+
+weather_conditions:
+  visibility_m: 10000
+  wind_speed_mps: 0.0
+  temperature_c: 20.0
+
+terrain:
+  width_m: 30000
+  height_m: 20000
+  cell_size_m: 100
+  terrain_type: flat_desert
+
+deployment:
+  mode: manual
+
+sides:
+  - side: blue
+    units:
+      - unit_type: m109a6
+        count: 1
+        position: [1000, 9000, 0]
+      - unit_type: m109a6
+        count: 1
+        position: [4000, 11000, 0]
+    experience_level: 0.8
+    morale_initial: STEADY
+
+  - side: red
+    units:
+      - unit_type: hemtt
+        count: 1
+        position: [22000, 10000, 0]
+    experience_level: 0.5
+    morale_initial: STEADY
+
+victory_conditions:
+  - type: time_expired
+
+behavior_rules:
+  blue:
+    hold_position: true
+  red:
+    hold_position: true
+
+calibration_overrides:
+  defensive_sides: [blue, red]
+
+indirect_fire:
+  enable_time_on_target: true
+  time_on_target_missions:
+    - mission_id: blue_validation_tot
+      target_unit_id: red_hemtt_0000
+      target_position:
+        easting: 22000
+        northing: 10000
+        altitude: 0
+      impact_time_s: 120
+      rounds_per_battery: 1
+      batteries:
+        - unit_id: blue_m109a6_0000
+          source_equipment_index: 0
+          weapon_id: m284_155mm
+          ammo_id: m982_excalibur
+          time_of_flight_s: 60
+        - unit_id: blue_m109a6_0001
+          source_equipment_index: 0
+          weapon_id: m284_155mm
+          ammo_id: m982_excalibur
+          time_of_flight_s: 55

@@ -211,28 +211,6 @@ class TestCounterbatterySolution:
         assert pos1.northing == pytest.approx(pos2.northing)
 
 
-class TestTOTPlan:
-    """Time-on-target plan should compute fire times for simultaneous impact."""
-
-    def test_tot_plan_basic(self):
-        eng = _make_indirect_engine(seed=500)
-        weapon, ammo = _howitzer()
-
-        target = Position(10_000.0, 0.0, 0.0)
-        batteries = {
-            "bty_1": Position(0.0, 0.0, 0.0),
-            "bty_2": Position(-5_000.0, 0.0, 0.0),
-        }
-
-        plan = eng.compute_tot_plan(target, batteries, weapon, ammo, 120.0)
-        assert len(plan.batteries) == 2
-        assert "bty_1" in plan.fire_times
-        assert "bty_2" in plan.fire_times
-        # Fire times should be less than desired impact time
-        for bid in plan.batteries:
-            assert plan.fire_times[bid] < 120.0
-
-
 class TestSuppression:
     """HE fire missions with >= 3 rounds should achieve suppression."""
 

@@ -71,14 +71,19 @@ At the engine boundary, each tick follows a fixed order:
 3. **Logistics** -- cross any fixed logical cadence boundaries, update direct
    routes, resupply, then apply eligible idle demand. This call occurs at every
    engine resolution.
-4. **Resolution-specific work** -- select the current resolution, then execute
+4. **Scheduled indirect fire** -- after due scripted events have committed,
+   process aligned time-on-target fire and impact milestones before movement,
+   detection, or autonomous combat. Successful fires debit the exact live
+   attachment's ammunition, cooldown, and maintenance-round state; the common
+   impact can change the exact target's status.
+5. **Resolution-specific work** -- select the current resolution, then execute
    strategic/operational campaign work or active tactical battles. Detection,
    AI/C2, movement, combat, and morale are sequenced inside those managers.
-5. **Logistics activity latch** -- remember movement and battle participation
+6. **Logistics activity latch** -- remember movement and battle participation
    so a unit is not charged the idle rate at the next cadence boundary.
-6. **Victory** -- evaluate conditions against the committed force, morale, and
+7. **Victory** -- evaluate conditions against the committed force, morale, and
    supply state.
-7. **Recorder** -- record the tick and any configured snapshot.
+8. **Recorder** -- record the tick and any configured snapshot.
 
 The Phase 108 logistics path models direct aggregate resupply and stationary,
 non-battle idle demand only. March/combat demand and synchronization with live
@@ -172,6 +177,30 @@ and per-unit resolution topology are part of checkpoint compatibility, while
 live weapon, ammunition, sensor, and linked-equipment state remain the mutable
 checkpoint payload. The detailed contract is
 [Equipment Mapping and Runtime Loadouts](../specs/equipment-mapping.md).
+
+Declared time-on-target missions pass through one simulation-layer resolver
+after initial loadouts exist. It binds each declaration to the exact initial
+unit and `(source_equipment_index, weapon_id)` attachment, validates the
+weapon/ammunition/domain/range/timing contract, and passes immutable lower-layer
+plans to `IndirectFireEngine`. The engine executes those plans once on the
+fixed scenario cadence, reserves only the planned attachments from autonomous
+fire until all their missions complete, and publishes one typed terminal event
+per mission through the recorder and generic run-events API.
+
+Checkpoint restore reconciles exact live-resource observations with scheduled
+lifecycle history. A lower-level public weapon transition before or between
+milestones is accepted only when ammunition depletion, total/maintenance
+counters, finite advancing last-fire time, quantity cooldown, and checkpoint
+chronology form one causal chain; the next scheduled milestone then observes
+that state. Reservation governs autonomous battle selection, not the underlying
+weapon-state authority. Reload-shaped increases remain unsupported and reject.
+
+This path accepts authored whole-second fire-control times of flight for
+supported tube-artillery or mortar weapons and positive-radius lethal
+ammunition. It does not infer a firing-table solution, support rocket-artillery
+time on target, or treat a live magazine increase as a reload: no production
+reload path currently provides persisted Class V provenance. See
+[Time-on-Target Execution](../specs/time-on-target-execution.md).
 
 Space runtime state is orchestrated by one `SpaceEngine` boundary. Each tick
 propagates orbits, advances existing debris, executes newly due ASAT orders,
@@ -339,3 +368,12 @@ This enables:
 - **Save/restore** mid-simulation
 - **Branching** -- checkpoint, run two different decisions, compare outcomes
 - **Debugging** -- reproduce any simulation state from a checkpoint + seed
+
+The current `SimulationEngine` checkpoint schema is version 111. For declared
+time-on-target plans it includes the immutable topology fingerprint, mission
+and battery lifecycles, generated in-flight impacts, terminal result, exact
+live-resource observations, target transition, and the reconciled COMBAT RNG
+state. Restore stages and validates that state against the fresh runtime before
+committing any mutation. Version 110 and other non-current versioned engine
+checkpoints reject; versionless compatibility is unavailable when a
+time-on-target plan is declared, including a disabled populated control.
