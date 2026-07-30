@@ -128,27 +128,32 @@ matching UI metadata.
   semantics into the production loader; never adds an unrelated proxy mapping
   or invented default merely to satisfy a validator
 - Runs `scripts/validate_scenario_data.py --file`, verifies exact roster and
-  loadouts through `ScenarioLoader`, and exercises required behavior through a
-  bounded `SimulationEngine` run
+  loadouts through the production factory/session boundary, and exercises
+  required behavior through a bounded `RuntimeSession`
 - Treats mapping presence and aggregate armed/sensored counts as structural
   diagnostics, not outcome evidence
 - Validates against `CampaignScenarioConfig` schema
 - Outputs complete scenario YAML to `data/scenarios/{name}/scenario.yaml`
 
 ### /compare (Phase 14)
-- Runs two scenario configurations and statistically compares outcomes
-- Uses `tools/comparison.py` with Mann-Whitney U test
-- Interprets p-values and effect sizes in military context
-- Outputs formatted comparison table
-- Hard-blocked by REM-017 until production batch loading, metric rejection, and
-  outcome-affecting override behavior are proven
+- Prepares one source scenario and compares two strict sparse calibration
+  variants with the same ordered seeds and metrics
+- Uses `tools/comparison.py` for exact common-seed paired differences, paired
+  superiority, exact sign-test p-values, and Holm family correction
+- Retains both raw metric vectors plus source/config, code/data/catalog,
+  doctrine/loadout, roster, assignment, seed, and terminal-run provenance
+- Rejects unsupported metrics, incomplete/nonfinite runs, roster drift, or
+  ineffective runtime preflight instead of producing summary-only output
 
 ### /what-if (Phase 14)
 - Quick parameter sensitivity analysis from natural language questions
 - Identifies parameter and range from user's question
-- Uses `tools/sensitivity.py` for sweep, generates errorbar plot
-- Summarizes sensitivity level and key inflection points
-- Hard-blocked by REM-017 until its production preflight is behaviorally proven
+- Requires a real `CalibrationSchema` field, finite duplicate-free values, at
+  least two iterations per point, and an explicit schema-valid scenario
+- Uses the production factory/session route through `tools/sensitivity.py`,
+  retaining each point's raw vectors and provenance
+- Summarizes sensitivity and inflection points only after the configured field
+  is proven wired and outcome-affecting
 
 ### /timeline (Phase 14)
 - Runs a scenario and generates human-readable battle narrative
@@ -163,11 +168,14 @@ matching UI metadata.
 
 ### /calibrate (Phase 14)
 - Auto-tunes calibration overrides to match historical metrics
-- Sweeps influential parameters via `tools/sensitivity.py`
+- Sweeps wired influential parameters through the production analysis boundary
 - Uses binary search refinement to narrow to target value
-- Validates with statistical test against historical data
-- Requires a frozen source-backed backtest envelope and held-out validation
-  seeds; hard-blocked by REM-017 until the shared batch route is trustworthy
+- Requires a frozen source-backed backtest envelope, predeclared tolerances,
+  held-out validation seeds, and exact production provenance
+- Phase 112 implements REM-017's shared analysis boundary; the remediation
+  status changes only after the final phase gate. That boundary does not itself
+  validate history. Catalog-wide historical-envelope evidence remains queued
+  under REM-030
 
 ### /validate-data
 - Validates unit YAML and scenario YAML data integrity
@@ -177,7 +185,8 @@ matching UI metadata.
   guessing substitutions or generic defaults
 - **Run after**: adding new units, weapons, scenarios, or modifying equipment entries
 - The simplified-runner maps are static diagnostics; production evidence comes
-  from `ScenarioLoader`, exact affected loadouts, and behavioral execution
+  from `SimulationRuntimeFactory -> PreparedScenario -> RuntimeSession`, exact
+  affected loadouts, and behavioral execution
 
 ### /evaluate-scenarios (Phase 42)
 - Runs all scenarios through simulation engine and compares against previous baseline

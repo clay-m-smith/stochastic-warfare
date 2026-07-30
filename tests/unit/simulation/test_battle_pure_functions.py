@@ -35,7 +35,7 @@ from stochastic_warfare.simulation.battle import (
     _movement_target,
     _nearest_enemy_dist,
     _should_hold_position,
-    _standoff_range,
+    usable_weapon_standoff_range,
 )
 
 
@@ -270,6 +270,7 @@ class TestGetUnitSignature:
     def test_loader_exception_returns_none(self):
         def bad_loader(ut):
             raise KeyError("no profile")
+
         loader = SimpleNamespace(get_profile=bad_loader)
         ctx = SimpleNamespace(sig_loader=loader)
         u = _make_unit()
@@ -286,30 +287,35 @@ class TestInferMeleeType:
 
     def test_cavalry(self):
         from stochastic_warfare.combat.melee import MeleeType
+
         wpn = _make_weapon_instance(weapon_id="cavalry_saber")
         u = _make_unit()
         assert _infer_melee_type(u, wpn) == MeleeType.CAVALRY_CHARGE
 
     def test_bayonet(self):
         from stochastic_warfare.combat.melee import MeleeType
+
         wpn = _make_weapon_instance(weapon_id="bayonet_charge")
         u = _make_unit()
         assert _infer_melee_type(u, wpn) == MeleeType.BAYONET_CHARGE
 
     def test_pike(self):
         from stochastic_warfare.combat.melee import MeleeType
+
         wpn = _make_weapon_instance(weapon_id="pike_18ft")
         u = _make_unit()
         assert _infer_melee_type(u, wpn) == MeleeType.PIKE_PUSH
 
     def test_sword(self):
         from stochastic_warfare.combat.melee import MeleeType
+
         wpn = _make_weapon_instance(weapon_id="gladius_short")
         u = _make_unit()
         assert _infer_melee_type(u, wpn) == MeleeType.SHIELD_WALL
 
     def test_unknown_defaults_to_bayonet(self):
         from stochastic_warfare.combat.melee import MeleeType
+
         wpn = _make_weapon_instance(weapon_id="flamethrower")
         u = _make_unit()
         assert _infer_melee_type(u, wpn) == MeleeType.BAYONET_CHARGE
@@ -325,26 +331,31 @@ class TestInferMissileType:
 
     def test_longbow(self):
         from stochastic_warfare.combat.archery import MissileType
+
         wpn = _make_weapon_instance(weapon_id="english_longbow")
         assert _infer_missile_type(wpn) == MissileType.LONGBOW
 
     def test_crossbow(self):
         from stochastic_warfare.combat.archery import MissileType
+
         wpn = _make_weapon_instance(weapon_id="heavy_crossbow")
         assert _infer_missile_type(wpn) == MissileType.CROSSBOW
 
     def test_composite(self):
         from stochastic_warfare.combat.archery import MissileType
+
         wpn = _make_weapon_instance(weapon_id="composite_bow")
         assert _infer_missile_type(wpn) == MissileType.COMPOSITE_BOW
 
     def test_javelin(self):
         from stochastic_warfare.combat.archery import MissileType
+
         wpn = _make_weapon_instance(weapon_id="javelin_throw")
         assert _infer_missile_type(wpn) == MissileType.JAVELIN
 
     def test_sling(self):
         from stochastic_warfare.combat.archery import MissileType
+
         wpn = _make_weapon_instance(weapon_id="sling_lead")
         assert _infer_missile_type(wpn) == MissileType.SLING
 
@@ -443,16 +454,21 @@ class TestShouldHoldPosition:
         assert _should_hold_position(u) is False
 
     def test_air_defense_holds(self):
-        try:
-            from stochastic_warfare.entities.unit_classes.air_defense import AirDefenseUnit
-            # If AirDefenseUnit can be instantiated simply, test it
-            # Otherwise just verify the import works and the function handles it
-        except ImportError:
-            pytest.skip("AirDefenseUnit not importable")
+        from stochastic_warfare.entities.unit_classes.air_defense import (
+            AirDefenseUnit,
+        )
+
+        air_defense = AirDefenseUnit(
+            entity_id="air-defense",
+            position=Position(0.0, 0.0, 0.0),
+            speed=0.0,
+        )
+
+        assert _should_hold_position(air_defense) is True
 
 
 # ===================================================================
-# _standoff_range
+# usable_weapon_standoff_range
 # ===================================================================
 
 
@@ -464,19 +480,19 @@ class TestStandoffRange:
         ammo = SimpleNamespace(ammo_id="test_ap")
         ctx = SimpleNamespace(unit_weapons={"u1": [(wpn, [ammo])]})
         u = _make_unit("u1")
-        assert _standoff_range(u, ctx) == pytest.approx(1600.0)
+        assert usable_weapon_standoff_range(u, ctx) == pytest.approx(1600.0)
 
     def test_no_weapons_closes_fully(self):
         ctx = SimpleNamespace(unit_weapons={})
         u = _make_unit("u1")
-        assert _standoff_range(u, ctx) == 0.0
+        assert usable_weapon_standoff_range(u, ctx) == 0.0
 
     def test_melee_weapon_ignored(self):
         wpn = _make_weapon_instance(weapon_id="sword", max_range_m=2.0)
         ammo = SimpleNamespace(ammo_id="test_ap")
         ctx = SimpleNamespace(unit_weapons={"u1": [(wpn, [ammo])]})
         u = _make_unit("u1")
-        assert _standoff_range(u, ctx) == 0.0
+        assert usable_weapon_standoff_range(u, ctx) == 0.0
 
     def test_empty_ammo_ignored(self):
         defn = SimpleNamespace(weapon_id="gun", category="CANNON", max_range_m=3000.0)
@@ -487,7 +503,7 @@ class TestStandoffRange:
         ammo = SimpleNamespace(ammo_id="test_ap")
         ctx = SimpleNamespace(unit_weapons={"u1": [(wpn, [ammo])]})
         u = _make_unit("u1")
-        assert _standoff_range(u, ctx) == 0.0
+        assert usable_weapon_standoff_range(u, ctx) == 0.0
 
     def test_best_range_selected(self):
         wpn1 = _make_weapon_instance(weapon_id="gun1", max_range_m=1000.0)
@@ -495,7 +511,7 @@ class TestStandoffRange:
         ammo = SimpleNamespace(ammo_id="test_ap")
         ctx = SimpleNamespace(unit_weapons={"u1": [(wpn1, [ammo]), (wpn2, [ammo])]})
         u = _make_unit("u1")
-        assert _standoff_range(u, ctx) == pytest.approx(4000.0)
+        assert usable_weapon_standoff_range(u, ctx) == pytest.approx(4000.0)
 
     def test_weapon_domain_limits_standoff(self):
         wpn = _make_weapon_instance(weapon_id="sam", max_range_m=2000.0)
@@ -504,8 +520,15 @@ class TestStandoffRange:
         ctx = SimpleNamespace(unit_weapons={"u1": [(wpn, [ammo])]})
         u = _make_unit("u1")
 
-        assert _standoff_range(u, ctx, Domain.GROUND) == 0.0
-        assert _standoff_range(u, ctx, Domain.AERIAL) == pytest.approx(1600.0)
+        assert (
+            usable_weapon_standoff_range(u, ctx, Domain.GROUND)
+            == 0.0
+        )
+        assert usable_weapon_standoff_range(
+            u,
+            ctx,
+            Domain.AERIAL,
+        ) == pytest.approx(1600.0)
 
 
 def test_max_weapon_range_filters_mapping_owned_target_domain() -> None:

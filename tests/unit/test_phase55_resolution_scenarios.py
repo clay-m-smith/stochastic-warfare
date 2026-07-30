@@ -94,6 +94,7 @@ class TestResolutionSwitching:
         ctx.units_by_side = units_by_side
         ctx.morale_states = {}
         ctx.calibration = CalibrationSchema()
+        ctx.movement_diagnostics = None
         ctx.los_engine = None
         ctx.heightmap = None
         ctx.engagement_engine = None

@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import copy
 import enum
+import json
 import math
 from collections.abc import Mapping
 from dataclasses import dataclass, field
@@ -29,6 +30,12 @@ from pydantic import (
 from stochastic_warfare.combat.indirect_fire_config import (
     IndirectFireScenarioConfig,
     ResolvedTimeOnTargetMission,
+)
+from stochastic_warfare.c2.ai.commander import (
+    CommanderAssignmentPlan,
+    CommanderEngine,
+    CommanderProfileLoader,
+    CommanderScenarioConfig,
 )
 from stochastic_warfare.core.clock import SimulationClock
 from stochastic_warfare.core.events import EventBus
@@ -54,16 +61,28 @@ from stochastic_warfare.simulation.deployment import (
 from stochastic_warfare.simulation.equipment_mappings import (
     EQUIPMENT_MAPPING_REGISTRY,
 )
+from stochastic_warfare.simulation.force_builder import (
+    InitialForcePlan,
+    InitialUnitConfig,
+    RuntimeForceBuilder,
+)
 from stochastic_warfare.simulation.loadouts import (
     EquipmentResolution,
     RuntimeLoadoutBuilder,
     RuntimeLoadouts,
     WeaponAttachment,
 )
+from stochastic_warfare.simulation.movement_diagnostics import (
+    MovementDiagnostics,
+)
 from stochastic_warfare.space.config import SpaceConfig
 from stochastic_warfare.terrain.heightmap import Heightmap
 
 logger = get_logger(__name__)
+
+
+class ScenarioReferenceError(ValueError):
+    """A typed scenario reference cannot resolve before runtime mutation."""
 
 
 def _looks_like_logistics_key(value: object) -> bool:
@@ -436,7 +455,7 @@ class SideConfig(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     side: str
-    units: list[dict[str, Any]]  # [{unit_type, count, overrides}]
+    units: list[InitialUnitConfig]
     experience_level: float = 0.5
     morale_initial: str = "STEADY"
     commander_profile: str = ""  # YAML commander personality ID
@@ -449,6 +468,28 @@ class SideConfig(BaseModel):
         "WEAPONS_FREE",
     ] | None = Field(default=None, exclude=True)
     depots: list[DepotConfig] = Field(default_factory=list)
+
+    @field_validator("side", mode="before")
+    @classmethod
+    def _valid_side(cls, value: Any) -> str:
+        if (
+            not isinstance(value, str)
+            or not value
+            or value != value.strip()
+        ):
+            raise ValueError("side must be a non-empty trimmed string")
+        return value
+
+    @field_validator("commander_profile", mode="before")
+    @classmethod
+    def _valid_commander_profile(cls, value: Any) -> str:
+        if not isinstance(value, str):
+            raise ValueError("commander_profile must be a string")
+        if value and value != value.strip():
+            raise ValueError(
+                "commander_profile must be empty or a trimmed profile ID",
+            )
+        return value
 
     @field_validator("experience_level")
     @classmethod
@@ -463,6 +504,28 @@ class SideConfig(BaseModel):
         from stochastic_warfare.morale.state import validate_morale_state_name
 
         return validate_morale_state_name(v)
+
+
+class DoctrineSideAssignment(BaseModel):
+    """One strict side-to-school assignment supplied by runtime analysis."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    side: str
+    school_id: str
+
+    @field_validator("side", "school_id", mode="before")
+    @classmethod
+    def _trimmed_identifier(cls, value: Any, info: Any) -> str:
+        if (
+            not isinstance(value, str)
+            or not value
+            or value != value.strip()
+        ):
+            raise ValueError(
+                f"{info.field_name} must be a non-empty trimmed string",
+            )
+        return value
 
 
 class TickResolutionConfig(BaseModel):
@@ -532,13 +595,23 @@ class CampaignScenarioConfig(BaseModel):
     space_config: SpaceConfig | None = None
     cbrn_config: dict[str, Any] | None = None
     school_config: dict[str, Any] | None = None
-    commander_config: dict[str, Any] | None = None
+    commander_config: CommanderScenarioConfig | None = None
     dew_config: dict[str, Any] | None = None
     behavior_rules: dict[str, Any] = {}
     indirect_fire: IndirectFireScenarioConfig = Field(
         default_factory=IndirectFireScenarioConfig,
     )
     logistics: LogisticsConfig = Field(default_factory=LogisticsConfig)
+
+    @field_validator("calibration_overrides", mode="before")
+    @classmethod
+    def _strict_calibration_overrides(
+        cls,
+        value: Any,
+    ) -> CalibrationSchema:
+        if isinstance(value, CalibrationSchema):
+            return value
+        return CalibrationSchema.model_validate(value, strict=True)
 
     @field_validator("sides")
     @classmethod
@@ -631,6 +704,25 @@ class CampaignScenarioConfig(BaseModel):
         if len(side_names) != len(set(side_names)):
             raise ValueError("scenario side names must be unique")
         known_sides = set(side_names)
+        commander_profiles = [
+            side.commander_profile
+            for side in self.sides
+        ]
+        populated_profiles = [
+            profile_id
+            for profile_id in commander_profiles
+            if profile_id
+        ]
+        if populated_profiles and len(populated_profiles) != len(self.sides):
+            raise ValueError(
+                "commander profiles must be populated for every side or "
+                "omitted for every side",
+            )
+        if self.commander_config is not None and not populated_profiles:
+            raise ValueError(
+                "commander_config requires canonical commander_profile "
+                "values on every side",
+            )
         if self.space_config is not None:
             space_config = self.space_config
             if space_config.enable_space and not space_config.constellation_ids:
@@ -664,6 +756,15 @@ class CampaignScenarioConfig(BaseModel):
                         **theater_updates,
                     },
                 )
+                space_config = self.space_config
+            if (
+                space_config.imint_fusion_constellation_ids
+                and not self.calibration_overrides.enable_space_effects
+            ):
+                raise ValueError(
+                    "space_config.imint_fusion_constellation_ids requires "
+                    "calibration_overrides.enable_space_effects=true",
+                )
         for index, reinforcement in enumerate(self.reinforcements):
             if reinforcement.side not in known_sides:
                 raise ValueError(
@@ -674,7 +775,7 @@ class CampaignScenarioConfig(BaseModel):
         depots_by_id: dict[str, str] = {}
         declared_unit_types: dict[str, set[str]] = {
             side.side: {
-                str(unit.get("unit_type", ""))
+                unit.unit_type
                 for unit in side.units
             }
             for side in self.sides
@@ -811,22 +912,107 @@ def _merge_config_patch(
             base[key] = copy.deepcopy(value)
 
 
-def load_campaign_scenario_config(
-    scenario_path: Path,
-    calibration_overrides: Mapping[str, Any] | CalibrationSchema | None = None,
+NON_RUNTIME_SCENARIO_ROOT_FIELDS = frozenset(
+    {
+        "ai_expectations",
+        "blue_forces",
+        "documented_outcomes",
+        "id",
+        "master_seed",
+        "red_forces",
+        "sources",
+        "start_time",
+        "weather",
+    },
+)
+
+
+def _reject_nonfinite_source_numbers(
+    value: Any,
+    *,
+    path: str,
+) -> None:
+    """Reject NaN/Inf anywhere in authored runtime or metadata input."""
+    if isinstance(value, float):
+        if not math.isfinite(value):
+            raise ValueError(
+                f"{path} must contain only finite numbers",
+            )
+        return
+    if isinstance(value, Mapping):
+        for key, nested in value.items():
+            _reject_nonfinite_source_numbers(
+                nested,
+                path=f"{path}.{key}",
+            )
+        return
+    if isinstance(value, (list, tuple)):
+        for index, nested in enumerate(value):
+            _reject_nonfinite_source_numbers(
+                nested,
+                path=f"{path}[{index}]",
+            )
+
+
+def parse_campaign_scenario_config(
+    raw: Any,
 ) -> CampaignScenarioConfig:
-    """Parse one scenario and apply a sparse, typed calibration overlay."""
-    with open(scenario_path, encoding="utf-8") as config_file:
-        raw = load_yaml_unique(config_file)
-    config = CampaignScenarioConfig.model_validate(raw)
+    """Parse one strict runtime config while explicitly excluding metadata."""
+    if not isinstance(raw, Mapping):
+        raise ValueError("campaign scenario source must be a mapping")
+    _reject_nonfinite_source_numbers(raw, path="scenario")
+    runtime_fields = set(CampaignScenarioConfig.model_fields)
+    unknown = sorted(
+        set(raw)
+        - runtime_fields
+        - NON_RUNTIME_SCENARIO_ROOT_FIELDS,
+    )
+    if unknown:
+        raise ValueError(
+            f"unknown scenario root field(s): {unknown!r}",
+        )
+    normalized = {
+        key: copy.deepcopy(value)
+        for key, value in raw.items()
+        if key in runtime_fields
+    }
+    return CampaignScenarioConfig.model_validate_json(
+        json.dumps(
+            normalized,
+            allow_nan=False,
+            separators=(",", ":"),
+        ),
+        strict=True,
+        extra="forbid",
+    )
+
+
+def load_campaign_scenario_config(
+    scenario_path: Path | None = None,
+    calibration_overrides: Mapping[str, Any] | CalibrationSchema | None = None,
+    *,
+    source_config: CampaignScenarioConfig | None = None,
+) -> CampaignScenarioConfig:
+    """Load or revalidate one source and apply a sparse typed overlay."""
+    if (scenario_path is None) == (source_config is None):
+        raise ValueError(
+            "Provide exactly one of scenario_path or source_config",
+        )
+    if source_config is None:
+        with open(scenario_path, encoding="utf-8") as config_file:
+            raw = load_yaml_unique(config_file)
+        config = parse_campaign_scenario_config(raw)
+    else:
+        config = CampaignScenarioConfig.model_validate(
+            source_config.model_dump(mode="python"),
+            strict=True,
+            extra="forbid",
+        )
     if calibration_overrides is None:
         return config
 
     if isinstance(calibration_overrides, CalibrationSchema):
-        patch = calibration_overrides.model_dump(
-            mode="json",
-            exclude_unset=True,
-        )
+        patch = calibration_overrides.to_sparse_patch(mode="json")
     else:
         raw_patch = dict(calibration_overrides)
         dead_keys = sorted(
@@ -839,23 +1025,23 @@ def load_campaign_scenario_config(
         patch = CalibrationSchema.model_validate(
             raw_patch,
             strict=True,
-        ).model_dump(
-            mode="json",
-            exclude_unset=True,
-        )
+        ).to_sparse_patch(mode="json")
 
     scenario_sides = {side.side for side in config.sides}
     referenced_sides = set(patch.get("side_overrides", {}))
     referenced_sides.update(patch.get("defensive_sides", []))
     unknown_sides = sorted(referenced_sides - scenario_sides)
     if unknown_sides:
-        raise ValueError(
+        raise ScenarioReferenceError(
             f"Calibration overrides reference unknown sides: {unknown_sides!r}",
         )
 
     merged = config.calibration_overrides.model_dump(mode="json")
     _merge_config_patch(merged, patch)
-    config.calibration_overrides = CalibrationSchema.model_validate(merged)
+    config.calibration_overrides = CalibrationSchema.model_validate(
+        merged,
+        strict=True,
+    )
     return config
 
 
@@ -1194,6 +1380,103 @@ def _initial_morale_for_units(
     return result
 
 
+_CONTEXT_STATE_ENGINE_NAMES = (
+    "morale_machine",
+    "ooda_engine",
+    "planning_engine",
+    "order_execution",
+    "logistics_runtime",
+    "stockpile_manager",
+    "fog_of_war",
+    "aggregation_engine",
+    "space_engine",
+    "cbrn_engine",
+    "school_registry",
+    "trench_engine",
+    "barrage_engine",
+    "gas_warfare_engine",
+    "volley_fire_engine",
+    "melee_engine",
+    "cavalry_engine",
+    "formation_napoleonic_engine",
+    "courier_engine",
+    "foraging_engine",
+    "archery_engine",
+    "siege_engine",
+    "formation_ancient_engine",
+    "naval_oar_engine",
+    "visual_signals_engine",
+    "escalation_engine",
+    "political_engine",
+    "consequence_engine",
+    "unconventional_engine",
+    "insurgency_engine",
+    "sof_engine",
+    "war_termination_engine",
+    "incendiary_engine",
+    "uxo_engine",
+    "commander_engine",
+    "eccm_engine",
+    "sigint_engine",
+    "ew_decoy_engine",
+    "dew_engine",
+    "indirect_fire_engine",
+    "naval_surface_engine",
+    "naval_subsurface_engine",
+    "naval_gunfire_support_engine",
+    "mine_warfare_engine",
+    "disruption_engine",
+    "maintenance_engine",
+    "medical_engine",
+    "engineering_engine",
+    "collateral_engine",
+    "weather_engine",
+    "sea_state_engine",
+    "stratagem_engine",
+    "iads_engine",
+    "ato_engine",
+    "underwater_acoustics_engine",
+    "carrier_ops_engine",
+    "comms_engine",
+    "detection_engine",
+    "movement_engine",
+    "movement_diagnostics",
+    "conditions_engine",
+    "engagement_engine",
+    "suppression_engine",
+    "air_combat_engine",
+    "air_ground_engine",
+    "air_defense_engine",
+    "missile_engine",
+    "missile_defense_engine",
+    "naval_gunnery_engine",
+    "convoy_engine",
+    "strategic_bombing_engine",
+    "time_of_day_engine",
+    "seasons_engine",
+    "obscurants_engine",
+    "order_propagation",
+    "assessor",
+    "decision_engine",
+    "adaptation_engine",
+    "roe_engine",
+    "rout_engine",
+    "ew_engine",
+    "consumption_engine",
+    "supply_network_engine",
+    "command_engine",
+)
+
+
+@dataclass(frozen=True)
+class SimulationContextStatePlan:
+    """Validated, owner-bound whole-context checkpoint plan."""
+
+    owner_id: int
+    state: dict[str, Any]
+    allow_legacy_morale: bool
+
+
 @dataclass
 class SimulationContext:
     """Shared state for an in-progress simulation run.
@@ -1233,6 +1516,7 @@ class SimulationContext:
         str,
         tuple[EquipmentResolution, ...],
     ] = field(default_factory=dict)
+    force_builder: RuntimeForceBuilder | None = None
     loadout_builder: RuntimeLoadoutBuilder | None = None
     morale_states: dict[str, Any] = field(default_factory=dict)
 
@@ -1253,6 +1537,7 @@ class SimulationContext:
 
     # Movement
     movement_engine: Any = None
+    movement_diagnostics: MovementDiagnostics | None = None
 
     # Morale
     morale_machine: Any = None
@@ -1290,6 +1575,10 @@ class SimulationContext:
 
     # Doctrinal AI Schools (Phase 19)
     school_registry: Any = None
+    doctrine_side_assignments: tuple[
+        DoctrineSideAssignment,
+        ...,
+    ] = ()
 
     # Commander (Phase 25)
     commander_engine: Any = None
@@ -1401,6 +1690,7 @@ class SimulationContext:
     sensor_loader: Any = None
     sig_loader: Any = None
     supply_item_loader: Any = None
+    commander_profile_loader: Any = None
 
     # Calibration
     calibration: CalibrationSchema | dict[str, Any] = field(default_factory=CalibrationSchema)
@@ -1434,10 +1724,21 @@ class SimulationContext:
 
     # ── State persistence ────────────────────────────────────────────
 
+    def _checkpoint_engines(self) -> tuple[tuple[str, Any], ...]:
+        """Return the single ordered registry of context state owners."""
+        return tuple(
+            (name, getattr(self, name))
+            for name in _CONTEXT_STATE_ENGINE_NAMES
+        )
+
     def get_state(self) -> dict[str, Any]:
         """Capture full simulation state for checkpointing."""
         state: dict[str, Any] = {
             "config": _model_dump_json_compatible(self.config),
+            "doctrine_side_assignments": [
+                assignment.model_dump(mode="json")
+                for assignment in self.doctrine_side_assignments
+            ],
             "clock": self.clock.get_state(),
             "rng": self.rng_manager.get_state(),
             "units_by_side": {
@@ -1476,98 +1777,8 @@ class SimulationContext:
                 else dict(self.calibration)
             ),
         }
-        # Delegate to engines that have get_state
-        engines = [
-            ("morale_machine", self.morale_machine),
-            ("ooda_engine", self.ooda_engine),
-            ("planning_engine", self.planning_engine),
-            ("order_execution", self.order_execution),
-            ("logistics_runtime", self.logistics_runtime),
-            ("stockpile_manager", self.stockpile_manager),
-            ("fog_of_war", self.fog_of_war),
-            ("aggregation_engine", self.aggregation_engine),
-            ("space_engine", self.space_engine),
-            ("cbrn_engine", self.cbrn_engine),
-            ("school_registry", self.school_registry),
-            ("trench_engine", self.trench_engine),
-            ("barrage_engine", self.barrage_engine),
-            ("gas_warfare_engine", self.gas_warfare_engine),
-            ("volley_fire_engine", self.volley_fire_engine),
-            ("melee_engine", self.melee_engine),
-            ("cavalry_engine", self.cavalry_engine),
-            ("formation_napoleonic_engine", self.formation_napoleonic_engine),
-            ("courier_engine", self.courier_engine),
-            ("foraging_engine", self.foraging_engine),
-            ("archery_engine", self.archery_engine),
-            ("siege_engine", self.siege_engine),
-            ("formation_ancient_engine", self.formation_ancient_engine),
-            ("naval_oar_engine", self.naval_oar_engine),
-            ("visual_signals_engine", self.visual_signals_engine),
-            ("escalation_engine", self.escalation_engine),
-            ("political_engine", self.political_engine),
-            ("consequence_engine", self.consequence_engine),
-            ("unconventional_engine", self.unconventional_engine),
-            ("insurgency_engine", self.insurgency_engine),
-            ("sof_engine", self.sof_engine),
-            ("war_termination_engine", self.war_termination_engine),
-            ("incendiary_engine", self.incendiary_engine),
-            ("uxo_engine", self.uxo_engine),
-            ("commander_engine", self.commander_engine),
-            ("eccm_engine", self.eccm_engine),
-            ("sigint_engine", self.sigint_engine),
-            ("ew_decoy_engine", self.ew_decoy_engine),
-            ("dew_engine", self.dew_engine),
-            ("indirect_fire_engine", self.indirect_fire_engine),
-            ("naval_surface_engine", self.naval_surface_engine),
-            ("naval_subsurface_engine", self.naval_subsurface_engine),
-            ("naval_gunfire_support_engine", self.naval_gunfire_support_engine),
-            ("mine_warfare_engine", self.mine_warfare_engine),
-            ("disruption_engine", self.disruption_engine),
-            ("maintenance_engine", self.maintenance_engine),
-            ("medical_engine", self.medical_engine),
-            ("engineering_engine", self.engineering_engine),
-            ("collateral_engine", self.collateral_engine),
-            ("weather_engine", self.weather_engine),
-            ("sea_state_engine", self.sea_state_engine),
-            ("stratagem_engine", self.stratagem_engine),
-            ("iads_engine", self.iads_engine),
-            ("ato_engine", self.ato_engine),
-            ("underwater_acoustics_engine", self.underwater_acoustics_engine),
-            ("carrier_ops_engine", self.carrier_ops_engine),
-            # Phase 63c: previously missing engines
-            ("comms_engine", self.comms_engine),
-            ("detection_engine", self.detection_engine),
-            ("movement_engine", self.movement_engine),
-            ("conditions_engine", self.conditions_engine),
-            # Phase 72a: previously missing engines — Combat
-            ("engagement_engine", self.engagement_engine),
-            ("suppression_engine", self.suppression_engine),
-            ("air_combat_engine", self.air_combat_engine),
-            ("air_ground_engine", self.air_ground_engine),
-            ("air_defense_engine", self.air_defense_engine),
-            ("missile_engine", self.missile_engine),
-            ("missile_defense_engine", self.missile_defense_engine),
-            # Phase 72a: previously missing engines — WW2
-            ("naval_gunnery_engine", self.naval_gunnery_engine),
-            ("convoy_engine", self.convoy_engine),
-            ("strategic_bombing_engine", self.strategic_bombing_engine),
-            # Phase 72a: previously missing engines — Environment
-            ("time_of_day_engine", self.time_of_day_engine),
-            ("seasons_engine", self.seasons_engine),
-            ("obscurants_engine", self.obscurants_engine),
-            # Phase 72a: previously missing engines — C2/AI
-            ("order_propagation", self.order_propagation),
-            ("assessor", self.assessor),
-            ("decision_engine", self.decision_engine),
-            ("adaptation_engine", self.adaptation_engine),
-            ("roe_engine", self.roe_engine),
-            # Phase 72a: previously missing engines — Other
-            ("rout_engine", self.rout_engine),
-            ("ew_engine", self.ew_engine),
-            ("consumption_engine", self.consumption_engine),
-            ("supply_network_engine", self.supply_network_engine),
-            ("command_engine", self.command_engine),
-        ]
+        # Delegate to the single ordered registry of context state owners.
+        engines = self._checkpoint_engines()
         for name, eng in engines:
             if (
                 name in {"stockpile_manager", "supply_network_engine"}
@@ -1581,13 +1792,60 @@ class SimulationContext:
             state["era_config"] = _model_dump_json_compatible(self.era_config)
         return state
 
+    def stage_state(
+        self,
+        state: dict[str, Any],
+        *,
+        allow_legacy_morale: bool = False,
+    ) -> SimulationContextStatePlan:
+        """Validate all context state without mutating the live runtime."""
+        staged_state = copy.deepcopy(state)
+        self._apply_state(
+            staged_state,
+            allow_legacy_morale=allow_legacy_morale,
+            commit=False,
+        )
+        return SimulationContextStatePlan(
+            owner_id=id(self),
+            state=staged_state,
+            allow_legacy_morale=allow_legacy_morale,
+        )
+
+    def commit_state(self, plan: SimulationContextStatePlan) -> None:
+        """Commit a whole-context plan after every owner has preflighted."""
+        if plan.owner_id != id(self):
+            raise ValueError(
+                "Simulation-context checkpoint plan belongs to another "
+                "runtime",
+            )
+        self._apply_state(
+            plan.state,
+            allow_legacy_morale=plan.allow_legacy_morale,
+            commit=True,
+        )
+
     def set_state(
         self,
         state: dict[str, Any],
         *,
         allow_legacy_morale: bool = False,
     ) -> None:
-        """Restore simulation state from checkpoint."""
+        """Validate and atomically restore simulation context state."""
+        self.commit_state(
+            self.stage_state(
+                state,
+                allow_legacy_morale=allow_legacy_morale,
+            ),
+        )
+
+    def _apply_state(
+        self,
+        state: dict[str, Any],
+        *,
+        allow_legacy_morale: bool,
+        commit: bool,
+    ) -> None:
+        """Preflight context state and optionally commit it."""
         if "config" in state:
             checkpoint_config = state["config"]
             if (
@@ -1600,6 +1858,31 @@ class SimulationContext:
                 raise ValueError(
                     "Checkpoint configuration does not match the runtime "
                     "configuration",
+                )
+        raw_doctrine_policy = state.get("doctrine_side_assignments")
+        if raw_doctrine_policy is None:
+            if self.doctrine_side_assignments and not allow_legacy_morale:
+                raise ValueError(
+                    "Checkpoint is missing runtime doctrine policy",
+                )
+        else:
+            if not isinstance(raw_doctrine_policy, list):
+                raise ValueError(
+                    "Checkpoint doctrine_side_assignments must be a list",
+                )
+            try:
+                checkpoint_policy = tuple(
+                    DoctrineSideAssignment.model_validate(assignment)
+                    for assignment in raw_doctrine_policy
+                )
+            except (TypeError, ValueError) as exc:
+                raise ValueError(
+                    f"Invalid checkpoint doctrine policy: {exc}",
+                ) from exc
+            _doctrine_policy_index(checkpoint_policy)
+            if checkpoint_policy != self.doctrine_side_assignments:
+                raise ValueError(
+                    "Checkpoint doctrine policy does not match the runtime",
                 )
 
         if "era_config" in state:
@@ -1644,12 +1927,62 @@ class SimulationContext:
 
         clock_state = state["clock"]
         rng_state = state["rng"]
+        expected_clock_fields = {
+            "start",
+            "current",
+            "tick_duration_seconds",
+            "tick_count",
+        }
+        if (
+            not isinstance(clock_state, dict)
+            or set(clock_state) != expected_clock_fields
+        ):
+            raise ValueError(
+                "Checkpoint clock state has invalid key topology",
+            )
+        raw_tick_count = clock_state["tick_count"]
+        if (
+            isinstance(raw_tick_count, bool)
+            or not isinstance(raw_tick_count, int)
+            or raw_tick_count < 0
+        ):
+            raise ValueError(
+                "Checkpoint clock tick_count must be a non-negative strict "
+                "integer",
+            )
+        raw_tick_duration = clock_state["tick_duration_seconds"]
+        if (
+            isinstance(raw_tick_duration, bool)
+            or not isinstance(raw_tick_duration, (int, float))
+            or not math.isfinite(float(raw_tick_duration))
+            or float(raw_tick_duration) <= 0.0
+        ):
+            raise ValueError(
+                "Checkpoint clock tick_duration_seconds must be finite and "
+                "positive",
+            )
         try:
             staged_clock = copy.deepcopy(self.clock)
             staged_clock.set_state(clock_state)
             copy.deepcopy(self.rng_manager).set_state(rng_state)
+            elapsed_seconds = staged_clock.elapsed.total_seconds()
         except (KeyError, TypeError, ValueError) as exc:
             raise ValueError(f"Invalid checkpoint clock or RNG state: {exc}") from exc
+        if (
+            not math.isfinite(elapsed_seconds)
+            or elapsed_seconds < 0.0
+            or (
+                raw_tick_count == 0
+                and elapsed_seconds != 0.0
+            )
+            or (
+                raw_tick_count > 0
+                and elapsed_seconds <= 0.0
+            )
+        ):
+            raise ValueError(
+                "Checkpoint clock tick count and logical time are inconsistent",
+            )
 
         cal_data = state.get("calibration", {})
         if not isinstance(cal_data, dict):
@@ -1959,6 +2292,104 @@ class SimulationContext:
                     )
                 reusable_ids.add(staged.entity_id)
 
+        if (
+            (
+                self.commander_engine is not None
+                or self.school_registry is not None
+            )
+            and self.aggregation_engine is not None
+            and self.aggregation_engine._config.enable_aggregation
+        ):
+            raise ValueError(
+                "Commander/school checkpoint restoration with enabled force "
+                "aggregation is unsupported",
+            )
+
+        staged_commander_plan: CommanderAssignmentPlan | None = None
+        if self.commander_engine is not None:
+            raw_commander_state = state.get("commander_engine")
+            if raw_commander_state is None:
+                if not allow_legacy_morale:
+                    raise ValueError(
+                        "Checkpoint is missing commander_engine state",
+                    )
+            elif not isinstance(raw_commander_state, Mapping):
+                raise ValueError(
+                    "Checkpoint commander_engine state must be a mapping",
+                )
+            else:
+                try:
+                    staged_commander_plan = (
+                        self.commander_engine.stage_state(
+                            raw_commander_state,
+                            expected_unit_ids=checkpoint_unit_ids,
+                        )
+                    )
+                except (KeyError, TypeError, ValueError) as exc:
+                    raise ValueError(
+                        f"Invalid checkpoint commander state: {exc}",
+                    ) from exc
+        elif "commander_engine" in state:
+            raise ValueError(
+                "Checkpoint contains commander state for a runtime without "
+                "a commander engine",
+            )
+
+        staged_school_plan: Any = None
+        if self.school_registry is not None:
+            raw_school_state = state.get("school_registry")
+            if raw_school_state is None:
+                if not allow_legacy_morale:
+                    raise ValueError(
+                        "Checkpoint is missing school_registry state",
+                    )
+            elif not isinstance(raw_school_state, Mapping):
+                raise ValueError(
+                    "Checkpoint school_registry state must be a mapping",
+                )
+            else:
+                try:
+                    staged_school_plan = self.school_registry.stage_state(
+                        raw_school_state,
+                        expected_unit_ids=checkpoint_unit_ids,
+                    )
+                except (KeyError, TypeError, ValueError) as exc:
+                    raise ValueError(
+                        f"Invalid checkpoint school state: {exc}",
+                    ) from exc
+        elif "school_registry" in state:
+            raise ValueError(
+                "Checkpoint contains school state for a runtime without a "
+                "school registry",
+            )
+
+        staged_ooda_plan: Any = None
+        if self.commander_engine is not None:
+            if self.ooda_engine is None:
+                raise ValueError(
+                    "Commander checkpoint runtime is missing its OODA engine",
+                )
+            raw_ooda_state = state.get("ooda_engine")
+            if raw_ooda_state is None:
+                if not allow_legacy_morale:
+                    raise ValueError(
+                        "Checkpoint is missing commander OODA state",
+                    )
+            elif not isinstance(raw_ooda_state, Mapping):
+                raise ValueError(
+                    "Checkpoint OODA state must be a mapping",
+                )
+            else:
+                try:
+                    staged_ooda_plan = self.ooda_engine.stage_state(
+                        raw_ooda_state,
+                        expected_unit_ids=checkpoint_unit_ids,
+                    )
+                except (KeyError, TypeError, ValueError) as exc:
+                    raise ValueError(
+                        f"Invalid checkpoint commander OODA state: {exc}",
+                    ) from exc
+
         current_unit_weapons = getattr(self, "unit_weapons", {})
         current_unit_sensors = getattr(self, "unit_sensors", {})
         current_equipment_resolutions = getattr(
@@ -2063,6 +2494,136 @@ class SimulationContext:
                 kind="sensor",
             )
 
+        prospective_units_by_side = (
+            {
+                side: [
+                    staged
+                    for _, staged in staged_side
+                ]
+                for side, staged_side in staged_units.items()
+            }
+            if staged_units is not None
+            else {
+                side: list(units)
+                for side, units in self.units_by_side.items()
+            }
+        )
+        configured_sides = getattr(self.config, "sides", ())
+        declared_sides = {
+            side.side
+            for side in configured_sides
+        }
+        requires_exact_force_topology = any(
+            component is not None
+            for component in (
+                self.fog_of_war,
+                self.space_engine,
+                self.movement_diagnostics,
+            )
+        )
+        if (
+            requires_exact_force_topology
+            and set(prospective_units_by_side) != declared_sides
+        ):
+            raise ValueError(
+                "Checkpoint unit-side topology does not match scenario sides",
+            )
+        expected_sides = (
+            declared_sides
+            if requires_exact_force_topology
+            else set(prospective_units_by_side)
+        )
+        expected_target_sides = {
+            unit.entity_id: side
+            for side, units in prospective_units_by_side.items()
+            for unit in units
+        }
+
+        staged_movement_plan: Any = None
+        if (
+            self.movement_diagnostics is not None
+            and "movement_diagnostics" in state
+        ):
+            try:
+                staged_movement_plan = (
+                    self.movement_diagnostics.stage_state(
+                        state["movement_diagnostics"],
+                        expected_unit_sides=expected_target_sides,
+                    )
+                )
+            except (KeyError, TypeError, ValueError) as exc:
+                raise ValueError(
+                    f"Invalid checkpoint movement diagnostics state: {exc}",
+                ) from exc
+        elif (
+            self.movement_diagnostics is None
+            and "movement_diagnostics" in state
+        ):
+            raise ValueError(
+                "Checkpoint contains movement diagnostics for a context "
+                "without a movement-diagnostics owner",
+            )
+
+        staged_obscurants_plan: Any = None
+        if (
+            self.obscurants_engine is not None
+            and "obscurants_engine" in state
+        ):
+            try:
+                staged_obscurants_plan = (
+                    self.obscurants_engine.stage_state(
+                        state["obscurants_engine"],
+                    )
+                )
+            except (KeyError, TypeError, ValueError) as exc:
+                raise ValueError(
+                    f"Invalid checkpoint obscurants state: {exc}",
+                ) from exc
+        elif self.obscurants_engine is None and "obscurants_engine" in state:
+            raise ValueError(
+                "Checkpoint contains obscurants state for a context without "
+                "an obscurants engine",
+            )
+
+        staged_fog_plan: Any = None
+        if self.fog_of_war is not None and "fog_of_war" in state:
+            satellite_topology = (
+                {
+                    satellite.satellite_id: (
+                        satellite.side,
+                        satellite.constellation_id,
+                    )
+                    for satellite in (
+                        self.space_engine.constellation_manager
+                        .all_satellites()
+                    )
+                }
+                if self.space_engine is not None
+                else {}
+            )
+            try:
+                staged_fog_plan = self.fog_of_war.stage_state(
+                    state["fog_of_war"],
+                    expected_sides=expected_sides,
+                    expected_target_sides=expected_target_sides,
+                    satellite_topology=satellite_topology,
+                    checkpoint_elapsed_s=(
+                        staged_clock.elapsed.total_seconds()
+                    ),
+                    authoritative_rng_state=(
+                        rng_state["streams"][ModuleId.DETECTION.value]
+                    ),
+                )
+            except (KeyError, TypeError, ValueError) as exc:
+                raise ValueError(
+                    f"Invalid checkpoint fog/fusion state: {exc}",
+                ) from exc
+        elif self.fog_of_war is None and "fog_of_war" in state:
+            raise ValueError(
+                "Checkpoint contains fog-of-war state for a context without "
+                "a fog-of-war manager",
+            )
+
         staged_logistics_plan: Any = None
         if (
             self.logistics_runtime is not None
@@ -2094,6 +2655,11 @@ class SimulationContext:
 
         staged_space_plan: Any = None
         if self.space_engine is not None and "space_engine" in state:
+            delivered_receipts = (
+                tuple(staged_fog_plan["intel_fusion"]["delivery_receipts"])
+                if staged_fog_plan is not None
+                else ()
+            )
             try:
                 staged_space_plan = self.space_engine.stage_state(
                     state["space_engine"],
@@ -2101,6 +2667,9 @@ class SimulationContext:
                         staged_clock.elapsed.total_seconds()
                     ),
                     expected_tick_count=staged_clock.tick_count,
+                    expected_sides=tuple(sorted(expected_sides)),
+                    expected_units_by_side=prospective_units_by_side,
+                    delivered_receipts=delivered_receipts,
                 )
             except (KeyError, TypeError, ValueError) as exc:
                 raise ValueError(
@@ -2205,6 +2774,73 @@ class SimulationContext:
                 "without an indirect-fire engine",
             )
 
+        # Legacy state owners do not yet expose typed stage/commit plans.
+        # Validate each one on an isolated clone and require an exact
+        # canonical round trip before any context-owned state is mutated.
+        canonical_engine_states: dict[str, Any] = {}
+        for name, engine in self._checkpoint_engines():
+            if name in {
+                "morale_machine",
+                "logistics_runtime",
+                "space_engine",
+                "indirect_fire_engine",
+                "commander_engine",
+                "school_registry",
+            }:
+                continue
+            if name == "ooda_engine" and staged_ooda_plan is not None:
+                continue
+            if name == "fog_of_war" and staged_fog_plan is not None:
+                continue
+            if (
+                name == "movement_diagnostics"
+                and staged_movement_plan is not None
+            ):
+                continue
+            if (
+                name == "obscurants_engine"
+                and staged_obscurants_plan is not None
+            ):
+                continue
+            if (
+                name in {"stockpile_manager", "supply_network_engine"}
+                and "logistics_runtime" in state
+            ):
+                continue
+            if (
+                engine is None
+                or name not in state
+                or not hasattr(engine, "set_state")
+            ):
+                continue
+            try:
+                isolated_bus = EventBus()
+                staged_engine = copy.deepcopy(
+                    engine,
+                    {id(self.event_bus): isolated_bus},
+                )
+                staged_engine.set_state(copy.deepcopy(state[name]))
+                canonical_state = (
+                    staged_engine.get_state()
+                    if hasattr(staged_engine, "get_state")
+                    else copy.deepcopy(state[name])
+                )
+                if not _json_values_equal(
+                    _json_compatible_value(state[name]),
+                    _json_compatible_value(canonical_state),
+                ):
+                    raise ValueError(
+                        "state does not round-trip canonically",
+                    )
+            except (AttributeError, KeyError, TypeError, ValueError) as exc:
+                raise ValueError(
+                    f"Invalid checkpoint {name} state: {exc}",
+                ) from exc
+            canonical_engine_states[name] = canonical_state
+
+        if not commit:
+            return
+
         # Commit only after all context-owned checkpoint state validates.
         self.clock.set_state(clock_state)
         self.rng_manager.set_state(rng_state)
@@ -2275,126 +2911,183 @@ class SimulationContext:
             )
         if staged_logistics_plan is not None:
             self.logistics_runtime.commit_state(staged_logistics_plan)
+        if staged_fog_plan is not None:
+            self.fog_of_war.commit_state(staged_fog_plan)
         if staged_space_plan is not None:
             self.space_engine.commit_state(staged_space_plan)
+        if staged_movement_plan is not None:
+            self.movement_diagnostics.commit_state(staged_movement_plan)
+        if staged_obscurants_plan is not None:
+            self.obscurants_engine.commit_state(staged_obscurants_plan)
+        if staged_commander_plan is not None:
+            self.commander_engine.commit_state(staged_commander_plan)
+        if staged_school_plan is not None:
+            self.school_registry.commit_state(staged_school_plan)
+        if staged_ooda_plan is not None:
+            self.ooda_engine.commit_state(staged_ooda_plan)
 
         # Regenerate flat dict after restoring forces (Phase 86).
         if isinstance(self.calibration, CalibrationSchema):
             self.cal_flat = self.calibration.to_flat_dict(self.side_names())
 
-        # Restore engine states
-        engines = [
-            # Restored explicitly above after non-mutating preflight.
-            ("morale_machine", self.morale_machine),
-            ("ooda_engine", self.ooda_engine),
-            ("planning_engine", self.planning_engine),
-            ("order_execution", self.order_execution),
-            ("logistics_runtime", self.logistics_runtime),
-            ("stockpile_manager", self.stockpile_manager),
-            ("fog_of_war", self.fog_of_war),
-            ("aggregation_engine", self.aggregation_engine),
-            ("space_engine", self.space_engine),
-            ("cbrn_engine", self.cbrn_engine),
-            ("school_registry", self.school_registry),
-            ("trench_engine", self.trench_engine),
-            ("barrage_engine", self.barrage_engine),
-            ("gas_warfare_engine", self.gas_warfare_engine),
-            ("volley_fire_engine", self.volley_fire_engine),
-            ("melee_engine", self.melee_engine),
-            ("cavalry_engine", self.cavalry_engine),
-            ("formation_napoleonic_engine", self.formation_napoleonic_engine),
-            ("courier_engine", self.courier_engine),
-            ("foraging_engine", self.foraging_engine),
-            ("archery_engine", self.archery_engine),
-            ("siege_engine", self.siege_engine),
-            ("formation_ancient_engine", self.formation_ancient_engine),
-            ("naval_oar_engine", self.naval_oar_engine),
-            ("visual_signals_engine", self.visual_signals_engine),
-            ("escalation_engine", self.escalation_engine),
-            ("political_engine", self.political_engine),
-            ("consequence_engine", self.consequence_engine),
-            ("unconventional_engine", self.unconventional_engine),
-            ("insurgency_engine", self.insurgency_engine),
-            ("sof_engine", self.sof_engine),
-            ("war_termination_engine", self.war_termination_engine),
-            ("incendiary_engine", self.incendiary_engine),
-            ("uxo_engine", self.uxo_engine),
-            ("commander_engine", self.commander_engine),
-            ("eccm_engine", self.eccm_engine),
-            ("sigint_engine", self.sigint_engine),
-            ("ew_decoy_engine", self.ew_decoy_engine),
-            ("dew_engine", self.dew_engine),
-            ("indirect_fire_engine", self.indirect_fire_engine),
-            ("naval_surface_engine", self.naval_surface_engine),
-            ("naval_subsurface_engine", self.naval_subsurface_engine),
-            ("naval_gunfire_support_engine", self.naval_gunfire_support_engine),
-            ("mine_warfare_engine", self.mine_warfare_engine),
-            ("disruption_engine", self.disruption_engine),
-            ("maintenance_engine", self.maintenance_engine),
-            ("medical_engine", self.medical_engine),
-            ("engineering_engine", self.engineering_engine),
-            ("collateral_engine", self.collateral_engine),
-            ("weather_engine", self.weather_engine),
-            ("sea_state_engine", self.sea_state_engine),
-            ("stratagem_engine", self.stratagem_engine),
-            ("iads_engine", self.iads_engine),
-            ("ato_engine", self.ato_engine),
-            ("underwater_acoustics_engine", self.underwater_acoustics_engine),
-            ("carrier_ops_engine", self.carrier_ops_engine),
-            # Phase 63c: previously missing engines
-            ("comms_engine", self.comms_engine),
-            ("detection_engine", self.detection_engine),
-            ("movement_engine", self.movement_engine),
-            ("conditions_engine", self.conditions_engine),
-            # Phase 72a: previously missing engines — Combat
-            ("engagement_engine", self.engagement_engine),
-            ("suppression_engine", self.suppression_engine),
-            ("air_combat_engine", self.air_combat_engine),
-            ("air_ground_engine", self.air_ground_engine),
-            ("air_defense_engine", self.air_defense_engine),
-            ("missile_engine", self.missile_engine),
-            ("missile_defense_engine", self.missile_defense_engine),
-            # Phase 72a: previously missing engines — WW2
-            ("naval_gunnery_engine", self.naval_gunnery_engine),
-            ("convoy_engine", self.convoy_engine),
-            ("strategic_bombing_engine", self.strategic_bombing_engine),
-            # Phase 72a: previously missing engines — Environment
-            ("time_of_day_engine", self.time_of_day_engine),
-            ("seasons_engine", self.seasons_engine),
-            ("obscurants_engine", self.obscurants_engine),
-            # Phase 72a: previously missing engines — C2/AI
-            ("order_propagation", self.order_propagation),
-            ("assessor", self.assessor),
-            ("decision_engine", self.decision_engine),
-            ("adaptation_engine", self.adaptation_engine),
-            ("roe_engine", self.roe_engine),
-            # Phase 72a: previously missing engines — Other
-            ("rout_engine", self.rout_engine),
-            ("ew_engine", self.ew_engine),
-            ("consumption_engine", self.consumption_engine),
-            ("supply_network_engine", self.supply_network_engine),
-            ("command_engine", self.command_engine),
-        ]
+        # Restore generic owners in the same registry order used by capture.
+        engines = self._checkpoint_engines()
         for name, eng in engines:
             if name in {
                 "morale_machine",
                 "logistics_runtime",
                 "space_engine",
                 "indirect_fire_engine",
+                "commander_engine",
+                "school_registry",
             }:
+                continue
+            if name == "ooda_engine" and staged_ooda_plan is not None:
+                continue
+            if name == "fog_of_war" and staged_fog_plan is not None:
+                continue
+            if (
+                name == "movement_diagnostics"
+                and staged_movement_plan is not None
+            ):
+                continue
+            if (
+                name == "obscurants_engine"
+                and staged_obscurants_plan is not None
+            ):
                 continue
             if (
                 name in {"stockpile_manager", "supply_network_engine"}
                 and "logistics_runtime" in state
             ):
                 continue
-            if eng is not None and name in state and hasattr(eng, "set_state"):
-                eng.set_state(state[name])
+            if (
+                eng is not None
+                and name in canonical_engine_states
+                and hasattr(eng, "set_state")
+            ):
+                eng.set_state(canonical_engine_states[name])
 
 
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
+
+def _initialize_commander_ooda(
+    *,
+    commander_engine: CommanderEngine,
+    ooda_engine: Any,
+    school_registry: Any,
+    assignments: tuple[tuple[str, str], ...],
+    c2_rng: np.random.Generator,
+    timestamp: datetime,
+) -> None:
+    """Register and start exact commander OODA state transactionally."""
+    from stochastic_warfare.c2.ai.ooda import OODAPhase
+    from stochastic_warfare.entities.organization.echelons import (
+        EchelonLevel,
+    )
+
+    ooda_before = ooda_engine.get_state()
+    c2_rng_before = copy.deepcopy(c2_rng.bit_generator.state)
+    try:
+        for unit_id, _profile_id in sorted(assignments):
+            ooda_engine.register_commander(
+                unit_id,
+                int(EchelonLevel.COMPANY),
+            )
+            school_multiplier = 1.0
+            if school_registry is not None:
+                school = school_registry.get_for_unit(unit_id)
+                if school is not None:
+                    school_multiplier = school.get_ooda_multiplier()
+            ooda_engine.start_phase(
+                unit_id,
+                OODAPhase.OBSERVE,
+                personality_mult=(
+                    commander_engine.get_ooda_speed_multiplier(unit_id)
+                ),
+                tactical_mult=(
+                    ooda_engine.tactical_acceleration
+                    * school_multiplier
+                ),
+                ts=timestamp,
+                publish_event=False,
+            )
+    except Exception:
+        ooda_engine.set_state(ooda_before)
+        c2_rng.bit_generator.state = c2_rng_before
+        raise
+
+
+def _doctrine_policy_index(
+    assignments: tuple[DoctrineSideAssignment, ...],
+) -> dict[str, str]:
+    """Validate a typed ordered policy before creating an internal index."""
+    sides = [assignment.side for assignment in assignments]
+    if len(sides) != len(set(sides)):
+        raise ValueError(
+            f"Doctrine policy side IDs must be unique: {sides!r}",
+        )
+    return {
+        assignment.side: assignment.school_id
+        for assignment in assignments
+    }
+
+
+def _prepare_runtime_school_plan(
+    *,
+    config: CampaignScenarioConfig,
+    commander_engine: CommanderEngine | None,
+    commander_assignments: tuple[tuple[str, str], ...],
+    school_registry: Any,
+    unit_sides: Mapping[str, str],
+    doctrine_side_assignments: tuple[DoctrineSideAssignment, ...],
+) -> Any:
+    """Stage profile, exact-unit, then highest-precedence side policy."""
+    school_assignments: dict[str, str] = {}
+    if commander_engine is not None:
+        school_assignments.update({
+            unit_id: personality.school_id
+            for unit_id, profile_id in commander_assignments
+            if (
+                personality
+                := commander_engine.get_profile_definition(profile_id)
+            ).school_id is not None
+        })
+
+    exact_assignments = (
+        config.school_config.get("unit_assignments", {})
+        if config.school_config is not None
+        else {}
+    )
+    if not isinstance(exact_assignments, Mapping):
+        raise ValueError(
+            "school_config.unit_assignments must be a mapping",
+        )
+    school_assignments.update({
+        unit_id: exact_assignments[unit_id]
+        for unit_id in unit_sides
+        if unit_id in exact_assignments
+    })
+
+    side_policy = _doctrine_policy_index(doctrine_side_assignments)
+    school_assignments.update({
+        unit_id: side_policy[side]
+        for unit_id, side in unit_sides.items()
+        if side in side_policy
+    })
+    if not school_assignments:
+        return None
+    if school_registry is None:
+        raise ValueError(
+            "Runtime school assignments require a loaded school registry",
+        )
+    return school_registry.prepare_assignments(
+        school_assignments,
+        expected_unit_ids=set(unit_sides),
+    )
 
 
 def register_dynamic_units(
@@ -2463,6 +3156,76 @@ def register_dynamic_units(
     if ctx.morale_machine is None:
         raise RuntimeError("Dynamic units require a morale state machine")
 
+    commander_plan: CommanderAssignmentPlan | None = None
+    school_plan: Any = None
+    if ctx.commander_engine is not None:
+        if ctx.ooda_engine is None:
+            raise RuntimeError(
+                "Dynamic commander assignments require an OODA engine",
+            )
+        existing_commander_ids = set(
+            ctx.commander_engine.assignments(),
+        )
+        if existing_commander_ids != existing_ids:
+            raise ValueError(
+                "Commander assignment topology does not match the current "
+                "runtime roster",
+            )
+        existing_ooda_ids = set(
+            ctx.ooda_engine.get_state()["commanders"],
+        )
+        if existing_ooda_ids != existing_ids:
+            raise ValueError(
+                "OODA commander topology does not match the current "
+                "runtime roster",
+            )
+        side_profiles = {
+            side.side: side.commander_profile
+            for side in ctx.config.sides
+        }
+        commander_overrides = (
+            ctx.config.commander_config.assignments
+            if ctx.config.commander_config is not None
+            else {}
+        )
+        incoming_assignments = {
+            unit.entity_id: commander_overrides.get(
+                unit.entity_id,
+                side_profiles[
+                    (
+                        unit.side
+                        if isinstance(unit.side, str)
+                        else unit.side.value
+                    )
+                ],
+            )
+            for unit in units
+        }
+        commander_plan = ctx.commander_engine.prepare_assignments(
+            incoming_assignments,
+            expected_unit_ids=incoming_ids,
+            require_complete=True,
+        )
+    school_plan = _prepare_runtime_school_plan(
+        config=ctx.config,
+        commander_engine=ctx.commander_engine,
+        commander_assignments=(
+            commander_plan.assignments
+            if commander_plan is not None
+            else ()
+        ),
+        school_registry=ctx.school_registry,
+        unit_sides={
+            unit.entity_id: (
+                unit.side
+                if isinstance(unit.side, str)
+                else unit.side.value
+            )
+            for unit in units
+        },
+        doctrine_side_assignments=ctx.doctrine_side_assignments,
+    )
+
     logistics_plan = None
     logistics_before = None
     if ctx.logistics_runtime is not None:
@@ -2489,13 +3252,50 @@ def register_dynamic_units(
     staged_morale = dict(ctx.morale_states)
     staged_morale.update(incoming_morale)
 
-    # Both registration plans validate the complete batch before commit. If
-    # morale initialization unexpectedly fails, restore the no-event
-    # logistics snapshot so the reinforcement wave remains retryable.
-    if logistics_plan is not None:
-        ctx.logistics_runtime.commit_unit_registration(logistics_plan)
+    morale_before = ctx.morale_machine.get_state()
+    commander_before = (
+        ctx.commander_engine.get_state()
+        if ctx.commander_engine is not None
+        else None
+    )
+    school_before = (
+        ctx.school_registry.get_state()
+        if ctx.school_registry is not None
+        else None
+    )
+    ooda_before = (
+        ctx.ooda_engine.get_state()
+        if ctx.commander_engine is not None
+        else None
+    )
+    c2_rng = ctx.rng_manager.get_stream(ModuleId.C2)
+    c2_rng_before = copy.deepcopy(c2_rng.bit_generator.state)
+
+    # Every component has validated the complete batch before the first
+    # commit. Roll back all component-owned state if an unexpected commit
+    # failure occurs so the reinforcement wave remains retryable.
     try:
+        if logistics_plan is not None:
+            ctx.logistics_runtime.commit_unit_registration(logistics_plan)
         ctx.morale_machine.initialize_units(incoming_morale)
+        if commander_plan is not None:
+            ctx.commander_engine.commit_assignments(commander_plan)
+        if school_plan is not None:
+            ctx.school_registry.commit_assignments(school_plan)
+        if commander_plan is not None:
+            _initialize_commander_ooda(
+                commander_engine=ctx.commander_engine,
+                ooda_engine=ctx.ooda_engine,
+                school_registry=ctx.school_registry,
+                assignments=commander_plan.assignments,
+                c2_rng=c2_rng,
+                timestamp=ctx.clock.current_time,
+            )
+        if ctx.movement_diagnostics is not None:
+            ctx.movement_diagnostics.register_units({
+                unit.entity_id: unit.side
+                for unit in units
+            })
     except Exception:
         if logistics_before is not None:
             ctx.logistics_runtime.set_state(
@@ -2505,6 +3305,14 @@ def register_dynamic_units(
                     for unit in ctx.all_units()
                 },
             )
+        ctx.morale_machine.set_state(morale_before)
+        if commander_before is not None:
+            ctx.commander_engine.set_state(commander_before)
+        if school_before is not None:
+            ctx.school_registry.set_state(school_before)
+        if ooda_before is not None:
+            ctx.ooda_engine.set_state(ooda_before)
+        c2_rng.bit_generator.state = c2_rng_before
         raise
     ctx.units_by_side = staged_units_by_side
     ctx.unit_weapons = staged_weapons
@@ -2565,6 +3373,10 @@ class ScenarioLoader:
         *,
         calibration_overrides: Mapping[str, Any] | CalibrationSchema | None = None,
         scenario_config: CampaignScenarioConfig | None = None,
+        doctrine_side_assignments: tuple[
+            DoctrineSideAssignment,
+            ...,
+        ] | None = None,
     ) -> SimulationContext:
         """Load a campaign scenario and create a fully-wired context.
 
@@ -2579,6 +3391,9 @@ class ScenarioLoader:
             source scenario.
         scenario_config:
             Prevalidated effective configuration supplied by an orchestrator.
+        doctrine_side_assignments:
+            Highest-precedence typed per-side school policy supplied by the
+            runtime factory. It is not written into scenario YAML.
         """
         # 1. Parse config
         if scenario_config is not None and calibration_overrides is not None:
@@ -2593,6 +3408,25 @@ class ScenarioLoader:
         else:
             config = CampaignScenarioConfig.model_validate(
                 scenario_config.model_dump(mode="python"),
+            )
+        doctrine_policy = tuple(doctrine_side_assignments or ())
+        if any(
+            not isinstance(assignment, DoctrineSideAssignment)
+            for assignment in doctrine_policy
+        ):
+            raise TypeError(
+                "doctrine_side_assignments must contain only "
+                "DoctrineSideAssignment values",
+            )
+        doctrine_index = _doctrine_policy_index(doctrine_policy)
+        known_sides = {side.side for side in config.sides}
+        unknown_doctrine_sides = sorted(
+            set(doctrine_index) - known_sides,
+        )
+        if unknown_doctrine_sides:
+            raise ScenarioReferenceError(
+                "Doctrine policy references unknown scenario sides: "
+                f"{unknown_doctrine_sides!r}",
             )
         logger.info("Loaded campaign %r from %s", config.name, scenario_path)
 
@@ -2632,8 +3466,34 @@ class ScenarioLoader:
             config,
             loaders["supply_item_loader"],
         )
+        initial_force_plans = self._initial_force_plans(config)
+        initial_unit_ids = set(
+            RuntimeForceBuilder.initial_entity_ids(initial_force_plans),
+        )
+        planned_unit_sides = self._planned_unit_sides(
+            config,
+            initial_force_plans,
+        )
+        commander_engine, initial_commander_plan = (
+            self._prepare_commander_engine(
+                config,
+                loaders["commander_profile_loader"],
+                rng_mgr.get_stream(ModuleId.C2),
+                initial_unit_ids=initial_unit_ids,
+                planned_unit_sides=planned_unit_sides,
+                schools_enabled=(
+                    config.school_config is not None
+                    or bool(doctrine_policy)
+                ),
+            )
+        )
+        self._validate_school_assignments(
+            config,
+            planned_unit_sides=planned_unit_sides,
+            doctrine_side_assignments=doctrine_policy,
+        )
         reachable_unit_types = tuple(
-            entry["unit_type"]
+            entry.unit_type
             for side in config.sides
             for entry in side.units
         ) + tuple(
@@ -2656,12 +3516,24 @@ class ScenarioLoader:
 
         # 5. Build forces
         entities_rng = rng_mgr.get_stream(ModuleId.ENTITIES)
-        units_by_side, runtime_loadouts = self._build_all_forces(
-            config,
-            loaders,
-            entities_rng,
-            loadout_builder,
+        force_builder = RuntimeForceBuilder(
+            unit_loader=loaders["unit_loader"],
+            rng=entities_rng,
         )
+        entities_rng_before = copy.deepcopy(
+            entities_rng.bit_generator.state,
+        )
+        try:
+            units_by_side, runtime_loadouts = self._build_all_forces(
+                config,
+                initial_force_plans,
+                force_builder,
+                entities_rng,
+                loadout_builder,
+            )
+        except Exception:
+            entities_rng.bit_generator.state = entities_rng_before
+            raise
         from stochastic_warfare.simulation.time_on_target import (
             TimeOnTargetMissionResolver,
         )
@@ -2693,11 +3565,59 @@ class ScenarioLoader:
             clock,
             units_by_side,
             era_config,
+            doctrine_side_assignments=doctrine_policy,
             time_on_target_missions=time_on_target_missions,
         )
+        if commander_engine is not None:
+            if initial_commander_plan is None:
+                raise RuntimeError(
+                    "Commander engine was created without an assignment plan",
+                )
+            engines["commander_engine"] = commander_engine
+            commander_engine.commit_assignments(
+                initial_commander_plan,
+                replace=True,
+            )
+        initial_school_plan = _prepare_runtime_school_plan(
+            config=config,
+            commander_engine=commander_engine,
+            commander_assignments=(
+                initial_commander_plan.assignments
+                if initial_commander_plan is not None
+                else ()
+            ),
+            school_registry=engines.get("school_registry"),
+            unit_sides={
+                unit_id: planned_unit_sides[unit_id]
+                for unit_id in initial_unit_ids
+            },
+            doctrine_side_assignments=doctrine_policy,
+        )
+        if initial_school_plan is not None:
+            engines["school_registry"].commit_assignments(
+                initial_school_plan,
+            )
+        if commander_engine is not None:
+            ooda_engine = engines.get("ooda_engine")
+            if ooda_engine is None:
+                raise RuntimeError(
+                    "Commander engine was created without an OODA engine",
+                )
+            _initialize_commander_ooda(
+                commander_engine=commander_engine,
+                ooda_engine=ooda_engine,
+                school_registry=engines.get("school_registry"),
+                assignments=initial_commander_plan.assignments,
+                c2_rng=rng_mgr.get_stream(ModuleId.C2),
+                timestamp=clock.current_time,
+            )
 
         # 8. Assemble context
         real_ctx = self._real_terrain_ctx
+        movement_diagnostics = MovementDiagnostics({
+            unit.entity_id: unit.side
+            for unit in all_units
+        })
         ctx = SimulationContext(
             config=config,
             clock=clock,
@@ -2713,8 +3633,11 @@ class ScenarioLoader:
             equipment_resolutions=dict(
                 runtime_loadouts.equipment_resolutions,
             ),
+            force_builder=force_builder,
             loadout_builder=loadout_builder,
             morale_states=morale_states,
+            movement_diagnostics=movement_diagnostics,
+            doctrine_side_assignments=doctrine_policy,
             calibration=config.calibration_overrides,
             era_config=era_config,
             **engines,
@@ -2737,13 +3660,10 @@ class ScenarioLoader:
                 config.deployment.min_side_separation_m,
             )
 
-        # 10. Commander assignments (Phase 25d)
-        self._apply_commander_assignments(ctx, config)
-
-        # 11. Pre-emplaced IEDs / HBIEDs (Phase 101)
+        # 10. Pre-emplaced IEDs / HBIEDs (Phase 101)
         self._emplace_initial_ieds(ctx, config)
 
-        # 12. Scripted events — stash on context for campaign manager (Phase 101)
+        # 11. Scripted events — stash on context for campaign manager (Phase 101)
         ctx.scripted_events = list(config.scripted_events)
 
         return ctx
@@ -2787,58 +3707,249 @@ class ScenarioLoader:
         ctx.initial_ied_obstacle_ids = obstacle_ids
         logger.info("Emplaced %d pre-prepared IEDs/HBIEDs", len(obstacle_ids))
 
-    def _apply_commander_assignments(
-        self,
-        ctx: SimulationContext,
+    @staticmethod
+    def _initial_force_plans(
         config: CampaignScenarioConfig,
-    ) -> None:
-        """Assign commander profiles to units from commander_config.
+    ) -> tuple[InitialForcePlan, ...]:
+        """Resolve typed initial placement inputs without consuming RNG."""
+        plans: list[InitialForcePlan] = []
+        calibration = config.calibration_overrides
+        for side_index, side_config in enumerate(config.sides):
+            prefix = side_config.side
+            default_easting = (
+                100.0
+                if side_index == 0
+                else config.terrain.width_m - 100.0
+            )
+            default_northing = config.terrain.height_m / 2
+            start_easting = calibration.get(
+                f"{prefix}_start_x",
+                default_easting,
+            )
+            start_northing = calibration.get(
+                f"{prefix}_start_y",
+                default_northing,
+            )
+            spacing = calibration.get(
+                f"{prefix}_formation_spacing_m",
+                calibration.get("formation_spacing_m", 50.0),
+            )
+            plans.append(
+                InitialForcePlan(
+                    side=side_config.side,
+                    units=tuple(side_config.units),
+                    start_easting=float(start_easting),
+                    start_northing=float(start_northing),
+                    spacing_m=float(spacing),
+                ),
+            )
+        return tuple(plans)
 
-        Applies side-level defaults first, then per-unit overrides.
-        """
-        if ctx.commander_engine is None or config.commander_config is None:
-            return
-
-        cmd_cfg = config.commander_config
-        side_defaults = cmd_cfg.get("side_defaults", {})
-        assignments = cmd_cfg.get("assignments", {})
-
-        # Side-level defaults: assign all units on a side to the given profile
-        for side_name, profile_id in side_defaults.items():
-            for u in ctx.units_by_side.get(side_name, []):
-                try:
-                    ctx.commander_engine.assign_personality(u.entity_id, profile_id)
-                except Exception:
-                    logger.warning(
-                        "Failed to assign profile %r to unit %s",
-                        profile_id, u.entity_id,
+    @staticmethod
+    def _planned_unit_sides(
+        config: CampaignScenarioConfig,
+        initial_plans: tuple[InitialForcePlan, ...],
+    ) -> dict[str, str]:
+        """Return exact initial and future reinforcement identity topology."""
+        planned = {
+            spec.entity_id: spec.side
+            for spec in RuntimeForceBuilder.initial_specs(initial_plans)
+        }
+        for wave_ordinal, reinforcement in enumerate(
+            config.reinforcements,
+        ):
+            unit_index = 0
+            for unit_config in reinforcement.units:
+                for _ in range(unit_config.count):
+                    entity_id = (
+                        f"reinforce_{reinforcement.side}_"
+                        f"{wave_ordinal:04d}_"
+                        f"{unit_config.unit_type}_{unit_index:04d}"
                     )
+                    if entity_id in planned:
+                        raise ValueError(
+                            f"Duplicate planned unit ID {entity_id!r}",
+                        )
+                    planned[entity_id] = reinforcement.side
+                    unit_index += 1
+        return planned
 
-        # Per-unit overrides (take precedence)
-        for unit_id, profile_id in assignments.items():
+    def _validate_school_assignments(
+        self,
+        config: CampaignScenarioConfig,
+        *,
+        planned_unit_sides: Mapping[str, str],
+        doctrine_side_assignments: tuple[
+            DoctrineSideAssignment,
+            ...,
+        ],
+    ) -> None:
+        """Validate exact-unit and analysis school references pre-runtime."""
+        raw_exact = (
+            config.school_config.get("unit_assignments", {})
+            if config.school_config is not None
+            else {}
+        )
+        if not isinstance(raw_exact, Mapping):
+            raise ScenarioReferenceError(
+                "school_config.unit_assignments must be a mapping",
+            )
+        exact_assignments: dict[str, str] = {}
+        for unit_id, school_id in raw_exact.items():
+            if (
+                not isinstance(unit_id, str)
+                or not unit_id
+                or unit_id != unit_id.strip()
+            ):
+                raise ScenarioReferenceError(
+                    "School assignment unit IDs must be non-empty "
+                    "trimmed strings",
+                )
+            if (
+                not isinstance(school_id, str)
+                or not school_id
+                or school_id != school_id.strip()
+            ):
+                raise ScenarioReferenceError(
+                    "School assignment school IDs must be non-empty "
+                    "trimmed strings",
+                )
+            exact_assignments[unit_id] = school_id
+        unknown_units = sorted(
+            set(exact_assignments) - set(planned_unit_sides),
+        )
+        if unknown_units:
+            raise ScenarioReferenceError(
+                "School assignments reference unknown initial or future "
+                f"unit IDs: {unknown_units!r}",
+            )
+
+        referenced_schools = set(exact_assignments.values()) | {
+            assignment.school_id
+            for assignment in doctrine_side_assignments
+        }
+        if not referenced_schools:
+            return
+        from stochastic_warfare.c2.ai.schools import SchoolLoader
+
+        school_loader = SchoolLoader(self._data_dir / "schools")
+        school_loader.load_all()
+        missing_schools = sorted(
+            referenced_schools - set(school_loader.available_schools()),
+        )
+        if missing_schools:
+            raise ScenarioReferenceError(
+                "Runtime assignments reference unknown doctrinal schools: "
+                f"{missing_schools!r}",
+            )
+
+    def _prepare_commander_engine(
+        self,
+        config: CampaignScenarioConfig,
+        profile_loader: CommanderProfileLoader,
+        c2_rng: np.random.Generator,
+        *,
+        initial_unit_ids: set[str],
+        planned_unit_sides: Mapping[str, str],
+        schools_enabled: bool,
+    ) -> tuple[
+        CommanderEngine | None,
+        CommanderAssignmentPlan | None,
+    ]:
+        """Validate commander authority before any unit construction."""
+        side_profiles = {
+            side.side: side.commander_profile
+            for side in config.sides
+            if side.commander_profile
+        }
+        if not side_profiles:
+            return None, None
+
+        for side, profile_id in sorted(side_profiles.items()):
             try:
-                ctx.commander_engine.assign_personality(unit_id, profile_id)
-            except Exception:
-                logger.warning(
-                    "Failed to assign profile %r to unit %s",
-                    profile_id, unit_id,
+                profile_loader.get_definition(profile_id)
+            except KeyError as exc:
+                raise ScenarioReferenceError(
+                    f"Side {side!r} references unknown commander_profile "
+                    f"{profile_id!r}",
+                ) from exc
+
+        commander_config = (
+            config.commander_config
+            if config.commander_config is not None
+            else CommanderScenarioConfig()
+        )
+        planned_ids = set(planned_unit_sides)
+        unknown_assignment_ids = sorted(
+            set(commander_config.assignments) - planned_ids,
+        )
+        if unknown_assignment_ids:
+            raise ScenarioReferenceError(
+                "Commander assignments reference unknown initial or future "
+                f"unit IDs: {unknown_assignment_ids!r}",
+            )
+        for unit_id, profile_id in sorted(
+            commander_config.assignments.items(),
+        ):
+            try:
+                profile_loader.get_definition(profile_id)
+            except KeyError as exc:
+                raise ScenarioReferenceError(
+                    f"Commander assignment for {unit_id!r} references "
+                    f"unknown profile {profile_id!r}",
+                ) from exc
+
+        referenced_profile_ids = set(side_profiles.values()) | set(
+            commander_config.assignments.values(),
+        )
+        referenced_school_ids = {
+            definition.school_id
+            for profile_id in referenced_profile_ids
+            if (
+                definition := profile_loader.get_definition(profile_id)
+            ).school_id is not None
+        }
+        if referenced_school_ids:
+            if not schools_enabled:
+                raise ScenarioReferenceError(
+                    "Commander profiles reference doctrinal schools but "
+                    "no runtime school registry is enabled",
+                )
+            from stochastic_warfare.c2.ai.schools import SchoolLoader
+
+            school_loader = SchoolLoader(self._data_dir / "schools")
+            school_loader.load_all()
+            missing_schools = sorted(
+                referenced_school_ids
+                - set(school_loader.available_schools()),
+            )
+            if missing_schools:
+                raise ScenarioReferenceError(
+                    "Commander profiles reference unknown doctrinal schools: "
+                    f"{missing_schools!r}",
                 )
 
-        # Phase 53c: Auto-assign school_id from commander personality
-        if ctx.school_registry is not None:
-            for side_units in ctx.units_by_side.values():
-                for u in side_units:
-                    personality = ctx.commander_engine.get_personality(u.entity_id)
-                    if personality is not None and personality.school_id:
-                        try:
-                            ctx.school_registry.assign_to_unit(
-                                u.entity_id, personality.school_id,
-                            )
-                        except KeyError:
-                            logger.debug(
-                                "School %s not registered for unit %s",
-                                personality.school_id, u.entity_id,
-                            )
+        initial_assignments = {
+            unit_id: side_profiles[planned_unit_sides[unit_id]]
+            for unit_id in sorted(initial_unit_ids)
+        }
+        initial_assignments.update({
+            unit_id: profile_id
+            for unit_id, profile_id
+            in commander_config.assignments.items()
+            if unit_id in initial_unit_ids
+        })
+        engine = CommanderEngine(
+            profile_loader,
+            c2_rng,
+            commander_config.engine_config(),
+        )
+        plan = engine.prepare_assignments(
+            initial_assignments,
+            expected_unit_ids=initial_unit_ids,
+            require_complete=True,
+        )
+        return engine, plan
 
     def _build_terrain(
         self,
@@ -2850,19 +3961,10 @@ class ScenarioLoader:
         if spec.terrain_source == "real":
             return self._build_real_terrain(spec, config)
 
-        from stochastic_warfare.validation.scenario_runner import build_terrain
-        from stochastic_warfare.validation.historical_data import TerrainSpec
+        from stochastic_warfare.terrain.procedural import build_terrain
 
-        terrain_spec = TerrainSpec(
-            width_m=spec.width_m,
-            height_m=spec.height_m,
-            cell_size_m=spec.cell_size_m,
-            base_elevation_m=spec.base_elevation_m,
-            terrain_type=spec.terrain_type,
-            features=spec.features,
-        )
         terrain_rng = rng_mgr.get_stream(ModuleId.TERRAIN)
-        return build_terrain(terrain_spec, terrain_rng)
+        return build_terrain(spec, terrain_rng)
 
     def _build_real_terrain(
         self,
@@ -2939,6 +4041,16 @@ class ScenarioLoader:
         )
         supply_item_loader.load_all()
 
+        commander_profile_loader = CommanderProfileLoader(
+            self._data_dir / "commander_profiles",
+        )
+        commander_catalogs = [self._data_dir / "commander_profiles"]
+        if era != "modern":
+            commander_catalogs.append(
+                self._data_dir / "eras" / era / "commanders",
+            )
+        commander_profile_loader.load_directories(commander_catalogs)
+
         # Load era-specific data on top of base data
         if era != "modern":
             era_dir = self._data_dir / "eras" / era
@@ -2982,6 +4094,7 @@ class ScenarioLoader:
             "sig_loader": sig_loader,
             "sensor_loader": sensor_loader,
             "supply_item_loader": supply_item_loader,
+            "commander_profile_loader": commander_profile_loader,
         }
 
     @staticmethod
@@ -3002,7 +4115,7 @@ class ScenarioLoader:
                 f"wave {wave_index}: {unit_type!r}"
                 for wave_index, unit_type in unknown
             )
-            raise ValueError(
+            raise ScenarioReferenceError(
                 "Reinforcement schedule references unknown unit types "
                 f"({details})",
             )
@@ -3021,12 +4134,12 @@ class ScenarioLoader:
             try:
                 definition = supply_item_loader.get_definition(entry.item_id)
             except KeyError as exc:
-                raise ValueError(
+                raise ScenarioReferenceError(
                     f"{location} references unknown supply item "
                     f"{entry.item_id!r}",
                 ) from exc
             if definition.supply_class != entry.supply_class:
-                raise ValueError(
+                raise ScenarioReferenceError(
                     f"{location} declares {entry.supply_class} for "
                     f"{entry.item_id!r}, but the catalog declares "
                     f"{definition.supply_class}",
@@ -3036,7 +4149,7 @@ class ScenarioLoader:
                 or not math.isfinite(definition.weight_per_unit_kg)
                 or definition.weight_per_unit_kg <= 0.0
             ):
-                raise ValueError(
+                raise RuntimeError(
                     f"Catalog item {entry.item_id!r} has invalid "
                     "weight_per_unit_kg",
                 )
@@ -3068,7 +4181,7 @@ class ScenarioLoader:
                         entry.quantity * definition.weight_per_unit_kg
                     )
                 if total_kg > depot.capacity_tons * 1000.0 + 1e-9:
-                    raise ValueError(
+                    raise ScenarioReferenceError(
                         f"depot {depot.depot_id!r} initial inventory weighs "
                         f"{total_kg / 1000.0:.6g} tons and exceeds "
                         f"capacity_tons={depot.capacity_tons:.6g}",
@@ -3077,77 +4190,48 @@ class ScenarioLoader:
     def _build_all_forces(
         self,
         config: CampaignScenarioConfig,
-        loaders: dict[str, Any],
+        plans: tuple[InitialForcePlan, ...],
+        force_builder: RuntimeForceBuilder,
         entities_rng: np.random.Generator,
         loadout_builder: RuntimeLoadoutBuilder,
     ) -> tuple[dict[str, list[Unit]], RuntimeLoadouts]:
-        """Build units for all sides and assign weapons/sensors."""
-        from stochastic_warfare.validation.scenario_runner import build_forces
-        from stochastic_warfare.validation.historical_data import ForceDefinition
-
-        units_by_side: dict[str, list[Unit]] = {}
-        cal = config.calibration_overrides
-
-        for i, side_cfg in enumerate(config.sides):
-            force_def = ForceDefinition(
-                side=side_cfg.side,
-                units=side_cfg.units,
-                personnel_total=sum(
-                    e.get("count", 1) for e in side_cfg.units
-                ),
-                experience_level=side_cfg.experience_level,
-                morale_initial=side_cfg.morale_initial,
-            )
-            # Determine start positions from calibration or defaults
-            prefix = side_cfg.side
-            default_x = 100.0 if i == 0 else config.terrain.width_m - 100.0
-            default_y = config.terrain.height_m / 2
-            start_x = cal.get(f"{prefix}_start_x", default_x)
-            start_y = cal.get(f"{prefix}_start_y", default_y)
-
-            spacing = cal.get(
-                f"{prefix}_formation_spacing_m",
-                cal.get("formation_spacing_m", 50.0),
-            )
-            units = build_forces(
-                force_def,
-                loaders["unit_loader"],
-                entities_rng,
-                start_x=start_x,
-                start_y=start_y,
-                spacing_m=spacing,
-            )
+        """Build the exact typed roster, then attach runtime loadouts."""
+        units_by_side = force_builder.build_initial(plans)
+        for plan in plans:
+            units = units_by_side[plan.side]
             # Phase 104: apply configured deployment mode (legacy preserves
-            # the line-abreast positions already assigned by build_forces).
+            # the line-abreast positions assigned by RuntimeForceBuilder).
             # Per-unit `_manually_positioned` flag skips auto-deployment.
             if config.deployment.mode.value != "legacy":
-                # Load formation template if doctrinal mode
                 template = None
                 if config.deployment.mode == DeploymentMode.DOCTRINAL:
-                    tpl_id = (
-                        config.deployment.blue_template if side_cfg.side == "blue"
+                    template_id = (
+                        config.deployment.blue_template
+                        if plan.side == "blue"
                         else config.deployment.red_template
                     )
-                    if tpl_id is not None:
-                        tpl_loader = FormationTemplateLoader(self._data_dir / "formations")
-                        tpl_loader.load_all()
-                        template = tpl_loader.get(tpl_id)
+                    if template_id is not None:
+                        template_loader = FormationTemplateLoader(
+                            self._data_dir / "formations",
+                        )
+                        template_loader.load_all()
+                        template = template_loader.get(template_id)
                         if template is None:
-                            logger.warning(
-                                "formation template %r not found for side=%s — available: %s",
-                                tpl_id, side_cfg.side, tpl_loader.available(),
+                            raise ScenarioReferenceError(
+                                f"Formation template {template_id!r} "
+                                f"referenced by side {plan.side!r} is unknown; "
+                                f"available={template_loader.available()!r}",
                             )
                 deploy_units(
                     units=units,
-                    side=side_cfg.side,
+                    side=plan.side,
                     config=config.deployment,
-                    legacy_start_x=start_x,
-                    legacy_start_y=start_y,
-                    legacy_spacing_m=spacing,
+                    legacy_start_x=plan.start_easting,
+                    legacy_start_y=plan.start_northing,
+                    legacy_spacing_m=plan.spacing_m,
                     template=template,
                     rng=entities_rng,
                 )
-            units_by_side[side_cfg.side] = units
 
         # Assign weapons and sensors
         all_units = [u for us in units_by_side.values() for u in us]
@@ -3166,6 +4250,10 @@ class ScenarioLoader:
         units_by_side: dict[str, list] | None = None,
         era_config: Any = None,
         *,
+        doctrine_side_assignments: tuple[
+            DoctrineSideAssignment,
+            ...,
+        ] = (),
         time_on_target_missions: tuple[ResolvedTimeOnTargetMission, ...] = (),
     ) -> dict[str, Any]:
         """Create all domain engine instances."""
@@ -3285,11 +4373,11 @@ class ScenarioLoader:
         )
 
         # Morale
+        from stochastic_warfare.morale.config import build_morale_config
         from stochastic_warfare.morale.state import MoraleStateMachine
-        from stochastic_warfare.validation.scenario_runner import ScenarioRunner as _SR
 
         cal = config.calibration_overrides
-        morale_config = _SR._build_morale_config(cal) if cal else None
+        morale_config = build_morale_config(cal.morale)
         morale_machine = MoraleStateMachine(bus, morale_rng, morale_config)
 
         # ROE (Phase 42a)
@@ -3666,6 +4754,7 @@ class ScenarioLoader:
                 c2_rng,
                 era_config,
                 clock,
+                doctrine_side_assignments=doctrine_side_assignments,
             ),
         )
         return result
@@ -3678,6 +4767,11 @@ class ScenarioLoader:
         c2_rng: np.random.Generator,
         era_config: Any = None,
         clock: SimulationClock | None = None,
+        *,
+        doctrine_side_assignments: tuple[
+            DoctrineSideAssignment,
+            ...,
+        ] = (),
     ) -> dict[str, Any]:
         """Create optional domain engines from explicit flags and era gates."""
         if era_config is None:
@@ -3694,7 +4788,7 @@ class ScenarioLoader:
             config_field="ew_config",
         )
         if ew_enabled and "ew" in disabled:
-            raise ValueError(
+            raise ScenarioReferenceError(
                 "Era feature 'ew' is disabled but ew_config.enable_ew is true",
             )
         if ew_enabled:
@@ -3706,7 +4800,7 @@ class ScenarioLoader:
             and config.space_config.enable_space
         )
         if space_enabled and "space" in disabled:
-            raise ValueError(
+            raise ScenarioReferenceError(
                 "Era feature 'space' is disabled but "
                 "space_config.enable_space is true",
             )
@@ -3728,7 +4822,7 @@ class ScenarioLoader:
             config_field="cbrn_config",
         )
         if cbrn_enabled and "cbrn" in disabled:
-            raise ValueError(
+            raise ScenarioReferenceError(
                 "Era feature 'cbrn' is disabled but "
                 "cbrn_config.enable_cbrn is true",
             )
@@ -3736,12 +4830,17 @@ class ScenarioLoader:
             result.update(self._create_cbrn_engines(rng_mgr, bus, config))
 
         # 4. Schools
-        if config.school_config is not None:
-            result.update(self._create_school_engines(config.school_config))
+        if config.school_config is not None or doctrine_side_assignments:
+            school_config = dict(config.school_config or {})
+            # Exact per-unit assignments are committed with profile-derived
+            # and analysis assignments in one precedence-ordered plan.
+            school_config["unit_assignments"] = {}
+            result.update(self._create_school_engines(school_config))
 
         # 5. Commander
-        if config.commander_config is not None:
-            result.update(self._create_commander_engine(c2_rng, config.commander_config))
+        # Production commander construction is preflighted in ``load()``
+        # before the first ENTITIES draw and injected into the engine map
+        # after this optional-suite factory returns.
 
         # 6. Escalation
         if config.escalation_config is not None:
@@ -3908,7 +5007,14 @@ class ScenarioLoader:
             if gps_enabled
             else None
         )
-        isr = SpaceISREngine(constellation, sc, bus, space_rng, clock=clock)
+        isr = SpaceISREngine(
+            constellation,
+            sc,
+            bus,
+            space_rng,
+            clock=clock,
+            scenario_sides=tuple(side.side for side in config.sides),
+        )
         ew_sat = EarlyWarningEngine(
             constellation,
             sc,
@@ -4046,27 +5152,24 @@ class ScenarioLoader:
     def _create_commander_engine(
         self,
         c2_rng: np.random.Generator,
-        commander_cfg: dict[str, Any],
+        commander_cfg: CommanderScenarioConfig | Mapping[str, Any],
+        *,
+        era: str = "modern",
     ) -> dict[str, Any]:
-        """Create commander engine from commander_config."""
-        from stochastic_warfare.c2.ai.commander import (
-            CommanderConfig,
-            CommanderEngine,
-            CommanderProfileLoader,
-        )
-
+        """Create an isolated commander engine for focused consumers."""
         loader = CommanderProfileLoader(self._data_dir / "commander_profiles")
-        loader.load_all()
-
-        cmd_config = None
-        config_params = {
-            k: v for k, v in commander_cfg.items()
-            if k not in ("assignments", "side_defaults")
-        }
-        if config_params:
-            cmd_config = CommanderConfig.model_validate(config_params)
-
-        engine = CommanderEngine(loader, c2_rng, cmd_config)
+        catalogs = [self._data_dir / "commander_profiles"]
+        if era != "modern":
+            catalogs.append(
+                self._data_dir / "eras" / era / "commanders",
+            )
+        loader.load_directories(catalogs)
+        config = (
+            commander_cfg
+            if isinstance(commander_cfg, CommanderScenarioConfig)
+            else CommanderScenarioConfig.model_validate(commander_cfg)
+        )
+        engine = CommanderEngine(loader, c2_rng, config.engine_config())
 
         logger.info("Created commander engine")
         return {"commander_engine": engine}

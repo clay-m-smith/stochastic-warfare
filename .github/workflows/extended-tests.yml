@@ -1,0 +1,130 @@
+name: Extended Python Tests
+
+on:
+  schedule:
+    - cron: '17 6 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: extended-tests-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PYTHONDONTWRITEBYTECODE: '1'
+  UV_CACHE_DIR: /tmp/sw-uv-cache
+
+jobs:
+  partition-audit:
+    name: Exact Python partition union
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          enable-cache: true
+
+      - name: Install locked superset dependencies
+        run: >-
+          uv sync --locked --extra dev --extra api --extra terrain --extra mcp
+
+      - name: Audit exact disjoint partition union
+        run: >-
+          uv run --no-sync python scripts/validate_test_partitions.py
+          --output artifacts/partition-audit/manifest.json
+
+      - name: Upload partition audit
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: extended-partition-audit-${{ github.run_id }}
+          path: artifacts/partition-audit/
+          if-no-files-found: error
+
+  marker-partition:
+    name: ${{ matrix.partition }} shard ${{ matrix.shard_index }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 100
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - partition: slow-only
+            shard_index: 0
+            shard_count: 4
+            timeout_seconds: 4200
+          - partition: slow-only
+            shard_index: 1
+            shard_count: 4
+            timeout_seconds: 4200
+          - partition: slow-only
+            shard_index: 2
+            shard_count: 4
+            timeout_seconds: 4200
+          - partition: slow-only
+            shard_index: 3
+            shard_count: 4
+            timeout_seconds: 4200
+          - partition: benchmark-only
+            shard_index: 0
+            shard_count: 3
+            timeout_seconds: 2400
+          - partition: benchmark-only
+            shard_index: 1
+            shard_count: 3
+            timeout_seconds: 2400
+          - partition: benchmark-only
+            shard_index: 2
+            shard_count: 3
+            timeout_seconds: 2400
+          - partition: slow-benchmark
+            shard_index: 0
+            shard_count: 1
+            timeout_seconds: 4200
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          enable-cache: true
+
+      - name: Install locked superset dependencies
+        run: >-
+          uv sync --locked --extra dev --extra api --extra terrain --extra mcp
+
+      - name: Run deterministic non-empty shard
+        run: >-
+          uv run --no-sync python scripts/run_pytest_partition.py
+          "${{ matrix.partition }}"
+          --shard-index "${{ matrix.shard_index }}"
+          --shard-count "${{ matrix.shard_count }}"
+          --forbid-skips
+          --timeout-seconds "${{ matrix.timeout_seconds }}"
+          --manifest
+          "artifacts/${{ matrix.partition }}-${{ matrix.shard_index }}/manifest.json"
+          --junit
+          "artifacts/${{ matrix.partition }}-${{ matrix.shard_index }}/junit.xml"
+
+      - name: Upload shard evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: >-
+            pytest-${{ matrix.partition }}-${{ matrix.shard_index }}-${{ github.run_id }}
+          path: >-
+            artifacts/${{ matrix.partition }}-${{ matrix.shard_index }}/
+          if-no-files-found: error

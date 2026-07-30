@@ -1,0 +1,529 @@
+{
+  "derivation_command": "/home/csmith/projects/stochastic-warfare/.venv/bin/python -m pytest --collect-only -q -p no:cacheprovider -o addopts=",
+  "entries": [
+    {
+      "classification": "behavioral_oracle",
+      "node_id": "tests/benchmarks/test_benchmarks.py::TestRuntimeClosure::test_candidate_snapshot_is_exact_and_immutable",
+      "rationale": "The read_text calls inspect generated runtime content rather than source structure. The stronger positive and negative controls prove that snapshot materialization reproduces the captured dirty runtime manifest and bytes, then remains unchanged after the live source is mutated.",
+      "strongest_oracle": "candidate snapshot exactly reproduces a captured dirty runtime tree and remains immutable after live-tree mutation"
+    },
+    {
+      "classification": "behavioral_oracle",
+      "node_id": "tests/unit/test_phase112_doctrine_compare.py::test_no_analysis_doctrine_retains_commander_derived_schools",
+      "rationale": "The empty-policy assertion is a secondary disabled-control check. The stronger oracles use copied, typed commander profile data with explicit schools, load the real scenario through SimulationRuntimeFactory, and prove exact initial and reached reinforcement school assignments remain commander-derived when no analysis doctrine is supplied.",
+      "strongest_oracle": "production loading and reinforcement registration retain exact commander-profile schools when the analysis doctrine overlay is omitted"
+    },
+    {
+      "classification": "behavioral_oracle",
+      "node_id": "tests/api/test_phase_106_api_integrity.py::test_api_override_changes_outcome_and_is_deterministic",
+      "rationale": "The read_bytes call is a secondary source-immutability check. The stronger oracle compares completed API runs and persisted records, including engagements and disabled units under WEAPONS_FREE versus no engagements and ten active units under WEAPONS_HOLD, plus exact same-seed replay.",
+      "strongest_oracle": "real HTTP runs expose deterministic, persisted, outcome-changing ROE behavior"
+    },
+    {
+      "classification": "behavioral_oracle",
+      "node_id": "tests/api/test_phase_106_api_integrity.py::test_loader_applies_sparse_calibration_patch_without_mutating_source",
+      "rationale": "The read_bytes call is one postcondition. Stronger assertions prove that a production ScenarioLoader applies nested and side-specific typed calibration values, preserves defaults, publishes the effective calibration, and does not contaminate a second independently loaded context.",
+      "strongest_oracle": "production loader applies independent sparse calibration variants with exact runtime-visible values"
+    },
+    {
+      "classification": "behavioral_oracle",
+      "node_id": "tests/benchmarks/test_benchmarks.py::TestCanonicalEvidence::test_artifact_digest_detects_tampering",
+      "rationale": "The read_text call mutates a temporary serialized artifact after the production writer and validator have agreed on its typed value and digest. The stronger oracle is the validator's explicit rejection of that tampering.",
+      "strongest_oracle": "canonical artifact round-trip succeeds, then a changed status with the old digest is rejected"
+    },
+    {
+      "classification": "behavioral_oracle",
+      "node_id": "tests/benchmarks/test_benchmarks.py::TestCanonicalEvidence::test_version_one_or_extra_baseline_fields_reject",
+      "rationale": "Reading the checked-in baseline only supplies a valid fixture. The test changes its schema version and adds an unknown field, then exercises the typed baseline loader's fail-closed behavior.",
+      "strongest_oracle": "typed baseline loading raises on a version-one document with extra fields"
+    },
+    {
+      "classification": "behavioral_oracle",
+      "node_id": "tests/validation/test_phase112_ci_contract.py::test_partition_audit_rejects_overlap_and_missing_nodes",
+      "rationale": "The test calls the real partition-set validator with a valid exact union and two adversarial invalid unions; no workflow source or shape assertion supplies its result.",
+      "strongest_oracle": "partition validation accepts an exact union and rejects overlap and an empty/missing partition"
+    },
+    {
+      "classification": "behavioral_oracle",
+      "node_id": "tests/validation/test_phase112_ci_contract.py::test_partition_result_validation_rejects_skips_and_missing_outcomes",
+      "rationale": "The test executes the result-evidence validator against complete, skipped, and incomplete outcome counts. Its declared structural-cluster location is secondary to these direct fail-closed outcomes.",
+      "strongest_oracle": "result validation accepts complete accounting and rejects skips or missing terminal outcomes"
+    },
+    {
+      "classification": "behavioral_oracle",
+      "node_id": "tests/validation/test_phase112_ci_contract.py::test_shards_are_deterministic_disjoint_and_exact",
+      "rationale": "The test executes shard selection twice under reversed input and observes deterministic, non-empty, disjoint shards whose union exactly equals the source set.",
+      "strongest_oracle": "real shard-selection results are order-independent, disjoint, non-empty, and union-exact"
+    },
+    {
+      "classification": "behavioral_oracle",
+      "node_id": "tests/integration/test_phase_109_battle_sensor_domains.py::test_ship_sam_uses_air_defense_route_against_aircraft",
+      "rationale": "The naval mock non-call is secondary routing evidence. Stronger assertions execute the production ship-SAM path and observe ammunition consumption, exact AmmoExpended/Intercept/Engagement events, and an incremented air-defense engagement counter.",
+      "strongest_oracle": "production ship SAM consumes one round and emits exact outcome-affecting air-defense events"
+    },
+    {
+      "classification": "behavioral_oracle",
+      "node_id": "tests/integration/test_phase_109_equipment_mapping.py::test_m4_fire_control_instrument_is_not_a_duplicate_live_sensor",
+      "rationale": "The read_text call is fixture setup for a real temporary scenario. The stronger oracle production-loads that scenario and checks its exact runtime sensor and equipment-resolution attachment topology.",
+      "strongest_oracle": "production scenario loading resolves exactly one semantically correct live M4 sensor attachment"
+    },
+    {
+      "classification": "behavioral_oracle",
+      "node_id": "tests/unit/test_logging.py::TestConfigureLogging::test_file_handler",
+      "rationale": "The read_text call observes production output rather than source structure: the test configures a real file handler, emits and flushes a log record, then reads the output file.",
+      "strongest_oracle": "a real configured logger persists the exact emitted message to its file handler"
+    },
+    {
+      "classification": "behavioral_oracle",
+      "node_id": "tests/unit/test_phase112_analysis_red.py::test_batch_rejects_an_authored_empty_roster",
+      "rationale": "The read_text call only builds a schema-valid temporary fixture. The stronger oracle invokes the production analysis boundary and requires it to reject an authored empty roster before simulation.",
+      "strongest_oracle": "run_scenario_batch raises ValueError for a schema-valid force-empty scenario"
+    },
+    {
+      "classification": "behavioral_oracle",
+      "node_id": "tests/unit/test_phase_109_data_validator.py::test_unit_validator_rejects_unmapped_equipment",
+      "rationale": "The read_text call derives a real catalog fixture. The stronger oracle invokes validate_unit_catalog and observes exact statistics plus a semantic error naming the unmapped item and missing declaration.",
+      "strongest_oracle": "production data validation fails closed with exact unmapped-equipment diagnostics"
+    },
+    {
+      "classification": "behavioral_oracle",
+      "node_id": "tests/unit/test_phase_19a_school_framework.py::TestSchoolDefinition::test_yaml_roundtrip",
+      "rationale": "The temporary YAML read is the serialization input, not a source search. The test rehydrates it through SchoolDefinition and asserts the exact school ID, multiplier, and nested override.",
+      "strongest_oracle": "typed doctrine-school schema round-trips exact nested values through YAML"
+    },
+    {
+      "classification": "behavioral_oracle",
+      "node_id": "tests/unit/test_phase_109_routed_ammunition.py::test_missile_route_abort_does_not_consume_or_publish[cooldown-cooldown]",
+      "rationale": "The downstream missile method remains mocked, but the stronger oracle is the real route's exact cooldown abort plus unchanged weapon state and zero expenditure/engagement events.",
+      "strongest_oracle": "real routed launch aborts for cooldown without consuming or publishing"
+    },
+    {
+      "classification": "behavioral_oracle",
+      "node_id": "tests/unit/test_phase_109_routed_ammunition.py::test_missile_route_abort_does_not_consume_or_publish[no_ammo-no_ammo]",
+      "rationale": "The downstream missile method remains mocked, but the stronger oracle is the real route's exact no-ammo abort plus unchanged weapon state and zero expenditure/engagement events.",
+      "strongest_oracle": "real routed launch aborts for no ammunition without consuming or publishing"
+    },
+    {
+      "classification": "behavioral_oracle",
+      "node_id": "tests/unit/test_phase_109_routed_ammunition.py::test_missile_route_abort_does_not_consume_or_publish[no_engine-no_missile_engine]",
+      "rationale": "The downstream missile method remains mocked, but the stronger oracle is the real route's exact missing-engine abort plus unchanged weapon state and zero expenditure/engagement events.",
+      "strongest_oracle": "real routed launch aborts for missing missile engine without consuming or publishing"
+    },
+    {
+      "classification": "behavioral_oracle",
+      "node_id": "tests/unit/test_phase_109_routed_ammunition.py::test_missile_route_abort_does_not_consume_or_publish[out_of_range-out_of_range]",
+      "rationale": "The downstream missile method remains mocked, but the stronger oracle is the real route's exact range abort plus unchanged weapon state and zero expenditure/engagement events.",
+      "strongest_oracle": "real routed launch aborts out of range without consuming or publishing"
+    },
+    {
+      "classification": "behavioral_oracle",
+      "node_id": "tests/unit/test_phase_109_routed_ammunition.py::test_routed_launches_consume_record_and_publish_exactly_once[10]",
+      "rationale": "Mock assertions are secondary dispatch checks. The real route engages, consumes exactly one round, advances fire/cooldown counters, and publishes exact ammunition and engagement events; downstream missile effects remain mocked.",
+      "strongest_oracle": "real routed launch commits one exact weapon-resource and event transition"
+    },
+    {
+      "classification": "behavioral_oracle",
+      "node_id": "tests/unit/test_phase_109_routed_ammunition.py::test_routed_launches_consume_record_and_publish_exactly_once[11]",
+      "rationale": "Mock assertions are secondary dispatch checks. The real route engages, consumes exactly one round, advances fire/cooldown counters, and publishes exact ammunition and engagement events; downstream missile effects remain mocked.",
+      "strongest_oracle": "real routed launch commits one exact weapon-resource and event transition"
+    },
+    {
+      "classification": "behavioral_oracle",
+      "node_id": "tests/unit/test_phase_109_routed_ammunition.py::test_routed_launches_consume_record_and_publish_exactly_once[2]",
+      "rationale": "Mock assertions are secondary dispatch checks. The real route engages, consumes exactly one round, advances fire/cooldown counters, and publishes exact ammunition and engagement events; downstream missile effects remain mocked.",
+      "strongest_oracle": "real routed launch commits one exact weapon-resource and event transition"
+    },
+    {
+      "classification": "behavioral_oracle",
+      "node_id": "tests/unit/test_phase_109_routed_ammunition.py::test_routed_launches_consume_record_and_publish_exactly_once[9]",
+      "rationale": "Mock assertions are secondary dispatch checks. The real route engages, consumes exactly one round, advances fire/cooldown counters, and publishes exact ammunition and engagement events; downstream missile effects remain mocked.",
+      "strongest_oracle": "real routed launch commits one exact weapon-resource and event transition"
+    },
+    {
+      "classification": "behavioral_oracle",
+      "node_id": "tests/unit/test_phase43_domain_resolution.py::TestGetFormationFirepower::test_engine_queried",
+      "rationale": "The mock call verifies the dependency boundary, but the real adapter also returns the exact 0.6 value supplied by that dependency. This proves the adapter's bounded query/result contract, not formation-firepower production behavior.",
+      "strongest_oracle": "real formation-firepower adapter returns the dependency's exact numeric result"
+    },
+    {
+      "classification": "behavioral_oracle",
+      "node_id": "tests/unit/test_phase43_domain_resolution.py::TestNavalRouting::test_missile_routes_to_surface_engine",
+      "rationale": "The downstream surface engine is mocked, limiting the claim to routing and translation. The real BattleManager route turns its typed result into an exact pending DESTROYED status.",
+      "strongest_oracle": "real naval route translates a typed surface-engine result to pending DESTROYED"
+    },
+    {
+      "classification": "behavioral_oracle",
+      "node_id": "tests/unit/test_phase43_domain_resolution.py::TestNavalRouting::test_naval_gun_routes_to_gunnery_engine",
+      "rationale": "The downstream gunnery engine is mocked, limiting the claim to routing and translation. The real BattleManager route turns its typed result into an exact pending DISABLED status.",
+      "strongest_oracle": "real naval route translates a typed gunnery-engine result to pending DISABLED"
+    },
+    {
+      "classification": "behavioral_oracle",
+      "node_id": "tests/unit/test_phase43_domain_resolution.py::TestNavalRouting::test_torpedo_routes_to_subsurface_engine",
+      "rationale": "The downstream subsurface engine is mocked, limiting the claim to routing and translation. The real BattleManager route turns its typed result into an exact pending DESTROYED status.",
+      "strongest_oracle": "real naval route translates a typed subsurface-engine result to pending DESTROYED"
+    },
+    {
+      "classification": "behavioral_oracle",
+      "node_id": "tests/unit/test_phase51_naval_combat.py::TestASROCRouting::test_missile_vs_naval_routes_to_salvo",
+      "rationale": "The salvo engine is mocked, so this is not evidence for missile effects. The real routing boundary nevertheless returns handled=True for the naval missile branch.",
+      "strongest_oracle": "real naval routing boundary reports the missile-versus-ship branch as handled"
+    },
+    {
+      "classification": "behavioral_oracle",
+      "node_id": "tests/unit/test_phase51_naval_combat.py::TestASROCRouting::test_missile_vs_submarine_routes_to_asroc",
+      "rationale": "The ASROC engine is mocked, so this is not evidence for weapon effects. The real routing boundary returns handled=True and translates the typed result to exact DISABLED status.",
+      "strongest_oracle": "real ASROC route reports handled and translates its typed result to DISABLED"
+    },
+    {
+      "classification": "behavioral_oracle",
+      "node_id": "tests/unit/test_phase51_naval_combat.py::TestDepthChargeRouting::test_depth_charge_routes_to_engine",
+      "rationale": "The depth-charge engine is mocked, so the claim is limited to dispatch. The real routing boundary returns handled=True for the depth-charge branch.",
+      "strongest_oracle": "real naval routing boundary reports the depth-charge branch as handled"
+    },
+    {
+      "classification": "behavioral_oracle",
+      "node_id": "tests/unit/test_phase51_naval_combat.py::TestShoreBombardmentAndVLS::test_shore_bombardment_ground_attacker_falls_through",
+      "rationale": "The mock non-call is secondary. The direct oracle is the real routing boundary's handled=False result for a ground attacker, proving this bounded negative dispatch contract.",
+      "strongest_oracle": "real shore-bombardment route falls through for a ground attacker"
+    },
+    {
+      "classification": "behavioral_oracle",
+      "node_id": "tests/unit/test_phase51_naval_combat.py::TestShoreBombardmentAndVLS::test_shore_bombardment_requires_naval_attacker",
+      "rationale": "The downstream bombardment engine is mocked, limiting the claim to dispatch. The real routing boundary returns handled=True for the naval-attacker branch.",
+      "strongest_oracle": "real shore-bombardment route handles a naval attacker"
+    },
+    {
+      "classification": "behavioral_oracle",
+      "node_id": "tests/unit/test_phase51_naval_combat.py::TestShoreBombardmentAndVLS::test_vls_magazine_exhaustion",
+      "rationale": "The mock non-call is secondary. The real route returns handled=True with no damage status when the VLS magazine is exhausted, proving only that bounded exhaustion outcome.",
+      "strongest_oracle": "real VLS route handles an exhausted magazine with no damage status"
+    },
+    {
+      "classification": "behavioral_oracle",
+      "node_id": "tests/unit/test_phase52_environmental.py::TestCommsTerrainLOS::test_hf_exempt_from_los",
+      "rationale": "The LOS mock non-call is secondary. The real CommunicationsEngine boundary returns an exact 1.0 terrain factor for HF, proving only the named bypass behavior.",
+      "strongest_oracle": "real communications LOS boundary returns 1.0 for HF bypass"
+    },
+    {
+      "classification": "behavioral_oracle",
+      "node_id": "tests/unit/test_phase52_environmental.py::TestCommsTerrainLOS::test_requires_los_false_bypasses",
+      "rationale": "The LOS mock non-call is secondary. The real CommunicationsEngine boundary returns an exact 1.0 terrain factor when line of sight is disabled, proving only the named bypass behavior.",
+      "strongest_oracle": "real communications LOS boundary returns 1.0 when LOS is not required"
+    },
+    {
+      "classification": "behavioral_oracle",
+      "node_id": "tests/unit/test_phase52_environmental.py::TestCommsTerrainLOS::test_satellite_exempt_from_los",
+      "rationale": "The LOS mock non-call is secondary. The real CommunicationsEngine boundary returns an exact 1.0 terrain factor for satellite links, proving only the named bypass behavior.",
+      "strongest_oracle": "real communications LOS boundary returns 1.0 for satellite bypass"
+    },
+    {
+      "classification": "behavioral_oracle",
+      "node_id": "tests/unit/test_phase78_structural.py::TestLOSVegetation::test_set_vegetation_density",
+      "rationale": "Although located in a structural cluster, this test calls the real mutator and observes exact stored values, including lower and upper clamping. It proves only this state-transition contract.",
+      "strongest_oracle": "real vegetation-density mutator stores 0.5 and clamps to 0.0 and 1.0"
+    },
+    {
+      "classification": "behavioral_oracle",
+      "node_id": "tests/unit/test_phase78_structural.py::TestMovementEngineIceOnIce::test_returns_false_without_classification",
+      "rationale": "Although located in a structural cluster, this test executes the real movement helper and observes its disabled-input fallback. It does not prove enabled ice-crossing behavior.",
+      "strongest_oracle": "real movement helper returns False without an ice classification"
+    },
+    {
+      "classification": "behavioral_oracle",
+      "node_id": "tests/validation/test_calibration_coverage.py::TestCalibrationIntegrity::test_schema_round_trip",
+      "rationale": "The test serializes and rehydrates the real CalibrationSchema and checks exact nested values. This proves the typed schema round-trip only, not production loading or outcome effects.",
+      "strongest_oracle": "typed calibration schema round-trips exact nested values"
+    },
+    {
+      "classification": "behavioral_oracle",
+      "node_id": "tests/validation/test_deficit_closure.py::TestScenarioResolutionDeficitClosure::test_calibration_schema_typed",
+      "rationale": "The inheritance check is structural, but the same test also exercises the real typed schema's fail-closed unknown-key contract. It does not prove production scenario wiring.",
+      "strongest_oracle": "typed calibration schema rejects an unknown field"
+    },
+    {
+      "classification": "behavioral_oracle",
+      "node_id": "tests/unit/test_phase_24e_insurgency.py::TestCellFormation::test_cell_created_at_threshold",
+      "rationale": "The type assertion is secondary. With the configured member count set to five, the real insurgency engine returns a concrete InsurgentCell instead of no formation; this proves only that bounded input/output contract.",
+      "strongest_oracle": "real cell-formation boundary returns an InsurgentCell for the five-member input"
+    },
+    {
+      "classification": "behavioral_oracle",
+      "node_id": "tests/unit/test_phase40_battle_loop.py::TestBattleManagerIntegration::test_base_unit_posture_unchanged",
+      "rationale": "The assertion is attribute-shaped, but it follows a real BattleManager tick. It observes that the backward-compatible base Unit is not mutated with a posture field; it does not prove any posture-aware behavior.",
+      "strongest_oracle": "real battle tick preserves the base Unit's posture-free state"
+    },
+    {
+      "classification": "behavioral_oracle",
+      "node_id": "tests/unit/test_phase_72c_engine_checkpoint.py::TestNumpyEncoderUsage::test_default_str_corrupts_numpy",
+      "rationale": "The type assertion is the exact negative-control outcome: a NumPy array serialized through default=str rehydrates as a string. This demonstrates the corruption mode only, not the production checkpoint encoder.",
+      "strongest_oracle": "default=str JSON round-trip rehydrates a NumPy array as a string"
+    },
+    {
+      "classification": "behavioral_oracle",
+      "node_id": "tests/unit/test_phase88_unit_arrays.py::TestDistanceMatrix::test_distance_matrix_empty_side",
+      "rationale": "Here the exact shape is the complete bounded result of the real distance-matrix operation for one populated and one empty side, not merely an object-presence check.",
+      "strongest_oracle": "real empty-side distance computation returns exact shape (1, 0)"
+    },
+    {
+      "classification": "behavioral_oracle",
+      "node_id": "tests/unit/test_phase88_unit_arrays.py::TestFiltering::test_get_enemy_positions_empty",
+      "rationale": "Here the exact shape is the complete bounded result of the real enemy-position query for a single-side force, not merely an object-presence check.",
+      "strongest_oracle": "real no-enemy position query returns exact shape (0, 2)"
+    },
+    {
+      "classification": "behavioral_oracle",
+      "node_id": "tests/validation/test_campaign_data.py::TestToScenarioConfig::test_strips_ai_expectations",
+      "rationale": "The absence check follows real HistoricalCampaign validation and conversion. It proves only that analysis-only AI expectations are omitted from the produced ScenarioConfig.",
+      "strongest_oracle": "campaign conversion omits AI expectations from the runtime scenario config"
+    },
+    {
+      "classification": "behavioral_oracle",
+      "node_id": "tests/validation/test_campaign_data.py::TestToScenarioConfig::test_strips_documented_outcomes",
+      "rationale": "The absence check follows real HistoricalCampaign validation and conversion. It proves only that analysis-only documented outcomes are omitted from the produced ScenarioConfig.",
+      "strongest_oracle": "campaign conversion omits documented outcomes from the runtime scenario config"
+    },
+    {
+      "classification": "behavioral_oracle",
+      "node_id": "tests/validation/test_phase112_ci_contract.py::test_helper_trace_uses_executable_lexical_scope",
+      "rationale": "The AST type checks are setup guards. The stronger oracle executes the real helper tracer against colliding module, class, and local definitions and observes that only the executable local assertion helper is selected.",
+      "strongest_oracle": "helper tracing resolves the executable local assertion helper instead of same-name module or class definitions"
+    },
+    {
+      "classification": "behavioral_oracle",
+      "node_id": "tests/validation/test_phase112_ci_contract.py::test_weak_shape_classifier_requires_the_whole_assertion_to_be_weak",
+      "rationale": "The AST type checks are setup guards. The stronger positive and negative controls execute the real weak-shape classifier and distinguish wholly shape/non-null assertions from mixed semantic and exact-null assertions.",
+      "strongest_oracle": "weak-shape classification accepts only the wholly weak expression and rejects both mixed-semantic and exact-null controls"
+    },
+    {
+      "classification": "behavioral_oracle",
+      "node_id": "tests/unit/test_phase_27a_cross_domain.py::TestEngagementRouter::test_coastal_defense_with_missile_engine",
+      "rationale": "The downstream missile engine is mocked, limiting the claim to routing. The real EngagementEngine route returns engaged=True for the coastal-defense branch.",
+      "strongest_oracle": "real coastal-defense routing boundary reports the missile-backed branch as engaged"
+    },
+    {
+      "classification": "behavioral_oracle",
+      "node_id": "tests/unit/test_phase_58b_air_routing.py::TestAirRoutingDispatch::test_air_vs_air_routes_to_air_combat",
+      "rationale": "The downstream air-combat engine is mocked, limiting the claim to routing and result translation. The real air-routing boundary returns handled=True and exact DESTROYED status.",
+      "strongest_oracle": "real air-versus-air route translates a typed hit to handled DESTROYED"
+    },
+    {
+      "classification": "behavioral_oracle",
+      "node_id": "tests/unit/test_phase_58b_air_routing.py::TestAirRoutingDispatch::test_air_vs_ground_routes_to_air_ground",
+      "rationale": "The downstream air-ground engine is mocked, limiting the claim to routing and result translation. The real air-routing boundary returns handled=True and exact DISABLED status.",
+      "strongest_oracle": "real air-versus-ground route translates a typed hit to handled DISABLED"
+    },
+    {
+      "classification": "behavioral_oracle",
+      "node_id": "tests/unit/test_phase_58b_air_routing.py::TestAirRoutingDispatch::test_ground_vs_air_routes_to_air_defense",
+      "rationale": "The downstream air-defense engine is mocked, limiting the claim to routing and result translation. The real air-routing boundary returns handled=True and exact DESTROYED status.",
+      "strongest_oracle": "real ground-versus-air route translates a typed intercept to handled DESTROYED"
+    },
+    {
+      "classification": "behavioral_oracle",
+      "node_id": "tests/unit/test_phase_61c_em_propagation.py::TestDEWAtmosphericParams::test_dew_laser_receives_humidity_and_precipitation",
+      "rationale": "The atmospheric forwarding assertions remain mock-bound and do not prove humidity effects. A narrower direct oracle executes the real EngagementEngine route and observes engaged=True translation from the typed DEW result.",
+      "strongest_oracle": "real DEW routing boundary translates a typed laser result to engaged=True"
+    },
+    {
+      "classification": "behavioral_oracle",
+      "node_id": "tests/unit/test_phase_63a_detection_ai.py::TestGetUnitSignature::test_returns_profile_when_available",
+      "rationale": "The signature loader is mocked, so this is not production-loading evidence. The real adapter nevertheless returns the exact profile supplied for the unit type, proving only its bounded query/result contract.",
+      "strongest_oracle": "real unit-signature adapter returns the loader's exact profile for the unit type"
+    },
+    {
+      "classification": "behavioral_oracle",
+      "node_id": "tests/unit/test_phase_63d_missile_comms.py::TestMissileRouting::test_missile_type_route_engagement_calls_missile_engine",
+      "rationale": "The downstream missile engine is mocked, limiting the claim to route behavior. The real EngagementEngine boundary returns engaged=True with exact MISSILE engagement type.",
+      "strongest_oracle": "real missile route returns engaged=True with exact MISSILE type"
+    },
+    {
+      "classification": "behavioral_oracle",
+      "node_id": "tests/validation/test_phase112_ci_contract.py::test_evidence_metadata_refresh_preserves_reviewed_disposition",
+      "rationale": "The test executes the real metadata refresher against a temporary reviewed ledger. It observes the derivation command change while the exact disposition entry remains unchanged.",
+      "strongest_oracle": "metadata refresh updates the command and preserves the reviewed entry byte-for-value"
+    },
+    {
+      "classification": "behavioral_oracle",
+      "node_id": "tests/validation/test_phase112_evidence_ledgers.py::test_strong_behavioral_oracles_are_not_auto_marked_structural",
+      "rationale": "Reading the reviewed ledger establishes the expected IDs. The stronger oracle executes real pytest structural collection and observes that neither reviewed behavioral node is selected; it does not re-prove their simulation capabilities.",
+      "strongest_oracle": "real structural-marker collection excludes both reviewed Phase 106 behavioral nodes"
+    },
+    {
+      "classification": "behavioral_oracle",
+      "node_id": "tests/api/test_database.py::test_batch_with_metrics",
+      "rationale": "The non-null check follows a real in-memory SQLite create, metrics update, and subsequent row retrieval. It proves only that the database boundary persists some metrics payload in the formerly empty field, not its exact JSON contents or downstream use.",
+      "strongest_oracle": "SQLite batch update persists a non-null metrics payload through subsequent retrieval"
+    },
+    {
+      "classification": "behavioral_oracle",
+      "node_id": "tests/unit/movement/test_convoy.py::TestConvoyFormation::test_get_convoy",
+      "rationale": "The non-null result follows real convoy formation under the requested ID and a lookup of that same ID. It proves the bounded formation-to-retrieval state transition, not the convoy composition, speed, or movement behavior.",
+      "strongest_oracle": "forming convoy cv1 makes cv1 retrievable from the real convoy engine"
+    },
+    {
+      "classification": "behavioral_oracle",
+      "node_id": "tests/unit/test_c2_ai_doctrine.py::TestDoctrineEngine::test_fallback_when_preferred_is_none",
+      "rationale": "The engine loads two concrete doctrine definitions, receives no preferred ID, and returns an applicable definition instead of no selection. Because the test does not assert the selected ID, it proves fallback availability only, not deterministic selection or doctrinal effects.",
+      "strongest_oracle": "real doctrine selection returns an applicable fallback when no preferred ID is supplied"
+    },
+    {
+      "classification": "behavioral_oracle",
+      "node_id": "tests/unit/test_c2_coordination.py::TestFSCL::test_set_and_query_fscl",
+      "rationale": "A fresh coordination engine starts without an FSCL; after the real setter receives two positions, the real query returns a line instead of None. The test does not validate the returned geometry or any fire-clearance consequence.",
+      "strongest_oracle": "setting an FSCL makes it queryable from the same coordination engine"
+    },
+    {
+      "classification": "behavioral_oracle",
+      "node_id": "tests/unit/test_config.py::TestScenarioConfig::test_start_time_is_utc",
+      "rationale": "The assertion observes a ScenarioConfig produced by the real fixture loader and establishes that its parsed start time is timezone-aware. It does not verify a zero UTC offset, so it cannot support the test name's stronger UTC claim.",
+      "strongest_oracle": "real scenario-config loading parses the authored start time as timezone-aware"
+    },
+    {
+      "classification": "behavioral_oracle",
+      "node_id": "tests/unit/test_intel_fusion.py::TestSubmitSensorDetection::test_creates_track",
+      "rationale": "A positive typed radar detection is submitted through the real fusion boundary and produces a track identifier instead of the no-detection None result. The test does not inspect the track, its lifecycle, or downstream exposure.",
+      "strongest_oracle": "real positive sensor-detection submission returns a created track identifier"
+    },
+    {
+      "classification": "behavioral_oracle",
+      "node_id": "tests/unit/test_logging.py::TestConfigureLogging::test_console_handler_added",
+      "rationale": "The type-shaped predicate observes mutated logger state after the real logging configurator clears and rebuilds the namespace handlers. It proves only that configuration installs a stream handler, not formatting, levels, emission, or persistence.",
+      "strongest_oracle": "real logging configuration installs a stream handler on the repository logger"
+    },
+    {
+      "classification": "behavioral_oracle",
+      "node_id": "tests/unit/test_naval_logistics.py::TestLOTS::test_lots_calm_seas",
+      "rationale": "The real naval-logistics engine receives a sea-state-2 LOTS request and creates a mission instead of returning the high-sea cancellation result. It does not prove mission contents, transfer progress, completion, or the rejection threshold.",
+      "strongest_oracle": "real LOTS startup accepts the calm-sea request and returns a mission"
+    },
+    {
+      "classification": "behavioral_oracle",
+      "node_id": "tests/unit/test_phase_13a5_viewshed.py::TestViewshedVectorization::test_viewshed_shape_matches_heightmap",
+      "rationale": "For a real 15-row by 25-column Heightmap, the viewshed operation returns the exact same 15-by-25 lattice. This proves only the bounded output-extent contract, not any cell's visibility value, occlusion, range, or cache behavior.",
+      "strongest_oracle": "real viewshed computation preserves the exact authored 15-by-25 terrain lattice"
+    },
+    {
+      "classification": "behavioral_oracle",
+      "node_id": "tests/unit/test_phase_13b4_astar_precompute.py::TestDifficultyGrid::test_difficulty_grid_shape",
+      "rationale": "The real A* difficulty-grid builder receives inclusive indices -5 through 5 on both axes and returns the exact 11-by-11 lattice. It does not prove cell costs, terrain consumption, route choice, or pathfinding behavior.",
+      "strongest_oracle": "real difficulty-grid construction maps inclusive -5..5 bounds to an exact 11-by-11 lattice"
+    },
+    {
+      "classification": "behavioral_oracle",
+      "node_id": "tests/unit/test_phase_15a_pipeline_heightmap.py::TestSrtmHeightmapLoader::test_cell_size_determines_shape",
+      "rationale": "Two real SRTM loads use the same synthetic tile and bounding box with 1000 m and 500 m cells; the finer result has strictly more rows and strictly more columns. This proves only the resolution-to-lattice-size relation, not exact dimensions, elevations, projection accuracy, or production terrain availability.",
+      "strongest_oracle": "real 500 m SRTM loading produces more rows and columns than the same 1000 m load"
+    },
+    {
+      "classification": "behavioral_oracle",
+      "node_id": "tests/integration/test_phase112_commander_unit_integrity.py::test_duplicate_commander_assignment_yaml_key_rejects_preconstruction",
+      "rationale": "The read_text call only constructs the malformed YAML fixture. The real ScenarioLoader rejects the duplicate commander-assignment key with its exact diagnostic, while instrumented production boundaries prove that no unit construction or commander-plan commit occurred.",
+      "strongest_oracle": "real ScenarioLoader duplicate-key rejection occurs before any unit construction or commander assignment commit"
+    },
+    {
+      "classification": "behavioral_oracle",
+      "node_id": "tests/unit/test_phase_63a_detection_ai.py::TestGetUnitSignature::test_missing_unit_type_returns_none_without_error",
+      "rationale": "The mock-call assertion is secondary to the helper postcondition: a unit with no type produces the contractually explicit None result, and the exact call argument distinguishes that fallback from an unrelated short circuit. This proves only the helper boundary, not production detection wiring.",
+      "strongest_oracle": "the signature helper returns None for a missing unit type after one exact loader lookup with None"
+    },
+    {
+      "classification": "behavioral_oracle",
+      "node_id": "tests/validation/test_phase112_evaluator_contract.py::test_evaluator_process_rejects_error_and_preserves_cambrai_semantics",
+      "rationale": "The read_text calls consume subprocess output artifacts rather than inspect implementation source. A real evaluator process proves the exact successful Cambrai result and event semantics, while a malformed scenario produces exit code 1 and an exact LOAD_OR_RUN_ERROR result.",
+      "strongest_oracle": "real evaluator subprocess preserves exact Cambrai semantics and fails closed with exit 1 for an invalid scenario"
+    },
+    {
+      "classification": "behavioral_oracle",
+      "node_id": "tests/validation/test_phase112_scenario_data_contract.py::test_scenario_data_validator_rejects_incompatible_override",
+      "rationale": "The read_text call only seeds a mutated scenario fixture. The real data-validation route invokes ScenarioLoader, publishes no load statistics, and returns one exact domain-incompatibility error for an aerial armor override.",
+      "strongest_oracle": "production ScenarioLoader validation rejects the incompatible f16c armor override with one exact error and no load statistics"
+    },
+    {
+      "classification": "behavioral_oracle",
+      "node_id": "tests/api/test_analysis.py::test_analysis_maps_unknown_scenario_references_to_422",
+      "rationale": "The read_text calls only seed malformed scenario fixtures. Real ASGI requests traverse the analysis router and runtime preparation boundary for unknown commander, doctrine-school, and reinforcement-unit references, and each returns HTTP 422 with the exact rejected identifier.",
+      "strongest_oracle": "the real comparison endpoint maps three distinct runtime-reference validation failures to exact HTTP 422 responses"
+    },
+    {
+      "classification": "behavioral_oracle",
+      "node_id": "tests/api/test_analysis.py::test_analysis_routes_map_real_missing_unit_input_to_422",
+      "rationale": "The read_text call only seeds the malformed scenario fixture. Real ASGI requests traverse comparison, sweep, and doctrine-comparison preparation, and every route returns HTTP 422 naming the missing production unit definition.",
+      "strongest_oracle": "all three public analysis routes map real runtime unit-load failure to exact HTTP 422 responses"
+    },
+    {
+      "classification": "behavioral_oracle",
+      "node_id": "tests/api/test_phase112_runtime_persistence.py::test_invalid_rosters_are_rejected_before_run_or_batch_persistence",
+      "rationale": "The read_text call only seeds the invalid roster fixture. File-run, inline-run, and batch ASGI requests all fail with HTTP 422 before database rows, background tasks, progress queues, or cancellation state are created.",
+      "strongest_oracle": "three public run submission paths reject a missing unit definition before any durable or in-memory publication"
+    },
+    {
+      "classification": "behavioral_oracle",
+      "node_id": "tests/api/test_phase112_runtime_persistence.py::test_invalid_scenario_references_are_http_422_before_persistence",
+      "rationale": "The read_text calls only seed malformed scenario fixtures. Real inline and batch submission routes reject unknown commander, doctrine-school, and reinforcement-unit references with HTTP 422 while preserving run and batch counts and creating no tasks.",
+      "strongest_oracle": "two public submission paths reject three runtime-reference failures before database or task publication"
+    },
+    {
+      "classification": "behavioral_oracle",
+      "node_id": "tests/api/test_phase112_runtime_persistence.py::test_run_and_batch_survive_database_reopen_with_full_evidence",
+      "rationale": "The read_text call supplies the inline scenario payload rather than inspecting source. Real file, inline, and batch API runs complete, the SQLite database is closed and reopened, and exact outcomes, raw metrics, statistics, seeds, fingerprints, rosters, and per-run provenance remain available.",
+      "strongest_oracle": "completed file, inline, and batch results retain exact outcome and provenance evidence after a real database reopen"
+    },
+    {
+      "classification": "behavioral_oracle",
+      "node_id": "tests/unit/test_phase112_analysis_consumers.py::test_file_source_rejects_coercive_or_nonfinite_calibration[10.0]",
+      "rationale": "The read_text call seeds a real scenario-file fixture. Production SimulationRuntimeFactory preparation rejects the coercive string calibration value before a prepared runtime can be returned.",
+      "strongest_oracle": "the production file-source preparation boundary rejects string-to-float calibration coercion"
+    },
+    {
+      "classification": "behavioral_oracle",
+      "node_id": "tests/unit/test_phase112_analysis_consumers.py::test_file_source_rejects_coercive_or_nonfinite_calibration[True]",
+      "rationale": "The read_text call seeds a real scenario-file fixture. Production SimulationRuntimeFactory preparation rejects the boolean calibration value before a prepared runtime can be returned.",
+      "strongest_oracle": "the production file-source preparation boundary rejects boolean-as-number calibration coercion"
+    },
+    {
+      "classification": "behavioral_oracle",
+      "node_id": "tests/unit/test_phase112_analysis_consumers.py::test_file_source_rejects_coercive_or_nonfinite_calibration[inf]",
+      "rationale": "The read_text call seeds a real scenario-file fixture. Production SimulationRuntimeFactory preparation rejects positive infinity before a prepared runtime can be returned.",
+      "strongest_oracle": "the production file-source preparation boundary rejects non-finite positive-infinity calibration"
+    },
+    {
+      "classification": "behavioral_oracle",
+      "node_id": "tests/unit/test_phase112_analysis_consumers.py::test_file_source_rejects_coercive_or_nonfinite_calibration[nan]",
+      "rationale": "The read_text call seeds a real scenario-file fixture. Production SimulationRuntimeFactory preparation rejects NaN before a prepared runtime can be returned.",
+      "strongest_oracle": "the production file-source preparation boundary rejects non-finite NaN calibration"
+    },
+    {
+      "classification": "behavioral_oracle",
+      "node_id": "tests/validation/test_phase112_ci_contract.py::test_collection_timeout_writes_failure_result_and_removes_stale_evidence",
+      "rationale": "The read_text call consumes the generated result artifact. With a controlled subprocess timeout, the real partition-runner entry point returns its collection-error code, removes every stale evidence file, and writes the exact bounded-timeout failure record; this is a local runner contract, not proof of a remote CI execution.",
+      "strongest_oracle": "partition-runner timeout handling atomically removes stale artifacts and publishes one exact collection-error result"
+    },
+    {
+      "classification": "behavioral_oracle",
+      "node_id": "tests/validation/test_phase112_ci_contract.py::test_unsharded_partition_executes_exact_manifest_node_ids",
+      "rationale": "The read_text calls consume generated selection, manifest, and result artifacts. The real partition runner binds an unsharded execution to the exact collected node IDs, emits matching JUnit evidence, records the selected manifest, and returns success; subprocess execution itself is controlled.",
+      "strongest_oracle": "unsharded partition execution uses the exact manifest node-ID argument file and persists matching passed evidence"
+    },
+    {
+      "classification": "behavioral_oracle",
+      "node_id": "tests/validation/test_phase112_evaluator_contract.py::test_evaluator_uses_every_constructed_unit_as_movement_denominator",
+      "rationale": "The read_text call consumes the real evaluator subprocess artifact. The reinforcement scenario reports six initial units but thirteen constructed units, exposes thirteen unit details, partitions all thirteen into moved or unmoved, and never prints the invalid 13/6 ratio.",
+      "strongest_oracle": "a real evaluator subprocess uses all thirteen constructed initial-plus-reinforcement units as the movement denominator"
+    },
+    {
+      "classification": "behavioral_oracle",
+      "node_id": "tests/validation/test_phase112_scenario_data_contract.py::test_all_shipped_scenarios_strictly_round_trip_through_typed_json",
+      "rationale": "The read_text calls load shipped data rather than inspect implementation source. All exactly fifty-two scenario YAML files pass typed parsing, JSON-mode materialization, strict reparsing, and exact typed JSON equality.",
+      "strongest_oracle": "all 52 shipped scenarios preserve exact typed JSON across parse, materialize, and reparse"
+    },
+    {
+      "classification": "behavioral_oracle",
+      "node_id": "tests/unit/test_phase_16f_ew_validation.py::TestBekaaSetup::test_eccm_suites_for_sams",
+      "rationale": "A fresh ECCM engine receives a concrete SA-6 suite for sam_0 and its real unit lookup then returns a suite instead of None. This proves only the register/get state transition, not suite identity, techniques, activation, jamming reduction, scenario loading, or Bekaa outcomes.",
+      "strongest_oracle": "registering the SA-6 ECCM suite makes sam_0 retrievable from the same engine"
+    }
+  ],
+  "kind": "reviewed_behavioral_oracles",
+  "schema_version": 1
+}

@@ -9,8 +9,7 @@ from __future__ import annotations
 
 import enum
 import math
-import uuid
-from typing import NamedTuple
+from typing import Any, NamedTuple
 
 import numpy as np
 
@@ -53,6 +52,17 @@ _SPECTRAL_TABLE: dict[ObscurantType, SpectralBlocking] = {
     ObscurantType.FOG_ADVECTION: SpectralBlocking(0.9, 0.6, 0.0),
     ObscurantType.FOG_SEA: SpectralBlocking(0.9, 0.6, 0.0),
 }
+
+
+def _cloud_prefix(cloud_type: ObscurantType) -> str:
+    if cloud_type in {
+        ObscurantType.SMOKE,
+        ObscurantType.SMOKE_MULTISPECTRAL,
+    }:
+        return "smoke"
+    if cloud_type is ObscurantType.DUST:
+        return "dust"
+    return "fog"
 
 
 # ---------------------------------------------------------------------------
@@ -113,6 +123,12 @@ class ObscurantsEngine:
         self._clock = clock
         self._rng = rng
         self._clouds: dict[str, _Cloud] = {}
+        self._next_cloud_sequence = 1
+
+    def _allocate_cloud_id(self, prefix: str) -> str:
+        cloud_id = f"{prefix}_{self._next_cloud_sequence:08d}"
+        self._next_cloud_sequence += 1
+        return cloud_id
 
     # ------------------------------------------------------------------
     # Public API
@@ -126,7 +142,7 @@ class ObscurantsEngine:
             ObscurantType.SMOKE_MULTISPECTRAL if multispectral
             else ObscurantType.SMOKE
         )
-        cid = f"smoke_{uuid.uuid4().hex[:8]}"
+        cid = self._allocate_cloud_id("smoke")
         self._clouds[cid] = _Cloud(
             cid, ctype, center.easting, center.northing, radius, 1.0
         )
@@ -134,7 +150,7 @@ class ObscurantsEngine:
 
     def add_dust(self, center: Position, radius: Meters) -> str:
         """Add a dust cloud.  Returns the cloud ID."""
-        cid = f"dust_{uuid.uuid4().hex[:8]}"
+        cid = self._allocate_cloud_id("dust")
         self._clouds[cid] = _Cloud(
             cid, ObscurantType.DUST, center.easting, center.northing, radius, 1.0
         )
@@ -146,7 +162,8 @@ class ObscurantsEngine:
         wx = self._weather.current
 
         to_remove: list[str] = []
-        for cid, cloud in self._clouds.items():
+        for cid in sorted(self._clouds):
+            cloud = self._clouds[cid]
             cloud.age_seconds += dt_seconds
 
             # Drift with wind
@@ -182,7 +199,7 @@ class ObscurantsEngine:
             for c in self._clouds.values()
         ):
             # Create a large fog patch
-            cid = f"fog_{uuid.uuid4().hex[:8]}"
+            cid = self._allocate_cloud_id("fog")
             self._clouds[cid] = _Cloud(
                 cid, ObscurantType.FOG_RADIATION, 0.0, 0.0, 50000.0, 0.8
             )
@@ -193,7 +210,8 @@ class ObscurantsEngine:
         thermal = 0.0
         radar = 0.0
 
-        for cloud in self._clouds.values():
+        for cloud_id in sorted(self._clouds):
+            cloud = self._clouds[cloud_id]
             dist = math.sqrt(
                 (pos.easting - cloud.center_e) ** 2
                 + (pos.northing - cloud.center_n) ** 2
@@ -226,6 +244,7 @@ class ObscurantsEngine:
 
     def get_state(self) -> dict:
         return {
+            "next_cloud_sequence": self._next_cloud_sequence,
             "clouds": [
                 {
                     "cloud_id": c.cloud_id,
@@ -236,20 +255,165 @@ class ObscurantsEngine:
                     "density": c.density,
                     "age_seconds": c.age_seconds,
                 }
-                for c in self._clouds.values()
+                for c in sorted(
+                    self._clouds.values(),
+                    key=lambda cloud: cloud.cloud_id,
+                )
             ]
         }
 
-    def set_state(self, state: dict) -> None:
-        self._clouds.clear()
-        for cd in state["clouds"]:
-            cloud = _Cloud(
-                cd["cloud_id"],
-                ObscurantType(cd["cloud_type"]),
-                cd["center_e"],
-                cd["center_n"],
-                cd["radius"],
-                cd["density"],
+    def stage_state(self, state: dict[str, Any]) -> dict[str, Any]:
+        """Validate a complete deterministic cloud snapshot."""
+        if not isinstance(state, dict):
+            raise ValueError("Obscurants state must be a mapping")
+        expected_keys = {"clouds", "next_cloud_sequence"}
+        if set(state) != expected_keys:
+            raise ValueError(
+                "Obscurants state keys must be exactly "
+                f"{sorted(expected_keys)!r}",
             )
-            cloud.age_seconds = cd["age_seconds"]
-            self._clouds[cloud.cloud_id] = cloud
+        next_sequence = state["next_cloud_sequence"]
+        if (
+            isinstance(next_sequence, bool)
+            or not isinstance(next_sequence, int)
+            or next_sequence <= 0
+        ):
+            raise ValueError(
+                "next_cloud_sequence must be a positive integer",
+            )
+        raw_clouds = state["clouds"]
+        if not isinstance(raw_clouds, list):
+            raise ValueError("Obscurants clouds must be a list")
+        cloud_keys = {
+            "cloud_id",
+            "cloud_type",
+            "center_e",
+            "center_n",
+            "radius",
+            "density",
+            "age_seconds",
+        }
+        clouds: dict[str, _Cloud] = {}
+        maximum_sequence = 0
+        prior_id = ""
+        for cd in raw_clouds:
+            if not isinstance(cd, dict) or set(cd) != cloud_keys:
+                raise ValueError("Obscurant cloud state has invalid keys")
+            cloud_id = cd["cloud_id"]
+            if (
+                not isinstance(cloud_id, str)
+                or not cloud_id
+                or cloud_id != cloud_id.strip()
+            ):
+                raise ValueError(
+                    "Obscurant cloud_id must be a non-empty trimmed string",
+                )
+            if cloud_id in clouds:
+                raise ValueError(
+                    f"Duplicate obscurant cloud_id {cloud_id!r}",
+                )
+            if cloud_id <= prior_id:
+                raise ValueError(
+                    "Obscurant clouds must be canonically ordered by ID",
+                )
+            prior_id = cloud_id
+            raw_type = cd["cloud_type"]
+            if isinstance(raw_type, bool) or not isinstance(raw_type, int):
+                raise ValueError(
+                    "Obscurant cloud_type must be an integer enum",
+                )
+            try:
+                cloud_type = ObscurantType(raw_type)
+            except ValueError as exc:
+                raise ValueError("Unknown obscurant cloud_type") from exc
+            prefix, separator, suffix = cloud_id.rpartition("_")
+            expected_prefix = _cloud_prefix(cloud_type)
+            if (
+                separator != "_"
+                or prefix != expected_prefix
+                or len(suffix) != 8
+                or not suffix.isdigit()
+                or int(suffix) <= 0
+                or cloud_id
+                != f"{expected_prefix}_{int(suffix):08d}"
+            ):
+                raise ValueError(
+                    "Obscurant cloud_id must match its type and use an "
+                    "eight-digit positive sequence",
+                )
+            numbers: dict[str, float] = {}
+            for field_name in (
+                "center_e",
+                "center_n",
+                "radius",
+                "density",
+                "age_seconds",
+            ):
+                value = cd[field_name]
+                if (
+                    isinstance(value, bool)
+                    or not isinstance(value, (int, float))
+                    or not math.isfinite(float(value))
+                ):
+                    raise ValueError(
+                        f"Obscurant {field_name} must be finite",
+                    )
+                numbers[field_name] = float(value)
+            if numbers["radius"] < 0.0:
+                raise ValueError("Obscurant radius must be non-negative")
+            if not 0.0 <= numbers["density"] <= 1.0:
+                raise ValueError("Obscurant density must be in [0, 1]")
+            if numbers["age_seconds"] < 0.0:
+                raise ValueError(
+                    "Obscurant age_seconds must be non-negative",
+                )
+            cloud = _Cloud(
+                cloud_id,
+                cloud_type,
+                numbers["center_e"],
+                numbers["center_n"],
+                numbers["radius"],
+                numbers["density"],
+            )
+            cloud.age_seconds = numbers["age_seconds"]
+            clouds[cloud_id] = cloud
+            maximum_sequence = max(maximum_sequence, int(suffix))
+        if next_sequence <= maximum_sequence:
+            raise ValueError(
+                "next_cloud_sequence must exceed every issued cloud ID",
+            )
+        return {
+            "clouds": clouds,
+            "next_cloud_sequence": next_sequence,
+        }
+
+    def commit_state(self, staged_state: dict[str, Any]) -> None:
+        """Commit a non-throwing plan returned by :meth:`stage_state`."""
+        self._clouds = dict(staged_state["clouds"])
+        self._next_cloud_sequence = staged_state["next_cloud_sequence"]
+
+    def set_state(self, state: dict) -> None:
+        if isinstance(state, dict) and set(state) == {"clouds"}:
+            # Explicit versionless migration for pre-schema-112 snapshots.
+            migrated_clouds: list[dict[str, Any]] = []
+            for sequence, cloud in enumerate(
+                sorted(
+                    state["clouds"],
+                    key=lambda item: item["cloud_id"],
+                ),
+                start=1,
+            ):
+                migrated = dict(cloud)
+                cloud_type = ObscurantType(migrated["cloud_type"])
+                migrated["cloud_id"] = (
+                    f"{_cloud_prefix(cloud_type)}_{sequence:08d}"
+                )
+                migrated_clouds.append(migrated)
+            state = {
+                "clouds": sorted(
+                    migrated_clouds,
+                    key=lambda cloud: cloud["cloud_id"],
+                ),
+                "next_cloud_sequence": len(migrated_clouds) + 1,
+            }
+        self.commit_state(self.stage_state(state))

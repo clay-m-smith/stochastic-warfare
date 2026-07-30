@@ -1,5 +1,14 @@
 # Block 11: Golden Scenarios & End-to-End Engine Validation
 
+> **Phase 112 integrity supersession (2026-07-30):** This brainstorming page
+> preserves Block 11's contemporaneous design inventory, counts, calibration
+> plans, and scenario claims. They are development history, not current
+> historical-validation evidence. A historical name, source citation,
+> calibrated input, golden-scenario label, or current-engine regression does not
+> establish a provenance-bearing, held-out production outcome-envelope verdict.
+> REM-030/Phase 117 owns the replacement catalog-wide contract and the
+> disposition of every retained claim.
+
 ## Motivation
 
 Blocks 1–10 delivered 97 phases of engine capability and UI polish: 60+ domain engines, 32 `enable_*` behavioral flags, 68 calibration parameters, 9 doctrinal schools, 5 historical eras, 100+ event types, ~10,323 backend tests + 416 frontend tests, and 40+ validated scenarios covering every era we support.

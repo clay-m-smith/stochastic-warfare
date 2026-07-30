@@ -91,7 +91,19 @@ class TestConfigParsing:
         assert cfg.school_config == {"unit_assignments": {}}
 
     def test_commander_config_accepted(self) -> None:
-        cfg = _minimal_config(commander_config={"side_defaults": {"blue": "balanced_default"}})
+        cfg = _minimal_config(
+            sides=[
+                {
+                    **_MINIMAL_SIDES[0],
+                    "commander_profile": "balanced_default",
+                },
+                {
+                    **_MINIMAL_SIDES[1],
+                    "commander_profile": "cautious_infantry",
+                },
+            ],
+            commander_config={"noise_sigma": 0.2},
+        )
         assert cfg.commander_config is not None
 
     def test_escalation_config_accepted(self) -> None:
@@ -562,19 +574,18 @@ class TestCommanderCreation:
         engine = result["commander_engine"]
         assert engine._config.ooda_speed_base_mult == 1.5
 
-    def test_commander_side_defaults_ignored_here(self) -> None:
-        """side_defaults is handled in load(), not in engine creation."""
+    def test_commander_side_defaults_rejected_here(self) -> None:
+        """The side profile is canonical and legacy side_defaults is invalid."""
         from pathlib import Path
         from stochastic_warfare.simulation.scenario import ScenarioLoader
 
         loader = ScenarioLoader.__new__(ScenarioLoader)
         loader._data_dir = Path("data")
         c2_rng = _make_rng_mgr().get_stream(ModuleId.C2)
-        # Should not raise even with side_defaults present
-        result = loader._create_commander_engine(c2_rng, {
-            "side_defaults": {"blue": "balanced_default"},
-        })
-        assert result["commander_engine"] is not None
+        with pytest.raises(ValueError, match="side_defaults"):
+            loader._create_commander_engine(c2_rng, {
+                "side_defaults": {"blue": "balanced_default"},
+            })
 
     def test_commander_profiles_loaded(self) -> None:
         from pathlib import Path
@@ -817,10 +828,27 @@ class TestIntegration:
         cfg = _minimal_config(
             ew_config={"enable_ew": True},
             school_config={"unit_assignments": {}},
+            sides=[
+                {
+                    **_MINIMAL_SIDES[0],
+                    "commander_profile": "balanced_default",
+                },
+                {
+                    **_MINIMAL_SIDES[1],
+                    "commander_profile": "cautious_infantry",
+                },
+            ],
             commander_config={},
         )
         c2_rng = _make_rng_mgr().get_stream(ModuleId.C2)
         result = loader._create_optional_engines(_make_rng_mgr(), _make_bus(), cfg, c2_rng)
         assert result.get("ew_engine") is not None
         assert result.get("school_registry") is not None
-        assert result.get("commander_engine") is not None
+        assert result.get("commander_engine") is None
+        assert (
+            loader._create_commander_engine(
+                c2_rng,
+                cfg.commander_config,
+            )["commander_engine"]
+            is not None
+        )

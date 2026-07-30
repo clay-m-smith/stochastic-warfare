@@ -250,7 +250,11 @@ guessed valid.
 
 ### Calibration Overrides
 
-Fine-tune simulation parameters for historical accuracy:
+Calibration overrides change the current model configuration. They can support
+a predeclared, source-backed fitting study, but a fitted value or a passing
+regression seed does not by itself establish historical accuracy. Independent
+production outcome-envelope validation remains tracked by
+[REM-030](../remediation-backlog.md#rem-030-catalog-wide-historical-outcome-claims-lack-production-validation).
 
 ```yaml
 calibration_overrides:

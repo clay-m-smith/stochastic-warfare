@@ -8,8 +8,9 @@ No domain logic lives here — only sequencing and data routing.
 
 from __future__ import annotations
 
+import copy
 import math
-from collections.abc import Iterable
+from collections.abc import Callable, Iterable
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -19,6 +20,11 @@ from typing import Any
 import numpy as np
 from pydantic import BaseModel
 
+from stochastic_warfare.c2.ai.assessment import (
+    AssessmentRating,
+    SituationAssessment,
+)
+from stochastic_warfare.c2.orders.propagation import PropagationResult
 from stochastic_warfare.combat.ammunition import (
     AmmoDefinition,
     WeaponCategory,
@@ -42,6 +48,14 @@ from shapely.geometry import Point
 
 from stochastic_warfare.simulation.calibration import CalibrationSchema
 from stochastic_warfare.simulation.loadouts import WeaponAttachment
+from stochastic_warfare.simulation.movement_diagnostics import (
+    MOVEMENT_EPSILON_M,
+    MovementDecision,
+    MovementDiagnostics,
+    MovementReason,
+    MovementStage,
+    resolve_movement_diagnostics_owner,
+)
 from stochastic_warfare.simulation.unit_arrays import UnitArrays
 
 
@@ -1589,7 +1603,7 @@ def _nearest_enemy_index_and_dist(
     return best_index, best
 
 
-def _standoff_range(
+def usable_weapon_standoff_range(
     unit: Unit,
     ctx: Any,
     target_domain: Domain | None = None,
@@ -1626,6 +1640,44 @@ def _standoff_range(
         if has_ammo and r > best_range:
             best_range = r
     return best_range * 0.8 if best_range > 10 else 0.0
+
+
+def nearest_enemy_weapon_standoff(
+    unit: Unit,
+    ctx: Any,
+    enemies: list[Unit],
+    enemy_pos_arr: np.ndarray | None = None,
+) -> tuple[int | None, float, float]:
+    """Return nearest enemy index, distance, and exact usable standoff."""
+    nearest_index, nearest_dist = _nearest_enemy_index_and_dist(
+        unit.position,
+        enemies,
+        enemy_pos_arr=enemy_pos_arr,
+    )
+    if nearest_index is None:
+        return None, nearest_dist, 0.0
+    return (
+        nearest_index,
+        nearest_dist,
+        usable_weapon_standoff_range(
+            unit,
+            ctx,
+            target_domain=enemies[nearest_index].domain,
+        ),
+    )
+
+
+MovementCommitter = Callable[[Unit, Position], Position]
+"""Fault-detector seam for validating a manager's final position commit."""
+
+
+def _default_movement_committer(
+    unit: Unit,
+    proposed_position: Position,
+) -> Position:
+    """Return the production manager's proposed final position unchanged."""
+    del unit
+    return proposed_position
 
 
 # ---------------------------------------------------------------------------
@@ -1702,6 +1754,30 @@ class AutoResolveResult:
     duration_s: float = 0.0
 
 
+@dataclass(frozen=True)
+class BattleStatePlan:
+    """Validated, owner-bound tactical checkpoint commit plan."""
+
+    owner_id: int
+    battles: dict[str, BattleContext]
+    next_battle_id: int
+    vls_launches: dict[str, int]
+    ammo_expended: dict[str, int]
+    pending_decisions: dict[str, float]
+    cached_assessments: dict[str, SituationAssessment]
+    ticks_stationary: dict[str, int]
+    suppression_states: dict[str, UnitSuppressionState]
+    cumulative_casualties: dict[str, int]
+    undigging: dict[str, bool]
+    concealment_scores: dict[str, float]
+    env_casualty_accum: dict[str, float]
+    misinterpreted_orders: dict[str, PropagationResult]
+    lod_tiers: dict[str, int]
+    lod_pending_tiers: dict[str, int]
+    lod_pending_counts: dict[str, int]
+    lod_promoted: set[str]
+
+
 # ---------------------------------------------------------------------------
 # Battle Manager
 # ---------------------------------------------------------------------------
@@ -1725,13 +1801,23 @@ class BattleManager:
         self,
         event_bus: EventBus,
         config: BattleConfig | None = None,
+        *,
+        movement_diagnostics: MovementDiagnostics | None = None,
+        movement_committer: MovementCommitter | None = None,
     ) -> None:
         self._bus = event_bus
         self._config = config or BattleConfig()
+        self._movement_diagnostics = movement_diagnostics
+        # This callable cannot be selected by scenario data.  It exists only
+        # to prove that diagnostics detect a broken final position commit.
+        self._movement_committer = (
+            movement_committer or _default_movement_committer
+        )
         self._battles: dict[str, BattleContext] = {}
         self._next_battle_id = 0
-        # Transient assessment cache — not checkpointed
-        self._cached_assessments: dict[str, Any] = {}  # unit_id -> SituationAssessment
+        # OBSERVE output is consumed by a later DECIDE phase and therefore is
+        # outcome-affecting checkpoint state rather than a transient cache.
+        self._cached_assessments: dict[str, SituationAssessment] = {}
         # Phase 40b: posture tracking (ticks unit has been stationary)
         self._ticks_stationary: dict[str, int] = {}
         # Phase 40e: per-unit suppression state
@@ -2009,7 +2095,12 @@ class BattleManager:
         # 2. AI OODA loop update → completions trigger assess/decide
         if ctx.ooda_engine is not None:
             completions = ctx.ooda_engine.update(dt, ts=timestamp)
-            self._process_ooda_completions(ctx, completions, timestamp)
+            self._process_ooda_completions(
+                ctx,
+                completions,
+                timestamp,
+                battle=battle,
+            )
 
         # 3. Order execution update
         if ctx.order_execution is not None:
@@ -2772,6 +2863,57 @@ class BattleManager:
 
     # ── State persistence ───────────────────────────────────────────
 
+    @staticmethod
+    def _assessment_state(
+        assessment: SituationAssessment,
+    ) -> dict[str, Any]:
+        if not isinstance(assessment, SituationAssessment):
+            raise ValueError(
+                "Battle assessment state must contain SituationAssessment "
+                "instances",
+            )
+        return {
+            "unit_id": assessment.unit_id,
+            "timestamp": assessment.timestamp.isoformat(),
+            "force_ratio": assessment.force_ratio,
+            "force_ratio_rating": int(assessment.force_ratio_rating),
+            "terrain_advantage": assessment.terrain_advantage,
+            "terrain_rating": int(assessment.terrain_rating),
+            "supply_level": assessment.supply_level,
+            "supply_rating": int(assessment.supply_rating),
+            "morale_level": assessment.morale_level,
+            "morale_rating": int(assessment.morale_rating),
+            "intel_quality": assessment.intel_quality,
+            "intel_rating": int(assessment.intel_rating),
+            "environmental_rating": int(
+                assessment.environmental_rating,
+            ),
+            "c2_effectiveness": assessment.c2_effectiveness,
+            "c2_rating": int(assessment.c2_rating),
+            "overall_rating": int(assessment.overall_rating),
+            "confidence": assessment.confidence,
+            "opportunities": list(assessment.opportunities),
+            "threats": list(assessment.threats),
+        }
+
+    @staticmethod
+    def _propagation_state(
+        result: PropagationResult,
+    ) -> dict[str, Any]:
+        if not isinstance(result, PropagationResult):
+            raise ValueError(
+                "Battle misinterpreted-order state must contain "
+                "PropagationResult instances",
+            )
+        return {
+            "success": result.success,
+            "total_delay_s": result.total_delay_s,
+            "was_misinterpreted": result.was_misinterpreted,
+            "misinterpretation_type": result.misinterpretation_type,
+            "comms_quality": result.comms_quality,
+            "degraded": result.degraded,
+        }
+
     def get_state(self) -> dict[str, Any]:
         """Capture battle manager state for checkpointing."""
         return {
@@ -2784,78 +2926,783 @@ class BattleManager:
                     "active": b.active,
                     "ticks_executed": b.ticks_executed,
                     "unit_ids": sorted(b.unit_ids),
-                    "wave_assignments": b.wave_assignments,
+                    "wave_assignments": dict(
+                        sorted(b.wave_assignments.items()),
+                    ),
                     "battle_elapsed_s": b.battle_elapsed_s,
                 }
-                for bid, b in self._battles.items()
+                for bid, b in sorted(self._battles.items())
             },
             "next_battle_id": self._next_battle_id,
-            "vls_launches": dict(self._vls_launches),
-            "ammo_expended": dict(self._ammo_expended),
-            "pending_decisions": dict(self._pending_decisions),
-            # Phase 72b: previously missing state
-            "ticks_stationary": dict(self._ticks_stationary),
+            "vls_launches": dict(sorted(self._vls_launches.items())),
+            "ammo_expended": dict(sorted(self._ammo_expended.items())),
+            "pending_decisions": dict(
+                sorted(self._pending_decisions.items()),
+            ),
+            "cached_assessments": {
+                unit_id: self._assessment_state(assessment)
+                for unit_id, assessment in sorted(
+                    self._cached_assessments.items(),
+                )
+            },
+            "ticks_stationary": dict(
+                sorted(self._ticks_stationary.items()),
+            ),
             "suppression_states": {
                 uid: s.get_state()
-                for uid, s in self._suppression_states.items()
+                for uid, s in sorted(self._suppression_states.items())
             },
-            "cumulative_casualties": dict(self._cumulative_casualties),
-            "undigging": dict(self._undigging),
-            "concealment_scores": dict(self._concealment_scores),
-            "env_casualty_accum": dict(self._env_casualty_accum),
-            "misinterpreted_orders": dict(self._misinterpreted_orders),
-            # Phase 85: LOD tier state
-            "lod_tiers": dict(self._lod_tiers),
-            "lod_pending_tiers": dict(self._lod_pending_tiers),
-            "lod_pending_counts": dict(self._lod_pending_counts),
+            "cumulative_casualties": dict(
+                sorted(self._cumulative_casualties.items()),
+            ),
+            "undigging": dict(sorted(self._undigging.items())),
+            "concealment_scores": dict(
+                sorted(self._concealment_scores.items()),
+            ),
+            "env_casualty_accum": dict(
+                sorted(self._env_casualty_accum.items()),
+            ),
+            "misinterpreted_orders": {
+                unit_id: self._propagation_state(result)
+                for unit_id, result in sorted(
+                    self._misinterpreted_orders.items(),
+                )
+            },
+            "lod_tiers": dict(sorted(self._lod_tiers.items())),
+            "lod_pending_tiers": dict(
+                sorted(self._lod_pending_tiers.items()),
+            ),
+            "lod_pending_counts": dict(
+                sorted(self._lod_pending_counts.items()),
+            ),
+            "lod_promoted": sorted(self._lod_promoted),
         }
 
-    def set_state(self, state: dict[str, Any]) -> None:
-        """Restore battle manager state from checkpoint."""
-        self._next_battle_id = state.get("next_battle_id", 0)
-        self._vls_launches = dict(state.get("vls_launches", {}))
-        self._ammo_expended = dict(state.get("ammo_expended", {}))
-        self._pending_decisions = dict(state.get("pending_decisions", {}))
-        self._battles.clear()
-        self._cached_assessments.clear()
-        for bid, bdata in state.get("battles", {}).items():
-            self._battles[bid] = BattleContext(
-                battle_id=bdata["battle_id"],
-                start_tick=bdata["start_tick"],
-                start_time=datetime.fromisoformat(bdata["start_time"]),
-                involved_sides=bdata["involved_sides"],
-                active=bdata["active"],
-                ticks_executed=bdata["ticks_executed"],
-                unit_ids=set(bdata.get("unit_ids", [])),
-                wave_assignments=bdata.get("wave_assignments", {}),
-                battle_elapsed_s=bdata.get("battle_elapsed_s", 0.0),
+    @staticmethod
+    def _state_identifier(value: Any, *, field_name: str) -> str:
+        if (
+            not isinstance(value, str)
+            or not value
+            or value != value.strip()
+        ):
+            raise ValueError(
+                f"Battle {field_name} must be a non-empty trimmed string",
             )
-        # Phase 72b: restore previously missing state
-        self._ticks_stationary = dict(state.get("ticks_stationary", {}))
-        self._cumulative_casualties = dict(state.get("cumulative_casualties", {}))
-        self._undigging = dict(state.get("undigging", {}))
-        self._concealment_scores = {
-            k: float(v) for k, v in state.get("concealment_scores", {}).items()
+        return value
+
+    @staticmethod
+    def _state_int(
+        value: Any,
+        *,
+        field_name: str,
+        minimum: int = 0,
+    ) -> int:
+        if (
+            isinstance(value, bool)
+            or not isinstance(value, int)
+            or value < minimum
+        ):
+            raise ValueError(
+                f"Battle {field_name} must be a strict integer >= {minimum}",
+            )
+        return value
+
+    @staticmethod
+    def _state_float(
+        value: Any,
+        *,
+        field_name: str,
+        minimum: float | None = None,
+        maximum: float | None = None,
+    ) -> float:
+        if (
+            isinstance(value, bool)
+            or not isinstance(value, (int, float))
+            or not math.isfinite(float(value))
+        ):
+            raise ValueError(
+                f"Battle {field_name} must be a finite number",
+            )
+        result = float(value)
+        if minimum is not None and result < minimum:
+            raise ValueError(
+                f"Battle {field_name} must be >= {minimum}",
+            )
+        if maximum is not None and result > maximum:
+            raise ValueError(
+                f"Battle {field_name} must be <= {maximum}",
+            )
+        return result
+
+    @classmethod
+    def _stage_int_map(
+        cls,
+        raw: Any,
+        *,
+        field_name: str,
+        minimum: int = 0,
+    ) -> dict[str, int]:
+        if not isinstance(raw, dict):
+            raise ValueError(f"Battle {field_name} must be a mapping")
+        return {
+            cls._state_identifier(key, field_name=f"{field_name} key"):
+            cls._state_int(
+                value,
+                field_name=f"{field_name}[{key!r}]",
+                minimum=minimum,
+            )
+            for key, value in sorted(raw.items())
         }
-        self._env_casualty_accum = {
-            k: float(v) for k, v in state.get("env_casualty_accum", {}).items()
+
+    @classmethod
+    def _stage_float_map(
+        cls,
+        raw: Any,
+        *,
+        field_name: str,
+        minimum: float | None = None,
+        maximum: float | None = None,
+    ) -> dict[str, float]:
+        if not isinstance(raw, dict):
+            raise ValueError(f"Battle {field_name} must be a mapping")
+        return {
+            cls._state_identifier(key, field_name=f"{field_name} key"):
+            cls._state_float(
+                value,
+                field_name=f"{field_name}[{key!r}]",
+                minimum=minimum,
+                maximum=maximum,
+            )
+            for key, value in sorted(raw.items())
         }
-        self._misinterpreted_orders = dict(state.get("misinterpreted_orders", {}))
-        self._suppression_states = {}
-        for uid, sdata in state.get("suppression_states", {}).items():
-            s = UnitSuppressionState()
-            s.set_state(sdata)
-            self._suppression_states[uid] = s
-        # Phase 85: LOD tier state
-        self._lod_tiers = {k: int(v) for k, v in state.get("lod_tiers", {}).items()}
-        self._lod_pending_tiers = {k: int(v) for k, v in state.get("lod_pending_tiers", {}).items()}
-        self._lod_pending_counts = {k: int(v) for k, v in state.get("lod_pending_counts", {}).items()}
-        self._lod_promoted = set()
+
+    @classmethod
+    def _stage_assessment(
+        cls,
+        raw: Any,
+        *,
+        map_unit_id: str,
+        checkpoint_time: datetime | None,
+    ) -> SituationAssessment:
+        expected_fields = {
+            "unit_id",
+            "timestamp",
+            "force_ratio",
+            "force_ratio_rating",
+            "terrain_advantage",
+            "terrain_rating",
+            "supply_level",
+            "supply_rating",
+            "morale_level",
+            "morale_rating",
+            "intel_quality",
+            "intel_rating",
+            "environmental_rating",
+            "c2_effectiveness",
+            "c2_rating",
+            "overall_rating",
+            "confidence",
+            "opportunities",
+            "threats",
+        }
+        if not isinstance(raw, dict) or set(raw) != expected_fields:
+            raise ValueError(
+                f"Battle assessment {map_unit_id!r} has invalid fields",
+            )
+        unit_id = cls._state_identifier(
+            raw["unit_id"],
+            field_name="assessment unit_id",
+        )
+        if unit_id != map_unit_id:
+            raise ValueError(
+                "Battle assessment map key disagrees with unit_id",
+            )
+        raw_timestamp = raw["timestamp"]
+        if not isinstance(raw_timestamp, str) or not raw_timestamp:
+            raise ValueError(
+                "Battle assessment timestamp must be a non-empty ISO string",
+            )
+        try:
+            timestamp = datetime.fromisoformat(raw_timestamp)
+        except ValueError as exc:
+            raise ValueError(
+                "Battle assessment timestamp is not valid ISO time",
+            ) from exc
+        if checkpoint_time is not None:
+            try:
+                after_checkpoint = timestamp > checkpoint_time
+            except TypeError as exc:
+                raise ValueError(
+                    "Battle assessment and checkpoint timestamps have "
+                    "incompatible timezone awareness",
+                ) from exc
+            if after_checkpoint:
+                raise ValueError(
+                    "Battle assessment timestamp is after checkpoint time",
+                )
+
+        def rating(field_name: str) -> AssessmentRating:
+            value = raw[field_name]
+            if isinstance(value, bool) or not isinstance(value, int):
+                raise ValueError(
+                    f"Battle assessment {field_name} must be a strict integer",
+                )
+            try:
+                return AssessmentRating(value)
+            except ValueError as exc:
+                raise ValueError(
+                    f"Battle assessment {field_name} is unknown",
+                ) from exc
+
+        def strings(field_name: str) -> tuple[str, ...]:
+            values = raw[field_name]
+            if not isinstance(values, (list, tuple)):
+                raise ValueError(
+                    f"Battle assessment {field_name} must be a list",
+                )
+            result = tuple(
+                cls._state_identifier(
+                    value,
+                    field_name=f"assessment {field_name}",
+                )
+                for value in values
+            )
+            if len(result) != len(set(result)):
+                raise ValueError(
+                    f"Battle assessment {field_name} must be unique",
+                )
+            return result
+
+        return SituationAssessment(
+            unit_id=unit_id,
+            timestamp=timestamp,
+            force_ratio=cls._state_float(
+                raw["force_ratio"],
+                field_name="assessment force_ratio",
+                minimum=0.0,
+            ),
+            force_ratio_rating=rating("force_ratio_rating"),
+            terrain_advantage=cls._state_float(
+                raw["terrain_advantage"],
+                field_name="assessment terrain_advantage",
+            ),
+            terrain_rating=rating("terrain_rating"),
+            supply_level=cls._state_float(
+                raw["supply_level"],
+                field_name="assessment supply_level",
+            ),
+            supply_rating=rating("supply_rating"),
+            morale_level=cls._state_float(
+                raw["morale_level"],
+                field_name="assessment morale_level",
+            ),
+            morale_rating=rating("morale_rating"),
+            intel_quality=cls._state_float(
+                raw["intel_quality"],
+                field_name="assessment intel_quality",
+                minimum=0.0,
+                maximum=1.0,
+            ),
+            intel_rating=rating("intel_rating"),
+            environmental_rating=rating("environmental_rating"),
+            c2_effectiveness=cls._state_float(
+                raw["c2_effectiveness"],
+                field_name="assessment c2_effectiveness",
+            ),
+            c2_rating=rating("c2_rating"),
+            overall_rating=rating("overall_rating"),
+            confidence=cls._state_float(
+                raw["confidence"],
+                field_name="assessment confidence",
+                minimum=0.0,
+                maximum=1.0,
+            ),
+            opportunities=strings("opportunities"),
+            threats=strings("threats"),
+        )
+
+    @classmethod
+    def _stage_propagation_result(
+        cls,
+        raw: Any,
+        *,
+        unit_id: str,
+    ) -> PropagationResult:
+        expected_fields = {
+            "success",
+            "total_delay_s",
+            "was_misinterpreted",
+            "misinterpretation_type",
+            "comms_quality",
+            "degraded",
+        }
+        if not isinstance(raw, dict) or set(raw) != expected_fields:
+            raise ValueError(
+                f"Battle misinterpreted order {unit_id!r} has invalid fields",
+            )
+        success = raw["success"]
+        was_misinterpreted = raw["was_misinterpreted"]
+        degraded = raw["degraded"]
+        if not all(
+            isinstance(value, bool)
+            for value in (success, was_misinterpreted, degraded)
+        ):
+            raise ValueError(
+                "Battle propagation flags must be boolean",
+            )
+        if not success or not was_misinterpreted:
+            raise ValueError(
+                "Battle misinterpreted-order state requires a successful "
+                "misinterpreted propagation result",
+            )
+        misinterpretation_type = cls._state_identifier(
+            raw["misinterpretation_type"],
+            field_name="misinterpretation_type",
+        )
+        if misinterpretation_type not in {
+            "position",
+            "timing",
+            "objective",
+            "unit_designation",
+        }:
+            raise ValueError(
+                "Battle misinterpretation_type is unknown",
+            )
+        return PropagationResult(
+            success=success,
+            total_delay_s=cls._state_float(
+                raw["total_delay_s"],
+                field_name="propagation total_delay_s",
+                minimum=0.0,
+            ),
+            was_misinterpreted=was_misinterpreted,
+            misinterpretation_type=misinterpretation_type,
+            comms_quality=cls._state_float(
+                raw["comms_quality"],
+                field_name="propagation comms_quality",
+                minimum=0.0,
+                maximum=1.0,
+            ),
+            degraded=degraded,
+        )
+
+    def stage_state(
+        self,
+        state: dict[str, Any],
+        *,
+        allow_legacy: bool = False,
+        expected_unit_ids: set[str] | None = None,
+        expected_sides: set[str] | None = None,
+        required_assessment_ids: set[str] | None = None,
+        checkpoint_time: datetime | None = None,
+    ) -> BattleStatePlan:
+        """Validate all tactical state before mutating the live manager."""
+        if not isinstance(state, dict):
+            raise ValueError("Battle checkpoint state must be a mapping")
+        expected_keys = {
+            "battles",
+            "next_battle_id",
+            "vls_launches",
+            "ammo_expended",
+            "pending_decisions",
+            "cached_assessments",
+            "ticks_stationary",
+            "suppression_states",
+            "cumulative_casualties",
+            "undigging",
+            "concealment_scores",
+            "env_casualty_accum",
+            "misinterpreted_orders",
+            "lod_tiers",
+            "lod_pending_tiers",
+            "lod_pending_counts",
+            "lod_promoted",
+        }
+        actual_keys = set(state)
+        if actual_keys - expected_keys or (
+            not allow_legacy and actual_keys != expected_keys
+        ):
+            raise ValueError(
+                "Battle checkpoint key topology is invalid: "
+                f"missing={sorted(expected_keys - actual_keys)!r}, "
+                f"extra={sorted(actual_keys - expected_keys)!r}",
+            )
+
+        raw_battles = state.get("battles", {})
+        if not isinstance(raw_battles, dict):
+            raise ValueError("Battle checkpoint battles must be a mapping")
+        battle_fields = {
+            "battle_id",
+            "start_tick",
+            "start_time",
+            "involved_sides",
+            "active",
+            "ticks_executed",
+            "unit_ids",
+            "wave_assignments",
+            "battle_elapsed_s",
+        }
+        battles: dict[str, BattleContext] = {}
+        for battle_id, raw in sorted(raw_battles.items()):
+            self._state_identifier(
+                battle_id,
+                field_name="battle map key",
+            )
+            if not isinstance(raw, dict) or (
+                (not allow_legacy and set(raw) != battle_fields)
+                or set(raw) - battle_fields
+            ):
+                raise ValueError(
+                    f"Battle {battle_id!r} has invalid fields",
+                )
+            if raw.get("battle_id") != battle_id:
+                raise ValueError(
+                    "Battle map key disagrees with battle_id",
+                )
+            raw_start_time = raw.get("start_time")
+            if not isinstance(raw_start_time, str) or not raw_start_time:
+                raise ValueError("Battle start_time must be an ISO string")
+            try:
+                start_time = datetime.fromisoformat(raw_start_time)
+            except ValueError as exc:
+                raise ValueError(
+                    f"Battle {battle_id!r} start_time is invalid",
+                ) from exc
+            raw_sides = raw.get("involved_sides")
+            if not isinstance(raw_sides, list):
+                raise ValueError("Battle involved_sides must be a list")
+            involved_sides = [
+                self._state_identifier(
+                    side,
+                    field_name="involved side",
+                )
+                for side in raw_sides
+            ]
+            if (
+                len(involved_sides) < 2
+                or len(involved_sides) != len(set(involved_sides))
+                or (
+                    expected_sides is not None
+                    and not set(involved_sides) <= expected_sides
+                )
+            ):
+                raise ValueError(
+                    f"Battle {battle_id!r} has invalid side topology",
+                )
+            raw_unit_ids = raw.get("unit_ids", [])
+            if not isinstance(raw_unit_ids, list):
+                raise ValueError("Battle unit_ids must be a list")
+            unit_ids = {
+                self._state_identifier(
+                    unit_id,
+                    field_name="battle unit_id",
+                )
+                for unit_id in raw_unit_ids
+            }
+            if len(unit_ids) != len(raw_unit_ids) or (
+                expected_unit_ids is not None
+                and not unit_ids <= expected_unit_ids
+            ):
+                raise ValueError(
+                    f"Battle {battle_id!r} has invalid unit topology",
+                )
+            wave_assignments = self._stage_int_map(
+                raw.get("wave_assignments", {}),
+                field_name="wave_assignments",
+                minimum=-1,
+            )
+            if not set(wave_assignments) <= unit_ids:
+                raise ValueError(
+                    "Battle wave assignments reference units outside the "
+                    "battle",
+                )
+            active = raw.get("active")
+            if not isinstance(active, bool):
+                raise ValueError("Battle active must be boolean")
+            battles[battle_id] = BattleContext(
+                battle_id=battle_id,
+                start_tick=self._state_int(
+                    raw.get("start_tick"),
+                    field_name="start_tick",
+                ),
+                start_time=start_time,
+                involved_sides=involved_sides,
+                active=active,
+                ticks_executed=self._state_int(
+                    raw.get("ticks_executed"),
+                    field_name="ticks_executed",
+                ),
+                unit_ids=unit_ids,
+                wave_assignments=wave_assignments,
+                battle_elapsed_s=self._state_float(
+                    raw.get("battle_elapsed_s", 0.0),
+                    field_name="battle_elapsed_s",
+                    minimum=0.0,
+                ),
+            )
+
+        next_battle_id = self._state_int(
+            state.get("next_battle_id", 0),
+            field_name="next_battle_id",
+        )
+        allocated_ids: list[int] = []
+        for battle_id in battles:
+            suffix = battle_id.removeprefix("battle_")
+            is_runtime_id = (
+                suffix.isascii()
+                and suffix.isdecimal()
+                and battle_id == f"battle_{int(suffix):04d}"
+            )
+            if not is_runtime_id:
+                if not allow_legacy:
+                    raise ValueError(
+                        "Current battle checkpoint IDs must use the runtime "
+                        "allocator format",
+                    )
+                continue
+            allocated_ids.append(int(suffix))
+        if allocated_ids and next_battle_id <= max(allocated_ids):
+            raise ValueError(
+                "Battle next_battle_id would collide with restored "
+                "battle topology",
+            )
+
+        raw_assessments = state.get("cached_assessments", {})
+        if not isinstance(raw_assessments, dict):
+            raise ValueError(
+                "Battle cached_assessments must be a mapping",
+            )
+        cached_assessments = {
+            self._state_identifier(
+                unit_id,
+                field_name="assessment map key",
+            ): self._stage_assessment(
+                raw,
+                map_unit_id=unit_id,
+                checkpoint_time=checkpoint_time,
+            )
+            for unit_id, raw in sorted(raw_assessments.items())
+        }
+        if expected_unit_ids is not None and (
+            not set(cached_assessments) <= expected_unit_ids
+        ):
+            raise ValueError(
+                "Battle assessment cache references unknown runtime units",
+            )
+        required = required_assessment_ids or set()
+        if not required <= set(cached_assessments):
+            raise ValueError(
+                "Battle assessment cache is incomplete for OODA continuation: "
+                f"missing={sorted(required - set(cached_assessments))!r}",
+            )
+
+        raw_suppression = state.get("suppression_states", {})
+        if not isinstance(raw_suppression, dict):
+            raise ValueError(
+                "Battle suppression_states must be a mapping",
+            )
+        suppression_states: dict[str, UnitSuppressionState] = {}
+        for unit_id, raw in sorted(raw_suppression.items()):
+            unit_id = self._state_identifier(
+                unit_id,
+                field_name="suppression unit_id",
+            )
+            if (
+                not isinstance(raw, dict)
+                or set(raw) != {"value", "source_direction"}
+            ):
+                raise ValueError(
+                    f"Battle suppression state {unit_id!r} is invalid",
+                )
+            suppression_states[unit_id] = UnitSuppressionState(
+                value=self._state_float(
+                    raw["value"],
+                    field_name="suppression value",
+                    minimum=0.0,
+                    maximum=1.0,
+                ),
+                source_direction=self._state_float(
+                    raw["source_direction"],
+                    field_name="suppression source_direction",
+                ),
+            )
+
+        raw_undigging = state.get("undigging", {})
+        if not isinstance(raw_undigging, dict):
+            raise ValueError("Battle undigging must be a mapping")
+        undigging: dict[str, bool] = {}
+        for unit_id, value in sorted(raw_undigging.items()):
+            unit_id = self._state_identifier(
+                unit_id,
+                field_name="undigging unit_id",
+            )
+            if not isinstance(value, bool):
+                raise ValueError("Battle undigging values must be boolean")
+            undigging[unit_id] = value
+
+        raw_misinterpreted = state.get("misinterpreted_orders", {})
+        if not isinstance(raw_misinterpreted, dict):
+            raise ValueError(
+                "Battle misinterpreted_orders must be a mapping",
+            )
+        misinterpreted_orders = {
+            self._state_identifier(
+                unit_id,
+                field_name="misinterpreted-order unit_id",
+            ): self._stage_propagation_result(
+                raw,
+                unit_id=unit_id,
+            )
+            for unit_id, raw in sorted(raw_misinterpreted.items())
+        }
+
+        raw_lod_promoted = state.get("lod_promoted", [])
+        if not isinstance(raw_lod_promoted, list):
+            raise ValueError("Battle lod_promoted must be a list")
+        lod_promoted = {
+            self._state_identifier(
+                unit_id,
+                field_name="lod_promoted unit_id",
+            )
+            for unit_id in raw_lod_promoted
+        }
+        if len(lod_promoted) != len(raw_lod_promoted):
+            raise ValueError("Battle lod_promoted values must be unique")
+
+        plan = BattleStatePlan(
+            owner_id=id(self),
+            battles=battles,
+            next_battle_id=next_battle_id,
+            vls_launches=self._stage_int_map(
+                state.get("vls_launches", {}),
+                field_name="vls_launches",
+            ),
+            ammo_expended=self._stage_int_map(
+                state.get("ammo_expended", {}),
+                field_name="ammo_expended",
+            ),
+            pending_decisions=self._stage_float_map(
+                state.get("pending_decisions", {}),
+                field_name="pending_decisions",
+                minimum=0.0,
+            ),
+            cached_assessments=cached_assessments,
+            ticks_stationary=self._stage_int_map(
+                state.get("ticks_stationary", {}),
+                field_name="ticks_stationary",
+            ),
+            suppression_states=suppression_states,
+            cumulative_casualties=self._stage_int_map(
+                state.get("cumulative_casualties", {}),
+                field_name="cumulative_casualties",
+            ),
+            undigging=undigging,
+            concealment_scores=self._stage_float_map(
+                state.get("concealment_scores", {}),
+                field_name="concealment_scores",
+                minimum=0.0,
+            ),
+            env_casualty_accum=self._stage_float_map(
+                state.get("env_casualty_accum", {}),
+                field_name="env_casualty_accum",
+                minimum=0.0,
+            ),
+            misinterpreted_orders=misinterpreted_orders,
+            lod_tiers=self._stage_int_map(
+                state.get("lod_tiers", {}),
+                field_name="lod_tiers",
+            ),
+            lod_pending_tiers=self._stage_int_map(
+                state.get("lod_pending_tiers", {}),
+                field_name="lod_pending_tiers",
+            ),
+            lod_pending_counts=self._stage_int_map(
+                state.get("lod_pending_counts", {}),
+                field_name="lod_pending_counts",
+            ),
+            lod_promoted=lod_promoted,
+        )
+        all_unit_maps = (
+            plan.pending_decisions,
+            plan.cached_assessments,
+            plan.ticks_stationary,
+            plan.suppression_states,
+            plan.cumulative_casualties,
+            plan.undigging,
+            plan.concealment_scores,
+            plan.env_casualty_accum,
+            plan.misinterpreted_orders,
+            plan.lod_tiers,
+            plan.lod_pending_tiers,
+            plan.lod_pending_counts,
+        )
+        if expected_unit_ids is not None and any(
+            not set(mapping) <= expected_unit_ids
+            for mapping in all_unit_maps
+        ):
+            raise ValueError(
+                "Battle unit-owned state references unknown runtime units",
+            )
+        if expected_unit_ids is not None and (
+            not plan.lod_promoted <= expected_unit_ids
+        ):
+            raise ValueError(
+                "Battle lod_promoted references unknown runtime units",
+            )
+        return plan
+
+    def commit_state(self, plan: BattleStatePlan) -> None:
+        """Commit a fully validated tactical checkpoint plan."""
+        if plan.owner_id != id(self):
+            raise ValueError(
+                "Battle checkpoint plan belongs to another manager",
+            )
+        self._battles = copy.deepcopy(plan.battles)
+        self._next_battle_id = plan.next_battle_id
+        self._vls_launches = dict(plan.vls_launches)
+        self._ammo_expended = dict(plan.ammo_expended)
+        self._pending_decisions = dict(plan.pending_decisions)
+        self._cached_assessments = dict(plan.cached_assessments)
+        self._ticks_stationary = dict(plan.ticks_stationary)
+        self._suppression_states = copy.deepcopy(
+            plan.suppression_states,
+        )
+        self._cumulative_casualties = dict(
+            plan.cumulative_casualties,
+        )
+        self._undigging = dict(plan.undigging)
+        self._concealment_scores = dict(plan.concealment_scores)
+        self._env_casualty_accum = dict(plan.env_casualty_accum)
+        self._misinterpreted_orders = copy.deepcopy(
+            plan.misinterpreted_orders,
+        )
+        self._lod_tiers = dict(plan.lod_tiers)
+        self._lod_pending_tiers = dict(plan.lod_pending_tiers)
+        self._lod_pending_counts = dict(plan.lod_pending_counts)
+        self._lod_promoted = set(plan.lod_promoted)
+
+    def set_state(
+        self,
+        state: dict[str, Any],
+        *,
+        allow_legacy: bool = True,
+    ) -> None:
+        """Validate and atomically restore standalone tactical state."""
+        self.commit_state(
+            self.stage_state(
+                state,
+                allow_legacy=allow_legacy,
+            ),
+        )
 
     @property
     def active_battles(self) -> list[BattleContext]:
         """Return all currently active battles."""
-        return [b for b in self._battles.values() if b.active]
+        return [
+            battle
+            for _, battle in sorted(self._battles.items())
+            if battle.active
+        ]
 
     # ── Private helpers ─────────────────────────────────────────────
 
@@ -3086,6 +3933,8 @@ class BattleManager:
         ctx: Any,
         completions: list[tuple[str, Any]],
         timestamp: datetime,
+        *,
+        battle: BattleContext | None = None,
     ) -> None:
         """Handle OODA phase completions — trigger assessment/decision.
 
@@ -3561,11 +4410,34 @@ class BattleManager:
         enemy_pos_arrays: dict[str, np.ndarray] | None = None,
     ) -> None:
         """Execute movement for all active units."""
+        diagnostics, diagnostic_tick = resolve_movement_diagnostics_owner(
+            ctx,
+            self._movement_diagnostics,
+            boundary="BattleManager",
+        )
+
         cal_flat = _resolve_cal_flat(ctx)
         wave_interval = cal_flat.get("wave_interval_s", 300.0)
         battle_elapsed = battle.battle_elapsed_s if battle is not None else 0.0
         wave_assignments = battle.wave_assignments if battle is not None else {}
         _rules = behavior_rules or {}
+        movement_decisions: list[MovementDecision] = []
+
+        def _observe(
+            unit: Unit,
+            reason: MovementReason,
+            pre_position: Position,
+            *,
+            attempted_m: float = 0.0,
+        ) -> None:
+            movement_decisions.append(MovementDecision(
+                unit_id=unit.entity_id,
+                side=unit.side,
+                reason=reason,
+                attempted_m=attempted_m,
+                pre_position=pre_position,
+                post_position=unit.position,
+            ))
 
         # Sides that should hold position (defensive doctrine)
         defensive_sides = set(cal_flat.get("defensive_sides", []))
@@ -3604,6 +4476,16 @@ class BattleManager:
         for side, units in units_by_side.items():
             enemies = active_enemies.get(side, [])
             if not enemies:
+                for u in units:
+                    _observe(
+                        u,
+                        (
+                            MovementReason.NO_TARGET
+                            if u.status == UnitStatus.ACTIVE
+                            else MovementReason.INACTIVE
+                        ),
+                        u.position,
+                    )
                 continue
             # Phase 70a: pre-fetched numpy position array for vectorized helpers
             _epa = enemy_pos_arrays.get(side) if enemy_pos_arrays is not None else None
@@ -3611,10 +4493,30 @@ class BattleManager:
             # If behavior_rules explicitly say hold_position, skip this side
             side_rules = _rules.get(side, {})
             if side_rules.get("hold_position", False):
+                for u in units:
+                    _observe(
+                        u,
+                        (
+                            MovementReason.AUTHORED_HOLD
+                            if u.status == UnitStatus.ACTIVE
+                            else MovementReason.INACTIVE
+                        ),
+                        u.position,
+                    )
                 continue
 
             # Defensive sides don't advance
             if side in defensive_sides:
+                for u in units:
+                    _observe(
+                        u,
+                        (
+                            MovementReason.DEFENSIVE_HOLD
+                            if u.status == UnitStatus.ACTIVE
+                            else MovementReason.INACTIVE
+                        ),
+                        u.position,
+                    )
                 continue
 
             # Phase 70b: hoist formation sort — compute once per side, not per unit
@@ -3633,17 +4535,29 @@ class BattleManager:
             )
 
             for u in units:
+                pre_position = u.position
                 if u.status != UnitStatus.ACTIVE:
+                    _observe(u, MovementReason.INACTIVE, pre_position)
                     continue
 
                 # Emplaced / air-defense units hold position
                 if _should_hold_position(u):
+                    _observe(
+                        u,
+                        MovementReason.EMPLACED_HOLD,
+                        pre_position,
+                    )
                     continue
 
                 # Effective speed: use current speed (set by behavior_rules
                 # or AI), fall back to max_speed for scenarios without rules
                 effective_speed = u.speed if u.speed > 0 else u.max_speed
                 if effective_speed <= 0:
+                    _observe(
+                        u,
+                        MovementReason.RESOURCE_BLOCKED,
+                        pre_position,
+                    )
                     continue
 
                 # Phase 50a: posture → movement speed multiplier
@@ -3658,15 +4572,30 @@ class BattleManager:
                                 # First tick: start un-digging, skip movement
                                 self._undigging[uid] = True
                                 object.__setattr__(u, "posture", type(u.posture)(0))
+                                _observe(
+                                    u,
+                                    MovementReason.DEFENSIVE_HOLD,
+                                    pre_position,
+                                )
                                 continue
                             else:
                                 # Second tick: cleared to move
                                 del self._undigging[uid]
                         else:
+                            _observe(
+                                u,
+                                MovementReason.DEFENSIVE_HOLD,
+                                pre_position,
+                            )
                             continue  # Defensive side stays put
                     speed_mult = _POSTURE_SPEED_MULT.get(posture_int, 1.0)
                     effective_speed *= speed_mult
                     if effective_speed <= 0:
+                        _observe(
+                            u,
+                            MovementReason.RESOURCE_BLOCKED,
+                            pre_position,
+                        )
                         continue
 
                 # Phase 51b: naval posture → speed multiplier
@@ -3674,6 +4603,11 @@ class BattleManager:
                 if np_val is not None:
                     effective_speed *= _NAVAL_POSTURE_SPEED_MULT.get(int(np_val), 1.0)
                     if effective_speed <= 0:
+                        _observe(
+                            u,
+                            MovementReason.RESOURCE_BLOCKED,
+                            pre_position,
+                        )
                         continue
 
                 # Phase 61a: sea state ops — Beaufort speed penalty + tidal current
@@ -3703,6 +4637,11 @@ class BattleManager:
                             except Exception:
                                 pass
                         if effective_speed <= 0:
+                            _observe(
+                                u,
+                                MovementReason.RESOURCE_BLOCKED,
+                                pre_position,
+                            )
                             continue
 
                 # Phase 56b: readiness-based movement speed penalty
@@ -3712,6 +4651,11 @@ class BattleManager:
                         if _rdns < 1.0:
                             effective_speed *= max(0.3, _rdns)
                             if effective_speed <= 0:
+                                _observe(
+                                    u,
+                                    MovementReason.RESOURCE_BLOCKED,
+                                    pre_position,
+                                )
                                 continue
                     except (KeyError, Exception):
                         pass
@@ -3719,25 +4663,39 @@ class BattleManager:
                 # Wave gating: check if this unit's wave has been released
                 wave = wave_assignments.get(u.entity_id, 0)
                 if wave == -1:
+                    _observe(
+                        u,
+                        MovementReason.RESERVE_OR_UNRELEASED,
+                        pre_position,
+                    )
                     continue  # Reserve — never moves
                 if wave > 0 and battle_elapsed < wave * wave_interval:
+                    _observe(
+                        u,
+                        MovementReason.RESERVE_OR_UNRELEASED,
+                        pre_position,
+                    )
                     continue  # Wave not yet released
 
                 # Standoff: stop closing once within best weapon range
                 # of the nearest enemy
-                nearest_index, nearest_dist = _nearest_enemy_index_and_dist(
-                    u.position,
-                    enemies,
-                    enemy_pos_arr=_epa,
-                )
-                if nearest_index is None:
-                    continue
-                standoff = _standoff_range(
+                nearest_index, nearest_dist, standoff = (
+                    nearest_enemy_weapon_standoff(
                     u,
                     ctx,
-                    target_domain=enemies[nearest_index].domain,
+                    enemies,
+                    enemy_pos_arr=_epa,
+                    )
                 )
+                if nearest_index is None:
+                    _observe(u, MovementReason.NO_TARGET, pre_position)
+                    continue
                 if nearest_dist <= standoff:
+                    _observe(
+                        u,
+                        MovementReason.ENGINE_WEAPON_STANDOFF,
+                        pre_position,
+                    )
                     continue
 
                 # Blend centroid + nearest enemy for movement target,
@@ -3748,6 +4706,7 @@ class BattleManager:
                 dy = ty - u.position.northing
                 dist = math.sqrt(dx * dx + dy * dy)
                 if dist < 1.0:
+                    _observe(u, MovementReason.NO_TARGET, pre_position)
                     continue
 
                 # Phase 70b: hoisted formation index — O(1) lookup per unit
@@ -3765,6 +4724,7 @@ class BattleManager:
                     dy = ty - u.position.northing
                     dist = math.sqrt(dx * dx + dy * dy)
                     if dist < 1.0:
+                        _observe(u, MovementReason.NO_TARGET, pre_position)
                         continue
 
                 # Phase 54b: trench movement factor (WW1)
@@ -3794,6 +4754,11 @@ class BattleManager:
                         _traf_mult = _sc.ground_trafficability
                         effective_speed *= _mud_mult * _snow_mult * _traf_mult
                         if effective_speed <= 0:
+                            _observe(
+                                u,
+                                MovementReason.RESOURCE_BLOCKED,
+                                pre_position,
+                            )
                             continue
 
                 # Phase 59c: wind gust operational gates
@@ -3804,9 +4769,19 @@ class BattleManager:
                         _utype = str(getattr(u, "unit_type", ""))
                         if "HELO" in _utype.upper() or "HELICOPTER" in _utype.upper():
                             if _gust > 15.0:
+                                _observe(
+                                    u,
+                                    MovementReason.RESOURCE_BLOCKED,
+                                    pre_position,
+                                )
                                 continue
                     if _domain in (None, Domain.GROUND) and getattr(u, "max_speed", 0) <= 5.0:
                         if _gust > 25.0:
+                            _observe(
+                                u,
+                                MovementReason.RESOURCE_BLOCKED,
+                                pre_position,
+                            )
                             continue
 
                 # MOPP speed factor (Phase 25c)
@@ -3823,12 +4798,22 @@ class BattleManager:
                 max_close = max(0.0, nearest_dist - standoff)
                 move_dist = min(effective_speed * dt * mopp_speed_factor, dist, max_close)
                 if move_dist <= 0:
+                    _observe(
+                        u,
+                        MovementReason.RESOURCE_BLOCKED,
+                        pre_position,
+                    )
                     continue
 
                 # Phase 58e: fuel gate — vehicles with no fuel cannot move
                 _fuel = getattr(u, "fuel_remaining", 1.0)
                 _is_vehicle = getattr(u, "max_speed", 0) > 5.0
                 if _fuel <= 0.0 and _is_vehicle:
+                    _observe(
+                        u,
+                        MovementReason.RESOURCE_BLOCKED,
+                        pre_position,
+                    )
                     continue
 
                 # Phase 59d: obstacle traversal speed reduction
@@ -3843,6 +4828,11 @@ class BattleManager:
                         except Exception:
                             pass
                     if move_dist <= 0:
+                        _observe(
+                            u,
+                            MovementReason.RESOURCE_BLOCKED,
+                            pre_position,
+                        )
                         continue
 
                 # Phase 78a: ice crossing speed penalty + water cell gate
@@ -3861,10 +4851,20 @@ class BattleManager:
                                 _tent_lc = _mv_classif.land_cover_at(_tent_pos_ice)
                                 if _tent_lc == _LC78.WATER:
                                     if not _mv_movement_eng.is_on_ice(_tent_pos_ice, _ice_snap):
+                                        _observe(
+                                            u,
+                                            MovementReason.RESOURCE_BLOCKED,
+                                            pre_position,
+                                        )
                                         continue
                             except (IndexError, ValueError):
                                 pass
                     if move_dist <= 0:
+                        _observe(
+                            u,
+                            MovementReason.RESOURCE_BLOCKED,
+                            pre_position,
+                        )
                         continue
 
                 # Phase 78b: bridge capacity + ford crossing
@@ -3889,6 +4889,11 @@ class BattleManager:
                         except Exception:
                             pass
                     if _blocked_bridge:
+                        _observe(
+                            u,
+                            MovementReason.RESOURCE_BLOCKED,
+                            pre_position,
+                        )
                         continue
                     # Ford crossing: allow at 30% speed
                     if _mv_hydro is not None:
@@ -3902,10 +4907,20 @@ class BattleManager:
                                     if not (_mv_enable_ice_crossing and _mv_seasons_eng is not None
                                             and _mv_movement_eng is not None
                                             and _mv_movement_eng.is_on_ice(_tent_bpos, _mv_seasons_eng.current)):
+                                        _observe(
+                                            u,
+                                            MovementReason.RESOURCE_BLOCKED,
+                                            pre_position,
+                                        )
                                         continue
                         except Exception:
                             pass
                     if move_dist <= 0:
+                        _observe(
+                            u,
+                            MovementReason.RESOURCE_BLOCKED,
+                            pre_position,
+                        )
                         continue
 
                 # Phase 60b: fire zones block movement
@@ -3920,11 +4935,25 @@ class BattleManager:
                                 move_dist = 0
                                 break
                         if move_dist <= 0:
+                            _observe(
+                                u,
+                                MovementReason.RESOURCE_BLOCKED,
+                                pre_position,
+                            )
                             continue
 
                 nx = u.position.easting + (dx / dist) * move_dist
                 ny = u.position.northing + (dy / dist) * move_dist
-                object.__setattr__(u, "position", Position(nx, ny, u.position.altitude))
+                proposed_position = Position(nx, ny, u.position.altitude)
+                committed_position = self._movement_committer(
+                    u,
+                    proposed_position,
+                )
+                if not isinstance(committed_position, Position):
+                    raise TypeError(
+                        "movement_committer must return a Position",
+                    )
+                object.__setattr__(u, "position", committed_position)
 
                 # Phase 60b: vehicle movement dust trail on dry ground
                 if _mv_obs_eng is not None and _mv_enable_obscurants:
@@ -3961,6 +4990,41 @@ class BattleManager:
                     if _new_fuel <= 0.0:
                         object.__setattr__(u, "speed", 0.0)
                         logger.warning("Unit %s out of fuel — speed set to 0", u.entity_id)
+
+                achieved_m = math.sqrt(
+                    (u.position.easting - pre_position.easting) ** 2
+                    + (u.position.northing - pre_position.northing) ** 2
+                    + (u.position.altitude - pre_position.altitude) ** 2
+                )
+                if move_dist <= MOVEMENT_EPSILON_M:
+                    movement_reason = MovementReason.RESOURCE_BLOCKED
+                elif achieved_m <= MOVEMENT_EPSILON_M:
+                    movement_reason = MovementReason.ZERO_PROGRESS
+                else:
+                    movement_reason = MovementReason.MOVED
+                _observe(
+                    u,
+                    movement_reason,
+                    pre_position,
+                    attempted_m=(
+                        move_dist
+                        if move_dist > MOVEMENT_EPSILON_M
+                        else 0.0
+                    ),
+                )
+
+        if diagnostics is not None:
+            assert diagnostic_tick is not None
+            diagnostics.record_batch(
+                engine_tick=diagnostic_tick,
+                stage=MovementStage.TACTICAL,
+                battle_id=(
+                    battle.battle_id
+                    if battle is not None
+                    else ""
+                ),
+                decisions=movement_decisions,
+            )
 
     # ------------------------------------------------------------------
     # Phase 41a: Terrain combat modifiers

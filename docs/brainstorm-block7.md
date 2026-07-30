@@ -1,5 +1,13 @@
 # Block 7: Final Engine Hardening — Integration, Wiring, & Fidelity
 
+> **Phase 112 integrity supersession (2026-07-30):** This brainstorming page
+> preserves Block 7's contemporaneous design goals, counts, and proposed outcome
+> checks. They are development history, not current historical-validation
+> evidence. Scenario availability, calibrated-input runs, winner agreement, and
+> current-engine regression do not establish a provenance-bearing, held-out
+> production outcome-envelope verdict. REM-030/Phase 117 owns the replacement
+> catalog-wide contract and the disposition of every retained claim.
+
 ## Motivation
 
 Blocks 1–6 built 57 phases of subsystems, from core infrastructure through combat, C2, EW, space, CBRN, four historical eras, a web UI, and full scenario validation. The result is a simulation with ~8,655 tests, 37 validated scenarios, and zero unresolved deficits.

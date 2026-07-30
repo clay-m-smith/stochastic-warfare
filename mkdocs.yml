@@ -32,6 +32,10 @@ theme:
 plugins:
   - search
 
+validation:
+  links:
+    anchors: warn
+
 markdown_extensions:
   - tables
   - toc:
@@ -88,6 +92,7 @@ nav:
     - Block 10 (92-97): development-phases-block10.md
     - Block 11 (98-104): development-phases-block11.md
     - Block 12 (105-114): development-phases-block12.md
+    - Block 13 (115-118): development-phases-block13.md
     - Remediation Backlog: remediation-backlog.md
   - Devlog:
     - Overview: devlog/index.md
@@ -204,10 +209,12 @@ nav:
     - Phase 109 - Equipment Mapping Integrity: devlog/phase-109.md
     - Phase 110 - ASAT Production Integration: devlog/phase-110.md
     - Phase 111 - Time-on-Target Execution: devlog/phase-111.md
+    - Phase 112 - Validation and Documentation Trust: devlog/phase-112.md
   - Specifications:
     - Project Structure: specs/project-structure.md
     - Checkpoint State Contract: specs/checkpoint-state.md
     - Equipment Mapping and Runtime Loadouts: specs/equipment-mapping.md
     - ASAT Production Integration: specs/asat-production-integration.md
     - Time-on-Target Execution: specs/time-on-target-execution.md
+    - Validation and Documentation Trust: specs/validation-and-documentation-trust.md
     - Skills & Hooks: skills-and-hooks.md

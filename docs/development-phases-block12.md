@@ -8,6 +8,9 @@ or persisted stages are missing.
 The live issue inventory and evidence matrix are in
 [`remediation-backlog.md`](remediation-backlog.md).
 
+Block status: **In progress**. Phases 105 through 112 are complete. Phase 113
+has not started, and Phase 114 remains unstarted.
+
 ## Phase 105 - Checkpoint State Integrity
 
 Status: **Complete** (reclosed 2026-07-28 after the Codex skill-port
@@ -148,6 +151,8 @@ evidence. REM-012 is closed.
 
 ## Phase 112 - Validation and Documentation Trust
 
+Status: **Complete** (2026-07-30).
+
 - Make excluded Python suites explicit in CI and developer documentation.
 - Preserve and enforce the green repository-wide Python Ruff baseline that
   Phase 109 established after removing the six mapping-table duplicate-key
@@ -170,13 +175,35 @@ evidence. REM-012 is closed.
 - Reconcile hard wall-clock benchmark assertions with the authoritative stored
   baseline and declared hardware/repetition policy.
 - Reconcile public capability and status claims with the remediation evidence.
+- Replace catalog tests that call current winner rows historical validation
+  with bounded, honestly named current-engine regression and repeatability
+  evidence.
+- Remove the unsupported Block 9 claim that one-sided authored-configuration
+  runs prove performance-flag semantic preservation.
 
 Exit criteria: REM-013, REM-014, REM-017, REM-022, REM-023, REM-024, REM-025,
 REM-026, and REM-027 are closed, REM-015 remains green, all relevant suites are
 reported explicitly, and the phase postmortem identifies any newly discovered
-backlog items.
+backlog items. REM-030 and REM-031 remain explicit Phase 117/118 follow-ups;
+Phase 112 must record them and stop presenting current-engine regression as
+historical validation or one-sided execution as performance-flag equivalence,
+but it does not claim to close either deficit.
+
+Local closure evidence audits an exact 11,752-node disjoint Python union:
+`standard` 11,299 passed with 6 warnings, `slow-only` 109 passed with no
+warnings, `benchmark-only` 60 passed with no warnings, `slow-benchmark` 4
+passed with no warnings, API 239 passed with no warnings, and E2E 41 passed
+with no warnings. The API result is qualified by this host's local uvloop
+workaround and does not establish host-default behavior until remote
+default-policy CI passes. The overlapping terrain dependency profile
+separately passed 97 tests. See [`phase-112.md`](devlog/phase-112.md) for the
+commands, warnings, exclusions, scenario outcomes, benchmark evidence, and
+remaining limitations, and [`remediation-backlog.md`](remediation-backlog.md)
+for the canonical issue transitions.
 
 ## Phase 113 - Morale State Ownership
+
+Status: **Not started**.
 
 Replace the independently mutable context and state-machine morale stores with
 one authoritative runtime path. Route transitions, rout cascades, aggregation,
@@ -186,6 +213,8 @@ Exit criteria: REM-019 is closed with exact transition, cascade, aggregation,
 and checkpoint-continuation evidence.
 
 ## Phase 114 - Era Override Execution
+
+Status: **Not started**.
 
 Define the supported physics and tick-resolution override keys, reject unknown
 metadata, and apply each supported value at the production construction

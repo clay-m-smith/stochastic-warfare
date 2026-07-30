@@ -44,10 +44,28 @@ class _FakeUnitLoader:
         )
 
 
+class _FakeForceBuilder:
+    """Minimal runtime-boundary fixture for reinforcement event tests."""
+
+    @staticmethod
+    def build_units(specs):
+        return [
+            types.SimpleNamespace(
+                entity_id=spec.entity_id,
+                unit_type=spec.unit_type,
+                position=spec.position,
+                side=spec.side,
+                status=None,
+            )
+            for spec in specs
+        ]
+
+
 def _ctx(clock: SimulationClock | None = None):
     return types.SimpleNamespace(
         clock=clock or _make_clock(200.0),
         unit_loader=_FakeUnitLoader(),
+        force_builder=_FakeForceBuilder(),
         rng_manager=RNGManager(42),
     )
 

@@ -55,7 +55,10 @@ and CBRN stress affect the transition probabilities.
 
 ### What It Models
 
-Statistical estimation of outcomes through repeated random sampling. Used for **engagement validation** and **campaign outcome distributions**.
+Statistical estimation of outcomes through repeated random sampling. Production
+batches characterize current-engine engagement and campaign outcome
+distributions. They support a historical-validation claim only when executed as
+part of a predeclared, source-backed, held-out outcome-envelope contract.
 
 ### Key Formula
 
@@ -65,12 +68,22 @@ $$\bar{X} = \frac{1}{N}\sum_{i=1}^{N} X_i, \quad \text{CI}_{95\%} = \bar{X} \pm 
 
 ### Example
 
-To validate the 73 Easting scenario, run 100 iterations with different seeds. Collect the exchange ratio (blue kills / red kills) from each. Compare the mean and 95% confidence interval against the historical outcome (~0.1 loss ratio for blue).
+To characterize the current production distribution for 73 Easting, run 100
+iterations with different seeds and collect one exactly defined exchange-ratio
+metric from every completed run. Report the ordered raw vector, summary
+statistics, seed sequence, and runtime provenance. That experiment does not by
+itself validate the scenario historically. Historical acceptance additionally
+requires predeclared sources, units and event boundaries, calibration evidence
+separated from held-out seeds, and a persisted production-envelope verdict.
+REM-030/Phase 117 owns that catalog-wide acceptance contract.
 
 ### Where Used
 
-- `validation/monte_carlo.py` -- `MonteCarloHarness` for batch runs
-- `validation/campaign_validation.py` -- campaign-level MC validation
+- `validation/monte_carlo.py` -- legacy `MonteCarloHarness` diagnostics
+- `validation/campaign_runner.py` and `validation/campaign_metrics.py` --
+  campaign execution and metric extraction
+- `tools/_run_helpers.py` with `simulation/runtime.py` -- Phase 112
+  authoritative production batch boundary through `SimulationRuntimeFactory`
 
 ### Key Parameters
 
@@ -454,11 +467,23 @@ The full calibration toolkit includes:
 
 ### Note on Circular Calibration
 
-CEV values are calibrated to produce correct historical outcomes — the same outcomes they are derived from. This circularity is acceptable for **historical validation** (confirming the engine can reproduce known results with plausible parameters) but does not constitute **predictive validation**. Predictive validation requires testing against engagements not used for calibration, which is done via the Monte Carlo regression suite with multiple seeds.
+CEV values fitted to an engagement's reported outcome demonstrate calibration
+fit only. They do not validate that engagement historically, because the same
+evidence selected the parameters and judged the result. Running additional
+seeds from those calibrated inputs characterizes the model's seeded
+distribution and supports current-engine regression; it does not create
+independent or predictive validation.
+
+Historical or predictive validation requires a predeclared, source-backed
+metric envelope with exact units and event boundaries, a production execution
+path, and calibration/training inputs separated from held-out validation
+evidence. The catalog-wide replacement contract remains queued under
+[REM-030](../remediation-backlog.md#rem-030-catalog-wide-historical-outcome-claims-lack-production-validation).
 
 ### Where Used
 
-- `calibration_overrides` in every scenario YAML
+- `CampaignScenarioConfig.calibration_overrides` (typed defaults apply when a
+  scenario YAML omits the field)
 - `simulation/calibration.py` — `CalibrationSchema` pydantic model
 - `simulation/battle.py` — applied during engagement resolution
 

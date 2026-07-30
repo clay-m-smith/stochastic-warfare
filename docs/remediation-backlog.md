@@ -34,21 +34,25 @@ Audit baseline: 2026-07-28 at `68acd4b`
 | REM-010 | P0 | 109 | Equipment data | Loadout mapping has duplicate/wrong keys, 22 unmapped catalog entries, and validation-layer ownership | **Closed** | Yes | Yes | Yes | N/A | Yes | Yes | Yes | [Phase 109](devlog/phase-109.md#postmortem) |
 | REM-011 | P1 | 110 | Space combat | The production ASAT hook is an explicit placeholder | **Closed** | Yes | Yes | Yes | Yes | Yes | Yes | Yes | [Phase 110](devlog/phase-110.md#postmortem) |
 | REM-012 | P1 | 111 | Indirect fire | Time-on-target uses dummy coordinates, has no executed state, and has no production caller | **Closed** | Yes | Yes | Yes | Yes | Yes | Yes | Yes | [Phase 111](devlog/phase-111.md#postmortem) |
-| REM-013 | P1 | 112 | Validation trust | Default CI hides excluded suites; Phase 109 established a green full Python Ruff baseline, but CI does not yet enforce the complete suite contract | Queued | Yes | N/A | Yes | N/A | - | N/A | N/A | Explicit CI suites and documented/enforced boundaries |
-| REM-014 | P1 | 112 | Test quality | Structural and no-assert tests can support false completion claims | Queued | Yes | N/A | Yes | N/A | - | - | N/A | Audit critical contracts and add behavioral assertions |
+| REM-013 | P1 | 112 | Validation trust | Default CI hides excluded suites; Phase 109 established a green full Python Ruff baseline, but CI does not yet enforce the complete suite contract | **Closed** | Yes | N/A | Yes | N/A | Yes | N/A | Yes | [Phase 112](devlog/phase-112.md#postmortem) |
+| REM-014 | P1 | 112 | Test quality | Structural and no-assert tests can support false completion claims | **Closed** | Yes | N/A | Yes | N/A | Yes | Yes | N/A | [Phase 112](devlog/phase-112.md#postmortem) |
 | REM-015 | P2 | 112 | Documentation | Strict documentation build was not part of the verified baseline | **Closed early** | Yes | N/A | Yes | N/A | Yes | N/A | N/A | [Phase 105 verification](devlog/phase-105.md#final-broader-verification) |
 | REM-016 | P1 | TBD | Aggregation | Disaggregation recreates every constituent as base `Unit` and does not restore captured weapon, sensor, or supply attachments | Queued | Yes | Yes | Yes | N/A | - | - | - | Subclass/loadout round trip across aggregation |
-| REM-017 | P0 | 112 | Analysis tooling | Scenario batches can accept empty invalid rosters and silently turn unsupported metrics into zero | Queued | Yes | Yes | Yes | N/A | Yes | Yes | N/A | Real-unit batch run, unknown-metric rejection, and outcome-affecting sweep/comparison |
+| REM-017 | P0 | 112 | Analysis tooling | Scenario batches can accept empty invalid rosters and silently turn unsupported metrics into zero | **Closed** | Yes | Yes | Yes | N/A | Yes | Yes | Yes | [Phase 112](devlog/phase-112.md#postmortem) |
 | REM-018 | P1 | 114 | Era overrides | `physics_overrides` and `tick_resolution_overrides` are declared and documented but have no production consumer | Queued | Yes | Yes | - | N/A | - | - | Yes | Typed override changes its production engine/clock behavior |
 | REM-019 | P1 | 113 | Morale state | `SimulationContext.morale_states` and `MoraleStateMachine` are independently mutable and can diverge after rout or aggregation paths | Queued | Yes | Yes | Yes | N/A | - | - | Yes | One authoritative state survives transition, cascade, aggregation, and checkpoint |
 | REM-020 | P1 | TBD | Logistics | March/combat consumption is computed with fabricated defaults and discarded | Queued | Yes | Yes | - | - | - | - | - | Typed activity demand changes real inventory once per logical interval |
 | REM-021 | P1 | TBD | Logistics | Abstract Class III/V inventory is independent of live entity fuel and weapon magazines | Queued | Yes | Yes | - | - | - | - | Yes | One explicit authority or conservative synchronization contract |
-| REM-022 | P2 | 112 | Documentation navigation | Strict MkDocs succeeds while seven historical devlog-index fragment links target missing anchors | Queued | Yes | N/A | Yes | N/A | Yes | N/A | N/A | Repair fragment targets and verify link resolution |
-| REM-023 | P1 | 112 | Scenario data trust | Missing commander profile references warn once per unit while scenario evaluation still reports OK | Queued | Yes | Yes | Yes | N/A | Yes | - | N/A | Strict profile-reference validation and corrected scenario data |
-| REM-024 | P1 | 112 | Unit data trust | Invalid crew-skill enums are hidden by a broad `KeyError` catch and silently drop historical units | Queued | Yes | Yes | Yes | N/A | Yes | Yes | N/A | Eager enum validation and narrow missing-definition handling |
-| REM-025 | P2 | 112 | Scenario diagnostics | `MANY_STUCK_UNITS` treats legitimate corrected weapon-range standoff as a movement failure | Queued | Yes | N/A | Yes | N/A | Yes | Yes | N/A | Semantic stuck-unit diagnostic with a Cambrai control |
-| REM-026 | P1 | 112 | Benchmark trust | A hard 60-second Golan assertion contradicts the checked-in 500-second baseline and fails code that is faster than that baseline | Queued | Yes | N/A | Yes | N/A | Yes | Yes | Yes | Hardware-aware threshold and reproducible before/after benchmark |
-| REM-027 | P2 | 112 | Space ISR state | Buffered ISR checkpoint reports use generic JSON normalization rather than a typed semantic rehydration boundary | Queued | - | Yes | Yes | N/A | Yes | - | - | Typed report round trip and malformed-report rejection through production fusion |
+| REM-022 | P2 | 112 | Documentation navigation | Strict MkDocs succeeds while seven historical devlog-index fragment links target missing anchors | **Closed** | Yes | N/A | Yes | N/A | Yes | N/A | N/A | [Phase 112](devlog/phase-112.md#postmortem) |
+| REM-023 | P1 | 112 | Scenario data trust | Missing commander profile references warn once per unit while scenario evaluation still reports OK | **Closed** | Yes | Yes | Yes | N/A | Yes | Yes | N/A | [Phase 112](devlog/phase-112.md#postmortem) |
+| REM-024 | P1 | 112 | Unit data trust | Invalid crew-skill enums are hidden by a broad `KeyError` catch and silently drop historical units | **Closed** | Yes | Yes | Yes | N/A | Yes | Yes | N/A | [Phase 112](devlog/phase-112.md#postmortem) |
+| REM-025 | P2 | 112 | Scenario diagnostics | `MANY_STUCK_UNITS` treats legitimate corrected weapon-range standoff as a movement failure | **Closed** | Yes | N/A | Yes | N/A | Yes | Yes | N/A | [Phase 112](devlog/phase-112.md#postmortem) |
+| REM-026 | P1 | 112 | Benchmark trust | A hard 60-second Golan assertion contradicts the checked-in 500-second baseline and fails code that is faster than that baseline | **Closed** | Yes | N/A | Yes | N/A | Yes | Yes | Yes | [Phase 112](devlog/phase-112.md#postmortem) |
+| REM-027 | P2 | 112 | Space ISR state | Buffered ISR checkpoint reports use generic JSON normalization rather than a typed semantic rehydration boundary | **Closed** | Yes | Yes | Yes | N/A | Yes | Yes | Yes | [Phase 112](devlog/phase-112.md#postmortem) |
+| REM-028 | P1 | 115 | Sensing/combat | Tactical movement can hold at catalog weapon range beyond usable sensing range | Queued | - | Yes | Yes | - | Yes | Yes | - | Sensing-aware standoff enabled/disabled production comparison |
+| REM-029 | P1 | 116 | Fog-of-war state | Ordinary contacts serialize but are discarded by `FogOfWarManager.set_state()` | Queued | Yes | Yes | Yes | N/A | Yes | Yes | - | Nonempty-contact fresh continuation with exact COP behavior |
+| REM-030 | P1 | 117 | Historical validation | At the Phase 112 baseline, catalog winner tables, legacy comparisons, and public docs claimed historical validation without a production, provenance-bearing, held-out outcome-envelope contract; fresh Debecka production exposed incompatible casualty units and a duration miss | Queued | Yes | - | - | N/A | Yes | Yes | - | Per-claim validated/regression-only/unsupported disposition plus typed held-out production-envelope artifacts |
+| REM-031 | P1 | 118 | Performance semantics | At the Phase 112 baseline, Block 9 claimed five performance flags preserve scenario outcomes, but its regression executed only authored configurations, excluded the only two all-flag scenarios, and had no same-input disabled controls | Queued | Yes | Yes | Yes | - | - | - | - | Per-flag semantic classification and common-seed production off/on evidence with persisted provenance |
 
 ## REM-001 - Exact checkpoint restoration
 
@@ -914,6 +918,79 @@ live Class V consumption path. Planned-attachment reload restore is rejected
 until typed resupply provenance exists; live Class V synchronization remains
 REM-021 rather than being claimed by REM-012.
 
+## REM-013 - CI and local commands concealed excluded Python suites
+
+### Phase 112 closure evidence
+
+**Matrix:** `D=Yes, L=N/A, W=Yes, E=N/A, X=Yes, O=N/A, P=Yes`.
+
+Phase 112 defines one locked-superset collection contract and divides its
+node IDs into six explicit, pairwise-disjoint selections: standard,
+slow-only, benchmark-only, slow-benchmark, API, and E2E. The exact-union audit
+compares node IDs rather than trusting fixed counts. Terrain is separately
+exercised as a dependency profile against its four owned files; it is no
+longer represented by a zero-selecting marker.
+
+The executable partition runner selects exact manifest node IDs and rejects an
+empty selection, collection failure or timeout, operational timeout, skip,
+missing outcome summary, or incomplete node accounting. Its timeout negative
+controls retain the result, manifest, and selection without fabricating JUnit
+counts that do not exist. Completed pytest executions also emit JUnit.
+Module-affine deterministic sharding keeps a test module on one worker
+whenever the number of modules permits it and reports any explicit fallback
+split.
+
+Pull-request and main workflows execute repository-wide Ruff, standard, API,
+E2E, terrain, strict documentation, and paired 73 Easting gates.
+Weekly/manual workflows own the sharded marker partitions, and the long Golan
+pair remains an explicit manual gate. Artifact upload steps run after failure,
+so a timeout cannot be presented as an omitted or successful suite. Fresh
+local execution of the exact partitions, the terrain dependency profile, and
+the runner's failure controls exercises this delivery contract; the exact
+commands, counts, timeouts, warnings, and retained artifacts belong in the
+Phase 112 devlog.
+
+`L` and `E` are N/A because suite selection is delivery infrastructure, not
+scenario data or a simulation feature gate. `O` is N/A because running the
+complete validation contract does not itself change a simulation outcome.
+`P` is Yes because the exact selection and result evidence is retained by the
+local/CI artifact contract. The Phase 112 postmortem accepted this evidence
+and the ranked row is closed.
+
+## REM-014 - Structural tests supported behavioral completion claims
+
+### Phase 112 closure evidence
+
+**Matrix:** `D=Yes, L=N/A, W=Yes, E=N/A, X=Yes, O=Yes, P=N/A`.
+
+Phase 112 adds a machine-checked current inventory for tests with no direct
+oracle and for syntactic weak-oracle candidates. Every weak candidate has one
+reviewed disposition: structural-only evidence is marked
+`pytest.mark.structural`, while an excluded behavioral candidate records the
+stronger observable oracle that makes the syntactic signal secondary. A
+separate historical remediation ledger records the exact phase-start nodes
+that were removed, honestly renamed, or repaired. New, stale, overlapping, or
+unreviewed node IDs fail validation rather than being regenerated as an
+automatic judgment.
+
+The named high-risk phase-start tests were not accepted on imports, mocks,
+logs, constructors, or no-crash execution. Their replacements observe real
+effects at the applicable boundary: bounded API concurrency, terrain
+coordinate agreement, C2 latency, delayed ISR delivery, armed air-posture
+engagement, naval result/event publication, activated stratagem state,
+temperature/fatigue and morale-mode behavior, campaign update state, and two
+simultaneously advanced battles. The remaining structural clusters are
+explicit diagnostics and cannot support a capability or phase-exit claim.
+Truthful current-engine snapshots and legacy-runner regressions also replace
+historical or semantic-equivalence labels that their oracles did not prove.
+
+`L` and `E` are N/A because evidence classification is not loaded scenario
+state or an optional runtime behavior. `O` is Yes because each repaired
+behavioral node now fails when its named observable effect is absent. `P` is
+N/A because this remediation governs repository evidence, not a simulation
+checkpoint or public runtime result. The Phase 112 postmortem accepted this
+evidence and the ranked row is closed.
+
 ## REM-027 - Space ISR buffered checkpoint reports are not typed
 
 `SpaceISREngine` stores buffered reports as dictionaries containing a
@@ -933,6 +1010,252 @@ Phase 112 must introduce a typed report state, reject malformed/unknown
 references and impossible times, rehydrate positions explicitly, and prove
 that a reachable buffered report produces identical fusion state across fresh
 checkpoint continuation.
+
+### Phase 112 closure evidence
+
+**Matrix:** `D=Yes, L=Yes, W=Yes, E=N/A, X=Yes, O=Yes, P=Yes`.
+
+Phase 112 replaces generic buffered dictionaries with strict
+`SpaceISRReport`, `IntelDeliveryReceipt`, and `IMINTTrackAssociation` records.
+The scenario selects exact IMINT-capable constellations, and the loader rejects
+unknown, wrong-owner, wrong-target-side, unsupported-resolution, or
+non-IMINT selections before context publication. Report generation validates
+the real satellite and target topology, records an explicit `Position`,
+observation/availability times, owner, target, source, and uncertainty, and
+queues reports in canonical causal order.
+
+A reachable catalog-backed optical pass now generates an owner-scoped delayed
+report against a real runtime unit. Delivery changes that owner's fusion
+track, receipt ledger, and association state only after the processing delay;
+the other side remains unchanged. Lifecycle controls prove exact stale-track
+reactivation and age-gated behavior. Batch preflight, report delivery, and
+fusion commit failures reject atomically or preserve prior committed reports
+with an exact retry, rather than dropping or double-delivering the failed
+report.
+
+Checkpoint schema 112 persists the typed queue, delivery receipts,
+associations, fusion track, lifecycle state, and relevant SPACE/DETECTION
+authority. Fresh restore before and after delivery continues byte-exactly.
+Malformed references, ordering, times, positions, proxy mappings, cross-state
+receipts, associations, and forged fusion state reject before mutation. The
+proof deliberately keeps ordinary fog-of-war contacts empty because their
+independent restore gap remains REM-029; aggregation remains bounded by
+REM-016.
+
+`E` is N/A because typed report integrity and rehydration are mandatory
+whenever the configured Space ISR path is present, not an optional typing
+mode. The Phase 112 postmortem accepted this evidence and the ranked row is
+closed.
+
+## REM-028 - Weapon standoff can exceed usable sensing range
+
+### Reproduction and required proof
+
+The corrected Cambrai Mark IV primary armament gives the production movement
+boundary a 6,675 m modeled weapon range. At seed 42 the tanks hold at roughly
+5,340 m even though the applicable visibility/sensing range is 3,000 m and no
+tank detection, fire, or engagement event occurs. Phase 112 must classify the
+actual `ENGINE_WEAPON_STANDOFF` branch accurately under REM-025, but that
+diagnostic repair does not make the underlying blind standoff
+outcome-affecting behavior valid.
+
+A future phase must define whether tactical standoff requires a live
+owner-side contact, sensor/visibility reach, fire-control solution, or another
+typed targeting condition. It must prove enabled/disabled movement and combat
+outcomes without extending a sensor, inventing a target, or silently reverting
+to unrestricted catalog maximum range.
+
+**Status:** Queued for Phase 115 in the planned next remediation block.
+
+## REM-029 - Ordinary fog-of-war contacts are discarded on restore
+
+### Reproduction and required proof
+
+`FogOfWarManager.get_state()` serializes each `SideWorldView.contacts` entry,
+but `set_state()` restores only last-update times and leaves every ordinary
+contact absent. REM-027 can prove typed Space-report queue and
+intelligence-fusion track continuation only with ordinary world views
+explicitly empty; it cannot support a whole-fog-of-war continuation claim.
+
+A future phase must stage and validate exact side ownership, contact IDs,
+`ContactInfo`, nested track state, update times, topology, and DETECTION RNG
+authority before mutation. A nonempty-contact fresh-runtime continuation must
+preserve decay, update, common-operating-picture behavior, subsequent events,
+and whole-context checkpoint equality.
+
+**Status:** Queued for Phase 116 in the planned next remediation block.
+
+## REM-030 - Catalog-wide historical outcome claims lack production validation
+
+### Reproduction and required proof
+
+The gap is catalog-wide, not limited to one scenario. Thirty-one shipped
+scenario YAML files declare `documented_outcomes`. At the Phase 112 baseline,
+`tests/validation/test_historical_accuracy.py` labeled 34 winner rows and eight
+draw rows as historical accuracy, and called a winner frequency of at least
+80 percent across ten seeds statistical validation. Phase 67 and Phase 91
+tests imported or repeated those rows. Older Phase 7 validation tests used a
+separate legacy `ScenarioRunner`; several proved only that a comparison object
+existed, not that the declared tolerances passed. Metadata presence, a static
+winner row, multiple seeds from the same calibrated inputs, and a legacy
+runner are not production historical-validation evidence.
+
+Debecka Pass is the concrete production red, not the limit of this issue.
+Fresh Phase 112 production runs for seeds 42 through 51 won for blue in all ten
+runs. The captured summary counted an average of 33.7 destroyed blue unit
+records and 20 destroyed red unit records, but the declared casualty metrics
+are explicitly measured in vehicles. That incompatible unit/extractor
+boundary prevents an authoritative casualty verdict; treating the totals as
+the legacy numeric comparison would also put them outside the stored blue
+ceiling and red range. Runs terminated after an average of 191.8 five-second
+ticks, about 959 seconds, while the declared duration range is about
+10,286--20,160 seconds. Those seeds were not a predeclared held-out set, so the
+result proves a current contract/mismatch red and a false public claim; it does
+not constitute a replacement validation study. The same slow-suite audit also
+found obsolete seed-42 winner/condition rows for 73 Easting, Bekaa Valley,
+Trafalgar, Bint Jbeil, and Eastern Front 1943.
+
+### Phase 112 truthful disposition
+
+Phase 112 removed the blanket historical-accuracy oracle without manufacturing
+a pass. The production evaluator now runs once for declared seed 42 and records
+an exact 46-scenario current-engine terminal snapshot. Its module, class, and
+test documentation explicitly state that a changed winner/condition row is a
+regression-review signal, not historical validation. Phase 67 retains only its
+catalog-lineage inventory and does not rerun the evaluator.
+
+The Golan and Falklands campaign suites now share bounded production samples,
+compare exact same-seed semantic state, and label documented-outcome handling
+as metric projection rather than a passing historical verdict. Redundant
+50-seed campaign loops and the Golan and Falklands legacy runners' count-only
+1,000-run loops were removed; the remaining 73 Easting legacy convergence
+check is explicitly not historical evidence. Public roadmap, model, scenario,
+and historical devlog claims carry REM-030 supersession notices.
+
+This truthful relabel/removal is a Phase 112 integrity repair, not REM-030
+closure. No production, source-backed, predeclared held-out envelope or public
+verdict artifact was added.
+
+Phase 117 must inventory every test, scenario field, and public statement that
+claims historical accuracy and give each one an explicit disposition:
+
+- production-validated against a typed, source-backed outcome envelope;
+- current-engine regression only; or
+- unsupported or not yet validated.
+
+Closure does not require manufacturing a passing envelope for every scenario.
+It requires removing the blanket claim, validating only those scenarios for
+which defensible evidence exists, and labeling the rest honestly. Every
+validated envelope must carry the scenario and input fingerprints, event
+boundaries, exact metric extractor and units, source and source-quality
+provenance, justified ranges or tolerances, calibration/training inputs
+separate from predeclared held-out seeds, raw production vectors, and a
+persisted verdict. Missing metrics and envelope misses must fail explicitly.
+Winner-only agreement, same-data calibration, constructor or loader success,
+and `len(report) > 0` are not completion evidence. Physical weapon performance
+must not be tuned merely to force a historical pass.
+
+### Evidence-matrix rationale
+
+- `D` is **Yes** because typed `HistoricalMetric` and
+  `HistoricalEngagement` metadata exist, although they do not yet provide the
+  required production/provenance/held-out contract.
+- `L` and `W` are unproven because documented outcomes are not loaded and
+  evaluated at the authoritative `SimulationRuntimeFactory` boundary.
+- `E` is **N/A** because historical conformity is not an optional feature
+  switch. The relevant control is predeclared calibration/training evidence
+  versus independent held-out validation.
+- `X` and `O` are **Yes** only for the concrete production red and its
+  observable mismatch, not for a passing catalog-wide validation claim.
+- `P` remains unproven because no authoritative provenance-bearing verdict
+  artifact is persisted or exposed.
+
+**Status:** Queued for Phase 117. Phase 112 relabeled false tests as
+current-engine regression and recorded the deficit, but did not close
+REM-030.
+
+## REM-031 - Performance flags lack semantic-integrity evidence
+
+### Reproduction and required proof
+
+Phase 91 planned to run every scenario with the Block 9 performance flags off
+and on and compare winner, victory type, ticks, and casualties. At the Phase
+112 baseline, `tests/validation/test_block9_regression.py` instead called
+`evaluate_scenarios.py` with a seed and the scenario's authored configuration;
+it supplied no paired variant or calibration override. The only scenarios
+that authored all five current flags -- `enable_detection_culling`,
+`enable_scan_scheduling`, `enable_lod`, `enable_soa`, and
+`enable_parallel_detection` -- are `benchmark_battalion` and
+`benchmark_brigade`, while evaluator discovery explicitly excludes
+`benchmark_*`. Detection culling defaulted to enabled but also had no
+same-input disabled control. The old test therefore proved neither
+performance-flag preservation nor flag-caused historical accuracy.
+
+The baseline slow tests compounded that semantic gap with an unbounded
+execution shape. The Phase 67 and historical-accuracy Monte Carlo fixtures
+each launched the full 46-scenario evaluator for ten seeds and then discarded
+results outside their selected rows. One fresh Phase 112 evaluator artifact
+recorded 751.04 seconds across the 46 scenarios; ten serial passes would have
+required about 7,510 seconds before other partition nodes, beyond the declared
+4,800-second job timeout. Running the entire evaluator twice to compare only
+73 Easting winner and ticks was similarly a repeatability check for the
+current authored configuration, not an enabled/disabled flag comparison.
+
+### Phase 112 truthful disposition
+
+Phase 112 removed the repeated full-evaluator fixtures and the unsupported
+semantic-preservation/performance labels. The Phase 67 module now records only
+its catalog lineage and proves that none of those ten scenarios authors the
+four opt-in Block 9 flags. The Block 9 module now checks only the typed boolean
+schema/default/rejection boundary and the exact catalog fact that
+`benchmark_battalion` and `benchmark_brigade` author all four opt-in flags
+while both are evaluator exclusions. It explicitly disclaims outcome
+neutrality, historical accuracy, determinism, and benchmark validation.
+
+The ordinary seed-42 evaluator snapshot is bounded current-engine regression,
+not flag evidence. These truthful labels and bounded fixtures make the suite
+operable without claiming that any of the five controls preserves semantics.
+No common-seed disabled/enabled production pair, isolated flag effect, or
+persisted semantic verdict was added; REM-031 therefore remains open.
+
+Phase 118 must classify each flag before testing it as either a
+semantics-preserving execution optimization or an explicit model-fidelity
+approximation. It must then:
+
+- run same-revision, same-data, same-config, common-seed off/on pairs through
+  `SimulationRuntimeFactory` and prove that the intended branch executes;
+- predeclare the terminal-state, event, detection/contact, RNG, and checkpoint
+  semantics applicable to that flag rather than using winner agreement alone;
+- require exact preservation only for flags whose declared contract is
+  semantics-preserving;
+- rename or document approximation controls as model controls and enforce a
+  justified, predeclared paired semantic-error budget rather than promising
+  blanket exact equivalence;
+- prove deterministic repetition and fresh-checkpoint continuation on each
+  side of the pair;
+- store raw vectors, runtime/config/data/loadout/doctrine fingerprints,
+  semantic digests, and the per-flag verdict in bounded, sharded artifacts; and
+- keep performance timing evidence separate from semantic evidence and never
+  recalibrate combat parameters to erase a flag delta.
+
+### Evidence-matrix rationale
+
+- `D`, `L`, and `W` are **Yes** because the five flags are typed
+  `CalibrationSchema` fields, load into the effective calibration, and have
+  production consumers.
+- `E` is unproven because no same-input enabled/disabled production pair
+  exists.
+- `X` is unproven because the only all-flag scenario declarations are excluded
+  from the cited evaluator and Phase 91 descoped their production Monte Carlo
+  run to schema-level evidence.
+- `O` is unproven because current output drift was not isolated to a flag.
+- `P` is unproven because no paired semantic artifact or public verdict exists.
+  No evidence cell is `N/A`: controls, realistic exercise, observable verdict,
+  and persisted provenance are all required for this integrity claim.
+
+**Status:** Queued for Phase 118. Phase 112 removed the false current labels,
+but no documentation may describe the Block 9 flags as historically validated
+or semantically equivalent until the required controlled evidence exists.
 
 ## REM-020 - March and combat logistics demand is not applied
 
@@ -995,8 +1318,42 @@ real loaded roster and stop rather than report unverified results.
 Phase 107 repaired the first independent defect: batch loading now derives the
 data root from the `scenarios` ancestor and requires an explicit `data_dir` for
 other layouts. The complete 200-test API suite covers that compatibility
-repair. REM-017 remains open because empty-roster rejection, metric validation,
-and real outcome-changing sweep/comparison proof still belong to Phase 112.
+repair. At the Phase 112 baseline, empty-roster rejection, metric validation,
+and real outcome-changing sweep/comparison proof remained open.
+
+### Phase 112 closure evidence
+
+**Matrix:** `D=Yes, L=Yes, W=Yes, E=N/A, X=Yes, O=Yes, P=Yes`.
+
+Phase 112 establishes `SimulationRuntimeFactory -> PreparedScenario ->
+RuntimeSession` as the authoritative construction boundary for analysis,
+campaign validation, API run management, MCP, and benchmarks.
+`AnalysisRunner` validates an exact nonempty metric list, strict iteration and
+seed values, finite typed variants, exact side IDs, and authored-versus-loaded
+roster cardinality before returning an authoritative batch. Each seed and
+variant receives a fresh production session. Unknown metrics, dead/unknown
+calibration keys, missing definitions, empty or changed rosters, partial
+vectors, nonfinite values, incomplete runs, and changed code/data identity
+reject instead of becoming zero.
+
+A supported calibration sweep changes a metric derived from completed
+production runs. Same-seed A/B and doctrine variants expose complete raw
+vectors and public terminal records; comparison uses paired differences,
+positive/negative/tied counts, the exact sign test, Holm-adjusted family
+significance, and explicit superiority. Doctrine assignments take effect
+before initial and reinforcement registration and change exercised OODA or
+decision behavior. Python, MCP, FastAPI, and frontend consumers use the same
+typed payload rather than recomputing statistics from a second runner.
+
+Every result carries source/effective-configuration, code, data, catalog,
+loadout, doctrine, roster, seed, metric, and terminal-run provenance. Durable
+API batch storage retains raw vectors, statistics, and provenance across a
+database reopen. An iteration-two failure or accepted cancellation publishes
+no partial metrics, raw vectors, terrain/frame result, or false completed
+state. `E` is N/A because strict analysis integrity is mandatory for every
+accepted request; controlled variants are outcome controls, not an
+enable/disable switch for validation. The Phase 112 postmortem accepted this
+evidence and the ranked row is closed.
 
 ## REM-022 - Historical devlog fragment links do not resolve
 
@@ -1011,6 +1368,24 @@ Phase 112 must repair each target or update the index to the heading that
 actually owns the limitation, then run a link-resolution check that fails on a
 missing fragment. Pages intentionally omitted from the navigation tree are not
 part of this item.
+
+### Phase 112 closure evidence
+
+**Matrix:** `D=Yes, L=N/A, W=Yes, E=N/A, X=Yes, O=N/A, P=N/A`.
+
+Phase 112 repairs all 49 affected links across the seven malformed historical
+fragment targets and enables MkDocs anchor validation under the repository's
+strict build. A real full-site build resolves the corrected fragments with
+zero broken-fragment diagnostics. An isolated documentation validator also
+proves the failure path: a generated missing-fragment target fails while the
+corresponding valid-fragment control passes. This distinguishes link
+resolution from mere successful page generation.
+
+`L` is N/A because documentation links are not loaded simulation input. `E` is
+N/A because current-link validity has no supported disabled mode. `O` and `P`
+are N/A because this item governs navigable documentation, not simulation
+outcomes or runtime state. The Phase 112 postmortem accepted this evidence and
+the ranked row is closed.
 
 ## REM-023 - Missing commander profiles do not fail scenario validation
 
@@ -1027,6 +1402,37 @@ correct the scenario to catalog-backed profiles or add independently justified
 definitions, and make a missing reference a validator/evaluator failure rather
 than a warning-only success. Negative and corrected production-load controls
 must prove the boundary.
+
+### Phase 112 closure evidence
+
+**Matrix:** `D=Yes, L=Yes, W=Yes, E=N/A, X=Yes, O=Yes, P=N/A`.
+
+`SideConfig.commander_profile` is now the canonical side-default reference,
+with one strict typed tuning/assignment model for per-unit exceptions.
+Production loading merges the global and applicable era profile catalogs with
+duplicate rejection, validates every side and exact initial/future unit
+assignment before construction, and rejects partial profile declarations,
+feature-shaped empty configuration, unknown schools, and malformed tuning.
+All 74 shipped commander references resolve.
+
+The six unresolved side references now select existing catalog roles:
+Khafji/Debecka red use `aggressive_armor`; Fallujah/Bint Jbeil red and INS
+Hanit red use `insurgent_leader`; INS Hanit blue uses `naval_surface`.
+Suwalki Gap and Korean Peninsula remove the stale second side-default
+authority. Corrected production scenarios assign every initial and arriving
+unit. Unknown/duplicate/whitespace references reject before unit or RNG
+mutation; a failed dynamic assignment rolls back and retries exactly.
+
+An exact-profile control changes production OODA duration and recorded decision
+state relative to the same scenario with another profile, so assignment is
+behavioral rather than constructor evidence. Fresh checkpoint continuation
+preserves commander, school, decision, and C2 RNG state, with explicit
+unsupported rejection for aggregation-owned proxy IDs under REM-016. `E` is
+N/A because reference validity is mandatory, not an optional validation mode.
+`P` is N/A for this missing-reference remediation; the checkpoint proof
+supports continuation but no new public exposure is required to reject invalid
+scenario data. The Phase 112 postmortem accepted this evidence and the ranked
+row is closed.
 
 ## REM-024 - Invalid crew skill silently drops historical units
 
@@ -1047,6 +1453,33 @@ cardinality part of scenario validation. Negative unit-load and corrected
 production-scenario controls must prove that an invalid crew skill cannot
 silently reduce a force.
 
+### Phase 112 closure evidence
+
+**Matrix:** `D=Yes, L=Yes, W=Yes, E=N/A, X=Yes, O=Yes, P=N/A`.
+
+`UnitLoader` now validates crew role/skill, domain, equipment category, and
+domain-specific subtype enums eagerly. Only a dedicated missing-definition
+exception represents an absent unit; constructor, enum, equipment, and
+override failures retain their context and propagate. One strict
+`InitialUnitConfig`/`UnitInstanceOverrides` schema and the simulation-owned
+`RuntimeForceBuilder` preflight every definition, count, position, override,
+subtype, and deterministic unit ID before the first ENTITIES RNG draw, then
+require exact per-side and total cardinality before publication.
+
+The French Old Guard's unsupported `EXPERT` value is corrected to the existing
+`ELITE` proficiency. Production Austerlitz and Waterloo runs construct the
+authored 10/9 and 11/9 side rosters, retain the exact Old Guard unit and elite
+crew, reach their declared current terminal results, and preserve the complete
+roster. Catalog-wide data validation also applies every shipped typed override
+through the runtime boundary. Invalid enum, incompatible override, malformed
+specification, and constructor controls reject before RNG or partial roster
+mutation.
+
+`E` is N/A because valid typed unit data and exact roster construction are
+mandatory. `P` is N/A because the item closes an eager load/construction
+false-green rather than adding a new public or checkpoint field. The Phase 112
+postmortem accepted this evidence and the ranked row is closed.
+
 ## REM-025 - Corrected standoff is reported as stuck movement
 
 ### Reproduction and required proof
@@ -1063,6 +1496,38 @@ tactical behavior. A corrected Cambrai control must retain its semantic
 outcome without the false diagnostic, while a deliberately immobile,
 out-of-position unit still raises an issue.
 
+### Phase 112 closure evidence
+
+**Matrix:** `D=Yes, L=N/A, W=Yes, E=N/A, X=Yes, O=Yes, P=N/A`.
+
+One simulation-owned `MovementDiagnostics` component now receives exact
+strategic, operational, and tactical movement decisions. Typed observations
+record unit/side, logical tick, stage and deterministic ordinal, attempted and
+achieved distance, pre/post positions, and the production reason. Bounded
+recent history is separate from cumulative counters, and registration/batch
+commit is canonical, transactional, and side-bound. A production manager must
+record every considered unit exactly once; a fault-injected claimed commit
+without displacement is rejected rather than presented as ordinary movement.
+
+The evaluator consumes these dispositions instead of inferring intent from
+raw whole-run displacement. Cambrai retains its seed-42 British
+`force_destroyed` outcome, 433 ticks, casualties and engagement/event
+semantics while each unmoved Mark IV is reported as
+`ENGINE_WEAPON_STANDOFF`, not `MANY_STUCK_UNITS`. Explicit fuel-blocked and
+zero-commit controls remain real semantic deficits. Reinforcement controls use
+all 13 constructed units as the denominator and preserve each construction
+position.
+
+Schema 112 validates and continues bounded movement history and cumulative
+state exactly across fresh restore. `L` is N/A because diagnostics are a
+runtime-owned observer rather than scenario-loaded configuration. `E` is N/A
+because truthful classification is always on when movement runs. `O` is Yes
+because the public evaluator disposition changes from a false stuck issue to
+the exact production reason without changing battle behavior. `P` is N/A for
+the REM-025 diagnostic correction; REM-028 separately owns the
+outcome-affecting blind-standoff behavior. The Phase 112 postmortem accepted
+this evidence and the ranked row is closed.
+
 ## REM-026 - Benchmark wall-clock assertion contradicts its baseline
 
 ### Reproduction and required proof
@@ -1078,6 +1543,38 @@ hardware/environment metadata, warm-up and repetition policy, semantic outcome
 checks, and a threshold derived from an authoritative baseline or a
 hardware-normalized comparison. The hard assertion and stored baseline may
 not disagree.
+
+### Phase 112 closure evidence
+
+**Matrix:** `D=Yes, L=N/A, W=Yes, E=N/A, X=Yes, O=Yes, P=Yes`.
+
+The version-2 benchmark policy removes every absolute wall-clock pass
+threshold. Gating workloads declare an exact reference commit and runtime
+input identity, one warm-up per revision, three alternating same-host timed
+pairs, a maximum 1.20 median slowdown ratio, a maximum 0.20 relative sample
+range, and a complete semantic envelope. 73 Easting is the routine gate;
+Golan Heights is an explicit long-running manual gate. Unbaselined battalion,
+brigade, and flag-impact workloads are labeled measurement-only and cannot
+authorize a regression verdict.
+
+The harness executes the actual reference revision through its bounded
+historical adapter and the candidate through `SimulationRuntimeFactory`; it
+does not import candidate runtime code as the reference. Each worker verifies
+revision ownership, scenario/dependency identity, roster/loadout topology,
+winner, victory type, logical duration, ticks, status counts, event count, and
+event digest before timing can pass. Missing reference data, dirty or changed
+runtime inputs, noisy samples, semantic drift, worker failure, and an
+unverifiable final revision fail closed.
+
+The paired artifact retains hardware/environment metadata, alternating order,
+all raw samples, medians/ranges/ratio, semantic and input identities, dirty
+state, policy verdict, and an integrity digest. Measurement tests retain only
+positive raw timing plus exact terminal semantics; the contradictory
+60-second Golan assertion and legacy 500-second absolute baseline no longer
+decide acceptance. `L` and `E` are N/A because the benchmark policy is
+external validation infrastructure, not scenario-loaded or enabled simulation
+behavior. The Phase 112 postmortem accepted this evidence and the ranked row
+is closed.
 
 ## REM-018 - Era override metadata has no production consumer
 

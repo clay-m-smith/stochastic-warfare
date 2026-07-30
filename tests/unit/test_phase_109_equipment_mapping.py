@@ -57,14 +57,19 @@ from stochastic_warfare.simulation.loadouts import (
     WeaponStoreMapping,
     required_domains_for_sensor_role,
 )
+from stochastic_warfare.simulation.runtime import (
+    AnalysisInputError,
+    AnalysisVariant,
+    DoctrineAnalysisVariant,
+)
 from stochastic_warfare.simulation.scenario import (
+    DoctrineSideAssignment,
     load_campaign_scenario_config,
 )
-from stochastic_warfare.tools._run_helpers import (
-    _load_scenario_yaml as load_batch_scenario_yaml,
-)
+from stochastic_warfare.tools._run_helpers import prepare_analysis
 from stochastic_warfare.tools.doctrine_compare import (
-    _load_scenario_yaml as load_doctrine_scenario_yaml,
+    DoctrineCompareConfig,
+    run_doctrine_comparison,
 )
 
 
@@ -155,6 +160,7 @@ def _unit_definition(
     return UnitDefinition(
         unit_type=unit_type,
         domain="ground",
+        ground_type="LIGHT_INFANTRY",
         display_name=unit_type,
         max_speed=1.0,
         crew=[],
@@ -304,16 +310,9 @@ def test_scenario_config_rejects_duplicate_weapon_assignment_yaml_keys(
         load_campaign_scenario_config(scenario_path)
 
 
-@pytest.mark.parametrize(
-    "loader",
-    (
-        load_batch_scenario_yaml,
-        load_doctrine_scenario_yaml,
-    ),
-    ids=("scenario-batch", "doctrine-comparison"),
-)
+@pytest.mark.parametrize("consumer", ("scenario-batch", "doctrine-comparison"))
 def test_tool_scenario_ingestion_rejects_duplicate_weapon_assignment_keys(
-    loader,
+    consumer: str,
     tmp_path: Path,
 ) -> None:
     scenario_path = tmp_path / "duplicate-assignment.yaml"
@@ -326,10 +325,53 @@ def test_tool_scenario_ingestion_rejects_duplicate_weapon_assignment_keys(
     )
 
     with pytest.raises(
-        DuplicateKeyError,
-        match=r"Duplicate YAML mapping key 'Main Gun'",
-    ):
-        loader(str(scenario_path))
+        AnalysisInputError,
+        match=(
+            r"Invalid scenario source .*duplicate-assignment\.yaml: "
+            r"Duplicate YAML mapping key 'Main Gun'"
+        ),
+    ) as exc_info:
+        if consumer == "scenario-batch":
+            prepare_analysis(
+                scenario_path=scenario_path,
+                variants=(AnalysisVariant(variant_id="batch"),),
+                metric_names=("ticks_executed",),
+                data_dir=Path("data"),
+            )
+        else:
+            run_doctrine_comparison(
+                DoctrineCompareConfig(
+                    scenario_path=str(scenario_path),
+                    variants=(
+                        AnalysisVariant(
+                            variant_id="maneuverist",
+                            doctrine_variant=DoctrineAnalysisVariant(
+                                assignments=(
+                                    DoctrineSideAssignment(
+                                        side="blue",
+                                        school_id="maneuverist",
+                                    ),
+                                ),
+                            ),
+                        ),
+                        AnalysisVariant(
+                            variant_id="attrition",
+                            doctrine_variant=DoctrineAnalysisVariant(
+                                assignments=(
+                                    DoctrineSideAssignment(
+                                        side="blue",
+                                        school_id="attrition",
+                                    ),
+                                ),
+                            ),
+                        ),
+                    ),
+                    num_iterations=2,
+                    data_dir="data",
+                ),
+            )
+    assert isinstance(exc_info.value.__cause__, DuplicateKeyError)
+    assert "Duplicate YAML mapping key 'Main Gun'" in str(exc_info.value.__cause__)
 
 
 def test_record_shapes_are_frozen_typed_and_discriminated() -> None:

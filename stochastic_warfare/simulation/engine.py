@@ -14,7 +14,7 @@ from __future__ import annotations
 
 import json
 from dataclasses import dataclass
-from datetime import timedelta
+from datetime import datetime, timedelta
 from enum import IntEnum
 from typing import Any
 
@@ -26,13 +26,25 @@ from stochastic_warfare.core.types import Position
 from stochastic_warfare.entities.base import UnitStatus
 from stochastic_warfare.simulation.battle import BattleConfig, BattleManager
 from stochastic_warfare.simulation.campaign import CampaignConfig, CampaignManager
+from stochastic_warfare.simulation.movement_diagnostics import MovementStage
 from stochastic_warfare.simulation.recorder import SimulationRecorder
 from stochastic_warfare.simulation.scenario import SimulationContext
 from stochastic_warfare.simulation.victory import VictoryEvaluator, VictoryResult
 
 logger = get_logger(__name__)
 
-_CHECKPOINT_VERSION = 111
+_CHECKPOINT_VERSION = 112
+_TERMINAL_CONDITION_TYPES = frozenset({
+    "armistice",
+    "attrition_ratio",
+    "ceasefire",
+    "force_destroyed",
+    "max_ticks",
+    "morale_collapsed",
+    "supply_exhausted",
+    "territory_control",
+    "time_expired",
+})
 
 
 # ---------------------------------------------------------------------------
@@ -138,12 +150,19 @@ class SimulationEngine:
             ).ModuleId.CORE
         )
         self._campaign = CampaignManager(
-            ctx.event_bus, core_rng, campaign_config,
+            ctx.event_bus,
+            core_rng,
+            campaign_config,
+            movement_diagnostics=ctx.movement_diagnostics,
         )
         self._campaign.set_reinforcements(
             getattr(ctx.config, "reinforcements", []),
         )
-        self._battle = BattleManager(ctx.event_bus, battle_config)
+        self._battle = BattleManager(
+            ctx.event_bus,
+            battle_config,
+            movement_diagnostics=ctx.movement_diagnostics,
+        )
         self._victory = victory_evaluator
         self._recorder = recorder
 
@@ -179,6 +198,7 @@ class SimulationEngine:
 
         # Phase 72c: proper init for checkpoint (replaces hasattr guard)
         self._last_ato_day: int = -1
+        self._last_victory = VictoryResult(game_over=False)
 
         # Phase 63b: subscribe to logistics events if enabled
         self._register_event_handlers()
@@ -330,12 +350,24 @@ class SimulationEngine:
         if self._recorder is not None:
             self._recorder.stop()
 
-        elapsed_s = self._ctx.clock.elapsed.total_seconds()
-        victory = self._last_victory or VictoryResult(game_over=False)
+        return self.finalize()
 
+    def finalize(self) -> SimulationRunResult:
+        """Return the public result after an authored or engine terminal step.
+
+        Step-driven consumers use this method instead of inspecting private
+        engine state.  Cancellation or a local consumer loop limit is not a
+        terminal simulation result and therefore cannot be finalized.
+        """
+        victory = self._last_victory
+        if victory is None or not victory.game_over:
+            raise RuntimeError(
+                "Simulation cannot be finalized before a public terminal "
+                "condition",
+            )
         return SimulationRunResult(
             ticks_executed=self._ctx.clock.tick_count,
-            duration_s=elapsed_s,
+            duration_s=self._ctx.clock.elapsed.total_seconds(),
             victory_result=victory,
         )
 
@@ -349,6 +381,9 @@ class SimulationEngine:
         bool
             ``True`` if the simulation is over (victory or max ticks).
         """
+        if self._last_victory.game_over:
+            return True
+
         ctx = self._ctx
         clock = ctx.clock
         tick = clock.tick_count
@@ -370,6 +405,27 @@ class SimulationEngine:
                 tick=tick,
             )
             return True
+
+        # Validate imagery targets and fusion lifecycle against the
+        # prospective logical time before the clock or any subsystem advances.
+        # Reinforcements are independently preflighted by their runtime force
+        # builder and the actual Space update validates the resulting roster.
+        if (
+            ctx.space_engine is not None
+            and hasattr(ctx.space_engine, "preflight_update")
+        ):
+            prospective_dt = clock.tick_duration.total_seconds()
+            fog_of_war = getattr(ctx, "fog_of_war", None)
+            ctx.space_engine.preflight_update(
+                prospective_dt,
+                clock.elapsed.total_seconds() + prospective_dt,
+                targets_by_side=ctx.units_by_side,
+                intel_fusion=(
+                    fog_of_war.intel_fusion
+                    if fog_of_war is not None
+                    else None
+                ),
+            )
 
         # 1. Advance clock
         clock.advance()
@@ -476,7 +532,11 @@ class SimulationEngine:
         # 4. Strategic logic (runs at all resolutions, but campaign
         #    manager internally gates on strategic tick intervals)
         if self._resolution == TickResolution.STRATEGIC:
-            self._campaign.update_strategic(ctx, dt)
+            self._campaign.update_strategic(
+                ctx,
+                dt,
+                stage=MovementStage.STRATEGIC,
+            )
 
             # Phase 24: Escalation update
             if ctx.escalation_engine is not None:
@@ -597,7 +657,11 @@ class SimulationEngine:
         # OPERATIONAL while forces are still beyond engagement range.
         # Without movement here, units freeze in the 15–30 km gap.
         if self._resolution == TickResolution.OPERATIONAL:
-            self._campaign.update_strategic(ctx, dt)
+            self._campaign.update_strategic(
+                ctx,
+                dt,
+                stage=MovementStage.OPERATIONAL,
+            )
             new_battles = self._campaign.detect_engagements(ctx, self._battle)
             if new_battles:
                 logistics_activity_unit_ids.update(
@@ -781,15 +845,25 @@ class SimulationEngine:
 
         # Phase 17: Space domain
         if ctx.space_engine is not None and hasattr(ctx.space_engine, "update"):
+            from stochastic_warfare.space.isr import SpaceISRIntegrityError
+
             try:
                 elapsed = clock.elapsed.total_seconds()
+                fog_of_war = getattr(ctx, "fog_of_war", None)
                 ctx.space_engine.update(
                     dt, elapsed,
                     em_environment=ctx.conditions_engine,
                     comms_engine=ctx.comms_engine,
                     targets_by_side=ctx.units_by_side,
                     timestamp=clock.current_time,
+                    intel_fusion=(
+                        fog_of_war.intel_fusion
+                        if fog_of_war is not None
+                        else None
+                    ),
                 )
+            except SpaceISRIntegrityError:
+                raise
             except Exception:
                 logger.error("Space engine update failed", exc_info=True)
                 if self._strict_mode:
@@ -1047,20 +1121,16 @@ class SimulationEngine:
     # ── Phase 52d: SIGINT fusion ──────────────────────────────────────
 
     def _fuse_sigint(self) -> None:
-        """Fuse space-based and EW SIGINT reports into unified tracks."""
+        """Fuse EW SIGINT without consuming the dedicated Space IMINT queue."""
         ctx = self._ctx
         # Phase 65a: gate on enable_space_effects
         _cal_65 = getattr(ctx, "calibration", None)
         if _cal_65 is None or not _cal_65.get("enable_space_effects", False):
             return
-        space = getattr(ctx, "space_engine", None)
-        ew = getattr(ctx, "ew_engine", None)
-        # Phase 65a: fix — fusion engine lives in fog_of_war, not ctx
         _fow_65 = getattr(ctx, "fog_of_war", None)
         fusion = getattr(_fow_65, "intel_fusion", None) if _fow_65 is not None else None
-        if space is None or ew is None or fusion is None:
+        if fusion is None:
             return
-        # Phase 65a: fix — sigint_engine is on ctx, not on ew_engine
         sigint_engine = getattr(ctx, "sigint_engine", None)
         if sigint_engine is None:
             return
@@ -1081,32 +1151,14 @@ class SimulationEngine:
                 position_uncertainty_m=r.position_uncertainty_m,
             ))
 
-        # Collect space ISR reports (from ISR engine if available)
-        space_isr = getattr(space, "isr_engine", None)
-        space_reports: list[IntelReport] = []
-        if space_isr is not None:
-            raw_space = getattr(space_isr, "get_recent_reports", None)
-            if raw_space is not None:
-                # Phase 65a: ISR reports are dicts with target_position key
-                for sr in raw_space(clear=True):
-                    _tpos = sr.get("target_position") if isinstance(sr, dict) else getattr(sr, "target_position", None)
-                    if _tpos is not None:
-                        space_reports.append(IntelReport(
-                            source=IntelSource.SIGINT,
-                            timestamp=sr.get("timestamp", 0.0) if isinstance(sr, dict) else getattr(sr, "timestamp", 0.0) or 0.0,
-                            reliability=0.7,
-                            target_position=_tpos,
-                            position_uncertainty_m=sr.get("resolution_m", 1000.0) if isinstance(sr, dict) else getattr(sr, "position_uncertainty_m", 1000.0),
-                        ))
-
-        if not space_reports and not ew_reports:
+        if not ew_reports:
             return
 
         # Fuse for each side
         for side in ctx.side_names():
             try:
                 fusion.fuse_sigint_tracks(
-                    side, space_reports, ew_reports,
+                    side, [], ew_reports,
                 )
             except Exception:
                 logger.debug("SIGINT fusion failed for side %s", side, exc_info=True)
@@ -1400,6 +1452,13 @@ class SimulationEngine:
             "battle": self._battle.get_state(),
             # Phase 72c: proper checkpoint of _last_ato_day
             "last_ato_day": self._last_ato_day,
+            "last_victory": {
+                "game_over": self._last_victory.game_over,
+                "winning_side": self._last_victory.winning_side,
+                "condition_type": self._last_victory.condition_type,
+                "message": self._last_victory.message,
+                "tick": self._last_victory.tick,
+            },
         }
         if self._victory is not None:
             state["victory"] = self._victory.get_state()
@@ -1409,6 +1468,8 @@ class SimulationEngine:
 
     def set_state(self, state: dict[str, Any]) -> None:
         """Restore engine state from a checkpoint dict."""
+        if not isinstance(state, dict):
+            raise ValueError("Checkpoint engine state must be a mapping")
         has_checkpoint_version = "checkpoint_version" in state
         checkpoint_version = state.get("checkpoint_version")
         if has_checkpoint_version and (
@@ -1468,6 +1529,35 @@ class SimulationEngine:
         context_state = state.get("context")
         if not isinstance(context_state, dict):
             raise ValueError("Checkpoint context must be a mapping")
+        declared_sides = {
+            side.side
+            for side in self._ctx.config.sides
+        }
+        if (
+            allow_legacy_checkpoint
+            and self._ctx.movement_diagnostics is not None
+            and "movement_diagnostics" not in context_state
+        ):
+            legacy_clock = context_state.get("clock")
+            legacy_tick = (
+                legacy_clock.get("tick_count")
+                if isinstance(legacy_clock, dict)
+                else None
+            )
+            if (
+                isinstance(legacy_tick, bool)
+                or not isinstance(legacy_tick, int)
+                or legacy_tick != 0
+                or (
+                    self._ctx.movement_diagnostics
+                    .total_observation_count
+                    != 0
+                )
+            ):
+                raise ValueError(
+                    "Versionless checkpoints cannot omit movement diagnostics "
+                    "after simulation start",
+                )
         if not allow_legacy_checkpoint:
             required_morale_keys = {"morale_states", "morale_machine"}
             missing_morale_keys = sorted(
@@ -1500,42 +1590,214 @@ class SimulationEngine:
                     "for a runtime without a morale machine",
                 )
 
-        new_resolution = TickResolution(state["resolution"])
+        raw_resolution = state["resolution"]
+        if (
+            isinstance(raw_resolution, bool)
+            or not isinstance(raw_resolution, int)
+        ):
+            raise ValueError(
+                "Checkpoint resolution must be a strict integer enum",
+            )
+        try:
+            new_resolution = TickResolution(raw_resolution)
+        except ValueError as exc:
+            raise ValueError(
+                f"Checkpoint resolution is unknown: {raw_resolution!r}",
+            ) from exc
         new_dt = self._tick_durations[new_resolution]
         saved_dt = context_state["clock"]["tick_duration_seconds"]
-        if float(saved_dt) != float(new_dt):
+        if (
+            isinstance(saved_dt, bool)
+            or not isinstance(saved_dt, (int, float))
+            or float(saved_dt) != float(new_dt)
+        ):
             raise ValueError(
                 "Checkpoint resolution and clock tick duration disagree: "
                 f"{new_resolution.name} requires {new_dt}s, got {saved_dt}s",
             )
+        raw_last_victory = state.get("last_victory")
+        if raw_last_victory is None and allow_legacy_checkpoint:
+            staged_last_victory = VictoryResult(game_over=False)
+        else:
+            expected_victory_keys = {
+                "game_over",
+                "winning_side",
+                "condition_type",
+                "message",
+                "tick",
+            }
+            if (
+                not isinstance(raw_last_victory, dict)
+                or set(raw_last_victory) != expected_victory_keys
+            ):
+                raise ValueError(
+                    "Checkpoint last_victory has invalid key topology",
+                )
+            game_over = raw_last_victory["game_over"]
+            tick = raw_last_victory["tick"]
+            text_fields = (
+                "winning_side",
+                "condition_type",
+                "message",
+            )
+            if not isinstance(game_over, bool):
+                raise ValueError(
+                    "Checkpoint last_victory.game_over must be boolean",
+                )
+            if (
+                isinstance(tick, bool)
+                or not isinstance(tick, int)
+                or tick < 0
+            ):
+                raise ValueError(
+                    "Checkpoint last_victory.tick must be non-negative integer",
+                )
+            if any(
+                not isinstance(raw_last_victory[field], str)
+                or raw_last_victory[field]
+                != raw_last_victory[field].strip()
+                for field in text_fields
+            ):
+                raise ValueError(
+                    "Checkpoint last_victory text fields must be trimmed strings",
+                )
+            checkpoint_tick = context_state["clock"]["tick_count"]
+            if game_over and tick != checkpoint_tick:
+                raise ValueError(
+                    "Terminal checkpoint victory tick disagrees with clock",
+                )
+            if game_over and (
+                raw_last_victory["winning_side"]
+                not in declared_sides | {"draw"}
+                or raw_last_victory["condition_type"]
+                not in _TERMINAL_CONDITION_TYPES
+                or not raw_last_victory["message"]
+            ):
+                raise ValueError(
+                    "Terminal checkpoint victory result is not a supported "
+                    "runtime outcome",
+                )
+            if not game_over and (
+                tick != 0
+                or any(raw_last_victory[field] for field in text_fields)
+            ):
+                raise ValueError(
+                    "Nonterminal checkpoint has populated victory state",
+                )
+            staged_last_victory = VictoryResult(**raw_last_victory)
 
-        # Validate manager-owned topology before the context restore can
-        # replace rosters, clocks, RNG streams, or runtime loadouts.
+        raw_last_ato_day = state.get("last_ato_day", -1)
+        if (
+            isinstance(raw_last_ato_day, bool)
+            or not isinstance(raw_last_ato_day, int)
+            or raw_last_ato_day < -1
+        ):
+            raise ValueError(
+                "Checkpoint last_ato_day must be a strict integer >= -1",
+            )
+
+        # Stage every owner before any clock, RNG, roster, loadout, manager,
+        # recorder, or engine-scalar state is mutated.
         campaign_state = state.get("campaign", {})
+        campaign_plan = self._campaign.stage_state(
+            campaign_state,
+            allow_legacy=allow_legacy_checkpoint,
+        )
+        context_plan = self._ctx.stage_state(
+            context_state,
+            allow_legacy_morale=allow_legacy_checkpoint,
+        )
+
+        raw_forces = context_state.get("units_by_side", {})
+        expected_unit_ids = {
+            raw_unit["entity_id"]
+            for raw_units in raw_forces.values()
+            for raw_unit in raw_units
+        }
+        expected_sides = set(raw_forces)
+        raw_ooda = context_state.get("ooda_engine", {})
+        raw_commanders = (
+            raw_ooda.get("commanders", {})
+            if isinstance(raw_ooda, dict)
+            else {}
+        )
+        required_assessment_ids = {
+            unit_id
+            for unit_id, raw_commander in raw_commanders.items()
+            if (
+                isinstance(raw_commander, dict)
+                and raw_commander.get("phase") in {1, 2}
+            )
+        }
+        raw_checkpoint_start = context_state["clock"]["start"]
+        raw_checkpoint_time = context_state["clock"]["current"]
+        try:
+            checkpoint_start = datetime.fromisoformat(raw_checkpoint_start)
+            checkpoint_time = datetime.fromisoformat(raw_checkpoint_time)
+            checkpoint_elapsed_s = (
+                checkpoint_time - checkpoint_start
+            ).total_seconds()
+        except (TypeError, ValueError) as exc:
+            raise ValueError(
+                "Checkpoint clock timestamps must be compatible ISO values",
+            ) from exc
+        checkpoint_tick = context_state["clock"]["tick_count"]
         self._campaign.validate_checkpoint_roster(
             campaign_state,
             context_state,
             allow_legacy=allow_legacy_checkpoint,
+            staged_plan=campaign_plan,
+            checkpoint_elapsed_s=checkpoint_elapsed_s,
+            checkpoint_tick=checkpoint_tick,
         )
+        battle_plan = self._battle.stage_state(
+            state.get("battle", {}),
+            allow_legacy=allow_legacy_checkpoint,
+            expected_unit_ids=expected_unit_ids,
+            expected_sides=expected_sides,
+            required_assessment_ids=required_assessment_ids,
+            checkpoint_time=checkpoint_time,
+        )
+        victory_plan = (
+            self._victory.stage_state(
+                state["victory"],
+                expected_sides=expected_sides,
+            )
+            if self._victory is not None and "victory" in state
+            else None
+        )
+        recorder_plan = (
+            self._recorder.stage_state(
+                state["recorder"],
+                allow_legacy=allow_legacy_checkpoint,
+                expected_current_tick=checkpoint_tick,
+            )
+            if self._recorder is not None and "recorder" in state
+            else None
+        )
+        if self._victory is None and "victory" in state:
+            raise ValueError(
+                "Checkpoint contains victory state for a runtime without "
+                "a victory evaluator",
+            )
+        if self._recorder is None and "recorder" in state:
+            raise ValueError(
+                "Checkpoint contains recorder state for a runtime without "
+                "a recorder",
+            )
 
-        self._ctx.set_state(
-            context_state,
-            allow_legacy_morale=allow_legacy_checkpoint,
-        )
+        self._ctx.commit_state(context_plan)
         self._resolution = new_resolution
         self._ctx.clock.set_tick_duration(timedelta(seconds=new_dt))
-        self._campaign.set_state(
-            campaign_state,
-            allow_legacy=allow_legacy_checkpoint,
-        )
-        self._battle.set_state(state.get("battle", {}))
-        # Phase 72c: restore _last_ato_day
-        self._last_ato_day = state.get("last_ato_day", -1)
+        self._campaign.commit_state(campaign_plan)
+        self._battle.commit_state(battle_plan)
+        self._last_ato_day = raw_last_ato_day
+        self._last_victory = staged_last_victory
 
-        if self._victory is not None and "victory" in state:
-            self._victory.set_state(state["victory"])
-        if self._recorder is not None and "recorder" in state:
-            self._recorder.set_state(state["recorder"])
+        if victory_plan is not None:
+            self._victory.commit_state(victory_plan)
+        if recorder_plan is not None:
+            self._recorder.commit_state(recorder_plan)
 
     def checkpoint(self) -> bytes:
         """Serialize engine state to bytes."""
@@ -1546,7 +1808,3 @@ class SimulationEngine:
         """Restore engine state from serialized bytes."""
         state = json.loads(data.decode("utf-8"), object_hook=_numpy_object_hook)
         self.set_state(state)
-
-    # ── Internal state ───────────────────────────────────────────────
-
-    _last_victory: VictoryResult = VictoryResult(game_over=False)

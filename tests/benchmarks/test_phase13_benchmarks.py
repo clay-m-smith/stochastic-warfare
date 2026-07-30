@@ -1,5 +1,11 @@
-"""Phase 13 performance benchmarks — baseline and post-optimization."""
+"""Phase 13 measurement-only timing smoke tests.
 
+These one-shot timers assert only that the exercised operation completes and
+returns a finite duration. They are not paired regression
+evidence and make no claim about speed, improvement, or a performance target.
+"""
+
+import math
 import time
 
 import numpy as np
@@ -9,15 +15,10 @@ from stochastic_warfare.core.types import Position
 
 
 @pytest.mark.benchmark
-class TestBaselineBenchmarks:
-    """Pre-optimization baseline measurements.
+class TestMeasurementOnlyTimings:
+    """Unpaired diagnostic timings with explicit measurement-only semantics."""
 
-    These capture the current performance so we can measure improvement
-    after Phase 13 optimizations.  Results are printed and compared to
-    targets in post-optimization tests.
-    """
-
-    def test_brute_force_spatial_query_baseline(self):
+    def test_brute_force_spatial_query_measurement_only(self):
         """Time N brute-force distance computations (proxy for STRtree gain)."""
         rng = np.random.default_rng(42)
         n = 5000
@@ -32,10 +33,10 @@ class TestBaselineBenchmarks:
             _result = np.where(dists <= radius)[0]
         elapsed = time.perf_counter() - t0
         print(f"\nBrute-force spatial query (5000 pts, 100 iters): {elapsed:.4f}s")
-        # Just record — no assertion for baseline
-        assert elapsed > 0
+        # Positivity validates the timer only; it is not a speed threshold.
+        assert math.isfinite(elapsed) and elapsed > 0
 
-    def test_kalman_predict_baseline(self):
+    def test_kalman_predict_measurement_only(self):
         """Time N Kalman predict calls to measure matrix construction overhead."""
         from stochastic_warfare.detection.estimation import (
             EstimationConfig,
@@ -69,9 +70,9 @@ class TestBaselineBenchmarks:
                 est.predict(track, 5.0)
         elapsed = time.perf_counter() - t0
         print(f"\nKalman predict (100 tracks, 50 iters, dt=5.0): {elapsed:.4f}s")
-        assert elapsed > 0
+        assert math.isfinite(elapsed) and elapsed > 0
 
-    def test_los_check_baseline(self):
+    def test_los_check_measurement_only(self):
         """Time LOS checks over a terrain grid."""
         from stochastic_warfare.terrain.heightmap import Heightmap, HeightmapConfig
         from stochastic_warfare.terrain.los import LOSEngine
@@ -90,9 +91,9 @@ class TestBaselineBenchmarks:
                 los.check_los(observer, target, observer_height=2.0)
         elapsed = time.perf_counter() - t0
         print(f"\nLOS checks (400 rays, 100x100 grid): {elapsed:.4f}s")
-        assert elapsed > 0
+        assert math.isfinite(elapsed) and elapsed > 0
 
-    def test_pathfinding_baseline(self):
+    def test_pathfinding_measurement_only(self):
         """Time A* pathfinding over flat terrain."""
         from stochastic_warfare.movement.pathfinding import Pathfinder
 
@@ -105,9 +106,9 @@ class TestBaselineBenchmarks:
             pf.find_path(start, goal, grid_resolution=100.0, max_iterations=10000)
         elapsed = time.perf_counter() - t0
         print(f"\nA* pathfinding (5km diagonal, 10 iters): {elapsed:.4f}s")
-        assert elapsed > 0
+        assert math.isfinite(elapsed) and elapsed > 0
 
-    def test_rk4_trajectory_baseline(self):
+    def test_rk4_trajectory_measurement_only(self):
         """Time RK4 trajectory computation."""
         from stochastic_warfare.combat.ammunition import AmmoDefinition, WeaponDefinition
         from stochastic_warfare.combat.ballistics import BallisticsConfig, BallisticsEngine
@@ -139,17 +140,17 @@ class TestBaselineBenchmarks:
             engine.compute_trajectory(weapon, ammo, Position(0, 0, 0), 5.0, float(az))
         elapsed = time.perf_counter() - t0
         print(f"\nRK4 trajectory (36 azimuths): {elapsed:.4f}s")
-        assert elapsed > 0
+        assert math.isfinite(elapsed) and elapsed > 0
 
-    def test_mc_serial_baseline(self):
-        """Time a single Monte Carlo iteration (serial baseline)."""
+    def test_mc_serial_measurement_only(self):
+        """Measure a timer smoke path without a performance claim."""
         # Just measure import + setup overhead
         t0 = time.perf_counter()
         elapsed = time.perf_counter() - t0
         print(f"\nMC import overhead: {elapsed:.4f}s")
-        assert elapsed >= 0
+        assert math.isfinite(elapsed) and elapsed >= 0
 
-    def test_viewshed_baseline(self):
+    def test_viewshed_measurement_only(self):
         """Time viewshed computation over a small grid."""
         from stochastic_warfare.terrain.heightmap import Heightmap, HeightmapConfig
         from stochastic_warfare.terrain.los import LOSEngine
@@ -165,4 +166,4 @@ class TestBaselineBenchmarks:
         los.visible_area(observer, max_range=3000.0, observer_height=2.0)
         elapsed = time.perf_counter() - t0
         print(f"\nViewshed (50x50 grid, 3km range): {elapsed:.4f}s")
-        assert elapsed > 0
+        assert math.isfinite(elapsed) and elapsed > 0

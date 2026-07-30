@@ -49,6 +49,7 @@ def _rng(seed: int = 42) -> np.random.Generator:
 
 class _TestSchool(DoctrinalSchool):
     """Concrete school for testing."""
+
     pass
 
 
@@ -67,9 +68,7 @@ def _make_coa(coa_id: str, maneuver: ManeuverType = ManeuverType.FRONTAL_ATTACK)
         name=f"COA {coa_id}",
         maneuver_type=maneuver,
         main_effort_direction=0.0,
-        task_assignments=(
-            TaskAssignment(subordinate_id="sub1", task_description="Main effort", effort_weight=0.6),
-        ),
+        task_assignments=(TaskAssignment(subordinate_id="sub1", task_description="Main effort", effort_weight=0.6),),
         wargame_result=WargameResult(
             estimated_friendly_losses=0.1,
             estimated_enemy_losses=0.3,
@@ -116,10 +115,12 @@ def _make_mock_ctx(
         unit_sensors={},
         morale_states={},
         calibration={},
-        config=types.SimpleNamespace(sides=[
-            types.SimpleNamespace(side="blue", experience_level=0.5),
-            types.SimpleNamespace(side="red", experience_level=0.5),
-        ]),
+        config=types.SimpleNamespace(
+            sides=[
+                types.SimpleNamespace(side="blue", experience_level=0.5),
+                types.SimpleNamespace(side="red", experience_level=0.5),
+            ]
+        ),
         clock=types.SimpleNamespace(
             current_time=TS,
             elapsed=timedelta(seconds=100),
@@ -133,10 +134,7 @@ def _make_mock_ctx(
         commander_engine=None,
     )
     ctx.all_units = lambda: [u for us in ctx.units_by_side.values() for u in us]
-    ctx.active_units = lambda side: [
-        u for u in ctx.units_by_side.get(side, [])
-        if u.status == UnitStatus.ACTIVE
-    ]
+    ctx.active_units = lambda side: [u for u in ctx.units_by_side.get(side, []) if u.status == UnitStatus.ACTIVE]
     ctx.side_names = lambda: sorted(ctx.units_by_side.keys())
     return ctx
 
@@ -151,12 +149,14 @@ class TestSimulationContext:
         """SimulationContext should have school_registry field."""
         # Just verify the import and field existence via introspection
         import dataclasses
+
         fields = {f.name for f in dataclasses.fields(SimulationContext)}
         assert "school_registry" in fields
 
     def test_school_registry_defaults_to_none(self):
         """school_registry should default to None."""
         import dataclasses
+
         for f in dataclasses.fields(SimulationContext):
             if f.name == "school_registry":
                 assert f.default is None
@@ -174,20 +174,30 @@ class TestBattleOODA:
         reg = SchoolRegistry()
         school = _make_school(
             school_id="weighted",
-            assessment_weight_overrides={"intel": 3.0},
+            assessment_weight_overrides={"intel": 100.0},
         )
         reg.register(school)
         reg.assign_to_unit("u1", "weighted")
 
         ctx = _make_mock_ctx(school_registry=reg)
         bm = BattleManager(_bus())
+        control_ctx = _make_mock_ctx(school_registry=None)
+        control_bm = BattleManager(_bus())
 
-        # Start OBSERVE phase and complete it
         ctx.ooda_engine.start_phase("u1", OODAPhase.OBSERVE, ts=TS)
-        completions = [(("u1", OODAPhase.OBSERVE))]
-
-        # Process completions — should not crash, school weight overrides applied
+        control_ctx.ooda_engine.start_phase("u1", OODAPhase.OBSERVE, ts=TS)
         bm._process_ooda_completions(ctx, [("u1", OODAPhase.OBSERVE)], TS)
+        control_bm._process_ooda_completions(
+            control_ctx,
+            [("u1", OODAPhase.OBSERVE)],
+            TS,
+        )
+
+        weighted = bm._cached_assessments["u1"]
+        baseline = control_bm._cached_assessments["u1"]
+        assert weighted.intel_rating is baseline.intel_rating
+        assert weighted.overall_rating.name == "UNFAVORABLE"
+        assert baseline.overall_rating.name == "FAVORABLE"
 
     def test_school_adjustments_passed_to_decide(self):
         """When school provides adjustments, they flow to decide()."""
@@ -209,12 +219,24 @@ class TestBattleOODA:
         # Test decision engine directly with adjustments
         assessor = SituationAssessor(_bus(), _rng(100))
         assessment = assessor.assess(
-            unit_id="u1", echelon=5, friendly_units=10,
-            friendly_power=100.0, morale_level=0.7, supply_level=0.6,
-            c2_effectiveness=0.7, contacts=5, enemy_power=100.0, ts=TS,
+            unit_id="u1",
+            echelon=5,
+            friendly_units=10,
+            friendly_power=100.0,
+            morale_level=0.7,
+            supply_level=0.6,
+            c2_effectiveness=0.7,
+            contacts=5,
+            enemy_power=100.0,
+            ts=TS,
         )
         result = ctx.decision_engine.decide(
-            "u1", 6, assessment, None, None, ts=TS,
+            "u1",
+            6,
+            assessment,
+            None,
+            None,
+            ts=TS,
             school_adjustments=adj,
         )
         assert result.action_name == "DEFEND"
@@ -231,20 +253,44 @@ class TestBattleOODA:
 
         ctx = _make_mock_ctx(school_registry=reg)
         bm = BattleManager(_bus())
+        control_ctx = _make_mock_ctx(school_registry=None)
+        control_bm = BattleManager(_bus())
 
-        # Process ACT completion — should advance to OBSERVE and start with
-        # effective_mult = tactical_mult(0.5) * school(0.7) = 0.35
         ctx.ooda_engine.start_phase("u1", OODAPhase.ACT, ts=TS)
+        control_ctx.ooda_engine.start_phase("u1", OODAPhase.ACT, ts=TS)
         bm._process_ooda_completions(ctx, [("u1", OODAPhase.ACT)], TS)
-        # Just verify it doesn't crash — the multiplier is applied internally
+        control_bm._process_ooda_completions(
+            control_ctx,
+            [("u1", OODAPhase.ACT)],
+            TS,
+        )
+
+        fast = ctx.ooda_engine.get_state()["commanders"]["u1"]
+        baseline = control_ctx.ooda_engine.get_state()["commanders"]["u1"]
+        assert fast["phase"] == int(OODAPhase.OBSERVE)
+        assert fast["cycle_count"] == 1
+        assert fast["phase_duration"] == pytest.approx(
+            baseline["phase_duration"] * 0.7,
+        )
 
     def test_no_school_no_change(self):
         """Without school_registry, OBSERVE behavior should be unchanged."""
         ctx = _make_mock_ctx(school_registry=None)
         bm = BattleManager(_bus())
+        empty_ctx = _make_mock_ctx(school_registry=SchoolRegistry())
+        empty_bm = BattleManager(_bus())
 
-        # Process OBSERVE without school — should work as before
+        ctx.ooda_engine.start_phase("u1", OODAPhase.OBSERVE, ts=TS)
+        empty_ctx.ooda_engine.start_phase("u1", OODAPhase.OBSERVE, ts=TS)
         bm._process_ooda_completions(ctx, [("u1", OODAPhase.OBSERVE)], TS)
+        empty_bm._process_ooda_completions(
+            empty_ctx,
+            [("u1", OODAPhase.OBSERVE)],
+            TS,
+        )
+
+        assert bm._cached_assessments == empty_bm._cached_assessments
+        assert ctx.ooda_engine.get_state() == empty_ctx.ooda_engine.get_state()
 
     def test_unassigned_unit_no_change(self):
         """Unit without school assignment should get no adjustments."""
@@ -255,9 +301,20 @@ class TestBattleOODA:
 
         ctx = _make_mock_ctx(school_registry=reg)
         bm = BattleManager(_bus())
+        control_ctx = _make_mock_ctx(school_registry=None)
+        control_bm = BattleManager(_bus())
 
-        # OBSERVE should work — school lookup returns None for unassigned
+        ctx.ooda_engine.start_phase("u1", OODAPhase.OBSERVE, ts=TS)
+        control_ctx.ooda_engine.start_phase("u1", OODAPhase.OBSERVE, ts=TS)
         bm._process_ooda_completions(ctx, [("u1", OODAPhase.OBSERVE)], TS)
+        control_bm._process_ooda_completions(
+            control_ctx,
+            [("u1", OODAPhase.OBSERVE)],
+            TS,
+        )
+
+        assert bm._cached_assessments == control_bm._cached_assessments
+        assert ctx.ooda_engine.get_state() == control_ctx.ooda_engine.get_state()
 
     def test_opponent_modeling_integration(self):
         """School with opponent modeling computes adjustments correctly."""
@@ -319,9 +376,7 @@ class TestCOACompare:
             name="Low Loss",
             maneuver_type=ManeuverType.DEFENSE_IN_DEPTH,
             main_effort_direction=0.0,
-            task_assignments=(
-                TaskAssignment("sub1", "defend", 0.5),
-            ),
+            task_assignments=(TaskAssignment("sub1", "defend", 0.5),),
             wargame_result=WargameResult(0.05, 0.2, 28800.0, 0.6, "LOW"),
         )
         coa_high_loss = COA(
@@ -329,9 +384,7 @@ class TestCOACompare:
             name="High Loss",
             maneuver_type=ManeuverType.FRONTAL_ATTACK,
             main_effort_direction=0.0,
-            task_assignments=(
-                TaskAssignment("sub1", "attack", 0.5),
-            ),
+            task_assignments=(TaskAssignment("sub1", "attack", 0.5),),
             wargame_result=WargameResult(0.4, 0.5, 28800.0, 0.8, "HIGH"),
         )
         scored = engine.compare_coas(
@@ -349,9 +402,7 @@ class TestCOACompare:
             name="Fast",
             maneuver_type=ManeuverType.PENETRATION,
             main_effort_direction=0.0,
-            task_assignments=(
-                TaskAssignment("sub1", "attack", 0.5),
-            ),
+            task_assignments=(TaskAssignment("sub1", "attack", 0.5),),
             wargame_result=WargameResult(0.2, 0.3, 3600.0, 0.6, "MODERATE"),
         )
         coa_slow = COA(
@@ -359,9 +410,7 @@ class TestCOACompare:
             name="Slow",
             maneuver_type=ManeuverType.DEFENSE_IN_DEPTH,
             main_effort_direction=0.0,
-            task_assignments=(
-                TaskAssignment("sub1", "defend", 0.5),
-            ),
+            task_assignments=(TaskAssignment("sub1", "defend", 0.5),),
             wargame_result=WargameResult(0.1, 0.1, 80000.0, 0.65, "LOW"),
         )
         scored = engine.compare_coas(
@@ -385,12 +434,8 @@ class TestOODAStacking:
         for i in range(20):
             ooda = OODALoopEngine(_bus(), _rng(42 + i))
             ooda.register_commander("u1", 5)
-            durations_fast.append(
-                ooda.compute_phase_duration(5, OODAPhase.OBSERVE, tactical_mult=0.35)
-            )
-            durations_slow.append(
-                ooda.compute_phase_duration(5, OODAPhase.OBSERVE, tactical_mult=1.0)
-            )
+            durations_fast.append(ooda.compute_phase_duration(5, OODAPhase.OBSERVE, tactical_mult=0.35))
+            durations_slow.append(ooda.compute_phase_duration(5, OODAPhase.OBSERVE, tactical_mult=1.0))
         # Faster multiplier should produce shorter average duration
         avg_fast = sum(durations_fast) / len(durations_fast)
         avg_slow = sum(durations_slow) / len(durations_slow)
@@ -425,21 +470,40 @@ class TestBackwardCompat:
         """battle.py should work fine with school_registry=None."""
         ctx = _make_mock_ctx(school_registry=None)
         bm = BattleManager(_bus())
-        # Process OBSERVE and ACT phases without school (DECIDE passes None
-        # assessment which is a pre-existing gap — test OBSERVE and ACT only)
-        bm._process_ooda_completions(ctx, [
-            ("u1", OODAPhase.OBSERVE),
-            ("u1", OODAPhase.ACT),
-        ], TS)
+        bm._process_ooda_completions(
+            ctx,
+            [("u1", OODAPhase.OBSERVE)],
+            TS,
+        )
+
+        state = ctx.ooda_engine.get_state()["commanders"]["u1"]
+        assert bm._cached_assessments["u1"].unit_id == "u1"
+        assert state["phase"] == int(OODAPhase.ORIENT)
+        assert state["cycle_count"] == 0
 
     def test_empty_school_registry(self):
         """Empty registry should behave same as None."""
         reg = SchoolRegistry()
         ctx = _make_mock_ctx(school_registry=reg)
         bm = BattleManager(_bus())
-        bm._process_ooda_completions(ctx, [
-            ("u1", OODAPhase.OBSERVE),
-        ], TS)
+        control_ctx = _make_mock_ctx(school_registry=None)
+        control_bm = BattleManager(_bus())
+
+        bm._process_ooda_completions(
+            ctx,
+            [
+                ("u1", OODAPhase.OBSERVE),
+            ],
+            TS,
+        )
+        control_bm._process_ooda_completions(
+            control_ctx,
+            [("u1", OODAPhase.OBSERVE)],
+            TS,
+        )
+
+        assert bm._cached_assessments == control_bm._cached_assessments
+        assert ctx.ooda_engine.get_state() == control_ctx.ooda_engine.get_state()
 
     def test_existing_coa_compare_unchanged(self):
         """compare_coas() without overrides should produce same results."""

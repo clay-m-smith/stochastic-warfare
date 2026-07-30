@@ -11,12 +11,17 @@ from datetime import datetime, timedelta, timezone
 from typing import Any
 from unittest.mock import MagicMock
 
-
+from stochastic_warfare.c2.ai.assessment import (
+    AssessmentRating,
+    SituationAssessment,
+)
+from stochastic_warfare.c2.ai.ooda import OODAConfig, OODALoopEngine, OODAPhase
 from stochastic_warfare.core.clock import SimulationClock
 from stochastic_warfare.core.events import EventBus
 from stochastic_warfare.core.rng import RNGManager
-from stochastic_warfare.core.types import Position
+from stochastic_warfare.core.types import ModuleId, Position
 from stochastic_warfare.entities.base import Unit
+from stochastic_warfare.entities.organization.echelons import EchelonLevel
 from stochastic_warfare.simulation.battle import BattleManager
 from stochastic_warfare.simulation.scenario import (
     CampaignScenarioConfig,
@@ -36,13 +41,15 @@ _MINIMAL_SIDES = [
 
 
 def _minimal_config() -> CampaignScenarioConfig:
-    return CampaignScenarioConfig.model_validate({
-        "name": "test",
-        "date": "2024-06-15",
-        "duration_hours": 1.0,
-        "terrain": {"width_m": 1000, "height_m": 1000, "cell_size_m": 100},
-        "sides": _MINIMAL_SIDES,
-    })
+    return CampaignScenarioConfig.model_validate(
+        {
+            "name": "test",
+            "date": "2024-06-15",
+            "duration_hours": 1.0,
+            "terrain": {"width_m": 1000, "height_m": 1000, "cell_size_m": 100},
+            "sides": _MINIMAL_SIDES,
+        }
+    )
 
 
 def _make_unit(entity_id: str, side: str = "blue") -> Unit:
@@ -67,6 +74,30 @@ def _make_ctx(**overrides: Any) -> SimulationContext:
 
 def _make_bm() -> BattleManager:
     return BattleManager(EventBus())
+
+
+def _assessment(unit_id: str = "u1") -> SituationAssessment:
+    return SituationAssessment(
+        unit_id=unit_id,
+        timestamp=TS,
+        force_ratio=2.0,
+        force_ratio_rating=AssessmentRating.FAVORABLE,
+        terrain_advantage=0.25,
+        terrain_rating=AssessmentRating.FAVORABLE,
+        supply_level=0.8,
+        supply_rating=AssessmentRating.FAVORABLE,
+        morale_level=0.9,
+        morale_rating=AssessmentRating.VERY_FAVORABLE,
+        intel_quality=0.6,
+        intel_rating=AssessmentRating.FAVORABLE,
+        environmental_rating=AssessmentRating.NEUTRAL,
+        c2_effectiveness=1.0,
+        c2_rating=AssessmentRating.VERY_FAVORABLE,
+        overall_rating=AssessmentRating.FAVORABLE,
+        confidence=0.75,
+        opportunities=("local superiority",),
+        threats=("exposed flank",),
+    )
 
 
 # =========================================================================
@@ -164,12 +195,16 @@ class TestAssessmentCache:
         call_args = mock_decision.decide.call_args
         assert call_args[1]["assessment"] is None
 
-    def test_cache_not_in_get_state(self) -> None:
+    def test_cache_round_trips_through_checkpoint_state(self) -> None:
         bm = _make_bm()
-        bm._cached_assessments["u1"] = MagicMock()
-        state = bm.get_state()
-        # Cache is transient — should NOT be in state
-        assert "cached_assessments" not in state
+        bm._cached_assessments["u1"] = _assessment()
+
+        state_before = bm.get_state()
+        restored = _make_bm()
+        restored.set_state(state_before)
+
+        assert restored._cached_assessments == {"u1": _assessment()}
+        assert restored.get_state() == state_before
 
     def test_multiple_units_cached_independently(self) -> None:
         from stochastic_warfare.c2.ai.ooda import OODAPhase
@@ -717,16 +752,23 @@ class TestBackwardCompat:
         bm._process_ooda_completions(ctx, [("u1", OODAPhase.OBSERVE)], TS)
         assert "u1" not in bm._cached_assessments
 
-    def test_no_decision_engine_skips_decide(self) -> None:
-        from stochastic_warfare.c2.ai.ooda import OODAPhase
-
+    def test_no_decision_engine_advances_real_ooda_state(self) -> None:
         bm = _make_bm()
-        mock_ooda = MagicMock()
-        mock_ooda.tactical_acceleration = 1.0
-        mock_ooda.advance_phase.return_value = OODAPhase.ACT
+        ooda = OODALoopEngine(
+            EventBus(),
+            RNGManager(42).get_stream(ModuleId.C2),
+            OODAConfig(timing_sigma=0.0, tactical_acceleration=1.0),
+        )
+        ooda.register_commander("u1", int(EchelonLevel.PLATOON))
+        ooda.start_phase(
+            "u1",
+            OODAPhase.DECIDE,
+            ts=TS,
+            publish_event=False,
+        )
 
         ctx = _make_ctx(
-            ooda_engine=mock_ooda,
+            ooda_engine=ooda,
             assessor=None,
             decision_engine=None,
             commander_engine=None,
@@ -734,8 +776,12 @@ class TestBackwardCompat:
             units_by_side={"blue": [_make_unit("u1")], "red": []},
             morale_states={},
         )
-        # Should not raise
         bm._process_ooda_completions(ctx, [("u1", OODAPhase.DECIDE)], TS)
+
+        assert ooda.get_phase("u1") is OODAPhase.ACT
+        state = ooda.get_state()["commanders"]["u1"]
+        assert state["phase_timer"] == 30.0
+        assert state["phase_duration"] == 30.0
 
     def test_observe_passes_real_morale(self) -> None:
         from stochastic_warfare.c2.ai.ooda import OODAPhase

@@ -180,6 +180,20 @@ class TestBuildTerrain:
         hm = build_terrain(spec, _rng())
         assert hm.shape[0] > 0
 
+    def test_hilly_defense_requires_injected_rng(self) -> None:
+        spec = TerrainSpec(
+            width_m=1000,
+            height_m=1000,
+            terrain_type="hilly_defense",
+            base_elevation_m=900.0,
+        )
+
+        with pytest.raises(
+            ValueError,
+            match="requires an injected RNG stream",
+        ):
+            build_terrain(spec)
+
     def test_unknown_type(self) -> None:
         # TerrainSpec validator rejects unknown types, but test build_terrain directly
         # by creating a spec with valid type then changing it

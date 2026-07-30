@@ -1,5 +1,11 @@
 # Stochastic Warfare -- Block 5 Development Phases (40--48)
 
+> **Phase 112 integrity supersession (2026-07-30):** This roadmap preserves
+> Block 5's historical plan. The winner-table and calibrated-input regression
+> delivered in this block is not a provenance-bearing, held-out production
+> validation of every scenario. REM-030/Phase 117 owns the replacement
+> catalog-wide historical outcome-envelope contract.
+
 ## Philosophy
 
 Block 5 is the **core combat fidelity block**. No new subsystems, no new UI features. The engine has ~40 built-but-disconnected systems -- posture, suppression, terrain cover, ROE, morale multipliers, aggregate fire models, naval combat engines, detection pipeline, logistics engines, weather/night effects, population engines, and strategic/campaign engines. All were built in Phases 1--30 and tested in isolation, but none feed into the tactical engagement loop in `battle.py`.

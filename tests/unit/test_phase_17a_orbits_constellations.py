@@ -99,7 +99,7 @@ class TestOrbitalPeriod:
         """T = 2π√(a³/μ) for known values."""
         eng = _orbits()
         a = 7_000_000.0
-        expected = 2.0 * math.pi * math.sqrt(a ** 3 / MU_EARTH)
+        expected = 2.0 * math.pi * math.sqrt(a**3 / MU_EARTH)
         assert abs(eng.orbital_period(a) - expected) < 0.001
 
 
@@ -365,8 +365,7 @@ class TestConstellationState:
         s1 = cm1.get_state()
         s2 = cm2.get_state()
         for sid in s1["satellites"]:
-            assert abs(s1["satellites"][sid]["true_anomaly_deg"]
-                       - s2["satellites"][sid]["true_anomaly_deg"]) < 1e-6
+            assert abs(s1["satellites"][sid]["true_anomaly_deg"] - s2["satellites"][sid]["true_anomaly_deg"]) < 1e-6
 
     def test_get_satellite(self) -> None:
         """get_satellite returns specific satellite by ID."""
@@ -408,9 +407,13 @@ class TestSpaceConfig:
 class TestEvents:
     def test_creation(self) -> None:
         evt = GPSAccuracyChangedEvent(
-            timestamp=TS, source=ModuleId.SPACE,
-            side="blue", previous_accuracy_m=3.6,
-            new_accuracy_m=12.0, visible_satellites=12, dop=2.0,
+            timestamp=TS,
+            source=ModuleId.SPACE,
+            side="blue",
+            previous_accuracy_m=3.6,
+            new_accuracy_m=12.0,
+            visible_satellites=12,
+            dop=2.0,
         )
         assert evt.side == "blue"
 
@@ -418,18 +421,30 @@ class TestEvents:
         bus = _bus()
         received = []
         bus.subscribe(ConstellationDegradedEvent, received.append)
-        bus.publish(ConstellationDegradedEvent(
-            timestamp=TS, source=ModuleId.SPACE,
-            constellation_id="gps", previous_count=24, new_count=20, cause="test",
-        ))
+        bus.publish(
+            ConstellationDegradedEvent(
+                timestamp=TS,
+                source=ModuleId.SPACE,
+                constellation_id="gps",
+                previous_count=24,
+                new_count=20,
+                cause="test",
+            )
+        )
         assert len(received) == 1
 
     def test_frozen(self) -> None:
         evt = SatelliteOverpassEvent(
-            timestamp=TS, source=ModuleId.SPACE,
-            satellite_id="s1", constellation_id="c1", side="blue",
-            overpass_start=True, coverage_center_x=0.0, coverage_center_y=0.0,
-            coverage_radius_m=100.0, resolution_m=1.0,
+            timestamp=TS,
+            source=ModuleId.SPACE,
+            satellite_id="s1",
+            constellation_id="c1",
+            side="blue",
+            overpass_start=True,
+            coverage_center_x=0.0,
+            coverage_center_y=0.0,
+            coverage_radius_m=100.0,
+            resolution_m=1.0,
         )
         with pytest.raises(AttributeError):
             evt.satellite_id = "s2"  # type: ignore[misc]
@@ -447,8 +462,16 @@ class TestSpaceEngine:
         cm = ConstellationManager(_orbits(), _bus(), _rng(), cfg)
         cm.add_constellation(_gps_constellation())
         se = SpaceEngine(cfg, cm)
-        # Should not raise
+
+        before = cm.get_state()
         se.update(3600.0, 3600.0)
+        after = cm.get_state()
+
+        assert before["sim_time_s"] == 0.0
+        assert after["sim_time_s"] == 3600.0
+        assert {satellite_id: state["true_anomaly_deg"] for satellite_id, state in after["satellites"].items()} != {
+            satellite_id: state["true_anomaly_deg"] for satellite_id, state in before["satellites"].items()
+        }
 
     def test_state_roundtrip(self) -> None:
         cfg = _config()

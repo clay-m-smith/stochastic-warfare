@@ -1,32 +1,32 @@
-"""Campaign runner — wraps ScenarioLoader + SimulationEngine for validation.
+"""Campaign validation runner backed by the production runtime factory.
 
 Provides the campaign analog of :class:`ScenarioRunner`: loads a
-:class:`HistoricalCampaign`, wires all domain modules via
-:class:`ScenarioLoader`, runs the campaign through :class:`SimulationEngine`,
-and packages the result for metric extraction and historical comparison.
+:class:`HistoricalCampaign`, executes the authoritative runtime construction
+boundary, and packages the result for metric extraction and historical
+comparison.
 """
 
 from __future__ import annotations
 
-import tempfile
 from dataclasses import dataclass
-from pathlib import Path
 from typing import Any
 
-import yaml
 from pydantic import BaseModel
 
 from stochastic_warfare.core.logging import get_logger
-from stochastic_warfare.simulation.engine import EngineConfig, SimulationEngine, SimulationRunResult
 from stochastic_warfare.simulation.battle import BattleConfig
 from stochastic_warfare.simulation.campaign import CampaignConfig
-from stochastic_warfare.simulation.recorder import RecorderConfig, SimulationRecorder
-from stochastic_warfare.simulation.scenario import ScenarioLoader, SimulationContext
-from stochastic_warfare.simulation.victory import (
-    ObjectiveState,
-    VictoryEvaluator,
-    VictoryResult,
+from stochastic_warfare.simulation.engine import (
+    EngineConfig,
+    SimulationRunResult,
 )
+from stochastic_warfare.simulation.recorder import RecorderConfig, SimulationRecorder
+from stochastic_warfare.simulation.runtime import (
+    AnalysisVariant,
+    RuntimeProvenance,
+    SimulationRuntimeFactory,
+)
+from stochastic_warfare.simulation.victory import VictoryResult
 from stochastic_warfare.validation.campaign_data import CampaignDataLoader, HistoricalCampaign
 
 logger = get_logger(__name__)
@@ -68,6 +68,7 @@ class CampaignRunResult:
     final_morale_states: dict[str, Any]
     terminated_by: str
     run_result: SimulationRunResult | None = None
+    runtime_provenance: RuntimeProvenance | None = None
 
 
 # ---------------------------------------------------------------------------
@@ -111,54 +112,33 @@ class CampaignRunner:
         """
         seed = seed if seed is not None else 42
 
-        # 1. Convert to CampaignScenarioConfig and write temp YAML
         scenario_config = CampaignDataLoader.to_scenario_config(campaign)
-        config_dict = scenario_config.model_dump()
-
-        # Write temp YAML for ScenarioLoader
-        with tempfile.NamedTemporaryFile(
-            mode="w", suffix=".yaml", delete=False, dir=tempfile.gettempdir()
-        ) as tmp:
-            yaml.dump(config_dict, tmp, default_flow_style=False)
-            tmp_path = Path(tmp.name)
-
-        try:
-            # 2. Load scenario via ScenarioLoader
-            data_dir = Path(self._config.data_dir)
-            loader = ScenarioLoader(data_dir)
-            ctx = loader.load(tmp_path, seed=seed)
-        finally:
-            # Clean up temp file
-            try:
-                tmp_path.unlink()
-            except OSError:
-                pass
-
-        # 3. Create victory evaluator from config
-        victory_evaluator = self._create_victory_evaluator(ctx, campaign)
-
-        # 4. Create recorder
-        recorder = SimulationRecorder(
-            ctx.event_bus,
-            RecorderConfig(
-                snapshot_interval_ticks=self._config.snapshot_interval_ticks,
-            ),
+        variant = AnalysisVariant(variant_id="campaign-validation")
+        prepared = SimulationRuntimeFactory().prepare_config(
+            scenario_config,
+            self._config.data_dir,
+            (variant,),
+            source_label=f"<campaign:{campaign.name}>",
         )
-
-        # 5. Create and run engine
         engine_config = self._config.engine_config
-        engine = SimulationEngine(
-            ctx,
-            config=engine_config,
+        session = prepared.build(
+            "campaign-validation",
+            seed=seed,
+            max_ticks=engine_config.max_ticks,
+            recorder_factory=lambda context: SimulationRecorder(
+                context.event_bus,
+                RecorderConfig(
+                    snapshot_interval_ticks=(
+                        self._config.snapshot_interval_ticks
+                    ),
+                ),
+            ),
+            engine_config=engine_config,
             campaign_config=self._config.campaign_config,
             battle_config=self._config.battle_config,
-            victory_evaluator=victory_evaluator,
-            recorder=recorder,
         )
-
-        run_result = engine.run()
-
-        # 6. Package result
+        run_result = session.run_to_completion()
+        ctx = session.context
         terminated_by = run_result.victory_result.condition_type or "completed"
 
         return CampaignRunResult(
@@ -166,7 +146,7 @@ class CampaignRunner:
             ticks_executed=run_result.ticks_executed,
             duration_simulated_s=run_result.duration_s,
             victory_result=run_result.victory_result,
-            recorder=recorder,
+            recorder=session.recorder,
             final_units_by_side={
                 side: list(units)
                 for side, units in ctx.units_by_side.items()
@@ -174,36 +154,5 @@ class CampaignRunner:
             final_morale_states=dict(ctx.morale_states),
             terminated_by=terminated_by,
             run_result=run_result,
-        )
-
-    def _create_victory_evaluator(
-        self,
-        ctx: SimulationContext,
-        campaign: HistoricalCampaign,
-    ) -> VictoryEvaluator:
-        """Build a VictoryEvaluator from the campaign configuration."""
-        from stochastic_warfare.core.types import Position
-
-        objectives = []
-        for obj_cfg in campaign.objectives:
-            pos = Position(
-                easting=obj_cfg.position[0],
-                northing=obj_cfg.position[1],
-                altitude=0.0,
-            )
-            objectives.append(
-                ObjectiveState(
-                    objective_id=obj_cfg.objective_id,
-                    position=pos,
-                    radius_m=obj_cfg.radius_m,
-                )
-            )
-
-        max_duration_s = campaign.duration_hours * 3600.0
-
-        return VictoryEvaluator(
-            objectives=objectives,
-            conditions=campaign.victory_conditions,
-            event_bus=ctx.event_bus,
-            max_duration_s=max_duration_s,
+            runtime_provenance=session.provenance(),
         )

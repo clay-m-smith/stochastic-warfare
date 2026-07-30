@@ -3,8 +3,8 @@
 **High-fidelity stochastic wargame simulator** -- multi-scale, multi-domain, multi-era.
 
 ![Python](https://img.shields.io/badge/python-%3E%3D3.12-blue)
-![Tests](https://img.shields.io/badge/tests-10%2C958_passing-brightgreen)
-![Phase](https://img.shields.io/badge/phase-111_COMPLETE-brightgreen)
+![Tests](https://img.shields.io/badge/tests-partitioned_validation-blue)
+![Phase](https://img.shields.io/badge/phase-112_COMPLETE-brightgreen)
 
 ---
 
@@ -26,8 +26,12 @@ Kalman filters, Poisson processes, queueing theory, and SNR-based detection.
   explicitly
 - **Multi-era coverage** -- Modern (Cold War--present), WW2, WW1, Napoleonic, and Ancient/Medieval eras with era-specific mechanics
 - **Stochastic models throughout** -- 10+ mathematical models (Markov, Monte Carlo, Kalman, Poisson, queueing, Lanchester, Wayne Hughes salvo, Boyd OODA, Beer-Lambert DEW)
-- **AI commanders** -- 9 doctrinal schools (Clausewitz, Maneuver, Attrition, AirLand Battle, Air Power, Sun Tzu, Deep Battle, Mahanian, Corbettian) with OODA decision cycles
-- **Validated against history** -- 73 Easting, Falklands Naval, Golan Heights engagements and campaigns with Monte Carlo statistical comparison
+- **AI commanders** -- 9 doctrinal schools with OODA decision cycles when
+  scenarios provide strict all-side commander profiles and valid school
+  assignments
+- **Historical scenario catalog** -- source-backed scenario metadata and
+  current-engine regressions; catalog-wide historical validity remains queued
+  under [REM-030](remediation-backlog.md)
 
 ## Architecture at a Glance
 
@@ -50,14 +54,30 @@ Dependencies flow downward only. Entities hold data; modules implement behavior 
 ### Quick Setup
 
 ```bash
-uv sync --extra dev    # creates .venv, installs all deps including pytest/matplotlib
-uv run python -m pytest --tb=short -q   # run the default-selected suite
+uv sync --locked --extra dev --extra api --extra terrain --extra mcp
+uv run --no-sync python scripts/validate_test_partitions.py \
+  --output artifacts/partition-audit/manifest.json
+uv run --no-sync python scripts/run_pytest_partition.py standard \
+  --manifest artifacts/standard/manifest.json \
+  --junit artifacts/standard/junit.xml --forbid-skips \
+  --timeout-seconds 2700
 ```
 
-The default selection excludes the `slow`, `benchmark`, `terrain`, `api`, and
-`e2e` markers and ignores `tests/api` and `tests/e2e`. Run those boundaries
-explicitly with the needed extras and `-o addopts=`; REM-013 tracks their
-routine CI disclosure.
+The authoritative Python union is the audited, disjoint set `standard`,
+`slow-only`, `benchmark-only`, `slow-benchmark`, `api`, and `e2e`. PR/main CI
+runs the audit plus `standard`, `api`, `e2e`, and the overlapping `terrain`
+dependency profile. Weekly/manual CI runs the three marker partitions in
+deterministic shards. `benchmark-policy` is also an overlapping focused
+profile, not a seventh partition. The 73 Easting paired benchmark is routine;
+Golan remains manual.
+
+The Phase 112 closure audit exercised exactly 11,752 nodes: `standard` 11,299
+passed with 6 warnings, `slow-only` 109 passed with no warnings,
+`benchmark-only` 60 passed with no warnings, `slow-benchmark` 4 passed with no
+warnings, API 239 passed with no warnings, and E2E 41 passed with no warnings.
+The local API result used the host's uvloop-qualified workaround and does not
+establish host-default behavior until the remote default-policy job passes.
+The overlapping terrain profile separately passed 97 tests.
 
 See the [Getting Started Guide](guide/getting-started.md) for a complete tutorial including running your first scenario.
 
@@ -92,15 +112,11 @@ See the [Getting Started Guide](guide/getting-started.md) for a complete tutoria
 | Block 11 | 98--104 | Golden scenarios and deployment polish | **Complete** |
 | Block 12 | 105--114 | Integrity remediation against production-path evidence | **In progress** |
 
-Phases 105 through 111 are complete, including REM-012 time-on-target
-production execution. Phase 112 is next and has not started.
-
-Fresh Phase 111 completion baseline: **10,958 default-selected Python tests
-passed** (21 skipped, 348 deselected, 6 warnings). The frontend was not rerun
-because Phase 111 changed no frontend contract; its last verified Phase 108
-baseline remains 418 tests.
-See the
-[remediation backlog](remediation-backlog.md) for current evidence and known
+Phases 105 through 112 are complete, including the validation and
+documentation trust remediations. Phase 113 has not started; Block 12
+therefore remains in progress. See the
+[Phase 112 devlog](devlog/phase-112.md) and
+[remediation backlog](remediation-backlog.md) for exact evidence and known
 coverage boundaries. The YAML data catalog defines units, weapons, ammunition
 types, sensors, signatures, doctrines, commanders, formation templates, and
 modern plus historical scenarios across five eras.

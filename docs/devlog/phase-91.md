@@ -4,6 +4,16 @@
 **Block**: 9 (Performance at Scale)
 **Tests**: 58
 
+> **Phase 112 integrity note (2026-07-30):** Complete is the preserved
+> historical phase status, not a current semantic-equivalence claim. The
+> shipped evaluator ran authored configurations and excluded the two benchmark
+> scenarios that declare all five performance flags; it never compared the
+> same runtime inputs with those flags disabled. Its winner table is therefore
+> current-engine regression history, not evidence that performance flags
+> preserve semantics or historical outcomes. Current output has also drifted
+> from several rows. REM-030 owns historical outcome validation and REM-031
+> owns per-flag semantic classification and paired production evidence.
+
 ## What Was Built
 
 Final phase of Block 9. Enabled performance flags across all modern and WW2 scenarios, validated outcome preservation, and documented Block 9 completion.

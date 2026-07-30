@@ -701,9 +701,13 @@ class TestStateProtocol:
         # set_state should not raise
         assessor.set_state(state)
 
-    def test_set_state_accepts_empty_dict(self) -> None:
+    def test_empty_state_restore_is_explicit_no_op(self) -> None:
+        """The stateless assessor's empty restore is an exact no-op."""
         assessor = _make_assessor()
+        before_rng = assessor._rng.bit_generator.state
         assessor.set_state({})
+        assert assessor.get_state() == {}
+        assert assessor._rng.bit_generator.state == before_rng
 
 
 # ---------------------------------------------------------------------------

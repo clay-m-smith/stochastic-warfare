@@ -1,0 +1,91 @@
+{
+  "entries": [
+    {
+      "classification": "renamed",
+      "node_id": "tests/api/test_concurrency.py::test_batch_semaphore_limits_concurrency",
+      "rationale": "The phase-start batch test never observed concurrency. Its replacement submits five production RunManager jobs and proves the shared semaphore admits exactly two workers while all five complete.",
+      "strongest_oracle": "tests/api/test_concurrency.py::test_run_manager_semaphore_limits_concurrent_runs asserts completed_calls == 5, max_concurrent_seen == 2, and current == 0"
+    },
+    {
+      "classification": "repaired_behavioral",
+      "node_id": "tests/integration/test_phase1_integration.py::TestFullTerrainStack::test_coordinate_consistency",
+      "rationale": "The test now samples one non-boundary coordinate through the real terrain stack and checks the expected grid cell in every named layer.",
+      "strongest_oracle": "height, land-cover, bathymetry, and population queries equal their independently selected cell values"
+    },
+    {
+      "classification": "renamed",
+      "node_id": "tests/unit/simulation/test_calibration_schema.py::TestCalibrationSchemaEdgeCases::test_dead_key_dropped",
+      "rationale": "The phase-start test accepted and silently discarded retired calibration data. Its replacement names the fail-closed contract and proves typed validation rejects advance_speed instead of converting it into an empty patch.",
+      "strongest_oracle": "tests/unit/simulation/test_calibration_schema.py::TestCalibrationSchemaEdgeCases::test_dead_key_rejected observes an exact unsupported-dead-calibration error for advance_speed"
+    },
+    {
+      "classification": "repaired_behavioral",
+      "node_id": "tests/unit/test_phase_12a_c2_depth.py::TestNetworkDegradation::test_mid_load_increases_latency",
+      "rationale": "The former no-crash observation now compares identical seeded communications with and without authored network load.",
+      "strongest_oracle": "loaded-network message latency is strictly greater than the unloaded control"
+    },
+    {
+      "classification": "repaired_behavioral",
+      "node_id": "tests/unit/test_phase_17c_isr_ew.py::TestISROverpass::test_timing_gap",
+      "rationale": "The former discarded return values now drive one catalog-backed satellite through the real overpass hysteresis boundary at 100, 159, and 220 seconds.",
+      "strongest_oracle": "the first and post-gap calls return the exact satellite, the inside-gap call is empty, and persisted last-overpass time advances to 220 seconds"
+    },
+    {
+      "classification": "removed",
+      "node_id": "tests/unit/test_phase50_combat_fidelity.py::TestAirPosture::test_on_station_aircraft_engages",
+      "rationale": "The empty-loadout no-crash probe could not demonstrate engagement and was removed; Phase 109 already supplies real production-path ON_STATION engagement evidence.",
+      "strongest_oracle": "tests/integration/test_phase_109_battle_sensor_domains.py::test_multidomain_fire_control_radar_allows_real_aerial_engagement asserts a real F-16 loadout produces an aerial engagement event"
+    },
+    {
+      "classification": "repaired_behavioral",
+      "node_id": "tests/unit/test_phase_27c_naval.py::TestNavalGun::test_event_published",
+      "rationale": "The test now uses a real EventBus and naval engine, observes a successful engagement, and validates the emitted domain event.",
+      "strongest_oracle": "positive hit count and exact NavalEngagementEvent attacker, target, and weapon values"
+    },
+    {
+      "classification": "renamed",
+      "node_id": "tests/unit/test_phase49_calibration_schema.py::TestSchemaConstruction::test_dead_key_advance_speed_dropped",
+      "rationale": "The phase-start test treated silent dead-key loss as successful parsing. Its replacement names the rejection contract and proves direct typed construction fails on advance_speed.",
+      "strongest_oracle": "tests/unit/test_phase49_calibration_schema.py::TestSchemaConstruction::test_dead_key_advance_speed_rejected observes an exact unsupported-dead-calibration error for advance_speed"
+    },
+    {
+      "classification": "repaired_behavioral",
+      "node_id": "tests/unit/test_phase_64d_stratagem_activation.py::TestStratagemConcentration::test_activate_stratagem_called",
+      "rationale": "Activation is now checked through both persisted engine state and the public event bus.",
+      "strongest_oracle": "the planned stratagem is active and one exact StratagemActivatedEvent is observed"
+    },
+    {
+      "classification": "repaired_behavioral",
+      "node_id": "tests/unit/test_phase78_structural.py::TestFatigueTemperatureStress::test_parameter_accepted",
+      "rationale": "The constructor/no-raise probe now runs matched fatigue managers and observes the temperature-stress effect.",
+      "strongest_oracle": "stressed physical and mental fatigue are each greater than the zero-stress control"
+    },
+    {
+      "classification": "repaired_behavioral",
+      "node_id": "tests/unit/test_phase87_morale_jit.py::TestMoraleEngineIntegration::test_check_transition_uses_kernel",
+      "rationale": "The discrete integration test now mirrors the public kernel with an independent seeded RNG and checks returned and persisted state.",
+      "strongest_oracle": "returned and checkpoint-visible morale state equal the independently sampled discrete-kernel state"
+    },
+    {
+      "classification": "repaired_behavioral",
+      "node_id": "tests/unit/test_phase87_morale_jit.py::TestMoraleEngineIntegration::test_continuous_mode_uses_kernel",
+      "rationale": "The continuous integration test now mirrors the public kernel with an independent seeded RNG and checks returned and persisted state.",
+      "strongest_oracle": "returned and checkpoint-visible morale state equal the independently sampled continuous-kernel state"
+    },
+    {
+      "classification": "repaired_behavioral",
+      "node_id": "tests/unit/test_simulation_engine.py::TestStrategicTick::test_strategic_runs_campaign_update",
+      "rationale": "A real SimulationEngine strategic tick now advances separated opposing units under the production CampaignManager.",
+      "strongest_oracle": "both sides move toward one another while preserving their spatial order"
+    },
+    {
+      "classification": "repaired_behavioral",
+      "node_id": "tests/unit/test_simulation_engine.py::TestEdgeCases::test_multiple_battles_simultaneously",
+      "rationale": "The test now observes both registered battles after one production engine step.",
+      "strongest_oracle": "both battles execute exactly one tick and transition inactive"
+    }
+  ],
+  "kind": "phase112_remediations",
+  "phase_start_commit": "0460ac70be86784bcc6e359ae4202f4bcb938c60",
+  "schema_version": 1
+}

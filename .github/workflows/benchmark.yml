@@ -1,46 +1,143 @@
-name: Benchmarks
+name: Paired production benchmarks
 
 on:
   push:
     branches: [main]
   pull_request:
     branches: [main]
+  schedule:
+    - cron: "31 7 * * 1"
   workflow_dispatch:
     inputs:
       run_golan:
-        description: 'Run Golan Heights benchmark (slow)'
+        description: Run the manual full Golan paired comparison
         type: boolean
         default: false
 
+permissions:
+  contents: read
+
 concurrency:
-  group: benchmark-${{ github.ref }}
+  group: paired-benchmark-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  benchmark:
+  policy:
+    name: Benchmark policy and measurement contracts
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
-
-      - uses: actions/setup-python@v5
         with:
-          python-version: '3.12'
+          fetch-depth: 0
 
-      - name: Install uv
-        uses: astral-sh/setup-uv@v4
+      - uses: astral-sh/setup-uv@v6
         with:
           enable-cache: true
 
-      - name: Install dependencies
-        run: uv sync --extra dev
+      - name: Install locked development environment
+        run: uv sync --extra dev --locked
 
-      - name: 73 Easting benchmark
-        run: uv run python -m pytest tests/benchmarks/test_benchmarks.py::TestBenchmark73Easting --override-ini="addopts=" -v --tb=short
+      - name: Run focused benchmark policy tests
+        run: >-
+          uv run --no-sync python scripts/run_pytest_partition.py
+          benchmark-policy
+          --manifest artifacts/benchmark-policy/manifest.json
+          --junit artifacts/benchmark-policy/junit.xml
+          --forbid-skips
+          --timeout-seconds 600
 
-      - name: Golan Heights benchmark (manual only)
-        if: github.event_name == 'workflow_dispatch' && github.event.inputs.run_golan == 'true'
-        run: uv run python -m pytest tests/benchmarks/test_benchmarks.py::TestBenchmarkGolanHeights --override-ini="addopts=" -v --tb=short
+      - name: Upload benchmark policy evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: benchmark-policy-${{ github.run_id }}
+          path: artifacts/benchmark-policy/
+          if-no-files-found: error
 
-      - name: Infrastructure tests
-        run: uv run python -m pytest tests/benchmarks/test_benchmarks.py::TestBenchmarkInfra --override-ini="addopts=" -v --tb=short
+  easting:
+    name: 73 Easting paired gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+
+      - name: Install locked development environment
+        run: uv sync --extra dev --locked
+
+      - name: Run same-host reference/candidate pairs
+        run: >-
+          uv run --no-sync python scripts/run_paired_benchmark.py
+          --scenario 73_easting
+          --artifact "${RUNNER_TEMP}/paired-73-easting.json"
+          --worker-timeout-seconds 300
+
+      - name: Bind comparison to clean final commit
+        run: >-
+          uv run --no-sync python scripts/run_paired_benchmark.py verify-final
+          --artifact "${RUNNER_TEMP}/paired-73-easting.json"
+          --verification
+          "${RUNNER_TEMP}/paired-73-easting-final-tree.json"
+          --worker-timeout-seconds 300
+
+      - name: Upload complete or partial comparison evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: paired-73-easting-${{ github.run_id }}
+          path: |
+            ${{ runner.temp }}/paired-73-easting.json
+            ${{ runner.temp }}/paired-73-easting-final-tree.json
+          if-no-files-found: error
+          retention-days: 30
+
+  golan:
+    name: Golan manual paired gate
+    if: >-
+      github.event_name == 'workflow_dispatch' &&
+      inputs.run_golan
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+
+      - name: Install locked development environment
+        run: uv sync --extra dev --locked
+
+      - name: Run same-host reference/candidate pairs
+        run: >-
+          uv run --no-sync python scripts/run_paired_benchmark.py
+          --scenario golan_heights
+          --artifact "${RUNNER_TEMP}/paired-golan-heights.json"
+          --worker-timeout-seconds 900
+
+      - name: Bind comparison to clean final commit
+        run: >-
+          uv run --no-sync python scripts/run_paired_benchmark.py verify-final
+          --artifact "${RUNNER_TEMP}/paired-golan-heights.json"
+          --verification
+          "${RUNNER_TEMP}/paired-golan-heights-final-tree.json"
+          --worker-timeout-seconds 900
+
+      - name: Upload complete or partial comparison evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: paired-golan-heights-${{ github.run_id }}
+          path: |
+            ${{ runner.temp }}/paired-golan-heights.json
+            ${{ runner.temp }}/paired-golan-heights-final-tree.json
+          if-no-files-found: error
+          retention-days: 30

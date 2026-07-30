@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import json
 import threading
 import time
 from pathlib import Path
@@ -19,10 +20,18 @@ from api.database import Database
 from api.main import create_app
 from api.run_manager import RunManager
 from stochastic_warfare.simulation.scenario import ScenarioLoader
+from stochastic_warfare.tools._run_helpers import AnalysisRunner
 
 pytestmark = [pytest.mark.api, pytest.mark.asyncio]
 
 SCENARIO_PATH = Path("data/scenarios/test_campaign/scenario.yaml")
+
+
+def _without_config_identity(result: dict[str, Any]) -> dict[str, Any]:
+    """Return behavioral output without the separately asserted config identity."""
+    outcome = dict(result)
+    outcome.pop("config_fingerprint")
+    return outcome
 
 
 async def _wait_for_terminal(
@@ -153,27 +162,33 @@ async def test_api_override_changes_outcome_and_is_deterministic(
     )
     events = dict(zip(run_ids, events_list, strict=True))
     db: Database = app.state.db
-    optional_rows = {
-        label: await db.get_run(run_id)
-        for label, run_id in run_ids.items()
-    }
-    rows = {
-        label: row
-        for label, row in optional_rows.items()
-        if row is not None
-    }
+    optional_rows = {label: await db.get_run(run_id) for label, run_id in run_ids.items()}
+    rows = {label: row for label, row in optional_rows.items() if row is not None}
 
     assert all(detail["status"] == "completed" for detail in details.values())
     assert rows.keys() == optional_rows.keys()
     assert details["omitted"]["result"] == details["empty"]["result"]
-    assert details["omitted"]["result"] == details["free"]["result"]
+    assert _without_config_identity(details["omitted"]["result"]) == _without_config_identity(
+        details["free"]["result"],
+    )
+    assert details["omitted"]["result"]["config_fingerprint"] != details["free"]["result"]["config_fingerprint"]
     assert events["omitted"] == events["empty"] == events["free"]
     assert details["hold_a"]["result"] == details["hold_b"]["result"]
     assert events["hold_a"] == events["hold_b"]
-    assert details["closest"]["result"] == details["nearest"]["result"]
+    assert _without_config_identity(details["closest"]["result"]) == _without_config_identity(
+        details["nearest"]["result"],
+    )
+    assert details["closest"]["result"]["config_fingerprint"] != details["nearest"]["result"]["config_fingerprint"]
     assert events["closest"] == events["nearest"]
+    assert rows["omitted"]["result_json"] == rows["empty"]["result_json"]
+    assert _without_config_identity(json.loads(rows["omitted"]["result_json"])) == (
+        _without_config_identity(json.loads(rows["free"]["result_json"]))
+    )
+    assert rows["hold_a"]["result_json"] == rows["hold_b"]["result_json"]
+    assert _without_config_identity(json.loads(rows["closest"]["result_json"])) == (
+        _without_config_identity(json.loads(rows["nearest"]["result_json"]))
+    )
     for payload_field in (
-        "result_json",
         "events_json",
         "snapshots_json",
         "terrain_json",
@@ -184,24 +199,12 @@ async def test_api_override_changes_outcome_and_is_deterministic(
         assert rows["hold_a"][payload_field] == rows["hold_b"][payload_field]
         assert rows["closest"][payload_field] == rows["nearest"][payload_field]
 
-    free_engagements = [
-        event for event in events["free"]
-        if event["event_type"] == "EngagementEvent"
-    ]
-    hold_engagements = [
-        event for event in events["hold_a"]
-        if event["event_type"] == "EngagementEvent"
-    ]
+    free_engagements = [event for event in events["free"] if event["event_type"] == "EngagementEvent"]
+    hold_engagements = [event for event in events["hold_a"] if event["event_type"] == "EngagementEvent"]
     assert free_engagements
     assert hold_engagements == []
-    assert sum(
-        side["disabled"]
-        for side in details["free"]["result"]["sides"].values()
-    ) > 0
-    assert sum(
-        side["active"]
-        for side in details["hold_a"]["result"]["sides"].values()
-    ) == 10
+    assert sum(side["disabled"] for side in details["free"]["result"]["sides"].values()) > 0
+    assert sum(side["active"] for side in details["hold_a"]["result"]["sides"].values()) == 10
     assert details["free"]["config_overrides"] == {
         "roe_level": "WEAPONS_FREE",
     }
@@ -423,14 +426,22 @@ async def test_immediate_lifespan_teardown_persists_cancelled_batch(
         mgr: RunManager = app.state.run_manager
         started = threading.Event()
 
-        def cooperative_worker(run_id: str, *args: Any) -> dict[str, Any]:
+        def cooperative_batch(
+            runner: AnalysisRunner,
+            variant_id: str,
+            **kwargs: Any,
+        ) -> None:
+            del runner, variant_id
             started.set()
-            cancel_event = _argument_cancel_event(args)
-            while cancel_event is None or not cancel_event.is_set():
+            while True:
+                kwargs["cancellation_check"]()
                 time.sleep(0.001)
-            _raise_worker_cancelled()
 
-        monkeypatch.setattr(mgr, "_run_sync", cooperative_worker)
+        monkeypatch.setattr(
+            AnalysisRunner,
+            "run_variant",
+            cooperative_batch,
+        )
         transport = ASGITransport(app=app)
         async with AsyncClient(
             transport=transport,
@@ -467,6 +478,7 @@ async def test_immediate_lifespan_teardown_persists_cancelled_batch(
         assert row is not None
         assert row["status"] == "cancelled"
         assert row["completed_at"] is not None
+        assert row["metrics_json"] is None
     finally:
         await verification_db.close()
 
@@ -484,10 +496,7 @@ async def test_shutdown_waits_for_worker_after_grace_threshold(
     def controlled_worker(run_id: str, *args: Any) -> dict[str, Any]:
         cancel_event = _argument_cancel_event(args)
         started.set()
-        while not (
-            (cancel_event is not None and cancel_event.is_set())
-            or release.is_set()
-        ):
+        while not ((cancel_event is not None and cancel_event.is_set()) or release.is_set()):
             time.sleep(0.001)
         if cancel_event is not None and cancel_event.is_set():
             release.wait(2.0)
@@ -695,15 +704,9 @@ async def test_active_delete_cancels_and_awaits_worker(
     def controlled_worker(run_id: str, *args: Any) -> dict[str, Any]:
         cancel_event = _argument_cancel_event(args)
         started.set()
-        while not (
-            (cancel_event is not None and cancel_event.is_set())
-            or release.is_set()
-        ):
+        while not ((cancel_event is not None and cancel_event.is_set()) or release.is_set()):
             time.sleep(0.001)
-        if (
-            cancel_event is not None
-            and cancel_event.is_set()
-        ):
+        if cancel_event is not None and cancel_event.is_set():
             release.wait(2.0)
             _raise_worker_cancelled()
         return _empty_result()

@@ -17,6 +17,7 @@ from stochastic_warfare.core.events import EventBus
 from stochastic_warfare.core.rng import RNGManager
 from stochastic_warfare.core.types import ModuleId, Position
 from stochastic_warfare.entities.base import Unit, UnitStatus
+from stochastic_warfare.entities.loader import MissingUnitDefinitionError
 import stochastic_warfare.simulation.campaign as campaign_module
 from stochastic_warfare.simulation.battle import BattleManager
 from stochastic_warfare.simulation.campaign import (
@@ -24,6 +25,7 @@ from stochastic_warfare.simulation.campaign import (
     CampaignManager,
     ReinforcementEntry,
 )
+from stochastic_warfare.simulation.force_builder import RuntimeForceBuilder
 from stochastic_warfare.simulation.scenario import (
     ReinforcementConfig,
     ReinforcementUnitConfig,
@@ -57,6 +59,7 @@ class _MockCtx:
     units_by_side: dict[str, list[Unit]] = field(default_factory=dict)
     rng_manager: Any = None
     unit_loader: Any = None
+    force_builder: Any = None
     ooda_engine: Any = None
     consumption_engine: Any = None
     stockpile_manager: Any = None
@@ -69,6 +72,11 @@ class _MockCtx:
             self.clock = _MockClock()
         if self.rng_manager is None:
             self.rng_manager = RNGManager(DEFAULT_SEED)
+        if self.force_builder is None and self.unit_loader is not None:
+            self.force_builder = RuntimeForceBuilder(
+                unit_loader=self.unit_loader,
+                rng=self.rng_manager.get_stream(ModuleId.ENTITIES),
+            )
 
     def active_units(self, side: str) -> list[Unit]:
         return [u for u in self.units_by_side.get(side, []) if u.status == UnitStatus.ACTIVE]
@@ -117,7 +125,8 @@ class TestReinforcementEntry:
 
     def test_creation(self) -> None:
         cfg = ReinforcementConfig(
-            side="blue", arrival_time_s=3600,
+            side="blue",
+            arrival_time_s=3600,
             units=[ReinforcementUnitConfig(unit_type="m1a2", count=2)],
         )
         entry = ReinforcementEntry(config=cfg)
@@ -125,7 +134,8 @@ class TestReinforcementEntry:
 
     def test_arrived_flag(self) -> None:
         cfg = ReinforcementConfig(
-            side="red", arrival_time_s=0,
+            side="red",
+            arrival_time_s=0,
             units=[ReinforcementUnitConfig(unit_type="m1a2")],
         )
         entry = ReinforcementEntry(config=cfg, arrived=True)
@@ -145,7 +155,8 @@ class TestReinforcements:
         mgr = CampaignManager(event_bus, rng)
         reinforcements = [
             ReinforcementConfig(
-                side="blue", arrival_time_s=3600,
+                side="blue",
+                arrival_time_s=3600,
                 units=[ReinforcementUnitConfig(unit_type="m1a2", count=2)],
             ),
         ]
@@ -181,25 +192,29 @@ class TestReinforcements:
         event_bus: EventBus,
     ) -> None:
         mgr = CampaignManager(event_bus, make_rng())
-        mgr.set_reinforcements([
-            ReinforcementConfig(
-                side="blue",
-                arrival_time_s=3600,
-                units=[ReinforcementUnitConfig(unit_type="m1a2")],
-            ),
-        ])
+        mgr.set_reinforcements(
+            [
+                ReinforcementConfig(
+                    side="blue",
+                    arrival_time_s=3600,
+                    units=[ReinforcementUnitConfig(unit_type="m1a2")],
+                ),
+            ]
+        )
 
         with pytest.raises(
             ValueError,
             match="already initialized with different topology",
         ):
-            mgr.set_reinforcements([
-                ReinforcementConfig(
-                    side="blue",
-                    arrival_time_s=7200,
-                    units=[ReinforcementUnitConfig(unit_type="m1a2")],
-                ),
-            ])
+            mgr.set_reinforcements(
+                [
+                    ReinforcementConfig(
+                        side="blue",
+                        arrival_time_s=7200,
+                        units=[ReinforcementUnitConfig(unit_type="m1a2")],
+                    ),
+                ]
+            )
 
     def test_failed_schedule_sampling_restores_rng(
         self,
@@ -225,12 +240,15 @@ class TestReinforcements:
     def test_reinforcements_not_arrived_before_time(self, event_bus: EventBus) -> None:
         rng = make_rng()
         mgr = CampaignManager(event_bus, rng)
-        mgr.set_reinforcements([
-            ReinforcementConfig(
-                side="blue", arrival_time_s=7200,
-                units=[ReinforcementUnitConfig(unit_type="m1a2")],
-            ),
-        ])
+        mgr.set_reinforcements(
+            [
+                ReinforcementConfig(
+                    side="blue",
+                    arrival_time_s=7200,
+                    units=[ReinforcementUnitConfig(unit_type="m1a2")],
+                ),
+            ]
+        )
         ctx = _MockCtx(clock=_MockClock(elapsed=timedelta(seconds=3600)))
         new_units = mgr.check_reinforcements(ctx, 3600.0)
         assert len(new_units) == 0
@@ -238,15 +256,19 @@ class TestReinforcements:
     def test_reinforcements_arrive_at_time(self, event_bus: EventBus) -> None:
         rng = make_rng()
         mgr = CampaignManager(event_bus, rng)
-        mgr.set_reinforcements([
-            ReinforcementConfig(
-                side="blue", arrival_time_s=3600,
-                units=[ReinforcementUnitConfig(unit_type="m1a2")],
-                position=[100, 200],
-            ),
-        ])
+        mgr.set_reinforcements(
+            [
+                ReinforcementConfig(
+                    side="blue",
+                    arrival_time_s=3600,
+                    units=[ReinforcementUnitConfig(unit_type="m1a2")],
+                    position=[100, 200],
+                ),
+            ]
+        )
         # Need a real unit loader for spawning
         from stochastic_warfare.entities.loader import UnitLoader
+
         loader = UnitLoader(Path("data/units"))
         loader.load_all()
         ctx = _MockCtx(
@@ -260,13 +282,17 @@ class TestReinforcements:
     def test_reinforcements_dont_re_arrive(self, event_bus: EventBus) -> None:
         rng = make_rng()
         mgr = CampaignManager(event_bus, rng)
-        mgr.set_reinforcements([
-            ReinforcementConfig(
-                side="blue", arrival_time_s=0,
-                units=[ReinforcementUnitConfig(unit_type="m1a2")],
-            ),
-        ])
+        mgr.set_reinforcements(
+            [
+                ReinforcementConfig(
+                    side="blue",
+                    arrival_time_s=0,
+                    units=[ReinforcementUnitConfig(unit_type="m1a2")],
+                ),
+            ]
+        )
         from stochastic_warfare.entities.loader import UnitLoader
+
         loader = UnitLoader(Path("data/units"))
         loader.load_all()
         ctx = _MockCtx(unit_loader=loader)
@@ -278,17 +304,22 @@ class TestReinforcements:
     def test_multiple_reinforcements(self, event_bus: EventBus) -> None:
         rng = make_rng()
         mgr = CampaignManager(event_bus, rng)
-        mgr.set_reinforcements([
-            ReinforcementConfig(
-                side="blue", arrival_time_s=100,
-                units=[ReinforcementUnitConfig(unit_type="m1a2", count=2)],
-            ),
-            ReinforcementConfig(
-                side="red", arrival_time_s=200,
-                units=[ReinforcementUnitConfig(unit_type="m1a2", count=3)],
-            ),
-        ])
+        mgr.set_reinforcements(
+            [
+                ReinforcementConfig(
+                    side="blue",
+                    arrival_time_s=100,
+                    units=[ReinforcementUnitConfig(unit_type="m1a2", count=2)],
+                ),
+                ReinforcementConfig(
+                    side="red",
+                    arrival_time_s=200,
+                    units=[ReinforcementUnitConfig(unit_type="m1a2", count=3)],
+                ),
+            ]
+        )
         from stochastic_warfare.entities.loader import UnitLoader
+
         loader = UnitLoader(Path("data/units"))
         loader.load_all()
         ctx = _MockCtx(unit_loader=loader)
@@ -303,14 +334,17 @@ class TestReinforcements:
     ) -> None:
         rng = make_rng()
         mgr = CampaignManager(event_bus, rng)
-        mgr.set_reinforcements([
-            ReinforcementConfig(
-                side="blue", arrival_time_s=0,
-                units=[ReinforcementUnitConfig(unit_type="m1a2")],
-            ),
-        ])
+        mgr.set_reinforcements(
+            [
+                ReinforcementConfig(
+                    side="blue",
+                    arrival_time_s=0,
+                    units=[ReinforcementUnitConfig(unit_type="m1a2")],
+                ),
+            ]
+        )
         ctx = _MockCtx(unit_loader=None)
-        with pytest.raises(RuntimeError, match="without a unit loader"):
+        with pytest.raises(RuntimeError, match="RuntimeForceBuilder"):
             mgr.check_reinforcements(ctx, 100.0)
         assert mgr._reinforcements[0].arrived is False
 
@@ -320,17 +354,24 @@ class TestReinforcements:
     ) -> None:
         rng = make_rng()
         mgr = CampaignManager(event_bus, rng)
-        mgr.set_reinforcements([
-            ReinforcementConfig(
-                side="blue", arrival_time_s=0,
-                units=[ReinforcementUnitConfig(unit_type="nonexistent_tank")],
-            ),
-        ])
+        mgr.set_reinforcements(
+            [
+                ReinforcementConfig(
+                    side="blue",
+                    arrival_time_s=0,
+                    units=[ReinforcementUnitConfig(unit_type="nonexistent_tank")],
+                ),
+            ]
+        )
         from stochastic_warfare.entities.loader import UnitLoader
+
         loader = UnitLoader(Path("data/units"))
         loader.load_all()
         ctx = _MockCtx(unit_loader=loader)
-        with pytest.raises(KeyError, match="nonexistent_tank"):
+        with pytest.raises(
+            MissingUnitDefinitionError,
+            match="nonexistent_tank",
+        ):
             mgr.check_reinforcements(ctx, 100.0)
         assert mgr._reinforcements[0].arrived is False
 
@@ -340,18 +381,20 @@ class TestReinforcements:
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         mgr = CampaignManager(event_bus, make_rng())
-        mgr.set_reinforcements([
-            ReinforcementConfig(
-                side="blue",
-                arrival_time_s=0,
-                units=[
-                    ReinforcementUnitConfig(
-                        unit_type="m1a2",
-                        count=2,
-                    ),
-                ],
-            ),
-        ])
+        mgr.set_reinforcements(
+            [
+                ReinforcementConfig(
+                    side="blue",
+                    arrival_time_s=0,
+                    units=[
+                        ReinforcementUnitConfig(
+                            unit_type="m1a2",
+                            count=2,
+                        ),
+                    ],
+                ),
+            ]
+        )
         from stochastic_warfare.entities.loader import UnitLoader
 
         loader = UnitLoader(Path("data/units"))
@@ -384,14 +427,18 @@ class TestReinforcements:
     def test_reinforcement_position_applied(self, event_bus: EventBus) -> None:
         rng = make_rng()
         mgr = CampaignManager(event_bus, rng)
-        mgr.set_reinforcements([
-            ReinforcementConfig(
-                side="blue", arrival_time_s=0,
-                units=[ReinforcementUnitConfig(unit_type="m1a2")],
-                position=[500, 1000],
-            ),
-        ])
+        mgr.set_reinforcements(
+            [
+                ReinforcementConfig(
+                    side="blue",
+                    arrival_time_s=0,
+                    units=[ReinforcementUnitConfig(unit_type="m1a2")],
+                    position=[500, 1000],
+                ),
+            ]
+        )
         from stochastic_warfare.entities.loader import UnitLoader
+
         loader = UnitLoader(Path("data/units"))
         loader.load_all()
         ctx = _MockCtx(unit_loader=loader)
@@ -461,13 +508,17 @@ class TestStrategicUpdate:
     ) -> None:
         rng = make_rng()
         mgr = CampaignManager(event_bus, rng)
-        mgr.set_reinforcements([
-            ReinforcementConfig(
-                side="blue", arrival_time_s=100,
-                units=[ReinforcementUnitConfig(unit_type="m1a2")],
-            ),
-        ])
+        mgr.set_reinforcements(
+            [
+                ReinforcementConfig(
+                    side="blue",
+                    arrival_time_s=100,
+                    units=[ReinforcementUnitConfig(unit_type="m1a2")],
+                ),
+            ]
+        )
         from stochastic_warfare.entities.loader import UnitLoader
+
         loader = UnitLoader(Path("data/units"))
         loader.load_all()
         ctx = _MockCtx(
@@ -494,12 +545,15 @@ class TestCheckpointRestore:
     def test_get_state(self, event_bus: EventBus) -> None:
         rng = make_rng()
         mgr = CampaignManager(event_bus, rng)
-        mgr.set_reinforcements([
-            ReinforcementConfig(
-                side="blue", arrival_time_s=100,
-                units=[ReinforcementUnitConfig(unit_type="m1a2")],
-            ),
-        ])
+        mgr.set_reinforcements(
+            [
+                ReinforcementConfig(
+                    side="blue",
+                    arrival_time_s=100,
+                    units=[ReinforcementUnitConfig(unit_type="m1a2")],
+                ),
+            ]
+        )
         state = mgr.get_state()
         assert len(state["reinforcements"]) == 1
         assert state["reinforcements"][0]["arrived"] is False
@@ -507,22 +561,28 @@ class TestCheckpointRestore:
     def test_set_state_restores(self, event_bus: EventBus) -> None:
         rng = make_rng()
         mgr = CampaignManager(event_bus, rng)
-        mgr.set_reinforcements([
-            ReinforcementConfig(
-                side="blue", arrival_time_s=100,
-                units=[ReinforcementUnitConfig(unit_type="m1a2")],
-            ),
-        ])
+        mgr.set_reinforcements(
+            [
+                ReinforcementConfig(
+                    side="blue",
+                    arrival_time_s=100,
+                    units=[ReinforcementUnitConfig(unit_type="m1a2")],
+                ),
+            ]
+        )
         state = mgr.get_state()
         state["reinforcements"][0]["arrived"] = True
 
         mgr2 = CampaignManager(event_bus, rng)
-        mgr2.set_reinforcements([
-            ReinforcementConfig(
-                side="blue", arrival_time_s=100,
-                units=[ReinforcementUnitConfig(unit_type="m1a2")],
-            ),
-        ])
+        mgr2.set_reinforcements(
+            [
+                ReinforcementConfig(
+                    side="blue",
+                    arrival_time_s=100,
+                    units=[ReinforcementUnitConfig(unit_type="m1a2")],
+                ),
+            ]
+        )
         mgr2.set_state(state)
         s2 = mgr2.get_state()
         assert s2["reinforcements"][0]["arrived"] is True
@@ -530,28 +590,36 @@ class TestCheckpointRestore:
     def test_round_trip(self, event_bus: EventBus) -> None:
         rng = make_rng()
         mgr = CampaignManager(event_bus, rng)
-        mgr.set_reinforcements([
-            ReinforcementConfig(
-                side="blue", arrival_time_s=3600,
-                units=[ReinforcementUnitConfig(unit_type="m1a2")],
-            ),
-            ReinforcementConfig(
-                side="red", arrival_time_s=7200,
-                units=[ReinforcementUnitConfig(unit_type="m1a2", count=3)],
-            ),
-        ])
+        mgr.set_reinforcements(
+            [
+                ReinforcementConfig(
+                    side="blue",
+                    arrival_time_s=3600,
+                    units=[ReinforcementUnitConfig(unit_type="m1a2")],
+                ),
+                ReinforcementConfig(
+                    side="red",
+                    arrival_time_s=7200,
+                    units=[ReinforcementUnitConfig(unit_type="m1a2", count=3)],
+                ),
+            ]
+        )
         state = mgr.get_state()
         mgr2 = CampaignManager(event_bus, rng)
-        mgr2.set_reinforcements([
-            ReinforcementConfig(
-                side="blue", arrival_time_s=3600,
-                units=[ReinforcementUnitConfig(unit_type="m1a2")],
-            ),
-            ReinforcementConfig(
-                side="red", arrival_time_s=7200,
-                units=[ReinforcementUnitConfig(unit_type="m1a2", count=3)],
-            ),
-        ])
+        mgr2.set_reinforcements(
+            [
+                ReinforcementConfig(
+                    side="blue",
+                    arrival_time_s=3600,
+                    units=[ReinforcementUnitConfig(unit_type="m1a2")],
+                ),
+                ReinforcementConfig(
+                    side="red",
+                    arrival_time_s=7200,
+                    units=[ReinforcementUnitConfig(unit_type="m1a2", count=3)],
+                ),
+            ]
+        )
         mgr2.set_state(state)
         assert len(mgr2.get_state()["reinforcements"]) == 2
 
@@ -615,9 +683,7 @@ class TestCheckpointRestore:
                             {
                                 "original_side": "blue",
                                 "unit_state": {
-                                    "entity_id": (
-                                        "reinforce_blue_0000_m1a2_0000"
-                                    ),
+                                    "entity_id": ("reinforce_blue_0000_m1a2_0000"),
                                     "unit_type": "m1a2",
                                 },
                             },
@@ -631,6 +697,14 @@ class TestCheckpointRestore:
             campaign_state,
             context_state,
         )
+        plan = mgr.stage_state(campaign_state)
+        mgr.validate_checkpoint_roster(
+            campaign_state,
+            context_state,
+            staged_plan=plan,
+        )
+        mgr.commit_state(plan)
+        assert mgr.get_state()["reinforcements"][0]["arrived"] is True
 
 
 # ---------------------------------------------------------------------------
@@ -649,20 +723,30 @@ class TestEdgeCases:
         units = mgr.check_reinforcements(ctx, 100.0)
         assert units == []
 
-    def test_disabled_maintenance(self, event_bus: EventBus) -> None:
+    def test_disabled_maintenance_update_is_explicit_no_op(
+        self,
+        event_bus: EventBus,
+    ) -> None:
         rng = make_rng()
         mgr = CampaignManager(event_bus, rng, CampaignConfig(enable_maintenance=False))
         ctx = _MockCtx(
             clock=_MockClock(),
             units_by_side={"blue": [], "red": []},
         )
-        mgr.update_strategic(ctx, dt=3600.0)  # Should not raise
+        before = mgr.get_state()
+        mgr.update_strategic(ctx, dt=3600.0)
+        assert mgr.get_state() == before
 
-    def test_disabled_supply_network(self, event_bus: EventBus) -> None:
+    def test_disabled_supply_update_is_explicit_no_op(
+        self,
+        event_bus: EventBus,
+    ) -> None:
         rng = make_rng()
         mgr = CampaignManager(event_bus, rng, CampaignConfig(enable_supply_network=False))
         ctx = _MockCtx(
             clock=_MockClock(),
             units_by_side={"blue": [], "red": []},
         )
-        mgr.update_strategic(ctx, dt=3600.0)  # Should not raise
+        before = mgr.get_state()
+        mgr.update_strategic(ctx, dt=3600.0)
+        assert mgr.get_state() == before

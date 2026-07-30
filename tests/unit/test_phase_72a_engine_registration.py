@@ -112,48 +112,78 @@ def _get_source():
 
 @pytest.fixture(scope="module")
 def source_pair():
-    return _get_source()
+    from stochastic_warfare.simulation.scenario import (
+        _CONTEXT_STATE_ENGINE_NAMES,
+        SimulationContext,
+    )
+
+    context = object.__new__(SimulationContext)
+    sentinels = {
+        name: object()
+        for name in _CONTEXT_STATE_ENGINE_NAMES
+    }
+    for name, sentinel in sentinels.items():
+        setattr(context, name, sentinel)
+
+    get_source, set_source = _get_source()
+    return {
+        "declared_names": _CONTEXT_STATE_ENGINE_NAMES,
+        "runtime_owners": dict(context._checkpoint_engines()),
+        "sentinels": sentinels,
+        "get_source": get_source,
+        "set_source": set_source,
+        "apply_source": inspect.getsource(SimulationContext._apply_state),
+    }
 
 
+@pytest.mark.structural
 class TestStructuralRegistration:
-    """Structural tests that verify engine names appear in source code."""
+    """Structural diagnostics for the runtime-owned checkpoint registry."""
 
     @pytest.mark.parametrize("engine_name", PHASE_72A_ENGINES)
     def test_engine_in_get_state(self, source_pair, engine_name):
-        """Each Phase 72a engine appears in get_state."""
-        get_src, _ = source_pair
-        assert f'"{engine_name}"' in get_src, (
-            f"{engine_name} missing from SimulationContext.get_state()"
+        """Each Phase 72a owner resolves through the capture registry."""
+        assert engine_name in source_pair["declared_names"]
+        assert (
+            source_pair["runtime_owners"][engine_name]
+            is source_pair["sentinels"][engine_name]
         )
+        assert "self._checkpoint_engines()" in source_pair["get_source"]
 
     @pytest.mark.parametrize("engine_name", PHASE_72A_ENGINES)
     def test_engine_in_set_state(self, source_pair, engine_name):
-        """Each Phase 72a engine appears in set_state."""
-        _, set_src = source_pair
-        assert f'"{engine_name}"' in set_src, (
-            f"{engine_name} missing from SimulationContext.set_state()"
+        """Each Phase 72a owner resolves through the staged restore registry."""
+        assert engine_name in source_pair["declared_names"]
+        assert (
+            source_pair["runtime_owners"][engine_name]
+            is source_pair["sentinels"][engine_name]
         )
+        assert "self._checkpoint_engines()" in source_pair["apply_source"]
+        assert "self.stage_state(" in source_pair["set_source"]
+        assert "self.commit_state(" in source_pair["set_source"]
 
     def test_total_engine_count_get_state(self, source_pair):
-        """get_state engine list has >= 79 entries (57 pre-existing + 22 new)."""
-        get_src, _ = source_pair
-        # Count tuples in the engines list — each entry is ("name", self.xxx)
-        count = get_src.count("self.")
-        # Each engine entry has at least one self.X reference
-        assert count >= 79, f"Expected >= 79 engine refs in get_state, got {count}"
+        """Capture consumes one unique registry with at least 79 owners."""
+        declared = source_pair["declared_names"]
+        assert tuple(source_pair["runtime_owners"]) == declared
+        assert len(declared) == len(set(declared))
+        assert len(declared) >= 79
 
     def test_total_engine_count_set_state(self, source_pair):
-        """set_state engine list has >= 79 entries."""
-        _, set_src = source_pair
-        count = set_src.count("self.")
-        assert count >= 79, f"Expected >= 79 engine refs in set_state, got {count}"
+        """Restore consumes the same complete runtime owner registry."""
+        declared = source_pair["declared_names"]
+        expected = set(PRE_EXISTING_ENGINES + PHASE_72A_ENGINES)
+        assert expected <= set(declared)
+        assert len(declared) >= 79
+        assert "self._checkpoint_engines()" in source_pair["apply_source"]
 
     @pytest.mark.parametrize("engine_name", PRE_EXISTING_ENGINES)
     def test_preexisting_engines_still_present(self, source_pair, engine_name):
-        """Pre-existing engines remain in get_state (regression)."""
-        get_src, _ = source_pair
-        assert f'"{engine_name}"' in get_src, (
-            f"Pre-existing engine {engine_name} removed from get_state!"
+        """Pre-existing owners remain in the runtime-owned registry."""
+        assert engine_name in source_pair["declared_names"]
+        assert (
+            source_pair["runtime_owners"][engine_name]
+            is source_pair["sentinels"][engine_name]
         )
 
 
@@ -162,19 +192,22 @@ class TestBehavioralRegistration:
 
     def _make_mock_ctx(self):
         """Create a minimal mock SimulationContext for behavioral tests."""
+        from datetime import datetime, timedelta, timezone
         from types import SimpleNamespace
+
+        from stochastic_warfare.core.clock import SimulationClock
+        from stochastic_warfare.core.events import EventBus
+        from stochastic_warfare.core.rng import RNGManager
         from stochastic_warfare.simulation.scenario import SimulationContext
         from stochastic_warfare.simulation.calibration import CalibrationSchema
 
         ctx = object.__new__(SimulationContext)
-        ctx.clock = SimpleNamespace(
-            get_state=lambda: {"t": 0},
-            set_state=lambda s: None,
+        ctx.clock = SimulationClock(
+            start=datetime(2024, 1, 1, tzinfo=timezone.utc),
+            tick_duration=timedelta(seconds=5),
         )
-        ctx.rng_manager = SimpleNamespace(
-            get_state=lambda: {"s": 0},
-            set_state=lambda s: None,
-        )
+        ctx.rng_manager = RNGManager(72)
+        ctx.event_bus = EventBus()
         ctx.calibration = CalibrationSchema()
         ctx.era_config = None
         ctx.config = SimpleNamespace(model_dump=lambda: {})
@@ -211,13 +244,7 @@ class TestBehavioralRegistration:
         )
         ctx.roe_engine = mock_eng
 
-        state = {
-            "clock": {"t": 0},
-            "rng": {"s": 0},
-            "calibration": {},
-            "loadout_builder_fingerprint": None,
-            "loadout_topology": {},
-            "roe_engine": {"level": "WEAPONS_FREE"},
-        }
+        state = ctx.get_state()
+        state["roe_engine"] = {"level": "WEAPONS_FREE"}
         ctx.set_state(state)
         assert restored == {"level": "WEAPONS_FREE"}

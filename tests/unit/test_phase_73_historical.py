@@ -1,8 +1,8 @@
-"""Phase 73: Structural tests for historical scenario correctness.
+"""Phase 73 authored-calibration and current-terminal lineage checks.
 
-Validates that scenario YAMLs follow calibration patterns established in
-working scenarios (Austerlitz, Hastings, Trafalgar) and that documentation
-reflects the calibration methodology.
+These structural checks preserve Phase 73's YAML and documentation contracts.
+The imported seed-42 terminal classifications are current-engine regression
+state, not historical or predictive validation.
 """
 
 from __future__ import annotations
@@ -12,14 +12,20 @@ from pathlib import Path
 import pytest
 import yaml
 
+from tests.validation.test_historical_accuracy import (
+    CURRENT_ENGINE_TERMINAL_SNAPSHOT,
+)
+
 DATA_DIR = Path(__file__).resolve().parents[2] / "data"
 DOCS_DIR = Path(__file__).resolve().parents[2] / "docs"
-TESTS_DIR = Path(__file__).resolve().parents[2] / "tests"
 
-# Scenarios that must resolve decisively (not time_expired)
-PHASE_73_DECISIVE = {"agincourt", "cannae", "salamis", "midway"}
+PHASE_73_CURRENT_TERMINALS = {
+    "agincourt": ("english", "force_destroyed"),
+    "cannae": ("carthaginian", "force_destroyed"),
+    "salamis": ("greek", "force_destroyed"),
+    "midway": ("usn", "force_destroyed"),
+}
 
-# Somme must NOT be in decisive list (German defensive victory = time_expired)
 SOMME_SCENARIO = "somme_july1"
 
 
@@ -32,14 +38,8 @@ def _load_scenario(name: str) -> dict:
     pytest.fail(f"Scenario {name} not found")
 
 
-def _load_test_file() -> str:
-    """Load the historical accuracy test file as text."""
-    path = TESTS_DIR / "validation" / "test_historical_accuracy.py"
-    return path.read_text()
-
-
 class TestSommeVictoryCondition:
-    """Somme force_destroyed must have target_side restriction."""
+    """Somme authoring and current terminal classification."""
 
     def test_somme_force_destroyed_has_target_side(self):
         data = _load_scenario(SOMME_SCENARIO)
@@ -50,19 +50,17 @@ class TestSommeVictoryCondition:
                     "generic annihilation triggering on British attackers"
                 )
 
-    def test_somme_not_in_decisive_combat_scenarios(self):
-        source = _load_test_file()
-        # Check that somme_july1 is NOT in the DECISIVE_COMBAT_SCENARIOS set
-        assert "somme_july1" not in source.split("DECISIVE_COMBAT_SCENARIOS")[1].split("}")[0], (
-            "somme_july1 should not be in DECISIVE_COMBAT_SCENARIOS — "
-            "German defensive victory is correctly time_expired"
+    def test_somme_current_terminal_snapshot(self):
+        assert CURRENT_ENGINE_TERMINAL_SNAPSHOT[SOMME_SCENARIO] == (
+            "german",
+            "time_expired",
         )
 
 
-class TestDecisiveScenariosHaveTargetSide:
-    """All Phase 73 decisive scenarios should have target_side or count_disabled."""
+class TestPhase73ForceDestroyedAuthoring:
+    """Phase 73 force-destruction authoring has an explicit scope."""
 
-    @pytest.mark.parametrize("scenario", sorted(PHASE_73_DECISIVE))
+    @pytest.mark.parametrize("scenario", sorted(PHASE_73_CURRENT_TERMINALS))
     def test_force_destroyed_has_target_side(self, scenario):
         data = _load_scenario(scenario)
         for vc in data["victory_conditions"]:
@@ -71,27 +69,40 @@ class TestDecisiveScenariosHaveTargetSide:
                 has_target = "target_side" in params or "count_disabled" in params
                 assert has_target, (
                     f"{scenario}: force_destroyed should have target_side or "
-                    f"count_disabled for decisive outcome"
+                    f"count_disabled to define its scope"
                 )
 
 
-class TestDecisiveScenariosInTestSuite:
-    """Phase 73 decisive scenarios must be registered in DECISIVE_COMBAT_SCENARIOS."""
+class TestCurrentTerminalLineage:
+    """Phase 73 rows match the declared current-engine snapshot."""
 
-    @pytest.mark.parametrize("scenario", sorted(PHASE_73_DECISIVE))
-    def test_in_decisive_combat_scenarios(self, scenario):
-        source = _load_test_file()
-        block = source.split("DECISIVE_COMBAT_SCENARIOS")[1].split("}")[0]
-        assert scenario in block, (
-            f"{scenario} must be in DECISIVE_COMBAT_SCENARIOS in "
-            f"test_historical_accuracy.py"
-        )
+    @pytest.mark.parametrize(
+        ("scenario", "expected"),
+        sorted(PHASE_73_CURRENT_TERMINALS.items()),
+    )
+    def test_current_terminal_snapshot(
+        self,
+        scenario: str,
+        expected: tuple[str, str],
+    ) -> None:
+        assert CURRENT_ENGINE_TERMINAL_SNAPSHOT[scenario] == expected
+
+    def test_phase73_rows_currently_end_by_force_destruction(self) -> None:
+        assert {
+            condition
+            for _, condition in PHASE_73_CURRENT_TERMINALS.values()
+        } == {
+            "force_destroyed",
+        }
 
 
 class TestCalibrationComments:
     """Scenarios with force_ratio_modifier should have calibration comments."""
 
-    @pytest.mark.parametrize("scenario", sorted(PHASE_73_DECISIVE | {SOMME_SCENARIO}))
+    @pytest.mark.parametrize(
+        "scenario",
+        sorted(set(PHASE_73_CURRENT_TERMINALS) | {SOMME_SCENARIO}),
+    )
     def test_has_calibration_comment(self, scenario):
         """Scenario YAML has a calibration rationale comment near force_ratio_modifier."""
         for path in DATA_DIR.rglob("scenario.yaml"):

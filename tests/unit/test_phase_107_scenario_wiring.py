@@ -913,7 +913,13 @@ def test_checkpoint_rejects_dynamic_unit_type_mismatch_atomically() -> None:
     _, target = _checkpoint_engine()
     before = _json_checkpoint(target)
 
-    with pytest.raises(ValueError, match="unit topology"):
+    with pytest.raises(
+        ValueError,
+        match=(
+            "unit 'reinforce_blue_0000_m1a2_0000' has unit_type 't72m' "
+            "outside this builder's reachable envelope"
+        ),
+    ):
         target.set_state(invalid)
 
     assert _json_checkpoint(target) == before
@@ -931,15 +937,25 @@ def test_checkpoint_arrival_flag_must_match_force_roster_atomically(
     if arrive_before_checkpoint:
         source.step()
     invalid = _json_checkpoint(source)
-    invalid["campaign"]["reinforcements"][0]["arrived"] = corrupt_arrived
+    reinforcement = invalid["campaign"]["reinforcements"][0]
+    reinforcement["arrived"] = corrupt_arrived
+    reinforcement["actual_arrival_time_s"] = (
+        0.0 if corrupt_arrived else 7200.0
+    )
 
     _, target = _checkpoint_engine()
     before = _json_checkpoint(target)
 
-    with pytest.raises(
-        ValueError,
-        match="arrival flag.*force roster",
-    ):
+    expected_validation = (
+        "Checkpoint reinforcement arrival flag or unit topology disagrees "
+        "with force roster at wave 0: "
+        "'reinforce_blue_0000_m1a2_0000' must be present as 'blue'/'m1a2'"
+        if corrupt_arrived
+        else "Checkpoint reinforcement arrival flag disagrees with force "
+        "roster at wave 0: 'reinforce_blue_0000_m1a2_0000' is present "
+        "before arrival"
+    )
+    with pytest.raises(ValueError, match=expected_validation):
         target.set_state(invalid)
 
     assert _json_checkpoint(target) == before
@@ -1090,7 +1106,7 @@ def test_arrived_legacy_reinforcement_checkpoint_migrates_without_repeat(
 
     migrated_checkpoint = target.checkpoint()
     migrated_state = json.loads(migrated_checkpoint.decode("utf-8"))
-    assert migrated_state["checkpoint_version"] == 111
+    assert migrated_state["checkpoint_version"] == 112
     migrated_first_wave = migrated_state["campaign"]["reinforcements"][0]
     assert migrated_first_wave["legacy_ids"] is True
     assert migrated_first_wave["wave_ordinal"] == 0

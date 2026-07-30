@@ -183,6 +183,9 @@ space_config:
     - sbirs_ew
     - milstar_satcom
     - wgs_satcom
+  # Classified imaging topology remains available for overpass/ASAT effects,
+  # but has no inspectable sourced geolocation sigma for imagery fusion.
+  imint_fusion_constellation_ids: []
   enable_asat: false
   gps_sigma_range_m: 5.0
   ins_drift_rate_m_per_s: 0.6

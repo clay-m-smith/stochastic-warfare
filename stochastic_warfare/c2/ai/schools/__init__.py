@@ -18,6 +18,8 @@ via optional parameters.  No engine subclassing or wrapping.
 
 from __future__ import annotations
 
+from collections.abc import Mapping
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
@@ -30,6 +32,13 @@ logger = get_logger(__name__)
 # ---------------------------------------------------------------------------
 # School Registry
 # ---------------------------------------------------------------------------
+
+
+@dataclass(frozen=True)
+class SchoolAssignmentPlan:
+    """Validated deterministic school-assignment state."""
+
+    assignments: tuple[tuple[str, str], ...]
 
 
 class SchoolRegistry:
@@ -65,9 +74,44 @@ class SchoolRegistry:
         KeyError
             If *school_id* has not been registered.
         """
-        if school_id not in self._schools:
-            raise KeyError(f"School {school_id!r} not registered")
-        self._unit_assignments[unit_id] = school_id
+        plan = self.prepare_assignments({unit_id: school_id})
+        self.commit_assignments(plan)
+
+    def prepare_assignments(
+        self,
+        assignments: Mapping[str, str],
+        *,
+        expected_unit_ids: set[str] | None = None,
+    ) -> SchoolAssignmentPlan:
+        """Validate assignment updates without mutating registry state."""
+        staged: list[tuple[str, str]] = []
+        for unit_id, school_id in sorted(assignments.items()):
+            if not isinstance(unit_id, str) or not unit_id:
+                raise ValueError(
+                    "School assignment unit IDs must be non-empty strings",
+                )
+            if (
+                expected_unit_ids is not None
+                and unit_id not in expected_unit_ids
+            ):
+                raise ValueError(
+                    f"School assignment references unknown unit {unit_id!r}",
+                )
+            if school_id not in self._schools:
+                raise KeyError(f"School {school_id!r} not registered")
+            staged.append((unit_id, school_id))
+        return SchoolAssignmentPlan(tuple(staged))
+
+    def commit_assignments(
+        self,
+        plan: SchoolAssignmentPlan,
+        *,
+        replace: bool = False,
+    ) -> None:
+        """Commit a validated school assignment plan."""
+        assignments = {} if replace else dict(self._unit_assignments)
+        assignments.update(plan.assignments)
+        self._unit_assignments = assignments
 
     def get_for_unit(self, unit_id: str) -> DoctrinalSchool | None:
         """Return the school assigned to *unit_id*, or ``None``."""
@@ -83,18 +127,53 @@ class SchoolRegistry:
         return {
             "schools": {
                 sid: s.definition.model_dump()
-                for sid, s in self._schools.items()
+                for sid, s in sorted(self._schools.items())
             },
-            "unit_assignments": dict(self._unit_assignments),
+            "unit_assignments": dict(
+                sorted(self._unit_assignments.items()),
+            ),
         }
 
-    def set_state(self, state: dict[str, Any]) -> None:
-        """Restore from checkpoint.
+    def stage_state(
+        self,
+        state: Mapping[str, Any],
+        *,
+        expected_unit_ids: set[str] | None = None,
+    ) -> SchoolAssignmentPlan:
+        """Validate checkpoint state without mutating the live registry.
 
-        Note: only restores unit assignments.  Schools must be
-        re-registered by the loader before calling ``set_state``.
+        Schools must already be registered by the scenario loader.
         """
-        self._unit_assignments = dict(state.get("unit_assignments", {}))
+        if set(state) != {"schools", "unit_assignments"}:
+            raise ValueError(
+                "School checkpoint state must contain schools and "
+                "unit_assignments",
+            )
+        expected_schools = {
+            school_id: school.definition.model_dump()
+            for school_id, school in sorted(self._schools.items())
+        }
+        if state["schools"] != expected_schools:
+            raise ValueError(
+                "School checkpoint catalog does not match the runtime",
+            )
+        raw_assignments = state["unit_assignments"]
+        if not isinstance(raw_assignments, Mapping):
+            raise ValueError(
+                "School checkpoint assignments must be a mapping",
+            )
+        return self.prepare_assignments(
+            raw_assignments,
+            expected_unit_ids=expected_unit_ids,
+        )
+
+    def commit_state(self, plan: SchoolAssignmentPlan) -> None:
+        """Replace live assignment state from a validated checkpoint plan."""
+        self.commit_assignments(plan, replace=True)
+
+    def set_state(self, state: Mapping[str, Any]) -> None:
+        """Restore independently validated assignment state."""
+        self.commit_state(self.stage_state(state))
 
 
 # ---------------------------------------------------------------------------

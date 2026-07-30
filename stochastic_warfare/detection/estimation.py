@@ -42,7 +42,8 @@ class TrackStatus(enum.IntEnum):
     TENTATIVE = 0
     CONFIRMED = 1
     COASTING = 2
-    LOST = 3
+    STALE = 3
+    LOST = 4
 
 
 # ---------------------------------------------------------------------------
@@ -165,6 +166,11 @@ class StateEstimator:
         self._cached_dt: float | None = None
         self._cached_F: np.ndarray | None = None
         self._cached_Q: np.ndarray | None = None
+
+    @property
+    def config(self) -> EstimationConfig:
+        """Return the validated estimator lifecycle configuration."""
+        return self._config
 
     # ------------------------------------------------------------------
     # Kalman predict

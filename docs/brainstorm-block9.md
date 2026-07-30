@@ -1,5 +1,13 @@
 # Block 9: Performance at Scale
 
+> **Phase 112 integrity supersession (2026-07-30):** This brainstorming page
+> preserves Block 9's contemporaneous design goals, projected timings, counts,
+> and proposed winner checks. They are not current benchmark gates,
+> historical-validation evidence, or proof that performance flags preserve
+> semantics. REM-030/Phase 117 owns provenance-bearing, held-out historical
+> outcome envelopes; REM-031/Phase 118 owns same-input, common-seed
+> enabled/disabled semantic evidence for each performance flag.
+
 ## Motivation
 
 Blocks 1-8 delivered 82 phases of simulation capability: 19 engine modules, 44 validated scenarios, 5 historical eras, a web UI, and ~10,187 tests. The engine produces historically validated results for scenarios up to ~300 units (Golan Heights benchmark: 120s).

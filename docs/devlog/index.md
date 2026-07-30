@@ -134,6 +134,7 @@ Rolling record of implementation decisions, changes, and lessons learned across 
 | 109 | Equipment Mapping Integrity | **Complete** | [phase-109.md](phase-109.md) |
 | 110 | ASAT Production Integration | **Complete** | [phase-110.md](phase-110.md) |
 | 111 | Time-on-Target Execution | **Complete** | [phase-111.md](phase-111.md) |
+| 112 | Validation & Documentation Trust | **Complete** | [phase-112.md](phase-112.md) |
 
 ## Post-MVP Refinement Index
 
@@ -308,61 +309,61 @@ Known limitations and deferred improvements logged during implementation. Review
 | 54 | ~~GasWarfareEngine instantiated in scenario.py but zero call sites in battle/engine/campaign~~ *(resolved Phase 55c-1 — MOPP query in battle.py WW1 barrage path)* | [phase-54.md — Postmortem](phase-54.md#postmortem) |
 | 54 | ~~`seeker_fov_deg` dead YAML field~~ *(resolved Phase 55c-2 — FOV cone check in battle.py guided munition path)* | [phase-54.md — Postmortem](phase-54.md#postmortem) |
 | 55 | ~~Gas casualty modifier has hardcoded floor (0.1) and scaling (0.8)~~ *(resolved Phase 56f — CalibrationSchema fields)* | [phase-55.md — Postmortem](phase-55.md#postmortem) |
-| 58 | `apply_casualties` / `degrade_equipment` unwired — methods exist on Unit but not called from battle.py. Behavioral application deferred to calibration phase that accounts for progressive unit degradation. | [phase-58.md — Known Limitations](phase-58.md#known-limitations--deferred-items) |
-| 58 | Fuel consumption unwired — fuel gate (check) works but fuel depletion (consumption) commented out in battle.py movement loop. Rate needs per-vehicle-type calibration and resolution-aware scaling. | [phase-58.md — Known Limitations](phase-58.md#known-limitations--deferred-items) |
-| 58 | Air routing uses hardcoded Pk values (missile_pk=0.5, weapon_pk=0.4, interceptor_pk=0.4) — should read from weapon definitions when scenarios enable `enable_air_routing: true`. | [phase-58.md — Known Limitations](phase-58.md#known-limitations--deferred-items) |
-| 59 | Ice crossing pathfinding — frozen water bodies not traversable (requires pathfinding graph changes to add temporary edges) | [phase-59.md — Deferrals](phase-59.md#deferrals-planned--deferred) |
-| 59 | Vegetation height LOS blocking — tall vegetation (>2m) should block ground-level LOS (requires DDA raycaster modification) | [phase-59.md — Deferrals](phase-59.md#deferrals-planned--deferred) |
-| 59 | Bridge capacity enforcement — units lack weight field, so capacity_tons gate cannot be applied | [phase-59.md — Deferrals](phase-59.md#deferrals-planned--deferred) |
-| 59 | Ford crossing routing — river ford traversal requires pathfinding integration | [phase-59.md — Deferrals](phase-59.md#deferrals-planned--deferred) |
-| 59 | Road snow degradation — `_ROAD_SPEED_FACTORS` hardcoded table needs per-snow-depth refactoring | [phase-59.md — Deferrals](phase-59.md#deferrals-planned--deferred) |
-| 60 | Fire spread cellular automaton (wind-biased spread between cells) — fire zone creation wired, spread deferred to calibration | [phase-60.md — Deferrals](phase-60.md#deferrals-planned--deferred) |
-| 60 | `environment_config` scenario YAML — pre-placed smoke/fog zones and season overrides | [phase-60.md — Deferrals](phase-60.md#deferrals-planned--deferred) |
-| 60 | Burned zone concealment reduction — `BurnedZone.concealment_reduction=0.5` exists but not consumed in detection | [phase-60.md — Deferrals](phase-60.md#deferrals-planned--deferred) |
-| 60 | Fire damage application to units — `units_in_fire()` called/logged, burn damage not applied | [phase-60.md — Deferrals](phase-60.md#deferrals-planned--deferred) |
-| 60 | Road surface dust suppression — dust generation doesn't distinguish paved roads | [phase-60.md — Deferrals](phase-60.md#deferrals-planned--deferred) |
-| 60 | Artificial illumination / flares — no flare deployment mechanic exists | [phase-60.md — Deferrals](phase-60.md#deferrals-planned--deferred) |
-| 61 | CarrierOpsEngine full battle loop wiring — instantiated but CAP/sortie/recovery needs air sortie dispatch | [phase-61.md — Deferrals](phase-61.md#deferrals-planned--deferred) |
-| 61 | Beaufort > 6 helicopter deck landing abort — no helicopter-carrier recovery tracking | [phase-61.md — Deferrals](phase-61.md#deferrals-planned--deferred) |
-| 61 | Beaufort > 7 carrier flight ops suspension — requires CarrierOpsEngine battle loop integration | [phase-61.md — Deferrals](phase-61.md#deferrals-planned--deferred) |
-| 61 | Landing craft 10% casualty risk at Beaufort > 5 — no landing craft type detection | [phase-61.md — Deferrals](phase-61.md#deferrals-planned--deferred) |
-| 61 | Sea spray/salt fog maritime obscurant — needs ObscurantsEngine integration | [phase-61.md — Deferrals](phase-61.md#deferrals-planned--deferred) |
-| 61 | SHF/EHF rain attenuation for comms — needs per-equipment frequency tracking | [phase-61.md — Deferrals](phase-61.md#deferrals-planned--deferred) |
-| 61 | Ionospheric storm effects on HF — needs space weather events | [phase-61.md — Deferrals](phase-61.md#deferrals-planned--deferred) |
-| 61 | Hull natural period per ship class — hardcoded ~10s/~12s, should come from YAML | [phase-61.md — Deferrals](phase-61.md#deferrals-planned--deferred) |
-| 62 | Dehydration/water consumption — needs water supply tracking in logistics | [phase-62.md — Deferrals](phase-62.md#deferrals-planned--deferred) |
-| 62 | Environmental fatigue acceleration — temperature-driven fatigue needs fatigue accumulation wiring | [phase-62.md — Deferrals](phase-62.md#deferrals-planned--deferred) |
-| 62 | MOPP comms → C2 effectiveness full chain — voice clarity → order execution | [phase-62.md — Deferrals](phase-62.md#deferrals-planned--deferred) |
-| 62 | Turbulence → gun accuracy — no turbulence model in WeatherEngine | [phase-62.md — Deferrals](phase-62.md#deferrals-planned--deferred) |
-| 62 | Wind shear (altitude-dependent wind) — needs new wind profile model | [phase-62.md — Deferrals](phase-62.md#deferrals-planned--deferred) |
-| 62 | Surface roughness → CBRN mixing height — needs per-terrain roughness data | [phase-62.md — Deferrals](phase-62.md#deferrals-planned--deferred) |
+| 58 | `apply_casualties` / `degrade_equipment` unwired — methods exist on Unit but not called from battle.py. Behavioral application deferred to calibration phase that accounts for progressive unit degradation. | [phase-58.md — Known Limitations](phase-58.md#known-limitations-deferred-items) |
+| 58 | Fuel consumption unwired — fuel gate (check) works but fuel depletion (consumption) commented out in battle.py movement loop. Rate needs per-vehicle-type calibration and resolution-aware scaling. | [phase-58.md — Known Limitations](phase-58.md#known-limitations-deferred-items) |
+| 58 | Air routing uses hardcoded Pk values (missile_pk=0.5, weapon_pk=0.4, interceptor_pk=0.4) — should read from weapon definitions when scenarios enable `enable_air_routing: true`. | [phase-58.md — Known Limitations](phase-58.md#known-limitations-deferred-items) |
+| 59 | Ice crossing pathfinding — frozen water bodies not traversable (requires pathfinding graph changes to add temporary edges) | [phase-59.md — Deferrals](phase-59.md#deferrals-planned-deferred) |
+| 59 | Vegetation height LOS blocking — tall vegetation (>2m) should block ground-level LOS (requires DDA raycaster modification) | [phase-59.md — Deferrals](phase-59.md#deferrals-planned-deferred) |
+| 59 | Bridge capacity enforcement — units lack weight field, so capacity_tons gate cannot be applied | [phase-59.md — Deferrals](phase-59.md#deferrals-planned-deferred) |
+| 59 | Ford crossing routing — river ford traversal requires pathfinding integration | [phase-59.md — Deferrals](phase-59.md#deferrals-planned-deferred) |
+| 59 | Road snow degradation — `_ROAD_SPEED_FACTORS` hardcoded table needs per-snow-depth refactoring | [phase-59.md — Deferrals](phase-59.md#deferrals-planned-deferred) |
+| 60 | Fire spread cellular automaton (wind-biased spread between cells) — fire zone creation wired, spread deferred to calibration | [phase-60.md — Deferrals](phase-60.md#deferrals-planned-deferred) |
+| 60 | `environment_config` scenario YAML — pre-placed smoke/fog zones and season overrides | [phase-60.md — Deferrals](phase-60.md#deferrals-planned-deferred) |
+| 60 | Burned zone concealment reduction — `BurnedZone.concealment_reduction=0.5` exists but not consumed in detection | [phase-60.md — Deferrals](phase-60.md#deferrals-planned-deferred) |
+| 60 | Fire damage application to units — `units_in_fire()` called/logged, burn damage not applied | [phase-60.md — Deferrals](phase-60.md#deferrals-planned-deferred) |
+| 60 | Road surface dust suppression — dust generation doesn't distinguish paved roads | [phase-60.md — Deferrals](phase-60.md#deferrals-planned-deferred) |
+| 60 | Artificial illumination / flares — no flare deployment mechanic exists | [phase-60.md — Deferrals](phase-60.md#deferrals-planned-deferred) |
+| 61 | CarrierOpsEngine full battle loop wiring — instantiated but CAP/sortie/recovery needs air sortie dispatch | [phase-61.md — Deferrals](phase-61.md#deferrals-planned-deferred) |
+| 61 | Beaufort > 6 helicopter deck landing abort — no helicopter-carrier recovery tracking | [phase-61.md — Deferrals](phase-61.md#deferrals-planned-deferred) |
+| 61 | Beaufort > 7 carrier flight ops suspension — requires CarrierOpsEngine battle loop integration | [phase-61.md — Deferrals](phase-61.md#deferrals-planned-deferred) |
+| 61 | Landing craft 10% casualty risk at Beaufort > 5 — no landing craft type detection | [phase-61.md — Deferrals](phase-61.md#deferrals-planned-deferred) |
+| 61 | Sea spray/salt fog maritime obscurant — needs ObscurantsEngine integration | [phase-61.md — Deferrals](phase-61.md#deferrals-planned-deferred) |
+| 61 | SHF/EHF rain attenuation for comms — needs per-equipment frequency tracking | [phase-61.md — Deferrals](phase-61.md#deferrals-planned-deferred) |
+| 61 | Ionospheric storm effects on HF — needs space weather events | [phase-61.md — Deferrals](phase-61.md#deferrals-planned-deferred) |
+| 61 | Hull natural period per ship class — hardcoded ~10s/~12s, should come from YAML | [phase-61.md — Deferrals](phase-61.md#deferrals-planned-deferred) |
+| 62 | Dehydration/water consumption — needs water supply tracking in logistics | [phase-62.md — Deferrals](phase-62.md#deferrals-planned-deferred) |
+| 62 | Environmental fatigue acceleration — temperature-driven fatigue needs fatigue accumulation wiring | [phase-62.md — Deferrals](phase-62.md#deferrals-planned-deferred) |
+| 62 | MOPP comms → C2 effectiveness full chain — voice clarity → order execution | [phase-62.md — Deferrals](phase-62.md#deferrals-planned-deferred) |
+| 62 | Turbulence → gun accuracy — no turbulence model in WeatherEngine | [phase-62.md — Deferrals](phase-62.md#deferrals-planned-deferred) |
+| 62 | Wind shear (altitude-dependent wind) — needs new wind profile model | [phase-62.md — Deferrals](phase-62.md#deferrals-planned-deferred) |
+| 62 | Surface roughness → CBRN mixing height — needs per-terrain roughness data | [phase-62.md — Deferrals](phase-62.md#deferrals-planned-deferred) |
 | 63 | MissileEngine per-tick update — launch ships but flight-to-impact resolution deferred | [phase-63.md — Deferrals](phase-63.md#deferrals) |
 | 63 | MissileDefenseEngine intercept — requires missile-as-contact detection | [phase-63.md — Deferrals](phase-63.md#deferrals) |
 | 63 | Formal DEGRADED unit status — threshold logging only, no enum value or auto Pk/movement penalties | [phase-63.md — Deferrals](phase-63.md#deferrals) |
 | 63 | FOW confidence-weighted assessment — uses simple contact count, not confidence mapping | [phase-63.md — Deferrals](phase-63.md#deferrals) |
 | 63 | RTD to HEALTHY — restores to MINOR_WOUND only, full rehabilitation deferred | [phase-63.md — Deferrals](phase-63.md#deferrals) |
 | 63 | Logistics event feedback — SupplyDelivered/RouteInterdicted/ConvoyDestroyed events unsubscribed | [phase-63.md — Deferrals](phase-63.md#deferrals) |
-| 64 | CommandEngine full hierarchy wiring — authority check skipped when command_engine=None | [phase-64.md — D1](phase-64.md#known-limitations--deferrals) |
-| 64 | Order delay enforcement queue — delay computed but not enforced | [phase-64.md — D2](phase-64.md#known-limitations--deferrals) |
-| 64 | Misinterpretation parameter modification — logged but order params unchanged | [phase-64.md — D3](phase-64.md#known-limitations--deferrals) |
-| 64 | Planning result injection — auto-advances without COA/wargaming results | [phase-64.md — D4](phase-64.md#known-limitations--deferrals) |
-| 64 | ATO entry consumption — sorties_today never incremented after air engagement | [phase-64.md — D5](phase-64.md#known-limitations--deferrals) |
-| 64 | Stratagem duration and expiry — active stratagems never expire | [phase-64.md — D6](phase-64.md#known-limitations--deferrals) |
-| 64 | Deception effect on enemy AI — no false force disposition in FOW | [phase-64.md — D7](phase-64.md#known-limitations--deferrals) |
-| 64 | Hardcoded echelon_level=5 for all units in DECIDE handler | [phase-64.md — D8](phase-64.md#known-limitations--deferrals) |
-| 64 | Hardcoded mission_type=0 (ATTACK) for all orders | [phase-64.md — D9](phase-64.md#known-limitations--deferrals) |
-| 64 | Economy-of-force/feint unit selection by list position | [phase-64.md — D10](phase-64.md#known-limitations--deferrals) |
-| 64 | PropagationConfig private attribute mutation from battle.py | [phase-64.md — D11](phase-64.md#known-limitations--deferrals) |
-| 66 | Guerrilla retreat movement — disengage evaluated but unit doesn't physically relocate | [phase-66.md — D1](phase-66.md#known-limitations--deferrals) |
-| 66 | Population center spatial lookup — falls back to 0.0 density when population_engine absent | [phase-66.md — D2](phase-66.md#known-limitations--deferrals) |
-| 66 | IED auto-emplacement by insurgent AI — only pre-placed IEDs supported | [phase-66.md — D3](phase-66.md#known-limitations--deferrals) |
-| 66 | Mine sweeping hardcoded to CONTACT type only | [phase-66.md — D4](phase-66.md#known-limitations--deferrals) |
-| 66 | AmphibiousAssaultEngine — full beach assault state machine deferred (needs scenario infrastructure) | [phase-66.md — D5](phase-66.md#known-limitations--deferrals) |
-| 66 | ConditionsEngine replacing EMEnvironment — `conditions_facade` added alongside, migration deferred | [phase-66.md — D6](phase-66.md#known-limitations--deferrals) |
-| 66 | P4 dead code (shadow_azimuth, solar/lunar, deep_channel_depth) — allowlisted not removed | [phase-66.md — D7](phase-66.md#known-limitations--deferrals) |
-| 66 | Data link range degradation — binary gate only, gradual C2 loss deferred | [phase-66.md — D8](phase-66.md#known-limitations--deferrals) |
-| 66 | Propulsion altitude performance — cruise_altitude_m not wired to altitude-dependent Pk | [phase-66.md — D9](phase-66.md#known-limitations--deferrals) |
-| 66 | SimulationContext TODO cleanup — cosmetic, deferred | [phase-66.md — D10](phase-66.md#known-limitations--deferrals) |
+| 64 | CommandEngine full hierarchy wiring — authority check skipped when command_engine=None | [phase-64.md — D1](phase-64.md#deferrals) |
+| 64 | Order delay enforcement queue — delay computed but not enforced | [phase-64.md — D2](phase-64.md#deferrals) |
+| 64 | Misinterpretation parameter modification — logged but order params unchanged | [phase-64.md — D3](phase-64.md#deferrals) |
+| 64 | Planning result injection — auto-advances without COA/wargaming results | [phase-64.md — D4](phase-64.md#deferrals) |
+| 64 | ATO entry consumption — sorties_today never incremented after air engagement | [phase-64.md — D5](phase-64.md#deferrals) |
+| 64 | Stratagem duration and expiry — active stratagems never expire | [phase-64.md — D6](phase-64.md#deferrals) |
+| 64 | Deception effect on enemy AI — no false force disposition in FOW | [phase-64.md — D7](phase-64.md#deferrals) |
+| 64 | Hardcoded echelon_level=5 for all units in DECIDE handler | [phase-64.md — D8](phase-64.md#deferrals) |
+| 64 | Hardcoded mission_type=0 (ATTACK) for all orders | [phase-64.md — D9](phase-64.md#deferrals) |
+| 64 | Economy-of-force/feint unit selection by list position | [phase-64.md — D10](phase-64.md#deferrals) |
+| 64 | PropagationConfig private attribute mutation from battle.py | [phase-64.md — D11](phase-64.md#deferrals) |
+| 66 | Guerrilla retreat movement — disengage evaluated but unit doesn't physically relocate | [phase-66.md — D1](phase-66.md#known-limitations-deferrals) |
+| 66 | Population center spatial lookup — falls back to 0.0 density when population_engine absent | [phase-66.md — D2](phase-66.md#known-limitations-deferrals) |
+| 66 | IED auto-emplacement by insurgent AI — only pre-placed IEDs supported | [phase-66.md — D3](phase-66.md#known-limitations-deferrals) |
+| 66 | Mine sweeping hardcoded to CONTACT type only | [phase-66.md — D4](phase-66.md#known-limitations-deferrals) |
+| 66 | AmphibiousAssaultEngine — full beach assault state machine deferred (needs scenario infrastructure) | [phase-66.md — D5](phase-66.md#known-limitations-deferrals) |
+| 66 | ConditionsEngine replacing EMEnvironment — `conditions_facade` added alongside, migration deferred | [phase-66.md — D6](phase-66.md#known-limitations-deferrals) |
+| 66 | P4 dead code (shadow_azimuth, solar/lunar, deep_channel_depth) — allowlisted not removed | [phase-66.md — D7](phase-66.md#known-limitations-deferrals) |
+| 66 | Data link range degradation — binary gate only, gradual C2 loss deferred | [phase-66.md — D8](phase-66.md#known-limitations-deferrals) |
+| 66 | Propulsion altitude performance — cruise_altitude_m not wired to altitude-dependent Pk | [phase-66.md — D9](phase-66.md#known-limitations-deferrals) |
+| 66 | SimulationContext TODO cleanup — cosmetic, deferred | [phase-66.md — D10](phase-66.md#known-limitations-deferrals) |
 | 85 | Aggregation engine.py wiring deferred — automatic LOD-tier-based aggregate/disaggregate in campaign tick not wired | [phase-85.md — Accepted Limitations](phase-85.md#accepted-limitations) |
 | 85 | 1000-unit performance benchmark not validated — no 1000-unit scenario exists yet | [phase-85.md — Accepted Limitations](phase-85.md#accepted-limitations) |
 | 88 | SoA morale/engagement integration structural only — arrays available but not driving batch computation yet | [phase-88.md — Known Limitations](phase-88.md#known-limitations) |

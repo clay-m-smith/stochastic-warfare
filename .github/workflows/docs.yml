@@ -1,20 +1,28 @@
-name: Deploy Documentation
+name: Documentation
 
 on:
   push:
     branches: [main]
-    paths:
-      - 'docs/**'
-      - 'mkdocs.yml'
-
+  pull_request:
+    branches: [main]
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
+
+concurrency:
+  group: docs-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+env:
+  PYTHONDONTWRITEBYTECODE: '1'
+  UV_CACHE_DIR: /tmp/sw-uv-cache
 
 jobs:
-  deploy:
+  validate:
+    name: Strict documentation validation
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
 
@@ -27,11 +35,56 @@ jobs:
         with:
           enable-cache: true
 
-      - name: Install docs dependencies
-        run: uv sync --extra docs
+      - name: Install locked documentation dependencies
+        run: uv sync --locked --extra docs
 
-      - name: Build (strict mode)
-        run: uv run mkdocs build --strict
+      - name: Prepare documentation evidence
+        run: mkdir -p artifacts/docs-control artifacts/site
 
-      - name: Deploy to GitHub Pages
-        run: uv run mkdocs gh-deploy --force
+      - name: Prove missing-fragment failure and valid-fragment success
+        run: >-
+          uv run --no-sync python scripts/validate_docs_links.py
+          > artifacts/docs-control/fragment-control.json
+
+      - name: Print fragment-control evidence
+        if: always()
+        run: cat artifacts/docs-control/fragment-control.json
+
+      - name: Build documentation in strict mode
+        run: uv run --no-sync mkdocs build --strict --site-dir artifacts/site
+
+      - name: Upload validated documentation
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: docs-site-${{ github.run_id }}
+          path: artifacts/
+          if-no-files-found: error
+
+  deploy:
+    name: Deploy validated main documentation
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: validate
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          enable-cache: true
+
+      - name: Install locked documentation dependencies
+        run: uv sync --locked --extra docs
+
+      - name: Rebuild and deploy the validated commit
+        run: uv run --no-sync mkdocs gh-deploy --strict --force

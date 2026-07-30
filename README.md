@@ -1,8 +1,8 @@
 # Stochastic Warfare
 
 ![Python](https://img.shields.io/badge/python-%3E%3D3.12-blue)
-![Tests](https://img.shields.io/badge/tests-10%2C958_passing-brightgreen)
-![Phase](https://img.shields.io/badge/phase-111_COMPLETE-brightgreen)
+![Tests](https://img.shields.io/badge/tests-partitioned_validation-blue)
+![Phase](https://img.shields.io/badge/phase-112_COMPLETE-brightgreen)
 
 High-fidelity, high-resolution wargame simulator with a headless Python engine,
 FastAPI service, and React frontend. Models warfare across multiple scales —
@@ -10,7 +10,12 @@ from individual engagements through tactical battles, operational battlefields,
 and multi-day strategic campaigns — with stochastic and
 signal-processing-inspired models throughout.
 
-The simulator covers the modern era (Cold War to present) as its prototype period and treats maritime warfare as a fully integrated domain alongside land and air operations, not a deferred add-on. Validated against historical engagements (73 Easting, Falklands Naval, Golan Heights) at both engagement and campaign levels.
+The simulator covers the modern era (Cold War to present) as its prototype
+period and treats maritime warfare as a fully integrated domain alongside land
+and air operations, not a deferred add-on. It includes source-backed historical
+scenario data and current-engine regression tooling. A catalog-wide historical
+validity claim requires the queued production-path work in
+[REM-030](docs/remediation-backlog.md).
 
 Core mathematical models include Markov chains (morale state transitions, weather), Monte Carlo methods (engagement and campaign outcome analysis), Kalman filters (enemy state estimation from noisy sensor data), Poisson processes (equipment breakdown), log-normal uncertainty (reinforcement arrival time), queueing theory (medical evacuation, supply bottlenecks), and SNR-based detection theory (unified across visual, thermal, radar, and acoustic sensors).
 
@@ -30,15 +35,33 @@ uv sync --extra dev    # creates .venv, installs all deps including pytest/matpl
 ### Running Tests
 
 ```bash
-uv run python -m pytest --tb=short -q           # default-selected suite
-uv run python -m pytest -m slow --ignore=tests/api --ignore=tests/e2e -q --tb=short -o addopts=  # all slow-marked tests
+uv sync --locked --extra dev --extra api --extra terrain --extra mcp
+uv run --no-sync python scripts/validate_test_partitions.py \
+  --output artifacts/partition-audit/manifest.json
+uv run --no-sync python scripts/run_pytest_partition.py standard \
+  --manifest artifacts/standard/manifest.json \
+  --junit artifacts/standard/junit.xml --forbid-skips \
+  --timeout-seconds 2700
 ```
 
-The default selection excludes `slow`, `benchmark`, `terrain`, `api`, and
-`e2e` markers and does not collect `tests/api` or `tests/e2e`; those boundaries
-must be run explicitly (usually with `-o addopts=`). REM-013 tracks making the
-excluded suites routine and explicit in CI. All Python commands use `uv run` so
-the project environment is selected without manual activation.
+The authoritative Python test union has six audited, pairwise-disjoint
+partitions: `standard`, `slow-only`, `benchmark-only`, `slow-benchmark`, `api`,
+and `e2e`. PR/main CI audits the union and runs `standard`, `api`, `e2e`, and
+the overlapping `terrain` dependency profile. Weekly/manual CI runs the three
+marker partitions in deterministic module-affine shards. `terrain` and
+`benchmark-policy` are overlapping dependency/policy profiles, not extra union
+members. The 73 Easting benchmark is routine; Golan remains a manual paired
+benchmark. All Python commands use `uv run` so the project environment is
+selected without manual activation.
+
+The Phase 112 closure audit exercised exactly 11,752 nodes in that disjoint
+union: `standard` 11,299 passed with 6 warnings, `slow-only` 109 passed with no
+warnings, `benchmark-only` 60 passed with no warnings, `slow-benchmark` 4
+passed with no warnings, API 239 passed with no warnings, and E2E 41 passed
+with no warnings. The API result is local evidence under the host's
+uvloop-qualified workaround; it is not a host-default API claim until the
+remote default-policy job passes. The overlapping terrain profile separately
+passed 97 tests.
 
 ## Quick Start (Web UI)
 
@@ -57,9 +80,30 @@ uv run python -m api
 
 **Docker**:
 ```bash
-docker build -t stochastic-warfare .
+docker build \
+  --build-arg SOURCE_REVISION="$(git rev-parse HEAD)" \
+  -t stochastic-warfare .
 docker run -p 8000:8000 stochastic-warfare
 ```
+
+`SOURCE_REVISION` is a required, builder-supplied 40-character lowercase commit
+attribution. Build from a clean checkout so that attribution names the source
+being staged. Source checkouts remain Git-first: runtime preparation records
+`HEAD`, whether the tree is dirty, and a content-sensitive worktree fingerprint,
+and it never substitutes an image identity for an established but unverifiable
+Git worktree.
+
+Images intentionally contain no `.git` directory. After the locked Python
+environment is installed, the build writes
+`stochastic_warfare/_build_identity.json` with `SOURCE_REVISION` and a digest
+of a strict manifest covering `stochastic_warfare/`, `api/`, `pyproject.toml`,
+and `uv.lock`. Production runtime preparation recomputes that manifest, so a
+missing or malformed identity, a source edit, or an unsupported source entry
+fails closed. Scenario and catalog files are verified separately by the
+runtime data revision. The Docker workflow supplies `GITHUB_SHA`, builds on
+pull requests to `main`, pushes to `main`, and manual dispatches, then asserts
+that `.git` is absent and runs a production-runtime identity smoke inside the
+image.
 
 ## Architecture
 
@@ -105,9 +149,9 @@ All raster grids share the convention: `Grid[0,0]` = SW corner, row increases no
 | Poisson processes | `logistics/maintenance` | Equipment breakdown (`1 - exp(-dt/MTBF)`) |
 | Queueing theory (M/M/c) | `logistics/medical` | Priority-based medical evacuation |
 | SNR detection (erfc) | `detection/detection` | Unified Pd across all sensor types |
-| Lanchester attrition | `ai/coa` | Analytical COA wargaming |
+| Lanchester attrition | `c2/planning/coa` | Analytical COA wargaming |
 | Wayne Hughes salvo | `combat/naval_surface` | Missile exchange with leaker dynamics |
-| Boyd OODA | `ai/ooda` | Commander decision cycle as FSM |
+| Boyd OODA | `c2/ai/ooda` | Commander decision cycle as FSM |
 | Log-normal delays | `c2/communications`, `logistics/transport` | Clausewitzian friction in C2 and supply |
 | Beer-Lambert law | `combat/directed_energy` | Laser atmospheric transmittance for DEW |
 
@@ -116,7 +160,7 @@ For full architectural rationale, see [`docs/brainstorm.md`](docs/brainstorm.md)
 ## Project Structure
 
 ```
-api/                      # REST API service layer (13 source files) [Phase 32]
+api/                      # REST API service layer [Phase 32]
   routers/                # FastAPI route handlers (scenarios, units, runs, analysis, meta)
 
 frontend/                 # React frontend (Vite + TypeScript + Tailwind) [Phase 33]
@@ -139,13 +183,13 @@ stochastic_warfare/       # simulation engine
   combat/                 # ballistics, damage, missiles, naval, air combat, IADS, strategic targeting
   morale/                 # state transitions, cohesion, stress, psychology, rout
   c2/                     # command, communications, ROE, orders, joint ops, mission command
+    ai/                   # OODA, commander AI, doctrine, assessment, decisions, doctrinal schools
+    planning/             # MDMP, mission analysis, COA generation, estimates
   logistics/              # supply, transport, maintenance, medical, engineering, production
   population/             # civilian regions, displacement, collateral, HUMINT, influence, insurgency
   escalation/             # escalation ladder, political pressure, consequences, war termination
   simulation/             # scenario loading, battle/campaign managers, engine
   validation/             # historical data, Monte Carlo, campaign validation
-  ai/                     # OODA, commander AI, doctrine, assessment, decisions, doctrinal schools
-  planning/               # MDMP, mission analysis, COA generation, estimates
   ew/                     # electronic warfare: jamming, spoofing, ECCM, SIGINT, decoys
   space/                  # space & satellite: GPS, SATCOM, ISR, early warning, ASAT
   cbrn/                   # CBRN effects: agents, dispersal, contamination, protection, nuclear
@@ -172,7 +216,7 @@ data/                     # YAML data catalog
   eras/                    # Era-specific data packages (WW2, WW1, Napoleonic, Ancient/Medieval)
   scenarios/              # modern, test, and historical-era scenario definitions
 
-tests/                    # 10,958 default-selected Python tests passing
+tests/                    # six audited disjoint Python test partitions
 docs/                     # specs, brainstorm, devlog, development phases
 ```
 
@@ -180,10 +224,12 @@ For the full package tree and module decomposition, see [`docs/specs/project-str
 
 ## Development Status
 
-Phases 105 through 111 are complete, including REM-012 time-on-target
-production execution. Phase 112 is next and has not started. Blocks 1–11
-remain complete. See the remediation backlog, devlogs, and phase roadmaps for
-full detail.
+Phases 105 through 112 are complete, including the validation and
+documentation trust remediations. Phase 113 has not started, so Block 12
+remains in progress. See the
+[Phase 112 devlog](docs/devlog/phase-112.md), the
+[remediation backlog](docs/remediation-backlog.md), and the phase roadmaps for
+the exact evidence and remaining boundaries.
 
 | Phase | Focus | Tests | Status |
 |-------|-------|-------|--------|
@@ -300,15 +346,18 @@ full detail.
 | 109 | Equipment Mapping Integrity (Block 12) | 322 | **Complete** |
 | 110 | ASAT Production Integration (Block 12) | 50 (49 focused + 1 API) | **Complete** |
 | 111 | Time-on-Target Execution (Block 12) | 165 (162 focused + 3 API) | **Complete** |
-| | **Verified passing baseline** | **10,958 Python** | |
+| 112 | Validation & Documentation Trust (Block 12) | 11,752 audited union; 97 terrain profile | **Complete** |
+| 113 | Morale State Ownership (Block 12) | Not started | **Not started** |
+| 114 | Era Override Execution (Block 12) | Not started | **Not started** |
 
-The Python figure is the fresh default-suite result; that run also reported 21
-skipped, 348 deselected tests, and 6 warnings. Phase 111 changed no frontend
-contract, so the frontend suite was not rerun; its last Phase 108 baseline was
-418 passing tests. For the full phase roadmap, see
+The Phase 112 counts above are repository-wide closure evidence, not a count
+of newly added tests. The six warnings belong to `standard`; the other five
+partitions reported none. The local API partition used the documented
+uvloop-qualified host workaround and still requires remote default-policy
+confirmation. For the full phase roadmap, see
 [`docs/development-phases.md`](docs/development-phases.md) (MVP),
 [`docs/development-phases-post-mvp.md`](docs/development-phases-post-mvp.md)
-(post-MVP), and `docs/development-phases-block{N}.md` for Blocks 2–12. The live
+(post-MVP), and `docs/development-phases-block{N}.md` for Blocks 2–13. The live
 integrity issue inventory is in
 [`docs/remediation-backlog.md`](docs/remediation-backlog.md). For per-phase
 implementation logs, see [`docs/devlog/`](docs/devlog/).
@@ -337,7 +386,14 @@ uv run uvicorn api.main:app      # start the API server
 # OpenAPI docs at http://localhost:8000/api/docs
 ```
 
-Key endpoints: `GET /api/scenarios`, `GET /api/units`, `POST /api/runs` (submit simulation), `GET /api/runs/{id}` (poll results), `WS /api/runs/{id}/progress` (live progress), `POST /api/runs/batch` (Monte Carlo), `POST /api/analysis/compare` (A/B comparison).
+Key endpoints: `GET /api/scenarios`, `GET /api/units`, `POST /api/runs`
+(submit simulation), `GET /api/runs/{id}` (poll results),
+`WS /api/runs/{id}/progress` (live progress), `POST /api/runs/batch`
+(Monte Carlo), `POST /api/analysis/compare` (same-scenario A/B calibration
+comparison), `POST /api/analysis/sweep` (sensitivity analysis), and
+`POST /api/analysis/doctrine-compare` (doctrinal policy comparison). Analysis
+results retain ordered raw metric vectors, seeds, and runtime provenance;
+comparisons use common-seed paired differences.
 
 ## Frontend Development
 
@@ -356,7 +412,7 @@ cd frontend && npm install && npm run dev
 Frontend commands:
 - `npm run dev` — Vite dev server at localhost:5173
 - `npm run build` — Production build (TypeScript + Vite)
-- `npm test` — Run vitest tests (418 tests, no API server required)
+- `npm test` — Run Vitest tests (no API server required)
 - `npm run lint` — ESLint
 
 ## Documentation

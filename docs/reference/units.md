@@ -319,6 +319,18 @@ Doctrine templates define AI behavior patterns and are assigned per-side in scen
 
 Commander personalities affect OODA cycle speed, decision quality, and risk assessment.
 
+This behavior is optional and fail-closed. A scenario activates the commander
+runtime only when every side declares a non-empty, catalog-backed
+`commander_profile`. If every side leaves that field blank and
+`commander_config` is omitted, no commander engine is created; partial side
+coverage, or a `commander_config` with blank side profiles, is rejected.
+Scenario loading validates exact initial- and future-unit profile overrides and
+doctrinal-school references before roster mutation, registers the resulting
+assignments with the OODA runtime, applies the same authority to reinforcement
+arrivals, and includes the commander/OODA/school topology in checkpoint
+continuation. The profiles below therefore describe available catalog
+capabilities, not behavior automatically active in every scenario.
+
 | Profile | Risk Tolerance | Aggression | Adaptability | Style |
 |---------|---------------|------------|--------------|-------|
 | Cautious Infantry | Low | Low | Medium | Deliberate planning, minimal risk |

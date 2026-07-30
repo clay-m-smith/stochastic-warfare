@@ -1,5 +1,13 @@
 # Stochastic Warfare -- Block 6 Brainstorm
 
+> **Phase 112 integrity supersession (2026-07-30):** This brainstorming page
+> preserves Block 6's contemporaneous design goals, counts, and proposed winner
+> checks. They are development history, not current historical-validation
+> evidence. Scenario availability, calibrated-input runs, winner frequency, and
+> current-engine regression do not establish a provenance-bearing, held-out
+> production outcome-envelope verdict. REM-030/Phase 117 owns the replacement
+> catalog-wide contract and the disposition of every retained claim.
+
 ## Context
 
 Blocks 1--5 (Phases 0--48) built the complete simulation engine, 5 historical eras, a REST API, a React web application, Docker packaging, and ~8,274 tests (8,002 Python + 272 frontend vitest). 42+ scenarios across 5 eras. The engine has 19+ modules across all combat domains (land/air/naval/sub/space/EW/CBRN/DEW).

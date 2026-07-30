@@ -14,6 +14,7 @@ from stochastic_warfare.detection.fog_of_war import FogOfWarManager
 # Fixtures
 # ---------------------------------------------------------------------------
 
+
 @pytest.fixture
 def rng() -> np.random.Generator:
     return np.random.Generator(np.random.PCG64(42))
@@ -64,7 +65,8 @@ class TestUpdateDecoys:
     def test_degradation_over_time(self, fow: FogOfWarManager):
         """Decoy effectiveness degrades with each update."""
         decoy = fow.deploy_decoy(
-            Position(100, 100, 0), effectiveness=1.0,
+            Position(100, 100, 0),
+            effectiveness=1.0,
         )
         fow.update_decoys(10.0)  # 10s * 0.01 rate = 0.1 degradation
         assert decoy.effectiveness == pytest.approx(0.9, abs=1e-9)
@@ -72,7 +74,8 @@ class TestUpdateDecoys:
     def test_decoy_deactivates_at_zero(self, fow: FogOfWarManager):
         """Decoy becomes inactive when effectiveness reaches 0."""
         decoy = fow.deploy_decoy(
-            Position(100, 100, 0), effectiveness=0.05,
+            Position(100, 100, 0),
+            effectiveness=0.05,
         )
         fow.update_decoys(10.0)  # 0.05 - 0.1 → 0 → inactive
         assert decoy.effectiveness == 0.0
@@ -114,17 +117,18 @@ class TestAssessmentInflation:
 class TestBackwardCompat:
     """Phase 69c: backward compatibility when FOW disabled."""
 
-    def test_no_fow_no_decoys(self):
-        """When FOW is None, no decoys are deployed."""
+    @pytest.mark.structural
+    def test_missing_fow_does_not_raise_structural_diagnostic(self):
+        """Structural no-raise diagnostic for the optional FOW branch."""
         # Simulates the None check in battle.py
         fow = None
         if fow is not None:
             fow.deploy_decoy(Position(100, 100, 0))
-        # No exception, nothing deployed
 
     def test_phantom_count_from_calibration(self, fow: FogOfWarManager):
         """Phantom count is configurable via calibration."""
         from stochastic_warfare.simulation.calibration import CalibrationSchema
+
         cal = CalibrationSchema(deception_phantom_count=5)
         count = cal.get("deception_phantom_count", 3)
         assert count == 5

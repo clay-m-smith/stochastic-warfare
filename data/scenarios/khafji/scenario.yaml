@@ -207,7 +207,7 @@ sides:
         count: 1
     experience_level: 0.30
     morale_initial: STEADY
-    commander_profile: attritional_defender
+    commander_profile: aggressive_armor
     doctrine_template: attritional_defense
 
 blue_forces:

@@ -79,7 +79,7 @@ sides:
           training_level: 0.55   # reduced alert — historical degraded posture
     experience_level: 0.55
     morale_initial: STEADY
-    commander_profile: defensive_posture
+    commander_profile: naval_surface
     doctrine_template: naval_patrol
 
   - side: red
@@ -93,7 +93,7 @@ sides:
           heading: 3.141592653589793
     experience_level: 0.55
     morale_initial: STEADY
-    commander_profile: opportunistic_strike
+    commander_profile: insurgent_leader
     doctrine_template: coastal_missile_attack
 
 objectives:

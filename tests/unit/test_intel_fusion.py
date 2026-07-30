@@ -147,6 +147,7 @@ class TestSatelliteCoverage:
     def test_in_coverage(self) -> None:
         engine = _engine()
         sp = SatellitePass(
+            satellite_id="sat-1", constellation_id="imint-1", side="blue",
             start_time=0.0, end_time=600.0,
             coverage_center_x=5000.0, coverage_center_y=5000.0,
             coverage_radius_m=50000.0,
@@ -158,6 +159,7 @@ class TestSatelliteCoverage:
     def test_out_of_time(self) -> None:
         engine = _engine()
         sp = SatellitePass(
+            satellite_id="sat-1", constellation_id="imint-1", side="blue",
             start_time=0.0, end_time=600.0,
             coverage_center_x=5000.0, coverage_center_y=5000.0,
             coverage_radius_m=50000.0,
@@ -169,6 +171,7 @@ class TestSatelliteCoverage:
     def test_out_of_area(self) -> None:
         engine = _engine()
         sp = SatellitePass(
+            satellite_id="sat-1", constellation_id="imint-1", side="blue",
             start_time=0.0, end_time=600.0,
             coverage_center_x=5000.0, coverage_center_y=5000.0,
             coverage_radius_m=1000.0,

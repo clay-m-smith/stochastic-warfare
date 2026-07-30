@@ -5,44 +5,82 @@ import { useDoctrineCompare } from '../../hooks/useAnalysis'
 import { useSchools } from '../../hooks/useMeta'
 import { useScenarios } from '../../hooks/useScenarios'
 import type { DoctrineCompareResult } from '../../types/analysis'
+import { validateDoctrineResult } from '../../utils/analysisEvidence'
+import type { DoctrineExpectation } from '../../utils/analysisEvidence'
+
+const BASE_SEED = 42
 
 function ResultsTable({ data }: { data: DoctrineCompareResult }) {
-  const sorted = [...data.results].sort((a, b) => b.win_rate - a.win_rate)
   return (
     <div className="overflow-x-auto rounded-lg bg-white shadow dark:bg-gray-800">
       <table className="min-w-full text-sm">
         <thead>
           <tr className="border-b border-gray-200 text-left text-gray-500 dark:border-gray-700 dark:text-gray-400">
-            <th className="px-4 py-3 font-medium" scope="col">School</th>
-            <th className="px-4 py-3 font-medium" scope="col">Win Rate</th>
-            <th className="px-4 py-3 font-medium" scope="col">Blue Casualties</th>
-            <th className="px-4 py-3 font-medium" scope="col">Red Casualties</th>
-            <th className="px-4 py-3 font-medium" scope="col">Duration (ticks)</th>
+            <th className="px-4 py-3 font-medium" scope="col">Policy</th>
+            {data.ordered_metrics.map((metric) => (
+              <th className="px-4 py-3 font-medium" scope="col" key={metric}>
+                {metric.replace(/_/g, ' ')}
+              </th>
+            ))}
           </tr>
         </thead>
         <tbody>
-          {sorted.map((r, i) => (
-            <tr
-              key={r.school_id}
-              className={`border-b border-gray-100 dark:border-gray-700 ${i === 0 ? 'bg-green-50 dark:bg-green-900/10' : ''}`}
-            >
+          {data.results.map((result) => {
+            const provenance = result.batch.runs[0]?.runtime_provenance
+            return (
+              <tr
+                key={result.variant_id}
+                className="border-b border-gray-100 dark:border-gray-700"
+              >
               <td className="px-4 py-2 font-medium text-gray-900 dark:text-gray-100">
-                {r.display_name || r.school_id}
+                <div>{result.variant_id}</div>
+                <div className="text-xs font-normal text-gray-500">
+                  {result.assignments
+                    .map((assignment) => `${assignment.side}: ${assignment.school_id}`)
+                    .join(', ')}
+                </div>
+                {provenance ? (
+                  <details className="mt-1 text-xs font-normal text-gray-500">
+                    <summary>Provenance</summary>
+                    <div className="break-all">
+                      Source: {result.batch.source_fingerprint}
+                    </div>
+                    <div className="break-all">
+                      Config: {result.batch.config_fingerprint}
+                    </div>
+                    <div className="break-all">
+                      Doctrine assignment: {provenance.doctrine_assignment_fingerprint}
+                    </div>
+                    <div className="break-all">
+                      Loadout topology: {provenance.final_roster_loadout_fingerprint}
+                    </div>
+                  </details>
+                ) : (
+                  <div className="text-xs font-normal text-red-600">
+                    Missing runtime provenance
+                  </div>
+                )}
               </td>
-              <td className="px-4 py-2 font-mono">
-                {(r.win_rate * 100).toFixed(0)}%
-              </td>
-              <td className="px-4 py-2 font-mono">
-                {r.mean_blue_destroyed.toFixed(1)} +/- {r.std_blue_destroyed.toFixed(1)}
-              </td>
-              <td className="px-4 py-2 font-mono">
-                {r.mean_red_destroyed.toFixed(1)} +/- {r.std_red_destroyed.toFixed(1)}
-              </td>
-              <td className="px-4 py-2 font-mono">
-                {r.mean_duration_ticks.toFixed(0)} +/- {r.std_duration_ticks.toFixed(0)}
-              </td>
-            </tr>
-          ))}
+              {data.ordered_metrics.map((metricName) => {
+                const metric = result.metrics.find((item) => item.metric === metricName)
+                return (
+                  <td className="px-4 py-2 font-mono" key={metricName}>
+                    {metric
+                      ? (
+                        <>
+                          <div>{metric.mean.toFixed(2)} +/- {metric.std.toFixed(2)}</div>
+                          <div className="text-xs text-gray-500">
+                            raw: {JSON.stringify(metric.values)}
+                          </div>
+                        </>
+                      )
+                      : 'Missing'}
+                  </td>
+                )
+              })}
+              </tr>
+            )
+          })}
         </tbody>
       </table>
     </div>
@@ -53,14 +91,22 @@ export function DoctrineComparePanel() {
   const { data: scenarios } = useScenarios()
   const { data: schools } = useSchools()
   const [scenario, setScenario] = useState('')
-  const [sideToVary, setSideToVary] = useState('blue')
+  const [sideToVary, setSideToVary] = useState('')
   const [selectedSchools, setSelectedSchools] = useState<Set<string>>(new Set())
   const [numIterations, setNumIterations] = useState(10)
   const [maxTicks, setMaxTicks] = useState(10000)
+  const [submittedDoctrine, setSubmittedDoctrine] = useState<DoctrineExpectation | null>(null)
 
   const doctrineCompare = useDoctrineCompare()
 
   const scenarioOptions = (scenarios ?? []).map((s) => ({ value: s.name, label: s.display_name }))
+  const selectedScenario = (scenarios ?? []).find((candidate) => candidate.name === scenario)
+
+  const handleScenarioChange = (name: string) => {
+    setScenario(name)
+    const nextScenario = (scenarios ?? []).find((candidate) => candidate.name === name)
+    setSideToVary(nextScenario?.sides[0] ?? '')
+  }
 
   const toggleSchool = (id: string) => {
     setSelectedSchools((prev) => {
@@ -71,18 +117,50 @@ export function DoctrineComparePanel() {
     })
   }
 
-  const canSubmit = scenario && selectedSchools.size >= 2 && !doctrineCompare.isPending
+  const canSubmit = Boolean(
+    scenario
+    && sideToVary
+    && selectedSchools.size >= 2
+    && !doctrineCompare.isPending,
+  )
 
   const handleSubmit = () => {
-    if (!canSubmit) return
+    if (!canSubmit || !selectedScenario) return
+    doctrineCompare.reset()
+    setSubmittedDoctrine(null)
+    const variants = Array.from(selectedSchools).map((schoolId) => ({
+      variant_id: schoolId,
+      assignments: [{ side: sideToVary, school_id: schoolId }],
+    }))
+    const orderedMetrics = [
+      `win_${sideToVary}`,
+      ...selectedScenario.sides.map((side) => `${side}_destroyed`),
+      'ticks_executed',
+    ]
+    setSubmittedDoctrine({
+      scenario,
+      variants,
+      orderedMetrics,
+      numIterations,
+      baseSeed: BASE_SEED,
+      maxTicks,
+    })
     doctrineCompare.mutate({
       scenario,
-      side_to_vary: sideToVary,
-      schools: Array.from(selectedSchools),
+      variants,
+      metrics: orderedMetrics,
       num_iterations: numIterations,
+      base_seed: BASE_SEED,
       max_ticks: maxTicks,
     })
   }
+
+  const evidenceError = doctrineCompare.data && submittedDoctrine
+    ? validateDoctrineResult(doctrineCompare.data, submittedDoctrine)
+    : null
+  const validatedResult = doctrineCompare.data && !evidenceError
+    ? doctrineCompare.data
+    : null
 
   return (
     <div className="space-y-6">
@@ -95,7 +173,11 @@ export function DoctrineComparePanel() {
             <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
               Scenario
             </label>
-            <Select value={scenario} onChange={setScenario} options={scenarioOptions} />
+            <Select
+              value={scenario}
+              onChange={handleScenarioChange}
+              options={scenarioOptions}
+            />
           </div>
           <div>
             <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -105,10 +187,14 @@ export function DoctrineComparePanel() {
               value={sideToVary}
               onChange={(e) => setSideToVary(e.target.value)}
               aria-label="Side to vary"
+              disabled={!selectedScenario}
               className="mt-1 block w-full rounded border-gray-300 text-sm shadow-sm dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200"
             >
-              <option value="blue">Blue</option>
-              <option value="red">Red</option>
+              {(selectedScenario?.sides ?? []).map((side) => (
+                <option value={side} key={side}>
+                  {side.replace(/_/g, ' ')}
+                </option>
+              ))}
             </select>
           </div>
           <div>
@@ -119,7 +205,7 @@ export function DoctrineComparePanel() {
               type="number"
               value={numIterations}
               onChange={(e) => setNumIterations(parseInt(e.target.value, 10) || 10)}
-              min={1}
+              min={2}
               max={500}
               className="mt-1 block w-full rounded border-gray-300 text-sm shadow-sm dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200"
             />
@@ -181,7 +267,16 @@ export function DoctrineComparePanel() {
         </div>
       )}
 
-      {doctrineCompare.data && <ResultsTable data={doctrineCompare.data} />}
+      {evidenceError && (
+        <div
+          className="rounded-md bg-red-50 p-4 text-sm text-red-700 dark:bg-red-900/30 dark:text-red-300"
+          role="alert"
+        >
+          Doctrine result rejected: {evidenceError}
+        </div>
+      )}
+
+      {validatedResult && <ResultsTable data={validatedResult} />}
     </div>
   )
 }

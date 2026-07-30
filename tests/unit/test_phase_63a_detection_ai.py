@@ -57,13 +57,14 @@ class TestGetUnitSignature:
         unit = _make_unit()
         assert _get_unit_signature(ctx, unit) is None
 
-    def test_handles_unit_without_unit_type(self):
+    def test_missing_unit_type_returns_none_without_error(self):
+        """A missing unit type has an explicit None fallback without error."""
         sig_loader = MagicMock()
         sig_loader.get_profile.return_value = None
         ctx = SimpleNamespace(sig_loader=sig_loader)
         unit = SimpleNamespace(unit_type=None)
-        # Should not crash
-        _get_unit_signature(ctx, unit)
+        assert _get_unit_signature(ctx, unit) is None
+        sig_loader.get_profile.assert_called_once_with(None)
 
 
 class TestFOWWiring:
@@ -108,13 +109,15 @@ class TestFOWWiring:
         # Instead we verify the structural change: ctx.unit_sensors is used
         # by checking that the code path exists.
         import stochastic_warfare.simulation.battle as battle_mod
+
         src = open(battle_mod.__file__).read()
-        assert 'ctx.unit_sensors.get(_u.entity_id, [])' in src
-        assert '_get_unit_signature(ctx, _eu)' in src
+        assert "ctx.unit_sensors.get(_u.entity_id, [])" in src
+        assert "_get_unit_signature(ctx, _eu)" in src
 
     def test_fow_disabled_skips_sensors(self):
         """When FOW disabled, the FOW update block is gated off entirely."""
         import stochastic_warfare.simulation.battle as battle_mod
+
         src = open(battle_mod.__file__).read()
         # The FOW block is gated by enable_fog_of_war — when False, no sensor/sig lookup
         assert 'cal_flat.get("enable_fog_of_war", False)' in src
@@ -123,6 +126,7 @@ class TestFOWWiring:
     def test_assessment_uses_fow_contacts_when_enabled(self):
         """Structural: assessment reads fog_of_war.get_world_view(side).contacts."""
         import stochastic_warfare.simulation.battle as battle_mod
+
         src = open(battle_mod.__file__).read()
         assert "fog_of_war.get_world_view(side)" in src
         assert "len(_wv.contacts)" in src
@@ -130,19 +134,22 @@ class TestFOWWiring:
     def test_assessment_uses_ground_truth_when_fow_disabled(self):
         """Structural: when FOW disabled, assessment counts true enemies."""
         import stochastic_warfare.simulation.battle as battle_mod
+
         src = open(battle_mod.__file__).read()
         # Verify both paths exist
         assert "enemies = len(_wv.contacts)" in src
-        assert 'len(ctx.active_units(s))' in src
+        assert "len(ctx.active_units(s))" in src
 
     def test_sensors_at_engagement_detection_consistent(self):
         """Line ~2488: sensors for engagement detection also reads ctx.unit_sensors."""
         import stochastic_warfare.simulation.battle as battle_mod
+
         src = open(battle_mod.__file__).read()
         assert "ctx.unit_sensors.get(attacker.entity_id, [])" in src
 
     def test_fow_exception_handling(self):
         """Structural: FOW update wrapped in try/except."""
         import stochastic_warfare.simulation.battle as battle_mod
+
         src = open(battle_mod.__file__).read()
         assert "FogOfWar update failed" in src

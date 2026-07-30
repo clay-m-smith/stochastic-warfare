@@ -2,9 +2,10 @@
 # Tests: Red repositions during satellite blind window
 name: "Space ISR Gap"
 date: "2024-06-15"
-duration_hours: 8.0
+duration_hours: 6.0
 latitude: 33.0
 longitude: 35.0
+tick_duration_seconds: 60.0
 
 terrain:
   width_m: 20000.0
@@ -44,10 +45,22 @@ victory_conditions:
   - type: time_expired
     side: ""
     params:
-      max_time_s: 28800
+      max_time_s: 21600
 
 calibration_overrides:
+  enable_space_effects: true
+  enable_fog_of_war: false
+  roe_level: WEAPONS_HOLD
   blue_start_x: 2000.0
   blue_start_y: 10000.0
   red_start_x: 18000.0
   red_start_y: 10000.0
+  defensive_sides: [blue, red]
+
+space_config:
+  enable_space: true
+  constellation_ids:
+    - worldview3_reference_optical
+  imint_fusion_constellation_ids:
+    - worldview3_reference_optical
+  isr_processing_delay_s: 7200.0

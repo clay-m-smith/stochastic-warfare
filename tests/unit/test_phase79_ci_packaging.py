@@ -92,18 +92,40 @@ class TestLintWorkflowContent:
 
 
 class TestBuildWorkflowContent:
-    """build.yml runs Docker build on PRs only."""
+    """build.yml verifies immutable production images on every merge route."""
 
     def test_docker_build_present(self):
         text = (WORKFLOWS / "build.yml").read_text()
         assert "docker build" in text
 
-    def test_pr_only_trigger(self):
+    def test_pr_push_and_manual_triggers(self):
         data = yaml.safe_load((WORKFLOWS / "build.yml").read_text())
         triggers = data.get(True, {})
-        # Should have pull_request but NOT push
         assert "pull_request" in triggers
-        assert "push" not in triggers
+        assert "push" in triggers
+        assert triggers["push"]["branches"] == ["main"]
+        assert "workflow_dispatch" in triggers
+
+    def test_build_supplies_exact_source_revision(self):
+        text = (WORKFLOWS / "build.yml").read_text()
+        assert '--build-arg SOURCE_REVISION="${GITHUB_SHA}"' in text
+
+    def test_image_runs_production_runtime_smoke(self):
+        text = (WORKFLOWS / "build.yml").read_text()
+        assert "docker run --rm" in text
+        assert "test ! -e /app/.git" in text
+        assert "uv run --no-sync python -c" in text
+        assert "SimulationRuntimeFactory().prepare" in text
+        assert ".build('image-smoke'" in text
+        assert "run_to_completion()" in text
+        assert "EXPECTED_SOURCE_REVISION" in text
+
+    def test_image_locks_dependencies_before_generating_identity(self):
+        text = (ROOT / "Dockerfile").read_text()
+        sync = text.index("uv sync --locked --extra api --no-dev")
+        identity = text.index("python -m stochastic_warfare.build_identity")
+        assert sync < identity
+        assert 'CMD ["uv", "run", "--no-sync", "python", "-m", "api"]' in text
 
 
 # ---------------------------------------------------------------------------

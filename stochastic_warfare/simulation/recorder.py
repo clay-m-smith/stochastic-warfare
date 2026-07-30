@@ -10,6 +10,7 @@ protocol.
 
 from __future__ import annotations
 
+import copy
 from dataclasses import asdict, dataclass
 from datetime import datetime
 from typing import Any, Callable
@@ -58,6 +59,16 @@ class StateSnapshot:
     tick: int
     timestamp: datetime
     state: dict[str, Any]
+
+
+@dataclass(frozen=True)
+class RecorderStatePlan:
+    """Validated, owner-bound recorder checkpoint commit plan."""
+
+    owner_id: int
+    current_tick: int
+    events: tuple[RecordedEvent, ...]
+    snapshots: tuple[StateSnapshot, ...]
 
 
 # ---------------------------------------------------------------------------
@@ -218,27 +229,198 @@ class SimulationRecorder:
                 {
                     "tick": s.tick,
                     "timestamp": s.timestamp.isoformat(),
+                    "state": copy.deepcopy(s.state),
                 }
                 for s in self._snapshots
             ],
             "current_tick": self._current_tick,
         }
 
-    def set_state(self, state: dict[str, Any]) -> None:
-        """Restore recorder state from checkpoint.
+    @staticmethod
+    def _state_tick(value: Any, *, field_name: str) -> int:
+        if (
+            isinstance(value, bool)
+            or not isinstance(value, int)
+            or value < 0
+        ):
+            raise ValueError(
+                f"Recorder {field_name} must be a non-negative strict integer",
+            )
+        return value
 
-        Snapshots are **not** restored — they contain full state dicts
-        that may be very large.  Only snapshot metadata is preserved in
-        ``get_state``.
-        """
-        self._current_tick = state.get("current_tick", 0)
+    @staticmethod
+    def _state_timestamp(value: Any, *, field_name: str) -> datetime:
+        if not isinstance(value, str) or not value:
+            raise ValueError(
+                f"Recorder {field_name} must be a non-empty ISO timestamp",
+            )
+        try:
+            return datetime.fromisoformat(value)
+        except ValueError as exc:
+            raise ValueError(
+                f"Recorder {field_name} is not a valid ISO timestamp",
+            ) from exc
+
+    def stage_state(
+        self,
+        state: dict[str, Any],
+        *,
+        allow_legacy: bool = False,
+        expected_current_tick: int | None = None,
+    ) -> RecorderStatePlan:
+        """Validate all recorder state without mutating live evidence."""
+        if (
+            not isinstance(state, dict)
+            or set(state) != {"current_tick", "events", "snapshots"}
+        ):
+            raise ValueError(
+                "Recorder checkpoint state has invalid key topology",
+            )
+        current_tick = self._state_tick(
+            state["current_tick"],
+            field_name="current_tick",
+        )
+        if (
+            expected_current_tick is not None
+            and current_tick != expected_current_tick
+        ):
+            raise ValueError(
+                "Recorder current_tick disagrees with the checkpoint clock",
+            )
+        raw_events = state["events"]
+        if not isinstance(raw_events, list):
+            raise ValueError("Recorder events must be a list")
+        events: list[RecordedEvent] = []
+        prior_tick = -1
+        event_fields = {
+            "tick",
+            "timestamp",
+            "event_type",
+            "source",
+            "data",
+        }
+        for index, raw in enumerate(raw_events):
+            if not isinstance(raw, dict) or set(raw) != event_fields:
+                raise ValueError(
+                    f"Recorder event {index} has invalid key topology",
+                )
+            tick = self._state_tick(
+                raw["tick"],
+                field_name=f"events[{index}].tick",
+            )
+            if tick > current_tick or tick < prior_tick:
+                raise ValueError(
+                    "Recorder event ticks must be ordered and no later than "
+                    "current_tick",
+                )
+            prior_tick = tick
+            event_type = raw["event_type"]
+            source = raw["source"]
+            if (
+                not isinstance(event_type, str)
+                or not event_type
+                or event_type != event_type.strip()
+                or not isinstance(source, str)
+                or not source
+                or source != source.strip()
+            ):
+                raise ValueError(
+                    "Recorder event_type and source must be non-empty trimmed "
+                    "strings",
+                )
+            data = raw["data"]
+            if not isinstance(data, dict):
+                raise ValueError("Recorder event data must be a mapping")
+            events.append(
+                RecordedEvent(
+                    tick=tick,
+                    timestamp=self._state_timestamp(
+                        raw["timestamp"],
+                        field_name=f"events[{index}].timestamp",
+                    ),
+                    event_type=event_type,
+                    source=source,
+                    data=copy.deepcopy(data),
+                ),
+            )
+
+        raw_snapshots = state["snapshots"]
+        if not isinstance(raw_snapshots, list):
+            raise ValueError("Recorder snapshots must be a list")
+        snapshots: list[StateSnapshot] = []
+        prior_tick = -1
+        for index, raw in enumerate(raw_snapshots):
+            if not isinstance(raw, dict):
+                raise ValueError(
+                    f"Recorder snapshot {index} must be a mapping",
+                )
+            if allow_legacy and set(raw) == {"tick", "timestamp"}:
+                raise ValueError(
+                    "Legacy recorder snapshots omitted their state and cannot "
+                    "be restored faithfully",
+                )
+            if set(raw) != {"tick", "timestamp", "state"}:
+                raise ValueError(
+                    f"Recorder snapshot {index} has invalid key topology",
+                )
+            tick = self._state_tick(
+                raw["tick"],
+                field_name=f"snapshots[{index}].tick",
+            )
+            if tick > current_tick or tick < prior_tick:
+                raise ValueError(
+                    "Recorder snapshot ticks must be ordered and no later "
+                    "than current_tick",
+                )
+            prior_tick = tick
+            snapshot_state = raw["state"]
+            if not isinstance(snapshot_state, dict):
+                raise ValueError(
+                    "Recorder snapshot state must be a mapping",
+                )
+            snapshots.append(
+                StateSnapshot(
+                    tick=tick,
+                    timestamp=self._state_timestamp(
+                        raw["timestamp"],
+                        field_name=f"snapshots[{index}].timestamp",
+                    ),
+                    state=copy.deepcopy(snapshot_state),
+                ),
+            )
+        return RecorderStatePlan(
+            owner_id=id(self),
+            current_tick=current_tick,
+            events=tuple(events),
+            snapshots=tuple(snapshots),
+        )
+
+    def commit_state(self, plan: RecorderStatePlan) -> None:
+        """Commit a validated recorder checkpoint plan."""
+        if plan.owner_id != id(self):
+            raise ValueError(
+                "Recorder checkpoint plan belongs to another recorder",
+            )
+        self._current_tick = plan.current_tick
         self._events = [
             RecordedEvent(
-                tick=e["tick"],
-                timestamp=datetime.fromisoformat(e["timestamp"]),
-                event_type=e["event_type"],
-                source=e["source"],
-                data=e["data"],
+                tick=event.tick,
+                timestamp=event.timestamp,
+                event_type=event.event_type,
+                source=event.source,
+                data=copy.deepcopy(event.data),
             )
-            for e in state.get("events", [])
+            for event in plan.events
         ]
+        self._snapshots = [
+            StateSnapshot(
+                tick=snapshot.tick,
+                timestamp=snapshot.timestamp,
+                state=copy.deepcopy(snapshot.state),
+            )
+            for snapshot in plan.snapshots
+        ]
+
+    def set_state(self, state: dict[str, Any]) -> None:
+        """Validate and atomically restore recorder evidence."""
+        self.commit_state(self.stage_state(state))

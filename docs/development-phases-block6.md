@@ -1,5 +1,11 @@
 # Stochastic Warfare -- Block 6 Development Phases (49--57)
 
+> **Phase 112 integrity supersession (2026-07-30):** This roadmap preserves
+> Block 6's historical plan. Its all-scenario winner checks and repeated seeds
+> from calibrated inputs are current-engine regression history, not
+> provenance-bearing, held-out production validation. REM-030/Phase 117 owns
+> the replacement catalog-wide historical outcome-envelope contract.
+
 ## Philosophy
 
 Block 6 is the **final tightening block**. No new subsystems, no new UI features. The engine has 25+ instantiated-but-never-called engines, 10 dead YAML data fields, 3 fully implemented subsystems that were never even instantiated, a free-form calibration dict that silently swallows mistyped keys, and config fields that zero scenarios exercise. All were built in Phases 1--48 and tested in isolation, but they contribute nothing to simulation outcomes because they're disconnected.

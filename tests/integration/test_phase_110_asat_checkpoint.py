@@ -207,7 +207,7 @@ def test_corrupt_space_checkpoint_is_rejected_before_any_runtime_mutation(
             "last_overpass_time",
             TARGET_ID,
             1.0e12,
-            "after the staged simulation time",
+            "after checkpoint time",
         ),
     ),
 )
@@ -330,9 +330,19 @@ def test_disabled_runtime_rejects_transplanted_completed_history() -> None:
         disabled.step()
 
     invalid = disabled.get_state()
-    invalid["context"]["space_engine"] = copy.deepcopy(
-        enabled.get_state()["context"]["space_engine"],
-    )
+    enabled_asat = enabled.get_state()["context"]["space_engine"][
+        "asat_engine"
+    ]
+    disabled_asat = invalid["context"]["space_engine"]["asat_engine"]
+    for field_name in (
+        "assets",
+        "pending_order_ids",
+        "completed_orders",
+        "debris_clouds",
+    ):
+        disabled_asat[field_name] = copy.deepcopy(
+            enabled_asat[field_name],
+        )
     before = disabled.checkpoint()
 
     with pytest.raises(ValueError, match="ASAT-disabled checkpoint"):

@@ -1,6 +1,7 @@
 .venv/
 __pycache__/
 *.pyc
+stochastic_warfare/_build_identity.json
 *.egg-info/
 dist/
 build/

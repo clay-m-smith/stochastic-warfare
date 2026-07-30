@@ -4,6 +4,9 @@ from __future__ import annotations
 
 import pytest
 
+from stochastic_warfare.combat.events import NavalEngagementEvent
+from stochastic_warfare.core.events import EventBus
+
 from tests.conftest import TS, make_rng
 
 
@@ -90,10 +93,27 @@ class TestNavalGun:
         assert result.total_damage == pytest.approx(result.hits * 0.1)
 
     def test_event_published(self) -> None:
-        eng = _make_naval_surface_engine(rng=make_rng(1))
-        # Fire enough rounds that at least some hit
-        eng.naval_gun_engagement("dd", "tgt", 5000.0, 100, timestamp=TS)
-        # Just verify no error; event publishing is fire-and-forget
+        from stochastic_warfare.combat.damage import DamageEngine
+        from stochastic_warfare.combat.naval_surface import NavalSurfaceEngine
+
+        rng = make_rng(1)
+        bus = EventBus()
+        events: list[NavalEngagementEvent] = []
+        bus.subscribe(NavalEngagementEvent, events.append)
+        eng = NavalSurfaceEngine(DamageEngine(bus, rng), bus, rng)
+        result = eng.naval_gun_engagement(
+            "dd",
+            "tgt",
+            5000.0,
+            100,
+            timestamp=TS,
+        )
+
+        assert result.hits > 0
+        assert [
+            (event.attacker_id, event.target_id, event.weapon_type)
+            for event in events
+        ] == [("dd", "tgt", "NAVAL_GUN")]
 
     def test_zero_at_max_range(self) -> None:
         eng = _make_naval_surface_engine(naval_gun_max_range_m=10000.0)

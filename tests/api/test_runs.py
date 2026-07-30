@@ -30,6 +30,25 @@ async def test_submit_run_not_found(client):
     assert resp.status_code == 404
 
 
+async def test_submit_run_rejects_unpersistable_or_coercive_seed(
+    client,
+    app,
+):
+    for seed in (True, "42", -1, 1 << 63):
+        response = await client.post(
+            "/api/runs",
+            json={
+                "scenario": "test_campaign",
+                "seed": seed,
+                "max_ticks": 1,
+            },
+        )
+        assert response.status_code == 422, response.text
+
+    assert await app.state.db.count_runs() == 0
+    assert app.state.run_manager._tasks == {}
+
+
 async def test_submit_and_poll_run(client):
     resp = await client.post("/api/runs", json={
         "scenario": "test_campaign",
@@ -52,6 +71,11 @@ async def test_submit_and_poll_run(client):
     assert data["result"] is not None
     assert "sides" in data["result"]
     assert "ticks_executed" in data["result"]
+    assert len(data["result"]["source_fingerprint"]) == 64
+    assert len(data["result"]["config_fingerprint"]) == 64
+    assert data["result"]["authored_roster"] == (
+        data["result"]["loaded_roster"]
+    )
 
 
 async def test_get_run_not_found(client):

@@ -359,10 +359,26 @@ class TestStrategicTick:
     """Strategic tick execution via campaign manager."""
 
     def test_strategic_runs_campaign_update(self) -> None:
-        ctx = _make_ctx(config=_minimal_config(duration_hours=24.0))
-        engine = SimulationEngine(ctx)
-        # Should not raise
+        blue = _make_unit("b1", Position(0.0, 0.0, 0.0), "blue")
+        red = _make_unit("r1", Position(100_000.0, 0.0, 0.0), "red")
+        object.__setattr__(blue, "max_speed", 10.0)
+        object.__setattr__(red, "max_speed", 10.0)
+        ctx = _make_ctx(
+            blue_units=[blue],
+            red_units=[red],
+            config=_minimal_config(duration_hours=24.0),
+        )
+        engine = SimulationEngine(
+            ctx,
+            campaign_config=CampaignConfig(
+                engagement_detection_range_m=1_000.0,
+            ),
+        )
         engine.step()
+
+        assert blue.position.easting > 0.0
+        assert red.position.easting < 100_000.0
+        assert blue.position.easting < red.position.easting
 
     def test_engagement_detection_triggers_battle(self) -> None:
         # Blue and red units within engagement range
@@ -778,7 +794,10 @@ class TestReinforcements:
         engine = SimulationEngine(ctx)
         assert len(engine.campaign_manager._reinforcements) == 1
 
-        with pytest.raises(RuntimeError, match="without a unit loader"):
+        with pytest.raises(
+            RuntimeError,
+            match="without the production RuntimeForceBuilder",
+        ):
             engine.step()
 
         assert engine.campaign_manager._reinforcements[0].arrived is False
@@ -829,8 +848,11 @@ class TestEdgeCases:
         engine.battle_manager._battles["b1"] = b1
         engine.battle_manager._battles["b2"] = b2
         engine.step()
-        # Both battles should have been ticked
-        # (they'll terminate since no units, but should not crash)
+
+        assert b1.ticks_executed == 1
+        assert b2.ticks_executed == 1
+        assert b1.active is False
+        assert b2.active is False
 
     def test_very_short_campaign(self) -> None:
         cfg = _minimal_config(duration_hours=0.01)

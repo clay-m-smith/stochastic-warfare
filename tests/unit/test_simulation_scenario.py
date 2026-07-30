@@ -274,9 +274,29 @@ class TestSideConfig:
     def test_units_with_overrides(self) -> None:
         s = SideConfig(
             side="blue",
-            units=[{"unit_type": "m1a2", "count": 2, "overrides": {"speed": 15.0}}],
+            units=[{
+                "unit_type": "m1a2",
+                "count": 2,
+                "overrides": {
+                    "training_level": 0.9,
+                    "heading": 15.0,
+                },
+            }],
         )
-        assert s.units[0]["overrides"]["speed"] == 15.0
+        assert s.units[0]["overrides"] == {
+            "training_level": 0.9,
+            "heading": 15.0,
+        }
+
+    def test_unsupported_unit_override_is_rejected(self) -> None:
+        with pytest.raises(ValueError, match="speed"):
+            SideConfig(
+                side="blue",
+                units=[{
+                    "unit_type": "m1a2",
+                    "overrides": {"speed": 15.0},
+                }],
+            )
 
     def test_custom_morale(self) -> None:
         s = SideConfig(side="blue", units=[], morale_initial="SHAKEN")
@@ -478,6 +498,7 @@ class TestYamlParsing:
                     "side": "red",
                     "units": [{"unit_type": "m1a2", "count": 15}],
                     "experience_level": 0.6,
+                    "commander_profile": "cautious_infantry",
                 },
             ],
             "objectives": [

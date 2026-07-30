@@ -1,5 +1,12 @@
 # Phase 7: Engagement Validation
 
+> **Superseded validation claim (Phase 112 / REM-030):** This devlog records
+> the Phase 7 implementation and its then-reported calibration results. Those
+> tables are not current production-path historical validation evidence.
+> Phase 112 relabeled the surviving tests as legacy-runner regressions and
+> removed redundant count-only Monte Carlo work; REM-030 remains queued for
+> source-backed, predeclared production outcome envelopes in Phase 117.
+
 ## Summary
 
 Phase 7 validates the combat model against 3 historical engagements: 73 Easting (1991), Falklands Naval (1982), and Golan Heights (1973). It builds a reusable validation infrastructure (scenario runner, Monte Carlo harness, metrics extraction, historical data loader) and calibrates engagement parameters to produce results within 2x of historical outcomes.
@@ -126,7 +133,9 @@ All four metrics pass tolerance. Hull-down modifier (0.55), slow advance (0.15 m
 - **Constant dicts hoisted**: `posture_mods` (hit_probability), `posture_protect`/`posture_frag_protect` (damage), `effects_table` (suppression), `level_risks` (fratricide) — all moved to module/class level.
 - **Math constants pre-computed**: `_SQRT_2`, `_FOUR_PI_CUBED`, `_BOLTZMANN_290_1E6` in detection.py. `_H` and `_EYE4` matrices in estimation.py.
 - **`state.py`**: `datetime.now()` replaced with explicit sim clock timestamp in morale events — fixes determinism.
-- **`pyproject.toml`**: `addopts = "-m 'not slow'"` excludes 1000-run MC tests by default. Run with `-m slow` explicitly.
+- **`pyproject.toml`**: the then-current default excluded the 1,000-run MC
+  tests. After Phase 112, one legacy 73 Easting convergence run remains in the
+  explicit slow partition.
 
 ### Infrastructure Improvements (post-completion)
 - Created `tests/conftest.py` — shared fixtures (`rng`, `event_bus`, `sim_clock`, `rng_manager`) + helper functions (`make_rng()`, `make_clock()`, `make_stream()`) + constants (`TS`, `POS_ORIGIN`). For all Phase 8+ test files.

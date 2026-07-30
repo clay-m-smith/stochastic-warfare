@@ -20,6 +20,7 @@ DATA_DIR = Path(__file__).resolve().parents[2] / "data"
 
 # ── Fixtures ─────────────────────────────────────────────────────────
 
+
 @pytest.fixture(scope="module")
 def weapon_loader() -> WeaponLoader:
     loader = WeaponLoader(DATA_DIR / "weapons")
@@ -226,12 +227,13 @@ class TestDEWCrossRef:
         for wid in DEW_WEAPON_IDS:
             wdef = weapon_loader.get_definition(wid)
             for ammo_id in wdef.compatible_ammo:
-                ammo_loader.get_definition(ammo_id)  # raises KeyError if missing
+                ammo = ammo_loader.get_definition(ammo_id)
+                assert ammo.ammo_id == ammo_id
 
     def test_unit_signature_refs(self, sig_loader: SignatureLoader) -> None:
         """All DEW unit types have matching signatures."""
         for uid in ["de_shorad", "iron_beam", "ddg_helios"]:
-            sig_loader.get_profile(uid)  # raises KeyError if missing
+            assert sig_loader.get_profile(uid).profile_id == uid
 
     def test_sensor_count(self, sensor_loader: SensorLoader) -> None:
         """DEW sensors exist."""

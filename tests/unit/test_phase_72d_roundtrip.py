@@ -5,10 +5,12 @@ Behavioral tests exercising the full checkpoint chain with real or mock engines.
 
 from __future__ import annotations
 
-import inspect
+from datetime import timedelta
 from types import SimpleNamespace
 
+import pytest
 
+from stochastic_warfare.c2.orders.propagation import PropagationResult
 from stochastic_warfare.combat.suppression import UnitSuppressionState
 from stochastic_warfare.core.events import EventBus
 from stochastic_warfare.simulation.calibration import CalibrationSchema
@@ -20,12 +22,12 @@ from stochastic_warfare.simulation.calibration import CalibrationSchema
 
 
 def _all_context_engine_names() -> list[str]:
-    """Collect all engine-like attribute names from get_state source."""
-    from stochastic_warfare.simulation.scenario import SimulationContext
-    src = inspect.getsource(SimulationContext.get_state)
-    # Extract quoted engine names from ("name", self.xxx) tuples
-    import re
-    return re.findall(r'\("(\w+)", self\.\w+\)', src)
+    """Return the single authoritative context checkpoint-owner list."""
+    from stochastic_warfare.simulation.scenario import (
+        _CONTEXT_STATE_ENGINE_NAMES,
+    )
+
+    return list(_CONTEXT_STATE_ENGINE_NAMES)
 
 
 def _make_mock_context():
@@ -34,8 +36,15 @@ def _make_mock_context():
 
     ctx = object.__new__(SimulationContext)
     ctx.clock = SimpleNamespace(
-        get_state=lambda: {"tick": 0, "elapsed_s": 0},
+        get_state=lambda: {
+            "start": "2024-01-01T00:00:00+00:00",
+            "current": "2024-01-01T00:00:00+00:00",
+            "tick_duration_seconds": 5.0,
+            "tick_count": 0,
+        },
         set_state=lambda s: None,
+        elapsed=timedelta(0),
+        tick_count=0,
     )
     ctx.rng_manager = SimpleNamespace(
         get_state=lambda: {"seed": 42},
@@ -91,10 +100,14 @@ class TestContextRoundTrip:
 
         for name, data in engines_data.items():
             captured = dict(data)
-            setattr(ctx, name, SimpleNamespace(
-                get_state=lambda d=captured: d,
-                set_state=lambda s: None,
-            ))
+            setattr(
+                ctx,
+                name,
+                SimpleNamespace(
+                    get_state=lambda d=captured: d,
+                    set_state=lambda s: None,
+                ),
+            )
 
         state = ctx.get_state()
         for name, expected_data in engines_data.items():
@@ -108,20 +121,22 @@ class TestContextRoundTrip:
         for name in engine_names:
             assert name not in state, f"None engine {name} should not be in state"
 
-    def test_set_state_skips_missing_engines(self):
-        """set_state gracefully skips engines that are None on context."""
+    def test_missing_engine_restore_is_explicit_no_op(self):
+        """State for an absent optional engine is an exact no-op."""
         ctx, _ = _make_mock_context()
+        before = ctx.get_state()
         # State has data for an engine that doesn't exist on context
         state = {
-            "clock": {"tick": 0},
+            "clock": ctx.clock.get_state(),
             "rng": {"seed": 42},
             "calibration": {},
             "loadout_builder_fingerprint": None,
             "loadout_topology": {},
             "missile_engine": {"missiles": []},
         }
-        # Should not raise
         ctx.set_state(state)
+        assert ctx.missile_engine is None
+        assert ctx.get_state() == before
 
 
 class TestBattleManagerRoundTrip:
@@ -141,7 +156,16 @@ class TestBattleManagerRoundTrip:
         bm1._undigging = {"u2": True}
         bm1._concealment_scores = {"u1": 0.55}
         bm1._env_casualty_accum = {"u3": 0.45}
-        bm1._misinterpreted_orders = {"u1": {"radius_m": 200}}
+        bm1._misinterpreted_orders = {
+            "u1": PropagationResult(
+                success=True,
+                total_delay_s=45.0,
+                was_misinterpreted=True,
+                misinterpretation_type="position",
+                comms_quality=0.6,
+                degraded=True,
+            ),
+        }
         bm1._vls_launches = {"side_a": 5}
         bm1._ammo_expended = {"u1": 30}
 
@@ -153,8 +177,13 @@ class TestBattleManagerRoundTrip:
 
         # All Phase 72b fields match
         for key in [
-            "ticks_stationary", "suppression_states", "cumulative_casualties",
-            "undigging", "concealment_scores", "env_casualty_accum",
+            "ticks_stationary",
+            "suppression_states",
+            "cumulative_casualties",
+            "undigging",
+            "concealment_scores",
+            "env_casualty_accum",
+            "misinterpreted_orders",
         ]:
             assert state2[key] == state1[key], f"Mismatch on {key}"
 
@@ -180,39 +209,34 @@ class TestStructuralCompleteness:
         checkpoint_engines = set(_all_context_engine_names())
 
         # Get all attrs ending in _engine from class annotations and source
+        import inspect
         import re
+
         src = inspect.getsource(SimulationContext)
         # Match annotations like `some_engine: SomeType` and assignments
-        annotated = set(re.findall(r'\b(\w+_engine)\s*:', src))
+        annotated = set(re.findall(r"\b(\w+_engine)\s*:", src))
         # Also match self.xxx_engine assignments in ScenarioLoader
         loader_src = inspect.getsource(
             inspect.getmodule(SimulationContext)  # type: ignore[arg-type]
         )
-        assigned = set(re.findall(r'ctx\.(\w+_engine)\s*=', loader_src))
+        assigned = set(re.findall(r"ctx\.(\w+_engine)\s*=", loader_src))
 
         init_engines = annotated | assigned
 
         # Every engine should be in checkpoint or excluded
         uncovered = init_engines - checkpoint_engines - EXCLUDED
-        assert not uncovered, (
-            f"Engines on SimulationContext but not in checkpoint lists: {uncovered}"
+        assert not uncovered, f"Engines on SimulationContext but not in checkpoint lists: {uncovered}"
+
+    @pytest.mark.structural
+    def test_get_state_set_state_parity(self):
+        """Context get/set share one authoritative engine-owner list."""
+        from stochastic_warfare.simulation.scenario import (
+            _CONTEXT_STATE_ENGINE_NAMES,
         )
 
-    def test_get_state_set_state_parity(self):
-        """get_state and set_state have the same engine lists."""
-        from stochastic_warfare.simulation.scenario import SimulationContext
-
-        get_src = inspect.getsource(SimulationContext.get_state)
-        set_src = inspect.getsource(SimulationContext.set_state)
-
-        import re
-        get_names = re.findall(r'\("(\w+)", self\.\w+\)', get_src)
-        set_names = re.findall(r'\("(\w+)", self\.\w+\)', set_src)
-
-        assert set(get_names) == set(set_names), (
-            f"get_state/set_state engine mismatch: "
-            f"only in get={set(get_names) - set(set_names)}, "
-            f"only in set={set(set_names) - set(get_names)}"
+        assert tuple(_all_context_engine_names()) == _CONTEXT_STATE_ENGINE_NAMES
+        assert len(_CONTEXT_STATE_ENGINE_NAMES) == len(
+            set(_CONTEXT_STATE_ENGINE_NAMES),
         )
 
     def test_battle_manager_state_keys(self):
@@ -223,13 +247,18 @@ class TestStructuralCompleteness:
         state = bm.get_state()
 
         expected_keys = {
-            "battles", "next_battle_id", "vls_launches", "ammo_expended",
+            "battles",
+            "next_battle_id",
+            "vls_launches",
+            "ammo_expended",
             "pending_decisions",
             # Phase 72b additions
-            "ticks_stationary", "suppression_states", "cumulative_casualties",
-            "undigging", "concealment_scores", "env_casualty_accum",
+            "ticks_stationary",
+            "suppression_states",
+            "cumulative_casualties",
+            "undigging",
+            "concealment_scores",
+            "env_casualty_accum",
             "misinterpreted_orders",
         }
-        assert expected_keys.issubset(state.keys()), (
-            f"Missing keys: {expected_keys - state.keys()}"
-        )
+        assert expected_keys.issubset(state.keys()), f"Missing keys: {expected_keys - state.keys()}"

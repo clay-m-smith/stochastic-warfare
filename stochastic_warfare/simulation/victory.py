@@ -122,6 +122,14 @@ class VictoryResult:
     tick: int = 0
 
 
+@dataclass(frozen=True)
+class VictoryStatePlan:
+    """Validated, owner-bound objective-state commit plan."""
+
+    owner_id: int
+    objectives: tuple[tuple[ObjectiveState, str, bool], ...]
+
+
 # ---------------------------------------------------------------------------
 # Victory evaluator
 # ---------------------------------------------------------------------------
@@ -299,13 +307,123 @@ class VictoryEvaluator:
             },
         }
 
-    def set_state(self, state: dict) -> None:
-        """Restore evaluator state from a checkpoint dict."""
-        for oid, obj_data in state["objectives"].items():
-            obj = self._objectives.get(oid)
-            if obj is not None:
-                obj.controlling_side = obj_data["controlling_side"]
-                obj.contested = obj_data["contested"]
+    def stage_state(
+        self,
+        state: dict[str, Any],
+        *,
+        expected_sides: set[str] | None = None,
+    ) -> VictoryStatePlan:
+        """Validate objective state without mutating live objectives."""
+        if not isinstance(state, dict) or set(state) != {"objectives"}:
+            raise ValueError(
+                "Victory checkpoint state must contain only objectives",
+            )
+        raw_objectives = state["objectives"]
+        if not isinstance(raw_objectives, dict):
+            raise ValueError(
+                "Victory checkpoint objectives must be a mapping",
+            )
+        expected_ids = set(self._objectives)
+        actual_ids = set(raw_objectives)
+        if actual_ids != expected_ids:
+            raise ValueError(
+                "Victory checkpoint objective topology does not match the "
+                "runtime: "
+                f"missing={sorted(expected_ids - actual_ids)!r}, "
+                f"extra={sorted(actual_ids - expected_ids)!r}",
+            )
+
+        expected_fields = {
+            "objective_id",
+            "position",
+            "radius_m",
+            "controlling_side",
+            "contested",
+        }
+        staged: list[tuple[ObjectiveState, str, bool]] = []
+        for objective_id, raw in sorted(raw_objectives.items()):
+            if not isinstance(raw, dict) or set(raw) != expected_fields:
+                raise ValueError(
+                    f"Victory objective {objective_id!r} has invalid fields",
+                )
+            if raw["objective_id"] != objective_id:
+                raise ValueError(
+                    "Victory objective map key disagrees with objective_id",
+                )
+            objective = self._objectives[objective_id]
+            raw_position = raw["position"]
+            if (
+                not isinstance(raw_position, (list, tuple))
+                or len(raw_position) != 3
+                or any(
+                    isinstance(value, bool)
+                    or not isinstance(value, (int, float))
+                    or not math.isfinite(float(value))
+                    for value in raw_position
+                )
+                or tuple(float(value) for value in raw_position)
+                != tuple(float(value) for value in objective.position)
+            ):
+                raise ValueError(
+                    f"Victory objective {objective_id!r} position does not "
+                    "match the runtime",
+                )
+            radius = raw["radius_m"]
+            if (
+                isinstance(radius, bool)
+                or not isinstance(radius, (int, float))
+                or not math.isfinite(float(radius))
+                or float(radius) != float(objective.radius_m)
+            ):
+                raise ValueError(
+                    f"Victory objective {objective_id!r} radius does not "
+                    "match the runtime",
+                )
+            controlling_side = raw["controlling_side"]
+            if (
+                not isinstance(controlling_side, str)
+                or controlling_side != controlling_side.strip()
+                or (
+                    expected_sides is not None
+                    and controlling_side
+                    and controlling_side not in expected_sides
+                )
+            ):
+                raise ValueError(
+                    "Victory objective controlling_side must be empty or name "
+                    "a runtime side",
+                )
+            contested = raw["contested"]
+            if not isinstance(contested, bool):
+                raise ValueError(
+                    "Victory objective contested must be boolean",
+                )
+            staged.append((objective, controlling_side, contested))
+        return VictoryStatePlan(id(self), tuple(staged))
+
+    def commit_state(self, plan: VictoryStatePlan) -> None:
+        """Commit a validated objective-state plan."""
+        if plan.owner_id != id(self):
+            raise ValueError(
+                "Victory checkpoint plan belongs to another evaluator",
+            )
+        for objective, controlling_side, contested in plan.objectives:
+            objective.controlling_side = controlling_side
+            objective.contested = contested
+
+    def set_state(
+        self,
+        state: dict[str, Any],
+        *,
+        expected_sides: set[str] | None = None,
+    ) -> None:
+        """Validate and atomically restore objective state."""
+        self.commit_state(
+            self.stage_state(
+                state,
+                expected_sides=expected_sides,
+            ),
+        )
 
     # ------------------------------------------------------------------
     # Private helpers

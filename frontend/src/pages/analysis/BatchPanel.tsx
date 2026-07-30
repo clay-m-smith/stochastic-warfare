@@ -6,6 +6,8 @@ import { useSubmitBatch } from '../../hooks/useBatch'
 import { useBatchProgress } from '../../hooks/useWebSocket'
 import { Select } from '../../components/Select'
 import { BatchResultsView } from './BatchResultsView'
+import { validateBatchDetail } from '../../utils/analysisEvidence'
+import type { BatchExpectation } from '../../utils/analysisEvidence'
 
 export function BatchPanel() {
   const { data: scenarios } = useScenarios()
@@ -14,6 +16,7 @@ export function BatchPanel() {
   const [baseSeed, setBaseSeed] = useState(42)
   const [maxTicks, setMaxTicks] = useState(10000)
   const [batchId, setBatchId] = useState<string | null>(null)
+  const [submittedBatch, setSubmittedBatch] = useState<BatchExpectation | null>(null)
 
   const submit = useSubmitBatch()
   const { data: batchDetail } = useBatch(batchId)
@@ -24,17 +27,46 @@ export function BatchPanel() {
   )
 
   const scenarioOptions = (scenarios ?? []).map((s) => ({ value: s.name, label: s.display_name }))
+  const selectedScenario = scenarios?.find((candidate) => candidate.name === scenario)
+  const orderedMetrics = selectedScenario?.sides.flatMap((side) => [
+    `${side}_active`,
+    `${side}_destroyed`,
+  ]) ?? []
 
   const handleSubmit = () => {
-    if (!scenario) return
+    if (!scenario || orderedMetrics.length === 0) return
+    const submittedMetrics = [...orderedMetrics]
+    setSubmittedBatch({
+      scenario,
+      orderedMetrics: submittedMetrics,
+      numIterations,
+      baseSeed,
+      maxTicks,
+    })
     submit.mutate(
-      { scenario, num_iterations: numIterations, base_seed: baseSeed, max_ticks: maxTicks },
-      { onSuccess: (resp) => setBatchId(resp.batch_id) },
+      {
+        scenario,
+        num_iterations: numIterations,
+        base_seed: baseSeed,
+        max_ticks: maxTicks,
+        metrics: submittedMetrics,
+      },
+      {
+        onSuccess: (resp) => {
+          setSubmittedBatch((current) => (
+            current ? { ...current, batchId: resp.batch_id } : current
+          ))
+          setBatchId(resp.batch_id)
+        },
+      },
     )
   }
 
   const isRunning = batchDetail?.status === 'pending' || batchDetail?.status === 'running'
   const isCompleted = batchDetail?.status === 'completed'
+  const evidenceError = isCompleted && batchDetail
+    ? validateBatchDetail(batchDetail, submittedBatch ?? undefined)
+    : null
 
   return (
     <div className="space-y-6">
@@ -79,7 +111,7 @@ export function BatchPanel() {
         </div>
         <button
           onClick={handleSubmit}
-          disabled={!scenario || submit.isPending || isRunning}
+          disabled={orderedMetrics.length === 0 || submit.isPending || isRunning}
           className="mt-4 rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
         >
           {submit.isPending ? 'Submitting...' : isRunning ? 'Running...' : 'Run Batch'}
@@ -99,9 +131,28 @@ export function BatchPanel() {
         </div>
       )}
 
-      {isCompleted && batchDetail?.metrics && (
-        <BatchResultsView metrics={batchDetail.metrics} />
+      {isCompleted && evidenceError && (
+        <div
+          className="rounded-md bg-red-50 p-4 text-sm text-red-700 dark:bg-red-900/30 dark:text-red-300"
+          role="alert"
+        >
+          Completed batch rejected: {evidenceError}
+        </div>
       )}
+
+      {isCompleted
+        && !evidenceError
+        && batchDetail.metrics
+        && batchDetail.raw_metrics
+        && batchDetail.provenance
+        && (
+          <BatchResultsView
+            metrics={batchDetail.metrics}
+            orderedMetrics={batchDetail.ordered_metrics}
+            rawMetrics={batchDetail.raw_metrics}
+            provenance={batchDetail.provenance}
+          />
+        )}
     </div>
   )
 }

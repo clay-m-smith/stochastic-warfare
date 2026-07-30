@@ -1,8 +1,9 @@
-"""Phase 10 integration tests — end-to-end campaign validation pipeline.
+"""Phase 10 integration tests for campaign-comparator plumbing.
 
-Tests the complete flow: load campaign YAML → run MC → compare to
-historical → validate AI decisions.  Verifies cross-domain interaction
-and recorder event capture through full campaign runs.
+The tests exercise load, bounded simulation, Monte Carlo aggregation, metric
+comparison, and AI-decision reporting.  Merely producing a comparison report
+does not establish historical or predictive accuracy; outcome envelopes need
+their own sourced acceptance evidence.
 """
 
 from __future__ import annotations
@@ -51,7 +52,7 @@ def _fast_runner() -> CampaignRunner:
 
 @pytest.mark.slow
 class TestEndToEndPipeline:
-    """Full pipeline: load → run MC → compare → validate AI."""
+    """Full pipeline: load → run MC → build report → validate AI."""
 
     def test_golan_pipeline(self):
         if not GOLAN_YAML.exists():
@@ -184,10 +185,10 @@ class TestAllDomainModules:
 
 @pytest.mark.slow
 class TestDeficiencyDetection:
-    """Verify that metric comparison captures deficiencies."""
+    """Verify comparator pass/fail branches with synthetic references."""
 
-    def test_unrealistic_historical_detected(self):
-        """A deliberately wrong historical value should fail comparison."""
+    def test_synthetic_out_of_range_reference_is_detected(self):
+        """A deliberately out-of-range synthetic value fails comparison."""
         campaign = HistoricalCampaign.model_validate({
             "name": "Deficiency Test",
             "date": "2024-06-15",
@@ -225,11 +226,16 @@ class TestDeficiencyDetection:
         harness = CampaignMonteCarloHarness(runner, mc_config)
         mc_result = harness.run(campaign)
         report = mc_result.compare_to_historical(campaign.documented_outcomes)
-        # This absurd historical value should fail
+        # The synthetic value is intentionally outside the produced range.
         assert report.failing_count() > 0
 
-    def test_reasonable_historical_passes(self):
-        """A wide-tolerance outcome should pass."""
+    def test_synthetic_current_duration_reference_passes(self):
+        """A synthetic exact-current reference exercises the pass branch.
+
+        The ten-tick test runner advances five logical seconds per tick, so its
+        current simulated duration is 50 seconds.  This is comparator test data,
+        not a widened historical envelope.
+        """
         campaign = HistoricalCampaign.model_validate({
             "name": "Pass Test",
             "date": "2024-06-15",
@@ -257,8 +263,8 @@ class TestDeficiencyDetection:
             "documented_outcomes": [
                 {
                     "name": "campaign_duration_s",
-                    "value": 3600.0,
-                    "tolerance_factor": 10.0,
+                    "value": 50.0,
+                    "tolerance_factor": 1.0,
                 }
             ],
         })
@@ -267,10 +273,10 @@ class TestDeficiencyDetection:
         harness = CampaignMonteCarloHarness(runner, mc_config)
         mc_result = harness.run(campaign)
         report = mc_result.compare_to_historical(campaign.documented_outcomes)
-        # With tolerance_factor=10.0, campaign_duration should pass
         duration_result = [
             r for r in report.metric_results
             if r.metric_name == "campaign_duration_s"
         ]
         assert len(duration_result) == 1
+        assert duration_result[0].simulated_mean == 50.0
         assert duration_result[0].within_tolerance

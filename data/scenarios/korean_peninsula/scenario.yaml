@@ -170,15 +170,14 @@ space_config:
     - sbirs_ew
     - milstar_satcom
     - wgs_satcom
+  # Classified imaging topology remains explicitly unsupported for fusion.
+  imint_fusion_constellation_ids: []
   enable_asat: false
   gps_sigma_range_m: 3.0
 
 commander_config:
   ooda_speed_base_mult: 1.1
   noise_sigma: 0.12
-  side_defaults:
-    blue: joint_commander
-    red: conventional_commander
 
 documented_outcomes:
   - name: red_armor_destroyed

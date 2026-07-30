@@ -366,7 +366,7 @@ class TestStochasticReinforcements:
         monkeypatch.setattr(
             mgr,
             "_spawn_reinforcements",
-            lambda _ctx, _entry, _rng: [],
+            lambda _ctx, _entry: [],
         )
         monkeypatch.setattr(
             campaign_module,

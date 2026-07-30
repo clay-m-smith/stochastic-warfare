@@ -109,12 +109,26 @@ class MappingCoverageStats:
     stale_registry_keys: int = 0
 
 
+@dataclass(frozen=True, slots=True)
+class ScenarioLoadStats:
+    """Exact production roster and per-instance override outcomes."""
+
+    authored_initial_units: int = 0
+    loaded_initial_units: int = 0
+    authored_override_groups: int = 0
+    authored_override_units: int = 0
+    authored_override_fields: int = 0
+    verified_override_units: int = 0
+    verified_override_fields: int = 0
+
+
 @dataclass(slots=True)
 class ValidationResult:
     errors: list[str] = field(default_factory=list)
     warnings: list[str] = field(default_factory=list)
     classifications: list[str] = field(default_factory=list)
     mapping_coverage: MappingCoverageStats | None = None
+    scenario_load_stats: ScenarioLoadStats | None = None
 
     @property
     def ok(self) -> bool:
@@ -157,16 +171,10 @@ def _era_for_unit_path(path: Path) -> str:
     parts = relative.parts
     if len(parts) >= 2 and parts[0] == "units":
         return "modern"
-    if (
-        len(parts) >= 4
-        and parts[0] == "eras"
-        and parts[2] == "units"
-        and parts[1] in _ERA_NAMES
-    ):
+    if len(parts) >= 4 and parts[0] == "eras" and parts[2] == "units" and parts[1] in _ERA_NAMES:
         return parts[1]
     raise ValueError(
-        f"{path}: expected a unit file below data/units or "
-        "data/eras/<era>/units",
+        f"{path}: expected a unit file below data/units or data/eras/<era>/units",
     )
 
 
@@ -204,7 +212,8 @@ def _registry_mapping_keys(
     return {
         (record.category, record.equipment_name)
         for record in registry.records
-        if record.category in (
+        if record.category
+        in (
             EquipmentCategory.WEAPON,
             EquipmentCategory.SENSOR,
         )
@@ -222,11 +231,7 @@ def compare_equipment_mapping_coverage(
     registry: EquipmentMappingRegistry | None = None,
 ) -> tuple[ValidationResult, MappingCoverageStats]:
     """Compare distinct full-catalog keys with the production registry."""
-    effective_registry = (
-        EQUIPMENT_MAPPING_REGISTRY
-        if registry is None
-        else registry
-    )
+    effective_registry = EQUIPMENT_MAPPING_REGISTRY if registry is None else registry
     registry_keys = _registry_mapping_keys(effective_registry)
     unmapped_authored = sorted(
         authored_keys - registry_keys,
@@ -247,8 +252,7 @@ def compare_equipment_mapping_coverage(
     )
     result = ValidationResult(mapping_coverage=stats)
     result.errors.extend(
-        "Full-catalog equipment coverage: authored key "
-        f"{_mapping_key_label(key)} has no registry declaration"
+        f"Full-catalog equipment coverage: authored key {_mapping_key_label(key)} has no registry declaration"
         for key in unmapped_authored
     )
     result.errors.extend(
@@ -296,13 +300,11 @@ def _sensor_policy_result(
         elif definition.sensor_policy is SensorPolicy.INTENTIONALLY_NONE:
             intentionally_none += 1
             result.classifications.append(
-                f"{era}/{unit_type}: sensor_policy='intentionally_none' — "
-                f"{definition.sensor_policy_reason}",
+                f"{era}/{unit_type}: sensor_policy='intentionally_none' — {definition.sensor_policy_reason}",
             )
         else:  # pragma: no cover - Pydantic owns the closed enum
             result.errors.append(
-                f"{era}/{unit_type}: unknown sensor policy "
-                f"{definition.sensor_policy!r}",
+                f"{era}/{unit_type}: unknown sensor policy {definition.sensor_policy!r}",
             )
     return result, CatalogValidationStats(
         units=len(definitions),
@@ -339,14 +341,12 @@ def _preflight_catalog(
                 )
             except (EquipmentMappingError, TypeError, ValueError) as unit_error:
                 result.errors.append(
-                    f"{era}/{unit_type}: RuntimeLoadoutBuilder preflight "
-                    f"failed: {unit_error}",
+                    f"{era}/{unit_type}: RuntimeLoadoutBuilder preflight failed: {unit_error}",
                 )
                 per_unit_errors += 1
         if per_unit_errors == 0:
             result.errors.append(
-                f"{era}: RuntimeLoadoutBuilder batch preflight failed: "
-                f"{batch_error}",
+                f"{era}: RuntimeLoadoutBuilder batch preflight failed: {batch_error}",
             )
     return result
 
@@ -474,8 +474,7 @@ def validate_space_yaml(path: Path) -> ValidationResult:
             validate_asat_weapon_file(path)
         else:
             raise ValueError(
-                f"{path}: expected data/space/constellations or "
-                "data/space/asat_weapons",
+                f"{path}: expected data/space/constellations or data/space/asat_weapons",
             )
     except (OSError, TypeError, ValueError) as exc:
         return ValidationResult(errors=[str(exc)])
@@ -533,27 +532,79 @@ def validate_scenario_loads(path: Path) -> ValidationResult:
         loader = ScenarioLoader(DATA_DIR)
         ctx = loader.load(path, seed=42)
 
-        # Check units exist
-        for side, units in ctx.units_by_side.items():
+        authored_initial_units = 0
+        loaded_initial_units = 0
+        authored_override_groups = 0
+        authored_override_units = 0
+        authored_override_fields = 0
+        verified_override_units = 0
+        verified_override_fields = 0
+        for side_config in ctx.config.sides:
+            side = side_config.side
+            units = ctx.units_by_side.get(side, [])
+            loaded_initial_units += len(units)
+            expected_side_count = sum(entry.count for entry in side_config.units)
+            authored_initial_units += expected_side_count
             if len(units) == 0:
+                result.errors.append(f"{path}: side '{side}' has 0 units after loading")
+            if len(units) != expected_side_count:
                 result.errors.append(
-                    f"{path}: side '{side}' has 0 units after loading"
+                    f"{path}: side {side!r} loaded {len(units)} of {expected_side_count} authored initial units",
                 )
+
+            unit_index = 0
+            for entry in side_config.units:
+                override_values = entry.overrides.applied_values()
+                if override_values:
+                    authored_override_groups += 1
+                    authored_override_units += entry.count
+                    authored_override_fields += entry.count * len(override_values)
+                selected_units = units[unit_index : unit_index + entry.count]
+                unit_index += entry.count
+                for unit in selected_units:
+                    if unit.unit_type != entry.unit_type:
+                        result.errors.append(
+                            f"{path}: runtime unit {unit.entity_id!r} "
+                            f"has type {unit.unit_type!r}; expected "
+                            f"{entry.unit_type!r} from authored order",
+                        )
+                    unit_verified = bool(override_values)
+                    for field_name, expected in override_values.items():
+                        runtime_field = "name" if field_name == "display_name" else field_name
+                        observed = getattr(unit, runtime_field, None)
+                        if observed != expected:
+                            result.errors.append(
+                                f"{path}: runtime unit "
+                                f"{unit.entity_id!r} did not apply "
+                                f"override {field_name!r}: expected "
+                                f"{expected!r}, observed {observed!r}",
+                            )
+                            unit_verified = False
+                        else:
+                            verified_override_fields += 1
+                    if unit_verified:
+                        verified_override_units += 1
+
+        result.scenario_load_stats = ScenarioLoadStats(
+            authored_initial_units=authored_initial_units,
+            loaded_initial_units=loaded_initial_units,
+            authored_override_groups=authored_override_groups,
+            authored_override_units=authored_override_units,
+            authored_override_fields=authored_override_fields,
+            verified_override_units=verified_override_units,
+            verified_override_fields=verified_override_fields,
+        )
 
         # Check weapons
         all_weapons = sum(
-            len(ctx.unit_weapons.get(u.entity_id, []))
-            for units in ctx.units_by_side.values()
-            for u in units
+            len(ctx.unit_weapons.get(u.entity_id, [])) for units in ctx.units_by_side.values() for u in units
         )
         if all_weapons == 0:
             result.errors.append(f"{path}: no units have weapons after loading")
 
         # Check sensors
         all_sensors = sum(
-            len(ctx.unit_sensors.get(u.entity_id, []))
-            for units in ctx.units_by_side.values()
-            for u in units
+            len(ctx.unit_sensors.get(u.entity_id, [])) for units in ctx.units_by_side.values() for u in units
         )
         if all_sensors == 0:
             result.errors.append(f"{path}: no units have sensors after loading")
@@ -575,8 +626,7 @@ def main() -> int:
     args = parser.parse_args()
     if sum((args.units_only, args.scenarios_only, args.space_only)) > 1:
         parser.error(
-            "--units-only, --scenarios-only, and --space-only are mutually "
-            "exclusive",
+            "--units-only, --scenarios-only, and --space-only are mutually exclusive",
         )
 
     total_errors = 0
@@ -611,8 +661,7 @@ def main() -> int:
     if not args.scenarios_only and not args.space_only:
         unit_paths = _collect_unit_yamls()
         print(
-            f"Checking {len(unit_paths)} unit YAML files through the "
-            "production RuntimeLoadoutBuilder...",
+            f"Checking {len(unit_paths)} unit YAML files through the production RuntimeLoadoutBuilder...",
         )
         r, stats_by_era = validate_unit_catalogs()
         total_errors += len(r.errors)
@@ -680,12 +729,52 @@ def main() -> int:
 
         if not args.no_load:
             print("Running ScenarioLoader load tests...")
+            scenario_load_totals = ScenarioLoadStats()
             for path in scenario_paths:
                 r = validate_scenario_loads(path)
                 total_errors += len(r.errors)
                 total_warnings += len(r.warnings)
                 for e in r.errors:
                     print(f"  ERROR: {e}")
+                if r.scenario_load_stats is not None:
+                    stats = r.scenario_load_stats
+                    scenario_load_totals = ScenarioLoadStats(
+                        authored_initial_units=(
+                            scenario_load_totals.authored_initial_units + stats.authored_initial_units
+                        ),
+                        loaded_initial_units=(scenario_load_totals.loaded_initial_units + stats.loaded_initial_units),
+                        authored_override_groups=(
+                            scenario_load_totals.authored_override_groups + stats.authored_override_groups
+                        ),
+                        authored_override_units=(
+                            scenario_load_totals.authored_override_units + stats.authored_override_units
+                        ),
+                        authored_override_fields=(
+                            scenario_load_totals.authored_override_fields + stats.authored_override_fields
+                        ),
+                        verified_override_units=(
+                            scenario_load_totals.verified_override_units + stats.verified_override_units
+                        ),
+                        verified_override_fields=(
+                            scenario_load_totals.verified_override_fields + stats.verified_override_fields
+                        ),
+                    )
+            print(
+                "  Initial roster outcomes: "
+                f"{scenario_load_totals.loaded_initial_units}/"
+                f"{scenario_load_totals.authored_initial_units} units loaded",
+            )
+            print(
+                "  Instance override outcomes: "
+                f"{scenario_load_totals.authored_override_groups} authored "
+                "groups expanded to "
+                f"{scenario_load_totals.authored_override_units} units; "
+                f"{scenario_load_totals.verified_override_units}/"
+                f"{scenario_load_totals.authored_override_units} units and "
+                f"{scenario_load_totals.verified_override_fields}/"
+                f"{scenario_load_totals.authored_override_fields} field "
+                "applications verified",
+            )
 
     # Summary
     print(

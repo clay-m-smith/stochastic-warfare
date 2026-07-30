@@ -12,6 +12,7 @@ import logging
 import uuid
 from collections.abc import Mapping
 from datetime import datetime, timezone
+from functools import partial
 from pathlib import Path
 from threading import Event
 from typing import TYPE_CHECKING, Any
@@ -19,8 +20,10 @@ from typing import TYPE_CHECKING, Any
 from api.database import Database
 
 if TYPE_CHECKING:
+    from stochastic_warfare.simulation.runtime import PreparedScenario
     from stochastic_warfare.simulation.loadouts import WeaponAttachment
     from stochastic_warfare.simulation.scenario import CampaignScenarioConfig
+    from stochastic_warfare.tools._run_helpers import AnalysisRunner
 
 logger = logging.getLogger(__name__)
 
@@ -36,8 +39,15 @@ class RunManagerClosedError(RuntimeError):
 class RunManager:
     """Manages background simulation execution with progress streaming."""
 
-    def __init__(self, db: Database, *, data_dir: str, max_concurrent: int = 4,
-                 max_stored_events: int = 50_000, default_max_ticks: int = 10_000) -> None:
+    def __init__(
+        self,
+        db: Database,
+        *,
+        data_dir: str,
+        max_concurrent: int = 4,
+        max_stored_events: int = 50_000,
+        default_max_ticks: int = 10_000,
+    ) -> None:
         if max_concurrent < 1:
             raise ValueError("max_concurrent must be at least 1")
         self._db = db
@@ -66,16 +76,91 @@ class RunManager:
         if self._closing or self._closed:
             raise RunManagerClosedError("Run manager is shutting down")
 
-        from stochastic_warfare.simulation.scenario import (
-            load_campaign_scenario_config,
+        from stochastic_warfare.simulation.runtime import (
+            AnalysisVariant,
+            SimulationRuntimeFactory,
         )
 
         patch = dict(config_overrides or {})
-        effective_config = await asyncio.to_thread(
-            load_campaign_scenario_config,
-            Path(scenario_path),
-            patch,
+        variant = AnalysisVariant(
+            variant_id="api-run",
+            calibration_patch=patch,
         )
+        effective_config = await asyncio.to_thread(
+            SimulationRuntimeFactory().prepare,
+            Path(scenario_path),
+            self._data_dir,
+            (variant,),
+        )
+        await asyncio.to_thread(
+            effective_config.build,
+            variant.variant_id,
+            seed,
+            max_ticks,
+        )
+        return await self._submit_prepared(
+            scenario_name=scenario_name,
+            scenario_path=scenario_path,
+            seed=seed,
+            max_ticks=max_ticks,
+            config_overrides=patch,
+            prepared=effective_config,
+            frame_interval=frame_interval,
+        )
+
+    async def submit_config(
+        self,
+        scenario_name: str,
+        source_config: CampaignScenarioConfig,
+        seed: int,
+        max_ticks: int,
+        frame_interval: int | None = None,
+    ) -> str:
+        """Submit one typed inline scenario without temporary serialization."""
+        if self._closing or self._closed:
+            raise RunManagerClosedError("Run manager is shutting down")
+
+        from stochastic_warfare.simulation.runtime import (
+            AnalysisVariant,
+            SimulationRuntimeFactory,
+        )
+
+        variant = AnalysisVariant(variant_id="api-run")
+        prepared = await asyncio.to_thread(
+            SimulationRuntimeFactory().prepare_config,
+            source_config,
+            self._data_dir,
+            (variant,),
+            source_label="<inline-config>",
+        )
+        await asyncio.to_thread(
+            prepared.build,
+            variant.variant_id,
+            seed,
+            max_ticks,
+        )
+        return await self._submit_prepared(
+            scenario_name=scenario_name,
+            scenario_path="<inline-config>",
+            seed=seed,
+            max_ticks=max_ticks,
+            config_overrides={},
+            prepared=prepared,
+            frame_interval=frame_interval,
+        )
+
+    async def _submit_prepared(
+        self,
+        *,
+        scenario_name: str,
+        scenario_path: str,
+        seed: int,
+        max_ticks: int,
+        config_overrides: dict[str, Any],
+        prepared: PreparedScenario,
+        frame_interval: int | None,
+    ) -> str:
+        """Persist and schedule one already validated production runtime."""
         run_id = uuid.uuid4().hex[:12]
         async with self._lifecycle_lock:
             if self._closing or self._closed:
@@ -86,7 +171,7 @@ class RunManager:
                 scenario_path,
                 seed,
                 max_ticks,
-                patch,
+                config_overrides,
             )
             self._progress_queues[run_id] = []
             cancel_event = Event()
@@ -98,7 +183,7 @@ class RunManager:
                         scenario_path,
                         seed,
                         max_ticks,
-                        effective_config,
+                        prepared,
                         cancel_event,
                         frame_interval,
                     ),
@@ -154,9 +239,9 @@ class RunManager:
 
     @staticmethod
     async def _await_worker(
-        worker_future: asyncio.Future[dict[str, Any]],
+        worker_future: asyncio.Future[Any],
         cancel_event: Event,
-    ) -> dict[str, Any]:
+    ) -> Any:
         """Keep ownership until an executor worker stops, even if cancelled."""
         try:
             return await asyncio.shield(worker_future)
@@ -266,8 +351,7 @@ class RunManager:
                 _, pending = await asyncio.wait(tasks, timeout=timeout)
                 if pending:
                     logger.warning(
-                        "Shutdown grace threshold reached; waiting for %d "
-                        "cooperative worker(s)",
+                        "Shutdown grace threshold reached; waiting for %d cooperative worker(s)",
                         len(pending),
                     )
                 await asyncio.gather(*tasks, return_exceptions=True)
@@ -281,7 +365,7 @@ class RunManager:
         scenario_path: str,
         seed: int,
         max_ticks: int,
-        effective_config: CampaignScenarioConfig,
+        effective_config: PreparedScenario,
         cancel_event: Event,
         frame_interval: int | None = None,
     ) -> None:
@@ -314,15 +398,21 @@ class RunManager:
                 )
 
             now = datetime.now(timezone.utc).isoformat()
-            await self._db.update_run_status(
-                run_id, "completed",
-                completed_at=now,
-                result_json=json.dumps(result["summary"], default=str),
-                events_json=json.dumps(result["events"], default=str),
-                snapshots_json=json.dumps(result["snapshots"], default=str),
-                terrain_json=json.dumps(result["terrain"], default=str),
-                frames_json=json.dumps(result["frames"], default=str),
-            )
+            async with self._lifecycle_lock:
+                if cancel_event.is_set():
+                    raise RunCancelledError("Run cancelled by user")
+                await self._db.update_run_status(
+                    run_id,
+                    "completed",
+                    completed_at=now,
+                    result_json=json.dumps(result["summary"], default=str),
+                    events_json=json.dumps(result["events"], default=str),
+                    snapshots_json=json.dumps(result["snapshots"], default=str),
+                    terrain_json=json.dumps(result["terrain"], default=str),
+                    frames_json=json.dumps(result["frames"], default=str),
+                )
+                self._cancel_events.pop(run_id, None)
+                self._tasks.pop(run_id, None)
         except RunCancelledError:
             await self._db.update_run_status(
                 run_id,
@@ -342,7 +432,8 @@ class RunManager:
         except Exception as exc:
             now = datetime.now(timezone.utc).isoformat()
             await self._db.update_run_status(
-                run_id, "failed",
+                run_id,
+                "failed",
                 completed_at=now,
                 error_message=str(exc),
             )
@@ -361,7 +452,7 @@ class RunManager:
         scenario_path: str,
         seed: int,
         max_ticks: int,
-        effective_config: CampaignScenarioConfig,
+        effective_config: PreparedScenario,
         loop: asyncio.AbstractEventLoop,
         queue: asyncio.Queue | None,
         frame_interval: int | None = None,
@@ -369,55 +460,25 @@ class RunManager:
     ) -> dict[str, Any]:
         """Core synchronous simulation execution (runs in thread pool)."""
         from stochastic_warfare.entities.base import UnitStatus
-        from stochastic_warfare.simulation.engine import EngineConfig, SimulationEngine
-        from stochastic_warfare.simulation.recorder import SimulationRecorder
-        from stochastic_warfare.simulation.scenario import ScenarioLoader, VictoryConditionConfig
-        from stochastic_warfare.simulation.victory import ObjectiveState, VictoryEvaluator
-        from stochastic_warfare.core.types import Position
         from stochastic_warfare.tools.serializers import serialize_to_dict
 
-        path = Path(scenario_path)
-        loader = ScenarioLoader(self._data_dir)
-        ctx = loader.load(
-            path,
+        prepared = effective_config
+        session = prepared.build(
+            "api-run",
             seed=seed,
-            scenario_config=effective_config,
+            max_ticks=max_ticks,
+            record_events=True,
         )
+        ctx = session.context
+        recorder = session.recorder
+        if recorder is None:
+            raise RuntimeError("API runtime did not construct its recorder")
+        engine = session.engine
+        path = prepared.scenario_path
         config_dict = ctx.config.model_dump(mode="json")
 
         # Capture static terrain data (Phase 35)
         terrain_data = self._capture_terrain(ctx, config_dict)
-
-        # Build victory evaluator
-        objectives = []
-        for obj_cfg in config_dict.get("objectives", []):
-            pos_list = obj_cfg.get("position", [0.0, 0.0])
-            objectives.append(ObjectiveState(
-                objective_id=obj_cfg["objective_id"],
-                position=Position(easting=pos_list[0], northing=pos_list[1]),
-                radius_m=obj_cfg.get("radius_m", 500.0),
-            ))
-
-        conditions = [VictoryConditionConfig(**vc) for vc in config_dict.get("victory_conditions", [])]
-        # Default: end when any side loses 70%+ of forces
-        if not conditions:
-            conditions = [VictoryConditionConfig(type="force_destroyed")]
-        max_dur = config_dict.get("duration_hours", 24) * 3600.0
-
-        victory_eval = VictoryEvaluator(
-            objectives=objectives,
-            conditions=conditions,
-            event_bus=ctx.event_bus,
-            max_duration_s=max_dur,
-        )
-
-        recorder = SimulationRecorder(ctx.event_bus)
-        engine = SimulationEngine(
-            ctx,
-            config=EngineConfig(max_ticks=max_ticks),
-            victory_evaluator=victory_eval,
-            recorder=recorder,
-        )
 
         # Step-based loop with progress
         recorder.start()
@@ -446,7 +507,7 @@ class RunManager:
             if cancel_event is not None and cancel_event.is_set():
                 raise RunCancelledError("Run cancelled by user")
 
-            game_over = engine.step()
+            game_over = session.step()
             tick = ctx.clock.tick_count
 
             # Capture position frame at dynamic intervals (Phase 35)
@@ -460,13 +521,16 @@ class RunManager:
                 _engaged.discard("")
 
                 _bm = getattr(engine, "battle_manager", None)
-                map_frames.append(self._capture_frame(
-                    tick, ctx,
-                    morale_states=getattr(ctx, "morale_states", None),
-                    suppression_states=getattr(_bm, "_suppression_states", None) if _bm else None,
-                    engaged_ids=_engaged,
-                    unit_weapons=ctx.unit_weapons,
-                ))
+                map_frames.append(
+                    self._capture_frame(
+                        tick,
+                        ctx,
+                        morale_states=getattr(ctx, "morale_states", None),
+                        suppression_states=getattr(_bm, "_suppression_states", None) if _bm else None,
+                        engaged_ids=_engaged,
+                        unit_weapons=ctx.unit_weapons,
+                    )
+                )
 
             # Emit progress to all subscribers
             if tick % progress_interval == 0 or game_over:
@@ -495,7 +559,7 @@ class RunManager:
         recorder.stop()
 
         # Build summary
-        run_result = engine._last_victory
+        run_result = session.finalize()
         side_summaries = {}
         for side, units in ctx.units_by_side.items():
             active = sum(1 for u in units if u.status == UnitStatus.ACTIVE)
@@ -509,7 +573,7 @@ class RunManager:
             }
 
         # Transform VictoryResult into frontend-friendly format
-        victory_raw = serialize_to_dict(run_result)
+        victory_raw = serialize_to_dict(run_result.victory_result)
         ct = victory_raw.get("condition_type", "")
         ws = victory_raw.get("winning_side", "")
         if ws and ws != "draw":
@@ -531,13 +595,19 @@ class RunManager:
         summary = {
             "scenario": config_dict.get("name", path.stem),
             "seed": seed,
-            "ticks_executed": ctx.clock.tick_count,
-            "duration_s": ctx.clock.elapsed.total_seconds(),
+            "ticks_executed": run_result.ticks_executed,
+            "duration_s": run_result.duration_s,
             "victory": victory_dict,
             "sides": side_summaries,
+            "source_fingerprint": prepared.source_fingerprint,
+            "config_fingerprint": session.config_fingerprint,
+            "data_root": str(prepared.data_root),
+            "authored_roster": prepared.authored_roster,
+            "loaded_roster": session.loaded_roster,
+            "provenance": serialize_to_dict(session.provenance()),
         }
 
-        events = [serialize_to_dict(e) for e in recorder.events[:self._max_stored_events]]
+        events = [serialize_to_dict(e) for e in recorder.events[: self._max_stored_events]]
         snapshots = [{"tick": s.tick} for s in recorder.snapshots]
 
         return {
@@ -574,18 +644,21 @@ class RunManager:
             terrain["width_cells"] = int(shape[1])
             if extent is not None:
                 # extent from heightmap is (min_e, max_e, min_n, max_n)
-                terrain["origin_easting"] = float(extent[0])   # min_easting
+                terrain["origin_easting"] = float(extent[0])  # min_easting
                 terrain["origin_northing"] = float(extent[2])  # min_northing
                 # Frontend expects [minX, minY, maxX, maxY]
                 terrain["extent"] = [
-                    float(extent[0]), float(extent[2]),  # min_e, min_n
-                    float(extent[1]), float(extent[3]),  # max_e, max_n
+                    float(extent[0]),
+                    float(extent[2]),  # min_e, min_n
+                    float(extent[1]),
+                    float(extent[3]),  # max_e, max_n
                 ]
 
         if heightmap is not None:
             raw = getattr(heightmap, "_data", None)
             if raw is not None:
                 import numpy as np
+
                 if isinstance(raw, np.ndarray):
                     terrain["elevation"] = raw.tolist()
 
@@ -595,6 +668,7 @@ class RunManager:
             lc = state.get("land_cover")
             if lc is not None:
                 import numpy as np
+
                 if isinstance(lc, np.ndarray):
                     terrain["land_cover"] = lc.tolist()
                 else:
@@ -605,11 +679,11 @@ class RunManager:
             # Map terrain_type -> land cover code
             terrain_type = config_dict.get("terrain", {}).get("terrain_type", "flat_desert")
             lc_map = {
-                "flat_desert": 11,     # DESERT_SAND
-                "open_ocean": 9,       # WATER
-                "hilly_defense": 1,    # GRASSLAND
+                "flat_desert": 11,  # DESERT_SAND
+                "open_ocean": 9,  # WATER
+                "hilly_defense": 1,  # GRASSLAND
                 "trench_warfare": 14,  # CULTIVATED
-                "open_field": 0,       # OPEN
+                "open_field": 0,  # OPEN
             }
             code = lc_map.get(terrain_type, 0)
             h, w = terrain["height_cells"], terrain["width_cells"]
@@ -617,12 +691,14 @@ class RunManager:
 
         for obj_cfg in config_dict.get("objectives", []):
             pos = obj_cfg.get("position", [0.0, 0.0])
-            terrain["objectives"].append({
-                "id": obj_cfg.get("objective_id", ""),
-                "x": float(pos[0]),
-                "y": float(pos[1]),
-                "radius": float(obj_cfg.get("radius_m", 500.0)),
-            })
+            terrain["objectives"].append(
+                {
+                    "id": obj_cfg.get("objective_id", ""),
+                    "x": float(pos[0]),
+                    "y": float(pos[1]),
+                    "radius": float(obj_cfg.get("radius_m", 500.0)),
+                }
+            )
 
         return terrain
 
@@ -743,18 +819,47 @@ class RunManager:
         num_iterations: int,
         base_seed: int,
         max_ticks: int,
+        metric_names: list[str] | None = None,
+        config_overrides: dict[str, Any] | None = None,
     ) -> str:
         """Submit a Monte Carlo batch for background execution."""
         if self._closing or self._closed:
             raise RunManagerClosedError("Run manager is shutting down")
 
-        from stochastic_warfare.simulation.scenario import (
-            load_campaign_scenario_config,
+        from stochastic_warfare.simulation.runtime import (
+            AnalysisVariant,
+            SimulationRuntimeFactory,
         )
+        from stochastic_warfare.tools._run_helpers import AnalysisRunner
 
-        effective_config = await asyncio.to_thread(
-            load_campaign_scenario_config,
+        variant = AnalysisVariant(
+            variant_id="batch",
+            calibration_patch=dict(config_overrides or {}),
+        )
+        prepared = await asyncio.to_thread(
+            SimulationRuntimeFactory().prepare,
             Path(scenario_path),
+            self._data_dir,
+            (variant,),
+        )
+        requested_metrics = (
+            list(metric_names)
+            if metric_names is not None
+            else [
+                metric
+                for side in prepared.side_ids
+                for metric in (
+                    f"{side}_active",
+                    f"{side}_destroyed",
+                )
+            ]
+        )
+        runner = AnalysisRunner(prepared, requested_metrics)
+        await asyncio.to_thread(
+            prepared.build,
+            variant.variant_id,
+            base_seed,
+            max_ticks,
         )
         batch_id = uuid.uuid4().hex[:12]
         async with self._lifecycle_lock:
@@ -775,11 +880,10 @@ class RunManager:
                 task = asyncio.create_task(
                     self._execute_batch(
                         batch_id,
-                        scenario_path,
                         num_iterations,
                         base_seed,
                         max_ticks,
-                        effective_config,
+                        runner,
                         cancel_event,
                     ),
                 )
@@ -800,88 +904,84 @@ class RunManager:
     async def _execute_batch(
         self,
         batch_id: str,
-        scenario_path: str,
         num_iterations: int,
         base_seed: int,
         max_ticks: int,
-        effective_config: CampaignScenarioConfig,
+        runner: AnalysisRunner,
         cancel_event: Event,
     ) -> None:
-        """Execute a Monte Carlo batch sequentially."""
-        import numpy as np
-
+        """Execute one authoritative analysis batch and persist its result."""
         loop = asyncio.get_running_loop()
+
+        def check_cancellation() -> None:
+            if cancel_event.is_set():
+                raise RunCancelledError("Batch cancelled by user")
+
+        def publish_progress(
+            completed: int,
+            total: int,
+            seed: int,
+        ) -> None:
+            progress_future = asyncio.run_coroutine_threadsafe(
+                self._record_batch_progress(
+                    batch_id,
+                    completed=completed,
+                    total=total,
+                    seed=seed,
+                ),
+                loop,
+            )
+            progress_future.result()
 
         try:
             await self._db.update_batch(batch_id, status="running")
-            all_metrics: dict[str, list[float]] = {}
-            completed = 0
+            async with self._semaphore:
+                worker_future = loop.run_in_executor(
+                    None,
+                    partial(
+                        runner.run_variant,
+                        "batch",
+                        num_iterations=num_iterations,
+                        base_seed=base_seed,
+                        max_ticks=max_ticks,
+                        cancellation_check=check_cancellation,
+                        progress_callback=publish_progress,
+                    ),
+                )
+                batch = await self._await_worker(
+                    worker_future,
+                    cancel_event,
+                )
 
-            for i in range(num_iterations):
-                if cancel_event.is_set():
-                    raise RunCancelledError("Batch cancelled by user")
-
-                seed = base_seed + i
-                async with self._semaphore:
-                    worker_future = loop.run_in_executor(
-                        None,
-                        self._run_sync,
-                        f"batch_{batch_id}_{i}",
-                        scenario_path,
-                        seed,
-                        max_ticks,
-                        effective_config,
-                        loop,
-                        None,
-                        None,
-                        cancel_event,
-                    )
-                    result = await self._await_worker(
-                        worker_future,
-                        cancel_event,
-                    )
-
-                # Extract metrics
-                for side, data in result["summary"].get("sides", {}).items():
-                    for key in ("destroyed", "active", "total"):
-                        metric_name = f"{side}_{key}"
-                        all_metrics.setdefault(metric_name, []).append(float(data.get(key, 0)))
-
-                completed += 1
-                await self._db.update_batch(batch_id, completed_iterations=completed)
-
-                # Emit progress to all subscribers
-                progress = {
-                    "type": "iteration",
-                    "iteration": i + 1,
-                    "total": num_iterations,
-                    "seed": seed,
-                }
-                for q in list(self._progress_queues.get(batch_id, [])):
-                    self._put_progress(q, progress)
-
-            # Compute statistics
-            stats: dict[str, Any] = {}
-            for metric_name, values in all_metrics.items():
-                arr = np.array(values)
-                stats[metric_name] = {
-                    "mean": float(np.mean(arr)),
-                    "median": float(np.median(arr)),
-                    "std": float(np.std(arr, ddof=1)) if len(arr) > 1 else 0.0,
-                    "min": float(np.min(arr)),
-                    "max": float(np.max(arr)),
-                    "p5": float(np.percentile(arr, 5)),
-                    "p95": float(np.percentile(arr, 95)),
-                    "n": len(values),
-                }
-
-            now = datetime.now(timezone.utc).isoformat()
-            await self._db.update_batch(
-                batch_id,
-                status="completed",
-                completed_at=now,
-                metrics_json=json.dumps(stats, default=str),
+            payload = {
+                "statistics": batch.statistics_dict(),
+                "raw_metrics": batch.metrics_dict(),
+                "ordered_metrics": list(batch.ordered_metrics),
+                "provenance": batch.provenance_dict(),
+            }
+            from stochastic_warfare.tools._run_helpers import (
+                validate_serialized_batch_evidence,
             )
+
+            validate_serialized_batch_evidence(
+                payload,
+                num_iterations=num_iterations,
+                base_seed=base_seed,
+                max_ticks=max_ticks,
+                completed_iterations=len(batch.seeds),
+            )
+            now = datetime.now(timezone.utc).isoformat()
+            async with self._lifecycle_lock:
+                check_cancellation()
+                await self._db.update_batch(
+                    batch_id,
+                    status="completed",
+                    completed_iterations=len(batch.seeds),
+                    completed_at=now,
+                    metrics_json=json.dumps(payload, allow_nan=False),
+                )
+                self._cancel_events.pop(batch_id, None)
+                self._tasks.pop(batch_id, None)
         except RunCancelledError:
             await self._db.update_batch(
                 batch_id,
@@ -912,3 +1012,25 @@ class RunManager:
             self._progress_queues.pop(batch_id, None)
             self._cancel_events.pop(batch_id, None)
             self._tasks.pop(batch_id, None)
+
+    async def _record_batch_progress(
+        self,
+        batch_id: str,
+        *,
+        completed: int,
+        total: int,
+        seed: int,
+    ) -> None:
+        """Persist and expose one runner-owned completed iteration."""
+        await self._db.update_batch(
+            batch_id,
+            completed_iterations=completed,
+        )
+        progress = {
+            "type": "iteration",
+            "iteration": completed,
+            "total": total,
+            "seed": seed,
+        }
+        for queue in list(self._progress_queues.get(batch_id, [])):
+            self._put_progress(queue, progress)

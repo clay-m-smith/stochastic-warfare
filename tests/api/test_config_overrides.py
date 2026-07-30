@@ -76,6 +76,23 @@ def test_mixed_structured_and_legacy_fields_are_all_applied() -> None:
     )
 
 
+def test_canonical_nested_morale_modifier_remains_consistent_after_merge() -> None:
+    config = load_campaign_scenario_config(
+        SCENARIO_PATH,
+        {"morale": {"degrade_rate_modifier": 0.4}},
+    )
+
+    calibration = config.calibration_overrides
+    assert calibration.morale.degrade_rate_modifier == 0.4
+    assert calibration.morale_degrade_rate_modifier == 0.4
+    assert (
+        calibration.to_flat_dict(["blue", "red"])[
+            "morale_degrade_rate_modifier"
+        ]
+        == 0.4
+    )
+
+
 def test_empty_overrides_noop() -> None:
     baseline = load_campaign_scenario_config(SCENARIO_PATH)
     effective = load_campaign_scenario_config(SCENARIO_PATH, {})

@@ -1,47 +1,94 @@
-"""Parameter sensitivity sweep for scenario analysis.
-
-Runs a scenario at multiple parameter values, collecting metrics
-at each point for sensitivity visualization.
-"""
+"""Strict paired-seed parameter sensitivity for production scenarios."""
 
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Any
 
 import numpy as np
-from pydantic import BaseModel
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    StrictFloat,
+    StrictInt,
+    field_validator,
+)
 
-from stochastic_warfare.core.logging import get_logger
-
-logger = get_logger(__name__)
-
-
-# ---------------------------------------------------------------------------
-# Configuration
-# ---------------------------------------------------------------------------
+from stochastic_warfare.simulation.runtime import AnalysisVariant
+from stochastic_warfare.tools._run_helpers import (
+    AnalysisBatchResult,
+    prepare_analysis,
+)
 
 
 class SweepConfig(BaseModel):
-    """Configuration for a parameter sweep."""
+    """Validated configuration for one production parameter sweep."""
+
+    model_config = ConfigDict(extra="forbid")
 
     scenario_path: str
-    parameter_name: str  # calibration_overrides key
-    values: list[float]
-    metric_names: list[str] = ["blue_destroyed", "red_destroyed"]
-    iterations_per_point: int = 10
-    base_seed: int = 42
-    max_ticks: int = 100
+    parameter_name: str
+    values: list[StrictFloat] = Field(min_length=1)
+    metric_names: list[str] | None = Field(default=None, min_length=1)
+    iterations_per_point: StrictInt = Field(default=10, ge=2)
+    base_seed: StrictInt = Field(default=42, ge=0)
+    max_ticks: StrictInt = Field(default=100, ge=1)
+    data_dir: str | None = None
+
+    @field_validator("scenario_path", "parameter_name", mode="before")
+    @classmethod
+    def _trimmed_required_text(cls, value: Any) -> str:
+        if (
+            not isinstance(value, str)
+            or not value
+            or value != value.strip()
+        ):
+            raise ValueError("value must be a non-empty trimmed string")
+        return value
+
+    @field_validator("values")
+    @classmethod
+    def _finite_unique_values(
+        cls,
+        values: list[float],
+    ) -> list[float]:
+        if any(
+            isinstance(value, bool) or not math.isfinite(value)
+            for value in values
+        ):
+            raise ValueError("sweep values must be finite numbers")
+        if len(values) != len(set(values)):
+            raise ValueError("sweep values must be duplicate-free")
+        return values
+
+    @field_validator("metric_names")
+    @classmethod
+    def _unique_metric_names(
+        cls,
+        values: list[str] | None,
+    ) -> list[str] | None:
+        if values is None:
+            return None
+        if any(
+            not isinstance(value, str)
+            or not value
+            or value != value.strip()
+            for value in values
+        ):
+            raise ValueError(
+                "metric_names must contain non-empty trimmed strings",
+            )
+        if len(values) != len(set(values)):
+            raise ValueError("metric_names must be duplicate-free")
+        return values
 
 
-# ---------------------------------------------------------------------------
-# Result structures
-# ---------------------------------------------------------------------------
-
-
-@dataclass
+@dataclass(frozen=True)
 class MetricResult:
-    """Statistics for one metric at one sweep point."""
+    """Statistics and exact raw vector for one metric at one point."""
 
     metric: str
     mean: float
@@ -51,121 +98,141 @@ class MetricResult:
     values: list[float] = field(default_factory=list)
 
 
-@dataclass
+@dataclass(frozen=True)
 class SweepPoint:
-    """Results at one parameter value."""
+    """One independently prepared calibration value."""
 
     parameter_value: float
     metric_results: list[MetricResult] = field(default_factory=list)
+    batch: AnalysisBatchResult | None = None
 
 
-@dataclass
+@dataclass(frozen=True)
 class SweepResult:
-    """Complete sweep result."""
+    """Complete source-once production sweep."""
 
     parameter_name: str
     points: list[SweepPoint] = field(default_factory=list)
-
-
-# ---------------------------------------------------------------------------
-# Core sweep logic
-# ---------------------------------------------------------------------------
+    ordered_metrics: tuple[str, ...] = ()
+    base_seed: int = 42
+    seeds: tuple[int, ...] = ()
+    max_ticks: int = 100
+    source_fingerprint: str = ""
+    data_root: str = ""
 
 
 def run_sweep(config: SweepConfig) -> SweepResult:
-    """Run a parameter sweep over a scenario.
-
-    For each value in ``config.values``, runs ``iterations_per_point``
-    simulations with the parameter set in ``calibration_overrides``,
-    collecting the specified metrics.
-
-    Uses the same seed sequence at every sweep point — only the
-    parameter changes.
-    """
-    from stochastic_warfare.tools._run_helpers import run_scenario_batch
-
-    result = SweepResult(parameter_name=config.parameter_name)
-
-    for val in config.values:
-        overrides = {config.parameter_name: val}
-        raw = run_scenario_batch(
-            config.scenario_path,
-            overrides,
-            config.iterations_per_point,
-            config.base_seed,
-            config.max_ticks,
-            config.metric_names,
+    """Run every point against the same source and ordered seed sequence."""
+    variants = tuple(
+        AnalysisVariant(
+            variant_id=f"point-{index}",
+            calibration_patch={config.parameter_name: value},
         )
+        for index, value in enumerate(config.values)
+    )
+    prepared, runner = prepare_analysis(
+        scenario_path=config.scenario_path,
+        variants=variants,
+        metric_names=config.metric_names,
+        data_dir=config.data_dir,
+    )
 
+    points: list[SweepPoint] = []
+    seeds = tuple(
+        config.base_seed + index
+        for index in range(config.iterations_per_point)
+    )
+    for value, variant in zip(config.values, variants, strict=True):
+        batch = runner.run_variant(
+            variant.variant_id,
+            num_iterations=config.iterations_per_point,
+            base_seed=config.base_seed,
+            max_ticks=config.max_ticks,
+        )
         metric_results: list[MetricResult] = []
-        for name in config.metric_names:
-            vals = raw.get(name, [])
-            arr = np.array(vals, dtype=float) if vals else np.array([0.0])
+        for name in runner.metric_names:
+            values = list(batch.metric_values(name))
+            if len(values) != config.iterations_per_point:
+                raise RuntimeError(
+                    f"Metric {name!r} has a partial result vector",
+                )
+            array = np.asarray(values, dtype=float)
+            if not np.isfinite(array).all():
+                raise ValueError(
+                    f"Metric {name!r} contains non-finite values",
+                )
             metric_results.append(
                 MetricResult(
                     metric=name,
-                    mean=float(np.mean(arr)),
-                    std=float(np.std(arr, ddof=1)) if len(arr) > 1 else 0.0,
-                    min=float(np.min(arr)),
-                    max=float(np.max(arr)),
-                    values=vals,
-                )
+                    mean=float(np.mean(array)),
+                    std=float(np.std(array, ddof=1)),
+                    min=float(np.min(array)),
+                    max=float(np.max(array)),
+                    values=values,
+                ),
             )
+        points.append(
+            SweepPoint(
+                parameter_value=value,
+                metric_results=metric_results,
+                batch=batch,
+            ),
+        )
 
-        result.points.append(SweepPoint(parameter_value=val, metric_results=metric_results))
-
-    return result
-
-
-# ---------------------------------------------------------------------------
-# Plotting (requires matplotlib)
-# ---------------------------------------------------------------------------
+    return SweepResult(
+        parameter_name=config.parameter_name,
+        points=points,
+        ordered_metrics=runner.metric_names,
+        base_seed=config.base_seed,
+        seeds=seeds,
+        max_ticks=config.max_ticks,
+        source_fingerprint=prepared.source_fingerprint,
+        data_root=str(prepared.data_root),
+    )
 
 
 def plot_sweep(result: SweepResult, metric: str | None = None) -> Any:
-    """Plot sweep results as errorbar chart.
-
-    Parameters
-    ----------
-    result:
-        Output from ``run_sweep()``.
-    metric:
-        Which metric to plot. If None, plots the first available.
-
-    Returns ``matplotlib.figure.Figure``.
-    """
+    """Plot one exact metric; reject absent vectors instead of adding zeros."""
     import matplotlib.pyplot as plt
 
     if not result.points:
-        fig, ax = plt.subplots()
-        ax.text(0.5, 0.5, "No sweep data", transform=ax.transAxes, ha="center")
-        plt.close(fig)
-        return fig
-
-    # Determine metric to plot
+        raise ValueError("Sweep result contains no points")
+    if not result.points[0].metric_results:
+        raise ValueError("Sweep result contains no metric vectors")
     if metric is None:
         metric = result.points[0].metric_results[0].metric
 
-    x_vals = [p.parameter_value for p in result.points]
-    means = []
-    stds = []
-    for p in result.points:
-        for mr in p.metric_results:
-            if mr.metric == metric:
-                means.append(mr.mean)
-                stds.append(mr.std)
-                break
-        else:
-            means.append(0.0)
-            stds.append(0.0)
+    x_values: list[float] = []
+    means: list[float] = []
+    stds: list[float] = []
+    for point in result.points:
+        matches = [
+            item
+            for item in point.metric_results
+            if item.metric == metric
+        ]
+        if len(matches) != 1:
+            raise ValueError(
+                f"Sweep point {point.parameter_value!r} does not contain "
+                f"exactly one vector for metric {metric!r}",
+            )
+        x_values.append(point.parameter_value)
+        means.append(matches[0].mean)
+        stds.append(matches[0].std)
 
-    fig, ax = plt.subplots(figsize=(10, 6))
-    ax.errorbar(x_vals, means, yerr=stds, marker="o", capsize=4, linewidth=1.5)
-    ax.set_xlabel(result.parameter_name)
-    ax.set_ylabel(metric)
-    ax.set_title(f"Sensitivity: {metric} vs {result.parameter_name}")
-    ax.grid(True, alpha=0.3)
-
-    fig.tight_layout()
-    plt.close(fig)
-    return fig
+    figure, axis = plt.subplots(figsize=(10, 6))
+    axis.errorbar(
+        x_values,
+        means,
+        yerr=stds,
+        marker="o",
+        capsize=4,
+        linewidth=1.5,
+    )
+    axis.set_xlabel(result.parameter_name)
+    axis.set_ylabel(metric)
+    axis.set_title(f"Sensitivity: {metric} vs {result.parameter_name}")
+    axis.grid(True, alpha=0.3)
+    figure.tight_layout()
+    plt.close(figure)
+    return figure

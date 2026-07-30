@@ -55,8 +55,13 @@ class ScenarioResult:
     victory_message: str = ""
 
     # Force counts
+    # ``sides`` / ``initial_total`` retain the exact authored initial roster.
+    # Whole-run diagnostics use the separately recorded population of every
+    # unit that was actually constructed, including reinforcements.
     sides: dict[str, int] = field(default_factory=dict)
     initial_total: int = 0
+    constructed_sides: dict[str, int] = field(default_factory=dict)
+    constructed_total: int = 0
     final_active: dict[str, int] = field(default_factory=dict)
     final_destroyed: dict[str, int] = field(default_factory=dict)
     total_casualties: int = 0
@@ -67,6 +72,10 @@ class ScenarioResult:
     avg_distance_moved: float = 0.0
     max_distance_moved: float = 0.0
     min_distance_moved_active: float = 0.0  # among active units
+    semantic_stuck_count: int = 0
+    semantic_stuck_population: int = 0
+    semantic_blocked_count: int = 0
+    semantic_blocked_population: int = 0
 
     # Engagement diagnostics
     total_events: int = 0
@@ -75,6 +84,13 @@ class ScenarioResult:
     destruction_events: int = 0
     morale_events: int = 0
     weapon_fire_events: int = 0
+    event_type_counts: dict[str, int] = field(default_factory=dict)
+    engagement_weapon_counts: dict[str, int] = field(
+        default_factory=dict,
+    )
+    unit_combat_event_counts: dict[str, dict[str, int]] = field(
+        default_factory=dict,
+    )
 
     # Resolution tracking
     started_tactical: bool = False
@@ -92,11 +108,19 @@ class ScenarioResult:
 
 def run_scenario(scenario_path: Path, data_dir: Path, verbose: bool = False, seed: int = 42) -> ScenarioResult:
     """Run a single scenario and collect diagnostics."""
-    from stochastic_warfare.simulation.scenario import ScenarioLoader
-    from stochastic_warfare.simulation.engine import SimulationEngine, EngineConfig
+    from stochastic_warfare.simulation.engine import EngineConfig
+    from stochastic_warfare.simulation.campaign import (
+        ReinforcementArrivedEvent,
+    )
     from stochastic_warfare.simulation.recorder import SimulationRecorder
-    from stochastic_warfare.simulation.victory import VictoryEvaluator
+    from stochastic_warfare.simulation.runtime import (
+        AnalysisVariant,
+        SimulationRuntimeFactory,
+    )
     from stochastic_warfare.entities.base import UnitStatus
+    from stochastic_warfare.validation.movement_diagnostics import (
+        evaluate_movement_diagnostics,
+    )
 
     result = ScenarioResult(
         scenario_name=scenario_path.parent.name,
@@ -106,9 +130,29 @@ def run_scenario(scenario_path: Path, data_dir: Path, verbose: bool = False, see
     start_time = time.time()
 
     try:
-        # Load scenario
-        loader = ScenarioLoader(data_dir)
-        ctx = loader.load(scenario_path, seed=seed)
+        prepared = SimulationRuntimeFactory().prepare(
+            scenario_path,
+            data_dir,
+            (AnalysisVariant(variant_id="scenario-evaluator"),),
+        )
+        session = prepared.build(
+            "scenario-evaluator",
+            seed=seed,
+            max_ticks=20000,
+            recorder_factory=lambda context: SimulationRecorder(
+                context.event_bus,
+            ),
+            engine_config=EngineConfig(
+                max_ticks=20000,
+                snapshot_interval_ticks=0,
+            ),
+        )
+        ctx = session.context
+        recorder = session.recorder
+        if recorder is None:
+            raise RuntimeError(
+                "scenario evaluator runtime did not publish its recorder",
+            )
 
         # Record initial positions
         initial_positions: dict[str, tuple[float, float]] = {}
@@ -116,9 +160,36 @@ def run_scenario(scenario_path: Path, data_dir: Path, verbose: bool = False, see
         for side, units in ctx.units_by_side.items():
             initial_counts[side] = len(units)
             for u in units:
-                initial_positions[u.entity_id] = (
-                    u.position.easting, u.position.northing
+                initial_positions[u.entity_id] = (u.position.easting, u.position.northing)
+        known_unit_ids = set(initial_positions)
+
+        def _capture_reinforcement_start(
+            event: ReinforcementArrivedEvent,
+        ) -> None:
+            current_units = ctx.all_units()
+            arrived = [unit for unit in current_units if unit.entity_id not in known_unit_ids]
+            if (
+                len(arrived) != event.unit_count
+                or any(unit.side != event.side for unit in arrived)
+                or tuple(unit.unit_type for unit in arrived) != event.unit_types
+            ):
+                raise RuntimeError(
+                    "reinforcement event disagrees with the runtime roster",
                 )
+            for unit in arrived:
+                initial_positions[unit.entity_id] = (
+                    unit.position.easting,
+                    unit.position.northing,
+                )
+                known_unit_ids.add(unit.entity_id)
+
+        # ReinforcementArrivedEvent dispatch is synchronous and occurs after
+        # runtime registration but before movement in that engine tick.  The
+        # captured values are therefore the exact construction positions.
+        ctx.event_bus.subscribe(
+            ReinforcementArrivedEvent,
+            _capture_reinforcement_start,
+        )
         result.sides = initial_counts
         result.initial_total = sum(initial_counts.values())
 
@@ -133,85 +204,90 @@ def run_scenario(scenario_path: Path, data_dir: Path, verbose: bool = False, see
                     best_range = r
             unit_weapons_info[eid] = (count, best_range)
 
-        # Set up recorder and victory evaluator
-        recorder = SimulationRecorder(ctx.event_bus)
-
-        # Build victory evaluator from scenario config
-        victory_eval = None
-        cfg = ctx.config
-        if hasattr(cfg, 'victory_conditions') and cfg.victory_conditions:
-            from stochastic_warfare.simulation.victory import (
-                VictoryEvaluator, ObjectiveState,
-            )
-            from stochastic_warfare.core.types import Position
-            objectives = []
-            if hasattr(cfg, 'objectives') and cfg.objectives:
-                for obj in cfg.objectives:
-                    pos = obj.position if hasattr(obj, 'position') else [0, 0]
-                    objectives.append(ObjectiveState(
-                        objective_id=obj.objective_id,
-                        position=Position(
-                            easting=pos[0] if len(pos) > 0 else 0,
-                            northing=pos[1] if len(pos) > 1 else 0,
-                        ),
-                        radius_m=obj.radius_m,
-                    ))
-            # VictoryConditionConfig from scenario module is compatible
-            victory_eval = VictoryEvaluator(
-                objectives=objectives,
-                conditions=cfg.victory_conditions,
-                event_bus=ctx.event_bus,
-                max_duration_s=cfg.duration_hours * 3600.0,
-            )
-
-        # Set up engine
-        engine_config = EngineConfig(max_ticks=20000, snapshot_interval_ticks=0)
-        engine = SimulationEngine(
-            ctx,
-            config=engine_config,
-            victory_evaluator=victory_eval,
-            recorder=recorder,
-        )
-
         # Record starting resolution
-        result.started_tactical = str(engine.resolution) != "TickResolution.STRATEGIC"
+        result.started_tactical = str(session.engine.resolution) != "TickResolution.STRATEGIC"
 
         # Run
-        run_result = engine.run()
+        run_result = session.run_to_completion()
 
         result.ticks_executed = run_result.ticks_executed
         result.sim_duration_s = run_result.duration_s
         if run_result.victory_result:
             result.victory_side = run_result.victory_result.winning_side
             result.victory_condition = run_result.victory_result.condition_type
-            result.victory_message = run_result.victory_result.message
+        result.victory_message = run_result.victory_result.message
 
         # Track if tactical resolution was reached
+        recorded_events = recorder.events
         result.reached_tactical = result.started_tactical or any(
-            e.event_type in ('BattleStartedEvent', 'EngagementEvent')
-            for e in recorder._events
+            event.event_type
+            in ("BattleStartedEvent", "EngagementEvent")
+            for event in recorded_events
         )
 
         # Analyze events
-        result.total_events = len(recorder._events)
-        for e in recorder._events:
+        result.total_events = len(recorded_events)
+        for e in recorded_events:
             et = e.event_type
-            if 'Engagement' in et or 'Battle' in et:
+            result.event_type_counts[et] = result.event_type_counts.get(et, 0) + 1
+            event_data = e.data or {}
+            if et == "EngagementEvent":
+                weapon = next(
+                    (
+                        event_data[key]
+                        for key in (
+                            "weapon_name",
+                            "weapon_id",
+                            "weapon",
+                        )
+                        if isinstance(event_data.get(key), str)
+                    ),
+                    "<unidentified>",
+                )
+                result.engagement_weapon_counts[weapon] = result.engagement_weapon_counts.get(weapon, 0) + 1
+            if any(
+                term in et
+                for term in (
+                    "Detect",
+                    "Fire",
+                    "Target",
+                    "Engagement",
+                )
+            ):
+                pending_values: list[Any] = [event_data]
+                referenced_strings: set[str] = set()
+                while pending_values:
+                    value = pending_values.pop()
+                    if isinstance(value, str):
+                        referenced_strings.add(value)
+                    elif isinstance(value, dict):
+                        pending_values.extend(value.values())
+                    elif isinstance(value, (list, tuple, set)):
+                        pending_values.extend(value)
+                for unit_id in sorted(
+                    referenced_strings & known_unit_ids,
+                ):
+                    counts = result.unit_combat_event_counts.setdefault(
+                        unit_id,
+                        {},
+                    )
+                    counts[et] = counts.get(et, 0) + 1
+            if "Engagement" in et or "Battle" in et:
                 result.engagement_events += 1
             # Phase 91: count combat_damage destructions as engagements for
             # aggregate models (melee, archery, volley fire) that don't publish
             # EngagementEvent but do apply damage directly.
-            if 'Destroy' in et:
-                _cause = (e.data or {}).get('cause', '') if hasattr(e, 'data') else ''
-                if _cause == 'combat_damage':
+            if "Destroy" in et:
+                _cause = (e.data or {}).get("cause", "") if hasattr(e, "data") else ""
+                if _cause == "combat_damage":
                     result.engagement_events += 1
-            if 'Damage' in et or 'Hit' in et:
+            if "Damage" in et or "Hit" in et:
                 result.damage_events += 1
-            if 'Destroy' in et or 'Killed' in et or 'Sunk' in et or 'Downed' in et:
+            if "Destroy" in et or "Killed" in et or "Sunk" in et or "Downed" in et:
                 result.destruction_events += 1
-            if 'Morale' in et:
+            if "Morale" in et:
                 result.morale_events += 1
-            if 'Fire' in et or 'Shot' in et or 'Launch' in et or 'Volley' in et or 'Engagement' in et:
+            if "Fire" in et or "Shot" in et or "Launch" in et or "Volley" in et or "Engagement" in et:
                 result.weapon_fire_events += 1
 
         # Analyze final unit states
@@ -223,6 +299,33 @@ def run_scenario(scenario_path: Path, data_dir: Path, verbose: bool = False, see
 
         unit_details = []
         side_positions: dict[str, list[tuple[float, float]]] = {}
+        movement_evaluation = evaluate_movement_diagnostics(
+            ctx.movement_diagnostics,
+            ctx.units_by_side,
+            context=ctx,
+        )
+        movement_fields = movement_evaluation.fields_by_unit()
+        final_unit_ids = {unit.entity_id for units in ctx.units_by_side.values() for unit in units}
+        if final_unit_ids != set(initial_positions):
+            raise RuntimeError(
+                "scenario evaluator did not capture every constructed unit's start position",
+            )
+        constructed_sides = {
+            side: len(units)
+            for side, units in ctx.units_by_side.items()
+        }
+        constructed_total = sum(constructed_sides.values())
+        if constructed_total != len(initial_positions):
+            raise RuntimeError(
+                "scenario evaluator constructed-roster counts disagree with "
+                "captured unit identities",
+            )
+        result.constructed_sides = constructed_sides
+        result.constructed_total = constructed_total
+        result.semantic_stuck_count = movement_evaluation.stuck_count
+        result.semantic_stuck_population = movement_evaluation.stuck_population
+        result.semantic_blocked_count = movement_evaluation.resource_blocked_count
+        result.semantic_blocked_population = movement_evaluation.resource_blocked_population
 
         for side, units in ctx.units_by_side.items():
             active_count = 0
@@ -231,16 +334,12 @@ def run_scenario(scenario_path: Path, data_dir: Path, verbose: bool = False, see
                 side_positions[side] = []
 
             for u in units:
-                status_str = u.status.name if hasattr(u.status, 'name') else str(u.status)
+                status_str = u.status.name if hasattr(u.status, "name") else str(u.status)
                 end_pos = (u.position.easting, u.position.northing)
-                start = initial_positions.get(u.entity_id, end_pos)
-                dist = math.sqrt(
-                    (end_pos[0] - start[0])**2 + (end_pos[1] - start[1])**2
-                )
+                start = initial_positions[u.entity_id]
+                dist = math.sqrt((end_pos[0] - start[0]) ** 2 + (end_pos[1] - start[1]) ** 2)
 
-                wpn_count, best_range = unit_weapons_info.get(
-                    u.entity_id, (0, 0.0)
-                )
+                wpn_count, best_range = unit_weapons_info.get(u.entity_id, (0, 0.0))
 
                 detail = UnitDiagnostics(
                     entity_id=u.entity_id,
@@ -253,7 +352,9 @@ def run_scenario(scenario_path: Path, data_dir: Path, verbose: bool = False, see
                     weapons_count=wpn_count,
                     best_weapon_range=best_range,
                 )
-                unit_details.append(asdict(detail))
+                detail_fields = asdict(detail)
+                detail_fields.update(movement_fields[u.entity_id])
+                unit_details.append(detail_fields)
 
                 if u.status == UnitStatus.ACTIVE:
                     active_count += 1
@@ -288,19 +389,18 @@ def run_scenario(scenario_path: Path, data_dir: Path, verbose: bool = False, see
             if len(positions) > 1:
                 cx = sum(p[0] for p in positions) / len(positions)
                 cy = sum(p[1] for p in positions) / len(positions)
-                var = sum(
-                    (p[0] - cx)**2 + (p[1] - cy)**2 for p in positions
-                ) / len(positions)
+                var = sum((p[0] - cx) ** 2 + (p[1] - cy) ** 2 for p in positions) / len(positions)
                 result.final_position_spread[side] = round(math.sqrt(var), 1)
             elif len(positions) == 1:
                 result.final_position_spread[side] = 0.0
 
         result.unit_details = unit_details
+        result.issues.extend(movement_evaluation.issues)
 
         # Detect issues
         if result.total_casualties == 0 and result.ticks_executed > 10:
             # Skip CBRN / ISR scenarios where zero casualties is expected
-            non_combat = ('cbrn_chemical', 'space_isr')
+            non_combat = ("cbrn_chemical", "space_isr")
             if not any(tag in result.scenario_name for tag in non_combat):
                 result.issues.append("ZERO_CASUALTIES")
         if result.engagement_events == 0 and result.ticks_executed > 10 and result.total_casualties == 0:
@@ -308,7 +408,7 @@ def run_scenario(scenario_path: Path, data_dir: Path, verbose: bool = False, see
             # Aggregate models (volley fire, archery) produce casualties without
             # EngagementEvent events.
             result.issues.append("ZERO_ENGAGEMENTS")
-        if result.units_that_moved == 0 and result.initial_total > 0:
+        if result.units_that_moved == 0 and result.constructed_total > 0:
             result.issues.append("NO_MOVEMENT")
         if result.damage_events == 0 and result.engagement_events > 0 and result.total_casualties == 0:
             result.issues.append("ENGAGEMENTS_BUT_NO_DAMAGE")
@@ -317,33 +417,11 @@ def run_scenario(scenario_path: Path, data_dir: Path, verbose: bool = False, see
         # Skip if side lost >50% — survivors naturally cluster after collapse
         for side, spread in result.final_position_spread.items():
             active = result.final_active.get(side, 0)
-            total = result.sides.get(side, 0)
+            total = result.constructed_sides.get(side, 0)
             if total > 0 and (total - active) / total > 0.5:
                 continue  # side lost majority — clustering is expected
             if spread < 50 and active > 2:
                 result.issues.append(f"CENTROID_COLLAPSE_{side}")
-
-        # Check for stuck units (active, have weapons, didn't move much)
-        # Exclude defensive-side units — they are supposed to hold position
-        _def_sides = set()
-        _cal_ov = getattr(cfg, 'calibration_overrides', None)
-        if isinstance(_cal_ov, dict):
-            _def_sides = set(_cal_ov.get('defensive_sides', []))
-        elif _cal_ov is not None:
-            _def_sides = set(getattr(_cal_ov, 'defensive_sides', None) or [])
-        stuck_count = 0
-        non_defensive_total = 0
-        for d in unit_details:
-            if d['side'] in _def_sides:
-                continue  # defensive units hold position by design
-            non_defensive_total += 1
-            if (d['status'] == 'ACTIVE'
-                    and d['distance_moved'] < 10
-                    and d['weapons_count'] > 0
-                    and d['best_weapon_range'] > 0):
-                stuck_count += 1
-        if stuck_count > non_defensive_total * 0.5 and non_defensive_total > 4:
-            result.issues.append(f"MANY_STUCK_UNITS({stuck_count}/{non_defensive_total})")
 
     except Exception as exc:
         result.success = False
@@ -359,10 +437,10 @@ def find_all_scenarios(data_dir: Path) -> list[Path]:
     scenarios = []
     for p in sorted(data_dir.rglob("scenario.yaml")):
         # Skip test_campaign_* scenarios (internal test fixtures)
-        if 'test_campaign' in p.parent.name:
+        if "test_campaign" in p.parent.name:
             continue
         # Skip benchmark scenarios (Phase 90 — too large for evaluator timeout)
-        if p.parent.name.startswith('benchmark_'):
+        if p.parent.name.startswith("benchmark_"):
             continue
         scenarios.append(p)
     return scenarios
@@ -376,8 +454,10 @@ def print_summary(results: list[ScenarioResult]) -> None:
     print("=" * 120)
 
     # Summary table
-    print(f"\n{'Scenario':<35} {'Status':<8} {'Ticks':>6} {'Casualties':>10} "
-          f"{'Engagements':>11} {'Moved':>6} {'Stuck':>6} {'Issues'}")
+    print(
+        f"\n{'Scenario':<35} {'Status':<8} {'Ticks':>6} {'Casualties':>10} "
+        f"{'Engagements':>11} {'Moved':>6} {'Unmoved':>8} {'Issues'}"
+    )
     print("-" * 120)
 
     issue_scenarios = []
@@ -391,17 +471,19 @@ def print_summary(results: list[ScenarioResult]) -> None:
         else:
             status = "OK"
 
-        moved_str = f"{r.units_that_moved}/{r.initial_total}"
-        stuck_str = f"{r.units_that_didnt_move}/{r.initial_total}"
+        moved_str = f"{r.units_that_moved}/{r.constructed_total}"
+        unmoved_str = f"{r.units_that_didnt_move}/{r.constructed_total}"
 
         issues_str = ", ".join(r.issues) if r.issues else ""
         if not r.success:
             # Truncate error for table
-            issues_str = r.error.split('\n')[0][:50]
+            issues_str = r.error.split("\n")[0][:50]
 
-        print(f"{r.scenario_name:<35} {status:<8} {r.ticks_executed:>6} "
-              f"{r.total_casualties:>10} {r.engagement_events:>11} "
-              f"{moved_str:>6} {stuck_str:>6} {issues_str}")
+        print(
+            f"{r.scenario_name:<35} {status:<8} {r.ticks_executed:>6} "
+            f"{r.total_casualties:>10} {r.engagement_events:>11} "
+            f"{moved_str:>6} {unmoved_str:>8} {issues_str}"
+        )
 
         if r.issues or not r.success:
             issue_scenarios.append(r)
@@ -423,35 +505,51 @@ def print_summary(results: list[ScenarioResult]) -> None:
             print(f"  Issues: {', '.join(r.issues)}")
             print(f"  Victory: {r.victory_condition} — {r.victory_message}")
             print(f"  Duration: {r.sim_duration_s:.0f}s sim, {r.duration_wall_s:.1f}s wall")
-            print(f"  Forces: {r.sides}")
+            print(f"  Initial forces: {r.sides}")
+            print(f"  Constructed forces: {r.constructed_sides}")
             print(f"  Final active: {r.final_active}")
             print(f"  Final destroyed: {r.final_destroyed}")
-            print(f"  Events: total={r.total_events}, engage={r.engagement_events}, "
-                  f"damage={r.damage_events}, destroy={r.destruction_events}")
-            print(f"  Movement: moved={r.units_that_moved}, stuck={r.units_that_didnt_move}, "
-                  f"avg_dist={r.avg_distance_moved:.0f}m, max_dist={r.max_distance_moved:.0f}m")
+            print(
+                f"  Events: total={r.total_events}, engage={r.engagement_events}, "
+                f"damage={r.damage_events}, destroy={r.destruction_events}"
+            )
+            print(
+                f"  Raw displacement: moved={r.units_that_moved}, "
+                f"unmoved={r.units_that_didnt_move}, "
+                f"avg_dist={r.avg_distance_moved:.0f}m, max_dist={r.max_distance_moved:.0f}m"
+            )
+            print(
+                "  Semantic movement: "
+                f"stuck={r.semantic_stuck_count}/"
+                f"{r.semantic_stuck_population}, "
+                f"resource_blocked={r.semantic_blocked_count}/"
+                f"{r.semantic_blocked_population}"
+            )
             print(f"  Position spread: {r.final_position_spread}")
-            print(f"  Started tactical: {r.started_tactical}, "
-                  f"Reached tactical: {r.reached_tactical}")
+            print(f"  Started tactical: {r.started_tactical}, Reached tactical: {r.reached_tactical}")
 
-            # Show stuck units
-            stuck = [d for d in r.unit_details
-                     if d['status'] == 'ACTIVE' and d['distance_moved'] < 10]
-            if stuck and len(stuck) <= 20:
-                print("  Stuck active units:")
-                for d in stuck:
-                    print(f"    {d['entity_id']} ({d['unit_type']}, {d['side']}) "
-                          f"pos=({d['end_pos'][0]:.0f}, {d['end_pos'][1]:.0f}) "
-                          f"weapons={d['weapons_count']} "
-                          f"best_range={d['best_weapon_range']:.0f}m")
+            # The 10 m threshold is a raw presentation aid, not a semantic
+            # stuck classification.
+            limited_displacement = [
+                detail for detail in r.unit_details if (detail["status"] == "ACTIVE" and detail["distance_moved"] < 10)
+            ]
+            if limited_displacement and len(limited_displacement) <= 20:
+                print("  Active units with <10m raw displacement:")
+                for d in limited_displacement:
+                    print(
+                        f"    {d['entity_id']} ({d['unit_type']}, {d['side']}) "
+                        f"pos=({d['end_pos'][0]:.0f}, {d['end_pos'][1]:.0f}) "
+                        f"weapons={d['weapons_count']} "
+                        f"best_range={d['best_weapon_range']:.0f}m "
+                        f"disposition={d['movement_disposition']}"
+                    )
 
     # Summary
     print(f"\n{'=' * 120}")
-    print(f"TOTALS: {len(results)} scenarios — "
-          f"{len(ok_scenarios)} OK, "
-          f"{len(issue_scenarios)} with issues")
+    print(f"TOTALS: {len(results)} scenarios — {len(ok_scenarios)} OK, {len(issue_scenarios)} with issues")
     print("  Issues breakdown:")
     from collections import Counter
+
     all_issues = []
     for r in results:
         all_issues.extend(r.issues)
@@ -460,25 +558,39 @@ def print_summary(results: list[ScenarioResult]) -> None:
     print("=" * 120)
 
 
-def main():
+def main() -> int:
     parser = argparse.ArgumentParser(description="Evaluate all scenarios")
     parser.add_argument("--scenario", type=str, help="Run only this scenario (directory name)")
+    parser.add_argument(
+        "--scenario-file",
+        type=Path,
+        help=(
+            "Run one exact scenario YAML, including fixtures that are not part of the shipped scenario discovery set."
+        ),
+    )
     parser.add_argument("--output", type=str, help="Save results to JSON file")
     parser.add_argument("--verbose", action="store_true", help="Show per-unit details")
-    parser.add_argument("--no-details", action="store_true",
-                        help="Omit per-unit details from JSON output")
-    parser.add_argument("--seed", type=int, default=42,
-                        help="PRNG seed (default: 42)")
+    parser.add_argument("--no-details", action="store_true", help="Omit per-unit details from JSON output")
+    parser.add_argument("--seed", type=int, default=42, help="PRNG seed (default: 42)")
     args = parser.parse_args()
 
     data_dir = project_root / "data"
-    all_scenarios = find_all_scenarios(data_dir)
+    if args.scenario and args.scenario_file:
+        parser.error("--scenario and --scenario-file are mutually exclusive")
+    if args.scenario_file:
+        scenario_file = args.scenario_file.resolve()
+        if not scenario_file.is_file():
+            print(f"Scenario file does not exist: {scenario_file}")
+            return 1
+        all_scenarios = [scenario_file]
+    else:
+        all_scenarios = find_all_scenarios(data_dir)
 
     if args.scenario:
         all_scenarios = [s for s in all_scenarios if args.scenario in s.parent.name]
         if not all_scenarios:
             print(f"No scenarios matching '{args.scenario}'")
-            sys.exit(1)
+            return 1
 
     print(f"Found {len(all_scenarios)} scenarios to evaluate")
     print(f"Scenarios: {[s.parent.name for s in all_scenarios]}\n")
@@ -488,11 +600,8 @@ def main():
         name = scenario_path.parent.name
         print(f"[{i}/{len(all_scenarios)}] Running {name}...", end=" ", flush=True)
         r = run_scenario(scenario_path, data_dir, verbose=args.verbose, seed=args.seed)
-        status = "OK" if r.success and not r.issues else (
-            "ERROR" if not r.success else f"WARN({','.join(r.issues)})"
-        )
-        print(f"{status} ({r.ticks_executed} ticks, {r.total_casualties} casualties, "
-              f"{r.duration_wall_s:.1f}s)")
+        status = "OK" if r.success and not r.issues else ("ERROR" if not r.success else f"WARN({','.join(r.issues)})")
+        print(f"{status} ({r.ticks_executed} ticks, {r.total_casualties} casualties, {r.duration_wall_s:.1f}s)")
         results.append(r)
 
     print_summary(results)
@@ -502,12 +611,13 @@ def main():
         for r in results:
             d = asdict(r)
             if args.no_details:
-                d.pop('unit_details', None)
+                d.pop("unit_details", None)
             out_data.append(d)
-        with open(args.output, 'w') as f:
+        with open(args.output, "w") as f:
             json.dump(out_data, f, indent=2, default=str)
         print(f"\nResults saved to {args.output}")
+    return 1 if any(not result.success for result in results) else 0
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())

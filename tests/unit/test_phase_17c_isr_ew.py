@@ -2,12 +2,17 @@
 
 from __future__ import annotations
 
-import types
-
 import numpy as np
 import pytest
 
 from stochastic_warfare.core.events import EventBus
+from stochastic_warfare.core.types import Position
+from stochastic_warfare.entities.base import Unit
+from stochastic_warfare.entities.personnel import (
+    CrewMember,
+    CrewRole,
+    SkillLevel,
+)
 from stochastic_warfare.space.constellations import (
     ConstellationDefinition,
     ConstellationManager,
@@ -60,6 +65,7 @@ def _make_imaging_constellation(
         sensor_resolution_m=resolution,
         sensor_swath_km=20.0,
         sensor_type=sensor_type,
+        imint_position_sigma_m=2.0,
     )
 
 
@@ -85,19 +91,43 @@ def _make_ew_constellation(side: str = "blue") -> ConstellationDefinition:
     )
 
 
-def _make_target(entity_id: str = "t1", strength: int = 10):
-    return types.SimpleNamespace(entity_id=entity_id, strength=strength)
+def _make_target(entity_id: str = "t1", strength: int = 10) -> Unit:
+    return Unit(
+        entity_id=entity_id,
+        position=Position(1000.0, 2000.0, 0.0),
+        side="red",
+        personnel=[
+            CrewMember(
+                member_id=f"{entity_id}_crew_{index}",
+                role=CrewRole.GENERIC,
+                skill=SkillLevel.TRAINED,
+                experience=0.5,
+            )
+            for index in range(strength)
+        ],
+    )
 
 
 def _setup_isr(sensor_type: str = "optical", resolution: float = 0.3):
     orbits = OrbitalMechanicsEngine()
     bus = _bus()
     rng = _rng()
-    cfg = _config()
+    constellation_id = f"img_{sensor_type}"
+    cfg = _config(
+        constellation_ids=[constellation_id],
+        imint_fusion_constellation_ids=[constellation_id],
+    )
     clock = make_clock()
     cm = ConstellationManager(orbits, bus, rng, cfg)
     cm.add_constellation(_make_imaging_constellation(sensor_type=sensor_type, resolution=resolution))
-    isr = SpaceISREngine(cm, cfg, bus, rng, clock)
+    isr = SpaceISREngine(
+        cm,
+        cfg,
+        bus,
+        rng,
+        clock,
+        scenario_sides=("blue", "red"),
+    )
     return isr, cm
 
 
@@ -139,14 +169,28 @@ class TestISROverpass:
         reported2 = {e.satellite_id for e in events2}
         assert reported1.isdisjoint(reported2) or len(reported2) == 0
 
-    def test_timing_gap(self) -> None:
+    def test_timing_gap(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """After 120s gap, satellite can be re-reported."""
         isr, cm = _setup_isr()
-        cm.update(100.0, 100.0)
-        isr.check_overpass("blue", 100.0)
-        # After 120s gap, should allow re-reporting
-        isr.check_overpass("blue", 300.0)
-        # No assertion on count — just verify no crash
+        satellite = cm.all_satellites()[0]
+        monkeypatch.setattr(
+            cm,
+            "visible_satellites",
+            lambda *_args, **_kwargs: [satellite],
+        )
+
+        first = isr.check_overpass("blue", 100.0)
+        inside_hysteresis = isr.check_overpass("blue", 159.0)
+        after_gap = isr.check_overpass("blue", 220.0)
+
+        assert [event.satellite_id for event in first] == [
+            satellite.satellite_id,
+        ]
+        assert inside_hysteresis == []
+        assert [event.satellite_id for event in after_gap] == [
+            satellite.satellite_id,
+        ]
+        assert isr._last_overpass_time[satellite.satellite_id] == 220.0
 
     def test_side_filtering(self) -> None:
         """ISR only reports for the matching side."""
@@ -181,56 +225,147 @@ class TestISRReports:
         isr, cm = _setup_isr("optical", 0.3)
         cm.update(3600.0, 3600.0)
         targets = [_make_target("t1", 20)]  # platoon size
-        reports = isr.generate_isr_reports("blue", targets, 3600.0, cloud_cover=0.0)
+        reports = isr.generate_isr_reports(
+            "blue",
+            "red",
+            targets,
+            3600.0,
+            cloud_cover=0.0,
+        )
         # May or may not have visible sats — just check structure
         for r in reports:
-            assert "target_id" in r
-            assert "resolution_m" in r
+            assert r.target_id == "t1"
+            assert r.resolution_m == 0.3
 
     def test_sar_unblocked_by_cloud(self) -> None:
         """SAR satellite works through clouds."""
         orbits = OrbitalMechanicsEngine()
         bus = _bus()
         rng = _rng()
-        cfg = _config()
+        cfg = _config(
+            constellation_ids=["img_sar"],
+            imint_fusion_constellation_ids=["img_sar"],
+        )
         cm = ConstellationManager(orbits, bus, rng, cfg)
-        cm.add_constellation(_make_imaging_constellation(
-            ctype=int(ConstellationType.IMAGING_SAR),
-            sensor_type="sar", resolution=1.0,
-        ))
-        isr = SpaceISREngine(cm, cfg, bus, rng)
+        cm.add_constellation(
+            _make_imaging_constellation(
+                ctype=int(ConstellationType.IMAGING_SAR),
+                sensor_type="sar",
+                resolution=1.0,
+            )
+        )
+        isr = SpaceISREngine(
+            cm,
+            cfg,
+            bus,
+            rng,
+            scenario_sides=("blue", "red"),
+        )
         cm.update(3600.0, 3600.0)
         targets = [_make_target("t1", 20)]
-        reports = isr.generate_isr_reports("blue", targets, 3600.0, cloud_cover=0.9)
+        reports = isr.generate_isr_reports(
+            "blue",
+            "red",
+            targets,
+            3600.0,
+            cloud_cover=0.9,
+        )
         # SAR should not be blocked by cloud > 0.7
         # (whether reports exist depends on visibility geometry)
-        assert isinstance(reports, list)
+        assert isinstance(reports, tuple)
 
     def test_cloud_blocks_optical(self) -> None:
         """Optical blocked by cloud > 0.7."""
         isr, cm = _setup_isr("optical", 0.3)
         cm.update(3600.0, 3600.0)
         targets = [_make_target("t1", 20)]
-        reports = isr.generate_isr_reports("blue", targets, 3600.0, cloud_cover=0.9)
+        reports = isr.generate_isr_reports(
+            "blue",
+            "red",
+            targets,
+            3600.0,
+            cloud_cover=0.9,
+        )
         assert len(reports) == 0  # Optical blocked
 
     def test_resolution_limit(self) -> None:
-        """Low-resolution sat can't detect vehicles."""
-        isr, cm = _setup_isr("optical", 10.0)  # 10m resolution
-        cm.update(3600.0, 3600.0)
-        targets = [_make_target("t1", 2)]  # vehicle = need <0.5m
-        reports = isr.generate_isr_reports("blue", targets, 3600.0, cloud_cover=0.0)
-        # 10m resolution can't see vehicles (threshold 0.5m)
-        assert len(reports) == 0
+        """A known-visible vehicle is resolved at 0.5 m, not above it."""
+        target = _make_target("t1", 2)
+        threshold = _RESOLUTION_THRESHOLD["vehicle"]
+        known_visible_s = 31_560.0
+        assert threshold == 0.5
+
+        coarse_isr, coarse_cm = _setup_isr(
+            "optical",
+            threshold + 1.0e-6,
+        )
+        coarse_cm.update(known_visible_s, known_visible_s)
+        coarse_visible = coarse_cm.visible_satellites(
+            "img_optical",
+            33.0,
+            35.0,
+            known_visible_s,
+            10.0,
+        )
+        coarse_overpass = coarse_isr.check_overpass(
+            "blue",
+            known_visible_s,
+        )
+        coarse_reports = coarse_isr.generate_isr_reports(
+            "blue",
+            "red",
+            [target],
+            known_visible_s,
+            cloud_cover=0.0,
+        )
+        assert [satellite.satellite_id for satellite in coarse_visible] == ["img_optical_p1_s1"]
+        assert [event.satellite_id for event in coarse_overpass] == [
+            "img_optical_p1_s1",
+        ]
+        assert coarse_reports == ()
+
+        exact_isr, exact_cm = _setup_isr("optical", threshold)
+        exact_cm.update(known_visible_s, known_visible_s)
+        exact_visible = exact_cm.visible_satellites(
+            "img_optical",
+            33.0,
+            35.0,
+            known_visible_s,
+            10.0,
+        )
+        exact_overpass = exact_isr.check_overpass(
+            "blue",
+            known_visible_s,
+        )
+        exact_reports = exact_isr.generate_isr_reports(
+            "blue",
+            "red",
+            [target],
+            known_visible_s,
+            cloud_cover=0.0,
+        )
+        assert [satellite.satellite_id for satellite in exact_visible] == ["img_optical_p1_s1"]
+        assert [event.satellite_id for event in exact_overpass] == [
+            "img_optical_p1_s1",
+        ]
+        assert len(exact_reports) == 1
+        assert exact_reports[0].target_id == target.entity_id
+        assert exact_reports[0].resolution_m == threshold
 
     def test_delay_field(self) -> None:
         """Reports include processing delay."""
         isr, cm = _setup_isr("optical", 0.3)
         cm.update(3600.0, 3600.0)
         targets = [_make_target("t1", 20)]
-        reports = isr.generate_isr_reports("blue", targets, 3600.0, cloud_cover=0.0)
+        reports = isr.generate_isr_reports(
+            "blue",
+            "red",
+            targets,
+            3600.0,
+            cloud_cover=0.0,
+        )
         for r in reports:
-            assert r["delay_s"] == 300.0  # default isr_processing_delay_s
+            assert r.available_at_s - r.observed_at_s == 300.0
 
 
 # ---------------------------------------------------------------------------
@@ -385,11 +520,12 @@ class TestBMDIntegration:
 class TestISRState:
     def test_roundtrip(self) -> None:
         isr, cm = _setup_isr()
-        isr._last_overpass_time["test_sat"] = 1000.0
+        satellite_id = cm.all_satellites()[0].satellite_id
+        isr._last_overpass_time[satellite_id] = 1000.0
         state = isr.get_state()
         isr2, _ = _setup_isr()
         isr2.set_state(state)
-        assert isr2._last_overpass_time["test_sat"] == 1000.0
+        assert isr2._last_overpass_time[satellite_id] == 1000.0
 
     def test_ew_state(self) -> None:
         ew, _ = _setup_ew()

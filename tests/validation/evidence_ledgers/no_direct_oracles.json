@@ -1,0 +1,517 @@
+{
+  "derivation_command": "/home/csmith/projects/stochastic-warfare/.venv/bin/python -m pytest --collect-only -q -p no:cacheprovider -o addopts=",
+  "entries": [
+    {
+      "classification": "invariant_only",
+      "node_id": "tests/api/test_concurrency.py::test_unsubscribe_nonexistent_no_error",
+      "rationale": "This node establishes only its named non-behavioral invariant until an observable postcondition and negative control are added.",
+      "strongest_oracle": "successful completion without a direct oracle"
+    },
+    {
+      "classification": "structural_only",
+      "node_id": "tests/api/test_phase_39_packaging.py::TestMainModule::test_main_module_import_does_not_raise_structural_diagnostic",
+      "rationale": "The exact @pytest.mark.structural marker and absence of a direct assertion identify this as a reviewed compatibility diagnostic; it cannot support a behavioral capability or closure claim.",
+      "strongest_oracle": "explicit structural marker with successful completion but no direct assertion"
+    },
+    {
+      "classification": "invariant_only",
+      "node_id": "tests/api/test_reliability.py::test_double_init_no_error",
+      "rationale": "This node establishes only its named non-behavioral invariant until an observable postcondition and negative control are added.",
+      "strongest_oracle": "successful completion without a direct oracle"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/integration/test_phase_111_time_on_target_checkpoint.py::test_corrupt_never_fired_boundary_is_rejected_atomically[resource--1.0-Resource last_fire_time_s observation is invalid]",
+      "rationale": "A traced local helper contains the direct oracle.",
+      "strongest_oracle": "called helper: _advance, _assert_atomic_rejection, _resource_record, _weapon_state"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/integration/test_phase_111_time_on_target_checkpoint.py::test_corrupt_never_fired_boundary_is_rejected_atomically[resource--inf-Resource last_fire_time_s observation is invalid]",
+      "rationale": "A traced local helper contains the direct oracle.",
+      "strongest_oracle": "called helper: _advance, _assert_atomic_rejection, _resource_record, _weapon_state"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/integration/test_phase_111_time_on_target_checkpoint.py::test_corrupt_never_fired_boundary_is_rejected_atomically[resource-nan-Resource last_fire_time_s observation is invalid]",
+      "rationale": "A traced local helper contains the direct oracle.",
+      "strongest_oracle": "called helper: _advance, _assert_atomic_rejection, _resource_record, _weapon_state"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/integration/test_phase_111_time_on_target_checkpoint.py::test_corrupt_never_fired_boundary_is_rejected_atomically[weapon--1.0-Weapon last_fire_time_s must be the never-fired sentinel]",
+      "rationale": "A traced local helper contains the direct oracle.",
+      "strongest_oracle": "called helper: _advance, _assert_atomic_rejection, _resource_record, _weapon_state"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/integration/test_phase_111_time_on_target_checkpoint.py::test_corrupt_never_fired_boundary_is_rejected_atomically[weapon-None-Weapon last_fire_time_s must be the never-fired sentinel]",
+      "rationale": "A traced local helper contains the direct oracle.",
+      "strongest_oracle": "called helper: _advance, _assert_atomic_rejection, _resource_record, _weapon_state"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/integration/test_phase_111_time_on_target_checkpoint.py::test_corrupt_never_fired_boundary_is_rejected_atomically[weapon-inf-Weapon last_fire_time_s must be the never-fired sentinel]",
+      "rationale": "A traced local helper contains the direct oracle.",
+      "strongest_oracle": "called helper: _advance, _assert_atomic_rejection, _resource_record, _weapon_state"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/integration/test_phase_111_time_on_target_checkpoint.py::test_corrupt_never_fired_boundary_is_rejected_atomically[weapon-nan-Weapon last_fire_time_s must be the never-fired sentinel]",
+      "rationale": "A traced local helper contains the direct oracle.",
+      "strongest_oracle": "called helper: _advance, _assert_atomic_rejection, _resource_record, _weapon_state"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/integration/test_phase_111_time_on_target_checkpoint.py::test_versionless_checkpoint_rejects_every_declared_tot_plan[False]",
+      "rationale": "A traced local helper contains the direct oracle.",
+      "strongest_oracle": "called helper: _assert_atomic_rejection"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/integration/test_phase_111_time_on_target_checkpoint.py::test_versionless_checkpoint_rejects_every_declared_tot_plan[True]",
+      "rationale": "A traced local helper contains the direct oracle.",
+      "strongest_oracle": "called helper: _assert_atomic_rejection"
+    },
+    {
+      "classification": "invariant_only",
+      "node_id": "tests/unit/simulation/test_battle_static_methods.py::TestApplyDeferredDamage::test_empty_noop",
+      "rationale": "This node establishes only its named non-behavioral invariant until an observable postcondition and negative control are added.",
+      "strongest_oracle": "successful completion without a direct oracle"
+    },
+    {
+      "classification": "invariant_only",
+      "node_id": "tests/unit/simulation/test_engine_event_handlers.py::TestHandleEquipmentBreakdown::test_missing_unit_noop",
+      "rationale": "This node establishes only its named non-behavioral invariant until an observable postcondition and negative control are added.",
+      "strongest_oracle": "successful completion without a direct oracle"
+    },
+    {
+      "classification": "invariant_only",
+      "node_id": "tests/unit/simulation/test_engine_event_handlers.py::TestHandleMaintenanceCompleted::test_missing_equip_noop",
+      "rationale": "This node establishes only its named non-behavioral invariant until an observable postcondition and negative control are added.",
+      "strongest_oracle": "successful completion without a direct oracle"
+    },
+    {
+      "classification": "invariant_only",
+      "node_id": "tests/unit/simulation/test_engine_event_handlers.py::TestHandleMaintenanceCompleted::test_missing_unit_noop",
+      "rationale": "This node establishes only its named non-behavioral invariant until an observable postcondition and negative control are added.",
+      "strongest_oracle": "successful completion without a direct oracle"
+    },
+    {
+      "classification": "invariant_only",
+      "node_id": "tests/unit/simulation/test_engine_event_handlers.py::TestHandleReturnToDuty::test_missing_unit_noop",
+      "rationale": "This node establishes only its named non-behavioral invariant until an observable postcondition and negative control are added.",
+      "strongest_oracle": "successful completion without a direct oracle"
+    },
+    {
+      "classification": "invariant_only",
+      "node_id": "tests/unit/simulation/test_engine_event_handlers.py::TestHandleReturnToDuty::test_no_method_noop",
+      "rationale": "This node establishes only its named non-behavioral invariant until an observable postcondition and negative control are added.",
+      "strongest_oracle": "successful completion without a direct oracle"
+    },
+    {
+      "classification": "invariant_only",
+      "node_id": "tests/unit/simulation/test_engine_sigint_victory.py::TestFuseSigint::test_disabled_noop",
+      "rationale": "This node establishes only its named non-behavioral invariant until an observable postcondition and negative control are added.",
+      "strongest_oracle": "successful completion without a direct oracle"
+    },
+    {
+      "classification": "invariant_only",
+      "node_id": "tests/unit/simulation/test_engine_sigint_victory.py::TestFuseSigint::test_missing_engines_noop",
+      "rationale": "This node establishes only its named non-behavioral invariant until an observable postcondition and negative control are added.",
+      "strongest_oracle": "successful completion without a direct oracle"
+    },
+    {
+      "classification": "invariant_only",
+      "node_id": "tests/unit/simulation/test_engine_sigint_victory.py::TestFuseSigint::test_no_fow_noop",
+      "rationale": "This node establishes only its named non-behavioral invariant until an observable postcondition and negative control are added.",
+      "strongest_oracle": "successful completion without a direct oracle"
+    },
+    {
+      "classification": "invariant_only",
+      "node_id": "tests/unit/test_c2_planning_process.py::TestCompleteCancel::test_cancel_nonexistent_is_noop",
+      "rationale": "This node establishes only its named non-behavioral invariant until an observable postcondition and negative control are added.",
+      "strongest_oracle": "successful completion without a direct oracle"
+    },
+    {
+      "classification": "invariant_only",
+      "node_id": "tests/unit/test_events.py::TestBasicPubSub::test_no_handler_no_error",
+      "rationale": "This node establishes only its named non-behavioral invariant until an observable postcondition and negative control are added.",
+      "strongest_oracle": "successful completion without a direct oracle"
+    },
+    {
+      "classification": "structural_only",
+      "node_id": "tests/unit/test_phase53_c2_ai.py::TestEscalationSubEngines::test_missing_political_engine_does_not_raise_structural_diagnostic",
+      "rationale": "The exact @pytest.mark.structural marker and absence of a direct assertion identify this as a reviewed compatibility diagnostic; it cannot support a behavioral capability or closure claim.",
+      "strongest_oracle": "explicit structural marker with successful completion but no direct assertion"
+    },
+    {
+      "classification": "structural_only",
+      "node_id": "tests/unit/test_phase53_c2_ai.py::TestFogOfWarWiring::test_missing_fow_does_not_raise_structural_diagnostic",
+      "rationale": "The exact @pytest.mark.structural marker and absence of a direct assertion identify this as a reviewed compatibility diagnostic; it cannot support a behavioral capability or closure claim.",
+      "strongest_oracle": "explicit structural marker with successful completion but no direct assertion"
+    },
+    {
+      "classification": "structural_only",
+      "node_id": "tests/unit/test_phase54_era_wiring.py::TestAncientEngineWiring::test_all_ancient_none_does_not_raise_structural_diagnostic",
+      "rationale": "The exact @pytest.mark.structural marker and absence of a direct assertion identify this as a reviewed compatibility diagnostic; it cannot support a behavioral capability or closure claim.",
+      "strongest_oracle": "explicit structural marker with successful completion but no direct assertion"
+    },
+    {
+      "classification": "structural_only",
+      "node_id": "tests/unit/test_phase54_era_wiring.py::TestNapoleonicEngineWiring::test_all_napoleonic_none_does_not_raise_structural_diagnostic",
+      "rationale": "The exact @pytest.mark.structural marker and absence of a direct assertion identify this as a reviewed compatibility diagnostic; it cannot support a behavioral capability or closure claim.",
+      "strongest_oracle": "explicit structural marker with successful completion but no direct assertion"
+    },
+    {
+      "classification": "structural_only",
+      "node_id": "tests/unit/test_phase54_era_wiring.py::TestWW1EngineWiring::test_barrage_engine_none_does_not_raise_structural_diagnostic",
+      "rationale": "The exact @pytest.mark.structural marker and absence of a direct assertion identify this as a reviewed compatibility diagnostic; it cannot support a behavioral capability or closure claim.",
+      "strongest_oracle": "explicit structural marker with successful completion but no direct assertion"
+    },
+    {
+      "classification": "structural_only",
+      "node_id": "tests/unit/test_phase54_era_wiring.py::TestWW2EngineWiring::test_convoy_engine_none_does_not_raise_structural_diagnostic",
+      "rationale": "The exact @pytest.mark.structural marker and absence of a direct assertion identify this as a reviewed compatibility diagnostic; it cannot support a behavioral capability or closure claim.",
+      "strongest_oracle": "explicit structural marker with successful completion but no direct assertion"
+    },
+    {
+      "classification": "structural_only",
+      "node_id": "tests/unit/test_phase54_era_wiring.py::TestWW2EngineWiring::test_strategic_bombing_none_does_not_raise_structural_diagnostic",
+      "rationale": "The exact @pytest.mark.structural marker and absence of a direct assertion identify this as a reviewed compatibility diagnostic; it cannot support a behavioral capability or closure claim.",
+      "strongest_oracle": "explicit structural marker with successful completion but no direct assertion"
+    },
+    {
+      "classification": "invariant_only",
+      "node_id": "tests/unit/test_phase56_performance_logistics.py::TestMaintenanceReadiness::test_no_maintenance_engine_no_error",
+      "rationale": "This node establishes only its named non-behavioral invariant until an observable postcondition and negative control are added.",
+      "strongest_oracle": "successful completion without a direct oracle"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/unit/test_phase_107_scenario_wiring.py::test_goose_green_initial_morale_populates_context_and_state_machine",
+      "rationale": "A traced local helper contains the direct oracle.",
+      "strongest_oracle": "called helper: _assert_unit_morale"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/unit/test_phase_109_historical_weapon_semantics.py::test_ww1_exact_weapon_semantics[bl_13_5in_mk_v-7-343.0-100-ammo_ids4-domains4]",
+      "rationale": "A traced local helper contains the direct oracle.",
+      "strongest_oracle": "called helper: _assert_weapon_semantics"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/unit/test_phase_109_historical_weapon_semantics.py::test_ww1_exact_weapon_semantics[bl_6in_mk_vii-7-152.4-130-ammo_ids3-domains3]",
+      "rationale": "A traced local helper contains the direct oracle.",
+      "strongest_oracle": "called helper: _assert_weapon_semantics"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/unit/test_phase_109_historical_weapon_semantics.py::test_ww1_exact_weapon_semantics[qf_4in_mk_iii-7-101.6-100-ammo_ids1-domains1]",
+      "rationale": "A traced local helper contains the direct oracle.",
+      "strongest_oracle": "called helper: _assert_weapon_semantics"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/unit/test_phase_109_historical_weapon_semantics.py::test_ww1_exact_weapon_semantics[qf_4in_mk_iv-7-101.6-1-ammo_ids2-domains2]",
+      "rationale": "A traced local helper contains the direct oracle.",
+      "strongest_oracle": "called helper: _assert_weapon_semantics"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/unit/test_phase_109_historical_weapon_semantics.py::test_ww1_exact_weapon_semantics[sk_l30_88mm-7-88.0-116-ammo_ids0-domains0]",
+      "rationale": "A traced local helper contains the direct oracle.",
+      "strongest_oracle": "called helper: _assert_weapon_semantics"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/unit/test_phase_109_historical_weapon_semantics.py::test_ww2_exact_weapon_semantics[bl_4in_mk_ix-7-101.6-1-ammo_ids4-domains4]",
+      "rationale": "A traced local helper contains the direct oracle.",
+      "strongest_oracle": "called helper: _assert_weapon_semantics"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/unit/test_phase_109_historical_weapon_semantics.py::test_ww2_exact_weapon_semantics[bofors_40mm_l60-8-40.0-8-ammo_ids10-domains10]",
+      "rationale": "A traced local helper contains the direct oracle.",
+      "strongest_oracle": "called helper: _assert_weapon_semantics"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/unit/test_phase_109_historical_weapon_semantics.py::test_ww2_exact_weapon_semantics[browning_303_mk_ii-9-7.7-350-ammo_ids5-domains5]",
+      "rationale": "A traced local helper contains the direct oracle.",
+      "strongest_oracle": "called helper: _assert_weapon_semantics"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/unit/test_phase_109_historical_weapon_semantics.py::test_ww2_exact_weapon_semantics[dp28_lmg-15-7.62-47-ammo_ids7-domains7]",
+      "rationale": "A traced local helper contains the direct oracle.",
+      "strongest_oracle": "called helper: _assert_weapon_semantics"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/unit/test_phase_109_historical_weapon_semantics.py::test_ww2_exact_weapon_semantics[dt_762mm-1-7.62-60-ammo_ids8-domains8]",
+      "rationale": "A traced local helper contains the direct oracle.",
+      "strongest_oracle": "called helper: _assert_weapon_semantics"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/unit/test_phase_109_historical_weapon_semantics.py::test_ww2_exact_weapon_semantics[flak_c30_20mm-8-20.0-20-ammo_ids14-domains14]",
+      "rationale": "A traced local helper contains the direct oracle.",
+      "strongest_oracle": "called helper: _assert_weapon_semantics"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/unit/test_phase_109_historical_weapon_semantics.py::test_ww2_exact_weapon_semantics[flak_m42_37mm-8-37.0-5-ammo_ids15-domains15]",
+      "rationale": "A traced local helper contains the direct oracle.",
+      "strongest_oracle": "called helper: _assert_weapon_semantics"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/unit/test_phase_109_historical_weapon_semantics.py::test_ww2_exact_weapon_semantics[hedgehog_mk10-21-182.88-24-ammo_ids17-domains17]",
+      "rationale": "A traced local helper contains the direct oracle.",
+      "strongest_oracle": "called helper: _assert_weapon_semantics"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/unit/test_phase_109_historical_weapon_semantics.py::test_ww2_exact_weapon_semantics[kwk42_75mm-0-75.0-79-ammo_ids1-domains1]",
+      "rationale": "A traced local helper contains the direct oracle.",
+      "strongest_oracle": "called helper: _assert_weapon_semantics"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/unit/test_phase_109_historical_weapon_semantics.py::test_ww2_exact_weapon_semantics[m1918a2_bar-15-7.62-20-ammo_ids9-domains9]",
+      "rationale": "A traced local helper contains the direct oracle.",
+      "strongest_oracle": "called helper: _assert_weapon_semantics"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/unit/test_phase_109_historical_weapon_semantics.py::test_ww2_exact_weapon_semantics[oerlikon_20mm_mk4-8-20.0-60-ammo_ids11-domains11]",
+      "rationale": "A traced local helper contains the direct oracle.",
+      "strongest_oracle": "called helper: _assert_weapon_semantics"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/unit/test_phase_109_historical_weapon_semantics.py::test_ww2_exact_weapon_semantics[qf_2pdr_mk_viii-8-40.0-56-ammo_ids13-domains13]",
+      "rationale": "A traced local helper contains the direct oracle.",
+      "strongest_oracle": "called helper: _assert_weapon_semantics"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/unit/test_phase_109_historical_weapon_semantics.py::test_ww2_exact_weapon_semantics[qf_6pdr_l50-0-57.0-1-ammo_ids0-domains0]",
+      "rationale": "A traced local helper contains the direct oracle.",
+      "strongest_oracle": "called helper: _assert_weapon_semantics"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/unit/test_phase_109_historical_weapon_semantics.py::test_ww2_exact_weapon_semantics[sk_c32_105mm-7-105.0-110-ammo_ids3-domains3]",
+      "rationale": "A traced local helper contains the direct oracle.",
+      "strongest_oracle": "called helper: _assert_weapon_semantics"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/unit/test_phase_109_historical_weapon_semantics.py::test_ww2_exact_weapon_semantics[sk_c35_88mm-7-88.0-220-ammo_ids2-domains2]",
+      "rationale": "A traced local helper contains the direct oracle.",
+      "strongest_oracle": "called helper: _assert_weapon_semantics"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/unit/test_phase_109_historical_weapon_semantics.py::test_ww2_exact_weapon_semantics[type89_127mm-8-127.0-250-ammo_ids16-domains16]",
+      "rationale": "A traced local helper contains the direct oracle.",
+      "strongest_oracle": "called helper: _assert_weapon_semantics"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/unit/test_phase_109_historical_weapon_semantics.py::test_ww2_exact_weapon_semantics[type96_25mm-8-25.0-15-ammo_ids12-domains12]",
+      "rationale": "A traced local helper contains the direct oracle.",
+      "strongest_oracle": "called helper: _assert_weapon_semantics"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/unit/test_phase_109_historical_weapon_semantics.py::test_ww2_exact_weapon_semantics[type97_77mm_aircraft_mg-9-7.7-500-ammo_ids6-domains6]",
+      "rationale": "A traced local helper contains the direct oracle.",
+      "strongest_oracle": "called helper: _assert_weapon_semantics"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/unit/test_phase_111_time_on_target_schema.py::test_loader_rejects_batteries_from_multiple_sides",
+      "rationale": "A traced local helper contains the direct oracle.",
+      "strongest_oracle": "called helper: _assert_loader_rejects"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/unit/test_phase_111_time_on_target_schema.py::test_loader_rejects_friendly_target",
+      "rationale": "A traced local helper contains the direct oracle.",
+      "strongest_oracle": "called helper: _assert_loader_rejects"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/unit/test_phase_111_time_on_target_schema.py::test_loader_rejects_non_damaging_ammunition[m485_illumination]",
+      "rationale": "A traced local helper contains the direct oracle.",
+      "strongest_oracle": "called helper: _assert_loader_rejects"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/unit/test_phase_111_time_on_target_schema.py::test_loader_rejects_non_damaging_ammunition[m825_smoke]",
+      "rationale": "A traced local helper contains the direct oracle.",
+      "strongest_oracle": "called helper: _assert_loader_rejects"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/unit/test_phase_111_time_on_target_schema.py::test_loader_rejects_rounds_above_exact_runtime_multiplier",
+      "rationale": "A traced local helper contains the direct oracle.",
+      "strongest_oracle": "called helper: _assert_loader_rejects"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/unit/test_phase_111_time_on_target_schema.py::test_loader_rejects_target_outside_loaded_terrain",
+      "rationale": "A traced local helper contains the direct oracle.",
+      "strongest_oracle": "called helper: _assert_loader_rejects"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/unit/test_phase_111_time_on_target_schema.py::test_loader_rejects_target_outside_weapon_range[above-maximum]",
+      "rationale": "A traced local helper contains the direct oracle.",
+      "strongest_oracle": "called helper: _assert_loader_rejects"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/unit/test_phase_111_time_on_target_schema.py::test_loader_rejects_target_outside_weapon_range[below-minimum]",
+      "rationale": "A traced local helper contains the direct oracle.",
+      "strongest_oracle": "called helper: _assert_loader_rejects"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/unit/test_phase_111_time_on_target_schema.py::test_loader_rejects_time_of_flight_below_physical_speed_bound",
+      "rationale": "A traced local helper contains the direct oracle.",
+      "strongest_oracle": "called helper: _assert_loader_rejects"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/unit/test_phase_111_time_on_target_schema.py::test_loader_rejects_unknown_target_and_battery_units[battery-missing-battery-unknown battery unit]",
+      "rationale": "A traced local helper contains the direct oracle.",
+      "strongest_oracle": "called helper: _assert_loader_rejects"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/unit/test_phase_111_time_on_target_schema.py::test_loader_rejects_unknown_target_and_battery_units[target-missing-target-target.*unknown unit]",
+      "rationale": "A traced local helper contains the direct oracle.",
+      "strongest_oracle": "called helper: _assert_loader_rejects"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/unit/test_phase_111_time_on_target_schema.py::test_loader_rejects_unsupported_weapon_category",
+      "rationale": "A traced local helper contains the direct oracle.",
+      "strongest_oracle": "called helper: _assert_loader_rejects"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/unit/test_phase_111_time_on_target_schema.py::test_loader_rejects_wrong_exact_attachment_identity[ammo_id-not_on_the_attachment-unknown ammunition 'not_on_the_attachment']",
+      "rationale": "A traced local helper contains the direct oracle.",
+      "strongest_oracle": "called helper: _assert_loader_rejects"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/unit/test_phase_111_time_on_target_schema.py::test_loader_rejects_wrong_exact_attachment_identity[source_equipment_index-99-unknown source_equipment_index 99]",
+      "rationale": "A traced local helper contains the direct oracle.",
+      "strongest_oracle": "called helper: _assert_loader_rejects"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/unit/test_phase_111_time_on_target_schema.py::test_loader_rejects_wrong_exact_attachment_identity[weapon_id-not_the_indexed_weapon-not declared 'not_the_indexed_weapon']",
+      "rationale": "A traced local helper contains the direct oracle.",
+      "strongest_oracle": "called helper: _assert_loader_rejects"
+    },
+    {
+      "classification": "invariant_only",
+      "node_id": "tests/unit/test_phase_12c_combat_depth.py::TestCompartmentDamage::test_no_damage_without_init",
+      "rationale": "This node establishes only its named non-behavioral invariant until an observable postcondition and negative control are added.",
+      "strongest_oracle": "successful completion without a direct oracle"
+    },
+    {
+      "classification": "invariant_only",
+      "node_id": "tests/unit/test_phase_13_postmortem.py::TestSelectiveLOSInvalidation::test_no_heightmap_selective_falls_back",
+      "rationale": "This node establishes only its named non-behavioral invariant until an observable postcondition and negative control are added.",
+      "strongest_oracle": "successful completion without a direct oracle"
+    },
+    {
+      "classification": "invariant_only",
+      "node_id": "tests/unit/test_phase_13_postmortem.py::TestSelectiveLOSInvalidation::test_no_los_engine_no_error",
+      "rationale": "This node establishes only its named non-behavioral invariant until an observable postcondition and negative control are added.",
+      "strongest_oracle": "successful completion without a direct oracle"
+    },
+    {
+      "classification": "invariant_only",
+      "node_id": "tests/unit/test_phase_24e_insurgency.py::TestCellActivation::test_reason_does_not_error",
+      "rationale": "The helper only asserts that setup returned a cell. The reason-bearing activation call has no observable postcondition or failing negative control, so this test cannot support behavior.",
+      "strongest_oracle": "successful activation call without an oracle for the supplied reason"
+    },
+    {
+      "classification": "structural_only",
+      "node_id": "tests/unit/test_phase_25c_tick_loop.py::TestBackwardCompat::test_absent_optional_environment_engines_do_not_raise_structural_diagnostic",
+      "rationale": "The exact @pytest.mark.structural marker and absence of a direct assertion identify this as a reviewed compatibility diagnostic; it cannot support a behavioral capability or closure claim.",
+      "strongest_oracle": "explicit structural marker with successful completion but no direct assertion"
+    },
+    {
+      "classification": "structural_only",
+      "node_id": "tests/unit/test_phase_25c_tick_loop.py::TestEWUpdate::test_absent_ew_decoy_engine_does_not_raise_structural_diagnostic",
+      "rationale": "The exact @pytest.mark.structural marker and absence of a direct assertion identify this as a reviewed compatibility diagnostic; it cannot support a behavioral capability or closure claim.",
+      "strongest_oracle": "explicit structural marker with successful completion but no direct assertion"
+    },
+    {
+      "classification": "structural_only",
+      "node_id": "tests/unit/test_phase_25c_tick_loop.py::TestEWUpdate::test_absent_ew_engine_does_not_raise_structural_diagnostic",
+      "rationale": "The exact @pytest.mark.structural marker and absence of a direct assertion identify this as a reviewed compatibility diagnostic; it cannot support a behavioral capability or closure claim.",
+      "strongest_oracle": "explicit structural marker with successful completion but no direct assertion"
+    },
+    {
+      "classification": "structural_only",
+      "node_id": "tests/unit/test_phase_25c_tick_loop.py::TestEWUpdate::test_ew_without_update_method_does_not_raise_structural_diagnostic",
+      "rationale": "The exact @pytest.mark.structural marker and absence of a direct assertion identify this as a reviewed compatibility diagnostic; it cannot support a behavioral capability or closure claim.",
+      "strongest_oracle": "explicit structural marker with successful completion but no direct assertion"
+    },
+    {
+      "classification": "invariant_only",
+      "node_id": "tests/unit/test_phase_61_infra.py::TestUnderwaterAcousticsEngine::test_update_runs_without_error",
+      "rationale": "This node establishes only its named non-behavioral invariant until an observable postcondition and negative control are added.",
+      "strongest_oracle": "successful completion without a direct oracle"
+    },
+    {
+      "classification": "structural_only",
+      "node_id": "tests/unit/test_phase_69c_deception_fow.py::TestBackwardCompat::test_missing_fow_does_not_raise_structural_diagnostic",
+      "rationale": "The exact @pytest.mark.structural marker and absence of a direct assertion identify this as a reviewed compatibility diagnostic; it cannot support a behavioral capability or closure claim.",
+      "strongest_oracle": "explicit structural marker with successful completion but no direct assertion"
+    },
+    {
+      "classification": "invariant_only",
+      "node_id": "tests/unit/test_simulation_campaign.py::TestStrategicUpdate::test_runs_without_error",
+      "rationale": "This node establishes only its named non-behavioral invariant until an observable postcondition and negative control are added.",
+      "strongest_oracle": "successful completion without a direct oracle"
+    },
+    {
+      "classification": "invariant_only",
+      "node_id": "tests/unit/test_simulation_engine.py::TestEdgeCases::test_empty_units_no_crash",
+      "rationale": "This node establishes only its named non-behavioral invariant until an observable postcondition and negative control are added.",
+      "strongest_oracle": "successful completion without a direct oracle"
+    },
+    {
+      "classification": "invariant_only",
+      "node_id": "tests/unit/test_simulation_engine.py::TestEdgeCases::test_environment_engine_failure_doesnt_crash",
+      "rationale": "This node establishes only its named non-behavioral invariant until an observable postcondition and negative control are added.",
+      "strongest_oracle": "successful completion without a direct oracle"
+    },
+    {
+      "classification": "invariant_only",
+      "node_id": "tests/unit/test_special_org.py::TestSpecialOrgManager::test_remove_nonexistent_no_error",
+      "rationale": "This node establishes only its named non-behavioral invariant until an observable postcondition and negative control are added.",
+      "strongest_oracle": "successful completion without a direct oracle"
+    },
+    {
+      "classification": "invariant_only",
+      "node_id": "tests/unit/test_staff.py::TestStaffCapabilities::test_degrade_missing_no_error",
+      "rationale": "This node establishes only its named non-behavioral invariant until an observable postcondition and negative control are added.",
+      "strongest_oracle": "successful completion without a direct oracle"
+    }
+  ],
+  "kind": "no_direct_oracles",
+  "schema_version": 1
+}

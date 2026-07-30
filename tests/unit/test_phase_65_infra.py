@@ -4,6 +4,7 @@ from __future__ import annotations
 
 
 import numpy as np
+import pytest
 
 from stochastic_warfare.simulation.calibration import CalibrationSchema
 
@@ -42,7 +43,10 @@ def test_backward_compat_no_regressions():
 # ---------------------------------------------------------------------------
 
 
-def _make_isr_engine():
+def _make_isr_engine(
+    *,
+    scenario_sides: tuple[str, ...] = (),
+):
     """Create a SpaceISREngine with minimal deps."""
     from stochastic_warfare.core.events import EventBus
     from stochastic_warfare.space.constellations import (
@@ -57,7 +61,13 @@ def _make_isr_engine():
     sc = SpaceConfig()
     orbits = OrbitalMechanicsEngine()
     cm = ConstellationManager(orbits, bus, rng, sc)
-    return SpaceISREngine(cm, sc, bus, rng)
+    return SpaceISREngine(
+        cm,
+        sc,
+        bus,
+        rng,
+        scenario_sides=scenario_sides,
+    )
 
 
 def test_isr_has_get_recent_reports():
@@ -66,37 +76,44 @@ def test_isr_has_get_recent_reports():
     assert callable(engine.get_recent_reports)
 
 
-def test_isr_get_recent_reports_returns_list_and_clears():
+def test_isr_get_recent_reports_returns_typed_queue_view():
     engine = _make_isr_engine()
-    # Manually add a report to the buffer
-    engine._recent_reports.append({"target_id": "t1", "target_position": None})
+
     reports = engine.get_recent_reports()
-    assert len(reports) == 1
-    assert reports[0]["target_id"] == "t1"
-    # Buffer should be cleared
-    assert engine.get_recent_reports() == []
+
+    assert reports == ()
+    assert isinstance(reports, tuple)
 
 
 def test_isr_get_recent_reports_clear_false_preserves():
     engine = _make_isr_engine()
-    engine._recent_reports.append({"target_id": "t2"})
+
     first = engine.get_recent_reports(clear=False)
-    assert len(first) == 1
     second = engine.get_recent_reports(clear=False)
-    assert len(second) == 1
+
+    assert first == second == ()
+    with pytest.raises(
+        RuntimeError,
+        match="successful delivery",
+    ):
+        engine.get_recent_reports(clear=True)
 
 
-def test_isr_state_includes_recent_reports():
-    engine = _make_isr_engine()
-    engine._recent_reports.append({"target_id": "t3"})
+def test_isr_state_uses_typed_queue_schema_and_round_trips():
+    scenario_sides = ("blue", "red")
+    engine = _make_isr_engine(scenario_sides=scenario_sides)
     state = engine.get_state()
-    assert "recent_reports" in state
-    assert len(state["recent_reports"]) == 1
+    assert set(state) == {
+        "last_overpass_time",
+        "last_reported_at",
+        "report_queue",
+        "next_report_sequence",
+    }
+    assert state["report_queue"] == []
 
-    # Round-trip
-    engine2 = _make_isr_engine()
+    engine2 = _make_isr_engine(scenario_sides=scenario_sides)
     engine2.set_state(state)
-    assert len(engine2._recent_reports) == 1
+    assert engine2.get_state() == state
 
 
 # ---------------------------------------------------------------------------

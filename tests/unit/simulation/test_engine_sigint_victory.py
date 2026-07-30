@@ -84,6 +84,7 @@ class TestEvaluateVictory:
 
     def test_delegates_to_evaluator(self):
         from stochastic_warfare.simulation.victory import VictoryResult
+
         mock_result = VictoryResult(
             game_over=True,
             winning_side="blue",
@@ -110,6 +111,7 @@ class TestEvaluateVictory:
         def mock_evaluate(**kwargs):
             captured.update(kwargs)
             from stochastic_warfare.simulation.victory import VictoryResult
+
             return VictoryResult(game_over=False)
 
         mgr = SimpleNamespace(get_supply_state=lambda uid: 0.75)
@@ -142,6 +144,8 @@ class TestEvaluateVictory:
 
     def test_exception_in_supply(self):
         """Supply manager exception should not prevent victory eval."""
+        captured = {}
+
         def bad_supply(uid):
             raise RuntimeError("fail")
 
@@ -149,15 +153,18 @@ class TestEvaluateVictory:
         u = _make_unit("u1")
         evaluator = SimpleNamespace(
             update_objective_control=lambda ubs: None,
-            evaluate=lambda **kw: SimpleNamespace(game_over=False),
+            evaluate=lambda **kw: captured.update(kw) or SimpleNamespace(game_over=False),
         )
         engine = _make_victory_engine(
             units_by_side={"blue": [u]},
             victory_evaluator=evaluator,
             stockpile_manager=mgr,
         )
-        # Should not raise — exception caught per unit
-        engine._evaluate_victory(10)
+        result = engine._evaluate_victory(10)
+
+        assert result.game_over is False
+        assert captured["supply_states"] == {"u1": 1.0}
+        assert captured["units_by_side"] == {"blue": [u]}
 
 
 # ===================================================================

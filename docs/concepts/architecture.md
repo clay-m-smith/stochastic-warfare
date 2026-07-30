@@ -34,8 +34,8 @@ Beyond the core 12, specialized domain modules provide optional capabilities:
 
 | Module | Purpose | Phase |
 |--------|---------|-------|
-| **ai** | OODA FSM, commander personalities, doctrine templates, MDMP planning | 8 |
-| **planning** | Mission analysis, COA generation, wargaming, estimates | 8 |
+| **c2.ai** | OODA FSM, commander personalities, doctrine templates | 8 |
+| **c2.planning** | Mission analysis, COA generation, wargaming, estimates | 8 |
 | **validation** | Historical data, Monte Carlo harness, campaign validation | 7, 10 |
 | **population** | Civilian regions, displacement, collateral, insurgency | 12, 24 |
 | **ew** | Electronic warfare: jamming, spoofing, ECCM, SIGINT, decoys | 16 |
@@ -141,7 +141,67 @@ This means you can test combat resolution without a terrain engine, or test dete
 
 ## Engine Wiring
 
-The `ScenarioLoader` is the central factory. Given a scenario YAML file, it:
+Production consumers enter through one typed runtime-owned boundary:
+
+```text
+scenario YAML or typed config
+  -> SimulationRuntimeFactory.prepare() / prepare_config()
+  -> PreparedScenario.build()
+  -> RuntimeSession.step() / run_to_completion() / finalize()
+```
+
+Preparation reads a YAML source once (or directly copies a typed
+`CampaignScenarioConfig`), applies strict independent variants, and captures
+source, code/worktree, data, and authored-roster identity. `build()` then
+constructs a fresh session and verifies exact loaded side/cardinality,
+duplicate-free IDs, loadout topology, commander/doctrine assignments, and
+catalog provenance. `RuntimeSession.step()` returns `True` at terminal;
+`run_to_completion()` and `finalize()` require a public terminal outcome.
+Provenance exposes source/config fingerprints, exact seeds and rosters, code
+and data revisions, catalog/doctrine/loadout fingerprints, and initial plus
+arriving assignments.
+
+### Source identity in checkouts and immutable images
+
+Runtime source identity is Git-first. When preparation starts inside a Git
+worktree, the resolver records `HEAD`, a dirty flag, and a content-sensitive
+worktree fingerprint. A clean tree is identified by its commit; a dirty tree
+also incorporates Git status, the tracked binary diff, and the path, mode,
+size, and content of every untracked file. Symlinks and non-regular worktree
+entries are rejected. If a `.git` control marker exists but Git is unavailable
+or cannot verify the worktree, preparation fails rather than falling back to a
+packaged identity.
+
+The production Docker image deliberately omits `.git`. Its build requires an
+explicit `SOURCE_REVISION` containing exactly 40 lowercase hexadecimal
+characters. Builders must use a clean checkout so that this supplied
+attribution names the staged source. After the locked Python environment is
+installed, `stochastic_warfare.build_identity` writes the exact-schema
+`stochastic_warfare/_build_identity.json`. That identity binds the supplied
+commit to a canonical manifest digest over every regular file beneath
+`stochastic_warfare/` and `api/`, plus `pyproject.toml` and `uv.lock`. Each
+manifest entry contains the relative path, normalized executable mode, byte
+size, and SHA-256 digest; generated identity and interpreter-cache files are
+excluded. Missing directories or files, symlinks, special files, duplicate
+identity keys, malformed values, and non-finite JSON are rejected.
+
+When no Git worktree exists, runtime preparation loads the generated identity
+and recomputes the complete application-source manifest. Missing or malformed
+identity data and any packaged-source tampering fail before a
+`PreparedScenario` can be used. A verified image reports the supplied commit,
+`dirty=False`, and a fingerprint derived from the immutable-build kind, commit,
+and source-manifest digest. Scenario and catalog inputs are outside this
+application manifest and retain their separate runtime data and catalog
+revisions.
+
+`.github/workflows/build.yml` exercises this path on pull requests to `main`,
+pushes to `main`, and manual dispatches. It builds with `GITHUB_SHA`, asserts
+that `/app/.git` is absent, runs a bounded scenario through
+`SimulationRuntimeFactory -> RuntimeSession`, and checks the expected commit
+and clean immutable-image identity.
+
+`ScenarioLoader` is the lower-level engine-wiring boundary used by that
+factory. Given a scenario YAML or prevalidated effective config, it:
 
 1. Parses the YAML into a `CampaignScenarioConfig` (pydantic-validated), or
    deep-copies a prevalidated effective config supplied by an orchestrator
@@ -170,6 +230,21 @@ The `ScenarioLoader` is the central factory. Given a scenario YAML file, it:
 6. Creates always-on behavioral engines: ROE engine (default WEAPONS_FREE), rout engine
 7. Seeds both morale views from each side's validated `morale_initial`
 8. Returns a `SimulationContext` with everything wired together
+
+`RuntimeForceBuilder` owns typed initial-force construction. It validates exact
+unit enums, counts, positions, supported per-instance overrides, deterministic
+IDs, loaded runtime domains, and final roster cardinality before publication.
+Construction stages the force and RNG outcome so a failed build cannot consume
+the caller's unit RNG stream.
+
+Commander declaration is all-side or absent. Behavior is active only when
+every side supplies a valid catalog profile; all omitted with no
+`commander_config` creates no commander engine. Partial profiles, or any
+`commander_config` with blank side profiles, reject. Exact initial and future
+per-unit commander overrides and `school_config.unit_assignments` are validated
+eagerly against the planned roster, profile catalog, and school catalog. The
+resulting commander, school, and OODA assignments are runtime behavior, not
+metadata; they survive reinforcement registration and checkpoint continuation.
 
 The retained loadout builder creates every initial, arriving, and
 checkpoint-reconstructed weapon/sensor attachment. Its immutable fingerprint
@@ -204,16 +279,37 @@ reload path currently provides persisted Class V provenance. See
 
 Space runtime state is orchestrated by one `SpaceEngine` boundary. Each tick
 propagates orbits, advances existing debris, executes newly due ASAT orders,
-then updates downstream GPS/ISR/early-warning/SATCOM consumers. The selected
-catalog topology, satellite state, ASAT inventory/orders/debris, service
-history, and SPACE RNG stream participate in whole-context checkpoint
-preflight. The detailed contract is
+then updates downstream GPS/ISR/early-warning/SATCOM consumers. Selected
+optical/SAR IMINT constellations generate immutable, owner-scoped
+`SpaceISRReport` values when `enable_space_effects` is active; a nonempty
+fusion selection without that calibration gate rejects. Delayed delivery
+transactionally creates an exact
+`IntelDeliveryReceipt` and one owner/target `IMINTTrackAssociation`; queued
+reports, receipts, associations, cadence, and reference integrity participate
+in atomic checkpoint preflight. This does not inject reports directly into
+ordinary fog-of-war contacts. Exact continuation with nonempty ordinary
+`SideWorldView.contacts` remains REM-029, so Space ISR checkpoint evidence uses
+an explicit empty ordinary-contact topology.
+
+The selected catalog topology, satellite state, ASAT
+inventory/orders/debris, service history, and SPACE RNG stream also participate
+in whole-context checkpoint preflight. The detailed ASAT contract is
 [ASAT Production Integration](../specs/asat-production-integration.md).
 
 `SimulationEngine` then installs the validated reinforcement schedule exactly
 once. Due waves are checked at every resolution and are committed atomically to
 the campaign roster, context force map, live loadout maps, morale state, and
-enabled logistics topology.
+commander, school, OODA, movement-diagnostics, and enabled logistics topology.
+If registration fails, all staged subsystem changes roll back and the wave can
+be retried deterministically.
+
+Movement diagnostics observe the decisions already made by strategic,
+operational, and tactical movement managers; they never select a destination,
+consume randomness, or move a unit. Canonically ordered typed reasons include
+weapon standoff, resource blocked, and zero progress. Cumulative counters and a
+bounded recent-observation window are checkpointed, and the scenario evaluator
+derives semantic stuck/resource-blocked populations from those counters rather
+than inferring intent from final displacement.
 
 ### Null-Config Gating
 
@@ -263,14 +359,17 @@ Era data lives in `data/eras/{era_name}/` with the same directory structure as m
 
 ## Determinism & Reproducibility
 
-Every simulation run is fully reproducible given the same seed:
+Within a validated deterministic contract, a run is reproducible when code,
+data/catalog content, effective configuration, seed, and execution inputs are
+identical:
 
 ### PRNG Discipline
 
 - All randomness flows through `RNGManager`, which creates per-module `np.random.Generator` streams
 - Each module gets its own independent PRNG stream via `RNGManager.get_stream(ModuleId)`
 - No bare `random` module or `np.random` module-level calls anywhere in the codebase
-- Given the same seed, the same scenario produces identical results
+- The same seed alone is insufficient when code, data, configuration, or
+  runtime topology differs
 - Battle discovery and reinforcement events require the caller's simulation
   clock timestamp; no wall-clock fallback participates in replay state
 
@@ -300,7 +399,10 @@ A FastAPI service sits alongside the engine (not inside it). It provides:
 - **Async run execution** via executor workers (CPU-bound simulation in a
   thread pool)
 - **SQLite persistence** for run results across server restarts
-- **Batch execution** for Monte Carlo statistical analysis
+- **Production batch execution** with ordered raw metric vectors, exact seeds,
+  and source/code/data/catalog/doctrine/loadout provenance
+- **A/B and doctrine comparison** over common seeds, plus strict parameter
+  sweeps
 
 The application lifespan owns one settings object, database connection, and run
 manager. A run is accepted only after its effective scenario config validates
@@ -309,9 +411,16 @@ run and batch workers, waits for the actual executor threads and terminal
 SQLite writes, then closes the database. The grace timeout reports slow
 workers; it does not abandon them.
 
-The API layer imports `stochastic_warfare` as a library. Sparse calibration
-overlays are merged into an isolated effective config before
-`ScenarioLoader`; source scenario YAML is not modified.
+The API layer imports `stochastic_warfare` as a library. Run, batch, comparison,
+sweep, doctrine-comparison, MCP, and current-revision benchmark execution share
+`SimulationRuntimeFactory -> PreparedScenario -> RuntimeSession`. A paired
+benchmark's bounded historical reference adapter executes the actual reference
+revision when that revision predates this boundary. Sparse calibration
+overlays are applied to isolated typed variants; source scenario YAML is not
+modified. Comparisons preserve paired counts/differences, superiority, raw
+exact-sign p-values, Holm-adjusted p-values, and family-wise significance.
+Unsupported metrics or incomplete/nonfinite runs fail rather than producing
+plausible zeroes.
 
 ### Frontend (`frontend/`)
 
@@ -323,7 +432,11 @@ A React + TypeScript single-page application built with Vite:
 - **React Router** for deep-linkable pages
 - **Headless UI** for accessible modals, dropdowns, and menus
 
-Key pages: Scenario Browser, Unit Catalog, Run Results (charts + narrative + map), Scenario Editor (clone-and-tweak), Analysis (Monte Carlo, A/B comparison, sensitivity sweep).
+Key pages: Scenario Browser, Unit Catalog, Run Results (charts + narrative +
+map), Scenario Editor (clone-and-tweak), Analysis (Monte Carlo, same-scenario
+A/B comparison, sensitivity sweep, and doctrine comparison). Analysis views
+validate and expose raw vectors and provenance instead of accepting summary-only
+payloads.
 
 See the [Web UI Guide](../guide/web-ui.md) for usage documentation.
 
@@ -346,11 +459,14 @@ Key enforcement gates:
 
 Additional non-flag consequences include fire zone damage (`fire_damage_per_tick`), stratagem expiry (`stratagem_duration_ticks`), guerrilla retreat distance, and order misinterpretation effects.
 
-The `enable_all_modern` meta-flag activates all 21 non-deferred flags at once for convenience, but individual flag control is preferred in scenario YAMLs for performance (selective flags avoid ~6x overhead from unused subsystems).
+The `enable_all_modern` meta-flag activates all 21 non-deferred flags at once
+for convenience. Individual flag control is preferred when a scenario does not
+need every consequence. No general performance multiplier is claimed without
+the controlled semantic-equivalence evidence queued under REM-031.
 
 ## Checkpointing
 
-All stateful classes implement the checkpoint protocol:
+Checkpoint-participating runtime owners implement the checkpoint protocol:
 
 ```python
 class SomeEngine:
@@ -369,11 +485,12 @@ This enables:
 - **Branching** -- checkpoint, run two different decisions, compare outcomes
 - **Debugging** -- reproduce any simulation state from a checkpoint + seed
 
-The current `SimulationEngine` checkpoint schema is version 111. For declared
-time-on-target plans it includes the immutable topology fingerprint, mission
-and battery lifecycles, generated in-flight impacts, terminal result, exact
-live-resource observations, target transition, and the reconciled COMBAT RNG
-state. Restore stages and validates that state against the fresh runtime before
-committing any mutation. Version 110 and other non-current versioned engine
-checkpoints reject; versionless compatibility is unavailable when a
-time-on-target plan is declared, including a disabled populated control.
+The current `SimulationEngine` checkpoint schema is version 112. It includes
+exact force/loadout/morale/logistics/time-on-target state plus commander and
+OODA assignments, bounded movement diagnostics, and typed Space ISR report
+queues, delivery receipts, and owner/target IMINT associations. Restore stages
+and validates topology, identity, chronology, mutable resources, and relevant
+RNG state against a fresh compatible runtime before committing any mutation.
+Version 111 and every other non-current versioned engine checkpoint reject.
+Bounded versionless compatibility remains subject to the stricter subsystem
+rules in the [checkpoint state contract](../specs/checkpoint-state.md).

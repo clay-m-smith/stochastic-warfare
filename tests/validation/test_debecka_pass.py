@@ -1,25 +1,15 @@
-"""Phase 99 regression test — Battle of Debecka Pass (2003).
+"""Current-engine regression guard — Battle of Debecka Pass (2003).
 
-Asserts that the Debecka Pass scenario produces outcomes bracketed by
-the current engine's observed envelope.  The envelope is widened from
-the historical record where the engine has documented fidelity gaps
-(see ``docs/devlog/phase-99.md`` for the full miss analysis).
+This suite protects reproducible software behavior; it is not a historical
+or predictive validation.  Fresh Phase 112 production runs do not satisfy
+the source-backed casualty or duration envelope.  REM-030 owns the future
+typed historical-envelope contract and its held-out production validation.
 
-Expected historical outcome (per ARSOF Veritas v1n1):
-- Coalition victory (blue wins)
-- Iraqi force repulsed after ~4 hours
-- 8–12 Iraqi armored vehicles destroyed (+ trucks)
-- 0 Coalition direct-combat KIA
-
-Engine-observed envelope (wider — reflects current fidelity):
-- Blue wins ≥ 8/10 iterations
-- Red destroyed: 5–30 units (engine collapses battle earlier than
-  historical; Javelin max-range employment + CAS bomb delivery are
-  both under-modeled — see devlog)
-- Blue destroyed: ≤ 35 units (engine allocates more per-unit attrition
-  due to fine-grained Peshmerga squad granularity)
-- Duration: ≥ 500 ticks (≥ 2500 s; below historical 4h but above a
-  trivial rout)
+Current regression envelope:
+- Blue wins at least 8 of 10 iterations.
+- Mean red destroyed is 5–30 units.
+- Mean blue destroyed is at most 55 units.
+- Mean duration is at least 15 ticks.
 """
 
 from __future__ import annotations

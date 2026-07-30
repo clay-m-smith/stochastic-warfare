@@ -4,10 +4,13 @@ from __future__ import annotations
 
 import logging
 from contextlib import asynccontextmanager
-from typing import AsyncIterator
+from typing import Any, AsyncIterator, Mapping
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+from fastapi.encoders import jsonable_encoder
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 
 from api import __version__
 from api.config import ApiSettings
@@ -16,6 +19,31 @@ from api.dependencies import get_default_settings
 from api.routers import analysis, analytics, meta, runs, scenarios, units
 
 logger = logging.getLogger(__name__)
+
+
+async def request_validation_error_response(
+    _request: Request,
+    exc: RequestValidationError,
+) -> JSONResponse:
+    """Return serializable validation errors even for non-finite input."""
+    errors: list[dict[str, Any]] = []
+    for raw_error in exc.errors():
+        error = {
+            key: value
+            for key, value in raw_error.items()
+            if key != "input"
+        }
+        context = error.get("ctx")
+        if isinstance(context, Mapping):
+            error["ctx"] = {
+                key: str(value)
+                for key, value in context.items()
+            }
+        errors.append(error)
+    return JSONResponse(
+        status_code=422,
+        content={"detail": jsonable_encoder(errors)},
+    )
 
 
 @asynccontextmanager
@@ -65,6 +93,10 @@ def create_app(settings: ApiSettings | None = None) -> FastAPI:
         lifespan=lifespan,
     )
     app.state.settings = settings
+    app.add_exception_handler(
+        RequestValidationError,
+        request_validation_error_response,
+    )
 
     app.add_middleware(
         CORSMiddleware,

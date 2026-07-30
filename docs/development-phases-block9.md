@@ -1,5 +1,14 @@
 # Stochastic Warfare -- Block 9 Development Phases (83--91)
 
+> **Phase 112 integrity supersession (2026-07-30):** This roadmap preserves
+> Block 9's planned and contemporaneously reported work. The shipped
+> regression used authored configurations, excluded the two benchmark
+> scenarios that declare all five performance flags, and supplied no
+> same-input disabled controls. Its winner rows are current-engine regression
+> history, not historical-validation or performance-flag semantic-equivalence
+> evidence. REM-030 owns historical outcome-envelope integrity and REM-031
+> owns per-flag semantic integrity.
+
 ## Philosophy
 
 Block 9 is the **performance at scale block**. The engine produces historically validated results for scenarios up to ~300 units (Golan Heights: 120s). Real-world operational scenarios involve thousands of units. The tick loop is single-threaded, detection scales quadratically, and there is no level-of-detail system. Every future development direction — more scenarios, larger campaigns, real-time visualization, interactive play — depends on the engine handling 1,000+ units at reasonable speed.

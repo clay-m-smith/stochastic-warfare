@@ -102,7 +102,7 @@ def test_due_order_executes_once_and_disabled_control_preserves_target() -> None
     disabled_space_rng_before = copy.deepcopy(
         disabled.rng_manager.get_state()["streams"]["space"],
     )
-    _, enabled_recorder, enabled_first_tick = _run_two_ticks(enabled)
+    enabled_engine, enabled_recorder, enabled_first_tick = _run_two_ticks(enabled)
     _, disabled_recorder, disabled_first_tick = _run_two_ticks(disabled)
 
     assert not [
@@ -162,12 +162,14 @@ def test_due_order_executes_once_and_disabled_control_preserves_target() -> None
         == disabled_space_rng_before
     )
 
-    # A third enabled tick cannot execute the completed order again.
-    recorder = SimulationRecorder(enabled.event_bus)
-    recorder.start()
-    SimulationEngine(enabled, recorder=recorder).step()
-    recorder.stop()
-    assert not _asat_events(recorder)
+    # Continue through the same engine-owned boundary. Fresh-runtime
+    # continuation is tested through an actual checkpoint/restore elsewhere;
+    # wrapping progressed context in a new engine would discard engine-owned
+    # Battle/Campaign state and is not a valid uninterrupted control.
+    enabled_recorder.start()
+    enabled_engine.step()
+    enabled_recorder.stop()
+    assert len(_asat_events(enabled_recorder)) == 1
 
 
 def test_space_schema_rejects_unknown_fields_instead_of_ignoring_them() -> None:

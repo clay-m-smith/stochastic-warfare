@@ -183,13 +183,13 @@ class TestFullTerrainStack:
     def test_coordinate_consistency(self) -> None:
         """All grid modules should share the same coordinate system."""
         hm, cls, infra, hydro, bath, maritime, pop, obs = _terrain_stack()
-        pos = Position(500, 500)
+        pos = Position(550, 550)
 
-        # All grid modules should accept the same position
-        _ = hm.elevation_at(pos)
-        _ = cls.land_cover_at(pos)
-        _ = bath.depth_at(pos)
-        _ = pop.density_at(pos)
+        expected_height = 50 * np.exp(-((5 - 10) ** 2 + (5 - 10) ** 2) / 50)
+        assert hm.elevation_at(pos) == pytest.approx(expected_height)
+        assert cls.land_cover_at(pos) == LandCover.GRASSLAND
+        assert bath.depth_at(pos) == pytest.approx(0.0)
+        assert pop.density_at(pos) == pytest.approx(pop._density[5, 5])
 
 
 class TestFullEnvironmentStack:

@@ -14,7 +14,7 @@ from types import MappingProxyType
 from typing import Any
 
 import numpy as np
-from pydantic import BaseModel, field_validator, model_validator
+from pydantic import BaseModel, ConfigDict, field_validator, model_validator
 
 from stochastic_warfare.core.logging import get_logger
 from stochastic_warfare.core.strict_yaml import load_yaml_unique
@@ -52,19 +52,74 @@ _DOMAIN_MAP: dict[str, Domain] = {
 class CrewEntry(BaseModel):
     """One or more crew members sharing a role."""
 
+    model_config = ConfigDict(extra="forbid")
+
     role: str
     count: int = 1
     skill: str = "TRAINED"
 
+    @field_validator("role", mode="before")
+    @classmethod
+    def _validate_role(cls, value: Any) -> str:
+        if not isinstance(value, str) or not value.strip():
+            raise ValueError(
+                "crew role must be a non-empty CrewRole name; "
+                f"got {value!r}; allowed={sorted(CrewRole.__members__)!r}",
+            )
+        normalized = value.strip().upper()
+        if normalized == "CREW":
+            normalized = "GENERIC"
+        if normalized not in CrewRole.__members__:
+            raise ValueError(
+                f"unknown crew role {value!r}; "
+                f"allowed={sorted([*CrewRole.__members__, 'CREW'])!r}",
+            )
+        return normalized
+
+    @field_validator("skill", mode="before")
+    @classmethod
+    def _validate_skill(cls, value: Any) -> str:
+        if not isinstance(value, str) or not value.strip():
+            raise ValueError(
+                "crew skill must be a non-empty SkillLevel name; "
+                f"got {value!r}; allowed={sorted(SkillLevel.__members__)!r}",
+            )
+        normalized = value.strip().upper()
+        if normalized not in SkillLevel.__members__:
+            raise ValueError(
+                f"unknown crew skill {value!r}; "
+                f"allowed={sorted(SkillLevel.__members__)!r}",
+            )
+        return normalized
+
 
 class EquipmentEntry(BaseModel):
     """Equipment item definition from YAML."""
+
+    model_config = ConfigDict(extra="forbid")
 
     name: str
     category: str
     weight_kg: float = 0.0
     reliability: float = 0.95
     temperature_range: list[float] | None = None
+
+    @field_validator("category", mode="before")
+    @classmethod
+    def _validate_category(cls, value: Any) -> str:
+        if not isinstance(value, str) or not value.strip():
+            raise ValueError(
+                "equipment category must be a non-empty EquipmentCategory "
+                f"name; got {value!r}; "
+                f"allowed={sorted(EquipmentCategory.__members__)!r}",
+            )
+        normalized = value.strip().upper()
+        if normalized not in EquipmentCategory.__members__:
+            raise ValueError(
+                f"unknown equipment category {value!r}; "
+                f"allowed={sorted(EquipmentCategory.__members__)!r}",
+            )
+        return normalized
 
 
 class SensorPolicy(str, enum.Enum):
@@ -76,6 +131,8 @@ class SensorPolicy(str, enum.Enum):
 
 class UnitDefinition(BaseModel):
     """Pydantic model validated from YAML unit files."""
+
+    model_config = ConfigDict(extra="forbid")
 
     unit_type: str
     domain: str
@@ -166,6 +223,108 @@ class UnitDefinition(BaseModel):
         self.sensor_policy_reason = reason
         return self
 
+    @field_validator(
+        "ground_type",
+        "aerial_type",
+        "naval_type",
+        "ad_type",
+        "support_type",
+        mode="before",
+    )
+    @classmethod
+    def _validate_subtype(cls, value: Any, info: Any) -> str | None:
+        if value is None:
+            return None
+        enum_by_field: dict[str, type[enum.Enum]] = {
+            "ground_type": GroundUnitType,
+            "aerial_type": AerialUnitType,
+            "naval_type": NavalUnitType,
+            "ad_type": ADUnitType,
+            "support_type": SupportUnitType,
+        }
+        enum_type = enum_by_field[info.field_name]
+        if not isinstance(value, str) or not value.strip():
+            raise ValueError(
+                f"{info.field_name} must be a non-empty {enum_type.__name__} "
+                f"name; got {value!r}; "
+                f"allowed={sorted(enum_type.__members__)!r}",
+            )
+        normalized = value.strip().upper()
+        if normalized not in enum_type.__members__:
+            raise ValueError(
+                f"unknown {info.field_name} {value!r}; "
+                f"allowed={sorted(enum_type.__members__)!r}",
+            )
+        return normalized
+
+    @model_validator(mode="after")
+    def _validate_domain_subtypes(self) -> UnitDefinition:
+        if self.ad_type is not None and self.support_type is not None:
+            raise ValueError(
+                "unit definition cannot select both ad_type and support_type",
+            )
+        if (
+            (self.ad_type is not None or self.support_type is not None)
+            and self.domain != "ground"
+        ):
+            raise ValueError(
+                "air-defense and support unit definitions must use "
+                "domain='ground'",
+            )
+
+        selected_fields: set[str]
+        if self.ad_type is not None:
+            selected_fields = {"ground_type", "ad_type"}
+        elif self.support_type is not None:
+            selected_fields = {"ground_type", "support_type"}
+        elif self.domain == "ground":
+            selected_fields = {"ground_type"}
+        elif self.domain == "aerial":
+            selected_fields = {"aerial_type"}
+        else:
+            selected_fields = {"naval_type"}
+
+        required_field = (
+            "ad_type"
+            if self.ad_type is not None
+            else (
+                "support_type"
+                if self.support_type is not None
+                else (
+                    "ground_type"
+                    if self.domain == "ground"
+                    else (
+                        "aerial_type"
+                        if self.domain == "aerial"
+                        else "naval_type"
+                    )
+                )
+            )
+        )
+        if getattr(self, required_field) is None:
+            raise ValueError(
+                f"domain {self.domain!r} requires {required_field}",
+            )
+
+        populated = {
+            field_name
+            for field_name in (
+                "ground_type",
+                "aerial_type",
+                "naval_type",
+                "ad_type",
+                "support_type",
+            )
+            if getattr(self, field_name) is not None
+        }
+        incompatible = sorted(populated - selected_fields)
+        if incompatible:
+            raise ValueError(
+                f"domain {self.domain!r} has incompatible subtype fields "
+                f"{incompatible!r}",
+            )
+        return self
+
 
 def runtime_domain_for_definition(definition: UnitDefinition) -> Domain:
     """Return the domain the production unit subclass will publish."""
@@ -252,6 +411,10 @@ def _parse_equipment(entries: list[EquipmentEntry]) -> list[EquipmentItem]:
 # ── Loader ───────────────────────────────────────────────────────────
 
 
+class MissingUnitDefinitionError(LookupError):
+    """Raised when a requested unit type has no loaded definition."""
+
+
 class UnitLoader:
     """Load YAML unit definitions and create Unit instances.
 
@@ -267,9 +430,14 @@ class UnitLoader:
 
     def load_definition(self, path: Path) -> UnitDefinition:
         """Load and validate a single YAML unit definition."""
-        with open(path, encoding="utf-8") as definition_file:
-            raw = load_yaml_unique(definition_file)
-        defn = UnitDefinition.model_validate(raw)
+        try:
+            with open(path, encoding="utf-8") as definition_file:
+                raw = load_yaml_unique(definition_file)
+            defn = UnitDefinition.model_validate(raw)
+        except (TypeError, ValueError) as exc:
+            raise ValueError(
+                f"Invalid unit definition {path}: {exc}",
+            ) from exc
         if defn.unit_type in self._definitions:
             raise ValueError(
                 f"Duplicate unit_type {defn.unit_type!r} while loading {path}",
@@ -294,9 +462,14 @@ class UnitLoader:
     def get_definition(self, unit_type: str) -> UnitDefinition:
         """Return the definition for *unit_type*.
 
-        Raises ``KeyError`` if not loaded.
+        Raises :class:`MissingUnitDefinitionError` if not loaded.
         """
-        return self._definitions[unit_type]
+        try:
+            return self._definitions[unit_type]
+        except KeyError as exc:
+            raise MissingUnitDefinitionError(
+                f"Unit definition {unit_type!r} is not loaded",
+            ) from exc
 
     def create_unit(
         self,
@@ -307,7 +480,7 @@ class UnitLoader:
         rng: np.random.Generator,
     ) -> Unit:
         """Instantiate a Unit subclass from a loaded definition."""
-        defn = self._definitions[unit_type]
+        defn = self.get_definition(unit_type)
         personnel = _parse_crew(defn.crew, rng)
         equipment = _parse_equipment(defn.equipment)
         domain = runtime_domain_for_definition(defn)

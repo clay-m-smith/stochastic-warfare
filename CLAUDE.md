@@ -7,13 +7,10 @@ models, a headless Python engine, FastAPI service, and React frontend. Modern
 warfare is the primary data package, with four historical-era packages and
 integrated maritime warfare.
 
-**Current status**: Phases 105 through 111 are complete, including REM-012
-time-on-target production execution. Phase 112 is next and has not started.
-The fresh default Python verification is 10,958 passed, 21 skipped, 348
-deselected, and 6 warnings. Phase 111 did not change a frontend contract, so
-the last verified frontend baseline remains Phase 108's 418 passing Vitest
-tests. Blocks 1–11 remain complete. See
-`docs/remediation-backlog.md` for current evidence and unresolved gaps.
+**Current status**: Phases 105 through 112 are complete, including the
+validation and documentation trust remediations. Phase 113 has not started, so
+Block 12 remains in progress. See `docs/devlog/phase-112.md` and
+`docs/remediation-backlog.md` for exact evidence and unresolved gaps.
 
 ## Python & Package Management
 **Requires Python >=3.12** (pinned to 3.12.10 via `.python-version`).
@@ -27,21 +24,35 @@ uv sync --extra dev    # creates .venv, installs all deps including pytest/matpl
 
 Use `uv run` to execute all Python commands — this automatically uses the correct venv without manual activation:
 ```bash
-uv run python -m pytest --tb=short -q
+uv run python --version
 ```
 
 Do NOT use `source .venv/Scripts/activate` — use `uv run` instead.
 
 ## Running Tests
 ```bash
-uv run python -m pytest --tb=short -q          # default-selected suite
-uv run python -m pytest -m slow --ignore=tests/api --ignore=tests/e2e -q --tb=short -o addopts=  # all slow-marked tests
+uv sync --locked --extra dev --extra api --extra terrain --extra mcp
+uv run --no-sync python scripts/validate_test_partitions.py \
+  --output artifacts/partition-audit/manifest.json
+uv run --no-sync python scripts/run_pytest_partition.py standard \
+  --manifest artifacts/standard/manifest.json \
+  --junit artifacts/standard/junit.xml --forbid-skips \
+  --timeout-seconds 2700
 ```
 
-The default selection excludes `slow`, `benchmark`, `terrain`, `api`, and
-`e2e`, and ignores `tests/api` and `tests/e2e`. Run excluded boundaries
-explicitly with their required extras and `-o addopts=`; REM-013 tracks the
-remaining CI disclosure work.
+The authoritative Python suite is the exact audited union of `standard`,
+`slow-only`, `benchmark-only`, `slow-benchmark`, `api`, and `e2e`. PR/main CI
+runs the audit, `standard`, `api`, `e2e`, and the overlapping `terrain`
+dependency profile. Weekly/manual CI runs the three marker partitions in
+deterministic module-affine shards. `benchmark-policy` is also an overlapping
+focused profile, not a seventh partition. The 73 Easting paired benchmark is
+routine; Golan remains manual.
+
+Phase 112's closure audit exercised exactly 11,752 nodes: `standard` 11,299
+passed with 6 warnings; `slow-only` 109, `benchmark-only` 60,
+`slow-benchmark` 4, API 239, and E2E 41 each passed with no warnings. The API
+result is local uvloop-qualified evidence only until remote default-policy CI
+passes. The overlapping terrain profile separately passed 97 tests.
 
 ## Architecture
 
@@ -62,13 +73,19 @@ Layered hybrid — graph (strategic), grid (operational/tactical), continuous (u
 ## Project Conventions
 - **PRNG discipline**: No `np.random` module-level calls. All randomness via `RNGManager.get_stream(ModuleId)` → `np.random.Generator`. No bare `random` module.
 - **Deterministic iteration**: No `set()` or unordered dict driving simulation logic.
-- **State protocol**: All stateful classes implement `get_state() -> dict` and `set_state(dict) -> None`.
+- **State protocol**: Checkpoint-participating runtime owners implement the
+  coordinated `get_state() -> dict` and `set_state(dict) -> None` contract.
 - **Coordinate system**: ENU meters internally. Geodetic only for import/export/display. `pyproj` for transforms.
 - **Dependencies flow downward**: terrain modules never import environment; environment may read terrain.
 - **Entities are data, modules are behavior** (ECS-like separation).
 - **No global singletons**: RNGManager, EventBus, Clock are explicitly instantiated and passed.
 - **Config**: pydantic BaseModel for all configuration classes.
 - **Unit definitions**: Data-driven YAML configs validated by pydantic. Engine defines behaviors, YAML parameterizes instances.
+- **Source provenance**: Checkouts use the Git commit plus a content-sensitive
+  dirty-tree fingerprint and never fall back from an unverifiable Git worktree.
+  No-`.git` production images require explicit `SOURCE_REVISION` and a verified
+  generated application-source manifest; missing, malformed, or tampered
+  packaged source fails closed.
 - **Logging**: `from stochastic_warfare.core.logging import get_logger; logger = get_logger(__name__)` — no bare `print()` in sim core.
 - **Type hints**: Required on all public API functions.
 
@@ -155,6 +172,7 @@ production-evidence requirements.
 | `docs/brainstorm-block11.md` | Block 11 design thinking (golden scenarios, engine validation through UI) |
 | `docs/development-phases-block11.md` | Block 11 roadmap and polish history (98–104) |
 | `docs/development-phases-block12.md` | Block 12 phase roadmap (105–114), integrity remediation |
+| `docs/development-phases-block13.md` | Block 13 roadmap (115–118), queued integrity follow-ups |
 | `docs/remediation-backlog.md` | Audited implementation gaps and completion evidence |
 | `docs/specs/project-structure.md` | Full package tree, module decomposition, dependency graph |
 | `docs/devlog/` | Per-phase implementation logs (`index.md` tracks status) |
@@ -185,7 +203,8 @@ All phase details are in `docs/devlog/` (one file per phase). Per-phase tables i
 | Block 9 | 83–91 | Profiling, spatial culling, LOD, Numba JIT, SoA data layer, per-side parallelism, benchmarking | ~279 |
 | Block 10 | 92–97 | UI depth: analytics endpoints, dashboard charts, map overlays, calibration editor, event filtering, data catalogs | ~120 |
 | Block 11 | 98–104 | Golden scenarios plus OOB, engine, and deployment polish | ~107 |
-| Block 12 | 105–114 | Production-path integrity remediation; Phase 111 complete, Phase 112 next and not started | 803 phase-focused tests through Phase 111 |
+| Block 12 | 105–114 | Production-path integrity remediation; Phase 112 complete, Phase 113 not started | 11,752 audited union; 97 terrain profile |
+| Block 13 | 115–118 | Queued checkpoint, historical-validation, and performance-semantics follow-ups | Planned |
 
 ### Block 11 Detail (COMPLETE)
 
@@ -195,6 +214,6 @@ All phase details are in `docs/devlog/` (one file per phase). Per-phase tables i
 | 99 | Complete | Debecka Pass (2003) — 12 new YAMLs (6 units + 3 weapons + 5 ammo), scenario YAML, 8 regression tests. **Engine fixes**: LIGHT_INFANTRY exempt from seeker FOV (Javelin fires), `"Ordnance Stations"` / `"CSRL Rotary Launcher"` mapped to bomb_rack_generic (CAS bombs emit EngagementEvents). 1 accepted limitation (Peshmerga squad granularity). |
 | 100 | Complete | Khafji (1991) — 37 new YAMLs (14 units + 13 weapons + 10 ammo), scenario YAML with hybrid tick resolution + full OOB (233 units), 7 regression tests. Engine fixes: 16"/50 cross-era availability + NAVAL_GUN target_domains override for shore bombardment. 5 accepted limitations (naval-gunfire EngagementEvent, Iraqi artillery unit, SA-7/Spirit 03, AGM-65, full-OOB performance). |
 | 101 | Complete | Fallujah Phase Line Fran (2004) — 29 new YAMLs (14 units + 7 weapons + 7 ammo + 1 HBIED device), 333-unit scenario (198 blue + 135 red at full Al-Fajr scale), **2 new scenario-level config fields** (`initial_ieds` + `scripted_events`) backed by real engine APIs (HBIED detonation, WP fire zone, unit teleport, casualty pulse). Engine fixes: `hbied` subtype (non-jammable), `INCENDIARY_WEAPON` ammo now forces fire_started for honest WP shake-and-bake semantics, `unconventional_engine` auto-created when initial_ieds non-empty. 13 tests (6 fast + 7 @slow). |
-| 102 | Complete | Bint Jbeil + INS Hanit (2006) — 19 new YAMLs (11 units + 4 weapons + 4 ammo) via 3 parallel authoring agents. Two scenarios: Bint Jbeil (249 units, IDF Golani/Paratrooper/Armor vs Hezbollah, DRAW_SCENARIO) + INS Hanit vignette (3 units, Sa'ar 5 vs C-802 Noor, HISTORICAL_WINNERS.blue). 15 tests (9 fast + 6 @slow). **Zero engine fixes** — all new classes fit existing schemas (CORVETTE naval_type, NAVAL_GUN category, RADAR_ACTIVE guidance all existed). Block 11 COMPLETE. |
+| 102 | Complete | Bint Jbeil + INS Hanit (2006) — 19 new YAMLs (11 units + 4 weapons + 4 ammo) via 3 parallel authoring agents. Two scenarios: Bint Jbeil (249 units, IDF Golani/Paratrooper/Armor vs Hezbollah, phase-era `DRAW_SCENARIO`) + INS Hanit vignette (3 units, Sa'ar 5 vs C-802 Noor, phase-era `HISTORICAL_WINNERS.blue`). These labels preserve Block 11 intent/current regression behavior; they are not catalog-wide historical-validation evidence, which is queued under REM-030. 15 tests (9 fast + 6 @slow). **Zero engine fixes** — all new classes fit existing schemas (CORVETTE naval_type, NAVAL_GUN category, RADAR_ACTIVE guidance all existed). Block 11 COMPLETE. |
 | 103 | Complete | Block 11 Polish — OOB + engine gap tightening. 3 new Iraqi artillery carrier units (2S1, 2S3, FROG-7), 10 weapon/sensor map additions, AGM-65 added to F-16C, FAE retagged INCENDIARY_WEAPON, `_publish_air_engagement_event` helper wired to 3 `_route_air_engagement` sites (AGM-65/AMRAAM/Hellfire/SAM now surface in /analytics/engagements chart), 4 `_publish_naval_engagement_event` sites added (torpedo, depth charge, ASHM, ASROC). 17 new tests. Resolves Phase 100 limitations #2 + #3 (partial) + #4. |
 | 104 | Complete | Configurable Deployment Modes — new `stochastic_warfare/simulation/deployment.py` with 5 modes (legacy / bounding_box / clustered / doctrinal / manual) + `DeploymentMode` + `GroupKey` enums + `DeploymentBox` + `DeploymentConfig` pydantic models. Per-unit `position: [x, y]` YAML override works in any mode. 6 formation templates in `data/formations/` (brigade_attack, brigade_defense, battalion_urban_defense, marine_urban_assault, mechanized_thrust, naval_patrol_station). All 4 Block 11 golden scenarios retrofitted (104b): Debecka→bounding_box, Khafji/Fallujah/Bint Jbeil→doctrinal (Hanit stays legacy). Tick-0 side separation: Debecka 0m→1292m, Fallujah 5m→1104m, Bint Jbeil 5m→2625m (Khafji already OK at 5050m+). Direction-aware `_deploy_doctrinal` auto-flips offset_y_frac when opposing box is at lower y. 33 new Phase 104 tests including all-golden regression guard. |

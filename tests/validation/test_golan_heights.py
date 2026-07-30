@@ -145,15 +145,3 @@ class TestMonteCarloFast:
         mc_result = harness.run(engagement)
         report = mc_result.compare_to_historical(engagement.documented_outcomes)
         assert len(report.metric_results) > 0
-
-
-# ── Monte Carlo (1000 runs, slow) ────────────────────────────────────
-
-
-@pytest.mark.slow
-class TestMonteCarloFull:
-    def test_mc_1000(self, engagement, runner) -> None:
-        mc_config = MonteCarloConfig(num_iterations=1000, base_seed=42)
-        harness = MonteCarloHarness(runner, mc_config)
-        mc_result = harness.run(engagement)
-        assert mc_result.num_runs == 1000

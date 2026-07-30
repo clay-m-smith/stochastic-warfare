@@ -124,8 +124,14 @@ class TestFatigueTemperatureStress:
         from stochastic_warfare.movement.fatigue import FatigueManager
 
         fm = FatigueManager()
-        # Should not raise
         fm.accumulate("u1", 1.0, "march", temperature_stress=0.5)
+        stressed = fm.get_fatigue("u1")
+
+        control = FatigueManager()
+        control.accumulate("u1", 1.0, "march", temperature_stress=0.0)
+        unstressed = control.get_fatigue("u1")
+        assert stressed.physical > unstressed.physical
+        assert stressed.mental > unstressed.mental
 
 
 class TestIncendiarySpreadFire:

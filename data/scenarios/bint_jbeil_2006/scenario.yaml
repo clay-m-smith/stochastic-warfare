@@ -150,7 +150,7 @@ sides:
           training_level: 0.50
     experience_level: 0.55
     morale_initial: STEADY
-    commander_profile: attritional_defender
+    commander_profile: insurgent_leader
     doctrine_template: attritional_defense
 
 objectives:

@@ -34,7 +34,8 @@ from stochastic_warfare.detection.sensors import SensorLoader, SensorType
 from stochastic_warfare.detection.signatures import SignatureLoader
 from stochastic_warfare.entities.base import Unit, UnitStatus
 from stochastic_warfare.entities.loader import UnitLoader
-from stochastic_warfare.morale.state import MoraleConfig, MoraleState, MoraleStateMachine
+from stochastic_warfare.morale.config import build_morale_config
+from stochastic_warfare.morale.state import MoraleState, MoraleStateMachine
 from stochastic_warfare.simulation.equipment_mappings import (
     EQUIPMENT_MAPPING_REGISTRY,
 )
@@ -42,11 +43,15 @@ from stochastic_warfare.simulation.loadouts import (
     RuntimeLoadoutBuilder,
     WeaponAttachment,
 )
-from stochastic_warfare.terrain.heightmap import Heightmap, HeightmapConfig
+from stochastic_warfare.terrain.procedural import (
+    build_flat_desert,
+    build_hilly_defense,
+    build_open_ocean,
+    build_terrain,
+)
 from stochastic_warfare.validation.historical_data import (
     ForceDefinition,
     HistoricalEngagement,
-    TerrainSpec,
 )
 from stochastic_warfare.validation.metrics import (
     SimulationResult,
@@ -158,118 +163,6 @@ class MoraleCollapseTermination:
 
 
 # ---------------------------------------------------------------------------
-# Terrain builders
-# ---------------------------------------------------------------------------
-
-
-def build_flat_desert(spec: TerrainSpec) -> Heightmap:
-    """Construct a flat desert heightmap."""
-    rows = max(1, int(spec.height_m / spec.cell_size_m))
-    cols = max(1, int(spec.width_m / spec.cell_size_m))
-    data = np.full((rows, cols), spec.base_elevation_m, dtype=np.float64)
-    config = HeightmapConfig(
-        origin_easting=0.0,
-        origin_northing=0.0,
-        cell_size=spec.cell_size_m,
-    )
-    return Heightmap(data, config)
-
-
-def build_open_ocean(spec: TerrainSpec) -> Heightmap:
-    """Construct a flat ocean heightmap (elevation 0)."""
-    rows = max(1, int(spec.height_m / spec.cell_size_m))
-    cols = max(1, int(spec.width_m / spec.cell_size_m))
-    data = np.zeros((rows, cols), dtype=np.float64)
-    config = HeightmapConfig(
-        origin_easting=0.0,
-        origin_northing=0.0,
-        cell_size=spec.cell_size_m,
-    )
-    return Heightmap(data, config)
-
-
-def build_hilly_defense(spec: TerrainSpec, rng: np.random.Generator) -> Heightmap:
-    """Construct hilly terrain with ridge features.
-
-    Features of type ``"ridge"`` create elevated ridgelines.
-    Features of type ``"berm"`` create localized defensive positions.
-    """
-    rows = max(1, int(spec.height_m / spec.cell_size_m))
-    cols = max(1, int(spec.width_m / spec.cell_size_m))
-    data = np.full((rows, cols), spec.base_elevation_m, dtype=np.float64)
-
-    # Add gentle undulation (vectorized)
-    x_coords = np.arange(cols) * spec.cell_size_m
-    y_coords = np.arange(rows) * spec.cell_size_m
-    xx, yy = np.meshgrid(x_coords, y_coords)
-    data += 30.0 * np.sin(xx / 800.0) * np.cos(yy / 600.0)
-    data += rng.normal(0.0, 2.0, size=(rows, cols))
-
-    # Apply features
-    for feat in spec.features:
-        ftype = feat.get("type", "")
-        pos = feat.get("position", [0, 0])
-        params = feat.get("params", {})
-
-        if ftype == "ridge":
-            ridge_height = params.get("height_m", 100.0)
-            ridge_width = params.get("width_m", 200.0)
-            ridge_col = int(pos[0] / spec.cell_size_m)
-            col_indices = np.arange(cols)
-            dist = np.abs(col_indices - ridge_col) * spec.cell_size_m
-            mask = dist < ridge_width
-            ridge_profile = np.where(mask, ridge_height * (1.0 - dist / ridge_width), 0.0)
-            data += ridge_profile[np.newaxis, :]  # broadcast across all rows
-
-        elif ftype == "berm":
-            berm_height = params.get("height_m", 3.0)
-            berm_radius = params.get("radius_m", 50.0)
-            br = int(pos[1] / spec.cell_size_m)
-            bc = int(pos[0] / spec.cell_size_m)
-            r_lo = max(0, br - 5)
-            r_hi = min(rows, br + 5)
-            c_lo = max(0, bc - 5)
-            c_hi = min(cols, bc + 5)
-            if r_hi > r_lo and c_hi > c_lo:
-                r_idx = np.arange(r_lo, r_hi)
-                c_idx = np.arange(c_lo, c_hi)
-                rr, cc = np.meshgrid(r_idx, c_idx, indexing="ij")
-                dist = np.sqrt(
-                    ((rr - br) * spec.cell_size_m) ** 2
-                    + ((cc - bc) * spec.cell_size_m) ** 2
-                )
-                berm_mask = dist < berm_radius
-                data[r_lo:r_hi, c_lo:c_hi] += np.where(
-                    berm_mask, berm_height * (1.0 - dist / berm_radius), 0.0
-                )
-
-    config = HeightmapConfig(
-        origin_easting=0.0,
-        origin_northing=0.0,
-        cell_size=spec.cell_size_m,
-    )
-    return Heightmap(data, config)
-
-
-def build_terrain(spec: TerrainSpec, rng: np.random.Generator | None = None) -> Heightmap:
-    """Dispatch to the appropriate terrain builder."""
-    if spec.terrain_type == "flat_desert":
-        return build_flat_desert(spec)
-    elif spec.terrain_type == "open_ocean":
-        return build_open_ocean(spec)
-    elif spec.terrain_type == "hilly_defense":
-        if rng is None:
-            rng = np.random.Generator(np.random.PCG64(0))
-        return build_hilly_defense(spec, rng)
-    elif spec.terrain_type == "trench_warfare":
-        return build_flat_desert(spec)  # Flat terrain; trenches are a separate overlay
-    elif spec.terrain_type == "open_field":
-        return build_flat_desert(spec)  # Flat open ground; ancient/medieval battles
-    else:
-        raise ValueError(f"Unknown terrain type: {spec.terrain_type!r}")
-
-
-# ---------------------------------------------------------------------------
 # Force builder
 # ---------------------------------------------------------------------------
 
@@ -282,75 +175,27 @@ def build_forces(
     start_y: float = 0.0,
     spacing_m: float = 50.0,
 ) -> list[Unit]:
-    """Create unit instances from a force definition.
+    """Consume the typed production force-construction boundary."""
+    from stochastic_warfare.simulation.force_builder import (
+        InitialForcePlan,
+        InitialUnitConfig,
+        RuntimeForceBuilder,
+    )
 
-    Units are placed in a line abreast formation centred on
-    ``(start_x, start_y)`` with *spacing_m* between each unit along the
-    northing (Y) axis.  This keeps all units at the same range from the
-    opposing force (which advances along the easting / X axis).
-    """
-    units: list[Unit] = []
-    unit_idx = 0
-
-    total_units = sum(e.get("count", 1) for e in force_def.units)
-
-    for entry in force_def.units:
-        unit_type = entry["unit_type"]
-        count = entry.get("count", 1)
-        overrides = entry.get("overrides", {})
-        # Phase 104: per-unit YAML `position: [x, y]` override.  Applied once
-        # (to every unit in the entry) — mostly useful for count=1 scripted-
-        # start entries.  Sets `_manually_positioned = True` so the Phase 104
-        # deployment dispatcher skips these units.
-        manual_pos_raw = entry.get("position")
-        manual_pos: Position | None = None
-        if manual_pos_raw is not None:
-            if isinstance(manual_pos_raw, (list, tuple)) and len(manual_pos_raw) >= 2:
-                manual_pos = Position(
-                    float(manual_pos_raw[0]),
-                    float(manual_pos_raw[1]),
-                    float(manual_pos_raw[2]) if len(manual_pos_raw) >= 3 else 0.0,
-                )
-            else:
-                logger.warning(
-                    "unit entry %r has invalid position %r — ignoring",
-                    unit_type, manual_pos_raw,
-                )
-
-        for i in range(count):
-            eid = f"{force_def.side}_{unit_type}_{unit_idx:04d}"
-            if manual_pos is not None:
-                pos = manual_pos
-            else:
-                offset_y = (unit_idx - total_units / 2) * spacing_m
-                pos = Position(
-                    start_x,
-                    start_y + offset_y,
-                    0.0,
-                )
-            try:
-                unit = unit_loader.create_unit(
-                    unit_type=unit_type,
-                    entity_id=eid,
-                    position=pos,
-                    side=force_def.side,
-                    rng=rng,
-                )
-                # Apply overrides
-                for key, val in overrides.items():
-                    if hasattr(unit, key):
-                        object.__setattr__(unit, key, val)
-                # Phase 104: flag manually-positioned units so deploy_units skips them
-                if manual_pos is not None:
-                    object.__setattr__(unit, "_manually_positioned", True)
-                units.append(unit)
-            except KeyError:
-                logger.warning(
-                    "Unit type %r not found in loader — skipping", unit_type
-                )
-            unit_idx += 1
-
-    return units
+    plan = InitialForcePlan(
+        side=force_def.side,
+        units=tuple(
+            InitialUnitConfig.model_validate(entry)
+            for entry in force_def.units
+        ),
+        start_easting=start_x,
+        start_northing=start_y,
+        spacing_m=spacing_m,
+    )
+    return RuntimeForceBuilder(
+        unit_loader=unit_loader,
+        rng=rng,
+    ).build_initial((plan,))[force_def.side]
 
 
 # ---------------------------------------------------------------------------
@@ -555,7 +400,9 @@ class ScenarioRunner:
             sensor_loader=sensor_loader,
         )
 
-        morale_config = self._build_morale_config(engagement.calibration_overrides)
+        morale_config = build_morale_config(
+            engagement.calibration_overrides.morale,
+        )
         morale_machine = MoraleStateMachine(bus, morale_rng, morale_config)
 
         # Morale tracking
@@ -817,49 +664,6 @@ class ScenarioRunner:
         )
 
     # ── Private helpers ──────────────────────────────────────────────
-
-    @staticmethod
-    def _build_morale_config(
-        calibration: Any,
-    ) -> MoraleConfig | None:
-        """Build MoraleConfig from calibration overrides, if any."""
-        if not calibration:
-            return None
-
-        from stochastic_warfare.simulation.calibration import CalibrationSchema
-
-        if isinstance(calibration, CalibrationSchema):
-            m = calibration.morale
-            kwargs: dict[str, Any] = {}
-            for field_name in (
-                "base_degrade_rate", "base_recover_rate",
-                "casualty_weight", "suppression_weight",
-                "leadership_weight", "cohesion_weight",
-                "force_ratio_weight", "transition_cooldown_s",
-            ):
-                val = getattr(m, field_name)
-                from stochastic_warfare.morale.state import MoraleConfig as MC
-                default = MC.model_fields[field_name].default
-                if val != default:
-                    kwargs[field_name] = val
-            return MoraleConfig(**kwargs) if kwargs else None
-
-        # Dict fallback for test mocks
-        morale_keys = {
-            "morale_base_degrade_rate": "base_degrade_rate",
-            "morale_base_recover_rate": "base_recover_rate",
-            "morale_casualty_weight": "casualty_weight",
-            "morale_suppression_weight": "suppression_weight",
-            "morale_leadership_weight": "leadership_weight",
-            "morale_cohesion_weight": "cohesion_weight",
-            "morale_force_ratio_weight": "force_ratio_weight",
-            "morale_transition_cooldown_s": "transition_cooldown_s",
-        }
-        kwargs = {}
-        for cal_key, config_key in morale_keys.items():
-            if cal_key in calibration:
-                kwargs[config_key] = calibration[cal_key]
-        return MoraleConfig(**kwargs) if kwargs else None
 
     @staticmethod
     def _build_final_states(

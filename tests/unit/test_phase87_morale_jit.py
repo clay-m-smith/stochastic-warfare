@@ -41,6 +41,10 @@ def _cfg_params(cfg: MoraleConfig) -> dict:
     )
 
 
+def _sample_state(row: np.ndarray, roll: float) -> MoraleState:
+    return MoraleState(int(np.searchsorted(np.cumsum(row), roll, side="right")))
+
+
 # ---------------------------------------------------------------------------
 # 87c: Discrete transition matrix kernel
 # ---------------------------------------------------------------------------
@@ -160,26 +164,61 @@ class TestContinuousTransitionKernel:
 class TestMoraleEngineIntegration:
 
     def test_check_transition_uses_kernel(self):
-        """check_transition still works after kernel wiring."""
+        """Discrete transition matches the public kernel and RNG draw."""
         cfg = _default_cfg()
         rng = np.random.default_rng(42)
+        control_rng = np.random.default_rng(42)
         sm = MoraleStateMachine(EventBus(), rng, config=cfg)
+        row = _transition_matrix_kernel(
+            0.3,
+            0.5,
+            0.0,
+            0.3,
+            0.5,
+            0.0,
+            **_cfg_params(cfg),
+        )[int(MoraleState.STEADY)]
+        expected = _sample_state(row, control_rng.random())
 
-        # Run enough transitions to verify no crash
-        for _ in range(10):
-            sm.check_transition(
-                "u1", casualty_rate=0.3, suppression_level=0.5,
-                leadership_present=False, cohesion=0.3, force_ratio=0.5,
-            )
+        actual = sm.check_transition(
+            "u1",
+            casualty_rate=0.3,
+            suppression_level=0.5,
+            leadership_present=False,
+            cohesion=0.3,
+            force_ratio=0.5,
+            current_time_s=100.0,
+        )
+
+        assert actual is expected
+        assert sm.get_state()["unit_states"]["u1"]["current_state"] == int(expected)
 
     def test_continuous_mode_uses_kernel(self):
         cfg = MoraleConfig(use_continuous_time=True)
         rng = np.random.default_rng(42)
+        control_rng = np.random.default_rng(42)
         sm = MoraleStateMachine(EventBus(), rng, config=cfg)
+        row = _continuous_transition_kernel(
+            0.2,
+            0.4,
+            1.0,
+            0.5,
+            0.8,
+            5.0,
+            **_cfg_params(cfg),
+        )[int(MoraleState.STEADY)]
+        expected = _sample_state(row, control_rng.random())
 
-        for _ in range(10):
-            sm.check_transition(
-                "u1", casualty_rate=0.2, suppression_level=0.4,
-                leadership_present=True, cohesion=0.5, force_ratio=0.8,
-                dt=5.0,
-            )
+        actual = sm.check_transition(
+            "u1",
+            casualty_rate=0.2,
+            suppression_level=0.4,
+            leadership_present=True,
+            cohesion=0.5,
+            force_ratio=0.8,
+            dt=5.0,
+            current_time_s=100.0,
+        )
+
+        assert actual is expected
+        assert sm.get_state()["unit_states"]["u1"]["current_state"] == int(expected)

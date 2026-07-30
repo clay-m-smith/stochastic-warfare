@@ -27,17 +27,20 @@ class TestVolleyFireConfig:
 
     def test_default_values(self) -> None:
         from stochastic_warfare.combat.volley_fire import VolleyFireConfig
+
         cfg = VolleyFireConfig()
         assert cfg.rifle_accuracy_multiplier == 3.0
         assert cfg.smoke_per_volley == 0.1
 
     def test_custom_values(self) -> None:
         from stochastic_warfare.combat.volley_fire import VolleyFireConfig
+
         cfg = VolleyFireConfig(rifle_accuracy_multiplier=2.0)
         assert cfg.rifle_accuracy_multiplier == 2.0
 
     def test_volley_types(self) -> None:
         from stochastic_warfare.combat.volley_fire import VolleyType
+
         assert VolleyType.VOLLEY_BY_RANK == 0
         assert VolleyType.CANISTER == 3
 
@@ -48,6 +51,7 @@ class TestVolleyFireEngine:
     @pytest.fixture()
     def engine(self):
         from stochastic_warfare.combat.volley_fire import VolleyFireEngine
+
         return VolleyFireEngine(rng=make_rng(42))
 
     def test_volley_produces_casualties(self, engine) -> None:
@@ -60,6 +64,7 @@ class TestVolleyFireEngine:
         rng1 = make_rng(1)
         rng2 = make_rng(1)
         from stochastic_warfare.combat.volley_fire import VolleyFireEngine
+
         e1 = VolleyFireEngine(rng=rng1)
         e2 = VolleyFireEngine(rng=rng2)
         # Accumulate over multiple volleys for statistical stability
@@ -69,31 +74,21 @@ class TestVolleyFireEngine:
 
     def test_rifle_more_accurate(self, engine) -> None:
         from stochastic_warfare.combat.volley_fire import VolleyFireEngine
+
         # Compare rifle vs smoothbore at same range
         e1 = VolleyFireEngine(rng=make_rng(10))
         e2 = VolleyFireEngine(rng=make_rng(10))
-        rifle_total = sum(
-            e1.fire_volley(100, 150.0, is_rifle=True).casualties
-            for _ in range(50)
-        )
-        smooth_total = sum(
-            e2.fire_volley(100, 150.0, is_rifle=False).casualties
-            for _ in range(50)
-        )
+        rifle_total = sum(e1.fire_volley(100, 150.0, is_rifle=True).casualties for _ in range(50))
+        smooth_total = sum(e2.fire_volley(100, 150.0, is_rifle=False).casualties for _ in range(50))
         assert rifle_total > smooth_total
 
     def test_formation_reduces_firepower(self, engine) -> None:
         from stochastic_warfare.combat.volley_fire import VolleyFireEngine
+
         e1 = VolleyFireEngine(rng=make_rng(5))
         e2 = VolleyFireEngine(rng=make_rng(5))
-        line_total = sum(
-            e1.fire_volley(500, 100.0, formation_firepower_fraction=1.0).casualties
-            for _ in range(20)
-        )
-        column_total = sum(
-            e2.fire_volley(500, 100.0, formation_firepower_fraction=0.3).casualties
-            for _ in range(20)
-        )
+        line_total = sum(e1.fire_volley(500, 100.0, formation_firepower_fraction=1.0).casualties for _ in range(20))
+        column_total = sum(e2.fire_volley(500, 100.0, formation_firepower_fraction=0.3).casualties for _ in range(20))
         assert line_total > column_total
 
     def test_smoke_accumulates(self, engine) -> None:
@@ -108,16 +103,11 @@ class TestVolleyFireEngine:
 
     def test_smoke_reduces_accuracy(self) -> None:
         from stochastic_warfare.combat.volley_fire import VolleyFireEngine
+
         e1 = VolleyFireEngine(rng=make_rng(20))
         e2 = VolleyFireEngine(rng=make_rng(20))
-        clear_total = sum(
-            e1.fire_volley(500, 100.0, current_smoke=0.0).casualties
-            for _ in range(30)
-        )
-        smoky_total = sum(
-            e2.fire_volley(500, 100.0, current_smoke=0.8).casualties
-            for _ in range(30)
-        )
+        clear_total = sum(e1.fire_volley(500, 100.0, current_smoke=0.0).casualties for _ in range(30))
+        smoky_total = sum(e2.fire_volley(500, 100.0, current_smoke=0.8).casualties for _ in range(30))
         assert clear_total > smoky_total
 
     def test_canister_at_close_range(self, engine) -> None:
@@ -131,6 +121,7 @@ class TestVolleyFireEngine:
 
     def test_canister_range_effectiveness(self) -> None:
         from stochastic_warfare.combat.volley_fire import VolleyFireEngine
+
         e1 = VolleyFireEngine(rng=make_rng(30))
         e2 = VolleyFireEngine(rng=make_rng(30))
         close_total = sum(e1.fire_canister(50.0, 6).casualties for _ in range(30))
@@ -139,22 +130,23 @@ class TestVolleyFireEngine:
 
     def test_independent_fire_less_accurate(self) -> None:
         from stochastic_warfare.combat.volley_fire import (
-            VolleyFireEngine, VolleyType,
+            VolleyFireEngine,
+            VolleyType,
         )
+
         e1 = VolleyFireEngine(rng=make_rng(40))
         e2 = VolleyFireEngine(rng=make_rng(40))
         volley_total = sum(
-            e1.fire_volley(500, 100.0, volley_type=VolleyType.VOLLEY_BY_RANK).casualties
-            for _ in range(30)
+            e1.fire_volley(500, 100.0, volley_type=VolleyType.VOLLEY_BY_RANK).casualties for _ in range(30)
         )
         indep_total = sum(
-            e2.fire_volley(500, 100.0, volley_type=VolleyType.INDEPENDENT_FIRE).casualties
-            for _ in range(30)
+            e2.fire_volley(500, 100.0, volley_type=VolleyType.INDEPENDENT_FIRE).casualties for _ in range(30)
         )
         assert volley_total > indep_total
 
     def test_state_roundtrip(self, engine) -> None:
         from stochastic_warfare.combat.volley_fire import VolleyFireEngine
+
         engine.fire_volley(500, 100.0)
         state = engine.get_state()
         eng2 = VolleyFireEngine(rng=make_rng(99))
@@ -176,17 +168,20 @@ class TestMeleeConfig:
 
     def test_default_values(self) -> None:
         from stochastic_warfare.combat.melee import MeleeConfig
+
         cfg = MeleeConfig()
         assert cfg.pre_contact_morale_threshold == 0.4
         assert cfg.cavalry_shock_multiplier == 2.0
 
     def test_custom_values(self) -> None:
         from stochastic_warfare.combat.melee import MeleeConfig
+
         cfg = MeleeConfig(pursuit_casualty_rate=0.15)
         assert cfg.pursuit_casualty_rate == 0.15
 
     def test_melee_types(self) -> None:
         from stochastic_warfare.combat.melee import MeleeType
+
         assert MeleeType.BAYONET_CHARGE == 0
         assert MeleeType.CAVALRY_CHARGE == 1
 
@@ -197,10 +192,12 @@ class TestMeleeEngine:
     @pytest.fixture()
     def engine(self):
         from stochastic_warfare.combat.melee import MeleeEngine
+
         return MeleeEngine(rng=make_rng(42))
 
     def test_pre_contact_defender_breaks(self, engine) -> None:
         from stochastic_warfare.combat.melee import MeleeType
+
         d_breaks, a_breaks = engine.check_pre_contact_morale(
             attacker_morale=0.8,
             defender_morale=0.3,
@@ -211,6 +208,7 @@ class TestMeleeEngine:
 
     def test_pre_contact_defender_holds(self, engine) -> None:
         from stochastic_warfare.combat.melee import MeleeType
+
         d_breaks, a_breaks = engine.check_pre_contact_morale(
             attacker_morale=0.8,
             defender_morale=0.8,
@@ -221,13 +219,18 @@ class TestMeleeEngine:
     def test_cavalry_shock_lowers_threshold(self, engine) -> None:
         """Cavalry charge should make defender break more easily."""
         from stochastic_warfare.combat.melee import MeleeType
+
         # With bayonet (no shock), defender at 0.6 morale holds
         d1, _ = engine.check_pre_contact_morale(
-            0.8, 0.6, MeleeType.BAYONET_CHARGE,
+            0.8,
+            0.6,
+            MeleeType.BAYONET_CHARGE,
         )
         # With cavalry charge and high vulnerability, defender may break
         d2, _ = engine.check_pre_contact_morale(
-            0.8, 0.6, MeleeType.CAVALRY_CHARGE,
+            0.8,
+            0.6,
+            MeleeType.CAVALRY_CHARGE,
             defender_formation_cavalry_vuln=1.5,
         )
         # Cavalry makes breaking more likely
@@ -235,8 +238,11 @@ class TestMeleeEngine:
 
     def test_cavalry_vs_square(self, engine) -> None:
         from stochastic_warfare.combat.melee import MeleeType
+
         result = engine.resolve_melee_round(
-            120, 75, MeleeType.CAVALRY_CHARGE,
+            120,
+            75,
+            MeleeType.CAVALRY_CHARGE,
             defender_formation_cavalry_vuln=0.1,
         )
         # Square should result in very few defender casualties
@@ -244,30 +250,33 @@ class TestMeleeEngine:
 
     def test_cavalry_vs_line_more_lethal(self) -> None:
         from stochastic_warfare.combat.melee import MeleeEngine, MeleeType
+
         e1 = MeleeEngine(rng=make_rng(50))
         e2 = MeleeEngine(rng=make_rng(50))
         # Cavalry vs line (vuln 1.5)
         line_cas = sum(
-            e1.resolve_melee_round(120, 75, MeleeType.CAVALRY_CHARGE, 1.5).defender_casualties
-            for _ in range(30)
+            e1.resolve_melee_round(120, 75, MeleeType.CAVALRY_CHARGE, 1.5).defender_casualties for _ in range(30)
         )
         # Cavalry vs square (vuln 0.1)
         square_cas = sum(
-            e2.resolve_melee_round(120, 75, MeleeType.CAVALRY_CHARGE, 0.1).defender_casualties
-            for _ in range(30)
+            e2.resolve_melee_round(120, 75, MeleeType.CAVALRY_CHARGE, 0.1).defender_casualties for _ in range(30)
         )
         assert line_cas > square_cas
 
     def test_bayonet_charge(self, engine) -> None:
         from stochastic_warfare.combat.melee import MeleeType
+
         result = engine.resolve_melee_round(
-            75, 75, MeleeType.BAYONET_CHARGE,
+            75,
+            75,
+            MeleeType.BAYONET_CHARGE,
         )
         assert result.attacker_casualties >= 0
         assert result.defender_casualties >= 0
 
     def test_shock_decay_per_round(self) -> None:
         from stochastic_warfare.combat.melee import MeleeEngine, MeleeType
+
         e1 = MeleeEngine(rng=make_rng(60))
         e2 = MeleeEngine(rng=make_rng(60))
         r1_cas = sum(
@@ -283,18 +292,13 @@ class TestMeleeEngine:
 
     def test_force_ratio_matters(self) -> None:
         from stochastic_warfare.combat.melee import MeleeEngine, MeleeType
+
         e1 = MeleeEngine(rng=make_rng(70))
         e2 = MeleeEngine(rng=make_rng(70))
         # 3:1 advantage
-        sup_cas = sum(
-            e1.resolve_melee_round(225, 75, MeleeType.BAYONET_CHARGE).defender_casualties
-            for _ in range(30)
-        )
+        sup_cas = sum(e1.resolve_melee_round(225, 75, MeleeType.BAYONET_CHARGE).defender_casualties for _ in range(30))
         # 1:1
-        even_cas = sum(
-            e2.resolve_melee_round(75, 75, MeleeType.BAYONET_CHARGE).defender_casualties
-            for _ in range(30)
-        )
+        even_cas = sum(e2.resolve_melee_round(75, 75, MeleeType.BAYONET_CHARGE).defender_casualties for _ in range(30))
         assert sup_cas > even_cas
 
     def test_pursuit_casualties(self, engine) -> None:
@@ -317,16 +321,20 @@ class TestMeleeEngine:
 
     def test_zero_strength(self, engine) -> None:
         from stochastic_warfare.combat.melee import MeleeType
+
         result = engine.resolve_melee_round(0, 75, MeleeType.BAYONET_CHARGE)
         assert result.attacker_casualties == 0
         assert result.defender_casualties == 0
 
-    def test_state_roundtrip(self, engine) -> None:
+    def test_state_roundtrip_is_explicit_no_op(self, engine) -> None:
+        """The stateless melee engine restores an empty state as a no-op."""
         from stochastic_warfare.combat.melee import MeleeEngine
+
         state = engine.get_state()
+        assert state == {}
         eng2 = MeleeEngine(rng=make_rng(99))
         eng2.set_state(state)
-        # Stateless engine, just verify no error
+        assert eng2.get_state() == {}
 
 
 # ---------------------------------------------------------------------------
@@ -339,12 +347,14 @@ class TestCavalryConfig:
 
     def test_default_values(self) -> None:
         from stochastic_warfare.movement.cavalry import CavalryConfig
+
         cfg = CavalryConfig()
         assert cfg.gallop_start_distance_m == 150.0
         assert cfg.rally_duration_s == 120.0
 
     def test_charge_phases(self) -> None:
         from stochastic_warfare.movement.cavalry import ChargePhase
+
         assert ChargePhase.WALK == 0
         assert ChargePhase.RALLY == 6
 
@@ -355,16 +365,19 @@ class TestCavalryEngine:
     @pytest.fixture()
     def engine(self):
         from stochastic_warfare.movement.cavalry import CavalryEngine
+
         return CavalryEngine(rng=make_rng(42))
 
     def test_initiate_charge(self, engine) -> None:
         from stochastic_warfare.movement.cavalry import ChargePhase
+
         state = engine.initiate_charge("c1", "unit_1", "target_1", 500.0)
         assert state.phase == ChargePhase.WALK
         assert state.distance_to_target_m == 500.0
 
     def test_initiate_close_charge(self, engine) -> None:
         from stochastic_warfare.movement.cavalry import ChargePhase
+
         state = engine.initiate_charge("c2", "unit_1", "target_1", 30.0)
         assert state.phase == ChargePhase.CHARGE
 
@@ -377,6 +390,7 @@ class TestCavalryEngine:
 
     def test_phase_progression(self, engine) -> None:
         from stochastic_warfare.movement.cavalry import ChargePhase
+
         engine.initiate_charge("c1", "u1", "t1", 300.0)
         # Run many updates to advance through phases
         for _ in range(100):
@@ -387,6 +401,7 @@ class TestCavalryEngine:
 
     def test_fatigue_at_gallop(self, engine) -> None:
         from stochastic_warfare.movement.cavalry import ChargePhase
+
         engine.initiate_charge("c1", "u1", "t1", 100.0)
         # Start at gallop distance
         state = engine._charges["c1"]
@@ -396,6 +411,7 @@ class TestCavalryEngine:
 
     def test_exhaustion(self, engine) -> None:
         from stochastic_warfare.movement.cavalry import ChargePhase
+
         state = engine.initiate_charge("c1", "u1", "t1", 100.0)
         state.phase = ChargePhase.GALLOP
         state.gallop_time_s = 55.0
@@ -404,6 +420,7 @@ class TestCavalryEngine:
 
     def test_rally_duration(self, engine) -> None:
         from stochastic_warfare.movement.cavalry import ChargePhase
+
         state = engine.initiate_charge("c1", "u1", "t1", 100.0)
         engine.begin_rally("c1")
         assert state.phase == ChargePhase.RALLY
@@ -412,6 +429,7 @@ class TestCavalryEngine:
 
     def test_pursuit_phase(self, engine) -> None:
         from stochastic_warfare.movement.cavalry import ChargePhase
+
         engine.initiate_charge("c1", "u1", "t1", 100.0)
         engine.begin_pursuit("c1")
         state = engine._charges["c1"]
@@ -432,6 +450,7 @@ class TestCavalryEngine:
 
     def test_state_roundtrip(self, engine) -> None:
         from stochastic_warfare.movement.cavalry import CavalryEngine
+
         engine.initiate_charge("c1", "u1", "t1", 300.0)
         state = engine.get_state()
         eng2 = CavalryEngine(rng=make_rng(99))
@@ -452,6 +471,7 @@ class TestNapoleonicFormationConfig:
         from stochastic_warfare.movement.formation_napoleonic import (
             NapoleonicFormationConfig,
         )
+
         cfg = NapoleonicFormationConfig()
         assert cfg.firepower_fractions[0] == 1.0  # LINE
 
@@ -459,6 +479,7 @@ class TestNapoleonicFormationConfig:
         from stochastic_warfare.movement.formation_napoleonic import (
             NapoleonicFormationType,
         )
+
         assert NapoleonicFormationType.LINE == 0
         assert NapoleonicFormationType.SQUARE == 2
 
@@ -466,6 +487,7 @@ class TestNapoleonicFormationConfig:
         from stochastic_warfare.movement.formation_napoleonic import (
             NapoleonicFormationConfig,
         )
+
         cfg = NapoleonicFormationConfig()
         assert cfg.transition_times_s["SQUARE_to_LINE"] == 90.0
 
@@ -478,12 +500,14 @@ class TestNapoleonicFormationEngine:
         from stochastic_warfare.movement.formation_napoleonic import (
             NapoleonicFormationEngine,
         )
+
         return NapoleonicFormationEngine()
 
     def test_set_formation(self, engine) -> None:
         from stochastic_warfare.movement.formation_napoleonic import (
             NapoleonicFormationType,
         )
+
         engine.set_formation("u1", NapoleonicFormationType.COLUMN)
         assert engine.get_formation("u1") == NapoleonicFormationType.COLUMN
 
@@ -491,12 +515,14 @@ class TestNapoleonicFormationEngine:
         from stochastic_warfare.movement.formation_napoleonic import (
             NapoleonicFormationType,
         )
+
         assert engine.get_formation("unknown") == NapoleonicFormationType.LINE
 
     def test_transition_timing(self, engine) -> None:
         from stochastic_warfare.movement.formation_napoleonic import (
             NapoleonicFormationType,
         )
+
         engine.set_formation("u1", NapoleonicFormationType.LINE)
         time_s = engine.order_formation_change("u1", NapoleonicFormationType.SQUARE)
         assert time_s == 45.0  # LINE_to_SQUARE
@@ -505,6 +531,7 @@ class TestNapoleonicFormationEngine:
         from stochastic_warfare.movement.formation_napoleonic import (
             NapoleonicFormationType,
         )
+
         engine.set_formation("u1", NapoleonicFormationType.SQUARE)
         time_s = engine.order_formation_change("u1", NapoleonicFormationType.LINE)
         assert time_s == 90.0
@@ -513,6 +540,7 @@ class TestNapoleonicFormationEngine:
         from stochastic_warfare.movement.formation_napoleonic import (
             NapoleonicFormationType,
         )
+
         engine.set_formation("u1", NapoleonicFormationType.LINE)
         engine.order_formation_change("u1", NapoleonicFormationType.COLUMN)
         completed = engine.update(100.0)
@@ -523,6 +551,7 @@ class TestNapoleonicFormationEngine:
         from stochastic_warfare.movement.formation_napoleonic import (
             NapoleonicFormationType,
         )
+
         engine.set_formation("u1", NapoleonicFormationType.LINE)
         engine.order_formation_change("u1", NapoleonicFormationType.SQUARE)
         assert engine.is_transitioning("u1") is True
@@ -533,6 +562,7 @@ class TestNapoleonicFormationEngine:
         from stochastic_warfare.movement.formation_napoleonic import (
             NapoleonicFormationType,
         )
+
         engine.set_formation("u1", NapoleonicFormationType.LINE)
         assert engine.firepower_fraction("u1") == pytest.approx(1.0)
 
@@ -540,6 +570,7 @@ class TestNapoleonicFormationEngine:
         from stochastic_warfare.movement.formation_napoleonic import (
             NapoleonicFormationType,
         )
+
         engine.set_formation("u1", NapoleonicFormationType.COLUMN)
         assert engine.firepower_fraction("u1") == pytest.approx(0.3)
 
@@ -547,6 +578,7 @@ class TestNapoleonicFormationEngine:
         from stochastic_warfare.movement.formation_napoleonic import (
             NapoleonicFormationType,
         )
+
         engine.set_formation("u1", NapoleonicFormationType.COLUMN)
         assert engine.speed_multiplier("u1") == pytest.approx(0.9)
 
@@ -554,6 +586,7 @@ class TestNapoleonicFormationEngine:
         from stochastic_warfare.movement.formation_napoleonic import (
             NapoleonicFormationType,
         )
+
         engine.set_formation("u1", NapoleonicFormationType.SQUARE)
         assert engine.speed_multiplier("u1") == pytest.approx(0.3)
 
@@ -561,6 +594,7 @@ class TestNapoleonicFormationEngine:
         from stochastic_warfare.movement.formation_napoleonic import (
             NapoleonicFormationType,
         )
+
         engine.set_formation("u1", NapoleonicFormationType.SQUARE)
         assert engine.cavalry_vulnerability("u1") == pytest.approx(0.1)
 
@@ -568,6 +602,7 @@ class TestNapoleonicFormationEngine:
         from stochastic_warfare.movement.formation_napoleonic import (
             NapoleonicFormationType,
         )
+
         engine.set_formation("u1", NapoleonicFormationType.SKIRMISH)
         assert engine.cavalry_vulnerability("u1") == pytest.approx(1.5)
 
@@ -575,6 +610,7 @@ class TestNapoleonicFormationEngine:
         from stochastic_warfare.movement.formation_napoleonic import (
             NapoleonicFormationType,
         )
+
         engine.set_formation("u1", NapoleonicFormationType.SQUARE)
         assert engine.artillery_vulnerability("u1") == pytest.approx(2.0)
 
@@ -582,6 +618,7 @@ class TestNapoleonicFormationEngine:
         from stochastic_warfare.movement.formation_napoleonic import (
             NapoleonicFormationType,
         )
+
         engine.set_formation("u1", NapoleonicFormationType.SKIRMISH)
         assert engine.artillery_vulnerability("u1") == pytest.approx(0.3)
 
@@ -590,6 +627,7 @@ class TestNapoleonicFormationEngine:
         from stochastic_warfare.movement.formation_napoleonic import (
             NapoleonicFormationType,
         )
+
         engine.set_formation("u1", NapoleonicFormationType.LINE)
         engine.order_formation_change("u1", NapoleonicFormationType.SQUARE)
         # Transitioning LINE→SQUARE: worst cavalry vuln = max(1.0, 0.1) = 1.0
@@ -602,6 +640,7 @@ class TestNapoleonicFormationEngine:
         from stochastic_warfare.movement.formation_napoleonic import (
             NapoleonicFormationType,
         )
+
         engine.set_formation("u1", NapoleonicFormationType.COLUMN)
         engine.order_formation_change("u1", NapoleonicFormationType.SQUARE)
         # Worst speed = min(0.9, 0.3) = 0.3
@@ -611,6 +650,7 @@ class TestNapoleonicFormationEngine:
         from stochastic_warfare.movement.formation_napoleonic import (
             NapoleonicFormationType,
         )
+
         engine.set_formation("u1", NapoleonicFormationType.LINE)
         engine.set_formation("u2", NapoleonicFormationType.COLUMN)
         engine.order_formation_change("u1", NapoleonicFormationType.SQUARE)
@@ -623,6 +663,7 @@ class TestNapoleonicFormationEngine:
         from stochastic_warfare.movement.formation_napoleonic import (
             NapoleonicFormationType,
         )
+
         engine.set_formation("u1", NapoleonicFormationType.LINE)
         time_s = engine.order_formation_change("u1", NapoleonicFormationType.LINE)
         assert time_s == 0.0
@@ -632,6 +673,7 @@ class TestNapoleonicFormationEngine:
             NapoleonicFormationEngine,
             NapoleonicFormationType,
         )
+
         engine.set_formation("u1", NapoleonicFormationType.SQUARE)
         state = engine.get_state()
         eng2 = NapoleonicFormationEngine()
@@ -649,11 +691,13 @@ class TestCourierConfig:
 
     def test_default_values(self) -> None:
         from stochastic_warfare.c2.courier import CourierConfig
+
         cfg = CourierConfig()
         assert cfg.max_couriers_per_hq == 4
 
     def test_courier_types(self) -> None:
         from stochastic_warfare.c2.courier import CourierType
+
         assert CourierType.MOUNTED_ADC == 0
         assert CourierType.DRUM_BUGLE == 3
 
@@ -664,13 +708,17 @@ class TestCourierEngine:
     @pytest.fixture()
     def engine(self):
         from stochastic_warfare.c2.courier import CourierEngine
+
         return CourierEngine(rng=make_rng(42))
 
     def test_dispatch_courier(self, engine) -> None:
         from stochastic_warfare.c2.courier import CourierType
+
         msg = engine.dispatch_courier(
-            "m1", CourierType.MOUNTED_ADC,
-            (0, 0), (5000, 0),
+            "m1",
+            CourierType.MOUNTED_ADC,
+            (0, 0),
+            (5000, 0),
             sim_time_s=0.0,
         )
         assert msg is not None
@@ -678,31 +726,38 @@ class TestCourierEngine:
 
     def test_travel_time_road_faster(self, engine) -> None:
         from stochastic_warfare.c2.courier import CourierType
+
         road_time = engine.compute_travel_time(5000.0, CourierType.MOUNTED_ADC, "road")
         open_time = engine.compute_travel_time(5000.0, CourierType.MOUNTED_ADC, "open")
         assert road_time < open_time
 
     def test_travel_time_foot_slower(self, engine) -> None:
         from stochastic_warfare.c2.courier import CourierType
+
         mounted = engine.compute_travel_time(5000.0, CourierType.MOUNTED_ADC, "open")
         foot = engine.compute_travel_time(5000.0, CourierType.FOOT_MESSENGER, "open")
         assert foot > mounted
 
     def test_drum_bugle_in_range(self, engine) -> None:
         from stochastic_warfare.c2.courier import CourierType
+
         time = engine.compute_travel_time(200.0, CourierType.DRUM_BUGLE)
         assert time == pytest.approx(2.0)
 
     def test_drum_bugle_out_of_range(self, engine) -> None:
         from stochastic_warfare.c2.courier import CourierType
+
         time = engine.compute_travel_time(500.0, CourierType.DRUM_BUGLE)
         assert time == float("inf")
 
     def test_message_delivery(self, engine) -> None:
         from stochastic_warfare.c2.courier import CourierType
+
         msg = engine.dispatch_courier(
-            "m1", CourierType.MOUNTED_ADC,
-            (0, 0), (1000, 0),
+            "m1",
+            CourierType.MOUNTED_ADC,
+            (0, 0),
+            (1000, 0),
             sim_time_s=0.0,
         )
         delivered = engine.update(msg.arrival_time_s + 1.0)
@@ -713,12 +768,15 @@ class TestCourierEngine:
     def test_interception_possible(self) -> None:
         """With high enemy_km, some messages get intercepted."""
         from stochastic_warfare.c2.courier import CourierEngine, CourierType
+
         intercepted_count = 0
         for seed in range(100):
             eng = CourierEngine(rng=make_rng(seed))
             msg = eng.dispatch_courier(
-                f"m{seed}", CourierType.FOOT_MESSENGER,
-                (0, 0), (10000, 0),
+                f"m{seed}",
+                CourierType.FOOT_MESSENGER,
+                (0, 0),
+                (10000, 0),
                 enemy_km=20.0,
             )
             if msg.intercepted:
@@ -727,27 +785,35 @@ class TestCourierEngine:
 
     def test_courier_pool_limit(self, engine) -> None:
         from stochastic_warfare.c2.courier import CourierType
+
         for i in range(4):
             engine.dispatch_courier(
-                f"m{i}", CourierType.MOUNTED_ADC,
-                (0, 0), (10000, 0),
+                f"m{i}",
+                CourierType.MOUNTED_ADC,
+                (0, 0),
+                (10000, 0),
                 hq_id="hq1",
                 sim_time_s=0.0,
             )
         # 5th should fail
         msg = engine.dispatch_courier(
-            "m4", CourierType.MOUNTED_ADC,
-            (0, 0), (10000, 0),
+            "m4",
+            CourierType.MOUNTED_ADC,
+            (0, 0),
+            (10000, 0),
             hq_id="hq1",
         )
         assert msg is None
 
     def test_available_couriers(self, engine) -> None:
         from stochastic_warfare.c2.courier import CourierType
+
         assert engine.available_couriers("hq1") == 4
         engine.dispatch_courier(
-            "m1", CourierType.MOUNTED_ADC,
-            (0, 0), (1000, 0),
+            "m1",
+            CourierType.MOUNTED_ADC,
+            (0, 0),
+            (1000, 0),
             hq_id="hq1",
         )
         assert engine.available_couriers("hq1") == 3
@@ -755,14 +821,18 @@ class TestCourierEngine:
     def test_hour_scale_delay(self, engine) -> None:
         """10km courier should take ~33 minutes."""
         from stochastic_warfare.c2.courier import CourierType
+
         time = engine.compute_travel_time(10000.0, CourierType.MOUNTED_ADC, "open")
         assert 1000.0 < time < 3000.0
 
     def test_state_roundtrip(self, engine) -> None:
         from stochastic_warfare.c2.courier import CourierEngine, CourierType
+
         engine.dispatch_courier(
-            "m1", CourierType.MOUNTED_ADC,
-            (0, 0), (5000, 0),
+            "m1",
+            CourierType.MOUNTED_ADC,
+            (0, 0),
+            (5000, 0),
             hq_id="hq1",
         )
         state = engine.get_state()
@@ -781,11 +851,13 @@ class TestForagingConfig:
 
     def test_default_values(self) -> None:
         from stochastic_warfare.logistics.foraging import ForagingConfig
+
         cfg = ForagingConfig()
         assert cfg.men_per_km2_per_day == 500.0
 
     def test_terrain_productivity(self) -> None:
         from stochastic_warfare.logistics.foraging import TerrainProductivity
+
         assert TerrainProductivity.BARREN == 0
         assert TerrainProductivity.ABUNDANT == 4
 
@@ -799,6 +871,7 @@ class TestForagingEngine:
             ForagingEngine,
             TerrainProductivity,
         )
+
         eng = ForagingEngine(rng=make_rng(42))
         eng.register_zone("z1", (0, 0), 5000.0, TerrainProductivity.GOOD)
         return eng
@@ -840,6 +913,7 @@ class TestForagingEngine:
             ForagingEngine,
             TerrainProductivity,
         )
+
         ambush_count = 0
         for seed in range(100):
             eng = ForagingEngine(rng=make_rng(seed))
@@ -855,6 +929,7 @@ class TestForagingEngine:
 
     def test_state_roundtrip(self, engine) -> None:
         from stochastic_warfare.logistics.foraging import ForagingEngine
+
         engine._zones["z1"].remaining_fraction = 0.3
         state = engine.get_state()
         eng2 = ForagingEngine(rng=make_rng(99))
@@ -872,7 +947,8 @@ class TestCrossEngineIntegration:
 
     def test_formation_to_volley_firepower(self) -> None:
         from stochastic_warfare.movement.formation_napoleonic import (
-            NapoleonicFormationEngine, NapoleonicFormationType,
+            NapoleonicFormationEngine,
+            NapoleonicFormationType,
         )
         from stochastic_warfare.combat.volley_fire import VolleyFireEngine
 
@@ -887,7 +963,8 @@ class TestCrossEngineIntegration:
 
     def test_formation_to_melee_vulnerability(self) -> None:
         from stochastic_warfare.movement.formation_napoleonic import (
-            NapoleonicFormationEngine, NapoleonicFormationType,
+            NapoleonicFormationEngine,
+            NapoleonicFormationType,
         )
         from stochastic_warfare.combat.melee import MeleeEngine, MeleeType
 
@@ -899,14 +976,18 @@ class TestCrossEngineIntegration:
         assert cav_vuln == pytest.approx(0.1)
 
         d_breaks, _ = melee_eng.check_pre_contact_morale(
-            0.8, 0.8, MeleeType.CAVALRY_CHARGE, cav_vuln,
+            0.8,
+            0.8,
+            MeleeType.CAVALRY_CHARGE,
+            cav_vuln,
         )
         # Square should not break even with cavalry
         assert d_breaks is False
 
     def test_cavalry_charge_to_melee(self) -> None:
         from stochastic_warfare.movement.cavalry import (
-            CavalryEngine, ChargePhase,
+            CavalryEngine,
+            ChargePhase,
         )
         from stochastic_warfare.combat.melee import MeleeEngine, MeleeType
 
@@ -921,12 +1002,16 @@ class TestCrossEngineIntegration:
                 break
         # At impact, resolve melee
         result = melee_eng.resolve_melee_round(
-            120, 75, MeleeType.CAVALRY_CHARGE, 1.0,
+            120,
+            75,
+            MeleeType.CAVALRY_CHARGE,
+            1.0,
         )
         assert result.defender_casualties >= 0
 
     def test_smoke_to_volley(self) -> None:
         from stochastic_warfare.combat.volley_fire import VolleyFireEngine
+
         eng = VolleyFireEngine(rng=make_rng(4))
         # Fire several volleys to build smoke
         for _ in range(5):
@@ -949,7 +1034,9 @@ class TestCrossEngineIntegration:
         from datetime import datetime, timezone, timedelta
 
         config = CampaignScenarioConfig(
-            name="modern_test", date="2024-01-01", duration_hours=1.0,
+            name="modern_test",
+            date="2024-01-01",
+            duration_hours=1.0,
             terrain=TerrainConfig(width_m=1000, height_m=1000),
             sides=[
                 SideConfig(side="a", units=[]),
@@ -983,7 +1070,9 @@ class TestCrossEngineIntegration:
         from datetime import datetime, timezone, timedelta
 
         config = CampaignScenarioConfig(
-            name="nap_test", date="1805-12-02", duration_hours=1.0,
+            name="nap_test",
+            date="1805-12-02",
+            duration_hours=1.0,
             era="napoleonic",
             terrain=TerrainConfig(width_m=1000, height_m=1000),
             sides=[

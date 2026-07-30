@@ -124,6 +124,44 @@ def check_casualty_envelope(
 # ---------------------------------------------------------------------------
 
 
+def _capture_events(
+    scenario_path: str | Path,
+    seed: int,
+    data_dir: str | Path,
+    max_ticks: int,
+) -> tuple[Any, ...]:
+    """Run one production-owned session and return its recorded events."""
+    # Lazy imports keep the assertion-only helpers importable in minimal
+    # environments while runtime construction stays behind the typed boundary.
+    from stochastic_warfare.simulation.runtime import (
+        AnalysisVariant,
+        SimulationRuntimeFactory,
+    )
+
+    variant_id = "event-capture"
+    prepared = SimulationRuntimeFactory().prepare(
+        Path(scenario_path),
+        Path(data_dir),
+        [AnalysisVariant(variant_id=variant_id)],
+    )
+    session = prepared.build(
+        variant_id,
+        seed=seed,
+        max_ticks=max_ticks,
+        record_events=True,
+    )
+    result = session.run_to_completion()
+    if result.ticks_executed != session.context.clock.tick_count:
+        raise RuntimeError("Runtime result tick count does not match the production clock")
+    if result.duration_s != session.context.clock.elapsed.total_seconds():
+        raise RuntimeError("Runtime result duration does not match the production clock")
+    if result.victory_result.tick != result.ticks_executed:
+        raise RuntimeError("Terminal victory tick does not match the runtime result")
+    if session.recorder is None:
+        raise RuntimeError("Recorded runtime session did not provide a recorder")
+    return tuple(session.recorder.events)
+
+
 def count_destructions_by_weapon(
     scenario_path: str | Path,
     weapon_id: str,
@@ -138,39 +176,10 @@ def count_destructions_by_weapon(
     checks because it needs a full run with a recorder, not a metric-only
     batch.
     """
-    # Lazy imports — keeps module importable in minimal environments
-    from stochastic_warfare.simulation.engine import EngineConfig, SimulationEngine
-    from stochastic_warfare.simulation.recorder import SimulationRecorder
-    from stochastic_warfare.simulation.scenario import (
-        ScenarioLoader,
-        VictoryConditionConfig,
-    )
-    from stochastic_warfare.simulation.victory import VictoryEvaluator
-
-    loader = ScenarioLoader(str(data_dir))
-    ctx = loader.load(Path(scenario_path), seed=seed)
-    victory_eval = VictoryEvaluator(
-        objectives=[],
-        conditions=[VictoryConditionConfig(type="force_destroyed")],
-        event_bus=ctx.event_bus,
-        max_duration_s=max_ticks * 5.0,
-    )
-    recorder = SimulationRecorder(ctx.event_bus)
-    engine = SimulationEngine(
-        ctx,
-        config=EngineConfig(max_ticks=max_ticks),
-        victory_evaluator=victory_eval,
-        recorder=recorder,
-    )
-    recorder.start()
-    while not engine.step():
-        pass
-
     return sum(
         1
-        for e in recorder.events
-        if e.event_type == "UnitDestroyedEvent"
-        and e.data.get("weapon_id") == weapon_id
+        for e in _capture_events(scenario_path, seed, data_dir, max_ticks)
+        if e.event_type == "UnitDestroyedEvent" and e.data.get("weapon_id") == weapon_id
     )
 
 
@@ -186,36 +195,9 @@ def count_total_destructions(
     Companion to ``count_destructions_by_weapon`` — divide the former by
     the latter to assert a weapon's share of kills.
     """
-    from stochastic_warfare.simulation.engine import EngineConfig, SimulationEngine
-    from stochastic_warfare.simulation.recorder import SimulationRecorder
-    from stochastic_warfare.simulation.scenario import (
-        ScenarioLoader,
-        VictoryConditionConfig,
-    )
-    from stochastic_warfare.simulation.victory import VictoryEvaluator
-
-    loader = ScenarioLoader(str(data_dir))
-    ctx = loader.load(Path(scenario_path), seed=seed)
-    victory_eval = VictoryEvaluator(
-        objectives=[],
-        conditions=[VictoryConditionConfig(type="force_destroyed")],
-        event_bus=ctx.event_bus,
-        max_duration_s=max_ticks * 5.0,
-    )
-    recorder = SimulationRecorder(ctx.event_bus)
-    engine = SimulationEngine(
-        ctx,
-        config=EngineConfig(max_ticks=max_ticks),
-        victory_evaluator=victory_eval,
-        recorder=recorder,
-    )
-    recorder.start()
-    while not engine.step():
-        pass
-
     return sum(
         1
-        for e in recorder.events
+        for e in _capture_events(scenario_path, seed, data_dir, max_ticks)
         if e.event_type == "UnitDestroyedEvent" and e.data.get("side") == side
     )
 
@@ -232,31 +214,4 @@ def count_events_by_type(
     Useful for key-dynamic assertions like "at least N CAS engagements" or
     "at least M IED detonations per run".
     """
-    from stochastic_warfare.simulation.engine import EngineConfig, SimulationEngine
-    from stochastic_warfare.simulation.recorder import SimulationRecorder
-    from stochastic_warfare.simulation.scenario import (
-        ScenarioLoader,
-        VictoryConditionConfig,
-    )
-    from stochastic_warfare.simulation.victory import VictoryEvaluator
-
-    loader = ScenarioLoader(str(data_dir))
-    ctx = loader.load(Path(scenario_path), seed=seed)
-    victory_eval = VictoryEvaluator(
-        objectives=[],
-        conditions=[VictoryConditionConfig(type="force_destroyed")],
-        event_bus=ctx.event_bus,
-        max_duration_s=max_ticks * 5.0,
-    )
-    recorder = SimulationRecorder(ctx.event_bus)
-    engine = SimulationEngine(
-        ctx,
-        config=EngineConfig(max_ticks=max_ticks),
-        victory_evaluator=victory_eval,
-        recorder=recorder,
-    )
-    recorder.start()
-    while not engine.step():
-        pass
-
-    return sum(1 for e in recorder.events if e.event_type == event_type)
+    return sum(1 for e in _capture_events(scenario_path, seed, data_dir, max_ticks) if e.event_type == event_type)

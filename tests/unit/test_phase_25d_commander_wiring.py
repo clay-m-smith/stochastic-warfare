@@ -11,12 +11,15 @@ from typing import Any
 from unittest.mock import MagicMock
 
 import numpy as np
+import pytest
 
+from stochastic_warfare.c2.ai.ooda import OODAConfig, OODALoopEngine, OODAPhase
 from stochastic_warfare.core.clock import SimulationClock
 from stochastic_warfare.core.events import EventBus
 from stochastic_warfare.core.rng import RNGManager
 from stochastic_warfare.core.types import ModuleId, Position
 from stochastic_warfare.entities.base import Unit
+from stochastic_warfare.entities.organization.echelons import EchelonLevel
 from stochastic_warfare.simulation.scenario import (
     CampaignScenarioConfig,
     SimulationContext,
@@ -136,7 +139,10 @@ class TestScenarioLoaderCommander:
         cfg = _minimal_config(commander_config=None)
         c2_rng = RNGManager(42).get_stream(ModuleId.C2)
         result = loader._create_optional_engines(
-            RNGManager(42), EventBus(), cfg, c2_rng,
+            RNGManager(42),
+            EventBus(),
+            cfg,
+            c2_rng,
         )
         assert result.get("commander_engine") is None
 
@@ -147,24 +153,29 @@ class TestScenarioLoaderCommander:
         loader = ScenarioLoader.__new__(ScenarioLoader)
         loader._data_dir = Path("data")
         c2_rng = RNGManager(42).get_stream(ModuleId.C2)
-        result = loader._create_commander_engine(c2_rng, {
-            "ooda_speed_base_mult": 2.0,
-        })
+        result = loader._create_commander_engine(
+            c2_rng,
+            {
+                "ooda_speed_base_mult": 2.0,
+            },
+        )
         assert result["commander_engine"]._config.ooda_speed_base_mult == 2.0
 
-    def test_commander_side_defaults_stripped_from_config(self) -> None:
+    def test_commander_side_defaults_rejected_from_config(self) -> None:
         from pathlib import Path
         from stochastic_warfare.simulation.scenario import ScenarioLoader
 
         loader = ScenarioLoader.__new__(ScenarioLoader)
         loader._data_dir = Path("data")
         c2_rng = RNGManager(42).get_stream(ModuleId.C2)
-        # side_defaults should not go into CommanderConfig
-        result = loader._create_commander_engine(c2_rng, {
-            "side_defaults": {"blue": "balanced_default"},
-            "assignments": {"unit_1": "aggressive_armor"},
-        })
-        assert result["commander_engine"] is not None
+        with pytest.raises(ValueError, match="side_defaults"):
+            loader._create_commander_engine(
+                c2_rng,
+                {
+                    "side_defaults": {"blue": "balanced_default"},
+                    "assignments": {"unit_1": "aggressive_armor"},
+                },
+            )
 
     def test_commander_assignments_stripped(self) -> None:
         from pathlib import Path
@@ -173,9 +184,12 @@ class TestScenarioLoaderCommander:
         loader = ScenarioLoader.__new__(ScenarioLoader)
         loader._data_dir = Path("data")
         c2_rng = RNGManager(42).get_stream(ModuleId.C2)
-        result = loader._create_commander_engine(c2_rng, {
-            "assignments": {"unit_1": "aggressive_armor"},
-        })
+        result = loader._create_commander_engine(
+            c2_rng,
+            {
+                "assignments": {"unit_1": "aggressive_armor"},
+            },
+        )
         assert result["commander_engine"] is not None
 
 
@@ -185,95 +199,85 @@ class TestScenarioLoaderCommander:
 
 
 class TestCommanderAssignments:
-    """_apply_commander_assignments wires profiles to units."""
+    """Production scenario loading wires exact commander assignments."""
 
-    def test_side_default_assigns_all_units(self) -> None:
+    def test_side_profile_assigns_all_units(self) -> None:
         from pathlib import Path
-        from stochastic_warfare.c2.ai.commander import CommanderEngine, CommanderProfileLoader
         from stochastic_warfare.simulation.scenario import ScenarioLoader
 
-        loader = CommanderProfileLoader(Path("data/commander_profiles"))
-        loader.load_all()
-        engine = CommanderEngine(loader, np.random.default_rng(42))
-
-        u1 = _make_unit("u1", "blue")
-        u2 = _make_unit("u2", "blue")
-        u3 = _make_unit("u3", "red")
-
-        cfg = _minimal_config(commander_config={
-            "side_defaults": {"blue": "balanced_default"},
-        })
-        ctx = _make_ctx(
-            config=cfg,
-            commander_engine=engine,
-            units_by_side={"blue": [u1, u2], "red": [u3]},
+        ctx = ScenarioLoader(Path("data")).load(
+            Path("data/scenarios/test_campaign/scenario.yaml"),
+            seed=42,
         )
+        engine = ctx.commander_engine
+        assert engine is not None
 
-        sl = ScenarioLoader.__new__(ScenarioLoader)
-        sl._apply_commander_assignments(ctx, cfg)
-
-        assert engine.get_personality("u1") is not None
-        assert engine.get_personality("u2") is not None
-        assert engine.get_personality("u3") is None  # red not assigned
+        all_units = ctx.all_units()
+        assignments = engine.assignments()
+        assert set(assignments) == {unit.entity_id for unit in all_units}
+        assert all(
+            assignments[unit.entity_id] == ("aggressive_armor" if unit.side == "blue" else "cautious_infantry")
+            for unit in all_units
+        )
 
     def test_per_unit_override(self) -> None:
         from pathlib import Path
-        from stochastic_warfare.c2.ai.commander import CommanderEngine, CommanderProfileLoader
-        from stochastic_warfare.simulation.scenario import ScenarioLoader
-
-        loader = CommanderProfileLoader(Path("data/commander_profiles"))
-        loader.load_all()
-        engine = CommanderEngine(loader, np.random.default_rng(42))
-
-        u1 = _make_unit("u1", "blue")
-        cfg = _minimal_config(commander_config={
-            "side_defaults": {"blue": "balanced_default"},
-            "assignments": {"u1": "aggressive_armor"},
-        })
-        ctx = _make_ctx(
-            config=cfg,
-            commander_engine=engine,
-            units_by_side={"blue": [u1], "red": []},
+        from stochastic_warfare.simulation.scenario import (
+            ScenarioLoader,
+            load_campaign_scenario_config,
         )
 
-        sl = ScenarioLoader.__new__(ScenarioLoader)
-        sl._apply_commander_assignments(ctx, cfg)
+        scenario_path = Path("data/scenarios/test_campaign/scenario.yaml")
+        raw = load_campaign_scenario_config(scenario_path).model_dump(
+            mode="python",
+        )
+        raw["commander_config"] = {
+            "assignments": {
+                "blue_m1a2_0000": "balanced_default",
+            },
+        }
+        cfg = CampaignScenarioConfig.model_validate(raw)
+        ctx = ScenarioLoader(Path("data")).load(
+            scenario_path,
+            seed=42,
+            scenario_config=cfg,
+        )
 
-        # Per-unit override takes precedence
-        personality = engine.get_personality("u1")
+        assert ctx.commander_engine is not None
+        personality = ctx.commander_engine.get_personality(
+            "blue_m1a2_0000",
+        )
         assert personality is not None
-        assert personality.profile_id == "aggressive_armor"
+        assert personality.profile_id == "balanced_default"
+        assert ctx.commander_engine.assignments()["blue_m1a2_0001"] == "aggressive_armor"
 
     def test_no_commander_engine_is_noop(self) -> None:
-        from stochastic_warfare.simulation.scenario import ScenarioLoader
-
-        cfg = _minimal_config(commander_config={"side_defaults": {"blue": "balanced_default"}})
+        cfg = _minimal_config()
         ctx = _make_ctx(config=cfg, commander_engine=None)
 
-        sl = ScenarioLoader.__new__(ScenarioLoader)
-        sl._apply_commander_assignments(ctx, cfg)  # Should not raise
+        assert ctx.commander_engine is None
 
-    def test_invalid_profile_logged_not_raised(self) -> None:
+    def test_invalid_profile_rejected_before_force_construction(self) -> None:
         from pathlib import Path
-        from stochastic_warfare.c2.ai.commander import CommanderEngine, CommanderProfileLoader
         from stochastic_warfare.simulation.scenario import ScenarioLoader
 
-        loader = CommanderProfileLoader(Path("data/commander_profiles"))
-        loader.load_all()
-        engine = CommanderEngine(loader, np.random.default_rng(42))
-
-        u1 = _make_unit("u1", "blue")
-        cfg = _minimal_config(commander_config={
-            "side_defaults": {"blue": "nonexistent_profile"},
-        })
-        ctx = _make_ctx(
-            config=cfg,
-            commander_engine=engine,
-            units_by_side={"blue": [u1], "red": []},
+        cfg = _minimal_config(
+            sides=[
+                {
+                    **_MINIMAL_SIDES[0],
+                    "commander_profile": "nonexistent_profile",
+                },
+                {
+                    **_MINIMAL_SIDES[1],
+                    "commander_profile": "cautious_infantry",
+                },
+            ],
         )
-
-        sl = ScenarioLoader.__new__(ScenarioLoader)
-        sl._apply_commander_assignments(ctx, cfg)  # Should not raise
+        with pytest.raises(ValueError, match="nonexistent_profile"):
+            ScenarioLoader(Path("data")).load(
+                Path("data/scenarios/test_scenario/scenario.yaml"),
+                scenario_config=cfg,
+            )
 
 
 # =========================================================================
@@ -286,6 +290,7 @@ class TestOODASpeedMultiplier:
 
     def _make_battle_manager(self) -> Any:
         from stochastic_warfare.simulation.battle import BattleManager
+
         return BattleManager(EventBus())
 
     def test_commander_ooda_mult_applied(self) -> None:
@@ -460,17 +465,25 @@ class TestBackwardCompat:
         ctx = _make_ctx()
         assert ctx.commander_engine is None
 
-    def test_battle_loop_works_without_commander(self) -> None:
-        from stochastic_warfare.c2.ai.ooda import OODAPhase
+    def test_no_commander_advances_real_ooda_cycle(self) -> None:
         from stochastic_warfare.simulation.battle import BattleManager
 
         bm = BattleManager(EventBus())
-        mock_ooda = MagicMock()
-        mock_ooda.tactical_acceleration = 1.0
-        mock_ooda.advance_phase.return_value = OODAPhase.ORIENT
+        ooda = OODALoopEngine(
+            EventBus(),
+            RNGManager(42).get_stream(ModuleId.C2),
+            OODAConfig(timing_sigma=0.0, tactical_acceleration=1.0),
+        )
+        ooda.register_commander("u1", int(EchelonLevel.PLATOON))
+        ooda.start_phase(
+            "u1",
+            OODAPhase.ACT,
+            ts=TS,
+            publish_event=False,
+        )
 
         ctx = _make_ctx(
-            ooda_engine=mock_ooda,
+            ooda_engine=ooda,
             commander_engine=None,
             school_registry=None,
             assessor=None,
@@ -479,4 +492,9 @@ class TestBackwardCompat:
         )
         completions = [("u1", OODAPhase.ACT)]
         bm._process_ooda_completions(ctx, completions, TS)
-        # Should not raise
+
+        assert ooda.get_phase("u1") is OODAPhase.OBSERVE
+        assert ooda.get_cycle_count("u1") == 1
+        state = ooda.get_state()["commanders"]["u1"]
+        assert state["phase_timer"] == 30.0
+        assert state["phase_duration"] == 30.0

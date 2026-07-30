@@ -11,12 +11,17 @@ describe('submitBatch', () => {
     vi.spyOn(globalThis, 'fetch').mockResolvedValue(
       new Response(JSON.stringify(resp), { status: 202 }),
     )
-    const result = await submitBatch({ scenario: 'test', num_iterations: 10 })
+    const request = {
+      scenario: 'test',
+      num_iterations: 10,
+      config_overrides: { hit_probability_modifier: 10.0 },
+    }
+    const result = await submitBatch(request)
     expect(result).toEqual(resp)
     expect(fetch).toHaveBeenCalledWith('/api/runs/batch', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ scenario: 'test', num_iterations: 10 }),
+      body: JSON.stringify(request),
     })
   })
 })

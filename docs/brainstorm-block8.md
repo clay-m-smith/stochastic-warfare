@@ -1,5 +1,13 @@
 # Block 8: Depth Completion & Fidelity Hardening
 
+> **Phase 112 integrity supersession (2026-07-30):** This brainstorming page
+> preserves Block 8's contemporaneous design goals, counts, and proposed outcome
+> checks. They are development history, not current historical-validation
+> evidence. Scenario availability, calibrated-input runs, winner agreement, and
+> current-engine regression do not establish a provenance-bearing, held-out
+> production outcome-envelope verdict. REM-030/Phase 117 owns the replacement
+> catalog-wide contract and the disposition of every retained claim.
+
 ## Motivation
 
 Blocks 1–7 built 67 phases of subsystems: core infrastructure, combat, C2, EW, space, CBRN, four historical eras, a web UI, doctrinal AI, unconventional warfare, and full environmental wiring. The result is a simulation with ~9,249 tests, 37 validated scenarios, and zero unresolved critical deficits.

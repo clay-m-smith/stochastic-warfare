@@ -1,5 +1,14 @@
 # Stochastic Warfare -- Block 11 Development Phases (98--102)
 
+> **Phase 112 integrity supersession (2026-07-30):** This roadmap preserves
+> Block 11's historical plan and completion record. Its ten-seed tests are
+> current-engine regression guards built from calibration inputs, not
+> independent historical-validation studies. Fresh production evidence for
+> Debecka Pass does not satisfy the stored casualty-unit and duration contract.
+> REM-030/Phase 117 owns the catalog-wide provenance-bearing, held-out
+> outcome-envelope contract; until that work closes, no Block 11 scenario has
+> a blanket historical-validation claim.
+
 ## Philosophy
 
 Block 11 is the **golden scenarios block**. The engine has ~60 domain engines and a UI capable of visualizing their output, but the existing scenario library is too narrow to exercise engine breadth. Block 11 builds four historically-grounded modern-era scenarios, each calibrated to reproduce a documented outcome envelope and each walked through the UI with an explicit depth checklist.

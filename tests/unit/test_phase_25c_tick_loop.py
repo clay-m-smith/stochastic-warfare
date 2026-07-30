@@ -6,6 +6,7 @@ real data, and error-handling improvements.
 
 from __future__ import annotations
 
+import logging
 from datetime import datetime, timedelta, timezone
 from typing import Any
 from unittest.mock import MagicMock
@@ -90,7 +91,13 @@ class TestStrictMode:
         engine = SimulationEngine(ctx, EngineConfig(max_ticks=1), strict_mode=True)
         assert engine._strict_mode is True
 
-    def test_strict_mode_false_swallows_weather_error(self) -> None:
+    @pytest.mark.structural
+    def test_non_strict_weather_error_does_not_raise_structural_diagnostic(
+        self,
+        caplog: pytest.LogCaptureFixture,
+    ) -> None:
+        """Structural diagnostic: a non-strict weather error does not raise."""
+        caplog.set_level(logging.ERROR)
         mock_weather = MagicMock()
         mock_weather.update.side_effect = RuntimeError("boom")
         ctx = _make_ctx(
@@ -98,8 +105,9 @@ class TestStrictMode:
             units_by_side={"blue": [], "red": []},
         )
         engine = SimulationEngine(ctx, EngineConfig(max_ticks=1))
-        # Should not raise
         engine._update_environment(10.0)
+        mock_weather.update.assert_called_once_with(10.0)
+        assert any(record.getMessage() == "Weather engine update failed" for record in caplog.records)
 
     def test_strict_mode_true_raises_weather_error(self) -> None:
         mock_weather = MagicMock()
@@ -112,7 +120,13 @@ class TestStrictMode:
         with pytest.raises(RuntimeError, match="boom"):
             engine._update_environment(10.0)
 
-    def test_strict_mode_false_swallows_space_error(self) -> None:
+    @pytest.mark.structural
+    def test_non_strict_space_error_does_not_raise_structural_diagnostic(
+        self,
+        caplog: pytest.LogCaptureFixture,
+    ) -> None:
+        """Structural diagnostic: a non-strict space error does not raise."""
+        caplog.set_level(logging.ERROR)
         mock_space = MagicMock()
         mock_space.update.side_effect = RuntimeError("space boom")
         ctx = _make_ctx(
@@ -120,7 +134,9 @@ class TestStrictMode:
             units_by_side={"blue": [], "red": []},
         )
         engine = SimulationEngine(ctx, EngineConfig(max_ticks=1))
-        engine._update_environment(10.0)  # Should not raise
+        engine._update_environment(10.0)
+        assert mock_space.update.call_count == 1
+        assert any(record.getMessage() == "Space engine update failed" for record in caplog.records)
 
     def test_strict_mode_true_raises_space_error(self) -> None:
         mock_space = MagicMock()
@@ -152,13 +168,17 @@ class TestEWUpdate:
         engine._update_ew(10.0)
         mock_ew.update.assert_called_once_with(10.0)
 
-    def test_ew_update_skipped_when_none(self) -> None:
+    @pytest.mark.structural
+    def test_absent_ew_engine_does_not_raise_structural_diagnostic(
+        self,
+    ) -> None:
+        """Structural diagnostic: an absent EW engine does not raise."""
         ctx = _make_ctx(
             ew_engine=None,
             units_by_side={"blue": [], "red": []},
         )
         engine = SimulationEngine(ctx, EngineConfig(max_ticks=1))
-        engine._update_ew(10.0)  # Should not raise
+        engine._update_ew(10.0)
 
     def test_ew_decoy_update_called(self) -> None:
         mock_decoy = MagicMock()
@@ -170,15 +190,25 @@ class TestEWUpdate:
         engine._update_ew(10.0)
         mock_decoy.update.assert_called_once_with(10.0)
 
-    def test_ew_decoy_skipped_when_none(self) -> None:
+    @pytest.mark.structural
+    def test_absent_ew_decoy_engine_does_not_raise_structural_diagnostic(
+        self,
+    ) -> None:
+        """Structural diagnostic: an absent EW decoy engine does not raise."""
         ctx = _make_ctx(
             ew_decoy_engine=None,
             units_by_side={"blue": [], "red": []},
         )
         engine = SimulationEngine(ctx, EngineConfig(max_ticks=1))
-        engine._update_ew(10.0)  # Should not raise
+        engine._update_ew(10.0)
 
-    def test_ew_error_logged_not_raised(self) -> None:
+    @pytest.mark.structural
+    def test_ew_error_emits_structural_diagnostic_without_raising(
+        self,
+        caplog: pytest.LogCaptureFixture,
+    ) -> None:
+        """Structural diagnostic: an EW error is logged without raising."""
+        caplog.set_level(logging.ERROR)
         mock_ew = MagicMock()
         mock_ew.update.side_effect = RuntimeError("ew boom")
         ctx = _make_ctx(
@@ -186,7 +216,9 @@ class TestEWUpdate:
             units_by_side={"blue": [], "red": []},
         )
         engine = SimulationEngine(ctx, EngineConfig(max_ticks=1))
-        engine._update_ew(10.0)  # Should not raise (strict_mode=False)
+        engine._update_ew(10.0)
+        mock_ew.update.assert_called_once_with(10.0)
+        assert any(record.getMessage() == "EW jamming engine update failed" for record in caplog.records)
 
     def test_ew_error_raised_strict(self) -> None:
         mock_ew = MagicMock()
@@ -210,14 +242,18 @@ class TestEWUpdate:
         engine._update_environment(10.0)
         mock_ew.update.assert_called_once_with(10.0)
 
-    def test_ew_no_update_method_skipped(self) -> None:
+    @pytest.mark.structural
+    def test_ew_without_update_method_does_not_raise_structural_diagnostic(
+        self,
+    ) -> None:
+        """Structural diagnostic: EW without update does not raise."""
         mock_ew = MagicMock(spec=[])  # no update method
         ctx = _make_ctx(
             ew_engine=mock_ew,
             units_by_side={"blue": [], "red": []},
         )
         engine = SimulationEngine(ctx, EngineConfig(max_ticks=1))
-        engine._update_ew(10.0)  # Should not raise
+        engine._update_ew(10.0)
 
 
 # =========================================================================
@@ -263,6 +299,7 @@ class TestMOPPSpeed:
         # u1 should have moved, but less than u.speed * dt = 5 * 10 = 50
         dist_moved = u1.position.easting
         from stochastic_warfare.cbrn.protection import ProtectionEngine
+
         mopp4_factor = ProtectionEngine.get_mopp_speed_factor(4)
         expected = u1.speed * 10.0 * mopp4_factor
         assert abs(dist_moved - expected) < 0.01
@@ -475,7 +512,13 @@ class TestInsurgencyRealData:
 class TestErrorHandling:
     """No bare except:pass — errors logged or re-raised."""
 
-    def test_cbrn_error_logged_not_raised(self) -> None:
+    @pytest.mark.structural
+    def test_cbrn_error_emits_structural_diagnostic_without_raising(
+        self,
+        caplog: pytest.LogCaptureFixture,
+    ) -> None:
+        """Structural diagnostic: a CBRN error is logged without raising."""
+        caplog.set_level(logging.ERROR)
         mock_cbrn = MagicMock()
         mock_cbrn.update.side_effect = RuntimeError("cbrn")
         ctx = _make_ctx(
@@ -483,7 +526,9 @@ class TestErrorHandling:
             units_by_side={"blue": [], "red": []},
         )
         engine = SimulationEngine(ctx, EngineConfig(max_ticks=1))
-        engine._update_environment(10.0)  # Should not raise
+        engine._update_environment(10.0)
+        assert mock_cbrn.update.call_count == 1
+        assert any(record.getMessage() == "CBRN engine update failed" for record in caplog.records)
 
     def test_cbrn_error_raised_strict(self) -> None:
         mock_cbrn = MagicMock()
@@ -509,8 +554,13 @@ class TestErrorHandling:
         engine._update_environment(10.0)
         mock_tod.update.assert_not_called()
 
-    def test_isolated_failures_non_strict(self) -> None:
-        """Multiple engines can fail without cascading."""
+    @pytest.mark.structural
+    def test_multiple_environment_errors_do_not_raise_structural_diagnostic(
+        self,
+        caplog: pytest.LogCaptureFixture,
+    ) -> None:
+        """Structural diagnostic: multiple environment errors do not raise."""
+        caplog.set_level(logging.ERROR)
         mock_weather = MagicMock()
         mock_weather.update.side_effect = RuntimeError("weather")
         mock_sea = MagicMock()
@@ -522,7 +572,12 @@ class TestErrorHandling:
             units_by_side={"blue": [], "red": []},
         )
         engine = SimulationEngine(ctx, EngineConfig(max_ticks=1))
-        engine._update_environment(10.0)  # All fail silently
+        engine._update_environment(10.0)
+        mock_weather.update.assert_called_once_with(10.0)
+        mock_sea.update.assert_called_once_with(10.0)
+        messages = {record.getMessage() for record in caplog.records}
+        assert "Weather engine update failed" in messages
+        assert "Sea state engine update failed" in messages
 
 
 # =========================================================================
@@ -533,7 +588,11 @@ class TestErrorHandling:
 class TestBackwardCompat:
     """No optional engines → identical behavior."""
 
-    def test_no_ew_no_cbrn_no_space(self) -> None:
+    @pytest.mark.structural
+    def test_absent_optional_environment_engines_do_not_raise_structural_diagnostic(
+        self,
+    ) -> None:
+        """Structural diagnostic: absent optional engines do not raise."""
         ctx = _make_ctx(
             ew_engine=None,
             ew_decoy_engine=None,
@@ -542,7 +601,7 @@ class TestBackwardCompat:
             units_by_side={"blue": [], "red": []},
         )
         engine = SimulationEngine(ctx, EngineConfig(max_ticks=1))
-        engine._update_environment(10.0)  # Should not raise
+        engine._update_environment(10.0)
 
     def test_no_escalation_engines(self) -> None:
         ctx = _make_ctx(

@@ -158,6 +158,15 @@ class TestCampaignRunnerIntegration:
         assert isinstance(result, CampaignRunResult)
         assert result.seed == 42
         assert result.ticks_executed > 0
+        provenance = result.runtime_provenance
+        assert provenance is not None
+        assert len(provenance.data_revision) == 64
+        assert len(provenance.catalog_revision) == 64
+        assert len(provenance.doctrine_catalog_fingerprint) == 64
+        assert len(provenance.doctrine_assignment_fingerprint) == 64
+        assert len(provenance.loaded_roster_loadout_fingerprint) == 64
+        assert len(provenance.final_roster_loadout_fingerprint) == 64
+        assert len(provenance.initial_unit_assignments) == 10
 
     def test_deterministic_replay(self, runner: CampaignRunner):
         campaign = _minimal_campaign()

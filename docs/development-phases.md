@@ -1,5 +1,11 @@
 # Stochastic Warfare — Development Phases
 
+> **Phase 112 integrity supersession (2026-07-30):** This original roadmap
+> preserves the intended MVP workflow and historical acceptance language.
+> Calibration and repeated seeds from the same inputs do not constitute
+> independent historical validation. REM-030/Phase 117 owns the current
+> provenance-bearing, held-out production outcome-envelope contract.
+
 ## Philosophy
 Build the nuts and bolts first. Every phase produces runnable, testable code. Validation via basic Python visualization (matplotlib) throughout. No UI work until the engine is solid. Naval warfare is integrated across phases, not deferred.
 

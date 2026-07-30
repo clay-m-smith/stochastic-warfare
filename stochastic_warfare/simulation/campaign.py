@@ -24,6 +24,18 @@ from stochastic_warfare.simulation.battle import (
     BattleContext, BattleManager,
     _movement_target, _should_hold_position,
 )
+from stochastic_warfare.simulation.force_builder import (
+    RuntimeUnitSpec,
+    UnitInstanceOverrides,
+)
+from stochastic_warfare.simulation.movement_diagnostics import (
+    MOVEMENT_EPSILON_M,
+    MovementDecision,
+    MovementDiagnostics,
+    MovementReason,
+    MovementStage,
+    resolve_movement_diagnostics_owner,
+)
 from stochastic_warfare.simulation.scenario import (
     ReinforcementConfig,
     ReinforcementUnitConfig,
@@ -77,6 +89,14 @@ class ReinforcementEntry:
     legacy_ids: bool = False
 
 
+@dataclass(frozen=True)
+class CampaignStatePlan:
+    """Validated, owner-bound campaign checkpoint commit plan."""
+
+    owner_id: int
+    entries: tuple[tuple[ReinforcementEntry, bool, float, bool], ...]
+
+
 # ---------------------------------------------------------------------------
 # Campaign manager
 # ---------------------------------------------------------------------------
@@ -100,10 +120,13 @@ class CampaignManager:
         event_bus: EventBus,
         rng: np.random.Generator,
         config: CampaignConfig | None = None,
+        *,
+        movement_diagnostics: MovementDiagnostics | None = None,
     ) -> None:
         self._bus = event_bus
         self._rng = rng
         self._config = config or CampaignConfig()
+        self._movement_diagnostics = movement_diagnostics
         self._reinforcements: list[ReinforcementEntry] = []
         self._schedule_signature: list[dict[str, Any]] | None = None
 
@@ -178,6 +201,8 @@ class CampaignManager:
         self,
         ctx: Any,  # SimulationContext
         dt: float,
+        *,
+        stage: MovementStage = MovementStage.STRATEGIC,
     ) -> None:
         """Execute one strategic tick.
 
@@ -200,7 +225,7 @@ class CampaignManager:
 
         # 2. Strategic movement — march toward nearest enemy
         if self._config.enable_strategic_movement:
-            self._execute_strategic_movement(ctx, dt)
+            self._execute_strategic_movement(ctx, dt, stage=stage)
 
         # 3. Maintenance checks
         if self._config.enable_maintenance and ctx.maintenance_engine is not None:
@@ -261,6 +286,8 @@ class CampaignManager:
         self,
         ctx: Any,
         dt: float,
+        *,
+        stage: MovementStage = MovementStage.STRATEGIC,
     ) -> None:
         """Move units toward nearest enemy at strategic march speed.
 
@@ -271,9 +298,34 @@ class CampaignManager:
         """
         import math
 
+        if not isinstance(stage, MovementStage):
+            raise ValueError("campaign movement stage must be a MovementStage")
+        diagnostics, diagnostic_tick = resolve_movement_diagnostics_owner(
+            ctx,
+            self._movement_diagnostics,
+            boundary="CampaignManager",
+        )
+
         units_by_side = ctx.units_by_side
         sides = list(units_by_side.keys())
         speed_frac = self._config.strategic_speed_fraction
+        movement_decisions: list[MovementDecision] = []
+
+        def _observe(
+            unit: Unit,
+            reason: MovementReason,
+            pre_position: Position,
+            *,
+            attempted_m: float = 0.0,
+        ) -> None:
+            movement_decisions.append(MovementDecision(
+                unit_id=unit.entity_id,
+                side=unit.side,
+                reason=reason,
+                attempted_m=attempted_m,
+                pre_position=pre_position,
+                post_position=unit.position,
+            ))
 
         # Sides that should hold position (from config or scenario calibration)
         defensive = set(self._config.defensive_sides)
@@ -283,11 +335,27 @@ class CampaignManager:
 
         for side in sides:
             if side in defensive:
+                for unit in units_by_side[side]:
+                    _observe(
+                        unit,
+                        (
+                            MovementReason.DEFENSIVE_HOLD
+                            if unit.status == UnitStatus.ACTIVE
+                            else MovementReason.INACTIVE
+                        ),
+                        unit.position,
+                    )
                 continue
 
             active_own = [u for u in units_by_side[side]
                           if u.status == UnitStatus.ACTIVE]
             if not active_own:
+                for unit in units_by_side[side]:
+                    _observe(
+                        unit,
+                        MovementReason.INACTIVE,
+                        unit.position,
+                    )
                 continue
 
             # Build enemy position list across all opposing sides
@@ -299,15 +367,43 @@ class CampaignManager:
                         if u.status == UnitStatus.ACTIVE
                     )
             if not enemies:
+                for unit in units_by_side[side]:
+                    _observe(
+                        unit,
+                        (
+                            MovementReason.NO_TARGET
+                            if unit.status == UnitStatus.ACTIVE
+                            else MovementReason.INACTIVE
+                        ),
+                        unit.position,
+                    )
                 continue
 
+            for unit in units_by_side[side]:
+                if unit.status != UnitStatus.ACTIVE:
+                    _observe(
+                        unit,
+                        MovementReason.INACTIVE,
+                        unit.position,
+                    )
             for u in active_own:
+                pre_position = u.position
                 # Emplaced / air-defense units hold position
                 if _should_hold_position(u):
+                    _observe(
+                        u,
+                        MovementReason.EMPLACED_HOLD,
+                        pre_position,
+                    )
                     continue
 
                 effective_speed = u.max_speed * speed_frac
                 if effective_speed <= 0:
+                    _observe(
+                        u,
+                        MovementReason.RESOURCE_BLOCKED,
+                        pre_position,
+                    )
                     continue
 
                 # Blend centroid + nearest enemy for movement target
@@ -316,6 +412,7 @@ class CampaignManager:
                 dy = ty - u.position.northing
                 dist = math.sqrt(dx * dx + dy * dy)
                 if dist < 1.0:
+                    _observe(u, MovementReason.NO_TARGET, pre_position)
                     continue
 
                 # Perpendicular offset to maintain formation spacing
@@ -332,6 +429,7 @@ class CampaignManager:
                     dy = ty - u.position.northing
                     dist = math.sqrt(dx * dx + dy * dy)
                     if dist < 1.0:
+                        _observe(u, MovementReason.NO_TARGET, pre_position)
                         continue
 
                 move_dist = min(effective_speed * dt, dist)
@@ -343,6 +441,29 @@ class CampaignManager:
                     Position(easting=new_e, northing=new_n,
                              altitude=u.position.altitude),
                 )
+                _observe(
+                    u,
+                    (
+                        MovementReason.MOVED
+                        if move_dist > MOVEMENT_EPSILON_M
+                        else MovementReason.RESOURCE_BLOCKED
+                    ),
+                    pre_position,
+                    attempted_m=(
+                        move_dist
+                        if move_dist > MOVEMENT_EPSILON_M
+                        else 0.0
+                    ),
+                )
+
+        if diagnostics is not None:
+            assert diagnostic_tick is not None
+            diagnostics.record_batch(
+                engine_tick=diagnostic_tick,
+                stage=stage,
+                battle_id="",
+                decisions=movement_decisions,
+            )
 
     # ── Reinforcements ──────────────────────────────────────────────
 
@@ -377,7 +498,6 @@ class CampaignManager:
                     units = self._spawn_reinforcements(
                         ctx,
                         entry,
-                        entities_rng,
                     )
                     register_dynamic_units(ctx, units)
                 except Exception:
@@ -405,13 +525,12 @@ class CampaignManager:
         self,
         ctx: Any,
         entry: ReinforcementEntry,
-        entities_rng: np.random.Generator,
     ) -> list[Unit]:
         """Stage every unit in one reinforcement wave."""
-        units: list[Unit] = []
-        if ctx.unit_loader is None:
+        if ctx.force_builder is None:
             raise RuntimeError(
-                "Cannot create reinforcements without a unit loader",
+                "Cannot create reinforcements without the production "
+                "RuntimeForceBuilder",
             )
 
         config = entry.config
@@ -419,6 +538,7 @@ class CampaignManager:
         spawn_y = config.position[1] if len(config.position) > 1 else 0.0
         spawn_z = config.position[2] if len(config.position) > 2 else 0.0
 
+        specs: list[RuntimeUnitSpec] = []
         for unit_idx, eid, unit_cfg in self._reinforcement_unit_specs(entry):
             if unit_cfg.overrides:
                 raise ValueError(
@@ -426,16 +546,15 @@ class CampaignManager:
                 )
             offset_y = unit_idx * 50.0
             pos = Position(spawn_x, spawn_y + offset_y, spawn_z)
-            unit = ctx.unit_loader.create_unit(
+            specs.append(RuntimeUnitSpec(
                 unit_type=unit_cfg.unit_type,
                 entity_id=eid,
                 position=pos,
                 side=config.side,
-                rng=entities_rng,
-            )
-            units.append(unit)
+                overrides=UnitInstanceOverrides(),
+            ))
 
-        return units
+        return ctx.force_builder.build_units(tuple(specs))
 
     @staticmethod
     def _reinforcement_unit_specs(
@@ -773,9 +892,52 @@ class CampaignManager:
         context_state: dict[str, Any],
         *,
         allow_legacy: bool = False,
+        staged_plan: CampaignStatePlan | None = None,
+        checkpoint_elapsed_s: float | None = None,
+        checkpoint_tick: int | None = None,
     ) -> None:
         """Cross-check arrival flags against the checkpoint force roster."""
-        staged = self._stage_state(state, allow_legacy=allow_legacy)
+        if staged_plan is None:
+            staged = self._stage_state(
+                state,
+                allow_legacy=allow_legacy,
+            )
+        else:
+            if staged_plan.owner_id != id(self):
+                raise ValueError(
+                    "Campaign checkpoint plan belongs to another manager",
+                )
+            staged = list(staged_plan.entries)
+        if checkpoint_elapsed_s is not None:
+            if (
+                isinstance(checkpoint_elapsed_s, bool)
+                or not isinstance(checkpoint_elapsed_s, (int, float))
+                or not math.isfinite(float(checkpoint_elapsed_s))
+                or float(checkpoint_elapsed_s) < 0.0
+                or isinstance(checkpoint_tick, bool)
+                or not isinstance(checkpoint_tick, int)
+                or checkpoint_tick < 0
+            ):
+                raise ValueError(
+                    "Checkpoint reinforcement timing requires a finite "
+                    "non-negative elapsed time and strict tick",
+                )
+            elapsed_s = float(checkpoint_elapsed_s)
+            for entry, arrived, actual_arrival, _ in staged:
+                if arrived and actual_arrival > elapsed_s:
+                    raise ValueError(
+                        "Checkpoint reinforcement arrived before its sampled "
+                        f"time at wave {entry.wave_ordinal}",
+                    )
+                if (
+                    not arrived
+                    and checkpoint_tick > 0
+                    and actual_arrival <= elapsed_s
+                ):
+                    raise ValueError(
+                        "Checkpoint reinforcement remains pending after its "
+                        f"sampled time at wave {entry.wave_ordinal}",
+                    )
         raw_forces = context_state.get("units_by_side")
         if not isinstance(raw_forces, dict):
             raise ValueError(
@@ -902,6 +1064,38 @@ class CampaignManager:
                     f"{entity_id!r} is present before arrival",
                 )
 
+    def stage_state(
+        self,
+        state: dict[str, Any],
+        *,
+        allow_legacy: bool = False,
+    ) -> CampaignStatePlan:
+        """Validate state without mutating the reinforcement schedule."""
+        return CampaignStatePlan(
+            owner_id=id(self),
+            entries=tuple(
+                self._stage_state(
+                    state,
+                    allow_legacy=allow_legacy,
+                ),
+            ),
+        )
+
+    def commit_state(self, plan: CampaignStatePlan) -> None:
+        """Commit a validated campaign state plan without reparsing input."""
+        if plan.owner_id != id(self):
+            raise ValueError(
+                "Campaign checkpoint plan belongs to another manager",
+            )
+        if len(plan.entries) != len(self._reinforcements):
+            raise ValueError(
+                "Campaign checkpoint plan no longer matches the runtime",
+            )
+        for entry, arrived, actual_arrival, legacy_ids in plan.entries:
+            entry.arrived = arrived
+            entry.actual_arrival_time_s = actual_arrival
+            entry.legacy_ids = legacy_ids
+
     def set_state(
         self,
         state: dict[str, Any],
@@ -909,8 +1103,9 @@ class CampaignManager:
         allow_legacy: bool = False,
     ) -> None:
         """Validate and atomically restore campaign manager state."""
-        staged = self._stage_state(state, allow_legacy=allow_legacy)
-        for entry, arrived, actual_arrival, legacy_ids in staged:
-            entry.arrived = arrived
-            entry.actual_arrival_time_s = actual_arrival
-            entry.legacy_ids = legacy_ids
+        self.commit_state(
+            self.stage_state(
+                state,
+                allow_legacy=allow_legacy,
+            ),
+        )

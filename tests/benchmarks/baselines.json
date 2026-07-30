@@ -1,34 +1,176 @@
 {
-  "_meta": {
-    "format_version": 1,
-    "description": "Performance benchmark baselines for regression detection. Measured locally (Windows) with profile=False. Update from CI for ubuntu-latest baselines."
+  "description": "Strict version-2 paired production benchmark identities. Timing decisions require fresh same-host paired samples; checked-in values contain no absolute wall-clock pass threshold.",
+  "entries": {
+    "73_easting": {
+      "policy": {
+        "manual": false,
+        "maximum_median_slowdown_ratio": 1.2,
+        "maximum_relative_sample_range": 0.2,
+        "mode": "gate",
+        "pair_orders": [
+          [
+            "reference",
+            "candidate"
+          ],
+          [
+            "candidate",
+            "reference"
+          ],
+          [
+            "reference",
+            "candidate"
+          ]
+        ],
+        "policy_version": 2,
+        "reference_commit": "0460ac70be86784bcc6e359ae4202f4bcb938c60",
+        "timed_pairs": 3,
+        "timing_scope": "SimulationEngine.run",
+        "warmup_runs_per_revision": 1
+      },
+      "reference_input": {
+        "dependency_lock_sha256": "bbc6b45cfc270d08baa09d3d568a6b84d0f936a6ee9c874cb49c9d8813c5ad39",
+        "fingerprint": "060accaec0b76c043ef92fb63360286c2c84d047ac3b2ac6584919a365aadc50",
+        "scenario_path": "data/scenarios/73_easting/scenario.yaml",
+        "scenario_sha256": "328467cd1f200cf2f0157da917ab20b9e9bbc43fb7ee985f5d4472d2df3cd3e5"
+      },
+      "scenario_name": "73_easting",
+      "scenario_path": "data/scenarios/73_easting/scenario.yaml",
+      "semantic_envelope": {
+        "event_count": 30,
+        "event_digest": "628e33c22fd86c8845f2be87e8ae82ea041d0b8a6253c5760d228de4684d2128",
+        "logical_duration_s": 1800.0,
+        "roster_loadout_digest": "b598b36d78604a60cd16bd3313e29e7a8a677e2cb9b83417dc4b00cab778a1b3",
+        "status_counts": {
+          "blue": {
+            "ACTIVE": 21
+          },
+          "red": {
+            "ACTIVE": 50
+          }
+        },
+        "ticks": 360,
+        "unit_count": 71,
+        "victory_condition_type": "time_expired",
+        "winner": "blue"
+      }
+    },
+    "benchmark_battalion": {
+      "policy": {
+        "manual": true,
+        "maximum_median_slowdown_ratio": 1.2,
+        "maximum_relative_sample_range": 0.2,
+        "mode": "measurement_only",
+        "pair_orders": [
+          [
+            "reference",
+            "candidate"
+          ],
+          [
+            "candidate",
+            "reference"
+          ],
+          [
+            "reference",
+            "candidate"
+          ]
+        ],
+        "policy_version": 2,
+        "reference_commit": null,
+        "timed_pairs": 3,
+        "timing_scope": "SimulationEngine.run",
+        "warmup_runs_per_revision": 1
+      },
+      "reference_input": null,
+      "scenario_name": "benchmark_battalion",
+      "scenario_path": "data/scenarios/benchmark_battalion/scenario.yaml",
+      "semantic_envelope": null
+    },
+    "benchmark_brigade": {
+      "policy": {
+        "manual": true,
+        "maximum_median_slowdown_ratio": 1.2,
+        "maximum_relative_sample_range": 0.2,
+        "mode": "measurement_only",
+        "pair_orders": [
+          [
+            "reference",
+            "candidate"
+          ],
+          [
+            "candidate",
+            "reference"
+          ],
+          [
+            "reference",
+            "candidate"
+          ]
+        ],
+        "policy_version": 2,
+        "reference_commit": null,
+        "timed_pairs": 3,
+        "timing_scope": "SimulationEngine.run",
+        "warmup_runs_per_revision": 1
+      },
+      "reference_input": null,
+      "scenario_name": "benchmark_brigade",
+      "scenario_path": "data/scenarios/benchmark_brigade/scenario.yaml",
+      "semantic_envelope": null
+    },
+    "golan_heights": {
+      "policy": {
+        "manual": true,
+        "maximum_median_slowdown_ratio": 1.2,
+        "maximum_relative_sample_range": 0.2,
+        "mode": "gate",
+        "pair_orders": [
+          [
+            "reference",
+            "candidate"
+          ],
+          [
+            "candidate",
+            "reference"
+          ],
+          [
+            "reference",
+            "candidate"
+          ]
+        ],
+        "policy_version": 2,
+        "reference_commit": "0460ac70be86784bcc6e359ae4202f4bcb938c60",
+        "timed_pairs": 3,
+        "timing_scope": "SimulationEngine.run",
+        "warmup_runs_per_revision": 1
+      },
+      "reference_input": {
+        "dependency_lock_sha256": "bbc6b45cfc270d08baa09d3d568a6b84d0f936a6ee9c874cb49c9d8813c5ad39",
+        "fingerprint": "c3b609e436c9370a8941eedc41ff0af48e45226f0b69e74f82a1c433c08b8909",
+        "scenario_path": "data/scenarios/golan_heights/scenario.yaml",
+        "scenario_sha256": "699b75819d271ddf61a8d0bce309d44f64335fd1af6cd7d0b1c6da39128b8868"
+      },
+      "scenario_name": "golan_heights",
+      "scenario_path": "data/scenarios/golan_heights/scenario.yaml",
+      "semantic_envelope": {
+        "event_count": 1858,
+        "event_digest": "434df4752d8df26f1ef67aa4dda4aec9c3ce92a86e093e5f025b85895a7cb736",
+        "logical_duration_s": 64800.0,
+        "roster_loadout_digest": "0b5a4b8c84faf4daa8d486294d07099608e15af5a1fd74ae48beebf588e0b270",
+        "status_counts": {
+          "blue": {
+            "ACTIVE": 40
+          },
+          "red": {
+            "ACTIVE": 127,
+            "DESTROYED": 64,
+            "DISABLED": 59
+          }
+        },
+        "ticks": 6480,
+        "unit_count": 290,
+        "victory_condition_type": "time_expired",
+        "winner": "blue"
+      }
+    }
   },
-  "73_easting": {
-    "wall_clock_s": 8.0,
-    "ticks_executed": 185,
-    "peak_memory_mb": 5.0,
-    "commit": "c76d63e",
-    "timestamp": "2026-03-24T00:00:00Z"
-  },
-  "golan_heights": {
-    "wall_clock_s": 500.0,
-    "ticks_executed": 6480,
-    "peak_memory_mb": 20.0,
-    "commit": "c76d63e",
-    "timestamp": "2026-03-24T00:00:00Z"
-  },
-  "benchmark_battalion": {
-    "wall_clock_s": 300.0,
-    "ticks_executed": 2160,
-    "peak_memory_mb": 100.0,
-    "commit": "placeholder",
-    "timestamp": "2026-03-25T00:00:00Z"
-  },
-  "benchmark_brigade": {
-    "wall_clock_s": 1800.0,
-    "ticks_executed": 2160,
-    "peak_memory_mb": 500.0,
-    "commit": "placeholder",
-    "timestamp": "2026-03-25T00:00:00Z"
-  }
+  "format_version": 2
 }

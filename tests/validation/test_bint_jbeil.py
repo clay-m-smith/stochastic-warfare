@@ -1,27 +1,19 @@
-"""Phase 102 regression test — Second Lebanon War Bint Jbeil (July-August 2006).
+"""Phase 102 Bint Jbeil wiring and current-engine regression.
 
-Asserts that the Bint Jbeil scenario produces outcomes consistent with
-the contested historical envelope and that Phase 102 new unit/weapon
-plumbing works end-to-end:
+The tests prove that the authored units and weapons load and that the
+production simulation reaches active combat.  They do not claim that the
+current terminal result is consistent with the contested historical battle.
+At seed 42 the engine currently produces a blue ``force_destroyed`` win, which
+is retained here as a drift signal while the catalog-wide historical-outcome
+deficit remains tracked separately.
+
+Covered data and routing include:
 
 - IDF Golani / Paratrooper / Egoz SOF / Merkava Mk III/IV author and
   load via Phase 102 YAMLs
 - Hezbollah local / SF / Kornet tank-hunter / mortar cell units load
 - RPG-29 Vampir + PG-29V tandem-HEAT warhead load
 - Kornet 9M133 engagement routes via existing ATGM path
-
-Historical outcome (Matthews CSI 2008, Harel & Issacharoff 2008,
-Cordesman CSIS 2006, Biddle & Friedman USAWC 2008):
-- CONTESTED — neither side decisively won; registered as DRAW_SCENARIO
-- Duration ~10 days intermittent combat
-- IDF casualties ~15 KIA / ~50 WIA
-- Hezbollah casualties ~30-40 KIA (IDF claim, disputed)
-- Key dynamic: Kornet + RPG-29 defeating Merkava side/rear armor
-
-Engine-observed envelope (single-seed @slow):
-- No decisive winner (time_expired expected)
-- Both sides suffer casualties within envelope (neither wipes the other)
-- ≥ 50 engagement events (tactical urban combat develops)
 
 Tests marked @slow — 249 units + hybrid tick resolution + 240hr sim
 window makes this a heavy scenario at full resolution.
@@ -77,11 +69,13 @@ def _run_one(seed: int, max_ticks: int = 1500) -> dict:
     red_d = sum(1 for u in ctx.units_by_side["red"] if u.status == UnitStatus.DESTROYED)
     victory = getattr(engine, "_last_victory", None)
     winner = (getattr(victory, "winning_side", "") or "").lower()
+    condition = getattr(victory, "condition_type", "")
     ticks = ctx.clock.tick_count
     return {
         "blue_destroyed": blue_d,
         "red_destroyed": red_d,
         "winner": winner,
+        "condition": condition,
         "ticks": ticks,
         "events": recorder.events,
     }
@@ -156,44 +150,35 @@ def run_result() -> dict:
 
 @pytest.mark.slow
 class TestBintJbeilRuntime:
-    """Runtime envelope assertions — single seed."""
+    """Current-engine production regression at one declared seed."""
 
-    def test_both_sides_take_casualties(self, run_result: dict) -> None:
-        """Neither side wipes the other — contested battle envelope."""
+    def test_combat_causes_casualties(self, run_result: dict) -> None:
+        """The scenario reaches damaging combat rather than a no-op run."""
         blue_d = run_result["blue_destroyed"]
         red_d = run_result["red_destroyed"]
-        # At least some casualties on both sides (not a walkover)
         assert blue_d + red_d > 0, "No casualties at all — scenario not active"
 
     def test_blue_casualty_ceiling(self, run_result: dict) -> None:
-        """Coalition losses ≤ 80 — urban + ATGM losses should be modest."""
+        """Retain the current-engine blue-loss drift ceiling."""
         assert run_result["blue_destroyed"] <= 80, (
-            f"IDF losses {run_result['blue_destroyed']} exceed envelope"
+            f"Blue losses {run_result['blue_destroyed']} exceed regression ceiling"
+        )
+
+    def test_current_terminal_classification(self, run_result: dict) -> None:
+        """Record the known current result without presenting it as history."""
+        assert (run_result["winner"], run_result["condition"]) == (
+            "blue",
+            "force_destroyed",
         )
 
     def test_scenario_progresses(self, run_result: dict) -> None:
-        """Scenario runs at least 5 ticks (combat develops).
-
-        Documented limitation: Bint Jbeil's 249-unit force + 9km map +
-        80m blue / 150m red formation spacing causes formation overflow
-        that places some blue units adjacent to red at scenario start.
-        Forces engage at TACTICAL resolution on tick 0 and the
-        force_destroyed VC (threshold 0.7) triggers in ~8 ticks
-        (40 sim seconds) at 70-72% red losses — an over-resolved
-        engagement that misses the historical contested outcome.
-        DRAW_SCENARIOS registration reflects the intended classification;
-        the engine currently produces a blue win.  Fixing requires
-        either tighter spacing with standoff distance or an engine-level
-        fix for the formation-overflow pattern — deferred per Block 11
-        philosophy of documenting misses rather than calibrating around
-        them.
-        """
+        """Scenario runs at least five ticks before its current terminal state."""
         assert run_result["ticks"] >= 5, (
             f"Scenario barely progressed: {run_result['ticks']} ticks"
         )
 
     def test_engagements_occur(self, run_result: dict) -> None:
-        """Combat engagement events fire — not a walkover."""
+        """Combat engagement events fire rather than a no-op completion."""
         engagements = [e for e in run_result["events"] if e.event_type == "EngagementEvent"]
         assert len(engagements) >= 30, (
             f"Only {len(engagements)} engagements — scenario not active"

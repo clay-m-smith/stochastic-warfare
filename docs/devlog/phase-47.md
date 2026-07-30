@@ -4,6 +4,13 @@
 **Block**: 5 (Core Combat Fidelity)
 **Tests**: 38 (new in `tests/validation/test_historical_accuracy.py`)
 
+> **Phase 112 integrity note (2026-07-30):** Complete is the preserved
+> historical phase status. The static winner table and calibrated-input
+> regression described below do not constitute current, provenance-bearing,
+> held-out production validation, and several rows have since drifted. Treat
+> the phase as development history; REM-030/Phase 117 owns current
+> catalog-wide historical outcome claims.
+
 ## Summary
 
 Phase 47 is the capstone of Block 5. With 40+ disconnected combat systems now wired into the battle loop (Phases 40-46), this phase systematically diagnosed, calibrated, and validated every scenario against historical outcomes, then locked results into regression tests.

@@ -1,5 +1,12 @@
 # Phase 57: Full Validation & Regression
 
+> **Phase 112 integrity note (2026-07-30):** Complete is the preserved
+> historical phase status. Ten seeds from the same calibrated inputs and
+> winner/condition rows support regression only; they do not provide
+> independent historical validation, and several current seed-42 outcomes no
+> longer match the rows below. REM-030/Phase 117 owns the replacement
+> catalog-wide production outcome-envelope contract.
+
 ## Summary
 
 Phase 57 is the final phase of Block 6 and the capstone of 57 phases of development. It validates that all scenarios produce correct historical outcomes, verifies every calibration parameter is consumed and exercised, closes every deficit in the project with a formal disposition, fixes an OPERATIONAL resolution deadlock introduced by the Phase 55a closing range guard, migrates checkpoint serialization from pickle to JSON, and synchronizes all documentation.

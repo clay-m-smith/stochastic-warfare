@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from pathlib import Path
+
 import pytest
 
 pytestmark = [pytest.mark.api, pytest.mark.asyncio]
@@ -80,6 +82,21 @@ async def test_get_scenario_force_summary(client):
 async def test_get_scenario_not_found(client):
     resp = await client.get("/api/scenarios/nonexistent_scenario_xyz")
     assert resp.status_code == 404
+
+
+async def test_scenario_resolver_rejects_path_aliases() -> None:
+    from api.scenarios import resolve_scenario
+
+    for name in (
+        "../eras/napoleonic/scenarios/austerlitz",
+        "test_campaign/scenario.yaml",
+        r"..\eras\napoleonic\scenarios\austerlitz",
+    ):
+        with pytest.raises(
+            ValueError,
+            match="one lowercase directory identifier",
+        ):
+            resolve_scenario(name, Path("data"))
 
 
 async def test_scenarios_have_era_field(client):

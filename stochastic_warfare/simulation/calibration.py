@@ -15,6 +15,7 @@ scenario.py, scenario_runner.py, and campaign.py.
 from __future__ import annotations
 
 import copy
+import math
 from typing import Any, ClassVar, Literal
 
 from pydantic import BaseModel, ConfigDict, model_validator
@@ -250,7 +251,7 @@ class CalibrationSchema(BaseModel):
     # -- Per-side overrides -----------------------------------------------
     side_overrides: dict[str, SideCalibration] = {}
 
-    # -- Dead-key safety list (silently dropped by before-validator) -------
+    # -- Dead-key safety list (rejected by before-validator) ----------------
     _DEAD_KEYS: ClassVar[set[str]] = {"advance_speed"}
 
     # Keys whose suffix identifies a per-side field
@@ -288,10 +289,17 @@ class CalibrationSchema(BaseModel):
         - ``morale_base_degrade_rate`` → ``morale.base_degrade_rate``
         - ``blue_cohesion`` → ``side_overrides.blue.cohesion``
         - ``target_size_modifier_red`` → ``side_overrides.red.target_size_modifier``
-        - ``advance_speed`` → silently dropped (dead data)
+        - ``advance_speed`` → rejected as retired, ineffective data
         """
         if not isinstance(data, dict):
             return data
+
+        dead_keys = sorted(set(data) & cls._DEAD_KEYS)
+        if dead_keys:
+            raise ValueError(
+                "unsupported dead calibration field(s): "
+                f"{dead_keys!r}",
+            )
 
         result: dict[str, Any] = {}
         raw_side_overrides = data.get("side_overrides", {})
@@ -299,10 +307,83 @@ class CalibrationSchema(BaseModel):
         if not isinstance(raw_side_overrides, dict):
             return data
         if isinstance(raw_morale, MoraleCalibration):
+            explicit_morale_fields = raw_morale.model_fields_set
+        elif isinstance(raw_morale, dict):
+            explicit_morale_fields = set(raw_morale)
+        else:
+            return data
+
+        duplicate_paths: list[str] = []
+        for alias, nested_field in cls._MORALE_KEY_MAP.items():
+            if (
+                alias in data
+                and nested_field in explicit_morale_fields
+                and data[alias]
+                != (
+                    getattr(raw_morale, nested_field)
+                    if isinstance(raw_morale, MoraleCalibration)
+                    else raw_morale[nested_field]
+                )
+            ):
+                duplicate_paths.append(f"morale.{nested_field}")
+        for key in data:
+            if key in {"side_overrides", "morale"}:
+                continue
+            for prefix in cls._SIDE_PREFIX_FIELDS:
+                if key.startswith(f"{prefix}_"):
+                    side_name = key[len(prefix) + 1:]
+                    raw_side = raw_side_overrides.get(side_name)
+                    if isinstance(raw_side, SideCalibration):
+                        explicit_side_fields = raw_side.model_fields_set
+                    elif isinstance(raw_side, dict):
+                        explicit_side_fields = set(raw_side)
+                    else:
+                        explicit_side_fields = set()
+                    if (
+                        prefix in explicit_side_fields
+                        and data[key]
+                        != (
+                            getattr(raw_side, prefix)
+                            if isinstance(raw_side, SideCalibration)
+                            else raw_side[prefix]
+                        )
+                    ):
+                        duplicate_paths.append(
+                            f"side_overrides.{side_name}.{prefix}",
+                        )
+            for suffix in cls._SIDE_SUFFIX_FIELDS:
+                if key.endswith(f"_{suffix}"):
+                    side_name = key[:-(len(suffix) + 1)]
+                    raw_side = raw_side_overrides.get(side_name)
+                    if isinstance(raw_side, SideCalibration):
+                        explicit_side_fields = raw_side.model_fields_set
+                    elif isinstance(raw_side, dict):
+                        explicit_side_fields = set(raw_side)
+                    else:
+                        explicit_side_fields = set()
+                    if (
+                        suffix in explicit_side_fields
+                        and data[key]
+                        != (
+                            getattr(raw_side, suffix)
+                            if isinstance(raw_side, SideCalibration)
+                            else raw_side[suffix]
+                        )
+                    ):
+                        duplicate_paths.append(
+                            f"side_overrides.{side_name}.{suffix}",
+                        )
+        if duplicate_paths:
+            raise ValueError(
+                "duplicate semantic calibration path(s): "
+                f"{sorted(set(duplicate_paths))!r}",
+            )
+
+        if isinstance(raw_morale, MoraleCalibration):
             morale = raw_morale.model_dump()
         elif isinstance(raw_morale, dict):
             morale = copy.deepcopy(raw_morale)
-        else:
+        else:  # pragma: no cover - guarded above
             return data
         side_overrides: dict[str, dict[str, Any]] = {}
         for side_name, raw_side in raw_side_overrides.items():
@@ -315,10 +396,6 @@ class CalibrationSchema(BaseModel):
 
         for key, value in data.items():
             if key in {"side_overrides", "morale"}:
-                continue
-
-            # Dead keys — silently drop
-            if key in cls._DEAD_KEYS:
                 continue
 
             # morale_degrade_rate_modifier is a top-level field that
@@ -369,6 +446,49 @@ class CalibrationSchema(BaseModel):
 
         return result
 
+    @model_validator(mode="after")
+    def _reject_nonfinite_values(self) -> CalibrationSchema:
+        """Synchronize the compatibility mirror and reject non-finite data."""
+        if (
+            "morale" in self.model_fields_set
+            and "degrade_rate_modifier"
+            in self.morale.model_fields_set
+            and "morale_degrade_rate_modifier"
+            not in self.model_fields_set
+        ):
+            object.__setattr__(
+                self,
+                "morale_degrade_rate_modifier",
+                self.morale.degrade_rate_modifier,
+            )
+
+        def validate(value: Any, *, path: str) -> None:
+            if isinstance(value, float):
+                if not math.isfinite(value):
+                    raise ValueError(
+                        f"{path} must be finite",
+                    )
+                return
+            if isinstance(value, dict):
+                for key, nested in value.items():
+                    validate(
+                        nested,
+                        path=f"{path}.{key}",
+                    )
+                return
+            if isinstance(value, (list, tuple)):
+                for index, nested in enumerate(value):
+                    validate(
+                        nested,
+                        path=f"{path}[{index}]",
+                    )
+
+        validate(
+            self.model_dump(mode="python"),
+            path="calibration",
+        )
+        return self
+
     # 21 non-deferred flags validated in Phase 67.  Deferred flags
     # (fuel_consumption, ammo_gate, command_hierarchy, carrier_ops,
     # ice_crossing, bridge_capacity, environmental_fatigue) excluded.
@@ -387,6 +507,30 @@ class CalibrationSchema(BaseModel):
         if self.enable_all_modern:
             for flag in self._MODERN_FLAGS:
                 object.__setattr__(self, flag, True)
+
+    def to_sparse_patch(
+        self,
+        *,
+        mode: Literal["json", "python"] = "python",
+    ) -> dict[str, Any]:
+        """Return one canonical sparse overlay without inventing defaults."""
+        patch = self.model_dump(
+            mode=mode,
+            exclude_unset=True,
+        )
+        nested_morale = patch.get("morale")
+        if (
+            isinstance(nested_morale, dict)
+            and "degrade_rate_modifier" in nested_morale
+        ):
+            patch["morale_degrade_rate_modifier"] = nested_morale[
+                "degrade_rate_modifier"
+            ]
+        return {
+            field_name: patch[field_name]
+            for field_name in self.__class__.model_fields
+            if field_name in patch
+        }
 
     def to_flat_dict(self, sides: list[str]) -> dict[str, Any]:
         """Expand all fields into a flat ``dict[str, Any]`` for O(1) lookup.

@@ -8,9 +8,8 @@ provides per-type/per-side queries.
 
 from __future__ import annotations
 
-import copy
 import math
-from typing import Any
+from typing import TYPE_CHECKING, Any, Mapping, Sequence
 
 import numpy as np
 
@@ -33,6 +32,14 @@ from stochastic_warfare.space.orbits import (
     OrbitalMechanicsEngine,
     SatelliteState,
 )
+
+if TYPE_CHECKING:
+    from stochastic_warfare.detection.intel_fusion import (
+        IntelDeliveryReceipt,
+        IntelFusionEngine,
+    )
+    from stochastic_warfare.entities.base import Unit
+    from stochastic_warfare.space.isr import SpaceISREngine, SpaceISRUpdatePlan
 
 logger = get_logger(__name__)
 
@@ -199,6 +206,17 @@ class ConstellationManager:
     def get_constellations_by_side(self, side: str) -> list[ConstellationDefinition]:
         """Return constellation definitions for a given side."""
         return [d for d in self._constellations.values() if d.side == side]
+
+    def get_constellation(
+        self,
+        constellation_id: str,
+    ) -> ConstellationDefinition | None:
+        """Return one exact loaded constellation definition."""
+        return self._constellations.get(constellation_id)
+
+    def all_constellations(self) -> tuple[ConstellationDefinition, ...]:
+        """Return loaded definitions in deterministic insertion order."""
+        return tuple(self._constellations.values())
 
     def deactivate_satellite(
         self,
@@ -440,7 +458,7 @@ class SpaceEngine:
         config: SpaceConfig,
         constellation_manager: ConstellationManager,
         gps_engine: Any = None,
-        isr_engine: Any = None,
+        isr_engine: SpaceISREngine | None = None,
         early_warning_engine: Any = None,
         satcom_engine: Any = None,
         asat_engine: Any = None,
@@ -470,7 +488,7 @@ class SpaceEngine:
         return self._gps_engine
 
     @property
-    def isr_engine(self) -> Any:
+    def isr_engine(self) -> SpaceISREngine | None:
         return self._isr_engine
 
     @property
@@ -496,13 +514,24 @@ class SpaceEngine:
         sim_time_s: float,
         em_environment: Any = None,
         comms_engine: Any = None,
-        targets_by_side: dict[str, list[Any]] | None = None,
+        targets_by_side: Mapping[str, Sequence[Unit]] | None = None,
         cloud_cover: float = 0.0,
         timestamp: Any = None,
+        intel_fusion: IntelFusionEngine | None = None,
     ) -> None:
         """Update all space sub-engines for the current tick."""
         if not self._config.enable_space:
             return
+
+        # Freeze the complete imagery target topology before constellation,
+        # ASAT, GPS, event, or shared SPACE state can mutate.
+        isr_plan = self.preflight_update(
+            dt_s,
+            sim_time_s,
+            targets_by_side=targets_by_side,
+            cloud_cover=cloud_cover,
+            intel_fusion=intel_fusion,
+        )
 
         # 1. Propagate constellations
         self._constellation_manager.update(dt_s, sim_time_s)
@@ -531,7 +560,10 @@ class SpaceEngine:
 
         # 4. ISR
         if self._isr_engine is not None:
-            self._isr_engine.update(dt_s, sim_time_s, targets_by_side, cloud_cover)
+            self._isr_engine.apply_update(
+                isr_plan,
+                intel_fusion=intel_fusion,
+            )
 
         # 5. Early warning
         if self._early_warning_engine is not None:
@@ -544,6 +576,35 @@ class SpaceEngine:
                 for side in ("blue", "red"):
                     factor = self._satcom_engine.get_reliability_factor(side, sim_time_s)
                     comms_engine.set_satcom_reliability(factor)
+
+    def preflight_update(
+        self,
+        dt_s: float,
+        sim_time_s: float,
+        *,
+        targets_by_side: Mapping[str, Sequence[Unit]] | None = None,
+        cloud_cover: float = 0.0,
+        intel_fusion: IntelFusionEngine | None = None,
+    ) -> SpaceISRUpdatePlan | None:
+        """Validate Space ISR inputs and fusion lifecycle without mutation."""
+        if not self._config.enable_space or self._isr_engine is None:
+            return None
+        from stochastic_warfare.space.isr import SpaceISRIntegrityError
+
+        try:
+            return self._isr_engine.prepare_update(
+                dt_s,
+                sim_time_s,
+                targets_by_side,
+                cloud_cover,
+                intel_fusion=intel_fusion,
+            )
+        except SpaceISRIntegrityError:
+            raise
+        except Exception as exc:
+            raise SpaceISRIntegrityError(
+                "Unexpected Space ISR generation preflight failure",
+            ) from exc
 
     # ── Phase 54e: public GPS convenience API ───────────────────────
 
@@ -581,6 +642,9 @@ class SpaceEngine:
         *,
         expected_elapsed_s: float | None = None,
         expected_tick_count: int | None = None,
+        expected_sides: tuple[str, ...] | None = None,
+        expected_units_by_side: Mapping[str, Sequence[Unit]] | None = None,
+        delivered_receipts: Sequence[IntelDeliveryReceipt] = (),
     ) -> dict[str, Any]:
         """Validate a complete space snapshot without mutating live engines."""
         if not isinstance(state, dict):
@@ -682,6 +746,15 @@ class SpaceEngine:
                     ]["sim_time_s"],
                     expected_tick_count=normalized_tick_count,
                 )
+            elif name == "isr_engine":
+                assert self._isr_engine is not None
+                staged[name] = self._isr_engine.stage_state(
+                    raw_engine_state,
+                    expected_elapsed_s=normalized_elapsed,
+                    expected_sides=expected_sides,
+                    expected_units_by_side=expected_units_by_side,
+                    delivered_receipts=delivered_receipts,
+                )
             elif hasattr(eng, "stage_state"):
                 staged[name] = eng.stage_state(raw_engine_state)
             elif hasattr(eng, "validate_state"):
@@ -714,98 +787,11 @@ class SpaceEngine:
         sim_time_s: float,
     ) -> dict[str, Any]:
         """Strictly stage legacy space-service state at the runtime boundary."""
-        if name == "isr_engine":
-            expected = {"last_overpass_time", "recent_reports"}
-            if set(state) != expected:
-                raise ValueError(
-                    "isr_engine state keys must be exactly "
-                    f"{sorted(expected)!r}",
-                )
-            overpasses = self._stage_finite_mapping(
-                state["last_overpass_time"],
-                "ISR last_overpass_time",
-            )
-            known_satellites = {
-                satellite.satellite_id
-                for satellite in constellation_manager.all_satellites()
-            }
-            unknown_satellites = sorted(set(overpasses) - known_satellites)
-            if unknown_satellites:
-                raise ValueError(
-                    "ISR checkpoint references unknown satellites: "
-                    f"{unknown_satellites!r}",
-                )
-            future_overpasses = sorted(
-                satellite_id
-                for satellite_id, overpass_time in overpasses.items()
-                if overpass_time > sim_time_s
-            )
-            if future_overpasses:
-                raise ValueError(
-                    "ISR checkpoint has last_overpass_time after the staged "
-                    f"simulation time: {future_overpasses!r}",
-                )
-            reports = state["recent_reports"]
-            if not isinstance(reports, list):
-                raise ValueError("ISR recent_reports must be a list")
-            return {
-                "last_overpass_time": overpasses,
-                "recent_reports": [
-                    self._stage_json_value(
-                        report,
-                        f"ISR recent_reports[{index}]",
-                    )
-                    for index, report in enumerate(reports)
-                ],
-            }
         if name == "early_warning_engine":
             if state:
                 raise ValueError("early_warning_engine state must be empty")
             return {}
         raise ValueError(f"Unsupported space service state {name!r}")
-
-    @staticmethod
-    def _stage_finite_mapping(
-        value: Any,
-        label: str,
-    ) -> dict[str, float]:
-        if not isinstance(value, dict):
-            raise ValueError(f"{label} must be a mapping")
-        staged: dict[str, float] = {}
-        for key, raw in value.items():
-            if not isinstance(key, str) or not key:
-                raise ValueError(f"{label} keys must be non-empty strings")
-            staged[key] = _validated_float(
-                raw,
-                f"{label}[{key!r}]",
-                minimum=0.0,
-            )
-        return staged
-
-    @classmethod
-    def _stage_json_value(cls, value: Any, label: str) -> Any:
-        if value is None or type(value) in {bool, str, int}:
-            return copy.deepcopy(value)
-        if isinstance(value, float):
-            if not math.isfinite(value):
-                raise ValueError(f"{label} contains a non-finite number")
-            return value
-        if isinstance(value, (list, tuple)):
-            return [
-                cls._stage_json_value(item, f"{label}[]")
-                for item in value
-            ]
-        if isinstance(value, dict):
-            if not all(isinstance(key, str) for key in value):
-                raise ValueError(f"{label} mapping keys must be strings")
-            return {
-                key: cls._stage_json_value(item, f"{label}.{key}")
-                for key, item in value.items()
-            }
-        raise ValueError(
-            f"{label} contains unsupported value type "
-            f"{type(value).__name__}",
-        )
 
     def _validate_cross_engine_state(self, staged: dict[str, Any]) -> None:
         """Validate invariants jointly owned by ASAT and constellation state."""
@@ -905,9 +891,11 @@ class SpaceEngine:
             if (
                 eng is not None
                 and name in staged_state
-                and hasattr(eng, "set_state")
             ):
-                eng.set_state(staged_state[name])
+                if hasattr(eng, "commit_state"):
+                    eng.commit_state(staged_state[name])
+                elif hasattr(eng, "set_state"):
+                    eng.set_state(staged_state[name])
 
     def set_state(self, state: dict[str, Any]) -> None:
         """Validate and atomically restore the complete space snapshot."""

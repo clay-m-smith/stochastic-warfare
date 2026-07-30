@@ -27,16 +27,23 @@ def _make_cbrn_engine(enable: bool = True) -> CBRNEngine:
     config = CBRNConfig(enable_cbrn=enable)
 
     registry = AgentRegistry()
-    registry.register(AgentDefinition(
-        agent_id="sarin", category=int(AgentCategory.NERVE),
-        lct50_mg_min_m3=70.0, persistence_hours=2.0,
-    ))
+    registry.register(
+        AgentDefinition(
+            agent_id="sarin",
+            category=int(AgentCategory.NERVE),
+            lct50_mg_min_m3=70.0,
+            persistence_hours=2.0,
+        )
+    )
 
     dispersal = DispersalEngine()
     contamination = ContaminationManager(
-        grid_shape=(10, 10), cell_size_m=100.0,
-        origin_easting=0.0, origin_northing=0.0,
-        event_bus=bus, rng=rng,
+        grid_shape=(10, 10),
+        cell_size_m=100.0,
+        origin_easting=0.0,
+        origin_northing=0.0,
+        event_bus=bus,
+        rng=rng,
         config=ContaminationConfig(enable_cbrn=enable),
     )
     protection = ProtectionEngine()
@@ -44,10 +51,15 @@ def _make_cbrn_engine(enable: bool = True) -> CBRNEngine:
     decon = DecontaminationEngine(bus, rng)
 
     return CBRNEngine(
-        config=config, event_bus=bus, rng=rng,
-        agent_registry=registry, dispersal_engine=dispersal,
-        contamination_manager=contamination, protection_engine=protection,
-        casualty_engine=casualty, decon_engine=decon,
+        config=config,
+        event_bus=bus,
+        rng=rng,
+        agent_registry=registry,
+        dispersal_engine=dispersal,
+        contamination_manager=contamination,
+        protection_engine=protection,
+        casualty_engine=casualty,
+        decon_engine=decon,
     )
 
 
@@ -69,6 +81,7 @@ class TestModuleId:
 class TestSimulationContext:
     def test_field_exists(self):
         from stochastic_warfare.simulation.scenario import SimulationContext
+
         # Create minimal context — cbrn_engine should default to None
         ctx = SimulationContext.__new__(SimulationContext)
         assert not hasattr(ctx, "cbrn_engine") or ctx.cbrn_engine is None
@@ -77,15 +90,21 @@ class TestSimulationContext:
         """cbrn_engine defaults to None in dataclass."""
         from stochastic_warfare.simulation.scenario import SimulationContext
         import dataclasses
+
         fields = {f.name: f for f in dataclasses.fields(SimulationContext)}
         assert "cbrn_engine" in fields
 
-    def test_get_set_state_includes_cbrn(self):
-        """get_state engine list should include cbrn_engine."""
-        from stochastic_warfare.simulation.scenario import SimulationContext
-        import inspect
-        source = inspect.getsource(SimulationContext.get_state)
-        assert "cbrn_engine" in source
+    @pytest.mark.structural
+    def test_cbrn_owner_is_registered_for_context_state(self):
+        """Structural registry diagnostic; roundtrips are tested elsewhere."""
+        from stochastic_warfare.simulation.scenario import (
+            _CONTEXT_STATE_ENGINE_NAMES,
+        )
+
+        assert "cbrn_engine" in _CONTEXT_STATE_ENGINE_NAMES
+        assert len(_CONTEXT_STATE_ENGINE_NAMES) == len(
+            set(_CONTEXT_STATE_ENGINE_NAMES),
+        )
 
 
 # ---------------------------------------------------------------------------
@@ -99,6 +118,7 @@ class TestEngineTick:
         # Read source to verify the integration point exists
         from stochastic_warfare.simulation import engine as sim_engine
         import inspect
+
         source = inspect.getsource(sim_engine.SimulationEngine._update_environment)
         assert "cbrn_engine" in source
 
@@ -106,6 +126,7 @@ class TestEngineTick:
         """No error when cbrn_engine is None."""
         from stochastic_warfare.simulation import engine as sim_engine
         import inspect
+
         source = inspect.getsource(sim_engine.SimulationEngine._update_environment)
         assert "cbrn_engine is not None" in source
 
@@ -118,6 +139,7 @@ class TestEngineTick:
 class TestMovementMOPP:
     def _make_engine(self):
         from stochastic_warfare.movement.engine import MovementEngine, MovementConfig
+
         # Mock heightmap that returns flat terrain
         hm = types.SimpleNamespace(
             slope_at=lambda pos: 0.0,
@@ -155,6 +177,7 @@ class TestMovementMOPP:
 class TestMoraleCBRN:
     def test_check_transition_with_stress(self):
         from stochastic_warfare.morale.state import MoraleStateMachine, MoraleConfig
+
         mm = MoraleStateMachine(
             event_bus=EventBus(),
             rng=np.random.default_rng(42),
@@ -167,6 +190,7 @@ class TestMoraleCBRN:
 
     def test_matrix_changes_with_cbrn_stress(self):
         from stochastic_warfare.morale.state import MoraleStateMachine, MoraleConfig
+
         mm = MoraleStateMachine(
             event_bus=EventBus(),
             rng=np.random.default_rng(42),
@@ -182,6 +206,7 @@ class TestMoraleCBRN:
     def test_default_cbrn_stress_zero(self):
         """Default cbrn_stress=0 should produce same matrix as before."""
         from stochastic_warfare.morale.state import MoraleStateMachine, MoraleConfig
+
         mm = MoraleStateMachine(
             event_bus=EventBus(),
             rng=np.random.default_rng(42),
@@ -207,14 +232,29 @@ class TestCBRNEngine:
         eng = _make_cbrn_engine()
         eng.release_agent("sarin", Position(500, 500, 0), 1.0, "artillery", TS)
         unit = types.SimpleNamespace(
-            entity_id="u1", position=Position(500, 500, 0), personnel_count=10,
+            entity_id="u1",
+            position=Position(500, 500, 0),
+            personnel_count=10,
         )
-        weather = types.SimpleNamespace(wind_speed_m_s=5.0, wind_direction_rad=0.0,
-                                         cloud_cover=0.5, temperature_c=20.0,
-                                         precipitation_rate_mm_hr=0.0)
+        weather = types.SimpleNamespace(
+            wind_speed_m_s=5.0,
+            wind_direction_rad=0.0,
+            cloud_cover=0.5,
+            temperature_c=20.0,
+            precipitation_rate_mm_hr=0.0,
+        )
         tod = types.SimpleNamespace(is_daytime=True)
+        before = eng._dispersal.puffs[0]
+        assert (before.center_e, before.center_n, before.age_s) == (
+            500.0,
+            500.0,
+            0.0,
+        )
         eng.update(10.0, 10.0, {"blue": [unit]}, weather, timestamp=TS, time_of_day=tod)
-        # Should not error
+        after = eng._dispersal.puffs[0]
+        assert after.center_e == pytest.approx(500.0)
+        assert after.center_n == pytest.approx(550.0)
+        assert after.age_s == pytest.approx(10.0)
 
     def test_get_mopp_effects(self):
         eng = _make_cbrn_engine()
@@ -244,17 +284,22 @@ class TestCBRNEngine:
 
 
 class TestBackwardCompat:
-    def test_enable_cbrn_false_skips(self):
+    def test_disabled_cbrn_update_is_explicit_no_op(self):
+        """Disabled CBRN preserves its exact state across an update."""
         eng = _make_cbrn_engine(enable=False)
         unit = types.SimpleNamespace(
-            entity_id="u1", position=Position(500, 500, 0), personnel_count=10,
+            entity_id="u1",
+            position=Position(500, 500, 0),
+            personnel_count=10,
         )
-        # Should not error, should be a no-op
+        before = eng.get_state()
         eng.update(10.0, 10.0, {"blue": [unit]}, timestamp=TS)
+        assert eng.get_state() == before
 
     def test_morale_cache_key_includes_cbrn_stress(self):
         """Cache key for compute_transition_matrix should include cbrn_stress."""
         from stochastic_warfare.morale.state import MoraleStateMachine, MoraleConfig
+
         mm = MoraleStateMachine(
             event_bus=EventBus(),
             rng=np.random.default_rng(42),

@@ -61,6 +61,8 @@ async def get_scenario(name: str, settings: ApiSettings = Depends(get_settings))
     data_dir = Path(settings.data_dir)
     try:
         path = resolve_scenario(name, data_dir)
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
     except FileNotFoundError:
         raise HTTPException(status_code=404, detail=f"Scenario '{name}' not found")
 
@@ -101,10 +103,12 @@ async def get_scenario(name: str, settings: ApiSettings = Depends(get_settings))
 async def validate_config(req: ValidateConfigRequest) -> ValidateConfigResponse:
     """Validate a scenario config dict against the campaign schema."""
     from pydantic import ValidationError
-    from stochastic_warfare.simulation.scenario import CampaignScenarioConfig
+    from stochastic_warfare.simulation.scenario import (
+        parse_campaign_scenario_config,
+    )
 
     try:
-        CampaignScenarioConfig(**req.config)
+        parse_campaign_scenario_config(req.config)
         return ValidateConfigResponse(valid=True)
     except ValidationError as exc:
         errors = [f"{e['loc']}: {e['msg']}" for e in exc.errors()]

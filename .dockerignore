@@ -2,6 +2,7 @@
 node_modules/
 __pycache__/
 *.pyc
+stochastic_warfare/_build_identity.json
 .git/
 .github/
 tests/

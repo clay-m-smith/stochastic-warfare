@@ -280,8 +280,8 @@ class TestComputeBattlePositions:
 
 
 class TestAggregationWiring:
-    def test_step_runs_without_aggregation_engine(self):
-        """Engine runs fine when aggregation_engine is None."""
+    def test_step_without_aggregation_advances_runtime_clock(self):
+        """The ordinary runtime tick advances with no aggregation owner."""
         ctx = _make_ctx(
             units_by_side={
                 "blue": _make_units("blue", 2, Position(100, 100)),
@@ -289,7 +289,11 @@ class TestAggregationWiring:
             },
         )
         engine = _make_engine(ctx, EngineConfig(max_ticks=2))
-        engine.step()  # should not raise
+        before_tick = ctx.clock.tick_count
+        terminal = engine.step()
+        assert terminal is False
+        assert ctx.clock.tick_count == before_tick + 1
+        assert ctx.aggregation_engine is None
 
     def test_step_runs_with_aggregation_disabled(self):
         agg = AggregationEngine(config=AggregationConfig(enable_aggregation=False), rng=np.random.default_rng(0))
@@ -374,7 +378,12 @@ class TestAggregationWiring:
             aggregation_engine=agg,
         )
         engine = _make_engine(ctx, EngineConfig(max_ticks=2), battle_config)
-        engine.step()  # should not raise
+        before_tick = ctx.clock.tick_count
+        terminal = engine.step()
+        assert terminal is False
+        assert ctx.clock.tick_count == before_tick + 1
+        assert engine._battle._config.auto_resolve_enabled is True
+        assert agg._config.enable_aggregation is True
 
 
 # ===========================================================================

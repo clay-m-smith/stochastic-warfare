@@ -44,15 +44,20 @@ class TestStratagemConcentration:
 
     def test_activate_stratagem_called(self):
         bus = EventBus()
+        events = []
+        bus.subscribe(StratagemActivatedEvent, events.append)
         engine = StratagemEngine(bus, _make_rng())
         plan = engine.plan_concentration(
             ["u1", "u2", "u3"],
             Position(1000, 2000, 0),
             [],
         )
-        # Should not raise
         engine.activate_stratagem("commander_1", plan,
                                   datetime(2024, 1, 1, tzinfo=timezone.utc))
+        assert engine.is_active(plan.stratagem_id)
+        assert [(event.unit_id, event.stratagem_type) for event in events] == [
+            ("commander_1", "CONCENTRATION"),
+        ]
 
     def test_stratagem_activated_event_published(self):
         bus = EventBus()

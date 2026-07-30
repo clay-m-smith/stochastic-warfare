@@ -16,7 +16,9 @@ Usage in a test file::
 
 from __future__ import annotations
 
+import json
 from datetime import datetime, timedelta, timezone
+from pathlib import Path
 
 import numpy as np
 import pytest
@@ -39,6 +41,30 @@ POS_5KM = Position(5000.0, 5000.0, 0.0)
 
 #: Default seed for deterministic tests.
 DEFAULT_SEED = 42
+
+_EVIDENCE_ROOT = Path(__file__).parent / "validation" / "evidence_ledgers"
+_CURRENT_EVIDENCE_LEDGERS = (
+    _EVIDENCE_ROOT / "no_direct_oracles.json",
+    _EVIDENCE_ROOT / "weak_oracles.json",
+)
+
+
+def pytest_collection_modifyitems(items: list[pytest.Item]) -> None:
+    """Apply reviewed structural classifications to exact collected nodes."""
+    structural_node_ids: set[str] = set()
+    for ledger_path in _CURRENT_EVIDENCE_LEDGERS:
+        if not ledger_path.is_file():
+            continue
+        ledger = json.loads(ledger_path.read_text(encoding="utf-8"))
+        structural_node_ids.update(
+            entry["node_id"]
+            for entry in ledger["entries"]
+            if entry["classification"] == "structural_only"
+        )
+
+    for item in items:
+        if item.nodeid in structural_node_ids:
+            item.add_marker(pytest.mark.structural)
 
 
 # ---------------------------------------------------------------------------
@@ -86,5 +112,4 @@ def make_clock(
     for _ in range(ticks):
         clock.advance()
     return clock
-
 

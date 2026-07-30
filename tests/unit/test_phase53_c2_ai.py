@@ -32,9 +32,9 @@ def _rng(seed: int = 42) -> np.random.Generator:
     return np.random.Generator(np.random.PCG64(seed))
 
 
-def _make_unit(entity_id: str, side: str = "blue",
-               easting: float = 0.0, northing: float = 0.0,
-               domain: Domain = Domain.GROUND) -> Unit:
+def _make_unit(
+    entity_id: str, side: str = "blue", easting: float = 0.0, northing: float = 0.0, domain: Domain = Domain.GROUND
+) -> Unit:
     """Create a minimal unit for testing."""
     u = Unit.__new__(Unit)
     object.__setattr__(u, "entity_id", entity_id)
@@ -69,6 +69,7 @@ def _make_ctx(
 ) -> SimpleNamespace:
     """Build a minimal SimulationContext-like namespace."""
     from stochastic_warfare.simulation.calibration import CalibrationSchema
+
     if units_by_side is None:
         units_by_side = {}
     cal = calibration or CalibrationSchema()
@@ -117,8 +118,7 @@ def _make_ctx(
     )
 
     def active_units(side: str) -> list[Unit]:
-        return [u for u in ctx.units_by_side.get(side, [])
-                if u.status == UnitStatus.ACTIVE]
+        return [u for u in ctx.units_by_side.get(side, []) if u.status == UnitStatus.ACTIVE]
 
     def side_names() -> list[str]:
         return sorted(ctx.units_by_side.keys())
@@ -244,7 +244,7 @@ class TestC2Effectiveness:
         positions = {
             "u1": Position(0.0, 0.0, 0.0),
             "u2": Position(1000.0, 0.0, 0.0),  # In range
-            "u3": Position(4500.0, 0.0, 0.0),   # Near max range — degraded
+            "u3": Position(4500.0, 0.0, 0.0),  # Near max range — degraded
         }
         eff = engine.compute_c2_effectiveness("u1", positions)
         # Should be between min and 1.0
@@ -330,7 +330,10 @@ class TestStratagemEngineWiring:
         )
         units = ["u1", "u2", "u3", "u4"]
         viable, reason = engine.evaluate_concentration_opportunity(
-            assessment, units, echelon=5, experience=0.5,
+            assessment,
+            units,
+            echelon=5,
+            experience=0.5,
         )
         assert isinstance(viable, bool)
         assert isinstance(reason, str)
@@ -351,7 +354,10 @@ class TestStratagemEngineWiring:
         )
         units = ["u1", "u2"]
         viable, reason = engine.evaluate_deception_opportunity(
-            assessment, units, echelon=6, experience=0.5,
+            assessment,
+            units,
+            echelon=6,
+            experience=0.5,
         )
         assert isinstance(viable, bool)
 
@@ -615,8 +621,12 @@ class TestFogOfWarWiring:
         assert "blue" in sides_called
         assert "red" in sides_called
 
-    def test_fow_exception_logged(self):
-        """Exception in fog_of_war.update() → logged, continues normally."""
+    @pytest.mark.structural
+    def test_fow_exception_emits_structural_diagnostic(
+        self,
+        caplog,
+    ):
+        """Structural mock/log diagnostic; no behavioral wiring claim."""
         from stochastic_warfare.simulation.calibration import CalibrationSchema
         from stochastic_warfare.simulation.battle import BattleManager, BattleContext
 
@@ -639,11 +649,17 @@ class TestFogOfWarWiring:
             involved_sides=["blue", "red"],
         )
         mgr = BattleManager(EventBus())
-        # Should not raise
-        mgr.execute_tick(ctx, battle, dt=5.0)
+        with caplog.at_level("DEBUG"):
+            mgr.execute_tick(ctx, battle, dt=5.0)
+        assert fow.update.call_count == 2
+        assert {message for message in caplog.messages if message.startswith("FogOfWar update failed for ")} == {
+            "FogOfWar update failed for blue",
+            "FogOfWar update failed for red",
+        }
 
-    def test_missing_fow_no_crash(self):
-        """Missing fog_of_war on context → no crash."""
+    @pytest.mark.structural
+    def test_missing_fow_does_not_raise_structural_diagnostic(self):
+        """Structural no-raise diagnostic for an absent optional owner."""
         from stochastic_warfare.simulation.calibration import CalibrationSchema
         from stochastic_warfare.simulation.battle import BattleManager, BattleContext
 
@@ -664,7 +680,6 @@ class TestFogOfWarWiring:
             involved_sides=["blue", "red"],
         )
         mgr = BattleManager(EventBus())
-        # Should not raise
         mgr.execute_tick(ctx, battle, dt=5.0)
 
     def test_fow_detected_count_used_in_assessment(self):
@@ -686,8 +701,10 @@ class TestFogOfWarWiring:
 
         assessor = MagicMock()
         assessor.assess.return_value = SimpleNamespace(
-            force_ratio=1.0, c2_effectiveness=1.0,
-            supply_level=1.0, morale_level=0.7,
+            force_ratio=1.0,
+            c2_effectiveness=1.0,
+            supply_level=1.0,
+            morale_level=0.7,
             intel_quality=0.5,
         )
 
@@ -707,8 +724,7 @@ class TestFogOfWarWiring:
         assert assessor.assess.called
         call_kwargs = assessor.assess.call_args
         # contacts is passed as keyword arg
-        assert call_kwargs.kwargs.get("contacts") == 1 or \
-            (len(call_kwargs.args) > 7 and call_kwargs.args[7] == 1)
+        assert call_kwargs.kwargs.get("contacts") == 1 or (len(call_kwargs.args) > 7 and call_kwargs.args[7] == 1)
 
     def test_backward_compat_ground_truth_when_disabled(self):
         """With enable_fog_of_war=False, assessment uses ground truth enemy count."""
@@ -724,8 +740,10 @@ class TestFogOfWarWiring:
 
         assessor = MagicMock()
         assessor.assess.return_value = SimpleNamespace(
-            force_ratio=1.0, c2_effectiveness=1.0,
-            supply_level=1.0, morale_level=0.7,
+            force_ratio=1.0,
+            c2_effectiveness=1.0,
+            supply_level=1.0,
+            morale_level=0.7,
             intel_quality=0.5,
         )
 
@@ -743,8 +761,7 @@ class TestFogOfWarWiring:
         assert assessor.assess.called
         call_kwargs = assessor.assess.call_args
         # contacts should be 2 (ground truth)
-        assert call_kwargs.kwargs.get("contacts") == 2 or \
-            (len(call_kwargs.args) > 7 and call_kwargs.args[7] == 2)
+        assert call_kwargs.kwargs.get("contacts") == 2 or (len(call_kwargs.args) > 7 and call_kwargs.args[7] == 2)
 
 
 # ===========================================================================
@@ -870,8 +887,11 @@ class TestEscalationSubEngines:
         # Should be called once per side
         assert political.update.call_count == 2
 
-    def test_no_escalation_config_no_political(self):
-        """No political_engine → no political pressure update."""
+    @pytest.mark.structural
+    def test_missing_political_engine_does_not_raise_structural_diagnostic(
+        self,
+    ):
+        """Structural no-raise diagnostic for an absent optional owner."""
         from stochastic_warfare.simulation.engine import SimulationEngine
 
         ctx = _make_ctx(
@@ -889,7 +909,6 @@ class TestEscalationSubEngines:
         engine = SimulationEngine.__new__(SimulationEngine)
         engine._ctx = ctx
         engine._strict_mode = False
-        # Should not crash
         engine._update_escalation(3600.0)
 
     def test_political_pressure_accumulates_casualties(self):

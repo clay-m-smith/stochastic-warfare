@@ -6,11 +6,26 @@ in checkpoint state and correctly restored.
 
 from __future__ import annotations
 
+import json
 from typing import Any
 
 
+from stochastic_warfare.c2.orders.propagation import PropagationResult
 from stochastic_warfare.combat.suppression import UnitSuppressionState
+from stochastic_warfare.core.checkpoint import NumpyEncoder
 from stochastic_warfare.core.events import EventBus
+
+
+def _misinterpreted_order() -> PropagationResult:
+    """Return a real production value for the typed checkpoint boundary."""
+    return PropagationResult(
+        success=True,
+        total_delay_s=30.0,
+        was_misinterpreted=True,
+        misinterpretation_type="position",
+        comms_quality=0.7,
+        degraded=True,
+    )
 
 
 def _make_battle_manager() -> Any:
@@ -68,9 +83,17 @@ class TestGetStateCompleteness:
 
     def test_misinterpreted_orders_in_state(self):
         bm = _make_battle_manager()
-        bm._misinterpreted_orders = {"u1": {"offset": 150.0}}
+        bm._misinterpreted_orders = {"u1": _misinterpreted_order()}
         state = bm.get_state()
         assert "misinterpreted_orders" in state
+        assert state["misinterpreted_orders"]["u1"] == {
+            "success": True,
+            "total_delay_s": 30.0,
+            "was_misinterpreted": True,
+            "misinterpretation_type": "position",
+            "comms_quality": 0.7,
+            "degraded": True,
+        }
 
 
 class TestSetStateRestore:
@@ -117,8 +140,32 @@ class TestSetStateRestore:
 
     def test_restore_misinterpreted_orders(self):
         bm = _make_battle_manager()
-        bm.set_state({"misinterpreted_orders": {"u1": "offset_data"}})
-        assert bm._misinterpreted_orders == {"u1": "offset_data"}
+        bm.set_state({
+            "misinterpreted_orders": {
+                "u1": {
+                    "success": True,
+                    "total_delay_s": 30.0,
+                    "was_misinterpreted": True,
+                    "misinterpretation_type": "position",
+                    "comms_quality": 0.7,
+                    "degraded": True,
+                },
+            },
+        })
+        assert bm._misinterpreted_orders == {"u1": _misinterpreted_order()}
+
+    def test_misinterpreted_orders_cross_json_checkpoint_boundary(self):
+        bm = _make_battle_manager()
+        bm._misinterpreted_orders = {"u1": _misinterpreted_order()}
+        serialized = json.dumps(bm.get_state(), cls=NumpyEncoder)
+
+        restored = _make_battle_manager()
+        restored.set_state(json.loads(serialized))
+
+        assert restored._misinterpreted_orders == {
+            "u1": _misinterpreted_order(),
+        }
+        assert restored.get_state() == bm.get_state()
 
 
 class TestRoundTrip:
@@ -136,7 +183,7 @@ class TestRoundTrip:
         bm._undigging = {"u2": True}
         bm._concealment_scores = {"u1": 0.4}
         bm._env_casualty_accum = {"u1": 0.3}
-        bm._misinterpreted_orders = {"u3": {"radius": 100}}
+        bm._misinterpreted_orders = {"u3": _misinterpreted_order()}
 
         state1 = bm.get_state()
 
@@ -152,6 +199,7 @@ class TestRoundTrip:
         assert state2["undigging"] == state1["undigging"]
         assert state2["concealment_scores"] == state1["concealment_scores"]
         assert state2["env_casualty_accum"] == state1["env_casualty_accum"]
+        assert state2["misinterpreted_orders"] == state1["misinterpreted_orders"]
 
     def test_backward_compat_empty_state(self):
         """Old checkpoints missing new keys → defaults to empty."""

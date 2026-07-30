@@ -13,8 +13,11 @@ appropriate module. This keeps each module independently testable.
 from __future__ import annotations
 
 import enum
+import math
+from collections.abc import Mapping
 from dataclasses import dataclass
 from datetime import datetime
+from typing import Any
 
 import numpy as np
 from pydantic import BaseModel
@@ -103,6 +106,16 @@ class _OODAState:
     echelon_level: int
 
 
+@dataclass(frozen=True)
+class OODAStatePlan:
+    """Validated immutable checkpoint payload for OODA commander state."""
+
+    commanders: tuple[
+        tuple[str, OODAPhase, float, float, int, int],
+        ...,
+    ]
+
+
 # ---------------------------------------------------------------------------
 # Engine
 # ---------------------------------------------------------------------------
@@ -144,12 +157,35 @@ class OODALoopEngine:
         echelon_level : int
             ``EchelonLevel`` integer value (e.g. ``EchelonLevel.BATTALION``).
         """
+        if (
+            not isinstance(unit_id, str)
+            or not unit_id
+            or unit_id != unit_id.strip()
+        ):
+            raise ValueError(
+                "OODA commander unit IDs must be non-empty trimmed strings",
+            )
+        if unit_id in self._commanders:
+            raise ValueError(
+                f"OODA commander {unit_id!r} is already registered",
+            )
+        if (
+            isinstance(echelon_level, bool)
+            or not isinstance(echelon_level, int)
+        ):
+            raise ValueError("OODA echelon_level must be a strict integer")
+        try:
+            echelon = EchelonLevel(echelon_level)
+        except ValueError as exc:
+            raise ValueError(
+                f"Unknown OODA echelon_level {echelon_level!r}",
+            ) from exc
         self._commanders[unit_id] = _OODAState(
             phase=OODAPhase.OBSERVE,
             phase_timer=-1.0,
             phase_duration=0.0,
             cycle_count=0,
-            echelon_level=echelon_level,
+            echelon_level=int(echelon),
         )
         logger.debug("Registered OODA commander %s (echelon=%d)", unit_id, echelon_level)
 
@@ -209,6 +245,8 @@ class OODALoopEngine:
         personality_mult: float = 1.0,
         tactical_mult: float = 1.0,
         ts: datetime | None = None,
+        *,
+        publish_event: bool = True,
     ) -> None:
         """Start a specific OODA phase for a commander.
 
@@ -248,15 +286,16 @@ class OODALoopEngine:
         state.phase_timer = duration
         state.phase_duration = duration
 
-        timestamp = ts or datetime.now()
-        self._event_bus.publish(OODAPhaseChangeEvent(
-            timestamp=timestamp,
-            source=ModuleId.C2,
-            unit_id=unit_id,
-            old_phase=int(old_phase),
-            new_phase=int(phase),
-            cycle_number=state.cycle_count,
-        ))
+        if publish_event:
+            timestamp = ts or datetime.now()
+            self._event_bus.publish(OODAPhaseChangeEvent(
+                timestamp=timestamp,
+                source=ModuleId.C2,
+                unit_id=unit_id,
+                old_phase=int(old_phase),
+                new_phase=int(phase),
+                cycle_number=state.cycle_count,
+            ))
 
         logger.debug(
             "OODA %s: started %s (%.1fs, cycle %d)",
@@ -395,7 +434,7 @@ class OODALoopEngine:
 
     # -- State protocol -----------------------------------------------------
 
-    def get_state(self) -> dict:
+    def get_state(self) -> dict[str, Any]:
         """Serialize engine state for checkpoint/restore."""
         return {
             "commanders": {
@@ -406,18 +445,153 @@ class OODALoopEngine:
                     "cycle_count": s.cycle_count,
                     "echelon_level": s.echelon_level,
                 }
-                for uid, s in self._commanders.items()
+                for uid, s in sorted(self._commanders.items())
             },
         }
 
-    def set_state(self, state: dict) -> None:
-        """Restore engine state from checkpoint."""
-        self._commanders.clear()
-        for uid, sd in state["commanders"].items():
-            self._commanders[uid] = _OODAState(
-                phase=OODAPhase(sd["phase"]),
-                phase_timer=sd["phase_timer"],
-                phase_duration=sd["phase_duration"],
-                cycle_count=sd["cycle_count"],
-                echelon_level=sd["echelon_level"],
+    def stage_state(
+        self,
+        state: Mapping[str, Any],
+        *,
+        expected_unit_ids: set[str] | None = None,
+    ) -> OODAStatePlan:
+        """Validate checkpoint state without mutating live commanders."""
+        if set(state) != {"commanders"}:
+            raise ValueError(
+                "OODA checkpoint state must contain only commanders",
             )
+        raw_commanders = state["commanders"]
+        if not isinstance(raw_commanders, Mapping):
+            raise ValueError("OODA checkpoint commanders must be a mapping")
+        commander_ids = set(raw_commanders)
+        if (
+            expected_unit_ids is not None
+            and commander_ids != expected_unit_ids
+        ):
+            raise ValueError(
+                "OODA commander topology must match the exact runtime "
+                f"roster: missing={sorted(expected_unit_ids - commander_ids)!r}, "
+                f"extra={sorted(commander_ids - expected_unit_ids)!r}",
+            )
+        staged: list[
+            tuple[str, OODAPhase, float, float, int, int]
+        ] = []
+        expected_fields = {
+            "phase",
+            "phase_timer",
+            "phase_duration",
+            "cycle_count",
+            "echelon_level",
+        }
+        for unit_id, raw in sorted(raw_commanders.items()):
+            if (
+                not isinstance(unit_id, str)
+                or not unit_id
+                or unit_id != unit_id.strip()
+            ):
+                raise ValueError(
+                    "OODA commander unit IDs must be non-empty trimmed "
+                    "strings",
+                )
+            if not isinstance(raw, Mapping) or set(raw) != expected_fields:
+                raise ValueError(
+                    f"OODA commander {unit_id!r} has invalid state fields",
+                )
+            phase_value = raw["phase"]
+            if isinstance(phase_value, bool) or not isinstance(
+                phase_value,
+                int,
+            ):
+                raise ValueError("OODA phase must be a strict integer")
+            try:
+                phase = OODAPhase(phase_value)
+            except ValueError as exc:
+                raise ValueError(
+                    f"OODA commander {unit_id!r} has invalid phase",
+                ) from exc
+            phase_timer = self._finite_state_float(
+                raw["phase_timer"],
+                field_name="phase_timer",
+            )
+            phase_duration = self._finite_state_float(
+                raw["phase_duration"],
+                field_name="phase_duration",
+            )
+            if phase_duration < 0.0:
+                raise ValueError("OODA phase_duration must be non-negative")
+            if phase_timer > phase_duration:
+                raise ValueError(
+                    "OODA phase_timer may not exceed phase_duration",
+                )
+            if phase_duration == 0.0 and phase_timer != -1.0:
+                raise ValueError(
+                    "OODA zero-duration state requires phase_timer=-1",
+                )
+            cycle_count = raw["cycle_count"]
+            if (
+                isinstance(cycle_count, bool)
+                or not isinstance(cycle_count, int)
+                or cycle_count < 0
+            ):
+                raise ValueError(
+                    "OODA cycle_count must be a non-negative strict integer",
+                )
+            echelon_value = raw["echelon_level"]
+            if isinstance(echelon_value, bool) or not isinstance(
+                echelon_value,
+                int,
+            ):
+                raise ValueError(
+                    "OODA echelon_level must be a strict integer",
+                )
+            try:
+                echelon = EchelonLevel(echelon_value)
+            except ValueError as exc:
+                raise ValueError(
+                    f"OODA commander {unit_id!r} has invalid echelon_level",
+                ) from exc
+            staged.append((
+                unit_id,
+                phase,
+                phase_timer,
+                phase_duration,
+                cycle_count,
+                int(echelon),
+            ))
+        return OODAStatePlan(tuple(staged))
+
+    @staticmethod
+    def _finite_state_float(value: Any, *, field_name: str) -> float:
+        if (
+            isinstance(value, bool)
+            or not isinstance(value, (int, float))
+            or not math.isfinite(float(value))
+        ):
+            raise ValueError(
+                f"OODA {field_name} must be a finite number",
+            )
+        return float(value)
+
+    def commit_state(self, plan: OODAStatePlan) -> None:
+        """Replace live commander state with a validated checkpoint plan."""
+        self._commanders = {
+            unit_id: _OODAState(
+                phase=phase,
+                phase_timer=phase_timer,
+                phase_duration=phase_duration,
+                cycle_count=cycle_count,
+                echelon_level=echelon_level,
+            )
+            for (
+                unit_id,
+                phase,
+                phase_timer,
+                phase_duration,
+                cycle_count,
+                echelon_level,
+            ) in plan.commanders
+        }
+
+    def set_state(self, state: Mapping[str, Any]) -> None:
+        """Restore independently validated commander state."""
+        self.commit_state(self.stage_state(state))

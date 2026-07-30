@@ -3,9 +3,8 @@
 from __future__ import annotations
 
 from datetime import datetime, timezone
-from types import SimpleNamespace
-
 import numpy as np
+import pytest
 
 from stochastic_warfare.core.events import EventBus
 from stochastic_warfare.core.types import Position
@@ -79,44 +78,45 @@ def _make_early_warning_engine(bus, rng, *, has_ew_constellation=True):
 # ---------------------------------------------------------------------------
 
 
-def test_isr_reports_include_target_position():
-    """ISR generate_isr_reports stores target_position in each report dict."""
-    engine = _make_isr_engine()
+def _typed_report(report_id: int, target_id: str) -> object:
+    from stochastic_warfare.space.isr import SpaceISRReport
 
-    # Manually simulate a report with position
-    target = SimpleNamespace(
-        entity_id="tank_1",
-        position=Position(1000, 2000, 0),
-        strength=10,
+    return SpaceISRReport(
+        report_id=report_id,
+        reporting_side="blue",
+        target_side="red",
+        target_id=target_id,
+        satellite_id="sat-1",
+        constellation_id="constellation-1",
+        sensor_type="optical",
+        resolution_m=0.5,
+        position_sigma_m=2.0,
+        target_position=Position(1000.0, 2000.0, 0.0),
+        observed_at_s=100.0,
+        available_at_s=400.0,
     )
-    # Directly add to buffer as generate_isr_reports would
-    engine._recent_reports.append({
-        "target_id": "tank_1",
-        "target_position": target.position,
-        "timestamp": 100.0,
-        "resolution_m": 0.5,
-    })
-
-    reports = engine.get_recent_reports()
-    assert len(reports) == 1
-    assert reports[0]["target_position"] is target.position
 
 
-def test_isr_clear_true_empties_clear_false_preserves():
+def test_isr_report_serializes_typed_position() -> None:
+    report = _typed_report(1, "tank_1")
+
+    assert isinstance(report.target_position, Position)
+    assert report.to_state()["target_position"] == [1000.0, 2000.0, 0.0]
+
+
+def test_isr_queue_rejects_unacknowledged_clear() -> None:
     engine = _make_isr_engine()
-    engine._recent_reports.extend([
-        {"target_id": "a", "target_position": Position(0, 0, 0)},
-        {"target_id": "b", "target_position": Position(1, 1, 0)},
+    engine._report_queue.extend([
+        _typed_report(1, "a"),
+        _typed_report(2, "b"),
     ])
 
     first = engine.get_recent_reports(clear=False)
     assert len(first) == 2
 
-    second = engine.get_recent_reports(clear=True)
-    assert len(second) == 2
-
-    third = engine.get_recent_reports()
-    assert len(third) == 0
+    with pytest.raises(RuntimeError, match="successful delivery"):
+        engine.get_recent_reports(clear=True)
+    assert engine.get_recent_reports() == first
 
 
 # ---------------------------------------------------------------------------
@@ -124,6 +124,7 @@ def test_isr_clear_true_empties_clear_false_preserves():
 # ---------------------------------------------------------------------------
 
 
+@pytest.mark.structural
 def test_fuse_sigint_uses_ctx_sigint_engine_not_ew():
     """engine.py must access sigint_engine from ctx, not from ew_engine."""
     from stochastic_warfare.simulation.engine import SimulationEngine
@@ -134,6 +135,7 @@ def test_fuse_sigint_uses_ctx_sigint_engine_not_ew():
     assert 'getattr(ctx, "sigint_engine"' in source
 
 
+@pytest.mark.structural
 def test_fuse_sigint_uses_fog_of_war_intel_fusion():
     """engine.py must access fusion from fog_of_war.intel_fusion, not ctx.intel_fusion_engine."""
     from stochastic_warfare.simulation.engine import SimulationEngine
@@ -144,6 +146,7 @@ def test_fuse_sigint_uses_fog_of_war_intel_fusion():
     assert "intel_fusion_engine" not in source
 
 
+@pytest.mark.structural
 def test_fuse_sigint_gated_by_enable_space_effects():
     """_fuse_sigint returns early when enable_space_effects is False."""
     from stochastic_warfare.simulation.engine import SimulationEngine
@@ -153,13 +156,15 @@ def test_fuse_sigint_gated_by_enable_space_effects():
     assert "enable_space_effects" in source
 
 
-def test_fuse_sigint_handles_dict_isr_reports():
-    """ISR reports are dicts; _fuse_sigint must handle .get() on dicts."""
+@pytest.mark.structural
+def test_fuse_sigint_does_not_consume_space_imint_queue() -> None:
+    """Structural guard: EW fusion does not acknowledge Space IMINT."""
     from stochastic_warfare.simulation.engine import SimulationEngine
     import inspect
 
     source = inspect.getsource(SimulationEngine._fuse_sigint)
-    assert "isinstance(sr, dict)" in source
+    assert "space_reports" not in source
+    assert "isr_engine" not in source
 
 
 # ---------------------------------------------------------------------------

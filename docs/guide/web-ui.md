@@ -40,7 +40,7 @@ The sidebar provides access to four main sections:
 | **Scenarios** | Browse and search all available scenarios |
 | **Units** | Catalog of all unit definitions across eras |
 | **Runs** | Simulation run history and live tracking |
-| **Analysis** | Batch Monte Carlo, A/B comparison, sensitivity sweeps |
+| **Analysis** | Batch Monte Carlo, A/B comparison, sensitivity sweeps, doctrine comparison |
 
 The sidebar shows a connection indicator (green dot = connected) and counts of available scenarios and units. On mobile screens, the sidebar collapses into a hamburger menu.
 
@@ -76,7 +76,8 @@ Click a scenario card to see its full configuration:
 - **Objectives** -- positions and assigned sides
 - **Victory conditions** -- what triggers the end of the simulation
 - **Optional configs** -- which subsystems are enabled (shown as colored badges)
-- **Documented outcomes** -- historical reference data (for validated scenarios)
+- **Documented outcomes** -- authored historical/reference metadata; its
+  presence is not a current validation verdict
 
 **Actions on the detail page:**
 
@@ -141,7 +142,7 @@ After a simulation completes, the run detail page shows results across several t
 ### Overview
 
 - **Victory result** -- which side won and by what condition
-- **Timing** -- simulation ticks, wall-clock duration
+- **Timing** -- simulation ticks and logical simulated elapsed duration
 - **Force summary** -- surviving units per side
 
 ### Charts
@@ -343,7 +344,11 @@ Shortcuts are disabled when typing in input fields, text areas, or select elemen
 
 ## Analysis
 
-The Analysis page provides three tools for statistical analysis of simulation results.
+The Analysis page provides four production-runtime tools for statistical
+analysis. Completed results are accepted by the UI only when raw vectors,
+seed/order consistency, terminal run records, roster/loadout/assignment
+evidence, and runtime provenance pass the client-side semantic validators;
+incomplete or internally inconsistent responses are shown as errors.
 
 ### Batch Monte Carlo
 
@@ -356,11 +361,14 @@ Run multiple iterations of the same scenario with different seeds to build stati
 
 ### A/B Comparison
 
-Compare two different configurations side by side:
+Compare two sparse calibration configurations of the same source scenario with
+the same ordered seed sequence:
 
-1. Select two scenarios (or the same scenario with different parameters)
-2. Set seeds and iteration counts
-3. View: side-by-side force strength charts, Mann-Whitney U test results, effect sizes
+1. Select one scenario and provide A/B overrides
+2. Set a base seed, iteration count, metrics, and family alpha
+3. View exact paired counts and differences, paired superiority, raw exact-sign
+   p-values, Holm-adjusted p-values, and family-wise significance
+4. Inspect both ordered raw-vector and production-provenance envelopes
 
 ### Sensitivity Sweep
 
@@ -368,7 +376,22 @@ Test how a single parameter affects outcomes:
 
 1. Select a scenario and parameter to sweep
 2. Set the range and number of steps
-3. View: errorbar chart of metric vs parameter value
+3. View an errorbar chart plus each point's raw vectors and runtime provenance
+
+### Doctrine Comparison
+
+Compare distinct doctrinal-school policies while holding the source,
+calibration patch, seed sequence, and metric order constant:
+
+1. Select one scenario and define at least two named policies
+2. Assign the same exact scenario-side set in every policy, using at least two
+   distinct catalog-backed schools
+3. Inspect per-variant raw vectors, commander/school assignment evidence, and
+   production provenance
+
+These analysis tools characterize current production behavior. They do not by
+themselves establish historical validity; that requires a predeclared,
+source-backed held-out envelope.
 
 ---
 

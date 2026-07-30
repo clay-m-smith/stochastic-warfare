@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import asyncio
 import json
 from pathlib import Path
 
@@ -12,6 +11,7 @@ from api.config import ApiSettings
 from api.database import Database
 from api.dependencies import get_db, get_run_manager, get_settings
 from api.run_manager import RunManager, RunManagerClosedError
+from api.runtime_errors import RUNTIME_INPUT_EXCEPTIONS
 from api.scenarios import resolve_scenario
 from api.schemas import (
     BatchDetail,
@@ -34,6 +34,7 @@ from api.schemas import (
     SnapshotsResponse,
     TerrainResponse,
 )
+from stochastic_warfare.simulation.scenario import parse_campaign_scenario_config
 
 router = APIRouter(prefix="/runs", tags=["runs"])
 
@@ -68,7 +69,7 @@ async def submit_run(
         )
     except RunManagerClosedError as exc:
         raise HTTPException(status_code=503, detail=str(exc)) from exc
-    except ValueError as exc:
+    except RUNTIME_INPUT_EXCEPTIONS as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
     return RunSubmitResponse(run_id=run_id, status=RunStatus.PENDING)
 
@@ -79,34 +80,21 @@ async def submit_run_from_config(
     mgr: RunManager = Depends(get_run_manager),
 ) -> RunSubmitResponse:
     """Start a run from an inline config dict (no saved scenario file required)."""
-    import tempfile
-    import yaml
-    from pydantic import ValidationError
-    from stochastic_warfare.simulation.scenario import CampaignScenarioConfig
-
-    # Validate first
     try:
-        CampaignScenarioConfig(**req.config)
-    except (ValidationError, Exception) as exc:
-        raise HTTPException(status_code=422, detail=str(exc))
+        source_config = parse_campaign_scenario_config(req.config)
+    except (TypeError, ValueError) as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
 
-    # Write config to temp YAML (off event loop)
-    tmp_dir = await asyncio.to_thread(tempfile.mkdtemp, prefix="sw_custom_")
-    tmp_path = Path(tmp_dir) / "custom_scenario.yaml"
-    with open(tmp_path, "w") as f:
-        yaml.dump(req.config, f, default_flow_style=False)
-
-    scenario_name = req.config.get("name", "[custom]")
     try:
-        run_id = await mgr.submit(
-            str(scenario_name),
-            str(tmp_path),
+        run_id = await mgr.submit_config(
+            source_config.name,
+            source_config,
             req.seed,
             req.max_ticks,
         )
     except RunManagerClosedError as exc:
         raise HTTPException(status_code=503, detail=str(exc)) from exc
-    except ValueError as exc:
+    except RUNTIME_INPUT_EXCEPTIONS as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
     return RunSubmitResponse(run_id=run_id, status=RunStatus.PENDING)
 
@@ -202,7 +190,8 @@ async def get_run_events(
     if side:
         side_lower = side.lower()
         all_events = [
-            e for e in all_events
+            e
+            for e in all_events
             if str(e.get("data", {}).get("side", "")).lower() == side_lower
             or str(e.get("data", {}).get("attacker_side", "")).lower() == side_lower
             or side_lower in str(e.get("source", "")).lower()
@@ -214,14 +203,15 @@ async def get_run_events(
     if search:
         search_lower = search.lower()
         all_events = [
-            e for e in all_events
+            e
+            for e in all_events
             if search_lower in str(e.get("event_type", "")).lower()
             or search_lower in str(e.get("source", "")).lower()
             or search_lower in json.dumps(e.get("data", {})).lower()
         ]
 
     total = len(all_events)
-    page = all_events[offset:offset + limit]
+    page = all_events[offset : offset + limit]
     items = [
         EventItem(
             tick=e.get("tick", 0),
@@ -411,15 +401,20 @@ async def submit_batch(
 
     try:
         batch_id = await mgr.submit_batch(
-            req.scenario,
-            str(path),
-            req.num_iterations,
-            req.base_seed,
-            req.max_ticks,
+            scenario_name=req.scenario,
+            scenario_path=str(path),
+            num_iterations=req.num_iterations,
+            base_seed=req.base_seed,
+            max_ticks=req.max_ticks,
+            metric_names=req.metrics,
+            config_overrides=req.config_overrides.model_dump(
+                mode="json",
+                exclude_unset=True,
+            ),
         )
     except RunManagerClosedError as exc:
         raise HTTPException(status_code=503, detail=str(exc)) from exc
-    except ValueError as exc:
+    except RUNTIME_INPUT_EXCEPTIONS as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
     return BatchSubmitResponse(batch_id=batch_id, status=RunStatus.PENDING)
 
@@ -429,15 +424,57 @@ async def get_batch(batch_id: str, db: Database = Depends(get_db)) -> BatchDetai
     row = await db.get_batch(batch_id)
     if row is None:
         raise HTTPException(status_code=404, detail=f"Batch '{batch_id}' not found")
+    status = RunStatus(row["status"])
+    if status is RunStatus.COMPLETED:
+        from stochastic_warfare.tools._run_helpers import (
+            validate_serialized_batch_evidence,
+        )
+
+        try:
+            stored_metrics = json.loads(row["metrics_json"])
+            validate_serialized_batch_evidence(
+                stored_metrics,
+                num_iterations=row["num_iterations"],
+                base_seed=row["base_seed"],
+                max_ticks=row["max_ticks"],
+                completed_iterations=row["completed_iterations"],
+            )
+        except (
+            json.JSONDecodeError,
+            KeyError,
+            TypeError,
+            ValueError,
+        ) as exc:
+            raise HTTPException(
+                status_code=409,
+                detail=(
+                    "Completed batch lacks valid Phase 112 raw-vector and "
+                    f"provenance evidence: {exc}"
+                ),
+            ) from exc
+        statistics = stored_metrics["statistics"]
+        ordered_metrics = stored_metrics["ordered_metrics"]
+        raw_metrics = stored_metrics["raw_metrics"]
+        provenance = stored_metrics["provenance"]
+    else:
+        statistics = None
+        ordered_metrics = []
+        raw_metrics = None
+        provenance = None
     return BatchDetail(
         batch_id=row["id"],
         scenario_name=row["scenario_name"],
         num_iterations=row["num_iterations"],
+        base_seed=row["base_seed"],
+        max_ticks=row["max_ticks"],
         completed_iterations=row["completed_iterations"],
-        status=RunStatus(row["status"]),
+        status=status,
         created_at=row["created_at"],
         completed_at=row.get("completed_at"),
-        metrics=json.loads(row["metrics_json"]) if row.get("metrics_json") else None,
+        metrics=statistics,
+        ordered_metrics=ordered_metrics,
+        raw_metrics=raw_metrics,
+        provenance=provenance,
         error_message=row.get("error_message"),
     )
 

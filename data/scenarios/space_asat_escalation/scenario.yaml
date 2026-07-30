@@ -59,6 +59,8 @@ space_config:
   enable_space: true
   constellation_ids:
     - keyhole_optical
+  # Keyhole remains ASAT/overpass topology, not imagery-fusion evidence.
+  imint_fusion_constellation_ids: []
   enable_asat: true
   asat_assets:
     - asset_id: red_nudol_1

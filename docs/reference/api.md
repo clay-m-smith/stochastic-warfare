@@ -56,7 +56,40 @@ OpenAPI docs are available at `/api/docs` (Swagger UI) and `/api/redoc`.
 | GET | `/api/meta/weapons/{id}` | Full weapon definition |
 | POST | `/api/analysis/compare` | A/B configuration comparison |
 | POST | `/api/analysis/sweep` | Parameter sensitivity sweep |
+| POST | `/api/analysis/doctrine-compare` | Common-seed doctrinal-policy comparison |
 | GET | `/api/analysis/tempo/{id}` | Operational tempo analysis |
+
+### Analysis evidence contract
+
+Batch, comparison, sweep, and doctrine-comparison execution all use the
+production runtime boundary described below. A completed batch includes exact
+ordered raw metric vectors and provenance for the scenario/data roots,
+variant, ordered metrics, base seed and seed sequence, maximum ticks,
+source/config fingerprints, authored and loaded rosters, code/worktree and data
+revisions, catalog/doctrine/loadout fingerprints, initial assignments, and
+per-run terminal/runtime records.
+
+`POST /api/analysis/compare` compares two sparse calibration overlays of the
+same prepared scenario with common seeds. For every metric it returns the
+paired sample counts (`n_total`, `n_nonzero`, positive, negative, tied), mean
+and median paired differences, paired superiority, raw exact-sign p-value,
+Holm-adjusted p-value, alpha, and family-wise significance. It also retains
+both exact raw vectors and both batch provenance envelopes.
+
+`POST /api/analysis/sweep` requires a real `CalibrationSchema` field plus
+finite, duplicate-free values and at least two iterations per point. Every
+point includes its raw values and complete batch provenance.
+
+`POST /api/analysis/doctrine-compare` requires at least two distinct policies
+and schools, the same exact side set in every variant, and identical sparse
+calibration patches. Each variant retains assignment-aware runtime provenance.
+Doctrine comparison has an explicit FastAPI response model; compare and sweep
+currently return validated serialized JSON dictionaries rather than declared
+OpenAPI response models.
+
+An unknown scenario returns HTTP 404. Schema, catalog, roster, metric,
+calibration, assignment, or runtime-preflight failures return HTTP 422 rather
+than plausible empty results.
 
 ### Run submission contract
 
@@ -126,13 +159,91 @@ The following classes are in the `stochastic_warfare` package for direct program
 
 ## Core Simulation Classes
 
+### SimulationRuntimeFactory, PreparedScenario, and RuntimeSession
+
+```python
+from stochastic_warfare.simulation.runtime import (
+    AnalysisVariant,
+    PreparedScenario,
+    RuntimeSession,
+    SimulationRuntimeFactory,
+)
+```
+
+This is the authoritative construction boundary for production consumers.
+`prepare()` reads one YAML source once; `prepare_config()` accepts an already
+typed `CampaignScenarioConfig` without temporary serialization. Both apply
+strict independent `AnalysisVariant` values and return a `PreparedScenario`.
+
+| Method | Returns | Contract |
+|---|---|---|
+| `SimulationRuntimeFactory.prepare(path, data_root, variants)` | `PreparedScenario` | Parse one YAML source and capture source/code/data identity |
+| `SimulationRuntimeFactory.prepare_config(source_config, data_root, variants, source_label=...)` | `PreparedScenario` | Prepare a typed source directly |
+| `PreparedScenario.build(variant, seed, max_ticks, ..., record_events=False)` | `RuntimeSession` | Eagerly validate exact sides, roster, loadouts, profiles, doctrine, and provenance; build a fresh production engine |
+| `RuntimeSession.run_to_completion()` | `SimulationRunResult` | Run until a public terminal result or reject |
+| `RuntimeSession.step()` | `bool` | Advance one tick; `True` means the session is terminal and `False` means it can continue |
+| `RuntimeSession.finalize()` | `SimulationRunResult` | Return the result only after `step()` reports terminal |
+| `RuntimeSession.provenance()` | `RuntimeProvenance` | Capture code/data/catalog/doctrine/loadout identity and initial/arriving assignments |
+
+```python
+from pathlib import Path
+
+factory = SimulationRuntimeFactory()
+prepared = factory.prepare(
+    Path("data/scenarios/73_easting/scenario.yaml"),
+    data_root=Path("data"),
+    variants=(AnalysisVariant(variant_id="baseline"),),
+)
+session = prepared.build(
+    "baseline",
+    seed=42,
+    max_ticks=10_000,
+    record_events=True,
+)
+result = session.run_to_completion()
+```
+
+The boundary rejects an empty authored side, duplicate variant or loaded unit
+ID, changed source/data/worktree identity, roster cardinality drift, and
+incomplete or semantically incompatible runtime loadouts. It also constructs
+the production victory evaluator and optional recorder, avoiding private
+consumer-specific construction.
+
+#### Code-revision provenance
+
+`RuntimeProvenance.code_revision` always comes from a verified source boundary.
+In a source checkout, preparation uses Git first and returns the exact `HEAD`,
+the dirty-tree state, and a content-sensitive fingerprint that includes tracked
+and untracked changes. An established Git worktree that cannot be verified
+fails; it cannot use the immutable-package path as a fallback.
+
+Production images contain no `.git` directory. Their build must supply
+`SOURCE_REVISION` as exactly 40 lowercase hexadecimal characters and generates
+`stochastic_warfare/_build_identity.json` only after the locked Python
+environment has been installed. The identity binds that commit attribution to
+a canonical manifest of all files beneath `stochastic_warfare/` and `api/`
+plus `pyproject.toml` and `uv.lock`. Runtime preparation recomputes the
+manifest. Missing, malformed, symlinked, non-regular, or modified packaged
+source is rejected before session construction; a verified image reports
+`dirty=False`. Data and catalog revisions remain independent provenance fields.
+
+The repository Docker workflow covers pull requests to `main`, pushes to
+`main`, and manual dispatch. Its image smoke asserts that `.git` is absent,
+executes a bounded production session, and verifies the supplied commit and
+clean code-revision result.
+
+---
+
 ### ScenarioLoader
 
 ```python
 from stochastic_warfare.simulation.scenario import ScenarioLoader
 ```
 
-Factory that loads a scenario YAML and creates a fully-wired `SimulationContext`.
+Lower-level wiring factory that loads a scenario YAML and creates a fully-wired
+`SimulationContext`. Direct subsystem work may use it, but production
+consumers that claim comparable run/analysis evidence use
+`SimulationRuntimeFactory` and `RuntimeSession`.
 
 **Constructor:**
 
@@ -201,7 +312,7 @@ Top-level simulation orchestrator. Manages the master tick loop, automatic resol
 | Method | Parameters | Returns | Description |
 |--------|-----------|---------|-------------|
 | `run()` | -- | `SimulationRunResult` | Run to completion (victory or max ticks) |
-| `step()` | -- | `bool` | Execute one tick. Returns `True` if simulation should continue |
+| `step()` | -- | `bool` | Execute one tick. Returns `True` when terminal and `False` while execution can continue |
 
 **Example:**
 
@@ -248,7 +359,7 @@ Dataclass returned by `SimulationEngine.run()`.
 | Field | Type | Description |
 |-------|------|-------------|
 | `ticks_executed` | `int` | Total simulation ticks completed |
-| `duration_s` | `float` | Wall-clock execution time in seconds |
+| `duration_s` | `float` | Logical simulated elapsed seconds |
 | `victory_result` | `VictoryResult` | Who won, how, and when |
 | `campaign_summary` | `Any` | Campaign-level statistics (or `None`) |
 
@@ -269,15 +380,15 @@ Records all simulation events for post-run analysis. Subscribes to the `EventBus
 | `event_bus` | `EventBus` | required | Event bus to subscribe to |
 | `config` | `RecorderConfig \| None` | `None` | Optional recorder configuration |
 
-**Key Methods:**
+**Key methods and properties:**
 
-| Method | Returns | Description |
+| Member | Returns | Description |
 |--------|---------|-------------|
 | `start()` | -- | Begin recording |
 | `stop()` | -- | Stop recording |
-| `events()` | `list` | All recorded events |
+| `events` | `list` | Copy of all recorded events (property) |
 | `events_of_type(event_type_name)` | `list` | Events filtered by type |
-| `snapshots()` | `list[dict]` | State snapshots (captured at `snapshot_interval_ticks`) |
+| `snapshots` | `list[dict]` | Copy of state snapshots (property; captured at `snapshot_interval_ticks`) |
 
 ---
 
@@ -303,13 +414,14 @@ Evaluates victory conditions each tick. Supports multiple condition types.
 
 | Type | Triggers When |
 |------|--------------|
-| `territory` | Side controls all assigned objectives |
+| `territory_control` | Side controls all assigned objectives |
 | `force_destroyed` | Opponent loses > 70% of forces (configurable) |
 | `morale_collapsed` | Opponent has > 60% units routed/surrendered |
 | `supply_exhausted` | Opponent's average supply < 20% |
 | `time_expired` | Scenario duration exceeded -- uses composite scoring |
 | `ceasefire` | Negotiated war termination (escalation system) |
-| `capitulation` | Unilateral surrender at extreme desperation |
+| `armistice` | Negotiated armistice |
+| `attrition_ratio` | Configured force-loss ratio is reached |
 
 **Composite Victory Scoring (time_expired):**
 
@@ -347,7 +459,11 @@ When called without `weights` (or with `None`), defaults to force-ratio-only sco
 from stochastic_warfare.validation.monte_carlo import MonteCarloHarness
 ```
 
-Runs multiple independent simulation iterations for statistical analysis.
+Runs multiple independent iterations through the legacy validation interface.
+It remains available for compatibility, but its `ScenarioRunner` path is not
+the authoritative evidence boundary for production batch, comparison, sweep,
+or doctrine claims. Use `SimulationRuntimeFactory` and the shared analysis
+helpers for those claims.
 
 **Constructor:**
 
@@ -449,14 +565,16 @@ from stochastic_warfare.core.clock import SimulationClock
 
 Manages simulation time with variable-resolution ticks.
 
-**Key Methods:**
+**Key properties and methods:**
 
-| Method | Parameters | Returns | Description |
+| Member | Parameters | Returns | Description |
 |--------|-----------|---------|-------------|
-| `tick()` | -- | -- | Advance by one tick at current resolution |
-| `current_time_s()` | -- | `float` | Current simulation time in seconds |
-| `current_tick()` | -- | `int` | Current tick number |
-| `set_resolution()` | `seconds: float` | -- | Change tick resolution |
+| `current_time` | -- | `datetime` | Current logical UTC time (property) |
+| `elapsed` | -- | `timedelta` | Logical elapsed time (property) |
+| `tick_count` | -- | `int` | Number of ticks advanced (property) |
+| `tick_duration` | -- | `timedelta` | Current tick duration (property) |
+| `advance()` | -- | `datetime` | Advance one tick and return the new logical time |
+| `set_tick_duration()` | `duration: timedelta` | -- | Change tick duration |
 
 ---
 
@@ -483,16 +601,33 @@ The top-level pydantic model for scenario YAML files. Key fields:
 | `space_config` | `SpaceConfig \| None` | Strict selected constellations, space services, finite ASAT assets, and scheduled exact-target orders |
 | `cbrn_config` | `dict \| None` | CBRN effects configuration |
 | `escalation_config` | `dict \| None` | Escalation ladder configuration |
-| `school_config` | `dict \| None` | Doctrinal school assignments |
+| `school_config` | `dict \| None` | Doctrinal school registry configuration and exact `unit_assignments` |
+| `commander_config` | `CommanderScenarioConfig \| None` | Commander tuning plus exact initial/future per-unit profile assignments |
 | `dew_config` | `dict \| None` | Directed energy weapon configuration |
 | `indirect_fire` | `IndirectFireScenarioConfig` | Strict gate and exact preplanned time-on-target missions |
+
+Commander declaration is all-side or absent. Behavior is active only when
+every scenario side supplies a catalog-backed `commander_profile`; when every
+side omits it and `commander_config` is absent, no commander engine is created.
+Partial profiles, or any `commander_config` with blank side profiles, reject.
+`commander_config.assignments` and `school_config.unit_assignments` may target
+exact planned initial or reinforcement IDs; unknown units, profiles, or
+schools fail eagerly before unit construction. Initial and arriving units are
+registered with commander, OODA, school, movement, morale, loadout, and
+logistics owners transactionally, and their assignment state participates in
+checkpoint continuation.
 
 ---
 
 ### SpaceConfig and ASAT events
 
 `SpaceConfig` rejects unknown fields and owns `enable_space`,
-`constellation_ids`, `enable_asat`, `asat_assets`, and `asat_orders`.
+`constellation_ids`, `imint_fusion_constellation_ids`, `enable_asat`,
+`asat_assets`, and `asat_orders`. Fusion constellation IDs must be a subset of
+the selected topology and resolve to supported optical/SAR imaging
+constellations. A nonempty fusion selection also requires
+`calibration_overrides.enable_space_effects: true`. Other definitions fail
+explicitly.
 Each asset has a unique `asset_id`, exact catalog `weapon_id`, owning scenario
 side, and finite `rounds_available`. Each order has a unique `order_id`, exact
 asset and satellite IDs, and a finite `execute_at_s` within the scenario
@@ -506,6 +641,15 @@ times, `launched`, `pk`, `hit`, exact `outcome`/`reason`, debris generated,
 rounds remaining, and before/after constellation counts. A successful hit
 records `ConstellationDegradedEvent` first. The existing `event_type` and
 `side` filters select these events without a specialized endpoint.
+
+Selected IMINT constellations create immutable owner-scoped `SpaceISRReport`
+values with exact observation/availability times and uncertainty, a terminal
+`IntelDeliveryReceipt` ledger with report digest and resulting track, and one
+`IMINTTrackAssociation` per owner/target. Generation and delayed delivery are
+transactional and checkpointed. This typed internal state is not a claim of
+ordinary REST/UI event exposure or direct injection into generic fog-of-war
+contacts. Nonempty ordinary `SideWorldView.contacts` continuation remains
+tracked by REM-029.
 
 ---
 
@@ -645,72 +789,96 @@ All `enable_*` flags default to `False` for backward compatibility. Enable them 
 
 ```python
 from pathlib import Path
-from stochastic_warfare.simulation.scenario import ScenarioLoader
-from stochastic_warfare.simulation.engine import SimulationEngine, EngineConfig
-from stochastic_warfare.simulation.recorder import SimulationRecorder
-from stochastic_warfare.simulation.victory import VictoryEvaluator
-
-loader = ScenarioLoader(Path("data"))
-ctx = loader.load(Path("data/scenarios/73_easting/scenario.yaml"), seed=42)
-
-recorder = SimulationRecorder(ctx.event_bus)
-victory = VictoryEvaluator(
-    objectives=ctx.objectives,
-    conditions=ctx.victory_conditions,
-    event_bus=ctx.event_bus,
-    max_duration_s=ctx.scenario_config.duration_s,
+from stochastic_warfare.simulation.runtime import (
+    AnalysisVariant,
+    SimulationRuntimeFactory,
 )
 
-engine = SimulationEngine(ctx, config=EngineConfig(max_ticks=10_000),
-                          victory_evaluator=victory, recorder=recorder)
-result = engine.run()
+prepared = SimulationRuntimeFactory().prepare(
+    Path("data/scenarios/73_easting/scenario.yaml"),
+    data_root=Path("data"),
+    variants=(AnalysisVariant(variant_id="baseline"),),
+)
+session = prepared.build(
+    "baseline",
+    seed=42,
+    max_ticks=10_000,
+    record_events=True,
+)
+result = session.run_to_completion()
 print(f"{result.victory_result.winning_side} wins by {result.victory_result.condition_type}")
 ```
 
 ### Monte Carlo Batch
 
 ```python
-from stochastic_warfare.validation.scenario_runner import ScenarioRunner
-from stochastic_warfare.validation.monte_carlo import MonteCarloHarness, MonteCarloConfig
-from stochastic_warfare.validation.historical_data import HistoricalEngagement
+from stochastic_warfare.tools._run_helpers import run_scenario_batch
 
-runner = ScenarioRunner(data_dir=Path("data"))
-harness = MonteCarloHarness(runner, config=MonteCarloConfig(num_iterations=100))
-
-engagement = HistoricalEngagement.load(Path("data/scenarios/73_easting/scenario.yaml"))
-mc_result = harness.run(engagement)
-print(f"Mean exchange ratio: {mc_result.mean('exchange_ratio'):.1f}")
+batch = run_scenario_batch(
+    "data/scenarios/73_easting/scenario.yaml",
+    overrides={},
+    num_iterations=100,
+    base_seed=42,
+    max_ticks=10_000,
+    metric_names=["exchange_ratio"],
+    data_dir=Path("data"),
+)
+print(batch.statistics_dict()["exchange_ratio"]["mean"])
+print(batch.metric_values("exchange_ratio"))
 ```
+
+This characterizes the current production distribution. Historical validation
+additionally requires a predeclared source-backed envelope and held-out
+production evidence; see REM-030 in the remediation backlog.
 
 ### Step-by-Step Execution
 
 ```python
-engine = SimulationEngine(ctx, config=EngineConfig(max_ticks=10_000),
-                         victory_evaluator=victory, recorder=recorder)
+session = prepared.build(
+    "baseline",
+    seed=42,
+    max_ticks=10_000,
+    record_events=True,
+)
 
-# Run tick by tick for custom control
-while engine.step():
-    tick = ctx.clock.current_tick()
+# RuntimeSession.step() returns True at terminal.
+while not session.step():
+    tick = session.context.clock.tick_count
     if tick % 100 == 0:
-        print(f"Tick {tick}: {len(recorder.events())} events so far")
+        assert session.recorder is not None
+        print(f"Tick {tick}: {len(session.recorder.events)} events so far")
+
+result = session.finalize()
 ```
 
 ### Checkpoint and Restore
 
-All stateful classes support `get_state()` / `set_state()`:
+Current checkpoint-participating runtime owners support the coordinated
+`get_state()` / `set_state()` contract:
 
 ```python
-# Save state at tick 500
-state = engine.get_state()
+# Advance a fresh branch runtime to a nonterminal checkpoint.
+branch = prepared.build(
+    "baseline",
+    seed=42,
+    max_ticks=10_000,
+    record_events=True,
+)
+if branch.step():
+    raise RuntimeError("scenario became terminal before the branch checkpoint")
+state = branch.engine.get_state()
 
-# Continue running...
-result = engine.run()
+# Construct a fresh compatible runtime from the same prepared source.
+restored = prepared.build(
+    "baseline",
+    seed=42,
+    max_ticks=10_000,
+    record_events=True,
+)
+restored.engine.set_state(state)
 
-# Restore the exact saved contract into a compatible runtime
-engine.set_state(state)
-
-# Continue deterministically from tick 500
-result = engine.run()
+# Continue from the deterministic branch point.
+result = restored.run_to_completion()
 ```
 
 Current-format checkpoints require an exact effective scenario configuration,
@@ -719,10 +887,14 @@ mutating the target. See the
 [checkpoint state contract](../specs/checkpoint-state.md) for the canonical
 schema and bounded legacy-migration rules.
 
-The current engine checkpoint schema is version 111. Declared time-on-target
-plans add their topology fingerprint, complete scheduled lifecycle, in-flight
-impacts, terminal result, exact live-resource observations, target transition,
-and reconciled COMBAT RNG state to the atomic restore contract. Version 110
-does not restore into this runtime, and versionless engine state is rejected
-when any time-on-target plan is declared, including a disabled populated
-control.
+The current engine checkpoint schema is version 112. In addition to force,
+loadout, morale, logistics, space/ASAT, and time-on-target state, it preserves
+commander/OODA assignments, bounded movement diagnostics, and typed Space ISR
+pending reports, delivery receipts, and owner/target IMINT associations.
+Current-format restore is atomic and validates exact topology and chronology.
+Explicit version 111 and every other non-current version reject.
+
+Typed Space ISR checkpoint equivalence is proven under an explicit empty
+ordinary-contact topology. Nonempty ordinary `SideWorldView.contacts` are
+serialized but currently discarded on restore; that separate fog-of-war
+continuation deficit remains REM-029.

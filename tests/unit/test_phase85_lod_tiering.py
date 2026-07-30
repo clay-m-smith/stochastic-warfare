@@ -334,6 +334,7 @@ class TestLodTierClassification:
         bm._lod_tiers = {"u1": UnitLodTier.NEARBY, "u2": UnitLodTier.DISTANT}
         bm._lod_pending_tiers = {"u1": UnitLodTier.DISTANT}
         bm._lod_pending_counts = {"u1": 2}
+        bm._lod_promoted = {"u2"}
 
         state = bm.get_state()
         assert "lod_tiers" in state
@@ -344,4 +345,4 @@ class TestLodTierClassification:
         assert bm2._lod_tiers == {"u1": int(UnitLodTier.NEARBY), "u2": int(UnitLodTier.DISTANT)}
         assert bm2._lod_pending_tiers == {"u1": int(UnitLodTier.DISTANT)}
         assert bm2._lod_pending_counts == {"u1": 2}
-        assert bm2._lod_promoted == set()
+        assert bm2._lod_promoted == {"u2"}

@@ -6,6 +6,7 @@ loop when their era is active, and NOT called for other eras.
 
 from __future__ import annotations
 
+import logging
 import math
 from datetime import datetime, timedelta
 from types import SimpleNamespace
@@ -22,6 +23,7 @@ from stochastic_warfare.entities.base import Unit, UnitStatus
 # ---------------------------------------------------------------------------
 # Shared helpers
 # ---------------------------------------------------------------------------
+
 
 def _make_unit(
     entity_id: str = "u1",
@@ -65,7 +67,9 @@ def _make_config(era: str = "modern"):
         era=era,
         sides=[],
         tick_resolution=SimpleNamespace(
-            strategic_s=3600, operational_s=300, tactical_s=5,
+            strategic_s=3600,
+            operational_s=300,
+            tactical_s=5,
         ),
         duration_hours=24,
         behavior_rules={},
@@ -166,6 +170,7 @@ def _active_units_func(side):
 # 54a: WW2 Era Engine Wiring
 # =========================================================================
 
+
 class TestWW2EngineWiring:
     """Test ConvoyEngine + StrategicBombingEngine wiring in campaign.py."""
 
@@ -226,8 +231,9 @@ class TestWW2EngineWiring:
 
         sb_eng.apply_target_regeneration.assert_not_called()
 
-    def test_convoy_engine_none_no_crash(self):
-        """convoy_engine=None does not crash."""
+    @pytest.mark.structural
+    def test_convoy_engine_none_does_not_raise_structural_diagnostic(self):
+        """Structural diagnostic: convoy_engine=None does not raise."""
         from stochastic_warfare.simulation.campaign import CampaignManager
 
         ctx = _make_ctx("ww2")
@@ -236,8 +242,9 @@ class TestWW2EngineWiring:
         mgr = CampaignManager(ctx.event_bus, np.random.default_rng(42))
         mgr.update_strategic(ctx, 3600.0)  # Should not raise
 
-    def test_strategic_bombing_engine_none_no_crash(self):
-        """strategic_bombing_engine=None does not crash."""
+    @pytest.mark.structural
+    def test_strategic_bombing_none_does_not_raise_structural_diagnostic(self):
+        """Structural diagnostic: strategic_bombing_engine=None does not raise."""
         from stochastic_warfare.simulation.campaign import CampaignManager
 
         ctx = _make_ctx("ww2")
@@ -246,10 +253,15 @@ class TestWW2EngineWiring:
         mgr = CampaignManager(ctx.event_bus, np.random.default_rng(42))
         mgr.update_strategic(ctx, 3600.0)  # Should not raise
 
-    def test_convoy_update_exception_handled(self):
-        """Convoy update exception is caught and logged."""
+    @pytest.mark.structural
+    def test_convoy_exception_emits_structural_diagnostic(
+        self,
+        caplog: pytest.LogCaptureFixture,
+    ):
+        """Structural diagnostic: a convoy exception is logged and contained."""
         from stochastic_warfare.simulation.campaign import CampaignManager
 
+        caplog.set_level(logging.DEBUG)
         convoy_eng = MagicMock()
         convoy_eng._convoys = {"c1": MagicMock()}
         convoy_eng.update_convoy.side_effect = RuntimeError("test")
@@ -258,6 +270,8 @@ class TestWW2EngineWiring:
 
         mgr = CampaignManager(ctx.event_bus, np.random.default_rng(42))
         mgr.update_strategic(ctx, 3600.0)  # Should not raise
+        convoy_eng.update_convoy.assert_called_once_with("c1", 3600.0)
+        assert any(record.getMessage() == "Convoy update failed" for record in caplog.records)
 
     def test_convoy_straggler_accumulates(self):
         """Verify convoy straggler count increments across calls."""
@@ -286,6 +300,7 @@ class TestWW2EngineWiring:
 # =========================================================================
 # 54b: WW1 Era Engine Wiring
 # =========================================================================
+
 
 class TestWW1EngineWiring:
     """Test BarrageEngine, TrenchSystemEngine wiring."""
@@ -338,8 +353,9 @@ class TestWW1EngineWiring:
         _, kwargs = barrage_eng.update.call_args
         assert kwargs.get("trench_engine") is trench_eng
 
-    def test_barrage_engine_none_no_crash(self):
-        """barrage_engine=None does not crash."""
+    @pytest.mark.structural
+    def test_barrage_engine_none_does_not_raise_structural_diagnostic(self):
+        """Structural diagnostic: barrage_engine=None does not raise."""
         from stochastic_warfare.simulation.engine import SimulationEngine
 
         ctx = _make_ctx("ww1")
@@ -361,7 +377,8 @@ class TestWW1EngineWiring:
         # This tests that the barrage suppression code doesn't crash.
         # Full integration would require a complete battle context.
         assert barrage_eng.compute_effects(100.0, 200.0, in_dugout=False) == {
-            "suppression_p": 0.5, "casualty_p": 0.1,
+            "suppression_p": 0.5,
+            "casualty_p": 0.1,
         }
 
     def test_barrage_dugout_protection(self):
@@ -389,7 +406,8 @@ class TestWW1EngineWiring:
 
         mgr = BattleManager(ctx.event_bus)
         battle = BattleContext(
-            battle_id="test", start_tick=0,
+            battle_id="test",
+            start_tick=0,
             start_time=datetime(2024, 1, 1),
             involved_sides=["blue", "red"],
         )
@@ -417,7 +435,8 @@ class TestWW1EngineWiring:
 
         mgr = BattleManager(ctx.event_bus)
         battle = BattleContext(
-            battle_id="test", start_tick=0,
+            battle_id="test",
+            start_tick=0,
             start_time=datetime(2024, 1, 1),
             involved_sides=["blue", "red"],
         )
@@ -429,10 +448,15 @@ class TestWW1EngineWiring:
         # Unit should have moved (no penalty)
         assert blue.position.easting != pre_pos or blue.position.northing != 2000.0
 
-    def test_barrage_exception_handled(self):
-        """Barrage engine exception is caught and logged."""
+    @pytest.mark.structural
+    def test_barrage_exception_emits_structural_diagnostic(
+        self,
+        caplog: pytest.LogCaptureFixture,
+    ):
+        """Structural diagnostic: a barrage exception is logged and contained."""
         from stochastic_warfare.simulation.engine import SimulationEngine
 
+        caplog.set_level(logging.DEBUG)
         barrage_eng = MagicMock()
         barrage_eng.update.side_effect = RuntimeError("test")
         ctx = _make_ctx("ww1", barrage_engine=barrage_eng)
@@ -442,11 +466,17 @@ class TestWW1EngineWiring:
         engine._strict_mode = False
 
         engine._update_environment(5.0)  # Should not raise
+        barrage_eng.update.assert_called_once_with(
+            5.0,
+            trench_engine=None,
+        )
+        assert any(record.getMessage() == "Barrage engine update failed" for record in caplog.records)
 
 
 # =========================================================================
 # 54c: Napoleonic Era Engine Wiring
 # =========================================================================
+
 
 class TestNapoleonicEngineWiring:
     """Test CavalryEngine + CourierEngine + ForagingEngine wiring."""
@@ -546,24 +576,24 @@ class TestNapoleonicEngineWiring:
         """Non-cavalry units should NOT trigger cavalry engine."""
         # Infantry unit type should not match cavalry keywords
         unit_type = "infantry_battalion"
-        is_cavalry = any(
-            kw in unit_type.lower()
-            for kw in ("cavalry", "hussar", "dragoon", "lancer", "cuirassier")
-        )
+        is_cavalry = any(kw in unit_type.lower() for kw in ("cavalry", "hussar", "dragoon", "lancer", "cuirassier"))
         assert not is_cavalry
 
     def test_cavalry_keywords_match(self):
         """Cavalry type keywords match correctly."""
-        for unit_type in ["light_cavalry", "hussar_regiment", "dragoon_squadron",
-                          "lancer_platoon", "cuirassier_brigade"]:
-            is_cavalry = any(
-                kw in unit_type.lower()
-                for kw in ("cavalry", "hussar", "dragoon", "lancer", "cuirassier")
-            )
+        for unit_type in [
+            "light_cavalry",
+            "hussar_regiment",
+            "dragoon_squadron",
+            "lancer_platoon",
+            "cuirassier_brigade",
+        ]:
+            is_cavalry = any(kw in unit_type.lower() for kw in ("cavalry", "hussar", "dragoon", "lancer", "cuirassier"))
             assert is_cavalry, f"{unit_type} should match cavalry"
 
-    def test_all_napoleonic_engines_none_no_crash(self):
-        """All Napoleonic engines None does not crash."""
+    @pytest.mark.structural
+    def test_all_napoleonic_none_does_not_raise_structural_diagnostic(self):
+        """Structural diagnostic: absent Napoleonic engines do not raise."""
         from stochastic_warfare.simulation.engine import SimulationEngine
         from stochastic_warfare.simulation.campaign import CampaignManager
 
@@ -582,6 +612,7 @@ class TestNapoleonicEngineWiring:
 # =========================================================================
 # 54d: Ancient/Medieval Era Engine Wiring
 # =========================================================================
+
 
 class TestAncientEngineWiring:
     """Test AncientFormationEngine, NavalOarEngine, VisualSignalEngine,
@@ -712,8 +743,9 @@ class TestAncientEngineWiring:
         modified = int(base_strength * 1.3)
         assert modified == 130
 
-    def test_all_ancient_engines_none_no_crash(self):
-        """All Ancient engines None does not crash."""
+    @pytest.mark.structural
+    def test_all_ancient_none_does_not_raise_structural_diagnostic(self):
+        """Structural diagnostic: absent Ancient engines do not raise."""
         from stochastic_warfare.simulation.engine import SimulationEngine
         from stochastic_warfare.simulation.campaign import CampaignManager
 
@@ -733,6 +765,7 @@ class TestAncientEngineWiring:
 # 54e: Space Sub-Engine Verification
 # =========================================================================
 
+
 class TestSpaceVerification:
     """Verify SpaceEngine delegates to all 5 sub-engines and get_gps_cep."""
 
@@ -741,9 +774,7 @@ class TestSpaceVerification:
         from stochastic_warfare.space.constellations import SpaceEngine
 
         gps = MagicMock()
-        gps.compute_gps_accuracy.return_value = SimpleNamespace(
-            position_accuracy_m=5.0
-        )
+        gps.compute_gps_accuracy.return_value = SimpleNamespace(position_accuracy_m=5.0)
         config = SimpleNamespace(enable_space=True)
         constellation_mgr = MagicMock()
 
@@ -761,10 +792,22 @@ class TestSpaceVerification:
         gps.update.assert_called_once_with(1.0, 100.0)
 
     def test_space_update_calls_isr(self):
-        """SpaceEngine.update() calls isr_engine.update()."""
+        """SpaceEngine.update() uses the typed ISR prepare/apply boundary."""
         from stochastic_warfare.space.constellations import SpaceEngine
+        from stochastic_warfare.space.isr import (
+            SpaceISREngine,
+            SpaceISRUpdatePlan,
+        )
 
-        isr = MagicMock()
+        isr = MagicMock(spec=SpaceISREngine)
+        plan = SpaceISRUpdatePlan(
+            dt_s=1.0,
+            sim_time_s=100.0,
+            cloud_cover=0.0,
+            sides=(),
+            targets_by_side=(),
+        )
+        isr.prepare_update.return_value = plan
         config = SimpleNamespace(enable_space=True)
         constellation_mgr = MagicMock()
 
@@ -779,7 +822,17 @@ class TestSpaceVerification:
 
         se.update(1.0, 100.0)
 
-        isr.update.assert_called_once()
+        isr.prepare_update.assert_called_once_with(
+            1.0,
+            100.0,
+            None,
+            0.0,
+            intel_fusion=None,
+        )
+        isr.apply_update.assert_called_once_with(
+            plan,
+            intel_fusion=None,
+        )
 
     def test_space_update_calls_early_warning(self):
         """SpaceEngine.update() calls early_warning_engine.update()."""
@@ -902,6 +955,7 @@ class TestSpaceVerification:
 # =========================================================================
 # 54f: Dead YAML Fields & Context Cleanup
 # =========================================================================
+
 
 class TestDeadFieldsCleanup:
     """Test weapon arc constraints, terminal maneuver, and context fields."""

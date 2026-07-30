@@ -9,7 +9,7 @@ armor_side: 0.0
 crew:
   - role: COMMANDER
     count: 1
-    skill: EXPERT  # veteran Guard officer
+    skill: ELITE  # veteran Guard officer
   - role: CREW
     count: 74
     skill: VETERAN  # elite grenadiers, 10+ years service

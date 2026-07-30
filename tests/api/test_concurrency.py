@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import asyncio
+import threading
+import time
 
 import pytest
 import pytest_asyncio
@@ -29,39 +31,56 @@ async def mgr(db):
 # ── Batch semaphore ───────────────────────────────────────────────────────
 
 
-async def test_batch_semaphore_limits_concurrency(db):
-    """Batch iterations should respect the max_concurrent semaphore."""
+async def test_run_manager_semaphore_limits_concurrent_runs(db, monkeypatch):
+    """Concurrent run submissions never exceed the configured worker limit."""
     max_concurrent_seen = 0
     current = 0
-    lock = asyncio.Lock()
-
-    original_run_sync = RunManager._run_sync
+    completed_calls = 0
+    lock = threading.Lock()
+    two_workers_entered = threading.Event()
 
     def mock_run_sync(self, run_id, scenario_path, seed, max_ticks,
                       effective_config, loop, queue, frame_interval=None,
                       cancel_event=None):
-        nonlocal max_concurrent_seen, current
-        # Use threading lock since this runs in thread pool
-        # We approximate by tracking through a simple counter
-        return {
-            "summary": {"scenario": "test", "seed": seed, "ticks_executed": 1,
-                        "duration_s": 0, "victory": {}, "sides": {}},
-            "events": [],
-            "snapshots": [],
-            "terrain": {},
-            "frames": [],
-        }
+        nonlocal completed_calls, max_concurrent_seen, current
+        with lock:
+            current += 1
+            max_concurrent_seen = max(max_concurrent_seen, current)
+            if current == 2:
+                two_workers_entered.set()
+        try:
+            if not two_workers_entered.wait(timeout=5.0):
+                raise RuntimeError("shared semaphore never admitted two workers")
+            time.sleep(0.02)
+            return {
+                "summary": {"scenario": "test", "seed": seed, "ticks_executed": 1,
+                            "duration_s": 0, "victory": {}, "sides": {}},
+                "events": [],
+                "snapshots": [],
+                "terrain": {},
+                "frames": [],
+            }
+        finally:
+            with lock:
+                current -= 1
+                completed_calls += 1
 
     mgr = RunManager(db, data_dir="data", max_concurrent=2)
-    RunManager._run_sync = mock_run_sync
-    try:
-        batch_id = await mgr.submit_batch("test", "data/scenarios/test_campaign/scenario.yaml", 5, 42, 10)
-        # Wait for batch to complete
-        task = mgr._tasks.get(batch_id)
-        if task:
-            await asyncio.wait_for(task, timeout=10.0)
-    finally:
-        RunManager._run_sync = original_run_sync
+    monkeypatch.setattr(RunManager, "_run_sync", mock_run_sync)
+    tasks = []
+    for seed in range(42, 47):
+        run_id = await mgr.submit(
+            "test",
+            "data/scenarios/test_campaign/scenario.yaml",
+            seed,
+            10,
+        )
+        tasks.append(mgr._tasks[run_id])
+    await asyncio.wait_for(asyncio.gather(*tasks), timeout=10.0)
+
+    assert completed_calls == 5
+    assert max_concurrent_seen == 2
+    assert current == 0
 
 
 async def test_batch_and_single_share_semaphore(db):

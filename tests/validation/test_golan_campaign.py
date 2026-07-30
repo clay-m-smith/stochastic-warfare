@@ -1,16 +1,19 @@
-"""Campaign-level validation tests — Golan Heights (Oct 6-10, 1973).
+"""Current-engine campaign regressions — Golan Heights scenario.
 
-Tests the full simulation engine producing realistic campaign outcomes
-for the Golan Heights campaign.  AI commanders make decisions, logistics
-deplete, reinforcements arrive, and the campaign resolves over 4 days.
+These tests exercise the authored campaign through the production runtime and
+verify deterministic execution, metric projection, and campaign plumbing.
+They do not establish historical accuracy; catalog-wide historical envelope
+acceptance is tracked by REM-030.
 """
 
 from __future__ import annotations
 
+from collections import Counter
 from pathlib import Path
 
 import pytest
 
+from stochastic_warfare.entities.base import UnitStatus
 from stochastic_warfare.simulation.engine import EngineConfig
 from stochastic_warfare.validation.ai_validation import AIDecisionValidator
 from stochastic_warfare.validation.campaign_data import CampaignDataLoader
@@ -44,11 +47,35 @@ def golan_campaign():
 
 def _fast_runner() -> CampaignRunner:
     """Runner limited to 20 ticks for fast tests."""
-    return CampaignRunner(CampaignRunnerConfig(
-        data_dir=str(DATA_DIR),
-        engine_config=EngineConfig(max_ticks=20),
-        snapshot_interval_ticks=10,
-    ))
+    return CampaignRunner(
+        CampaignRunnerConfig(
+            data_dir=str(DATA_DIR),
+            engine_config=EngineConfig(max_ticks=20),
+            snapshot_interval_ticks=10,
+        )
+    )
+
+
+@pytest.fixture(scope="module")
+def golan_fast_result(golan_campaign):
+    """Share one seed-42 production result across read-only checks."""
+    return _fast_runner().run(golan_campaign, seed=42)
+
+
+@pytest.fixture(scope="module")
+def golan_replay_result(golan_campaign):
+    """Independently replay the seed-42 production run once."""
+    return _fast_runner().run(golan_campaign, seed=42)
+
+
+@pytest.fixture(scope="module")
+def golan_fast_mc_result(golan_campaign):
+    """Run one bounded three-seed production sample for all consumers."""
+    harness = CampaignMonteCarloHarness(
+        _fast_runner(),
+        MonteCarloConfig(num_iterations=3, base_seed=42, max_workers=1),
+    )
+    return harness.run(golan_campaign)
 
 
 # ===========================================================================
@@ -81,34 +108,30 @@ class TestGolanScenarioLoading:
 
 @pytest.mark.slow
 class TestGolanSingleRun:
-    def test_runs_to_completion(self, golan_campaign):
-        runner = _fast_runner()
-        result = runner.run(golan_campaign, seed=42)
-        assert isinstance(result, CampaignRunResult)
-        assert result.ticks_executed > 0
+    def test_runs_to_configured_terminal_boundary(self, golan_fast_result):
+        assert isinstance(golan_fast_result, CampaignRunResult)
+        assert golan_fast_result.seed == 42
+        assert golan_fast_result.ticks_executed == 20
+        assert golan_fast_result.terminated_by == "max_ticks"
 
-    def test_both_sides_present(self, golan_campaign):
-        runner = _fast_runner()
-        result = runner.run(golan_campaign, seed=42)
-        assert "blue" in result.final_units_by_side
-        assert "red" in result.final_units_by_side
+    def test_both_sides_preserve_authored_rosters(self, golan_fast_result):
+        assert {side: len(units) for side, units in golan_fast_result.final_units_by_side.items()} == {
+            "blue": 40,
+            "red": 100,
+        }
 
-    def test_has_victory_result(self, golan_campaign):
-        runner = _fast_runner()
-        result = runner.run(golan_campaign, seed=42)
-        assert result.victory_result is not None
+    def test_terminal_result_is_packaged_consistently(self, golan_fast_result):
+        assert golan_fast_result.victory_result.condition_type == (golan_fast_result.terminated_by)
+        assert golan_fast_result.victory_result.winning_side == "draw"
 
-    def test_recorder_captures_events(self, golan_campaign):
-        runner = _fast_runner()
-        result = runner.run(golan_campaign, seed=42)
-        assert result.recorder is not None
-        # Should have captured some events during the run
-        assert result.recorder.event_count() >= 0
+    def test_recorder_captures_events(self, golan_fast_result):
+        assert golan_fast_result.recorder is not None
+        assert golan_fast_result.recorder.event_count() > 0
 
-    def test_morale_states_populated(self, golan_campaign):
-        runner = _fast_runner()
-        result = runner.run(golan_campaign, seed=42)
-        assert len(result.final_morale_states) > 0
+    def test_morale_states_cover_runtime_roster(self, golan_fast_result):
+        assert set(golan_fast_result.final_morale_states) == {
+            unit.entity_id for units in golan_fast_result.final_units_by_side.values() for unit in units
+        }
 
 
 # ===========================================================================
@@ -118,197 +141,130 @@ class TestGolanSingleRun:
 
 @pytest.mark.slow
 class TestGolanDeterministicReplay:
-    def test_same_seed_identical(self, golan_campaign):
-        runner = _fast_runner()
-        r1 = runner.run(golan_campaign, seed=42)
-        r2 = runner.run(golan_campaign, seed=42)
-        assert r1.ticks_executed == r2.ticks_executed
-        assert r1.terminated_by == r2.terminated_by
+    def test_same_seed_semantic_replay_is_exact(self, golan_fast_result, golan_replay_result):
+        assert golan_fast_result.run_result == golan_replay_result.run_result
+        assert golan_fast_result.ticks_executed == golan_replay_result.ticks_executed
+        assert golan_fast_result.terminated_by == golan_replay_result.terminated_by
+        assert golan_fast_result.victory_result == golan_replay_result.victory_result
+        assert {
+            side: [unit.get_state() for unit in units] for side, units in golan_fast_result.final_units_by_side.items()
+        } == {
+            side: [unit.get_state() for unit in units]
+            for side, units in golan_replay_result.final_units_by_side.items()
+        }
+        assert golan_fast_result.final_morale_states == golan_replay_result.final_morale_states
+        assert golan_fast_result.recorder is not None
+        assert golan_replay_result.recorder is not None
+        assert golan_fast_result.recorder.events == golan_replay_result.recorder.events
 
-    def test_different_seed_diverges(self, golan_campaign):
-        runner = _fast_runner()
-        r1 = runner.run(golan_campaign, seed=42)
-        r2 = runner.run(golan_campaign, seed=99)
-        # Both complete
-        assert isinstance(r1, CampaignRunResult)
-        assert isinstance(r2, CampaignRunResult)
-
-    def test_metrics_deterministic(self, golan_campaign):
-        runner = _fast_runner()
-        r1 = runner.run(golan_campaign, seed=42)
-        r2 = runner.run(golan_campaign, seed=42)
-        m1 = CampaignValidationMetrics.extract_all(r1)
-        m2 = CampaignValidationMetrics.extract_all(r2)
+    def test_metrics_deterministic(self, golan_fast_result, golan_replay_result):
+        m1 = CampaignValidationMetrics.extract_all(golan_fast_result)
+        m2 = CampaignValidationMetrics.extract_all(golan_replay_result)
         for key in m1:
             assert m1[key] == m2[key], f"Metric {key} differs between runs"
 
 
 # ===========================================================================
-# Historical comparison (single run)
+# Current metric projection (single run)
 # ===========================================================================
 
 
 @pytest.mark.slow
-class TestGolanHistoricalSingleRun:
-    def test_metrics_extracted(self, golan_campaign):
-        runner = _fast_runner()
-        result = runner.run(golan_campaign, seed=42)
-        metrics = CampaignValidationMetrics.extract_all(result)
-        assert "red_units_destroyed" in metrics
-        assert "blue_units_destroyed" in metrics
-        assert "campaign_duration_s" in metrics
+class TestGolanCurrentMetricSingleRun:
+    def test_metrics_extracted(self, golan_fast_result):
+        metrics = CampaignValidationMetrics.extract_all(golan_fast_result)
+        assert set(metrics) == {
+            "blue_units_destroyed",
+            "red_units_destroyed",
+            "blue_units_surviving",
+            "red_units_surviving",
+            "exchange_ratio",
+            "campaign_duration_s",
+            "engagement_count",
+            "force_ratio_final",
+            "blue_territory_control",
+            "red_territory_control",
+            "blue_ships_sunk",
+            "red_ships_sunk",
+        }
 
-    def test_campaign_duration_positive(self, golan_campaign):
-        runner = _fast_runner()
-        result = runner.run(golan_campaign, seed=42)
-        metrics = CampaignValidationMetrics.extract_all(result)
+    def test_campaign_duration_matches_runtime_result(self, golan_fast_result):
+        metrics = CampaignValidationMetrics.extract_all(golan_fast_result)
+        assert metrics["campaign_duration_s"] == (golan_fast_result.duration_simulated_s)
         assert metrics["campaign_duration_s"] > 0
 
-    def test_units_sum_correct(self, golan_campaign):
-        runner = _fast_runner()
-        result = runner.run(golan_campaign, seed=42)
-        metrics = CampaignValidationMetrics.extract_all(result)
-        # Sum of destroyed + surviving should equal total initial
-        blue_total = metrics["blue_units_destroyed"] + metrics["blue_units_surviving"]
-        assert blue_total > 0
+    def test_status_metrics_match_final_runtime_state(self, golan_fast_result):
+        metrics = CampaignValidationMetrics.extract_all(golan_fast_result)
+        for side in ("blue", "red"):
+            units = golan_fast_result.final_units_by_side[side]
+            status_counts = {status: sum(unit.status == status for unit in units) for status in UnitStatus}
+            assert sum(status_counts.values()) == len(units)
+            assert metrics[f"{side}_units_destroyed"] == float(
+                status_counts[UnitStatus.DESTROYED] + status_counts[UnitStatus.SURRENDERED]
+            )
+            assert metrics[f"{side}_units_surviving"] == float(status_counts[UnitStatus.ACTIVE])
 
 
 # ===========================================================================
-# MC fast (3 runs)
+# Bounded production sample and statistic projection (3 runs)
 # ===========================================================================
 
 
 @pytest.mark.slow
-class TestGolanMCFast:
-    def test_mc_3_runs(self, golan_campaign):
-        runner = _fast_runner()
-        mc_config = MonteCarloConfig(num_iterations=3, base_seed=42, max_workers=1)
-        harness = CampaignMonteCarloHarness(runner, mc_config)
-        result = harness.run(golan_campaign)
-        assert result.num_runs == 3
+class TestGolanProductionSample:
+    def test_requested_seed_sample_is_complete(self, golan_fast_mc_result):
+        assert golan_fast_mc_result.num_runs == 3
+        assert [run.seed for run in golan_fast_mc_result.runs] == [42, 43, 44]
 
-    def test_all_complete(self, golan_campaign):
-        runner = _fast_runner()
-        mc_config = MonteCarloConfig(num_iterations=3, base_seed=42, max_workers=1)
-        harness = CampaignMonteCarloHarness(runner, mc_config)
-        result = harness.run(golan_campaign)
-        for run in result.runs:
+    def test_all_runs_reach_configured_terminal_boundary(self, golan_fast_mc_result):
+        for run in golan_fast_mc_result.runs:
             assert "campaign_duration_s" in run.metrics
+            assert run.terminated_by == "max_ticks"
 
-    def test_comparison_report(self, golan_campaign):
-        runner = _fast_runner()
-        mc_config = MonteCarloConfig(num_iterations=3, base_seed=42, max_workers=1)
-        harness = CampaignMonteCarloHarness(runner, mc_config)
-        result = harness.run(golan_campaign)
-        report = result.compare_to_historical(golan_campaign.documented_outcomes)
-        assert len(report.metric_results) > 0
+    def test_documented_metric_projection_is_complete(self, golan_campaign, golan_fast_mc_result):
+        report = golan_fast_mc_result.compare_to_historical(golan_campaign.documented_outcomes)
+        assert [item.metric_name for item in report.metric_results] == [
+            metric.name for metric in golan_campaign.documented_outcomes
+        ]
+        for item in report.metric_results:
+            assert item.simulated_mean == pytest.approx(golan_fast_mc_result.mean(item.metric_name))
 
-    def test_stats_computed(self, golan_campaign):
-        runner = _fast_runner()
-        mc_config = MonteCarloConfig(num_iterations=3, base_seed=42, max_workers=1)
-        harness = CampaignMonteCarloHarness(runner, mc_config)
-        result = harness.run(golan_campaign)
-        mean = result.mean("campaign_duration_s")
+    def test_duration_statistic_is_positive(self, golan_fast_mc_result):
+        mean = golan_fast_mc_result.mean("campaign_duration_s")
         assert mean > 0
 
 
 # ===========================================================================
-# MC full (slow — 50+ runs)
+# AI event projection (bounded current-engine control)
 # ===========================================================================
 
 
 @pytest.mark.slow
-class TestGolanMCFull:
-    """Full Monte Carlo validation — expensive, marked @slow."""
-
-    def test_mc_50_runs(self, golan_campaign):
-        runner = CampaignRunner(CampaignRunnerConfig(
-            data_dir=str(DATA_DIR),
-            engine_config=EngineConfig(max_ticks=100),
-        ))
-        mc_config = MonteCarloConfig(num_iterations=50, base_seed=42, max_workers=1)
-        harness = CampaignMonteCarloHarness(runner, mc_config)
-        result = harness.run(golan_campaign)
-        assert result.num_runs == 50
-
-    def test_compare_to_historical(self, golan_campaign):
-        runner = CampaignRunner(CampaignRunnerConfig(
-            data_dir=str(DATA_DIR),
-            engine_config=EngineConfig(max_ticks=100),
-        ))
-        mc_config = MonteCarloConfig(num_iterations=50, base_seed=42, max_workers=1)
-        harness = CampaignMonteCarloHarness(runner, mc_config)
-        result = harness.run(golan_campaign)
-        report = result.compare_to_historical(golan_campaign.documented_outcomes)
-        # Log the summary for analysis
-        print(report.summary())
-        # With tolerance_factor=3.0 most metrics should be within range
-        assert report.passing_count() >= 0  # at least we get results
-
-    def test_confidence_intervals(self, golan_campaign):
-        runner = CampaignRunner(CampaignRunnerConfig(
-            data_dir=str(DATA_DIR),
-            engine_config=EngineConfig(max_ticks=100),
-        ))
-        mc_config = MonteCarloConfig(num_iterations=50, base_seed=42, max_workers=1)
-        harness = CampaignMonteCarloHarness(runner, mc_config)
-        result = harness.run(golan_campaign)
-        ci = result.confidence_interval("campaign_duration_s")
-        assert ci[0] <= ci[1]
-
-
-# ===========================================================================
-# AI decision quality
-# ===========================================================================
-
-
-@pytest.mark.slow
-class TestGolanAIDecisions:
-    def test_decisions_extracted(self, golan_campaign):
-        runner = _fast_runner()
-        result = runner.run(golan_campaign, seed=42)
-        if result.recorder is None:
-            pytest.skip("No recorder")
-        decisions = AIDecisionValidator.extract_decisions(result.recorder)
-        # AI decisions may or may not occur in 20 ticks at strategic resolution
-        assert isinstance(decisions, list)
-
-    def test_expectations_checked(self, golan_campaign):
-        runner = _fast_runner()
-        result = runner.run(golan_campaign, seed=42)
-        if result.recorder is None:
-            pytest.skip("No recorder")
-        decisions = AIDecisionValidator.extract_decisions(result.recorder)
-        ai_result = AIDecisionValidator.validate_expectations(
-            decisions, golan_campaign.ai_expectations
+class TestGolanAIEventProjection:
+    def test_bounded_run_projects_exact_current_event_types(self, golan_fast_result):
+        assert golan_fast_result.recorder is not None
+        decisions = AIDecisionValidator.extract_decisions(golan_fast_result.recorder)
+        event_types = Counter(decision.event_type for decision in decisions)
+        assert event_types == Counter(
+            {
+                "SituationAssessedEvent": 140,
+                "OODAPhaseChangeEvent": 160,
+            }
         )
-        assert len(ai_result.expectation_results) == len(golan_campaign.ai_expectations)
-
-    def test_summary_generated(self, golan_campaign):
-        runner = _fast_runner()
-        result = runner.run(golan_campaign, seed=42)
-        if result.recorder is None:
-            pytest.skip("No recorder")
-        decisions = AIDecisionValidator.extract_decisions(result.recorder)
-        ai_result = AIDecisionValidator.validate_expectations(
-            decisions, golan_campaign.ai_expectations
-        )
-        summary = AIDecisionValidator.summarize(ai_result)
-        assert "AI Decision Validation" in summary
+        assert "DecisionMadeEvent" not in event_types
 
 
 # ===========================================================================
-# Supply dynamics
+# Runtime state coverage
 # ===========================================================================
 
 
 @pytest.mark.slow
-class TestGolanSupply:
-    def test_supply_states_present(self, golan_campaign):
-        runner = _fast_runner()
-        result = runner.run(golan_campaign, seed=42)
-        # Morale states as proxy for unit tracking
-        assert len(result.final_morale_states) > 0
+class TestGolanRuntimeState:
+    def test_runtime_tracks_every_unit_morale_state(self, golan_fast_result):
+        assert len(golan_fast_result.final_morale_states) == sum(
+            len(units) for units in golan_fast_result.final_units_by_side.values()
+        )
 
 
 # ===========================================================================

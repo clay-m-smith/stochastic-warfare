@@ -1,19 +1,30 @@
 name: Tests
 
+# scripts/validate_test_partitions.py audits these exact selectors in the locked
+# superset environment: tests/api; tests/e2e; slow and not benchmark;
+# benchmark and not slow; and slow and benchmark.
 on:
   push:
-    branches: ['**']
+    branches: [main]
   pull_request:
     branches: [main]
 
+permissions:
+  contents: read
+
 concurrency:
-  group: test-${{ github.ref }}
+  group: tests-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
+env:
+  PYTHONDONTWRITEBYTECODE: '1'
+  UV_CACHE_DIR: /tmp/sw-uv-cache
+
 jobs:
-  python:
-    name: Python Tests
+  partition-audit:
+    name: Exact Python partition union
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
 
@@ -26,15 +37,109 @@ jobs:
         with:
           enable-cache: true
 
-      - name: Install dependencies
-        run: uv sync --extra dev --extra api
+      - name: Install locked superset dependencies
+        run: >-
+          uv sync --locked --extra dev --extra api --extra terrain --extra mcp
 
-      - name: Run tests
-        run: uv run python -m pytest --tb=short -q
+      - name: Audit exact disjoint partition union
+        run: >-
+          uv run --no-sync python scripts/validate_test_partitions.py
+          --output artifacts/partition-audit/manifest.json
+
+      - name: Upload partition audit
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: partition-audit-${{ github.run_id }}
+          path: artifacts/partition-audit/
+          if-no-files-found: error
+
+  python:
+    name: Python ${{ matrix.partition }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    strategy:
+      fail-fast: false
+      matrix:
+        partition:
+          - standard
+          - api
+          - e2e
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          enable-cache: true
+
+      - name: Install locked superset dependencies
+        run: >-
+          uv sync --locked --extra dev --extra api --extra terrain --extra mcp
+
+      - name: Run explicit partition
+        run: >-
+          uv run --no-sync python scripts/run_pytest_partition.py
+          "${{ matrix.partition }}"
+          --manifest "artifacts/${{ matrix.partition }}/manifest.json"
+          --junit "artifacts/${{ matrix.partition }}/junit.xml"
+          --forbid-skips
+          --timeout-seconds 2700
+
+      - name: Upload partition evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pytest-${{ matrix.partition }}-${{ github.run_id }}
+          path: artifacts/${{ matrix.partition }}/
+          if-no-files-found: error
+
+  terrain:
+    name: Terrain dependency profile
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          enable-cache: true
+
+      - name: Install locked terrain dependencies
+        run: uv sync --locked --extra dev --extra terrain
+
+      # The runner's terrain contract is exactly these four dependency-profile
+      # files, beginning with test_phase_15a_pipeline_heightmap.py and ending
+      # with test_phase_15d_integration.py.
+      - name: Run explicit terrain dependency profile
+        run: >-
+          uv run --no-sync python scripts/run_pytest_partition.py terrain
+          --manifest artifacts/terrain/manifest.json
+          --junit artifacts/terrain/junit.xml
+          --forbid-skips
+          --timeout-seconds 2100
+
+      - name: Upload terrain evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pytest-terrain-${{ github.run_id }}
+          path: artifacts/terrain/
+          if-no-files-found: error
 
   frontend:
     name: Frontend Tests
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     defaults:
       run:
         working-directory: frontend
@@ -44,11 +149,26 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-          cache: 'npm'
+          cache: npm
           cache-dependency-path: frontend/package-lock.json
 
       - name: Install dependencies
         run: npm ci
 
+      - name: Prepare frontend evidence directory
+        run: mkdir -p ../artifacts/frontend
+
       - name: Run tests
-        run: npm test
+        run: >-
+          npm test --
+          --reporter=default
+          --reporter=junit
+          --outputFile.junit=../artifacts/frontend/junit.xml
+
+      - name: Upload frontend test evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-tests-${{ github.run_id }}
+          path: artifacts/frontend/
+          if-no-files-found: error

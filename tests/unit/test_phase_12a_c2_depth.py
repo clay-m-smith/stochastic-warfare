@@ -348,10 +348,15 @@ class TestNetworkDegradation:
         eng2.register_unit("a", ["vhf_test"])
         eng2.register_unit("b", ["vhf_test"])
         eng2.add_network_load(CommType.RADIO_VHF, 0.7)
-        # Can't easily test latency increase since send_message returns
-        # latency only on success, and congestion affects reliability too.
-        # Just verify the engine doesn't crash.
-        eng2.send_message("a", "b", pos_a, pos_b, timestamp=_TS)
+        _, lat_loaded = eng2.send_message(
+            "a",
+            "b",
+            pos_a,
+            pos_b,
+            timestamp=_TS,
+        )
+
+        assert lat_loaded > lat_base
 
 
 # ========================================================================

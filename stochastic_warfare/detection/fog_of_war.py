@@ -7,6 +7,8 @@ intelligence have revealed.  Undetected enemies do not appear.
 
 from __future__ import annotations
 
+import copy
+import math
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -528,12 +530,154 @@ class FogOfWarManager:
             "world_views": {
                 side: wv.get_state() for side, wv in sorted(self._world_views.items())
             },
-            "rng_state": self._rng.bit_generator.state,
+            "rng_state": copy.deepcopy(self._rng.bit_generator.state),
+            "intel_fusion": self._intel_fusion.get_state(),
         }
 
+    def stage_state(
+        self,
+        state: dict[str, Any],
+        *,
+        expected_sides: set[str] | None = None,
+        expected_target_sides: dict[str, str] | None = None,
+        satellite_topology: dict[str, tuple[str, str]] | None = None,
+        checkpoint_elapsed_s: float | None = None,
+        authoritative_rng_state: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        """Validate fog/fusion state without mutating the live manager."""
+        if not isinstance(state, dict):
+            raise ValueError("Fog-of-war state must be a mapping")
+        expected_keys = {"world_views", "rng_state", "intel_fusion"}
+        if set(state) != expected_keys:
+            raise ValueError(
+                "Fog-of-war state keys must be exactly "
+                f"{sorted(expected_keys)!r}",
+            )
+        elapsed: float | None = None
+        if checkpoint_elapsed_s is not None:
+            if (
+                isinstance(checkpoint_elapsed_s, bool)
+                or not isinstance(checkpoint_elapsed_s, (int, float))
+                or not math.isfinite(float(checkpoint_elapsed_s))
+                or float(checkpoint_elapsed_s) < 0.0
+            ):
+                raise ValueError(
+                    "Fog-of-war checkpoint time must be finite and "
+                    "non-negative",
+                )
+            elapsed = float(checkpoint_elapsed_s)
+
+        rng_state = copy.deepcopy(state["rng_state"])
+        if not isinstance(rng_state, dict):
+            raise ValueError("Fog-of-war rng_state must be a mapping")
+        try:
+            staged_rng = copy.deepcopy(self._rng)
+            staged_rng.bit_generator.state = rng_state
+        except (TypeError, ValueError) as exc:
+            raise ValueError("Fog-of-war rng_state is invalid") from exc
+        if (
+            authoritative_rng_state is not None
+            and rng_state != authoritative_rng_state
+        ):
+            raise ValueError(
+                "Fog-of-war RNG mirror disagrees with RNGManager DETECTION "
+                "state",
+            )
+
+        raw_world_views = state["world_views"]
+        if not isinstance(raw_world_views, dict):
+            raise ValueError("Fog-of-war world_views must be a mapping")
+        world_views: dict[str, dict[str, Any]] = {}
+        view_keys = {"side", "contacts", "last_update_time"}
+        for side, raw_view in raw_world_views.items():
+            if (
+                not isinstance(side, str)
+                or not side
+                or side != side.strip()
+            ):
+                raise ValueError(
+                    "Fog-of-war side keys must be non-empty trimmed strings",
+                )
+            if expected_sides is not None and side not in expected_sides:
+                raise ValueError(f"Unknown fog-of-war side {side!r}")
+            if not isinstance(raw_view, dict) or set(raw_view) != view_keys:
+                raise ValueError(
+                    f"Fog-of-war view {side!r} has invalid keys",
+                )
+            if raw_view["side"] != side:
+                raise ValueError(
+                    "Fog-of-war view map key disagrees with serialized side",
+                )
+            if not isinstance(raw_view["contacts"], dict):
+                raise ValueError(
+                    f"Fog-of-war contacts for {side!r} must be a mapping",
+                )
+            last_update = raw_view["last_update_time"]
+            if (
+                isinstance(last_update, bool)
+                or not isinstance(last_update, (int, float))
+                or not math.isfinite(float(last_update))
+                or float(last_update) < 0.0
+            ):
+                raise ValueError(
+                    "Fog-of-war last_update_time must be finite and "
+                    "non-negative",
+                )
+            normalized_time = float(last_update)
+            if elapsed is not None and normalized_time > elapsed:
+                raise ValueError(
+                    "Fog-of-war update time is after checkpoint time",
+                )
+            world_views[side] = {
+                "side": side,
+                "contacts": copy.deepcopy(raw_view["contacts"]),
+                "last_update_time": normalized_time,
+            }
+
+        fusion_plan = self._intel_fusion.stage_state(
+            state["intel_fusion"],
+            expected_sides=expected_sides,
+            expected_target_sides=expected_target_sides,
+            satellite_topology=satellite_topology,
+            checkpoint_elapsed_s=elapsed,
+            authoritative_rng_state=authoritative_rng_state,
+        )
+        if (
+            authoritative_rng_state is not None
+            and fusion_plan["rng_state"] != rng_state
+        ):
+            raise ValueError(
+                "Fog-of-war and IntelFusion RNG mirrors disagree",
+            )
+        return {
+            "world_views": world_views,
+            "rng_state": rng_state,
+            "intel_fusion": fusion_plan,
+        }
+
+    def commit_state(self, staged_state: dict[str, Any]) -> None:
+        """Commit a non-throwing fog/fusion restore plan."""
+        self._rng.bit_generator.state = staged_state["rng_state"]
+        self._intel_fusion.commit_state(staged_state["intel_fusion"])
+        # REM-029 owns non-empty ordinary contact restoration.  Preserve the
+        # established boundary while restoring exact logical update times.
+        for side, world_view_state in staged_state["world_views"].items():
+            world_view = self.get_world_view(side)
+            world_view.last_update_time = world_view_state["last_update_time"]
+
     def set_state(self, state: dict[str, Any]) -> None:
-        self._rng.bit_generator.state = state["rng_state"]
-        # World views are reconstructed via update cycles; just store time
-        for side, wv_state in state["world_views"].items():
-            wv = self.get_world_view(side)
-            wv.last_update_time = wv_state["last_update_time"]
+        """Validate and atomically restore standalone fog/fusion state."""
+        if isinstance(state, dict) and set(state) == {
+            "world_views",
+            "rng_state",
+        }:
+            # Explicit versionless migration: historical fog state contained
+            # no fusion payload.  A fresh legacy runtime therefore retains an
+            # empty fusion topology while sharing the restored DETECTION RNG.
+            legacy_fusion = self._intel_fusion.get_state()
+            legacy_fusion["rng_state"] = copy.deepcopy(state["rng_state"])
+            state = {
+                **state,
+                "intel_fusion": legacy_fusion,
+            }
+        self.commit_state(self.stage_state(state))

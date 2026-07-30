@@ -1,5 +1,13 @@
 # Stochastic Warfare -- Block 7 Development Phases (58--67)
 
+> **Phase 112 integrity supersession (2026-07-30):** This roadmap preserves
+> Block 7's contemporaneous goals and completion record. Its structural flag
+> checks and authored-configuration winner tables do not prove an individual
+> flag's enabled/disabled behavior, and the multi-seed winner regression is not
+> source-backed historical validation. Current historical claims are governed
+> by REM-030; the original exit language below is not current capability
+> evidence.
+
 ## Philosophy
 
 Block 7 is the **final engine hardening block**. A comprehensive audit reveals that Blocks 1--6 suffer from a systemic **build-then-defer-wiring** pattern: engines were built and unit-tested in isolation, but their outputs are never consumed by downstream systems. The result is 36 computed-but-unconsumed environmental parameters, 16 unreachable combat engines, 4 dead EngagementType values, an observational-only event bus, discarded damage detail, ungateed logistics, empty checkpoints, and protective postures that protect nothing.

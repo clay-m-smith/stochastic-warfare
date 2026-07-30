@@ -1,5 +1,15 @@
 # Block 11 Scenario Calibration Template
 
+> **Phase 112 integrity supersession (2026-07-30):** This page preserves the
+> Block 11 calibration and regression template as development history. Its
+> worked seeds, winner thresholds, helper calls, and sample configuration are
+> not a current, provenance-bearing, held-out production validation contract
+> and must not be cited as historical-accuracy evidence. Scenario availability,
+> source citations, fitted inputs, and current-engine regression do not by
+> themselves establish historical validation. REM-030/Phase 117 owns the
+> replacement catalog-wide outcome-envelope contract and the disposition of
+> every retained claim.
+
 Every Block 11 golden scenario defines an **outcome envelope** — a range of statistically-plausible results derived from historical sources. The scenario's regression test validates that the engine produces outcomes bracketing that envelope.
 
 This document defines:
@@ -156,25 +166,26 @@ calibration_overrides:
 def test_debecka_pass_envelope():
     results = run_scenario_batch(
         "data/scenarios/debecka_pass/scenario.yaml",
+        overrides={},
         num_iterations=10, base_seed=42, max_ticks=5000,
         metric_names=["win_blue", "blue_destroyed", "red_destroyed", "ticks_executed"],
         data_dir="data",
     )
     # Winner envelope
-    blue_win_rate = sum(results["win_blue"]) / 10
+    blue_win_rate = sum(results.metric_values("win_blue")) / 10
     assert blue_win_rate >= 0.7, f"Expected ≥70% blue wins, got {blue_win_rate:.0%}"
 
     # Casualty envelope
-    avg_red_destroyed = sum(results["red_destroyed"]) / 10
+    avg_red_destroyed = sum(results.metric_values("red_destroyed")) / 10
     assert 15 <= avg_red_destroyed <= 40, \
         f"Iraqi destructions outside envelope: {avg_red_destroyed:.1f}"
 
-    avg_blue_destroyed = sum(results["blue_destroyed"]) / 10
+    avg_blue_destroyed = sum(results.metric_values("blue_destroyed")) / 10
     assert avg_blue_destroyed <= 3, \
         f"SF casualties too high (historical: 0, max: 3): {avg_blue_destroyed:.1f}"
 
     # Duration envelope
-    avg_ticks = sum(results["ticks_executed"]) / 10
+    avg_ticks = sum(results.metric_values("ticks_executed")) / 10
     # 6 hours ± 50%, tick_duration_seconds=5.0 → 2160-6480 ticks
     assert 2160 <= avg_ticks <= 6480, f"Duration outside envelope: {avg_ticks:.0f} ticks"
 ```

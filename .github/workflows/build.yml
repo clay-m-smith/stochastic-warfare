@@ -3,6 +3,9 @@ name: Docker Build
 on:
   pull_request:
     branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
 
 concurrency:
   group: build-${{ github.ref }}
@@ -16,4 +19,34 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Build Docker image
-        run: docker build -t stochastic-warfare:test .
+        run: >-
+          docker build
+          --build-arg SOURCE_REVISION="${GITHUB_SHA}"
+          -t stochastic-warfare:test
+          .
+
+      - name: Assert image omits Git metadata
+        run: >-
+          docker run --rm
+          stochastic-warfare:test
+          sh -c "test ! -e /app/.git"
+
+      - name: Run immutable image production-runtime smoke
+        run: >-
+          docker run --rm
+          -e EXPECTED_SOURCE_REVISION="${GITHUB_SHA}"
+          stochastic-warfare:test
+          uv run --no-sync python -c
+          "import os;
+          from pathlib import Path;
+          from stochastic_warfare.simulation.runtime import AnalysisVariant, SimulationRuntimeFactory;
+          prepared = SimulationRuntimeFactory().prepare(
+              Path('data/scenarios/test_campaign/scenario.yaml'),
+              Path('data'),
+              (AnalysisVariant(variant_id='image-smoke'),),
+          );
+          session = prepared.build('image-smoke', seed=112, max_ticks=1);
+          result = session.run_to_completion();
+          assert result.ticks_executed == 1;
+          assert session.code_revision.commit == os.environ['EXPECTED_SOURCE_REVISION'];
+          assert session.code_revision.dirty is False"

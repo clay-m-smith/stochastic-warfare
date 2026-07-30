@@ -497,6 +497,7 @@ class TestTrainingLevel:
         defn = UnitDefinition(
             unit_type="test",
             domain="ground",
+            ground_type="LIGHT_INFANTRY",
             display_name="Test",
             max_speed=10.0,
             crew=[],
@@ -513,6 +514,7 @@ class TestTrainingLevel:
         defn = UnitDefinition(
             unit_type="test",
             domain="ground",
+            ground_type="LIGHT_INFANTRY",
             display_name="Test",
             max_speed=10.0,
             crew=[],

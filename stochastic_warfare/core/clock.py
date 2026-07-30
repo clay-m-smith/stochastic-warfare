@@ -41,7 +41,7 @@ class SimulationClock:
 
     @property
     def elapsed(self) -> timedelta:
-        """Wall-clock time elapsed since scenario start."""
+        """Logical simulation time elapsed since scenario start."""
         return self._current - self._start
 
     @property

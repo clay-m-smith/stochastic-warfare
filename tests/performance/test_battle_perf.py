@@ -6,6 +6,7 @@ Slow tests (golan_heights benchmark) are marked @pytest.mark.slow.
 
 from __future__ import annotations
 
+import math
 import time
 from pathlib import Path
 
@@ -16,79 +17,57 @@ SCENARIOS_DIR = DATA_DIR / "scenarios"
 
 
 def _run_scenario(scenario_name: str, seed: int = 42) -> dict:
-    """Run a scenario via SimulationEngine.run() and return timing + outcome."""
-    from stochastic_warfare.simulation.scenario import ScenarioLoader
-    from stochastic_warfare.simulation.engine import SimulationEngine, EngineConfig
-    from stochastic_warfare.simulation.recorder import SimulationRecorder
-    from stochastic_warfare.simulation.victory import VictoryEvaluator
+    """Run a production-owned session and return timing plus exact outcome."""
     from stochastic_warfare.entities.base import UnitStatus
-    from stochastic_warfare.core.types import Position
+    from stochastic_warfare.simulation.engine import EngineConfig
+    from stochastic_warfare.simulation.runtime import (
+        AnalysisVariant,
+        SimulationRuntimeFactory,
+    )
 
     scenario_path = SCENARIOS_DIR / scenario_name / "scenario.yaml"
     if not scenario_path.exists():
-        pytest.skip(f"Scenario {scenario_name} not found at {scenario_path}")
+        pytest.fail(f"required scenario {scenario_name} is missing: {scenario_path}")
 
-    loader = ScenarioLoader(DATA_DIR)
-    ctx = loader.load(scenario_path, seed=seed)
-
-    recorder = SimulationRecorder(ctx.event_bus)
-
-    # Build victory evaluator from scenario config
-    victory_eval = None
-    cfg = ctx.config
-    if hasattr(cfg, "victory_conditions") and cfg.victory_conditions:
-        from stochastic_warfare.simulation.victory import ObjectiveState
-
-        objectives = []
-        if hasattr(cfg, "objectives") and cfg.objectives:
-            for obj in cfg.objectives:
-                pos = obj.position if hasattr(obj, "position") else [0, 0]
-                objectives.append(
-                    ObjectiveState(
-                        objective_id=obj.objective_id,
-                        position=Position(
-                            easting=pos[0] if len(pos) > 0 else 0,
-                            northing=pos[1] if len(pos) > 1 else 0,
-                        ),
-                        radius_m=obj.radius_m,
-                    )
-                )
-        victory_eval = VictoryEvaluator(
-            objectives=objectives,
-            conditions=cfg.victory_conditions,
-            event_bus=ctx.event_bus,
-            max_duration_s=cfg.duration_hours * 3600.0,
-        )
-
-    engine_cfg = EngineConfig(max_ticks=20000, snapshot_interval_ticks=0)
-    engine = SimulationEngine(
-        ctx,
-        config=engine_cfg,
-        victory_evaluator=victory_eval,
-        recorder=recorder,
+    variant_id = "performance"
+    prepared = SimulationRuntimeFactory().prepare(
+        scenario_path,
+        DATA_DIR,
+        [AnalysisVariant(variant_id=variant_id)],
+    )
+    session = prepared.build(
+        variant_id,
+        seed=seed,
+        max_ticks=20_000,
+        record_events=True,
+        engine_config=EngineConfig(
+            max_ticks=20_000,
+            snapshot_interval_ticks=0,
+        ),
     )
 
     start = time.perf_counter()
-    run_result = engine.run()
+    run_result = session.run_to_completion()
     elapsed = time.perf_counter() - start
-
-    # Extract winner from run result
-    winner = None
-    if run_result.victory_result:
-        winner = run_result.victory_result.winning_side
+    if run_result.ticks_executed != session.context.clock.tick_count:
+        raise RuntimeError("Runtime result tick count does not match the production clock")
+    if run_result.duration_s != session.context.clock.elapsed.total_seconds():
+        raise RuntimeError("Runtime result duration does not match the production clock")
+    if run_result.victory_result.tick != run_result.ticks_executed:
+        raise RuntimeError("Terminal victory tick does not match the runtime result")
 
     # Casualty counts per side
     casualties = {}
-    for side, units in ctx.units_by_side.items():
+    for side, units in session.context.units_by_side.items():
         casualties[side] = sum(
-            1
-            for u in units
-            if u.status in (UnitStatus.DESTROYED, UnitStatus.DISABLED, UnitStatus.SURRENDERED)
+            1 for u in units if u.status in (UnitStatus.DESTROYED, UnitStatus.DISABLED, UnitStatus.SURRENDERED)
         )
 
     return {
         "elapsed_s": elapsed,
-        "winner": winner,
+        "winner": run_result.victory_result.winning_side,
+        "condition_type": run_result.victory_result.condition_type,
+        "duration_s": run_result.duration_s,
         "casualties": casualties,
         "ticks": run_result.ticks_executed,
     }
@@ -100,45 +79,52 @@ def _run_scenario(scenario_name: str, seed: int = 42) -> dict:
 
 
 @pytest.mark.slow
-class TestGolanBenchmark:
-    """Golan Heights scenario performance benchmark."""
+class TestGolanMeasurement:
+    """Golan production workload measurement and semantic replay."""
 
-    def test_golan_heights_benchmark(self) -> None:
-        """Golan Heights (290 units, 18hr) completes in < 120s."""
+    def test_golan_heights_measurement_only(self) -> None:
+        """Expose one positive raw duration without a regression decision."""
         result = _run_scenario("golan_heights")
-        assert result["elapsed_s"] < 120.0, (
-            f"Golan Heights took {result['elapsed_s']:.1f}s (limit: 120s)"
-        )
+        assert math.isfinite(result["elapsed_s"])
+        assert result["elapsed_s"] > 0.0
+        assert result["winner"] == "blue"
+        assert result["condition_type"] == "time_expired"
+        assert result["duration_s"] == 64_800.0
+        assert result["ticks"] == 6480
 
     def test_determinism_golan_heights(self) -> None:
         """Two identical-seed runs produce same winner + casualties."""
         r1 = _run_scenario("golan_heights", seed=42)
         r2 = _run_scenario("golan_heights", seed=42)
-        assert r1["winner"] == r2["winner"], (
-            f"Winner diverged: {r1['winner']} vs {r2['winner']}"
-        )
-        assert r1["casualties"] == r2["casualties"], (
-            f"Casualties diverged: {r1['casualties']} vs {r2['casualties']}"
-        )
+        assert _semantic_result(r1) == _semantic_result(r2)
 
 
-class TestEastingBenchmark:
-    """73 Easting scenario performance + determinism."""
+class TestEastingMeasurement:
+    """73 Easting measurement-only sample plus semantic determinism."""
 
-    def test_73_easting_benchmark(self) -> None:
-        """73 Easting (small scenario) completes in < 30s."""
+    def test_73_easting_measurement_only(self) -> None:
+        """Expose one positive raw duration without a regression decision."""
         result = _run_scenario("73_easting")
-        assert result["elapsed_s"] < 30.0, (
-            f"73 Easting took {result['elapsed_s']:.1f}s (limit: 30s)"
-        )
+        assert math.isfinite(result["elapsed_s"])
+        assert result["elapsed_s"] > 0.0
+        assert result["winner"] == "blue"
+        assert result["condition_type"] == "time_expired"
+        assert result["duration_s"] == 1_800.0
+        assert result["ticks"] == 360
 
     def test_determinism_73_easting(self) -> None:
         """Two identical-seed runs produce same winner + casualties."""
         r1 = _run_scenario("73_easting", seed=42)
         r2 = _run_scenario("73_easting", seed=42)
-        assert r1["winner"] == r2["winner"], (
-            f"Winner diverged: {r1['winner']} vs {r2['winner']}"
-        )
-        assert r1["casualties"] == r2["casualties"], (
-            f"Casualties diverged: {r1['casualties']} vs {r2['casualties']}"
-        )
+        assert _semantic_result(r1) == _semantic_result(r2)
+
+
+def _semantic_result(result: dict) -> tuple:
+    """Return all deterministic public outcome fields from a timed sample."""
+    return (
+        result["winner"],
+        result["condition_type"],
+        result["duration_s"],
+        result["casualties"],
+        result["ticks"],
+    )

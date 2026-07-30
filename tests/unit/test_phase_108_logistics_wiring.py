@@ -1552,7 +1552,7 @@ def test_mutated_restore_plan_rejects_without_mutation() -> None:
 @pytest.mark.parametrize(
     ("mutation", "match"),
     [
-        ("v107", r"Unsupported checkpoint version 107; expected 111"),
+        ("v107", r"Unsupported checkpoint version 107; expected 112"),
         (
             "versionless",
             r"Versionless checkpoints cannot restore a logistics-enabled",
@@ -2105,7 +2105,6 @@ def test_midinterval_reinforcement_prorates_route_and_depot_throughput(
         arrival_time_s=1800.0,
         tick_duration_seconds=1800.0,
     )
-    payload["sides"][0]["units"] = []
     route = payload["logistics"]["route_templates"][0]
     route["transport_mode"] = "AIR"
     if bottleneck == "route":
@@ -2116,6 +2115,9 @@ def test_midinterval_reinforcement_prorates_route_and_depot_throughput(
         ] = 0.004
     dynamic_id = "reinforce_blue_0000_m1a2_0000"
     ctx, engine = _engine_for(payload, seed=10_208)
+    # Preserve an exact, non-empty authored initial roster while excluding
+    # that control unit from the throughput competition under test.
+    ctx.units_by_side["blue"][0].status = UnitStatus.DESTROYED
     delivered: list[SupplyDeliveredEvent] = []
     ctx.event_bus.subscribe(SupplyDeliveredEvent, delivered.append)
 

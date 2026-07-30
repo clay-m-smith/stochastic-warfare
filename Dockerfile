@@ -8,13 +8,17 @@ RUN npm run build
 
 # Stage 2: Python application
 FROM python:3.12-slim
+ARG SOURCE_REVISION
 WORKDIR /app
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
 COPY pyproject.toml uv.lock .python-version ./
 COPY stochastic_warfare/ stochastic_warfare/
 COPY api/ api/
 COPY data/ data/
-RUN uv sync --extra api --no-dev
+RUN uv sync --locked --extra api --no-dev
+RUN python -m stochastic_warfare.build_identity \
+    --application-root /app \
+    --commit "${SOURCE_REVISION:?SOURCE_REVISION must be a 40-character lowercase Git commit}"
 COPY --from=frontend-build /app/frontend/dist frontend/dist/
 EXPOSE 8000
-CMD ["uv", "run", "python", "-m", "api"]
+CMD ["uv", "run", "--no-sync", "python", "-m", "api"]

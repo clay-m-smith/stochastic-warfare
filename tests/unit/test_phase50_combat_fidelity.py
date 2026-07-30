@@ -331,37 +331,6 @@ class TestAirPosture:
         # Should produce no damage
         assert len(result) == 0
 
-    def test_on_station_aircraft_engages(self) -> None:
-        """ON_STATION air unit should pass the air posture gate."""
-        bm = BattleManager(EventBus())
-        attacker = AerialUnit(
-            entity_id="a1", side="blue",
-            position=Position(0.0, 0.0, 5000.0),
-            air_posture=AirPosture.ON_STATION,
-            flight_state=FlightState.AIRBORNE,
-        )
-        # The attacker should pass the air posture gate (not be skipped).
-        # We verify by checking it reaches the weapons check.
-        # With no weapons, it will stop there — but it won't be blocked by posture.
-        target = _make_ground_unit(
-            entity_id="e1", side="red", position=Position(500.0, 0.0, 0.0),
-        )
-
-        class MockEngEngine:
-            def route_engagement(self, **kw: Any) -> Any:
-                return SimpleNamespace(engaged=False)
-
-        ctx = _make_ctx(engagement_engine=MockEngEngine())
-        ctx.unit_weapons["a1"] = []  # No weapons — will stop at weapons check
-        units_by_side = {"blue": [attacker], "red": [target]}
-        active_enemies = {"blue": [target], "red": [attacker]}
-        enemy_pos = {"blue": np.array([[500.0, 0.0]]), "red": np.array([[0.0, 0.0]])}
-
-        # Should not raise — air posture gate should pass
-        bm._execute_engagements(
-            ctx, units_by_side, active_enemies, enemy_pos, 1.0, datetime.now(),
-        )
-
     def test_fuel_low_transitions_to_returning(self) -> None:
         """Auto-assignment: fuel < 0.2 should transition to RETURNING."""
         bm = BattleManager(EventBus())

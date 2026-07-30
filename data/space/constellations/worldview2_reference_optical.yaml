@@ -1,0 +1,24 @@
+# Public reference values: NASA CSDA/Vantor WorldView-2 specification.
+# The authored ownership and orbital phase are deterministic proof-scenario
+# assumptions, not a claim about real-world military access or ephemeris.
+constellation_id: worldview2_reference_optical
+display_name: "WorldView-2 Public Reference Optical"
+constellation_type: 2  # IMAGING_OPTICAL
+side: blue
+num_satellites: 1
+orbital_elements_template:
+  semi_major_axis_m: 7141000.0  # 770 km altitude; ~100 minute period
+  eccentricity: 0.0
+  inclination_deg: 98.0
+  raan_deg: 115.0
+  arg_perigee_deg: 0.0
+  true_anomaly_deg: 235.0
+plane_count: 1
+sats_per_plane: 1
+sensor_resolution_m: 0.46
+sensor_swath_km: 16.4
+sensor_type: "optical"
+# Conservative 3.5 m CE90 converted under the documented isotropic
+# bivariate-normal model: sigma = CE90 / sqrt(2 * ln(10)).
+imint_position_sigma_m: 1.6309671062462963
+bandwidth_bps: 0.0

@@ -1,70 +1,132 @@
-"""Phase 63c: Checkpoint State Completeness tests."""
+"""Phase 63c: checkpoint owner-registry completeness tests."""
+
+from __future__ import annotations
+
+from dataclasses import dataclass
+from datetime import datetime, timedelta, timezone
+from typing import Any
+
+import pytest
+
+from stochastic_warfare.core.clock import SimulationClock
+from stochastic_warfare.core.events import EventBus
+from stochastic_warfare.core.rng import RNGManager
+from stochastic_warfare.simulation.scenario import (
+    _CONTEXT_STATE_ENGINE_NAMES,
+    CampaignScenarioConfig,
+    SideConfig,
+    SimulationContext,
+    TerrainConfig,
+)
 
 
+@dataclass
+class _StateOwner:
+    """Minimal deterministic owner used through the real context boundary."""
+
+    value: int
+
+    def get_state(self) -> dict[str, int]:
+        return {"value": self.value}
+
+    def set_state(self, state: dict[str, Any]) -> None:
+        if (
+            not isinstance(state, dict)
+            or set(state) != {"value"}
+            or isinstance(state["value"], bool)
+            or not isinstance(state["value"], int)
+        ):
+            raise ValueError("invalid test owner state")
+        self.value = state["value"]
 
 
-def _read_scenario_source():
-    """Read scenario.py source for structural checks."""
-    import stochastic_warfare.simulation.scenario as mod
-    return open(mod.__file__).read()
+def _context() -> SimulationContext:
+    config = CampaignScenarioConfig(
+        name="Phase 63c checkpoint registry",
+        date="2024-01-01T00:00:00Z",
+        duration_hours=1.0,
+        terrain=TerrainConfig(width_m=1_000.0, height_m=1_000.0),
+        sides=[
+            SideConfig(side="blue", units=[]),
+            SideConfig(side="red", units=[]),
+        ],
+    )
+    return SimulationContext(
+        config=config,
+        clock=SimulationClock(
+            start=datetime(2024, 1, 1, tzinfo=timezone.utc),
+            tick_duration=timedelta(seconds=5),
+        ),
+        rng_manager=RNGManager(63),
+        event_bus=EventBus(),
+        units_by_side={"blue": [], "red": []},
+        morale_states={},
+    )
 
 
 class TestCheckpointEngineList:
-    """Verify get_state/set_state include previously missing engines."""
+    """Verify capture and restore consume one runtime-visible owner registry."""
 
-    def test_get_state_includes_comms_engine(self):
-        src = _read_scenario_source()
-        # Must appear in the get_state engine list
-        assert '("comms_engine", self.comms_engine)' in src
+    @pytest.mark.parametrize(
+        "owner_name",
+        (
+            "comms_engine",
+            "detection_engine",
+            "movement_engine",
+            "conditions_engine",
+            "weather_engine",
+            "morale_machine",
+        ),
+    )
+    def test_registered_owner_is_visible_to_capture(
+        self,
+        owner_name: str,
+    ) -> None:
+        context = _context()
+        owner = _StateOwner(7)
+        setattr(context, owner_name, owner)
 
-    def test_get_state_includes_detection_engine(self):
-        src = _read_scenario_source()
-        assert '("detection_engine", self.detection_engine)' in src
+        runtime_owners = dict(context._checkpoint_engines())
 
-    def test_get_state_includes_movement_engine(self):
-        src = _read_scenario_source()
-        assert '("movement_engine", self.movement_engine)' in src
+        assert runtime_owners[owner_name] is owner
+        assert context.get_state()[owner_name] == {"value": 7}
 
-    def test_get_state_includes_conditions_engine(self):
-        src = _read_scenario_source()
-        assert '("conditions_engine", self.conditions_engine)' in src
+    @pytest.mark.parametrize(
+        "owner_name",
+        ("comms_engine", "detection_engine"),
+    )
+    def test_registered_generic_owner_round_trips_through_context(
+        self,
+        owner_name: str,
+    ) -> None:
+        context = _context()
+        owner = _StateOwner(11)
+        setattr(context, owner_name, owner)
+        checkpoint = context.get_state()
+        owner.value = 99
 
-    def test_get_state_includes_weather_engine(self):
-        """Pre-existing — verify not accidentally removed."""
-        src = _read_scenario_source()
-        assert '("weather_engine", self.weather_engine)' in src
+        context.set_state(checkpoint)
 
-    def test_get_state_includes_morale_machine(self):
-        """Pre-existing — verify not accidentally removed."""
-        src = _read_scenario_source()
-        assert '("morale_machine", self.morale_machine)' in src
+        assert owner.value == 11
+        assert context.get_state() == checkpoint
 
-    def test_set_state_includes_comms_engine(self):
-        """set_state engine list also has comms_engine."""
-        src = _read_scenario_source()
-        # Both get_state and set_state have separate engine lists
-        # Verify comms_engine appears at least twice (once in each list)
-        count = src.count('("comms_engine", self.comms_engine)')
-        assert count >= 2, f"comms_engine appears {count} times, expected >=2"
+    def test_owner_without_state_api_is_skipped_behaviorally(self) -> None:
+        context = _context()
+        context.comms_engine = object()
 
-    def test_set_state_includes_detection_engine(self):
-        src = _read_scenario_source()
-        count = src.count('("detection_engine", self.detection_engine)')
-        assert count >= 2
+        checkpoint = context.get_state()
 
-    def test_engine_with_no_get_state_gracefully_skipped(self):
-        """Engines without get_state are skipped (hasattr check)."""
-        src = _read_scenario_source()
-        assert 'hasattr(eng, "get_state")' in src
-        assert 'hasattr(eng, "set_state")' in src
+        assert "comms_engine" not in checkpoint
+        context.set_state(checkpoint)
+        assert "comms_engine" not in context.get_state()
 
-    def test_engine_count_regression_guard(self):
-        """Total engine entries in get_state list is at minimum expected."""
-        src = _read_scenario_source()
-        # Count all entries of the pattern ("xxx", self.xxx) in get_state
-        # The engines list starts after "Delegate to engines" comment
-        import re
-        # Find all engine tuples in get_state section
-        matches = re.findall(r'\("(\w+)", self\.\1\)', src)
-        # Should have at least 48 entries (original ~44 + 4 new)
-        assert len(matches) >= 48, f"Only found {len(matches)} engine entries"
+    def test_registry_is_unique_and_is_the_runtime_iteration_order(self) -> None:
+        context = _context()
+        runtime_names = tuple(
+            name
+            for name, _ in context._checkpoint_engines()
+        )
+
+        assert runtime_names == _CONTEXT_STATE_ENGINE_NAMES
+        assert len(runtime_names) == len(set(runtime_names))
+        assert len(runtime_names) >= 48

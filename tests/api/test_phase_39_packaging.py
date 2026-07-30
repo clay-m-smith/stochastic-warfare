@@ -7,6 +7,7 @@ import pytest
 
 # ── 39b: Frame interval ─────────────────────────────────────────────────
 
+
 class TestFrameInterval:
     """Verify configurable frame_interval in RunSubmitRequest."""
 
@@ -25,14 +26,20 @@ class TestFrameInterval:
 
 # ── 39c: __main__ ────────────────────────────────────────────────────────
 
+
 class TestMainModule:
     """Verify api/__main__.py is importable."""
 
-    def test_main_module_importable(self):
+    @pytest.mark.structural
+    def test_main_module_import_does_not_raise_structural_diagnostic(
+        self,
+    ):
+        """Structural import diagnostic only; it makes no runtime claim."""
         import api.__main__  # noqa: F401
 
 
 # ── 39c: Static file serving & SPA fallback ─────────────────────────────
+
 
 @pytest.mark.asyncio
 async def test_spa_fallback_serves_index(client):
@@ -53,6 +60,7 @@ async def test_api_routes_take_precedence(client):
 
 
 # ── 39d: Terrain types from LandCover enum ──────────────────────────────
+
 
 @pytest.mark.asyncio
 async def test_terrain_types_from_enum(client):

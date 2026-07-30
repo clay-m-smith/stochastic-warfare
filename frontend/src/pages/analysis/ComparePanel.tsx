@@ -4,6 +4,12 @@ import { LoadingSpinner } from '../../components/LoadingSpinner'
 import { Select } from '../../components/Select'
 import { useScenarios } from '../../hooks/useScenarios'
 import { useCompare } from '../../hooks/useAnalysis'
+import type { CalibrationOverrides } from '../../types/api'
+import { validateCompareResult } from '../../utils/analysisEvidence'
+import type { CompareExpectation } from '../../utils/analysisEvidence'
+
+const BASE_SEED = 42
+const ALPHA = 0.05
 
 export function ComparePanel() {
   const { data: scenarios } = useScenarios()
@@ -15,38 +21,63 @@ export function ComparePanel() {
   const [numIterations, setNumIterations] = useState(10)
   const [maxTicks, setMaxTicks] = useState(10000)
   const [jsonError, setJsonError] = useState<string | null>(null)
+  const [submittedCompare, setSubmittedCompare] = useState<CompareExpectation | null>(null)
 
   const compare = useCompare()
 
   const scenarioOptions = (scenarios ?? []).map((s) => ({ value: s.name, label: s.display_name }))
+  const selectedScenario = (scenarios ?? []).find((candidate) => candidate.name === scenario)
 
   const handleSubmit = () => {
-    if (!scenario) return
+    if (!scenario || !selectedScenario) return
+    compare.reset()
+    setSubmittedCompare(null)
     setJsonError(null)
-    let parsedA: Record<string, unknown> = {}
-    let parsedB: Record<string, unknown> = {}
+    let parsedA: CalibrationOverrides = {}
+    let parsedB: CalibrationOverrides = {}
     try {
-      parsedA = JSON.parse(overridesA) as Record<string, unknown>
+      parsedA = JSON.parse(overridesA) as CalibrationOverrides
     } catch (e) {
       setJsonError(`Overrides A: invalid JSON — ${e instanceof Error ? e.message : String(e)}`)
       return
     }
     try {
-      parsedB = JSON.parse(overridesB) as Record<string, unknown>
+      parsedB = JSON.parse(overridesB) as CalibrationOverrides
     } catch (e) {
       setJsonError(`Overrides B: invalid JSON — ${e instanceof Error ? e.message : String(e)}`)
       return
     }
+    const orderedMetrics = selectedScenario.sides.map(
+      (side) => `${side}_destroyed`,
+    )
+    setSubmittedCompare({
+      scenario,
+      labelA,
+      labelB,
+      orderedMetrics,
+      numIterations,
+      baseSeed: BASE_SEED,
+      maxTicks,
+      alpha: ALPHA,
+    })
     compare.mutate({
       scenario,
       overrides_a: parsedA,
       overrides_b: parsedB,
       label_a: labelA,
       label_b: labelB,
+      metrics: orderedMetrics,
       num_iterations: numIterations,
+      base_seed: BASE_SEED,
       max_ticks: maxTicks,
+      alpha: ALPHA,
     })
   }
+
+  const evidenceError = compare.data && submittedCompare
+    ? validateCompareResult(compare.data, submittedCompare)
+    : null
+  const validatedResult = compare.data && !evidenceError ? compare.data : null
 
   return (
     <div className="space-y-6">
@@ -133,8 +164,21 @@ export function ComparePanel() {
 
       {compare.isPending && <LoadingSpinner />}
 
-      {compare.data && (
-        <ComparisonCharts result={compare.data} labelA={labelA} labelB={labelB} />
+      {evidenceError && (
+        <div
+          className="rounded-md bg-red-50 p-4 text-sm text-red-700 dark:bg-red-900/30 dark:text-red-300"
+          role="alert"
+        >
+          Comparison result rejected: {evidenceError}
+        </div>
+      )}
+
+      {validatedResult && (
+        <ComparisonCharts
+          result={validatedResult}
+          labelA={validatedResult.label_a}
+          labelB={validatedResult.label_b}
+        />
       )}
     </div>
   )

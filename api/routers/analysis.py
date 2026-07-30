@@ -10,8 +10,14 @@ from fastapi import APIRouter, Depends, HTTPException
 from api.config import ApiSettings
 from api.database import Database
 from api.dependencies import get_db, get_settings
+from api.runtime_errors import RUNTIME_INPUT_EXCEPTIONS
 from api.scenarios import resolve_scenario
-from api.schemas import CompareRequest, DoctrineCompareRequest, SweepRequest
+from api.schemas import (
+    CompareRequest,
+    DoctrineCompareRequest,
+    DoctrineCompareResult as DoctrineCompareResponse,
+    SweepRequest,
+)
 
 router = APIRouter(prefix="/analysis", tags=["analysis"])
 
@@ -40,17 +46,30 @@ async def run_compare(
     from stochastic_warfare.tools.comparison import ComparisonConfig, run_comparison
     from stochastic_warfare.tools.serializers import serialize_to_dict
 
-    config = ComparisonConfig(
-        scenario_path=str(path),
-        overrides_a=req.overrides_a,
-        overrides_b=req.overrides_b,
-        label_a=req.label_a,
-        label_b=req.label_b,
-        num_iterations=req.num_iterations,
-        max_ticks=req.max_ticks,
-    )
-    async with _get_analysis_semaphore():
-        result = await asyncio.to_thread(run_comparison, config)
+    try:
+        config = ComparisonConfig(
+            scenario_path=str(path),
+            overrides_a=req.overrides_a.model_dump(
+                mode="python",
+                exclude_unset=True,
+            ),
+            overrides_b=req.overrides_b.model_dump(
+                mode="python",
+                exclude_unset=True,
+            ),
+            label_a=req.label_a,
+            label_b=req.label_b,
+            metric_names=req.metrics,
+            num_iterations=req.num_iterations,
+            base_seed=req.base_seed,
+            max_ticks=req.max_ticks,
+            alpha=req.alpha,
+            data_dir=str(data_dir),
+        )
+        async with _get_analysis_semaphore():
+            result = await asyncio.to_thread(run_comparison, config)
+    except RUNTIME_INPUT_EXCEPTIONS as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
     return serialize_to_dict(result)
 
 
@@ -68,19 +87,28 @@ async def run_sweep(
     from stochastic_warfare.tools.sensitivity import SweepConfig, run_sweep as _run_sweep
     from stochastic_warfare.tools.serializers import serialize_to_dict
 
-    config = SweepConfig(
-        scenario_path=str(path),
-        parameter_name=req.parameter_name,
-        values=req.values,
-        iterations_per_point=req.num_iterations,
-        max_ticks=req.max_ticks,
-    )
-    async with _get_analysis_semaphore():
-        result = await asyncio.to_thread(_run_sweep, config)
+    try:
+        config = SweepConfig(
+            scenario_path=str(path),
+            parameter_name=req.parameter_name,
+            values=req.values,
+            metric_names=req.metrics,
+            iterations_per_point=req.num_iterations,
+            base_seed=req.base_seed,
+            max_ticks=req.max_ticks,
+            data_dir=str(data_dir),
+        )
+        async with _get_analysis_semaphore():
+            result = await asyncio.to_thread(_run_sweep, config)
+    except RUNTIME_INPUT_EXCEPTIONS as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
     return serialize_to_dict(result)
 
 
-@router.post("/doctrine-compare")
+@router.post(
+    "/doctrine-compare",
+    response_model=DoctrineCompareResponse,
+)
 async def run_doctrine_compare(
     req: DoctrineCompareRequest,
     settings: ApiSettings = Depends(get_settings),
@@ -96,17 +124,46 @@ async def run_doctrine_compare(
         run_doctrine_comparison,
     )
     from stochastic_warfare.tools.serializers import serialize_to_dict
-
-    config = DoctrineCompareConfig(
-        scenario_path=str(path),
-        side_to_vary=req.side_to_vary,
-        schools=req.schools,
-        num_iterations=req.num_iterations,
-        max_ticks=req.max_ticks,
-        data_dir=str(data_dir),
+    from stochastic_warfare.simulation.runtime import (
+        AnalysisVariant,
+        DoctrineAnalysisVariant,
     )
-    async with _get_analysis_semaphore():
-        result = await asyncio.to_thread(run_doctrine_comparison, config)
+    from stochastic_warfare.simulation.scenario import (
+        DoctrineSideAssignment,
+    )
+
+    try:
+        config = DoctrineCompareConfig(
+            scenario_path=str(path),
+            variants=[
+                AnalysisVariant(
+                    variant_id=variant.variant_id,
+                    calibration_patch=variant.calibration_patch,
+                    doctrine_variant=DoctrineAnalysisVariant(
+                        assignments=[
+                            DoctrineSideAssignment(
+                                side=assignment.side,
+                                school_id=assignment.school_id,
+                            )
+                            for assignment in variant.assignments
+                        ],
+                    ),
+                )
+                for variant in req.variants
+            ],
+            metric_names=req.metrics,
+            num_iterations=req.num_iterations,
+            base_seed=req.base_seed,
+            max_ticks=req.max_ticks,
+            data_dir=str(data_dir),
+        )
+        async with _get_analysis_semaphore():
+            result = await asyncio.to_thread(
+                run_doctrine_comparison,
+                config,
+            )
+    except RUNTIME_INPUT_EXCEPTIONS as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
     return serialize_to_dict(result)
 
 

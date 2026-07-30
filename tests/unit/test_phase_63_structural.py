@@ -1,5 +1,6 @@
 """Phase 63 Step S: Structural verification tests."""
 
+import inspect
 
 
 def _read_source(module_path: str) -> str:
@@ -9,8 +10,30 @@ def _read_source(module_path: str) -> str:
     return open(mod.__file__).read()
 
 
+def _checkpoint_registry_evidence():
+    """Return the declared and runtime-owned checkpoint registry boundary."""
+    from stochastic_warfare.simulation.scenario import (
+        _CONTEXT_STATE_ENGINE_NAMES,
+        SimulationContext,
+    )
+
+    context = object.__new__(SimulationContext)
+    sentinels = {
+        name: object()
+        for name in _CONTEXT_STATE_ENGINE_NAMES
+    }
+    for name, sentinel in sentinels.items():
+        setattr(context, name, sentinel)
+    return (
+        _CONTEXT_STATE_ENGINE_NAMES,
+        dict(context._checkpoint_engines()),
+        sentinels,
+        inspect.getsource(SimulationContext.get_state),
+    )
+
+
 class TestPhase63Structural:
-    """Source-level string assertions to catch regressions."""
+    """Structural registry and source assertions to catch regressions."""
 
     def test_enable_event_feedback_in_calibration(self):
         src = _read_source("stochastic_warfare.simulation.calibration")
@@ -49,12 +72,20 @@ class TestPhase63Structural:
         assert "MissileEngine" in src
 
     def test_comms_engine_in_get_state(self):
-        src = _read_source("stochastic_warfare.simulation.scenario")
-        assert '("comms_engine", self.comms_engine)' in src
+        declared, runtime, sentinels, get_state_source = (
+            _checkpoint_registry_evidence()
+        )
+        assert "comms_engine" in declared
+        assert runtime["comms_engine"] is sentinels["comms_engine"]
+        assert "self._checkpoint_engines()" in get_state_source
 
     def test_detection_engine_in_get_state(self):
-        src = _read_source("stochastic_warfare.simulation.scenario")
-        assert '("detection_engine", self.detection_engine)' in src
+        declared, runtime, sentinels, get_state_source = (
+            _checkpoint_registry_evidence()
+        )
+        assert "detection_engine" in declared
+        assert runtime["detection_engine"] is sentinels["detection_engine"]
+        assert "self._checkpoint_engines()" in get_state_source
 
     def test_sensors_not_hardcoded_empty_in_battle_fow(self):
         src = _read_source("stochastic_warfare.simulation.battle")

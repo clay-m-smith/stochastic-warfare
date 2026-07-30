@@ -94,9 +94,12 @@ class TestSchemaConstruction:
         assert cs.side_overrides["franco_spanish"].cohesion == 0.6
         assert cs.side_overrides["franco_spanish"].start_x == 17000.0
 
-    def test_dead_key_advance_speed_dropped(self):
-        cs = CalibrationSchema(**{"advance_speed": 1.0})
-        assert not hasattr(cs, "advance_speed")
+    def test_dead_key_advance_speed_rejected(self):
+        with pytest.raises(
+            ValueError,
+            match="unsupported dead calibration.*advance_speed",
+        ):
+            CalibrationSchema(**{"advance_speed": 1.0})
 
     def test_structured_format_passthrough(self):
         """Already-structured data (from model_dump/checkpoint) passes through."""

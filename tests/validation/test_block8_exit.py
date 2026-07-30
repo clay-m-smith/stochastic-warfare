@@ -1,7 +1,9 @@
-"""Phase 81: Block 8 exit criteria — structural verification tests.
+"""Phase 81 Block 8 structural declarations against current repository state.
 
-Verifies all 10 Block 8 exit criteria without running the evaluator.
-Source-level and file-system checks only.
+The legacy file retains its exit-criterion numbering, but it does not convert
+source searches or authored victory conditions into historical outcome proof.
+Current seed-42 terminal classifications come from the production-evaluator
+snapshot.
 """
 
 from __future__ import annotations
@@ -10,6 +12,10 @@ import re
 from pathlib import Path
 
 import yaml
+
+from tests.validation.test_historical_accuracy import (
+    CURRENT_ENGINE_TERMINAL_SNAPSHOT,
+)
 
 _ROOT = Path(__file__).resolve().parents[2]
 _SRC = _ROOT / "stochastic_warfare"
@@ -170,43 +176,50 @@ class TestEC4_UnitTestCoverage:
 
 
 # ---------------------------------------------------------------------------
-# EC5: Historical scenarios produce decisive outcomes
+# EC5: Authored victory conditions and current terminal results remain distinct
 # ---------------------------------------------------------------------------
 
-class TestEC5_HistoricalDecisive:
-    """EC5: Historical scenarios produce decisive outcomes."""
+class TestEC5_TerminalDeclarations:
+    """EC5: Check current classifications without asserting historical truth."""
 
-    def test_trafalgar_in_decisive_list(self):
-        """Trafalgar is in DECISIVE_COMBAT_SCENARIOS."""
-        src = (_TESTS / "validation" / "test_historical_accuracy.py").read_text(encoding="utf-8")
-        assert '"trafalgar"' in src, "trafalgar not in DECISIVE_COMBAT_SCENARIOS"
+    def test_trafalgar_current_terminal_snapshot(self):
+        """Trafalgar currently ends by time expiry, not decisive combat."""
+        assert CURRENT_ENGINE_TERMINAL_SNAPSHOT["trafalgar"] == (
+            "british",
+            "time_expired",
+        )
 
-    def test_decisive_scenarios_have_target_side(self):
-        """Key decisive scenarios have target_side in force_destroyed victory conditions."""
+    def test_authored_force_destroyed_does_not_imply_terminal_condition(self):
+        """Three authored force conditions currently terminate by time expiry."""
         for scenario_dir in ["73_easting", "bekaa_valley_1982", "golan_heights"]:
             path = _DATA / "scenarios" / scenario_dir / "scenario.yaml"
-            if not path.exists():
-                continue
+            assert path.is_file()
             with open(path) as f:
                 data = yaml.safe_load(f)
             vcs = data.get("victory_conditions", [])
-            # At least one vc should be force_destroyed
             has_fd = any(vc.get("type") == "force_destroyed" for vc in vcs)
             assert has_fd, f"{scenario_dir} missing force_destroyed victory condition"
+            assert CURRENT_ENGINE_TERMINAL_SNAPSHOT[scenario_dir][1] == (
+                "time_expired"
+            )
 
 
 # ---------------------------------------------------------------------------
-# EC6: Golan Heights < 120s
+# EC6: Golan uses the strict manual paired policy
 # ---------------------------------------------------------------------------
 
 class TestEC6_GolanBenchmark:
-    """EC6: Golan Heights < 120s — verified structurally in test_battle_perf.py."""
+    """EC6: Golan cannot pass from an absolute wall-clock literal."""
 
-    def test_benchmark_threshold_is_120(self):
-        """test_battle_perf.py asserts < 120s, not 180s."""
-        src = (_TESTS / "performance" / "test_battle_perf.py").read_text(encoding="utf-8")
-        assert "< 120.0" in src, "Golan benchmark not tightened to 120s"
-        assert "< 180.0" not in src, "Golan benchmark still at 180s"
+    def test_golan_policy_is_manual_and_paired(self):
+        """Parse the authoritative typed policy rather than source-searching."""
+        from tests.benchmarks.benchmark_suite import BenchmarkBaseline
+
+        entry = BenchmarkBaseline().load()["golan_heights"]
+        assert entry.policy.mode == "gate"
+        assert entry.policy.manual is True
+        assert entry.policy.timed_pairs == 3
+        assert entry.policy.maximum_median_slowdown_ratio == 1.2
 
 
 # ---------------------------------------------------------------------------

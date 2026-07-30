@@ -156,6 +156,7 @@ class ConstellationDefinition(BaseModel):
     sensor_resolution_m: float = 0.0
     sensor_swath_km: float = 0.0
     sensor_type: Literal["optical", "sar", "ir", "none"] = "none"
+    imint_position_sigma_m: float | None = None
     bandwidth_bps: float = 0.0
     detection_delay_s: float = 0.0
     detection_confidence: float = 0.0
@@ -207,6 +208,16 @@ class ConstellationDefinition(BaseModel):
     def _finite_metadata(cls, value: Any, info: Any) -> float:
         return _require_number(value, info.field_name)
 
+    @field_validator("imint_position_sigma_m", mode="before")
+    @classmethod
+    def _optional_position_sigma(
+        cls,
+        value: Any,
+    ) -> float | None:
+        if value is None:
+            return None
+        return _require_number(value, "imint_position_sigma_m")
+
     @model_validator(mode="after")
     def _valid_metadata_and_topology(self) -> ConstellationDefinition:
         if self.num_satellites != self.plane_count * self.sats_per_plane:
@@ -223,6 +234,18 @@ class ConstellationDefinition(BaseModel):
                 raise ValueError(f"{field_name} must be non-negative")
         if not 0.0 <= self.detection_confidence <= 1.0:
             raise ValueError("detection_confidence must be in [0, 1]")
+        imaging_types = {
+            ConstellationType.IMAGING_OPTICAL,
+            ConstellationType.IMAGING_SAR,
+        }
+        if self.imint_position_sigma_m is not None:
+            if self.constellation_type not in imaging_types:
+                raise ValueError(
+                    "imint_position_sigma_m is valid only for imaging "
+                    "constellations",
+                )
+            if self.imint_position_sigma_m <= 0.0:
+                raise ValueError("imint_position_sigma_m must be positive")
         return self
 
 
@@ -389,6 +412,7 @@ class SpaceConfig(BaseModel):
 
     enable_space: bool = False
     constellation_ids: list[str] = Field(default_factory=list)
+    imint_fusion_constellation_ids: list[str] = Field(default_factory=list)
     enable_asat: bool = False
     asat_assets: list[ASATAssetConfig] = Field(default_factory=list)
     asat_orders: list[ASATOrderConfig] = Field(default_factory=list)
@@ -415,13 +439,21 @@ class SpaceConfig(BaseModel):
     def _strict_booleans(cls, value: Any, info: Any) -> bool:
         return _require_strict_bool(value, info.field_name)
 
-    @field_validator("constellation_ids", mode="before")
+    @field_validator(
+        "constellation_ids",
+        "imint_fusion_constellation_ids",
+        mode="before",
+    )
     @classmethod
-    def _constellation_identifiers(cls, value: Any) -> Any:
+    def _constellation_identifiers(
+        cls,
+        value: Any,
+        info: Any,
+    ) -> Any:
         if not isinstance(value, list):
-            raise ValueError("constellation_ids must be a list")
+            raise ValueError(f"{info.field_name} must be a list")
         return [
-            _require_identifier(item, "constellation_ids entry")
+            _require_identifier(item, f"{info.field_name} entry")
             for item in value
         ]
 
@@ -490,6 +522,22 @@ class SpaceConfig(BaseModel):
 
         if len(self.constellation_ids) != len(set(self.constellation_ids)):
             raise ValueError("constellation_ids must not contain duplicates")
+        if len(self.imint_fusion_constellation_ids) != len(
+            set(self.imint_fusion_constellation_ids),
+        ):
+            raise ValueError(
+                "imint_fusion_constellation_ids must not contain duplicates",
+            )
+        unknown_fusion_ids = [
+            constellation_id
+            for constellation_id in self.imint_fusion_constellation_ids
+            if constellation_id not in self.constellation_ids
+        ]
+        if unknown_fusion_ids:
+            raise ValueError(
+                "imint_fusion_constellation_ids must be selected in "
+                f"constellation_ids: {unknown_fusion_ids!r}",
+            )
         asset_ids = [asset.asset_id for asset in self.asat_assets]
         if len(asset_ids) != len(set(asset_ids)):
             raise ValueError("asat_assets must have unique asset_id values")
@@ -510,6 +558,7 @@ class SpaceConfig(BaseModel):
 
         has_declarations = bool(
             self.constellation_ids
+            or self.imint_fusion_constellation_ids
             or self.asat_assets
             or self.asat_orders
         )

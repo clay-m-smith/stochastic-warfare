@@ -36,75 +36,73 @@ uv run python -c "import stochastic_warfare; print('OK')"
 ## Running the Test Suite
 
 ```bash
-uv run python -m pytest --tb=short -q           # default-selected suite
-uv run python -m pytest -m slow --ignore=tests/api --ignore=tests/e2e -q --tb=short -o addopts=  # all slow-marked tests
+uv sync --locked --extra dev --extra api --extra terrain --extra mcp
+uv run --no-sync python scripts/validate_test_partitions.py \
+  --output artifacts/partition-audit/manifest.json
+uv run --no-sync python scripts/run_pytest_partition.py standard \
+  --manifest artifacts/standard/manifest.json \
+  --junit artifacts/standard/junit.xml --forbid-skips \
+  --timeout-seconds 2700
 ```
 
-The default selection excludes `slow`, `benchmark`, `terrain`, `api`, and
-`e2e`, and ignores `tests/api` and `tests/e2e`. Run an excluded boundary
-explicitly with its required extra and `-o addopts=`. REM-013 tracks making
-those suites routine and explicit in CI.
+The authoritative suite is the exact audited union of six disjoint partitions:
+`standard`, `slow-only`, `benchmark-only`, `slow-benchmark`, `api`, and `e2e`.
+PR/main CI runs the audit plus `standard`, `api`, `e2e`, and the overlapping
+`terrain` dependency profile. Weekly/manual CI runs the three marker
+partitions in deterministic module-affine shards. `benchmark-policy` is another
+overlapping focused profile, not a seventh partition.
 
 All commands use `uv run` to ensure the correct virtual environment is used.
 
 ## Running Your First Scenario
 
-The engine runs scenarios defined in YAML files. Here's how to load and execute one programmatically:
+The engine runs scenarios defined in YAML files. Production consumers construct
+and execute them through one typed runtime-owned boundary.
 
-### Step 1: Load a Scenario
+### Step 1: Prepare a Scenario
 
 ```python
 from pathlib import Path
-from stochastic_warfare.simulation.scenario import ScenarioLoader
+from stochastic_warfare.simulation.runtime import (
+    AnalysisVariant,
+    SimulationRuntimeFactory,
+)
 
-# Point to the data directory containing unit/weapon/sensor definitions
 data_dir = Path("data")
-loader = ScenarioLoader(data_dir)
-
-# Load a scenario YAML -- this creates a fully-wired SimulationContext
 scenario_path = data_dir / "scenarios" / "73_easting" / "scenario.yaml"
-ctx = loader.load(scenario_path, seed=42)
+prepared = SimulationRuntimeFactory().prepare(
+    scenario_path,
+    data_root=data_dir,
+    variants=(AnalysisVariant(variant_id="baseline"),),
+)
 ```
 
-The `ScenarioLoader.load()` method:
+`SimulationRuntimeFactory.prepare()`:
 
 1. Parses the scenario YAML
-2. Loads all referenced unit, weapon, sensor, and signature definitions
-3. Creates terrain, environment, and all domain engines
-4. Wires optional subsystems (EW, Space, CBRN, escalation, doctrinal schools) if configured
-5. Returns a `SimulationContext` with everything ready to run
+2. Applies each strict typed variant independently without changing the source
+3. Captures source, code, data, catalog, doctrine, loadout, and roster identity
+4. Returns an immutable `PreparedScenario`
 
-### Step 2: Configure and Run the Engine
+Use `prepare_config()` instead when the source is already a typed
+`CampaignScenarioConfig`; it does not serialize through a temporary file.
+
+### Step 2: Build and Run a Session
 
 ```python
-from stochastic_warfare.simulation.engine import SimulationEngine, EngineConfig
-from stochastic_warfare.simulation.recorder import SimulationRecorder
-from stochastic_warfare.simulation.victory import VictoryEvaluator
-
-# Configure the engine
-config = EngineConfig(
-    max_ticks=10_000,              # safety limit
-    snapshot_interval_ticks=100,   # state snapshots every 100 ticks
+session = prepared.build(
+    "baseline",
+    seed=42,
+    max_ticks=10_000,
+    record_events=True,
 )
-
-# Set up event recording and victory evaluation
-recorder = SimulationRecorder(ctx.event_bus)
-victory = VictoryEvaluator(
-    objectives=ctx.objectives,
-    conditions=ctx.victory_conditions,
-    event_bus=ctx.event_bus,
-    max_duration_s=ctx.scenario_config.duration_s,
-)
-
-# Create and run the engine
-engine = SimulationEngine(
-    ctx,
-    config=config,
-    victory_evaluator=victory,
-    recorder=recorder,
-)
-result = engine.run()
+result = session.run_to_completion()
 ```
+
+`PreparedScenario.build()` performs exact side/roster/loadout and assignment
+checks, constructs victory and recording through the production boundary, and
+returns a fresh `RuntimeSession`. `run_to_completion()` rejects a non-terminal
+result.
 
 ### Step 3: Read the Results
 
@@ -114,10 +112,11 @@ print(f"Game over: {result.victory_result.game_over}")
 print(f"Winner: {result.victory_result.winning_side}")
 print(f"Condition: {result.victory_result.condition_type}")
 print(f"Ticks executed: {result.ticks_executed}")
-print(f"Wall-clock time: {result.duration_s:.1f}s")
+print(f"Logical simulated duration: {result.duration_s:.1f}s")
 
 # Access recorded events
-events = recorder.events()
+assert session.recorder is not None
+events = session.recorder.events
 print(f"Total events recorded: {len(events)}")
 ```
 
@@ -125,12 +124,12 @@ print(f"Total events recorded: {len(events)}")
 
 ### SimulationRunResult
 
-The `run()` method returns a `SimulationRunResult` with:
+`RuntimeSession.run_to_completion()` returns a `SimulationRunResult` with:
 
 | Field | Type | Description |
 |-------|------|-------------|
 | `ticks_executed` | `int` | Total simulation ticks completed |
-| `duration_s` | `float` | Wall-clock execution time in seconds |
+| `duration_s` | `float` | Logical simulated elapsed seconds |
 | `victory_result` | `VictoryResult` | Who won, how, and when |
 | `campaign_summary` | `Any` | Campaign-level statistics (if applicable) |
 
@@ -150,28 +149,31 @@ The `SimulationRecorder` captures all simulation events -- combat engagements, d
 
 ## Running Monte Carlo Batches
 
-For statistical validation, run multiple iterations with different seeds:
+For production-path statistical analysis, use the shared runtime-owned batch,
+comparison, sweep, or doctrine-comparison routes exposed by the Python analysis
+tools and REST API. They preserve ordered raw metric vectors, exact seeds,
+source/config fingerprints, and runtime provenance.
 
 ```python
-from stochastic_warfare.validation.scenario_runner import ScenarioRunner
-from stochastic_warfare.validation.monte_carlo import MonteCarloHarness, MonteCarloConfig
-from stochastic_warfare.validation.historical_data import HistoricalEngagement
+from stochastic_warfare.tools._run_helpers import run_scenario_batch
 
-# Create a scenario runner (handles loading and executing scenarios)
-runner = ScenarioRunner(data_dir=data_dir)
-
-# Configure Monte Carlo parameters
-mc_config = MonteCarloConfig(num_iterations=100)
-
-# Create the harness and run
-harness = MonteCarloHarness(runner, config=mc_config)
-engagement = HistoricalEngagement.load(scenario_path)
-mc_result = harness.run(engagement)
-
-# Aggregate statistics
-print(f"Mean exchange ratio: {mc_result.mean('exchange_ratio'):.1f}")
-print(f"95% CI: {mc_result.confidence_interval('exchange_ratio')}")
+batch = run_scenario_batch(
+    str(scenario_path),
+    overrides={},
+    num_iterations=100,
+    base_seed=42,
+    max_ticks=10_000,
+    metric_names=["exchange_ratio"],
+    data_dir=data_dir,
+)
+print(batch.statistics_dict()["exchange_ratio"]["mean"])
+print(batch.metric_values("exchange_ratio"))
 ```
+
+A seeded distribution characterizes current production behavior; it is not by
+itself historical validation. A historical verdict requires a predeclared,
+source-backed outcome envelope and held-out production runs. Catalog-wide work
+for that claim is tracked by [REM-030](../remediation-backlog.md).
 
 ## Using the Web UI
 

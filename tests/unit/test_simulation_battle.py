@@ -91,7 +91,9 @@ class TestBattleContext:
 
     def test_unit_ids_tracking(self) -> None:
         b = BattleContext(
-            battle_id="b1", start_tick=0, start_time=TS,
+            battle_id="b1",
+            start_tick=0,
+            start_time=TS,
             involved_sides=["blue", "red"],
             unit_ids={"u1", "u2"},
         )
@@ -212,7 +214,9 @@ class TestBattleTermination:
     def test_active_battle_not_terminated(self, event_bus: EventBus) -> None:
         mgr = BattleManager(event_bus)
         battle = BattleContext(
-            battle_id="b1", start_tick=0, start_time=TS,
+            battle_id="b1",
+            start_tick=0,
+            start_time=TS,
             involved_sides=["blue", "red"],
         )
         units = _units_by_side([Position(0, 0, 0)], [Position(1000, 0, 0)])
@@ -221,7 +225,9 @@ class TestBattleTermination:
     def test_no_active_units_terminates(self, event_bus: EventBus) -> None:
         mgr = BattleManager(event_bus)
         battle = BattleContext(
-            battle_id="b1", start_tick=0, start_time=TS,
+            battle_id="b1",
+            start_tick=0,
+            start_time=TS,
             involved_sides=["blue", "red"],
         )
         blue = [_make_unit("b1", Position(0, 0, 0), "blue")]
@@ -231,7 +237,9 @@ class TestBattleTermination:
     def test_max_ticks_terminates(self, event_bus: EventBus) -> None:
         mgr = BattleManager(event_bus, BattleConfig(max_ticks_per_battle=10))
         battle = BattleContext(
-            battle_id="b1", start_tick=0, start_time=TS,
+            battle_id="b1",
+            start_tick=0,
+            start_time=TS,
             involved_sides=["blue", "red"],
         )
         battle.ticks_executed = 10
@@ -241,7 +249,9 @@ class TestBattleTermination:
     def test_disengaged_terminates(self, event_bus: EventBus) -> None:
         mgr = BattleManager(event_bus, BattleConfig(engagement_range_m=1000))
         battle = BattleContext(
-            battle_id="b1", start_tick=0, start_time=TS,
+            battle_id="b1",
+            start_tick=0,
+            start_time=TS,
             involved_sides=["blue", "red"],
         )
         # Forces far apart (> 2x engagement range)
@@ -251,7 +261,9 @@ class TestBattleTermination:
     def test_inactive_battle_returns_true(self, event_bus: EventBus) -> None:
         mgr = BattleManager(event_bus)
         battle = BattleContext(
-            battle_id="b1", start_tick=0, start_time=TS,
+            battle_id="b1",
+            start_tick=0,
+            start_time=TS,
             involved_sides=["blue", "red"],
             active=False,
         )
@@ -261,7 +273,9 @@ class TestBattleTermination:
     def test_missing_side_terminates(self, event_bus: EventBus) -> None:
         mgr = BattleManager(event_bus)
         battle = BattleContext(
-            battle_id="b1", start_tick=0, start_time=TS,
+            battle_id="b1",
+            start_tick=0,
+            start_time=TS,
             involved_sides=["blue", "red"],
         )
         units = {"blue": [_make_unit("b1", Position(0, 0, 0), "blue")]}
@@ -279,7 +293,9 @@ class TestBattleResolution:
     def test_resolve_produces_result(self, event_bus: EventBus) -> None:
         mgr = BattleManager(event_bus)
         battle = BattleContext(
-            battle_id="b1", start_tick=0, start_time=TS,
+            battle_id="b1",
+            start_tick=0,
+            start_time=TS,
             involved_sides=["blue", "red"],
         )
         battle.ticks_executed = 50
@@ -291,7 +307,9 @@ class TestBattleResolution:
     def test_resolve_deactivates_battle(self, event_bus: EventBus) -> None:
         mgr = BattleManager(event_bus)
         battle = BattleContext(
-            battle_id="b1", start_tick=0, start_time=TS,
+            battle_id="b1",
+            start_tick=0,
+            start_time=TS,
             involved_sides=["blue", "red"],
         )
         units = _units_by_side([Position(0, 0, 0)], [Position(1000, 0, 0)])
@@ -301,7 +319,9 @@ class TestBattleResolution:
     def test_resolve_counts_destroyed(self, event_bus: EventBus) -> None:
         mgr = BattleManager(event_bus)
         battle = BattleContext(
-            battle_id="b1", start_tick=0, start_time=TS,
+            battle_id="b1",
+            start_tick=0,
+            start_time=TS,
             involved_sides=["blue", "red"],
         )
         red = [
@@ -317,7 +337,9 @@ class TestBattleResolution:
     def test_resolve_reports_terminated_by(self, event_bus: EventBus) -> None:
         mgr = BattleManager(event_bus)
         battle = BattleContext(
-            battle_id="b1", start_tick=0, start_time=TS,
+            battle_id="b1",
+            start_tick=0,
+            start_time=TS,
             involved_sides=["blue", "red"],
         )
         red = [_make_unit("r1", POS_ORIGIN, "red", UnitStatus.DESTROYED)]
@@ -328,7 +350,9 @@ class TestBattleResolution:
     def test_resolve_max_ticks(self, event_bus: EventBus) -> None:
         mgr = BattleManager(event_bus, BattleConfig(max_ticks_per_battle=100))
         battle = BattleContext(
-            battle_id="b1", start_tick=0, start_time=TS,
+            battle_id="b1",
+            start_tick=0,
+            start_time=TS,
             involved_sides=["blue", "red"],
         )
         battle.ticks_executed = 100
@@ -339,7 +363,9 @@ class TestBattleResolution:
     def test_resolve_disengaged(self, event_bus: EventBus) -> None:
         mgr = BattleManager(event_bus)
         battle = BattleContext(
-            battle_id="b1", start_tick=0, start_time=TS,
+            battle_id="b1",
+            start_tick=0,
+            start_time=TS,
             involved_sides=["blue", "red"],
         )
         battle.ticks_executed = 10
@@ -385,9 +411,15 @@ class TestDeferredDamage:
         assert u1.status == UnitStatus.DESTROYED
         assert u2.status == UnitStatus.DISABLED
 
-    def test_empty_pending(self, event_bus: EventBus) -> None:
+    def test_empty_pending_damage_is_explicit_no_op(
+        self,
+        event_bus: EventBus,
+    ) -> None:
+        """An empty damage batch preserves the manager's exact state."""
         mgr = BattleManager(event_bus)
-        mgr._apply_deferred_damage([])  # Should not raise
+        before = mgr.get_state()
+        mgr._apply_deferred_damage([])
+        assert mgr.get_state() == before
 
     def test_no_damage_preserves_active(self, event_bus: EventBus) -> None:
         u = _make_unit("t1", POS_ORIGIN)
@@ -407,7 +439,7 @@ class TestBuildEnemyData:
         units = _units_by_side([Position(0, 0, 0)], [Position(1000, 0, 0)])
         enemies, pos_arrays = BattleManager._build_enemy_data(units)
         assert len(enemies["blue"]) == 1  # One red enemy
-        assert len(enemies["red"]) == 1   # One blue enemy
+        assert len(enemies["red"]) == 1  # One blue enemy
 
     def test_destroyed_excluded(self, event_bus: EventBus) -> None:
         blue = [_make_unit("b1", POS_ORIGIN, "blue")]
@@ -422,7 +454,7 @@ class TestBuildEnemyData:
         )
         _, pos_arrays = BattleManager._build_enemy_data(units)
         assert pos_arrays["blue"].shape == (1, 2)  # 1 red enemy, 2 coords
-        assert pos_arrays["red"].shape == (2, 2)   # 2 blue enemies
+        assert pos_arrays["red"].shape == (2, 2)  # 2 blue enemies
 
     def test_empty_side(self, event_bus: EventBus) -> None:
         _, pos_arrays = BattleManager._build_enemy_data({"blue": [], "red": []})

@@ -132,12 +132,14 @@ class TestUpdateResolution:
 
     def test_active_battles_to_tactical(self):
         from stochastic_warfare.simulation.engine import TickResolution
+
         engine = _make_resolution_engine(active_battles=["battle_1"])
         engine._update_resolution()
         assert engine._resolution == TickResolution.TACTICAL
 
     def test_closing_to_operational(self):
         from stochastic_warfare.simulation.engine import TickResolution
+
         u_blue = _make_unit("u1", "blue", Position(0.0, 0.0, 0.0))
         u_red = _make_unit("u2", "red", Position(100.0, 0.0, 0.0))
         u_blue.status = UnitStatus.ACTIVE
@@ -148,6 +150,7 @@ class TestUpdateResolution:
 
     def test_deescalation_chain(self):
         from stochastic_warfare.simulation.engine import TickResolution
+
         u_blue = _make_unit("u1", "blue", Position(0.0, 0.0, 0.0))
         u_red = _make_unit("u2", "red", Position(200000.0, 0.0, 0.0))
         u_blue.status = UnitStatus.ACTIVE
@@ -159,6 +162,7 @@ class TestUpdateResolution:
 
     def test_operational_to_strategic(self):
         from stochastic_warfare.simulation.engine import TickResolution
+
         u_blue = _make_unit("u1", "blue", Position(0.0, 0.0, 0.0))
         u_red = _make_unit("u2", "red", Position(200000.0, 0.0, 0.0))
         u_blue.status = UnitStatus.ACTIVE
@@ -170,6 +174,7 @@ class TestUpdateResolution:
 
     def test_already_strategic_stays(self):
         from stochastic_warfare.simulation.engine import TickResolution
+
         u_blue = _make_unit("u1", "blue", Position(0.0, 0.0, 0.0))
         u_red = _make_unit("u2", "red", Position(200000.0, 0.0, 0.0))
         u_blue.status = UnitStatus.ACTIVE
@@ -190,12 +195,14 @@ class TestSetResolution:
 
     def test_changes_resolution(self):
         from stochastic_warfare.simulation.engine import TickResolution
+
         engine = _make_resolution_engine()
         engine._set_resolution(TickResolution.TACTICAL)
         assert engine._resolution == TickResolution.TACTICAL
 
     def test_same_noop(self):
         from stochastic_warfare.simulation.engine import TickResolution
+
         engine = _make_resolution_engine()
         engine._resolution = TickResolution.STRATEGIC
         engine._set_resolution(TickResolution.STRATEGIC)
@@ -204,15 +211,22 @@ class TestSetResolution:
 
     def test_clock_updated(self):
         from stochastic_warfare.simulation.engine import TickResolution
+
         engine = _make_resolution_engine()
         engine._set_resolution(TickResolution.TACTICAL)
         assert engine._ctx.clock.tick_duration == timedelta(seconds=10)
 
-    def test_transition_logged(self):
+    def test_transition_changes_clock_and_emits_exact_log(self, caplog):
         from stochastic_warfare.simulation.engine import TickResolution
+
         engine = _make_resolution_engine()
-        # Just verify no crash — logging is tested structurally
-        engine._set_resolution(TickResolution.OPERATIONAL)
+        with caplog.at_level("INFO"):
+            engine._set_resolution(TickResolution.OPERATIONAL)
+        assert engine._resolution == TickResolution.OPERATIONAL
+        assert engine._ctx.clock.tick_duration == timedelta(
+            seconds=60,
+        )
+        assert ("Resolution switch: STRATEGIC -> OPERATIONAL (60.0s tick)") in caplog.messages
 
 
 # ===================================================================

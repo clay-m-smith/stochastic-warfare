@@ -396,7 +396,10 @@ class TestReinforcementArrival:
         assert initial_blue_count == 1
 
         # A missing production dependency is explicit and retryable.
-        with pytest.raises(RuntimeError, match="without a unit loader"):
+        with pytest.raises(
+            RuntimeError,
+            match="without the production RuntimeForceBuilder",
+        ):
             engine.step()
 
         entries = engine.campaign_manager._reinforcements
@@ -425,7 +428,10 @@ class TestReinforcementArrival:
 
         # At the due time, a missing loader fails explicitly without
         # consuming the schedule entry.
-        with pytest.raises(RuntimeError, match="without a unit loader"):
+        with pytest.raises(
+            RuntimeError,
+            match="without the production RuntimeForceBuilder",
+        ):
             engine.step()
         assert entries[0].arrived is False
 

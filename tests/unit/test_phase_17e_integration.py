@@ -4,8 +4,10 @@ from __future__ import annotations
 
 
 import numpy as np
+import pytest
 
 from stochastic_warfare.core.events import EventBus
+from stochastic_warfare.core.types import Position
 from stochastic_warfare.simulation.scenario import SimulationContext, CampaignScenarioConfig
 
 from tests.conftest import make_rng, make_clock
@@ -50,7 +52,8 @@ class TestGPSDegradesCEP:
         """Non-GPS weapons have factor 1.0 regardless of accuracy."""
         from stochastic_warfare.space.gps import GPSEngine
         from stochastic_warfare.space.constellations import (
-            ConstellationManager, SpaceConfig,
+            ConstellationManager,
+            SpaceConfig,
         )
         from stochastic_warfare.space.orbits import OrbitalMechanicsEngine
 
@@ -78,13 +81,52 @@ class TestSATCOMDegrades:
 
     def test_wire_unaffected(self) -> None:
         """Non-SATELLITE comm types not degraded by satcom factor."""
-        from stochastic_warfare.c2.communications import CommunicationsEngine
+        from stochastic_warfare.c2.communications import (
+            CommEquipmentDefinition,
+            CommunicationsEngine,
+            EmconState,
+        )
 
         comms = CommunicationsEngine(_bus(), _rng())
         comms.set_satcom_reliability(0.0)
-        # Wire comms should not be affected
-        # (we can't easily test without full setup, but the code only checks
-        # comm_type_enum == SATELLITE)
+        common = {
+            "display_name": "Phase 112 channel",
+            "max_range_m": 10_000.0,
+            "bandwidth_bps": 1_000.0,
+            "base_latency_s": 0.1,
+            "base_reliability": 1.0,
+            "intercept_risk": 0.0,
+            "jam_resistance": 1.0,
+            "requires_los": False,
+        }
+        wire = CommEquipmentDefinition(
+            comm_id="wire",
+            comm_type="WIRE",
+            **common,
+        )
+        satellite = CommEquipmentDefinition(
+            comm_id="satellite",
+            comm_type="SATELLITE",
+            **common,
+        )
+        origin = Position(0.0, 0.0, 0.0)
+        destination = Position(100.0, 0.0, 0.0)
+
+        assert comms._channel_reliability(
+            wire,
+            origin,
+            destination,
+            EmconState.RADIATE,
+        ) == 1.0
+        assert (
+            comms._channel_reliability(
+                satellite,
+                origin,
+                destination,
+                EmconState.RADIATE,
+            )
+            == 0.0
+        )
 
     def test_state_persists(self) -> None:
         from stochastic_warfare.c2.communications import CommunicationsEngine
@@ -141,6 +183,7 @@ class TestEMConstellationAccuracy:
 
         clock = make_clock()
         from stochastic_warfare.environment.weather import WeatherConfig
+
         weather = WeatherEngine(WeatherConfig(), clock, _rng())
         em = EMEnvironment(weather, None, clock)
         em.set_constellation_accuracy(12.0)
@@ -152,6 +195,7 @@ class TestEMConstellationAccuracy:
 
         clock = make_clock()
         from stochastic_warfare.environment.weather import WeatherConfig
+
         weather = WeatherEngine(WeatherConfig(), clock, _rng())
         em = EMEnvironment(weather, None, clock)
         em.set_constellation_accuracy(10.0)
@@ -164,6 +208,7 @@ class TestEMConstellationAccuracy:
 
         clock = make_clock()
         from stochastic_warfare.environment.weather import WeatherConfig
+
         weather = WeatherEngine(WeatherConfig(), clock, _rng())
         em = EMEnvironment(weather, None, clock)
         # Default 0.0 → fallback to 5.0
@@ -184,7 +229,9 @@ class TestContext:
         bus = _bus()
         rng_mgr = RNGManager(42)
         config = CampaignScenarioConfig(
-            name="test", date="2024-01-01", duration_hours=1.0,
+            name="test",
+            date="2024-01-01",
+            duration_hours=1.0,
             terrain={"width_m": 1000, "height_m": 1000},
             sides=[
                 {"side": "blue", "units": [{"unit_type": "test"}]},
@@ -192,8 +239,10 @@ class TestContext:
             ],
         )
         ctx = SimulationContext(
-            config=config, clock=clock,
-            rng_manager=rng_mgr, event_bus=bus,
+            config=config,
+            clock=clock,
+            rng_manager=rng_mgr,
+            event_bus=bus,
         )
         assert ctx.space_engine is None
 
@@ -205,7 +254,9 @@ class TestContext:
         bus = _bus()
         rng_mgr = RNGManager(42)
         config = CampaignScenarioConfig(
-            name="test", date="2024-01-01", duration_hours=1.0,
+            name="test",
+            date="2024-01-01",
+            duration_hours=1.0,
             terrain={"width_m": 1000, "height_m": 1000},
             sides=[
                 {"side": "blue", "units": [{"unit_type": "test"}]},
@@ -213,8 +264,10 @@ class TestContext:
             ],
         )
         ctx = SimulationContext(
-            config=config, clock=clock,
-            rng_manager=rng_mgr, event_bus=bus,
+            config=config,
+            clock=clock,
+            rng_manager=rng_mgr,
+            event_bus=bus,
         )
         assert ctx.space_engine is None
         # get_state should work with None space_engine

@@ -1,7 +1,8 @@
-"""Validation tests for 73 Easting scenario.
+"""Legacy-runner regression tests for the 73 Easting scenario.
 
-Tests that the scenario loads, runs, produces non-trivial results,
-and (after calibration) produces metrics within historical tolerance.
+These tests cover loading, execution, deterministic variation, metric
+projection, and one Monte Carlo convergence property. They do not establish
+historical outcome validity.
 """
 
 from __future__ import annotations
@@ -163,16 +164,11 @@ class TestMonteCarloFast:
 
 @pytest.mark.slow
 class TestMonteCarloFull:
-    def test_mc_1000_runs(self, engagement, runner) -> None:
-        mc_config = MonteCarloConfig(num_iterations=1000, base_seed=42)
-        harness = MonteCarloHarness(runner, mc_config)
-        mc_result = harness.run(engagement)
-        assert mc_result.num_runs == 1000
-
     def test_mc_1000_convergence(self, engagement, runner) -> None:
         mc_config = MonteCarloConfig(num_iterations=1000, base_seed=42)
         harness = MonteCarloHarness(runner, mc_config)
         mc_result = harness.run(engagement)
-        # CI should be narrower than full tolerance
+        assert mc_result.num_runs == 1000
+        # The 95% confidence interval should be narrower than the observed mean.
         lo, hi = mc_result.confidence_interval("duration_s", 0.95)
         assert hi - lo < mc_result.mean("duration_s")

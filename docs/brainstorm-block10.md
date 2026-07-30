@@ -1,5 +1,13 @@
 # Block 10: UI Depth & Engine Exposure
 
+> **Phase 112 integrity supersession (2026-07-30):** This brainstorming page
+> preserves Block 10's contemporaneous design inventory, counts, and scenario
+> claims. They are development history, not current historical-validation
+> evidence. Scenario availability, UI exposure, winner agreement, and
+> current-engine regression do not establish a provenance-bearing, held-out
+> production outcome-envelope verdict. REM-030/Phase 117 owns the replacement
+> catalog-wide contract and the disposition of every retained claim.
+
 ## Motivation
 
 Blocks 1–9 delivered 91 phases of engine capability: 60+ domain engines, 32 `enable_*` behavioral flags, 68 calibration parameters, 9 doctrinal schools, 5 historical eras, 100+ event types, and 40 validated scenarios across ~10,638 tests. The engine is comprehensive, historically validated, and performant for scenarios up to ~300 units.

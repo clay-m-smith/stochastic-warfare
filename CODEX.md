@@ -15,9 +15,14 @@ Track them in `docs/remediation-backlog.md`.
 Stochastic Warfare is a deterministic, data-driven, multi-scale wargame
 simulator with a Python engine, FastAPI service, and React frontend.
 
-The production execution path is:
+The production consumer path is:
 
-`scenario YAML -> CampaignScenarioConfig / ScenarioLoader -> SimulationContext -> SimulationEngine -> CampaignManager / BattleManager -> Recorder / Victory -> API -> frontend`
+`scenario YAML or typed CampaignScenarioConfig -> SimulationRuntimeFactory.prepare / prepare_config -> PreparedScenario.build -> RuntimeSession.step / run_to_completion / finalize -> SimulationEngine -> CampaignManager / BattleManager -> Recorder / Victory -> API / analysis / frontend`
+
+`ScenarioLoader` remains the lower-level simulation wiring boundary used by
+the factory. Production consumers that claim comparable runtime execution use
+the typed factory/session boundary so source preparation, variants, roster,
+loadouts, victory construction, and provenance are not reimplemented.
 
 The core dependency direction is:
 
@@ -47,6 +52,12 @@ simulator. A test that exercises it does not prove that the production
   misspelled inputs must fail explicitly instead of silently falling back.
 - Unit, equipment, and scenario YAML remain data-driven. Equipment mappings
   must preserve the equipment's actual semantics.
+- Authoritative runtime source identity is Git-first. A checkout records its
+  commit and content-sensitive dirty-tree identity and must not fall back from
+  a broken Git worktree. A no-`.git` production package requires a verified
+  generated application-source identity; Docker builds supply an explicit
+  `SOURCE_REVISION`, and missing, malformed, or tampered package source fails
+  closed.
 - Simulation-core logging uses the project logging framework, not `print()`.
 - Public APIs require type hints.
 - Every affected stateful component must serialize and restore its complete
@@ -194,40 +205,49 @@ limitation. Do not silently approximate it.
 
 ## Test Commands and Hidden Coverage
 
-Setup:
+Install the locked superset needed by the authoritative collection audit:
 
 ```powershell
-uv sync --extra dev
+uv sync --locked --extra dev --extra api --extra terrain --extra mcp
 ```
 
-Python default suite:
+The Python suite is the exact union of six audited, pairwise-disjoint
+partitions:
+
+| Partition | Authoritative selector |
+|---|---|
+| `standard` | `tests`, `not slow and not benchmark`, excluding `tests/api` and `tests/e2e` |
+| `slow-only` | `tests`, `slow and not benchmark`, excluding `tests/api` and `tests/e2e` |
+| `benchmark-only` | `tests`, `benchmark and not slow`, excluding `tests/api` and `tests/e2e` |
+| `slow-benchmark` | `tests`, `slow and benchmark`, excluding `tests/api` and `tests/e2e` |
+| `api` | `tests/api` |
+| `e2e` | `tests/e2e` |
+
+Audit the exact union, then run a named partition through the fail-closed
+runner:
 
 ```powershell
-uv run python -m pytest --tb=short -q
+uv run --no-sync python scripts/validate_test_partitions.py --output artifacts/partition-audit/manifest.json
+uv run --no-sync python scripts/run_pytest_partition.py standard --manifest artifacts/standard/manifest.json --junit artifacts/standard/junit.xml --forbid-skips --timeout-seconds 2700
 ```
 
-The default suite does not mean all Python tests. `pyproject.toml` deselects
-`slow`, `benchmark`, `terrain`, `api`, and `e2e`, and ignores `tests/api` and
-`tests/e2e`.
+PR/main CI runs the audit plus `standard`, `api`, `e2e`, and the `terrain`
+dependency profile. Weekly/manual extended CI runs `slow-only` in four shards,
+`benchmark-only` in three shards, and `slow-benchmark` in one shard. Sharding
+is deterministic and module-affine. `terrain` (the four Phase 15 terrain
+files) and `benchmark-policy` are intentionally overlapping dependency/policy
+profiles, not additional members of the disjoint union. The 73 Easting paired
+benchmark is routine; Golan is manual.
 
-Run excluded suites explicitly when relevant:
-
-```powershell
-uv run python -m pytest tests/api -q --tb=short -o addopts=
-uv run python -m pytest tests/e2e -q --tb=short -o addopts=
-uv run python -m pytest -m slow --ignore=tests/api --ignore=tests/e2e -q --tb=short -o addopts=
-uv run python -m pytest -m benchmark --ignore=tests/api --ignore=tests/e2e -q --tb=short -o addopts=
-uv run python -m pytest -m terrain --ignore=tests/api --ignore=tests/e2e -q --tb=short -o addopts=
-uv run python -m pytest --collect-only -q -o addopts=
-```
-
-API, terrain, and documentation checks may require their corresponding optional
-extras.
+Raw `pytest` marker commands are diagnostics only. They must not be reported as
+the authoritative partition evidence because `slow` and `benchmark` overlap.
+API, terrain, and documentation checks may require their corresponding
+optional extras.
 
 Static checks:
 
 ```powershell
-uv run ruff check stochastic_warfare api tests
+uv run --no-sync ruff check stochastic_warfare/ api/ tests/ scripts/
 ```
 
 Data changes:

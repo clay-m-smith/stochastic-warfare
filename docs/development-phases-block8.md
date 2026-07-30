@@ -1,5 +1,11 @@
 # Stochastic Warfare -- Block 8 Development Phases (68--82)
 
+> **Phase 112 integrity supersession (2026-07-30):** This roadmap preserves
+> Block 8's historical plan and completion record. Correct-winner and victory
+> condition checks are current-engine regression, not provenance-bearing,
+> held-out historical validation. REM-030/Phase 117 owns the replacement
+> catalog-wide outcome-envelope contract.
+
 ## Philosophy
 
 Block 8 is the **depth completion block**. A post-Block-7 audit reveals a new systemic pattern: **structural wiring without behavioral depth**. Block 7 successfully connected 21 `enable_*` flags and 36 environment parameters, but many engines follow a "log but don't act" pattern — results are computed and logged, but never enforce consequences. Gates are checked but not blocking. Orders are issued but execute instantly. Fire zones exist but deal no damage. Historical scenarios produce the right winner via the wrong victory condition.

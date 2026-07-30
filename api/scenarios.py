@@ -10,6 +10,8 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
+from stochastic_warfare.scenario_names import validate_scenario_name
+
 
 class _ScanCache:
     """Mtime-based filesystem scan cache."""
@@ -69,6 +71,7 @@ def resolve_scenario(name: str, data_dir: Path) -> Path:
 
     Raises ``FileNotFoundError`` if not found.
     """
+    name = validate_scenario_name(name)
     base = data_dir / "scenarios" / name / "scenario.yaml"
     if base.exists():
         return base

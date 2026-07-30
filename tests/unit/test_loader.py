@@ -7,6 +7,7 @@ import pytest
 
 from stochastic_warfare.core.types import Domain, Position, Side
 from stochastic_warfare.entities.loader import (
+    MissingUnitDefinitionError,
     SensorPolicy,
     UnitDefinition,
     UnitLoader,
@@ -29,6 +30,7 @@ class TestUnitDefinition:
             unit_type="test",
             domain="ground",
             display_name="Test Unit",
+            ground_type="LIGHT_INFANTRY",
             max_speed=5.0,
             crew=[{"role": "COMMANDER", "count": 1}],
             equipment=[{"name": "Gun", "category": "WEAPON"}],
@@ -192,7 +194,7 @@ class TestCreateUnit:
         assert u.domain == Domain.AMPHIBIOUS
 
     def test_unknown_type_raises(self, loader: UnitLoader) -> None:
-        with pytest.raises(KeyError):
+        with pytest.raises(MissingUnitDefinitionError):
             loader.create_unit("nonexistent", "x", Position(0.0, 0.0),
                                Side.BLUE, self._rng())
 

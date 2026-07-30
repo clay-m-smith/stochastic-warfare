@@ -29,6 +29,16 @@ Setting `era` in a scenario YAML selects a registered configuration. Unknown
 eras are rejected. The production loader enforces suite gates and rejects
 unit loadouts that require forbidden sensors, guidance, or data links.
 
+!!! warning "Historical-validation status"
+
+    A historical name, source citation, `documented_outcomes` field, successful
+    load, or current-engine regression result does not by itself validate a
+    scenario against history. Earlier blanket Phase 47 claims are superseded
+    by [REM-030](../remediation-backlog.md#rem-030-catalog-wide-historical-outcome-claims-lack-production-validation).
+    Each scenario must have a provenance-bearing, held-out production
+    outcome-envelope verdict before it is described as historically validated;
+    otherwise its historical-validation status is unsupported.
+
 ---
 
 ## Modern Era (Cold War -- Present)
@@ -67,7 +77,11 @@ US FM 3-0, Russian Deep Operations, NATO Procedures, PLA Active Defense, IDF Pre
 
 ### Available Scenarios
 
-30 modern scenarios including 73 Easting, Falklands Naval, Golan Heights, Taiwan Strait, Korean Peninsula, Suwalki Gap, and 3 calibration exercise scenarios (arctic, urban CBRN, air-ground). All scenarios validated against historical outcomes in Phase 47 (seed=42 deterministic + Monte Carlo).
+The modern catalog includes 73 Easting, Falklands Naval, Golan Heights,
+Taiwan Strait, Korean Peninsula, Suwalki Gap, and three calibration exercise
+scenarios (arctic, urban CBRN, and air-ground). It mixes historical,
+hypothetical, calibration, benchmark, and validation scenarios; availability
+is not a historical-validation claim.
 
 ---
 
@@ -126,7 +140,10 @@ High-altitude bombing with circular error probable (CEP):
 
 ### Available Scenarios
 
-Kursk 1943 (largest tank battle), Normandy Bocage 1944 (hedgerow fighting), Stalingrad 1942 (urban combat), Midway 1942 (carrier battle). All validated against historical outcomes in Phase 47.
+Kursk 1943 (largest tank battle), Normandy Bocage 1944 (hedgerow fighting),
+Stalingrad 1942 (urban combat), and Midway 1942 (carrier battle). Their
+availability and current-engine regression coverage are not historical
+outcome-envelope verdicts.
 
 ---
 
@@ -189,7 +206,10 @@ Chemical weapons via CBRN adapter:
 
 ### Available Scenarios
 
-Somme July 1 1916 (first day of the Somme), Cambrai 1917 (first mass tank assault), Jutland 1916 (dreadnought fleet action). All validated against historical outcomes in Phase 47.
+Somme July 1 1916 (first day of the Somme), Cambrai 1917 (first mass tank
+assault), and Jutland 1916 (dreadnought fleet action). Their availability and
+current-engine regression coverage are not historical outcome-envelope
+verdicts.
 
 ---
 
@@ -280,7 +300,9 @@ Supply through local foraging:
 
 ### Available Scenarios
 
-Austerlitz 1805 (Napoleon's masterpiece), Waterloo 1815 (Coalition defeat of Napoleon), Trafalgar 1805 (Nelson vs Franco-Spanish fleet). All validated against historical outcomes in Phase 47.
+Austerlitz 1805, Waterloo 1815, and Trafalgar 1805. Their availability and
+current-engine regression coverage are not historical outcome-envelope
+verdicts.
 
 ---
 
@@ -369,7 +391,9 @@ Command and control via visual/audible signals:
 
 ### Available Scenarios
 
-Cannae 216 BC (Hannibal's double envelopment), Salamis 480 BC (Greek trireme victory), Hastings 1066 (Norman conquest), Agincourt 1415 (English longbow vs French knights). All validated against historical outcomes in Phase 47.
+Cannae 216 BC, Salamis 480 BC, Hastings 1066, and Agincourt 1415. Their
+availability and current-engine regression coverage are not historical
+outcome-envelope verdicts.
 
 ---
 

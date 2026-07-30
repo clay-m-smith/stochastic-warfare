@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-
+import pytest
 
 from stochastic_warfare.tools.sensitivity import (
     MetricResult,
@@ -39,6 +39,33 @@ class TestSweepConfig:
         assert cfg.iterations_per_point == 10
         assert cfg.base_seed == 42
         assert cfg.max_ticks == 100
+
+    def test_rejects_invalid_sampling_contract(self) -> None:
+        with pytest.raises(ValueError):
+            SweepConfig(
+                scenario_path="test.yaml",
+                parameter_name="hit_probability_modifier",
+                values=[],
+            )
+        with pytest.raises(ValueError):
+            SweepConfig(
+                scenario_path="test.yaml",
+                parameter_name="hit_probability_modifier",
+                values=[1.0, 1.0],
+            )
+        with pytest.raises(ValueError):
+            SweepConfig(
+                scenario_path="test.yaml",
+                parameter_name="hit_probability_modifier",
+                values=[float("nan")],
+            )
+        with pytest.raises(ValueError):
+            SweepConfig(
+                scenario_path="test.yaml",
+                parameter_name="hit_probability_modifier",
+                values=[1.0],
+                iterations_per_point=1,
+            )
 
 
 # ---------------------------------------------------------------------------
@@ -111,11 +138,9 @@ class TestPlotSweep:
         assert isinstance(fig, matplotlib.figure.Figure)
 
     def test_plot_empty_data(self) -> None:
-        import matplotlib.figure
-
         result = SweepResult(parameter_name="param", points=[])
-        fig = plot_sweep(result)
-        assert isinstance(fig, matplotlib.figure.Figure)
+        with pytest.raises(ValueError, match="no points"):
+            plot_sweep(result)
 
     def test_plot_specific_metric(self) -> None:
         import matplotlib.figure
@@ -131,3 +156,24 @@ class TestPlotSweep:
         )
         fig = plot_sweep(result, metric="m2")
         assert isinstance(fig, matplotlib.figure.Figure)
+
+    def test_plot_rejects_missing_metric(self) -> None:
+        result = SweepResult(
+            parameter_name="param",
+            points=[
+                SweepPoint(
+                    parameter_value=1.0,
+                    metric_results=[
+                        MetricResult(
+                            metric="m1",
+                            mean=1.0,
+                            std=0.1,
+                            min=0.8,
+                            max=1.2,
+                        ),
+                    ],
+                ),
+            ],
+        )
+        with pytest.raises(ValueError, match="metric 'missing'"):
+            plot_sweep(result, metric="missing")

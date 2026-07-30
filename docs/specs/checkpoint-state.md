@@ -2,7 +2,7 @@
 
 ## Status
 
-Phase 105 contract, extended through Phase 111 on 2026-07-29.
+Phase 105 contract, extended through Phase 112 on 2026-07-30.
 
 ## Purpose
 
@@ -15,12 +15,12 @@ validated effective scenario configuration and repository/data-catalog
 revision. Checkpoint restore replaces mutable state; it does not rebuild engine
 topology or reinterpret a different scenario.
 
-`SimulationEngine` writes checkpoint format version `111`. Any explicit version
-other than `111` is rejected before runtime mutation. An absent version selects
+`SimulationEngine` writes checkpoint format version `112`. Any explicit version
+other than `112` is rejected before runtime mutation. An absent version selects
 the bounded legacy-migration path described below; an explicitly present
 `null` value is malformed, not legacy.
 
-For version `111`, top-level engine keys and context-state keys must exactly
+For version `112`, top-level engine keys and context-state keys must exactly
 match the compatible target runtime. Missing or extra keys fail before
 mutation. Serialized scenario and reinforcement configurations use type-aware
 JSON equality, so booleans cannot masquerade as integers and integers cannot
@@ -106,6 +106,37 @@ RNG streams restore before engine continuation. Reconstructing force objects
 must not consume a stream. Calibration's flattened, side-dependent view is
 regenerated after force restoration.
 
+## Commander, school, and OODA state
+
+When commander behavior is enabled, the current checkpoint contains the exact
+unit-to-profile assignments, commander configuration and mutable state,
+doctrinal-school catalog/assignments, and OODA commander phase state. Restore
+validates those owners against the complete checkpoint roster, including
+already arrived reinforcements, and rejects a missing, extra, unknown, or
+side-incompatible assignment before mutation.
+
+Commander behavior requires valid canonical profiles for every scenario side
+or for none. Initial/future per-unit overrides and school assignments are
+preflighted against the full planned roster and catalogs. Fresh-runtime
+continuation must preserve assignment identity and subsequent decision/OODA
+behavior. Commander/school restore across an enabled aggregation-proxy topology
+remains unsupported under REM-016.
+
+## Movement-diagnostics state
+
+The scenario-owned `MovementDiagnostics` persists exact registered
+unit-to-side topology, canonical last ordering key and next ordinal, cumulative
+reason/distance/progress counters, total observation count, and each unit's
+bounded recent observation window plus dropped count. Typed reasons include
+weapon standoff, resource blocked, and zero progress.
+
+Restore stages and validates all units, sides, finite distances, order,
+reason-specific invariants, aggregate counters, and the fixed observation
+bound before committing. The diagnostics are observational: they do not select
+movement, consume RNG, or write positions. Versionless state may omit this
+owner only at tick zero before either the checkpoint or target diagnostics has
+observations.
+
 ## Runtime loadout topology
 
 The Phase 109 `RuntimeLoadoutBuilder` is the only owner of production weapon
@@ -156,10 +187,31 @@ state, order/result chronology, inventory, cooldown, debris, service
 compatibility, and RNG agreement before committing any space owner. A
 versionless checkpoint cannot restore a space-enabled runtime.
 
-The detailed production/action contract is
-[ASAT Production Integration](asat-production-integration.md). The legacy
-generic buffered Space ISR report representation remains tracked by REM-027
-until Phase 112 gives it a typed semantic rehydration boundary.
+The ISR queue contains only immutable typed `SpaceISRReport` values with exact
+report ID, owner/reporting side, target, satellite/constellation, optical/SAR
+modality, resolution, position uncertainty, ENU observation, and observed plus
+available logical times. Selected IMINT fusion constellations must be a subset
+of the loaded constellation topology and must resolve to supported sourced
+optical/SAR definitions.
+
+Delayed delivery is transactional. Each delivered report has one terminal
+`IntelDeliveryReceipt` carrying the exact report digest, resulting track, and
+delivery time, plus one current `IMINTTrackAssociation` for the owner/target.
+Restore validates report IDs and canonical queue order, cadence and
+observation/availability chronology, satellite and unit references, ownership,
+receipt/association digests, pending-versus-delivered lifecycle, and agreement
+between Space and fusion state before committing either owner. A failed
+delivery or restore leaves the queue, receipt ledger, associations, tracks,
+clock, and RNG unchanged so the same operation can be retried.
+
+This typed Space ISR contract does not restore ordinary fog-of-war contacts.
+`SideWorldView.contacts` are currently serialized but nonempty entries are
+discarded on restore under REM-029. Space ISR fresh-continuation evidence
+therefore declares an empty ordinary-contact topology rather than implying
+whole-fog-of-war equivalence.
+
+The detailed ASAT production/action contract is
+[ASAT Production Integration](asat-production-integration.md).
 
 ## Time-on-target state
 
@@ -200,8 +252,9 @@ The detailed contract is
 
 ## Compatibility
 
-- Current engine checkpoints contain `checkpoint_version: 111`; an unknown,
+- Current engine checkpoints contain `checkpoint_version: 112`; an unknown,
   malformed, boolean, older explicit, or newer explicit version is rejected.
+  Explicit version `111` does not migrate into the current runtime.
 - Current reinforcement wave ordinals and both morale-store enum values use
   non-boolean integers. Current wave side, configured arrival time, and full
   typed configuration must agree with the target schedule.
@@ -221,7 +274,7 @@ The detailed contract is
   empty mapping. Direct legacy context calls that omit either section leave
   that corresponding runtime state unchanged. `SimulationEngine` additionally
   requires `units_by_side` for its campaign/roster preflight and both morale
-  keys for version 111.
+  keys for version 112.
 - Older unit snapshots without `unit_class` infer the class from its unique
   subclass field. A snapshot with no subclass field restores as `Unit`.
 - Unknown explicit discriminators fail; they never silently downgrade to
@@ -259,13 +312,22 @@ Completion requires:
 13. ordered mapping-registry/runtime-loadout topology and exact mutable
     weapon/sensor continuation;
 14. complete space/ASAT action, service, inventory, satellite, debris, RNG, and
-    before/after-action fresh continuation;
-15. time-on-target continuation before fire, after a causal reserved pre-fire
+    before/after-action fresh continuation, plus typed Space ISR continuation
+    before and after delayed delivery, transactional retry, owner-only
+    association, and atomic corruption controls under the declared ordinary
+    contact limitation;
+15. exact commander/profile/school/OODA restoration and fresh continuation for
+    initial and arriving units, including a behavior-affecting assignment
+    control and atomic rejection;
+16. exact bounded movement-diagnostics restoration and fresh continuation,
+    including real weapon-standoff and resource-blocked controls plus an
+    explicitly injected zero-progress fault detector;
+17. time-on-target continuation before fire, after a causal reserved pre-fire
     mutation, between fire and impact, during a shared-attachment plan, after
     completion/release, and for a disabled populated plan, plus atomic
     sentinel/lifecycle/resource/quantity-cooldown/target/RNG controls; and
-16. relevant existing checkpoint, scenario, engine, entity, logistics, space,
-    and indirect-fire regression suites.
+18. relevant existing checkpoint, scenario, engine, entity, logistics, space,
+    commander, movement, and indirect-fire regression suites.
 
 ## Tracked boundaries
 
@@ -278,6 +340,10 @@ topology is rejected rather than substituted.
 Aggregation/disaggregation also owns constituent reconstruction and attachment
 restoration. Its current base-unit reconstruction gap is tracked separately and
 must be closed before checkpoint equivalence is claimed across an aggregation
+boundary.
+
+Ordinary nonempty fog-of-war contact restore remains REM-029. Typed Space ISR
+queue/receipt/association equivalence must not be generalized across that
 boundary.
 
 The mapping registry and subsystem topology carry compatibility fingerprints,

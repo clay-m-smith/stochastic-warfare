@@ -1,4 +1,5 @@
 // TypeScript interfaces mirroring api/schemas.py
+import type { AnalysisBatchProvenance } from './analysis'
 
 // --- Scenarios ---
 
@@ -339,6 +340,8 @@ export interface BatchSubmitRequest {
   num_iterations?: number
   base_seed?: number
   max_ticks?: number
+  config_overrides?: CalibrationOverrides
+  metrics?: string[]
 }
 
 export interface BatchSubmitResponse {
@@ -361,11 +364,16 @@ export interface BatchDetail {
   batch_id: string
   scenario_name: string
   num_iterations: number
+  base_seed: number
+  max_ticks: number
   completed_iterations: number
   status: RunStatus
   created_at: string
   completed_at: string | null
   metrics: Record<string, MetricStats> | null
+  ordered_metrics: string[]
+  raw_metrics: Record<string, number[]> | null
+  provenance: AnalysisBatchProvenance | null
   error_message: string | null
 }
 
@@ -381,18 +389,23 @@ export interface BatchProgressMessage {
 
 export interface CompareRequest {
   scenario: string
-  overrides_a?: Record<string, unknown>
-  overrides_b?: Record<string, unknown>
+  overrides_a?: CalibrationOverrides
+  overrides_b?: CalibrationOverrides
   label_a?: string
   label_b?: string
+  metrics?: string[]
   num_iterations?: number
+  base_seed?: number
   max_ticks?: number
+  alpha?: number
 }
 
 export interface SweepRequest {
   scenario: string
   parameter_name: string
   values: number[]
+  metrics?: string[]
   num_iterations?: number
+  base_seed?: number
   max_ticks?: number
 }

@@ -17,9 +17,14 @@ from stochastic_warfare.space.config import (
     ASATType,
     ASATWeaponDefinition,
     ConstellationDefinition,
+    ConstellationType,
     SpaceConfig,
 )
 from stochastic_warfare.space.orbits import R_EARTH
+
+
+class UnsupportedIMINTFusionError(ValueError):
+    """Raised when selected imagery lacks a defensible fusion contract."""
 
 
 @dataclass(frozen=True, slots=True)
@@ -27,6 +32,7 @@ class ResolvedSpaceCatalog:
     """One scenario's immutable selected space catalog envelope."""
 
     constellations: tuple[ConstellationDefinition, ...]
+    imint_fusion_constellations: tuple[ConstellationDefinition, ...]
     weapon_definitions: dict[str, ASATWeaponDefinition]
     assets: tuple[ASATAssetConfig, ...]
     orders: tuple[ASATOrderConfig, ...]
@@ -117,6 +123,40 @@ class SpaceCatalog:
                     definition.constellation_id,
                 )
 
+        selected_by_id = {
+            definition.constellation_id: definition
+            for definition in selected
+        }
+        fusion_constellations: list[ConstellationDefinition] = []
+        expected_sensor_type = {
+            ConstellationType.IMAGING_OPTICAL: "optical",
+            ConstellationType.IMAGING_SAR: "sar",
+        }
+        for constellation_id in config.imint_fusion_constellation_ids:
+            definition = selected_by_id[constellation_id]
+            sensor_type = expected_sensor_type.get(
+                definition.constellation_type,
+            )
+            if sensor_type is None or definition.sensor_type != sensor_type:
+                raise UnsupportedIMINTFusionError(
+                    f"Constellation {constellation_id!r} is not a supported "
+                    "optical or SAR imaging definition",
+                )
+            if (
+                definition.sensor_resolution_m <= 0.0
+                or definition.sensor_swath_km <= 0.0
+            ):
+                raise UnsupportedIMINTFusionError(
+                    f"Constellation {constellation_id!r} requires positive "
+                    "sensor resolution and swath for IMINT fusion",
+                )
+            if definition.imint_position_sigma_m is None:
+                raise UnsupportedIMINTFusionError(
+                    f"Constellation {constellation_id!r} has no sourced "
+                    "imint_position_sigma_m and is unsupported for fusion",
+                )
+            fusion_constellations.append(definition)
+
         referenced_weapons: dict[str, ASATWeaponDefinition] = {}
         assets_by_id = {asset.asset_id: asset for asset in config.asat_assets}
         for asset in config.asat_assets:
@@ -173,6 +213,7 @@ class SpaceCatalog:
                 )
 
         payload = {
+            "config": config.model_dump(mode="json"),
             "constellations": [
                 definition.model_dump(mode="json")
                 for definition in selected
@@ -199,6 +240,7 @@ class SpaceCatalog:
         ).hexdigest()
         return ResolvedSpaceCatalog(
             constellations=tuple(selected),
+            imint_fusion_constellations=tuple(fusion_constellations),
             weapon_definitions=referenced_weapons,
             assets=tuple(config.asat_assets),
             orders=tuple(config.asat_orders),

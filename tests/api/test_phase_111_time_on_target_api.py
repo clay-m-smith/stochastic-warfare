@@ -184,13 +184,15 @@ async def test_malformed_nested_time_on_target_config_is_rejected(
     assert "time_of_flight_seconds" in detail
 
 
-async def test_unresolved_nested_battery_reference_fails_background_run(
+async def test_unresolved_nested_battery_reference_is_rejected_before_persistence(
     client: Any,
+    app: Any,
 ) -> None:
     unresolved = copy.deepcopy(_shipped_inline_config())
     unresolved["indirect_fire"]["time_on_target_missions"][0]["batteries"][
         0
     ]["unit_id"] = "blue_missing_battery"
+    before_runs = await app.state.db.count_runs()
 
     response = await client.post(
         "/api/runs/from-config",
@@ -200,11 +202,14 @@ async def test_unresolved_nested_battery_reference_fails_background_run(
             "max_ticks": 1,
         },
     )
-    assert response.status_code == 202
-
-    detail = await _wait_for_terminal(client, response.json()["run_id"])
-    assert detail["status"] == "failed"
-    assert detail["error_message"] == (
-        "mission 'blue_validation_tot' references unknown battery "
-        "unit(s) ['blue_missing_battery']"
-    )
+    assert response.status_code == 422
+    assert response.json() == {
+        "detail": (
+            "mission 'blue_validation_tot' references unknown battery "
+            "unit(s) ['blue_missing_battery']"
+        ),
+    }
+    assert await app.state.db.count_runs() == before_runs
+    assert app.state.run_manager._tasks == {}
+    assert app.state.run_manager._progress_queues == {}
+    assert app.state.run_manager._cancel_events == {}

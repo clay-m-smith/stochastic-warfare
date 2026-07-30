@@ -4,6 +4,15 @@
 **Date**: 2026-03-23
 **Tests**: ~22 (18 structural + 4 validation condition tests)
 
+> **Phase 112 integrity note (2026-07-30):** This page preserves Phase 73's
+> historical implementation record and completion status. Its winner/condition
+> rows, fitted calibration values, and circular-calibration rationale are
+> current-engine regression and development history, not evidence that the
+> scenarios are historically accurate or historically validated.
+> [REM-030](../remediation-backlog.md#rem-030-catalog-wide-historical-outcome-claims-lack-production-validation)
+> owns the still-queued source-backed, predeclared, held-out production
+> validation contract and supersedes the claims below.
+
 ## Goal
 
 Make 5 historical scenarios resolve via historically accurate victory conditions, not `time_expired` clock runout or wrong outcomes. Addresses Block 8 exit criterion #5.

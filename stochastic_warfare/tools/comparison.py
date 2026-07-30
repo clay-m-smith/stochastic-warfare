@@ -1,78 +1,141 @@
-"""A/B statistical comparison of simulation configurations.
-
-Runs two configurations N times each, compares per-metric distributions
-using the Mann-Whitney U test, and reports effect sizes.
-"""
+"""Common-seed production comparison with exact paired inference."""
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
-from typing import Any
+import math
+from dataclasses import dataclass, field, replace
+from typing import Any, Mapping
 
 import numpy as np
-from pydantic import BaseModel
-from scipy import stats
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    StrictFloat,
+    StrictInt,
+    field_validator,
+)
+from scipy.stats import binomtest
 
-from stochastic_warfare.core.logging import get_logger
-
-logger = get_logger(__name__)
-
-
-# ---------------------------------------------------------------------------
-# Configuration
-# ---------------------------------------------------------------------------
+from stochastic_warfare.simulation.runtime import AnalysisVariant
+from stochastic_warfare.tools._run_helpers import (
+    AnalysisBatchResult,
+    prepare_analysis,
+)
 
 
 class ComparisonConfig(BaseModel):
-    """Configuration for A/B comparison."""
+    """Strict configuration for a paired A/B production comparison."""
+
+    model_config = ConfigDict(extra="forbid")
 
     scenario_path: str
-    overrides_a: dict[str, Any] = {}
-    overrides_b: dict[str, Any] = {}
+    overrides_a: dict[str, Any] = Field(default_factory=dict)
+    overrides_b: dict[str, Any] = Field(default_factory=dict)
     label_a: str = "A"
     label_b: str = "B"
-    metric_names: list[str] = ["blue_destroyed", "red_destroyed"]
-    num_iterations: int = 20
-    alpha: float = 0.05
-    base_seed: int = 42
-    max_ticks: int = 100
+    metric_names: list[str] | None = Field(default=None, min_length=1)
+    num_iterations: StrictInt = Field(default=20, ge=2)
+    alpha: StrictFloat = Field(default=0.05, gt=0.0, lt=1.0)
+    base_seed: StrictInt = Field(default=42, ge=0)
+    max_ticks: StrictInt = Field(default=100, ge=1)
+    data_dir: str | None = None
+
+    @field_validator("scenario_path", "label_a", "label_b", mode="before")
+    @classmethod
+    def _trimmed_required_text(cls, value: Any) -> str:
+        if (
+            not isinstance(value, str)
+            or not value
+            or value != value.strip()
+        ):
+            raise ValueError("value must be a non-empty trimmed string")
+        return value
+
+    @field_validator("overrides_a", "overrides_b", mode="before")
+    @classmethod
+    def _mapping_override(cls, value: Any) -> dict[str, Any]:
+        if not isinstance(value, Mapping):
+            raise ValueError("calibration overrides must be mappings")
+        return dict(value)
+
+    @field_validator("metric_names")
+    @classmethod
+    def _unique_metric_names(
+        cls,
+        values: list[str] | None,
+    ) -> list[str] | None:
+        if values is None:
+            return None
+        if any(
+            not isinstance(value, str)
+            or not value
+            or value != value.strip()
+            for value in values
+        ):
+            raise ValueError(
+                "metric_names must contain non-empty trimmed strings",
+            )
+        if len(values) != len(set(values)):
+            raise ValueError("metric_names must be duplicate-free")
+        return values
+
+    @field_validator("alpha")
+    @classmethod
+    def _finite_alpha(cls, value: float) -> float:
+        if not math.isfinite(value):
+            raise ValueError("alpha must be finite")
+        return value
 
 
-# ---------------------------------------------------------------------------
-# Result structures
-# ---------------------------------------------------------------------------
-
-
-@dataclass
+@dataclass(frozen=True)
 class MetricComparison:
-    """Statistical comparison of a single metric between two configs."""
+    """Exact paired sign-test evidence for one metric."""
 
     metric: str
     mean_a: float
     std_a: float
     mean_b: float
     std_b: float
-    u_statistic: float
-    p_value: float
-    significant: bool
-    effect_size: float  # rank-biserial r
+    n_total: int
+    n_nonzero: int
+    positive: int
+    negative: int
+    tied: int
+    mean_paired_difference: float
+    median_paired_difference: float
+    paired_superiority: float
+    raw_p_value: float
+    holm_adjusted_p_value: float
+    alpha: float
+    family_wise_significant: bool
+
+    @property
+    def p_value(self) -> float:
+        """Compatibility accessor for callers that only display one p-value."""
+        return self.holm_adjusted_p_value
+
+    @property
+    def significant(self) -> bool:
+        """Compatibility accessor with the paired family-wise meaning."""
+        return self.family_wise_significant
 
 
-@dataclass
+@dataclass(frozen=True)
 class ComparisonResult:
-    """Complete A/B comparison result."""
+    """Complete paired production comparison and exact raw provenance."""
 
     label_a: str
     label_b: str
     num_iterations: int
+    alpha: float = 0.05
+    ordered_metrics: tuple[str, ...] = ()
+    seeds: tuple[int, ...] = ()
     metrics: list[MetricComparison] = field(default_factory=list)
     raw_a: dict[str, list[float]] = field(default_factory=dict)
     raw_b: dict[str, list[float]] = field(default_factory=dict)
-
-
-# ---------------------------------------------------------------------------
-# Core comparison logic
-# ---------------------------------------------------------------------------
+    batch_a: AnalysisBatchResult | None = None
+    batch_b: AnalysisBatchResult | None = None
 
 
 def compare_distributions(
@@ -81,125 +144,208 @@ def compare_distributions(
     metric_name: str,
     alpha: float = 0.05,
 ) -> MetricComparison:
-    """Compare two distributions using Mann-Whitney U test.
+    """Compare aligned values with the two-sided exact paired sign test."""
+    if (
+        not isinstance(metric_name, str)
+        or not metric_name
+        or metric_name != metric_name.strip()
+    ):
+        raise ValueError("metric_name must be a non-empty trimmed string")
+    if (
+        isinstance(alpha, bool)
+        or not isinstance(alpha, float)
+        or not math.isfinite(alpha)
+        or not 0.0 < alpha < 1.0
+    ):
+        raise ValueError("alpha must be a strict finite float in (0, 1)")
+    if len(values_a) != len(values_b):
+        raise ValueError("Paired metric vectors must have equal length")
+    if len(values_a) < 2:
+        raise ValueError("Paired comparison requires at least two values")
 
-    Parameters
-    ----------
-    values_a, values_b:
-        Sample values from configurations A and B.
-    metric_name:
-        Name of the metric being compared.
-    alpha:
-        Significance level.
+    def _strict_vector(values: list[float], *, label: str) -> np.ndarray:
+        if any(type(value) not in {int, float} for value in values):
+            raise ValueError(
+                f"Paired metric vector {label} must contain only strict "
+                "integer or float values",
+            )
+        array = np.asarray(values, dtype=float)
+        if not np.isfinite(array).all():
+            raise ValueError(
+                f"Paired metric vector {label} must contain finite values",
+            )
+        return array
 
-    Returns
-    -------
-    MetricComparison
-        Statistical comparison result.
-    """
-    arr_a = np.array(values_a, dtype=float)
-    arr_b = np.array(values_b, dtype=float)
-
-    mean_a = float(np.mean(arr_a)) if len(arr_a) > 0 else 0.0
-    std_a = float(np.std(arr_a, ddof=1)) if len(arr_a) > 1 else 0.0
-    mean_b = float(np.mean(arr_b)) if len(arr_b) > 0 else 0.0
-    std_b = float(np.std(arr_b, ddof=1)) if len(arr_b) > 1 else 0.0
-
-    if len(arr_a) < 2 or len(arr_b) < 2:
-        return MetricComparison(
-            metric=metric_name,
-            mean_a=mean_a, std_a=std_a,
-            mean_b=mean_b, std_b=std_b,
-            u_statistic=0.0, p_value=1.0,
-            significant=False, effect_size=0.0,
+    array_a = _strict_vector(values_a, label="A")
+    array_b = _strict_vector(values_b, label="B")
+    differences = array_b - array_a
+    positive = int(np.count_nonzero(differences > 0.0))
+    negative = int(np.count_nonzero(differences < 0.0))
+    tied = int(np.count_nonzero(differences == 0.0))
+    n_total = len(differences)
+    n_nonzero = positive + negative
+    raw_p_value = (
+        1.0
+        if n_nonzero == 0
+        else float(
+            binomtest(
+                positive,
+                n_nonzero,
+                p=0.5,
+                alternative="two-sided",
+            ).pvalue,
         )
-
-    # Mann-Whitney U test
-    try:
-        u_stat, p_value = stats.mannwhitneyu(arr_a, arr_b, alternative="two-sided")
-    except ValueError:
-        # All values identical
-        u_stat = 0.0
-        p_value = 1.0
-
-    # Rank-biserial correlation as effect size
-    n1, n2 = len(arr_a), len(arr_b)
-    effect_size = 1.0 - (2.0 * u_stat) / (n1 * n2) if n1 * n2 > 0 else 0.0
+    )
 
     return MetricComparison(
         metric=metric_name,
-        mean_a=mean_a, std_a=std_a,
-        mean_b=mean_b, std_b=std_b,
-        u_statistic=float(u_stat),
-        p_value=float(p_value),
-        significant=p_value < alpha,
-        effect_size=float(effect_size),
+        mean_a=float(np.mean(array_a)),
+        std_a=float(np.std(array_a, ddof=1)),
+        mean_b=float(np.mean(array_b)),
+        std_b=float(np.std(array_b, ddof=1)),
+        n_total=n_total,
+        n_nonzero=n_nonzero,
+        positive=positive,
+        negative=negative,
+        tied=tied,
+        mean_paired_difference=float(np.mean(differences)),
+        median_paired_difference=float(np.median(differences)),
+        paired_superiority=float(
+            (positive + 0.5 * tied) / n_total,
+        ),
+        raw_p_value=raw_p_value,
+        holm_adjusted_p_value=raw_p_value,
+        alpha=alpha,
+        family_wise_significant=raw_p_value <= alpha,
     )
+
+
+def _apply_holm(
+    comparisons: list[MetricComparison],
+    *,
+    alpha: float,
+) -> list[MetricComparison]:
+    """Apply stable Holm step-down adjustment in original metric order."""
+    count = len(comparisons)
+    ordered_indexes = _holm_order_indices(comparisons)
+    adjusted = [1.0] * count
+    running_max = 0.0
+    for rank, original_index in enumerate(ordered_indexes):
+        candidate = min(
+            1.0,
+            (count - rank)
+            * comparisons[original_index].raw_p_value,
+        )
+        running_max = max(running_max, candidate)
+        adjusted[original_index] = running_max
+    return [
+        replace(
+            comparison,
+            holm_adjusted_p_value=adjusted[index],
+            family_wise_significant=adjusted[index] <= alpha,
+        )
+        for index, comparison in enumerate(comparisons)
+    ]
+
+
+def _holm_order_indices(
+    comparisons: list[MetricComparison],
+) -> tuple[int, ...]:
+    """Return the production step-down order, including stable p-value ties."""
+    return tuple(sorted(
+        range(len(comparisons)),
+        key=lambda index: (
+            comparisons[index].raw_p_value,
+            index,
+        ),
+    ))
 
 
 def run_comparison(config: ComparisonConfig) -> ComparisonResult:
-    """Run A/B comparison using CampaignRunner.
-
-    Runs ``num_iterations`` of each config variant, collects metrics,
-    and performs Mann-Whitney U test per metric.
-    """
-    from stochastic_warfare.tools._run_helpers import run_scenario_batch
-
-    raw_a = run_scenario_batch(
-        config.scenario_path,
-        config.overrides_a,
-        config.num_iterations,
-        config.base_seed,
-        config.max_ticks,
-        config.metric_names,
+    """Run A and B from one source with the exact same ordered seeds."""
+    variants = (
+        AnalysisVariant(
+            variant_id="a",
+            calibration_patch=config.overrides_a,
+        ),
+        AnalysisVariant(
+            variant_id="b",
+            calibration_patch=config.overrides_b,
+        ),
     )
-    raw_b = run_scenario_batch(
-        config.scenario_path,
-        config.overrides_b,
-        config.num_iterations,
-        config.base_seed,
-        config.max_ticks,
-        config.metric_names,
+    _, runner = prepare_analysis(
+        scenario_path=config.scenario_path,
+        variants=variants,
+        metric_names=config.metric_names,
+        data_dir=config.data_dir,
     )
+    batch_a = runner.run_variant(
+        "a",
+        num_iterations=config.num_iterations,
+        base_seed=config.base_seed,
+        max_ticks=config.max_ticks,
+    )
+    batch_b = runner.run_variant(
+        "b",
+        num_iterations=config.num_iterations,
+        base_seed=config.base_seed,
+        max_ticks=config.max_ticks,
+    )
+    if batch_a.seeds != batch_b.seeds:
+        raise RuntimeError("Comparison variants did not use the same seeds")
 
-    metrics: list[MetricComparison] = []
-    for name in config.metric_names:
-        mc = compare_distributions(
-            raw_a.get(name, []),
-            raw_b.get(name, []),
-            name,
+    comparisons = [
+        compare_distributions(
+            list(batch_a.metric_values(metric)),
+            list(batch_b.metric_values(metric)),
+            metric,
             config.alpha,
         )
-        metrics.append(mc)
-
+        for metric in runner.metric_names
+    ]
+    comparisons = _apply_holm(comparisons, alpha=config.alpha)
     return ComparisonResult(
         label_a=config.label_a,
         label_b=config.label_b,
         num_iterations=config.num_iterations,
-        metrics=metrics,
-        raw_a=raw_a,
-        raw_b=raw_b,
+        alpha=config.alpha,
+        ordered_metrics=runner.metric_names,
+        seeds=batch_a.seeds,
+        metrics=comparisons,
+        raw_a=batch_a.metrics_dict(),
+        raw_b=batch_b.metrics_dict(),
+        batch_a=batch_a,
+        batch_b=batch_b,
     )
 
 
-# ---------------------------------------------------------------------------
-# Formatting
-# ---------------------------------------------------------------------------
-
-
 def format_comparison(result: ComparisonResult) -> str:
-    """Format comparison result as human-readable table."""
+    """Format the paired result without legacy unpaired terminology."""
     lines = [
-        f"A/B Comparison: {result.label_a} vs {result.label_b}",
+        f"Paired A/B Comparison: {result.label_a} vs {result.label_b}",
         f"Iterations: {result.num_iterations}",
+        f"Family-wise alpha: {result.alpha:g}",
         "",
-        f"{'Metric':<25} {'Mean A':>10} {'Mean B':>10} {'p-value':>10} {'Sig?':>5} {'Effect':>8}",
-        "-" * 72,
+        (
+            f"{'Metric':<22} {'Mean A':>9} {'Mean B':>9} "
+            f"{'+/-/=':>11} {'Raw p':>9} {'Holm p':>9} {'Sig?':>5}"
+        ),
+        "-" * 82,
     ]
-    for mc in result.metrics:
-        sig = " *" if mc.significant else ""
+    for comparison in result.metrics:
+        signs = (
+            f"{comparison.positive}/"
+            f"{comparison.negative}/"
+            f"{comparison.tied}"
+        )
+        significant = "*" if comparison.family_wise_significant else ""
         lines.append(
-            f"{mc.metric:<25} {mc.mean_a:>10.3f} {mc.mean_b:>10.3f} "
-            f"{mc.p_value:>10.4f} {sig:>5} {mc.effect_size:>8.3f}"
+            f"{comparison.metric:<22} "
+            f"{comparison.mean_a:>9.3f} "
+            f"{comparison.mean_b:>9.3f} "
+            f"{signs:>11} "
+            f"{comparison.raw_p_value:>9.4f} "
+            f"{comparison.holm_adjusted_p_value:>9.4f} "
+            f"{significant:>5}",
         )
     return "\n".join(lines)

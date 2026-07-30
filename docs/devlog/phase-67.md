@@ -4,6 +4,16 @@
 **Block**: 7 (Final Engine Hardening) — BLOCK COMPLETE
 **Tests**: ~30 new (10 structural + 6 validation/evaluator + 3 cross-doc + ~7 MC slow)
 
+> **Phase 112 integrity note (2026-07-30):** Complete is the preserved
+> historical phase status, not a renewed evidence claim. The cited flag tests
+> prove declarations, consumers, and authored-configuration regression; they
+> do not provide per-flag same-input enabled/disabled behavioral controls.
+> Their static winner rows and ten-seed reuse of calibrated inputs also do not
+> establish source-backed historical validity, and several rows no longer
+> match current seed-42 production output. Treat the results below as the
+> development record at Phase 67. REM-030 owns the replacement historical
+> outcome-envelope contract.
+
 ## Summary
 
 Phase 67 is the final phase of Block 7 and validates that all 21 `enable_*` CalibrationSchema flags — added across Phases 58–66 — work correctly when activated in curated scenarios. This is pure validation/calibration/documentation: zero new source files, zero new engine code.

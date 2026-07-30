@@ -1,5 +1,14 @@
 # Phase 10: Full Campaign Validation & Backtesting
 
+> **Phase 112 integrity note (2026-07-30):** This page preserves Phase 10's
+> historical implementation record and completion status. The bounded Golan
+> and Falklands production suites and their documented-outcome comparisons are
+> current-engine replay and metric-projection evidence, not source-backed,
+> predeclared, held-out historical validation.
+> [REM-030](../remediation-backlog.md#rem-030-catalog-wide-historical-outcome-claims-lack-production-validation)
+> owns that still-queued production validation contract and supersedes the
+> unqualified “validated” wording below.
+
 ## Summary
 
 Phase 10 validates the complete simulation engine at campaign scale against documented historical outcomes. Unlike Phase 7 (which validated individual engagements with pre-scripted behavior), Phase 10 runs multi-day campaigns with AI commanders, logistics, C2, reinforcements — all 11 domain modules interacting through the Phase 9 `SimulationEngine`.

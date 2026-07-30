@@ -6,6 +6,7 @@ Phase 75d: Edge cases NOT covered by test_phase49_calibration_schema.py.
 from __future__ import annotations
 
 import pytest
+from pydantic import ValidationError
 
 from stochastic_warfare.simulation.calibration import (
     CalibrationSchema,
@@ -20,10 +21,13 @@ from stochastic_warfare.simulation.calibration import (
 class TestCalibrationSchemaEdgeCases:
     """Edge cases in CalibrationSchema parsing and validation."""
 
-    def test_dead_key_dropped(self):
-        """advance_speed is a dead key — should be silently dropped."""
-        cal = CalibrationSchema.model_validate({"advance_speed": 5.0})
-        assert not hasattr(cal, "advance_speed")
+    def test_dead_key_rejected(self):
+        """Retired calibration data must not become an empty patch."""
+        with pytest.raises(
+            ValueError,
+            match="unsupported dead calibration.*advance_speed",
+        ):
+            CalibrationSchema.model_validate({"advance_speed": 5.0})
 
     def test_morale_prefix_routing(self):
         """morale_base_degrade_rate → morale.base_degrade_rate via .get()."""
@@ -53,6 +57,88 @@ class TestCalibrationSchemaEdgeCases:
         """Direct field access works for known fields."""
         cal = CalibrationSchema(hit_probability_modifier=0.8)
         assert cal.hit_probability_modifier == pytest.approx(0.8)
+
+    @pytest.mark.parametrize(
+        "payload",
+        (
+            {"hit_probability_modifier": float("nan")},
+            {"morale": {"base_degrade_rate": float("inf")}},
+            {"target_value_weights": {"armor": float("-inf")}},
+        ),
+    )
+    def test_nonfinite_values_rejected_throughout_schema(
+        self,
+        payload: dict,
+    ) -> None:
+        """NaN and infinity cannot enter any typed calibration field."""
+        with pytest.raises(ValidationError, match="must be finite"):
+            CalibrationSchema.model_validate(payload, strict=True)
+
+    @pytest.mark.parametrize(
+        "payload",
+        (
+            {
+                "morale": {"base_degrade_rate": 0.1},
+                "morale_base_degrade_rate": 0.9,
+            },
+            {
+                "side_overrides": {"blue": {"cohesion": 0.1}},
+                "blue_cohesion": 0.9,
+            },
+            {
+                "morale": {"degrade_rate_modifier": 0.1},
+                "morale_degrade_rate_modifier": 0.9,
+            },
+        ),
+    )
+    def test_semantic_alias_collisions_are_rejected(
+        self,
+        payload: dict,
+    ) -> None:
+        """Flat compatibility aliases cannot overwrite canonical paths."""
+        with pytest.raises(
+            ValidationError,
+            match="duplicate semantic calibration path",
+        ):
+            CalibrationSchema.model_validate(payload, strict=True)
+
+    def test_canonical_nested_morale_modifier_updates_compatibility_mirror(
+        self,
+    ) -> None:
+        """One canonical nested value has identical legacy read behavior."""
+        calibration = CalibrationSchema.model_validate(
+            {"morale": {"degrade_rate_modifier": 0.4}},
+            strict=True,
+        )
+
+        assert calibration.morale.degrade_rate_modifier == 0.4
+        assert calibration.morale_degrade_rate_modifier == 0.4
+        assert (
+            calibration.to_flat_dict(["blue"])[
+                "morale_degrade_rate_modifier"
+            ]
+            == 0.4
+        )
+
+    def test_semantic_aliases_have_one_canonical_sparse_patch(self) -> None:
+        """Equivalent flat/nested inputs serialize to one sparse identity."""
+        flat = CalibrationSchema.model_validate(
+            {"morale_degrade_rate_modifier": 0.4},
+            strict=True,
+        )
+        nested = CalibrationSchema.model_validate(
+            {"morale": {"degrade_rate_modifier": 0.4}},
+            strict=True,
+        )
+
+        assert flat.to_sparse_patch(mode="json") == (
+            nested.to_sparse_patch(mode="json")
+        )
+        assert CalibrationSchema().to_sparse_patch(mode="json") == {}
+        assert CalibrationSchema.model_validate(
+            {"morale": {"degrade_rate_modifier": 1.0}},
+            strict=True,
+        ).to_sparse_patch(mode="json") != {}
 
 
 # ===================================================================

@@ -745,6 +745,7 @@ def _composite_fixture():
     battery_definition = UnitDefinition(
         unit_type="composite_battery",
         domain="ground",
+        ground_type="ARTILLERY_SP",
         display_name="Composite Battery",
         max_speed=1.0,
         crew=[],
@@ -760,6 +761,7 @@ def _composite_fixture():
     target_definition = UnitDefinition(
         unit_type="composite_target",
         domain="ground",
+        ground_type="LIGHT_INFANTRY",
         display_name="Composite Target",
         max_speed=1.0,
         crew=[],

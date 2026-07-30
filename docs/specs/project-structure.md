@@ -1,6 +1,6 @@
 # Project Structure & Module Decomposition
-**Status**: Living reference, current through Phase 108.
-**Last Updated**: 2026-07-28
+**Status**: Living reference, current through Phase 112 implementation.
+**Last Updated**: 2026-07-30
 
 ---
 
@@ -15,19 +15,22 @@ stochastic-warfare/
 ├── README.md
 ├── api/                              # REST API service layer [Phase 32]
 │   ├── __init__.py                   # Package marker, version
+│   ├── __main__.py                   # `python -m api` production entry point
 │   ├── config.py                     # ApiSettings (pydantic-settings)
 │   ├── schemas.py                    # Request/response Pydantic models
 │   ├── dependencies.py               # FastAPI dependency injection
 │   ├── scenarios.py                  # Scenario/unit discovery helpers
 │   ├── database.py                   # Serialized SQLite persistence (aiosqlite)
 │   ├── run_manager.py                # Cooperative run/batch execution and progress
+│   ├── runtime_errors.py              # Typed runtime-failure to HTTP-error translation
 │   ├── main.py                       # Settings-owned app factory, lifespan, CORS
 │   └── routers/                      # Route handlers
 │       ├── meta.py                   # Health, eras, doctrines, terrain types
 │       ├── scenarios.py              # Scenario listing/detail
 │       ├── units.py                  # Unit listing/detail
 │       ├── runs.py                   # Run lifecycle, events, narrative, WebSocket, batch
-│       └── analysis.py              # Compare, sweep, tempo
+│       ├── analysis.py               # Compare, sweep, doctrine compare
+│       └── analytics.py              # Persisted tempo and analysis-result routes
 ├── frontend/                            # React frontend [Phase 33]
 │   ├── package.json                     # npm dependencies, scripts
 │   ├── vite.config.ts                   # Vite build config + /api proxy
@@ -40,6 +43,7 @@ stochastic-warfare/
 │       ├── types/api.ts                 # TypeScript interfaces (mirrors api/schemas.py)
 │       ├── types/
 │       │   ├── api.ts                  # TypeScript interfaces (mirrors api/schemas.py)
+│       │   ├── analysis.ts             # Raw-vector, paired-inference, provenance types
 │       │   ├── map.ts                  # Map/replay types [Phase 35]
 │       │   └── editor.ts              # Editor state/action types [Phase 36]
 │       ├── api/                         # Typed fetch wrappers
@@ -49,7 +53,7 @@ stochastic-warfare/
 │       │   ├── runs.ts                 # submitRun, fetchRuns
 │       │   ├── meta.ts                 # fetchHealth, fetchEras
 │       │   ├── batch.ts               # submitBatch, fetchBatch [Phase 34]
-│       │   ├── analysis.ts            # submitCompare, submitSweep [Phase 34]
+│       │   ├── analysis.ts            # Compare, sweep, doctrine-compare clients
 │       │   ├── map.ts                  # fetchRunTerrain, fetchRunFrames [Phase 35]
 │       │   └── editor.ts              # submitRunFromConfig, validateConfig [Phase 36]
 │       ├── hooks/                       # TanStack Query hooks
@@ -122,8 +126,12 @@ stochastic-warfare/
 │       │   └── analysis/              # Analysis tools [Phase 34]
 │       │       ├── AnalysisPage.tsx
 │       │       ├── BatchPanel.tsx
+│       │       ├── BatchResultsView.tsx
 │       │       ├── ComparePanel.tsx
+│       │       ├── DoctrineComparePanel.tsx
 │       │       └── SweepPanel.tsx
+│       ├── utils/
+│       │   └── analysisEvidence.ts    # Fail-visible raw/provenance validators
 │       ├── lib/                         # Utility functions
 │       │   ├── format.ts               # formatDuration, formatDate, eventsToCsvRows
 │       │   ├── era.ts                  # eraDisplayName, eraBadgeColor
@@ -133,7 +141,7 @@ stochastic-warfare/
 │       │   ├── yamlExport.ts          # configToYaml (js-yaml wrapper) [Phase 36]
 │       │   ├── unitRendering.ts       # drawUnit, hitTestUnit [Phase 35]
 │       │   └── engagementProcessing.ts # buildEngagementArcs [Phase 35]
-│       └── __tests__/                   # Vitest tests (418 verified)
+│       └── __tests__/                   # Vitest/RTL frontend tests
 ├── .agents/
 │   └── skills/                       # Maintained Codex phase routes (20 total)
 ├── .claude/
@@ -141,7 +149,12 @@ stochastic-warfare/
 │   └── skills/                       # Claude source routes (20 total)
 ├── .github/
 │   └── workflows/
-│       └── docs.yml                  # GitHub Actions — docs deployment [Phase 31]
+│       ├── test.yml                  # Partition audit + standard/API/E2E/terrain
+│       ├── extended-tests.yml        # Sharded slow/benchmark partitions
+│       ├── benchmark.yml             # Paired benchmark policy and 73 Easting
+│       ├── build.yml                 # No-.git image build + production identity smoke
+│       ├── lint.yml                  # Ruff and frontend lint
+│       └── docs.yml                  # Strict docs build/deployment
 ├── docs/
 │   ├── index.md                      # Docs site landing page [Phase 31]
 │   ├── brainstorm.md                 # Architecture decisions & rationale
@@ -298,11 +311,20 @@ stochastic-warfare/
 │   ├── unit/                         # Fast, isolated unit tests
 │   ├── integration/                  # Multi-module integration tests
 │   ├── benchmarks/                   # Performance benchmarks + determinism verification [Phase 13]
-│   └── validation/                   # Historical backtest scenarios
+│   ├── validation/                   # Data, contract, scenario, and evidence validation
+│   ├── api/                          # Explicit API partition
+│   └── e2e/                          # Explicit end-to-end partition
 ├── scripts/
+│   ├── run_pytest_partition.py       # Exact selectors, manifests, deterministic shards
+│   ├── validate_test_partitions.py   # Disjoint exact-union audit
+│   ├── validate_test_evidence.py     # Weak/no-direct evidence-ledger audit
+│   ├── run_paired_benchmark.py       # Same-host paired benchmark execution
+│   ├── validate_docs_links.py        # Markdown target/fragment validation
 │   └── visualize/                    # Matplotlib visualization utilities
 └── stochastic_warfare/               # ===== MAIN PACKAGE =====
     ├── __init__.py
+    ├── build_identity.py              # Strict immutable-package source identity
+    ├── scenario_names.py              # Canonical scenario-name normalization
     ├── core/                         # Foundational infrastructure
     │   ├── __init__.py
     │   ├── rng.py                    # Central RNG manager, stream forking
@@ -336,6 +358,7 @@ stochastic-warfare/
     │   ├── real_classification.py    # Copernicus land cover → TerrainClassification (Phase 15)
     │   ├── real_infrastructure.py    # OSM GeoJSON → InfrastructureManager (Phase 15)
     │   ├── real_bathymetry.py        # GEBCO NetCDF → Bathymetry (Phase 15)
+    │   ├── procedural.py             # Deterministic procedural terrain construction
     │   └── trenches.py               # WW1 trench system overlay: STRtree spatial queries, cover/movement modifiers, bombardment [Phase 21b]
     ├── environment/                  # Weather, time-of-day, dynamic conditions, obscurants
     │   ├── __init__.py
@@ -398,7 +421,7 @@ stochastic-warfare/
     │   ├── detection.py              # SNR-based detection probability engine (Pd, Pfa, ROC)
     │   ├── identification.py         # Classification & ID confidence (detected → classified → identified)
     │   ├── estimation.py             # Kalman filter state estimation (pre-alloc H/I₄ matrices, belief state)
-    │   ├── intel_fusion.py           # Multi-source intelligence fusion (SIGINT, HUMINT, IMINT, sensor data)
+    │   ├── intel_fusion.py           # Multi-source fusion + typed IMINT receipts/owner-target associations
     │   ├── deception.py              # Decoys, feints, false signals, camouflage effectiveness
     │   ├── sonar.py                  # Sonar models: active/passive, towed array, hull-mounted, sonobuoy, dipping
     │   ├── underwater_detection.py   # Submarine detection: acoustic propagation through environment, MAD, wake detection, periscope detection
@@ -441,6 +464,7 @@ stochastic-warfare/
     │   └── directed_energy.py       # DEW engine: Beer-Lambert laser transmittance, laser/HPM Pk, engagement execution [Phase 28.5]
     ├── morale/                       # Morale & human factors
     │   ├── __init__.py
+    │   ├── config.py                 # Typed morale configuration and defaults
     │   ├── events.py                 # Morale events (state change, rout, rally, surrender)
     │   ├── state.py                  # Morale state machine (Markov transitions): steady/shaken/broken/routed/surrendered
     │   ├── cohesion.py               # Unit cohesion, nearby friendlies, leadership, unit history/reputation
@@ -537,6 +561,7 @@ stochastic-warfare/
     │   ├── campaign_runner.py         # Campaign runner wrapping ScenarioLoader + SimulationEngine
     │   ├── campaign_metrics.py        # Campaign-level metric extraction (units destroyed, exchange ratio, etc.)
     │   ├── ai_validation.py           # AI decision quality analysis from recorder events
+    │   ├── movement_diagnostics.py    # Typed semantic movement evaluator
     │   └── performance.py             # cProfile + tracemalloc campaign performance profiling
     ├── tools/                         # Developer tooling — MCP server, analysis, visualization [Phase 14]
     │   ├── __init__.py
@@ -544,11 +569,12 @@ stochastic-warfare/
     │   ├── result_store.py            # In-memory LRU cache for run results
     │   ├── mcp_server.py              # FastMCP server with 7 tools (run, query, MC, compare, list, modify)
     │   ├── mcp_resources.py           # MCP resource providers (scenarios, units, results)
-    │   ├── _run_helpers.py            # Shared batch scenario runner for analysis tools
+    │   ├── _run_helpers.py            # Production factory/session batch boundary + provenance
     │   ├── narrative.py               # Battle narrative generation from events (registry-based formatters)
     │   ├── tempo_analysis.py          # Operational tempo FFT + OODA cycle extraction
-    │   ├── comparison.py              # A/B statistical comparison (Mann-Whitney U)
-    │   ├── sensitivity.py             # Parameter sweep analysis
+    │   ├── comparison.py              # Common-seed paired exact-sign + Holm comparison
+    │   ├── sensitivity.py             # Strict paired-seed parameter sweep
+    │   ├── doctrine_compare.py        # Doctrine-only production comparison
     │   ├── charts.py                  # 6 reusable chart functions (force, engagement, supply, morale, MC)
     │   └── replay.py                  # Animated battle replay (FuncAnimation)
     ├── ew/                            # Electronic Warfare [Phase 16]
@@ -569,7 +595,7 @@ stochastic-warfare/
     │   ├── orbits.py                  # Simplified Keplerian orbital mechanics: period, ground track, J2 precession
     │   ├── constellations.py          # Manager-owned satellite transitions and ordered/checkpointed SpaceEngine orchestration
     │   ├── gps.py                     # GPS accuracy model: DOP from visible satellites, INS drift, CEP scaling
-    │   ├── isr.py                     # Space-based ISR: imaging satellites, resolution thresholds, cloud blocking
+    │   ├── isr.py                     # Typed owner-scoped ISR reports, delayed queue, checkpoint lifecycle
     │   ├── early_warning.py           # Missile early warning: GEO/HEO IR detection, BMD Pk bonus
     │   ├── satcom.py                  # SATCOM availability: coverage windows, bandwidth capacity, reliability
     │   └── asat.py                    # Scheduled finite direct-ascent KKV actions, observable results, and Poisson debris cascade
@@ -597,6 +623,9 @@ stochastic-warfare/
         ├── campaign.py               # Campaign-level management, strategic AI, reinforcement pipeline
         ├── battle.py                 # Tactical battle resolution manager
         ├── scenario.py               # Scenario loading, setup, initialization; SimulationContext includes stratagem_engine, iads_engine, ato_engine [Phase 53]
+        ├── runtime.py                # Authoritative prepared-scenario/runtime-session boundary and provenance [Phase 112]
+        ├── force_builder.py          # Typed deterministic initial-force construction [Phase 112]
+        ├── movement_diagnostics.py   # Ordered observational movement reasons and checkpoint state [Phase 112]
         ├── equipment_mappings.py     # Ordered typed equipment-name registry and reviewed data decisions [Phase 109]
         ├── loadouts.py               # RuntimeLoadoutBuilder, semantic preflight, topology/fingerprint [Phase 109]
         ├── time_on_target.py         # Initial-roster/runtime-loadout resolver for exact scheduled indirect-fire plans [Phase 111]
@@ -993,8 +1022,20 @@ the production scenario loop.
 - **Victory conditions**: objective-based, attrition-based, time-based, political — configurable per scenario. War termination criteria for campaigns.
 - **Reinforcement pipeline**: the engine installs the scenario schedule once;
   campaign ticks admit due waves at every resolution with stable IDs, atomic
-  live loadout/morale registration, logical-time events, and exact checkpoint
-  continuation [Phase 107]
+  loadout, morale, commander, school, OODA, movement-diagnostics, and logistics
+  registration, logical-time events, rollback/retry, and exact checkpoint
+  continuation [Phases 107, 112]
+- **Runtime construction**: `SimulationRuntimeFactory.prepare()` and
+  `prepare_config()` produce immutable typed variants; `PreparedScenario.build()`
+  verifies exact side/roster/loadout/assignment topology and returns a fresh
+  `RuntimeSession` for `step()`, `run_to_completion()`, or `finalize()`.
+  Source/config, code/data/catalog/doctrine/loadout, roster, seed, and
+  initial/arriving assignment provenance stays with every analysis run
+  [Phase 112].
+- **Initial force construction**: `RuntimeForceBuilder` validates exact typed
+  unit groups, per-instance overrides, deterministic IDs/domains, cardinality,
+  and transactional unit-RNG behavior before publishing the roster
+  [Phase 112].
 - **Runtime loadouts**: one immutable typed mapping registry and one
   scenario-owned `RuntimeLoadoutBuilder` preflight exact weapon, ammunition,
   sensor, store/non-runtime, era-gate, and explicit system-count semantics.
@@ -1008,7 +1049,15 @@ the production scenario loop.
   cadence before injecting immutable plans into the combat engine. Simulation
   owns only this construction/wiring boundary; lifecycle and effects remain in
   `combat/` [Phase 111].
-- **Metrics and analysis**: statistical aggregation of simulation outputs (casualty rates, exchange ratios, supply consumption rates, environmental casualties, supply consumption by category, detection performance vs conditions, etc.) for post-run analysis. Environmental conditions logged alongside events for correlation analysis (e.g., "detection rates during ducting conditions" or "casualty rates during night vs day").
+- **Movement diagnostics**: managers submit already-made strategic,
+  operational, and tactical decisions to one observational owner. Typed
+  reasons, semantic stuck/resource-blocked counts, canonical order, and bounded
+  history persist across checkpoints without changing movement [Phase 112].
+- **Metrics and analysis**: production batches retain ordered raw metric
+  vectors, terminal run records, exact seeds and runtime provenance.
+  Same-scenario comparisons use paired differences, exact sign tests,
+  superiority, and Holm family correction; sweeps and doctrine comparisons
+  reuse the same production construction boundary [Phase 112].
 - Does NOT contain domain logic — only sequencing and coordination
 
 **Depends on**: Everything (top of the dependency tree)

@@ -1,5 +1,5 @@
 import { apiPost } from './client'
-import type { CompareRequest, SweepRequest } from '../types/api'
+import type { CalibrationOverrides, CompareRequest, SweepRequest } from '../types/api'
 import type { CompareResult, DoctrineCompareResult, SweepResult } from '../types/analysis'
 
 export function runCompare(req: CompareRequest): Promise<CompareResult> {
@@ -12,9 +12,17 @@ export function runSweep(req: SweepRequest): Promise<SweepResult> {
 
 export interface DoctrineCompareRequest {
   scenario: string
-  side_to_vary: string
-  schools: string[]
+  variants: Array<{
+    variant_id: string
+    calibration_patch?: CalibrationOverrides
+    assignments: Array<{
+      side: string
+      school_id: string
+    }>
+  }>
+  metrics?: string[]
   num_iterations?: number
+  base_seed?: number
   max_ticks?: number
 }
 

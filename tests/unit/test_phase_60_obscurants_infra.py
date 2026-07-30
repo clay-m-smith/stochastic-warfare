@@ -4,6 +4,9 @@ from __future__ import annotations
 
 from unittest.mock import MagicMock
 
+import pytest
+
+from stochastic_warfare.core.types import Position
 from stochastic_warfare.simulation.calibration import CalibrationSchema
 
 
@@ -76,10 +79,21 @@ class TestObscurantsEngineUpdate:
         tod = MagicMock()
         clock = MagicMock()
         import numpy as np
+
         rng = np.random.default_rng(42)
 
         engine = ObscurantsEngine(weather, tod, clock, rng)
-        engine.update(60.0)  # Should not raise
+        cloud_id = engine.deploy_smoke(
+            Position(100.0, 200.0, 0.0),
+            50.0,
+        )
+        engine.update(60.0)
+        cloud = engine._clouds[cloud_id]
+        assert cloud.age_seconds == 60.0
+        assert cloud.center_e == pytest.approx(100.0)
+        assert cloud.center_n == pytest.approx(500.0)
+        assert cloud.radius > 50.0
+        assert 0.0 < cloud.density < 1.0
 
     def test_opacity_zero_when_no_clouds(self) -> None:
         """No deployed clouds → zero opacity at any position (backward compat)."""
@@ -95,6 +109,7 @@ class TestObscurantsEngineUpdate:
         tod = MagicMock()
         clock = MagicMock()
         import numpy as np
+
         rng = np.random.default_rng(42)
 
         engine = ObscurantsEngine(weather, tod, clock, rng)

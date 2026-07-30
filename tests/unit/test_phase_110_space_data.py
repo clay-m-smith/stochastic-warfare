@@ -82,14 +82,14 @@ def _config(
 
 def test_production_space_catalog_has_exact_strict_counts() -> None:
     catalog = SpaceCatalog.load(DATA_DIR)
-    assert len(catalog.constellations) == 9
+    assert len(catalog.constellations) == 11
     assert len(catalog.weapons) == 3
 
     result, stats = validate_space_catalogs()
     assert result.ok
     assert result.errors == []
     assert result.warnings == []
-    assert stats.constellations == 9
+    assert stats.constellations == 11
     assert stats.asat_weapons == 3
 
 

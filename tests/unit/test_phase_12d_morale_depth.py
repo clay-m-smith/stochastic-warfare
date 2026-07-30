@@ -50,8 +50,12 @@ class TestContinuousTransitionProbs:
     def test_row_stochastic(self) -> None:
         machine = self._make_machine()
         mat = machine.compute_continuous_transition_probs(
-            casualty_rate=0.1, suppression_level=0.2,
-            leadership_present=True, cohesion=0.6, force_ratio=1.0, dt=5.0,
+            casualty_rate=0.1,
+            suppression_level=0.2,
+            leadership_present=True,
+            cohesion=0.6,
+            force_ratio=1.0,
+            dt=5.0,
         )
         for i in range(5):
             assert abs(mat[i].sum() - 1.0) < 1e-12
@@ -59,8 +63,12 @@ class TestContinuousTransitionProbs:
     def test_surrendered_absorbing(self) -> None:
         machine = self._make_machine()
         mat = machine.compute_continuous_transition_probs(
-            casualty_rate=0.5, suppression_level=0.8,
-            leadership_present=False, cohesion=0.1, force_ratio=0.3, dt=10.0,
+            casualty_rate=0.5,
+            suppression_level=0.8,
+            leadership_present=False,
+            cohesion=0.1,
+            force_ratio=0.3,
+            dt=10.0,
         )
         assert mat[4, 4] == 1.0
         for j in range(4):
@@ -70,8 +78,12 @@ class TestContinuousTransitionProbs:
         """STEADY state cannot recover further."""
         machine = self._make_machine()
         mat = machine.compute_continuous_transition_probs(
-            casualty_rate=0.0, suppression_level=0.0,
-            leadership_present=True, cohesion=1.0, force_ratio=2.0, dt=5.0,
+            casualty_rate=0.0,
+            suppression_level=0.0,
+            leadership_present=True,
+            cohesion=1.0,
+            force_ratio=2.0,
+            dt=5.0,
         )
         # Row 0: p_up should be 0
         for j in range(0):  # nothing before STEADY
@@ -81,12 +93,20 @@ class TestContinuousTransitionProbs:
         """Longer dt should yield higher transition probabilities."""
         machine = self._make_machine()
         mat_short = machine.compute_continuous_transition_probs(
-            casualty_rate=0.3, suppression_level=0.3,
-            leadership_present=False, cohesion=0.3, force_ratio=0.5, dt=1.0,
+            casualty_rate=0.3,
+            suppression_level=0.3,
+            leadership_present=False,
+            cohesion=0.3,
+            force_ratio=0.5,
+            dt=1.0,
         )
         mat_long = machine.compute_continuous_transition_probs(
-            casualty_rate=0.3, suppression_level=0.3,
-            leadership_present=False, cohesion=0.3, force_ratio=0.5, dt=10.0,
+            casualty_rate=0.3,
+            suppression_level=0.3,
+            leadership_present=False,
+            cohesion=0.3,
+            force_ratio=0.5,
+            dt=10.0,
         )
         # P(degrade from STEADY) should be higher for longer dt
         assert mat_long[0, 1] > mat_short[0, 1]
@@ -95,8 +115,12 @@ class TestContinuousTransitionProbs:
         """dt=0 should produce identity-like matrix."""
         machine = self._make_machine()
         mat = machine.compute_continuous_transition_probs(
-            casualty_rate=0.5, suppression_level=0.5,
-            leadership_present=False, cohesion=0.2, force_ratio=0.5, dt=0.0,
+            casualty_rate=0.5,
+            suppression_level=0.5,
+            leadership_present=False,
+            cohesion=0.2,
+            force_ratio=0.5,
+            dt=0.0,
         )
         for i in range(5):
             assert abs(mat[i, i] - 1.0) < 1e-12
@@ -104,8 +128,12 @@ class TestContinuousTransitionProbs:
     def test_non_negative(self) -> None:
         machine = self._make_machine()
         mat = machine.compute_continuous_transition_probs(
-            casualty_rate=0.8, suppression_level=0.9,
-            leadership_present=False, cohesion=0.0, force_ratio=0.1, dt=20.0,
+            casualty_rate=0.8,
+            suppression_level=0.9,
+            leadership_present=False,
+            cohesion=0.0,
+            force_ratio=0.1,
+            dt=20.0,
         )
         assert np.all(mat >= 0.0)
 
@@ -113,8 +141,12 @@ class TestContinuousTransitionProbs:
         """Total transitions never exceed 0.95 even under extreme conditions."""
         machine = self._make_machine()
         mat = machine.compute_continuous_transition_probs(
-            casualty_rate=1.0, suppression_level=1.0,
-            leadership_present=True, cohesion=1.0, force_ratio=0.1, dt=100.0,
+            casualty_rate=1.0,
+            suppression_level=1.0,
+            leadership_present=True,
+            cohesion=1.0,
+            force_ratio=0.1,
+            dt=100.0,
         )
         for i in range(4):
             off_diag = 1.0 - mat[i, i]
@@ -134,9 +166,14 @@ class TestContinuousTimeCheckTransition:
         degraded = False
         for i in range(50):
             state = machine.check_transition(
-                unit_id="u1", casualty_rate=0.5, suppression_level=0.8,
-                leadership_present=False, cohesion=0.1, force_ratio=0.3,
-                dt=5.0, current_time_s=i * 10.0,
+                unit_id="u1",
+                casualty_rate=0.5,
+                suppression_level=0.8,
+                leadership_present=False,
+                cohesion=0.1,
+                force_ratio=0.3,
+                dt=5.0,
+                current_time_s=i * 10.0,
             )
             if state != MoraleState.STEADY:
                 degraded = True
@@ -166,8 +203,14 @@ class TestContinuousTimeCheckTransition:
             m = MoraleStateMachine(EventBus(), _rng(trial), config=cfg_ct)
             for step in range(60):
                 state = m.check_transition(
-                    "u1", 0.3, 0.4, False, 0.3, 0.5,
-                    dt=1.0, current_time_s=step * 1.0,
+                    "u1",
+                    0.3,
+                    0.4,
+                    False,
+                    0.3,
+                    0.5,
+                    dt=1.0,
+                    current_time_s=step * 1.0,
                 )
                 if state != MoraleState.STEADY:
                     trans_small += 1
@@ -179,8 +222,14 @@ class TestContinuousTimeCheckTransition:
             m = MoraleStateMachine(EventBus(), _rng(trial + 10000), config=cfg_ct)
             for step in range(6):
                 state = m.check_transition(
-                    "u1", 0.3, 0.4, False, 0.3, 0.5,
-                    dt=10.0, current_time_s=step * 10.0,
+                    "u1",
+                    0.3,
+                    0.4,
+                    False,
+                    0.3,
+                    0.5,
+                    dt=10.0,
+                    current_time_s=step * 10.0,
                 )
                 if state != MoraleState.STEADY:
                     trans_large += 1
@@ -207,7 +256,12 @@ class TestTransitionCooldown:
         for i in range(100):
             t = float(i)
             state = machine.check_transition(
-                "u1", 0.8, 0.9, False, 0.0, 0.2,
+                "u1",
+                0.8,
+                0.9,
+                False,
+                0.0,
+                0.2,
                 current_time_s=t,
             )
             if state != MoraleState.STEADY and first_trans_time is None:
@@ -220,7 +274,12 @@ class TestTransitionCooldown:
             for i in range(10):
                 t2 = first_trans_time + 1.0 + i
                 state2 = machine.check_transition(
-                    "u1", 0.8, 0.9, False, 0.0, 0.2,
+                    "u1",
+                    0.8,
+                    0.9,
+                    False,
+                    0.0,
+                    0.2,
                     current_time_s=t2,
                 )
                 # Should stay the same (blocked by cooldown)
@@ -230,34 +289,63 @@ class TestTransitionCooldown:
         cfg = MoraleConfig(transition_cooldown_s=10.0)
         machine = MoraleStateMachine(EventBus(), _rng(), config=cfg)
 
-        # Force first transition
-        first_trans_time = None
-        for i in range(100):
-            t = float(i) * 20.0  # Space checks far apart
-            state = machine.check_transition(
-                "u1", 0.8, 0.9, False, 0.0, 0.2,
-                current_time_s=t,
-            )
-            if state != MoraleState.STEADY:
-                first_trans_time = t
-                break
+        first = machine.check_transition(
+            "u1",
+            0.8,
+            0.9,
+            False,
+            0.0,
+            0.2,
+            current_time_s=0.0,
+        )
+        blocked = machine.check_transition(
+            "u1",
+            0.8,
+            0.9,
+            False,
+            0.0,
+            0.2,
+            current_time_s=5.0,
+        )
+        admitted = machine.check_transition(
+            "u1",
+            0.8,
+            0.9,
+            False,
+            0.0,
+            0.2,
+            current_time_s=20.0,
+        )
 
-        # After 10s, next transition should be allowed
-        if first_trans_time is not None:
-            t_after = first_trans_time + 20.0
-            # This check should proceed (not blocked)
-            _state = machine.check_transition(
-                "u1", 0.8, 0.9, False, 0.0, 0.2,
-                current_time_s=t_after,
-            )
-            # Just verify it didn't error — the transition may or may not occur
+        assert first is MoraleState.SHAKEN
+        assert blocked is first
+        assert admitted is MoraleState.BROKEN
 
     def test_zero_cooldown_allows_all(self) -> None:
         cfg = MoraleConfig(transition_cooldown_s=0.0)
         machine = MoraleStateMachine(EventBus(), _rng(), config=cfg)
-        # Two checks at same time should both be allowed
-        machine.check_transition("u1", 0.5, 0.5, False, 0.5, 0.5, current_time_s=0.0)
-        machine.check_transition("u1", 0.5, 0.5, False, 0.5, 0.5, current_time_s=0.0)
+
+        first = machine.check_transition(
+            "u1",
+            0.8,
+            0.9,
+            False,
+            0.0,
+            0.2,
+            current_time_s=0.0,
+        )
+        second = machine.check_transition(
+            "u1",
+            0.8,
+            0.9,
+            False,
+            0.0,
+            0.2,
+            current_time_s=0.0,
+        )
+
+        assert first is MoraleState.SHAKEN
+        assert second is MoraleState.BROKEN
 
 
 class TestContinuousTimeSaveRestore:
@@ -267,7 +355,14 @@ class TestContinuousTimeSaveRestore:
         cfg = MoraleConfig(use_continuous_time=True, transition_cooldown_s=0.0)
         machine = MoraleStateMachine(EventBus(), _rng(), config=cfg)
         machine.check_transition(
-            "u1", 0.5, 0.5, False, 0.5, 0.5, dt=5.0, current_time_s=10.0,
+            "u1",
+            0.5,
+            0.5,
+            False,
+            0.5,
+            0.5,
+            dt=5.0,
+            current_time_s=10.0,
         )
         saved = machine.get_state()
         machine2 = MoraleStateMachine(EventBus(), _rng(999), config=cfg)
@@ -328,8 +423,10 @@ class TestApplyPsyopEnhanced:
     def test_surrendered_target_no_effect(self) -> None:
         engine = self._make_engine()
         result = engine.apply_psyop_enhanced(
-            target_unit_id="u1", target_morale_state=4,
-            message_type="surrender", delivery_method="broadcast",
+            target_unit_id="u1",
+            target_morale_state=4,
+            message_type="surrender",
+            delivery_method="broadcast",
             target_susceptibility=0.9,
         )
         assert not result.effective
@@ -339,34 +436,58 @@ class TestApplyPsyopEnhanced:
         """Surrender message type should produce more degradation than fear."""
         e1 = PsychologyEngine(EventBus(), _rng(42), config=PsychologyConfig())
         r1 = e1.apply_psyop_enhanced(
-            "u1", 1, "surrender", "broadcast", target_susceptibility=0.5,
+            "u1",
+            1,
+            "surrender",
+            "broadcast",
+            target_susceptibility=0.5,
         )
         e2 = PsychologyEngine(EventBus(), _rng(42), config=PsychologyConfig())
         r2 = e2.apply_psyop_enhanced(
-            "u1", 1, "fear", "broadcast", target_susceptibility=0.5,
+            "u1",
+            1,
+            "fear",
+            "broadcast",
+            target_susceptibility=0.5,
         )
         assert r1.morale_degradation > r2.morale_degradation
 
     def test_social_media_stronger_than_leaflet(self) -> None:
         e1 = PsychologyEngine(EventBus(), _rng(42), config=PsychologyConfig())
         r1 = e1.apply_psyop_enhanced(
-            "u1", 1, "fear", "social_media", target_susceptibility=0.5,
+            "u1",
+            1,
+            "fear",
+            "social_media",
+            target_susceptibility=0.5,
         )
         e2 = PsychologyEngine(EventBus(), _rng(42), config=PsychologyConfig())
         r2 = e2.apply_psyop_enhanced(
-            "u1", 1, "fear", "leaflet", target_susceptibility=0.5,
+            "u1",
+            1,
+            "fear",
+            "leaflet",
+            target_susceptibility=0.5,
         )
         assert r1.morale_degradation > r2.morale_degradation
 
     def test_high_training_reduces_effect(self) -> None:
         e1 = PsychologyEngine(EventBus(), _rng(42), config=PsychologyConfig())
         r1 = e1.apply_psyop_enhanced(
-            "u1", 1, "fear", "broadcast", target_susceptibility=0.5,
+            "u1",
+            1,
+            "fear",
+            "broadcast",
+            target_susceptibility=0.5,
             target_training=0.0,
         )
         e2 = PsychologyEngine(EventBus(), _rng(42), config=PsychologyConfig())
         r2 = e2.apply_psyop_enhanced(
-            "u1", 1, "fear", "broadcast", target_susceptibility=0.5,
+            "u1",
+            1,
+            "fear",
+            "broadcast",
+            target_susceptibility=0.5,
             target_training=1.0,
         )
         assert r1.morale_degradation > r2.morale_degradation
@@ -374,22 +495,38 @@ class TestApplyPsyopEnhanced:
     def test_high_susceptibility_increases_effect(self) -> None:
         e1 = PsychologyEngine(EventBus(), _rng(42), config=PsychologyConfig())
         r1 = e1.apply_psyop_enhanced(
-            "u1", 1, "fear", "broadcast", target_susceptibility=0.9,
+            "u1",
+            1,
+            "fear",
+            "broadcast",
+            target_susceptibility=0.9,
         )
         e2 = PsychologyEngine(EventBus(), _rng(42), config=PsychologyConfig())
         r2 = e2.apply_psyop_enhanced(
-            "u1", 1, "fear", "broadcast", target_susceptibility=0.1,
+            "u1",
+            1,
+            "fear",
+            "broadcast",
+            target_susceptibility=0.1,
         )
         assert r1.morale_degradation > r2.morale_degradation
 
     def test_worse_morale_more_susceptible(self) -> None:
         e1 = PsychologyEngine(EventBus(), _rng(42), config=PsychologyConfig())
         r1 = e1.apply_psyop_enhanced(
-            "u1", 3, "surrender", "broadcast", target_susceptibility=0.5,
+            "u1",
+            3,
+            "surrender",
+            "broadcast",
+            target_susceptibility=0.5,
         )
         e2 = PsychologyEngine(EventBus(), _rng(42), config=PsychologyConfig())
         r2 = e2.apply_psyop_enhanced(
-            "u1", 0, "surrender", "broadcast", target_susceptibility=0.5,
+            "u1",
+            0,
+            "surrender",
+            "broadcast",
+            target_susceptibility=0.5,
         )
         assert r1.morale_degradation > r2.morale_degradation
 
@@ -399,7 +536,11 @@ class TestApplyPsyopEnhanced:
         bus.subscribe(PsyopAppliedEvent, events.append)
         engine = PsychologyEngine(bus, _rng(), config=PsychologyConfig())
         engine.apply_psyop_enhanced(
-            "u1", 1, "fear", "broadcast", target_susceptibility=0.5,
+            "u1",
+            1,
+            "fear",
+            "broadcast",
+            target_susceptibility=0.5,
         )
         assert len(events) == 1
         assert events[0].target_unit_id == "u1"
@@ -409,15 +550,22 @@ class TestApplyPsyopEnhanced:
     def test_result_clamped_0_to_1(self) -> None:
         engine = self._make_engine()
         result = engine.apply_psyop_enhanced(
-            "u1", 3, "surrender", "social_media",
-            target_susceptibility=1.0, target_training=0.0,
+            "u1",
+            3,
+            "surrender",
+            "social_media",
+            target_susceptibility=1.0,
+            target_training=0.0,
         )
         assert 0.0 <= result.morale_degradation <= 1.0
 
     def test_unknown_message_type_uses_default_mult(self) -> None:
         engine = self._make_engine()
         result = engine.apply_psyop_enhanced(
-            "u1", 1, "unknown_type", "broadcast",
+            "u1",
+            1,
+            "unknown_type",
+            "broadcast",
             target_susceptibility=0.5,
         )
         # Should not error, uses multiplier 1.0
@@ -427,7 +575,9 @@ class TestApplyPsyopEnhanced:
         """Existing apply_psyop method still works."""
         engine = self._make_engine()
         result = engine.apply_psyop(
-            target_morale_state=1, psyop_intensity=0.5, visibility=0.7,
+            target_morale_state=1,
+            psyop_intensity=0.5,
+            visibility=0.7,
         )
         assert isinstance(result, PsyopResult)
         assert result.morale_degradation >= 0.0
