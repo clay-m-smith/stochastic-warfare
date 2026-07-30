@@ -15,7 +15,7 @@
         <link rel="canonical" href="https://clay-m-smith.github.io/stochastic-warfare/skills-and-hooks/">
       
       
-        <link rel="prev" href="../specs/time-on-target-execution/">
+        <link rel="prev" href="../specs/validation-and-documentation-trust/">
       
       
       
@@ -1661,6 +1661,34 @@
     
   
     Block 12 (105-114)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../development-phases-block13/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 13 (115-118)
   
 
     
@@ -4955,6 +4983,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-112/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 112 - Validation and Documentation Trust
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -5146,6 +5202,34 @@
     
   
     Time-on-Target Execution
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../specs/validation-and-documentation-trust/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Validation and Documentation Trust
   
 
     
@@ -6189,8 +6273,8 @@ matching UI metadata.</p>
   semantics into the production loader; never adds an unrelated proxy mapping
   or invented default merely to satisfy a validator</li>
 <li>Runs <code>scripts/validate_scenario_data.py --file</code>, verifies exact roster and
-  loadouts through <code>ScenarioLoader</code>, and exercises required behavior through a
-  bounded <code>SimulationEngine</code> run</li>
+  loadouts through the production factory/session boundary, and exercises
+  required behavior through a bounded <code>RuntimeSession</code></li>
 <li>Treats mapping presence and aggregate armed/sensored counts as structural
   diagnostics, not outcome evidence</li>
 <li>Validates against <code>CampaignScenarioConfig</code> schema</li>
@@ -6198,20 +6282,25 @@ matching UI metadata.</p>
 </ul>
 <h3 id="compare-phase-14">/compare (Phase 14)<a class="headerlink" href="#compare-phase-14" title="Permanent link">&para;</a></h3>
 <ul>
-<li>Runs two scenario configurations and statistically compares outcomes</li>
-<li>Uses <code>tools/comparison.py</code> with Mann-Whitney U test</li>
-<li>Interprets p-values and effect sizes in military context</li>
-<li>Outputs formatted comparison table</li>
-<li>Hard-blocked by REM-017 until production batch loading, metric rejection, and
-  outcome-affecting override behavior are proven</li>
+<li>Prepares one source scenario and compares two strict sparse calibration
+  variants with the same ordered seeds and metrics</li>
+<li>Uses <code>tools/comparison.py</code> for exact common-seed paired differences, paired
+  superiority, exact sign-test p-values, and Holm family correction</li>
+<li>Retains both raw metric vectors plus source/config, code/data/catalog,
+  doctrine/loadout, roster, assignment, seed, and terminal-run provenance</li>
+<li>Rejects unsupported metrics, incomplete/nonfinite runs, roster drift, or
+  ineffective runtime preflight instead of producing summary-only output</li>
 </ul>
 <h3 id="what-if-phase-14">/what-if (Phase 14)<a class="headerlink" href="#what-if-phase-14" title="Permanent link">&para;</a></h3>
 <ul>
 <li>Quick parameter sensitivity analysis from natural language questions</li>
 <li>Identifies parameter and range from user's question</li>
-<li>Uses <code>tools/sensitivity.py</code> for sweep, generates errorbar plot</li>
-<li>Summarizes sensitivity level and key inflection points</li>
-<li>Hard-blocked by REM-017 until its production preflight is behaviorally proven</li>
+<li>Requires a real <code>CalibrationSchema</code> field, finite duplicate-free values, at
+  least two iterations per point, and an explicit schema-valid scenario</li>
+<li>Uses the production factory/session route through <code>tools/sensitivity.py</code>,
+  retaining each point's raw vectors and provenance</li>
+<li>Summarizes sensitivity and inflection points only after the configured field
+  is proven wired and outcome-affecting</li>
 </ul>
 <h3 id="timeline-phase-14">/timeline (Phase 14)<a class="headerlink" href="#timeline-phase-14" title="Permanent link">&para;</a></h3>
 <ul>
@@ -6229,11 +6318,14 @@ matching UI metadata.</p>
 <h3 id="calibrate-phase-14">/calibrate (Phase 14)<a class="headerlink" href="#calibrate-phase-14" title="Permanent link">&para;</a></h3>
 <ul>
 <li>Auto-tunes calibration overrides to match historical metrics</li>
-<li>Sweeps influential parameters via <code>tools/sensitivity.py</code></li>
+<li>Sweeps wired influential parameters through the production analysis boundary</li>
 <li>Uses binary search refinement to narrow to target value</li>
-<li>Validates with statistical test against historical data</li>
-<li>Requires a frozen source-backed backtest envelope and held-out validation
-  seeds; hard-blocked by REM-017 until the shared batch route is trustworthy</li>
+<li>Requires a frozen source-backed backtest envelope, predeclared tolerances,
+  held-out validation seeds, and exact production provenance</li>
+<li>Phase 112 implements REM-017's shared analysis boundary; the remediation
+  status changes only after the final phase gate. That boundary does not itself
+  validate history. Catalog-wide historical-envelope evidence remains queued
+  under REM-030</li>
 </ul>
 <h3 id="validate-data">/validate-data<a class="headerlink" href="#validate-data" title="Permanent link">&para;</a></h3>
 <ul>
@@ -6244,7 +6336,8 @@ matching UI metadata.</p>
   guessing substitutions or generic defaults</li>
 <li><strong>Run after</strong>: adding new units, weapons, scenarios, or modifying equipment entries</li>
 <li>The simplified-runner maps are static diagnostics; production evidence comes
-  from <code>ScenarioLoader</code>, exact affected loadouts, and behavioral execution</li>
+  from <code>SimulationRuntimeFactory -&gt; PreparedScenario -&gt; RuntimeSession</code>, exact
+  affected loadouts, and behavioral execution</li>
 </ul>
 <h3 id="evaluate-scenarios-phase-42">/evaluate-scenarios (Phase 42)<a class="headerlink" href="#evaluate-scenarios-phase-42" title="Permanent link">&para;</a></h3>
 <ul>

@@ -1683,6 +1683,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../development-phases-block13/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 13 (115-118)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../remediation-backlog/" class="md-nav__link">
         
   
@@ -5306,6 +5334,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-112/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 112 - Validation and Documentation Trust
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -5494,6 +5550,34 @@
     
   
     Time-on-Target Execution
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../specs/validation-and-documentation-trust/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Validation and Documentation Trust
   
 
     
@@ -5888,6 +5972,14 @@
 
 
 <h1 id="phase-7-engagement-validation">Phase 7: Engagement Validation<a class="headerlink" href="#phase-7-engagement-validation" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p><strong>Superseded validation claim (Phase 112 / REM-030):</strong> This devlog records
+the Phase 7 implementation and its then-reported calibration results. Those
+tables are not current production-path historical validation evidence.
+Phase 112 relabeled the surviving tests as legacy-runner regressions and
+removed redundant count-only Monte Carlo work; REM-030 remains queued for
+source-backed, predeclared production outcome envelopes in Phase 117.</p>
+</blockquote>
 <h2 id="summary">Summary<a class="headerlink" href="#summary" title="Permanent link">&para;</a></h2>
 <p>Phase 7 validates the combat model against 3 historical engagements: 73 Easting (1991), Falklands Naval (1982), and Golan Heights (1973). It builds a reusable validation infrastructure (scenario runner, Monte Carlo harness, metrics extraction, historical data loader) and calibrates engagement parameters to produce results within 2x of historical outcomes.</p>
 <p><strong>Modules</strong>: 5 source files in <code>stochastic_warfare/validation/</code>
@@ -6090,7 +6182,9 @@
 <li><strong>Constant dicts hoisted</strong>: <code>posture_mods</code> (hit_probability), <code>posture_protect</code>/<code>posture_frag_protect</code> (damage), <code>effects_table</code> (suppression), <code>level_risks</code> (fratricide) — all moved to module/class level.</li>
 <li><strong>Math constants pre-computed</strong>: <code>_SQRT_2</code>, <code>_FOUR_PI_CUBED</code>, <code>_BOLTZMANN_290_1E6</code> in detection.py. <code>_H</code> and <code>_EYE4</code> matrices in estimation.py.</li>
 <li><strong><code>state.py</code></strong>: <code>datetime.now()</code> replaced with explicit sim clock timestamp in morale events — fixes determinism.</li>
-<li><strong><code>pyproject.toml</code></strong>: <code>addopts = "-m 'not slow'"</code> excludes 1000-run MC tests by default. Run with <code>-m slow</code> explicitly.</li>
+<li><strong><code>pyproject.toml</code></strong>: the then-current default excluded the 1,000-run MC
+  tests. After Phase 112, one legacy 73 Easting convergence run remains in the
+  explicit slow partition.</li>
 </ul>
 <h3 id="infrastructure-improvements-post-completion">Infrastructure Improvements (post-completion)<a class="headerlink" href="#infrastructure-improvements-post-completion" title="Permanent link">&para;</a></h3>
 <ul>

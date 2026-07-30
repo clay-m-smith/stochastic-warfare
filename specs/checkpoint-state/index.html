@@ -1683,6 +1683,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../development-phases-block13/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 13 (115-118)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../remediation-backlog/" class="md-nav__link">
         
   
@@ -4957,6 +4985,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devlog/phase-112/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 112 - Validation and Documentation Trust
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -5171,6 +5227,28 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#commander-school-and-ooda-state" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Commander, school, and OODA state
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#movement-diagnostics-state" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Movement-diagnostics state
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#runtime-loadout-topology" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -5347,6 +5425,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../validation-and-documentation-trust/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Validation and Documentation Trust
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../skills-and-hooks/" class="md-nav__link">
         
   
@@ -5457,6 +5563,28 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#commander-school-and-ooda-state" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Commander, school, and OODA state
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#movement-diagnostics-state" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Movement-diagnostics state
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#runtime-loadout-topology" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -5555,7 +5683,7 @@
 
 <h1 id="checkpoint-state-contract">Checkpoint State Contract<a class="headerlink" href="#checkpoint-state-contract" title="Permanent link">&para;</a></h1>
 <h2 id="status">Status<a class="headerlink" href="#status" title="Permanent link">&para;</a></h2>
-<p>Phase 105 contract, extended through Phase 111 on 2026-07-29.</p>
+<p>Phase 105 contract, extended through Phase 112 on 2026-07-30.</p>
 <h2 id="purpose">Purpose<a class="headerlink" href="#purpose" title="Permanent link">&para;</a></h2>
 <p>A checkpoint is a deterministic branch point. Restoring it must reproduce the
 mutable simulation state at time <code>T</code>, and continuing from it must produce the
@@ -5564,11 +5692,11 @@ same subsequent state and events as the uninterrupted seeded run.</p>
 validated effective scenario configuration and repository/data-catalog
 revision. Checkpoint restore replaces mutable state; it does not rebuild engine
 topology or reinterpret a different scenario.</p>
-<p><code>SimulationEngine</code> writes checkpoint format version <code>111</code>. Any explicit version
-other than <code>111</code> is rejected before runtime mutation. An absent version selects
+<p><code>SimulationEngine</code> writes checkpoint format version <code>112</code>. Any explicit version
+other than <code>112</code> is rejected before runtime mutation. An absent version selects
 the bounded legacy-migration path described below; an explicitly present
 <code>null</code> value is malformed, not legacy.</p>
-<p>For version <code>111</code>, top-level engine keys and context-state keys must exactly
+<p>For version <code>112</code>, top-level engine keys and context-state keys must exactly
 match the compatible target runtime. Missing or extra keys fail before
 mutation. Serialized scenario and reinforcement configurations use type-aware
 JSON equality, so booleans cannot masquerade as integers and integers cannot
@@ -5644,6 +5772,31 @@ REM-019 is closed.</p>
 <p>RNG streams restore before engine continuation. Reconstructing force objects
 must not consume a stream. Calibration's flattened, side-dependent view is
 regenerated after force restoration.</p>
+<h2 id="commander-school-and-ooda-state">Commander, school, and OODA state<a class="headerlink" href="#commander-school-and-ooda-state" title="Permanent link">&para;</a></h2>
+<p>When commander behavior is enabled, the current checkpoint contains the exact
+unit-to-profile assignments, commander configuration and mutable state,
+doctrinal-school catalog/assignments, and OODA commander phase state. Restore
+validates those owners against the complete checkpoint roster, including
+already arrived reinforcements, and rejects a missing, extra, unknown, or
+side-incompatible assignment before mutation.</p>
+<p>Commander behavior requires valid canonical profiles for every scenario side
+or for none. Initial/future per-unit overrides and school assignments are
+preflighted against the full planned roster and catalogs. Fresh-runtime
+continuation must preserve assignment identity and subsequent decision/OODA
+behavior. Commander/school restore across an enabled aggregation-proxy topology
+remains unsupported under REM-016.</p>
+<h2 id="movement-diagnostics-state">Movement-diagnostics state<a class="headerlink" href="#movement-diagnostics-state" title="Permanent link">&para;</a></h2>
+<p>The scenario-owned <code>MovementDiagnostics</code> persists exact registered
+unit-to-side topology, canonical last ordering key and next ordinal, cumulative
+reason/distance/progress counters, total observation count, and each unit's
+bounded recent observation window plus dropped count. Typed reasons include
+weapon standoff, resource blocked, and zero progress.</p>
+<p>Restore stages and validates all units, sides, finite distances, order,
+reason-specific invariants, aggregate counters, and the fixed observation
+bound before committing. The diagnostics are observational: they do not select
+movement, consume RNG, or write positions. Versionless state may omit this
+owner only at tick zero before either the checkpoint or target diagnostics has
+observations.</p>
 <h2 id="runtime-loadout-topology">Runtime loadout topology<a class="headerlink" href="#runtime-loadout-topology" title="Permanent link">&para;</a></h2>
 <p>The Phase 109 <code>RuntimeLoadoutBuilder</code> is the only owner of production weapon
 and sensor attachment construction for initial units, reinforcements, and fresh
@@ -5686,10 +5839,28 @@ envelope and validates exact catalog/action topology, satellite ownership and
 state, order/result chronology, inventory, cooldown, debris, service
 compatibility, and RNG agreement before committing any space owner. A
 versionless checkpoint cannot restore a space-enabled runtime.</p>
-<p>The detailed production/action contract is
-<a href="../asat-production-integration/">ASAT Production Integration</a>. The legacy
-generic buffered Space ISR report representation remains tracked by REM-027
-until Phase 112 gives it a typed semantic rehydration boundary.</p>
+<p>The ISR queue contains only immutable typed <code>SpaceISRReport</code> values with exact
+report ID, owner/reporting side, target, satellite/constellation, optical/SAR
+modality, resolution, position uncertainty, ENU observation, and observed plus
+available logical times. Selected IMINT fusion constellations must be a subset
+of the loaded constellation topology and must resolve to supported sourced
+optical/SAR definitions.</p>
+<p>Delayed delivery is transactional. Each delivered report has one terminal
+<code>IntelDeliveryReceipt</code> carrying the exact report digest, resulting track, and
+delivery time, plus one current <code>IMINTTrackAssociation</code> for the owner/target.
+Restore validates report IDs and canonical queue order, cadence and
+observation/availability chronology, satellite and unit references, ownership,
+receipt/association digests, pending-versus-delivered lifecycle, and agreement
+between Space and fusion state before committing either owner. A failed
+delivery or restore leaves the queue, receipt ledger, associations, tracks,
+clock, and RNG unchanged so the same operation can be retried.</p>
+<p>This typed Space ISR contract does not restore ordinary fog-of-war contacts.
+<code>SideWorldView.contacts</code> are currently serialized but nonempty entries are
+discarded on restore under REM-029. Space ISR fresh-continuation evidence
+therefore declares an empty ordinary-contact topology rather than implying
+whole-fog-of-war equivalence.</p>
+<p>The detailed ASAT production/action contract is
+<a href="../asat-production-integration/">ASAT Production Integration</a>.</p>
 <h2 id="time-on-target-state">Time-on-target state<a class="headerlink" href="#time-on-target-state" title="Permanent link">&para;</a></h2>
 <p>For every declared time-on-target plan, <code>IndirectFireEngine</code> persists the
 immutable plan fingerprint, enabled/dormant state, mission and battery
@@ -5724,8 +5895,9 @@ counters reject before context mutation.</p>
 <a href="../time-on-target-execution/">Time-on-Target Execution</a>.</p>
 <h2 id="compatibility">Compatibility<a class="headerlink" href="#compatibility" title="Permanent link">&para;</a></h2>
 <ul>
-<li>Current engine checkpoints contain <code>checkpoint_version: 111</code>; an unknown,
-  malformed, boolean, older explicit, or newer explicit version is rejected.</li>
+<li>Current engine checkpoints contain <code>checkpoint_version: 112</code>; an unknown,
+  malformed, boolean, older explicit, or newer explicit version is rejected.
+  Explicit version <code>111</code> does not migrate into the current runtime.</li>
 <li>Current reinforcement wave ordinals and both morale-store enum values use
   non-boolean integers. Current wave side, configured arrival time, and full
   typed configuration must agree with the target schedule.</li>
@@ -5745,7 +5917,7 @@ counters reject before context mutation.</p>
   empty mapping. Direct legacy context calls that omit either section leave
   that corresponding runtime state unchanged. <code>SimulationEngine</code> additionally
   requires <code>units_by_side</code> for its campaign/roster preflight and both morale
-  keys for version 111.</li>
+  keys for version 112.</li>
 <li>Older unit snapshots without <code>unit_class</code> infer the class from its unique
   subclass field. A snapshot with no subclass field restores as <code>Unit</code>.</li>
 <li>Unknown explicit discriminators fail; they never silently downgrade to
@@ -5782,13 +5954,22 @@ counters reject before context mutation.</p>
 <li>ordered mapping-registry/runtime-loadout topology and exact mutable
     weapon/sensor continuation;</li>
 <li>complete space/ASAT action, service, inventory, satellite, debris, RNG, and
-    before/after-action fresh continuation;</li>
+    before/after-action fresh continuation, plus typed Space ISR continuation
+    before and after delayed delivery, transactional retry, owner-only
+    association, and atomic corruption controls under the declared ordinary
+    contact limitation;</li>
+<li>exact commander/profile/school/OODA restoration and fresh continuation for
+    initial and arriving units, including a behavior-affecting assignment
+    control and atomic rejection;</li>
+<li>exact bounded movement-diagnostics restoration and fresh continuation,
+    including real weapon-standoff and resource-blocked controls plus an
+    explicitly injected zero-progress fault detector;</li>
 <li>time-on-target continuation before fire, after a causal reserved pre-fire
     mutation, between fire and impact, during a shared-attachment plan, after
     completion/release, and for a disabled populated plan, plus atomic
     sentinel/lifecycle/resource/quantity-cooldown/target/RNG controls; and</li>
 <li>relevant existing checkpoint, scenario, engine, entity, logistics, space,
-    and indirect-fire regression suites.</li>
+    commander, movement, and indirect-fire regression suites.</li>
 </ol>
 <h2 id="tracked-boundaries">Tracked boundaries<a class="headerlink" href="#tracked-boundaries" title="Permanent link">&para;</a></h2>
 <p>Production weapon/sensor definitions and attachment topology remain
@@ -5799,6 +5980,9 @@ topology is rejected rather than substituted.</p>
 <p>Aggregation/disaggregation also owns constituent reconstruction and attachment
 restoration. Its current base-unit reconstruction gap is tracked separately and
 must be closed before checkpoint equivalence is claimed across an aggregation
+boundary.</p>
+<p>Ordinary nonempty fog-of-war contact restore remains REM-029. Typed Space ISR
+queue/receipt/association equivalence must not be generalized across that
 boundary.</p>
 <p>The mapping registry and subsystem topology carry compatibility fingerprints,
 but checkpoint files do not embed full content hashes for every external unit,

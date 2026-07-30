@@ -1049,6 +1049,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#doctrine-comparison" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Doctrine Comparison
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -2184,6 +2195,34 @@
     
   
     Block 12 (105-114)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development-phases-block13/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 13 (115-118)
   
 
     
@@ -5478,6 +5517,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devlog/phase-112/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 112 - Validation and Documentation Trust
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -5666,6 +5733,34 @@
     
   
     Time-on-Target Execution
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../specs/validation-and-documentation-trust/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Validation and Documentation Trust
   
 
     
@@ -6184,6 +6279,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#doctrine-comparison" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Doctrine Comparison
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -6280,7 +6386,7 @@
 </tr>
 <tr>
 <td><strong>Analysis</strong></td>
-<td>Batch Monte Carlo, A/B comparison, sensitivity sweeps</td>
+<td>Batch Monte Carlo, A/B comparison, sensitivity sweeps, doctrine comparison</td>
 </tr>
 </tbody>
 </table>
@@ -6311,7 +6417,8 @@
 <li><strong>Objectives</strong> -- positions and assigned sides</li>
 <li><strong>Victory conditions</strong> -- what triggers the end of the simulation</li>
 <li><strong>Optional configs</strong> -- which subsystems are enabled (shown as colored badges)</li>
-<li><strong>Documented outcomes</strong> -- historical reference data (for validated scenarios)</li>
+<li><strong>Documented outcomes</strong> -- authored historical/reference metadata; its
+  presence is not a current validation verdict</li>
 </ul>
 <p><strong>Actions on the detail page:</strong></p>
 <table>
@@ -6377,7 +6484,7 @@
 <h3 id="overview">Overview<a class="headerlink" href="#overview" title="Permanent link">&para;</a></h3>
 <ul>
 <li><strong>Victory result</strong> -- which side won and by what condition</li>
-<li><strong>Timing</strong> -- simulation ticks, wall-clock duration</li>
+<li><strong>Timing</strong> -- simulation ticks and logical simulated elapsed duration</li>
 <li><strong>Force summary</strong> -- surviving units per side</li>
 </ul>
 <h3 id="charts">Charts<a class="headerlink" href="#charts" title="Permanent link">&para;</a></h3>
@@ -6730,7 +6837,11 @@
 <p>Shortcuts are disabled when typing in input fields, text areas, or select elements.</p>
 <hr />
 <h2 id="analysis">Analysis<a class="headerlink" href="#analysis" title="Permanent link">&para;</a></h2>
-<p>The Analysis page provides three tools for statistical analysis of simulation results.</p>
+<p>The Analysis page provides four production-runtime tools for statistical
+analysis. Completed results are accepted by the UI only when raw vectors,
+seed/order consistency, terminal run records, roster/loadout/assignment
+evidence, and runtime provenance pass the client-side semantic validators;
+incomplete or internally inconsistent responses are shown as errors.</p>
 <h3 id="batch-monte-carlo">Batch Monte Carlo<a class="headerlink" href="#batch-monte-carlo" title="Permanent link">&para;</a></h3>
 <p>Run multiple iterations of the same scenario with different seeds to build statistical distributions:</p>
 <ol>
@@ -6740,19 +6851,35 @@
 <li>View results: metric histograms, summary statistics, convergence plots</li>
 </ol>
 <h3 id="ab-comparison">A/B Comparison<a class="headerlink" href="#ab-comparison" title="Permanent link">&para;</a></h3>
-<p>Compare two different configurations side by side:</p>
+<p>Compare two sparse calibration configurations of the same source scenario with
+the same ordered seed sequence:</p>
 <ol>
-<li>Select two scenarios (or the same scenario with different parameters)</li>
-<li>Set seeds and iteration counts</li>
-<li>View: side-by-side force strength charts, Mann-Whitney U test results, effect sizes</li>
+<li>Select one scenario and provide A/B overrides</li>
+<li>Set a base seed, iteration count, metrics, and family alpha</li>
+<li>View exact paired counts and differences, paired superiority, raw exact-sign
+   p-values, Holm-adjusted p-values, and family-wise significance</li>
+<li>Inspect both ordered raw-vector and production-provenance envelopes</li>
 </ol>
 <h3 id="sensitivity-sweep">Sensitivity Sweep<a class="headerlink" href="#sensitivity-sweep" title="Permanent link">&para;</a></h3>
 <p>Test how a single parameter affects outcomes:</p>
 <ol>
 <li>Select a scenario and parameter to sweep</li>
 <li>Set the range and number of steps</li>
-<li>View: errorbar chart of metric vs parameter value</li>
+<li>View an errorbar chart plus each point's raw vectors and runtime provenance</li>
 </ol>
+<h3 id="doctrine-comparison">Doctrine Comparison<a class="headerlink" href="#doctrine-comparison" title="Permanent link">&para;</a></h3>
+<p>Compare distinct doctrinal-school policies while holding the source,
+calibration patch, seed sequence, and metric order constant:</p>
+<ol>
+<li>Select one scenario and define at least two named policies</li>
+<li>Assign the same exact scenario-side set in every policy, using at least two
+   distinct catalog-backed schools</li>
+<li>Inspect per-variant raw vectors, commander/school assignment evidence, and
+   production provenance</li>
+</ol>
+<p>These analysis tools characterize current production behavior. They do not by
+themselves establish historical validity; that requires a predeclared,
+source-backed held-out envelope.</p>
 <hr />
 <h2 id="api-server-configuration">API Server Configuration<a class="headerlink" href="#api-server-configuration" title="Permanent link">&para;</a></h2>
 <p>The API server is configured via environment variables (prefix <code>SW_API_</code>):</p>

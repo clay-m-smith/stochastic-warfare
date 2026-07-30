@@ -874,6 +874,17 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#source-identity-in-checkouts-and-immutable-images" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Source identity in checkouts and immutable images
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#null-config-gating" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2002,6 +2013,34 @@
     
   
     Block 12 (105-114)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development-phases-block13/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 13 (115-118)
   
 
     
@@ -5296,6 +5335,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devlog/phase-112/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 112 - Validation and Documentation Trust
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -5484,6 +5551,34 @@
     
   
     Time-on-Target Execution
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../specs/validation-and-documentation-trust/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Validation and Documentation Trust
   
 
     
@@ -5708,6 +5803,17 @@
   
     <nav class="md-nav" aria-label="Engine Wiring">
       <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#source-identity-in-checkouts-and-immutable-images" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Source identity in checkouts and immutable images
+      
+    </span>
+  </a>
+  
+</li>
         
           <li class="md-nav__item">
   <a href="#null-config-gating" class="md-nav__link">
@@ -5945,12 +6051,12 @@
 </thead>
 <tbody>
 <tr>
-<td><strong>ai</strong></td>
-<td>OODA FSM, commander personalities, doctrine templates, MDMP planning</td>
+<td><strong>c2.ai</strong></td>
+<td>OODA FSM, commander personalities, doctrine templates</td>
 <td>8</td>
 </tr>
 <tr>
-<td><strong>planning</strong></td>
+<td><strong>c2.planning</strong></td>
 <td>Mission analysis, COA generation, wargaming, estimates</td>
 <td>8</td>
 </tr>
@@ -6121,7 +6227,58 @@ fuel tanks or weapon magazines remain explicit remediation boundaries.</p>
 </ul>
 <p>This means you can test combat resolution without a terrain engine, or test detection without a movement engine.</p>
 <h2 id="engine-wiring">Engine Wiring<a class="headerlink" href="#engine-wiring" title="Permanent link">&para;</a></h2>
-<p>The <code>ScenarioLoader</code> is the central factory. Given a scenario YAML file, it:</p>
+<p>Production consumers enter through one typed runtime-owned boundary:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>scenario YAML or typed config
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>  -&gt; SimulationRuntimeFactory.prepare() / prepare_config()
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>  -&gt; PreparedScenario.build()
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>  -&gt; RuntimeSession.step() / run_to_completion() / finalize()
+</code></pre></div>
+<p>Preparation reads a YAML source once (or directly copies a typed
+<code>CampaignScenarioConfig</code>), applies strict independent variants, and captures
+source, code/worktree, data, and authored-roster identity. <code>build()</code> then
+constructs a fresh session and verifies exact loaded side/cardinality,
+duplicate-free IDs, loadout topology, commander/doctrine assignments, and
+catalog provenance. <code>RuntimeSession.step()</code> returns <code>True</code> at terminal;
+<code>run_to_completion()</code> and <code>finalize()</code> require a public terminal outcome.
+Provenance exposes source/config fingerprints, exact seeds and rosters, code
+and data revisions, catalog/doctrine/loadout fingerprints, and initial plus
+arriving assignments.</p>
+<h3 id="source-identity-in-checkouts-and-immutable-images">Source identity in checkouts and immutable images<a class="headerlink" href="#source-identity-in-checkouts-and-immutable-images" title="Permanent link">&para;</a></h3>
+<p>Runtime source identity is Git-first. When preparation starts inside a Git
+worktree, the resolver records <code>HEAD</code>, a dirty flag, and a content-sensitive
+worktree fingerprint. A clean tree is identified by its commit; a dirty tree
+also incorporates Git status, the tracked binary diff, and the path, mode,
+size, and content of every untracked file. Symlinks and non-regular worktree
+entries are rejected. If a <code>.git</code> control marker exists but Git is unavailable
+or cannot verify the worktree, preparation fails rather than falling back to a
+packaged identity.</p>
+<p>The production Docker image deliberately omits <code>.git</code>. Its build requires an
+explicit <code>SOURCE_REVISION</code> containing exactly 40 lowercase hexadecimal
+characters. Builders must use a clean checkout so that this supplied
+attribution names the staged source. After the locked Python environment is
+installed, <code>stochastic_warfare.build_identity</code> writes the exact-schema
+<code>stochastic_warfare/_build_identity.json</code>. That identity binds the supplied
+commit to a canonical manifest digest over every regular file beneath
+<code>stochastic_warfare/</code> and <code>api/</code>, plus <code>pyproject.toml</code> and <code>uv.lock</code>. Each
+manifest entry contains the relative path, normalized executable mode, byte
+size, and SHA-256 digest; generated identity and interpreter-cache files are
+excluded. Missing directories or files, symlinks, special files, duplicate
+identity keys, malformed values, and non-finite JSON are rejected.</p>
+<p>When no Git worktree exists, runtime preparation loads the generated identity
+and recomputes the complete application-source manifest. Missing or malformed
+identity data and any packaged-source tampering fail before a
+<code>PreparedScenario</code> can be used. A verified image reports the supplied commit,
+<code>dirty=False</code>, and a fingerprint derived from the immutable-build kind, commit,
+and source-manifest digest. Scenario and catalog inputs are outside this
+application manifest and retain their separate runtime data and catalog
+revisions.</p>
+<p><code>.github/workflows/build.yml</code> exercises this path on pull requests to <code>main</code>,
+pushes to <code>main</code>, and manual dispatches. It builds with <code>GITHUB_SHA</code>, asserts
+that <code>/app/.git</code> is absent, runs a bounded scenario through
+<code>SimulationRuntimeFactory -&gt; RuntimeSession</code>, and checks the expected commit
+and clean immutable-image identity.</p>
+<p><code>ScenarioLoader</code> is the lower-level engine-wiring boundary used by that
+factory. Given a scenario YAML or prevalidated effective config, it:</p>
 <ol>
 <li>Parses the YAML into a <code>CampaignScenarioConfig</code> (pydantic-validated), or
    deep-copies a prevalidated effective config supplied by an orchestrator</li>
@@ -6151,6 +6308,19 @@ fuel tanks or weapon magazines remain explicit remediation boundaries.</p>
 <li>Seeds both morale views from each side's validated <code>morale_initial</code></li>
 <li>Returns a <code>SimulationContext</code> with everything wired together</li>
 </ol>
+<p><code>RuntimeForceBuilder</code> owns typed initial-force construction. It validates exact
+unit enums, counts, positions, supported per-instance overrides, deterministic
+IDs, loaded runtime domains, and final roster cardinality before publication.
+Construction stages the force and RNG outcome so a failed build cannot consume
+the caller's unit RNG stream.</p>
+<p>Commander declaration is all-side or absent. Behavior is active only when
+every side supplies a valid catalog profile; all omitted with no
+<code>commander_config</code> creates no commander engine. Partial profiles, or any
+<code>commander_config</code> with blank side profiles, reject. Exact initial and future
+per-unit commander overrides and <code>school_config.unit_assignments</code> are validated
+eagerly against the planned roster, profile catalog, and school catalog. The
+resulting commander, school, and OODA assignments are runtime behavior, not
+metadata; they survive reinforcement registration and checkpoint continuation.</p>
 <p>The retained loadout builder creates every initial, arriving, and
 checkpoint-reconstructed weapon/sensor attachment. Its immutable fingerprint
 and per-unit resolution topology are part of checkpoint compatibility, while
@@ -6180,21 +6350,40 @@ reload path currently provides persisted Class V provenance. See
 <a href="../../specs/time-on-target-execution/">Time-on-Target Execution</a>.</p>
 <p>Space runtime state is orchestrated by one <code>SpaceEngine</code> boundary. Each tick
 propagates orbits, advances existing debris, executes newly due ASAT orders,
-then updates downstream GPS/ISR/early-warning/SATCOM consumers. The selected
-catalog topology, satellite state, ASAT inventory/orders/debris, service
-history, and SPACE RNG stream participate in whole-context checkpoint
-preflight. The detailed contract is
+then updates downstream GPS/ISR/early-warning/SATCOM consumers. Selected
+optical/SAR IMINT constellations generate immutable, owner-scoped
+<code>SpaceISRReport</code> values when <code>enable_space_effects</code> is active; a nonempty
+fusion selection without that calibration gate rejects. Delayed delivery
+transactionally creates an exact
+<code>IntelDeliveryReceipt</code> and one owner/target <code>IMINTTrackAssociation</code>; queued
+reports, receipts, associations, cadence, and reference integrity participate
+in atomic checkpoint preflight. This does not inject reports directly into
+ordinary fog-of-war contacts. Exact continuation with nonempty ordinary
+<code>SideWorldView.contacts</code> remains REM-029, so Space ISR checkpoint evidence uses
+an explicit empty ordinary-contact topology.</p>
+<p>The selected catalog topology, satellite state, ASAT
+inventory/orders/debris, service history, and SPACE RNG stream also participate
+in whole-context checkpoint preflight. The detailed ASAT contract is
 <a href="../../specs/asat-production-integration/">ASAT Production Integration</a>.</p>
 <p><code>SimulationEngine</code> then installs the validated reinforcement schedule exactly
 once. Due waves are checked at every resolution and are committed atomically to
 the campaign roster, context force map, live loadout maps, morale state, and
-enabled logistics topology.</p>
+commander, school, OODA, movement-diagnostics, and enabled logistics topology.
+If registration fails, all staged subsystem changes roll back and the wave can
+be retried deterministically.</p>
+<p>Movement diagnostics observe the decisions already made by strategic,
+operational, and tactical movement managers; they never select a destination,
+consume randomness, or move a unit. Canonically ordered typed reasons include
+weapon standoff, resource blocked, and zero progress. Cumulative counters and a
+bounded recent-observation window are checkpointed, and the scenario evaluator
+derives semantic stuck/resource-blocked populations from those counters rather
+than inferring intent from final displacement.</p>
 <h3 id="null-config-gating">Null-Config Gating<a class="headerlink" href="#null-config-gating" title="Permanent link">&para;</a></h3>
 <p>Every optional subsystem follows the same pattern:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="k">if</span> <span class="n">config</span><span class="o">.</span><span class="n">ew_config</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">config</span><span class="o">.</span><span class="n">ew_config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;enable_ew&quot;</span><span class="p">)</span> <span class="ow">is</span> <span class="kc">True</span><span class="p">:</span>
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>    <span class="c1"># Create and wire EW engines</span>
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="k">else</span><span class="p">:</span>
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>    <span class="n">ctx</span><span class="o">.</span><span class="n">ew_engine</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># Disabled -- zero cost</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="k">if</span> <span class="n">config</span><span class="o">.</span><span class="n">ew_config</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">config</span><span class="o">.</span><span class="n">ew_config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;enable_ew&quot;</span><span class="p">)</span> <span class="ow">is</span> <span class="kc">True</span><span class="p">:</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>    <span class="c1"># Create and wire EW engines</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="k">else</span><span class="p">:</span>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>    <span class="n">ctx</span><span class="o">.</span><span class="n">ew_engine</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># Disabled -- zero cost</span>
 </code></pre></div>
 <p>The equivalent <code>enable_space</code> and <code>enable_cbrn</code> flags control their suites.
 The effective registered era is checked before construction, so a scenario
@@ -6255,13 +6444,16 @@ direct route template.</p>
 </ul>
 <p>Era data lives in <code>data/eras/{era_name}/</code> with the same directory structure as modern data.</p>
 <h2 id="determinism-reproducibility">Determinism &amp; Reproducibility<a class="headerlink" href="#determinism-reproducibility" title="Permanent link">&para;</a></h2>
-<p>Every simulation run is fully reproducible given the same seed:</p>
+<p>Within a validated deterministic contract, a run is reproducible when code,
+data/catalog content, effective configuration, seed, and execution inputs are
+identical:</p>
 <h3 id="prng-discipline">PRNG Discipline<a class="headerlink" href="#prng-discipline" title="Permanent link">&para;</a></h3>
 <ul>
 <li>All randomness flows through <code>RNGManager</code>, which creates per-module <code>np.random.Generator</code> streams</li>
 <li>Each module gets its own independent PRNG stream via <code>RNGManager.get_stream(ModuleId)</code></li>
 <li>No bare <code>random</code> module or <code>np.random</code> module-level calls anywhere in the codebase</li>
-<li>Given the same seed, the same scenario produces identical results</li>
+<li>The same seed alone is insufficient when code, data, configuration, or
+  runtime topology differs</li>
 <li>Battle discovery and reinforcement events require the caller's simulation
   clock timestamp; no wall-clock fallback participates in replay state</li>
 </ul>
@@ -6273,9 +6465,9 @@ direct route template.</p>
 <h2 id="web-application-layer">Web Application Layer<a class="headerlink" href="#web-application-layer" title="Permanent link">&para;</a></h2>
 <p>The engine is wrapped by a web application stack that provides interactive access without writing Python code.</p>
 <h3 id="architecture">Architecture<a class="headerlink" href="#architecture" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>Browser (React) -&gt; Vite dev proxy -&gt; FastAPI (api/) -&gt; Simulation Engine (stochastic_warfare/)
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>                                         |
-<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>                                    SQLite (aiosqlite)
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>Browser (React) -&gt; Vite dev proxy -&gt; FastAPI (api/) -&gt; Simulation Engine (stochastic_warfare/)
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>                                         |
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>                                    SQLite (aiosqlite)
 </code></pre></div>
 <h3 id="api-layer-api">API Layer (<code>api/</code>)<a class="headerlink" href="#api-layer-api" title="Permanent link">&para;</a></h3>
 <p>A FastAPI service sits alongside the engine (not inside it). It provides:</p>
@@ -6285,7 +6477,10 @@ direct route template.</p>
 <li><strong>Async run execution</strong> via executor workers (CPU-bound simulation in a
   thread pool)</li>
 <li><strong>SQLite persistence</strong> for run results across server restarts</li>
-<li><strong>Batch execution</strong> for Monte Carlo statistical analysis</li>
+<li><strong>Production batch execution</strong> with ordered raw metric vectors, exact seeds,
+  and source/code/data/catalog/doctrine/loadout provenance</li>
+<li><strong>A/B and doctrine comparison</strong> over common seeds, plus strict parameter
+  sweeps</li>
 </ul>
 <p>The application lifespan owns one settings object, database connection, and run
 manager. A run is accepted only after its effective scenario config validates
@@ -6293,9 +6488,16 @@ and its pending row commits. Shutdown rejects new work, cooperatively signals
 run and batch workers, waits for the actual executor threads and terminal
 SQLite writes, then closes the database. The grace timeout reports slow
 workers; it does not abandon them.</p>
-<p>The API layer imports <code>stochastic_warfare</code> as a library. Sparse calibration
-overlays are merged into an isolated effective config before
-<code>ScenarioLoader</code>; source scenario YAML is not modified.</p>
+<p>The API layer imports <code>stochastic_warfare</code> as a library. Run, batch, comparison,
+sweep, doctrine-comparison, MCP, and current-revision benchmark execution share
+<code>SimulationRuntimeFactory -&gt; PreparedScenario -&gt; RuntimeSession</code>. A paired
+benchmark's bounded historical reference adapter executes the actual reference
+revision when that revision predates this boundary. Sparse calibration
+overlays are applied to isolated typed variants; source scenario YAML is not
+modified. Comparisons preserve paired counts/differences, superiority, raw
+exact-sign p-values, Holm-adjusted p-values, and family-wise significance.
+Unsupported metrics or incomplete/nonfinite runs fail rather than producing
+plausible zeroes.</p>
 <h3 id="frontend-frontend">Frontend (<code>frontend/</code>)<a class="headerlink" href="#frontend-frontend" title="Permanent link">&para;</a></h3>
 <p>A React + TypeScript single-page application built with Vite:</p>
 <ul>
@@ -6305,7 +6507,11 @@ overlays are merged into an isolated effective config before
 <li><strong>React Router</strong> for deep-linkable pages</li>
 <li><strong>Headless UI</strong> for accessible modals, dropdowns, and menus</li>
 </ul>
-<p>Key pages: Scenario Browser, Unit Catalog, Run Results (charts + narrative + map), Scenario Editor (clone-and-tweak), Analysis (Monte Carlo, A/B comparison, sensitivity sweep).</p>
+<p>Key pages: Scenario Browser, Unit Catalog, Run Results (charts + narrative +
+map), Scenario Editor (clone-and-tweak), Analysis (Monte Carlo, same-scenario
+A/B comparison, sensitivity sweep, and doctrine comparison). Analysis views
+validate and expose raw vectors and provenance instead of accepting summary-only
+payloads.</p>
 <p>See the <a href="../../guide/web-ui/">Web UI Guide</a> for usage documentation.</p>
 <h2 id="consequence-enforcement-gates">Consequence Enforcement Gates<a class="headerlink" href="#consequence-enforcement-gates" title="Permanent link">&para;</a></h2>
 <p>The engine uses an opt-in pattern for behavioral enforcement of resource consumption and C2 friction. Each consequence is gated behind an <code>enable_*</code> flag in <code>CalibrationSchema</code> (default <code>False</code>), so enabling a new behavior never breaks existing scenarios.</p>
@@ -6362,17 +6568,20 @@ overlays are merged into an isolated effective config before
 </tbody>
 </table>
 <p>Additional non-flag consequences include fire zone damage (<code>fire_damage_per_tick</code>), stratagem expiry (<code>stratagem_duration_ticks</code>), guerrilla retreat distance, and order misinterpretation effects.</p>
-<p>The <code>enable_all_modern</code> meta-flag activates all 21 non-deferred flags at once for convenience, but individual flag control is preferred in scenario YAMLs for performance (selective flags avoid ~6x overhead from unused subsystems).</p>
+<p>The <code>enable_all_modern</code> meta-flag activates all 21 non-deferred flags at once
+for convenience. Individual flag control is preferred when a scenario does not
+need every consequence. No general performance multiplier is claimed without
+the controlled semantic-equivalence evidence queued under REM-031.</p>
 <h2 id="checkpointing">Checkpointing<a class="headerlink" href="#checkpointing" title="Permanent link">&para;</a></h2>
-<p>All stateful classes implement the checkpoint protocol:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="k">class</span><span class="w"> </span><span class="nc">SomeEngine</span><span class="p">:</span>
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">get_state</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
-<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;Serialize full internal state.&quot;&quot;&quot;</span>
-<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>        <span class="o">...</span>
-<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>
-<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">set_state</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;Restore from serialized state.&quot;&quot;&quot;</span>
-<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>        <span class="o">...</span>
+<p>Checkpoint-participating runtime owners implement the checkpoint protocol:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="k">class</span><span class="w"> </span><span class="nc">SomeEngine</span><span class="p">:</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">get_state</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;Serialize full internal state.&quot;&quot;&quot;</span>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>        <span class="o">...</span>
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">set_state</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;Restore from serialized state.&quot;&quot;&quot;</span>
+<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a>        <span class="o">...</span>
 </code></pre></div>
 <p>This enables:</p>
 <ul>
@@ -6380,14 +6589,15 @@ overlays are merged into an isolated effective config before
 <li><strong>Branching</strong> -- checkpoint, run two different decisions, compare outcomes</li>
 <li><strong>Debugging</strong> -- reproduce any simulation state from a checkpoint + seed</li>
 </ul>
-<p>The current <code>SimulationEngine</code> checkpoint schema is version 111. For declared
-time-on-target plans it includes the immutable topology fingerprint, mission
-and battery lifecycles, generated in-flight impacts, terminal result, exact
-live-resource observations, target transition, and the reconciled COMBAT RNG
-state. Restore stages and validates that state against the fresh runtime before
-committing any mutation. Version 110 and other non-current versioned engine
-checkpoints reject; versionless compatibility is unavailable when a
-time-on-target plan is declared, including a disabled populated control.</p>
+<p>The current <code>SimulationEngine</code> checkpoint schema is version 112. It includes
+exact force/loadout/morale/logistics/time-on-target state plus commander and
+OODA assignments, bounded movement diagnostics, and typed Space ISR report
+queues, delivery receipts, and owner/target IMINT associations. Restore stages
+and validates topology, identity, chronology, mutable resources, and relevant
+RNG state against a fresh compatible runtime before committing any mutation.
+Version 111 and every other non-current versioned engine checkpoint reject.
+Bounded versionless compatibility remains subject to the stricter subsystem
+rules in the <a href="../../specs/checkpoint-state/">checkpoint state contract</a>.</p>
 
 
 

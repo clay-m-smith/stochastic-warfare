@@ -1833,6 +1833,34 @@
   
   
     <li class="md-nav__item">
+      <a href="development-phases-block13/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 13 (115-118)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="remediation-backlog/" class="md-nav__link">
         
   
@@ -5107,6 +5135,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="devlog/phase-112/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 112 - Validation and Documentation Trust
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -5315,6 +5371,34 @@
   
   
     <li class="md-nav__item">
+      <a href="specs/validation-and-documentation-trust/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Validation and Documentation Trust
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="skills-and-hooks/" class="md-nav__link">
         
   
@@ -5497,8 +5581,8 @@
 <h1 id="stochastic-warfare">Stochastic Warfare<a class="headerlink" href="#stochastic-warfare" title="Permanent link">&para;</a></h1>
 <p><strong>High-fidelity stochastic wargame simulator</strong> -- multi-scale, multi-domain, multi-era.</p>
 <p><img alt="Python" src="https://img.shields.io/badge/python-%3E%3D3.12-blue" />
-<img alt="Tests" src="https://img.shields.io/badge/tests-10%2C958_passing-brightgreen" />
-<img alt="Phase" src="https://img.shields.io/badge/phase-111_COMPLETE-brightgreen" /></p>
+<img alt="Tests" src="https://img.shields.io/badge/tests-partitioned_validation-blue" />
+<img alt="Phase" src="https://img.shields.io/badge/phase-112_COMPLETE-brightgreen" /></p>
 <hr />
 <h2 id="what-is-this">What Is This?<a class="headerlink" href="#what-is-this" title="Permanent link">&para;</a></h2>
 <p>Stochastic Warfare combines a headless Python simulation engine, FastAPI
@@ -5516,8 +5600,12 @@ Kalman filters, Poisson processes, queueing theory, and SNR-based detection.</p>
   explicitly</li>
 <li><strong>Multi-era coverage</strong> -- Modern (Cold War--present), WW2, WW1, Napoleonic, and Ancient/Medieval eras with era-specific mechanics</li>
 <li><strong>Stochastic models throughout</strong> -- 10+ mathematical models (Markov, Monte Carlo, Kalman, Poisson, queueing, Lanchester, Wayne Hughes salvo, Boyd OODA, Beer-Lambert DEW)</li>
-<li><strong>AI commanders</strong> -- 9 doctrinal schools (Clausewitz, Maneuver, Attrition, AirLand Battle, Air Power, Sun Tzu, Deep Battle, Mahanian, Corbettian) with OODA decision cycles</li>
-<li><strong>Validated against history</strong> -- 73 Easting, Falklands Naval, Golan Heights engagements and campaigns with Monte Carlo statistical comparison</li>
+<li><strong>AI commanders</strong> -- 9 doctrinal schools with OODA decision cycles when
+  scenarios provide strict all-side commander profiles and valid school
+  assignments</li>
+<li><strong>Historical scenario catalog</strong> -- source-backed scenario metadata and
+  current-engine regressions; catalog-wide historical validity remains queued
+  under <a href="remediation-backlog/">REM-030</a></li>
 </ul>
 <h2 id="architecture-at-a-glance">Architecture at a Glance<a class="headerlink" href="#architecture-at-a-glance" title="Permanent link">&para;</a></h2>
 <p>The engine is composed of 12 top-level modules with a strict one-way dependency graph:</p>
@@ -5532,13 +5620,28 @@ Kalman filters, Poisson processes, queueing theory, and SNR-based detection.</p>
 <li><strong><a href="https://docs.astral.sh/uv/">uv</a></strong> -- used exclusively for package management</li>
 </ul>
 <h3 id="quick-setup">Quick Setup<a class="headerlink" href="#quick-setup" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>uv<span class="w"> </span>sync<span class="w"> </span>--extra<span class="w"> </span>dev<span class="w">    </span><span class="c1"># creates .venv, installs all deps including pytest/matplotlib</span>
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>uv<span class="w"> </span>run<span class="w"> </span>python<span class="w"> </span>-m<span class="w"> </span>pytest<span class="w"> </span>--tb<span class="o">=</span>short<span class="w"> </span>-q<span class="w">   </span><span class="c1"># run the default-selected suite</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>uv<span class="w"> </span>sync<span class="w"> </span>--locked<span class="w"> </span>--extra<span class="w"> </span>dev<span class="w"> </span>--extra<span class="w"> </span>api<span class="w"> </span>--extra<span class="w"> </span>terrain<span class="w"> </span>--extra<span class="w"> </span>mcp
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>uv<span class="w"> </span>run<span class="w"> </span>--no-sync<span class="w"> </span>python<span class="w"> </span>scripts/validate_test_partitions.py<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w">  </span>--output<span class="w"> </span>artifacts/partition-audit/manifest.json
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>uv<span class="w"> </span>run<span class="w"> </span>--no-sync<span class="w"> </span>python<span class="w"> </span>scripts/run_pytest_partition.py<span class="w"> </span>standard<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="w">  </span>--manifest<span class="w"> </span>artifacts/standard/manifest.json<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="w">  </span>--junit<span class="w"> </span>artifacts/standard/junit.xml<span class="w"> </span>--forbid-skips<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="w">  </span>--timeout-seconds<span class="w"> </span><span class="m">2700</span>
 </code></pre></div>
-<p>The default selection excludes the <code>slow</code>, <code>benchmark</code>, <code>terrain</code>, <code>api</code>, and
-<code>e2e</code> markers and ignores <code>tests/api</code> and <code>tests/e2e</code>. Run those boundaries
-explicitly with the needed extras and <code>-o addopts=</code>; REM-013 tracks their
-routine CI disclosure.</p>
+<p>The authoritative Python union is the audited, disjoint set <code>standard</code>,
+<code>slow-only</code>, <code>benchmark-only</code>, <code>slow-benchmark</code>, <code>api</code>, and <code>e2e</code>. PR/main CI
+runs the audit plus <code>standard</code>, <code>api</code>, <code>e2e</code>, and the overlapping <code>terrain</code>
+dependency profile. Weekly/manual CI runs the three marker partitions in
+deterministic shards. <code>benchmark-policy</code> is also an overlapping focused
+profile, not a seventh partition. The 73 Easting paired benchmark is routine;
+Golan remains manual.</p>
+<p>The Phase 112 closure audit exercised exactly 11,752 nodes: <code>standard</code> 11,299
+passed with 6 warnings, <code>slow-only</code> 109 passed with no warnings,
+<code>benchmark-only</code> 60 passed with no warnings, <code>slow-benchmark</code> 4 passed with no
+warnings, API 239 passed with no warnings, and E2E 41 passed with no warnings.
+The local API result used the host's uvloop-qualified workaround and does not
+establish host-default behavior until the remote default-policy job passes.
+The overlapping terrain profile separately passed 97 tests.</p>
 <p>See the <a href="guide/getting-started/">Getting Started Guide</a> for a complete tutorial including running your first scenario.</p>
 <h2 id="explore-the-documentation">Explore the Documentation<a class="headerlink" href="#explore-the-documentation" title="Permanent link">&para;</a></h2>
 <table>
@@ -5674,14 +5777,11 @@ routine CI disclosure.</p>
 </tr>
 </tbody>
 </table>
-<p>Phases 105 through 111 are complete, including REM-012 time-on-target
-production execution. Phase 112 is next and has not started.</p>
-<p>Fresh Phase 111 completion baseline: <strong>10,958 default-selected Python tests
-passed</strong> (21 skipped, 348 deselected, 6 warnings). The frontend was not rerun
-because Phase 111 changed no frontend contract; its last verified Phase 108
-baseline remains 418 tests.
-See the
-<a href="remediation-backlog/">remediation backlog</a> for current evidence and known
+<p>Phases 105 through 112 are complete, including the validation and
+documentation trust remediations. Phase 113 has not started; Block 12
+therefore remains in progress. See the
+<a href="devlog/phase-112/">Phase 112 devlog</a> and
+<a href="remediation-backlog/">remediation backlog</a> for exact evidence and known
 coverage boundaries. The YAML data catalog defines units, weapons, ammunition
 types, sensors, signatures, doctrines, commanders, formation templates, and
 modern plus historical scenarios across five eras.</p>

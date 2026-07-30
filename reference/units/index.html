@@ -2005,6 +2005,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../development-phases-block13/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 13 (115-118)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../remediation-backlog/" class="md-nav__link">
         
   
@@ -5279,6 +5307,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devlog/phase-112/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 112 - Validation and Documentation Trust
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -5467,6 +5523,34 @@
     
   
     Time-on-Target Execution
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../specs/validation-and-documentation-trust/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Validation and Documentation Trust
   
 
     
@@ -6871,6 +6955,17 @@ rules and accepted non-runtime boundaries.</p>
 <hr />
 <h2 id="commander-profiles">Commander Profiles<a class="headerlink" href="#commander-profiles" title="Permanent link">&para;</a></h2>
 <p>Commander personalities affect OODA cycle speed, decision quality, and risk assessment.</p>
+<p>This behavior is optional and fail-closed. A scenario activates the commander
+runtime only when every side declares a non-empty, catalog-backed
+<code>commander_profile</code>. If every side leaves that field blank and
+<code>commander_config</code> is omitted, no commander engine is created; partial side
+coverage, or a <code>commander_config</code> with blank side profiles, is rejected.
+Scenario loading validates exact initial- and future-unit profile overrides and
+doctrinal-school references before roster mutation, registers the resulting
+assignments with the OODA runtime, applies the same authority to reinforcement
+arrivals, and includes the commander/OODA/school topology in checkpoint
+continuation. The profiles below therefore describe available catalog
+capabilities, not behavior automatically active in every scenario.</p>
 <table>
 <thead>
 <tr>

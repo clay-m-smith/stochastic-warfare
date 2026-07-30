@@ -1677,6 +1677,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../development-phases-block13/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 13 (115-118)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../remediation-backlog/" class="md-nav__link">
         
   
@@ -4951,6 +4979,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devlog/phase-112/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 112 - Validation and Documentation Trust
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -5139,6 +5195,34 @@
     
   
     Time-on-Target Execution
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../specs/validation-and-documentation-trust/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Validation and Documentation Trust
   
 
     
@@ -5378,6 +5462,17 @@
 
 
 <h1 id="block-11-scenario-calibration-template">Block 11 Scenario Calibration Template<a class="headerlink" href="#block-11-scenario-calibration-template" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p><strong>Phase 112 integrity supersession (2026-07-30):</strong> This page preserves the
+Block 11 calibration and regression template as development history. Its
+worked seeds, winner thresholds, helper calls, and sample configuration are
+not a current, provenance-bearing, held-out production validation contract
+and must not be cited as historical-accuracy evidence. Scenario availability,
+source citations, fitted inputs, and current-engine regression do not by
+themselves establish historical validation. REM-030/Phase 117 owns the
+replacement catalog-wide outcome-envelope contract and the disposition of
+every retained claim.</p>
+</blockquote>
 <p>Every Block 11 golden scenario defines an <strong>outcome envelope</strong> — a range of statistically-plausible results derived from historical sources. The scenario's regression test validates that the engine produces outcomes bracketing that envelope.</p>
 <p>This document defines:</p>
 <ol>
@@ -5499,27 +5594,28 @@
 <a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="k">def</span><span class="w"> </span><span class="nf">test_debecka_pass_envelope</span><span class="p">():</span>
 <a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>    <span class="n">results</span> <span class="o">=</span> <span class="n">run_scenario_batch</span><span class="p">(</span>
 <a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>        <span class="s2">&quot;data/scenarios/debecka_pass/scenario.yaml&quot;</span><span class="p">,</span>
-<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>        <span class="n">num_iterations</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">base_seed</span><span class="o">=</span><span class="mi">42</span><span class="p">,</span> <span class="n">max_ticks</span><span class="o">=</span><span class="mi">5000</span><span class="p">,</span>
-<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a>        <span class="n">metric_names</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;win_blue&quot;</span><span class="p">,</span> <span class="s2">&quot;blue_destroyed&quot;</span><span class="p">,</span> <span class="s2">&quot;red_destroyed&quot;</span><span class="p">,</span> <span class="s2">&quot;ticks_executed&quot;</span><span class="p">],</span>
-<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a>        <span class="n">data_dir</span><span class="o">=</span><span class="s2">&quot;data&quot;</span><span class="p">,</span>
-<a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a>    <span class="p">)</span>
-<a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a>    <span class="c1"># Winner envelope</span>
-<a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a>    <span class="n">blue_win_rate</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">results</span><span class="p">[</span><span class="s2">&quot;win_blue&quot;</span><span class="p">])</span> <span class="o">/</span> <span class="mi">10</span>
-<a id="__codelineno-6-11" name="__codelineno-6-11" href="#__codelineno-6-11"></a>    <span class="k">assert</span> <span class="n">blue_win_rate</span> <span class="o">&gt;=</span> <span class="mf">0.7</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;Expected ≥70% blue wins, got </span><span class="si">{</span><span class="n">blue_win_rate</span><span class="si">:</span><span class="s2">.0%</span><span class="si">}</span><span class="s2">&quot;</span>
-<a id="__codelineno-6-12" name="__codelineno-6-12" href="#__codelineno-6-12"></a>
-<a id="__codelineno-6-13" name="__codelineno-6-13" href="#__codelineno-6-13"></a>    <span class="c1"># Casualty envelope</span>
-<a id="__codelineno-6-14" name="__codelineno-6-14" href="#__codelineno-6-14"></a>    <span class="n">avg_red_destroyed</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">results</span><span class="p">[</span><span class="s2">&quot;red_destroyed&quot;</span><span class="p">])</span> <span class="o">/</span> <span class="mi">10</span>
-<a id="__codelineno-6-15" name="__codelineno-6-15" href="#__codelineno-6-15"></a>    <span class="k">assert</span> <span class="mi">15</span> <span class="o">&lt;=</span> <span class="n">avg_red_destroyed</span> <span class="o">&lt;=</span> <span class="mi">40</span><span class="p">,</span> \
-<a id="__codelineno-6-16" name="__codelineno-6-16" href="#__codelineno-6-16"></a>        <span class="sa">f</span><span class="s2">&quot;Iraqi destructions outside envelope: </span><span class="si">{</span><span class="n">avg_red_destroyed</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2">&quot;</span>
-<a id="__codelineno-6-17" name="__codelineno-6-17" href="#__codelineno-6-17"></a>
-<a id="__codelineno-6-18" name="__codelineno-6-18" href="#__codelineno-6-18"></a>    <span class="n">avg_blue_destroyed</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">results</span><span class="p">[</span><span class="s2">&quot;blue_destroyed&quot;</span><span class="p">])</span> <span class="o">/</span> <span class="mi">10</span>
-<a id="__codelineno-6-19" name="__codelineno-6-19" href="#__codelineno-6-19"></a>    <span class="k">assert</span> <span class="n">avg_blue_destroyed</span> <span class="o">&lt;=</span> <span class="mi">3</span><span class="p">,</span> \
-<a id="__codelineno-6-20" name="__codelineno-6-20" href="#__codelineno-6-20"></a>        <span class="sa">f</span><span class="s2">&quot;SF casualties too high (historical: 0, max: 3): </span><span class="si">{</span><span class="n">avg_blue_destroyed</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2">&quot;</span>
-<a id="__codelineno-6-21" name="__codelineno-6-21" href="#__codelineno-6-21"></a>
-<a id="__codelineno-6-22" name="__codelineno-6-22" href="#__codelineno-6-22"></a>    <span class="c1"># Duration envelope</span>
-<a id="__codelineno-6-23" name="__codelineno-6-23" href="#__codelineno-6-23"></a>    <span class="n">avg_ticks</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">results</span><span class="p">[</span><span class="s2">&quot;ticks_executed&quot;</span><span class="p">])</span> <span class="o">/</span> <span class="mi">10</span>
-<a id="__codelineno-6-24" name="__codelineno-6-24" href="#__codelineno-6-24"></a>    <span class="c1"># 6 hours ± 50%, tick_duration_seconds=5.0 → 2160-6480 ticks</span>
-<a id="__codelineno-6-25" name="__codelineno-6-25" href="#__codelineno-6-25"></a>    <span class="k">assert</span> <span class="mi">2160</span> <span class="o">&lt;=</span> <span class="n">avg_ticks</span> <span class="o">&lt;=</span> <span class="mi">6480</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;Duration outside envelope: </span><span class="si">{</span><span class="n">avg_ticks</span><span class="si">:</span><span class="s2">.0f</span><span class="si">}</span><span class="s2"> ticks&quot;</span>
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>        <span class="n">overrides</span><span class="o">=</span><span class="p">{},</span>
+<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a>        <span class="n">num_iterations</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">base_seed</span><span class="o">=</span><span class="mi">42</span><span class="p">,</span> <span class="n">max_ticks</span><span class="o">=</span><span class="mi">5000</span><span class="p">,</span>
+<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a>        <span class="n">metric_names</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;win_blue&quot;</span><span class="p">,</span> <span class="s2">&quot;blue_destroyed&quot;</span><span class="p">,</span> <span class="s2">&quot;red_destroyed&quot;</span><span class="p">,</span> <span class="s2">&quot;ticks_executed&quot;</span><span class="p">],</span>
+<a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a>        <span class="n">data_dir</span><span class="o">=</span><span class="s2">&quot;data&quot;</span><span class="p">,</span>
+<a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a>    <span class="p">)</span>
+<a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a>    <span class="c1"># Winner envelope</span>
+<a id="__codelineno-6-11" name="__codelineno-6-11" href="#__codelineno-6-11"></a>    <span class="n">blue_win_rate</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">results</span><span class="o">.</span><span class="n">metric_values</span><span class="p">(</span><span class="s2">&quot;win_blue&quot;</span><span class="p">))</span> <span class="o">/</span> <span class="mi">10</span>
+<a id="__codelineno-6-12" name="__codelineno-6-12" href="#__codelineno-6-12"></a>    <span class="k">assert</span> <span class="n">blue_win_rate</span> <span class="o">&gt;=</span> <span class="mf">0.7</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;Expected ≥70% blue wins, got </span><span class="si">{</span><span class="n">blue_win_rate</span><span class="si">:</span><span class="s2">.0%</span><span class="si">}</span><span class="s2">&quot;</span>
+<a id="__codelineno-6-13" name="__codelineno-6-13" href="#__codelineno-6-13"></a>
+<a id="__codelineno-6-14" name="__codelineno-6-14" href="#__codelineno-6-14"></a>    <span class="c1"># Casualty envelope</span>
+<a id="__codelineno-6-15" name="__codelineno-6-15" href="#__codelineno-6-15"></a>    <span class="n">avg_red_destroyed</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">results</span><span class="o">.</span><span class="n">metric_values</span><span class="p">(</span><span class="s2">&quot;red_destroyed&quot;</span><span class="p">))</span> <span class="o">/</span> <span class="mi">10</span>
+<a id="__codelineno-6-16" name="__codelineno-6-16" href="#__codelineno-6-16"></a>    <span class="k">assert</span> <span class="mi">15</span> <span class="o">&lt;=</span> <span class="n">avg_red_destroyed</span> <span class="o">&lt;=</span> <span class="mi">40</span><span class="p">,</span> \
+<a id="__codelineno-6-17" name="__codelineno-6-17" href="#__codelineno-6-17"></a>        <span class="sa">f</span><span class="s2">&quot;Iraqi destructions outside envelope: </span><span class="si">{</span><span class="n">avg_red_destroyed</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2">&quot;</span>
+<a id="__codelineno-6-18" name="__codelineno-6-18" href="#__codelineno-6-18"></a>
+<a id="__codelineno-6-19" name="__codelineno-6-19" href="#__codelineno-6-19"></a>    <span class="n">avg_blue_destroyed</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">results</span><span class="o">.</span><span class="n">metric_values</span><span class="p">(</span><span class="s2">&quot;blue_destroyed&quot;</span><span class="p">))</span> <span class="o">/</span> <span class="mi">10</span>
+<a id="__codelineno-6-20" name="__codelineno-6-20" href="#__codelineno-6-20"></a>    <span class="k">assert</span> <span class="n">avg_blue_destroyed</span> <span class="o">&lt;=</span> <span class="mi">3</span><span class="p">,</span> \
+<a id="__codelineno-6-21" name="__codelineno-6-21" href="#__codelineno-6-21"></a>        <span class="sa">f</span><span class="s2">&quot;SF casualties too high (historical: 0, max: 3): </span><span class="si">{</span><span class="n">avg_blue_destroyed</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2">&quot;</span>
+<a id="__codelineno-6-22" name="__codelineno-6-22" href="#__codelineno-6-22"></a>
+<a id="__codelineno-6-23" name="__codelineno-6-23" href="#__codelineno-6-23"></a>    <span class="c1"># Duration envelope</span>
+<a id="__codelineno-6-24" name="__codelineno-6-24" href="#__codelineno-6-24"></a>    <span class="n">avg_ticks</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">results</span><span class="o">.</span><span class="n">metric_values</span><span class="p">(</span><span class="s2">&quot;ticks_executed&quot;</span><span class="p">))</span> <span class="o">/</span> <span class="mi">10</span>
+<a id="__codelineno-6-25" name="__codelineno-6-25" href="#__codelineno-6-25"></a>    <span class="c1"># 6 hours ± 50%, tick_duration_seconds=5.0 → 2160-6480 ticks</span>
+<a id="__codelineno-6-26" name="__codelineno-6-26" href="#__codelineno-6-26"></a>    <span class="k">assert</span> <span class="mi">2160</span> <span class="o">&lt;=</span> <span class="n">avg_ticks</span> <span class="o">&lt;=</span> <span class="mi">6480</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;Duration outside envelope: </span><span class="si">{</span><span class="n">avg_ticks</span><span class="si">:</span><span class="s2">.0f</span><span class="si">}</span><span class="s2"> ticks&quot;</span>
 </code></pre></div>
 <p>The key-dynamic check (Javelin dominance) is a separate test because it requires running one full iteration with event capture, which is heavier:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="nd">@pytest</span><span class="o">.</span><span class="n">mark</span><span class="o">.</span><span class="n">slow</span>

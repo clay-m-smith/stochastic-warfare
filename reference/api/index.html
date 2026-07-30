@@ -874,6 +874,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#analysis-evidence-contract" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Analysis evidence contract
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#run-submission-contract" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -922,6 +933,34 @@
   
     <nav class="md-nav" aria-label="Core Simulation Classes">
       <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#simulationruntimefactory-preparedscenario-and-runtimesession" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SimulationRuntimeFactory, PreparedScenario, and RuntimeSession
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="SimulationRuntimeFactory, PreparedScenario, and RuntimeSession">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#code-revision-provenance" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Code-revision provenance
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
         
           <li class="md-nav__item">
   <a href="#scenarioloader" class="md-nav__link">
@@ -2101,6 +2140,34 @@
     
   
     Block 12 (105-114)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development-phases-block13/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 13 (115-118)
   
 
     
@@ -5395,6 +5462,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devlog/phase-112/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 112 - Validation and Documentation Trust
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -5603,6 +5698,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../specs/validation-and-documentation-trust/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Validation and Documentation Trust
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../skills-and-hooks/" class="md-nav__link">
         
   
@@ -5692,6 +5815,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#analysis-evidence-contract" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Analysis evidence contract
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#run-submission-contract" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -5740,6 +5874,34 @@
   
     <nav class="md-nav" aria-label="Core Simulation Classes">
       <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#simulationruntimefactory-preparedscenario-and-runtimesession" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SimulationRuntimeFactory, PreparedScenario, and RuntimeSession
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="SimulationRuntimeFactory, PreparedScenario, and RuntimeSession">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#code-revision-provenance" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Code-revision provenance
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
         
           <li class="md-nav__item">
   <a href="#scenarioloader" class="md-nav__link">
@@ -6261,12 +6423,43 @@
 <td>Parameter sensitivity sweep</td>
 </tr>
 <tr>
+<td>POST</td>
+<td><code>/api/analysis/doctrine-compare</code></td>
+<td>Common-seed doctrinal-policy comparison</td>
+</tr>
+<tr>
 <td>GET</td>
 <td><code>/api/analysis/tempo/{id}</code></td>
 <td>Operational tempo analysis</td>
 </tr>
 </tbody>
 </table>
+<h3 id="analysis-evidence-contract">Analysis evidence contract<a class="headerlink" href="#analysis-evidence-contract" title="Permanent link">&para;</a></h3>
+<p>Batch, comparison, sweep, and doctrine-comparison execution all use the
+production runtime boundary described below. A completed batch includes exact
+ordered raw metric vectors and provenance for the scenario/data roots,
+variant, ordered metrics, base seed and seed sequence, maximum ticks,
+source/config fingerprints, authored and loaded rosters, code/worktree and data
+revisions, catalog/doctrine/loadout fingerprints, initial assignments, and
+per-run terminal/runtime records.</p>
+<p><code>POST /api/analysis/compare</code> compares two sparse calibration overlays of the
+same prepared scenario with common seeds. For every metric it returns the
+paired sample counts (<code>n_total</code>, <code>n_nonzero</code>, positive, negative, tied), mean
+and median paired differences, paired superiority, raw exact-sign p-value,
+Holm-adjusted p-value, alpha, and family-wise significance. It also retains
+both exact raw vectors and both batch provenance envelopes.</p>
+<p><code>POST /api/analysis/sweep</code> requires a real <code>CalibrationSchema</code> field plus
+finite, duplicate-free values and at least two iterations per point. Every
+point includes its raw values and complete batch provenance.</p>
+<p><code>POST /api/analysis/doctrine-compare</code> requires at least two distinct policies
+and schools, the same exact side set in every variant, and identical sparse
+calibration patches. Each variant retains assignment-aware runtime provenance.
+Doctrine comparison has an explicit FastAPI response model; compare and sweep
+currently return validated serialized JSON dictionaries rather than declared
+OpenAPI response models.</p>
+<p>An unknown scenario returns HTTP 404. Schema, catalog, roster, metric,
+calibration, assignment, or runtime-preflight failures return HTTP 422 rather
+than plausible empty results.</p>
 <h3 id="run-submission-contract">Run submission contract<a class="headerlink" href="#run-submission-contract" title="Permanent link">&para;</a></h3>
 <p><code>POST /api/runs</code> accepts a bare sparse <code>CalibrationSchema</code> overlay:</p>
 <table>
@@ -6383,10 +6576,112 @@ rejected and the database remains open until run and batch workers stop.</p>
 <p>The following classes are in the <code>stochastic_warfare</code> package for direct programmatic use.</p>
 <hr />
 <h2 id="core-simulation-classes">Core Simulation Classes<a class="headerlink" href="#core-simulation-classes" title="Permanent link">&para;</a></h2>
-<h3 id="scenarioloader">ScenarioLoader<a class="headerlink" href="#scenarioloader" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">stochastic_warfare.simulation.scenario</span><span class="w"> </span><span class="kn">import</span> <span class="n">ScenarioLoader</span>
+<h3 id="simulationruntimefactory-preparedscenario-and-runtimesession">SimulationRuntimeFactory, PreparedScenario, and RuntimeSession<a class="headerlink" href="#simulationruntimefactory-preparedscenario-and-runtimesession" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">stochastic_warfare.simulation.runtime</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>    <span class="n">AnalysisVariant</span><span class="p">,</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>    <span class="n">PreparedScenario</span><span class="p">,</span>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>    <span class="n">RuntimeSession</span><span class="p">,</span>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>    <span class="n">SimulationRuntimeFactory</span><span class="p">,</span>
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="p">)</span>
 </code></pre></div>
-<p>Factory that loads a scenario YAML and creates a fully-wired <code>SimulationContext</code>.</p>
+<p>This is the authoritative construction boundary for production consumers.
+<code>prepare()</code> reads one YAML source once; <code>prepare_config()</code> accepts an already
+typed <code>CampaignScenarioConfig</code> without temporary serialization. Both apply
+strict independent <code>AnalysisVariant</code> values and return a <code>PreparedScenario</code>.</p>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Returns</th>
+<th>Contract</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>SimulationRuntimeFactory.prepare(path, data_root, variants)</code></td>
+<td><code>PreparedScenario</code></td>
+<td>Parse one YAML source and capture source/code/data identity</td>
+</tr>
+<tr>
+<td><code>SimulationRuntimeFactory.prepare_config(source_config, data_root, variants, source_label=...)</code></td>
+<td><code>PreparedScenario</code></td>
+<td>Prepare a typed source directly</td>
+</tr>
+<tr>
+<td><code>PreparedScenario.build(variant, seed, max_ticks, ..., record_events=False)</code></td>
+<td><code>RuntimeSession</code></td>
+<td>Eagerly validate exact sides, roster, loadouts, profiles, doctrine, and provenance; build a fresh production engine</td>
+</tr>
+<tr>
+<td><code>RuntimeSession.run_to_completion()</code></td>
+<td><code>SimulationRunResult</code></td>
+<td>Run until a public terminal result or reject</td>
+</tr>
+<tr>
+<td><code>RuntimeSession.step()</code></td>
+<td><code>bool</code></td>
+<td>Advance one tick; <code>True</code> means the session is terminal and <code>False</code> means it can continue</td>
+</tr>
+<tr>
+<td><code>RuntimeSession.finalize()</code></td>
+<td><code>SimulationRunResult</code></td>
+<td>Return the result only after <code>step()</code> reports terminal</td>
+</tr>
+<tr>
+<td><code>RuntimeSession.provenance()</code></td>
+<td><code>RuntimeProvenance</code></td>
+<td>Capture code/data/catalog/doctrine/loadout identity and initial/arriving assignments</td>
+</tr>
+</tbody>
+</table>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="n">factory</span> <span class="o">=</span> <span class="n">SimulationRuntimeFactory</span><span class="p">()</span>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="n">prepared</span> <span class="o">=</span> <span class="n">factory</span><span class="o">.</span><span class="n">prepare</span><span class="p">(</span>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>    <span class="n">Path</span><span class="p">(</span><span class="s2">&quot;data/scenarios/73_easting/scenario.yaml&quot;</span><span class="p">),</span>
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>    <span class="n">data_root</span><span class="o">=</span><span class="n">Path</span><span class="p">(</span><span class="s2">&quot;data&quot;</span><span class="p">),</span>
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>    <span class="n">variants</span><span class="o">=</span><span class="p">(</span><span class="n">AnalysisVariant</span><span class="p">(</span><span class="n">variant_id</span><span class="o">=</span><span class="s2">&quot;baseline&quot;</span><span class="p">),),</span>
+<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a><span class="p">)</span>
+<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a><span class="n">session</span> <span class="o">=</span> <span class="n">prepared</span><span class="o">.</span><span class="n">build</span><span class="p">(</span>
+<a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a>    <span class="s2">&quot;baseline&quot;</span><span class="p">,</span>
+<a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a>    <span class="n">seed</span><span class="o">=</span><span class="mi">42</span><span class="p">,</span>
+<a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a>    <span class="n">max_ticks</span><span class="o">=</span><span class="mi">10_000</span><span class="p">,</span>
+<a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a>    <span class="n">record_events</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+<a id="__codelineno-3-14" name="__codelineno-3-14" href="#__codelineno-3-14"></a><span class="p">)</span>
+<a id="__codelineno-3-15" name="__codelineno-3-15" href="#__codelineno-3-15"></a><span class="n">result</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">run_to_completion</span><span class="p">()</span>
+</code></pre></div>
+<p>The boundary rejects an empty authored side, duplicate variant or loaded unit
+ID, changed source/data/worktree identity, roster cardinality drift, and
+incomplete or semantically incompatible runtime loadouts. It also constructs
+the production victory evaluator and optional recorder, avoiding private
+consumer-specific construction.</p>
+<h4 id="code-revision-provenance">Code-revision provenance<a class="headerlink" href="#code-revision-provenance" title="Permanent link">&para;</a></h4>
+<p><code>RuntimeProvenance.code_revision</code> always comes from a verified source boundary.
+In a source checkout, preparation uses Git first and returns the exact <code>HEAD</code>,
+the dirty-tree state, and a content-sensitive fingerprint that includes tracked
+and untracked changes. An established Git worktree that cannot be verified
+fails; it cannot use the immutable-package path as a fallback.</p>
+<p>Production images contain no <code>.git</code> directory. Their build must supply
+<code>SOURCE_REVISION</code> as exactly 40 lowercase hexadecimal characters and generates
+<code>stochastic_warfare/_build_identity.json</code> only after the locked Python
+environment has been installed. The identity binds that commit attribution to
+a canonical manifest of all files beneath <code>stochastic_warfare/</code> and <code>api/</code>
+plus <code>pyproject.toml</code> and <code>uv.lock</code>. Runtime preparation recomputes the
+manifest. Missing, malformed, symlinked, non-regular, or modified packaged
+source is rejected before session construction; a verified image reports
+<code>dirty=False</code>. Data and catalog revisions remain independent provenance fields.</p>
+<p>The repository Docker workflow covers pull requests to <code>main</code>, pushes to
+<code>main</code>, and manual dispatch. Its image smoke asserts that <code>.git</code> is absent,
+executes a bounded production session, and verifies the supplied commit and
+clean code-revision result.</p>
+<hr />
+<h3 id="scenarioloader">ScenarioLoader<a class="headerlink" href="#scenarioloader" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">stochastic_warfare.simulation.scenario</span><span class="w"> </span><span class="kn">import</span> <span class="n">ScenarioLoader</span>
+</code></pre></div>
+<p>Lower-level wiring factory that loads a scenario YAML and creates a fully-wired
+<code>SimulationContext</code>. Direct subsystem work may use it, but production
+consumers that claim comparable run/analysis evidence use
+<code>SimulationRuntimeFactory</code> and <code>RuntimeSession</code>.</p>
 <p><strong>Constructor:</strong></p>
 <table>
 <thead>
@@ -6424,11 +6719,11 @@ rejected and the database remains open until run and batch workers stop.</p>
 </tbody>
 </table>
 <p><strong>Example:</strong></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">stochastic_warfare.simulation.scenario</span><span class="w"> </span><span class="kn">import</span> <span class="n">ScenarioLoader</span>
-<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>
-<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="n">loader</span> <span class="o">=</span> <span class="n">ScenarioLoader</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="s2">&quot;data&quot;</span><span class="p">))</span>
-<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="n">ctx</span> <span class="o">=</span> <span class="n">loader</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="s2">&quot;data/scenarios/73_easting/scenario.yaml&quot;</span><span class="p">),</span> <span class="n">seed</span><span class="o">=</span><span class="mi">42</span><span class="p">)</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">stochastic_warfare.simulation.scenario</span><span class="w"> </span><span class="kn">import</span> <span class="n">ScenarioLoader</span>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="n">loader</span> <span class="o">=</span> <span class="n">ScenarioLoader</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="s2">&quot;data&quot;</span><span class="p">))</span>
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="n">ctx</span> <span class="o">=</span> <span class="n">loader</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="s2">&quot;data/scenarios/73_easting/scenario.yaml&quot;</span><span class="p">),</span> <span class="n">seed</span><span class="o">=</span><span class="mi">42</span><span class="p">)</span>
 </code></pre></div>
 <p>The loader automatically:</p>
 <ul>
@@ -6450,7 +6745,7 @@ rejected and the database remains open until run and batch workers stop.</p>
 </ul>
 <hr />
 <h3 id="simulationengine">SimulationEngine<a class="headerlink" href="#simulationengine" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">stochastic_warfare.simulation.engine</span><span class="w"> </span><span class="kn">import</span> <span class="n">SimulationEngine</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">stochastic_warfare.simulation.engine</span><span class="w"> </span><span class="kn">import</span> <span class="n">SimulationEngine</span>
 </code></pre></div>
 <p>Top-level simulation orchestrator. Manages the master tick loop, automatic resolution switching, and campaign/battle management.</p>
 <p><strong>Constructor:</strong></p>
@@ -6529,24 +6824,24 @@ rejected and the database remains open until run and batch workers stop.</p>
 <td><code>step()</code></td>
 <td>--</td>
 <td><code>bool</code></td>
-<td>Execute one tick. Returns <code>True</code> if simulation should continue</td>
+<td>Execute one tick. Returns <code>True</code> when terminal and <code>False</code> while execution can continue</td>
 </tr>
 </tbody>
 </table>
 <p><strong>Example:</strong></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">stochastic_warfare.simulation.engine</span><span class="w"> </span><span class="kn">import</span> <span class="n">SimulationEngine</span><span class="p">,</span> <span class="n">EngineConfig</span>
-<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>
-<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="n">engine</span> <span class="o">=</span> <span class="n">SimulationEngine</span><span class="p">(</span>
-<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>    <span class="n">ctx</span><span class="p">,</span>
-<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>    <span class="n">config</span><span class="o">=</span><span class="n">EngineConfig</span><span class="p">(</span><span class="n">max_ticks</span><span class="o">=</span><span class="mi">10_000</span><span class="p">),</span>
-<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a>    <span class="n">victory_evaluator</span><span class="o">=</span><span class="n">victory</span><span class="p">,</span>
-<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a>    <span class="n">recorder</span><span class="o">=</span><span class="n">recorder</span><span class="p">,</span>
-<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a><span class="p">)</span>
-<a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a><span class="n">result</span> <span class="o">=</span> <span class="n">engine</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">stochastic_warfare.simulation.engine</span><span class="w"> </span><span class="kn">import</span> <span class="n">SimulationEngine</span><span class="p">,</span> <span class="n">EngineConfig</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="n">engine</span> <span class="o">=</span> <span class="n">SimulationEngine</span><span class="p">(</span>
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>    <span class="n">ctx</span><span class="p">,</span>
+<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>    <span class="n">config</span><span class="o">=</span><span class="n">EngineConfig</span><span class="p">(</span><span class="n">max_ticks</span><span class="o">=</span><span class="mi">10_000</span><span class="p">),</span>
+<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a>    <span class="n">victory_evaluator</span><span class="o">=</span><span class="n">victory</span><span class="p">,</span>
+<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a>    <span class="n">recorder</span><span class="o">=</span><span class="n">recorder</span><span class="p">,</span>
+<a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a><span class="p">)</span>
+<a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a><span class="n">result</span> <span class="o">=</span> <span class="n">engine</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
 </code></pre></div>
 <hr />
 <h3 id="engineconfig">EngineConfig<a class="headerlink" href="#engineconfig" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">stochastic_warfare.simulation.engine</span><span class="w"> </span><span class="kn">import</span> <span class="n">EngineConfig</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">stochastic_warfare.simulation.engine</span><span class="w"> </span><span class="kn">import</span> <span class="n">EngineConfig</span>
 </code></pre></div>
 <p>Pydantic model for engine tuning parameters.</p>
 <table>
@@ -6593,7 +6888,7 @@ rejected and the database remains open until run and batch workers stop.</p>
 </table>
 <hr />
 <h3 id="simulationrunresult">SimulationRunResult<a class="headerlink" href="#simulationrunresult" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">stochastic_warfare.simulation.engine</span><span class="w"> </span><span class="kn">import</span> <span class="n">SimulationRunResult</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">stochastic_warfare.simulation.engine</span><span class="w"> </span><span class="kn">import</span> <span class="n">SimulationRunResult</span>
 </code></pre></div>
 <p>Dataclass returned by <code>SimulationEngine.run()</code>.</p>
 <table>
@@ -6613,7 +6908,7 @@ rejected and the database remains open until run and batch workers stop.</p>
 <tr>
 <td><code>duration_s</code></td>
 <td><code>float</code></td>
-<td>Wall-clock execution time in seconds</td>
+<td>Logical simulated elapsed seconds</td>
 </tr>
 <tr>
 <td><code>victory_result</code></td>
@@ -6629,7 +6924,7 @@ rejected and the database remains open until run and batch workers stop.</p>
 </table>
 <hr />
 <h3 id="simulationrecorder">SimulationRecorder<a class="headerlink" href="#simulationrecorder" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">stochastic_warfare.simulation.recorder</span><span class="w"> </span><span class="kn">import</span> <span class="n">SimulationRecorder</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">stochastic_warfare.simulation.recorder</span><span class="w"> </span><span class="kn">import</span> <span class="n">SimulationRecorder</span>
 </code></pre></div>
 <p>Records all simulation events for post-run analysis. Subscribes to the <code>EventBus</code> and captures events by type.</p>
 <p><strong>Constructor:</strong></p>
@@ -6657,11 +6952,11 @@ rejected and the database remains open until run and batch workers stop.</p>
 </tr>
 </tbody>
 </table>
-<p><strong>Key Methods:</strong></p>
+<p><strong>Key methods and properties:</strong></p>
 <table>
 <thead>
 <tr>
-<th>Method</th>
+<th>Member</th>
 <th>Returns</th>
 <th>Description</th>
 </tr>
@@ -6678,9 +6973,9 @@ rejected and the database remains open until run and batch workers stop.</p>
 <td>Stop recording</td>
 </tr>
 <tr>
-<td><code>events()</code></td>
+<td><code>events</code></td>
 <td><code>list</code></td>
-<td>All recorded events</td>
+<td>Copy of all recorded events (property)</td>
 </tr>
 <tr>
 <td><code>events_of_type(event_type_name)</code></td>
@@ -6688,15 +6983,15 @@ rejected and the database remains open until run and batch workers stop.</p>
 <td>Events filtered by type</td>
 </tr>
 <tr>
-<td><code>snapshots()</code></td>
+<td><code>snapshots</code></td>
 <td><code>list[dict]</code></td>
-<td>State snapshots (captured at <code>snapshot_interval_ticks</code>)</td>
+<td>Copy of state snapshots (property; captured at <code>snapshot_interval_ticks</code>)</td>
 </tr>
 </tbody>
 </table>
 <hr />
 <h3 id="victoryevaluator">VictoryEvaluator<a class="headerlink" href="#victoryevaluator" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">stochastic_warfare.simulation.victory</span><span class="w"> </span><span class="kn">import</span> <span class="n">VictoryEvaluator</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">stochastic_warfare.simulation.victory</span><span class="w"> </span><span class="kn">import</span> <span class="n">VictoryEvaluator</span>
 </code></pre></div>
 <p>Evaluates victory conditions each tick. Supports multiple condition types.</p>
 <p><strong>Constructor:</strong></p>
@@ -6746,7 +7041,7 @@ rejected and the database remains open until run and batch workers stop.</p>
 </thead>
 <tbody>
 <tr>
-<td><code>territory</code></td>
+<td><code>territory_control</code></td>
 <td>Side controls all assigned objectives</td>
 </tr>
 <tr>
@@ -6770,20 +7065,24 @@ rejected and the database remains open until run and batch workers stop.</p>
 <td>Negotiated war termination (escalation system)</td>
 </tr>
 <tr>
-<td><code>capitulation</code></td>
-<td>Unilateral surrender at extreme desperation</td>
+<td><code>armistice</code></td>
+<td>Negotiated armistice</td>
+</tr>
+<tr>
+<td><code>attrition_ratio</code></td>
+<td>Configured force-loss ratio is reached</td>
 </tr>
 </tbody>
 </table>
 <p><strong>Composite Victory Scoring (time_expired):</strong></p>
 <p>When a scenario reaches its time limit, <code>evaluate_force_advantage()</code> determines the winner using a composite score:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="n">VictoryEvaluator</span><span class="o">.</span><span class="n">evaluate_force_advantage</span><span class="p">(</span>
-<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>    <span class="n">units_by_side</span><span class="p">,</span>
-<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a>    <span class="n">morale_states</span><span class="o">=</span><span class="n">ctx</span><span class="o">.</span><span class="n">morale_states</span><span class="p">,</span>       <span class="c1"># dict of unit_id -&gt; MoraleState</span>
-<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a>    <span class="n">weights</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;force_ratio&quot;</span><span class="p">:</span> <span class="mf">1.0</span><span class="p">,</span>           <span class="c1"># quality-weighted survival</span>
-<a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a>             <span class="s2">&quot;morale_ratio&quot;</span><span class="p">:</span> <span class="mf">0.3</span><span class="p">,</span>          <span class="c1"># 1 - (routed_count / total)</span>
-<a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a>             <span class="s2">&quot;casualty_exchange&quot;</span><span class="p">:</span> <span class="mf">0.2</span><span class="p">},</span>    <span class="c1"># survival as proxy</span>
-<a id="__codelineno-10-7" name="__codelineno-10-7" href="#__codelineno-10-7"></a><span class="p">)</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="n">VictoryEvaluator</span><span class="o">.</span><span class="n">evaluate_force_advantage</span><span class="p">(</span>
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>    <span class="n">units_by_side</span><span class="p">,</span>
+<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a>    <span class="n">morale_states</span><span class="o">=</span><span class="n">ctx</span><span class="o">.</span><span class="n">morale_states</span><span class="p">,</span>       <span class="c1"># dict of unit_id -&gt; MoraleState</span>
+<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a>    <span class="n">weights</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;force_ratio&quot;</span><span class="p">:</span> <span class="mf">1.0</span><span class="p">,</span>           <span class="c1"># quality-weighted survival</span>
+<a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a>             <span class="s2">&quot;morale_ratio&quot;</span><span class="p">:</span> <span class="mf">0.3</span><span class="p">,</span>          <span class="c1"># 1 - (routed_count / total)</span>
+<a id="__codelineno-12-6" name="__codelineno-12-6" href="#__codelineno-12-6"></a>             <span class="s2">&quot;casualty_exchange&quot;</span><span class="p">:</span> <span class="mf">0.2</span><span class="p">},</span>    <span class="c1"># survival as proxy</span>
+<a id="__codelineno-12-7" name="__codelineno-12-7" href="#__codelineno-12-7"></a><span class="p">)</span>
 </code></pre></div>
 <p>When called without <code>weights</code> (or with <code>None</code>), defaults to force-ratio-only scoring for backward compatibility.</p>
 <h3 id="victoryresult">VictoryResult<a class="headerlink" href="#victoryresult" title="Permanent link">&para;</a></h3>
@@ -6826,9 +7125,13 @@ rejected and the database remains open until run and batch workers stop.</p>
 <hr />
 <h2 id="validation-classes">Validation Classes<a class="headerlink" href="#validation-classes" title="Permanent link">&para;</a></h2>
 <h3 id="montecarloharness">MonteCarloHarness<a class="headerlink" href="#montecarloharness" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">stochastic_warfare.validation.monte_carlo</span><span class="w"> </span><span class="kn">import</span> <span class="n">MonteCarloHarness</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">stochastic_warfare.validation.monte_carlo</span><span class="w"> </span><span class="kn">import</span> <span class="n">MonteCarloHarness</span>
 </code></pre></div>
-<p>Runs multiple independent simulation iterations for statistical analysis.</p>
+<p>Runs multiple independent iterations through the legacy validation interface.
+It remains available for compatibility, but its <code>ScenarioRunner</code> path is not
+the authoritative evidence boundary for production batch, comparison, sweep,
+or doctrine claims. Use <code>SimulationRuntimeFactory</code> and the shared analysis
+helpers for those claims.</p>
 <p><strong>Constructor:</strong></p>
 <table>
 <thead>
@@ -6990,7 +7293,7 @@ rejected and the database remains open until run and batch workers stop.</p>
 <hr />
 <h2 id="infrastructure-classes">Infrastructure Classes<a class="headerlink" href="#infrastructure-classes" title="Permanent link">&para;</a></h2>
 <h3 id="rngmanager">RNGManager<a class="headerlink" href="#rngmanager" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">stochastic_warfare.core.rng</span><span class="w"> </span><span class="kn">import</span> <span class="n">RNGManager</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">stochastic_warfare.core.rng</span><span class="w"> </span><span class="kn">import</span> <span class="n">RNGManager</span>
 </code></pre></div>
 <p>Central PRNG management. Creates independent per-module random number generator streams from a single seed.</p>
 <p><strong>Constructor:</strong></p>
@@ -7037,7 +7340,7 @@ rejected and the database remains open until run and batch workers stop.</p>
 </ul>
 <hr />
 <h3 id="eventbus">EventBus<a class="headerlink" href="#eventbus" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">stochastic_warfare.core.events</span><span class="w"> </span><span class="kn">import</span> <span class="n">EventBus</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">stochastic_warfare.core.events</span><span class="w"> </span><span class="kn">import</span> <span class="n">EventBus</span>
 </code></pre></div>
 <p>Publish/subscribe event system. Decouples modules -- combat publishes damage events, morale subscribes without combat knowing about morale.</p>
 <p><strong>Key Methods:</strong></p>
@@ -7065,14 +7368,14 @@ rejected and the database remains open until run and batch workers stop.</p>
 <p>Events use class hierarchy for type matching -- subscribing to a base class receives all subclass events.</p>
 <hr />
 <h3 id="simulationclock">SimulationClock<a class="headerlink" href="#simulationclock" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">stochastic_warfare.core.clock</span><span class="w"> </span><span class="kn">import</span> <span class="n">SimulationClock</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">stochastic_warfare.core.clock</span><span class="w"> </span><span class="kn">import</span> <span class="n">SimulationClock</span>
 </code></pre></div>
 <p>Manages simulation time with variable-resolution ticks.</p>
-<p><strong>Key Methods:</strong></p>
+<p><strong>Key properties and methods:</strong></p>
 <table>
 <thead>
 <tr>
-<th>Method</th>
+<th>Member</th>
 <th>Parameters</th>
 <th>Returns</th>
 <th>Description</th>
@@ -7080,28 +7383,40 @@ rejected and the database remains open until run and batch workers stop.</p>
 </thead>
 <tbody>
 <tr>
-<td><code>tick()</code></td>
+<td><code>current_time</code></td>
 <td>--</td>
-<td>--</td>
-<td>Advance by one tick at current resolution</td>
+<td><code>datetime</code></td>
+<td>Current logical UTC time (property)</td>
 </tr>
 <tr>
-<td><code>current_time_s()</code></td>
+<td><code>elapsed</code></td>
 <td>--</td>
-<td><code>float</code></td>
-<td>Current simulation time in seconds</td>
+<td><code>timedelta</code></td>
+<td>Logical elapsed time (property)</td>
 </tr>
 <tr>
-<td><code>current_tick()</code></td>
+<td><code>tick_count</code></td>
 <td>--</td>
 <td><code>int</code></td>
-<td>Current tick number</td>
+<td>Number of ticks advanced (property)</td>
 </tr>
 <tr>
-<td><code>set_resolution()</code></td>
-<td><code>seconds: float</code></td>
+<td><code>tick_duration</code></td>
 <td>--</td>
-<td>Change tick resolution</td>
+<td><code>timedelta</code></td>
+<td>Current tick duration (property)</td>
+</tr>
+<tr>
+<td><code>advance()</code></td>
+<td>--</td>
+<td><code>datetime</code></td>
+<td>Advance one tick and return the new logical time</td>
+</tr>
+<tr>
+<td><code>set_tick_duration()</code></td>
+<td><code>duration: timedelta</code></td>
+<td>--</td>
+<td>Change tick duration</td>
 </tr>
 </tbody>
 </table>
@@ -7196,7 +7511,12 @@ rejected and the database remains open until run and batch workers stop.</p>
 <tr>
 <td><code>school_config</code></td>
 <td><code>dict \| None</code></td>
-<td>Doctrinal school assignments</td>
+<td>Doctrinal school registry configuration and exact <code>unit_assignments</code></td>
+</tr>
+<tr>
+<td><code>commander_config</code></td>
+<td><code>CommanderScenarioConfig \| None</code></td>
+<td>Commander tuning plus exact initial/future per-unit profile assignments</td>
 </tr>
 <tr>
 <td><code>dew_config</code></td>
@@ -7210,10 +7530,25 @@ rejected and the database remains open until run and batch workers stop.</p>
 </tr>
 </tbody>
 </table>
+<p>Commander declaration is all-side or absent. Behavior is active only when
+every scenario side supplies a catalog-backed <code>commander_profile</code>; when every
+side omits it and <code>commander_config</code> is absent, no commander engine is created.
+Partial profiles, or any <code>commander_config</code> with blank side profiles, reject.
+<code>commander_config.assignments</code> and <code>school_config.unit_assignments</code> may target
+exact planned initial or reinforcement IDs; unknown units, profiles, or
+schools fail eagerly before unit construction. Initial and arriving units are
+registered with commander, OODA, school, movement, morale, loadout, and
+logistics owners transactionally, and their assignment state participates in
+checkpoint continuation.</p>
 <hr />
 <h3 id="spaceconfig-and-asat-events">SpaceConfig and ASAT events<a class="headerlink" href="#spaceconfig-and-asat-events" title="Permanent link">&para;</a></h3>
 <p><code>SpaceConfig</code> rejects unknown fields and owns <code>enable_space</code>,
-<code>constellation_ids</code>, <code>enable_asat</code>, <code>asat_assets</code>, and <code>asat_orders</code>.
+<code>constellation_ids</code>, <code>imint_fusion_constellation_ids</code>, <code>enable_asat</code>,
+<code>asat_assets</code>, and <code>asat_orders</code>. Fusion constellation IDs must be a subset of
+the selected topology and resolve to supported optical/SAR imaging
+constellations. A nonempty fusion selection also requires
+<code>calibration_overrides.enable_space_effects: true</code>. Other definitions fail
+explicitly.
 Each asset has a unique <code>asset_id</code>, exact catalog <code>weapon_id</code>, owning scenario
 side, and finite <code>rounds_available</code>. Each order has a unique <code>order_id</code>, exact
 asset and satellite IDs, and a finite <code>execute_at_s</code> within the scenario
@@ -7226,6 +7561,14 @@ times, <code>launched</code>, <code>pk</code>, <code>hit</code>, exact <code>out
 rounds remaining, and before/after constellation counts. A successful hit
 records <code>ConstellationDegradedEvent</code> first. The existing <code>event_type</code> and
 <code>side</code> filters select these events without a specialized endpoint.</p>
+<p>Selected IMINT constellations create immutable owner-scoped <code>SpaceISRReport</code>
+values with exact observation/availability times and uncertainty, a terminal
+<code>IntelDeliveryReceipt</code> ledger with report digest and resulting track, and one
+<code>IMINTTrackAssociation</code> per owner/target. Generation and delayed delivery are
+transactional and checkpointed. This typed internal state is not a claim of
+ordinary REST/UI event exposure or direct injection into generic fog-of-war
+contacts. Nonempty ordinary <code>SideWorldView.contacts</code> continuation remains
+tracked by REM-029.</p>
 <hr />
 <h3 id="indirectfirescenarioconfig-and-time-on-target-events">IndirectFireScenarioConfig and time-on-target events<a class="headerlink" href="#indirectfirescenarioconfig-and-time-on-target-events" title="Permanent link">&para;</a></h3>
 <p><code>IndirectFireScenarioConfig</code> rejects unknown fields and owns
@@ -7244,7 +7587,7 @@ For <code>POST /api/runs/from-config</code>, malformed nested schema fields retu
 run and are then exposed as terminal <code>failed</code> run detail.</p>
 <p>The generic events endpoint exposes each terminal mission as
 <code>TimeOnTargetMissionEvent</code>:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a>GET /api/runs/{id}/events?event_type=TimeOnTargetMissionEvent&amp;side=blue
+<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a>GET /api/runs/{id}/events?event_type=TimeOnTargetMissionEvent&amp;side=blue
 </code></pre></div>
 <p>Its data includes mission/attacker/target identity, target point, scheduled and
 processing times, ordered exact-attachment battery results, generated and
@@ -7261,7 +7604,7 @@ on target, automatic firing-table solutions, and live-magazine reload
 provenance are not supported.</p>
 <hr />
 <h3 id="calibrationschema">CalibrationSchema<a class="headerlink" href="#calibrationschema" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">stochastic_warfare.simulation.calibration</span><span class="w"> </span><span class="kn">import</span> <span class="n">CalibrationSchema</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">stochastic_warfare.simulation.calibration</span><span class="w"> </span><span class="kn">import</span> <span class="n">CalibrationSchema</span>
 </code></pre></div>
 <p>Pydantic model (<code>extra="forbid"</code>) for all scenario tuning parameters. Replaces free-form <code>dict</code> overrides — mistyped keys are caught at parse time. Key fields organized by domain:</p>
 <p><strong>Combat &amp; Engagement:</strong></p>
@@ -7600,76 +7943,102 @@ provenance are not supported.</p>
 <hr />
 <h2 id="usage-patterns">Usage Patterns<a class="headerlink" href="#usage-patterns" title="Permanent link">&para;</a></h2>
 <h3 id="basic-single-run">Basic Single Run<a class="headerlink" href="#basic-single-run" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
-<a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">stochastic_warfare.simulation.scenario</span><span class="w"> </span><span class="kn">import</span> <span class="n">ScenarioLoader</span>
-<a id="__codelineno-17-3" name="__codelineno-17-3" href="#__codelineno-17-3"></a><span class="kn">from</span><span class="w"> </span><span class="nn">stochastic_warfare.simulation.engine</span><span class="w"> </span><span class="kn">import</span> <span class="n">SimulationEngine</span><span class="p">,</span> <span class="n">EngineConfig</span>
-<a id="__codelineno-17-4" name="__codelineno-17-4" href="#__codelineno-17-4"></a><span class="kn">from</span><span class="w"> </span><span class="nn">stochastic_warfare.simulation.recorder</span><span class="w"> </span><span class="kn">import</span> <span class="n">SimulationRecorder</span>
-<a id="__codelineno-17-5" name="__codelineno-17-5" href="#__codelineno-17-5"></a><span class="kn">from</span><span class="w"> </span><span class="nn">stochastic_warfare.simulation.victory</span><span class="w"> </span><span class="kn">import</span> <span class="n">VictoryEvaluator</span>
-<a id="__codelineno-17-6" name="__codelineno-17-6" href="#__codelineno-17-6"></a>
-<a id="__codelineno-17-7" name="__codelineno-17-7" href="#__codelineno-17-7"></a><span class="n">loader</span> <span class="o">=</span> <span class="n">ScenarioLoader</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="s2">&quot;data&quot;</span><span class="p">))</span>
-<a id="__codelineno-17-8" name="__codelineno-17-8" href="#__codelineno-17-8"></a><span class="n">ctx</span> <span class="o">=</span> <span class="n">loader</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="s2">&quot;data/scenarios/73_easting/scenario.yaml&quot;</span><span class="p">),</span> <span class="n">seed</span><span class="o">=</span><span class="mi">42</span><span class="p">)</span>
-<a id="__codelineno-17-9" name="__codelineno-17-9" href="#__codelineno-17-9"></a>
-<a id="__codelineno-17-10" name="__codelineno-17-10" href="#__codelineno-17-10"></a><span class="n">recorder</span> <span class="o">=</span> <span class="n">SimulationRecorder</span><span class="p">(</span><span class="n">ctx</span><span class="o">.</span><span class="n">event_bus</span><span class="p">)</span>
-<a id="__codelineno-17-11" name="__codelineno-17-11" href="#__codelineno-17-11"></a><span class="n">victory</span> <span class="o">=</span> <span class="n">VictoryEvaluator</span><span class="p">(</span>
-<a id="__codelineno-17-12" name="__codelineno-17-12" href="#__codelineno-17-12"></a>    <span class="n">objectives</span><span class="o">=</span><span class="n">ctx</span><span class="o">.</span><span class="n">objectives</span><span class="p">,</span>
-<a id="__codelineno-17-13" name="__codelineno-17-13" href="#__codelineno-17-13"></a>    <span class="n">conditions</span><span class="o">=</span><span class="n">ctx</span><span class="o">.</span><span class="n">victory_conditions</span><span class="p">,</span>
-<a id="__codelineno-17-14" name="__codelineno-17-14" href="#__codelineno-17-14"></a>    <span class="n">event_bus</span><span class="o">=</span><span class="n">ctx</span><span class="o">.</span><span class="n">event_bus</span><span class="p">,</span>
-<a id="__codelineno-17-15" name="__codelineno-17-15" href="#__codelineno-17-15"></a>    <span class="n">max_duration_s</span><span class="o">=</span><span class="n">ctx</span><span class="o">.</span><span class="n">scenario_config</span><span class="o">.</span><span class="n">duration_s</span><span class="p">,</span>
-<a id="__codelineno-17-16" name="__codelineno-17-16" href="#__codelineno-17-16"></a><span class="p">)</span>
-<a id="__codelineno-17-17" name="__codelineno-17-17" href="#__codelineno-17-17"></a>
-<a id="__codelineno-17-18" name="__codelineno-17-18" href="#__codelineno-17-18"></a><span class="n">engine</span> <span class="o">=</span> <span class="n">SimulationEngine</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">config</span><span class="o">=</span><span class="n">EngineConfig</span><span class="p">(</span><span class="n">max_ticks</span><span class="o">=</span><span class="mi">10_000</span><span class="p">),</span>
-<a id="__codelineno-17-19" name="__codelineno-17-19" href="#__codelineno-17-19"></a>                          <span class="n">victory_evaluator</span><span class="o">=</span><span class="n">victory</span><span class="p">,</span> <span class="n">recorder</span><span class="o">=</span><span class="n">recorder</span><span class="p">)</span>
-<a id="__codelineno-17-20" name="__codelineno-17-20" href="#__codelineno-17-20"></a><span class="n">result</span> <span class="o">=</span> <span class="n">engine</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
-<a id="__codelineno-17-21" name="__codelineno-17-21" href="#__codelineno-17-21"></a><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">result</span><span class="o">.</span><span class="n">victory_result</span><span class="o">.</span><span class="n">winning_side</span><span class="si">}</span><span class="s2"> wins by </span><span class="si">{</span><span class="n">result</span><span class="o">.</span><span class="n">victory_result</span><span class="o">.</span><span class="n">condition_type</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">stochastic_warfare.simulation.runtime</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+<a id="__codelineno-19-3" name="__codelineno-19-3" href="#__codelineno-19-3"></a>    <span class="n">AnalysisVariant</span><span class="p">,</span>
+<a id="__codelineno-19-4" name="__codelineno-19-4" href="#__codelineno-19-4"></a>    <span class="n">SimulationRuntimeFactory</span><span class="p">,</span>
+<a id="__codelineno-19-5" name="__codelineno-19-5" href="#__codelineno-19-5"></a><span class="p">)</span>
+<a id="__codelineno-19-6" name="__codelineno-19-6" href="#__codelineno-19-6"></a>
+<a id="__codelineno-19-7" name="__codelineno-19-7" href="#__codelineno-19-7"></a><span class="n">prepared</span> <span class="o">=</span> <span class="n">SimulationRuntimeFactory</span><span class="p">()</span><span class="o">.</span><span class="n">prepare</span><span class="p">(</span>
+<a id="__codelineno-19-8" name="__codelineno-19-8" href="#__codelineno-19-8"></a>    <span class="n">Path</span><span class="p">(</span><span class="s2">&quot;data/scenarios/73_easting/scenario.yaml&quot;</span><span class="p">),</span>
+<a id="__codelineno-19-9" name="__codelineno-19-9" href="#__codelineno-19-9"></a>    <span class="n">data_root</span><span class="o">=</span><span class="n">Path</span><span class="p">(</span><span class="s2">&quot;data&quot;</span><span class="p">),</span>
+<a id="__codelineno-19-10" name="__codelineno-19-10" href="#__codelineno-19-10"></a>    <span class="n">variants</span><span class="o">=</span><span class="p">(</span><span class="n">AnalysisVariant</span><span class="p">(</span><span class="n">variant_id</span><span class="o">=</span><span class="s2">&quot;baseline&quot;</span><span class="p">),),</span>
+<a id="__codelineno-19-11" name="__codelineno-19-11" href="#__codelineno-19-11"></a><span class="p">)</span>
+<a id="__codelineno-19-12" name="__codelineno-19-12" href="#__codelineno-19-12"></a><span class="n">session</span> <span class="o">=</span> <span class="n">prepared</span><span class="o">.</span><span class="n">build</span><span class="p">(</span>
+<a id="__codelineno-19-13" name="__codelineno-19-13" href="#__codelineno-19-13"></a>    <span class="s2">&quot;baseline&quot;</span><span class="p">,</span>
+<a id="__codelineno-19-14" name="__codelineno-19-14" href="#__codelineno-19-14"></a>    <span class="n">seed</span><span class="o">=</span><span class="mi">42</span><span class="p">,</span>
+<a id="__codelineno-19-15" name="__codelineno-19-15" href="#__codelineno-19-15"></a>    <span class="n">max_ticks</span><span class="o">=</span><span class="mi">10_000</span><span class="p">,</span>
+<a id="__codelineno-19-16" name="__codelineno-19-16" href="#__codelineno-19-16"></a>    <span class="n">record_events</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+<a id="__codelineno-19-17" name="__codelineno-19-17" href="#__codelineno-19-17"></a><span class="p">)</span>
+<a id="__codelineno-19-18" name="__codelineno-19-18" href="#__codelineno-19-18"></a><span class="n">result</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">run_to_completion</span><span class="p">()</span>
+<a id="__codelineno-19-19" name="__codelineno-19-19" href="#__codelineno-19-19"></a><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">result</span><span class="o">.</span><span class="n">victory_result</span><span class="o">.</span><span class="n">winning_side</span><span class="si">}</span><span class="s2"> wins by </span><span class="si">{</span><span class="n">result</span><span class="o">.</span><span class="n">victory_result</span><span class="o">.</span><span class="n">condition_type</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 </code></pre></div>
 <h3 id="monte-carlo-batch">Monte Carlo Batch<a class="headerlink" href="#monte-carlo-batch" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">stochastic_warfare.validation.scenario_runner</span><span class="w"> </span><span class="kn">import</span> <span class="n">ScenarioRunner</span>
-<a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">stochastic_warfare.validation.monte_carlo</span><span class="w"> </span><span class="kn">import</span> <span class="n">MonteCarloHarness</span><span class="p">,</span> <span class="n">MonteCarloConfig</span>
-<a id="__codelineno-18-3" name="__codelineno-18-3" href="#__codelineno-18-3"></a><span class="kn">from</span><span class="w"> </span><span class="nn">stochastic_warfare.validation.historical_data</span><span class="w"> </span><span class="kn">import</span> <span class="n">HistoricalEngagement</span>
-<a id="__codelineno-18-4" name="__codelineno-18-4" href="#__codelineno-18-4"></a>
-<a id="__codelineno-18-5" name="__codelineno-18-5" href="#__codelineno-18-5"></a><span class="n">runner</span> <span class="o">=</span> <span class="n">ScenarioRunner</span><span class="p">(</span><span class="n">data_dir</span><span class="o">=</span><span class="n">Path</span><span class="p">(</span><span class="s2">&quot;data&quot;</span><span class="p">))</span>
-<a id="__codelineno-18-6" name="__codelineno-18-6" href="#__codelineno-18-6"></a><span class="n">harness</span> <span class="o">=</span> <span class="n">MonteCarloHarness</span><span class="p">(</span><span class="n">runner</span><span class="p">,</span> <span class="n">config</span><span class="o">=</span><span class="n">MonteCarloConfig</span><span class="p">(</span><span class="n">num_iterations</span><span class="o">=</span><span class="mi">100</span><span class="p">))</span>
-<a id="__codelineno-18-7" name="__codelineno-18-7" href="#__codelineno-18-7"></a>
-<a id="__codelineno-18-8" name="__codelineno-18-8" href="#__codelineno-18-8"></a><span class="n">engagement</span> <span class="o">=</span> <span class="n">HistoricalEngagement</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="s2">&quot;data/scenarios/73_easting/scenario.yaml&quot;</span><span class="p">))</span>
-<a id="__codelineno-18-9" name="__codelineno-18-9" href="#__codelineno-18-9"></a><span class="n">mc_result</span> <span class="o">=</span> <span class="n">harness</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">engagement</span><span class="p">)</span>
-<a id="__codelineno-18-10" name="__codelineno-18-10" href="#__codelineno-18-10"></a><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Mean exchange ratio: </span><span class="si">{</span><span class="n">mc_result</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="s1">&#39;exchange_ratio&#39;</span><span class="p">)</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">stochastic_warfare.tools._run_helpers</span><span class="w"> </span><span class="kn">import</span> <span class="n">run_scenario_batch</span>
+<a id="__codelineno-20-2" name="__codelineno-20-2" href="#__codelineno-20-2"></a>
+<a id="__codelineno-20-3" name="__codelineno-20-3" href="#__codelineno-20-3"></a><span class="n">batch</span> <span class="o">=</span> <span class="n">run_scenario_batch</span><span class="p">(</span>
+<a id="__codelineno-20-4" name="__codelineno-20-4" href="#__codelineno-20-4"></a>    <span class="s2">&quot;data/scenarios/73_easting/scenario.yaml&quot;</span><span class="p">,</span>
+<a id="__codelineno-20-5" name="__codelineno-20-5" href="#__codelineno-20-5"></a>    <span class="n">overrides</span><span class="o">=</span><span class="p">{},</span>
+<a id="__codelineno-20-6" name="__codelineno-20-6" href="#__codelineno-20-6"></a>    <span class="n">num_iterations</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>
+<a id="__codelineno-20-7" name="__codelineno-20-7" href="#__codelineno-20-7"></a>    <span class="n">base_seed</span><span class="o">=</span><span class="mi">42</span><span class="p">,</span>
+<a id="__codelineno-20-8" name="__codelineno-20-8" href="#__codelineno-20-8"></a>    <span class="n">max_ticks</span><span class="o">=</span><span class="mi">10_000</span><span class="p">,</span>
+<a id="__codelineno-20-9" name="__codelineno-20-9" href="#__codelineno-20-9"></a>    <span class="n">metric_names</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;exchange_ratio&quot;</span><span class="p">],</span>
+<a id="__codelineno-20-10" name="__codelineno-20-10" href="#__codelineno-20-10"></a>    <span class="n">data_dir</span><span class="o">=</span><span class="n">Path</span><span class="p">(</span><span class="s2">&quot;data&quot;</span><span class="p">),</span>
+<a id="__codelineno-20-11" name="__codelineno-20-11" href="#__codelineno-20-11"></a><span class="p">)</span>
+<a id="__codelineno-20-12" name="__codelineno-20-12" href="#__codelineno-20-12"></a><span class="nb">print</span><span class="p">(</span><span class="n">batch</span><span class="o">.</span><span class="n">statistics_dict</span><span class="p">()[</span><span class="s2">&quot;exchange_ratio&quot;</span><span class="p">][</span><span class="s2">&quot;mean&quot;</span><span class="p">])</span>
+<a id="__codelineno-20-13" name="__codelineno-20-13" href="#__codelineno-20-13"></a><span class="nb">print</span><span class="p">(</span><span class="n">batch</span><span class="o">.</span><span class="n">metric_values</span><span class="p">(</span><span class="s2">&quot;exchange_ratio&quot;</span><span class="p">))</span>
 </code></pre></div>
+<p>This characterizes the current production distribution. Historical validation
+additionally requires a predeclared source-backed envelope and held-out
+production evidence; see REM-030 in the remediation backlog.</p>
 <h3 id="step-by-step-execution">Step-by-Step Execution<a class="headerlink" href="#step-by-step-execution" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a><span class="n">engine</span> <span class="o">=</span> <span class="n">SimulationEngine</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">config</span><span class="o">=</span><span class="n">EngineConfig</span><span class="p">(</span><span class="n">max_ticks</span><span class="o">=</span><span class="mi">10_000</span><span class="p">),</span>
-<a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a>                         <span class="n">victory_evaluator</span><span class="o">=</span><span class="n">victory</span><span class="p">,</span> <span class="n">recorder</span><span class="o">=</span><span class="n">recorder</span><span class="p">)</span>
-<a id="__codelineno-19-3" name="__codelineno-19-3" href="#__codelineno-19-3"></a>
-<a id="__codelineno-19-4" name="__codelineno-19-4" href="#__codelineno-19-4"></a><span class="c1"># Run tick by tick for custom control</span>
-<a id="__codelineno-19-5" name="__codelineno-19-5" href="#__codelineno-19-5"></a><span class="k">while</span> <span class="n">engine</span><span class="o">.</span><span class="n">step</span><span class="p">():</span>
-<a id="__codelineno-19-6" name="__codelineno-19-6" href="#__codelineno-19-6"></a>    <span class="n">tick</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">clock</span><span class="o">.</span><span class="n">current_tick</span><span class="p">()</span>
-<a id="__codelineno-19-7" name="__codelineno-19-7" href="#__codelineno-19-7"></a>    <span class="k">if</span> <span class="n">tick</span> <span class="o">%</span> <span class="mi">100</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-<a id="__codelineno-19-8" name="__codelineno-19-8" href="#__codelineno-19-8"></a>        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Tick </span><span class="si">{</span><span class="n">tick</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">recorder</span><span class="o">.</span><span class="n">events</span><span class="p">())</span><span class="si">}</span><span class="s2"> events so far&quot;</span><span class="p">)</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a><span class="n">session</span> <span class="o">=</span> <span class="n">prepared</span><span class="o">.</span><span class="n">build</span><span class="p">(</span>
+<a id="__codelineno-21-2" name="__codelineno-21-2" href="#__codelineno-21-2"></a>    <span class="s2">&quot;baseline&quot;</span><span class="p">,</span>
+<a id="__codelineno-21-3" name="__codelineno-21-3" href="#__codelineno-21-3"></a>    <span class="n">seed</span><span class="o">=</span><span class="mi">42</span><span class="p">,</span>
+<a id="__codelineno-21-4" name="__codelineno-21-4" href="#__codelineno-21-4"></a>    <span class="n">max_ticks</span><span class="o">=</span><span class="mi">10_000</span><span class="p">,</span>
+<a id="__codelineno-21-5" name="__codelineno-21-5" href="#__codelineno-21-5"></a>    <span class="n">record_events</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+<a id="__codelineno-21-6" name="__codelineno-21-6" href="#__codelineno-21-6"></a><span class="p">)</span>
+<a id="__codelineno-21-7" name="__codelineno-21-7" href="#__codelineno-21-7"></a>
+<a id="__codelineno-21-8" name="__codelineno-21-8" href="#__codelineno-21-8"></a><span class="c1"># RuntimeSession.step() returns True at terminal.</span>
+<a id="__codelineno-21-9" name="__codelineno-21-9" href="#__codelineno-21-9"></a><span class="k">while</span> <span class="ow">not</span> <span class="n">session</span><span class="o">.</span><span class="n">step</span><span class="p">():</span>
+<a id="__codelineno-21-10" name="__codelineno-21-10" href="#__codelineno-21-10"></a>    <span class="n">tick</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">context</span><span class="o">.</span><span class="n">clock</span><span class="o">.</span><span class="n">tick_count</span>
+<a id="__codelineno-21-11" name="__codelineno-21-11" href="#__codelineno-21-11"></a>    <span class="k">if</span> <span class="n">tick</span> <span class="o">%</span> <span class="mi">100</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+<a id="__codelineno-21-12" name="__codelineno-21-12" href="#__codelineno-21-12"></a>        <span class="k">assert</span> <span class="n">session</span><span class="o">.</span><span class="n">recorder</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+<a id="__codelineno-21-13" name="__codelineno-21-13" href="#__codelineno-21-13"></a>        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Tick </span><span class="si">{</span><span class="n">tick</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">session</span><span class="o">.</span><span class="n">recorder</span><span class="o">.</span><span class="n">events</span><span class="p">)</span><span class="si">}</span><span class="s2"> events so far&quot;</span><span class="p">)</span>
+<a id="__codelineno-21-14" name="__codelineno-21-14" href="#__codelineno-21-14"></a>
+<a id="__codelineno-21-15" name="__codelineno-21-15" href="#__codelineno-21-15"></a><span class="n">result</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">finalize</span><span class="p">()</span>
 </code></pre></div>
 <h3 id="checkpoint-and-restore">Checkpoint and Restore<a class="headerlink" href="#checkpoint-and-restore" title="Permanent link">&para;</a></h3>
-<p>All stateful classes support <code>get_state()</code> / <code>set_state()</code>:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a><span class="c1"># Save state at tick 500</span>
-<a id="__codelineno-20-2" name="__codelineno-20-2" href="#__codelineno-20-2"></a><span class="n">state</span> <span class="o">=</span> <span class="n">engine</span><span class="o">.</span><span class="n">get_state</span><span class="p">()</span>
-<a id="__codelineno-20-3" name="__codelineno-20-3" href="#__codelineno-20-3"></a>
-<a id="__codelineno-20-4" name="__codelineno-20-4" href="#__codelineno-20-4"></a><span class="c1"># Continue running...</span>
-<a id="__codelineno-20-5" name="__codelineno-20-5" href="#__codelineno-20-5"></a><span class="n">result</span> <span class="o">=</span> <span class="n">engine</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
-<a id="__codelineno-20-6" name="__codelineno-20-6" href="#__codelineno-20-6"></a>
-<a id="__codelineno-20-7" name="__codelineno-20-7" href="#__codelineno-20-7"></a><span class="c1"># Restore the exact saved contract into a compatible runtime</span>
-<a id="__codelineno-20-8" name="__codelineno-20-8" href="#__codelineno-20-8"></a><span class="n">engine</span><span class="o">.</span><span class="n">set_state</span><span class="p">(</span><span class="n">state</span><span class="p">)</span>
-<a id="__codelineno-20-9" name="__codelineno-20-9" href="#__codelineno-20-9"></a>
-<a id="__codelineno-20-10" name="__codelineno-20-10" href="#__codelineno-20-10"></a><span class="c1"># Continue deterministically from tick 500</span>
-<a id="__codelineno-20-11" name="__codelineno-20-11" href="#__codelineno-20-11"></a><span class="n">result</span> <span class="o">=</span> <span class="n">engine</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
+<p>Current checkpoint-participating runtime owners support the coordinated
+<code>get_state()</code> / <code>set_state()</code> contract:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a><span class="c1"># Advance a fresh branch runtime to a nonterminal checkpoint.</span>
+<a id="__codelineno-22-2" name="__codelineno-22-2" href="#__codelineno-22-2"></a><span class="n">branch</span> <span class="o">=</span> <span class="n">prepared</span><span class="o">.</span><span class="n">build</span><span class="p">(</span>
+<a id="__codelineno-22-3" name="__codelineno-22-3" href="#__codelineno-22-3"></a>    <span class="s2">&quot;baseline&quot;</span><span class="p">,</span>
+<a id="__codelineno-22-4" name="__codelineno-22-4" href="#__codelineno-22-4"></a>    <span class="n">seed</span><span class="o">=</span><span class="mi">42</span><span class="p">,</span>
+<a id="__codelineno-22-5" name="__codelineno-22-5" href="#__codelineno-22-5"></a>    <span class="n">max_ticks</span><span class="o">=</span><span class="mi">10_000</span><span class="p">,</span>
+<a id="__codelineno-22-6" name="__codelineno-22-6" href="#__codelineno-22-6"></a>    <span class="n">record_events</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+<a id="__codelineno-22-7" name="__codelineno-22-7" href="#__codelineno-22-7"></a><span class="p">)</span>
+<a id="__codelineno-22-8" name="__codelineno-22-8" href="#__codelineno-22-8"></a><span class="k">if</span> <span class="n">branch</span><span class="o">.</span><span class="n">step</span><span class="p">():</span>
+<a id="__codelineno-22-9" name="__codelineno-22-9" href="#__codelineno-22-9"></a>    <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;scenario became terminal before the branch checkpoint&quot;</span><span class="p">)</span>
+<a id="__codelineno-22-10" name="__codelineno-22-10" href="#__codelineno-22-10"></a><span class="n">state</span> <span class="o">=</span> <span class="n">branch</span><span class="o">.</span><span class="n">engine</span><span class="o">.</span><span class="n">get_state</span><span class="p">()</span>
+<a id="__codelineno-22-11" name="__codelineno-22-11" href="#__codelineno-22-11"></a>
+<a id="__codelineno-22-12" name="__codelineno-22-12" href="#__codelineno-22-12"></a><span class="c1"># Construct a fresh compatible runtime from the same prepared source.</span>
+<a id="__codelineno-22-13" name="__codelineno-22-13" href="#__codelineno-22-13"></a><span class="n">restored</span> <span class="o">=</span> <span class="n">prepared</span><span class="o">.</span><span class="n">build</span><span class="p">(</span>
+<a id="__codelineno-22-14" name="__codelineno-22-14" href="#__codelineno-22-14"></a>    <span class="s2">&quot;baseline&quot;</span><span class="p">,</span>
+<a id="__codelineno-22-15" name="__codelineno-22-15" href="#__codelineno-22-15"></a>    <span class="n">seed</span><span class="o">=</span><span class="mi">42</span><span class="p">,</span>
+<a id="__codelineno-22-16" name="__codelineno-22-16" href="#__codelineno-22-16"></a>    <span class="n">max_ticks</span><span class="o">=</span><span class="mi">10_000</span><span class="p">,</span>
+<a id="__codelineno-22-17" name="__codelineno-22-17" href="#__codelineno-22-17"></a>    <span class="n">record_events</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+<a id="__codelineno-22-18" name="__codelineno-22-18" href="#__codelineno-22-18"></a><span class="p">)</span>
+<a id="__codelineno-22-19" name="__codelineno-22-19" href="#__codelineno-22-19"></a><span class="n">restored</span><span class="o">.</span><span class="n">engine</span><span class="o">.</span><span class="n">set_state</span><span class="p">(</span><span class="n">state</span><span class="p">)</span>
+<a id="__codelineno-22-20" name="__codelineno-22-20" href="#__codelineno-22-20"></a>
+<a id="__codelineno-22-21" name="__codelineno-22-21" href="#__codelineno-22-21"></a><span class="c1"># Continue from the deterministic branch point.</span>
+<a id="__codelineno-22-22" name="__codelineno-22-22" href="#__codelineno-22-22"></a><span class="n">result</span> <span class="o">=</span> <span class="n">restored</span><span class="o">.</span><span class="n">run_to_completion</span><span class="p">()</span>
 </code></pre></div>
 <p>Current-format checkpoints require an exact effective scenario configuration,
 era contract, and runtime topology. An incompatible restore fails before
 mutating the target. See the
 <a href="../../specs/checkpoint-state/">checkpoint state contract</a> for the canonical
 schema and bounded legacy-migration rules.</p>
-<p>The current engine checkpoint schema is version 111. Declared time-on-target
-plans add their topology fingerprint, complete scheduled lifecycle, in-flight
-impacts, terminal result, exact live-resource observations, target transition,
-and reconciled COMBAT RNG state to the atomic restore contract. Version 110
-does not restore into this runtime, and versionless engine state is rejected
-when any time-on-target plan is declared, including a disabled populated
-control.</p>
+<p>The current engine checkpoint schema is version 112. In addition to force,
+loadout, morale, logistics, space/ASAT, and time-on-target state, it preserves
+commander/OODA assignments, bounded movement diagnostics, and typed Space ISR
+pending reports, delivery receipts, and owner/target IMINT associations.
+Current-format restore is atomic and validates exact topology and chronology.
+Explicit version 111 and every other non-current version reject.</p>
+<p>Typed Space ISR checkpoint equivalence is proven under an explicit empty
+ordinary-contact topology. Nonempty ordinary <code>SideWorldView.contacts</code> are
+serialized but currently discarded on restore; that separate fog-of-war
+continuation deficit remains REM-029.</p>
 
 
 

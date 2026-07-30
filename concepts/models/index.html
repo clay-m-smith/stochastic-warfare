@@ -2558,6 +2558,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../development-phases-block13/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 13 (115-118)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../remediation-backlog/" class="md-nav__link">
         
   
@@ -5832,6 +5860,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devlog/phase-112/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 112 - Validation and Documentation Trust
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -6020,6 +6076,34 @@
     
   
     Time-on-Target Execution
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../specs/validation-and-documentation-trust/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Validation and Documentation Trust
   
 
     
@@ -6977,16 +7061,29 @@ and CBRN stress affect the transition probabilities.</p>
 <hr />
 <h2 id="2-monte-carlo-methods">2. Monte Carlo Methods<a class="headerlink" href="#2-monte-carlo-methods" title="Permanent link">&para;</a></h2>
 <h3 id="what-it-models_1">What It Models<a class="headerlink" href="#what-it-models_1" title="Permanent link">&para;</a></h3>
-<p>Statistical estimation of outcomes through repeated random sampling. Used for <strong>engagement validation</strong> and <strong>campaign outcome distributions</strong>.</p>
+<p>Statistical estimation of outcomes through repeated random sampling. Production
+batches characterize current-engine engagement and campaign outcome
+distributions. They support a historical-validation claim only when executed as
+part of a predeclared, source-backed, held-out outcome-envelope contract.</p>
 <h3 id="key-formula_1">Key Formula<a class="headerlink" href="#key-formula_1" title="Permanent link">&para;</a></h3>
 <p>Run <code>N</code> independent simulations, collect metric <code>X</code> from each:</p>
 <p>$$\bar{X} = \frac{1}{N}\sum_{i=1}^{N} X_i, \quad \text{CI}_{95\%} = \bar{X} \pm 1.96 \frac{s}{\sqrt{N}}$$</p>
 <h3 id="example">Example<a class="headerlink" href="#example" title="Permanent link">&para;</a></h3>
-<p>To validate the 73 Easting scenario, run 100 iterations with different seeds. Collect the exchange ratio (blue kills / red kills) from each. Compare the mean and 95% confidence interval against the historical outcome (~0.1 loss ratio for blue).</p>
+<p>To characterize the current production distribution for 73 Easting, run 100
+iterations with different seeds and collect one exactly defined exchange-ratio
+metric from every completed run. Report the ordered raw vector, summary
+statistics, seed sequence, and runtime provenance. That experiment does not by
+itself validate the scenario historically. Historical acceptance additionally
+requires predeclared sources, units and event boundaries, calibration evidence
+separated from held-out seeds, and a persisted production-envelope verdict.
+REM-030/Phase 117 owns that catalog-wide acceptance contract.</p>
 <h3 id="where-used_1">Where Used<a class="headerlink" href="#where-used_1" title="Permanent link">&para;</a></h3>
 <ul>
-<li><code>validation/monte_carlo.py</code> -- <code>MonteCarloHarness</code> for batch runs</li>
-<li><code>validation/campaign_validation.py</code> -- campaign-level MC validation</li>
+<li><code>validation/monte_carlo.py</code> -- legacy <code>MonteCarloHarness</code> diagnostics</li>
+<li><code>validation/campaign_runner.py</code> and <code>validation/campaign_metrics.py</code> --
+  campaign execution and metric extraction</li>
+<li><code>tools/_run_helpers.py</code> with <code>simulation/runtime.py</code> -- Phase 112
+  authoritative production batch boundary through <code>SimulationRuntimeFactory</code></li>
 </ul>
 <h3 id="key-parameters_1">Key Parameters<a class="headerlink" href="#key-parameters_1" title="Permanent link">&para;</a></h3>
 <ul>
@@ -7360,10 +7457,21 @@ $$P</em>$$} = (I - KH) P_{k|k-1</p>
 </tbody>
 </table>
 <h3 id="note-on-circular-calibration">Note on Circular Calibration<a class="headerlink" href="#note-on-circular-calibration" title="Permanent link">&para;</a></h3>
-<p>CEV values are calibrated to produce correct historical outcomes — the same outcomes they are derived from. This circularity is acceptable for <strong>historical validation</strong> (confirming the engine can reproduce known results with plausible parameters) but does not constitute <strong>predictive validation</strong>. Predictive validation requires testing against engagements not used for calibration, which is done via the Monte Carlo regression suite with multiple seeds.</p>
+<p>CEV values fitted to an engagement's reported outcome demonstrate calibration
+fit only. They do not validate that engagement historically, because the same
+evidence selected the parameters and judged the result. Running additional
+seeds from those calibrated inputs characterizes the model's seeded
+distribution and supports current-engine regression; it does not create
+independent or predictive validation.</p>
+<p>Historical or predictive validation requires a predeclared, source-backed
+metric envelope with exact units and event boundaries, a production execution
+path, and calibration/training inputs separated from held-out validation
+evidence. The catalog-wide replacement contract remains queued under
+<a href="../../remediation-backlog/#rem-030-catalog-wide-historical-outcome-claims-lack-production-validation">REM-030</a>.</p>
 <h3 id="where-used_10">Where Used<a class="headerlink" href="#where-used_10" title="Permanent link">&para;</a></h3>
 <ul>
-<li><code>calibration_overrides</code> in every scenario YAML</li>
+<li><code>CampaignScenarioConfig.calibration_overrides</code> (typed defaults apply when a
+  scenario YAML omits the field)</li>
 <li><code>simulation/calibration.py</code> — <code>CalibrationSchema</code> pydantic model</li>
 <li><code>simulation/battle.py</code> — applied during engagement resolution</li>
 </ul>

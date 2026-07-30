@@ -2326,6 +2326,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../development-phases-block13/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 13 (115-118)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../remediation-backlog/" class="md-nav__link">
         
   
@@ -5600,6 +5628,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-112/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 112 - Validation and Documentation Trust
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -5788,6 +5844,34 @@
     
   
     Time-on-Target Execution
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../specs/validation-and-documentation-trust/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Validation and Documentation Trust
   
 
     
@@ -6476,6 +6560,16 @@
 
 
 <h1 id="stochastic-warfare-block-9-development-phases-83-91">Stochastic Warfare -- Block 9 Development Phases (83--91)<a class="headerlink" href="#stochastic-warfare-block-9-development-phases-83-91" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p><strong>Phase 112 integrity supersession (2026-07-30):</strong> This roadmap preserves
+Block 9's planned and contemporaneously reported work. The shipped
+regression used authored configurations, excluded the two benchmark
+scenarios that declare all five performance flags, and supplied no
+same-input disabled controls. Its winner rows are current-engine regression
+history, not historical-validation or performance-flag semantic-equivalence
+evidence. REM-030 owns historical outcome-envelope integrity and REM-031
+owns per-flag semantic integrity.</p>
+</blockquote>
 <h2 id="philosophy">Philosophy<a class="headerlink" href="#philosophy" title="Permanent link">&para;</a></h2>
 <p>Block 9 is the <strong>performance at scale block</strong>. The engine produces historically validated results for scenarios up to ~300 units (Golan Heights: 120s). Real-world operational scenarios involve thousands of units. The tick loop is single-threaded, detection scales quadratically, and there is no level-of-detail system. Every future development direction — more scenarios, larger campaigns, real-time visualization, interactive play — depends on the engine handling 1,000+ units at reasonable speed.</p>
 <p>This block measures first, then attacks the dominant O(n²) bottleneck (FOW detection), reduces effective unit count via LOD and aggregation, optimizes engagement selection and calibration lookups, expands JIT compilation, introduces SoA data for vectorization, adds per-side parallelism, and validates everything at scale.</p>

@@ -2195,6 +2195,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../development-phases-block13/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 13 (115-118)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../remediation-backlog/" class="md-nav__link">
         
   
@@ -5469,6 +5497,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-112/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 112 - Validation and Documentation Trust
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -5657,6 +5713,34 @@
     
   
     Time-on-Target Execution
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../specs/validation-and-documentation-trust/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Validation and Documentation Trust
   
 
     
@@ -6214,6 +6298,15 @@
 
 
 <h1 id="block-9-performance-at-scale">Block 9: Performance at Scale<a class="headerlink" href="#block-9-performance-at-scale" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p><strong>Phase 112 integrity supersession (2026-07-30):</strong> This brainstorming page
+preserves Block 9's contemporaneous design goals, projected timings, counts,
+and proposed winner checks. They are not current benchmark gates,
+historical-validation evidence, or proof that performance flags preserve
+semantics. REM-030/Phase 117 owns provenance-bearing, held-out historical
+outcome envelopes; REM-031/Phase 118 owns same-input, common-seed
+enabled/disabled semantic evidence for each performance flag.</p>
+</blockquote>
 <h2 id="motivation">Motivation<a class="headerlink" href="#motivation" title="Permanent link">&para;</a></h2>
 <p>Blocks 1-8 delivered 82 phases of simulation capability: 19 engine modules, 44 validated scenarios, 5 historical eras, a web UI, and ~10,187 tests. The engine produces historically validated results for scenarios up to ~300 units (Golan Heights benchmark: 120s).</p>
 <p>However, real-world operational scenarios routinely involve thousands of units. A brigade-level engagement (3,000-5,000 troops) with equipment is beyond the engine's current performance envelope. The tick loop is single-threaded, detection scales quadratically, and there is no level-of-detail system. <strong>Performance at scale is the prerequisite for any future development</strong> — more scenarios, larger campaigns, real-time visualization, and interactive play all depend on the engine handling 1,000+ units at reasonable speed.</p>
