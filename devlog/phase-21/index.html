@@ -1690,7 +1690,7 @@
   <span class="md-ellipsis">
     
   
-    Block 13 (115-121)
+    Block 13 (115-127)
   
 
     
@@ -5301,6 +5301,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-114/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 114 - Era Override Execution
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -5545,6 +5573,34 @@
     
   
     Morale State Ownership
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../specs/era-override-execution/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Era Override Execution
   
 
     
@@ -5853,6 +5909,18 @@
 <p><strong>Status</strong>: Complete
 <strong>Tests</strong>: 182 (87 era config/data + 67 engine extensions + 28 validation)
 <strong>Total</strong>: 5,426 (5,244 prior + 182 new)</p>
+<blockquote>
+<p><strong>Historical supersession (Phase 114 completion, 2026-08-01):</strong> This devlog
+preserves the Phase 21 implementation record, but its claims that
+<code>c2_delay_multiplier=5.0</code> affected C2 and that
+<code>cbrn_nuclear_enabled=False</code> structurally disabled nuclear use were not
+production behavior. The runtime had no loaded, unit-bound communications
+topology and no scheduled CBRN/nuclear action consumer. Phase 114 removes
+those keys from shipped presets and rejects them explicitly; production C2
+and scheduled CBRN action remain REM-036/Phase 123 and REM-037/Phase 124.
+WW1's CBRN capability gate and chemical-engine/data history are separate
+claims. Phase 114 is complete and REM-018 is closed.</p>
+</blockquote>
 <h2 id="summary">Summary<a class="headerlink" href="#summary" title="Permanent link">&para;</a></h2>
 <p>WW1 era config + data package (~45 YAML files) + 3 engine extensions (trench systems, creeping barrage, gas warfare) + 2 validation scenarios (Somme Day 1, Cambrai). Follows Phase 20 era framework pattern exactly.</p>
 <h2 id="what-was-built">What Was Built<a class="headerlink" href="#what-was-built" title="Permanent link">&para;</a></h2>

@@ -2040,7 +2040,7 @@
   <span class="md-ellipsis">
     
   
-    Block 13 (115-121)
+    Block 13 (115-127)
   
 
     
@@ -5391,6 +5391,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devlog/phase-114/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 114 - Era Override Execution
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -5635,6 +5663,34 @@
     
   
     Morale State Ownership
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../specs/era-override-execution/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Era Override Execution
   
 
     
@@ -6303,10 +6359,13 @@ recording, API, and analysis consumers.</p>
 </code></pre></div>
 <p>Preparation reads a YAML source once (or directly copies a typed
 <code>CampaignScenarioConfig</code>), applies strict independent variants, and captures
-source, code/worktree, data, and authored-roster identity. <code>build()</code> then
+source, code/worktree, data, authored-roster identity, the isolated selected
+<code>EraConfig</code>, and one fully effective <code>EraRuntimeContract</code>. Era resolution and
+calendar-horizon validation happen before runtime RNG construction. <code>build()</code> then
 constructs a fresh session and verifies exact loaded side/cardinality,
 duplicate-free IDs, loadout topology, commander/doctrine assignments, and
-catalog provenance. <code>RuntimeSession.step()</code> returns <code>True</code> at terminal;
+catalog provenance, while injecting the captured era contract without a later
+registry lookup. <code>RuntimeSession.step()</code> returns <code>True</code> at terminal;
 <code>run_to_completion()</code> and <code>finalize()</code> require a public terminal outcome.
 Provenance exposes source/config fingerprints, exact seeds and rosters, code
 and data revisions, catalog/doctrine/loadout fingerprints, and initial plus
@@ -6468,7 +6527,8 @@ reinforcement unit type needs one same-side profile, every depot needs explicit
 type, condition, and inventory, and every connection comes from a declared
 direct route template.</p>
 <h2 id="era-framework">Era Framework<a class="headerlink" href="#era-framework" title="Permanent link">&para;</a></h2>
-<p>The engine supports 5 historical eras, each with different available technologies:</p>
+<p>The engine supports five eras—one modern and four historical—each with
+different available technologies:</p>
 <table>
 <thead>
 <tr>
@@ -6510,10 +6570,18 @@ direct route template.</p>
 <li>Seven validated capability gates: EW, space, CBRN, GPS, thermal sights,
   data links, and precision-guided munitions</li>
 <li>An enforced sensor-type allowlist</li>
-<li>Declared physics and tick-resolution override metadata (not yet consumed by
-  the production runtime; tracked separately in the remediation backlog)</li>
+<li>Strict sparse tick overrides for strategic, operational, and tactical
+  cadence, plus medical treatment and maintenance repair durations. One
+  frozen effective <code>EraRuntimeContract</code> constructs the clock and domain
+  configs, participates in runtime fingerprints, and persists in format-114
+  checkpoints. Unsupported C2/nuclear keys reject instead of acting as
+  metadata proxies.</li>
 <li>Era-specific engine extensions</li>
 </ul>
+<p>Built-in eras intentionally omit the former unsourced physics numbers. This
+runtime contract does not imply automatic casualty admission, maintenance
+registration/repair initiation, communications equipment topology, or
+scheduled nuclear employment; those remain explicit remediation items.</p>
 <p>Era data lives in <code>data/eras/{era_name}/</code> with the same directory structure as modern data.</p>
 <h2 id="determinism-reproducibility">Determinism &amp; Reproducibility<a class="headerlink" href="#determinism-reproducibility" title="Permanent link">&para;</a></h2>
 <p>Within a validated deterministic contract, a run is reproducible when code,
@@ -6670,18 +6738,20 @@ the controlled semantic-equivalence evidence queued under REM-031.</p>
 <li><strong>Branching</strong> -- checkpoint, run two different decisions, compare outcomes</li>
 <li><strong>Debugging</strong> -- reproduce any simulation state from a checkpoint + seed</li>
 </ul>
-<p>The current <code>SimulationEngine</code> checkpoint schema is version 113. It includes
-exact force/loadout/logistics/time-on-target state plus one <code>morale_runtime</code>
-envelope containing immutable active records and suspended aggregate archives;
-there is no current-format context map or state-machine copy. <code>RNGManager</code>
-alone persists the MORALE stream. Commander and OODA assignments, bounded
-movement diagnostics, and typed Space ISR report queues, delivery receipts,
-and owner/target IMINT associations remain included. Restore stages and
-validates topology, identity, chronology, mutable resources, statuses, routes,
-and relevant RNG state against a fresh compatible runtime before committing any
-mutation. Versions 111, 112, and every other non-current versioned engine
-checkpoint reject. Bounded versionless compatibility remains subject to the
-stricter subsystem rules in the
+<p>The current <code>SimulationEngine</code> checkpoint schema is version 114. In addition
+to exact force/loadout/logistics/time-on-target state and the single
+<code>morale_runtime</code> envelope, it stores one fully effective
+<code>era_runtime_contract</code>. The current resolution, clock duration, selected
+registry identity, captured scenario cadence/horizon inputs, and frozen
+medical/maintenance consumers must agree before mutation; format 113 and every
+other explicit non-current version reject. There is no current-format morale
+context map or state-machine copy, and <code>RNGManager</code> alone persists the MORALE
+stream. Commander/OODA assignments, bounded movement diagnostics, and typed
+Space ISR queues, receipts, and owner/target associations remain included.
+Restore stages and validates topology, identity, chronology, mutable
+resources, statuses, routes, and relevant RNG state against a fresh compatible
+runtime before committing any mutation. Bounded versionless compatibility
+remains subject to the stricter subsystem rules in the
 <a href="../../specs/checkpoint-state/">checkpoint state contract</a>.</p>
 
 

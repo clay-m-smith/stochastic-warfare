@@ -1690,7 +1690,7 @@
   <span class="md-ellipsis">
     
   
-    Block 13 (115-121)
+    Block 13 (115-127)
   
 
     
@@ -5345,6 +5345,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-114/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 114 - Era Override Execution
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -5589,6 +5617,34 @@
     
   
     Morale State Ownership
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../specs/era-override-execution/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Era Override Execution
   
 
     
@@ -5941,6 +5997,22 @@
 <h2 id="summary">Summary<a class="headerlink" href="#summary" title="Permanent link">&para;</a></h2>
 <p>Phase 56 addresses performance bottlenecks and logistics wiring gaps: O(n^2) rally cascade replaced with STRtree spatial index, maintenance breakdowns wired to unit readiness, era-specific medical/engineering times, per-subsystem Weibull shape parameters, VLS exhaustion enforcement, naval posture detection modifiers, gas casualty calibration fields, and blockade throughput reduction.</p>
 <p><strong>39 new tests. 8 deficits resolved.</strong></p>
+<blockquote>
+<p><strong>Historical supersession (Phase 114 completion, 2026-08-01):</strong> This devlog
+preserves what Phase 56 changed and claimed, but the listed built-in
+treatment/repair values were unsourced and did not establish the stated
+production behavior. The medical construction helper ignored its supplied
+era config, while <code>repair_time_hours</code> was routed through unrelated
+<code>EngineeringConfig</code>; maintenance also advanced from both campaign and engine
+owners on strategic intervals. Phase 114 removes the unsourced preset
+numbers, routes strict synthetic/user-supplied durations through one typed
+runtime contract to <code>MedicalConfig</code> and <code>MaintenanceConfig</code>, and makes the
+engine the sole once-per-interval maintenance owner. That proves duration
+wiring, not historical calibration, automatic casualty admission/facility
+topology (REM-038/Phase 125), or automatic equipment registration and
+spares-driven repair (REM-039/Phase 126). Phase 114 is complete and REM-018
+is closed.</p>
+</blockquote>
 <h2 id="what-was-built">What Was Built<a class="headerlink" href="#what-was-built" title="Permanent link">&para;</a></h2>
 <h3 id="56a-rally-strtree-spatial-index">56a: Rally STRtree Spatial Index<a class="headerlink" href="#56a-rally-strtree-spatial-index" title="Permanent link">&para;</a></h3>
 <ul>

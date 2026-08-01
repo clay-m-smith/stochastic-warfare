@@ -2715,7 +2715,7 @@
   <span class="md-ellipsis">
     
   
-    Block 13 (115-121)
+    Block 13 (115-127)
   
 
     
@@ -6066,6 +6066,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-114/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 114 - Era Override Execution
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -6310,6 +6338,34 @@
     
   
     Morale State Ownership
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../specs/era-override-execution/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Era Override Execution
   
 
     
@@ -7735,6 +7791,24 @@
 <h2 id="phase-20-ww2-era-complete">Phase 20: WW2 Era — <strong>COMPLETE</strong><a class="headerlink" href="#phase-20-ww2-era-complete" title="Permanent link">&para;</a></h2>
 <p><strong>Goal</strong>: World War 2 data package + engine extensions for pre-guided-munition, radar-emerging, propeller-aircraft warfare. Also establishes the <strong>era framework</strong> used by all subsequent era phases.</p>
 <p><strong>Status</strong>: Complete. 137 tests across 4 sub-phases. Total: 5,244 tests passing (up from 5,107). 4 new source files + 3 modified existing files + ~60 YAML data files. No new dependencies. All changes backward-compatible — <code>era: modern</code> is default and matches all existing behavior. Devlog: <a href="../devlog/phase-20/"><code>devlog/phase-20.md</code></a>.</p>
+<blockquote>
+<p><strong>Phase 114 supersession (complete, 2026-08-01):</strong> The Phase 20-23
+sections below remain the historical record of what those phases delivered
+and claimed. Fresh production tracing proved that their arbitrary
+<code>physics_overrides</code> and <code>tick_resolution_overrides</code> metadata did not
+construct the affected runtime consumers. Phase 114 now accepts only strict
+treatment, repair, and strategic/operational/tactical cadence declarations,
+resolved through one runtime-owned contract; shipped era presets omit the
+old unsourced values. The historical <code>c2_delay_multiplier</code> and
+<code>cbrn_nuclear_enabled</code> keys are removed and reject explicitly because a
+production communications topology and scheduled CBRN/nuclear actions do
+not yet exist (REM-036/Phase 123 and REM-037/Phase 124). Capability gates,
+sensor policy, and data-catalog claims are separate and remain governed by
+their current production evidence. The owner accepted Phase 114's timing
+evidence only with an explicit contention qualification and deferred clean
+confirmation until all cores are free. Phase 114 is complete and REM-018 is
+closed.</p>
+</blockquote>
 <h3 id="20a-era-framework-unit-data">20a: Era Framework &amp; Unit Data<a class="headerlink" href="#20a-era-framework-unit-data" title="Permanent link">&para;</a></h3>
 <ul>
 <li><code>core/era.py</code> (new) — Era configuration system: <code>EraConfig</code> defining which simulation subsystems are active/inactive per era. Era enum (MODERN, WW2, WW1, NAPOLEONIC, ANCIENT_MEDIEVAL). Module disable list per era (e.g., ANCIENT_MEDIEVAL disables <code>detection/sensors.py</code> radar/thermal/sonar, <code>c2/communications.py</code> radio/data link, <code>ew/*</code>, <code>space/*</code>). Era-specific physics constants (Mach-dependent drag tables per era, propellant types, armor materials). Era-specific <code>TickResolution</code> defaults (Napoleonic tactical ticks may be longer than modern). Scenario YAML <code>era: ww2</code> field selects era config. <code>era: modern</code> is default and matches all existing behavior.</li>

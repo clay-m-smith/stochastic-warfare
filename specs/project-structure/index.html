@@ -15,7 +15,7 @@
         <link rel="canonical" href="https://clay-m-smith.github.io/stochastic-warfare/specs/project-structure/">
       
       
-        <link rel="prev" href="../../devlog/phase-113/">
+        <link rel="prev" href="../../devlog/phase-114/">
       
       
         <link rel="next" href="../checkpoint-state/">
@@ -1690,7 +1690,7 @@
   <span class="md-ellipsis">
     
   
-    Block 13 (115-121)
+    Block 13 (115-127)
   
 
     
@@ -5041,6 +5041,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devlog/phase-114/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 114 - Era Override Execution
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -5755,6 +5783,34 @@
     
   
     Morale State Ownership
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../era-override-execution/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Era Override Execution
   
 
     
@@ -6892,18 +6948,19 @@
 <a id="__codelineno-0-616" name="__codelineno-0-616" href="#__codelineno-0-616"></a>        ├── battle.py                 # Tactical battle resolution manager
 <a id="__codelineno-0-617" name="__codelineno-0-617" href="#__codelineno-0-617"></a>        ├── scenario.py               # Scenario loading, setup, initialization; SimulationContext includes stratagem_engine, iads_engine, ato_engine [Phase 53]
 <a id="__codelineno-0-618" name="__codelineno-0-618" href="#__codelineno-0-618"></a>        ├── runtime.py                # Authoritative prepared-scenario/runtime-session boundary and provenance [Phase 112]
-<a id="__codelineno-0-619" name="__codelineno-0-619" href="#__codelineno-0-619"></a>        ├── force_builder.py          # Typed deterministic initial-force construction [Phase 112]
-<a id="__codelineno-0-620" name="__codelineno-0-620" href="#__codelineno-0-620"></a>        ├── movement_diagnostics.py   # Ordered observational movement reasons and checkpoint state [Phase 112]
-<a id="__codelineno-0-621" name="__codelineno-0-621" href="#__codelineno-0-621"></a>        ├── equipment_mappings.py     # Ordered typed equipment-name registry and reviewed data decisions [Phase 109]
-<a id="__codelineno-0-622" name="__codelineno-0-622" href="#__codelineno-0-622"></a>        ├── loadouts.py               # RuntimeLoadoutBuilder, semantic preflight, topology/fingerprint [Phase 109]
-<a id="__codelineno-0-623" name="__codelineno-0-623" href="#__codelineno-0-623"></a>        ├── time_on_target.py         # Initial-roster/runtime-loadout resolver for exact scheduled indirect-fire plans [Phase 111]
-<a id="__codelineno-0-624" name="__codelineno-0-624" href="#__codelineno-0-624"></a>        ├── victory.py                # Victory conditions, war termination criteria, objective evaluation
-<a id="__codelineno-0-625" name="__codelineno-0-625" href="#__codelineno-0-625"></a>        ├── recorder.py               # Event/state recording for replay &amp; analysis
-<a id="__codelineno-0-626" name="__codelineno-0-626" href="#__codelineno-0-626"></a>        ├── metrics.py                # Simulation output metrics, statistical aggregation, analysis hooks
-<a id="__codelineno-0-627" name="__codelineno-0-627" href="#__codelineno-0-627"></a>        ├── aggregation.py           # Force aggregation/disaggregation engine for campaign-scale [Phase 13a]
-<a id="__codelineno-0-628" name="__codelineno-0-628" href="#__codelineno-0-628"></a>        ├── calibration.py           # Typed CalibrationSchema pydantic model replacing free-form dict [Phase 49]
-<a id="__codelineno-0-629" name="__codelineno-0-629" href="#__codelineno-0-629"></a>        ├── unit_arrays.py           # Structure-of-Arrays (SoA) data layer for hot-path unit data [Phase 88]
-<a id="__codelineno-0-630" name="__codelineno-0-630" href="#__codelineno-0-630"></a>        └── deployment.py            # Configurable deployment modes (legacy/bounding_box/clustered/doctrinal/manual) + DeploymentConfig + FormationTemplateLoader consuming data/formations/*.yaml [Phase 104]
+<a id="__codelineno-0-619" name="__codelineno-0-619" href="#__codelineno-0-619"></a>        ├── era_runtime.py            # Frozen effective cadence/treatment/repair contract and executable-horizon sources [Phase 114]
+<a id="__codelineno-0-620" name="__codelineno-0-620" href="#__codelineno-0-620"></a>        ├── force_builder.py          # Typed deterministic initial-force construction [Phase 112]
+<a id="__codelineno-0-621" name="__codelineno-0-621" href="#__codelineno-0-621"></a>        ├── movement_diagnostics.py   # Ordered observational movement reasons and checkpoint state [Phase 112]
+<a id="__codelineno-0-622" name="__codelineno-0-622" href="#__codelineno-0-622"></a>        ├── equipment_mappings.py     # Ordered typed equipment-name registry and reviewed data decisions [Phase 109]
+<a id="__codelineno-0-623" name="__codelineno-0-623" href="#__codelineno-0-623"></a>        ├── loadouts.py               # RuntimeLoadoutBuilder, semantic preflight, topology/fingerprint [Phase 109]
+<a id="__codelineno-0-624" name="__codelineno-0-624" href="#__codelineno-0-624"></a>        ├── time_on_target.py         # Initial-roster/runtime-loadout resolver for exact scheduled indirect-fire plans [Phase 111]
+<a id="__codelineno-0-625" name="__codelineno-0-625" href="#__codelineno-0-625"></a>        ├── victory.py                # Victory conditions, war termination criteria, objective evaluation
+<a id="__codelineno-0-626" name="__codelineno-0-626" href="#__codelineno-0-626"></a>        ├── recorder.py               # Event/state recording for replay &amp; analysis
+<a id="__codelineno-0-627" name="__codelineno-0-627" href="#__codelineno-0-627"></a>        ├── metrics.py                # Simulation output metrics, statistical aggregation, analysis hooks
+<a id="__codelineno-0-628" name="__codelineno-0-628" href="#__codelineno-0-628"></a>        ├── aggregation.py           # Force aggregation/disaggregation engine for campaign-scale [Phase 13a]
+<a id="__codelineno-0-629" name="__codelineno-0-629" href="#__codelineno-0-629"></a>        ├── calibration.py           # Typed CalibrationSchema pydantic model replacing free-form dict [Phase 49]
+<a id="__codelineno-0-630" name="__codelineno-0-630" href="#__codelineno-0-630"></a>        ├── unit_arrays.py           # Structure-of-Arrays (SoA) data layer for hot-path unit data [Phase 88]
+<a id="__codelineno-0-631" name="__codelineno-0-631" href="#__codelineno-0-631"></a>        └── deployment.py            # Configurable deployment modes (legacy/bounding_box/clustered/doctrinal/manual) + DeploymentConfig + FormationTemplateLoader consuming data/formations/*.yaml [Phase 104]
 </code></pre></div>
 <hr />
 <h2 id="module-responsibilities-boundaries">Module Responsibilities &amp; Boundaries<a class="headerlink" href="#module-responsibilities-boundaries" title="Permanent link">&para;</a></h2>
@@ -6920,7 +6977,10 @@
 - <strong>Era framework</strong> (<code>era.py</code>): Era enum
   (MODERN/WW2/WW1/NAPOLEONIC/ANCIENT_MEDIEVAL), strict isolated
   <code>EraConfig</code> registry, seven enforced capability gates, sensor allowlists, and
-  declared-but-not-yet-consumed physics/tick override metadata [Phases 20, 107]</p>
+  strict sparse cadence/treatment/repair declarations. The simulation-layer
+  <code>EraRuntimeContract</code> resolves effective values before RNG construction and
+  owns clock/domain configuration plus format-114 persistence [Phases 20, 107,
+  114]</p>
 <p><strong>Depends on</strong>: Nothing (leaf dependency)</p>
 <h3 id="coordinates">coordinates/<a class="headerlink" href="#coordinates" title="Permanent link">&para;</a></h3>
 <p><strong>Owns</strong>: All coordinate math. The only module that knows about geodetic ↔ projected transforms.
@@ -7300,11 +7360,16 @@ the production scenario loop.</p>
   continuation [Phases 107, 112, 113]
 - <strong>Runtime construction</strong>: <code>SimulationRuntimeFactory.prepare()</code> and
   <code>prepare_config()</code> produce immutable typed variants; <code>PreparedScenario.build()</code>
-  verifies exact side/roster/loadout/assignment topology and returns a fresh
-  <code>RuntimeSession</code> for <code>step()</code>, <code>run_to_completion()</code>, or <code>finalize()</code>.
-  Source/config, code/data/catalog/doctrine/loadout, roster, seed, and
-  initial/arriving assignment provenance stays with every analysis run
-  [Phase 112].
+  verifies exact side/roster/loadout/assignment topology and the isolated
+  selected era/effective contract, then returns a fresh <code>RuntimeSession</code> for
+  <code>step()</code>, <code>run_to_completion()</code>, or <code>finalize()</code>. Source/config,
+  code/data/catalog/doctrine/loadout/era, roster, seed, and initial/arriving
+  assignment provenance stays with every analysis run [Phases 112, 114].
+- <strong>Era runtime</strong>: one frozen <code>EraRuntimeContract</code> materializes sparse
+  strategic/operational/tactical cadence and medical/maintenance overrides
+  before RNG, clock, or engine construction. Clock, engine intervals, medical,
+  maintenance, API cadence, fingerprints, and format-114 checkpoints consume
+  that same boundary; unsupported C2/nuclear metadata rejects [Phase 114].
 - <strong>Initial force construction</strong>: <code>RuntimeForceBuilder</code> validates exact typed
   unit groups, per-instance overrides, deterministic IDs/domains, cardinality,
   and transactional unit-RNG behavior before publishing the roster

@@ -18,7 +18,7 @@
         <link rel="prev" href="../validation-and-documentation-trust/">
       
       
-        <link rel="next" href="../../skills-and-hooks/">
+        <link rel="next" href="../era-override-execution/">
       
       
         
@@ -1690,7 +1690,7 @@
   <span class="md-ellipsis">
     
   
-    Block 13 (115-121)
+    Block 13 (115-127)
   
 
     
@@ -5041,6 +5041,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devlog/phase-114/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 114 - Era Override Execution
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -5439,10 +5467,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#checkpoint-format-113" class="md-nav__link">
+  <a href="#phase-113-checkpoint-format" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Checkpoint format 113
+        Phase 113 checkpoint format
       
     </span>
   </a>
@@ -5486,6 +5514,34 @@
   
 </nav>
       
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../era-override-execution/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Era Override Execution
+  
+
+    
+  </span>
+  
+  
+
+      </a>
     </li>
   
 
@@ -5652,10 +5708,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#checkpoint-format-113" class="md-nav__link">
+  <a href="#phase-113-checkpoint-format" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Checkpoint format 113
+        Phase 113 checkpoint format
       
     </span>
   </a>
@@ -5720,6 +5776,10 @@
 <p>Verified Phase 113 production contract. The corrected documentation audit and
 <a href="../../devlog/phase-113/#postmortem">Phase 113 postmortem</a> passed on 2026-08-01;
 Phase 113 is complete and REM-019 is closed.</p>
+<p>Phase 114 extends the engine checkpoint to format 114 by adding the effective
+era runtime contract and clock/resolution validation. It does not change or
+duplicate the morale envelope below: current format 114 still contains exactly
+one <code>morale_runtime</code>, and <code>RNGManager</code> remains the sole MORALE-stream owner.</p>
 <h2 id="purpose-and-scope">Purpose and scope<a class="headerlink" href="#purpose-and-scope" title="Permanent link">&para;</a></h2>
 <p>Phase 113 closes REM-019 by replacing the independent mutable
 morale copies in <code>SimulationContext</code> and <code>MoraleStateMachine</code> with one
@@ -5968,7 +6028,13 @@ the terminal victory result. A matched control held at <code>SHAKEN</code> must 
 that condition. A no-crash run, source search, event log, or constructor call
 is not sufficient evidence. Firing behavior may be checked for consistency but
 is not the causal acceptance proof for this ownership remediation.</p>
-<h2 id="checkpoint-format-113">Checkpoint format 113<a class="headerlink" href="#checkpoint-format-113" title="Permanent link">&para;</a></h2>
+<h2 id="phase-113-checkpoint-format">Phase 113 checkpoint format<a class="headerlink" href="#phase-113-checkpoint-format" title="Permanent link">&para;</a></h2>
+<blockquote>
+<p><strong>Current-format note:</strong> This section records the Phase 113 format transition
+historically. The current engine writes format 114, which preserves this
+exact morale topology and adds the independent Phase 114 era-runtime
+contract. Explicit format 113 now rejects as an older version.</p>
+</blockquote>
 <p><code>SimulationEngine</code> advances the explicit format to <code>113</code>.</p>
 <ol>
 <li>Current context state always contains exactly one <code>morale_runtime</code> key. Its

@@ -941,10 +941,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#c2-delay" class="md-nav__link">
+  <a href="#communications-status" class="md-nav__link">
     <span class="md-ellipsis">
       
-        C2 Delay
+        Communications Status
       
     </span>
   </a>
@@ -1024,10 +1024,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#c2-delay_1" class="md-nav__link">
+  <a href="#communications-status_1" class="md-nav__link">
     <span class="md-ellipsis">
       
-        C2 Delay
+        Communications Status
       
     </span>
   </a>
@@ -1107,10 +1107,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#c2-delay_2" class="md-nav__link">
+  <a href="#communications-status_2" class="md-nav__link">
     <span class="md-ellipsis">
       
-        C2 Delay
+        Communications Status
       
     </span>
   </a>
@@ -1190,10 +1190,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#c2-delay_3" class="md-nav__link">
+  <a href="#communications-status_3" class="md-nav__link">
     <span class="md-ellipsis">
       
-        C2 Delay
+        Communications Status
       
     </span>
   </a>
@@ -1273,10 +1273,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#c2-delay_4" class="md-nav__link">
+  <a href="#communications-status_4" class="md-nav__link">
     <span class="md-ellipsis">
       
-        C2 Delay
+        Communications Status
       
     </span>
   </a>
@@ -2216,7 +2216,7 @@
   <span class="md-ellipsis">
     
   
-    Block 13 (115-121)
+    Block 13 (115-127)
   
 
     
@@ -5567,6 +5567,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devlog/phase-114/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 114 - Era Override Execution
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -5831,6 +5859,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../specs/era-override-execution/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Era Override Execution
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../skills-and-hooks/" class="md-nav__link">
         
   
@@ -5959,10 +6015,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#c2-delay" class="md-nav__link">
+  <a href="#communications-status" class="md-nav__link">
     <span class="md-ellipsis">
       
-        C2 Delay
+        Communications Status
       
     </span>
   </a>
@@ -6042,10 +6098,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#c2-delay_1" class="md-nav__link">
+  <a href="#communications-status_1" class="md-nav__link">
     <span class="md-ellipsis">
       
-        C2 Delay
+        Communications Status
       
     </span>
   </a>
@@ -6125,10 +6181,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#c2-delay_2" class="md-nav__link">
+  <a href="#communications-status_2" class="md-nav__link">
     <span class="md-ellipsis">
       
-        C2 Delay
+        Communications Status
       
     </span>
   </a>
@@ -6208,10 +6264,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#c2-delay_3" class="md-nav__link">
+  <a href="#communications-status_3" class="md-nav__link">
     <span class="md-ellipsis">
       
-        C2 Delay
+        Communications Status
       
     </span>
   </a>
@@ -6291,10 +6347,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#c2-delay_4" class="md-nav__link">
+  <a href="#communications-status_4" class="md-nav__link">
     <span class="md-ellipsis">
       
-        C2 Delay
+        Communications Status
       
     </span>
   </a>
@@ -6382,7 +6438,10 @@
 
 
 <h1 id="eras">Eras<a class="headerlink" href="#eras" title="Permanent link">&para;</a></h1>
-<p>Stochastic Warfare supports 5 historical eras, each with different available technologies, unit types, and combat mechanics. The era framework gates module availability and loads era-specific data.</p>
+<p>Stochastic Warfare supports one modern era package and four historical-era
+packages, each with different available technologies, unit types, and combat
+mechanics. The era framework gates module availability and loads era-specific
+data.</p>
 <h2 id="era-framework">Era Framework<a class="headerlink" href="#era-framework" title="Permanent link">&para;</a></h2>
 <h3 id="era-enum">Era Enum<a class="headerlink" href="#era-enum" title="Permanent link">&para;</a></h3>
 <table>
@@ -6427,13 +6486,22 @@
 <li><strong>Disabled capabilities</strong> -- exactly <code>ew</code>, <code>space</code>, <code>cbrn</code>, <code>gps</code>,
   <code>thermal_sights</code>, <code>data_links</code>, and <code>pgm</code></li>
 <li><strong>Available sensor types</strong> -- an enforced allowlist of sensor modalities</li>
-<li><strong>Physics and tick overrides</strong> -- declared metadata that is not yet consumed
-  by the production runtime</li>
+<li><strong>Physics and tick overrides</strong> -- strict sparse declarations consumed by one
+  effective production runtime contract</li>
 <li><strong>Era-specific engine extensions</strong> -- custom combat models for the period</li>
 </ul>
 <p>Setting <code>era</code> in a scenario YAML selects a registered configuration. Unknown
 eras are rejected. The production loader enforces suite gates and rejects
 unit loadouts that require forbidden sensors, guidance, or data links.</p>
+<p>No built-in or custom <code>EraConfig</code> supports a C2 delay multiplier. The former
+<code>c2_delay_multiplier</code> field rejects explicitly: communications catalogs and
+standalone courier/signaling components do not establish a production-loaded,
+unit/HQ-bound communications topology. That capability remains
+<a href="../../remediation-backlog/#rem-036-production-c2-lacks-a-loaded-communications-topology">REM-036</a>.</p>
+<p>The component descriptions below identify available models and data; they are
+not blanket claims that every component has a complete production lifecycle.
+Construction, importability, or isolated tests alone do not prove production
+wiring or outcome effects.</p>
 <div class="admonition warning">
 <p class="admonition-title">Historical-validation status</p>
 <p>A historical name, source citation, <code>documented_outcomes</code> field, successful
@@ -6448,11 +6516,14 @@ otherwise its historical-validation status is unsupported.</p>
 <h2 id="modern-era-cold-war-present">Modern Era (Cold War -- Present)<a class="headerlink" href="#modern-era-cold-war-present" title="Permanent link">&para;</a></h2>
 <p>The default era with full access to all subsystems.</p>
 <h3 id="enabled-modules">Enabled Modules<a class="headerlink" href="#enabled-modules" title="Permanent link">&para;</a></h3>
-<p>All modules enabled: EW, Space, CBRN, directed energy, full sensor suite, digital C2.</p>
+<p>The built-in config has no disabled era capabilities. EW, Space, CBRN, GPS,
+thermal sights, data links, and PGM are permitted when the scenario and live
+equipment satisfy their own configuration and topology requirements.</p>
 <h3 id="available-sensor-types">Available Sensor Types<a class="headerlink" href="#available-sensor-types" title="Permanent link">&para;</a></h3>
-<p>Visual, thermal/IR, radar, acoustic, sonar, UV MAWS, laser warning, SIGINT.</p>
-<h3 id="c2-delay">C2 Delay<a class="headerlink" href="#c2-delay" title="Permanent link">&para;</a></h3>
-<p>Baseline (1.0x multiplier). Digital communications, Link 16, SATCOM.</p>
+<p>The allowlist is empty, which means every catalog sensor type is permitted.</p>
+<h3 id="communications-status">Communications Status<a class="headerlink" href="#communications-status" title="Permanent link">&para;</a></h3>
+<p>Modern communications data and components exist, but automatic production
+assignment and link topology remain REM-036. No era multiplier is applied.</p>
 <h3 id="key-unit-categories">Key Unit Categories<a class="headerlink" href="#key-unit-categories" title="Permanent link">&para;</a></h3>
 <table>
 <thead>
@@ -6521,11 +6592,15 @@ is not a historical-validation claim.</p>
 <hr />
 <h2 id="ww2-era-1939-1945">WW2 Era (1939--1945)<a class="headerlink" href="#ww2-era-1939-1945" title="Permanent link">&para;</a></h2>
 <h3 id="enabled-modules_1">Enabled Modules<a class="headerlink" href="#enabled-modules_1" title="Permanent link">&para;</a></h3>
-<p>Most modules enabled. No EW (electronic warfare), no space, no directed energy. CBRN limited (no nuclear in most scenarios). Radar available but primitive.</p>
+<p>The built-in config disables exactly EW, Space, CBRN, GPS, thermal sights,
+data links, and PGM. Other behavior still requires explicit scenario and
+equipment support; the era gate does not itself enable a subsystem.</p>
 <h3 id="available-sensor-types_1">Available Sensor Types<a class="headerlink" href="#available-sensor-types_1" title="Permanent link">&para;</a></h3>
-<p>Visual, radar, passive sonar, active sonar (no thermal/IR targeting, no GPS).</p>
-<h3 id="c2-delay_1">C2 Delay<a class="headerlink" href="#c2-delay_1" title="Permanent link">&para;</a></h3>
-<p>Baseline (1.0x multiplier). Radio communications available but less reliable. No digital data links.</p>
+<p>Exactly <code>VISUAL</code>, <code>RADAR</code>, <code>PASSIVE_SONAR</code>, and <code>ACTIVE_SONAR</code>.</p>
+<h3 id="communications-status_1">Communications Status<a class="headerlink" href="#communications-status_1" title="Permanent link">&para;</a></h3>
+<p>WW2 communications data or isolated components are not an automatically
+loaded production network. No era multiplier is applied; REM-036 owns that
+topology.</p>
 <h3 id="era-specific-mechanics">Era-Specific Mechanics<a class="headerlink" href="#era-specific-mechanics" title="Permanent link">&para;</a></h3>
 <p><strong>Naval Gunnery Bracket Firing</strong></p>
 <p>WW2 naval guns use bracket firing -- observing fall of shot and adjusting. The engine models:</p>
@@ -6590,11 +6665,16 @@ outcome-envelope verdicts.</p>
 <hr />
 <h2 id="ww1-era-1914-1918">WW1 Era (1914--1918)<a class="headerlink" href="#ww1-era-1914-1918" title="Permanent link">&para;</a></h2>
 <h3 id="enabled-modules_2">Enabled Modules<a class="headerlink" href="#enabled-modules_2" title="Permanent link">&para;</a></h3>
-<p>Limited modules. No EW, no space, no CBRN (except gas warfare via adapter), no directed energy. Basic visual detection only. Very slow C2.</p>
+<p>The built-in config disables exactly EW, Space, GPS, thermal sights, data
+links, and PGM, leaving CBRN enabled at the era gate for WW1
+chemical-warfare scenarios. Runtime use still requires an explicitly enabled,
+schema-valid CBRN suite.</p>
 <h3 id="available-sensor-types_2">Available Sensor Types<a class="headerlink" href="#available-sensor-types_2" title="Permanent link">&para;</a></h3>
-<p>Visual only. No radar, no thermal, no acoustic sensors.</p>
-<h3 id="c2-delay_2">C2 Delay<a class="headerlink" href="#c2-delay_2" title="Permanent link">&para;</a></h3>
-<p>5.0x multiplier. Telephone/telegraph to HQ, runners and couriers forward. Significant communication friction.</p>
+<p>Exactly <code>VISUAL</code> and <code>PASSIVE_SONAR</code>.</p>
+<h3 id="communications-status_2">Communications Status<a class="headerlink" href="#communications-status_2" title="Permanent link">&para;</a></h3>
+<p>WW1 telephone, messenger, and signaling data do not establish a live
+production communications network. No era multiplier is applied; REM-036
+owns unit/HQ assignment, propagation, and failure behavior.</p>
 <h3 id="era-specific-mechanics_1">Era-Specific Mechanics<a class="headerlink" href="#era-specific-mechanics_1" title="Permanent link">&para;</a></h3>
 <p><strong>Trench System Overlay</strong></p>
 <p>Trenches modeled as spatial overlays using Shapely LineString geometries:</p>
@@ -6658,11 +6738,16 @@ verdicts.</p>
 <hr />
 <h2 id="napoleonic-era-1792-1815">Napoleonic Era (1792--1815)<a class="headerlink" href="#napoleonic-era-1792-1815" title="Permanent link">&para;</a></h2>
 <h3 id="enabled-modules_3">Enabled Modules<a class="headerlink" href="#enabled-modules_3" title="Permanent link">&para;</a></h3>
-<p>Minimal modules. No electronic anything. Visual detection only. Courier-based C2 with extreme delays. Foraging-based logistics.</p>
+<p>The built-in config disables exactly EW, Space, CBRN, GPS, thermal sights,
+data links, and PGM. Period-specific combat and logistics components remain
+subject to their own production wiring and scenario configuration.</p>
 <h3 id="available-sensor-types_3">Available Sensor Types<a class="headerlink" href="#available-sensor-types_3" title="Permanent link">&para;</a></h3>
-<p>Visual only. Detection range limited by terrain and weather.</p>
-<h3 id="c2-delay_3">C2 Delay<a class="headerlink" href="#c2-delay_3" title="Permanent link">&para;</a></h3>
-<p>8.0x multiplier. Courier on horseback. Orders take hours to propagate. Fog of war is extreme.</p>
+<p>Exactly <code>VISUAL</code>; actual detection is additionally constrained by loaded
+sensor data, terrain, and weather.</p>
+<h3 id="communications-status_3">Communications Status<a class="headerlink" href="#communications-status_3" title="Permanent link">&para;</a></h3>
+<p>The standalone courier model does not establish a loaded production
+communications topology. No era multiplier is applied; REM-036 owns its
+future unit/HQ integration.</p>
 <h3 id="era-specific-mechanics_2">Era-Specific Mechanics<a class="headerlink" href="#era-specific-mechanics_2" title="Permanent link">&para;</a></h3>
 <p><strong>Volley Fire</strong></p>
 <p>Aggregate model using binomial trials:</p>
@@ -6729,7 +6814,8 @@ verdicts.</p>
 </table>
 <p>Transitioning between formations takes time and creates vulnerability.</p>
 <p><strong>Courier C2</strong></p>
-<p>Orders delivered by mounted courier:</p>
+<p>The standalone <code>CourierEngine</code> component models orders delivered by mounted
+courier:</p>
 <ul>
 <li>Travel time proportional to distance</li>
 <li>Risk of interception or courier loss</li>
@@ -6778,11 +6864,16 @@ verdicts.</p>
 <hr />
 <h2 id="ancient-medieval-era-3000-bc-1500-ad">Ancient &amp; Medieval Era (3000 BC -- 1500 AD)<a class="headerlink" href="#ancient-medieval-era-3000-bc-1500-ad" title="Permanent link">&para;</a></h2>
 <h3 id="enabled-modules_4">Enabled Modules<a class="headerlink" href="#enabled-modules_4" title="Permanent link">&para;</a></h3>
-<p>Minimal modules. Visual detection only. Visual signals C2 (flags, trumpets). No logistics automation.</p>
+<p>The built-in config disables exactly EW, Space, CBRN, GPS, thermal sights,
+data links, and PGM. Period-specific combat and signaling components remain
+subject to their own production wiring.</p>
 <h3 id="available-sensor-types_4">Available Sensor Types<a class="headerlink" href="#available-sensor-types_4" title="Permanent link">&para;</a></h3>
-<p>Visual only. Very short detection ranges.</p>
-<h3 id="c2-delay_4">C2 Delay<a class="headerlink" href="#c2-delay_4" title="Permanent link">&para;</a></h3>
-<p>12.0x multiplier. Visual signals (flags, horns, drums) for nearby units. Messengers on foot for distant commands. Extremely limited command span.</p>
+<p>Exactly <code>VISUAL</code>; range comes from the loaded sensor definition and live
+environment rather than the era label.</p>
+<h3 id="communications-status_4">Communications Status<a class="headerlink" href="#communications-status_4" title="Permanent link">&para;</a></h3>
+<p>The standalone visual-signaling model does not establish loaded unit/HQ link
+topology. No era multiplier is applied; REM-036 owns its future production
+integration.</p>
 <h3 id="era-specific-mechanics_3">Era-Specific Mechanics<a class="headerlink" href="#era-specific-mechanics_3" title="Permanent link">&para;</a></h3>
 <p><strong>Massed Archery</strong></p>
 <p>Aggregate volley model for massed bowmen:</p>
@@ -6865,7 +6956,8 @@ verdicts.</p>
 <li>Ram damage proportional to relative velocity</li>
 </ul>
 <p><strong>Visual Signals C2</strong></p>
-<p>Command and control via visual/audible signals:</p>
+<p>The standalone <code>VisualSignalEngine</code> component models command and control via
+visual/audible signals:</p>
 <ul>
 <li>Flags, standards, horns, drums</li>
 <li>Signal range limited by terrain and weather</li>
@@ -6906,32 +6998,78 @@ outcome-envelope verdicts.</p>
 <hr />
 <h2 id="creating-era-specific-scenarios">Creating Era-Specific Scenarios<a class="headerlink" href="#creating-era-specific-scenarios" title="Permanent link">&para;</a></h2>
 <p>To create a scenario for a specific era, set the <code>era</code> field in the scenario YAML:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;Battle</span><span class="nv"> </span><span class="s">of</span><span class="nv"> </span><span class="s">Austerlitz&quot;</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="nt">era</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">napoleonic</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="nt">duration_s</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">28800</span><span class="w">  </span><span class="c1"># 8 hours</span>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="nt">terrain</span><span class="p">:</span>
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="w">  </span><span class="nt">width</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">8000</span>
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="w">  </span><span class="nt">height</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">6000</span>
-<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="w">  </span><span class="nt">cell_size</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">100</span>
-<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="w">  </span><span class="nt">terrain_type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">rolling_hills</span>
-<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="nt">sides</span><span class="p">:</span>
-<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">french</span>
-<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="w">    </span><span class="nt">units</span><span class="p">:</span>
-<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">unit_type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">french_ligne</span>
-<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span class="w">        </span><span class="nt">count</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">12</span>
-<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a><span class="w">        </span><span class="c1"># ...</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;Custom</span><span class="nv"> </span><span class="s">Napoleonic</span><span class="nv"> </span><span class="s">Engagement&quot;</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="nt">date</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;1805-12-02T06:00:00Z&quot;</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="nt">duration_hours</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">8.0</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="nt">era</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">napoleonic</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="nt">tick_resolution</span><span class="p">:</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="w">  </span><span class="nt">strategic_s</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">3600</span>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="w">  </span><span class="nt">operational_s</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">300</span>
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="w">  </span><span class="nt">tactical_s</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">5</span>
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="nt">terrain</span><span class="p">:</span>
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="w">  </span><span class="nt">width_m</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">8000</span>
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="w">  </span><span class="nt">height_m</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">6000</span>
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="w">  </span><span class="nt">cell_size_m</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">100</span>
+<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span class="w">  </span><span class="nt">base_elevation_m</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0</span>
+<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a><span class="w">  </span><span class="nt">terrain_type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">hilly_defense</span>
+<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a><span class="nt">sides</span><span class="p">:</span>
+<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">side</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">french</span>
+<a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a><span class="w">    </span><span class="nt">units</span><span class="p">:</span>
+<a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">unit_type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">french_line_infantry</span>
+<a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a><span class="w">        </span><span class="nt">count</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">12</span>
+<a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">side</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">coalition</span>
+<a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a><span class="w">    </span><span class="nt">units</span><span class="p">:</span>
+<a id="__codelineno-0-22" name="__codelineno-0-22" href="#__codelineno-0-22"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">unit_type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">british_line_infantry</span>
+<a id="__codelineno-0-23" name="__codelineno-0-23" href="#__codelineno-0-23"></a><span class="w">        </span><span class="nt">count</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">12</span>
+<a id="__codelineno-0-24" name="__codelineno-0-24" href="#__codelineno-0-24"></a><span class="nt">objectives</span><span class="p">:</span>
+<a id="__codelineno-0-25" name="__codelineno-0-25" href="#__codelineno-0-25"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">objective_id</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">pratzen_heights</span>
+<a id="__codelineno-0-26" name="__codelineno-0-26" href="#__codelineno-0-26"></a><span class="w">    </span><span class="nt">position</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">4000</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">3000</span><span class="p p-Indicator">]</span>
+<a id="__codelineno-0-27" name="__codelineno-0-27" href="#__codelineno-0-27"></a><span class="w">    </span><span class="nt">radius_m</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">500</span>
+<a id="__codelineno-0-28" name="__codelineno-0-28" href="#__codelineno-0-28"></a><span class="w">    </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">key_terrain</span>
+<a id="__codelineno-0-29" name="__codelineno-0-29" href="#__codelineno-0-29"></a><span class="nt">victory_conditions</span><span class="p">:</span>
+<a id="__codelineno-0-30" name="__codelineno-0-30" href="#__codelineno-0-30"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">force_destroyed</span>
+<a id="__codelineno-0-31" name="__codelineno-0-31" href="#__codelineno-0-31"></a><span class="w">    </span><span class="nt">side</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;&quot;</span>
+<a id="__codelineno-0-32" name="__codelineno-0-32" href="#__codelineno-0-32"></a><span class="w">    </span><span class="nt">params</span><span class="p">:</span>
+<a id="__codelineno-0-33" name="__codelineno-0-33" href="#__codelineno-0-33"></a><span class="w">      </span><span class="nt">threshold</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.7</span>
 </code></pre></div>
-<p>The <code>ScenarioLoader</code> will:</p>
+<p>In the authoritative production flow, <code>SimulationRuntimeFactory</code> resolves and
+captures the named era before <code>PreparedScenario.build()</code> supplies the paired
+<code>EraConfig</code> and effective contract to <code>ScenarioLoader</code>; the loader verifies
+that pair without consulting the live registry. An explicit direct
+<code>ScenarioLoader.load()</code> instead omits both captured objects and resolves the
+registry at that lower boundary. In either flow, the loader will:</p>
 <ol>
-<li>Resolve the named registered <code>EraConfig</code> and enforce its capability and
-   sensor gates.</li>
+<li>Enforce the selected era's capability and sensor gates.</li>
 <li>Load definitions from the base catalogs and overlay definitions from
    <code>data/eras/napoleonic/</code>.</li>
-<li>Wire era-specific engines (volley fire, melee, cavalry, formations,
-   courier, and foraging).</li>
+<li>Construct the selected period engine set (volley fire, melee, cavalry,
+   formations, courier, and foraging). Construction alone does not establish
+   each component's complete production lifecycle; communications topology
+   remains REM-036.</li>
 </ol>
-<p><code>physics_overrides</code> and <code>tick_resolution_overrides</code> remain declared metadata;
-they do not currently alter production behavior.</p>
+<p>The selected registered era also participates in one effective runtime
+contract resolved before RNG, clock, terrain, or engine construction.
+<code>tick_resolution_overrides</code> may sparsely override <code>strategic_s</code>,
+<code>operational_s</code>, and <code>tactical_s</code>. <code>physics_overrides</code> supports only
+<code>treatment_hours_minor</code>, <code>treatment_hours_serious</code>,
+<code>treatment_hours_critical</code>, and maintenance-owned <code>repair_time_hours</code>. Every
+declared value is a strict finite positive float; cadence values must be exact
+at microsecond precision and executable through the scenario's calendar
+horizon. Unknown fields, numeric strings, booleans, nulls, non-finite values,
+and the former unsupported C2/nuclear keys fail validation.</p>
+<p>Sparse omission preserves the scenario cadence and medical/maintenance owner
+defaults. The uniform <code>tick_duration_seconds</code> shorthand cannot be combined
+with an era tick override. Built-in era presets currently declare no physics
+or cadence numbers because their earlier values lacked traceable sources; the
+typed contract is exercised by explicit custom-era controls, not presented as
+historical calibration.</p>
+<p>The effective values construct <code>SimulationClock</code>, <code>SimulationEngine</code>,
+<code>MedicalEngine</code>, and <code>MaintenanceEngine</code>, contribute to runtime/API config
+fingerprints, and persist in checkpoint format 114. Automatic casualty
+admission, medical-facility topology, equipment registration and repair-spares
+initiation, communications topology, and scheduled nuclear employment remain
+separate remediations. See the
+<a href="../../specs/era-override-execution/">Era Override Execution contract</a>.</p>
 
 
 

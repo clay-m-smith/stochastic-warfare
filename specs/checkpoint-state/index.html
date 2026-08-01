@@ -1690,7 +1690,7 @@
   <span class="md-ellipsis">
     
   
-    Block 13 (115-121)
+    Block 13 (115-127)
   
 
     
@@ -5041,6 +5041,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devlog/phase-114/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 114 - Era Override Execution
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -5226,6 +5254,17 @@
     <span class="md-ellipsis">
       
         Force state
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#era-runtime-and-clock-cadence" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Era runtime and clock cadence
       
     </span>
   </a>
@@ -5509,6 +5548,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../era-override-execution/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Era Override Execution
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../skills-and-hooks/" class="md-nav__link">
         
   
@@ -5590,6 +5657,17 @@
     <span class="md-ellipsis">
       
         Force state
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#era-runtime-and-clock-cadence" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Era runtime and clock cadence
       
     </span>
   </a>
@@ -5739,8 +5817,8 @@
 
 <h1 id="checkpoint-state-contract">Checkpoint State Contract<a class="headerlink" href="#checkpoint-state-contract" title="Permanent link">&para;</a></h1>
 <h2 id="status">Status<a class="headerlink" href="#status" title="Permanent link">&para;</a></h2>
-<p>Phase 105 contract, verified through the completed Phase 113 extension on
-2026-08-01.</p>
+<p>Verified Phase 105 contract, extended by the completed Phase 114 era-runtime
+contract and format-114 checkpoint boundary.</p>
 <h2 id="purpose">Purpose<a class="headerlink" href="#purpose" title="Permanent link">&para;</a></h2>
 <p>A checkpoint is a deterministic branch point. Restoring it must reproduce the
 mutable simulation state at time <code>T</code>, and continuing from it must produce the
@@ -5749,11 +5827,11 @@ same subsequent state and events as the uninterrupted seeded run.</p>
 validated effective scenario configuration and repository/data-catalog
 revision. Checkpoint restore replaces mutable state; it does not rebuild engine
 topology or reinterpret a different scenario.</p>
-<p><code>SimulationEngine</code> writes checkpoint format version <code>113</code>. Any explicit version
-other than <code>113</code>, including <code>112</code>, is rejected before runtime mutation. An
+<p><code>SimulationEngine</code> writes checkpoint format version <code>114</code>. Any explicit version
+other than <code>114</code>, including <code>113</code>, is rejected before runtime mutation. An
 absent version selects the bounded legacy-migration path described below; an
 explicitly present <code>null</code> value is malformed, not legacy.</p>
-<p>For version <code>113</code>, top-level engine keys and context-state keys must exactly
+<p>For version <code>114</code>, top-level engine keys and context-state keys must exactly
 match the compatible target runtime. Missing or extra keys fail before
 mutation. Serialized scenario and reinforcement configurations use type-aware
 JSON equality, so booleans cannot masquerade as integers and integers cannot
@@ -5803,6 +5881,26 @@ incompatible runtime fails before context-owned clock, RNG, force, morale, or
 loadout state is committed.</p>
 <p>Stable-object reuse is required because weapon, sensor, and subsystem instances
 can hold references to a unit's equipment.</p>
+<h2 id="era-runtime-and-clock-cadence">Era runtime and clock cadence<a class="headerlink" href="#era-runtime-and-clock-cadence" title="Permanent link">&para;</a></h2>
+<p>Current context state contains exactly one <code>era_runtime_contract</code> with the
+selected registry ID, era label, effective strategic/operational/tactical
+durations, all three medical treatment durations, and maintenance repair
+duration. It is behavior, not a copy of the sparse metadata that produced it.</p>
+<p>The target runtime separately captures the exact scenario-side cadence source
+(<code>era</code>, all three authored tick values, and optional uniform shorthand), the
+isolated selected <code>EraConfig</code>, and the scenario start/duration horizon. Before
+mutation, restore strictly parses the checkpoint contract and requires exact
+agreement with those captured identities and the frozen medical, maintenance,
+and loadout consumers. The saved engine resolution must map to the saved clock
+duration under that same contract, the saved clock start must equal the
+scenario start, and current time cannot exceed the executable horizon.</p>
+<p>Missing, extra, malformed, type-aliased, or different era contract data fails
+atomically. A versionless checkpoint cannot contain the format-114 key and may
+restore only into a target whose captured era declares no physics or cadence
+override. It cannot infer historical behavior from a current registry entry.
+Active non-default medical treatment and maintenance repair state remains
+owned by those engines and must continue at the exact contract-defined
+endpoint after fresh or in-place restore.</p>
 <h2 id="morale-state">Morale state<a class="headerlink" href="#morale-state" title="Permanent link">&para;</a></h2>
 <p>A non-empty production runtime has exactly one semantic morale owner:
 <code>MoraleRuntime</code>. <code>SimulationContext.morale_states</code> is the runtime's stable,
@@ -5812,7 +5910,7 @@ but owns no current unit state.</p>
 <p>Current context state contains exactly one <code>morale_runtime</code> key. Its value is a
 strict envelope with exact <code>active_records</code> and <code>suspended_archives</code> keys, or
 <code>null</code> only for a deliberately minimal context whose roster, active routes, and
-aggregation topology are all empty. Version 113 contains no separate
+aggregation topology are all empty. Current format 114 contains no separate
 <code>morale_states</code> or <code>morale_machine</code> current-state copy.</p>
 <p>Each active record preserves typed current state, optional finite non-negative
 last-transition and last-admitted-check times, and a strict non-negative
@@ -5970,9 +6068,10 @@ counters reject before context mutation.</p>
 <a href="../time-on-target-execution/">Time-on-Target Execution</a>.</p>
 <h2 id="compatibility">Compatibility<a class="headerlink" href="#compatibility" title="Permanent link">&para;</a></h2>
 <ul>
-<li>Current engine checkpoints contain <code>checkpoint_version: 113</code>; an unknown,
+<li>Current engine checkpoints contain <code>checkpoint_version: 114</code>; an unknown,
   malformed, boolean, older explicit, or newer explicit version is rejected.
-  Explicit versions <code>111</code> and <code>112</code> do not migrate into the current runtime.</li>
+  Explicit version <code>113</code> and all earlier formats do not migrate into the
+  current runtime.</li>
 <li>Current reinforcement wave ordinals and morale-record enum/generation values
   use non-boolean integers. Current wave side, configured arrival time, and full
   typed configuration must agree with the target schedule.</li>
@@ -6004,11 +6103,13 @@ counters reject before context mutation.</p>
   current stable IDs when it arrives, after which its next checkpoint is fully
   current.</li>
 <li>Direct current-format <code>SimulationContext.set_state()</code> calls require the
-  complete <code>morale_runtime</code> envelope and apply exact replacement semantics.
+  complete <code>era_runtime_contract</code> and <code>morale_runtime</code> envelopes and apply
+  exact replacement semantics.
   Legacy <code>morale_states</code>/<code>morale_machine</code> inputs are accepted only through the
   explicit bounded <code>allow_legacy_morale=True</code> path. <code>SimulationEngine</code>
   additionally requires <code>units_by_side</code> for its campaign/roster preflight and
-  exactly one <code>morale_runtime</code> key for version 113.</li>
+  exactly one <code>era_runtime_contract</code> and one <code>morale_runtime</code> key for version
+  114.</li>
 <li>Older unit snapshots without <code>unit_class</code> infer the class from its unique
   subclass field. A snapshot with no subclass field restores as <code>Unit</code>.</li>
 <li>Unknown explicit discriminators fail; they never silently downgrade to
@@ -6061,7 +6162,11 @@ counters reject before context mutation.</p>
     sentinel/lifecycle/resource/quantity-cooldown/target/RNG controls;</li>
 <li>one-runtime transition, rally, melee, cascade, dynamic-registration,
     aggregation, API/campaign exposure, and exact current/legacy morale
-    continuation controls; and</li>
+    continuation controls;</li>
+<li>exact format-114 era-contract topology, resolution/clock agreement,
+    bounded override-free versionless handling, active treatment/repair
+    continuation, and atomic rejection of captured source, horizon, consumer,
+    or contract drift; and</li>
 <li>relevant existing checkpoint, scenario, engine, entity, morale, logistics,
     space, commander, movement, and indirect-fire regression suites.</li>
 </ol>
