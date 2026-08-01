@@ -2661,12 +2661,6 @@
     },
     {
       "classification": "structural_only",
-      "node_id": "tests/unit/test_phase56_performance_logistics.py::TestMaintenanceReadiness::test_campaign_maintenance_delegates",
-      "rationale": "The strongest current oracle is structural; this node cannot support a behavioral capability claim.",
-      "strongest_oracle": "mock-call oracle: assert_called_once"
-    },
-    {
-      "classification": "structural_only",
       "node_id": "tests/unit/test_phase78_structural.py::TestBattleGates::test_bridge_capacity_gate",
       "rationale": "The strongest current oracle is structural; this node cannot support a behavioral capability claim.",
       "strongest_oracle": "declared structural cluster"

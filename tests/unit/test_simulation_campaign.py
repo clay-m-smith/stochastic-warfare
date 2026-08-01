@@ -9,6 +9,7 @@ import copy
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from pathlib import Path
+from types import SimpleNamespace
 from typing import Any
 
 import pytest
@@ -66,6 +67,11 @@ class _MockCtx:
     supply_network_engine: Any = None
     maintenance_engine: Any = None
     config: Any = None
+    era_runtime_contract: Any = field(
+        default_factory=lambda: SimpleNamespace(
+            era=SimpleNamespace(value="modern"),
+        ),
+    )
 
     def __post_init__(self) -> None:
         if self.clock is None:

@@ -12,7 +12,7 @@ from dataclasses import dataclass
 from datetime import datetime
 
 import numpy as np
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 from stochastic_warfare.core.events import EventBus
 from stochastic_warfare.core.logging import get_logger
@@ -147,6 +147,8 @@ class MedicalFacilityLoader:
 class MedicalConfig(BaseModel):
     """Tuning parameters for medical engine."""
 
+    model_config = ConfigDict(frozen=True)
+
     evacuation_speed_mps: float = 5.0
     triage_time_hours: float = 0.083  # ~5 minutes
     treatment_hours_minor: float = 2.0
@@ -196,6 +198,11 @@ class MedicalEngine:
         self._facilities: dict[str, MedicalFacility] = {}
         self._casualties: dict[str, CasualtyRecord] = {}  # keyed by member_id
         self._sim_time: float = 0.0
+
+    @property
+    def config(self) -> MedicalConfig:
+        """Return the immutable runtime configuration."""
+        return self._config
 
     def register_facility(self, facility: MedicalFacility) -> None:
         """Register a medical facility."""

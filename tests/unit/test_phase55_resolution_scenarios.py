@@ -10,6 +10,7 @@ Tests cover:
 from __future__ import annotations
 
 import math
+from datetime import datetime, timedelta, timezone
 from types import SimpleNamespace
 from unittest.mock import MagicMock
 
@@ -73,6 +74,9 @@ class TestResolutionSwitching:
         from stochastic_warfare.simulation.battle import BattleConfig
         from stochastic_warfare.simulation.campaign import CampaignConfig
         from stochastic_warfare.simulation.calibration import CalibrationSchema
+        from stochastic_warfare.core.clock import SimulationClock
+        from stochastic_warfare.core.era import Era
+        from stochastic_warfare.simulation.era_runtime import EraRuntimeContract
 
         # Minimal context mock
         ctx = SimpleNamespace()
@@ -80,17 +84,29 @@ class TestResolutionSwitching:
         rng_mgr.get_stream.return_value = np.random.default_rng(42)
         ctx.rng_manager = rng_mgr
         ctx.event_bus = MagicMock()
-        ctx.clock = MagicMock()
-        ctx.clock.tick_count = 0
-        ctx.clock.elapsed.total_seconds.return_value = 0.0
-        ctx.clock.tick_duration.total_seconds.return_value = 5.0
-        ctx.clock.current_time = None
+        ctx.clock = SimulationClock(
+            datetime(2024, 1, 1, tzinfo=timezone.utc),
+            timedelta(seconds=3600.0),
+        )
         ctx.config = SimpleNamespace(
             tick_resolution=SimpleNamespace(
                 strategic_s=3600, operational_s=300, tactical_s=5,
             ),
             duration_hours=24.0,
+            reinforcements=[],
         )
+        ctx.era_runtime_contract = EraRuntimeContract(
+            selected_registry_id="modern",
+            era=Era.MODERN,
+            strategic_s=3600.0,
+            operational_s=300.0,
+            tactical_s=5.0,
+            treatment_hours_minor=2.0,
+            treatment_hours_serious=8.0,
+            treatment_hours_critical=24.0,
+            repair_time_hours=4.0,
+        )
+        ctx.validate_era_runtime_bindings = lambda: None
         ctx.units_by_side = units_by_side
         ctx.morale_states = {}
         ctx.calibration = CalibrationSchema()
@@ -201,8 +217,6 @@ class TestResolutionSwitching:
         """Active battles → TACTICAL regardless of distance."""
         from stochastic_warfare.simulation.engine import TickResolution
         from stochastic_warfare.simulation.battle import BattleContext
-        from datetime import datetime
-
         units = {
             "blue": [_make_unit("b1", "blue", (0, 0))],
             "red": [_make_unit("r1", "red", (100000, 0))],

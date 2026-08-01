@@ -29,6 +29,7 @@ from stochastic_warfare.entities.base import Unit, UnitStatus
 from stochastic_warfare.entities.unit_classes.ground import GroundUnit, Posture
 from stochastic_warfare.morale.state import MoraleState, _MORALE_EFFECTS
 from stochastic_warfare.simulation.battle import BattleContext, BattleManager
+from tests.conftest import bind_test_era_runtime
 from stochastic_warfare.simulation.victory import VictoryEvaluator
 
 # ---------------------------------------------------------------------------
@@ -546,7 +547,7 @@ class TestBattleManagerIntegration:
             behavior_rules={},
         )
 
-        return SimpleNamespace(
+        ctx = SimpleNamespace(
             config=config,
             clock=clock,
             event_bus=EventBus(),
@@ -565,6 +566,7 @@ class TestBattleManagerIntegration:
             movement_engine=None,
             cbrn_engine=None,
         )
+        return bind_test_era_runtime(ctx)
 
     def test_posture_update_stationary_halted(self):
         """A stationary GroundUnit on non-defensive side becomes HALTED."""

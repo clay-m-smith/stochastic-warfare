@@ -1,8 +1,9 @@
 """Napoleonic courier C2 — physical messengers with interception risk.
 
-Overlays the existing ``MESSENGER`` :class:`CommType`.  Adds interception
-risk, courier pool limits, terrain-dependent travel time, and ADC system.
-``c2_delay_multiplier=8.0`` (no telephone at all).
+Provides interception risk, courier pool limits, terrain-dependent travel
+time, and an ADC system for the existing ``MESSENGER`` :class:`CommType`.
+This is a standalone component; production communications topology does not
+yet route orders through it.
 """
 
 from __future__ import annotations

@@ -57,7 +57,7 @@ from tests.conftest import TS
 def _config() -> CampaignScenarioConfig:
     return CampaignScenarioConfig(
         name="Phase 105 checkpoint test",
-        date="2024-06-15",
+        date="2024-06-15T12:00:00Z",
         duration_hours=24.0,
         terrain=TerrainConfig(width_m=200_000, height_m=200_000),
         sides=[
@@ -133,6 +133,7 @@ def _as_versionless_legacy_context(
 ) -> dict[str, Any]:
     """Translate an idle current context into the bounded legacy envelope."""
     legacy = copy.deepcopy(checkpoint)
+    legacy.pop("era_runtime_contract")
     runtime_state = legacy.pop("morale_runtime")
     assert runtime_state["suspended_archives"] == {}
     records = runtime_state["active_records"]

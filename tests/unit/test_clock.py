@@ -4,7 +4,10 @@ from datetime import datetime, timedelta, timezone
 
 import pytest
 
-from stochastic_warfare.core.clock import SimulationClock
+from stochastic_warfare.core.clock import (
+    SimulationClock,
+    validate_clock_execution_horizon,
+)
 
 
 @pytest.fixture
@@ -91,6 +94,20 @@ class TestVariableTickResolution:
         expected = datetime(1991, 2, 24, 4, 5, 10, tzinfo=timezone.utc)
         assert clock.current_time == expected
         assert clock.tick_count == 2
+
+
+class TestExecutionHorizon:
+    def test_duration_and_final_tick_are_bounded_separately(self) -> None:
+        start = datetime(2024, 1, 1, tzinfo=timezone.utc) + timedelta(
+            microseconds=30,
+        )
+
+        with pytest.raises(ValueError, match="execution horizon"):
+            validate_clock_execution_horizon(
+                start=start,
+                scenario_duration_seconds=251_698_233_599.999_94,
+                maximum_tick_seconds=31e-6,
+            )
 
 
 class TestStateRoundTrip:

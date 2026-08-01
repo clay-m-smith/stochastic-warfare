@@ -165,10 +165,13 @@ scenario YAML or typed config
 
 Preparation reads a YAML source once (or directly copies a typed
 `CampaignScenarioConfig`), applies strict independent variants, and captures
-source, code/worktree, data, and authored-roster identity. `build()` then
+source, code/worktree, data, authored-roster identity, the isolated selected
+`EraConfig`, and one fully effective `EraRuntimeContract`. Era resolution and
+calendar-horizon validation happen before runtime RNG construction. `build()` then
 constructs a fresh session and verifies exact loaded side/cardinality,
 duplicate-free IDs, loadout topology, commander/doctrine assignments, and
-catalog provenance. `RuntimeSession.step()` returns `True` at terminal;
+catalog provenance, while injecting the captured era contract without a later
+registry lookup. `RuntimeSession.step()` returns `True` at terminal;
 `run_to_completion()` and `finalize()` require a public terminal outcome.
 Provenance exposes source/config fingerprints, exact seeds and rosters, code
 and data revisions, catalog/doctrine/loadout fingerprints, and initial plus
@@ -353,7 +356,8 @@ direct route template.
 
 ## Era Framework
 
-The engine supports 5 historical eras, each with different available technologies:
+The engine supports five eras—one modern and four historical—each with
+different available technologies:
 
 | Era | Period | Key Mechanics |
 |-----|--------|---------------|
@@ -368,9 +372,18 @@ Each era is defined by an `EraConfig` that specifies:
 - Seven validated capability gates: EW, space, CBRN, GPS, thermal sights,
   data links, and precision-guided munitions
 - An enforced sensor-type allowlist
-- Declared physics and tick-resolution override metadata (not yet consumed by
-  the production runtime; tracked separately in the remediation backlog)
+- Strict sparse tick overrides for strategic, operational, and tactical
+  cadence, plus medical treatment and maintenance repair durations. One
+  frozen effective `EraRuntimeContract` constructs the clock and domain
+  configs, participates in runtime fingerprints, and persists in format-114
+  checkpoints. Unsupported C2/nuclear keys reject instead of acting as
+  metadata proxies.
 - Era-specific engine extensions
+
+Built-in eras intentionally omit the former unsourced physics numbers. This
+runtime contract does not imply automatic casualty admission, maintenance
+registration/repair initiation, communications equipment topology, or
+scheduled nuclear employment; those remain explicit remediation items.
 
 Era data lives in `data/eras/{era_name}/` with the same directory structure as modern data.
 
@@ -511,16 +524,18 @@ This enables:
 - **Branching** -- checkpoint, run two different decisions, compare outcomes
 - **Debugging** -- reproduce any simulation state from a checkpoint + seed
 
-The current `SimulationEngine` checkpoint schema is version 113. It includes
-exact force/loadout/logistics/time-on-target state plus one `morale_runtime`
-envelope containing immutable active records and suspended aggregate archives;
-there is no current-format context map or state-machine copy. `RNGManager`
-alone persists the MORALE stream. Commander and OODA assignments, bounded
-movement diagnostics, and typed Space ISR report queues, delivery receipts,
-and owner/target IMINT associations remain included. Restore stages and
-validates topology, identity, chronology, mutable resources, statuses, routes,
-and relevant RNG state against a fresh compatible runtime before committing any
-mutation. Versions 111, 112, and every other non-current versioned engine
-checkpoint reject. Bounded versionless compatibility remains subject to the
-stricter subsystem rules in the
+The current `SimulationEngine` checkpoint schema is version 114. In addition
+to exact force/loadout/logistics/time-on-target state and the single
+`morale_runtime` envelope, it stores one fully effective
+`era_runtime_contract`. The current resolution, clock duration, selected
+registry identity, captured scenario cadence/horizon inputs, and frozen
+medical/maintenance consumers must agree before mutation; format 113 and every
+other explicit non-current version reject. There is no current-format morale
+context map or state-machine copy, and `RNGManager` alone persists the MORALE
+stream. Commander/OODA assignments, bounded movement diagnostics, and typed
+Space ISR queues, receipts, and owner/target associations remain included.
+Restore stages and validates topology, identity, chronology, mutable
+resources, statuses, routes, and relevant RNG state against a fresh compatible
+runtime before committing any mutation. Bounded versionless compatibility
+remains subject to the stricter subsystem rules in the
 [checkpoint state contract](../specs/checkpoint-state.md).

@@ -4,6 +4,17 @@
 **Tests**: 182 (87 era config/data + 67 engine extensions + 28 validation)
 **Total**: 5,426 (5,244 prior + 182 new)
 
+> **Historical supersession (Phase 114 completion, 2026-08-01):** This devlog
+> preserves the Phase 21 implementation record, but its claims that
+> `c2_delay_multiplier=5.0` affected C2 and that
+> `cbrn_nuclear_enabled=False` structurally disabled nuclear use were not
+> production behavior. The runtime had no loaded, unit-bound communications
+> topology and no scheduled CBRN/nuclear action consumer. Phase 114 removes
+> those keys from shipped presets and rejects them explicitly; production C2
+> and scheduled CBRN action remain REM-036/Phase 123 and REM-037/Phase 124.
+> WW1's CBRN capability gate and chemical-engine/data history are separate
+> claims. Phase 114 is complete and REM-018 is closed.
+
 ## Summary
 
 WW1 era config + data package (~45 YAML files) + 3 engine extensions (trench systems, creeping barrage, gas warfare) + 2 validation scenarios (Somme Day 1, Cambrai). Follows Phase 20 era framework pattern exactly.

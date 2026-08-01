@@ -52,7 +52,7 @@ GOOSE_GREEN_SCENARIO = (
 COIN_SCENARIO = DATA_DIR / "scenarios" / "coin_campaign" / "scenario.yaml"
 SEED = 113
 MAX_TICKS = 1_000_000
-BASE_TIMESTAMP = datetime(2024, 1, 1, tzinfo=timezone.utc)
+BASE_TIMESTAMP = datetime(2024, 6, 15, 6, 0, tzinfo=timezone.utc)
 MELEE_SEED = 1
 MELEE_MAX_TICKS = 2
 MELEE_BLUE_ID = "blue_swiss_pike_block_0000"

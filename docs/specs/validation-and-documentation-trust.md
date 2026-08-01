@@ -1510,8 +1510,13 @@ Phase 112 is complete only when:
 ## Non-goals and accepted limitations
 
 - REM-016 aggregation subtype/loadout reconstruction remains queued.
-- REM-018 era override execution remains assigned to Phase 114. REM-019 morale
-  ownership was closed by the accepted Phase 113 production contract.
+- REM-018 era override execution is closed by completed Phase 114. Its strict
+  typed declarations, runtime wiring, declared/omitted behavioral controls,
+  format-114 continuation, API fingerprint exposure, broad production
+  evidence, postmortem, and explicit status transition all pass. Its timing
+  result remains contention-qualified and does not claim an uncontended pass.
+  REM-019 morale ownership was closed by the accepted Phase 113 production
+  contract.
 - REM-020 and REM-021 logistics authority remain explicit follow-ups.
 - REM-028 owns the newly confirmed weapon-standoff versus detection/visibility
   mismatch and is assigned to planned Phase 115. Phase 112 records it without

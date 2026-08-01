@@ -361,6 +361,23 @@ Same as MVP: every phase produces runnable, testable code. Validation via matplo
 
 **Status**: Complete. 137 tests across 4 sub-phases. Total: 5,244 tests passing (up from 5,107). 4 new source files + 3 modified existing files + ~60 YAML data files. No new dependencies. All changes backward-compatible — `era: modern` is default and matches all existing behavior. Devlog: [`devlog/phase-20.md`](devlog/phase-20.md).
 
+> **Phase 114 supersession (complete, 2026-08-01):** The Phase 20-23
+> sections below remain the historical record of what those phases delivered
+> and claimed. Fresh production tracing proved that their arbitrary
+> `physics_overrides` and `tick_resolution_overrides` metadata did not
+> construct the affected runtime consumers. Phase 114 now accepts only strict
+> treatment, repair, and strategic/operational/tactical cadence declarations,
+> resolved through one runtime-owned contract; shipped era presets omit the
+> old unsourced values. The historical `c2_delay_multiplier` and
+> `cbrn_nuclear_enabled` keys are removed and reject explicitly because a
+> production communications topology and scheduled CBRN/nuclear actions do
+> not yet exist (REM-036/Phase 123 and REM-037/Phase 124). Capability gates,
+> sensor policy, and data-catalog claims are separate and remain governed by
+> their current production evidence. The owner accepted Phase 114's timing
+> evidence only with an explicit contention qualification and deferred clean
+> confirmation until all cores are free. Phase 114 is complete and REM-018 is
+> closed.
+
 ### 20a: Era Framework & Unit Data
 - `core/era.py` (new) — Era configuration system: `EraConfig` defining which simulation subsystems are active/inactive per era. Era enum (MODERN, WW2, WW1, NAPOLEONIC, ANCIENT_MEDIEVAL). Module disable list per era (e.g., ANCIENT_MEDIEVAL disables `detection/sensors.py` radar/thermal/sonar, `c2/communications.py` radio/data link, `ew/*`, `space/*`). Era-specific physics constants (Mach-dependent drag tables per era, propellant types, armor materials). Era-specific `TickResolution` defaults (Napoleonic tactical ticks may be longer than modern). Scenario YAML `era: ww2` field selects era config. `era: modern` is default and matches all existing behavior.
 - `simulation/scenario.py` (modified) — Added `era` field, `era_config` loading, era-aware scenario loading, WW2 engine fields wired into `SimulationContext`.

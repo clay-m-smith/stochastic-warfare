@@ -1820,6 +1820,13 @@ class RuntimeLoadoutBuilder:
         return self._reachable_unit_types
 
     @property
+    def era_config(self) -> EraConfig:
+        """Return an isolated copy of the era gates frozen at preflight."""
+        return EraConfig.model_validate(
+            self._era_config.model_dump(mode="python"),
+        )
+
+    @property
     def registry(self) -> EquipmentMappingRegistry:
         return self._registry
 

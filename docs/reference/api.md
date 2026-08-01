@@ -174,12 +174,16 @@ This is the authoritative construction boundary for production consumers.
 `prepare()` reads one YAML source once; `prepare_config()` accepts an already
 typed `CampaignScenarioConfig` without temporary serialization. Both apply
 strict independent `AnalysisVariant` values and return a `PreparedScenario`.
+Preparation resolves and captures the selected registry entry and frozen
+effective `EraRuntimeContract` before runtime RNG construction. Repeated builds
+use that captured identity even if a custom registry entry is later replaced;
+a new preparation observes the replacement.
 
 | Method | Returns | Contract |
 |---|---|---|
-| `SimulationRuntimeFactory.prepare(path, data_root, variants)` | `PreparedScenario` | Parse one YAML source and capture source/code/data identity |
-| `SimulationRuntimeFactory.prepare_config(source_config, data_root, variants, source_label=...)` | `PreparedScenario` | Prepare a typed source directly |
-| `PreparedScenario.build(variant, seed, max_ticks, ..., record_events=False)` | `RuntimeSession` | Eagerly validate exact sides, roster, loadouts, profiles, doctrine, and provenance; build a fresh production engine |
+| `SimulationRuntimeFactory.prepare(path, data_root, variants)` | `PreparedScenario` | Parse one YAML source and capture source/code/data plus effective era identity |
+| `SimulationRuntimeFactory.prepare_config(source_config, data_root, variants, source_label=...)` | `PreparedScenario` | Prepare a typed source directly and resolve its era contract |
+| `PreparedScenario.build(variant, seed, max_ticks, ..., record_events=False)` | `RuntimeSession` | Eagerly validate exact sides, roster, loadouts, profiles, doctrine, captured era contract, and provenance; build a fresh production engine |
 | `RuntimeSession.run_to_completion()` | `SimulationRunResult` | Run until a public terminal result or reject |
 | `RuntimeSession.step()` | `bool` | Advance one tick; `True` means the session is terminal and `False` means it can continue |
 | `RuntimeSession.finalize()` | `SimulationRunResult` | Return the result only after `step()` reports terminal |
@@ -205,9 +209,15 @@ result = session.run_to_completion()
 
 The boundary rejects an empty authored side, duplicate variant or loaded unit
 ID, changed source/data/worktree identity, roster cardinality drift, and
-incomplete or semantically incompatible runtime loadouts. It also constructs
-the production victory evaluator and optional recorder, avoiding private
-consumer-specific construction.
+incomplete or semantically incompatible runtime loadouts. It also rejects an
+unknown era when preparing, ambiguous uniform-plus-era cadence, an
+unexecutable calendar horizon, and any mismatch among the captured scenario,
+era config, effective contract, or source identities before runtime
+construction. Replacing a registry entry after preparation neither invalidates
+nor changes an existing `PreparedScenario`; its builds use the captured
+isolated values. A new preparation resolves and captures the replacement. The
+boundary also constructs the production victory evaluator and optional
+recorder, avoiding private consumer-specific construction.
 
 #### Code-revision provenance
 
@@ -253,9 +263,27 @@ consumers that claim comparable run/analysis evidence use
 
 **Methods:**
 
-| Method | Parameters | Returns | Description |
-|--------|-----------|---------|-------------|
-| `load()` | `scenario_path: Path, seed: int = 42, *, calibration_overrides: Mapping \| CalibrationSchema \| None = None, scenario_config: CampaignScenarioConfig \| None = None` | `SimulationContext` | Parse or deep-copy one validated config, load all definitions, wire all engines, return context |
+```python
+ScenarioLoader.load(
+    scenario_path: Path,
+    seed: int = 42,
+    *,
+    calibration_overrides: Mapping[str, Any] | CalibrationSchema | None = None,
+    scenario_config: CampaignScenarioConfig | None = None,
+    doctrine_side_assignments: tuple[DoctrineSideAssignment, ...] | None = None,
+    era_config: EraConfig | None = None,
+    era_runtime_contract: EraRuntimeContract | None = None,
+) -> SimulationContext
+```
+
+`scenario_config` and `calibration_overrides` are mutually exclusive.
+`era_config` and `era_runtime_contract` are a paired boundary: callers must
+supply both or neither. A direct load omits both and resolves the registered
+era plus its effective contract before constructing `RNGManager`. A prepared
+factory build supplies both captured values; the loader revalidates their exact
+agreement with the captured scenario without consulting the live registry.
+`doctrine_side_assignments`, when supplied, is normalized to a tuple and must
+contain only typed `DoctrineSideAssignment` values for known scenario sides.
 
 **Example:**
 
@@ -270,6 +298,9 @@ ctx = loader.load(Path("data/scenarios/73_easting/scenario.yaml"), seed=42)
 The loader automatically:
 
 - Validates the YAML against `CampaignScenarioConfig`
+- Resolves the selected registry entry and effective contract at this lower
+  boundary when both era objects are omitted, or verifies the paired captured
+  `EraConfig` and `EraRuntimeContract` supplied by `PreparedScenario`
 - Validates and merges a sparse calibration overlay without modifying YAML, or
   accepts a mutually exclusive prevalidated effective config
 - Loads unit, weapon, ammo, sensor, and signature definitions
@@ -284,6 +315,8 @@ The loader automatically:
   validated effective era; contradictory enabled blocks fail loading
 - Enforces the effective era's GPS, thermal-sight, data-link, PGM, and sensor
   allowlist gates while building the runtime
+- Constructs the clock, engine cadence, medical config, and maintenance config
+  from the same strict effective era contract
 
 ---
 
@@ -900,17 +933,18 @@ mutating the target. See the
 [checkpoint state contract](../specs/checkpoint-state.md) for the canonical
 schema and bounded legacy-migration rules.
 
-The current engine checkpoint schema is version 113. In addition to force,
+The current engine checkpoint schema is version 114. In addition to force,
 loadout, logistics, space/ASAT, and time-on-target state, it preserves one
-`morale_runtime` envelope with immutable active records and suspended aggregate
-archives. `SimulationContext.morale_states` remains a stable read-only
+`morale_runtime` envelope and one fully effective `era_runtime_contract`.
+`SimulationContext.morale_states` remains a stable read-only
 `Mapping[str, MoraleState]` for runtime and frame consumers, but it is not a
 second checkpoint store; `RNGManager` alone persists the MORALE generator.
 Commander/OODA assignments, bounded movement diagnostics, and typed Space ISR
 pending reports, delivery receipts, and owner/target IMINT associations remain
 included. Current-format restore is atomic and validates exact topology,
-status/route consistency, chronology, and owner/RNG bindings. Explicit versions
-111 and 112 and every other non-current version reject.
+status/route consistency, chronology, owner/RNG bindings, selected era
+identity, and clock/current-resolution agreement. Explicit version 113 and
+every other non-current version reject.
 
 Typed Space ISR checkpoint equivalence is proven under an explicit empty
 ordinary-contact topology. Nonempty ordinary `SideWorldView.contacts` are

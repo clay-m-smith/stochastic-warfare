@@ -625,6 +625,7 @@ stochastic-warfare/
         ├── battle.py                 # Tactical battle resolution manager
         ├── scenario.py               # Scenario loading, setup, initialization; SimulationContext includes stratagem_engine, iads_engine, ato_engine [Phase 53]
         ├── runtime.py                # Authoritative prepared-scenario/runtime-session boundary and provenance [Phase 112]
+        ├── era_runtime.py            # Frozen effective cadence/treatment/repair contract and executable-horizon sources [Phase 114]
         ├── force_builder.py          # Typed deterministic initial-force construction [Phase 112]
         ├── movement_diagnostics.py   # Ordered observational movement reasons and checkpoint state [Phase 112]
         ├── equipment_mappings.py     # Ordered typed equipment-name registry and reviewed data decisions [Phase 109]
@@ -656,7 +657,10 @@ stochastic-warfare/
 - **Era framework** (`era.py`): Era enum
   (MODERN/WW2/WW1/NAPOLEONIC/ANCIENT_MEDIEVAL), strict isolated
   `EraConfig` registry, seven enforced capability gates, sensor allowlists, and
-  declared-but-not-yet-consumed physics/tick override metadata [Phases 20, 107]
+  strict sparse cadence/treatment/repair declarations. The simulation-layer
+  `EraRuntimeContract` resolves effective values before RNG construction and
+  owns clock/domain configuration plus format-114 persistence [Phases 20, 107,
+  114]
 
 **Depends on**: Nothing (leaf dependency)
 
@@ -1045,11 +1049,16 @@ the production scenario loop.
   continuation [Phases 107, 112, 113]
 - **Runtime construction**: `SimulationRuntimeFactory.prepare()` and
   `prepare_config()` produce immutable typed variants; `PreparedScenario.build()`
-  verifies exact side/roster/loadout/assignment topology and returns a fresh
-  `RuntimeSession` for `step()`, `run_to_completion()`, or `finalize()`.
-  Source/config, code/data/catalog/doctrine/loadout, roster, seed, and
-  initial/arriving assignment provenance stays with every analysis run
-  [Phase 112].
+  verifies exact side/roster/loadout/assignment topology and the isolated
+  selected era/effective contract, then returns a fresh `RuntimeSession` for
+  `step()`, `run_to_completion()`, or `finalize()`. Source/config,
+  code/data/catalog/doctrine/loadout/era, roster, seed, and initial/arriving
+  assignment provenance stays with every analysis run [Phases 112, 114].
+- **Era runtime**: one frozen `EraRuntimeContract` materializes sparse
+  strategic/operational/tactical cadence and medical/maintenance overrides
+  before RNG, clock, or engine construction. Clock, engine intervals, medical,
+  maintenance, API cadence, fingerprints, and format-114 checkpoints consume
+  that same boundary; unsupported C2/nuclear metadata rejects [Phase 114].
 - **Initial force construction**: `RuntimeForceBuilder` validates exact typed
   unit groups, per-instance overrides, deterministic IDs/domains, cardinality,
   and transactional unit-RNG behavior before publishing the roster

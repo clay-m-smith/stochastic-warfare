@@ -9,6 +9,109 @@ from __future__ import annotations
 
 import math
 from datetime import datetime, timedelta, timezone
+from decimal import ROUND_CEILING, Decimal
+from typing import Any
+
+
+_DATETIME_DOMAIN = datetime.max - datetime.min
+
+
+def normalize_clock_duration_seconds(
+    value: Any,
+    *,
+    field_name: str,
+) -> float:
+    """Return a positive duration exactly representable by ``timedelta``.
+
+    Simulation cadence is stored by :class:`datetime.timedelta`, whose
+    resolution and range are narrower than the positive finite IEEE-754
+    floats accepted by ordinary numeric schemas.  Rejecting quantization and
+    overflow here keeps authored, effective, persisted, and executed cadence
+    identical.
+    """
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        raise ValueError(
+            f"{field_name} must be a finite positive clock duration",
+        )
+    try:
+        normalized = float(value)
+    except (OverflowError, TypeError, ValueError) as exc:
+        raise ValueError(
+            f"{field_name} must be a finite positive clock duration",
+        ) from exc
+    if not math.isfinite(normalized) or normalized <= 0.0:
+        raise ValueError(
+            f"{field_name} must be a finite positive clock duration",
+        )
+    try:
+        duration = timedelta(seconds=normalized)
+    except OverflowError as exc:
+        raise ValueError(
+            f"{field_name} exceeds the simulation clock range",
+        ) from exc
+    represented = duration.total_seconds()
+    if represented != normalized:
+        raise ValueError(
+            f"{field_name} must be exactly representable at microsecond "
+            "simulation-clock precision",
+        )
+    if duration > _DATETIME_DOMAIN:
+        raise ValueError(
+            f"{field_name} exceeds the simulation calendar range",
+        )
+    return normalized
+
+
+def clock_execution_horizon_end(
+    *,
+    start: datetime,
+    scenario_duration_seconds: float,
+    maximum_tick_seconds: float,
+) -> datetime:
+    """Return the validated final executable calendar endpoint."""
+    if not isinstance(start, datetime) or start.tzinfo is None:
+        raise ValueError("start must be a timezone-aware datetime")
+    if (
+        isinstance(scenario_duration_seconds, bool)
+        or not isinstance(scenario_duration_seconds, (int, float))
+        or not math.isfinite(float(scenario_duration_seconds))
+        or float(scenario_duration_seconds) <= 0.0
+    ):
+        raise ValueError(
+            "scenario_duration_seconds must be finite and positive",
+        )
+    maximum_tick = normalize_clock_duration_seconds(
+        maximum_tick_seconds,
+        field_name="maximum_tick_seconds",
+    )
+    try:
+        duration_microseconds = int(
+            (
+                Decimal.from_float(float(scenario_duration_seconds))
+                * Decimal(1_000_000)
+            ).to_integral_value(rounding=ROUND_CEILING),
+        )
+        duration = timedelta(microseconds=duration_microseconds)
+        tick = timedelta(seconds=maximum_tick)
+        return start.astimezone(timezone.utc) + duration + tick
+    except OverflowError as exc:
+        raise ValueError(
+            "scenario clock execution horizon exceeds the calendar range",
+        ) from exc
+
+
+def validate_clock_execution_horizon(
+    *,
+    start: datetime,
+    scenario_duration_seconds: float,
+    maximum_tick_seconds: float,
+) -> None:
+    """Reject a scenario whose final possible interval cannot be dated."""
+    clock_execution_horizon_end(
+        start=start,
+        scenario_duration_seconds=scenario_duration_seconds,
+        maximum_tick_seconds=maximum_tick_seconds,
+    )
 
 
 class SimulationClock:
@@ -25,6 +128,12 @@ class SimulationClock:
     def __init__(self, start: datetime, tick_duration: timedelta) -> None:
         if start.tzinfo is None:
             raise ValueError("start must be timezone-aware (UTC)")
+        if not isinstance(tick_duration, timedelta):
+            raise TypeError("tick_duration must be a timedelta")
+        normalize_clock_duration_seconds(
+            tick_duration.total_seconds(),
+            field_name="tick_duration",
+        )
         self._start = start.astimezone(timezone.utc)
         self._current = self._start
         self._tick_duration = tick_duration
@@ -38,6 +147,11 @@ class SimulationClock:
     def current_time(self) -> datetime:
         """Current simulation time (UTC)."""
         return self._current
+
+    @property
+    def start_time(self) -> datetime:
+        """Scenario start time (UTC)."""
+        return self._start
 
     @property
     def elapsed(self) -> timedelta:
@@ -89,6 +203,12 @@ class SimulationClock:
 
     def set_tick_duration(self, duration: timedelta) -> None:
         """Change tick resolution (e.g. switching from tactical to strategic)."""
+        if not isinstance(duration, timedelta):
+            raise TypeError("duration must be a timedelta")
+        normalize_clock_duration_seconds(
+            duration.total_seconds(),
+            field_name="duration",
+        )
         self._tick_duration = duration
 
     @property
@@ -108,10 +228,43 @@ class SimulationClock:
         }
 
     def set_state(self, state: dict) -> None:
-        self._start = datetime.fromisoformat(state["start"])
-        self._current = datetime.fromisoformat(state["current"])
-        self._tick_duration = timedelta(seconds=state["tick_duration_seconds"])
-        self._tick_count = state["tick_count"]
+        raw_start = state["start"]
+        raw_current = state["current"]
+        if type(raw_start) is not str or type(raw_current) is not str:
+            raise ValueError("clock timestamps must be strict ISO strings")
+        try:
+            start = datetime.fromisoformat(raw_start)
+            current = datetime.fromisoformat(raw_current)
+        except ValueError as exc:
+            raise ValueError("clock timestamps must be valid ISO datetimes") from exc
+        if (
+            start.tzinfo is None
+            or start.utcoffset() is None
+            or current.tzinfo is None
+            or current.utcoffset() is None
+        ):
+            raise ValueError("clock timestamps must be timezone-aware")
+        start = start.astimezone(timezone.utc)
+        current = current.astimezone(timezone.utc)
+        if current < start:
+            raise ValueError("clock current time cannot precede its start")
+
+        tick_duration_seconds = normalize_clock_duration_seconds(
+            state["tick_duration_seconds"],
+            field_name="tick_duration_seconds",
+        )
+        tick_count = state["tick_count"]
+        if (
+            isinstance(tick_count, bool)
+            or not isinstance(tick_count, int)
+            or tick_count < 0
+        ):
+            raise ValueError("clock tick_count must be a non-negative integer")
+
+        self._start = start
+        self._current = current
+        self._tick_duration = timedelta(seconds=tick_duration_seconds)
+        self._tick_count = tick_count
 
 
 # ----------------------------------------------------------------------

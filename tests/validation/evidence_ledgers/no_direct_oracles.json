@@ -74,6 +74,48 @@
       "strongest_oracle": "called helper: _assert_atomic_rejection"
     },
     {
+      "classification": "helper_assertion",
+      "node_id": "tests/integration/test_phase114_checkpoint_and_transitions.py::test_format_113_is_explicitly_rejected_atomically",
+      "rationale": "A traced local helper asserts the exact rejection and byte-identical checkpoint after the failed restore.",
+      "strongest_oracle": "called helper: _assert_atomic_rejection"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/integration/test_phase114_checkpoint_and_transitions.py::test_format_114_rejects_invalid_contract_atomically[extra]",
+      "rationale": "A traced local helper asserts the exact rejection and byte-identical checkpoint after the failed restore.",
+      "strongest_oracle": "called helper: _assert_atomic_rejection"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/integration/test_phase114_checkpoint_and_transitions.py::test_format_114_rejects_invalid_contract_atomically[malformed]",
+      "rationale": "A traced local helper asserts the exact rejection and byte-identical checkpoint after the failed restore.",
+      "strongest_oracle": "called helper: _assert_atomic_rejection"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/integration/test_phase114_checkpoint_and_transitions.py::test_format_114_rejects_invalid_contract_atomically[mismatch]",
+      "rationale": "A traced local helper asserts the exact rejection and byte-identical checkpoint after the failed restore.",
+      "strongest_oracle": "called helper: _assert_atomic_rejection"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/integration/test_phase114_checkpoint_and_transitions.py::test_format_114_rejects_invalid_contract_atomically[missing]",
+      "rationale": "A traced local helper asserts the exact rejection and byte-identical checkpoint after the failed restore.",
+      "strongest_oracle": "called helper: _assert_atomic_rejection"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/integration/test_phase114_checkpoint_and_transitions.py::test_resolution_clock_mismatch_is_rejected_atomically[clock-duration]",
+      "rationale": "A traced local helper asserts the exact rejection and byte-identical checkpoint after the failed restore.",
+      "strongest_oracle": "called helper: _assert_atomic_rejection"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/integration/test_phase114_checkpoint_and_transitions.py::test_resolution_clock_mismatch_is_rejected_atomically[resolution]",
+      "rationale": "A traced local helper asserts the exact rejection and byte-identical checkpoint after the failed restore.",
+      "strongest_oracle": "called helper: _assert_atomic_rejection"
+    },
+    {
       "classification": "invariant_only",
       "node_id": "tests/unit/simulation/test_battle_static_methods.py::TestApplyDeferredDamage::test_empty_noop",
       "rationale": "This node establishes only its named non-behavioral invariant until an observable postcondition and negative control are added.",
@@ -180,12 +222,6 @@
       "node_id": "tests/unit/test_phase54_era_wiring.py::TestWW2EngineWiring::test_strategic_bombing_none_does_not_raise_structural_diagnostic",
       "rationale": "The exact @pytest.mark.structural marker and absence of a direct assertion identify this as a reviewed compatibility diagnostic; it cannot support a behavioral capability or closure claim.",
       "strongest_oracle": "explicit structural marker with successful completion but no direct assertion"
-    },
-    {
-      "classification": "invariant_only",
-      "node_id": "tests/unit/test_phase56_performance_logistics.py::TestMaintenanceReadiness::test_no_maintenance_engine_no_error",
-      "rationale": "This node establishes only its named non-behavioral invariant until an observable postcondition and negative control are added.",
-      "strongest_oracle": "successful completion without a direct oracle"
     },
     {
       "classification": "helper_assertion",

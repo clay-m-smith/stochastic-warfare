@@ -2,8 +2,8 @@
 
 ## Status
 
-Phase 105 contract, verified through the completed Phase 113 extension on
-2026-08-01.
+Verified Phase 105 contract, extended by the completed Phase 114 era-runtime
+contract and format-114 checkpoint boundary.
 
 ## Purpose
 
@@ -16,12 +16,12 @@ validated effective scenario configuration and repository/data-catalog
 revision. Checkpoint restore replaces mutable state; it does not rebuild engine
 topology or reinterpret a different scenario.
 
-`SimulationEngine` writes checkpoint format version `113`. Any explicit version
-other than `113`, including `112`, is rejected before runtime mutation. An
+`SimulationEngine` writes checkpoint format version `114`. Any explicit version
+other than `114`, including `113`, is rejected before runtime mutation. An
 absent version selects the bounded legacy-migration path described below; an
 explicitly present `null` value is malformed, not legacy.
 
-For version `113`, top-level engine keys and context-state keys must exactly
+For version `114`, top-level engine keys and context-state keys must exactly
 match the compatible target runtime. Missing or extra keys fail before
 mutation. Serialized scenario and reinforcement configurations use type-aware
 JSON equality, so booleans cannot masquerade as integers and integers cannot
@@ -76,6 +76,30 @@ loadout state is committed.
 Stable-object reuse is required because weapon, sensor, and subsystem instances
 can hold references to a unit's equipment.
 
+## Era runtime and clock cadence
+
+Current context state contains exactly one `era_runtime_contract` with the
+selected registry ID, era label, effective strategic/operational/tactical
+durations, all three medical treatment durations, and maintenance repair
+duration. It is behavior, not a copy of the sparse metadata that produced it.
+
+The target runtime separately captures the exact scenario-side cadence source
+(`era`, all three authored tick values, and optional uniform shorthand), the
+isolated selected `EraConfig`, and the scenario start/duration horizon. Before
+mutation, restore strictly parses the checkpoint contract and requires exact
+agreement with those captured identities and the frozen medical, maintenance,
+and loadout consumers. The saved engine resolution must map to the saved clock
+duration under that same contract, the saved clock start must equal the
+scenario start, and current time cannot exceed the executable horizon.
+
+Missing, extra, malformed, type-aliased, or different era contract data fails
+atomically. A versionless checkpoint cannot contain the format-114 key and may
+restore only into a target whose captured era declares no physics or cadence
+override. It cannot infer historical behavior from a current registry entry.
+Active non-default medical treatment and maintenance repair state remains
+owned by those engines and must continue at the exact contract-defined
+endpoint after fresh or in-place restore.
+
 ## Morale state
 
 A non-empty production runtime has exactly one semantic morale owner:
@@ -87,7 +111,7 @@ but owns no current unit state.
 Current context state contains exactly one `morale_runtime` key. Its value is a
 strict envelope with exact `active_records` and `suspended_archives` keys, or
 `null` only for a deliberately minimal context whose roster, active routes, and
-aggregation topology are all empty. Version 113 contains no separate
+aggregation topology are all empty. Current format 114 contains no separate
 `morale_states` or `morale_machine` current-state copy.
 
 Each active record preserves typed current state, optional finite non-negative
@@ -275,9 +299,10 @@ The detailed contract is
 
 ## Compatibility
 
-- Current engine checkpoints contain `checkpoint_version: 113`; an unknown,
+- Current engine checkpoints contain `checkpoint_version: 114`; an unknown,
   malformed, boolean, older explicit, or newer explicit version is rejected.
-  Explicit versions `111` and `112` do not migrate into the current runtime.
+  Explicit version `113` and all earlier formats do not migrate into the
+  current runtime.
 - Current reinforcement wave ordinals and morale-record enum/generation values
   use non-boolean integers. Current wave side, configured arrival time, and full
   typed configuration must agree with the target schedule.
@@ -309,11 +334,13 @@ The detailed contract is
   current stable IDs when it arrives, after which its next checkpoint is fully
   current.
 - Direct current-format `SimulationContext.set_state()` calls require the
-  complete `morale_runtime` envelope and apply exact replacement semantics.
+  complete `era_runtime_contract` and `morale_runtime` envelopes and apply
+  exact replacement semantics.
   Legacy `morale_states`/`morale_machine` inputs are accepted only through the
   explicit bounded `allow_legacy_morale=True` path. `SimulationEngine`
   additionally requires `units_by_side` for its campaign/roster preflight and
-  exactly one `morale_runtime` key for version 113.
+  exactly one `era_runtime_contract` and one `morale_runtime` key for version
+  114.
 - Older unit snapshots without `unit_class` infer the class from its unique
   subclass field. A snapshot with no subclass field restores as `Unit`.
 - Unknown explicit discriminators fail; they never silently downgrade to
@@ -367,8 +394,12 @@ Completion requires:
     sentinel/lifecycle/resource/quantity-cooldown/target/RNG controls;
 18. one-runtime transition, rally, melee, cascade, dynamic-registration,
     aggregation, API/campaign exposure, and exact current/legacy morale
-    continuation controls; and
-19. relevant existing checkpoint, scenario, engine, entity, morale, logistics,
+    continuation controls;
+19. exact format-114 era-contract topology, resolution/clock agreement,
+    bounded override-free versionless handling, active treatment/repair
+    continuation, and atomic rejection of captured source, horizon, consumer,
+    or contract drift; and
+20. relevant existing checkpoint, scenario, engine, entity, morale, logistics,
     space, commander, movement, and indirect-fire regression suites.
 
 ## Tracked boundaries

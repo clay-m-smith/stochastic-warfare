@@ -58,7 +58,7 @@ def _minimal_config(**overrides: Any) -> CampaignScenarioConfig:
     """Create a minimal valid CampaignScenarioConfig."""
     defaults = {
         "name": "Test",
-        "date": "2024-06-15",
+        "date": "2024-06-15T12:00:00Z",
         "duration_hours": 1.0,
         "terrain": TerrainConfig(width_m=5000, height_m=5000),
         "sides": [

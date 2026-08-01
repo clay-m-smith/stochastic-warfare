@@ -92,6 +92,9 @@ def _make_ctx(era: str = "modern", **kwargs):
     """Build a minimal SimulationContext-like namespace."""
     ctx = SimpleNamespace(
         config=_make_config(era),
+        era_runtime_contract=SimpleNamespace(
+            era=SimpleNamespace(value=era),
+        ),
         clock=_make_clock(),
         rng_manager=_make_rng_manager(),
         event_bus=EventBus(),
@@ -315,6 +318,7 @@ class TestWW1EngineWiring:
 
         engine = SimulationEngine.__new__(SimulationEngine)
         engine._ctx = ctx
+        engine._campaign = SimpleNamespace(maintenance_enabled=False)
         engine._strict_mode = False
 
         engine._update_environment(5.0)
@@ -330,6 +334,7 @@ class TestWW1EngineWiring:
 
         engine = SimulationEngine.__new__(SimulationEngine)
         engine._ctx = ctx
+        engine._campaign = SimpleNamespace(maintenance_enabled=False)
         engine._strict_mode = False
 
         engine._update_environment(5.0)
@@ -346,6 +351,7 @@ class TestWW1EngineWiring:
 
         engine = SimulationEngine.__new__(SimulationEngine)
         engine._ctx = ctx
+        engine._campaign = SimpleNamespace(maintenance_enabled=False)
         engine._strict_mode = False
 
         engine._update_environment(5.0)
@@ -362,6 +368,7 @@ class TestWW1EngineWiring:
 
         engine = SimulationEngine.__new__(SimulationEngine)
         engine._ctx = ctx
+        engine._campaign = SimpleNamespace(maintenance_enabled=False)
         engine._strict_mode = False
 
         engine._update_environment(5.0)  # Should not raise
@@ -463,6 +470,7 @@ class TestWW1EngineWiring:
 
         engine = SimulationEngine.__new__(SimulationEngine)
         engine._ctx = ctx
+        engine._campaign = SimpleNamespace(maintenance_enabled=False)
         engine._strict_mode = False
 
         engine._update_environment(5.0)  # Should not raise
@@ -491,6 +499,7 @@ class TestNapoleonicEngineWiring:
 
         engine = SimulationEngine.__new__(SimulationEngine)
         engine._ctx = ctx
+        engine._campaign = SimpleNamespace(maintenance_enabled=False)
         engine._strict_mode = False
 
         engine._update_environment(5.0)
@@ -509,6 +518,7 @@ class TestNapoleonicEngineWiring:
 
         engine = SimulationEngine.__new__(SimulationEngine)
         engine._ctx = ctx
+        engine._campaign = SimpleNamespace(maintenance_enabled=False)
         engine._strict_mode = False
 
         engine._update_environment(5.0)
@@ -526,6 +536,7 @@ class TestNapoleonicEngineWiring:
 
         engine = SimulationEngine.__new__(SimulationEngine)
         engine._ctx = ctx
+        engine._campaign = SimpleNamespace(maintenance_enabled=False)
         engine._strict_mode = False
 
         engine._update_environment(5.0)
@@ -602,6 +613,7 @@ class TestNapoleonicEngineWiring:
 
         engine = SimulationEngine.__new__(SimulationEngine)
         engine._ctx = ctx
+        engine._campaign = SimpleNamespace(maintenance_enabled=False)
         engine._strict_mode = False
         engine._update_environment(5.0)
 
@@ -628,6 +640,7 @@ class TestAncientEngineWiring:
 
         engine = SimulationEngine.__new__(SimulationEngine)
         engine._ctx = ctx
+        engine._campaign = SimpleNamespace(maintenance_enabled=False)
         engine._strict_mode = False
 
         engine._update_environment(5.0)
@@ -643,6 +656,7 @@ class TestAncientEngineWiring:
 
         engine = SimulationEngine.__new__(SimulationEngine)
         engine._ctx = ctx
+        engine._campaign = SimpleNamespace(maintenance_enabled=False)
         engine._strict_mode = False
 
         engine._update_environment(5.0)
@@ -658,6 +672,7 @@ class TestAncientEngineWiring:
 
         engine = SimulationEngine.__new__(SimulationEngine)
         engine._ctx = ctx
+        engine._campaign = SimpleNamespace(maintenance_enabled=False)
         engine._strict_mode = False
 
         engine._update_environment(5.0)
@@ -674,6 +689,7 @@ class TestAncientEngineWiring:
 
         engine = SimulationEngine.__new__(SimulationEngine)
         engine._ctx = ctx
+        engine._campaign = SimpleNamespace(maintenance_enabled=False)
         engine._strict_mode = False
 
         engine._update_environment(5.0)
@@ -754,6 +770,7 @@ class TestAncientEngineWiring:
 
         engine = SimulationEngine.__new__(SimulationEngine)
         engine._ctx = ctx
+        engine._campaign = SimpleNamespace(maintenance_enabled=False)
         engine._strict_mode = False
         engine._update_environment(5.0)
 

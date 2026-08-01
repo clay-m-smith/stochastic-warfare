@@ -1,6 +1,9 @@
 # Eras
 
-Stochastic Warfare supports 5 historical eras, each with different available technologies, unit types, and combat mechanics. The era framework gates module availability and loads era-specific data.
+Stochastic Warfare supports one modern era package and four historical-era
+packages, each with different available technologies, unit types, and combat
+mechanics. The era framework gates module availability and loads era-specific
+data.
 
 ## Era Framework
 
@@ -21,13 +24,24 @@ Each era defines an `EraConfig` that specifies:
 - **Disabled capabilities** -- exactly `ew`, `space`, `cbrn`, `gps`,
   `thermal_sights`, `data_links`, and `pgm`
 - **Available sensor types** -- an enforced allowlist of sensor modalities
-- **Physics and tick overrides** -- declared metadata that is not yet consumed
-  by the production runtime
+- **Physics and tick overrides** -- strict sparse declarations consumed by one
+  effective production runtime contract
 - **Era-specific engine extensions** -- custom combat models for the period
 
 Setting `era` in a scenario YAML selects a registered configuration. Unknown
 eras are rejected. The production loader enforces suite gates and rejects
 unit loadouts that require forbidden sensors, guidance, or data links.
+
+No built-in or custom `EraConfig` supports a C2 delay multiplier. The former
+`c2_delay_multiplier` field rejects explicitly: communications catalogs and
+standalone courier/signaling components do not establish a production-loaded,
+unit/HQ-bound communications topology. That capability remains
+[REM-036](../remediation-backlog.md#rem-036-production-c2-lacks-a-loaded-communications-topology).
+
+The component descriptions below identify available models and data; they are
+not blanket claims that every component has a complete production lifecycle.
+Construction, importability, or isolated tests alone do not prove production
+wiring or outcome effects.
 
 !!! warning "Historical-validation status"
 
@@ -47,15 +61,18 @@ The default era with full access to all subsystems.
 
 ### Enabled Modules
 
-All modules enabled: EW, Space, CBRN, directed energy, full sensor suite, digital C2.
+The built-in config has no disabled era capabilities. EW, Space, CBRN, GPS,
+thermal sights, data links, and PGM are permitted when the scenario and live
+equipment satisfy their own configuration and topology requirements.
 
 ### Available Sensor Types
 
-Visual, thermal/IR, radar, acoustic, sonar, UV MAWS, laser warning, SIGINT.
+The allowlist is empty, which means every catalog sensor type is permitted.
 
-### C2 Delay
+### Communications Status
 
-Baseline (1.0x multiplier). Digital communications, Link 16, SATCOM.
+Modern communications data and components exist, but automatic production
+assignment and link topology remain REM-036. No era multiplier is applied.
 
 ### Key Unit Categories
 
@@ -89,15 +106,19 @@ is not a historical-validation claim.
 
 ### Enabled Modules
 
-Most modules enabled. No EW (electronic warfare), no space, no directed energy. CBRN limited (no nuclear in most scenarios). Radar available but primitive.
+The built-in config disables exactly EW, Space, CBRN, GPS, thermal sights,
+data links, and PGM. Other behavior still requires explicit scenario and
+equipment support; the era gate does not itself enable a subsystem.
 
 ### Available Sensor Types
 
-Visual, radar, passive sonar, active sonar (no thermal/IR targeting, no GPS).
+Exactly `VISUAL`, `RADAR`, `PASSIVE_SONAR`, and `ACTIVE_SONAR`.
 
-### C2 Delay
+### Communications Status
 
-Baseline (1.0x multiplier). Radio communications available but less reliable. No digital data links.
+WW2 communications data or isolated components are not an automatically
+loaded production network. No era multiplier is applied; REM-036 owns that
+topology.
 
 ### Era-Specific Mechanics
 
@@ -151,15 +172,20 @@ outcome-envelope verdicts.
 
 ### Enabled Modules
 
-Limited modules. No EW, no space, no CBRN (except gas warfare via adapter), no directed energy. Basic visual detection only. Very slow C2.
+The built-in config disables exactly EW, Space, GPS, thermal sights, data
+links, and PGM, leaving CBRN enabled at the era gate for WW1
+chemical-warfare scenarios. Runtime use still requires an explicitly enabled,
+schema-valid CBRN suite.
 
 ### Available Sensor Types
 
-Visual only. No radar, no thermal, no acoustic sensors.
+Exactly `VISUAL` and `PASSIVE_SONAR`.
 
-### C2 Delay
+### Communications Status
 
-5.0x multiplier. Telephone/telegraph to HQ, runners and couriers forward. Significant communication friction.
+WW1 telephone, messenger, and signaling data do not establish a live
+production communications network. No era multiplier is applied; REM-036
+owns unit/HQ assignment, propagation, and failure behavior.
 
 ### Era-Specific Mechanics
 
@@ -217,15 +243,20 @@ verdicts.
 
 ### Enabled Modules
 
-Minimal modules. No electronic anything. Visual detection only. Courier-based C2 with extreme delays. Foraging-based logistics.
+The built-in config disables exactly EW, Space, CBRN, GPS, thermal sights,
+data links, and PGM. Period-specific combat and logistics components remain
+subject to their own production wiring and scenario configuration.
 
 ### Available Sensor Types
 
-Visual only. Detection range limited by terrain and weather.
+Exactly `VISUAL`; actual detection is additionally constrained by loaded
+sensor data, terrain, and weather.
 
-### C2 Delay
+### Communications Status
 
-8.0x multiplier. Courier on horseback. Orders take hours to propagate. Fog of war is extreme.
+The standalone courier model does not establish a loaded production
+communications topology. No era multiplier is applied; REM-036 owns its
+future unit/HQ integration.
 
 ### Era-Specific Mechanics
 
@@ -273,7 +304,8 @@ Transitioning between formations takes time and creates vulnerability.
 
 **Courier C2**
 
-Orders delivered by mounted courier:
+The standalone `CourierEngine` component models orders delivered by mounted
+courier:
 
 - Travel time proportional to distance
 - Risk of interception or courier loss
@@ -310,15 +342,20 @@ verdicts.
 
 ### Enabled Modules
 
-Minimal modules. Visual detection only. Visual signals C2 (flags, trumpets). No logistics automation.
+The built-in config disables exactly EW, Space, CBRN, GPS, thermal sights,
+data links, and PGM. Period-specific combat and signaling components remain
+subject to their own production wiring.
 
 ### Available Sensor Types
 
-Visual only. Very short detection ranges.
+Exactly `VISUAL`; range comes from the loaded sensor definition and live
+environment rather than the era label.
 
-### C2 Delay
+### Communications Status
 
-12.0x multiplier. Visual signals (flags, horns, drums) for nearby units. Messengers on foot for distant commands. Extremely limited command span.
+The standalone visual-signaling model does not establish loaded unit/HQ link
+topology. No era multiplier is applied; REM-036 owns its future production
+integration.
 
 ### Era-Specific Mechanics
 
@@ -373,7 +410,8 @@ Ancient/medieval naval combat:
 
 **Visual Signals C2**
 
-Command and control via visual/audible signals:
+The standalone `VisualSignalEngine` component models command and control via
+visual/audible signals:
 
 - Flags, standards, horns, drums
 - Signal range limited by terrain and weather
@@ -402,30 +440,78 @@ outcome-envelope verdicts.
 To create a scenario for a specific era, set the `era` field in the scenario YAML:
 
 ```yaml
-name: "Battle of Austerlitz"
+name: "Custom Napoleonic Engagement"
+date: "1805-12-02T06:00:00Z"
+duration_hours: 8.0
 era: napoleonic
-duration_s: 28800  # 8 hours
+tick_resolution:
+  strategic_s: 3600
+  operational_s: 300
+  tactical_s: 5
 terrain:
-  width: 8000
-  height: 6000
-  cell_size: 100
-  terrain_type: rolling_hills
+  width_m: 8000
+  height_m: 6000
+  cell_size_m: 100
+  base_elevation_m: 0
+  terrain_type: hilly_defense
 sides:
-  - name: french
+  - side: french
     units:
-      - unit_type: french_ligne
+      - unit_type: french_line_infantry
         count: 12
-        # ...
+  - side: coalition
+    units:
+      - unit_type: british_line_infantry
+        count: 12
+objectives:
+  - objective_id: pratzen_heights
+    position: [4000, 3000]
+    radius_m: 500
+    type: key_terrain
+victory_conditions:
+  - type: force_destroyed
+    side: ""
+    params:
+      threshold: 0.7
 ```
 
-The `ScenarioLoader` will:
+In the authoritative production flow, `SimulationRuntimeFactory` resolves and
+captures the named era before `PreparedScenario.build()` supplies the paired
+`EraConfig` and effective contract to `ScenarioLoader`; the loader verifies
+that pair without consulting the live registry. An explicit direct
+`ScenarioLoader.load()` instead omits both captured objects and resolves the
+registry at that lower boundary. In either flow, the loader will:
 
-1. Resolve the named registered `EraConfig` and enforce its capability and
-   sensor gates.
+1. Enforce the selected era's capability and sensor gates.
 2. Load definitions from the base catalogs and overlay definitions from
    `data/eras/napoleonic/`.
-3. Wire era-specific engines (volley fire, melee, cavalry, formations,
-   courier, and foraging).
+3. Construct the selected period engine set (volley fire, melee, cavalry,
+   formations, courier, and foraging). Construction alone does not establish
+   each component's complete production lifecycle; communications topology
+   remains REM-036.
 
-`physics_overrides` and `tick_resolution_overrides` remain declared metadata;
-they do not currently alter production behavior.
+The selected registered era also participates in one effective runtime
+contract resolved before RNG, clock, terrain, or engine construction.
+`tick_resolution_overrides` may sparsely override `strategic_s`,
+`operational_s`, and `tactical_s`. `physics_overrides` supports only
+`treatment_hours_minor`, `treatment_hours_serious`,
+`treatment_hours_critical`, and maintenance-owned `repair_time_hours`. Every
+declared value is a strict finite positive float; cadence values must be exact
+at microsecond precision and executable through the scenario's calendar
+horizon. Unknown fields, numeric strings, booleans, nulls, non-finite values,
+and the former unsupported C2/nuclear keys fail validation.
+
+Sparse omission preserves the scenario cadence and medical/maintenance owner
+defaults. The uniform `tick_duration_seconds` shorthand cannot be combined
+with an era tick override. Built-in era presets currently declare no physics
+or cadence numbers because their earlier values lacked traceable sources; the
+typed contract is exercised by explicit custom-era controls, not presented as
+historical calibration.
+
+The effective values construct `SimulationClock`, `SimulationEngine`,
+`MedicalEngine`, and `MaintenanceEngine`, contribute to runtime/API config
+fingerprints, and persist in checkpoint format 114. Automatic casualty
+admission, medical-facility topology, equipment registration and repair-spares
+initiation, communications topology, and scheduled nuclear employment remain
+separate remediations. See the
+[Era Override Execution contract](../specs/era-override-execution.md).

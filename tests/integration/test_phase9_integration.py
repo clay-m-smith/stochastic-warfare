@@ -90,7 +90,7 @@ def _minimal_config(**overrides: Any) -> CampaignScenarioConfig:
     """Create a minimal valid CampaignScenarioConfig."""
     defaults: dict[str, Any] = {
         "name": "IntegrationTest",
-        "date": "2024-06-15",
+        "date": "2024-06-15T12:00:00Z",
         "duration_hours": 24.0,
         "terrain": TerrainConfig(width_m=10000, height_m=10000),
         "sides": [
@@ -216,10 +216,15 @@ class TestScenarioLoadStrategicTick:
         # engagement detection (9800m apart > 5000m range).
         engine = SimulationEngine(
             ctx,
-            campaign_config=CampaignConfig(engagement_detection_range_m=5000),
+            config=EngineConfig(resolution_closing_range_mult=0.0),
+            campaign_config=CampaignConfig(
+                engagement_detection_range_m=5000,
+                enable_strategic_movement=False,
+            ),
         )
         engine.step()
         # Strategic tick is 3600s per the YAML
+        assert engine.resolution is TickResolution.STRATEGIC
         assert ctx.clock.elapsed.total_seconds() == pytest.approx(3600.0)
 
 
@@ -1084,6 +1089,8 @@ class TestMultipleSequentialBattles:
         object.__setattr__(red[1], "position", Position(200, 5100, 0))
 
         # Battle 2: detect
+        engine.step()
+        assert engine.resolution == TickResolution.OPERATIONAL
         engine.step()
         assert engine.resolution == TickResolution.TACTICAL
         active = engine.battle_manager.active_battles

@@ -38,7 +38,11 @@ from stochastic_warfare.c2.ai.commander import (
     CommanderProfileLoader,
     CommanderScenarioConfig,
 )
-from stochastic_warfare.core.clock import SimulationClock
+from stochastic_warfare.core.clock import (
+    SimulationClock,
+    normalize_clock_duration_seconds,
+)
+from stochastic_warfare.core.era import EraConfig, get_era_config
 from stochastic_warfare.core.events import EventBus
 from stochastic_warfare.core.logging import get_logger
 from stochastic_warfare.core.rng import RNGManager
@@ -67,6 +71,11 @@ from stochastic_warfare.simulation.deployment import (
 )
 from stochastic_warfare.simulation.equipment_mappings import (
     EQUIPMENT_MAPPING_REGISTRY,
+)
+from stochastic_warfare.simulation.era_runtime import (
+    EraExecutionHorizonSource,
+    EraRuntimeContract,
+    EraRuntimeSource,
 )
 from stochastic_warfare.simulation.force_builder import (
     InitialForcePlan,
@@ -538,9 +547,24 @@ class DoctrineSideAssignment(BaseModel):
 class TickResolutionConfig(BaseModel):
     """Tick duration settings per resolution level."""
 
+    model_config = ConfigDict(extra="forbid")
+
     strategic_s: float = 3600.0
     operational_s: float = 300.0
     tactical_s: float = 5.0
+
+    @field_validator(
+        "strategic_s",
+        "operational_s",
+        "tactical_s",
+        mode="before",
+    )
+    @classmethod
+    def _positive_finite_duration(cls, value: Any, info: Any) -> float:
+        return normalize_clock_duration_seconds(
+            value,
+            field_name=info.field_name,
+        )
 
 
 class TerrainConfig(BaseModel):
@@ -610,6 +634,17 @@ class CampaignScenarioConfig(BaseModel):
     )
     logistics: LogisticsConfig = Field(default_factory=LogisticsConfig)
 
+    @field_validator("date", mode="before")
+    @classmethod
+    def _strict_date(cls, value: Any) -> str:
+        if (
+            type(value) is not str
+            or not value
+            or value != value.strip()
+        ):
+            raise ValueError("date must be a non-empty trimmed strict string")
+        return value
+
     @field_validator("calibration_overrides", mode="before")
     @classmethod
     def _strict_calibration_overrides(
@@ -646,14 +681,27 @@ class CampaignScenarioConfig(BaseModel):
             )
         return normalized
 
-    @field_validator("era")
+    @field_validator("era", mode="before")
     @classmethod
-    def _registered_era(cls, v: str) -> str:
-        from stochastic_warfare.core.era import get_era_config
+    def _normalized_era_identifier(cls, value: Any) -> str:
+        """Validate identity syntax; runtime boundaries resolve registry data."""
+        if (
+            not isinstance(value, str)
+            or not value
+            or value != value.strip()
+        ):
+            raise ValueError("era must be a non-empty trimmed string")
+        return value.lower()
 
-        normalized = v.lower()
-        get_era_config(normalized)
-        return normalized
+    @field_validator("tick_duration_seconds", mode="before")
+    @classmethod
+    def _positive_uniform_duration(cls, value: Any) -> float | None:
+        if value is None:
+            return None
+        return normalize_clock_duration_seconds(
+            value,
+            field_name="tick_duration_seconds",
+        )
 
     @model_validator(mode="before")
     @classmethod
@@ -1886,7 +1934,8 @@ class SimulationContext:
     ew_decoy_engine: Any = None
 
     # Era Framework (Phase 20)
-    era_config: Any = None
+    era_config: EraConfig | None = None
+    era_runtime_contract: EraRuntimeContract | None = None
 
     # WW2 Engine Extensions (Phase 20b)
     naval_gunnery_engine: Any = None
@@ -2004,11 +2053,100 @@ class SimulationContext:
         init=False,
         repr=False,
     )
+    _era_config_identity_json: str = field(
+        default="",
+        init=False,
+        repr=False,
+    )
+    _era_runtime_source_identity_json: str = field(
+        default="",
+        init=False,
+        repr=False,
+    )
+    _era_execution_horizon_identity_json: str = field(
+        default="",
+        init=False,
+        repr=False,
+    )
+    _era_runtime_bound: bool = field(
+        default=False,
+        init=False,
+        repr=False,
+    )
 
     # ── Helpers ──────────────────────────────────────────────────────
 
     def __post_init__(self) -> None:
-        """Bind the stable, read-only public morale projection."""
+        """Bind stable era-runtime and morale ownership graphs."""
+        if self.era_config is None:
+            try:
+                effective_era_config = EraConfig(era=self.config.era)
+            except (TypeError, ValueError) as exc:
+                raise ValueError(
+                    "A manually assembled context with a custom era ID must "
+                    "supply its captured EraConfig explicitly",
+                ) from exc
+        elif isinstance(self.era_config, EraConfig):
+            effective_era_config = EraConfig.model_validate(
+                self.era_config.model_dump(mode="python"),
+                strict=True,
+                extra="forbid",
+            )
+        else:
+            raise TypeError("era_config must be an EraConfig or None")
+        runtime_source = EraRuntimeSource(
+            selected_registry_id=self.config.era,
+            strategic_s=self.config.tick_resolution.strategic_s,
+            operational_s=self.config.tick_resolution.operational_s,
+            tactical_s=self.config.tick_resolution.tactical_s,
+            tick_duration_seconds=self.config.tick_duration_seconds,
+        )
+        horizon_source = EraExecutionHorizonSource(
+            date=self.config.date,
+            duration_hours=self.config.duration_hours,
+        )
+        expected_era_contract = EraRuntimeContract.resolve(
+            era_config=effective_era_config,
+            **runtime_source.model_dump(mode="python"),
+        )
+        expected_era_contract.validate_execution_horizon(
+            start=parse_scenario_start_time(horizon_source.date),
+            duration_hours=horizon_source.duration_hours,
+        )
+        if self.era_runtime_contract is None:
+            object.__setattr__(
+                self,
+                "era_runtime_contract",
+                expected_era_contract,
+            )
+        elif not isinstance(
+            self.era_runtime_contract,
+            EraRuntimeContract,
+        ):
+            raise TypeError(
+                "era_runtime_contract must be an EraRuntimeContract",
+            )
+        elif self.era_runtime_contract != expected_era_contract:
+            raise ValueError(
+                "era_runtime_contract does not match the context's "
+                "scenario and captured era configuration",
+            )
+        object.__setattr__(
+            self,
+            "_era_config_identity_json",
+            effective_era_config.model_dump_json(),
+        )
+        object.__setattr__(
+            self,
+            "_era_runtime_source_identity_json",
+            runtime_source.model_dump_json(),
+        )
+        object.__setattr__(
+            self,
+            "_era_execution_horizon_identity_json",
+            horizon_source.model_dump_json(),
+        )
+
         initial_projection = dict(self.morale_states)
         if self.morale_runtime is None:
             if initial_projection:
@@ -2040,10 +2178,12 @@ class SimulationContext:
                 )
         object.__setattr__(self, "morale_states", morale_view)
         self._validate_morale_bindings()
+        self.validate_era_runtime_bindings()
         object.__setattr__(self, "_morale_states_bound", True)
+        object.__setattr__(self, "_era_runtime_bound", True)
 
     def __setattr__(self, name: str, value: Any) -> None:
-        """Prevent replacement of the bound morale owner graph."""
+        """Prevent replacement of bound runtime ownership graphs."""
         if (
             name in {"morale_states", "morale_runtime", "rout_engine"}
             and getattr(self, "_morale_states_bound", False)
@@ -2051,7 +2191,154 @@ class SimulationContext:
             raise AttributeError(
                 f"{name} is a stable MoraleRuntime ownership binding",
             )
+        if (
+            name in {"era_config", "era_runtime_contract"}
+            and getattr(self, "_era_runtime_bound", False)
+        ):
+            raise AttributeError(
+                f"{name} is a stable EraRuntimeContract ownership binding",
+            )
         object.__setattr__(self, name, value)
+
+    def _captured_era_config(self) -> EraConfig:
+        """Return the isolated era identity captured at construction."""
+        return EraConfig.model_validate_json(
+            self._era_config_identity_json,
+            strict=True,
+            extra="forbid",
+        )
+
+    def _captured_era_runtime_source(self) -> EraRuntimeSource:
+        """Return the exact scenario-side inputs captured at construction."""
+        return EraRuntimeSource.model_validate_json(
+            self._era_runtime_source_identity_json,
+            strict=True,
+            extra="forbid",
+        )
+
+    def _captured_era_execution_horizon(
+        self,
+    ) -> EraExecutionHorizonSource:
+        """Return exact scenario inputs bounding executable clock time."""
+        return EraExecutionHorizonSource.model_validate_json(
+            self._era_execution_horizon_identity_json,
+            strict=True,
+            extra="forbid",
+        )
+
+    def validate_era_runtime_bindings(self) -> None:
+        """Fail closed when captured era behavior diverges from consumers."""
+        contract = self.era_runtime_contract
+        if not isinstance(contract, EraRuntimeContract):
+            raise RuntimeError("SimulationContext lacks EraRuntimeContract")
+        captured_era = self._captured_era_config()
+        captured_source = self._captured_era_runtime_source()
+        try:
+            current_source = EraRuntimeSource(
+                selected_registry_id=self.config.era,
+                strategic_s=self.config.tick_resolution.strategic_s,
+                operational_s=self.config.tick_resolution.operational_s,
+                tactical_s=self.config.tick_resolution.tactical_s,
+                tick_duration_seconds=self.config.tick_duration_seconds,
+            )
+        except (AttributeError, TypeError, ValueError) as exc:
+            raise RuntimeError(
+                "Scenario era runtime source is no longer valid",
+            ) from exc
+        if current_source != captured_source:
+            raise RuntimeError(
+                "Scenario era runtime source changed after runtime "
+                "construction",
+            )
+        captured_horizon = self._captured_era_execution_horizon()
+        try:
+            current_horizon = EraExecutionHorizonSource.model_validate(
+                {
+                    "date": self.config.date,
+                    "duration_hours": self.config.duration_hours,
+                },
+                strict=True,
+                extra="forbid",
+            )
+        except (AttributeError, TypeError, ValueError) as exc:
+            raise RuntimeError(
+                "Scenario clock execution horizon is no longer valid",
+            ) from exc
+        if current_horizon != captured_horizon:
+            raise RuntimeError(
+                "Scenario clock execution horizon changed after runtime "
+                "construction",
+            )
+        expected = EraRuntimeContract.resolve(
+            era_config=captured_era,
+            **captured_source.model_dump(mode="python"),
+        )
+        if contract != expected:
+            raise RuntimeError(
+                "Scenario, captured era configuration, and runtime contract "
+                "have diverged",
+            )
+        if self.era_config is not None:
+            try:
+                current_era = EraConfig.model_validate(
+                    self.era_config.model_dump(mode="python"),
+                    strict=True,
+                    extra="forbid",
+                )
+            except (AttributeError, TypeError, ValueError) as exc:
+                raise RuntimeError(
+                    "Captured era configuration is no longer valid",
+                ) from exc
+            if current_era != captured_era:
+                raise RuntimeError(
+                    "Captured era configuration changed after runtime "
+                    "construction",
+                )
+        if (
+            self.loadout_builder is not None
+            and self.loadout_builder.era_config != captured_era
+        ):
+            raise RuntimeError(
+                "RuntimeLoadoutBuilder era gates diverge from the captured "
+                "era configuration",
+            )
+
+        if self.medical_engine is not None:
+            from stochastic_warfare.logistics.medical import MedicalConfig
+
+            medical_config = getattr(self.medical_engine, "config", None)
+            if not isinstance(medical_config, MedicalConfig) or any(
+                getattr(medical_config, field_name)
+                != getattr(contract, field_name)
+                for field_name in (
+                    "treatment_hours_minor",
+                    "treatment_hours_serious",
+                    "treatment_hours_critical",
+                )
+            ):
+                raise RuntimeError(
+                    "MedicalEngine configuration diverges from "
+                    "EraRuntimeContract",
+                )
+        if self.maintenance_engine is not None:
+            from stochastic_warfare.logistics.maintenance import (
+                MaintenanceConfig,
+            )
+
+            maintenance_config = getattr(
+                self.maintenance_engine,
+                "config",
+                None,
+            )
+            if (
+                not isinstance(maintenance_config, MaintenanceConfig)
+                or maintenance_config.repair_time_hours
+                != contract.repair_time_hours
+            ):
+                raise RuntimeError(
+                    "MaintenanceEngine configuration diverges from "
+                    "EraRuntimeContract",
+                )
 
     def _morale_roster(self) -> dict[str, Unit]:
         """Return the exact active roster, rejecting duplicate entity IDs."""
@@ -2128,8 +2415,12 @@ class SimulationContext:
     def get_state(self) -> dict[str, Any]:
         """Capture full simulation state for checkpointing."""
         self._validate_morale_bindings(require_runtime_for_roster=True)
+        self.validate_era_runtime_bindings()
         state: dict[str, Any] = {
             "config": _model_dump_json_compatible(self.config),
+            "era_runtime_contract": _model_dump_json_compatible(
+                self.era_runtime_contract,
+            ),
             "doctrine_side_assignments": [
                 assignment.model_dump(mode="json")
                 for assignment in self.doctrine_side_assignments
@@ -2243,11 +2534,45 @@ class SimulationContext:
         commit: bool,
     ) -> None:
         """Preflight context state and optionally commit it."""
+        self.validate_era_runtime_bindings()
         if allow_legacy_morale and "morale_runtime" in state:
             raise ValueError(
                 "Versionless checkpoints cannot contain format-113 "
                 "morale_runtime state",
             )
+        raw_era_runtime_contract = state.get("era_runtime_contract")
+        if allow_legacy_morale:
+            if "era_runtime_contract" in state:
+                raise ValueError(
+                    "Versionless checkpoints cannot contain format-114 "
+                    "era_runtime_contract state",
+                )
+            if self._captured_era_config().has_runtime_overrides:
+                raise ValueError(
+                    "Versionless checkpoints cannot restore a runtime with "
+                    "declared era overrides",
+                )
+        else:
+            if raw_era_runtime_contract is None:
+                raise ValueError(
+                    "Checkpoint is missing era_runtime_contract",
+                )
+            try:
+                checkpoint_era_contract = (
+                    EraRuntimeContract.model_validate(
+                        raw_era_runtime_contract,
+                        extra="forbid",
+                    )
+                )
+            except (TypeError, ValueError) as exc:
+                raise ValueError(
+                    f"Invalid checkpoint era runtime contract: {exc}",
+                ) from exc
+            if checkpoint_era_contract != self.era_runtime_contract:
+                raise ValueError(
+                    "Checkpoint era runtime contract does not match the "
+                    "target runtime",
+                )
         if "config" in state:
             checkpoint_config = state["config"]
             comparable_config = checkpoint_config
@@ -2400,6 +2725,21 @@ class SimulationContext:
         ):
             raise ValueError(
                 "Checkpoint clock tick count and logical time are inconsistent",
+            )
+        horizon_source = self._captured_era_execution_horizon()
+        expected_start = parse_scenario_start_time(horizon_source.date)
+        if staged_clock.start_time != expected_start:
+            raise ValueError(
+                "Checkpoint clock start does not match the scenario start",
+            )
+        horizon_end = self.era_runtime_contract.execution_horizon_end(
+            start=expected_start,
+            duration_hours=horizon_source.duration_hours,
+        )
+        if staged_clock.current_time > horizon_end:
+            raise ValueError(
+                "Checkpoint clock current time exceeds the executable "
+                "scenario horizon",
             )
 
         cal_data = state.get("calibration", {})
@@ -3710,7 +4050,7 @@ def _parse_weather_state(precip: str) -> int:
 # ---------------------------------------------------------------------------
 
 
-def _parse_start_time(date_str: str) -> datetime:
+def parse_scenario_start_time(date_str: str) -> datetime:
     """Parse ISO date/datetime string into UTC-aware datetime."""
     if "T" in date_str:
         dt = datetime.fromisoformat(date_str)
@@ -3744,6 +4084,8 @@ class ScenarioLoader:
             DoctrineSideAssignment,
             ...,
         ] | None = None,
+        era_config: EraConfig | None = None,
+        era_runtime_contract: EraRuntimeContract | None = None,
     ) -> SimulationContext:
         """Load a campaign scenario and create a fully-wired context.
 
@@ -3761,6 +4103,12 @@ class ScenarioLoader:
         doctrine_side_assignments:
             Highest-precedence typed per-side school policy supplied by the
             runtime factory. It is not written into scenario YAML.
+        era_config:
+            Isolated era configuration captured by the runtime factory. It
+            must be paired with ``era_runtime_contract``. Direct loads omit
+            both values and resolve the registry at this boundary.
+        era_runtime_contract:
+            Frozen effective behavior captured by the runtime factory.
         """
         # 1. Parse config
         if scenario_config is not None and calibration_overrides is not None:
@@ -3775,7 +4123,68 @@ class ScenarioLoader:
         else:
             config = CampaignScenarioConfig.model_validate(
                 scenario_config.model_dump(mode="python"),
+                strict=True,
+                extra="forbid",
             )
+        provided_era_config = era_config is not None
+        provided_era_contract = era_runtime_contract is not None
+        if provided_era_config != provided_era_contract:
+            raise ValueError(
+                "era_config and era_runtime_contract must be supplied "
+                "together",
+            )
+        if era_config is None:
+            resolved_era_config = get_era_config(config.era)
+            resolved_era_contract = EraRuntimeContract.resolve(
+                selected_registry_id=config.era,
+                era_config=resolved_era_config,
+                strategic_s=config.tick_resolution.strategic_s,
+                operational_s=config.tick_resolution.operational_s,
+                tactical_s=config.tick_resolution.tactical_s,
+                tick_duration_seconds=config.tick_duration_seconds,
+            )
+        else:
+            if not isinstance(era_config, EraConfig):
+                raise TypeError("era_config must be an EraConfig")
+            if not isinstance(era_runtime_contract, EraRuntimeContract):
+                raise TypeError(
+                    "era_runtime_contract must be an EraRuntimeContract",
+                )
+            resolved_era_config = EraConfig.model_validate(
+                era_config.model_dump(mode="python"),
+                strict=True,
+                extra="forbid",
+            )
+            resolved_era_contract = EraRuntimeContract.model_validate(
+                era_runtime_contract.model_dump(mode="python"),
+                strict=True,
+                extra="forbid",
+            )
+            if resolved_era_contract.selected_registry_id != config.era:
+                raise ValueError(
+                    "Prepared era contract registry identity does not match "
+                    f"scenario era {config.era!r}",
+                )
+            expected_era_contract = EraRuntimeContract.resolve(
+                selected_registry_id=config.era,
+                era_config=resolved_era_config,
+                strategic_s=config.tick_resolution.strategic_s,
+                operational_s=config.tick_resolution.operational_s,
+                tactical_s=config.tick_resolution.tactical_s,
+                tick_duration_seconds=config.tick_duration_seconds,
+            )
+            if resolved_era_contract != expected_era_contract:
+                raise ValueError(
+                    "Prepared era runtime contract does not match its "
+                    "captured scenario and era configuration",
+                )
+        era_config = resolved_era_config
+        era_runtime_contract = resolved_era_contract
+        start_dt = parse_scenario_start_time(config.date)
+        era_runtime_contract.validate_execution_horizon(
+            start=start_dt,
+            duration_hours=config.duration_hours,
+        )
         doctrine_policy = tuple(doctrine_side_assignments or ())
         if any(
             not isinstance(assignment, DoctrineSideAssignment)
@@ -3800,24 +4209,14 @@ class ScenarioLoader:
         # 2. Core infrastructure
         rng_mgr = RNGManager(seed)
         bus = EventBus()
-        start_dt = _parse_start_time(config.date)
-
-        # When tick_duration_seconds is set (engagement-scale scenarios),
-        # use it as the tactical tick resolution so the engine runs at
-        # the scenario-appropriate cadence during combat.
-        if config.tick_duration_seconds is not None:
-            config.tick_resolution = TickResolutionConfig(
-                strategic_s=config.tick_duration_seconds,
-                operational_s=config.tick_duration_seconds,
-                tactical_s=config.tick_duration_seconds,
-            )
-
         # The engine detects initial force proximity and picks the right
         # starting resolution (strategic vs tactical), so we always
         # initialize the clock at strategic pace here.
         clock = SimulationClock(
             start=start_dt,
-            tick_duration=timedelta(seconds=config.tick_resolution.strategic_s),
+            tick_duration=timedelta(
+                seconds=era_runtime_contract.strategic_s,
+            ),
         )
 
         # 3. Terrain
@@ -3825,9 +4224,7 @@ class ScenarioLoader:
         heightmap = self._build_terrain(config.terrain, rng_mgr, config)
 
         # 4. Load YAML data (era-aware)
-        from stochastic_warfare.core.era import get_era_config
-        era_config = get_era_config(config.era)
-        loaders = self._create_loaders(era=config.era)
+        loaders = self._create_loaders(era=era_config.era.value)
         self._validate_reinforcement_unit_types(config, loaders["unit_loader"])
         self._validate_logistics_catalog(
             config,
@@ -3931,7 +4328,8 @@ class ScenarioLoader:
             config,
             clock,
             units_by_side,
-            era_config,
+            era_config=era_config,
+            era_runtime_contract=era_runtime_contract,
             doctrine_side_assignments=doctrine_policy,
             time_on_target_missions=time_on_target_missions,
         )
@@ -4026,6 +4424,7 @@ class ScenarioLoader:
             doctrine_side_assignments=doctrine_policy,
             calibration=config.calibration_overrides,
             era_config=era_config,
+            era_runtime_contract=era_runtime_contract,
             **engines,
             **loaders,
         )
@@ -4631,8 +5030,9 @@ class ScenarioLoader:
         config: CampaignScenarioConfig,
         clock: SimulationClock | None = None,
         units_by_side: dict[str, list] | None = None,
-        era_config: Any = None,
         *,
+        era_config: EraConfig,
+        era_runtime_contract: EraRuntimeContract,
         doctrine_side_assignments: tuple[
             DoctrineSideAssignment,
             ...,
@@ -4879,7 +5279,10 @@ class ScenarioLoader:
         from stochastic_warfare.logistics.consumption import ConsumptionEngine
         from stochastic_warfare.logistics.stockpile import StockpileManager
         from stochastic_warfare.logistics.supply_network import SupplyNetworkEngine
-        from stochastic_warfare.logistics.maintenance import MaintenanceEngine
+        from stochastic_warfare.logistics.maintenance import (
+            MaintenanceConfig,
+            MaintenanceEngine,
+        )
 
         consumption_engine = ConsumptionEngine(bus, logistics_rng)
         stockpile_manager = StockpileManager(
@@ -4908,16 +5311,26 @@ class ScenarioLoader:
                 for unit in (units_by_side or {})[side]
             ],
         )
-        maintenance_engine = MaintenanceEngine(bus, logistics_rng)
-
         # Phase 56c: per-subsystem Weibull shapes from calibration
         _cal = config.calibration_overrides
         _weibull = (
             _cal.get("subsystem_weibull_shapes", {})
             if hasattr(_cal, "get") else {}
         )
+        maintenance_config = era_runtime_contract.maintenance_config()
         if _weibull:
-            maintenance_engine._config.use_weibull = True
+            maintenance_config = MaintenanceConfig.model_validate(
+                {
+                    **maintenance_config.model_dump(mode="python"),
+                    "use_weibull": True,
+                },
+            )
+        maintenance_engine = MaintenanceEngine(
+            bus,
+            logistics_rng,
+            config=maintenance_config,
+        )
+        if _weibull:
             maintenance_engine.set_subsystem_shapes(_weibull)
 
         # Aggregation (Phase 13a-7)
@@ -5033,36 +5446,21 @@ class ScenarioLoader:
                     cal["visibility_m"] = wc["visibility_m"]
 
         # Phase 44c / 56c: Medical & engineering engines (era-aware)
-        from stochastic_warfare.logistics.medical import MedicalConfig, MedicalEngine
+        from stochastic_warfare.logistics.medical import MedicalEngine
         from stochastic_warfare.logistics.engineering import (
             EngineeringConfig,
             EngineeringEngine,
         )
 
-        _era_cfg = getattr(config, "era_config", None)
-        if _era_cfg is None:
-            _era_cfg = getattr(config, "era", None)
-            if _era_cfg is not None and not hasattr(_era_cfg, "physics_overrides"):
-                _era_cfg = None
-        _med_kw: dict[str, Any] = {}
-        _eng_kw: dict[str, Any] = {}
-        if _era_cfg is not None:
-            _po = getattr(_era_cfg, "physics_overrides", {})
-            for _mk in (
-                "treatment_hours_minor",
-                "treatment_hours_serious",
-                "treatment_hours_critical",
-            ):
-                if _mk in _po:
-                    _med_kw[_mk] = _po[_mk]
-            if "repair_time_hours" in _po:
-                _eng_kw["repair_time_hours"] = _po["repair_time_hours"]
-
-        medical_config = MedicalConfig(**_med_kw) if _med_kw else None
-        engineering_config = EngineeringConfig(**_eng_kw) if _eng_kw else None
-        medical_engine = MedicalEngine(bus, logistics_rng, config=medical_config)
+        medical_engine = MedicalEngine(
+            bus,
+            logistics_rng,
+            config=era_runtime_contract.medical_config(),
+        )
         engineering_engine = EngineeringEngine(
-            bus, logistics_rng, config=engineering_config,
+            bus,
+            logistics_rng,
+            config=EngineeringConfig(),
         )
 
         # Phase 61: CarrierOpsEngine instantiation
@@ -5151,7 +5549,7 @@ class ScenarioLoader:
         bus: EventBus,
         config: CampaignScenarioConfig,
         c2_rng: np.random.Generator,
-        era_config: Any = None,
+        era_config: EraConfig,
         clock: SimulationClock | None = None,
         *,
         doctrine_side_assignments: tuple[
@@ -5160,10 +5558,6 @@ class ScenarioLoader:
         ] = (),
     ) -> dict[str, Any]:
         """Create optional domain engines from explicit flags and era gates."""
-        if era_config is None:
-            from stochastic_warfare.core.era import get_era_config
-
-            era_config = get_era_config(config.era)
         disabled = set(era_config.disabled_modules)
         result: dict[str, Any] = {}
 
@@ -5256,8 +5650,10 @@ class ScenarioLoader:
                     result["incendiary_engine"] = IncendiaryDamageEngine(combat_rng)
 
         # 7. Era engines
-        if config.era != "modern":
-            result.update(self._create_era_engines(rng_mgr, bus, config))
+        if era_config.era.value != "modern":
+            result.update(
+                self._create_era_engines(rng_mgr, bus, era_config),
+            )
 
         # 8. DEW engines
         if config.dew_config is not None:
@@ -5606,10 +6002,10 @@ class ScenarioLoader:
         self,
         rng_mgr: RNGManager,
         bus: EventBus,
-        config: CampaignScenarioConfig,
+        era_config: EraConfig,
     ) -> dict[str, Any]:
-        """Create era-specific engines based on config.era."""
-        era = config.era
+        """Create era-specific engines from the captured typed era."""
+        era = era_config.era.value
         result: dict[str, Any] = {}
         combat_rng = rng_mgr.get_stream(ModuleId.COMBAT)
         movement_rng = rng_mgr.get_stream(ModuleId.MOVEMENT)

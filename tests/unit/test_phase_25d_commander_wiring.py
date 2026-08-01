@@ -15,6 +15,7 @@ import pytest
 
 from stochastic_warfare.c2.ai.ooda import OODAConfig, OODALoopEngine, OODAPhase
 from stochastic_warfare.core.clock import SimulationClock
+from stochastic_warfare.core.era import get_era_config
 from stochastic_warfare.core.events import EventBus
 from stochastic_warfare.core.rng import RNGManager
 from stochastic_warfare.core.types import ModuleId, Position
@@ -143,6 +144,7 @@ class TestScenarioLoaderCommander:
             EventBus(),
             cfg,
             c2_rng,
+            get_era_config(cfg.era),
         )
         assert result.get("commander_engine") is None
 

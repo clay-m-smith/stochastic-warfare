@@ -20,6 +20,7 @@ import copy
 import json
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
+from typing import Any
 
 import numpy as np
 import pytest
@@ -115,13 +116,96 @@ def make_clock(
     return clock
 
 
+def bind_test_era_runtime(
+    context: Any,
+    *,
+    era: str = "modern",
+    selected_registry_id: str | None = None,
+    strategic_s: float = 3600.0,
+    operational_s: float = 300.0,
+    tactical_s: float = 5.0,
+    tick_duration_seconds: float | None = None,
+) -> Any:
+    """Attach a typed, internally consistent era contract to a test context.
+
+    Minimal ``SimpleNamespace`` battle contexts do not run the production
+    ``SimulationContext`` constructor, while checkpoint tests sometimes build
+    a ``SimulationContext`` with ``object.__new__``.  This helper gives both
+    forms the same immutable era contract and captured identity used by the
+    production boundary.  Namespace contexts receive a small integrity check;
+    real ``SimulationContext`` instances retain their production validator.
+    """
+    from stochastic_warfare.core.era import Era, EraConfig
+    from stochastic_warfare.simulation.era_runtime import (
+        EraExecutionHorizonSource,
+        EraRuntimeContract,
+        EraRuntimeSource,
+    )
+
+    era_config = EraConfig(era=Era(era))
+    source = EraRuntimeSource(
+        selected_registry_id=selected_registry_id or era,
+        strategic_s=strategic_s,
+        operational_s=operational_s,
+        tactical_s=tactical_s,
+        tick_duration_seconds=tick_duration_seconds,
+    )
+    contract = EraRuntimeContract.resolve(
+        era_config=era_config,
+        **source.model_dump(mode="python"),
+    )
+    object.__setattr__(context, "era_config", era_config)
+    object.__setattr__(context, "era_runtime_contract", contract)
+    object.__setattr__(
+        context,
+        "_era_config_identity_json",
+        era_config.model_dump_json(),
+    )
+    object.__setattr__(
+        context,
+        "_era_runtime_source_identity_json",
+        source.model_dump_json(),
+    )
+    config = getattr(context, "config", None)
+    if (
+        config is not None
+        and hasattr(config, "date")
+        and hasattr(config, "duration_hours")
+    ):
+        object.__setattr__(
+            context,
+            "_era_execution_horizon_identity_json",
+            EraExecutionHorizonSource(
+                date=config.date,
+                duration_hours=config.duration_hours,
+            ).model_dump_json(),
+        )
+
+    if not callable(
+        getattr(type(context), "validate_era_runtime_bindings", None),
+    ):
+        def validate_era_runtime_bindings() -> None:
+            current = context.era_runtime_contract
+            if (
+                not isinstance(current, EraRuntimeContract)
+                or current != contract
+            ):
+                raise RuntimeError("Test context era runtime binding changed")
+
+        context.validate_era_runtime_bindings = (
+            validate_era_runtime_bindings
+        )
+    return context
+
+
 def make_versionless_legacy_morale_checkpoint(
     checkpoint: dict,
 ) -> dict:
-    """Convert format 113 into the bounded pre-113 morale envelope."""
+    """Convert format 114 into the bounded pre-113 morale envelope."""
     legacy = copy.deepcopy(checkpoint)
-    assert legacy.pop("checkpoint_version") == 113
+    assert legacy.pop("checkpoint_version") == 114
     context = legacy["context"]
+    context.pop("era_runtime_contract")
     runtime_state = context.pop("morale_runtime")
     assert runtime_state["suspended_archives"] == {}
     active_records = runtime_state["active_records"]

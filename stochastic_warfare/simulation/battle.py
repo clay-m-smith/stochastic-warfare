@@ -2201,7 +2201,7 @@ class BattleManager:
         # 4d. Phase 51b: auto-assign naval posture based on enemy proximity
         # Only for modern/ww2 eras — ancient/napoleonic oar-powered ships
         # don't have the modern battle stations speed concept.
-        _era = getattr(ctx.config, "era", "modern")
+        _era = ctx.era_runtime_contract.era.value
         if _era in ("modern", "ww2", "ww1"):
             for side_name, side_units in units_by_side.items():
                 enemies = active_enemies.get(side_name, [])
@@ -6498,7 +6498,7 @@ class BattleManager:
                 _agg_modifier = _terrain_cas_mult * _agg_skill
 
                 if not routed_aggregate:
-                    era = getattr(ctx.config, "era", "modern")
+                    era = ctx.era_runtime_contract.era.value
 
                     if era == "napoleonic":
                         if wpn_cat_str in ("RIFLE", "CANNON", "ARTILLERY") and best_range > _MELEE_RANGE_M:

@@ -16,6 +16,7 @@ import json
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from enum import IntEnum
+from types import MappingProxyType
 from typing import Any
 
 from pydantic import BaseModel
@@ -33,7 +34,7 @@ from stochastic_warfare.simulation.victory import VictoryEvaluator, VictoryResul
 
 logger = get_logger(__name__)
 
-_CHECKPOINT_VERSION = 113
+_CHECKPOINT_VERSION = 114
 _TERMINAL_CONDITION_TYPES = frozenset({
     "armistice",
     "attrition_ratio",
@@ -168,11 +169,14 @@ class SimulationEngine:
 
         # Tick resolution state
         self._resolution = TickResolution.STRATEGIC
-        self._tick_durations = {
-            TickResolution.STRATEGIC: ctx.config.tick_resolution.strategic_s,
-            TickResolution.OPERATIONAL: ctx.config.tick_resolution.operational_s,
-            TickResolution.TACTICAL: ctx.config.tick_resolution.tactical_s,
-        }
+        era_contract = ctx.era_runtime_contract
+        if era_contract is None:
+            raise RuntimeError("SimulationContext lacks EraRuntimeContract")
+        self._tick_durations = MappingProxyType({
+            TickResolution.STRATEGIC: era_contract.strategic_s,
+            TickResolution.OPERATIONAL: era_contract.operational_s,
+            TickResolution.TACTICAL: era_contract.tactical_s,
+        })
 
         # Detect initial engagement proximity — if opposing forces are
         # already within engagement range at start, begin at tactical
@@ -180,10 +184,10 @@ class SimulationEngine:
         # engagement scenarios with hour-long ticks).
         initial_battles = self._campaign.detect_engagements(ctx, self._battle)
         if initial_battles:
-            self._resolution = TickResolution.TACTICAL
             logger.info(
                 "Forces in contact at start — beginning at TACTICAL resolution"
             )
+        self._update_resolution()
 
         # Set initial tick duration
         ctx.clock.set_tick_duration(
@@ -202,6 +206,7 @@ class SimulationEngine:
 
         # Phase 63b: subscribe to logistics events if enabled
         self._register_event_handlers()
+        self._validate_era_runtime_binding()
 
     # ── Properties ────────────────────────────────────────────────────
 
@@ -229,6 +234,23 @@ class SimulationEngine:
     def recorder(self) -> SimulationRecorder | None:
         """The event recorder, if any."""
         return self._recorder
+
+    def _validate_era_runtime_binding(self) -> None:
+        """Reject any cadence or domain-config drift before work or state IO."""
+        self._ctx.validate_era_runtime_bindings()
+        self._validate_clock_resolution_binding()
+
+    def _validate_clock_resolution_binding(self) -> None:
+        """Require the live clock to match the engine's bound resolution."""
+        expected_duration = self._tick_durations[self._resolution]
+        actual_duration = self._ctx.clock.tick_duration.total_seconds()
+        if actual_duration != expected_duration:
+            raise RuntimeError(
+                "Simulation clock duration diverges from the current "
+                "EraRuntimeContract resolution: "
+                f"{self._resolution.name} requires {expected_duration}s, "
+                f"got {actual_duration}s",
+            )
 
     # ── Phase 63b: event feedback ────────────────────────────────────
 
@@ -381,6 +403,7 @@ class SimulationEngine:
         bool
             ``True`` if the simulation is over (victory or max ticks).
         """
+        self._validate_era_runtime_binding()
         if self._last_victory.game_over:
             return True
 
@@ -406,6 +429,17 @@ class SimulationEngine:
             )
             return True
 
+        # Select exactly one resolution and duration for this whole interval
+        # without mutating live state.  Validation that can still reject the
+        # interval uses this staged cadence; only a successful preflight may
+        # commit the resolution and its clock duration.
+        #
+        # Divergence is checked before selection by the binding validation at
+        # the start of ``step`` so a public clock mutation cannot be hidden by
+        # a coincident transition.
+        interval_resolution = self._select_resolution()
+        prospective_dt = self._tick_durations[interval_resolution]
+
         # Validate imagery targets and fusion lifecycle against the
         # prospective logical time before the clock or any subsystem advances.
         # Reinforcements are independently preflighted by their runtime force
@@ -414,7 +448,6 @@ class SimulationEngine:
             ctx.space_engine is not None
             and hasattr(ctx.space_engine, "preflight_update")
         ):
-            prospective_dt = clock.tick_duration.total_seconds()
             fog_of_war = getattr(ctx, "fog_of_war", None)
             ctx.space_engine.preflight_update(
                 prospective_dt,
@@ -426,6 +459,9 @@ class SimulationEngine:
                     else None
                 ),
             )
+
+        self._set_resolution(interval_resolution)
+        self._validate_clock_resolution_binding()
 
         # 1. Advance clock
         clock.advance()
@@ -526,12 +562,9 @@ class SimulationEngine:
                 timestamp,
             )
 
-        # 3. Determine and apply tick resolution
-        self._update_resolution()
-
-        # 4. Strategic logic (runs at all resolutions, but campaign
+        # 3. Strategic logic (runs at all resolutions, but campaign
         #    manager internally gates on strategic tick intervals)
-        if self._resolution == TickResolution.STRATEGIC:
+        if interval_resolution == TickResolution.STRATEGIC:
             self._campaign.update_strategic(
                 ctx,
                 dt,
@@ -647,8 +680,10 @@ class SimulationEngine:
                     else:
                         remaining.append(battle)
                 if remaining:
-                    # Switch to tactical
-                    self._set_resolution(TickResolution.TACTICAL)
+                    logger.debug(
+                        "New battle detected; tactical cadence begins next "
+                        "interval",
+                    )
 
         # 4b. Phase 55a: engagement detection at OPERATIONAL resolution
         # (prevents forces overshooting each other between STRATEGIC ticks).
@@ -656,7 +691,7 @@ class SimulationEngine:
         # deadlock — the closing range guard can hold resolution at
         # OPERATIONAL while forces are still beyond engagement range.
         # Without movement here, units freeze in the 15–30 km gap.
-        if self._resolution == TickResolution.OPERATIONAL:
+        if interval_resolution == TickResolution.OPERATIONAL:
             self._campaign.update_strategic(
                 ctx,
                 dt,
@@ -691,10 +726,17 @@ class SimulationEngine:
                     else:
                         remaining.append(battle)
                 if remaining:
-                    self._set_resolution(TickResolution.TACTICAL)
+                    logger.debug(
+                        "New battle detected; tactical cadence begins next "
+                        "interval",
+                    )
 
         # 5. Tactical logic (active battles)
-        active = self._battle.active_battles
+        active = (
+            self._battle.active_battles
+            if interval_resolution == TickResolution.TACTICAL
+            else ()
+        )
         if active:
             logistics_activity_unit_ids.update(
                 unit_id
@@ -911,7 +953,7 @@ class SimulationEngine:
         self._fuse_sigint()
 
         # Phase 54: era-specific per-tick engine updates
-        era = getattr(ctx.config, "era", "modern")
+        era = ctx.era_runtime_contract.era.value
 
         # Phase 54b: WW1 barrage engine update (advance/drift barrages)
         if era == "ww1":
@@ -964,7 +1006,10 @@ class SimulationEngine:
                     logger.debug("Visual signal update failed", exc_info=True)
 
         # Phase 44c / 56b: Maintenance engine — equipment breakdowns + readiness
-        if ctx.maintenance_engine is not None:
+        if (
+            self._campaign.maintenance_enabled
+            and ctx.maintenance_engine is not None
+        ):
             try:
                 dt_hours = dt / 3600.0
                 temp_c = 20.0
@@ -1376,25 +1421,27 @@ class SimulationEngine:
                     return True
         return False
 
-    def _update_resolution(self) -> None:
-        """Switch tick resolution based on battle state.
+    def _select_resolution(self) -> TickResolution:
+        """Return the next interval resolution without mutating live state.
 
         Phase 55a: Guards against STRATEGIC when forces are closing.
         """
         active = self._battle.active_battles
         if active:
-            self._set_resolution(TickResolution.TACTICAL)
-            return
+            return TickResolution.TACTICAL
         # Phase 55a: Don't escalate to STRATEGIC if forces are approaching
         if self._forces_within_closing_range():
-            if self._resolution != TickResolution.OPERATIONAL:
-                self._set_resolution(TickResolution.OPERATIONAL)
-            return
+            return TickResolution.OPERATIONAL
         # Normal de-escalation
         if self._resolution == TickResolution.TACTICAL:
-            self._set_resolution(TickResolution.OPERATIONAL)
-        elif self._resolution == TickResolution.OPERATIONAL:
-            self._set_resolution(TickResolution.STRATEGIC)
+            return TickResolution.OPERATIONAL
+        if self._resolution == TickResolution.OPERATIONAL:
+            return TickResolution.STRATEGIC
+        return self._resolution
+
+    def _update_resolution(self) -> None:
+        """Select and immediately apply the next interval resolution."""
+        self._set_resolution(self._select_resolution())
 
     def _set_resolution(self, resolution: TickResolution) -> None:
         """Apply a new tick resolution."""
@@ -1440,6 +1487,7 @@ class SimulationEngine:
 
     def get_state(self) -> dict[str, Any]:
         """Capture full engine state for checkpointing."""
+        self._validate_era_runtime_binding()
         if self._ctx.morale_runtime is None:
             if self._ctx.all_units():
                 raise RuntimeError(
@@ -1484,6 +1532,7 @@ class SimulationEngine:
 
     def set_state(self, state: dict[str, Any]) -> None:
         """Restore engine state from a checkpoint dict."""
+        self._validate_era_runtime_binding()
         if not isinstance(state, dict):
             raise ValueError("Checkpoint engine state must be a mapping")
         has_checkpoint_version = "checkpoint_version" in state
@@ -1818,6 +1867,7 @@ class SimulationEngine:
             self._victory.commit_state(victory_plan)
         if recorder_plan is not None:
             self._recorder.commit_state(recorder_plan)
+        self._validate_era_runtime_binding()
 
     def checkpoint(self) -> bytes:
         """Serialize engine state to bytes."""

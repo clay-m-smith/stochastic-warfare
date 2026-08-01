@@ -6,6 +6,21 @@ Phase 56 addresses performance bottlenecks and logistics wiring gaps: O(n^2) ral
 
 **39 new tests. 8 deficits resolved.**
 
+> **Historical supersession (Phase 114 completion, 2026-08-01):** This devlog
+> preserves what Phase 56 changed and claimed, but the listed built-in
+> treatment/repair values were unsourced and did not establish the stated
+> production behavior. The medical construction helper ignored its supplied
+> era config, while `repair_time_hours` was routed through unrelated
+> `EngineeringConfig`; maintenance also advanced from both campaign and engine
+> owners on strategic intervals. Phase 114 removes the unsourced preset
+> numbers, routes strict synthetic/user-supplied durations through one typed
+> runtime contract to `MedicalConfig` and `MaintenanceConfig`, and makes the
+> engine the sole once-per-interval maintenance owner. That proves duration
+> wiring, not historical calibration, automatic casualty admission/facility
+> topology (REM-038/Phase 125), or automatic equipment registration and
+> spares-driven repair (REM-039/Phase 126). Phase 114 is complete and REM-018
+> is closed.
+
 ## What Was Built
 
 ### 56a: Rally STRtree Spatial Index

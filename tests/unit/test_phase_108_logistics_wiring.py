@@ -1153,7 +1153,9 @@ def test_battle_created_and_resolved_after_logistics_marks_open_interval(
     assert source.step() is False
     campaign.engagement_detection_range_m = 1.0
 
-    assert source.battle_manager.active_battles == []
+    active_battles = source.battle_manager.active_battles
+    assert len(active_battles) == 1
+    assert active_battles[0].ticks_executed == 0
     assert {
         unit.entity_id: unit.position
         for unit in source_ctx.all_units()
@@ -1174,7 +1176,9 @@ def test_battle_created_and_resolved_after_logistics_marks_open_interval(
         seed=999_208,
     )
     target.restore(checkpoint)
-    assert target.battle_manager.active_battles == []
+    restored_battles = target.battle_manager.active_battles
+    assert len(restored_battles) == 1
+    assert restored_battles[0].ticks_executed == 0
     assert target_ctx.logistics_runtime.get_state()[
         "unit_interval_disqualified"
     ][UNIT_ID] is True
@@ -1188,15 +1192,36 @@ def test_battle_created_and_resolved_after_logistics_marks_open_interval(
 def test_crossing_call_applies_motion_only_to_first_of_two_open_intervals(
 ) -> None:
     payload = _enabled_payload()
-    payload["tick_duration_seconds"] = 1800.0
+    payload.pop("tick_duration_seconds", None)
+    payload["tick_resolution"] = {
+        "strategic_s": 1800.0,
+        "operational_s": 3600.0,
+        "tactical_s": 300.0,
+    }
     payload["logistics"]["route_templates"] = []
     payload["logistics"]["unit_profiles"][0][
         "initial_inventory"
     ] = [_item(4.0)]
-    ctx, engine = _engine_for(payload, seed=6_308)
+    ctx = _load_payload(payload, seed=6_308)
     blue = next(
         unit for unit in ctx.all_units()
         if unit.entity_id == UNIT_ID
+    )
+    red = ctx.units_by_side["red"][0]
+    red.position = Position(
+        blue.position.easting + 50_000.0,
+        blue.position.northing,
+        blue.position.altitude,
+    )
+    engine = SimulationEngine(
+        ctx,
+        config=EngineConfig(resolution_closing_range_mult=2.0),
+        campaign_config=CampaignConfig(
+            engagement_detection_range_m=15_000.0,
+            enable_maintenance=False,
+            enable_strategic_movement=False,
+            enable_supply_network=True,
+        ),
     )
 
     assert engine.step() is False
@@ -1208,7 +1233,11 @@ def test_crossing_call_applies_motion_only_to_first_of_two_open_intervals(
         blue.position.northing,
         blue.position.altitude,
     )
-    ctx.clock.set_tick_duration(timedelta(seconds=3600.0))
+    red.position = Position(
+        blue.position.easting + 20_000.0,
+        blue.position.northing,
+        blue.position.altitude,
+    )
 
     assert engine.step() is False
     assert ctx.clock.elapsed.total_seconds() == pytest.approx(5400.0)
@@ -1217,7 +1246,11 @@ def test_crossing_call_applies_motion_only_to_first_of_two_open_intervals(
     )
     assert _unit_quantity(ctx) == pytest.approx(4.0)
 
-    ctx.clock.set_tick_duration(timedelta(seconds=1800.0))
+    red.position = Position(
+        blue.position.easting + 50_000.0,
+        blue.position.northing,
+        blue.position.altitude,
+    )
     assert engine.step() is False
     assert ctx.clock.elapsed.total_seconds() == pytest.approx(7200.0)
     assert ctx.logistics_runtime.elapsed_accumulator_seconds == pytest.approx(
@@ -1392,7 +1425,8 @@ def test_disabled_runtime_adds_no_unit_or_battle_enumeration(
     )
 
     assert engine.step() is False
-    assert battle_scan_count == 2
+    # One scan selects the interval resolution; disabled logistics adds none.
+    assert battle_scan_count == 1
 
 
 def test_disabled_runtime_restores_after_elapsed_scenario_time() -> None:
@@ -1552,7 +1586,7 @@ def test_mutated_restore_plan_rejects_without_mutation() -> None:
 @pytest.mark.parametrize(
     ("mutation", "match"),
     [
-        ("v107", r"Unsupported checkpoint version 107; expected 113"),
+        ("v107", r"Unsupported checkpoint version 107; expected 114"),
         (
             "versionless",
             r"Versionless checkpoints cannot restore a logistics-enabled",

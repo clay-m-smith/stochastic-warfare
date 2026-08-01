@@ -49,7 +49,10 @@ CURRENT_ENGINE_TERMINAL_SNAPSHOT: dict[str, tuple[str, str]] = {
     "trafalgar": ("franco_spanish", "morale_collapsed"),
     "waterloo": ("british", "force_destroyed"),
     "cambrai": ("british", "force_destroyed"),
-    "jutland": ("british", "time_expired"),
+    # Phase 114 binds contact discovered in one interval to the next
+    # interval's cadence. The reviewed seed-42 result remains British but now
+    # reaches force_destroyed; multi-seed interpretation remains REM-030.
+    "jutland": ("british", "force_destroyed"),
     "somme_july1": ("german", "time_expired"),
     "kursk": ("soviet", "time_expired"),
     "midway": ("usn", "force_destroyed"),

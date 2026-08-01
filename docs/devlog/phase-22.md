@@ -1,5 +1,14 @@
 # Phase 22: Napoleonic Era
 
+> **Historical supersession (Phase 114 completion, 2026-08-01):** This devlog
+> preserves Phase 22's original record. Its `c2_delay_multiplier=8.0`
+> declaration did not affect production order propagation: the catalog and
+> standalone courier engine were not a loaded, unit-bound communications
+> topology. Phase 114 removes the unsupported key from shipped presets and
+> rejects it explicitly. Production communications assignment and order
+> delivery remain REM-036/Phase 123; the standalone courier tests below do not
+> close that gap. Phase 114 is complete and REM-018 is closed.
+
 ## Summary
 
 Napoleonic era data package (~53 YAML files) + 6 engine extensions (volley fire, melee combat, cavalry charges, Napoleonic formations, courier C2, foraging logistics) + 2 validation scenarios (Austerlitz, Waterloo). 233 new tests, 5,659 total passing.

@@ -1457,6 +1457,19 @@ def _build_effective_inputs(context: Any) -> tuple[dict[str, Any], set[str]]:
             "canonical scenario configuration must be a mapping",
         )
     config = _normalize_scenario_configuration(canonical_config)
+    era_contract = getattr(context, "era_runtime_contract", None)
+    if era_contract is not None:
+        # Phase 114 preserves the authored per-resolution values alongside a
+        # uniform ``tick_duration_seconds`` shorthand.  Earlier runtimes
+        # materialized that shorthand directly into ``tick_resolution``.
+        # Benchmark identity describes executed cadence, so project both
+        # representations onto the effective contract before comparing the
+        # historical reference and current candidate.
+        config["tick_resolution"] = {
+            "strategic_s": era_contract.strategic_s,
+            "operational_s": era_contract.operational_s,
+            "tactical_s": era_contract.tactical_s,
+        }
     for side in config.get("sides", []):
         for key in ("commander_profile", "doctrine_template"):
             value = side.get(key)

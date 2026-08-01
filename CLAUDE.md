@@ -7,12 +7,14 @@ models, a headless Python engine, FastAPI service, and React frontend. Modern
 warfare is the primary data package, with four historical-era packages and
 integrated maritime warfare.
 
-**Current status**: Phases 105 through 113 are complete, including the
-validation, documentation trust, and morale-ownership remediations. Phase 114
-is next and remains unstarted, so Block 12 remains in progress. See
-`docs/devlog/phase-113.md`,
-`docs/specs/morale-state-ownership.md`, and `docs/remediation-backlog.md` for
-exact evidence and unresolved gaps.
+**Current status**: Phases 105 through 114 and Block 12 are complete. Phase
+114's typed era-runtime contract passes documentation, cross-document review,
+and postmortem; REM-018 is closed. The owner accepted its timing evidence only
+with an explicit contention qualification and deferred clean confirmation
+until all cores are free; no uncontended pass is claimed. See
+`docs/devlog/phase-114.md`,
+`docs/specs/era-override-execution.md`, and `docs/remediation-backlog.md` for
+the exact evidence, closure gates, and unresolved follow-ups.
 
 ## Python & Package Management
 **Requires Python >=3.12** (pinned to 3.12.10 via `.python-version`).
@@ -51,13 +53,12 @@ focused profile, not a seventh partition. The routine 73 Easting paired gate
 uses the version-3 typed, morale-neutral control-plane workload and does not
 prove default morale behavior or historical fidelity; Golan remains manual.
 
-The current Phase 113 audit enumerates exactly 11,824 nodes:
-`standard` 11,367, `slow-only` 109, `benchmark-only` 62, `slow-benchmark` 4,
-API 241, and E2E 41. All 11,824 passed with zero failures/errors/skips and six
-declared warnings. Local API/E2E plus one FastMCP standard node used the
-declared uvloop qualification; hosted CI is the authoritative default-policy
-control for that local host/tool-loop boundary. Historical Phase 112 execution
-evidence is recorded in its devlog.
+The Phase 114 closure audit enumerates exactly 11,903 nodes:
+`standard` 11,445, `slow-only` 109, `benchmark-only` 62, `slow-benchmark` 4,
+API 242, and E2E 41. All 11,903 passed with zero failures/errors/skips and six
+classified warnings. The Phase 114 devlog records the exact partition,
+qualification, final-tree rerun, scenario, and static-check evidence. Phase
+114 is complete and REM-018 is closed.
 
 ## Architecture
 
@@ -177,7 +178,7 @@ production-evidence requirements.
 | `docs/brainstorm-block11.md` | Block 11 design thinking (golden scenarios, engine validation through UI) |
 | `docs/development-phases-block11.md` | Block 11 roadmap and polish history (98–104) |
 | `docs/development-phases-block12.md` | Block 12 phase roadmap (105–114), integrity remediation |
-| `docs/development-phases-block13.md` | Block 13 roadmap (115–121), queued integrity follow-ups |
+| `docs/development-phases-block13.md` | Block 13 roadmap (115–127), queued integrity follow-ups |
 | `docs/remediation-backlog.md` | Audited implementation gaps and completion evidence |
 | `docs/specs/project-structure.md` | Full package tree, module decomposition, dependency graph |
 | `docs/devlog/` | Per-phase implementation logs (`index.md` tracks status) |
@@ -208,8 +209,8 @@ All phase details are in `docs/devlog/` (one file per phase). Per-phase tables i
 | Block 9 | 83–91 | Profiling, spatial culling, LOD, Numba JIT, SoA data layer, per-side parallelism, benchmarking | ~279 |
 | Block 10 | 92–97 | UI depth: analytics endpoints, dashboard charts, map overlays, calibration editor, event filtering, data catalogs | ~120 |
 | Block 11 | 98–104 | Golden scenarios plus OOB, engine, and deployment polish | ~107 |
-| Block 12 | 105–114 | Production-path integrity remediation; Phases 105–113 complete, Phase 114 unstarted | 11,824 audited passes; 6 declared warnings |
-| Block 13 | 115–121 | Queued sensing, checkpoint, historical-validation, performance-semantics, concealment, surrender/POW, and event-time follow-ups | Planned |
+| Block 12 | 105–114 | Production-path integrity remediation; complete | 11,903 audited closure passes; 6 classified warnings |
+| Block 13 | 115–127 | Queued sensing, checkpoint, historical-validation, performance-semantics, concealment, surrender/POW, event-time, battle-topology, C2, CBRN-action, medical, maintenance, and validation-era follow-ups | Planned |
 
 ### Block 11 Detail (COMPLETE)
 

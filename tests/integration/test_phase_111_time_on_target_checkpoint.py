@@ -107,11 +107,6 @@ def _quantity_aware_engine(
     *,
     seed: int,
 ) -> tuple[SimulationEngine, SimulationRecorder]:
-    context = ScenarioLoader(DATA_DIR).load(
-        SCENARIO_PATH,
-        seed=seed,
-        scenario_config=_scenario_config(empty=True),
-    )
     payload = _scenario_config().model_dump(mode="python")
     first = payload["indirect_fire"]["time_on_target_missions"][0]
     first["batteries"] = [first["batteries"][0]]
@@ -126,6 +121,15 @@ def _quantity_aware_engine(
         "tactical_s": 5.0,
     }
     config = CampaignScenarioConfig.model_validate(payload)
+    loader_payload = _scenario_config(empty=True).model_dump(mode="python")
+    loader_payload["tick_resolution"] = copy.deepcopy(
+        payload["tick_resolution"],
+    )
+    context = ScenarioLoader(DATA_DIR).load(
+        SCENARIO_PATH,
+        seed=seed,
+        scenario_config=CampaignScenarioConfig.model_validate(loader_payload),
+    )
 
     original = context.unit_weapons[BATTERY_IDS[0]][0]
     expanded = replace(
@@ -992,15 +996,15 @@ def test_corrupt_tot_authorities_are_rejected_atomically(
 
 @pytest.mark.parametrize(
     "invalid_version",
-    (112, 114, True, None),
-    ids=("version-112", "future", "boolean", "null"),
+    (113, 115, True, None),
+    ids=("version-113", "future", "boolean", "null"),
 )
-def test_checkpoint_version_113_is_exact_and_atomic(
+def test_checkpoint_version_114_is_exact_and_atomic(
     invalid_version: int | bool | None,
 ) -> None:
     source, _ = _engine(seed=42)
     invalid = copy.deepcopy(source.get_state())
-    assert invalid["checkpoint_version"] == 113
+    assert invalid["checkpoint_version"] == 114
     invalid["checkpoint_version"] = invalid_version
 
     _assert_atomic_rejection(

@@ -19,6 +19,7 @@ import pytest
 from stochastic_warfare.core.events import EventBus
 from stochastic_warfare.core.types import Domain, Position
 from stochastic_warfare.entities.base import Unit, UnitStatus
+from tests.conftest import bind_test_era_runtime
 
 
 # ---------------------------------------------------------------------------
@@ -125,7 +126,7 @@ def _make_ctx(
 
     ctx.active_units = active_units
     ctx.side_names = side_names
-    return ctx
+    return bind_test_era_runtime(ctx)
 
 
 # ===========================================================================

@@ -35,6 +35,7 @@ from stochastic_warfare.build_identity import (
 )
 from stochastic_warfare.core.strict_yaml import load_yaml_unique
 from stochastic_warfare.core.types import Position
+from stochastic_warfare.core.era import EraConfig, get_era_config
 from stochastic_warfare.simulation.battle import BattleConfig
 from stochastic_warfare.simulation.calibration import CalibrationSchema
 from stochastic_warfare.simulation.campaign import CampaignConfig
@@ -43,6 +44,7 @@ from stochastic_warfare.simulation.engine import (
     SimulationEngine,
     SimulationRunResult,
 )
+from stochastic_warfare.simulation.era_runtime import EraRuntimeContract
 from stochastic_warfare.simulation.recorder import SimulationRecorder
 from stochastic_warfare.simulation.scenario import (
     CampaignScenarioConfig,
@@ -51,6 +53,7 @@ from stochastic_warfare.simulation.scenario import (
     SimulationContext,
     load_campaign_scenario_config,
     parse_campaign_scenario_config,
+    parse_scenario_start_time,
 )
 from stochastic_warfare.simulation.victory import (
     ObjectiveState,
@@ -638,11 +641,25 @@ class PreparedVariant:
     config_json: str
     config_fingerprint: str
     doctrine_side_assignments: tuple[DoctrineSideAssignment, ...]
+    era_config_json: str
+    era_runtime_contract_json: str
 
     @property
     def config(self) -> CampaignScenarioConfig:
         """Return a fresh typed copy of the effective configuration."""
         return CampaignScenarioConfig.model_validate_json(self.config_json)
+
+    @property
+    def era_config(self) -> EraConfig:
+        """Return the isolated era configuration frozen at preparation."""
+        return EraConfig.model_validate_json(self.era_config_json)
+
+    @property
+    def era_runtime_contract(self) -> EraRuntimeContract:
+        """Return the effective era behavior frozen at preparation."""
+        return EraRuntimeContract.model_validate_json(
+            self.era_runtime_contract_json,
+        )
 
 
 @dataclass(frozen=True)
@@ -809,6 +826,8 @@ class PreparedScenario:
             seed=seed,
             scenario_config=effective,
             doctrine_side_assignments=(selected.doctrine_side_assignments),
+            era_config=selected.era_config,
+            era_runtime_contract=selected.era_runtime_contract,
         )
         loaded_side_ids = tuple(context.units_by_side)
         if loaded_side_ids != self.side_ids:
@@ -1039,6 +1058,45 @@ class SimulationRuntimeFactory:
                 f"Analysis variant IDs must be unique: {variant_ids!r}",
             )
 
+        effective_variants: list[
+            tuple[
+                AnalysisVariant,
+                CampaignScenarioConfig,
+                EraConfig,
+                EraRuntimeContract,
+            ]
+        ] = []
+        for variant in variants:
+            patch = variant.calibration_patch.to_sparse_patch(
+                mode="python",
+            )
+            effective = load_campaign_scenario_config(
+                None,
+                patch,
+                source_config=source_config,
+            )
+            era_config = get_era_config(effective.era)
+            era_runtime_contract = EraRuntimeContract.resolve(
+                selected_registry_id=effective.era,
+                era_config=era_config,
+                strategic_s=effective.tick_resolution.strategic_s,
+                operational_s=effective.tick_resolution.operational_s,
+                tactical_s=effective.tick_resolution.tactical_s,
+                tick_duration_seconds=effective.tick_duration_seconds,
+            )
+            era_runtime_contract.validate_execution_horizon(
+                start=parse_scenario_start_time(effective.date),
+                duration_hours=effective.duration_hours,
+            )
+            effective_variants.append(
+                (
+                    variant,
+                    effective,
+                    era_config,
+                    era_runtime_contract,
+                ),
+            )
+
         authored_roster = tuple(
             (
                 side.side,
@@ -1092,15 +1150,12 @@ class SimulationRuntimeFactory:
             excluded_relative_paths=data_revision_exclusions,
         )
         prepared_variants: list[PreparedVariant] = []
-        for variant in variants:
-            patch = variant.calibration_patch.to_sparse_patch(
-                mode="python",
-            )
-            effective = load_campaign_scenario_config(
-                None,
-                patch,
-                source_config=source_config,
-            )
+        for (
+            variant,
+            effective,
+            era_config,
+            era_runtime_contract,
+        ) in effective_variants:
             doctrine_side_assignments = (
                 variant.doctrine_variant.assignments if variant.doctrine_variant is not None else ()
             )
@@ -1113,10 +1168,20 @@ class SimulationRuntimeFactory:
                             "scenario_config": effective.model_dump(
                                 mode="json",
                             ),
+                            "era_config": era_config.model_dump(
+                                mode="json",
+                            ),
+                            "era_runtime_contract": (
+                                era_runtime_contract.model_dump(mode="json")
+                            ),
                             "doctrine_side_assignments": (doctrine_side_assignments),
                         },
                     ),
                     doctrine_side_assignments=doctrine_side_assignments,
+                    era_config_json=era_config.model_dump_json(),
+                    era_runtime_contract_json=(
+                        era_runtime_contract.model_dump_json()
+                    ),
                 ),
             )
 

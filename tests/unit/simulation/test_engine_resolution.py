@@ -70,6 +70,7 @@ def _make_resolution_engine(
     from stochastic_warfare.simulation.engine import SimulationEngine
 
     engine._forces_within_closing_range = lambda: SimulationEngine._forces_within_closing_range(engine)
+    engine._select_resolution = lambda: SimulationEngine._select_resolution(engine)
     engine._update_resolution = lambda: SimulationEngine._update_resolution(engine)
     engine._set_resolution = lambda r: SimulationEngine._set_resolution(engine, r)
     engine._compute_battle_positions = lambda ctx: SimulationEngine._compute_battle_positions(engine, ctx)

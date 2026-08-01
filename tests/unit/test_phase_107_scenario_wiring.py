@@ -359,8 +359,12 @@ def test_arrived_reinforcement_fires_through_production_battle_path() -> None:
     dynamic_id = "reinforce_blue_0000_m1a2_0000"
     battle = engine.battle_manager.active_battles[0]
     assert dynamic_id in battle.unit_ids
-    assert battle.ticks_executed == 1
+    assert battle.ticks_executed == 0
     assert battle.start_time.isoformat() == "2024-06-15T07:00:00+00:00"
+
+    engine.step()
+
+    assert battle.ticks_executed == 1
     main_gun = next(
         weapon
         for weapon, _ in ctx.unit_weapons[dynamic_id]
@@ -628,7 +632,7 @@ def _empty_direct_engine(
     context = SimulationContext(
         config=config,
         clock=SimulationClock(
-            start=datetime(2024, 1, 1, tzinfo=timezone.utc),
+            start=datetime(2024, 6, 15, 6, 0, tzinfo=timezone.utc),
             tick_duration=timedelta(hours=1),
         ),
         rng_manager=rng_manager,
@@ -758,7 +762,7 @@ def test_current_checkpoint_has_one_canonical_morale_owner() -> None:
     state = _json_checkpoint(engine)
     context_state = state["context"]
 
-    assert state["checkpoint_version"] == 113
+    assert state["checkpoint_version"] == 114
     assert "morale_states" not in context_state
     assert "morale_machine" not in context_state
     assert set(context_state["morale_runtime"]) == {
@@ -792,7 +796,7 @@ def test_campaign_topology_rejection_precedes_context_restore() -> None:
     assert _json_checkpoint(engine) == before
 
 
-@pytest.mark.parametrize("unsupported_version", [112, 114])
+@pytest.mark.parametrize("unsupported_version", [113, 115])
 def test_unknown_checkpoint_version_rejects_atomically(
     unsupported_version: int,
 ) -> None:
@@ -1518,7 +1522,7 @@ def test_arrived_legacy_reinforcement_checkpoint_migrates_without_repeat(
 
     migrated_checkpoint = target.checkpoint()
     migrated_state = json.loads(migrated_checkpoint.decode("utf-8"))
-    assert migrated_state["checkpoint_version"] == 113
+    assert migrated_state["checkpoint_version"] == 114
     migrated_first_wave = migrated_state["campaign"]["reinforcements"][0]
     assert migrated_first_wave["legacy_ids"] is True
     assert migrated_first_wave["wave_ordinal"] == 0

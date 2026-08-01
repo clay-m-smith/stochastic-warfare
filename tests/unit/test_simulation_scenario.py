@@ -33,7 +33,7 @@ from stochastic_warfare.simulation.scenario import (
     TerrainConfig,
     TickResolutionConfig,
     VictoryConditionConfig,
-    _parse_start_time,
+    parse_scenario_start_time,
 )
 
 from tests.conftest import DEFAULT_SEED, POS_ORIGIN, TS
@@ -585,22 +585,22 @@ class TestParseStartTime:
     """ISO datetime parsing."""
 
     def test_full_iso_with_tz(self) -> None:
-        dt = _parse_start_time("2024-06-15T12:00:00+00:00")
+        dt = parse_scenario_start_time("2024-06-15T12:00:00+00:00")
         assert dt.year == 2024
         assert dt.hour == 12
         assert dt.tzinfo is not None
 
     def test_iso_without_tz_defaults_utc(self) -> None:
-        dt = _parse_start_time("2024-06-15T12:00:00")
+        dt = parse_scenario_start_time("2024-06-15T12:00:00")
         assert dt.tzinfo == timezone.utc
 
     def test_date_only(self) -> None:
-        dt = _parse_start_time("2024-06-15")
+        dt = parse_scenario_start_time("2024-06-15")
         assert dt.hour == 0
         assert dt.tzinfo == timezone.utc
 
     def test_z_suffix(self) -> None:
-        dt = _parse_start_time("2024-06-15T12:00:00Z")
+        dt = parse_scenario_start_time("2024-06-15T12:00:00Z")
         assert dt.tzinfo is not None
 
 

@@ -10,6 +10,8 @@ import inspect
 
 import pytest
 
+from tests.conftest import bind_test_era_runtime
+
 
 # ---------------------------------------------------------------------------
 # 22 engines added in Phase 72a
@@ -219,7 +221,18 @@ class TestBehavioralRegistration:
         ctx.event_bus = EventBus()
         ctx.calibration = CalibrationSchema()
         ctx.era_config = None
-        ctx.config = SimpleNamespace(model_dump=lambda: {})
+        ctx.config = SimpleNamespace(
+            date="2024-01-01",
+            duration_hours=24.0,
+            era="modern",
+            tick_resolution=SimpleNamespace(
+                strategic_s=3600.0,
+                operational_s=300.0,
+                tactical_s=5.0,
+            ),
+            tick_duration_seconds=None,
+            model_dump=lambda: {},
+        )
         ctx.units_by_side = {}
         ctx.morale_states = {}
         ctx.equipment_resolutions = {}
@@ -227,7 +240,7 @@ class TestBehavioralRegistration:
         all_engines = PRE_EXISTING_ENGINES + PHASE_72A_ENGINES
         for eng in all_engines:
             setattr(ctx, eng, None)
-        return ctx
+        return bind_test_era_runtime(ctx)
 
     def test_get_state_includes_mock_engine(self):
         """SimulationContext.get_state() calls get_state on registered engines."""

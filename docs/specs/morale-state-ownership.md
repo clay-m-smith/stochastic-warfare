@@ -6,6 +6,11 @@ Verified Phase 113 production contract. The corrected documentation audit and
 [Phase 113 postmortem](../devlog/phase-113.md#postmortem) passed on 2026-08-01;
 Phase 113 is complete and REM-019 is closed.
 
+Phase 114 extends the engine checkpoint to format 114 by adding the effective
+era runtime contract and clock/resolution validation. It does not change or
+duplicate the morale envelope below: current format 114 still contains exactly
+one `morale_runtime`, and `RNGManager` remains the sole MORALE-stream owner.
+
 ## Purpose and scope
 
 Phase 113 closes REM-019 by replacing the independent mutable
@@ -243,7 +248,12 @@ that condition. A no-crash run, source search, event log, or constructor call
 is not sufficient evidence. Firing behavior may be checked for consistency but
 is not the causal acceptance proof for this ownership remediation.
 
-## Checkpoint format 113
+## Phase 113 checkpoint format
+
+> **Current-format note:** This section records the Phase 113 format transition
+> historically. The current engine writes format 114, which preserves this
+> exact morale topology and adds the independent Phase 114 era-runtime
+> contract. Explicit format 113 now rejects as an older version.
 
 `SimulationEngine` advances the explicit format to `113`.
 

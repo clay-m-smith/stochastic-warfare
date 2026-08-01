@@ -1,14 +1,18 @@
 # Development Phases - Block 13
 
-**Status:** Planned follow-up handoff; implementation has not started
+**Phase range:** 115 through 127
+
+**Status:** Planned follow-up handoff; no Block 13 phase has started
 
 Block 13 owns integrity deficits discovered while specifying and validating
-Phases 112 and 113. It is not part of either implementation or the Block 12
-completion claim. Each phase must follow the repository's full specification,
-production-red, implementation, validation, documentation, postmortem, and
-single-commit workflow before its remediation item can close.
+Phases 112 through 114. It is not part of those implementations or the Block
+12 completion claim. Each phase must follow the repository's full
+specification, production-red, implementation, validation, documentation,
+postmortem, and single-commit workflow before its remediation item can close.
 
 ## Phase 115 - Sensing-Aware Tactical Standoff
+
+Status: **Not started**. REM-028 remains queued.
 
 Replace unrestricted catalog-range movement holding with a typed targeting
 precondition that distinguishes physical weapon reach from owner-side sensing,
@@ -21,6 +25,8 @@ production-exercised, outcome-affecting, and checkpoint/exposure evidence.
 
 ## Phase 116 - Fog-of-War Contact Continuation
 
+Status: **Not started**. REM-029 remains queued.
+
 Restore complete nonempty `SideWorldView` contact state through the
 fog-of-war-owned checkpoint boundary. Validate side/contact topology,
 `ContactInfo`, nested track state, logical update times, and DETECTION RNG
@@ -31,6 +37,8 @@ decay, detection updates, common-operating-picture behavior, subsequent
 events, and whole-context checkpoint equality.
 
 ## Phase 117 - Historical Outcome-Envelope Integrity
+
+Status: **Not started**. REM-030 remains queued.
 
 Replace catalog-wide winner tables and legacy-runner comparisons presented as
 historical accuracy with one typed, provenance-bearing production validation
@@ -66,6 +74,8 @@ or same-data calibrated result is described as historical or predictive
 validation.
 
 ## Phase 118 - Performance-Flag Semantic Integrity
+
+Status: **Not started**. REM-031 remains queued.
 
 Replace Block 9's one-sided authored-configuration checks with a typed, paired
 production contract for `enable_detection_culling`,
@@ -137,3 +147,105 @@ Exit criteria: REM-034 is closed with declared, loaded, wired, realistic
 production-exercised, outcome-affecting, and persisted/exposed evidence for
 aggregate engagement/damage and auto-resolve destruction timestamps, including
 recorder/API/timeline output and deterministic checkpoint continuation.
+
+## Phase 122 - Battle Membership Topology Integrity
+
+Status: **Not started**. REM-035 remains queued.
+
+Replace the one-battle-per-side-pair/global-roster shortcut with one typed,
+deterministic battle-membership owner. Build membership from explicit spatial,
+command, and participation rules; support spatially distinct concurrent
+battles between the same sides; and prevent one unit from entering conflicting
+active battles. Route resolution, movement, combat, logistics activity,
+aggregation, and victory reads through the exact topology.
+
+Exit criteria: REM-035 is closed with declared, loaded, wired, realistic
+production-exercised, outcome-affecting, and persisted/exposed evidence for
+deterministic battle creation, membership, merge/split/termination behavior,
+and fresh/in-place checkpoint continuation. Correct membership is mandatory,
+so an enabled/disabled correctness toggle is N/A.
+
+## Phase 123 - Production C2 Communications Topology
+
+Status: **Not started**. REM-036 remains queued.
+
+Load exact communications equipment and link/relay topology onto production
+units, HQs, and sides. Validate ownership, capabilities, range, latency,
+reliability, and availability before runtime construction, then route order
+issue, propagation, acknowledgement, degradation, interception, and failure
+through that live network. Do not infer communications from era or multiply a
+delay on an absent path.
+
+Exit criteria: REM-036 is closed with declared, loaded, wired,
+enabled/disabled, realistic production-exercised, outcome-affecting, and
+persisted/exposed evidence for connected, disconnected, degraded, and
+destroyed-link order delivery, including deterministic continuation and
+recorder/API exposure.
+
+## Phase 124 - Scheduled CBRN and Nuclear Action Integrity
+
+Status: **Not started**. REM-037 remains queued.
+
+Define strict scheduled CBRN actions with a real owner, delivery asset and
+inventory, target, logical time, agent or nuclear yield, authorization, and
+era/capability gate. Execute them from the production session loop and commit
+inventory, effects, events, and action lifecycle together. Construction or a
+direct call to `NuclearEffectsEngine` is not scheduled-employment evidence.
+
+Exit criteria: REM-037 is closed with declared, loaded, wired,
+enabled/disabled, realistic production-exercised, outcome-affecting, and
+persisted/exposed evidence for available/unavailable and successful/failed
+actions, exact RNG ownership, atomic rejection, recorder/API output, and
+checkpoint continuation.
+
+## Phase 125 - Automatic Medical Lifecycle Integrity
+
+Status: **Not started**. REM-038 remains queued.
+
+Load medical facilities, staff, capacity, supplies, evacuation routes, and
+triage policy, then commit a real battle casualty once into authoritative
+personnel and medical state. Route evacuation, admission, treatment,
+return-to-duty, death, and resource/capacity failures through logical time.
+Public test setup of a facility and casualty remains a boundary proof, not the
+automatic production lifecycle.
+
+Exit criteria: REM-038 is closed with declared, loaded, wired,
+enabled/disabled, realistic production-exercised, outcome-affecting, and
+persisted/exposed evidence from battle casualty through final medical
+disposition, including exact unit/crew strength, resources, events, API, and
+checkpoint continuation.
+
+## Phase 126 - Automatic Maintenance and Spares Lifecycle Integrity
+
+Status: **Not started**. REM-039 remains queued.
+
+Register each live loadout equipment instance automatically with one
+maintenance/readiness owner, including reinforcement and aggregation paths.
+Route diagnosis, repair priority, parts reservation and consumption, repair
+start/completion/cancellation, and failure through real Class IX inventory and
+logistics reachability. Do not pass a literal parts amount to simulate a
+production logistics transaction.
+
+Exit criteria: REM-039 is closed with declared, loaded, wired,
+enabled/disabled, realistic production-exercised, outcome-affecting, and
+persisted/exposed evidence for breakdown-to-repair with parts
+available/unavailable, atomic rollback, exact RNG accounting, recorder/API
+output, and checkpoint continuation. REM-020 and REM-021 retain their broader
+activity-demand and inventory-authority scope.
+
+## Phase 127 - Validation Era Propagation Integrity
+
+Status: **Not started**. REM-040 remains queued.
+
+Remove the silent modern-era fallback from the validation-only campaign
+conversion. Preserve exact normalized era and every required production source
+field through one typed projection, and resolve the selected era only at the
+authoritative runtime factory. Prevent future production fields from being
+silently dropped by a duplicated validation model.
+
+Exit criteria: REM-040 is closed with declared, loaded, wired, realistic
+production-exercised, outcome-affecting, and persisted/exposed evidence that a
+non-modern validation campaign retains its gates, catalog/loadout selection,
+effective era contract, fingerprint, artifact provenance, and deterministic
+continuation relative to an explicit modern control. Enabled/disabled is N/A
+because exact source identity is mandatory.

@@ -441,33 +441,24 @@ class TestMaintenanceReadiness:
         engine = MaintenanceEngine(bus, rng)
         assert engine.get_unit_readiness("nonexistent") == 1.0
 
-    def test_campaign_maintenance_delegates(self):
-        """CampaignManager._run_maintenance delegates to engine."""
+    def test_campaign_exposes_enabled_maintenance_policy(self):
+        """The engine can read the campaign maintenance policy."""
         from stochastic_warfare.simulation.campaign import CampaignManager
 
-        clock = SimulationClock(
-            start=TS, tick_duration=timedelta(seconds=10),
-        )
-        maint = MagicMock()
-        ctx = SimpleNamespace(
-            maintenance_engine=maint,
-            weather_engine=None,
-            clock=clock,
-        )
-
         cm = CampaignManager.__new__(CampaignManager)
-        cm._run_maintenance(ctx, dt=60.0)
+        cm._config = SimpleNamespace(enable_maintenance=True)
 
-        maint.update.assert_called_once()
-        maint.complete_repairs.assert_called_once()
+        assert cm.maintenance_enabled is True
+        assert not hasattr(cm, "_run_maintenance")
 
-    def test_no_maintenance_engine_no_error(self):
-        """No maintenance engine → _run_maintenance is a no-op."""
+    def test_campaign_exposes_disabled_maintenance_policy(self):
+        """The runtime owner can disable its all-resolution cadence."""
         from stochastic_warfare.simulation.campaign import CampaignManager
 
-        ctx = SimpleNamespace(maintenance_engine=None)
         cm = CampaignManager.__new__(CampaignManager)
-        cm._run_maintenance(ctx, dt=60.0)  # should not raise
+        cm._config = SimpleNamespace(enable_maintenance=False)
+
+        assert cm.maintenance_enabled is False
 
 
 # =========================================================================
@@ -476,40 +467,43 @@ class TestMaintenanceReadiness:
 
 
 class TestEraOverrides:
-    """Era-specific physics_overrides for medical/engineering."""
+    """Shipped eras do not invent unsupported runtime physics values."""
 
     def test_modern_default_medical(self):
         """Modern era has no medical overrides → defaults apply."""
         from stochastic_warfare.core.era import MODERN_ERA_CONFIG
+
         po = MODERN_ERA_CONFIG.physics_overrides
-        assert "treatment_hours_minor" not in po
+        assert po.is_empty
+        assert po.model_dump(mode="json") == {}
 
-    def test_ww2_medical_overrides(self):
+    def test_ww2_has_no_unsourced_runtime_physics(self):
         from stochastic_warfare.core.era import WW2_ERA_CONFIG
+
         po = WW2_ERA_CONFIG.physics_overrides
-        assert po["treatment_hours_minor"] == 3.0
-        assert po["treatment_hours_serious"] == 12.0
-        assert po["treatment_hours_critical"] == 36.0
-        assert po["repair_time_hours"] == 6.0
+        assert po.is_empty
+        assert po.model_dump(mode="json") == {}
 
-    def test_ww1_medical_overrides(self):
+    def test_ww1_has_no_unsourced_runtime_physics(self):
         from stochastic_warfare.core.era import WW1_ERA_CONFIG
+
         po = WW1_ERA_CONFIG.physics_overrides
-        assert po["treatment_hours_minor"] == 4.0
-        assert po["treatment_hours_serious"] == 24.0
+        assert po.is_empty
+        assert po.model_dump(mode="json") == {}
 
-    def test_napoleonic_medical_overrides(self):
+    def test_napoleonic_has_no_unsourced_runtime_physics(self):
         from stochastic_warfare.core.era import NAPOLEONIC_ERA_CONFIG
-        po = NAPOLEONIC_ERA_CONFIG.physics_overrides
-        assert po["treatment_hours_minor"] == 8.0
-        assert po["treatment_hours_serious"] == 48.0
 
-    def test_ancient_medical_overrides(self):
+        po = NAPOLEONIC_ERA_CONFIG.physics_overrides
+        assert po.is_empty
+        assert po.model_dump(mode="json") == {}
+
+    def test_ancient_has_no_unsourced_runtime_physics(self):
         from stochastic_warfare.core.era import ANCIENT_MEDIEVAL_ERA_CONFIG
+
         po = ANCIENT_MEDIEVAL_ERA_CONFIG.physics_overrides
-        assert po["treatment_hours_minor"] == 24.0
-        assert po["treatment_hours_serious"] == 168.0
-        assert po["treatment_hours_critical"] == 336.0
+        assert po.is_empty
+        assert po.model_dump(mode="json") == {}
 
 
 class TestWeibullPerSubsystem:

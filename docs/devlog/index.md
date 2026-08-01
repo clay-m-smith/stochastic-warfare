@@ -136,6 +136,7 @@ Rolling record of implementation decisions, changes, and lessons learned across 
 | 111 | Time-on-Target Execution | **Complete** | [phase-111.md](phase-111.md) |
 | 112 | Validation & Documentation Trust | **Complete** | [phase-112.md](phase-112.md) |
 | 113 | Morale State Ownership | **Complete** | [phase-113.md](phase-113.md) |
+| 114 | Era Override Execution | **Complete** | [phase-114.md](phase-114.md) |
 
 ## Post-MVP Refinement Index
 

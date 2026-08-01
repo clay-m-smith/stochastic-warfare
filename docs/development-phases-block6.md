@@ -717,6 +717,15 @@ Expand ROE coverage, fix data gaps, replace proxy units.
 
 ## Phase 56: Performance & Logistics — COMPLETE
 
+> **Historical supersession (Phase 114):** Phase 56's per-era treatment/repair
+> values were unsourced and its provisional loader path did not apply the
+> metadata correctly (`repair_time_hours` was routed toward the unrelated
+> engineering config). Phase 114 removes those built-in numbers, replaces the
+> arbitrary dictionary with strict sparse declarations, and wires supported
+> custom values through one effective runtime contract to `MedicalEngine` and
+> `MaintenanceEngine`. This correction does not reopen Phase 56's other
+> completed work or claim automatic casualty/repair lifecycles.
+
 **Goal**: Rally spatial indexing, maintenance → readiness wiring, per-era medical/engineering data, Weibull per-subsystem, VLS exhaustion enforcement, naval posture detection, gas casualty calibration, blockade throughput.
 
 **Status**: **COMPLETE** — 39 new tests. 8 deficits resolved.

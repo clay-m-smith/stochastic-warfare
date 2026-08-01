@@ -39,7 +39,7 @@ Audit baseline: 2026-07-28 at `68acd4b`
 | REM-015 | P2 | 112 | Documentation | Strict documentation build was not part of the verified baseline | **Closed early** | Yes | N/A | Yes | N/A | Yes | N/A | N/A | [Phase 105 verification](devlog/phase-105.md#final-broader-verification) |
 | REM-016 | P1 | TBD | Aggregation | Disaggregation recreates every constituent as base `Unit` and does not restore captured weapon, sensor, or supply attachments | Queued | Yes | Yes | Yes | N/A | - | - | - | Subclass/loadout round trip across aggregation |
 | REM-017 | P0 | 112 | Analysis tooling | Scenario batches can accept empty invalid rosters and silently turn unsupported metrics into zero | **Closed** | Yes | Yes | Yes | N/A | Yes | Yes | Yes | [Phase 112](devlog/phase-112.md#postmortem) |
-| REM-018 | P1 | 114 | Era overrides | `physics_overrides` and `tick_resolution_overrides` are declared and documented but have no production consumer | Queued | Yes | Yes | - | N/A | - | - | Yes | Typed override changes its production engine/clock behavior |
+| REM-018 | P1 | 114 | Era overrides | `physics_overrides` and `tick_resolution_overrides` were persisted without a production consumer at the audit baseline | **Closed** | Yes | Yes | Yes | Yes | Yes | Yes | Yes | [Phase 114](devlog/phase-114.md#postmortem) |
 | REM-019 | P1 | 113 | Morale state | `SimulationContext.morale_states` and `MoraleStateMachine` are independently mutable and can diverge after rout or aggregation paths | **Closed** | Yes | Yes | Yes | N/A | Yes | Yes | Yes | [Phase 113](devlog/phase-113.md#postmortem) |
 | REM-020 | P1 | TBD | Logistics | March/combat consumption is computed with fabricated defaults and discarded | Queued | Yes | Yes | - | - | - | - | - | Typed activity demand changes real inventory once per logical interval |
 | REM-021 | P1 | TBD | Logistics | Abstract Class III/V inventory is independent of live entity fuel and weapon magazines | Queued | Yes | Yes | - | - | - | - | Yes | One explicit authority or conservative synchronization contract |
@@ -56,6 +56,12 @@ Audit baseline: 2026-07-28 at `68acd4b`
 | REM-032 | P1 | 119 | Guerrilla concealment | Populated-area blend probability was mapped to morale-owned `ROUTING`, while the production context exposes no matching population query or concealed-unit owner | Queued | Yes | Yes | - | - | - | - | - | Typed non-morale concealment changes targetability and persists/exposes its lifecycle |
 | REM-033 | P1 | 120 | Surrender/POW state | A public rout helper emitted `SurrenderEvent` and a synthetic POW count without changing authoritative morale/status; no production captor or prisoner lifecycle consumes it | Queued | Yes | Yes | - | N/A | - | - | - | Typed runtime surrender creates captor-owned prisoners and persists/exposes the complete lifecycle |
 | REM-034 | P1 | 121 | Event time | Aggregate combat and auto-resolve publish exposed events with `datetime.min` instead of authoritative simulation time | Queued | Yes | Yes | - | N/A | - | - | Yes | Production aggregate/auto-resolve events use exact logical clock time and persist/replay |
+| REM-035 | P1 | 122 | Battle topology | One close pair creates one side-pair battle containing every active unit on both sides and prevents a second concurrent battle for that side pair | Queued | Yes | Yes | - | N/A | Yes | Yes | - | Spatially correct, deterministic multi-battle membership with exact continuation |
+| REM-036 | P1 | 123 | C2 topology | Catalog communications and standalone C2 engines have no production-loaded, unit-bound communications topology | Queued | Yes | - | - | - | - | - | - | Loaded communications change production order delivery and persist/expose the live topology |
+| REM-037 | P1 | 124 | CBRN action | CBRN configuration constructs a nuclear sub-engine, but no typed scheduled chemical/biological/radiological/nuclear action reaches it | Queued | Yes | Yes | - | - | - | - | - | Scheduled action uses real delivery/target topology and changes production effects |
+| REM-038 | P1 | 125 | Medical lifecycle | Production does not create medical facilities or admit battle casualties automatically | Queued | Yes | - | - | - | - | - | - | Battle casualty enters a loaded care/evacuation lifecycle and persists/exposes its disposition |
+| REM-039 | P1 | 126 | Maintenance lifecycle | Loaded maintenance configuration does not register live loadout equipment or start repairs from real spare-parts logistics | Queued | Yes | Yes | - | - | - | - | - | Runtime equipment breakdown consumes spares and completes an automatic production repair lifecycle |
+| REM-040 | P2 | 127 | Validation era | The validation-only `HistoricalCampaign` conversion has no era field and silently returns a modern scenario config | Queued | - | - | - | N/A | Yes | - | - | Validation campaign preserves exact era identity through the authoritative runtime factory |
 
 ## REM-001 - Exact checkpoint restoration
 
@@ -334,8 +340,9 @@ checkpoint-only reinforcement with a non-empty loadout.
 
 ### Non-goals
 
-- Phase 107 preserves the current equipment-name mapping semantics. Duplicate
-  or semantically wrong mappings remain REM-010/Phase 109.
+- Phase 107 preserved the then-current equipment-name mapping semantics.
+  Duplicate and semantically wrong mappings were deferred to REM-010 and
+  closed by completed Phase 109.
 - Logistics, command hierarchy, and every optional engine's dynamic unit
   registry are not implied by this loadout repair.
 
@@ -442,7 +449,8 @@ false, enabled, and era-forbidden EW/space/CBRN controls prove suite
 construction behavior; GPS-child, thermal, data-link, PGM, and sensor-allowlist
 controls prove capability rejection. The effective era contract is canonical
 in checkpoints and a mismatch fails before mutation. Declared but unconsumed
-physics/tick override metadata remains REM-018.
+physics/tick override metadata was deferred to REM-018 and closed by completed
+Phase 114.
 
 ## REM-008 - Scenario logistics do not initialize runtime topology
 
@@ -760,7 +768,8 @@ commands, scenario rows, exclusions, and review findings are recorded in the
 - No new EW, mine-detection, breaching, navigation, carrier, or UAV-spotting
   mechanic.
 - Aggregation reconstruction remains REM-016. Live Class III/V authority
-  remains REM-020/021. Analysis and broader validation trust remain Phase 112.
+  remains REM-020/021. Analysis and broader validation trust were deferred to
+  and closed by completed Phase 112.
 
 The durable detailed contract is
 [`docs/specs/equipment-mapping.md`](specs/equipment-mapping.md).
@@ -1068,6 +1077,24 @@ typed targeting condition. It must prove enabled/disabled movement and combat
 outcomes without extending a sensor, inventing a target, or silently reverting
 to unrestricted catalog maximum range.
 
+### Phase 114 Jutland evidence
+
+The final seed-42 production replay adds a second catalog-backed reproduction.
+Jutland completed after 569 ticks and 7,620 logical seconds with a British
+`force_destroyed` result, 10 casualties, and 15 engagement events. All five
+active British Iron Duke battleships finished with
+`ENGINE_WEAPON_STANDOFF` after 537 of 569 movement decisions at a catalog
+best-weapon range of 21,780 m; all three active Invincible battlecruisers did
+the same after 561 decisions at 21,700 m. Their loaded Barr & Stroud
+rangefinder maps to the 3,000 m WW1 visual sensor while scenario visibility is
+8,000 m. The recorded weapon-fire topology contains QF 4-inch destroyer fire
+and one naval engagement, but no capital-gun engagement.
+
+That exact current-engine observation strengthens the blind-standoff red; it
+does not establish the correct targeting prerequisite, validate Jutland
+historically, or authorize extending the rangefinder. Phase 114 changes era
+cadence ownership only and leaves the movement branch unchanged.
+
 **Status:** Queued for Phase 115 in the planned next remediation block.
 
 ## REM-029 - Ordinary fog-of-war contacts are discarded on restore
@@ -1173,6 +1200,27 @@ integrity defect. They neither validate the outcomes against historical
 sources nor authorize tuning to restore the previous snapshots. Phase 117
 remains responsible for source-backed, provenance-bearing dispositions and
 held-out outcome-envelope evidence.
+
+### Phase 114 current-engine trajectory signals
+
+Phase 114 corrected interval cadence so work discovered during one interval
+selects the next interval instead of relabeling the completed interval. In the
+final 46-scenario seed-42 production replay, 31 rows retained their exact
+semantic result, 12 changed by the expected one-boundary cadence correction,
+and Jutland, Khafji, and Taiwan Strait produced deterministic downstream
+cascades. Seeds 42 through 44 produced:
+
+| Scenario | Phase 113 ticks/casualties | Phase 114 ticks/casualties | Phase 114 terminal |
+| --- | --- | --- | --- |
+| Jutland 42 / 43 / 44 | 373/21; 397/21; 469/24 | 569/10; 437/6; 713/8 | British / `force_destroyed` in all three |
+| Khafji 42 / 43 / 44 | 721/90; 683/78; 676/60 | 728/77; 668/79; 680/60 | Blue / `force_destroyed` in all three |
+| Taiwan Strait 42 / 43 / 44 | 8/15; 7/14; 8/14 | 61/15; 61/17; 157/21 | Blue / `force_destroyed` in all three |
+
+All nine final-tree replays matched the accepted candidate and had empty issue
+arrays. Those observations are regression/fidelity inventory signals only.
+They are not source-backed outcome envelopes, a held-out historical study, a
+calibration verdict, or authority to tune physical parameters. Phase 117
+retains the complete catalog and public-claim disposition.
 
 Phase 117 must inventory every test, scenario field, and public statement that
 claims historical accuracy and give each one an explicit disposition:
@@ -1661,6 +1709,44 @@ seven Phase 107 capability gates and sensor allowlist are enforced.
   omission preserves the baseline.
 - Persist and compare the effective override contract during checkpoint restore.
 
+### Phase 114 implementation evidence
+
+**Matrix:** `D=Yes, L=Yes, W=Yes, E=Yes, X=Yes, O=Yes, P=Yes`.
+
+Phase 114 replaces both arbitrary dictionaries with frozen, extra-forbidden
+typed declarations. The supported physics keys are the three medical
+treatment durations and maintenance repair duration; the supported cadence
+keys are strategic, operational, and tactical seconds. Strict finite-positive,
+type, microsecond, duration, calendar-horizon, registry, and conflict checks
+fail before runtime RNG construction. The former `c2_delay_multiplier` and
+`cbrn_nuclear_enabled` keys now reject explicitly because their production
+prerequisites remain REM-036 and REM-037 rather than being proxied.
+
+One frozen `EraRuntimeContract` is resolved by
+`SimulationRuntimeFactory`/`PreparedScenario` or the direct lower loader and
+then exclusively supplies `SimulationClock`, `SimulationEngine`, medical,
+maintenance, runtime loadout, and API-frame cadence consumers. Natural
+strategic, operational, and tactical intervals use one preselected resolution
+and duration. Same-seed declared/omitted controls change all three medical
+completion endpoints and maintenance repair completion, while omission
+preserves the destination defaults. Maintenance now advances exactly once per
+logical interval rather than once in both campaign and engine owners.
+
+Checkpoint format 114 persists and compares the exact effective contract,
+source cadence, execution horizon, selected registry identity, clock,
+resolution, and frozen consumer configuration before mutation. Fresh and
+in-place active treatment/repair continuation is exact. The effective contract
+also changes the exposed runtime fingerprint and is exercised through the
+real API run manager. Final focused evidence passed 93 non-API tests and one
+API production behavior proof; the exact 11,903-node Python union, full data
+validation, and final 46-scenario replay are recorded in the Phase 114 devlog.
+
+Phase 114 is **Complete** and REM-018 is **Closed**. Documentation,
+`$cross-doc-audit`, and `$postmortem` pass. The owner accepted the performance
+result only as contention-qualified evidence, preserved the original
+thresholds, made no uncontended-pass claim, and deferred clean confirmation
+until all cores are free.
+
 ## REM-019 - Morale has two independently mutable stores
 
 ### Reproduction and cause
@@ -1830,3 +1916,195 @@ path emits an event; there is no supported enabled/disabled correctness mode.
 **Status:** Queued for Phase 121. Phase 113 records the production reachability
 and corrects its documentation but does not broaden REM-019 into a combat-event
 timestamp implementation.
+
+## REM-035 - Battle membership collapses each side pair into one topology
+
+### Phase 114 finding and nonclaim
+
+`BattleManager.detect_engagement()` declares and loads the authored runtime
+roster, computes the minimum distance between two sides, and creates a battle
+when any opposing pair is within engagement range. The created
+`BattleContext.unit_ids`, however, contains every active unit on both sides,
+including spatially remote units. Its duplicate guard is only the unordered
+side pair, so a second spatially distinct battle between the same sides cannot
+exist concurrently.
+
+The natural-resolution Phase 114 proofs legitimately exercise one unit per
+side and show that a loaded active battle changes cadence and domain execution.
+They do not prove realistic multi-unit battle membership. The 46-scenario
+replay and the deterministic Jutland/Khafji/Taiwan cascades establish that the
+current topology is production reached and outcome-affecting; they do not
+validate its spatial grouping or historical fidelity.
+
+**Matrix:** `D=Yes, L=Yes, W=-, E=N/A, X=Yes, O=Yes, P=-`. `E` is N/A because
+correct battle membership is a mandatory runtime invariant, not an optional
+mode.
+
+### Required proof
+
+- Define one typed battle-membership identity based on deterministic spatial,
+  command, and participation rules rather than global side membership.
+- Permit multiple simultaneous battles between the same sides without placing
+  one unit in conflicting active battles.
+- Route resolution, movement, combat, logistics activity, aggregation, and
+  victory reads through the exact membership.
+- Prove deterministic creation, merge/split/termination behavior and exact
+  fresh/in-place checkpoint continuation through realistic multi-cluster
+  production scenarios.
+
+**Status:** Queued for Phase 122. Phase 114 records the precondition but does
+not broaden REM-018 into a battle-topology rewrite.
+
+## REM-036 - Production C2 lacks a loaded communications topology
+
+### Phase 114 finding and nonclaim
+
+Communication catalogs, `CommType`, courier/visual-signaling engines, and C2
+delay APIs are declared, but the production scenario boundary does not load
+communications equipment onto exact units, HQs, relays, or links. The battle
+path can catch a propagation failure, and isolated `compute_delay()` or
+courier calls can produce numbers, but neither establishes a live network or
+an order-delivery outcome. The former era `c2_delay_multiplier` was therefore
+dead metadata; Phase 114 removes it from shipped presets and rejects it rather
+than multiplying an absent topology.
+
+**Matrix:** `D=Yes, L=-, W=-, E=-, X=-, O=-, P=-`.
+
+### Required proof
+
+- Define typed communications assignments and link/relay topology with exact
+  unit, side, HQ, equipment, range, latency, reliability, and availability
+  identities.
+- Load and validate that topology through the authoritative scenario/runtime
+  factory and reject missing, wrong-owner, duplicate, or impossible links.
+- Wire order issue, propagation, acknowledgement, degradation, interception,
+  and failure through the production C2 path without a catch-and-continue
+  capability claim.
+- Prove enabled/disabled, connected/disconnected, degraded, and destroyed-link
+  outcome differences plus exact event/API and checkpoint continuation.
+
+**Status:** Queued for Phase 123. Phase 114 makes unsupported era C2 metadata
+an explicit error; it does not claim production communications.
+
+## REM-037 - CBRN has no typed scheduled action boundary
+
+### Phase 114 finding and nonclaim
+
+`CampaignScenarioConfig.cbrn_config` and the CBRN suite are declared and
+loaded, and an enabled suite constructs `NuclearEffectsEngine` unconditionally.
+No typed scheduled chemical, biological, radiological, or nuclear action
+selects a real owner, weapon/delivery system, target, yield/agent, release
+time, or authorization and calls that engine from the production loop. A
+direct `detonate_nuclear()` invocation proves an effects API, not a scheduled
+warfare capability. The former `cbrn_nuclear_enabled` era key could neither
+enable nor disable an action and now rejects explicitly.
+
+**Matrix:** `D=Yes, L=Yes, W=-, E=-, X=-, O=-, P=-`.
+
+### Required proof
+
+- Define strict scheduled CBRN action declarations with exact owner, delivery
+  asset/weapon, target, logical time, agent or nuclear yield, authorization,
+  and capability-gate identities.
+- Validate the complete live topology before runtime mutation or CBRN RNG use
+  and reject unsupported era, ownership, inventory, target, or timing input.
+- Execute actions from the production session loop and prove enabled/disabled,
+  available/unavailable, and successful/failed outcome differences without a
+  dummy launcher, target, or detonation.
+- Persist pending/executed actions, affected inventories and environments,
+  events, recorder/API exposure, and exact deterministic continuation.
+
+**Status:** Queued for Phase 124. Phase 114 neither schedules a CBRN action nor
+claims that construction of the nuclear sub-engine enables nuclear use.
+
+## REM-038 - Medical treatment lacks an automatic casualty lifecycle
+
+### Phase 114 finding and nonclaim
+
+Typed medical facilities, casualties, treatment queues, and treatment-duration
+configuration exist. Phase 114 proves the era construction boundary by
+registering a real facility and admitting a real casualty through the public
+medical API, then advancing only through `RuntimeSession.step()`. Production
+scenario loading and battle resolution do not create facility topology,
+convert combat casualties into medical records, select or move them to care,
+or consume Class VIII resources. The duration proof is therefore not an
+automatic battlefield medical lifecycle claim.
+
+**Matrix:** `D=Yes, L=-, W=-, E=-, X=-, O=-, P=-`.
+
+### Required proof
+
+- Define and load exact medical facility, capacity, staffing, supply,
+  evacuation, triage, and casualty-origin topology.
+- Commit a battle casualty once into the authoritative personnel and medical
+  lifecycles without duplicating deaths, wounded strength, or available crew.
+- Wire triage, movement, admission, treatment, return-to-duty, evacuation, and
+  failure/resource constraints through production logical time.
+- Prove realistic enabled/disabled and resource/capacity controls, observable
+  unit/crew outcomes, and exact event/API and checkpoint continuation.
+
+**Status:** Queued for Phase 125. Phase 114 wires supported treatment duration
+overrides only after explicit public setup.
+
+## REM-039 - Maintenance lacks automatic registration and spares-driven repair
+
+### Phase 114 finding and nonclaim
+
+Maintenance configuration and the engine are declared and loaded, and Phase
+114 makes the all-resolution engine loop its sole once-per-interval update
+owner. The behavioral proof explicitly registers synthetic equipment through
+the public API, reaches breakdown during a production step, and calls
+`start_repair()` with a literal available-parts amount. Runtime loadout
+construction does not register each live weapon, sensor, propulsion, or other
+equipment instance with maintenance, and the Class IX/spares network does not
+authorize, consume, delay, or start its repair.
+
+**Matrix:** `D=Yes, L=Yes, W=-, E=-, X=-, O=-, P=-`.
+
+### Required proof
+
+- Register exact runtime-owned loadout instances automatically and reject
+  duplicate, proxy, missing-owner, or topology-divergent maintenance records.
+- Establish one condition/readiness authority between live equipment and the
+  maintenance record, including dynamic reinforcement and aggregation paths.
+- Route diagnosis, repair priority, start, parts reservation/consumption,
+  completion, cancellation, and failure through real Class IX inventory and
+  logistics reachability.
+- Prove breakdown-to-repair enabled/disabled and parts-available/unavailable
+  outcome differences plus exact events, recorder/API exposure, rollback,
+  RNG accounting, and checkpoint continuation.
+
+**Status:** Queued for Phase 126. REM-020 and REM-021 retain their broader
+activity-demand and inventory-authority scope; Phase 114 does not absorb them.
+
+## REM-040 - Validation campaign conversion silently loses era identity
+
+### Phase 114 finding and nonclaim
+
+The validation-only `HistoricalCampaign` model mirrors only a subset of
+`CampaignScenarioConfig` and has no `era` field.
+`CampaignDataLoader.to_scenario_config()` therefore constructs a config whose
+era silently defaults to `modern`, even if the source campaign is intended for
+another era. Existing validation campaign flows exercise that conversion, but
+Phase 114 does not add a second era-resolution rule to a legacy validation
+model or claim an outcome effect without a controlled non-modern campaign.
+
+**Matrix:** `D=-, L=-, W=-, E=N/A, X=Yes, O=-, P=-`. `E` is N/A because exact
+source identity must survive every conversion; silently changing era is never
+a supported toggle.
+
+### Required proof
+
+- Add strict normalized era identity and every required production source
+  field to the validation boundary, or replace its duplicated scenario model
+  with an explicit typed projection that cannot silently omit new fields.
+- Resolve the era only through `SimulationRuntimeFactory`, not through a
+  validation-owned registry lookup or modern fallback.
+- Prove a non-modern campaign loads the expected gates, equipment/catalog
+  selection, effective era contract, fingerprint, and outcome relative to an
+  explicit modern control.
+- Reject absent/unknown/mismatched identity and persist the exact projection
+  provenance in validation artifacts and checkpoint continuation where used.
+
+**Status:** Queued for Phase 127. This is a validation-only propagation gap;
+it does not weaken Phase 114's authoritative production factory contract.

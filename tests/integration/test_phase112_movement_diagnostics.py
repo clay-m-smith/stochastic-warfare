@@ -206,17 +206,38 @@ def test_campaign_manager_records_each_roster_unit_once() -> None:
         assert observation.side == summary.side
 
 
-def test_operational_to_tactical_paths_record_each_manager_pass_once() -> None:
+def test_operational_to_tactical_paths_bind_one_stage_per_interval() -> None:
     engine = _campaign_engine(seed=42, red_easting=20_000.0)
     assert engine.step() is False
 
     for summary in engine._ctx.movement_diagnostics.summaries():
-        assert summary.decision_count == 2
+        assert summary.decision_count == 1
         assert [observation.stage for observation in summary.recent_observations] == [
             MovementStage.OPERATIONAL,
-            MovementStage.TACTICAL,
         ]
         assert {observation.engine_tick for observation in summary.recent_observations} == {1}
+
+    executed = 1
+    while executed < 12:
+        assert engine.step() is False
+        executed += 1
+        if all(
+            summary.recent_observations[-1].stage
+            is MovementStage.TACTICAL
+            for summary in engine._ctx.movement_diagnostics.summaries()
+        ):
+            break
+    else:
+        pytest.fail("campaign never reached a tactical interval")
+
+    for summary in engine._ctx.movement_diagnostics.summaries():
+        assert summary.decision_count == executed
+        assert summary.recent_observations[0].stage is MovementStage.OPERATIONAL
+        assert summary.recent_observations[-1].stage is MovementStage.TACTICAL
+        assert {
+            observation.engine_tick
+            for observation in summary.recent_observations
+        } == set(range(1, executed + 1))
 
 
 def _two_battle_engine(
@@ -271,7 +292,7 @@ def test_schema112_movement_state_restores_and_continues_exactly() -> None:
     assert control.step() is False
     checkpoint = control.checkpoint()
     state_at_t = control.get_state()
-    assert state_at_t["checkpoint_version"] == 113
+    assert state_at_t["checkpoint_version"] == 114
     assert state_at_t["context"]["movement_diagnostics"] == control._ctx.movement_diagnostics.get_state()
 
     resumed = _campaign_engine(seed=999_112)

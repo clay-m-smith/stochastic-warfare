@@ -49,17 +49,21 @@ class TestAncientMedievalEraConfig:
         cfg = get_era_config("ancient_medieval")
         assert cfg.available_sensor_types == {"VISUAL"}
 
-    def test_c2_delay_multiplier(self) -> None:
+    def test_no_unwired_c2_delay_proxy(self) -> None:
         from stochastic_warfare.core.era import get_era_config
 
         cfg = get_era_config("ancient_medieval")
-        assert cfg.physics_overrides.get("c2_delay_multiplier") == 12.0
+        assert "c2_delay_multiplier" not in cfg.physics_overrides.model_dump(
+            mode="json",
+        )
 
-    def test_nuclear_disabled_override(self) -> None:
+    def test_no_unwired_nuclear_proxy(self) -> None:
         from stochastic_warfare.core.era import get_era_config
 
         cfg = get_era_config("ancient_medieval")
-        assert cfg.physics_overrides.get("cbrn_nuclear_enabled") is False
+        assert "cbrn_nuclear_enabled" not in cfg.physics_overrides.model_dump(
+            mode="json",
+        )
 
     def test_era_enum_value(self) -> None:
         from stochastic_warfare.core.era import Era
@@ -689,14 +693,16 @@ class TestBackwardCompatibility:
         cfg = get_era_config("ww2")
         assert "RADAR" in cfg.available_sensor_types
 
-    def test_ww1_c2_delay(self) -> None:
+    def test_ww1_has_sparse_physics_declaration(self) -> None:
         from stochastic_warfare.core.era import get_era_config
 
         cfg = get_era_config("ww1")
-        assert cfg.physics_overrides.get("c2_delay_multiplier") == 5.0
+        assert cfg.physics_overrides.is_empty
+        assert cfg.physics_overrides.model_dump(mode="json") == {}
 
-    def test_napoleonic_c2_delay(self) -> None:
+    def test_napoleonic_has_sparse_physics_declaration(self) -> None:
         from stochastic_warfare.core.era import get_era_config
 
         cfg = get_era_config("napoleonic")
-        assert cfg.physics_overrides.get("c2_delay_multiplier") == 8.0
+        assert cfg.physics_overrides.is_empty
+        assert cfg.physics_overrides.model_dump(mode="json") == {}

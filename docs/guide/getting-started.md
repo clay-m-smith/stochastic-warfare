@@ -207,4 +207,4 @@ See the [Web UI Guide](web-ui.md) for a complete walkthrough.
 - **[Architecture Overview](../concepts/architecture.md)** -- understand the module design and simulation loop
 - **[Mathematical Models](../concepts/models.md)** -- deep dive into the 10 stochastic models
 - **[API Reference](../reference/api.md)** -- REST API and Python API documentation
-- **[Era Reference](../reference/eras.md)** -- explore all 5 historical eras
+- **[Era Reference](../reference/eras.md)** -- explore the modern era and four historical eras

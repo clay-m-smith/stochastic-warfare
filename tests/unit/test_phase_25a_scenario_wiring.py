@@ -12,6 +12,7 @@ from typing import Any
 
 import pytest
 
+from stochastic_warfare.core.era import EraConfig, get_era_config
 from stochastic_warfare.core.events import EventBus
 from stochastic_warfare.core.rng import RNGManager
 from stochastic_warfare.core.types import ModuleId
@@ -53,6 +54,10 @@ def _make_rng_mgr(seed: int = 42) -> RNGManager:
 
 def _make_bus() -> EventBus:
     return EventBus()
+
+
+def _era_config(config: CampaignScenarioConfig) -> EraConfig:
+    return get_era_config(config.era)
 
 
 # =========================================================================
@@ -156,7 +161,9 @@ class TestEWCreation:
         loader = ScenarioLoader.__new__(ScenarioLoader)
         loader._data_dir = None
         c2_rng = rng_mgr.get_stream(ModuleId.C2)
-        result = loader._create_optional_engines(rng_mgr, bus, cfg, c2_rng)
+        result = loader._create_optional_engines(
+            rng_mgr, bus, cfg, c2_rng, _era_config(cfg),
+        )
         assert result.get("ew_engine") is None
         assert result.get("eccm_engine") is None
 
@@ -259,7 +266,9 @@ class TestSpaceCreation:
         loader._data_dir = None
         cfg = _minimal_config(space_config=None)
         c2_rng = _make_rng_mgr().get_stream(ModuleId.C2)
-        result = loader._create_optional_engines(_make_rng_mgr(), _make_bus(), cfg, c2_rng)
+        result = loader._create_optional_engines(
+            _make_rng_mgr(), _make_bus(), cfg, c2_rng, _era_config(cfg),
+        )
         assert result.get("space_engine") is None
 
     def test_space_engine_type(self) -> None:
@@ -322,6 +331,7 @@ class TestSpaceCreation:
             _make_bus(),
             _minimal_config(),
             rng_manager.get_stream(ModuleId.C2),
+            get_era_config("modern"),
         )
         assert "space_engine" not in result
 
@@ -360,7 +370,9 @@ class TestCBRNCreation:
         loader._data_dir = None
         cfg = _minimal_config(cbrn_config=None)
         c2_rng = _make_rng_mgr().get_stream(ModuleId.C2)
-        result = loader._create_optional_engines(_make_rng_mgr(), _make_bus(), cfg, c2_rng)
+        result = loader._create_optional_engines(
+            _make_rng_mgr(), _make_bus(), cfg, c2_rng, _era_config(cfg),
+        )
         assert result.get("cbrn_engine") is None
 
     def test_cbrn_uses_terrain_grid(self) -> None:
@@ -443,7 +455,9 @@ class TestSchoolsCreation:
         loader._data_dir = None
         cfg = _minimal_config(school_config=None)
         c2_rng = _make_rng_mgr().get_stream(ModuleId.C2)
-        result = loader._create_optional_engines(_make_rng_mgr(), _make_bus(), cfg, c2_rng)
+        result = loader._create_optional_engines(
+            _make_rng_mgr(), _make_bus(), cfg, c2_rng, _era_config(cfg),
+        )
         assert result.get("school_registry") is None
 
     def test_school_factory_clausewitzian(self) -> None:
@@ -557,7 +571,9 @@ class TestCommanderCreation:
         loader._data_dir = None
         cfg = _minimal_config(commander_config=None)
         c2_rng = _make_rng_mgr().get_stream(ModuleId.C2)
-        result = loader._create_optional_engines(_make_rng_mgr(), _make_bus(), cfg, c2_rng)
+        result = loader._create_optional_engines(
+            _make_rng_mgr(), _make_bus(), cfg, c2_rng, _era_config(cfg),
+        )
         assert result.get("commander_engine") is None
 
     def test_commander_with_config_params(self) -> None:
@@ -633,7 +649,9 @@ class TestEscalationCreation:
         loader._data_dir = None
         cfg = _minimal_config(escalation_config=None)
         c2_rng = _make_rng_mgr().get_stream(ModuleId.C2)
-        result = loader._create_optional_engines(_make_rng_mgr(), _make_bus(), cfg, c2_rng)
+        result = loader._create_optional_engines(
+            _make_rng_mgr(), _make_bus(), cfg, c2_rng, _era_config(cfg),
+        )
         assert result.get("escalation_engine") is None
         assert result.get("political_engine") is None
 
@@ -707,7 +725,9 @@ class TestEraEngines:
         loader._data_dir = None
         cfg = _minimal_config(era="modern")
         c2_rng = _make_rng_mgr().get_stream(ModuleId.C2)
-        result = loader._create_optional_engines(_make_rng_mgr(), _make_bus(), cfg, c2_rng)
+        result = loader._create_optional_engines(
+            _make_rng_mgr(), _make_bus(), cfg, c2_rng, _era_config(cfg),
+        )
         # No era-specific engines for modern
         assert result.get("trench_engine") is None
         assert result.get("volley_fire_engine") is None
@@ -719,7 +739,11 @@ class TestEraEngines:
         loader = ScenarioLoader.__new__(ScenarioLoader)
         loader._data_dir = None
         cfg = _minimal_config(era="ww2")
-        result = loader._create_era_engines(_make_rng_mgr(), _make_bus(), cfg)
+        result = loader._create_era_engines(
+            _make_rng_mgr(),
+            _make_bus(),
+            _era_config(cfg),
+        )
         assert result["naval_gunnery_engine"] is not None
         assert result["convoy_engine"] is not None
         assert result["strategic_bombing_engine"] is not None
@@ -730,7 +754,11 @@ class TestEraEngines:
         loader = ScenarioLoader.__new__(ScenarioLoader)
         loader._data_dir = None
         cfg = _minimal_config(era="ww1")
-        result = loader._create_era_engines(_make_rng_mgr(), _make_bus(), cfg)
+        result = loader._create_era_engines(
+            _make_rng_mgr(),
+            _make_bus(),
+            _era_config(cfg),
+        )
         assert result["trench_engine"] is not None
         assert result["barrage_engine"] is not None
         assert result["gas_warfare_engine"] is not None
@@ -741,7 +769,11 @@ class TestEraEngines:
         loader = ScenarioLoader.__new__(ScenarioLoader)
         loader._data_dir = None
         cfg = _minimal_config(era="napoleonic")
-        result = loader._create_era_engines(_make_rng_mgr(), _make_bus(), cfg)
+        result = loader._create_era_engines(
+            _make_rng_mgr(),
+            _make_bus(),
+            _era_config(cfg),
+        )
         assert result["volley_fire_engine"] is not None
         assert result["melee_engine"] is not None
         assert result["cavalry_engine"] is not None
@@ -755,7 +787,11 @@ class TestEraEngines:
         loader = ScenarioLoader.__new__(ScenarioLoader)
         loader._data_dir = None
         cfg = _minimal_config(era="ancient_medieval")
-        result = loader._create_era_engines(_make_rng_mgr(), _make_bus(), cfg)
+        result = loader._create_era_engines(
+            _make_rng_mgr(),
+            _make_bus(),
+            _era_config(cfg),
+        )
         assert result["archery_engine"] is not None
         assert result["siege_engine"] is not None
         assert result["formation_ancient_engine"] is not None
@@ -778,7 +814,9 @@ class TestIntegration:
         loader._data_dir = None
         cfg = _minimal_config()
         c2_rng = _make_rng_mgr().get_stream(ModuleId.C2)
-        result = loader._create_optional_engines(_make_rng_mgr(), _make_bus(), cfg, c2_rng)
+        result = loader._create_optional_engines(
+            _make_rng_mgr(), _make_bus(), cfg, c2_rng, _era_config(cfg),
+        )
         assert len(result) == 0
 
     def test_context_new_fields_default_none(self) -> None:
@@ -841,7 +879,9 @@ class TestIntegration:
             commander_config={},
         )
         c2_rng = _make_rng_mgr().get_stream(ModuleId.C2)
-        result = loader._create_optional_engines(_make_rng_mgr(), _make_bus(), cfg, c2_rng)
+        result = loader._create_optional_engines(
+            _make_rng_mgr(), _make_bus(), cfg, c2_rng, _era_config(cfg),
+        )
         assert result.get("ew_engine") is not None
         assert result.get("school_registry") is not None
         assert result.get("commander_engine") is None

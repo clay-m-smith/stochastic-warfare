@@ -4,7 +4,7 @@
 
 ![Python](https://img.shields.io/badge/python-%3E%3D3.12-blue)
 ![Tests](https://img.shields.io/badge/tests-partitioned_validation-blue)
-![Phase](https://img.shields.io/badge/phase-113_COMPLETE-brightgreen)
+![Phase](https://img.shields.io/badge/phase-114_COMPLETE-brightgreen)
 
 ---
 
@@ -72,14 +72,16 @@ profile, not a seventh partition. The routine 73 Easting paired gate uses the
 version-3 typed, morale-neutral control-plane workload; it is not evidence for
 default morale behavior or historical fidelity. Golan remains manual.
 
-The current Phase 113 audit enumerates exactly 11,824 nodes:
-`standard` 11,367, `slow-only` 109, `benchmark-only` 62, `slow-benchmark` 4,
-API 241, and E2E 41. All 11,824 passed with zero failures/errors/skips and six
-declared warnings. Local API/E2E plus one FastMCP standard node used the
-declared uvloop qualification; hosted CI is the authoritative default-policy
-control for that local host/tool-loop boundary. Historical Phase 112 execution
-evidence remains in the
-[Phase 112 devlog](devlog/phase-112.md).
+The Phase 114 closure audit enumerates exactly 11,903 nodes:
+`standard` 11,445, `slow-only` 109, `benchmark-only` 62, `slow-benchmark` 4,
+API 242, and E2E 41. All 11,903 passed with zero failures/errors/skips and six
+declared warnings. The API partition ran on the host because this sandbox
+currently loses an `aiosqlite` worker-thread wakeup before schema creation;
+identical focused and full host runs passed, and hosted CI remains the final
+environment control. The owner accepted the dispersed timing result only as
+contention-qualified evidence and deferred clean confirmation until all cores
+are free; no uncontended pass is claimed. Phase 114 and Block 12 are complete,
+and REM-018 is closed. Exact evidence is in the [Phase 114 devlog](devlog/phase-114.md).
 
 See the [Getting Started Guide](guide/getting-started.md) for a complete tutorial including running your first scenario.
 
@@ -112,14 +114,15 @@ See the [Getting Started Guide](guide/getting-started.md) for a complete tutoria
 | Block 9 | 83--91 | Performance at scale — profiling, spatial culling, LOD, parallelism | **Complete** |
 | Block 10 | 92--97 | UI depth & engine exposure — analytics, frame enrichment, metadata | **Complete** |
 | Block 11 | 98--104 | Golden scenarios and deployment polish | **Complete** |
-| Block 12 | 105--114 | Integrity remediation against production-path evidence | **In progress** |
-| Block 13 | 115--121 | Queued integrity follow-ups | **Planned** |
+| Block 12 | 105--114 | Integrity remediation against production-path evidence | **Complete** |
+| Block 13 | 115--127 | Queued integrity follow-ups | **Planned** |
 
-Phases 105 through 113 are complete, including the validation, documentation
-trust, and morale-ownership remediations. Phase 114 is next and remains
-unstarted, so Block 12 remains in progress. See the
-[Phase 113 devlog](devlog/phase-113.md), the
-[morale ownership specification](specs/morale-state-ownership.md), and the
+Phases 105 through 114 and Block 12 are complete. Phase 114 implements the
+strict effective era-runtime and format-114 checkpoint contract, and REM-018
+is closed. Its timing result carries an explicit owner-approved contention
+qualification. See the
+[Phase 114 devlog](devlog/phase-114.md), the
+[era override specification](specs/era-override-execution.md), and the
 [remediation backlog](remediation-backlog.md) for exact evidence and known
 coverage boundaries. The YAML data catalog defines units, weapons, ammunition
 types, sensors, signatures, doctrines, commanders, formation templates, and

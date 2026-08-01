@@ -49,7 +49,7 @@ def _make_context(**overrides) -> SimulationContext:
     """Build a minimal SimulationContext for field-presence tests."""
     cfg = CampaignScenarioConfig(
         name="test",
-        date="2024-01-01",
+        date="2024-06-15T12:00:00Z",
         duration_hours=24,
         terrain=TerrainConfig(width_m=1000, height_m=1000),
         sides=[

@@ -195,6 +195,11 @@ class CampaignManager:
         """Whether configured logistics may update routes and resupply."""
         return self._config.enable_supply_network
 
+    @property
+    def maintenance_enabled(self) -> bool:
+        """Whether the runtime-owned maintenance cadence is enabled."""
+        return self._config.enable_maintenance
+
     # ── Strategic tick ──────────────────────────────────────────────
 
     def update_strategic(
@@ -206,8 +211,9 @@ class CampaignManager:
     ) -> None:
         """Execute one strategic tick.
 
-        Sequences strategic AI → movement → maintenance → engagement
-        detection. Reinforcements and the all-resolution logistics cadence are
+        Sequences strategic AI → movement → era-specific work → engagement
+        detection. Reinforcements, maintenance, and the all-resolution
+        logistics cadence are
         sequenced by :class:`SimulationEngine` before resolution-specific work.
 
         Parameters
@@ -227,12 +233,8 @@ class CampaignManager:
         if self._config.enable_strategic_movement:
             self._execute_strategic_movement(ctx, dt, stage=stage)
 
-        # 3. Maintenance checks
-        if self._config.enable_maintenance and ctx.maintenance_engine is not None:
-            self._run_maintenance(ctx, dt)
-
-        # 4. Phase 54: era-specific strategic engine updates
-        era = getattr(ctx.config, "era", "modern")
+        # 3. Phase 54: era-specific strategic engine updates
+        era = ctx.era_runtime_contract.era.value
         if era == "ww2":
             # Phase 54a: convoy updates
             convoy_eng = getattr(ctx, "convoy_engine", None)
@@ -711,31 +713,6 @@ class CampaignManager:
                 if u.entity_id == unit_id:
                     return u
         return None
-
-    # ── Maintenance ─────────────────────────────────────────────────
-
-    def _run_maintenance(self, ctx: Any, dt: float) -> None:
-        """Run maintenance/breakdown checks during strategic ticks."""
-        maint = getattr(ctx, "maintenance_engine", None)
-        if maint is None:
-            return
-        dt_hours = dt / 3600.0
-        temp_c = 20.0
-        try:
-            if getattr(ctx, "weather_engine", None) is not None:
-                temp_c = ctx.weather_engine.current.temperature
-        except Exception:
-            pass
-        try:
-            maint.update(
-                dt_hours=dt_hours, temperature_c=temp_c,
-                timestamp=ctx.clock.current_time,
-            )
-            maint.complete_repairs(
-                dt_hours=dt_hours, timestamp=ctx.clock.current_time,
-            )
-        except Exception:
-            logger.debug("Maintenance update failed", exc_info=True)
 
     # ── Engagement detection ────────────────────────────────────────
 

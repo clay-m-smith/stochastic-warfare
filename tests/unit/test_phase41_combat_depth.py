@@ -21,6 +21,7 @@ from stochastic_warfare.combat.hit_probability import (
 )
 from stochastic_warfare.core.events import EventBus
 from stochastic_warfare.core.types import Domain, Position
+from tests.conftest import bind_test_era_runtime
 from stochastic_warfare.entities.base import Unit, UnitStatus
 
 TS = datetime(2024, 6, 15, 12, 0, 0, tzinfo=timezone.utc)
@@ -356,6 +357,7 @@ class TestForceChanneling:
             clock=clock,
             units_by_side={"blue": blue_units, "red": red_units},
         )
+        bind_test_era_runtime(ctx)
 
         enemy_pos = np.array([[3000.0, 250.0]])
         pending = bm._execute_engagements(
@@ -416,6 +418,7 @@ class TestForceChanneling:
             clock=clock,
             units_by_side={"blue": blue_units, "red": red_units},
         )
+        bind_test_era_runtime(ctx)
 
         enemy_pos = np.array([[2000.0, 100.0]])
         bm._execute_engagements(

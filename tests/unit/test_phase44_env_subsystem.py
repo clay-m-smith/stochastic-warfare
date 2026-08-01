@@ -27,6 +27,7 @@ from stochastic_warfare.simulation.battle import (
     BattleManager,
     _compute_weather_pk_modifier,
 )
+from tests.conftest import bind_test_era_runtime
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -169,37 +170,39 @@ def _make_ctx(
         behavior_rules={},
     )
 
-    return SimpleNamespace(
-        config=config,
-        clock=clock,
-        calibration=calibration or {},
-        units_by_side=units_by_side,
-        unit_weapons=weapons or {},
-        unit_sensors=sensors or {},
-        morale_states=ms,
-        engagement_engine=engagement_engine,
-        detection_engine=None,
-        suppression_engine=None,
-        roe_engine=None,
-        weather_engine=weather_engine,
-        time_of_day_engine=time_of_day_engine,
-        sea_state_engine=sea_state_engine,
-        cbrn_engine=cbrn_engine,
-        ew_engine=ew_engine,
-        space_engine=space_engine,
-        maintenance_engine=maintenance_engine,
-        obstacle_manager=None,
-        hydrography_manager=None,
-        heightmap=None,
-        dew_engine=None,
-        volley_fire_engine=None,
-        melee_engine=None,
-        archery_engine=None,
-        indirect_fire_engine=None,
-        naval_surface_engine=None,
-        naval_subsurface_engine=None,
-        naval_gunfire_support_engine=None,
-        mine_warfare_engine=None,
+    return bind_test_era_runtime(
+        SimpleNamespace(
+            config=config,
+            clock=clock,
+            calibration=calibration or {},
+            units_by_side=units_by_side,
+            unit_weapons=weapons or {},
+            unit_sensors=sensors or {},
+            morale_states=ms,
+            engagement_engine=engagement_engine,
+            detection_engine=None,
+            suppression_engine=None,
+            roe_engine=None,
+            weather_engine=weather_engine,
+            time_of_day_engine=time_of_day_engine,
+            sea_state_engine=sea_state_engine,
+            cbrn_engine=cbrn_engine,
+            ew_engine=ew_engine,
+            space_engine=space_engine,
+            maintenance_engine=maintenance_engine,
+            obstacle_manager=None,
+            hydrography_manager=None,
+            heightmap=None,
+            dew_engine=None,
+            volley_fire_engine=None,
+            melee_engine=None,
+            archery_engine=None,
+            indirect_fire_engine=None,
+            naval_surface_engine=None,
+            naval_subsurface_engine=None,
+            naval_gunfire_support_engine=None,
+            mine_warfare_engine=None,
+        ),
     )
 
 

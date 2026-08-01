@@ -9,9 +9,19 @@ engine gating.
 from __future__ import annotations
 
 from enum import Enum
-from typing import Any, Literal
+from typing import Annotated, Literal, Mapping
 
-from pydantic import BaseModel, ConfigDict, Field, field_serializer
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    field_serializer,
+    field_validator,
+    model_serializer,
+    model_validator,
+)
+
+from stochastic_warfare.core.clock import normalize_clock_duration_seconds
 
 
 # ---------------------------------------------------------------------------
@@ -44,6 +54,119 @@ EraFeature = Literal[
 ]
 
 
+PositiveFiniteFloat = Annotated[
+    float,
+    Field(strict=True, gt=0.0, allow_inf_nan=False),
+]
+
+
+class _SparseOverrides(BaseModel):
+    """Strict immutable declaration whose JSON form contains authored fields."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    @model_validator(mode="before")
+    @classmethod
+    def _reject_explicit_null(cls, value: object) -> object:
+        if isinstance(value, Mapping):
+            null_fields = sorted(
+                str(field_name)
+                for field_name, field_value in value.items()
+                if field_value is None
+            )
+            if null_fields:
+                raise ValueError(
+                    "override declarations may not be null: "
+                    + ", ".join(null_fields),
+                )
+        return value
+
+    @model_serializer(mode="plain")
+    def _serialize_sparse(self) -> dict[str, float]:
+        return {
+            field_name: field_value
+            for field_name in type(self).model_fields
+            if (field_value := getattr(self, field_name)) is not None
+        }
+
+    @property
+    def is_empty(self) -> bool:
+        """Return whether no override value was authored."""
+        return not self.model_dump(mode="python")
+
+
+class EraPhysicsOverrides(_SparseOverrides):
+    """Supported sparse era overlays for runtime-owned engine settings."""
+
+    treatment_hours_minor: PositiveFiniteFloat | None = None
+    treatment_hours_serious: PositiveFiniteFloat | None = None
+    treatment_hours_critical: PositiveFiniteFloat | None = None
+    repair_time_hours: PositiveFiniteFloat | None = None
+
+    @field_validator(
+        "treatment_hours_minor",
+        "treatment_hours_serious",
+        "treatment_hours_critical",
+        "repair_time_hours",
+        mode="before",
+    )
+    @classmethod
+    def _strict_float(
+        cls,
+        value: object,
+        info: object,
+    ) -> object:
+        if value is not None and type(value) is not float:
+            raise ValueError(
+                f"{getattr(info, 'field_name')} must be a strict float",
+            )
+        return value
+
+
+class EraTickResolutionOverrides(_SparseOverrides):
+    """Supported sparse era overlays for simulation resolution durations."""
+
+    strategic_s: PositiveFiniteFloat | None = None
+    operational_s: PositiveFiniteFloat | None = None
+    tactical_s: PositiveFiniteFloat | None = None
+
+    @field_validator(
+        "strategic_s",
+        "operational_s",
+        "tactical_s",
+        mode="before",
+    )
+    @classmethod
+    def _strict_float(
+        cls,
+        value: object,
+        info: object,
+    ) -> object:
+        if value is not None and type(value) is not float:
+            raise ValueError(
+                f"{getattr(info, 'field_name')} must be a strict float",
+            )
+        return value
+
+    @field_validator(
+        "strategic_s",
+        "operational_s",
+        "tactical_s",
+    )
+    @classmethod
+    def _clock_representable(
+        cls,
+        value: float | None,
+        info: object,
+    ) -> float | None:
+        if value is None:
+            return None
+        return normalize_clock_duration_seconds(
+            value,
+            field_name=getattr(info, "field_name"),
+        )
+
+
 class EraConfig(BaseModel):
     """Configuration describing which subsystems and capabilities are
     available in a given era.
@@ -60,10 +183,9 @@ class EraConfig(BaseModel):
         If non-empty, only these sensor types are allowed.  Empty set
         means all sensor types are available (modern default).
     physics_overrides:
-        Arbitrary key-value physics parameter overrides for this era.
+        Supported sparse runtime-engine parameter overrides for this era.
     tick_resolution_overrides:
-        Override tick durations.  Keys: ``"strategic_s"``,
-        ``"operational_s"``, ``"tactical_s"``.
+        Supported sparse tick-duration overrides.
     """
 
     model_config = ConfigDict(extra="forbid")
@@ -71,12 +193,29 @@ class EraConfig(BaseModel):
     era: Era = Era.MODERN
     disabled_modules: set[EraFeature] = Field(default_factory=set)
     available_sensor_types: set[str] = Field(default_factory=set)
-    physics_overrides: dict[str, Any] = Field(default_factory=dict)
-    tick_resolution_overrides: dict[str, float] = Field(default_factory=dict)
+    physics_overrides: EraPhysicsOverrides = Field(
+        default_factory=EraPhysicsOverrides,
+    )
+    tick_resolution_overrides: EraTickResolutionOverrides = Field(
+        default_factory=EraTickResolutionOverrides,
+    )
 
     def feature_enabled(self, feature: EraFeature) -> bool:
         """Return whether an era permits one declared runtime feature."""
         return feature not in self.disabled_modules
+
+    @property
+    def has_runtime_overrides(self) -> bool:
+        """Return whether this era declares any production runtime overlay."""
+        return not (
+            self.physics_overrides.is_empty
+            and self.tick_resolution_overrides.is_empty
+        )
+
+    @property
+    def has_tick_resolution_overrides(self) -> bool:
+        """Return whether this era declares a tick-resolution overlay."""
+        return not self.tick_resolution_overrides.is_empty
 
     @field_serializer(
         "disabled_modules",
@@ -111,12 +250,6 @@ WW2_ERA_CONFIG = EraConfig(
         "PASSIVE_SONAR",
         "ACTIVE_SONAR",
     },
-    physics_overrides={
-        "treatment_hours_minor": 3.0,
-        "treatment_hours_serious": 12.0,
-        "treatment_hours_critical": 36.0,
-        "repair_time_hours": 6.0,
-    },
 )
 
 WW1_ERA_CONFIG = EraConfig(
@@ -130,14 +263,6 @@ WW1_ERA_CONFIG = EraConfig(
         "pgm",
     },
     available_sensor_types={"VISUAL", "PASSIVE_SONAR"},
-    physics_overrides={
-        "c2_delay_multiplier": 5.0,
-        "cbrn_nuclear_enabled": False,
-        "treatment_hours_minor": 4.0,
-        "treatment_hours_serious": 24.0,
-        "treatment_hours_critical": 72.0,
-        "repair_time_hours": 8.0,
-    },
 )
 
 NAPOLEONIC_ERA_CONFIG = EraConfig(
@@ -152,13 +277,6 @@ NAPOLEONIC_ERA_CONFIG = EraConfig(
         "pgm",
     },
     available_sensor_types={"VISUAL"},
-    physics_overrides={
-        "c2_delay_multiplier": 8.0,
-        "cbrn_nuclear_enabled": False,
-        "treatment_hours_minor": 8.0,
-        "treatment_hours_serious": 48.0,
-        "treatment_hours_critical": 168.0,
-    },
 )
 
 ANCIENT_MEDIEVAL_ERA_CONFIG = EraConfig(
@@ -173,13 +291,6 @@ ANCIENT_MEDIEVAL_ERA_CONFIG = EraConfig(
         "pgm",
     },
     available_sensor_types={"VISUAL"},
-    physics_overrides={
-        "c2_delay_multiplier": 12.0,
-        "cbrn_nuclear_enabled": False,
-        "treatment_hours_minor": 24.0,
-        "treatment_hours_serious": 168.0,
-        "treatment_hours_critical": 336.0,
-    },
 )
 
 _ERA_REGISTRY: dict[str, EraConfig] = {
@@ -191,6 +302,17 @@ _ERA_REGISTRY: dict[str, EraConfig] = {
 }
 
 
+def _registry_id(value: object) -> str:
+    """Return one canonical public era-registry identifier."""
+    if (
+        not isinstance(value, str)
+        or not value
+        or value != value.strip()
+    ):
+        raise ValueError("era registry ID must be a non-empty trimmed string")
+    return value.lower()
+
+
 def get_era_config(era_name: str) -> EraConfig:
     """Return an isolated registered era configuration.
 
@@ -199,7 +321,7 @@ def get_era_config(era_name: str) -> EraConfig:
     ValueError
         If ``era_name`` is not registered.
     """
-    normalized_name = era_name.lower()
+    normalized_name = _registry_id(era_name)
     try:
         config = _ERA_REGISTRY[normalized_name]
     except KeyError as exc:
@@ -210,9 +332,67 @@ def get_era_config(era_name: str) -> EraConfig:
     return config.model_copy(deep=True)
 
 
+def _registration_model_topology(
+    model: BaseModel,
+    *,
+    label: str,
+) -> None:
+    """Reject bypass-added or missing fields before canonical validation."""
+    declared = set(type(model).model_fields)
+    actual = set(model.__dict__)
+    extra = getattr(model, "__pydantic_extra__", None) or {}
+    unknown = sorted((actual - declared) | set(extra))
+    missing = sorted(declared - actual)
+    if unknown or missing:
+        raise ValueError(
+            f"Invalid {label} field topology; unknown={unknown!r}, "
+            f"missing={missing!r}",
+        )
+
+
+def _registration_sparse_data(
+    overrides: _SparseOverrides,
+    *,
+    expected_type: type[_SparseOverrides],
+    label: str,
+) -> dict[str, object]:
+    """Preserve authored-null fields while rebuilding one sparse input."""
+    if type(overrides) is not expected_type:
+        raise TypeError(f"{label} must be an {expected_type.__name__}")
+    _registration_model_topology(overrides, label=label)
+    return {
+        field_name: getattr(overrides, field_name)
+        for field_name in expected_type.model_fields
+        if (
+            field_name in overrides.model_fields_set
+            or getattr(overrides, field_name) is not None
+        )
+    }
+
+
 def register_era_config(era_name: str, config: EraConfig) -> None:
     """Validate and register an isolated custom era configuration."""
+    normalized_name = _registry_id(era_name)
+    if type(config) is not EraConfig:
+        raise TypeError("config must be an EraConfig")
+    _registration_model_topology(config, label="EraConfig")
     validated = EraConfig.model_validate(
-        config.model_dump(mode="python"),
+        {
+            "era": config.era,
+            "disabled_modules": config.disabled_modules,
+            "available_sensor_types": config.available_sensor_types,
+            "physics_overrides": _registration_sparse_data(
+                config.physics_overrides,
+                expected_type=EraPhysicsOverrides,
+                label="physics_overrides",
+            ),
+            "tick_resolution_overrides": _registration_sparse_data(
+                config.tick_resolution_overrides,
+                expected_type=EraTickResolutionOverrides,
+                label="tick_resolution_overrides",
+            ),
+        },
+        strict=True,
+        extra="forbid",
     )
-    _ERA_REGISTRY[era_name.lower()] = validated.model_copy(deep=True)
+    _ERA_REGISTRY[normalized_name] = validated.model_copy(deep=True)

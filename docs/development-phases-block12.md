@@ -8,8 +8,10 @@ or persisted stages are missing.
 The live issue inventory and evidence matrix are in
 [`remediation-backlog.md`](remediation-backlog.md).
 
-Block status: **In progress**. Phases 105 through 113 are complete. Phase 114
-remains unstarted.
+Block status: **Complete**. Phases 105 through 114 are complete. Phase 114
+passed validation, documentation audit, cross-document audit, and postmortem;
+its owner-approved performance qualification remains explicit and is not an
+uncontended wall-clock-pass claim.
 
 ## Phase 105 - Checkpoint State Integrity
 
@@ -233,11 +235,30 @@ and checkpoint-continuation evidence.
 
 ## Phase 114 - Era Override Execution
 
-Status: **Not started**.
+Status: **Complete**.
 
 Define the supported physics and tick-resolution override keys, reject unknown
 metadata, and apply each supported value at the production construction
 boundary.
+
+The implemented boundary resolves one frozen effective `EraRuntimeContract`
+before RNG and runtime construction. It supports strict sparse strategic,
+operational, and tactical cadence plus minor/serious/critical treatment and
+maintenance repair durations; unsupported C2 and nuclear declarations reject.
+The same contract constructs the clock and domain configs, determines API
+frame cadence, participates in runtime fingerprints, and persists in exact
+checkpoint format 114. One cadence is bound to each complete interval, and
+maintenance now has one all-resolution update owner. Built-in era presets omit
+the prior unsourced physics numbers.
+
+Focused production, API, deterministic/checkpoint, full-data, 46-scenario,
+and exact 11,903-node partition evidence is recorded in
+[`phase-114.md`](devlog/phase-114.md). Documentation audit, cross-document
+audit, and postmortem pass. The owner accepted the dispersed timing evidence
+only with an explicit contention qualification and deferred uncontended
+confirmation until all cores are free; no clean wall-clock pass is claimed.
+Newly exposed production prerequisites have explicit Block 13 remediation
+assignments rather than proxy implementations. REM-018 is closed.
 
 Exit criteria: REM-018 is closed with enabled/omitted controls that change the
 intended production clock or engine behavior and persist exactly.

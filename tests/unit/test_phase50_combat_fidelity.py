@@ -34,6 +34,7 @@ from stochastic_warfare.simulation.battle import (
     _POSTURE_SPEED_MULT,
 )
 from stochastic_warfare.simulation.calibration import CalibrationSchema
+from tests.conftest import bind_test_era_runtime
 
 
 # ---------------------------------------------------------------------------
@@ -86,7 +87,7 @@ def _make_ctx(
         era=era,
         behavior_rules=behavior_rules or {},
     )
-    return SimpleNamespace(
+    ctx = SimpleNamespace(
         calibration=calibration,
         config=config,
         engagement_engine=engagement_engine,
@@ -114,6 +115,7 @@ def _make_ctx(
         elevation_manager=None,
         rng=np.random.default_rng(42),
     )
+    return bind_test_era_runtime(ctx, era=era)
 
 
 def _make_battle(sides: list[str] | None = None) -> BattleContext:

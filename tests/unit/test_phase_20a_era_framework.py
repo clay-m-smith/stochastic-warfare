@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import Any
 
 import pytest
+from pydantic import ValidationError
 
 from stochastic_warfare.core.era import (
     Era,
@@ -66,12 +67,22 @@ class TestEraConfig:
         assert cfg.available_sensor_types == {"VISUAL", "RADAR"}
 
     def test_physics_overrides(self) -> None:
-        cfg = EraConfig(physics_overrides={"max_mach": 0.8})
-        assert cfg.physics_overrides["max_mach"] == 0.8
+        cfg = EraConfig(physics_overrides={"repair_time_hours": 0.8})
+        assert cfg.physics_overrides.repair_time_hours == 0.8
+        assert cfg.physics_overrides.model_dump(mode="json") == {
+            "repair_time_hours": 0.8,
+        }
+
+    def test_unsupported_physics_override_is_rejected(self) -> None:
+        with pytest.raises(ValidationError, match="max_mach"):
+            EraConfig(physics_overrides={"max_mach": 0.8})
 
     def test_tick_resolution_overrides(self) -> None:
         cfg = EraConfig(tick_resolution_overrides={"tactical_s": 10.0})
-        assert cfg.tick_resolution_overrides["tactical_s"] == 10.0
+        assert cfg.tick_resolution_overrides.tactical_s == 10.0
+        assert cfg.tick_resolution_overrides.model_dump(mode="json") == {
+            "tactical_s": 10.0,
+        }
 
     def test_model_dump_roundtrip(self) -> None:
         cfg = WW2_ERA_CONFIG
@@ -391,5 +402,7 @@ class TestBackwardCompatibility:
         assert cfg.era == Era.MODERN
         assert cfg.disabled_modules == set()
         assert cfg.available_sensor_types == set()
-        assert cfg.physics_overrides == {}
-        assert cfg.tick_resolution_overrides == {}
+        assert cfg.physics_overrides.is_empty
+        assert cfg.tick_resolution_overrides.is_empty
+        assert cfg.physics_overrides.model_dump(mode="json") == {}
+        assert cfg.tick_resolution_overrides.model_dump(mode="json") == {}

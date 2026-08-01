@@ -72,7 +72,7 @@ def _make_config(
 ) -> CampaignScenarioConfig:
     return CampaignScenarioConfig(
         name="test",
-        date="2024-06-15",
+        date="2024-06-15T12:00:00Z",
         duration_hours=1.0,
         terrain=TerrainConfig(
             width_m=width_m,

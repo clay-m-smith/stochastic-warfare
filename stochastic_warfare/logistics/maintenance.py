@@ -13,7 +13,7 @@ from dataclasses import dataclass
 from datetime import datetime
 
 import numpy as np
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 from stochastic_warfare.core.events import EventBus
 from stochastic_warfare.core.logging import get_logger
@@ -74,6 +74,8 @@ class MaintenanceConfig(BaseModel):
       Assessment" — deferred maintenance doubles failure rate.
     """
 
+    model_config = ConfigDict(frozen=True)
+
     base_mtbf_hours: float = 500.0
     """Mid-range military vehicle MTBF (MIL-HDBK-217F: 200-1000h)."""
     deferred_maintenance_multiplier: float = 2.0
@@ -131,6 +133,11 @@ class MaintenanceEngine:
         self._sim_time: float = 0.0
         # Phase 56c: per-subsystem Weibull shapes
         self._subsystem_shapes: dict[str, float] = {}
+
+    @property
+    def config(self) -> MaintenanceConfig:
+        """Return the immutable runtime configuration."""
+        return self._config
 
     def set_subsystem_shapes(self, shapes: dict[str, float]) -> None:
         """Set per-subsystem Weibull shape parameters.

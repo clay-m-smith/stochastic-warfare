@@ -2,7 +2,7 @@
 
 ![Python](https://img.shields.io/badge/python-%3E%3D3.12-blue)
 ![Tests](https://img.shields.io/badge/tests-partitioned_validation-blue)
-![Phase](https://img.shields.io/badge/phase-113_COMPLETE-brightgreen)
+![Phase](https://img.shields.io/badge/phase-114_COMPLETE-brightgreen)
 
 High-fidelity, high-resolution wargame simulator with a headless Python engine,
 FastAPI service, and React frontend. Models warfare across multiple scales —
@@ -56,14 +56,19 @@ behavior or historical fidelity. Golan remains a manual paired benchmark. All
 Python commands use `uv run` so the project environment is selected without
 manual activation.
 
-The current Phase 113 audit enumerates exactly 11,824 nodes in that disjoint
-union: `standard` 11,367, `slow-only` 109, `benchmark-only` 62,
-`slow-benchmark` 4, API 241, and E2E 41. All 11,824 passed with zero
-failures/errors/skips and six declared warnings. Local API/E2E plus one
-FastMCP standard node used the declared uvloop qualification; hosted CI is the
-authoritative default-policy control for that local host/tool-loop boundary.
-Historical Phase 112 execution evidence is retained in the
-[Phase 112 devlog](docs/devlog/phase-112.md).
+The Phase 114 closure audit enumerates exactly 11,903 nodes in that
+disjoint union: `standard` 11,445, `slow-only` 109, `benchmark-only` 62,
+`slow-benchmark` 4, API 242, and E2E 41. All 11,903 passed with zero
+failures/errors/skips and six declared warnings. The accepted Phase 114
+standard and API commands used no Phase 113 uvloop qualification. The API
+partition ran on the host because this sandbox currently loses an
+`aiosqlite` worker-thread wakeup before schema creation; identical focused and
+full host runs passed, and hosted CI remains the final environment control.
+The owner accepted Phase 114's dispersed timing result only as
+contention-qualified evidence and deferred an uncontended confirmation until
+all cores are free; no clean wall-clock pass is claimed. Phase 114 is complete,
+REM-018 is closed, and Block 12 is complete. Exact execution evidence is in the
+[Phase 114 devlog](docs/devlog/phase-114.md).
 
 ## Quick Start (Web UI)
 
@@ -226,11 +231,12 @@ For the full package tree and module decomposition, see [`docs/specs/project-str
 
 ## Development Status
 
-Phases 105 through 113 are complete, including the validation, documentation
-trust, and morale-ownership remediations. Phase 114 is next and remains
-unstarted, so Block 12 remains in progress. See the
-[Phase 113 devlog](docs/devlog/phase-113.md), the
-[morale ownership specification](docs/specs/morale-state-ownership.md), the
+Phases 105 through 114 and Block 12 are complete. Phase 114 implements the typed
+era runtime, clock/domain-consumer, and format-114 checkpoint contract; REM-018
+is closed. Its performance result carries the explicit owner-approved
+contention qualification above. See the
+[Phase 114 devlog](docs/devlog/phase-114.md), the
+[era override specification](docs/specs/era-override-execution.md), the
 [remediation backlog](docs/remediation-backlog.md), and the phase roadmaps for
 the exact evidence and remaining boundaries.
 
@@ -351,11 +357,12 @@ the exact evidence and remaining boundaries.
 | 111 | Time-on-Target Execution (Block 12) | 165 (162 focused + 3 API) | **Complete** |
 | 112 | Validation & Documentation Trust (Block 12) | 11,752 audited union; 97 terrain profile | **Complete** |
 | 113 | Morale State Ownership (Block 12) | 11,824 audited passes; 6 declared warnings | **Complete** |
-| 114 | Era Override Execution (Block 12) | Not started | **Not started** |
+| 114 | Era Override Execution (Block 12) | 11,903 audited closure passes; 6 declared warnings | **Complete** |
 
 The Phase 112 row remains historical repository-wide closure evidence, not a
-count of newly added tests. The Phase 113 row reports the complete current
-closure union. For the full phase roadmap, see
+count of newly added tests. The Phase 113 row is its historical closure union;
+the Phase 114 row reports its exact closure union. For the full phase
+roadmap, see
 [`docs/development-phases.md`](docs/development-phases.md) (MVP),
 [`docs/development-phases-post-mvp.md`](docs/development-phases-post-mvp.md)
 (post-MVP), and `docs/development-phases-block{N}.md` for Blocks 2–13. The live

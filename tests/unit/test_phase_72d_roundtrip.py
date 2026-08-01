@@ -5,15 +5,17 @@ Behavioral tests exercising the full checkpoint chain with real or mock engines.
 
 from __future__ import annotations
 
-from datetime import timedelta
+from datetime import datetime, timedelta, timezone
 from types import SimpleNamespace
 
 import pytest
 
 from stochastic_warfare.c2.orders.propagation import PropagationResult
 from stochastic_warfare.combat.suppression import UnitSuppressionState
+from stochastic_warfare.core.clock import SimulationClock
 from stochastic_warfare.core.events import EventBus
 from stochastic_warfare.simulation.calibration import CalibrationSchema
+from tests.conftest import bind_test_era_runtime
 
 
 # ---------------------------------------------------------------------------
@@ -35,16 +37,9 @@ def _make_mock_context():
     from stochastic_warfare.simulation.scenario import SimulationContext
 
     ctx = object.__new__(SimulationContext)
-    ctx.clock = SimpleNamespace(
-        get_state=lambda: {
-            "start": "2024-01-01T00:00:00+00:00",
-            "current": "2024-01-01T00:00:00+00:00",
-            "tick_duration_seconds": 5.0,
-            "tick_count": 0,
-        },
-        set_state=lambda s: None,
-        elapsed=timedelta(0),
-        tick_count=0,
+    ctx.clock = SimulationClock(
+        start=datetime(2024, 1, 1, tzinfo=timezone.utc),
+        tick_duration=timedelta(seconds=5),
     )
     ctx.rng_manager = SimpleNamespace(
         get_state=lambda: {"seed": 42},
@@ -52,7 +47,18 @@ def _make_mock_context():
     )
     ctx.calibration = CalibrationSchema()
     ctx.era_config = None
-    ctx.config = SimpleNamespace(model_dump=lambda: {})
+    ctx.config = SimpleNamespace(
+        date="2024-01-01",
+        duration_hours=24.0,
+        era="modern",
+        tick_resolution=SimpleNamespace(
+            strategic_s=3600.0,
+            operational_s=300.0,
+            tactical_s=5.0,
+        ),
+        tick_duration_seconds=None,
+        model_dump=lambda: {},
+    )
     ctx.units_by_side = {}
     ctx.morale_states = {}
     ctx.equipment_resolutions = {}
@@ -62,7 +68,7 @@ def _make_mock_context():
     for name in engine_names:
         setattr(ctx, name, None)
 
-    return ctx, engine_names
+    return bind_test_era_runtime(ctx), engine_names
 
 
 # ---------------------------------------------------------------------------
@@ -130,6 +136,9 @@ class TestContextRoundTrip:
             "clock": ctx.clock.get_state(),
             "rng": {"seed": 42},
             "calibration": {},
+            "era_runtime_contract": (
+                ctx.era_runtime_contract.model_dump(mode="json")
+            ),
             "loadout_builder_fingerprint": None,
             "loadout_topology": {},
             "missile_engine": {"missiles": []},

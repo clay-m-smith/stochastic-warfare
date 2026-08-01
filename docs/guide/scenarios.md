@@ -9,12 +9,14 @@ This page catalogs all available scenarios and documents the YAML format for cre
 The simulation pipeline:
 
 ```
-YAML file -> pydantic validation -> ScenarioLoader -> SimulationContext -> SimulationEngine
+YAML or typed config -> SimulationRuntimeFactory -> PreparedScenario
+                     -> ScenarioLoader -> SimulationEngine -> RuntimeSession
 ```
 
 1. A scenario YAML defines terrain, forces, objectives, victory conditions, and optional subsystems
-2. `ScenarioLoader` validates the YAML, loads all referenced definitions, and wires engines
-3. `SimulationEngine` runs the simulation using the fully-wired context
+2. `SimulationRuntimeFactory` validates and freezes source/config/data/era identity
+3. `PreparedScenario.build()` uses `ScenarioLoader` to load definitions and wire engines
+4. `RuntimeSession` advances the resulting `SimulationEngine`
 
 ## Scenario YAML Format
 
@@ -26,6 +28,46 @@ date: "1991-02-26T16:18:00Z"       # ISO 8601 date (historical scenarios)
 duration_hours: 0.5                  # max scenario duration
 era: modern                          # modern | ww2 | ww1 | napoleonic | ancient_medieval
 ```
+
+The production factory resolves the named registered era before constructing
+any RNG, clock, terrain, force, or engine. It freezes the selected `EraConfig`
+and one effective runtime contract into the prepared scenario, so later
+registry replacement cannot alter an already prepared run. A new preparation
+resolves and captures the replacement.
+
+### Tick Cadence and Era Contracts
+
+```yaml
+tick_resolution:
+  strategic_s: 3600.0
+  operational_s: 300.0
+  tactical_s: 5.0
+```
+
+Scenario-authored `tick_resolution` values and the alternative uniform
+`tick_duration_seconds` shorthand accept non-boolean integers or floats,
+normalize them to floats, and require a finite positive value exactly
+representable at microsecond precision. The resulting cadence must be
+executable through the scenario's declared calendar horizon. The uniform
+shorthand sets all three resolutions and cannot be combined with a selected
+era that declares a sparse tick override.
+
+Custom registered eras may sparsely override the three cadence values and the
+medical minor/serious/critical treatment or maintenance repair duration. Those
+are typed registry declarations, not arbitrary scenario YAML dictionaries.
+Unlike scenario cadence inputs, every authored era-override value must be an
+actual strict float (`5.0`, not integer `5`). Unknown keys and the former
+unsupported C2/nuclear fields reject. Built-in era presets currently declare
+no cadence or physics numbers because the historical values previously stored
+there were unsourced.
+
+One resolved contract constructs the clock, engine interval cadence, medical
+and maintenance configs; participates in runtime/API fingerprints; and
+persists in checkpoint format 114. It does not automatically admit battle
+casualties, create facilities, register equipment for maintenance, initiate
+repairs/spares, construct communications equipment topology, or schedule a
+nuclear action. See the [era reference](../reference/eras.md) and
+[Phase 114 contract](../specs/era-override-execution.md).
 
 ### Terrain
 
@@ -82,17 +124,26 @@ objectives:
   - objective_id: obj_alpha
     position: [3000, 2000]
     radius_m: 500
-    assigned_side: blue
+    type: territory
 
 victory_conditions:
-  - side: blue
-    condition_type: territory         # all assigned objectives controlled
-  - side: red
-    condition_type: force_destroyed   # opponent loses 70%+ forces
-  - condition_type: time_expired      # scenario duration exceeded
+  - type: territory_control
+    side: blue
+    params:
+      required_fraction: 1.0
+  - type: force_destroyed
+    side: blue
+    params:
+      threshold: 0.7
+  - type: time_expired
+    side: red
+    params:
+      max_duration_s: 1800
 ```
 
-**Victory condition types**: `territory`, `force_destroyed`, `morale_collapsed`, `supply_exhausted`, `time_expired`, `ceasefire`, `capitulation`.
+**Victory condition types**: `territory_control`, `force_destroyed`,
+`time_expired`, `morale_collapsed`, `supply_exhausted`, `ceasefire`,
+`armistice`, and `attrition_ratio`.
 
 ### Reinforcements
 
@@ -284,8 +335,8 @@ space_config:                        # Space & Satellite
 
 cbrn_config:                         # CBRN Effects
   enable_cbrn: true
-  enable_chemical: true
-  enable_nuclear: false
+  update_interval_s: 10.0
+  auto_mopp_response: true
 
 escalation_config:                   # Escalation Ladder
   initial_level: 3
@@ -305,6 +356,11 @@ era selected by `era` can also forbid `ew`, `space`, or `cbrn`; explicitly
 enabling a forbidden suite is a load error. Era gates additionally reject
 forbidden GPS/PGM guidance, thermal sensors, finite data links, and sensor
 types outside the era allowlist.
+
+Constructing an enabled CBRN suite does not schedule a chemical, biological,
+radiological, or nuclear action. Typed production action/owner/delivery/target
+topology remains
+[REM-037](../remediation-backlog.md#rem-037-cbrn-has-no-typed-scheduled-action-boundary).
 
 ### Documented Outcomes
 
@@ -361,7 +417,7 @@ documented_outcomes:
 | **Space ISR Gap** | Satellite coverage gaps | 24 hr | Space ISR |
 | **Space ASAT Escalation** | Hypothetical catalog-backed exact-target direct-ascent strike | 12 hr | Finite ASAT asset, debris, enabled/disabled control |
 | **CBRN Chemical Defense** | Chemical attack and protection | 4 hr | CBRN, MOPP |
-| **CBRN Nuclear Tactical** | Tactical nuclear exchange | 2 hr | Nuclear, EMP, fallout |
+| **CBRN Nuclear Tactical** | Nuclear-action validation fixture | 2 hr | CBRN suite loads, but the authored scheduled detonation has no production consumer (REM-037) |
 | **Halabja 1988** | Chemical attack on civilians | 4 hr | CBRN, civilian population |
 | **Srebrenica 1995** | Escalation and war crimes | 72 hr | Escalation, consequences |
 | **Eastern Front 1943** | WWII Eastern Front | 72 hr | Large-scale combined arms |

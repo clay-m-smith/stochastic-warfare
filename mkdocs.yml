@@ -92,7 +92,7 @@ nav:
     - Block 10 (92-97): development-phases-block10.md
     - Block 11 (98-104): development-phases-block11.md
     - Block 12 (105-114): development-phases-block12.md
-    - Block 13 (115-121): development-phases-block13.md
+    - Block 13 (115-127): development-phases-block13.md
     - Remediation Backlog: remediation-backlog.md
   - Devlog:
     - Overview: devlog/index.md
@@ -211,6 +211,7 @@ nav:
     - Phase 111 - Time-on-Target Execution: devlog/phase-111.md
     - Phase 112 - Validation and Documentation Trust: devlog/phase-112.md
     - Phase 113 - Morale State Ownership: devlog/phase-113.md
+    - Phase 114 - Era Override Execution: devlog/phase-114.md
   - Specifications:
     - Project Structure: specs/project-structure.md
     - Checkpoint State Contract: specs/checkpoint-state.md
@@ -219,4 +220,5 @@ nav:
     - Time-on-Target Execution: specs/time-on-target-execution.md
     - Validation and Documentation Trust: specs/validation-and-documentation-trust.md
     - Morale State Ownership: specs/morale-state-ownership.md
+    - Era Override Execution: specs/era-override-execution.md
     - Skills & Hooks: skills-and-hooks.md

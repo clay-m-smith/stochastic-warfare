@@ -28,6 +28,7 @@ from stochastic_warfare.simulation.battle import (
     _infer_missile_type,
     _route_naval_engagement,
 )
+from tests.conftest import bind_test_era_runtime
 
 
 # ---------------------------------------------------------------------------
@@ -159,7 +160,7 @@ def _make_ctx(
         infrastructure_manager=None,
         obstacle_manager=None,
     )
-    return ctx
+    return bind_test_era_runtime(ctx, era=era)
 
 
 # ===========================================================================

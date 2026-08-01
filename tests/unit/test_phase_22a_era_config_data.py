@@ -70,15 +70,21 @@ class TestNapoleonicEraConfig:
         cfg = get_era_config("napoleonic")
         assert cfg.available_sensor_types == {"VISUAL"}
 
-    def test_c2_delay_multiplier(self) -> None:
+    def test_no_unwired_c2_delay_proxy(self) -> None:
         from stochastic_warfare.core.era import get_era_config
-        cfg = get_era_config("napoleonic")
-        assert cfg.physics_overrides.get("c2_delay_multiplier") == 8.0
 
-    def test_nuclear_disabled_override(self) -> None:
-        from stochastic_warfare.core.era import get_era_config
         cfg = get_era_config("napoleonic")
-        assert cfg.physics_overrides.get("cbrn_nuclear_enabled") is False
+        assert "c2_delay_multiplier" not in cfg.physics_overrides.model_dump(
+            mode="json",
+        )
+
+    def test_no_unwired_nuclear_proxy(self) -> None:
+        from stochastic_warfare.core.era import get_era_config
+
+        cfg = get_era_config("napoleonic")
+        assert "cbrn_nuclear_enabled" not in cfg.physics_overrides.model_dump(
+            mode="json",
+        )
 
     def test_modern_unaffected(self) -> None:
         from stochastic_warfare.core.era import get_era_config

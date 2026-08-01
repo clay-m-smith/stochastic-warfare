@@ -4,6 +4,15 @@
 **Tests**: 321 new (5,980 total)
 **Duration**: Single session
 
+> **Historical supersession (Phase 114 completion, 2026-08-01):** This devlog
+> preserves Phase 23's original record. Its `c2_delay_multiplier=12.0`
+> declaration was not consumed by a production communications path, and the
+> standalone visual-signaling engine did not supply loaded unit/HQ link
+> topology. Phase 114 removes the unsupported key from shipped presets and
+> rejects it explicitly. Production communications topology remains
+> REM-036/Phase 123; the standalone signaling behavior below is not that
+> capability proof. Phase 114 is complete and REM-018 is closed.
+
 ## Overview
 
 Pre-gunpowder warfare dominated by melee combat, formations, and morale. Follows the Phase 20-22 era framework pattern: data package + standalone engine modules. Battles decided by morale collapse and rout cascade, not attrition to zero.
