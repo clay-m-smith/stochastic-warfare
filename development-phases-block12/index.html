@@ -1850,7 +1850,7 @@
   <span class="md-ellipsis">
     
   
-    Block 13 (115-118)
+    Block 13 (115-121)
   
 
     
@@ -5173,6 +5173,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-113/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 113 - Morale State Ownership
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -5409,6 +5437,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../specs/morale-state-ownership/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Morale State Ownership
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../skills-and-hooks/" class="md-nav__link">
         
   
@@ -5600,8 +5656,8 @@ specific claims where the declared, loaded, wired, exercised, outcome-affecting,
 or persisted stages are missing.</p>
 <p>The live issue inventory and evidence matrix are in
 <a href="../remediation-backlog/"><code>remediation-backlog.md</code></a>.</p>
-<p>Block status: <strong>In progress</strong>. Phases 105 through 112 are complete. Phase 113
-has not started, and Phase 114 remains unstarted.</p>
+<p>Block status: <strong>In progress</strong>. Phases 105 through 113 are complete. Phase 114
+remains unstarted.</p>
 <h2 id="phase-105-checkpoint-state-integrity">Phase 105 - Checkpoint State Integrity<a class="headerlink" href="#phase-105-checkpoint-state-integrity" title="Permanent link">&para;</a></h2>
 <p>Status: <strong>Complete</strong> (reclosed 2026-07-28 after the Codex skill-port
 postmortem and follow-up repair).</p>
@@ -5765,10 +5821,27 @@ commands, warnings, exclusions, scenario outcomes, benchmark evidence, and
 remaining limitations, and <a href="../remediation-backlog/"><code>remediation-backlog.md</code></a>
 for the canonical issue transitions.</p>
 <h2 id="phase-113-morale-state-ownership">Phase 113 - Morale State Ownership<a class="headerlink" href="#phase-113-morale-state-ownership" title="Permanent link">&para;</a></h2>
-<p>Status: <strong>Not started</strong>.</p>
+<p>Status: <strong>Complete</strong> (2026-08-01).</p>
 <p>Replace the independently mutable context and state-machine morale stores with
 one authoritative runtime path. Route transitions, rout cascades, aggregation,
 dynamic registration, victory reads, and checkpointing through it.</p>
+<p>The implementation now places immutable active records and suspended aggregate
+archives behind one typed <code>MoraleRuntime</code>. Initial units and reinforcements,
+stochastic and forced transitions, rally, cascades, aggregation, victory,
+recorder/API projections, and format-113 checkpoint continuation use that
+runtime-owned boundary; <code>RNGManager</code> is the sole MORALE-stream persistence
+authority. The former guerrilla <code>blend_probability -&gt; ROUTING</code> proxy has also
+been replaced by an explicit pre-mutation unsupported error, with the actual
+concealment lifecycle retained by REM-032/Phase 119.</p>
+<p>Focused production-path, deterministic-replay, checkpoint, scenario, and
+benchmark-policy evidence is recorded in
+<a href="../devlog/phase-113/"><code>phase-113.md</code></a>. The exact 11,824-node union has passed
+with zero failures/errors/skips and six declared warnings; local API/E2E plus
+one FastMCP standard node use an explicit uvloop qualification, with hosted CI
+as the authoritative default-policy control. The corrected documentation audit
+and phase postmortem passed. The post-commit clean-tree benchmark verifier
+binds the accepted comparison to the final phase commit as documented in the
+devlog. REM-019 is closed.</p>
 <p>Exit criteria: REM-019 is closed with exact transition, cascade, aggregation,
 and checkpoint-continuation evidence.</p>
 <h2 id="phase-114-era-override-execution">Phase 114 - Era Override Execution<a class="headerlink" href="#phase-114-era-override-execution" title="Permanent link">&para;</a></h2>

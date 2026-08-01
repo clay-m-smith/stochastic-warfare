@@ -1690,7 +1690,7 @@
   <span class="md-ellipsis">
     
   
-    Block 13 (115-118)
+    Block 13 (115-121)
   
 
     
@@ -5328,6 +5328,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-113/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 113 - Morale State Ownership
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -5544,6 +5572,34 @@
     
   
     Validation and Documentation Trust
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../specs/morale-state-ownership/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Morale State Ownership
   
 
     
@@ -5914,6 +5970,18 @@
 <li><strong>MineWarfareEngine completion</strong> — mine persistence (battery decay per tick), mine sweeping by minesweeper units. Gated by <code>enable_mine_persistence=False</code>.</li>
 <li><strong>P2 engine cleanup</strong> — siege assault/sally wiring in campaign loop, propulsion drag reduction in ballistics, data link range gate for UAVs, ConditionsEngine facade instantiation.</li>
 </ol>
+<blockquote>
+<p><strong>Historical supersession (Phase 113 complete):</strong> This Phase 66
+record did not prove a production-loaded populated-area guerrilla-blend
+lifecycle. Phase 68 later represented successful blending with
+<code>UnitStatus.ROUTING</code>; the Phase 113 production audit found that proxy
+semantically invalid. The completed Phase 113 implementation instead fails
+a positive blend explicitly before retreat, status, morale, event, COMBAT-RNG,
+or MORALE-RNG mutation. A typed population/concealment owner remains queued as
+<a href="../../remediation-backlog/#rem-032-guerrilla-blending-has-no-semantic-runtime-owner">REM-032</a>
+for Phase 119. This notice supersedes only the blend/<code>ROUTING</code> claim; the
+historical Phase 66 record below is otherwise retained.</p>
+</blockquote>
 <h2 id="what-was-built">What Was Built<a class="headerlink" href="#what-was-built" title="Permanent link">&para;</a></h2>
 <h3 id="calibrationschema-step-0">CalibrationSchema (Step 0)<a class="headerlink" href="#calibrationschema-step-0" title="Permanent link">&para;</a></h3>
 <ul>

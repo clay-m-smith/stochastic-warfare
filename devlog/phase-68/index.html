@@ -1690,7 +1690,7 @@
   <span class="md-ellipsis">
     
   
-    Block 13 (115-118)
+    Block 13 (115-121)
   
 
     
@@ -5262,6 +5262,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-113/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 113 - Morale State Ownership
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -5478,6 +5506,34 @@
     
   
     Validation and Documentation Trust
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../specs/morale-state-ownership/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Morale State Ownership
   
 
     
@@ -5777,6 +5833,19 @@
 <strong>Tests</strong>: 67 new (7 test files)</p>
 <h2 id="summary">Summary<a class="headerlink" href="#summary" title="Permanent link">&para;</a></h2>
 <p>Phase 68 converts the 7 highest-priority "log but don't act" patterns to actual behavioral enforcement, each gated behind an <code>enable_*</code> flag (default <code>False</code>) to prevent regressions.</p>
+<blockquote>
+<p><strong>Historical supersession (Phase 113 complete):</strong> The Phase 68
+populated-area <code>blend_probability -&gt; UnitStatus.ROUTING</code> mapping represented
+concealment as morale collapse and had neither the production population
+query nor a typed concealment lifecycle. The completed Phase 113
+implementation removes that proxy and fails a positive blend explicitly
+before retreat, status, morale, event, COMBAT-RNG, or MORALE-RNG mutation; the
+zero-blend retreat path remains available. Correct populated-area membership,
+concealment, targetability, re-emergence, checkpoint, and API behavior remain
+<a href="../../remediation-backlog/#rem-032-guerrilla-blending-has-no-semantic-runtime-owner">REM-032</a>
+for Phase 119. The sections below are retained as a historical implementation
+record, not current concealment-completion evidence.</p>
+</blockquote>
 <h2 id="what-was-built">What Was Built<a class="headerlink" href="#what-was-built" title="Permanent link">&para;</a></h2>
 <h3 id="68a-fuel-consumption-enforcement">68a: Fuel Consumption Enforcement<a class="headerlink" href="#68a-fuel-consumption-enforcement" title="Permanent link">&para;</a></h3>
 <ul>
@@ -5836,7 +5905,8 @@
 <li><code>retreat_distance_m</code> field in CalibrationSchema (default 2000m)</li>
 <li>Guerrilla units that disengage physically move away from nearest enemy</li>
 <li>Retreat vector: opposite direction from nearest enemy, magnitude = <code>retreat_distance_m</code></li>
-<li>Optional ROUTING status via blend probability + PRNG</li>
+<li><del>Optional ROUTING status via blend probability + PRNG</del> <em>(superseded by the
+  Phase 113 notice above; REM-032/Phase 119 owns the replacement)</em></li>
 <li>Gated by existing <code>enable_unconventional_warfare</code> flag</li>
 </ul>
 <h2 id="files-modified">Files Modified<a class="headerlink" href="#files-modified" title="Permanent link">&para;</a></h2>

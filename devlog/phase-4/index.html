@@ -1690,7 +1690,7 @@
   <span class="md-ellipsis">
     
   
-    Block 13 (115-118)
+    Block 13 (115-121)
   
 
     
@@ -5311,6 +5311,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-113/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 113 - Morale State Ownership
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -5527,6 +5555,34 @@
     
   
     Validation and Documentation Trust
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../specs/morale-state-ownership/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Morale State Ownership
   
 
     
@@ -5873,12 +5929,20 @@
 <p><strong>Status</strong>: Complete
 <strong>Date</strong>: 2026-03-01</p>
 <hr />
+<blockquote>
+<p><strong>Historical supersession (Phase 113):</strong> Phase 4's EventBus-subscriber
+language below records its original design intent, not the current production
+ownership graph. <code>simulation/battle.py</code> now passes computed combat pressures
+directly to <code>MoraleRuntime</code>; the runtime commits authoritative state/status
+and then publishes caused morale events. Morale does not subscribe to combat
+events in the current production path.</p>
+</blockquote>
 <h2 id="summary">Summary<a class="headerlink" href="#summary" title="Permanent link">&para;</a></h2>
 <p>Phase 4 implements the combat resolution and morale systems — the core of what makes this a wargame. Units can now engage each other across every domain: direct fire (kinetic rounds, HEAT), indirect fire (tube and rocket artillery), surface-to-surface missiles (TBMs, cruise missiles, SSMs), air-to-air (BVR/WVR/guns), air-to-ground (CAS, SEAD/DEAD), air defense (SAMs with shoot-look-shoot, EMCON), missile defense (layered BMD, cruise missile defense, C-RAM), naval surface (Wayne Hughes salvo model), naval subsurface (torpedo engagements, evasion), mine warfare, naval gunfire support, amphibious assault, and carrier operations. Combat outcomes feed into a 5-state Markov morale model that drives rout cascades, surrender, and rally mechanics.</p>
 <p><strong>Test count</strong>: 634 new tests -&gt; 1,721 total (1,087 Phase 0-3 + 634 Phase 4).</p>
 <h2 id="what-was-built">What Was Built<a class="headerlink" href="#what-was-built" title="Permanent link">&para;</a></h2>
 <h3 id="step-1-direct-fire-fundamentals-7-modules">Step 1: Direct Fire &amp; Fundamentals (7 modules)<a class="headerlink" href="#step-1-direct-fire-fundamentals-7-modules" title="Permanent link">&para;</a></h3>
-<p><strong><code>combat/engagement.py</code></strong> — Engagement orchestrator. Sequences the kill chain: target selection, range determination, weapon-ammo pairing, hit probability, damage assessment. Delegates to physics (ballistics), probability (hit_probability), and effects (damage) engines. Publishes <code>EngagementEvent</code> to EventBus for morale/intel subscribers.</p>
+<p><strong><code>combat/engagement.py</code></strong> — Engagement orchestrator. Sequences the kill chain: target selection, range determination, weapon-ammo pairing, hit probability, damage assessment. Delegates to physics (ballistics), probability (hit_probability), and effects (damage) engines. Publishes <code>EngagementEvent</code> to EventBus for recorder, analytics, and other applicable observers; current morale pressure is orchestrated directly by the battle runtime.</p>
 <p><strong><code>combat/ballistics.py</code></strong> — Projectile trajectory computation via RK4 numerical integration. Models drag (simplified constant Cd), Coriolis deflection (latitude-dependent), wind drift, and propellant temperature effects on muzzle velocity. Computes time of flight, impact angle, and terminal velocity.</p>
 <p><strong><code>combat/hit_probability.py</code></strong> — P(hit) computation from weapon accuracy, range, crew skill, target motion (crossing rate penalty), target size, environmental modifiers (visibility, wind), and posture (hull-down, defilade). Returns probability used as Bernoulli trial parameter.</p>
 <p><strong><code>combat/damage.py</code></strong> — Terminal effects engine. DeMarre penetration model for kinetic energy rounds (penetration proportional to projectile mass, velocity squared, and caliber). HEAT penetration is range-independent (shaped charge jet). Behind-armor effects: spalling, fire, crew casualties. Hull/equipment damage tracking.</p>
@@ -5927,7 +5991,7 @@
 <p><strong>Wayne Hughes salvo model for naval missile exchange</strong>: The salvo model (offensive power vs defensive power vs staying power) is the standard analytical framework for modern naval surface combat. It naturally captures the alpha-strike nature of missile warfare and the importance of defense-in-depth.</p>
 </li>
 <li>
-<p><strong>Morale decoupled via EventBus</strong>: Combat modules publish events (casualties, suppression, kills); morale modules subscribe. No direct import from combat to morale or vice versa. This preserves the dependency graph: combat and morale are peers, not parent-child.</p>
+<p><strong>Morale ownership superseded in Phase 113</strong>: Phase 4 originally described combat events feeding morale subscribers. Current production instead has the battle orchestrator compute pressure inputs and call the single authoritative <code>MoraleRuntime</code>; the runtime publishes committed morale outcomes.</p>
 </li>
 <li>
 <p><strong>Weapon + ammo separated</strong>: A weapon definition specifies mechanical properties (rate of fire, accuracy, range). Ammunition definitions specify terminal effects (penetration, blast radius, fragmentation). A weapon references compatible ammo types. This mirrors real-world logistics and allows realistic ammo selection.</p>
@@ -5979,7 +6043,7 @@
 <tbody>
 <tr>
 <td>Morale dependency direction unclear</td>
-<td>Decoupled via EventBus — combat publishes, morale subscribes, no circular imports</td>
+<td>Original EventBus-subscriber design was superseded in Phase 113 by direct battle-to-<code>MoraleRuntime</code> orchestration and post-commit morale events</td>
 </tr>
 <tr>
 <td>IAMD code duplication between AD and BMD</td>
@@ -6285,7 +6349,7 @@
 <ul>
 <li><strong>Engagement orchestration is key</strong>: Keeping <code>engagement.py</code> as a thin orchestrator that delegates to specialized modules prevents monolithic combat code. Each physics/probability/damage module can be tested and tuned independently.</li>
 <li><strong>Wayne Hughes salvo model scales well</strong>: The offensive/defensive/staying power framework handles everything from small corvette actions to carrier strike group engagements by parameterizing the missile counts and Pk values.</li>
-<li><strong>Morale decoupling via EventBus works cleanly</strong>: Publishing combat events and letting morale subscribe eliminates circular dependencies. The morale system doesn't need to know about weapon types or physics — it only cares about outcomes (casualties, suppression, kills).</li>
+<li><strong>Morale input isolation remains useful, but ownership changed</strong>: Morale still consumes derived outcomes rather than weapon physics. Phase 113 replaced the historical subscriber design with a direct, typed battle-to-<code>MoraleRuntime</code> boundary so state, status, routing, RNG, and caused events commit together.</li>
 <li><strong>YAML weapon/ammo separation pays off</strong>: Being able to mix weapon-ammo combinations (e.g., same 155mm howitzer firing HE, DPICM, smoke, illumination, or Excalibur) without code changes makes scenario authoring much more flexible.</li>
 <li><strong>Rout cascade needs depth limiting</strong>: Without a visited-set and depth limit, cascading morale checks can theoretically loop through a dense formation. The fix is straightforward (BFS with visited set) but the failure mode is subtle.</li>
 <li><strong>Kill chain timing matters</strong>: Missiles that take minutes to reach their target create windows for defensive response. Modeling this explicitly (rather than instant resolution) is essential for realistic IAMD and naval combat.</li>

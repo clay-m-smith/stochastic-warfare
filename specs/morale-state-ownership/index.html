@@ -12,29 +12,31 @@
         <meta name="author" content="Clay Smith">
       
       
-        <link rel="canonical" href="https://clay-m-smith.github.io/stochastic-warfare/">
+        <link rel="canonical" href="https://clay-m-smith.github.io/stochastic-warfare/specs/morale-state-ownership/">
       
       
+        <link rel="prev" href="../validation-and-documentation-trust/">
       
-        <link rel="next" href="guide/getting-started/">
+      
+        <link rel="next" href="../../skills-and-hooks/">
       
       
         
       
       
-      <link rel="icon" href="assets/images/favicon.png">
+      <link rel="icon" href="../../assets/images/favicon.png">
       <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.4">
     
     
       
-        <title>Stochastic Warfare</title>
+        <title>Morale State Ownership - Stochastic Warfare</title>
       
     
     
-      <link rel="stylesheet" href="assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
       
         
-        <link rel="stylesheet" href="assets/stylesheets/palette.ab4e12ef.min.css">
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
       
       
 
@@ -53,7 +55,7 @@
       
     
     
-    <script>__md_scope=new URL(".",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
       
 
@@ -78,7 +80,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#stochastic-warfare" class="md-skip">
+        <a href="#morale-state-ownership-contract" class="md-skip">
           Skip to content
         </a>
       
@@ -92,7 +94,7 @@
 
 <header class="md-header" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Header">
-    <a href="." title="Stochastic Warfare" class="md-header__button md-logo" aria-label="Stochastic Warfare" data-md-component="logo">
+    <a href="../.." title="Stochastic Warfare" class="md-header__button md-logo" aria-label="Stochastic Warfare" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
@@ -112,7 +114,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Home
+              Morale State Ownership
             
           </span>
         </div>
@@ -223,11 +225,9 @@
   
   
   
-    
   
-  
-    <li class="md-tabs__item md-tabs__item--active">
-      <a href="." class="md-tabs__link">
+    <li class="md-tabs__item">
+      <a href="../.." class="md-tabs__link">
         
   
   
@@ -248,7 +248,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="guide/getting-started/" class="md-tabs__link">
+        <a href="../../guide/getting-started/" class="md-tabs__link">
           
   
   
@@ -268,7 +268,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="concepts/architecture/" class="md-tabs__link">
+        <a href="../../concepts/architecture/" class="md-tabs__link">
           
   
   
@@ -288,7 +288,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="reference/api/" class="md-tabs__link">
+        <a href="../../reference/api/" class="md-tabs__link">
           
   
   
@@ -308,7 +308,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="brainstorm/" class="md-tabs__link">
+        <a href="../../brainstorm/" class="md-tabs__link">
           
   
   
@@ -328,7 +328,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="development-phases/" class="md-tabs__link">
+        <a href="../../development-phases/" class="md-tabs__link">
           
   
   
@@ -348,7 +348,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="devlog/" class="md-tabs__link">
+        <a href="../../devlog/" class="md-tabs__link">
           
   
   
@@ -364,11 +364,13 @@
   
   
   
+    
+  
   
     
     
-      <li class="md-tabs__item">
-        <a href="specs/project-structure/" class="md-tabs__link">
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../project-structure/" class="md-tabs__link">
           
   
   
@@ -402,7 +404,7 @@
 
 <nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href="." title="Stochastic Warfare" class="md-nav__button md-logo" aria-label="Stochastic Warfare" data-md-component="logo">
+    <a href="../.." title="Stochastic Warfare" class="md-nav__button md-logo" aria-label="Stochastic Warfare" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
@@ -429,37 +431,10 @@
       
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Home
-  
-
-    
-  </span>
-  
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="." class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
         
   
   
@@ -475,131 +450,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#what-is-this" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        What Is This?
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#key-capabilities" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Key Capabilities
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#architecture-at-a-glance" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Architecture at a Glance
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#getting-started" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Getting Started
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Getting Started">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#prerequisites" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Prerequisites
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#quick-setup" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Quick Setup
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#explore-the-documentation" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Explore the Documentation
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#project-status" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Project Status
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#license" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        License
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -665,7 +515,7 @@
   
   
     <li class="md-nav__item">
-      <a href="guide/getting-started/" class="md-nav__link">
+      <a href="../../guide/getting-started/" class="md-nav__link">
         
   
   
@@ -693,7 +543,7 @@
   
   
     <li class="md-nav__item">
-      <a href="guide/web-ui/" class="md-nav__link">
+      <a href="../../guide/web-ui/" class="md-nav__link">
         
   
   
@@ -721,7 +571,7 @@
   
   
     <li class="md-nav__item">
-      <a href="guide/scenarios/" class="md-nav__link">
+      <a href="../../guide/scenarios/" class="md-nav__link">
         
   
   
@@ -810,7 +660,7 @@
   
   
     <li class="md-nav__item">
-      <a href="concepts/architecture/" class="md-nav__link">
+      <a href="../../concepts/architecture/" class="md-nav__link">
         
   
   
@@ -838,7 +688,7 @@
   
   
     <li class="md-nav__item">
-      <a href="concepts/models/" class="md-nav__link">
+      <a href="../../concepts/models/" class="md-nav__link">
         
   
   
@@ -927,7 +777,7 @@
   
   
     <li class="md-nav__item">
-      <a href="reference/api/" class="md-nav__link">
+      <a href="../../reference/api/" class="md-nav__link">
         
   
   
@@ -955,7 +805,7 @@
   
   
     <li class="md-nav__item">
-      <a href="reference/eras/" class="md-nav__link">
+      <a href="../../reference/eras/" class="md-nav__link">
         
   
   
@@ -983,7 +833,7 @@
   
   
     <li class="md-nav__item">
-      <a href="reference/units/" class="md-nav__link">
+      <a href="../../reference/units/" class="md-nav__link">
         
   
   
@@ -1072,7 +922,7 @@
   
   
     <li class="md-nav__item">
-      <a href="brainstorm/" class="md-nav__link">
+      <a href="../../brainstorm/" class="md-nav__link">
         
   
   
@@ -1100,7 +950,7 @@
   
   
     <li class="md-nav__item">
-      <a href="brainstorm-post-mvp/" class="md-nav__link">
+      <a href="../../brainstorm-post-mvp/" class="md-nav__link">
         
   
   
@@ -1128,7 +978,7 @@
   
   
     <li class="md-nav__item">
-      <a href="brainstorm-block2/" class="md-nav__link">
+      <a href="../../brainstorm-block2/" class="md-nav__link">
         
   
   
@@ -1156,7 +1006,7 @@
   
   
     <li class="md-nav__item">
-      <a href="brainstorm-block3/" class="md-nav__link">
+      <a href="../../brainstorm-block3/" class="md-nav__link">
         
   
   
@@ -1184,7 +1034,7 @@
   
   
     <li class="md-nav__item">
-      <a href="brainstorm-block4/" class="md-nav__link">
+      <a href="../../brainstorm-block4/" class="md-nav__link">
         
   
   
@@ -1212,7 +1062,7 @@
   
   
     <li class="md-nav__item">
-      <a href="brainstorm-block5/" class="md-nav__link">
+      <a href="../../brainstorm-block5/" class="md-nav__link">
         
   
   
@@ -1240,7 +1090,7 @@
   
   
     <li class="md-nav__item">
-      <a href="brainstorm-block6/" class="md-nav__link">
+      <a href="../../brainstorm-block6/" class="md-nav__link">
         
   
   
@@ -1268,7 +1118,7 @@
   
   
     <li class="md-nav__item">
-      <a href="brainstorm-block7/" class="md-nav__link">
+      <a href="../../brainstorm-block7/" class="md-nav__link">
         
   
   
@@ -1296,7 +1146,7 @@
   
   
     <li class="md-nav__item">
-      <a href="brainstorm-block8/" class="md-nav__link">
+      <a href="../../brainstorm-block8/" class="md-nav__link">
         
   
   
@@ -1324,7 +1174,7 @@
   
   
     <li class="md-nav__item">
-      <a href="brainstorm-block9/" class="md-nav__link">
+      <a href="../../brainstorm-block9/" class="md-nav__link">
         
   
   
@@ -1352,7 +1202,7 @@
   
   
     <li class="md-nav__item">
-      <a href="brainstorm-block10/" class="md-nav__link">
+      <a href="../../brainstorm-block10/" class="md-nav__link">
         
   
   
@@ -1380,7 +1230,7 @@
   
   
     <li class="md-nav__item">
-      <a href="brainstorm-block11/" class="md-nav__link">
+      <a href="../../brainstorm-block11/" class="md-nav__link">
         
   
   
@@ -1469,7 +1319,7 @@
   
   
     <li class="md-nav__item">
-      <a href="development-phases/" class="md-nav__link">
+      <a href="../../development-phases/" class="md-nav__link">
         
   
   
@@ -1497,7 +1347,7 @@
   
   
     <li class="md-nav__item">
-      <a href="development-phases-post-mvp/" class="md-nav__link">
+      <a href="../../development-phases-post-mvp/" class="md-nav__link">
         
   
   
@@ -1525,7 +1375,7 @@
   
   
     <li class="md-nav__item">
-      <a href="development-phases-block2/" class="md-nav__link">
+      <a href="../../development-phases-block2/" class="md-nav__link">
         
   
   
@@ -1553,7 +1403,7 @@
   
   
     <li class="md-nav__item">
-      <a href="development-phases-block3/" class="md-nav__link">
+      <a href="../../development-phases-block3/" class="md-nav__link">
         
   
   
@@ -1581,7 +1431,7 @@
   
   
     <li class="md-nav__item">
-      <a href="development-phases-block4/" class="md-nav__link">
+      <a href="../../development-phases-block4/" class="md-nav__link">
         
   
   
@@ -1609,7 +1459,7 @@
   
   
     <li class="md-nav__item">
-      <a href="development-phases-block5/" class="md-nav__link">
+      <a href="../../development-phases-block5/" class="md-nav__link">
         
   
   
@@ -1637,7 +1487,7 @@
   
   
     <li class="md-nav__item">
-      <a href="development-phases-block6/" class="md-nav__link">
+      <a href="../../development-phases-block6/" class="md-nav__link">
         
   
   
@@ -1665,7 +1515,7 @@
   
   
     <li class="md-nav__item">
-      <a href="development-phases-block7/" class="md-nav__link">
+      <a href="../../development-phases-block7/" class="md-nav__link">
         
   
   
@@ -1693,7 +1543,7 @@
   
   
     <li class="md-nav__item">
-      <a href="development-phases-block8/" class="md-nav__link">
+      <a href="../../development-phases-block8/" class="md-nav__link">
         
   
   
@@ -1721,7 +1571,7 @@
   
   
     <li class="md-nav__item">
-      <a href="development-phases-block9/" class="md-nav__link">
+      <a href="../../development-phases-block9/" class="md-nav__link">
         
   
   
@@ -1749,7 +1599,7 @@
   
   
     <li class="md-nav__item">
-      <a href="development-phases-block10/" class="md-nav__link">
+      <a href="../../development-phases-block10/" class="md-nav__link">
         
   
   
@@ -1777,7 +1627,7 @@
   
   
     <li class="md-nav__item">
-      <a href="development-phases-block11/" class="md-nav__link">
+      <a href="../../development-phases-block11/" class="md-nav__link">
         
   
   
@@ -1805,7 +1655,7 @@
   
   
     <li class="md-nav__item">
-      <a href="development-phases-block12/" class="md-nav__link">
+      <a href="../../development-phases-block12/" class="md-nav__link">
         
   
   
@@ -1833,7 +1683,7 @@
   
   
     <li class="md-nav__item">
-      <a href="development-phases-block13/" class="md-nav__link">
+      <a href="../../development-phases-block13/" class="md-nav__link">
         
   
   
@@ -1861,7 +1711,7 @@
   
   
     <li class="md-nav__item">
-      <a href="remediation-backlog/" class="md-nav__link">
+      <a href="../../remediation-backlog/" class="md-nav__link">
         
   
   
@@ -1950,7 +1800,7 @@
   
   
     <li class="md-nav__item">
-      <a href="devlog/" class="md-nav__link">
+      <a href="../../devlog/" class="md-nav__link">
         
   
   
@@ -1978,7 +1828,7 @@
   
   
     <li class="md-nav__item">
-      <a href="devlog/phase-0/" class="md-nav__link">
+      <a href="../../devlog/phase-0/" class="md-nav__link">
         
   
   
@@ -2006,7 +1856,7 @@
   
   
     <li class="md-nav__item">
-      <a href="devlog/phase-1/" class="md-nav__link">
+      <a href="../../devlog/phase-1/" class="md-nav__link">
         
   
   
@@ -2034,7 +1884,7 @@
   
   
     <li class="md-nav__item">
-      <a href="devlog/phase-2/" class="md-nav__link">
+      <a href="../../devlog/phase-2/" class="md-nav__link">
         
   
   
@@ -2062,7 +1912,7 @@
   
   
     <li class="md-nav__item">
-      <a href="devlog/phase-3/" class="md-nav__link">
+      <a href="../../devlog/phase-3/" class="md-nav__link">
         
   
   
@@ -2090,7 +1940,7 @@
   
   
     <li class="md-nav__item">
-      <a href="devlog/phase-4/" class="md-nav__link">
+      <a href="../../devlog/phase-4/" class="md-nav__link">
         
   
   
@@ -2118,7 +1968,7 @@
   
   
     <li class="md-nav__item">
-      <a href="devlog/phase-5/" class="md-nav__link">
+      <a href="../../devlog/phase-5/" class="md-nav__link">
         
   
   
@@ -2146,7 +1996,7 @@
   
   
     <li class="md-nav__item">
-      <a href="devlog/phase-6/" class="md-nav__link">
+      <a href="../../devlog/phase-6/" class="md-nav__link">
         
   
   
@@ -2174,7 +2024,7 @@
   
   
     <li class="md-nav__item">
-      <a href="devlog/phase-7/" class="md-nav__link">
+      <a href="../../devlog/phase-7/" class="md-nav__link">
         
   
   
@@ -2202,7 +2052,7 @@
   
   
     <li class="md-nav__item">
-      <a href="devlog/phase-8/" class="md-nav__link">
+      <a href="../../devlog/phase-8/" class="md-nav__link">
         
   
   
@@ -2230,7 +2080,7 @@
   
   
     <li class="md-nav__item">
-      <a href="devlog/phase-9/" class="md-nav__link">
+      <a href="../../devlog/phase-9/" class="md-nav__link">
         
   
   
@@ -2258,7 +2108,7 @@
   
   
     <li class="md-nav__item">
-      <a href="devlog/phase-10/" class="md-nav__link">
+      <a href="../../devlog/phase-10/" class="md-nav__link">
         
   
   
@@ -2286,7 +2136,7 @@
   
   
     <li class="md-nav__item">
-      <a href="devlog/phase-11/" class="md-nav__link">
+      <a href="../../devlog/phase-11/" class="md-nav__link">
         
   
   
@@ -2314,7 +2164,7 @@
   
   
     <li class="md-nav__item">
-      <a href="devlog/phase-12/" class="md-nav__link">
+      <a href="../../devlog/phase-12/" class="md-nav__link">
         
   
   
@@ -2342,7 +2192,7 @@
   
   
     <li class="md-nav__item">
-      <a href="devlog/phase-13/" class="md-nav__link">
+      <a href="../../devlog/phase-13/" class="md-nav__link">
         
   
   
@@ -2370,7 +2220,7 @@
   
   
     <li class="md-nav__item">
-      <a href="devlog/phase-14/" class="md-nav__link">
+      <a href="../../devlog/phase-14/" class="md-nav__link">
         
   
   
@@ -2398,7 +2248,7 @@
   
   
     <li class="md-nav__item">
-      <a href="devlog/phase-15/" class="md-nav__link">
+      <a href="../../devlog/phase-15/" class="md-nav__link">
         
   
   
@@ -2426,7 +2276,7 @@
   
   
     <li class="md-nav__item">
-      <a href="devlog/phase-16/" class="md-nav__link">
+      <a href="../../devlog/phase-16/" class="md-nav__link">
         
   
   
@@ -2454,7 +2304,7 @@
   
   
     <li class="md-nav__item">
-      <a href="devlog/phase-17/" class="md-nav__link">
+      <a href="../../devlog/phase-17/" class="md-nav__link">
         
   
   
@@ -2482,7 +2332,7 @@
   
   
     <li class="md-nav__item">
-      <a href="devlog/phase-18/" class="md-nav__link">
+      <a href="../../devlog/phase-18/" class="md-nav__link">
         
   
   
@@ -2510,7 +2360,7 @@
   
   
     <li class="md-nav__item">
-      <a href="devlog/phase-19/" class="md-nav__link">
+      <a href="../../devlog/phase-19/" class="md-nav__link">
         
   
   
@@ -2538,7 +2388,7 @@
   
   
     <li class="md-nav__item">
-      <a href="devlog/phase-20/" class="md-nav__link">
+      <a href="../../devlog/phase-20/" class="md-nav__link">
         
   
   
@@ -2566,7 +2416,7 @@
   
   
     <li class="md-nav__item">
-      <a href="devlog/phase-21/" class="md-nav__link">
+      <a href="../../devlog/phase-21/" class="md-nav__link">
         
   
   
@@ -2594,7 +2444,7 @@
   
   
     <li class="md-nav__item">
-      <a href="devlog/phase-22/" class="md-nav__link">
+      <a href="../../devlog/phase-22/" class="md-nav__link">
         
   
   
@@ -2622,7 +2472,7 @@
   
   
     <li class="md-nav__item">
-      <a href="devlog/phase-23/" class="md-nav__link">
+      <a href="../../devlog/phase-23/" class="md-nav__link">
         
   
   
@@ -2650,7 +2500,7 @@
   
   
     <li class="md-nav__item">
-      <a href="devlog/phase-24/" class="md-nav__link">
+      <a href="../../devlog/phase-24/" class="md-nav__link">
         
   
   
@@ -2678,7 +2528,7 @@
   
   
     <li class="md-nav__item">
-      <a href="devlog/phase-25/" class="md-nav__link">
+      <a href="../../devlog/phase-25/" class="md-nav__link">
         
   
   
@@ -2706,7 +2556,7 @@
   
   
     <li class="md-nav__item">
-      <a href="devlog/phase-26/" class="md-nav__link">
+      <a href="../../devlog/phase-26/" class="md-nav__link">
         
   
   
@@ -2734,7 +2584,7 @@
   
   
     <li class="md-nav__item">
-      <a href="devlog/phase-27/" class="md-nav__link">
+      <a href="../../devlog/phase-27/" class="md-nav__link">
         
   
   
@@ -2762,7 +2612,7 @@
   
   
     <li class="md-nav__item">
-      <a href="devlog/phase-28/" class="md-nav__link">
+      <a href="../../devlog/phase-28/" class="md-nav__link">
         
   
   
@@ -2790,7 +2640,7 @@
   
   
     <li class="md-nav__item">
-      <a href="devlog/phase-28.5/" class="md-nav__link">
+      <a href="../../devlog/phase-28.5/" class="md-nav__link">
         
   
   
@@ -2818,7 +2668,7 @@
   
   
     <li class="md-nav__item">
-      <a href="devlog/phase-29/" class="md-nav__link">
+      <a href="../../devlog/phase-29/" class="md-nav__link">
         
   
   
@@ -2846,7 +2696,7 @@
   
   
     <li class="md-nav__item">
-      <a href="devlog/phase-30/" class="md-nav__link">
+      <a href="../../devlog/phase-30/" class="md-nav__link">
         
   
   
@@ -2874,7 +2724,7 @@
   
   
     <li class="md-nav__item">
-      <a href="devlog/phase-31/" class="md-nav__link">
+      <a href="../../devlog/phase-31/" class="md-nav__link">
         
   
   
@@ -2902,7 +2752,7 @@
   
   
     <li class="md-nav__item">
-      <a href="devlog/phase-32/" class="md-nav__link">
+      <a href="../../devlog/phase-32/" class="md-nav__link">
         
   
   
@@ -2930,7 +2780,7 @@
   
   
     <li class="md-nav__item">
-      <a href="devlog/phase-33/" class="md-nav__link">
+      <a href="../../devlog/phase-33/" class="md-nav__link">
         
   
   
@@ -2958,7 +2808,7 @@
   
   
     <li class="md-nav__item">
-      <a href="devlog/phase-34/" class="md-nav__link">
+      <a href="../../devlog/phase-34/" class="md-nav__link">
         
   
   
@@ -2986,7 +2836,7 @@
   
   
     <li class="md-nav__item">
-      <a href="devlog/phase-35/" class="md-nav__link">
+      <a href="../../devlog/phase-35/" class="md-nav__link">
         
   
   
@@ -3014,7 +2864,7 @@
   
   
     <li class="md-nav__item">
-      <a href="devlog/phase-36/" class="md-nav__link">
+      <a href="../../devlog/phase-36/" class="md-nav__link">
         
   
   
@@ -3042,7 +2892,7 @@
   
   
     <li class="md-nav__item">
-      <a href="devlog/phase-37/" class="md-nav__link">
+      <a href="../../devlog/phase-37/" class="md-nav__link">
         
   
   
@@ -3070,7 +2920,7 @@
   
   
     <li class="md-nav__item">
-      <a href="devlog/phase-38/" class="md-nav__link">
+      <a href="../../devlog/phase-38/" class="md-nav__link">
         
   
   
@@ -3098,7 +2948,7 @@
   
   
     <li class="md-nav__item">
-      <a href="devlog/phase-39/" class="md-nav__link">
+      <a href="../../devlog/phase-39/" class="md-nav__link">
         
   
   
@@ -3126,7 +2976,7 @@
   
   
     <li class="md-nav__item">
-      <a href="devlog/phase-40/" class="md-nav__link">
+      <a href="../../devlog/phase-40/" class="md-nav__link">
         
   
   
@@ -3154,7 +3004,7 @@
   
   
     <li class="md-nav__item">
-      <a href="devlog/phase-41/" class="md-nav__link">
+      <a href="../../devlog/phase-41/" class="md-nav__link">
         
   
   
@@ -3182,7 +3032,7 @@
   
   
     <li class="md-nav__item">
-      <a href="devlog/phase-42/" class="md-nav__link">
+      <a href="../../devlog/phase-42/" class="md-nav__link">
         
   
   
@@ -3210,7 +3060,7 @@
   
   
     <li class="md-nav__item">
-      <a href="devlog/phase-43/" class="md-nav__link">
+      <a href="../../devlog/phase-43/" class="md-nav__link">
         
   
   
@@ -3238,7 +3088,7 @@
   
   
     <li class="md-nav__item">
-      <a href="devlog/phase-44/" class="md-nav__link">
+      <a href="../../devlog/phase-44/" class="md-nav__link">
         
   
   
@@ -3266,7 +3116,7 @@
   
   
     <li class="md-nav__item">
-      <a href="devlog/phase-45/" class="md-nav__link">
+      <a href="../../devlog/phase-45/" class="md-nav__link">
         
   
   
@@ -3294,7 +3144,7 @@
   
   
     <li class="md-nav__item">
-      <a href="devlog/phase-46/" class="md-nav__link">
+      <a href="../../devlog/phase-46/" class="md-nav__link">
         
   
   
@@ -3322,7 +3172,7 @@
   
   
     <li class="md-nav__item">
-      <a href="devlog/phase-47/" class="md-nav__link">
+      <a href="../../devlog/phase-47/" class="md-nav__link">
         
   
   
@@ -3350,7 +3200,7 @@
   
   
     <li class="md-nav__item">
-      <a href="devlog/phase-48/" class="md-nav__link">
+      <a href="../../devlog/phase-48/" class="md-nav__link">
         
   
   
@@ -3378,7 +3228,7 @@
   
   
     <li class="md-nav__item">
-      <a href="devlog/phase-49/" class="md-nav__link">
+      <a href="../../devlog/phase-49/" class="md-nav__link">
         
   
   
@@ -3406,7 +3256,7 @@
   
   
     <li class="md-nav__item">
-      <a href="devlog/phase-50/" class="md-nav__link">
+      <a href="../../devlog/phase-50/" class="md-nav__link">
         
   
   
@@ -3434,7 +3284,7 @@
   
   
     <li class="md-nav__item">
-      <a href="devlog/phase-51/" class="md-nav__link">
+      <a href="../../devlog/phase-51/" class="md-nav__link">
         
   
   
@@ -3462,7 +3312,7 @@
   
   
     <li class="md-nav__item">
-      <a href="devlog/phase-52/" class="md-nav__link">
+      <a href="../../devlog/phase-52/" class="md-nav__link">
         
   
   
@@ -3490,7 +3340,7 @@
   
   
     <li class="md-nav__item">
-      <a href="devlog/phase-53/" class="md-nav__link">
+      <a href="../../devlog/phase-53/" class="md-nav__link">
         
   
   
@@ -3518,7 +3368,7 @@
   
   
     <li class="md-nav__item">
-      <a href="devlog/phase-54/" class="md-nav__link">
+      <a href="../../devlog/phase-54/" class="md-nav__link">
         
   
   
@@ -3546,7 +3396,7 @@
   
   
     <li class="md-nav__item">
-      <a href="devlog/phase-55/" class="md-nav__link">
+      <a href="../../devlog/phase-55/" class="md-nav__link">
         
   
   
@@ -3574,7 +3424,7 @@
   
   
     <li class="md-nav__item">
-      <a href="devlog/phase-56/" class="md-nav__link">
+      <a href="../../devlog/phase-56/" class="md-nav__link">
         
   
   
@@ -3602,7 +3452,7 @@
   
   
     <li class="md-nav__item">
-      <a href="devlog/phase-57/" class="md-nav__link">
+      <a href="../../devlog/phase-57/" class="md-nav__link">
         
   
   
@@ -3630,7 +3480,7 @@
   
   
     <li class="md-nav__item">
-      <a href="devlog/phase-58/" class="md-nav__link">
+      <a href="../../devlog/phase-58/" class="md-nav__link">
         
   
   
@@ -3658,7 +3508,7 @@
   
   
     <li class="md-nav__item">
-      <a href="devlog/phase-59/" class="md-nav__link">
+      <a href="../../devlog/phase-59/" class="md-nav__link">
         
   
   
@@ -3686,7 +3536,7 @@
   
   
     <li class="md-nav__item">
-      <a href="devlog/phase-60/" class="md-nav__link">
+      <a href="../../devlog/phase-60/" class="md-nav__link">
         
   
   
@@ -3714,7 +3564,7 @@
   
   
     <li class="md-nav__item">
-      <a href="devlog/phase-61/" class="md-nav__link">
+      <a href="../../devlog/phase-61/" class="md-nav__link">
         
   
   
@@ -3742,7 +3592,7 @@
   
   
     <li class="md-nav__item">
-      <a href="devlog/phase-62/" class="md-nav__link">
+      <a href="../../devlog/phase-62/" class="md-nav__link">
         
   
   
@@ -3770,7 +3620,7 @@
   
   
     <li class="md-nav__item">
-      <a href="devlog/phase-63/" class="md-nav__link">
+      <a href="../../devlog/phase-63/" class="md-nav__link">
         
   
   
@@ -3798,7 +3648,7 @@
   
   
     <li class="md-nav__item">
-      <a href="devlog/phase-64/" class="md-nav__link">
+      <a href="../../devlog/phase-64/" class="md-nav__link">
         
   
   
@@ -3826,7 +3676,7 @@
   
   
     <li class="md-nav__item">
-      <a href="devlog/phase-65/" class="md-nav__link">
+      <a href="../../devlog/phase-65/" class="md-nav__link">
         
   
   
@@ -3854,7 +3704,7 @@
   
   
     <li class="md-nav__item">
-      <a href="devlog/phase-66/" class="md-nav__link">
+      <a href="../../devlog/phase-66/" class="md-nav__link">
         
   
   
@@ -3882,7 +3732,7 @@
   
   
     <li class="md-nav__item">
-      <a href="devlog/phase-67/" class="md-nav__link">
+      <a href="../../devlog/phase-67/" class="md-nav__link">
         
   
   
@@ -3910,7 +3760,7 @@
   
   
     <li class="md-nav__item">
-      <a href="devlog/phase-68/" class="md-nav__link">
+      <a href="../../devlog/phase-68/" class="md-nav__link">
         
   
   
@@ -3938,7 +3788,7 @@
   
   
     <li class="md-nav__item">
-      <a href="devlog/phase-69/" class="md-nav__link">
+      <a href="../../devlog/phase-69/" class="md-nav__link">
         
   
   
@@ -3966,7 +3816,7 @@
   
   
     <li class="md-nav__item">
-      <a href="devlog/phase-70/" class="md-nav__link">
+      <a href="../../devlog/phase-70/" class="md-nav__link">
         
   
   
@@ -3994,7 +3844,7 @@
   
   
     <li class="md-nav__item">
-      <a href="devlog/phase-71/" class="md-nav__link">
+      <a href="../../devlog/phase-71/" class="md-nav__link">
         
   
   
@@ -4022,7 +3872,7 @@
   
   
     <li class="md-nav__item">
-      <a href="devlog/phase-72/" class="md-nav__link">
+      <a href="../../devlog/phase-72/" class="md-nav__link">
         
   
   
@@ -4050,7 +3900,7 @@
   
   
     <li class="md-nav__item">
-      <a href="devlog/phase-73/" class="md-nav__link">
+      <a href="../../devlog/phase-73/" class="md-nav__link">
         
   
   
@@ -4078,7 +3928,7 @@
   
   
     <li class="md-nav__item">
-      <a href="devlog/phase-74/" class="md-nav__link">
+      <a href="../../devlog/phase-74/" class="md-nav__link">
         
   
   
@@ -4106,7 +3956,7 @@
   
   
     <li class="md-nav__item">
-      <a href="devlog/phase-75/" class="md-nav__link">
+      <a href="../../devlog/phase-75/" class="md-nav__link">
         
   
   
@@ -4134,7 +3984,7 @@
   
   
     <li class="md-nav__item">
-      <a href="devlog/phase-76/" class="md-nav__link">
+      <a href="../../devlog/phase-76/" class="md-nav__link">
         
   
   
@@ -4162,7 +4012,7 @@
   
   
     <li class="md-nav__item">
-      <a href="devlog/phase-77/" class="md-nav__link">
+      <a href="../../devlog/phase-77/" class="md-nav__link">
         
   
   
@@ -4190,7 +4040,7 @@
   
   
     <li class="md-nav__item">
-      <a href="devlog/phase-78/" class="md-nav__link">
+      <a href="../../devlog/phase-78/" class="md-nav__link">
         
   
   
@@ -4218,7 +4068,7 @@
   
   
     <li class="md-nav__item">
-      <a href="devlog/phase-79/" class="md-nav__link">
+      <a href="../../devlog/phase-79/" class="md-nav__link">
         
   
   
@@ -4246,7 +4096,7 @@
   
   
     <li class="md-nav__item">
-      <a href="devlog/phase-80/" class="md-nav__link">
+      <a href="../../devlog/phase-80/" class="md-nav__link">
         
   
   
@@ -4274,7 +4124,7 @@
   
   
     <li class="md-nav__item">
-      <a href="devlog/phase-81/" class="md-nav__link">
+      <a href="../../devlog/phase-81/" class="md-nav__link">
         
   
   
@@ -4302,7 +4152,7 @@
   
   
     <li class="md-nav__item">
-      <a href="devlog/phase-82/" class="md-nav__link">
+      <a href="../../devlog/phase-82/" class="md-nav__link">
         
   
   
@@ -4330,7 +4180,7 @@
   
   
     <li class="md-nav__item">
-      <a href="devlog/phase-83/" class="md-nav__link">
+      <a href="../../devlog/phase-83/" class="md-nav__link">
         
   
   
@@ -4358,7 +4208,7 @@
   
   
     <li class="md-nav__item">
-      <a href="devlog/phase-84/" class="md-nav__link">
+      <a href="../../devlog/phase-84/" class="md-nav__link">
         
   
   
@@ -4386,7 +4236,7 @@
   
   
     <li class="md-nav__item">
-      <a href="devlog/phase-85/" class="md-nav__link">
+      <a href="../../devlog/phase-85/" class="md-nav__link">
         
   
   
@@ -4414,7 +4264,7 @@
   
   
     <li class="md-nav__item">
-      <a href="devlog/phase-86/" class="md-nav__link">
+      <a href="../../devlog/phase-86/" class="md-nav__link">
         
   
   
@@ -4442,7 +4292,7 @@
   
   
     <li class="md-nav__item">
-      <a href="devlog/phase-87/" class="md-nav__link">
+      <a href="../../devlog/phase-87/" class="md-nav__link">
         
   
   
@@ -4470,7 +4320,7 @@
   
   
     <li class="md-nav__item">
-      <a href="devlog/phase-88/" class="md-nav__link">
+      <a href="../../devlog/phase-88/" class="md-nav__link">
         
   
   
@@ -4498,7 +4348,7 @@
   
   
     <li class="md-nav__item">
-      <a href="devlog/phase-89/" class="md-nav__link">
+      <a href="../../devlog/phase-89/" class="md-nav__link">
         
   
   
@@ -4526,7 +4376,7 @@
   
   
     <li class="md-nav__item">
-      <a href="devlog/phase-90/" class="md-nav__link">
+      <a href="../../devlog/phase-90/" class="md-nav__link">
         
   
   
@@ -4554,7 +4404,7 @@
   
   
     <li class="md-nav__item">
-      <a href="devlog/phase-91/" class="md-nav__link">
+      <a href="../../devlog/phase-91/" class="md-nav__link">
         
   
   
@@ -4582,7 +4432,7 @@
   
   
     <li class="md-nav__item">
-      <a href="devlog/phase-92/" class="md-nav__link">
+      <a href="../../devlog/phase-92/" class="md-nav__link">
         
   
   
@@ -4610,7 +4460,7 @@
   
   
     <li class="md-nav__item">
-      <a href="devlog/phase-93/" class="md-nav__link">
+      <a href="../../devlog/phase-93/" class="md-nav__link">
         
   
   
@@ -4638,7 +4488,7 @@
   
   
     <li class="md-nav__item">
-      <a href="devlog/phase-94/" class="md-nav__link">
+      <a href="../../devlog/phase-94/" class="md-nav__link">
         
   
   
@@ -4666,7 +4516,7 @@
   
   
     <li class="md-nav__item">
-      <a href="devlog/phase-95/" class="md-nav__link">
+      <a href="../../devlog/phase-95/" class="md-nav__link">
         
   
   
@@ -4694,7 +4544,7 @@
   
   
     <li class="md-nav__item">
-      <a href="devlog/phase-96/" class="md-nav__link">
+      <a href="../../devlog/phase-96/" class="md-nav__link">
         
   
   
@@ -4722,7 +4572,7 @@
   
   
     <li class="md-nav__item">
-      <a href="devlog/phase-97/" class="md-nav__link">
+      <a href="../../devlog/phase-97/" class="md-nav__link">
         
   
   
@@ -4750,7 +4600,7 @@
   
   
     <li class="md-nav__item">
-      <a href="devlog/phase-98/" class="md-nav__link">
+      <a href="../../devlog/phase-98/" class="md-nav__link">
         
   
   
@@ -4778,7 +4628,7 @@
   
   
     <li class="md-nav__item">
-      <a href="devlog/phase-99/" class="md-nav__link">
+      <a href="../../devlog/phase-99/" class="md-nav__link">
         
   
   
@@ -4806,7 +4656,7 @@
   
   
     <li class="md-nav__item">
-      <a href="devlog/phase-100/" class="md-nav__link">
+      <a href="../../devlog/phase-100/" class="md-nav__link">
         
   
   
@@ -4834,7 +4684,7 @@
   
   
     <li class="md-nav__item">
-      <a href="devlog/phase-101/" class="md-nav__link">
+      <a href="../../devlog/phase-101/" class="md-nav__link">
         
   
   
@@ -4862,7 +4712,7 @@
   
   
     <li class="md-nav__item">
-      <a href="devlog/phase-102/" class="md-nav__link">
+      <a href="../../devlog/phase-102/" class="md-nav__link">
         
   
   
@@ -4890,7 +4740,7 @@
   
   
     <li class="md-nav__item">
-      <a href="devlog/phase-103/" class="md-nav__link">
+      <a href="../../devlog/phase-103/" class="md-nav__link">
         
   
   
@@ -4918,7 +4768,7 @@
   
   
     <li class="md-nav__item">
-      <a href="devlog/phase-104/" class="md-nav__link">
+      <a href="../../devlog/phase-104/" class="md-nav__link">
         
   
   
@@ -4946,7 +4796,7 @@
   
   
     <li class="md-nav__item">
-      <a href="devlog/phase-105/" class="md-nav__link">
+      <a href="../../devlog/phase-105/" class="md-nav__link">
         
   
   
@@ -4974,7 +4824,7 @@
   
   
     <li class="md-nav__item">
-      <a href="devlog/phase-106/" class="md-nav__link">
+      <a href="../../devlog/phase-106/" class="md-nav__link">
         
   
   
@@ -5002,7 +4852,7 @@
   
   
     <li class="md-nav__item">
-      <a href="devlog/phase-107/" class="md-nav__link">
+      <a href="../../devlog/phase-107/" class="md-nav__link">
         
   
   
@@ -5030,7 +4880,7 @@
   
   
     <li class="md-nav__item">
-      <a href="devlog/phase-108/" class="md-nav__link">
+      <a href="../../devlog/phase-108/" class="md-nav__link">
         
   
   
@@ -5058,7 +4908,7 @@
   
   
     <li class="md-nav__item">
-      <a href="devlog/phase-109/" class="md-nav__link">
+      <a href="../../devlog/phase-109/" class="md-nav__link">
         
   
   
@@ -5086,7 +4936,7 @@
   
   
     <li class="md-nav__item">
-      <a href="devlog/phase-110/" class="md-nav__link">
+      <a href="../../devlog/phase-110/" class="md-nav__link">
         
   
   
@@ -5114,7 +4964,7 @@
   
   
     <li class="md-nav__item">
-      <a href="devlog/phase-111/" class="md-nav__link">
+      <a href="../../devlog/phase-111/" class="md-nav__link">
         
   
   
@@ -5142,7 +4992,7 @@
   
   
     <li class="md-nav__item">
-      <a href="devlog/phase-112/" class="md-nav__link">
+      <a href="../../devlog/phase-112/" class="md-nav__link">
         
   
   
@@ -5170,7 +5020,7 @@
   
   
     <li class="md-nav__item">
-      <a href="devlog/phase-113/" class="md-nav__link">
+      <a href="../../devlog/phase-113/" class="md-nav__link">
         
   
   
@@ -5202,28 +5052,31 @@
       
   
   
+    
   
   
+  
     
     
     
     
+      
+        
+        
       
       
         
       
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
       
         
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_8" checked>
         
           
-        
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_8" >
-        
-          
-          <label class="md-nav__link" for="__nav_8" id="__nav_8_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_8" id="__nav_8_label" tabindex="">
             
   
   
@@ -5241,7 +5094,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_8">
             <span class="md-nav__icon md-icon"></span>
             
@@ -5259,7 +5112,7 @@
   
   
     <li class="md-nav__item">
-      <a href="specs/project-structure/" class="md-nav__link">
+      <a href="../project-structure/" class="md-nav__link">
         
   
   
@@ -5287,7 +5140,7 @@
   
   
     <li class="md-nav__item">
-      <a href="specs/checkpoint-state/" class="md-nav__link">
+      <a href="../checkpoint-state/" class="md-nav__link">
         
   
   
@@ -5315,7 +5168,7 @@
   
   
     <li class="md-nav__item">
-      <a href="specs/equipment-mapping/" class="md-nav__link">
+      <a href="../equipment-mapping/" class="md-nav__link">
         
   
   
@@ -5343,7 +5196,7 @@
   
   
     <li class="md-nav__item">
-      <a href="specs/asat-production-integration/" class="md-nav__link">
+      <a href="../asat-production-integration/" class="md-nav__link">
         
   
   
@@ -5371,7 +5224,7 @@
   
   
     <li class="md-nav__item">
-      <a href="specs/time-on-target-execution/" class="md-nav__link">
+      <a href="../time-on-target-execution/" class="md-nav__link">
         
   
   
@@ -5399,7 +5252,7 @@
   
   
     <li class="md-nav__item">
-      <a href="specs/validation-and-documentation-trust/" class="md-nav__link">
+      <a href="../validation-and-documentation-trust/" class="md-nav__link">
         
   
   
@@ -5424,10 +5277,37 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="specs/morale-state-ownership/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Morale State Ownership
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -5443,6 +5323,169 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#status" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Status
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#purpose-and-scope" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Purpose and scope
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ownership-model" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Ownership model
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#registration-and-lifecycle" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Registration and lifecycle
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#transition-transaction" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Transition transaction
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#status-rout-and-event-consistency" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Status, rout, and event consistency
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#rng-ownership" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        RNG ownership
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#aggregation-ownership" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Aggregation ownership
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#consumers-and-outcome-effect" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Consumers and outcome effect
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#checkpoint-format-113" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Checkpoint format 113
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#production-trace-and-capability-evidence" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Production trace and capability evidence
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#acceptance-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Acceptance tests
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#non-goals-and-remaining-deficits" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Non-goals and remaining deficits
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -5455,7 +5498,7 @@
   
   
     <li class="md-nav__item">
-      <a href="skills-and-hooks/" class="md-nav__link">
+      <a href="../../skills-and-hooks/" class="md-nav__link">
         
   
   
@@ -5510,10 +5553,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#what-is-this" class="md-nav__link">
+  <a href="#status" class="md-nav__link">
     <span class="md-ellipsis">
       
-        What Is This?
+        Status
       
     </span>
   </a>
@@ -5521,10 +5564,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#key-capabilities" class="md-nav__link">
+  <a href="#purpose-and-scope" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Key Capabilities
+        Purpose and scope
       
     </span>
   </a>
@@ -5532,10 +5575,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#architecture-at-a-glance" class="md-nav__link">
+  <a href="#ownership-model" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Architecture at a Glance
+        Ownership model
       
     </span>
   </a>
@@ -5543,49 +5586,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#getting-started" class="md-nav__link">
+  <a href="#registration-and-lifecycle" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Getting Started
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Getting Started">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#prerequisites" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Prerequisites
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#quick-setup" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Quick Setup
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#explore-the-documentation" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Explore the Documentation
+        Registration and lifecycle
       
     </span>
   </a>
@@ -5593,10 +5597,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#project-status" class="md-nav__link">
+  <a href="#transition-transaction" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Project Status
+        Transition transaction
       
     </span>
   </a>
@@ -5604,10 +5608,87 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#license" class="md-nav__link">
+  <a href="#status-rout-and-event-consistency" class="md-nav__link">
     <span class="md-ellipsis">
       
-        License
+        Status, rout, and event consistency
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#rng-ownership" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        RNG ownership
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#aggregation-ownership" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Aggregation ownership
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#consumers-and-outcome-effect" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Consumers and outcome effect
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#checkpoint-format-113" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Checkpoint format 113
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#production-trace-and-capability-evidence" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Production trace and capability evidence
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#acceptance-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Acceptance tests
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#non-goals-and-remaining-deficits" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Non-goals and remaining deficits
       
     </span>
   </a>
@@ -5634,224 +5715,438 @@
   
 
 
-<h1 id="stochastic-warfare">Stochastic Warfare<a class="headerlink" href="#stochastic-warfare" title="Permanent link">&para;</a></h1>
-<p><strong>High-fidelity stochastic wargame simulator</strong> -- multi-scale, multi-domain, multi-era.</p>
-<p><img alt="Python" src="https://img.shields.io/badge/python-%3E%3D3.12-blue" />
-<img alt="Tests" src="https://img.shields.io/badge/tests-partitioned_validation-blue" />
-<img alt="Phase" src="https://img.shields.io/badge/phase-113_COMPLETE-brightgreen" /></p>
-<hr />
-<h2 id="what-is-this">What Is This?<a class="headerlink" href="#what-is-this" title="Permanent link">&para;</a></h2>
-<p>Stochastic Warfare combines a headless Python simulation engine, FastAPI
-service, and React web application. It models warfare across multiple scales --
-from individual unit engagements through tactical battles, operational
-battlefields, and multi-day strategic campaigns. Outcomes use stochastic and
-signal-processing-inspired models including Markov chains, Monte Carlo methods,
-Kalman filters, Poisson processes, queueing theory, and SNR-based detection.</p>
-<h2 id="key-capabilities">Key Capabilities<a class="headerlink" href="#key-capabilities" title="Permanent link">&para;</a></h2>
-<ul>
-<li><strong>Multi-scale simulation</strong> -- strategic (hours), operational (minutes), and tactical (seconds) resolution with automatic scale switching</li>
-<li><strong>Multi-domain warfare</strong> -- ground, air, and naval combat plus gated GPS,
-  SATCOM, ISR, early warning, direct-ascent kinetic ASAT, electronic warfare,
-  cyber, and CBRN effects; unsupported co-orbital/laser ASAT assets fail
-  explicitly</li>
-<li><strong>Multi-era coverage</strong> -- Modern (Cold War--present), WW2, WW1, Napoleonic, and Ancient/Medieval eras with era-specific mechanics</li>
-<li><strong>Stochastic models throughout</strong> -- 10+ mathematical models (Markov, Monte Carlo, Kalman, Poisson, queueing, Lanchester, Wayne Hughes salvo, Boyd OODA, Beer-Lambert DEW)</li>
-<li><strong>AI commanders</strong> -- 9 doctrinal schools with OODA decision cycles when
-  scenarios provide strict all-side commander profiles and valid school
-  assignments</li>
-<li><strong>Historical scenario catalog</strong> -- source-backed scenario metadata and
-  current-engine regressions; catalog-wide historical validity remains queued
-  under <a href="remediation-backlog/">REM-030</a></li>
-</ul>
-<h2 id="architecture-at-a-glance">Architecture at a Glance<a class="headerlink" href="#architecture-at-a-glance" title="Permanent link">&para;</a></h2>
-<p>The engine is composed of 12 top-level modules with a strict one-way dependency graph:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>core -&gt; coordinates -&gt; terrain -&gt; environment -&gt; entities -&gt; movement
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>  -&gt; detection -&gt; combat -&gt; morale -&gt; c2 -&gt; logistics -&gt; simulation
-</code></pre></div>
-<p>Dependencies flow downward only. Entities hold data; modules implement behavior (ECS-like separation). All randomness flows through per-module PRNG streams for deterministic reproducibility.</p>
-<h2 id="getting-started">Getting Started<a class="headerlink" href="#getting-started" title="Permanent link">&para;</a></h2>
-<h3 id="prerequisites">Prerequisites<a class="headerlink" href="#prerequisites" title="Permanent link">&para;</a></h3>
-<ul>
-<li><strong>Python &gt;= 3.12</strong> (pinned to 3.12.10 via <code>.python-version</code>)</li>
-<li><strong><a href="https://docs.astral.sh/uv/">uv</a></strong> -- used exclusively for package management</li>
-</ul>
-<h3 id="quick-setup">Quick Setup<a class="headerlink" href="#quick-setup" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>uv<span class="w"> </span>sync<span class="w"> </span>--locked<span class="w"> </span>--extra<span class="w"> </span>dev<span class="w"> </span>--extra<span class="w"> </span>api<span class="w"> </span>--extra<span class="w"> </span>terrain<span class="w"> </span>--extra<span class="w"> </span>mcp
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>uv<span class="w"> </span>run<span class="w"> </span>--no-sync<span class="w"> </span>python<span class="w"> </span>scripts/validate_test_partitions.py<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w">  </span>--output<span class="w"> </span>artifacts/partition-audit/manifest.json
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>uv<span class="w"> </span>run<span class="w"> </span>--no-sync<span class="w"> </span>python<span class="w"> </span>scripts/run_pytest_partition.py<span class="w"> </span>standard<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="w">  </span>--manifest<span class="w"> </span>artifacts/standard/manifest.json<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="w">  </span>--junit<span class="w"> </span>artifacts/standard/junit.xml<span class="w"> </span>--forbid-skips<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="w">  </span>--timeout-seconds<span class="w"> </span><span class="m">2700</span>
-</code></pre></div>
-<p>The authoritative Python union is the audited, disjoint set <code>standard</code>,
-<code>slow-only</code>, <code>benchmark-only</code>, <code>slow-benchmark</code>, <code>api</code>, and <code>e2e</code>. PR/main CI
-runs the audit plus <code>standard</code>, <code>api</code>, <code>e2e</code>, and the overlapping <code>terrain</code>
-dependency profile. Weekly/manual CI runs the three marker partitions in
-deterministic shards. <code>benchmark-policy</code> is also an overlapping focused
-profile, not a seventh partition. The routine 73 Easting paired gate uses the
-version-3 typed, morale-neutral control-plane workload; it is not evidence for
-default morale behavior or historical fidelity. Golan remains manual.</p>
-<p>The current Phase 113 audit enumerates exactly 11,824 nodes:
-<code>standard</code> 11,367, <code>slow-only</code> 109, <code>benchmark-only</code> 62, <code>slow-benchmark</code> 4,
-API 241, and E2E 41. All 11,824 passed with zero failures/errors/skips and six
-declared warnings. Local API/E2E plus one FastMCP standard node used the
-declared uvloop qualification; hosted CI is the authoritative default-policy
-control for that local host/tool-loop boundary. Historical Phase 112 execution
-evidence remains in the
-<a href="devlog/phase-112/">Phase 112 devlog</a>.</p>
-<p>See the <a href="guide/getting-started/">Getting Started Guide</a> for a complete tutorial including running your first scenario.</p>
-<h2 id="explore-the-documentation">Explore the Documentation<a class="headerlink" href="#explore-the-documentation" title="Permanent link">&para;</a></h2>
+<h1 id="morale-state-ownership-contract">Morale State Ownership Contract<a class="headerlink" href="#morale-state-ownership-contract" title="Permanent link">&para;</a></h1>
+<h2 id="status">Status<a class="headerlink" href="#status" title="Permanent link">&para;</a></h2>
+<p>Verified Phase 113 production contract. The corrected documentation audit and
+<a href="../../devlog/phase-113/#postmortem">Phase 113 postmortem</a> passed on 2026-08-01;
+Phase 113 is complete and REM-019 is closed.</p>
+<h2 id="purpose-and-scope">Purpose and scope<a class="headerlink" href="#purpose-and-scope" title="Permanent link">&para;</a></h2>
+<p>Phase 113 closes REM-019 by replacing the independent mutable
+morale copies in <code>SimulationContext</code> and <code>MoraleStateMachine</code> with one
+runtime-owned semantic boundary. Every production morale mutation must update
+the authoritative record, unit status, applicable rout state, events, public
+projections, and checkpoint state as one ordered operation.</p>
+<p>This contract covers initial and dynamic registration, stochastic transitions,
+rally, melee rout, rout cascade, aggregation and disaggregation, victory and
+API projections, deterministic continuation, and versionless checkpoint
+migration. It does not claim the general aggregate-unit reconstruction or
+attachment propagation work retained by REM-016.</p>
+<p>The ownership audit also found that Phase 68 treated populated-area guerrilla
+<code>blend_probability</code> as a COMBAT-stream chance to write
+<code>UnitStatus.ROUTING</code> without a morale transition. Concealment by blending
+into a population is not morale collapse, so Phase 113 must not preserve that
+proxy through <code>MoraleRuntime</code> or silently discard it. A positive value reaching
+the battle guard is an explicit unsupported error before retreat, status,
+morale, event, or RNG mutation; deterministic retreat remains supported when
+the result is zero. The current factory context cannot derive a populated-area
+result because its <code>population_manager</code> has no matching density query, so the
+positive test is a direct fail-closed fault detector rather than production
+capability evidence. REM-032 owns the separate population-query, concealment,
+targetability, lifecycle, persistence, and exposure model.</p>
+<p>No military probability, transition matrix, or morale parameter changes in
+this phase. Aggregate archive policy and corrupt-state rejection are integrity
+rules, not new combat models.</p>
+<h2 id="ownership-model">Ownership model<a class="headerlink" href="#ownership-model" title="Permanent link">&para;</a></h2>
+<ol>
+<li><code>SimulationContext</code> exposes exactly one public <code>MoraleRuntime</code>. The runtime
+   privately composes a <code>MoraleStateStore</code> for state and a
+   <code>MoraleStateMachine</code> for stochastic transition behavior. The state machine
+   does not own current unit state.</li>
+<li>The store owns every active <code>MoraleStateRecord</code> and every suspended
+   aggregation archive. Callers cannot mutate the store, state machine, or
+   records directly. <code>SimulationContext.morale_states</code> remains a stable,
+   read-only compatibility view derived from the runtime.</li>
+<li>A morale record is an immutable typed value containing:</li>
+<li><code>current_state: MoraleState</code>;</li>
+<li><code>last_transition_time_s: float | None</code>;</li>
+<li><code>last_check_time_s: float | None</code>; and</li>
+<li><code>generation: int</code>.</li>
+<li><code>None</code> means that no transition or admitted stochastic check has occurred.
+   Times are finite, non-negative, no later than checkpoint elapsed time, and a
+   transition time cannot exceed the last-check time. Generation is a
+   non-boolean integer greater than or equal to zero.</li>
+<li>The validated <code>MoraleConfig.transition_cooldown_s</code> is the sole cooldown
+   setting. Records do not duplicate configuration.</li>
+<li>Canonical snapshots and checkpoint entries use lexicographically sorted
+   unit IDs. Insertion order is not semantic. Existing engagement target,
+   rally selection, and cascade selection retain their own documented
+   canonical ordering.</li>
+</ol>
+<h2 id="registration-and-lifecycle">Registration and lifecycle<a class="headerlink" href="#registration-and-lifecycle" title="Permanent link">&para;</a></h2>
+<ol>
+<li>Registration accepts an ordered sequence of immutable
+   <code>MoraleRegistration</code> values. Empty IDs, duplicate IDs within the request,
+   already active IDs, suspended constituent IDs, unknown units, invalid
+   initial states, or incompatible statuses fail before mutation.</li>
+<li>Initial scenario units and reinforcements register through the same runtime
+   boundary. Reinforcement registration participates in the existing wave
+   transaction: a later failure restores roster, loadouts, morale records,
+   statuses, wave state, and stable owner/view identities in place.</li>
+<li>A production <code>ScenarioLoader</code> runtime with a non-empty roster requires a
+   morale runtime whose active IDs exactly match the simulated active morale
+   topology. Deliberately minimal direct contexts may omit the runtime and
+   expose an empty immutable compatibility view, but they gain no mutation
+   path by doing so.</li>
+<li>Runtime, store, compatibility-view, state-machine, and injected generator
+   identities remain stable for the life of the context and across in-place
+   checkpoint restore.</li>
+</ol>
+<h2 id="transition-transaction">Transition transaction<a class="headerlink" href="#transition-transaction" title="Permanent link">&para;</a></h2>
+<p>Every public transition uses the runtime coordinator and follows this order:</p>
+<ol>
+<li>Resolve and prevalidate unit ownership, current record, unit status,
+   transition cause, logical time, and any applicable rout plan before an RNG
+   draw.</li>
+<li>Capture the authoritative MORALE generator state.</li>
+<li>For an admitted stochastic check, derive elapsed <code>dt</code> from the record and
+   consume exactly one MORALE-stream draw through the state machine.</li>
+<li>Commit the new record, status, and applicable rout removal before notifying
+   observers. If an unexpected internal failure occurs before the first
+   notification, roll back those owners and the generator in place. A retry
+   therefore starts from the identical semantic and RNG state.</li>
+<li>Publish the ordered events with collecting dispatch, then surface a grouped
+   subscriber failure. A subscriber failure cannot roll back already visible
+   state or rewind the consumed RNG draw.</li>
+</ol>
+<p>The runtime uses the following typed causes and transition rules:</p>
 <table>
 <thead>
 <tr>
-<th>Section</th>
-<th>What You'll Find</th>
+<th>Cause</th>
+<th>Allowed transition</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><a href="guide/getting-started/">Getting Started</a></td>
-<td>Installation, first scenario run, understanding output</td>
+<td><code>STOCHASTIC</code></td>
+<td>Existing adjacent-state stochastic transition matrix</td>
 </tr>
 <tr>
-<td><a href="guide/web-ui/">Web UI Guide</a></td>
-<td>Running the web application, browsing scenarios, viewing results, editing configs</td>
+<td><code>RALLY</code></td>
+<td><code>ROUTED -&gt; SHAKEN</code> only</td>
 </tr>
 <tr>
-<td><a href="guide/scenarios/">Scenario Library</a></td>
-<td>Complete scenario catalog, YAML format reference</td>
+<td><code>MELEE_ROUT</code></td>
+<td><code>STEADY</code>, <code>SHAKEN</code>, or <code>BROKEN -&gt; ROUTED</code></td>
 </tr>
 <tr>
-<td><a href="concepts/architecture/">Architecture</a></td>
-<td>Module design, simulation loop, spatial model, engine wiring</td>
-</tr>
-<tr>
-<td><a href="concepts/models/">Mathematical Models</a></td>
-<td>All 10 stochastic models with formulas and worked examples</td>
-</tr>
-<tr>
-<td><a href="reference/api/">API Reference</a></td>
-<td>Key classes, methods, configuration, usage patterns</td>
-</tr>
-<tr>
-<td><a href="reference/eras/">Era Reference</a></td>
-<td>All 5 eras with mechanics, units, and scenarios</td>
-</tr>
-<tr>
-<td><a href="reference/units/">Units &amp; Equipment</a></td>
-<td>Unit data model, modern + historical unit catalogs</td>
+<td><code>ROUT_CASCADE</code></td>
+<td><code>SHAKEN</code> or <code>BROKEN -&gt; ROUTED</code></td>
 </tr>
 </tbody>
 </table>
-<h2 id="project-status">Project Status<a class="headerlink" href="#project-status" title="Permanent link">&para;</a></h2>
+<p><code>SURRENDERED</code> is absorbing. Re-routing <code>ROUTED</code> is a no-op. A rejected,
+cooldown-blocked, absorbing, or semantic no-op request consumes no draw,
+changes no record/time/generation, and emits no event.</p>
+<p>An admitted stochastic check consumes exactly one draw. It updates
+<code>last_check_time_s</code> and increments generation even if the selected state does
+not change; a real change also sets <code>last_transition_time_s</code>. Forced rally,
+melee-rout, and cascade transitions consume no morale draw, bypass the current
+cooldown, set both logical times, increment generation, and establish that
+logical time as the unit's admitted semantic update. Independently of the
+configured cooldown, the battle scheduler must not request a second stochastic admission
+when the authoritative record's <code>last_check_time_s</code> already equals the current
+logical time; this includes successful rally and earlier same-tick melee or
+cascade transactions. The configured cooldown governs requests at later
+logical times.</p>
+<p>The first admitted stochastic check uses elapsed scenario time since zero.
+Later checks use <code>current_time_s - last_check_time_s</code>. <code>dt</code> must be finite and
+strictly positive. Battle cadence and level-of-detail scheduling may decide
+when to request a check, but cannot substitute a constant tick duration or a
+zero logical timestamp for elapsed time.</p>
+<h2 id="status-rout-and-event-consistency">Status, rout, and event consistency<a class="headerlink" href="#status-rout-and-event-consistency" title="Permanent link">&para;</a></h2>
+<p>The semantic morale/status projection is:</p>
 <table>
 <thead>
 <tr>
-<th>Block</th>
-<th>Phases</th>
-<th>Focus</th>
-<th>Status</th>
+<th>Morale</th>
+<th>Required active status</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>MVP</td>
-<td>0--10</td>
-<td>Core engine (terrain through campaign validation)</td>
-<td><strong>Complete</strong></td>
+<td><code>STEADY</code>, <code>SHAKEN</code>, <code>BROKEN</code></td>
+<td><code>ACTIVE</code></td>
 </tr>
 <tr>
-<td>Post-MVP</td>
-<td>11--24</td>
-<td>Fidelity, EW, Space, CBRN, AI schools, 4 historical eras, unconventional warfare</td>
-<td><strong>Complete</strong></td>
+<td><code>ROUTED</code></td>
+<td><code>ROUTING</code></td>
 </tr>
 <tr>
-<td>Block 2</td>
-<td>25--30</td>
-<td>Integration, polish, data expansion, scenarios</td>
-<td><strong>Complete</strong></td>
-</tr>
-<tr>
-<td>Block 3</td>
-<td>31--36</td>
-<td>Documentation site, API, frontend, visualization</td>
-<td><strong>Complete</strong></td>
-</tr>
-<tr>
-<td>Block 4</td>
-<td>37--39</td>
-<td>Integration fixes, map enhancements, packaging</td>
-<td><strong>Complete</strong></td>
-</tr>
-<tr>
-<td>Block 5</td>
-<td>40--48</td>
-<td>Core combat fidelity — battle loop wiring, terrain interaction, ROE, composite victory, deficit resolution</td>
-<td><strong>Complete</strong></td>
-</tr>
-<tr>
-<td>Block 6</td>
-<td>49--57</td>
-<td>Final tightening — calibration hardening, combat polish, engine wiring, validation</td>
-<td><strong>Complete</strong></td>
-</tr>
-<tr>
-<td>Block 7</td>
-<td>58--67</td>
-<td>Final engine hardening — structural verification, environment wiring, engine integration</td>
-<td><strong>Complete</strong></td>
-</tr>
-<tr>
-<td>Block 8</td>
-<td>68--82</td>
-<td>Consequence enforcement, scenario expansion, postmortem &amp; documentation</td>
-<td><strong>Complete</strong></td>
-</tr>
-<tr>
-<td>Block 9</td>
-<td>83--91</td>
-<td>Performance at scale — profiling, spatial culling, LOD, parallelism</td>
-<td><strong>Complete</strong></td>
-</tr>
-<tr>
-<td>Block 10</td>
-<td>92--97</td>
-<td>UI depth &amp; engine exposure — analytics, frame enrichment, metadata</td>
-<td><strong>Complete</strong></td>
-</tr>
-<tr>
-<td>Block 11</td>
-<td>98--104</td>
-<td>Golden scenarios and deployment polish</td>
-<td><strong>Complete</strong></td>
-</tr>
-<tr>
-<td>Block 12</td>
-<td>105--114</td>
-<td>Integrity remediation against production-path evidence</td>
-<td><strong>In progress</strong></td>
-</tr>
-<tr>
-<td>Block 13</td>
-<td>115--121</td>
-<td>Queued integrity follow-ups</td>
-<td><strong>Planned</strong></td>
+<td><code>SURRENDERED</code></td>
+<td><code>SURRENDERED</code></td>
 </tr>
 </tbody>
 </table>
-<p>Phases 105 through 113 are complete, including the validation, documentation
-trust, and morale-ownership remediations. Phase 114 is next and remains
-unstarted, so Block 12 remains in progress. See the
-<a href="devlog/phase-113/">Phase 113 devlog</a>, the
-<a href="specs/morale-state-ownership/">morale ownership specification</a>, and the
-<a href="remediation-backlog/">remediation backlog</a> for exact evidence and known
-coverage boundaries. The YAML data catalog defines units, weapons, ammunition
-types, sensors, signatures, doctrines, commanders, formation templates, and
-modern plus historical scenarios across five eras.</p>
-<h2 id="license">License<a class="headerlink" href="#license" title="Permanent link">&para;</a></h2>
-<p><a href="https://github.com/clay-m-smith/stochastic-warfare/blob/main/LICENSE.md">PolyForm Noncommercial License 1.0.0</a> -- free for personal, academic, and research use. Commercial/institutional use requires a separate license (claymsmith1@gmail.com).</p>
+<p><code>DISABLED</code> and <code>DESTROYED</code> supersede retained morale and cannot be resurrected
+by a morale operation. Prevalidation rejects a transition whose proposed
+status effect would violate that precedence.</p>
+<p>Rally evaluation and cascade selection are split into immutable planning and
+runtime commit. A rally plan is evaluated with the injected MORALE stream;
+failed preconditions consume no draw, while an eligible but unsuccessful rally
+consumes its prescribed draw and mutates no state. A successful rally commits
+removal of any existing <code>RoutState</code>, record, and status before publishing
+<code>MoraleStateChangeEvent</code> and then <code>RallyEvent</code> at the same logical timestamp.
+An injected failure before the first notification rewinds that rally draw and
+all semantic owners. Melee rout and cascade use the same
+record/status/event transaction.</p>
+<p>Each routing source is processed in the existing configured-side and unit
+processing order. For that source, cascade planning first prevalidates the
+complete candidate snapshot, captures the MORALE generator, and then visits
+candidate IDs in lexicographic order. It consumes exactly one draw for each
+<code>SHAKEN</code> or <code>BROKEN</code> candidate at or inside the configured radius and no draw
+for the source itself, another state, or an out-of-range candidate. Applying a
+selected <code>ROUT_CASCADE</code> transition consumes no additional draw. All selected
+targets for one source form one batch: their records and statuses commit before
+the first batch event. Any failure before that notification restores every
+target, status, and all selection draws; subscriber failures leave the batch
+committed and report only after every selected target has been offered its
+event in candidate order. Later routing sources observe earlier committed
+batches, matching the production loop's sequential source semantics.</p>
+<p>Phase 113 does not synthesize a <code>RoutState</code> when morale becomes <code>ROUTED</code>.
+Production battle already represents those transitions with morale plus
+<code>UnitStatus.ROUTING</code> and supplies neither the threat direction nor the extra
+scatter draw required by <code>RoutEngine.initiate_rout()</code>. That lower-level API
+remains separately usable and its existing active route is removed when the
+unit rallies or becomes <code>SURRENDERED</code>; transition into <code>ROUTED</code> consumes only
+the draw budget stated above.</p>
+<p>The former public <code>RoutEngine.process_surrender()</code> partial API rejects before
+RNG, route, event, record, or status mutation. Production stochastic
+<code>ROUTED -&gt; SURRENDERED</code> transitions already commit the authoritative record,
+<code>Unit.status</code>, route removal, and caused morale event through <code>MoraleRuntime</code>.
+Captor provenance, prisoner counts, <code>SurrenderEvent</code>, logistics processing,
+and their persistence/exposure remain REM-033/Phase 120; Phase 113 does not
+fabricate them.</p>
+<p><code>MoraleStateChangeEvent</code> carries the typed cause and logical time. Observers
+therefore see the committed state when handling it. Analytics remains a
+caused-transition timeline; registration does not fabricate transition
+events and analytics is not claimed as a complete current-state distribution.</p>
+<h2 id="rng-ownership">RNG ownership<a class="headerlink" href="#rng-ownership" title="Permanent link">&para;</a></h2>
+<p><code>RNGManager</code> is the sole persistence authority for the MORALE stream. The
+runtime, state machine, and rout engine all receive the exact same generator
+object from <code>RNGManager.get_stream(ModuleId.MORALE)</code>. None serializes an RNG
+mirror in the current checkpoint.</p>
+<p>Factory construction and restore validate generator object identity. Failed
+prevalidation, no-ops, cooldown blocks, and forced-transition application do
+not consume the stream. Admitted stochastic checks, eligible rally
+evaluations, and eligible cascade-candidate selection consume only the draws
+specified above. Continuation evidence compares exact RNG state as well as
+state, status, rout, events, and outcome.</p>
+<h2 id="aggregation-ownership">Aggregation ownership<a class="headerlink" href="#aggregation-ownership" title="Permanent link">&para;</a></h2>
+<ol>
+<li>The morale store, not <code>AggregationEngine</code>, owns suspended constituent
+   records. Suspending a group removes its sorted constituent IDs from active
+   state and records their complete immutable records plus the exact aggregate
+   proxy baseline.</li>
+<li>The aggregate proxy record is the complete record of the
+   lexicographically smallest constituent among those tied for the worst
+   <code>current_state</code>. No synthesized timestamp, cooldown, or generation is
+   introduced.</li>
+<li>Aggregation commits roster topology, store suspension, aggregate proxy
+   registration, and status coherently. Its rollback restores each owner in
+   place.</li>
+<li>Disaggregation first compares the proxy's complete record—including both
+   optional times and generation—with its stored baseline. Any evolution,
+   including a state that changes away and back or an admitted no-change
+   stochastic check, rejects before the existing lossy disaggregation logic
+   mutates the roster.</li>
+<li>An unchanged proxy restores the archived constituent records exactly. The
+   Phase 113 positive round-trip proof is intentionally limited to a base
+   <code>Unit</code> fixture with empty attachment topology. Production-loaded evidence
+   proves aggregate morale topology and evolved-proxy rejection, not general
+   unit or attachment reconstruction. REM-016 remains open for that broader
+   fidelity and propagation boundary.</li>
+</ol>
+<h2 id="consumers-and-outcome-effect">Consumers and outcome effect<a class="headerlink" href="#consumers-and-outcome-effect" title="Permanent link">&para;</a></h2>
+<p>Victory evaluation, battle logic, API status frames, campaign final-state
+serialization, aggregation, recorder output, and checkpointing all read the
+same immutable current-state projection. No consumer retains a separately
+writable enum map.</p>
+<p>Production outcome evidence must use a seeded, production-loaded scenario in
+which authoritative morale transitions satisfy <code>morale_collapsed</code> and change
+the terminal victory result. A matched control held at <code>SHAKEN</code> must not meet
+that condition. A no-crash run, source search, event log, or constructor call
+is not sufficient evidence. Firing behavior may be checked for consistency but
+is not the causal acceptance proof for this ownership remediation.</p>
+<h2 id="checkpoint-format-113">Checkpoint format 113<a class="headerlink" href="#checkpoint-format-113" title="Permanent link">&para;</a></h2>
+<p><code>SimulationEngine</code> advances the explicit format to <code>113</code>.</p>
+<ol>
+<li>Current context state always contains exactly one <code>morale_runtime</code> key. Its
+   value is an envelope with active records and suspended aggregate archives,
+   or <code>null</code> only for a deliberately minimal context with no runtime and an
+   empty roster. It contains no separate <code>morale_states</code> or <code>morale_machine</code>
+   current-state copy. A non-empty engine runtime cannot be checkpointed with
+   <code>null</code> morale ownership.</li>
+<li><code>RNGManager</code> alone serializes MORALE generator state. <code>MoraleRuntime</code>,
+   <code>MoraleStateMachine</code>, and <code>RoutEngine</code> serialize no MORALE RNG mirror.
+   <code>RoutEngine</code> remains a registered state owner for active route state.</li>
+<li>Restore stages and validates the complete morale envelope before mutation:
+   exact active roster/store topology, aggregate proxy and suspended archive
+   topology, record types/times/generations, state/status compatibility,
+   factory owner and generator binding, and elapsed-time bounds.</li>
+<li>Fresh and in-place continuation preserve exact records, statuses, active
+   routes, event sequence, RNG continuation, victory behavior, immutable view,
+   and stable in-place owner identities.</li>
+<li>Any explicitly present version other than <code>113</code>, including <code>112</code>, rejects.
+   Explicit <code>null</code>, booleans, malformed values, and future versions reject as
+   corrupt rather than entering migration.</li>
+</ol>
+<p>An absent version enters one bounded legacy migration:</p>
+<ul>
+<li>where both old context and state-machine entries are present for an active
+  unit, they must agree; disagreement is rejected rather than resolved by
+  precedence;</li>
+<li>a pre-108 payload missing one or both entries for an active unit first uses
+  any present valid machine record, then the validated checkpoint roster's
+  side-level <code>morale_initial</code> only when both legacy entries are absent. A
+  present context/machine disagreement always rejects;</li>
+<li>the dead per-record <code>transition_cooldown_s</code> mirror must be a non-boolean
+  finite numeric <code>0.0</code>, the canonical value produced by the legacy production
+  initializer. It is discarded; the validated <code>MoraleConfig</code> is the sole
+  effective cooldown authority;</li>
+<li>the historical negative transition-time sentinel migrates to
+  <code>last_transition_time_s=None</code>, <code>last_check_time_s=None</code>, and <code>generation=0</code>.
+  A finite non-negative legacy transition time migrates to both new times with
+  <code>generation=1</code>. This is a new generation epoch, not a claim that the
+  unrecorded count of historical checks was recovered;</li>
+<li>a legacy runtime whose checkpoint elapsed time is greater than zero and whose
+  validated config has <code>use_continuous_time=True</code> rejects because its
+  last admitted no-change check and therefore its next elapsed <code>dt</code> cannot be
+  reconstructed. A tick-zero continuous-time payload may migrate using the
+  never-checked record above. Discrete-time migration remains deterministic
+  because the model ignores <code>dt</code> and the authoritative RNG state is preserved;</li>
+<li>legacy MORALE RNG mirrors in the state machine and rout engine must exactly
+  match the authoritative <code>RNGManager</code> stream before they are discarded; and</li>
+<li>a legacy payload with an active aggregation proxy is rejected because it
+  cannot reconstruct complete suspended constituent records.</li>
+</ul>
+<p>For format 113, <code>morale_runtime=null</code> restores only when checkpoint and target
+rosters are empty, the target also omits the runtime, and route/aggregation
+state is empty. A runtime target rejects <code>null</code>; an absent-runtime target
+rejects an envelope. Direct minimal contexts may expose the empty immutable
+view, but a non-empty one cannot claim or emit a valid engine checkpoint.</p>
+<p>Migration validation occurs before clock, RNG, roster, record, status, route,
+recorder, or event mutation. Current and migrated restores reject foreign
+units, duplicate or missing records, invalid enum/status combinations,
+impossible times, boolean generations, and malformed archive topology.</p>
+<h2 id="production-trace-and-capability-evidence">Production trace and capability evidence<a class="headerlink" href="#production-trace-and-capability-evidence" title="Permanent link">&para;</a></h2>
+<p><code>scenario YAML -&gt; typed morale configuration -&gt; ScenarioLoader -&gt; one
+MoraleRuntime -&gt; battle/rally/melee/cascade/aggregation -&gt; immutable context
+view -&gt; victory/recorder/API/checkpoint</code></p>
+<table>
+<thead>
+<tr>
+<th>Stage</th>
+<th>Required Phase 113 evidence</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Declared</td>
+<td>Immutable record, registration, cause, plan, store, runtime, view, and checkpoint structures with explicit invariants</td>
+</tr>
+<tr>
+<td>Loaded</td>
+<td><code>ScenarioLoader</code> constructs one factory runtime from the validated morale configuration and full planned roster</td>
+</tr>
+<tr>
+<td>Wired</td>
+<td>Initial units, reinforcements, all transition causes, aggregation, victory, API/campaign, analytics, and checkpoint use the same boundary</td>
+</tr>
+<tr>
+<td>Enabled</td>
+<td>N/A: morale ownership is mandatory in a production-loaded non-empty runtime and has no feature flag</td>
+</tr>
+<tr>
+<td>Exercised</td>
+<td>Seeded ordinary, rally, melee, cascade, reinforcement, aggregation, fresh/in-place restore, and corruption controls execute production paths</td>
+</tr>
+<tr>
+<td>Outcome-affecting</td>
+<td>A production <code>morale_collapsed</code> scenario terminates only after authoritative transitions; the SHAKEN control does not</td>
+</tr>
+<tr>
+<td>Persisted/exposed</td>
+<td>Format 113 and bounded legacy migration preserve exact records, statuses, routes, RNG, events, identity, victory, API frames, and campaign final state without duplicate owners</td>
+</tr>
+</tbody>
+</table>
+<h2 id="acceptance-tests">Acceptance tests<a class="headerlink" href="#acceptance-tests" title="Permanent link">&para;</a></h2>
+<p>Baseline red proof must reproduce five distinct defects on the Phase 112
+production surface:</p>
+<ol>
+<li>a post-reinforcement direct state-machine mutation leaves the public
+   projection stale (a public-bypass defect, not an ordinary battle-mirror
+   claim);</li>
+<li>a real rout cascade creates a context/machine disagreement that a fresh
+   production restore rejects;</li>
+<li>aggregation leaves constituent and proxy morale topology split;</li>
+<li>machine-owned routed state cannot trigger production victory while the
+   context copy remains shaken; and</li>
+<li>ordinary battle requests morale checks at zero logical time, permanently
+   interacting with cooldown after the first recorded transition.</li>
+</ol>
+<p>Green proof must include:</p>
+<ul>
+<li>one factory runtime, stable immutable view, and exact MORALE generator
+  identity across runtime, state machine, rout engine, and RNG manager;</li>
+<li>mutation attempts against records/views failing without state change;</li>
+<li>duplicate, unknown, and injected-late-failure registration rollback controls;</li>
+<li>injected pre-notification stochastic and successful-rally failures proving
+  in-place owner and MORALE-generator rollback;</li>
+<li>unknown/no-op/cooldown/absorbing transition RNG, generation, and event
+  neutrality;</li>
+<li>exact ordinary, rally, melee, and cascade transaction ordering and draw
+  behavior at nonzero logical times;</li>
+<li>valid zero-second cooldown controls proving successful rally and a failed
+  rally after same-tick melee rout cannot trigger a duplicate <code>dt == 0</code>
+  stochastic admission;</li>
+<li>sorted cascade candidate draw counts, multi-target pre-notification rollback,
+  and retry equivalence;</li>
+<li>the causal <code>morale_collapsed</code> outcome and SHAKEN control;</li>
+<li>production-loaded aggregate topology plus evolved-proxy rejection, including
+  an away-and-back/generation control;</li>
+<li>exact unchanged aggregation round-trip for the narrow base-unit fixture;</li>
+<li>current format fresh and in-place deterministic continuation plus current,
+  legacy, RNG, status, topology, timestamp, foreign-unit, null-version, and
+  malformed-record rejection controls;</li>
+<li>exact API frame, campaign final-state, and transition-analytics projections;</li>
+<li>the direct positive guerrilla guard failing explicitly before position,
+  status, morale, event, COMBAT-RNG, or MORALE-RNG mutation, paired with a
+  factory-loaded zero-blend production-loop retreat control and no claim that
+  populated-area recognition is currently wired; and</li>
+<li>the legacy rout-owned surrender/POW bypass rejecting without mutation,
+  paired with an authoritative stochastic <code>SURRENDERED</code> record/status/route/
+  event transition; and</li>
+<li>static exhaustive review of mutation and read call sites, backed by the
+  behavioral tests rather than treated as behavior itself.</li>
+</ul>
+<p>Applicable existing morale, rally, aggregation, victory, checkpoint,
+reinforcement, API, campaign, and scenario suites must remain green. Full
+cross-hash proof is required if implementation introduces a new unordered
+state-affecting traversal. Profiling is required only if the runtime boundary
+causes a material production-scenario regression.</p>
+<h2 id="non-goals-and-remaining-deficits">Non-goals and remaining deficits<a class="headerlink" href="#non-goals-and-remaining-deficits" title="Permanent link">&para;</a></h2>
+<ul>
+<li>General aggregate-unit reconstruction, subclass fidelity, attachment
+  preservation, and aggregate-created state propagation remain REM-016.</li>
+<li>Populated-area guerrilla concealment is not a morale route. Its correct
+  population lookup, concealed/disengaged ownership, targeting effects,
+  lifecycle, checkpoint, API, and scenario behavior remain REM-032; Phase 113
+  exposes the unsupported positive result rather than fabricating or dropping
+  it.</li>
+<li>Captor selection, prisoner counts, <code>SurrenderEvent</code>, logistics processing,
+  and their checkpoint/API lifecycle remain REM-033/Phase 120. The production
+  morale state can become <code>SURRENDERED</code>, but that does not imply POW handling.</li>
+<li>Aggregate-casualty and auto-resolve event timestamps remain
+  REM-034/Phase 121. Their production <code>datetime.min</code> sentinel is tracked as an
+  event-time deficit and is not Phase 113 morale-event evidence.</li>
+<li>Logistics resupply and expenditure linkage remain REM-020 and REM-021.</li>
+<li>Ordinary contact fidelity, checkpoint scope separation, and terrain/weather
+  remediation remain assigned to later phases.</li>
+<li>This phase does not recalibrate morale probabilities, change combat doctrine,
+  or infer completeness from imports, mocks, logs, or no-crash runs.</li>
+</ul>
 
 
 
@@ -5907,10 +6202,10 @@ modern plus historical scenarios across five eras.</p>
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": ".", "features": ["navigation.tabs", "navigation.sections", "navigation.expand", "navigation.top", "search.suggest", "search.highlight", "content.code.copy"], "search": "assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs", "navigation.sections", "navigation.expand", "navigation.top", "search.suggest", "search.highlight", "content.code.copy"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
       
     
   </body>

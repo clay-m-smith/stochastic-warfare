@@ -29,7 +29,7 @@
     
     
       
-        <title>Block 13 (115-118) - Stochastic Warfare</title>
+        <title>Block 13 (115-121) - Stochastic Warfare</title>
       
     
     
@@ -114,7 +114,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Block 13 (115-118)
+              Block 13 (115-121)
             
           </span>
         </div>
@@ -1702,7 +1702,7 @@
   <span class="md-ellipsis">
     
   
-    Block 13 (115-118)
+    Block 13 (115-121)
   
 
     
@@ -1720,7 +1720,7 @@
   <span class="md-ellipsis">
     
   
-    Block 13 (115-118)
+    Block 13 (115-121)
   
 
     
@@ -1783,6 +1783,39 @@
     <span class="md-ellipsis">
       
         Phase 118 - Performance-Flag Semantic Integrity
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#phase-119-guerrilla-concealment-state-integrity" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 119 - Guerrilla Concealment State Integrity
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#phase-120-surrender-and-pow-lifecycle-integrity" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 120 - Surrender and POW Lifecycle Integrity
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#phase-121-production-event-time-integrity" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 121 - Production Event-Time Integrity
       
     </span>
   </a>
@@ -5107,6 +5140,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-113/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 113 - Morale State Ownership
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -5343,6 +5404,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../specs/morale-state-ownership/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Morale State Ownership
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../skills-and-hooks/" class="md-nav__link">
         
   
@@ -5441,6 +5530,39 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#phase-119-guerrilla-concealment-state-integrity" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 119 - Guerrilla Concealment State Integrity
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#phase-120-surrender-and-pow-lifecycle-integrity" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 120 - Surrender and POW Lifecycle Integrity
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#phase-121-production-event-time-integrity" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 121 - Production Event-Time Integrity
+      
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -5464,7 +5586,7 @@
 <h1 id="development-phases-block-13">Development Phases - Block 13<a class="headerlink" href="#development-phases-block-13" title="Permanent link">&para;</a></h1>
 <p><strong>Status:</strong> Planned follow-up handoff; implementation has not started</p>
 <p>Block 13 owns integrity deficits discovered while specifying and validating
-Phase 112. It is not part of the Phase 112 implementation or the Block 12
+Phases 112 and 113. It is not part of either implementation or the Block 12
 completion claim. Each phase must follow the repository's full specification,
 production-red, implementation, validation, documentation, postmortem, and
 single-commit workflow before its remediation item can close.</p>
@@ -5491,6 +5613,14 @@ contract. Inventory every scenario, test, and public historical-outcome claim
 and classify it as production-validated, current-engine regression only, or
 explicitly unsupported. Debecka Pass is the concrete production red that
 surfaced the issue, not the phase's only scenario.</p>
+<p>Phase 113 supplied additional current-engine regression signals for this
+inventory: default 73 Easting now exposes routed blue units while its explicit
+morale-neutral benchmark control does not; the existing Waterloo 20-seed sweep
+shifted from 20 British wins to 18 British and 2 French wins; and seed-42
+Trafalgar and <code>calibration_arctic</code> changed terminal winner, duration, and force
+status composition. These deterministic observations identify fidelity review
+work; they are not historical-validation verdicts or calibration authority.
+REM-030 remains queued for this phase.</p>
 <p>For every claim retained as validated, predeclare exact metric definitions and
 units, event boundaries, source provenance and quality, justified ranges or
 tolerances, scenario/input fingerprints, calibration or training inputs, and
@@ -5527,6 +5657,42 @@ parameters may not be recalibrated to conceal a semantic delta.</p>
 enabled/disabled, realistic production-exercised, observable semantic-verdict,
 and persisted/exposed evidence for every flag. Every required validation job
 must fit its declared timeout without discarding unexamined catalog runs.</p>
+<h2 id="phase-119-guerrilla-concealment-state-integrity">Phase 119 - Guerrilla Concealment State Integrity<a class="headerlink" href="#phase-119-guerrilla-concealment-state-integrity" title="Permanent link">&para;</a></h2>
+<p>Status: <strong>Not started</strong>. REM-032 remains queued.</p>
+<p>Replace the historical populated-area <code>blend_probability -&gt; ROUTING</code> proxy
+with a typed non-morale concealment/disengagement owner. Resolve populated-area
+membership through the production population boundary, define success and
+re-emergence lifecycle, and wire the state into detection, targetability,
+movement, active-force and victory accounting, events, recorder/API exposure,
+and checkpoint continuation. Do not represent concealment as morale collapse
+or remove a unit without an explicit lifecycle.</p>
+<p>Exit criteria: REM-032 is closed with declared, loaded, wired,
+enabled/disabled, realistic production-exercised, outcome-affecting, and
+persisted/exposed evidence. The Phase 113 explicit unsupported error remains
+until the complete replacement is verified in this phase.</p>
+<h2 id="phase-120-surrender-and-pow-lifecycle-integrity">Phase 120 - Surrender and POW Lifecycle Integrity<a class="headerlink" href="#phase-120-surrender-and-pow-lifecycle-integrity" title="Permanent link">&para;</a></h2>
+<p>Status: <strong>Not started</strong>. REM-033 remains queued.</p>
+<p>Replace the rejected rout-owned surrender helper with one typed production
+transaction that commits authoritative morale/status/route state together with
+captor provenance and a prisoner lifecycle. Wire exact surrendered personnel
+into logistics handling, resource costs, transfers/releases, events,
+recorder/API exposure, and checkpoint continuation. Do not fabricate a captor,
+an escape count, or a logistics handoff from an isolated subsystem call.</p>
+<p>Exit criteria: REM-033 is closed with declared, loaded, wired, realistic
+production-exercised, outcome-affecting, and persisted/exposed evidence for
+the complete surrender-to-prisoner lifecycle, including deterministic failure,
+rollback, duplicate-processing, and continuation controls.</p>
+<h2 id="phase-121-production-event-time-integrity">Phase 121 - Production Event-Time Integrity<a class="headerlink" href="#phase-121-production-event-time-integrity" title="Permanent link">&para;</a></h2>
+<p>Status: <strong>Not started</strong>. REM-034 remains queued.</p>
+<p>Replace <code>datetime.min</code> sentinels in production aggregate casualty and
+auto-resolve events with one explicit authoritative simulation timestamp.
+Thread the logical clock through every live caller, reject absent or invalid
+time before publishing, and preserve exact event order without introducing a
+wall-clock fallback or second clock owner.</p>
+<p>Exit criteria: REM-034 is closed with declared, loaded, wired, realistic
+production-exercised, outcome-affecting, and persisted/exposed evidence for
+aggregate engagement/damage and auto-resolve destruction timestamps, including
+recorder/API/timeline output and deterministic checkpoint continuation.</p>
 
 
 

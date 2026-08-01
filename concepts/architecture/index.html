@@ -2040,7 +2040,7 @@
   <span class="md-ellipsis">
     
   
-    Block 13 (115-118)
+    Block 13 (115-121)
   
 
     
@@ -5363,6 +5363,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devlog/phase-113/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 113 - Morale State Ownership
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -5579,6 +5607,34 @@
     
   
     Validation and Documentation Trust
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../specs/morale-state-ownership/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Morale State Ownership
   
 
     
@@ -6176,7 +6232,15 @@ fuel tanks or weapon magazines remain explicit remediation boundaries.</p>
 <li><strong>Hold-fire discipline</strong> -- if enabled via <code>behavior_rules</code>, defensive units wait until targets are within effective range (default 80% of max range)</li>
 <li><strong>Engagement resolution</strong> -- ballistics, penetration, and damage applied</li>
 </ol>
-<p>After morale transitions, a <strong>rout cascade</strong> check propagates routing to nearby SHAKEN/BROKEN units. A <strong>rally check</strong> allows ROUTING units near friendly forces to recover.</p>
+<p><code>MoraleRuntime</code> owns ordinary transitions and the related status, route, event,
+and MORALE-stream transaction. After a transition, a <strong>rout cascade</strong> may force
+nearby <code>SHAKEN</code>/<code>BROKEN</code> units to <code>ROUTED</code> in canonical candidate order. A
+<strong>rally check</strong> can move an eligible <code>ROUTED</code> unit to <code>SHAKEN</code>; melee rout and
+cascade are typed forced causes. These paths use logical scenario time and
+commit through the same runtime rather than writing a parallel morale map.
+Transition into <code>ROUTED</code> does not invent the threat direction and extra scatter
+draw needed for a direction-bearing <code>RoutState</code>; an existing route is removed
+on rally or surrender.</p>
 <h2 id="spatial-model">Spatial Model<a class="headerlink" href="#spatial-model" title="Permanent link">&para;</a></h2>
 <p>The engine uses a <strong>layered hybrid</strong> spatial representation:</p>
 <h3 id="three-layers">Three Layers<a class="headerlink" href="#three-layers" title="Permanent link">&para;</a></h3>
@@ -6221,10 +6285,14 @@ fuel tanks or weapon magazines remain explicit remediation boundaries.</p>
 <h2 id="ecs-like-separation">ECS-Like Separation<a class="headerlink" href="#ecs-like-separation" title="Permanent link">&para;</a></h2>
 <p>The engine follows an <strong>Entity-Component-System</strong> inspired pattern:</p>
 <ul>
-<li><strong>Entities</strong> hold data (position, health, ammunition, morale state, equipment)</li>
+<li><strong>Entities</strong> hold data (position, health, ammunition, status, equipment)</li>
 <li><strong>Modules</strong> implement behavior (movement algorithms, detection math, combat resolution)</li>
 <li>Entities are passed to modules as arguments; modules return results or modify entity state</li>
 </ul>
+<p>Current morale records are the deliberate exception to treating every
+simulation value as entity-local data: one <code>MoraleRuntime</code> owns immutable
+per-unit records and exposes a stable read-only mapping to battle, victory,
+recording, API, and analysis consumers.</p>
 <p>This means you can test combat resolution without a terrain engine, or test detection without a movement engine.</p>
 <h2 id="engine-wiring">Engine Wiring<a class="headerlink" href="#engine-wiring" title="Permanent link">&para;</a></h2>
 <p>Production consumers enter through one typed runtime-owned boundary:</p>
@@ -6288,7 +6356,8 @@ factory. Given a scenario YAML or prevalidated effective config, it:</p>
    scenario-owned <code>RuntimeLoadoutBuilder</code>. Duplicate YAML keys, unmapped or
    unsupported weapon/sensor entries, catalog/semantic mismatches, and
    contradictory sensor policy fail before context publication.</li>
-<li>Creates detection, combat, movement, morale, C2, and logistics engines
+<li>Creates detection, combat, movement, one authoritative <code>MoraleRuntime</code>, C2,
+   and logistics engines
    and, when <code>logistics.enabled</code> is true, materializes declared depot stock,
    unit inventories, supply nodes, and expanded direct routes</li>
 <li>Wires optional subsystems from explicit enable flags after applying the
@@ -6304,8 +6373,11 @@ factory. Given a scenario YAML or prevalidated effective config, it:</p>
 <li><code>escalation_config</code> present -&gt; creates escalation engine</li>
 <li><code>dew_config</code> present -&gt; creates directed energy weapon engine</li>
 <li><code>era</code> specified -&gt; loads era-specific data and engines</li>
-<li>Creates always-on behavioral engines: ROE engine (default WEAPONS_FREE), rout engine</li>
-<li>Seeds both morale views from each side's validated <code>morale_initial</code></li>
+<li>Creates always-on behavioral engines: ROE engine (default WEAPONS_FREE) and
+   the rout planner coordinated by <code>MoraleRuntime</code></li>
+<li>Registers every initial unit once with <code>MoraleRuntime</code> from its side's
+   validated <code>morale_initial</code>; <code>SimulationContext.morale_states</code> is the
+   runtime's stable read-only <code>Mapping[str, MoraleState]</code>, not another owner</li>
 <li>Returns a <code>SimulationContext</code> with everything wired together</li>
 </ol>
 <p><code>RuntimeForceBuilder</code> owns typed initial-force construction. It validates exact
@@ -6567,7 +6639,16 @@ payloads.</p>
 </tr>
 </tbody>
 </table>
-<p>Additional non-flag consequences include fire zone damage (<code>fire_damage_per_tick</code>), stratagem expiry (<code>stratagem_duration_ticks</code>), guerrilla retreat distance, and order misinterpretation effects.</p>
+<p>Additional non-flag consequences include fire zone damage
+(<code>fire_damage_per_tick</code>), stratagem expiry (<code>stratagem_duration_ticks</code>),
+guerrilla retreat distance, and order misinterpretation effects. Deterministic
+retreat remains supported when guerrilla blending is zero. A positive value
+reaching the battle guard fails explicitly before position, status, morale,
+events, or COMBAT/MORALE RNG state changes because the runtime has no valid
+non-morale concealment owner. The loaded runtime cannot yet recognize a
+populated area through its <code>population_manager</code>; the guard is not a claim that
+the positive branch is production-reachable. REM-032/Phase 119 owns the lookup
+and concealment replacement.</p>
 <p>The <code>enable_all_modern</code> meta-flag activates all 21 non-deferred flags at once
 for convenience. Individual flag control is preferred when a scenario does not
 need every consequence. No general performance multiplier is claimed without
@@ -6589,15 +6670,19 @@ the controlled semantic-equivalence evidence queued under REM-031.</p>
 <li><strong>Branching</strong> -- checkpoint, run two different decisions, compare outcomes</li>
 <li><strong>Debugging</strong> -- reproduce any simulation state from a checkpoint + seed</li>
 </ul>
-<p>The current <code>SimulationEngine</code> checkpoint schema is version 112. It includes
-exact force/loadout/morale/logistics/time-on-target state plus commander and
-OODA assignments, bounded movement diagnostics, and typed Space ISR report
-queues, delivery receipts, and owner/target IMINT associations. Restore stages
-and validates topology, identity, chronology, mutable resources, and relevant
-RNG state against a fresh compatible runtime before committing any mutation.
-Version 111 and every other non-current versioned engine checkpoint reject.
-Bounded versionless compatibility remains subject to the stricter subsystem
-rules in the <a href="../../specs/checkpoint-state/">checkpoint state contract</a>.</p>
+<p>The current <code>SimulationEngine</code> checkpoint schema is version 113. It includes
+exact force/loadout/logistics/time-on-target state plus one <code>morale_runtime</code>
+envelope containing immutable active records and suspended aggregate archives;
+there is no current-format context map or state-machine copy. <code>RNGManager</code>
+alone persists the MORALE stream. Commander and OODA assignments, bounded
+movement diagnostics, and typed Space ISR report queues, delivery receipts,
+and owner/target IMINT associations remain included. Restore stages and
+validates topology, identity, chronology, mutable resources, statuses, routes,
+and relevant RNG state against a fresh compatible runtime before committing any
+mutation. Versions 111, 112, and every other non-current versioned engine
+checkpoint reject. Bounded versionless compatibility remains subject to the
+stricter subsystem rules in the
+<a href="../../specs/checkpoint-state/">checkpoint state contract</a>.</p>
 
 
 

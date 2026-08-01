@@ -18,7 +18,7 @@
         <link rel="prev" href="../time-on-target-execution/">
       
       
-        <link rel="next" href="../../skills-and-hooks/">
+        <link rel="next" href="../morale-state-ownership/">
       
       
         
@@ -1690,7 +1690,7 @@
   <span class="md-ellipsis">
     
   
-    Block 13 (115-118)
+    Block 13 (115-121)
   
 
     
@@ -5013,6 +5013,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devlog/phase-113/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 113 - Morale State Ownership
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -5373,10 +5401,21 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#reproducible-paired-performance-contract" class="md-nav__link">
+  <a href="#phase-112-version-2-reproducible-paired-performance-contract-historical" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Reproducible paired performance contract
+        Phase 112 version-2 reproducible paired performance contract (historical)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#current-version-3-typed-workload-amendment" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Current version-3 typed workload amendment
       
     </span>
   </a>
@@ -5570,6 +5609,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../morale-state-ownership/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Morale State Ownership
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../skills-and-hooks/" class="md-nav__link">
         
   
@@ -5714,10 +5781,21 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#reproducible-paired-performance-contract" class="md-nav__link">
+  <a href="#phase-112-version-2-reproducible-paired-performance-contract-historical" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Reproducible paired performance contract
+        Phase 112 version-2 reproducible paired performance contract (historical)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#current-version-3-typed-workload-amendment" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Current version-3 typed workload amendment
       
     </span>
   </a>
@@ -6461,9 +6539,9 @@ unchanged, record <code>RESOURCE_BLOCKED</code>, and emit individual
 fully fueled control moves and emits neither issue. Direct calls to
 <code>MovementDiagnostics</code>, a fake movement result, or the injected committer do
 not satisfy this production blocked-unit proof.</p>
-<h3 id="reproducible-paired-performance-contract">Reproducible paired performance contract<a class="headerlink" href="#reproducible-paired-performance-contract" title="Permanent link">&para;</a></h3>
-<p><code>baselines.json</code> advances to a strict typed version-2 contract. A gating entry
-contains:</p>
+<h3 id="phase-112-version-2-reproducible-paired-performance-contract-historical">Phase 112 version-2 reproducible paired performance contract (historical)<a class="headerlink" href="#phase-112-version-2-reproducible-paired-performance-contract-historical" title="Permanent link">&para;</a></h3>
+<p>For the Phase 112 closure, <code>baselines.json</code> advanced to a strict typed
+version-2 contract. A gating entry contained:</p>
 <ul>
 <li>one full authoritative reference commit, initially
   <code>0460ac70be86784bcc6e359ae4202f4bcb938c60</code>;</li>
@@ -6505,10 +6583,10 @@ alone is insufficient because a referenced catalog value can change runtime
 work without changing either.</p>
 <p>Code, loader, checkpoint, and result-schema revisions remain explicit artifact
 metadata but are not equality-critical inputs: the reference is schema 111 and
-the candidate advances to schema 112 by design. One candidate-owned version-2
-normalizer projects both revisions into the same effective-value and semantic
-contracts. A normalized value difference fails; an intentional schema-version
-label difference alone does not.</p>
+the candidate advances to schema 112 by design. For that Phase 112 comparison,
+one candidate-owned version-2 normalizer projects both revisions into the same
+effective-value and semantic contracts. A normalized value difference fails;
+an intentional schema-version label difference alone does not.</p>
 <p>The semantic envelope contains exact unit count, ordered roster/loadout
 fingerprint, winner, victory condition type, ticks, logical duration,
 per-side status counts, and a canonical event-type/outcome digest. Reference
@@ -6582,10 +6660,11 @@ regression claim uses the typed paired policy; every other timing run is
 explicitly <code>measurement_only</code>. Measured CI safety timeouts may fail an
 incomplete job and preserve its partial artifact, but they are operational
 containment rather than performance-regression evidence.</p>
-<p>The routine 73 Easting gate uses the version-2 paired harness. The full paired
-Golan run is a standalone manual harness, not a pytest node in the scheduled
-<code>slow-benchmark</code> partition. Existing Golan and Falklands pytest nodes are
-either semantic/profile tests with no regression claim or typed
+<p>At Phase 112 closure, the routine 73 Easting gate used the version-2 paired
+harness. The full paired Golan run is a standalone manual harness, not a
+pytest node in the scheduled <code>slow-benchmark</code> partition. Existing Golan and
+Falklands pytest nodes are either semantic/profile tests with no regression
+claim or typed
 <code>measurement_only</code> consumers that refuse a pass/fail regression result.
 Consequently the weekly partition cannot accidentally execute the manual
 Golan gate. Weekly marker jobs are sharded by deterministic collected node-ID
@@ -6614,6 +6693,27 @@ for <code>uv.lock</code>,
 for 73 Easting, and
 <code>699b75819d271ddf61a8d0bce309d44f64335fd1af6cd7d0b1c6da39128b8868</code>
 for Golan.</p>
+<h3 id="current-version-3-typed-workload-amendment">Current version-3 typed workload amendment<a class="headerlink" href="#current-version-3-typed-workload-amendment" title="Permanent link">&para;</a></h3>
+<p>During Phase 113, the live baseline and artifact contract advances to version
+3. Every entry now carries a strict <code>BenchmarkWorkload</code> with a named workload
+and typed sparse <code>BenchmarkCalibrationPatch</code>; unknown fields, missing workload
+identity, and a workload-name/patch mismatch reject. The workload and exact
+effective calibration participate in the reference/candidate input
+fingerprint and semantic comparison.</p>
+<p>The routine 73 Easting gate is specifically
+<code>morale_neutral_control_plane</code>. Its typed morale patch sets the base degrade
+and recovery rates plus casualty, suppression, leadership, cohesion, and force
+ratio weights to exactly zero through the production configuration boundary.
+Only 73 Easting may select this workload. Every other current entry uses the
+typed <code>default</code> workload, and a morale-neutral patch on another entry rejects.</p>
+<p>This control preserves a stable movement/control-plane performance workload
+across the intentional Phase 113 morale-ownership change. Its checked-in
+semantic envelope remains 71 units, all 21 blue and 50 red units <code>ACTIVE</code>, blue
+<code>time_expired</code>, 360 ticks, 1,800 logical seconds, and one recorded victory
+event. It is not evidence for default 73 Easting morale behavior, combat
+throughput, historical fidelity, or Phase 113 acceptance. The version-2 timing
+and baseline-red measurements above remain labeled historical Phase 112
+evidence rather than being rewritten as version-3 results.</p>
 <h3 id="typed-space-isr-report-delivery-and-checkpoint-state">Typed Space ISR report delivery and checkpoint state<a class="headerlink" href="#typed-space-isr-report-delivery-and-checkpoint-state" title="Permanent link">&para;</a></h3>
 <p><code>SpaceISREngine</code> buffers immutable <code>SpaceISRReport</code> values with exactly:</p>
 <ul>
@@ -7042,10 +7142,10 @@ longer depends accidentally on the EW suite.</p>
 </tr>
 <tr>
 <td>Benchmark</td>
-<td>Version-2 policy, semantic envelope, samples, environment</td>
+<td>Version-3 typed workload policy, semantic envelope, samples, environment</td>
 <td>Strict baseline/artifact parser</td>
-<td>Candidate harness runs reference and candidate production engines</td>
-<td>73 Easting routine; Golan manual</td>
+<td>Candidate harness runs reference and candidate production engines with the fingerprinted workload patch</td>
+<td>73 Easting morale-neutral control-plane routine; Golan default-workload manual</td>
 <td>Warm-up and three paired measurements</td>
 <td>Rejects performance claims when workload semantics change</td>
 <td>Uploaded JSON artifact and reviewed baseline contract</td>
@@ -7355,8 +7455,8 @@ deficits go into <code>docs/devlog/phase-112.md</code>.</p>
 <h2 id="non-goals-and-accepted-limitations">Non-goals and accepted limitations<a class="headerlink" href="#non-goals-and-accepted-limitations" title="Permanent link">&para;</a></h2>
 <ul>
 <li>REM-016 aggregation subtype/loadout reconstruction remains queued.</li>
-<li>REM-018 era override execution and REM-019 morale ownership remain Phase 114
-  and Phase 113 respectively.</li>
+<li>REM-018 era override execution remains assigned to Phase 114. REM-019 morale
+  ownership was closed by the accepted Phase 113 production contract.</li>
 <li>REM-020 and REM-021 logistics authority remain explicit follow-ups.</li>
 <li>REM-028 owns the newly confirmed weapon-standoff versus detection/visibility
   mismatch and is assigned to planned Phase 115. Phase 112 records it without
