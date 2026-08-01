@@ -1,25 +1,33 @@
 """Phase 68g: Guerrilla retreat movement tests.
 
 Verifies that guerrilla units physically move away from enemies on
-disengage, and optionally transition to ROUTING status.
+disengage without fabricating a morale-owned routing status.
 """
 
 from __future__ import annotations
 
+import copy
 import math
+from datetime import datetime, timezone
+from types import SimpleNamespace
 
 import numpy as np
 import pytest
 
-from stochastic_warfare.core.events import EventBus
-from stochastic_warfare.core.types import Position
-from stochastic_warfare.entities.base import UnitStatus
-from stochastic_warfare.entities.unit_classes.ground import GroundUnit
-from stochastic_warfare.simulation.calibration import CalibrationSchema
 from stochastic_warfare.combat.unconventional import (
     GuerrillaConfig,
     UnconventionalWarfareEngine,
+    UnsupportedGuerrillaBlendError,
 )
+from stochastic_warfare.core.events import Event, EventBus
+from stochastic_warfare.core.rng import RNGManager
+from stochastic_warfare.core.types import ModuleId, Position
+from stochastic_warfare.entities.base import UnitStatus
+from stochastic_warfare.entities.unit_classes.ground import GroundUnit
+from stochastic_warfare.morale.runtime import MoraleRegistration, MoraleRuntime
+from stochastic_warfare.morale.state import MoraleState
+from stochastic_warfare.simulation.battle import BattleManager
+from stochastic_warfare.simulation.calibration import CalibrationSchema
 
 
 def _rng(seed: int = 42) -> np.random.Generator:
@@ -108,17 +116,109 @@ class TestDisengageEvaluation:
         assert disengage is False
 
 
-class TestBlendRouting:
-    """Blend probability can set guerrilla to ROUTING status."""
+class TestBlendBoundary:
+    """Concealment blending cannot impersonate a morale transition."""
 
-    def test_routing_status_possible(self):
-        """ROUTING status exists and has value 4."""
-        assert UnitStatus.ROUTING.value == 4
+    @pytest.mark.parametrize(
+        ("blend_probability", "unsupported"),
+        ((1.0, True), (0.0, False)),
+        ids=("positive-explicitly-unsupported", "zero-retreat-control"),
+    )
+    def test_blend_boundary_preserves_morale_and_rng(
+        self,
+        blend_probability: float,
+        unsupported: bool,
+    ) -> None:
+        guerrilla = _make_guerrilla(position=Position(1000, 1000, 0))
+        enemy = _make_enemy(position=Position(500, 1000, 0))
+        bus = EventBus()
+        events: list[Event] = []
+        bus.subscribe(Event, events.append)
+        rng_manager = RNGManager(68)
+        combat_rng = rng_manager.get_stream(ModuleId.COMBAT)
+        morale_rng = rng_manager.get_stream(ModuleId.MORALE)
+        unconventional = UnconventionalWarfareEngine(
+            bus,
+            combat_rng,
+            config_guerrilla=GuerrillaConfig(
+                disengage_threshold=0.3,
+                blend_probability=blend_probability,
+            ),
+        )
+        assert unconventional._rng is combat_rng
+        combat_rng_before = copy.deepcopy(combat_rng.bit_generator.state)
+        morale_rng_before = copy.deepcopy(morale_rng.bit_generator.state)
+        manager = BattleManager(event_bus=bus)
+        manager._cumulative_casualties[guerrilla.entity_id] = 4
 
-    def test_blend_zero_no_routing(self):
-        """With blend=0, unit stays ACTIVE regardless of RNG."""
-        guerrilla = _make_guerrilla()
-        blend = 0.0
-        # The gate: if _blend > 0 ... → never enters block
-        assert not (blend > 0)
-        assert guerrilla.status == UnitStatus.ACTIVE
+        units_by_side = {"blue": [guerrilla], "red": [enemy]}
+        active_enemies = {"blue": [enemy], "red": [guerrilla]}
+        enemy_positions = {
+            "blue": np.array([[500.0, 1000.0]], dtype=np.float64),
+            "red": np.array([[1000.0, 1000.0]], dtype=np.float64),
+        }
+        morale_runtime = MoraleRuntime(
+            bus,
+            rng_manager.get_stream(ModuleId.MORALE),
+        )
+        morale_runtime.register_units(
+            (
+                MoraleRegistration(guerrilla.entity_id, MoraleState.STEADY),
+                MoraleRegistration(enemy.entity_id, MoraleState.STEADY),
+            ),
+            {
+                guerrilla.entity_id: guerrilla,
+                enemy.entity_id: enemy,
+            },
+        )
+        context = SimpleNamespace(
+            calibration={
+                "enable_unconventional_warfare": True,
+                "guerrilla_disengage_threshold": 0.3,
+                "retreat_distance_m": 2000.0,
+            },
+            config=SimpleNamespace(
+                behavior_rules={},
+                latitude=0.0,
+                longitude=0.0,
+            ),
+            engagement_engine=object(),
+            morale_runtime=morale_runtime,
+            morale_states=morale_runtime.states,
+            population_engine=SimpleNamespace(get_density_at=lambda _position: 1.0),
+            rng_manager=rng_manager,
+            rout_engine=morale_runtime.rout_engine,
+            unconventional_engine=unconventional,
+            unit_weapons={},
+        )
+
+        execute = lambda: manager._execute_engagements(
+            context,
+            units_by_side,
+            active_enemies,
+            enemy_positions,
+            dt=1.0,
+            timestamp=datetime(2024, 1, 1, tzinfo=timezone.utc),
+            _unit_index={
+                guerrilla.entity_id: guerrilla,
+                enemy.entity_id: enemy,
+            },
+        )
+        if unsupported:
+            with pytest.raises(
+                UnsupportedGuerrillaBlendError,
+                match="REM-032",
+            ):
+                execute()
+        else:
+            assert execute() == []
+
+        expected_easting = 1000.0 if unsupported else 3000.0
+        assert guerrilla.position.easting == pytest.approx(expected_easting)
+        assert guerrilla.position.northing == pytest.approx(1000.0)
+        assert guerrilla.status is UnitStatus.ACTIVE
+        assert morale_runtime.states[guerrilla.entity_id] is MoraleState.STEADY
+        assert morale_runtime.record_for(guerrilla.entity_id).generation == 0
+        assert combat_rng.bit_generator.state == combat_rng_before
+        assert morale_rng.bit_generator.state == morale_rng_before
+        assert events == []

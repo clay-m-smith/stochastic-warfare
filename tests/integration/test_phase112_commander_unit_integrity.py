@@ -110,8 +110,15 @@ def _build_commander_runtime(
 def _reinforcement_runtime(
     *,
     future_override: bool = True,
+    blue_morale_initial: str | None = None,
 ) -> tuple[CampaignScenarioConfig, Any, SimulationEngine]:
     raw = _reinforcement_config().model_dump(mode="python")
+    if blue_morale_initial is not None:
+        next(
+            side
+            for side in raw["sides"]
+            if side["side"] == "blue"
+        )["morale_initial"] = blue_morale_initial
     if future_override:
         raw["commander_config"] = {
             "assignments": {
@@ -741,21 +748,24 @@ def test_initial_overrides_apply_through_runtime_force_boundary() -> None:
         "old_guard_id",
         "expected_ticks",
         "expected_winner",
+        "expected_old_guard_status",
     ),
     [
         (
             "austerlitz",
             {"french": 10, "coalition": 9},
             "french_french_old_guard_0005",
-            300,
+            336,
             "french",
+            UnitStatus.ACTIVE,
         ),
         (
             "waterloo",
             {"french": 11, "british": 9},
             "french_french_old_guard_0004",
-            490,
+            252,
             "british",
+            UnitStatus.ROUTING,
         ),
     ],
 )
@@ -765,6 +775,7 @@ def test_napoleonic_rosters_and_old_guard_survive_completed_runtime(
     old_guard_id: str,
     expected_ticks: int,
     expected_winner: str,
+    expected_old_guard_status: UnitStatus,
 ) -> None:
     scenario_path = DATA_DIR / "eras" / "napoleonic" / "scenarios" / scenario_name / "scenario.yaml"
     prepared = SimulationRuntimeFactory().prepare(
@@ -796,7 +807,7 @@ def test_napoleonic_rosters_and_old_guard_survive_completed_runtime(
     assert result.victory_result.game_over is True
     assert result.victory_result.condition_type == "force_destroyed"
     assert result.victory_result.winning_side == expected_winner
-    assert old_guard.status is UnitStatus.ACTIVE
+    assert old_guard.status is expected_old_guard_status
     assert {side: len(units) for side, units in context.units_by_side.items()} == expected_counts
     assert len(session.provenance().initial_unit_assignments) == sum(
         expected_counts.values(),
@@ -840,7 +851,9 @@ def test_future_override_is_absent_until_arrival_then_assignment_is_exact() -> N
 def test_dynamic_commander_commit_failure_rolls_back_and_retries_exactly(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    _, context, engine = _reinforcement_runtime()
+    _, context, engine = _reinforcement_runtime(
+        blue_morale_initial="ROUTED",
+    )
     commander = context.commander_engine
     assert commander is not None
     entry = engine.campaign_manager._reinforcements[0]
@@ -848,8 +861,9 @@ def test_dynamic_commander_commit_failure_rolls_back_and_retries_exactly(
     before_weapon_ids = set(context.unit_weapons)
     before_sensor_ids = set(context.unit_sensors)
     before_morale = dict(context.morale_states)
-    before_morale_machine = copy.deepcopy(
-        context.morale_machine.get_state(),
+    assert context.morale_runtime is not None
+    before_morale_runtime = copy.deepcopy(
+        context.morale_runtime.get_state(),
     )
     before_commander = copy.deepcopy(commander.get_state())
     before_ooda = copy.deepcopy(context.ooda_engine.get_state())
@@ -858,7 +872,15 @@ def test_dynamic_commander_commit_failure_rolls_back_and_retries_exactly(
     before_entities_rng = copy.deepcopy(entities_rng.bit_generator.state)
     before_c2_rng = copy.deepcopy(c2_rng.bit_generator.state)
     original_commit = commander.commit_assignments
+    original_build = context.force_builder.build_units
+    retained_batches: list[list[Any]] = []
     calls = 0
+
+    def retain_built_units(*args: Any, **kwargs: Any) -> list[Any]:
+        batch = original_build(*args, **kwargs)
+        assert all(unit.status is UnitStatus.ACTIVE for unit in batch)
+        retained_batches.append(batch)
+        return batch
 
     def fail_once(*args: Any, **kwargs: Any) -> None:
         nonlocal calls
@@ -867,6 +889,7 @@ def test_dynamic_commander_commit_failure_rolls_back_and_retries_exactly(
             raise RuntimeError("phase112 injected commander commit failure")
         original_commit(*args, **kwargs)
 
+    monkeypatch.setattr(context.force_builder, "build_units", retain_built_units)
     monkeypatch.setattr(commander, "commit_assignments", fail_once)
     with pytest.raises(
         RuntimeError,
@@ -883,11 +906,14 @@ def test_dynamic_commander_commit_failure_rolls_back_and_retries_exactly(
     assert set(context.unit_weapons) == before_weapon_ids
     assert set(context.unit_sensors) == before_sensor_ids
     assert context.morale_states == before_morale
-    assert context.morale_machine.get_state() == before_morale_machine
+    assert context.morale_runtime.get_state() == before_morale_runtime
     assert commander.get_state() == before_commander
     assert context.ooda_engine.get_state() == before_ooda
     assert entities_rng.bit_generator.state == before_entities_rng
     assert c2_rng.bit_generator.state == before_c2_rng
+    assert len(retained_batches) == 1
+    rejected_batch = retained_batches[0]
+    assert all(unit.status is UnitStatus.ACTIVE for unit in rejected_batch)
 
     monkeypatch.setattr(commander, "commit_assignments", original_commit)
     arrived = engine.campaign_manager.check_reinforcements(
@@ -896,9 +922,83 @@ def test_dynamic_commander_commit_failure_rolls_back_and_retries_exactly(
     )
     assert entry.arrived is True
     assert len(arrived) == 2
+    assert all(
+        actual is retained
+        for actual, retained in zip(arrived, retained_batches[1], strict=True)
+    )
+    assert all(unit.status is UnitStatus.ROUTING for unit in arrived)
+    assert all(unit.status is UnitStatus.ACTIVE for unit in rejected_batch)
     assert set(commander.assignments()) == {unit.entity_id for unit in context.all_units()}
 
-    _, control_context, control = _reinforcement_runtime()
+    _, control_context, control = _reinforcement_runtime(
+        blue_morale_initial="ROUTED",
+    )
+    control.campaign_manager.check_reinforcements(
+        control_context,
+        elapsed_s=3_600.0,
+    )
+    assert engine.checkpoint() == control.checkpoint()
+
+
+def test_dynamic_commander_preflight_failure_preserves_rejected_unit_statuses(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _, context, engine = _reinforcement_runtime(
+        blue_morale_initial="ROUTED",
+    )
+    commander = context.commander_engine
+    assert commander is not None
+    assert context.force_builder is not None
+    entry = engine.campaign_manager._reinforcements[0]
+    before = engine.checkpoint()
+    original_build = context.force_builder.build_units
+    original_prepare = commander.prepare_assignments
+    retained_batches: list[list[Any]] = []
+
+    def retain_built_units(*args: Any, **kwargs: Any) -> list[Any]:
+        batch = original_build(*args, **kwargs)
+        assert all(unit.status is UnitStatus.ACTIVE for unit in batch)
+        retained_batches.append(batch)
+        return batch
+
+    def reject_preflight(*args: Any, **kwargs: Any) -> Any:
+        raise RuntimeError("phase113 injected commander preflight failure")
+
+    monkeypatch.setattr(context.force_builder, "build_units", retain_built_units)
+    monkeypatch.setattr(commander, "prepare_assignments", reject_preflight)
+
+    with pytest.raises(
+        RuntimeError,
+        match="phase113 injected commander preflight failure",
+    ):
+        engine.campaign_manager.check_reinforcements(
+            context,
+            elapsed_s=3_600.0,
+        )
+
+    assert entry.arrived is False
+    assert engine.checkpoint() == before
+    assert len(retained_batches) == 1
+    rejected_batch = retained_batches[0]
+    assert all(unit.status is UnitStatus.ACTIVE for unit in rejected_batch)
+
+    monkeypatch.setattr(commander, "prepare_assignments", original_prepare)
+    arrived = engine.campaign_manager.check_reinforcements(
+        context,
+        elapsed_s=3_600.0,
+    )
+
+    assert entry.arrived is True
+    assert all(
+        actual is retained
+        for actual, retained in zip(arrived, retained_batches[1], strict=True)
+    )
+    assert all(unit.status is UnitStatus.ROUTING for unit in arrived)
+    assert all(unit.status is UnitStatus.ACTIVE for unit in rejected_batch)
+
+    _, control_context, control = _reinforcement_runtime(
+        blue_morale_initial="ROUTED",
+    )
     control.campaign_manager.check_reinforcements(
         control_context,
         elapsed_s=3_600.0,
@@ -911,7 +1011,7 @@ def test_commander_checkpoint_restore_and_continuation_are_exact_and_atomic() ->
     source.step()
     valid_checkpoint = source.checkpoint()
     valid_state = json.loads(valid_checkpoint.decode("utf-8"))
-    assert valid_state["checkpoint_version"] == 112
+    assert valid_state["checkpoint_version"] == 113
 
     _, target_context, target = _reinforcement_runtime()
     before_rejection = target.checkpoint()

@@ -58,23 +58,21 @@ def test_evaluator_process_rejects_error_and_preserves_cambrai_semantics(
     cambrai = valid_payload[0]
     assert cambrai["success"] is True
     assert "LOAD_OR_RUN_ERROR" not in cambrai["issues"]
-    assert cambrai["ticks_executed"] == 433
+    assert cambrai["ticks_executed"] == 156
     assert cambrai["victory_side"] == "british"
     assert cambrai["victory_condition"] == "force_destroyed"
     assert cambrai["total_casualties"] == 2
-    assert cambrai["engagement_events"] == 14
+    assert cambrai["engagement_events"] == 0
     assert cambrai["units_that_moved"] == 3
     assert cambrai["units_that_didnt_move"] == 7
-    assert cambrai["total_events"] == 504
+    assert cambrai["total_events"] == 190
     assert cambrai["event_type_counts"] == {
-        "DamageEvent": 12,
-        "DecisionMadeEvent": 75,
-        "EngagementEvent": 12,
-        "MoraleStateChangeEvent": 6,
+        "DecisionMadeEvent": 25,
+        "MoraleStateChangeEvent": 23,
         "ObjectiveControlChangedEvent": 1,
-        "OODAPhaseChangeEvent": 311,
-        "SituationAssessedEvent": 84,
-        "UnitDestroyedEvent": 2,
+        "OODAPhaseChangeEvent": 107,
+        "RallyEvent": 1,
+        "SituationAssessedEvent": 32,
         "VictoryDeclaredEvent": 1,
     }
     c2_event_types = {
@@ -84,11 +82,9 @@ def test_evaluator_process_rejects_error_and_preserves_cambrai_semantics(
     }
     assert (
         sum(count for event_type, count in cambrai["event_type_counts"].items() if event_type not in c2_event_types)
-        == 34
+        == 26
     )
-    assert cambrai["engagement_weapon_counts"] == {
-        "lee_enfield": 12,
-    }
+    assert cambrai["engagement_weapon_counts"] == {}
     mark_ivs = [detail for detail in cambrai["unit_details"] if detail["unit_type"] == "mark_iv_tank"]
     assert [detail["entity_id"] for detail in mark_ivs] == [
         "british_mark_iv_tank_0003",

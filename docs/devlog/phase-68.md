@@ -8,6 +8,18 @@
 
 Phase 68 converts the 7 highest-priority "log but don't act" patterns to actual behavioral enforcement, each gated behind an `enable_*` flag (default `False`) to prevent regressions.
 
+> **Historical supersession (Phase 113 complete):** The Phase 68
+> populated-area `blend_probability -> UnitStatus.ROUTING` mapping represented
+> concealment as morale collapse and had neither the production population
+> query nor a typed concealment lifecycle. The completed Phase 113
+> implementation removes that proxy and fails a positive blend explicitly
+> before retreat, status, morale, event, COMBAT-RNG, or MORALE-RNG mutation; the
+> zero-blend retreat path remains available. Correct populated-area membership,
+> concealment, targetability, re-emergence, checkpoint, and API behavior remain
+> [REM-032](../remediation-backlog.md#rem-032-guerrilla-blending-has-no-semantic-runtime-owner)
+> for Phase 119. The sections below are retained as a historical implementation
+> record, not current concealment-completion evidence.
+
 ## What Was Built
 
 ### 68a: Fuel Consumption Enforcement
@@ -61,7 +73,8 @@ Phase 68 converts the 7 highest-priority "log but don't act" patterns to actual 
 - `retreat_distance_m` field in CalibrationSchema (default 2000m)
 - Guerrilla units that disengage physically move away from nearest enemy
 - Retreat vector: opposite direction from nearest enemy, magnitude = `retreat_distance_m`
-- Optional ROUTING status via blend probability + PRNG
+- ~~Optional ROUTING status via blend probability + PRNG~~ *(superseded by the
+  Phase 113 notice above; REM-032/Phase 119 owns the replacement)*
 - Gated by existing `enable_unconventional_warfare` flag
 
 ## Files Modified

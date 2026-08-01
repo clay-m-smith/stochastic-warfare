@@ -20,8 +20,11 @@ from stochastic_warfare.core.clock import SimulationClock
 from stochastic_warfare.core.events import EventBus
 from stochastic_warfare.core.rng import RNGManager
 from stochastic_warfare.core.types import ModuleId, Position
-from stochastic_warfare.entities.base import Unit
+from stochastic_warfare.entities.base import Unit, UnitStatus
 from stochastic_warfare.entities.organization.echelons import EchelonLevel
+from stochastic_warfare.morale.rout import RoutEngine
+from stochastic_warfare.morale.runtime import MoraleRegistration, MoraleRuntime
+from stochastic_warfare.morale.state import MoraleState
 from stochastic_warfare.simulation.battle import BattleManager
 from stochastic_warfare.simulation.scenario import (
     CampaignScenarioConfig,
@@ -52,22 +55,86 @@ def _minimal_config() -> CampaignScenarioConfig:
     )
 
 
-def _make_unit(entity_id: str, side: str = "blue") -> Unit:
+def _make_unit(
+    entity_id: str,
+    side: str = "blue",
+    *,
+    status: UnitStatus = UnitStatus.ACTIVE,
+) -> Unit:
     return Unit(
         entity_id=entity_id,
         unit_type="infantry_platoon",
         side=side,
         position=Position(100.0, 100.0, 0.0),
         speed=5.0,
+        status=status,
     )
 
 
 def _make_ctx(**overrides: Any) -> SimulationContext:
+    config = overrides.pop("config", _minimal_config())
+    clock = SimulationClock(start=TS, tick_duration=timedelta(seconds=10))
+    rng_manager = RNGManager(42)
+    event_bus = EventBus()
+    initial_morale = dict(overrides.pop("morale_states", {}))
+
+    if initial_morale:
+        units_by_side = overrides.get("units_by_side")
+        if units_by_side is None:
+            units_by_side = {
+                "blue": [
+                    _make_unit(
+                        unit_id,
+                        status=(
+                            UnitStatus.ROUTING
+                            if state is MoraleState.ROUTED
+                            else UnitStatus.SURRENDERED
+                            if state is MoraleState.SURRENDERED
+                            else UnitStatus.ACTIVE
+                        ),
+                    )
+                    for unit_id, state in sorted(initial_morale.items())
+                ]
+            }
+            overrides["units_by_side"] = units_by_side
+        units = {
+            unit.entity_id: unit
+            for side_units in units_by_side.values()
+            for unit in side_units
+        }
+        unknown_ids = sorted(set(initial_morale) - set(units))
+        if unknown_ids:
+            raise ValueError(
+                f"Initial morale references units outside the fixture: {unknown_ids}",
+            )
+        morale_rng = rng_manager.get_stream(ModuleId.MORALE)
+        rout_engine = RoutEngine(event_bus, morale_rng)
+        morale_runtime = MoraleRuntime(
+            event_bus,
+            morale_rng,
+            rout_engine=rout_engine,
+        )
+        morale_runtime.register_units(
+            tuple(
+                MoraleRegistration(
+                    unit_id,
+                    initial_morale.get(unit_id, MoraleState.STEADY),
+                )
+                for unit_id in sorted(units)
+            ),
+            units,
+        )
+        overrides.update(
+            morale_runtime=morale_runtime,
+            morale_states=morale_runtime.states,
+            rout_engine=rout_engine,
+        )
+
     return SimulationContext(
-        config=overrides.pop("config", _minimal_config()),
-        clock=SimulationClock(start=TS, tick_duration=timedelta(seconds=10)),
-        rng_manager=RNGManager(42),
-        event_bus=EventBus(),
+        config=config,
+        clock=clock,
+        rng_manager=rng_manager,
+        event_bus=event_bus,
         **overrides,
     )
 
@@ -282,9 +349,9 @@ class TestRealMorale:
     """Morale level derived from MoraleState enum."""
 
     def test_steady_is_1(self) -> None:
-        from stochastic_warfare.morale.state import MoraleState
-
         ctx = _make_ctx(morale_states={"u1": MoraleState.STEADY})
+        assert ctx.morale_runtime is not None
+        assert ctx.morale_states is ctx.morale_runtime.states
         result = BattleManager._get_unit_morale_level(ctx, "u1")
         assert result == 1.0
 

@@ -1161,6 +1161,12 @@
     },
     {
       "classification": "structural_only",
+      "node_id": "tests/unit/test_phase_13a7_aggregation.py::TestUnitSnapshot::test_snapshot_does_not_duplicate_morale",
+      "rationale": "Manual review found no stronger behavioral postcondition beyond this exact heuristic signal; the node remains a structural diagnostic and cannot support capability or closure claims.",
+      "strongest_oracle": "shape/non-null-only assertion set"
+    },
+    {
+      "classification": "structural_only",
       "node_id": "tests/unit/test_phase_13b1_numba_utils.py::TestOptionalJit::test_numba_available_flag",
       "rationale": "Manual review found no stronger behavioral postcondition beyond this exact heuristic signal; the node remains a structural diagnostic and cannot support capability or closure claims.",
       "strongest_oracle": "shape/non-null-only assertion set"
@@ -1378,12 +1384,6 @@
     {
       "classification": "structural_only",
       "node_id": "tests/unit/test_phase_17f_validation.py::TestASATEscalation::test_cascade_bounded",
-      "rationale": "Manual review found no stronger behavioral postcondition beyond this exact heuristic signal; the node remains a structural diagnostic and cannot support capability or closure claims.",
-      "strongest_oracle": "shape/non-null-only assertion set"
-    },
-    {
-      "classification": "structural_only",
-      "node_id": "tests/unit/test_phase_18e_integration.py::TestMoraleCBRN::test_check_transition_with_stress",
       "rationale": "Manual review found no stronger behavioral postcondition beyond this exact heuristic signal; the node remains a structural diagnostic and cannot support capability or closure claims.",
       "strongest_oracle": "shape/non-null-only assertion set"
     },
@@ -2103,19 +2103,7 @@
     },
     {
       "classification": "structural_only",
-      "node_id": "tests/unit/test_morale_state.py::TestCheckTransition::test_multiple_units_independent",
-      "rationale": "Manual review found no stronger behavioral postcondition beyond this exact heuristic signal; the node remains a structural diagnostic and cannot support capability or closure claims.",
-      "strongest_oracle": "shape/non-null-only assertion set"
-    },
-    {
-      "classification": "structural_only",
-      "node_id": "tests/unit/test_morale_state.py::TestCheckTransition::test_returns_morale_state",
-      "rationale": "Manual review found no stronger behavioral postcondition beyond this exact heuristic signal; the node remains a structural diagnostic and cannot support capability or closure claims.",
-      "strongest_oracle": "shape/non-null-only assertion set"
-    },
-    {
-      "classification": "structural_only",
-      "node_id": "tests/unit/test_morale_state.py::TestTransitionMatrix::test_shape",
+      "node_id": "tests/unit/test_morale_state.py::TestSelectTransition::test_owns_no_semantic_or_checkpoint_state",
       "rationale": "Manual review found no stronger behavioral postcondition beyond this exact heuristic signal; the node remains a structural diagnostic and cannot support capability or closure claims.",
       "strongest_oracle": "shape/non-null-only assertion set"
     },
@@ -2310,6 +2298,12 @@
       "node_id": "tests/unit/test_phase43_domain_resolution.py::TestIndirectFireRouting::test_mortar_routes_to_indirect_fire",
       "rationale": "The strongest current oracle is structural; this node cannot support a behavioral capability claim.",
       "strongest_oracle": "mock-call oracle: assert_called_once"
+    },
+    {
+      "classification": "structural_only",
+      "node_id": "tests/unit/test_phase43_domain_resolution.py::TestMeleeResultApplication::test_melee_rout_uses_runtime_transaction",
+      "rationale": "The strongest current oracle is structural; this node cannot support a behavioral capability claim.",
+      "strongest_oracle": "mock call/await state: call_args; mock-call oracle: assert_called_once"
     },
     {
       "classification": "structural_only",
@@ -2670,48 +2664,6 @@
       "node_id": "tests/unit/test_phase56_performance_logistics.py::TestMaintenanceReadiness::test_campaign_maintenance_delegates",
       "rationale": "The strongest current oracle is structural; this node cannot support a behavioral capability claim.",
       "strongest_oracle": "mock-call oracle: assert_called_once"
-    },
-    {
-      "classification": "structural_only",
-      "node_id": "tests/unit/test_phase56_performance_logistics.py::TestRallySTRtree::test_cascade_beyond_radius_excluded",
-      "rationale": "The strongest current oracle is structural; this node cannot support a behavioral capability claim.",
-      "strongest_oracle": "mock call/await state: call_args; mock-call oracle: assert_called_once"
-    },
-    {
-      "classification": "structural_only",
-      "node_id": "tests/unit/test_phase56_performance_logistics.py::TestRallySTRtree::test_cascade_within_radius_triggers",
-      "rationale": "The strongest current oracle is structural; this node cannot support a behavioral capability claim.",
-      "strongest_oracle": "mock call/await state: call_args; mock-call oracle: assert_called_once"
-    },
-    {
-      "classification": "structural_only",
-      "node_id": "tests/unit/test_phase56_performance_logistics.py::TestRallySTRtree::test_multi_unit_distance_regression",
-      "rationale": "The strongest current oracle is structural; this node cannot support a behavioral capability claim.",
-      "strongest_oracle": "mock call/await state: call_args; mock-call oracle: assert_called_once"
-    },
-    {
-      "classification": "structural_only",
-      "node_id": "tests/unit/test_phase56_performance_logistics.py::TestRallySTRtree::test_rally_beyond_radius",
-      "rationale": "The strongest current oracle is structural; this node cannot support a behavioral capability claim.",
-      "strongest_oracle": "mock call/await state: call_args; mock-call oracle: assert_called_once"
-    },
-    {
-      "classification": "structural_only",
-      "node_id": "tests/unit/test_phase56_performance_logistics.py::TestRallySTRtree::test_rally_fails_with_no_friendlies",
-      "rationale": "The strongest current oracle is structural; this node cannot support a behavioral capability claim.",
-      "strongest_oracle": "mock call/await state: call_args; mock-call oracle: assert_called_once"
-    },
-    {
-      "classification": "structural_only",
-      "node_id": "tests/unit/test_phase56_performance_logistics.py::TestRallySTRtree::test_rally_leader_bonus",
-      "rationale": "The strongest current oracle is structural; this node cannot support a behavioral capability claim.",
-      "strongest_oracle": "mock call/await state: call_args; mock-call oracle: assert_called_once"
-    },
-    {
-      "classification": "structural_only",
-      "node_id": "tests/unit/test_phase56_performance_logistics.py::TestRallySTRtree::test_rally_succeeds_with_friendlies_nearby",
-      "rationale": "The strongest current oracle is structural; this node cannot support a behavioral capability claim.",
-      "strongest_oracle": "mock call/await state: call_args; mock-call oracle: assert_called_once"
     },
     {
       "classification": "structural_only",
@@ -4671,7 +4623,7 @@
     },
     {
       "classification": "structural_only",
-      "node_id": "tests/benchmarks/test_benchmarks.py::test_checked_in_baseline_document_is_exact_v2",
+      "node_id": "tests/benchmarks/test_benchmarks.py::test_checked_in_baseline_document_is_exact_v3",
       "rationale": "This checks the checked-in benchmark document's schema version and entry inventory; it does not execute or compare a production workload.",
       "strongest_oracle": "typed baseline-file structure and exact entry names"
     },
@@ -5133,9 +5085,9 @@
     },
     {
       "classification": "structural_only",
-      "node_id": "tests/unit/test_phase_72a_engine_registration.py::TestStructuralRegistration::test_preexisting_engines_still_present[morale_machine]",
-      "rationale": "The node resolves one exact pre-existing sentinel owner through the runtime checkpoint registry, but registry retention alone cannot support a behavioral checkpoint or capability claim.",
-      "strongest_oracle": "exact pre-existing owner retained in the runtime registry"
+      "node_id": "tests/unit/test_phase_72a_engine_registration.py::TestStructuralRegistration::test_morale_runtime_uses_its_explicit_checkpoint_boundary",
+      "rationale": "The node proves the retired generic morale_machine key is absent and the typed morale_runtime boundary is captured explicitly, but source-shape ownership alone cannot support a behavioral checkpoint or capability claim.",
+      "strongest_oracle": "single explicit morale_runtime capture boundary without duplicate generic registration"
     },
     {
       "classification": "structural_only",

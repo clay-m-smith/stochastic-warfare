@@ -16,6 +16,11 @@ import yaml
 from stochastic_warfare.core.clock import SimulationClock
 from stochastic_warfare.core.events import EventBus
 from stochastic_warfare.core.rng import RNGManager
+from stochastic_warfare.core.types import ModuleId
+from stochastic_warfare.entities.base import UnitStatus
+from stochastic_warfare.morale.rout import RoutEngine
+from stochastic_warfare.morale.runtime import MoraleRegistration, MoraleRuntime
+from stochastic_warfare.morale.state import MoraleState
 from stochastic_warfare.simulation.scenario import (
     CampaignScenarioConfig,
     DepotConfig,
@@ -61,7 +66,11 @@ def _minimal_config(**overrides: Any) -> dict[str, Any]:
     return base
 
 
-def _make_ctx(**overrides: Any) -> SimulationContext:
+def _make_ctx(
+    *,
+    bind_morale_runtime: bool = False,
+    **overrides: Any,
+) -> SimulationContext:
     """Create a minimal SimulationContext for testing."""
     config = CampaignScenarioConfig.model_validate(_minimal_config())
     clock = SimulationClock(start=TS, tick_duration=timedelta(seconds=10))
@@ -74,6 +83,40 @@ def _make_ctx(**overrides: Any) -> SimulationContext:
         "event_bus": bus,
     }
     defaults.update(overrides)
+    if bind_morale_runtime:
+        units = {
+            unit.entity_id: unit
+            for side_units in defaults.get("units_by_side", {}).values()
+            for unit in side_units
+        }
+        morale_rng = rng_mgr.get_stream(ModuleId.MORALE)
+        rout_engine = RoutEngine(bus, morale_rng)
+        morale_runtime = MoraleRuntime(
+            bus,
+            morale_rng,
+            rout_engine=rout_engine,
+        )
+        morale_runtime.register_units(
+            tuple(
+                MoraleRegistration(
+                    unit_id,
+                    (
+                        MoraleState.ROUTED
+                        if unit.status is UnitStatus.ROUTING
+                        else MoraleState.SURRENDERED
+                        if unit.status is UnitStatus.SURRENDERED
+                        else MoraleState.STEADY
+                    ),
+                )
+                for unit_id, unit in sorted(units.items())
+            ),
+            units,
+        )
+        defaults.update(
+            morale_runtime=morale_runtime,
+            morale_states=morale_runtime.states,
+            rout_engine=rout_engine,
+        )
     return SimulationContext(**defaults)
 
 
@@ -607,7 +650,12 @@ class TestSimulationContext:
     def test_get_state_captures_units(self) -> None:
         from stochastic_warfare.entities.base import Unit
         u = Unit(entity_id="u1", position=POS_ORIGIN)
-        ctx = _make_ctx(units_by_side={"blue": [u]})
+        ctx = _make_ctx(
+            bind_morale_runtime=True,
+            units_by_side={"blue": [u]},
+        )
+        assert ctx.morale_runtime is not None
+        assert ctx.morale_states is ctx.morale_runtime.states
         state = ctx.get_state()
         assert "blue" in state["units_by_side"]
         assert len(state["units_by_side"]["blue"]) == 1
@@ -760,7 +808,7 @@ class TestScenarioLoad:
         ctx = loader.load(Path("data/scenarios/test_campaign/scenario.yaml"))
         assert ctx.engagement_engine is not None
         assert ctx.fog_of_war is not None
-        assert ctx.morale_machine is not None
+        assert ctx.morale_runtime is not None
         assert ctx.ooda_engine is not None
         assert ctx.stockpile_manager is not None
 

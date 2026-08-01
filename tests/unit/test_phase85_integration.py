@@ -6,6 +6,7 @@ engagement, morale, supply, and FOW subsystems in the battle loop.
 
 from __future__ import annotations
 
+from datetime import datetime, timedelta, timezone
 from types import SimpleNamespace
 
 import numpy as np
@@ -13,7 +14,9 @@ import pytest
 
 from stochastic_warfare.core.events import EventBus
 from stochastic_warfare.core.types import Domain, Position
-from stochastic_warfare.entities.base import UnitStatus
+from stochastic_warfare.entities.base import Unit, UnitStatus
+from stochastic_warfare.morale.runtime import MoraleRegistration, MoraleRuntime
+from stochastic_warfare.morale.state import MoraleConfig, MoraleState
 from stochastic_warfare.simulation.battle import BattleManager, UnitLodTier
 
 
@@ -141,22 +144,43 @@ class TestLodMoraleIntegration:
 
     def test_lod_skips_morale_for_distant(self):
         """DISTANT unit (not in full_update) skipped for morale degradation."""
-        bm = BattleManager(event_bus=EventBus())
-        u_active = _make_unit("u1", 0.0, "blue")
-        u_distant = _make_unit("u2", 50_000.0, "blue")
-
-        # Mock morale machine that records which units were checked
-        checked_ids: list[str] = []
-
-        def mock_check_transition(unit_id, **kwargs):
-            checked_ids.append(unit_id)
-            return 0  # STEADY
-
-        morale_machine = SimpleNamespace(check_transition=mock_check_transition)
+        bus = EventBus()
+        bm = BattleManager(event_bus=bus)
+        u_active = Unit(
+            entity_id="u1",
+            position=Position(0.0, 0.0, 0.0),
+            side="blue",
+        )
+        u_distant = Unit(
+            entity_id="u2",
+            position=Position(50_000.0, 0.0, 0.0),
+            side="blue",
+        )
+        morale_runtime = MoraleRuntime(
+            bus,
+            np.random.default_rng(85),
+            MoraleConfig(
+                base_degrade_rate=0.0,
+                base_recover_rate=0.0,
+                casualty_weight=0.0,
+                suppression_weight=0.0,
+                leadership_weight=0.0,
+                cohesion_weight=0.0,
+                force_ratio_weight=0.0,
+            ),
+        )
+        morale_runtime.register_units(
+            (
+                MoraleRegistration("u1", MoraleState.STEADY),
+                MoraleRegistration("u2", MoraleState.STEADY),
+            ),
+            {"u1": u_active, "u2": u_distant},
+        )
         ctx = SimpleNamespace(
             calibration={"morale_degrade_rate_modifier": 1.0},
-            morale_machine=morale_machine,
-            morale_states={"u1": 0, "u2": 0},
+            morale_runtime=morale_runtime,
+            morale_states=morale_runtime.states,
+            clock=SimpleNamespace(elapsed=timedelta(seconds=100.0)),
         )
         units_by_side = {"blue": [u_active, u_distant]}
         active_enemies = {"blue": []}
@@ -164,11 +188,11 @@ class TestLodMoraleIntegration:
         # Only u1 in full_update
         bm._execute_morale(
             ctx, units_by_side, active_enemies,
-            timestamp=SimpleNamespace(),
+            timestamp=datetime(2024, 1, 1, tzinfo=timezone.utc),
             _lod_full_update={"u1"},
         )
-        assert "u1" in checked_ids
-        assert "u2" not in checked_ids
+        assert morale_runtime.record_for("u1").generation == 1
+        assert morale_runtime.record_for("u2").generation == 0
 
 
 class TestCombatConsumptionBoundary:

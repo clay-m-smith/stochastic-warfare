@@ -464,14 +464,15 @@ stochastic-warfare/
     │   └── directed_energy.py       # DEW engine: Beer-Lambert laser transmittance, laser/HPM Pk, engagement execution [Phase 28.5]
     ├── morale/                       # Morale & human factors
     │   ├── __init__.py
+    │   ├── runtime.py                # One immutable-record owner for transitions, status/routes, aggregation, and checkpoint state
     │   ├── config.py                 # Typed morale configuration and defaults
     │   ├── events.py                 # Morale events (state change, rout, rally, surrender)
-    │   ├── state.py                  # Morale state machine (Markov transitions): steady/shaken/broken/routed/surrendered
+    │   ├── state.py                  # Stateless Markov transition selector: steady/shaken/broken/routed/surrendered
     │   ├── cohesion.py               # Unit cohesion, nearby friendlies, leadership, unit history/reputation
     │   ├── stress.py                 # Stress/fatigue/sleep deprivation accumulation (random walk with drift)
     │   ├── experience.py             # Training level, combat experience learning curve, skill progression
     │   ├── psychology.py             # PSYOP effects, propaganda, surrender inducement, civilian reaction
-    │   └── rout.py                   # Rout, rally, surrender mechanics, POW generation
+    │   └── rout.py                   # Rout/rally/cascade planning; partial surrender/POW API rejects pending REM-033
     ├── c2/                           # Command & Control (Phase 5: plumbing; Phase 8: AI/planning)
     │   ├── __init__.py
     │   ├── events.py                 # C2 events (command status, succession, comms, orders, ROE, coordination, initiative)
@@ -888,20 +889,37 @@ The organizational model must be **nation-agnostic and era-agnostic** — it pro
 - **Naval gunfire support**: shore bombardment supporting ground forces. Accuracy degrades with range and lack of spotting. Coordination through C2/fire support coordination.
 - **Amphibious assault resolution**: the land-sea interface combat problem. Shore defense engagement of landing craft, naval fire support suppression of defenses, air support, beach obstacles, assault wave timing. The most complex multi-domain integration in the simulation.
 - **Carrier operations**: sortie generation rate (function of deck crew, aircraft availability, weather), deck cycle time (launch/recovery windows), combat air patrol (CAP) management, strike package assembly, aircraft turnaround (rearm, refuel, repair). Flight deck damage cripples air capability.
-- Feeds results to morale, logistics/medical, terrain (infrastructure damage) via event bus
+- Feeds recorder and applicable subsystem consumers through typed events;
+  production battle supplies casualty/suppression inputs to `MoraleRuntime`
+  directly through the simulation coordinator
 
 **Depends on**: core/, terrain/, environment/, entities/, detection/
 
 ### morale/
-**Owns**: Human factors. Morale state, cohesion, stress, experience, psychology, rout/rally/surrender.
-- Reads combat results (casualties, suppression, fratricide) as inputs via event bus
-- Modifies entity effectiveness and can trigger rout or surrender
+**Owns**: Human factors. One `MoraleRuntime` owns immutable current-state
+records, logical transition/check times, generation, aggregation archives,
+status/route synchronization, and ordered transition/rally events. The state
+machine selects stochastic transitions but does not own a second mutable state
+store. `SimulationContext.morale_states` is a stable read-only
+`Mapping[str, MoraleState]` derived from that runtime.
+- Receives production casualty, suppression, leadership, cohesion, force-ratio,
+  and CBRN inputs directly from the battle coordinator; there is no current
+  combat-event subscription path into morale
+- Coordinates ordinary stochastic changes, rally, melee rout, and rout cascade
+  through one atomic runtime boundary; routed/surrendered records synchronize
+  `Unit.status`, while disabled/destroyed status retains precedence
+- Does not synthesize a direction-bearing `RoutState` on a morale transition;
+  rally and surrender remove an existing lower-level active route
 - Reads entity organization for leadership/cohesion checks
 - **Experience/training**: individual and unit training level is a continuous variable affecting combat effectiveness across all systems. Combat experience follows a learning curve — green troops perform worse than veterans, but the gap narrows with exposure.
 - **Unit history and reputation**: units with distinguished combat records have higher baseline morale; units that have been repeatedly mauled carry institutional trauma
 - **Sleep deprivation**: compounds with stress; extended ops without rest degrade decision-making, increase stress accumulation rate
 - **PSYOP**: psychological operations (loudspeaker, leaflet, information warfare) affect enemy morale and civilian disposition. Can induce surrender or erode will to fight.
-- **Surrender**: distinct from rout — surrendered units generate POWs that logistics must handle. Mass surrender events are possible under extreme conditions.
+- **Surrender**: a stochastic `SURRENDERED` morale record and unit status commit
+  authoritatively and remove an existing route. Captor selection, prisoner
+  counts, `SurrenderEvent`, and logistics handoff are not production-wired;
+  the former partial rout helper rejects before mutation and REM-033/Phase 120
+  owns the complete POW lifecycle.
 - **Leadership**: loss of leaders (killed, wounded, captured) has cascading morale effects through the unit. Quality of replacement leaders matters.
 - **Environmental morale effects**: extreme cold, extreme heat, persistent rain, and darkness all erode morale over time as stressors. Extended operations in harsh environments (desert, arctic, jungle, high altitude) compound fatigue and stress. Conversely, improving conditions (moving from exposed positions to shelter, seasonal warming, sunrise after a long night engagement) can provide modest morale recovery. Isolation (small units cut off, submarines on extended patrol, remote outposts) is a distinct psychological stressor.
 
@@ -1024,7 +1042,7 @@ the production scenario loop.
   campaign ticks admit due waves at every resolution with stable IDs, atomic
   loadout, morale, commander, school, OODA, movement-diagnostics, and logistics
   registration, logical-time events, rollback/retry, and exact checkpoint
-  continuation [Phases 107, 112]
+  continuation [Phases 107, 112, 113]
 - **Runtime construction**: `SimulationRuntimeFactory.prepare()` and
   `prepare_config()` produce immutable typed variants; `PreparedScenario.build()`
   verifies exact side/roster/loadout/assignment topology and returns a fresh
@@ -1042,6 +1060,11 @@ the production scenario loop.
   Initial units, reinforcements, and fresh checkpoint reconstruction use that
   same boundary; validation code consumes it rather than owning a parallel
   mapping [Phase 109].
+- **Morale ownership**: one `MoraleRuntime` registers the initial and arriving
+  roster, coordinates stochastic/melee/rally/cascade mutations and aggregate
+  archives, exposes the stable read-only consumer mapping, and owns the sole
+  current-format morale checkpoint envelope. `RNGManager` alone persists the
+  shared MORALE stream [Phase 113].
 - **Time-on-target resolution**: after initial loadouts are built,
   `TimeOnTargetMissionResolver` binds strict scenario declarations to the exact
   initial units and source-equipment attachments. It validates identity, side,
@@ -1113,20 +1136,33 @@ Modules communicate laterally through a **typed event bus** in `core/events.py`,
 - Modules **subscribe** to event types they care about
 - The event bus lives in `core/`, so all modules can access it without creating lateral dependencies
 - `simulation/recorder.py` subscribes to ALL events — gives replay recording for free
-- Event dispatch is synchronous and deterministic (ordered by simulation clock, then by registered priority)
+- Event dispatch is synchronous in publisher order. Within one publish call,
+  handlers are visited by event-class MRO, then registered priority and stable
+  registration order; the bus does not sort separate events by timestamp.
 
 **Examples:**
-- `combat/` publishes `CasualtyEvent` → `morale/` subscribes (morale impact), `logistics/medical` subscribes (casualty evacuation), `entities/` subscribes (personnel state update)
-- `combat/` publishes `LeaderKilledEvent` → `morale/` subscribes (cascading morale impact), `c2/hierarchy` subscribes (succession), `entities/` subscribes (personnel update)
+- Morale is a deliberate direct-orchestration exception to the lateral-event
+  pattern: `simulation/battle.py` computes the current casualty/suppression and
+  related inputs, calls `MoraleRuntime`, and morale then publishes its committed
+  caused events. The historical morale-subscriber arrows are not current
+  production wiring.
+- `combat/` publishes `CasualtyEvent` → applicable medical/entity consumers
+- `combat/` publishes `LeaderKilledEvent` → applicable C2/entity consumers
 - `detection/` publishes `DetectionEvent` → `c2/` subscribes, updates situational awareness
 - `detection/` publishes `IdentificationEvent` → `combat/` subscribes (engagement authorization), `c2/` subscribes (target classification update)
 - `combat/` publishes `InterdictionEvent` → `logistics/` subscribes, disrupts supply route
 - `combat/` publishes `InfrastructureDestroyedEvent` → `terrain/` subscribes (bridge out), `logistics/` subscribes (route recalculation)
-- `combat/` publishes `CivilianCasualtyEvent` → `terrain/population` subscribes (disposition shift), `c2/` subscribes (ROE review), `morale/` subscribes (moral injury)
-- `combat/` publishes `FratricideEvent` → `morale/` subscribes (severe morale impact), `c2/` subscribes (deconfliction review)
-- `combat/` publishes `SurrenderEvent` → `logistics/prisoners` subscribes (POW processing), `morale/` subscribes (contagion check on nearby units)
+- `combat/` publishes `CivilianCasualtyEvent` → applicable population/C2 consumers
+- `combat/` publishes `FratricideEvent` → applicable C2 consumers
+- `SurrenderEvent` has narrative/analysis types but no production publisher or
+  logistics/morale subscriber. REM-033/Phase 120 owns that typed transaction;
+  current stochastic surrender exposes `MoraleStateChangeEvent` only.
 - `logistics/maintenance` publishes `EquipmentBreakdownEvent` → `entities/` subscribes (readiness degradation), `c2/` subscribes (combat power assessment update)
-- `morale/` publishes `RoutEvent` → `movement/` subscribes (involuntary retreat movement), `c2/` subscribes (adjust plan), neighboring units subscribe (morale contagion check)
+- `morale/` publishes a caused, logical-time `MoraleStateChangeEvent` after its
+  record/status transaction commits; a successful rally then publishes
+  `RallyEvent`. Production cascade selection is coordinated directly by
+  `MoraleRuntime`, while the lower-level direction-bearing `RoutEvent` remains
+  specific to explicit `RoutEngine.initiate_rout()` calls.
 - `environment/` publishes `WeatherChangeEvent` → `movement/`, `detection/`, `combat/`, `logistics/` all subscribe (update condition modifiers)
 - `environment/` publishes `SeaStateChangeEvent` → `movement/naval`, `combat/naval`, `detection/sonar`, `logistics/naval` subscribe (maritime condition update)
 - `environment/` publishes `IlluminationChangeEvent` → `detection/` subscribes (NVG/visual sensor effectiveness), `movement/` subscribes (night movement penalty), `c2/` subscribes (operational planning)
@@ -1136,8 +1172,8 @@ Modules communicate laterally through a **typed event bus** in `core/events.py`,
 - `environment/` publishes `PropagationConditionChangeEvent` → `detection/` subscribes (radar ducting, anomalous propagation), `c2/communications` subscribes (HF propagation, data link performance)
 - `environment/` publishes `FireSpreadEvent` → `terrain/` subscribes (vegetation destruction, concealment loss), `movement/` subscribes (terrain denial), `detection/` subscribes (thermal/visual signature), `logistics/` subscribes (route obstruction)
 - `environment/` publishes `SeaIceEvent` → `movement/naval` subscribes (route availability), `logistics/naval` subscribes (port access), `detection/sonar` subscribes (ambient noise)
-- `combat/naval_subsurface` publishes `TorpedoImpactEvent` → `entities/` subscribes (hull damage, flooding), `morale/` subscribes
-- `combat/naval_surface` publishes `ShipSunkEvent` → `logistics/` subscribes (loss of supply/transport capacity), `morale/` subscribes, `c2/` subscribes (task force reorganization)
+- `combat/naval_subsurface` publishes `TorpedoImpactEvent` → applicable entity consumers
+- `combat/naval_surface` publishes `ShipSunkEvent` → applicable logistics/C2 consumers
 - `combat/naval_mine` publishes `MineStrikeEvent` → `entities/` subscribes (damage assessment), `movement/` subscribes (area avoidance update), `logistics/` subscribes (route rerouting)
 - `combat/amphibious_assault` publishes `BeachSecuredEvent` → `logistics/` subscribes (LOTS can begin), `movement/` subscribes (shore access opened)
 - `detection/sonar` publishes `SubmarineContactEvent` → `c2/naval_c2` subscribes (ASW prosecution decision), `combat/` subscribes (engagement authorization)
@@ -1145,7 +1181,7 @@ Modules communicate laterally through a **typed event bus** in `core/events.py`,
 - `c2/orders` publishes `OrderMisunderstoodEvent` → `simulation/recorder` subscribes (friction log), `c2/ai/adaptation` subscribes (detect execution deviation)
 - `entities/organization/task_org` publishes `TaskOrgChangeEvent` → `c2/` subscribes (update command relationships), `logistics/` subscribes (update supply routing)
 - `c2/ai` publishes `PlanChangeEvent` → `c2/orders` subscribes (generate new orders), `simulation/recorder` subscribes
-- `c2/communications` publishes `CommsLostEvent` → `c2/mission_command` subscribes (switch to last intent), `morale/` subscribes (isolation stress)
+- `c2/communications` publishes `CommsLostEvent` → applicable mission-command consumers
 - `movement/` publishes `DustPlumeEvent` → `detection/` subscribes (visual signature — dust plumes from vehicle movement visible for miles in arid/dry terrain), `environment/obscurants` subscribes (local visibility reduction from dust)
 - `environment/weather` publishes `PrecipitationEvent` → `terrain/hydrography` subscribes (river level change, flooding potential), `movement/` subscribes (mud, snow accumulation), `logistics/` subscribes (route degradation)
 - `entities/equipment` publishes `PowerDepletedEvent` → `detection/` subscribes (sensor capability loss), `c2/communications` subscribes (comms capability loss), `movement/` subscribes (navigation degradation)

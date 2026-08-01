@@ -11,9 +11,11 @@ from datetime import datetime, timezone
 import numpy as np
 
 from stochastic_warfare.core.events import EventBus
-from stochastic_warfare.core.types import ModuleId
+from stochastic_warfare.core.types import ModuleId, Position
+from stochastic_warfare.entities.base import Unit
 from stochastic_warfare.morale.events import PsyopAppliedEvent
 from stochastic_warfare.morale.psychology import PsychologyConfig, PsychologyEngine, PsyopResult
+from stochastic_warfare.morale.runtime import MoraleRegistration, MoraleRuntime
 from stochastic_warfare.morale.state import MoraleConfig, MoraleState, MoraleStateMachine
 
 _TS = datetime(2024, 6, 15, 12, 0, 0, tzinfo=timezone.utc)
@@ -21,6 +23,21 @@ _TS = datetime(2024, 6, 15, 12, 0, 0, tzinfo=timezone.utc)
 
 def _rng(seed: int = 42) -> np.random.Generator:
     return np.random.Generator(np.random.PCG64(seed))
+
+
+def _runtime(
+    config: MoraleConfig,
+    *,
+    seed: int = 42,
+    initial_state: MoraleState = MoraleState.STEADY,
+) -> tuple[MoraleRuntime, dict[str, Unit]]:
+    runtime = MoraleRuntime(EventBus(), _rng(seed), config)
+    units = {"u1": Unit(entity_id="u1", position=Position(0.0, 0.0))}
+    runtime.register_units(
+        (MoraleRegistration("u1", initial_state),),
+        units,
+    )
+    return runtime, units
 
 
 # ========================================================================
@@ -45,7 +62,7 @@ class TestContinuousTransitionProbs:
 
     def _make_machine(self, **kwargs) -> MoraleStateMachine:
         cfg = MoraleConfig(use_continuous_time=True, **kwargs)
-        return MoraleStateMachine(EventBus(), _rng(), config=cfg)
+        return MoraleStateMachine(_rng(), config=cfg)
 
     def test_row_stochastic(self) -> None:
         machine = self._make_machine()
@@ -153,27 +170,27 @@ class TestContinuousTransitionProbs:
             assert off_diag <= 0.95 + 1e-12
 
 
-class TestContinuousTimeCheckTransition:
-    """check_transition with use_continuous_time=True uses dt-scaled rates."""
+class TestContinuousTimeSelectTransition:
+    """Stateless selection in continuous mode uses dt-scaled rates."""
 
     def _make_machine(self, **kwargs) -> MoraleStateMachine:
         cfg = MoraleConfig(use_continuous_time=True, transition_cooldown_s=0.0, **kwargs)
-        return MoraleStateMachine(EventBus(), _rng(), config=cfg)
+        return MoraleStateMachine(_rng(), config=cfg)
 
     def test_uses_continuous_matrix(self) -> None:
         """Under heavy stress with dt, should eventually degrade."""
         machine = self._make_machine()
+        state = MoraleState.STEADY
         degraded = False
-        for i in range(50):
-            state = machine.check_transition(
-                unit_id="u1",
+        for _ in range(50):
+            state = machine.select_transition(
+                state,
                 casualty_rate=0.5,
                 suppression_level=0.8,
                 leadership_present=False,
                 cohesion=0.1,
                 force_ratio=0.3,
                 dt=5.0,
-                current_time_s=i * 10.0,
             )
             if state != MoraleState.STEADY:
                 degraded = True
@@ -183,11 +200,27 @@ class TestContinuousTimeCheckTransition:
     def test_discrete_mode_ignores_dt(self) -> None:
         """Default (discrete) mode ignores dt parameter."""
         cfg = MoraleConfig(use_continuous_time=False, transition_cooldown_s=0.0)
-        m1 = MoraleStateMachine(EventBus(), _rng(100), config=cfg)
-        m2 = MoraleStateMachine(EventBus(), _rng(100), config=cfg)
+        m1 = MoraleStateMachine(_rng(100), config=cfg)
+        m2 = MoraleStateMachine(_rng(100), config=cfg)
         # Same seed, different dt — should give identical results
-        s1 = m1.check_transition("u1", 0.3, 0.3, False, 0.5, 1.0, dt=1.0)
-        s2 = m2.check_transition("u1", 0.3, 0.3, False, 0.5, 1.0, dt=100.0)
+        s1 = m1.select_transition(
+            MoraleState.STEADY,
+            0.3,
+            0.3,
+            False,
+            0.5,
+            1.0,
+            dt=1.0,
+        )
+        s2 = m2.select_transition(
+            MoraleState.STEADY,
+            0.3,
+            0.3,
+            False,
+            0.5,
+            1.0,
+            dt=100.0,
+        )
         assert s1 == s2
 
     def test_tick_rate_independence(self) -> None:
@@ -200,17 +233,17 @@ class TestContinuousTimeCheckTransition:
         # Count transitions with dt=1.0 (60 checks)
         trans_small = 0
         for trial in range(n_trials):
-            m = MoraleStateMachine(EventBus(), _rng(trial), config=cfg_ct)
-            for step in range(60):
-                state = m.check_transition(
-                    "u1",
+            m = MoraleStateMachine(_rng(trial), config=cfg_ct)
+            state = MoraleState.STEADY
+            for _ in range(60):
+                state = m.select_transition(
+                    state,
                     0.3,
                     0.4,
                     False,
                     0.3,
                     0.5,
                     dt=1.0,
-                    current_time_s=step * 1.0,
                 )
                 if state != MoraleState.STEADY:
                     trans_small += 1
@@ -219,17 +252,17 @@ class TestContinuousTimeCheckTransition:
         # Count transitions with dt=10.0 (6 checks)
         trans_large = 0
         for trial in range(n_trials):
-            m = MoraleStateMachine(EventBus(), _rng(trial + 10000), config=cfg_ct)
-            for step in range(6):
-                state = m.check_transition(
-                    "u1",
+            m = MoraleStateMachine(_rng(trial + 10000), config=cfg_ct)
+            state = MoraleState.STEADY
+            for _ in range(6):
+                state = m.select_transition(
+                    state,
                     0.3,
                     0.4,
                     False,
                     0.3,
                     0.5,
                     dt=10.0,
-                    current_time_s=step * 10.0,
                 )
                 if state != MoraleState.STEADY:
                     trans_large += 1
@@ -244,76 +277,70 @@ class TestContinuousTimeCheckTransition:
 
 
 class TestTransitionCooldown:
-    """transition_cooldown_s is now enforced in check_transition."""
+    """The authoritative runtime enforces transition_cooldown_s."""
 
     def test_cooldown_blocks_rapid_transitions(self) -> None:
         cfg = MoraleConfig(transition_cooldown_s=30.0)
-        bus = EventBus()
-        machine = MoraleStateMachine(bus, _rng(), config=cfg)
+        runtime, _units = _runtime(cfg)
 
-        # Force first transition by running many checks with stress
-        first_trans_time = None
-        for i in range(100):
-            t = float(i)
-            state = machine.check_transition(
+        first = runtime.check_transition(
+            "u1",
+            0.8,
+            0.9,
+            False,
+            0.0,
+            0.2,
+            timestamp=_TS,
+            current_time_s=1.0,
+        )
+        assert first is MoraleState.SHAKEN
+
+        generation = runtime.record_for("u1").generation
+        for logical_time in range(2, 12):
+            assert runtime.check_transition(
                 "u1",
                 0.8,
                 0.9,
                 False,
                 0.0,
                 0.2,
-                current_time_s=t,
-            )
-            if state != MoraleState.STEADY and first_trans_time is None:
-                first_trans_time = t
-                break
-
-        if first_trans_time is not None:
-            # Immediately try again — should be blocked by cooldown
-            state_before = state
-            for i in range(10):
-                t2 = first_trans_time + 1.0 + i
-                state2 = machine.check_transition(
-                    "u1",
-                    0.8,
-                    0.9,
-                    False,
-                    0.0,
-                    0.2,
-                    current_time_s=t2,
-                )
-                # Should stay the same (blocked by cooldown)
-                assert state2 == state_before
+                timestamp=_TS,
+                current_time_s=float(logical_time),
+            ) is first
+            assert runtime.record_for("u1").generation == generation
 
     def test_cooldown_allows_after_elapsed(self) -> None:
         cfg = MoraleConfig(transition_cooldown_s=10.0)
-        machine = MoraleStateMachine(EventBus(), _rng(), config=cfg)
+        runtime, _units = _runtime(cfg)
 
-        first = machine.check_transition(
+        first = runtime.check_transition(
             "u1",
             0.8,
             0.9,
             False,
             0.0,
             0.2,
-            current_time_s=0.0,
+            timestamp=_TS,
+            current_time_s=1.0,
         )
-        blocked = machine.check_transition(
+        blocked = runtime.check_transition(
             "u1",
             0.8,
             0.9,
             False,
             0.0,
             0.2,
-            current_time_s=5.0,
+            timestamp=_TS,
+            current_time_s=6.0,
         )
-        admitted = machine.check_transition(
+        admitted = runtime.check_transition(
             "u1",
             0.8,
             0.9,
             False,
             0.0,
             0.2,
+            timestamp=_TS,
             current_time_s=20.0,
         )
 
@@ -323,51 +350,57 @@ class TestTransitionCooldown:
 
     def test_zero_cooldown_allows_all(self) -> None:
         cfg = MoraleConfig(transition_cooldown_s=0.0)
-        machine = MoraleStateMachine(EventBus(), _rng(), config=cfg)
+        runtime, _units = _runtime(cfg)
 
-        first = machine.check_transition(
+        first = runtime.check_transition(
             "u1",
             0.8,
             0.9,
             False,
             0.0,
             0.2,
-            current_time_s=0.0,
+            timestamp=_TS,
+            current_time_s=1.0,
         )
-        second = machine.check_transition(
+        second = runtime.check_transition(
             "u1",
             0.8,
             0.9,
             False,
             0.0,
             0.2,
-            current_time_s=0.0,
+            timestamp=_TS,
+            current_time_s=2.0,
         )
 
         assert first is MoraleState.SHAKEN
         assert second is MoraleState.BROKEN
 
 
-class TestContinuousTimeSaveRestore:
-    """Continuous-time state survives checkpoint/restore."""
+class TestContinuousTimeRuntimeState:
+    """Continuous-time semantic records survive runtime state restore."""
 
-    def test_save_restore(self) -> None:
+    def test_runtime_state_roundtrip(self) -> None:
         cfg = MoraleConfig(use_continuous_time=True, transition_cooldown_s=0.0)
-        machine = MoraleStateMachine(EventBus(), _rng(), config=cfg)
-        machine.check_transition(
+        runtime, _units = _runtime(cfg)
+        runtime.check_transition(
             "u1",
             0.5,
             0.5,
             False,
             0.5,
             0.5,
-            dt=5.0,
+            timestamp=_TS,
             current_time_s=10.0,
         )
-        saved = machine.get_state()
-        machine2 = MoraleStateMachine(EventBus(), _rng(999), config=cfg)
-        machine2.set_state(saved)
-        assert machine2.get_state()["unit_states"] == saved["unit_states"]
+        saved = runtime.get_state()
+        restored, restored_units = _runtime(cfg, seed=999)
+        restored.set_state(
+            saved,
+            expected_units=restored_units,
+            elapsed_time_s=10.0,
+        )
+        assert restored.get_state() == saved
 
 
 # ========================================================================

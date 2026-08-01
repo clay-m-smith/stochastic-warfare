@@ -20,6 +20,10 @@ from stochastic_warfare.core.types import ModuleId, Position
 logger = get_logger(__name__)
 
 
+class UnsupportedGuerrillaBlendError(RuntimeError):
+    """Raised until populated-area concealment has a semantic state owner."""
+
+
 # ---------------------------------------------------------------------------
 # Events
 # ---------------------------------------------------------------------------

@@ -183,10 +183,10 @@ class TestEC5_TerminalDeclarations:
     """EC5: Check current classifications without asserting historical truth."""
 
     def test_trafalgar_current_terminal_snapshot(self):
-        """Trafalgar currently ends by time expiry, not decisive combat."""
+        """Trafalgar currently ends through the production morale path."""
         assert CURRENT_ENGINE_TERMINAL_SNAPSHOT["trafalgar"] == (
-            "british",
-            "time_expired",
+            "franco_spanish",
+            "morale_collapsed",
         )
 
     def test_authored_force_destroyed_does_not_imply_terminal_condition(self):

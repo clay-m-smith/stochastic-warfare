@@ -175,24 +175,48 @@ class TestMovementMOPP:
 
 
 class TestMoraleCBRN:
-    def test_check_transition_with_stress(self):
-        from stochastic_warfare.morale.state import MoraleStateMachine, MoraleConfig
+    def test_cbrn_stress_changes_selected_transition(self):
+        from stochastic_warfare.morale.state import (
+            MoraleConfig,
+            MoraleState,
+            MoraleStateMachine,
+        )
 
-        mm = MoraleStateMachine(
-            event_bus=EventBus(),
+        baseline = MoraleStateMachine(
             rng=np.random.default_rng(42),
             config=MoraleConfig(),
         )
-        # With cbrn_stress=0, get baseline
-        state1 = mm.check_transition("u1", 0.0, 0.0, True, 0.8, 1.0, TS, cbrn_stress=0.0)
-        # Should not error
-        assert state1 is not None
+        stressed = MoraleStateMachine(
+            rng=np.random.default_rng(42),
+            config=MoraleConfig(),
+        )
+        baseline_state = baseline.select_transition(
+            MoraleState.STEADY,
+            0.0,
+            0.0,
+            True,
+            0.8,
+            1.0,
+            dt=1.0,
+            cbrn_stress=0.0,
+        )
+        stressed_state = stressed.select_transition(
+            MoraleState.STEADY,
+            0.0,
+            0.0,
+            True,
+            0.8,
+            1.0,
+            dt=1.0,
+            cbrn_stress=0.8,
+        )
+        assert baseline_state is MoraleState.STEADY
+        assert stressed_state is MoraleState.SHAKEN
 
     def test_matrix_changes_with_cbrn_stress(self):
         from stochastic_warfare.morale.state import MoraleStateMachine, MoraleConfig
 
         mm = MoraleStateMachine(
-            event_bus=EventBus(),
             rng=np.random.default_rng(42),
             config=MoraleConfig(),
         )
@@ -208,7 +232,6 @@ class TestMoraleCBRN:
         from stochastic_warfare.morale.state import MoraleStateMachine, MoraleConfig
 
         mm = MoraleStateMachine(
-            event_bus=EventBus(),
             rng=np.random.default_rng(42),
             config=MoraleConfig(),
         )
@@ -301,7 +324,6 @@ class TestBackwardCompat:
         from stochastic_warfare.morale.state import MoraleStateMachine, MoraleConfig
 
         mm = MoraleStateMachine(
-            event_bus=EventBus(),
             rng=np.random.default_rng(42),
             config=MoraleConfig(),
         )

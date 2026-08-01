@@ -459,7 +459,11 @@ class TestRoutCascade:
         for seed in range(100):
             rng_i = _rng(seed)
             eng = RoutEngine(bus, rng_i, config)
-            if eng.check_rally("rout_1", nearby_friendly_count=4, leader_present=True):
+            if eng.plan_rally(
+                "rout_1",
+                nearby_friendly_count=4,
+                leader_present=True,
+            ).rallied:
                 rallied_count += 1
         # With 55% chance, expect roughly 40-70 rallies in 100 tries
         assert rallied_count > 20
@@ -475,14 +479,18 @@ class TestRoutCascade:
         for seed in range(200):
             rng_i = _rng(seed)
             eng = RoutEngine(bus, rng_i, config)
-            if eng.check_rally("rout_1", nearby_friendly_count=0, leader_present=False):
+            if eng.plan_rally(
+                "rout_1",
+                nearby_friendly_count=0,
+                leader_present=False,
+            ).rallied:
                 rallied_count += 1
         # 15% base chance → expect 10-50 rallies in 200 tries
         assert rallied_count < 60
         assert rallied_count > 5
 
-    def test_rally_updates_morale_state(self):
-        """Rally should set morale to SHAKEN, not STEADY."""
+    def test_rally_plan_reports_guaranteed_success(self):
+        """The low-level planner reports a guaranteed eligible success."""
         from stochastic_warfare.morale.rout import RoutEngine, RoutConfig
 
         bus = EventBus()
@@ -490,9 +498,13 @@ class TestRoutCascade:
         rng = _rng()
         engine = RoutEngine(bus, rng, config)
 
-        rallied = engine.check_rally("rout_1", nearby_friendly_count=3, leader_present=True)
-        assert rallied is True
-        # The battle loop sets MoraleState.SHAKEN on rally — tested via integration
+        plan = engine.plan_rally(
+            "rout_1",
+            nearby_friendly_count=3,
+            leader_present=True,
+        )
+        assert plan.rallied is True
+        assert plan.rallied_by == "leader"
 
     def test_cascade_broken_susceptibility(self):
         """BROKEN unit is more susceptible to cascade than SHAKEN."""

@@ -135,6 +135,7 @@ Rolling record of implementation decisions, changes, and lessons learned across 
 | 110 | ASAT Production Integration | **Complete** | [phase-110.md](phase-110.md) |
 | 111 | Time-on-Target Execution | **Complete** | [phase-111.md](phase-111.md) |
 | 112 | Validation & Documentation Trust | **Complete** | [phase-112.md](phase-112.md) |
+| 113 | Morale State Ownership | **Complete** | [phase-113.md](phase-113.md) |
 
 ## Post-MVP Refinement Index
 
@@ -354,7 +355,7 @@ Known limitations and deferred improvements logged during implementation. Review
 | 64 | Hardcoded mission_type=0 (ATTACK) for all orders | [phase-64.md — D9](phase-64.md#deferrals) |
 | 64 | Economy-of-force/feint unit selection by list position | [phase-64.md — D10](phase-64.md#deferrals) |
 | 64 | PropagationConfig private attribute mutation from battle.py | [phase-64.md — D11](phase-64.md#deferrals) |
-| 66 | Guerrilla retreat movement — disengage evaluated but unit doesn't physically relocate | [phase-66.md — D1](phase-66.md#known-limitations-deferrals) |
+| 66 | ~~Guerrilla retreat movement — disengage evaluated but unit doesn't physically relocate~~ *(resolved Phase 68 — deterministic physical retreat for the factory-loaded zero-blend path; populated-area concealment remains REM-032)* | [phase-66.md — D1](phase-66.md#known-limitations-deferrals) |
 | 66 | Population center spatial lookup — falls back to 0.0 density when population_engine absent | [phase-66.md — D2](phase-66.md#known-limitations-deferrals) |
 | 66 | IED auto-emplacement by insurgent AI — only pre-placed IEDs supported | [phase-66.md — D3](phase-66.md#known-limitations-deferrals) |
 | 66 | Mine sweeping hardcoded to CONTACT type only | [phase-66.md — D4](phase-66.md#known-limitations-deferrals) |

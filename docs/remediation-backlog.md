@@ -40,7 +40,7 @@ Audit baseline: 2026-07-28 at `68acd4b`
 | REM-016 | P1 | TBD | Aggregation | Disaggregation recreates every constituent as base `Unit` and does not restore captured weapon, sensor, or supply attachments | Queued | Yes | Yes | Yes | N/A | - | - | - | Subclass/loadout round trip across aggregation |
 | REM-017 | P0 | 112 | Analysis tooling | Scenario batches can accept empty invalid rosters and silently turn unsupported metrics into zero | **Closed** | Yes | Yes | Yes | N/A | Yes | Yes | Yes | [Phase 112](devlog/phase-112.md#postmortem) |
 | REM-018 | P1 | 114 | Era overrides | `physics_overrides` and `tick_resolution_overrides` are declared and documented but have no production consumer | Queued | Yes | Yes | - | N/A | - | - | Yes | Typed override changes its production engine/clock behavior |
-| REM-019 | P1 | 113 | Morale state | `SimulationContext.morale_states` and `MoraleStateMachine` are independently mutable and can diverge after rout or aggregation paths | Queued | Yes | Yes | Yes | N/A | - | - | Yes | One authoritative state survives transition, cascade, aggregation, and checkpoint |
+| REM-019 | P1 | 113 | Morale state | `SimulationContext.morale_states` and `MoraleStateMachine` are independently mutable and can diverge after rout or aggregation paths | **Closed** | Yes | Yes | Yes | N/A | Yes | Yes | Yes | [Phase 113](devlog/phase-113.md#postmortem) |
 | REM-020 | P1 | TBD | Logistics | March/combat consumption is computed with fabricated defaults and discarded | Queued | Yes | Yes | - | - | - | - | - | Typed activity demand changes real inventory once per logical interval |
 | REM-021 | P1 | TBD | Logistics | Abstract Class III/V inventory is independent of live entity fuel and weapon magazines | Queued | Yes | Yes | - | - | - | - | Yes | One explicit authority or conservative synchronization contract |
 | REM-022 | P2 | 112 | Documentation navigation | Strict MkDocs succeeds while seven historical devlog-index fragment links target missing anchors | **Closed** | Yes | N/A | Yes | N/A | Yes | N/A | N/A | [Phase 112](devlog/phase-112.md#postmortem) |
@@ -53,6 +53,9 @@ Audit baseline: 2026-07-28 at `68acd4b`
 | REM-029 | P1 | 116 | Fog-of-war state | Ordinary contacts serialize but are discarded by `FogOfWarManager.set_state()` | Queued | Yes | Yes | Yes | N/A | Yes | Yes | - | Nonempty-contact fresh continuation with exact COP behavior |
 | REM-030 | P1 | 117 | Historical validation | At the Phase 112 baseline, catalog winner tables, legacy comparisons, and public docs claimed historical validation without a production, provenance-bearing, held-out outcome-envelope contract; fresh Debecka production exposed incompatible casualty units and a duration miss | Queued | Yes | - | - | N/A | Yes | Yes | - | Per-claim validated/regression-only/unsupported disposition plus typed held-out production-envelope artifacts |
 | REM-031 | P1 | 118 | Performance semantics | At the Phase 112 baseline, Block 9 claimed five performance flags preserve scenario outcomes, but its regression executed only authored configurations, excluded the only two all-flag scenarios, and had no same-input disabled controls | Queued | Yes | Yes | Yes | - | - | - | - | Per-flag semantic classification and common-seed production off/on evidence with persisted provenance |
+| REM-032 | P1 | 119 | Guerrilla concealment | Populated-area blend probability was mapped to morale-owned `ROUTING`, while the production context exposes no matching population query or concealed-unit owner | Queued | Yes | Yes | - | - | - | - | - | Typed non-morale concealment changes targetability and persists/exposes its lifecycle |
+| REM-033 | P1 | 120 | Surrender/POW state | A public rout helper emitted `SurrenderEvent` and a synthetic POW count without changing authoritative morale/status; no production captor or prisoner lifecycle consumes it | Queued | Yes | Yes | - | N/A | - | - | - | Typed runtime surrender creates captor-owned prisoners and persists/exposes the complete lifecycle |
+| REM-034 | P1 | 121 | Event time | Aggregate combat and auto-resolve publish exposed events with `datetime.min` instead of authoritative simulation time | Queued | Yes | Yes | - | N/A | - | - | Yes | Production aggregate/auto-resolve events use exact logical clock time and persist/replay |
 
 ## REM-001 - Exact checkpoint restoration
 
@@ -1136,6 +1139,41 @@ This truthful relabel/removal is a Phase 112 integrity repair, not REM-030
 closure. No production, source-backed, predeclared held-out envelope or public
 verdict artifact was added.
 
+### Phase 113 current-engine regression signals
+
+Phase 113's morale-ownership repair intentionally changed live morale timing,
+status synchronization, cascade, and victory reads. Fresh production evidence
+therefore adds four regression/fidelity signals to the Phase 117 inventory:
+
+- Default 73 Easting at seed 42 terminates blue/`time_expired` after 360 ticks
+  and 1,800 seconds with 18 blue `ACTIVE`, 3 blue `ROUTING`, and all 50 red
+  units `ACTIVE`. It records 118 morale-state changes, two rallies, and one
+  victory event. The explicit morale-neutral benchmark workload instead ends
+  with all 21 blue units active while preserving the 50 active red units and
+  the same terminal winner, condition, ticks, and logical duration. This is a
+  controlled morale outcome effect and benchmark-control distinction, not a
+  historical-fidelity verdict.
+- The existing 20-seed Waterloo current-engine sweep shifts from the Phase 112
+  baseline's 20 British wins to 18 British and 2 French wins. Repeatability
+  does not establish that either distribution is historically predictive.
+- Trafalgar seed 42 shifts from the Phase 112 revision's
+  British/`time_expired` result at 5,760 ticks and 28,800 seconds, with 51
+  `ACTIVE` and 2 `DISABLED` units, to a deterministic
+  Franco-Spanish/`morale_collapsed` result at 372 ticks and 1,860 seconds, with
+  44 `ACTIVE`, 2 `DISABLED`, 2 `ROUTING`, and 5 `SURRENDERED` units. Two fresh
+  Phase 113 replays produced the same complete semantic digest.
+- `calibration_arctic` seed 42 shifts from red/`force_destroyed` at 723 ticks
+  and 7,230 seconds, with 5 `ACTIVE` and 3 `DESTROYED` units, to a deterministic
+  blue/`force_destroyed` result at 468 ticks and 4,680 seconds, with 6 `ACTIVE`
+  and 2 red `SURRENDERED` units. Two fresh Phase 113 replays again produced the
+  same complete semantic digest.
+
+These are exact current-engine regression observations caused by repairing an
+integrity defect. They neither validate the outcomes against historical
+sources nor authorize tuning to restore the previous snapshots. Phase 117
+remains responsible for source-backed, provenance-bearing dispositions and
+held-out outcome-envelope evidence.
+
 Phase 117 must inventory every test, scenario field, and public statement that
 claims historical accuracy and give each one an explicit disposition:
 
@@ -1576,6 +1614,34 @@ external validation infrastructure, not scenario-loaded or enabled simulation
 behavior. The Phase 112 postmortem accepted this evidence and the ranked row
 is closed.
 
+### Phase 113 version-3 extension
+
+Phase 113 extends, but does not rewrite or reopen, the accepted Phase 112
+version-2 closure. Policy version 3 adds a typed `BenchmarkWorkload` to the
+stored baseline and paired artifact, so reference and candidate workers must
+load the same explicit workload as well as the same scenario and source/data
+identity. The routine 73 Easting gate now declares a morale-neutral typed
+control-plane calibration patch. A production comparison proves that this
+override is actually loaded and outcome-affecting: the default workload ends
+with three blue units routing, while the neutral control ends with all 21 blue
+units active.
+
+That control isolates Phase 113's runtime overhead from its intentional morale
+semantic change; it is not evidence that default morale behavior is neutral or
+historically accurate. The earlier CPU-30-pinned pre-final artifact was
+superseded after simplify changed the runtime tree. The final dirty-tree
+capture passed the unchanged 1.20 slowdown and 0.20 sample-range gates with
+ratios 1.101958711, 1.099634464, and 1.099029460; median 1.099634464;
+candidate range 0.010757612; and reference range 0.008635696 while matching the
+complete declared terminal envelope. Its artifact-declared SHA-256 is
+`817a9dec5ca2984e87e70e42d941b9d16297836cf9fd9fded79f6660ad7d870e`
+and its raw file SHA-256 is
+`cac10f3a045ca2cf3f025ae9f18579c579ee360928d93ce114808a8725a52a03`.
+The command used `--allow-dirty-candidate`; final clean committed-tree
+verification binds that comparison to the final Phase 113 commit as recorded
+in the Phase 113 devlog and external handoff. This extends the evidence bridge;
+it does not reopen REM-026.
+
 ## REM-018 - Era override metadata has no production consumer
 
 ### Reproduction and cause
@@ -1612,3 +1678,155 @@ Subsequent machine transitions can therefore start from a stale state.
 - Keep unit status synchronization explicit for routed and surrendered states.
 - Prove transition, cascade, aggregation/disaggregation, and checkpoint
   continuation cannot produce divergent morale views.
+
+`E` is N/A because authoritative morale ownership is mandatory whenever a
+production runtime has registered units; there is no supported enabled/disabled
+feature gate under which divergent ownership would be acceptable.
+
+### Phase 113 closure evidence
+
+The accepted implementation introduces one `MoraleRuntime` over a private
+immutable-record store. The production loader registers initial and dynamic
+units through it; battle, rally, melee rout, ordered cascade batches,
+aggregation archives, victory evaluation, recorder/API projections, and
+campaign final-state serialization read or mutate only its stable read-only
+projection. Format 113 checkpoints persist the active records and suspended
+archives once, with `RNGManager` as the only MORALE-stream persistence owner;
+bounded versionless migration rejects ambiguous started continuous-time state
+instead of guessing its missing check history.
+
+Focused evidence exercises exact transition/status/event transactions,
+pre-notification rollback and draw restoration, deterministic cascade order,
+reinforcement rollback, aggregation suspension and unchanged-proxy restore,
+evolved-proxy rejection, fresh and in-place checkpoint continuation, and a
+production `morale_collapsed` victory difference. Positive guerrilla blending
+now fails explicitly before retreat, status, morale, events, or COMBAT/MORALE
+RNG mutation rather than being misrepresented as `ROUTING`; REM-032 retains
+the unsupported concealment lifecycle.
+
+The exact 11,824-node broad union passed with zero failures/errors/skips and six
+declared warnings. Local API/E2E plus one FastMCP standard node use the declared
+uvloop qualification, with hosted CI as the authoritative default-policy
+control. The corrected documentation audit and Phase 113 postmortem passed.
+The clean committed-tree verifier binds the accepted paired comparison to the
+final phase commit using exact runtime-manifest, input, semantic-envelope, and
+fresh-reproduction equality; its external evidence is recorded in the Phase
+113 devlog and handoff. REM-019 is **Closed**.
+
+## REM-032 - Guerrilla blending has no semantic runtime owner
+
+### Reproduction and cause
+
+Phase 68 described populated-area guerrilla blending as optional live routing,
+but the production branch used a COMBAT-stream draw to write
+`UnitStatus.ROUTING` without a corresponding morale transition. That proxy
+conflates concealment/disappearance into a population with morale collapse and
+violates REM-019's status/state invariant. The branch also queries the absent
+`SimulationContext.population_engine` name while the loader exposes a
+`population_manager` whose API does not provide the assumed density lookup.
+The prior tests proved only enum existence and a zero-probability condition;
+they did not execute a production-loaded blend outcome.
+
+Phase 113 removes the invalid proxy. A direct positive blend result fails
+explicitly before retreat, status, morale, events, or either affected RNG
+stream can mutate; a zero result retains deterministic retreat behavior. This
+is an honest unsupported boundary, not completion of concealment behavior.
+
+### Required proof
+
+- Define one typed, non-morale concealed/disengaged state owner and its
+  lifecycle, including re-emergence or terminal disposition.
+- Resolve populated-area membership through the production-loaded population
+  boundary instead of an absent context attribute or a fabricated density.
+- Apply concealment to detection, targetability, active-enemy selection,
+  movement, victory/roster accounting, and events without inventing a morale
+  route.
+- Prove enabled/disabled and success/failure controls through a realistic
+  production scenario, with deterministic stream allocation and exact
+  checkpoint continuation plus recorder/API exposure.
+
+**Status:** Queued for Phase 119. Phase 113 removes the false morale proxy but
+does not implement or close the concealment capability.
+
+## REM-033 - Surrender and POW handling have no production transaction
+
+### Reproduction and cause
+
+The Phase 113 final ownership audit reproduced a public semantic bypass in
+`RoutEngine.process_surrender()`. A direct call consumed the shared MORALE
+stream, removed an active route, published `SurrenderEvent`, and returned a
+synthetic prisoner count while the authoritative `MoraleRuntime` record stayed
+`ROUTED` and the bound unit stayed `ROUTING`. No production caller invokes that
+helper, no production boundary supplies capturing-unit/side provenance, and no
+simulation runtime constructs or subscribes a `PrisonerEngine` to the morale
+event. The documented combat-to-logistics event path therefore did not exist.
+
+Phase 113 removes the divergent result type and makes the legacy helper reject
+before RNG, route, event, record, or status mutation. Normal stochastic
+`ROUTED -> SURRENDERED` transitions remain production-supported through
+`MoraleRuntime`: the immutable record and `Unit.status` commit together, an
+existing route is removed, and the caused morale event is exposed. That state
+transition does not fabricate a captor, prisoner count, or logistics handoff.
+
+### Required proof
+
+- Define one typed surrender transaction with exact surrendering unit,
+  capturing unit/side provenance, personnel disposition, escape semantics, and
+  event ordering; do not infer a captor from an arbitrary opposing side.
+- Wire the transaction through the production battle/campaign decision path
+  and one runtime-owned prisoner lifecycle rather than independent morale and
+  logistics mutations.
+- Prove realistic enabled preconditions plus no-captor, inactive-unit,
+  duplicate-processing, and subscriber/commit-failure controls with exact RNG
+  accounting and rollback semantics.
+- Persist and expose surrendered personnel, prisoner groups, captor ownership,
+  resource costs, transfers/releases, and their recorder/API representation
+  through exact fresh and in-place continuation.
+
+`E` is N/A because surrender integrity is not a feature-flag toggle: every
+accepted surrender must use the authoritative transaction.
+
+**Status:** Queued for Phase 120. Phase 113 closes the divergent public bypass
+but does not claim production POW generation or logistics handling.
+
+## REM-034 - Production combat events use sentinel timestamps
+
+### Reproduction and cause
+
+The final Phase 113 adversarial postmortem corrected an earlier review
+classification. `RoutEngine.initiate_rout()` has no production caller, but the
+separately noted aggregate casualty helper is production reached from the
+Napoleonic volley, ancient archery, and WW1 volley branches in
+`BattleManager._execute_engagements()`. When an aggregate casualty is positive,
+the helper publishes `EngagementEvent` and `DamageEvent` with
+`timestamp=datetime.min` because its boundary accepts no authoritative
+timestamp. `BattleManager.auto_resolve()` likewise publishes
+`UnitDestroyedEvent` with `datetime.min`, and `SimulationEngine` calls that path
+for live battle resolution.
+
+These events flow through the ordinary event bus and can be persisted by the
+recorder and exposed by API/timeline consumers. A sentinel source timestamp is
+therefore a production event-integrity deficit, not a non-production caveat or
+valid completion witness. Phase 113 did not introduce or depend on these
+paths; its melee-event repair supplies exact logical time and remains valid.
+
+### Required proof
+
+- Add one required typed authoritative timestamp to aggregate casualty and
+  auto-resolve production boundaries; do not use wall-clock time or a sentinel
+  fallback.
+- Thread `SimulationContext.clock.current_time` from every production caller
+  and reject an absent, naive, or non-authoritative value before publishing or
+  mutating an exposed result.
+- Execute production-loaded aggregate-volley and auto-resolve controls and
+  prove every engagement, damage, destruction, recorder, API, and timeline
+  timestamp equals the triggering logical simulation time.
+- Prove deterministic replay and checkpoint continuation preserve the exact
+  event order and timestamps without adding an RNG or clock mirror.
+
+`E` is N/A because correct event time is mandatory whenever either production
+path emits an event; there is no supported enabled/disabled correctness mode.
+
+**Status:** Queued for Phase 121. Phase 113 records the production reachability
+and corrects its documentation but does not broaden REM-019 into a combat-event
+timestamp implementation.

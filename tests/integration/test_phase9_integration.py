@@ -19,9 +19,11 @@ import pytest
 from stochastic_warfare.core.clock import SimulationClock
 from stochastic_warfare.core.events import EventBus
 from stochastic_warfare.core.rng import RNGManager
-from stochastic_warfare.core.types import Position
+from stochastic_warfare.core.types import ModuleId, Position
 from stochastic_warfare.entities.base import Unit, UnitStatus
-from stochastic_warfare.morale.state import MoraleState
+from stochastic_warfare.morale.rout import RoutEngine
+from stochastic_warfare.morale.runtime import MoraleRegistration, MoraleRuntime
+from stochastic_warfare.morale.state import MoraleState, MoraleTransitionCause
 from stochastic_warfare.simulation.battle import (
     BattleContext,
 )
@@ -116,15 +118,46 @@ def _make_ctx(
         start=TS,
         tick_duration=timedelta(seconds=tick_s),
     )
+    units_by_side = {
+        "blue": blue_units if blue_units is not None else [],
+        "red": red_units if red_units is not None else [],
+    }
+    units = {
+        unit.entity_id: unit
+        for side_units in units_by_side.values()
+        for unit in side_units
+    }
+    morale_rng = rng_mgr.get_stream(ModuleId.MORALE)
+    rout_engine = RoutEngine(bus, morale_rng)
+    morale_runtime = MoraleRuntime(
+        bus,
+        morale_rng,
+        rout_engine=rout_engine,
+    )
+    morale_runtime.register_units(
+        tuple(
+            MoraleRegistration(
+                unit_id=unit_id,
+                initial_state=(
+                    MoraleState.ROUTED
+                    if unit.status is UnitStatus.ROUTING
+                    else MoraleState.SURRENDERED
+                    if unit.status is UnitStatus.SURRENDERED
+                    else MoraleState.STEADY
+                ),
+            )
+            for unit_id, unit in units.items()
+        ),
+        units,
+    )
     return SimulationContext(
         config=cfg,
         clock=clock,
         rng_manager=rng_mgr,
         event_bus=bus,
-        units_by_side={
-            "blue": blue_units if blue_units is not None else [],
-            "red": red_units if red_units is not None else [],
-        },
+        units_by_side=units_by_side,
+        morale_runtime=morale_runtime,
+        rout_engine=rout_engine,
     )
 
 
@@ -595,8 +628,15 @@ class TestMultipleVictoryConditions:
         ctx = _make_ctx(blue_units=blue_units, red_units=red_units, config=cfg)
 
         # Set red morale to ROUTED for most units
+        assert ctx.morale_runtime is not None
         for u in red_units:
-            ctx.morale_states[u.entity_id] = MoraleState.ROUTED
+            assert ctx.morale_runtime.force_transition(
+                u.entity_id,
+                MoraleState.ROUTED,
+                cause=MoraleTransitionCause.MELEE_ROUT,
+                timestamp=ctx.clock.current_time,
+                current_time_s=0.0,
+            )
 
         ve = VictoryEvaluator(
             objectives=[],
@@ -959,7 +999,7 @@ class TestC2AIPresence:
 
         # All these engines should be non-None
         assert ctx.engagement_engine is not None
-        assert ctx.morale_machine is not None
+        assert ctx.morale_runtime is not None
         assert ctx.ooda_engine is not None
         assert ctx.decision_engine is not None
         assert ctx.assessor is not None
@@ -1196,7 +1236,7 @@ class TestScenarioLoaderIntegration:
         # Verify all major engines are wired
         assert ctx.engagement_engine is not None
         assert ctx.fog_of_war is not None
-        assert ctx.morale_machine is not None
+        assert ctx.morale_runtime is not None
         assert ctx.movement_engine is not None
         assert ctx.comms_engine is not None
         assert ctx.ooda_engine is not None

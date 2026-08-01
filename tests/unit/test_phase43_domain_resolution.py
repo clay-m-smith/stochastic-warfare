@@ -16,6 +16,7 @@ import pytest
 
 from stochastic_warfare.core.types import Domain, Position
 from stochastic_warfare.entities.base import Unit, UnitStatus
+from stochastic_warfare.morale.state import MoraleState
 from stochastic_warfare.simulation.battle import (
     BattleConfig,
     BattleManager,
@@ -525,13 +526,22 @@ class TestMeleeResultApplication:
             attacker_routed=False,
         )
         pending: list[tuple[Unit, UnitStatus]] = []
-        morale_states: dict[str, Any] = {}
-        _apply_melee_result(mr, attacker, defender, pending, morale_states, 0.5, 0.3)
+        _apply_melee_result(
+            mr,
+            attacker,
+            defender,
+            pending,
+            None,
+            0.5,
+            0.3,
+            timestamp=datetime.min,
+            current_time_s=1.0,
+        )
         statuses = {entry[0].entity_id: entry[1] for entry in pending}
         assert statuses["att"] == UnitStatus.DISABLED  # 35%
         assert statuses["def"] == UnitStatus.DESTROYED  # 60%
 
-    def test_melee_rout_sets_morale_state(self):
+    def test_melee_rout_uses_runtime_transaction(self):
         attacker = _make_unit("att", "blue", personnel_count=100)
         defender = _make_unit("def", "red", personnel_count=100)
         mr = SimpleNamespace(
@@ -540,10 +550,22 @@ class TestMeleeResultApplication:
             defender_routed=True, attacker_routed=False,
         )
         pending: list[tuple[Unit, UnitStatus]] = []
-        morale_states: dict[str, Any] = {}
-        _apply_melee_result(mr, attacker, defender, pending, morale_states)
-        assert morale_states["def"] == 3  # ROUTED
-        assert defender.status == UnitStatus.ROUTING
+        morale_runtime = MagicMock()
+        _apply_melee_result(
+            mr,
+            attacker,
+            defender,
+            pending,
+            morale_runtime,
+            timestamp=datetime.min,
+            current_time_s=42.0,
+        )
+        morale_runtime.force_transition.assert_called_once()
+        call = morale_runtime.force_transition.call_args
+        assert call.args == ("def", MoraleState.ROUTED)
+        assert call.kwargs["cause"].name == "MELEE_ROUT"
+        assert call.kwargs["timestamp"] == datetime.min
+        assert call.kwargs["current_time_s"] == 42.0
 
 
 class TestInferMeleeType:

@@ -430,7 +430,7 @@ When a scenario reaches its time limit, `evaluate_force_advantage()` determines 
 ```python
 VictoryEvaluator.evaluate_force_advantage(
     units_by_side,
-    morale_states=ctx.morale_states,       # dict of unit_id -> MoraleState
+    morale_states=ctx.morale_states,       # read-only Mapping[str, MoraleState]
     weights={"force_ratio": 1.0,           # quality-weighted survival
              "morale_ratio": 0.3,          # 1 - (routed_count / total)
              "casualty_exchange": 0.2},    # survival as proxy
@@ -544,7 +544,10 @@ Central PRNG management. Creates independent per-module random number generator 
 from stochastic_warfare.core.events import EventBus
 ```
 
-Publish/subscribe event system. Decouples modules -- combat publishes damage events, morale subscribes without combat knowing about morale.
+Publish/subscribe event system for recorder and subsystem consumers. Production
+morale inputs are coordinated directly by the simulation battle path; morale
+does not currently subscribe to combat events and instead publishes committed
+transition events for downstream consumers.
 
 **Key Methods:**
 
@@ -752,6 +755,16 @@ Pydantic model (`extra="forbid"`) for all scenario tuning parameters. Replaces f
 | `retreat_distance_m` | `float` | `2000.0` | Distance guerrilla units retreat after disengage |
 | `misinterpretation_radius_m` | `float` | `500.0` | Position offset for misinterpreted orders |
 
+Guerrilla retreat is supported when the unconventional engine reports zero
+blend probability. If a positive populated-area result reaches the battle
+guard, `UnsupportedGuerrillaBlendError` is raised before retreat, status,
+morale, events, or COMBAT/MORALE RNG state changes; it is never translated to
+`ROUTING`. This is a direct fail-closed guard, not a production-loaded positive
+path: the factory context exposes `population_manager`, while the current
+battle lookup has no matching density-query contract and therefore cannot
+recognize a populated area. REM-032/Phase 119 owns that lookup and the future
+non-morale concealment lifecycle.
+
 **Environment Wiring (Phase 78):**
 
 | Field | Type | Default | Description |
@@ -887,12 +900,17 @@ mutating the target. See the
 [checkpoint state contract](../specs/checkpoint-state.md) for the canonical
 schema and bounded legacy-migration rules.
 
-The current engine checkpoint schema is version 112. In addition to force,
-loadout, morale, logistics, space/ASAT, and time-on-target state, it preserves
-commander/OODA assignments, bounded movement diagnostics, and typed Space ISR
-pending reports, delivery receipts, and owner/target IMINT associations.
-Current-format restore is atomic and validates exact topology and chronology.
-Explicit version 111 and every other non-current version reject.
+The current engine checkpoint schema is version 113. In addition to force,
+loadout, logistics, space/ASAT, and time-on-target state, it preserves one
+`morale_runtime` envelope with immutable active records and suspended aggregate
+archives. `SimulationContext.morale_states` remains a stable read-only
+`Mapping[str, MoraleState]` for runtime and frame consumers, but it is not a
+second checkpoint store; `RNGManager` alone persists the MORALE generator.
+Commander/OODA assignments, bounded movement diagnostics, and typed Space ISR
+pending reports, delivery receipts, and owner/target IMINT associations remain
+included. Current-format restore is atomic and validates exact topology,
+status/route consistency, chronology, and owner/RNG bindings. Explicit versions
+111 and 112 and every other non-current version reject.
 
 Typed Space ISR checkpoint equivalence is proven under an explicit empty
 ordinary-contact topology. Nonempty ordinary `SideWorldView.contacts` are

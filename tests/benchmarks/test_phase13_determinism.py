@@ -9,8 +9,12 @@ import types
 import numpy as np
 import pytest
 
+from stochastic_warfare.core.events import EventBus
+from stochastic_warfare.core.rng import RNGManager
+from stochastic_warfare.core.types import ModuleId
 from stochastic_warfare.core.types import Position
 from stochastic_warfare.entities.base import Unit
+from stochastic_warfare.morale.runtime import MoraleRegistration, MoraleRuntime
 from stochastic_warfare.morale.state import MoraleState
 
 
@@ -43,7 +47,29 @@ def _make_ctx(units_by_side=None, morale_states=None):
     ctx.units_by_side = units_by_side or {}
     ctx.unit_weapons = {}
     ctx.unit_sensors = {}
-    ctx.morale_states = morale_states if morale_states is not None else {}
+    units = [
+        unit
+        for side_units in ctx.units_by_side.values()
+        for unit in side_units
+    ]
+    initial_morale = morale_states or {
+        unit.entity_id: MoraleState.STEADY
+        for unit in units
+    }
+    rng_manager = RNGManager(13)
+    morale_runtime = MoraleRuntime(
+        EventBus(),
+        rng_manager.get_stream(ModuleId.MORALE),
+    )
+    morale_runtime.register_units(
+        tuple(
+            MoraleRegistration(unit.entity_id, initial_morale[unit.entity_id])
+            for unit in units
+        ),
+        {unit.entity_id: unit for unit in units},
+    )
+    ctx.morale_runtime = morale_runtime
+    ctx.morale_states = morale_runtime.states
     ctx.stockpile_manager = None
     return ctx
 
@@ -257,8 +283,12 @@ class TestAggregationDeterminism:
             _make_unit("u1", "blue", Position(300, 400), "infantry"),
             _make_unit("u2", "blue", Position(500, 600), "armor"),
         ]
-        morale = {"u0": MoraleState.STEADY, "u1": MoraleState.SHAKEN, "u2": MoraleState.STEADY}
-        ctx = _make_ctx({"blue": list(units)}, dict(morale))
+        morale = {
+            "u0": MoraleState.STEADY,
+            "u1": MoraleState.SHAKEN,
+            "u2": MoraleState.STEADY,
+        }
+        ctx = _make_ctx({"blue": list(units)}, morale)
 
         engine = AggregationEngine(config=config, rng=np.random.default_rng(0))
         agg = engine.aggregate([u.entity_id for u in units], ctx)
@@ -273,8 +303,8 @@ class TestAggregationDeterminism:
         assert restored["u0"].position.easting == pytest.approx(100.0)
         assert restored["u1"].position.northing == pytest.approx(400.0)
         assert restored["u2"].unit_type == "armor"
-        assert ctx.morale_states["u0"] == MoraleState.STEADY
-        assert ctx.morale_states["u1"] == MoraleState.SHAKEN
+        assert ctx.morale_states["u0"] is MoraleState.STEADY
+        assert ctx.morale_states["u1"] is MoraleState.SHAKEN
 
     def test_deterministic_aggregate_ids(self):
         from stochastic_warfare.simulation.aggregation import AggregationConfig, AggregationEngine

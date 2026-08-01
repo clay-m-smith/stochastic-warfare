@@ -34,6 +34,29 @@ class TestCalibrationSchemaEdgeCases:
         cal = CalibrationSchema()
         assert cal.get("morale_base_degrade_rate") == pytest.approx(0.05)
 
+    def test_continuous_time_morale_alias_has_one_typed_path(self) -> None:
+        nested = CalibrationSchema.model_validate(
+            {"morale": {"use_continuous_time": True}},
+            strict=True,
+        )
+        flat = CalibrationSchema.model_validate(
+            {"morale_use_continuous_time": True},
+            strict=True,
+        )
+
+        assert nested == flat
+        assert nested.morale.use_continuous_time is True
+        assert nested.get("morale_use_continuous_time") is True
+        assert nested.to_flat_dict(["blue"])[
+            "morale_use_continuous_time"
+        ] is True
+
+        with pytest.raises(ValidationError, match="bool_type"):
+            CalibrationSchema.model_validate(
+                {"morale_use_continuous_time": 1},
+                strict=True,
+            )
+
     def test_side_suffix(self):
         """blue_cohesion → side_overrides['blue'].cohesion."""
         cal = CalibrationSchema.model_validate({

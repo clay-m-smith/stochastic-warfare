@@ -1,7 +1,8 @@
-"""Phase 112 tests for strict paired benchmark policy and evidence."""
+"""Tests for the strict paired benchmark policy and evidence contract."""
 
 from __future__ import annotations
 
+import copy
 from dataclasses import dataclass
 from datetime import datetime, timezone
 import json
@@ -11,6 +12,7 @@ from pathlib import Path
 import subprocess
 import sys
 
+import numpy as np
 import pytest
 from pydantic import BaseModel, ValidationError
 
@@ -46,6 +48,15 @@ def _gate_policy() -> BenchmarkPolicy:
     return BenchmarkBaseline().load()["73_easting"].policy
 
 
+def _synthetic_gate_policy() -> BenchmarkPolicy:
+    payload = _gate_policy().model_dump(mode="python")
+    payload["workload"] = {
+        "name": "default",
+        "calibration_patch": {},
+    }
+    return BenchmarkPolicy.model_validate(payload)
+
+
 def _worker_with_duration(
     worker: WorkerRun,
     *,
@@ -61,7 +72,7 @@ def _worker_with_duration(
 
 def _minimal_manifest() -> RuntimeInputManifest:
     payload = {
-        "policy_version": 2,
+        "policy_version": 3,
         "scenario_path": "data/scenarios/test/scenario.yaml",
         "scenario_sha256": "a" * 64,
         "dependency_lock_sha256": "b" * 64,
@@ -228,7 +239,7 @@ def _runtime_input_for_identity(
     scenario_source = sources_by_path[scenario_path]
     lock_source = sources_by_path["uv.lock"]
     payload = {
-        "policy_version": 2,
+        "policy_version": 3,
         "scenario_path": scenario_path,
         "scenario_sha256": scenario_source.sha256,
         "dependency_lock_sha256": lock_source.sha256,
@@ -269,6 +280,7 @@ def _pass_artifact_for_identity(
         benchmark_module.BenchmarkBaselineIdentity | None
     ) = None,
     scenario_name: str = "73_easting",
+    policy: BenchmarkPolicy | None = None,
 ) -> ComparisonArtifact:
     template = _valid_pass_artifact()
     assert template.reference_identity is not None
@@ -302,7 +314,7 @@ def _pass_artifact_for_identity(
         scenario_name=scenario_name,
         status="pass",
         errors=[],
-        policy=template.policy,
+        policy=policy or template.policy,
         baseline_identity=baseline_identity or template.baseline_identity,
         environment=environment,
         reference_identity=GitIdentity(
@@ -339,7 +351,7 @@ def _write_synthetic_gate_baseline(
     entry = benchmark_module.BaselineEntry(
         scenario_name="synthetic",
         scenario_path=runtime_input.scenario_path,
-        policy=template.policy,
+        policy=_synthetic_gate_policy(),
         reference_input=benchmark_module.ReferenceInput(
             scenario_path=runtime_input.scenario_path,
             scenario_sha256=runtime_input.scenario_sha256,
@@ -396,6 +408,7 @@ def _prepare_dirty_final_tree(
         runtime_input,
         baseline_identity=baseline_identity,
         scenario_name="synthetic",
+        policy=entry.policy,
     )
     return artifact, runtime_input, baseline_path
 
@@ -406,7 +419,7 @@ class TestPairedPolicy:
         entries = BenchmarkBaseline().load()
         policy = entries["73_easting"].policy
 
-        assert policy.policy_version == 2
+        assert policy.policy_version == 3
         assert policy.mode == "gate"
         assert policy.manual is False
         assert policy.warmup_runs_per_revision == 1
@@ -415,12 +428,38 @@ class TestPairedPolicy:
         assert policy.maximum_median_slowdown_ratio == 1.20
         assert policy.maximum_relative_sample_range == 0.20
         assert policy.timing_scope == "SimulationEngine.run"
+        assert policy.workload.name == "morale_neutral_control_plane"
+        assert policy.workload.calibration_patch.model_dump(
+            mode="python",
+            exclude_none=True,
+        ) == {
+            "morale": {
+                "base_degrade_rate": 0.0,
+                "base_recover_rate": 0.0,
+                "casualty_weight": 0.0,
+                "suppression_weight": 0.0,
+                "leadership_weight": 0.0,
+                "cohesion_weight": 0.0,
+                "force_ratio_weight": 0.0,
+            },
+        }
 
         golan = entries["golan_heights"]
         assert golan.policy.mode == "gate"
         assert golan.policy.manual is True
         assert entries["benchmark_battalion"].policy.mode == "measurement_only"
         assert entries["benchmark_brigade"].policy.mode == "measurement_only"
+
+    def test_morale_neutral_workload_rejects_every_non_73_scenario(self) -> None:
+        entry = BenchmarkBaseline().load()["73_easting"]
+        payload = entry.model_dump(mode="python")
+        payload["scenario_name"] = "future_benchmark"
+
+        with pytest.raises(
+            ValidationError,
+            match="only the routine 73_easting benchmark",
+        ):
+            benchmark_module.BaselineEntry.model_validate(payload)
 
     def test_environment_metadata_is_complete_without_nullable_hardware(self) -> None:
         metadata = benchmark_module._environment_metadata()
@@ -970,7 +1009,7 @@ class TestCanonicalEvidence:
         path = tmp_path / "bad-baseline.json"
         path.write_text(json.dumps(raw), encoding="utf-8")
 
-        with pytest.raises(ValueError, match="version-2"):
+        with pytest.raises(ValueError, match="version-3"):
             BenchmarkBaseline(path).load_file()
 
     def test_artifact_digest_detects_tampering(
@@ -1388,8 +1427,91 @@ class TestFinalTreeVerification:
             )
 
 
+def test_morale_timing_identity_unifies_only_discrete_default() -> None:
+    """Schema-112 implicit false matches 113 false while true stays distinct."""
+
+    def payload(value: bool | None) -> dict[str, object]:
+        morale: dict[str, object] = {}
+        flat: dict[str, object] = {}
+        if value is not None:
+            morale["use_continuous_time"] = value
+            flat["morale_use_continuous_time"] = value
+        return {
+            "configuration": {
+                "calibration_overrides": {"morale": dict(morale)},
+            },
+            "calibration": {"morale": dict(morale)},
+            "calibration_flat": flat,
+        }
+
+    implicit_discrete = payload(None)
+    assert (
+        benchmark_module._normalize_morale_timing_identity(payload(False))
+        == implicit_discrete
+    )
+
+    continuous = payload(True)
+    assert benchmark_module._normalize_morale_timing_identity(continuous) == (
+        payload(True)
+    )
+    assert continuous != implicit_discrete
+
+
 @pytest.mark.benchmark
 class TestProductionWorker:
+    def test_morale_neutral_workload_executes_exact_runtime_draw_budget(
+        self,
+    ) -> None:
+        from stochastic_warfare.core.types import ModuleId
+        from stochastic_warfare.morale.state import MoraleState
+        from stochastic_warfare.simulation.engine import EngineConfig
+        from stochastic_warfare.simulation.runtime import (
+            AnalysisVariant,
+            SimulationRuntimeFactory,
+        )
+
+        entry = BenchmarkBaseline().load()["73_easting"]
+        variant = AnalysisVariant(
+            variant_id="morale-neutral-draw-proof",
+            calibration_patch=(
+                entry.policy.workload.calibration_patch.model_dump(
+                    mode="python",
+                    exclude_none=True,
+                )
+            ),
+        )
+        prepared = SimulationRuntimeFactory().prepare(
+            ROOT / entry.scenario_path,
+            DATA_DIR,
+            (variant,),
+        )
+        session = prepared.build(
+            variant.variant_id,
+            seed=42,
+            max_ticks=20_000,
+            engine_config=EngineConfig(
+                max_ticks=20_000,
+                snapshot_interval_ticks=0,
+            ),
+            strict_mode=True,
+        )
+        morale_rng = session.context.rng_manager.get_stream(ModuleId.MORALE)
+        expected = np.random.default_rng()
+        expected.bit_generator.state = copy.deepcopy(
+            morale_rng.bit_generator.state,
+        )
+
+        result = session.engine.run()
+
+        records = tuple(session.context.morale_runtime.records.values())
+        assert result.ticks_executed == 360
+        assert len(records) == 71
+        assert all(record.current_state is MoraleState.STEADY for record in records)
+        assert all(record.generation == 30 for record in records)
+        assert sum(record.generation for record in records) == 2_130
+        expected.random(2_130)
+        assert morale_rng.bit_generator.state == expected.bit_generator.state
+
     @pytest.mark.slow
     def test_exact_reference_worker_uses_historical_adapter(
         self,
@@ -1415,6 +1537,7 @@ class TestProductionWorker:
             repo_root=reference_root,
             scenario_relative="data/scenarios/73_easting/scenario.yaml",
             revision="reference",
+            workload=BenchmarkBaseline().load()["73_easting"].policy.workload,
             timeout_s=60.0,
         )
 
@@ -1424,7 +1547,7 @@ class TestProductionWorker:
             .reference_input.fingerprint
         )
         assert run.semantic_envelope.ticks == 360
-        assert run.semantic_envelope.event_count == 30
+        assert run.semantic_envelope.event_count == 1
 
     @pytest.mark.slow
     def test_73_easting_matches_authoritative_semantics(self) -> None:
@@ -1446,7 +1569,40 @@ class TestProductionWorker:
         assert run.semantic_envelope.victory_condition_type == "time_expired"
         assert run.semantic_envelope.ticks == 360
         assert run.semantic_envelope.logical_duration_s == 1800.0
-        assert run.semantic_envelope.event_count == 30
+        assert run.semantic_envelope.event_count == 1
+
+        default_run = run_revision_worker(
+            repo_root=ROOT,
+            scenario_relative=entry.scenario_path,
+            revision="candidate",
+            workload=benchmark_module.BenchmarkWorkload(
+                name="default",
+                calibration_patch=(
+                    benchmark_module.BenchmarkCalibrationPatch()
+                ),
+            ),
+        )
+        assert default_run.runtime_input.fingerprint != (
+            run.runtime_input.fingerprint
+        )
+        assert default_run.semantic_envelope.model_dump(mode="python") == {
+            "unit_count": 71,
+            "roster_loadout_digest": (
+                "cf7c3f3eb0f629283ec68a1e746014bb4386d0310bcc63b39b709500f9ec9f78"
+            ),
+            "winner": "blue",
+            "victory_condition_type": "time_expired",
+            "ticks": 360,
+            "logical_duration_s": 1800.0,
+            "status_counts": {
+                "blue": {"ACTIVE": 18, "ROUTING": 3},
+                "red": {"ACTIVE": 50},
+            },
+            "event_count": 121,
+            "event_digest": (
+                "35cdb75fc61e3eb3e76f4961a65dd57518d68de7a0125e9dcd7d5528ae3b2718"
+            ),
+        }
 
     def test_missing_scenario_fails_instead_of_skipping(self) -> None:
         with pytest.raises(FileNotFoundError, match="not found"):
@@ -1625,11 +1781,11 @@ class TestMeasurementOnlyScenarios:
             raise BenchmarkComparisonError("explicit harness failure")
 
 
-def test_checked_in_baseline_document_is_exact_v2() -> None:
+def test_checked_in_baseline_document_is_exact_v3() -> None:
     baseline = BaselineFile.model_validate_json(
         BASELINES_PATH.read_text(encoding="utf-8"),
     )
-    assert baseline.format_version == 2
+    assert baseline.format_version == 3
     assert sorted(baseline.entries) == [
         "73_easting",
         "benchmark_battalion",

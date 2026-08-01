@@ -7,10 +7,12 @@ models, a headless Python engine, FastAPI service, and React frontend. Modern
 warfare is the primary data package, with four historical-era packages and
 integrated maritime warfare.
 
-**Current status**: Phases 105 through 112 are complete, including the
-validation and documentation trust remediations. Phase 113 has not started, so
-Block 12 remains in progress. See `docs/devlog/phase-112.md` and
-`docs/remediation-backlog.md` for exact evidence and unresolved gaps.
+**Current status**: Phases 105 through 113 are complete, including the
+validation, documentation trust, and morale-ownership remediations. Phase 114
+is next and remains unstarted, so Block 12 remains in progress. See
+`docs/devlog/phase-113.md`,
+`docs/specs/morale-state-ownership.md`, and `docs/remediation-backlog.md` for
+exact evidence and unresolved gaps.
 
 ## Python & Package Management
 **Requires Python >=3.12** (pinned to 3.12.10 via `.python-version`).
@@ -45,14 +47,17 @@ The authoritative Python suite is the exact audited union of `standard`,
 runs the audit, `standard`, `api`, `e2e`, and the overlapping `terrain`
 dependency profile. Weekly/manual CI runs the three marker partitions in
 deterministic module-affine shards. `benchmark-policy` is also an overlapping
-focused profile, not a seventh partition. The 73 Easting paired benchmark is
-routine; Golan remains manual.
+focused profile, not a seventh partition. The routine 73 Easting paired gate
+uses the version-3 typed, morale-neutral control-plane workload and does not
+prove default morale behavior or historical fidelity; Golan remains manual.
 
-Phase 112's closure audit exercised exactly 11,752 nodes: `standard` 11,299
-passed with 6 warnings; `slow-only` 109, `benchmark-only` 60,
-`slow-benchmark` 4, API 239, and E2E 41 each passed with no warnings. The API
-result is local uvloop-qualified evidence only until remote default-policy CI
-passes. The overlapping terrain profile separately passed 97 tests.
+The current Phase 113 audit enumerates exactly 11,824 nodes:
+`standard` 11,367, `slow-only` 109, `benchmark-only` 62, `slow-benchmark` 4,
+API 241, and E2E 41. All 11,824 passed with zero failures/errors/skips and six
+declared warnings. Local API/E2E plus one FastMCP standard node used the
+declared uvloop qualification; hosted CI is the authoritative default-policy
+control for that local host/tool-loop boundary. Historical Phase 112 execution
+evidence is recorded in its devlog.
 
 ## Architecture
 
@@ -172,7 +177,7 @@ production-evidence requirements.
 | `docs/brainstorm-block11.md` | Block 11 design thinking (golden scenarios, engine validation through UI) |
 | `docs/development-phases-block11.md` | Block 11 roadmap and polish history (98–104) |
 | `docs/development-phases-block12.md` | Block 12 phase roadmap (105–114), integrity remediation |
-| `docs/development-phases-block13.md` | Block 13 roadmap (115–118), queued integrity follow-ups |
+| `docs/development-phases-block13.md` | Block 13 roadmap (115–121), queued integrity follow-ups |
 | `docs/remediation-backlog.md` | Audited implementation gaps and completion evidence |
 | `docs/specs/project-structure.md` | Full package tree, module decomposition, dependency graph |
 | `docs/devlog/` | Per-phase implementation logs (`index.md` tracks status) |
@@ -203,8 +208,8 @@ All phase details are in `docs/devlog/` (one file per phase). Per-phase tables i
 | Block 9 | 83–91 | Profiling, spatial culling, LOD, Numba JIT, SoA data layer, per-side parallelism, benchmarking | ~279 |
 | Block 10 | 92–97 | UI depth: analytics endpoints, dashboard charts, map overlays, calibration editor, event filtering, data catalogs | ~120 |
 | Block 11 | 98–104 | Golden scenarios plus OOB, engine, and deployment polish | ~107 |
-| Block 12 | 105–114 | Production-path integrity remediation; Phase 112 complete, Phase 113 not started | 11,752 audited union; 97 terrain profile |
-| Block 13 | 115–118 | Queued checkpoint, historical-validation, and performance-semantics follow-ups | Planned |
+| Block 12 | 105–114 | Production-path integrity remediation; Phases 105–113 complete, Phase 114 unstarted | 11,824 audited passes; 6 declared warnings |
+| Block 13 | 115–121 | Queued sensing, checkpoint, historical-validation, performance-semantics, concealment, surrender/POW, and event-time follow-ups | Planned |
 
 ### Block 11 Detail (COMPLETE)
 

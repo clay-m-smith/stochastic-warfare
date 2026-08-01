@@ -14,6 +14,7 @@ import pytest
 from stochastic_warfare.combat.indirect_fire import IndirectFireEngine
 from stochastic_warfare.core.types import ModuleId
 from stochastic_warfare.entities.base import UnitStatus
+from stochastic_warfare.morale.state import MoraleState
 from stochastic_warfare.simulation.engine import SimulationEngine
 from stochastic_warfare.simulation.loadouts import RuntimeLoadouts
 from stochastic_warfare.simulation.recorder import SimulationRecorder
@@ -25,6 +26,7 @@ from stochastic_warfare.simulation.scenario import (
 from stochastic_warfare.simulation.time_on_target import (
     TimeOnTargetMissionResolver,
 )
+from tests.conftest import make_versionless_legacy_morale_checkpoint
 
 
 DATA_DIR = Path("data")
@@ -593,12 +595,21 @@ def test_corrupt_never_fired_boundary_is_rejected_atomically(
 def test_surrendered_terminal_target_cannot_regress_on_restore() -> None:
     source, _ = _engine(seed=42)
     _advance(source, 23)
-    target = next(
-        unit
-        for unit in source._ctx.units_by_side["red"]
-        if unit.entity_id == TARGET_ID
+    surrendered = source.get_state()
+    _saved_unit(surrendered, TARGET_ID)["status"] = (
+        UnitStatus.SURRENDERED.value
     )
-    object.__setattr__(target, "status", UnitStatus.SURRENDERED)
+    logical_time_s = source._ctx.clock.elapsed.total_seconds()
+    morale_record = surrendered["context"]["morale_runtime"][
+        "active_records"
+    ][TARGET_ID]
+    morale_record.update({
+        "current_state": int(MoraleState.SURRENDERED),
+        "last_transition_time_s": logical_time_s,
+        "last_check_time_s": logical_time_s,
+        "generation": morale_record["generation"] + 1,
+    })
+    source.set_state(surrendered)
     _advance(source, 1)
 
     valid = source.get_state()
@@ -612,6 +623,9 @@ def test_surrendered_terminal_target_cannot_regress_on_restore() -> None:
 
     invalid = copy.deepcopy(valid)
     _saved_unit(invalid, TARGET_ID)["status"] = UnitStatus.ACTIVE.value
+    invalid["context"]["morale_runtime"]["active_records"][TARGET_ID][
+        "current_state"
+    ] = int(MoraleState.STEADY)
     _assert_atomic_rejection(
         source,
         invalid,
@@ -978,15 +992,15 @@ def test_corrupt_tot_authorities_are_rejected_atomically(
 
 @pytest.mark.parametrize(
     "invalid_version",
-    (111, 113, True, None),
-    ids=("version-111", "future", "boolean", "null"),
+    (112, 114, True, None),
+    ids=("version-112", "future", "boolean", "null"),
 )
-def test_checkpoint_version_112_is_exact_and_atomic(
+def test_checkpoint_version_113_is_exact_and_atomic(
     invalid_version: int | bool | None,
 ) -> None:
     source, _ = _engine(seed=42)
     invalid = copy.deepcopy(source.get_state())
-    assert invalid["checkpoint_version"] == 112
+    assert invalid["checkpoint_version"] == 113
     invalid["checkpoint_version"] = invalid_version
 
     _assert_atomic_rejection(
@@ -1001,8 +1015,9 @@ def test_versionless_checkpoint_rejects_every_declared_tot_plan(
     enabled: bool,
 ) -> None:
     source, _ = _engine(seed=42, enabled=enabled)
-    invalid = copy.deepcopy(source.get_state())
-    invalid.pop("checkpoint_version")
+    invalid = make_versionless_legacy_morale_checkpoint(
+        source.get_state(),
+    )
 
     _assert_atomic_rejection(
         source,
@@ -1032,8 +1047,9 @@ def test_versionless_checkpoint_remains_compatible_without_declared_plan(
 ) -> None:
     source, _ = _engine(seed=42, empty=True)
     _advance(source, 3)
-    versionless = copy.deepcopy(source.get_state())
-    assert versionless.pop("checkpoint_version") == 112
+    versionless = make_versionless_legacy_morale_checkpoint(
+        source.get_state(),
+    )
 
     resumed, _ = _engine(seed=999_111, empty=True)
     resumed.set_state(versionless)

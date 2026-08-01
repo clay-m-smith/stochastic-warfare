@@ -366,8 +366,7 @@ def plot_morale_transitions(show: bool) -> None:
     """Visualize Markov transition matrices under good and dire conditions."""
     logger.info("Generating morale transition matrix plot")
     rng = np.random.Generator(np.random.PCG64(42))
-    event_bus = EventBus()
-    machine = MoraleStateMachine(event_bus, rng)
+    machine = MoraleStateMachine(rng)
 
     state_names = [s.name for s in MoraleState]
     n_states = len(state_names)

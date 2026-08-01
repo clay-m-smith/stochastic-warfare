@@ -8,6 +8,7 @@ and publishes events when objectives change hands or victory is declared.
 from __future__ import annotations
 
 import math
+from collections.abc import Mapping
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from enum import IntEnum
@@ -179,7 +180,7 @@ class VictoryEvaluator:
         self,
         clock: Any,
         units_by_side: dict[str, list[Unit]],
-        morale_states: dict[str, Any],
+        morale_states: Mapping[str, MoraleState],
         supply_states: dict[str, float],
     ) -> VictoryResult:
         """Check all victory conditions and return the first satisfied.
@@ -191,7 +192,7 @@ class VictoryEvaluator:
         units_by_side:
             Mapping of side name to list of :class:`Unit`.
         morale_states:
-            Mapping of unit_id to :class:`MoraleState` (or int).
+            Read-only mapping of unit ID to :class:`MoraleState`.
         supply_states:
             Mapping of unit_id to supply level (0.0–1.0).
 
@@ -434,7 +435,7 @@ class VictoryEvaluator:
         cond: VictoryConditionConfig,
         clock: Any,
         units_by_side: dict[str, list[Unit]],
-        morale_states: dict[str, Any],
+        morale_states: Mapping[str, MoraleState],
         supply_states: dict[str, float],
         tick: int,
     ) -> VictoryResult:
@@ -597,7 +598,7 @@ class VictoryEvaluator:
         self,
         cond: VictoryConditionConfig,
         units_by_side: dict[str, list[Unit]],
-        morale_states: dict[str, Any],
+        morale_states: Mapping[str, MoraleState],
         tick: int,
     ) -> VictoryResult:
         """Check if any side's morale has collectively collapsed."""
@@ -732,7 +733,7 @@ class VictoryEvaluator:
     def evaluate_force_advantage(
         units_by_side: dict[str, list[Unit]],
         *,
-        morale_states: dict[str, Any] | None = None,
+        morale_states: Mapping[str, MoraleState] | None = None,
         weights: dict[str, float] | None = None,
     ) -> VictoryResult:
         """Evaluate which side has the force advantage.

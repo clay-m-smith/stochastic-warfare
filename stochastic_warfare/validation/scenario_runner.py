@@ -35,7 +35,8 @@ from stochastic_warfare.detection.signatures import SignatureLoader
 from stochastic_warfare.entities.base import Unit, UnitStatus
 from stochastic_warfare.entities.loader import UnitLoader
 from stochastic_warfare.morale.config import build_morale_config
-from stochastic_warfare.morale.state import MoraleState, MoraleStateMachine
+from stochastic_warfare.morale.runtime import MoraleRegistration, MoraleRuntime
+from stochastic_warfare.morale.state import MoraleState
 from stochastic_warfare.simulation.equipment_mappings import (
     EQUIPMENT_MAPPING_REGISTRY,
 )
@@ -403,12 +404,15 @@ class ScenarioRunner:
         morale_config = build_morale_config(
             engagement.calibration_overrides.morale,
         )
-        morale_machine = MoraleStateMachine(bus, morale_rng, morale_config)
-
-        # Morale tracking
-        unit_morale: dict[str, MoraleState] = {}
-        for u in blue_forces + red_forces:
-            unit_morale[u.entity_id] = MoraleState.STEADY
+        morale_runtime = MoraleRuntime(bus, morale_rng, morale_config)
+        all_units = blue_forces + red_forces
+        morale_runtime.register_units(
+            tuple(
+                MoraleRegistration(u.entity_id, MoraleState.STEADY)
+                for u in all_units
+            ),
+            {u.entity_id: u for u in all_units},
+        )
 
         # 6. Termination
         if termination_conditions is None:
@@ -437,8 +441,6 @@ class ScenarioRunner:
         # 7. Tick loop
         terminated_by = "max_ticks"
         ticks = 0
-        all_units = blue_forces + red_forces
-
         for tick_num in range(self._config.max_ticks):
             clock.advance()
             ticks = tick_num + 1
@@ -598,6 +600,7 @@ class ScenarioRunner:
             if tick_num % morale_check_interval != 0:
                 continue  # skip this part of the tick loop; jump to next tick
             sim_timestamp = clock.current_time
+            current_time_s = clock.elapsed.total_seconds()
             for side_name, side_units in units_by_side.items():
                 total = len(side_units)
                 destroyed = sum(
@@ -633,7 +636,7 @@ class ScenarioRunner:
                     if u.status not in (UnitStatus.ACTIVE, UnitStatus.ROUTING):
                         continue
 
-                    new_morale = morale_machine.check_transition(
+                    morale_runtime.check_transition(
                         unit_id=u.entity_id,
                         casualty_rate=casualty_rate * morale_degrade_mod,
                         suppression_level=0.0,
@@ -641,17 +644,12 @@ class ScenarioRunner:
                         cohesion=cohesion,
                         force_ratio=force_ratio,
                         timestamp=sim_timestamp,
+                        current_time_s=current_time_s,
                     )
-                    unit_morale[u.entity_id] = new_morale
-
-                    if new_morale == MoraleState.ROUTED:
-                        object.__setattr__(u, "status", UnitStatus.ROUTING)
-                    elif new_morale == MoraleState.SURRENDERED:
-                        object.__setattr__(u, "status", UnitStatus.SURRENDERED)
 
         # 8. Build result
         units_final = self._build_final_states(
-            all_units, unit_morale, unit_weapons
+            all_units, morale_runtime.states, unit_weapons
         )
 
         return SimulationResult(
@@ -668,7 +666,7 @@ class ScenarioRunner:
     @staticmethod
     def _build_final_states(
         units: list[Unit],
-        morale_map: dict[str, MoraleState],
+        morale_map: Mapping[str, MoraleState],
         weapon_map: Mapping[str, tuple[WeaponAttachment, ...]],
     ) -> list[UnitFinalState]:
         """Convert unit objects to UnitFinalState for metrics."""

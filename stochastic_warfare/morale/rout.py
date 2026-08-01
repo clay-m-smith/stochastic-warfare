@@ -1,23 +1,26 @@
-"""Rout, rally, surrender, and cascade mechanics.
+"""Rout, rally, and cascade mechanics.
 
-Handles units breaking and fleeing, rally attempts, formal surrender
-processing, and the contagion of routing to nearby fragile units.
+Handles units breaking and fleeing, rally attempts, and the contagion of
+routing to nearby fragile units. The former partial surrender/POW API rejects
+until a runtime-owned capture lifecycle is implemented under REM-033.
 """
 
 from __future__ import annotations
 
 import math
+import copy
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from datetime import datetime, timezone
-from typing import Any
+from typing import Any, NoReturn
 
 import numpy as np
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 from stochastic_warfare.core.events import EventBus
 from stochastic_warfare.core.logging import get_logger
 from stochastic_warfare.core.types import ModuleId
-from stochastic_warfare.morale.events import RallyEvent, RoutEvent, SurrenderEvent
+from stochastic_warfare.morale.events import RallyEvent, RoutEvent
 
 logger = get_logger(__name__)
 
@@ -28,6 +31,8 @@ logger = get_logger(__name__)
 
 class RoutConfig(BaseModel):
     """Configurable parameters for rout and rally mechanics."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
 
     rally_base_chance: float = 0.15
     """Base probability of a routing unit rallying per check."""
@@ -49,9 +54,6 @@ class RoutConfig(BaseModel):
 
     cascade_broken_susceptibility: float = 2.5
     """Multiplier on cascade chance for BROKEN units."""
-
-    surrender_threshold: float = 0.6
-    """Surrender probability above which surrender is automatic."""
 
     rout_speed_factor: float = 1.5
     """Speed multiplier for routing units (flee at max speed)."""
@@ -86,19 +88,80 @@ class RoutState:
         self.speed_factor = state["speed_factor"]
 
 
-@dataclass
-class SurrenderResult:
-    """Result of a surrender event."""
+@dataclass(frozen=True, slots=True)
+class RallyPlan:
+    """Immutable result of one eligible rally evaluation."""
 
     unit_id: str
-    pow_count: int
-    """Number of personnel taken as prisoners of war."""
+    rallied: bool
+    rallied_by: str
 
-    def get_state(self) -> dict[str, Any]:
-        return {
-            "unit_id": self.unit_id,
-            "pow_count": self.pow_count,
-        }
+
+@dataclass(frozen=True, slots=True)
+class RoutCascadeCandidate:
+    """One authoritative candidate snapshot for cascade planning."""
+
+    unit_id: str
+    morale_state: int
+    distance_m: float
+
+
+@dataclass(frozen=True, slots=True)
+class RoutCascadePlan:
+    """Immutable result of one routing source's cascade selection."""
+
+    routing_unit_id: str
+    selected_unit_ids: tuple[str, ...]
+
+
+@dataclass(frozen=True, slots=True)
+class _RoutStateSnapshot:
+    """Immutable scalar snapshot used by the staged restore boundary."""
+
+    unit_id: str
+    direction_rad: float
+    speed_factor: float
+
+
+@dataclass(frozen=True, slots=True)
+class RoutEngineStatePlan:
+    """Validated, owner-bound active-route restore plan."""
+
+    owner_token: object
+    active_routs: tuple[tuple[str, _RoutStateSnapshot], ...]
+
+
+def _validated_route_snapshot(
+    unit_id: object,
+    direction_rad: object,
+    speed_factor: object,
+) -> _RoutStateSnapshot:
+    """Return one canonical immutable route snapshot or fail closed."""
+    if not isinstance(unit_id, str) or not unit_id:
+        raise ValueError("Active-route IDs must be non-empty strings")
+    for value, label in (
+        (direction_rad, "direction_rad"),
+        (speed_factor, "speed_factor"),
+    ):
+        if (
+            isinstance(value, bool)
+            or not isinstance(value, (int, float))
+            or not math.isfinite(float(value))
+        ):
+            raise ValueError(
+                f"Active route {unit_id!r} {label} must be finite",
+            )
+    direction = float(direction_rad)
+    speed = float(speed_factor)
+    if direction < 0.0 or direction >= 2.0 * math.pi:
+        raise ValueError(
+            f"Active route {unit_id!r} direction must be in [0, 2*pi)",
+        )
+    if speed <= 0.0:
+        raise ValueError(
+            f"Active route {unit_id!r} speed_factor must be positive",
+        )
+    return _RoutStateSnapshot(unit_id, direction, speed)
 
 
 # ---------------------------------------------------------------------------
@@ -107,12 +170,12 @@ class SurrenderResult:
 
 
 class RoutEngine:
-    """Handles rout initiation, rally attempts, surrender, and cascade.
+    """Handles rout initiation, rally selection, and cascade selection.
 
     Parameters
     ----------
     event_bus:
-        EventBus for publishing rout/rally/surrender events.
+        EventBus for publishing direction-bearing rout events.
     rng:
         A ``numpy.random.Generator``.
     config:
@@ -129,6 +192,17 @@ class RoutEngine:
         self._rng = rng
         self._config = config or RoutConfig()
         self._active_routs: dict[str, RoutState] = {}
+        self._state_owner_token = object()
+
+    @property
+    def rng(self) -> np.random.Generator:
+        """Return the injected authoritative MORALE generator."""
+        return self._rng
+
+    @property
+    def config(self) -> RoutConfig:
+        """Return the effective rout configuration."""
+        return self._config
 
     def initiate_rout(
         self,
@@ -178,13 +252,13 @@ class RoutEngine:
 
         return rout_state
 
-    def check_rally(
+    def plan_rally(
         self,
         unit_id: str,
         nearby_friendly_count: int,
         leader_present: bool,
-    ) -> bool:
-        """Check if a routing unit can rally.
+    ) -> RallyPlan:
+        """Consume one draw and return a side-effect-free rally plan.
 
         Parameters
         ----------
@@ -197,9 +271,22 @@ class RoutEngine:
 
         Returns
         -------
-        bool
-            True if the unit rallies.
+        RallyPlan
+            Immutable selection result. Semantic commit and events belong to
+            :class:`~stochastic_warfare.morale.runtime.MoraleRuntime`.
         """
+        if not isinstance(unit_id, str) or not unit_id:
+            raise ValueError("Rally unit_id must be a non-empty string")
+        if (
+            isinstance(nearby_friendly_count, bool)
+            or not isinstance(nearby_friendly_count, int)
+            or nearby_friendly_count < 0
+        ):
+            raise ValueError(
+                "nearby_friendly_count must be a non-negative integer",
+            )
+        if not isinstance(leader_present, bool):
+            raise TypeError("leader_present must be a boolean")
         cfg = self._config
 
         rally_chance = cfg.rally_base_chance
@@ -210,93 +297,116 @@ class RoutEngine:
 
         roll = self._rng.random()
         rallied = roll < rally_chance
+        return RallyPlan(
+            unit_id=unit_id,
+            rallied=rallied,
+            rallied_by="leader" if leader_present and rallied else "",
+        )
 
-        if rallied:
-            self._active_routs.pop(unit_id, None)
-            rallied_by = "leader" if leader_present else ""
-            logger.info("Unit %s rallied (chance=%.2f)", unit_id, rally_chance)
+    def check_rally(
+        self,
+        unit_id: str,
+        nearby_friendly_count: int,
+        leader_present: bool,
+    ) -> bool:
+        """Reject the former partial semantic API explicitly.
 
-            self._event_bus.publish(RallyEvent(
-                timestamp=datetime.now(tz=timezone.utc),
-                source=ModuleId.MORALE,
-                unit_id=unit_id,
-                rallied_by=rallied_by,
-            ))
-
-        return rallied
+        Call :meth:`plan_rally` for side-effect-free selection or
+        :meth:`MoraleRuntime.check_rally
+        <stochastic_warfare.morale.runtime.MoraleRuntime.check_rally>` for the
+        authoritative state/status/route/event transaction.
+        """
+        raise RuntimeError(
+            "RoutEngine.check_rally cannot commit authoritative morale; use "
+            "MoraleRuntime.check_rally or RoutEngine.plan_rally",
+        )
 
     def process_surrender(
         self,
         unit_id: str,
         personnel_count: int,
         capturing_side: str,
-    ) -> SurrenderResult:
-        """Process a unit surrender.
+    ) -> NoReturn:
+        """Reject the former partial surrender/POW semantic API.
 
-        Parameters
-        ----------
-        unit_id:
-            Identifier of the surrendering unit.
-        personnel_count:
-            Number of personnel in the surrendering unit.
-        capturing_side:
-            Side that captures the surrendering unit.
-
-        Returns
-        -------
-        SurrenderResult
-            Result with POW count.
+        A rout owner cannot commit the authoritative morale record or bound
+        unit status, and the production runtime has no typed captor/POW
+        lifecycle.  Stochastic ``SURRENDERED`` transitions are coordinated by
+        :class:`~stochastic_warfare.morale.runtime.MoraleRuntime`; REM-033 owns
+        the missing capture and prisoner-processing boundary.
         """
-        # Some personnel may escape during surrender
-        escape_fraction = self._rng.uniform(0.0, 0.1)
-        pow_count = max(1, int(personnel_count * (1.0 - escape_fraction)))
-
-        self._active_routs.pop(unit_id, None)
-
-        logger.info(
-            "Unit %s surrendered — %d POW captured by %s",
-            unit_id, pow_count, capturing_side,
+        raise RuntimeError(
+            "RoutEngine.process_surrender cannot commit authoritative morale; "
+            "SURRENDERED transitions belong to MoraleRuntime and POW capture "
+            "is unsupported until REM-033",
         )
 
-        self._event_bus.publish(SurrenderEvent(
-            timestamp=datetime.now(tz=timezone.utc),
-            source=ModuleId.MORALE,
-            unit_id=unit_id,
-            capturing_side=capturing_side,
-        ))
-
-        return SurrenderResult(unit_id=unit_id, pow_count=pow_count)
-
-    def rout_cascade(
+    def plan_cascade(
         self,
         routing_unit_id: str,
-        adjacent_unit_morale_states: dict[str, int],
-        distances_m: dict[str, float],
-    ) -> list[str]:
-        """Check if a routing unit causes nearby units to cascade into rout.
+        candidates: Sequence[RoutCascadeCandidate],
+    ) -> RoutCascadePlan:
+        """Consume prescribed draws and return a side-effect-free batch plan.
 
         Parameters
         ----------
         routing_unit_id:
             The unit that is routing (source of cascade).
-        adjacent_unit_morale_states:
-            Mapping of nearby unit_id -> morale state (int).
-        distances_m:
-            Mapping of nearby unit_id -> distance in meters.
+        candidates:
+            Complete authoritative candidate snapshot. Candidate IDs are
+            validated for uniqueness, then processed lexicographically.
 
         Returns
         -------
-        list[str]
-            Unit IDs of units that have been triggered to rout by cascade.
+        RoutCascadePlan
+            Selected IDs in canonical candidate order.
         """
+        if not isinstance(routing_unit_id, str) or not routing_unit_id:
+            raise ValueError(
+                "Cascade routing_unit_id must be a non-empty string",
+            )
+        staged: list[RoutCascadeCandidate] = []
+        seen: set[str] = set()
+        for candidate in candidates:
+            if not isinstance(candidate, RoutCascadeCandidate):
+                raise TypeError(
+                    "Cascade candidates must be RoutCascadeCandidate values",
+                )
+            if not candidate.unit_id:
+                raise ValueError("Cascade candidate IDs must be non-empty")
+            if candidate.unit_id in seen:
+                raise ValueError(
+                    f"Duplicate cascade candidate {candidate.unit_id!r}",
+                )
+            if (
+                isinstance(candidate.morale_state, bool)
+                or not isinstance(candidate.morale_state, int)
+            ):
+                raise ValueError(
+                    "Cascade candidate morale_state must be an integer",
+                )
+            if (
+                isinstance(candidate.distance_m, bool)
+                or not isinstance(candidate.distance_m, (int, float))
+                or not math.isfinite(float(candidate.distance_m))
+                or float(candidate.distance_m) < 0.0
+            ):
+                raise ValueError(
+                    "Cascade candidate distance must be finite and non-negative",
+                )
+            seen.add(candidate.unit_id)
+            staged.append(candidate)
+
         cfg = self._config
         cascaded: list[str] = []
 
-        for uid, morale_state in sorted(adjacent_unit_morale_states.items()):
+        for candidate in sorted(staged, key=lambda item: item.unit_id):
+            uid = candidate.unit_id
+            morale_state = candidate.morale_state
             if uid == routing_unit_id:
                 continue
 
-            distance = distances_m.get(uid, float("inf"))
+            distance = float(candidate.distance_m)
             if distance > cfg.cascade_radius_m:
                 continue
 
@@ -320,7 +430,32 @@ class RoutEngine:
                     routing_unit_id, uid, cascade_prob,
                 )
 
-        return cascaded
+        return RoutCascadePlan(
+            routing_unit_id=routing_unit_id,
+            selected_unit_ids=tuple(cascaded),
+        )
+
+    def rout_cascade(
+        self,
+        routing_unit_id: str,
+        adjacent_unit_morale_states: Mapping[str, int],
+        distances_m: Mapping[str, float],
+    ) -> list[str]:
+        """Compatibility selector returning the side-effect-free plan IDs."""
+        candidates = tuple(
+            RoutCascadeCandidate(
+                unit_id=uid,
+                morale_state=morale_state,
+                distance_m=distances_m.get(uid, float("inf")),
+            )
+            for uid, morale_state in adjacent_unit_morale_states.items()
+        )
+        return list(
+            self.plan_cascade(
+                routing_unit_id,
+                candidates,
+            ).selected_unit_ids,
+        )
 
     # ------------------------------------------------------------------
     # State
@@ -332,13 +467,125 @@ class RoutEngine:
                 uid: rs.get_state()
                 for uid, rs in sorted(self._active_routs.items())
             },
-            "rng_state": self._rng.bit_generator.state,
         }
 
-    def set_state(self, state: dict[str, Any]) -> None:
-        self._rng.bit_generator.state = state["rng_state"]
+    def stage_state(
+        self,
+        state: Mapping[str, Any],
+        *,
+        expected_routing_unit_ids: set[str] | None = None,
+    ) -> RoutEngineStatePlan:
+        """Validate active-route state without mutating routes or RNG."""
+        if not isinstance(state, Mapping) or set(state) != {"active_routs"}:
+            raise ValueError(
+                "RoutEngine state must contain exactly active_routs",
+            )
+        raw_routs = state["active_routs"]
+        if not isinstance(raw_routs, Mapping):
+            raise ValueError("active_routs must be a mapping")
+        staged: list[tuple[str, _RoutStateSnapshot]] = []
+        for uid in sorted(raw_routs):
+            if not isinstance(uid, str) or not uid:
+                raise ValueError("Active-route IDs must be non-empty strings")
+            raw_route = raw_routs[uid]
+            if not isinstance(raw_route, Mapping):
+                raise ValueError(f"Active route {uid!r} must be a mapping")
+            if set(raw_route) != {"unit_id", "direction_rad", "speed_factor"}:
+                raise ValueError(f"Active route {uid!r} has invalid fields")
+            if raw_route["unit_id"] != uid:
+                raise ValueError(f"Active route key/payload disagree for {uid!r}")
+            staged.append((
+                uid,
+                _validated_route_snapshot(
+                    uid,
+                    raw_route["direction_rad"],
+                    raw_route["speed_factor"],
+                ),
+            ))
+        staged_ids = {uid for uid, _ in staged}
+        if (
+            expected_routing_unit_ids is not None
+            and not staged_ids <= expected_routing_unit_ids
+        ):
+            raise ValueError(
+                "Active routes contain units without authoritative routed state: "
+                f"{sorted(staged_ids - expected_routing_unit_ids)!r}",
+            )
+        return RoutEngineStatePlan(
+            owner_token=self._state_owner_token,
+            active_routs=tuple(staged),
+        )
+
+    def commit_state(self, plan: RoutEngineStatePlan) -> None:
+        """Commit a validated route plan in place without touching RNG."""
+        if not isinstance(plan, RoutEngineStatePlan):
+            raise TypeError("plan must be a RoutEngineStatePlan")
+        if plan.owner_token is not self._state_owner_token:
+            raise ValueError("RoutEngine state plan belongs to another runtime")
+        if not isinstance(plan.active_routs, tuple) or any(
+            not isinstance(entry, tuple) or len(entry) != 2
+            for entry in plan.active_routs
+        ):
+            raise ValueError(
+                "RoutEngine state plan requires canonical unique routes",
+            )
+        route_ids = tuple(uid for uid, _route in plan.active_routs)
+        if route_ids != tuple(sorted(set(route_ids))):
+            raise ValueError(
+                "RoutEngine state plan requires canonical unique routes",
+            )
+        staged: list[tuple[str, _RoutStateSnapshot]] = []
+        for uid, route in plan.active_routs:
+            if not isinstance(route, _RoutStateSnapshot) or route.unit_id != uid:
+                raise ValueError(
+                    "RoutEngine state plan requires canonical unique routes",
+                )
+            staged.append((
+                uid,
+                _validated_route_snapshot(
+                    uid,
+                    route.direction_rad,
+                    route.speed_factor,
+                ),
+            ))
+        replacement = {
+            uid: RoutState(
+                unit_id=route.unit_id,
+                direction_rad=route.direction_rad,
+                speed_factor=route.speed_factor,
+            )
+            for uid, route in staged
+        }
         self._active_routs.clear()
-        for uid, rs_state in state["active_routs"].items():
-            rs = RoutState(unit_id="", direction_rad=0.0, speed_factor=0.0)
-            rs.set_state(rs_state)
-            self._active_routs[uid] = rs
+        self._active_routs.update(replacement)
+
+    def set_state(
+        self,
+        state: Mapping[str, Any],
+        *,
+        expected_routing_unit_ids: set[str] | None = None,
+    ) -> None:
+        """Validate and restore active routes in place without touching RNG."""
+        self.commit_state(
+            self.stage_state(
+                state,
+                expected_routing_unit_ids=expected_routing_unit_ids,
+            ),
+        )
+
+    def _active_rout_snapshot(self, unit_id: str) -> RoutState | None:
+        route = self._active_routs.get(unit_id)
+        return copy.deepcopy(route) if route is not None else None
+
+    def _remove_active_rout(self, unit_id: str) -> None:
+        self._active_routs.pop(unit_id, None)
+
+    def _restore_active_rout(
+        self,
+        unit_id: str,
+        route: RoutState | None,
+    ) -> None:
+        if route is None:
+            self._active_routs.pop(unit_id, None)
+        else:
+            self._active_routs[unit_id] = copy.deepcopy(route)

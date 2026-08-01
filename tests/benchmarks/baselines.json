@@ -1,5 +1,5 @@
 {
-  "description": "Strict version-2 paired production benchmark identities. Timing decisions require fresh same-host paired samples; checked-in values contain no absolute wall-clock pass threshold.",
+  "description": "Strict version-3 paired production benchmark identities with explicit typed workloads. Timing decisions require fresh same-host paired samples; checked-in values contain no absolute wall-clock pass threshold.",
   "entries": {
     "73_easting": {
       "policy": {
@@ -21,23 +21,37 @@
             "candidate"
           ]
         ],
-        "policy_version": 2,
+        "policy_version": 3,
         "reference_commit": "0460ac70be86784bcc6e359ae4202f4bcb938c60",
         "timed_pairs": 3,
         "timing_scope": "SimulationEngine.run",
-        "warmup_runs_per_revision": 1
+        "warmup_runs_per_revision": 1,
+        "workload": {
+          "calibration_patch": {
+            "morale": {
+              "base_degrade_rate": 0.0,
+              "base_recover_rate": 0.0,
+              "casualty_weight": 0.0,
+              "cohesion_weight": 0.0,
+              "force_ratio_weight": 0.0,
+              "leadership_weight": 0.0,
+              "suppression_weight": 0.0
+            }
+          },
+          "name": "morale_neutral_control_plane"
+        }
       },
       "reference_input": {
         "dependency_lock_sha256": "bbc6b45cfc270d08baa09d3d568a6b84d0f936a6ee9c874cb49c9d8813c5ad39",
-        "fingerprint": "060accaec0b76c043ef92fb63360286c2c84d047ac3b2ac6584919a365aadc50",
+        "fingerprint": "9d85b6f8489e961eaf3765220d2e2672e1e8955f8a9b58827a8ce0c1b9931e77",
         "scenario_path": "data/scenarios/73_easting/scenario.yaml",
         "scenario_sha256": "328467cd1f200cf2f0157da917ab20b9e9bbc43fb7ee985f5d4472d2df3cd3e5"
       },
       "scenario_name": "73_easting",
       "scenario_path": "data/scenarios/73_easting/scenario.yaml",
       "semantic_envelope": {
-        "event_count": 30,
-        "event_digest": "628e33c22fd86c8845f2be87e8ae82ea041d0b8a6253c5760d228de4684d2128",
+        "event_count": 1,
+        "event_digest": "2784db62737dac1df07bb13e64cadb9b6b6f0d3e48cee291efcfc0d51cb8e798",
         "logical_duration_s": 1800.0,
         "roster_loadout_digest": "b598b36d78604a60cd16bd3313e29e7a8a677e2cb9b83417dc4b00cab778a1b3",
         "status_counts": {
@@ -74,11 +88,15 @@
             "candidate"
           ]
         ],
-        "policy_version": 2,
+        "policy_version": 3,
         "reference_commit": null,
         "timed_pairs": 3,
         "timing_scope": "SimulationEngine.run",
-        "warmup_runs_per_revision": 1
+        "warmup_runs_per_revision": 1,
+        "workload": {
+          "calibration_patch": {},
+          "name": "default"
+        }
       },
       "reference_input": null,
       "scenario_name": "benchmark_battalion",
@@ -105,11 +123,15 @@
             "candidate"
           ]
         ],
-        "policy_version": 2,
+        "policy_version": 3,
         "reference_commit": null,
         "timed_pairs": 3,
         "timing_scope": "SimulationEngine.run",
-        "warmup_runs_per_revision": 1
+        "warmup_runs_per_revision": 1,
+        "workload": {
+          "calibration_patch": {},
+          "name": "default"
+        }
       },
       "reference_input": null,
       "scenario_name": "benchmark_brigade",
@@ -136,11 +158,15 @@
             "candidate"
           ]
         ],
-        "policy_version": 2,
+        "policy_version": 3,
         "reference_commit": "0460ac70be86784bcc6e359ae4202f4bcb938c60",
         "timed_pairs": 3,
         "timing_scope": "SimulationEngine.run",
-        "warmup_runs_per_revision": 1
+        "warmup_runs_per_revision": 1,
+        "workload": {
+          "calibration_patch": {},
+          "name": "default"
+        }
       },
       "reference_input": {
         "dependency_lock_sha256": "bbc6b45cfc270d08baa09d3d568a6b84d0f936a6ee9c874cb49c9d8813c5ad39",
@@ -172,5 +198,5 @@
       }
     }
   },
-  "format_version": 2
+  "format_version": 3
 }

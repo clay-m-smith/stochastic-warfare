@@ -37,6 +37,8 @@ from stochastic_warfare.entities.unit_classes.ground import (
 )
 from stochastic_warfare.entities.unit_classes.naval import NavalUnit
 from stochastic_warfare.entities.unit_classes.support import SupportUnit
+from stochastic_warfare.morale.rout import RoutEngine
+from stochastic_warfare.morale.runtime import MoraleRegistration, MoraleRuntime
 from stochastic_warfare.morale.state import MoraleState
 from stochastic_warfare.simulation.campaign import CampaignConfig
 from stochastic_warfare.simulation.engine import SimulationEngine, TickResolution
@@ -71,14 +73,95 @@ def _context(
     *,
     seed: int = 105,
 ) -> SimulationContext:
+    force = (
+        units_by_side
+        if units_by_side is not None
+        else {"blue": [], "red": []}
+    )
+    ordered_units = [
+        unit
+        for side_units in force.values()
+        for unit in side_units
+    ]
+    units = {unit.entity_id: unit for unit in ordered_units}
+    if len(units) != len(ordered_units):
+        raise ValueError("Test force fixture contains duplicate unit IDs")
+    initial_morale = (
+        morale_states
+        if morale_states is not None
+        else {unit_id: MoraleState.STEADY for unit_id in units}
+    )
+    if set(initial_morale) != set(units):
+        raise ValueError("Test morale fixture must exactly match the roster")
+    for unit_id, state in initial_morale.items():
+        if state is MoraleState.ROUTED:
+            units[unit_id].status = UnitStatus.ROUTING
+        elif state is MoraleState.SURRENDERED:
+            units[unit_id].status = UnitStatus.SURRENDERED
+        else:
+            units[unit_id].status = UnitStatus.ACTIVE
+
+    rng_manager = RNGManager(seed)
+    event_bus = EventBus()
+    morale_rng = rng_manager.get_stream(ModuleId.MORALE)
+    rout_engine = RoutEngine(event_bus, morale_rng)
+    morale_runtime = MoraleRuntime(
+        event_bus,
+        morale_rng,
+        rout_engine=rout_engine,
+    )
+    morale_runtime.register_units(
+        tuple(
+            MoraleRegistration(unit_id, initial_morale[unit_id])
+            for unit_id in units
+        ),
+        units,
+    )
     return SimulationContext(
         config=_config(),
         clock=SimulationClock(start=TS, tick_duration=timedelta(hours=1)),
-        rng_manager=RNGManager(seed),
-        event_bus=EventBus(),
-        units_by_side=units_by_side or {"blue": [], "red": []},
-        morale_states=morale_states or {},
+        rng_manager=rng_manager,
+        event_bus=event_bus,
+        units_by_side=force,
+        morale_runtime=morale_runtime,
+        rout_engine=rout_engine,
     )
+
+
+def _as_versionless_legacy_context(
+    checkpoint: dict[str, Any],
+) -> dict[str, Any]:
+    """Translate an idle current context into the bounded legacy envelope."""
+    legacy = copy.deepcopy(checkpoint)
+    runtime_state = legacy.pop("morale_runtime")
+    assert runtime_state["suspended_archives"] == {}
+    records = runtime_state["active_records"]
+    morale_rng = copy.deepcopy(
+        legacy["rng"]["streams"][ModuleId.MORALE.value],
+    )
+    legacy["morale_states"] = {
+        unit_id: record["current_state"]
+        for unit_id, record in records.items()
+    }
+    legacy["morale_machine"] = {
+        "unit_states": {
+            unit_id: {
+                "current_state": record["current_state"],
+                "transition_cooldown_s": 0.0,
+                "last_transition_time": (
+                    -1e9
+                    if record["last_transition_time_s"] is None
+                    else record["last_transition_time_s"]
+                ),
+            }
+            for unit_id, record in records.items()
+        },
+        "rng_state": morale_rng,
+    }
+    rout_state = legacy.get("rout_engine")
+    if rout_state is not None:
+        rout_state["rng_state"] = copy.deepcopy(morale_rng)
+    return legacy
 
 
 def _ground(
@@ -187,7 +270,18 @@ def test_in_place_restore_preserves_nested_references_and_typed_morale() -> None
     equipment.operational = False
     sensor_equipment.condition = 0.02
     sensor_equipment.operational = False
-    ctx.morale_states["blue-1"] = MoraleState.SURRENDERED
+    assert ctx.morale_runtime is not None
+    mutated_morale = copy.deepcopy(ctx.morale_runtime.get_state())
+    mutated_morale["active_records"]["blue-1"]["current_state"] = int(
+        MoraleState.SURRENDERED,
+    )
+    ctx.morale_runtime.set_state(
+        mutated_morale,
+        expected_units={"blue-1": unit},
+        elapsed_time_s=ctx.clock.elapsed.total_seconds(),
+    )
+    morale_view = ctx.morale_states
+    morale_runtime = ctx.morale_runtime
 
     ctx.set_state(checkpoint)
 
@@ -204,6 +298,8 @@ def test_in_place_restore_preserves_nested_references_and_typed_morale() -> None
     assert sensor.equipment.condition == 0.81
     assert sensor.equipment.operational is True
     assert restored.get_state() == checkpoint["units_by_side"]["blue"][0]
+    assert ctx.morale_runtime is morale_runtime
+    assert ctx.morale_states is morale_view
     assert ctx.morale_states == {"blue-1": MoraleState.BROKEN}
     assert type(ctx.morale_states["blue-1"]) is MoraleState
 
@@ -368,12 +464,12 @@ def test_legacy_unit_states_infer_concrete_classes() -> None:
             "red": [],
         },
     )
-    checkpoint = copy.deepcopy(source.get_state())
+    checkpoint = _as_versionless_legacy_context(source.get_state())
     for state in checkpoint["units_by_side"]["blue"]:
         state.pop("unit_class", None)
     target = _context()
 
-    target.set_state(checkpoint)
+    target.set_state(checkpoint, allow_legacy_morale=True)
 
     assert [type(unit) for unit in target.units_by_side["blue"]] == [
         GroundUnit,
@@ -392,15 +488,14 @@ def test_legacy_checkpoint_without_force_sections_preserves_runtime_force() -> N
         {"existing": MoraleState.SHAKEN},
     )
     expected_units = copy.deepcopy(target.get_state()["units_by_side"])
-    checkpoint = copy.deepcopy(target.get_state())
+    checkpoint = _as_versionless_legacy_context(target.get_state())
     checkpoint.pop("units_by_side")
-    checkpoint.pop("morale_states")
     checkpoint.pop("unit_weapon_states")
     checkpoint.pop("unit_sensor_states")
     unit.position = Position(70, 80, 0)
     expected_mutated = unit.get_state()
 
-    target.set_state(checkpoint)
+    target.set_state(checkpoint, allow_legacy_morale=True)
 
     assert target.units_by_side["blue"][0] is unit
     assert unit.get_state() == expected_mutated
@@ -525,7 +620,9 @@ def test_corrupt_force_state_fails_without_partial_force_commit(corrupt: str) ->
         unit_state.pop("unit_class")
         unit_state["aerial_type"] = 0
     elif corrupt == "invalid_morale":
-        checkpoint["morale_states"]["existing"] = "NOT_A_MORALE_STATE"
+        checkpoint["morale_runtime"]["active_records"]["existing"][
+            "current_state"
+        ] = "NOT_A_MORALE_STATE"
     elif corrupt == "config_mismatch":
         checkpoint["config"]["name"] = "Different scenario"
     else:

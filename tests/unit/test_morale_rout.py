@@ -2,18 +2,22 @@
 
 from __future__ import annotations
 
+import copy
+from dataclasses import FrozenInstanceError, replace
 import math
 
 import numpy as np
 import pytest
+from pydantic import ValidationError
 
 from stochastic_warfare.core.events import EventBus
 from stochastic_warfare.morale.events import RallyEvent, RoutEvent, SurrenderEvent
 from stochastic_warfare.morale.rout import (
+    RallyPlan,
     RoutConfig,
+    RoutCascadeCandidate,
     RoutEngine,
     RoutState,
-    SurrenderResult,
 )
 
 
@@ -37,12 +41,21 @@ class TestRoutConfig:
         cfg = RoutConfig()
         assert cfg.rally_base_chance > 0
         assert cfg.cascade_radius_m > 0
-        assert cfg.surrender_threshold > 0
 
     def test_custom(self) -> None:
         cfg = RoutConfig(rally_base_chance=0.3, cascade_radius_m=1000.0)
         assert cfg.rally_base_chance == 0.3
         assert cfg.cascade_radius_m == 1000.0
+
+    def test_is_strict_and_immutable(self) -> None:
+        with pytest.raises(ValidationError, match="extra_forbidden"):
+            RoutConfig(unknown_option=True)
+        with pytest.raises(ValidationError, match="extra_forbidden"):
+            RoutConfig(surrender_threshold=0.6)
+
+        cfg = RoutConfig()
+        with pytest.raises(ValidationError, match="frozen_instance"):
+            cfg.cascade_radius_m = 1.0
 
 
 # ── initiate_rout ────────────────────────────────────────────────────
@@ -98,7 +111,11 @@ class TestCheckRally:
         engine.initiate_rout("u1", threat_direction_rad=0.0)
         rallied = False
         for _ in range(50):
-            if engine.check_rally("u1", nearby_friendly_count=5, leader_present=True):
+            if engine.plan_rally(
+                "u1",
+                nearby_friendly_count=5,
+                leader_present=True,
+            ).rallied:
                 rallied = True
                 break
         assert rallied
@@ -109,76 +126,103 @@ class TestCheckRally:
         success_no_leader = 0
         for seed in range(200):
             e1, _ = _engine(seed=seed)
-            if e1.check_rally("u1", nearby_friendly_count=2, leader_present=True):
+            if e1.plan_rally(
+                "u1",
+                nearby_friendly_count=2,
+                leader_present=True,
+            ).rallied:
                 success_leader += 1
             e2, _ = _engine(seed=seed)
-            if e2.check_rally("u2", nearby_friendly_count=2, leader_present=False):
+            if e2.plan_rally(
+                "u2",
+                nearby_friendly_count=2,
+                leader_present=False,
+            ).rallied:
                 success_no_leader += 1
         assert success_leader > success_no_leader
 
-    def test_rally_removes_active_rout(self) -> None:
+    def test_partial_compatibility_api_fails_before_rng_draw(self) -> None:
+        engine, _ = _engine()
+        before = copy.deepcopy(engine.rng.bit_generator.state)
+
+        with pytest.raises(RuntimeError, match="MoraleRuntime.check_rally"):
+            engine.check_rally(
+                "u1",
+                nearby_friendly_count=2,
+                leader_present=True,
+            )
+
+        assert engine.rng.bit_generator.state == before
+
+    def test_rally_plan_does_not_remove_active_rout(self) -> None:
         cfg = RoutConfig(rally_base_chance=0.99)
         engine, _ = _engine(config=cfg)
         engine.initiate_rout("u1", threat_direction_rad=0.0)
         assert "u1" in engine._active_routs
-        engine.check_rally("u1", nearby_friendly_count=5, leader_present=True)
-        assert "u1" not in engine._active_routs
+        plan = engine.plan_rally(
+            "u1",
+            nearby_friendly_count=5,
+            leader_present=True,
+        )
+        assert isinstance(plan, RallyPlan)
+        assert plan.rallied
+        assert "u1" in engine._active_routs
 
-    def test_rally_event_published(self) -> None:
+    def test_rally_plan_publishes_no_event(self) -> None:
         cfg = RoutConfig(rally_base_chance=0.99)
         engine, bus = _engine(config=cfg)
         received: list[RallyEvent] = []
         bus.subscribe(RallyEvent, lambda e: received.append(e))
-        engine.check_rally("u1", nearby_friendly_count=5, leader_present=True)
-        assert len(received) == 1
-        assert received[0].rallied_by == "leader"
+        plan = engine.plan_rally(
+            "u1",
+            nearby_friendly_count=5,
+            leader_present=True,
+        )
+        assert plan.rallied_by == "leader"
+        assert received == []
 
 
 # ── process_surrender ────────────────────────────────────────────────
 
 
 class TestProcessSurrender:
-    def test_returns_surrender_result(self) -> None:
-        engine, _ = _engine()
-        result = engine.process_surrender("u1", personnel_count=100, capturing_side="red")
-        assert isinstance(result, SurrenderResult)
-        assert result.unit_id == "u1"
-
-    def test_pow_count_reasonable(self) -> None:
-        engine, _ = _engine()
-        result = engine.process_surrender("u1", personnel_count=100, capturing_side="red")
-        assert 1 <= result.pow_count <= 100
-
-    def test_minimum_one_pow(self) -> None:
-        engine, _ = _engine()
-        result = engine.process_surrender("u1", personnel_count=1, capturing_side="blue")
-        assert result.pow_count >= 1
-
-    def test_event_published(self) -> None:
+    def test_partial_api_fails_before_rng_route_or_event_mutation(self) -> None:
         engine, bus = _engine()
+        engine.initiate_rout("u1", threat_direction_rad=0.0)
+        before_rng = copy.deepcopy(engine.rng.bit_generator.state)
+        before_routes = copy.deepcopy(engine._active_routs)
         received: list[SurrenderEvent] = []
         bus.subscribe(SurrenderEvent, lambda e: received.append(e))
-        engine.process_surrender("u1", personnel_count=50, capturing_side="red")
-        assert len(received) == 1
-        assert received[0].capturing_side == "red"
-
-    def test_removes_active_rout(self) -> None:
-        engine, _ = _engine()
-        engine.initiate_rout("u1", threat_direction_rad=0.0)
-        engine.process_surrender("u1", personnel_count=50, capturing_side="red")
-        assert "u1" not in engine._active_routs
-
-    def test_surrender_result_get_state(self) -> None:
-        result = SurrenderResult(unit_id="u1", pow_count=42)
-        state = result.get_state()
-        assert state["unit_id"] == "u1"
-        assert state["pow_count"] == 42
+        with pytest.raises(RuntimeError, match="authoritative morale"):
+            engine.process_surrender(
+                "u1",
+                personnel_count=50,
+                capturing_side="red",
+            )
+        assert engine.rng.bit_generator.state == before_rng
+        assert engine._active_routs == before_routes
+        assert received == []
 
 
 # ── rout_cascade ─────────────────────────────────────────────────────
 
 
 class TestRoutCascade:
+    def test_plan_uses_lexicographic_candidate_order(self) -> None:
+        cfg = RoutConfig(
+            cascade_base_chance=1.0,
+            cascade_shaken_susceptibility=2.0,
+        )
+        engine, _ = _engine(config=cfg)
+        plan = engine.plan_cascade(
+            "source",
+            (
+                RoutCascadeCandidate("z", 1, 10.0),
+                RoutCascadeCandidate("a", 1, 10.0),
+            ),
+        )
+        assert plan.selected_unit_ids == ("a", "z")
+
     def test_no_cascade_far_away(self) -> None:
         engine, _ = _engine()
         cascaded = engine.rout_cascade(
@@ -277,17 +321,90 @@ class TestRoutEngineState:
         assert "u1" in engine2._active_routs
         assert engine2._active_routs["u1"].unit_id == "u1"
 
-    def test_determinism_after_restore(self) -> None:
+    def test_current_state_has_no_rng_mirror(self) -> None:
         engine, bus = _engine(seed=42)
         engine.initiate_rout("u1", threat_direction_rad=0.5)
         state = engine.get_state()
+        assert set(state) == {"active_routs"}
 
-        engine2, bus2 = _engine(seed=0)
-        engine2.set_state(state)
+    def test_restore_does_not_change_injected_rng(self) -> None:
+        engine, _ = _engine(seed=42)
+        before = engine.rng.bit_generator.state
+        engine.set_state({"active_routs": {}})
+        assert engine.rng.bit_generator.state == before
 
-        # Both should produce same cascade results
-        morale_states = {"u2": 1, "u3": 2}
-        dists = {"u2": 200.0, "u3": 300.0}
-        c1 = engine.rout_cascade("u1", morale_states, dists)
-        c2 = engine2.rout_cascade("u1", morale_states, dists)
-        assert c1 == c2
+    def test_staged_routes_are_immutable_and_detached(self) -> None:
+        engine, _ = _engine(seed=42)
+        live = engine.initiate_rout("u1", threat_direction_rad=0.5)
+        raw = engine.get_state()
+        plan = engine.stage_state(raw)
+        staged = plan.active_routs[0][1]
+        planned_direction = staged.direction_rad
+
+        with pytest.raises(FrozenInstanceError):
+            staged.direction_rad = float("inf")
+
+        raw["active_routs"]["u1"]["direction_rad"] = 0.0
+        live.direction_rad = 1.0
+        assert staged.direction_rad == planned_direction
+
+    def test_commit_rejects_forged_duplicate_plan_atomically(self) -> None:
+        engine, _ = _engine(seed=42)
+        engine.initiate_rout("u1", threat_direction_rad=0.5)
+        plan = engine.stage_state(engine.get_state())
+        forged = replace(
+            plan,
+            active_routs=(plan.active_routs[0], plan.active_routs[0]),
+        )
+        routes = engine._active_routs
+        rng = engine.rng
+        before_state = copy.deepcopy(engine.get_state())
+        before_rng = copy.deepcopy(rng.bit_generator.state)
+
+        with pytest.raises(ValueError, match="canonical unique"):
+            engine.commit_state(forged)
+
+        assert engine._active_routs is routes
+        assert engine.get_state() == before_state
+        assert engine.rng is rng
+        assert rng.bit_generator.state == before_rng
+
+    def test_commit_rejects_forged_nonfinite_snapshot_atomically(self) -> None:
+        engine, _ = _engine(seed=42)
+        engine.initiate_rout("u1", threat_direction_rad=0.5)
+        plan = engine.stage_state(engine.get_state())
+        unit_id, snapshot = plan.active_routs[0]
+        forged = replace(
+            plan,
+            active_routs=((unit_id, replace(snapshot, direction_rad=float("inf"))),),
+        )
+        routes = engine._active_routs
+        rng = engine.rng
+        before_state = copy.deepcopy(engine.get_state())
+        before_rng = copy.deepcopy(rng.bit_generator.state)
+
+        with pytest.raises(ValueError, match="finite"):
+            engine.commit_state(forged)
+
+        assert engine._active_routs is routes
+        assert engine.get_state() == before_state
+        assert engine.rng is rng
+        assert rng.bit_generator.state == before_rng
+
+    def test_commit_preserves_mapping_and_rng_identity(self) -> None:
+        engine, _ = _engine(seed=42)
+        engine.initiate_rout("u1", threat_direction_rad=0.5)
+        plan = engine.stage_state(engine.get_state())
+        routes = engine._active_routs
+        rng = engine.rng
+        before_rng = copy.deepcopy(rng.bit_generator.state)
+        engine._active_routs["u1"].speed_factor = 99.0
+
+        engine.commit_state(plan)
+
+        assert engine._active_routs is routes
+        assert engine._active_routs["u1"].speed_factor == pytest.approx(
+            RoutConfig().rout_speed_factor,
+        )
+        assert engine.rng is rng
+        assert rng.bit_generator.state == before_rng

@@ -2,7 +2,8 @@
 
 ## Status
 
-Phase 105 contract, extended through Phase 112 on 2026-07-30.
+Phase 105 contract, verified through the completed Phase 113 extension on
+2026-08-01.
 
 ## Purpose
 
@@ -15,12 +16,12 @@ validated effective scenario configuration and repository/data-catalog
 revision. Checkpoint restore replaces mutable state; it does not rebuild engine
 topology or reinterpret a different scenario.
 
-`SimulationEngine` writes checkpoint format version `112`. Any explicit version
-other than `112` is rejected before runtime mutation. An absent version selects
-the bounded legacy-migration path described below; an explicitly present
-`null` value is malformed, not legacy.
+`SimulationEngine` writes checkpoint format version `113`. Any explicit version
+other than `113`, including `112`, is rejected before runtime mutation. An
+absent version selects the bounded legacy-migration path described below; an
+explicitly present `null` value is malformed, not legacy.
 
-For version `112`, top-level engine keys and context-state keys must exactly
+For version `113`, top-level engine keys and context-state keys must exactly
 match the compatible target runtime. Missing or extra keys fail before
 mutation. Serialized scenario and reinforcement configurations use type-aware
 JSON equality, so booleans cannot masquerade as integers and integers cannot
@@ -77,34 +78,56 @@ can hold references to a unit's equipment.
 
 ## Morale state
 
-The context morale map is distinct from `MoraleStateMachine` internal state.
-Both must round-trip:
+A non-empty production runtime has exactly one semantic morale owner:
+`MoraleRuntime`. `SimulationContext.morale_states` is the runtime's stable,
+read-only `Mapping[str, MoraleState]` compatibility projection; it is not a
+second checkpoint store. `MoraleStateMachine` selects stochastic transitions
+but owns no current unit state.
 
-- `SimulationContext.morale_states` restores exact keys as typed
-  `MoraleState` values.
-- `MoraleStateMachine` restores its transition state through its own
-  `get_state()` and `set_state()`.
+Current context state contains exactly one `morale_runtime` key. Its value is a
+strict envelope with exact `active_records` and `suspended_archives` keys, or
+`null` only for a deliberately minimal context whose roster, active routes, and
+aggregation topology are all empty. Version 113 contains no separate
+`morale_states` or `morale_machine` current-state copy.
 
-Unknown morale names or values are corrupt checkpoint data and must fail.
-For a current engine checkpoint, both context keys are required. In a
-production `ScenarioLoader` runtime, both stores must contain the expected
-active-unit topology and agree on every current state before either is mutated.
-A deliberately minimal engine runtime without a morale machine serializes the
-engine checkpoint's `morale_machine` key as `null`; a direct context snapshot
-keeps its legacy omission behavior. Aggregation proxies are excluded from
-state-machine topology because their constituents remain the simulated morale
-owners.
+Each active record preserves typed current state, optional finite non-negative
+last-transition and last-admitted-check times, and a strict non-negative
+generation. Canonical serialization sorts unit and aggregate IDs. Suspended
+archives preserve each aggregate proxy's complete baseline record and every
+constituent's complete record. Disaggregation rejects an evolved proxy before
+the existing lossy reconstruction path can mutate the roster; an unchanged
+supported proxy restores the archived records exactly. General subclass and
+attachment reconstruction remains REM-016.
 
-Initial and dynamic units are seeded from their side's validated
-`morale_initial`. The two-store design itself remains a tracked ownership
-boundary: later rout-cascade and aggregation writes can still diverge until
-REM-019 is closed.
+`MoraleRuntime` coordinates ordinary stochastic changes, rally, melee rout, and
+rout-cascade changes with `Unit.status`, applicable active-route removal, and
+ordered events. `STEADY`, `SHAKEN`, and `BROKEN` require `ACTIVE`; `ROUTED`
+requires `ROUTING`; and `SURRENDERED` requires `SURRENDERED`, while `DISABLED`
+and `DESTROYED` take precedence. A transition into `ROUTED` does not synthesize
+a direction-bearing `RoutState`; an existing lower-level route is retained only
+while semantically compatible and is removed on rally or surrender.
+
+Restore stages and validates the complete envelope before mutation: active
+roster/object topology, aggregate archives, record types and times against the
+checkpoint clock, morale/status compatibility, stable owner bindings, and the
+shared MORALE generator identity. Fresh and in-place continuation preserve
+records, statuses, routes, events, victory behavior, the stable read-only view,
+and in-place owner identities.
+
+Initial and dynamic units register through the same runtime boundary using each
+side's validated `morale_initial`. Unknown states, foreign or duplicate IDs,
+missing active records, malformed archives, impossible times, and incompatible
+status combinations are corrupt checkpoint data and fail before commit.
 
 ## RNG and derived state
 
-RNG streams restore before engine continuation. Reconstructing force objects
-must not consume a stream. Calibration's flattened, side-dependent view is
-regenerated after force restoration.
+RNG streams restore before engine continuation. `RNGManager` is the sole
+checkpoint authority for the MORALE generator. `MoraleRuntime`,
+`MoraleStateMachine`, and `RoutEngine` receive that exact generator object and
+serialize no current-format RNG mirror. Legacy machine and rout mirrors must
+match the authoritative stream before migration discards them. Reconstructing
+force objects must not consume a stream. Calibration's flattened,
+side-dependent view is regenerated after force restoration.
 
 ## Commander, school, and OODA state
 
@@ -252,29 +275,45 @@ The detailed contract is
 
 ## Compatibility
 
-- Current engine checkpoints contain `checkpoint_version: 112`; an unknown,
+- Current engine checkpoints contain `checkpoint_version: 113`; an unknown,
   malformed, boolean, older explicit, or newer explicit version is rejected.
-  Explicit version `111` does not migrate into the current runtime.
-- Current reinforcement wave ordinals and both morale-store enum values use
-  non-boolean integers. Current wave side, configured arrival time, and full
+  Explicit versions `111` and `112` do not migrate into the current runtime.
+- Current reinforcement wave ordinals and morale-record enum/generation values
+  use non-boolean integers. Current wave side, configured arrival time, and full
   typed configuration must agree with the target schedule.
 - Versionless engine checkpoints are treated as pre-108 only for bounded morale
   and reinforcement-ID migration, and only when logistics is disabled, space
-  is not enabled, and no time-on-target mission is declared.
-  Existing morale entries are still validated; missing active-unit entries are
-  reconstructed from the checkpoint roster and the runtime's validated side
-  configuration. A disagreement between present context and machine morale is
-  never repaired silently.
+  is not enabled, and no time-on-target mission is declared. Present legacy
+  context and machine morale entries must agree; disagreement is never repaired
+  by precedence. A missing pre-108 entry uses a present valid machine record,
+  then the checkpoint roster's validated side-level `morale_initial` only when
+  both legacy entries are absent.
+- A legacy record's dead `transition_cooldown_s` mirror must be the canonical
+  finite numeric `0.0` before it is discarded. A historical negative
+  transition-time sentinel becomes an unchecked generation-zero record; a
+  finite non-negative transition time becomes both current record times with
+  generation one. This bounded migration does not claim to reconstruct an
+  unrecorded count of admitted checks.
+- A started versionless runtime with continuous-time morale rejects because the
+  last admitted no-change check and next elapsed `dt` cannot be reconstructed.
+  Tick-zero continuous-time and deterministic discrete-time migrations retain
+  the authoritative `RNGManager` state. Legacy machine and rout RNG mirrors
+  must match it exactly before being discarded.
+- A versionless payload with an active aggregation proxy rejects because it
+  cannot reconstruct complete suspended constituent records.
+- Current `morale_runtime: null` restores only between empty-runtime topologies
+  with empty rosters, active routes, and aggregates. A runtime target rejects
+  `null`, and an absent-runtime target rejects a runtime envelope.
 - Legacy reinforcement entries without the current wave ordinal/config payload
   retain legacy IDs for units that already arrived. A pending legacy wave uses
   current stable IDs when it arrives, after which its next checkpoint is fully
   current.
-- Direct `SimulationContext.set_state()` calls containing `units_by_side` or
-  `morale_states` use exact replacement semantics, including an explicitly
-  empty mapping. Direct legacy context calls that omit either section leave
-  that corresponding runtime state unchanged. `SimulationEngine` additionally
-  requires `units_by_side` for its campaign/roster preflight and both morale
-  keys for version 112.
+- Direct current-format `SimulationContext.set_state()` calls require the
+  complete `morale_runtime` envelope and apply exact replacement semantics.
+  Legacy `morale_states`/`morale_machine` inputs are accepted only through the
+  explicit bounded `allow_legacy_morale=True` path. `SimulationEngine`
+  additionally requires `units_by_side` for its campaign/roster preflight and
+  exactly one `morale_runtime` key for version 113.
 - Older unit snapshots without `unit_class` infer the class from its unique
   subclass field. A snapshot with no subclass field restores as `Unit`.
 - Unknown explicit discriminators fail; they never silently downgrade to
@@ -302,7 +341,7 @@ Completion requires:
    including weapons, ammunition, sensors, morale, schedule state, and
    no-repeat behavior;
 9. atomic rejection of campaign/roster, arrival-flag, loadout, era-gate, and
-   dual-morale topology mismatches;
+   single-owner morale record/status/archive topology mismatches;
 10. exact enabled-logistics restoration immediately before a cadence boundary
     into a fresh compatible runtime, followed by equivalent stock, route flow,
     event order, supply state, victory, and RNG continuation;
@@ -325,9 +364,12 @@ Completion requires:
 17. time-on-target continuation before fire, after a causal reserved pre-fire
     mutation, between fire and impact, during a shared-attachment plan, after
     completion/release, and for a disabled populated plan, plus atomic
-    sentinel/lifecycle/resource/quantity-cooldown/target/RNG controls; and
-18. relevant existing checkpoint, scenario, engine, entity, logistics, space,
-    commander, movement, and indirect-fire regression suites.
+    sentinel/lifecycle/resource/quantity-cooldown/target/RNG controls;
+18. one-runtime transition, rally, melee, cascade, dynamic-registration,
+    aggregation, API/campaign exposure, and exact current/legacy morale
+    continuation controls; and
+19. relevant existing checkpoint, scenario, engine, entity, morale, logistics,
+    space, commander, movement, and indirect-fire regression suites.
 
 ## Tracked boundaries
 

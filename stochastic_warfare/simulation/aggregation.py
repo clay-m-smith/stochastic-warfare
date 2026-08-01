@@ -21,7 +21,7 @@ from stochastic_warfare.core.events import EventBus
 from stochastic_warfare.core.logging import get_logger
 from stochastic_warfare.core.types import Position
 from stochastic_warfare.entities.base import Unit, UnitStatus
-from stochastic_warfare.morale.state import MoraleState
+from stochastic_warfare.morale.runtime import MoraleRuntime
 
 logger = get_logger(__name__)
 
@@ -55,7 +55,6 @@ class UnitSnapshot:
     """Complete serialized state of a single unit across all subsystems."""
 
     unit_state: dict
-    morale_state: int  # MoraleState enum value
     weapon_states: list[dict] = field(default_factory=list)
     sensor_states: list[dict] = field(default_factory=list)
     supply_inventory: dict | None = None
@@ -75,8 +74,38 @@ class AggregateUnit:
     aggregate_combat_power: float
     aggregate_personnel: int
     aggregate_supply_state: float
-    morale_state: MoraleState
     parent_id: str | None = None
+
+
+def _morale_runtime(ctx: Any) -> MoraleRuntime:
+    """Return the mandatory morale owner for a roster mutation."""
+    runtime = getattr(ctx, "morale_runtime", None)
+    if runtime is None:
+        raise RuntimeError(
+            "Aggregation and disaggregation require MoraleRuntime",
+        )
+    return runtime
+
+
+def _restore_mapping(target: Any, snapshot: dict[Any, Any]) -> None:
+    """Restore a mutable mapping without replacing its identity."""
+    target.clear()
+    target.update(snapshot)
+
+
+def _restore_roster(
+    units_by_side: dict[str, list[Unit]],
+    snapshot: dict[str, list[Unit]],
+) -> None:
+    """Restore side lists and their existing identities where possible."""
+    for side in tuple(units_by_side):
+        if side not in snapshot:
+            del units_by_side[side]
+    for side, units in snapshot.items():
+        if side in units_by_side:
+            units_by_side[side][:] = units
+        else:
+            units_by_side[side] = list(units)
 
 
 # ---------------------------------------------------------------------------
@@ -120,13 +149,6 @@ class AggregationEngine:
         """Capture complete per-unit state from all subsystems."""
         unit_state = unit.get_state()
 
-        # Morale
-        morale_val = int(MoraleState.STEADY)
-        if ctx.morale_states is not None:
-            ms = ctx.morale_states.get(unit.entity_id)
-            if ms is not None:
-                morale_val = int(ms)
-
         # Weapons
         weapon_states: list[dict] = []
         weapons = ctx.unit_weapons.get(unit.entity_id, [])
@@ -164,7 +186,6 @@ class AggregationEngine:
 
         return UnitSnapshot(
             unit_state=unit_state,
-            morale_state=morale_val,
             weapon_states=weapon_states,
             sensor_states=sensor_states,
             supply_inventory=supply_inv,
@@ -179,51 +200,53 @@ class AggregationEngine:
     ) -> AggregateUnit | None:
         """Aggregate units into a composite formation.
 
-        1. Snapshot each unit
-        2. Remove from ctx.units_by_side, unit_weapons, unit_sensors,
-           morale_states
-        3. Create AggregateUnit with merged state
-        4. Register proxy Unit in units_by_side
-        5. Return the aggregate
+        Morale records move through ``MoraleRuntime`` as complete immutable
+        records.  The aggregation engine owns only roster/unit snapshots and
+        never serializes a second morale copy.
         """
         if len(unit_ids) < self._config.min_units_to_aggregate:
             return None
 
-        # Sort for deterministic processing
         unit_ids = sorted(unit_ids)
+        if len(unit_ids) != len(set(unit_ids)):
+            raise ValueError("Aggregation unit IDs must be unique")
 
-        # Find units
-        units: list[Unit] = []
-        for uid in unit_ids:
-            for side_units in ctx.units_by_side.values():
-                for u in side_units:
-                    if u.entity_id == uid and u.status == UnitStatus.ACTIVE:
-                        units.append(u)
-                        break
-
-        if len(units) < self._config.min_units_to_aggregate:
+        roster_index = {
+            unit.entity_id: unit
+            for side_units in ctx.units_by_side.values()
+            for unit in side_units
+        }
+        if len(roster_index) != sum(
+            len(side_units) for side_units in ctx.units_by_side.values()
+        ):
+            raise ValueError("Aggregation roster contains duplicate unit IDs")
+        units = [
+            roster_index[unit_id]
+            for unit_id in unit_ids
+            if (
+                unit_id in roster_index
+                and roster_index[unit_id].status == UnitStatus.ACTIVE
+            )
+        ]
+        if len(units) != len(unit_ids):
             return None
 
-        # All must be same side
         sides = {u.side if isinstance(u.side, str) else str(u.side) for u in units}
         if len(sides) != 1:
             return None
         side = sides.pop()
 
-        # Snapshot all units
         snapshots = [self.snapshot_unit(u, ctx) for u in units]
 
-        # Compute aggregate stats
         total_power = 0.0
         total_personnel = 0
         total_supply = 0.0
         supply_count = 0
-        worst_morale = MoraleState.STEADY
-        positions_e = []
-        positions_n = []
+        positions_e: list[float] = []
+        positions_n: list[float] = []
         unit_types: set[str] = set()
 
-        for u, snap in zip(units, snapshots):
+        for u in units:
             personnel = len(u.personnel) if u.personnel else 4
             equipment = len(u.equipment) if u.equipment else 1
             total_power += personnel + equipment * 2.0
@@ -231,10 +254,6 @@ class AggregationEngine:
             unit_types.add(u.unit_type)
             positions_e.append(u.position.easting)
             positions_n.append(u.position.northing)
-
-            morale = MoraleState(snap.morale_state)
-            if morale.value > worst_morale.value:
-                worst_morale = morale
 
             if ctx.stockpile_manager is not None:
                 try:
@@ -252,10 +271,7 @@ class AggregationEngine:
         )
         agg_type = units[0].unit_type if len(unit_types) == 1 else "mixed"
 
-        # Generate aggregate ID
         agg_id = f"agg_{self._next_id:04d}"
-        self._next_id += 1
-
         agg = AggregateUnit(
             aggregate_id=agg_id,
             side=side,
@@ -265,27 +281,7 @@ class AggregationEngine:
             aggregate_combat_power=total_power,
             aggregate_personnel=total_personnel,
             aggregate_supply_state=avg_supply,
-            morale_state=worst_morale,
         )
-
-        # Remove individual units from context
-        for u in units:
-            side_key = u.side if isinstance(u.side, str) else str(u.side)
-            if side_key in ctx.units_by_side:
-                ctx.units_by_side[side_key] = [
-                    x for x in ctx.units_by_side[side_key]
-                    if x.entity_id != u.entity_id
-                ]
-            ctx.unit_weapons.pop(u.entity_id, None)
-            ctx.unit_sensors.pop(u.entity_id, None)
-            getattr(ctx, "equipment_resolutions", {}).pop(
-                u.entity_id,
-                None,
-            )
-            if ctx.morale_states is not None:
-                ctx.morale_states.pop(u.entity_id, None)
-
-        # Create proxy unit for the aggregate
         proxy = Unit(
             entity_id=agg_id,
             position=centroid,
@@ -298,16 +294,67 @@ class AggregationEngine:
             max_speed=min(u.max_speed for u in units) if units else 0.0,
         )
 
-        if side in ctx.units_by_side:
+        morale_runtime = _morale_runtime(ctx)
+        morale_plan = morale_runtime.prepare_aggregation(
+            agg_id,
+            unit_ids,
+            proxy,
+        )
+        roster_before = {
+            roster_side: list(side_units)
+            for roster_side, side_units in ctx.units_by_side.items()
+        }
+        weapons_before = dict(ctx.unit_weapons)
+        sensors_before = dict(ctx.unit_sensors)
+        resolutions = getattr(ctx, "equipment_resolutions", None)
+        resolutions_before = (
+            dict(resolutions) if resolutions is not None else None
+        )
+        aggregates_before = dict(self._aggregates)
+        next_id_before = self._next_id
+        morale_committed = False
+
+        try:
+            morale_runtime.commit_aggregation(morale_plan)
+            morale_committed = True
+
+            constituent_ids = set(unit_ids)
+            ctx.units_by_side[side][:] = [
+                unit
+                for unit in ctx.units_by_side[side]
+                if unit.entity_id not in constituent_ids
+            ]
             ctx.units_by_side[side].append(proxy)
-        else:
-            ctx.units_by_side[side] = [proxy]
-
-        # Set aggregate morale
-        if ctx.morale_states is not None:
-            ctx.morale_states[agg_id] = worst_morale
-
-        self._aggregates[agg_id] = agg
+            for unit_id in unit_ids:
+                ctx.unit_weapons.pop(unit_id, None)
+                ctx.unit_sensors.pop(unit_id, None)
+                if resolutions is not None:
+                    resolutions.pop(unit_id, None)
+            self._aggregates[agg_id] = agg
+            self._next_id += 1
+        except Exception as exc:
+            rollback_errors: list[Exception] = []
+            try:
+                _restore_roster(ctx.units_by_side, roster_before)
+                _restore_mapping(ctx.unit_weapons, weapons_before)
+                _restore_mapping(ctx.unit_sensors, sensors_before)
+                if resolutions_before is not None:
+                    _restore_mapping(resolutions, resolutions_before)
+                _restore_mapping(self._aggregates, aggregates_before)
+                self._next_id = next_id_before
+            except Exception as rollback_exc:
+                rollback_errors.append(rollback_exc)
+            if morale_committed:
+                try:
+                    morale_runtime.rollback_aggregation(morale_plan)
+                except Exception as rollback_exc:
+                    rollback_errors.append(rollback_exc)
+            if rollback_errors:
+                raise ExceptionGroup(
+                    "Aggregation failed and rollback was incomplete",
+                    [exc, *rollback_errors],
+                ) from exc
+            raise
 
         logger.info(
             "Aggregated %d units into %s (side=%s, power=%.0f)",
@@ -323,53 +370,35 @@ class AggregationEngine:
     ) -> list[str]:
         """Restore individual units from an aggregate.
 
-        1. Remove proxy from ctx
-        2. Recreate units from snapshots
-        3. Re-register in all subsystems
+        The complete proxy morale record is checked against the runtime-owned
+        baseline before any roster mutation.  A proxy that evolved—even away
+        and back to the same enum state—cannot be lossily expanded.
         """
-        agg = self._aggregates.pop(aggregate_id, None)
+        agg = self._aggregates.get(aggregate_id)
         if agg is None:
             return []
 
-        # Remove proxy unit
-        side = agg.side
-        if side in ctx.units_by_side:
-            ctx.units_by_side[side] = [
-                u for u in ctx.units_by_side[side]
-                if u.entity_id != aggregate_id
-            ]
-        ctx.unit_weapons.pop(aggregate_id, None)
-        ctx.unit_sensors.pop(aggregate_id, None)
-        getattr(ctx, "equipment_resolutions", {}).pop(
-            aggregate_id,
-            None,
-        )
-        if ctx.morale_states is not None:
-            ctx.morale_states.pop(aggregate_id, None)
-
-        # Restore individual units
-        restored_ids: list[str] = []
+        restored_units: dict[str, Unit] = {}
+        restored_sides: dict[str, str] = {}
+        staged_orders: list[Any] = []
+        order_execution = getattr(ctx, "order_execution", None)
         for snap in agg.constituent_snapshots:
             unit = Unit(
                 entity_id=snap.unit_state["entity_id"],
                 position=Position(*snap.unit_state["position"]),
             )
             unit.set_state(snap.unit_state)
+            if unit.entity_id in restored_units:
+                raise ValueError(
+                    "Aggregate snapshots contain duplicate unit ID "
+                    f"{unit.entity_id!r}",
+                )
+            restored_units[unit.entity_id] = unit
+            restored_sides[unit.entity_id] = snap.original_side or agg.side
 
-            orig_side = snap.original_side or side
-            if orig_side in ctx.units_by_side:
-                ctx.units_by_side[orig_side].append(unit)
-            else:
-                ctx.units_by_side[orig_side] = [unit]
-
-            # Restore morale
-            if ctx.morale_states is not None:
-                ctx.morale_states[unit.entity_id] = MoraleState(snap.morale_state)
-
-            # Restore orders (Phase 85)
-            _order_exec = getattr(ctx, "order_execution", None)
-            if _order_exec is not None and snap.order_records:
+            if order_execution is not None and snap.order_records:
                 from stochastic_warfare.c2.orders.types import OrderExecutionRecord
+
                 for rec_state in snap.order_records:
                     try:
                         rec = OrderExecutionRecord(
@@ -377,15 +406,100 @@ class AggregationEngine:
                             recipient_id=rec_state.get("recipient_id", ""),
                         )
                         rec.set_state(rec_state)
-                        _order_exec._records[rec.order_id] = rec
+                        staged_orders.append(rec)
                     except Exception:
                         pass
 
-            restored_ids.append(unit.entity_id)
+        current_ids = {
+            unit.entity_id
+            for side_units in ctx.units_by_side.values()
+            for unit in side_units
+            if unit.entity_id != aggregate_id
+        }
+        collisions = current_ids & set(restored_units)
+        if collisions:
+            raise ValueError(
+                "Disaggregation would duplicate active unit IDs: "
+                f"{sorted(collisions)!r}",
+            )
+
+        morale_runtime = _morale_runtime(ctx)
+        morale_plan = morale_runtime.prepare_disaggregation(
+            aggregate_id,
+            restored_units,
+        )
+        roster_before = {
+            roster_side: list(side_units)
+            for roster_side, side_units in ctx.units_by_side.items()
+        }
+        weapons_before = dict(ctx.unit_weapons)
+        sensors_before = dict(ctx.unit_sensors)
+        resolutions = getattr(ctx, "equipment_resolutions", None)
+        resolutions_before = (
+            dict(resolutions) if resolutions is not None else None
+        )
+        aggregates_before = dict(self._aggregates)
+        order_records = (
+            getattr(order_execution, "_records", None)
+            if order_execution is not None
+            else None
+        )
+        order_records_before = (
+            dict(order_records) if order_records is not None else None
+        )
+        morale_committed = False
+
+        try:
+            morale_runtime.commit_disaggregation(morale_plan)
+            morale_committed = True
+
+            for side_units in ctx.units_by_side.values():
+                side_units[:] = [
+                    unit
+                    for unit in side_units
+                    if unit.entity_id != aggregate_id
+                ]
+            ctx.unit_weapons.pop(aggregate_id, None)
+            ctx.unit_sensors.pop(aggregate_id, None)
+            if resolutions is not None:
+                resolutions.pop(aggregate_id, None)
+            for unit_id, unit in restored_units.items():
+                side = restored_sides[unit_id]
+                ctx.units_by_side.setdefault(side, []).append(unit)
+            if order_records is not None:
+                for record in staged_orders:
+                    order_records[record.order_id] = record
+            self._aggregates.pop(aggregate_id)
+        except Exception as exc:
+            rollback_errors: list[Exception] = []
+            try:
+                _restore_roster(ctx.units_by_side, roster_before)
+                _restore_mapping(ctx.unit_weapons, weapons_before)
+                _restore_mapping(ctx.unit_sensors, sensors_before)
+                if resolutions_before is not None:
+                    _restore_mapping(resolutions, resolutions_before)
+                _restore_mapping(self._aggregates, aggregates_before)
+                if order_records_before is not None:
+                    _restore_mapping(order_records, order_records_before)
+            except Exception as rollback_exc:
+                rollback_errors.append(rollback_exc)
+            if morale_committed:
+                try:
+                    morale_runtime.rollback_disaggregation(morale_plan)
+                except Exception as rollback_exc:
+                    rollback_errors.append(rollback_exc)
+            if rollback_errors:
+                raise ExceptionGroup(
+                    "Disaggregation failed and rollback was incomplete",
+                    [exc, *rollback_errors],
+                ) from exc
+            raise
+
+        restored_ids = list(restored_units)
 
         logger.info(
             "Disaggregated %s into %d units (side=%s)",
-            aggregate_id, len(restored_ids), side,
+            aggregate_id, len(restored_ids), agg.side,
         )
 
         return restored_ids
@@ -487,11 +601,9 @@ class AggregationEngine:
                     "aggregate_combat_power": agg.aggregate_combat_power,
                     "aggregate_personnel": agg.aggregate_personnel,
                     "aggregate_supply_state": agg.aggregate_supply_state,
-                    "morale_state": int(agg.morale_state),
                     "snapshots": [
                         {
                             "unit_state": s.unit_state,
-                            "morale_state": s.morale_state,
                             "weapon_states": s.weapon_states,
                             "sensor_states": s.sensor_states,
                             "supply_inventory": s.supply_inventory,
@@ -501,7 +613,7 @@ class AggregationEngine:
                         for s in agg.constituent_snapshots
                     ],
                 }
-                for agg_id, agg in self._aggregates.items()
+                for agg_id, agg in sorted(self._aggregates.items())
             },
         }
 
@@ -509,18 +621,20 @@ class AggregationEngine:
         """Restore aggregation engine state."""
         self._next_id = state.get("next_id", 0)
         self._aggregates.clear()
-        for agg_id, adata in state.get("aggregates", {}).items():
+        for agg_id, adata in sorted(state.get("aggregates", {}).items()):
             snapshots = [
                 UnitSnapshot(
                     unit_state=s["unit_state"],
-                    morale_state=s["morale_state"],
                     weapon_states=s.get("weapon_states", []),
                     sensor_states=s.get("sensor_states", []),
                     supply_inventory=s.get("supply_inventory"),
                     original_side=s.get("original_side", ""),
                     order_records=s.get("order_records", []),
                 )
-                for s in adata["snapshots"]
+                for s in sorted(
+                    adata["snapshots"],
+                    key=lambda item: item["unit_state"]["entity_id"],
+                )
             ]
             self._aggregates[agg_id] = AggregateUnit(
                 aggregate_id=adata["aggregate_id"],
@@ -531,5 +645,4 @@ class AggregationEngine:
                 aggregate_combat_power=adata["aggregate_combat_power"],
                 aggregate_personnel=adata["aggregate_personnel"],
                 aggregate_supply_state=adata["aggregate_supply_state"],
-                morale_state=MoraleState(adata["morale_state"]),
             )

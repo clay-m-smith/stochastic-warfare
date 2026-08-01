@@ -32,6 +32,7 @@ from stochastic_warfare.simulation.scenario import (
 from stochastic_warfare.validation.movement_diagnostics import (
     evaluate_movement_diagnostics,
 )
+from tests.conftest import make_versionless_legacy_morale_checkpoint
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -270,7 +271,7 @@ def test_schema112_movement_state_restores_and_continues_exactly() -> None:
     assert control.step() is False
     checkpoint = control.checkpoint()
     state_at_t = control.get_state()
-    assert state_at_t["checkpoint_version"] == 112
+    assert state_at_t["checkpoint_version"] == 113
     assert state_at_t["context"]["movement_diagnostics"] == control._ctx.movement_diagnostics.get_state()
 
     resumed = _campaign_engine(seed=999_112)
@@ -327,8 +328,9 @@ def test_schema112_offset_ordinals_reject_without_any_mutation() -> None:
 def test_elapsed_versionless_checkpoint_cannot_forget_movement_history() -> None:
     source = _campaign_engine(seed=112)
     assert source.step() is False
-    invalid = copy.deepcopy(source.get_state())
-    assert invalid.pop("checkpoint_version") == 112
+    invalid = make_versionless_legacy_morale_checkpoint(
+        source.get_state(),
+    )
     invalid["context"].pop("movement_diagnostics")
 
     target = _campaign_engine(seed=42)
@@ -346,8 +348,9 @@ def test_elapsed_versionless_checkpoint_cannot_forget_movement_history() -> None
 
 def test_tick_zero_versionless_checkpoint_can_migrate_empty_diagnostics() -> None:
     source = _campaign_engine(seed=112)
-    legacy = copy.deepcopy(source.get_state())
-    assert legacy.pop("checkpoint_version") == 112
+    legacy = make_versionless_legacy_morale_checkpoint(
+        source.get_state(),
+    )
     movement_state = legacy["context"].pop("movement_diagnostics")
     assert movement_state["total_observation_count"] == 0
 
@@ -420,15 +423,31 @@ def test_evaluator_captures_every_reinforcement_construction_position() -> None:
         "reinforce_red_0002_m1a2_0002": (9_800.0, 5_100.0),
     }
     assert set(reinforcements) == set(expected_starts)
+    blue_ids = {
+        unit_id
+        for unit_id in expected_starts
+        if unit_id.startswith("reinforce_blue_")
+    }
     for unit_id, detail in reinforcements.items():
         assert tuple(detail["start_pos"]) == expected_starts[unit_id]
-        assert tuple(detail["end_pos"]) != expected_starts[unit_id]
         assert detail["distance_moved"] == round(
             math.dist(detail["start_pos"], detail["end_pos"]),
             1,
         )
-        assert detail["distance_moved"] > 1.0
-        assert detail["movement_achieved_m"] > 1.0
+        if unit_id in blue_ids:
+            assert tuple(detail["end_pos"]) != expected_starts[unit_id]
+            assert detail["distance_moved"] > 1.0
+            assert detail["movement_achieved_m"] > 1.0
+            assert detail["movement_reason_counts"]["MOVED"] == 1
+        else:
+            assert tuple(detail["end_pos"]) == expected_starts[unit_id]
+            assert detail["distance_moved"] == 0.0
+            assert detail["movement_achieved_m"] == 0.0
+            assert detail["movement_disposition"] == "NO_TARGET"
+            assert detail["movement_reason_counts"]["NO_TARGET"] == 22
+            assert detail["movement_reason_counts"]["MOVED"] == 0
+            assert detail["movement_reason_counts"]["RESOURCE_BLOCKED"] == 0
+            assert detail["movement_reason_counts"]["ZERO_PROGRESS"] == 0
 
     expected_moved = sum(detail["distance_moved"] > 1.0 for detail in result.unit_details)
     assert result.units_that_moved == expected_moved

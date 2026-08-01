@@ -16,6 +16,7 @@ from collections.abc import Mapping
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
+from types import MappingProxyType
 from typing import Any, Literal
 
 import numpy as np
@@ -50,6 +51,12 @@ from stochastic_warfare.logistics.config import (
     SupplyQuantityConfig,
 )
 from stochastic_warfare.logistics.stockpile import DepotType
+from stochastic_warfare.morale.rout import RoutConfig, RoutEngine
+from stochastic_warfare.morale.runtime import (
+    MoraleRegistration,
+    MoraleRuntime,
+)
+from stochastic_warfare.morale.state import MoraleState
 from stochastic_warfare.simulation.calibration import CalibrationSchema
 from stochastic_warfare.simulation.deployment import (
     DeploymentConfig,
@@ -1350,13 +1357,298 @@ def _json_values_equal(left: Any, right: Any) -> bool:
     return bool(left == right)
 
 
+@dataclass(frozen=True, slots=True)
+class _CheckpointAggregateMoraleTopology:
+    """Validated aggregate constituent IDs and captured unit statuses."""
+
+    constituents: dict[str, tuple[str, ...]]
+    statuses: dict[str, UnitStatus]
+
+
+def _checkpoint_aggregate_morale_topology(
+    raw_aggregation: Any,
+) -> _CheckpointAggregateMoraleTopology:
+    """Parse aggregate morale topology and statuses in one strict pass."""
+    if raw_aggregation is None:
+        return _CheckpointAggregateMoraleTopology({}, {})
+    if not isinstance(raw_aggregation, dict):
+        raise ValueError("Checkpoint aggregation_engine must be a mapping")
+    raw_aggregates = raw_aggregation.get("aggregates", {})
+    if not isinstance(raw_aggregates, dict):
+        raise ValueError(
+            "Checkpoint aggregation_engine.aggregates must be a mapping",
+        )
+    result: dict[str, tuple[str, ...]] = {}
+    statuses: dict[str, UnitStatus] = {}
+    seen_constituents: set[str] = set()
+    for aggregate_id in sorted(raw_aggregates):
+        raw_aggregate = raw_aggregates[aggregate_id]
+        if not isinstance(aggregate_id, str) or not aggregate_id:
+            raise ValueError("Checkpoint aggregate IDs must be non-empty strings")
+        if not isinstance(raw_aggregate, dict):
+            raise ValueError("Checkpoint aggregate entries must be mappings")
+        if raw_aggregate.get("aggregate_id") != aggregate_id:
+            raise ValueError(
+                f"Checkpoint aggregate identity mismatch for {aggregate_id!r}",
+            )
+        raw_snapshots = raw_aggregate.get("snapshots")
+        if not isinstance(raw_snapshots, list) or not raw_snapshots:
+            raise ValueError(
+                f"Checkpoint aggregate {aggregate_id!r} requires snapshots",
+            )
+        constituent_ids: list[str] = []
+        for raw_snapshot in raw_snapshots:
+            if not isinstance(raw_snapshot, dict):
+                raise ValueError("Checkpoint aggregate snapshots must be mappings")
+            raw_unit = raw_snapshot.get("unit_state")
+            if not isinstance(raw_unit, dict):
+                raise ValueError(
+                    "Checkpoint aggregate unit_state must be a mapping",
+                )
+            unit_id = raw_unit.get("entity_id")
+            raw_status = raw_unit.get("status")
+            if not isinstance(unit_id, str) or not unit_id:
+                raise ValueError(
+                    "Checkpoint aggregate constituent IDs must be non-empty strings",
+                )
+            if (
+                isinstance(raw_status, bool)
+                or not isinstance(raw_status, int)
+            ):
+                raise ValueError(
+                    "Checkpoint aggregate constituent status is malformed",
+                )
+            if unit_id in seen_constituents:
+                raise ValueError(
+                    f"Duplicate aggregate constituent ID {unit_id!r}",
+                )
+            seen_constituents.add(unit_id)
+            constituent_ids.append(unit_id)
+            try:
+                statuses[unit_id] = UnitStatus(raw_status)
+            except ValueError as exc:
+                raise ValueError(
+                    f"Unknown aggregate constituent status for {unit_id!r}",
+                ) from exc
+        result[aggregate_id] = tuple(sorted(constituent_ids))
+    return _CheckpointAggregateMoraleTopology(result, statuses)
+
+
+def _checkpoint_has_active_routes(raw_rout_state: Any) -> bool:
+    """Return whether a validated-enough rout envelope is non-empty."""
+    if raw_rout_state is None:
+        return False
+    if not isinstance(raw_rout_state, dict):
+        raise ValueError("Checkpoint rout_engine state must be a mapping")
+    raw_routes = raw_rout_state.get("active_routs", {})
+    if not isinstance(raw_routes, dict):
+        raise ValueError("Checkpoint active_routs must be a mapping")
+    return bool(raw_routes)
+
+
+def _legacy_morale_value(value: Any, *, owner: str, unit_id: str) -> Any:
+    """Parse one strict legacy context or machine morale value."""
+    try:
+        if owner == "context" and isinstance(value, str):
+            return MoraleState[value]
+        if isinstance(value, bool) or not isinstance(value, int):
+            raise ValueError("must be an integer enum value")
+        return MoraleState(value)
+    except (KeyError, TypeError, ValueError) as exc:
+        raise ValueError(
+            f"Invalid legacy {owner} morale for {unit_id!r}: {value!r}",
+        ) from exc
+
+
+def _migrate_legacy_morale_runtime(
+    *,
+    context_morale: Any,
+    machine_state: Any,
+    units: Mapping[str, Unit],
+    side_initial: Mapping[str, str],
+    elapsed_time_s: float,
+    continuous_time: bool,
+    authoritative_rng_state: Any,
+    rout_state: Any,
+) -> tuple[dict[str, Any], dict[str, Any] | None]:
+    """Build one bounded format-113 morale envelope from versionless state."""
+    if continuous_time and elapsed_time_s > 0.0:
+        raise ValueError(
+            "A started continuous-time runtime cannot reconstruct legacy "
+            "morale check history",
+        )
+    if context_morale is None:
+        raw_context: Mapping[str, Any] = {}
+    elif isinstance(context_morale, dict):
+        raw_context = context_morale
+    else:
+        raise ValueError("Legacy morale_states must be a mapping")
+
+    raw_machine_units: Mapping[str, Any] = {}
+    if machine_state is not None:
+        if not isinstance(machine_state, dict):
+            raise ValueError("Legacy morale_machine must be a mapping")
+        if set(machine_state) != {"unit_states", "rng_state"}:
+            raise ValueError(
+                "Legacy morale_machine has invalid key topology",
+            )
+        raw_machine_units = machine_state["unit_states"]
+        if not isinstance(raw_machine_units, dict):
+            raise ValueError(
+                "Legacy morale_machine.unit_states must be a mapping",
+            )
+        if not _json_values_equal(
+            machine_state["rng_state"],
+            authoritative_rng_state,
+        ):
+            raise ValueError(
+                "Legacy morale_machine RNG disagrees with RNGManager",
+            )
+
+    normalized_rout_state: dict[str, Any] | None = None
+    if rout_state is not None:
+        if not isinstance(rout_state, dict):
+            raise ValueError("Legacy rout_engine must be a mapping")
+        if set(rout_state) != {"active_routs", "rng_state"}:
+            raise ValueError(
+                "Legacy rout_engine has invalid key topology",
+            )
+        if not _json_values_equal(
+            rout_state["rng_state"],
+            authoritative_rng_state,
+        ):
+            raise ValueError(
+                "Legacy rout_engine RNG disagrees with RNGManager",
+            )
+        normalized_rout_state = {
+            "active_routs": copy.deepcopy(rout_state["active_routs"]),
+        }
+
+    expected_ids = set(units)
+    extra_context = set(raw_context) - expected_ids
+    extra_machine = set(raw_machine_units) - expected_ids
+    if extra_context:
+        raise ValueError(
+            "Legacy morale_states contains units outside the force roster: "
+            f"{sorted(extra_context)!r}",
+        )
+    if extra_machine:
+        raise ValueError(
+            "Legacy morale_machine contains units outside the force roster: "
+            f"{sorted(extra_machine)!r}",
+        )
+
+    active_records: dict[str, dict[str, Any]] = {}
+    for unit_id in sorted(expected_ids):
+        context_value = raw_context.get(unit_id)
+        context_state = (
+            _legacy_morale_value(
+                context_value,
+                owner="context",
+                unit_id=unit_id,
+            )
+            if unit_id in raw_context
+            else None
+        )
+
+        machine_morale = None
+        transition_time: float | None = None
+        generation = 0
+        if unit_id in raw_machine_units:
+            raw_record = raw_machine_units[unit_id]
+            if not isinstance(raw_record, dict):
+                raise ValueError(
+                    f"Legacy morale record for {unit_id!r} must be a mapping",
+                )
+            if set(raw_record) != {
+                "current_state",
+                "transition_cooldown_s",
+                "last_transition_time",
+            }:
+                raise ValueError(
+                    f"Legacy morale record for {unit_id!r} has invalid keys",
+                )
+            machine_morale = _legacy_morale_value(
+                raw_record["current_state"],
+                owner="machine",
+                unit_id=unit_id,
+            )
+            cooldown = raw_record["transition_cooldown_s"]
+            if (
+                isinstance(cooldown, bool)
+                or not isinstance(cooldown, (int, float))
+                or not math.isfinite(float(cooldown))
+                or float(cooldown) != 0.0
+            ):
+                raise ValueError(
+                    "Legacy per-record transition_cooldown_s must be the "
+                    f"canonical inert 0.0 for {unit_id!r}",
+                )
+            raw_time = raw_record["last_transition_time"]
+            if (
+                isinstance(raw_time, bool)
+                or not isinstance(raw_time, (int, float))
+                or not math.isfinite(float(raw_time))
+            ):
+                raise ValueError(
+                    f"Legacy transition time for {unit_id!r} is invalid",
+                )
+            normalized_time = float(raw_time)
+            if normalized_time == -1e9:
+                transition_time = None
+            elif 0.0 <= normalized_time <= elapsed_time_s:
+                transition_time = normalized_time
+                generation = 1
+            else:
+                raise ValueError(
+                    f"Legacy transition time for {unit_id!r} is impossible",
+                )
+
+        if (
+            context_state is not None
+            and machine_morale is not None
+            and context_state is not machine_morale
+        ):
+            raise ValueError(
+                f"Legacy morale stores disagree for unit {unit_id!r}",
+            )
+
+        chosen_state = (
+            machine_morale
+            if machine_morale is not None
+            else context_state
+        )
+        if chosen_state is None:
+            side = units[unit_id].side
+            side_name = side if isinstance(side, str) else side.value
+            try:
+                chosen_state = MoraleState[side_initial[side_name]]
+            except (KeyError, TypeError, ValueError) as exc:
+                raise ValueError(
+                    f"Cannot backfill legacy morale for unit {unit_id!r}",
+                ) from exc
+
+        active_records[unit_id] = {
+            "current_state": int(chosen_state),
+            "last_transition_time_s": transition_time,
+            "last_check_time_s": transition_time,
+            "generation": generation,
+        }
+
+    return (
+        {
+            "active_records": active_records,
+            "suspended_archives": {},
+        },
+        normalized_rout_state,
+    )
+
+
 def _initial_morale_for_units(
     config: CampaignScenarioConfig,
     units: list[Unit],
-) -> dict[str, Any]:
-    """Stage typed side morale and its corresponding initial unit status."""
-    from stochastic_warfare.morale.state import MoraleState
-
+) -> dict[str, MoraleState]:
+    """Derive typed side morale without mutating caller-owned units."""
     state_by_side = {
         side.side: MoraleState[side.morale_initial]
         for side in config.sides
@@ -1370,18 +1662,20 @@ def _initial_morale_for_units(
             raise ValueError(
                 f"Unit {unit.entity_id!r} references unknown side {side!r}",
             ) from exc
-        if morale is MoraleState.ROUTED:
-            object.__setattr__(unit, "status", UnitStatus.ROUTING)
-        elif morale is MoraleState.SURRENDERED:
-            object.__setattr__(unit, "status", UnitStatus.SURRENDERED)
-        else:
-            object.__setattr__(unit, "status", UnitStatus.ACTIVE)
         result[unit.entity_id] = morale
     return result
 
 
+def _initial_status_for_morale(morale: MoraleState) -> UnitStatus:
+    """Return the required initial unit-status projection for morale."""
+    if morale is MoraleState.ROUTED:
+        return UnitStatus.ROUTING
+    if morale is MoraleState.SURRENDERED:
+        return UnitStatus.SURRENDERED
+    return UnitStatus.ACTIVE
+
+
 _CONTEXT_STATE_ENGINE_NAMES = (
-    "morale_machine",
     "ooda_engine",
     "planning_engine",
     "order_execution",
@@ -1518,7 +1812,10 @@ class SimulationContext:
     ] = field(default_factory=dict)
     force_builder: RuntimeForceBuilder | None = None
     loadout_builder: RuntimeLoadoutBuilder | None = None
-    morale_states: dict[str, Any] = field(default_factory=dict)
+    morale_states: Mapping[str, MoraleState] = field(
+        default_factory=dict,
+        repr=False,
+    )
 
     # Environment engines
     weather_engine: Any = None
@@ -1540,13 +1837,13 @@ class SimulationContext:
     movement_diagnostics: MovementDiagnostics | None = None
 
     # Morale
-    morale_machine: Any = None
+    morale_runtime: MoraleRuntime | None = None
 
     # ROE (Phase 42a)
     roe_engine: Any = None
 
     # Rout (Phase 42c)
-    rout_engine: Any = None
+    rout_engine: RoutEngine | None = None
 
     # C2
     command_engine: Any = None
@@ -1702,7 +1999,104 @@ class SimulationContext:
     scripted_events: list[Any] = field(default_factory=list)
     initial_ied_obstacle_ids: list[str] = field(default_factory=list)
 
+    _morale_states_bound: bool = field(
+        default=False,
+        init=False,
+        repr=False,
+    )
+
     # ── Helpers ──────────────────────────────────────────────────────
+
+    def __post_init__(self) -> None:
+        """Bind the stable, read-only public morale projection."""
+        initial_projection = dict(self.morale_states)
+        if self.morale_runtime is None:
+            if initial_projection:
+                raise ValueError(
+                    "A non-empty morale projection requires MoraleRuntime",
+                )
+            morale_view: Mapping[str, MoraleState] = MappingProxyType({})
+        else:
+            morale_view = self.morale_runtime.states
+            if initial_projection and initial_projection != dict(morale_view):
+                raise ValueError(
+                    "Initial morale projection disagrees with MoraleRuntime",
+                )
+            authoritative_rng = self.rng_manager.get_stream(ModuleId.MORALE)
+            if self.morale_runtime.rng is not authoritative_rng:
+                raise ValueError(
+                    "MoraleRuntime must use RNGManager's MORALE generator",
+                )
+            if (
+                self.rout_engine is not None
+                and self.rout_engine.rng is not authoritative_rng
+            ):
+                raise ValueError(
+                    "RoutEngine must use RNGManager's MORALE generator",
+                )
+            if self.morale_runtime.rout_engine is not self.rout_engine:
+                raise ValueError(
+                    "MoraleRuntime and SimulationContext must share RoutEngine",
+                )
+        object.__setattr__(self, "morale_states", morale_view)
+        self._validate_morale_bindings()
+        object.__setattr__(self, "_morale_states_bound", True)
+
+    def __setattr__(self, name: str, value: Any) -> None:
+        """Prevent replacement of the bound morale owner graph."""
+        if (
+            name in {"morale_states", "morale_runtime", "rout_engine"}
+            and getattr(self, "_morale_states_bound", False)
+        ):
+            raise AttributeError(
+                f"{name} is a stable MoraleRuntime ownership binding",
+            )
+        object.__setattr__(self, name, value)
+
+    def _morale_roster(self) -> dict[str, Unit]:
+        """Return the exact active roster, rejecting duplicate entity IDs."""
+        roster: dict[str, Unit] = {}
+        for unit in self.all_units():
+            if unit.entity_id in roster:
+                raise ValueError(
+                    f"Duplicate runtime entity_id {unit.entity_id!r}",
+                )
+            roster[unit.entity_id] = unit
+        return roster
+
+    def _validate_morale_bindings(
+        self,
+        *,
+        require_runtime_for_roster: bool = False,
+    ) -> None:
+        """Fail closed when context, runtime, rout, RNG, or roster diverge."""
+        roster = self._morale_roster()
+        runtime = self.morale_runtime
+        if runtime is None:
+            if self.morale_states:
+                raise ValueError(
+                    "A null MoraleRuntime requires an empty morale view",
+                )
+            if require_runtime_for_roster and roster:
+                raise RuntimeError(
+                    "A non-empty roster requires MoraleRuntime ownership",
+                )
+            return
+
+        if self.morale_states is not runtime.states:
+            raise ValueError(
+                "SimulationContext morale view is detached from MoraleRuntime",
+            )
+        authoritative_rng = self.rng_manager.get_stream(ModuleId.MORALE)
+        if runtime.rng is not authoritative_rng:
+            raise ValueError(
+                "MoraleRuntime must use RNGManager's MORALE generator",
+            )
+        if runtime.rout_engine is not self.rout_engine:
+            raise ValueError(
+                "MoraleRuntime and SimulationContext must share RoutEngine",
+            )
+        runtime.validate_bindings(roster)
 
     def all_units(self) -> list[Unit]:
         """Return a flat list of all units across all sides."""
@@ -1733,6 +2127,7 @@ class SimulationContext:
 
     def get_state(self) -> dict[str, Any]:
         """Capture full simulation state for checkpointing."""
+        self._validate_morale_bindings(require_runtime_for_roster=True)
         state: dict[str, Any] = {
             "config": _model_dump_json_compatible(self.config),
             "doctrine_side_assignments": [
@@ -1745,10 +2140,11 @@ class SimulationContext:
                 side: [u.get_state() for u in units]
                 for side, units in self.units_by_side.items()
             },
-            "morale_states": {
-                uid: (ms.value if hasattr(ms, "value") else ms)
-                for uid, ms in self.morale_states.items()
-            },
+            "morale_runtime": (
+                self.morale_runtime.get_state()
+                if self.morale_runtime is not None
+                else None
+            ),
             "unit_weapon_states": {
                 uid: [weapon.get_state() for weapon, _ in weapons]
                 for uid, weapons in getattr(self, "unit_weapons", {}).items()
@@ -1799,6 +2195,7 @@ class SimulationContext:
         allow_legacy_morale: bool = False,
     ) -> SimulationContextStatePlan:
         """Validate all context state without mutating the live runtime."""
+        self._validate_morale_bindings(require_runtime_for_roster=True)
         staged_state = copy.deepcopy(state)
         self._apply_state(
             staged_state,
@@ -1846,12 +2243,33 @@ class SimulationContext:
         commit: bool,
     ) -> None:
         """Preflight context state and optionally commit it."""
+        if allow_legacy_morale and "morale_runtime" in state:
+            raise ValueError(
+                "Versionless checkpoints cannot contain format-113 "
+                "morale_runtime state",
+            )
         if "config" in state:
             checkpoint_config = state["config"]
+            comparable_config = checkpoint_config
+            if allow_legacy_morale and isinstance(checkpoint_config, dict):
+                comparable_config = copy.deepcopy(checkpoint_config)
+                calibration = comparable_config.get(
+                    "calibration_overrides",
+                )
+                morale = (
+                    calibration.get("morale")
+                    if isinstance(calibration, dict)
+                    else None
+                )
+                if (
+                    isinstance(morale, dict)
+                    and "use_continuous_time" not in morale
+                ):
+                    morale["use_continuous_time"] = False
             if (
                 not isinstance(checkpoint_config, dict)
                 or not _json_values_equal(
-                    checkpoint_config,
+                    comparable_config,
                     _model_dump_json_compatible(self.config),
                 )
             ):
@@ -2000,7 +2418,6 @@ class SimulationContext:
             )
 
         staged_units: dict[str, list[tuple[dict[str, Any], Unit]]] | None = None
-        staged_morale: dict[str, Any] | None = None
         checkpoint_unit_ids: set[str] = set()
         checkpoint_equipment: (
             dict[str, dict[str, dict[str, Any]]] | None
@@ -2037,205 +2454,11 @@ class SimulationContext:
                 for raw_unit, staged in staged_side
             }
 
-        if "morale_states" in state:
-            from stochastic_warfare.morale.state import MoraleState
-
-            raw_morale = state["morale_states"]
-            if not isinstance(raw_morale, dict):
-                raise ValueError("Checkpoint morale_states must be a mapping")
-            staged_morale = {}
-            for entity_id, value in raw_morale.items():
-                if not isinstance(entity_id, str):
-                    raise ValueError(
-                        "Checkpoint morale state keys must be entity IDs",
-                    )
-                try:
-                    if not allow_legacy_morale and (
-                        isinstance(value, bool)
-                        or not isinstance(value, int)
-                    ):
-                        raise ValueError(
-                            "current checkpoint morale values must be integers",
-                        )
-                    if isinstance(value, str):
-                        morale = MoraleState[value]
-                    else:
-                        if isinstance(value, bool) or not isinstance(value, int):
-                            raise ValueError(
-                                "checkpoint morale values must be integer "
-                                "enum values or legacy names",
-                            )
-                        morale = MoraleState(value)
-                except (KeyError, TypeError, ValueError) as exc:
-                    raise ValueError(
-                        f"Invalid morale state for {entity_id!r}: {value!r}",
-                    ) from exc
-                staged_morale[entity_id] = morale
-
-        staged_morale_machine_state: dict[str, Any] | None = None
-        if self.morale_machine is not None and "morale_machine" in state:
-            from stochastic_warfare.morale.state import MoraleState
-
-            morale_checkpoint_unit_ids = (
-                checkpoint_unit_ids
-                if staged_units is not None
-                else {unit.entity_id for unit in self.all_units()}
-            )
-            raw_machine_state = state["morale_machine"]
-            if not isinstance(raw_machine_state, dict):
-                raise ValueError(
-                    "Checkpoint morale_machine state must be a mapping",
-                )
-            staged_morale_machine_state = copy.deepcopy(raw_machine_state)
-            raw_machine_units = staged_morale_machine_state.get(
-                "unit_states",
-            )
-            if not isinstance(raw_machine_units, dict):
-                raise ValueError(
-                    "Checkpoint morale_machine.unit_states must be a mapping",
-                )
-
-            if staged_morale is not None:
-                morale_ids = set(staged_morale)
-                extra_morale_ids = morale_ids - morale_checkpoint_unit_ids
-                if extra_morale_ids:
-                    raise ValueError(
-                        "Checkpoint morale_states topology contains units "
-                        f"outside the force roster: "
-                        f"{sorted(extra_morale_ids)!r}",
-                    )
-                missing_morale_ids = (
-                    morale_checkpoint_unit_ids - morale_ids
-                )
-                if missing_morale_ids:
-                    if not allow_legacy_morale:
-                        raise ValueError(
-                            "Checkpoint morale_states topology is missing "
-                            f"active units: {sorted(missing_morale_ids)!r}",
-                        )
-                    state_by_side = {
-                        side.side: MoraleState[side.morale_initial]
-                        for side in self.config.sides
-                    }
-                    if staged_units is not None:
-                        checkpoint_sides = {
-                            staged.entity_id: side
-                            for side, side_units in staged_units.items()
-                            for _, staged in side_units
-                        }
-                    else:
-                        checkpoint_sides = {
-                            unit.entity_id: (
-                                unit.side
-                                if isinstance(unit.side, str)
-                                else unit.side.value
-                            )
-                            for unit in self.all_units()
-                        }
-                    try:
-                        staged_morale.update(
-                            {
-                                unit_id: state_by_side[
-                                    checkpoint_sides[unit_id]
-                                ]
-                                for unit_id in sorted(missing_morale_ids)
-                            },
-                        )
-                    except KeyError as exc:
-                        raise ValueError(
-                            "Cannot migrate legacy morale for unknown unit "
-                            f"or side {exc.args[0]!r}",
-                        ) from exc
-
-                aggregate_proxy_ids: set[str] = set()
-                raw_aggregation = state.get("aggregation_engine")
-                if isinstance(raw_aggregation, dict):
-                    raw_aggregates = raw_aggregation.get("aggregates", {})
-                    if isinstance(raw_aggregates, dict):
-                        aggregate_proxy_ids = {
-                            aggregate_id
-                            for aggregate_id in raw_aggregates
-                            if isinstance(aggregate_id, str)
-                        }
-                expected_machine_ids = (
-                    morale_checkpoint_unit_ids - aggregate_proxy_ids
-                )
-
-                extra_machine_ids = (
-                    set(raw_machine_units) - expected_machine_ids
-                )
-                if extra_machine_ids:
-                    raise ValueError(
-                        "Checkpoint morale_machine topology contains units "
-                        f"outside the force roster: "
-                        f"{sorted(extra_machine_ids)!r}",
-                    )
-                missing_machine_ids = (
-                    expected_machine_ids - set(raw_machine_units)
-                )
-                if missing_machine_ids:
-                    if not allow_legacy_morale:
-                        raise ValueError(
-                            "Checkpoint morale_machine topology is missing "
-                            f"active units: "
-                            f"{sorted(missing_machine_ids)!r}",
-                        )
-                    raw_machine_units.update(
-                        {
-                            unit_id: {
-                                "current_state": int(
-                                    staged_morale[unit_id],
-                                ),
-                                "transition_cooldown_s": 0.0,
-                                "last_transition_time": -1e9,
-                            }
-                            for unit_id in sorted(missing_machine_ids)
-                        },
-                    )
-
-                for unit_id in sorted(expected_machine_ids):
-                    raw_unit_state = raw_machine_units[unit_id]
-                    if not isinstance(raw_unit_state, dict):
-                        raise ValueError(
-                            "Checkpoint morale_machine unit states must be "
-                            "mappings",
-                        )
-                    try:
-                        raw_current_state = raw_unit_state["current_state"]
-                        if (
-                            isinstance(raw_current_state, bool)
-                            or not isinstance(raw_current_state, int)
-                        ):
-                            raise ValueError(
-                                "morale-machine current_state must be an "
-                                "integer enum value",
-                            )
-                        machine_morale = MoraleState(
-                            raw_current_state,
-                        )
-                    except (KeyError, TypeError, ValueError) as exc:
-                        raise ValueError(
-                            "Invalid checkpoint morale_machine state for "
-                            f"{unit_id!r}",
-                        ) from exc
-                    if machine_morale is not staged_morale[unit_id]:
-                        raise ValueError(
-                            "Checkpoint morale stores disagree for unit "
-                            f"{unit_id!r}",
-                        )
-
-            try:
-                copy.deepcopy(
-                    self.morale_machine,
-                    {id(self.event_bus): self.event_bus},
-                ).set_state(
-                    staged_morale_machine_state,
-                )
-            except (AttributeError, KeyError, TypeError, ValueError) as exc:
-                raise ValueError(
-                    f"Invalid checkpoint morale_machine state: {exc}",
-                ) from exc
-
+        raw_legacy_morale = state.get("morale_states")
+        raw_legacy_machine = state.get("morale_machine")
+        raw_morale_runtime = state.get("morale_runtime")
+        raw_rout_state = state.get("rout_engine")
+        staged_morale_plan: Any = None
         existing_by_id: dict[str, Unit] = {}
         for unit in self.all_units():
             if unit.entity_id in existing_by_id:
@@ -2538,6 +2761,107 @@ class SimulationContext:
             for side, units in prospective_units_by_side.items()
             for unit in units
         }
+        prospective_morale_units = {
+            unit.entity_id: unit
+            for units in prospective_units_by_side.values()
+            for unit in units
+        }
+        aggregate_morale_topology = _checkpoint_aggregate_morale_topology(
+            state.get("aggregation_engine"),
+        )
+        aggregate_constituents = aggregate_morale_topology.constituents
+        if allow_legacy_morale and aggregate_constituents:
+            raise ValueError(
+                "Versionless checkpoints with active aggregation cannot "
+                "reconstruct complete morale records",
+            )
+
+        if self.morale_runtime is None:
+            if prospective_morale_units:
+                raise ValueError(
+                    "A non-empty checkpoint roster requires MoraleRuntime",
+                )
+            if raw_morale_runtime is not None:
+                raise ValueError(
+                    "Checkpoint contains morale state for a context without "
+                    "MoraleRuntime",
+                )
+            if aggregate_constituents or _checkpoint_has_active_routes(
+                state.get("rout_engine"),
+            ):
+                raise ValueError(
+                    "A null morale runtime requires empty route and "
+                    "aggregation state",
+                )
+        else:
+            if allow_legacy_morale:
+                (
+                    raw_morale_runtime,
+                    raw_rout_state,
+                ) = _migrate_legacy_morale_runtime(
+                    context_morale=raw_legacy_morale,
+                    machine_state=raw_legacy_machine,
+                    units=prospective_morale_units,
+                    side_initial={
+                        side.side: side.morale_initial
+                        for side in self.config.sides
+                    },
+                    elapsed_time_s=elapsed_seconds,
+                    continuous_time=(
+                        self.morale_runtime.config.use_continuous_time
+                    ),
+                    authoritative_rng_state=(
+                        rng_state["streams"][ModuleId.MORALE.value]
+                    ),
+                    rout_state=raw_rout_state,
+                )
+            if not isinstance(raw_morale_runtime, dict):
+                raise ValueError(
+                    "Checkpoint morale_runtime must be a mapping",
+                )
+            try:
+                staged_morale_plan = self.morale_runtime.stage_state(
+                    raw_morale_runtime,
+                    expected_units=prospective_morale_units,
+                    elapsed_time_s=elapsed_seconds,
+                    aggregate_constituents=aggregate_constituents,
+                    suspended_statuses=aggregate_morale_topology.statuses,
+                )
+            except (KeyError, TypeError, ValueError) as exc:
+                raise ValueError(
+                    f"Invalid checkpoint morale runtime state: {exc}",
+                ) from exc
+
+        staged_rout_plan: Any = None
+        if self.rout_engine is None:
+            if state.get("rout_engine") is not None:
+                raise ValueError(
+                    "Checkpoint contains rout state for a context without "
+                    "RoutEngine",
+                )
+        else:
+            if raw_rout_state is None:
+                if not allow_legacy_morale:
+                    raise ValueError("Checkpoint is missing RoutEngine state")
+                raw_rout_state = {"active_routs": {}}
+            routed_ids = (
+                {
+                    unit_id
+                    for unit_id, record in staged_morale_plan.active_records
+                    if record.current_state.name == "ROUTED"
+                }
+                if staged_morale_plan is not None
+                else set()
+            )
+            try:
+                staged_rout_plan = self.rout_engine.stage_state(
+                    raw_rout_state,
+                    expected_routing_unit_ids=routed_ids,
+                )
+            except (KeyError, TypeError, ValueError) as exc:
+                raise ValueError(
+                    f"Invalid checkpoint RoutEngine state: {exc}",
+                ) from exc
 
         staged_movement_plan: Any = None
         if (
@@ -2780,12 +3104,12 @@ class SimulationContext:
         canonical_engine_states: dict[str, Any] = {}
         for name, engine in self._checkpoint_engines():
             if name in {
-                "morale_machine",
                 "logistics_runtime",
                 "space_engine",
                 "indirect_fire_engine",
                 "commander_engine",
                 "school_registry",
+                "rout_engine",
             }:
                 continue
             if name == "ooda_engine" and staged_ooda_plan is not None:
@@ -2896,10 +3220,19 @@ class SimulationContext:
                 if entity_id in checkpoint_unit_ids
             }
 
-        if staged_morale is not None:
-            self.morale_states = staged_morale
-        if staged_morale_machine_state is not None:
-            self.morale_machine.set_state(staged_morale_machine_state)
+        if staged_morale_plan is not None:
+            self.morale_runtime.commit_state(
+                staged_morale_plan,
+                units={
+                    unit.entity_id: unit
+                    for unit in self.all_units()
+                },
+                elapsed_time_s=elapsed_seconds,
+                aggregate_constituents=aggregate_constituents,
+                suspended_statuses=aggregate_morale_topology.statuses,
+            )
+        if staged_rout_plan is not None:
+            self.rout_engine.commit_state(staged_rout_plan)
 
         for instance, saved_state in staged_weapon_states:
             instance.set_state(saved_state)
@@ -2934,12 +3267,12 @@ class SimulationContext:
         engines = self._checkpoint_engines()
         for name, eng in engines:
             if name in {
-                "morale_machine",
                 "logistics_runtime",
                 "space_engine",
                 "indirect_fire_engine",
                 "commander_engine",
                 "school_registry",
+                "rout_engine",
             }:
                 continue
             if name == "ooda_engine" and staged_ooda_plan is not None:
@@ -2967,6 +3300,8 @@ class SimulationContext:
                 and hasattr(eng, "set_state")
             ):
                 eng.set_state(canonical_engine_states[name])
+
+        self._validate_morale_bindings(require_runtime_for_roster=True)
 
 
 # ---------------------------------------------------------------------------
@@ -3145,6 +3480,12 @@ def register_dynamic_units(
         raise ValueError("Dynamic sensor loadout topology is incomplete")
 
     incoming_morale = _initial_morale_for_units(ctx.config, units)
+    incoming_statuses = {
+        unit.entity_id: _initial_status_for_morale(
+            incoming_morale[unit.entity_id],
+        )
+        for unit in units
+    }
     if set(ctx.unit_weapons) & incoming_ids:
         raise ValueError("Dynamic weapon loadout IDs already exist")
     if set(ctx.unit_sensors) & incoming_ids:
@@ -3153,8 +3494,8 @@ def register_dynamic_units(
         raise ValueError("Dynamic equipment-resolution IDs already exist")
     if set(ctx.morale_states) & incoming_ids:
         raise ValueError("Dynamic morale IDs already exist")
-    if ctx.morale_machine is None:
-        raise RuntimeError("Dynamic units require a morale state machine")
+    if ctx.morale_runtime is None:
+        raise RuntimeError("Dynamic units require a morale runtime")
 
     commander_plan: CommanderAssignmentPlan | None = None
     school_plan: Any = None
@@ -3249,10 +3590,7 @@ def register_dynamic_units(
     staged_sensors.update(incoming_sensors)
     staged_resolutions = dict(ctx.equipment_resolutions)
     staged_resolutions.update(incoming_resolutions)
-    staged_morale = dict(ctx.morale_states)
-    staged_morale.update(incoming_morale)
-
-    morale_before = ctx.morale_machine.get_state()
+    morale_before = ctx.morale_runtime.get_state()
     commander_before = (
         ctx.commander_engine.get_state()
         if ctx.commander_engine is not None
@@ -3270,6 +3608,7 @@ def register_dynamic_units(
     )
     c2_rng = ctx.rng_manager.get_stream(ModuleId.C2)
     c2_rng_before = copy.deepcopy(c2_rng.bit_generator.state)
+    incoming_status_before = tuple((unit, unit.status) for unit in units)
 
     # Every component has validated the complete batch before the first
     # commit. Roll back all component-owned state if an unexpected commit
@@ -3277,7 +3616,18 @@ def register_dynamic_units(
     try:
         if logistics_plan is not None:
             ctx.logistics_runtime.commit_unit_registration(logistics_plan)
-        ctx.morale_machine.initialize_units(incoming_morale)
+        for unit in units:
+            unit.status = incoming_statuses[unit.entity_id]
+        ctx.morale_runtime.register_units(
+            tuple(
+                MoraleRegistration(
+                    unit_id=unit.entity_id,
+                    initial_state=incoming_morale[unit.entity_id],
+                )
+                for unit in units
+            ),
+            {unit.entity_id: unit for unit in units},
+        )
         if commander_plan is not None:
             ctx.commander_engine.commit_assignments(commander_plan)
         if school_plan is not None:
@@ -3297,6 +3647,8 @@ def register_dynamic_units(
                 for unit in units
             })
     except Exception:
+        for unit, status in incoming_status_before:
+            unit.status = status
         if logistics_before is not None:
             ctx.logistics_runtime.set_state(
                 logistics_before,
@@ -3305,7 +3657,23 @@ def register_dynamic_units(
                     for unit in ctx.all_units()
                 },
             )
-        ctx.morale_machine.set_state(morale_before)
+        rollback_aggregate_topology = (
+            _checkpoint_aggregate_morale_topology(
+                ctx.aggregation_engine.get_state(),
+            )
+            if ctx.aggregation_engine is not None
+            else _CheckpointAggregateMoraleTopology({}, {})
+        )
+        ctx.morale_runtime.set_state(
+            morale_before,
+            expected_units={
+                unit.entity_id: unit
+                for unit in ctx.all_units()
+            },
+            elapsed_time_s=ctx.clock.elapsed.total_seconds(),
+            aggregate_constituents=rollback_aggregate_topology.constituents,
+            suspended_statuses=rollback_aggregate_topology.statuses,
+        )
         if commander_before is not None:
             ctx.commander_engine.set_state(commander_before)
         if school_before is not None:
@@ -3318,7 +3686,6 @@ def register_dynamic_units(
     ctx.unit_weapons = staged_weapons
     ctx.unit_sensors = staged_sensors
     ctx.equipment_resolutions = staged_resolutions
-    ctx.morale_states = staged_morale
 
 
 def _parse_weather_state(precip: str) -> int:
@@ -3612,6 +3979,26 @@ class ScenarioLoader:
                 timestamp=clock.current_time,
             )
 
+        morale_runtime = engines.get("morale_runtime")
+        if morale_runtime is None:
+            raise RuntimeError(
+                "Scenario loader did not create a morale runtime",
+            )
+        for unit in all_units:
+            unit.status = _initial_status_for_morale(
+                morale_states[unit.entity_id],
+            )
+        morale_runtime.register_units(
+            tuple(
+                MoraleRegistration(
+                    unit_id=unit.entity_id,
+                    initial_state=morale_states[unit.entity_id],
+                )
+                for unit in all_units
+            ),
+            {unit.entity_id: unit for unit in all_units},
+        )
+
         # 8. Assemble context
         real_ctx = self._real_terrain_ctx
         movement_diagnostics = MovementDiagnostics({
@@ -3635,7 +4022,6 @@ class ScenarioLoader:
             ),
             force_builder=force_builder,
             loadout_builder=loadout_builder,
-            morale_states=morale_states,
             movement_diagnostics=movement_diagnostics,
             doctrine_side_assignments=doctrine_policy,
             calibration=config.calibration_overrides,
@@ -3643,9 +4029,6 @@ class ScenarioLoader:
             **engines,
             **loaders,
         )
-        if ctx.morale_machine is None:
-            raise RuntimeError("Scenario loader did not create a morale state machine")
-        ctx.morale_machine.initialize_units(morale_states)
 
         # 9. Flat calibration dict (Phase 86 — O(1) battle-loop access)
         if isinstance(ctx.calibration, CalibrationSchema):
@@ -4374,18 +4757,15 @@ class ScenarioLoader:
 
         # Morale
         from stochastic_warfare.morale.config import build_morale_config
-        from stochastic_warfare.morale.state import MoraleStateMachine
 
         cal = config.calibration_overrides
         morale_config = build_morale_config(cal.morale)
-        morale_machine = MoraleStateMachine(bus, morale_rng, morale_config)
 
         # ROE (Phase 42a)
         from stochastic_warfare.c2.roe import RoeEngine, RoeLevel
         roe_engine = RoeEngine(bus, default_level=RoeLevel.WEAPONS_FREE)
 
         # Rout (Phase 42c / Phase 55 per-scenario config)
-        from stochastic_warfare.morale.rout import RoutConfig, RoutEngine
         _rout_cfg_kwargs: dict[str, float] = {}
         for _rout_field in ("cascade_radius_m", "cascade_base_chance", "cascade_shaken_susceptibility"):
             _rout_val = cal.get(f"rout_{_rout_field}")
@@ -4394,6 +4774,12 @@ class ScenarioLoader:
         rout_engine = RoutEngine(
             bus, morale_rng,
             config=RoutConfig(**_rout_cfg_kwargs) if _rout_cfg_kwargs else None,
+        )
+        morale_runtime = MoraleRuntime(
+            bus,
+            morale_rng,
+            morale_config,
+            rout_engine=rout_engine,
         )
 
         # Movement
@@ -4698,7 +5084,7 @@ class ScenarioLoader:
             "missile_defense_engine": missile_defense_engine,
             "detection_engine": det_engine,
             "fog_of_war": fog_of_war,
-            "morale_machine": morale_machine,
+            "morale_runtime": morale_runtime,
             "roe_engine": roe_engine,
             "rout_engine": rout_engine,
             "movement_engine": movement_engine,

@@ -43,13 +43,7 @@ def test_scenario_loader_owns_terrain_and_morale_construction(
     assert context.heightmap is not None
     assert context.heightmap.shape == (80, 120)
     assert context.heightmap.elevation_at(Position(25.0, 25.0)) == 200.0
-    assert context.morale_machine is not None
-    transition = context.morale_machine.compute_transition_matrix(
-        casualty_rate=0.0,
-        suppression_level=0.0,
-        leadership_present=False,
-        cohesion=0.0,
-        force_ratio=1.0,
-        cbrn_stress=0.0,
+    assert context.morale_runtime is not None
+    assert context.morale_runtime.config.base_degrade_rate == pytest.approx(
+        0.015,
     )
-    assert transition[0, 1] == pytest.approx(0.015)

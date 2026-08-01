@@ -2,7 +2,7 @@
 
 The configurations remain available for explicit manual measurement, but no
 single candidate/baseline timing pair makes a speed or interaction claim.
-Each flag needs its own promoted version-2 paired reference before gating.
+Each flag needs its own promoted version-3 paired reference before gating.
 """
 
 from __future__ import annotations

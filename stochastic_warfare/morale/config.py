@@ -34,6 +34,9 @@ class MoraleCalibrationValues(Protocol):
     @property
     def transition_cooldown_s(self) -> float: ...
 
+    @property
+    def use_continuous_time(self) -> bool: ...
+
 
 _RUNTIME_MORALE_FIELDS = (
     "base_degrade_rate",
@@ -44,6 +47,7 @@ _RUNTIME_MORALE_FIELDS = (
     "cohesion_weight",
     "force_ratio_weight",
     "transition_cooldown_s",
+    "use_continuous_time",
 )
 
 

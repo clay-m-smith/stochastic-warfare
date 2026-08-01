@@ -233,20 +233,21 @@ class TestMoraleConstants:
         Marshall: ~15-25% stop firing effectively in first hour."""
         from stochastic_warfare.morale.state import MoraleConfig, MoraleState, MoraleStateMachine
 
-        bus = EventBus()
         degraded = 0
         n_trials = 200
         # Light-moderate combat: 3% casualties, light suppression, leadership present
         for i in range(n_trials):
             rng = np.random.Generator(np.random.PCG64(i))
-            msm = MoraleStateMachine(bus, rng, MoraleConfig())
-            uid = f"unit_{i}"
+            msm = MoraleStateMachine(rng, MoraleConfig())
+            state = MoraleState.STEADY
             # Simulate ~12 checks over 1 hour (5-min intervals)
-            for tick in range(12):
-                state = msm.check_transition(
-                    uid, casualty_rate=0.03, suppression_level=0.15,
+            for _ in range(12):
+                state = msm.select_transition(
+                    state,
+                    casualty_rate=0.03,
+                    suppression_level=0.15,
                     leadership_present=True, cohesion=0.6, force_ratio=1.0,
-                    current_time_s=tick * 300.0,
+                    dt=300.0,
                 )
             if state != MoraleState.STEADY:
                 degraded += 1
@@ -260,19 +261,20 @@ class TestMoraleConstants:
         should occur within ~2 hours."""
         from stochastic_warfare.morale.state import MoraleConfig, MoraleState, MoraleStateMachine
 
-        bus = EventBus()
         broken_or_worse = 0
         n_trials = 100
         for i in range(n_trials):
             rng = np.random.Generator(np.random.PCG64(i))
-            msm = MoraleStateMachine(bus, rng, MoraleConfig())
-            uid = f"unit_{i}"
+            msm = MoraleStateMachine(rng, MoraleConfig())
+            state = MoraleState.STEADY
             # 2 hours of heavy combat (24 checks at 5-min intervals)
-            for tick in range(24):
-                state = msm.check_transition(
-                    uid, casualty_rate=0.35, suppression_level=0.6,
+            for _ in range(24):
+                state = msm.select_transition(
+                    state,
+                    casualty_rate=0.35,
+                    suppression_level=0.6,
                     leadership_present=False, cohesion=0.3, force_ratio=0.5,
-                    current_time_s=tick * 300.0,
+                    dt=300.0,
                 )
             if state.value >= MoraleState.BROKEN.value:
                 broken_or_worse += 1
@@ -285,21 +287,20 @@ class TestMoraleConstants:
         """Recovery from SHAKEN takes ~30-60 min with leadership."""
         from stochastic_warfare.morale.state import MoraleConfig, MoraleState, MoraleStateMachine
 
-        bus = EventBus()
         recovered = 0
         n_trials = 200
         for i in range(n_trials):
             rng = np.random.Generator(np.random.PCG64(i))
-            msm = MoraleStateMachine(bus, rng, MoraleConfig())
-            uid = f"unit_{i}"
-            # Force to SHAKEN
-            msm._get_unit_state(uid).current_state = MoraleState.SHAKEN
+            msm = MoraleStateMachine(rng, MoraleConfig())
+            state = MoraleState.SHAKEN
             # 1 hour of recovery with leadership, low threat
-            for tick in range(12):
-                state = msm.check_transition(
-                    uid, casualty_rate=0.0, suppression_level=0.0,
+            for _ in range(12):
+                state = msm.select_transition(
+                    state,
+                    casualty_rate=0.0,
+                    suppression_level=0.0,
                     leadership_present=True, cohesion=0.7, force_ratio=2.0,
-                    current_time_s=tick * 300.0,
+                    dt=300.0,
                 )
             if state == MoraleState.STEADY:
                 recovered += 1

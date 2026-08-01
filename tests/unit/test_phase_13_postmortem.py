@@ -9,8 +9,10 @@ import numpy as np
 from stochastic_warfare.core.clock import SimulationClock
 from stochastic_warfare.core.events import EventBus
 from stochastic_warfare.core.rng import RNGManager
-from stochastic_warfare.core.types import Position
+from stochastic_warfare.core.types import ModuleId, Position
 from stochastic_warfare.entities.base import Unit, UnitStatus
+from stochastic_warfare.morale.runtime import MoraleRegistration, MoraleRuntime
+from stochastic_warfare.morale.state import MoraleState
 from stochastic_warfare.simulation.aggregation import (
     AggregationConfig,
     AggregationEngine,
@@ -89,11 +91,32 @@ def _make_ctx(
     aggregation_engine: AggregationEngine | None = None,
     heightmap: Heightmap | None = None,
     los_engine: object | None = None,
+    *,
+    with_morale_runtime: bool = False,
 ) -> SimulationContext:
     config = _make_config()
     rng_mgr = RNGManager(42)
     bus = EventBus()
     clock = SimulationClock(start=TS, tick_duration=timedelta(seconds=3600))
+    runtime = (
+        MoraleRuntime(bus, rng_mgr.get_stream(ModuleId.MORALE))
+        if with_morale_runtime
+        else None
+    )
+    effective_units = units_by_side or {}
+    if runtime is not None:
+        units_by_id = {
+            unit.entity_id: unit
+            for units in effective_units.values()
+            for unit in units
+        }
+        runtime.register_units(
+            tuple(
+                MoraleRegistration(unit_id, MoraleState.STEADY)
+                for unit_id in sorted(units_by_id)
+            ),
+            units_by_id,
+        )
 
     ctx = SimulationContext(
         config=config,
@@ -101,8 +124,10 @@ def _make_ctx(
         rng_manager=rng_mgr,
         event_bus=bus,
         heightmap=heightmap,
-        units_by_side=units_by_side or {},
+        units_by_side=effective_units,
         morale_states={},
+        morale_runtime=runtime,
+        rout_engine=(runtime.rout_engine if runtime is not None else None),
         aggregation_engine=aggregation_engine,
         los_engine=los_engine,
     )
@@ -164,6 +189,7 @@ class TestAggregationContextField:
         ctx = _make_ctx(
             units_by_side={"blue": units},
             aggregation_engine=agg,
+            with_morale_runtime=True,
         )
         # Aggregate some units
         agg.aggregate(["u0", "u1", "u2", "u3"], ctx)
@@ -171,7 +197,10 @@ class TestAggregationContextField:
 
         # Restore into a new engine
         agg2 = AggregationEngine(config=config, rng=np.random.default_rng(0))
-        ctx2 = _make_ctx(aggregation_engine=agg2)
+        ctx2 = _make_ctx(
+            aggregation_engine=agg2,
+            with_morale_runtime=True,
+        )
         ctx2.set_state(state)
         assert agg2.active_aggregates  # restored aggregates
 
@@ -325,6 +354,7 @@ class TestAggregationWiring:
         ctx = _make_ctx(
             units_by_side={"blue": blue, "red": red},
             aggregation_engine=agg,
+            with_morale_runtime=True,
         )
         # Use short engagement range so initial engagement detection
         # doesn't trigger (forces are ~12.6km apart > 5km range).

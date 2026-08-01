@@ -3,7 +3,7 @@
 **Status:** Planned follow-up handoff; implementation has not started
 
 Block 13 owns integrity deficits discovered while specifying and validating
-Phase 112. It is not part of the Phase 112 implementation or the Block 12
+Phases 112 and 113. It is not part of either implementation or the Block 12
 completion claim. Each phase must follow the repository's full specification,
 production-red, implementation, validation, documentation, postmortem, and
 single-commit workflow before its remediation item can close.
@@ -38,6 +38,15 @@ contract. Inventory every scenario, test, and public historical-outcome claim
 and classify it as production-validated, current-engine regression only, or
 explicitly unsupported. Debecka Pass is the concrete production red that
 surfaced the issue, not the phase's only scenario.
+
+Phase 113 supplied additional current-engine regression signals for this
+inventory: default 73 Easting now exposes routed blue units while its explicit
+morale-neutral benchmark control does not; the existing Waterloo 20-seed sweep
+shifted from 20 British wins to 18 British and 2 French wins; and seed-42
+Trafalgar and `calibration_arctic` changed terminal winner, duration, and force
+status composition. These deterministic observations identify fidelity review
+work; they are not historical-validation verdicts or calibration authority.
+REM-030 remains queued for this phase.
 
 For every claim retained as validated, predeclare exact metric definitions and
 units, event boundaries, source provenance and quality, justified ranges or
@@ -80,3 +89,51 @@ Exit criteria: REM-031 is closed with declared, loaded, wired,
 enabled/disabled, realistic production-exercised, observable semantic-verdict,
 and persisted/exposed evidence for every flag. Every required validation job
 must fit its declared timeout without discarding unexamined catalog runs.
+
+## Phase 119 - Guerrilla Concealment State Integrity
+
+Status: **Not started**. REM-032 remains queued.
+
+Replace the historical populated-area `blend_probability -> ROUTING` proxy
+with a typed non-morale concealment/disengagement owner. Resolve populated-area
+membership through the production population boundary, define success and
+re-emergence lifecycle, and wire the state into detection, targetability,
+movement, active-force and victory accounting, events, recorder/API exposure,
+and checkpoint continuation. Do not represent concealment as morale collapse
+or remove a unit without an explicit lifecycle.
+
+Exit criteria: REM-032 is closed with declared, loaded, wired,
+enabled/disabled, realistic production-exercised, outcome-affecting, and
+persisted/exposed evidence. The Phase 113 explicit unsupported error remains
+until the complete replacement is verified in this phase.
+
+## Phase 120 - Surrender and POW Lifecycle Integrity
+
+Status: **Not started**. REM-033 remains queued.
+
+Replace the rejected rout-owned surrender helper with one typed production
+transaction that commits authoritative morale/status/route state together with
+captor provenance and a prisoner lifecycle. Wire exact surrendered personnel
+into logistics handling, resource costs, transfers/releases, events,
+recorder/API exposure, and checkpoint continuation. Do not fabricate a captor,
+an escape count, or a logistics handoff from an isolated subsystem call.
+
+Exit criteria: REM-033 is closed with declared, loaded, wired, realistic
+production-exercised, outcome-affecting, and persisted/exposed evidence for
+the complete surrender-to-prisoner lifecycle, including deterministic failure,
+rollback, duplicate-processing, and continuation controls.
+
+## Phase 121 - Production Event-Time Integrity
+
+Status: **Not started**. REM-034 remains queued.
+
+Replace `datetime.min` sentinels in production aggregate casualty and
+auto-resolve events with one explicit authoritative simulation timestamp.
+Thread the logical clock through every live caller, reject absent or invalid
+time before publishing, and preserve exact event order without introducing a
+wall-clock fallback or second clock owner.
+
+Exit criteria: REM-034 is closed with declared, loaded, wired, realistic
+production-exercised, outcome-affecting, and persisted/exposed evidence for
+aggregate engagement/damage and auto-resolve destruction timestamps, including
+recorder/API/timeline output and deterministic checkpoint continuation.

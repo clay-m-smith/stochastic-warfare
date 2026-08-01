@@ -1,12 +1,15 @@
 """Phase 13a-7: Force aggregation/disaggregation tests."""
 
-import types
+from collections.abc import Mapping
+from dataclasses import dataclass
 
 import numpy as np
 import pytest
 
+from stochastic_warfare.core.events import EventBus
 from stochastic_warfare.core.types import Position
 from stochastic_warfare.entities.base import Unit, UnitStatus
+from stochastic_warfare.morale.runtime import MoraleRegistration, MoraleRuntime
 from stochastic_warfare.morale.state import MoraleState
 from stochastic_warfare.simulation.aggregation import (
     AggregationConfig,
@@ -23,15 +26,91 @@ def _make_unit(entity_id: str, side: str = "blue", pos: Position = Position(0, 0
     return Unit(entity_id=entity_id, position=pos, side=side, unit_type=unit_type)
 
 
-def _make_ctx(units_by_side=None, morale_states=None):
-    """Minimal mock SimulationContext."""
-    ctx = types.SimpleNamespace()
-    ctx.units_by_side = units_by_side or {}
-    ctx.unit_weapons = {}
-    ctx.unit_sensors = {}
-    ctx.morale_states = morale_states if morale_states is not None else {}
-    ctx.stockpile_manager = None
-    return ctx
+@dataclass
+class _AggregationContext:
+    """Typed aggregation boundary with an explicit morale owner."""
+
+    event_bus: EventBus
+    units_by_side: dict[str, list[Unit]]
+    morale_runtime: MoraleRuntime | None
+    morale_states: Mapping[str, MoraleState]
+    unit_weapons: dict[str, list[object]]
+    unit_sensors: dict[str, list[object]]
+    equipment_resolutions: dict[str, tuple[object, ...]]
+    stockpile_manager: object | None
+    order_execution: object | None
+
+
+def _copy_roster(
+    units_by_side: Mapping[str, list[Unit]] | None,
+) -> dict[str, list[Unit]]:
+    return {
+        side: list(units)
+        for side, units in (units_by_side or {}).items()
+    }
+
+
+def _make_ctx(
+    units_by_side: Mapping[str, list[Unit]] | None = None,
+    morale_states: Mapping[str, MoraleState] | None = None,
+) -> _AggregationContext:
+    """Build an exactly registered runtime-owned aggregation context."""
+    roster = _copy_roster(units_by_side)
+    units = {
+        unit.entity_id: unit
+        for side_units in roster.values()
+        for unit in side_units
+    }
+    if len(units) != sum(len(side_units) for side_units in roster.values()):
+        raise ValueError("Test roster contains duplicate unit IDs")
+
+    initial_states = (
+        {unit_id: MoraleState.STEADY for unit_id in units}
+        if morale_states is None
+        else dict(morale_states)
+    )
+    if set(initial_states) != set(units):
+        raise ValueError("Test morale topology must exactly match the roster")
+
+    event_bus = EventBus()
+    runtime = MoraleRuntime(event_bus, _rng())
+    runtime.register_units(
+        tuple(
+            MoraleRegistration(unit_id, initial_states[unit_id])
+            for unit_id in sorted(units)
+        ),
+        units,
+    )
+    runtime.validate_bindings(units)
+    return _AggregationContext(
+        event_bus=event_bus,
+        units_by_side=roster,
+        morale_runtime=runtime,
+        morale_states=runtime.states,
+        unit_weapons={},
+        unit_sensors={},
+        equipment_resolutions={},
+        stockpile_manager=None,
+        order_execution=None,
+    )
+
+
+def _make_ownerless_ctx(
+    units_by_side: Mapping[str, list[Unit]],
+    morale_states: Mapping[str, MoraleState],
+) -> _AggregationContext:
+    """Build the deliberate legacy-ownerless failure control."""
+    return _AggregationContext(
+        event_bus=EventBus(),
+        units_by_side=_copy_roster(units_by_side),
+        morale_runtime=None,
+        morale_states=dict(morale_states),
+        unit_weapons={},
+        unit_sensors={},
+        equipment_resolutions={},
+        stockpile_manager=None,
+        order_execution=None,
+    )
 
 
 class TestUnitSnapshot:
@@ -43,19 +122,19 @@ class TestUnitSnapshot:
         assert snap.unit_state["entity_id"] == "u1"
         assert snap.original_side == "blue"
 
-    def test_snapshot_captures_morale(self):
+    def test_snapshot_does_not_duplicate_morale(self):
         engine = AggregationEngine(rng=_rng())
         unit = _make_unit("u1")
         ctx = _make_ctx({"blue": [unit]}, {"u1": MoraleState.SHAKEN})
         snap = engine.snapshot_unit(unit, ctx)
-        assert snap.morale_state == int(MoraleState.SHAKEN)
+        assert not hasattr(snap, "morale_state")
 
-    def test_snapshot_default_morale_steady(self):
+    def test_snapshot_state_omits_morale_key(self):
         engine = AggregationEngine(rng=_rng())
         unit = _make_unit("u1")
         ctx = _make_ctx({"blue": [unit]})
         snap = engine.snapshot_unit(unit, ctx)
-        assert snap.morale_state == int(MoraleState.STEADY)
+        assert "morale_state" not in snap.__dict__
 
 
 class TestAggregation:
@@ -101,14 +180,16 @@ class TestAggregation:
         agg = engine.aggregate(["u0", "u1"], ctx)
         assert agg.position.easting == pytest.approx(500.0)
 
-    def test_aggregate_worst_morale(self):
+    def test_aggregate_uses_worst_runtime_owned_morale(self):
         config = AggregationConfig(enable_aggregation=True, min_units_to_aggregate=2)
         engine = AggregationEngine(config=config, rng=_rng())
         units = [_make_unit("u0", "blue"), _make_unit("u1", "blue")]
         morale = {"u0": MoraleState.STEADY, "u1": MoraleState.BROKEN}
         ctx = _make_ctx({"blue": list(units)}, morale)
+
         agg = engine.aggregate(["u0", "u1"], ctx)
-        assert agg.morale_state == MoraleState.BROKEN
+
+        assert ctx.morale_states == {agg.aggregate_id: MoraleState.BROKEN}
 
     def test_aggregate_mixed_types(self):
         config = AggregationConfig(enable_aggregation=True, min_units_to_aggregate=2)
@@ -170,17 +251,31 @@ class TestDisaggregation:
         assert agg.aggregate_id not in blue_ids
         assert "u0" in blue_ids
 
-    def test_disaggregate_restores_morale(self):
+    def test_disaggregate_restores_runtime_owned_morale(self):
         config = AggregationConfig(enable_aggregation=True, min_units_to_aggregate=2)
         engine = AggregationEngine(config=config, rng=_rng())
         units = [_make_unit("u0", "blue"), _make_unit("u1", "blue")]
         morale = {"u0": MoraleState.STEADY, "u1": MoraleState.SHAKEN}
         ctx = _make_ctx({"blue": list(units)}, morale)
         agg = engine.aggregate(["u0", "u1"], ctx)
+
         engine.disaggregate(agg.aggregate_id, ctx)
 
-        assert ctx.morale_states["u0"] == MoraleState.STEADY
-        assert ctx.morale_states["u1"] == MoraleState.SHAKEN
+        assert ctx.morale_states == morale
+
+    def test_ownerless_morale_rejection_precedes_roster_mutation(self):
+        config = AggregationConfig(enable_aggregation=True, min_units_to_aggregate=2)
+        engine = AggregationEngine(config=config, rng=_rng())
+        units = [_make_unit("u0", "blue"), _make_unit("u1", "blue")]
+        morale = {"u0": MoraleState.STEADY, "u1": MoraleState.SHAKEN}
+        ctx = _make_ownerless_ctx({"blue": list(units)}, morale)
+        before = list(ctx.units_by_side["blue"])
+
+        with pytest.raises(RuntimeError, match="MoraleRuntime"):
+            engine.aggregate(["u0", "u1"], ctx)
+
+        assert ctx.units_by_side["blue"] == before
+        assert ctx.morale_states == morale
 
     def test_disaggregate_unknown_id(self):
         engine = AggregationEngine(rng=_rng())
@@ -195,7 +290,7 @@ class TestDisaggregation:
             _make_unit("u0", "blue", Position(100, 200), "infantry"),
             _make_unit("u1", "blue", Position(300, 400), "infantry"),
         ]
-        ctx = _make_ctx({"blue": list(units)}, {"u0": MoraleState.STEADY, "u1": MoraleState.STEADY})
+        ctx = _make_ctx({"blue": list(units)})
 
         # Aggregate
         agg = engine.aggregate(["u0", "u1"], ctx)

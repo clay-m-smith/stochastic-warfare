@@ -614,10 +614,10 @@ fully fueled control moves and emits neither issue. Direct calls to
 `MovementDiagnostics`, a fake movement result, or the injected committer do
 not satisfy this production blocked-unit proof.
 
-### Reproducible paired performance contract
+### Phase 112 version-2 reproducible paired performance contract (historical)
 
-`baselines.json` advances to a strict typed version-2 contract. A gating entry
-contains:
+For the Phase 112 closure, `baselines.json` advanced to a strict typed
+version-2 contract. A gating entry contained:
 
 - one full authoritative reference commit, initially
   `0460ac70be86784bcc6e359ae4202f4bcb938c60`;
@@ -660,10 +660,10 @@ work without changing either.
 
 Code, loader, checkpoint, and result-schema revisions remain explicit artifact
 metadata but are not equality-critical inputs: the reference is schema 111 and
-the candidate advances to schema 112 by design. One candidate-owned version-2
-normalizer projects both revisions into the same effective-value and semantic
-contracts. A normalized value difference fails; an intentional schema-version
-label difference alone does not.
+the candidate advances to schema 112 by design. For that Phase 112 comparison,
+one candidate-owned version-2 normalizer projects both revisions into the same
+effective-value and semantic contracts. A normalized value difference fails;
+an intentional schema-version label difference alone does not.
 
 The semantic envelope contains exact unit count, ordered roster/loadout
 fingerprint, winner, victory condition type, ticks, logical duration,
@@ -745,10 +745,11 @@ explicitly `measurement_only`. Measured CI safety timeouts may fail an
 incomplete job and preserve its partial artifact, but they are operational
 containment rather than performance-regression evidence.
 
-The routine 73 Easting gate uses the version-2 paired harness. The full paired
-Golan run is a standalone manual harness, not a pytest node in the scheduled
-`slow-benchmark` partition. Existing Golan and Falklands pytest nodes are
-either semantic/profile tests with no regression claim or typed
+At Phase 112 closure, the routine 73 Easting gate used the version-2 paired
+harness. The full paired Golan run is a standalone manual harness, not a
+pytest node in the scheduled `slow-benchmark` partition. Existing Golan and
+Falklands pytest nodes are either semantic/profile tests with no regression
+claim or typed
 `measurement_only` consumers that refuse a pass/fail regression result.
 Consequently the weekly partition cannot accidentally execute the manual
 Golan gate. Weekly marker jobs are sharded by deterministic collected node-ID
@@ -779,6 +780,31 @@ for `uv.lock`,
 for 73 Easting, and
 `699b75819d271ddf61a8d0bce309d44f64335fd1af6cd7d0b1c6da39128b8868`
 for Golan.
+
+### Current version-3 typed workload amendment
+
+During Phase 113, the live baseline and artifact contract advances to version
+3. Every entry now carries a strict `BenchmarkWorkload` with a named workload
+and typed sparse `BenchmarkCalibrationPatch`; unknown fields, missing workload
+identity, and a workload-name/patch mismatch reject. The workload and exact
+effective calibration participate in the reference/candidate input
+fingerprint and semantic comparison.
+
+The routine 73 Easting gate is specifically
+`morale_neutral_control_plane`. Its typed morale patch sets the base degrade
+and recovery rates plus casualty, suppression, leadership, cohesion, and force
+ratio weights to exactly zero through the production configuration boundary.
+Only 73 Easting may select this workload. Every other current entry uses the
+typed `default` workload, and a morale-neutral patch on another entry rejects.
+
+This control preserves a stable movement/control-plane performance workload
+across the intentional Phase 113 morale-ownership change. Its checked-in
+semantic envelope remains 71 units, all 21 blue and 50 red units `ACTIVE`, blue
+`time_expired`, 360 ticks, 1,800 logical seconds, and one recorded victory
+event. It is not evidence for default 73 Easting morale behavior, combat
+throughput, historical fidelity, or Phase 113 acceptance. The version-2 timing
+and baseline-red measurements above remain labeled historical Phase 112
+evidence rather than being rewritten as version-3 results.
 
 ### Typed Space ISR report delivery and checkpoint state
 
@@ -1184,7 +1210,7 @@ longer depends accidentally on the EW suite.
 | Commander | Canonical side profile plus typed tuning/override config | Global and applicable era catalogs with duplicate rejection | Initial and reinforcement units receive exact profiles | Declaring side profiles creates the engine | OODA/decision path runs with assigned personalities | Enabled side profiles change decision timing/behavior against phase-start controls | Commander/school/C2 state checkpoints and scenario diagnostics |
 | Unit data | Canonical enum-valued definition fields | UnitLoader validates before construction | Exact roster builder uses validated definitions | N/A: valid unit data is mandatory, not optional | Austerlitz and Waterloo construct every authored unit | Old Guard participates in production battle state | Exact roster/loadout checkpoint and validator/evaluator output |
 | Movement diagnostics | Typed disposition and bounded cumulative reason state | Production movement inputs | Exact strategic/tactical branches record disposition | Always observational when movement runs | Cambrai plus explicit zero-commit invariant control | Evaluator classification changes without altering simulation behavior | Evaluator JSON/text and bounded schema-112 state |
-| Benchmark | Version-2 policy, semantic envelope, samples, environment | Strict baseline/artifact parser | Candidate harness runs reference and candidate production engines | 73 Easting routine; Golan manual | Warm-up and three paired measurements | Rejects performance claims when workload semantics change | Uploaded JSON artifact and reviewed baseline contract |
+| Benchmark | Version-3 typed workload policy, semantic envelope, samples, environment | Strict baseline/artifact parser | Candidate harness runs reference and candidate production engines with the fingerprinted workload patch | 73 Easting morale-neutral control-plane routine; Golan default-workload manual | Warm-up and three paired measurements | Rejects performance claims when workload semantics change | Uploaded JSON artifact and reviewed baseline contract |
 | Space ISR | Typed report, receipt, and queue/fusion state | Scenario/topology and checkpoint validation | Space update to transactional owner-side IMINT fusion | Space effects plus reachable imaging constellation | Delayed report before/after fresh restore | Ready report changes only owner fusion track/receipt state | Schema-112 report queue, receipt ledger, and FOW fusion state |
 | Documentation | Anchor severity and evidence-backed claims | MkDocs parses all pages/config | PR/main workflows run strict build | Every docs-relevant PR/push | All historical fragments resolve | N/A: documentation reports behavior but does not create it | Built site artifact and committed docs |
 
@@ -1484,8 +1510,8 @@ Phase 112 is complete only when:
 ## Non-goals and accepted limitations
 
 - REM-016 aggregation subtype/loadout reconstruction remains queued.
-- REM-018 era override execution and REM-019 morale ownership remain Phase 114
-  and Phase 113 respectively.
+- REM-018 era override execution remains assigned to Phase 114. REM-019 morale
+  ownership was closed by the accepted Phase 113 production contract.
 - REM-020 and REM-021 logistics authority remain explicit follow-ups.
 - REM-028 owns the newly confirmed weapon-standoff versus detection/visibility
   mismatch and is assigned to planned Phase 115. Phase 112 records it without

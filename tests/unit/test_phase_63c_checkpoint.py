@@ -11,6 +11,9 @@ import pytest
 from stochastic_warfare.core.clock import SimulationClock
 from stochastic_warfare.core.events import EventBus
 from stochastic_warfare.core.rng import RNGManager
+from stochastic_warfare.core.types import ModuleId
+from stochastic_warfare.morale.runtime import MoraleRuntime
+from stochastic_warfare.morale.rout import RoutEngine
 from stochastic_warfare.simulation.scenario import (
     _CONTEXT_STATE_ENGINE_NAMES,
     CampaignScenarioConfig,
@@ -40,7 +43,7 @@ class _StateOwner:
         self.value = state["value"]
 
 
-def _context() -> SimulationContext:
+def _context(*, with_morale_runtime: bool = False) -> SimulationContext:
     config = CampaignScenarioConfig(
         name="Phase 63c checkpoint registry",
         date="2024-01-01T00:00:00Z",
@@ -51,16 +54,30 @@ def _context() -> SimulationContext:
             SideConfig(side="red", units=[]),
         ],
     )
+    rng_manager = RNGManager(63)
+    event_bus = EventBus()
+    morale_runtime = None
+    rout_engine = None
+    if with_morale_runtime:
+        morale_rng = rng_manager.get_stream(ModuleId.MORALE)
+        rout_engine = RoutEngine(event_bus, morale_rng)
+        morale_runtime = MoraleRuntime(
+            event_bus,
+            morale_rng,
+            rout_engine=rout_engine,
+        )
     return SimulationContext(
         config=config,
         clock=SimulationClock(
             start=datetime(2024, 1, 1, tzinfo=timezone.utc),
             tick_duration=timedelta(seconds=5),
         ),
-        rng_manager=RNGManager(63),
-        event_bus=EventBus(),
+        rng_manager=rng_manager,
+        event_bus=event_bus,
         units_by_side={"blue": [], "red": []},
         morale_states={},
+        morale_runtime=morale_runtime,
+        rout_engine=rout_engine,
     )
 
 
@@ -75,7 +92,6 @@ class TestCheckpointEngineList:
             "movement_engine",
             "conditions_engine",
             "weather_engine",
-            "morale_machine",
         ),
     )
     def test_registered_owner_is_visible_to_capture(
@@ -90,6 +106,15 @@ class TestCheckpointEngineList:
 
         assert runtime_owners[owner_name] is owner
         assert context.get_state()[owner_name] == {"value": 7}
+
+    def test_morale_runtime_uses_the_explicit_owned_boundary(self) -> None:
+        context = _context(with_morale_runtime=True)
+
+        checkpoint = context.get_state()
+
+        assert context.morale_runtime is not None
+        assert checkpoint["morale_runtime"] == context.morale_runtime.get_state()
+        assert "morale_runtime" not in dict(context._checkpoint_engines())
 
     @pytest.mark.parametrize(
         "owner_name",

@@ -42,7 +42,6 @@ PHASE_72A_ENGINES = [
 
 # Pre-existing engines (Phase 63c and earlier)
 PRE_EXISTING_ENGINES = [
-    "morale_machine",
     "ooda_engine",
     "planning_engine",
     "order_execution",
@@ -185,6 +184,16 @@ class TestStructuralRegistration:
             source_pair["runtime_owners"][engine_name]
             is source_pair["sentinels"][engine_name]
         )
+
+    def test_morale_runtime_uses_its_explicit_checkpoint_boundary(
+        self,
+        source_pair,
+    ):
+        """Morale has one typed owner and is not duplicated in the registry."""
+        assert "morale_machine" not in source_pair["declared_names"]
+        assert "morale_runtime" not in source_pair["declared_names"]
+        assert '"morale_runtime": (' in source_pair["get_source"]
+        assert "self.morale_runtime.get_state()" in source_pair["get_source"]
 
 
 class TestBehavioralRegistration:

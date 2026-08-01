@@ -2,7 +2,7 @@
 
 ![Python](https://img.shields.io/badge/python-%3E%3D3.12-blue)
 ![Tests](https://img.shields.io/badge/tests-partitioned_validation-blue)
-![Phase](https://img.shields.io/badge/phase-112_COMPLETE-brightgreen)
+![Phase](https://img.shields.io/badge/phase-113_COMPLETE-brightgreen)
 
 High-fidelity, high-resolution wargame simulator with a headless Python engine,
 FastAPI service, and React frontend. Models warfare across multiple scales —
@@ -50,18 +50,20 @@ and `e2e`. PR/main CI audits the union and runs `standard`, `api`, `e2e`, and
 the overlapping `terrain` dependency profile. Weekly/manual CI runs the three
 marker partitions in deterministic module-affine shards. `terrain` and
 `benchmark-policy` are overlapping dependency/policy profiles, not extra union
-members. The 73 Easting benchmark is routine; Golan remains a manual paired
-benchmark. All Python commands use `uv run` so the project environment is
-selected without manual activation.
+members. The routine 73 Easting gate uses the version-3 typed,
+morale-neutral control-plane workload; it does not measure default morale
+behavior or historical fidelity. Golan remains a manual paired benchmark. All
+Python commands use `uv run` so the project environment is selected without
+manual activation.
 
-The Phase 112 closure audit exercised exactly 11,752 nodes in that disjoint
-union: `standard` 11,299 passed with 6 warnings, `slow-only` 109 passed with no
-warnings, `benchmark-only` 60 passed with no warnings, `slow-benchmark` 4
-passed with no warnings, API 239 passed with no warnings, and E2E 41 passed
-with no warnings. The API result is local evidence under the host's
-uvloop-qualified workaround; it is not a host-default API claim until the
-remote default-policy job passes. The overlapping terrain profile separately
-passed 97 tests.
+The current Phase 113 audit enumerates exactly 11,824 nodes in that disjoint
+union: `standard` 11,367, `slow-only` 109, `benchmark-only` 62,
+`slow-benchmark` 4, API 241, and E2E 41. All 11,824 passed with zero
+failures/errors/skips and six declared warnings. Local API/E2E plus one
+FastMCP standard node used the declared uvloop qualification; hosted CI is the
+authoritative default-policy control for that local host/tool-loop boundary.
+Historical Phase 112 execution evidence is retained in the
+[Phase 112 devlog](docs/devlog/phase-112.md).
 
 ## Quick Start (Web UI)
 
@@ -224,10 +226,11 @@ For the full package tree and module decomposition, see [`docs/specs/project-str
 
 ## Development Status
 
-Phases 105 through 112 are complete, including the validation and
-documentation trust remediations. Phase 113 has not started, so Block 12
-remains in progress. See the
-[Phase 112 devlog](docs/devlog/phase-112.md), the
+Phases 105 through 113 are complete, including the validation, documentation
+trust, and morale-ownership remediations. Phase 114 is next and remains
+unstarted, so Block 12 remains in progress. See the
+[Phase 113 devlog](docs/devlog/phase-113.md), the
+[morale ownership specification](docs/specs/morale-state-ownership.md), the
 [remediation backlog](docs/remediation-backlog.md), and the phase roadmaps for
 the exact evidence and remaining boundaries.
 
@@ -347,14 +350,12 @@ the exact evidence and remaining boundaries.
 | 110 | ASAT Production Integration (Block 12) | 50 (49 focused + 1 API) | **Complete** |
 | 111 | Time-on-Target Execution (Block 12) | 165 (162 focused + 3 API) | **Complete** |
 | 112 | Validation & Documentation Trust (Block 12) | 11,752 audited union; 97 terrain profile | **Complete** |
-| 113 | Morale State Ownership (Block 12) | Not started | **Not started** |
+| 113 | Morale State Ownership (Block 12) | 11,824 audited passes; 6 declared warnings | **Complete** |
 | 114 | Era Override Execution (Block 12) | Not started | **Not started** |
 
-The Phase 112 counts above are repository-wide closure evidence, not a count
-of newly added tests. The six warnings belong to `standard`; the other five
-partitions reported none. The local API partition used the documented
-uvloop-qualified host workaround and still requires remote default-policy
-confirmation. For the full phase roadmap, see
+The Phase 112 row remains historical repository-wide closure evidence, not a
+count of newly added tests. The Phase 113 row reports the complete current
+closure union. For the full phase roadmap, see
 [`docs/development-phases.md`](docs/development-phases.md) (MVP),
 [`docs/development-phases-post-mvp.md`](docs/development-phases-post-mvp.md)
 (post-MVP), and `docs/development-phases-block{N}.md` for Blocks 2–13. The live

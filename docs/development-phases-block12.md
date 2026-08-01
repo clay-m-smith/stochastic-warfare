@@ -8,8 +8,8 @@ or persisted stages are missing.
 The live issue inventory and evidence matrix are in
 [`remediation-backlog.md`](remediation-backlog.md).
 
-Block status: **In progress**. Phases 105 through 112 are complete. Phase 113
-has not started, and Phase 114 remains unstarted.
+Block status: **In progress**. Phases 105 through 113 are complete. Phase 114
+remains unstarted.
 
 ## Phase 105 - Checkpoint State Integrity
 
@@ -203,11 +203,30 @@ for the canonical issue transitions.
 
 ## Phase 113 - Morale State Ownership
 
-Status: **Not started**.
+Status: **Complete** (2026-08-01).
 
 Replace the independently mutable context and state-machine morale stores with
 one authoritative runtime path. Route transitions, rout cascades, aggregation,
 dynamic registration, victory reads, and checkpointing through it.
+
+The implementation now places immutable active records and suspended aggregate
+archives behind one typed `MoraleRuntime`. Initial units and reinforcements,
+stochastic and forced transitions, rally, cascades, aggregation, victory,
+recorder/API projections, and format-113 checkpoint continuation use that
+runtime-owned boundary; `RNGManager` is the sole MORALE-stream persistence
+authority. The former guerrilla `blend_probability -> ROUTING` proxy has also
+been replaced by an explicit pre-mutation unsupported error, with the actual
+concealment lifecycle retained by REM-032/Phase 119.
+
+Focused production-path, deterministic-replay, checkpoint, scenario, and
+benchmark-policy evidence is recorded in
+[`phase-113.md`](devlog/phase-113.md). The exact 11,824-node union has passed
+with zero failures/errors/skips and six declared warnings; local API/E2E plus
+one FastMCP standard node use an explicit uvloop qualification, with hosted CI
+as the authoritative default-policy control. The corrected documentation audit
+and phase postmortem passed. The post-commit clean-tree benchmark verifier
+binds the accepted comparison to the final phase commit as documented in the
+devlog. REM-019 is closed.
 
 Exit criteria: REM-019 is closed with exact transition, cascade, aggregation,
 and checkpoint-continuation evidence.

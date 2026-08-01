@@ -16,6 +16,7 @@ Usage in a test file::
 
 from __future__ import annotations
 
+import copy
 import json
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -113,3 +114,39 @@ def make_clock(
         clock.advance()
     return clock
 
+
+def make_versionless_legacy_morale_checkpoint(
+    checkpoint: dict,
+) -> dict:
+    """Convert format 113 into the bounded pre-113 morale envelope."""
+    legacy = copy.deepcopy(checkpoint)
+    assert legacy.pop("checkpoint_version") == 113
+    context = legacy["context"]
+    runtime_state = context.pop("morale_runtime")
+    assert runtime_state["suspended_archives"] == {}
+    active_records = runtime_state["active_records"]
+    # Checkpoints serialize RNG stream identities by their stable schema value.
+    morale_rng_state = copy.deepcopy(context["rng"]["streams"]["morale"])
+    context["morale_states"] = {
+        unit_id: record["current_state"]
+        for unit_id, record in active_records.items()
+    }
+    context["morale_machine"] = {
+        "unit_states": {
+            unit_id: {
+                "current_state": record["current_state"],
+                "transition_cooldown_s": 0.0,
+                "last_transition_time": (
+                    -1e9
+                    if record["last_transition_time_s"] is None
+                    else record["last_transition_time_s"]
+                ),
+            }
+            for unit_id, record in active_records.items()
+        },
+        "rng_state": copy.deepcopy(morale_rng_state),
+    }
+    rout_state = context.get("rout_engine")
+    if isinstance(rout_state, dict):
+        rout_state["rng_state"] = copy.deepcopy(morale_rng_state)
+    return legacy

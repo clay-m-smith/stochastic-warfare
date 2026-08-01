@@ -1,7 +1,8 @@
 """Morale-layer events published on the EventBus.
 
-Combat modules do not import morale — morale subscribes to combat events
-and publishes its own events for downstream consumers (C2, simulation).
+Production battle orchestration supplies combat-derived inputs directly to the
+morale runtime. Morale publishes committed transition events for recorder,
+analysis, and other downstream consumers without importing combat modules.
 """
 
 from __future__ import annotations
@@ -9,6 +10,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from stochastic_warfare.core.events import Event
+from stochastic_warfare.morale.state import MoraleTransitionCause
 
 
 @dataclass(frozen=True)
@@ -18,6 +20,8 @@ class MoraleStateChangeEvent(Event):
     unit_id: str
     old_state: int  # MoraleState value
     new_state: int
+    cause: MoraleTransitionCause = MoraleTransitionCause.STOCHASTIC
+    logical_time_s: float = 0.0
 
 
 @dataclass(frozen=True)
@@ -38,7 +42,7 @@ class RallyEvent(Event):
 
 @dataclass(frozen=True)
 class SurrenderEvent(Event):
-    """Published when a unit surrenders."""
+    """Reserved typed event with no production publisher until REM-033."""
 
     unit_id: str
     capturing_side: str  # Side value

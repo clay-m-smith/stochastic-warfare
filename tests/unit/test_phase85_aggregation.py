@@ -13,7 +13,13 @@ import pytest
 
 from stochastic_warfare.core.events import EventBus
 from stochastic_warfare.core.types import Domain, Position
-from stochastic_warfare.entities.base import UnitStatus
+from stochastic_warfare.entities.base import Unit, UnitStatus
+from stochastic_warfare.entities.personnel import (
+    CrewMember,
+    CrewRole,
+    SkillLevel,
+)
+from stochastic_warfare.morale.runtime import MoraleRegistration, MoraleRuntime
 from stochastic_warfare.morale.state import MoraleState
 from stochastic_warfare.simulation.aggregation import (
     AggregationConfig,
@@ -30,37 +36,27 @@ def _rng(seed: int = 42) -> np.random.Generator:
     return np.random.Generator(np.random.PCG64(seed))
 
 
-def _make_unit(uid: str, side: str = "blue", easting: float = 0.0) -> SimpleNamespace:
-    u = SimpleNamespace(
+def _make_unit(uid: str, side: str = "blue", easting: float = 0.0) -> Unit:
+    return Unit(
         entity_id=uid,
         side=side,
         position=Position(easting, 0.0, 0.0),
         status=UnitStatus.ACTIVE,
-        personnel=[f"p{i}" for i in range(10)],
-        equipment=[],
+        personnel=[
+            CrewMember(
+                member_id=f"{uid}-p{i}",
+                role=CrewRole.RIFLEMAN,
+                skill=SkillLevel.TRAINED,
+                experience=0.5,
+            )
+            for i in range(10)
+        ],
         unit_type="infantry",
         domain=Domain.GROUND,
         speed=5.0,
         max_speed=10.0,
         name=f"Unit {uid}",
     )
-    u.get_state = lambda: {
-        "entity_id": u.entity_id,
-        "name": u.name,
-        "side": u.side,
-        "unit_type": u.unit_type,
-        "domain": int(u.domain),
-        "status": int(u.status),
-        "position": tuple(u.position),
-        "heading": 0.0,
-        "speed": u.speed,
-        "max_speed": u.max_speed,
-        "training_level": 0.5,
-        "weight_tons": 0.0,
-        "personnel": [],
-        "equipment": [],
-    }
-    return u
 
 
 def _make_order_record(order_id: str, recipient_id: str, status: int = 5) -> SimpleNamespace:
@@ -110,11 +106,26 @@ def _make_order_exec(records_by_unit: dict[str, list]) -> SimpleNamespace:
     )
 
 
-def _make_ctx(units_by_side, order_exec=None):
+def _make_ctx(
+    units_by_side: dict[str, list[Unit]],
+    order_exec: SimpleNamespace | None = None,
+) -> SimpleNamespace:
+    units = [unit for side_units in units_by_side.values() for unit in side_units]
+    units_by_id = {unit.entity_id: unit for unit in units}
+    if len(units_by_id) != len(units):
+        raise ValueError("Aggregation test roster contains duplicate unit IDs")
+    runtime = MoraleRuntime(EventBus(), _rng())
+    runtime.register_units(
+        tuple(
+            MoraleRegistration(unit_id, MoraleState.STEADY)
+            for unit_id in sorted(units_by_id)
+        ),
+        units_by_id,
+    )
     return SimpleNamespace(
         units_by_side=units_by_side,
-        morale_states={u.entity_id: MoraleState.STEADY
-                       for su in units_by_side.values() for u in su},
+        morale_runtime=runtime,
+        morale_states=runtime.states,
         unit_weapons={},
         unit_sensors={},
         stockpile_manager=None,
@@ -132,7 +143,7 @@ class TestOrderSnapshot:
 
     def test_snapshot_has_order_records_field(self):
         """UnitSnapshot has order_records attr with default []."""
-        snap = UnitSnapshot(unit_state={}, morale_state=0)
+        snap = UnitSnapshot(unit_state={})
         assert hasattr(snap, "order_records")
         assert snap.order_records == []
 

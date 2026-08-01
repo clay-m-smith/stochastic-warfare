@@ -1,8 +1,9 @@
-"""Combat-layer events published on the EventBus.
+"""Typed combat-layer events for recorder, analytics, and other observers.
 
-All events are frozen dataclasses inheriting from :class:`Event`.
-Morale and other downstream modules subscribe to these events without
-importing combat modules directly.
+All events are frozen dataclasses inheriting from :class:`Event`.  The current
+production battle path passes derived combat pressures directly to
+``MoraleRuntime``; morale publishes its committed caused events and does not
+subscribe to these combat events.
 """
 
 from __future__ import annotations

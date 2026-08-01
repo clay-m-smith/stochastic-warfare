@@ -33,8 +33,6 @@ from stochastic_warfare.combat.naval_surface import NavalSurfaceEngine
 from stochastic_warfare.combat.naval_subsurface import NavalSubsurfaceEngine
 from stochastic_warfare.combat.carrier_ops import CarrierOpsEngine, DeckState
 from stochastic_warfare.morale.state import MoraleState, MoraleStateMachine
-from stochastic_warfare.morale.cohesion import CohesionEngine
-from stochastic_warfare.morale.stress import StressEngine
 from stochastic_warfare.morale.rout import RoutEngine
 from stochastic_warfare.core.events import Event, EventBus
 from stochastic_warfare.core.types import Position
@@ -265,30 +263,27 @@ class TestSubmarineTorpedo:
         assert result.torpedo_id != ""
 
 
-class TestMoraleCascade:
-    """Scenario 7: Casualties → suppression → morale check → rout → cascade."""
+class TestMoraleAndRoutModels:
+    """Scenario 7: morale degradation and nearby rout-cascade selection."""
 
-    def test_morale_degradation_pipeline(self) -> None:
+    def test_morale_degradation_sequence(self) -> None:
         rng = _rng(42)
-        bus = EventBus()
 
-        morale = MoraleStateMachine(bus, rng)
-        cohesion = CohesionEngine(rng)
-        stress = StressEngine(rng)
-        rout_eng = RoutEngine(bus, rng)
+        morale = MoraleStateMachine(rng)
 
         # Start steady
         state = MoraleState.STEADY
 
         # Simulate heavy casualties and suppression
-        for i in range(10):
-            state = morale.check_transition(
-                unit_id=f"unit_{i}",
+        for _ in range(10):
+            state = morale.select_transition(
+                state,
                 casualty_rate=0.4,
                 suppression_level=0.8,
                 leadership_present=False,
                 cohesion=0.2,
                 force_ratio=0.3,
+                dt=1.0,
             )
             if state >= MoraleState.ROUTED:
                 break
@@ -452,22 +447,36 @@ class TestDeterministicReplay:
         """Different seeds should produce different stochastic outcomes."""
         rng1 = _rng(42)
         rng2 = _rng(99)
-        bus1, bus2 = EventBus(), EventBus()
 
-        m1 = MoraleStateMachine(bus1, rng1)
-        m2 = MoraleStateMachine(bus2, rng2)
+        m1 = MoraleStateMachine(rng1)
+        m2 = MoraleStateMachine(rng2)
 
         results1 = [
-            m1.check_transition(MoraleState.SHAKEN, 0.3, 0.5, False, 0.4, 0.5)
+            m1.select_transition(
+                MoraleState.SHAKEN,
+                0.3,
+                0.5,
+                False,
+                0.4,
+                0.5,
+                dt=1.0,
+            )
             for _ in range(20)
         ]
         results2 = [
-            m2.check_transition(MoraleState.SHAKEN, 0.3, 0.5, False, 0.4, 0.5)
+            m2.select_transition(
+                MoraleState.SHAKEN,
+                0.3,
+                0.5,
+                False,
+                0.4,
+                0.5,
+                dt=1.0,
+            )
             for _ in range(20)
         ]
 
-        # Should not all be identical (extremely unlikely with different seeds)
-        assert results1 != results2 or True  # Stochastic — very rarely equal
+        assert results1 != results2
 
 
 class TestEventBusIntegration:

@@ -12,6 +12,17 @@ Phase 66 wired three categories of dormant engines into the simulation loop:
 2. **MineWarfareEngine completion** — mine persistence (battery decay per tick), mine sweeping by minesweeper units. Gated by `enable_mine_persistence=False`.
 3. **P2 engine cleanup** — siege assault/sally wiring in campaign loop, propulsion drag reduction in ballistics, data link range gate for UAVs, ConditionsEngine facade instantiation.
 
+> **Historical supersession (Phase 113 complete):** This Phase 66
+> record did not prove a production-loaded populated-area guerrilla-blend
+> lifecycle. Phase 68 later represented successful blending with
+> `UnitStatus.ROUTING`; the Phase 113 production audit found that proxy
+> semantically invalid. The completed Phase 113 implementation instead fails
+> a positive blend explicitly before retreat, status, morale, event, COMBAT-RNG,
+> or MORALE-RNG mutation. A typed population/concealment owner remains queued as
+> [REM-032](../remediation-backlog.md#rem-032-guerrilla-blending-has-no-semantic-runtime-owner)
+> for Phase 119. This notice supersedes only the blend/`ROUTING` claim; the
+> historical Phase 66 record below is otherwise retained.
+
 ## What Was Built
 
 ### CalibrationSchema (Step 0)

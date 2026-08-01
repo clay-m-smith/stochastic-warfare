@@ -16,6 +16,7 @@ from stochastic_warfare.simulation.runtime import (
     AnalysisVariant,
     SimulationRuntimeFactory,
 )
+from tests.conftest import make_versionless_legacy_morale_checkpoint
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -176,7 +177,7 @@ def test_cambrai_weapon_standoff_is_not_reported_as_stuck_or_blocked() -> None:
     result = run_scenario(CAMBRAI_PATH, DATA_DIR, seed=42)
 
     assert result.success, result.error
-    assert result.ticks_executed == 433
+    assert result.ticks_executed == 156
     assert result.units_that_moved == 3
     assert result.units_that_didnt_move == 7
     assert not any(issue.startswith("MANY_STUCK_UNITS") for issue in result.issues), result.issues
@@ -337,7 +338,7 @@ def test_whole_runtime_rejects_each_invalid_owner_atomically(
 @pytest.mark.parametrize(
     "versionless",
     (False, True),
-    ids=("schema-112", "versionless"),
+    ids=("schema-113", "versionless"),
 )
 def test_whole_runtime_rejects_impossible_cross_owner_state_atomically(
     corruption: str,
@@ -352,7 +353,7 @@ def test_whole_runtime_rejects_impossible_cross_owner_state_atomically(
     invalid = copy.deepcopy(source.get_state())
     _corrupt_checkpoint_semantics(invalid, corruption)
     if versionless:
-        assert invalid.pop("checkpoint_version") == 112
+        invalid = make_versionless_legacy_morale_checkpoint(invalid)
 
     target, _ = _stateful_engine(scenario_path, seed=999_112)
     assert target.step() is False

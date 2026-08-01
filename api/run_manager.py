@@ -20,6 +20,7 @@ from typing import TYPE_CHECKING, Any
 from api.database import Database
 
 if TYPE_CHECKING:
+    from stochastic_warfare.morale.state import MoraleState
     from stochastic_warfare.simulation.runtime import PreparedScenario
     from stochastic_warfare.simulation.loadouts import WeaponAttachment
     from stochastic_warfare.simulation.scenario import CampaignScenarioConfig
@@ -707,7 +708,7 @@ class RunManager:
         tick: int,
         ctx: Any,
         *,
-        morale_states: dict | None = None,
+        morale_states: Mapping[str, MoraleState] | None = None,
         suppression_states: dict | None = None,
         engaged_ids: set[str] | None = None,
         unit_weapons: Mapping[str, tuple[WeaponAttachment, ...]] | None = None,

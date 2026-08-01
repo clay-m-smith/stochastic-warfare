@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import copy
 import math
-from collections.abc import Callable, Iterable
+from collections.abc import Callable, Iterable, Mapping
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -32,6 +32,9 @@ from stochastic_warfare.combat.ammunition import (
 )
 from stochastic_warfare.combat.engagement import EngagementType
 from stochastic_warfare.combat.suppression import UnitSuppressionState
+from stochastic_warfare.combat.unconventional import (
+    UnsupportedGuerrillaBlendError,
+)
 from stochastic_warfare.core.events import EventBus
 from stochastic_warfare.core.logging import get_logger
 from stochastic_warfare.core.types import Domain, ModuleId, Position
@@ -39,6 +42,7 @@ from stochastic_warfare.entities.base import Unit, UnitStatus
 from stochastic_warfare.entities.events import UnitDestroyedEvent, UnitDisabledEvent
 from stochastic_warfare.entities.unit_classes.ground import GroundUnitType
 from stochastic_warfare.detection.sensors import SensorType
+from stochastic_warfare.morale.runtime import MoraleRuntime, MoraleTransitionCause
 from stochastic_warfare.morale.state import MoraleState, _MORALE_EFFECTS
 
 from typing import NamedTuple
@@ -445,24 +449,28 @@ def _apply_melee_result(
     attacker: Unit,
     defender: Unit,
     pending_damage: list[tuple[Unit, UnitStatus, str]],
-    morale_states: dict[str, Any],
+    morale_runtime: MoraleRuntime | None,
     destruction_threshold: float = 0.5,
     disable_threshold: float = 0.3,
     *,
     event_bus: Any | None = None,
     wpn_inst: Any | None = None,
+    timestamp: datetime,
+    current_time_s: float,
 ) -> None:
     """Convert melee result to damage entries for both sides."""
+    if (mr.defender_routed or mr.attacker_routed) and morale_runtime is None:
+        raise RuntimeError("Melee rout requires a morale runtime")
     _wpn_id = getattr(
         getattr(wpn_inst, "definition", None), "weapon_id", "melee",
     ) if wpn_inst else "melee"
 
     # Publish engagement event for melee
     if event_bus is not None and (mr.defender_casualties > 0 or mr.attacker_casualties > 0):
-        from stochastic_warfare.combat.events import DamageEvent, EngagementEvent
+        from stochastic_warfare.combat.events import EngagementEvent
 
         event_bus.publish(EngagementEvent(
-            timestamp=datetime.min,
+            timestamp=timestamp,
             source=ModuleId.COMBAT,
             attacker_id=attacker.entity_id,
             target_id=defender.entity_id,
@@ -477,7 +485,7 @@ def _apply_melee_result(
             from stochastic_warfare.combat.events import DamageEvent
 
             event_bus.publish(DamageEvent(
-                timestamp=datetime.min,
+                timestamp=timestamp,
                 source=ModuleId.COMBAT,
                 target_id=defender.entity_id,
                 damage_amount=float(mr.defender_casualties),
@@ -496,7 +504,7 @@ def _apply_melee_result(
             from stochastic_warfare.combat.events import DamageEvent
 
             event_bus.publish(DamageEvent(
-                timestamp=datetime.min,
+                timestamp=timestamp,
                 source=ModuleId.COMBAT,
                 target_id=attacker.entity_id,
                 damage_amount=float(mr.attacker_casualties),
@@ -511,11 +519,23 @@ def _apply_melee_result(
             pending_damage.append((attacker, UnitStatus.DISABLED, _wpn_id))
     # Morale effects — rout
     if mr.defender_routed:
-        morale_states[defender.entity_id] = 3  # ROUTED
-        object.__setattr__(defender, "status", UnitStatus.ROUTING)
+        assert morale_runtime is not None
+        morale_runtime.force_transition(
+            defender.entity_id,
+            MoraleState.ROUTED,
+            cause=MoraleTransitionCause.MELEE_ROUT,
+            timestamp=timestamp,
+            current_time_s=current_time_s,
+        )
     if mr.attacker_routed:
-        morale_states[attacker.entity_id] = 3
-        object.__setattr__(attacker, "status", UnitStatus.ROUTING)
+        assert morale_runtime is not None
+        morale_runtime.force_transition(
+            attacker.entity_id,
+            MoraleState.ROUTED,
+            cause=MoraleTransitionCause.MELEE_ROUT,
+            timestamp=timestamp,
+            current_time_s=current_time_s,
+        )
 
 
 def _consume_routed_ammunition(
@@ -2724,8 +2744,8 @@ class BattleManager:
         battle: BattleContext,
         units_by_side: dict[str, list[Unit]],
         rng: np.random.Generator,
-        morale_states: dict | None = None,
-        supply_states: dict | None = None,
+        morale_states: Mapping[str, MoraleState] | None = None,
+        supply_states: Mapping[str, float] | None = None,
     ) -> AutoResolveResult:
         """Auto-resolve a minor battle using simplified Lanchester attrition.
 
@@ -2741,9 +2761,9 @@ class BattleManager:
             Current force disposition.
         rng : np.random.Generator
             PRNG stream for loss distribution.
-        morale_states : dict | None
+        morale_states : Mapping[str, MoraleState] | None
             Per-unit morale states for morale factor.
-        supply_states : dict | None
+        supply_states : Mapping[str, float] | None
             Per-unit supply levels for supply factor.
         """
         battle.active = False
@@ -2772,8 +2792,6 @@ class BattleManager:
             morale_factor = 1.0
             supply_factor = 1.0
             if morale_states:
-                from stochastic_warfare.morale.state import MoraleState
-
                 side_morale_vals = [
                     morale_states.get(u.entity_id, MoraleState.STEADY)
                     for u in side_units_active[side]
@@ -6568,9 +6586,12 @@ class BattleManager:
                                     )
                                     _apply_melee_result(
                                         mr, attacker, best_target, pending_damage,
-                                        ctx.morale_states, dest_thresh, dis_thresh,
+                                        getattr(ctx, "morale_runtime", None),
+                                        dest_thresh, dis_thresh,
                                         event_bus=getattr(ctx, "event_bus", None),
                                         wpn_inst=wpn_inst,
+                                        timestamp=timestamp,
+                                        current_time_s=current_time_s,
                                     )
                                     side_engagements += 1
                                     routed_aggregate = True
@@ -6646,9 +6667,12 @@ class BattleManager:
                                 )
                                 _apply_melee_result(
                                     mr, attacker, best_target, pending_damage,
-                                    ctx.morale_states, dest_thresh, dis_thresh,
+                                    getattr(ctx, "morale_runtime", None),
+                                    dest_thresh, dis_thresh,
                                     event_bus=getattr(ctx, "event_bus", None),
                                     wpn_inst=wpn_inst,
+                                    timestamp=timestamp,
+                                    current_time_s=current_time_s,
                                 )
                                 side_engagements += 1
                                 routed_aggregate = True
@@ -6729,9 +6753,12 @@ class BattleManager:
                                 )
                                 _apply_melee_result(
                                     mr, attacker, best_target, pending_damage,
-                                    ctx.morale_states, dest_thresh, dis_thresh,
+                                    getattr(ctx, "morale_runtime", None),
+                                    dest_thresh, dis_thresh,
                                     event_bus=getattr(ctx, "event_bus", None),
                                     wpn_inst=wpn_inst,
+                                    timestamp=timestamp,
+                                    current_time_s=current_time_s,
                                 )
                                 side_engagements += 1
                                 routed_aggregate = True
@@ -7009,6 +7036,12 @@ class BattleManager:
                             _u_guer.entity_id, _cas_frac, _in_pop,
                         )
                         if _disengage:
+                            if _blend > 0:
+                                raise UnsupportedGuerrillaBlendError(
+                                    "Populated-area guerrilla blending is "
+                                    "unsupported until REM-032 provides a "
+                                    "non-morale concealment owner",
+                                )
                             logger.debug(
                                 "Guerrilla %s disengaging (blend=%.2f)",
                                 _u_guer.entity_id, _blend,
@@ -7040,15 +7073,6 @@ class BattleManager:
                                     "Guerrilla %s retreated %.0fm to (%s)",
                                     _u_guer.entity_id, _retreat_dist, _new_pos,
                                 )
-                            # Blend probability → set ROUTING status
-                            if _blend > 0:
-                                _rng_guer = getattr(ctx, "rng_manager", None)
-                                if _rng_guer is not None:
-                                    _guer_stream = _rng_guer.get_stream(ModuleId.COMBAT)
-                                    if _guer_stream.random() < _blend:
-                                        object.__setattr__(_u_guer, "status", UnitStatus.ROUTING)
-                                        logger.debug("Guerrilla %s routing", _u_guer.entity_id)
-
         return pending_damage
 
     @staticmethod
@@ -7101,12 +7125,14 @@ class BattleManager:
         _lod_full_update: set[str] | None = None,
     ) -> None:
         """Run morale checks for all active/routing units."""
-        if ctx.morale_machine is None:
+        morale_runtime = getattr(ctx, "morale_runtime", None)
+        if morale_runtime is None:
             return
 
         cal_flat = _resolve_cal_flat(ctx)
         morale_degrade_mod = cal_flat.get("morale_degrade_rate_modifier", 1.0)
-        rout_engine = getattr(ctx, "rout_engine", None)
+        rout_engine = morale_runtime.rout_engine
+        current_time_s = ctx.clock.elapsed.total_seconds()
 
         # Phase 56a: build per-side STRtree for rally + cascade (O(n log n))
         _side_trees: dict[str, tuple[STRtree, list[Unit]]] = {}
@@ -7125,7 +7151,7 @@ class BattleManager:
 
         # Phase 42c / 56a: rally check for routing units (STRtree)
         if rout_engine is not None:
-            _rally_r = rout_engine._config.cascade_radius_m
+            _rally_r = rout_engine.config.cascade_radius_m
             for side_name, side_units in units_by_side.items():
                 tree_data = _side_trees.get(side_name)
                 for u in side_units:
@@ -7157,9 +7183,13 @@ class BattleManager:
                                     st_name = st.name if hasattr(st, "name") else str(st)
                                     if st_name == "HQ":
                                         leader_present = True
-                    if rout_engine.check_rally(u.entity_id, nearby_count, leader_present):
-                        ctx.morale_states[u.entity_id] = MoraleState.SHAKEN
-                        object.__setattr__(u, "status", UnitStatus.ACTIVE)
+                    morale_runtime.check_rally(
+                        u.entity_id,
+                        nearby_count,
+                        leader_present,
+                        timestamp=timestamp,
+                        current_time_s=current_time_s,
+                    )
 
         for side_name, side_units in units_by_side.items():
             total = len(side_units)
@@ -7189,11 +7219,27 @@ class BattleManager:
                 ):
                     continue
 
+                # The runtime derives the first dt from scenario time zero;
+                # logical zero therefore has no admissible stochastic check.
+                if current_time_s <= 0.0:
+                    continue
+
+                # Rally, melee, or another forced transaction may already
+                # have admitted this unit at the current logical time.  The
+                # authoritative record, rather than local loop bookkeeping,
+                # prevents a second same-tick stochastic admission even when
+                # transition_cooldown_s is configured to zero.
+                if (
+                    morale_runtime.record_for(u.entity_id).last_check_time_s
+                    == current_time_s
+                ):
+                    continue
+
                 # Phase 40e: use actual suppression level
                 sup_state = self._suppression_states.get(u.entity_id)
                 suppression_level = sup_state.value if sup_state is not None else 0.0
 
-                new_morale = ctx.morale_machine.check_transition(
+                morale_runtime.check_transition(
                     unit_id=u.entity_id,
                     casualty_rate=casualty_rate * morale_degrade_mod,
                     suppression_level=suppression_level,
@@ -7201,17 +7247,12 @@ class BattleManager:
                     cohesion=cohesion,
                     force_ratio=force_ratio,
                     timestamp=timestamp,
+                    current_time_s=current_time_s,
                 )
-                ctx.morale_states[u.entity_id] = new_morale
-
-                if new_morale == MoraleState.ROUTED:
-                    object.__setattr__(u, "status", UnitStatus.ROUTING)
-                elif new_morale == MoraleState.SURRENDERED:
-                    object.__setattr__(u, "status", UnitStatus.SURRENDERED)
 
         # Phase 42c / 56a: rout cascade — STRtree spatial query
         if rout_engine is not None:
-            _cascade_r = rout_engine._config.cascade_radius_m
+            _cascade_r = rout_engine.config.cascade_radius_m
             newly_routed: list[tuple[str, Unit]] = []
             for side_name, side_units in units_by_side.items():
                 for u in side_units:
@@ -7221,8 +7262,6 @@ class BattleManager:
                             newly_routed.append((side_name, u))
 
             for side_name, routing_unit in newly_routed:
-                same_side = units_by_side.get(side_name, [])
-                adjacent_morale: dict[str, int] = {}
                 distances: dict[str, float] = {}
                 tree_data = _side_trees.get(side_name)
                 if tree_data is not None:
@@ -7242,21 +7281,13 @@ class BattleManager:
                         dy = other.position.northing - routing_unit.position.northing
                         dist = math.sqrt(dx * dx + dy * dy)
                         distances[other.entity_id] = dist
-                        ms = ctx.morale_states.get(other.entity_id)
-                        if ms is not None:
-                            adjacent_morale[other.entity_id] = int(ms)
 
-                cascaded_ids = rout_engine.rout_cascade(
-                    routing_unit_id=routing_unit.entity_id,
-                    adjacent_unit_morale_states=adjacent_morale,
-                    distances_m=distances,
+                morale_runtime.rout_cascade(
+                    routing_unit.entity_id,
+                    distances,
+                    timestamp=timestamp,
+                    current_time_s=current_time_s,
                 )
-                for cid in cascaded_ids:
-                    ctx.morale_states[cid] = MoraleState.ROUTED
-                    for u in same_side:
-                        if u.entity_id == cid:
-                            object.__setattr__(u, "status", UnitStatus.ROUTING)
-                            break
 
     @staticmethod
     def _find_unit_side(ctx: Any, unit_id: str) -> str:

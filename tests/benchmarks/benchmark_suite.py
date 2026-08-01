@@ -47,7 +47,7 @@ DATA_DIR = ROOT / "data"
 SCENARIOS_DIR = DATA_DIR / "scenarios"
 BASELINES_PATH = Path(__file__).with_name("baselines.json")
 REFERENCE_COMMIT = "0460ac70be86784bcc6e359ae4202f4bcb938c60"
-POLICY_VERSION = 2
+POLICY_VERSION = 3
 WORKER_RECORDER_MAX_EVENTS = 5_000_000
 DEFAULT_MAX_TICKS = 20_000
 PAIR_ORDERS: list[list[Literal["reference", "candidate"]]] = [
@@ -210,7 +210,7 @@ class RuntimeSource(_StrictModel):
 class RuntimeInputManifest(_StrictModel):
     """Canonical effective workload and every resolved data source."""
 
-    policy_version: Literal[2] = POLICY_VERSION
+    policy_version: Literal[3] = POLICY_VERSION
     scenario_path: str
     scenario_sha256: str
     dependency_lock_sha256: str
@@ -362,13 +362,48 @@ class ReferenceInput(_StrictModel):
         return _validate_sha256(value, "reference input digest")
 
 
-class BenchmarkPolicy(_StrictModel):
-    """Exact version-2 comparison policy for one scenario."""
+class MoraleNeutralCalibration(_StrictModel):
+    """Exact zero-pressure morale calibration for a control-plane workload."""
 
-    policy_version: Literal[2] = POLICY_VERSION
+    base_degrade_rate: Literal[0.0]
+    base_recover_rate: Literal[0.0]
+    casualty_weight: Literal[0.0]
+    suppression_weight: Literal[0.0]
+    leadership_weight: Literal[0.0]
+    cohesion_weight: Literal[0.0]
+    force_ratio_weight: Literal[0.0]
+
+
+class BenchmarkCalibrationPatch(_StrictModel):
+    """Typed sparse production calibration used by one benchmark workload."""
+
+    morale: MoraleNeutralCalibration | None = None
+
+
+class BenchmarkWorkload(_StrictModel):
+    """Named effective workload and its exact production calibration patch."""
+
+    name: Literal["default", "morale_neutral_control_plane"]
+    calibration_patch: BenchmarkCalibrationPatch
+
+    @model_validator(mode="after")
+    def _valid_variant(self) -> Self:
+        has_morale_control = self.calibration_patch.morale is not None
+        if (self.name == "morale_neutral_control_plane") != has_morale_control:
+            raise ValueError(
+                "morale-neutral workload name and calibration must agree",
+            )
+        return self
+
+
+class BenchmarkPolicy(_StrictModel):
+    """Exact version-3 comparison policy for one scenario."""
+
+    policy_version: Literal[3] = POLICY_VERSION
     mode: Literal["gate", "measurement_only"]
     manual: bool
     reference_commit: str | None
+    workload: BenchmarkWorkload
     warmup_runs_per_revision: Literal[1] = 1
     timed_pairs: Literal[3] = 3
     pair_orders: list[list[Literal["reference", "candidate"]]]
@@ -404,7 +439,7 @@ class BenchmarkPolicy(_StrictModel):
 
 
 class BaselineEntry(_StrictModel):
-    """Strict version-2 baseline entry."""
+    """Strict version-3 baseline entry."""
 
     scenario_name: str
     scenario_path: str
@@ -416,6 +451,19 @@ class BaselineEntry(_StrictModel):
     def _valid_mode_payload(self) -> Self:
         if not self.scenario_name or self.scenario_name != self.scenario_name.strip():
             raise ValueError("scenario_name must be non-empty and trimmed")
+        uses_morale_neutral_control = (
+            self.policy.workload.name == "morale_neutral_control_plane"
+        )
+        is_routine_control_plane = self.scenario_name == "73_easting"
+        if is_routine_control_plane and not uses_morale_neutral_control:
+            raise ValueError(
+                "73_easting must use the morale-neutral control-plane workload",
+            )
+        if not is_routine_control_plane and uses_morale_neutral_control:
+            raise ValueError(
+                "only the routine 73_easting benchmark may use the "
+                "morale-neutral control-plane workload",
+            )
         if self.policy.mode == "gate":
             if self.reference_input is None or self.semantic_envelope is None:
                 raise ValueError(
@@ -433,7 +481,7 @@ class BaselineEntry(_StrictModel):
 class BaselineFile(_StrictModel):
     """Checked-in benchmark baseline document."""
 
-    format_version: Literal[2] = POLICY_VERSION
+    format_version: Literal[3] = POLICY_VERSION
     description: str
     entries: dict[str, BaselineEntry]
 
@@ -689,7 +737,7 @@ class BenchmarkBaselineIdentity(_StrictModel):
 class FinalTreeVerification(_StrictModel):
     """Content and production-run bridge from comparison tree to final commit."""
 
-    format_version: Literal[2] = POLICY_VERSION
+    format_version: Literal[3] = POLICY_VERSION
     created_at_utc: str
     status: Literal["pass"] = "pass"
     comparison_artifact_sha256: str
@@ -788,7 +836,7 @@ class FinalTreeVerification(_StrictModel):
 class ComparisonArtifact(_StrictModel):
     """Always-written paired comparison evidence."""
 
-    format_version: Literal[2] = POLICY_VERSION
+    format_version: Literal[3] = POLICY_VERSION
     created_at_utc: str
     scenario_name: str
     status: Literal["pass", "fail", "inconclusive", "error"]
@@ -969,7 +1017,7 @@ class BenchmarkComparisonError(RuntimeError):
 
 
 class BenchmarkBaseline:
-    """Load strict v2 baselines; legacy unpaired decisions are disabled."""
+    """Load strict v3 baselines; legacy unpaired decisions are disabled."""
 
     def __init__(self, path: Path | None = None) -> None:
         self._path = path or BASELINES_PATH
@@ -983,7 +1031,7 @@ class BenchmarkBaseline:
             )
         except (TypeError, ValueError) as exc:
             raise ValueError(
-                f"invalid version-2 benchmark baseline {self._path}: {exc}",
+                f"invalid version-3 benchmark baseline {self._path}: {exc}",
             ) from exc
 
     def load(self) -> dict[str, BaselineEntry]:
@@ -1005,7 +1053,7 @@ class BenchmarkBaseline:
         del scenario_name, result, margin
         raise ValueError(
             "legacy unpaired regression decisions are unsupported; use the "
-            "version-2 paired comparison harness or label the run "
+            "version-3 paired comparison harness or label the run "
             "measurement_only",
         )
 
@@ -1045,7 +1093,7 @@ def evaluate_paired_samples(
     reference_seconds: list[float],
     candidate_seconds: list[float],
 ) -> PerformanceDecision:
-    """Apply the exact version-2 paired policy to raw samples."""
+    """Apply the exact version-3 paired policy to raw samples."""
     if policy.mode != "gate":
         raise ValueError(
             "measurement_only entries cannot produce a regression decision",
@@ -1247,7 +1295,7 @@ def _definition_identifier(value: Any, *names: str) -> str | None:
 def _normalize_scenario_configuration(
     value: dict[str, Any],
 ) -> dict[str, Any]:
-    """Project schema-111 and schema-112 scenarios into one v2 contract."""
+    """Project schema-111 and schema-112 scenarios into one v3 contract."""
     for side in value.get("sides", []):
         if not isinstance(side, dict):
             raise ValueError(
@@ -1271,6 +1319,44 @@ def _normalize_scenario_configuration(
             ):
                 overrides.setdefault(field_name, None)
     return value
+
+
+def _normalize_morale_timing_identity(
+    effective_inputs: dict[str, Any],
+) -> dict[str, Any]:
+    """Unify the implicit and explicit discrete-time morale defaults.
+
+    The Phase 112 runtime already interpreted an absent
+    ``use_continuous_time`` setting as ``False`` in ``MoraleConfig``. Phase
+    113 exposes that same effective default through the typed calibration
+    schema. The benchmark policy therefore omits only an exact ``False`` from
+    all three compatibility views so the historical implicit default and the
+    current explicit default retain one workload identity. ``True`` remains in
+    the manifest and changes its fingerprint.
+    """
+    nested_paths = (
+        ("configuration", "calibration_overrides", "morale"),
+        ("calibration", "morale"),
+    )
+    for path in nested_paths:
+        value: Any = effective_inputs
+        for key in path:
+            if not isinstance(value, dict):
+                break
+            value = value.get(key)
+        if (
+            isinstance(value, dict)
+            and value.get("use_continuous_time") is False
+        ):
+            del value["use_continuous_time"]
+
+    calibration_flat = effective_inputs.get("calibration_flat")
+    if (
+        isinstance(calibration_flat, dict)
+        and calibration_flat.get("morale_use_continuous_time") is False
+    ):
+        del calibration_flat["morale_use_continuous_time"]
+    return effective_inputs
 
 
 def _build_effective_inputs(context: Any) -> tuple[dict[str, Any], set[str]]:
@@ -1410,7 +1496,7 @@ def _build_effective_inputs(context: Any) -> tuple[dict[str, Any], set[str]]:
             "schools": school_state,
         },
     }
-    return effective, identifiers
+    return _normalize_morale_timing_identity(effective), identifiers
 
 
 def _runtime_input_manifest(
@@ -1567,6 +1653,7 @@ def _historical_reference_runtime(
     scenario_path: Path,
     seed: int,
     max_ticks: int,
+    workload: BenchmarkWorkload,
 ) -> tuple[Any, Any, Any, Any]:
     """Construct the exact pre-factory runtime at the fixed reference commit.
 
@@ -1607,6 +1694,13 @@ def _historical_reference_runtime(
     context = ScenarioLoader(repo_root / "data").load(
         scenario_path,
         seed=seed,
+        calibration_overrides=(
+            workload.calibration_patch.model_dump(
+                mode="python",
+                exclude_none=True,
+            )
+            or None
+        ),
     )
     objectives = [
         ObjectiveState(
@@ -1651,6 +1745,7 @@ def run_revision_worker(
     revision: Literal["reference", "candidate"],
     seed: int = 42,
     max_ticks: int = DEFAULT_MAX_TICKS,
+    workload: BenchmarkWorkload | Mapping[str, Any] | None = None,
 ) -> WorkerRun:
     """Run one production revision and return strict semantic evidence."""
     repo_root = repo_root.resolve()
@@ -1662,7 +1757,21 @@ def run_revision_worker(
     if not scenario_path.is_file():
         raise FileNotFoundError(f"benchmark scenario not found: {scenario_path}")
     if seed != 42:
-        raise ValueError("version-2 benchmark policy requires seed 42")
+        raise ValueError("version-3 benchmark policy requires seed 42")
+
+    if workload is None:
+        matching_workloads = [
+            entry.policy.workload
+            for entry in BenchmarkBaseline().load().values()
+            if entry.scenario_path == scenario_relative
+        ]
+        if len(matching_workloads) != 1:
+            raise ValueError(
+                "benchmark scenario must resolve one checked-in workload",
+            )
+        resolved_workload = matching_workloads[0]
+    else:
+        resolved_workload = BenchmarkWorkload.model_validate(workload)
 
     if str(repo_root) not in sys.path:
         sys.path.insert(0, str(repo_root))
@@ -1674,6 +1783,7 @@ def run_revision_worker(
                 scenario_path=scenario_path,
                 seed=seed,
                 max_ticks=max_ticks,
+                workload=resolved_workload,
             )
         )
     else:
@@ -1688,7 +1798,15 @@ def run_revision_worker(
             max_ticks=max_ticks,
             snapshot_interval_ticks=0,
         )
-        variant = AnalysisVariant(variant_id="benchmark")
+        variant = AnalysisVariant(
+            variant_id=f"benchmark_{resolved_workload.name}",
+            calibration_patch=(
+                resolved_workload.calibration_patch.model_dump(
+                    mode="python",
+                    exclude_none=True,
+                )
+            ),
+        )
         prepared = SimulationRuntimeFactory().prepare(
             scenario_path,
             repo_root / "data",
@@ -2349,6 +2467,7 @@ def _run_worker_subprocess(
     repo_root: Path,
     scenario_relative: str,
     revision: Literal["reference", "candidate"],
+    workload: BenchmarkWorkload,
     timeout_s: float,
 ) -> WorkerRun:
     with tempfile.NamedTemporaryFile(
@@ -2371,6 +2490,8 @@ def _run_worker_subprocess(
                 scenario_relative,
                 "--revision",
                 revision,
+                "--workload-json",
+                workload.model_dump_json(exclude_none=True),
                 "--output",
                 str(output_path),
             ],
@@ -2613,6 +2734,10 @@ def validate_final_tree_verification(
         raise ValueError(
             "passing comparison artifact has no candidate identity",
         )
+    if artifact.policy is None:
+        raise ValueError(
+            "passing comparison artifact has no benchmark policy",
+        )
     comparison_run = artifact.warmups["candidate"]
     if verification.comparison_artifact_sha256 != artifact_digest:
         raise ValueError(
@@ -2704,6 +2829,7 @@ def verify_final_tree(
         repo_root=final_root,
         scenario_relative=comparison_run.runtime_input.scenario_path,
         revision="candidate",
+        workload=artifact.policy.workload,
         timeout_s=worker_timeout_s,
     )
     verification = FinalTreeVerification(
@@ -2881,6 +3007,7 @@ def run_paired_comparison(
                 repo_root=reference_root,
                 scenario_relative=entry.scenario_path,
                 revision="reference",
+                workload=policy.workload,
                 timeout_s=worker_timeout_s,
             )
             checkpoint("reference warm-up completed")
@@ -2889,6 +3016,7 @@ def run_paired_comparison(
                 repo_root=candidate_snapshot_root,
                 scenario_relative=entry.scenario_path,
                 revision="candidate",
+                workload=policy.workload,
                 timeout_s=worker_timeout_s,
             )
             checkpoint("candidate warm-up completed")
@@ -2921,6 +3049,7 @@ def run_paired_comparison(
                         repo_root=root,
                         scenario_relative=entry.scenario_path,
                         revision=revision,
+                        workload=policy.workload,
                         timeout_s=worker_timeout_s,
                     )
                     _validate_worker_identity(
@@ -3148,6 +3277,7 @@ def _worker_command(args: argparse.Namespace) -> int:
         repo_root=args.repo_root,
         scenario_relative=args.scenario_relative,
         revision=args.revision,
+        workload=BenchmarkWorkload.model_validate_json(args.workload_json),
     )
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(
@@ -3207,7 +3337,7 @@ def _final_tree_verification_command(args: argparse.Namespace) -> int:
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
-        description="Strict version-2 paired production benchmark",
+        description="Strict version-3 paired production benchmark",
     )
     commands = parser.add_subparsers(dest="command", required=True)
 
@@ -3219,6 +3349,7 @@ def main(argv: list[str] | None = None) -> int:
         choices=("reference", "candidate"),
         required=True,
     )
+    worker.add_argument("--workload-json", required=True)
     worker.add_argument("--output", type=Path, required=True)
     worker.set_defaults(handler=_worker_command)
 

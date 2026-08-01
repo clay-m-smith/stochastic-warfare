@@ -51,6 +51,7 @@ class MoraleCalibration(BaseModel):
     cohesion_weight: float = 0.4
     force_ratio_weight: float = 0.5
     transition_cooldown_s: float = 30.0
+    use_continuous_time: bool = False
     degrade_rate_modifier: float = 1.0
     check_interval: int = 1
 
@@ -276,6 +277,7 @@ class CalibrationSchema(BaseModel):
         "morale_cohesion_weight": "cohesion_weight",
         "morale_force_ratio_weight": "force_ratio_weight",
         "morale_transition_cooldown_s": "transition_cooldown_s",
+        "morale_use_continuous_time": "use_continuous_time",
         "morale_degrade_rate_modifier": "degrade_rate_modifier",
         "morale_check_interval": "check_interval",
     }

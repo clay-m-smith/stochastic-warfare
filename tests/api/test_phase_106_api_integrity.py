@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+from collections import Counter
 import json
 import threading
 import time
@@ -19,6 +20,8 @@ from api.config import ApiSettings
 from api.database import Database
 from api.main import create_app
 from api.run_manager import RunManager
+from stochastic_warfare.entities.base import UnitStatus
+from stochastic_warfare.morale.state import MoraleState
 from stochastic_warfare.simulation.scenario import ScenarioLoader
 from stochastic_warfare.tools._run_helpers import AnalysisRunner
 
@@ -204,7 +207,51 @@ async def test_api_override_changes_outcome_and_is_deterministic(
     assert free_engagements
     assert hold_engagements == []
     assert sum(side["disabled"] for side in details["free"]["result"]["sides"].values()) > 0
-    assert sum(side["active"] for side in details["hold_a"]["result"]["sides"].values()) == 10
+    assert details["hold_a"]["result"]["sides"] == {
+        "blue": {"total": 6, "active": 2, "disabled": 0, "destroyed": 0},
+        "red": {"total": 6, "active": 6, "disabled": 0, "destroyed": 0},
+    }
+    hold_morale_events = [
+        event
+        for event in events["hold_a"]
+        if event["event_type"] == "MoraleStateChangeEvent"
+    ]
+    assert len(hold_morale_events) == 23
+    assert Counter(
+        event["data"]["cause"] for event in hold_morale_events
+    ) == Counter({"stochastic": 21, "rout_cascade": 1, "rally": 1})
+    final_hold_frame = json.loads(rows["hold_a"]["frames_json"])[-1]
+    final_blue_morale = {
+        unit["id"]: (unit["s"], unit["mo"])
+        for unit in final_hold_frame["units"]
+        if unit["side"] == "blue"
+    }
+    assert final_blue_morale == {
+        "blue_m1a2_0000": (
+            UnitStatus.ROUTING.value,
+            MoraleState.ROUTED.value,
+        ),
+        "blue_m1a2_0001": (
+            UnitStatus.ROUTING.value,
+            MoraleState.ROUTED.value,
+        ),
+        "blue_m1a2_0002": (
+            UnitStatus.ROUTING.value,
+            MoraleState.ROUTED.value,
+        ),
+        "blue_m1a2_0003": (
+            UnitStatus.SURRENDERED.value,
+            MoraleState.SURRENDERED.value,
+        ),
+        "reinforce_blue_0000_m1a2_0000": (
+            UnitStatus.ACTIVE.value,
+            MoraleState.STEADY.value,
+        ),
+        "reinforce_blue_0000_m1a2_0001": (
+            UnitStatus.ACTIVE.value,
+            MoraleState.STEADY.value,
+        ),
+    }
     assert details["free"]["config_overrides"] == {
         "roe_level": "WEAPONS_FREE",
     }

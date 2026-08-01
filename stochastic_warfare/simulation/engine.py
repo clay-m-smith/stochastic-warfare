@@ -33,7 +33,7 @@ from stochastic_warfare.simulation.victory import VictoryEvaluator, VictoryResul
 
 logger = get_logger(__name__)
 
-_CHECKPOINT_VERSION = 112
+_CHECKPOINT_VERSION = 113
 _TERMINAL_CONDITION_TYPES = frozenset({
     "armistice",
     "attrition_ratio",
@@ -1440,10 +1440,26 @@ class SimulationEngine:
 
     def get_state(self) -> dict[str, Any]:
         """Capture full engine state for checkpointing."""
+        if self._ctx.morale_runtime is None:
+            if self._ctx.all_units():
+                raise RuntimeError(
+                    "A non-empty engine runtime requires MoraleRuntime ownership",
+                )
+            if (
+                self._ctx.rout_engine is not None
+                and self._ctx.rout_engine.get_state().get("active_routs")
+            ):
+                raise RuntimeError(
+                    "A null morale runtime cannot checkpoint active routes",
+                )
+            if (
+                self._ctx.aggregation_engine is not None
+                and self._ctx.aggregation_engine.get_state().get("aggregates")
+            ):
+                raise RuntimeError(
+                    "A null morale runtime cannot checkpoint aggregates",
+                )
         context_state = self._ctx.get_state()
-        # Format 109 distinguishes an intentionally absent morale machine from
-        # an omitted legacy field without changing direct context snapshots.
-        context_state.setdefault("morale_machine", None)
         state: dict[str, Any] = {
             "checkpoint_version": _CHECKPOINT_VERSION,
             "resolution": self._resolution.value,
@@ -1559,7 +1575,7 @@ class SimulationEngine:
                     "after simulation start",
                 )
         if not allow_legacy_checkpoint:
-            required_morale_keys = {"morale_states", "morale_machine"}
+            required_morale_keys = {"morale_runtime"}
             missing_morale_keys = sorted(
                 required_morale_keys - set(context_state),
             )
@@ -1570,7 +1586,6 @@ class SimulationEngine:
                     f"morale state: {missing_morale_keys!r}",
                 )
             expected_context_keys = set(self._ctx.get_state())
-            expected_context_keys.add("morale_machine")
             actual_context_keys = set(context_state)
             if actual_context_keys != expected_context_keys:
                 raise ValueError(
@@ -1580,14 +1595,19 @@ class SimulationEngine:
                     f"missing={sorted(expected_context_keys - actual_context_keys)!r}, "
                     f"extra={sorted(actual_context_keys - expected_context_keys)!r}",
                 )
-            if (
-                self._ctx.morale_machine is None
-                and context_state["morale_machine"] is not None
-            ):
+            raw_morale_runtime = context_state["morale_runtime"]
+            if self._ctx.morale_runtime is None and raw_morale_runtime is not None:
                 raise ValueError(
                     f"Checkpoint version {_CHECKPOINT_VERSION} contains "
-                    "morale-machine state "
-                    "for a runtime without a morale machine",
+                    "morale-runtime state for a context without MoraleRuntime",
+                )
+            if self._ctx.morale_runtime is not None and not isinstance(
+                raw_morale_runtime,
+                dict,
+            ):
+                raise ValueError(
+                    f"Checkpoint version {_CHECKPOINT_VERSION} must contain "
+                    "a morale-runtime mapping for this runtime",
                 )
 
         raw_resolution = state["resolution"]

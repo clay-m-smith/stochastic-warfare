@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""Run the strict same-host version-2 production benchmark harness."""
+"""Run the strict same-host version-3 production benchmark harness."""
 
 from __future__ import annotations
 

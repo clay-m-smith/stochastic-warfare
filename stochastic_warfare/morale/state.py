@@ -7,24 +7,13 @@ SURRENDERED is an absorbing state.
 
 from __future__ import annotations
 
-from collections.abc import Mapping
-import copy
 import enum
 import math
-from dataclasses import dataclass
-from datetime import datetime, timezone
-from typing import Any
 
 import numpy as np
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
-from stochastic_warfare.core.events import EventBus
-from stochastic_warfare.core.logging import get_logger
 from stochastic_warfare.core.numba_utils import optional_jit
-from stochastic_warfare.core.types import ModuleId
-from stochastic_warfare.morale.events import MoraleStateChangeEvent
-
-logger = get_logger(__name__)
 
 
 # ---------------------------------------------------------------------------
@@ -198,6 +187,15 @@ class MoraleState(enum.IntEnum):
     SURRENDERED = 4
 
 
+class MoraleTransitionCause(enum.StrEnum):
+    """Typed production causes for semantic morale transitions."""
+
+    STOCHASTIC = "stochastic"
+    RALLY = "rally"
+    MELEE_ROUT = "melee_rout"
+    ROUT_CASCADE = "rout_cascade"
+
+
 def validate_morale_state_name(value: str) -> str:
     """Validate and return one exact, case-sensitive morale state name."""
     if value not in MoraleState.__members__:
@@ -226,6 +224,8 @@ class MoraleConfig(BaseModel):
     - Rowland, "The Stress of Battle" (2006): base degrade ~5%/check,
       recovery ~10%/check under favorable conditions.
     """
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
 
     base_degrade_rate: float = 0.05
     """Base probability of degrading one step per check."""
@@ -260,52 +260,6 @@ class MoraleConfig(BaseModel):
 
 
 # ---------------------------------------------------------------------------
-# Per-unit morale tracking
-# ---------------------------------------------------------------------------
-
-
-@dataclass
-class UnitMoraleState:
-    """Tracks the morale state of a single unit."""
-
-    current_state: MoraleState = MoraleState.STEADY
-    transition_cooldown_s: float = 0.0
-    last_transition_time: float = -1e9
-
-    def get_state(self) -> dict[str, Any]:
-        return {
-            "current_state": int(self.current_state),
-            "transition_cooldown_s": self.transition_cooldown_s,
-            "last_transition_time": self.last_transition_time,
-        }
-
-    def set_state(self, state: dict[str, Any]) -> None:
-        current_state = MoraleState(state["current_state"])
-        transition_cooldown_s = state["transition_cooldown_s"]
-        last_transition_time = state["last_transition_time"]
-        if (
-            isinstance(transition_cooldown_s, bool)
-            or not isinstance(transition_cooldown_s, (int, float))
-            or not math.isfinite(float(transition_cooldown_s))
-            or float(transition_cooldown_s) < 0.0
-        ):
-            raise ValueError(
-                "transition_cooldown_s must be a finite non-negative number",
-            )
-        if (
-            isinstance(last_transition_time, bool)
-            or not isinstance(last_transition_time, (int, float))
-            or not math.isfinite(float(last_transition_time))
-        ):
-            raise ValueError(
-                "last_transition_time must be a finite number",
-            )
-        self.current_state = current_state
-        self.transition_cooldown_s = float(transition_cooldown_s)
-        self.last_transition_time = float(last_transition_time)
-
-
-# ---------------------------------------------------------------------------
 # Morale state machine
 # ---------------------------------------------------------------------------
 
@@ -324,68 +278,40 @@ _MORALE_EFFECTS: dict[MoraleState, dict[str, float]] = {
 
 
 class MoraleStateMachine:
-    """Markov-chain morale state transitions.
+    """Stateless Markov-chain morale transition selector.
 
     Parameters
     ----------
-    event_bus:
-        EventBus for publishing morale state changes.
     rng:
         A ``numpy.random.Generator``.
     config:
         Morale configuration parameters.
+
+    The machine owns no per-unit semantic state, events, or checkpoint data.
+    Its only mutable data is a non-semantic transition-matrix cache.
     """
 
     def __init__(
         self,
-        event_bus: EventBus,
         rng: np.random.Generator,
         config: MoraleConfig | None = None,
     ) -> None:
-        self._event_bus = event_bus
         self._rng = rng
         self._config = config or MoraleConfig()
-        self._unit_states: dict[str, UnitMoraleState] = {}
         # Last-result cache for compute_transition_matrix (same-side units
         # share identical parameters within a tick)
         self._cached_matrix_key: tuple[float, ...] | None = None
         self._cached_matrix: np.ndarray | None = None
 
-    def _get_unit_state(self, unit_id: str) -> UnitMoraleState:
-        """Get or create morale state for a unit."""
-        if unit_id not in self._unit_states:
-            self._unit_states[unit_id] = UnitMoraleState()
-        return self._unit_states[unit_id]
+    @property
+    def rng(self) -> np.random.Generator:
+        """Return the injected authoritative MORALE generator."""
+        return self._rng
 
-    def initialize_units(
-        self,
-        initial_states: Mapping[str, MoraleState],
-    ) -> None:
-        """Register initial unit states without RNG draws or transition events.
-
-        Registration is atomic: every ID and state is validated before the
-        machine replaces its state mapping. Existing IDs are rejected so
-        dynamic-unit callers cannot silently reset live morale.
-        """
-        staged: dict[str, UnitMoraleState] = {}
-        for unit_id, state in initial_states.items():
-            if not isinstance(unit_id, str) or not unit_id:
-                raise ValueError("Morale unit IDs must be non-empty strings")
-            if unit_id in self._unit_states or unit_id in staged:
-                raise ValueError(
-                    f"Morale state already registered for unit {unit_id!r}",
-                )
-            try:
-                morale_state = MoraleState(state)
-            except (TypeError, ValueError) as exc:
-                raise ValueError(
-                    f"Invalid initial morale for unit {unit_id!r}: {state!r}",
-                ) from exc
-            staged[unit_id] = UnitMoraleState(current_state=morale_state)
-
-        updated = dict(self._unit_states)
-        updated.update(staged)
-        self._unit_states = updated
+    @property
+    def config(self) -> MoraleConfig:
+        """Return the validated immutable-by-convention configuration."""
+        return self._config
 
     def compute_transition_matrix(
         self,
@@ -472,51 +398,33 @@ class MoraleStateMachine:
             cfg.leadership_weight, cfg.cohesion_weight,
         )
 
-    def check_transition(
+    def select_transition(
         self,
-        unit_id: str,
+        current_state: MoraleState,
         casualty_rate: float,
         suppression_level: float,
         leadership_present: bool,
         cohesion: float,
         force_ratio: float,
-        timestamp: datetime | None = None,
-        dt: float = 1.0,
-        current_time_s: float = 0.0,
+        *,
+        dt: float,
         cbrn_stress: float = 0.0,
     ) -> MoraleState:
-        """Check for a morale state transition.
-
-        Parameters
-        ----------
-        timestamp:
-            Simulation clock time for the event.  Falls back to
-            ``datetime.now(UTC)`` if not provided (legacy callers).
-        dt:
-            Tick duration in seconds.  Only used when
-            ``config.use_continuous_time`` is True.
-        current_time_s:
-            Current simulation time in seconds, for cooldown enforcement.
-        cbrn_stress:
-            Additional degradation pressure from CBRN environment (0.0–1.0).
-
-        Returns the (possibly new) morale state.
-        """
-        ums = self._get_unit_state(unit_id)
-        old_state = ums.current_state
-
-        if old_state == MoraleState.SURRENDERED:
-            return old_state
-
-        # Enforce transition cooldown
-        elapsed_since_last = current_time_s - ums.last_transition_time
-        if elapsed_since_last < self._config.transition_cooldown_s:
-            return old_state
+        """Consume one draw and select one adjacent stochastic state."""
+        if not isinstance(current_state, MoraleState):
+            raise TypeError("current_state must be a MoraleState")
+        if (
+            isinstance(dt, bool)
+            or not isinstance(dt, (int, float))
+            or not math.isfinite(float(dt))
+            or float(dt) <= 0.0
+        ):
+            raise ValueError("dt must be a finite positive number")
 
         if self._config.use_continuous_time:
             matrix = self.compute_continuous_transition_probs(
                 casualty_rate, suppression_level, leadership_present,
-                cohesion, force_ratio, dt,
+                cohesion, force_ratio, float(dt),
             )
         else:
             matrix = self.compute_transition_matrix(
@@ -524,74 +432,19 @@ class MoraleStateMachine:
                 cbrn_stress=cbrn_stress,
             )
 
-        row = matrix[int(old_state)]
+        row = matrix[int(current_state)]
         roll = self._rng.random()
 
         cumulative = 0.0
-        new_state = old_state
+        new_state = current_state
         for j in range(len(MoraleState)):
             cumulative += row[j]
             if roll < cumulative:
                 new_state = MoraleState(j)
                 break
-
-        if new_state != old_state:
-            ums.current_state = new_state
-            ums.last_transition_time = current_time_s
-            logger.debug(
-                "Unit %s morale: %s -> %s", unit_id, old_state.name, new_state.name,
-            )
-            ts = timestamp if timestamp is not None else datetime.now(tz=timezone.utc)
-            self._event_bus.publish(MoraleStateChangeEvent(
-                timestamp=ts,
-                source=ModuleId.MORALE,
-                unit_id=unit_id,
-                old_state=int(old_state),
-                new_state=int(new_state),
-            ))
-
         return new_state
 
     @staticmethod
     def apply_morale_effects(state: MoraleState) -> dict[str, float]:
         """Return effectiveness multipliers for the given morale state."""
         return _MORALE_EFFECTS[state]
-
-    # ------------------------------------------------------------------
-    # State
-    # ------------------------------------------------------------------
-
-    def get_state(self) -> dict[str, Any]:
-        return {
-            "unit_states": {
-                uid: ums.get_state()
-                for uid, ums in sorted(self._unit_states.items())
-            },
-            "rng_state": self._rng.bit_generator.state,
-        }
-
-    def set_state(self, state: dict[str, Any]) -> None:
-        try:
-            raw_states = state["unit_states"]
-            if not isinstance(raw_states, dict):
-                raise ValueError("unit_states must be a mapping")
-            staged_rng = copy.deepcopy(self._rng)
-            staged_rng.bit_generator.state = state["rng_state"]
-            staged_units: dict[str, UnitMoraleState] = {}
-            for uid, ums_state in raw_states.items():
-                if not isinstance(uid, str) or not uid:
-                    raise ValueError(
-                        "morale state keys must be non-empty unit IDs",
-                    )
-                if not isinstance(ums_state, dict):
-                    raise ValueError(
-                        f"morale state for {uid!r} must be a mapping",
-                    )
-                ums = UnitMoraleState()
-                ums.set_state(ums_state)
-                staged_units[uid] = ums
-        except (KeyError, TypeError, ValueError) as exc:
-            raise ValueError(f"Invalid morale checkpoint state: {exc}") from exc
-
-        self._rng.bit_generator.state = staged_rng.bit_generator.state
-        self._unit_states = staged_units

@@ -14,6 +14,7 @@ from typing import Any
 from pydantic import BaseModel
 
 from stochastic_warfare.core.logging import get_logger
+from stochastic_warfare.morale.state import MoraleState
 from stochastic_warfare.simulation.battle import BattleConfig
 from stochastic_warfare.simulation.campaign import CampaignConfig
 from stochastic_warfare.simulation.engine import (
@@ -65,7 +66,7 @@ class CampaignRunResult:
     victory_result: VictoryResult
     recorder: SimulationRecorder | None
     final_units_by_side: dict[str, list[Any]]
-    final_morale_states: dict[str, Any]
+    final_morale_states: dict[str, MoraleState]
     terminated_by: str
     run_result: SimulationRunResult | None = None
     runtime_provenance: RuntimeProvenance | None = None

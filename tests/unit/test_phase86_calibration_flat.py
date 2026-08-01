@@ -49,7 +49,7 @@ class TestToFlatDict:
         flat = cal.to_flat_dict(["blue", "red"])
         assert flat["morale_base_degrade_rate"] == 0.1
         assert flat["morale_casualty_weight"] == 3.0
-        # All 10 morale keys present
+        # Every declared morale compatibility key is present.
         for key in CalibrationSchema._MORALE_KEY_MAP:
             assert key in flat, f"Missing morale key: {key}"
 

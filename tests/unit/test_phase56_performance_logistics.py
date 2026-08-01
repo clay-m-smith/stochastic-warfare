@@ -26,7 +26,9 @@ from stochastic_warfare.logistics.maintenance import (
     MaintenanceEngine,
     MaintenanceStatus,
 )
-from stochastic_warfare.morale.state import MoraleState
+from stochastic_warfare.morale.rout import RoutConfig, RoutEngine
+from stochastic_warfare.morale.runtime import MoraleRegistration, MoraleRuntime
+from stochastic_warfare.morale.state import MoraleConfig, MoraleState
 from stochastic_warfare.simulation.calibration import CalibrationSchema
 
 from tests.conftest import TS, make_rng
@@ -66,20 +68,17 @@ def _make_unit(
     return u
 
 
-def _make_rout_engine(cascade_radius_m: float = 500.0):
-    """Minimal RoutEngine mock with config and callable methods."""
-    engine = SimpleNamespace()
-    engine._config = SimpleNamespace(cascade_radius_m=cascade_radius_m)
-    engine.check_rally = MagicMock(return_value=False)
-    engine.rout_cascade = MagicMock(return_value=[])
-    return engine
-
-
-def _make_morale_machine():
-    """Mock morale machine that returns STEADY by default."""
-    machine = MagicMock()
-    machine.check_transition = MagicMock(return_value=MoraleState.STEADY)
-    return machine
+def _stable_morale_config() -> MoraleConfig:
+    """Return a config that isolates deterministic rally/cascade behavior."""
+    return MoraleConfig(
+        base_degrade_rate=0.0,
+        base_recover_rate=0.0,
+        casualty_weight=0.0,
+        suppression_weight=0.0,
+        leadership_weight=0.0,
+        cohesion_weight=0.0,
+        force_ratio_weight=0.0,
+    )
 
 
 # =========================================================================
@@ -145,136 +144,178 @@ class TestWeibullCalibration:
 class TestRallySTRtree:
     """Rally + cascade via STRtree spatial index."""
 
-    def _make_battle_manager(self):
+    def _make_runtime_context(
+        self,
+        units: list[Unit],
+        morale_states: dict[str, MoraleState],
+        *,
+        rout_config: RoutConfig,
+        seed: int = _SEED,
+        cal: CalibrationSchema | None = None,
+    ) -> tuple[object, SimpleNamespace, MoraleRuntime]:
         from stochastic_warfare.simulation.battle import BattleManager
-        bus = EventBus()
-        return BattleManager(event_bus=bus)
 
-    def _make_ctx(self, morale_states, morale_machine=None, rout_engine=None, cal=None):
-        return SimpleNamespace(
-            morale_machine=morale_machine or _make_morale_machine(),
-            morale_states=morale_states,
-            calibration=cal or CalibrationSchema(),
+        bus = EventBus()
+        rng = make_rng(seed)
+        rout_engine = RoutEngine(bus, rng, rout_config)
+        runtime = MoraleRuntime(
+            bus,
+            rng,
+            _stable_morale_config(),
             rout_engine=rout_engine,
         )
+        unit_index = {unit.entity_id: unit for unit in units}
+        runtime.register_units(
+            tuple(
+                MoraleRegistration(unit.entity_id, morale_states[unit.entity_id])
+                for unit in units
+            ),
+            unit_index,
+        )
+        ctx = SimpleNamespace(
+            morale_runtime=runtime,
+            morale_states=runtime.states,
+            calibration=cal or CalibrationSchema(),
+            rout_engine=runtime.rout_engine,
+            clock=SimpleNamespace(elapsed=timedelta(seconds=100.0)),
+        )
+        return BattleManager(event_bus=bus), ctx, runtime
 
     def test_rally_succeeds_with_friendlies_nearby(self):
         """Routing unit rallies when nearby active friendlies exist."""
-        bm = self._make_battle_manager()
-        rout = _make_rout_engine(cascade_radius_m=600.0)
-        rout.check_rally.return_value = True
-
         routing = _make_unit("u1", status=UnitStatus.ROUTING, easting=100, northing=100)
         friendly = _make_unit("u2", status=UnitStatus.ACTIVE, easting=200, northing=100)
         morale_states = {"u1": MoraleState.ROUTED, "u2": MoraleState.STEADY}
-        ctx = self._make_ctx(morale_states, rout_engine=rout)
+        bm, ctx, runtime = self._make_runtime_context(
+            [routing, friendly],
+            morale_states,
+            rout_config=RoutConfig(
+                rally_base_chance=0.0,
+                rally_friendly_bonus=1.0,
+                rally_leader_bonus=0.0,
+                cascade_radius_m=600.0,
+                cascade_base_chance=0.0,
+            ),
+        )
 
         bm._execute_morale(
             ctx, {"blue": [routing, friendly]}, {"blue": []}, TS,
         )
 
-        rout.check_rally.assert_called_once()
-        args = rout.check_rally.call_args
-        assert args[0][1] >= 1  # nearby_count >= 1
+        assert runtime.record_for("u1").current_state is MoraleState.SHAKEN
+        assert routing.status is UnitStatus.ACTIVE
 
     def test_rally_fails_with_no_friendlies(self):
         """Routing unit does not rally when alone."""
-        bm = self._make_battle_manager()
-        rout = _make_rout_engine(cascade_radius_m=600.0)
-        rout.check_rally.return_value = False
-
         routing = _make_unit("u1", status=UnitStatus.ROUTING, easting=100, northing=100)
         morale_states = {"u1": MoraleState.ROUTED}
-        ctx = self._make_ctx(morale_states, rout_engine=rout)
+        bm, ctx, runtime = self._make_runtime_context(
+            [routing],
+            morale_states,
+            rout_config=RoutConfig(
+                rally_base_chance=0.0,
+                rally_friendly_bonus=1.0,
+                rally_leader_bonus=0.0,
+                cascade_radius_m=600.0,
+                cascade_base_chance=0.0,
+            ),
+        )
 
         bm._execute_morale(ctx, {"blue": [routing]}, {"blue": []}, TS)
 
-        rout.check_rally.assert_called_once()
-        args = rout.check_rally.call_args
-        assert args[0][1] == 0  # nearby_count == 0
+        assert runtime.record_for("u1").current_state is MoraleState.ROUTED
+        assert routing.status is UnitStatus.ROUTING
 
     def test_rally_leader_bonus(self):
         """HQ unit nearby sets leader_present flag."""
-        bm = self._make_battle_manager()
-        rout = _make_rout_engine(cascade_radius_m=600.0)
-        rout.check_rally.return_value = True
-
         routing = _make_unit("u1", status=UnitStatus.ROUTING, easting=100, northing=100)
         hq = _make_unit("u2", status=UnitStatus.ACTIVE, easting=150, northing=100,
                         support_type="HQ")
         morale_states = {"u1": MoraleState.ROUTED, "u2": MoraleState.STEADY}
-        ctx = self._make_ctx(morale_states, rout_engine=rout)
+        bm, ctx, runtime = self._make_runtime_context(
+            [routing, hq],
+            morale_states,
+            rout_config=RoutConfig(
+                rally_base_chance=0.0,
+                rally_friendly_bonus=0.0,
+                rally_leader_bonus=1.0,
+                cascade_radius_m=600.0,
+                cascade_base_chance=0.0,
+            ),
+        )
 
         bm._execute_morale(ctx, {"blue": [routing, hq]}, {"blue": []}, TS)
 
-        rout.check_rally.assert_called_once()
-        assert rout.check_rally.call_args[0][2] is True  # leader_present
+        assert runtime.record_for("u1").current_state is MoraleState.SHAKEN
+        assert routing.status is UnitStatus.ACTIVE
 
     def test_rally_beyond_radius(self):
         """Friendlies beyond cascade_radius_m are not counted."""
-        bm = self._make_battle_manager()
-        rout = _make_rout_engine(cascade_radius_m=100.0)
-        rout.check_rally.return_value = False
-
         routing = _make_unit("u1", status=UnitStatus.ROUTING, easting=0, northing=0)
         far = _make_unit("u2", status=UnitStatus.ACTIVE, easting=500, northing=500)
         morale_states = {"u1": MoraleState.ROUTED, "u2": MoraleState.STEADY}
-        ctx = self._make_ctx(morale_states, rout_engine=rout)
+        bm, ctx, runtime = self._make_runtime_context(
+            [routing, far],
+            morale_states,
+            rout_config=RoutConfig(
+                rally_base_chance=0.0,
+                rally_friendly_bonus=1.0,
+                rally_leader_bonus=0.0,
+                cascade_radius_m=100.0,
+                cascade_base_chance=0.0,
+            ),
+        )
 
         bm._execute_morale(ctx, {"blue": [routing, far]}, {"blue": []}, TS)
 
-        rout.check_rally.assert_called_once()
-        assert rout.check_rally.call_args[0][1] == 0  # nearby_count
+        assert runtime.record_for("u1").current_state is MoraleState.ROUTED
+        assert routing.status is UnitStatus.ROUTING
 
     def test_cascade_within_radius_triggers(self):
         """Rout cascade queries units within radius."""
-        bm = self._make_battle_manager()
-        rout = _make_rout_engine(cascade_radius_m=600.0)
-
-        # morale_machine must return ROUTED for the routing unit so it stays
-        # in the newly_routed list after check_transition
-        mm = _make_morale_machine()
-        def _transition(unit_id, **kw):
-            if unit_id == "u1":
-                return MoraleState.ROUTED
-            return MoraleState.STEADY
-        mm.check_transition.side_effect = _transition
-
         routing = _make_unit("u1", status=UnitStatus.ROUTING, easting=100, northing=100)
         nearby = _make_unit("u2", status=UnitStatus.ACTIVE, easting=200, northing=100)
-        morale_states = {"u1": MoraleState.ROUTED, "u2": MoraleState.STEADY}
-        ctx = self._make_ctx(morale_states, morale_machine=mm, rout_engine=rout)
+        morale_states = {"u1": MoraleState.ROUTED, "u2": MoraleState.SHAKEN}
+        bm, ctx, runtime = self._make_runtime_context(
+            [routing, nearby],
+            morale_states,
+            rout_config=RoutConfig(
+                rally_base_chance=0.0,
+                rally_friendly_bonus=0.0,
+                rally_leader_bonus=0.0,
+                cascade_radius_m=600.0,
+                cascade_base_chance=1.0,
+                cascade_shaken_susceptibility=1.0,
+            ),
+        )
 
         bm._execute_morale(ctx, {"blue": [routing, nearby]}, {"blue": []}, TS)
 
-        rout.rout_cascade.assert_called_once()
-        call_kwargs = rout.rout_cascade.call_args[1]
-        assert "u2" in call_kwargs.get("distances_m", {})
+        assert runtime.record_for("u2").current_state is MoraleState.ROUTED
+        assert nearby.status is UnitStatus.ROUTING
 
     def test_cascade_beyond_radius_excluded(self):
         """Units beyond cascade radius are not in cascade distances."""
-        bm = self._make_battle_manager()
-        rout = _make_rout_engine(cascade_radius_m=100.0)
-
-        mm = _make_morale_machine()
-        def _transition(unit_id, **kw):
-            if unit_id == "u1":
-                return MoraleState.ROUTED
-            return MoraleState.STEADY
-        mm.check_transition.side_effect = _transition
-
         routing = _make_unit("u1", status=UnitStatus.ROUTING, easting=0, northing=0)
         far = _make_unit("u2", status=UnitStatus.ACTIVE, easting=5000, northing=5000)
-        morale_states = {"u1": MoraleState.ROUTED, "u2": MoraleState.STEADY}
-        ctx = self._make_ctx(morale_states, morale_machine=mm, rout_engine=rout)
+        morale_states = {"u1": MoraleState.ROUTED, "u2": MoraleState.SHAKEN}
+        bm, ctx, runtime = self._make_runtime_context(
+            [routing, far],
+            morale_states,
+            rout_config=RoutConfig(
+                rally_base_chance=0.0,
+                rally_friendly_bonus=0.0,
+                rally_leader_bonus=0.0,
+                cascade_radius_m=100.0,
+                cascade_base_chance=1.0,
+                cascade_shaken_susceptibility=1.0,
+            ),
+        )
 
         bm._execute_morale(ctx, {"blue": [routing, far]}, {"blue": []}, TS)
 
-        rout.rout_cascade.assert_called_once()
-        # distances dict should be empty — far unit is outside radius
-        call_kwargs = rout.rout_cascade.call_args
-        distances = call_kwargs[1].get("distances_m", {})
-        assert "u2" not in distances
+        assert runtime.record_for("u2").current_state is MoraleState.SHAKEN
+        assert far.status is UnitStatus.ACTIVE
 
     def test_multi_unit_distance_regression(self):
         """Regression: all nearby units are counted, not just the last.
@@ -282,10 +323,6 @@ class TestRallySTRtree:
         The Phase 42c bug had an indentation error that only checked the
         last unit's distance. Verify multiple units are counted.
         """
-        bm = self._make_battle_manager()
-        rout = _make_rout_engine(cascade_radius_m=600.0)
-        rout.check_rally.return_value = True
-
         routing = _make_unit("u1", status=UnitStatus.ROUTING, easting=100, northing=100)
         f1 = _make_unit("u2", status=UnitStatus.ACTIVE, easting=150, northing=100)
         f2 = _make_unit("u3", status=UnitStatus.ACTIVE, easting=200, northing=100)
@@ -296,14 +333,27 @@ class TestRallySTRtree:
             "u3": MoraleState.STEADY,
             "u4": MoraleState.STEADY,
         }
-        ctx = self._make_ctx(morale_states, rout_engine=rout)
+        bm, ctx, runtime = self._make_runtime_context(
+            [routing, f1, f2, f3],
+            morale_states,
+            seed=1,
+            rout_config=RoutConfig(
+                rally_base_chance=0.0,
+                rally_friendly_bonus=0.2,
+                rally_leader_bonus=0.0,
+                cascade_radius_m=600.0,
+                cascade_base_chance=0.0,
+            ),
+        )
 
         bm._execute_morale(
             ctx, {"blue": [routing, f1, f2, f3]}, {"blue": []}, TS,
         )
 
-        rout.check_rally.assert_called_once()
-        assert rout.check_rally.call_args[0][1] == 3  # all 3 counted
+        # PCG64 seed 1 starts at 0.5118: three friendlies produce chance 0.6,
+        # while one or two would produce at most 0.4.
+        assert runtime.record_for("u1").current_state is MoraleState.SHAKEN
+        assert routing.status is UnitStatus.ACTIVE
 
 
 # =========================================================================
