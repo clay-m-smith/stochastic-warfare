@@ -1,4 +1,4 @@
-"""Tests for the strict paired benchmark policy and evidence contract."""
+"""Tests for strict benchmark gate and workload-transition evidence."""
 
 from __future__ import annotations
 
@@ -15,6 +15,7 @@ import sys
 import numpy as np
 import pytest
 from pydantic import BaseModel, ValidationError
+import yaml
 
 from tests.benchmarks import benchmark_suite as benchmark_module
 from tests.benchmarks.benchmark_suite import (
@@ -26,12 +27,17 @@ from tests.benchmarks.benchmark_suite import (
     BenchmarkComparisonError,
     BenchmarkPolicy,
     BenchmarkResult,
+    BenchmarkTransitionError,
     ComparisonArtifact,
     DATA_DIR,
     GitIdentity,
     PairSample,
+    ProductionClosureRun,
     RuntimeInputManifest,
     SCENARIOS_DIR,
+    TransitionArtifact,
+    TransitionFinalTreeVerification,
+    TransitionPolicy,
     WorkerRun,
     _write_artifact,
     canonical_json_bytes,
@@ -39,13 +45,19 @@ from tests.benchmarks.benchmark_suite import (
     evaluate_paired_samples,
     run_benchmark,
     run_paired_comparison,
+    run_revision_closure,
     run_revision_worker,
+    run_workload_transition,
     validate_artifact,
+    validate_transition_artifact,
+    validate_transition_final_tree_verification,
+    validate_workload_transition,
+    verify_transition_final_tree,
 )
 
 
 def _gate_policy() -> BenchmarkPolicy:
-    return BenchmarkBaseline().load()["73_easting"].policy
+    return BenchmarkBaseline().load()["golan_heights"].policy
 
 
 def _synthetic_gate_policy() -> BenchmarkPolicy:
@@ -63,11 +75,13 @@ def _worker_with_duration(
     revision: str,
     duration_s: float,
 ) -> WorkerRun:
-    return WorkerRun.model_validate({
-        **worker.model_dump(mode="python"),
-        "revision": revision,
-        "duration_s": duration_s,
-    })
+    return WorkerRun.model_validate(
+        {
+            **worker.model_dump(mode="python"),
+            "revision": revision,
+            "duration_s": duration_s,
+        }
+    )
 
 
 def _minimal_manifest() -> RuntimeInputManifest:
@@ -105,17 +119,129 @@ def _minimal_manifest() -> RuntimeInputManifest:
     )
 
 
+def _manifest_with_effective_inputs(
+    template: RuntimeInputManifest,
+    effective_inputs: dict[str, object],
+    **updates: object,
+) -> RuntimeInputManifest:
+    payload = template.fingerprint_payload()
+    payload["effective_inputs"] = effective_inputs
+    payload.update(updates)
+    return RuntimeInputManifest(
+        **payload,
+        fingerprint=canonical_sha256(payload),
+    )
+
+
+def _synthetic_transition_fixture() -> tuple[
+    ProductionClosureRun,
+    ProductionClosureRun,
+    benchmark_module.WorkloadTransitionContract,
+]:
+    template = _minimal_manifest()
+    reference_manifest = _manifest_with_effective_inputs(
+        template,
+        {"control": {"enabled": False}},
+    )
+    candidate_manifest = _manifest_with_effective_inputs(
+        template,
+        {"control": {"enabled": True}},
+    )
+    semantic = BenchmarkBaseline().load()["golan_heights"].semantic_envelope
+    assert semantic is not None
+    candidate_semantic = semantic.model_copy(
+        update={"roster_loadout_digest": "c" * 64},
+    )
+    reference = ProductionClosureRun(
+        revision="reference",
+        commit=benchmark_module.REFERENCE_COMMIT,
+        runtime_input=reference_manifest,
+        semantic_envelope=semantic,
+    )
+    candidate = ProductionClosureRun(
+        revision="candidate",
+        commit="1" * 40,
+        runtime_input=candidate_manifest,
+        semantic_envelope=candidate_semantic,
+    )
+    observed = benchmark_module.compute_transition_differences(
+        reference_manifest.effective_inputs,
+        candidate_manifest.effective_inputs,
+        surface="effective_inputs",
+    )
+    observed.extend(
+        benchmark_module.compute_transition_differences(
+            {"fingerprint": reference_manifest.fingerprint},
+            {"fingerprint": candidate_manifest.fingerprint},
+            surface="runtime_input",
+        )
+    )
+    observed.extend(
+        benchmark_module.compute_transition_differences(
+            semantic.model_dump(mode="json"),
+            candidate_semantic.model_dump(mode="json"),
+            surface="semantic_envelope",
+        )
+    )
+    classifications = {
+        ("effective_inputs", "/control/enabled"): "sensing_aware_standoff_enablement",
+        ("runtime_input", "/fingerprint"): "derived_runtime_input_fingerprint",
+        ("semantic_envelope", "/roster_loadout_digest"): "derived_roster_loadout_digest",
+    }
+    approvals = [
+        benchmark_module.TransitionApproval(
+            surface=difference.surface,
+            pointer=difference.pointer,
+            operation=difference.operation,
+            before_sha256=difference.before_sha256,
+            after_sha256=difference.after_sha256,
+            classification=classifications[(difference.surface, difference.pointer)],
+            authorities=["synthetic-transition-test"],
+            rationale="Synthetic exact-difference contract for harness tests.",
+        )
+        for difference in sorted(
+            observed,
+            key=lambda item: (item.surface, item.pointer),
+        )
+    ]
+    contract = benchmark_module.WorkloadTransitionContract(
+        predecessor=benchmark_module.TransitionPredecessorLineage(
+            format_version=3,
+            policy_version=3,
+            commit="2" * 40,
+            document_sha256="3" * 64,
+            entry_sha256="4" * 64,
+        ),
+        reference=benchmark_module.TransitionEndpoint(
+            runtime_input=benchmark_module.ReferenceInput(
+                scenario_path=reference_manifest.scenario_path,
+                scenario_sha256=reference_manifest.scenario_sha256,
+                dependency_lock_sha256=(reference_manifest.dependency_lock_sha256),
+                fingerprint=reference_manifest.fingerprint,
+            ),
+            semantic_envelope=semantic,
+        ),
+        candidate=benchmark_module.TransitionEndpoint(
+            runtime_input=benchmark_module.ReferenceInput(
+                scenario_path=candidate_manifest.scenario_path,
+                scenario_sha256=candidate_manifest.scenario_sha256,
+                dependency_lock_sha256=(candidate_manifest.dependency_lock_sha256),
+                fingerprint=candidate_manifest.fingerprint,
+            ),
+            semantic_envelope=candidate_semantic,
+        ),
+        approvals=approvals,
+    )
+    return reference, candidate, contract
+
+
 def _valid_pass_artifact() -> ComparisonArtifact:
-    entry = BenchmarkBaseline().load()["73_easting"]
+    entry = BenchmarkBaseline().load()["golan_heights"]
     assert entry.policy.reference_commit is not None
     assert entry.semantic_envelope is not None
     manifest = _minimal_manifest()
-    environment_payload = (
-        benchmark_module._environment_metadata().model_dump(mode="python")
-    )
-    environment_payload["dependency_lock_sha256"] = (
-        manifest.dependency_lock_sha256
-    )
+    environment_payload = benchmark_module._environment_metadata().model_dump(mode="python")
+    environment_payload["dependency_lock_sha256"] = manifest.dependency_lock_sha256
     environment = benchmark_module.BenchmarkEnvironment.model_validate(
         environment_payload,
     )
@@ -160,7 +286,7 @@ def _valid_pass_artifact() -> ComparisonArtifact:
     )
     return ComparisonArtifact(
         created_at_utc="2026-07-29T00:00:00+00:00",
-        scenario_name="73_easting",
+        scenario_name="golan_heights",
         status="pass",
         errors=[],
         policy=entry.policy,
@@ -191,6 +317,54 @@ def _valid_pass_artifact() -> ComparisonArtifact:
         },
         pairs=pairs,
         decision=decision,
+    )
+
+
+def _valid_transition_artifact() -> TransitionArtifact:
+    reference, candidate, contract = _synthetic_transition_fixture()
+    policy_payload = BenchmarkBaseline().load()["73_easting"].policy.model_dump(mode="python")
+    policy_payload["workload"] = {
+        "name": "default",
+        "calibration_patch": {},
+    }
+    policy = TransitionPolicy.model_validate(policy_payload)
+    environment_payload = benchmark_module._environment_metadata().model_dump(mode="python")
+    environment_payload["dependency_lock_sha256"] = reference.runtime_input.dependency_lock_sha256
+    return TransitionArtifact(
+        created_at_utc="2026-08-02T00:00:00+00:00",
+        scenario_name="synthetic",
+        status="transition_qualified",
+        errors=[],
+        policy=policy,
+        baseline_identity=benchmark_module.BenchmarkBaselineIdentity(
+            authoritative=False,
+            source="custom",
+            document_sha256="d" * 64,
+            entry_sha256="e" * 64,
+        ),
+        environment=benchmark_module.BenchmarkEnvironment.model_validate(
+            environment_payload,
+        ),
+        reference_identity=GitIdentity(
+            commit=reference.commit,
+            dirty=False,
+            status=[],
+            runtime_manifest=reference.runtime_input.sources,
+        ),
+        candidate_identity=GitIdentity(
+            commit=candidate.commit,
+            dirty=False,
+            status=[],
+            runtime_manifest=candidate.runtime_input.sources,
+        ),
+        closures={"reference": reference, "candidate": candidate},
+        contract=contract,
+        verified_approvals=validate_workload_transition(
+            reference,
+            candidate,
+            contract,
+        ),
+        timing_assessment=benchmark_module.TransitionTimingAssessment(),
     )
 
 
@@ -231,10 +405,7 @@ def _initialize_runtime_repository(repo: Path) -> None:
 def _runtime_input_for_identity(
     identity: GitIdentity,
 ) -> RuntimeInputManifest:
-    sources_by_path = {
-        source.path: source
-        for source in identity.runtime_manifest
-    }
+    sources_by_path = {source.path: source for source in identity.runtime_manifest}
     scenario_path = "data/scenarios/test/scenario.yaml"
     scenario_source = sources_by_path[scenario_path]
     lock_source = sources_by_path["uv.lock"]
@@ -276,9 +447,7 @@ def _pass_artifact_for_identity(
     candidate_identity: GitIdentity,
     runtime_input: RuntimeInputManifest,
     *,
-    baseline_identity: (
-        benchmark_module.BenchmarkBaselineIdentity | None
-    ) = None,
+    baseline_identity: (benchmark_module.BenchmarkBaselineIdentity | None) = None,
     scenario_name: str = "73_easting",
     policy: BenchmarkPolicy | None = None,
 ) -> ComparisonArtifact:
@@ -290,9 +459,7 @@ def _pass_artifact_for_identity(
     semantic_envelope = template.warmups["candidate"].semantic_envelope
     environment = template.environment.model_copy(
         update={
-            "dependency_lock_sha256": (
-                runtime_input.dependency_lock_sha256
-            ),
+            "dependency_lock_sha256": (runtime_input.dependency_lock_sha256),
         },
     )
     reference = WorkerRun(
@@ -346,7 +513,7 @@ def _write_synthetic_gate_baseline(
     path: Path,
     runtime_input: RuntimeInputManifest,
 ) -> benchmark_module.BaselineEntry:
-    template = BenchmarkBaseline().load()["73_easting"]
+    template = BenchmarkBaseline().load()["golan_heights"]
     assert template.semantic_envelope is not None
     entry = benchmark_module.BaselineEntry(
         scenario_name="synthetic",
@@ -355,17 +522,50 @@ def _write_synthetic_gate_baseline(
         reference_input=benchmark_module.ReferenceInput(
             scenario_path=runtime_input.scenario_path,
             scenario_sha256=runtime_input.scenario_sha256,
-            dependency_lock_sha256=(
-                runtime_input.dependency_lock_sha256
-            ),
+            dependency_lock_sha256=(runtime_input.dependency_lock_sha256),
             fingerprint=runtime_input.fingerprint,
         ),
         semantic_envelope=template.semantic_envelope,
+        transition_contract=None,
     )
-    BenchmarkBaseline(path).save_file(BaselineFile(
-        description="Synthetic paired-driver policy fixture.",
-        entries={"synthetic": entry},
-    ))
+    BenchmarkBaseline(path).save_file(
+        BaselineFile(
+            description="Synthetic paired-driver policy fixture.",
+            entries={"synthetic": entry},
+        )
+    )
+    return entry
+
+
+def _write_synthetic_transition_baseline(
+    path: Path,
+    contract: benchmark_module.WorkloadTransitionContract,
+) -> benchmark_module.BaselineEntry:
+    payload = (
+        BenchmarkBaseline()
+        .load()["73_easting"]
+        .policy.model_dump(
+            mode="python",
+        )
+    )
+    payload["workload"] = {
+        "name": "default",
+        "calibration_patch": {},
+    }
+    entry = benchmark_module.BaselineEntry(
+        scenario_name="synthetic",
+        scenario_path=contract.reference.runtime_input.scenario_path,
+        policy=TransitionPolicy.model_validate(payload),
+        reference_input=None,
+        semantic_envelope=None,
+        transition_contract=contract,
+    )
+    BenchmarkBaseline(path).save_file(
+        BaselineFile(
+            description="Synthetic workload-transition policy fixture.",
+            entries={"synthetic": entry},
+        )
+    )
     return entry
 
 
@@ -413,21 +613,208 @@ def _prepare_dirty_final_tree(
     return artifact, runtime_input, baseline_path
 
 
+def _prepare_dirty_transition_tree(
+    repo: Path,
+) -> tuple[TransitionArtifact, RuntimeInputManifest, Path]:
+    _initialize_runtime_repository(repo)
+    (repo / "stochastic_warfare" / "runtime.py").write_text(
+        "VALUE = 2\n",
+        encoding="utf-8",
+    )
+    initial_dirty_identity = benchmark_module._git_identity(
+        repo,
+        require_clean=False,
+    )
+    base_manifest = _runtime_input_for_identity(initial_dirty_identity)
+    reference_manifest = _manifest_with_effective_inputs(
+        base_manifest,
+        {"optional": None, "test": False},
+    )
+    candidate_manifest = _manifest_with_effective_inputs(
+        base_manifest,
+        {"optional": None, "test": True},
+    )
+    semantic = BenchmarkBaseline().load()["golan_heights"].semantic_envelope
+    assert semantic is not None
+    candidate_semantic = semantic.model_copy(
+        update={"roster_loadout_digest": "c" * 64},
+    )
+    reference = ProductionClosureRun(
+        revision="reference",
+        commit=benchmark_module.REFERENCE_COMMIT,
+        runtime_input=reference_manifest,
+        semantic_envelope=semantic,
+    )
+    baseline_path = repo / "tests" / "benchmarks" / "baselines.json"
+    predecessor_entry = {
+        "policy": {
+            **_synthetic_gate_policy().model_dump(mode="json"),
+            "policy_version": 3,
+        },
+        "reference_input": {
+            "scenario_path": reference_manifest.scenario_path,
+            "scenario_sha256": reference_manifest.scenario_sha256,
+            "dependency_lock_sha256": (reference_manifest.dependency_lock_sha256),
+            "fingerprint": reference_manifest.fingerprint,
+        },
+        "scenario_name": "synthetic",
+        "scenario_path": reference_manifest.scenario_path,
+        "semantic_envelope": semantic.model_dump(mode="json"),
+    }
+    predecessor_document = {
+        "description": "Synthetic version-3 predecessor.",
+        "entries": {"synthetic": predecessor_entry},
+        "format_version": 3,
+    }
+    baseline_path.write_text(
+        json.dumps(predecessor_document, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    predecessor_document_sha256 = benchmark_module._file_sha256(
+        baseline_path,
+    )
+    benchmark_module._git(repo, "add", ".")
+    benchmark_module._git(repo, "commit", "-m", "v3 predecessor baseline")
+    predecessor_commit = benchmark_module._full_commit(repo)
+    candidate = ProductionClosureRun(
+        revision="candidate",
+        commit=predecessor_commit,
+        runtime_input=candidate_manifest,
+        semantic_envelope=candidate_semantic,
+    )
+    (repo / "stochastic_warfare" / "runtime.py").write_text(
+        "VALUE = 3\n",
+        encoding="utf-8",
+    )
+    observed = benchmark_module.compute_transition_differences(
+        reference_manifest.effective_inputs,
+        candidate_manifest.effective_inputs,
+        surface="effective_inputs",
+    )
+    observed.extend(
+        benchmark_module.compute_transition_differences(
+            {"fingerprint": reference_manifest.fingerprint},
+            {"fingerprint": candidate_manifest.fingerprint},
+            surface="runtime_input",
+        )
+    )
+    observed.extend(
+        benchmark_module.compute_transition_differences(
+            semantic.model_dump(mode="json"),
+            candidate_semantic.model_dump(mode="json"),
+            surface="semantic_envelope",
+        )
+    )
+    classifications = {
+        ("effective_inputs", "/test"): "sensing_aware_standoff_enablement",
+        ("runtime_input", "/fingerprint"): "derived_runtime_input_fingerprint",
+        ("semantic_envelope", "/roster_loadout_digest"): "derived_roster_loadout_digest",
+    }
+    contract = benchmark_module.WorkloadTransitionContract(
+        predecessor=benchmark_module.TransitionPredecessorLineage(
+            format_version=3,
+            policy_version=3,
+            commit=predecessor_commit,
+            document_sha256=predecessor_document_sha256,
+            entry_sha256=canonical_sha256(predecessor_entry),
+        ),
+        reference=benchmark_module.TransitionEndpoint(
+            runtime_input=benchmark_module.ReferenceInput(
+                scenario_path=reference_manifest.scenario_path,
+                scenario_sha256=reference_manifest.scenario_sha256,
+                dependency_lock_sha256=(reference_manifest.dependency_lock_sha256),
+                fingerprint=reference_manifest.fingerprint,
+            ),
+            semantic_envelope=semantic,
+        ),
+        candidate=benchmark_module.TransitionEndpoint(
+            runtime_input=benchmark_module.ReferenceInput(
+                scenario_path=candidate_manifest.scenario_path,
+                scenario_sha256=candidate_manifest.scenario_sha256,
+                dependency_lock_sha256=(candidate_manifest.dependency_lock_sha256),
+                fingerprint=candidate_manifest.fingerprint,
+            ),
+            semantic_envelope=candidate_semantic,
+        ),
+        approvals=[
+            benchmark_module.TransitionApproval(
+                surface=difference.surface,
+                pointer=difference.pointer,
+                operation=difference.operation,
+                before_sha256=difference.before_sha256,
+                after_sha256=difference.after_sha256,
+                classification=classifications[(difference.surface, difference.pointer)],
+                authorities=["synthetic-transition-test"],
+                rationale=("Synthetic exact-difference contract for final-tree tests."),
+            )
+            for difference in sorted(
+                observed,
+                key=lambda item: (item.surface, item.pointer),
+            )
+        ],
+    )
+    entry = _write_synthetic_transition_baseline(baseline_path, contract)
+    candidate_identity = benchmark_module._git_identity(
+        repo,
+        require_clean=False,
+    )
+    environment_payload = benchmark_module._environment_metadata().model_dump(mode="python")
+    environment_payload["dependency_lock_sha256"] = candidate_manifest.dependency_lock_sha256
+    artifact = TransitionArtifact(
+        created_at_utc="2026-08-02T00:00:00+00:00",
+        scenario_name="synthetic",
+        status="transition_qualified",
+        errors=[],
+        policy=entry.policy,
+        baseline_identity=benchmark_module.BenchmarkBaselineIdentity(
+            authoritative=True,
+            source="checked_in",
+            document_sha256=benchmark_module._file_sha256(baseline_path),
+            entry_sha256=canonical_sha256(entry.model_dump(mode="json")),
+        ),
+        environment=benchmark_module.BenchmarkEnvironment.model_validate(
+            environment_payload,
+        ),
+        reference_identity=GitIdentity(
+            commit=reference.commit,
+            dirty=False,
+            status=[],
+            runtime_manifest=candidate_identity.runtime_manifest,
+        ),
+        candidate_identity=candidate_identity,
+        closures={"reference": reference, "candidate": candidate},
+        contract=contract,
+        verified_approvals=validate_workload_transition(
+            reference,
+            candidate,
+            contract,
+        ),
+        timing_assessment=benchmark_module.TransitionTimingAssessment(),
+    )
+    return artifact, candidate_manifest, baseline_path
+
+
 @pytest.mark.benchmark
 class TestPairedPolicy:
     def test_exact_policy_contract_is_loaded(self) -> None:
         entries = BenchmarkBaseline().load()
         policy = entries["73_easting"].policy
 
-        assert policy.policy_version == 3
-        assert policy.mode == "gate"
+        assert isinstance(policy, TransitionPolicy)
+        assert policy.policy_version == 4
+        assert policy.mode == "transition_qualified"
         assert policy.manual is False
-        assert policy.warmup_runs_per_revision == 1
-        assert policy.timed_pairs == 3
-        assert policy.pair_orders == PAIR_ORDERS
-        assert policy.maximum_median_slowdown_ratio == 1.20
-        assert policy.maximum_relative_sample_range == 0.20
-        assert policy.timing_scope == "SimulationEngine.run"
+        assert policy.closures_per_revision == 1
+        assert set(policy.model_dump(mode="python")).isdisjoint(
+            {
+                "warmup_runs_per_revision",
+                "timed_pairs",
+                "pair_orders",
+                "maximum_median_slowdown_ratio",
+                "maximum_relative_sample_range",
+                "timing_scope",
+            }
+        )
         assert policy.workload.name == "morale_neutral_control_plane"
         assert policy.workload.calibration_patch.model_dump(
             mode="python",
@@ -447,8 +834,39 @@ class TestPairedPolicy:
         golan = entries["golan_heights"]
         assert golan.policy.mode == "gate"
         assert golan.policy.manual is True
+        assert golan.policy.timed_pairs == 3
+        assert golan.policy.pair_orders == PAIR_ORDERS
+        assert golan.policy.maximum_median_slowdown_ratio == 1.20
+        assert golan.policy.maximum_relative_sample_range == 0.20
+        assert golan.policy.timing_scope == "SimulationEngine.run"
         assert entries["benchmark_battalion"].policy.mode == "measurement_only"
         assert entries["benchmark_brigade"].policy.mode == "measurement_only"
+        for name in ("benchmark_battalion", "benchmark_brigade"):
+            measurement = entries[name].policy
+            assert isinstance(measurement, BenchmarkPolicy)
+            assert measurement.timed_pairs == 3
+            assert measurement.pair_orders == PAIR_ORDERS
+            assert measurement.maximum_median_slowdown_ratio == 1.20
+            assert measurement.maximum_relative_sample_range == 0.20
+            assert measurement.timing_scope == "SimulationEngine.run"
+
+        contract = entries["73_easting"].transition_contract
+        assert contract is not None
+        assert contract.reference.runtime_input.fingerprint == (
+            "9d85b6f8489e961eaf3765220d2e2672e1e8955f8a9b58827a8ce0c1b9931e77"
+        )
+        assert contract.candidate.runtime_input.fingerprint == (
+            "3ef1e72ff1ebdb099a6e89cc6917540f49d774593816c439bfe9e96d6d87f879"
+        )
+        assert contract.predecessor.commit == ("4c660d1f5c31eb21a7c920af24a8647a7024d6e2")
+        assert len(contract.approvals) == 29
+        assert {approval.classification for approval in contract.approvals} == {
+            "derived_roster_loadout_digest",
+            "derived_runtime_input_fingerprint",
+            "sensing_aware_standoff_enablement",
+            "vvs2_loadout_role_correction",
+            "vvs2_target_domain_expansion",
+        }
 
     def test_morale_neutral_workload_rejects_every_non_73_scenario(self) -> None:
         entry = BenchmarkBaseline().load()["73_easting"]
@@ -460,6 +878,583 @@ class TestPairedPolicy:
             match="only the routine 73_easting benchmark",
         ):
             benchmark_module.BaselineEntry.model_validate(payload)
+
+    def test_transition_contract_is_canonical_and_rejects_unapproved_deltas(
+        self,
+    ) -> None:
+        reference, candidate, contract = _synthetic_transition_fixture()
+
+        validate_workload_transition(reference, candidate, contract)
+        assert [approval.pointer for approval in contract.approvals] == [
+            "/control/enabled",
+            "/fingerprint",
+            "/roster_loadout_digest",
+        ]
+        assert contract.approvals[0].operation == "replace"
+
+        unexpected_manifest = _manifest_with_effective_inputs(
+            candidate.runtime_input,
+            {
+                "control": {"enabled": True},
+                "unexpected": True,
+            },
+        )
+        unexpected_candidate = candidate.model_copy(
+            update={"runtime_input": unexpected_manifest},
+        )
+        unexpected_contract = contract.model_copy(
+            update={
+                "candidate": contract.candidate.model_copy(
+                    update={
+                        "runtime_input": benchmark_module.ReferenceInput(
+                            scenario_path=unexpected_manifest.scenario_path,
+                            scenario_sha256=unexpected_manifest.scenario_sha256,
+                            dependency_lock_sha256=(unexpected_manifest.dependency_lock_sha256),
+                            fingerprint=unexpected_manifest.fingerprint,
+                        ),
+                    },
+                ),
+            },
+        )
+        with pytest.raises(ValueError, match="unapproved"):
+            validate_workload_transition(
+                reference,
+                unexpected_candidate,
+                unexpected_contract,
+            )
+
+        stale_approval = contract.approvals[0].model_copy(
+            update={"pointer": "/not-observed"},
+        )
+        stale_contract = contract.model_copy(
+            update={
+                "approvals": sorted(
+                    [*contract.approvals, stale_approval],
+                    key=lambda approval: (
+                        approval.surface,
+                        approval.pointer,
+                    ),
+                ),
+            },
+        )
+        with pytest.raises(ValueError, match="stale"):
+            validate_workload_transition(
+                reference,
+                candidate,
+                stale_contract,
+            )
+        payload = contract.model_dump(mode="python")
+        payload["approvals"].append(
+            copy.deepcopy(payload["approvals"][0]),
+        )
+        with pytest.raises(ValidationError, match="unique and surface/path-sorted"):
+            benchmark_module.WorkloadTransitionContract.model_validate(payload)
+        payload = contract.model_dump(mode="python")
+        payload["approvals"] = []
+        with pytest.raises(ValidationError, match="at least one"):
+            benchmark_module.WorkloadTransitionContract.model_validate(payload)
+
+    @pytest.mark.parametrize(
+        ("field", "value"),
+        (
+            ("operation", "remove"),
+            ("before_sha256", "f" * 64),
+            ("after_sha256", "f" * 64),
+        ),
+    )
+    def test_transition_rejects_changed_approved_value_contract(
+        self,
+        field: str,
+        value: str,
+    ) -> None:
+        reference, candidate, contract = _synthetic_transition_fixture()
+        payload = contract.model_dump(mode="python")
+        payload["approvals"][0][field] = value
+        changed_contract = benchmark_module.WorkloadTransitionContract.model_validate(
+            payload,
+        )
+
+        with pytest.raises(ValueError, match="differs from observed value"):
+            validate_workload_transition(
+                reference,
+                candidate,
+                changed_contract,
+            )
+
+    def test_authoritative_validator_rejects_reclassified_approval(
+        self,
+        tmp_path: Path,
+    ) -> None:
+        entry = BenchmarkBaseline().load()["73_easting"]
+        assert isinstance(entry.policy, TransitionPolicy)
+        assert entry.transition_contract is not None
+        approvals = list(entry.transition_contract.approvals)
+        approvals[0] = approvals[0].model_copy(
+            update={"classification": "vvs2_target_domain_expansion"},
+        )
+        reclassified = entry.transition_contract.model_copy(
+            update={"approvals": approvals},
+        )
+        artifact = TransitionArtifact(
+            created_at_utc="2026-08-02T00:00:00+00:00",
+            scenario_name="73_easting",
+            status="error",
+            errors=["synthetic reclassification rejection"],
+            policy=entry.policy,
+            baseline_identity=benchmark_module.BenchmarkBaselineIdentity(
+                authoritative=True,
+                source="checked_in",
+                document_sha256=benchmark_module._file_sha256(
+                    BASELINES_PATH,
+                ),
+                entry_sha256=canonical_sha256(
+                    entry.model_dump(mode="json"),
+                ),
+            ),
+            environment=None,
+            reference_identity=None,
+            candidate_identity=None,
+            closures={},
+            contract=reclassified,
+            verified_approvals=[],
+            timing_assessment=benchmark_module.TransitionTimingAssessment(),
+        )
+        artifact_path = tmp_path / "reclassified-transition.json"
+        benchmark_module._write_transition_artifact(artifact_path, artifact)
+
+        with pytest.raises(
+            ValueError,
+            match="policy or contract differs from authoritative baseline",
+        ):
+            validate_transition_artifact(artifact_path)
+
+    def test_predecessor_lineage_rejects_tampered_document_digest(self) -> None:
+        entry = BenchmarkBaseline().load()["73_easting"]
+        assert isinstance(entry.policy, TransitionPolicy)
+        assert entry.transition_contract is not None
+        changed_contract = entry.transition_contract.model_copy(
+            update={
+                "predecessor": (
+                    entry.transition_contract.predecessor.model_copy(
+                        update={"document_sha256": "f" * 64},
+                    )
+                ),
+            },
+        )
+
+        with pytest.raises(ValueError, match="document digest differs from git"):
+            benchmark_module._verify_transition_predecessor(
+                ROOT,
+                scenario_name="73_easting",
+                policy=entry.policy,
+                contract=changed_contract,
+            )
+
+    @pytest.mark.parametrize(
+        "mutation",
+        (
+            "scenario",
+            "dependency_lock",
+            "seed",
+            "max_ticks",
+            "recorder_config",
+            "sources",
+        ),
+    )
+    def test_transition_rejects_every_immutable_runtime_input_change(
+        self,
+        mutation: str,
+    ) -> None:
+        reference, candidate, contract = _synthetic_transition_fixture()
+        candidate_payload = candidate.runtime_input.fingerprint_payload()
+        if mutation == "scenario":
+            candidate_payload["scenario_sha256"] = "c" * 64
+            candidate_payload["sources"] = [
+                {
+                    **source,
+                    "sha256": ("c" * 64 if source["path"] == candidate_payload["scenario_path"] else source["sha256"]),
+                }
+                for source in candidate_payload["sources"]
+            ]
+        elif mutation == "dependency_lock":
+            candidate_payload["dependency_lock_sha256"] = "c" * 64
+            candidate_payload["sources"] = [
+                {
+                    **source,
+                    "sha256": ("c" * 64 if source["path"] == "uv.lock" else source["sha256"]),
+                }
+                for source in candidate_payload["sources"]
+            ]
+        elif mutation == "seed":
+            candidate_payload["seed"] = 43
+        elif mutation == "max_ticks":
+            candidate_payload["max_ticks"] = 20_001
+        elif mutation == "recorder_config":
+            candidate_payload["recorder_config"] = {
+                **candidate_payload["recorder_config"],
+                "max_events": 4_999_999,
+            }
+        elif mutation == "sources":
+            candidate_payload["sources"] = sorted(
+                [
+                    *candidate_payload["sources"],
+                    {
+                        "path": "data/units/extra.yaml",
+                        "sha256": "f" * 64,
+                        "mode": "100644",
+                        "role": "resolved_units",
+                    },
+                ],
+                key=lambda source: source["path"],
+            )
+        else:
+            raise AssertionError(mutation)
+        changed_manifest = RuntimeInputManifest(
+            **candidate_payload,
+            fingerprint=canonical_sha256(candidate_payload),
+        )
+        changed_candidate = candidate.model_copy(
+            update={"runtime_input": changed_manifest},
+        )
+        changed_contract = contract.model_copy(
+            update={
+                "candidate": contract.candidate.model_copy(
+                    update={
+                        "runtime_input": benchmark_module.ReferenceInput(
+                            scenario_path=changed_manifest.scenario_path,
+                            scenario_sha256=changed_manifest.scenario_sha256,
+                            dependency_lock_sha256=(changed_manifest.dependency_lock_sha256),
+                            fingerprint=changed_manifest.fingerprint,
+                        ),
+                    },
+                ),
+            },
+        )
+
+        with pytest.raises(ValueError, match="immutable inputs differ"):
+            validate_workload_transition(
+                reference,
+                changed_candidate,
+                changed_contract,
+            )
+
+    @pytest.mark.parametrize(
+        ("pointer", "classification"),
+        (("not-absolute", "valid"), ("/bad~2escape", "valid"), ("/ok", "")),
+    )
+    def test_transition_approval_rejects_invalid_pointer_or_classification(
+        self,
+        pointer: str,
+        classification: str,
+    ) -> None:
+        with pytest.raises(ValidationError):
+            benchmark_module.TransitionApproval(
+                surface="effective_inputs",
+                pointer=pointer,
+                operation="replace",
+                before_sha256="a" * 64,
+                after_sha256="b" * 64,
+                classification=classification,
+                authorities=["synthetic-transition-test"],
+                rationale="Synthetic approval validation.",
+            )
+
+    def test_transition_root_difference_uses_rfc6901_empty_pointer(self) -> None:
+        differences = benchmark_module.compute_transition_differences(
+            False,
+            True,
+            surface="effective_inputs",
+        )
+
+        assert len(differences) == 1
+        assert differences[0].pointer == ""
+        approval = benchmark_module.TransitionApproval(
+            surface="effective_inputs",
+            pointer="",
+            operation=differences[0].operation,
+            before_sha256=differences[0].before_sha256,
+            after_sha256=differences[0].after_sha256,
+            classification="sensing_aware_standoff_enablement",
+            authorities=["synthetic-transition-test"],
+            rationale="Synthetic root-pointer validation.",
+        )
+        assert approval.pointer == ""
+
+    def test_transition_artifact_has_no_performance_claim(self) -> None:
+        artifact = _valid_transition_artifact()
+
+        assert artifact.status == "transition_qualified"
+        payload = artifact.model_dump(mode="python")
+        assert "pairs" not in payload
+        assert "decision" not in payload
+        assert "duration_s" not in payload["closures"]["reference"]
+        assert payload["timing_assessment"] == {
+            "applicability": "not_applicable",
+            "reason": "workloads_differ",
+        }
+        for field, value in (
+            ("pairs", []),
+            ("decision", None),
+            ("ratio", 1.0),
+        ):
+            invalid = copy.deepcopy(payload)
+            invalid[field] = value
+            with pytest.raises(ValidationError, match="Extra inputs"):
+                TransitionArtifact.model_validate(invalid)
+        invalid = copy.deepcopy(payload)
+        invalid["closures"]["reference"]["duration_s"] = 1.0
+        with pytest.raises(ValidationError, match="Extra inputs"):
+            TransitionArtifact.model_validate(invalid)
+        invalid = copy.deepcopy(payload)
+        invalid["contract"] = None
+        with pytest.raises(ValidationError, match="complete policy"):
+            TransitionArtifact.model_validate(invalid)
+
+    def test_transition_policy_rejects_every_timing_field(self) -> None:
+        policy = BenchmarkBaseline().load()["73_easting"].policy
+        assert isinstance(policy, TransitionPolicy)
+        for field, value in (
+            ("timed_pairs", 0),
+            ("pair_orders", []),
+            ("timing_scope", None),
+            ("maximum_median_slowdown_ratio", None),
+        ):
+            payload = policy.model_dump(mode="python")
+            payload[field] = value
+            with pytest.raises(ValidationError, match="Extra inputs"):
+                TransitionPolicy.model_validate(payload)
+
+    def test_gate_artifact_rejects_transition_status_and_contract(self) -> None:
+        payload = _valid_pass_artifact().model_dump(mode="python")
+        payload["status"] = "transition_qualified"
+        with pytest.raises(ValidationError):
+            ComparisonArtifact.model_validate(payload)
+        payload = _valid_pass_artifact().model_dump(mode="python")
+        payload["contract"] = _valid_transition_artifact().contract.model_dump(
+            mode="python",
+        )
+        with pytest.raises(ValidationError, match="Extra inputs"):
+            ComparisonArtifact.model_validate(payload)
+
+    def test_transition_rejects_extra_semantic_difference_even_if_endpoint_bound(
+        self,
+    ) -> None:
+        reference, candidate, contract = _synthetic_transition_fixture()
+        changed_semantics = candidate.semantic_envelope.model_copy(
+            update={"event_count": candidate.semantic_envelope.event_count + 1},
+        )
+        changed_candidate = candidate.model_copy(
+            update={"semantic_envelope": changed_semantics},
+        )
+        changed_contract = contract.model_copy(
+            update={
+                "candidate": contract.candidate.model_copy(
+                    update={"semantic_envelope": changed_semantics},
+                ),
+            },
+        )
+
+        with pytest.raises(ValueError, match="unapproved"):
+            validate_workload_transition(
+                reference,
+                changed_candidate,
+                changed_contract,
+            )
+
+    def test_compare_explicitly_rejects_transition_mode(
+        self,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        artifact_path = tmp_path / "wrong-mode.json"
+        monkeypatch.setattr(
+            benchmark_module,
+            "_run_worker_subprocess",
+            lambda **kwargs: (_ for _ in ()).throw(
+                AssertionError("compare launched a transition worker"),
+            ),
+        )
+        with pytest.raises(
+            BenchmarkComparisonError,
+            match="cannot run as an ordinary gate",
+        ):
+            run_paired_comparison(
+                scenario_name="73_easting",
+                candidate_root=ROOT,
+                artifact_path=artifact_path,
+                allow_dirty_candidate=True,
+            )
+        artifact, _ = validate_artifact(artifact_path)
+        assert artifact.status == "error"
+        assert artifact.pairs == []
+        assert artifact.decision is None
+
+    @pytest.mark.parametrize("late_identity_change", (False, True))
+    def test_transition_driver_runs_two_closures_without_timing_workers(
+        self,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+        late_identity_change: bool,
+    ) -> None:
+        reference, candidate, contract = _synthetic_transition_fixture()
+        baseline_path = tmp_path / "transition-baseline.json"
+        entry = _write_synthetic_transition_baseline(
+            baseline_path,
+            contract,
+        )
+        candidate_root = tmp_path / "candidate"
+        candidate_root.mkdir()
+        identities = {
+            "reference": GitIdentity(
+                commit=reference.commit,
+                dirty=False,
+                status=[],
+                runtime_manifest=reference.runtime_input.sources,
+            ),
+            "candidate": GitIdentity(
+                commit=candidate.commit,
+                dirty=False,
+                status=[],
+                runtime_manifest=candidate.runtime_input.sources,
+            ),
+        }
+        environment = benchmark_module._environment_metadata().model_copy(
+            update={
+                "dependency_lock_sha256": (reference.runtime_input.dependency_lock_sha256),
+            },
+        )
+        calls: list[str] = []
+        candidate_identity_calls = 0
+
+        def fake_identity(root: Path, **kwargs: object) -> GitIdentity:
+            nonlocal candidate_identity_calls
+            del kwargs
+            if root.name == "reference":
+                return identities["reference"]
+            candidate_identity_calls += 1
+            identity = identities["candidate"]
+            if late_identity_change and candidate_identity_calls > 1:
+                return identity.model_copy(
+                    update={
+                        "dirty": True,
+                        "status": [" M stochastic_warfare/runtime.py"],
+                    },
+                )
+            return identity
+
+        def fake_closure(**kwargs: object) -> ProductionClosureRun:
+            revision = str(kwargs["revision"])
+            calls.append(revision)
+            return reference if revision == "reference" else candidate
+
+        monkeypatch.setattr(
+            benchmark_module,
+            "_environment_metadata",
+            lambda _root: environment,
+        )
+        monkeypatch.setattr(
+            benchmark_module,
+            "_scenario_external_runtime_paths",
+            lambda *args: frozenset(),
+        )
+        monkeypatch.setattr(benchmark_module, "_git_identity", fake_identity)
+        monkeypatch.setattr(
+            benchmark_module,
+            "_verify_transition_predecessor",
+            lambda *args, **kwargs: None,
+        )
+        monkeypatch.setattr(
+            benchmark_module,
+            "_materialize_candidate_snapshot",
+            lambda **kwargs: kwargs["snapshot_root"].mkdir(),
+        )
+        monkeypatch.setattr(
+            benchmark_module,
+            "_git",
+            lambda *args, **kwargs: subprocess.CompletedProcess(
+                args=[],
+                returncode=0,
+                stdout="",
+                stderr="",
+            ),
+        )
+        monkeypatch.setattr(
+            benchmark_module,
+            "_file_sha256",
+            lambda path: reference.runtime_input.dependency_lock_sha256,
+        )
+        monkeypatch.setattr(
+            benchmark_module,
+            "_run_closure_subprocess",
+            fake_closure,
+        )
+        monkeypatch.setattr(
+            benchmark_module,
+            "_run_worker_subprocess",
+            lambda **kwargs: (_ for _ in ()).throw(
+                AssertionError("transition invoked timing worker"),
+            ),
+        )
+        monkeypatch.setattr(
+            benchmark_module,
+            "_runtime_tree_manifest",
+            lambda root, **kwargs: candidate.runtime_input.sources,
+        )
+        monkeypatch.setattr(
+            benchmark_module,
+            "evaluate_paired_samples",
+            lambda *args, **kwargs: (_ for _ in ()).throw(
+                AssertionError("transition invoked paired timing policy"),
+            ),
+        )
+
+        artifact_path = tmp_path / "transition.json"
+        if late_identity_change:
+            with pytest.raises(
+                BenchmarkTransitionError,
+                match="ended error",
+            ):
+                run_workload_transition(
+                    scenario_name=entry.scenario_name,
+                    candidate_root=candidate_root,
+                    baseline_path=baseline_path,
+                    artifact_path=artifact_path,
+                )
+            artifact, _ = validate_transition_artifact(artifact_path)
+            assert artifact.verified_approvals == []
+        else:
+            artifact = run_workload_transition(
+                scenario_name=entry.scenario_name,
+                candidate_root=candidate_root,
+                baseline_path=baseline_path,
+                artifact_path=artifact_path,
+            )
+
+        assert calls == ["reference", "candidate"]
+        assert artifact.status == ("error" if late_identity_change else "transition_qualified")
+        assert set(artifact.closures) == {"reference", "candidate"}
+        assert artifact.timing_assessment.applicability == "not_applicable"
+
+    def test_hosted_73_easting_job_declares_transition_evidence(
+        self,
+    ) -> None:
+        workflow = yaml.safe_load(
+            (ROOT / ".github" / "workflows" / "benchmark.yml").read_text(
+                encoding="utf-8",
+            ),
+        )
+        steps = workflow["jobs"]["easting"]["steps"]
+        run_commands = [str(step["run"]) for step in steps if "run" in step]
+        assert any(
+            "run_paired_benchmark.py transition" in command and "--scenario 73_easting" in command
+            for command in run_commands
+        )
+        upload = next(step for step in steps if str(step.get("uses", "")).startswith("actions/upload-artifact@"))
+        assert upload["if"] == "always()"
+        assert "transition-73-easting.json" in upload["with"]["path"]
+        easting_text = json.dumps(workflow["jobs"]["easting"])
+        assert "paired-73-easting" not in easting_text
+        assert "Bind comparison" not in easting_text
 
     def test_environment_metadata_is_complete_without_nullable_hardware(self) -> None:
         metadata = benchmark_module._environment_metadata()
@@ -566,9 +1561,7 @@ class TestPairedPolicy:
         }
         environment = benchmark_module._environment_metadata().model_copy(
             update={
-                "dependency_lock_sha256": (
-                    manifest.dependency_lock_sha256
-                ),
+                "dependency_lock_sha256": (manifest.dependency_lock_sha256),
             },
         )
         calls: list[str] = []
@@ -590,11 +1583,7 @@ class TestPairedPolicy:
             external_runtime_paths: frozenset[str],
         ) -> GitIdentity:
             del require_clean, external_runtime_paths
-            revision = (
-                "reference"
-                if root.name == "reference"
-                else "candidate"
-            )
+            revision = "reference" if root.name == "reference" else "candidate"
             return identities[revision]
 
         def fake_worker(**kwargs: object) -> WorkerRun:
@@ -664,11 +1653,7 @@ class TestPairedPolicy:
         monkeypatch.setattr(
             benchmark_module,
             "_runtime_tree_manifest",
-            lambda root, **kwargs: (
-                []
-                if (root / "mutated.py").is_file()
-                else manifest.sources
-            ),
+            lambda root, **kwargs: [] if (root / "mutated.py").is_file() else manifest.sources,
         )
         artifact_path = tmp_path / "paired.json"
 
@@ -695,9 +1680,7 @@ class TestPairedPolicy:
             )
 
         assert calls == expected_order
-        assert artifact.status == (
-            "error" if mutate_snapshot else "pass"
-        )
+        assert artifact.status == ("error" if mutate_snapshot else "pass")
         if mutate_snapshot:
             return
         assert artifact.baseline_identity is not None
@@ -707,10 +1690,7 @@ class TestPairedPolicy:
         assert artifact.decision is not None
         assert artifact.decision.ratios == pytest.approx([1.1] * 3)
         assert artifact.decision.median_ratio == pytest.approx(1.1)
-        assert [
-            pair.order
-            for pair in artifact.pairs
-        ] == PAIR_ORDERS
+        assert [pair.order for pair in artifact.pairs] == PAIR_ORDERS
 
     def test_driver_rejects_dependency_lock_mismatch_before_workers(
         self,
@@ -741,9 +1721,7 @@ class TestPairedPolicy:
         }
         environment = benchmark_module._environment_metadata().model_copy(
             update={
-                "dependency_lock_sha256": (
-                    manifest.dependency_lock_sha256
-                ),
+                "dependency_lock_sha256": (manifest.dependency_lock_sha256),
             },
         )
         worker_calls: list[str] = []
@@ -761,11 +1739,7 @@ class TestPairedPolicy:
         monkeypatch.setattr(
             benchmark_module,
             "_git_identity",
-            lambda root, **kwargs: identities[
-                "reference"
-                if root.name == "reference"
-                else "candidate"
-            ],
+            lambda root, **kwargs: identities["reference" if root.name == "reference" else "candidate"],
         )
         monkeypatch.setattr(
             benchmark_module,
@@ -785,11 +1759,7 @@ class TestPairedPolicy:
         monkeypatch.setattr(
             benchmark_module,
             "_file_sha256",
-            lambda path: (
-                "a" * 64
-                if path.parent.name == "reference"
-                else "b" * 64
-            ),
+            lambda path: "a" * 64 if path.parent.name == "reference" else "b" * 64,
         )
         monkeypatch.setattr(
             benchmark_module,
@@ -835,22 +1805,14 @@ class TestPairedPolicy:
         elif mutation == "worker_commit":
             payload["pairs"][1]["candidate"]["commit"] = "2" * 40
         elif mutation == "runtime_input":
-            runtime_input = payload["pairs"][1]["candidate"][
-                "runtime_input"
-            ]
+            runtime_input = payload["pairs"][1]["candidate"]["runtime_input"]
             runtime_input["effective_inputs"] = {"different": True}
-            fingerprint_payload = {
-                key: value
-                for key, value in runtime_input.items()
-                if key != "fingerprint"
-            }
+            fingerprint_payload = {key: value for key, value in runtime_input.items() if key != "fingerprint"}
             runtime_input["fingerprint"] = canonical_sha256(
                 fingerprint_payload,
             )
         elif mutation == "semantic_envelope":
-            payload["pairs"][1]["candidate"]["semantic_envelope"][
-                "event_digest"
-            ] = "c" * 64
+            payload["pairs"][1]["candidate"]["semantic_envelope"]["event_digest"] = "c" * 64
         elif mutation == "identity_source":
             payload["candidate_identity"]["runtime_manifest"] = []
         else:
@@ -865,9 +1827,7 @@ class TestPairedPolicy:
         for pair in payload["pairs"]:
             pair["candidate"]["duration_s"] = 0.5
             pair["candidate_over_reference"] = 0.5
-        payload["pairs"][1]["candidate"]["semantic_envelope"][
-            "event_digest"
-        ] = "c" * 64
+        payload["pairs"][1]["candidate"]["semantic_envelope"]["event_digest"] = "c" * 64
         payload["decision"] = evaluate_paired_samples(
             _gate_policy(),
             reference_seconds=[1.0, 1.0, 1.0],
@@ -978,10 +1938,12 @@ class TestCanonicalEvidence:
             ),
         )
 
-        assert canonical_json_bytes(value) == canonical_json_bytes({
-            "timestamp": "2026-07-29T00:00:00Z",
-            "optional_value": None,
-        })
+        assert canonical_json_bytes(value) == canonical_json_bytes(
+            {
+                "timestamp": "2026-07-29T00:00:00Z",
+                "optional_value": None,
+            }
+        )
 
     @pytest.mark.parametrize("value", (math.inf, -math.inf, math.nan))
     def test_canonical_json_rejects_nonfinite_numbers(
@@ -1009,14 +1971,14 @@ class TestCanonicalEvidence:
         path = tmp_path / "bad-baseline.json"
         path.write_text(json.dumps(raw), encoding="utf-8")
 
-        with pytest.raises(ValueError, match="version-3"):
+        with pytest.raises(ValueError, match="version-4"):
             BenchmarkBaseline(path).load_file()
 
     def test_artifact_digest_detects_tampering(
         self,
         tmp_path: Path,
     ) -> None:
-        baseline = BenchmarkBaseline().load()["73_easting"]
+        baseline = BenchmarkBaseline().load()["golan_heights"]
         assert baseline.reference_input is not None
         assert baseline.semantic_envelope is not None
         reference = WorkerRun(
@@ -1103,14 +2065,8 @@ class TestRuntimeClosure:
             require_clean=False,
         )
 
-        original_source = {
-            source.path: source
-            for source in original.runtime_manifest
-        }["stochastic_warfare/runtime.py"]
-        dirty_source = {
-            source.path: source
-            for source in dirty.runtime_manifest
-        }["stochastic_warfare/runtime.py"]
+        original_source = {source.path: source for source in original.runtime_manifest}["stochastic_warfare/runtime.py"]
+        dirty_source = {source.path: source for source in dirty.runtime_manifest}["stochastic_warfare/runtime.py"]
         assert original_source.mode == "100644"
         assert dirty_source.mode == "100755"
         with pytest.raises(ValueError, match="worktree is dirty"):
@@ -1148,12 +2104,8 @@ class TestRuntimeClosure:
             scenario_relative="data/scenarios/test/scenario.yaml",
             external_runtime_paths=frozenset(),
         )
-        assert benchmark_module._runtime_tree_manifest(snapshot) == (
-            identity.runtime_manifest
-        )
-        snapshot_runtime = (
-            snapshot / "stochastic_warfare" / "runtime.py"
-        )
+        assert benchmark_module._runtime_tree_manifest(snapshot) == (identity.runtime_manifest)
+        snapshot_runtime = snapshot / "stochastic_warfare" / "runtime.py"
         assert snapshot_runtime.read_text(encoding="utf-8") == "VALUE = 2\n"
 
         runtime_path.write_text("VALUE = 3\n", encoding="utf-8")
@@ -1180,11 +2132,9 @@ class TestRuntimeClosure:
         unrelated_cache.write_bytes(b"ignored procedural cache")
         scenario_relative = "data/scenarios/test/scenario.yaml"
 
-        procedural_paths = (
-            benchmark_module._scenario_external_runtime_paths(
-                repo,
-                scenario_relative,
-            )
+        procedural_paths = benchmark_module._scenario_external_runtime_paths(
+            repo,
+            scenario_relative,
         )
         assert procedural_paths == frozenset()
         procedural_identity = benchmark_module._git_identity(
@@ -1192,10 +2142,7 @@ class TestRuntimeClosure:
             require_clean=False,
             external_runtime_paths=procedural_paths,
         )
-        assert all(
-            source.path != "data/terrain_cache/unrelated.npz"
-            for source in procedural_identity.runtime_manifest
-        )
+        assert all(source.path != "data/terrain_cache/unrelated.npz" for source in procedural_identity.runtime_manifest)
 
         scenario_path = repo / scenario_relative
         scenario_path.write_text(
@@ -1208,20 +2155,11 @@ class TestRuntimeClosure:
             "  cell_size_m: 100.0\n",
             encoding="utf-8",
         )
-        raw_tile = (
-            repo
-            / "data"
-            / "terrain_raw"
-            / "srtm"
-            / "N29E046.hgt"
-        )
+        raw_tile = repo / "data" / "terrain_raw" / "srtm" / "N29E046.hgt"
         raw_tile.parent.mkdir(parents=True)
         raw_tile.write_bytes(b"synthetic SRTM identity")
         half_height = (1000.0 / 2.0) / 111_320.0
-        half_width = (
-            (1000.0 / 2.0)
-            / (111_320.0 * math.cos(math.radians(29.5)))
-        )
+        half_width = (1000.0 / 2.0) / (111_320.0 * math.cos(math.radians(29.5)))
         bbox = BoundingBox(
             south=29.5 - half_height,
             west=46.5 - half_width,
@@ -1232,11 +2170,9 @@ class TestRuntimeClosure:
         selected_cache = cache_dir / f"srtm_{cache_key}.npz"
         selected_cache.write_bytes(b"selected cache")
 
-        external_paths = (
-            benchmark_module._scenario_external_runtime_paths(
-                repo,
-                scenario_relative,
-            )
+        external_paths = benchmark_module._scenario_external_runtime_paths(
+            repo,
+            scenario_relative,
         )
         assert raw_tile.relative_to(repo).as_posix() in external_paths
         assert selected_cache.relative_to(repo).as_posix() in external_paths
@@ -1268,11 +2204,13 @@ class TestRuntimeClosure:
         recorder, _ = benchmark_module._strict_recorder(context)
         recorder.start()
         with pytest.raises(TypeError, match="canonical JSON"):
-            context.event_bus.publish(UnsupportedEvent(
-                timestamp=datetime.now(timezone.utc),
-                source=ModuleId.CORE,
-                payload=object(),
-            ))
+            context.event_bus.publish(
+                UnsupportedEvent(
+                    timestamp=datetime.now(timezone.utc),
+                    source=ModuleId.CORE,
+                    payload=object(),
+                )
+            )
         assert recorder.event_count() == 0
 
         capacity_context = Context()
@@ -1293,15 +2231,64 @@ class TestRuntimeClosure:
 
 @pytest.mark.benchmark
 class TestFinalTreeVerification:
+    def test_transition_qualification_binds_to_clean_final_commit(
+        self,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        repo = tmp_path / "repo"
+        artifact, runtime_input, baseline_path = _prepare_dirty_transition_tree(repo)
+        transition_path = tmp_path / "transition-artifact.json"
+        verification_path = tmp_path / "transition-final-tree.json"
+        benchmark_module._write_transition_artifact(transition_path, artifact)
+        benchmark_module._git(repo, "add", ".")
+        benchmark_module._git(
+            repo,
+            "commit",
+            "-m",
+            "final transition runtime tree",
+        )
+        final_commit = benchmark_module._full_commit(repo)
+        reproduction = ProductionClosureRun(
+            revision="candidate",
+            commit=final_commit,
+            runtime_input=runtime_input,
+            semantic_envelope=(artifact.closures["candidate"].semantic_envelope),
+        )
+        monkeypatch.setattr(
+            benchmark_module,
+            "_run_closure_subprocess",
+            lambda **kwargs: reproduction,
+        )
+
+        verification = verify_transition_final_tree(
+            transition_artifact_path=transition_path,
+            verification_path=verification_path,
+            final_root=repo,
+        )
+        validated, _ = validate_transition_final_tree_verification(
+            verification_path,
+            transition_artifact_path=transition_path,
+            authoritative_baseline_path=baseline_path,
+        )
+
+        assert validated == verification
+        assert isinstance(verification, TransitionFinalTreeVerification)
+        assert verification.status == "transition_qualified"
+        assert verification.transition_candidate_identity.dirty is True
+        assert verification.final_identity.dirty is False
+        assert verification.timing_assessment.applicability == "not_applicable"
+        payload = verification.model_dump(mode="python")
+        assert "reproduction_run" not in payload
+        assert "duration_s" not in payload["reproduction_closure"]
+
     def test_dirty_precommit_artifact_binds_to_clean_final_commit(
         self,
         tmp_path: Path,
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         repo = tmp_path / "repo"
-        artifact, runtime_input, baseline_path = (
-            _prepare_dirty_final_tree(repo)
-        )
+        artifact, runtime_input, baseline_path = _prepare_dirty_final_tree(repo)
         comparison_path = tmp_path / "comparison.json"
         verification_path = tmp_path / "final-tree.json"
         _write_artifact(comparison_path, artifact)
@@ -1318,9 +2305,7 @@ class TestFinalTreeVerification:
             commit=final_commit,
             duration_s=1.0,
             runtime_input=runtime_input,
-            semantic_envelope=(
-                artifact.warmups["candidate"].semantic_envelope
-            ),
+            semantic_envelope=(artifact.warmups["candidate"].semantic_envelope),
         )
         monkeypatch.setattr(
             benchmark_module,
@@ -1333,25 +2318,19 @@ class TestFinalTreeVerification:
             verification_path=verification_path,
             final_root=repo,
         )
-        validated, digest = (
-            benchmark_module.validate_final_tree_verification(
-                verification_path,
-                comparison_artifact_path=comparison_path,
-                authoritative_baseline_path=baseline_path,
-            )
+        validated, digest = benchmark_module.validate_final_tree_verification(
+            verification_path,
+            comparison_artifact_path=comparison_path,
+            authoritative_baseline_path=baseline_path,
         )
 
         assert validated == verification
         assert verification.status == "pass"
         assert verification.comparison_candidate_identity.dirty is True
         assert verification.final_identity.dirty is False
+        assert verification.comparison_candidate_identity.commit != verification.final_identity.commit
         assert (
-            verification.comparison_candidate_identity.commit
-            != verification.final_identity.commit
-        )
-        assert (
-            verification.comparison_candidate_identity.runtime_manifest
-            == verification.final_identity.runtime_manifest
+            verification.comparison_candidate_identity.runtime_manifest == verification.final_identity.runtime_manifest
         )
         assert len(digest) == 64
 
@@ -1361,9 +2340,7 @@ class TestFinalTreeVerification:
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         repo = tmp_path / "repo"
-        artifact, _runtime_input, _baseline_path = (
-            _prepare_dirty_final_tree(repo)
-        )
+        artifact, _runtime_input, _baseline_path = _prepare_dirty_final_tree(repo)
         comparison_path = tmp_path / "comparison.json"
         _write_artifact(comparison_path, artifact)
         (repo / "stochastic_warfare" / "runtime.py").chmod(0o755)
@@ -1397,9 +2374,7 @@ class TestFinalTreeVerification:
         tmp_path: Path,
     ) -> None:
         repo = tmp_path / "repo"
-        artifact, _runtime_input, _baseline_path = (
-            _prepare_dirty_final_tree(repo)
-        )
+        artifact, _runtime_input, _baseline_path = _prepare_dirty_final_tree(repo)
         assert artifact.baseline_identity is not None
         custom_artifact = artifact.model_copy(
             update={
@@ -1445,15 +2420,10 @@ def test_morale_timing_identity_unifies_only_discrete_default() -> None:
         }
 
     implicit_discrete = payload(None)
-    assert (
-        benchmark_module._normalize_morale_timing_identity(payload(False))
-        == implicit_discrete
-    )
+    assert benchmark_module._normalize_morale_timing_identity(payload(False)) == implicit_discrete
 
     continuous = payload(True)
-    assert benchmark_module._normalize_morale_timing_identity(continuous) == (
-        payload(True)
-    )
+    assert benchmark_module._normalize_morale_timing_identity(continuous) == (payload(True))
     assert continuous != implicit_discrete
 
 
@@ -1542,28 +2512,36 @@ class TestProductionWorker:
         )
 
         assert run.commit == benchmark_module.REFERENCE_COMMIT
-        assert run.runtime_input.fingerprint == (
-            BenchmarkBaseline().load()["73_easting"]
-            .reference_input.fingerprint
-        )
+        contract = BenchmarkBaseline().load()["73_easting"].transition_contract
+        assert contract is not None
+        assert run.runtime_input.fingerprint == (contract.reference.runtime_input.fingerprint)
+        assert run.semantic_envelope == contract.reference.semantic_envelope
         assert run.semantic_envelope.ticks == 360
         assert run.semantic_envelope.event_count == 1
 
     @pytest.mark.slow
-    def test_73_easting_matches_authoritative_semantics(self) -> None:
+    def test_73_easting_matches_authoritative_semantics_without_timing(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
         entry = BenchmarkBaseline().load()["73_easting"]
-        run = run_revision_worker(
+        contract = entry.transition_contract
+        assert contract is not None
+        monkeypatch.setattr(
+            benchmark_module,
+            "_benchmark_timer",
+            lambda: (_ for _ in ()).throw(
+                AssertionError("duration-free closure sampled timing clock"),
+            ),
+        )
+        run = run_revision_closure(
             repo_root=ROOT,
             scenario_relative=entry.scenario_path,
             revision="candidate",
         )
 
-        assert run.runtime_input.fingerprint == (
-            entry.reference_input.fingerprint
-            if entry.reference_input is not None
-            else None
-        )
-        assert run.semantic_envelope == entry.semantic_envelope
+        assert run.runtime_input.fingerprint == (contract.candidate.runtime_input.fingerprint)
+        assert run.semantic_envelope == contract.candidate.semantic_envelope
         assert run.semantic_envelope.unit_count == 71
         assert run.semantic_envelope.winner == "blue"
         assert run.semantic_envelope.victory_condition_type == "time_expired"
@@ -1571,37 +2549,29 @@ class TestProductionWorker:
         assert run.semantic_envelope.logical_duration_s == 1800.0
         assert run.semantic_envelope.event_count == 1
 
-        default_run = run_revision_worker(
+        default_run = run_revision_closure(
             repo_root=ROOT,
             scenario_relative=entry.scenario_path,
             revision="candidate",
             workload=benchmark_module.BenchmarkWorkload(
                 name="default",
-                calibration_patch=(
-                    benchmark_module.BenchmarkCalibrationPatch()
-                ),
+                calibration_patch=(benchmark_module.BenchmarkCalibrationPatch()),
             ),
         )
-        assert default_run.runtime_input.fingerprint != (
-            run.runtime_input.fingerprint
-        )
+        assert default_run.runtime_input.fingerprint != (run.runtime_input.fingerprint)
         assert default_run.semantic_envelope.model_dump(mode="python") == {
             "unit_count": 71,
-            "roster_loadout_digest": (
-                "cf7c3f3eb0f629283ec68a1e746014bb4386d0310bcc63b39b709500f9ec9f78"
-            ),
+            "roster_loadout_digest": ("68efa36274ce5643f052310306a073597268c439492fc1c170c34e34a9b57645"),
             "winner": "blue",
             "victory_condition_type": "time_expired",
             "ticks": 360,
             "logical_duration_s": 1800.0,
             "status_counts": {
-                "blue": {"ACTIVE": 18, "ROUTING": 3},
+                "blue": {"ACTIVE": 20, "SURRENDERED": 1},
                 "red": {"ACTIVE": 50},
             },
-            "event_count": 121,
-            "event_digest": (
-                "35cdb75fc61e3eb3e76f4961a65dd57518d68de7a0125e9dcd7d5528ae3b2718"
-            ),
+            "event_count": 120,
+            "event_digest": ("fc1c92e76778571beed49e58c8f9c27fd858f2b7d4b19d9323aa079e68e125a7"),
         }
 
     def test_missing_scenario_fails_instead_of_skipping(self) -> None:
@@ -1661,7 +2631,7 @@ class TestProductionWorker:
         tmp_path: Path,
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
-        entry = BenchmarkBaseline().load()["73_easting"]
+        entry = BenchmarkBaseline().load()["golan_heights"]
         assert entry.policy.reference_commit is not None
         assert entry.semantic_envelope is not None
         reference_run = WorkerRun(
@@ -1680,11 +2650,7 @@ class TestProductionWorker:
             external_runtime_paths: frozenset[str],
         ) -> GitIdentity:
             del require_clean, external_runtime_paths
-            commit = (
-                entry.policy.reference_commit
-                if root.name == "reference"
-                else "1" * 40
-            )
+            commit = entry.policy.reference_commit if root.name == "reference" else "1" * 40
             return GitIdentity(
                 commit=commit,
                 dirty=False,
@@ -1736,7 +2702,7 @@ class TestProductionWorker:
         artifact_path = tmp_path / "interrupted.json"
         with pytest.raises(KeyboardInterrupt, match="job-level"):
             run_paired_comparison(
-                scenario_name="73_easting",
+                scenario_name="golan_heights",
                 candidate_root=ROOT,
                 artifact_path=artifact_path,
                 allow_dirty_candidate=True,
@@ -1771,21 +2737,18 @@ class TestMeasurementOnlyScenarios:
 
         path = SCENARIOS_DIR / scenario / "scenario.yaml"
         context = ScenarioLoader(DATA_DIR).load(path, seed=42)
-        assert sum(
-            len(units)
-            for units in context.units_by_side.values()
-        ) == expected_units
+        assert sum(len(units) for units in context.units_by_side.values()) == expected_units
 
     def test_no_synthetic_paired_error_is_suppressed(self) -> None:
         with pytest.raises(BenchmarkComparisonError):
             raise BenchmarkComparisonError("explicit harness failure")
 
 
-def test_checked_in_baseline_document_is_exact_v3() -> None:
+def test_checked_in_baseline_document_is_exact_v4() -> None:
     baseline = BaselineFile.model_validate_json(
         BASELINES_PATH.read_text(encoding="utf-8"),
     )
-    assert baseline.format_version == 3
+    assert baseline.format_version == 4
     assert sorted(baseline.entries) == [
         "73_easting",
         "benchmark_battalion",

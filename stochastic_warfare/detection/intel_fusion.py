@@ -13,6 +13,7 @@ import enum
 import hashlib
 import json
 import math
+import threading
 from collections.abc import Iterator, Sequence
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any
@@ -34,6 +35,10 @@ if TYPE_CHECKING:
     from stochastic_warfare.space.isr import SpaceISRReport
 
 logger = get_logger(__name__)
+
+_FOW_TRACK_ID_PREFIX = "fow-track-"
+_FOW_TRACK_ID_MIN_WIDTH = 4
+_MIN_POSITION_UNCERTAINTY_M = 1.0
 
 # ---------------------------------------------------------------------------
 # Enums
@@ -137,6 +142,41 @@ def _strict_identifier(value: Any, field_name: str) -> str:
     if not isinstance(value, str) or not value or value != value.strip():
         raise ValueError(f"{field_name} must be a non-empty trimmed string")
     return value
+
+
+def _fow_track_ordinal(value: str) -> int | None:
+    """Return a canonical side-local FOW track ordinal, if present."""
+    suffix = value.removeprefix(_FOW_TRACK_ID_PREFIX)
+    if (
+        not value.startswith(_FOW_TRACK_ID_PREFIX)
+        or not suffix.isascii()
+        or not suffix.isdigit()
+    ):
+        return None
+    ordinal = int(suffix)
+    if (
+        ordinal <= 0
+        or suffix != f"{ordinal:0{_FOW_TRACK_ID_MIN_WIDTH}d}"
+    ):
+        return None
+    return ordinal
+
+
+def _format_fow_track_id(ordinal: int) -> str:
+    """Format one target-independent ordinal inside a side-owned namespace."""
+    if isinstance(ordinal, bool) or not isinstance(ordinal, int) or ordinal <= 0:
+        raise ValueError("FOW track ordinal must be a positive integer")
+    return f"{_FOW_TRACK_ID_PREFIX}{ordinal:0{_FOW_TRACK_ID_MIN_WIDTH}d}"
+
+
+def validate_fow_track_id(value: Any, field_name: str = "FOW track_id") -> str:
+    """Return one canonical opaque side-local FOW track identifier."""
+    track_id = _strict_identifier(value, field_name)
+    if _fow_track_ordinal(track_id) is None:
+        raise ValueError(
+            f"{field_name} must be a canonical opaque FOW ordinal track ID",
+        )
+    return track_id
 
 
 def _strict_number(
@@ -503,8 +543,8 @@ def _fuse_two_reports(a: IntelReport, b: IntelReport) -> IntelReport:
     either individual uncertainty.
     """
     assert a.target_position is not None and b.target_position is not None
-    ua = max(a.position_uncertainty_m, 1.0)
-    ub = max(b.position_uncertainty_m, 1.0)
+    ua = max(a.position_uncertainty_m, _MIN_POSITION_UNCERTAINTY_M)
+    ub = max(b.position_uncertainty_m, _MIN_POSITION_UNCERTAINTY_M)
     wa = 1.0 / (ua * ua)
     wb = 1.0 / (ub * ub)
     total_w = wa + wb
@@ -548,6 +588,11 @@ class IntelFusionEngine:
         self._tracks: dict[str, dict[str, Track]] = {}  # side → {track_id: Track}
         self._satellite_passes: dict[str, list[SatellitePass]] = {}  # side → passes
         self._track_counter: int = 0
+        # FOW IDs are intentionally side-local.  They reveal neither the
+        # target ID nor scan inputs, and independent side updates cannot race
+        # on a shared public identifier sequence.
+        self._fow_track_counters: dict[str, int] = {}
+        self._track_lock = threading.RLock()
         self._delivery_receipts = _DeliveryReceiptLedger()
         self._imint_target_tracks: dict[
             str,
@@ -599,21 +644,57 @@ class IntelFusionEngine:
         side: str,
         report: IntelReport,
         contact_id: str | None = None,
+        *,
+        allocate_fow_track: bool = False,
     ) -> str | None:
         """Convert an intel report to a Kalman measurement and update/create track.
 
         Returns the track ID of the updated or created track, or None if
         the report has no position information.
         """
+        with self._track_lock:
+            return self._submit_report_locked(
+                side,
+                report,
+                contact_id,
+                allocate_fow_track=allocate_fow_track,
+            )
+
+    def _submit_report_locked(
+        self,
+        side: str,
+        report: IntelReport,
+        contact_id: str | None,
+        *,
+        allocate_fow_track: bool,
+    ) -> str | None:
+        """Submit one report while holding the fusion track lock."""
+        if type(allocate_fow_track) is not bool:
+            raise TypeError("allocate_fow_track must be a boolean")
         if report.target_position is None:
             return None
 
         tracks = self._get_side_tracks(side)
 
-        # Scale noise by reliability: low reliability = high noise
-        reliability = max(report.reliability, 0.01)
+        # Scale noise by reliability: low reliability = high noise.  A
+        # strictly positive measurement covariance is a fusion invariant;
+        # zero variance would claim perfect knowledge and makes a repeated
+        # exact observation's innovation covariance singular.
+        reliability = _strict_number(
+            report.reliability,
+            "intel report reliability",
+            non_negative=True,
+        )
+        if reliability > 1.0:
+            raise ValueError("intel report reliability must not exceed 1.0")
+        position_uncertainty_m = _strict_number(
+            report.position_uncertainty_m,
+            "intel report position uncertainty",
+            positive=True,
+        )
+        reliability = max(reliability, 0.01)
         noise_scale = 1.0 / reliability
-        unc = report.position_uncertainty_m * noise_scale
+        unc = position_uncertainty_m * noise_scale
         R = np.diag([unc * unc, unc * unc])
         meas = np.array([
             report.target_position.easting,
@@ -634,19 +715,51 @@ class IntelFusionEngine:
             confidence=report.classification_confidence,
         )
 
-        # Try to associate with existing track
+        # Try to associate with existing track.  A rejected FOW association
+        # is replaced under this same lock; retain its identity until the
+        # replacement has been constructed and installed successfully.
+        replaced_fow_track_id: str | None = None
         if contact_id and contact_id in tracks:
             track = tracks[contact_id]
-            self._estimator.update(track, meas, R, report.timestamp)
-            return contact_id
+            accepted = self._estimator.update(
+                track,
+                meas,
+                R,
+                report.timestamp,
+            )
+            if accepted or not allocate_fow_track:
+                return contact_id
+            replaced_fow_track_id = contact_id
+            # A gated FOW measurement is a distinct observation rather than
+            # permission to leave a current contact bound to a stale estimate.
+            # The one-hit predecessor cannot enter the ordinary confirmed ->
+            # coasting -> lost lifecycle, so the replacement transaction owns
+            # its removal instead of retaining unreachable fusion state.
 
-        # Create new track
-        self._track_counter += 1
-        tid = f"track-{self._track_counter:04d}"
+        # Create a new track.  FOW uses an independent ordinal namespace for
+        # each reporting side, so parallel side scheduling cannot reassign
+        # public identifiers and the identifier contains no target material.
+        if allocate_fow_track:
+            next_fow_ordinal = self._fow_track_counters.get(side, 0) + 1
+            tid = _format_fow_track_id(next_fow_ordinal)
+            if tid in tracks:
+                raise ValueError(
+                    f"Fusion FOW track ID {tid!r} is already issued for {side!r}",
+                )
+            next_track_counter = self._track_counter
+        else:
+            next_track_counter = self._track_counter + 1
+            next_fow_ordinal = None
+            tid = f"track-{next_track_counter:04d}"
         track = self._estimator.create_track(
             tid, side, meas, R, ci, report.timestamp,
         )
         tracks[tid] = track
+        self._track_counter = next_track_counter
+        if next_fow_ordinal is not None:
+            self._fow_track_counters[side] = next_fow_ordinal
+        if replaced_fow_track_id is not None:
+            del tracks[replaced_fow_track_id]
         return tid
 
     def _imint_status(
@@ -997,6 +1110,9 @@ class IntelFusionEngine:
         contact_info: ContactInfo,
         observer_pos: Position,
         contact_id: str | None = None,
+        *,
+        allocate_fow_track: bool = False,
+        observation_time_s: float = 0.0,
     ) -> str | None:
         """Create an IntelReport from a sensor detection and submit it."""
         if not detection.detected:
@@ -1009,15 +1125,27 @@ class IntelFusionEngine:
 
         report = IntelReport(
             source=IntelSource.SENSOR,
-            timestamp=0.0,
+            timestamp=_strict_number(
+                observation_time_s,
+                "observation_time_s",
+                non_negative=True,
+            ),
             reliability=min(1.0, detection.probability),
             target_position=Position(tgt_e, tgt_n, 0.0),
-            position_uncertainty_m=detection.range_m * 0.05,  # 5% of range
+            position_uncertainty_m=max(
+                detection.range_m * 0.05,
+                _MIN_POSITION_UNCERTAINTY_M,
+            ),
             target_type=None,
             classification_confidence=contact_info.confidence,
             source_unit_id=None,
         )
-        return self.submit_report(side, report, contact_id)
+        return self.submit_report(
+            side,
+            report,
+            contact_id,
+            allocate_fow_track=allocate_fow_track,
+        )
 
     # ------------------------------------------------------------------
     # Satellite coverage
@@ -1191,6 +1319,10 @@ class IntelFusionEngine:
         return {
             "tracks": tracks_state,
             "track_counter": self._track_counter,
+            "fow_track_counters": {
+                side: counter
+                for side, counter in sorted(self._fow_track_counters.items())
+            },
             "rng_state": copy.deepcopy(self._rng.bit_generator.state),
             "satellite_passes": {
                 side: [
@@ -1376,6 +1508,7 @@ class IntelFusionEngine:
         expected_keys = {
             "tracks",
             "track_counter",
+            "fow_track_counters",
             "rng_state",
             "satellite_passes",
             "delivery_receipts",
@@ -1404,12 +1537,29 @@ class IntelFusionEngine:
             raise ValueError(
                 "Intel fusion track_counter must be non-negative integer",
             )
+        raw_fow_counters = state["fow_track_counters"]
+        if not isinstance(raw_fow_counters, dict):
+            raise ValueError("Intel fusion fow_track_counters must be a mapping")
+        fow_track_counters: dict[str, int] = {}
+        for raw_side, raw_fow_counter in raw_fow_counters.items():
+            side = _strict_identifier(raw_side, "FOW track-counter side")
+            if expected_sides is not None and side not in expected_sides:
+                raise ValueError(f"Unknown FOW track-counter side {side!r}")
+            if (
+                isinstance(raw_fow_counter, bool)
+                or not isinstance(raw_fow_counter, int)
+                or raw_fow_counter <= 0
+            ):
+                raise ValueError(
+                    "Intel fusion FOW track counter must be a positive integer",
+                )
+            fow_track_counters[side] = raw_fow_counter
         raw_tracks = state["tracks"]
         if not isinstance(raw_tracks, dict):
             raise ValueError("Intel fusion tracks must be a mapping")
         tracks: dict[str, dict[str, Track]] = {}
-        all_track_ids: set[str] = set()
-        maximum_track_number = 0
+        automatic_track_ids: set[str] = set()
+        fow_ordinals_by_side: dict[str, set[int]] = {}
         for side, side_tracks in raw_tracks.items():
             side = _strict_identifier(side, "fusion side")
             if expected_sides is not None and side not in expected_sides:
@@ -1417,12 +1567,9 @@ class IntelFusionEngine:
             if not isinstance(side_tracks, dict):
                 raise ValueError("Fusion side tracks must be a mapping")
             tracks[side] = {}
+            fow_ordinals_by_side[side] = set()
             for track_id, raw_track in side_tracks.items():
                 _strict_identifier(track_id, "fusion track map key")
-                if track_id in all_track_ids:
-                    raise ValueError(
-                        f"Duplicate fusion track ID {track_id!r}",
-                    )
                 track = self._stage_track(
                     raw_track,
                     map_side=side,
@@ -1430,20 +1577,41 @@ class IntelFusionEngine:
                     checkpoint_elapsed_s=elapsed,
                 )
                 tracks[side][track_id] = track
-                all_track_ids.add(track_id)
                 if track_id.startswith("track-") and track_id[6:].isdigit():
-                    maximum_track_number = max(
-                        maximum_track_number,
-                        int(track_id[6:]),
-                    )
+                    if track_id in automatic_track_ids:
+                        raise ValueError(
+                            f"Duplicate fusion track ID {track_id!r}",
+                        )
+                    automatic_track_ids.add(track_id)
+                    continue
+                fow_ordinal = _fow_track_ordinal(track_id)
+                if fow_ordinal is None:
+                    raise ValueError("Intel fusion contains an unsupported track ID")
+                fow_ordinals_by_side[side].add(fow_ordinal)
         expected_track_ids = {
             f"track-{sequence:04d}"
             for sequence in range(1, raw_counter + 1)
         }
-        if all_track_ids != expected_track_ids:
+        if automatic_track_ids != expected_track_ids:
             raise ValueError(
                 "Intel fusion track_counter disagrees with issued track IDs",
             )
+        if not set(fow_track_counters) <= set(tracks):
+            raise ValueError(
+                "Intel fusion FOW track counter has no side track namespace",
+            )
+        for side, ordinals in fow_ordinals_by_side.items():
+            if not ordinals:
+                continue
+            counter = fow_track_counters.get(side)
+            if counter is None:
+                raise ValueError(
+                    f"Intel fusion FOW track counter is missing for side {side!r}",
+                )
+            if max(ordinals) > counter:
+                raise ValueError(
+                    "Intel fusion FOW track counter precedes an issued track",
+                )
 
         rng_state = copy.deepcopy(state["rng_state"])
         if not isinstance(rng_state, dict):
@@ -1713,6 +1881,7 @@ class IntelFusionEngine:
         return {
             "tracks": tracks,
             "track_counter": raw_counter,
+            "fow_track_counters": fow_track_counters,
             "rng_state": rng_state,
             "satellite_passes": satellite_passes,
             "delivery_receipts": receipts,
@@ -1723,6 +1892,7 @@ class IntelFusionEngine:
     def commit_state(self, staged_state: dict[str, Any]) -> None:
         """Commit a non-throwing staged fusion snapshot."""
         self._track_counter = staged_state["track_counter"]
+        self._fow_track_counters = dict(staged_state["fow_track_counters"])
         self._rng.bit_generator.state = staged_state["rng_state"]
         self._tracks = {
             side: dict(side_tracks)

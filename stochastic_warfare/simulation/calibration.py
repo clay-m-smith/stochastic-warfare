@@ -18,7 +18,7 @@ import copy
 import math
 from typing import Any, ClassVar, Literal
 
-from pydantic import BaseModel, ConfigDict, model_validator
+from pydantic import BaseModel, ConfigDict, StrictBool, model_validator
 
 
 class SideCalibration(BaseModel):
@@ -118,6 +118,7 @@ class CalibrationSchema(BaseModel):
     # -- C2 (Phase 53b) ----------------------------------------------------
     c2_min_effectiveness: float = 0.3
     enable_fog_of_war: bool = False
+    enable_sensing_aware_standoff: StrictBool = True
 
     # -- Concealment -------------------------------------------------------
     observation_decay_rate: float = 0.05

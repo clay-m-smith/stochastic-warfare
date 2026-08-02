@@ -8,6 +8,9 @@ from unittest.mock import MagicMock
 
 
 from api.run_manager import RunManager
+from stochastic_warfare.simulation.tactical_targeting import (
+    TacticalTargetingRuntime,
+)
 
 
 # ── Helpers ──────────────────────────────────────────────────────────────
@@ -38,6 +41,15 @@ def _make_ctx(
         units_by_side=units_by_side,
         fog_of_war=fog_of_war,
         unit_sensors=unit_sensors or {},
+        cal_flat={},
+        tactical_targeting=TacticalTargetingRuntime(
+            sensing_aware_standoff_enabled=False,
+            unit_sides={
+                str(unit.entity_id): side
+                for side, units in units_by_side.items()
+                for unit in units
+            },
+        ),
     )
     return ctx
 
@@ -57,6 +69,7 @@ class TestCaptureFrameFow:
         wv = SimpleNamespace(contacts=contacts)
         fow = MagicMock()
         fow.get_world_view.return_value = wv
+        fow.peek_world_view.return_value = wv
 
         ctx = _make_ctx({"blue": [blue], "red": [red]}, fog_of_war=fow)
         frame = RunManager._capture_frame(0, ctx)
@@ -79,6 +92,7 @@ class TestCaptureFrameFow:
         wv = SimpleNamespace(contacts={})
         fow = MagicMock()
         fow.get_world_view.return_value = wv
+        fow.peek_world_view.return_value = wv
 
         ctx = _make_ctx({"blue": [blue]}, fog_of_war=fow)
         frame = RunManager._capture_frame(0, ctx)

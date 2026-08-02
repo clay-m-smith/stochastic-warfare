@@ -24,6 +24,8 @@ _REVIEWED_OVERRIDE_NAMES = frozenset(
         "AN/SPY-6 AMDR",
         "AN/SQQ-89 Sonar",
         "AN/TAS-4 TOW Thermal Sight",
+        "Aerial Observer Binoculars",
+        "Barr & Stroud Rangefinder",
         "Blue Fox Radar",
         "CITV Commander's Independent Thermal Viewer",
         "CIV Commander's Independent Viewer",
@@ -52,7 +54,9 @@ _REVIEWED_OVERRIDE_NAMES = frozenset(
         "Mk 37 GFCS with Mk 25 Fire Control Radar",
         "Mk 38 GFCS with Mk 13 Fire Control Radar",
         "No. 22c Mk 1 Telescopic Sight",
+        "No. 7 Dial Sight",
         "OEPS-27 IRST",
+        "Panoramic Sight",
         "PERI R17A2 Commander Sight",
         "Rblf 36 Panoramic Sight",
         "Revi 16B Reflector Gunsight",
@@ -68,10 +72,28 @@ _REVIEWED_OVERRIDE_NAMES = frozenset(
         "Type 965 Air Search Radar",
         "Type 967/968 Radar",
         "ZF 3x8 Telescopic Sight",
+        "Zeiss Entfernungsmesser Rangefinder",
     }
 )
 
 _SOURCE_EVIDENCE_GROUPS = (
+    (
+        "Publications-Catalog/Eyes-Of-Artillery",
+        {"Aerial Observer Binoculars"},
+    ),
+    (
+        "dreadnoughtproject.org/docs/notes/ADM_186_205.php",
+        {"Barr & Stroud Rangefinder"},
+    ),
+    (
+        "technische-meilensteine/verteidigungssysteme.html",
+        {"Zeiss Entfernungsmesser Rangefinder"},
+    ),
+    (
+        "collectionswa.net.au/items/95201dcb",
+        {"No. 7 Dial Sight"},
+    ),
+    ("awm.gov.au/collection/C311429", {"Panoramic Sight"}),
     ("GOVPUB-W-75e5a1c84782895a30d30d9df6fb19e2", {"M1 Panoramic Telescope"}),
     ("FM17-12.PDF", {"M55 Telescope"}),
     ("ministryforheritage.gi", {"No. 22c Mk 1 Telescopic Sight"}),
@@ -175,7 +197,7 @@ def test_reviewed_equipment_source_overrides_are_complete_and_unique() -> None:
         ._SENSOR_FUNCTIONAL_SOURCE_OVERRIDE_DECLARATIONS
     )
 
-    assert len(declarations) == 52
+    assert len(declarations) == 57
     assert len(declarations) == len(
         {equipment_name for equipment_name, _source in declarations},
     )

@@ -8,7 +8,9 @@ intelligence have revealed.  Undetected enemies do not appear.
 from __future__ import annotations
 
 import copy
+import enum
 import math
+import threading
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -21,7 +23,10 @@ from pydantic import BaseModel
 from stochastic_warfare.core.logging import get_logger
 from stochastic_warfare.core.types import Position
 from stochastic_warfare.detection.deception import Decoy, DeceptionEngine
-from stochastic_warfare.detection.detection import DetectionEngine
+from stochastic_warfare.detection.detection import (
+    DetectionEngine,
+    DetectionScanIdentity,
+)
 from stochastic_warfare.detection.estimation import (
     StateEstimator,
     Track,
@@ -32,6 +37,7 @@ from stochastic_warfare.detection.identification import (
     IdentificationEngine,
 )
 from stochastic_warfare.detection.intel_fusion import IntelFusionEngine
+from stochastic_warfare.detection.sensors import SensorInstance
 from stochastic_warfare.detection.signatures import SignatureProfile
 
 logger = get_logger(__name__)
@@ -39,6 +45,104 @@ logger = get_logger(__name__)
 # ---------------------------------------------------------------------------
 # Data types
 # ---------------------------------------------------------------------------
+
+
+def _require_witness_id(value: str, field_name: str) -> None:
+    if not isinstance(value, str) or not value or value != value.strip():
+        raise ValueError(f"{field_name} must be a non-empty trimmed string")
+
+
+def _require_finite_witness_scalar(
+    value: float,
+    field_name: str,
+    *,
+    non_negative: bool = False,
+) -> None:
+    if (
+        isinstance(value, bool)
+        or not isinstance(value, (int, float))
+        or not math.isfinite(float(value))
+        or (non_negative and float(value) < 0.0)
+    ):
+        qualifier = "finite and non-negative" if non_negative else "finite"
+        raise ValueError(f"{field_name} must be {qualifier}")
+
+
+@dataclass(frozen=True, slots=True, kw_only=True)
+class ObserverDetectionWitness:
+    """One successful canonical observer/sensor detection check.
+
+    Witnesses are current-update integration evidence, not durable fog-of-war
+    contacts.  They deliberately retain exact observer and attachment identity
+    that the side-wide contact record cannot represent.
+    """
+
+    side: str
+    observer_unit_id: str
+    target_id: str
+    source_equipment_index: int
+    sensor_id: str
+    modeled_role: str
+    logical_time_s: float
+    detected: bool
+    probability: float
+    snr_db: float
+    range_m: float
+    sensor_type: str
+    bearing_deg: float
+
+    def __post_init__(self) -> None:
+        _require_witness_id(self.side, "witness side")
+        _require_witness_id(
+            self.observer_unit_id,
+            "witness observer_unit_id",
+        )
+        _require_witness_id(self.target_id, "witness target_id")
+        _require_witness_id(self.sensor_id, "witness sensor_id")
+        _require_witness_id(self.modeled_role, "witness modeled_role")
+        _require_witness_id(self.sensor_type, "witness sensor_type")
+        if (
+            isinstance(self.source_equipment_index, bool)
+            or not isinstance(self.source_equipment_index, int)
+            or self.source_equipment_index < 0
+        ):
+            raise ValueError(
+                "witness source_equipment_index must be a non-negative int",
+            )
+        if self.detected is not True:
+            raise ValueError("a detection witness must represent success")
+        _require_finite_witness_scalar(
+            self.logical_time_s,
+            "witness logical_time_s",
+            non_negative=True,
+        )
+        _require_finite_witness_scalar(
+            self.probability,
+            "witness probability",
+            non_negative=True,
+        )
+        if self.probability > 1.0:
+            raise ValueError("witness probability must be at most 1.0")
+        _require_finite_witness_scalar(self.snr_db, "witness snr_db")
+        _require_finite_witness_scalar(
+            self.range_m,
+            "witness range_m",
+            non_negative=True,
+        )
+        _require_finite_witness_scalar(
+            self.bearing_deg,
+            "witness bearing_deg",
+            non_negative=True,
+        )
+        if self.bearing_deg >= 360.0:
+            raise ValueError("witness bearing_deg must be less than 360")
+
+
+@dataclass(frozen=True, slots=True)
+class _ObserverSensorScan:
+    sensor: SensorInstance
+    source_equipment_index: int | None = None
+    modeled_role: str | None = None
 
 
 @dataclass
@@ -150,6 +254,14 @@ class FogOfWarManager:
         self._data_link_networks: dict[str, list[str]] = {}
         # unit_id → set of network names
         self._unit_networks: dict[str, set[str]] = {}
+        # Successful checks from the most recent update for each side.  This
+        # non-durable cache is protected because Phase 89 may update sides in
+        # parallel.  Each published tuple is canonically ordered.
+        self._current_detection_witnesses: dict[
+            str,
+            tuple[ObserverDetectionWitness, ...],
+        ] = {}
+        self._witness_lock = threading.Lock()
 
     @property
     def intel_fusion(self) -> IntelFusionEngine:
@@ -166,12 +278,141 @@ class FogOfWarManager:
             self._world_views[side] = SideWorldView(side=side)
         return self._world_views[side]
 
+    def peek_world_view(self, side: str) -> SideWorldView | None:
+        """Return an existing world view without creating simulation state."""
+        return self._world_views.get(side)
+
     def get_contact(self, side: str, contact_id: str) -> ContactRecord | None:
         """Return a specific contact record, or None."""
         wv = self._world_views.get(side)
         if wv is None:
             return None
         return wv.contacts.get(contact_id)
+
+    def get_current_detection_witnesses(
+        self,
+        side: str | None = None,
+    ) -> tuple[ObserverDetectionWitness, ...]:
+        """Return an immutable snapshot of current-update detection witnesses.
+
+        Passing a side returns only that side's latest update.  Omitting it
+        returns the canonical union across all most-recently updated sides.
+        These values are intentionally absent from :meth:`get_state`.
+        """
+        with self._witness_lock:
+            if side is not None:
+                return self._current_detection_witnesses.get(side, ())
+            witnesses = [
+                witness
+                for side_witnesses in self._current_detection_witnesses.values()
+                for witness in side_witnesses
+            ]
+        return tuple(sorted(witnesses, key=self._witness_sort_key))
+
+    def clear_current_detection_witnesses(
+        self,
+        side: str | None = None,
+    ) -> None:
+        """Clear non-durable witness evidence for one side or all sides."""
+        with self._witness_lock:
+            if side is None:
+                self._current_detection_witnesses.clear()
+            else:
+                self._current_detection_witnesses.pop(side, None)
+
+    @staticmethod
+    def _witness_sort_key(
+        witness: ObserverDetectionWitness,
+    ) -> tuple[str, str, str, int, str, str]:
+        return (
+            witness.side,
+            witness.observer_unit_id,
+            witness.target_id,
+            witness.source_equipment_index,
+            witness.sensor_id,
+            witness.modeled_role,
+        )
+
+    @staticmethod
+    def _observer_sensor_scans(
+        own: dict[str, Any],
+    ) -> tuple[_ObserverSensorScan, ...]:
+        """Resolve typed attachments or the compatibility sensor projection."""
+        attachments = own.get("sensor_attachments")
+        if attachments is None:
+            return tuple(
+                _ObserverSensorScan(sensor=sensor)
+                for sensor in own.get("sensors", ())
+            )
+
+        scans: list[_ObserverSensorScan] = []
+        identities: set[tuple[int, str]] = set()
+        for attachment in attachments:
+            sensor = getattr(attachment, "sensor", None)
+            if not isinstance(sensor, SensorInstance):
+                raise TypeError(
+                    "sensor attachment must expose a SensorInstance as sensor",
+                )
+            source_index = getattr(
+                attachment,
+                "source_equipment_index",
+                None,
+            )
+            if (
+                isinstance(source_index, bool)
+                or not isinstance(source_index, int)
+                or source_index < 0
+            ):
+                raise ValueError(
+                    "sensor attachment source_equipment_index must be a "
+                    "non-negative int",
+                )
+            modeled_role = getattr(attachment, "modeled_role", None)
+            if not isinstance(modeled_role, enum.Enum):
+                raise TypeError(
+                    "sensor attachment modeled_role must be a typed enum",
+                )
+            role_value = modeled_role.value
+            _require_witness_id(role_value, "sensor attachment modeled_role")
+            attachment_sensor_id = getattr(
+                attachment,
+                "sensor_id",
+                sensor.sensor_id,
+            )
+            if attachment_sensor_id != sensor.sensor_id:
+                raise ValueError(
+                    "sensor attachment sensor_id disagrees with its live sensor",
+                )
+            identity = (source_index, sensor.sensor_id)
+            if identity in identities:
+                raise ValueError(
+                    "duplicate sensor attachment identity "
+                    f"{identity!r} for one observer",
+                )
+            identities.add(identity)
+            scans.append(
+                _ObserverSensorScan(
+                    sensor=sensor,
+                    source_equipment_index=source_index,
+                    modeled_role=role_value,
+                ),
+            )
+
+        if "sensors" in own:
+            compatibility_sensors = tuple(own["sensors"])
+            attachment_sensors = tuple(scan.sensor for scan in scans)
+            if len(compatibility_sensors) != len(attachment_sensors) or any(
+                projected is not attached
+                for projected, attached in zip(
+                    compatibility_sensors,
+                    attachment_sensors,
+                )
+            ):
+                raise ValueError(
+                    "own-unit sensors must be the exact sensor_attachments "
+                    "projection",
+                )
+        return tuple(scans)
 
     # ------------------------------------------------------------------
     # Phase 69c: Deception passthrough API
@@ -217,6 +458,13 @@ class FogOfWarManager:
         current_tick: int = 0,
         unit_arrays: Any | None = None,
         rng: np.random.Generator | None = None,
+        visibility_m: float = 10000.0,
+        illumination_lux: float = 100.0,
+        thermal_contrast: float = 1.0,
+        ambient_noise_db: float = 70.0,
+        atmospheric_atten_db_per_km: float = 0.01,
+        transmission_loss: float | None = None,
+        jam_snr_penalty_db: float = 0.0,
     ) -> SideWorldView:
         """Run one detection cycle for *side*.
 
@@ -240,11 +488,29 @@ class FogOfWarManager:
             Respect per-sensor ``scan_interval_ticks`` scheduling.
         current_tick:
             Current simulation tick (for scan scheduling).
+        visibility_m, illumination_lux, thermal_contrast, ambient_noise_db,
+        atmospheric_atten_db_per_km, transmission_loss,
+        jam_snr_penalty_db:
+            Current detection-environment inputs forwarded to the canonical
+            :class:`DetectionEngine` check.  A target mapping may override an
+            input when propagation or concealment is target-specific.
 
         Returns the updated :class:`SideWorldView`.
         """
+        _require_witness_id(side, "fog-of-war side")
+        # Never allow a prior update's success to survive a failed or empty
+        # current update.  New witnesses publish only after the full scan and
+        # track-lifecycle work succeeds.
+        self.clear_current_detection_witnesses(side)
+        _require_finite_witness_scalar(
+            current_time,
+            "fog-of-war logical time",
+            non_negative=True,
+        )
+        logical_time_s = float(current_time)
+        staged_witnesses: list[ObserverDetectionWitness] = []
         wv = self.get_world_view(side)
-        wv.last_update_time = current_time
+        wv.last_update_time = logical_time_s
 
         # Build list of scannable targets (enemy units + decoys)
         all_targets = list(enemy_units)
@@ -280,11 +546,31 @@ class FogOfWarManager:
             _target_tree = STRtree(_target_points)
 
         # For each own unit's sensors, scan each target
-        for own in own_units:
+        for observer_index, own in enumerate(own_units):
             obs_pos = own["position"]
-            sensors = own.get("sensors", [])
+            sensor_scans = self._observer_sensor_scans(own)
+            sensors = tuple(scan.sensor for scan in sensor_scans)
             obs_height = own.get("observer_height", 1.8)
             obs_heading_deg = own.get("observer_heading_deg", 0.0)
+            observer_unit_id = own.get("unit_id")
+            has_typed_attachments = any(
+                scan.source_equipment_index is not None
+                for scan in sensor_scans
+            )
+            if has_typed_attachments:
+                _require_witness_id(
+                    observer_unit_id,
+                    "observer unit_id",
+                )
+            elif observer_unit_id is None:
+                # Legacy sensor projections have no authored equipment
+                # identity.  Their canonical input position is the only
+                # available observer-local compatibility identity.
+                observer_unit_id = (
+                    f"__legacy_fow_observer_index__:{observer_index}"
+                )
+            else:
+                _require_witness_id(observer_unit_id, "observer unit_id")
 
             # Phase 84a: determine targets in range via spatial index
             if _target_tree is not None:
@@ -326,7 +612,13 @@ class FogOfWarManager:
                 concealment = target.get("concealment", 0.0)
                 posture = target.get("posture", 0)
 
-                for sensor in sensors:
+                for sensor_index, scan in enumerate(sensor_scans):
+                    sensor = scan.sensor
+                    scan_source_index = (
+                        scan.source_equipment_index
+                        if scan.source_equipment_index is not None
+                        else sensor_index
+                    )
                     if not sensor.operational:
                         continue
 
@@ -347,24 +639,88 @@ class FogOfWarManager:
                         target_height=tgt_height,
                         concealment=concealment,
                         posture=posture,
+                        illumination_lux=target.get(
+                            "illumination_lux",
+                            illumination_lux,
+                        ),
+                        visibility_m=target.get("visibility_m", visibility_m),
+                        thermal_contrast=target.get(
+                            "thermal_contrast",
+                            thermal_contrast,
+                        ),
+                        ambient_noise_db=target.get(
+                            "ambient_noise_db",
+                            ambient_noise_db,
+                        ),
+                        atmospheric_atten_db_per_km=target.get(
+                            "atmospheric_atten_db_per_km",
+                            atmospheric_atten_db_per_km,
+                        ),
+                        transmission_loss=target.get(
+                            "transmission_loss",
+                            transmission_loss,
+                        ),
                         observer_heading_deg=obs_heading_deg,
+                        target_id=tgt_id,
+                        scan_identity=DetectionScanIdentity(
+                            side=side,
+                            observer_unit_id=observer_unit_id,
+                            source_equipment_index=scan_source_index,
+                        ),
+                        jam_snr_penalty_db=target.get(
+                            "jam_snr_penalty_db",
+                            jam_snr_penalty_db,
+                        ),
                         rng=rng,
                     )
 
                     if result.detected:
+                        if scan.source_equipment_index is not None:
+                            staged_witnesses.append(
+                                ObserverDetectionWitness(
+                                    side=side,
+                                    observer_unit_id=observer_unit_id,
+                                    target_id=tgt_id,
+                                    source_equipment_index=(
+                                        scan.source_equipment_index
+                                    ),
+                                    sensor_id=sensor.sensor_id,
+                                    modeled_role=scan.modeled_role,
+                                    logical_time_s=logical_time_s,
+                                    detected=result.detected,
+                                    probability=float(result.probability),
+                                    snr_db=float(result.snr_db),
+                                    range_m=float(result.range_m),
+                                    sensor_type=result.sensor_type.name,
+                                    bearing_deg=float(result.bearing_deg),
+                                ),
+                            )
                         # Classify
                         ci = ContactInfo(ContactLevel.DETECTED, None, None, None, 0.3)
                         if self._identification is not None:
                             ci = self._identification.classify_from_detection(
                                 result, tgt_unit,
                                 threshold_db=sensor.definition.detection_threshold,
+                                rng=rng,
                             )
 
-                        # Feed to intel fusion
-                        existing_tid = tgt_id if tgt_id in wv.contacts else None
+                        # Feed to intel fusion.  The internal target-keyed
+                        # contact retains an already issued side-local public
+                        # track; new contacts receive the next opaque ordinal.
+                        existing_track_id = (
+                            wv.contacts[tgt_id].track.track_id
+                            if tgt_id in wv.contacts
+                            else None
+                        )
 
                         tid = self._intel_fusion.submit_sensor_detection(
-                            side, result, ci, obs_pos, contact_id=existing_tid,
+                            side,
+                            result,
+                            ci,
+                            obs_pos,
+                            contact_id=existing_track_id,
+                            allocate_fow_track=True,
+                            observation_time_s=logical_time_s,
                         )
 
                         if tid is not None:
@@ -378,7 +734,7 @@ class FogOfWarManager:
                                     cr.contact_info = IdentificationEngine.update_contact(
                                         cr.contact_info, ci,
                                     ) if self._identification else ci
-                                    cr.last_sensor_contact_time = current_time
+                                    cr.last_sensor_contact_time = logical_time_s
                                     if sensor.sensor_id not in cr.reporting_sensors:
                                         cr.reporting_sensors.append(sensor.sensor_id)
                                 else:
@@ -386,20 +742,27 @@ class FogOfWarManager:
                                         contact_id=tgt_id,
                                         track=track,
                                         contact_info=ci,
-                                        first_detected_time=current_time,
-                                        last_sensor_contact_time=current_time,
+                                        first_detected_time=logical_time_s,
+                                        last_sensor_contact_time=logical_time_s,
                                         reporting_sensors=[sensor.sensor_id],
                                     )
 
         # Manage track lifecycle
         tracks = self._intel_fusion.get_tracks(side)
-        to_delete = self._estimator.manage_tracks(tracks, current_time)
+        to_delete = self._estimator.manage_tracks(tracks, logical_time_s)
         for tid in to_delete:
             # Find and remove associated contact
             for cid in list(wv.contacts.keys()):
                 if wv.contacts[cid].track.track_id == tid:
                     del wv.contacts[cid]
                     break
+
+        published_witnesses = tuple(sorted(
+            staged_witnesses,
+            key=self._witness_sort_key,
+        ))
+        with self._witness_lock:
+            self._current_detection_witnesses[side] = published_witnesses
 
         return wv
 
@@ -664,6 +1027,8 @@ class FogOfWarManager:
         for side, world_view_state in staged_state["world_views"].items():
             world_view = self.get_world_view(side)
             world_view.last_update_time = world_view_state["last_update_time"]
+        # Witnesses are same-update evidence, never restored contact state.
+        self.clear_current_detection_witnesses()
 
     def set_state(self, state: dict[str, Any]) -> None:
         """Validate and atomically restore standalone fog/fusion state."""

@@ -195,15 +195,17 @@ class TestCalibrationGet:
         cal = CalibrationSchema()
         assert cal.get("bogus_key") is None
 
-    def test_enable_flags_all_false(self):
-        """All enable_* flags default to False."""
+    def test_enable_flag_defaults_are_explicit(self) -> None:
+        """Only the two production-safe default-on gates start enabled."""
         cal = CalibrationSchema()
-        # enable_air_routing, enable_fog_of_war, enable_detection_culling
-        # default to True — exclude from this check
-        _TRUE_DEFAULTS = {"enable_air_routing", "enable_fog_of_war", "enable_detection_culling"}
-        enable_fields = [
-            f for f in CalibrationSchema.model_fields
-            if f.startswith("enable_") and f not in _TRUE_DEFAULTS
-        ]
-        for field_name in enable_fields:
-            assert getattr(cal, field_name) is False, f"{field_name} should default to False"
+        enabled_by_default = {
+            field_name
+            for field_name in CalibrationSchema.model_fields
+            if field_name.startswith("enable_")
+            and getattr(cal, field_name) is True
+        }
+
+        assert enabled_by_default == {
+            "enable_detection_culling",
+            "enable_sensing_aware_standoff",
+        }

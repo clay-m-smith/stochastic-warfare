@@ -151,6 +151,33 @@ This contract covers:
    classification.
 4. Contradictory policy/data combinations fail unit-catalog validation.
 
+### Phase 115 targeting bindings
+
+Phase 115 extends the same production builder without creating another mapping
+owner. Every live weapon and sensor attachment now carries its exact canonical
+source-equipment index, modeled role, allowed domains, and compatible source
+indexes into tactical targeting. Initial, reinforcement, and checkpoint-only
+construction must reproduce those bindings exactly; duplicate names, repeated
+roles, and reordered source equipment cannot pass by list-position
+coincidence. Weapon attachment order remains
+`(-max_range_m, source_equipment_index, weapon_id)`, while sensor bindings
+retain source order.
+
+Role compatibility is a total upper-bound policy, not a proxy for the exact
+catalog definition. The policy must admit the shooter role and target domain,
+the selected mapped sensor must name the selected weapon source index, and the
+attached weapon definition must independently admit the target domain. This
+last gate is important for shared cross-era role profiles: the strict Salamis
+production regression accepts ancient projectile/melee attachments against
+their authored naval targets and rejects an aerial control without widening
+the catalog definitions.
+
+The current mapping can associate any same-unit weapon and director that pass
+the exact role/domain policy because the catalog has no authored physical
+mount/director association. That narrower topology deficit is REM-042 / Phase
+129; Phase 115 does not infer it from equipment names or claim that compatible
+roles prove a physical connection.
+
 ## Interfaces and dependencies
 
 The runtime boundary lives in `simulation/` because it composes typed entity,

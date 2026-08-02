@@ -49,7 +49,7 @@ Audit baseline: 2026-07-28 at `68acd4b`
 | REM-025 | P2 | 112 | Scenario diagnostics | `MANY_STUCK_UNITS` treats legitimate corrected weapon-range standoff as a movement failure | **Closed** | Yes | N/A | Yes | N/A | Yes | Yes | N/A | [Phase 112](devlog/phase-112.md#postmortem) |
 | REM-026 | P1 | 112 | Benchmark trust | A hard 60-second Golan assertion contradicts the checked-in 500-second baseline and fails code that is faster than that baseline | **Closed** | Yes | N/A | Yes | N/A | Yes | Yes | Yes | [Phase 112](devlog/phase-112.md#postmortem) |
 | REM-027 | P2 | 112 | Space ISR state | Buffered ISR checkpoint reports use generic JSON normalization rather than a typed semantic rehydration boundary | **Closed** | Yes | Yes | Yes | N/A | Yes | Yes | Yes | [Phase 112](devlog/phase-112.md#postmortem) |
-| REM-028 | P1 | 115 | Sensing/combat | Tactical movement can hold at catalog weapon range beyond usable sensing range | Queued | - | Yes | Yes | - | Yes | Yes | - | Sensing-aware standoff enabled/disabled production comparison |
+| REM-028 | P1 | 115 | Sensing/combat | Tactical movement can hold at catalog weapon range beyond usable sensing range | **Closed** | Yes | Yes | Yes | Yes | Yes | Yes | Yes | [Phase 115](devlog/phase-115.md#postmortem) |
 | REM-029 | P1 | 116 | Fog-of-war state | Ordinary contacts serialize but are discarded by `FogOfWarManager.set_state()` | Queued | Yes | Yes | Yes | N/A | Yes | Yes | - | Nonempty-contact fresh continuation with exact COP behavior |
 | REM-030 | P1 | 117 | Historical validation | At the Phase 112 baseline, catalog winner tables, legacy comparisons, and public docs claimed historical validation without a production, provenance-bearing, held-out outcome-envelope contract; fresh Debecka production exposed incompatible casualty units and a duration miss | Queued | Yes | - | - | N/A | Yes | Yes | - | Per-claim validated/regression-only/unsupported disposition plus typed held-out production-envelope artifacts |
 | REM-031 | P1 | 118 | Performance semantics | At the Phase 112 baseline, Block 9 claimed five performance flags preserve scenario outcomes, but its regression executed only authored configurations, excluded the only two all-flag scenarios, and had no same-input disabled controls | Queued | Yes | Yes | Yes | - | - | - | - | Per-flag semantic classification and common-seed production off/on evidence with persisted provenance |
@@ -62,6 +62,11 @@ Audit baseline: 2026-07-28 at `68acd4b`
 | REM-038 | P1 | 125 | Medical lifecycle | Production does not create medical facilities or admit battle casualties automatically | Queued | Yes | - | - | - | - | - | - | Battle casualty enters a loaded care/evacuation lifecycle and persists/exposes its disposition |
 | REM-039 | P1 | 126 | Maintenance lifecycle | Loaded maintenance configuration does not register live loadout equipment or start repairs from real spare-parts logistics | Queued | Yes | Yes | - | - | - | - | - | Runtime equipment breakdown consumes spares and completes an automatic production repair lifecycle |
 | REM-040 | P2 | 127 | Validation era | The validation-only `HistoricalCampaign` conversion has no era field and silently returns a modern scenario config | Queued | - | - | - | N/A | Yes | - | - | Validation campaign preserves exact era identity through the authoritative runtime factory |
+| REM-041 | P1 | 128 | API authorization | Stored frame targeting supports a side-safe projection, but the route has no caller authorization and defaults to privileged evidence | Queued | Yes | Yes | Yes | - | Yes | Yes | Yes | Authenticated caller-derived scope/side with player-safe defaults and cross-side denial |
+| REM-042 | P1 | 129 | Equipment topology | Role-compatible sensors can direct any compatible weapon on the same unit because authored mount/director associations do not exist | Queued | - | - | - | N/A | Yes | Yes | - | Authored exact mount/director bindings across initial, reinforcement, and checkpoint loadouts |
+| REM-043 | P2 | 130 | Target selection | Threat ranking does not have an explicit availability-aware selection contract across current weapon/sensor/fire-control solutions | Queued | Yes | Yes | Yes | N/A | Yes | Yes | Yes | Multi-target production comparison with deterministic serviceable-threat selection |
+| REM-044 | P1 | 131 | Detection estimation | FOW fusion uses generic isotropic range uncertainty and updates tracks without an elapsed-time predictive transaction | Queued | Yes | - | Yes | N/A | Yes | Yes | - | Sourced sensor covariance plus atomic predict/update/replacement continuation |
+| REM-045 | P1 | 132 | Scripted scenario actions | Phase 101 scripted events use an untyped parameter bag, silently consume failed/no-op actions, bypass position/casualty lifecycle owners, and do not checkpoint or expose exact-once state | Queued | Yes | Yes | Yes | N/A | - | - | - | Typed due-action owner with fail-closed effects, exact-once continuation, and public lifecycle evidence |
 
 ## REM-001 - Exact checkpoint restoration
 
@@ -1095,7 +1100,38 @@ does not establish the correct targeting prerequisite, validate Jutland
 historically, or authorize extending the rangefinder. Phase 114 changes era
 cadence ownership only and leaves the movement branch unchanged.
 
-**Status:** Queued for Phase 115 in the planned next remediation block.
+### Phase 115 closure evidence
+
+Phase 115 now loads one strict default-on targeting owner through the
+authoritative runtime factory. Each tactical interval publishes immutable
+tick/battle/shooter decisions after one canonical FOW update. Automatic
+movement standoff and ordinary direct engagement consume the same exact
+contact, weapon, sensing/fire-control, range, and post-movement revalidation
+evidence. Explicitly disabling automatic standoff authorizes `0.0 m`; raw
+catalog maximum never returns as a fallback. Exact role/source bindings cover
+initial, reinforcement, and checkpoint reconstruction.
+
+Cambrai seeds 42--44 move all four Mark IVs that formerly blind-held outside
+their 3,000 m usable optical envelope. Jutland seeds 42--44 move all 29 units
+and reach capital-weapon engagement instead of stopping capital ships solely
+at 21.7 km. Salamis proves the corrected ancient-projectile naval role and
+rejects an aerial control. Format-115 no-FOW continuation is exact; restored
+FOW decisions are historical/non-consumable, and REM-029 remains explicit.
+Movement diagnostics, evaluator/replay, paired privileged/side-FOW API frames,
+and frontend schemas expose the decision evidence.
+
+The accepted implementation matrix is `D=Yes, L=Yes, W=Yes, E=Yes, X=Yes,
+O=Yes, P=Yes`. The final standard partition passed 11,743/11,743 nodes; data,
+determinism, scenario, frontend, static, documentation, and focused real
+database/API persistence gates passed. Owner-qualified slow/API/E2E contention
+results and Debecka's REM-030 signal remain disclosed rather than being called
+passes. The final frozen-tree 73 Easting version-4 transition verified all
+29/29 approvals with `transition_qualified`, identical approved semantic
+state, and timing explicitly `not_applicable` because the workload identity
+changes. Phase 116 must promote the clean Phase 115 endpoint before ordinary
+paired gating resumes; this handoff is not a performance pass.
+
+**Status:** **Closed** by the accepted Phase 115 postmortem.
 
 ## REM-029 - Ordinary fog-of-war contacts are discarded on restore
 
@@ -1113,7 +1149,7 @@ authority before mutation. A nonempty-contact fresh-runtime continuation must
 preserve decay, update, common-operating-picture behavior, subsequent events,
 and whole-context checkpoint equality.
 
-**Status:** Queued for Phase 116 in the planned next remediation block.
+**Status:** Queued for Phase 116, the next phase in active Block 13.
 
 ## REM-030 - Catalog-wide historical outcome claims lack production validation
 
@@ -1221,6 +1257,54 @@ arrays. Those observations are regression/fidelity inventory signals only.
 They are not source-backed outcome envelopes, a held-out historical study, a
 calibration verdict, or authority to tune physical parameters. Phase 117
 retains the complete catalog and public-claim disposition.
+
+### Phase 115 current-engine trajectory signals
+
+The REM-028 shared-targeting repair supplies two further deterministic signals
+without turning either into calibration authority.
+
+Debecka seeds 42 through 51 changed from the Phase 114 current-engine result of
+10 blue wins, mean 32.5 destroyed blue records, mean 15.6 destroyed red
+records, and mean 137.9 ticks to 4 blue wins, means 42.5 and 6.7 destroyed
+records, and mean 1,887.5 ticks. Every current seed still records five bomb and
+six Javelin engagements. The principal removed path is legacy aircraft-cannon
+ground fire that lacked compatible director evidence: Phase 114 recorded 1,315
+M61A1 ground engagements across the ten seeds, while the current runs record
+about 25. For example, the F-14's aerial-only AN/AWG-9 cannot direct its M61 at
+a ground target and now records `FIRE_CONTROL_TARGET_DOMAIN_UNSUPPORTED`; the
+multi-domain F/A-18 APG-73 retains limited valid ground-gun use.
+
+The strict `enable_sensing_aware_standoff=false` control improves the current
+result only to 7/10 blue wins, with means 43.1 destroyed blue records, 8.8
+destroyed red records, and 1,137.6 ticks. That isolates standoff as a
+downstream exposure/morale contributor, not the cause of the removed invalid
+fire. The remaining nonterminal runs expose an authored-horizon contradiction:
+the scenario duration is four hours while its blue `time_expired` condition is
+due at six hours. A typed in-memory six-hour control with a 4,500-tick safety
+cap reached 10/10 blue labels, but six were the unconditional authored fallback
+at exactly 4,320 ticks / 21,600 seconds after every blue unit was already
+destroyed or surrendered. The unchanged regression harness also caps at 3,000
+ticks and cannot reach that fallback. Changing the horizon, cap, or winner
+threshold would therefore manufacture a pass rather than validate policy.
+
+Fallujah seed 42 changed from the Phase 112 artifact's blue
+`force_destroyed` result at 115 ticks / 575 seconds, 1,643 evaluator
+engagements, 256 moved and 77 unmoved units, 830.7 m mean travel, and 3,543
+events to the final Phase 115 blue `force_destroyed` result at 40 ticks / 200
+seconds, 70 casualties, 297 evaluator engagements (221 direct engagement
+events), all 333 units moving at least once, 1,060.7 m mean travel, 2,282
+events, and eight pre-emplaced IED detonations. An explicit standoff-disabled
+control ends at 38 ticks, so the default-on flag is not an early-termination
+accelerator. The current regression ends before the first authored scripted
+action at H+7; loading 11 declarations and resolving their references does not
+prove dispatch or effects. REM-045 / Phase 132 owns that independent runtime
+integrity gap.
+
+These are deterministic current-engine semantic deltas produced by correcting
+shared targeting authority. They are not source-backed historical duration or
+casualty envelopes, held-out validation, calibration verdicts, or authority to
+tune weapons, morale, victory policy, or scenario parameters. Phase 117 must
+classify them with the rest of the catalog-wide evidence.
 
 Phase 117 must inventory every test, scenario field, and public statement that
 claims historical accuracy and give each one an explicit disposition:
@@ -1690,6 +1774,24 @@ verification binds that comparison to the final Phase 113 commit as recorded
 in the Phase 113 devlog and external handoff. This extends the evidence bridge;
 it does not reopen REM-026.
 
+### Phase 115 version-4 workload-transition extension
+
+Phase 115 intentionally changes the effective 73 Easting workload through the
+new default-on sensing-aware-standoff flag and corrected VVS-2 role/domain
+data. The version-3 gate correctly rejects before timing because the reference
+and candidate runtime-input fingerprints and derived loadout digest differ.
+Policy version 4 therefore adds a separate non-timing transition contract over
+the unchanged version-3 runtime-input normalization. It requires one exact
+production closure per endpoint, complete classified RFC-6901 differences,
+authoritative predecessor and tree identities, and zero timed pairs or
+performance decisions. `transition_qualified` is not a pass and cannot be
+used to claim speed.
+
+The next phase must promote the clean Phase 115 endpoint to an ordinary paired
+reference before its own postmortem. This temporary reviewed handoff preserves
+REM-026's fail-closed rule instead of comparing unequal workloads or weakening
+the 1.20/0.20 gate. It does not reopen REM-026.
+
 ## REM-018 - Era override metadata has no production consumer
 
 ### Reproduction and cause
@@ -2108,3 +2210,217 @@ a supported toggle.
 
 **Status:** Queued for Phase 127. This is a validation-only propagation gap;
 it does not weaken Phase 114's authoritative production factory contract.
+
+## REM-041 - Player-facing targeting exposure lacks caller authorization
+
+### Phase 115 finding and nonclaim
+
+Phase 115 stores both a privileged targeting projection and a structurally
+side-safe `SIDE_FOW` projection. The frame route validates the requested scope
+and side combination and the frontend has typed support for either projection.
+The route does not authenticate a caller, derive a permitted side, or require
+an explicit operator privilege, however. Its omitted-query default is
+`PRIVILEGED_ENGINE`, and the current tactical map uses that default. A
+caller-supplied `scope=SIDE_FOW&side=...` is a payload choice, not an
+authorization boundary; client-side filtering is not access control.
+
+**Matrix:** `D=Yes, L=Yes, W=Yes, E=-, X=Yes, O=Yes, P=Yes`. These `Yes`
+entries describe the paired projection machinery only. They do not prove the
+missing caller authorization or a safe default.
+
+### Required proof
+
+- Define caller identities, player-to-side grants, and an explicit privileged
+  operator/evaluator grant in one server-owned authorization contract.
+- Derive scope and side from that contract or strictly validate any requested
+  narrowing against it before stored frame evidence is read.
+- Make ordinary player and frontend defaults side-safe; reject unauthenticated,
+  cross-side, and privilege-escalating requests without leaking target,
+  attachment, or roster existence.
+- Prove allowed and denied production API calls, audit records, frontend use,
+  legacy-data behavior, and persistence boundaries. A response filter or UI
+  toggle alone is insufficient.
+
+**Status:** Queued for Phase 128 in Block 14. Phase 115 proves the projection's
+structure, not caller authorization.
+
+## REM-042 - Compatible roles do not encode physical mount/director topology
+
+### Phase 115 finding and nonclaim
+
+Phase 115 replaces name and collection-position inference with canonical exact
+source indexes and total weapon-role/sensor-role/domain policy. That policy
+prevents unrelated role classes, such as an artillery sight directing an
+organic direct-fire weapon. Within a compatible role class, a sensor mapping
+currently publishes every compatible weapon source index on the same unit.
+The catalogs do not author which rangefinder, fire-control system, or director
+serves which physical weapon or mount group, so a mixed platform can still
+cross-bind two otherwise compatible attachments.
+
+**Matrix:** `D=-, L=-, W=-, E=N/A, X=Yes, O=Yes, P=-`. `E` is N/A because
+physical topology is mandatory data, not an optional fidelity mode. Phase 115
+production decisions expose the exact current cross-binding result, which is
+the evidence for `X` and `O`, not proof of the missing topology.
+
+### Required proof
+
+- Author stable weapon/mount/director association IDs or an equally explicit
+  topology for every affected catalog entry; classify genuinely unsupported
+  combinations instead of guessing.
+- Validate uniqueness, ownership, target-domain and role compatibility, and
+  complete references before constructing a runtime loadout.
+- Resolve exact associations through the same initial, reinforcement, and
+  checkpoint loadout builder without names or list-position coincidence.
+- Prove mixed compatible-loadout engagement selection and rejection, exposed
+  provenance, deterministic ordering, and exact fresh/in-place continuation.
+
+**Status:** Queued for Phase 129 in Block 14. Phase 115's total role policy is
+an upper bound and does not claim physical mount topology.
+
+## REM-043 - Threat selection lacks an availability-aware contract
+
+### Phase 115 finding and nonclaim
+
+The tactical targeting runtime validates candidates and persists an exact
+decision, and the current target-selection mode can rank hostile candidates by
+threat. Phase 115 does not define a complete policy for comparing current
+serviceability across weapon, ammunition, sensing, fire-control, and target
+domain before ranking multiple threats. Its single selected decision therefore
+must not be described as an availability-aware threat optimizer.
+
+**Matrix:** `D=Yes, L=Yes, W=Yes, E=N/A, X=Yes, O=Yes, P=Yes`. This is the
+existing deterministic selection and decision-evidence matrix. `E` is N/A
+because correct selection semantics are not a feature toggle; the missing
+availability-aware contract remains open.
+
+### Required proof
+
+- Declare deterministic ordering and scoring for serviceable, temporarily
+  unavailable, and unsupported target/weapon/sensor combinations.
+- Decide and document whether selection ranks only complete current solutions
+  or represents unavailable threats without authorizing movement or fire.
+- Prove production multi-target cases where threat and serviceability conflict,
+  including no-solution, ammunition, degraded sensor, fire-control, domain,
+  tie, and reordered-roster controls.
+- Persist/expose the score inputs and selected disposition, preserve RNG stream
+  authority and checkpoint continuation, and do not retune physical data to
+  force a preferred target.
+
+**Status:** Queued for Phase 130 in Block 14. Phase 115 closes blind catalog-
+range standoff without absorbing this selection-policy follow-up.
+
+## REM-044 - Sensor fusion lacks sourced covariance and predictive tracking
+
+### Phase 115 finding and nonclaim
+
+Stable side-local FOW track reuse exposed two pre-existing estimator
+assumptions. `submit_sensor_detection()` derives one isotropic position
+uncertainty as five percent of reported range, without sensor-specific range
+or bearing error data; at zero range that became zero covariance and made the
+next conventional innovation inverse singular. Phase 115 requires finite,
+strictly positive report uncertainty and applies the subsystem's generic
+one-metre numerical minimum. It also bounds a gated replacement to one current
+fusion track and preserves a monotonic, never-reused public ordinal.
+
+That repair does not turn the generic minimum into historical sensor accuracy.
+Nor does it claim predictive tracking: the existing fusion submission calls
+the measurement update without first propagating the track through elapsed
+logical time. Adding prediction in place would mutate the predecessor before
+gating and could violate atomic replacement; it needs one detached
+predict/update plan and explicit process-noise/timestamp semantics.
+
+**Matrix:** `D=Yes, L=-, W=Yes, E=N/A, X=Yes, O=Yes, P=-`. Existing report,
+track, covariance, and gating types support `D/W`; the Phase 115 production
+zero-range and moving/gated controls support `X/O`. `E` is N/A because correct
+measurement covariance is mandatory data/model provenance, not a fidelity
+toggle. Sensor-specific covariance is not loaded and predictive transaction
+provenance is not persisted/exposed.
+
+### Required proof
+
+- Author or explicitly classify range and bearing error models, units,
+  operating envelopes, correlations, and sources for every applicable sensor
+  class; do not infer accuracy from display names or tune it to scenario
+  outcomes.
+- Convert range/bearing errors and current geometry into a finite positive
+  semidefinite position covariance, with a declared treatment for genuinely
+  exact/noise-free observations rather than a hidden matrix fudge.
+- Stage elapsed-time prediction and measurement update on detached state,
+  enforce logical timestamp monotonicity, and atomically commit either the
+  accepted update or a bounded replacement without orphan tracks.
+- Prove stationary, crossing, accelerating, zero/short-range, gated, stale,
+  reordered, parallel, and checkpoint-resume behavior through the production
+  FOW path with exact RNG/process-noise ownership.
+- Persist and expose the required covariance/prediction provenance in
+  privileged evidence and a non-leaking side-safe projection.
+
+**Status:** Queued for Phase 131 in Block 15. Phase 115 prevents singular and
+orphaned production state without claiming sensor-specific estimation
+fidelity.
+
+## REM-045 - Scripted scenario actions lack a typed exact-once runtime owner
+
+### Phase 115 finding and nonclaim
+
+Phase 101 added `ScriptedEventConfig(time_s, event_type, params)` and four
+Fallujah handlers. The outer model validates the event-type string, but the
+per-type payload remains `dict[str, Any]`; required fields, exact target kinds,
+units, bounds, and cross-references are not represented by a discriminated
+typed contract. `CampaignManager.check_scripted_events()` catches every
+handler exception and adds the ordinal to `_fired_scripted_events` anyway.
+Missing unconventional/incendiary owners, unresolved IEDs or units, and other
+handler no-ops return normally and are also counted as fired. The relocation
+handler assigns `Unit.position` directly and the casualty handler pops the
+personnel list, bypassing authoritative movement, casualty/status, event, and
+dependent-owner lifecycles.
+
+The fired set is created dynamically on `SimulationContext`; it is absent from
+`CampaignManager.get_state()`, format-115 context state, recorder/API evidence,
+and fresh restore. There is therefore no exact schedule identity, pending /
+attempted / committed / failed disposition, effect receipt, or exactly-once
+checkpoint continuation. Phase 101's own test-quality review acknowledged that
+no test exercised WP, relocation, or casualty dispatch. Phase 115's final
+Fallujah production run terminates after 40 ticks / 200 seconds, before the
+first scripted action at H+7, so its clean terminal and combat checks do not
+repair that proof gap.
+
+This deficit does not invalidate the loaded Fallujah catalog, pre-emplaced-IED
+path, or current-engine combat regression. It does supersede Phase 101 claims
+that every scripted historical moment has proven honest production causality
+or that declaration/reference checks establish execution. Phase 132 is scoped
+to the four existing action families; it must not grow an unbounded scripting
+language or invent new scenario events while repairing them.
+
+### Required proof
+
+- Replace the string-plus-bag payload with a strict discriminated union for
+  HBIED detonation, WP fire-zone creation, unit relocation, and casualty
+  application. Reject malformed values, unknown targets, missing owner
+  topology, duplicate schedule identity, and noncanonical ordering before
+  runtime publication.
+- Route relocation and casualties through authoritative production lifecycle
+  owners. A due action must commit its complete effect and receipt once or fail
+  explicitly without being marked complete; no missing owner/target or caught
+  exception may become a successful no-op.
+- Persist and validate schedule identity, action ordinals, dispositions,
+  logical due/commit time, and effect evidence. Prove exact pending and
+  post-commit continuation in fresh and in-place runtimes, including failure
+  rollback and retry policy, without a duplicate effect.
+- Exercise all four families through the public scenario runtime far enough to
+  observe authoritative outcome changes and recorder/evaluator/API lifecycle
+  evidence. Direct private dispatch, constructor/load success, source search,
+  a log line, or membership in a fired set is not behavioral proof.
+
+### Evidence-matrix rationale
+
+- `D`, `L`, and `W` are **Yes** only for the existing generic declaration,
+  loader list, and engine tick hook; they do not satisfy the typed-effect
+  contract.
+- `E` is **N/A** because integrity of an authored due action is mandatory, not
+  an optional feature mode.
+- `X`, `O`, and `P` remain unproven: the current production regression never
+  reaches an authored action, no authoritative effect comparison exists, and
+  exact-once lifecycle state is neither checkpointed nor publicly exposed.
+
+**Status:** Queued for Phase 132 in Block 16. Phase 115 records the production
+red and truthful nonclaim but does not implement or close scripted actions.

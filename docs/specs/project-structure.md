@@ -1,6 +1,6 @@
 # Project Structure & Module Decomposition
-**Status**: Living reference, current through Phase 112 implementation.
-**Last Updated**: 2026-07-30
+**Status**: Living reference, current through Phase 115 implementation.
+**Last Updated**: 2026-08-02
 
 ---
 
@@ -151,7 +151,7 @@ stochastic-warfare/
 │   └── workflows/
 │       ├── test.yml                  # Partition audit + standard/API/E2E/terrain
 │       ├── extended-tests.yml        # Sharded slow/benchmark partitions
-│       ├── benchmark.yml             # Paired benchmark policy and 73 Easting
+│       ├── benchmark.yml             # Paired policy + typed 73 Easting transition
 │       ├── build.yml                 # No-.git image build + production identity smoke
 │       ├── lint.yml                  # Ruff and frontend lint
 │       └── docs.yml                  # Strict docs build/deployment
@@ -318,7 +318,7 @@ stochastic-warfare/
 │   ├── run_pytest_partition.py       # Exact selectors, manifests, deterministic shards
 │   ├── validate_test_partitions.py   # Disjoint exact-union audit
 │   ├── validate_test_evidence.py     # Weak/no-direct evidence-ledger audit
-│   ├── run_paired_benchmark.py       # Same-host paired benchmark execution
+│   ├── run_paired_benchmark.py       # Same-host paired + non-timing transition execution
 │   ├── validate_docs_links.py        # Markdown target/fragment validation
 │   └── visualize/                    # Matplotlib visualization utilities
 └── stochastic_warfare/               # ===== MAIN PACKAGE =====
@@ -421,7 +421,7 @@ stochastic-warfare/
     │   ├── detection.py              # SNR-based detection probability engine (Pd, Pfa, ROC)
     │   ├── identification.py         # Classification & ID confidence (detected → classified → identified)
     │   ├── estimation.py             # Kalman filter state estimation (pre-alloc H/I₄ matrices, belief state)
-    │   ├── intel_fusion.py           # Multi-source fusion + typed IMINT receipts/owner-target associations
+    │   ├── intel_fusion.py           # Multi-source fusion, atomic side ordinals, IMINT receipts/associations
     │   ├── deception.py              # Decoys, feints, false signals, camouflage effectiveness
     │   ├── sonar.py                  # Sonar models: active/passive, towed array, hull-mounted, sonobuoy, dipping
     │   ├── underwater_detection.py   # Submarine detection: acoustic propagation through environment, MAD, wake detection, periscope detection
@@ -621,13 +621,15 @@ stochastic-warfare/
     └── simulation/                   # Top-level simulation orchestration
         ├── __init__.py
         ├── engine.py                 # Master simulation loop (hybrid tick + event)
-        ├── campaign.py               # Campaign-level management, strategic AI, reinforcement pipeline
+        ├── campaign.py               # Campaign-level management, strategic AI, reinforcement pipeline; legacy scripted-action boundary remains REM-045
         ├── battle.py                 # Tactical battle resolution manager
         ├── scenario.py               # Scenario loading, setup, initialization; SimulationContext includes stratagem_engine, iads_engine, ato_engine [Phase 53]
         ├── runtime.py                # Authoritative prepared-scenario/runtime-session boundary and provenance [Phase 112]
         ├── era_runtime.py            # Frozen effective cadence/treatment/repair contract and executable-horizon sources [Phase 114]
         ├── force_builder.py          # Typed deterministic initial-force construction [Phase 112]
         ├── movement_diagnostics.py   # Ordered observational movement reasons and checkpoint state [Phase 112]
+        ├── tactical_targeting.py     # Typed interval/picture/decision/revalidation owner and checkpoint state [Phase 115]
+        ├── targeting_exposure.py     # Privileged and opaque side-FOW targeting projections [Phase 115]
         ├── equipment_mappings.py     # Ordered typed equipment-name registry and reviewed data decisions [Phase 109]
         ├── loadouts.py               # RuntimeLoadoutBuilder, semantic preflight, topology/fingerprint [Phase 109]
         ├── time_on_target.py         # Initial-roster/runtime-loadout resolver for exact scheduled indirect-fire plans [Phase 111]
@@ -659,8 +661,8 @@ stochastic-warfare/
   `EraConfig` registry, seven enforced capability gates, sensor allowlists, and
   strict sparse cadence/treatment/repair declarations. The simulation-layer
   `EraRuntimeContract` resolves effective values before RNG construction and
-  owns clock/domain configuration plus format-114 persistence [Phases 20, 107,
-  114]
+  owns clock/domain configuration plus format-115 persistence [Phases 20, 107,
+  114, 115]
 
 **Depends on**: Nothing (leaf dependency)
 
@@ -1057,7 +1059,7 @@ the production scenario loop.
 - **Era runtime**: one frozen `EraRuntimeContract` materializes sparse
   strategic/operational/tactical cadence and medical/maintenance overrides
   before RNG, clock, or engine construction. Clock, engine intervals, medical,
-  maintenance, API cadence, fingerprints, and format-114 checkpoints consume
+  maintenance, API cadence, fingerprints, and format-115 checkpoints consume
   that same boundary; unsupported C2/nuclear metadata rejects [Phase 114].
 - **Initial force construction**: `RuntimeForceBuilder` validates exact typed
   unit groups, per-instance overrides, deterministic IDs/domains, cardinality,
@@ -1069,6 +1071,14 @@ the production scenario loop.
   Initial units, reinforcements, and fresh checkpoint reconstruction use that
   same boundary; validation code consumes it rather than owning a parallel
   mapping [Phase 109].
+- **Tactical targeting ownership**: one `TacticalTargetingRuntime`, bound by
+  identity to context, engine, and battle manager, owns the post-FOW interval
+  and immutable `(tick, battle, shooter)` pictures. Movement and ordinary
+  direct engagement consume the same exact attachment/contact/range decision
+  and post-movement revalidation. Format-115 checkpoints and privileged versus
+  target-independent side-ordinal FOW projections preserve the evidence, and
+  API/replay readers bind each payload to its requested viewer side; ordinary
+  nonempty FOW contact continuation remains REM-029 [Phase 115].
 - **Morale ownership**: one `MoraleRuntime` registers the initial and arriving
   roster, coordinates stochastic/melee/rally/cascade mutations and aggregate
   archives, exposes the stable read-only consumer mapping, and owns the sole

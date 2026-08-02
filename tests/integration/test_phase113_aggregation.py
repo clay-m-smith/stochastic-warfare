@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import copy
+from collections.abc import Mapping
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from types import SimpleNamespace
@@ -11,8 +12,10 @@ from typing import Any
 import numpy as np
 import pytest
 
+from stochastic_warfare.c2.orders.air_orders import ATOPlanningEngine
+from stochastic_warfare.c2.roe import RoeEngine, RoeLevel
 from stochastic_warfare.core.events import EventBus
-from stochastic_warfare.core.types import Position
+from stochastic_warfare.core.types import Domain, Position
 from stochastic_warfare.entities.base import Unit
 from stochastic_warfare.morale.runtime import (
     MoraleRegistration,
@@ -33,6 +36,9 @@ from stochastic_warfare.simulation.runtime import (
 from stochastic_warfare.simulation.scenario import (
     CampaignScenarioConfig,
     load_campaign_scenario_config,
+)
+from stochastic_warfare.simulation.tactical_targeting import (
+    TacticalTargetingRuntime,
 )
 
 
@@ -83,37 +89,43 @@ def _production_session(
 def _base_context(
     *,
     unit_weapons: dict[str, Any] | None = None,
+    unit_ids: tuple[str, ...] = ("u0", "u1", "u2"),
 ) -> tuple[SimpleNamespace, dict[str, MoraleStateRecord]]:
     units = [
         Unit(
-            entity_id=f"u{index}",
+            entity_id=unit_id,
             position=Position(float(index * 100), 0.0),
             name=f"Unit {index}",
             unit_type="base",
             side="blue",
             max_speed=10.0,
         )
-        for index in range(3)
+        for index, unit_id in enumerate(unit_ids)
     ]
-    records = {
-        "u0": MoraleStateRecord(
+    record_templates = (
+        MoraleStateRecord(
             MoraleState.BROKEN,
             last_transition_time_s=7.0,
             last_check_time_s=9.0,
             generation=3,
         ),
-        "u1": MoraleStateRecord(
+        MoraleStateRecord(
             MoraleState.BROKEN,
             last_transition_time_s=5.0,
             last_check_time_s=8.0,
             generation=2,
         ),
-        "u2": MoraleStateRecord(
+        MoraleStateRecord(
             MoraleState.SHAKEN,
             last_transition_time_s=4.0,
             last_check_time_s=4.0,
             generation=1,
         ),
+        MoraleStateRecord(MoraleState.STEADY),
+    )
+    records = {
+        unit_id: record_templates[index]
+        for index, unit_id in enumerate(unit_ids)
     }
     runtime = MoraleRuntime(EventBus(), np.random.default_rng(113))
     units_by_id = {unit.entity_id: unit for unit in units}
@@ -139,9 +151,18 @@ def _base_context(
         units_by_side={"blue": list(units)},
         morale_runtime=runtime,
         morale_states=runtime.states,
-        unit_weapons=(unit_weapons if unit_weapons is not None else {}),
-        unit_sensors={},
-        equipment_resolutions={},
+        unit_weapons=(
+            unit_weapons
+            if unit_weapons is not None
+            else {unit_id: () for unit_id in units_by_id}
+        ),
+        unit_sensor_attachments={unit_id: () for unit_id in units_by_id},
+        unit_sensors={unit_id: () for unit_id in units_by_id},
+        equipment_resolutions={unit_id: () for unit_id in units_by_id},
+        tactical_targeting=TacticalTargetingRuntime(
+            sensing_aware_standoff_enabled=True,
+            unit_sides={unit_id: "blue" for unit_id in units_by_id},
+        ),
         stockpile_manager=None,
         order_execution=None,
     )
@@ -161,6 +182,26 @@ class _FailingPopDict(dict[str, Any]):
             self.armed = False
             raise RuntimeError("phase113 injected late mapping failure")
         return super().pop(key, *default)
+
+
+class _FailingTargetingRuntime(TacticalTargetingRuntime):
+    """Forged owner whose virtual commit would mutate before failing."""
+
+    armed = True
+
+    def replace_registered_units(
+        self,
+        *,
+        expected_current: Mapping[str, str],
+        replacement: Mapping[str, str],
+    ) -> None:
+        super().replace_registered_units(
+            expected_current=expected_current,
+            replacement=replacement,
+        )
+        if self.armed:
+            self.armed = False
+            raise RuntimeError("phase115 injected targeting commit failure")
 
 
 def test_aggregation_rejects_ownerless_empty_projection_before_mutation() -> None:
@@ -218,98 +259,155 @@ def test_disaggregation_rejects_ownerless_empty_projection_before_mutation() -> 
     assert aggregate.aggregate_id in engine.get_state()["aggregates"]
 
 
-def test_production_aggregation_uses_runtime_archive_as_only_morale_owner() -> None:
+def test_aggregation_rejects_ato_roster_owner_before_mutation() -> None:
+    context, _records = _base_context()
+    context.ato_engine = ATOPlanningEngine(EventBus())
+    unit_ids = [unit.entity_id for unit in context.units_by_side["blue"]]
+    engine = AggregationEngine(
+        AggregationConfig(enable_aggregation=True, min_units_to_aggregate=2),
+        rng=np.random.default_rng(113),
+        event_bus=EventBus(),
+    )
+    roster_before = tuple(context.units_by_side["blue"])
+    morale_before = copy.deepcopy(context.morale_runtime.get_state())
+
+    with pytest.raises(ValueError, match="ato_engine"):
+        engine.aggregate(unit_ids, context)
+
+    assert tuple(context.units_by_side["blue"]) == roster_before
+    assert context.morale_runtime.get_state() == morale_before
+    assert engine.get_state()["aggregates"] == {}
+
+
+def test_aggregation_rejects_populated_roe_owner_before_mutation() -> None:
+    context, _records = _base_context()
+    context.roe_engine = RoeEngine(EventBus())
+    context.roe_engine.set_unit_roe("u0", RoeLevel.WEAPONS_HOLD)
+    unit_ids = [unit.entity_id for unit in context.units_by_side["blue"]]
+    engine = AggregationEngine(
+        AggregationConfig(enable_aggregation=True, min_units_to_aggregate=2),
+        rng=np.random.default_rng(113),
+        event_bus=EventBus(),
+    )
+    roster_before = tuple(context.units_by_side["blue"])
+    morale_before = copy.deepcopy(context.morale_runtime.get_state())
+    roe_before = copy.deepcopy(context.roe_engine.get_state())
+
+    with pytest.raises(ValueError, match="roe_engine"):
+        engine.aggregate(unit_ids, context)
+
+    assert tuple(context.units_by_side["blue"]) == roster_before
+    assert context.morale_runtime.get_state() == morale_before
+    assert context.roe_engine.get_state() == roe_before
+    assert engine.get_state()["aggregates"] == {}
+
+
+@pytest.mark.parametrize(
+    "corruption",
+    ("missing_attribute", "mismatched_owner", "duplicate_name"),
+)
+def test_aggregation_rejects_malformed_context_owner_registry_before_mutation(
+    corruption: str,
+) -> None:
+    context, _records = _base_context()
+    registered_owner = object()
+    if corruption == "missing_attribute":
+        owner_items = (("ghost_engine", registered_owner),)
+    else:
+        context.roe_engine = object()
+        owner_items = (("roe_engine", registered_owner),)
+        if corruption == "duplicate_name":
+            context.roe_engine = registered_owner
+            owner_items = (*owner_items, owner_items[0])
+    context._checkpoint_engines = lambda: owner_items
+    unit_ids = [unit.entity_id for unit in context.units_by_side["blue"]]
+    engine = AggregationEngine(
+        AggregationConfig(enable_aggregation=True, min_units_to_aggregate=2),
+        rng=np.random.default_rng(113),
+        event_bus=EventBus(),
+    )
+    roster_before = tuple(context.units_by_side["blue"])
+    morale_before = copy.deepcopy(context.morale_runtime.get_state())
+
+    with pytest.raises(ValueError, match="state-owner registry"):
+        engine.aggregate(unit_ids, context)
+
+    assert tuple(context.units_by_side["blue"]) == roster_before
+    assert context.morale_runtime.get_state() == morale_before
+    assert engine.get_state()["aggregates"] == {}
+
+
+def test_aggregation_rejects_mixed_domains_before_mutation() -> None:
+    context, _records = _base_context(unit_ids=("ground", "air"))
+    context.units_by_side["blue"][1].domain = Domain.AERIAL
+    engine = AggregationEngine(
+        AggregationConfig(enable_aggregation=True, min_units_to_aggregate=2),
+        rng=np.random.default_rng(113),
+        event_bus=EventBus(),
+    )
+    roster_before = tuple(context.units_by_side["blue"])
+    morale_before = copy.deepcopy(context.morale_runtime.get_state())
+
+    with pytest.raises(ValueError, match="share one exact domain"):
+        engine.aggregate(["ground", "air"], context)
+
+    assert tuple(context.units_by_side["blue"]) == roster_before
+    assert context.morale_runtime.get_state() == morale_before
+    assert engine.get_state()["aggregates"] == {}
+
+
+def test_production_equipped_aggregation_rejects_rem016_atomically() -> None:
     session = _production_session("phase113-aggregation-production")
     context = session.context
-    runtime = context.morale_runtime
     constituent_ids = sorted(
         unit.entity_id for unit in context.units_by_side["red"]
     )
-    original_records = {
-        unit_id: runtime.record_for(unit_id)
-        for unit_id in constituent_ids
-    }
-
-    aggregate = context.aggregation_engine.aggregate(
-        constituent_ids,
-        context,
-    )
-
-    assert aggregate is not None
-    roster_ids = {unit.entity_id for unit in context.all_units()}
-    assert set(runtime.records) == roster_ids == set(context.morale_states)
-    assert aggregate.aggregate_id in roster_ids
-    assert set(constituent_ids).isdisjoint(roster_ids)
-    expected_baseline = original_records[constituent_ids[0]]
-    assert runtime.record_for(aggregate.aggregate_id) == expected_baseline
-    morale_state = runtime.get_state()
-    archive = morale_state["suspended_archives"][aggregate.aggregate_id]
-    assert archive["proxy_baseline"] == _record_state(expected_baseline)
-    assert archive["constituent_records"] == {
-        unit_id: _record_state(original_records[unit_id])
-        for unit_id in constituent_ids
-    }
-    aggregate_state = context.aggregation_engine.get_state()["aggregates"][
-        aggregate.aggregate_id
-    ]
-    assert "morale_state" not in aggregate_state
-    assert all(
-        "morale_state" not in snapshot
-        for snapshot in aggregate_state["snapshots"]
-    )
-
-
-def test_production_evolved_proxy_rejects_before_roster_mutation() -> None:
-    raw = load_campaign_scenario_config(SCENARIO_PATH).model_dump(
-        mode="python",
-    )
-    raw["calibration_overrides"]["morale"].update(
-        {
-            "base_degrade_rate": 0.0,
-            "base_recover_rate": 0.8,
-            "leadership_weight": 0.0,
-            "cohesion_weight": 0.0,
-            "force_ratio_weight": 0.0,
-            "transition_cooldown_s": 0.0,
+    before = {
+        "roster": {
+            side: tuple(units)
+            for side, units in context.units_by_side.items()
         },
+        "morale": copy.deepcopy(context.morale_runtime.get_state()),
+        "weapons": dict(context.unit_weapons),
+        "sensor_attachments": dict(context.unit_sensor_attachments),
+        "sensors": dict(context.unit_sensors),
+        "resolutions": dict(context.equipment_resolutions),
+        "targeting": copy.deepcopy(context.tactical_targeting.get_state()),
+        "aggregation": copy.deepcopy(context.aggregation_engine.get_state()),
+        "rng": copy.deepcopy(context.rng_manager.get_state()),
+    }
+
+    with pytest.raises(ValueError, match="REM-016"):
+        context.aggregation_engine.aggregate(constituent_ids, context)
+
+    assert {
+        side: tuple(units)
+        for side, units in context.units_by_side.items()
+    } == before["roster"]
+    assert context.morale_runtime.get_state() == before["morale"]
+    assert context.unit_weapons == before["weapons"]
+    assert context.unit_sensor_attachments == before["sensor_attachments"]
+    assert context.unit_sensors == before["sensors"]
+    assert context.equipment_resolutions == before["resolutions"]
+    assert context.tactical_targeting.get_state() == before["targeting"]
+    assert context.aggregation_engine.get_state() == before["aggregation"]
+    assert context.rng_manager.get_state() == before["rng"]
+
+
+def test_equipmentless_evolved_proxy_rejects_before_roster_mutation() -> None:
+    context, _records = _base_context()
+    engine = AggregationEngine(
+        AggregationConfig(
+            enable_aggregation=True,
+            min_units_to_aggregate=2,
+        ),
+        rng=np.random.default_rng(13),
     )
-    config = CampaignScenarioConfig.model_validate(raw)
-    session = _production_session(
-        "phase113-aggregation-evolved-proxy",
-        seed=13,
-        config=config,
-    )
-    context = session.context
     runtime = context.morale_runtime
     constituent_ids = sorted(
-        unit.entity_id for unit in context.units_by_side["red"]
+        unit.entity_id for unit in context.units_by_side["blue"]
     )
-    baseline_source = constituent_ids[0]
-
-    assert runtime.check_transition(
-        baseline_source,
-        1.0,
-        1.0,
-        False,
-        0.0,
-        0.01,
-        timestamp=TIMESTAMP + timedelta(seconds=1.0),
-        current_time_s=1.0,
-    ) is MoraleState.SHAKEN
-    assert runtime.check_transition(
-        baseline_source,
-        1.0,
-        1.0,
-        False,
-        0.0,
-        0.01,
-        timestamp=TIMESTAMP + timedelta(seconds=2.0),
-        current_time_s=2.0,
-    ) is MoraleState.BROKEN
-    aggregate = context.aggregation_engine.aggregate(
-        constituent_ids,
-        context,
-    )
+    aggregate = engine.aggregate(constituent_ids, context)
     assert aggregate is not None
     aggregate_id = aggregate.aggregate_id
     baseline = runtime.record_for(aggregate_id)
@@ -319,27 +417,11 @@ def test_production_evolved_proxy_rejects_before_roster_mutation() -> None:
         aggregate_id,
         MoraleState.ROUTED,
         cause=MoraleTransitionCause.MELEE_ROUT,
-        timestamp=TIMESTAMP + timedelta(seconds=3.0),
-        current_time_s=3.0,
+        timestamp=TIMESTAMP + timedelta(seconds=10.0),
+        current_time_s=10.0,
     ) is MoraleState.ROUTED
-    recovered = MoraleState.ROUTED
-    logical_time_s = 3.0
-    while recovered is MoraleState.ROUTED:
-        logical_time_s += 1.0
-        recovered = runtime.check_transition(
-            aggregate_id,
-            0.0,
-            0.0,
-            False,
-            0.0,
-            1.0,
-            timestamp=TIMESTAMP + timedelta(seconds=logical_time_s),
-            current_time_s=logical_time_s,
-        )
-        assert logical_time_s <= 5.0
-    assert recovered is MoraleState.BROKEN
     evolved = runtime.record_for(aggregate_id)
-    assert evolved.current_state is baseline.current_state
+    assert evolved.current_state is MoraleState.ROUTED
     assert evolved.generation > baseline.generation
 
     roster_before = {
@@ -348,18 +430,93 @@ def test_production_evolved_proxy_rejects_before_roster_mutation() -> None:
     }
     runtime_before = copy.deepcopy(runtime.get_state())
     aggregation_before = copy.deepcopy(
-        context.aggregation_engine.get_state(),
+        engine.get_state(),
     )
 
     with pytest.raises(ValueError, match="proxy .* evolved"):
-        context.aggregation_engine.disaggregate(aggregate_id, context)
+        engine.disaggregate(aggregate_id, context)
 
     assert {
         side: tuple(units)
         for side, units in context.units_by_side.items()
     } == roster_before
     assert runtime.get_state() == runtime_before
-    assert context.aggregation_engine.get_state() == aggregation_before
+    assert engine.get_state() == aggregation_before
+
+
+def test_aggregate_id_collision_rejects_before_any_owner_mutation() -> None:
+    context, _records = _base_context(
+        unit_ids=("agg_0000", "u1", "u2", "u3"),
+    )
+    engine = AggregationEngine(
+        AggregationConfig(
+            enable_aggregation=True,
+            min_units_to_aggregate=2,
+        ),
+        rng=np.random.default_rng(113),
+    )
+    before = {
+        "roster": tuple(context.units_by_side["blue"]),
+        "morale": copy.deepcopy(context.morale_runtime.get_state()),
+        "weapons": dict(context.unit_weapons),
+        "sensor_attachments": dict(context.unit_sensor_attachments),
+        "sensors": dict(context.unit_sensors),
+        "resolutions": dict(context.equipment_resolutions),
+        "targeting": copy.deepcopy(context.tactical_targeting.get_state()),
+        "aggregation": copy.deepcopy(engine.get_state()),
+        "rng": copy.deepcopy(engine._rng.bit_generator.state),
+    }
+
+    with pytest.raises(ValueError, match="Aggregate ID .* collides"):
+        engine.aggregate(["u1", "u2"], context)
+
+    assert tuple(context.units_by_side["blue"]) == before["roster"]
+    assert context.morale_runtime.get_state() == before["morale"]
+    assert context.unit_weapons == before["weapons"]
+    assert context.unit_sensor_attachments == before["sensor_attachments"]
+    assert context.unit_sensors == before["sensors"]
+    assert context.equipment_resolutions == before["resolutions"]
+    assert context.tactical_targeting.get_state() == before["targeting"]
+    assert engine.get_state() == before["aggregation"]
+    assert engine._rng.bit_generator.state == before["rng"]
+
+
+def test_targeting_runtime_subclass_rejects_before_every_owner_mutation() -> None:
+    context, _records = _base_context()
+    context.tactical_targeting = _FailingTargetingRuntime(
+        sensing_aware_standoff_enabled=True,
+        unit_sides={unit_id: "blue" for unit_id in context.unit_weapons},
+    )
+    engine = AggregationEngine(
+        AggregationConfig(
+            enable_aggregation=True,
+            min_units_to_aggregate=2,
+        ),
+        rng=np.random.default_rng(113),
+    )
+    before = {
+        "roster": tuple(context.units_by_side["blue"]),
+        "morale": copy.deepcopy(context.morale_runtime.get_state()),
+        "weapons": dict(context.unit_weapons),
+        "sensor_attachments": dict(context.unit_sensor_attachments),
+        "sensors": dict(context.unit_sensors),
+        "resolutions": dict(context.equipment_resolutions),
+        "targeting": copy.deepcopy(context.tactical_targeting.get_state()),
+        "aggregation": copy.deepcopy(engine.get_state()),
+    }
+
+    with pytest.raises(ValueError, match="exact TacticalTargetingRuntime"):
+        engine.aggregate(sorted(context.unit_weapons), context)
+
+    assert tuple(context.units_by_side["blue"]) == before["roster"]
+    assert context.morale_runtime.get_state() == before["morale"]
+    assert context.unit_weapons == before["weapons"]
+    assert context.unit_sensor_attachments == before["sensor_attachments"]
+    assert context.unit_sensors == before["sensors"]
+    assert context.equipment_resolutions == before["resolutions"]
+    assert context.tactical_targeting.get_state() == before["targeting"]
+    assert context.tactical_targeting.armed is True
+    assert engine.get_state() == before["aggregation"]
 
 
 def test_base_unit_empty_attachment_roundtrip_restores_exact_records() -> None:
@@ -396,9 +553,40 @@ def test_base_unit_empty_attachment_roundtrip_restores_exact_records() -> None:
         unit.entity_id: unit.get_state()
         for unit in context.units_by_side["blue"]
     } == original_units
-    assert context.unit_weapons == {}
-    assert context.unit_sensors == {}
-    assert context.equipment_resolutions == {}
+    expected_empty_loadouts = {
+        unit_id: () for unit_id in sorted(original_units)
+    }
+    assert context.unit_weapons == expected_empty_loadouts
+    assert context.unit_sensor_attachments == expected_empty_loadouts
+    assert context.unit_sensors == expected_empty_loadouts
+    assert context.equipment_resolutions == expected_empty_loadouts
+    assert dict(context.tactical_targeting.registered_unit_sides) == {
+        unit_id: "blue" for unit_id in sorted(original_units)
+    }
+
+
+def test_partial_aggregation_roundtrip_preserves_exact_roster_order() -> None:
+    context, _records = _base_context(unit_ids=("u0", "u1", "u2", "u3"))
+    engine = AggregationEngine(
+        AggregationConfig(enable_aggregation=True, min_units_to_aggregate=2),
+        rng=np.random.default_rng(113),
+        event_bus=EventBus(),
+    )
+    before = tuple(context.units_by_side["blue"])
+
+    aggregate = engine.aggregate(["u1", "u2"], context)
+
+    assert aggregate is not None
+    assert [
+        unit.entity_id for unit in context.units_by_side["blue"]
+    ] == ["u0", aggregate.aggregate_id, "u3"]
+    assert [
+        snapshot.original_index
+        for snapshot in aggregate.constituent_snapshots
+    ] == [1, 2]
+
+    assert engine.disaggregate(aggregate.aggregate_id, context) == ["u1", "u2"]
+    assert tuple(context.units_by_side["blue"]) == before
 
 
 @pytest.mark.parametrize("operation", ["aggregate", "disaggregate"])
@@ -434,7 +622,13 @@ def test_late_failure_rolls_back_morale_and_roster_in_place(
     roster_before = tuple(blue_list)
     runtime_before = copy.deepcopy(context.morale_runtime.get_state())
     aggregation_before = copy.deepcopy(engine.get_state())
-    weapons_before = dict(weapons)
+    loadouts_before = {
+        "weapons": dict(context.unit_weapons),
+        "sensor_attachments": dict(context.unit_sensor_attachments),
+        "sensors": dict(context.unit_sensors),
+        "resolutions": dict(context.equipment_resolutions),
+    }
+    targeting_before = copy.deepcopy(context.tactical_targeting.get_state())
 
     with pytest.raises(
         RuntimeError,
@@ -451,7 +645,14 @@ def test_late_failure_rolls_back_morale_and_roster_in_place(
     assert tuple(blue_list) == roster_before
     assert context.morale_runtime.get_state() == runtime_before
     assert engine.get_state() == aggregation_before
-    assert dict(weapons) == weapons_before
+    assert dict(context.unit_weapons) == loadouts_before["weapons"]
+    assert (
+        context.unit_sensor_attachments
+        == loadouts_before["sensor_attachments"]
+    )
+    assert context.unit_sensors == loadouts_before["sensors"]
+    assert context.equipment_resolutions == loadouts_before["resolutions"]
+    assert context.tactical_targeting.get_state() == targeting_before
 
     if operation == "aggregate":
         assert engine.aggregate(unit_ids, context) is not None

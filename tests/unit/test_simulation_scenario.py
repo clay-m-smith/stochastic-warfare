@@ -35,6 +35,9 @@ from stochastic_warfare.simulation.scenario import (
     VictoryConditionConfig,
     parse_scenario_start_time,
 )
+from stochastic_warfare.simulation.tactical_targeting import (
+    TacticalTargetingRuntime,
+)
 
 from tests.conftest import DEFAULT_SEED, POS_ORIGIN, TS
 
@@ -649,10 +652,19 @@ class TestSimulationContext:
 
     def test_get_state_captures_units(self) -> None:
         from stochastic_warfare.entities.base import Unit
-        u = Unit(entity_id="u1", position=POS_ORIGIN)
+        u = Unit(entity_id="u1", position=POS_ORIGIN, side="blue")
+        empty_loadouts = {u.entity_id: ()}
         ctx = _make_ctx(
             bind_morale_runtime=True,
             units_by_side={"blue": [u]},
+            unit_weapons=dict(empty_loadouts),
+            unit_sensor_attachments=dict(empty_loadouts),
+            unit_sensors=dict(empty_loadouts),
+            equipment_resolutions=dict(empty_loadouts),
+            tactical_targeting=TacticalTargetingRuntime(
+                sensing_aware_standoff_enabled=True,
+                unit_sides={u.entity_id: "blue"},
+            ),
         )
         assert ctx.morale_runtime is not None
         assert ctx.morale_states is ctx.morale_runtime.states

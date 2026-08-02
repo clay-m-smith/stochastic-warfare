@@ -1,5 +1,5 @@
 {
-  "derivation_command": "/home/csmith/projects/stochastic-warfare/.venv/bin/python -m pytest --collect-only -q -p no:cacheprovider -o addopts=",
+  "derivation_command": "/home/csmith/projects/stochastic-warfare/.venv/bin/python3 -m pytest --collect-only -q -p no:cacheprovider -o addopts=",
   "entries": [
     {
       "classification": "behavioral_oracle",
@@ -522,6 +522,12 @@
       "node_id": "tests/unit/test_phase_16f_ew_validation.py::TestBekaaSetup::test_eccm_suites_for_sams",
       "rationale": "A fresh ECCM engine receives a concrete SA-6 suite for sam_0 and its real unit lookup then returns a suite instead of None. This proves only the register/get state transition, not suite identity, techniques, activation, jamming reduction, scenario loading, or Bekaa outcomes.",
       "strongest_oracle": "registering the SA-6 ECCM suite makes sam_0 retrievable from the same engine"
+    },
+    {
+      "classification": "behavioral_oracle",
+      "node_id": "tests/unit/simulation/test_tactical_targeting.py::test_fow_witness_implements_import_neutral_targeting_protocol",
+      "rationale": "The real runtime-checkable protocol accepts a concrete ObserverDetectionWitness across the import-neutral targeting boundary. This proves protocol conformance only, not detection, targeting, or engagement behavior.",
+      "strongest_oracle": "runtime protocol dispatch accepts ObserverDetectionWitness as ObserverDetectionWitnessView"
     }
   ],
   "kind": "reviewed_behavioral_oracles",

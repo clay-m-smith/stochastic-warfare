@@ -12,6 +12,7 @@ from stochastic_warfare.core.clock import SimulationClock
 from stochastic_warfare.core.events import EventBus
 from stochastic_warfare.core.rng import RNGManager
 from stochastic_warfare.core.types import ModuleId
+from stochastic_warfare.detection.detection import DetectionEngine
 from stochastic_warfare.morale.runtime import MoraleRuntime
 from stochastic_warfare.morale.rout import RoutEngine
 from stochastic_warfare.simulation.scenario import (
@@ -88,7 +89,6 @@ class TestCheckpointEngineList:
         "owner_name",
         (
             "comms_engine",
-            "detection_engine",
             "movement_engine",
             "conditions_engine",
             "weather_engine",
@@ -118,7 +118,7 @@ class TestCheckpointEngineList:
 
     @pytest.mark.parametrize(
         "owner_name",
-        ("comms_engine", "detection_engine"),
+        ("comms_engine",),
     )
     def test_registered_generic_owner_round_trips_through_context(
         self,
@@ -133,6 +133,24 @@ class TestCheckpointEngineList:
         context.set_state(checkpoint)
 
         assert owner.value == 11
+        assert context.get_state() == checkpoint
+
+    def test_detection_owner_is_not_a_generic_checkpoint_proxy(self) -> None:
+        context = _context()
+        context.detection_engine = _StateOwner(11)
+
+        with pytest.raises(ValueError, match="exact DetectionEngine"):
+            context.get_state()
+
+    def test_exact_detection_owner_round_trips_with_rng_manager(self) -> None:
+        context = _context()
+        detection_rng = context.rng_manager.get_stream(ModuleId.DETECTION)
+        context.detection_engine = DetectionEngine(rng=detection_rng)
+        checkpoint = context.get_state()
+        detection_rng.random()
+
+        context.set_state(checkpoint)
+
         assert context.get_state() == checkpoint
 
     def test_owner_without_state_api_is_skipped_behaviorally(self) -> None:

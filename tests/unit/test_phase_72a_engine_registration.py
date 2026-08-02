@@ -10,8 +10,6 @@ import inspect
 
 import pytest
 
-from tests.conftest import bind_test_era_runtime
-
 
 # ---------------------------------------------------------------------------
 # 22 engines added in Phase 72a
@@ -204,43 +202,47 @@ class TestBehavioralRegistration:
     def _make_mock_ctx(self):
         """Create a minimal mock SimulationContext for behavioral tests."""
         from datetime import datetime, timedelta, timezone
-        from types import SimpleNamespace
 
         from stochastic_warfare.core.clock import SimulationClock
         from stochastic_warfare.core.events import EventBus
         from stochastic_warfare.core.rng import RNGManager
-        from stochastic_warfare.simulation.scenario import SimulationContext
-        from stochastic_warfare.simulation.calibration import CalibrationSchema
-
-        ctx = object.__new__(SimulationContext)
-        ctx.clock = SimulationClock(
-            start=datetime(2024, 1, 1, tzinfo=timezone.utc),
-            tick_duration=timedelta(seconds=5),
+        from stochastic_warfare.simulation.scenario import (
+            CampaignScenarioConfig,
+            SideConfig,
+            SimulationContext,
+            TerrainConfig,
         )
-        ctx.rng_manager = RNGManager(72)
-        ctx.event_bus = EventBus()
-        ctx.calibration = CalibrationSchema()
-        ctx.era_config = None
-        ctx.config = SimpleNamespace(
-            date="2024-01-01",
+        from stochastic_warfare.simulation.tactical_targeting import (
+            TacticalTargetingRuntime,
+        )
+
+        config = CampaignScenarioConfig(
+            name="Phase 72a checkpoint registry test",
+            date="2024-01-01T00:00:00Z",
             duration_hours=24.0,
-            era="modern",
-            tick_resolution=SimpleNamespace(
-                strategic_s=3600.0,
-                operational_s=300.0,
-                tactical_s=5.0,
+            terrain=TerrainConfig(width_m=1_000, height_m=1_000),
+            sides=(
+                SideConfig(side="blue", units=[]),
+                SideConfig(side="red", units=[]),
             ),
-            tick_duration_seconds=None,
-            model_dump=lambda: {},
         )
-        ctx.units_by_side = {}
-        ctx.morale_states = {}
-        ctx.equipment_resolutions = {}
-
-        all_engines = PRE_EXISTING_ENGINES + PHASE_72A_ENGINES
-        for eng in all_engines:
-            setattr(ctx, eng, None)
-        return bind_test_era_runtime(ctx)
+        return SimulationContext(
+            config=config,
+            clock=SimulationClock(
+                start=datetime(2024, 1, 1, tzinfo=timezone.utc),
+                tick_duration=timedelta(seconds=5),
+            ),
+            rng_manager=RNGManager(72),
+            event_bus=EventBus(),
+            tactical_targeting=TacticalTargetingRuntime(
+                sensing_aware_standoff_enabled=(
+                    config.calibration_overrides
+                    .enable_sensing_aware_standoff
+                ),
+                unit_sides={},
+            ),
+            calibration=config.calibration_overrides,
+        )
 
     def test_get_state_includes_mock_engine(self):
         """SimulationContext.get_state() calls get_state on registered engines."""

@@ -11,7 +11,6 @@ from __future__ import annotations
 
 import math
 from datetime import datetime, timedelta, timezone
-from types import SimpleNamespace
 from unittest.mock import MagicMock
 
 import numpy as np
@@ -37,16 +36,15 @@ def _make_unit(
     **kwargs,
 ) -> Unit:
     """Create a minimal Unit for testing."""
-    u = Unit.__new__(Unit)
-    object.__setattr__(u, "entity_id", entity_id)
-    object.__setattr__(u, "side", side)
-    object.__setattr__(u, "position", Position(pos[0], pos[1], 0.0))
-    object.__setattr__(u, "domain", domain)
-    object.__setattr__(u, "status", status)
-    object.__setattr__(u, "speed", speed)
-    object.__setattr__(u, "heading", heading)
-    object.__setattr__(u, "personnel", [1, 2, 3, 4])
-    object.__setattr__(u, "equipment", [1])
+    u = Unit(
+        entity_id=entity_id,
+        side=side,
+        position=Position(pos[0], pos[1], 0.0),
+        domain=domain,
+        status=status,
+        speed=speed,
+        heading=heading,
+    )
     for k, v in kwargs.items():
         object.__setattr__(u, k, v)
     return u
@@ -73,82 +71,60 @@ class TestResolutionSwitching:
         )
         from stochastic_warfare.simulation.battle import BattleConfig
         from stochastic_warfare.simulation.campaign import CampaignConfig
-        from stochastic_warfare.simulation.calibration import CalibrationSchema
         from stochastic_warfare.core.clock import SimulationClock
-        from stochastic_warfare.core.era import Era
-        from stochastic_warfare.simulation.era_runtime import EraRuntimeContract
-
-        # Minimal context mock
-        ctx = SimpleNamespace()
-        rng_mgr = MagicMock()
-        rng_mgr.get_stream.return_value = np.random.default_rng(42)
-        ctx.rng_manager = rng_mgr
-        ctx.event_bus = MagicMock()
-        ctx.clock = SimulationClock(
-            datetime(2024, 1, 1, tzinfo=timezone.utc),
-            timedelta(seconds=3600.0),
+        from stochastic_warfare.core.events import EventBus
+        from stochastic_warfare.core.rng import RNGManager
+        from stochastic_warfare.simulation.scenario import (
+            CampaignScenarioConfig,
+            SideConfig,
+            SimulationContext,
+            TerrainConfig,
         )
-        ctx.config = SimpleNamespace(
-            tick_resolution=SimpleNamespace(
-                strategic_s=3600, operational_s=300, tactical_s=5,
-            ),
+        from stochastic_warfare.simulation.tactical_targeting import (
+            TacticalTargetingRuntime,
+        )
+
+        config = CampaignScenarioConfig(
+            name="Phase 55 resolution test",
+            date="2024-01-01T00:00:00Z",
             duration_hours=24.0,
-            reinforcements=[],
+            terrain=TerrainConfig(width_m=200_000, height_m=200_000),
+            sides=(
+                SideConfig(side="blue", units=[]),
+                SideConfig(side="red", units=[]),
+            ),
         )
-        ctx.era_runtime_contract = EraRuntimeContract(
-            selected_registry_id="modern",
-            era=Era.MODERN,
-            strategic_s=3600.0,
-            operational_s=300.0,
-            tactical_s=5.0,
-            treatment_hours_minor=2.0,
-            treatment_hours_serious=8.0,
-            treatment_hours_critical=24.0,
-            repair_time_hours=4.0,
+        unit_sides = {
+            unit.entity_id: side
+            for side, side_units in units_by_side.items()
+            for unit in side_units
+        }
+        empty_loadouts = {
+            unit_id: ()
+            for unit_id in sorted(unit_sides)
+        }
+        ctx = SimulationContext(
+            config=config,
+            clock=SimulationClock(
+                datetime(2024, 1, 1, tzinfo=timezone.utc),
+                timedelta(seconds=3600.0),
+            ),
+            rng_manager=RNGManager(42),
+            event_bus=EventBus(),
+            units_by_side=units_by_side,
+            unit_weapons=dict(empty_loadouts),
+            unit_sensor_attachments=dict(empty_loadouts),
+            unit_sensors=dict(empty_loadouts),
+            equipment_resolutions=dict(empty_loadouts),
+            tactical_targeting=TacticalTargetingRuntime(
+                sensing_aware_standoff_enabled=(
+                    config.calibration_overrides
+                    .enable_sensing_aware_standoff
+                ),
+                unit_sides=unit_sides,
+            ),
+            calibration=config.calibration_overrides,
         )
-        ctx.validate_era_runtime_bindings = lambda: None
-        ctx.units_by_side = units_by_side
-        ctx.morale_states = {}
-        ctx.calibration = CalibrationSchema()
-        ctx.movement_diagnostics = None
-        ctx.los_engine = None
-        ctx.heightmap = None
-        ctx.engagement_engine = None
-        ctx.ooda_engine = None
-        ctx.order_execution = None
-        ctx.suppression_engine = None
-        ctx.consumption_engine = None
-        ctx.stockpile_manager = None
-        ctx.morale_machine = None
-        ctx.weather_engine = None
-        ctx.time_of_day_engine = None
-        ctx.sea_state_engine = None
-        ctx.space_engine = None
-        ctx.cbrn_engine = None
-        ctx.ew_engine = None
-        ctx.ew_decoy_engine = None
-        ctx.seasons_engine = None
-        ctx.maintenance_engine = None
-        ctx.medical_engine = None
-        ctx.collateral_engine = None
-        ctx.aggregation_engine = None
-        ctx.escalation_engine = None
-        ctx.incendiary_engine = None
-        ctx.sof_engine = None
-        ctx.insurgency_engine = None
-        ctx.consequence_engine = None
-        ctx.war_termination_engine = None
-        ctx.political_engine = None
-        ctx.planning_engine = None
-        ctx.detection_engine = None
-        ctx.fog_of_war = None
-        ctx.intel_fusion_engine = None
-        ctx.get_state = lambda: {}
-        ctx.set_state = lambda s: None
-
-        def side_names():
-            return list(units_by_side.keys())
-        ctx.side_names = side_names
 
         engine_config = EngineConfig(
             max_ticks=100,

@@ -1,10 +1,12 @@
 """Phase 13a-7: Force aggregation/disaggregation tests."""
 
+import copy
 from collections.abc import Mapping
 from dataclasses import dataclass
 
 import numpy as np
 import pytest
+from pydantic import ValidationError
 
 from stochastic_warfare.core.events import EventBus
 from stochastic_warfare.core.types import Position
@@ -14,6 +16,9 @@ from stochastic_warfare.morale.state import MoraleState
 from stochastic_warfare.simulation.aggregation import (
     AggregationConfig,
     AggregationEngine,
+)
+from stochastic_warfare.simulation.tactical_targeting import (
+    TacticalTargetingRuntime,
 )
 
 
@@ -34,9 +39,11 @@ class _AggregationContext:
     units_by_side: dict[str, list[Unit]]
     morale_runtime: MoraleRuntime | None
     morale_states: Mapping[str, MoraleState]
-    unit_weapons: dict[str, list[object]]
-    unit_sensors: dict[str, list[object]]
+    unit_weapons: dict[str, tuple[object, ...]]
+    unit_sensor_attachments: dict[str, tuple[object, ...]]
+    unit_sensors: dict[str, tuple[object, ...]]
     equipment_resolutions: dict[str, tuple[object, ...]]
+    tactical_targeting: TacticalTargetingRuntime
     stockpile_manager: object | None
     order_execution: object | None
 
@@ -87,9 +94,21 @@ def _make_ctx(
         units_by_side=roster,
         morale_runtime=runtime,
         morale_states=runtime.states,
-        unit_weapons={},
-        unit_sensors={},
-        equipment_resolutions={},
+        unit_weapons={unit_id: () for unit_id in units},
+        unit_sensor_attachments={unit_id: () for unit_id in units},
+        unit_sensors={unit_id: () for unit_id in units},
+        equipment_resolutions={unit_id: () for unit_id in units},
+        tactical_targeting=TacticalTargetingRuntime(
+            sensing_aware_standoff_enabled=True,
+            unit_sides={
+                unit_id: (
+                    unit.side
+                    if isinstance(unit.side, str)
+                    else unit.side.value
+                )
+                for unit_id, unit in units.items()
+            },
+        ),
         stockpile_manager=None,
         order_execution=None,
     )
@@ -100,14 +119,44 @@ def _make_ownerless_ctx(
     morale_states: Mapping[str, MoraleState],
 ) -> _AggregationContext:
     """Build the deliberate legacy-ownerless failure control."""
+    roster = _copy_roster(units_by_side)
     return _AggregationContext(
         event_bus=EventBus(),
-        units_by_side=_copy_roster(units_by_side),
+        units_by_side=roster,
         morale_runtime=None,
         morale_states=dict(morale_states),
-        unit_weapons={},
-        unit_sensors={},
-        equipment_resolutions={},
+        unit_weapons={
+            unit.entity_id: ()
+            for side_units in roster.values()
+            for unit in side_units
+        },
+        unit_sensor_attachments={
+            unit.entity_id: ()
+            for side_units in roster.values()
+            for unit in side_units
+        },
+        unit_sensors={
+            unit.entity_id: ()
+            for side_units in roster.values()
+            for unit in side_units
+        },
+        equipment_resolutions={
+            unit.entity_id: ()
+            for side_units in roster.values()
+            for unit in side_units
+        },
+        tactical_targeting=TacticalTargetingRuntime(
+            sensing_aware_standoff_enabled=True,
+            unit_sides={
+                unit.entity_id: (
+                    unit.side
+                    if isinstance(unit.side, str)
+                    else unit.side.value
+                )
+                for side_units in roster.values()
+                for unit in side_units
+            },
+        ),
         stockpile_manager=None,
         order_execution=None,
     )
@@ -327,6 +376,26 @@ class TestCandidateDetection:
         assert len(candidates) == 1
         assert len(candidates[0]) == 5
 
+    def test_reversed_side_map_produces_same_candidates(self):
+        config = AggregationConfig(
+            enable_aggregation=True,
+            min_units_to_aggregate=2,
+        )
+        engine = AggregationEngine(config=config, rng=_rng())
+        blue_units = [_make_unit(f"b{i}", "blue") for i in range(2)]
+        red_units = [_make_unit(f"r{i}", "red") for i in range(2)]
+        context = _make_ctx({"red": red_units, "blue": blue_units})
+
+        reversed_candidates = engine.check_aggregation_candidates(context)
+        context.units_by_side = {
+            "blue": context.units_by_side["blue"],
+            "red": context.units_by_side["red"],
+        }
+        canonical_candidates = engine.check_aggregation_candidates(context)
+
+        assert reversed_candidates == canonical_candidates
+        assert canonical_candidates == [["b0", "b1"], ["r0", "r1"]]
+
     def test_candidates_filtered_by_battle_distance(self):
         config = AggregationConfig(
             enable_aggregation=True, min_units_to_aggregate=2,
@@ -391,6 +460,17 @@ class TestDisaggregationTriggers:
 
 
 class TestStatePersistence:
+    def test_config_is_public_and_immutable(self):
+        config = AggregationConfig(
+            enable_aggregation=True,
+            min_units_to_aggregate=2,
+        )
+        engine = AggregationEngine(config=config, rng=_rng())
+
+        assert engine.config is config
+        with pytest.raises(ValidationError, match="frozen"):
+            engine.config.enable_aggregation = False
+
     def test_get_set_state_roundtrip(self):
         config = AggregationConfig(enable_aggregation=True, min_units_to_aggregate=2)
         engine = AggregationEngine(config=config, rng=_rng())
@@ -402,9 +482,12 @@ class TestStatePersistence:
         engine2 = AggregationEngine(config=config, rng=_rng())
         engine2.set_state(state)
 
+        assert state["config"] == config.model_dump(mode="json")
+        assert engine2.config == config
         assert len(engine2.active_aggregates) == 1
         agg = list(engine2.active_aggregates.values())[0]
         assert len(agg.constituent_snapshots) == 4
+        assert engine2.get_state() == state
 
     def test_empty_state(self):
         engine = AggregationEngine(rng=_rng())
@@ -413,6 +496,140 @@ class TestStatePersistence:
         engine2 = AggregationEngine(rng=_rng())
         engine2.set_state(state)
         assert len(engine2.active_aggregates) == 0
+
+    @pytest.mark.parametrize("mutation", ("next_id", "position"))
+    def test_corrupt_state_rejects_atomically(self, mutation):
+        config = AggregationConfig(
+            enable_aggregation=True,
+            min_units_to_aggregate=2,
+        )
+        engine = AggregationEngine(config=config, rng=_rng())
+        units = [_make_unit(f"u{i}", "blue") for i in range(4)]
+        context = _make_ctx({"blue": list(units)})
+        engine.aggregate([unit.entity_id for unit in units], context)
+        before = copy.deepcopy(engine.get_state())
+        invalid = copy.deepcopy(before)
+        if mutation == "next_id":
+            invalid["next_id"] = -1
+        else:
+            snapshot = invalid["aggregates"]["agg_0000"]["snapshots"][0]
+            position = list(snapshot["unit_state"]["position"])
+            position[0] = float("inf")
+            snapshot["unit_state"]["position"] = position
+
+        with pytest.raises(ValueError):
+            engine.set_state(invalid)
+
+        assert engine.get_state() == before
+
+    def test_config_mismatch_rejects_state_atomically(self):
+        source_config = AggregationConfig(
+            enable_aggregation=True,
+            min_units_to_aggregate=2,
+        )
+        source = AggregationEngine(config=source_config, rng=_rng())
+        target = AggregationEngine(config=AggregationConfig(), rng=_rng())
+        before = target.get_state()
+
+        with pytest.raises(ValueError, match="config does not match"):
+            target.set_state(source.get_state())
+
+        assert target.get_state() == before
+
+    def test_active_state_requires_enabled_config_atomically(self):
+        enabled_config = AggregationConfig(
+            enable_aggregation=True,
+            min_units_to_aggregate=2,
+        )
+        source = AggregationEngine(config=enabled_config, rng=_rng())
+        units = [_make_unit(f"u{i}", "blue") for i in range(2)]
+        context = _make_ctx({"blue": units})
+        aggregate = source.aggregate(
+            [unit.entity_id for unit in units],
+            context,
+        )
+        assert aggregate is not None
+        invalid = source.get_state()
+        disabled_config = AggregationConfig(
+            enable_aggregation=False,
+            min_units_to_aggregate=2,
+        )
+        invalid["config"] = disabled_config.model_dump(mode="json")
+        target = AggregationEngine(config=disabled_config, rng=_rng())
+        before = target.get_state()
+
+        with pytest.raises(ValueError, match="require aggregation config"):
+            target.set_state(invalid)
+
+        assert target.get_state() == before
+
+    def test_state_requires_config_envelope_key_atomically(self):
+        engine = AggregationEngine(rng=_rng())
+        invalid = engine.get_state()
+        invalid.pop("config")
+        before = engine.get_state()
+
+        with pytest.raises(ValueError, match="state has invalid key topology"):
+            engine.set_state(invalid)
+
+        assert engine.get_state() == before
+
+    @pytest.mark.parametrize("mutation", ("extra_key", "coerced_bool"))
+    def test_config_requires_exact_strict_state(self, mutation):
+        engine = AggregationEngine(rng=_rng())
+        invalid = engine.get_state()
+        if mutation == "extra_key":
+            invalid["config"]["unexpected"] = True
+        else:
+            invalid["config"]["enable_aggregation"] = 0
+        before = engine.get_state()
+
+        with pytest.raises(ValueError, match="Aggregation config"):
+            engine.set_state(invalid)
+
+        assert engine.get_state() == before
+
+    def test_get_state_detaches_nested_snapshot_payloads(self):
+        config = AggregationConfig(
+            enable_aggregation=True,
+            min_units_to_aggregate=2,
+        )
+        engine = AggregationEngine(config=config, rng=_rng())
+        units = [_make_unit(f"u{i}", "blue") for i in range(2)]
+        context = _make_ctx({"blue": units})
+        aggregate = engine.aggregate([unit.entity_id for unit in units], context)
+        assert aggregate is not None
+        baseline = engine.get_state()
+
+        exposed = engine.get_state()
+        exposed["config"]["enable_aggregation"] = False
+        snapshot = exposed["aggregates"][aggregate.aggregate_id]["snapshots"][0]
+        snapshot["unit_state"]["position"] = (999.0, 999.0, 999.0)
+        snapshot["weapon_states"].append({"forged": True})
+
+        assert engine.get_state() == baseline
+
+    def test_active_aggregates_detaches_nested_snapshot_payloads(self):
+        config = AggregationConfig(
+            enable_aggregation=True,
+            min_units_to_aggregate=2,
+        )
+        engine = AggregationEngine(config=config, rng=_rng())
+        units = [_make_unit(f"u{i}", "blue") for i in range(2)]
+        context = _make_ctx({"blue": units})
+        aggregate = engine.aggregate([unit.entity_id for unit in units], context)
+        assert aggregate is not None
+        baseline = engine.get_state()
+
+        exposed = engine.active_aggregates
+        exposed_aggregate = exposed[aggregate.aggregate_id]
+        exposed_aggregate.aggregate_combat_power = -1.0
+        exposed_snapshot = exposed_aggregate.constituent_snapshots[0]
+        exposed_snapshot.unit_state["position"] = (999.0, 999.0, 999.0)
+        exposed_snapshot.weapon_states.append({"forged": True})
+        exposed.clear()
+
+        assert engine.get_state() == baseline
 
     def test_deterministic_aggregate_ids(self):
         """Aggregate IDs should be deterministic."""

@@ -16,7 +16,23 @@ from pydantic import (
     model_validator,
 )
 
+from stochastic_warfare.detection.intel_fusion import validate_fow_track_id
 from stochastic_warfare.simulation.calibration import CalibrationSchema
+from stochastic_warfare.simulation.loadouts import (
+    SensorModeledRole,
+    WeaponModeledRole,
+)
+from stochastic_warfare.simulation.tactical_targeting import (
+    ContactSource,
+    EffectiveRangeBasis,
+    FireControlSource,
+    TargetingDisposition,
+)
+from stochastic_warfare.simulation.targeting_exposure import (
+    PublicIdentificationLevel,
+    PublicTrackStatus,
+    TargetingExposureScope,
+)
 from stochastic_warfare.scenario_names import validate_scenario_name
 
 
@@ -258,19 +274,249 @@ class MapUnitFrame(BaseModel):
     engaged: bool = False
 
 
+class PrivilegedTargetingDecision(BaseModel):
+    """Exact engine/evaluator targeting evidence for one shooter."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    engine_tick: int
+    logical_time_s: float
+    battle_id: str
+    ordinal: int
+    shooter_id: str
+    shooter_side: str
+    shooter_domain: str
+    target_id: str | None
+    target_side: str | None
+    target_domain: str | None
+    distance_m: float
+    weapon_id: str | None
+    weapon_source_equipment_index: int | None
+    weapon_modeled_role: WeaponModeledRole | None
+    ammunition_id: str | None
+    physical_max_range_m: float
+    predictive_effective_range_m: float
+    effective_range_basis: EffectiveRangeBasis | None
+    legacy_derived_reference_range_m: float
+    contact_source: ContactSource
+    observing_unit_id: str | None
+    contact_sensor_source_equipment_index: int | None
+    contact_sensor_id: str | None
+    contact_sensor_modeled_role: SensorModeledRole | None
+    contact_time_s: float | None
+    contact_range_m: float
+    visibility_bound_m: float
+    sensing_sensor_source_equipment_index: int | None
+    sensing_sensor_id: str | None
+    sensing_sensor_modeled_role: SensorModeledRole | None
+    sensing_range_m: float
+    fire_control_source: FireControlSource
+    fire_control_sensor_source_equipment_index: int | None
+    fire_control_sensor_id: str | None
+    fire_control_sensor_modeled_role: SensorModeledRole | None
+    fire_control_range_m: float
+    disposition: TargetingDisposition
+    authorized_standoff_m: float
+    hold_authorized: bool
+    engagement_solution_valid: bool
+    sensing_aware_standoff_enabled: bool
+    fog_of_war_enabled: bool
+    consumable: bool
+
+
+class PrivilegedEngagementRevalidationOutcome(BaseModel):
+    """Exact post-movement targeting outcome for privileged consumers."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    engine_tick: int
+    logical_time_s: float
+    battle_id: str
+    shooter_id: str
+    target_id: str
+    weapon_id: str
+    weapon_source_equipment_index: int
+    weapon_modeled_role: WeaponModeledRole
+    ammunition_id: str
+    disposition: TargetingDisposition
+    revalidation_passed: bool
+    fog_of_war_enabled: bool
+    consumable: bool
+
+
+class SideFowPublicTrack(BaseModel):
+    """Opaque public track fields visible to one reporting side."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    track_id: str
+    reporting_side: str
+    easting_m: float
+    northing_m: float
+    velocity_east_mps: float
+    velocity_north_mps: float
+    position_uncertainty_m: float
+    status: PublicTrackStatus
+    identification_level: PublicIdentificationLevel
+    domain_estimate: str | None
+    type_estimate: str | None
+    specific_estimate: str | None
+    confidence: float
+    first_detected_time_s: float
+    last_sensor_contact_time_s: float
+
+    @field_validator("track_id", mode="before")
+    @classmethod
+    def _canonical_track_id(cls, value: Any) -> str:
+        return validate_fow_track_id(value, "track_id")
+
+
+class SideFowTargetingDecision(BaseModel):
+    """Attachment- and target-identity-free targeting result for one side."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    engine_tick: int
+    logical_time_s: float
+    battle_id: str
+    ordinal: int
+    shooter_id: str
+    viewer_side: str
+    target_track_id: str | None
+    disposition: TargetingDisposition
+    contact_source: ContactSource
+    contact_time_s: float | None
+    authorized_standoff_m: float
+    hold_authorized: bool
+    engagement_solution_valid: bool
+    sensing_aware_standoff_enabled: bool
+    fog_of_war_enabled: bool
+    consumable: bool
+
+    @field_validator("target_track_id", mode="before")
+    @classmethod
+    def _canonical_target_track_id(cls, value: Any) -> str | None:
+        if value is None:
+            return None
+        return validate_fow_track_id(value, "target_track_id")
+
+
+class SideFowEngagementRevalidationOutcome(BaseModel):
+    """Identity-bounded post-movement outcome for one viewer side."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    engine_tick: int
+    logical_time_s: float
+    battle_id: str
+    shooter_id: str
+    viewer_side: str
+    target_track_id: str
+    disposition: TargetingDisposition
+    revalidation_passed: bool
+    fog_of_war_enabled: bool
+    consumable: bool
+
+    @field_validator("target_track_id", mode="before")
+    @classmethod
+    def _canonical_target_track_id(cls, value: Any) -> str:
+        return validate_fow_track_id(value, "target_track_id")
+
+
 class ReplayFrame(BaseModel):
     """One tick's worth of unit positions."""
 
+    scope: TargetingExposureScope = TargetingExposureScope.PRIVILEGED_ENGINE
+    viewer_side: str | None = None
     tick: int
     units: list[MapUnitFrame] = Field(default_factory=list)
     detected: dict[str, list[str]] = Field(default_factory=dict)
+    targeting: list[PrivilegedTargetingDecision] = Field(default_factory=list)
+    targeting_outcomes: list[PrivilegedEngagementRevalidationOutcome] = Field(
+        default_factory=list,
+    )
+    tracks: list[SideFowPublicTrack] = Field(default_factory=list)
+    side_targeting: list[SideFowTargetingDecision] = Field(
+        default_factory=list,
+    )
+    side_targeting_outcomes: list[
+        SideFowEngagementRevalidationOutcome
+    ] = Field(default_factory=list)
+
+    @model_validator(mode="after")
+    def _scope_isolated(self) -> ReplayFrame:
+        if self.scope is TargetingExposureScope.PRIVILEGED_ENGINE:
+            if (
+                self.viewer_side is not None
+                or self.tracks
+                or self.side_targeting
+                or self.side_targeting_outcomes
+            ):
+                raise ValueError(
+                    "PRIVILEGED_ENGINE frame cannot carry SIDE_FOW fields",
+                )
+            return self
+        if not self.viewer_side:
+            raise ValueError("SIDE_FOW frame requires viewer_side")
+        if self.targeting or self.targeting_outcomes:
+            raise ValueError("SIDE_FOW frame cannot carry privileged targeting")
+        if any(unit.side != self.viewer_side for unit in self.units):
+            raise ValueError("SIDE_FOW frame contains another side's unit")
+        if set(self.detected) - {self.viewer_side}:
+            raise ValueError("SIDE_FOW detections contain another side")
+        if any(track.reporting_side != self.viewer_side for track in self.tracks):
+            raise ValueError("SIDE_FOW frame contains another side's track")
+        track_ids = {track.track_id for track in self.tracks}
+        for decision in self.side_targeting:
+            if decision.viewer_side != self.viewer_side:
+                raise ValueError("SIDE_FOW frame contains another side's decision")
+            if (
+                decision.target_track_id is not None
+                and decision.target_track_id not in track_ids
+            ):
+                raise ValueError("SIDE_FOW decision references an absent track")
+        decision_keys = {
+            (decision.engine_tick, decision.battle_id, decision.shooter_id)
+            for decision in self.side_targeting
+        }
+        for outcome in self.side_targeting_outcomes:
+            if outcome.viewer_side != self.viewer_side:
+                raise ValueError("SIDE_FOW frame contains another side's outcome")
+            if outcome.target_track_id not in track_ids:
+                raise ValueError("SIDE_FOW outcome references an absent track")
+            if (
+                outcome.engine_tick,
+                outcome.battle_id,
+                outcome.shooter_id,
+            ) not in decision_keys:
+                raise ValueError("SIDE_FOW outcome lacks its targeting decision")
+        return self
 
 
 class FramesResponse(BaseModel):
     """Paginated replay frames."""
 
+    scope: TargetingExposureScope = TargetingExposureScope.PRIVILEGED_ENGINE
+    viewer_side: str | None = None
     frames: list[ReplayFrame] = Field(default_factory=list)
     total_frames: int = 0
+
+    @model_validator(mode="after")
+    def _consistent_scope(self) -> FramesResponse:
+        if self.scope is TargetingExposureScope.PRIVILEGED_ENGINE:
+            if self.viewer_side is not None:
+                raise ValueError(
+                    "PRIVILEGED_ENGINE response cannot carry viewer_side",
+                )
+        elif not self.viewer_side:
+            raise ValueError("SIDE_FOW response requires viewer_side")
+        if any(
+            frame.scope is not self.scope
+            or frame.viewer_side != self.viewer_side
+            for frame in self.frames
+        ):
+            raise ValueError("frame scope disagrees with response scope")
+        return self
 
 
 class ObjectiveInfo(BaseModel):

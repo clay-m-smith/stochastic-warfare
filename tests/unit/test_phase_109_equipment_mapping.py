@@ -219,6 +219,7 @@ def _sensor_mapping(
         expected_sensor_type=SensorType.VISUAL,
         expected_signature_domain=SignatureDomain.VISUAL,
         modeled_role=SensorModeledRole.VISUAL_OBSERVATION,
+        compatible_weapon_roles=(),
         required_target_domains=required_domains_for_sensor_role(
             SensorModeledRole.VISUAL_OBSERVATION,
         ),
@@ -581,6 +582,7 @@ def test_sensor_role_contract_rejects_unrelated_detection_interface() -> None:
             expected_sensor_type=SensorType.RADAR,
             expected_signature_domain=SignatureDomain.RADAR,
             modeled_role=SensorModeledRole.RADAR_WARNING_ESM,
+            compatible_weapon_roles=(),
             required_target_domains=required_domains_for_sensor_role(
                 SensorModeledRole.RADAR_WARNING_ESM,
             ),
@@ -605,6 +607,7 @@ def test_sensor_catalog_target_domains_cannot_be_broadened_by_mapping() -> None:
                     expected_sensor_type=SensorType.VISUAL,
                     expected_signature_domain=SignatureDomain.VISUAL,
                     modeled_role=SensorModeledRole.GROUND_VISUAL_SIGHT,
+                    compatible_weapon_roles=(),
                     required_target_domains=(Domain.GROUND,),
                 ),
             ),
@@ -939,6 +942,7 @@ def test_sensor_metadata_must_match_authoritative_production_dispatch() -> None:
         expected_sensor_type=SensorType.RADAR,
         expected_signature_domain=SignatureDomain.RADAR,
         modeled_role=SensorModeledRole.FIRE_CONTROL_RADAR,
+        compatible_weapon_roles=(),
         required_target_domains=required_domains_for_sensor_role(
             SensorModeledRole.FIRE_CONTROL_RADAR,
         ),
@@ -1159,6 +1163,7 @@ def test_sensor_and_data_link_era_gates_are_part_of_preflight() -> None:
         expected_sensor_type=SensorType.THERMAL,
         expected_signature_domain=SignatureDomain.THERMAL,
         modeled_role=SensorModeledRole.THERMAL_TARGETING,
+        compatible_weapon_roles=(),
         required_target_domains=required_domains_for_sensor_role(
             SensorModeledRole.THERMAL_TARGETING,
         ),
@@ -1250,6 +1255,7 @@ def test_fingerprint_is_canonical_and_changes_with_reachable_contract() -> None:
                 expected_sensor_type=SensorType.VISUAL,
                 expected_signature_domain=SignatureDomain.VISUAL,
                 modeled_role=SensorModeledRole.VISUAL_OBSERVATION,
+                compatible_weapon_roles=(),
                 required_target_domains=required_domains_for_sensor_role(
                     SensorModeledRole.VISUAL_OBSERVATION,
                 ),
@@ -1379,6 +1385,7 @@ def test_functional_sensor_analogue_requires_consumed_range_and_fov_envelope(
             expected_sensor_type=SensorType.VISUAL,
             expected_signature_domain=SignatureDomain.VISUAL,
             modeled_role=SensorModeledRole.GROUND_VISUAL_SIGHT,
+            compatible_weapon_roles=(),
             required_target_domains=required_domains_for_sensor_role(
                 SensorModeledRole.GROUND_VISUAL_SIGHT,
             ),
@@ -1417,6 +1424,7 @@ def test_functional_sensor_envelope_changes_live_definition_and_fingerprint() ->
             expected_sensor_type=SensorType.VISUAL,
             expected_signature_domain=SignatureDomain.VISUAL,
             modeled_role=SensorModeledRole.GROUND_VISUAL_SIGHT,
+            compatible_weapon_roles=(),
             required_target_domains=required_domains_for_sensor_role(
                 SensorModeledRole.GROUND_VISUAL_SIGHT,
             ),

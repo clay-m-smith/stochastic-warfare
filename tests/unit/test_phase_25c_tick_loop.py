@@ -24,6 +24,9 @@ from stochastic_warfare.simulation.scenario import (
     CampaignScenarioConfig,
     SimulationContext,
 )
+from stochastic_warfare.simulation.tactical_targeting import (
+    TacticalTargetingRuntime,
+)
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -60,11 +63,34 @@ def _make_unit(entity_id: str, side: str = "blue") -> Unit:
 
 
 def _make_ctx(**overrides: Any) -> SimulationContext:
+    config = overrides.pop("config", _minimal_config())
+    units_by_side = overrides.pop("units_by_side", {})
+    unit_sides = {
+        unit.entity_id: side
+        for side, side_units in units_by_side.items()
+        for unit in side_units
+    }
+    empty_loadouts = {
+        unit_id: ()
+        for unit_id in sorted(unit_sides)
+    }
     return SimulationContext(
-        config=overrides.pop("config", _minimal_config()),
+        config=config,
         clock=SimulationClock(start=TS, tick_duration=timedelta(seconds=10)),
         rng_manager=RNGManager(42),
         event_bus=EventBus(),
+        units_by_side=units_by_side,
+        unit_weapons=dict(empty_loadouts),
+        unit_sensor_attachments=dict(empty_loadouts),
+        unit_sensors=dict(empty_loadouts),
+        equipment_resolutions=dict(empty_loadouts),
+        tactical_targeting=TacticalTargetingRuntime(
+            sensing_aware_standoff_enabled=(
+                config.calibration_overrides.enable_sensing_aware_standoff
+            ),
+            unit_sides=unit_sides,
+        ),
+        calibration=config.calibration_overrides,
         **overrides,
     )
 

@@ -5,14 +5,19 @@ from __future__ import annotations
 import copy
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
+from types import SimpleNamespace
 
 import numpy as np
 import pytest
 
+from stochastic_warfare.c2.orders.air_orders import (
+    ATOPlanningEngine,
+    AircraftAvailability,
+)
 from stochastic_warfare.core.clock import SimulationClock
 from stochastic_warfare.core.events import Event, EventBus
 from stochastic_warfare.core.rng import RNGManager
-from stochastic_warfare.core.types import ModuleId, Position
+from stochastic_warfare.core.types import Domain, ModuleId, Position
 from stochastic_warfare.entities.base import Unit, UnitStatus
 from stochastic_warfare.morale.runtime import (
     MoraleRegistration,
@@ -38,6 +43,9 @@ from stochastic_warfare.simulation.scenario import (
     CampaignScenarioConfig,
     SimulationContext,
     load_campaign_scenario_config,
+)
+from stochastic_warfare.simulation.tactical_targeting import (
+    TacticalTargetingRuntime,
 )
 
 
@@ -365,12 +373,21 @@ def _base_aggregation_context() -> tuple[
         rng=np.random.default_rng(SEED),
         event_bus=event_bus,
     )
+    unit_sides = {unit_id: "blue" for unit_id in sorted(units_by_id)}
     context = SimulationContext(
         config=load_campaign_scenario_config(REINFORCEMENT_SCENARIO),
         clock=clock,
         rng_manager=rng_manager,
         event_bus=event_bus,
         units_by_side={"blue": units},
+        unit_weapons={unit_id: () for unit_id in unit_sides},
+        unit_sensor_attachments={unit_id: () for unit_id in unit_sides},
+        unit_sensors={unit_id: () for unit_id in unit_sides},
+        equipment_resolutions={unit_id: () for unit_id in unit_sides},
+        tactical_targeting=TacticalTargetingRuntime(
+            sensing_aware_standoff_enabled=True,
+            unit_sides=unit_sides,
+        ),
         morale_runtime=runtime,
         rout_engine=runtime.rout_engine,
         aggregation_engine=aggregation,
@@ -666,6 +683,16 @@ def test_aggregation_checkpoint_restores_one_exact_morale_topology() -> None:
 
     assert aggregate is not None
     assert aggregate.aggregate_id == "agg_0000"
+    for owner in (
+        source.unit_weapons,
+        source.unit_sensor_attachments,
+        source.unit_sensors,
+        source.equipment_resolutions,
+    ):
+        assert owner == {"agg_0000": ()}
+    assert dict(source.tactical_targeting.registered_unit_sides) == {
+        "agg_0000": "blue",
+    }
     checkpoint = source.get_state()
     source_morale = copy.deepcopy(source.morale_runtime.get_state())
     source_aggregation = copy.deepcopy(source.aggregation_engine.get_state())
@@ -677,6 +704,16 @@ def test_aggregation_checkpoint_restores_one_exact_morale_topology() -> None:
     assert roster_ids == set(resumed.morale_states) == {"agg_0000"}
     assert resumed.morale_runtime.get_state() == source_morale
     assert resumed.aggregation_engine.get_state() == source_aggregation
+    for owner in (
+        resumed.unit_weapons,
+        resumed.unit_sensor_attachments,
+        resumed.unit_sensors,
+        resumed.equipment_resolutions,
+    ):
+        assert owner == {"agg_0000": ()}
+    assert dict(resumed.tactical_targeting.registered_unit_sides) == {
+        "agg_0000": "blue",
+    }
     archive = source_morale["suspended_archives"]["agg_0000"]
     assert archive["constituent_records"] == {
         unit_id: _record_payload(record)
@@ -689,6 +726,165 @@ def test_aggregation_checkpoint_restores_one_exact_morale_topology() -> None:
     ) == constituent_ids
     assert dict(resumed.morale_runtime.records) == original_records
     assert resumed.morale_runtime.get_state()["suspended_archives"] == {}
+    for owner in (
+        resumed.unit_weapons,
+        resumed.unit_sensor_attachments,
+        resumed.unit_sensors,
+        resumed.equipment_resolutions,
+    ):
+        assert owner == {unit_id: () for unit_id in constituent_ids}
+    assert dict(resumed.tactical_targeting.registered_unit_sides) == {
+        unit_id: "blue" for unit_id in constituent_ids
+    }
+
+
+def test_active_aggregate_checkpoint_rejects_ato_owner_atomically() -> None:
+    source, original_records = _base_aggregation_context()
+    aggregate = source.aggregation_engine.aggregate(
+        sorted(original_records),
+        source,
+    )
+    assert aggregate is not None
+    checkpoint = copy.deepcopy(source.get_state())
+    source.ato_engine = ATOPlanningEngine(source.event_bus)
+    source.ato_engine.register_aircraft(
+        AircraftAvailability(unit_id="base_0"),
+    )
+    with pytest.raises(ValueError, match="ato_engine"):
+        source.get_state()
+    checkpoint["ato_engine"] = copy.deepcopy(source.ato_engine.get_state())
+
+    target, _ = _base_aggregation_context()
+    target.ato_engine = ATOPlanningEngine(target.event_bus)
+    before = copy.deepcopy(target.get_state())
+
+    with pytest.raises(ValueError, match="ato_engine"):
+        target.set_state(checkpoint)
+
+    assert target.get_state() == before
+
+
+@pytest.mark.parametrize(
+    "owner_mutation",
+    ("missing", "forged", "subclass", "disabled", "config_mismatch"),
+)
+def test_active_aggregate_checkpoint_requires_enabled_owner_atomically(
+    owner_mutation: str,
+) -> None:
+    source, original_records = _base_aggregation_context()
+    aggregate = source.aggregation_engine.aggregate(
+        sorted(original_records),
+        source,
+    )
+    assert aggregate is not None
+    checkpoint = copy.deepcopy(source.get_state())
+
+    target, _ = _base_aggregation_context()
+    if owner_mutation == "missing":
+        target.aggregation_engine = None
+        error_match = "exact AggregationEngine runtime owner"
+    elif owner_mutation == "forged":
+        target.aggregation_engine = SimpleNamespace(
+            config=AggregationConfig(
+                enable_aggregation=True,
+                min_units_to_aggregate=2,
+            ),
+        )
+        error_match = "exact AggregationEngine runtime owner"
+    elif owner_mutation == "subclass":
+        class ForgedAggregationEngine(AggregationEngine):
+            pass
+
+        target.aggregation_engine = ForgedAggregationEngine(
+            AggregationConfig(
+                enable_aggregation=True,
+                min_units_to_aggregate=2,
+            ),
+            rng=np.random.default_rng(SEED),
+            event_bus=target.event_bus,
+        )
+        error_match = "exact AggregationEngine runtime owner"
+    elif owner_mutation == "disabled":
+        target.aggregation_engine = AggregationEngine(
+            AggregationConfig(enable_aggregation=False),
+            rng=np.random.default_rng(SEED),
+            event_bus=target.event_bus,
+        )
+        error_match = "requires an enabled aggregation runtime owner"
+    else:
+        target.aggregation_engine = AggregationEngine(
+            AggregationConfig(
+                enable_aggregation=True,
+                min_units_to_aggregate=3,
+            ),
+            rng=np.random.default_rng(SEED),
+            event_bus=target.event_bus,
+        )
+        error_match = "config does not match"
+    before_clock = copy.deepcopy(target.clock.get_state())
+    before_rng = copy.deepcopy(target.rng_manager.get_state())
+    before_units = copy.deepcopy({
+        side: [unit.get_state() for unit in units]
+        for side, units in target.units_by_side.items()
+    })
+    before_morale = copy.deepcopy(target.morale_runtime.get_state())
+    before_targeting = copy.deepcopy(target.tactical_targeting.get_state())
+
+    with pytest.raises(ValueError, match=error_match):
+        target.set_state(checkpoint)
+
+    assert target.clock.get_state() == before_clock
+    assert target.rng_manager.get_state() == before_rng
+    assert {
+        side: [unit.get_state() for unit in units]
+        for side, units in target.units_by_side.items()
+    } == before_units
+    assert target.morale_runtime.get_state() == before_morale
+    assert target.tactical_targeting.get_state() == before_targeting
+
+
+@pytest.mark.parametrize(
+    ("mutation", "error_match"),
+    (
+        ("negative_next_id", "next_id"),
+        ("nonfinite_constituent", "finite numbers"),
+        ("unrestorable_index", "proxy/order"),
+        ("proxy_domain", "roster proxy"),
+    ),
+)
+def test_aggregation_checkpoint_rejects_nested_corruption_atomically(
+    mutation: str,
+    error_match: str,
+) -> None:
+    source, original_records = _base_aggregation_context()
+    aggregate = source.aggregation_engine.aggregate(
+        sorted(original_records),
+        source,
+    )
+    assert aggregate is not None
+    invalid = copy.deepcopy(source.get_state())
+    raw_aggregation = invalid["aggregation_engine"]
+    snapshots = raw_aggregation["aggregates"][aggregate.aggregate_id][
+        "snapshots"
+    ]
+    if mutation == "negative_next_id":
+        raw_aggregation["next_id"] = -1
+    elif mutation == "nonfinite_constituent":
+        position = list(snapshots[0]["unit_state"]["position"])
+        position[0] = float("inf")
+        snapshots[0]["unit_state"]["position"] = position
+    elif mutation == "unrestorable_index":
+        snapshots[0]["original_index"] = 99
+    else:
+        invalid["units_by_side"]["blue"][0]["domain"] = int(Domain.AERIAL)
+
+    target, _ = _base_aggregation_context()
+    before = copy.deepcopy(target.get_state())
+
+    with pytest.raises(ValueError, match=error_match):
+        target.set_state(invalid)
+
+    assert target.get_state() == before
 
 
 def test_aggregation_checkpoint_rejects_suspended_status_disagreement_atomically(
@@ -697,7 +893,7 @@ def test_aggregation_checkpoint_rejects_suspended_status_disagreement_atomically
     constituent_ids = sorted(original_records)
     aggregate = source.aggregation_engine.aggregate(constituent_ids, source)
     assert aggregate is not None
-    invalid = source.get_state()
+    invalid = copy.deepcopy(source.get_state())
     snapshots = invalid["aggregation_engine"]["aggregates"][
         aggregate.aggregate_id
     ]["snapshots"]
@@ -708,6 +904,70 @@ def test_aggregation_checkpoint_rejects_suspended_status_disagreement_atomically
     before = target.get_state()
     with pytest.raises(ValueError, match="suspended morale/status disagree"):
         target.set_state(invalid)
+
+    assert target.get_state() == before
+
+
+@pytest.mark.parametrize(
+    "field,value",
+    (
+        ("weapon_states", [{}]),
+        ("sensor_states", [{}]),
+        ("supply_inventory", {}),
+        ("order_records", [{}]),
+        ("original_side", "red"),
+    ),
+)
+def test_aggregation_checkpoint_rejects_unsupported_snapshot_atomically(
+    field: str,
+    value: object,
+) -> None:
+    source, original_records = _base_aggregation_context()
+    aggregate = source.aggregation_engine.aggregate(
+        sorted(original_records),
+        source,
+    )
+    assert aggregate is not None
+    invalid = copy.deepcopy(source.get_state())
+    invalid["aggregation_engine"]["aggregates"][
+        aggregate.aggregate_id
+    ]["snapshots"][0][field] = value
+
+    target, _ = _base_aggregation_context()
+    before = target.get_state()
+    with pytest.raises(ValueError, match="REM-016"):
+        target.set_state(invalid)
+
+    assert target.get_state() == before
+
+
+def test_aggregate_checkpoint_rejects_builder_owner_before_build_atomically(
+) -> None:
+    source, original_records = _base_aggregation_context()
+    aggregate = source.aggregation_engine.aggregate(
+        sorted(original_records),
+        source,
+    )
+    assert aggregate is not None
+    checkpoint = source.get_state()
+
+    target, _ = _base_aggregation_context()
+    before = target.get_state()
+
+    class _ForbiddenBuilder:
+        era_config = target._captured_era_config()
+
+        @staticmethod
+        def fingerprint() -> None:
+            return None
+
+        @staticmethod
+        def build(_units: object) -> object:
+            raise AssertionError("aggregate checkpoint reached loadout build")
+
+    target.loadout_builder = _ForbiddenBuilder()  # type: ignore[assignment]
+    with pytest.raises(ValueError, match="REM-016.*loadout_builder"):
+        target.set_state(checkpoint)
 
     assert target.get_state() == before
 

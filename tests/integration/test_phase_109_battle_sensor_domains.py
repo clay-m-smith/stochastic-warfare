@@ -42,6 +42,9 @@ from stochastic_warfare.simulation.scenario import (
     ScenarioLoader,
     SimulationContext,
 )
+from stochastic_warfare.simulation.tactical_targeting import (
+    TacticalTargetingRuntime,
+)
 
 
 DATA_DIR = Path("data")
@@ -525,7 +528,18 @@ def _fow_contact_with_heading(attacker_heading_rad: float) -> tuple[bool, float]
         involved_sides=["blue", "red"],
         unit_ids={attacker.entity_id, target.entity_id},
     )
-    BattleManager(ctx.event_bus).execute_tick(ctx, battle, 1.0)
+    ctx.tactical_targeting = TacticalTargetingRuntime(
+        sensing_aware_standoff_enabled=(
+            ctx.tactical_targeting.sensing_aware_standoff_enabled
+        ),
+        unit_sides={
+            attacker.entity_id: "blue",
+            target.entity_id: "red",
+        },
+    )
+    battle_manager = BattleManager(ctx.event_bus)
+    battle_manager.prepare_tactical_interval(ctx, (battle,), 1.0)
+    battle_manager.execute_tick(ctx, battle, 1.0)
     world_view = ctx.fog_of_war.get_world_view("blue")
     return target.entity_id in world_view.contacts, radar.definition.fov_deg
 

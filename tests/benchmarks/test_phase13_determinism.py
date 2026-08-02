@@ -16,6 +16,9 @@ from stochastic_warfare.core.types import Position
 from stochastic_warfare.entities.base import Unit
 from stochastic_warfare.morale.runtime import MoraleRegistration, MoraleRuntime
 from stochastic_warfare.morale.state import MoraleState
+from stochastic_warfare.simulation.tactical_targeting import (
+    TacticalTargetingRuntime,
+)
 
 
 # ---------------------------------------------------------------------------
@@ -45,13 +48,25 @@ def _make_unit(entity_id, side="blue", pos=Position(0, 0), unit_type="infantry")
 def _make_ctx(units_by_side=None, morale_states=None):
     ctx = types.SimpleNamespace()
     ctx.units_by_side = units_by_side or {}
-    ctx.unit_weapons = {}
-    ctx.unit_sensors = {}
     units = [
         unit
         for side_units in ctx.units_by_side.values()
         for unit in side_units
     ]
+    unit_sides = {
+        unit.entity_id: (
+            unit.side if isinstance(unit.side, str) else unit.side.value
+        )
+        for unit in units
+    }
+    ctx.unit_weapons = {unit_id: () for unit_id in unit_sides}
+    ctx.unit_sensor_attachments = {unit_id: () for unit_id in unit_sides}
+    ctx.unit_sensors = {unit_id: () for unit_id in unit_sides}
+    ctx.equipment_resolutions = {unit_id: () for unit_id in unit_sides}
+    ctx.tactical_targeting = TacticalTargetingRuntime(
+        sensing_aware_standoff_enabled=True,
+        unit_sides=unit_sides,
+    )
     initial_morale = morale_states or {
         unit.entity_id: MoraleState.STEADY
         for unit in units

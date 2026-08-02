@@ -17,6 +17,21 @@ import numpy as np
 from pydantic import BaseModel
 
 from stochastic_warfare.core.logging import get_logger
+from stochastic_warfare.simulation.tactical_targeting import (
+    TacticalEngagementRevalidationOutcome,
+    TacticalTargetingDecision,
+)
+from stochastic_warfare.simulation.targeting_exposure import (
+    PrivilegedEngagementRevalidationExposure,
+    PrivilegedTargetingExposure,
+    PublicTrackExposure,
+    SideFowEngagementRevalidationExposure,
+    SideFowTargetingDecisionExposure,
+    TargetingExposureBundle,
+    TargetingExposureScope,
+    decode_stored_side_fow_targeting_exposure,
+    validate_privileged_targeting_roster,
+)
 
 logger = get_logger(__name__)
 
@@ -70,6 +85,18 @@ class ReplayFrame:
     tick: int
     units: list[UnitFrame] = field(default_factory=list)
     engagements: list[EngagementFrame] = field(default_factory=list)
+    scope: TargetingExposureScope = TargetingExposureScope.PRIVILEGED_ENGINE
+    viewer_side: str | None = None
+    targeting: tuple[
+        TacticalTargetingDecision | SideFowTargetingDecisionExposure,
+        ...,
+    ] = ()
+    targeting_outcomes: tuple[
+        TacticalEngagementRevalidationOutcome
+        | SideFowEngagementRevalidationExposure,
+        ...,
+    ] = ()
+    tracks: tuple[PublicTrackExposure, ...] = ()
 
 
 # ---------------------------------------------------------------------------
@@ -80,6 +107,11 @@ class ReplayFrame:
 def extract_replay_frames(
     snapshots: list[dict[str, Any]],
     events: list[dict[str, Any]] | None = None,
+    *,
+    scope: TargetingExposureScope = (
+        TargetingExposureScope.PRIVILEGED_ENGINE
+    ),
+    viewer_side: str | None = None,
 ) -> list[ReplayFrame]:
     """Extract replay frames from simulation snapshots and events.
 
@@ -90,13 +122,31 @@ def extract_replay_frames(
         ``units`` (list of ``{unit_id, side, position: {easting, northing}, active}``).
     events:
         Optional engagement events for engagement lines.
+    scope:
+        ``PRIVILEGED_ENGINE`` for exact stored frames or ``SIDE_FOW`` for a
+        precomputed side-safe snapshot.  SIDE_FOW is never reconstructed from
+        privileged unit positions or decision target IDs.
+    viewer_side:
+        Required only for ``SIDE_FOW``.
 
     Returns
     -------
     list[ReplayFrame]
         One frame per snapshot, in tick order.
     """
-    # Index events by tick
+    if not isinstance(scope, TargetingExposureScope):
+        raise ValueError("scope must be a TargetingExposureScope")
+    if scope is TargetingExposureScope.PRIVILEGED_ENGINE:
+        if viewer_side is not None:
+            raise ValueError("viewer_side is valid only for SIDE_FOW")
+    elif not isinstance(viewer_side, str) or not viewer_side.strip():
+        raise ValueError("SIDE_FOW replay requires viewer_side")
+    if scope is TargetingExposureScope.SIDE_FOW and events:
+        raise ValueError(
+            "SIDE_FOW replay cannot consume privileged engagement events",
+        )
+
+    # Index privileged events by tick.
     event_by_tick: dict[int, list[dict[str, Any]]] = {}
     if events:
         for ev in events:
@@ -107,17 +157,75 @@ def extract_replay_frames(
     for snap in sorted(snapshots, key=lambda s: s.get("tick", 0)):
         tick = snap.get("tick", 0)
 
-        # Extract units
+        raw_units = snap.get("units", [])
+        targeting: tuple[
+            TacticalTargetingDecision | SideFowTargetingDecisionExposure,
+            ...,
+        ] = ()
+        targeting_outcomes: tuple[
+            TacticalEngagementRevalidationOutcome
+            | SideFowEngagementRevalidationExposure,
+            ...,
+        ] = ()
+        tracks: tuple[PublicTrackExposure, ...] = ()
+        if scope is TargetingExposureScope.PRIVILEGED_ENGINE:
+            stored_scope = snap.get(
+                "scope",
+                TargetingExposureScope.PRIVILEGED_ENGINE.value,
+            )
+            if stored_scope != TargetingExposureScope.PRIVILEGED_ENGINE.value:
+                raise ValueError("snapshot has an unknown exposure scope")
+            raw_targeting = snap.get("targeting", [])
+            privileged = PrivilegedTargetingExposure.from_wire(
+                engine_tick=tick,
+                value=raw_targeting,
+            )
+            targeting = privileged.decisions
+            raw_outcomes = snap.get("targeting_outcomes", [])
+            outcomes = PrivilegedEngagementRevalidationExposure.from_wire(
+                engine_tick=tick,
+                value=raw_outcomes,
+            )
+            bundle = TargetingExposureBundle(
+                privileged=privileged,
+                privileged_engagement_revalidations=outcomes,
+                side_fow_available=False,
+                sides=(),
+            )
+            validate_privileged_targeting_roster(
+                exposure=bundle,
+                authoritative_unit_frames=raw_units,
+            )
+            targeting_outcomes = outcomes.outcomes
+        else:
+            decoded = decode_stored_side_fow_targeting_exposure(
+                engine_tick=tick,
+                viewer_side=viewer_side,
+                stored_frame=snap,
+            )
+            public = decoded.exposure
+            raw_units = decoded.unit_frames
+            targeting = public.decisions
+            targeting_outcomes = public.engagement_revalidations
+            tracks = public.tracks
+
+        # Extract the already scoped unit snapshot.
         unit_frames: list[UnitFrame] = []
-        for u in snap.get("units", []):
+        for u in raw_units:
             pos = u.get("position", {})
+            unit_side = u.get("side", "")
+            if (
+                scope is TargetingExposureScope.SIDE_FOW
+                and unit_side != viewer_side
+            ):
+                raise ValueError("SIDE_FOW snapshot contains another side's unit")
             unit_frames.append(
                 UnitFrame(
-                    unit_id=u.get("unit_id", ""),
-                    side=u.get("side", ""),
-                    x=pos.get("easting", 0.0),
-                    y=pos.get("northing", 0.0),
-                    active=u.get("active", True),
+                    unit_id=u.get("unit_id", u.get("id", "")),
+                    side=unit_side,
+                    x=pos.get("easting", u.get("x", 0.0)),
+                    y=pos.get("northing", u.get("y", 0.0)),
+                    active=u.get("active", u.get("s", 0) == 0),
                 )
             )
 
@@ -134,7 +242,16 @@ def extract_replay_frames(
                 )
             )
 
-        frames.append(ReplayFrame(tick=tick, units=unit_frames, engagements=eng_frames))
+        frames.append(ReplayFrame(
+            tick=tick,
+            units=unit_frames,
+            engagements=eng_frames,
+            scope=scope,
+            viewer_side=viewer_side,
+            targeting=targeting,
+            targeting_outcomes=targeting_outcomes,
+            tracks=tracks,
+        ))
 
     return frames
 
@@ -179,15 +296,25 @@ def create_replay(
     # Collections for scatter
     scatter_objs: dict[str, Any] = {}
     destroyed_scatter: Any = None
+    track_scatter: Any = None
     engagement_lines: list[Any] = []
 
     def init():
-        nonlocal destroyed_scatter
+        nonlocal destroyed_scatter, track_scatter
         for side, color in cfg.side_colors.items():
             scatter_objs[side] = ax.scatter([], [], c=color, s=50, label=side, zorder=5)
         destroyed_scatter = ax.scatter([], [], c="black", marker="x", s=40, zorder=4, label="Destroyed")
+        track_scatter = ax.scatter(
+            [],
+            [],
+            c="#AA4499",
+            marker="D",
+            s=45,
+            zorder=6,
+            label="FOW track",
+        )
         ax.legend(loc="upper right", fontsize=8)
-        return list(scatter_objs.values()) + [destroyed_scatter]
+        return list(scatter_objs.values()) + [destroyed_scatter, track_scatter]
 
     def update(frame_idx):
         nonlocal engagement_lines
@@ -225,6 +352,14 @@ def create_replay(
         destroyed_scatter.set_offsets(
             np.column_stack([destroyed_x, destroyed_y]) if destroyed_x else np.empty((0, 2))
         )
+        track_scatter.set_offsets(
+            np.column_stack([
+                [track.easting_m for track in frame.tracks],
+                [track.northing_m for track in frame.tracks],
+            ])
+            if frame.tracks
+            else np.empty((0, 2))
+        )
 
         # Draw engagement lines
         for eng in frame.engagements:
@@ -236,7 +371,11 @@ def create_replay(
             )
             engagement_lines.append(line)
 
-        return list(scatter_objs.values()) + [destroyed_scatter] + engagement_lines
+        return (
+            list(scatter_objs.values())
+            + [destroyed_scatter, track_scatter]
+            + engagement_lines
+        )
 
     anim = FuncAnimation(
         fig, update, init_func=init,

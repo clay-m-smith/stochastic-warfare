@@ -3,7 +3,8 @@
 ## Status
 
 Verified Phase 105 contract, extended by the completed Phase 114 era-runtime
-contract and format-114 checkpoint boundary.
+contract and completed Phase 115 tactical-targeting format-115 checkpoint
+boundary.
 
 ## Purpose
 
@@ -16,12 +17,12 @@ validated effective scenario configuration and repository/data-catalog
 revision. Checkpoint restore replaces mutable state; it does not rebuild engine
 topology or reinterpret a different scenario.
 
-`SimulationEngine` writes checkpoint format version `114`. Any explicit version
-other than `114`, including `113`, is rejected before runtime mutation. An
+`SimulationEngine` writes checkpoint format version `115`. Any explicit version
+other than `115`, including `114`, is rejected before runtime mutation. An
 absent version selects the bounded legacy-migration path described below; an
 explicitly present `null` value is malformed, not legacy.
 
-For version `114`, top-level engine keys and context-state keys must exactly
+For version `115`, top-level engine keys and context-state keys must exactly
 match the compatible target runtime. Missing or extra keys fail before
 mutation. Serialized scenario and reinforcement configurations use type-aware
 JSON equality, so booleans cannot masquerade as integers and integers cannot
@@ -66,6 +67,12 @@ Restore must:
    reinforcement without consuming RNG, then restore its exact mutable
    attachment state.
 
+Current and bounded versionless restore apply the same semantic reuse
+preflight before mutating an existing same-ID unit: exact concrete class,
+unit type, domain, ordered equipment IDs, names, and categories must agree.
+Legacy migration does not permit a same-type object to be mutated first and
+rejected later by its retained live loadout bindings.
+
 The checkpoint's effective scenario configuration must match the runtime
 configuration. Weapon and sensor instance counts, ordering, and identities must
 match for every non-empty serialized loadout. An empty serialized loadout needs
@@ -93,7 +100,7 @@ duration under that same contract, the saved clock start must equal the
 scenario start, and current time cannot exceed the executable horizon.
 
 Missing, extra, malformed, type-aliased, or different era contract data fails
-atomically. A versionless checkpoint cannot contain the format-114 key and may
+atomically. A versionless checkpoint cannot contain the era-contract key and may
 restore only into a target whose captured era declares no physics or cadence
 override. It cannot infer historical behavior from a current registry entry.
 Active non-default medical treatment and maintenance repair state remains
@@ -111,7 +118,7 @@ but owns no current unit state.
 Current context state contains exactly one `morale_runtime` key. Its value is a
 strict envelope with exact `active_records` and `suspended_archives` keys, or
 `null` only for a deliberately minimal context whose roster, active routes, and
-aggregation topology are all empty. Current format 114 contains no separate
+aggregation topology are all empty. Current format 115 contains no separate
 `morale_states` or `morale_machine` current-state copy.
 
 Each active record preserves typed current state, optional finite non-negative
@@ -142,6 +149,34 @@ Initial and dynamic units register through the same runtime boundary using each
 side's validated `morale_initial`. Unknown states, foreign or duplicate IDs,
 missing active records, malformed archives, impossible times, and incompatible
 status combinations are corrupt checkpoint data and fail before commit.
+
+## Aggregation state
+
+An aggregation checkpoint is one strict envelope containing the exact
+`AggregationConfig`, monotonic next aggregate ordinal, and canonical active
+aggregate archives. Each archive remains detached from public state/property
+reads and retains the side, domain, original roster indexes, complete supported
+base-unit snapshots, and derived proxy summary needed for exact reconstruction.
+Candidate selection is canonical by side, unit type, and unit ID; equivalent
+side-map insertion orders cannot change aggregate IDs or transition order.
+
+An active aggregate may restore only into a present `AggregationEngine` whose
+configuration exactly equals the persisted configuration and whose
+`enable_aggregation` field is true. A missing, disabled, or differently
+configured owner rejects before clock, RNG, roster, equipment, morale, or any
+other context state mutates. An unchanged supported proxy and its morale
+archive must therefore always retain a live owner capable of executing the
+future disaggregation transition.
+
+The supported compatibility transaction is deliberately fail-closed. It
+coordinates only the exact aggregation, morale/rout, targeting-registration,
+and empty runtime-loadout owners. Every other non-null owner in the
+authoritative context checkpoint registry rejects before aggregation,
+disaggregation, capture, or restore; compatibility fixtures conservatively
+reject every unrecognized `*_engine` as well. This prevents CBRN, planning,
+ROE, detection, EW, carrier, indirect-fire, missile, or future per-unit state
+from retaining constituent IDs while an unregistered aggregate proxy enters
+the roster. General owner-state propagation remains REM-016.
 
 ## RNG and derived state
 
@@ -183,6 +218,61 @@ bound before committing. The diagnostics are observational: they do not select
 movement, consume RNG, or write positions. Versionless state may omit this
 owner only at tick zero before either the checkpoint or target diagnostics has
 observations.
+
+## Tactical-targeting state
+
+Format 115 contains one strict `tactical_targeting` envelope owned by the exact
+`TacticalTargetingRuntime` bound to the context, engine, and battle manager. It
+persists the default-on enablement value, default visibility bound, registered
+unit/side topology, current interval tick and elapsed time, published battle
+IDs, immutable per-battle pictures and decisions, and post-movement engagement
+revalidation outcomes. Live interval, published IDs, pictures, and
+revalidations occupy one immutable runtime snapshot so complete multi-battle
+publication cannot expose a prefix. Every `SimulationEngine`, including one with an empty
+roster, requires this owner so an engine-produced current checkpoint cannot
+omit the envelope and then fail its own restore contract. Decisions retain
+exact target, weapon, ammunition,
+source-equipment, sensing/contact/fire-control, range provenance, disposition,
+authorized standoff, and consumability evidence.
+
+Restore stages that envelope and cross-validates its tick/time against the
+checkpoint clock, its battle IDs and shooter memberships against staged active
+battles, its unit/side references against the restored roster, its exact source
+indexes against runtime loadout topology, its default visibility against the
+captured scenario environment, and every checkpoint-current latest decision's
+recorded visibility (including targetless decisions) against that same staged
+environment. An older retained latest picture and retained movement history
+preserve the visibility recorded for their own interval; they remain subject to
+schema, topology, attachment, catalog, and internal optical-bound validation,
+but do not claim the checkpoint-current environment and therefore pass no live
+visibility value. Restore also cross-validates the associated movement
+diagnostics. A
+missing active-battle picture, foreign target, reordered binding, impossible
+range, forged authorization, or owner-identity divergence rejects before
+mutation.
+
+Before every engine step, the authoritative roster registration check walks
+the exact `units_by_side` buckets without collapsing IDs. It rejects duplicate
+entity IDs and any unit whose declared side disagrees with its containing
+bucket, then compares the canonical unit/side map with targeting registration.
+This guard runs before clock advancement, RNG consumption, position changes,
+or recorder/event mutation.
+
+With FOW disabled, fresh restore and continuation preserve exact decisions,
+positions, movement diagnostics, revalidation, ammunition, events, and full
+checkpoint bytes. When FOW supplied a contact, restored decisions are
+deliberately historical and non-consumable: they can be exposed as prior
+evidence but cannot authorize a new hold or shot. Complete fresh continuation
+from nonempty ordinary `SideWorldView.contacts` remains REM-029 because that
+FOW-owned state is still discarded on restore; format 115 neither duplicates
+it nor claims equivalence across that boundary.
+
+The fusion envelope nevertheless persists each monotonic side-local public
+track ordinal and its bounded current fusion tracks. A gated replacement
+commits the next ordinal/track before removing its predecessor, and a failed
+replacement leaves both unchanged. This preserves never-reused opaque fusion
+identity but does not reconstruct the separate ordinary `SideWorldView`
+contact record or close REM-029.
 
 ## Runtime loadout topology
 
@@ -299,9 +389,9 @@ The detailed contract is
 
 ## Compatibility
 
-- Current engine checkpoints contain `checkpoint_version: 114`; an unknown,
+- Current engine checkpoints contain `checkpoint_version: 115`; an unknown,
   malformed, boolean, older explicit, or newer explicit version is rejected.
-  Explicit version `113` and all earlier formats do not migrate into the
+  Explicit version `114` and all earlier formats do not migrate into the
   current runtime.
 - Current reinforcement wave ordinals and morale-record enum/generation values
   use non-boolean integers. Current wave side, configured arrival time, and full
@@ -339,8 +429,8 @@ The detailed contract is
   Legacy `morale_states`/`morale_machine` inputs are accepted only through the
   explicit bounded `allow_legacy_morale=True` path. `SimulationEngine`
   additionally requires `units_by_side` for its campaign/roster preflight and
-  exactly one `era_runtime_contract` and one `morale_runtime` key for version
-  114.
+  exactly one `era_runtime_contract`, one `morale_runtime`, and one
+  `tactical_targeting` key for version 115.
 - Older unit snapshots without `unit_class` infer the class from its unique
   subclass field. A snapshot with no subclass field restores as `Unit`.
 - Unknown explicit discriminators fail; they never silently downgrade to
@@ -395,11 +485,15 @@ Completion requires:
 18. one-runtime transition, rally, melee, cascade, dynamic-registration,
     aggregation, API/campaign exposure, and exact current/legacy morale
     continuation controls;
-19. exact format-114 era-contract topology, resolution/clock agreement,
+19. exact format-115 era-contract topology, resolution/clock agreement,
     bounded override-free versionless handling, active treatment/repair
     continuation, and atomic rejection of captured source, horizon, consumer,
-    or contract drift; and
-20. relevant existing checkpoint, scenario, engine, entity, morale, logistics,
+    or contract drift;
+20. exact tactical-targeting owner/topology, no-FOW fresh continuation,
+    historical/non-consumable restored FOW decisions, movement-diagnostic
+    agreement, and atomic clock/battle/roster/loadout/range corruption
+    controls, with REM-029 explicitly excluded; and
+21. relevant existing checkpoint, scenario, engine, entity, morale, logistics,
     space, commander, movement, and indirect-fire regression suites.
 
 ## Tracked boundaries
@@ -418,6 +512,11 @@ boundary.
 Ordinary nonempty fog-of-war contact restore remains REM-029. Typed Space ISR
 queue/receipt/association equivalence must not be generalized across that
 boundary.
+
+Legacy Phase 101 `_fired_scripted_events` state is not part of format 115 and
+must not be inferred from elapsed time after restore. Typed schedule identity,
+effect receipts, fail-closed retry/commit policy, and exact-once continuation
+for the four existing scripted-action families remain REM-045 / Phase 132.
 
 The mapping registry and subsystem topology carry compatibility fingerprints,
 but checkpoint files do not embed full content hashes for every external unit,

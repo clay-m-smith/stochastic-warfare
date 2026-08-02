@@ -1,4 +1,4 @@
-import type { ReplayFrame, MapUnitFrame } from '../types/map'
+import type { MapReplayFrame, MapUnitFrame } from '../types/map'
 
 const TARGET_MIN_FRAMES = 300
 
@@ -6,11 +6,11 @@ const TARGET_MIN_FRAMES = 300
  * When a run has few captured frames (e.g. strategic-tick campaigns),
  * generate interpolated intermediate frames for smooth playback.
  */
-export function interpolateFrames(frames: ReplayFrame[]): ReplayFrame[] {
+export function interpolateFrames(frames: MapReplayFrame[]): MapReplayFrame[] {
   if (frames.length >= TARGET_MIN_FRAMES || frames.length < 2) return frames
 
   const expansionFactor = Math.ceil(TARGET_MIN_FRAMES / (frames.length - 1))
-  const result: ReplayFrame[] = []
+  const result: MapReplayFrame[] = []
 
   for (let i = 0; i < frames.length - 1; i++) {
     const f0 = frames[i]!
@@ -27,7 +27,7 @@ export function interpolateFrames(frames: ReplayFrame[]): ReplayFrame[] {
   return result
 }
 
-function lerpFrame(a: ReplayFrame, b: ReplayFrame, t: number): ReplayFrame {
+function lerpFrame(a: MapReplayFrame, b: MapReplayFrame, t: number): MapReplayFrame {
   // Build a lookup for the target frame's units
   const bMap = new Map<string, MapUnitFrame>()
   for (const u of b.units) {

@@ -35,6 +35,10 @@ class LOSResult(NamedTuple):
     grazing_distance: Meters | None  # closest clearance distance
 
 
+LOSCacheCell = tuple[int, int]
+LOSCacheKey = tuple[int, int, int, int, int, int]
+
+
 # ---------------------------------------------------------------------------
 # JIT kernel for terrain-only ray march
 # ---------------------------------------------------------------------------
@@ -185,6 +189,24 @@ class LOSEngine:
     # Public API
     # ------------------------------------------------------------------
 
+    def cache_cell(self, position: Position) -> LOSCacheCell:
+        """Return the exact grid-cell identity used by the LOS cache."""
+        return self._hm.enu_to_grid(position)
+
+    @staticmethod
+    def cache_key(
+        observer_cell: LOSCacheCell,
+        target_cell: LOSCacheCell,
+        observer_height: Meters = 1.8,
+        target_height: Meters = 0.0,
+    ) -> LOSCacheKey:
+        """Return the directed cell-and-height identity used by LOS results."""
+        obs_row, obs_col = observer_cell
+        tgt_row, tgt_col = target_cell
+        obs_h_cm = int(round(observer_height * 100))
+        tgt_h_cm = int(round(target_height * 100))
+        return (obs_row, obs_col, tgt_row, tgt_col, obs_h_cm, tgt_h_cm)
+
     def check_los(
         self,
         observer: Position,
@@ -208,12 +230,14 @@ class LOSEngine:
         """
         # Build cache key from grid-cell coordinates + quantized heights
         # (centimetre precision avoids float-key issues).
-        obs_row, obs_col = self._hm.enu_to_grid(observer)
-        tgt_row, tgt_col = self._hm.enu_to_grid(target)
-        obs_h_cm = int(round(observer_height * 100))
-        tgt_h_cm = int(round(target_height * 100))
-
-        cache_key = (obs_row, obs_col, tgt_row, tgt_col, obs_h_cm, tgt_h_cm)
+        observer_cell = self.cache_cell(observer)
+        target_cell = self.cache_cell(target)
+        cache_key = self.cache_key(
+            observer_cell,
+            target_cell,
+            observer_height,
+            target_height,
+        )
         cached = self._los_cache.get(cache_key)
         if cached is not None:
             return cached

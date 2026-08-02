@@ -24,6 +24,8 @@ from api.schemas import (
     MapUnitFrame,
     NarrativeResponse,
     ObjectiveInfo,
+    PrivilegedEngagementRevalidationOutcome,
+    PrivilegedTargetingDecision,
     ReplayFrame,
     RunDetail,
     RunFromConfigRequest,
@@ -32,9 +34,20 @@ from api.schemas import (
     RunSubmitResponse,
     RunSummary,
     SnapshotsResponse,
+    SideFowEngagementRevalidationOutcome,
+    SideFowPublicTrack,
+    SideFowTargetingDecision,
     TerrainResponse,
 )
 from stochastic_warfare.simulation.scenario import parse_campaign_scenario_config
+from stochastic_warfare.simulation.targeting_exposure import (
+    PrivilegedEngagementRevalidationExposure,
+    PrivilegedTargetingExposure,
+    TargetingExposureBundle,
+    TargetingExposureScope,
+    decode_stored_side_fow_targeting_exposure,
+    validate_privileged_targeting_roster,
+)
 
 router = APIRouter(prefix="/runs", tags=["runs"])
 
@@ -275,6 +288,124 @@ async def get_run_snapshots(run_id: str, db: Database = Depends(get_db)) -> Snap
 # ── Map data (Phase 35) ──────────────────────────────────────────────────
 
 
+def _map_unit_frame(value: object) -> MapUnitFrame:
+    """Validate one compact stored unit frame into the public API schema."""
+    if not isinstance(value, dict):
+        raise ValueError("stored unit frame must be a mapping")
+    return MapUnitFrame(
+        id=value.get("id", ""),
+        side=value.get("side", ""),
+        x=value.get("x", 0),
+        y=value.get("y", 0),
+        domain=value.get("d", 0),
+        status=value.get("s", 0),
+        heading=value.get("h", 0),
+        type=value.get("t", ""),
+        sensor_range=value.get("sr", 0.0),
+        morale=value.get("mo", 0),
+        posture=value.get("po", ""),
+        health=value.get("hp", 1.0),
+        fuel_pct=value.get("fp", 1.0),
+        ammo_pct=value.get("ap", 1.0),
+        suppression=value.get("su", 0),
+        engaged=value.get("eg", False),
+    )
+
+
+def _frame_from_storage(
+    value: object,
+    *,
+    scope: TargetingExposureScope,
+    side: str | None,
+) -> ReplayFrame:
+    """Project one stored frame without deriving SIDE_FOW from ground truth."""
+    if not isinstance(value, dict):
+        raise ValueError("stored replay frame must be a mapping")
+    tick = value.get("tick", 0)
+    stored_scope = value.get(
+        "scope",
+        TargetingExposureScope.PRIVILEGED_ENGINE.value,
+    )
+    if stored_scope != TargetingExposureScope.PRIVILEGED_ENGINE.value:
+        raise ValueError("stored frame has an unknown exposure scope")
+    if scope is TargetingExposureScope.PRIVILEGED_ENGINE:
+        raw_targeting = value.get("targeting", [])
+        if not isinstance(raw_targeting, list):
+            raise ValueError("stored privileged targeting must be a list")
+        raw_outcomes = value.get("targeting_outcomes", [])
+        if not isinstance(raw_outcomes, list):
+            raise ValueError("stored privileged targeting outcomes must be a list")
+        raw_units = value.get("units", [])
+        if not isinstance(raw_units, list):
+            raise ValueError("stored privileged units must be a list")
+        privileged = PrivilegedTargetingExposure.from_wire(
+            engine_tick=tick,
+            value=raw_targeting,
+        )
+        outcomes = PrivilegedEngagementRevalidationExposure.from_wire(
+            engine_tick=tick,
+            value=raw_outcomes,
+        )
+        bundle = TargetingExposureBundle(
+            privileged=privileged,
+            privileged_engagement_revalidations=outcomes,
+            side_fow_available=False,
+            sides=(),
+        )
+        validate_privileged_targeting_roster(
+            exposure=bundle,
+            authoritative_unit_frames=raw_units,
+        )
+        return ReplayFrame(
+            scope=scope,
+            tick=tick,
+            units=[_map_unit_frame(item) for item in raw_units],
+            detected=value.get("det", {}),
+            targeting=[
+                PrivilegedTargetingDecision.model_validate(item)
+                for item in privileged.to_wire()
+            ],
+            targeting_outcomes=[
+                PrivilegedEngagementRevalidationOutcome.model_validate(item)
+                for item in outcomes.to_wire()
+            ],
+        )
+
+    if side is None:
+        raise ValueError("SIDE_FOW projection requires side")
+    decoded = decode_stored_side_fow_targeting_exposure(
+        engine_tick=tick,
+        viewer_side=side,
+        stored_frame=value,
+    )
+    public = decoded.exposure
+    raw_units = decoded.unit_frames
+    units = [_map_unit_frame(item) for item in raw_units]
+    if any(unit.side != side for unit in units):
+        raise ValueError("SIDE_FOW unit snapshot contains another side")
+    return ReplayFrame(
+        scope=scope,
+        viewer_side=side,
+        tick=tick,
+        units=units,
+        detected={side: [track.track_id for track in public.tracks]},
+        tracks=[
+            SideFowPublicTrack.model_validate(track.to_wire())
+            for track in public.tracks
+        ],
+        side_targeting=[
+            SideFowTargetingDecision.model_validate(decision.to_wire())
+            for decision in public.decisions
+        ],
+        side_targeting_outcomes=[
+            SideFowEngagementRevalidationOutcome.model_validate(
+                outcome.to_wire(),
+            )
+            for outcome in public.engagement_revalidations
+        ],
+    )
+
+
 @router.get("/{run_id}/terrain", response_model=TerrainResponse)
 async def get_run_terrain(run_id: str, db: Database = Depends(get_db)) -> TerrainResponse:
     row = await db.get_run(run_id)
@@ -305,14 +436,54 @@ async def get_run_frames(
     run_id: str,
     start_tick: int | None = Query(None, ge=0),
     end_tick: int | None = Query(None, ge=0),
+    scope: TargetingExposureScope = Query(
+        TargetingExposureScope.PRIVILEGED_ENGINE,
+    ),
+    side: str | None = Query(None, min_length=1, max_length=200),
     db: Database = Depends(get_db),
 ) -> FramesResponse:
+    if scope is TargetingExposureScope.PRIVILEGED_ENGINE and side is not None:
+        raise HTTPException(
+            status_code=422,
+            detail="side is valid only for SIDE_FOW frame exposure",
+        )
+    if scope is TargetingExposureScope.SIDE_FOW and side is None:
+        raise HTTPException(
+            status_code=422,
+            detail="SIDE_FOW frame exposure requires side",
+        )
+    if side is not None and side != side.strip():
+        raise HTTPException(
+            status_code=422,
+            detail="side must be a trimmed identifier",
+        )
     row = await db.get_run(run_id)
     if row is None:
         raise HTTPException(status_code=404, detail=f"Run '{run_id}' not found")
     if not row.get("frames_json"):
-        return FramesResponse()
-    all_frames = json.loads(row["frames_json"])
+        if scope is TargetingExposureScope.SIDE_FOW:
+            raise HTTPException(
+                status_code=409,
+                detail="run has no stored SIDE_FOW frame snapshots",
+            )
+        return FramesResponse(scope=scope)
+    try:
+        all_frames = json.loads(row["frames_json"])
+    except (TypeError, json.JSONDecodeError) as exc:
+        raise HTTPException(
+            status_code=409,
+            detail="stored frame exposure is not valid JSON",
+        ) from exc
+    if not isinstance(all_frames, list):
+        raise HTTPException(
+            status_code=409,
+            detail="stored frame exposure must be a list",
+        )
+    if any(not isinstance(frame, dict) for frame in all_frames):
+        raise HTTPException(
+            status_code=409,
+            detail="stored frame exposure entries must be mappings",
+        )
 
     # Filter by tick range
     filtered = all_frames
@@ -321,36 +492,22 @@ async def get_run_frames(
     if end_tick is not None:
         filtered = [f for f in filtered if f.get("tick", 0) <= end_tick]
 
-    frames = [
-        ReplayFrame(
-            tick=f.get("tick", 0),
-            units=[
-                MapUnitFrame(
-                    id=u.get("id", ""),
-                    side=u.get("side", ""),
-                    x=u.get("x", 0),
-                    y=u.get("y", 0),
-                    domain=u.get("d", 0),
-                    status=u.get("s", 0),
-                    heading=u.get("h", 0),
-                    type=u.get("t", ""),
-                    sensor_range=u.get("sr", 0.0),
-                    # Phase 92: enriched state
-                    morale=u.get("mo", 0),
-                    posture=u.get("po", ""),
-                    health=u.get("hp", 1.0),
-                    fuel_pct=u.get("fp", 1.0),
-                    ammo_pct=u.get("ap", 1.0),
-                    suppression=u.get("su", 0),
-                    engaged=u.get("eg", False),
-                )
-                for u in f.get("units", [])
-            ],
-            detected=f.get("det", {}),
-        )
-        for f in filtered
-    ]
-    return FramesResponse(frames=frames, total_frames=len(all_frames))
+    try:
+        frames = [
+            _frame_from_storage(frame, scope=scope, side=side)
+            for frame in filtered
+        ]
+    except (TypeError, ValueError) as exc:
+        raise HTTPException(
+            status_code=409,
+            detail=f"stored frame exposure is invalid: {exc}",
+        ) from exc
+    return FramesResponse(
+        scope=scope,
+        viewer_side=side,
+        frames=frames,
+        total_frames=len(all_frames),
+    )
 
 
 # ── WebSocket progress ───────────────────────────────────────────────────

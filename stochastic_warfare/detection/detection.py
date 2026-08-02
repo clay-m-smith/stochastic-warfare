@@ -8,8 +8,11 @@ complementary error function.
 
 from __future__ import annotations
 
+import json
 import math
-from typing import Any, NamedTuple
+import threading
+from dataclasses import dataclass
+from typing import Any, NamedTuple, TypeAlias
 
 import numpy as np
 from pydantic import BaseModel
@@ -164,6 +167,46 @@ class DetectionResult(NamedTuple):
     bearing_deg: float
 
 
+@dataclass(frozen=True, slots=True)
+class DetectionScanIdentity:
+    """Stable owner identity for one sensor attachment's dwell history.
+
+    Fog-of-war scanning supplies the exact side, observer unit, and authored
+    equipment index.  This prevents physically separate instances of the same
+    catalog sensor from sharing integration gain.
+    """
+
+    side: str
+    observer_unit_id: str
+    source_equipment_index: int
+
+    def __post_init__(self) -> None:
+        for value, name in (
+            (self.side, "side"),
+            (self.observer_unit_id, "observer_unit_id"),
+        ):
+            if not isinstance(value, str) or not value or value != value.strip():
+                raise ValueError(
+                    f"Detection scan identity {name} must be a non-empty "
+                    "trimmed string",
+                )
+        if (
+            isinstance(self.source_equipment_index, bool)
+            or not isinstance(self.source_equipment_index, int)
+            or self.source_equipment_index < 0
+        ):
+            raise ValueError(
+                "Detection scan identity source_equipment_index must be a "
+                "non-negative integer",
+            )
+
+
+_LegacyScanCountKey: TypeAlias = tuple[str, str]
+_ObserverScanCountKey: TypeAlias = tuple[str, str, int, str, str]
+_ScanCountKey: TypeAlias = _LegacyScanCountKey | _ObserverScanCountKey
+_OBSERVER_SCAN_STATE_PREFIX = "observer-v1:"
+
+
 # ---------------------------------------------------------------------------
 # Configuration
 # ---------------------------------------------------------------------------
@@ -256,7 +299,22 @@ class DetectionEngine:
         self._sensor_loader = sensor_loader
         self._rng = rng
         self._config = config or DetectionConfig()
-        self._scan_counts: dict[tuple[str, str], int] = {}  # (sensor_id, target_id) → count
+        # Direct DetectionEngine callers retain the historical
+        # (sensor_id, target_id) key.  Production FOW calls use the exact
+        # (side, observer_id, equipment_index, sensor_id, target_id) identity.
+        self._scan_counts: dict[_ScanCountKey, int] = {}
+        self._scan_count_lock = threading.Lock()
+
+    def __getstate__(self) -> dict[str, Any]:
+        """Exclude the process-local mutex from isolated checkpoint staging."""
+        state = self.__dict__.copy()
+        state.pop("_scan_count_lock", None)
+        return state
+
+    def __setstate__(self, state: dict[str, Any]) -> None:
+        """Restore a deepcopy with an independent scan-count mutex."""
+        self.__dict__.update(state)
+        self._scan_count_lock = threading.Lock()
 
     # ------------------------------------------------------------------
     # SNR computation per sensor type
@@ -352,7 +410,8 @@ class DetectionEngine:
 
     def reset_scan_counts(self) -> None:
         """Clear all integration gain scan counters."""
-        self._scan_counts.clear()
+        with self._scan_count_lock:
+            self._scan_counts.clear()
 
     def check_detection(
         self,
@@ -373,6 +432,7 @@ class DetectionEngine:
         transmission_loss: float | None = None,
         observer_heading_deg: float = 0.0,
         target_id: str = "",
+        scan_identity: DetectionScanIdentity | None = None,
         jam_snr_penalty_db: float = 0.0,
         rng: np.random.Generator | None = None,
     ) -> DetectionResult:
@@ -483,9 +543,27 @@ class DetectionEngine:
 
         # 5. Integration gain (dwell/scan accumulation)
         if target_id and self._config.enable_integration_gain:
-            key = (sensor.sensor_id, target_id)
-            raw_scans = self._scan_counts.get(key, 0) + 1
-            self._scan_counts[key] = raw_scans
+            key: _ScanCountKey
+            if scan_identity is None:
+                # Compatibility for direct subsystem consumers.  FOW always
+                # supplies an observer-local identity below its public update
+                # boundary.
+                key = (sensor.sensor_id, target_id)
+            else:
+                if not isinstance(scan_identity, DetectionScanIdentity):
+                    raise TypeError(
+                        "scan_identity must be a DetectionScanIdentity",
+                    )
+                key = (
+                    scan_identity.side,
+                    scan_identity.observer_unit_id,
+                    scan_identity.source_equipment_index,
+                    sensor.sensor_id,
+                    target_id,
+                )
+            with self._scan_count_lock:
+                raw_scans = self._scan_counts.get(key, 0) + 1
+                self._scan_counts[key] = raw_scans
             n_scans = min(raw_scans, self._config.max_integration_scans)
             if n_scans > 1:
                 gain_db = 5.0 * math.log10(n_scans)
@@ -536,17 +614,90 @@ class DetectionEngine:
     # State persistence
     # ------------------------------------------------------------------
 
+    @staticmethod
+    def _scan_count_state_key(key: _ScanCountKey) -> str:
+        if len(key) == 2:
+            return f"{key[0]}:{key[1]}"
+        return _OBSERVER_SCAN_STATE_PREFIX + json.dumps(
+            key,
+            ensure_ascii=False,
+            separators=(",", ":"),
+        )
+
+    @staticmethod
+    def _scan_count_key_from_state(key_str: str) -> _ScanCountKey:
+        if key_str.startswith(_OBSERVER_SCAN_STATE_PREFIX):
+            try:
+                raw = json.loads(
+                    key_str.removeprefix(_OBSERVER_SCAN_STATE_PREFIX),
+                )
+            except (json.JSONDecodeError, TypeError) as exc:
+                raise ValueError(
+                    "Observer scan-count state key is invalid",
+                ) from exc
+            if (
+                not isinstance(raw, list)
+                or len(raw) != 5
+                or not all(isinstance(value, str) for value in (*raw[:2], *raw[3:]))
+                or isinstance(raw[2], bool)
+                or not isinstance(raw[2], int)
+                or raw[2] < 0
+            ):
+                raise ValueError(
+                    "Observer scan-count state key has invalid identity fields",
+                )
+            identity = DetectionScanIdentity(raw[0], raw[1], raw[2])
+            sensor_id, target_id = raw[3], raw[4]
+            if not sensor_id or not target_id:
+                raise ValueError(
+                    "Observer scan-count sensor and target IDs must be non-empty",
+                )
+            return (
+                identity.side,
+                identity.observer_unit_id,
+                identity.source_equipment_index,
+                sensor_id,
+                target_id,
+            )
+        try:
+            sensor_id, target_id = key_str.split(":", 1)
+        except ValueError as exc:
+            raise ValueError("Legacy scan-count state key is invalid") from exc
+        if not sensor_id or not target_id:
+            raise ValueError(
+                "Legacy scan-count sensor and target IDs must be non-empty",
+            )
+        return (sensor_id, target_id)
+
     def get_state(self) -> dict[str, Any]:
+        with self._scan_count_lock:
+            serialized_counts = {
+                state_key: count
+                for state_key, count in sorted(
+                    (
+                        (self._scan_count_state_key(key), count)
+                        for key, count in self._scan_counts.items()
+                    ),
+                )
+            }
         return {
             "rng_state": self._rng.bit_generator.state,
-            "scan_counts": {
-                f"{k[0]}:{k[1]}": v for k, v in self._scan_counts.items()
-            },
+            "scan_counts": serialized_counts,
         }
 
     def set_state(self, state: dict[str, Any]) -> None:
         self._rng.bit_generator.state = state["rng_state"]
-        self._scan_counts.clear()
+        staged_counts: dict[_ScanCountKey, int] = {}
         for key_str, count in state.get("scan_counts", {}).items():
-            sensor_id, target_id = key_str.split(":", 1)
-            self._scan_counts[(sensor_id, target_id)] = count
+            key = self._scan_count_key_from_state(key_str)
+            if (
+                isinstance(count, bool)
+                or not isinstance(count, int)
+                or count <= 0
+            ):
+                raise ValueError("Detection scan count must be a positive integer")
+            if key in staged_counts:
+                raise ValueError("Duplicate detection scan-count identity")
+            staged_counts[key] = count
+        with self._scan_count_lock:
+            self._scan_counts = staged_counts

@@ -356,7 +356,10 @@ The dedicated typed space-domain action queue is **APPROVED WITH NOTES** as
 the smallest coherent Phase 110 design. Generic C2 orders and
 `scripted_events` lack the required typed payload, stable logical clock,
 checkpointed action state, and explicit target semantics. The design verdict
-does not establish implementation completeness or phase status.
+does not establish implementation completeness or phase status. The bounded
+repair for the four existing scenario-action families is now tracked as
+[REM-045](../remediation-backlog.md#rem-045-scripted-scenario-actions-lack-a-typed-exact-once-runtime-owner)
+/ Phase 132.
 
 ## Open decisions
 

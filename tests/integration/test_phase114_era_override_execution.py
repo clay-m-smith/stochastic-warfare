@@ -353,7 +353,7 @@ def test_minor_treatment_override_changes_production_completion_time(
     assert omitted_casualty.outcome is None
 
 
-def test_checkpoint_exposes_effective_format_114_contract(
+def test_checkpoint_exposes_effective_format_115_contract(
     tmp_path: Path,
 ) -> None:
     data = _scenario_data()
@@ -364,7 +364,7 @@ def test_checkpoint_exposes_effective_format_114_contract(
     )
     state = SimulationEngine(context).get_state()
 
-    assert state["checkpoint_version"] == 114
+    assert state["checkpoint_version"] == 115
     assert set(state["context"]["era_runtime_contract"]) == {
         "selected_registry_id",
         "era",

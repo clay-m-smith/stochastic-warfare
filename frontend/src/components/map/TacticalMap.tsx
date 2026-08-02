@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import type { MapUnitFrame, ReplayFrame, TerrainData, EngagementArc } from '../../types/map'
+import type { MapUnitFrame, MapReplayFrame, TerrainData, EngagementArc } from '../../types/map'
 import { useViewportControls } from './useViewportControls'
 import { LAND_COVER_COLORS, worldToScreen, screenToWorld, getVisibleCellRange, applyElevationShading } from '../../lib/terrain'
 import { drawUnit, hitTestUnit, type OverlayOptions } from '../../lib/unitRendering'
@@ -20,7 +20,7 @@ function formatPlaybackTime(seconds: number): string {
 
 interface TacticalMapProps {
   terrain: TerrainData
-  frames: ReplayFrame[]
+  frames: MapReplayFrame[]
   engagementArcs?: EngagementArc[]
   onTickChange?: (tick: number) => void
   durationS?: number

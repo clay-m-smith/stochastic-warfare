@@ -15,6 +15,9 @@ from api.database import Database
 from api.main import create_app
 from api.run_manager import RunManager
 from stochastic_warfare.simulation.scenario import ScenarioLoader
+from stochastic_warfare.simulation.tactical_targeting import (
+    TacticalTargetingRuntime,
+)
 
 
 # ---------------------------------------------------------------------------
@@ -66,6 +69,19 @@ class _MockUnit:
             self.personnel = [_MockPersonnel(True), _MockPersonnel(True)]
 
 
+def _targeting_runtime(
+    units_by_side: dict[str, list[_MockUnit]],
+) -> TacticalTargetingRuntime:
+    return TacticalTargetingRuntime(
+        sensing_aware_standoff_enabled=False,
+        unit_sides={
+            unit.entity_id: side
+            for side, units in units_by_side.items()
+            for unit in units
+        },
+    )
+
+
 def test_capture_frame_enriched_fields():
     """_capture_frame returns enriched fields when state dicts provided."""
     unit = _MockUnit(entity_id="u1", posture_name="DEFENSIVE", fuel=0.6,
@@ -76,6 +92,8 @@ def test_capture_frame_enriched_fields():
         fog_of_war=None,
         unit_weapons={},
         morale_states={},
+        cal_flat={},
+        tactical_targeting=_targeting_runtime({"blue": [unit]}),
     )
     morale_states = {"u1": SimpleNamespace(value=1)}  # SHAKEN
     suppression_states = {"u1": SimpleNamespace(value=0.5)}  # 50% -> level 2
@@ -107,6 +125,8 @@ def test_capture_frame_defaults_without_enrichment():
         units_by_side={"blue": [unit]},
         unit_sensors={},
         fog_of_war=None,
+        cal_flat={},
+        tactical_targeting=_targeting_runtime({"blue": [unit]}),
     )
 
     frame = RunManager._capture_frame(tick=1, ctx=ctx)
@@ -124,6 +144,8 @@ def test_capture_frame_no_personnel():
         units_by_side={"blue": [unit]},
         unit_sensors={},
         fog_of_war=None,
+        cal_flat={},
+        tactical_targeting=_targeting_runtime({"blue": [unit]}),
     )
 
     frame = RunManager._capture_frame(

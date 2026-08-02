@@ -1,4 +1,4 @@
-name: Paired production benchmarks
+name: Production benchmark integrity
 
 on:
   push:
@@ -18,7 +18,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: paired-benchmark-${{ github.ref }}
+  group: benchmark-integrity-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -56,7 +56,7 @@ jobs:
           if-no-files-found: error
 
   easting:
-    name: 73 Easting paired gate
+    name: 73 Easting workload transition
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -71,29 +71,29 @@ jobs:
       - name: Install locked development environment
         run: uv sync --extra dev --locked
 
-      - name: Run same-host reference/candidate pairs
+      - name: Run exact reference/candidate workload transition
         run: >-
-          uv run --no-sync python scripts/run_paired_benchmark.py
+          uv run --no-sync python scripts/run_paired_benchmark.py transition
           --scenario 73_easting
-          --artifact "${RUNNER_TEMP}/paired-73-easting.json"
+          --artifact "${RUNNER_TEMP}/transition-73-easting.json"
           --worker-timeout-seconds 300
 
-      - name: Bind comparison to clean final commit
+      - name: Bind workload transition to clean final commit
         run: >-
           uv run --no-sync python scripts/run_paired_benchmark.py verify-final
-          --artifact "${RUNNER_TEMP}/paired-73-easting.json"
+          --artifact "${RUNNER_TEMP}/transition-73-easting.json"
           --verification
-          "${RUNNER_TEMP}/paired-73-easting-final-tree.json"
+          "${RUNNER_TEMP}/transition-73-easting-final-tree.json"
           --worker-timeout-seconds 300
 
-      - name: Upload complete or partial comparison evidence
+      - name: Upload complete or partial workload-transition evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: paired-73-easting-${{ github.run_id }}
+          name: transition-73-easting-${{ github.run_id }}
           path: |
-            ${{ runner.temp }}/paired-73-easting.json
-            ${{ runner.temp }}/paired-73-easting-final-tree.json
+            ${{ runner.temp }}/transition-73-easting.json
+            ${{ runner.temp }}/transition-73-easting-final-tree.json
           if-no-files-found: error
           retention-days: 30
 

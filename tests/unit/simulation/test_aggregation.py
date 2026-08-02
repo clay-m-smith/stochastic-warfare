@@ -23,6 +23,9 @@ from stochastic_warfare.simulation.aggregation import (
     AggregationConfig,
     AggregationEngine,
 )
+from stochastic_warfare.simulation.tactical_targeting import (
+    TacticalTargetingRuntime,
+)
 
 from .conftest import _rng
 
@@ -106,8 +109,21 @@ def _make_agg_ctx(
         units_by_side=units_by_side,
         morale_runtime=runtime,
         morale_states=runtime.states,
-        unit_weapons={},
-        unit_sensors={},
+        unit_weapons={unit_id: () for unit_id in units_by_id},
+        unit_sensor_attachments={unit_id: () for unit_id in units_by_id},
+        unit_sensors={unit_id: () for unit_id in units_by_id},
+        equipment_resolutions={unit_id: () for unit_id in units_by_id},
+        tactical_targeting=TacticalTargetingRuntime(
+            sensing_aware_standoff_enabled=True,
+            unit_sides={
+                unit_id: (
+                    unit.side
+                    if isinstance(unit.side, str)
+                    else unit.side.value
+                )
+                for unit_id, unit in units_by_id.items()
+            },
+        ),
         stockpile_manager=None,
     )
     return ctx
@@ -144,9 +160,31 @@ class TestAggregationEngine:
         ]
         ctx = _make_agg_ctx({"blue": units})
         r1 = engine.aggregate(["u0", "u1"], ctx)
+        assert r1 is not None
+        engine.disaggregate(r1.aggregate_id, ctx)
         r2 = engine.aggregate(["u2", "u3"], ctx)
-        assert r1 is not None and r2 is not None
+        assert r2 is not None
         assert r1.aggregate_id != r2.aggregate_id
+
+    def test_second_same_side_aggregate_is_explicitly_unsupported(self):
+        cfg = AggregationConfig(
+            enable_aggregation=True,
+            min_units_to_aggregate=2,
+        )
+        engine = AggregationEngine(config=cfg, rng=_rng(), event_bus=EventBus())
+        units = [
+            _make_real_unit(f"u{i}", "blue", Position(float(i), 0, 0))
+            for i in range(4)
+        ]
+        ctx = _make_agg_ctx({"blue": units})
+        first = engine.aggregate(["u0", "u1"], ctx)
+        assert first is not None
+        before = engine.get_state()
+
+        with pytest.raises(ValueError, match="already has active aggregate"):
+            engine.aggregate(["u2", "u3"], ctx)
+
+        assert engine.get_state() == before
 
 
 # ===================================================================

@@ -31,12 +31,26 @@ from pathlib import Path
 import pytest
 import yaml
 
+from stochastic_warfare.entities.equipment import EquipmentCategory
 from stochastic_warfare.entities.base import UnitStatus
+from stochastic_warfare.simulation.equipment_mappings import (
+    EQUIPMENT_MAPPING_REGISTRY,
+)
 from stochastic_warfare.simulation.engine import EngineConfig, SimulationEngine
+from stochastic_warfare.simulation.loadouts import (
+    ReferenceKind,
+    SensorAttachmentMapping,
+    SensorModeledRole,
+    WeaponModeledRole,
+)
 from stochastic_warfare.simulation.recorder import SimulationRecorder
 from stochastic_warfare.simulation.scenario import (
     ScenarioLoader,
     VictoryConditionConfig,
+)
+from stochastic_warfare.simulation.tactical_targeting import (
+    FireControlSource,
+    TacticalTargetingDecision,
 )
 from stochastic_warfare.simulation.victory import VictoryEvaluator
 
@@ -77,9 +91,20 @@ def _run_one(seed: int, max_ticks: int = 1500) -> dict:
         victory_evaluator=victory_eval,
         recorder=recorder,
     )
+    red_unit_ids = tuple(
+        unit.entity_id for unit in ctx.units_by_side["red"]
+    )
+    c802_targeting_by_key: dict[tuple[int, str, str], TacticalTargetingDecision] = {}
     recorder.start()
-    while not engine.step():
-        pass
+    while True:
+        done = engine.step()
+        for picture in ctx.tactical_targeting.latest_pictures():
+            for unit_id in red_unit_ids:
+                decision = picture.decision_for(unit_id)
+                if decision is not None and decision.weapon_id == "c802_noor":
+                    c802_targeting_by_key[decision.key] = decision
+        if done:
+            break
     blue_units = ctx.units_by_side["blue"]
     hanit_status = blue_units[0].status if blue_units else None
     red_d = sum(1 for u in ctx.units_by_side["red"] if u.status == UnitStatus.DESTROYED)
@@ -107,6 +132,7 @@ def _run_one(seed: int, max_ticks: int = 1500) -> dict:
         "ticks": ticks,
         "events": recorder.events,
         "c802_events": c802_events,
+        "c802_targeting": tuple(c802_targeting_by_key.values()),
         "c802_rounds_before": c802_rounds_before,
         "c802_rounds_after": c802_rounds_after,
     }
@@ -153,6 +179,81 @@ class TestInsHanitScenarioLoad:
         ctx = loader.load(SCENARIO_PATH, seed=42)
         assert ctx.config.duration_hours == 2.0
 
+    def test_coastal_targeting_network_mapping_is_bounded_anti_ship_fire_control(
+        self,
+    ) -> None:
+        """The composite network is a bounded director, not a search proxy."""
+        record = EQUIPMENT_MAPPING_REGISTRY.require(
+            EquipmentCategory.SENSOR,
+            "Coastal Missile Targeting Network",
+        )
+
+        assert isinstance(record, SensorAttachmentMapping)
+        assert record.sensor_id == "ground_search_radar"
+        assert record.modeled_role is SensorModeledRole.FIRE_CONTROL_RADAR
+        assert record.compatible_weapon_roles == (
+            WeaponModeledRole.ANTI_SHIP_MISSILE,
+        )
+        assert record.modeled_max_range_m == 60_000.0
+        assert record.modeled_fov_deg == 360.0
+        assert record.reference_kind is ReferenceKind.FUNCTIONAL_ANALOGUE
+        assert record.allowed_target_ids == ("ground_search_radar",)
+        assert record.rationale is not None
+        assert record.source is not None
+        assert EQUIPMENT_MAPPING_REGISTRY.get(
+            EquipmentCategory.SENSOR,
+            "Coastal Surveillance Radar",
+        ) is None
+
+    def test_coastal_targeting_network_binds_only_the_live_c802_attachment(
+        self,
+    ) -> None:
+        """Production loading wires the network to each TEL's exact launcher."""
+        loader = ScenarioLoader(str(DATA_DIR))
+        ctx = loader.load(SCENARIO_PATH, seed=42)
+
+        for unit in ctx.units_by_side["red"]:
+            sensor_equipment = tuple(
+                equipment
+                for equipment in unit.equipment
+                if equipment.category is EquipmentCategory.SENSOR
+            )
+            assert tuple(
+                equipment.name for equipment in sensor_equipment
+            ) == ("Coastal Missile Targeting Network",)
+
+            sensor_attachments = ctx.unit_sensor_attachments[unit.entity_id]
+            assert len(sensor_attachments) == 1
+            director = sensor_attachments[0]
+            assert director.source_equipment is sensor_equipment[0]
+            assert director.sensor_id == "ground_search_radar"
+            assert director.modeled_role is SensorModeledRole.FIRE_CONTROL_RADAR
+            assert director.compatible_weapon_roles == (
+                WeaponModeledRole.ANTI_SHIP_MISSILE,
+            )
+            assert director.sensor.definition.max_range_m == 60_000.0
+            assert director.sensor.definition.fov_deg == 360.0
+
+            weapons = ctx.unit_weapons[unit.entity_id]
+            c802 = next(
+                attachment
+                for attachment in weapons
+                if attachment.weapon.weapon_id == "c802_noor"
+            )
+            assert c802.modeled_role is WeaponModeledRole.ANTI_SHIP_MISSILE
+            assert director.compatible_weapon_source_indexes == (
+                c802.source_equipment_index,
+            )
+
+            resolution = next(
+                item
+                for item in ctx.equipment_resolutions[unit.entity_id]
+                if item.source_equipment is sensor_equipment[0]
+            )
+            assert resolution.target_id == "ground_search_radar"
+            assert resolution.modeled_role is SensorModeledRole.FIRE_CONTROL_RADAR
+            assert resolution.reference_kind is ReferenceKind.FUNCTIONAL_ANALOGUE
+
 
 # ---------------------------------------------------------------------------
 # Runtime assertions (@slow)
@@ -192,3 +293,27 @@ class TestInsHanitRuntime:
             run_result["c802_rounds_after"]
             < run_result["c802_rounds_before"]
         )
+
+    def test_c802_uses_the_live_coastal_targeting_network(
+        self,
+        run_result: dict,
+    ) -> None:
+        """The production targeting decision consumes the mapped director."""
+        authorized = tuple(
+            decision
+            for decision in run_result["c802_targeting"]
+            if decision.can_engage
+        )
+        assert authorized
+        for decision in authorized:
+            assert decision.weapon_modeled_role is (
+                WeaponModeledRole.ANTI_SHIP_MISSILE
+            )
+            assert decision.fire_control_source is (
+                FireControlSource.SENSOR_ATTACHMENT
+            )
+            assert decision.fire_control_sensor_id == "ground_search_radar"
+            assert decision.fire_control_sensor_modeled_role is (
+                SensorModeledRole.FIRE_CONTROL_RADAR
+            )
+            assert decision.fire_control_range_m >= decision.distance_m > 0.0

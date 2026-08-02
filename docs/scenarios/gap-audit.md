@@ -256,7 +256,7 @@ Legend:
 | Sa'ar 5 EL/M-2221 STGR fire control | A | Adapt existing radar |
 | Sa'ar 5 Elisra NS-9003/9005 ESM | E | `esm_suite.yaml` |
 | Sa'ar 5 Rafael Deseaver chaff/decoy | N | New (or model via ESM override) |
-| Coastal surveillance radar (cueing) | E | `ground_search_radar` or `air_search_radar` |
+| Coastal missile targeting network (surveillance cueing plus battery fire control) | A | `ground_search_radar` functional analogue; explicit anti-ship fire-control role |
 
 ---
 

@@ -16,7 +16,6 @@ from stochastic_warfare.simulation.runtime import (
     AnalysisVariant,
     SimulationRuntimeFactory,
 )
-from tests.conftest import make_versionless_legacy_morale_checkpoint
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -170,23 +169,25 @@ def _reason_counts_for_unit(value: Any, unit_id: str) -> dict[str, int]:
     )
 
 
-def test_cambrai_weapon_standoff_is_not_reported_as_stuck_or_blocked() -> None:
-    """The production evaluator must expose the real Mark IV hold reason."""
+def test_cambrai_mark_iv_advance_is_not_reported_as_stuck_or_blocked() -> None:
+    """The evaluator must expose sensing-aware Mark IV movement."""
     from scripts.evaluate_scenarios import run_scenario
 
     result = run_scenario(CAMBRAI_PATH, DATA_DIR, seed=42)
 
     assert result.success, result.error
     assert result.ticks_executed == 156
-    assert result.units_that_moved == 3
-    assert result.units_that_didnt_move == 7
+    assert result.units_that_moved == 7
+    assert result.units_that_didnt_move == 3
     assert not any(issue.startswith("MANY_STUCK_UNITS") for issue in result.issues), result.issues
 
     mark_ivs = [detail for detail in result.unit_details if detail["unit_type"] == "mark_iv_tank"]
     assert len(mark_ivs) == 4
     for detail in mark_ivs:
-        assert detail["movement_disposition"] == "ENGINE_WEAPON_STANDOFF"
-        assert detail["movement_reason_counts"]["ENGINE_WEAPON_STANDOFF"] > 0
+        assert detail["movement_disposition"] == "MOVED"
+        assert detail["distance_moved"] > 1_300.0
+        assert detail["movement_reason_counts"]["MOVED"] == 156
+        assert detail["movement_reason_counts"]["ENGINE_WEAPON_STANDOFF"] == 0
         assert detail["movement_reason_counts"].get("RESOURCE_BLOCKED", 0) == 0
 
 
@@ -335,25 +336,17 @@ def test_whole_runtime_rejects_each_invalid_owner_atomically(
         ("overdue_reinforcement", "remains pending"),
     ),
 )
-@pytest.mark.parametrize(
-    "versionless",
-    (False, True),
-    ids=("schema-113", "versionless"),
-)
 def test_whole_runtime_rejects_impossible_cross_owner_state_atomically(
     corruption: str,
     message: str,
-    versionless: bool,
 ) -> None:
-    """Type-valid cross-owner contradictions fail before any live rewind."""
+    """Format-115 cross-owner contradictions fail before any live rewind."""
     scenario_path = DATA_DIR / "scenarios" / "test_campaign" / "scenario.yaml"
     source, _ = _stateful_engine(scenario_path, seed=112)
     assert source.step() is False
     assert source.step() is False
     invalid = copy.deepcopy(source.get_state())
     _corrupt_checkpoint_semantics(invalid, corruption)
-    if versionless:
-        invalid = make_versionless_legacy_morale_checkpoint(invalid)
 
     target, _ = _stateful_engine(scenario_path, seed=999_112)
     assert target.step() is False
@@ -365,7 +358,7 @@ def test_whole_runtime_rejects_impossible_cross_owner_state_atomically(
     assert target.checkpoint() == before
 
 
-def test_valid_schema112_restore_preserves_identity_and_continuation() -> None:
+def test_valid_schema115_restore_preserves_identity_and_continuation() -> None:
     """A strict valid restore remains exact, in-place, and deterministic."""
     scenario_path = DATA_DIR / "scenarios" / "test_campaign" / "scenario.yaml"
     source, _ = _stateful_engine(scenario_path, seed=112)

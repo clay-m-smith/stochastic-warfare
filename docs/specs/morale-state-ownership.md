@@ -6,10 +6,12 @@ Verified Phase 113 production contract. The corrected documentation audit and
 [Phase 113 postmortem](../devlog/phase-113.md#postmortem) passed on 2026-08-01;
 Phase 113 is complete and REM-019 is closed.
 
-Phase 114 extends the engine checkpoint to format 114 by adding the effective
-era runtime contract and clock/resolution validation. It does not change or
-duplicate the morale envelope below: current format 114 still contains exactly
-one `morale_runtime`, and `RNGManager` remains the sole MORALE-stream owner.
+Phase 114 extended the engine checkpoint to format 114 by adding the effective
+era runtime contract and clock/resolution validation. Phase 115 advances the
+current checkpoint to format 115 for tactical-targeting state. Neither change
+alters or duplicates the morale envelope below: current format 115 still
+contains exactly one `morale_runtime`, and `RNGManager` remains the sole
+MORALE-stream owner.
 
 ## Purpose and scope
 
@@ -233,6 +235,12 @@ state, status, rout, events, and outcome.
    proves aggregate morale topology and evolved-proxy rejection, not general
    unit or attachment reconstruction. REM-016 remains open for that broader
    fidelity and propagation boundary.
+6. That narrow round trip rejects every non-null context checkpoint owner not
+   explicitly coordinated by the aggregation transaction. The production
+   checkpoint registry is the authority, while minimal compatibility fixtures
+   fail closed over all `*_engine` attributes. A populated ROE, CBRN, planning,
+   detection, EW, indirect-fire, missile, or future owner cannot silently keep
+   constituent state or synthesize default aggregate state.
 
 ## Consumers and outcome effect
 
@@ -251,9 +259,10 @@ is not the causal acceptance proof for this ownership remediation.
 ## Phase 113 checkpoint format
 
 > **Current-format note:** This section records the Phase 113 format transition
-> historically. The current engine writes format 114, which preserves this
-> exact morale topology and adds the independent Phase 114 era-runtime
-> contract. Explicit format 113 now rejects as an older version.
+> historically. The current engine writes format 115, which preserves this
+> exact morale topology, retains the independent Phase 114 era-runtime
+> contract, and adds Phase 115 tactical-targeting state. Explicit formats 113
+> and 114 now reject as older versions.
 
 `SimulationEngine` advances the explicit format to `113`.
 

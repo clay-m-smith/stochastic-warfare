@@ -4,7 +4,7 @@
 
 ![Python](https://img.shields.io/badge/python-%3E%3D3.12-blue)
 ![Tests](https://img.shields.io/badge/tests-partitioned_validation-blue)
-![Phase](https://img.shields.io/badge/phase-114_COMPLETE-brightgreen)
+![Phase](https://img.shields.io/badge/phase-115_COMPLETE-brightgreen)
 
 ---
 
@@ -58,7 +58,7 @@ uv sync --locked --extra dev --extra api --extra terrain --extra mcp
 uv run --no-sync python scripts/validate_test_partitions.py \
   --output artifacts/partition-audit/manifest.json
 uv run --no-sync python scripts/run_pytest_partition.py standard \
-  --manifest artifacts/standard/manifest.json \
+  --manifest artifacts/partition-audit/manifest.json \
   --junit artifacts/standard/junit.xml --forbid-skips \
   --timeout-seconds 2700
 ```
@@ -68,20 +68,23 @@ The authoritative Python union is the audited, disjoint set `standard`,
 runs the audit plus `standard`, `api`, `e2e`, and the overlapping `terrain`
 dependency profile. Weekly/manual CI runs the three marker partitions in
 deterministic shards. `benchmark-policy` is also an overlapping focused
-profile, not a seventh partition. The routine 73 Easting paired gate uses the
-version-3 typed, morale-neutral control-plane workload; it is not evidence for
-default morale behavior or historical fidelity. Golan remains manual.
+profile, not a seventh partition. Phase 115 routes routine 73 Easting through
+a strict version-4 non-timing workload transition while retaining version-3
+runtime-input normalization. `transition_qualified` proves only the exact
+classified workload/semantic handoff; the next phase must promote the clean
+Phase 115 endpoint before ordinary paired gating resumes. It is not a speed,
+default-morale, or historical-fidelity result. Golan remains manual.
 
-The Phase 114 closure audit enumerates exactly 11,903 nodes:
-`standard` 11,445, `slow-only` 109, `benchmark-only` 62, `slow-benchmark` 4,
-API 242, and E2E 41. All 11,903 passed with zero failures/errors/skips and six
-declared warnings. The API partition ran on the host because this sandbox
-currently loses an `aiosqlite` worker-thread wakeup before schema creation;
-identical focused and full host runs passed, and hosted CI remains the final
-environment control. The owner accepted the dispersed timing result only as
-contention-qualified evidence and deferred clean confirmation until all cores
-are free; no uncontended pass is claimed. Phase 114 and Block 12 are complete,
-and REM-018 is closed. Exact evidence is in the [Phase 114 devlog](devlog/phase-114.md).
+The Phase 115 closure audit enumerates exactly 12,248 nodes:
+`standard` 11,743, `slow-only` 110, `benchmark-only` 87, `slow-benchmark` 4,
+API 263, and E2E 41. All 11,743 standard nodes and every complete benchmark
+profile passed; data, determinism, scenario, frontend, static, and
+documentation gates also passed. The owner accepted contended slow/API/E2E
+evidence only with an explicit qualification: capped runs are not called
+passes, the exact real database/API persistence witness passed on the host,
+and Debecka's 4/10 result remains assigned to REM-030. Hosted CI remains the
+final independent environment control. Phase 115 is complete and REM-028 is
+closed. Exact evidence is in the [Phase 115 devlog](devlog/phase-115.md).
 
 See the [Getting Started Guide](guide/getting-started.md) for a complete tutorial including running your first scenario.
 
@@ -115,18 +118,34 @@ See the [Getting Started Guide](guide/getting-started.md) for a complete tutoria
 | Block 10 | 92--97 | UI depth & engine exposure — analytics, frame enrichment, metadata | **Complete** |
 | Block 11 | 98--104 | Golden scenarios and deployment polish | **Complete** |
 | Block 12 | 105--114 | Integrity remediation against production-path evidence | **Complete** |
-| Block 13 | 115--127 | Queued integrity follow-ups | **Planned** |
+| Block 13 | 115--127 | Integrity follow-ups | **Active** |
+| Block 14 | 128--130 | Targeting authorization, topology, and selection follow-ups | **Planned** |
+| Block 15 | 131 | Sensor covariance and predictive-tracking integrity | **Planned** |
+| Block 16 | 132 | Scripted scenario action integrity | **Planned** |
 
-Phases 105 through 114 and Block 12 are complete. Phase 114 implements the
-strict effective era-runtime and format-114 checkpoint contract, and REM-018
-is closed. Its timing result carries an explicit owner-approved contention
-qualification. See the
-[Phase 114 devlog](devlog/phase-114.md), the
-[era override specification](specs/era-override-execution.md), and the
+Phases 105 through 115 and Block 12 are complete. Phase 115 implements the
+strict sensing-aware targeting and format-115 checkpoint/exposure contract,
+and REM-028 is closed. Its long-run evidence carries an explicit owner-approved
+contention qualification. See the
+[Phase 115 devlog](devlog/phase-115.md), the
+[targeting specification](specs/sensing-aware-tactical-standoff.md), and the
 [remediation backlog](remediation-backlog.md) for exact evidence and known
 coverage boundaries. The YAML data catalog defines units, weapons, ammunition
 types, sensors, signatures, doctrines, commanders, formation templates, and
 modern plus historical scenarios across five eras.
+
+Block 13 is active with Phase 116 / REM-029 next and unstarted. Phase 115 also
+records REM-041 through REM-043 for the planned Block 14 follow-ups rather than
+absorbing them into its claim.
+REM-044 separately assigns sourced sensor covariance and atomic predictive
+tracking to Phase 131 in planned Block 15.
+REM-045 assigns typed, fail-closed, exact-once Fallujah scripted actions to
+Phase 132 in planned Block 16; Phase 115's 200-second current regression does
+not reach the first authored action at H+7.
+The changed 73 Easting loadout/configuration identity is handled by the strict
+version-4 non-timing transition contract; it cannot be reported as a paired
+performance pass and must be promoted from the clean Phase 115 commit before
+the next phase closes.
 
 ## License
 

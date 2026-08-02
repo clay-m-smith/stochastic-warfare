@@ -795,16 +795,56 @@ class RunManager:
         detected: dict[str, list[str]] = {}
         fow = getattr(ctx, "fog_of_war", None)
         if fow is not None:
+            peek_world_view = getattr(fow, "peek_world_view", None)
+            if not callable(peek_world_view):
+                raise ValueError(
+                    "fog-of-war owner has no non-mutating world-view boundary",
+                )
             for side in ctx.units_by_side:
-                try:
-                    wv = fow.get_world_view(side)
-                    detected[side] = sorted(wv.contacts.keys())
-                except Exception:
-                    pass
+                world_view = peek_world_view(side)
+                detected[side] = (
+                    []
+                    if world_view is None
+                    else sorted(world_view.contacts.keys())
+                )
 
         result: dict[str, Any] = {"tick": tick, "units": units}
         if detected:
             result["det"] = detected
+        # Phase 115: persist the exact committed targeting snapshot once and
+        # precompute side-safe views while the authoritative FOW association
+        # still exists.  Stored legacy/full frames remain explicitly
+        # privileged; SIDE_FOW consumers never derive a view from them.
+        from stochastic_warfare.simulation.targeting_exposure import (
+            capture_targeting_exposure,
+        )
+        from stochastic_warfare.simulation.tactical_targeting import (
+            TacticalTargetingRuntime,
+        )
+
+        cal_flat = getattr(ctx, "cal_flat", {})
+        if not isinstance(cal_flat, Mapping):
+            raise ValueError("runtime calibration must be a mapping")
+        try:
+            targeting_runtime = ctx.tactical_targeting
+        except AttributeError as exc:
+            raise ValueError(
+                "frame capture requires a TacticalTargetingRuntime owner",
+            ) from exc
+        if not isinstance(targeting_runtime, TacticalTargetingRuntime):
+            raise ValueError(
+                "frame capture requires a TacticalTargetingRuntime owner",
+            )
+        exposure = capture_targeting_exposure(
+            engine_tick=tick,
+            runtime=targeting_runtime,
+            fog_of_war=fow,
+            fog_of_war_enabled=bool(
+                cal_flat.get("enable_fog_of_war", False),
+            ),
+            viewer_sides=tuple(ctx.units_by_side),
+        )
+        result.update(exposure.to_wire(unit_frames=units))
         return result
 
     # ── Batch ────────────────────────────────────────────────────────

@@ -13,6 +13,7 @@ and state collection.
 from __future__ import annotations
 
 import json
+import math
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from enum import IntEnum
@@ -30,11 +31,17 @@ from stochastic_warfare.simulation.campaign import CampaignConfig, CampaignManag
 from stochastic_warfare.simulation.movement_diagnostics import MovementStage
 from stochastic_warfare.simulation.recorder import SimulationRecorder
 from stochastic_warfare.simulation.scenario import SimulationContext
+from stochastic_warfare.simulation.tactical_targeting import (
+    TacticalTargetingRuntime,
+    TargetingInterval,
+    targeting_checkpoint_interval_from_state,
+    targeting_visibility_bound_m,
+)
 from stochastic_warfare.simulation.victory import VictoryEvaluator, VictoryResult
 
 logger = get_logger(__name__)
 
-_CHECKPOINT_VERSION = 114
+_CHECKPOINT_VERSION = 115
 _TERMINAL_CONDITION_TYPES = frozenset({
     "armistice",
     "attrition_ratio",
@@ -46,6 +53,47 @@ _TERMINAL_CONDITION_TYPES = frozenset({
     "territory_control",
     "time_expired",
 })
+
+
+def _checkpoint_targeting_memberships(
+    interval: TargetingInterval | None,
+    *,
+    battle_plan: Any,
+    checkpoint_tick: int,
+    checkpoint_elapsed_s: float,
+) -> tuple[dict[str, tuple[str, ...]] | None, bool]:
+    """Cross-check persisted targeting battles against staged battle state."""
+    active_ids = {
+        battle_id
+        for battle_id, battle in battle_plan.battles.items()
+        if battle.active
+    }
+    if interval is None:
+        return None, False
+    if (interval.engine_tick == checkpoint_tick) != (
+        interval.logical_time_s == checkpoint_elapsed_s
+    ):
+        raise ValueError(
+            "Checkpoint targeting tick/time disagree with the checkpoint clock",
+        )
+    interval_is_current = (
+        interval.engine_tick == checkpoint_tick
+        and interval.logical_time_s == checkpoint_elapsed_s
+    )
+    memberships = dict(interval.battle_memberships)
+    for battle_id, unit_ids in memberships.items():
+        battle = battle_plan.battles.get(battle_id)
+        if battle is None or set(unit_ids) != set(battle.unit_ids):
+            raise ValueError(
+                "Checkpoint targeting membership disagrees with staged "
+                f"battle {battle_id!r}",
+            )
+    if interval_is_current and not active_ids <= set(memberships):
+        raise ValueError(
+            "Checkpoint targeting state omits active battles: "
+            f"{sorted(active_ids - set(memberships))!r}",
+        )
+    return memberships, interval_is_current
 
 
 # ---------------------------------------------------------------------------
@@ -143,6 +191,15 @@ class SimulationEngine:
         self._ctx = ctx
         self._config = config or EngineConfig()
         self._strict_mode = strict_mode
+        self._targeting_runtime_owner = ctx.tactical_targeting
+        if not isinstance(
+            self._targeting_runtime_owner,
+            TacticalTargetingRuntime,
+        ):
+            raise RuntimeError(
+                "A simulation engine runtime requires tactical-targeting "
+                "ownership, including for an empty roster",
+            )
 
         # Sub-managers
         core_rng = ctx.rng_manager.get_stream(
@@ -163,6 +220,14 @@ class SimulationEngine:
             ctx.event_bus,
             battle_config,
             movement_diagnostics=ctx.movement_diagnostics,
+        )
+        self._targeting_default_visibility_m = targeting_visibility_bound_m(
+            calibration={},
+            default_visibility_m=self._battle._config.default_visibility_m,
+            weather_visibility_m=None,
+        )
+        ctx.targeting_default_visibility_m = (
+            self._targeting_default_visibility_m
         )
         self._victory = victory_evaluator
         self._recorder = recorder
@@ -206,7 +271,7 @@ class SimulationEngine:
 
         # Phase 63b: subscribe to logistics events if enabled
         self._register_event_handlers()
-        self._validate_era_runtime_binding()
+        self._validate_runtime_bindings()
 
     # ── Properties ────────────────────────────────────────────────────
 
@@ -235,10 +300,44 @@ class SimulationEngine:
         """The event recorder, if any."""
         return self._recorder
 
-    def _validate_era_runtime_binding(self) -> None:
-        """Reject any cadence or domain-config drift before work or state IO."""
+    def _validate_runtime_bindings(self) -> None:
+        """Reject owner, cadence, or domain-config drift before all work."""
         self._ctx.validate_era_runtime_bindings()
         self._validate_clock_resolution_binding()
+        if self._ctx.tactical_targeting is not self._targeting_runtime_owner:
+            raise RuntimeError(
+                "SimulationContext tactical-targeting owner changed after "
+                "engine construction",
+            )
+        # The owner object alone is insufficient: its registered unit/side
+        # topology is behavior-affecting mutable state.  Validate the bounded
+        # registration before a step can advance the clock or consume RNG.
+        self._ctx._validate_targeting_registration()
+        try:
+            context_default = targeting_visibility_bound_m(
+                calibration={},
+                default_visibility_m=(
+                    self._ctx.targeting_default_visibility_m
+                ),
+                weather_visibility_m=None,
+            )
+            battle_default = targeting_visibility_bound_m(
+                calibration={},
+                default_visibility_m=self._battle._config.default_visibility_m,
+                weather_visibility_m=None,
+            )
+        except ValueError as exc:
+            raise RuntimeError(
+                "Targeting default visibility binding became invalid",
+            ) from exc
+        if (
+            context_default != self._targeting_default_visibility_m
+            or battle_default != self._targeting_default_visibility_m
+        ):
+            raise RuntimeError(
+                "Targeting default visibility binding changed after engine "
+                "construction",
+            )
 
     def _validate_clock_resolution_binding(self) -> None:
         """Require the live clock to match the engine's bound resolution."""
@@ -403,7 +502,7 @@ class SimulationEngine:
         bool
             ``True`` if the simulation is over (victory or max ticks).
         """
-        self._validate_era_runtime_binding()
+        self._validate_runtime_bindings()
         if self._last_victory.game_over:
             return True
 
@@ -738,6 +837,7 @@ class SimulationEngine:
             else ()
         )
         if active:
+            active = self._battle.prepare_tactical_interval(ctx, active, dt)
             logistics_activity_unit_ids.update(
                 unit_id
                 for battle in active
@@ -1487,7 +1587,7 @@ class SimulationEngine:
 
     def get_state(self) -> dict[str, Any]:
         """Capture full engine state for checkpointing."""
-        self._validate_era_runtime_binding()
+        self._validate_runtime_bindings()
         if self._ctx.morale_runtime is None:
             if self._ctx.all_units():
                 raise RuntimeError(
@@ -1532,7 +1632,7 @@ class SimulationEngine:
 
     def set_state(self, state: dict[str, Any]) -> None:
         """Restore engine state from a checkpoint dict."""
-        self._validate_era_runtime_binding()
+        self._validate_runtime_bindings()
         if not isinstance(state, dict):
             raise ValueError("Checkpoint engine state must be a mapping")
         has_checkpoint_version = "checkpoint_version" in state
@@ -1772,10 +1872,6 @@ class SimulationEngine:
             campaign_state,
             allow_legacy=allow_legacy_checkpoint,
         )
-        context_plan = self._ctx.stage_state(
-            context_state,
-            allow_legacy_morale=allow_legacy_checkpoint,
-        )
 
         raw_forces = context_state.get("units_by_side", {})
         expected_unit_ids = {
@@ -1811,6 +1907,25 @@ class SimulationEngine:
                 "Checkpoint clock timestamps must be compatible ISO values",
             ) from exc
         checkpoint_tick = context_state["clock"]["tick_count"]
+        if (
+            isinstance(checkpoint_tick, bool)
+            or not isinstance(checkpoint_tick, int)
+            or checkpoint_tick < 0
+        ):
+            raise ValueError(
+                "Checkpoint clock tick_count must be a non-negative strict "
+                "integer",
+            )
+        if (
+            not math.isfinite(checkpoint_elapsed_s)
+            or checkpoint_elapsed_s < 0.0
+            or (checkpoint_tick == 0 and checkpoint_elapsed_s != 0.0)
+            or (checkpoint_tick > 0 and checkpoint_elapsed_s <= 0.0)
+        ):
+            raise ValueError(
+                "Checkpoint clock tick count and logical time are "
+                "inconsistent",
+            )
         self._campaign.validate_checkpoint_roster(
             campaign_state,
             context_state,
@@ -1826,6 +1941,46 @@ class SimulationEngine:
             expected_sides=expected_sides,
             required_assessment_ids=required_assessment_ids,
             checkpoint_time=checkpoint_time,
+        )
+        raw_targeting = context_state.get("tactical_targeting")
+        if raw_targeting is None:
+            if not allow_legacy_checkpoint:
+                raise ValueError(
+                    f"Checkpoint version {_CHECKPOINT_VERSION} context is "
+                    "missing required tactical_targeting state",
+                )
+            if (
+                checkpoint_tick != 0
+                or checkpoint_elapsed_s != 0.0
+            ):
+                raise ValueError(
+                    "Versionless checkpoints may omit tactical targeting "
+                    "only at pristine tick 0 before targeting preparation",
+                )
+            targeting_memberships = None
+            require_current_targeting_interval = False
+        else:
+            if allow_legacy_checkpoint:
+                raise ValueError(
+                    "Versionless checkpoints cannot contain format-115 "
+                    "tactical_targeting state",
+                )
+            (
+                targeting_memberships,
+                require_current_targeting_interval,
+            ) = _checkpoint_targeting_memberships(
+                targeting_checkpoint_interval_from_state(raw_targeting),
+                battle_plan=battle_plan,
+                checkpoint_tick=checkpoint_tick,
+                checkpoint_elapsed_s=checkpoint_elapsed_s,
+            )
+        context_plan = self._ctx.stage_state(
+            context_state,
+            allow_legacy_morale=allow_legacy_checkpoint,
+            targeting_battle_memberships=targeting_memberships,
+            require_current_targeting_interval=(
+                require_current_targeting_interval
+            ),
         )
         victory_plan = (
             self._victory.stage_state(
@@ -1867,7 +2022,7 @@ class SimulationEngine:
             self._victory.commit_state(victory_plan)
         if recorder_plan is not None:
             self._recorder.commit_state(recorder_plan)
-        self._validate_era_runtime_binding()
+        self._validate_runtime_bindings()
 
     def checkpoint(self) -> bytes:
         """Serialize engine state to bytes."""

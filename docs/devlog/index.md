@@ -137,6 +137,10 @@ Rolling record of implementation decisions, changes, and lessons learned across 
 | 112 | Validation & Documentation Trust | **Complete** | [phase-112.md](phase-112.md) |
 | 113 | Morale State Ownership | **Complete** | [phase-113.md](phase-113.md) |
 | 114 | Era Override Execution | **Complete** | [phase-114.md](phase-114.md) |
+| | | | |
+| **Block 13: Integrity Remediation Follow-ups** ||||
+| 115 | Sensing-Aware Tactical Standoff | **Complete** | [phase-115.md](phase-115.md) |
+| 116 | Fog-of-War Contact Continuation | Not started | [Block 13 roadmap](../development-phases-block13.md#phase-116-fog-of-war-contact-continuation) |
 
 ## Post-MVP Refinement Index
 

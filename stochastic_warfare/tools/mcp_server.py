@@ -8,7 +8,6 @@ Requires ``mcp[cli]>=1.2.0`` (install via ``uv sync --extra mcp``).
 
 from __future__ import annotations
 
-import asyncio
 import math
 from pathlib import Path
 from typing import Annotated, Any
@@ -626,8 +625,10 @@ def _create_server() -> Any:
         strict_patch = _validated_calibration_patch(
             calibration_patch,
         )
-        return await asyncio.to_thread(
-            _tool_run_scenario,
+        # The stdio server owns one deterministic request sequence.  Keep the
+        # simulation and its process-local result-store publication in that
+        # request instead of detaching it onto an unowned executor thread.
+        return _tool_run_scenario(
             scenario_name,
             seed,
             max_ticks,
@@ -669,8 +670,7 @@ def _create_server() -> Any:
         strict_patch = _validated_calibration_patch(
             calibration_patch,
         )
-        return await asyncio.to_thread(
-            _tool_run_monte_carlo,
+        return _tool_run_monte_carlo(
             scenario_name,
             num_iterations,
             base_seed,
@@ -722,8 +722,7 @@ def _create_server() -> Any:
             max_ticks: Maximum ticks per run
         """
         _mcp_scalar_calibration_patch(parameter_path, value)
-        return await asyncio.to_thread(
-            _tool_modify_parameter,
+        return _tool_modify_parameter(
             scenario_name,
             parameter_path,
             value,

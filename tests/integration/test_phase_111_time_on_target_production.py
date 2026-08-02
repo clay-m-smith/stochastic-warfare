@@ -520,7 +520,6 @@ def test_battle_reserves_only_exact_attachment_and_releases_after_impact() -> No
     attacker = _unit(reserved, BATTERY_IDS[0])
     target = _unit(reserved, TARGET_ID)
     object.__setattr__(target, "position", Position(1500.0, 9000.0, 0.0))
-    reserved.units_by_side = {"blue": [attacker], "red": [target]}
     recorder = SimulationRecorder(reserved.event_bus)
     recorder.start()
     battle = BattleContext(
@@ -530,7 +529,9 @@ def test_battle_reserves_only_exact_attachment_and_releases_after_impact() -> No
         involved_sides=["blue", "red"],
         unit_ids={attacker.entity_id, target.entity_id},
     )
-    BattleManager(reserved.event_bus).execute_tick(reserved, battle, 5.0)
+    manager = BattleManager(reserved.event_bus)
+    manager.prepare_tactical_interval(reserved, (battle,), 5.0)
+    manager.execute_tick(reserved, battle, 5.0)
     recorder.stop()
 
     assert [
@@ -565,10 +566,6 @@ def test_battle_reserves_only_exact_attachment_and_releases_after_impact() -> No
         "position",
         Position(5000.0, 9000.0, 0.0),
     )
-    completed.units_by_side = {
-        "blue": [completed_attacker],
-        "red": [completed_target],
-    }
     release_recorder = SimulationRecorder(completed.event_bus)
     release_recorder.start()
     release_battle = BattleContext(
@@ -581,7 +578,13 @@ def test_battle_reserves_only_exact_attachment_and_releases_after_impact() -> No
             completed_target.entity_id,
         },
     )
-    BattleManager(completed.event_bus).execute_tick(
+    release_manager = BattleManager(completed.event_bus)
+    release_manager.prepare_tactical_interval(
+        completed,
+        (release_battle,),
+        5.0,
+    )
+    release_manager.execute_tick(
         completed,
         release_battle,
         5.0,

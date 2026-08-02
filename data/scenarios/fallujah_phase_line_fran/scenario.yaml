@@ -18,12 +18,13 @@
 # mosque/minaret complexes, technical fighting positions with DShK
 # / SPG-9 / PKM.
 #
-# Historical phases simulated here: 8 Nov kinetic shaping + TF 2-7 CAV
+# Authored timeline declarations cover: 8 Nov kinetic shaping + TF 2-7 CAV
 # armored thrust into Jolan; 9 Nov RCT-1 seizure of Al-Kabir Mosque
 # (Regimental Objective Delta) by Kilo 3/5 at first light; 10 Nov
 # Phase Line Fran crossing and HBIED-belt clearance; 11 Nov WP / HE
 # "shake-and-bake" on Askari / Jolan strongpoints; 12-14 Nov sector
-# consolidation.  Ends ~16 Nov after Jolan stabilizes.
+# consolidation. The current regression ends before these due actions; their
+# runtime integrity is explicitly queued under REM-045 / Phase 132.
 #
 # Historical outcome: Coalition tactical success.  Insurgent force
 # destroyed or dispersed.  Marine casualties ~54 KIA / ~425 WIA.
@@ -351,9 +352,10 @@ initial_ieds:
     concealment: 0.80
 
 # ── Scripted events (Phase 101) ────────────────────────────────────
-# Historical moments scripted as honest engine calls: HBIED dets,
-# WP fire zones, unit teleports for scripted maneuvers, casualty
-# pulses for sniper ambushes.  No magic — real engine APIs.
+# Legacy Phase 101 declarations for HBIED detonations, WP fire zones,
+# unit relocations, and casualty pulses.  Loading these declarations is not
+# behavioral proof: REM-045 / Phase 132 owns their typed, fail-closed,
+# lifecycle-safe, checkpointed exact-once runtime contract.
 #
 # Timeline (relative to D-Day 8 Nov 1900L):
 scripted_events:

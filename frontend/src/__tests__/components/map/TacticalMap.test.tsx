@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import { TacticalMap } from '../../../components/map/TacticalMap'
-import type { TerrainData, ReplayFrame } from '../../../types/map'
+import type { TerrainData, MapReplayFrame } from '../../../types/map'
 
 // Mock ResizeObserver
 vi.stubGlobal('ResizeObserver', class {
@@ -46,7 +46,7 @@ const TERRAIN: TerrainData = {
   extent: [0, 0, 1000, 1000],
 }
 
-const FRAMES: ReplayFrame[] = [
+const FRAMES: MapReplayFrame[] = [
   {
     tick: 0,
     units: [

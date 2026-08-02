@@ -7,6 +7,10 @@ from types import SimpleNamespace
 
 import pytest
 
+from stochastic_warfare.simulation.tactical_targeting import (
+    TacticalTargetingRuntime,
+)
+
 pytestmark = pytest.mark.api
 
 
@@ -39,6 +43,21 @@ class _FakeUnit:
         self.status = SimpleNamespace(value=status_val)
         self.heading = heading
         self.unit_type = unit_type
+
+
+def _frame_context(units_by_side: dict[str, list[_FakeUnit]]) -> SimpleNamespace:
+    return SimpleNamespace(
+        units_by_side=units_by_side,
+        cal_flat={},
+        tactical_targeting=TacticalTargetingRuntime(
+            sensing_aware_standoff_enabled=False,
+            unit_sides={
+                unit.entity_id: side
+                for side, units in units_by_side.items()
+                for unit in units
+            },
+        ),
+    )
 
 
 # ── _capture_terrain tests ────────────────────────────────────────────────
@@ -117,7 +136,7 @@ def test_capture_frame_basic():
 
     u1 = _FakeUnit("u1", "blue", 100.0, 200.0, domain_val=0, status_val=0, heading=45.0, unit_type="tank")
     u2 = _FakeUnit("u2", "red", 300.0, 400.0, domain_val=2, status_val=3, heading=180.0, unit_type="ship")
-    ctx = SimpleNamespace(units_by_side={"blue": [u1], "red": [u2]})
+    ctx = _frame_context({"blue": [u1], "red": [u2]})
 
     frame = RunManager._capture_frame(10, ctx)
 
@@ -136,7 +155,7 @@ def test_capture_frame_basic():
 def test_capture_frame_empty_sides():
     from api.run_manager import RunManager
 
-    ctx = SimpleNamespace(units_by_side={})
+    ctx = _frame_context({})
     frame = RunManager._capture_frame(0, ctx)
     assert frame["tick"] == 0
     assert frame["units"] == []

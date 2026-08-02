@@ -103,7 +103,7 @@ def _assert_loader_rejects(
 def _runtime_loadouts(ctx) -> RuntimeLoadouts:
     return RuntimeLoadouts(
         unit_weapons=ctx.unit_weapons,
-        unit_sensors=ctx.unit_sensors,
+        unit_sensor_attachments=ctx.unit_sensor_attachments,
         equipment_resolutions=ctx.equipment_resolutions,
     )
 
@@ -530,23 +530,14 @@ def test_resolver_rejects_ambiguous_source_attachment() -> None:
     attachments = ctx.unit_weapons[BATTERY_ID]
     unit_weapons = dict(ctx.unit_weapons)
     unit_weapons[BATTERY_ID] = (attachments[0], *attachments)
-    loadouts = RuntimeLoadouts(
-        unit_weapons=unit_weapons,
-        unit_sensors=ctx.unit_sensors,
-        equipment_resolutions=ctx.equipment_resolutions,
-    )
-
     with pytest.raises(
-        TimeOnTargetResolutionError,
-        match="ambiguous source_equipment_index 0",
+        ValueError,
+        match="duplicate weapon source index 0",
     ):
-        TimeOnTargetMissionResolver.resolve(
-            ctx.config.indirect_fire,
-            units_by_side=ctx.units_by_side,
-            runtime_loadouts=loadouts,
-            terrain=ctx.heightmap,
-            duration_hours=ctx.config.duration_hours,
-            tick_duration_seconds=ctx.config.tick_duration_seconds,
+        RuntimeLoadouts(
+            unit_weapons=unit_weapons,
+            unit_sensor_attachments=ctx.unit_sensor_attachments,
+            equipment_resolutions=ctx.equipment_resolutions,
         )
 
 
@@ -567,7 +558,7 @@ def test_resolver_rejects_ambiguous_attachment_ammunition() -> None:
     unit_weapons[BATTERY_ID] = (ambiguous, *attachments[1:])
     loadouts = RuntimeLoadouts(
         unit_weapons=unit_weapons,
-        unit_sensors=ctx.unit_sensors,
+        unit_sensor_attachments=ctx.unit_sensor_attachments,
         equipment_resolutions=ctx.equipment_resolutions,
     )
 

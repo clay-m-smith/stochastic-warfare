@@ -292,7 +292,7 @@ def test_schema112_movement_state_restores_and_continues_exactly() -> None:
     assert control.step() is False
     checkpoint = control.checkpoint()
     state_at_t = control.get_state()
-    assert state_at_t["checkpoint_version"] == 114
+    assert state_at_t["checkpoint_version"] == 115
     assert state_at_t["context"]["movement_diagnostics"] == control._ctx.movement_diagnostics.get_state()
 
     resumed = _campaign_engine(seed=999_112)
@@ -449,6 +449,12 @@ def test_evaluator_captures_every_reinforcement_construction_position() -> None:
         for unit_id in expected_starts
         if unit_id.startswith("reinforce_blue_")
     }
+    expected_blue_moved_counts = {
+        "reinforce_blue_0000_m1a2_0000": 2,
+        "reinforce_blue_0000_m1a2_0001": 4,
+        "reinforce_blue_0001_m1a2_0000": 8,
+        "reinforce_blue_0001_m1a2_0001": 9,
+    }
     for unit_id, detail in reinforcements.items():
         assert tuple(detail["start_pos"]) == expected_starts[unit_id]
         assert detail["distance_moved"] == round(
@@ -459,7 +465,9 @@ def test_evaluator_captures_every_reinforcement_construction_position() -> None:
             assert tuple(detail["end_pos"]) != expected_starts[unit_id]
             assert detail["distance_moved"] > 1.0
             assert detail["movement_achieved_m"] > 1.0
-            assert detail["movement_reason_counts"]["MOVED"] == 1
+            assert detail["movement_reason_counts"]["MOVED"] == (
+                expected_blue_moved_counts[unit_id]
+            )
         else:
             assert tuple(detail["end_pos"]) == expected_starts[unit_id]
             assert detail["distance_moved"] == 0.0

@@ -49,6 +49,9 @@ from stochastic_warfare.simulation.scenario import (
     TickResolutionConfig,
     VictoryConditionConfig,
 )
+from stochastic_warfare.simulation.tactical_targeting import (
+    TacticalTargetingRuntime,
+)
 from stochastic_warfare.simulation.victory import (
     ObjectiveState,
     VictoryEvaluator,
@@ -127,6 +130,12 @@ def _make_ctx(
         for side_units in units_by_side.values()
         for unit in side_units
     }
+    unit_sides = {
+        unit_id: (
+            unit.side if isinstance(unit.side, str) else unit.side.value
+        )
+        for unit_id, unit in units.items()
+    }
     morale_rng = rng_mgr.get_stream(ModuleId.MORALE)
     rout_engine = RoutEngine(bus, morale_rng)
     morale_runtime = MoraleRuntime(
@@ -156,6 +165,16 @@ def _make_ctx(
         rng_manager=rng_mgr,
         event_bus=bus,
         units_by_side=units_by_side,
+        unit_weapons={unit_id: () for unit_id in units},
+        unit_sensor_attachments={unit_id: () for unit_id in units},
+        unit_sensors={unit_id: () for unit_id in units},
+        equipment_resolutions={unit_id: () for unit_id in units},
+        tactical_targeting=TacticalTargetingRuntime(
+            sensing_aware_standoff_enabled=(
+                cfg.calibration_overrides.enable_sensing_aware_standoff
+            ),
+            unit_sides=unit_sides,
+        ),
         morale_runtime=morale_runtime,
         rout_engine=rout_engine,
     )
@@ -1100,7 +1119,31 @@ class TestMultipleSequentialBattles:
 
     def test_simultaneous_battles_different_zones(self) -> None:
         """Two separate engagements in different areas."""
-        ctx = _make_ctx(config=_minimal_config(duration_hours=24.0))
+        blue_north = _make_unit(
+            "blue_north",
+            Position(100.0, 1_000.0, 0.0),
+            "blue",
+        )
+        red_north = _make_unit(
+            "red_north",
+            Position(500.0, 1_000.0, 0.0),
+            "red",
+        )
+        blue_south = _make_unit(
+            "blue_south",
+            Position(100.0, 9_000.0, 0.0),
+            "blue",
+        )
+        red_south = _make_unit(
+            "red_south",
+            Position(500.0, 9_000.0, 0.0),
+            "red",
+        )
+        ctx = _make_ctx(
+            blue_units=[blue_north, blue_south],
+            red_units=[red_north, red_south],
+            config=_minimal_config(duration_hours=24.0),
+        )
         engine = SimulationEngine(ctx)
 
         b1 = BattleContext(
@@ -1108,12 +1151,14 @@ class TestMultipleSequentialBattles:
             start_tick=0,
             start_time=TS,
             involved_sides=["blue", "red"],
+            unit_ids={blue_north.entity_id, red_north.entity_id},
         )
         b2 = BattleContext(
             battle_id="b_south",
             start_tick=0,
             start_time=TS,
             involved_sides=["blue", "red"],
+            unit_ids={blue_south.entity_id, red_south.entity_id},
         )
         engine.battle_manager._battles["b_north"] = b1
         engine.battle_manager._battles["b_south"] = b2

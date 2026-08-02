@@ -3,6 +3,21 @@
 **Status**: Complete (scenario, engine infrastructure, regression); UI walkthrough pending manual verification.
 **Block**: 11 (Golden Scenarios & End-to-End Engine Validation through UI).
 
+> **Phase 115 integrity supersession:** Phase 101 proved the Fallujah scenario,
+> pre-emplaced IED path, action declarations, and reference loading, but it did
+> not behaviorally prove dispatch or authoritative effects for the four
+> scripted-action families. The current seed-42 production run ends at 40
+> ticks / 200 seconds, before the first authored action at H+7. The existing
+> string-plus-parameter-bag dispatch also consumes failures/no-ops, bypasses
+> movement/casualty lifecycle owners, and does not checkpoint or expose its
+> fired set. [REM-045](../remediation-backlog.md#rem-045-scripted-scenario-actions-lack-a-typed-exact-once-runtime-owner)
+> assigns the typed, fail-closed, exact-once runtime repair to Phase 132. This
+> supersedes the completion claims about scripted-action causality below; it
+> does not alter Phase 101's historical record or completed scenario/data work.
+> The winner/casualty/duration material below is likewise phase-era scenario
+> intent and current-engine regression, not source-backed held-out historical
+> validation; catalog-wide disposition remains REM-030 / Phase 117.
+
 ## Summary
 
 Phase 101 delivers the third Block 11 golden scenario: **Second Battle of Fallujah / Operation Al-Fajr / Phase Line Fran, November 2004**. USMC 1st Marine Division (RCT-1 + RCT-7) with Army TF 2-7 CAV armored thrust vs an entrenched insurgent force of Iraqi Sunni fighters plus an AQI/Chechen foreign-fighter kernel — the largest urban battle fought by US forces since Hue 1968.

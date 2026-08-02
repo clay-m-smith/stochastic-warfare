@@ -2,7 +2,7 @@
 
 **Phase range:** 115 through 127
 
-**Status:** Planned follow-up handoff; no Block 13 phase has started
+**Status:** Active; Phase 115 is complete and Phase 116 is next
 
 Block 13 owns integrity deficits discovered while specifying and validating
 Phases 112 through 114. It is not part of those implementations or the Block
@@ -12,7 +12,9 @@ postmortem, and single-commit workflow before its remediation item can close.
 
 ## Phase 115 - Sensing-Aware Tactical Standoff
 
-Status: **Not started**. REM-028 remains queued.
+Status: **Complete**. REM-028 is closed with accepted production, data,
+determinism, scenario, exposure, qualified broad-run, documentation, and
+postmortem evidence. Phase 116 remains unstarted.
 
 Replace unrestricted catalog-range movement holding with a typed targeting
 precondition that distinguishes physical weapon reach from owner-side sensing,
@@ -26,6 +28,12 @@ production-exercised, outcome-affecting, and checkpoint/exposure evidence.
 ## Phase 116 - Fog-of-War Contact Continuation
 
 Status: **Not started**. REM-029 remains queued.
+
+Before Phase 116 changes production state, promote the clean Phase 115
+73 Easting transition endpoint to an ordinary version-4 paired reference and
+prove the exact promoted workload/semantic gate. The reviewed promotion is a
+baseline handoff from Phase 115's non-timing `transition_qualified` evidence;
+it must not rewrite that evidence as a performance pass.
 
 Restore complete nonempty `SideWorldView` contact state through the
 fog-of-war-owned checkpoint boundary. Validate side/contact topology,
@@ -55,6 +63,20 @@ Trafalgar and `calibration_arctic` changed terminal winner, duration, and force
 status composition. These deterministic observations identify fidelity review
 work; they are not historical-validation verdicts or calibration authority.
 REM-030 remains queued for this phase.
+
+Phase 115 adds two more inventory signals. Debecka changes from the Phase 114
+10/10 blue current-engine regression to 4/10 after the shared targeting owner
+correctly removes most F-14/M61 ground fire without a ground-compatible
+director; disabling automatic standoff recovers only 7/10. Its four-hour
+scenario horizon also precedes its authored six-hour blue fallback, while a
+six-hour control awards that fallback after all blue units are already
+non-active in six seeds. Fallujah seed 42 changes from 115 ticks / 575 seconds
+to 40 ticks / 200 seconds while retaining blue `force_destroyed`, combat, and
+pre-emplaced IED outcomes. It ends before the first scripted action at H+7,
+which separately surfaced REM-045 / Phase 132. These are deterministic
+current-engine semantic signals, not historical validation, a calibration
+verdict, or authority to tune physical performance, victory policy, or
+scenario parameters.
 
 For every claim retained as validated, predeclare exact metric definitions and
 units, event boundaries, source provenance and quality, justified ranges or

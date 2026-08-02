@@ -1,10 +1,10 @@
 import { describe, it, expect } from 'vitest'
 import { buildEngagementArcs } from '../../lib/engagementProcessing'
 import type { EventItem } from '../../types/api'
-import type { ReplayFrame } from '../../types/map'
+import type { MapReplayFrame } from '../../types/map'
 
 describe('buildEngagementArcs', () => {
-  const frames: ReplayFrame[] = [
+  const frames: MapReplayFrame[] = [
     {
       tick: 0,
       units: [

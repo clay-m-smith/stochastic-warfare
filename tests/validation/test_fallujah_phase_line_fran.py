@@ -1,32 +1,14 @@
-"""Phase 101 regression test — Second Battle of Fallujah / Operation
-Al-Fajr / Phase Line Fran (November 2004).
+"""Current-engine Fallujah Phase Line Fran regression checks.
 
-Asserts that the Fallujah scenario produces outcomes consistent with
-the current engine's observed envelope and that Phase 101 new
-infrastructure works end-to-end:
+The suite proves that the scenario loads its authored force, pre-emplaced IEDs,
+and scripted-action declarations and that unit references in those declarations
+resolve. The declared seed-42 runtime checks its current terminal, casualty,
+combat-activity, and IED outcomes. It is current-engine regression evidence,
+not historical validation.
 
-- ``initial_ieds`` scenario field emplaces HBIEDs + command-wire +
-  pressure-plate IEDs before scenario start.
-- ``scripted_events`` scenario field fires HBIED detonations, WP fire
-  zones, unit teleports, and casualty pulses at configured times.
-- Real engine APIs back every scripted event (no magic kills).
-
-Historical outcome (per Estes 2011, Matthews 2006, West 2005):
-- Coalition tactical victory
-- 8 Nov 2004 kinetic start; main urban assault ended ~16 Nov
-- Insurgent force ~1,200-2,000 KIA + ~1,500 captured (majority destroyed)
-- USMC ~54 KIA / ~425 WIA, Army TF 2-7 CAV ~18 KIA / ~200 WIA
-
-Engine-observed envelope (single-seed @slow):
-- Blue wins 1/1 (decisive; urban defenders lack C2 to contest force-ratio)
-- Red destroyed ≥ 20 units (urban grind from HBIED net + MG + mortar fire)
-- Blue destroyed ≤ 50 units (dense urban combat + HBIED losses)
-- 20 initial IEDs emplaced at scenario start
-- ≥ 1 scripted event fires within 50 hours sim time
-
-Tests are marked @slow — full Fallujah at 333 units runs ~15-20 min
-per iteration at urban tactical resolution. A single seed is enough
-to exercise the Phase 101 infrastructure + regression envelope.
+The runtime currently terminates before the first scripted action at H+7. The
+schema and reference checks below therefore do not prove scripted-action
+dispatch or effects.
 """
 
 from __future__ import annotations
@@ -77,26 +59,26 @@ def _run_one(seed: int, max_ticks: int = 2000) -> dict:
         victory_evaluator=victory_eval,
         recorder=recorder,
     )
-    recorder.start()
-    while not engine.step():
-        pass
+    result = engine.run()
 
     blue_d = sum(1 for u in ctx.units_by_side["blue"] if u.status == UnitStatus.DESTROYED)
     red_d = sum(1 for u in ctx.units_by_side["red"] if u.status == UnitStatus.DESTROYED)
-    victory = getattr(engine, "_last_victory", None)
-    winner = (getattr(victory, "winning_side", "") or "").lower()
-    ticks = ctx.clock.tick_count
-    fired = len(getattr(ctx, "_fired_scripted_events", set()) or set())
+    victory = result.victory_result
+    winner = victory.winning_side.lower()
+    condition_type = victory.condition_type
+    ticks = result.ticks_executed
     emplaced_count = len(getattr(ctx, "initial_ied_obstacle_ids", []) or [])
     return {
         "blue_destroyed": blue_d,
         "red_destroyed": red_d,
         "winner": winner,
+        "condition_type": condition_type,
         "ticks": ticks,
+        "max_ticks": max_ticks,
+        "tick_duration_s": ctx.clock.tick_duration.total_seconds(),
         "events": recorder.events,
-        "scripted_events_fired": fired,
         "emplaced_ied_count": emplaced_count,
-        "elapsed_s": ctx.clock.elapsed.total_seconds(),
+        "elapsed_s": result.duration_s,
     }
 
 
@@ -136,7 +118,7 @@ class TestFallujahScenarioLoad:
         )
 
     def test_scripted_events_loaded(self) -> None:
-        """11 scripted events must parse into ScriptedEventConfig list."""
+        """Eleven scripted actions must parse; this is not dispatch proof."""
         loader = ScenarioLoader(str(DATA_DIR))
         ctx = loader.load(SCENARIO_PATH, seed=42)
         assert len(ctx.scripted_events) == 11, (
@@ -144,7 +126,7 @@ class TestFallujahScenarioLoad:
         )
 
     def test_scripted_event_targets_exist(self) -> None:
-        """All scripted event unit_id / target_unit_id values must resolve."""
+        """Authored unit references must resolve; this is not dispatch proof."""
         loader = ScenarioLoader(str(DATA_DIR))
         ctx = loader.load(SCENARIO_PATH, seed=42)
         all_ids = set()
@@ -169,62 +151,56 @@ class TestFallujahScenarioLoad:
 
 
 # ---------------------------------------------------------------------------
-# Runtime / MC assertions (@slow)
+# Runtime assertions (@slow)
 # ---------------------------------------------------------------------------
 
 
 @pytest.fixture(scope="module")
 def run_result() -> dict:
-    """Single-seed run for runtime assertions (~15-20 min @slow)."""
+    """Run the declared seed-42 current-engine regression once."""
     return _run_one(seed=42, max_ticks=2000)
 
 
 @pytest.mark.slow
 class TestFallujahRuntimeEnvelope:
-    """Runtime envelope assertions — single seed, 2000 ticks."""
+    """Current-engine terminal assertions for one declared seed."""
 
     def test_winner_envelope(self, run_result: dict) -> None:
-        """Coalition wins (decisive historical outcome)."""
+        """Retain the declared seed's current-engine blue winner."""
         winner = run_result["winner"]
         assert "blue" in winner, f"Expected blue winner, got {winner!r}"
 
     def test_red_casualty_envelope(self, run_result: dict) -> None:
-        """Insurgent losses ≥ 20 units (urban grind from HBIEDs + MG fire +
-        mortar fire + WP fire zones). Historical: ~1,200-2,000 KIA, which
-        at 8 fighters per cell is ~150-250 cells destroyed; engine at
-        scaled-down granularity produces 20-80 in typical runs."""
+        """Retain the broad current-engine red-loss regression floor."""
         red_d = run_result["red_destroyed"]
         assert red_d >= 20, (
             f"Insurgent losses {red_d} below engine envelope (expect ≥ 20)"
         )
 
     def test_blue_casualty_ceiling(self, run_result: dict) -> None:
-        """Coalition losses ≤ 50 units — historical ~72 US KIA total
-        at vehicle-equivalent ~25; dense urban combat + HBIED losses
-        allow wider engine envelope."""
+        """Retain the broad current-engine blue-loss regression ceiling."""
         blue_d = run_result["blue_destroyed"]
         assert blue_d <= 50, (
             f"Coalition losses {blue_d} exceed engine envelope"
         )
 
-    def test_scenario_progresses(self, run_result: dict) -> None:
-        """Scenario runs enough ticks that a tactical battle develops.
+    def test_force_destroyed_terminal_progression(self, run_result: dict) -> None:
+        """Terminate semantically before the cap on an exact tactical clock."""
+        ticks = run_result["ticks"]
+        max_ticks = run_result["max_ticks"]
+        tick_duration_s = run_result["tick_duration_s"]
 
-        Phase 104b retrofit note: pre-retrofit this scenario ran 500+ ticks
-        because the legacy formation overflow put forces in chaotic 5m-apart
-        contact that took time to sort out. Post-retrofit (doctrinal mode,
-        forces 1100m apart at start) combat develops cleanly — one side
-        reaches the force_destroyed VC threshold (0.5) faster. 50-tick
-        threshold reflects actual doctrinal-deployment dynamics.
-        """
-        assert run_result["ticks"] >= 50, (
-            f"Scenario barely progressed: {run_result['ticks']} ticks"
+        assert run_result["condition_type"] == "force_destroyed"
+        assert 0 < ticks < max_ticks, (
+            f"Expected a pre-cap terminal, got {ticks}/{max_ticks} ticks"
         )
+        assert tick_duration_s == 5.0
+        assert run_result["elapsed_s"] == ticks * tick_duration_s
 
 
 @pytest.mark.slow
 class TestFallujahPhase101Infrastructure:
-    """Phase 101 infrastructure runtime checks."""
+    """Current-engine combat and pre-emplaced-IED runtime checks."""
 
     def test_engagements_occur(self, run_result: dict) -> None:
         """Combat engagement events must fire — not a walkover."""

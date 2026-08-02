@@ -1,5 +1,5 @@
 {
-  "derivation_command": "/home/csmith/projects/stochastic-warfare/.venv/bin/python -m pytest --collect-only -q -p no:cacheprovider -o addopts=",
+  "derivation_command": "/home/csmith/projects/stochastic-warfare/.venv/bin/python3 -m pytest --collect-only -q -p no:cacheprovider -o addopts=",
   "entries": [
     {
       "classification": "invariant_only",
@@ -63,6 +63,12 @@
     },
     {
       "classification": "helper_assertion",
+      "node_id": "tests/integration/test_phase_111_time_on_target_checkpoint.py::test_started_versionless_checkpoint_without_declared_plan_rejects_atomically",
+      "rationale": "A traced local helper contains the direct oracle.",
+      "strongest_oracle": "called helper: _advance, _assert_atomic_rejection"
+    },
+    {
+      "classification": "helper_assertion",
       "node_id": "tests/integration/test_phase_111_time_on_target_checkpoint.py::test_versionless_checkpoint_rejects_every_declared_tot_plan[False]",
       "rationale": "A traced local helper contains the direct oracle.",
       "strongest_oracle": "called helper: _assert_atomic_rejection"
@@ -81,25 +87,25 @@
     },
     {
       "classification": "helper_assertion",
-      "node_id": "tests/integration/test_phase114_checkpoint_and_transitions.py::test_format_114_rejects_invalid_contract_atomically[extra]",
+      "node_id": "tests/integration/test_phase114_checkpoint_and_transitions.py::test_format_115_rejects_invalid_contract_atomically[extra]",
       "rationale": "A traced local helper asserts the exact rejection and byte-identical checkpoint after the failed restore.",
       "strongest_oracle": "called helper: _assert_atomic_rejection"
     },
     {
       "classification": "helper_assertion",
-      "node_id": "tests/integration/test_phase114_checkpoint_and_transitions.py::test_format_114_rejects_invalid_contract_atomically[malformed]",
+      "node_id": "tests/integration/test_phase114_checkpoint_and_transitions.py::test_format_115_rejects_invalid_contract_atomically[malformed]",
       "rationale": "A traced local helper asserts the exact rejection and byte-identical checkpoint after the failed restore.",
       "strongest_oracle": "called helper: _assert_atomic_rejection"
     },
     {
       "classification": "helper_assertion",
-      "node_id": "tests/integration/test_phase114_checkpoint_and_transitions.py::test_format_114_rejects_invalid_contract_atomically[mismatch]",
+      "node_id": "tests/integration/test_phase114_checkpoint_and_transitions.py::test_format_115_rejects_invalid_contract_atomically[mismatch]",
       "rationale": "A traced local helper asserts the exact rejection and byte-identical checkpoint after the failed restore.",
       "strongest_oracle": "called helper: _assert_atomic_rejection"
     },
     {
       "classification": "helper_assertion",
-      "node_id": "tests/integration/test_phase114_checkpoint_and_transitions.py::test_format_114_rejects_invalid_contract_atomically[missing]",
+      "node_id": "tests/integration/test_phase114_checkpoint_and_transitions.py::test_format_115_rejects_invalid_contract_atomically[missing]",
       "rationale": "A traced local helper asserts the exact rejection and byte-identical checkpoint after the failed restore.",
       "strongest_oracle": "called helper: _assert_atomic_rejection"
     },

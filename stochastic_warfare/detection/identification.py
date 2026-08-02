@@ -77,6 +77,7 @@ class IdentificationEngine:
         detection: DetectionResult,
         target_unit: Any = None,
         threshold_db: float = 0.0,
+        rng: np.random.Generator | None = None,
     ) -> ContactInfo:
         """Derive contact info from a single detection result.
 
@@ -89,7 +90,14 @@ class IdentificationEngine:
             values that may be misclassified at low SNR).
         threshold_db:
             The sensor's detection threshold (used for margin computation).
+        rng:
+            Optional caller-owned stream. Parallel FOW dispatch supplies its
+            side-local stream so classification cannot race on shared state;
+            ordinary callers retain this engine's checkpointed stream.
         """
+        if rng is not None and not isinstance(rng, np.random.Generator):
+            raise TypeError("identification rng must be a numpy Generator")
+        draw_rng = self._rng if rng is None else rng
         snr = detection.snr_db
         excess = snr - threshold_db
 
@@ -118,7 +126,7 @@ class IdentificationEngine:
 
         # Apply misclassification at lower levels
         misclass_p = self.misclassification_probability(snr, threshold_db)
-        if self._rng.random() < misclass_p:
+        if draw_rng.random() < misclass_p:
             # Misclassified — degrade one level and null out specifics
             if level == ContactLevel.IDENTIFIED:
                 level = ContactLevel.CLASSIFIED

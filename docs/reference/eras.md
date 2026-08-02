@@ -433,6 +433,18 @@ Cannae 216 BC, Salamis 480 BC, Hastings 1066, and Agincourt 1415. Their
 availability and current-engine regression coverage are not historical
 outcome-envelope verdicts.
 
+### Cross-era targeting roles
+
+Runtime equipment mappings retain exact source-equipment indexes and assign a
+total modeled weapon/sensor role profile across every era. The profile is only
+an allowed-domain upper bound; the exact era-specific weapon definition still
+decides whether the selected target domain is valid. This matters at Salamis:
+ancient projectile and melee roles can be valid against the authored naval
+targets, while the same regression rejects an aerial target. A strict
+production Salamis run records real javelin engagement events. The control
+proves mapping semantics and production reachability, not historical outcome
+validity or a wider weapon domain.
+
 ---
 
 ## Creating Era-Specific Scenarios
@@ -510,7 +522,7 @@ historical calibration.
 
 The effective values construct `SimulationClock`, `SimulationEngine`,
 `MedicalEngine`, and `MaintenanceEngine`, contribute to runtime/API config
-fingerprints, and persist in checkpoint format 114. Automatic casualty
+fingerprints, and persist in checkpoint format 115. Automatic casualty
 admission, medical-facility topology, equipment registration and repair-spares
 initiation, communications topology, and scheduled nuclear employment remain
 separate remediations. See the

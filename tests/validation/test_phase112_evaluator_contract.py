@@ -63,8 +63,8 @@ def test_evaluator_process_rejects_error_and_preserves_cambrai_semantics(
     assert cambrai["victory_condition"] == "force_destroyed"
     assert cambrai["total_casualties"] == 2
     assert cambrai["engagement_events"] == 0
-    assert cambrai["units_that_moved"] == 3
-    assert cambrai["units_that_didnt_move"] == 7
+    assert cambrai["units_that_moved"] == 7
+    assert cambrai["units_that_didnt_move"] == 3
     assert cambrai["total_events"] == 190
     assert cambrai["event_type_counts"] == {
         "DecisionMadeEvent": 25,
@@ -85,7 +85,16 @@ def test_evaluator_process_rejects_error_and_preserves_cambrai_semantics(
         == 26
     )
     assert cambrai["engagement_weapon_counts"] == {}
-    mark_ivs = [detail for detail in cambrai["unit_details"] if detail["unit_type"] == "mark_iv_tank"]
+    german_ids = {
+        detail["entity_id"]
+        for detail in cambrai["unit_details"]
+        if detail["side"] == "german"
+    }
+    mark_ivs = [
+        detail
+        for detail in cambrai["unit_details"]
+        if detail["unit_type"] == "mark_iv_tank"
+    ]
     assert [detail["entity_id"] for detail in mark_ivs] == [
         "british_mark_iv_tank_0003",
         "british_mark_iv_tank_0004",
@@ -100,7 +109,87 @@ def test_evaluator_process_rejects_error_and_preserves_cambrai_semantics(
             )
             == {}
         )
-        assert detail["movement_disposition"] == "ENGINE_WEAPON_STANDOFF"
+        assert detail["movement_disposition"] == "MOVED"
+        assert detail["distance_moved"] > 1_300.0
+        assert detail["movement_reason_counts"]["MOVED"] == 156
+        assert detail["movement_reason_counts"]["ENGINE_WEAPON_STANDOFF"] == 0
+        final_order = detail["movement_final_order"]
+        assert final_order["stage"] == "TACTICAL"
+        assert detail["targeting_exposure_scope"] == "PRIVILEGED_ENGINE"
+        assert detail["targeting_engine_tick"] == final_order["engine_tick"]
+        assert detail["targeting_battle_id"] == final_order["battle_id"]
+        assert detail["targeting_shooter_id"] == detail["entity_id"]
+        assert detail["targeting_shooter_side"] == "british"
+        assert detail["targeting_shooter_domain"] == "GROUND"
+        assert detail["targeting_target_id"] in german_ids
+        assert detail["targeting_target_side"] == "german"
+        assert detail["targeting_target_domain"] == "GROUND"
+        assert detail["targeting_weapon_id"] == "qf_6pdr_6cwt"
+        assert detail["targeting_weapon_source_equipment_index"] == 0
+        assert detail["targeting_weapon_modeled_role"] == (
+            "ground_direct_fire"
+        )
+        assert detail["targeting_ammunition_id"] == "6pdr_hotchkiss_ap"
+        assert detail["targeting_physical_max_range_m"] == 6_675.0
+        assert detail["targeting_predictive_effective_range_m"] == 1_000.0
+        assert detail["targeting_effective_range_basis"] == "AUTHORED"
+        assert detail["targeting_legacy_derived_reference_range_m"] == (
+            5_340.0
+        )
+        assert detail["targeting_distance_m"] > 1_000.0
+        assert detail["targeting_contact_source"] == (
+            "NON_FOW_LOCAL_OBSERVATION"
+        )
+        assert detail["targeting_observing_unit_id"] == detail["entity_id"]
+        assert detail["targeting_contact_time_s"] == (
+            detail["targeting_logical_time_s"]
+        )
+        assert detail["targeting_contact_sensor_source_equipment_index"] is None
+        assert detail["targeting_contact_sensor_id"] is None
+        assert detail["targeting_contact_sensor_modeled_role"] is None
+        assert detail["targeting_sensing_sensor_source_equipment_index"] is None
+        assert detail["targeting_sensing_sensor_id"] is None
+        assert detail["targeting_sensing_sensor_modeled_role"] is None
+        assert detail["targeting_contact_range_m"] >= (
+            detail["targeting_distance_m"]
+        )
+        assert detail["targeting_sensing_range_m"] == (
+            detail["targeting_contact_range_m"]
+        )
+        assert detail["targeting_fire_control_source"] == "DIRECT_VISUAL"
+        assert detail["targeting_fire_control_sensor_source_equipment_index"] is None
+        assert detail["targeting_fire_control_sensor_id"] is None
+        assert detail["targeting_fire_control_sensor_modeled_role"] is None
+        assert detail["targeting_fire_control_range_m"] == (
+            detail["targeting_contact_range_m"]
+        )
+        assert detail["targeting_disposition"] == "OUTSIDE_EFFECTIVE_RANGE"
+        # The old 80%-of-maximum value remains visible only as a labeled
+        # diagnostic reference; it supplies no movement authorization.
+        assert detail["targeting_legacy_derived_reference_range_m"] > (
+            detail["targeting_predictive_effective_range_m"]
+        )
+        assert detail["targeting_authorized_standoff_m"] == 0.0
+        assert detail["targeting_hold_authorized"] is False
+        assert detail["targeting_engagement_solution_valid"] is False
+        assert detail["targeting_sensing_aware_standoff_enabled"] is True
+        assert detail["targeting_fog_of_war_enabled"] is False
+        assert detail["targeting_consumable"] is True
+
+    legacy_decisions = [
+        detail
+        for detail in cambrai["unit_details"]
+        if detail["targeting_effective_range_basis"]
+        == "LEGACY_DERIVED_80_PERCENT_OF_MAX"
+    ]
+    assert legacy_decisions
+    for detail in legacy_decisions:
+        assert detail["targeting_predictive_effective_range_m"] == 0.0
+        assert detail["targeting_authorized_standoff_m"] == 0.0
+        assert detail["targeting_hold_authorized"] is False
+        assert detail["targeting_legacy_derived_reference_range_m"] == (
+            0.8 * detail["targeting_physical_max_range_m"]
+        )
 
     invalid_dir = tmp_path / "invalid"
     invalid_dir.mkdir()

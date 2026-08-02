@@ -40,7 +40,7 @@ OpenAPI docs are available at `/api/docs` (Swagger UI) and `/api/redoc`.
 | GET | `/api/runs/{id}/narrative?side=&style=&max_ticks=` | Battle narrative text |
 | GET | `/api/runs/{id}/snapshots` | State snapshots |
 | GET | `/api/runs/{id}/terrain` | Terrain grid data (land cover, objectives, extent) |
-| GET | `/api/runs/{id}/frames?start_tick=&end_tick=` | Unit position replay frames |
+| GET | `/api/runs/{id}/frames?start_tick=&end_tick=&scope=&side=` | Unit position replay frames with explicit targeting exposure scope |
 | WS | `/api/runs/{id}/progress` | Live tick-level progress stream |
 | POST | `/api/runs/batch` | Monte Carlo batch run |
 | GET | `/api/runs/batch/{id}` | Batch status and aggregated metrics |
@@ -58,6 +58,44 @@ OpenAPI docs are available at `/api/docs` (Swagger UI) and `/api/redoc`.
 | POST | `/api/analysis/sweep` | Parameter sensitivity sweep |
 | POST | `/api/analysis/doctrine-compare` | Common-seed doctrinal-policy comparison |
 | GET | `/api/analysis/tempo/{id}` | Operational tempo analysis |
+
+### Frame targeting exposure
+
+Format-115 completed runs store paired targeting projections at each captured
+map frame:
+
+- `scope=PRIVILEGED_ENGINE` returns exact engine/evaluator evidence, including
+  ground-truth target and source-attachment identity. It is the current default
+  when `scope` is omitted and rejects a `side` parameter.
+- `scope=SIDE_FOW&side=<side-id>` returns only that side's frame roster and
+  opaque current owner-side track evidence. Track IDs are target-independent,
+  side-local ordinals allocated in canonical first-detection order; hidden
+  target/entity and attachment identity is omitted. The stored payload's exact
+  `viewer_side` must match the requested side, including for an empty side.
+  Missing `side` returns 422; a side absent from the captured projection
+  returns 409.
+
+Targeting-decision ordinals in `SIDE_FOW` are separately recomputed from zero
+per battle and viewer side; they are not the privileged all-sides picture
+ordinal and therefore do not reveal how many opposing shooters sort ahead of
+the viewer. The decoder re-derives and compares every public decision and
+revalidation field against the privileged source plus the root-only
+association. An internally valid but altered standoff, logical time,
+disposition, or outcome is rejected rather than trusted as stored public data.
+
+The stored root frame carries a privileged-only exact target-to-track
+association map so the decoder can prove that each opaque track identifier is
+the same contact used by the engine decision. Missing associations or same-side
+track rebinding reject; this map is never returned in `SIDE_FOW`, replay, or
+frontend payloads.
+
+The route does not yet authenticate the caller or derive an authorized side.
+Consequently these query parameters are evidence-projection controls, not an
+access-control boundary, and the privileged default is unsuitable as a
+player-safe default. REM-041 / Phase 128 owns server-side caller authorization
+and safe frontend/API defaults. Client-side FOW filtering cannot substitute
+for that work. Legacy frames that stored only the privileged projection cannot
+be used to synthesize a side projection.
 
 ### Analysis evidence contract
 
@@ -815,6 +853,12 @@ non-morale concealment lifecycle.
 | `lod_distant_interval` | `int` | `20` | Update frequency (ticks) for DISTANT-tier units |
 | `lod_hysteresis_ticks` | `int` | `3` | Ticks before downgrade from higher tier (immediate promotion) |
 
+**Targeting Integrity (Phase 115):**
+
+| Field | Type | Default | Description |
+|-------|------|---------|-------------|
+| `enable_sensing_aware_standoff` | `bool` | `True` | Require a current usable sensing/fire-control solution before automatic tactical standoff; explicit `False` authorizes zero automatic standoff rather than restoring catalog-range holding |
+
 **Flat Dict Optimization (Phase 86):**
 
 CalibrationSchema provides a `to_flat_dict(sides)` method that expands all fields (including nested morale and per-side overrides) into a plain `dict[str, Any]` for O(1) battle-loop access. This is generated once at scenario load time and stored as `ctx.cal_flat` on SimulationContext.
@@ -825,7 +869,12 @@ CalibrationSchema provides a `to_flat_dict(sides)` method that expands all field
 |-------|------|---------|-------------|
 | `enable_all_modern` | `bool` | `False` | Activates all 21 non-deferred `enable_*` flags at once (convenience meta-flag) |
 
-All `enable_*` flags default to `False` for backward compatibility. Enable them in scenario YAML to activate the corresponding effects. The `enable_all_modern` meta-flag is available for frontend convenience but per-scenario selective flags are preferred for performance.
+The legacy opt-in consequence `enable_*` flags default to `False` for backward
+compatibility. `enable_sensing_aware_standoff` is deliberately strict and
+defaults to `True`; explicit `False` does not restore the defective fallback.
+Enable other optional effects in scenario YAML as needed. The
+`enable_all_modern` meta-flag is available for frontend convenience, but
+per-scenario selective flags are preferred for performance.
 
 ---
 
@@ -933,9 +982,10 @@ mutating the target. See the
 [checkpoint state contract](../specs/checkpoint-state.md) for the canonical
 schema and bounded legacy-migration rules.
 
-The current engine checkpoint schema is version 114. In addition to force,
+The current engine checkpoint schema is version 115. In addition to force,
 loadout, logistics, space/ASAT, and time-on-target state, it preserves one
-`morale_runtime` envelope and one fully effective `era_runtime_contract`.
+`morale_runtime` envelope, one fully effective `era_runtime_contract`, and one
+strict tactical-targeting interval/picture/decision/revalidation envelope.
 `SimulationContext.morale_states` remains a stable read-only
 `Mapping[str, MoraleState]` for runtime and frame consumers, but it is not a
 second checkpoint store; `RNGManager` alone persists the MORALE generator.

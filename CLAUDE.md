@@ -7,14 +7,26 @@ models, a headless Python engine, FastAPI service, and React frontend. Modern
 warfare is the primary data package, with four historical-era packages and
 integrated maritime warfare.
 
-**Current status**: Phases 105 through 114 and Block 12 are complete. Phase
-114's typed era-runtime contract passes documentation, cross-document review,
-and postmortem; REM-018 is closed. The owner accepted its timing evidence only
-with an explicit contention qualification and deferred clean confirmation
-until all cores are free; no uncontended pass is claimed. See
-`docs/devlog/phase-114.md`,
-`docs/specs/era-override-execution.md`, and `docs/remediation-backlog.md` for
-the exact evidence, closure gates, and unresolved follow-ups.
+**Current status**: Phases 105 through 115 and Block 12 are complete. Phase
+115's typed sensing-aware targeting and format-115 checkpoint/exposure
+contract passes documentation, cross-document review, and postmortem; REM-028
+is closed. The owner accepted its contended long-run evidence only with an
+explicit qualification; capped slow/API/E2E runs are not called passes. See
+`docs/devlog/phase-115.md`,
+`docs/specs/sensing-aware-tactical-standoff.md`, and
+`docs/remediation-backlog.md` for the exact evidence, closure gates, and
+unresolved follow-ups.
+
+Block 13 is active with Phase 116 / REM-029 next and unstarted. REM-041 through
+REM-043 are assigned to planned Block 14.
+REM-044 is assigned to planned Block 15 for sourced sensor covariance and an
+atomic predictive-tracking transaction.
+REM-045 assigns the legacy Fallujah scripted-action lifecycle to planned Block
+16 / Phase 132; declaration/reference loading is not authoritative dispatch,
+effect, or exact-once continuation evidence.
+Phase 115's 73 Easting workload-identity change uses a strict non-timing
+transition qualification; the clean endpoint must be promoted before the next
+phase closes and is never called a performance pass.
 
 ## Python & Package Management
 **Requires Python >=3.12** (pinned to 3.12.10 via `.python-version`).
@@ -39,7 +51,7 @@ uv sync --locked --extra dev --extra api --extra terrain --extra mcp
 uv run --no-sync python scripts/validate_test_partitions.py \
   --output artifacts/partition-audit/manifest.json
 uv run --no-sync python scripts/run_pytest_partition.py standard \
-  --manifest artifacts/standard/manifest.json \
+  --manifest artifacts/partition-audit/manifest.json \
   --junit artifacts/standard/junit.xml --forbid-skips \
   --timeout-seconds 2700
 ```
@@ -49,16 +61,21 @@ The authoritative Python suite is the exact audited union of `standard`,
 runs the audit, `standard`, `api`, `e2e`, and the overlapping `terrain`
 dependency profile. Weekly/manual CI runs the three marker partitions in
 deterministic module-affine shards. `benchmark-policy` is also an overlapping
-focused profile, not a seventh partition. The routine 73 Easting paired gate
-uses the version-3 typed, morale-neutral control-plane workload and does not
-prove default morale behavior or historical fidelity; Golan remains manual.
+focused profile, not a seventh partition. Phase 115 routes routine 73 Easting
+through a strict version-4 non-timing workload transition while retaining
+version-3 runtime-input normalization. `transition_qualified` proves only the
+exact classified workload/semantic handoff; the next phase must promote the
+clean Phase 115 endpoint before ordinary paired gating resumes. It is not a
+speed, default-morale, or historical-fidelity result; Golan remains manual.
 
-The Phase 114 closure audit enumerates exactly 11,903 nodes:
-`standard` 11,445, `slow-only` 109, `benchmark-only` 62, `slow-benchmark` 4,
-API 242, and E2E 41. All 11,903 passed with zero failures/errors/skips and six
-classified warnings. The Phase 114 devlog records the exact partition,
-qualification, final-tree rerun, scenario, and static-check evidence. Phase
-114 is complete and REM-018 is closed.
+The Phase 115 closure audit enumerates exactly 12,248 nodes:
+`standard` 11,743, `slow-only` 110, `benchmark-only` 87, `slow-benchmark` 4,
+API 263, and E2E 41. All 11,743 standard nodes and every complete benchmark
+profile passed, alongside data, determinism, scenario, frontend, static, and
+documentation gates. The Phase 115 devlog records the exact qualified
+slow/API/E2E results, the passing focused production API witness, transition
+artifact, warnings, exclusions, and remaining deficits. Phase 115 is complete
+and REM-028 is closed.
 
 ## Architecture
 
@@ -178,7 +195,10 @@ production-evidence requirements.
 | `docs/brainstorm-block11.md` | Block 11 design thinking (golden scenarios, engine validation through UI) |
 | `docs/development-phases-block11.md` | Block 11 roadmap and polish history (98–104) |
 | `docs/development-phases-block12.md` | Block 12 phase roadmap (105–114), integrity remediation |
-| `docs/development-phases-block13.md` | Block 13 roadmap (115–127), queued integrity follow-ups |
+| `docs/development-phases-block13.md` | Block 13 roadmap (115–127), active integrity follow-ups |
+| `docs/development-phases-block14.md` | Block 14 roadmap (128–130), targeting authorization/topology/selection follow-ups |
+| `docs/development-phases-block15.md` | Block 15 roadmap (131), sensor covariance and predictive-tracking follow-up |
+| `docs/development-phases-block16.md` | Block 16 roadmap (132), scripted scenario action-integrity follow-up |
 | `docs/remediation-backlog.md` | Audited implementation gaps and completion evidence |
 | `docs/specs/project-structure.md` | Full package tree, module decomposition, dependency graph |
 | `docs/devlog/` | Per-phase implementation logs (`index.md` tracks status) |
@@ -210,7 +230,10 @@ All phase details are in `docs/devlog/` (one file per phase). Per-phase tables i
 | Block 10 | 92–97 | UI depth: analytics endpoints, dashboard charts, map overlays, calibration editor, event filtering, data catalogs | ~120 |
 | Block 11 | 98–104 | Golden scenarios plus OOB, engine, and deployment polish | ~107 |
 | Block 12 | 105–114 | Production-path integrity remediation; complete | 11,903 audited closure passes; 6 classified warnings |
-| Block 13 | 115–127 | Queued sensing, checkpoint, historical-validation, performance-semantics, concealment, surrender/POW, event-time, battle-topology, C2, CBRN-action, medical, maintenance, and validation-era follow-ups | Planned |
+| Block 13 | 115–127 | Active sensing, checkpoint, historical-validation, performance-semantics, concealment, surrender/POW, event-time, battle-topology, C2, CBRN-action, medical, maintenance, and validation-era follow-ups | Active |
+| Block 14 | 128–130 | Targeting exposure authorization, authored mount/director topology, and availability-aware threat selection | Planned |
+| Block 15 | 131 | Sourced sensor measurement covariance and atomic predictive tracking | Planned |
+| Block 16 | 132 | Typed, fail-closed, exact-once scripted scenario actions | Planned |
 
 ### Block 11 Detail (COMPLETE)
 
@@ -219,7 +242,7 @@ All phase details are in `docs/devlog/` (one file per phase). Per-phase tables i
 | 98 | Complete | Shared prework — gap audit (4 OOB briefs), envelope helpers (6 fns + 26 tests), calibration template, depth checklist template |
 | 99 | Complete | Debecka Pass (2003) — 12 new YAMLs (6 units + 3 weapons + 5 ammo), scenario YAML, 8 regression tests. **Engine fixes**: LIGHT_INFANTRY exempt from seeker FOV (Javelin fires), `"Ordnance Stations"` / `"CSRL Rotary Launcher"` mapped to bomb_rack_generic (CAS bombs emit EngagementEvents). 1 accepted limitation (Peshmerga squad granularity). |
 | 100 | Complete | Khafji (1991) — 37 new YAMLs (14 units + 13 weapons + 10 ammo), scenario YAML with hybrid tick resolution + full OOB (233 units), 7 regression tests. Engine fixes: 16"/50 cross-era availability + NAVAL_GUN target_domains override for shore bombardment. 5 accepted limitations (naval-gunfire EngagementEvent, Iraqi artillery unit, SA-7/Spirit 03, AGM-65, full-OOB performance). |
-| 101 | Complete | Fallujah Phase Line Fran (2004) — 29 new YAMLs (14 units + 7 weapons + 7 ammo + 1 HBIED device), 333-unit scenario (198 blue + 135 red at full Al-Fajr scale), **2 new scenario-level config fields** (`initial_ieds` + `scripted_events`) backed by real engine APIs (HBIED detonation, WP fire zone, unit teleport, casualty pulse). Engine fixes: `hbied` subtype (non-jammable), `INCENDIARY_WEAPON` ammo now forces fire_started for honest WP shake-and-bake semantics, `unconventional_engine` auto-created when initial_ieds non-empty. 13 tests (6 fast + 7 @slow). |
+| 101 | Complete | Fallujah Phase Line Fran (2004) — 29 new YAMLs (14 units + 7 weapons + 7 ammo + 1 HBIED device), 333-unit scenario (198 blue + 135 red at full Al-Fajr scale), **2 new scenario-level config fields** (`initial_ieds` + `scripted_events`) plus four legacy handlers. Phase 115 confirmed the current run ends before the first due action and that load/reference checks do not prove typed, lifecycle-safe, exact-once effects; REM-045 / Phase 132 owns that follow-up. Engine fixes: `hbied` subtype (non-jammable), `INCENDIARY_WEAPON` fire behavior, and `unconventional_engine` auto-creation for authored initial IEDs. 13 phase-era tests (6 fast + 7 @slow). |
 | 102 | Complete | Bint Jbeil + INS Hanit (2006) — 19 new YAMLs (11 units + 4 weapons + 4 ammo) via 3 parallel authoring agents. Two scenarios: Bint Jbeil (249 units, IDF Golani/Paratrooper/Armor vs Hezbollah, phase-era `DRAW_SCENARIO`) + INS Hanit vignette (3 units, Sa'ar 5 vs C-802 Noor, phase-era `HISTORICAL_WINNERS.blue`). These labels preserve Block 11 intent/current regression behavior; they are not catalog-wide historical-validation evidence, which is queued under REM-030. 15 tests (9 fast + 6 @slow). **Zero engine fixes** — all new classes fit existing schemas (CORVETTE naval_type, NAVAL_GUN category, RADAR_ACTIVE guidance all existed). Block 11 COMPLETE. |
 | 103 | Complete | Block 11 Polish — OOB + engine gap tightening. 3 new Iraqi artillery carrier units (2S1, 2S3, FROG-7), 10 weapon/sensor map additions, AGM-65 added to F-16C, FAE retagged INCENDIARY_WEAPON, `_publish_air_engagement_event` helper wired to 3 `_route_air_engagement` sites (AGM-65/AMRAAM/Hellfire/SAM now surface in /analytics/engagements chart), 4 `_publish_naval_engagement_event` sites added (torpedo, depth charge, ASHM, ASROC). 17 new tests. Resolves Phase 100 limitations #2 + #3 (partial) + #4. |
 | 104 | Complete | Configurable Deployment Modes — new `stochastic_warfare/simulation/deployment.py` with 5 modes (legacy / bounding_box / clustered / doctrinal / manual) + `DeploymentMode` + `GroupKey` enums + `DeploymentBox` + `DeploymentConfig` pydantic models. Per-unit `position: [x, y]` YAML override works in any mode. 6 formation templates in `data/formations/` (brigade_attack, brigade_defense, battalion_urban_defense, marine_urban_assault, mechanized_thrust, naval_patrol_station). All 4 Block 11 golden scenarios retrofitted (104b): Debecka→bounding_box, Khafji/Fallujah/Bint Jbeil→doctrinal (Hanit stays legacy). Tick-0 side separation: Debecka 0m→1292m, Fallujah 5m→1104m, Bint Jbeil 5m→2625m (Khafji already OK at 5050m+). Direction-aware `_deploy_doctrinal` auto-flips offset_y_frac when opposing box is at lower y. 33 new Phase 104 tests including all-golden regression guard. |

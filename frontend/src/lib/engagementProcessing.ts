@@ -1,5 +1,5 @@
 import type { EventItem } from '../types/api'
-import type { ReplayFrame, EngagementArc } from '../types/map'
+import type { MapReplayFrame, EngagementArc } from '../types/map'
 
 /**
  * Build engagement arcs by matching engagement events to the nearest frame
@@ -7,7 +7,7 @@ import type { ReplayFrame, EngagementArc } from '../types/map'
  */
 export function buildEngagementArcs(
   events: EventItem[],
-  frames: ReplayFrame[],
+  frames: MapReplayFrame[],
 ): EngagementArc[] {
   if (frames.length === 0) return []
 
@@ -43,8 +43,8 @@ export function buildEngagementArcs(
   return arcs
 }
 
-function findNearestFrame(frames: ReplayFrame[], tick: number): ReplayFrame | null {
-  let best: ReplayFrame | null = null
+function findNearestFrame(frames: MapReplayFrame[], tick: number): MapReplayFrame | null {
+  let best: MapReplayFrame | null = null
   let bestDist = Infinity
 
   for (const f of frames) {

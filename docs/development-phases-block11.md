@@ -259,6 +259,14 @@ Depth checklist per template, scenario-specific observations for naval engagemen
 
 **Status**: Complete. See [phase-101.md](devlog/phase-101.md).
 
+**Integrity follow-up:** Phase 115 confirmed that Phase 101's load/reference
+checks do not prove scripted-action dispatch or effects: the current seed-42
+production run terminates at 200 seconds, before the first authored action at
+H+7. The existing handlers also lack a typed, fail-closed, checkpointed
+exact-once owner. [REM-045](remediation-backlog.md#rem-045-scripted-scenario-actions-lack-a-typed-exact-once-runtime-owner)
+assigns that bounded repair to Phase 132; Phase 101's scenario and catalog
+delivery remains complete.
+
 **Goal**: Third golden scenario. Urban combat showcase with unconventional warfare elements. 3rd Battalion, 5th Marines + 2nd Battalion, 7th Cavalry sector advance from Phase Line Fran to Phase Line Jena during Operation Al-Fajr. Heavy IED emplacement, booby-trapped structures, AC-130 gunship support, M1A2 + AAV + LAV-25 combined arms, Iraqi National Guard blocking force.
 
 **Dependencies**: Phase 100 complete.
@@ -273,7 +281,12 @@ Depth checklist per template, scenario-specific observations for naval engagemen
 
 ### 101a: Research
 
-`docs/scenarios/fallujah_phase_line_fran.md` with sector OOB, phase lines, IED density estimates, house-clearance tempo.
+The planned standalone `docs/scenarios/fallujah_phase_line_fran.md` was not
+created. The retained research record is the
+[Phase 101 research section](devlog/phase-101.md#research) plus the catalog
+[scenario source notes](https://github.com/clay-m-smith/stochastic-warfare/blob/main/data/scenarios/fallujah_phase_line_fran/scenario.yaml).
+This roadmap correction does not manufacture the missing standalone brief or
+rewrite the phase-era research evidence.
 
 ### 101b: Data Authoring
 
@@ -405,7 +418,7 @@ Depth checklist includes naval engagement events, ATGM kill events distinguishab
 | `docs/scenarios/khafji.md` | 100 | Research brief |
 | `data/scenarios/khafji/scenario.yaml` | 100 | Scenario definition |
 | `tests/validation/test_khafji.py` | 100 | Regression test |
-| `docs/scenarios/fallujah_phase_line_fran.md` | 101 | Research brief |
+| `docs/devlog/phase-101.md` + `data/scenarios/fallujah_phase_line_fran/scenario.yaml` source notes | 101 | Retained research record; planned standalone brief was not created |
 | `data/scenarios/fallujah_phase_line_fran/scenario.yaml` | 101 | Scenario definition |
 | `tests/validation/test_fallujah_phase_line_fran.py` | 101 | Regression test |
 | `docs/scenarios/bint_jbeil.md` | 102 | Research brief |

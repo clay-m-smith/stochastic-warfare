@@ -2,7 +2,7 @@
 
 The configurations remain available for explicit manual measurement, but no
 single candidate/baseline timing pair makes a speed or interaction claim.
-Each flag needs its own promoted version-3 paired reference before gating.
+Each flag needs its own promoted version-4 paired reference before gating.
 """
 
 from __future__ import annotations
@@ -22,10 +22,7 @@ _PERFORMANCE_FLAGS = (
 )
 _BASE = {
     "enable_fog_of_war": True,
-    **{
-        flag: False
-        for flag in _PERFORMANCE_FLAGS
-    },
+    **{flag: False for flag in _PERFORMANCE_FLAGS},
 }
 
 
@@ -35,10 +32,7 @@ def flag_impact_measurement_plan() -> dict[str, dict[str, bool]]:
         "all_off": dict(_BASE),
         "all_on": {
             **_BASE,
-            **{
-                flag: True
-                for flag in _PERFORMANCE_FLAGS
-            },
+            **{flag: True for flag in _PERFORMANCE_FLAGS},
         },
     }
     for flag in _PERFORMANCE_FLAGS:
@@ -61,24 +55,12 @@ class TestFlagImpactMeasurementPlan:
         assert list(plan) == [
             "all_off",
             "all_on",
-            *[
-                f"only_{flag}"
-                for flag in _PERFORMANCE_FLAGS
-            ],
+            *[f"only_{flag}" for flag in _PERFORMANCE_FLAGS],
         ]
         assert plan["all_off"]["enable_fog_of_war"] is True
-        assert all(
-            plan["all_off"][flag] is False
-            for flag in _PERFORMANCE_FLAGS
-        )
-        assert all(
-            plan["all_on"][flag] is True
-            for flag in _PERFORMANCE_FLAGS
-        )
+        assert all(plan["all_off"][flag] is False for flag in _PERFORMANCE_FLAGS)
+        assert all(plan["all_on"][flag] is True for flag in _PERFORMANCE_FLAGS)
 
     def test_no_flag_configuration_has_a_promoted_gate(self) -> None:
         entries = BenchmarkBaseline().load()
-        assert all(
-            name not in entries
-            for name in flag_impact_measurement_plan()
-        )
+        assert all(name not in entries for name in flag_impact_measurement_plan())

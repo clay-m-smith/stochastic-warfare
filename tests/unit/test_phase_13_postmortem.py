@@ -31,6 +31,9 @@ from stochastic_warfare.simulation.scenario import (
     SimulationContext,
     TerrainConfig,
 )
+from stochastic_warfare.simulation.tactical_targeting import (
+    TacticalTargetingRuntime,
+)
 from stochastic_warfare.terrain.heightmap import Heightmap, HeightmapConfig
 
 TS = datetime(2024, 6, 15, 12, 0, 0, tzinfo=timezone.utc)
@@ -104,12 +107,12 @@ def _make_ctx(
         else None
     )
     effective_units = units_by_side or {}
+    units_by_id = {
+        unit.entity_id: unit
+        for units in effective_units.values()
+        for unit in units
+    }
     if runtime is not None:
-        units_by_id = {
-            unit.entity_id: unit
-            for units in effective_units.values()
-            for unit in units
-        }
         runtime.register_units(
             tuple(
                 MoraleRegistration(unit_id, MoraleState.STEADY)
@@ -125,6 +128,21 @@ def _make_ctx(
         event_bus=bus,
         heightmap=heightmap,
         units_by_side=effective_units,
+        unit_weapons={unit_id: () for unit_id in units_by_id},
+        unit_sensor_attachments={unit_id: () for unit_id in units_by_id},
+        unit_sensors={unit_id: () for unit_id in units_by_id},
+        equipment_resolutions={unit_id: () for unit_id in units_by_id},
+        tactical_targeting=TacticalTargetingRuntime(
+            sensing_aware_standoff_enabled=True,
+            unit_sides={
+                unit_id: (
+                    unit.side
+                    if isinstance(unit.side, str)
+                    else unit.side.value
+                )
+                for unit_id, unit in units_by_id.items()
+            },
+        ),
         morale_states={},
         morale_runtime=runtime,
         rout_engine=(runtime.rout_engine if runtime is not None else None),

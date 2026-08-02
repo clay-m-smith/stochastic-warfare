@@ -1,9 +1,10 @@
-"""Strict paired production-benchmark policy and execution harness.
+"""Strict production benchmark gate and workload-transition harness.
 
 The public :func:`run_benchmark` helper remains a measurement-only profiler.
-Regression decisions are made only by :func:`run_paired_comparison`, which
-executes the same candidate-owned worker against an authoritative reference
-checkout and the candidate tree on one host.
+Regression decisions are made only by :func:`run_paired_comparison`.
+Intentional workload changes use :func:`run_workload_transition`, which
+executes exactly one candidate-owned duration-free production closure at each
+endpoint and makes no performance decision.
 """
 
 from __future__ import annotations
@@ -47,7 +48,8 @@ DATA_DIR = ROOT / "data"
 SCENARIOS_DIR = DATA_DIR / "scenarios"
 BASELINES_PATH = Path(__file__).with_name("baselines.json")
 REFERENCE_COMMIT = "0460ac70be86784bcc6e359ae4202f4bcb938c60"
-POLICY_VERSION = 3
+POLICY_VERSION = 4
+RUNTIME_INPUT_POLICY_VERSION = 3
 WORKER_RECORDER_MAX_EVENTS = 5_000_000
 DEFAULT_MAX_TICKS = 20_000
 PAIR_ORDERS: list[list[Literal["reference", "candidate"]]] = [
@@ -114,19 +116,13 @@ def _canonical_value(value: Any) -> Any:
             value.model_dump(mode="json", exclude_none=False),
         )
     if is_dataclass(value) and not isinstance(value, type):
-        return {
-            field.name: _canonical_value(getattr(value, field.name))
-            for field in fields(value)
-        }
+        return {field.name: _canonical_value(getattr(value, field.name)) for field in fields(value)}
     if hasattr(value, "_asdict"):
         return _canonical_value(value._asdict())
     if isinstance(value, Mapping):
         if not all(isinstance(key, str) for key in value):
             raise ValueError("canonical JSON mapping keys must be strings")
-        return {
-            key: _canonical_value(item)
-            for key, item in sorted(value.items())
-        }
+        return {key: _canonical_value(item) for key, item in sorted(value.items())}
     if isinstance(value, (list, tuple)):
         return [_canonical_value(item) for item in value]
     if isinstance(value, (set, frozenset)):
@@ -140,8 +136,7 @@ def _canonical_value(value: Any) -> Any:
     if hasattr(value, "item"):
         return _canonical_value(value.item())
     raise TypeError(
-        "canonical JSON does not support "
-        f"{type(value).__module__}.{type(value).__qualname__}",
+        f"canonical JSON does not support {type(value).__module__}.{type(value).__qualname__}",
     )
 
 
@@ -210,7 +205,7 @@ class RuntimeSource(_StrictModel):
 class RuntimeInputManifest(_StrictModel):
     """Canonical effective workload and every resolved data source."""
 
-    policy_version: Literal[3] = POLICY_VERSION
+    policy_version: Literal[3] = RUNTIME_INPUT_POLICY_VERSION
     scenario_path: str
     scenario_sha256: str
     dependency_lock_sha256: str
@@ -241,10 +236,7 @@ class RuntimeInputManifest(_StrictModel):
         paths = [source.path for source in self.sources]
         if paths != sorted(paths) or len(paths) != len(set(paths)):
             raise ValueError("runtime sources must be unique and path-sorted")
-        sources_by_path = {
-            source.path: source
-            for source in self.sources
-        }
+        sources_by_path = {source.path: source for source in self.sources}
         scenario_source = sources_by_path.get(self.scenario_path)
         lock_source = sources_by_path.get("uv.lock")
         if (
@@ -280,10 +272,7 @@ class RuntimeInputManifest(_StrictModel):
             "max_ticks": self.max_ticks,
             "recorder_config": self.recorder_config,
             "effective_inputs": self.effective_inputs,
-            "sources": [
-                source.model_dump(mode="python")
-                for source in self.sources
-            ],
+            "sources": [source.model_dump(mode="python") for source in self.sources],
         }
 
 
@@ -314,32 +303,17 @@ class SemanticEnvelope(_StrictModel):
                 raise ValueError("semantic side names must be non-empty and trimmed")
             if list(counts) != sorted(counts):
                 raise ValueError("semantic status count maps must be sorted")
-            if any(
-                isinstance(count, bool)
-                or not isinstance(count, int)
-                or count < 0
-                for count in counts.values()
-            ):
+            if any(isinstance(count, bool) or not isinstance(count, int) or count < 0 for count in counts.values()):
                 raise ValueError("semantic status counts must be non-negative integers")
-        if sum(
-            count
-            for counts in self.status_counts.values()
-            for count in counts.values()
-        ) != self.unit_count:
+        if sum(count for counts in self.status_counts.values() for count in counts.values()) != self.unit_count:
             raise ValueError(
                 "semantic status counts must equal the exact unit count",
             )
-        if (
-            not self.victory_condition_type
-            or self.victory_condition_type
-            != self.victory_condition_type.strip()
-        ):
+        if not self.victory_condition_type or self.victory_condition_type != self.victory_condition_type.strip():
             raise ValueError(
                 "semantic victory condition must be non-empty and trimmed",
             )
-        if self.winner is not None and (
-            not self.winner or self.winner != self.winner.strip()
-        ):
+        if self.winner is not None and (not self.winner or self.winner != self.winner.strip()):
             raise ValueError("semantic winner must be null or non-empty and trimmed")
         return self
 
@@ -397,9 +371,9 @@ class BenchmarkWorkload(_StrictModel):
 
 
 class BenchmarkPolicy(_StrictModel):
-    """Exact version-3 comparison policy for one scenario."""
+    """Exact version-4 paired-gate or measurement-only policy."""
 
-    policy_version: Literal[3] = POLICY_VERSION
+    policy_version: Literal[4] = POLICY_VERSION
     mode: Literal["gate", "measurement_only"]
     manual: bool
     reference_commit: str | None
@@ -426,10 +400,7 @@ class BenchmarkPolicy(_StrictModel):
                 "paired order must alternate reference/candidate exactly",
             )
         if self.mode == "gate":
-            if (
-                self.reference_commit is None
-                or not _FULL_COMMIT_PATTERN.fullmatch(self.reference_commit)
-            ):
+            if self.reference_commit is None or not _FULL_COMMIT_PATTERN.fullmatch(self.reference_commit):
                 raise ValueError("gating policy requires one full reference commit")
         elif self.reference_commit is not None:
             raise ValueError(
@@ -438,22 +409,176 @@ class BenchmarkPolicy(_StrictModel):
         return self
 
 
+class TransitionPolicy(_StrictModel):
+    """Duration-free policy for one intentional workload transition."""
+
+    policy_version: Literal[4] = POLICY_VERSION
+    mode: Literal["transition_qualified"]
+    manual: bool
+    reference_commit: str
+    workload: BenchmarkWorkload
+    closures_per_revision: Literal[1] = 1
+
+    @field_validator("reference_commit")
+    @classmethod
+    def _full_reference_commit(cls, value: str) -> str:
+        if not _FULL_COMMIT_PATTERN.fullmatch(value):
+            raise ValueError(
+                "transition policy requires one full reference commit",
+            )
+        return value
+
+
+class TransitionApproval(_StrictModel):
+    """One sourced, digest-bound approval for an exact endpoint difference."""
+
+    surface: Literal[
+        "effective_inputs",
+        "runtime_input",
+        "semantic_envelope",
+    ]
+    pointer: str
+    operation: Literal["add", "remove", "replace"]
+    before_sha256: str
+    after_sha256: str
+    classification: Literal[
+        "sensing_aware_standoff_enablement",
+        "vvs2_target_domain_expansion",
+        "vvs2_loadout_role_correction",
+        "derived_runtime_input_fingerprint",
+        "derived_roster_loadout_digest",
+    ]
+    authorities: list[str]
+    rationale: str
+
+    @field_validator("pointer")
+    @classmethod
+    def _canonical_json_pointer(cls, value: str) -> str:
+        if value == "":
+            return value
+        if not value.startswith("/"):
+            raise ValueError(
+                "transition difference requires a canonical JSON Pointer",
+            )
+        encoded_tokens: list[str] = []
+        for token in value[1:].split("/"):
+            decoded: list[str] = []
+            index = 0
+            while index < len(token):
+                character = token[index]
+                if character != "~":
+                    decoded.append(character)
+                    index += 1
+                    continue
+                if index + 1 >= len(token) or token[index + 1] not in {"0", "1"}:
+                    raise ValueError("transition JSON Pointer escaping is invalid")
+                decoded.append("~" if token[index + 1] == "0" else "/")
+                index += 2
+            encoded_tokens.append(
+                "".join(decoded).replace("~", "~0").replace("/", "~1"),
+            )
+        canonical = "/" + "/".join(encoded_tokens)
+        if canonical != value:
+            raise ValueError("transition JSON Pointer is not canonical")
+        return value
+
+    @field_validator("before_sha256", "after_sha256")
+    @classmethod
+    def _valid_value_digest(cls, value: str) -> str:
+        return _validate_sha256(value, "transition value digest")
+
+    @field_validator("rationale")
+    @classmethod
+    def _nonempty_rationale(cls, value: str) -> str:
+        if not value or value != value.strip():
+            raise ValueError(
+                "transition rationale must be non-empty and trimmed",
+            )
+        return value
+
+    @field_validator("authorities")
+    @classmethod
+    def _sourced_authorities(cls, value: list[str]) -> list[str]:
+        if (
+            not value
+            or value != sorted(value)
+            or len(value) != len(set(value))
+            or any(not authority or authority != authority.strip() for authority in value)
+        ):
+            raise ValueError(
+                "transition authorities must be non-empty, unique, and sorted",
+            )
+        return value
+
+
+class TransitionEndpoint(_StrictModel):
+    """Checked-in exact runtime and semantic identity for one endpoint."""
+
+    runtime_input: ReferenceInput
+    semantic_envelope: SemanticEnvelope
+
+
+class TransitionPredecessorLineage(_StrictModel):
+    """Exact version-3 baseline lineage intentionally superseded by v4."""
+
+    format_version: Literal[3]
+    policy_version: Literal[3]
+    commit: str
+    document_sha256: str
+    entry_sha256: str
+
+    @field_validator("commit")
+    @classmethod
+    def _valid_predecessor_commit(cls, value: str) -> str:
+        if not _FULL_COMMIT_PATTERN.fullmatch(value):
+            raise ValueError(
+                "transition predecessor requires a full lowercase commit",
+            )
+        return value
+
+    @field_validator("document_sha256", "entry_sha256")
+    @classmethod
+    def _valid_lineage_digest(cls, value: str) -> str:
+        return _validate_sha256(value, "transition predecessor digest")
+
+
+class WorkloadTransitionContract(_StrictModel):
+    """Exact approved input and semantic delta for one workload transition."""
+
+    predecessor: TransitionPredecessorLineage
+    reference: TransitionEndpoint
+    candidate: TransitionEndpoint
+    approvals: list[TransitionApproval]
+
+    @model_validator(mode="after")
+    def _differences_are_exactly_ordered(self) -> Self:
+        if not self.approvals:
+            raise ValueError(
+                "workload transition requires at least one exact difference",
+            )
+        keys = [(approval.surface, approval.pointer) for approval in self.approvals]
+        if keys != sorted(keys) or len(keys) != len(set(keys)):
+            raise ValueError(
+                "transition approvals must be unique and surface/path-sorted",
+            )
+        return self
+
+
 class BaselineEntry(_StrictModel):
-    """Strict version-3 baseline entry."""
+    """Strict version-4 baseline entry."""
 
     scenario_name: str
     scenario_path: str
-    policy: BenchmarkPolicy
+    policy: BenchmarkPolicy | TransitionPolicy
     reference_input: ReferenceInput | None
     semantic_envelope: SemanticEnvelope | None
+    transition_contract: WorkloadTransitionContract | None
 
     @model_validator(mode="after")
     def _valid_mode_payload(self) -> Self:
         if not self.scenario_name or self.scenario_name != self.scenario_name.strip():
             raise ValueError("scenario_name must be non-empty and trimmed")
-        uses_morale_neutral_control = (
-            self.policy.workload.name == "morale_neutral_control_plane"
-        )
+        uses_morale_neutral_control = self.policy.workload.name == "morale_neutral_control_plane"
         is_routine_control_plane = self.scenario_name == "73_easting"
         if is_routine_control_plane and not uses_morale_neutral_control:
             raise ValueError(
@@ -461,17 +586,35 @@ class BaselineEntry(_StrictModel):
             )
         if not is_routine_control_plane and uses_morale_neutral_control:
             raise ValueError(
-                "only the routine 73_easting benchmark may use the "
-                "morale-neutral control-plane workload",
+                "only the routine 73_easting benchmark may use the morale-neutral control-plane workload",
             )
-        if self.policy.mode == "gate":
-            if self.reference_input is None or self.semantic_envelope is None:
+        if isinstance(self.policy, BenchmarkPolicy) and self.policy.mode == "gate":
+            if self.reference_input is None or self.semantic_envelope is None or self.transition_contract is not None:
                 raise ValueError(
                     "gating baseline requires reference input and semantics",
                 )
             if self.reference_input.scenario_path != self.scenario_path:
                 raise ValueError("baseline scenario paths disagree")
-        elif self.reference_input is not None or self.semantic_envelope is not None:
+        elif isinstance(self.policy, TransitionPolicy):
+            if (
+                self.reference_input is not None
+                or self.semantic_envelope is not None
+                or self.transition_contract is None
+            ):
+                raise ValueError(
+                    "transition baseline requires only its exact transition contract",
+                )
+            endpoints = (
+                self.transition_contract.reference,
+                self.transition_contract.candidate,
+            )
+            if any(endpoint.runtime_input.scenario_path != self.scenario_path for endpoint in endpoints):
+                raise ValueError("transition baseline scenario paths disagree")
+        elif (
+            self.reference_input is not None
+            or self.semantic_envelope is not None
+            or self.transition_contract is not None
+        ):
             raise ValueError(
                 "measurement-only entries cannot carry a pass/fail baseline",
             )
@@ -481,7 +624,7 @@ class BaselineEntry(_StrictModel):
 class BaselineFile(_StrictModel):
     """Checked-in benchmark baseline document."""
 
-    format_version: Literal[3] = POLICY_VERSION
+    format_version: Literal[4] = POLICY_VERSION
     description: str
     entries: dict[str, BaselineEntry]
 
@@ -512,6 +655,22 @@ class WorkerRun(_StrictModel):
         return value
 
 
+class ProductionClosureRun(_StrictModel):
+    """Duration-free runtime and semantic closure for one revision."""
+
+    revision: Literal["reference", "candidate"]
+    commit: str
+    runtime_input: RuntimeInputManifest
+    semantic_envelope: SemanticEnvelope
+
+    @field_validator("commit")
+    @classmethod
+    def _valid_commit(cls, value: str) -> str:
+        if not _FULL_COMMIT_PATTERN.fullmatch(value):
+            raise ValueError("closure commit must be a full lowercase git SHA")
+        return value
+
+
 class PairSample(_StrictModel):
     pair_index: int = Field(strict=True, ge=0, lt=3)
     order: list[Literal["reference", "candidate"]]
@@ -521,10 +680,7 @@ class PairSample(_StrictModel):
 
     @model_validator(mode="after")
     def _valid_pair(self) -> Self:
-        if (
-            self.reference.revision != "reference"
-            or self.candidate.revision != "candidate"
-        ):
+        if self.reference.revision != "reference" or self.candidate.revision != "candidate":
             raise ValueError("paired worker revisions are reversed or mislabeled")
         if self.order != PAIR_ORDERS[self.pair_index]:
             raise ValueError("pair order disagrees with the policy")
@@ -546,6 +702,271 @@ class PerformanceDecision(_StrictModel):
     reference_relative_range: float = Field(ge=0.0, allow_inf_nan=False)
     candidate_relative_range: float = Field(ge=0.0, allow_inf_nan=False)
     reason: str
+
+
+_TRANSITION_MISSING = object()
+
+
+@dataclass(frozen=True)
+class _ObservedTransitionDifference:
+    surface: Literal[
+        "effective_inputs",
+        "runtime_input",
+        "semantic_envelope",
+    ]
+    pointer: str
+    operation: Literal["add", "remove", "replace"]
+    before_sha256: str
+    after_sha256: str
+
+
+def _json_pointer_token(value: str | int) -> str:
+    return str(value).replace("~", "~0").replace("/", "~1")
+
+
+def _transition_value_sha256(value: Any) -> str:
+    payload: dict[str, Any] = {
+        "present": value is not _TRANSITION_MISSING,
+    }
+    if value is not _TRANSITION_MISSING:
+        payload["value"] = value
+    return canonical_sha256(payload)
+
+
+def compute_transition_differences(
+    reference: Any,
+    candidate: Any,
+    *,
+    surface: Literal[
+        "effective_inputs",
+        "runtime_input",
+        "semantic_envelope",
+    ],
+) -> list[_ObservedTransitionDifference]:
+    """Return every canonical leaf difference without assigning approval."""
+    raw: list[tuple[str, Any, Any]] = []
+
+    def visit(reference_value: Any, candidate_value: Any, pointer: str) -> None:
+        if isinstance(reference_value, Mapping) and isinstance(
+            candidate_value,
+            Mapping,
+        ):
+            if not all(isinstance(key, str) for key in (*reference_value.keys(), *candidate_value.keys())):
+                raise ValueError(
+                    "transition comparison mappings require string keys",
+                )
+            for key in sorted(set(reference_value) | set(candidate_value)):
+                visit(
+                    reference_value.get(key, _TRANSITION_MISSING),
+                    candidate_value.get(key, _TRANSITION_MISSING),
+                    f"{pointer}/{_json_pointer_token(key)}",
+                )
+            return
+        if isinstance(reference_value, list) and isinstance(candidate_value, list):
+            for index in range(max(len(reference_value), len(candidate_value))):
+                visit(
+                    (reference_value[index] if index < len(reference_value) else _TRANSITION_MISSING),
+                    (candidate_value[index] if index < len(candidate_value) else _TRANSITION_MISSING),
+                    f"{pointer}/{index}",
+                )
+            return
+        if (
+            reference_value is not _TRANSITION_MISSING
+            and candidate_value is not _TRANSITION_MISSING
+            and canonical_json_bytes(reference_value) == canonical_json_bytes(candidate_value)
+        ):
+            return
+        raw.append((pointer, reference_value, candidate_value))
+
+    visit(reference, candidate, "")
+    differences = [
+        _ObservedTransitionDifference(
+            surface=surface,
+            pointer=pointer,
+            operation=(
+                "add"
+                if reference_value is _TRANSITION_MISSING
+                else "remove"
+                if candidate_value is _TRANSITION_MISSING
+                else "replace"
+            ),
+            before_sha256=_transition_value_sha256(reference_value),
+            after_sha256=_transition_value_sha256(candidate_value),
+        )
+        for pointer, reference_value, candidate_value in raw
+    ]
+    return sorted(differences, key=lambda difference: difference.pointer)
+
+
+def _validate_transition_endpoint(
+    run: ProductionClosureRun,
+    endpoint: TransitionEndpoint,
+) -> None:
+    expected = endpoint.runtime_input
+    actual = run.runtime_input
+    if (
+        actual.scenario_path != expected.scenario_path
+        or actual.scenario_sha256 != expected.scenario_sha256
+        or actual.dependency_lock_sha256 != expected.dependency_lock_sha256
+        or actual.fingerprint != expected.fingerprint
+    ):
+        raise ValueError(
+            f"{run.revision} workload-transition runtime identity differs from its exact endpoint",
+        )
+    if run.semantic_envelope != endpoint.semantic_envelope:
+        raise ValueError(
+            f"{run.revision} workload-transition semantics differ from its exact endpoint",
+        )
+
+
+def validate_workload_transition(
+    reference: ProductionClosureRun,
+    candidate: ProductionClosureRun,
+    contract: WorkloadTransitionContract,
+) -> list[TransitionApproval]:
+    """Reject every unapproved endpoint, immutable input, or semantic delta."""
+    if reference.revision != "reference" or candidate.revision != "candidate":
+        raise ValueError("workload-transition endpoints are reversed or mislabeled")
+    _validate_transition_endpoint(reference, contract.reference)
+    _validate_transition_endpoint(candidate, contract.candidate)
+
+    reference_input = reference.runtime_input
+    candidate_input = candidate.runtime_input
+    invariant_fields = (
+        "policy_version",
+        "scenario_path",
+        "scenario_sha256",
+        "dependency_lock_sha256",
+        "seed",
+        "max_ticks",
+        "recorder_config",
+        "sources",
+    )
+    changed_invariants = [
+        name for name in invariant_fields if getattr(reference_input, name) != getattr(candidate_input, name)
+    ]
+    if changed_invariants:
+        raise ValueError(
+            f"workload-transition immutable inputs differ: {changed_invariants!r}",
+        )
+
+    observed = compute_transition_differences(
+        reference_input.effective_inputs,
+        candidate_input.effective_inputs,
+        surface="effective_inputs",
+    )
+    observed.extend(
+        compute_transition_differences(
+            {"fingerprint": reference_input.fingerprint},
+            {"fingerprint": candidate_input.fingerprint},
+            surface="runtime_input",
+        )
+    )
+    observed.extend(
+        compute_transition_differences(
+            reference.semantic_envelope.model_dump(mode="json"),
+            candidate.semantic_envelope.model_dump(mode="json"),
+            surface="semantic_envelope",
+        )
+    )
+    observed.sort(key=lambda difference: (difference.surface, difference.pointer))
+    approvals = {(approval.surface, approval.pointer): approval for approval in contract.approvals}
+    observed_by_key = {(difference.surface, difference.pointer): difference for difference in observed}
+    unapproved = sorted(set(observed_by_key) - set(approvals))
+    stale = sorted(set(approvals) - set(observed_by_key))
+    if unapproved:
+        raise ValueError(
+            f"unapproved transition differences: {unapproved!r}",
+        )
+    if stale:
+        raise ValueError(f"stale transition approvals: {stale!r}")
+    for key, difference in observed_by_key.items():
+        approval = approvals[key]
+        if (
+            approval.operation != difference.operation
+            or approval.before_sha256 != difference.before_sha256
+            or approval.after_sha256 != difference.after_sha256
+        ):
+            raise ValueError(
+                f"transition approval differs from observed value at {key!r}",
+            )
+    return list(contract.approvals)
+
+
+def _verify_transition_predecessor(
+    repo_root: Path,
+    *,
+    scenario_name: str,
+    policy: TransitionPolicy,
+    contract: WorkloadTransitionContract,
+) -> None:
+    """Verify the exact v3 document and entry superseded by a transition."""
+    lineage = contract.predecessor
+    ancestry = subprocess.run(
+        ["git", "merge-base", "--is-ancestor", lineage.commit, "HEAD"],
+        cwd=repo_root,
+        capture_output=True,
+        check=False,
+        timeout=120,
+    )
+    if ancestry.returncode != 0:
+        raise ValueError(
+            "transition predecessor is not an ancestor of the candidate",
+        )
+    completed = subprocess.run(
+        [
+            "git",
+            "show",
+            f"{lineage.commit}:tests/benchmarks/baselines.json",
+        ],
+        cwd=repo_root,
+        capture_output=True,
+        check=True,
+        timeout=120,
+    )
+    document = completed.stdout
+    if hashlib.sha256(document).hexdigest() != lineage.document_sha256:
+        raise ValueError(
+            "transition predecessor document digest differs from git",
+        )
+    try:
+        raw = json.loads(document)
+    except (TypeError, ValueError) as exc:
+        raise ValueError(
+            "transition predecessor document is not valid JSON",
+        ) from exc
+    if not isinstance(raw, dict) or raw.get("format_version") != 3:
+        raise ValueError(
+            "transition predecessor is not a version-3 baseline document",
+        )
+    entries = raw.get("entries")
+    if not isinstance(entries, dict):
+        raise ValueError("transition predecessor entries are invalid")
+    predecessor_entry = entries.get(scenario_name)
+    if not isinstance(predecessor_entry, dict):
+        raise ValueError(
+            "transition scenario is absent from its predecessor baseline",
+        )
+    if canonical_sha256(predecessor_entry) != lineage.entry_sha256:
+        raise ValueError(
+            "transition predecessor entry digest differs from git",
+        )
+    predecessor_policy = predecessor_entry.get("policy")
+    if not isinstance(predecessor_policy, dict):
+        raise ValueError("transition predecessor policy is invalid")
+    if (
+        predecessor_entry.get("scenario_name") != scenario_name
+        or predecessor_entry.get("scenario_path") != contract.reference.runtime_input.scenario_path
+        or predecessor_policy.get("policy_version") != 3
+        or predecessor_policy.get("mode") != "gate"
+        or predecessor_policy.get("reference_commit") != policy.reference_commit
+        or predecessor_policy.get("workload") != policy.workload.model_dump(mode="json")
+        or predecessor_entry.get("reference_input") != contract.reference.runtime_input.model_dump(mode="json")
+        or predecessor_entry.get("semantic_envelope") != contract.reference.semantic_envelope.model_dump(mode="json")
+    ):
+        raise ValueError(
+            "transition predecessor does not bind the exact reference endpoint",
+        )
 
 
 class GitIdentity(_StrictModel):
@@ -599,10 +1020,7 @@ class BenchmarkRunnerIdentity(_StrictModel):
             "runner_name",
             "runner_os",
         }
-        if set(value) != expected or any(
-            not label or label != label.strip()
-            for label in value.values()
-        ):
+        if set(value) != expected or any(not label or label != label.strip() for label in value.values()):
             raise ValueError(
                 "runner labels must contain the exact non-empty identity set",
             )
@@ -682,8 +1100,7 @@ class BenchmarkEnvironment(_StrictModel):
             "shapely",
         }
         if set(self.dependencies) != expected_dependencies or any(
-            not value or value != value.strip()
-            for value in self.dependencies.values()
+            not value or value != value.strip() for value in self.dependencies.values()
         ):
             raise ValueError(
                 "dependency versions must contain the exact benchmark set",
@@ -696,16 +1113,12 @@ class BenchmarkEnvironment(_StrictModel):
             "VECLIB_MAXIMUM_THREADS",
         }
         if set(self.threading_environment) != expected_threading or any(
-            not value or value != value.strip()
-            for value in self.threading_environment.values()
+            not value or value != value.strip() for value in self.threading_environment.values()
         ):
             raise ValueError(
                 "threading environment must contain every declared variable",
             )
-        if (
-            self.runner_image != self.runner_identity.image
-            or self.runner_labels != self.runner_identity.labels
-        ):
+        if self.runner_image != self.runner_identity.image or self.runner_labels != self.runner_identity.labels:
             raise ValueError(
                 "runner identity aliases must agree exactly",
             )
@@ -734,10 +1147,17 @@ class BenchmarkBaselineIdentity(_StrictModel):
         return self
 
 
+class TransitionTimingAssessment(_StrictModel):
+    """Explicit refusal to make a timing comparison across workloads."""
+
+    applicability: Literal["not_applicable"] = "not_applicable"
+    reason: Literal["workloads_differ"] = "workloads_differ"
+
+
 class FinalTreeVerification(_StrictModel):
     """Content and production-run bridge from comparison tree to final commit."""
 
-    format_version: Literal[3] = POLICY_VERSION
+    format_version: Literal[4] = POLICY_VERSION
     created_at_utc: str
     status: Literal["pass"] = "pass"
     comparison_artifact_sha256: str
@@ -770,10 +1190,7 @@ class FinalTreeVerification(_StrictModel):
 
     @model_validator(mode="after")
     def _internally_consistent(self) -> Self:
-        if (
-            not self.scenario_name
-            or self.scenario_name != self.scenario_name.strip()
-        ):
+        if not self.scenario_name or self.scenario_name != self.scenario_name.strip():
             raise ValueError(
                 "verification scenario name must be non-empty and trimmed",
             )
@@ -783,16 +1200,12 @@ class FinalTreeVerification(_StrictModel):
             )
         if (
             self.comparison_candidate_identity.dirty
-            and self.comparison_candidate_identity.commit
-            == self.final_identity.commit
+            and self.comparison_candidate_identity.commit == self.final_identity.commit
         ):
             raise ValueError(
                 "a dirty comparison tree must advance to a final commit",
             )
-        if (
-            self.comparison_candidate_identity.runtime_manifest
-            != self.final_identity.runtime_manifest
-        ):
+        if self.comparison_candidate_identity.runtime_manifest != self.final_identity.runtime_manifest:
             raise ValueError(
                 "final runtime manifest differs from comparison candidate",
             )
@@ -808,35 +1221,101 @@ class FinalTreeVerification(_StrictModel):
             raise ValueError(
                 "final-tree runtime input differs from comparison candidate",
             )
-        if (
-            self.reproduction_run.semantic_envelope
-            != self.comparison_semantic_envelope
-        ):
+        if self.reproduction_run.semantic_envelope != self.comparison_semantic_envelope:
             raise ValueError(
                 "final-tree semantics differ from comparison candidate",
             )
-        manifest_by_path = {
-            source.path: source
-            for source in self.final_identity.runtime_manifest
-        }
+        manifest_by_path = {source.path: source for source in self.final_identity.runtime_manifest}
         for source in self.reproduction_run.runtime_input.sources:
             final_source = manifest_by_path.get(source.path)
-            if (
-                final_source is None
-                or final_source.sha256 != source.sha256
-                or final_source.mode != source.mode
-            ):
+            if final_source is None or final_source.sha256 != source.sha256 or final_source.mode != source.mode:
                 raise ValueError(
-                    "final-tree runtime input is not bound to the final "
-                    f"identity at {source.path!r}",
+                    f"final-tree runtime input is not bound to the final identity at {source.path!r}",
+                )
+        return self
+
+
+class TransitionFinalTreeVerification(_StrictModel):
+    """Duration-free bridge from a transition snapshot to one clean commit."""
+
+    format_version: Literal[4] = POLICY_VERSION
+    created_at_utc: str
+    status: Literal["transition_qualified"] = "transition_qualified"
+    transition_artifact_sha256: str
+    scenario_name: str
+    transition_candidate_identity: GitIdentity
+    final_identity: GitIdentity
+    transition_runtime_input: RuntimeInputManifest
+    transition_semantic_envelope: SemanticEnvelope
+    reproduction_closure: ProductionClosureRun
+    timing_assessment: TransitionTimingAssessment
+
+    @field_validator("created_at_utc")
+    @classmethod
+    def _valid_created_at(cls, value: str) -> str:
+        try:
+            parsed = datetime.fromisoformat(value)
+        except ValueError as exc:
+            raise ValueError(
+                "transition final-tree timestamp must be ISO-8601",
+            ) from exc
+        if parsed.tzinfo is None:
+            raise ValueError(
+                "transition final-tree timestamp must be timezone-aware",
+            )
+        return value
+
+    @field_validator("transition_artifact_sha256")
+    @classmethod
+    def _valid_artifact_digest(cls, value: str) -> str:
+        return _validate_sha256(value, "transition artifact digest")
+
+    @model_validator(mode="after")
+    def _internally_consistent(self) -> Self:
+        if self.final_identity.dirty or self.final_identity.status:
+            raise ValueError(
+                "transition final-tree verification requires a clean identity",
+            )
+        if (
+            self.transition_candidate_identity.dirty
+            and self.transition_candidate_identity.commit == self.final_identity.commit
+        ):
+            raise ValueError(
+                "dirty transition snapshot must advance to a final commit",
+            )
+        if self.transition_candidate_identity.runtime_manifest != self.final_identity.runtime_manifest:
+            raise ValueError(
+                "final runtime manifest differs from transition candidate",
+            )
+        if self.reproduction_closure.revision != "candidate":
+            raise ValueError(
+                "transition reproduction must be a candidate closure",
+            )
+        if self.reproduction_closure.commit != self.final_identity.commit:
+            raise ValueError(
+                "transition reproduction commit differs from final identity",
+            )
+        if (
+            self.reproduction_closure.runtime_input != self.transition_runtime_input
+            or self.reproduction_closure.semantic_envelope != self.transition_semantic_envelope
+        ):
+            raise ValueError(
+                "transition final-tree workload differs from candidate endpoint",
+            )
+        manifest_by_path = {source.path: source for source in self.final_identity.runtime_manifest}
+        for source in self.reproduction_closure.runtime_input.sources:
+            final_source = manifest_by_path.get(source.path)
+            if final_source is None or final_source.sha256 != source.sha256 or final_source.mode != source.mode:
+                raise ValueError(
+                    f"transition final closure is not bound to the final identity at {source.path!r}",
                 )
         return self
 
 
 class ComparisonArtifact(_StrictModel):
-    """Always-written paired comparison evidence."""
+    """Always-written ordinary paired-gate evidence."""
 
-    format_version: Literal[3] = POLICY_VERSION
+    format_version: Literal[4] = POLICY_VERSION
     created_at_utc: str
     scenario_name: str
     status: Literal["pass", "fail", "inconclusive", "error"]
@@ -863,17 +1342,11 @@ class ComparisonArtifact(_StrictModel):
 
     @model_validator(mode="after")
     def _internally_consistent(self) -> Self:
-        if (
-            not self.scenario_name
-            or self.scenario_name != self.scenario_name.strip()
-        ):
+        if not self.scenario_name or self.scenario_name != self.scenario_name.strip():
             raise ValueError("artifact scenario name must be non-empty and trimmed")
         if set(self.warmups) - {"reference", "candidate"}:
             raise ValueError("artifact warm-up revision keys are invalid")
-        if any(
-            run.revision != revision
-            for revision, run in self.warmups.items()
-        ):
+        if any(run.revision != revision for revision, run in self.warmups.items()):
             raise ValueError("artifact warm-up revision is mislabeled")
         if [pair.pair_index for pair in self.pairs] != list(
             range(len(self.pairs)),
@@ -895,12 +1368,8 @@ class ComparisonArtifact(_StrictModel):
             )
         if self.errors:
             raise ValueError("decision artifacts cannot contain execution errors")
-        if self.decision is None or self.decision.status != self.status:
-            raise ValueError("artifact status must equal its paired decision")
         if set(self.warmups) != {"reference", "candidate"}:
             raise ValueError("decision artifacts require both warm-up runs")
-        if len(self.pairs) != self.policy.timed_pairs:
-            raise ValueError("decision artifacts require every declared pair")
         if self.reference_identity is None or self.candidate_identity is None:
             raise ValueError("decision artifacts require both git identities")
         if self.environment is None:
@@ -912,18 +1381,12 @@ class ComparisonArtifact(_StrictModel):
                 "reference identity disagrees with policy reference commit",
             )
         if self.baseline_identity.authoritative:
-            baseline_source = {
-                source.path: source
-                for source in self.candidate_identity.runtime_manifest
-            }.get("tests/benchmarks/baselines.json")
-            if (
-                baseline_source is None
-                or baseline_source.sha256
-                != self.baseline_identity.document_sha256
-            ):
+            baseline_source = {source.path: source for source in self.candidate_identity.runtime_manifest}.get(
+                "tests/benchmarks/baselines.json"
+            )
+            if baseline_source is None or baseline_source.sha256 != self.baseline_identity.document_sha256:
                 raise ValueError(
-                    "authoritative baseline is not bound to the candidate "
-                    "runtime manifest",
+                    "authoritative baseline is not bound to the candidate runtime manifest",
                 )
 
         identities = {
@@ -932,11 +1395,7 @@ class ComparisonArtifact(_StrictModel):
         }
         all_runs = [
             *self.warmups.values(),
-            *[
-                run
-                for pair in self.pairs
-                for run in (pair.reference, pair.candidate)
-            ],
+            *[run for pair in self.pairs for run in (pair.reference, pair.candidate)],
         ]
         reference_runtime_input = self.warmups["reference"].runtime_input
         reference_semantics = self.warmups["reference"].semantic_envelope
@@ -944,22 +1403,9 @@ class ComparisonArtifact(_StrictModel):
             identity = identities[run.revision]
             if run.commit != identity.commit:
                 raise ValueError(
-                    f"{run.revision} worker commit disagrees with its "
-                    "artifact identity",
+                    f"{run.revision} worker commit disagrees with its artifact identity",
                 )
-            if run.runtime_input != reference_runtime_input:
-                raise ValueError(
-                    "artifact worker runtime inputs are not exact matches",
-                )
-            if run.semantic_envelope != reference_semantics:
-                raise ValueError(
-                    "artifact worker semantic envelopes are not exact "
-                    "matches",
-                )
-            manifest_by_path = {
-                source.path: source
-                for source in identity.runtime_manifest
-            }
+            manifest_by_path = {source.path: source for source in identity.runtime_manifest}
             for source in run.runtime_input.sources:
                 identity_source = manifest_by_path.get(source.path)
                 if (
@@ -968,30 +1414,164 @@ class ComparisonArtifact(_StrictModel):
                     or identity_source.mode != source.mode
                 ):
                     raise ValueError(
-                        f"{run.revision} runtime input is not bound to its "
-                        f"git identity at {source.path!r}",
+                        f"{run.revision} runtime input is not bound to its git identity at {source.path!r}",
                     )
-        if (
-            self.environment.dependency_lock_sha256
-            != reference_runtime_input.dependency_lock_sha256
-        ):
+        candidate_runtime_input = self.warmups["candidate"].runtime_input
+        if self.environment.dependency_lock_sha256 not in {
+            reference_runtime_input.dependency_lock_sha256,
+            candidate_runtime_input.dependency_lock_sha256,
+        } or (reference_runtime_input.dependency_lock_sha256 != candidate_runtime_input.dependency_lock_sha256):
             raise ValueError(
                 "environment dependency lock disagrees with worker inputs",
             )
 
+        if self.policy.mode != "gate":
+            raise ValueError(
+                "measurement-only entries cannot produce a comparison artifact",
+            )
+        if len(self.pairs) != self.policy.timed_pairs:
+            raise ValueError("decision artifacts require every declared pair")
+        if self.decision is None or self.decision.status != self.status:
+            raise ValueError("artifact status must equal its paired decision")
+        for run in all_runs:
+            if run.runtime_input != reference_runtime_input:
+                raise ValueError(
+                    "artifact worker runtime inputs are not exact matches",
+                )
+            if run.semantic_envelope != reference_semantics:
+                raise ValueError(
+                    "artifact worker semantic envelopes are not exact matches",
+                )
         recomputed = evaluate_paired_samples(
             self.policy,
-            reference_seconds=[
-                pair.reference.duration_s
-                for pair in self.pairs
-            ],
-            candidate_seconds=[
-                pair.candidate.duration_s
-                for pair in self.pairs
-            ],
+            reference_seconds=[pair.reference.duration_s for pair in self.pairs],
+            candidate_seconds=[pair.candidate.duration_s for pair in self.pairs],
         )
         if recomputed != self.decision:
             raise ValueError("artifact decision disagrees with its raw samples")
+        return self
+
+
+class TransitionArtifact(_StrictModel):
+    """Duration-free, digest-bearing workload-transition evidence."""
+
+    format_version: Literal[4] = POLICY_VERSION
+    created_at_utc: str
+    scenario_name: str
+    status: Literal[
+        "transition_qualified",
+        "transition_rejected",
+        "error",
+    ]
+    errors: list[str]
+    policy: TransitionPolicy | None
+    baseline_identity: BenchmarkBaselineIdentity | None
+    environment: BenchmarkEnvironment | None
+    reference_identity: GitIdentity | None
+    candidate_identity: GitIdentity | None
+    closures: dict[str, ProductionClosureRun]
+    contract: WorkloadTransitionContract | None
+    verified_approvals: list[TransitionApproval]
+    timing_assessment: TransitionTimingAssessment
+
+    @field_validator("created_at_utc")
+    @classmethod
+    def _valid_created_at(cls, value: str) -> str:
+        try:
+            parsed = datetime.fromisoformat(value)
+        except ValueError as exc:
+            raise ValueError(
+                "transition artifact timestamp must be ISO-8601",
+            ) from exc
+        if parsed.tzinfo is None:
+            raise ValueError(
+                "transition artifact timestamp must be timezone-aware",
+            )
+        return value
+
+    @model_validator(mode="after")
+    def _internally_consistent(self) -> Self:
+        if not self.scenario_name or self.scenario_name != self.scenario_name.strip():
+            raise ValueError(
+                "transition scenario name must be non-empty and trimmed",
+            )
+        if set(self.closures) - {"reference", "candidate"}:
+            raise ValueError("transition closure revision keys are invalid")
+        if any(closure.revision != revision for revision, closure in self.closures.items()):
+            raise ValueError("transition closure revision is mislabeled")
+        if self.status != "transition_qualified":
+            if not self.errors or self.verified_approvals:
+                raise ValueError(
+                    "rejected/error transitions require errors and no verified approvals",
+                )
+            return self
+
+        if self.errors:
+            raise ValueError(
+                "qualified transition cannot contain execution errors",
+            )
+        if (
+            self.policy is None
+            or self.baseline_identity is None
+            or self.environment is None
+            or self.reference_identity is None
+            or self.candidate_identity is None
+            or self.contract is None
+            or set(self.closures) != {"reference", "candidate"}
+        ):
+            raise ValueError(
+                "qualified transition requires complete policy, baseline, "
+                "environment, identities, closures, and contract",
+            )
+        if self.reference_identity.commit != self.policy.reference_commit:
+            raise ValueError(
+                "transition reference identity disagrees with policy",
+            )
+        if self.baseline_identity.authoritative:
+            baseline_source = {source.path: source for source in self.candidate_identity.runtime_manifest}.get(
+                "tests/benchmarks/baselines.json"
+            )
+            if baseline_source is None or baseline_source.sha256 != self.baseline_identity.document_sha256:
+                raise ValueError(
+                    "authoritative transition baseline is not bound to the candidate runtime manifest",
+                )
+
+        identities = {
+            "reference": self.reference_identity,
+            "candidate": self.candidate_identity,
+        }
+        for revision, closure in self.closures.items():
+            identity = identities[revision]
+            if closure.commit != identity.commit:
+                raise ValueError(
+                    f"{revision} closure commit disagrees with its identity",
+                )
+            manifest_by_path = {source.path: source for source in identity.runtime_manifest}
+            for source in closure.runtime_input.sources:
+                identity_source = manifest_by_path.get(source.path)
+                if (
+                    identity_source is None
+                    or identity_source.sha256 != source.sha256
+                    or identity_source.mode != source.mode
+                ):
+                    raise ValueError(
+                        f"{revision} closure is not bound to its git identity at {source.path!r}",
+                    )
+        reference = self.closures["reference"]
+        candidate = self.closures["candidate"]
+        if self.environment.dependency_lock_sha256 != reference.runtime_input.dependency_lock_sha256:
+            raise ValueError(
+                "transition environment dependency lock disagrees with closure",
+            )
+        verified = validate_workload_transition(
+            reference,
+            candidate,
+            self.contract,
+        )
+        if self.verified_approvals != verified:
+            raise ValueError(
+                "transition artifact approvals differ from verified contract",
+            )
         return self
 
 
@@ -1016,8 +1596,16 @@ class BenchmarkComparisonError(RuntimeError):
     """Raised after a failing comparison artifact has been written."""
 
 
+class BenchmarkTransitionError(RuntimeError):
+    """Raised after rejected/error transition evidence has been written."""
+
+
+class _WorkloadTransitionRejected(ValueError):
+    """Internal distinction between contract rejection and execution error."""
+
+
 class BenchmarkBaseline:
-    """Load strict v3 baselines; legacy unpaired decisions are disabled."""
+    """Load strict v4 baselines; legacy unpaired decisions are disabled."""
 
     def __init__(self, path: Path | None = None) -> None:
         self._path = path or BASELINES_PATH
@@ -1031,7 +1619,7 @@ class BenchmarkBaseline:
             )
         except (TypeError, ValueError) as exc:
             raise ValueError(
-                f"invalid version-3 benchmark baseline {self._path}: {exc}",
+                f"invalid version-4 benchmark baseline {self._path}: {exc}",
             ) from exc
 
     def load(self) -> dict[str, BaselineEntry]:
@@ -1053,7 +1641,7 @@ class BenchmarkBaseline:
         del scenario_name, result, margin
         raise ValueError(
             "legacy unpaired regression decisions are unsupported; use the "
-            "version-3 paired comparison harness or label the run "
+            "version-4 paired comparison harness or label the run "
             "measurement_only",
         )
 
@@ -1093,11 +1681,13 @@ def evaluate_paired_samples(
     reference_seconds: list[float],
     candidate_seconds: list[float],
 ) -> PerformanceDecision:
-    """Apply the exact version-3 paired policy to raw samples."""
+    """Apply the exact version-4 paired gate policy to raw samples."""
     if policy.mode != "gate":
         raise ValueError(
-            "measurement_only entries cannot produce a regression decision",
+            f"{policy.mode} entries cannot produce a regression decision",
         )
+    if policy.maximum_median_slowdown_ratio is None or policy.maximum_relative_sample_range is None:
+        raise ValueError("paired gate is missing its timing thresholds")
     reference = _positive_finite_samples(
         reference_seconds,
         label="reference",
@@ -1130,10 +1720,7 @@ def evaluate_paired_samples(
             median_ratio=median_ratio,
             reference_relative_range=reference_spread,
             candidate_relative_range=candidate_spread,
-            reason=(
-                "sample dispersion exceeds the declared maximum relative "
-                "range"
-            ),
+            reason=("sample dispersion exceeds the declared maximum relative range"),
         )
     if median_ratio > policy.maximum_median_slowdown_ratio:
         return PerformanceDecision(
@@ -1222,16 +1809,9 @@ def _contains_exact_identifier(value: Any, identifiers: set[str]) -> bool:
     if isinstance(value, str):
         return value in identifiers
     if isinstance(value, Mapping):
-        return any(
-            key in identifiers
-            or _contains_exact_identifier(item, identifiers)
-            for key, item in value.items()
-        )
+        return any(key in identifiers or _contains_exact_identifier(item, identifiers) for key, item in value.items())
     if isinstance(value, (list, tuple)):
-        return any(
-            _contains_exact_identifier(item, identifiers)
-            for item in value
-        )
+        return any(_contains_exact_identifier(item, identifiers) for item in value)
     return False
 
 
@@ -1263,11 +1843,7 @@ def _resolved_data_sources(
         relative_parts = path.relative_to(data_root).parts
         if relative_parts[0] == "scenarios":
             continue
-        if (
-            len(relative_parts) >= 3
-            and relative_parts[0] == "eras"
-            and relative_parts[2] == "scenarios"
-        ):
+        if len(relative_parts) >= 3 and relative_parts[0] == "eras" and relative_parts[2] == "scenarios":
             continue
         try:
             raw = yaml.safe_load(path.read_text(encoding="utf-8"))
@@ -1344,28 +1920,18 @@ def _normalize_morale_timing_identity(
             if not isinstance(value, dict):
                 break
             value = value.get(key)
-        if (
-            isinstance(value, dict)
-            and value.get("use_continuous_time") is False
-        ):
+        if isinstance(value, dict) and value.get("use_continuous_time") is False:
             del value["use_continuous_time"]
 
     calibration_flat = effective_inputs.get("calibration_flat")
-    if (
-        isinstance(calibration_flat, dict)
-        and calibration_flat.get("morale_use_continuous_time") is False
-    ):
+    if isinstance(calibration_flat, dict) and calibration_flat.get("morale_use_continuous_time") is False:
         del calibration_flat["morale_use_continuous_time"]
     return effective_inputs
 
 
 def _build_effective_inputs(context: Any) -> tuple[dict[str, Any], set[str]]:
     """Capture loader-resolved values that determine the workload."""
-    units = [
-        unit
-        for side in sorted(context.units_by_side)
-        for unit in context.units_by_side[side]
-    ]
+    units = [unit for side in sorted(context.units_by_side) for unit in context.units_by_side[side]]
     roster: list[dict[str, Any]] = []
     identifiers: set[str] = set()
     unit_definitions: dict[str, Any] = {}
@@ -1390,21 +1956,16 @@ def _build_effective_inputs(context: Any) -> tuple[dict[str, Any], set[str]]:
                 context.sig_loader.get_profile(signature_id),
             )
 
-        loadout = [
-            resolution.topology()
-            for resolution in context.equipment_resolutions[unit.entity_id]
-        ]
-        roster.append({
-            "side": (
-                unit.side
-                if isinstance(unit.side, str)
-                else unit.side.value
-            ),
-            "entity_id": unit.entity_id,
-            "definition_id": unit.unit_type,
-            "position": list(unit.position),
-            "loadout": loadout,
-        })
+        loadout = [resolution.topology() for resolution in context.equipment_resolutions[unit.entity_id]]
+        roster.append(
+            {
+                "side": (unit.side if isinstance(unit.side, str) else unit.side.value),
+                "entity_id": unit.entity_id,
+                "definition_id": unit.unit_type,
+                "position": list(unit.position),
+                "loadout": loadout,
+            }
+        )
         for resolution in context.equipment_resolutions[unit.entity_id]:
             for identifier in (
                 resolution.source_equipment.equipment_id,
@@ -1482,30 +2043,12 @@ def _build_effective_inputs(context: Any) -> tuple[dict[str, Any], set[str]]:
         "era": _canonical_value(context.era_config),
         "roster": roster,
         "resolved_definitions": {
-            "units": {
-                key: unit_definitions[key]
-                for key in sorted(unit_definitions)
-            },
-            "weapons": {
-                key: weapon_definitions[key]
-                for key in sorted(weapon_definitions)
-            },
-            "ammunition": {
-                key: ammunition_definitions[key]
-                for key in sorted(ammunition_definitions)
-            },
-            "sensors": {
-                key: sensor_definitions[key]
-                for key in sorted(sensor_definitions)
-            },
-            "signatures": {
-                key: signature_definitions[key]
-                for key in sorted(signature_definitions)
-            },
-            "commander_profiles": {
-                key: commander_profiles[key]
-                for key in sorted(commander_profiles)
-            },
+            "units": {key: unit_definitions[key] for key in sorted(unit_definitions)},
+            "weapons": {key: weapon_definitions[key] for key in sorted(weapon_definitions)},
+            "ammunition": {key: ammunition_definitions[key] for key in sorted(ammunition_definitions)},
+            "sensors": {key: sensor_definitions[key] for key in sorted(sensor_definitions)},
+            "signatures": {key: signature_definitions[key] for key in sorted(signature_definitions)},
+            "commander_profiles": {key: commander_profiles[key] for key in sorted(commander_profiles)},
             "schools": school_state,
         },
     }
@@ -1534,7 +2077,7 @@ def _runtime_input_manifest(
         external_runtime_paths,
     )
     payload = {
-        "policy_version": POLICY_VERSION,
+        "policy_version": RUNTIME_INPUT_POLICY_VERSION,
         "scenario_path": scenario_relative,
         "scenario_sha256": _file_sha256(scenario_path),
         "dependency_lock_sha256": _file_sha256(repo_root / "uv.lock"),
@@ -1542,10 +2085,7 @@ def _runtime_input_manifest(
         "max_ticks": max_ticks,
         "recorder_config": recorder_config,
         "effective_inputs": effective_inputs,
-        "sources": [
-            source.model_dump(mode="python")
-            for source in sources
-        ],
+        "sources": [source.model_dump(mode="python") for source in sources],
     }
     return RuntimeInputManifest(
         **payload,
@@ -1598,10 +2138,7 @@ def _semantic_envelope(
             "entity_id": unit.entity_id,
             "definition_id": unit.unit_type,
             "position": list(unit.position),
-            "loadout": [
-                resolution.topology()
-                for resolution in context.equipment_resolutions[unit.entity_id]
-            ],
+            "loadout": [resolution.topology() for resolution in context.equipment_resolutions[unit.entity_id]],
         }
         for side in sorted(context.units_by_side)
         for unit in context.units_by_side[side]
@@ -1610,16 +2147,9 @@ def _semantic_envelope(
     for side in sorted(context.units_by_side):
         counts: dict[str, int] = {}
         for unit in context.units_by_side[side]:
-            status = (
-                unit.status.name
-                if hasattr(unit.status, "name")
-                else str(unit.status)
-            )
+            status = unit.status.name if hasattr(unit.status, "name") else str(unit.status)
             counts[status] = counts.get(status, 0) + 1
-        status_counts[side] = {
-            status: counts[status]
-            for status in sorted(counts)
-        }
+        status_counts[side] = {status: counts[status] for status in sorted(counts)}
 
     events = [
         {
@@ -1655,8 +2185,7 @@ def _assert_revision_owned(symbol: Any, repo_root: Path) -> None:
         source.relative_to(repo_root)
     except ValueError as exc:
         raise RuntimeError(
-            f"benchmark imported {symbol!r} outside selected revision: "
-            f"{source}",
+            f"benchmark imported {symbol!r} outside selected revision: {source}",
         ) from exc
 
 
@@ -1676,14 +2205,12 @@ def _historical_reference_runtime(
     """
     if _full_commit(repo_root) != REFERENCE_COMMIT:
         raise RuntimeError(
-            "historical runtime adapter is restricted to the exact "
-            f"reference commit {REFERENCE_COMMIT}",
+            f"historical runtime adapter is restricted to the exact reference commit {REFERENCE_COMMIT}",
         )
     status = _git_status(repo_root)
     if status:
         raise RuntimeError(
-            "historical runtime adapter requires a clean reference tree: "
-            f"{status!r}",
+            f"historical runtime adapter requires a clean reference tree: {status!r}",
         )
 
     from stochastic_warfare.core.types import Position
@@ -1721,11 +2248,7 @@ def _historical_reference_runtime(
             position=Position(
                 easting=objective.position[0],
                 northing=objective.position[1],
-                altitude=(
-                    objective.position[2]
-                    if len(objective.position) == 3
-                    else 0.0
-                ),
+                altitude=(objective.position[2] if len(objective.position) == 3 else 0.0),
             ),
             radius_m=objective.radius_m,
         )
@@ -1751,16 +2274,22 @@ def _historical_reference_runtime(
     return context, engine, recorder, recorder_config
 
 
-def run_revision_worker(
+def _benchmark_timer() -> float:
+    """Read the ordinary paired worker's timing clock."""
+    return time.perf_counter()
+
+
+def _execute_revision(
     *,
     repo_root: Path,
     scenario_relative: str,
     revision: Literal["reference", "candidate"],
+    record_duration: bool,
     seed: int = 42,
     max_ticks: int = DEFAULT_MAX_TICKS,
     workload: BenchmarkWorkload | Mapping[str, Any] | None = None,
-) -> WorkerRun:
-    """Run one production revision and return strict semantic evidence."""
+) -> WorkerRun | ProductionClosureRun:
+    """Run one production revision with explicitly selected evidence scope."""
     repo_root = repo_root.resolve()
     scenario_path = (repo_root / scenario_relative).resolve()
     try:
@@ -1790,14 +2319,12 @@ def run_revision_worker(
         sys.path.insert(0, str(repo_root))
 
     if revision == "reference":
-        context, engine, recorder, recorder_model = (
-            _historical_reference_runtime(
-                repo_root=repo_root,
-                scenario_path=scenario_path,
-                seed=seed,
-                max_ticks=max_ticks,
-                workload=resolved_workload,
-            )
+        context, engine, recorder, recorder_model = _historical_reference_runtime(
+            repo_root=repo_root,
+            scenario_path=scenario_path,
+            seed=seed,
+            max_ticks=max_ticks,
+            workload=resolved_workload,
         )
     else:
         from stochastic_warfare.simulation.engine import EngineConfig
@@ -1842,8 +2369,7 @@ def run_revision_worker(
         )
         if len(recorder_models) != 1 or session.recorder is None:
             raise RuntimeError(
-                "runtime factory did not construct one strict benchmark "
-                "recorder",
+                "runtime factory did not construct one strict benchmark recorder",
             )
         context = session.context
         engine = session.engine
@@ -1858,23 +2384,77 @@ def run_revision_worker(
         recorder_config=recorder_model.model_dump(mode="json"),
     )
 
-    started = time.perf_counter()
-    run_result = engine.run()
-    duration = time.perf_counter() - started
-    if not math.isfinite(duration) or duration <= 0.0:
-        raise RuntimeError("benchmark worker produced an invalid duration")
+    duration: float | None = None
+    if record_duration:
+        started = _benchmark_timer()
+        run_result = engine.run()
+        duration = _benchmark_timer() - started
+        if not math.isfinite(duration) or duration <= 0.0:
+            raise RuntimeError("benchmark worker produced an invalid duration")
+    else:
+        run_result = engine.run()
 
-    return WorkerRun(
-        revision=revision,
-        commit=_full_commit(repo_root),
-        duration_s=duration,
-        runtime_input=runtime_input,
-        semantic_envelope=_semantic_envelope(
+    common = {
+        "revision": revision,
+        "commit": _full_commit(repo_root),
+        "runtime_input": runtime_input,
+        "semantic_envelope": _semantic_envelope(
             context,
             run_result,
             recorder,
         ),
+    }
+    if duration is not None:
+        return WorkerRun(duration_s=duration, **common)
+    return ProductionClosureRun(**common)
+
+
+def run_revision_worker(
+    *,
+    repo_root: Path,
+    scenario_relative: str,
+    revision: Literal["reference", "candidate"],
+    seed: int = 42,
+    max_ticks: int = DEFAULT_MAX_TICKS,
+    workload: BenchmarkWorkload | Mapping[str, Any] | None = None,
+) -> WorkerRun:
+    """Run one production revision and collect one timing sample."""
+    result = _execute_revision(
+        repo_root=repo_root,
+        scenario_relative=scenario_relative,
+        revision=revision,
+        record_duration=True,
+        seed=seed,
+        max_ticks=max_ticks,
+        workload=workload,
     )
+    if not isinstance(result, WorkerRun):
+        raise AssertionError("timed worker returned duration-free evidence")
+    return result
+
+
+def run_revision_closure(
+    *,
+    repo_root: Path,
+    scenario_relative: str,
+    revision: Literal["reference", "candidate"],
+    seed: int = 42,
+    max_ticks: int = DEFAULT_MAX_TICKS,
+    workload: BenchmarkWorkload | Mapping[str, Any] | None = None,
+) -> ProductionClosureRun:
+    """Run one production revision without collecting a timing sample."""
+    result = _execute_revision(
+        repo_root=repo_root,
+        scenario_relative=scenario_relative,
+        revision=revision,
+        record_duration=False,
+        seed=seed,
+        max_ticks=max_ticks,
+        workload=workload,
+    )
+    if not isinstance(result, ProductionClosureRun):
+        raise AssertionError("duration-free worker returned timing evidence")
+    return result
 
 
 # ---------------------------------------------------------------------------
@@ -1884,11 +2464,7 @@ def run_revision_worker(
 
 def _is_loader_data_path(relative_path: str) -> bool:
     path = Path(relative_path)
-    return (
-        bool(path.parts)
-        and path.parts[0] == "data"
-        and path.suffix.lower() in _LOADER_DATA_SUFFIXES
-    )
+    return bool(path.parts) and path.parts[0] == "data" and path.suffix.lower() in _LOADER_DATA_SUFFIXES
 
 
 def _is_runtime_path(
@@ -1900,9 +2476,7 @@ def _is_runtime_path(
     if relative_path in _RUNTIME_EXACT_PATHS:
         return True
     static_runtime_path = (
-        bool(path.parts)
-        and path.parts[0] in _RUNTIME_TOP_LEVEL
-        and path.suffix.lower() in _STATIC_RUNTIME_SUFFIXES
+        bool(path.parts) and path.parts[0] in _RUNTIME_TOP_LEVEL and path.suffix.lower() in _STATIC_RUNTIME_SUFFIXES
     )
     return static_runtime_path or relative_path in external_runtime_paths
 
@@ -1978,9 +2552,7 @@ def _scenario_external_runtime_paths(
             ) from exc
 
     meters_per_degree_latitude = 111_320.0
-    meters_per_degree_longitude = (
-        meters_per_degree_latitude * math.cos(math.radians(latitude))
-    )
+    meters_per_degree_longitude = meters_per_degree_latitude * math.cos(math.radians(latitude))
     if meters_per_degree_longitude == 0.0:
         raise ValueError(
             "real-terrain benchmark longitude scale is zero",
@@ -2018,10 +2590,7 @@ def _scenario_external_runtime_paths(
                 selected.add(candidate)
                 break
     if srtm_paths:
-        cache_payload = (
-            f"srtm:{south:.6f},{west:.6f},{north:.6f},{east:.6f}:"
-            f"{cell_size_m:.2f}"
-        )
+        cache_payload = f"srtm:{south:.6f},{west:.6f},{north:.6f},{east:.6f}:{cell_size_m:.2f}"
         cache_key = hashlib.sha256(
             cache_payload.encode(),
         ).hexdigest()[:16]
@@ -2043,8 +2612,7 @@ def _scenario_external_runtime_paths(
             relative = selected_path.resolve().relative_to(resolved_root)
         except ValueError as exc:
             raise ValueError(
-                f"external runtime source is outside repository: "
-                f"{selected_path}",
+                f"external runtime source is outside repository: {selected_path}",
             ) from exc
         if not _is_loader_data_path(relative.as_posix()):
             raise ValueError(
@@ -2084,17 +2652,19 @@ def _runtime_tree_manifest(
         "--exclude-standard",
         "-z",
     ).stdout.split("\0")
-    relative_paths = sorted({
-        path
-        for path in [*tracked, *untracked]
-        if (
+    relative_paths = sorted(
+        {
             path
-            and _is_runtime_path(
-                path,
-                external_runtime_paths=external_runtime_paths,
+            for path in [*tracked, *untracked]
+            if (
+                path
+                and _is_runtime_path(
+                    path,
+                    external_runtime_paths=external_runtime_paths,
+                )
             )
-        )
-    })
+        }
+    )
 
     ignored = _git(
         repo_root,
@@ -2104,21 +2674,22 @@ def _runtime_tree_manifest(
         "--exclude-standard",
         "-z",
     ).stdout.split("\0")
-    ignored_runtime = sorted({
-        path
-        for path in ignored
-        if (
+    ignored_runtime = sorted(
+        {
             path
-            and _is_runtime_path(
-                path,
-                external_runtime_paths=external_runtime_paths,
+            for path in ignored
+            if (
+                path
+                and _is_runtime_path(
+                    path,
+                    external_runtime_paths=external_runtime_paths,
+                )
             )
-        )
-    })
+        }
+    )
     if ignored_runtime:
         raise ValueError(
-            "ignored runtime-affecting files are not benchmarkable: "
-            f"{ignored_runtime!r}",
+            f"ignored runtime-affecting files are not benchmarkable: {ignored_runtime!r}",
         )
 
     return [
@@ -2147,19 +2718,20 @@ def _git_identity(
         external_runtime_paths=external_runtime_paths,
     )
     manifested = {source.path for source in manifest}
-    missing_dirty_runtime = sorted({
-        path
-        for line in status
-        if _is_runtime_path(
-            path := _status_path(line),
-            external_runtime_paths=external_runtime_paths,
-        )
-        and path not in manifested
-    })
+    missing_dirty_runtime = sorted(
+        {
+            path
+            for line in status
+            if _is_runtime_path(
+                path := _status_path(line),
+                external_runtime_paths=external_runtime_paths,
+            )
+            and path not in manifested
+        }
+    )
     if missing_dirty_runtime:
         raise ValueError(
-            "dirty runtime paths are absent from the candidate manifest: "
-            f"{missing_dirty_runtime!r}",
+            f"dirty runtime paths are absent from the candidate manifest: {missing_dirty_runtime!r}",
         )
     return GitIdentity(
         commit=_full_commit(repo_root),
@@ -2201,8 +2773,7 @@ def _materialize_candidate_snapshot(
         )
         if current_source != expected_source:
             raise ValueError(
-                "candidate runtime source changed during snapshot capture: "
-                f"{expected_source.path!r}",
+                f"candidate runtime source changed during snapshot capture: {expected_source.path!r}",
             )
         target_path = snapshot_root / expected_source.path
         target_path.parent.mkdir(parents=True, exist_ok=True)
@@ -2225,8 +2796,7 @@ def _materialize_candidate_snapshot(
     )
     if snapshot_manifest != identity.runtime_manifest:
         raise ValueError(
-            "candidate snapshot runtime manifest differs from captured "
-            "identity",
+            "candidate snapshot runtime manifest differs from captured identity",
         )
 
 
@@ -2363,21 +2933,14 @@ def _total_ram_bytes() -> tuple[int, str]:
     except (AttributeError, OSError, ValueError):
         page_size = 0
         page_count = 0
-    if (
-        isinstance(page_size, int)
-        and isinstance(page_count, int)
-        and page_size > 0
-        and page_count > 0
-    ):
+    if isinstance(page_size, int) and isinstance(page_count, int) and page_size > 0 and page_count > 0:
         return page_size * page_count, "sysconf"
     raise RuntimeError("benchmark environment cannot determine total RAM")
 
 
 def _runner_identity() -> BenchmarkRunnerIdentity:
     provider: Literal["local", "github-actions"] = (
-        "github-actions"
-        if os.environ.get("GITHUB_ACTIONS", "").lower() == "true"
-        else "local"
+        "github-actions" if os.environ.get("GITHUB_ACTIONS", "").lower() == "true" else "local"
     )
     labels = {
         "image_os": _nonempty_environment_text(
@@ -2446,32 +3009,34 @@ def _environment_metadata(
         )
     }
     runner_identity = _runner_identity()
-    return BenchmarkEnvironment.model_validate({
-        "missing_text_policy": "unavailable",
-        "os": _nonempty_environment_text(platform.system()),
-        "kernel": _nonempty_environment_text(platform.release()),
-        "architecture": _nonempty_environment_text(platform.machine()),
-        "cpu_model": _cpu_model(),
-        "logical_core_count": logical_cores,
-        "physical_core_count": physical_cores,
-        "physical_core_count_source": physical_core_source,
-        "cpu_affinity": affinity,
-        "total_ram_bytes": total_ram,
-        "total_ram_source": total_ram_source,
-        "python_implementation": _nonempty_environment_text(
-            platform.python_implementation(),
-        ),
-        "python_version": _nonempty_environment_text(
-            platform.python_version(),
-        ),
-        "dependencies": _dependency_versions(),
-        "dependency_lock_sha256": _file_sha256(repo_root / "uv.lock"),
-        "runner_identity": runner_identity,
-        "runner_image": runner_identity.image,
-        "runner_labels": runner_identity.labels,
-        "threading_environment": thread_variables,
-        "unprofiled_peak_memory_mb": None,
-    })
+    return BenchmarkEnvironment.model_validate(
+        {
+            "missing_text_policy": "unavailable",
+            "os": _nonempty_environment_text(platform.system()),
+            "kernel": _nonempty_environment_text(platform.release()),
+            "architecture": _nonempty_environment_text(platform.machine()),
+            "cpu_model": _cpu_model(),
+            "logical_core_count": logical_cores,
+            "physical_core_count": physical_cores,
+            "physical_core_count_source": physical_core_source,
+            "cpu_affinity": affinity,
+            "total_ram_bytes": total_ram,
+            "total_ram_source": total_ram_source,
+            "python_implementation": _nonempty_environment_text(
+                platform.python_implementation(),
+            ),
+            "python_version": _nonempty_environment_text(
+                platform.python_version(),
+            ),
+            "dependencies": _dependency_versions(),
+            "dependency_lock_sha256": _file_sha256(repo_root / "uv.lock"),
+            "runner_identity": runner_identity,
+            "runner_image": runner_identity.image,
+            "runner_labels": runner_identity.labels,
+            "threading_environment": thread_variables,
+            "unprofiled_peak_memory_mb": None,
+        }
+    )
 
 
 def _run_worker_subprocess(
@@ -2530,6 +3095,65 @@ def _run_worker_subprocess(
         output_path.unlink(missing_ok=True)
 
 
+def _run_closure_subprocess(
+    *,
+    worker_path: Path,
+    repo_root: Path,
+    scenario_relative: str,
+    revision: Literal["reference", "candidate"],
+    workload: BenchmarkWorkload,
+    timeout_s: float,
+) -> ProductionClosureRun:
+    """Run one worker without sampling or exposing harness timing."""
+    with tempfile.NamedTemporaryFile(
+        prefix=f"sw-{revision}-closure-",
+        suffix=".json",
+        delete=False,
+    ) as output_file:
+        output_path = Path(output_file.name)
+    try:
+        environment = os.environ.copy()
+        environment["PYTHONPATH"] = str(repo_root)
+        completed = subprocess.run(
+            [
+                sys.executable,
+                str(worker_path),
+                "closure-worker",
+                "--repo-root",
+                str(repo_root),
+                "--scenario-relative",
+                scenario_relative,
+                "--revision",
+                revision,
+                "--workload-json",
+                workload.model_dump_json(exclude_none=True),
+                "--output",
+                str(output_path),
+            ],
+            cwd=repo_root,
+            env=environment,
+            text=True,
+            capture_output=True,
+            timeout=timeout_s,
+            check=False,
+        )
+        if completed.returncode != 0:
+            raise RuntimeError(
+                f"{revision} closure worker failed with exit "
+                f"{completed.returncode}: stdout={completed.stdout[-2000:]!r}, "
+                f"stderr={completed.stderr[-4000:]!r}",
+            )
+        if not output_path.is_file():
+            raise RuntimeError(
+                f"{revision} closure worker did not write its result",
+            )
+        return ProductionClosureRun.model_validate_json(
+            output_path.read_text(encoding="utf-8"),
+        )
+    finally:
+        output_path.unlink(missing_ok=True)
+
+
 def _validate_worker_identity(
     run: WorkerRun,
     *,
@@ -2544,25 +3168,19 @@ def _validate_worker_identity(
         raise ValueError("gating baseline is missing required evidence")
     if run.runtime_input.fingerprint != entry.reference_input.fingerprint:
         raise ValueError(
-            f"{run.revision} effective runtime input differs from the "
-            "authoritative baseline",
+            f"{run.revision} effective runtime input differs from the authoritative baseline",
         )
     if (
-        run.runtime_input.scenario_path
-        != entry.reference_input.scenario_path
-        or run.runtime_input.scenario_sha256
-        != entry.reference_input.scenario_sha256
-        or run.runtime_input.dependency_lock_sha256
-        != entry.reference_input.dependency_lock_sha256
+        run.runtime_input.scenario_path != entry.reference_input.scenario_path
+        or run.runtime_input.scenario_sha256 != entry.reference_input.scenario_sha256
+        or run.runtime_input.dependency_lock_sha256 != entry.reference_input.dependency_lock_sha256
     ):
         raise ValueError(
-            f"{run.revision} scenario or dependency-lock identity differs "
-            "from the authoritative baseline",
+            f"{run.revision} scenario or dependency-lock identity differs from the authoritative baseline",
         )
     if run.semantic_envelope != entry.semantic_envelope:
         raise ValueError(
-            f"{run.revision} semantic outcome differs from the "
-            "authoritative baseline",
+            f"{run.revision} semantic outcome differs from the authoritative baseline",
         )
 
 
@@ -2614,10 +3232,7 @@ def validate_artifact(
         raise ValueError("comparison artifact digest does not match its payload")
     artifact = ComparisonArtifact.model_validate(raw)
     baseline_identity = artifact.baseline_identity
-    if require_authoritative and (
-        baseline_identity is None
-        or not baseline_identity.authoritative
-    ):
+    if require_authoritative and (baseline_identity is None or not baseline_identity.authoritative):
         raise ValueError(
             "closure proof requires the checked-in authoritative baseline",
         )
@@ -2627,13 +3242,9 @@ def validate_artifact(
             raise ValueError(
                 "authoritative checked-in baseline is unavailable",
             )
-        if (
-            _file_sha256(baseline_path)
-            != baseline_identity.document_sha256
-        ):
+        if _file_sha256(baseline_path) != baseline_identity.document_sha256:
             raise ValueError(
-                "artifact authoritative baseline digest differs from the "
-                "checked-in document",
+                "artifact authoritative baseline digest differs from the checked-in document",
             )
         baseline = BenchmarkBaseline(baseline_path).load_file()
         entry = baseline.entries.get(artifact.scenario_name)
@@ -2641,10 +3252,7 @@ def validate_artifact(
             raise ValueError(
                 "artifact scenario is absent from authoritative baseline",
             )
-        if (
-            canonical_sha256(entry.model_dump(mode="json"))
-            != baseline_identity.entry_sha256
-        ):
+        if canonical_sha256(entry.model_dump(mode="json")) != baseline_identity.entry_sha256:
             raise ValueError(
                 "artifact baseline entry digest differs from checked-in entry",
             )
@@ -2654,7 +3262,9 @@ def validate_artifact(
             )
         if artifact.status != "error":
             if (
-                entry.reference_input is None
+                not isinstance(entry.policy, BenchmarkPolicy)
+                or entry.policy.mode != "gate"
+                or entry.reference_input is None
                 or entry.semantic_envelope is None
             ):
                 raise ValueError(
@@ -2662,18 +3272,121 @@ def validate_artifact(
                 )
             run = artifact.warmups["candidate"]
             if (
-                run.runtime_input.fingerprint
-                != entry.reference_input.fingerprint
-                or run.runtime_input.scenario_path
-                != entry.reference_input.scenario_path
-                or run.runtime_input.scenario_sha256
-                != entry.reference_input.scenario_sha256
-                or run.runtime_input.dependency_lock_sha256
-                != entry.reference_input.dependency_lock_sha256
+                run.runtime_input.fingerprint != entry.reference_input.fingerprint
+                or run.runtime_input.scenario_path != entry.reference_input.scenario_path
+                or run.runtime_input.scenario_sha256 != entry.reference_input.scenario_sha256
+                or run.runtime_input.dependency_lock_sha256 != entry.reference_input.dependency_lock_sha256
                 or run.semantic_envelope != entry.semantic_envelope
             ):
                 raise ValueError(
                     "artifact workload differs from authoritative baseline",
+                )
+    return artifact, digest
+
+
+def _write_transition_artifact(
+    path: Path,
+    artifact: TransitionArtifact,
+) -> str:
+    """Atomically persist one independently valid transition checkpoint."""
+    payload = artifact.model_dump(mode="json")
+    digest = canonical_sha256(payload)
+    document = {**payload, "artifact_sha256": digest}
+    path.parent.mkdir(parents=True, exist_ok=True)
+    temporary_path: Path | None = None
+    try:
+        with tempfile.NamedTemporaryFile(
+            mode="w",
+            encoding="utf-8",
+            prefix=f".{path.name}.",
+            suffix=".tmp",
+            dir=path.parent,
+            delete=False,
+        ) as temporary:
+            temporary_path = Path(temporary.name)
+            temporary.write(
+                json.dumps(document, indent=2, sort_keys=True) + "\n",
+            )
+            temporary.flush()
+            os.fsync(temporary.fileno())
+        os.replace(temporary_path, path)
+        temporary_path = None
+    finally:
+        if temporary_path is not None:
+            temporary_path.unlink(missing_ok=True)
+    return digest
+
+
+def validate_transition_artifact(
+    path: Path,
+    *,
+    authoritative_baseline_path: Path = BASELINES_PATH,
+    require_authoritative: bool = False,
+) -> tuple[TransitionArtifact, str]:
+    """Validate a duration-free transition artifact and baseline binding."""
+    raw = json.loads(path.read_text(encoding="utf-8"))
+    expected_keys = set(TransitionArtifact.model_fields) | {"artifact_sha256"}
+    if set(raw) != expected_keys:
+        raise ValueError("transition artifact keys are not exact")
+    digest = raw.pop("artifact_sha256")
+    _validate_sha256(digest, "transition artifact digest")
+    if digest != canonical_sha256(raw):
+        raise ValueError(
+            "transition artifact digest does not match its payload",
+        )
+    artifact = TransitionArtifact.model_validate(raw)
+    baseline_identity = artifact.baseline_identity
+    if require_authoritative and (baseline_identity is None or not baseline_identity.authoritative):
+        raise ValueError(
+            "transition closure requires the checked-in authoritative baseline",
+        )
+    if baseline_identity is not None and baseline_identity.authoritative:
+        baseline_path = authoritative_baseline_path.resolve()
+        if not baseline_path.is_file():
+            raise ValueError(
+                "authoritative transition baseline is unavailable",
+            )
+        if _file_sha256(baseline_path) != baseline_identity.document_sha256:
+            raise ValueError(
+                "transition artifact baseline digest differs from checked-in document",
+            )
+        baseline = BenchmarkBaseline(baseline_path).load_file()
+        entry = baseline.entries.get(artifact.scenario_name)
+        if entry is None:
+            raise ValueError(
+                "transition scenario is absent from authoritative baseline",
+            )
+        if canonical_sha256(entry.model_dump(mode="json")) != baseline_identity.entry_sha256:
+            raise ValueError(
+                "transition baseline entry digest differs from checked-in entry",
+            )
+        if (
+            not isinstance(entry.policy, TransitionPolicy)
+            or artifact.policy != entry.policy
+            or artifact.contract != entry.transition_contract
+        ):
+            raise ValueError(
+                "transition policy or contract differs from authoritative baseline",
+            )
+        if entry.transition_contract is None:
+            raise ValueError(
+                "authoritative transition lacks its exact contract",
+            )
+        _verify_transition_predecessor(
+            baseline_path.parents[2],
+            scenario_name=artifact.scenario_name,
+            policy=entry.policy,
+            contract=entry.transition_contract,
+        )
+        if artifact.status == "transition_qualified":
+            verified = validate_workload_transition(
+                artifact.closures["reference"],
+                artifact.closures["candidate"],
+                entry.transition_contract,
+            )
+            if artifact.verified_approvals != verified:
+                raise ValueError(
+                    "transition artifact approvals differ from authoritative contract",
                 )
     return artifact, digest
 
@@ -2760,19 +3473,13 @@ def validate_final_tree_verification(
         raise ValueError(
             "final-tree proof scenario differs from comparison artifact",
         )
-    if (
-        verification.comparison_candidate_identity
-        != artifact.candidate_identity
-    ):
+    if verification.comparison_candidate_identity != artifact.candidate_identity:
         raise ValueError(
-            "final-tree proof candidate identity differs from comparison "
-            "artifact",
+            "final-tree proof candidate identity differs from comparison artifact",
         )
     if (
-        verification.comparison_runtime_input
-        != comparison_run.runtime_input
-        or verification.comparison_semantic_envelope
-        != comparison_run.semantic_envelope
+        verification.comparison_runtime_input != comparison_run.runtime_input
+        or verification.comparison_semantic_envelope != comparison_run.semantic_envelope
     ):
         raise ValueError(
             "final-tree proof workload differs from comparison artifact",
@@ -2787,7 +3494,7 @@ def verify_final_tree(
     final_root: Path = ROOT,
     worker_timeout_s: float = 900.0,
 ) -> FinalTreeVerification:
-    """Bind a passing comparison's runtime closure to one clean final commit."""
+    """Bind a passing paired comparison to one clean final commit."""
     final_root = final_root.resolve()
     comparison_artifact_path = comparison_artifact_path.resolve()
     verification_path = verification_path.resolve()
@@ -2797,13 +3504,10 @@ def verify_final_tree(
     ):
         if evidence_path.is_relative_to(final_root):
             raise ValueError(
-                f"{label} must be outside the final worktree so evidence "
-                "does not dirty the tree being verified",
+                f"{label} must be outside the final worktree so evidence does not dirty the tree being verified",
             )
 
-    authoritative_baseline_path = (
-        final_root / "tests" / "benchmarks" / "baselines.json"
-    )
+    authoritative_baseline_path = final_root / "tests" / "benchmarks" / "baselines.json"
     artifact, artifact_digest = validate_artifact(
         comparison_artifact_path,
         authoritative_baseline_path=authoritative_baseline_path,
@@ -2827,18 +3531,13 @@ def verify_final_tree(
         require_clean=True,
         external_runtime_paths=external_runtime_paths,
     )
-    if (
-        final_identity.runtime_manifest
-        != artifact.candidate_identity.runtime_manifest
-    ):
+    if final_identity.runtime_manifest != artifact.candidate_identity.runtime_manifest:
         raise ValueError(
             "final runtime manifest differs from comparison candidate",
         )
 
     reproduction_run = _run_worker_subprocess(
-        worker_path=(
-            final_root / "tests" / "benchmarks" / "benchmark_suite.py"
-        ),
+        worker_path=(final_root / "tests" / "benchmarks" / "benchmark_suite.py"),
         repo_root=final_root,
         scenario_relative=comparison_run.runtime_input.scenario_path,
         revision="candidate",
@@ -2864,6 +3563,170 @@ def verify_final_tree(
     return verification
 
 
+def _write_transition_final_tree_verification(
+    path: Path,
+    verification: TransitionFinalTreeVerification,
+) -> str:
+    payload = verification.model_dump(mode="json")
+    digest = canonical_sha256(payload)
+    document = {**payload, "verification_sha256": digest}
+    path.parent.mkdir(parents=True, exist_ok=True)
+    temporary_path: Path | None = None
+    try:
+        with tempfile.NamedTemporaryFile(
+            mode="w",
+            encoding="utf-8",
+            prefix=f".{path.name}.",
+            suffix=".tmp",
+            dir=path.parent,
+            delete=False,
+        ) as temporary:
+            temporary_path = Path(temporary.name)
+            temporary.write(
+                json.dumps(document, indent=2, sort_keys=True) + "\n",
+            )
+            temporary.flush()
+            os.fsync(temporary.fileno())
+        os.replace(temporary_path, path)
+        temporary_path = None
+    finally:
+        if temporary_path is not None:
+            temporary_path.unlink(missing_ok=True)
+    return digest
+
+
+def validate_transition_final_tree_verification(
+    path: Path,
+    *,
+    transition_artifact_path: Path,
+    authoritative_baseline_path: Path = BASELINES_PATH,
+) -> tuple[TransitionFinalTreeVerification, str]:
+    raw = json.loads(path.read_text(encoding="utf-8"))
+    expected_keys = set(TransitionFinalTreeVerification.model_fields) | {
+        "verification_sha256",
+    }
+    if set(raw) != expected_keys:
+        raise ValueError(
+            "transition final-tree verification keys are not exact",
+        )
+    digest = raw.pop("verification_sha256")
+    _validate_sha256(digest, "transition final-tree verification digest")
+    if digest != canonical_sha256(raw):
+        raise ValueError(
+            "transition final-tree digest does not match its payload",
+        )
+    verification = TransitionFinalTreeVerification.model_validate(raw)
+    artifact, artifact_digest = validate_transition_artifact(
+        transition_artifact_path,
+        authoritative_baseline_path=authoritative_baseline_path,
+        require_authoritative=True,
+    )
+    if artifact.status != "transition_qualified":
+        raise ValueError(
+            "transition final-tree proof requires qualified source evidence",
+        )
+    if artifact.candidate_identity is None:
+        raise ValueError(
+            "qualified transition has no candidate identity",
+        )
+    transition_endpoint = artifact.closures["candidate"]
+    if verification.transition_artifact_sha256 != artifact_digest:
+        raise ValueError(
+            "transition final-tree proof references a different artifact",
+        )
+    if verification.scenario_name != artifact.scenario_name:
+        raise ValueError(
+            "transition final-tree scenario differs from source artifact",
+        )
+    if verification.transition_candidate_identity != artifact.candidate_identity:
+        raise ValueError(
+            "transition final-tree candidate identity differs from artifact",
+        )
+    if (
+        verification.transition_runtime_input != transition_endpoint.runtime_input
+        or verification.transition_semantic_envelope != transition_endpoint.semantic_envelope
+    ):
+        raise ValueError(
+            "transition final-tree endpoint differs from source artifact",
+        )
+    return verification, digest
+
+
+def verify_transition_final_tree(
+    *,
+    transition_artifact_path: Path,
+    verification_path: Path,
+    final_root: Path = ROOT,
+    worker_timeout_s: float = 900.0,
+) -> TransitionFinalTreeVerification:
+    """Bind a qualified transition endpoint to one clean final commit."""
+    final_root = final_root.resolve()
+    transition_artifact_path = transition_artifact_path.resolve()
+    verification_path = verification_path.resolve()
+    for label, evidence_path in (
+        ("transition artifact", transition_artifact_path),
+        ("transition final-tree verification", verification_path),
+    ):
+        if evidence_path.is_relative_to(final_root):
+            raise ValueError(
+                f"{label} must be outside the final worktree",
+            )
+    authoritative_baseline_path = final_root / "tests" / "benchmarks" / "baselines.json"
+    artifact, artifact_digest = validate_transition_artifact(
+        transition_artifact_path,
+        authoritative_baseline_path=authoritative_baseline_path,
+        require_authoritative=True,
+    )
+    if artifact.status != "transition_qualified":
+        raise ValueError(
+            "transition final-tree verification requires qualification",
+        )
+    if artifact.candidate_identity is None or artifact.policy is None:
+        raise ValueError(
+            "qualified transition lacks candidate identity or policy",
+        )
+    transition_endpoint = artifact.closures["candidate"]
+    external_runtime_paths = _scenario_external_runtime_paths(
+        final_root,
+        transition_endpoint.runtime_input.scenario_path,
+    )
+    final_identity = _git_identity(
+        final_root,
+        require_clean=True,
+        external_runtime_paths=external_runtime_paths,
+    )
+    if final_identity.runtime_manifest != artifact.candidate_identity.runtime_manifest:
+        raise ValueError(
+            "final runtime manifest differs from transition candidate",
+        )
+    reproduction = _run_closure_subprocess(
+        worker_path=(final_root / "tests" / "benchmarks" / "benchmark_suite.py"),
+        repo_root=final_root,
+        scenario_relative=transition_endpoint.runtime_input.scenario_path,
+        revision="candidate",
+        workload=artifact.policy.workload,
+        timeout_s=worker_timeout_s,
+    )
+    verification = TransitionFinalTreeVerification(
+        created_at_utc=datetime.now(timezone.utc).isoformat(),
+        transition_artifact_sha256=artifact_digest,
+        scenario_name=artifact.scenario_name,
+        transition_candidate_identity=artifact.candidate_identity,
+        final_identity=final_identity,
+        transition_runtime_input=transition_endpoint.runtime_input,
+        transition_semantic_envelope=transition_endpoint.semantic_envelope,
+        reproduction_closure=reproduction,
+        timing_assessment=TransitionTimingAssessment(),
+    )
+    _write_transition_final_tree_verification(verification_path, verification)
+    validate_transition_final_tree_verification(
+        verification_path,
+        transition_artifact_path=transition_artifact_path,
+        authoritative_baseline_path=authoritative_baseline_path,
+    )
+    return verification
+
+
 def run_paired_comparison(
     *,
     scenario_name: str,
@@ -2873,7 +3736,7 @@ def run_paired_comparison(
     allow_dirty_candidate: bool = False,
     worker_timeout_s: float = 900.0,
 ) -> ComparisonArtifact:
-    """Run warm-ups and three alternating same-host reference/candidate pairs."""
+    """Run an ordinary three-pair gate; transition entries reject explicitly."""
     candidate_root = candidate_root.resolve()
     artifact_path = artifact_path.resolve()
     if artifact_path.is_relative_to(candidate_root):
@@ -2922,10 +3785,12 @@ def run_paired_comparison(
         if scenario_name not in baseline.entries:
             raise ValueError(f"unknown benchmark scenario {scenario_name!r}")
         entry = baseline.entries[scenario_name]
+        if not isinstance(entry.policy, BenchmarkPolicy):
+            raise ValueError(
+                f"{scenario_name!r} is transition_qualified and cannot run as an ordinary gate",
+            )
         policy = entry.policy
-        canonical_baseline_path = (
-            candidate_root / "tests" / "benchmarks" / "baselines.json"
-        ).resolve()
+        canonical_baseline_path = (candidate_root / "tests" / "benchmarks" / "baselines.json").resolve()
         authoritative = baseline_path.resolve() == canonical_baseline_path
         baseline_identity = BenchmarkBaselineIdentity(
             authoritative=authoritative,
@@ -2962,9 +3827,7 @@ def run_paired_comparison(
         with tempfile.TemporaryDirectory(
             prefix="sw-paired-benchmark-",
         ) as temporary:
-            candidate_snapshot_root = (
-                Path(temporary) / "candidate-snapshot"
-            )
+            candidate_snapshot_root = Path(temporary) / "candidate-snapshot"
             _materialize_candidate_snapshot(
                 candidate_root=candidate_root,
                 snapshot_root=candidate_snapshot_root,
@@ -2972,12 +3835,7 @@ def run_paired_comparison(
                 scenario_relative=entry.scenario_path,
                 external_runtime_paths=candidate_external_paths,
             )
-            worker_path = (
-                candidate_snapshot_root
-                / "tests"
-                / "benchmarks"
-                / "benchmark_suite.py"
-            )
+            worker_path = candidate_snapshot_root / "tests" / "benchmarks" / "benchmark_suite.py"
             reference_root = Path(temporary) / "reference"
             _git(
                 candidate_root,
@@ -2997,8 +3855,7 @@ def run_paired_comparison(
                 reference_root,
                 require_clean=True,
                 external_runtime_paths=(
-                    reference_external_paths
-                    := _scenario_external_runtime_paths(
+                    reference_external_paths := _scenario_external_runtime_paths(
                         reference_root,
                         entry.scenario_path,
                     )
@@ -3007,10 +3864,7 @@ def run_paired_comparison(
             if reference_identity.commit != policy.reference_commit:
                 raise ValueError("reference checkout resolved the wrong commit")
             checkpoint("reference identity captured")
-            if (
-                _file_sha256(reference_root / "uv.lock")
-                != _file_sha256(candidate_snapshot_root / "uv.lock")
-            ):
+            if _file_sha256(reference_root / "uv.lock") != _file_sha256(candidate_snapshot_root / "uv.lock"):
                 raise ValueError(
                     "reference and candidate dependency locks differ",
                 )
@@ -3047,15 +3901,9 @@ def run_paired_comparison(
             for pair_index, order in enumerate(policy.pair_orders):
                 pair_runs: dict[str, WorkerRun] = {}
                 for revision in order:
-                    root = (
-                        reference_root
-                        if revision == "reference"
-                        else candidate_snapshot_root
-                    )
+                    root = reference_root if revision == "reference" else candidate_snapshot_root
                     expected_commit = (
-                        reference_identity.commit
-                        if revision == "reference"
-                        else candidate_identity.commit
+                        reference_identity.commit if revision == "reference" else candidate_identity.commit
                     )
                     run = _run_worker_subprocess(
                         worker_path=worker_path,
@@ -3073,16 +3921,15 @@ def run_paired_comparison(
                     pair_runs[revision] = run
                 reference_run = pair_runs["reference"]
                 candidate_run = pair_runs["candidate"]
-                pairs.append(PairSample(
-                    pair_index=pair_index,
-                    order=order,
-                    reference=reference_run,
-                    candidate=candidate_run,
-                    candidate_over_reference=(
-                        candidate_run.duration_s
-                        / reference_run.duration_s
-                    ),
-                ))
+                pairs.append(
+                    PairSample(
+                        pair_index=pair_index,
+                        order=order,
+                        reference=reference_run,
+                        candidate=candidate_run,
+                        candidate_over_reference=(candidate_run.duration_s / reference_run.duration_s),
+                    )
+                )
                 checkpoint(f"timed pair {pair_index} completed")
 
             final_reference_identity = _git_identity(
@@ -3094,13 +3941,9 @@ def run_paired_comparison(
                 candidate_snapshot_root,
                 external_runtime_paths=candidate_external_paths,
             )
-            if (
-                final_snapshot_manifest
-                != candidate_identity.runtime_manifest
-            ):
+            if final_snapshot_manifest != candidate_identity.runtime_manifest:
                 raise ValueError(
-                    "candidate snapshot runtime manifest changed during "
-                    "comparison",
+                    "candidate snapshot runtime manifest changed during comparison",
                 )
             final_candidate_identity = _git_identity(
                 candidate_root,
@@ -3118,14 +3961,8 @@ def run_paired_comparison(
 
         decision = evaluate_paired_samples(
             policy,
-            reference_seconds=[
-                pair.reference.duration_s
-                for pair in pairs
-            ],
-            candidate_seconds=[
-                pair.candidate.duration_s
-                for pair in pairs
-            ],
+            reference_seconds=[pair.reference.duration_s for pair in pairs],
+            candidate_seconds=[pair.candidate.duration_s for pair in pairs],
         )
         artifact_status = decision.status
     except Exception as exc:
@@ -3151,6 +3988,244 @@ def run_paired_comparison(
         raise BenchmarkComparisonError(
             f"paired benchmark {scenario_name!r} ended {artifact.status}: "
             f"{errors or ([decision.reason] if decision else [])}",
+        )
+    return artifact
+
+
+def run_workload_transition(
+    *,
+    scenario_name: str,
+    candidate_root: Path = ROOT,
+    baseline_path: Path = BASELINES_PATH,
+    artifact_path: Path,
+    allow_dirty_candidate: bool = False,
+    worker_timeout_s: float = 900.0,
+) -> TransitionArtifact:
+    """Run exactly one duration-free production closure at each endpoint."""
+    candidate_root = candidate_root.resolve()
+    artifact_path = artifact_path.resolve()
+    if artifact_path.is_relative_to(candidate_root):
+        raise ValueError(
+            "transition artifacts must be outside the candidate worktree",
+        )
+    created_at = datetime.now(timezone.utc).isoformat()
+    environment: BenchmarkEnvironment | None = None
+    entry: BaselineEntry | None = None
+    policy: TransitionPolicy | None = None
+    contract: WorkloadTransitionContract | None = None
+    baseline_identity: BenchmarkBaselineIdentity | None = None
+    reference_identity: GitIdentity | None = None
+    candidate_identity: GitIdentity | None = None
+    closures: dict[str, ProductionClosureRun] = {}
+    verified_approvals: list[TransitionApproval] = []
+    errors: list[str] = []
+    artifact_status: Literal[
+        "transition_qualified",
+        "transition_rejected",
+        "error",
+    ] = "error"
+
+    def checkpoint(stage: str) -> None:
+        _write_transition_artifact(
+            artifact_path,
+            TransitionArtifact(
+                created_at_utc=created_at,
+                scenario_name=scenario_name,
+                status="error",
+                errors=[f"transition in progress: {stage}"],
+                policy=policy,
+                baseline_identity=baseline_identity,
+                environment=environment,
+                reference_identity=reference_identity,
+                candidate_identity=candidate_identity,
+                closures=closures,
+                contract=contract,
+                verified_approvals=[],
+                timing_assessment=TransitionTimingAssessment(),
+            ),
+        )
+
+    checkpoint("initialized")
+    try:
+        environment = _environment_metadata(candidate_root)
+        checkpoint("environment captured")
+        baseline = BenchmarkBaseline(baseline_path).load_file()
+        if scenario_name not in baseline.entries:
+            raise ValueError(f"unknown benchmark scenario {scenario_name!r}")
+        entry = baseline.entries[scenario_name]
+        if not isinstance(entry.policy, TransitionPolicy):
+            raise ValueError(
+                f"{scenario_name!r} is {entry.policy.mode} and cannot run as a workload transition",
+            )
+        if entry.transition_contract is None:
+            raise ValueError("transition entry has no exact contract")
+        policy = entry.policy
+        contract = entry.transition_contract
+        canonical_baseline_path = (candidate_root / "tests" / "benchmarks" / "baselines.json").resolve()
+        authoritative = baseline_path.resolve() == canonical_baseline_path
+        baseline_identity = BenchmarkBaselineIdentity(
+            authoritative=authoritative,
+            source="checked_in" if authoritative else "custom",
+            document_sha256=_file_sha256(baseline_path),
+            entry_sha256=canonical_sha256(entry.model_dump(mode="json")),
+        )
+        _verify_transition_predecessor(
+            candidate_root,
+            scenario_name=scenario_name,
+            policy=policy,
+            contract=contract,
+        )
+        checkpoint("policy loaded")
+
+        candidate_external_paths = _scenario_external_runtime_paths(
+            candidate_root,
+            entry.scenario_path,
+        )
+        candidate_identity = _git_identity(
+            candidate_root,
+            require_clean=not allow_dirty_candidate,
+            external_runtime_paths=candidate_external_paths,
+        )
+        checkpoint("candidate identity captured")
+        _git(
+            candidate_root,
+            "cat-file",
+            "-e",
+            f"{policy.reference_commit}^{{commit}}",
+        )
+        with tempfile.TemporaryDirectory(
+            prefix="sw-transition-benchmark-",
+        ) as temporary:
+            candidate_snapshot_root = Path(temporary) / "candidate-snapshot"
+            _materialize_candidate_snapshot(
+                candidate_root=candidate_root,
+                snapshot_root=candidate_snapshot_root,
+                identity=candidate_identity,
+                scenario_relative=entry.scenario_path,
+                external_runtime_paths=candidate_external_paths,
+            )
+            worker_path = candidate_snapshot_root / "tests" / "benchmarks" / "benchmark_suite.py"
+            reference_root = Path(temporary) / "reference"
+            _git(
+                candidate_root,
+                "clone",
+                "--shared",
+                "--no-checkout",
+                str(candidate_root),
+                str(reference_root),
+            )
+            _git(
+                reference_root,
+                "checkout",
+                "--detach",
+                policy.reference_commit,
+            )
+            reference_external_paths = _scenario_external_runtime_paths(
+                reference_root,
+                entry.scenario_path,
+            )
+            reference_identity = _git_identity(
+                reference_root,
+                require_clean=True,
+                external_runtime_paths=reference_external_paths,
+            )
+            if reference_identity.commit != policy.reference_commit:
+                raise ValueError("reference checkout resolved the wrong commit")
+            checkpoint("reference identity captured")
+            if _file_sha256(reference_root / "uv.lock") != _file_sha256(candidate_snapshot_root / "uv.lock"):
+                raise _WorkloadTransitionRejected(
+                    "reference and candidate dependency locks differ",
+                )
+
+            closures["reference"] = _run_closure_subprocess(
+                worker_path=worker_path,
+                repo_root=reference_root,
+                scenario_relative=entry.scenario_path,
+                revision="reference",
+                workload=policy.workload,
+                timeout_s=worker_timeout_s,
+            )
+            checkpoint("reference closure completed")
+            closures["candidate"] = _run_closure_subprocess(
+                worker_path=worker_path,
+                repo_root=candidate_snapshot_root,
+                scenario_relative=entry.scenario_path,
+                revision="candidate",
+                workload=policy.workload,
+                timeout_s=worker_timeout_s,
+            )
+            checkpoint("candidate closure completed")
+            if closures["reference"].commit != reference_identity.commit:
+                raise ValueError(
+                    "reference closure commit disagrees with selected tree",
+                )
+            if closures["candidate"].commit != candidate_identity.commit:
+                raise ValueError(
+                    "candidate closure commit disagrees with selected tree",
+                )
+            try:
+                provisional_approvals = validate_workload_transition(
+                    closures["reference"],
+                    closures["candidate"],
+                    contract,
+                )
+            except ValueError as exc:
+                raise _WorkloadTransitionRejected(str(exc)) from exc
+
+            final_reference_identity = _git_identity(
+                reference_root,
+                require_clean=True,
+                external_runtime_paths=reference_external_paths,
+            )
+            final_snapshot_manifest = _runtime_tree_manifest(
+                candidate_snapshot_root,
+                external_runtime_paths=candidate_external_paths,
+            )
+            if final_snapshot_manifest != candidate_identity.runtime_manifest:
+                raise ValueError(
+                    "candidate snapshot runtime manifest changed during transition",
+                )
+            final_candidate_identity = _git_identity(
+                candidate_root,
+                require_clean=not allow_dirty_candidate,
+                external_runtime_paths=candidate_external_paths,
+            )
+            if final_reference_identity != reference_identity:
+                raise ValueError(
+                    "reference tree identity changed during transition",
+                )
+            if final_candidate_identity != candidate_identity:
+                raise ValueError(
+                    "candidate tree identity changed during transition",
+                )
+            verified_approvals = provisional_approvals
+        artifact_status = "transition_qualified"
+    except _WorkloadTransitionRejected as exc:
+        errors.append(f"{type(exc).__name__}: {exc}")
+        artifact_status = "transition_rejected"
+    except Exception as exc:
+        errors.append(f"{type(exc).__name__}: {exc}")
+        artifact_status = "error"
+
+    artifact = TransitionArtifact(
+        created_at_utc=created_at,
+        scenario_name=scenario_name,
+        status=artifact_status,
+        errors=errors,
+        policy=policy,
+        baseline_identity=baseline_identity,
+        environment=environment,
+        reference_identity=reference_identity,
+        candidate_identity=candidate_identity,
+        closures=closures,
+        contract=contract,
+        verified_approvals=verified_approvals,
+        timing_assessment=TransitionTimingAssessment(),
+    )
+    _write_transition_artifact(artifact_path, artifact)
+    if artifact.status != "transition_qualified":
+        raise BenchmarkTransitionError(
+            f"workload transition {scenario_name!r} ended {artifact.status}: {errors}",
         )
     return artifact
 
@@ -3204,10 +4279,7 @@ def run_benchmark(
     scenario_path = scenario_path.resolve()
     if not scenario_path.is_file():
         raise FileNotFoundError(f"benchmark scenario not found: {scenario_path}")
-    unknown_overrides = sorted(
-        set(calibration_overrides or {})
-        - set(CalibrationSchema.model_fields)
-    )
+    unknown_overrides = sorted(set(calibration_overrides or {}) - set(CalibrationSchema.model_fields))
     if unknown_overrides:
         raise ValueError(
             f"unknown benchmark calibration overrides: {unknown_overrides!r}",
@@ -3265,10 +4337,7 @@ def run_benchmark(
     ticks = run_result.ticks_executed
     return BenchmarkResult(
         scenario_name=scenario_path.parent.name,
-        unit_count=sum(
-            len(units)
-            for units in context.units_by_side.values()
-        ),
+        unit_count=sum(len(units) for units in context.units_by_side.values()),
         wall_clock_s=duration,
         ticks_executed=ticks,
         ticks_per_second=ticks / duration,
@@ -3298,7 +4367,28 @@ def _worker_command(args: argparse.Namespace) -> int:
             run.model_dump(mode="json"),
             indent=2,
             sort_keys=True,
-        ) + "\n",
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    return 0
+
+
+def _closure_worker_command(args: argparse.Namespace) -> int:
+    closure = run_revision_closure(
+        repo_root=args.repo_root,
+        scenario_relative=args.scenario_relative,
+        revision=args.revision,
+        workload=BenchmarkWorkload.model_validate_json(args.workload_json),
+    )
+    args.output.parent.mkdir(parents=True, exist_ok=True)
+    args.output.write_text(
+        json.dumps(
+            closure.model_dump(mode="json"),
+            indent=2,
+            sort_keys=True,
+        )
+        + "\n",
         encoding="utf-8",
     )
     return 0
@@ -3315,31 +4405,59 @@ def _comparison_command(args: argparse.Namespace) -> int:
     )
     _, digest = validate_artifact(
         args.artifact,
-        authoritative_baseline_path=(
-            args.repo_root / "tests" / "benchmarks" / "baselines.json"
-        ),
+        authoritative_baseline_path=(args.repo_root / "tests" / "benchmarks" / "baselines.json"),
     )
     print(
-        f"{artifact.scenario_name}: {artifact.status}; "
-        f"artifact_sha256={digest}",
+        f"{artifact.scenario_name}: {artifact.status}; artifact_sha256={digest}",
+    )
+    return 0
+
+
+def _transition_command(args: argparse.Namespace) -> int:
+    artifact = run_workload_transition(
+        scenario_name=args.scenario,
+        candidate_root=args.repo_root,
+        baseline_path=args.baseline,
+        artifact_path=args.artifact,
+        allow_dirty_candidate=args.allow_dirty_candidate,
+        worker_timeout_s=args.worker_timeout_seconds,
+    )
+    _, digest = validate_transition_artifact(
+        args.artifact,
+        authoritative_baseline_path=(args.repo_root / "tests" / "benchmarks" / "baselines.json"),
+    )
+    print(
+        f"{artifact.scenario_name}: {artifact.status}; timing=not_applicable; artifact_sha256={digest}",
     )
     return 0
 
 
 def _final_tree_verification_command(args: argparse.Namespace) -> int:
-    verification = verify_final_tree(
-        comparison_artifact_path=args.artifact,
-        verification_path=args.verification,
-        final_root=args.repo_root,
-        worker_timeout_s=args.worker_timeout_seconds,
-    )
-    _, digest = validate_final_tree_verification(
-        args.verification,
-        comparison_artifact_path=args.artifact,
-        authoritative_baseline_path=(
-            args.repo_root / "tests" / "benchmarks" / "baselines.json"
-        ),
-    )
+    raw_artifact = json.loads(args.artifact.read_text(encoding="utf-8"))
+    if "closures" in raw_artifact:
+        verification = verify_transition_final_tree(
+            transition_artifact_path=args.artifact,
+            verification_path=args.verification,
+            final_root=args.repo_root,
+            worker_timeout_s=args.worker_timeout_seconds,
+        )
+        _, digest = validate_transition_final_tree_verification(
+            args.verification,
+            transition_artifact_path=args.artifact,
+            authoritative_baseline_path=(args.repo_root / "tests" / "benchmarks" / "baselines.json"),
+        )
+    else:
+        verification = verify_final_tree(
+            comparison_artifact_path=args.artifact,
+            verification_path=args.verification,
+            final_root=args.repo_root,
+            worker_timeout_s=args.worker_timeout_seconds,
+        )
+        _, digest = validate_final_tree_verification(
+            args.verification,
+            comparison_artifact_path=args.artifact,
+            authoritative_baseline_path=(args.repo_root / "tests" / "benchmarks" / "baselines.json"),
+        )
     print(
         f"{verification.scenario_name}: final-tree {verification.status}; "
         f"final_commit={verification.final_identity.commit}; "
@@ -3350,7 +4468,7 @@ def _final_tree_verification_command(args: argparse.Namespace) -> int:
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
-        description="Strict version-3 paired production benchmark",
+        description="Strict version-4 production benchmark evidence",
     )
     commands = parser.add_subparsers(dest="command", required=True)
 
@@ -3365,6 +4483,18 @@ def main(argv: list[str] | None = None) -> int:
     worker.add_argument("--workload-json", required=True)
     worker.add_argument("--output", type=Path, required=True)
     worker.set_defaults(handler=_worker_command)
+
+    closure_worker = commands.add_parser("closure-worker")
+    closure_worker.add_argument("--repo-root", type=Path, required=True)
+    closure_worker.add_argument("--scenario-relative", required=True)
+    closure_worker.add_argument(
+        "--revision",
+        choices=("reference", "candidate"),
+        required=True,
+    )
+    closure_worker.add_argument("--workload-json", required=True)
+    closure_worker.add_argument("--output", type=Path, required=True)
+    closure_worker.set_defaults(handler=_closure_worker_command)
 
     compare = commands.add_parser("compare")
     compare.add_argument(
@@ -3382,6 +4512,23 @@ def main(argv: list[str] | None = None) -> int:
         default=900.0,
     )
     compare.set_defaults(handler=_comparison_command)
+
+    transition = commands.add_parser("transition")
+    transition.add_argument(
+        "--scenario",
+        choices=("73_easting", "golan_heights"),
+        default="73_easting",
+    )
+    transition.add_argument("--repo-root", type=Path, default=ROOT)
+    transition.add_argument("--baseline", type=Path, default=BASELINES_PATH)
+    transition.add_argument("--artifact", type=Path, required=True)
+    transition.add_argument("--allow-dirty-candidate", action="store_true")
+    transition.add_argument(
+        "--worker-timeout-seconds",
+        type=float,
+        default=900.0,
+    )
+    transition.set_defaults(handler=_transition_command)
 
     verify_final = commands.add_parser("verify-final")
     verify_final.add_argument("--repo-root", type=Path, default=ROOT)

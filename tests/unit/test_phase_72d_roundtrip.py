@@ -15,6 +15,9 @@ from stochastic_warfare.combat.suppression import UnitSuppressionState
 from stochastic_warfare.core.clock import SimulationClock
 from stochastic_warfare.core.events import EventBus
 from stochastic_warfare.simulation.calibration import CalibrationSchema
+from stochastic_warfare.simulation.tactical_targeting import (
+    TacticalTargetingRuntime,
+)
 from tests.conftest import bind_test_era_runtime
 
 
@@ -61,14 +64,28 @@ def _make_mock_context():
     )
     ctx.units_by_side = {}
     ctx.morale_states = {}
+    ctx.unit_weapons = {}
+    ctx.unit_sensor_attachments = {}
+    ctx.unit_sensors = {}
     ctx.equipment_resolutions = {}
+    ctx.cal_flat = {}
 
     # Set all engines to None by default
     engine_names = _all_context_engine_names()
     for name in engine_names:
         setattr(ctx, name, None)
+    ctx.tactical_targeting = TacticalTargetingRuntime(
+        sensing_aware_standoff_enabled=(
+            ctx.calibration.enable_sensing_aware_standoff
+        ),
+        unit_sides={},
+    )
 
-    return bind_test_era_runtime(ctx), engine_names
+    optional_engine_names = [
+        name for name in engine_names
+        if name != "tactical_targeting"
+    ]
+    return bind_test_era_runtime(ctx), optional_engine_names
 
 
 # ---------------------------------------------------------------------------
@@ -88,6 +105,7 @@ class TestContextRoundTrip:
         ctx.weather_engine = SimpleNamespace(
             get_state=lambda: dict(weather_state),
             set_state=lambda s: None,
+            current=SimpleNamespace(visibility=10_000.0),
         )
 
         state = ctx.get_state()
@@ -132,17 +150,8 @@ class TestContextRoundTrip:
         ctx, _ = _make_mock_context()
         before = ctx.get_state()
         # State has data for an engine that doesn't exist on context
-        state = {
-            "clock": ctx.clock.get_state(),
-            "rng": {"seed": 42},
-            "calibration": {},
-            "era_runtime_contract": (
-                ctx.era_runtime_contract.model_dump(mode="json")
-            ),
-            "loadout_builder_fingerprint": None,
-            "loadout_topology": {},
-            "missile_engine": {"missiles": []},
-        }
+        state = dict(before)
+        state["missile_engine"] = {"missiles": []}
         ctx.set_state(state)
         assert ctx.missile_engine is None
         assert ctx.get_state() == before

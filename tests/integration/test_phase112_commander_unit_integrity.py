@@ -29,6 +29,7 @@ from stochastic_warfare.entities.unit_classes.aerial import AerialUnit
 from stochastic_warfare.entities.unit_classes.air_defense import AirDefenseUnit
 from stochastic_warfare.entities.unit_classes.naval import NavalUnit
 from stochastic_warfare.entities.unit_classes.support import SupportUnit
+from stochastic_warfare.simulation.aggregation import AggregationConfig
 from stochastic_warfare.simulation.campaign import CampaignConfig
 from stochastic_warfare.simulation.engine import EngineConfig, SimulationEngine
 from stochastic_warfare.simulation.force_builder import (
@@ -755,7 +756,7 @@ def test_initial_overrides_apply_through_runtime_force_boundary() -> None:
             "austerlitz",
             {"french": 10, "coalition": 9},
             "french_french_old_guard_0005",
-            336,
+            300,
             "french",
             UnitStatus.ACTIVE,
         ),
@@ -763,9 +764,9 @@ def test_initial_overrides_apply_through_runtime_force_boundary() -> None:
             "waterloo",
             {"french": 11, "british": 9},
             "french_french_old_guard_0004",
-            252,
-            "british",
-            UnitStatus.ROUTING,
+            192,
+            "french",
+            UnitStatus.ACTIVE,
         ),
     ],
 )
@@ -1011,7 +1012,7 @@ def test_commander_checkpoint_restore_and_continuation_are_exact_and_atomic() ->
     source.step()
     valid_checkpoint = source.checkpoint()
     valid_state = json.loads(valid_checkpoint.decode("utf-8"))
-    assert valid_state["checkpoint_version"] == 114
+    assert valid_state["checkpoint_version"] == 115
 
     _, target_context, target = _reinforcement_runtime()
     before_rejection = target.checkpoint()
@@ -1169,7 +1170,9 @@ def test_profiles_change_production_ooda_and_decision_state() -> None:
 
 def test_enabled_aggregation_commander_restore_is_explicitly_unsupported() -> None:
     _, context, engine = _reinforcement_runtime()
-    context.aggregation_engine._config.enable_aggregation = True
+    context.aggregation_engine._config = AggregationConfig(
+        enable_aggregation=True,
+    )
     before = engine.checkpoint()
 
     with pytest.raises(

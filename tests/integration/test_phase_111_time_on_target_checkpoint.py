@@ -144,7 +144,7 @@ def _quantity_aware_engine(
     )
     runtime_loadouts = RuntimeLoadouts(
         unit_weapons=context.unit_weapons,
-        unit_sensors=context.unit_sensors,
+        unit_sensor_attachments=context.unit_sensor_attachments,
         equipment_resolutions=context.equipment_resolutions,
     )
     missions = TimeOnTargetMissionResolver.resolve(
@@ -996,15 +996,15 @@ def test_corrupt_tot_authorities_are_rejected_atomically(
 
 @pytest.mark.parametrize(
     "invalid_version",
-    (113, 115, True, None),
+    (113, 116, True, None),
     ids=("version-113", "future", "boolean", "null"),
 )
-def test_checkpoint_version_114_is_exact_and_atomic(
+def test_checkpoint_version_115_is_exact_and_atomic(
     invalid_version: int | bool | None,
 ) -> None:
     source, _ = _engine(seed=42)
     invalid = copy.deepcopy(source.get_state())
-    assert invalid["checkpoint_version"] == 114
+    assert invalid["checkpoint_version"] == 115
     invalid["checkpoint_version"] = invalid_version
 
     _assert_atomic_rejection(
@@ -1047,7 +1047,7 @@ def test_unconfigured_combat_rng_bool_alias_is_rejected_atomically() -> None:
     )
 
 
-def test_versionless_checkpoint_remains_compatible_without_declared_plan(
+def test_started_versionless_checkpoint_without_declared_plan_rejects_atomically(
 ) -> None:
     source, _ = _engine(seed=42, empty=True)
     _advance(source, 3)
@@ -1055,13 +1055,12 @@ def test_versionless_checkpoint_remains_compatible_without_declared_plan(
         source.get_state(),
     )
 
-    resumed, _ = _engine(seed=999_111, empty=True)
-    resumed.set_state(versionless)
-    assert _decoded_checkpoint(resumed) == _decoded_checkpoint(source)
-
-    _advance(source, 1)
-    _advance(resumed, 1)
-    assert _decoded_checkpoint(resumed) == _decoded_checkpoint(source)
+    _assert_atomic_rejection(
+        source,
+        versionless,
+        expected="only at pristine tick 0",
+        empty=True,
+    )
 
 
 def test_disabled_populated_plan_restores_dormant_after_authored_times(

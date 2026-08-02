@@ -34,6 +34,9 @@ from stochastic_warfare.simulation.scenario import (
     TickResolutionConfig,
     VictoryConditionConfig,
 )
+from stochastic_warfare.simulation.tactical_targeting import (
+    TacticalTargetingRuntime,
+)
 from stochastic_warfare.simulation.victory import (
     ObjectiveState,
     VictoryEvaluator,
@@ -88,14 +91,52 @@ def _make_ctx(
     )
     blue = blue_units if blue_units is not None else []
     red = red_units if red_units is not None else []
+    units_by_side = {"blue": blue, "red": red}
+    unit_sides = {
+        unit.entity_id: side
+        for side, side_units in units_by_side.items()
+        for unit in side_units
+    }
+    empty_loadouts = {
+        unit_id: ()
+        for unit_id in sorted(unit_sides)
+    }
     ctx = SimulationContext(
         config=cfg,
         clock=clock,
         rng_manager=rng_mgr,
         event_bus=bus,
-        units_by_side={"blue": blue, "red": red},
+        units_by_side=units_by_side,
+        unit_weapons=dict(empty_loadouts),
+        unit_sensor_attachments=dict(empty_loadouts),
+        unit_sensors=dict(empty_loadouts),
+        equipment_resolutions=dict(empty_loadouts),
+        tactical_targeting=TacticalTargetingRuntime(
+            sensing_aware_standoff_enabled=(
+                cfg.calibration_overrides.enable_sensing_aware_standoff
+            ),
+            unit_sides=unit_sides,
+        ),
+        calibration=cfg.calibration_overrides,
     )
     return ctx
+
+
+def _make_opposed_ctx(
+    *,
+    config: CampaignScenarioConfig,
+    status: UnitStatus = UnitStatus.ACTIVE,
+) -> SimulationContext:
+    """Create a fully registered two-unit context for a manual battle."""
+    blue = _make_unit("b1", Position(0.0, 0.0, 0.0), "blue")
+    red = _make_unit("r1", Position(100_000.0, 0.0, 0.0), "red")
+    object.__setattr__(blue, "status", status)
+    object.__setattr__(red, "status", status)
+    return _make_ctx(
+        blue_units=[blue],
+        red_units=[red],
+        config=config,
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -277,7 +318,9 @@ class TestResolutionSwitching:
         assert engine.resolution == TickResolution.STRATEGIC
 
     def test_switches_to_tactical_on_battle(self) -> None:
-        ctx = _make_ctx(config=_minimal_config(duration_hours=24.0))
+        ctx = _make_opposed_ctx(
+            config=_minimal_config(duration_hours=24.0),
+        )
         engine = SimulationEngine(ctx)
         # Manually create a battle
         battle = BattleContext(
@@ -285,30 +328,37 @@ class TestResolutionSwitching:
             start_tick=0,
             start_time=TS,
             involved_sides=["blue", "red"],
+            unit_ids={"b1", "r1"},
         )
         engine.battle_manager._battles["test_battle"] = battle
         engine.step()
         assert engine.resolution == TickResolution.TACTICAL
 
     def test_tactical_tick_duration(self) -> None:
-        ctx = _make_ctx(config=_minimal_config(duration_hours=24.0))
+        ctx = _make_opposed_ctx(
+            config=_minimal_config(duration_hours=24.0),
+        )
         engine = SimulationEngine(ctx)
         # Create active battle
         battle = BattleContext(
             battle_id="t", start_tick=0, start_time=TS,
             involved_sides=["blue", "red"],
+            unit_ids={"b1", "r1"},
         )
         engine.battle_manager._battles["t"] = battle
         engine.step()
         assert ctx.clock.tick_duration.total_seconds() == 5.0
 
     def test_returns_to_operational_after_battle(self) -> None:
-        ctx = _make_ctx(config=_minimal_config(duration_hours=24.0))
+        ctx = _make_opposed_ctx(
+            config=_minimal_config(duration_hours=24.0),
+        )
         engine = SimulationEngine(ctx)
         # Create and terminate a battle
         battle = BattleContext(
             battle_id="t", start_tick=0, start_time=TS,
             involved_sides=["blue", "red"],
+            unit_ids={"b1", "r1"},
         )
         engine.battle_manager._battles["t"] = battle
         engine.step()  # Goes TACTICAL
@@ -401,11 +451,14 @@ class TestTacticalTick:
     """Tactical tick execution via battle manager."""
 
     def test_battle_ticks_increment(self) -> None:
-        ctx = _make_ctx(config=_minimal_config(duration_hours=24.0))
+        ctx = _make_opposed_ctx(
+            config=_minimal_config(duration_hours=24.0),
+        )
         engine = SimulationEngine(ctx)
         battle = BattleContext(
             battle_id="t", start_tick=0, start_time=TS,
             involved_sides=["blue", "red"],
+            unit_ids={"b1", "r1"},
         )
         engine.battle_manager._battles["t"] = battle
         engine.step()
@@ -419,6 +472,7 @@ class TestTacticalTick:
         battle = BattleContext(
             battle_id="t", start_tick=0, start_time=TS,
             involved_sides=["blue", "red"],
+            unit_ids={"b1"},
         )
         engine.battle_manager._battles["t"] = battle
         engine.step()
@@ -436,6 +490,7 @@ class TestTacticalTick:
         battle = BattleContext(
             battle_id="t", start_tick=0, start_time=TS,
             involved_sides=["blue", "red"],
+            unit_ids={"b1", "r1"},
         )
         engine.battle_manager._battles["t"] = battle
         engine.step()
@@ -835,15 +890,20 @@ class TestEdgeCases:
         engine.step()  # Should not raise
 
     def test_multiple_battles_simultaneously(self) -> None:
-        ctx = _make_ctx(config=_minimal_config(duration_hours=24.0))
+        ctx = _make_opposed_ctx(
+            config=_minimal_config(duration_hours=24.0),
+            status=UnitStatus.DESTROYED,
+        )
         engine = SimulationEngine(ctx)
         b1 = BattleContext(
             battle_id="b1", start_tick=0, start_time=TS,
             involved_sides=["blue", "red"],
+            unit_ids={"b1", "r1"},
         )
         b2 = BattleContext(
             battle_id="b2", start_tick=0, start_time=TS,
             involved_sides=["blue", "red"],
+            unit_ids={"b1", "r1"},
         )
         engine.battle_manager._battles["b1"] = b1
         engine.battle_manager._battles["b2"] = b2

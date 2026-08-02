@@ -12,7 +12,7 @@ import copy
 import enum
 import json
 import math
-from collections.abc import Mapping
+from collections.abc import Collection, Mapping
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -47,9 +47,10 @@ from stochastic_warfare.core.events import EventBus
 from stochastic_warfare.core.logging import get_logger
 from stochastic_warfare.core.rng import RNGManager
 from stochastic_warfare.core.strict_yaml import load_yaml_unique
-from stochastic_warfare.core.types import ModuleId, Position
-from stochastic_warfare.detection.sensors import SensorInstance
+from stochastic_warfare.core.types import Domain, ModuleId, Position
+from stochastic_warfare.detection.sensors import SensorInstance, SensorType
 from stochastic_warfare.entities.base import Unit, UnitStatus
+from stochastic_warfare.entities.equipment import EquipmentCategory
 from stochastic_warfare.logistics.config import (
     LogisticsConfig,
     SupplyQuantityConfig,
@@ -61,6 +62,11 @@ from stochastic_warfare.morale.runtime import (
     MoraleRuntime,
 )
 from stochastic_warfare.morale.state import MoraleState
+from stochastic_warfare.simulation.aggregation import (
+    AggregationConfig,
+    AggregationEngine,
+    unsupported_aggregation_owner_names,
+)
 from stochastic_warfare.simulation.calibration import CalibrationSchema
 from stochastic_warfare.simulation.deployment import (
     DeploymentConfig,
@@ -86,10 +92,23 @@ from stochastic_warfare.simulation.loadouts import (
     EquipmentResolution,
     RuntimeLoadoutBuilder,
     RuntimeLoadouts,
+    SensorAttachment,
     WeaponAttachment,
 )
 from stochastic_warfare.simulation.movement_diagnostics import (
     MovementDiagnostics,
+)
+from stochastic_warfare.simulation.tactical_targeting import (
+    ContactSource,
+    DEFAULT_TARGETING_VISIBILITY_M,
+    EffectiveRangeBasis,
+    FireControlSource,
+    TacticalTargetingDecision,
+    TacticalTargetingRestorePlan,
+    TacticalTargetingRuntime,
+    sensor_environment_range_policy,
+    sensor_environment_range_upper_bound_m,
+    targeting_visibility_bound_m,
 )
 from stochastic_warfare.space.config import SpaceConfig
 from stochastic_warfare.terrain.heightmap import Heightmap
@@ -1405,12 +1424,570 @@ def _json_values_equal(left: Any, right: Any) -> bool:
     return bool(left == right)
 
 
+def _normalize_targeting_battle_memberships(
+    memberships: Mapping[str, Collection[str]] | None,
+) -> tuple[tuple[str, tuple[str, ...]], ...] | None:
+    """Return one immutable canonical active-battle topology."""
+    if memberships is None:
+        return None
+    if not isinstance(memberships, Mapping):
+        raise ValueError(
+            "targeting_battle_memberships must be a mapping",
+        )
+    normalized: list[tuple[str, tuple[str, ...]]] = []
+    for battle_id, raw_unit_ids in memberships.items():
+        if (
+            not isinstance(battle_id, str)
+            or not battle_id
+            or battle_id != battle_id.strip()
+        ):
+            raise ValueError(
+                "targeting battle IDs must be non-empty trimmed strings",
+            )
+        if isinstance(raw_unit_ids, (str, bytes)) or not isinstance(
+            raw_unit_ids,
+            Collection,
+        ):
+            raise ValueError(
+                f"targeting battle {battle_id!r} members must be a collection",
+            )
+        unit_ids = tuple(sorted(raw_unit_ids))
+        if any(
+            not isinstance(unit_id, str)
+            or not unit_id
+            or unit_id != unit_id.strip()
+            for unit_id in unit_ids
+        ):
+            raise ValueError(
+                "targeting battle members must be non-empty trimmed strings",
+            )
+        if len(unit_ids) != len(set(unit_ids)):
+            raise ValueError(
+                f"targeting battle {battle_id!r} contains duplicate members",
+            )
+        normalized.append((battle_id, unit_ids))
+    return tuple(sorted(normalized))
+
+
+def _validate_runtime_loadout_object_bindings(
+    *,
+    units: Mapping[str, Unit],
+    loadouts: RuntimeLoadouts,
+) -> None:
+    """Require attachments to point at exact prospective unit equipment."""
+    unit_ids = set(units)
+    if (
+        set(loadouts.unit_weapons) != unit_ids
+        or set(loadouts.unit_sensor_attachments) != unit_ids
+        or set(loadouts.equipment_resolutions) != unit_ids
+    ):
+        raise ValueError(
+            "prospective loadout topology disagrees with checkpoint roster",
+        )
+    for unit_id in sorted(unit_ids):
+        unit = units[unit_id]
+        equipment = unit.equipment
+        resolutions = loadouts.equipment_resolutions[unit_id]
+        resolution_indexes = tuple(
+            resolution.source_equipment_index
+            for resolution in resolutions
+        )
+        expected_indexes = tuple(
+            index
+            for index, item in enumerate(equipment)
+            if item.category in {
+                EquipmentCategory.WEAPON,
+                EquipmentCategory.SENSOR,
+            }
+        )
+        if resolution_indexes != expected_indexes:
+            raise ValueError(
+                f"equipment resolutions for {unit_id!r} must exactly cover "
+                "the live equipment source order",
+            )
+        for resolution in resolutions:
+            if (
+                resolution.unit_type != unit.unit_type
+                or resolution.source_equipment
+                is not equipment[resolution.source_equipment_index]
+            ):
+                raise ValueError(
+                    f"equipment resolution for {unit_id!r} source index "
+                    f"{resolution.source_equipment_index} is detached from "
+                    "the exact unit type or equipment object",
+                )
+        for label, attachments in (
+            ("weapon", loadouts.unit_weapons[unit_id]),
+            ("sensor", loadouts.unit_sensor_attachments[unit_id]),
+        ):
+            for attachment in attachments:
+                source_index = attachment.source_equipment_index
+                if (
+                    source_index >= len(equipment)
+                    or equipment[source_index]
+                    is not attachment.source_equipment
+                ):
+                    raise ValueError(
+                        f"{label} attachment for {unit_id!r} is detached "
+                        "from its exact source equipment object",
+                    )
+
+
+def _targeting_visibility_bound_m(
+    *,
+    calibration: Mapping[str, object],
+    weather_engine: Any,
+    default_visibility_m: float,
+) -> float:
+    """Return the exact configured/current visibility used by targeting."""
+    weather_visibility_m: float | None = None
+    if weather_engine is not None:
+        weather_visibility_m = getattr(
+            getattr(weather_engine, "current", None),
+            "visibility",
+            None,
+        )
+        if weather_visibility_m is None:
+            raise ValueError(
+                "targeting weather owner has no current visibility",
+            )
+    return targeting_visibility_bound_m(
+        calibration=calibration,
+        default_visibility_m=default_visibility_m,
+        weather_visibility_m=weather_visibility_m,
+    )
+
+
+def _targeting_interval_is_current(
+    *,
+    plan: TacticalTargetingRestorePlan,
+    clock_tick: int,
+    logical_time_s: float,
+) -> bool:
+    """Return whether retained targeting evidence belongs to this clock."""
+    interval = plan.prepared_interval
+    if interval is None:
+        return False
+    if (
+        interval.engine_tick > clock_tick
+        or interval.logical_time_s > logical_time_s
+    ):
+        raise ValueError(
+            "targeting checkpoint interval is later than the checkpoint clock",
+        )
+    tick_is_current = interval.engine_tick == clock_tick
+    time_is_current = interval.logical_time_s == logical_time_s
+    if tick_is_current != time_is_current:
+        raise ValueError(
+            "targeting checkpoint interval tick/time disagree with the "
+            "checkpoint clock",
+        )
+    return tick_is_current
+
+
+def _prospective_targeting_visibility_bound_m(
+    *,
+    calibration: Mapping[str, object],
+    weather_engine: Any,
+    checkpoint_state: Mapping[str, object],
+    default_visibility_m: float,
+) -> float:
+    """Resolve visibility from an isolated checkpoint-staged weather owner."""
+    if weather_engine is None:
+        return _targeting_visibility_bound_m(
+            calibration=calibration,
+            weather_engine=None,
+            default_visibility_m=default_visibility_m,
+        )
+    if "weather_engine" not in checkpoint_state:
+        raise ValueError(
+            "targeting checkpoint evidence requires weather_engine state",
+        )
+    staged_weather = copy.deepcopy(weather_engine)
+    staged_weather.set_state(copy.deepcopy(checkpoint_state["weather_engine"]))
+    return _targeting_visibility_bound_m(
+        calibration=calibration,
+        weather_engine=staged_weather,
+        default_visibility_m=default_visibility_m,
+    )
+
+
+def _validate_targeting_decision_live_bindings(
+    *,
+    decision: TacticalTargetingDecision,
+    units: Mapping[str, Unit],
+    loadouts: RuntimeLoadouts,
+    calibration: Mapping[str, object],
+    live_visibility_m: float | None,
+) -> None:
+    """Match one persisted decision to exact prospective runtime objects."""
+
+    def sensor_attachment_for(
+        *,
+        shooter_id: str,
+        source_index: int,
+        sensor_id: str,
+        modeled_role: Any,
+        evidence_label: str,
+    ) -> SensorAttachment:
+        matches = tuple(
+            attachment
+            for attachment in loadouts.unit_sensor_attachments.get(
+                shooter_id,
+                (),
+            )
+            if (
+                attachment.source_equipment_index == source_index
+                and attachment.sensor_id == sensor_id
+                and attachment.modeled_role is modeled_role
+            )
+        )
+        if len(matches) != 1:
+            raise ValueError(
+                f"{evidence_label} sensor identity does not resolve to "
+                "one exact live attachment",
+            )
+        return matches[0]
+
+    shooter = units.get(decision.shooter_id)
+    if shooter is None:
+        raise ValueError(
+            "targeting shooter identity is absent from the restored roster",
+        )
+    shooter_side = (
+        shooter.side if isinstance(shooter.side, str) else shooter.side.value
+    )
+    if shooter_side != decision.shooter_side:
+        raise ValueError(
+            "targeting shooter side disagrees with the live unit",
+        )
+    if shooter.domain is not decision.shooter_domain:
+        raise ValueError(
+            "targeting shooter domain disagrees with the live unit",
+        )
+    if decision.target_id is not None:
+        target = units.get(decision.target_id)
+        if target is None:
+            raise ValueError(
+                "targeting target identity is absent from the restored roster",
+            )
+        target_side = (
+            target.side if isinstance(target.side, str) else target.side.value
+        )
+        if target_side != decision.target_side:
+            raise ValueError(
+                "targeting target side disagrees with the live unit",
+            )
+        if target.domain is not decision.target_domain:
+            raise ValueError(
+                "targeting target domain disagrees with the live unit",
+            )
+    if live_visibility_m is not None and not math.isclose(
+        decision.visibility_bound_m,
+        live_visibility_m,
+        rel_tol=1e-12,
+        abs_tol=1e-9,
+    ):
+        raise ValueError(
+            "targeting recorded visibility disagrees with the live "
+            "environment",
+        )
+
+    try:
+        range_policy = sensor_environment_range_policy(
+            calibration=calibration,
+            observer_domain=shooter.domain,
+            observer_altitude_m=float(shooter.position.altitude or 0.0),
+            observer_acclimatized=getattr(
+                shooter,
+                "acclimatized",
+                False,
+            ),
+        )
+    except (TypeError, ValueError) as exc:
+        raise ValueError(
+            "targeting observer environmental range policy is invalid",
+        ) from exc
+
+    weapon_attachment: WeaponAttachment | None = None
+    if decision.weapon_id is not None:
+        weapon_matches = tuple(
+            attachment
+            for attachment in loadouts.unit_weapons.get(
+                decision.shooter_id,
+                (),
+            )
+            if (
+                attachment.source_equipment_index
+                == decision.weapon_source_equipment_index
+                and attachment.weapon.weapon_id == decision.weapon_id
+                and attachment.modeled_role is decision.weapon_modeled_role
+            )
+        )
+        if len(weapon_matches) != 1:
+            raise ValueError(
+                "targeting weapon identity does not resolve to one "
+                "exact live attachment",
+            )
+        weapon_attachment = weapon_matches[0]
+        definition = weapon_attachment.weapon.definition
+        authored_effective = float(definition.effective_range_m)
+        expected_basis = (
+            EffectiveRangeBasis.AUTHORED
+            if authored_effective > 0.0
+            else EffectiveRangeBasis.LEGACY_DERIVED_80_PERCENT_OF_MAX
+        )
+        expected_predictive = authored_effective if authored_effective > 0.0 else 0.0
+        expected_legacy = float(definition.max_range_m) * 0.8
+        if (
+            decision.effective_range_basis is not expected_basis
+            or not math.isclose(
+                decision.physical_max_range_m,
+                float(definition.max_range_m),
+                rel_tol=1e-12,
+                abs_tol=1e-9,
+            )
+            or not math.isclose(
+                decision.predictive_effective_range_m,
+                expected_predictive,
+                rel_tol=1e-12,
+                abs_tol=1e-9,
+            )
+            or not math.isclose(
+                decision.legacy_derived_reference_range_m,
+                expected_legacy,
+                rel_tol=1e-12,
+                abs_tol=1e-9,
+            )
+        ):
+            raise ValueError(
+                "targeting range evidence disagrees with the loaded "
+                "weapon definition",
+            )
+        if (
+            decision.ammunition_id is not None
+            and decision.ammunition_id
+            not in {
+                ammunition.ammo_id
+                for ammunition in weapon_attachment.ammunition
+            }
+        ):
+            raise ValueError(
+                "targeting ammunition identity is absent from the "
+                "live weapon attachment",
+            )
+
+    sensor_evidence = (
+        (
+            "contact",
+            decision.contact_sensor_source_equipment_index,
+            decision.contact_sensor_id,
+            decision.contact_sensor_modeled_role,
+            decision.contact_range_m,
+        ),
+        (
+            "sensing",
+            decision.sensing_sensor_source_equipment_index,
+            decision.sensing_sensor_id,
+            decision.sensing_sensor_modeled_role,
+            decision.sensing_range_m,
+        ),
+        (
+            "fire-control",
+            decision.fire_control_sensor_source_equipment_index,
+            decision.fire_control_sensor_id,
+            decision.fire_control_sensor_modeled_role,
+            decision.fire_control_range_m,
+        ),
+    )
+    fire_control_attachment: SensorAttachment | None = None
+    for (
+        label,
+        source_index,
+        sensor_id,
+        modeled_role,
+        live_range_m,
+    ) in sensor_evidence:
+        if source_index is None:
+            continue
+        assert sensor_id is not None
+        attachment = sensor_attachment_for(
+            shooter_id=decision.shooter_id,
+            source_index=source_index,
+            sensor_id=sensor_id,
+            modeled_role=modeled_role,
+            evidence_label=label,
+        )
+        strict_fow_witness = (
+            decision.contact_source is ContactSource.FOW_OBSERVER_WITNESS
+            and label in {"contact", "sensing"}
+        )
+        try:
+            live_sensor_range = float(attachment.sensor.effective_range)
+            if not math.isfinite(live_sensor_range) or live_sensor_range < 0.0:
+                raise ValueError("live sensor range must be finite and non-negative")
+            upper_bound_m = (
+                live_sensor_range
+                if strict_fow_witness
+                else sensor_environment_range_upper_bound_m(
+                    policy=range_policy,
+                    sensor_type=attachment.sensor.sensor_type,
+                    condition_adjusted_range_m=live_sensor_range,
+                )
+            )
+        except (TypeError, ValueError) as exc:
+            raise ValueError(
+                f"targeting {label} live sensor range evidence is invalid",
+            ) from exc
+        if live_range_m > upper_bound_m + 1e-9:
+            if strict_fow_witness:
+                raise ValueError(
+                    "targeting FOW witness range exceeds the live sensor range",
+                )
+            raise ValueError(
+                f"targeting {label} range exceeds the live sensor "
+                "environmental range bound",
+            )
+        optical_attachment = attachment.sensor.sensor_type in {
+            SensorType.VISUAL,
+            SensorType.NVG,
+        }
+        if (
+            optical_attachment
+            and live_range_m > decision.visibility_bound_m + 1e-9
+        ):
+            raise ValueError(
+                f"targeting {label} optical range exceeds the recorded "
+                "visibility bound",
+            )
+        if label == "fire-control":
+            fire_control_attachment = attachment
+
+    if (
+        decision.fire_control_source is FireControlSource.SENSOR_ATTACHMENT
+        and (
+            fire_control_attachment is None
+            or weapon_attachment is None
+            or weapon_attachment.source_equipment_index
+            not in fire_control_attachment.compatible_weapon_source_indexes
+        )
+    ):
+        raise ValueError(
+            "targeting fire-control evidence disagrees with the "
+            "mapping-resolved attachment compatibility",
+        )
+
+
+def _validate_targeting_live_bindings(
+    *,
+    plan: TacticalTargetingRestorePlan,
+    units: Mapping[str, Unit],
+    loadouts: RuntimeLoadouts,
+    calibration: Mapping[str, object],
+    live_visibility_m: float | None,
+) -> None:
+    """Match persisted latest-picture identities to live attachments."""
+
+    for picture in plan.latest_pictures:
+        for decision in picture.decisions:
+            _validate_targeting_decision_live_bindings(
+                decision=decision,
+                units=units,
+                loadouts=loadouts,
+                calibration=calibration,
+                live_visibility_m=live_visibility_m,
+            )
+
+
+def _validate_movement_targeting_restore_bindings(
+    *,
+    movement_plan: Any,
+    targeting_plan: TacticalTargetingRestorePlan,
+    units: Mapping[str, Unit],
+    loadouts: RuntimeLoadouts,
+    calibration: Mapping[str, object],
+) -> None:
+    """Validate every retained movement decision before checkpoint commit."""
+    picture_by_identity = {
+        (picture.engine_tick, picture.battle_id): picture
+        for picture in targeting_plan.latest_pictures
+    }
+    prepared_interval = targeting_plan.prepared_interval
+    for summary in movement_plan.units:
+        for observation in summary.recent_observations:
+            decision = observation.targeting_decision
+            if decision is None:
+                continue
+            _validate_targeting_decision_live_bindings(
+                decision=decision,
+                units=units,
+                loadouts=loadouts,
+                calibration=calibration,
+                live_visibility_m=None,
+            )
+            membership = observation.targeting_membership
+            if membership is None:
+                raise ValueError(
+                    "movement targeting evidence is missing its exact battle "
+                    "membership snapshot",
+                )
+            members = membership.unit_ids
+            if (
+                decision.shooter_id not in members
+                or (
+                    decision.target_id is not None
+                    and decision.target_id not in members
+                )
+            ):
+                raise ValueError(
+                    "movement targeting evidence disagrees with retained "
+                    "battle membership",
+                )
+            if (
+                prepared_interval is not None
+                and prepared_interval.engine_tick == decision.engine_tick
+                and prepared_interval.battle_memberships.get(
+                    decision.battle_id,
+                )
+                != members
+            ):
+                raise ValueError(
+                    "movement targeting evidence disagrees with the exact "
+                    "same-tick targeting interval membership",
+                )
+            picture = picture_by_identity.get((
+                decision.engine_tick,
+                decision.battle_id,
+            ))
+            if picture is None:
+                continue
+            restored = picture.decision_for(decision.shooter_id)
+            if restored is None:
+                raise ValueError(
+                    "movement targeting evidence has no matching persisted "
+                    "picture decision",
+                )
+            comparable = (
+                decision.as_historical()
+                if decision.fog_of_war_enabled
+                else decision
+            )
+            if comparable != restored:
+                raise ValueError(
+                    "movement targeting evidence disagrees with the exact "
+                    "persisted picture decision",
+                )
+
+
 @dataclass(frozen=True, slots=True)
 class _CheckpointAggregateMoraleTopology:
     """Validated aggregate constituent IDs and captured unit statuses."""
 
     constituents: dict[str, tuple[str, ...]]
     statuses: dict[str, UnitStatus]
+    proxy_expectations: dict[str, tuple[str, str, tuple[float, ...]]]
+    original_indexes: dict[str, tuple[int, ...]]
+    proxy_domains: dict[str, Domain]
 
 
 def _checkpoint_aggregate_morale_topology(
@@ -1418,7 +1995,7 @@ def _checkpoint_aggregate_morale_topology(
 ) -> _CheckpointAggregateMoraleTopology:
     """Parse aggregate morale topology and statuses in one strict pass."""
     if raw_aggregation is None:
-        return _CheckpointAggregateMoraleTopology({}, {})
+        return _CheckpointAggregateMoraleTopology({}, {}, {}, {}, {})
     if not isinstance(raw_aggregation, dict):
         raise ValueError("Checkpoint aggregation_engine must be a mapping")
     raw_aggregates = raw_aggregation.get("aggregates", {})
@@ -1428,6 +2005,12 @@ def _checkpoint_aggregate_morale_topology(
         )
     result: dict[str, tuple[str, ...]] = {}
     statuses: dict[str, UnitStatus] = {}
+    proxy_expectations: dict[
+        str,
+        tuple[str, str, tuple[float, ...]],
+    ] = {}
+    original_indexes: dict[str, tuple[int, ...]] = {}
+    proxy_domains: dict[str, Domain] = {}
     seen_constituents: set[str] = set()
     for aggregate_id in sorted(raw_aggregates):
         raw_aggregate = raw_aggregates[aggregate_id]
@@ -1439,22 +2022,80 @@ def _checkpoint_aggregate_morale_topology(
             raise ValueError(
                 f"Checkpoint aggregate identity mismatch for {aggregate_id!r}",
             )
+        raw_side = raw_aggregate.get("side")
+        raw_unit_type = raw_aggregate.get("unit_type")
+        raw_position = raw_aggregate.get("position")
+        if (
+            not isinstance(raw_side, str)
+            or not raw_side
+            or not isinstance(raw_unit_type, str)
+            or not raw_unit_type
+            or not isinstance(raw_position, (list, tuple))
+            or len(raw_position) not in {2, 3}
+            or any(
+                isinstance(value, bool)
+                or not isinstance(value, (int, float))
+                or not math.isfinite(float(value))
+                for value in raw_position
+            )
+        ):
+            raise ValueError(
+                f"Checkpoint aggregate {aggregate_id!r} proxy is malformed",
+            )
+        proxy_expectations[aggregate_id] = (
+            raw_side,
+            raw_unit_type,
+            tuple(Position(*raw_position)),
+        )
         raw_snapshots = raw_aggregate.get("snapshots")
         if not isinstance(raw_snapshots, list) or not raw_snapshots:
             raise ValueError(
                 f"Checkpoint aggregate {aggregate_id!r} requires snapshots",
             )
         constituent_ids: list[str] = []
+        constituent_domains: set[Domain] = set()
         for raw_snapshot in raw_snapshots:
-            if not isinstance(raw_snapshot, dict):
+            if (
+                not isinstance(raw_snapshot, dict)
+                or set(raw_snapshot)
+                != {
+                    "unit_state",
+                    "weapon_states",
+                    "sensor_states",
+                    "supply_inventory",
+                    "original_side",
+                    "original_index",
+                    "order_records",
+                }
+            ):
                 raise ValueError("Checkpoint aggregate snapshots must be mappings")
             raw_unit = raw_snapshot.get("unit_state")
             if not isinstance(raw_unit, dict):
                 raise ValueError(
                     "Checkpoint aggregate unit_state must be a mapping",
                 )
+            if (
+                raw_unit.get("unit_class") != Unit.__name__
+                or raw_unit.get("equipment") != []
+                or not isinstance(raw_snapshot["original_side"], str)
+                or not raw_snapshot["original_side"]
+                or raw_snapshot["original_side"]
+                != raw_snapshot["original_side"].strip()
+                or raw_unit.get("side") != raw_snapshot["original_side"]
+                or raw_snapshot["original_side"] != raw_side
+                or raw_snapshot["weapon_states"] != []
+                or raw_snapshot["sensor_states"] != []
+                or raw_snapshot["supply_inventory"] is not None
+                or raw_snapshot["order_records"] != []
+            ):
+                raise ValueError(
+                    "REM-016: checkpoint aggregation supports only exact "
+                    "base-Unit, equipmentless, no-supply/no-order snapshots",
+                )
             unit_id = raw_unit.get("entity_id")
             raw_status = raw_unit.get("status")
+            raw_domain = raw_unit.get("domain")
+            raw_original_index = raw_snapshot["original_index"]
             if not isinstance(unit_id, str) or not unit_id:
                 raise ValueError(
                     "Checkpoint aggregate constituent IDs must be non-empty strings",
@@ -1465,6 +2106,30 @@ def _checkpoint_aggregate_morale_topology(
             ):
                 raise ValueError(
                     "Checkpoint aggregate constituent status is malformed",
+                )
+            if isinstance(raw_domain, bool) or not isinstance(raw_domain, int):
+                raise ValueError(
+                    "Checkpoint aggregate constituent domain is malformed",
+                )
+            try:
+                constituent_domains.add(Domain(raw_domain))
+            except ValueError as exc:
+                raise ValueError(
+                    "Checkpoint aggregate constituent domain is unknown",
+                ) from exc
+            if (
+                isinstance(raw_original_index, bool)
+                or not isinstance(raw_original_index, int)
+                or raw_original_index < 0
+            ):
+                raise ValueError(
+                    "Checkpoint aggregate constituent original_index is "
+                    "malformed",
+                )
+            if raw_status != int(UnitStatus.ACTIVE):
+                raise ValueError(
+                    "Checkpoint suspended morale/status disagree: "
+                    "aggregate snapshots must capture ACTIVE constituents",
                 )
             if unit_id in seen_constituents:
                 raise ValueError(
@@ -1478,8 +2143,50 @@ def _checkpoint_aggregate_morale_topology(
                 raise ValueError(
                     f"Unknown aggregate constituent status for {unit_id!r}",
                 ) from exc
+        aggregate_indexes = tuple(
+            raw_snapshot["original_index"]
+            for raw_snapshot in raw_snapshots
+        )
+        if len(aggregate_indexes) != len(set(aggregate_indexes)):
+            raise ValueError(
+                f"Checkpoint aggregate {aggregate_id!r} original indexes "
+                "must be unique",
+            )
+        if len(constituent_domains) != 1:
+            raise ValueError(
+                "REM-016: aggregate constituents must share one exact domain",
+            )
         result[aggregate_id] = tuple(sorted(constituent_ids))
-    return _CheckpointAggregateMoraleTopology(result, statuses)
+        original_indexes[aggregate_id] = aggregate_indexes
+        proxy_domains[aggregate_id] = next(iter(constituent_domains))
+    return _CheckpointAggregateMoraleTopology(
+        result,
+        statuses,
+        proxy_expectations,
+        original_indexes,
+        proxy_domains,
+    )
+
+
+def _checkpoint_declares_empty_runtime_loadout(
+    state: Mapping[str, Any],
+    *,
+    unit_id: str,
+) -> bool:
+    """Return whether a checkpoint declares exact empty runtime bindings."""
+    for key in (
+        "unit_weapon_states",
+        "unit_sensor_states",
+        "loadout_topology",
+    ):
+        owner = state.get(key)
+        if (
+            not isinstance(owner, dict)
+            or unit_id not in owner
+            or owner[unit_id] != []
+        ):
+            return False
+    return True
 
 
 def _checkpoint_has_active_routes(raw_rout_state: Any) -> bool:
@@ -1783,6 +2490,7 @@ _CONTEXT_STATE_ENGINE_NAMES = (
     "detection_engine",
     "movement_engine",
     "movement_diagnostics",
+    "tactical_targeting",
     "conditions_engine",
     "engagement_engine",
     "suppression_engine",
@@ -1817,6 +2525,10 @@ class SimulationContextStatePlan:
     owner_id: int
     state: dict[str, Any]
     allow_legacy_morale: bool
+    targeting_battle_membership_items: (
+        tuple[tuple[str, tuple[str, ...]], ...] | None
+    )
+    require_current_targeting_interval: bool
 
 
 @dataclass
@@ -1851,6 +2563,10 @@ class SimulationContext:
     unit_weapons: dict[str, tuple[WeaponAttachment, ...]] = field(
         default_factory=dict,
     )
+    unit_sensor_attachments: dict[
+        str,
+        tuple[SensorAttachment, ...],
+    ] = field(default_factory=dict)
     unit_sensors: dict[str, tuple[SensorInstance, ...]] = field(
         default_factory=dict,
     )
@@ -1883,6 +2599,8 @@ class SimulationContext:
     # Movement
     movement_engine: Any = None
     movement_diagnostics: MovementDiagnostics | None = None
+    tactical_targeting: TacticalTargetingRuntime | None = None
+    targeting_default_visibility_m: float = DEFAULT_TARGETING_VISIBILITY_M
 
     # Morale
     morale_runtime: MoraleRuntime | None = None
@@ -2351,6 +3069,135 @@ class SimulationContext:
             roster[unit.entity_id] = unit
         return roster
 
+    def _validate_loadout_bindings(self) -> None:
+        """Require one atomic typed loadout projection for the full roster."""
+        roster = self._morale_roster()
+        roster_ids = set(roster)
+        loadout_maps = {
+            "unit_weapons": set(self.unit_weapons),
+            "unit_sensor_attachments": set(self.unit_sensor_attachments),
+            "unit_sensors": set(self.unit_sensors),
+            "equipment_resolutions": set(self.equipment_resolutions),
+        }
+        if not roster_ids and not any(loadout_maps.values()):
+            return
+        for name, unit_ids in loadout_maps.items():
+            if unit_ids != roster_ids:
+                raise ValueError(
+                    f"SimulationContext {name} topology disagrees with the "
+                    "runtime roster: "
+                    f"missing={sorted(roster_ids - unit_ids)!r}, "
+                    f"extra={sorted(unit_ids - roster_ids)!r}",
+                )
+        validated = RuntimeLoadouts(
+            unit_weapons=self.unit_weapons,
+            unit_sensor_attachments=self.unit_sensor_attachments,
+            equipment_resolutions=self.equipment_resolutions,
+        )
+        _validate_runtime_loadout_object_bindings(
+            units=roster,
+            loadouts=validated,
+        )
+        for unit_id in sorted(roster_ids):
+            attachments = self.unit_sensor_attachments[unit_id]
+            projection = self.unit_sensors[unit_id]
+            if len(attachments) != len(projection) or any(
+                attachment.sensor is not sensor
+                for attachment, sensor in zip(attachments, projection)
+            ):
+                raise ValueError(
+                    f"SimulationContext sensor projection for {unit_id!r} "
+                    "is detached from its typed attachments",
+                )
+            if any(
+                validated_attachment is not attachment
+                for validated_attachment, attachment in zip(
+                    validated.unit_sensor_attachments[unit_id],
+                    attachments,
+                )
+            ):
+                raise ValueError(
+                    f"SimulationContext sensor attachments for {unit_id!r} "
+                    "changed identity during validation",
+                )
+
+    def _validate_targeting_registration(
+        self,
+    ) -> TacticalTargetingRuntime | None:
+        """Require targeting registration to equal the authoritative roster."""
+        runtime = self.tactical_targeting
+        if runtime is None:
+            if self.all_units():
+                raise RuntimeError(
+                    "A non-empty production roster requires tactical targeting",
+                )
+            return None
+        expected: dict[str, str] = {}
+        for bucket_side, units in self.units_by_side.items():
+            for unit in units:
+                unit_side = (
+                    unit.side
+                    if isinstance(unit.side, str)
+                    else unit.side.value
+                )
+                if unit_side != bucket_side:
+                    raise ValueError(
+                        "Tactical targeting roster bucket disagrees with "
+                        f"unit side for {unit.entity_id!r}",
+                    )
+                if unit.entity_id in expected:
+                    raise ValueError(
+                        "Tactical targeting roster contains duplicate "
+                        f"entity_id {unit.entity_id!r}",
+                    )
+                expected[unit.entity_id] = unit_side
+        if dict(runtime.registered_unit_sides) != dict(sorted(expected.items())):
+            raise ValueError(
+                "Tactical targeting registration disagrees with the runtime "
+                "unit/side topology",
+            )
+        return runtime
+
+    def _validate_targeting_bindings(self) -> None:
+        """Require complete targeting state and live attachment bindings."""
+        runtime = self._validate_targeting_registration()
+        if runtime is None:
+            return
+        plan = runtime.stage_state(runtime.get_state())
+        interval_is_current = _targeting_interval_is_current(
+            plan=plan,
+            clock_tick=self.clock.tick_count,
+            logical_time_s=self.clock.elapsed.total_seconds(),
+        )
+        calibration = (
+            self.cal_flat
+            if self.cal_flat
+            else (
+                self.calibration.to_flat_dict(self.side_names())
+                if isinstance(self.calibration, CalibrationSchema)
+                else dict(self.calibration)
+            )
+        )
+        _validate_targeting_live_bindings(
+            plan=plan,
+            units=self._morale_roster(),
+            loadouts=RuntimeLoadouts(
+                unit_weapons=self.unit_weapons,
+                unit_sensor_attachments=self.unit_sensor_attachments,
+                equipment_resolutions=self.equipment_resolutions,
+            ),
+            calibration=calibration,
+            live_visibility_m=(
+                _targeting_visibility_bound_m(
+                    calibration=calibration,
+                    weather_engine=self.weather_engine,
+                    default_visibility_m=self.targeting_default_visibility_m,
+                )
+                if interval_is_current
+                else None
+            ),
+        )
+
     def _validate_morale_bindings(
         self,
         *,
@@ -2412,10 +3259,50 @@ class SimulationContext:
             for name in _CONTEXT_STATE_ENGINE_NAMES
         )
 
+    def _validate_detection_checkpoint_owner(self) -> None:
+        """Require the exact RNG-bound detection owner before persistence."""
+        owner = self.detection_engine
+        if owner is None:
+            return
+        from stochastic_warfare.detection.detection import DetectionEngine
+
+        if type(owner) is not DetectionEngine:
+            raise ValueError(
+                "Checkpoint detection_engine must be an exact DetectionEngine",
+            )
+        owner_state = owner.get_state()
+        authoritative_rng_state = self.rng_manager.get_state()["streams"][
+            ModuleId.DETECTION.value
+        ]
+        if not _json_values_equal(
+            owner_state.get("rng_state"),
+            authoritative_rng_state,
+        ):
+            raise ValueError(
+                "DetectionEngine RNG mirror disagrees with RNGManager "
+                "DETECTION state",
+            )
+
     def get_state(self) -> dict[str, Any]:
         """Capture full simulation state for checkpointing."""
+        self._validate_loadout_bindings()
+        self._validate_targeting_bindings()
         self._validate_morale_bindings(require_runtime_for_roster=True)
         self.validate_era_runtime_bindings()
+        self._validate_detection_checkpoint_owner()
+        if (
+            self.aggregation_engine is not None
+            and self.aggregation_engine.get_state().get("aggregates")
+        ):
+            unsupported_aggregate_owners = (
+                unsupported_aggregation_owner_names(self)
+            )
+            if unsupported_aggregate_owners:
+                raise ValueError(
+                    "REM-016: active aggregate checkpoint capture has "
+                    "uncoordinated context state owners: "
+                    f"{unsupported_aggregate_owners!r}",
+                )
         state: dict[str, Any] = {
             "config": _model_dump_json_compatible(self.config),
             "era_runtime_contract": _model_dump_json_compatible(
@@ -2463,6 +3350,9 @@ class SimulationContext:
                 if isinstance(self.calibration, CalibrationSchema)
                 else dict(self.calibration)
             ),
+            "targeting_default_visibility_m": (
+                self.targeting_default_visibility_m
+            ),
         }
         # Delegate to the single ordered registry of context state owners.
         engines = self._checkpoint_engines()
@@ -2484,19 +3374,42 @@ class SimulationContext:
         state: dict[str, Any],
         *,
         allow_legacy_morale: bool = False,
+        targeting_battle_memberships: (
+            Mapping[str, Collection[str]] | None
+        ) = None,
+        require_current_targeting_interval: bool = False,
     ) -> SimulationContextStatePlan:
         """Validate all context state without mutating the live runtime."""
         self._validate_morale_bindings(require_runtime_for_roster=True)
+        if type(require_current_targeting_interval) is not bool:
+            raise ValueError(
+                "require_current_targeting_interval must be a boolean",
+            )
+        membership_items = _normalize_targeting_battle_memberships(
+            targeting_battle_memberships,
+        )
         staged_state = copy.deepcopy(state)
         self._apply_state(
             staged_state,
             allow_legacy_morale=allow_legacy_morale,
+            targeting_battle_memberships=(
+                None
+                if membership_items is None
+                else dict(membership_items)
+            ),
+            require_current_targeting_interval=(
+                require_current_targeting_interval
+            ),
             commit=False,
         )
         return SimulationContextStatePlan(
             owner_id=id(self),
             state=staged_state,
             allow_legacy_morale=allow_legacy_morale,
+            targeting_battle_membership_items=membership_items,
+            require_current_targeting_interval=(
+                require_current_targeting_interval
+            ),
         )
 
     def commit_state(self, plan: SimulationContextStatePlan) -> None:
@@ -2509,6 +3422,14 @@ class SimulationContext:
         self._apply_state(
             plan.state,
             allow_legacy_morale=plan.allow_legacy_morale,
+            targeting_battle_memberships=(
+                None
+                if plan.targeting_battle_membership_items is None
+                else dict(plan.targeting_battle_membership_items)
+            ),
+            require_current_targeting_interval=(
+                plan.require_current_targeting_interval
+            ),
             commit=True,
         )
 
@@ -2517,12 +3438,22 @@ class SimulationContext:
         state: dict[str, Any],
         *,
         allow_legacy_morale: bool = False,
+        targeting_battle_memberships: (
+            Mapping[str, Collection[str]] | None
+        ) = None,
+        require_current_targeting_interval: bool = False,
     ) -> None:
         """Validate and atomically restore simulation context state."""
         self.commit_state(
             self.stage_state(
                 state,
                 allow_legacy_morale=allow_legacy_morale,
+                targeting_battle_memberships=(
+                    targeting_battle_memberships
+                ),
+                require_current_targeting_interval=(
+                    require_current_targeting_interval
+                ),
             ),
         )
 
@@ -2531,14 +3462,24 @@ class SimulationContext:
         state: dict[str, Any],
         *,
         allow_legacy_morale: bool,
+        targeting_battle_memberships: (
+            Mapping[str, Collection[str]] | None
+        ),
+        require_current_targeting_interval: bool,
         commit: bool,
     ) -> None:
         """Preflight context state and optionally commit it."""
+        self._validate_detection_checkpoint_owner()
         self.validate_era_runtime_bindings()
         if allow_legacy_morale and "morale_runtime" in state:
             raise ValueError(
                 "Versionless checkpoints cannot contain format-113 "
                 "morale_runtime state",
+            )
+        if allow_legacy_morale and "tactical_targeting" in state:
+            raise ValueError(
+                "Versionless checkpoints cannot contain format-115 "
+                "tactical_targeting state",
             )
         raw_era_runtime_contract = state.get("era_runtime_contract")
         if allow_legacy_morale:
@@ -2756,6 +3697,30 @@ class SimulationContext:
                 "Checkpoint calibration does not match the validated runtime "
                 "configuration",
             )
+        has_targeting_default = "targeting_default_visibility_m" in state
+        if not has_targeting_default and not allow_legacy_morale:
+            raise ValueError(
+                "Checkpoint is missing targeting_default_visibility_m",
+            )
+        checkpoint_targeting_default = _targeting_visibility_bound_m(
+            calibration={},
+            weather_engine=None,
+            default_visibility_m=(
+                state["targeting_default_visibility_m"]
+                if has_targeting_default
+                else DEFAULT_TARGETING_VISIBILITY_M
+            ),
+        )
+        current_targeting_default = _targeting_visibility_bound_m(
+            calibration={},
+            weather_engine=None,
+            default_visibility_m=self.targeting_default_visibility_m,
+        )
+        if checkpoint_targeting_default != current_targeting_default:
+            raise ValueError(
+                "Checkpoint targeting default visibility does not match the "
+                "runtime battle configuration",
+            )
 
         staged_units: dict[str, list[tuple[dict[str, Any], Unit]]] | None = None
         checkpoint_unit_ids: set[str] = set()
@@ -2794,6 +3759,76 @@ class SimulationContext:
                 for raw_unit, staged in staged_side
             }
 
+        raw_aggregation_state = state.get("aggregation_engine")
+        if (
+            allow_legacy_morale
+            and isinstance(raw_aggregation_state, dict)
+            and raw_aggregation_state.get("aggregates")
+        ):
+            raise ValueError(
+                "Versionless checkpoints with active aggregation cannot "
+                "reconstruct complete morale records",
+            )
+        aggregate_morale_topology = _checkpoint_aggregate_morale_topology(
+            raw_aggregation_state,
+        )
+        aggregate_constituents = aggregate_morale_topology.constituents
+        if allow_legacy_morale and aggregate_constituents:
+            raise ValueError(
+                "Versionless checkpoints with active aggregation cannot "
+                "reconstruct complete morale records",
+            )
+        if aggregate_constituents:
+            if type(self.aggregation_engine) is not AggregationEngine:
+                raise ValueError(
+                    "Active aggregate checkpoint requires an exact "
+                    "AggregationEngine runtime owner",
+                )
+            raw_aggregation_config = raw_aggregation_state.get("config")
+            if (
+                not isinstance(raw_aggregation_config, dict)
+                or set(raw_aggregation_config) != set(
+                    AggregationConfig.model_fields,
+                )
+            ):
+                raise ValueError(
+                    "Active aggregate checkpoint config has invalid key "
+                    "topology",
+                )
+            try:
+                staged_aggregation_config = AggregationConfig.model_validate(
+                    raw_aggregation_config,
+                    strict=True,
+                )
+            except ValueError as exc:
+                raise ValueError(
+                    f"Active aggregate checkpoint config is invalid: {exc}",
+                ) from exc
+            if not staged_aggregation_config.enable_aggregation:
+                raise ValueError(
+                    "Active aggregate checkpoint requires enabled persisted "
+                    "aggregation configuration",
+                )
+            if not self.aggregation_engine.config.enable_aggregation:
+                raise ValueError(
+                    "Active aggregate checkpoint requires an enabled "
+                    "aggregation runtime owner",
+                )
+            if staged_aggregation_config != self.aggregation_engine.config:
+                raise ValueError(
+                    "Active aggregate checkpoint config does not match the "
+                    "runtime config",
+                )
+            unsupported_aggregate_owners = (
+                unsupported_aggregation_owner_names(self)
+            )
+            if unsupported_aggregate_owners:
+                raise ValueError(
+                    "REM-016: active aggregate checkpoint restoration has "
+                    "uncoordinated context state owners: "
+                    f"{unsupported_aggregate_owners!r}",
+                )
+
         raw_legacy_morale = state.get("morale_states")
         raw_legacy_machine = state.get("morale_machine")
         raw_morale_runtime = state.get("morale_runtime")
@@ -2827,10 +3862,6 @@ class SimulationContext:
                 existing = existing_by_id.get(staged.entity_id)
                 if existing is None:
                     continue
-                if allow_legacy_morale:
-                    if type(existing) is type(staged):
-                        reusable_ids.add(staged.entity_id)
-                    continue
                 if (
                     type(existing) is not type(staged)
                     or existing.unit_type != staged.unit_type
@@ -2852,6 +3883,28 @@ class SimulationContext:
                     raise ValueError(
                         "Checkpoint equipment identity/order topology does not "
                         f"match the runtime for {staged.entity_id!r}",
+                    )
+                existing_binding_topology = [
+                    (
+                        equipment.equipment_id,
+                        equipment.name,
+                        equipment.category,
+                    )
+                    for equipment in existing.equipment
+                ]
+                staged_binding_topology = [
+                    (
+                        equipment.equipment_id,
+                        equipment.name,
+                        equipment.category,
+                    )
+                    for equipment in staged.equipment
+                ]
+                if staged_binding_topology != existing_binding_topology:
+                    raise ValueError(
+                        "Checkpoint equipment semantic binding topology does "
+                        "not match the runtime for "
+                        f"{staged.entity_id!r}",
                     )
                 reusable_ids.add(staged.entity_id)
 
@@ -2954,6 +4007,11 @@ class SimulationContext:
                     ) from exc
 
         current_unit_weapons = getattr(self, "unit_weapons", {})
+        current_unit_sensor_attachments = getattr(
+            self,
+            "unit_sensor_attachments",
+            {},
+        )
         current_unit_sensors = getattr(self, "unit_sensors", {})
         current_equipment_resolutions = getattr(
             self,
@@ -2961,6 +4019,9 @@ class SimulationContext:
             {},
         )
         runtime_unit_weapons = dict(current_unit_weapons)
+        runtime_unit_sensor_attachments = dict(
+            current_unit_sensor_attachments,
+        )
         runtime_unit_sensors = dict(current_unit_sensors)
         runtime_equipment_resolutions = dict(
             current_equipment_resolutions,
@@ -2998,6 +4059,12 @@ class SimulationContext:
                     in rebuilt_loadouts.unit_sensors.items()
                     if entity_id in reconstructed_ids
                 })
+                runtime_unit_sensor_attachments.update({
+                    entity_id: attachments
+                    for entity_id, attachments
+                    in rebuilt_loadouts.unit_sensor_attachments.items()
+                    if entity_id in reconstructed_ids
+                })
                 runtime_equipment_resolutions.update({
                     entity_id: resolutions
                     for entity_id, resolutions
@@ -3006,6 +4073,20 @@ class SimulationContext:
                 })
                 compatible_weapon_ids.update(reconstructed_ids)
                 compatible_sensor_ids.update(reconstructed_ids)
+            elif reconstructed_units:
+                for staged in reconstructed_units:
+                    entity_id = staged.entity_id
+                    if not _checkpoint_declares_empty_runtime_loadout(
+                        state,
+                        unit_id=entity_id,
+                    ):
+                        continue
+                    runtime_unit_weapons[entity_id] = ()
+                    runtime_unit_sensor_attachments[entity_id] = ()
+                    runtime_unit_sensors[entity_id] = ()
+                    runtime_equipment_resolutions[entity_id] = ()
+                    compatible_weapon_ids.add(entity_id)
+                    compatible_sensor_ids.add(entity_id)
 
         if not allow_legacy_morale:
             topology_resolutions = (
@@ -3101,21 +4182,218 @@ class SimulationContext:
             for side, units in prospective_units_by_side.items()
             for unit in units
         }
+        prospective_live_units = {
+            staged.entity_id: (
+                existing_by_id[staged.entity_id]
+                if staged.entity_id in reusable_ids
+                else staged
+            )
+            for staged_side in staged_units.values()
+            for _, staged in staged_side
+        } if staged_units is not None else dict(existing_by_id)
+        prospective_calibration = staged_calibration.to_flat_dict(
+            sorted(prospective_units_by_side),
+        )
+        try:
+            prospective_loadouts = RuntimeLoadouts(
+                unit_weapons={
+                    unit_id: runtime_unit_weapons[unit_id]
+                    for unit_id in sorted(checkpoint_unit_ids)
+                },
+                unit_sensor_attachments={
+                    unit_id: runtime_unit_sensor_attachments[unit_id]
+                    for unit_id in sorted(checkpoint_unit_ids)
+                },
+                equipment_resolutions={
+                    unit_id: runtime_equipment_resolutions[unit_id]
+                    for unit_id in sorted(checkpoint_unit_ids)
+                },
+            )
+            _validate_runtime_loadout_object_bindings(
+                units=prospective_live_units,
+                loadouts=prospective_loadouts,
+            )
+        except (KeyError, TypeError, ValueError) as exc:
+            raise ValueError(
+                f"Invalid checkpoint runtime loadout bindings: {exc}",
+            ) from exc
+
+        staged_targeting_plan: TacticalTargetingRestorePlan | None = None
+        has_targeting_state = "tactical_targeting" in state
+        raw_targeting_state = state.get("tactical_targeting")
+        if self.tactical_targeting is None:
+            if has_targeting_state:
+                raise ValueError(
+                    "Checkpoint contains targeting state for a context "
+                    "without a tactical-targeting owner",
+                )
+        elif not has_targeting_state:
+            if not allow_legacy_morale:
+                raise ValueError(
+                    "Checkpoint is missing tactical_targeting state",
+                )
+            if (
+                staged_clock.tick_count != 0
+                or elapsed_seconds != 0.0
+                or targeting_battle_memberships
+                or require_current_targeting_interval
+                or self.tactical_targeting.prepared_interval is not None
+                or self.tactical_targeting.latest_pictures()
+                or dict(self.tactical_targeting.registered_unit_sides)
+                != dict(sorted(expected_target_sides.items()))
+            ):
+                raise ValueError(
+                    "Versionless checkpoints may omit tactical targeting "
+                    "only at pristine tick 0 with an unprepared matching "
+                    "runtime topology",
+                )
+        else:
+            try:
+                staging_runtime = TacticalTargetingRuntime(
+                    sensing_aware_standoff_enabled=(
+                        self.tactical_targeting
+                        .sensing_aware_standoff_enabled
+                    ),
+                    unit_sides=expected_target_sides,
+                )
+                prepared_state = (
+                    raw_targeting_state.get("prepared_interval")
+                    if isinstance(raw_targeting_state, dict)
+                    else None
+                )
+                if prepared_state is None:
+                    if (
+                        targeting_battle_memberships
+                        or require_current_targeting_interval
+                    ):
+                        raise ValueError(
+                            "unprepared targeting state disagrees with the "
+                            "checkpoint active-battle topology",
+                        )
+                    staged_targeting_plan = staging_runtime.stage_state(
+                        raw_targeting_state,
+                    )
+                else:
+                    staged_targeting_plan = staging_runtime.stage_state(
+                        raw_targeting_state,
+                        expected_unit_sides=(
+                            expected_target_sides
+                            if targeting_battle_memberships is not None
+                            else None
+                        ),
+                        expected_battle_memberships=(
+                            targeting_battle_memberships
+                            if targeting_battle_memberships is not None
+                            else None
+                        ),
+                        expected_engine_tick=(
+                            staged_clock.tick_count
+                            if require_current_targeting_interval
+                            else None
+                        ),
+                        expected_logical_time_s=(
+                            elapsed_seconds
+                            if require_current_targeting_interval
+                            else None
+                        ),
+                    )
+                interval_is_current = _targeting_interval_is_current(
+                    plan=staged_targeting_plan,
+                    clock_tick=staged_clock.tick_count,
+                    logical_time_s=elapsed_seconds,
+                )
+                _validate_targeting_live_bindings(
+                    plan=staged_targeting_plan,
+                    units=prospective_live_units,
+                    loadouts=prospective_loadouts,
+                    calibration=prospective_calibration,
+                    live_visibility_m=(
+                        _prospective_targeting_visibility_bound_m(
+                            calibration=prospective_calibration,
+                            weather_engine=self.weather_engine,
+                            checkpoint_state=state,
+                            default_visibility_m=(
+                                checkpoint_targeting_default
+                            ),
+                        )
+                        if interval_is_current
+                        else None
+                    ),
+                )
+            except (AttributeError, KeyError, TypeError, ValueError) as exc:
+                raise ValueError(
+                    f"Invalid checkpoint tactical targeting state: {exc}",
+                ) from exc
         prospective_morale_units = {
             unit.entity_id: unit
             for units in prospective_units_by_side.values()
             for unit in units
         }
-        aggregate_morale_topology = _checkpoint_aggregate_morale_topology(
-            state.get("aggregation_engine"),
-        )
-        aggregate_constituents = aggregate_morale_topology.constituents
-        if allow_legacy_morale and aggregate_constituents:
+        aggregate_ids = set(aggregate_constituents)
+        archived_constituent_ids = {
+            unit_id
+            for unit_ids in aggregate_constituents.values()
+            for unit_id in unit_ids
+        }
+        if (
+            not aggregate_ids <= set(prospective_morale_units)
+            or archived_constituent_ids & set(prospective_morale_units)
+            or archived_constituent_ids & aggregate_ids
+        ):
             raise ValueError(
-                "Versionless checkpoints with active aggregation cannot "
-                "reconstruct complete morale records",
+                "Checkpoint aggregate proxies and archived constituents "
+                "must be disjoint and match the active roster",
             )
-
+        for aggregate_id in sorted(aggregate_ids):
+            proxy = prospective_morale_units[aggregate_id]
+            expected_side, expected_type, expected_position = (
+                aggregate_morale_topology.proxy_expectations[aggregate_id]
+            )
+            proxy_side = (
+                proxy.side
+                if isinstance(proxy.side, str)
+                else proxy.side.value
+            )
+            expected_domain = aggregate_morale_topology.proxy_domains[
+                aggregate_id
+            ]
+            if (
+                type(proxy) is not Unit
+                or proxy.equipment
+                or proxy_side != expected_side
+                or proxy.unit_type != expected_type
+                or proxy.domain is not expected_domain
+                or tuple(float(value) for value in proxy.position)
+                != expected_position
+            ):
+                raise ValueError(
+                    "Checkpoint aggregate roster proxy disagrees with "
+                    f"aggregation state for {aggregate_id!r}",
+                )
+            side_units = prospective_units_by_side.get(expected_side, [])
+            retained_count = sum(
+                unit.entity_id != aggregate_id
+                for unit in side_units
+            )
+            original_indexes = aggregate_morale_topology.original_indexes[
+                aggregate_id
+            ]
+            proxy_indexes = [
+                index
+                for index, unit in enumerate(side_units)
+                if unit.entity_id == aggregate_id
+            ]
+            if (
+                proxy_indexes != [min(original_indexes)]
+                or any(
+                    index >= retained_count + len(original_indexes)
+                    for index in original_indexes
+                )
+            ):
+                raise ValueError(
+                    f"Checkpoint aggregate {aggregate_id!r} proxy/order cannot "
+                    "reconstruct the serialized side roster",
+                )
         if self.morale_runtime is None:
             if prospective_morale_units:
                 raise ValueError(
@@ -3226,6 +4504,17 @@ class SimulationContext:
             raise ValueError(
                 "Checkpoint contains movement diagnostics for a context "
                 "without a movement-diagnostics owner",
+            )
+        if (
+            staged_movement_plan is not None
+            and staged_targeting_plan is not None
+        ):
+            _validate_movement_targeting_restore_bindings(
+                movement_plan=staged_movement_plan,
+                targeting_plan=staged_targeting_plan,
+                units=prospective_live_units,
+                loadouts=prospective_loadouts,
+                calibration=prospective_calibration,
             )
 
         staged_obscurants_plan: Any = None
@@ -3450,6 +4739,7 @@ class SimulationContext:
                 "commander_engine",
                 "school_registry",
                 "rout_engine",
+                "tactical_targeting",
             }:
                 continue
             if name == "ooda_engine" and staged_ooda_plan is not None:
@@ -3489,6 +4779,14 @@ class SimulationContext:
                     if hasattr(staged_engine, "get_state")
                     else copy.deepcopy(state[name])
                 )
+                if name == "detection_engine" and not _json_values_equal(
+                    canonical_state.get("rng_state"),
+                    rng_state["streams"][ModuleId.DETECTION.value],
+                ):
+                    raise ValueError(
+                        "DetectionEngine RNG mirror disagrees with RNGManager "
+                        "DETECTION state",
+                    )
                 if not _json_values_equal(
                     _json_compatible_value(state[name]),
                     _json_compatible_value(canonical_state),
@@ -3539,6 +4837,14 @@ class SimulationContext:
                     if entity_id in checkpoint_unit_ids
                 }
             if "unit_sensor_states" in state:
+                self.unit_sensor_attachments = {
+                    entity_id: (
+                        runtime_unit_sensor_attachments.get(entity_id, ())
+                        if entity_id in compatible_sensor_ids
+                        else ()
+                    )
+                    for entity_id in state["unit_sensor_states"]
+                }
                 self.unit_sensors = {
                     entity_id: (
                         runtime_unit_sensors.get(entity_id, ())
@@ -3548,6 +4854,12 @@ class SimulationContext:
                     for entity_id in state["unit_sensor_states"]
                 }
             else:
+                self.unit_sensor_attachments = {
+                    entity_id: attachments
+                    for entity_id, attachments
+                    in runtime_unit_sensor_attachments.items()
+                    if entity_id in checkpoint_unit_ids
+                }
                 self.unit_sensors = {
                     entity_id: sensors
                     for entity_id, sensors in runtime_unit_sensors.items()
@@ -3559,6 +4871,7 @@ class SimulationContext:
                 in runtime_equipment_resolutions.items()
                 if entity_id in checkpoint_unit_ids
             }
+            self._validate_loadout_bindings()
 
         if staged_morale_plan is not None:
             self.morale_runtime.commit_state(
@@ -3578,6 +4891,10 @@ class SimulationContext:
             instance.set_state(saved_state)
         for instance, saved_state in staged_sensor_states:
             instance.set_state(saved_state)
+        if staged_targeting_plan is not None:
+            self.tactical_targeting.commit_state(
+                staged_targeting_plan,
+            )
         if staged_indirect_fire_plan is not None:
             self.indirect_fire_engine.commit_state(
                 staged_indirect_fire_plan,
@@ -3613,6 +4930,7 @@ class SimulationContext:
                 "commander_engine",
                 "school_registry",
                 "rout_engine",
+                "tactical_targeting",
             }:
                 continue
             if name == "ooda_engine" and staged_ooda_plan is not None:
@@ -3642,6 +4960,7 @@ class SimulationContext:
                 eng.set_state(canonical_engine_states[name])
 
         self._validate_morale_bindings(require_runtime_for_roster=True)
+        self._validate_targeting_bindings()
 
 
 # ---------------------------------------------------------------------------
@@ -3811,6 +5130,9 @@ def register_dynamic_units(
         )
     incoming_loadouts = ctx.loadout_builder.build(units)
     incoming_weapons = incoming_loadouts.unit_weapons
+    incoming_sensor_attachments = (
+        incoming_loadouts.unit_sensor_attachments
+    )
     incoming_sensors = incoming_loadouts.unit_sensors
     incoming_resolutions = incoming_loadouts.equipment_resolutions
     incoming_ids = set(unit_ids)
@@ -3818,6 +5140,10 @@ def register_dynamic_units(
         raise ValueError("Dynamic weapon loadout topology is incomplete")
     if set(incoming_sensors) != incoming_ids:
         raise ValueError("Dynamic sensor loadout topology is incomplete")
+    if set(incoming_sensor_attachments) != incoming_ids:
+        raise ValueError(
+            "Dynamic sensor-attachment topology is incomplete",
+        )
 
     incoming_morale = _initial_morale_for_units(ctx.config, units)
     incoming_statuses = {
@@ -3830,12 +5156,18 @@ def register_dynamic_units(
         raise ValueError("Dynamic weapon loadout IDs already exist")
     if set(ctx.unit_sensors) & incoming_ids:
         raise ValueError("Dynamic sensor loadout IDs already exist")
+    if set(ctx.unit_sensor_attachments) & incoming_ids:
+        raise ValueError(
+            "Dynamic sensor-attachment IDs already exist",
+        )
     if set(ctx.equipment_resolutions) & incoming_ids:
         raise ValueError("Dynamic equipment-resolution IDs already exist")
     if set(ctx.morale_states) & incoming_ids:
         raise ValueError("Dynamic morale IDs already exist")
     if ctx.morale_runtime is None:
         raise RuntimeError("Dynamic units require a morale runtime")
+    if ctx.tactical_targeting is None:
+        raise RuntimeError("Dynamic units require tactical targeting ownership")
 
     commander_plan: CommanderAssignmentPlan | None = None
     school_plan: Any = None
@@ -3926,10 +5258,15 @@ def register_dynamic_units(
         staged_units_by_side[side].append(unit)
     staged_weapons = dict(ctx.unit_weapons)
     staged_weapons.update(incoming_weapons)
-    staged_sensors = dict(ctx.unit_sensors)
-    staged_sensors.update(incoming_sensors)
+    staged_sensor_attachments = dict(ctx.unit_sensor_attachments)
+    staged_sensor_attachments.update(incoming_sensor_attachments)
     staged_resolutions = dict(ctx.equipment_resolutions)
     staged_resolutions.update(incoming_resolutions)
+    staged_loadouts = RuntimeLoadouts(
+        unit_weapons=staged_weapons,
+        unit_sensor_attachments=staged_sensor_attachments,
+        equipment_resolutions=staged_resolutions,
+    )
     morale_before = ctx.morale_runtime.get_state()
     commander_before = (
         ctx.commander_engine.get_state()
@@ -3945,6 +5282,24 @@ def register_dynamic_units(
         ctx.ooda_engine.get_state()
         if ctx.commander_engine is not None
         else None
+    )
+    movement_before = (
+        ctx.movement_diagnostics.stage_state(
+            ctx.movement_diagnostics.get_state(),
+            expected_unit_sides={
+                unit.entity_id: (
+                    unit.side
+                    if isinstance(unit.side, str)
+                    else unit.side.value
+                )
+                for unit in ctx.all_units()
+            },
+        )
+        if ctx.movement_diagnostics is not None
+        else None
+    )
+    targeting_before = ctx.tactical_targeting.stage_state(
+        ctx.tactical_targeting.get_state(),
     )
     c2_rng = ctx.rng_manager.get_stream(ModuleId.C2)
     c2_rng_before = copy.deepcopy(c2_rng.bit_generator.state)
@@ -3986,6 +5341,14 @@ def register_dynamic_units(
                 unit.entity_id: unit.side
                 for unit in units
             })
+        ctx.tactical_targeting.register_units({
+            unit.entity_id: (
+                unit.side
+                if isinstance(unit.side, str)
+                else unit.side.value
+            )
+            for unit in units
+        })
     except Exception:
         for unit, status in incoming_status_before:
             unit.status = status
@@ -4002,7 +5365,7 @@ def register_dynamic_units(
                 ctx.aggregation_engine.get_state(),
             )
             if ctx.aggregation_engine is not None
-            else _CheckpointAggregateMoraleTopology({}, {})
+            else _CheckpointAggregateMoraleTopology({}, {}, {})
         )
         ctx.morale_runtime.set_state(
             morale_before,
@@ -4020,12 +5383,22 @@ def register_dynamic_units(
             ctx.school_registry.set_state(school_before)
         if ooda_before is not None:
             ctx.ooda_engine.set_state(ooda_before)
+        if movement_before is not None:
+            ctx.movement_diagnostics.commit_state(movement_before)
+        ctx.tactical_targeting.commit_state(targeting_before)
         c2_rng.bit_generator.state = c2_rng_before
         raise
     ctx.units_by_side = staged_units_by_side
-    ctx.unit_weapons = staged_weapons
-    ctx.unit_sensors = staged_sensors
-    ctx.equipment_resolutions = staged_resolutions
+    ctx.unit_weapons = dict(staged_loadouts.unit_weapons)
+    ctx.unit_sensor_attachments = dict(
+        staged_loadouts.unit_sensor_attachments,
+    )
+    ctx.unit_sensors = dict(staged_loadouts.unit_sensors)
+    ctx.equipment_resolutions = dict(
+        staged_loadouts.equipment_resolutions,
+    )
+    ctx._validate_loadout_bindings()
+    ctx._validate_targeting_bindings()
 
 
 def _parse_weather_state(precip: str) -> int:
@@ -4403,6 +5776,15 @@ class ScenarioLoader:
             unit.entity_id: unit.side
             for unit in all_units
         })
+        tactical_targeting = TacticalTargetingRuntime(
+            sensing_aware_standoff_enabled=(
+                config.calibration_overrides.enable_sensing_aware_standoff
+            ),
+            unit_sides={
+                unit.entity_id: unit.side
+                for unit in all_units
+            },
+        )
         ctx = SimulationContext(
             config=config,
             clock=clock,
@@ -4414,6 +5796,9 @@ class ScenarioLoader:
             bathymetry=real_ctx.bathymetry if real_ctx else None,
             units_by_side=units_by_side,
             unit_weapons=dict(runtime_loadouts.unit_weapons),
+            unit_sensor_attachments=dict(
+                runtime_loadouts.unit_sensor_attachments,
+            ),
             unit_sensors=dict(runtime_loadouts.unit_sensors),
             equipment_resolutions=dict(
                 runtime_loadouts.equipment_resolutions,
@@ -4421,6 +5806,7 @@ class ScenarioLoader:
             force_builder=force_builder,
             loadout_builder=loadout_builder,
             movement_diagnostics=movement_diagnostics,
+            tactical_targeting=tactical_targeting,
             doctrine_side_assignments=doctrine_policy,
             calibration=config.calibration_overrides,
             era_config=era_config,
@@ -4428,6 +5814,8 @@ class ScenarioLoader:
             **engines,
             **loaders,
         )
+        ctx._validate_loadout_bindings()
+        ctx._validate_targeting_bindings()
 
         # 9. Flat calibration dict (Phase 86 — O(1) battle-loop access)
         if isinstance(ctx.calibration, CalibrationSchema):
@@ -5422,18 +6810,15 @@ class ScenarioLoader:
 
             # Phase 66b: ConditionsEngine facade — composites all env sub-engines
             from stochastic_warfare.environment.conditions import ConditionsEngine as _CondFacade
-            try:
-                conditions_facade = _CondFacade(
-                    weather=weather_engine,
-                    time_of_day=time_of_day_engine,
-                    seasons=seasons_engine,
-                    obscurants=obscurants_engine,
-                    sea_state=sea_state_engine,
-                    acoustics=underwater_acoustics_engine,
-                    em=conditions_engine,
-                )
-            except Exception:
-                conditions_facade = None
+            conditions_facade = _CondFacade(
+                weather=weather_engine,
+                time_of_day=time_of_day_engine,
+                seasons=seasons_engine,
+                obscurants=obscurants_engine,
+                sea_state=sea_state_engine,
+                acoustics=underwater_acoustics_engine,
+                em=conditions_engine,
+            )
 
             # Merge weather visibility into calibration if not already set
             cal = config.calibration_overrides

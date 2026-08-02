@@ -1,5 +1,5 @@
 {
-  "derivation_command": "/home/csmith/projects/stochastic-warfare/.venv/bin/python -m pytest --collect-only -q -p no:cacheprovider -o addopts=",
+  "derivation_command": "/home/csmith/projects/stochastic-warfare/.venv/bin/python3 -m pytest --collect-only -q -p no:cacheprovider -o addopts=",
   "entries": [
     {
       "classification": "structural_only",
@@ -4617,9 +4617,15 @@
     },
     {
       "classification": "structural_only",
-      "node_id": "tests/benchmarks/test_benchmarks.py::test_checked_in_baseline_document_is_exact_v3",
+      "node_id": "tests/benchmarks/test_benchmarks.py::test_checked_in_baseline_document_is_exact_v4",
       "rationale": "This checks the checked-in benchmark document's schema version and entry inventory; it does not execute or compare a production workload.",
       "strongest_oracle": "typed baseline-file structure and exact entry names"
+    },
+    {
+      "classification": "structural_only",
+      "node_id": "tests/benchmarks/test_benchmarks.py::TestPairedPolicy::test_hosted_73_easting_job_declares_transition_evidence",
+      "rationale": "This parses workflow YAML to check the 73 Easting transition command and artifact labels; it does not execute the hosted workflow.",
+      "strongest_oracle": "workflow structure declares the transition and duration-free evidence paths"
     },
     {
       "classification": "structural_only",

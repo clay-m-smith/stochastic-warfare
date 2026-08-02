@@ -302,7 +302,32 @@ The FOW toggle enables a "what does this side see?" view. When active:
 2. Only units that the selected side has detected are visible -- undetected enemy units are hidden entirely
 3. Friendly units (same side as selected) are always shown
 
-This uses the simulation's actual detection data from the `FogOfWarManager`, showing what each side believed at each tick. The FOW toggle is disabled for runs that don't have detection data (e.g., older runs or scenarios without fog of war).
+This display filter uses the simulation's captured detection data to show what
+each side believed at each tick. The FOW toggle is disabled for runs that do
+not have detection data (for example, older runs or scenarios without fog of
+war).
+
+The frame client and TypeScript schemas support both exact
+`PRIVILEGED_ENGINE` targeting evidence and an opaque `SIDE_FOW` projection.
+The current main map request still omits those query parameters, receives the
+API's privileged default, and applies its FOW view in the browser. That is a
+useful operator/evaluator view, but it is not a player authorization boundary:
+browser filtering cannot prevent a caller from requesting or inspecting the
+underlying privileged response. REM-041 / Phase 128 must add server-side caller
+authorization and make the normal player-facing request side-safe before this
+UI can be described as secure for opposing players.
+
+### Targeting evidence
+
+Phase 115 frames can retain the exact sensing-aware tactical decision used by
+movement and ordinary direct engagement, including its disposition,
+authorized standoff range, selected weapon/contact/fire-control evidence, and
+post-movement revalidation. Privileged frames use ground-truth entity and
+attachment identity for analysis. A directly requested `SIDE_FOW` frame uses
+target-independent side-local ordinal track IDs and omits hidden identity. The
+server and replay reader bind the stored payload's exact viewer side to the
+requested side before exposing it. Older privileged-only frames cannot be
+transformed into a trustworthy side projection after the fact.
 
 ### Playback Controls
 

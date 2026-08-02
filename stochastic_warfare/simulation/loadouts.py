@@ -15,9 +15,9 @@ import json
 import math
 import re
 from collections.abc import Collection, Iterator, Mapping, Sequence
-from dataclasses import dataclass, fields, is_dataclass
+from dataclasses import dataclass, field, fields, is_dataclass
 from types import MappingProxyType
-from typing import Any, TypeAlias
+from typing import Any, TypeAlias, TypeVar
 
 from pydantic import BaseModel
 
@@ -219,6 +219,147 @@ class SensorModeledRole(str, enum.Enum):
     ELECTRONIC_SUPPORT = "electronic_support"
     ACTIVE_SONAR = "active_sonar"
     PASSIVE_SONAR = "passive_sonar"
+
+
+class WeaponStandoffClass(str, enum.Enum):
+    """Whether a weapon role can create an automatic tactical hold."""
+
+    ORGANIC_DIRECT_AIM = "organic_direct_aim"
+    COMPATIBLE_DIRECTOR_REQUIRED = "compatible_director_required"
+    UNSUPPORTED = "unsupported"
+
+
+class SensorTargetingClass(str, enum.Enum):
+    """Whether a mapped sensor role can provide local fire control."""
+
+    LOCAL_FIRE_CONTROL = "local_fire_control"
+    CONTACT_SEARCH_ONLY = "contact_search_only"
+
+
+_RoleT = TypeVar("_RoleT", bound=enum.Enum)
+_PolicyT = TypeVar("_PolicyT")
+
+
+def _build_total_role_policy(
+    *,
+    label: str,
+    enum_type: type[_RoleT],
+    declarations: tuple[tuple[_RoleT, _PolicyT], ...],
+) -> Mapping[_RoleT, _PolicyT]:
+    """Build one duplicate-safe, exhaustive enum policy."""
+    policy: dict[_RoleT, _PolicyT] = {}
+    duplicate_roles: list[str] = []
+    for role, value in declarations:
+        if not isinstance(role, enum_type):
+            raise EquipmentMappingError(
+                f"{label} contains non-{enum_type.__name__} key {role!r}",
+            )
+        if role in policy:
+            duplicate_roles.append(role.name)
+            continue
+        policy[role] = value
+    if duplicate_roles:
+        raise EquipmentMappingError(
+            f"{label} contains duplicate roles {duplicate_roles!r}",
+        )
+    expected = set(enum_type)
+    actual = set(policy)
+    if actual != expected:
+        raise EquipmentMappingError(
+            f"{label} is not exhaustive: missing "
+            f"{sorted(role.name for role in expected - actual)!r}; extra "
+            f"{sorted(role.name for role in actual - expected)!r}",
+        )
+    return MappingProxyType(policy)
+
+
+_WEAPON_STANDOFF_CLASSES = _build_total_role_policy(
+    label="weapon standoff policy",
+    enum_type=WeaponModeledRole,
+    declarations=(
+        (WeaponModeledRole.GROUND_DIRECT_FIRE, WeaponStandoffClass.ORGANIC_DIRECT_AIM),
+        (WeaponModeledRole.AIR_DEFENSE_GUN, WeaponStandoffClass.COMPATIBLE_DIRECTOR_REQUIRED),
+        (WeaponModeledRole.NAVAL_GUNFIRE, WeaponStandoffClass.COMPATIBLE_DIRECTOR_REQUIRED),
+        (WeaponModeledRole.NAVAL_AIR_DEFENSE_GUN, WeaponStandoffClass.COMPATIBLE_DIRECTOR_REQUIRED),
+        (WeaponModeledRole.FIELD_ARTILLERY, WeaponStandoffClass.UNSUPPORTED),
+        (WeaponModeledRole.MORTAR_FIRE, WeaponStandoffClass.UNSUPPORTED),
+        (WeaponModeledRole.ROCKET_ARTILLERY, WeaponStandoffClass.UNSUPPORTED),
+        (WeaponModeledRole.ASSAULT_RIFLE, WeaponStandoffClass.ORGANIC_DIRECT_AIM),
+        (WeaponModeledRole.MUZZLE_LOADING_MUSKET, WeaponStandoffClass.ORGANIC_DIRECT_AIM),
+        (WeaponModeledRole.BOLT_ACTION_RIFLE, WeaponStandoffClass.ORGANIC_DIRECT_AIM),
+        (WeaponModeledRole.SEMI_AUTOMATIC_RIFLE, WeaponStandoffClass.ORGANIC_DIRECT_AIM),
+        (WeaponModeledRole.SNIPER_RIFLE, WeaponStandoffClass.ORGANIC_DIRECT_AIM),
+        (WeaponModeledRole.ANTI_MATERIEL_RIFLE, WeaponStandoffClass.ORGANIC_DIRECT_AIM),
+        (WeaponModeledRole.SUBMACHINE_GUN, WeaponStandoffClass.ORGANIC_DIRECT_AIM),
+        (WeaponModeledRole.LIGHT_MACHINE_GUN, WeaponStandoffClass.ORGANIC_DIRECT_AIM),
+        (WeaponModeledRole.GENERAL_PURPOSE_MACHINE_GUN, WeaponStandoffClass.ORGANIC_DIRECT_AIM),
+        (WeaponModeledRole.HEAVY_MACHINE_GUN, WeaponStandoffClass.ORGANIC_DIRECT_AIM),
+        (WeaponModeledRole.INDIVIDUAL_GRENADE_LAUNCHER, WeaponStandoffClass.ORGANIC_DIRECT_AIM),
+        (WeaponModeledRole.AUTOMATIC_GRENADE_LAUNCHER, WeaponStandoffClass.ORGANIC_DIRECT_AIM),
+        (WeaponModeledRole.HAND_GRENADE, WeaponStandoffClass.UNSUPPORTED),
+        (WeaponModeledRole.MELEE, WeaponStandoffClass.UNSUPPORTED),
+        (WeaponModeledRole.ANCIENT_PROJECTILE, WeaponStandoffClass.ORGANIC_DIRECT_AIM),
+        (WeaponModeledRole.ANTI_ARMOR, WeaponStandoffClass.ORGANIC_DIRECT_AIM),
+        (WeaponModeledRole.AIR_DEFENSE_MISSILE, WeaponStandoffClass.COMPATIBLE_DIRECTOR_REQUIRED),
+        (WeaponModeledRole.AIR_TO_AIR_MISSILE, WeaponStandoffClass.COMPATIBLE_DIRECTOR_REQUIRED),
+        (WeaponModeledRole.AIR_TO_GROUND_MISSILE, WeaponStandoffClass.COMPATIBLE_DIRECTOR_REQUIRED),
+        (WeaponModeledRole.ANTI_SHIP_MISSILE, WeaponStandoffClass.COMPATIBLE_DIRECTOR_REQUIRED),
+        (WeaponModeledRole.MULTI_ROLE_VLS, WeaponStandoffClass.COMPATIBLE_DIRECTOR_REQUIRED),
+        (WeaponModeledRole.BOMB_DELIVERY, WeaponStandoffClass.UNSUPPORTED),
+        (WeaponModeledRole.AIRCRAFT_GUN, WeaponStandoffClass.COMPATIBLE_DIRECTOR_REQUIRED),
+        (WeaponModeledRole.TORPEDO, WeaponStandoffClass.UNSUPPORTED),
+        (WeaponModeledRole.ANTI_SUBMARINE, WeaponStandoffClass.UNSUPPORTED),
+        (WeaponModeledRole.CLOSE_IN_DEFENSE, WeaponStandoffClass.COMPATIBLE_DIRECTOR_REQUIRED),
+        (WeaponModeledRole.DIRECTED_ENERGY, WeaponStandoffClass.COMPATIBLE_DIRECTOR_REQUIRED),
+        (WeaponModeledRole.INCENDIARY_PROJECTOR, WeaponStandoffClass.ORGANIC_DIRECT_AIM),
+    ),
+)
+
+
+_SENSOR_TARGETING_CLASSES = _build_total_role_policy(
+    label="sensor targeting policy",
+    enum_type=SensorModeledRole,
+    declarations=(
+        (SensorModeledRole.VISUAL_OBSERVATION, SensorTargetingClass.CONTACT_SEARCH_ONLY),
+        (SensorModeledRole.NIGHT_VISION, SensorTargetingClass.CONTACT_SEARCH_ONLY),
+        (SensorModeledRole.THERMAL_TARGETING, SensorTargetingClass.LOCAL_FIRE_CONTROL),
+        (SensorModeledRole.AIRBORNE_FIRE_CONTROL_RADAR, SensorTargetingClass.LOCAL_FIRE_CONTROL),
+        (SensorModeledRole.AIRBORNE_GROUND_FIRE_CONTROL_RADAR, SensorTargetingClass.LOCAL_FIRE_CONTROL),
+        (SensorModeledRole.AIRBORNE_MULTI_DOMAIN_FIRE_CONTROL_RADAR, SensorTargetingClass.LOCAL_FIRE_CONTROL),
+        (SensorModeledRole.AIRBORNE_MARITIME_SEARCH_RADAR, SensorTargetingClass.CONTACT_SEARCH_ONLY),
+        (SensorModeledRole.AIR_SEARCH_RADAR, SensorTargetingClass.CONTACT_SEARCH_ONLY),
+        (SensorModeledRole.SHIP_AIR_SURFACE_SEARCH_RADAR, SensorTargetingClass.CONTACT_SEARCH_ONLY),
+        (SensorModeledRole.SURFACE_SEARCH_RADAR, SensorTargetingClass.CONTACT_SEARCH_ONLY),
+        (SensorModeledRole.SHIP_SURFACE_SEARCH_RADAR, SensorTargetingClass.CONTACT_SEARCH_ONLY),
+        (SensorModeledRole.SUBMARINE_SURFACE_SEARCH_RADAR, SensorTargetingClass.CONTACT_SEARCH_ONLY),
+        (SensorModeledRole.GROUND_SURVEILLANCE_RADAR, SensorTargetingClass.CONTACT_SEARCH_ONLY),
+        (SensorModeledRole.COASTAL_SURVEILLANCE_RADAR, SensorTargetingClass.CONTACT_SEARCH_ONLY),
+        (SensorModeledRole.FIRE_CONTROL_RADAR, SensorTargetingClass.LOCAL_FIRE_CONTROL),
+        (SensorModeledRole.GROUND_AIR_DEFENSE_FIRE_CONTROL_RADAR, SensorTargetingClass.LOCAL_FIRE_CONTROL),
+        (SensorModeledRole.NAVAL_FIRE_CONTROL_RADAR, SensorTargetingClass.LOCAL_FIRE_CONTROL),
+        (SensorModeledRole.NAVAL_AIR_DEFENSE_FIRE_CONTROL_RADAR, SensorTargetingClass.LOCAL_FIRE_CONTROL),
+        (SensorModeledRole.GROUND_VISUAL_SIGHT, SensorTargetingClass.LOCAL_FIRE_CONTROL),
+        (SensorModeledRole.GROUND_AIR_DEFENSE_OPTICAL_SIGHT, SensorTargetingClass.LOCAL_FIRE_CONTROL),
+        (SensorModeledRole.AIRBORNE_VISUAL_SIGHT, SensorTargetingClass.LOCAL_FIRE_CONTROL),
+        (SensorModeledRole.AIRBORNE_GROUND_VISUAL_TARGETING, SensorTargetingClass.LOCAL_FIRE_CONTROL),
+        (SensorModeledRole.AIRBORNE_GROUND_BOMBSIGHT, SensorTargetingClass.LOCAL_FIRE_CONTROL),
+        (SensorModeledRole.NAVAL_VISUAL_DIRECTOR, SensorTargetingClass.LOCAL_FIRE_CONTROL),
+        (SensorModeledRole.NAVAL_AIR_DEFENSE_OPTICAL_DIRECTOR, SensorTargetingClass.LOCAL_FIRE_CONTROL),
+        (SensorModeledRole.NAVAL_LOOKOUT, SensorTargetingClass.CONTACT_SEARCH_ONLY),
+        (SensorModeledRole.GROUND_NIGHT_SIGHT, SensorTargetingClass.LOCAL_FIRE_CONTROL),
+        (SensorModeledRole.GROUND_ACTIVE_IR_SIGHT, SensorTargetingClass.LOCAL_FIRE_CONTROL),
+        (SensorModeledRole.AIRBORNE_LOW_LIGHT_OBSERVATION, SensorTargetingClass.CONTACT_SEARCH_ONLY),
+        (SensorModeledRole.INDIVIDUAL_NIGHT_VISION, SensorTargetingClass.CONTACT_SEARCH_ONLY),
+        (SensorModeledRole.GROUND_THERMAL_TARGETING, SensorTargetingClass.LOCAL_FIRE_CONTROL),
+        (SensorModeledRole.AIRBORNE_GROUND_THERMAL_TARGETING, SensorTargetingClass.LOCAL_FIRE_CONTROL),
+        (SensorModeledRole.AIRBORNE_AIR_THERMAL_SEARCH, SensorTargetingClass.CONTACT_SEARCH_ONLY),
+        (SensorModeledRole.AIRBORNE_SURFACE_THERMAL_SEARCH, SensorTargetingClass.CONTACT_SEARCH_ONLY),
+        (SensorModeledRole.RADAR_WARNING_ESM, SensorTargetingClass.CONTACT_SEARCH_ONLY),
+        (SensorModeledRole.ELECTRONIC_SUPPORT, SensorTargetingClass.CONTACT_SEARCH_ONLY),
+        (SensorModeledRole.ACTIVE_SONAR, SensorTargetingClass.CONTACT_SEARCH_ONLY),
+        (SensorModeledRole.PASSIVE_SONAR, SensorTargetingClass.CONTACT_SEARCH_ONLY),
+    ),
+)
 
 
 _WEAPON_ROLE_CATEGORIES: Mapping[
@@ -456,7 +597,7 @@ _SENSOR_ROLE_CONTRACTS: Mapping[
     SensorModeledRole.AIRBORNE_MULTI_DOMAIN_FIRE_CONTROL_RADAR: (
         SensorType.RADAR,
         SignatureDomain.RADAR,
-        (Domain.GROUND, Domain.AERIAL),
+        (Domain.GROUND, Domain.AERIAL, Domain.NAVAL),
     ),
     SensorModeledRole.AIRBORNE_MARITIME_SEARCH_RADAR: (
         SensorType.RADAR,
@@ -632,6 +773,175 @@ _SENSOR_ROLE_CONTRACTS: Mapping[
     ),
 })
 
+_ALL_SHOOTER_DOMAINS = (
+    Domain.GROUND,
+    Domain.AERIAL,
+    Domain.NAVAL,
+    Domain.SUBMARINE,
+    Domain.AMPHIBIOUS,
+)
+_AERIAL_SHOOTER_DOMAINS = (Domain.AERIAL,)
+_GROUND_AMPHIBIOUS_SHOOTER_DOMAINS = (Domain.GROUND, Domain.AMPHIBIOUS)
+_NAVAL_SHOOTER_DOMAINS = (Domain.NAVAL,)
+_SURFACE_SHOOTER_DOMAINS = (
+    Domain.GROUND,
+    Domain.AERIAL,
+    Domain.NAVAL,
+    Domain.AMPHIBIOUS,
+)
+_SUBMARINE_SHOOTER_DOMAINS = (Domain.SUBMARINE,)
+_SONAR_SHOOTER_DOMAINS = (Domain.NAVAL, Domain.SUBMARINE)
+
+_SENSOR_ROLE_SHOOTER_DOMAINS = _build_total_role_policy(
+    label="sensor shooter-domain policy",
+    enum_type=SensorModeledRole,
+    declarations=(
+        (SensorModeledRole.VISUAL_OBSERVATION, _ALL_SHOOTER_DOMAINS),
+        (SensorModeledRole.NIGHT_VISION, _ALL_SHOOTER_DOMAINS),
+        (SensorModeledRole.THERMAL_TARGETING, _ALL_SHOOTER_DOMAINS),
+        (SensorModeledRole.AIRBORNE_FIRE_CONTROL_RADAR, _AERIAL_SHOOTER_DOMAINS),
+        (SensorModeledRole.AIRBORNE_GROUND_FIRE_CONTROL_RADAR, _AERIAL_SHOOTER_DOMAINS),
+        (SensorModeledRole.AIRBORNE_MULTI_DOMAIN_FIRE_CONTROL_RADAR, _AERIAL_SHOOTER_DOMAINS),
+        (SensorModeledRole.AIRBORNE_MARITIME_SEARCH_RADAR, _AERIAL_SHOOTER_DOMAINS),
+        (SensorModeledRole.AIR_SEARCH_RADAR, _SURFACE_SHOOTER_DOMAINS),
+        (SensorModeledRole.SHIP_AIR_SURFACE_SEARCH_RADAR, _NAVAL_SHOOTER_DOMAINS),
+        (SensorModeledRole.SURFACE_SEARCH_RADAR, _SURFACE_SHOOTER_DOMAINS),
+        (SensorModeledRole.SHIP_SURFACE_SEARCH_RADAR, _NAVAL_SHOOTER_DOMAINS),
+        (SensorModeledRole.SUBMARINE_SURFACE_SEARCH_RADAR, _SUBMARINE_SHOOTER_DOMAINS),
+        (SensorModeledRole.GROUND_SURVEILLANCE_RADAR, _GROUND_AMPHIBIOUS_SHOOTER_DOMAINS),
+        (SensorModeledRole.COASTAL_SURVEILLANCE_RADAR, _GROUND_AMPHIBIOUS_SHOOTER_DOMAINS),
+        (SensorModeledRole.FIRE_CONTROL_RADAR, _ALL_SHOOTER_DOMAINS),
+        (SensorModeledRole.GROUND_AIR_DEFENSE_FIRE_CONTROL_RADAR, _GROUND_AMPHIBIOUS_SHOOTER_DOMAINS),
+        (SensorModeledRole.NAVAL_FIRE_CONTROL_RADAR, _NAVAL_SHOOTER_DOMAINS),
+        (SensorModeledRole.NAVAL_AIR_DEFENSE_FIRE_CONTROL_RADAR, _NAVAL_SHOOTER_DOMAINS),
+        (SensorModeledRole.GROUND_VISUAL_SIGHT, _GROUND_AMPHIBIOUS_SHOOTER_DOMAINS),
+        (SensorModeledRole.GROUND_AIR_DEFENSE_OPTICAL_SIGHT, _GROUND_AMPHIBIOUS_SHOOTER_DOMAINS),
+        (SensorModeledRole.AIRBORNE_VISUAL_SIGHT, _AERIAL_SHOOTER_DOMAINS),
+        (SensorModeledRole.AIRBORNE_GROUND_VISUAL_TARGETING, _AERIAL_SHOOTER_DOMAINS),
+        (SensorModeledRole.AIRBORNE_GROUND_BOMBSIGHT, _AERIAL_SHOOTER_DOMAINS),
+        (SensorModeledRole.NAVAL_VISUAL_DIRECTOR, _NAVAL_SHOOTER_DOMAINS),
+        (SensorModeledRole.NAVAL_AIR_DEFENSE_OPTICAL_DIRECTOR, _NAVAL_SHOOTER_DOMAINS),
+        (SensorModeledRole.NAVAL_LOOKOUT, _NAVAL_SHOOTER_DOMAINS),
+        (SensorModeledRole.GROUND_NIGHT_SIGHT, _GROUND_AMPHIBIOUS_SHOOTER_DOMAINS),
+        (SensorModeledRole.GROUND_ACTIVE_IR_SIGHT, _GROUND_AMPHIBIOUS_SHOOTER_DOMAINS),
+        (SensorModeledRole.AIRBORNE_LOW_LIGHT_OBSERVATION, _AERIAL_SHOOTER_DOMAINS),
+        (SensorModeledRole.INDIVIDUAL_NIGHT_VISION, _GROUND_AMPHIBIOUS_SHOOTER_DOMAINS),
+        (SensorModeledRole.GROUND_THERMAL_TARGETING, _GROUND_AMPHIBIOUS_SHOOTER_DOMAINS),
+        (SensorModeledRole.AIRBORNE_GROUND_THERMAL_TARGETING, _AERIAL_SHOOTER_DOMAINS),
+        (SensorModeledRole.AIRBORNE_AIR_THERMAL_SEARCH, _AERIAL_SHOOTER_DOMAINS),
+        (SensorModeledRole.AIRBORNE_SURFACE_THERMAL_SEARCH, _AERIAL_SHOOTER_DOMAINS),
+        (SensorModeledRole.RADAR_WARNING_ESM, _ALL_SHOOTER_DOMAINS),
+        (SensorModeledRole.ELECTRONIC_SUPPORT, _ALL_SHOOTER_DOMAINS),
+        (SensorModeledRole.ACTIVE_SONAR, _SONAR_SHOOTER_DOMAINS),
+        (SensorModeledRole.PASSIVE_SONAR, _SONAR_SHOOTER_DOMAINS),
+    ),
+)
+
+_ORGANIC_DIRECT_SENSOR_ROLES = (
+    SensorModeledRole.THERMAL_TARGETING,
+    SensorModeledRole.FIRE_CONTROL_RADAR,
+    SensorModeledRole.GROUND_VISUAL_SIGHT,
+    SensorModeledRole.GROUND_NIGHT_SIGHT,
+    SensorModeledRole.GROUND_ACTIVE_IR_SIGHT,
+    SensorModeledRole.GROUND_THERMAL_TARGETING,
+)
+_GROUND_AIR_DEFENSE_SENSOR_ROLES = (
+    SensorModeledRole.GROUND_AIR_DEFENSE_OPTICAL_SIGHT,
+    SensorModeledRole.GROUND_AIR_DEFENSE_FIRE_CONTROL_RADAR,
+    SensorModeledRole.FIRE_CONTROL_RADAR,
+)
+_NAVAL_GUNFIRE_SENSOR_ROLES = (
+    SensorModeledRole.NAVAL_VISUAL_DIRECTOR,
+    SensorModeledRole.NAVAL_FIRE_CONTROL_RADAR,
+)
+_NAVAL_AIR_DEFENSE_SENSOR_ROLES = (
+    SensorModeledRole.NAVAL_AIR_DEFENSE_OPTICAL_DIRECTOR,
+    SensorModeledRole.NAVAL_AIR_DEFENSE_FIRE_CONTROL_RADAR,
+    SensorModeledRole.NAVAL_FIRE_CONTROL_RADAR,
+)
+_AIR_TO_AIR_SENSOR_ROLES = (
+    SensorModeledRole.AIRBORNE_VISUAL_SIGHT,
+    SensorModeledRole.AIRBORNE_FIRE_CONTROL_RADAR,
+    SensorModeledRole.AIRBORNE_MULTI_DOMAIN_FIRE_CONTROL_RADAR,
+)
+_AIRCRAFT_GUN_SENSOR_ROLES = (
+    *_AIR_TO_AIR_SENSOR_ROLES,
+    SensorModeledRole.AIRBORNE_GROUND_VISUAL_TARGETING,
+    SensorModeledRole.AIRBORNE_GROUND_THERMAL_TARGETING,
+    SensorModeledRole.AIRBORNE_GROUND_FIRE_CONTROL_RADAR,
+)
+_AIR_TO_GROUND_SENSOR_ROLES = (
+    SensorModeledRole.AIRBORNE_GROUND_VISUAL_TARGETING,
+    SensorModeledRole.AIRBORNE_GROUND_THERMAL_TARGETING,
+    SensorModeledRole.AIRBORNE_GROUND_FIRE_CONTROL_RADAR,
+    SensorModeledRole.AIRBORNE_MULTI_DOMAIN_FIRE_CONTROL_RADAR,
+)
+_ANTI_SHIP_SENSOR_ROLES = (
+    SensorModeledRole.NAVAL_FIRE_CONTROL_RADAR,
+    SensorModeledRole.AIRBORNE_MULTI_DOMAIN_FIRE_CONTROL_RADAR,
+    SensorModeledRole.FIRE_CONTROL_RADAR,
+)
+_MULTI_ROLE_VLS_SENSOR_ROLES = (
+    SensorModeledRole.FIRE_CONTROL_RADAR,
+    SensorModeledRole.GROUND_AIR_DEFENSE_FIRE_CONTROL_RADAR,
+    SensorModeledRole.NAVAL_FIRE_CONTROL_RADAR,
+    SensorModeledRole.NAVAL_AIR_DEFENSE_FIRE_CONTROL_RADAR,
+)
+_DIRECTED_ENERGY_SENSOR_ROLES = (
+    *_MULTI_ROLE_VLS_SENSOR_ROLES,
+    SensorModeledRole.GROUND_AIR_DEFENSE_OPTICAL_SIGHT,
+    SensorModeledRole.NAVAL_AIR_DEFENSE_OPTICAL_DIRECTOR,
+)
+
+_WEAPON_COMPATIBLE_SENSOR_ROLES = _build_total_role_policy(
+    label="weapon/sensor global compatibility policy",
+    enum_type=WeaponModeledRole,
+    declarations=(
+        (WeaponModeledRole.GROUND_DIRECT_FIRE, _ORGANIC_DIRECT_SENSOR_ROLES),
+        (WeaponModeledRole.AIR_DEFENSE_GUN, _GROUND_AIR_DEFENSE_SENSOR_ROLES),
+        (WeaponModeledRole.NAVAL_GUNFIRE, _NAVAL_GUNFIRE_SENSOR_ROLES),
+        (WeaponModeledRole.NAVAL_AIR_DEFENSE_GUN, _NAVAL_AIR_DEFENSE_SENSOR_ROLES),
+        (WeaponModeledRole.FIELD_ARTILLERY, ()),
+        (WeaponModeledRole.MORTAR_FIRE, ()),
+        (WeaponModeledRole.ROCKET_ARTILLERY, ()),
+        (WeaponModeledRole.ASSAULT_RIFLE, _ORGANIC_DIRECT_SENSOR_ROLES),
+        (WeaponModeledRole.MUZZLE_LOADING_MUSKET, _ORGANIC_DIRECT_SENSOR_ROLES),
+        (WeaponModeledRole.BOLT_ACTION_RIFLE, _ORGANIC_DIRECT_SENSOR_ROLES),
+        (WeaponModeledRole.SEMI_AUTOMATIC_RIFLE, _ORGANIC_DIRECT_SENSOR_ROLES),
+        (WeaponModeledRole.SNIPER_RIFLE, _ORGANIC_DIRECT_SENSOR_ROLES),
+        (WeaponModeledRole.ANTI_MATERIEL_RIFLE, _ORGANIC_DIRECT_SENSOR_ROLES),
+        (WeaponModeledRole.SUBMACHINE_GUN, _ORGANIC_DIRECT_SENSOR_ROLES),
+        (WeaponModeledRole.LIGHT_MACHINE_GUN, _ORGANIC_DIRECT_SENSOR_ROLES),
+        (WeaponModeledRole.GENERAL_PURPOSE_MACHINE_GUN, _ORGANIC_DIRECT_SENSOR_ROLES),
+        (WeaponModeledRole.HEAVY_MACHINE_GUN, _ORGANIC_DIRECT_SENSOR_ROLES),
+        (WeaponModeledRole.INDIVIDUAL_GRENADE_LAUNCHER, _ORGANIC_DIRECT_SENSOR_ROLES),
+        (WeaponModeledRole.AUTOMATIC_GRENADE_LAUNCHER, _ORGANIC_DIRECT_SENSOR_ROLES),
+        (WeaponModeledRole.HAND_GRENADE, ()),
+        (WeaponModeledRole.MELEE, ()),
+        (WeaponModeledRole.ANCIENT_PROJECTILE, _ORGANIC_DIRECT_SENSOR_ROLES),
+        (WeaponModeledRole.ANTI_ARMOR, _ORGANIC_DIRECT_SENSOR_ROLES),
+        (WeaponModeledRole.AIR_DEFENSE_MISSILE, _GROUND_AIR_DEFENSE_SENSOR_ROLES),
+        (WeaponModeledRole.AIR_TO_AIR_MISSILE, _AIR_TO_AIR_SENSOR_ROLES),
+        (WeaponModeledRole.AIR_TO_GROUND_MISSILE, _AIR_TO_GROUND_SENSOR_ROLES),
+        (WeaponModeledRole.ANTI_SHIP_MISSILE, _ANTI_SHIP_SENSOR_ROLES),
+        (WeaponModeledRole.MULTI_ROLE_VLS, _MULTI_ROLE_VLS_SENSOR_ROLES),
+        (WeaponModeledRole.BOMB_DELIVERY, ()),
+        (WeaponModeledRole.AIRCRAFT_GUN, _AIRCRAFT_GUN_SENSOR_ROLES),
+        (WeaponModeledRole.TORPEDO, ()),
+        (WeaponModeledRole.ANTI_SUBMARINE, ()),
+        (WeaponModeledRole.CLOSE_IN_DEFENSE, _NAVAL_AIR_DEFENSE_SENSOR_ROLES),
+        (WeaponModeledRole.DIRECTED_ENERGY, _DIRECTED_ENERGY_SENSOR_ROLES),
+        (WeaponModeledRole.INCENDIARY_PROJECTOR, _ORGANIC_DIRECT_SENSOR_ROLES),
+    ),
+)
+
+# These mapping-local links preserve routed-owner semantics while the global
+# tactical-standoff matrix continues to reject both weapon roles.
+_ROUTED_MAPPING_COMPATIBILITY = frozenset({
+    (SensorModeledRole.GROUND_VISUAL_SIGHT, WeaponModeledRole.FIELD_ARTILLERY),
+    (SensorModeledRole.AIRBORNE_GROUND_BOMBSIGHT, WeaponModeledRole.BOMB_DELIVERY),
+})
+
 
 def required_domains_for_weapon_role(
     modeled_role: WeaponModeledRole,
@@ -641,12 +951,67 @@ def required_domains_for_weapon_role(
     return _WEAPON_ROLE_DOMAINS[modeled_role]
 
 
+def weapon_role_supports_target_domain(
+    modeled_role: WeaponModeledRole,
+    target_domain: Domain,
+) -> bool:
+    """Return whether any valid mapping profile for a role admits a domain."""
+    _require_enum(modeled_role, WeaponModeledRole, "modeled_role")
+    _require_enum(target_domain, Domain, "target_domain")
+    return any(
+        target_domain in profile
+        for profile in _WEAPON_ROLE_DOMAIN_PROFILES[modeled_role]
+    )
+
+
 def required_domains_for_sensor_role(
     modeled_role: SensorModeledRole,
 ) -> tuple[Domain, ...]:
     """Return the production target-domain contract for one sensor role."""
     _require_enum(modeled_role, SensorModeledRole, "modeled_role")
     return _SENSOR_ROLE_CONTRACTS[modeled_role][2]
+
+
+def weapon_standoff_class(
+    modeled_role: WeaponModeledRole,
+) -> WeaponStandoffClass:
+    """Return the exhaustive tactical-standoff class for a weapon role."""
+    _require_enum(modeled_role, WeaponModeledRole, "modeled_role")
+    return _WEAPON_STANDOFF_CLASSES[modeled_role]
+
+
+def sensor_targeting_class(
+    modeled_role: SensorModeledRole,
+) -> SensorTargetingClass:
+    """Return whether a sensor role can supply local fire control."""
+    _require_enum(modeled_role, SensorModeledRole, "modeled_role")
+    return _SENSOR_TARGETING_CLASSES[modeled_role]
+
+
+def allowed_shooter_domains_for_sensor_role(
+    modeled_role: SensorModeledRole,
+) -> tuple[Domain, ...]:
+    """Return the exhaustive shooter-platform domain contract."""
+    _require_enum(modeled_role, SensorModeledRole, "modeled_role")
+    return _SENSOR_ROLE_SHOOTER_DOMAINS[modeled_role]
+
+
+def compatible_sensor_roles_for_weapon_role(
+    modeled_role: WeaponModeledRole,
+) -> tuple[SensorModeledRole, ...]:
+    """Return the global fire-control upper bound for one weapon role."""
+    _require_enum(modeled_role, WeaponModeledRole, "modeled_role")
+    return _WEAPON_COMPATIBLE_SENSOR_ROLES[modeled_role]
+
+
+def _mapping_roles_are_semantically_compatible(
+    sensor_role: SensorModeledRole,
+    weapon_role: WeaponModeledRole,
+) -> bool:
+    return (
+        sensor_role in compatible_sensor_roles_for_weapon_role(weapon_role)
+        or (sensor_role, weapon_role) in _ROUTED_MAPPING_COMPATIBILITY
+    )
 
 
 class ResolutionDisposition(str, enum.Enum):
@@ -669,6 +1034,12 @@ def _require_trimmed(value: object, label: str) -> str:
 def _require_optional_trimmed(value: object, label: str) -> None:
     if value is not None:
         _require_trimmed(value, label)
+
+
+def _require_source_index(value: object, label: str) -> int:
+    if isinstance(value, bool) or not isinstance(value, int) or value < 0:
+        raise ValueError(f"{label} must be a non-negative non-bool integer")
+    return value
 
 
 def _require_enum(value: object, enum_type: type[enum.Enum], label: str) -> None:
@@ -737,6 +1108,27 @@ def _validate_reference(
     elif allowed_target_ids:
         raise EquipmentMappingError(
             "allowed_target_ids is only valid for a functional analogue",
+        )
+
+
+def _validate_live_reference_provenance(
+    *,
+    reference_kind: ReferenceKind,
+    mapping_rationale: str | None,
+    mapping_source: str | None,
+) -> None:
+    """Validate provenance copied from one exact mapping declaration."""
+    _require_enum(reference_kind, ReferenceKind, "reference_kind")
+    _require_optional_trimmed(mapping_rationale, "mapping_rationale")
+    _require_optional_trimmed(mapping_source, "mapping_source")
+    if reference_kind is ReferenceKind.FUNCTIONAL_ANALOGUE:
+        _require_trimmed(
+            mapping_rationale,
+            "functional-analogue mapping_rationale",
+        )
+        _require_trimmed(
+            mapping_source,
+            "functional-analogue mapping_source",
         )
 
 
@@ -978,6 +1370,7 @@ class SensorAttachmentMapping:
     expected_sensor_type: SensorType
     expected_signature_domain: SignatureDomain
     modeled_role: SensorModeledRole
+    compatible_weapon_roles: tuple[WeaponModeledRole, ...]
     required_target_domains: tuple[Domain, ...]
     modeled_max_range_m: float | None = None
     modeled_fov_deg: float | None = None
@@ -1010,6 +1403,47 @@ class SensorAttachmentMapping:
             SensorModeledRole,
             "modeled_role",
         )
+        _require_enum_tuple(
+            self.compatible_weapon_roles,
+            WeaponModeledRole,
+            "compatible_weapon_roles",
+        )
+        if (
+            sensor_targeting_class(self.modeled_role)
+            is SensorTargetingClass.CONTACT_SEARCH_ONLY
+            and self.compatible_weapon_roles
+        ):
+            raise EquipmentMappingError(
+                f"Contact/search-only sensor role {self.modeled_role.value!r} "
+                "cannot declare compatible weapon roles",
+            )
+        incompatible_roles = [
+            role.value
+            for role in self.compatible_weapon_roles
+            if not _mapping_roles_are_semantically_compatible(
+                self.modeled_role,
+                role,
+            )
+        ]
+        if incompatible_roles:
+            raise EquipmentMappingError(
+                f"Sensor role {self.modeled_role.value!r} cannot bind mapping "
+                f"weapon roles {incompatible_roles!r}",
+            )
+        empty_domain_intersections = [
+            role.value
+            for role in self.compatible_weapon_roles
+            if not (
+                set(required_domains_for_sensor_role(self.modeled_role))
+                & set(required_domains_for_weapon_role(role))
+            )
+        ]
+        if empty_domain_intersections:
+            raise EquipmentMappingError(
+                f"Sensor role {self.modeled_role.value!r} has no common "
+                "target domain with mapping weapon roles "
+                f"{empty_domain_intersections!r}",
+            )
         expected_type, expected_domain, required_domains = _SENSOR_ROLE_CONTRACTS[
             self.modeled_role
         ]
@@ -1254,6 +1688,10 @@ class WeaponAttachment:
     ammunition: tuple[AmmoDefinition, ...]
     source_equipment: EquipmentItem
     source_equipment_index: int
+    modeled_role: WeaponModeledRole
+    reference_kind: ReferenceKind
+    mapping_rationale: str | None
+    mapping_source: str | None
     source_system_count: int
     target_system_count: int
     runtime_system_multiplier: int
@@ -1266,8 +1704,16 @@ class WeaponAttachment:
             )
         if not isinstance(self.ammunition, tuple) or not self.ammunition:
             raise ValueError("WeaponAttachment ammunition must be a non-empty tuple")
-        if self.source_equipment_index < 0:
-            raise ValueError("source_equipment_index must be non-negative")
+        _require_source_index(
+            self.source_equipment_index,
+            "source_equipment_index",
+        )
+        _require_enum(self.modeled_role, WeaponModeledRole, "modeled_role")
+        _validate_live_reference_provenance(
+            reference_kind=self.reference_kind,
+            mapping_rationale=self.mapping_rationale,
+            mapping_source=self.mapping_source,
+        )
         expected_multiplier = _validate_system_counts(
             equipment_name=self.source_equipment.name,
             source_system_count=self.source_system_count,
@@ -1322,6 +1768,78 @@ class WeaponAttachment:
 
 
 @dataclass(frozen=True, slots=True)
+class SensorAttachment:
+    """One live sensor plus immutable mapping and fire-control bindings."""
+
+    sensor: SensorInstance
+    source_equipment: EquipmentItem
+    source_equipment_index: int
+    modeled_role: SensorModeledRole
+    reference_kind: ReferenceKind
+    mapping_rationale: str | None
+    mapping_source: str | None
+    compatible_weapon_roles: tuple[WeaponModeledRole, ...]
+    compatible_weapon_source_indexes: tuple[int, ...]
+
+    def __post_init__(self) -> None:
+        if self.sensor.equipment is not self.source_equipment:
+            raise ValueError(
+                "SensorAttachment source_equipment must be the exact object "
+                "linked by its SensorInstance",
+            )
+        _require_source_index(
+            self.source_equipment_index,
+            "source_equipment_index",
+        )
+        _require_enum(self.modeled_role, SensorModeledRole, "modeled_role")
+        _validate_live_reference_provenance(
+            reference_kind=self.reference_kind,
+            mapping_rationale=self.mapping_rationale,
+            mapping_source=self.mapping_source,
+        )
+        _require_enum_tuple(
+            self.compatible_weapon_roles,
+            WeaponModeledRole,
+            "compatible_weapon_roles",
+        )
+        if not isinstance(self.compatible_weapon_source_indexes, tuple):
+            raise ValueError(
+                "compatible_weapon_source_indexes must be an immutable tuple",
+            )
+        if tuple(sorted(self.compatible_weapon_source_indexes)) != (
+            self.compatible_weapon_source_indexes
+        ):
+            raise ValueError(
+                "compatible_weapon_source_indexes must be in source order",
+            )
+        if len(self.compatible_weapon_source_indexes) != len(
+            set(self.compatible_weapon_source_indexes),
+        ):
+            raise ValueError(
+                "compatible_weapon_source_indexes contains duplicates",
+            )
+        for index in self.compatible_weapon_source_indexes:
+            if (
+                not isinstance(index, int)
+                or isinstance(index, bool)
+                or index < 0
+            ):
+                raise ValueError(
+                    "compatible_weapon_source_indexes must contain only "
+                    "non-negative integers",
+                )
+
+    @property
+    def sensor_instance(self) -> SensorInstance:
+        """Return the exact compatibility-projection object."""
+        return self.sensor
+
+    @property
+    def sensor_id(self) -> str:
+        return self.sensor.sensor_id
+
+
+@dataclass(frozen=True, slots=True)
 class EquipmentResolution:
     """Transparent outcome for one mapped runtime equipment item."""
 
@@ -1344,9 +1862,20 @@ class EquipmentResolution:
     def __post_init__(self) -> None:
         _require_trimmed(self.unit_id, "resolution unit_id")
         _require_trimmed(self.unit_type, "resolution unit_type")
-        if self.source_equipment_index < 0:
-            raise ValueError("source_equipment_index must be non-negative")
+        _require_source_index(
+            self.source_equipment_index,
+            "source_equipment_index",
+        )
+        if self.attached_to_equipment_index is not None:
+            _require_source_index(
+                self.attached_to_equipment_index,
+                "attached_to_equipment_index",
+            )
         _require_enum(self.category, EquipmentCategory, "resolution category")
+        if self.source_equipment.category is not self.category:
+            raise ValueError(
+                "resolution category must match the exact source equipment",
+            )
         _require_enum(
             self.disposition,
             ResolutionDisposition,
@@ -1424,6 +1953,8 @@ class EquipmentResolution:
                 )
         elif self.disposition is ResolutionDisposition.STORE:
             if (
+                self.category is not EquipmentCategory.WEAPON
+                or
                 self.target_id is None
                 or self.reference_kind is None
                 or self.modeled_role is not None
@@ -1432,7 +1963,8 @@ class EquipmentResolution:
                 or self.reason is not None
             ):
                 raise ValueError(
-                    "Store resolutions require a target and one attachment link",
+                    "Weapon store resolutions require a target and one "
+                    "attachment link",
                 )
             if any(
                 count is not None
@@ -1514,41 +2046,251 @@ class RuntimeLoadouts:
     """Immutable per-unit runtime attachments and equipment outcomes."""
 
     unit_weapons: Mapping[str, tuple[WeaponAttachment, ...]]
-    unit_sensors: Mapping[str, tuple[SensorInstance, ...]]
+    unit_sensor_attachments: Mapping[str, tuple[SensorAttachment, ...]]
     equipment_resolutions: Mapping[str, tuple[EquipmentResolution, ...]]
+    unit_sensors: Mapping[str, tuple[SensorInstance, ...]] = field(init=False)
 
     def __post_init__(self) -> None:
         weapon_keys = set(self.unit_weapons)
-        sensor_keys = set(self.unit_sensors)
+        sensor_keys = set(self.unit_sensor_attachments)
         resolution_keys = set(self.equipment_resolutions)
         if weapon_keys != sensor_keys or weapon_keys != resolution_keys:
             raise ValueError(
-                "RuntimeLoadouts must contain weapons, sensors, and resolutions "
-                "for exactly the same unit IDs",
+                "RuntimeLoadouts must contain weapons, sensor attachments, "
+                "and resolutions for exactly the same unit IDs",
             )
+        normalized_weapons = {
+            unit_id: tuple(attachments)
+            for unit_id, attachments in self.unit_weapons.items()
+        }
+        normalized_sensor_attachments = {
+            unit_id: tuple(attachments)
+            for unit_id, attachments in self.unit_sensor_attachments.items()
+        }
+        normalized_resolutions = {
+            unit_id: tuple(resolutions)
+            for unit_id, resolutions in self.equipment_resolutions.items()
+        }
+        normalized_sensors: dict[str, tuple[SensorInstance, ...]] = {}
+
+        for unit_id in normalized_weapons:
+            weapons = normalized_weapons[unit_id]
+            sensor_attachments = normalized_sensor_attachments[unit_id]
+            resolutions = normalized_resolutions[unit_id]
+
+            weapon_by_source_index: dict[int, WeaponAttachment] = {}
+            for attachment in weapons:
+                if not isinstance(attachment, WeaponAttachment):
+                    raise TypeError(
+                        f"unit_weapons[{unit_id!r}] must contain only "
+                        "WeaponAttachment values",
+                    )
+                if attachment.source_equipment_index in weapon_by_source_index:
+                    raise ValueError(
+                        f"unit {unit_id!r} has duplicate weapon source index "
+                        f"{attachment.source_equipment_index}",
+                    )
+                weapon_by_source_index[
+                    attachment.source_equipment_index
+                ] = attachment
+            weapon_order = tuple(
+                (
+                    -attachment.weapon.definition.max_range_m,
+                    attachment.source_equipment_index,
+                    attachment.weapon.weapon_id,
+                )
+                for attachment in weapons
+            )
+            if weapon_order != tuple(sorted(weapon_order)):
+                raise ValueError(
+                    f"unit {unit_id!r} weapon attachments must retain "
+                    "canonical range/source/ID order",
+                )
+
+            sensor_indexes = tuple(
+                attachment.source_equipment_index
+                for attachment in sensor_attachments
+            )
+            if sensor_indexes != tuple(sorted(sensor_indexes)):
+                raise ValueError(
+                    f"unit {unit_id!r} sensor attachments must retain source "
+                    "equipment order",
+                )
+            if len(sensor_indexes) != len(set(sensor_indexes)):
+                raise ValueError(
+                    f"unit {unit_id!r} has duplicate sensor source indexes",
+                )
+            sensor_by_source_index: dict[int, SensorAttachment] = {}
+            for attachment in sensor_attachments:
+                if not isinstance(attachment, SensorAttachment):
+                    raise TypeError(
+                        f"unit_sensor_attachments[{unit_id!r}] must contain "
+                        "only SensorAttachment values",
+                    )
+                sensor_by_source_index[
+                    attachment.source_equipment_index
+                ] = attachment
+                expected_indexes = tuple(sorted(
+                    source_index
+                    for source_index, weapon_attachment
+                    in weapon_by_source_index.items()
+                    if weapon_attachment.modeled_role
+                    in attachment.compatible_weapon_roles
+                ))
+                if (
+                    attachment.compatible_weapon_source_indexes
+                    != expected_indexes
+                ):
+                    raise ValueError(
+                        f"unit {unit_id!r} sensor source index "
+                        f"{attachment.source_equipment_index} declares resolved "
+                        "weapon indexes "
+                        f"{attachment.compatible_weapon_source_indexes!r}, "
+                        f"expected {expected_indexes!r}",
+                    )
+
+            resolution_by_key: dict[
+                tuple[EquipmentCategory, int],
+                EquipmentResolution,
+            ] = {}
+            resolution_indexes: list[int] = []
+            for resolution in resolutions:
+                if not isinstance(resolution, EquipmentResolution):
+                    raise TypeError(
+                        f"equipment_resolutions[{unit_id!r}] must contain "
+                        "only EquipmentResolution values",
+                    )
+                if resolution.unit_id != unit_id:
+                    raise ValueError(
+                        f"RuntimeLoadouts key {unit_id!r} contains resolution "
+                        f"for unit {resolution.unit_id!r}",
+                    )
+                key = (resolution.category, resolution.source_equipment_index)
+                if key in resolution_by_key:
+                    raise ValueError(
+                        f"unit {unit_id!r} has duplicate resolution for "
+                        f"{resolution.category.name} source index "
+                        f"{resolution.source_equipment_index}",
+                    )
+                resolution_by_key[key] = resolution
+                resolution_indexes.append(resolution.source_equipment_index)
+            if resolution_indexes != sorted(resolution_indexes):
+                raise ValueError(
+                    f"unit {unit_id!r} equipment resolutions must retain "
+                    "source equipment order",
+                )
+            if len(resolution_indexes) != len(set(resolution_indexes)):
+                raise ValueError(
+                    f"unit {unit_id!r} has duplicate equipment resolution "
+                    "source indexes",
+                )
+
+            for attachment in weapons:
+                resolution = resolution_by_key.get((
+                    EquipmentCategory.WEAPON,
+                    attachment.source_equipment_index,
+                ))
+                if (
+                    resolution is None
+                    or resolution.disposition
+                    is not ResolutionDisposition.ATTACHMENT
+                    or resolution.source_equipment
+                    is not attachment.source_equipment
+                    or resolution.target_id != attachment.weapon.weapon_id
+                    or resolution.modeled_role is not attachment.modeled_role
+                    or resolution.reference_kind
+                    is not attachment.reference_kind
+                ):
+                    raise ValueError(
+                        f"unit {unit_id!r} weapon source index "
+                        f"{attachment.source_equipment_index} lacks an exact "
+                        "attachment resolution",
+                    )
+            for attachment in sensor_attachments:
+                resolution = resolution_by_key.get((
+                    EquipmentCategory.SENSOR,
+                    attachment.source_equipment_index,
+                ))
+                if (
+                    resolution is None
+                    or resolution.disposition
+                    is not ResolutionDisposition.ATTACHMENT
+                    or resolution.source_equipment
+                    is not attachment.source_equipment
+                    or resolution.target_id != attachment.sensor.sensor_id
+                    or resolution.modeled_role is not attachment.modeled_role
+                    or resolution.reference_kind
+                    is not attachment.reference_kind
+                ):
+                    raise ValueError(
+                        f"unit {unit_id!r} sensor source index "
+                        f"{attachment.source_equipment_index} lacks an exact "
+                        "attachment resolution",
+                    )
+            for resolution in resolutions:
+                if resolution.disposition is not ResolutionDisposition.ATTACHMENT:
+                    if resolution.disposition is ResolutionDisposition.STORE:
+                        linked_weapon = weapon_by_source_index.get(
+                            resolution.attached_to_equipment_index,
+                        )
+                        if (
+                            linked_weapon is None
+                            or linked_weapon.weapon.weapon_id
+                            != resolution.attached_to_target_id
+                            or resolution.target_id
+                            not in {
+                                ammunition.ammo_id
+                                for ammunition in linked_weapon.ammunition
+                            }
+                        ):
+                            raise ValueError(
+                                f"unit {unit_id!r} store resolution at source "
+                                f"index {resolution.source_equipment_index} "
+                                "does not match an exact weapon/ammunition "
+                                "attachment",
+                            )
+                    continue
+                attachment = (
+                    weapon_by_source_index.get(
+                        resolution.source_equipment_index,
+                    )
+                    if resolution.category is EquipmentCategory.WEAPON
+                    else sensor_by_source_index.get(
+                        resolution.source_equipment_index,
+                    )
+                )
+                if attachment is None:
+                    raise ValueError(
+                        f"unit {unit_id!r} {resolution.category.name.lower()} "
+                        f"resolution at source index "
+                        f"{resolution.source_equipment_index} has no exact "
+                        "live attachment",
+                    )
+
+            normalized_sensors[unit_id] = tuple(
+                attachment.sensor
+                for attachment in sensor_attachments
+            )
+
         object.__setattr__(
             self,
             "unit_weapons",
-            MappingProxyType({
-                unit_id: tuple(attachments)
-                for unit_id, attachments in self.unit_weapons.items()
-            }),
+            MappingProxyType(normalized_weapons),
         )
         object.__setattr__(
             self,
-            "unit_sensors",
-            MappingProxyType({
-                unit_id: tuple(sensors)
-                for unit_id, sensors in self.unit_sensors.items()
-            }),
+            "unit_sensor_attachments",
+            MappingProxyType(normalized_sensor_attachments),
         )
         object.__setattr__(
             self,
             "equipment_resolutions",
-            MappingProxyType({
-                unit_id: tuple(resolutions)
-                for unit_id, resolutions in self.equipment_resolutions.items()
-            }),
+            MappingProxyType(normalized_resolutions),
+        )
+        object.__setattr__(
+            self,
+            "unit_sensors",
+            MappingProxyType(normalized_sensors),
         )
 
     @property
@@ -1558,6 +2300,10 @@ class RuntimeLoadouts:
     @property
     def sensors(self) -> Mapping[str, tuple[SensorInstance, ...]]:
         return self.unit_sensors
+
+    @property
+    def sensor_attachments(self) -> Mapping[str, tuple[SensorAttachment, ...]]:
+        return self.unit_sensor_attachments
 
     @property
     def resolutions(self) -> Mapping[str, tuple[EquipmentResolution, ...]]:
@@ -1974,6 +2720,19 @@ class RuntimeLoadoutBuilder:
                     record=record,
                 ))
             elif isinstance(record, SensorAttachmentMapping):
+                shooter_domain = runtime_domain_for_definition(definition)
+                allowed_shooter_domains = (
+                    allowed_shooter_domains_for_sensor_role(
+                        record.modeled_role,
+                    )
+                )
+                if shooter_domain not in allowed_shooter_domains:
+                    raise EquipmentMappingError(
+                        f"{context}: sensor role {record.modeled_role.value!r} "
+                        f"cannot be mounted on shooter domain "
+                        f"{shooter_domain.name}; allowed domains are "
+                        f"{[domain.name for domain in allowed_shooter_domains]}",
+                    )
                 self._validate_sensor_target(context, record)
                 plans.append(_EquipmentPlan(
                     source_equipment_index=source_index,
@@ -2507,11 +3266,83 @@ class RuntimeLoadoutBuilder:
             self._validate_runtime_topology(unit)
 
         unit_weapons: dict[str, tuple[WeaponAttachment, ...]] = {}
-        unit_sensors: dict[str, tuple[SensorInstance, ...]] = {}
+        unit_sensor_attachments: dict[
+            str,
+            tuple[SensorAttachment, ...],
+        ] = {}
         unit_resolutions: dict[str, tuple[EquipmentResolution, ...]] = {}
         for unit in units:
             weapons: list[WeaponAttachment] = []
-            sensors: list[SensorInstance] = []
+            for plan in self._plans[unit.unit_type]:
+                record = plan.record
+                if not isinstance(record, WeaponAttachmentMapping):
+                    continue
+                if plan.target_id is None:
+                    raise AssertionError("Validated weapon plan has no target")
+                equipment = unit.equipment[plan.source_equipment_index]
+                definition = self._weapon_definitions[plan.target_id]
+                # A catalog target can be a deliberately broad same-role
+                # abstraction. The mapping remains the runtime authority for
+                # this attachment's exact engagement envelope.
+                runtime_definition = WeaponDefinition.model_validate({
+                    **definition.model_dump(mode="python"),
+                    "target_domains": [
+                        domain.name
+                        for domain in record.required_target_domains
+                    ],
+                    "compatible_ammo": list(plan.ammo_ids),
+                    "rate_of_fire_rpm": (
+                        definition.rate_of_fire_rpm
+                        * record.runtime_system_multiplier
+                    ),
+                    # Aggregate systems produce more firing events, not more
+                    # rounds in each target-system burst.
+                    "burst_size": definition.burst_size,
+                    "magazine_capacity": (
+                        definition.magazine_capacity
+                        * record.runtime_system_multiplier
+                    ),
+                    "barrel_life_rounds": (
+                        definition.barrel_life_rounds
+                        * record.runtime_system_multiplier
+                    ),
+                })
+                ammo_definitions = tuple(
+                    self._ammo_definitions[ammo_id]
+                    for ammo_id in plan.ammo_ids
+                )
+                instance = WeaponInstance(
+                    definition=runtime_definition,
+                    ammo_state=AmmoState(rounds_by_type={
+                        ammo.ammo_id: runtime_definition.magazine_capacity
+                        for ammo in ammo_definitions
+                    }),
+                    equipment=equipment,
+                )
+                weapons.append(WeaponAttachment(
+                    weapon=instance,
+                    ammunition=ammo_definitions,
+                    source_equipment=equipment,
+                    source_equipment_index=plan.source_equipment_index,
+                    modeled_role=record.modeled_role,
+                    reference_kind=record.reference_kind,
+                    mapping_rationale=record.rationale,
+                    mapping_source=record.source,
+                    source_system_count=record.source_system_count,
+                    target_system_count=record.target_system_count,
+                    runtime_system_multiplier=(
+                        record.runtime_system_multiplier
+                    ),
+                ))
+
+            weapon_by_source_index = {
+                attachment.source_equipment_index: attachment
+                for attachment in weapons
+            }
+            if len(weapon_by_source_index) != len(weapons):
+                raise AssertionError("Validated weapon source indexes collided")
+
+            sensor_attachments: list[SensorAttachment] = []
             resolutions: list[EquipmentResolution] = []
             for plan in self._plans[unit.unit_type]:
                 equipment = unit.equipment[plan.source_equipment_index]
@@ -2519,62 +3350,6 @@ class RuntimeLoadoutBuilder:
                 if isinstance(record, WeaponAttachmentMapping):
                     if plan.target_id is None:
                         raise AssertionError("Validated weapon plan has no target")
-                    definition = self._weapon_definitions[plan.target_id]
-                    # A catalog target can be a deliberately broad same-role
-                    # abstraction.  The equipment mapping is the production
-                    # authority for this attachment's engagement envelope, so
-                    # publish a per-instance immutable definition narrowed to
-                    # the exact typed role domains.  Battle consumes this
-                    # definition directly; the semantic contract therefore
-                    # changes eligibility rather than remaining metadata.
-                    runtime_definition = WeaponDefinition.model_validate({
-                        **definition.model_dump(mode="python"),
-                        "target_domains": [
-                            domain.name
-                            for domain in record.required_target_domains
-                        ],
-                        "compatible_ammo": list(plan.ammo_ids),
-                        "rate_of_fire_rpm": (
-                            definition.rate_of_fire_rpm
-                            * record.runtime_system_multiplier
-                        ),
-                        # Aggregate systems produce more firing events, not
-                        # more rounds in each target-system burst. Scaling
-                        # both cadence and burst would square throughput when
-                        # EngagementEngine burst fire is enabled.
-                        "burst_size": definition.burst_size,
-                        "magazine_capacity": (
-                            definition.magazine_capacity
-                            * record.runtime_system_multiplier
-                        ),
-                        "barrel_life_rounds": (
-                            definition.barrel_life_rounds
-                            * record.runtime_system_multiplier
-                        ),
-                    })
-                    ammo_definitions = tuple(
-                        self._ammo_definitions[ammo_id]
-                        for ammo_id in plan.ammo_ids
-                    )
-                    instance = WeaponInstance(
-                        definition=runtime_definition,
-                        ammo_state=AmmoState(rounds_by_type={
-                            ammo.ammo_id: runtime_definition.magazine_capacity
-                            for ammo in ammo_definitions
-                        }),
-                        equipment=equipment,
-                    )
-                    weapons.append(WeaponAttachment(
-                        weapon=instance,
-                        ammunition=ammo_definitions,
-                        source_equipment=equipment,
-                        source_equipment_index=plan.source_equipment_index,
-                        source_system_count=record.source_system_count,
-                        target_system_count=record.target_system_count,
-                        runtime_system_multiplier=(
-                            record.runtime_system_multiplier
-                        ),
-                    ))
                     resolutions.append(EquipmentResolution(
                         unit_id=unit.entity_id,
                         unit_type=unit.unit_type,
@@ -2641,7 +3416,28 @@ class RuntimeLoadoutBuilder:
                         runtime_definition,
                         equipment,
                     )
-                    sensors.append(sensor)
+                    compatible_weapon_source_indexes = tuple(sorted(
+                        source_index
+                        for source_index, weapon_attachment
+                        in weapon_by_source_index.items()
+                        if weapon_attachment.modeled_role
+                        in record.compatible_weapon_roles
+                    ))
+                    sensor_attachments.append(SensorAttachment(
+                        sensor=sensor,
+                        source_equipment=equipment,
+                        source_equipment_index=plan.source_equipment_index,
+                        modeled_role=record.modeled_role,
+                        reference_kind=record.reference_kind,
+                        mapping_rationale=record.rationale,
+                        mapping_source=record.source,
+                        compatible_weapon_roles=(
+                            record.compatible_weapon_roles
+                        ),
+                        compatible_weapon_source_indexes=(
+                            compatible_weapon_source_indexes
+                        ),
+                    ))
                     resolutions.append(EquipmentResolution(
                         unit_id=unit.entity_id,
                         unit_type=unit.unit_type,
@@ -2672,12 +3468,14 @@ class RuntimeLoadoutBuilder:
                 attachment.weapon.weapon_id,
             ))
             unit_weapons[unit.entity_id] = tuple(weapons)
-            unit_sensors[unit.entity_id] = tuple(sensors)
+            unit_sensor_attachments[unit.entity_id] = tuple(
+                sensor_attachments
+            )
             unit_resolutions[unit.entity_id] = tuple(resolutions)
 
         return RuntimeLoadouts(
             unit_weapons=unit_weapons,
-            unit_sensors=unit_sensors,
+            unit_sensor_attachments=unit_sensor_attachments,
             equipment_resolutions=unit_resolutions,
         )
 
@@ -2758,9 +3556,11 @@ __all__ = [
     "ResolutionDisposition",
     "RuntimeLoadoutBuilder",
     "RuntimeLoadouts",
+    "SensorAttachment",
     "SensorAttachmentMapping",
     "SensorModeledRole",
     "SensorNonRuntimeMapping",
+    "SensorTargetingClass",
     "SensorUnsupportedMapping",
     "UnsupportedEquipmentError",
     "WeaponAssignment",
@@ -2768,9 +3568,15 @@ __all__ = [
     "WeaponAttachmentMapping",
     "WeaponModeledRole",
     "WeaponNonRuntimeMapping",
+    "WeaponStandoffClass",
     "WeaponStoreMapping",
     "WeaponUnsupportedMapping",
+    "allowed_shooter_domains_for_sensor_role",
+    "compatible_sensor_roles_for_weapon_role",
     "equipment_name_declares_system_count",
     "required_domains_for_sensor_role",
     "required_domains_for_weapon_role",
+    "sensor_targeting_class",
+    "weapon_role_supports_target_domain",
+    "weapon_standoff_class",
 ]

@@ -26,6 +26,9 @@ from stochastic_warfare.simulation.aggregation import (
     AggregationEngine,
     UnitSnapshot,
 )
+from stochastic_warfare.simulation.tactical_targeting import (
+    TacticalTargetingRuntime,
+)
 
 
 # ---------------------------------------------------------------------------
@@ -126,8 +129,21 @@ def _make_ctx(
         units_by_side=units_by_side,
         morale_runtime=runtime,
         morale_states=runtime.states,
-        unit_weapons={},
-        unit_sensors={},
+        unit_weapons={unit_id: () for unit_id in units_by_id},
+        unit_sensor_attachments={unit_id: () for unit_id in units_by_id},
+        unit_sensors={unit_id: () for unit_id in units_by_id},
+        equipment_resolutions={unit_id: () for unit_id in units_by_id},
+        tactical_targeting=TacticalTargetingRuntime(
+            sensing_aware_standoff_enabled=True,
+            unit_sides={
+                unit_id: (
+                    unit.side
+                    if isinstance(unit.side, str)
+                    else unit.side.value
+                )
+                for unit_id, unit in units_by_id.items()
+            },
+        ),
         stockpile_manager=None,
         order_execution=order_exec,
     )
@@ -205,44 +221,43 @@ class TestOrderSnapshot:
 class TestOrderSerialization:
     """Order records in get_state()/set_state()."""
 
-    def test_order_records_in_get_state(self):
-        """Serialization includes order_records."""
+    def test_aggregation_with_orders_rejects_before_state_mutation(self):
+        """Order-backed reconstruction remains explicit REM-016 scope."""
         cfg = AggregationConfig(enable_aggregation=True, min_units_to_aggregate=2)
         engine = AggregationEngine(config=cfg, rng=_rng(), event_bus=EventBus())
         units = [_make_unit(f"u{i}", easting=float(i * 10)) for i in range(4)]
         rec = _make_order_record("ord1", "u0", status=5)
         order_exec = _make_order_exec({"u0": [rec]})
         ctx = _make_ctx({"blue": units}, order_exec=order_exec)
-        engine.aggregate([u.entity_id for u in units], ctx)
-        state = engine.get_state()
-        snaps = list(state["aggregates"].values())[0]["snapshots"]
-        # At least one snapshot should have order_records
-        has_orders = any(s["order_records"] for s in snaps)
-        assert has_orders
+        roster_before = tuple(ctx.units_by_side["blue"])
+        morale_before = ctx.morale_runtime.get_state()
 
-    def test_order_records_in_set_state(self):
-        """Deserialization restores order_records."""
+        with pytest.raises(ValueError, match="REM-016"):
+            engine.aggregate([u.entity_id for u in units], ctx)
+
+        assert tuple(ctx.units_by_side["blue"]) == roster_before
+        assert ctx.morale_runtime.get_state() == morale_before
+        assert engine.get_state()["aggregates"] == {}
+
+    def test_order_owner_rejects_even_when_records_are_serializable(self):
+        """A serializable mock is not production reconstruction evidence."""
         cfg = AggregationConfig(enable_aggregation=True, min_units_to_aggregate=2)
         engine = AggregationEngine(config=cfg, rng=_rng(), event_bus=EventBus())
         units = [_make_unit(f"u{i}", easting=float(i * 10)) for i in range(4)]
         rec = _make_order_record("ord1", "u0", status=5)
         order_exec = _make_order_exec({"u0": [rec]})
         ctx = _make_ctx({"blue": units}, order_exec=order_exec)
-        engine.aggregate([u.entity_id for u in units], ctx)
-        state = engine.get_state()
-
-        engine2 = AggregationEngine(config=cfg, rng=_rng(), event_bus=EventBus())
-        engine2.set_state(state)
-        agg = list(engine2._aggregates.values())[0]
-        has_orders = any(s.order_records for s in agg.constituent_snapshots)
-        assert has_orders
+        with pytest.raises(ValueError, match="REM-016"):
+            engine.aggregate([u.entity_id for u in units], ctx)
+        assert "ord1" in order_exec._records
+        assert engine.active_aggregates == {}
 
     def test_aggregation_still_disabled_by_default(self):
         """AggregationConfig().enable_aggregation is False."""
         assert AggregationConfig().enable_aggregation is False
 
-    def test_full_roundtrip_with_orders(self):
-        """4 units with orders → aggregate → disaggregate → orders restored."""
+    def test_full_roundtrip_with_orders_is_explicitly_unsupported(self):
+        """Order restoration cannot paper over REM-016 aggregate fidelity."""
         cfg = AggregationConfig(enable_aggregation=True, min_units_to_aggregate=2)
         engine = AggregationEngine(config=cfg, rng=_rng(), event_bus=EventBus())
         units = [_make_unit(f"u{i}", easting=float(i * 10)) for i in range(4)]
@@ -255,15 +270,10 @@ class TestOrderSerialization:
         order_exec = _make_order_exec(recs)
         ctx = _make_ctx({"blue": units}, order_exec=order_exec)
 
-        agg = engine.aggregate([u.entity_id for u in units], ctx)
-        assert agg is not None
+        roster_before = tuple(ctx.units_by_side["blue"])
+        with pytest.raises(ValueError, match="REM-016"):
+            engine.aggregate([u.entity_id for u in units], ctx)
 
-        # Verify snapshots have order records
-        snaps_with_orders = [s for s in agg.constituent_snapshots if s.order_records]
-        assert len(snaps_with_orders) == 2
-
-        # Disaggregate — orders should be restored to _records
-        restored = engine.disaggregate(agg.aggregate_id, ctx)
-        assert len(restored) == 4
+        assert tuple(ctx.units_by_side["blue"]) == roster_before
         assert "ord0" in order_exec._records
         assert "ord1" in order_exec._records

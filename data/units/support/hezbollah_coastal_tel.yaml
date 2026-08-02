@@ -12,9 +12,15 @@
 #   Launch rails: 2 (two ready missiles)
 #   Reload time: ~30–60 min (dockyard/prepared site only; not reloaded
 #     during a single engagement in practice)
-#   Fire control: coastal surveillance radar (truck-mounted or
-#     pre-positioned) providing target bearing/range; missile uses
-#     inertial + radio-altimeter mid-course and active-radar terminal.
+#   Fire control: a composite coastal-missile targeting network combining
+#     surveillance/acquisition inputs, operators, communications, and launch
+#     control to provide target bearing/range and a firing solution; missile
+#     uses inertial + radio-altimeter mid-course and active-radar terminal.
+#     The runtime maps this network to the existing ground_search_radar as a
+#     bounded 60 km/360-degree functional analogue. Those modeled limits are
+#     not a sourced performance figure for the system used in the Hanit strike,
+#     and the mapping does not promote a standalone search radar into a fire-
+#     control system.
 #   Mobility: drive-to-hide-in-urban after launch; makes Counter-TEL
 #     strike extremely difficult.
 #
@@ -66,7 +72,7 @@ equipment:
     category: WEAPON
     weight_kg: 1500.0  # per missile; 2 ready rounds
     reliability: 0.80
-  - name: "Coastal Surveillance Radar"
+  - name: "Coastal Missile Targeting Network"
     category: SENSOR
     weight_kg: 450.0
     reliability: 0.72

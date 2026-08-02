@@ -14,6 +14,7 @@ from stochastic_warfare.core.clock import SimulationClock
 from stochastic_warfare.core.events import EventBus
 from stochastic_warfare.core.rng import RNGManager
 from stochastic_warfare.combat.ammunition import (
+    AmmoDefinition,
     AmmoState,
     WeaponDefinition,
     WeaponInstance,
@@ -42,6 +43,16 @@ from stochastic_warfare.morale.runtime import MoraleRegistration, MoraleRuntime
 from stochastic_warfare.morale.state import MoraleState
 from stochastic_warfare.simulation.campaign import CampaignConfig
 from stochastic_warfare.simulation.engine import SimulationEngine, TickResolution
+from stochastic_warfare.simulation.loadouts import (
+    EquipmentResolution,
+    ReferenceKind,
+    ResolutionDisposition,
+    RuntimeLoadouts,
+    SensorAttachment,
+    SensorModeledRole,
+    WeaponAttachment,
+    WeaponModeledRole,
+)
 from stochastic_warfare.simulation.recorder import SimulationRecorder
 from stochastic_warfare.simulation.scenario import (
     CampaignScenarioConfig,
@@ -49,6 +60,9 @@ from stochastic_warfare.simulation.scenario import (
     ScenarioLoader,
     SimulationContext,
     TerrainConfig,
+)
+from stochastic_warfare.simulation.tactical_targeting import (
+    TacticalTargetingRuntime,
 )
 
 from tests.conftest import TS
@@ -117,12 +131,33 @@ def _context(
         ),
         units,
     )
+    unit_sides = {
+        unit_id: (
+            unit.side if isinstance(unit.side, str) else unit.side.value
+        )
+        for unit_id, unit in units.items()
+    }
+    empty_loadouts = RuntimeLoadouts(
+        unit_weapons={unit_id: () for unit_id in units},
+        unit_sensor_attachments={unit_id: () for unit_id in units},
+        equipment_resolutions={unit_id: () for unit_id in units},
+    )
     return SimulationContext(
         config=_config(),
         clock=SimulationClock(start=TS, tick_duration=timedelta(hours=1)),
         rng_manager=rng_manager,
         event_bus=event_bus,
         units_by_side=force,
+        unit_weapons=dict(empty_loadouts.unit_weapons),
+        unit_sensor_attachments=dict(
+            empty_loadouts.unit_sensor_attachments,
+        ),
+        unit_sensors=dict(empty_loadouts.unit_sensors),
+        equipment_resolutions=dict(empty_loadouts.equipment_resolutions),
+        tactical_targeting=TacticalTargetingRuntime(
+            sensing_aware_standoff_enabled=True,
+            unit_sides=unit_sides,
+        ),
         morale_runtime=morale_runtime,
         rout_engine=rout_engine,
     )
@@ -133,6 +168,8 @@ def _as_versionless_legacy_context(
 ) -> dict[str, Any]:
     """Translate an idle current context into the bounded legacy envelope."""
     legacy = copy.deepcopy(checkpoint)
+    legacy.pop("targeting_default_visibility_m")
+    legacy.pop("tactical_targeting")
     legacy.pop("era_runtime_contract")
     runtime_state = legacy.pop("morale_runtime")
     assert runtime_state["suspended_archives"] == {}
@@ -202,9 +239,12 @@ def _loadout(
             display_name="Test Gun",
             category="CANNON",
             caliber_mm=30.0,
+            max_range_m=10_000.0,
+            effective_range_m=8_000.0,
             compatible_ammo=["test_round"],
             barrel_life_rounds=100,
             rate_of_fire_rpm=60.0,
+            target_domains=["GROUND"],
         ),
         ammo_state=AmmoState(rounds_by_type={"test_round": 10}),
         equipment=weapon_equipment,
@@ -216,10 +256,107 @@ def _loadout(
             display_name="Test Sensor",
             max_range_m=10_000,
             detection_threshold=1.0,
+            detects_domain=["VISUAL"],
+            target_domains=["GROUND"],
         ),
         sensor_equipment,
     )
     return weapon, sensor
+
+
+def _bind_loadout(
+    ctx: SimulationContext,
+    unit: Unit,
+    weapon: WeaponInstance,
+    sensor: SensorInstance,
+) -> None:
+    """Publish one exact typed test loadout through the runtime boundary."""
+    weapon_index = next(
+        index
+        for index, equipment in enumerate(unit.equipment)
+        if equipment is weapon.equipment
+    )
+    sensor_index = next(
+        index
+        for index, equipment in enumerate(unit.equipment)
+        if equipment is sensor.equipment
+    )
+    ammunition = AmmoDefinition(
+        ammo_id="test_round",
+        display_name="Test Round",
+        ammo_type="HE",
+    )
+    weapon_attachment = WeaponAttachment(
+        weapon=weapon,
+        ammunition=(ammunition,),
+        source_equipment=weapon.equipment,
+        source_equipment_index=weapon_index,
+        modeled_role=WeaponModeledRole.GROUND_DIRECT_FIRE,
+        reference_kind=ReferenceKind.EXACT,
+        mapping_rationale=None,
+        mapping_source=None,
+        source_system_count=1,
+        target_system_count=1,
+        runtime_system_multiplier=1,
+    )
+    sensor_attachment = SensorAttachment(
+        sensor=sensor,
+        source_equipment=sensor.equipment,
+        source_equipment_index=sensor_index,
+        modeled_role=SensorModeledRole.GROUND_VISUAL_SIGHT,
+        reference_kind=ReferenceKind.EXACT,
+        mapping_rationale=None,
+        mapping_source=None,
+        compatible_weapon_roles=(WeaponModeledRole.GROUND_DIRECT_FIRE,),
+        compatible_weapon_source_indexes=(weapon_index,),
+    )
+    resolutions = (
+        EquipmentResolution(
+            unit_id=unit.entity_id,
+            unit_type=unit.unit_type,
+            source_equipment=weapon.equipment,
+            source_equipment_index=weapon_index,
+            category=EquipmentCategory.WEAPON,
+            disposition=ResolutionDisposition.ATTACHMENT,
+            modeled_role=WeaponModeledRole.GROUND_DIRECT_FIRE,
+            reference_kind=ReferenceKind.EXACT,
+            target_id=weapon.weapon_id,
+            source_system_count=1,
+            target_system_count=1,
+            runtime_system_multiplier=1,
+        ),
+        EquipmentResolution(
+            unit_id=unit.entity_id,
+            unit_type=unit.unit_type,
+            source_equipment=sensor.equipment,
+            source_equipment_index=sensor_index,
+            category=EquipmentCategory.SENSOR,
+            disposition=ResolutionDisposition.ATTACHMENT,
+            modeled_role=SensorModeledRole.GROUND_VISUAL_SIGHT,
+            reference_kind=ReferenceKind.EXACT,
+            target_id=sensor.sensor_id,
+        ),
+    )
+    loadouts = RuntimeLoadouts(
+        unit_weapons={
+            **ctx.unit_weapons,
+            unit.entity_id: (weapon_attachment,),
+        },
+        unit_sensor_attachments={
+            **ctx.unit_sensor_attachments,
+            unit.entity_id: (sensor_attachment,),
+        },
+        equipment_resolutions={
+            **ctx.equipment_resolutions,
+            unit.entity_id: resolutions,
+        },
+    )
+    ctx.unit_weapons = dict(loadouts.unit_weapons)
+    ctx.unit_sensor_attachments = dict(loadouts.unit_sensor_attachments)
+    ctx.unit_sensors = dict(loadouts.unit_sensors)
+    ctx.equipment_resolutions = dict(loadouts.equipment_resolutions)
+    ctx._validate_loadout_bindings()
+    ctx._validate_targeting_bindings()
 
 
 def test_in_place_restore_preserves_nested_references_and_typed_morale() -> None:
@@ -255,8 +392,7 @@ def test_in_place_restore_preserves_nested_references_and_typed_morale() -> None
         {"blue": [unit], "red": []},
         {"blue-1": MoraleState.BROKEN},
     )
-    ctx.unit_weapons = {"blue-1": [(weapon, [])]}
-    ctx.unit_sensors = {"blue-1": [sensor]}
+    _bind_loadout(ctx, unit, weapon, sensor)
     checkpoint = copy.deepcopy(ctx.get_state())
 
     unit.position = Position(900, 900, 0)
@@ -361,8 +497,6 @@ def test_fresh_restore_rebuilds_exact_order_and_all_concrete_classes() -> None:
 def test_fresh_restore_preserves_checkpoint_only_empty_loadout_entries() -> None:
     unit = Unit("unarmed", Position(10, 20, 0), side="blue")
     source = _context({"blue": [unit], "red": []})
-    source.unit_weapons = {"unarmed": ()}
-    source.unit_sensors = {"unarmed": ()}
     checkpoint = copy.deepcopy(source.get_state())
     target = _context(seed=999)
 
@@ -377,11 +511,82 @@ def test_fresh_restore_preserves_checkpoint_only_empty_loadout_entries() -> None
     assert target.get_state() == checkpoint
 
 
+@pytest.mark.parametrize(
+    ("owner", "match"),
+    [
+        (
+            "unit_weapon_states",
+            "loadout resolution topology does not match",
+        ),
+        (
+            "unit_sensor_states",
+            "loadout resolution topology does not match",
+        ),
+        (
+            "loadout_topology",
+            "Invalid checkpoint runtime loadout bindings",
+        ),
+    ],
+)
+def test_fresh_restore_requires_exact_empty_loadout_evidence_atomically(
+    owner: str,
+    match: str,
+) -> None:
+    source = _context({
+        "blue": [Unit("unarmed", Position(10, 20, 0), side="blue")],
+        "red": [],
+    })
+    checkpoint = copy.deepcopy(source.get_state())
+    del checkpoint[owner]["unarmed"]
+    target = _context({
+        "blue": [Unit("stale", Position(0, 0, 0), side="blue")],
+        "red": [],
+    })
+    before = copy.deepcopy(target.get_state())
+
+    with pytest.raises(ValueError, match=match):
+        target.set_state(checkpoint)
+
+    assert target.get_state() == before
+
+
+@pytest.mark.parametrize(
+    "category",
+    [EquipmentCategory.WEAPON, EquipmentCategory.SENSOR],
+)
+def test_fresh_restore_rejects_empty_loadout_claim_for_runtime_equipment(
+    category: EquipmentCategory,
+) -> None:
+    source = _context({
+        "blue": [Unit("unarmed", Position(10, 20, 0), side="blue")],
+        "red": [],
+    })
+    checkpoint = copy.deepcopy(source.get_state())
+    checkpoint["units_by_side"]["blue"][0]["equipment"] = [
+        EquipmentItem(
+            equipment_id=f"unrepresented-{category.name.lower()}",
+            name="Unrepresented runtime equipment",
+            category=category,
+        ).get_state(),
+    ]
+    target = _context({
+        "blue": [Unit("stale", Position(0, 0, 0), side="blue")],
+        "red": [],
+    })
+    before = copy.deepcopy(target.get_state())
+
+    with pytest.raises(
+        ValueError,
+        match="equipment resolutions for 'unarmed' must exactly cover",
+    ):
+        target.set_state(checkpoint)
+
+    assert target.get_state() == before
+
+
 def test_restore_rejects_nonreusable_same_id_unit_atomically() -> None:
     source_unit = Unit("unarmed", Position(10, 20, 0), side="blue")
     source = _context({"blue": [source_unit], "red": []})
-    source.unit_weapons = {"unarmed": ()}
-    source.unit_sensors = {"unarmed": ()}
     checkpoint = copy.deepcopy(source.get_state())
 
     weapon_equipment = EquipmentItem(
@@ -398,8 +603,7 @@ def test_restore_rejects_nonreusable_same_id_unit_atomically() -> None:
     stale.equipment = [weapon_equipment, sensor_equipment]
     weapon, sensor = _loadout(weapon_equipment, sensor_equipment)
     target = _context({"blue": [stale], "red": []}, seed=999)
-    target.unit_weapons = {"unarmed": [(weapon, [])]}
-    target.unit_sensors = {"unarmed": [sensor]}
+    _bind_loadout(target, stale, weapon, sensor)
     before = copy.deepcopy(target.get_state())
 
     with pytest.raises(ValueError, match="unit identity topology"):
@@ -423,13 +627,22 @@ def test_fresh_restore_rejects_checkpoint_only_nonempty_loadout_atomically(
         name="Test Sensor",
         category=EquipmentCategory.SENSOR,
     )
-    unit = Unit("armed", Position(10, 20, 0), side="blue")
+    unit = Unit(
+        "armed",
+        Position(10, 20, 0),
+        unit_type="test_ground",
+        side="blue",
+    )
     unit.equipment = [weapon_equipment, sensor_equipment]
     weapon, sensor = _loadout(weapon_equipment, sensor_equipment)
     source = _context({"blue": [unit], "red": []})
-    source.unit_weapons = {"armed": [(weapon, [])] if kind == "weapon" else []}
-    source.unit_sensors = {"armed": [sensor] if kind == "sensor" else []}
+    _bind_loadout(source, unit, weapon, sensor)
     checkpoint = copy.deepcopy(source.get_state())
+    checkpoint["loadout_topology"]["armed"] = []
+    if kind == "weapon":
+        checkpoint["unit_sensor_states"]["armed"] = []
+    else:
+        checkpoint["unit_weapon_states"]["armed"] = []
 
     stale = Unit("stale", Position(0, 0, 0), side="blue")
     target = _context(
@@ -443,7 +656,7 @@ def test_fresh_restore_rejects_checkpoint_only_nonempty_loadout_atomically(
 
     with pytest.raises(
         ValueError,
-        match=rf"Cannot restore {kind} state for reconstructed unit 'armed'",
+        match="loadout resolution topology does not match",
     ):
         target.set_state(checkpoint)
 
@@ -452,27 +665,7 @@ def test_fresh_restore_rejects_checkpoint_only_nonempty_loadout_atomically(
 
 
 def test_legacy_unit_states_infer_concrete_classes() -> None:
-    source = _context(
-        {
-            "blue": [
-                GroundUnit("ground", Position(0, 0, 0), side="blue"),
-                AerialUnit("air", Position(1, 0, 0), side="blue"),
-                NavalUnit("naval", Position(2, 0, 0), side="blue"),
-                AirDefenseUnit("ad", Position(3, 0, 0), side="blue"),
-                SupportUnit("support", Position(4, 0, 0), side="blue"),
-                Unit("base", Position(5, 0, 0), side="blue"),
-            ],
-            "red": [],
-        },
-    )
-    checkpoint = _as_versionless_legacy_context(source.get_state())
-    for state in checkpoint["units_by_side"]["blue"]:
-        state.pop("unit_class", None)
-    target = _context()
-
-    target.set_state(checkpoint, allow_legacy_morale=True)
-
-    assert [type(unit) for unit in target.units_by_side["blue"]] == [
+    classes = [
         GroundUnit,
         AerialUnit,
         NavalUnit,
@@ -480,6 +673,46 @@ def test_legacy_unit_states_infer_concrete_classes() -> None:
         SupportUnit,
         Unit,
     ]
+    source_units = [
+        unit_class(
+            entity_id=entity_id,
+            position=Position(index, 0, 0),
+            side="blue",
+        )
+        for index, (unit_class, entity_id) in enumerate(zip(
+            classes,
+            ("ground", "air", "naval", "ad", "support", "base"),
+            strict=True,
+        ))
+    ]
+    source = _context(
+        {
+            "blue": source_units,
+            "red": [],
+        },
+    )
+    checkpoint = _as_versionless_legacy_context(source.get_state())
+    for state in checkpoint["units_by_side"]["blue"]:
+        state.pop("unit_class", None)
+    target = _context({
+        "blue": [
+            unit_class(
+                entity_id=source_unit.entity_id,
+                position=Position(999, 999, 0),
+                side="blue",
+            )
+            for unit_class, source_unit in zip(
+                classes,
+                source_units,
+                strict=True,
+            )
+        ],
+        "red": [],
+    })
+
+    target.set_state(checkpoint, allow_legacy_morale=True)
+
+    assert [type(unit) for unit in target.units_by_side["blue"]] == classes
 
 
 def test_legacy_checkpoint_without_force_sections_preserves_runtime_force() -> None:
@@ -523,8 +756,7 @@ def test_runtime_instance_state_validation_is_atomic(corrupt: str) -> None:
         {"blue": [unit], "red": []},
         {"armed": MoraleState.STEADY},
     )
-    ctx.unit_weapons = {"armed": [(weapon, [])]}
-    ctx.unit_sensors = {"armed": [sensor]}
+    _bind_loadout(ctx, unit, weapon, sensor)
     checkpoint = copy.deepcopy(ctx.get_state())
 
     ctx.clock.advance()
@@ -544,7 +776,7 @@ def test_runtime_instance_state_validation_is_atomic(corrupt: str) -> None:
         ctx.set_state(checkpoint)
 
     assert "armed" in ctx.unit_weapons
-    assert ctx.unit_weapons["armed"][0][0] is weapon
+    assert ctx.unit_weapons["armed"][0].weapon is weapon
     assert weapon.get_state() == before_weapon
     assert ctx.clock.get_state() == before_clock
     assert ctx.rng_manager.get_state() == before_rng
@@ -663,8 +895,7 @@ def _engine() -> tuple[SimulationEngine, WeaponInstance]:
             "red-1": MoraleState.SHAKEN,
         },
     )
-    ctx.unit_weapons = {"blue-1": [(weapon, [])], "red-1": []}
-    ctx.unit_sensors = {"blue-1": [sensor], "red-1": []}
+    _bind_loadout(ctx, blue, weapon, sensor)
     recorder = SimulationRecorder(ctx.event_bus)
     recorder.start()
     engine = SimulationEngine(
@@ -680,6 +911,44 @@ def _engine() -> tuple[SimulationEngine, WeaponInstance]:
 
 def _json_checkpoint(engine: SimulationEngine) -> dict[str, Any]:
     return json.loads(engine.checkpoint().decode("utf-8"))
+
+
+def test_same_id_equipment_semantic_drift_rejects_before_restore_mutation() -> None:
+    engine, _weapon = _engine()
+    checkpoint = copy.deepcopy(engine.get_state())
+    checkpoint["context"]["units_by_side"]["blue"][0]["equipment"][0][
+        "category"
+    ] = int(EquipmentCategory.UTILITY)
+    before = copy.deepcopy(engine.get_state())
+    live_equipment = engine._ctx.units_by_side["blue"][0].equipment[0]
+
+    with pytest.raises(ValueError, match="semantic binding topology"):
+        engine.set_state(checkpoint)
+
+    assert engine.get_state() == before
+    assert live_equipment.category is EquipmentCategory.WEAPON
+
+
+def test_versionless_same_id_equipment_semantic_drift_rejects_atomically() -> None:
+    engine, _weapon = _engine()
+    context = engine._ctx
+    checkpoint = _as_versionless_legacy_context(
+        copy.deepcopy(context.get_state()),
+    )
+    checkpoint["units_by_side"]["blue"][0]["equipment"][0][
+        "category"
+    ] = int(EquipmentCategory.UTILITY)
+    live_unit = context.units_by_side["blue"][0]
+    live_equipment = live_unit.equipment[0]
+    before = copy.deepcopy(context.get_state())
+
+    with pytest.raises(ValueError, match="semantic binding topology"):
+        context.set_state(checkpoint, allow_legacy_morale=True)
+
+    assert context.get_state() == before
+    assert context.units_by_side["blue"][0] is live_unit
+    assert context.units_by_side["blue"][0].equipment[0] is live_equipment
+    assert live_equipment.category is EquipmentCategory.WEAPON
 
 
 def test_fresh_engine_restore_continues_identically_to_control() -> None:
@@ -742,12 +1011,17 @@ def test_loaded_production_scenario_restores_live_weapon_state() -> None:
         (
             unit_id,
             index,
-            weapon,
-            ammo_defs[0].ammo_id,
+            attachment.weapon,
+            attachment.ammunition[0].ammo_id,
         )
         for unit_id, entries in control_ctx.unit_weapons.items()
-        for index, (weapon, ammo_defs) in enumerate(entries)
-        if ammo_defs and weapon.can_fire(ammo_defs[0].ammo_id)
+        for index, attachment in enumerate(entries)
+        if (
+            attachment.ammunition
+            and attachment.weapon.can_fire(
+                attachment.ammunition[0].ammo_id,
+            )
+        )
     )
     assert weapon.fire(ammo_id)
     weapon.record_fire(30.0)
@@ -758,7 +1032,7 @@ def test_loaded_production_scenario_restores_live_weapon_state() -> None:
     resumed_recorder.start()
     resumed = SimulationEngine(resumed_ctx, recorder=resumed_recorder)
     resumed.restore(checkpoint)
-    resumed_weapon = resumed_ctx.unit_weapons[unit_id][weapon_index][0]
+    resumed_weapon = resumed_ctx.unit_weapons[unit_id][weapon_index].weapon
 
     assert resumed_weapon.get_state() == weapon.get_state()
     assert _json_checkpoint(resumed) == json.loads(checkpoint.decode("utf-8"))

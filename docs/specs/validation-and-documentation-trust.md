@@ -86,9 +86,11 @@ CI enforces this cadence:
 - the refactored `slow-only`, `benchmark-only`, and `slow-benchmark`
   partitions on a declared weekly schedule and manual dispatch, sharded with
   measured job timeouts that do not conceal a timeout as a skip; and
-- the paired 73 Easting performance gate on every pull request and push, with
-  the paired Golan gate available only through an explicit long-running manual
-  dispatch.
+- the routine 73 Easting benchmark workflow on every pull request and push,
+  using the ordinary paired performance gate when its workload identity is
+  stable and the strict non-timing transition path during a reviewed workload
+  handoff; the paired Golan gate remains available only through an explicit
+  long-running manual dispatch.
 
 Every job prints its exact collection/pass/skip/deselect/warning counts and
 the command used. Machine-readable results and benchmark data upload under
@@ -781,10 +783,10 @@ for 73 Easting, and
 `699b75819d271ddf61a8d0bce309d44f64335fd1af6cd7d0b1c6da39128b8868`
 for Golan.
 
-### Current version-3 typed workload amendment
+### Phase 113 version-3 typed workload predecessor
 
-During Phase 113, the live baseline and artifact contract advances to version
-3. Every entry now carries a strict `BenchmarkWorkload` with a named workload
+During Phase 113, the baseline and artifact contract advanced to version
+3. Each version-3 entry carried a strict `BenchmarkWorkload` with a named workload
 and typed sparse `BenchmarkCalibrationPatch`; unknown fields, missing workload
 identity, and a workload-name/patch mismatch reject. The workload and exact
 effective calibration participate in the reference/candidate input
@@ -794,7 +796,7 @@ The routine 73 Easting gate is specifically
 `morale_neutral_control_plane`. Its typed morale patch sets the base degrade
 and recovery rates plus casualty, suppression, leadership, cohesion, and force
 ratio weights to exactly zero through the production configuration boundary.
-Only 73 Easting may select this workload. Every other current entry uses the
+Only 73 Easting may select this workload. Every other version-3 entry uses the
 typed `default` workload, and a morale-neutral patch on another entry rejects.
 
 This control preserves a stable movement/control-plane performance workload
@@ -805,6 +807,79 @@ event. It is not evidence for default 73 Easting morale behavior, combat
 throughput, historical fidelity, or Phase 113 acceptance. The version-2 timing
 and baseline-red measurements above remain labeled historical Phase 112
 evidence rather than being rewritten as version-3 results.
+
+### Phase 115 version-4 workload-transition qualification
+
+Phase 115 intentionally changes the effective 73 Easting control-plane
+workload while correcting equipment roles and enabling sensing-aware tactical
+standoff. The version-3 gate correctly rejects that candidate before timing:
+the scenario and dependency-lock identities remain exact, but the effective
+configuration, VVS-2 target-domain data, all 21 blue loadout role bindings,
+and the derived roster/loadout digest no longer equal the stored reference.
+Running paired timing samples across those different workloads would not be a
+performance-regression comparison.
+
+The checked-in benchmark contract therefore advances to strict format and
+policy version 4 while retaining runtime-input normalization version 3. The
+ordinary `gate` and `measurement_only` policies retain their existing
+meanings. A separate `transition_qualified` policy carries no timing
+threshold, order, pair count, timing scope, ratio, or performance decision.
+The ordinary `compare` command must reject it before launching a worker. A
+dedicated transition command executes exactly one production closure for the
+reference and one for the candidate; it can emit only
+`transition_qualified`, `transition_rejected`, or `error`.
+
+One typed transition contract contains the exact reference and candidate
+runtime-input identities, exact reference and candidate semantic envelopes,
+verified version-3 predecessor lineage, and a path-sorted, duplicate-free list
+of every approved effective-input, derived runtime-input, and semantic
+difference. Each approval
+records its surface, canonical RFC-6901 JSON Pointer, add/remove/replace
+operation, exact canonical before/after value digests, a closed classification,
+non-empty authorities, and rationale. Values use canonical JSON: sorted object
+keys, compact separators, explicit `null`, and no NaN or infinity. A transition
+digests a presence envelope—`{"present":false}` for absence or
+`{"present":true,"value":...}` for presence—so a missing path is never
+equivalent to a present JSON `null`. A transition
+rejects an added, removed, changed, stale, duplicated, reclassified, or
+unapproved value. A scenario, dependency lock, seed, maximum tick count,
+recorder configuration, or resolved source-list difference is never
+transition-qualified.
+
+The candidate-owned worker runs both endpoints. Every closure remains bound to
+its exact tree identity. The harness recomputes the complete runtime-input and
+semantic diffs and compares them to the checked-in contract before emitting
+its result. A separately typed, atomically written, digest-bearing transition
+artifact contains both complete runtime manifests and semantic envelopes, the
+exact classified differences, predecessor/baseline and tree identities,
+environment metadata, and an explicit `not_applicable` timing assessment. A
+closure and transition artifact expose no duration, timing sample, pair,
+ratio, or `PerformanceDecision`; operational timeouts and contention notes are
+not regression evidence. Neither the CLI, artifact validator, final-tree
+verifier, workflow, test, devlog, nor postmortem may rename a qualified
+transition to `pass` or infer a speed claim from it.
+
+The Phase 115 73 Easting transition is limited to three loaded
+`enable_sensing_aware_standoff: true` views, the catalog VVS-2 domain expansion
+from ground-only to ground/aerial/naval/amphibious, the exact 21 blue VVS-2
+loadout bindings from `ground_night_sight` to `night_vision`, the derived
+runtime-input fingerprint, and the derived roster/loadout digest. Unit count,
+winner, victory condition, ticks, logical duration, status counts, event count,
+event digest, scenario bytes, lock bytes, and all resolved source bytes remain
+exact. This is integrity-transition evidence, not historical validation,
+default-workload evidence, combat-throughput evidence, or a performance pass.
+
+The dirty precommit candidate snapshot must still carry a complete
+path/mode/content runtime-tree manifest. After the one Phase 115 commit, the
+existing clean-final-tree verifier must reproduce the candidate endpoint from
+that clean commit and may report only `transition_qualified`. The next phase
+must promote that clean Phase 115 commit and exact candidate endpoint to an
+ordinary version-4 paired reference before it can pass its own postmortem;
+promotion remains a reviewed baseline change and cannot be automatic or
+self-referential. The checked-in transition contract may retain predecessor
+document/entry hashes, but it must not embed its own current document/entry
+hash, candidate Git identity, or candidate runtime-tree manifest; those belong
+only to the external artifact.
 
 ### Typed Space ISR report delivery and checkpoint state
 
@@ -1210,7 +1285,7 @@ longer depends accidentally on the EW suite.
 | Commander | Canonical side profile plus typed tuning/override config | Global and applicable era catalogs with duplicate rejection | Initial and reinforcement units receive exact profiles | Declaring side profiles creates the engine | OODA/decision path runs with assigned personalities | Enabled side profiles change decision timing/behavior against phase-start controls | Commander/school/C2 state checkpoints and scenario diagnostics |
 | Unit data | Canonical enum-valued definition fields | UnitLoader validates before construction | Exact roster builder uses validated definitions | N/A: valid unit data is mandatory, not optional | Austerlitz and Waterloo construct every authored unit | Old Guard participates in production battle state | Exact roster/loadout checkpoint and validator/evaluator output |
 | Movement diagnostics | Typed disposition and bounded cumulative reason state | Production movement inputs | Exact strategic/tactical branches record disposition | Always observational when movement runs | Cambrai plus explicit zero-commit invariant control | Evaluator classification changes without altering simulation behavior | Evaluator JSON/text and bounded schema-112 state |
-| Benchmark | Version-3 typed workload policy, semantic envelope, samples, environment | Strict baseline/artifact parser | Candidate harness runs reference and candidate production engines with the fingerprinted workload patch | 73 Easting morale-neutral control-plane routine; Golan default-workload manual | Warm-up and three paired measurements | Rejects performance claims when workload semantics change | Uploaded JSON artifact and reviewed baseline contract |
+| Benchmark | Version-4 paired or transition policy over version-3 normalized runtime input | Strict baseline, comparison, transition, and final-tree parsers | Candidate harness runs reference and candidate production engines with the fingerprinted workload patch | 73 Easting morale-neutral transition during Phase 115; Golan default-workload manual | One closure per endpoint and zero timing samples for transition; warm-up plus three pairs for ordinary gate | Rejects or separately qualifies workload changes without a speed claim | Digest-bearing external artifacts, full endpoint manifests, and reviewed baseline contract |
 | Space ISR | Typed report, receipt, and queue/fusion state | Scenario/topology and checkpoint validation | Space update to transactional owner-side IMINT fusion | Space effects plus reachable imaging constellation | Delayed report before/after fresh restore | Ready report changes only owner fusion track/receipt state | Schema-112 report queue, receipt ledger, and FOW fusion state |
 | Documentation | Anchor severity and evidence-backed claims | MkDocs parses all pages/config | PR/main workflows run strict build | Every docs-relevant PR/push | All historical fragments resolve | N/A: documentation reports behavior but does not create it | Built site artifact and committed docs |
 
@@ -1405,6 +1480,11 @@ the seed or semantic workload.
    and bind the precommit candidate manifest exactly to the final commit tree.
 9. Run fresh paired 73 Easting and manual paired Golan comparisons on the same
    host and preserve their complete JSON artifacts.
+
+For the Phase 115 handoff only, item 9 is satisfied for 73 Easting by the
+separate exact `transition_qualified` artifact and clean-final reproduction
+defined above, never by paired timing across unequal inputs. Golan remains
+manual and unchanged.
 10. In the production loader-owned `space_isr_gap` scenario without EW, queue
     the exact eight-report blue imaging batch at 14,400 s with 7,200 s delay;
     prove no early track at 14,400 or 18,000 s, checkpoint/fresh restore typed
@@ -1455,15 +1535,19 @@ paths, scenario outcomes/diagnostics, and performance gates. Run:
 - representative pre/post scenario evaluation plus the complete scenario
   evaluator;
 - deterministic replay and fresh checkpoint continuation controls;
-- fresh paired 73 Easting and Golan performance comparisons;
+- fresh ordinary paired comparisons where workload identity is stable, or the
+  strict Phase 115 73 Easting transition qualification; manual Golan remains
+  separately declared;
 - affected frontend behavioral tests, then `npm test`, `npm run lint`, and
   `npm run build` from `frontend/`;
 - repository-wide Ruff, Python compilation, strict MkDocs, and
   `git diff --check`.
 
-Exact commands, versions, counts, warnings, exclusions, wall samples,
+Exact Phase 112 commands, versions, counts, warnings, exclusions, wall samples,
 environment metadata, scenario outcomes, artifact digests, and remaining
-deficits go into `docs/devlog/phase-112.md`.
+deficits go into `docs/devlog/phase-112.md`. Phase 115's version-4 transition
+commands, classified differences, endpoint identities, artifact digests, and
+explicit non-timing disposition go into `docs/devlog/phase-115.md`.
 
 ## Acceptance criteria
 
@@ -1494,7 +1578,8 @@ Phase 112 is complete only when:
    production capability;
 9. benchmark gates compare the same semantic workload on the same machine
    against an authoritative commit and cannot pass missing, placeholder,
-   noisy, or semantically stale evidence;
+   noisy, or semantically stale evidence; a reviewed unequal-workload handoff
+   uses the separate non-timing transition status and cannot claim a pass;
 10. Space ISR fusion has an explicit preflight-validated constellation
     selection, typed delayed owner-scoped imagery reports, real resolvable
     catalog targets, exact age-boundary/reactivation behavior, transactional
@@ -1518,9 +1603,11 @@ Phase 112 is complete only when:
   REM-019 morale ownership was closed by the accepted Phase 113 production
   contract.
 - REM-020 and REM-021 logistics authority remain explicit follow-ups.
-- REM-028 owns the newly confirmed weapon-standoff versus detection/visibility
-  mismatch and is assigned to planned Phase 115. Phase 112 records it without
-  changing movement or combat physics.
+- REM-028 owned the weapon-standoff versus detection/visibility mismatch and
+  is closed by completed Phase 115. Phase 112 recorded it without changing
+  movement or combat physics; Phase 115 supplied the accepted production,
+  checkpoint/exposure, qualified broad-run, documentation, and postmortem
+  evidence.
 - REM-029 owns exact restoration of nonempty ordinary fog-of-war contacts,
   is assigned to planned Phase 116, and addresses what current
   `FogOfWarManager.set_state()` discards. REM-027 proves fusion

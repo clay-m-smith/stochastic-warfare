@@ -163,11 +163,14 @@ fingerprint is part of checkpoint state.
 
 `SimulationEngine.step()` calls one public time-on-target update on every fixed
 whole-second scenario tick after reinforcement, environment, logistics, and
-scripted events, but before strategic movement, battle detection, or tactical
-combat. Because declared fire and impact times are exact multiples of the
-scenario's one cadence, no step crosses a milestone and no extra full engine
-tick is inserted. Enabled and disabled populated controls therefore retain
-identical clock, max-tick, environment, logistics, maintenance, recorder, and
+the legacy scripted-event check, but before strategic movement, battle
+detection, or tactical combat. That ordering does not assert that a due
+scripted action committed successfully; REM-045 / Phase 132 owns its typed,
+fail-closed, exact-once lifecycle. Because declared fire and impact times are
+exact multiples of the scenario's one cadence, no step crosses a milestone and
+no extra full engine tick is inserted. Enabled and disabled populated controls
+therefore retain identical clock, max-tick, environment, logistics,
+maintenance, recorder, and
 other subsystem cadence. An event processed at the same boundary changes the
 preconditions observed by time on target; a later event cannot be applied
 before an earlier aligned fire. A planned mission is not dependent on an

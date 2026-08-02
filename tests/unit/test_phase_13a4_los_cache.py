@@ -15,6 +15,51 @@ def _make_los(rows: int = 20, cols: int = 20, cell_size: float = 100.0) -> LOSEn
 
 
 class TestSelectiveLOSInvalidation:
+    def test_public_identity_matches_same_cell_engine_cache(self):
+        los = _make_los()
+        observer_a = Position(510, 510)
+        observer_b = Position(590, 590)
+        target_a = Position(1510, 510)
+        target_b = Position(1590, 590)
+
+        observer_cell = los.cache_cell(observer_a)
+        target_cell = los.cache_cell(target_a)
+        assert observer_cell == los.cache_cell(observer_b)
+        assert target_cell == los.cache_cell(target_b)
+        assert los.cache_key(observer_cell, target_cell) == los.cache_key(
+            los.cache_cell(observer_b),
+            los.cache_cell(target_b),
+        )
+
+        first = los.check_los(observer_a, target_a)
+        same_identity = los.check_los(observer_b, target_b)
+        assert same_identity is first
+        assert los.los_cache_size == 1
+
+    def test_public_identity_preserves_direction_and_height(self):
+        los = _make_los()
+        observer = Position(500, 500)
+        target = Position(1500, 500)
+        observer_cell = los.cache_cell(observer)
+        target_cell = los.cache_cell(target)
+
+        forward = los.cache_key(observer_cell, target_cell, 1.8, 0.0)
+        reverse = los.cache_key(target_cell, observer_cell, 1.8, 0.0)
+        higher_observer = los.cache_key(
+            observer_cell,
+            target_cell,
+            2.0,
+            0.0,
+        )
+        assert forward != reverse
+        assert forward != higher_observer
+
+        forward_result = los.check_los(observer, target, 1.8, 0.0)
+        reverse_result = los.check_los(target, observer, 1.8, 0.0)
+        assert forward_result.visible
+        assert reverse_result.visible
+        assert los.los_cache_size == 2
+
     def test_invalidate_empty_dirty_set(self):
         los = _make_los()
         obs = Position(500, 500)

@@ -17,6 +17,12 @@ from types import MappingProxyType
 from typing import Any
 
 from stochastic_warfare.core.types import Position
+from stochastic_warfare.simulation.tactical_targeting import (
+    TacticalTargetingDecision,
+    TargetingDisposition,
+    targeting_decision_from_state,
+    targeting_decision_to_state,
+)
 
 MOVEMENT_EPSILON_M = 1e-9
 MOVEMENT_OBSERVATION_LIMIT = 64
@@ -53,9 +59,7 @@ class MovementReason(str, Enum):
 
 
 _REASONS: tuple[MovementReason, ...] = tuple(MovementReason)
-_REASON_INDEX: dict[MovementReason, int] = {
-    reason: index for index, reason in enumerate(_REASONS)
-}
+_REASON_INDEX: dict[MovementReason, int] = {reason: index for index, reason in enumerate(_REASONS)}
 
 
 @dataclass(frozen=True, slots=True)
@@ -86,6 +90,146 @@ class MovementOrder:
 
 
 @dataclass(frozen=True, slots=True)
+class MovementTargetingMembership:
+    """Exact historical battle membership for one targeting decision."""
+
+    battle_id: str
+    unit_ids: tuple[str, ...]
+
+    def __post_init__(self) -> None:
+        battle_id = _validate_unit_id(
+            self.battle_id,
+            label="movement targeting membership battle_id",
+        )
+        if not isinstance(self.unit_ids, tuple) or not self.unit_ids:
+            raise ValueError(
+                "movement targeting membership unit_ids must be a non-empty "
+                "tuple",
+            )
+        unit_ids = tuple(
+            _validate_unit_id(
+                unit_id,
+                label="movement targeting membership unit_id",
+            )
+            for unit_id in self.unit_ids
+        )
+        if len(unit_ids) != len(set(unit_ids)):
+            raise ValueError(
+                "movement targeting membership contains duplicate unit IDs",
+            )
+        if unit_ids != tuple(sorted(unit_ids)):
+            raise ValueError(
+                "movement targeting membership unit IDs are not in "
+                "canonical order",
+            )
+        object.__setattr__(self, "battle_id", battle_id)
+        object.__setattr__(self, "unit_ids", unit_ids)
+
+
+_HOLD_REVALIDATION_FAILURE_DISPOSITIONS = frozenset({
+    TargetingDisposition.SHOOTER_INACTIVE,
+    TargetingDisposition.TARGET_INACTIVE,
+    TargetingDisposition.TARGET_NOT_HOSTILE,
+    TargetingDisposition.CONTACT_SENSOR_UNAVAILABLE,
+    TargetingDisposition.CONTACT_SENSOR_OFFLINE,
+    TargetingDisposition.CONTACT_SENSOR_WRONG_DOMAIN,
+    TargetingDisposition.CONTACT_RANGE_EXCEEDED,
+    TargetingDisposition.LINE_OF_SIGHT_BLOCKED,
+    TargetingDisposition.OUTSIDE_SENSOR_FIELD_OF_VIEW,
+    TargetingDisposition.VISIBILITY_LIMITED,
+    TargetingDisposition.SENSING_RANGE_EXCEEDED,
+    TargetingDisposition.NO_USABLE_WEAPON,
+    TargetingDisposition.WEAPON_INOPERABLE,
+    TargetingDisposition.NO_FIREABLE_AMMUNITION,
+    TargetingDisposition.WEAPON_RESERVED,
+    TargetingDisposition.TARGET_DOMAIN_UNSUPPORTED,
+    TargetingDisposition.NO_COMPATIBLE_FIRE_CONTROL,
+    TargetingDisposition.FIRE_CONTROL_SENSOR_OFFLINE,
+    TargetingDisposition.FIRE_CONTROL_SHOOTER_DOMAIN_UNSUPPORTED,
+    TargetingDisposition.FIRE_CONTROL_TARGET_DOMAIN_UNSUPPORTED,
+    TargetingDisposition.FIRE_CONTROL_RANGE_EXCEEDED,
+    TargetingDisposition.OUTSIDE_PHYSICAL_RANGE,
+    TargetingDisposition.OUTSIDE_EFFECTIVE_RANGE,
+})
+
+
+@dataclass(frozen=True, slots=True, kw_only=True)
+class MovementHoldRevalidationOutcome:
+    """Exact live check for one published consumable can-hold decision.
+
+    The immutable targeting decision remains the pre-movement authority.  This
+    diagnostic records whether that same decision still authorized a hold at
+    the live movement boundary after earlier battle mutations.  An earlier
+    authored or defensive movement owner may still select the final reason.
+    """
+
+    engine_tick: int
+    battle_id: str
+    shooter_id: str
+    target_id: str
+    live_distance_m: float
+    disposition: TargetingDisposition
+    hold_authorized: bool
+
+    def __post_init__(self) -> None:
+        _validate_non_negative_int(
+            self.engine_tick,
+            label="movement hold revalidation engine_tick",
+        )
+        battle_id = _validate_unit_id(
+            self.battle_id,
+            label="movement hold revalidation battle_id",
+        )
+        shooter_id = _validate_unit_id(
+            self.shooter_id,
+            label="movement hold revalidation shooter_id",
+        )
+        target_id = _validate_unit_id(
+            self.target_id,
+            label="movement hold revalidation target_id",
+        )
+        live_distance_m = _validate_non_negative_number(
+            self.live_distance_m,
+            label="movement hold revalidation live_distance_m",
+        )
+        if not isinstance(self.disposition, TargetingDisposition):
+            raise ValueError(
+                "movement hold revalidation disposition must be a "
+                "TargetingDisposition",
+            )
+        if type(self.hold_authorized) is not bool:
+            raise ValueError(
+                "movement hold revalidation hold_authorized must be a boolean",
+            )
+        if self.hold_authorized:
+            if self.disposition is not (
+                TargetingDisposition.VALID_ENGAGEMENT_SOLUTION
+            ):
+                raise ValueError(
+                    "an authorized movement hold requires "
+                    "VALID_ENGAGEMENT_SOLUTION",
+                )
+        elif (
+            self.disposition
+            is not TargetingDisposition.VALID_ENGAGEMENT_SOLUTION
+            and self.disposition not in _HOLD_REVALIDATION_FAILURE_DISPOSITIONS
+        ):
+            raise ValueError(
+                "a failed movement hold revalidation has an unsupported "
+                "disposition",
+            )
+        object.__setattr__(self, "battle_id", battle_id)
+        object.__setattr__(self, "shooter_id", shooter_id)
+        object.__setattr__(self, "target_id", target_id)
+        object.__setattr__(self, "live_distance_m", live_distance_m)
+
+    @property
+    def key(self) -> tuple[int, str, str]:
+        """Return the exact published targeting-decision identity."""
+        return (self.engine_tick, self.battle_id, self.shooter_id)
+
+
+@dataclass(frozen=True, slots=True)
 class MovementDecision:
     """One manager-owned decision awaiting canonical ordinal assignment."""
 
@@ -95,6 +239,9 @@ class MovementDecision:
     attempted_m: float
     pre_position: Position
     post_position: Position
+    targeting_decision: TacticalTargetingDecision | None = None
+    targeting_membership: MovementTargetingMembership | None = None
+    hold_revalidation: MovementHoldRevalidationOutcome | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -112,6 +259,9 @@ class MovementObservation:
     achieved_m: float
     pre_position: Position
     post_position: Position
+    targeting_decision: TacticalTargetingDecision | None = None
+    targeting_membership: MovementTargetingMembership | None = None
+    hold_revalidation: MovementHoldRevalidationOutcome | None = None
 
     @property
     def order(self) -> MovementOrder:
@@ -147,10 +297,7 @@ class MovementUnitDiagnostics:
     @property
     def reason_counts(self) -> Mapping[MovementReason, int]:
         """Return an immutable typed reason-count view."""
-        return MappingProxyType({
-            reason: self._reason_counts[index]
-            for index, reason in enumerate(_REASONS)
-        })
+        return MappingProxyType({reason: self._reason_counts[index] for index, reason in enumerate(_REASONS)})
 
     def reason_count(self, reason: MovementReason) -> int:
         """Return the cumulative count for one exact reason."""
@@ -158,10 +305,7 @@ class MovementUnitDiagnostics:
 
     def reason_counts_by_name(self) -> dict[str, int]:
         """Return JSON-facing exact reason counters."""
-        return {
-            reason.value: self._reason_counts[index]
-            for index, reason in enumerate(_REASONS)
-        }
+        return {reason.value: self._reason_counts[index] for index, reason in enumerate(_REASONS)}
 
 
 @dataclass(frozen=True, slots=True)
@@ -258,11 +402,7 @@ def _empty_unit_accumulator(
 def _validate_unit_id(value: object, *, label: str) -> str:
     if isinstance(value, Enum):
         value = value.value
-    if (
-        not isinstance(value, str)
-        or not value
-        or value.strip() != value
-    ):
+    if not isinstance(value, str) or not value or value.strip() != value:
         raise ValueError(
             f"{label} must be a non-empty string without surrounding whitespace",
         )
@@ -289,10 +429,7 @@ def _validate_non_negative_number(value: object, *, label: str) -> float:
 
 
 def _validate_position(value: object, *, label: str) -> Position:
-    if type(value) is Position and all(
-        type(coordinate) is float and math.isfinite(coordinate)
-        for coordinate in value
-    ):
+    if type(value) is Position and all(type(coordinate) is float and math.isfinite(coordinate) for coordinate in value):
         return value
     if not isinstance(value, (list, tuple)) or len(value) != 3:
         raise ValueError(f"{label} must contain exactly three ENU coordinates")
@@ -312,9 +449,7 @@ def _validate_position(value: object, *, label: str) -> Position:
 
 def _position_distance(pre: Position, post: Position) -> float:
     return math.sqrt(
-        (post.easting - pre.easting) ** 2
-        + (post.northing - pre.northing) ** 2
-        + (post.altitude - pre.altitude) ** 2
+        (post.easting - pre.easting) ** 2 + (post.northing - pre.northing) ** 2 + (post.altitude - pre.altitude) ** 2
     )
 
 
@@ -348,6 +483,133 @@ def _validate_reason_distances(
         abs_tol=MOVEMENT_EPSILON_M,
     ):
         raise ValueError(f"{label} achieved distance exceeds attempted distance")
+
+
+def _validate_targeting_identity(
+    decision: TacticalTargetingDecision | None,
+    membership: MovementTargetingMembership | None,
+    *,
+    engine_tick: int,
+    stage: MovementStage,
+    battle_id: str,
+    unit_id: str,
+    side: str,
+    label: str,
+) -> tuple[
+    TacticalTargetingDecision | None,
+    MovementTargetingMembership | None,
+]:
+    """Validate one already-resolved targeting answer without recomputing it."""
+    if decision is None:
+        if membership is not None:
+            raise ValueError(
+                f"{label}.targeting_membership requires a targeting decision",
+            )
+        return None, None
+    if not isinstance(decision, TacticalTargetingDecision):
+        raise ValueError(
+            f"{label}.targeting_decision must be a TacticalTargetingDecision or None",
+        )
+    if not isinstance(membership, MovementTargetingMembership):
+        raise ValueError(
+            f"{label}.targeting_membership must accompany every targeting "
+            "decision",
+        )
+    if stage is not MovementStage.TACTICAL:
+        raise ValueError(
+            f"{label}.targeting_decision is valid only for tactical movement",
+        )
+    expected_identity = (engine_tick, battle_id, unit_id, side)
+    actual_identity = (
+        decision.engine_tick,
+        decision.battle_id,
+        decision.shooter_id,
+        decision.shooter_side,
+    )
+    if actual_identity != expected_identity:
+        raise ValueError(
+            f"{label}.targeting_decision disagrees with movement tick/battle/shooter/side identity",
+        )
+    if membership.battle_id != battle_id:
+        raise ValueError(
+            f"{label}.targeting_membership disagrees with movement battle "
+            "identity",
+        )
+    if decision.shooter_id not in membership.unit_ids:
+        raise ValueError(
+            f"{label}.targeting_membership omits the decision shooter",
+        )
+    if (
+        decision.target_id is not None
+        and decision.target_id not in membership.unit_ids
+    ):
+        raise ValueError(
+            f"{label}.targeting_membership omits the decision target",
+        )
+    return decision, membership
+
+
+def _validate_hold_revalidation(
+    decision: TacticalTargetingDecision | None,
+    outcome: MovementHoldRevalidationOutcome | None,
+    *,
+    label: str,
+) -> MovementHoldRevalidationOutcome | None:
+    """Validate exact live-hold evidence against its immutable decision."""
+    if decision is None or not decision.can_hold:
+        if outcome is not None:
+            raise ValueError(
+                f"{label}.hold_revalidation is forbidden without a "
+                "consumable can-hold targeting decision",
+            )
+        return None
+    if not isinstance(outcome, MovementHoldRevalidationOutcome):
+        raise ValueError(
+            f"{label}.hold_revalidation must accompany every consumable "
+            "can-hold targeting decision",
+        )
+    if outcome.key != decision.key:
+        raise ValueError(
+            f"{label}.hold_revalidation key disagrees with targeting decision",
+        )
+    if outcome.target_id != decision.target_id:
+        raise ValueError(
+            f"{label}.hold_revalidation target disagrees with targeting decision",
+        )
+    if outcome.hold_authorized:
+        if outcome.live_distance_m > decision.authorized_standoff_m:
+            raise ValueError(
+                f"{label}.hold_revalidation authorized hold exceeds the "
+                "decision standoff range",
+            )
+    elif (
+        outcome.disposition is TargetingDisposition.VALID_ENGAGEMENT_SOLUTION
+        and outcome.live_distance_m <= decision.authorized_standoff_m
+    ):
+        raise ValueError(
+            f"{label}.hold_revalidation valid solution inside the standoff "
+            "range must authorize hold",
+        )
+    return outcome
+
+
+def _validate_hold_reason(
+    *,
+    decision: TacticalTargetingDecision | None,
+    outcome: MovementHoldRevalidationOutcome | None,
+    reason: MovementReason,
+    label: str,
+) -> None:
+    """Require an automatic-standoff reason to have live authorization."""
+    if (
+        decision is not None
+        and reason is MovementReason.ENGINE_WEAPON_STANDOFF
+        and (outcome is None or not outcome.hold_authorized)
+    ):
+        raise ValueError(
+            f"{label} automatic standoff reason lacks authorized live hold "
+            "revalidation",
+        )
 
 
 def _order_to_state(order: MovementOrder | None) -> dict[str, Any] | None:
@@ -408,7 +670,86 @@ _OBSERVATION_KEYS = _ORDER_KEYS | {
     "achieved_m",
     "pre_position",
     "post_position",
+    "targeting_decision",
+    "targeting_membership",
+    "hold_revalidation",
 }
+
+_TARGETING_MEMBERSHIP_KEYS = {"battle_id", "unit_ids"}
+_HOLD_REVALIDATION_KEYS = {
+    "engine_tick",
+    "battle_id",
+    "shooter_id",
+    "target_id",
+    "live_distance_m",
+    "disposition",
+    "hold_authorized",
+}
+
+
+def _targeting_membership_to_state(
+    membership: MovementTargetingMembership | None,
+) -> dict[str, Any] | None:
+    if membership is None:
+        return None
+    return {
+        "battle_id": membership.battle_id,
+        "unit_ids": list(membership.unit_ids),
+    }
+
+
+def _targeting_membership_from_state(
+    value: object,
+    *,
+    label: str,
+) -> MovementTargetingMembership:
+    if not isinstance(value, dict) or set(value) != _TARGETING_MEMBERSHIP_KEYS:
+        raise ValueError(f"{label} has invalid key topology")
+    raw_unit_ids = value["unit_ids"]
+    if not isinstance(raw_unit_ids, list):
+        raise ValueError(f"{label}.unit_ids must be a list")
+    return MovementTargetingMembership(
+        battle_id=value["battle_id"],
+        unit_ids=tuple(raw_unit_ids),
+    )
+
+
+def _hold_revalidation_to_state(
+    outcome: MovementHoldRevalidationOutcome | None,
+) -> dict[str, Any] | None:
+    if outcome is None:
+        return None
+    return {
+        "engine_tick": outcome.engine_tick,
+        "battle_id": outcome.battle_id,
+        "shooter_id": outcome.shooter_id,
+        "target_id": outcome.target_id,
+        "live_distance_m": outcome.live_distance_m,
+        "disposition": outcome.disposition.value,
+        "hold_authorized": outcome.hold_authorized,
+    }
+
+
+def _hold_revalidation_from_state(
+    value: object,
+    *,
+    label: str,
+) -> MovementHoldRevalidationOutcome:
+    if not isinstance(value, dict) or set(value) != _HOLD_REVALIDATION_KEYS:
+        raise ValueError(f"{label} has invalid key topology")
+    try:
+        disposition = TargetingDisposition(value["disposition"])
+    except (TypeError, ValueError) as exc:
+        raise ValueError(f"{label}.disposition is not supported") from exc
+    return MovementHoldRevalidationOutcome(
+        engine_tick=value["engine_tick"],
+        battle_id=value["battle_id"],
+        shooter_id=value["shooter_id"],
+        target_id=value["target_id"],
+        live_distance_m=value["live_distance_m"],
+        disposition=disposition,
+        hold_authorized=value["hold_authorized"],
+    )
 
 
 def _observation_to_state(observation: MovementObservation) -> dict[str, Any]:
@@ -419,6 +760,17 @@ def _observation_to_state(observation: MovementObservation) -> dict[str, Any]:
         "achieved_m": observation.achieved_m,
         "pre_position": list(observation.pre_position),
         "post_position": list(observation.post_position),
+        "targeting_decision": (
+            None
+            if observation.targeting_decision is None
+            else targeting_decision_to_state(observation.targeting_decision)
+        ),
+        "targeting_membership": _targeting_membership_to_state(
+            observation.targeting_membership,
+        ),
+        "hold_revalidation": _hold_revalidation_to_state(
+            observation.hold_revalidation,
+        ),
     }
 
 
@@ -467,6 +819,45 @@ def _observation_from_state(
         achieved_m=achieved_m,
         label=label,
     )
+    raw_targeting = value["targeting_decision"]
+    raw_membership = value["targeting_membership"]
+    targeting_membership = (
+        None
+        if raw_membership is None
+        else _targeting_membership_from_state(
+            raw_membership,
+            label=f"{label}.targeting_membership",
+        )
+    )
+    targeting_decision, targeting_membership = _validate_targeting_identity(
+        (None if raw_targeting is None else targeting_decision_from_state(raw_targeting)),
+        targeting_membership,
+        engine_tick=order.engine_tick,
+        stage=order.stage,
+        battle_id=order.battle_id,
+        unit_id=order.unit_id,
+        side=order.side,
+        label=label,
+    )
+    raw_hold_revalidation = value["hold_revalidation"]
+    hold_revalidation = _validate_hold_revalidation(
+        targeting_decision,
+        (
+            None
+            if raw_hold_revalidation is None
+            else _hold_revalidation_from_state(
+                raw_hold_revalidation,
+                label=f"{label}.hold_revalidation",
+            )
+        ),
+        label=label,
+    )
+    _validate_hold_reason(
+        decision=targeting_decision,
+        outcome=hold_revalidation,
+        reason=reason,
+        label=label,
+    )
     return MovementObservation(
         engine_tick=order.engine_tick,
         stage=order.stage,
@@ -479,6 +870,9 @@ def _observation_from_state(
         achieved_m=achieved_m,
         pre_position=pre_position,
         post_position=post_position,
+        targeting_decision=targeting_decision,
+        targeting_membership=targeting_membership,
+        hold_revalidation=hold_revalidation,
     )
 
 
@@ -546,8 +940,7 @@ class MovementDiagnostics:
             existing = self._units.get(unit_id)
             if existing is not None and existing.side != side:
                 raise ValueError(
-                    f"movement diagnostic unit {unit_id!r} is already "
-                    f"registered to side {existing.side!r}",
+                    f"movement diagnostic unit {unit_id!r} is already registered to side {existing.side!r}",
                 )
         additions = {
             unit_id: _empty_unit_accumulator(
@@ -570,10 +963,7 @@ class MovementDiagnostics:
 
     def summaries(self) -> tuple[MovementUnitDiagnostics, ...]:
         """Return all summaries in stable unit-ID order."""
-        return tuple(
-            self._units[unit_id].snapshot()
-            for unit_id in sorted(self._units)
-        )
+        return tuple(self._units[unit_id].snapshot() for unit_id in sorted(self._units))
 
     def record_batch(
         self,
@@ -635,6 +1025,38 @@ class MovementDiagnostics:
                 achieved_m=achieved_m,
                 label=label,
             )
+            (
+                targeting_decision,
+                targeting_membership,
+            ) = _validate_targeting_identity(
+                decision.targeting_decision,
+                decision.targeting_membership,
+                engine_tick=tick,
+                stage=stage,
+                battle_id=battle_id,
+                unit_id=unit_id,
+                side=side,
+                label=label,
+            )
+            hold_revalidation = _validate_hold_revalidation(
+                targeting_decision,
+                decision.hold_revalidation,
+                label=label,
+            )
+            _validate_hold_reason(
+                decision=targeting_decision,
+                outcome=hold_revalidation,
+                reason=decision.reason,
+                label=label,
+            )
+            if (
+                targeting_membership is not None
+                and not set(targeting_membership.unit_ids) <= set(self._units)
+            ):
+                raise ValueError(
+                    f"{label}.targeting_membership references an unregistered "
+                    "movement unit",
+                )
             normalized_decision = (
                 decision
                 if (
@@ -643,6 +1065,10 @@ class MovementDiagnostics:
                     and attempted_m is decision.attempted_m
                     and pre_position is decision.pre_position
                     and post_position is decision.post_position
+                    and targeting_decision is decision.targeting_decision
+                    and targeting_membership
+                    is decision.targeting_membership
+                    and hold_revalidation is decision.hold_revalidation
                 )
                 else MovementDecision(
                     unit_id=unit_id,
@@ -651,6 +1077,9 @@ class MovementDiagnostics:
                     attempted_m=attempted_m,
                     pre_position=pre_position,
                     post_position=post_position,
+                    targeting_decision=targeting_decision,
+                    targeting_membership=targeting_membership,
+                    hold_revalidation=hold_revalidation,
                 )
             )
             normalized.append((normalized_decision, achieved_m))
@@ -660,10 +1089,7 @@ class MovementDiagnostics:
         normalized.sort(key=lambda item: (item[0].side, item[0].unit_id))
 
         first_ordinal = (
-            self._next_ordinal
-            if self._last_order is not None
-            and self._last_order.engine_tick == tick
-            else 0
+            self._next_ordinal if self._last_order is not None and self._last_order.engine_tick == tick else 0
         )
         observations: list[tuple[MovementObservation, MovementOrder]] = []
         previous_order = self._last_order
@@ -688,15 +1114,13 @@ class MovementDiagnostics:
                 achieved_m=achieved_m,
                 pre_position=decision.pre_position,
                 post_position=decision.post_position,
+                targeting_decision=decision.targeting_decision,
+                targeting_membership=decision.targeting_membership,
+                hold_revalidation=decision.hold_revalidation,
             )
-            if (
-                previous_order is not None
-                and order.prefix_key()
-                < previous_order.prefix_key()
-            ):
+            if previous_order is not None and order.prefix_key() < previous_order.prefix_key():
                 raise ValueError(
-                    "movement observation batch is earlier than the canonical "
-                    "last order",
+                    "movement observation batch is earlier than the canonical last order",
                 )
             observations.append((observation, order))
             previous_order = order
@@ -715,19 +1139,25 @@ class MovementDiagnostics:
         ] = []
         for observation, order in observations:
             current = self._units[observation.unit_id]
-            staged_totals.append((
-                current,
-                observation,
-                order,
-                math.fsum((
-                    current.total_attempted_m,
-                    observation.attempted_m,
-                )),
-                math.fsum((
-                    current.total_achieved_m,
-                    observation.achieved_m,
-                )),
-            ))
+            staged_totals.append(
+                (
+                    current,
+                    observation,
+                    order,
+                    math.fsum(
+                        (
+                            current.total_attempted_m,
+                            observation.attempted_m,
+                        )
+                    ),
+                    math.fsum(
+                        (
+                            current.total_achieved_m,
+                            observation.achieved_m,
+                        )
+                    ),
+                )
+            )
 
         for (
             current,
@@ -748,9 +1178,7 @@ class MovementDiagnostics:
             current.final_reason = observation.reason
             current.final_order = order
             current.recent_observations.append(observation)
-            current.dropped_observation_count = (
-                current.decision_count - len(current.recent_observations)
-            )
+            current.dropped_observation_count = current.decision_count - len(current.recent_observations)
 
         self._total_observation_count += len(observations)
         self._last_order = observations[-1][1]
@@ -758,7 +1186,7 @@ class MovementDiagnostics:
         return tuple(observation for observation, _order in observations)
 
     def get_state(self) -> dict[str, Any]:
-        """Return exact schema-112 cumulative state."""
+        """Return exact format-115 cumulative state."""
         return {
             "units": {
                 summary.unit_id: {
@@ -770,19 +1198,12 @@ class MovementDiagnostics:
                     "expected_progress_count": summary.expected_progress_count,
                     "zero_progress_count": summary.zero_progress_count,
                     "positive_progress_count": summary.positive_progress_count,
-                    "final_reason": (
-                        summary.final_reason.value
-                        if summary.final_reason is not None
-                        else None
-                    ),
+                    "final_reason": (summary.final_reason.value if summary.final_reason is not None else None),
                     "final_order": _order_to_state(summary.final_order),
                     "recent_observations": [
-                        _observation_to_state(observation)
-                        for observation in summary.recent_observations
+                        _observation_to_state(observation) for observation in summary.recent_observations
                     ],
-                    "dropped_observation_count": (
-                        summary.dropped_observation_count
-                    ),
+                    "dropped_observation_count": (summary.dropped_observation_count),
                 }
                 for summary in self.summaries()
             },
@@ -824,14 +1245,14 @@ class MovementDiagnostics:
             raise ValueError("movement diagnostics unit keys must be strings")
         if set(raw_units) != expected_ids:
             raise ValueError(
-                "movement diagnostics unit topology does not match the "
-                "checkpoint force roster",
+                "movement diagnostics unit topology does not match the checkpoint force roster",
             )
 
         summaries = tuple(
             self._stage_unit_state(
                 unit_id,
                 expected_topology[unit_id],
+                expected_ids,
                 raw_units[unit_id],
             )
             for unit_id in sorted(expected_ids)
@@ -840,12 +1261,9 @@ class MovementDiagnostics:
             state["total_observation_count"],
             label="movement diagnostics total_observation_count",
         )
-        if total_observation_count != sum(
-            summary.decision_count for summary in summaries
-        ):
+        if total_observation_count != sum(summary.decision_count for summary in summaries):
             raise ValueError(
-                "movement diagnostics total_observation_count disagrees with "
-                "unit decision counts",
+                "movement diagnostics total_observation_count disagrees with unit decision counts",
             )
         next_ordinal = _validate_non_negative_int(
             state["next_ordinal"],
@@ -860,17 +1278,9 @@ class MovementDiagnostics:
                 label="movement diagnostics last_order",
             )
         )
-        final_orders = tuple(
-            summary.final_order
-            for summary in summaries
-            if summary.final_order is not None
-        )
+        final_orders = tuple(summary.final_order for summary in summaries if summary.final_order is not None)
         if not final_orders:
-            if (
-                total_observation_count != 0
-                or last_order is not None
-                or next_ordinal != 0
-            ):
+            if total_observation_count != 0 or last_order is not None or next_ordinal != 0:
                 raise ValueError(
                     "empty movement diagnostics have non-empty global counters",
                 )
@@ -897,6 +1307,7 @@ class MovementDiagnostics:
         self,
         unit_id: str,
         expected_side: str,
+        expected_unit_ids: set[str],
         value: object,
     ) -> MovementUnitDiagnostics:
         label = f"movement diagnostics unit {unit_id!r}"
@@ -907,10 +1318,7 @@ class MovementDiagnostics:
             raise ValueError(f"{label} side disagrees with runtime topology")
         raw_counts = value["reason_counts"]
         expected_reason_keys = {reason.value for reason in _REASONS}
-        if (
-            not isinstance(raw_counts, dict)
-            or set(raw_counts) != expected_reason_keys
-        ):
+        if not isinstance(raw_counts, dict) or set(raw_counts) != expected_reason_keys:
             raise ValueError(f"{label} has invalid reason-count topology")
         counts = tuple(
             _validate_non_negative_int(
@@ -951,8 +1359,7 @@ class MovementDiagnostics:
         if (
             positive_progress_count != moved_count
             or zero_progress_count != zero_reason_count
-            or expected_progress_count
-            != positive_progress_count + zero_progress_count
+            or expected_progress_count != positive_progress_count + zero_progress_count
         ):
             raise ValueError(f"{label} progress counters are inconsistent")
 
@@ -970,37 +1377,33 @@ class MovementDiagnostics:
         )
         if any(observation.unit_id != unit_id for observation in recent):
             raise ValueError(f"{label} ring contains another unit identity")
-        if any(
-            later.order.sort_key() <= earlier.order.sort_key()
-            for earlier, later in zip(recent, recent[1:])
-        ):
+        if any(later.order.sort_key() <= earlier.order.sort_key() for earlier, later in zip(recent, recent[1:])):
             raise ValueError(f"{label} ring is not strictly ordered")
         if any(observation.side != side for observation in recent):
             raise ValueError(f"{label} ring changes immutable side identity")
+        for observation in recent:
+            membership = observation.targeting_membership
+            if membership is not None and not set(
+                membership.unit_ids,
+            ) <= expected_unit_ids:
+                raise ValueError(
+                    f"{label} targeting membership references a unit outside "
+                    "the checkpoint force roster",
+                )
 
         dropped = _validate_non_negative_int(
             value["dropped_observation_count"],
             label=f"{label}.dropped_observation_count",
         )
-        if (
-            len(recent) != min(decision_count, MOVEMENT_OBSERVATION_LIMIT)
-            or dropped != decision_count - len(recent)
-        ):
+        if len(recent) != min(decision_count, MOVEMENT_OBSERVATION_LIMIT) or dropped != decision_count - len(recent):
             raise ValueError(f"{label} ring and dropped counters disagree")
         ring_counts = {reason: 0 for reason in _REASONS}
         for observation in recent:
             ring_counts[observation.reason] += 1
-        if any(
-            ring_counts[reason] > counts[_REASON_INDEX[reason]]
-            for reason in _REASONS
-        ):
+        if any(ring_counts[reason] > counts[_REASON_INDEX[reason]] for reason in _REASONS):
             raise ValueError(f"{label} ring reason counts exceed cumulative counts")
-        ring_attempted = math.fsum(
-            observation.attempted_m for observation in recent
-        )
-        ring_achieved = math.fsum(
-            observation.achieved_m for observation in recent
-        )
+        ring_attempted = math.fsum(observation.attempted_m for observation in recent)
+        ring_achieved = math.fsum(observation.achieved_m for observation in recent)
         if (
             total_attempted_m + MOVEMENT_EPSILON_M < ring_attempted
             or total_achieved_m + MOVEMENT_EPSILON_M < ring_achieved
@@ -1044,11 +1447,7 @@ class MovementDiagnostics:
                 or positive_progress_count != 0
             ):
                 raise ValueError(f"{label} zero state has non-zero fields")
-        elif (
-            not recent
-            or final_reason is not recent[-1].reason
-            or final_order != recent[-1].order
-        ):
+        elif not recent or final_reason is not recent[-1].reason or final_order != recent[-1].order:
             raise ValueError(f"{label} final disposition disagrees with its ring")
 
         return MovementUnitDiagnostics(
@@ -1083,10 +1482,7 @@ class MovementDiagnostics:
         """
         return all(
             summary.dropped_observation_count == 0
-            or (
-                bool(summary.recent_observations)
-                and summary.recent_observations[0].engine_tick < tick
-            )
+            or (bool(summary.recent_observations) and summary.recent_observations[0].engine_tick < tick)
             for summary in summaries
         )
 
@@ -1094,11 +1490,7 @@ class MovementDiagnostics:
     def _validate_cross_unit_order(
         summaries: tuple[MovementUnitDiagnostics, ...],
     ) -> None:
-        observations = [
-            observation
-            for summary in summaries
-            for observation in summary.recent_observations
-        ]
+        observations = [observation for summary in summaries for observation in summary.recent_observations]
         by_tick: dict[int, list[MovementObservation]] = {}
         for observation in observations:
             by_tick.setdefault(observation.engine_tick, []).append(observation)
@@ -1110,25 +1502,15 @@ class MovementDiagnostics:
                 raise ValueError(
                     f"movement diagnostics tick {tick} has duplicate ordinals",
                 )
-            if (
-                MovementDiagnostics._tick_history_is_complete(
-                    summaries,
-                    tick,
-                )
-                and ordinals != list(range(len(ordered)))
-            ):
+            if MovementDiagnostics._tick_history_is_complete(
+                summaries,
+                tick,
+            ) and ordinals != list(range(len(ordered))):
                 raise ValueError(
-                    f"movement diagnostics tick {tick} complete history must "
-                    "use contiguous zero-based ordinals",
+                    f"movement diagnostics tick {tick} complete history must use contiguous zero-based ordinals",
                 )
-            prefixes = [
-                observation.order.prefix_key()
-                for observation in ordered
-            ]
-            if any(
-                later < earlier
-                for earlier, later in zip(prefixes, prefixes[1:])
-            ):
+            prefixes = [observation.order.prefix_key() for observation in ordered]
+            if any(later < earlier for earlier, later in zip(prefixes, prefixes[1:])):
                 raise ValueError(
                     f"movement diagnostics tick {tick} violates canonical order",
                 )
@@ -1137,10 +1519,7 @@ class MovementDiagnostics:
         """Commit a previously staged movement-diagnostics plan."""
         if not isinstance(plan, MovementDiagnosticsRestorePlan):
             raise TypeError("plan must be a MovementDiagnosticsRestorePlan")
-        self._units = {
-            summary.unit_id: _MovementUnitAccumulator.from_snapshot(summary)
-            for summary in plan.units
-        }
+        self._units = {summary.unit_id: _MovementUnitAccumulator.from_snapshot(summary) for summary in plan.units}
         self._total_observation_count = plan.total_observation_count
         self._last_order = plan.last_order
         self._next_ordinal = plan.next_ordinal
@@ -1171,14 +1550,9 @@ def resolve_movement_diagnostics_owner(
     owner = injected
     if owner is None and isinstance(context_owner, MovementDiagnostics):
         owner = context_owner
-    elif (
-        owner is not None
-        and isinstance(context_owner, MovementDiagnostics)
-        and owner is not context_owner
-    ):
+    elif owner is not None and isinstance(context_owner, MovementDiagnostics) and owner is not context_owner:
         raise RuntimeError(
-            f"{boundary} and SimulationContext movement diagnostics must "
-            "share one owner",
+            f"{boundary} and SimulationContext movement diagnostics must share one owner",
         )
     if owner is None:
         return None, None

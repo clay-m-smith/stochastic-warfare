@@ -14,8 +14,8 @@ from pydantic import ValidationError
 from stochastic_warfare.core.clock import SimulationClock
 from stochastic_warfare.core.events import EventBus
 from stochastic_warfare.core.rng import RNGManager
-from stochastic_warfare.core.types import ModuleId
-from stochastic_warfare.entities.base import UnitStatus
+from stochastic_warfare.core.types import ModuleId, Position
+from stochastic_warfare.entities.base import Unit, UnitStatus
 from stochastic_warfare.morale.rout import RoutEngine
 from stochastic_warfare.morale.runtime import MoraleRuntime
 from stochastic_warfare.morale.state import MoraleState
@@ -36,6 +36,9 @@ from stochastic_warfare.simulation.scenario import (
     SideConfig,
     SimulationContext,
     load_campaign_scenario_config,
+)
+from stochastic_warfare.simulation.tactical_targeting import (
+    TacticalTargetingRuntime,
 )
 from stochastic_warfare.simulation.victory import VictoryEvaluator
 from tests.conftest import make_versionless_legacy_morale_checkpoint
@@ -616,6 +619,7 @@ def _versionless_legacy_morale_checkpoint(
 def _empty_direct_engine(
     *,
     with_runtime: bool,
+    with_targeting: bool = True,
 ) -> tuple[SimulationContext, SimulationEngine]:
     config = _reinforcement_config()
     event_bus = EventBus()
@@ -638,6 +642,14 @@ def _empty_direct_engine(
         rng_manager=rng_manager,
         event_bus=event_bus,
         units_by_side={"blue": [], "red": []},
+        tactical_targeting=(
+            TacticalTargetingRuntime(
+                sensing_aware_standoff_enabled=True,
+                unit_sides={},
+            )
+            if with_targeting
+            else None
+        ),
         morale_runtime=morale_runtime,
         rout_engine=rout_engine,
     )
@@ -762,7 +774,7 @@ def test_current_checkpoint_has_one_canonical_morale_owner() -> None:
     state = _json_checkpoint(engine)
     context_state = state["context"]
 
-    assert state["checkpoint_version"] == 114
+    assert state["checkpoint_version"] == 115
     assert "morale_states" not in context_state
     assert "morale_machine" not in context_state
     assert set(context_state["morale_runtime"]) == {
@@ -796,7 +808,7 @@ def test_campaign_topology_rejection_precedes_context_restore() -> None:
     assert _json_checkpoint(engine) == before
 
 
-@pytest.mark.parametrize("unsupported_version", [113, 115])
+@pytest.mark.parametrize("unsupported_version", [113, 116])
 def test_unknown_checkpoint_version_rejects_atomically(
     unsupported_version: int,
 ) -> None:
@@ -1013,8 +1025,8 @@ def test_checkpoint_rejects_dynamic_unit_type_mismatch_atomically() -> None:
     with pytest.raises(
         ValueError,
         match=(
-            "unit 'reinforce_blue_0000_m1a2_0000' has unit_type 't72m' "
-            "outside this builder's reachable envelope"
+            "reinforcement arrival flag or unit topology disagrees with "
+            "force roster at wave 0"
         ),
     ):
         target.set_state(invalid)
@@ -1190,7 +1202,7 @@ def test_versionless_current_morale_envelope_rejects_atomically() -> None:
     versionless_current.pop("checkpoint_version")
     before = _json_checkpoint(target)
 
-    with pytest.raises(ValueError, match="format-113 morale_runtime"):
+    with pytest.raises(ValueError, match="format-115 tactical_targeting state"):
         target.set_state(versionless_current)
 
     assert _json_checkpoint(target) == before
@@ -1326,7 +1338,7 @@ def test_versionless_migration_plan_preserves_legacy_rout_envelope() -> None:
     assert legacy_context == original_context
 
 
-def test_started_continuous_time_legacy_morale_rejects_atomically() -> None:
+def test_started_continuous_time_versionless_checkpoint_rejects_atomically() -> None:
     _, source = _checkpoint_engine(continuous_time=True)
     source.step()
     legacy = _versionless_legacy_morale_checkpoint(
@@ -1337,7 +1349,7 @@ def test_started_continuous_time_legacy_morale_rejects_atomically() -> None:
     assert ctx.morale_runtime.config.use_continuous_time is True
     before = _json_checkpoint(target)
 
-    with pytest.raises(ValueError, match="started continuous-time runtime"):
+    with pytest.raises(ValueError, match="pristine tick 0"):
         target.set_state(legacy)
 
     assert _json_checkpoint(target) == before
@@ -1431,15 +1443,35 @@ def test_versionless_active_aggregate_morale_rejects_atomically() -> None:
     legacy = _versionless_legacy_morale_checkpoint(
         _json_checkpoint(target),
     )
-    unit_id = next(iter(legacy["context"]["morale_states"]))
+    proxy = Unit(
+        "agg_0000",
+        Position(100.0, 200.0, 0.0),
+        unit_type="test_aggregate",
+        side="blue",
+    )
+    constituent = Unit(
+        "archived-blue-1",
+        Position(100.0, 200.0, 0.0),
+        unit_type="test_constituent",
+        side="blue",
+    )
+    legacy["context"]["units_by_side"]["blue"].append(proxy.get_state())
     legacy["context"]["aggregation_engine"]["aggregates"]["agg_0000"] = {
         "aggregate_id": "agg_0000",
+        "side": "blue",
+        "unit_type": "test_aggregate",
+        "position": [100.0, 200.0, 0.0],
+        "aggregate_combat_power": 1.0,
+        "aggregate_personnel": 1,
+        "aggregate_supply_state": 1.0,
         "snapshots": [
             {
-                "unit_state": {
-                    "entity_id": unit_id,
-                    "status": int(UnitStatus.ACTIVE),
-                },
+                "unit_state": constituent.get_state(),
+                "weapon_states": [],
+                "sensor_states": [],
+                "supply_inventory": None,
+                "original_side": "blue",
+                "order_records": [],
             },
         ],
     }
@@ -1472,7 +1504,7 @@ def test_current_null_morale_runtime_matrix_is_fail_closed() -> None:
         absent_target.set_state(active_route_state)
 
 
-def test_arrived_legacy_reinforcement_checkpoint_migrates_without_repeat(
+def test_started_versionless_reinforcement_checkpoint_rejects_atomically(
 ) -> None:
     _, source = _checkpoint_engine()
     source.step()
@@ -1497,39 +1529,21 @@ def test_arrived_legacy_reinforcement_checkpoint_migrates_without_repeat(
         )
     legacy = json.loads(serialized)
 
-    ctx, target = _checkpoint_engine()
-    target.set_state(legacy)
-    legacy_ids = {
-        f"reinforce_blue_m1a2_{index:04d}"
-        for index in range(2)
-    }
-    assert legacy_ids.issubset(
-        {unit.entity_id for unit in ctx.units_by_side["blue"]},
-    )
-    assert legacy_ids.issubset(ctx.morale_states)
-    assert ctx.morale_runtime is not None
-    assert legacy_ids.issubset(ctx.morale_runtime.records)
+    _, target = _checkpoint_engine()
+    before = _json_checkpoint(target)
 
-    target.step()
+    with pytest.raises(ValueError, match="pristine tick 0"):
+        target.set_state(legacy)
 
-    all_ids = [unit.entity_id for unit in ctx.all_units()]
-    assert len(all_ids) == len(set(all_ids))
-    assert legacy_ids.issubset(all_ids)
-    assert {
-        f"reinforce_blue_0001_m1a2_{index:04d}"
-        for index in range(2)
-    }.issubset(all_ids)
+    assert _json_checkpoint(target) == before
 
-    migrated_checkpoint = target.checkpoint()
-    migrated_state = json.loads(migrated_checkpoint.decode("utf-8"))
-    assert migrated_state["checkpoint_version"] == 114
-    migrated_first_wave = migrated_state["campaign"]["reinforcements"][0]
-    assert migrated_first_wave["legacy_ids"] is True
-    assert migrated_first_wave["wave_ordinal"] == 0
-    assert "config" in migrated_first_wave
-    migrated_ctx, migrated = _checkpoint_engine()
-    migrated.restore(migrated_checkpoint)
-    assert [unit.entity_id for unit in migrated_ctx.all_units()] == all_ids
+
+def test_empty_engine_requires_tactical_targeting_owner() -> None:
+    with pytest.raises(
+        RuntimeError,
+        match="requires tactical-targeting ownership",
+    ):
+        _empty_direct_engine(with_runtime=True, with_targeting=False)
 
 
 @pytest.mark.parametrize(

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 
 import numpy as np
+import pytest
 
 from stochastic_warfare.core.types import Position
 from stochastic_warfare.detection.detection import DetectionResult
@@ -116,6 +117,63 @@ class TestSubmitReport:
         engine.submit_report("blue", _report(x=5000.0))
         assert len(engine.get_tracks("blue")) == 2
 
+    def test_zero_position_uncertainty_rejects(self) -> None:
+        engine = _engine()
+
+        with pytest.raises(ValueError, match="position uncertainty must be positive"):
+            engine.submit_report("blue", _report(uncertainty=0.0))
+
+    def test_gated_fow_replacement_is_atomic_bounded_and_restorable(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        engine = _engine()
+        first_id = engine.submit_report(
+            "blue",
+            _report(x=0.0, y=0.0, uncertainty=1.0),
+            allocate_fow_track=True,
+        )
+        second_id = engine.submit_report(
+            "blue",
+            _report(x=1_000.0, y=0.0, time=1.0, uncertainty=1.0),
+            contact_id=first_id,
+            allocate_fow_track=True,
+        )
+
+        assert first_id == "fow-track-0001"
+        assert second_id == "fow-track-0002"
+        assert tuple(engine.get_tracks("blue")) == (second_id,)
+        before_failed_replacement = engine.get_state()
+
+        def fail_track_creation(*_args: object, **_kwargs: object) -> None:
+            raise RuntimeError("injected replacement failure")
+
+        monkeypatch.setattr(
+            engine._estimator,
+            "create_track",
+            fail_track_creation,
+        )
+        with pytest.raises(RuntimeError, match="injected replacement failure"):
+            engine.submit_report(
+                "blue",
+                _report(x=0.0, y=0.0, time=2.0, uncertainty=1.0),
+                contact_id=second_id,
+                allocate_fow_track=True,
+            )
+        assert engine.get_state() == before_failed_replacement
+
+        restored = _engine(seed=999)
+        restored.set_state(before_failed_replacement)
+        third_id = restored.submit_report(
+            "blue",
+            _report(x=0.0, y=0.0, time=2.0, uncertainty=1.0),
+            contact_id=second_id,
+            allocate_fow_track=True,
+        )
+        assert third_id == "fow-track-0003"
+        assert tuple(restored.get_tracks("blue")) == (third_id,)
+        assert restored.get_state()["fow_track_counters"] == {"blue": 3}
+
 
 # ── submit_sensor_detection ──────────────────────────────────────────
 
@@ -138,6 +196,42 @@ class TestSubmitSensorDetection:
             "blue", det, ci, Position(0.0, 0.0, 0.0),
         )
         assert tid is None
+
+    def test_repeated_coincident_detection_updates_same_finite_track(self) -> None:
+        engine = _engine()
+        detection = DetectionResult(
+            True,
+            1.0,
+            100.0,
+            0.0,
+            SensorType.VISUAL,
+            0.0,
+        )
+        contact = ContactInfo(ContactLevel.DETECTED, None, None, None, 0.5)
+        observer = Position(100.0, 200.0, 0.0)
+
+        track_id = engine.submit_sensor_detection(
+            "blue",
+            detection,
+            contact,
+            observer,
+            allocate_fow_track=True,
+        )
+        repeated_track_id = engine.submit_sensor_detection(
+            "blue",
+            detection,
+            contact,
+            observer,
+            contact_id=track_id,
+            allocate_fow_track=True,
+        )
+
+        assert repeated_track_id == track_id == "fow-track-0001"
+        tracks = engine.get_tracks("blue")
+        assert tuple(tracks) == (track_id,)
+        assert tracks[track_id].hits == 2
+        assert np.all(np.isfinite(tracks[track_id].state.covariance))
+        assert tracks[track_id].position_uncertainty > 0.0
 
 
 # ── Satellite coverage ────────────────────────────────────────────────

@@ -63,7 +63,7 @@ there were unsourced.
 
 One resolved contract constructs the clock, engine interval cadence, medical
 and maintenance configs; participates in runtime/API fingerprints; and
-persists in checkpoint format 114. It does not automatically admit battle
+persists unchanged inside current checkpoint format 115. It does not automatically admit battle
 casualties, create facilities, register equipment for maintenance, initiate
 repairs/spares, construct communications equipment topology, or schedule a
 nuclear action. See the [era reference](../reference/eras.md) and
@@ -317,6 +317,30 @@ calibration_overrides:
   red_cohesion: 0.5
 ```
 
+`enable_sensing_aware_standoff` is a strict boolean calibration field and
+defaults to `true`. In the default mode, automatic tactical movement holds only
+when the runtime has a current owner-side contact plus an exact live
+weapon/sensing/fire-control solution within its authorized range. Movement and
+ordinary direct engagement consume the same immutable tick/battle/shooter
+decision. Setting the field to `false` makes automatic tactical standoff range
+exactly `0.0`; it does not restore catalog-maximum holding or alter explicit
+defensive, emplaced, wave-release, indirect-fire, bomb, torpedo, or ASW owners.
+
+```yaml
+calibration_overrides:
+  enable_sensing_aware_standoff: true
+  target_selection_mode: threat_scored  # closest, nearest, or threat_scored
+```
+
+The loader uses the unit's exact authored weapon and sensor mappings. It does
+not invent a missing sensor, promote a search sensor to fire control, or extend
+an attachment to scenario visibility. `closest` and its accepted `nearest`
+alias choose by distance; `threat_scored` is deterministic but is not yet a
+claim of a complete availability-aware threat optimizer (REM-043 / Phase 130).
+The Salamis regression demonstrates the existing authored naval target domain
+for ancient projectile/melee attachments; it does not widen those weapons to
+other domains.
+
 ### Optional Subsystems
 
 Optional EW, space, and CBRN suites require an explicit true enable flag:
@@ -388,7 +412,7 @@ documented_outcomes:
 | **73 Easting** | Eagle Troop vs Iraqi armor, 1991 | 30 min | Desert, thermal advantage, validated |
 | **Debecka Pass** | US SF + Peshmerga vs Iraqi 1st Mech, 2003 | 4 hr | Javelin ATGM, CAS, ridgeline defense, golden-scenario (Block 11) |
 | **Khafji** | Iraqi III Corps vs Saudi/Qatari/USMC/coalition air + USS Missouri, 1991 | 72 hr | Full-OOB 233 units, hybrid tick resolution, naval gunfire, AC-130, multi-domain, golden-scenario (Block 11) |
-| **Fallujah Phase Line Fran** | USMC RCT-1/RCT-7 + Army TF 2-7 CAV vs insurgent defenders, 2004 | 120 hr | Urban combat, HBIED pre-emplacement, WP shake-and-bake, AC-130U, scripted events (mosque seizure, armored thrust), golden-scenario (Block 11) |
+| **Fallujah Phase Line Fran** | USMC RCT-1/RCT-7 + Army TF 2-7 CAV vs insurgent defenders, 2004 | 120 hr | Urban combat, HBIED pre-emplacement, AC-130U, and legacy scripted-action declarations; typed effect/continuation integrity is queued under REM-045, golden-scenario (Block 11) |
 | **Bint Jbeil 2006** | IDF Golani/Paratrooper/Armor + Egoz SOF vs Hezbollah tank hunters, 2006 | 240 hr | ATGM-vs-MBT (Kornet + RPG-29 vs Merkava Mk III/IV), urban hills, reserve-mobilization morale gap, contested outcome (DRAW_SCENARIO), golden-scenario (Block 11) |
 | **INS Hanit 2006** | Sa'ar 5 corvette vs Hezbollah coastal C-802 Noor ASCM strike, 2006 | 2 hr | Naval ASCM engagement, degraded-ECM posture, sea-skimming cruise missile, Barak-1 PD SAM, golden-scenario (Block 11) |
 | **Falklands Naval** | Sheffield vs Exocet attack, 1982 | 1 hr | Naval, missile exchange |
