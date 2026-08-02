@@ -4,6 +4,13 @@
 
 **Owner:** Phase 115 / REM-028
 
+> **Superseded checkpoint boundary:** This document records Phase 115's
+> accepted format-115 behavior and its then-open REM-029 exclusion. The Phase
+> 116 implementation advances the current engine to format 116 and restores
+> exact roster-backed contacts and bounded current witnesses; Phase 116 passed
+> postmortem and closed REM-029. The Phase 115 statements below remain
+> historical evidence, not current-format limitations.
+
 ## Purpose and scope
 
 At the Phase 115 baseline, tactical movement treated 80 percent of a live

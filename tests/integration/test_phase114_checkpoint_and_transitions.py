@@ -563,12 +563,12 @@ def _count_mapping_key(value: Any, key: str) -> int:
     return 0
 
 
-def test_format_115_persists_one_exact_effective_contract() -> None:
+def test_format_116_persists_one_exact_effective_contract() -> None:
     _register_transition_era()
     engine, context = _engine(era=_TRANSITION_ERA)
     state = json.loads(engine.checkpoint().decode("utf-8"))
 
-    assert state["checkpoint_version"] == 115
+    assert state["checkpoint_version"] == 116
     contract = state["context"]["era_runtime_contract"]
     assert tuple(contract) == _CONTRACT_KEYS
     assert contract == context.era_runtime_contract.model_dump(mode="json")
@@ -618,7 +618,7 @@ def _assert_atomic_rejection(
     ),
     ids=("missing", "extra", "malformed", "mismatch"),
 )
-def test_format_115_rejects_invalid_contract_atomically(
+def test_format_116_rejects_invalid_contract_atomically(
     mutation: Callable[[dict[str, Any]], None],
     match: str,
 ) -> None:
@@ -707,7 +707,7 @@ def test_resolution_clock_mismatch_is_rejected_atomically(
     ),
     ids=("naive", "shifted-start", "beyond-horizon"),
 )
-def test_format_115_rejects_invalid_clock_calendar_atomically(
+def test_format_116_rejects_invalid_clock_calendar_atomically(
     mutation: Callable[[dict[str, Any]], None],
     match: str,
 ) -> None:
@@ -878,7 +878,7 @@ def test_active_medical_and_maintenance_state_restore_and_continue_exactly() -> 
     checkpoint_at_t = control.engine.checkpoint()
     state_at_t = json.loads(checkpoint_at_t.decode("utf-8"))
 
-    assert state_at_t["checkpoint_version"] == 115
+    assert state_at_t["checkpoint_version"] == 116
     assert state_at_t["context"]["era_runtime_contract"] == {
         "selected_registry_id": _STATE_ERA,
         "era": "modern",

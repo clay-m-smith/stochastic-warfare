@@ -1,5 +1,5 @@
 # Project Structure & Module Decomposition
-**Status**: Living reference, current through Phase 115 implementation.
+**Status**: Living reference, current through completed Phase 116.
 **Last Updated**: 2026-08-02
 
 ---
@@ -425,7 +425,7 @@ stochastic-warfare/
     │   ├── deception.py              # Decoys, feints, false signals, camouflage effectiveness
     │   ├── sonar.py                  # Sonar models: active/passive, towed array, hull-mounted, sonobuoy, dipping
     │   ├── underwater_detection.py   # Submarine detection: acoustic propagation through environment, MAD, wake detection, periscope detection
-    │   └── fog_of_war.py             # Fog of war manager (per-side world view — land, air, AND maritime)
+    │   └── fog_of_war.py             # Per-side views, bounded witnesses, fusion aliases, strict format-116 staged restore
     ├── combat/                       # Combat resolution
     │   ├── __init__.py
     │   ├── events.py                 # Combat events (engagement, hit, kill, fratricide, suppression)
@@ -661,8 +661,8 @@ stochastic-warfare/
   `EraConfig` registry, seven enforced capability gates, sensor allowlists, and
   strict sparse cadence/treatment/repair declarations. The simulation-layer
   `EraRuntimeContract` resolves effective values before RNG construction and
-  owns clock/domain configuration plus format-115 persistence [Phases 20, 107,
-  114, 115]
+  owns clock/domain configuration plus format-116 persistence [Phases 20, 107,
+  114--116]
 
 **Depends on**: Nothing (leaf dependency)
 
@@ -1059,7 +1059,7 @@ the production scenario loop.
 - **Era runtime**: one frozen `EraRuntimeContract` materializes sparse
   strategic/operational/tactical cadence and medical/maintenance overrides
   before RNG, clock, or engine construction. Clock, engine intervals, medical,
-  maintenance, API cadence, fingerprints, and format-115 checkpoints consume
+  maintenance, API cadence, fingerprints, and format-116 checkpoints consume
   that same boundary; unsupported C2/nuclear metadata rejects [Phase 114].
 - **Initial force construction**: `RuntimeForceBuilder` validates exact typed
   unit groups, per-instance overrides, deterministic IDs/domains, cardinality,
@@ -1075,10 +1075,14 @@ the production scenario loop.
   identity to context, engine, and battle manager, owns the post-FOW interval
   and immutable `(tick, battle, shooter)` pictures. Movement and ordinary
   direct engagement consume the same exact attachment/contact/range decision
-  and post-movement revalidation. Format-115 checkpoints and privileged versus
-  target-independent side-ordinal FOW projections preserve the evidence, and
-  API/replay readers bind each payload to its requested viewer side; ordinary
-  nonempty FOW contact continuation remains REM-029 [Phase 115].
+  and post-movement revalidation. Format-116 checkpoints preserve that evidence
+  together with exact roster-backed side contacts, bounded current observer
+  witnesses, fusion-owned track aliases, exact staged type/alias integrity, and
+  DETECTION RNG authority. Explicit empty views and dynamic between-interval
+  checkpoints remain valid, while disabled ordinary state rejects. Privileged
+  versus target-independent side-ordinal FOW projections remain viewer-bound in
+  API/replay readers. Active deception and custom/populated COP topology reject
+  explicitly under REM-046 and REM-036 [Phases 115--116].
 - **Morale ownership**: one `MoraleRuntime` registers the initial and arriving
   roster, coordinates stochastic/melee/rally/cascade mutations and aggregate
   archives, exposes the stable read-only consumer mapping, and owns the sole

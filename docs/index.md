@@ -4,7 +4,7 @@
 
 ![Python](https://img.shields.io/badge/python-%3E%3D3.12-blue)
 ![Tests](https://img.shields.io/badge/tests-partitioned_validation-blue)
-![Phase](https://img.shields.io/badge/phase-115_COMPLETE-brightgreen)
+![Phase](https://img.shields.io/badge/phase-116_COMPLETE-brightgreen)
 
 ---
 
@@ -71,20 +71,21 @@ deterministic shards. `benchmark-policy` is also an overlapping focused
 profile, not a seventh partition. Phase 115 routes routine 73 Easting through
 a strict version-4 non-timing workload transition while retaining version-3
 runtime-input normalization. `transition_qualified` proves only the exact
-classified workload/semantic handoff; the next phase must promote the clean
-Phase 115 endpoint before ordinary paired gating resumes. It is not a speed,
-default-morale, or historical-fidelity result. Golan remains manual.
+classified workload/semantic handoff and is not a speed, default-morale, or
+historical-fidelity result. Phase 116 has promoted the clean Phase 115 endpoint
+and ordinary version-4 paired gating has resumed; Golan remains manual.
 
-The Phase 115 closure audit enumerates exactly 12,248 nodes:
-`standard` 11,743, `slow-only` 110, `benchmark-only` 87, `slow-benchmark` 4,
-API 263, and E2E 41. All 11,743 standard nodes and every complete benchmark
-profile passed; data, determinism, scenario, frontend, static, and
-documentation gates also passed. The owner accepted contended slow/API/E2E
-evidence only with an explicit qualification: capped runs are not called
-passes, the exact real database/API persistence witness passed on the host,
-and Debecka's 4/10 result remains assigned to REM-030. Hosted CI remains the
-final independent environment control. Phase 115 is complete and REM-028 is
-closed. Exact evidence is in the [Phase 115 devlog](devlog/phase-115.md).
+The Phase 116 closure audit enumerates exactly 12,459 nodes:
+`standard` 11,953, `slow-only` 110, `benchmark-only` 87, `slow-benchmark` 5,
+API 263, and E2E 41. All 11,953 standard nodes and every complete benchmark
+partition/profile passed; data, determinism, scenario, static, documentation,
+cross-document, and postmortem gates also passed. The owner accepted contended
+long-run evidence only with an explicit qualification: capped API/E2E and slow
+runs, pending clean-start Khafji reproduction, and inconclusive final timing
+dispersion are not called passes. Debecka's 4/10 result remains assigned to
+REM-030. Hosted CI remains the final independent environment control. Phase
+116 is complete and REM-029 is closed. Exact evidence is in the
+[Phase 116 devlog](devlog/phase-116.md).
 
 See the [Getting Started Guide](guide/getting-started.md) for a complete tutorial including running your first scenario.
 
@@ -122,30 +123,36 @@ See the [Getting Started Guide](guide/getting-started.md) for a complete tutoria
 | Block 14 | 128--130 | Targeting authorization, topology, and selection follow-ups | **Planned** |
 | Block 15 | 131 | Sensor covariance and predictive-tracking integrity | **Planned** |
 | Block 16 | 132 | Scripted scenario action integrity | **Planned** |
+| Block 17 | 133 | Active deception checkpoint integrity | **Planned** |
 
-Phases 105 through 115 and Block 12 are complete. Phase 115 implements the
-strict sensing-aware targeting and format-115 checkpoint/exposure contract,
-and REM-028 is closed. Its long-run evidence carries an explicit owner-approved
+Phases 105 through 116 and Block 12 are complete. Phase 116 implements the
+strict format-116 roster-backed ordinary-contact, fusion-alias,
+bounded-witness, targeting, and DETECTION RNG continuation contract, and
+REM-029 is closed. Its long-run evidence carries an explicit owner-approved
 contention qualification. See the
-[Phase 115 devlog](devlog/phase-115.md), the
-[targeting specification](specs/sensing-aware-tactical-standoff.md), and the
+[Phase 116 devlog](devlog/phase-116.md), the
+[contact-continuation specification](specs/fog-of-war-contact-continuation.md), and the
 [remediation backlog](remediation-backlog.md) for exact evidence and known
 coverage boundaries. The YAML data catalog defines units, weapons, ammunition
 types, sensors, signatures, doctrines, commanders, formation templates, and
 modern plus historical scenarios across five eras.
 
-Block 13 is active with Phase 116 / REM-029 next and unstarted. Phase 115 also
-records REM-041 through REM-043 for the planned Block 14 follow-ups rather than
-absorbing them into its claim.
+Block 13 is active with Phase 116 / REM-029 complete and closed. Phase 117 /
+REM-030 is next and remains unstarted. Phase 115 also records REM-041 through
+REM-043 for the planned Block 14 follow-ups rather than absorbing them into its
+claim.
 REM-044 separately assigns sourced sensor covariance and atomic predictive
 tracking to Phase 131 in planned Block 15.
 REM-045 assigns typed, fail-closed, exact-once Fallujah scripted actions to
 Phase 132 in planned Block 16; Phase 115's 200-second current regression does
 not reach the first authored action at H+7.
-The changed 73 Easting loadout/configuration identity is handled by the strict
-version-4 non-timing transition contract; it cannot be reported as a paired
-performance pass and must be promoted from the clean Phase 115 commit before
-the next phase closes.
+REM-046 assigns complete active/inactive decoy state, signature topology, and
+single-owner DETECTION RNG continuation to Phase 133 in planned Block 17;
+Phase 116 rejects non-pristine deception state instead of accepting loss.
+The changed 73 Easting loadout/configuration identity was handled by the strict
+version-4 non-timing transition contract; it is not a paired performance pass.
+Phase 116 subsequently promoted that clean endpoint to the ordinary paired
+reference.
 
 ## License
 

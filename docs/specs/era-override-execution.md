@@ -6,8 +6,10 @@ contention-qualified; no uncontended wall-clock pass is claimed.
 
 Phase 115 advances the current engine checkpoint from format 114 to format 115
 for tactical-targeting state. It preserves the exact Phase 114
-`era_runtime_contract` and clock/resolution owner unchanged; the format-114
-language below records the historical Phase 114 acceptance boundary.
+`era_runtime_contract` and clock/resolution owner unchanged. Phase 116 then
+advances the current format to 116 for fog-of-war contact continuation while
+preserving that era boundary. The format-114 language below records the
+historical Phase 114 acceptance boundary.
 
 This specification is the Phase 114 / REM-018 contract. It replaces
 executable-looking era metadata with one typed runtime-owned resolution

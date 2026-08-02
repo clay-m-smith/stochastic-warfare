@@ -7,6 +7,12 @@ REM-025, REM-026, and REM-027
 
 **Preserved closure:** REM-015
 
+> **Subsequent status:** Phase 116 promoted the clean Phase 115 73 Easting
+> endpoint to the ordinary version-4 paired gate and implemented exact nonempty
+> ordinary-contact continuation; its accepted postmortem closed REM-029.
+> Phase 112's empty-world-view Space ISR fixtures and the historical future-work
+> statements below remain scoped evidence rather than current limitations.
+
 ## Purpose and scope
 
 Phase 112 makes repository validation claims fail closed. A green command,

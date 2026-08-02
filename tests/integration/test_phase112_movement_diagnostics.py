@@ -292,7 +292,7 @@ def test_schema112_movement_state_restores_and_continues_exactly() -> None:
     assert control.step() is False
     checkpoint = control.checkpoint()
     state_at_t = control.get_state()
-    assert state_at_t["checkpoint_version"] == 115
+    assert state_at_t["checkpoint_version"] == 116
     assert state_at_t["context"]["movement_diagnostics"] == control._ctx.movement_diagnostics.get_state()
 
     resumed = _campaign_engine(seed=999_112)

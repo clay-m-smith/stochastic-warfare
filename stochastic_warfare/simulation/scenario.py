@@ -17,7 +17,7 @@ from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from types import MappingProxyType
-from typing import Any, Literal
+from typing import TYPE_CHECKING, Any, Literal
 
 import numpy as np
 from pydantic import (
@@ -112,6 +112,12 @@ from stochastic_warfare.simulation.tactical_targeting import (
 )
 from stochastic_warfare.space.config import SpaceConfig
 from stochastic_warfare.terrain.heightmap import Heightmap
+
+if TYPE_CHECKING:
+    from stochastic_warfare.detection.fog_of_war import (
+        FogOfWarRestorePlan,
+        FogOfWarSensorBinding,
+    )
 
 logger = get_logger(__name__)
 
@@ -1888,6 +1894,18 @@ def _validate_targeting_live_bindings(
 ) -> None:
     """Match persisted latest-picture identities to live attachments."""
 
+    expected_fog_of_war_enabled = _configured_fog_of_war_enabled(
+        calibration,
+    )
+    interval = plan.prepared_interval
+    if (
+        interval is not None
+        and interval.fog_of_war_enabled is not expected_fog_of_war_enabled
+    ):
+        raise ValueError(
+            "targeting fog-of-war enablement disagrees with calibration",
+        )
+
     for picture in plan.latest_pictures:
         for decision in picture.decisions:
             _validate_targeting_decision_live_bindings(
@@ -1897,6 +1915,161 @@ def _validate_targeting_live_bindings(
                 calibration=calibration,
                 live_visibility_m=live_visibility_m,
             )
+
+
+def _configured_fog_of_war_enabled(
+    calibration: Mapping[str, object],
+) -> bool:
+    """Return the strict production fog-of-war configuration gate."""
+    enabled = calibration.get("enable_fog_of_war", False)
+    if type(enabled) is not bool:
+        raise ValueError("enable_fog_of_war must be a boolean")
+    return enabled
+
+
+def _fog_sensor_bindings(
+    *,
+    unit_sides: Mapping[str, str],
+    loadouts: RuntimeLoadouts,
+) -> tuple[FogOfWarSensorBinding, ...]:
+    """Project staged loadouts into the FOW checkpoint's typed boundary."""
+    from stochastic_warfare.detection.fog_of_war import (
+        FogOfWarSensorBinding,
+    )
+
+    bindings = [
+        FogOfWarSensorBinding(
+            unit_id=unit_id,
+            side=unit_sides[unit_id],
+            source_equipment_index=attachment.source_equipment_index,
+            sensor_id=attachment.sensor_id,
+            modeled_role=attachment.modeled_role.value,
+            sensor_type=attachment.sensor.sensor_type.name,
+        )
+        for unit_id in sorted(loadouts.unit_sensor_attachments)
+        for attachment in loadouts.unit_sensor_attachments[unit_id]
+    ]
+    return tuple(
+        sorted(
+            bindings,
+            key=lambda binding: (
+                binding.side,
+                binding.unit_id,
+                binding.source_equipment_index,
+                binding.sensor_id,
+                binding.modeled_role,
+            ),
+        ),
+    )
+
+
+def _validate_fow_targeting_bindings(
+    *,
+    targeting_plan: TacticalTargetingRestorePlan,
+    fog_plan: FogOfWarRestorePlan,
+    expected_fog_of_war_enabled: bool,
+) -> None:
+    """Bind every retained consumable FOW decision to staged evidence."""
+    interval = targeting_plan.prepared_interval
+    if type(expected_fog_of_war_enabled) is not bool:
+        raise ValueError("expected_fog_of_war_enabled must be a boolean")
+    if (
+        interval is not None
+        and interval.fog_of_war_enabled is not expected_fog_of_war_enabled
+    ):
+        raise ValueError(
+            "targeting fog-of-war enablement disagrees with calibration",
+        )
+
+    witness_map = fog_plan.current_detection_witnesses
+    world_views = fog_plan.world_views
+    fusion = fog_plan.intel_fusion
+    fow_track_ids = {
+        track_id
+        for side_tracks in fusion["tracks"].values()
+        for track_id in side_tracks
+        if track_id.startswith("fow-track-")
+    }
+    has_allocated_ordinary_state = bool(
+        any(world_view.contacts for world_view in world_views.values())
+        or witness_map
+        or fow_track_ids
+        or fusion["fow_track_counters"]
+    )
+    if not expected_fog_of_war_enabled:
+        if has_allocated_ordinary_state:
+            raise ValueError(
+                "disabled production fog-of-war cannot restore ordinary state",
+            )
+        return
+    if interval is None:
+        # Dynamic topology changes deliberately invalidate the prepared
+        # targeting interval without erasing durable FOW contacts or the
+        # bounded latest witness cache. Their own owner validates that state;
+        # there is no retained consumable targeting decision to bind here.
+        return
+
+    witnesses = {
+        (
+            witness.side,
+            witness.observer_unit_id,
+            witness.target_id,
+            witness.source_equipment_index,
+            witness.sensor_id,
+            witness.modeled_role,
+            witness.logical_time_s,
+            witness.range_m,
+        ): witness
+        for side_witnesses in witness_map.values()
+        for witness in side_witnesses
+    }
+    for picture in targeting_plan.latest_pictures:
+        for decision in picture.decisions:
+            if decision.contact_source is not ContactSource.FOW_OBSERVER_WITNESS:
+                continue
+            assert decision.target_id is not None
+            assert decision.observing_unit_id is not None
+            assert decision.contact_sensor_source_equipment_index is not None
+            assert decision.contact_sensor_id is not None
+            assert decision.contact_sensor_modeled_role is not None
+            assert decision.contact_time_s is not None
+            identity = (
+                decision.shooter_side,
+                decision.observing_unit_id,
+                decision.target_id,
+                decision.contact_sensor_source_equipment_index,
+                decision.contact_sensor_id,
+                decision.contact_sensor_modeled_role.value,
+                decision.contact_time_s,
+                decision.contact_range_m,
+            )
+            if identity not in witnesses:
+                raise ValueError(
+                    "Retained consumable FOW targeting decision has no "
+                    "exact detection witness",
+                )
+            world_view = world_views.get(decision.shooter_side)
+            contact = (
+                None
+                if world_view is None
+                else world_view.contacts.get(decision.target_id)
+            )
+            if contact is None:
+                raise ValueError(
+                    "Retained consumable FOW targeting decision target is "
+                    "absent from the reporting-side world view",
+                )
+            if (
+                world_view.last_update_time != decision.contact_time_s
+                or contact.last_sensor_contact_time
+                != decision.contact_time_s
+                or decision.contact_sensor_id
+                not in contact.reporting_sensors
+            ):
+                raise ValueError(
+                    "Retained consumable FOW targeting decision disagrees "
+                    "with its contact epoch or sensor provenance",
+                )
 
 
 def _validate_movement_targeting_restore_bindings(
@@ -1967,12 +2140,7 @@ def _validate_movement_targeting_restore_bindings(
                     "movement targeting evidence has no matching persisted "
                     "picture decision",
                 )
-            comparable = (
-                decision.as_historical()
-                if decision.fog_of_war_enabled
-                else decision
-            )
-            if comparable != restored:
+            if decision != restored:
                 raise ValueError(
                     "movement targeting evidence disagrees with the exact "
                     "persisted picture decision",
@@ -3178,14 +3346,16 @@ class SimulationContext:
                 else dict(self.calibration)
             )
         )
+        roster = self._morale_roster()
+        loadouts = RuntimeLoadouts(
+            unit_weapons=self.unit_weapons,
+            unit_sensor_attachments=self.unit_sensor_attachments,
+            equipment_resolutions=self.equipment_resolutions,
+        )
         _validate_targeting_live_bindings(
             plan=plan,
-            units=self._morale_roster(),
-            loadouts=RuntimeLoadouts(
-                unit_weapons=self.unit_weapons,
-                unit_sensor_attachments=self.unit_sensor_attachments,
-                equipment_resolutions=self.equipment_resolutions,
-            ),
+            units=roster,
+            loadouts=loadouts,
             calibration=calibration,
             live_visibility_m=(
                 _targeting_visibility_bound_m(
@@ -3197,6 +3367,56 @@ class SimulationContext:
                 else None
             ),
         )
+        expected_fog_of_war_enabled = _configured_fog_of_war_enabled(
+            calibration,
+        )
+        if expected_fog_of_war_enabled and self.fog_of_war is None:
+            raise ValueError(
+                "enabled fog-of-war requires a live FogOfWarManager owner",
+            )
+        if self.fog_of_war is not None:
+            unit_sides = {
+                unit_id: (
+                    unit.side
+                    if isinstance(unit.side, str)
+                    else unit.side.value
+                )
+                for unit_id, unit in roster.items()
+            }
+            satellite_topology = (
+                {
+                    satellite.satellite_id: (
+                        satellite.side,
+                        satellite.constellation_id,
+                    )
+                    for satellite in (
+                        self.space_engine.constellation_manager.all_satellites()
+                    )
+                }
+                if self.space_engine is not None
+                else {}
+            )
+            fog_plan = self.fog_of_war.stage_state(
+                self.fog_of_war.get_state(),
+                expected_sides=set(self.side_names()),
+                expected_target_sides=unit_sides,
+                satellite_topology=satellite_topology,
+                checkpoint_elapsed_s=self.clock.elapsed.total_seconds(),
+                authoritative_rng_state=self.rng_manager.get_state()[
+                    "streams"
+                ][ModuleId.DETECTION.value],
+                expected_sensor_bindings=_fog_sensor_bindings(
+                    unit_sides=unit_sides,
+                    loadouts=loadouts,
+                ),
+            )
+            _validate_fow_targeting_bindings(
+                targeting_plan=plan,
+                fog_plan=fog_plan,
+                expected_fog_of_war_enabled=(
+                    expected_fog_of_war_enabled
+                ),
+            )
 
     def _validate_morale_bindings(
         self,
@@ -3263,6 +3483,10 @@ class SimulationContext:
         """Require the exact RNG-bound detection owner before persistence."""
         owner = self.detection_engine
         if owner is None:
+            if self.fog_of_war is not None:
+                raise ValueError(
+                    "FogOfWarManager requires a context DetectionEngine owner",
+                )
             return
         from stochastic_warfare.detection.detection import DetectionEngine
 
@@ -3270,10 +3494,15 @@ class SimulationContext:
             raise ValueError(
                 "Checkpoint detection_engine must be an exact DetectionEngine",
             )
-        owner_state = owner.get_state()
+        authoritative_rng = self.rng_manager.get_stream(ModuleId.DETECTION)
         authoritative_rng_state = self.rng_manager.get_state()["streams"][
             ModuleId.DETECTION.value
         ]
+        if getattr(owner, "_rng", None) is not authoritative_rng:
+            raise ValueError(
+                "DetectionEngine must use RNGManager's DETECTION generator",
+            )
+        owner_state = owner.get_state()
         if not _json_values_equal(
             owner_state.get("rng_state"),
             authoritative_rng_state,
@@ -3282,6 +3511,12 @@ class SimulationContext:
                 "DetectionEngine RNG mirror disagrees with RNGManager "
                 "DETECTION state",
             )
+        if self.fog_of_war is not None:
+            self.fog_of_war.validate_runtime_bindings(
+                detection_engine=owner,
+                authoritative_rng=authoritative_rng,
+            )
+            self.fog_of_war.validate_checkpoint_boundary()
 
     def get_state(self) -> dict[str, Any]:
         """Capture full simulation state for checkpointing."""
@@ -3470,6 +3705,17 @@ class SimulationContext:
     ) -> None:
         """Preflight context state and optionally commit it."""
         self._validate_detection_checkpoint_owner()
+        if (
+            self.detection_engine is not None
+            and "detection_engine" not in state
+            and not allow_legacy_morale
+        ):
+            raise ValueError("Checkpoint is missing DetectionEngine state")
+        if self.detection_engine is None and "detection_engine" in state:
+            raise ValueError(
+                "Checkpoint contains detection state for a context without "
+                "a DetectionEngine owner",
+            )
         self.validate_era_runtime_bindings()
         if allow_legacy_morale and "morale_runtime" in state:
             raise ValueError(
@@ -4194,6 +4440,13 @@ class SimulationContext:
         prospective_calibration = staged_calibration.to_flat_dict(
             sorted(prospective_units_by_side),
         )
+        expected_fog_of_war_enabled = _configured_fog_of_war_enabled(
+            prospective_calibration,
+        )
+        if expected_fog_of_war_enabled and self.fog_of_war is None:
+            raise ValueError(
+                "enabled fog-of-war requires a live FogOfWarManager owner",
+            )
         try:
             prospective_loadouts = RuntimeLoadouts(
                 unit_weapons={
@@ -4219,6 +4472,7 @@ class SimulationContext:
             ) from exc
 
         staged_targeting_plan: TacticalTargetingRestorePlan | None = None
+        targeting_interval_is_current = False
         has_targeting_state = "tactical_targeting" in state
         raw_targeting_state = state.get("tactical_targeting")
         if self.tactical_targeting is None:
@@ -4297,7 +4551,7 @@ class SimulationContext:
                             else None
                         ),
                     )
-                interval_is_current = _targeting_interval_is_current(
+                targeting_interval_is_current = _targeting_interval_is_current(
                     plan=staged_targeting_plan,
                     clock_tick=staged_clock.tick_count,
                     logical_time_s=elapsed_seconds,
@@ -4316,7 +4570,7 @@ class SimulationContext:
                                 checkpoint_targeting_default
                             ),
                         )
-                        if interval_is_current
+                        if targeting_interval_is_current
                         else None
                     ),
                 )
@@ -4538,7 +4792,7 @@ class SimulationContext:
                 "an obscurants engine",
             )
 
-        staged_fog_plan: Any = None
+        staged_fog_plan: FogOfWarRestorePlan | None = None
         if self.fog_of_war is not None and "fog_of_war" in state:
             satellite_topology = (
                 {
@@ -4566,11 +4820,26 @@ class SimulationContext:
                     authoritative_rng_state=(
                         rng_state["streams"][ModuleId.DETECTION.value]
                     ),
+                    expected_sensor_bindings=_fog_sensor_bindings(
+                        unit_sides=expected_target_sides,
+                        loadouts=prospective_loadouts,
+                    ),
+                    allow_legacy_state=allow_legacy_morale,
                 )
+                if staged_targeting_plan is not None:
+                    _validate_fow_targeting_bindings(
+                        targeting_plan=staged_targeting_plan,
+                        fog_plan=staged_fog_plan,
+                        expected_fog_of_war_enabled=(
+                            expected_fog_of_war_enabled
+                        ),
+                    )
             except (KeyError, TypeError, ValueError) as exc:
                 raise ValueError(
                     f"Invalid checkpoint fog/fusion state: {exc}",
                 ) from exc
+        elif self.fog_of_war is not None and not allow_legacy_morale:
+            raise ValueError("Checkpoint is missing fog-of-war state")
         elif self.fog_of_war is None and "fog_of_war" in state:
             raise ValueError(
                 "Checkpoint contains fog-of-war state for a context without "
@@ -4609,7 +4878,7 @@ class SimulationContext:
         staged_space_plan: Any = None
         if self.space_engine is not None and "space_engine" in state:
             delivered_receipts = (
-                tuple(staged_fog_plan["intel_fusion"]["delivery_receipts"])
+                tuple(staged_fog_plan.intel_fusion["delivery_receipts"])
                 if staged_fog_plan is not None
                 else ()
             )

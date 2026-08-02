@@ -996,15 +996,15 @@ def test_corrupt_tot_authorities_are_rejected_atomically(
 
 @pytest.mark.parametrize(
     "invalid_version",
-    (113, 116, True, None),
+    (113, 117, True, None),
     ids=("version-113", "future", "boolean", "null"),
 )
-def test_checkpoint_version_115_is_exact_and_atomic(
+def test_checkpoint_version_116_is_exact_and_atomic(
     invalid_version: int | bool | None,
 ) -> None:
     source, _ = _engine(seed=42)
     invalid = copy.deepcopy(source.get_state())
-    assert invalid["checkpoint_version"] == 115
+    assert invalid["checkpoint_version"] == 116
     invalid["checkpoint_version"] = invalid_version
 
     _assert_atomic_rejection(

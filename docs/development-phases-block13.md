@@ -2,7 +2,7 @@
 
 **Phase range:** 115 through 127
 
-**Status:** Active; Phase 115 is complete and Phase 116 is next
+**Status:** Active; Phases 115--116 are complete and Phase 117 is next
 
 Block 13 owns integrity deficits discovered while specifying and validating
 Phases 112 through 114. It is not part of those implementations or the Block
@@ -14,7 +14,7 @@ postmortem, and single-commit workflow before its remediation item can close.
 
 Status: **Complete**. REM-028 is closed with accepted production, data,
 determinism, scenario, exposure, qualified broad-run, documentation, and
-postmortem evidence. Phase 116 remains unstarted.
+postmortem evidence. Phase 116 is complete and Phase 117 is next.
 
 Replace unrestricted catalog-range movement holding with a typed targeting
 precondition that distinguishes physical weapon reach from owner-side sensing,
@@ -27,7 +27,10 @@ production-exercised, outcome-affecting, and checkpoint/exposure evidence.
 
 ## Phase 116 - Fog-of-War Contact Continuation
 
-Status: **Not started**. REM-029 remains queued.
+Status: **Complete**. REM-029 is closed with accepted specification, benchmark
+promotion, production, determinism, data, scenario, qualified broad-run,
+documentation, cross-document, and postmortem evidence. Phase 117 is next and
+remains unstarted.
 
 Before Phase 116 changes production state, promote the clean Phase 115
 73 Easting transition endpoint to an ordinary version-4 paired reference and

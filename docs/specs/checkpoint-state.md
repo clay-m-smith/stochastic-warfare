@@ -2,9 +2,8 @@
 
 ## Status
 
-Verified Phase 105 contract, extended by the completed Phase 114 era-runtime
-contract and completed Phase 115 tactical-targeting format-115 checkpoint
-boundary.
+Verified through the completed Phase 116 fog-of-war contact-continuation
+boundary. The current engine format is 116.
 
 ## Purpose
 
@@ -17,12 +16,12 @@ validated effective scenario configuration and repository/data-catalog
 revision. Checkpoint restore replaces mutable state; it does not rebuild engine
 topology or reinterpret a different scenario.
 
-`SimulationEngine` writes checkpoint format version `115`. Any explicit version
-other than `115`, including `114`, is rejected before runtime mutation. An
+`SimulationEngine` writes checkpoint format version `116`. Any explicit version
+other than `116`, including `115`, is rejected before runtime mutation. An
 absent version selects the bounded legacy-migration path described below; an
 explicitly present `null` value is malformed, not legacy.
 
-For version `115`, top-level engine keys and context-state keys must exactly
+For version `116`, top-level engine keys and context-state keys must exactly
 match the compatible target runtime. Missing or extra keys fail before
 mutation. Serialized scenario and reinforcement configurations use type-aware
 JSON equality, so booleans cannot masquerade as integers and integers cannot
@@ -118,7 +117,7 @@ but owns no current unit state.
 Current context state contains exactly one `morale_runtime` key. Its value is a
 strict envelope with exact `active_records` and `suspended_archives` keys, or
 `null` only for a deliberately minimal context whose roster, active routes, and
-aggregation topology are all empty. Current format 115 contains no separate
+aggregation topology are all empty. Current format 116 contains no separate
 `morale_states` or `morale_machine` current-state copy.
 
 Each active record preserves typed current state, optional finite non-negative
@@ -219,9 +218,9 @@ movement, consume RNG, or write positions. Versionless state may omit this
 owner only at tick zero before either the checkpoint or target diagnostics has
 observations.
 
-## Tactical-targeting state
+## Tactical-targeting and fog-of-war state
 
-Format 115 contains one strict `tactical_targeting` envelope owned by the exact
+Format 116 contains one strict `tactical_targeting` envelope owned by the exact
 `TacticalTargetingRuntime` bound to the context, engine, and battle manager. It
 persists the default-on enablement value, default visibility bound, registered
 unit/side topology, current interval tick and elapsed time, published battle
@@ -260,19 +259,46 @@ or recorder/event mutation.
 
 With FOW disabled, fresh restore and continuation preserve exact decisions,
 positions, movement diagnostics, revalidation, ammunition, events, and full
-checkpoint bytes. When FOW supplied a contact, restored decisions are
-deliberately historical and non-consumable: they can be exposed as prior
-evidence but cannot authorize a new hold or shot. Complete fresh continuation
-from nonempty ordinary `SideWorldView.contacts` remains REM-029 because that
-FOW-owned state is still discarded on restore; format 115 neither duplicates
-it nor claims equivalence across that boundary.
+checkpoint bytes. With FOW enabled, format 116 preserves a current decision's
+exact consumability only when the separately staged fog owner proves its
+reporting-side contact, fusion track, observer-local witness, interval epoch,
+and loadout/sensor provenance. A missing or inconsistent association rejects;
+restore does not rewrite a current decision as historical or infer witness
+evidence from a side-wide contact.
 
-The fusion envelope nevertheless persists each monotonic side-local public
-track ordinal and its bounded current fusion tracks. A gated replacement
-commits the next ordinal/track before removing its predecessor, and a failed
-replacement leaves both unchanged. This preserves never-reused opaque fusion
-identity but does not reconstruct the separate ordinary `SideWorldView`
-contact record or close REM-029.
+The `fog_of_war` envelope contains exactly `world_views`,
+`current_detection_witnesses`, `rng_state`, and `intel_fusion`. It restores the
+complete roster-backed ordinary-contact map with replacement semantics,
+including explicit empty views and removal of target-runtime-only state. Every
+live `ContactRecord.track` is rebound to the exact staged fusion-owned `Track`
+object after the duplicate serialized track representation agrees exactly;
+an equal detached object is invalid. Contact levels, classifications, vectors,
+covariance, lifecycle counters/status, sensor provenance, chronology, canonical
+ordering, roster hostility, and side-local monotonic track IDs are validated
+before publication. Reporting-sensor provenance is nonempty, and each FOW
+counter equals the greatest issued side-local ordinal so continuation cannot
+silently skip or reuse the next ID.
+
+The bounded current witness cache preserves the exact observer, target, source
+equipment index, sensor/model role/type, interval time, detection result,
+probability, SNR, range, and bearing needed by a consumable current targeting
+decision. The next normal update replaces this cache; it is not an unbounded
+history. FOW, fusion, detection, estimators, identification, deception, and the
+context must share the authoritative `RNGManager` DETECTION generator and all
+serialized mirrors must agree before mutation.
+
+Staging produces an exact-owner-bound plan with independent content and raw
+type/shape/alias fingerprints. Commit rejects a subclassed, foreign, or
+mutated plan, deep-copies the four staged graphs as one alias-preserving
+publication, and verifies both fingerprints again before publishing fusion,
+aliased contacts, RNG state, and witnesses. Disabled FOW permits explicit empty
+views and non-FOW Space tracks but rejects contacts, witnesses, FOW IDs, or FOW
+counters. A dynamic roster change may leave durable FOW state while targeting
+is intentionally between intervals; the next step refreshes both owners.
+Capture and restore reject non-pristine active/inactive deception state under
+REM-046 and custom/populated COP/data-link state under REM-036 because format
+116 does not serialize those owners. Versionless state cannot retain even
+LOST-only FOW track/counter history.
 
 ## Runtime loadout topology
 
@@ -341,11 +367,11 @@ between Space and fusion state before committing either owner. A failed
 delivery or restore leaves the queue, receipt ledger, associations, tracks,
 clock, and RNG unchanged so the same operation can be retried.
 
-This typed Space ISR contract does not restore ordinary fog-of-war contacts.
-`SideWorldView.contacts` are currently serialized but nonempty entries are
-discarded on restore under REM-029. Space ISR fresh-continuation evidence
-therefore declares an empty ordinary-contact topology rather than implying
-whole-fog-of-war equivalence.
+This typed Space ISR contract does not directly inject reports into ordinary
+fog-of-war contacts. Phase 112 proved its queue/receipt/association lifecycle
+with an explicitly empty ordinary-contact topology; format 116 independently
+restores nonempty roster-backed `SideWorldView.contacts` and their fusion
+aliases without relabeling Space ISR as a direct FOW-injection path.
 
 The detailed ASAT production/action contract is
 [ASAT Production Integration](asat-production-integration.md).
@@ -389,9 +415,9 @@ The detailed contract is
 
 ## Compatibility
 
-- Current engine checkpoints contain `checkpoint_version: 115`; an unknown,
+- Current engine checkpoints contain `checkpoint_version: 116`; an unknown,
   malformed, boolean, older explicit, or newer explicit version is rejected.
-  Explicit version `114` and all earlier formats do not migrate into the
+  Explicit version `115` and all earlier formats do not migrate into the
   current runtime.
 - Current reinforcement wave ordinals and morale-record enum/generation values
   use non-boolean integers. Current wave side, configured arrival time, and full
@@ -429,8 +455,9 @@ The detailed contract is
   Legacy `morale_states`/`morale_machine` inputs are accepted only through the
   explicit bounded `allow_legacy_morale=True` path. `SimulationEngine`
   additionally requires `units_by_side` for its campaign/roster preflight and
-  exactly one `era_runtime_contract`, one `morale_runtime`, and one
-  `tactical_targeting` key for version 115.
+  exactly one `era_runtime_contract`, one `morale_runtime`, one
+  `tactical_targeting`, one context-owned detection owner, and one strict
+  `fog_of_war` envelope for version 116.
 - Older unit snapshots without `unit_class` infer the class from its unique
   subclass field. A snapshot with no subclass field restores as `Unit`.
 - Unknown explicit discriminators fail; they never silently downgrade to
@@ -470,8 +497,8 @@ Completion requires:
 14. complete space/ASAT action, service, inventory, satellite, debris, RNG, and
     before/after-action fresh continuation, plus typed Space ISR continuation
     before and after delayed delivery, transactional retry, owner-only
-    association, and atomic corruption controls under the declared ordinary
-    contact limitation;
+    association, and atomic corruption controls under its historically
+    declared empty-ordinary-contact fixture;
 15. exact commander/profile/school/OODA restoration and fresh continuation for
     initial and arriving units, including a behavior-affecting assignment
     control and atomic rejection;
@@ -485,15 +512,18 @@ Completion requires:
 18. one-runtime transition, rally, melee, cascade, dynamic-registration,
     aggregation, API/campaign exposure, and exact current/legacy morale
     continuation controls;
-19. exact format-115 era-contract topology, resolution/clock agreement,
+19. exact current format-116 era-contract topology, resolution/clock agreement,
     bounded override-free versionless handling, active treatment/repair
     continuation, and atomic rejection of captured source, horizon, consumer,
     or contract drift;
 20. exact tactical-targeting owner/topology, no-FOW fresh continuation,
-    historical/non-consumable restored FOW decisions, movement-diagnostic
-    agreement, and atomic clock/battle/roster/loadout/range corruption
-    controls, with REM-029 explicitly excluded; and
-21. relevant existing checkpoint, scenario, engine, entity, morale, logistics,
+    movement-diagnostic agreement, and atomic clock/battle/roster/loadout/range
+    corruption controls;
+21. exact nonempty ordinary-contact, fusion-object alias, bounded witness,
+    current-decision consumability, DETECTION RNG, fresh/in-place lifecycle,
+    exposure, event, and whole-checkpoint continuation, including atomic
+    corruption/retry and explicit REM-036/REM-046 rejection controls; and
+22. relevant existing checkpoint, scenario, engine, entity, morale, logistics,
     space, commander, movement, and indirect-fire regression suites.
 
 ## Tracked boundaries
@@ -509,11 +539,12 @@ restoration. Its current base-unit reconstruction gap is tracked separately and
 must be closed before checkpoint equivalence is claimed across an aggregation
 boundary.
 
-Ordinary nonempty fog-of-war contact restore remains REM-029. Typed Space ISR
-queue/receipt/association equivalence must not be generalized across that
-boundary.
+Typed Space ISR queue/receipt/association equivalence must not be generalized
+into direct ordinary-contact injection. Format 116 restores roster-backed
+ordinary contacts separately; active deception remains REM-046 and custom or
+populated COP/data-link topology remains REM-036.
 
-Legacy Phase 101 `_fired_scripted_events` state is not part of format 115 and
+Legacy Phase 101 `_fired_scripted_events` state is not part of format 116 and
 must not be inferred from elapsed time after restore. Typed schedule identity,
 effect receipts, fail-closed retry/commit policy, and exact-once continuation
 for the four existing scripted-action families remain REM-045 / Phase 132.

@@ -140,7 +140,7 @@ Rolling record of implementation decisions, changes, and lessons learned across 
 | | | | |
 | **Block 13: Integrity Remediation Follow-ups** ||||
 | 115 | Sensing-Aware Tactical Standoff | **Complete** | [phase-115.md](phase-115.md) |
-| 116 | Fog-of-War Contact Continuation | Not started | [Block 13 roadmap](../development-phases-block13.md#phase-116-fog-of-war-contact-continuation) |
+| 116 | Fog-of-War Contact Continuation | **Complete** | [phase-116.md](phase-116.md) |
 
 ## Post-MVP Refinement Index
 

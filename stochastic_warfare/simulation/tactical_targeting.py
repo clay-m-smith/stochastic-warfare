@@ -1975,9 +1975,9 @@ class TacticalTargetingRuntime:
             for decision in picture.decisions:
                 if decision.shooter_side != sides[decision.shooter_id]:
                     raise ValueError("restored shooter side topology mismatch")
-                if not decision.fog_of_war_enabled and not decision.consumable:
+                if not decision.consumable:
                     raise ValueError(
-                        "non-FOW targeting decisions must restore exactly consumable",
+                        "targeting decisions must restore exactly consumable",
                     )
                 if decision.sensing_aware_standoff_enabled is not self._sensing_aware_standoff_enabled:
                     raise ValueError("restored decision enablement mismatch")
@@ -1985,7 +1985,7 @@ class TacticalTargetingRuntime:
                     decision.target_id not in members or decision.target_side != sides[decision.target_id]
                 ):
                     raise ValueError("restored target topology mismatch")
-                restored_decisions.append(decision.as_historical() if decision.fog_of_war_enabled else decision)
+                restored_decisions.append(decision)
             staged_pictures.append(
                 replace(
                     picture,
@@ -2004,12 +2004,12 @@ class TacticalTargetingRuntime:
                 raise ValueError(
                     "targeting revalidation lacks its exact bounded picture",
                 )
-            if not outcome.fog_of_war_enabled and not outcome.consumable:
+            if not outcome.consumable:
                 raise ValueError(
-                    "non-FOW revalidations must restore exactly consumable",
+                    "targeting revalidations must restore exactly consumable",
                 )
             _validate_revalidation_against_decision(outcome, decision)
-            staged_revalidations.append(outcome.as_historical() if outcome.fog_of_war_enabled else outcome)
+            staged_revalidations.append(outcome)
         return TacticalTargetingRestorePlan(
             registered_unit_side_items=tuple(registered_sides.items()),
             prepared_interval=interval,

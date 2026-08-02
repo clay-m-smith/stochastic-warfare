@@ -343,9 +343,10 @@ transactionally creates an exact
 `IntelDeliveryReceipt` and one owner/target `IMINTTrackAssociation`; queued
 reports, receipts, associations, cadence, and reference integrity participate
 in atomic checkpoint preflight. This does not inject reports directly into
-ordinary fog-of-war contacts. Exact continuation with nonempty ordinary
-`SideWorldView.contacts` remains REM-029, so Space ISR checkpoint evidence uses
-an explicit empty ordinary-contact topology.
+ordinary fog-of-war contacts. Phase 112's Space ISR evidence used an explicit
+empty ordinary-contact topology; format 116 independently restores nonempty
+roster-backed `SideWorldView.contacts` without turning ISR receipts into FOW
+contacts.
 
 The selected catalog topology, satellite state, ASAT
 inventory/orders/debris, service history, and SPACE RNG stream also participate
@@ -411,7 +412,7 @@ Each era is defined by an `EraConfig` that specifies:
 - Strict sparse tick overrides for strategic, operational, and tactical
   cadence, plus medical treatment and maintenance repair durations. One
   frozen effective `EraRuntimeContract` constructs the clock and domain
-  configs, participates in runtime fingerprints, and persists in format-115
+  configs, participates in runtime fingerprints, and persists in format-116
   checkpoints. Unsupported C2/nuclear keys reject instead of acting as
   metadata proxies.
 - Era-specific engine extensions
@@ -565,20 +566,32 @@ This enables:
 - **Branching** -- checkpoint, run two different decisions, compare outcomes
 - **Debugging** -- reproduce any simulation state from a checkpoint + seed
 
-The current `SimulationEngine` checkpoint schema is version 115. In addition
+The current `SimulationEngine` checkpoint schema is version 116. In addition
 to exact force/loadout/logistics/time-on-target state and the single
 `morale_runtime` envelope, it stores one fully effective
 `era_runtime_contract` plus the tactical-targeting interval, battle
 memberships, decisions, post-movement revalidations, enablement, default
-visibility, and exact source bindings. The current resolution, clock duration, selected
-registry identity, captured scenario cadence/horizon inputs, and frozen
-medical/maintenance consumers must agree before mutation; format 114 and every
+visibility, and exact source bindings. It also stores one strict fog-of-war
+envelope containing complete roster-backed ordinary side views, bounded
+current observer witnesses, the fusion topology, and a DETECTION RNG mirror.
+Restore reconstructs each contact's exact fusion-owned track-object alias and
+cross-validates consumable current targeting evidence against its witness,
+contact, roster, loadout, and interval. The staged owner is protected by both
+content and exact runtime type/shape/alias fingerprints, so equal serialized
+values cannot replace enums, arrays, containers, or shared track/receipt
+objects with behaviorally different structures. Explicit empty side views and
+between-interval dynamic-roster checkpoints remain supported; disabled FOW
+still rejects actual ordinary-contact state. The current resolution, clock
+duration, selected registry identity, captured scenario cadence/horizon inputs, and frozen
+medical/maintenance consumers must agree before mutation; format 115 and every
 other explicit non-current version reject. There is no current-format morale
 context map or state-machine copy, and `RNGManager` alone persists the MORALE
 stream. Commander/OODA assignments, bounded movement diagnostics, and typed
 Space ISR queues, receipts, and owner/target associations remain included.
 Restore stages and validates topology, identity, chronology, mutable
 resources, statuses, routes, and relevant RNG state against a fresh compatible
-runtime before committing any mutation. Bounded versionless compatibility
-remains subject to the stricter subsystem rules in the
+runtime before committing any mutation. Non-pristine active deception and
+custom/populated COP/data-link topology reject under REM-046 and REM-036,
+respectively, rather than being silently lost. Bounded versionless
+compatibility remains subject to the stricter subsystem rules in the
 [checkpoint state contract](../specs/checkpoint-state.md).

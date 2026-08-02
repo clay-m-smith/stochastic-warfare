@@ -1602,6 +1602,10 @@ class IntelFusionEngine:
             )
         for side, ordinals in fow_ordinals_by_side.items():
             if not ordinals:
+                if side in fow_track_counters:
+                    raise ValueError(
+                        "Intel fusion FOW track counter has no issued tracks",
+                    )
                 continue
             counter = fow_track_counters.get(side)
             if counter is None:
@@ -1611,6 +1615,10 @@ class IntelFusionEngine:
             if max(ordinals) > counter:
                 raise ValueError(
                     "Intel fusion FOW track counter precedes an issued track",
+                )
+            if max(ordinals) < counter:
+                raise ValueError(
+                    "Intel fusion FOW track counter disagrees with issued tracks",
                 )
 
         rng_state = copy.deepcopy(state["rng_state"])

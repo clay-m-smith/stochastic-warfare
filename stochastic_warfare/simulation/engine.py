@@ -41,7 +41,7 @@ from stochastic_warfare.simulation.victory import VictoryEvaluator, VictoryResul
 
 logger = get_logger(__name__)
 
-_CHECKPOINT_VERSION = 115
+_CHECKPOINT_VERSION = 116
 _TERMINAL_CONDITION_TYPES = frozenset({
     "armistice",
     "attrition_ratio",

@@ -2318,7 +2318,10 @@ def _execute_revision(
     if str(repo_root) not in sys.path:
         sys.path.insert(0, str(repo_root))
 
-    if revision == "reference":
+    # The candidate-owned compatibility adapter exists only for the exact
+    # pre-factory Phase 112 reference.  Promoted references execute through
+    # their own production SimulationRuntimeFactory just like candidates.
+    if revision == "reference" and _full_commit(repo_root) == REFERENCE_COMMIT:
         context, engine, recorder, recorder_model = _historical_reference_runtime(
             repo_root=repo_root,
             scenario_path=scenario_path,

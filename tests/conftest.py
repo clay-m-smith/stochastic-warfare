@@ -201,13 +201,16 @@ def bind_test_era_runtime(
 def make_versionless_legacy_morale_checkpoint(
     checkpoint: dict,
 ) -> dict:
-    """Convert format 115 into the bounded pre-113 morale envelope."""
+    """Convert format 116 into the bounded pre-113 morale envelope."""
     legacy = copy.deepcopy(checkpoint)
-    assert legacy.pop("checkpoint_version") == 115
+    assert legacy.pop("checkpoint_version") == 116
     context = legacy["context"]
     context.pop("targeting_default_visibility_m")
     context.pop("tactical_targeting")
     context.pop("era_runtime_contract")
+    fog_state = context.get("fog_of_war")
+    if fog_state is not None:
+        assert fog_state.pop("current_detection_witnesses") == {}
     runtime_state = context.pop("morale_runtime")
     assert runtime_state["suspended_archives"] == {}
     active_records = runtime_state["active_records"]

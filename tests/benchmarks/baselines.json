@@ -3,11 +3,29 @@
   "entries": {
     "73_easting": {
       "policy": {
-        "closures_per_revision": 1,
         "manual": false,
-        "mode": "transition_qualified",
+        "maximum_median_slowdown_ratio": 1.2,
+        "maximum_relative_sample_range": 0.2,
+        "mode": "gate",
+        "pair_orders": [
+          [
+            "reference",
+            "candidate"
+          ],
+          [
+            "candidate",
+            "reference"
+          ],
+          [
+            "reference",
+            "candidate"
+          ]
+        ],
         "policy_version": 4,
-        "reference_commit": "0460ac70be86784bcc6e359ae4202f4bcb938c60",
+        "reference_commit": "271ec49ceb508bdd050e2d5c3072ac91456cca7c",
+        "timed_pairs": 3,
+        "timing_scope": "SimulationEngine.run",
+        "warmup_runs_per_revision": 1,
         "workload": {
           "calibration_patch": {
             "morale": {
@@ -23,445 +41,33 @@
           "name": "morale_neutral_control_plane"
         }
       },
-      "reference_input": null,
+      "reference_input": {
+        "dependency_lock_sha256": "bbc6b45cfc270d08baa09d3d568a6b84d0f936a6ee9c874cb49c9d8813c5ad39",
+        "fingerprint": "3ef1e72ff1ebdb099a6e89cc6917540f49d774593816c439bfe9e96d6d87f879",
+        "scenario_path": "data/scenarios/73_easting/scenario.yaml",
+        "scenario_sha256": "328467cd1f200cf2f0157da917ab20b9e9bbc43fb7ee985f5d4472d2df3cd3e5"
+      },
       "scenario_name": "73_easting",
       "scenario_path": "data/scenarios/73_easting/scenario.yaml",
-      "semantic_envelope": null,
-      "transition_contract": {
-        "approvals": [
-          {
-            "after_sha256": "a56ab70691a68282d1c92ad09d3cfc1eb7a1b1ad3ad4f8fc9520cbac7af63d8f",
-            "authorities": [
-              "docs/specs/sensing-aware-tactical-standoff.md"
-            ],
-            "before_sha256": "398b676e47d03a29016ee92fe378b8b4f1b3e965390c4c64ce78d27f79df74d1",
-            "classification": "sensing_aware_standoff_enablement",
-            "operation": "add",
-            "pointer": "/calibration/enable_sensing_aware_standoff",
-            "rationale": "Phase 115 enables the typed sensing-aware standoff control in all three loaded configuration views.",
-            "surface": "effective_inputs"
+      "semantic_envelope": {
+        "event_count": 1,
+        "event_digest": "2784db62737dac1df07bb13e64cadb9b6b6f0d3e48cee291efcfc0d51cb8e798",
+        "logical_duration_s": 1800.0,
+        "roster_loadout_digest": "1344d0fdffe8cf42cd5329a4cbc808398a449f47c14c95fb17807f671f3a32a2",
+        "status_counts": {
+          "blue": {
+            "ACTIVE": 21
           },
-          {
-            "after_sha256": "a56ab70691a68282d1c92ad09d3cfc1eb7a1b1ad3ad4f8fc9520cbac7af63d8f",
-            "authorities": [
-              "docs/specs/sensing-aware-tactical-standoff.md"
-            ],
-            "before_sha256": "398b676e47d03a29016ee92fe378b8b4f1b3e965390c4c64ce78d27f79df74d1",
-            "classification": "sensing_aware_standoff_enablement",
-            "operation": "add",
-            "pointer": "/calibration_flat/enable_sensing_aware_standoff",
-            "rationale": "Phase 115 enables the typed sensing-aware standoff control in all three loaded configuration views.",
-            "surface": "effective_inputs"
-          },
-          {
-            "after_sha256": "a56ab70691a68282d1c92ad09d3cfc1eb7a1b1ad3ad4f8fc9520cbac7af63d8f",
-            "authorities": [
-              "docs/specs/sensing-aware-tactical-standoff.md"
-            ],
-            "before_sha256": "398b676e47d03a29016ee92fe378b8b4f1b3e965390c4c64ce78d27f79df74d1",
-            "classification": "sensing_aware_standoff_enablement",
-            "operation": "add",
-            "pointer": "/configuration/calibration_overrides/enable_sensing_aware_standoff",
-            "rationale": "Phase 115 enables the typed sensing-aware standoff control in all three loaded configuration views.",
-            "surface": "effective_inputs"
-          },
-          {
-            "after_sha256": "7e1535d3096eac446fd4d74a6e5f3713941157c0f798f1b89c17d1707116a944",
-            "authorities": [
-              "docs/specs/equipment-mapping.md",
-              "docs/specs/sensing-aware-tactical-standoff.md"
-            ],
-            "before_sha256": "398b676e47d03a29016ee92fe378b8b4f1b3e965390c4c64ce78d27f79df74d1",
-            "classification": "vvs2_target_domain_expansion",
-            "operation": "add",
-            "pointer": "/resolved_definitions/sensors/vvs2_commander_viewer/target_domains/1",
-            "rationale": "The VVS-2 catalog sensor is corrected from a ground-only domain to its approved multi-domain observation contract.",
-            "surface": "effective_inputs"
-          },
-          {
-            "after_sha256": "964aaa9feec4c7440bc247bc76574c0f8f366079d20d7c46c2b1f956fa1d5e38",
-            "authorities": [
-              "docs/specs/equipment-mapping.md",
-              "docs/specs/sensing-aware-tactical-standoff.md"
-            ],
-            "before_sha256": "398b676e47d03a29016ee92fe378b8b4f1b3e965390c4c64ce78d27f79df74d1",
-            "classification": "vvs2_target_domain_expansion",
-            "operation": "add",
-            "pointer": "/resolved_definitions/sensors/vvs2_commander_viewer/target_domains/2",
-            "rationale": "The VVS-2 catalog sensor is corrected from a ground-only domain to its approved multi-domain observation contract.",
-            "surface": "effective_inputs"
-          },
-          {
-            "after_sha256": "a3313c10400775df7445c544982f01da3af3ec5ea088b7a5a5e601148e89e40d",
-            "authorities": [
-              "docs/specs/equipment-mapping.md",
-              "docs/specs/sensing-aware-tactical-standoff.md"
-            ],
-            "before_sha256": "398b676e47d03a29016ee92fe378b8b4f1b3e965390c4c64ce78d27f79df74d1",
-            "classification": "vvs2_target_domain_expansion",
-            "operation": "add",
-            "pointer": "/resolved_definitions/sensors/vvs2_commander_viewer/target_domains/3",
-            "rationale": "The VVS-2 catalog sensor is corrected from a ground-only domain to its approved multi-domain observation contract.",
-            "surface": "effective_inputs"
-          },
-          {
-            "after_sha256": "4cc4c0a5b8e8aa5f072e7bc77cd8019558ca8761edcb13a81b85808cb349c760",
-            "authorities": [
-              "docs/specs/equipment-mapping.md",
-              "docs/specs/sensing-aware-tactical-standoff.md"
-            ],
-            "before_sha256": "742a5dc89f0b175608574a33a7e9f232693a7d90b98243ed4509da8d864f16aa",
-            "classification": "vvs2_loadout_role_correction",
-            "operation": "replace",
-            "pointer": "/roster/0/loadout/2/modeled_role",
-            "rationale": "All 21 blue VVS-2 bindings are corrected from ground_night_sight to night_vision.",
-            "surface": "effective_inputs"
-          },
-          {
-            "after_sha256": "4cc4c0a5b8e8aa5f072e7bc77cd8019558ca8761edcb13a81b85808cb349c760",
-            "authorities": [
-              "docs/specs/equipment-mapping.md",
-              "docs/specs/sensing-aware-tactical-standoff.md"
-            ],
-            "before_sha256": "742a5dc89f0b175608574a33a7e9f232693a7d90b98243ed4509da8d864f16aa",
-            "classification": "vvs2_loadout_role_correction",
-            "operation": "replace",
-            "pointer": "/roster/1/loadout/2/modeled_role",
-            "rationale": "All 21 blue VVS-2 bindings are corrected from ground_night_sight to night_vision.",
-            "surface": "effective_inputs"
-          },
-          {
-            "after_sha256": "4cc4c0a5b8e8aa5f072e7bc77cd8019558ca8761edcb13a81b85808cb349c760",
-            "authorities": [
-              "docs/specs/equipment-mapping.md",
-              "docs/specs/sensing-aware-tactical-standoff.md"
-            ],
-            "before_sha256": "742a5dc89f0b175608574a33a7e9f232693a7d90b98243ed4509da8d864f16aa",
-            "classification": "vvs2_loadout_role_correction",
-            "operation": "replace",
-            "pointer": "/roster/10/loadout/4/modeled_role",
-            "rationale": "All 21 blue VVS-2 bindings are corrected from ground_night_sight to night_vision.",
-            "surface": "effective_inputs"
-          },
-          {
-            "after_sha256": "4cc4c0a5b8e8aa5f072e7bc77cd8019558ca8761edcb13a81b85808cb349c760",
-            "authorities": [
-              "docs/specs/equipment-mapping.md",
-              "docs/specs/sensing-aware-tactical-standoff.md"
-            ],
-            "before_sha256": "742a5dc89f0b175608574a33a7e9f232693a7d90b98243ed4509da8d864f16aa",
-            "classification": "vvs2_loadout_role_correction",
-            "operation": "replace",
-            "pointer": "/roster/11/loadout/4/modeled_role",
-            "rationale": "All 21 blue VVS-2 bindings are corrected from ground_night_sight to night_vision.",
-            "surface": "effective_inputs"
-          },
-          {
-            "after_sha256": "4cc4c0a5b8e8aa5f072e7bc77cd8019558ca8761edcb13a81b85808cb349c760",
-            "authorities": [
-              "docs/specs/equipment-mapping.md",
-              "docs/specs/sensing-aware-tactical-standoff.md"
-            ],
-            "before_sha256": "742a5dc89f0b175608574a33a7e9f232693a7d90b98243ed4509da8d864f16aa",
-            "classification": "vvs2_loadout_role_correction",
-            "operation": "replace",
-            "pointer": "/roster/12/loadout/4/modeled_role",
-            "rationale": "All 21 blue VVS-2 bindings are corrected from ground_night_sight to night_vision.",
-            "surface": "effective_inputs"
-          },
-          {
-            "after_sha256": "4cc4c0a5b8e8aa5f072e7bc77cd8019558ca8761edcb13a81b85808cb349c760",
-            "authorities": [
-              "docs/specs/equipment-mapping.md",
-              "docs/specs/sensing-aware-tactical-standoff.md"
-            ],
-            "before_sha256": "742a5dc89f0b175608574a33a7e9f232693a7d90b98243ed4509da8d864f16aa",
-            "classification": "vvs2_loadout_role_correction",
-            "operation": "replace",
-            "pointer": "/roster/13/loadout/4/modeled_role",
-            "rationale": "All 21 blue VVS-2 bindings are corrected from ground_night_sight to night_vision.",
-            "surface": "effective_inputs"
-          },
-          {
-            "after_sha256": "4cc4c0a5b8e8aa5f072e7bc77cd8019558ca8761edcb13a81b85808cb349c760",
-            "authorities": [
-              "docs/specs/equipment-mapping.md",
-              "docs/specs/sensing-aware-tactical-standoff.md"
-            ],
-            "before_sha256": "742a5dc89f0b175608574a33a7e9f232693a7d90b98243ed4509da8d864f16aa",
-            "classification": "vvs2_loadout_role_correction",
-            "operation": "replace",
-            "pointer": "/roster/14/loadout/4/modeled_role",
-            "rationale": "All 21 blue VVS-2 bindings are corrected from ground_night_sight to night_vision.",
-            "surface": "effective_inputs"
-          },
-          {
-            "after_sha256": "4cc4c0a5b8e8aa5f072e7bc77cd8019558ca8761edcb13a81b85808cb349c760",
-            "authorities": [
-              "docs/specs/equipment-mapping.md",
-              "docs/specs/sensing-aware-tactical-standoff.md"
-            ],
-            "before_sha256": "742a5dc89f0b175608574a33a7e9f232693a7d90b98243ed4509da8d864f16aa",
-            "classification": "vvs2_loadout_role_correction",
-            "operation": "replace",
-            "pointer": "/roster/15/loadout/4/modeled_role",
-            "rationale": "All 21 blue VVS-2 bindings are corrected from ground_night_sight to night_vision.",
-            "surface": "effective_inputs"
-          },
-          {
-            "after_sha256": "4cc4c0a5b8e8aa5f072e7bc77cd8019558ca8761edcb13a81b85808cb349c760",
-            "authorities": [
-              "docs/specs/equipment-mapping.md",
-              "docs/specs/sensing-aware-tactical-standoff.md"
-            ],
-            "before_sha256": "742a5dc89f0b175608574a33a7e9f232693a7d90b98243ed4509da8d864f16aa",
-            "classification": "vvs2_loadout_role_correction",
-            "operation": "replace",
-            "pointer": "/roster/16/loadout/4/modeled_role",
-            "rationale": "All 21 blue VVS-2 bindings are corrected from ground_night_sight to night_vision.",
-            "surface": "effective_inputs"
-          },
-          {
-            "after_sha256": "4cc4c0a5b8e8aa5f072e7bc77cd8019558ca8761edcb13a81b85808cb349c760",
-            "authorities": [
-              "docs/specs/equipment-mapping.md",
-              "docs/specs/sensing-aware-tactical-standoff.md"
-            ],
-            "before_sha256": "742a5dc89f0b175608574a33a7e9f232693a7d90b98243ed4509da8d864f16aa",
-            "classification": "vvs2_loadout_role_correction",
-            "operation": "replace",
-            "pointer": "/roster/17/loadout/4/modeled_role",
-            "rationale": "All 21 blue VVS-2 bindings are corrected from ground_night_sight to night_vision.",
-            "surface": "effective_inputs"
-          },
-          {
-            "after_sha256": "4cc4c0a5b8e8aa5f072e7bc77cd8019558ca8761edcb13a81b85808cb349c760",
-            "authorities": [
-              "docs/specs/equipment-mapping.md",
-              "docs/specs/sensing-aware-tactical-standoff.md"
-            ],
-            "before_sha256": "742a5dc89f0b175608574a33a7e9f232693a7d90b98243ed4509da8d864f16aa",
-            "classification": "vvs2_loadout_role_correction",
-            "operation": "replace",
-            "pointer": "/roster/18/loadout/4/modeled_role",
-            "rationale": "All 21 blue VVS-2 bindings are corrected from ground_night_sight to night_vision.",
-            "surface": "effective_inputs"
-          },
-          {
-            "after_sha256": "4cc4c0a5b8e8aa5f072e7bc77cd8019558ca8761edcb13a81b85808cb349c760",
-            "authorities": [
-              "docs/specs/equipment-mapping.md",
-              "docs/specs/sensing-aware-tactical-standoff.md"
-            ],
-            "before_sha256": "742a5dc89f0b175608574a33a7e9f232693a7d90b98243ed4509da8d864f16aa",
-            "classification": "vvs2_loadout_role_correction",
-            "operation": "replace",
-            "pointer": "/roster/19/loadout/4/modeled_role",
-            "rationale": "All 21 blue VVS-2 bindings are corrected from ground_night_sight to night_vision.",
-            "surface": "effective_inputs"
-          },
-          {
-            "after_sha256": "4cc4c0a5b8e8aa5f072e7bc77cd8019558ca8761edcb13a81b85808cb349c760",
-            "authorities": [
-              "docs/specs/equipment-mapping.md",
-              "docs/specs/sensing-aware-tactical-standoff.md"
-            ],
-            "before_sha256": "742a5dc89f0b175608574a33a7e9f232693a7d90b98243ed4509da8d864f16aa",
-            "classification": "vvs2_loadout_role_correction",
-            "operation": "replace",
-            "pointer": "/roster/2/loadout/2/modeled_role",
-            "rationale": "All 21 blue VVS-2 bindings are corrected from ground_night_sight to night_vision.",
-            "surface": "effective_inputs"
-          },
-          {
-            "after_sha256": "4cc4c0a5b8e8aa5f072e7bc77cd8019558ca8761edcb13a81b85808cb349c760",
-            "authorities": [
-              "docs/specs/equipment-mapping.md",
-              "docs/specs/sensing-aware-tactical-standoff.md"
-            ],
-            "before_sha256": "742a5dc89f0b175608574a33a7e9f232693a7d90b98243ed4509da8d864f16aa",
-            "classification": "vvs2_loadout_role_correction",
-            "operation": "replace",
-            "pointer": "/roster/20/loadout/4/modeled_role",
-            "rationale": "All 21 blue VVS-2 bindings are corrected from ground_night_sight to night_vision.",
-            "surface": "effective_inputs"
-          },
-          {
-            "after_sha256": "4cc4c0a5b8e8aa5f072e7bc77cd8019558ca8761edcb13a81b85808cb349c760",
-            "authorities": [
-              "docs/specs/equipment-mapping.md",
-              "docs/specs/sensing-aware-tactical-standoff.md"
-            ],
-            "before_sha256": "742a5dc89f0b175608574a33a7e9f232693a7d90b98243ed4509da8d864f16aa",
-            "classification": "vvs2_loadout_role_correction",
-            "operation": "replace",
-            "pointer": "/roster/3/loadout/2/modeled_role",
-            "rationale": "All 21 blue VVS-2 bindings are corrected from ground_night_sight to night_vision.",
-            "surface": "effective_inputs"
-          },
-          {
-            "after_sha256": "4cc4c0a5b8e8aa5f072e7bc77cd8019558ca8761edcb13a81b85808cb349c760",
-            "authorities": [
-              "docs/specs/equipment-mapping.md",
-              "docs/specs/sensing-aware-tactical-standoff.md"
-            ],
-            "before_sha256": "742a5dc89f0b175608574a33a7e9f232693a7d90b98243ed4509da8d864f16aa",
-            "classification": "vvs2_loadout_role_correction",
-            "operation": "replace",
-            "pointer": "/roster/4/loadout/2/modeled_role",
-            "rationale": "All 21 blue VVS-2 bindings are corrected from ground_night_sight to night_vision.",
-            "surface": "effective_inputs"
-          },
-          {
-            "after_sha256": "4cc4c0a5b8e8aa5f072e7bc77cd8019558ca8761edcb13a81b85808cb349c760",
-            "authorities": [
-              "docs/specs/equipment-mapping.md",
-              "docs/specs/sensing-aware-tactical-standoff.md"
-            ],
-            "before_sha256": "742a5dc89f0b175608574a33a7e9f232693a7d90b98243ed4509da8d864f16aa",
-            "classification": "vvs2_loadout_role_correction",
-            "operation": "replace",
-            "pointer": "/roster/5/loadout/2/modeled_role",
-            "rationale": "All 21 blue VVS-2 bindings are corrected from ground_night_sight to night_vision.",
-            "surface": "effective_inputs"
-          },
-          {
-            "after_sha256": "4cc4c0a5b8e8aa5f072e7bc77cd8019558ca8761edcb13a81b85808cb349c760",
-            "authorities": [
-              "docs/specs/equipment-mapping.md",
-              "docs/specs/sensing-aware-tactical-standoff.md"
-            ],
-            "before_sha256": "742a5dc89f0b175608574a33a7e9f232693a7d90b98243ed4509da8d864f16aa",
-            "classification": "vvs2_loadout_role_correction",
-            "operation": "replace",
-            "pointer": "/roster/6/loadout/2/modeled_role",
-            "rationale": "All 21 blue VVS-2 bindings are corrected from ground_night_sight to night_vision.",
-            "surface": "effective_inputs"
-          },
-          {
-            "after_sha256": "4cc4c0a5b8e8aa5f072e7bc77cd8019558ca8761edcb13a81b85808cb349c760",
-            "authorities": [
-              "docs/specs/equipment-mapping.md",
-              "docs/specs/sensing-aware-tactical-standoff.md"
-            ],
-            "before_sha256": "742a5dc89f0b175608574a33a7e9f232693a7d90b98243ed4509da8d864f16aa",
-            "classification": "vvs2_loadout_role_correction",
-            "operation": "replace",
-            "pointer": "/roster/7/loadout/2/modeled_role",
-            "rationale": "All 21 blue VVS-2 bindings are corrected from ground_night_sight to night_vision.",
-            "surface": "effective_inputs"
-          },
-          {
-            "after_sha256": "4cc4c0a5b8e8aa5f072e7bc77cd8019558ca8761edcb13a81b85808cb349c760",
-            "authorities": [
-              "docs/specs/equipment-mapping.md",
-              "docs/specs/sensing-aware-tactical-standoff.md"
-            ],
-            "before_sha256": "742a5dc89f0b175608574a33a7e9f232693a7d90b98243ed4509da8d864f16aa",
-            "classification": "vvs2_loadout_role_correction",
-            "operation": "replace",
-            "pointer": "/roster/8/loadout/2/modeled_role",
-            "rationale": "All 21 blue VVS-2 bindings are corrected from ground_night_sight to night_vision.",
-            "surface": "effective_inputs"
-          },
-          {
-            "after_sha256": "4cc4c0a5b8e8aa5f072e7bc77cd8019558ca8761edcb13a81b85808cb349c760",
-            "authorities": [
-              "docs/specs/equipment-mapping.md",
-              "docs/specs/sensing-aware-tactical-standoff.md"
-            ],
-            "before_sha256": "742a5dc89f0b175608574a33a7e9f232693a7d90b98243ed4509da8d864f16aa",
-            "classification": "vvs2_loadout_role_correction",
-            "operation": "replace",
-            "pointer": "/roster/9/loadout/4/modeled_role",
-            "rationale": "All 21 blue VVS-2 bindings are corrected from ground_night_sight to night_vision.",
-            "surface": "effective_inputs"
-          },
-          {
-            "after_sha256": "19df87a1fca2a301a61b735d734fa68c613cefc24a4614f3ebbd9ecf15bbb4c3",
-            "authorities": [
-              "docs/specs/validation-and-documentation-trust.md"
-            ],
-            "before_sha256": "bee8ad03c23b6d9ab470b9a7a519ca3d19b7f083e9858d118e06c2d9107676e8",
-            "classification": "derived_runtime_input_fingerprint",
-            "operation": "replace",
-            "pointer": "/fingerprint",
-            "rationale": "The normalized runtime-input fingerprint changes only as the derived identity of the approved effective-input differences.",
-            "surface": "runtime_input"
-          },
-          {
-            "after_sha256": "f6c3b1ac63100fae8293d67eb5cfd575d65e806ee557063aa59dcfc3d41e2ce3",
-            "authorities": [
-              "docs/specs/equipment-mapping.md"
-            ],
-            "before_sha256": "d67331ee42a7b0b6ec1a68546afcc72fdb17fcc7d5eecc3d483ad73023a72c96",
-            "classification": "derived_roster_loadout_digest",
-            "operation": "replace",
-            "pointer": "/roster_loadout_digest",
-            "rationale": "The roster/loadout digest changes only as the derived identity of the 21 approved VVS-2 role corrections.",
-            "surface": "semantic_envelope"
-          }
-        ],
-        "candidate": {
-          "runtime_input": {
-            "dependency_lock_sha256": "bbc6b45cfc270d08baa09d3d568a6b84d0f936a6ee9c874cb49c9d8813c5ad39",
-            "fingerprint": "3ef1e72ff1ebdb099a6e89cc6917540f49d774593816c439bfe9e96d6d87f879",
-            "scenario_path": "data/scenarios/73_easting/scenario.yaml",
-            "scenario_sha256": "328467cd1f200cf2f0157da917ab20b9e9bbc43fb7ee985f5d4472d2df3cd3e5"
-          },
-          "semantic_envelope": {
-            "event_count": 1,
-            "event_digest": "2784db62737dac1df07bb13e64cadb9b6b6f0d3e48cee291efcfc0d51cb8e798",
-            "logical_duration_s": 1800.0,
-            "roster_loadout_digest": "1344d0fdffe8cf42cd5329a4cbc808398a449f47c14c95fb17807f671f3a32a2",
-            "status_counts": {
-              "blue": {
-                "ACTIVE": 21
-              },
-              "red": {
-                "ACTIVE": 50
-              }
-            },
-            "ticks": 360,
-            "unit_count": 71,
-            "victory_condition_type": "time_expired",
-            "winner": "blue"
+          "red": {
+            "ACTIVE": 50
           }
         },
-        "predecessor": {
-          "commit": "4c660d1f5c31eb21a7c920af24a8647a7024d6e2",
-          "document_sha256": "8eab75e5a61415c859c2c40348ef64473ad500a0855fccc7b60481547656bb2c",
-          "entry_sha256": "ce0819e37ae0a9171d3bab28e0860f10277d2d5b7f050d433c29f70a406307e8",
-          "format_version": 3,
-          "policy_version": 3
-        },
-        "reference": {
-          "runtime_input": {
-            "dependency_lock_sha256": "bbc6b45cfc270d08baa09d3d568a6b84d0f936a6ee9c874cb49c9d8813c5ad39",
-            "fingerprint": "9d85b6f8489e961eaf3765220d2e2672e1e8955f8a9b58827a8ce0c1b9931e77",
-            "scenario_path": "data/scenarios/73_easting/scenario.yaml",
-            "scenario_sha256": "328467cd1f200cf2f0157da917ab20b9e9bbc43fb7ee985f5d4472d2df3cd3e5"
-          },
-          "semantic_envelope": {
-            "event_count": 1,
-            "event_digest": "2784db62737dac1df07bb13e64cadb9b6b6f0d3e48cee291efcfc0d51cb8e798",
-            "logical_duration_s": 1800.0,
-            "roster_loadout_digest": "b598b36d78604a60cd16bd3313e29e7a8a677e2cb9b83417dc4b00cab778a1b3",
-            "status_counts": {
-              "blue": {
-                "ACTIVE": 21
-              },
-              "red": {
-                "ACTIVE": 50
-              }
-            },
-            "ticks": 360,
-            "unit_count": 71,
-            "victory_condition_type": "time_expired",
-            "winner": "blue"
-          }
-        }
-      }
+        "ticks": 360,
+        "unit_count": 71,
+        "victory_condition_type": "time_expired",
+        "winner": "blue"
+      },
+      "transition_contract": null
     },
     "benchmark_battalion": {
       "policy": {

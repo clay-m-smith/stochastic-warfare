@@ -430,7 +430,7 @@ def test_parallel_side_updates_publish_canonical_witness_order(
     ]
 
 
-def test_witnesses_are_not_serialized_or_restored(
+def test_witnesses_and_contacts_restore_exactly_with_fusion_alias(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     manager = _manager()
@@ -451,17 +451,42 @@ def test_witnesses_are_not_serialized_or_restored(
         dt=1.0,
         current_time=12.0,
     )
-    assert manager.get_current_detection_witnesses("blue")
+    expected_witnesses = manager.get_current_detection_witnesses("blue")
+    assert expected_witnesses
+    source_contact = manager.get_contact("blue", "target")
+    assert source_contact is not None
+    source_track = source_contact.track
 
     state = manager.get_state()
-    assert set(state) == {"world_views", "rng_state", "intel_fusion"}
-    assert "witness" not in repr(state).lower()
+    assert set(state) == {
+        "world_views",
+        "current_detection_witnesses",
+        "rng_state",
+        "intel_fusion",
+    }
+    assert state["current_detection_witnesses"]["blue"] == [
+        witness.get_state() for witness in expected_witnesses
+    ]
 
     manager.set_state(state)
-    assert manager.get_current_detection_witnesses() == ()
+    assert manager.get_state() == state
+    assert manager.get_current_detection_witnesses("blue") == expected_witnesses
+    in_place_contact = manager.get_contact("blue", "target")
+    assert in_place_contact is not None
+    assert in_place_contact.track is manager.intel_fusion.get_tracks("blue")[
+        in_place_contact.track.track_id
+    ]
+    assert in_place_contact.track is not source_track
+
     restored = _manager(seed=800)
     restored.set_state(state)
-    assert restored.get_current_detection_witnesses() == ()
+    assert restored.get_state() == state
+    assert restored.get_current_detection_witnesses("blue") == expected_witnesses
+    fresh_contact = restored.get_contact("blue", "target")
+    assert fresh_contact is not None
+    assert fresh_contact.track is restored.intel_fusion.get_tracks("blue")[
+        fresh_contact.track.track_id
+    ]
 
 
 def test_legacy_sensor_projection_detects_without_fabricating_witness() -> None:
@@ -739,14 +764,16 @@ def test_three_side_catalog_sensor_parallel_matches_sequential_exactly() -> None
     restored = _manager(seed=1)
     restored.set_state(expected["fow_state"])
     restored_state = restored.get_state()
-    assert restored_state["rng_state"] == expected["fow_state"]["rng_state"]
-    assert restored_state["intel_fusion"] == expected["fow_state"]["intel_fusion"]
-    # REM-029 deliberately owns ordinary SideWorldView contact restoration;
-    # Phase 115 retains its established empty-contact restore boundary.
-    assert {side: state["last_update_time"] for side, state in restored_state["world_views"].items()} == {
-        side: 25.0 for side in ("blue", "green", "red")
-    }
-    assert all(not state["contacts"] for state in restored_state["world_views"].values())
+    assert restored_state == expected["fow_state"]
+    assert restored_state["world_views"] == expected["world_views"]
+    assert [
+        asdict(witness)
+        for witness in restored.get_current_detection_witnesses()
+    ] == expected["witnesses"]
+    for side in canonical_order:
+        fusion_tracks = restored.intel_fusion.get_tracks(side)
+        for contact in restored.get_world_view(side).contacts.values():
+            assert contact.track is fusion_tracks[contact.track.track_id]
 
 
 def _gated_motion_replacement_probe(

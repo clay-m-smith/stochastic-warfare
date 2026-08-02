@@ -1268,7 +1268,7 @@ def test_non_fow_state_round_trip_is_exact_and_json_scalar_only() -> None:
     )
 
 
-def test_restored_fow_solution_is_historical_and_non_consumable() -> None:
+def test_restored_fow_solution_and_revalidation_remain_consumable() -> None:
     runtime = _runtime()
     interval = _stage(runtime, fog_of_war_enabled=True)
     live = _valid_decision(
@@ -1300,48 +1300,30 @@ def test_restored_fow_solution_is_historical_and_non_consumable() -> None:
         ),
     )
     runtime.publish_interval(interval, (picture,))
-    runtime.publish_engagement_revalidation(_revalidation(live))
+    live_outcome = runtime.publish_engagement_revalidation(
+        _revalidation(live),
+    )
 
     restored = _runtime()
     restored.set_state(runtime.get_state())
 
-    assert (
-        restored.decision_for(
-            engine_tick=7,
-            battle_id="battle-alpha",
-            shooter_id="blue-1",
-        )
-        is None
-    )
-    historical = restored.decision_for(
+    restored_decision = restored.decision_for(
         engine_tick=7,
         battle_id="battle-alpha",
         shooter_id="blue-1",
-        require_consumable=False,
     )
-    assert historical is not None
-    assert historical.hold_authorized
-    assert historical.engagement_solution_valid
-    assert not historical.consumable
-    assert not historical.can_hold
-    assert not historical.can_engage
+    assert restored_decision == live
+    assert restored_decision.consumable
+    assert restored_decision.can_hold
+    assert restored_decision.can_engage
     assert (
         restored.engagement_revalidation_for(
             engine_tick=7,
             battle_id="battle-alpha",
             shooter_id="blue-1",
         )
-        is None
+        == live_outcome
     )
-    historical_outcome = restored.engagement_revalidation_for(
-        engine_tick=7,
-        battle_id="battle-alpha",
-        shooter_id="blue-1",
-        require_consumable=False,
-    )
-    assert historical_outcome is not None
-    assert historical_outcome.revalidation_passed
-    assert not historical_outcome.consumable
 
 
 def test_corrupt_cross_decision_revalidation_state_rejects_atomically() -> None:

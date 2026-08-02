@@ -2,7 +2,7 @@
 
 ![Python](https://img.shields.io/badge/python-%3E%3D3.12-blue)
 ![Tests](https://img.shields.io/badge/tests-partitioned_validation-blue)
-![Phase](https://img.shields.io/badge/phase-115_COMPLETE-brightgreen)
+![Phase](https://img.shields.io/badge/phase-116_COMPLETE-brightgreen)
 
 High-fidelity, high-resolution wargame simulator with a headless Python engine,
 FastAPI service, and React frontend. Models warfare across multiple scales —
@@ -53,28 +53,30 @@ marker partitions in deterministic module-affine shards. `terrain` and
 members. During Phase 115, routine 73 Easting uses the strict version-4
 non-timing workload-transition contract over unchanged version-3 runtime-input
 normalization. `transition_qualified` proves only the exact classified
-workload/semantic handoff; it is not a performance pass. The next phase must
-promote the clean Phase 115 endpoint before ordinary paired gating resumes.
+workload/semantic handoff; it is not a performance pass. Phase 116 has promoted
+the clean Phase 115 endpoint and ordinary version-4 paired gating has resumed;
 Golan remains a manual paired benchmark. All
 Python commands use `uv run` so the project environment is selected without
 manual activation.
 
-The Phase 115 closure audit enumerates exactly 12,248 nodes in that disjoint
-union: `standard` 11,743, `slow-only` 110, `benchmark-only` 87,
-`slow-benchmark` 4, API 263, and E2E 41. All 11,743 standard nodes and every
-complete benchmark overlap/partition passed; data, determinism, scenario,
-frontend, static, and documentation gates also passed. The owner accepted the
-contended long-run evidence with an explicit qualification: some slow, API,
-and E2E runs reached their 2,700-second cap and are not called passes, while
-the exact real database/API persistence witness passed on the host. Debecka's
-4/10 result remains a REM-030 signal rather than being tuned away. Hosted CI is
-the final independent environment control. Exact commands, counts, warnings,
-exclusions, and artifacts are in the
-[Phase 115 devlog](docs/devlog/phase-115.md).
+The Phase 116 closure audit enumerates exactly 12,459 nodes in that disjoint
+union: `standard` 11,953, `slow-only` 110, `benchmark-only` 87,
+`slow-benchmark` 5, API 263, and E2E 41. All 11,953 standard nodes and every
+complete benchmark partition/profile passed; data, determinism, scenario,
+static, documentation, cross-document, and postmortem gates also passed. The
+owner accepted contended long-run evidence with an explicit qualification:
+API/E2E and two slow shards reached their containment limits, Khafji's clean
+reproduction remained pending, and final paired timing dispersion was
+inconclusive; none is called a pass. Debecka's 4/10 result remains a REM-030
+signal rather than being tuned away. Hosted CI is the final independent
+environment control. Exact commands, counts, warnings, exclusions, and
+artifacts are in the [Phase 116 devlog](docs/devlog/phase-116.md).
 
 Block 13 is active. Phase 115's sensing-aware tactical-standoff and format-115
 targeting implementation is complete, and REM-028 is closed. Phase 116 /
-REM-029 is next and remains unstarted. Phase 115's authorization,
+REM-029 is complete and closed with format-116 ordinary-contact continuation.
+Phase 117 / REM-030 is next and remains unstarted.
+Phase 115's authorization,
 mount/director-topology, and availability-aware-selection findings are tracked
 separately as REM-041 through REM-043 in planned Block 14. The
 sensor-covariance/predictive-tracking limitation surfaced by stable FOW track
@@ -82,9 +84,12 @@ reuse is REM-044 in planned Block 15.
 The legacy Fallujah scripted-action lifecycle is REM-045 in planned Block 16;
 declaration/reference loading is not dispatch/effect or exact-once continuation
 evidence.
-The intentional 73 Easting workload-identity change is handled by a strict
-non-timing transition qualification, not by timing unequal workloads; the
-clean Phase 115 endpoint must be promoted before the next phase closes.
+Active/inactive decoy checkpoint integrity is REM-046 in planned Block 17;
+Phase 116 rejects non-pristine deception state rather than restoring an
+incomplete signature or duplicate DETECTION RNG owner.
+The intentional 73 Easting workload-identity change was handled by a strict
+non-timing transition qualification, not by timing unequal workloads; Phase
+116 subsequently promoted the clean endpoint to the ordinary paired gate.
 
 ## Quick Start (Web UI)
 
@@ -247,16 +252,16 @@ For the full package tree and module decomposition, see [`docs/specs/project-str
 
 ## Development Status
 
-Phases 105 through 115 and Block 12 are complete. Phase 115 implements one
-typed, runtime-owned sensing-aware targeting boundary shared by tactical
-movement and ordinary direct fire, with format-115 checkpoint and public
-exposure evidence; REM-028 is closed. Its long-run evidence carries the
-explicit owner-approved contention qualification above. See the
-[Phase 115 devlog](docs/devlog/phase-115.md), the
-[targeting specification](docs/specs/sensing-aware-tactical-standoff.md), the
+Phases 105 through 116 and Block 12 are complete. Phase 116 implements one
+typed, runtime-owned format-116 boundary for exact roster-backed ordinary
+fog-of-war contact, fusion-alias, bounded-witness, targeting, and DETECTION RNG
+continuation; REM-029 is closed. Its long-run evidence carries the explicit
+owner-approved contention qualification above. See the
+[Phase 116 devlog](docs/devlog/phase-116.md), the
+[contact-continuation specification](docs/specs/fog-of-war-contact-continuation.md), the
 [remediation backlog](docs/remediation-backlog.md), and the phase roadmaps for
 the exact evidence and remaining boundaries. Block 13 remains active with
-Phase 116 / REM-029 next and unstarted.
+Phase 117 / REM-030 next and unstarted.
 
 | Phase | Focus | Tests | Status |
 |-------|-------|-------|--------|
@@ -377,6 +382,7 @@ Phase 116 / REM-029 next and unstarted.
 | 113 | Morale State Ownership (Block 12) | 11,824 audited passes; 6 declared warnings | **Complete** |
 | 114 | Era Override Execution (Block 12) | 11,903 audited closure passes; 6 declared warnings | **Complete** |
 | 115 | Sensing-Aware Tactical Standoff (Block 13) | 11,743 standard passes plus accepted qualified broad evidence | **Complete** |
+| 116 | Fog-of-War Contact Continuation (Block 13) | 11,953 standard passes plus accepted qualified broad evidence | **Complete** |
 
 The Phase 112 row remains historical repository-wide closure evidence, not a
 count of newly added tests. The Phase 113 row is its historical closure union;
@@ -384,7 +390,7 @@ the Phase 114 row reports its exact closure union. For the full phase
 roadmap, see
 [`docs/development-phases.md`](docs/development-phases.md) (MVP),
 [`docs/development-phases-post-mvp.md`](docs/development-phases-post-mvp.md)
-(post-MVP), and `docs/development-phases-block{N}.md` for Blocks 2–16. The live
+(post-MVP), and `docs/development-phases-block{N}.md` for Blocks 2–17. The live
 integrity issue inventory is in
 [`docs/remediation-backlog.md`](docs/remediation-backlog.md). For per-phase
 implementation logs, see [`docs/devlog/`](docs/devlog/).

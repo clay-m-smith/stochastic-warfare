@@ -581,11 +581,13 @@ def thermal_extension_checkpoint() -> tuple[
 def _versionless_pristine_checkpoint(state: dict) -> dict:
     """Convert current pristine state to the bounded legacy envelope."""
     legacy = copy.deepcopy(state)
-    assert legacy.pop("checkpoint_version") == 115
+    assert legacy.pop("checkpoint_version") == 116
     context = legacy["context"]
     context.pop("targeting_default_visibility_m")
     context.pop("tactical_targeting")
     context.pop("era_runtime_contract")
+    fog_of_war = context["fog_of_war"]
+    assert fog_of_war.pop("current_detection_witnesses") == {}
     morale_runtime = context.pop("morale_runtime")
     assert morale_runtime["suspended_archives"] == {}
     active_records = morale_runtime["active_records"]
@@ -946,7 +948,7 @@ def test_checkpoint_rejects_forged_resolution_topology(
         session.engine.checkpoint()
 
 
-def test_format_115_no_fow_fresh_continuation_is_exact() -> None:
+def test_format_116_no_fow_fresh_continuation_is_exact() -> None:
     prepared = _prepare_targeting_scenario()
     control = _build(prepared)
     assert control.step() is False
@@ -954,7 +956,7 @@ def test_format_115_no_fow_fresh_continuation_is_exact() -> None:
     checkpoint = control.engine.checkpoint()
     state = json.loads(checkpoint.decode("utf-8"))
     targeting = state["context"]["tactical_targeting"]
-    assert state["checkpoint_version"] == 115
+    assert state["checkpoint_version"] == 116
     assert targeting["prepared_interval"]["engine_tick"] == 1
     assert targeting["prepared_interval"]["logical_time_s"] == 5.0
     assert len(targeting["latest_pictures"]) == 1
@@ -1418,19 +1420,34 @@ def test_valid_older_ring_restore_continues_deterministically(
     assert first.engine.checkpoint() == second.engine.checkpoint()
 
 
-def test_fow_restore_marks_targeting_history_non_consumable() -> None:
-    prepared = _prepare_targeting_scenario(fog_of_war=True)
+def test_fow_restore_preserves_consumable_targeting_and_witnesses_exactly() -> None:
+    prepared = _prepare_targeting_scenario(
+        fog_of_war=True,
+        separation_m=800.0,
+        northward_target=True,
+    )
     source = _build(prepared)
     assert source.step() is False
-    saved = _decoded_checkpoint(source)
-    saved_decisions = saved["context"]["tactical_targeting"]
-    saved_decisions = saved_decisions["latest_pictures"][0]["decisions"]
+    checkpoint = source.engine.checkpoint()
+    saved = json.loads(checkpoint.decode("utf-8"))
+    saved_decisions = saved["context"]["tactical_targeting"][
+        "latest_pictures"
+    ][0]["decisions"]
     assert all(decision["consumable"] for decision in saved_decisions)
+    expected_witnesses = (
+        source.context.fog_of_war.get_current_detection_witnesses()
+    )
+    assert expected_witnesses
 
     resumed = _build(prepared)
     resumed.engine.set_state(saved)
+    assert resumed.engine.checkpoint() == checkpoint
+    assert (
+        resumed.context.fog_of_war.get_current_detection_witnesses()
+        == expected_witnesses
+    )
     picture = resumed.context.tactical_targeting.latest_pictures()[0]
-    assert all(not decision.consumable for decision in picture.decisions)
+    assert all(decision.consumable for decision in picture.decisions)
     for decision in picture.decisions:
         assert (
             resumed.context.tactical_targeting.decision_for(
@@ -1438,13 +1455,16 @@ def test_fow_restore_marks_targeting_history_non_consumable() -> None:
                 battle_id=decision.battle_id,
                 shooter_id=decision.shooter_id,
             )
-            is None
+            == decision
         )
 
+    assert source.step() is False
     assert resumed.step() is False
-    current = resumed.context.tactical_targeting.latest_pictures()[0]
-    assert current.engine_tick == 2
-    assert all(decision.consumable for decision in current.decisions)
+    assert (
+        resumed.context.fog_of_war.get_current_detection_witnesses()
+        == source.context.fog_of_war.get_current_detection_witnesses()
+    )
+    assert resumed.engine.checkpoint() == source.engine.checkpoint()
 
 
 def test_detection_engine_rng_mirror_rejects_tamper_atomically() -> None:
@@ -1609,7 +1629,7 @@ def test_format_114_and_elapsed_versionless_omission_reject_atomically() -> None
     old_version["checkpoint_version"] = 114
     with pytest.raises(
         ValueError,
-        match="Unsupported checkpoint version 114; expected 115",
+        match="Unsupported checkpoint version 114; expected 116",
     ):
         target.engine.set_state(old_version)
     assert target.engine.checkpoint() == before

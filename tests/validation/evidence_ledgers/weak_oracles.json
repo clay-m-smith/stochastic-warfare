@@ -4623,9 +4623,9 @@
     },
     {
       "classification": "structural_only",
-      "node_id": "tests/benchmarks/test_benchmarks.py::TestPairedPolicy::test_hosted_73_easting_job_declares_transition_evidence",
-      "rationale": "This parses workflow YAML to check the 73 Easting transition command and artifact labels; it does not execute the hosted workflow.",
-      "strongest_oracle": "workflow structure declares the transition and duration-free evidence paths"
+      "node_id": "tests/benchmarks/test_benchmarks.py::TestPairedPolicy::test_hosted_73_easting_job_declares_paired_evidence",
+      "rationale": "This parses workflow YAML to check the routine 73 Easting paired command, binding step, and artifact label; it does not execute the hosted workflow.",
+      "strongest_oracle": "workflow structure declares the paired production command and evidence path"
     },
     {
       "classification": "structural_only",

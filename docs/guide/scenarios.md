@@ -63,7 +63,7 @@ there were unsourced.
 
 One resolved contract constructs the clock, engine interval cadence, medical
 and maintenance configs; participates in runtime/API fingerprints; and
-persists unchanged inside current checkpoint format 115. It does not automatically admit battle
+persists unchanged inside current checkpoint format 116. It does not automatically admit battle
 casualties, create facilities, register equipment for maintenance, initiate
 repairs/spares, construct communications equipment topology, or schedule a
 nuclear action. See the [era reference](../reference/eras.md) and

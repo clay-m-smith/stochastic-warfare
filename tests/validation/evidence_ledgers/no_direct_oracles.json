@@ -87,25 +87,25 @@
     },
     {
       "classification": "helper_assertion",
-      "node_id": "tests/integration/test_phase114_checkpoint_and_transitions.py::test_format_115_rejects_invalid_contract_atomically[extra]",
+      "node_id": "tests/integration/test_phase114_checkpoint_and_transitions.py::test_format_116_rejects_invalid_contract_atomically[extra]",
       "rationale": "A traced local helper asserts the exact rejection and byte-identical checkpoint after the failed restore.",
       "strongest_oracle": "called helper: _assert_atomic_rejection"
     },
     {
       "classification": "helper_assertion",
-      "node_id": "tests/integration/test_phase114_checkpoint_and_transitions.py::test_format_115_rejects_invalid_contract_atomically[malformed]",
+      "node_id": "tests/integration/test_phase114_checkpoint_and_transitions.py::test_format_116_rejects_invalid_contract_atomically[malformed]",
       "rationale": "A traced local helper asserts the exact rejection and byte-identical checkpoint after the failed restore.",
       "strongest_oracle": "called helper: _assert_atomic_rejection"
     },
     {
       "classification": "helper_assertion",
-      "node_id": "tests/integration/test_phase114_checkpoint_and_transitions.py::test_format_115_rejects_invalid_contract_atomically[mismatch]",
+      "node_id": "tests/integration/test_phase114_checkpoint_and_transitions.py::test_format_116_rejects_invalid_contract_atomically[mismatch]",
       "rationale": "A traced local helper asserts the exact rejection and byte-identical checkpoint after the failed restore.",
       "strongest_oracle": "called helper: _assert_atomic_rejection"
     },
     {
       "classification": "helper_assertion",
-      "node_id": "tests/integration/test_phase114_checkpoint_and_transitions.py::test_format_115_rejects_invalid_contract_atomically[missing]",
+      "node_id": "tests/integration/test_phase114_checkpoint_and_transitions.py::test_format_116_rejects_invalid_contract_atomically[missing]",
       "rationale": "A traced local helper asserts the exact rejection and byte-identical checkpoint after the failed restore.",
       "strongest_oracle": "called helper: _assert_atomic_rejection"
     },
@@ -462,6 +462,822 @@
       "node_id": "tests/unit/test_phase_111_time_on_target_schema.py::test_loader_rejects_wrong_exact_attachment_identity[weapon_id-not_the_indexed_weapon-not declared 'not_the_indexed_weapon']",
       "rationale": "A traced local helper contains the direct oracle.",
       "strongest_oracle": "called helper: _assert_loader_rejects"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/unit/test_phase116_fow_contact_state.py::test_authoritative_rng_disagreement_rejects_atomically",
+      "rationale": "The traced _assert_atomic_rejection helper proves authoritative-RNG disagreement is rejected before mutation and that the unchanged target accepts the exact valid state on retry.",
+      "strongest_oracle": "called helper: _assert_atomic_rejection (rejection, atomicity, exact retry)"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/unit/test_phase116_fow_contact_state.py::test_contact_chronology_corruption_rejects_atomically[first_after_last-10.0]",
+      "rationale": "For each malformed chronology, the traced _assert_atomic_rejection helper asserts rejection, byte-identical target state after failure, and an exact valid-state retry.",
+      "strongest_oracle": "called helper: _assert_atomic_rejection (rejection, atomicity, exact retry)"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/unit/test_phase116_fow_contact_state.py::test_contact_chronology_corruption_rejects_atomically[first_negative-10.0]",
+      "rationale": "For each malformed chronology, the traced _assert_atomic_rejection helper asserts rejection, byte-identical target state after failure, and an exact valid-state retry.",
+      "strongest_oracle": "called helper: _assert_atomic_rejection (rejection, atomicity, exact retry)"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/unit/test_phase116_fow_contact_state.py::test_contact_chronology_corruption_rejects_atomically[sensor_time_disagrees_with_track-10.0]",
+      "rationale": "For each malformed chronology, the traced _assert_atomic_rejection helper asserts rejection, byte-identical target state after failure, and an exact valid-state retry.",
+      "strongest_oracle": "called helper: _assert_atomic_rejection (rejection, atomicity, exact retry)"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/unit/test_phase116_fow_contact_state.py::test_contact_chronology_corruption_rejects_atomically[track_after_view-11.0]",
+      "rationale": "For each malformed chronology, the traced _assert_atomic_rejection helper asserts rejection, byte-identical target state after failure, and an exact valid-state retry.",
+      "strongest_oracle": "called helper: _assert_atomic_rejection (rejection, atomicity, exact retry)"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/unit/test_phase116_fow_contact_state.py::test_contact_chronology_corruption_rejects_atomically[view_after_checkpoint-10.0]",
+      "rationale": "For each malformed chronology, the traced _assert_atomic_rejection helper asserts rejection, byte-identical target state after failure, and an exact valid-state retry.",
+      "strongest_oracle": "called helper: _assert_atomic_rejection (rejection, atomicity, exact retry)"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/unit/test_phase116_fow_contact_state.py::test_contact_info_corruption_rejects_atomically[blank_estimate]",
+      "rationale": "For each malformed contact-information case, the traced _assert_atomic_rejection helper asserts rejection, byte-identical target state after failure, and an exact valid-state retry.",
+      "strongest_oracle": "called helper: _assert_atomic_rejection (rejection, atomicity, exact retry)"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/unit/test_phase116_fow_contact_state.py::test_contact_info_corruption_rejects_atomically[classified_retains_specific]",
+      "rationale": "For each malformed contact-information case, the traced _assert_atomic_rejection helper asserts rejection, byte-identical target state after failure, and an exact valid-state retry.",
+      "strongest_oracle": "called helper: _assert_atomic_rejection (rejection, atomicity, exact retry)"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/unit/test_phase116_fow_contact_state.py::test_contact_info_corruption_rejects_atomically[confidence_above_one]",
+      "rationale": "For each malformed contact-information case, the traced _assert_atomic_rejection helper asserts rejection, byte-identical target state after failure, and an exact valid-state retry.",
+      "strongest_oracle": "called helper: _assert_atomic_rejection (rejection, atomicity, exact retry)"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/unit/test_phase116_fow_contact_state.py::test_contact_info_corruption_rejects_atomically[confidence_bool]",
+      "rationale": "For each malformed contact-information case, the traced _assert_atomic_rejection helper asserts rejection, byte-identical target state after failure, and an exact valid-state retry.",
+      "strongest_oracle": "called helper: _assert_atomic_rejection (rejection, atomicity, exact retry)"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/unit/test_phase116_fow_contact_state.py::test_contact_info_corruption_rejects_atomically[confidence_nan]",
+      "rationale": "For each malformed contact-information case, the traced _assert_atomic_rejection helper asserts rejection, byte-identical target state after failure, and an exact valid-state retry.",
+      "strongest_oracle": "called helper: _assert_atomic_rejection (rejection, atomicity, exact retry)"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/unit/test_phase116_fow_contact_state.py::test_contact_info_corruption_rejects_atomically[confidence_negative]",
+      "rationale": "For each malformed contact-information case, the traced _assert_atomic_rejection helper asserts rejection, byte-identical target state after failure, and an exact valid-state retry.",
+      "strongest_oracle": "called helper: _assert_atomic_rejection (rejection, atomicity, exact retry)"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/unit/test_phase116_fow_contact_state.py::test_contact_info_corruption_rejects_atomically[detected_retains_domain]",
+      "rationale": "For each malformed contact-information case, the traced _assert_atomic_rejection helper asserts rejection, byte-identical target state after failure, and an exact valid-state retry.",
+      "strongest_oracle": "called helper: _assert_atomic_rejection (rejection, atomicity, exact retry)"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/unit/test_phase116_fow_contact_state.py::test_contact_info_corruption_rejects_atomically[estimate_non_string]",
+      "rationale": "For each malformed contact-information case, the traced _assert_atomic_rejection helper asserts rejection, byte-identical target state after failure, and an exact valid-state retry.",
+      "strongest_oracle": "called helper: _assert_atomic_rejection (rejection, atomicity, exact retry)"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/unit/test_phase116_fow_contact_state.py::test_contact_info_corruption_rejects_atomically[level_bool]",
+      "rationale": "For each malformed contact-information case, the traced _assert_atomic_rejection helper asserts rejection, byte-identical target state after failure, and an exact valid-state retry.",
+      "strongest_oracle": "called helper: _assert_atomic_rejection (rejection, atomicity, exact retry)"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/unit/test_phase116_fow_contact_state.py::test_contact_info_corruption_rejects_atomically[nested_detected_retains_type]",
+      "rationale": "For each malformed contact-information case, the traced _assert_atomic_rejection helper asserts rejection, byte-identical target state after failure, and an exact valid-state retry.",
+      "strongest_oracle": "called helper: _assert_atomic_rejection (rejection, atomicity, exact retry)"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/unit/test_phase116_fow_contact_state.py::test_contact_info_corruption_rejects_atomically[unknown_level]",
+      "rationale": "For each malformed contact-information case, the traced _assert_atomic_rejection helper asserts rejection, byte-identical target state after failure, and an exact valid-state retry.",
+      "strongest_oracle": "called helper: _assert_atomic_rejection (rejection, atomicity, exact retry)"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/unit/test_phase116_fow_contact_state.py::test_contact_info_corruption_rejects_atomically[unknown_live_contact]",
+      "rationale": "For each malformed contact-information case, the traced _assert_atomic_rejection helper asserts rejection, byte-identical target state after failure, and an exact valid-state retry.",
+      "strongest_oracle": "called helper: _assert_atomic_rejection (rejection, atomicity, exact retry)"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/unit/test_phase116_fow_contact_state.py::test_current_witness_corruption_rejects_atomically[bearing_360]",
+      "rationale": "For each malformed current-witness case, the traced _assert_atomic_rejection helper asserts rejection, byte-identical target state after failure, and an exact valid-state retry.",
+      "strongest_oracle": "called helper: _assert_atomic_rejection (rejection, atomicity, exact retry)"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/unit/test_phase116_fow_contact_state.py::test_current_witness_corruption_rejects_atomically[bearing_bool]",
+      "rationale": "For each malformed current-witness case, the traced _assert_atomic_rejection helper asserts rejection, byte-identical target state after failure, and an exact valid-state retry.",
+      "strongest_oracle": "called helper: _assert_atomic_rejection (rejection, atomicity, exact retry)"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/unit/test_phase116_fow_contact_state.py::test_current_witness_corruption_rejects_atomically[bearing_nan]",
+      "rationale": "For each malformed current-witness case, the traced _assert_atomic_rejection helper asserts rejection, byte-identical target state after failure, and an exact valid-state retry.",
+      "strongest_oracle": "called helper: _assert_atomic_rejection (rejection, atomicity, exact retry)"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/unit/test_phase116_fow_contact_state.py::test_current_witness_corruption_rejects_atomically[bearing_negative]",
+      "rationale": "For each malformed current-witness case, the traced _assert_atomic_rejection helper asserts rejection, byte-identical target state after failure, and an exact valid-state retry.",
+      "strongest_oracle": "called helper: _assert_atomic_rejection (rejection, atomicity, exact retry)"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/unit/test_phase116_fow_contact_state.py::test_current_witness_corruption_rejects_atomically[detected_false]",
+      "rationale": "For each malformed current-witness case, the traced _assert_atomic_rejection helper asserts rejection, byte-identical target state after failure, and an exact valid-state retry.",
+      "strongest_oracle": "called helper: _assert_atomic_rejection (rejection, atomicity, exact retry)"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/unit/test_phase116_fow_contact_state.py::test_current_witness_corruption_rejects_atomically[detected_integer]",
+      "rationale": "For each malformed current-witness case, the traced _assert_atomic_rejection helper asserts rejection, byte-identical target state after failure, and an exact valid-state retry.",
+      "strongest_oracle": "called helper: _assert_atomic_rejection (rejection, atomicity, exact retry)"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/unit/test_phase116_fow_contact_state.py::test_current_witness_corruption_rejects_atomically[duplicate_identity]",
+      "rationale": "For each malformed current-witness case, the traced _assert_atomic_rejection helper asserts rejection, byte-identical target state after failure, and an exact valid-state retry.",
+      "strongest_oracle": "called helper: _assert_atomic_rejection (rejection, atomicity, exact retry)"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/unit/test_phase116_fow_contact_state.py::test_current_witness_corruption_rejects_atomically[logical_time_bool]",
+      "rationale": "For each malformed current-witness case, the traced _assert_atomic_rejection helper asserts rejection, byte-identical target state after failure, and an exact valid-state retry.",
+      "strongest_oracle": "called helper: _assert_atomic_rejection (rejection, atomicity, exact retry)"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/unit/test_phase116_fow_contact_state.py::test_current_witness_corruption_rejects_atomically[logical_time_negative]",
+      "rationale": "For each malformed current-witness case, the traced _assert_atomic_rejection helper asserts rejection, byte-identical target state after failure, and an exact valid-state retry.",
+      "strongest_oracle": "called helper: _assert_atomic_rejection (rejection, atomicity, exact retry)"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/unit/test_phase116_fow_contact_state.py::test_current_witness_corruption_rejects_atomically[logical_time_view_mismatch]",
+      "rationale": "For each malformed current-witness case, the traced _assert_atomic_rejection helper asserts rejection, byte-identical target state after failure, and an exact valid-state retry.",
+      "strongest_oracle": "called helper: _assert_atomic_rejection (rejection, atomicity, exact retry)"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/unit/test_phase116_fow_contact_state.py::test_current_witness_corruption_rejects_atomically[logical_time_wrong_type]",
+      "rationale": "For each malformed current-witness case, the traced _assert_atomic_rejection helper asserts rejection, byte-identical target state after failure, and an exact valid-state retry.",
+      "strongest_oracle": "called helper: _assert_atomic_rejection (rejection, atomicity, exact retry)"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/unit/test_phase116_fow_contact_state.py::test_current_witness_corruption_rejects_atomically[missing_contact]",
+      "rationale": "For each malformed current-witness case, the traced _assert_atomic_rejection helper asserts rejection, byte-identical target state after failure, and an exact valid-state retry.",
+      "strongest_oracle": "called helper: _assert_atomic_rejection (rejection, atomicity, exact retry)"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/unit/test_phase116_fow_contact_state.py::test_current_witness_corruption_rejects_atomically[missing_reporting_sensor]",
+      "rationale": "For each malformed current-witness case, the traced _assert_atomic_rejection helper asserts rejection, byte-identical target state after failure, and an exact valid-state retry.",
+      "strongest_oracle": "called helper: _assert_atomic_rejection (rejection, atomicity, exact retry)"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/unit/test_phase116_fow_contact_state.py::test_current_witness_corruption_rejects_atomically[noncanonical_order]",
+      "rationale": "For each malformed current-witness case, the traced _assert_atomic_rejection helper asserts rejection, byte-identical target state after failure, and an exact valid-state retry.",
+      "strongest_oracle": "called helper: _assert_atomic_rejection (rejection, atomicity, exact retry)"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/unit/test_phase116_fow_contact_state.py::test_current_witness_corruption_rejects_atomically[observer_empty]",
+      "rationale": "For each malformed current-witness case, the traced _assert_atomic_rejection helper asserts rejection, byte-identical target state after failure, and an exact valid-state retry.",
+      "strongest_oracle": "called helper: _assert_atomic_rejection (rejection, atomicity, exact retry)"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/unit/test_phase116_fow_contact_state.py::test_current_witness_corruption_rejects_atomically[observer_wrong_type]",
+      "rationale": "For each malformed current-witness case, the traced _assert_atomic_rejection helper asserts rejection, byte-identical target state after failure, and an exact valid-state retry.",
+      "strongest_oracle": "called helper: _assert_atomic_rejection (rejection, atomicity, exact retry)"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/unit/test_phase116_fow_contact_state.py::test_current_witness_corruption_rejects_atomically[probability_above_one]",
+      "rationale": "For each malformed current-witness case, the traced _assert_atomic_rejection helper asserts rejection, byte-identical target state after failure, and an exact valid-state retry.",
+      "strongest_oracle": "called helper: _assert_atomic_rejection (rejection, atomicity, exact retry)"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/unit/test_phase116_fow_contact_state.py::test_current_witness_corruption_rejects_atomically[probability_bool]",
+      "rationale": "For each malformed current-witness case, the traced _assert_atomic_rejection helper asserts rejection, byte-identical target state after failure, and an exact valid-state retry.",
+      "strongest_oracle": "called helper: _assert_atomic_rejection (rejection, atomicity, exact retry)"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/unit/test_phase116_fow_contact_state.py::test_current_witness_corruption_rejects_atomically[probability_nan]",
+      "rationale": "For each malformed current-witness case, the traced _assert_atomic_rejection helper asserts rejection, byte-identical target state after failure, and an exact valid-state retry.",
+      "strongest_oracle": "called helper: _assert_atomic_rejection (rejection, atomicity, exact retry)"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/unit/test_phase116_fow_contact_state.py::test_current_witness_corruption_rejects_atomically[probability_negative]",
+      "rationale": "For each malformed current-witness case, the traced _assert_atomic_rejection helper asserts rejection, byte-identical target state after failure, and an exact valid-state retry.",
+      "strongest_oracle": "called helper: _assert_atomic_rejection (rejection, atomicity, exact retry)"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/unit/test_phase116_fow_contact_state.py::test_current_witness_corruption_rejects_atomically[probability_wrong_type]",
+      "rationale": "For each malformed current-witness case, the traced _assert_atomic_rejection helper asserts rejection, byte-identical target state after failure, and an exact valid-state retry.",
+      "strongest_oracle": "called helper: _assert_atomic_rejection (rejection, atomicity, exact retry)"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/unit/test_phase116_fow_contact_state.py::test_current_witness_corruption_rejects_atomically[range_bool]",
+      "rationale": "For each malformed current-witness case, the traced _assert_atomic_rejection helper asserts rejection, byte-identical target state after failure, and an exact valid-state retry.",
+      "strongest_oracle": "called helper: _assert_atomic_rejection (rejection, atomicity, exact retry)"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/unit/test_phase116_fow_contact_state.py::test_current_witness_corruption_rejects_atomically[range_nan]",
+      "rationale": "For each malformed current-witness case, the traced _assert_atomic_rejection helper asserts rejection, byte-identical target state after failure, and an exact valid-state retry.",
+      "strongest_oracle": "called helper: _assert_atomic_rejection (rejection, atomicity, exact retry)"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/unit/test_phase116_fow_contact_state.py::test_current_witness_corruption_rejects_atomically[range_negative]",
+      "rationale": "For each malformed current-witness case, the traced _assert_atomic_rejection helper asserts rejection, byte-identical target state after failure, and an exact valid-state retry.",
+      "strongest_oracle": "called helper: _assert_atomic_rejection (rejection, atomicity, exact retry)"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/unit/test_phase116_fow_contact_state.py::test_current_witness_corruption_rejects_atomically[role_empty]",
+      "rationale": "For each malformed current-witness case, the traced _assert_atomic_rejection helper asserts rejection, byte-identical target state after failure, and an exact valid-state retry.",
+      "strongest_oracle": "called helper: _assert_atomic_rejection (rejection, atomicity, exact retry)"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/unit/test_phase116_fow_contact_state.py::test_current_witness_corruption_rejects_atomically[role_wrong_type]",
+      "rationale": "For each malformed current-witness case, the traced _assert_atomic_rejection helper asserts rejection, byte-identical target state after failure, and an exact valid-state retry.",
+      "strongest_oracle": "called helper: _assert_atomic_rejection (rejection, atomicity, exact retry)"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/unit/test_phase116_fow_contact_state.py::test_current_witness_corruption_rejects_atomically[sensor_empty]",
+      "rationale": "For each malformed current-witness case, the traced _assert_atomic_rejection helper asserts rejection, byte-identical target state after failure, and an exact valid-state retry.",
+      "strongest_oracle": "called helper: _assert_atomic_rejection (rejection, atomicity, exact retry)"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/unit/test_phase116_fow_contact_state.py::test_current_witness_corruption_rejects_atomically[sensor_type_empty]",
+      "rationale": "For each malformed current-witness case, the traced _assert_atomic_rejection helper asserts rejection, byte-identical target state after failure, and an exact valid-state retry.",
+      "strongest_oracle": "called helper: _assert_atomic_rejection (rejection, atomicity, exact retry)"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/unit/test_phase116_fow_contact_state.py::test_current_witness_corruption_rejects_atomically[sensor_type_wrong_type]",
+      "rationale": "For each malformed current-witness case, the traced _assert_atomic_rejection helper asserts rejection, byte-identical target state after failure, and an exact valid-state retry.",
+      "strongest_oracle": "called helper: _assert_atomic_rejection (rejection, atomicity, exact retry)"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/unit/test_phase116_fow_contact_state.py::test_current_witness_corruption_rejects_atomically[sensor_wrong_type]",
+      "rationale": "For each malformed current-witness case, the traced _assert_atomic_rejection helper asserts rejection, byte-identical target state after failure, and an exact valid-state retry.",
+      "strongest_oracle": "called helper: _assert_atomic_rejection (rejection, atomicity, exact retry)"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/unit/test_phase116_fow_contact_state.py::test_current_witness_corruption_rejects_atomically[side_map_mismatch]",
+      "rationale": "For each malformed current-witness case, the traced _assert_atomic_rejection helper asserts rejection, byte-identical target state after failure, and an exact valid-state retry.",
+      "strongest_oracle": "called helper: _assert_atomic_rejection (rejection, atomicity, exact retry)"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/unit/test_phase116_fow_contact_state.py::test_current_witness_corruption_rejects_atomically[side_map_noncanonical]",
+      "rationale": "For each malformed current-witness case, the traced _assert_atomic_rejection helper asserts rejection, byte-identical target state after failure, and an exact valid-state retry.",
+      "strongest_oracle": "called helper: _assert_atomic_rejection (rejection, atomicity, exact retry)"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/unit/test_phase116_fow_contact_state.py::test_current_witness_corruption_rejects_atomically[side_mismatch]",
+      "rationale": "For each malformed current-witness case, the traced _assert_atomic_rejection helper asserts rejection, byte-identical target state after failure, and an exact valid-state retry.",
+      "strongest_oracle": "called helper: _assert_atomic_rejection (rejection, atomicity, exact retry)"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/unit/test_phase116_fow_contact_state.py::test_current_witness_corruption_rejects_atomically[side_wrong_type]",
+      "rationale": "For each malformed current-witness case, the traced _assert_atomic_rejection helper asserts rejection, byte-identical target state after failure, and an exact valid-state retry.",
+      "strongest_oracle": "called helper: _assert_atomic_rejection (rejection, atomicity, exact retry)"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/unit/test_phase116_fow_contact_state.py::test_current_witness_corruption_rejects_atomically[snr_bool]",
+      "rationale": "For each malformed current-witness case, the traced _assert_atomic_rejection helper asserts rejection, byte-identical target state after failure, and an exact valid-state retry.",
+      "strongest_oracle": "called helper: _assert_atomic_rejection (rejection, atomicity, exact retry)"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/unit/test_phase116_fow_contact_state.py::test_current_witness_corruption_rejects_atomically[snr_nan]",
+      "rationale": "For each malformed current-witness case, the traced _assert_atomic_rejection helper asserts rejection, byte-identical target state after failure, and an exact valid-state retry.",
+      "strongest_oracle": "called helper: _assert_atomic_rejection (rejection, atomicity, exact retry)"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/unit/test_phase116_fow_contact_state.py::test_current_witness_corruption_rejects_atomically[source_index_bool]",
+      "rationale": "For each malformed current-witness case, the traced _assert_atomic_rejection helper asserts rejection, byte-identical target state after failure, and an exact valid-state retry.",
+      "strongest_oracle": "called helper: _assert_atomic_rejection (rejection, atomicity, exact retry)"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/unit/test_phase116_fow_contact_state.py::test_current_witness_corruption_rejects_atomically[source_index_negative]",
+      "rationale": "For each malformed current-witness case, the traced _assert_atomic_rejection helper asserts rejection, byte-identical target state after failure, and an exact valid-state retry.",
+      "strongest_oracle": "called helper: _assert_atomic_rejection (rejection, atomicity, exact retry)"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/unit/test_phase116_fow_contact_state.py::test_current_witness_corruption_rejects_atomically[source_index_wrong_type]",
+      "rationale": "For each malformed current-witness case, the traced _assert_atomic_rejection helper asserts rejection, byte-identical target state after failure, and an exact valid-state retry.",
+      "strongest_oracle": "called helper: _assert_atomic_rejection (rejection, atomicity, exact retry)"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/unit/test_phase116_fow_contact_state.py::test_current_witness_corruption_rejects_atomically[target_whitespace]",
+      "rationale": "For each malformed current-witness case, the traced _assert_atomic_rejection helper asserts rejection, byte-identical target state after failure, and an exact valid-state retry.",
+      "strongest_oracle": "called helper: _assert_atomic_rejection (rejection, atomicity, exact retry)"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/unit/test_phase116_fow_contact_state.py::test_current_witness_corruption_rejects_atomically[target_wrong_type]",
+      "rationale": "For each malformed current-witness case, the traced _assert_atomic_rejection helper asserts rejection, byte-identical target state after failure, and an exact valid-state retry.",
+      "strongest_oracle": "called helper: _assert_atomic_rejection (rejection, atomicity, exact retry)"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/unit/test_phase116_fow_contact_state.py::test_exact_key_and_container_topology_rejects_atomically[contact_extra]",
+      "rationale": "For each malformed envelope or container topology, the traced _assert_atomic_rejection helper asserts rejection, byte-identical target state after failure, and an exact valid-state retry.",
+      "strongest_oracle": "called helper: _assert_atomic_rejection (rejection, atomicity, exact retry)"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/unit/test_phase116_fow_contact_state.py::test_exact_key_and_container_topology_rejects_atomically[contact_info_extra]",
+      "rationale": "For each malformed envelope or container topology, the traced _assert_atomic_rejection helper asserts rejection, byte-identical target state after failure, and an exact valid-state retry.",
+      "strongest_oracle": "called helper: _assert_atomic_rejection (rejection, atomicity, exact retry)"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/unit/test_phase116_fow_contact_state.py::test_exact_key_and_container_topology_rejects_atomically[contact_info_missing]",
+      "rationale": "For each malformed envelope or container topology, the traced _assert_atomic_rejection helper asserts rejection, byte-identical target state after failure, and an exact valid-state retry.",
+      "strongest_oracle": "called helper: _assert_atomic_rejection (rejection, atomicity, exact retry)"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/unit/test_phase116_fow_contact_state.py::test_exact_key_and_container_topology_rejects_atomically[contact_missing]",
+      "rationale": "For each malformed envelope or container topology, the traced _assert_atomic_rejection helper asserts rejection, byte-identical target state after failure, and an exact valid-state retry.",
+      "strongest_oracle": "called helper: _assert_atomic_rejection (rejection, atomicity, exact retry)"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/unit/test_phase116_fow_contact_state.py::test_exact_key_and_container_topology_rejects_atomically[contact_not_mapping]",
+      "rationale": "For each malformed envelope or container topology, the traced _assert_atomic_rejection helper asserts rejection, byte-identical target state after failure, and an exact valid-state retry.",
+      "strongest_oracle": "called helper: _assert_atomic_rejection (rejection, atomicity, exact retry)"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/unit/test_phase116_fow_contact_state.py::test_exact_key_and_container_topology_rejects_atomically[contacts_noncanonical]",
+      "rationale": "For each malformed envelope or container topology, the traced _assert_atomic_rejection helper asserts rejection, byte-identical target state after failure, and an exact valid-state retry.",
+      "strongest_oracle": "called helper: _assert_atomic_rejection (rejection, atomicity, exact retry)"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/unit/test_phase116_fow_contact_state.py::test_exact_key_and_container_topology_rejects_atomically[contacts_not_mapping]",
+      "rationale": "For each malformed envelope or container topology, the traced _assert_atomic_rejection helper asserts rejection, byte-identical target state after failure, and an exact valid-state retry.",
+      "strongest_oracle": "called helper: _assert_atomic_rejection (rejection, atomicity, exact retry)"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/unit/test_phase116_fow_contact_state.py::test_exact_key_and_container_topology_rejects_atomically[envelope_extra]",
+      "rationale": "For each malformed envelope or container topology, the traced _assert_atomic_rejection helper asserts rejection, byte-identical target state after failure, and an exact valid-state retry.",
+      "strongest_oracle": "called helper: _assert_atomic_rejection (rejection, atomicity, exact retry)"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/unit/test_phase116_fow_contact_state.py::test_exact_key_and_container_topology_rejects_atomically[envelope_missing]",
+      "rationale": "For each malformed envelope or container topology, the traced _assert_atomic_rejection helper asserts rejection, byte-identical target state after failure, and an exact valid-state retry.",
+      "strongest_oracle": "called helper: _assert_atomic_rejection (rejection, atomicity, exact retry)"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/unit/test_phase116_fow_contact_state.py::test_exact_key_and_container_topology_rejects_atomically[track_extra]",
+      "rationale": "For each malformed envelope or container topology, the traced _assert_atomic_rejection helper asserts rejection, byte-identical target state after failure, and an exact valid-state retry.",
+      "strongest_oracle": "called helper: _assert_atomic_rejection (rejection, atomicity, exact retry)"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/unit/test_phase116_fow_contact_state.py::test_exact_key_and_container_topology_rejects_atomically[track_missing]",
+      "rationale": "For each malformed envelope or container topology, the traced _assert_atomic_rejection helper asserts rejection, byte-identical target state after failure, and an exact valid-state retry.",
+      "strongest_oracle": "called helper: _assert_atomic_rejection (rejection, atomicity, exact retry)"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/unit/test_phase116_fow_contact_state.py::test_exact_key_and_container_topology_rejects_atomically[track_state_extra]",
+      "rationale": "For each malformed envelope or container topology, the traced _assert_atomic_rejection helper asserts rejection, byte-identical target state after failure, and an exact valid-state retry.",
+      "strongest_oracle": "called helper: _assert_atomic_rejection (rejection, atomicity, exact retry)"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/unit/test_phase116_fow_contact_state.py::test_exact_key_and_container_topology_rejects_atomically[track_state_missing]",
+      "rationale": "For each malformed envelope or container topology, the traced _assert_atomic_rejection helper asserts rejection, byte-identical target state after failure, and an exact valid-state retry.",
+      "strongest_oracle": "called helper: _assert_atomic_rejection (rejection, atomicity, exact retry)"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/unit/test_phase116_fow_contact_state.py::test_exact_key_and_container_topology_rejects_atomically[view_extra]",
+      "rationale": "For each malformed envelope or container topology, the traced _assert_atomic_rejection helper asserts rejection, byte-identical target state after failure, and an exact valid-state retry.",
+      "strongest_oracle": "called helper: _assert_atomic_rejection (rejection, atomicity, exact retry)"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/unit/test_phase116_fow_contact_state.py::test_exact_key_and_container_topology_rejects_atomically[view_missing]",
+      "rationale": "For each malformed envelope or container topology, the traced _assert_atomic_rejection helper asserts rejection, byte-identical target state after failure, and an exact valid-state retry.",
+      "strongest_oracle": "called helper: _assert_atomic_rejection (rejection, atomicity, exact retry)"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/unit/test_phase116_fow_contact_state.py::test_exact_key_and_container_topology_rejects_atomically[witness_extra]",
+      "rationale": "For each malformed envelope or container topology, the traced _assert_atomic_rejection helper asserts rejection, byte-identical target state after failure, and an exact valid-state retry.",
+      "strongest_oracle": "called helper: _assert_atomic_rejection (rejection, atomicity, exact retry)"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/unit/test_phase116_fow_contact_state.py::test_exact_key_and_container_topology_rejects_atomically[witness_missing]",
+      "rationale": "For each malformed envelope or container topology, the traced _assert_atomic_rejection helper asserts rejection, byte-identical target state after failure, and an exact valid-state retry.",
+      "strongest_oracle": "called helper: _assert_atomic_rejection (rejection, atomicity, exact retry)"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/unit/test_phase116_fow_contact_state.py::test_exact_key_and_container_topology_rejects_atomically[witness_not_mapping]",
+      "rationale": "For each malformed envelope or container topology, the traced _assert_atomic_rejection helper asserts rejection, byte-identical target state after failure, and an exact valid-state retry.",
+      "strongest_oracle": "called helper: _assert_atomic_rejection (rejection, atomicity, exact retry)"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/unit/test_phase116_fow_contact_state.py::test_exact_key_and_container_topology_rejects_atomically[witnesses_not_list]",
+      "rationale": "For each malformed envelope or container topology, the traced _assert_atomic_rejection helper asserts rejection, byte-identical target state after failure, and an exact valid-state retry.",
+      "strongest_oracle": "called helper: _assert_atomic_rejection (rejection, atomicity, exact retry)"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/unit/test_phase116_fow_contact_state.py::test_exact_key_and_container_topology_rejects_atomically[witnesses_not_mapping]",
+      "rationale": "For each malformed envelope or container topology, the traced _assert_atomic_rejection helper asserts rejection, byte-identical target state after failure, and an exact valid-state retry.",
+      "strongest_oracle": "called helper: _assert_atomic_rejection (rejection, atomicity, exact retry)"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/unit/test_phase116_fow_contact_state.py::test_exact_key_and_container_topology_rejects_atomically[world_views_noncanonical]",
+      "rationale": "For each malformed envelope or container topology, the traced _assert_atomic_rejection helper asserts rejection, byte-identical target state after failure, and an exact valid-state retry.",
+      "strongest_oracle": "called helper: _assert_atomic_rejection (rejection, atomicity, exact retry)"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/unit/test_phase116_fow_contact_state.py::test_exact_key_and_container_topology_rejects_atomically[world_views_not_mapping]",
+      "rationale": "For each malformed envelope or container topology, the traced _assert_atomic_rejection helper asserts rejection, byte-identical target state after failure, and an exact valid-state retry.",
+      "strongest_oracle": "called helper: _assert_atomic_rejection (rejection, atomicity, exact retry)"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/unit/test_phase116_fow_contact_state.py::test_fusion_association_corruption_rejects_atomically[ahead_fow_counter]",
+      "rationale": "For each invalid fusion/contact ownership association, the traced _assert_atomic_rejection helper asserts rejection, byte-identical target state after failure, and an exact valid-state retry.",
+      "strongest_oracle": "called helper: _assert_atomic_rejection (rejection, atomicity, exact retry)"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/unit/test_phase116_fow_contact_state.py::test_fusion_association_corruption_rejects_atomically[contact_track_id_mismatch]",
+      "rationale": "For each invalid fusion/contact ownership association, the traced _assert_atomic_rejection helper asserts rejection, byte-identical target state after failure, and an exact valid-state retry.",
+      "strongest_oracle": "called helper: _assert_atomic_rejection (rejection, atomicity, exact retry)"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/unit/test_phase116_fow_contact_state.py::test_fusion_association_corruption_rejects_atomically[contact_track_side_mismatch]",
+      "rationale": "For each invalid fusion/contact ownership association, the traced _assert_atomic_rejection helper asserts rejection, byte-identical target state after failure, and an exact valid-state retry.",
+      "strongest_oracle": "called helper: _assert_atomic_rejection (rejection, atomicity, exact retry)"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/unit/test_phase116_fow_contact_state.py::test_fusion_association_corruption_rejects_atomically[detached_contact_track_state]",
+      "rationale": "For each invalid fusion/contact ownership association, the traced _assert_atomic_rejection helper asserts rejection, byte-identical target state after failure, and an exact valid-state retry.",
+      "strongest_oracle": "called helper: _assert_atomic_rejection (rejection, atomicity, exact retry)"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/unit/test_phase116_fow_contact_state.py::test_fusion_association_corruption_rejects_atomically[duplicate_contact_track_owner]",
+      "rationale": "For each invalid fusion/contact ownership association, the traced _assert_atomic_rejection helper asserts rejection, byte-identical target state after failure, and an exact valid-state retry.",
+      "strongest_oracle": "called helper: _assert_atomic_rejection (rejection, atomicity, exact retry)"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/unit/test_phase116_fow_contact_state.py::test_fusion_association_corruption_rejects_atomically[missing_fow_counter]",
+      "rationale": "For each invalid fusion/contact ownership association, the traced _assert_atomic_rejection helper asserts rejection, byte-identical target state after failure, and an exact valid-state retry.",
+      "strongest_oracle": "called helper: _assert_atomic_rejection (rejection, atomicity, exact retry)"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/unit/test_phase116_fow_contact_state.py::test_fusion_association_corruption_rejects_atomically[missing_fusion_track]",
+      "rationale": "For each invalid fusion/contact ownership association, the traced _assert_atomic_rejection helper asserts rejection, byte-identical target state after failure, and an exact valid-state retry.",
+      "strongest_oracle": "called helper: _assert_atomic_rejection (rejection, atomicity, exact retry)"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/unit/test_phase116_fow_contact_state.py::test_fusion_association_corruption_rejects_atomically[noncanonical_ordinary_track]",
+      "rationale": "For each invalid fusion/contact ownership association, the traced _assert_atomic_rejection helper asserts rejection, byte-identical target state after failure, and an exact valid-state retry.",
+      "strongest_oracle": "called helper: _assert_atomic_rejection (rejection, atomicity, exact retry)"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/unit/test_phase116_fow_contact_state.py::test_fusion_association_corruption_rejects_atomically[unowned_live_fow_track]",
+      "rationale": "For each invalid fusion/contact ownership association, the traced _assert_atomic_rejection helper asserts rejection, byte-identical target state after failure, and an exact valid-state retry.",
+      "strongest_oracle": "called helper: _assert_atomic_rejection (rejection, atomicity, exact retry)"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/unit/test_phase116_fow_contact_state.py::test_reachable_lifecycle_boundaries_restore_exactly[coasting_at_lost_boundary]",
+      "rationale": "The traced _assert_valid_restore helper stages and commits each reachable lifecycle boundary and asserts the complete emitted state exactly matches the supplied state.",
+      "strongest_oracle": "called helper: _assert_valid_restore (exact complete-state restore)"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/unit/test_phase116_fow_contact_state.py::test_reachable_lifecycle_boundaries_restore_exactly[coasting_at_uncertainty_limit]",
+      "rationale": "The traced _assert_valid_restore helper stages and commits each reachable lifecycle boundary and asserts the complete emitted state exactly matches the supplied state.",
+      "strongest_oracle": "called helper: _assert_valid_restore (exact complete-state restore)"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/unit/test_phase116_fow_contact_state.py::test_reachable_lifecycle_boundaries_restore_exactly[coasting_below_coast_timeout]",
+      "rationale": "The traced _assert_valid_restore helper stages and commits each reachable lifecycle boundary and asserts the complete emitted state exactly matches the supplied state.",
+      "strongest_oracle": "called helper: _assert_valid_restore (exact complete-state restore)"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/unit/test_phase116_fow_contact_state.py::test_reachable_lifecycle_boundaries_restore_exactly[confirmed_at_coast_boundary]",
+      "rationale": "The traced _assert_valid_restore helper stages and commits each reachable lifecycle boundary and asserts the complete emitted state exactly matches the supplied state.",
+      "strongest_oracle": "called helper: _assert_valid_restore (exact complete-state restore)"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/unit/test_phase116_fow_contact_state.py::test_reachable_lifecycle_boundaries_restore_exactly[tentative_below_threshold]",
+      "rationale": "The traced _assert_valid_restore helper stages and commits each reachable lifecycle boundary and asserts the complete emitted state exactly matches the supplied state.",
+      "strongest_oracle": "called helper: _assert_valid_restore (exact complete-state restore)"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/unit/test_phase116_fow_contact_state.py::test_reporting_sensor_corruption_rejects_atomically[duplicate]",
+      "rationale": "For each malformed reporting-sensor list, the traced _assert_atomic_rejection helper asserts rejection, byte-identical target state after failure, and an exact valid-state retry.",
+      "strongest_oracle": "called helper: _assert_atomic_rejection (rejection, atomicity, exact retry)"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/unit/test_phase116_fow_contact_state.py::test_reporting_sensor_corruption_rejects_atomically[empty]",
+      "rationale": "For each malformed reporting-sensor list, the traced _assert_atomic_rejection helper asserts rejection, byte-identical target state after failure, and an exact valid-state retry.",
+      "strongest_oracle": "called helper: _assert_atomic_rejection (rejection, atomicity, exact retry)"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/unit/test_phase116_fow_contact_state.py::test_reporting_sensor_corruption_rejects_atomically[missing]",
+      "rationale": "For each malformed reporting-sensor list, the traced _assert_atomic_rejection helper asserts rejection, byte-identical target state after failure, and an exact valid-state retry.",
+      "strongest_oracle": "called helper: _assert_atomic_rejection (rejection, atomicity, exact retry)"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/unit/test_phase116_fow_contact_state.py::test_reporting_sensor_corruption_rejects_atomically[non_string]",
+      "rationale": "For each malformed reporting-sensor list, the traced _assert_atomic_rejection helper asserts rejection, byte-identical target state after failure, and an exact valid-state retry.",
+      "strongest_oracle": "called helper: _assert_atomic_rejection (rejection, atomicity, exact retry)"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/unit/test_phase116_fow_contact_state.py::test_reporting_sensor_corruption_rejects_atomically[whitespace]",
+      "rationale": "For each malformed reporting-sensor list, the traced _assert_atomic_rejection helper asserts rejection, byte-identical target state after failure, and an exact valid-state retry.",
+      "strongest_oracle": "called helper: _assert_atomic_rejection (rejection, atomicity, exact retry)"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/unit/test_phase116_fow_contact_state.py::test_serialized_rng_corruption_rejects_atomically[fusion_rng_not_mapping]",
+      "rationale": "For each malformed or inconsistent serialized RNG state, the traced _assert_atomic_rejection helper asserts rejection, byte-identical target state after failure, and an exact valid-state retry.",
+      "strongest_oracle": "called helper: _assert_atomic_rejection (rejection, atomicity, exact retry)"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/unit/test_phase116_fow_contact_state.py::test_serialized_rng_corruption_rejects_atomically[manager_fusion_mirror_disagreement]",
+      "rationale": "For each malformed or inconsistent serialized RNG state, the traced _assert_atomic_rejection helper asserts rejection, byte-identical target state after failure, and an exact valid-state retry.",
+      "strongest_oracle": "called helper: _assert_atomic_rejection (rejection, atomicity, exact retry)"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/unit/test_phase116_fow_contact_state.py::test_serialized_rng_corruption_rejects_atomically[rng_not_mapping]",
+      "rationale": "For each malformed or inconsistent serialized RNG state, the traced _assert_atomic_rejection helper asserts rejection, byte-identical target state after failure, and an exact valid-state retry.",
+      "strongest_oracle": "called helper: _assert_atomic_rejection (rejection, atomicity, exact retry)"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/unit/test_phase116_fow_contact_state.py::test_strict_identity_and_scalar_types_reject_atomically[contact_id_mismatch]",
+      "rationale": "For each invalid identity or strict scalar type, the traced _assert_atomic_rejection helper asserts rejection, byte-identical target state after failure, and an exact valid-state retry.",
+      "strongest_oracle": "called helper: _assert_atomic_rejection (rejection, atomicity, exact retry)"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/unit/test_phase116_fow_contact_state.py::test_strict_identity_and_scalar_types_reject_atomically[contact_key_whitespace]",
+      "rationale": "For each invalid identity or strict scalar type, the traced _assert_atomic_rejection helper asserts rejection, byte-identical target state after failure, and an exact valid-state retry.",
+      "strongest_oracle": "called helper: _assert_atomic_rejection (rejection, atomicity, exact retry)"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/unit/test_phase116_fow_contact_state.py::test_strict_identity_and_scalar_types_reject_atomically[first_time_bool]",
+      "rationale": "For each invalid identity or strict scalar type, the traced _assert_atomic_rejection helper asserts rejection, byte-identical target state after failure, and an exact valid-state retry.",
+      "strongest_oracle": "called helper: _assert_atomic_rejection (rejection, atomicity, exact retry)"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/unit/test_phase116_fow_contact_state.py::test_strict_identity_and_scalar_types_reject_atomically[hits_bool]",
+      "rationale": "For each invalid identity or strict scalar type, the traced _assert_atomic_rejection helper asserts rejection, byte-identical target state after failure, and an exact valid-state retry.",
+      "strongest_oracle": "called helper: _assert_atomic_rejection (rejection, atomicity, exact retry)"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/unit/test_phase116_fow_contact_state.py::test_strict_identity_and_scalar_types_reject_atomically[hits_zero]",
+      "rationale": "For each invalid identity or strict scalar type, the traced _assert_atomic_rejection helper asserts rejection, byte-identical target state after failure, and an exact valid-state retry.",
+      "strongest_oracle": "called helper: _assert_atomic_rejection (rejection, atomicity, exact retry)"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/unit/test_phase116_fow_contact_state.py::test_strict_identity_and_scalar_types_reject_atomically[last_time_nan]",
+      "rationale": "For each invalid identity or strict scalar type, the traced _assert_atomic_rejection helper asserts rejection, byte-identical target state after failure, and an exact valid-state retry.",
+      "strongest_oracle": "called helper: _assert_atomic_rejection (rejection, atomicity, exact retry)"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/unit/test_phase116_fow_contact_state.py::test_strict_identity_and_scalar_types_reject_atomically[misses_bool]",
+      "rationale": "For each invalid identity or strict scalar type, the traced _assert_atomic_rejection helper asserts rejection, byte-identical target state after failure, and an exact valid-state retry.",
+      "strongest_oracle": "called helper: _assert_atomic_rejection (rejection, atomicity, exact retry)"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/unit/test_phase116_fow_contact_state.py::test_strict_identity_and_scalar_types_reject_atomically[misses_negative]",
+      "rationale": "For each invalid identity or strict scalar type, the traced _assert_atomic_rejection helper asserts rejection, byte-identical target state after failure, and an exact valid-state retry.",
+      "strongest_oracle": "called helper: _assert_atomic_rejection (rejection, atomicity, exact retry)"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/unit/test_phase116_fow_contact_state.py::test_strict_identity_and_scalar_types_reject_atomically[reporting_sensors_tuple]",
+      "rationale": "For each invalid identity or strict scalar type, the traced _assert_atomic_rejection helper asserts rejection, byte-identical target state after failure, and an exact valid-state retry.",
+      "strongest_oracle": "called helper: _assert_atomic_rejection (rejection, atomicity, exact retry)"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/unit/test_phase116_fow_contact_state.py::test_strict_identity_and_scalar_types_reject_atomically[side_key_bool]",
+      "rationale": "For each invalid identity or strict scalar type, the traced _assert_atomic_rejection helper asserts rejection, byte-identical target state after failure, and an exact valid-state retry.",
+      "strongest_oracle": "called helper: _assert_atomic_rejection (rejection, atomicity, exact retry)"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/unit/test_phase116_fow_contact_state.py::test_strict_identity_and_scalar_types_reject_atomically[side_key_whitespace]",
+      "rationale": "For each invalid identity or strict scalar type, the traced _assert_atomic_rejection helper asserts rejection, byte-identical target state after failure, and an exact valid-state retry.",
+      "strongest_oracle": "called helper: _assert_atomic_rejection (rejection, atomicity, exact retry)"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/unit/test_phase116_fow_contact_state.py::test_strict_identity_and_scalar_types_reject_atomically[track_status_bool]",
+      "rationale": "For each invalid identity or strict scalar type, the traced _assert_atomic_rejection helper asserts rejection, byte-identical target state after failure, and an exact valid-state retry.",
+      "strongest_oracle": "called helper: _assert_atomic_rejection (rejection, atomicity, exact retry)"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/unit/test_phase116_fow_contact_state.py::test_strict_identity_and_scalar_types_reject_atomically[view_side_mismatch]",
+      "rationale": "For each invalid identity or strict scalar type, the traced _assert_atomic_rejection helper asserts rejection, byte-identical target state after failure, and an exact valid-state retry.",
+      "strongest_oracle": "called helper: _assert_atomic_rejection (rejection, atomicity, exact retry)"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/unit/test_phase116_fow_contact_state.py::test_strict_identity_and_scalar_types_reject_atomically[view_time_bool]",
+      "rationale": "For each invalid identity or strict scalar type, the traced _assert_atomic_rejection helper asserts rejection, byte-identical target state after failure, and an exact valid-state retry.",
+      "strongest_oracle": "called helper: _assert_atomic_rejection (rejection, atomicity, exact retry)"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/unit/test_phase116_fow_contact_state.py::test_track_lifecycle_corruption_rejects_atomically[coasting_above_uncertainty_limit]",
+      "rationale": "For each unreachable track lifecycle, the traced _assert_atomic_rejection helper asserts rejection, byte-identical target state after failure, and an exact valid-state retry.",
+      "strongest_oracle": "called helper: _assert_atomic_rejection (rejection, atomicity, exact retry)"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/unit/test_phase116_fow_contact_state.py::test_track_lifecycle_corruption_rejects_atomically[coasting_below_confirmation_threshold]",
+      "rationale": "For each unreachable track lifecycle, the traced _assert_atomic_rejection helper asserts rejection, byte-identical target state after failure, and an exact valid-state retry.",
+      "strongest_oracle": "called helper: _assert_atomic_rejection (rejection, atomicity, exact retry)"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/unit/test_phase116_fow_contact_state.py::test_track_lifecycle_corruption_rejects_atomically[coasting_past_lost_timeout]",
+      "rationale": "For each unreachable track lifecycle, the traced _assert_atomic_rejection helper asserts rejection, byte-identical target state after failure, and an exact valid-state retry.",
+      "strongest_oracle": "called helper: _assert_atomic_rejection (rejection, atomicity, exact retry)"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/unit/test_phase116_fow_contact_state.py::test_track_lifecycle_corruption_rejects_atomically[confirmed_below_confirmation_threshold]",
+      "rationale": "For each unreachable track lifecycle, the traced _assert_atomic_rejection helper asserts rejection, byte-identical target state after failure, and an exact valid-state retry.",
+      "strongest_oracle": "called helper: _assert_atomic_rejection (rejection, atomicity, exact retry)"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/unit/test_phase116_fow_contact_state.py::test_track_lifecycle_corruption_rejects_atomically[confirmed_past_coast_timeout]",
+      "rationale": "For each unreachable track lifecycle, the traced _assert_atomic_rejection helper asserts rejection, byte-identical target state after failure, and an exact valid-state retry.",
+      "strongest_oracle": "called helper: _assert_atomic_rejection (rejection, atomicity, exact retry)"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/unit/test_phase116_fow_contact_state.py::test_track_lifecycle_corruption_rejects_atomically[lost_contact]",
+      "rationale": "For each unreachable track lifecycle, the traced _assert_atomic_rejection helper asserts rejection, byte-identical target state after failure, and an exact valid-state retry.",
+      "strongest_oracle": "called helper: _assert_atomic_rejection (rejection, atomicity, exact retry)"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/unit/test_phase116_fow_contact_state.py::test_track_lifecycle_corruption_rejects_atomically[stale_contact]",
+      "rationale": "For each unreachable track lifecycle, the traced _assert_atomic_rejection helper asserts rejection, byte-identical target state after failure, and an exact valid-state retry.",
+      "strongest_oracle": "called helper: _assert_atomic_rejection (rejection, atomicity, exact retry)"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/unit/test_phase116_fow_contact_state.py::test_track_lifecycle_corruption_rejects_atomically[tentative_at_confirmation_threshold]",
+      "rationale": "For each unreachable track lifecycle, the traced _assert_atomic_rejection helper asserts rejection, byte-identical target state after failure, and an exact valid-state retry.",
+      "strongest_oracle": "called helper: _assert_atomic_rejection (rejection, atomicity, exact retry)"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/unit/test_phase116_fow_contact_state.py::test_track_vector_and_covariance_corruption_rejects_atomically[covariance_asymmetric]",
+      "rationale": "For each malformed track vector or covariance, the traced _assert_atomic_rejection helper asserts rejection, byte-identical target state after failure, and an exact valid-state retry.",
+      "strongest_oracle": "called helper: _assert_atomic_rejection (rejection, atomicity, exact retry)"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/unit/test_phase116_fow_contact_state.py::test_track_vector_and_covariance_corruption_rejects_atomically[covariance_bool]",
+      "rationale": "For each malformed track vector or covariance, the traced _assert_atomic_rejection helper asserts rejection, byte-identical target state after failure, and an exact valid-state retry.",
+      "strongest_oracle": "called helper: _assert_atomic_rejection (rejection, atomicity, exact retry)"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/unit/test_phase116_fow_contact_state.py::test_track_vector_and_covariance_corruption_rejects_atomically[covariance_indefinite]",
+      "rationale": "For each malformed track vector or covariance, the traced _assert_atomic_rejection helper asserts rejection, byte-identical target state after failure, and an exact valid-state retry.",
+      "strongest_oracle": "called helper: _assert_atomic_rejection (rejection, atomicity, exact retry)"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/unit/test_phase116_fow_contact_state.py::test_track_vector_and_covariance_corruption_rejects_atomically[covariance_negative_diagonal]",
+      "rationale": "For each malformed track vector or covariance, the traced _assert_atomic_rejection helper asserts rejection, byte-identical target state after failure, and an exact valid-state retry.",
+      "strongest_oracle": "called helper: _assert_atomic_rejection (rejection, atomicity, exact retry)"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/unit/test_phase116_fow_contact_state.py::test_track_vector_and_covariance_corruption_rejects_atomically[covariance_not_list]",
+      "rationale": "For each malformed track vector or covariance, the traced _assert_atomic_rejection helper asserts rejection, byte-identical target state after failure, and an exact valid-state retry.",
+      "strongest_oracle": "called helper: _assert_atomic_rejection (rejection, atomicity, exact retry)"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/unit/test_phase116_fow_contact_state.py::test_track_vector_and_covariance_corruption_rejects_atomically[covariance_wrong_shape]",
+      "rationale": "For each malformed track vector or covariance, the traced _assert_atomic_rejection helper asserts rejection, byte-identical target state after failure, and an exact valid-state retry.",
+      "strongest_oracle": "called helper: _assert_atomic_rejection (rejection, atomicity, exact retry)"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/unit/test_phase116_fow_contact_state.py::test_track_vector_and_covariance_corruption_rejects_atomically[position_bool]",
+      "rationale": "For each malformed track vector or covariance, the traced _assert_atomic_rejection helper asserts rejection, byte-identical target state after failure, and an exact valid-state retry.",
+      "strongest_oracle": "called helper: _assert_atomic_rejection (rejection, atomicity, exact retry)"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/unit/test_phase116_fow_contact_state.py::test_track_vector_and_covariance_corruption_rejects_atomically[position_not_list]",
+      "rationale": "For each malformed track vector or covariance, the traced _assert_atomic_rejection helper asserts rejection, byte-identical target state after failure, and an exact valid-state retry.",
+      "strongest_oracle": "called helper: _assert_atomic_rejection (rejection, atomicity, exact retry)"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/unit/test_phase116_fow_contact_state.py::test_track_vector_and_covariance_corruption_rejects_atomically[position_wrong_shape]",
+      "rationale": "For each malformed track vector or covariance, the traced _assert_atomic_rejection helper asserts rejection, byte-identical target state after failure, and an exact valid-state retry.",
+      "strongest_oracle": "called helper: _assert_atomic_rejection (rejection, atomicity, exact retry)"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/unit/test_phase116_fow_contact_state.py::test_track_vector_and_covariance_corruption_rejects_atomically[track_time_nan]",
+      "rationale": "For each malformed track vector or covariance, the traced _assert_atomic_rejection helper asserts rejection, byte-identical target state after failure, and an exact valid-state retry.",
+      "strongest_oracle": "called helper: _assert_atomic_rejection (rejection, atomicity, exact retry)"
+    },
+    {
+      "classification": "helper_assertion",
+      "node_id": "tests/unit/test_phase116_fow_contact_state.py::test_track_vector_and_covariance_corruption_rejects_atomically[velocity_nan]",
+      "rationale": "For each malformed track vector or covariance, the traced _assert_atomic_rejection helper asserts rejection, byte-identical target state after failure, and an exact valid-state retry.",
+      "strongest_oracle": "called helper: _assert_atomic_rejection (rejection, atomicity, exact retry)"
     },
     {
       "classification": "invariant_only",

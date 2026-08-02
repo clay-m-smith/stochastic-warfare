@@ -7,26 +7,30 @@ models, a headless Python engine, FastAPI service, and React frontend. Modern
 warfare is the primary data package, with four historical-era packages and
 integrated maritime warfare.
 
-**Current status**: Phases 105 through 115 and Block 12 are complete. Phase
-115's typed sensing-aware targeting and format-115 checkpoint/exposure
-contract passes documentation, cross-document review, and postmortem; REM-028
-is closed. The owner accepted its contended long-run evidence only with an
-explicit qualification; capped slow/API/E2E runs are not called passes. See
-`docs/devlog/phase-115.md`,
-`docs/specs/sensing-aware-tactical-standoff.md`, and
+**Current status**: Phases 105 through 116 and Block 12 are complete. Phase
+116's typed format-116 ordinary-contact, fusion-alias, bounded-witness,
+targeting, and DETECTION RNG continuation contract passes documentation,
+cross-document review, and postmortem; REM-029 is closed. The owner accepted
+its contended long-run evidence only with an explicit qualification; capped
+slow/API/E2E runs and inconclusive timing are not called passes. See
+`docs/devlog/phase-116.md`,
+`docs/specs/fog-of-war-contact-continuation.md`, and
 `docs/remediation-backlog.md` for the exact evidence, closure gates, and
 unresolved follow-ups.
 
-Block 13 is active with Phase 116 / REM-029 next and unstarted. REM-041 through
-REM-043 are assigned to planned Block 14.
+Block 13 is active with Phase 116 / REM-029 complete and closed. Phase 117 /
+REM-030 is next and remains unstarted.
+REM-041 through REM-043 are assigned to planned Block 14.
 REM-044 is assigned to planned Block 15 for sourced sensor covariance and an
 atomic predictive-tracking transaction.
 REM-045 assigns the legacy Fallujah scripted-action lifecycle to planned Block
 16 / Phase 132; declaration/reference loading is not authoritative dispatch,
 effect, or exact-once continuation evidence.
+REM-046 assigns complete active-deception checkpoint state and single-owner
+DETECTION RNG continuation to planned Block 17 / Phase 133.
 Phase 115's 73 Easting workload-identity change uses a strict non-timing
-transition qualification; the clean endpoint must be promoted before the next
-phase closes and is never called a performance pass.
+transition qualification and is never called a performance pass. Phase 116
+has promoted the clean endpoint to the ordinary version-4 paired gate.
 
 ## Python & Package Management
 **Requires Python >=3.12** (pinned to 3.12.10 via `.python-version`).
@@ -61,21 +65,21 @@ The authoritative Python suite is the exact audited union of `standard`,
 runs the audit, `standard`, `api`, `e2e`, and the overlapping `terrain`
 dependency profile. Weekly/manual CI runs the three marker partitions in
 deterministic module-affine shards. `benchmark-policy` is also an overlapping
-focused profile, not a seventh partition. Phase 115 routes routine 73 Easting
+focused profile, not a seventh partition. Phase 115 routed routine 73 Easting
 through a strict version-4 non-timing workload transition while retaining
 version-3 runtime-input normalization. `transition_qualified` proves only the
-exact classified workload/semantic handoff; the next phase must promote the
-clean Phase 115 endpoint before ordinary paired gating resumes. It is not a
-speed, default-morale, or historical-fidelity result; Golan remains manual.
+exact classified workload/semantic handoff; it is not a speed, default-morale,
+or historical-fidelity result. Phase 116 has promoted the clean endpoint and
+ordinary paired gating has resumed; Golan remains manual.
 
-The Phase 115 closure audit enumerates exactly 12,248 nodes:
-`standard` 11,743, `slow-only` 110, `benchmark-only` 87, `slow-benchmark` 4,
-API 263, and E2E 41. All 11,743 standard nodes and every complete benchmark
-profile passed, alongside data, determinism, scenario, frontend, static, and
-documentation gates. The Phase 115 devlog records the exact qualified
-slow/API/E2E results, the passing focused production API witness, transition
-artifact, warnings, exclusions, and remaining deficits. Phase 115 is complete
-and REM-028 is closed.
+The Phase 116 closure audit enumerates exactly 12,459 nodes:
+`standard` 11,953, `slow-only` 110, `benchmark-only` 87, `slow-benchmark` 5,
+API 263, and E2E 41. All 11,953 standard nodes and every complete benchmark
+partition/profile passed, alongside data, determinism, scenario, static,
+documentation, cross-document, and postmortem gates. The Phase 116 devlog
+records the exact qualified slow/API/E2E, Khafji, and paired-timing results,
+artifacts, warnings, exclusions, and remaining deficits. Phase 116 is complete
+and REM-029 is closed.
 
 ## Architecture
 
@@ -199,6 +203,7 @@ production-evidence requirements.
 | `docs/development-phases-block14.md` | Block 14 roadmap (128–130), targeting authorization/topology/selection follow-ups |
 | `docs/development-phases-block15.md` | Block 15 roadmap (131), sensor covariance and predictive-tracking follow-up |
 | `docs/development-phases-block16.md` | Block 16 roadmap (132), scripted scenario action-integrity follow-up |
+| `docs/development-phases-block17.md` | Block 17 roadmap (133), active-deception checkpoint-integrity follow-up |
 | `docs/remediation-backlog.md` | Audited implementation gaps and completion evidence |
 | `docs/specs/project-structure.md` | Full package tree, module decomposition, dependency graph |
 | `docs/devlog/` | Per-phase implementation logs (`index.md` tracks status) |
@@ -234,6 +239,7 @@ All phase details are in `docs/devlog/` (one file per phase). Per-phase tables i
 | Block 14 | 128–130 | Targeting exposure authorization, authored mount/director topology, and availability-aware threat selection | Planned |
 | Block 15 | 131 | Sourced sensor measurement covariance and atomic predictive tracking | Planned |
 | Block 16 | 132 | Typed, fail-closed, exact-once scripted scenario actions | Planned |
+| Block 17 | 133 | Complete active-deception checkpoint state with one DETECTION RNG authority | Planned |
 
 ### Block 11 Detail (COMPLETE)
 

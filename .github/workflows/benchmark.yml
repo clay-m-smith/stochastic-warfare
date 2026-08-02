@@ -56,7 +56,7 @@ jobs:
           if-no-files-found: error
 
   easting:
-    name: 73 Easting workload transition
+    name: 73 Easting paired gate
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -71,29 +71,29 @@ jobs:
       - name: Install locked development environment
         run: uv sync --extra dev --locked
 
-      - name: Run exact reference/candidate workload transition
+      - name: Run same-host reference/candidate pairs
         run: >-
-          uv run --no-sync python scripts/run_paired_benchmark.py transition
+          uv run --no-sync python scripts/run_paired_benchmark.py
           --scenario 73_easting
-          --artifact "${RUNNER_TEMP}/transition-73-easting.json"
+          --artifact "${RUNNER_TEMP}/paired-73-easting.json"
           --worker-timeout-seconds 300
 
-      - name: Bind workload transition to clean final commit
+      - name: Bind comparison to clean final commit
         run: >-
           uv run --no-sync python scripts/run_paired_benchmark.py verify-final
-          --artifact "${RUNNER_TEMP}/transition-73-easting.json"
+          --artifact "${RUNNER_TEMP}/paired-73-easting.json"
           --verification
-          "${RUNNER_TEMP}/transition-73-easting-final-tree.json"
+          "${RUNNER_TEMP}/paired-73-easting-final-tree.json"
           --worker-timeout-seconds 300
 
-      - name: Upload complete or partial workload-transition evidence
+      - name: Upload complete or partial comparison evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: transition-73-easting-${{ github.run_id }}
+          name: paired-73-easting-${{ github.run_id }}
           path: |
-            ${{ runner.temp }}/transition-73-easting.json
-            ${{ runner.temp }}/transition-73-easting-final-tree.json
+            ${{ runner.temp }}/paired-73-easting.json
+            ${{ runner.temp }}/paired-73-easting-final-tree.json
           if-no-files-found: error
           retention-days: 30
 

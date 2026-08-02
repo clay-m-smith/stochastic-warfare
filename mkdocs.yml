@@ -96,6 +96,7 @@ nav:
     - Block 14 (128-130): development-phases-block14.md
     - Block 15 (131): development-phases-block15.md
     - Block 16 (132): development-phases-block16.md
+    - Block 17 (133): development-phases-block17.md
     - Remediation Backlog: remediation-backlog.md
   - Devlog:
     - Overview: devlog/index.md
@@ -216,6 +217,7 @@ nav:
     - Phase 113 - Morale State Ownership: devlog/phase-113.md
     - Phase 114 - Era Override Execution: devlog/phase-114.md
     - Phase 115 - Sensing-Aware Tactical Standoff: devlog/phase-115.md
+    - Phase 116 - Fog-of-War Contact Continuation: devlog/phase-116.md
   - Specifications:
     - Project Structure: specs/project-structure.md
     - Checkpoint State Contract: specs/checkpoint-state.md
@@ -223,6 +225,7 @@ nav:
     - ASAT Production Integration: specs/asat-production-integration.md
     - Time-on-Target Execution: specs/time-on-target-execution.md
     - Validation and Documentation Trust: specs/validation-and-documentation-trust.md
+    - Fog-of-War Contact Continuation: specs/fog-of-war-contact-continuation.md
     - Morale State Ownership: specs/morale-state-ownership.md
     - Era Override Execution: specs/era-override-execution.md
     - Sensing-Aware Tactical Standoff: specs/sensing-aware-tactical-standoff.md

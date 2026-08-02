@@ -1586,7 +1586,7 @@ def test_mutated_restore_plan_rejects_without_mutation() -> None:
 @pytest.mark.parametrize(
     ("mutation", "match"),
     [
-        ("v107", r"Unsupported checkpoint version 107; expected 115"),
+        ("v107", r"Unsupported checkpoint version 107; expected 116"),
         (
             "versionless",
             r"Versionless checkpoints cannot restore a logistics-enabled",

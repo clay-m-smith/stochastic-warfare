@@ -49,11 +49,11 @@ def _profile(cross_section: float = 10.0) -> SignatureProfile:
 
 def _fow(seed: int = 42) -> FogOfWarManager:
     rng = np.random.Generator(np.random.PCG64(seed))
-    det = DetectionEngine(rng=np.random.Generator(np.random.PCG64(seed + 1)))
-    ident = IdentificationEngine(np.random.Generator(np.random.PCG64(seed + 2)))
-    est = StateEstimator(rng=np.random.Generator(np.random.PCG64(seed + 3)))
-    intel = IntelFusionEngine(state_estimator=est, rng=np.random.Generator(np.random.PCG64(seed + 4)))
-    dec = DeceptionEngine(rng=np.random.Generator(np.random.PCG64(seed + 5)))
+    det = DetectionEngine(rng=rng)
+    ident = IdentificationEngine(rng)
+    est = StateEstimator(rng=rng)
+    intel = IntelFusionEngine(state_estimator=est, rng=rng)
+    dec = DeceptionEngine(rng=rng)
     return FogOfWarManager(
         detection_engine=det,
         identification_engine=ident,

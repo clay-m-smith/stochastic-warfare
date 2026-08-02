@@ -8,8 +8,9 @@ Phase 113 is complete and REM-019 is closed.
 
 Phase 114 extended the engine checkpoint to format 114 by adding the effective
 era runtime contract and clock/resolution validation. Phase 115 advances the
-current checkpoint to format 115 for tactical-targeting state. Neither change
-alters or duplicates the morale envelope below: current format 115 still
+checkpoint to format 115 for tactical-targeting state, and Phase 116 advances
+the current checkpoint to format 116 for fog-of-war contact continuation.
+None of those changes alters or duplicates the morale envelope below: current format 116 still
 contains exactly one `morale_runtime`, and `RNGManager` remains the sole
 MORALE-stream owner.
 
@@ -259,10 +260,10 @@ is not the causal acceptance proof for this ownership remediation.
 ## Phase 113 checkpoint format
 
 > **Current-format note:** This section records the Phase 113 format transition
-> historically. The current engine writes format 115, which preserves this
+> historically. The current engine writes format 116, which preserves this
 > exact morale topology, retains the independent Phase 114 era-runtime
-> contract, and adds Phase 115 tactical-targeting state. Explicit formats 113
-> and 114 now reject as older versions.
+> contract, Phase 115 tactical-targeting state, and Phase 116 fog-of-war
+> contact state. Explicit formats 113 through 115 now reject as older versions.
 
 `SimulationEngine` advances the explicit format to `113`.
 

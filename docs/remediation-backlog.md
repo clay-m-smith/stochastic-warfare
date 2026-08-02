@@ -50,7 +50,7 @@ Audit baseline: 2026-07-28 at `68acd4b`
 | REM-026 | P1 | 112 | Benchmark trust | A hard 60-second Golan assertion contradicts the checked-in 500-second baseline and fails code that is faster than that baseline | **Closed** | Yes | N/A | Yes | N/A | Yes | Yes | Yes | [Phase 112](devlog/phase-112.md#postmortem) |
 | REM-027 | P2 | 112 | Space ISR state | Buffered ISR checkpoint reports use generic JSON normalization rather than a typed semantic rehydration boundary | **Closed** | Yes | Yes | Yes | N/A | Yes | Yes | Yes | [Phase 112](devlog/phase-112.md#postmortem) |
 | REM-028 | P1 | 115 | Sensing/combat | Tactical movement can hold at catalog weapon range beyond usable sensing range | **Closed** | Yes | Yes | Yes | Yes | Yes | Yes | Yes | [Phase 115](devlog/phase-115.md#postmortem) |
-| REM-029 | P1 | 116 | Fog-of-war state | Ordinary contacts serialize but are discarded by `FogOfWarManager.set_state()` | Queued | Yes | Yes | Yes | N/A | Yes | Yes | - | Nonempty-contact fresh continuation with exact COP behavior |
+| REM-029 | P1 | 116 | Fog-of-war state | At the Phase 116 baseline, ordinary contacts serialized but were discarded by `FogOfWarManager.set_state()` | **Closed** | Yes | Yes | Yes | Yes | Yes | Yes | Yes | [Phase 116](devlog/phase-116.md#postmortem) |
 | REM-030 | P1 | 117 | Historical validation | At the Phase 112 baseline, catalog winner tables, legacy comparisons, and public docs claimed historical validation without a production, provenance-bearing, held-out outcome-envelope contract; fresh Debecka production exposed incompatible casualty units and a duration miss | Queued | Yes | - | - | N/A | Yes | Yes | - | Per-claim validated/regression-only/unsupported disposition plus typed held-out production-envelope artifacts |
 | REM-031 | P1 | 118 | Performance semantics | At the Phase 112 baseline, Block 9 claimed five performance flags preserve scenario outcomes, but its regression executed only authored configurations, excluded the only two all-flag scenarios, and had no same-input disabled controls | Queued | Yes | Yes | Yes | - | - | - | - | Per-flag semantic classification and common-seed production off/on evidence with persisted provenance |
 | REM-032 | P1 | 119 | Guerrilla concealment | Populated-area blend probability was mapped to morale-owned `ROUTING`, while the production context exposes no matching population query or concealed-unit owner | Queued | Yes | Yes | - | - | - | - | - | Typed non-morale concealment changes targetability and persists/exposes its lifecycle |
@@ -67,6 +67,7 @@ Audit baseline: 2026-07-28 at `68acd4b`
 | REM-043 | P2 | 130 | Target selection | Threat ranking does not have an explicit availability-aware selection contract across current weapon/sensor/fire-control solutions | Queued | Yes | Yes | Yes | N/A | Yes | Yes | Yes | Multi-target production comparison with deterministic serviceable-threat selection |
 | REM-044 | P1 | 131 | Detection estimation | FOW fusion uses generic isotropic range uncertainty and updates tracks without an elapsed-time predictive transaction | Queued | Yes | - | Yes | N/A | Yes | Yes | - | Sourced sensor covariance plus atomic predict/update/replacement continuation |
 | REM-045 | P1 | 132 | Scripted scenario actions | Phase 101 scripted events use an untyped parameter bag, silently consume failed/no-op actions, bypass position/casualty lifecycle owners, and do not checkpoint or expose exact-once state | Queued | Yes | Yes | Yes | N/A | - | - | - | Typed due-action owner with fail-closed effects, exact-once continuation, and public lifecycle evidence |
+| REM-046 | P1 | 133 | Deception state | Active/inactive decoys and their complete signature/degradation/ID topology are not safely checkpointed | Queued | Yes | Yes | Yes | - | Yes | Yes | - | Exact production decoy lifecycle continuation with one DETECTION RNG authority |
 
 ## REM-001 - Exact checkpoint restoration
 
@@ -1056,8 +1057,9 @@ authority. Fresh restore before and after delivery continues byte-exactly.
 Malformed references, ordering, times, positions, proxy mappings, cross-state
 receipts, associations, and forged fusion state reject before mutation. The
 proof deliberately keeps ordinary fog-of-war contacts empty because their
-independent restore gap remains REM-029; aggregation remains bounded by
-REM-016.
+independent restore gap was then REM-029; Phase 116 subsequently implements
+that separate repair and is completing its closure gates. Aggregation remains
+bounded by REM-016.
 
 `E` is N/A because typed report integrity and rehydration are mandatory
 whenever the configured Space ISR path is present, not an optional typing
@@ -1128,8 +1130,12 @@ results and Debecka's REM-030 signal remain disclosed rather than being called
 passes. The final frozen-tree 73 Easting version-4 transition verified all
 29/29 approvals with `transition_qualified`, identical approved semantic
 state, and timing explicitly `not_applicable` because the workload identity
-changes. Phase 116 must promote the clean Phase 115 endpoint before ordinary
-paired gating resumes; this handoff is not a performance pass.
+changes. At Phase 115 closure, Phase 116 still had to promote the clean endpoint
+before ordinary paired gating resumed; that handoff was not a performance pass.
+
+Phase 116 subsequently completed that promotion against clean commit
+`271ec49ceb508bdd050e2d5c3072ac91456cca7c`; the paragraph above remains the
+historical Phase 115 handoff requirement.
 
 **Status:** **Closed** by the accepted Phase 115 postmortem.
 
@@ -1137,19 +1143,36 @@ paired gating resumes; this handoff is not a performance pass.
 
 ### Reproduction and required proof
 
-`FogOfWarManager.get_state()` serializes each `SideWorldView.contacts` entry,
-but `set_state()` restores only last-update times and leaves every ordinary
-contact absent. REM-027 can prove typed Space-report queue and
+At the Phase 116 baseline, `FogOfWarManager.get_state()` serialized each
+`SideWorldView.contacts` entry, but `set_state()` restored only last-update
+times and left every ordinary contact absent. REM-027 could prove typed Space-report queue and
 intelligence-fusion track continuation only with ordinary world views
-explicitly empty; it cannot support a whole-fog-of-war continuation claim.
+explicitly empty; it could not support a whole-fog-of-war continuation claim.
 
-A future phase must stage and validate exact side ownership, contact IDs,
+Phase 116 implements staged validation of exact side ownership, contact IDs,
 `ContactInfo`, nested track state, update times, topology, and DETECTION RNG
 authority before mutation. A nonempty-contact fresh-runtime continuation must
 preserve decay, update, common-operating-picture behavior, subsequent events,
 and whole-context checkpoint equality.
 
-**Status:** Queued for Phase 116, the next phase in active Block 13.
+### Phase 116 closure evidence
+
+Format 116 restores the complete strict
+`world_views/current_detection_witnesses/rng_state/intel_fusion` envelope
+through one typed context-owned plan. Factory-built enabled and disabled
+sessions prove exact contact-to-fusion aliases, current witness and targeting
+consumability, outcome-affecting movement/engagement use, decay/coast/loss and
+redetection, current event/recorder continuation, dynamic registration,
+replacement, corruption/retry atomicity, and whole-checkpoint equality. The
+210-node focused suite, 11,953-node standard partition, determinism, data,
+scenario, benchmark-policy, Ruff, documentation, cross-document, and
+postmortem gates passed or carry the exact owner-approved contention
+qualification recorded in the [Phase 116 devlog](devlog/phase-116.md#postmortem).
+
+**Status:** **Closed** by the accepted Phase 116 postmortem. REM-036 retains
+custom/populated COP/data-link state, and REM-046 / Phase 133 retains complete
+active-deception checkpoint state; neither reopens roster-backed ordinary
+contact continuation.
 
 ## REM-030 - Catalog-wide historical outcome claims lack production validation
 
@@ -1787,10 +1810,10 @@ authoritative predecessor and tree identities, and zero timed pairs or
 performance decisions. `transition_qualified` is not a pass and cannot be
 used to claim speed.
 
-The next phase must promote the clean Phase 115 endpoint to an ordinary paired
-reference before its own postmortem. This temporary reviewed handoff preserves
-REM-026's fail-closed rule instead of comparing unequal workloads or weakening
-the 1.20/0.20 gate. It does not reopen REM-026.
+Phase 116 promoted the clean Phase 115 endpoint to an ordinary paired reference
+before production edits. The temporary reviewed handoff therefore completed
+without comparing unequal workloads or weakening the 1.20/0.20 gate. It does
+not reopen REM-026.
 
 ## REM-018 - Era override metadata has no production consumer
 
@@ -2424,3 +2447,50 @@ language or invent new scenario events while repairing them.
 
 **Status:** Queued for Phase 132 in Block 16. Phase 115 records the production
 red and truthful nonclaim but does not implement or close scripted actions.
+
+## REM-046 - Active deception state is not checkpoint-complete
+
+### Phase 116 finding and nonclaim
+
+`FogOfWarManager` owns a live `DeceptionEngine`, and the production battle path
+can deploy, count, and degrade decoys. The current `Decoy.get_state()` payload,
+however, omits its `SignatureProfile`; restore constructs an empty substitute
+signature. `DeceptionEngine.get_state()` also serializes a duplicate DETECTION
+RNG mirror while `RNGManager` is the authoritative stream owner. Nesting that
+existing dictionary inside format 116 would therefore accept semantically
+incomplete decoys and a commit-order RNG authority instead of exact state.
+
+Phase 116 implements roster-backed ordinary-contact continuation while failing closed:
+checkpoint capture rejects active or inactive retained decoys and a nonzero
+decoy counter, and restore requires the target deception owner to be pristine.
+Those guards prove the unsupported boundary; they do not persist deception or
+claim that every deployed decoy is wired into normal fog-of-war scans.
+Custom or populated common-operating-picture/data-link state remains the
+separate REM-036 boundary.
+
+**Matrix:** `D=Yes, L=Yes, W=Yes, E=-, X=Yes, O=Yes, P=-`. Typed decoys and the
+runtime owner establish declaration/loading/wiring. The production battle path
+and Phase 116 non-pristine capture/restore controls establish exercised and
+outcome-relevant state. Paired enabled/disabled behavior and complete exact
+persistence/exposure remain unproven.
+
+### Required proof
+
+- Persist and strictly validate canonical decoy IDs, monotonic counter,
+  positions, types, complete immutable signature profiles, effectiveness,
+  degradation, active disposition, deployment time, and every behavior-bearing
+  field; do not reconstruct an empty proxy signature.
+- Keep `RNGManager` as the single DETECTION authority and cross-validate any
+  required mirror before mutation. Stage the full owner transaction so corrupt,
+  foreign, or mutated state leaves clock, RNG, FOW, fusion, targeting, recorder,
+  and decoys unchanged and permits a valid retry.
+- Prove production deployment, degradation/inactivation, assessment effects,
+  any supported decoy/contact association, next-ID allocation, and enabled /
+  disabled controls across fresh and in-place continuation.
+- Either prove active decoys reach normal production fog-of-war scans and alter
+  detection/contact outcomes, or retain that wiring as an explicit unsupported
+  boundary. Direct helper calls, state-key searches, constructor ownership,
+  mocks, logs, and no-crash runs are not behavioral completion evidence.
+
+**Status:** Queued for Phase 133 in Block 17. This follow-up was surfaced while
+Phase 116 repaired ordinary contacts and does not reopen REM-029.

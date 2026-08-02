@@ -522,7 +522,7 @@ historical calibration.
 
 The effective values construct `SimulationClock`, `SimulationEngine`,
 `MedicalEngine`, and `MaintenanceEngine`, contribute to runtime/API config
-fingerprints, and persist in checkpoint format 115. Automatic casualty
+fingerprints, and persist in checkpoint format 116. Automatic casualty
 admission, medical-facility topology, equipment registration and repair-spares
 initiation, communications topology, and scheduled nuclear employment remain
 separate remediations. See the

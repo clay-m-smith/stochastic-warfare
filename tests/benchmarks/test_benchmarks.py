@@ -69,6 +69,22 @@ def _synthetic_gate_policy() -> BenchmarkPolicy:
     return BenchmarkPolicy.model_validate(payload)
 
 
+def _synthetic_transition_policy() -> TransitionPolicy:
+    return TransitionPolicy.model_validate(
+        {
+            "policy_version": 4,
+            "mode": "transition_qualified",
+            "manual": False,
+            "reference_commit": benchmark_module.REFERENCE_COMMIT,
+            "workload": {
+                "name": "default",
+                "calibration_patch": {},
+            },
+            "closures_per_revision": 1,
+        }
+    )
+
+
 def _worker_with_duration(
     worker: WorkerRun,
     *,
@@ -322,12 +338,7 @@ def _valid_pass_artifact() -> ComparisonArtifact:
 
 def _valid_transition_artifact() -> TransitionArtifact:
     reference, candidate, contract = _synthetic_transition_fixture()
-    policy_payload = BenchmarkBaseline().load()["73_easting"].policy.model_dump(mode="python")
-    policy_payload["workload"] = {
-        "name": "default",
-        "calibration_patch": {},
-    }
-    policy = TransitionPolicy.model_validate(policy_payload)
+    policy = _synthetic_transition_policy()
     environment_payload = benchmark_module._environment_metadata().model_dump(mode="python")
     environment_payload["dependency_lock_sha256"] = reference.runtime_input.dependency_lock_sha256
     return TransitionArtifact(
@@ -541,21 +552,10 @@ def _write_synthetic_transition_baseline(
     path: Path,
     contract: benchmark_module.WorkloadTransitionContract,
 ) -> benchmark_module.BaselineEntry:
-    payload = (
-        BenchmarkBaseline()
-        .load()["73_easting"]
-        .policy.model_dump(
-            mode="python",
-        )
-    )
-    payload["workload"] = {
-        "name": "default",
-        "calibration_patch": {},
-    }
     entry = benchmark_module.BaselineEntry(
         scenario_name="synthetic",
         scenario_path=contract.reference.runtime_input.scenario_path,
-        policy=TransitionPolicy.model_validate(payload),
+        policy=_synthetic_transition_policy(),
         reference_input=None,
         semantic_envelope=None,
         transition_contract=contract,
@@ -798,23 +798,22 @@ def _prepare_dirty_transition_tree(
 class TestPairedPolicy:
     def test_exact_policy_contract_is_loaded(self) -> None:
         entries = BenchmarkBaseline().load()
-        policy = entries["73_easting"].policy
+        easting = entries["73_easting"]
+        policy = easting.policy
 
-        assert isinstance(policy, TransitionPolicy)
+        assert isinstance(policy, BenchmarkPolicy)
         assert policy.policy_version == 4
-        assert policy.mode == "transition_qualified"
+        assert policy.mode == "gate"
         assert policy.manual is False
-        assert policy.closures_per_revision == 1
-        assert set(policy.model_dump(mode="python")).isdisjoint(
-            {
-                "warmup_runs_per_revision",
-                "timed_pairs",
-                "pair_orders",
-                "maximum_median_slowdown_ratio",
-                "maximum_relative_sample_range",
-                "timing_scope",
-            }
+        assert policy.reference_commit == (
+            "271ec49ceb508bdd050e2d5c3072ac91456cca7c"
         )
+        assert policy.warmup_runs_per_revision == 1
+        assert policy.timed_pairs == 3
+        assert policy.pair_orders == PAIR_ORDERS
+        assert policy.maximum_median_slowdown_ratio == 1.20
+        assert policy.maximum_relative_sample_range == 0.20
+        assert policy.timing_scope == "SimulationEngine.run"
         assert policy.workload.name == "morale_neutral_control_plane"
         assert policy.workload.calibration_patch.model_dump(
             mode="python",
@@ -829,6 +828,39 @@ class TestPairedPolicy:
                 "cohesion_weight": 0.0,
                 "force_ratio_weight": 0.0,
             },
+        }
+        assert easting.transition_contract is None
+        assert easting.reference_input is not None
+        assert easting.reference_input.model_dump(mode="python") == {
+            "scenario_path": "data/scenarios/73_easting/scenario.yaml",
+            "scenario_sha256": (
+                "328467cd1f200cf2f0157da917ab20b9e9bbc43fb7ee985f5d4472d2df3cd3e5"
+            ),
+            "dependency_lock_sha256": (
+                "bbc6b45cfc270d08baa09d3d568a6b84d0f936a6ee9c874cb49c9d8813c5ad39"
+            ),
+            "fingerprint": (
+                "3ef1e72ff1ebdb099a6e89cc6917540f49d774593816c439bfe9e96d6d87f879"
+            ),
+        }
+        assert easting.semantic_envelope is not None
+        assert easting.semantic_envelope.model_dump(mode="python") == {
+            "unit_count": 71,
+            "roster_loadout_digest": (
+                "1344d0fdffe8cf42cd5329a4cbc808398a449f47c14c95fb17807f671f3a32a2"
+            ),
+            "winner": "blue",
+            "victory_condition_type": "time_expired",
+            "ticks": 360,
+            "logical_duration_s": 1800.0,
+            "status_counts": {
+                "blue": {"ACTIVE": 21},
+                "red": {"ACTIVE": 50},
+            },
+            "event_count": 1,
+            "event_digest": (
+                "2784db62737dac1df07bb13e64cadb9b6b6f0d3e48cee291efcfc0d51cb8e798"
+            ),
         }
 
         golan = entries["golan_heights"]
@@ -849,24 +881,6 @@ class TestPairedPolicy:
             assert measurement.maximum_median_slowdown_ratio == 1.20
             assert measurement.maximum_relative_sample_range == 0.20
             assert measurement.timing_scope == "SimulationEngine.run"
-
-        contract = entries["73_easting"].transition_contract
-        assert contract is not None
-        assert contract.reference.runtime_input.fingerprint == (
-            "9d85b6f8489e961eaf3765220d2e2672e1e8955f8a9b58827a8ce0c1b9931e77"
-        )
-        assert contract.candidate.runtime_input.fingerprint == (
-            "3ef1e72ff1ebdb099a6e89cc6917540f49d774593816c439bfe9e96d6d87f879"
-        )
-        assert contract.predecessor.commit == ("4c660d1f5c31eb21a7c920af24a8647a7024d6e2")
-        assert len(contract.approvals) == 29
-        assert {approval.classification for approval in contract.approvals} == {
-            "derived_roster_loadout_digest",
-            "derived_runtime_input_fingerprint",
-            "sensing_aware_standoff_enablement",
-            "vvs2_loadout_role_correction",
-            "vvs2_target_domain_expansion",
-        }
 
     def test_morale_neutral_workload_rejects_every_non_73_scenario(self) -> None:
         entry = BenchmarkBaseline().load()["73_easting"]
@@ -985,19 +999,22 @@ class TestPairedPolicy:
         self,
         tmp_path: Path,
     ) -> None:
-        entry = BenchmarkBaseline().load()["73_easting"]
-        assert isinstance(entry.policy, TransitionPolicy)
-        assert entry.transition_contract is not None
-        approvals = list(entry.transition_contract.approvals)
+        _reference, _candidate, contract = _synthetic_transition_fixture()
+        baseline_path = tmp_path / "transition-baseline.json"
+        entry = _write_synthetic_transition_baseline(
+            baseline_path,
+            contract,
+        )
+        approvals = list(contract.approvals)
         approvals[0] = approvals[0].model_copy(
             update={"classification": "vvs2_target_domain_expansion"},
         )
-        reclassified = entry.transition_contract.model_copy(
+        reclassified = contract.model_copy(
             update={"approvals": approvals},
         )
         artifact = TransitionArtifact(
             created_at_utc="2026-08-02T00:00:00+00:00",
-            scenario_name="73_easting",
+            scenario_name="synthetic",
             status="error",
             errors=["synthetic reclassification rejection"],
             policy=entry.policy,
@@ -1005,7 +1022,7 @@ class TestPairedPolicy:
                 authoritative=True,
                 source="checked_in",
                 document_sha256=benchmark_module._file_sha256(
-                    BASELINES_PATH,
+                    baseline_path,
                 ),
                 entry_sha256=canonical_sha256(
                     entry.model_dump(mode="json"),
@@ -1026,27 +1043,41 @@ class TestPairedPolicy:
             ValueError,
             match="policy or contract differs from authoritative baseline",
         ):
-            validate_transition_artifact(artifact_path)
+            validate_transition_artifact(
+                artifact_path,
+                authoritative_baseline_path=baseline_path,
+            )
 
-    def test_predecessor_lineage_rejects_tampered_document_digest(self) -> None:
-        entry = BenchmarkBaseline().load()["73_easting"]
-        assert isinstance(entry.policy, TransitionPolicy)
-        assert entry.transition_contract is not None
-        changed_contract = entry.transition_contract.model_copy(
+    def test_predecessor_lineage_rejects_tampered_document_digest(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        _reference, _candidate, contract = _synthetic_transition_fixture()
+        changed_contract = contract.model_copy(
             update={
                 "predecessor": (
-                    entry.transition_contract.predecessor.model_copy(
+                    contract.predecessor.model_copy(
                         update={"document_sha256": "f" * 64},
                     )
                 ),
             },
         )
+        monkeypatch.setattr(
+            benchmark_module.subprocess,
+            "run",
+            lambda command, **kwargs: subprocess.CompletedProcess(
+                args=command,
+                returncode=0,
+                stdout=(b"{}\n" if "show" in command else b""),
+                stderr=b"",
+            ),
+        )
 
         with pytest.raises(ValueError, match="document digest differs from git"):
             benchmark_module._verify_transition_predecessor(
                 ROOT,
-                scenario_name="73_easting",
-                policy=entry.policy,
+                scenario_name="synthetic",
+                policy=_synthetic_transition_policy(),
                 contract=changed_contract,
             )
 
@@ -1211,8 +1242,7 @@ class TestPairedPolicy:
             TransitionArtifact.model_validate(invalid)
 
     def test_transition_policy_rejects_every_timing_field(self) -> None:
-        policy = BenchmarkBaseline().load()["73_easting"].policy
-        assert isinstance(policy, TransitionPolicy)
+        policy = _synthetic_transition_policy()
         for field, value in (
             ("timed_pairs", 0),
             ("pair_orders", []),
@@ -1266,6 +1296,12 @@ class TestPairedPolicy:
         tmp_path: Path,
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
+        _reference, _candidate, contract = _synthetic_transition_fixture()
+        baseline_path = tmp_path / "transition-baseline.json"
+        entry = _write_synthetic_transition_baseline(
+            baseline_path,
+            contract,
+        )
         artifact_path = tmp_path / "wrong-mode.json"
         monkeypatch.setattr(
             benchmark_module,
@@ -1279,8 +1315,9 @@ class TestPairedPolicy:
             match="cannot run as an ordinary gate",
         ):
             run_paired_comparison(
-                scenario_name="73_easting",
+                scenario_name=entry.scenario_name,
                 candidate_root=ROOT,
+                baseline_path=baseline_path,
                 artifact_path=artifact_path,
                 allow_dirty_candidate=True,
             )
@@ -1435,7 +1472,7 @@ class TestPairedPolicy:
         assert set(artifact.closures) == {"reference", "candidate"}
         assert artifact.timing_assessment.applicability == "not_applicable"
 
-    def test_hosted_73_easting_job_declares_transition_evidence(
+    def test_hosted_73_easting_job_declares_paired_evidence(
         self,
     ) -> None:
         workflow = yaml.safe_load(
@@ -1446,15 +1483,18 @@ class TestPairedPolicy:
         steps = workflow["jobs"]["easting"]["steps"]
         run_commands = [str(step["run"]) for step in steps if "run" in step]
         assert any(
-            "run_paired_benchmark.py transition" in command and "--scenario 73_easting" in command
+            "run_paired_benchmark.py" in command
+            and "--scenario 73_easting" in command
+            and " transition" not in command
             for command in run_commands
         )
         upload = next(step for step in steps if str(step.get("uses", "")).startswith("actions/upload-artifact@"))
         assert upload["if"] == "always()"
-        assert "transition-73-easting.json" in upload["with"]["path"]
+        assert "paired-73-easting.json" in upload["with"]["path"]
         easting_text = json.dumps(workflow["jobs"]["easting"])
-        assert "paired-73-easting" not in easting_text
-        assert "Bind comparison" not in easting_text
+        assert "transition-73-easting" not in easting_text
+        assert "run_paired_benchmark.py transition" not in easting_text
+        assert "Bind comparison" in easting_text
 
     def test_environment_metadata_is_complete_without_nullable_hardware(self) -> None:
         metadata = benchmark_module._environment_metadata()
@@ -2512,12 +2552,68 @@ class TestProductionWorker:
         )
 
         assert run.commit == benchmark_module.REFERENCE_COMMIT
-        contract = BenchmarkBaseline().load()["73_easting"].transition_contract
-        assert contract is not None
-        assert run.runtime_input.fingerprint == (contract.reference.runtime_input.fingerprint)
-        assert run.semantic_envelope == contract.reference.semantic_envelope
+        assert run.runtime_input.fingerprint == (
+            "9d85b6f8489e961eaf3765220d2e2672e1e8955f8a9b58827a8ce0c1b9931e77"
+        )
+        assert run.semantic_envelope.model_dump(mode="python") == {
+            "unit_count": 71,
+            "roster_loadout_digest": (
+                "b598b36d78604a60cd16bd3313e29e7a8a677e2cb9b83417dc4b00cab778a1b3"
+            ),
+            "winner": "blue",
+            "victory_condition_type": "time_expired",
+            "ticks": 360,
+            "logical_duration_s": 1800.0,
+            "status_counts": {
+                "blue": {"ACTIVE": 21},
+                "red": {"ACTIVE": 50},
+            },
+            "event_count": 1,
+            "event_digest": (
+                "2784db62737dac1df07bb13e64cadb9b6b6f0d3e48cee291efcfc0d51cb8e798"
+            ),
+        }
         assert run.semantic_envelope.ticks == 360
         assert run.semantic_envelope.event_count == 1
+
+    @pytest.mark.slow
+    def test_promoted_reference_worker_uses_production_factory(
+        self,
+        tmp_path: Path,
+    ) -> None:
+        entry = BenchmarkBaseline().load()["73_easting"]
+        assert isinstance(entry.policy, BenchmarkPolicy)
+        assert entry.policy.reference_commit is not None
+        assert entry.reference_input is not None
+        assert entry.semantic_envelope is not None
+        reference_root = tmp_path / "promoted-reference"
+        benchmark_module._git(
+            ROOT,
+            "clone",
+            "--shared",
+            "--no-checkout",
+            str(ROOT),
+            str(reference_root),
+        )
+        benchmark_module._git(
+            reference_root,
+            "checkout",
+            "--detach",
+            entry.policy.reference_commit,
+        )
+
+        run = benchmark_module._run_closure_subprocess(
+            worker_path=ROOT / "tests/benchmarks/benchmark_suite.py",
+            repo_root=reference_root,
+            scenario_relative=entry.scenario_path,
+            revision="reference",
+            workload=entry.policy.workload,
+            timeout_s=60.0,
+        )
+
+        assert run.commit == entry.policy.reference_commit
+        assert run.runtime_input.fingerprint == entry.reference_input.fingerprint
+        assert run.semantic_envelope == entry.semantic_envelope
 
     @pytest.mark.slow
     def test_73_easting_matches_authoritative_semantics_without_timing(
@@ -2525,8 +2621,8 @@ class TestProductionWorker:
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         entry = BenchmarkBaseline().load()["73_easting"]
-        contract = entry.transition_contract
-        assert contract is not None
+        assert entry.reference_input is not None
+        assert entry.semantic_envelope is not None
         monkeypatch.setattr(
             benchmark_module,
             "_benchmark_timer",
@@ -2540,8 +2636,8 @@ class TestProductionWorker:
             revision="candidate",
         )
 
-        assert run.runtime_input.fingerprint == (contract.candidate.runtime_input.fingerprint)
-        assert run.semantic_envelope == contract.candidate.semantic_envelope
+        assert run.runtime_input.fingerprint == entry.reference_input.fingerprint
+        assert run.semantic_envelope == entry.semantic_envelope
         assert run.semantic_envelope.unit_count == 71
         assert run.semantic_envelope.winner == "blue"
         assert run.semantic_envelope.victory_condition_type == "time_expired"

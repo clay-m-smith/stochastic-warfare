@@ -774,7 +774,7 @@ def test_current_checkpoint_has_one_canonical_morale_owner() -> None:
     state = _json_checkpoint(engine)
     context_state = state["context"]
 
-    assert state["checkpoint_version"] == 115
+    assert state["checkpoint_version"] == 116
     assert "morale_states" not in context_state
     assert "morale_machine" not in context_state
     assert set(context_state["morale_runtime"]) == {
@@ -808,7 +808,7 @@ def test_campaign_topology_rejection_precedes_context_restore() -> None:
     assert _json_checkpoint(engine) == before
 
 
-@pytest.mark.parametrize("unsupported_version", [113, 116])
+@pytest.mark.parametrize("unsupported_version", [113, 117])
 def test_unknown_checkpoint_version_rejects_atomically(
     unsupported_version: int,
 ) -> None:
