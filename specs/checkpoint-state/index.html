@@ -1711,6 +1711,90 @@
   
   
     <li class="md-nav__item">
+      <a href="../../development-phases-block14/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 14 (128-130)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development-phases-block15/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 15 (131)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development-phases-block16/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 16 (132)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../remediation-backlog/" class="md-nav__link">
         
   
@@ -5069,6 +5153,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devlog/phase-115/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 115 - Sensing-Aware Tactical Standoff
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -5283,6 +5395,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#aggregation-state" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Aggregation state
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#rng-and-derived-state" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -5309,6 +5432,17 @@
     <span class="md-ellipsis">
       
         Movement-diagnostics state
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#tactical-targeting-state" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tactical-targeting state
       
     </span>
   </a>
@@ -5576,6 +5710,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../sensing-aware-tactical-standoff/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Sensing-Aware Tactical Standoff
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../skills-and-hooks/" class="md-nav__link">
         
   
@@ -5686,6 +5848,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#aggregation-state" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Aggregation state
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#rng-and-derived-state" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -5712,6 +5885,17 @@
     <span class="md-ellipsis">
       
         Movement-diagnostics state
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#tactical-targeting-state" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tactical-targeting state
       
     </span>
   </a>
@@ -5818,7 +6002,8 @@
 <h1 id="checkpoint-state-contract">Checkpoint State Contract<a class="headerlink" href="#checkpoint-state-contract" title="Permanent link">&para;</a></h1>
 <h2 id="status">Status<a class="headerlink" href="#status" title="Permanent link">&para;</a></h2>
 <p>Verified Phase 105 contract, extended by the completed Phase 114 era-runtime
-contract and format-114 checkpoint boundary.</p>
+contract and completed Phase 115 tactical-targeting format-115 checkpoint
+boundary.</p>
 <h2 id="purpose">Purpose<a class="headerlink" href="#purpose" title="Permanent link">&para;</a></h2>
 <p>A checkpoint is a deterministic branch point. Restoring it must reproduce the
 mutable simulation state at time <code>T</code>, and continuing from it must produce the
@@ -5827,11 +6012,11 @@ same subsequent state and events as the uninterrupted seeded run.</p>
 validated effective scenario configuration and repository/data-catalog
 revision. Checkpoint restore replaces mutable state; it does not rebuild engine
 topology or reinterpret a different scenario.</p>
-<p><code>SimulationEngine</code> writes checkpoint format version <code>114</code>. Any explicit version
-other than <code>114</code>, including <code>113</code>, is rejected before runtime mutation. An
+<p><code>SimulationEngine</code> writes checkpoint format version <code>115</code>. Any explicit version
+other than <code>115</code>, including <code>114</code>, is rejected before runtime mutation. An
 absent version selects the bounded legacy-migration path described below; an
 explicitly present <code>null</code> value is malformed, not legacy.</p>
-<p>For version <code>114</code>, top-level engine keys and context-state keys must exactly
+<p>For version <code>115</code>, top-level engine keys and context-state keys must exactly
 match the compatible target runtime. Missing or extra keys fail before
 mutation. Serialized scenario and reinforcement configurations use type-aware
 JSON equality, so booleans cannot masquerade as integers and integers cannot
@@ -5873,6 +6058,11 @@ it never imports a class named by checkpoint data.</p>
    reinforcement without consuming RNG, then restore its exact mutable
    attachment state.</li>
 </ol>
+<p>Current and bounded versionless restore apply the same semantic reuse
+preflight before mutating an existing same-ID unit: exact concrete class,
+unit type, domain, ordered equipment IDs, names, and categories must agree.
+Legacy migration does not permit a same-type object to be mutated first and
+rejected later by its retained live loadout bindings.</p>
 <p>The checkpoint's effective scenario configuration must match the runtime
 configuration. Weapon and sensor instance counts, ordering, and identities must
 match for every non-empty serialized loadout. An empty serialized loadout needs
@@ -5895,7 +6085,7 @@ and loadout consumers. The saved engine resolution must map to the saved clock
 duration under that same contract, the saved clock start must equal the
 scenario start, and current time cannot exceed the executable horizon.</p>
 <p>Missing, extra, malformed, type-aliased, or different era contract data fails
-atomically. A versionless checkpoint cannot contain the format-114 key and may
+atomically. A versionless checkpoint cannot contain the era-contract key and may
 restore only into a target whose captured era declares no physics or cadence
 override. It cannot infer historical behavior from a current registry entry.
 Active non-default medical treatment and maintenance repair state remains
@@ -5910,7 +6100,7 @@ but owns no current unit state.</p>
 <p>Current context state contains exactly one <code>morale_runtime</code> key. Its value is a
 strict envelope with exact <code>active_records</code> and <code>suspended_archives</code> keys, or
 <code>null</code> only for a deliberately minimal context whose roster, active routes, and
-aggregation topology are all empty. Current format 114 contains no separate
+aggregation topology are all empty. Current format 115 contains no separate
 <code>morale_states</code> or <code>morale_machine</code> current-state copy.</p>
 <p>Each active record preserves typed current state, optional finite non-negative
 last-transition and last-admitted-check times, and a strict non-negative
@@ -5937,6 +6127,30 @@ and in-place owner identities.</p>
 side's validated <code>morale_initial</code>. Unknown states, foreign or duplicate IDs,
 missing active records, malformed archives, impossible times, and incompatible
 status combinations are corrupt checkpoint data and fail before commit.</p>
+<h2 id="aggregation-state">Aggregation state<a class="headerlink" href="#aggregation-state" title="Permanent link">&para;</a></h2>
+<p>An aggregation checkpoint is one strict envelope containing the exact
+<code>AggregationConfig</code>, monotonic next aggregate ordinal, and canonical active
+aggregate archives. Each archive remains detached from public state/property
+reads and retains the side, domain, original roster indexes, complete supported
+base-unit snapshots, and derived proxy summary needed for exact reconstruction.
+Candidate selection is canonical by side, unit type, and unit ID; equivalent
+side-map insertion orders cannot change aggregate IDs or transition order.</p>
+<p>An active aggregate may restore only into a present <code>AggregationEngine</code> whose
+configuration exactly equals the persisted configuration and whose
+<code>enable_aggregation</code> field is true. A missing, disabled, or differently
+configured owner rejects before clock, RNG, roster, equipment, morale, or any
+other context state mutates. An unchanged supported proxy and its morale
+archive must therefore always retain a live owner capable of executing the
+future disaggregation transition.</p>
+<p>The supported compatibility transaction is deliberately fail-closed. It
+coordinates only the exact aggregation, morale/rout, targeting-registration,
+and empty runtime-loadout owners. Every other non-null owner in the
+authoritative context checkpoint registry rejects before aggregation,
+disaggregation, capture, or restore; compatibility fixtures conservatively
+reject every unrecognized <code>*_engine</code> as well. This prevents CBRN, planning,
+ROE, detection, EW, carrier, indirect-fire, missile, or future per-unit state
+from retaining constituent IDs while an unregistered aggregate proxy enters
+the roster. General owner-state propagation remains REM-016.</p>
 <h2 id="rng-and-derived-state">RNG and derived state<a class="headerlink" href="#rng-and-derived-state" title="Permanent link">&para;</a></h2>
 <p>RNG streams restore before engine continuation. <code>RNGManager</code> is the sole
 checkpoint authority for the MORALE generator. <code>MoraleRuntime</code>,
@@ -5970,6 +6184,55 @@ bound before committing. The diagnostics are observational: they do not select
 movement, consume RNG, or write positions. Versionless state may omit this
 owner only at tick zero before either the checkpoint or target diagnostics has
 observations.</p>
+<h2 id="tactical-targeting-state">Tactical-targeting state<a class="headerlink" href="#tactical-targeting-state" title="Permanent link">&para;</a></h2>
+<p>Format 115 contains one strict <code>tactical_targeting</code> envelope owned by the exact
+<code>TacticalTargetingRuntime</code> bound to the context, engine, and battle manager. It
+persists the default-on enablement value, default visibility bound, registered
+unit/side topology, current interval tick and elapsed time, published battle
+IDs, immutable per-battle pictures and decisions, and post-movement engagement
+revalidation outcomes. Live interval, published IDs, pictures, and
+revalidations occupy one immutable runtime snapshot so complete multi-battle
+publication cannot expose a prefix. Every <code>SimulationEngine</code>, including one with an empty
+roster, requires this owner so an engine-produced current checkpoint cannot
+omit the envelope and then fail its own restore contract. Decisions retain
+exact target, weapon, ammunition,
+source-equipment, sensing/contact/fire-control, range provenance, disposition,
+authorized standoff, and consumability evidence.</p>
+<p>Restore stages that envelope and cross-validates its tick/time against the
+checkpoint clock, its battle IDs and shooter memberships against staged active
+battles, its unit/side references against the restored roster, its exact source
+indexes against runtime loadout topology, its default visibility against the
+captured scenario environment, and every checkpoint-current latest decision's
+recorded visibility (including targetless decisions) against that same staged
+environment. An older retained latest picture and retained movement history
+preserve the visibility recorded for their own interval; they remain subject to
+schema, topology, attachment, catalog, and internal optical-bound validation,
+but do not claim the checkpoint-current environment and therefore pass no live
+visibility value. Restore also cross-validates the associated movement
+diagnostics. A
+missing active-battle picture, foreign target, reordered binding, impossible
+range, forged authorization, or owner-identity divergence rejects before
+mutation.</p>
+<p>Before every engine step, the authoritative roster registration check walks
+the exact <code>units_by_side</code> buckets without collapsing IDs. It rejects duplicate
+entity IDs and any unit whose declared side disagrees with its containing
+bucket, then compares the canonical unit/side map with targeting registration.
+This guard runs before clock advancement, RNG consumption, position changes,
+or recorder/event mutation.</p>
+<p>With FOW disabled, fresh restore and continuation preserve exact decisions,
+positions, movement diagnostics, revalidation, ammunition, events, and full
+checkpoint bytes. When FOW supplied a contact, restored decisions are
+deliberately historical and non-consumable: they can be exposed as prior
+evidence but cannot authorize a new hold or shot. Complete fresh continuation
+from nonempty ordinary <code>SideWorldView.contacts</code> remains REM-029 because that
+FOW-owned state is still discarded on restore; format 115 neither duplicates
+it nor claims equivalence across that boundary.</p>
+<p>The fusion envelope nevertheless persists each monotonic side-local public
+track ordinal and its bounded current fusion tracks. A gated replacement
+commits the next ordinal/track before removing its predecessor, and a failed
+replacement leaves both unchanged. This preserves never-reused opaque fusion
+identity but does not reconstruct the separate ordinary <code>SideWorldView</code>
+contact record or close REM-029.</p>
 <h2 id="runtime-loadout-topology">Runtime loadout topology<a class="headerlink" href="#runtime-loadout-topology" title="Permanent link">&para;</a></h2>
 <p>The Phase 109 <code>RuntimeLoadoutBuilder</code> is the only owner of production weapon
 and sensor attachment construction for initial units, reinforcements, and fresh
@@ -6068,9 +6331,9 @@ counters reject before context mutation.</p>
 <a href="../time-on-target-execution/">Time-on-Target Execution</a>.</p>
 <h2 id="compatibility">Compatibility<a class="headerlink" href="#compatibility" title="Permanent link">&para;</a></h2>
 <ul>
-<li>Current engine checkpoints contain <code>checkpoint_version: 114</code>; an unknown,
+<li>Current engine checkpoints contain <code>checkpoint_version: 115</code>; an unknown,
   malformed, boolean, older explicit, or newer explicit version is rejected.
-  Explicit version <code>113</code> and all earlier formats do not migrate into the
+  Explicit version <code>114</code> and all earlier formats do not migrate into the
   current runtime.</li>
 <li>Current reinforcement wave ordinals and morale-record enum/generation values
   use non-boolean integers. Current wave side, configured arrival time, and full
@@ -6108,8 +6371,8 @@ counters reject before context mutation.</p>
   Legacy <code>morale_states</code>/<code>morale_machine</code> inputs are accepted only through the
   explicit bounded <code>allow_legacy_morale=True</code> path. <code>SimulationEngine</code>
   additionally requires <code>units_by_side</code> for its campaign/roster preflight and
-  exactly one <code>era_runtime_contract</code> and one <code>morale_runtime</code> key for version
-  114.</li>
+  exactly one <code>era_runtime_contract</code>, one <code>morale_runtime</code>, and one
+  <code>tactical_targeting</code> key for version 115.</li>
 <li>Older unit snapshots without <code>unit_class</code> infer the class from its unique
   subclass field. A snapshot with no subclass field restores as <code>Unit</code>.</li>
 <li>Unknown explicit discriminators fail; they never silently downgrade to
@@ -6163,10 +6426,14 @@ counters reject before context mutation.</p>
 <li>one-runtime transition, rally, melee, cascade, dynamic-registration,
     aggregation, API/campaign exposure, and exact current/legacy morale
     continuation controls;</li>
-<li>exact format-114 era-contract topology, resolution/clock agreement,
+<li>exact format-115 era-contract topology, resolution/clock agreement,
     bounded override-free versionless handling, active treatment/repair
     continuation, and atomic rejection of captured source, horizon, consumer,
-    or contract drift; and</li>
+    or contract drift;</li>
+<li>exact tactical-targeting owner/topology, no-FOW fresh continuation,
+    historical/non-consumable restored FOW decisions, movement-diagnostic
+    agreement, and atomic clock/battle/roster/loadout/range corruption
+    controls, with REM-029 explicitly excluded; and</li>
 <li>relevant existing checkpoint, scenario, engine, entity, morale, logistics,
     space, commander, movement, and indirect-fire regression suites.</li>
 </ol>
@@ -6183,6 +6450,10 @@ boundary.</p>
 <p>Ordinary nonempty fog-of-war contact restore remains REM-029. Typed Space ISR
 queue/receipt/association equivalence must not be generalized across that
 boundary.</p>
+<p>Legacy Phase 101 <code>_fired_scripted_events</code> state is not part of format 115 and
+must not be inferred from elapsed time after restore. Typed schedule identity,
+effect receipts, fail-closed retry/commit policy, and exact-once continuation
+for the four existing scripted-action families remain REM-045 / Phase 132.</p>
 <p>The mapping registry and subsystem topology carry compatibility fingerprints,
 but checkpoint files do not embed full content hashes for every external unit,
 weapon, ammunition, sensor, era, or space catalog definition. Cross-revision

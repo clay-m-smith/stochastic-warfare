@@ -874,6 +874,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#frame-targeting-exposure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Frame targeting exposure
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#analysis-evidence-contract" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2168,6 +2179,90 @@
     
   
     Block 13 (115-127)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development-phases-block14/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 14 (128-130)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development-phases-block15/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 15 (131)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development-phases-block16/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 16 (132)
   
 
     
@@ -5546,6 +5641,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devlog/phase-115/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 115 - Sensing-Aware Tactical Standoff
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -5838,6 +5961,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../specs/sensing-aware-tactical-standoff/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Sensing-Aware Tactical Standoff
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../skills-and-hooks/" class="md-nav__link">
         
   
@@ -5920,6 +6071,17 @@
     <span class="md-ellipsis">
       
         Endpoints
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#frame-targeting-exposure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Frame targeting exposure
       
     </span>
   </a>
@@ -6456,8 +6618,8 @@
 </tr>
 <tr>
 <td>GET</td>
-<td><code>/api/runs/{id}/frames?start_tick=&amp;end_tick=</code></td>
-<td>Unit position replay frames</td>
+<td><code>/api/runs/{id}/frames?start_tick=&amp;end_tick=&amp;scope=&amp;side=</code></td>
+<td>Unit position replay frames with explicit targeting exposure scope</td>
 </tr>
 <tr>
 <td>WS</td>
@@ -6546,6 +6708,40 @@
 </tr>
 </tbody>
 </table>
+<h3 id="frame-targeting-exposure">Frame targeting exposure<a class="headerlink" href="#frame-targeting-exposure" title="Permanent link">&para;</a></h3>
+<p>Format-115 completed runs store paired targeting projections at each captured
+map frame:</p>
+<ul>
+<li><code>scope=PRIVILEGED_ENGINE</code> returns exact engine/evaluator evidence, including
+  ground-truth target and source-attachment identity. It is the current default
+  when <code>scope</code> is omitted and rejects a <code>side</code> parameter.</li>
+<li><code>scope=SIDE_FOW&amp;side=&lt;side-id&gt;</code> returns only that side's frame roster and
+  opaque current owner-side track evidence. Track IDs are target-independent,
+  side-local ordinals allocated in canonical first-detection order; hidden
+  target/entity and attachment identity is omitted. The stored payload's exact
+  <code>viewer_side</code> must match the requested side, including for an empty side.
+  Missing <code>side</code> returns 422; a side absent from the captured projection
+  returns 409.</li>
+</ul>
+<p>Targeting-decision ordinals in <code>SIDE_FOW</code> are separately recomputed from zero
+per battle and viewer side; they are not the privileged all-sides picture
+ordinal and therefore do not reveal how many opposing shooters sort ahead of
+the viewer. The decoder re-derives and compares every public decision and
+revalidation field against the privileged source plus the root-only
+association. An internally valid but altered standoff, logical time,
+disposition, or outcome is rejected rather than trusted as stored public data.</p>
+<p>The stored root frame carries a privileged-only exact target-to-track
+association map so the decoder can prove that each opaque track identifier is
+the same contact used by the engine decision. Missing associations or same-side
+track rebinding reject; this map is never returned in <code>SIDE_FOW</code>, replay, or
+frontend payloads.</p>
+<p>The route does not yet authenticate the caller or derive an authorized side.
+Consequently these query parameters are evidence-projection controls, not an
+access-control boundary, and the privileged default is unsuitable as a
+player-safe default. REM-041 / Phase 128 owns server-side caller authorization
+and safe frontend/API defaults. Client-side FOW filtering cannot substitute
+for that work. Legacy frames that stored only the privileged projection cannot
+be used to synthesize a side projection.</p>
 <h3 id="analysis-evidence-contract">Analysis evidence contract<a class="headerlink" href="#analysis-evidence-contract" title="Permanent link">&para;</a></h3>
 <p>Batch, comparison, sweep, and doctrine-comparison execution all use the
 production runtime boundary described below. A completed batch includes exact
@@ -8058,6 +8254,25 @@ non-morale concealment lifecycle.</p>
 </tr>
 </tbody>
 </table>
+<p><strong>Targeting Integrity (Phase 115):</strong></p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>enable_sensing_aware_standoff</code></td>
+<td><code>bool</code></td>
+<td><code>True</code></td>
+<td>Require a current usable sensing/fire-control solution before automatic tactical standoff; explicit <code>False</code> authorizes zero automatic standoff rather than restoring catalog-range holding</td>
+</tr>
+</tbody>
+</table>
 <p><strong>Flat Dict Optimization (Phase 86):</strong></p>
 <p>CalibrationSchema provides a <code>to_flat_dict(sides)</code> method that expands all fields (including nested morale and per-side overrides) into a plain <code>dict[str, Any]</code> for O(1) battle-loop access. This is generated once at scenario load time and stored as <code>ctx.cal_flat</code> on SimulationContext.</p>
 <p><strong>Meta-Flags (Phase 80):</strong></p>
@@ -8079,7 +8294,12 @@ non-morale concealment lifecycle.</p>
 </tr>
 </tbody>
 </table>
-<p>All <code>enable_*</code> flags default to <code>False</code> for backward compatibility. Enable them in scenario YAML to activate the corresponding effects. The <code>enable_all_modern</code> meta-flag is available for frontend convenience but per-scenario selective flags are preferred for performance.</p>
+<p>The legacy opt-in consequence <code>enable_*</code> flags default to <code>False</code> for backward
+compatibility. <code>enable_sensing_aware_standoff</code> is deliberately strict and
+defaults to <code>True</code>; explicit <code>False</code> does not restore the defective fallback.
+Enable other optional effects in scenario YAML as needed. The
+<code>enable_all_modern</code> meta-flag is available for frontend convenience, but
+per-scenario selective flags are preferred for performance.</p>
 <hr />
 <h2 id="usage-patterns">Usage Patterns<a class="headerlink" href="#usage-patterns" title="Permanent link">&para;</a></h2>
 <h3 id="basic-single-run">Basic Single Run<a class="headerlink" href="#basic-single-run" title="Permanent link">&para;</a></h3>
@@ -8169,9 +8389,10 @@ era contract, and runtime topology. An incompatible restore fails before
 mutating the target. See the
 <a href="../../specs/checkpoint-state/">checkpoint state contract</a> for the canonical
 schema and bounded legacy-migration rules.</p>
-<p>The current engine checkpoint schema is version 114. In addition to force,
+<p>The current engine checkpoint schema is version 115. In addition to force,
 loadout, logistics, space/ASAT, and time-on-target state, it preserves one
-<code>morale_runtime</code> envelope and one fully effective <code>era_runtime_contract</code>.
+<code>morale_runtime</code> envelope, one fully effective <code>era_runtime_contract</code>, and one
+strict tactical-targeting interval/picture/decision/revalidation envelope.
 <code>SimulationContext.morale_states</code> remains a stable read-only
 <code>Mapping[str, MoraleState]</code> for runtime and frame consumers, but it is not a
 second checkpoint store; <code>RNGManager</code> alone persists the MORALE generator.

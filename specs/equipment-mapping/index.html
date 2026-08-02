@@ -1711,6 +1711,90 @@
   
   
     <li class="md-nav__item">
+      <a href="../../development-phases-block14/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 14 (128-130)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development-phases-block15/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 15 (131)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development-phases-block16/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 16 (132)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../remediation-backlog/" class="md-nav__link">
         
   
@@ -5069,6 +5153,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devlog/phase-115/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 115 - Sensing-Aware Tactical Standoff
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -5305,6 +5417,17 @@
     <span class="md-ellipsis">
       
         Explicit no-sensor classification
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-115-targeting-bindings" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 115 targeting bindings
       
     </span>
   </a>
@@ -5571,6 +5694,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../sensing-aware-tactical-standoff/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Sensing-Aware Tactical Standoff
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../skills-and-hooks/" class="md-nav__link">
         
   
@@ -5675,6 +5826,17 @@
     <span class="md-ellipsis">
       
         Explicit no-sensor classification
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-115-targeting-bindings" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 115 targeting bindings
       
     </span>
   </a>
@@ -5954,6 +6116,29 @@ mapping or construction.</p>
    classification.</li>
 <li>Contradictory policy/data combinations fail unit-catalog validation.</li>
 </ol>
+<h3 id="phase-115-targeting-bindings">Phase 115 targeting bindings<a class="headerlink" href="#phase-115-targeting-bindings" title="Permanent link">&para;</a></h3>
+<p>Phase 115 extends the same production builder without creating another mapping
+owner. Every live weapon and sensor attachment now carries its exact canonical
+source-equipment index, modeled role, allowed domains, and compatible source
+indexes into tactical targeting. Initial, reinforcement, and checkpoint-only
+construction must reproduce those bindings exactly; duplicate names, repeated
+roles, and reordered source equipment cannot pass by list-position
+coincidence. Weapon attachment order remains
+<code>(-max_range_m, source_equipment_index, weapon_id)</code>, while sensor bindings
+retain source order.</p>
+<p>Role compatibility is a total upper-bound policy, not a proxy for the exact
+catalog definition. The policy must admit the shooter role and target domain,
+the selected mapped sensor must name the selected weapon source index, and the
+attached weapon definition must independently admit the target domain. This
+last gate is important for shared cross-era role profiles: the strict Salamis
+production regression accepts ancient projectile/melee attachments against
+their authored naval targets and rejects an aerial control without widening
+the catalog definitions.</p>
+<p>The current mapping can associate any same-unit weapon and director that pass
+the exact role/domain policy because the catalog has no authored physical
+mount/director association. That narrower topology deficit is REM-042 / Phase
+129; Phase 115 does not infer it from equipment names or claim that compatible
+roles prove a physical connection.</p>
 <h2 id="interfaces-and-dependencies">Interfaces and dependencies<a class="headerlink" href="#interfaces-and-dependencies" title="Permanent link">&para;</a></h2>
 <p>The runtime boundary lives in <code>simulation/</code> because it composes typed entity,
 combat, detection, era, and calibration inputs. Moving it into <code>entities/</code>

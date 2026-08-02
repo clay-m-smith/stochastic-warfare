@@ -1711,6 +1711,90 @@
   
   
     <li class="md-nav__item">
+      <a href="../../development-phases-block14/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 14 (128-130)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development-phases-block15/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 15 (131)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development-phases-block16/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 16 (132)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../remediation-backlog/" class="md-nav__link">
         
   
@@ -5069,6 +5153,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devlog/phase-115/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 115 - Sensing-Aware Tactical Standoff
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -5554,6 +5666,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../sensing-aware-tactical-standoff/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Sensing-Aware Tactical Standoff
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../skills-and-hooks/" class="md-nav__link">
         
   
@@ -5776,10 +5916,12 @@
 <p>Verified Phase 113 production contract. The corrected documentation audit and
 <a href="../../devlog/phase-113/#postmortem">Phase 113 postmortem</a> passed on 2026-08-01;
 Phase 113 is complete and REM-019 is closed.</p>
-<p>Phase 114 extends the engine checkpoint to format 114 by adding the effective
-era runtime contract and clock/resolution validation. It does not change or
-duplicate the morale envelope below: current format 114 still contains exactly
-one <code>morale_runtime</code>, and <code>RNGManager</code> remains the sole MORALE-stream owner.</p>
+<p>Phase 114 extended the engine checkpoint to format 114 by adding the effective
+era runtime contract and clock/resolution validation. Phase 115 advances the
+current checkpoint to format 115 for tactical-targeting state. Neither change
+alters or duplicates the morale envelope below: current format 115 still
+contains exactly one <code>morale_runtime</code>, and <code>RNGManager</code> remains the sole
+MORALE-stream owner.</p>
 <h2 id="purpose-and-scope">Purpose and scope<a class="headerlink" href="#purpose-and-scope" title="Permanent link">&para;</a></h2>
 <p>Phase 113 closes REM-019 by replacing the independent mutable
 morale copies in <code>SimulationContext</code> and <code>MoraleStateMachine</code> with one
@@ -6016,6 +6158,12 @@ state, status, rout, events, and outcome.</p>
    proves aggregate morale topology and evolved-proxy rejection, not general
    unit or attachment reconstruction. REM-016 remains open for that broader
    fidelity and propagation boundary.</li>
+<li>That narrow round trip rejects every non-null context checkpoint owner not
+   explicitly coordinated by the aggregation transaction. The production
+   checkpoint registry is the authority, while minimal compatibility fixtures
+   fail closed over all <code>*_engine</code> attributes. A populated ROE, CBRN, planning,
+   detection, EW, indirect-fire, missile, or future owner cannot silently keep
+   constituent state or synthesize default aggregate state.</li>
 </ol>
 <h2 id="consumers-and-outcome-effect">Consumers and outcome effect<a class="headerlink" href="#consumers-and-outcome-effect" title="Permanent link">&para;</a></h2>
 <p>Victory evaluation, battle logic, API status frames, campaign final-state
@@ -6031,9 +6179,10 @@ is not the causal acceptance proof for this ownership remediation.</p>
 <h2 id="phase-113-checkpoint-format">Phase 113 checkpoint format<a class="headerlink" href="#phase-113-checkpoint-format" title="Permanent link">&para;</a></h2>
 <blockquote>
 <p><strong>Current-format note:</strong> This section records the Phase 113 format transition
-historically. The current engine writes format 114, which preserves this
-exact morale topology and adds the independent Phase 114 era-runtime
-contract. Explicit format 113 now rejects as an older version.</p>
+historically. The current engine writes format 115, which preserves this
+exact morale topology, retains the independent Phase 114 era-runtime
+contract, and adds Phase 115 tactical-targeting state. Explicit formats 113
+and 114 now reject as older versions.</p>
 </blockquote>
 <p><code>SimulationEngine</code> advances the explicit format to <code>113</code>.</p>
 <ol>

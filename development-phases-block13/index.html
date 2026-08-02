@@ -18,7 +18,7 @@
         <link rel="prev" href="../development-phases-block12/">
       
       
-        <link rel="next" href="../remediation-backlog/">
+        <link rel="next" href="../development-phases-block14/">
       
       
         
@@ -1892,6 +1892,90 @@
   
 </nav>
       
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../development-phases-block14/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 14 (128-130)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../development-phases-block15/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 15 (131)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../development-phases-block16/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 16 (132)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
     </li>
   
 
@@ -5262,6 +5346,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-115/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 115 - Sensing-Aware Tactical Standoff
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -5554,6 +5666,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../specs/sensing-aware-tactical-standoff/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Sensing-Aware Tactical Standoff
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../skills-and-hooks/" class="md-nav__link">
         
   
@@ -5773,14 +5913,16 @@
 
 <h1 id="development-phases-block-13">Development Phases - Block 13<a class="headerlink" href="#development-phases-block-13" title="Permanent link">&para;</a></h1>
 <p><strong>Phase range:</strong> 115 through 127</p>
-<p><strong>Status:</strong> Planned follow-up handoff; no Block 13 phase has started</p>
+<p><strong>Status:</strong> Active; Phase 115 is complete and Phase 116 is next</p>
 <p>Block 13 owns integrity deficits discovered while specifying and validating
 Phases 112 through 114. It is not part of those implementations or the Block
 12 completion claim. Each phase must follow the repository's full
 specification, production-red, implementation, validation, documentation,
 postmortem, and single-commit workflow before its remediation item can close.</p>
 <h2 id="phase-115-sensing-aware-tactical-standoff">Phase 115 - Sensing-Aware Tactical Standoff<a class="headerlink" href="#phase-115-sensing-aware-tactical-standoff" title="Permanent link">&para;</a></h2>
-<p>Status: <strong>Not started</strong>. REM-028 remains queued.</p>
+<p>Status: <strong>Complete</strong>. REM-028 is closed with accepted production, data,
+determinism, scenario, exposure, qualified broad-run, documentation, and
+postmortem evidence. Phase 116 remains unstarted.</p>
 <p>Replace unrestricted catalog-range movement holding with a typed targeting
 precondition that distinguishes physical weapon reach from owner-side sensing,
 visibility, fire control, and live contact state. Preserve explicit authored
@@ -5790,6 +5932,11 @@ a sensor or inventing a target.</p>
 production-exercised, outcome-affecting, and checkpoint/exposure evidence.</p>
 <h2 id="phase-116-fog-of-war-contact-continuation">Phase 116 - Fog-of-War Contact Continuation<a class="headerlink" href="#phase-116-fog-of-war-contact-continuation" title="Permanent link">&para;</a></h2>
 <p>Status: <strong>Not started</strong>. REM-029 remains queued.</p>
+<p>Before Phase 116 changes production state, promote the clean Phase 115
+73 Easting transition endpoint to an ordinary version-4 paired reference and
+prove the exact promoted workload/semantic gate. The reviewed promotion is a
+baseline handoff from Phase 115's non-timing <code>transition_qualified</code> evidence;
+it must not rewrite that evidence as a performance pass.</p>
 <p>Restore complete nonempty <code>SideWorldView</code> contact state through the
 fog-of-war-owned checkpoint boundary. Validate side/contact topology,
 <code>ContactInfo</code>, nested track state, logical update times, and DETECTION RNG
@@ -5813,6 +5960,19 @@ Trafalgar and <code>calibration_arctic</code> changed terminal winner, duration,
 status composition. These deterministic observations identify fidelity review
 work; they are not historical-validation verdicts or calibration authority.
 REM-030 remains queued for this phase.</p>
+<p>Phase 115 adds two more inventory signals. Debecka changes from the Phase 114
+10/10 blue current-engine regression to 4/10 after the shared targeting owner
+correctly removes most F-14/M61 ground fire without a ground-compatible
+director; disabling automatic standoff recovers only 7/10. Its four-hour
+scenario horizon also precedes its authored six-hour blue fallback, while a
+six-hour control awards that fallback after all blue units are already
+non-active in six seeds. Fallujah seed 42 changes from 115 ticks / 575 seconds
+to 40 ticks / 200 seconds while retaining blue <code>force_destroyed</code>, combat, and
+pre-emplaced IED outcomes. It ends before the first scripted action at H+7,
+which separately surfaced REM-045 / Phase 132. These are deterministic
+current-engine semantic signals, not historical validation, a calibration
+verdict, or authority to tune physical performance, victory policy, or
+scenario parameters.</p>
 <p>For every claim retained as validated, predeclare exact metric definitions and
 units, event boundaries, source provenance and quality, justified ranges or
 tolerances, scenario/input fingerprints, calibration or training inputs, and

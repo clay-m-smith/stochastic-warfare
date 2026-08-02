@@ -1711,6 +1711,90 @@
   
   
     <li class="md-nav__item">
+      <a href="../../development-phases-block14/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 14 (128-130)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development-phases-block15/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 15 (131)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development-phases-block16/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 16 (132)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../remediation-backlog/" class="md-nav__link">
         
   
@@ -5456,6 +5540,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-115/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 115 - Sensing-Aware Tactical Standoff
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -5728,6 +5840,34 @@
     
   
     Era Override Execution
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../specs/sensing-aware-tactical-standoff/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Sensing-Aware Tactical Standoff
   
 
     
@@ -6162,6 +6302,22 @@
 <h1 id="phase-101-fallujah-phase-line-fran-2004-third-block-11-golden-scenario">Phase 101: Fallujah Phase Line Fran (2004) — Third Block 11 Golden Scenario<a class="headerlink" href="#phase-101-fallujah-phase-line-fran-2004-third-block-11-golden-scenario" title="Permanent link">&para;</a></h1>
 <p><strong>Status</strong>: Complete (scenario, engine infrastructure, regression); UI walkthrough pending manual verification.
 <strong>Block</strong>: 11 (Golden Scenarios &amp; End-to-End Engine Validation through UI).</p>
+<blockquote>
+<p><strong>Phase 115 integrity supersession:</strong> Phase 101 proved the Fallujah scenario,
+pre-emplaced IED path, action declarations, and reference loading, but it did
+not behaviorally prove dispatch or authoritative effects for the four
+scripted-action families. The current seed-42 production run ends at 40
+ticks / 200 seconds, before the first authored action at H+7. The existing
+string-plus-parameter-bag dispatch also consumes failures/no-ops, bypasses
+movement/casualty lifecycle owners, and does not checkpoint or expose its
+fired set. <a href="../../remediation-backlog/#rem-045-scripted-scenario-actions-lack-a-typed-exact-once-runtime-owner">REM-045</a>
+assigns the typed, fail-closed, exact-once runtime repair to Phase 132. This
+supersedes the completion claims about scripted-action causality below; it
+does not alter Phase 101's historical record or completed scenario/data work.
+The winner/casualty/duration material below is likewise phase-era scenario
+intent and current-engine regression, not source-backed held-out historical
+validation; catalog-wide disposition remains REM-030 / Phase 117.</p>
+</blockquote>
 <h2 id="summary">Summary<a class="headerlink" href="#summary" title="Permanent link">&para;</a></h2>
 <p>Phase 101 delivers the third Block 11 golden scenario: <strong>Second Battle of Fallujah / Operation Al-Fajr / Phase Line Fran, November 2004</strong>. USMC 1st Marine Division (RCT-1 + RCT-7) with Army TF 2-7 CAV armored thrust vs an entrenched insurgent force of Iraqi Sunni fighters plus an AQI/Chechen foreign-fighter kernel — the largest urban battle fought by US forces since Hue 1968.</p>
 <p>Unlike Debecka (Phase 99, small ambush) and Khafji (Phase 100, mechanized thrust), Fallujah exercises <strong>urban close combat</strong>, <strong>pre-emplaced IED/HBIED defences</strong>, and <strong>scripted historical moments</strong> (mosque seizure, WP "shake-and-bake", HBIED detonations, sniper ambushes). The scenario introduces two new scenario-level configuration fields — <code>initial_ieds</code> and <code>scripted_events</code> — backed by real engine APIs so every historical moment has honest causality.</p>

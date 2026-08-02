@@ -2061,6 +2061,90 @@
   
   
     <li class="md-nav__item">
+      <a href="../../development-phases-block14/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 14 (128-130)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development-phases-block15/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 15 (131)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development-phases-block16/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 16 (132)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../remediation-backlog/" class="md-nav__link">
         
   
@@ -5419,6 +5503,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devlog/phase-115/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 115 - Sensing-Aware Tactical Standoff
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -5691,6 +5803,34 @@
     
   
     Era Override Execution
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../specs/sensing-aware-tactical-standoff/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Sensing-Aware Tactical Standoff
   
 
     
@@ -6256,14 +6396,19 @@
 <li><strong>Logistics</strong> -- cross any fixed logical cadence boundaries, update direct
    routes, resupply, then apply eligible idle demand. This call occurs at every
    engine resolution.</li>
-<li><strong>Scheduled indirect fire</strong> -- after due scripted events have committed,
+<li><strong>Scheduled indirect fire</strong> -- after the legacy scripted-event check,
    process aligned time-on-target fire and impact milestones before movement,
-   detection, or autonomous combat. Successful fires debit the exact live
-   attachment's ammunition, cooldown, and maintenance-round state; the common
-   impact can change the exact target's status.</li>
+   detection, or autonomous combat. The ordering is fixed, but it does not
+   prove that a due scripted action committed: REM-045 / Phase 132 owns that
+   typed, fail-closed, exact-once lifecycle. Successful time-on-target fires
+   debit the exact live attachment's ammunition, cooldown, and maintenance-
+   round state; the common impact can change the exact target's status.</li>
 <li><strong>Resolution-specific work</strong> -- select the current resolution, then execute
-   strategic/operational campaign work or active tactical battles. Detection,
-   AI/C2, movement, combat, and morale are sequenced inside those managers.</li>
+   strategic/operational campaign work or active tactical battles. For a
+   tactical interval, <code>BattleManager.prepare_tactical_interval()</code> advances
+   concealment/FOW once and atomically publishes immutable per-battle targeting
+   pictures before any battle moves or fires. AI/C2, movement, combat, and
+   morale then consume that prepared interval inside the managers.</li>
 <li><strong>Logistics activity latch</strong> -- remember movement and battle participation
    so a unit is not charged the idle rate at the next cadence boundary.</li>
 <li><strong>Victory</strong> -- evaluate conditions against the committed force, morale, and
@@ -6276,7 +6421,11 @@ fuel tanks or weapon magazines remain explicit remediation boundaries.</p>
 <h3 id="engagement-gate-sequence">Engagement Gate Sequence<a class="headerlink" href="#engagement-gate-sequence" title="Permanent link">&para;</a></h3>
 <p>Within combat, each potential engagement passes through a series of gates before resolving. If any gate rejects, the engagement is skipped. This gate sequence was wired in Phases 40--47 (Block 5: Core Combat Fidelity), connecting 40+ previously disconnected subsystems into the battle loop. Source-backed historical scenarios use separately declared outcome envelopes; synthetic, test, calibration, and benchmark scenarios are not historical validation claims.</p>
 <ol>
-<li><strong>Domain filtering</strong> -- attacker's weapon must target the defender's domain (ground, air, naval)</li>
+<li><strong>Shared targeting decision</strong> -- ordinary direct engagement must consume the
+   same current owner-side contact, exact weapon, sensing/fire-control source,
+   and range decision used by automatic movement standoff. Search-only,
+   incompatible, unavailable, stale, or unsupported evidence fails explicitly.</li>
+<li><strong>Domain filtering</strong> -- the exact attached weapon definition must target the defender's domain (ground, air, naval)</li>
 <li><strong>Posture/status check</strong> -- ROUTED/SURRENDERED units skip; morale accuracy multiplier applied</li>
 <li><strong>Suppression check</strong> -- heavily suppressed units may skip engagement</li>
 <li><strong>Fire-on-move check</strong> -- <code>requires_deployed</code> weapons skip if attacker is moving</li>
@@ -6284,7 +6433,9 @@ fuel tanks or weapon magazines remain explicit remediation boundaries.</p>
 <li><strong>Detection quality</strong> -- sensor-derived <code>id_confidence</code> modulates engagement effectiveness</li>
 <li><strong>Training level</strong> -- unit quality multiplies hit probability</li>
 <li><strong>ROE gate</strong> -- <code>RoeEngine.check_engagement_authorized()</code> blocks engagements below the current ROE level's confidence threshold (WEAPONS_HOLD blocks all non-self-defense; WEAPONS_TIGHT requires high <code>id_confidence</code>)</li>
-<li><strong>Weapon selection</strong> -- best weapon chosen by range, ammo, and target type</li>
+<li><strong>Post-movement revalidation</strong> -- the selected target, weapon, ammunition,
+    contact, and fire-control evidence must still be usable; failure records a
+    typed outcome rather than selecting a hidden replacement.</li>
 <li><strong>Hold-fire discipline</strong> -- if enabled via <code>behavior_rules</code>, defensive units wait until targets are within effective range (default 80% of max range)</li>
 <li><strong>Engagement resolution</strong> -- ballistics, penetration, and damage applied</li>
 </ol>
@@ -6458,6 +6609,29 @@ and per-unit resolution topology are part of checkpoint compatibility, while
 live weapon, ammunition, sensor, and linked-equipment state remain the mutable
 checkpoint payload. The detailed contract is
 <a href="../../specs/equipment-mapping/">Equipment Mapping and Runtime Loadouts</a>.</p>
+<p>One <code>TacticalTargetingRuntime</code> is also constructed at this boundary and bound
+by identity to the context, engine, and battle manager. It owns a single
+post-FOW <code>TargetingInterval</code> and immutable pictures keyed by exact tick, battle,
+and shooter. Canonical loadout bindings connect every decision to exact source
+equipment indexes; movement and ordinary direct engagement cannot construct a
+parallel answer. Its default-on strict calibration gate may disable automatic
+standoff, in which case the authorized range is exactly zero rather than the
+former catalog-maximum fallback. Routed indirect fire, bomb, torpedo, ASW,
+grenade, and melee ownership remains separate. The complete contract is
+<a href="../../specs/sensing-aware-tactical-standoff/">Sensing-Aware Tactical Standoff</a>.</p>
+<p>Ordinary FOW detection reuses one monotonically allocated side-local opaque
+track while measurements remain within the estimator gate. A gated
+replacement creates the next track and advances its ordinal before removing
+the predecessor; failure leaves the predecessor, counter, and live contact
+unchanged. Stored root-only target-to-track associations cross-bind privileged
+targeting evidence to the side-safe ordinal and are validated by one shared
+API/replay decoder without entering the side payload. Sensor-derived fusion
+uncertainty is finite and strictly positive, with a generic one-metre minimum
+at zero range. That minimum is numerical safety, not sensor accuracy;
+sensor-specific covariance and atomic elapsed-time prediction remain REM-044.
+Parallel FOW dispatch owns one RNG stream per side for both detection and any
+configured stochastic identification; classification cannot draw from a
+shared identification-engine stream.</p>
 <p>Declared time-on-target missions pass through one simulation-layer resolver
 after initial loadouts exist. It binds each declaration to the exact initial
 unit and <code>(source_equipment_index, weapon_id)</code> attachment, validates the
@@ -6573,7 +6747,7 @@ different available technologies:</p>
 <li>Strict sparse tick overrides for strategic, operational, and tactical
   cadence, plus medical treatment and maintenance repair durations. One
   frozen effective <code>EraRuntimeContract</code> constructs the clock and domain
-  configs, participates in runtime fingerprints, and persists in format-114
+  configs, participates in runtime fingerprints, and persists in format-115
   checkpoints. Unsupported C2/nuclear keys reject instead of acting as
   metadata proxies.</li>
 <li>Era-specific engine extensions</li>
@@ -6654,7 +6828,12 @@ validate and expose raw vectors and provenance instead of accepting summary-only
 payloads.</p>
 <p>See the <a href="../../guide/web-ui/">Web UI Guide</a> for usage documentation.</p>
 <h2 id="consequence-enforcement-gates">Consequence Enforcement Gates<a class="headerlink" href="#consequence-enforcement-gates" title="Permanent link">&para;</a></h2>
-<p>The engine uses an opt-in pattern for behavioral enforcement of resource consumption and C2 friction. Each consequence is gated behind an <code>enable_*</code> flag in <code>CalibrationSchema</code> (default <code>False</code>), so enabling a new behavior never breaks existing scenarios.</p>
+<p>The engine's legacy resource-consumption and C2-friction consequences use an
+opt-in pattern. Those gates are <code>CalibrationSchema</code> <code>enable_*</code> fields that
+default to <code>False</code>. Integrity gates need not be opt-in: Phase 115's strict
+<code>enable_sensing_aware_standoff</code> defaults to <code>True</code>, and disabling it authorizes
+zero automatic standoff rather than restoring the defective catalog-range
+fallback.</p>
 <p>Key enforcement gates:</p>
 <table>
 <thead>
@@ -6738,12 +6917,14 @@ the controlled semantic-equivalence evidence queued under REM-031.</p>
 <li><strong>Branching</strong> -- checkpoint, run two different decisions, compare outcomes</li>
 <li><strong>Debugging</strong> -- reproduce any simulation state from a checkpoint + seed</li>
 </ul>
-<p>The current <code>SimulationEngine</code> checkpoint schema is version 114. In addition
+<p>The current <code>SimulationEngine</code> checkpoint schema is version 115. In addition
 to exact force/loadout/logistics/time-on-target state and the single
 <code>morale_runtime</code> envelope, it stores one fully effective
-<code>era_runtime_contract</code>. The current resolution, clock duration, selected
+<code>era_runtime_contract</code> plus the tactical-targeting interval, battle
+memberships, decisions, post-movement revalidations, enablement, default
+visibility, and exact source bindings. The current resolution, clock duration, selected
 registry identity, captured scenario cadence/horizon inputs, and frozen
-medical/maintenance consumers must agree before mutation; format 113 and every
+medical/maintenance consumers must agree before mutation; format 114 and every
 other explicit non-current version reject. There is no current-format morale
 context map or state-machine copy, and <code>RNGManager</code> alone persists the MORALE
 stream. Commander/OODA assignments, bounded movement diagnostics, and typed

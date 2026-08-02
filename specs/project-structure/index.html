@@ -15,7 +15,7 @@
         <link rel="canonical" href="https://clay-m-smith.github.io/stochastic-warfare/specs/project-structure/">
       
       
-        <link rel="prev" href="../../devlog/phase-114/">
+        <link rel="prev" href="../../devlog/phase-115/">
       
       
         <link rel="next" href="../checkpoint-state/">
@@ -1691,6 +1691,90 @@
     
   
     Block 13 (115-127)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development-phases-block14/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 14 (128-130)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development-phases-block15/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 15 (131)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development-phases-block16/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 16 (132)
   
 
     
@@ -5069,6 +5153,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devlog/phase-115/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 115 - Sensing-Aware Tactical Standoff
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -5831,6 +5943,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../sensing-aware-tactical-standoff/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Sensing-Aware Tactical Standoff
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../skills-and-hooks/" class="md-nav__link">
         
   
@@ -6326,8 +6466,8 @@
 
 
 <h1 id="project-structure-module-decomposition">Project Structure &amp; Module Decomposition<a class="headerlink" href="#project-structure-module-decomposition" title="Permanent link">&para;</a></h1>
-<p><strong>Status</strong>: Living reference, current through Phase 112 implementation.
-<strong>Last Updated</strong>: 2026-07-30</p>
+<p><strong>Status</strong>: Living reference, current through Phase 115 implementation.
+<strong>Last Updated</strong>: 2026-08-02</p>
 <hr />
 <h2 id="package-tree">Package Tree<a class="headerlink" href="#package-tree" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>stochastic-warfare/
@@ -6474,7 +6614,7 @@
 <a id="__codelineno-0-142" name="__codelineno-0-142" href="#__codelineno-0-142"></a>│   └── workflows/
 <a id="__codelineno-0-143" name="__codelineno-0-143" href="#__codelineno-0-143"></a>│       ├── test.yml                  # Partition audit + standard/API/E2E/terrain
 <a id="__codelineno-0-144" name="__codelineno-0-144" href="#__codelineno-0-144"></a>│       ├── extended-tests.yml        # Sharded slow/benchmark partitions
-<a id="__codelineno-0-145" name="__codelineno-0-145" href="#__codelineno-0-145"></a>│       ├── benchmark.yml             # Paired benchmark policy and 73 Easting
+<a id="__codelineno-0-145" name="__codelineno-0-145" href="#__codelineno-0-145"></a>│       ├── benchmark.yml             # Paired policy + typed 73 Easting transition
 <a id="__codelineno-0-146" name="__codelineno-0-146" href="#__codelineno-0-146"></a>│       ├── build.yml                 # No-.git image build + production identity smoke
 <a id="__codelineno-0-147" name="__codelineno-0-147" href="#__codelineno-0-147"></a>│       ├── lint.yml                  # Ruff and frontend lint
 <a id="__codelineno-0-148" name="__codelineno-0-148" href="#__codelineno-0-148"></a>│       └── docs.yml                  # Strict docs build/deployment
@@ -6641,7 +6781,7 @@
 <a id="__codelineno-0-309" name="__codelineno-0-309" href="#__codelineno-0-309"></a>│   ├── run_pytest_partition.py       # Exact selectors, manifests, deterministic shards
 <a id="__codelineno-0-310" name="__codelineno-0-310" href="#__codelineno-0-310"></a>│   ├── validate_test_partitions.py   # Disjoint exact-union audit
 <a id="__codelineno-0-311" name="__codelineno-0-311" href="#__codelineno-0-311"></a>│   ├── validate_test_evidence.py     # Weak/no-direct evidence-ledger audit
-<a id="__codelineno-0-312" name="__codelineno-0-312" href="#__codelineno-0-312"></a>│   ├── run_paired_benchmark.py       # Same-host paired benchmark execution
+<a id="__codelineno-0-312" name="__codelineno-0-312" href="#__codelineno-0-312"></a>│   ├── run_paired_benchmark.py       # Same-host paired + non-timing transition execution
 <a id="__codelineno-0-313" name="__codelineno-0-313" href="#__codelineno-0-313"></a>│   ├── validate_docs_links.py        # Markdown target/fragment validation
 <a id="__codelineno-0-314" name="__codelineno-0-314" href="#__codelineno-0-314"></a>│   └── visualize/                    # Matplotlib visualization utilities
 <a id="__codelineno-0-315" name="__codelineno-0-315" href="#__codelineno-0-315"></a>└── stochastic_warfare/               # ===== MAIN PACKAGE =====
@@ -6744,7 +6884,7 @@
 <a id="__codelineno-0-412" name="__codelineno-0-412" href="#__codelineno-0-412"></a>    │   ├── detection.py              # SNR-based detection probability engine (Pd, Pfa, ROC)
 <a id="__codelineno-0-413" name="__codelineno-0-413" href="#__codelineno-0-413"></a>    │   ├── identification.py         # Classification &amp; ID confidence (detected → classified → identified)
 <a id="__codelineno-0-414" name="__codelineno-0-414" href="#__codelineno-0-414"></a>    │   ├── estimation.py             # Kalman filter state estimation (pre-alloc H/I₄ matrices, belief state)
-<a id="__codelineno-0-415" name="__codelineno-0-415" href="#__codelineno-0-415"></a>    │   ├── intel_fusion.py           # Multi-source fusion + typed IMINT receipts/owner-target associations
+<a id="__codelineno-0-415" name="__codelineno-0-415" href="#__codelineno-0-415"></a>    │   ├── intel_fusion.py           # Multi-source fusion, atomic side ordinals, IMINT receipts/associations
 <a id="__codelineno-0-416" name="__codelineno-0-416" href="#__codelineno-0-416"></a>    │   ├── deception.py              # Decoys, feints, false signals, camouflage effectiveness
 <a id="__codelineno-0-417" name="__codelineno-0-417" href="#__codelineno-0-417"></a>    │   ├── sonar.py                  # Sonar models: active/passive, towed array, hull-mounted, sonobuoy, dipping
 <a id="__codelineno-0-418" name="__codelineno-0-418" href="#__codelineno-0-418"></a>    │   ├── underwater_detection.py   # Submarine detection: acoustic propagation through environment, MAD, wake detection, periscope detection
@@ -6944,23 +7084,25 @@
 <a id="__codelineno-0-612" name="__codelineno-0-612" href="#__codelineno-0-612"></a>    └── simulation/                   # Top-level simulation orchestration
 <a id="__codelineno-0-613" name="__codelineno-0-613" href="#__codelineno-0-613"></a>        ├── __init__.py
 <a id="__codelineno-0-614" name="__codelineno-0-614" href="#__codelineno-0-614"></a>        ├── engine.py                 # Master simulation loop (hybrid tick + event)
-<a id="__codelineno-0-615" name="__codelineno-0-615" href="#__codelineno-0-615"></a>        ├── campaign.py               # Campaign-level management, strategic AI, reinforcement pipeline
+<a id="__codelineno-0-615" name="__codelineno-0-615" href="#__codelineno-0-615"></a>        ├── campaign.py               # Campaign-level management, strategic AI, reinforcement pipeline; legacy scripted-action boundary remains REM-045
 <a id="__codelineno-0-616" name="__codelineno-0-616" href="#__codelineno-0-616"></a>        ├── battle.py                 # Tactical battle resolution manager
 <a id="__codelineno-0-617" name="__codelineno-0-617" href="#__codelineno-0-617"></a>        ├── scenario.py               # Scenario loading, setup, initialization; SimulationContext includes stratagem_engine, iads_engine, ato_engine [Phase 53]
 <a id="__codelineno-0-618" name="__codelineno-0-618" href="#__codelineno-0-618"></a>        ├── runtime.py                # Authoritative prepared-scenario/runtime-session boundary and provenance [Phase 112]
 <a id="__codelineno-0-619" name="__codelineno-0-619" href="#__codelineno-0-619"></a>        ├── era_runtime.py            # Frozen effective cadence/treatment/repair contract and executable-horizon sources [Phase 114]
 <a id="__codelineno-0-620" name="__codelineno-0-620" href="#__codelineno-0-620"></a>        ├── force_builder.py          # Typed deterministic initial-force construction [Phase 112]
 <a id="__codelineno-0-621" name="__codelineno-0-621" href="#__codelineno-0-621"></a>        ├── movement_diagnostics.py   # Ordered observational movement reasons and checkpoint state [Phase 112]
-<a id="__codelineno-0-622" name="__codelineno-0-622" href="#__codelineno-0-622"></a>        ├── equipment_mappings.py     # Ordered typed equipment-name registry and reviewed data decisions [Phase 109]
-<a id="__codelineno-0-623" name="__codelineno-0-623" href="#__codelineno-0-623"></a>        ├── loadouts.py               # RuntimeLoadoutBuilder, semantic preflight, topology/fingerprint [Phase 109]
-<a id="__codelineno-0-624" name="__codelineno-0-624" href="#__codelineno-0-624"></a>        ├── time_on_target.py         # Initial-roster/runtime-loadout resolver for exact scheduled indirect-fire plans [Phase 111]
-<a id="__codelineno-0-625" name="__codelineno-0-625" href="#__codelineno-0-625"></a>        ├── victory.py                # Victory conditions, war termination criteria, objective evaluation
-<a id="__codelineno-0-626" name="__codelineno-0-626" href="#__codelineno-0-626"></a>        ├── recorder.py               # Event/state recording for replay &amp; analysis
-<a id="__codelineno-0-627" name="__codelineno-0-627" href="#__codelineno-0-627"></a>        ├── metrics.py                # Simulation output metrics, statistical aggregation, analysis hooks
-<a id="__codelineno-0-628" name="__codelineno-0-628" href="#__codelineno-0-628"></a>        ├── aggregation.py           # Force aggregation/disaggregation engine for campaign-scale [Phase 13a]
-<a id="__codelineno-0-629" name="__codelineno-0-629" href="#__codelineno-0-629"></a>        ├── calibration.py           # Typed CalibrationSchema pydantic model replacing free-form dict [Phase 49]
-<a id="__codelineno-0-630" name="__codelineno-0-630" href="#__codelineno-0-630"></a>        ├── unit_arrays.py           # Structure-of-Arrays (SoA) data layer for hot-path unit data [Phase 88]
-<a id="__codelineno-0-631" name="__codelineno-0-631" href="#__codelineno-0-631"></a>        └── deployment.py            # Configurable deployment modes (legacy/bounding_box/clustered/doctrinal/manual) + DeploymentConfig + FormationTemplateLoader consuming data/formations/*.yaml [Phase 104]
+<a id="__codelineno-0-622" name="__codelineno-0-622" href="#__codelineno-0-622"></a>        ├── tactical_targeting.py     # Typed interval/picture/decision/revalidation owner and checkpoint state [Phase 115]
+<a id="__codelineno-0-623" name="__codelineno-0-623" href="#__codelineno-0-623"></a>        ├── targeting_exposure.py     # Privileged and opaque side-FOW targeting projections [Phase 115]
+<a id="__codelineno-0-624" name="__codelineno-0-624" href="#__codelineno-0-624"></a>        ├── equipment_mappings.py     # Ordered typed equipment-name registry and reviewed data decisions [Phase 109]
+<a id="__codelineno-0-625" name="__codelineno-0-625" href="#__codelineno-0-625"></a>        ├── loadouts.py               # RuntimeLoadoutBuilder, semantic preflight, topology/fingerprint [Phase 109]
+<a id="__codelineno-0-626" name="__codelineno-0-626" href="#__codelineno-0-626"></a>        ├── time_on_target.py         # Initial-roster/runtime-loadout resolver for exact scheduled indirect-fire plans [Phase 111]
+<a id="__codelineno-0-627" name="__codelineno-0-627" href="#__codelineno-0-627"></a>        ├── victory.py                # Victory conditions, war termination criteria, objective evaluation
+<a id="__codelineno-0-628" name="__codelineno-0-628" href="#__codelineno-0-628"></a>        ├── recorder.py               # Event/state recording for replay &amp; analysis
+<a id="__codelineno-0-629" name="__codelineno-0-629" href="#__codelineno-0-629"></a>        ├── metrics.py                # Simulation output metrics, statistical aggregation, analysis hooks
+<a id="__codelineno-0-630" name="__codelineno-0-630" href="#__codelineno-0-630"></a>        ├── aggregation.py           # Force aggregation/disaggregation engine for campaign-scale [Phase 13a]
+<a id="__codelineno-0-631" name="__codelineno-0-631" href="#__codelineno-0-631"></a>        ├── calibration.py           # Typed CalibrationSchema pydantic model replacing free-form dict [Phase 49]
+<a id="__codelineno-0-632" name="__codelineno-0-632" href="#__codelineno-0-632"></a>        ├── unit_arrays.py           # Structure-of-Arrays (SoA) data layer for hot-path unit data [Phase 88]
+<a id="__codelineno-0-633" name="__codelineno-0-633" href="#__codelineno-0-633"></a>        └── deployment.py            # Configurable deployment modes (legacy/bounding_box/clustered/doctrinal/manual) + DeploymentConfig + FormationTemplateLoader consuming data/formations/*.yaml [Phase 104]
 </code></pre></div>
 <hr />
 <h2 id="module-responsibilities-boundaries">Module Responsibilities &amp; Boundaries<a class="headerlink" href="#module-responsibilities-boundaries" title="Permanent link">&para;</a></h2>
@@ -6979,8 +7121,8 @@
   <code>EraConfig</code> registry, seven enforced capability gates, sensor allowlists, and
   strict sparse cadence/treatment/repair declarations. The simulation-layer
   <code>EraRuntimeContract</code> resolves effective values before RNG construction and
-  owns clock/domain configuration plus format-114 persistence [Phases 20, 107,
-  114]</p>
+  owns clock/domain configuration plus format-115 persistence [Phases 20, 107,
+  114, 115]</p>
 <p><strong>Depends on</strong>: Nothing (leaf dependency)</p>
 <h3 id="coordinates">coordinates/<a class="headerlink" href="#coordinates" title="Permanent link">&para;</a></h3>
 <p><strong>Owns</strong>: All coordinate math. The only module that knows about geodetic ↔ projected transforms.
@@ -7368,7 +7510,7 @@ the production scenario loop.</p>
 - <strong>Era runtime</strong>: one frozen <code>EraRuntimeContract</code> materializes sparse
   strategic/operational/tactical cadence and medical/maintenance overrides
   before RNG, clock, or engine construction. Clock, engine intervals, medical,
-  maintenance, API cadence, fingerprints, and format-114 checkpoints consume
+  maintenance, API cadence, fingerprints, and format-115 checkpoints consume
   that same boundary; unsupported C2/nuclear metadata rejects [Phase 114].
 - <strong>Initial force construction</strong>: <code>RuntimeForceBuilder</code> validates exact typed
   unit groups, per-instance overrides, deterministic IDs/domains, cardinality,
@@ -7380,6 +7522,14 @@ the production scenario loop.</p>
   Initial units, reinforcements, and fresh checkpoint reconstruction use that
   same boundary; validation code consumes it rather than owning a parallel
   mapping [Phase 109].
+- <strong>Tactical targeting ownership</strong>: one <code>TacticalTargetingRuntime</code>, bound by
+  identity to context, engine, and battle manager, owns the post-FOW interval
+  and immutable <code>(tick, battle, shooter)</code> pictures. Movement and ordinary
+  direct engagement consume the same exact attachment/contact/range decision
+  and post-movement revalidation. Format-115 checkpoints and privileged versus
+  target-independent side-ordinal FOW projections preserve the evidence, and
+  API/replay readers bind each payload to its requested viewer side; ordinary
+  nonempty FOW contact continuation remains REM-029 [Phase 115].
 - <strong>Morale ownership</strong>: one <code>MoraleRuntime</code> registers the initial and arriving
   roster, coordinates stochastic/melee/rally/cascade mutations and aggregate
   archives, exposes the stable read-only consumer mapping, and owns the sole

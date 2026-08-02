@@ -2198,6 +2198,90 @@
   
   
     <li class="md-nav__item">
+      <a href="../development-phases-block14/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 14 (128-130)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../development-phases-block15/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 15 (131)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../development-phases-block16/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 16 (132)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../remediation-backlog/" class="md-nav__link">
         
   
@@ -5556,6 +5640,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-115/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 115 - Sensing-Aware Tactical Standoff
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -5828,6 +5940,34 @@
     
   
     Era Override Execution
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../specs/sensing-aware-tactical-standoff/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Sensing-Aware Tactical Standoff
   
 
     
@@ -6574,6 +6714,13 @@ a blanket historical-validation claim.</p>
 <hr />
 <h2 id="phase-101-fallujah-phase-line-fran-iraq-november-913-2004">Phase 101: Fallujah Phase Line Fran (Iraq, November 9–13, 2004)<a class="headerlink" href="#phase-101-fallujah-phase-line-fran-iraq-november-913-2004" title="Permanent link">&para;</a></h2>
 <p><strong>Status</strong>: Complete. See <a href="../devlog/phase-101/">phase-101.md</a>.</p>
+<p><strong>Integrity follow-up:</strong> Phase 115 confirmed that Phase 101's load/reference
+checks do not prove scripted-action dispatch or effects: the current seed-42
+production run terminates at 200 seconds, before the first authored action at
+H+7. The existing handlers also lack a typed, fail-closed, checkpointed
+exact-once owner. <a href="../remediation-backlog/#rem-045-scripted-scenario-actions-lack-a-typed-exact-once-runtime-owner">REM-045</a>
+assigns that bounded repair to Phase 132; Phase 101's scenario and catalog
+delivery remains complete.</p>
 <p><strong>Goal</strong>: Third golden scenario. Urban combat showcase with unconventional warfare elements. 3rd Battalion, 5th Marines + 2nd Battalion, 7th Cavalry sector advance from Phase Line Fran to Phase Line Jena during Operation Al-Fajr. Heavy IED emplacement, booby-trapped structures, AC-130 gunship support, M1A2 + AAV + LAV-25 combined arms, Iraqi National Guard blocking force.</p>
 <p><strong>Dependencies</strong>: Phase 100 complete.</p>
 <p><strong>Historical outcome</strong> (from Estes, <em>U.S. Marines in Iraq: Anthology and Annotated Bibliography</em>; Bing West, <em>No True Glory</em>; 1st MARDIV Lessons Learned):
@@ -6584,7 +6731,12 @@ a blanket historical-validation claim.</p>
 - Insurgent casualties: ~1200 KIA estimated across operation; sector: ~200–300
 - Key dynamics: IEDs accounted for ~30% of Marine casualties; AC-130 employment at night; booby-trapped buildings; methodical house-clearance</p>
 <h3 id="101a-research">101a: Research<a class="headerlink" href="#101a-research" title="Permanent link">&para;</a></h3>
-<p><code>docs/scenarios/fallujah_phase_line_fran.md</code> with sector OOB, phase lines, IED density estimates, house-clearance tempo.</p>
+<p>The planned standalone <code>docs/scenarios/fallujah_phase_line_fran.md</code> was not
+created. The retained research record is the
+<a href="../devlog/phase-101/#research">Phase 101 research section</a> plus the catalog
+<a href="https://github.com/clay-m-smith/stochastic-warfare/blob/main/data/scenarios/fallujah_phase_line_fran/scenario.yaml">scenario source notes</a>.
+This roadmap correction does not manufacture the missing standalone brief or
+rewrite the phase-era research evidence.</p>
 <h3 id="101b-data-authoring">101b: Data Authoring<a class="headerlink" href="#101b-data-authoring" title="Permanent link">&para;</a></h3>
 <p>Expected gaps:</p>
 <ul>
@@ -6749,9 +6901,9 @@ a blanket historical-validation claim.</p>
 <td>Regression test</td>
 </tr>
 <tr>
-<td><code>docs/scenarios/fallujah_phase_line_fran.md</code></td>
+<td><code>docs/devlog/phase-101.md</code> + <code>data/scenarios/fallujah_phase_line_fran/scenario.yaml</code> source notes</td>
 <td>101</td>
-<td>Research brief</td>
+<td>Retained research record; planned standalone brief was not created</td>
 </tr>
 <tr>
 <td><code>data/scenarios/fallujah_phase_line_fran/scenario.yaml</code></td>

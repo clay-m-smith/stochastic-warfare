@@ -967,6 +967,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#targeting-evidence" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Targeting evidence
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#playback-controls" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2223,6 +2234,90 @@
     
   
     Block 13 (115-127)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development-phases-block14/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 14 (128-130)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development-phases-block15/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 15 (131)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development-phases-block16/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 16 (132)
   
 
     
@@ -5601,6 +5696,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devlog/phase-115/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 115 - Sensing-Aware Tactical Standoff
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -5873,6 +5996,34 @@
     
   
     Era Override Execution
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../specs/sensing-aware-tactical-standoff/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Sensing-Aware Tactical Standoff
   
 
     
@@ -6302,6 +6453,17 @@
     <span class="md-ellipsis">
       
         Fog of War (FOW)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#targeting-evidence" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Targeting evidence
       
     </span>
   </a>
@@ -6863,7 +7025,29 @@
 <li>Only units that the selected side has detected are visible -- undetected enemy units are hidden entirely</li>
 <li>Friendly units (same side as selected) are always shown</li>
 </ol>
-<p>This uses the simulation's actual detection data from the <code>FogOfWarManager</code>, showing what each side believed at each tick. The FOW toggle is disabled for runs that don't have detection data (e.g., older runs or scenarios without fog of war).</p>
+<p>This display filter uses the simulation's captured detection data to show what
+each side believed at each tick. The FOW toggle is disabled for runs that do
+not have detection data (for example, older runs or scenarios without fog of
+war).</p>
+<p>The frame client and TypeScript schemas support both exact
+<code>PRIVILEGED_ENGINE</code> targeting evidence and an opaque <code>SIDE_FOW</code> projection.
+The current main map request still omits those query parameters, receives the
+API's privileged default, and applies its FOW view in the browser. That is a
+useful operator/evaluator view, but it is not a player authorization boundary:
+browser filtering cannot prevent a caller from requesting or inspecting the
+underlying privileged response. REM-041 / Phase 128 must add server-side caller
+authorization and make the normal player-facing request side-safe before this
+UI can be described as secure for opposing players.</p>
+<h3 id="targeting-evidence">Targeting evidence<a class="headerlink" href="#targeting-evidence" title="Permanent link">&para;</a></h3>
+<p>Phase 115 frames can retain the exact sensing-aware tactical decision used by
+movement and ordinary direct engagement, including its disposition,
+authorized standoff range, selected weapon/contact/fire-control evidence, and
+post-movement revalidation. Privileged frames use ground-truth entity and
+attachment identity for analysis. A directly requested <code>SIDE_FOW</code> frame uses
+target-independent side-local ordinal track IDs and omits hidden identity. The
+server and replay reader bind the stored payload's exact viewer side to the
+requested side before exposing it. Older privileged-only frames cannot be
+transformed into a trustworthy side projection after the fact.</p>
 <h3 id="playback-controls">Playback Controls<a class="headerlink" href="#playback-controls" title="Permanent link">&para;</a></h3>
 <p>The map includes a timeline scrubber and transport controls for stepping through the simulation:</p>
 <table>

@@ -1711,6 +1711,90 @@
   
   
     <li class="md-nav__item">
+      <a href="../../development-phases-block14/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 14 (128-130)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development-phases-block15/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 15 (131)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development-phases-block16/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 16 (132)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../remediation-backlog/" class="md-nav__link">
         
   
@@ -5069,6 +5153,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devlog/phase-115/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 115 - Sensing-Aware Tactical Standoff
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -5440,10 +5552,21 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#current-version-3-typed-workload-amendment" class="md-nav__link">
+  <a href="#phase-113-version-3-typed-workload-predecessor" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Current version-3 typed workload amendment
+        Phase 113 version-3 typed workload predecessor
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-115-version-4-workload-transition-qualification" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 115 version-4 workload-transition qualification
       
     </span>
   </a>
@@ -5693,6 +5816,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../sensing-aware-tactical-standoff/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Sensing-Aware Tactical Standoff
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../skills-and-hooks/" class="md-nav__link">
         
   
@@ -5848,10 +5999,21 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#current-version-3-typed-workload-amendment" class="md-nav__link">
+  <a href="#phase-113-version-3-typed-workload-predecessor" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Current version-3 typed workload amendment
+        Phase 113 version-3 typed workload predecessor
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-115-version-4-workload-transition-qualification" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 115 version-4 workload-transition qualification
       
     </span>
   </a>
@@ -6125,9 +6287,11 @@ that count is reported evidence rather than a permanent oracle.</p>
 <li>the refactored <code>slow-only</code>, <code>benchmark-only</code>, and <code>slow-benchmark</code>
   partitions on a declared weekly schedule and manual dispatch, sharded with
   measured job timeouts that do not conceal a timeout as a skip; and</li>
-<li>the paired 73 Easting performance gate on every pull request and push, with
-  the paired Golan gate available only through an explicit long-running manual
-  dispatch.</li>
+<li>the routine 73 Easting benchmark workflow on every pull request and push,
+  using the ordinary paired performance gate when its workload identity is
+  stable and the strict non-timing transition path during a reviewed workload
+  handoff; the paired Golan gate remains available only through an explicit
+  long-running manual dispatch.</li>
 </ul>
 <p>Every job prints its exact collection/pass/skip/deselect/warning counts and
 the command used. Machine-readable results and benchmark data upload under
@@ -6749,9 +6913,9 @@ for <code>uv.lock</code>,
 for 73 Easting, and
 <code>699b75819d271ddf61a8d0bce309d44f64335fd1af6cd7d0b1c6da39128b8868</code>
 for Golan.</p>
-<h3 id="current-version-3-typed-workload-amendment">Current version-3 typed workload amendment<a class="headerlink" href="#current-version-3-typed-workload-amendment" title="Permanent link">&para;</a></h3>
-<p>During Phase 113, the live baseline and artifact contract advances to version
-3. Every entry now carries a strict <code>BenchmarkWorkload</code> with a named workload
+<h3 id="phase-113-version-3-typed-workload-predecessor">Phase 113 version-3 typed workload predecessor<a class="headerlink" href="#phase-113-version-3-typed-workload-predecessor" title="Permanent link">&para;</a></h3>
+<p>During Phase 113, the baseline and artifact contract advanced to version
+3. Each version-3 entry carried a strict <code>BenchmarkWorkload</code> with a named workload
 and typed sparse <code>BenchmarkCalibrationPatch</code>; unknown fields, missing workload
 identity, and a workload-name/patch mismatch reject. The workload and exact
 effective calibration participate in the reference/candidate input
@@ -6760,7 +6924,7 @@ fingerprint and semantic comparison.</p>
 <code>morale_neutral_control_plane</code>. Its typed morale patch sets the base degrade
 and recovery rates plus casualty, suppression, leadership, cohesion, and force
 ratio weights to exactly zero through the production configuration boundary.
-Only 73 Easting may select this workload. Every other current entry uses the
+Only 73 Easting may select this workload. Every other version-3 entry uses the
 typed <code>default</code> workload, and a morale-neutral patch on another entry rejects.</p>
 <p>This control preserves a stable movement/control-plane performance workload
 across the intentional Phase 113 morale-ownership change. Its checked-in
@@ -6770,6 +6934,72 @@ event. It is not evidence for default 73 Easting morale behavior, combat
 throughput, historical fidelity, or Phase 113 acceptance. The version-2 timing
 and baseline-red measurements above remain labeled historical Phase 112
 evidence rather than being rewritten as version-3 results.</p>
+<h3 id="phase-115-version-4-workload-transition-qualification">Phase 115 version-4 workload-transition qualification<a class="headerlink" href="#phase-115-version-4-workload-transition-qualification" title="Permanent link">&para;</a></h3>
+<p>Phase 115 intentionally changes the effective 73 Easting control-plane
+workload while correcting equipment roles and enabling sensing-aware tactical
+standoff. The version-3 gate correctly rejects that candidate before timing:
+the scenario and dependency-lock identities remain exact, but the effective
+configuration, VVS-2 target-domain data, all 21 blue loadout role bindings,
+and the derived roster/loadout digest no longer equal the stored reference.
+Running paired timing samples across those different workloads would not be a
+performance-regression comparison.</p>
+<p>The checked-in benchmark contract therefore advances to strict format and
+policy version 4 while retaining runtime-input normalization version 3. The
+ordinary <code>gate</code> and <code>measurement_only</code> policies retain their existing
+meanings. A separate <code>transition_qualified</code> policy carries no timing
+threshold, order, pair count, timing scope, ratio, or performance decision.
+The ordinary <code>compare</code> command must reject it before launching a worker. A
+dedicated transition command executes exactly one production closure for the
+reference and one for the candidate; it can emit only
+<code>transition_qualified</code>, <code>transition_rejected</code>, or <code>error</code>.</p>
+<p>One typed transition contract contains the exact reference and candidate
+runtime-input identities, exact reference and candidate semantic envelopes,
+verified version-3 predecessor lineage, and a path-sorted, duplicate-free list
+of every approved effective-input, derived runtime-input, and semantic
+difference. Each approval
+records its surface, canonical RFC-6901 JSON Pointer, add/remove/replace
+operation, exact canonical before/after value digests, a closed classification,
+non-empty authorities, and rationale. Values use canonical JSON: sorted object
+keys, compact separators, explicit <code>null</code>, and no NaN or infinity. A transition
+digests a presence envelope—<code>{"present":false}</code> for absence or
+<code>{"present":true,"value":...}</code> for presence—so a missing path is never
+equivalent to a present JSON <code>null</code>. A transition
+rejects an added, removed, changed, stale, duplicated, reclassified, or
+unapproved value. A scenario, dependency lock, seed, maximum tick count,
+recorder configuration, or resolved source-list difference is never
+transition-qualified.</p>
+<p>The candidate-owned worker runs both endpoints. Every closure remains bound to
+its exact tree identity. The harness recomputes the complete runtime-input and
+semantic diffs and compares them to the checked-in contract before emitting
+its result. A separately typed, atomically written, digest-bearing transition
+artifact contains both complete runtime manifests and semantic envelopes, the
+exact classified differences, predecessor/baseline and tree identities,
+environment metadata, and an explicit <code>not_applicable</code> timing assessment. A
+closure and transition artifact expose no duration, timing sample, pair,
+ratio, or <code>PerformanceDecision</code>; operational timeouts and contention notes are
+not regression evidence. Neither the CLI, artifact validator, final-tree
+verifier, workflow, test, devlog, nor postmortem may rename a qualified
+transition to <code>pass</code> or infer a speed claim from it.</p>
+<p>The Phase 115 73 Easting transition is limited to three loaded
+<code>enable_sensing_aware_standoff: true</code> views, the catalog VVS-2 domain expansion
+from ground-only to ground/aerial/naval/amphibious, the exact 21 blue VVS-2
+loadout bindings from <code>ground_night_sight</code> to <code>night_vision</code>, the derived
+runtime-input fingerprint, and the derived roster/loadout digest. Unit count,
+winner, victory condition, ticks, logical duration, status counts, event count,
+event digest, scenario bytes, lock bytes, and all resolved source bytes remain
+exact. This is integrity-transition evidence, not historical validation,
+default-workload evidence, combat-throughput evidence, or a performance pass.</p>
+<p>The dirty precommit candidate snapshot must still carry a complete
+path/mode/content runtime-tree manifest. After the one Phase 115 commit, the
+existing clean-final-tree verifier must reproduce the candidate endpoint from
+that clean commit and may report only <code>transition_qualified</code>. The next phase
+must promote that clean Phase 115 commit and exact candidate endpoint to an
+ordinary version-4 paired reference before it can pass its own postmortem;
+promotion remains a reviewed baseline change and cannot be automatic or
+self-referential. The checked-in transition contract may retain predecessor
+document/entry hashes, but it must not embed its own current document/entry
+hash, candidate Git identity, or candidate runtime-tree manifest; those belong
+only to the external artifact.</p>
 <h3 id="typed-space-isr-report-delivery-and-checkpoint-state">Typed Space ISR report delivery and checkpoint state<a class="headerlink" href="#typed-space-isr-report-delivery-and-checkpoint-state" title="Permanent link">&para;</a></h3>
 <p><code>SpaceISREngine</code> buffers immutable <code>SpaceISRReport</code> values with exactly:</p>
 <ul>
@@ -7198,13 +7428,13 @@ longer depends accidentally on the EW suite.</p>
 </tr>
 <tr>
 <td>Benchmark</td>
-<td>Version-3 typed workload policy, semantic envelope, samples, environment</td>
-<td>Strict baseline/artifact parser</td>
+<td>Version-4 paired or transition policy over version-3 normalized runtime input</td>
+<td>Strict baseline, comparison, transition, and final-tree parsers</td>
 <td>Candidate harness runs reference and candidate production engines with the fingerprinted workload patch</td>
-<td>73 Easting morale-neutral control-plane routine; Golan default-workload manual</td>
-<td>Warm-up and three paired measurements</td>
-<td>Rejects performance claims when workload semantics change</td>
-<td>Uploaded JSON artifact and reviewed baseline contract</td>
+<td>73 Easting morale-neutral transition during Phase 115; Golan default-workload manual</td>
+<td>One closure per endpoint and zero timing samples for transition; warm-up plus three pairs for ordinary gate</td>
+<td>Rejects or separately qualifies workload changes without a speed claim</td>
+<td>Digest-bearing external artifacts, full endpoint manifests, and reviewed baseline contract</td>
 </tr>
 <tr>
 <td>Space ISR</td>
@@ -7409,7 +7639,12 @@ the seed or semantic workload.</p>
    and bind the precommit candidate manifest exactly to the final commit tree.</li>
 <li>Run fresh paired 73 Easting and manual paired Golan comparisons on the same
    host and preserve their complete JSON artifacts.</li>
-<li>In the production loader-owned <code>space_isr_gap</code> scenario without EW, queue
+</ol>
+<p>For the Phase 115 handoff only, item 9 is satisfied for 73 Easting by the
+separate exact <code>transition_qualified</code> artifact and clean-final reproduction
+defined above, never by paired timing across unequal inputs. Golan remains
+manual and unchanged.
+10. In the production loader-owned <code>space_isr_gap</code> scenario without EW, queue
     the exact eight-report blue imaging batch at 14,400 s with 7,200 s delay;
     prove no early track at 14,400 or 18,000 s, checkpoint/fresh restore typed
     equality, exact one-time blue-only delivery and eight persisted receipts
@@ -7433,15 +7668,14 @@ the seed or semantic workload.</p>
     epoch/report-ID/track link and each cadence-map derivation in
     otherwise type-valid checkpoint copies, plus delivery before availability
     and delivery after checkpoint time, and prove staged restore rejects
-    without mutation.</li>
-<li>Prove the automated missing-fragment negative and valid-fragment controls,
+    without mutation.
+11. Prove the automated missing-fragment negative and valid-fragment controls,
     repair all seven targets/all 49 links, and run strict real docs with no
-    missing-fragment diagnostic.</li>
-<li>Prove affected frontend types, client parsing, tables, and charts render
+    missing-fragment diagnostic.
+12. Prove affected frontend types, client parsing, tables, and charts render
     raw vectors/provenance, paired direction/counts/differences/superiority,
     raw and Holm-adjusted p-values, and family-wise significance; removed
-    Mann-Whitney/rank-biserial labels must not render.</li>
-</ol>
+    Mann-Whitney/rank-biserial labels must not render.</p>
 <h3 id="conditional-and-broad-validation">Conditional and broad validation<a class="headerlink" href="#conditional-and-broad-validation" title="Permanent link">&para;</a></h3>
 <p>Phase 112 requires <code>$validate-data</code>, <code>$validate-conventions</code>,
 <code>$audit-determinism</code>, <code>$evaluate-scenarios</code>, and <code>$profile</code> because it changes
@@ -7458,15 +7692,19 @@ paths, scenario outcomes/diagnostics, and performance gates. Run:</p>
 <li>representative pre/post scenario evaluation plus the complete scenario
   evaluator;</li>
 <li>deterministic replay and fresh checkpoint continuation controls;</li>
-<li>fresh paired 73 Easting and Golan performance comparisons;</li>
+<li>fresh ordinary paired comparisons where workload identity is stable, or the
+  strict Phase 115 73 Easting transition qualification; manual Golan remains
+  separately declared;</li>
 <li>affected frontend behavioral tests, then <code>npm test</code>, <code>npm run lint</code>, and
   <code>npm run build</code> from <code>frontend/</code>;</li>
 <li>repository-wide Ruff, Python compilation, strict MkDocs, and
   <code>git diff --check</code>.</li>
 </ul>
-<p>Exact commands, versions, counts, warnings, exclusions, wall samples,
+<p>Exact Phase 112 commands, versions, counts, warnings, exclusions, wall samples,
 environment metadata, scenario outcomes, artifact digests, and remaining
-deficits go into <code>docs/devlog/phase-112.md</code>.</p>
+deficits go into <code>docs/devlog/phase-112.md</code>. Phase 115's version-4 transition
+commands, classified differences, endpoint identities, artifact digests, and
+explicit non-timing disposition go into <code>docs/devlog/phase-115.md</code>.</p>
 <h2 id="acceptance-criteria">Acceptance criteria<a class="headerlink" href="#acceptance-criteria" title="Permanent link">&para;</a></h2>
 <p>Phase 112 is complete only when:</p>
 <ol>
@@ -7495,7 +7733,8 @@ deficits go into <code>docs/devlog/phase-112.md</code>.</p>
    production capability;</li>
 <li>benchmark gates compare the same semantic workload on the same machine
    against an authoritative commit and cannot pass missing, placeholder,
-   noisy, or semantically stale evidence;</li>
+   noisy, or semantically stale evidence; a reviewed unequal-workload handoff
+   uses the separate non-timing transition status and cannot claim a pass;</li>
 <li>Space ISR fusion has an explicit preflight-validated constellation
     selection, typed delayed owner-scoped imagery reports, real resolvable
     catalog targets, exact age-boundary/reactivation behavior, transactional
@@ -7519,9 +7758,11 @@ deficits go into <code>docs/devlog/phase-112.md</code>.</p>
   REM-019 morale ownership was closed by the accepted Phase 113 production
   contract.</li>
 <li>REM-020 and REM-021 logistics authority remain explicit follow-ups.</li>
-<li>REM-028 owns the newly confirmed weapon-standoff versus detection/visibility
-  mismatch and is assigned to planned Phase 115. Phase 112 records it without
-  changing movement or combat physics.</li>
+<li>REM-028 owned the weapon-standoff versus detection/visibility mismatch and
+  is closed by completed Phase 115. Phase 112 recorded it without changing
+  movement or combat physics; Phase 115 supplied the accepted production,
+  checkpoint/exposure, qualified broad-run, documentation, and postmortem
+  evidence.</li>
 <li>REM-029 owns exact restoration of nonempty ordinary fog-of-war contacts,
   is assigned to planned Phase 116, and addresses what current
   <code>FogOfWarManager.set_state()</code> discards. REM-027 proves fusion

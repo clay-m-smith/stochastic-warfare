@@ -1861,6 +1861,90 @@
   
   
     <li class="md-nav__item">
+      <a href="development-phases-block14/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 14 (128-130)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="development-phases-block15/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 15 (131)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="development-phases-block16/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 16 (132)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="remediation-backlog/" class="md-nav__link">
         
   
@@ -5219,6 +5303,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="devlog/phase-115/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 115 - Sensing-Aware Tactical Standoff
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -5511,6 +5623,34 @@
   
   
     <li class="md-nav__item">
+      <a href="specs/sensing-aware-tactical-standoff/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Sensing-Aware Tactical Standoff
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="skills-and-hooks/" class="md-nav__link">
         
   
@@ -5694,7 +5834,7 @@
 <p><strong>High-fidelity stochastic wargame simulator</strong> -- multi-scale, multi-domain, multi-era.</p>
 <p><img alt="Python" src="https://img.shields.io/badge/python-%3E%3D3.12-blue" />
 <img alt="Tests" src="https://img.shields.io/badge/tests-partitioned_validation-blue" />
-<img alt="Phase" src="https://img.shields.io/badge/phase-114_COMPLETE-brightgreen" /></p>
+<img alt="Phase" src="https://img.shields.io/badge/phase-115_COMPLETE-brightgreen" /></p>
 <hr />
 <h2 id="what-is-this">What Is This?<a class="headerlink" href="#what-is-this" title="Permanent link">&para;</a></h2>
 <p>Stochastic Warfare combines a headless Python simulation engine, FastAPI
@@ -5736,7 +5876,7 @@ Kalman filters, Poisson processes, queueing theory, and SNR-based detection.</p>
 <a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>uv<span class="w"> </span>run<span class="w"> </span>--no-sync<span class="w"> </span>python<span class="w"> </span>scripts/validate_test_partitions.py<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w">  </span>--output<span class="w"> </span>artifacts/partition-audit/manifest.json
 <a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>uv<span class="w"> </span>run<span class="w"> </span>--no-sync<span class="w"> </span>python<span class="w"> </span>scripts/run_pytest_partition.py<span class="w"> </span>standard<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="w">  </span>--manifest<span class="w"> </span>artifacts/standard/manifest.json<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="w">  </span>--manifest<span class="w"> </span>artifacts/partition-audit/manifest.json<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="w">  </span>--junit<span class="w"> </span>artifacts/standard/junit.xml<span class="w"> </span>--forbid-skips<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="w">  </span>--timeout-seconds<span class="w"> </span><span class="m">2700</span>
 </code></pre></div>
@@ -5745,19 +5885,22 @@ Kalman filters, Poisson processes, queueing theory, and SNR-based detection.</p>
 runs the audit plus <code>standard</code>, <code>api</code>, <code>e2e</code>, and the overlapping <code>terrain</code>
 dependency profile. Weekly/manual CI runs the three marker partitions in
 deterministic shards. <code>benchmark-policy</code> is also an overlapping focused
-profile, not a seventh partition. The routine 73 Easting paired gate uses the
-version-3 typed, morale-neutral control-plane workload; it is not evidence for
-default morale behavior or historical fidelity. Golan remains manual.</p>
-<p>The Phase 114 closure audit enumerates exactly 11,903 nodes:
-<code>standard</code> 11,445, <code>slow-only</code> 109, <code>benchmark-only</code> 62, <code>slow-benchmark</code> 4,
-API 242, and E2E 41. All 11,903 passed with zero failures/errors/skips and six
-declared warnings. The API partition ran on the host because this sandbox
-currently loses an <code>aiosqlite</code> worker-thread wakeup before schema creation;
-identical focused and full host runs passed, and hosted CI remains the final
-environment control. The owner accepted the dispersed timing result only as
-contention-qualified evidence and deferred clean confirmation until all cores
-are free; no uncontended pass is claimed. Phase 114 and Block 12 are complete,
-and REM-018 is closed. Exact evidence is in the <a href="devlog/phase-114/">Phase 114 devlog</a>.</p>
+profile, not a seventh partition. Phase 115 routes routine 73 Easting through
+a strict version-4 non-timing workload transition while retaining version-3
+runtime-input normalization. <code>transition_qualified</code> proves only the exact
+classified workload/semantic handoff; the next phase must promote the clean
+Phase 115 endpoint before ordinary paired gating resumes. It is not a speed,
+default-morale, or historical-fidelity result. Golan remains manual.</p>
+<p>The Phase 115 closure audit enumerates exactly 12,248 nodes:
+<code>standard</code> 11,743, <code>slow-only</code> 110, <code>benchmark-only</code> 87, <code>slow-benchmark</code> 4,
+API 263, and E2E 41. All 11,743 standard nodes and every complete benchmark
+profile passed; data, determinism, scenario, frontend, static, and
+documentation gates also passed. The owner accepted contended slow/API/E2E
+evidence only with an explicit qualification: capped runs are not called
+passes, the exact real database/API persistence witness passed on the host,
+and Debecka's 4/10 result remains assigned to REM-030. Hosted CI remains the
+final independent environment control. Phase 115 is complete and REM-028 is
+closed. Exact evidence is in the <a href="devlog/phase-115/">Phase 115 devlog</a>.</p>
 <p>See the <a href="guide/getting-started/">Getting Started Guide</a> for a complete tutorial including running your first scenario.</p>
 <h2 id="explore-the-documentation">Explore the Documentation<a class="headerlink" href="#explore-the-documentation" title="Permanent link">&para;</a></h2>
 <table>
@@ -5894,21 +6037,51 @@ and REM-018 is closed. Exact evidence is in the <a href="devlog/phase-114/">Phas
 <tr>
 <td>Block 13</td>
 <td>115--127</td>
-<td>Queued integrity follow-ups</td>
+<td>Integrity follow-ups</td>
+<td><strong>Active</strong></td>
+</tr>
+<tr>
+<td>Block 14</td>
+<td>128--130</td>
+<td>Targeting authorization, topology, and selection follow-ups</td>
+<td><strong>Planned</strong></td>
+</tr>
+<tr>
+<td>Block 15</td>
+<td>131</td>
+<td>Sensor covariance and predictive-tracking integrity</td>
+<td><strong>Planned</strong></td>
+</tr>
+<tr>
+<td>Block 16</td>
+<td>132</td>
+<td>Scripted scenario action integrity</td>
 <td><strong>Planned</strong></td>
 </tr>
 </tbody>
 </table>
-<p>Phases 105 through 114 and Block 12 are complete. Phase 114 implements the
-strict effective era-runtime and format-114 checkpoint contract, and REM-018
-is closed. Its timing result carries an explicit owner-approved contention
-qualification. See the
-<a href="devlog/phase-114/">Phase 114 devlog</a>, the
-<a href="specs/era-override-execution/">era override specification</a>, and the
+<p>Phases 105 through 115 and Block 12 are complete. Phase 115 implements the
+strict sensing-aware targeting and format-115 checkpoint/exposure contract,
+and REM-028 is closed. Its long-run evidence carries an explicit owner-approved
+contention qualification. See the
+<a href="devlog/phase-115/">Phase 115 devlog</a>, the
+<a href="specs/sensing-aware-tactical-standoff/">targeting specification</a>, and the
 <a href="remediation-backlog/">remediation backlog</a> for exact evidence and known
 coverage boundaries. The YAML data catalog defines units, weapons, ammunition
 types, sensors, signatures, doctrines, commanders, formation templates, and
 modern plus historical scenarios across five eras.</p>
+<p>Block 13 is active with Phase 116 / REM-029 next and unstarted. Phase 115 also
+records REM-041 through REM-043 for the planned Block 14 follow-ups rather than
+absorbing them into its claim.
+REM-044 separately assigns sourced sensor covariance and atomic predictive
+tracking to Phase 131 in planned Block 15.
+REM-045 assigns typed, fail-closed, exact-once Fallujah scripted actions to
+Phase 132 in planned Block 16; Phase 115's 200-second current regression does
+not reach the first authored action at H+7.
+The changed 73 Easting loadout/configuration identity is handled by the strict
+version-4 non-timing transition contract; it cannot be reported as a paired
+performance pass and must be promoted from the clean Phase 115 commit before
+the next phase closes.</p>
 <h2 id="license">License<a class="headerlink" href="#license" title="Permanent link">&para;</a></h2>
 <p><a href="https://github.com/clay-m-smith/stochastic-warfare/blob/main/LICENSE.md">PolyForm Noncommercial License 1.0.0</a> -- free for personal, academic, and research use. Commercial/institutional use requires a separate license (claymsmith1@gmail.com).</p>
 

@@ -1711,6 +1711,90 @@
   
   
     <li class="md-nav__item">
+      <a href="../../development-phases-block14/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 14 (128-130)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development-phases-block15/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 15 (131)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development-phases-block16/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 16 (132)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../remediation-backlog/" class="md-nav__link">
         
   
@@ -5069,6 +5153,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devlog/phase-115/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 115 - Sensing-Aware Tactical Standoff
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -5560,6 +5672,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../sensing-aware-tactical-standoff/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Sensing-Aware Tactical Standoff
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../skills-and-hooks/" class="md-nav__link">
         
   
@@ -5927,11 +6067,14 @@ fingerprint is part of checkpoint state.</p>
 <h3 id="timing-ordering-and-exactly-once-lifecycle">Timing, ordering, and exactly-once lifecycle<a class="headerlink" href="#timing-ordering-and-exactly-once-lifecycle" title="Permanent link">&para;</a></h3>
 <p><code>SimulationEngine.step()</code> calls one public time-on-target update on every fixed
 whole-second scenario tick after reinforcement, environment, logistics, and
-scripted events, but before strategic movement, battle detection, or tactical
-combat. Because declared fire and impact times are exact multiples of the
-scenario's one cadence, no step crosses a milestone and no extra full engine
-tick is inserted. Enabled and disabled populated controls therefore retain
-identical clock, max-tick, environment, logistics, maintenance, recorder, and
+the legacy scripted-event check, but before strategic movement, battle
+detection, or tactical combat. That ordering does not assert that a due
+scripted action committed successfully; REM-045 / Phase 132 owns its typed,
+fail-closed, exact-once lifecycle. Because declared fire and impact times are
+exact multiples of the scenario's one cadence, no step crosses a milestone and
+no extra full engine tick is inserted. Enabled and disabled populated controls
+therefore retain identical clock, max-tick, environment, logistics,
+maintenance, recorder, and
 other subsystem cadence. An event processed at the same boundary changes the
 preconditions observed by time on target; a later event cannot be applied
 before an earlier aligned fire. A planned mission is not dependent on an
