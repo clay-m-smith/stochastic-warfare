@@ -2283,6 +2283,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../development-phases-block17/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 17 (133)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../remediation-backlog/" class="md-nav__link">
         
   
@@ -5669,6 +5697,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devlog/phase-116/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 116 - Fog-of-War Contact Continuation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -5885,6 +5941,34 @@
     
   
     Validation and Documentation Trust
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../specs/fog-of-war-contact-continuation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Fog-of-War Contact Continuation
   
 
     
@@ -6709,8 +6793,10 @@
 </tbody>
 </table>
 <h3 id="frame-targeting-exposure">Frame targeting exposure<a class="headerlink" href="#frame-targeting-exposure" title="Permanent link">&para;</a></h3>
-<p>Format-115 completed runs store paired targeting projections at each captured
-map frame:</p>
+<p>Completed runs store the paired targeting projections introduced with format
+115 at each captured map frame. Current checkpoint format 116 additionally
+preserves the contact/witness evidence behind a current consumable projection;
+the REST schema itself is unchanged:</p>
 <ul>
 <li><code>scope=PRIVILEGED_ENGINE</code> returns exact engine/evaluator evidence, including
   ground-truth target and source-attachment identity. It is the current default
@@ -7894,8 +7980,9 @@ values with exact observation/availability times and uncertainty, a terminal
 <code>IMINTTrackAssociation</code> per owner/target. Generation and delayed delivery are
 transactional and checkpointed. This typed internal state is not a claim of
 ordinary REST/UI event exposure or direct injection into generic fog-of-war
-contacts. Nonempty ordinary <code>SideWorldView.contacts</code> continuation remains
-tracked by REM-029.</p>
+contacts. Format 116 independently restores nonempty roster-backed
+<code>SideWorldView.contacts</code>; it does not convert Space ISR receipts into those
+contacts.</p>
 <hr />
 <h3 id="indirectfirescenarioconfig-and-time-on-target-events">IndirectFireScenarioConfig and time-on-target events<a class="headerlink" href="#indirectfirescenarioconfig-and-time-on-target-events" title="Permanent link">&para;</a></h3>
 <p><code>IndirectFireScenarioConfig</code> rejects unknown fields and owns
@@ -8389,10 +8476,20 @@ era contract, and runtime topology. An incompatible restore fails before
 mutating the target. See the
 <a href="../../specs/checkpoint-state/">checkpoint state contract</a> for the canonical
 schema and bounded legacy-migration rules.</p>
-<p>The current engine checkpoint schema is version 115. In addition to force,
+<p>The current engine checkpoint schema is version 116. In addition to force,
 loadout, logistics, space/ASAT, and time-on-target state, it preserves one
 <code>morale_runtime</code> envelope, one fully effective <code>era_runtime_contract</code>, and one
-strict tactical-targeting interval/picture/decision/revalidation envelope.
+strict tactical-targeting interval/picture/decision/revalidation envelope. One
+strict fog-of-war envelope retains complete roster-backed ordinary side views,
+bounded current observer witnesses, fusion state, exact contact-to-fusion track
+object identity, and the cross-validated DETECTION RNG mirror. Current FOW
+targeting decisions keep their exact consumability only when that contact,
+witness, interval, roster, and loadout evidence agrees.
+The private publication plan is exact-owner-, content-, type-, shape-, and
+alias-bound. Disabled runtimes may retain explicitly allocated empty side views
+and non-FOW Space tracks, while ordinary contacts/witnesses/FOW IDs reject.
+Dynamic registration may checkpoint durable FOW state between targeting
+intervals and refreshes it on the next engine step.
 <code>SimulationContext.morale_states</code> remains a stable read-only
 <code>Mapping[str, MoraleState]</code> for runtime and frame consumers, but it is not a
 second checkpoint store; <code>RNGManager</code> alone persists the MORALE generator.
@@ -8400,12 +8497,14 @@ Commander/OODA assignments, bounded movement diagnostics, and typed Space ISR
 pending reports, delivery receipts, and owner/target IMINT associations remain
 included. Current-format restore is atomic and validates exact topology,
 status/route consistency, chronology, owner/RNG bindings, selected era
-identity, and clock/current-resolution agreement. Explicit version 113 and
+identity, and clock/current-resolution agreement. Explicit version 115 and
 every other non-current version reject.</p>
-<p>Typed Space ISR checkpoint equivalence is proven under an explicit empty
-ordinary-contact topology. Nonempty ordinary <code>SideWorldView.contacts</code> are
-serialized but currently discarded on restore; that separate fog-of-war
-continuation deficit remains REM-029.</p>
+<p>Phase 112's typed Space ISR proof uses an explicit empty ordinary-contact
+topology, including publicly allocated empty views. Phase 116 separately
+implements nonempty roster-backed FOW continuation.
+Active/inactive deception and custom/populated COP/data-link state remain
+unsupported checkpoint boundaries under REM-046 and REM-036 and reject rather
+than being silently discarded.</p>
 
 
 

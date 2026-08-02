@@ -15,7 +15,7 @@
         <link rel="canonical" href="https://clay-m-smith.github.io/stochastic-warfare/specs/morale-state-ownership/">
       
       
-        <link rel="prev" href="../validation-and-documentation-trust/">
+        <link rel="prev" href="../fog-of-war-contact-continuation/">
       
       
         <link rel="next" href="../era-override-execution/">
@@ -1775,6 +1775,34 @@
     
   
     Block 16 (132)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development-phases-block17/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 17 (133)
   
 
     
@@ -5181,6 +5209,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devlog/phase-116/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 116 - Fog-of-War Contact Continuation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -5400,6 +5456,34 @@
     
   
     Validation and Documentation Trust
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../fog-of-war-contact-continuation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Fog-of-War Contact Continuation
   
 
     
@@ -5918,8 +6002,9 @@
 Phase 113 is complete and REM-019 is closed.</p>
 <p>Phase 114 extended the engine checkpoint to format 114 by adding the effective
 era runtime contract and clock/resolution validation. Phase 115 advances the
-current checkpoint to format 115 for tactical-targeting state. Neither change
-alters or duplicates the morale envelope below: current format 115 still
+checkpoint to format 115 for tactical-targeting state, and Phase 116 advances
+the current checkpoint to format 116 for fog-of-war contact continuation.
+None of those changes alters or duplicates the morale envelope below: current format 116 still
 contains exactly one <code>morale_runtime</code>, and <code>RNGManager</code> remains the sole
 MORALE-stream owner.</p>
 <h2 id="purpose-and-scope">Purpose and scope<a class="headerlink" href="#purpose-and-scope" title="Permanent link">&para;</a></h2>
@@ -6179,10 +6264,10 @@ is not the causal acceptance proof for this ownership remediation.</p>
 <h2 id="phase-113-checkpoint-format">Phase 113 checkpoint format<a class="headerlink" href="#phase-113-checkpoint-format" title="Permanent link">&para;</a></h2>
 <blockquote>
 <p><strong>Current-format note:</strong> This section records the Phase 113 format transition
-historically. The current engine writes format 115, which preserves this
+historically. The current engine writes format 116, which preserves this
 exact morale topology, retains the independent Phase 114 era-runtime
-contract, and adds Phase 115 tactical-targeting state. Explicit formats 113
-and 114 now reject as older versions.</p>
+contract, Phase 115 tactical-targeting state, and Phase 116 fog-of-war
+contact state. Explicit formats 113 through 115 now reject as older versions.</p>
 </blockquote>
 <p><code>SimulationEngine</code> advances the explicit format to <code>113</code>.</p>
 <ol>
