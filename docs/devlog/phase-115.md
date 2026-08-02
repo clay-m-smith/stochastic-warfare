@@ -1572,3 +1572,126 @@ returned exit 0, and the otherwise identical strict build using
 `/tmp/sw-phase115-final-status-uv-cache` and
 `/tmp/sw-phase115-final-status-site` completed in 2.88 seconds with the same
 one advisory and three intentional unnav pages.
+
+## Hosted post-push verification and API oracle correction
+
+The single Phase 115 implementation commit was
+`7a632c0f52a9d254ca7e43a14c20ead058384b8b`. Its clean-tree local transition
+verification returned `transition_qualified` in 5.176 seconds with SHA-256
+`1207de8d280bd4b122078ed6e640a1687ead9198f19b0ccc172480e9d9dfbf4e`.
+The commit was pushed without rewriting published history. Four hosted
+workflows passed immediately:
+
+- Lint run `30751518856`: repository-wide Python Ruff returned
+  `All checks passed!`; frontend ESLint returned 0 errors and the same four
+  warnings (the `TacticalMap` dependency/unused-disable pair plus the
+  `TerrainPreview` and `MapTab` unstable-expression warnings);
+- Documentation run `30751518853`: strict validation and deployment passed;
+  each MkDocs build took 6.41 seconds, with the declared Material/MkDocs 2.0
+  advisory;
+- Docker run `30751518855`: build, absence of `/app/.git`, and the immutable
+  one-tick `SimulationRuntimeFactory` smoke passed. The image digest was
+  `sha256:cb3ac340035e8d71e23401a8ed9a308c34aba0bc9667d9b5fb3e6dabdd1b5e33`;
+- production benchmark run `30751518872`: 73 Easting returned
+  `transition_qualified`, timing `not_applicable`, artifact SHA-256
+  `9d2811b46b12c3b43b358d34e560cd934911cae0728a2876eee6fb1e8fd436d8`,
+  and clean-commit verification SHA-256
+  `d7fc076a2f43f33c6fd07a0f5f4d1150cbd292040806a71c6fa2b8713169f596`.
+  The policy profile passed 86/86 nodes in 42.72 seconds with zero warnings or
+  skips; the Golan manual gate was intentionally skipped on the push event.
+
+Hosted Tests run `30751518868` completed in 24 minutes 47 seconds with five
+green jobs and one red API job:
+
+| Job | Exact result | Artifact |
+|---|---|---|
+| Partition audit | exact/pairwise-disjoint 12,248 = 11,743 standard + 110 slow-only + 87 benchmark-only + 4 slow-benchmark + 263 API + 41 E2E | ID `8834618215`, 316,369 bytes |
+| Standard | 11,743 passed in 1,439.58s; zero failures/errors/skips/xfails/xpasses; six known warnings | ID `8834865796`, 622,138 bytes, SHA-256 `9be424b8d8b8738debdaf739a94517e1d38b56dafb03659db6880bab245ef978` |
+| API | 262 passed, 1 failed in 218.12s; zero skips/errors/warnings | ID `8834634241`, 15,329 bytes |
+| E2E | 41 passed in 130.47s; zero skips/errors/warnings | ID `8834618613`, 2,795 bytes |
+| Terrain | 97 passed in 7.29s; zero skips/errors/warnings | ID `8834594279`, 5,979 bytes |
+| Frontend | 84 files / 447 tests passed; JUnit 45.287s | ID `8834602250`, 15,923 bytes |
+
+The standard warnings were exactly one empty chart-legend warning, four
+unrendered matplotlib-animation warnings, and one `datetime.utcnow()`
+deprecation. All six artifacts uploaded successfully and remain active through
+2026-10-31. The jobs also reported the announced Node 20-to-24 action-runtime
+transition and intermittent GitHub uv-cache HTTP 400/service-unavailable
+warnings; none caused a test or artifact failure.
+
+The sole hosted failure was
+`tests/api/test_phase_106_api_integrity.py::test_api_override_changes_outcome_and_is_deterministic`:
+its Phase 106 snapshot expected two 7,200-second reinforcements to have arrived
+by tick 100 (`blue.total=6`), while production correctly returned the four
+initial blue units (`blue.total=4`). The exact node reproduced on the host as
+`1 failed in 9.43s`; it was not dismissed as a flaky or environment-only red.
+
+An independent read-only replay in an isolated repository compared the
+accepted Phase 114 commit with the Phase 115 commit. At `f057923`, the legacy
+`0.8 * max_range` hold stopped every M1A2 near easting 3,430 m. A spatial morale
+cascade removed all four initial active blue units by tick 96, dissolved the
+battle, allowed operational/strategic resolution at ticks 97--99, and advanced
+the clock to 7,980 seconds; only then did the 7,200-second wave arrive, yielding
+six total/two active blue units and 23 morale events. At `7a632c0`, the M256
+decision truthfully reports `EFFECTIVE_RANGE_UNKNOWN` with basis
+`LEGACY_DERIVED_80_PERCENT_OF_MAX`, zero authorized standoff, and no hold. The
+units continue moving, the battle stays active at five-second tactical
+resolution for all 100 ticks, and the terminal time is exactly 500 seconds.
+The future wave is not due; the four-unit roster, 19-event morale sequence, and
+two active/two routed final disposition are the correct Phase 115 behavior.
+
+The correction changes only that stale API behavior oracle. It adds exact
+100-tick/500-second and absent-`ReinforcementArrivedEvent` guards, then updates
+the roster and morale outcomes. Restoring the six-unit snapshot would restore
+or simulate the prohibited blind hold, so this is not expectation papering or
+production tuning. Focused verification was:
+
+```text
+.venv/bin/python -m pytest \
+  tests/unit/simulation/test_tactical_targeting.py::test_legacy_effective_range_allows_engagement_but_never_hold \
+  tests/integration/test_phase115_sensing_standoff_red.py::test_mark_iv_advances_outside_current_sensing_and_effective_envelope \
+  tests/integration/test_phase115_sensing_standoff_red.py::test_current_authored_solution_holds_and_is_shared_with_diagnostics \
+  -q
+# 3 passed in 1.72s; zero warnings/skips; exit 0
+
+.venv/bin/python -m pytest -q \
+  tests/api/test_phase_106_api_integrity.py::test_api_override_changes_outcome_and_is_deterministic \
+  --strict-markers --strict-config
+# host: 1 passed in 9.64s; exit 0
+```
+
+A first complete API attempt was intentionally interrupted with exit 130 after
+a review-driven comment changed the tree while it ran; it has no evidentiary
+credit. The stable correction then received a fresh audit and complete API
+partition:
+
+```text
+.venv/bin/python scripts/validate_test_partitions.py \
+  --output /tmp/sw-phase115-hosted-api-fix-final/manifest.json
+# 12,248 exact/pairwise-disjoint nodes; zero collection warnings; exit 0
+
+.venv/bin/python scripts/run_pytest_partition.py api \
+  --manifest /tmp/sw-phase115-hosted-api-fix-final/manifest.json \
+  --junit /tmp/sw-phase115-hosted-api-fix-final/api-junit.xml \
+  --forbid-skips --timeout-seconds 2700
+# 263 passed in 121.99s; zero failures/errors/skips/warnings/xfails/xpasses;
+# exact manifest/selection/JUnit identity; exit 0
+```
+
+The final manifest, selection, JUnit, and result SHA-256 values are respectively
+`989433d39fdf2220b4ef544e1b7c661fea4bfc9b1ffd1bf2badf992b587afd06`,
+`8a9faf3553fb45d5bc891267d10d1bd656bf268d28b1aadbf889862336179e0a`,
+`0536082eab1944efebb44152b17436176923436813bfeab6c174e2b290d6b031`,
+and `ce98222ff4bc1e1e9eca5b0e7e833446f876d9ace547d1a34704da13444b3715`.
+No production code, physical data, scenario configuration, or Phase 115
+completion boundary changed. A normal corrective commit preserves the
+published failure and diagnosis rather than force-rewriting `main`; its hosted
+rerun remains the final independent environment control.
+
+Final corrective static/documentation commands also passed: repository-wide
+`.venv/bin/ruff check .` returned `All checks passed!`; focused `compileall -q`
+and `git diff --check` exited 0; `validate_test_evidence.py` reported 92
+no-direct oracles, 88 reviewed behavioral oracles, 918 structural nodes, and
+1,006 weak oracles; and `validate_docs_links.py` again proved invalid exit 1 /
+valid exit 0. Strict MkDocs built in 3.00 seconds with only the same one
+Material advisory and three intentional unnav pages.

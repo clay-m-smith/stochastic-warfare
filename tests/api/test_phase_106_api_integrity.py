@@ -207,8 +207,17 @@ async def test_api_override_changes_outcome_and_is_deterministic(
     assert free_engagements
     assert hold_engagements == []
     assert sum(side["disabled"] for side in details["free"]["result"]["sides"].values()) > 0
+    # Removing the prohibited legacy-derived maximum-range hold keeps these
+    # close opposing rosters at tactical five-second resolution, so the
+    # authored 7,200-second reinforcement is correctly still pending.
+    assert details["hold_a"]["result"]["ticks_executed"] == 100
+    assert details["hold_a"]["result"]["duration_s"] == 500.0
+    assert all(
+        event["event_type"] != "ReinforcementArrivedEvent"
+        for event in events["hold_a"]
+    )
     assert details["hold_a"]["result"]["sides"] == {
-        "blue": {"total": 6, "active": 2, "disabled": 0, "destroyed": 0},
+        "blue": {"total": 4, "active": 2, "disabled": 0, "destroyed": 0},
         "red": {"total": 6, "active": 6, "disabled": 0, "destroyed": 0},
     }
     hold_morale_events = [
@@ -216,10 +225,10 @@ async def test_api_override_changes_outcome_and_is_deterministic(
         for event in events["hold_a"]
         if event["event_type"] == "MoraleStateChangeEvent"
     ]
-    assert len(hold_morale_events) == 23
+    assert len(hold_morale_events) == 19
     assert Counter(
         event["data"]["cause"] for event in hold_morale_events
-    ) == Counter({"stochastic": 21, "rout_cascade": 1, "rally": 1})
+    ) == Counter({"stochastic": 17, "rout_cascade": 1, "rally": 1})
     final_hold_frame = json.loads(rows["hold_a"]["frames_json"])[-1]
     final_blue_morale = {
         unit["id"]: (unit["s"], unit["mo"])
@@ -228,28 +237,20 @@ async def test_api_override_changes_outcome_and_is_deterministic(
     }
     assert final_blue_morale == {
         "blue_m1a2_0000": (
-            UnitStatus.ROUTING.value,
-            MoraleState.ROUTED.value,
+            UnitStatus.ACTIVE.value,
+            MoraleState.STEADY.value,
         ),
         "blue_m1a2_0001": (
-            UnitStatus.ROUTING.value,
-            MoraleState.ROUTED.value,
+            UnitStatus.ACTIVE.value,
+            MoraleState.STEADY.value,
         ),
         "blue_m1a2_0002": (
             UnitStatus.ROUTING.value,
             MoraleState.ROUTED.value,
         ),
         "blue_m1a2_0003": (
-            UnitStatus.SURRENDERED.value,
-            MoraleState.SURRENDERED.value,
-        ),
-        "reinforce_blue_0000_m1a2_0000": (
-            UnitStatus.ACTIVE.value,
-            MoraleState.STEADY.value,
-        ),
-        "reinforce_blue_0000_m1a2_0001": (
-            UnitStatus.ACTIVE.value,
-            MoraleState.STEADY.value,
+            UnitStatus.ROUTING.value,
+            MoraleState.ROUTED.value,
         ),
     }
     assert details["free"]["config_overrides"] == {
