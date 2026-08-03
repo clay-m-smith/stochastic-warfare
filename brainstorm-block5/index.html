@@ -3494,6 +3494,62 @@
   
   
     <li class="md-nav__item">
+      <a href="../development-phases-block18/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 18 (134)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../development-phases-block19/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 19 (135-137)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../remediation-backlog/" class="md-nav__link">
         
   
@@ -6908,6 +6964,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-117/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 117 - Historical Outcome-Envelope Integrity
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -7152,6 +7236,34 @@
     
   
     Fog-of-War Contact Continuation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../specs/historical-outcome-envelope-integrity/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Historical Outcome-Envelope Integrity
   
 
     
@@ -8952,12 +9064,13 @@
 
 
 <h1 id="stochastic-warfare-block-5-brainstorm">Stochastic Warfare — Block 5 Brainstorm<a class="headerlink" href="#stochastic-warfare-block-5-brainstorm" title="Permanent link">&para;</a></h1>
+<p>Current status: Phase 117 supersedes these historical-validation claims; this document is retained only as planning history.</p>
 <h2 id="context">Context<a class="headerlink" href="#context" title="Permanent link">&para;</a></h2>
 <p>Blocks 1–4 (Phases 0–39) built the complete simulation engine, 5 historical eras, a REST API, a React web application, Docker packaging, and ~7,833 tests. 42 scenarios (27 modern + 15 historical). The engine has 19+ modules across all combat domains.</p>
 <p>Block 4 completed the web application and made the product runnable via a single command. Block 5 is the first systematic effort to improve <strong>core combat fidelity</strong> — comparing simulation outputs against historical outcomes and fixing the engine mechanics that produce incorrect results.</p>
 <hr />
 <h2 id="motivation-systematic-scenario-evaluation">Motivation: Systematic Scenario Evaluation<a class="headerlink" href="#motivation-systematic-scenario-evaluation" title="Permanent link">&para;</a></h2>
-<p>Running all 42 scenarios and comparing outputs to historical outcomes reveals <strong>systemic fidelity gaps</strong> in the engine. These are not bugs but architectural simplifications made during initial development that now produce unrealistic results.</p>
+<p>The original Block 5 planning exercise treated then-current scenario comparisons as historical evidence. Phase 117 does not accept those runs as historical validation; the tables below are retained only to explain the planning context that motivated later engine work.</p>
 <h3 id="scenarios-with-wrong-winner-6-of-16-historical">Scenarios with Wrong Winner (6 of 16 historical)<a class="headerlink" href="#scenarios-with-wrong-winner-6-of-16-historical" title="Permanent link">&para;</a></h3>
 <table>
 <thead>

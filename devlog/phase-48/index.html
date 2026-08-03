@@ -1823,6 +1823,62 @@
   
   
     <li class="md-nav__item">
+      <a href="../../development-phases-block18/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 18 (134)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development-phases-block19/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 19 (135-137)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../remediation-backlog/" class="md-nav__link">
         
   
@@ -5541,6 +5597,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-117/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 117 - Historical Outcome-Envelope Integrity
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -5785,6 +5869,34 @@
     
   
     Fog-of-War Contact Continuation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../specs/historical-outcome-envelope-integrity/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Historical Outcome-Envelope Integrity
   
 
     
@@ -6218,6 +6330,13 @@
 
 
 <h1 id="phase-48-block-5-deficit-resolution">Phase 48: Block 5 Deficit Resolution<a class="headerlink" href="#phase-48-block-5-deficit-resolution" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p><strong>Phase 117 / REM-050 correction (2026-08-02):</strong> Taiwan's archived
+<code>enable_dew</code> key was ignored; block presence created only a default DEW
+engine, and the scenario has no DEW-capable unit. The key was removed. Engine
+presence is not production engagement evidence; Phase 137 owns strict DEW
+configuration and a real configured loadout exercise.</p>
+</blockquote>
 <h2 id="summary">Summary<a class="headerlink" href="#summary" title="Permanent link">&para;</a></h2>
 <p>Phase 48 resolves 14 planned deficits accumulated during Block 5 (Phases 40-47), wires 6 additional previously-unused calibration parameters into the engagement loop, enhances the victory condition system, and formally defers 16 items as accepted limitations. Zero new features — only bug fixes, configurable constants (with identical defaults for backward compatibility), data gap fills, calibration wiring, and deficit inventory cleanup.</p>
 <p><strong>Test count</strong>: 52 new tests. <strong>Engine source files modified</strong>: 3 (battle.py, victory.py, ammunition.py). <strong>New YAML files</strong>: 6 (weapon, units, signatures). <strong>Modified YAML files</strong>: 10 (scenarios, unit defs). <strong>Existing tests updated</strong>: 2 (backward-compat fixes for changed domain mappings and _score_target signature).</p>

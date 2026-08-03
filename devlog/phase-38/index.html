@@ -1823,6 +1823,62 @@
   
   
     <li class="md-nav__item">
+      <a href="../../development-phases-block18/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 18 (134)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development-phases-block19/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 19 (135-137)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../remediation-backlog/" class="md-nav__link">
         
   
@@ -5508,6 +5564,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-117/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 117 - Historical Outcome-Envelope Integrity
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -5752,6 +5836,34 @@
     
   
     Fog-of-War Contact Continuation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../specs/historical-outcome-envelope-integrity/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Historical Outcome-Envelope Integrity
   
 
     
@@ -6154,6 +6266,18 @@
 <h1 id="phase-38-map-chart-enhancements">Phase 38: Map &amp; Chart Enhancements<a class="headerlink" href="#phase-38-map-chart-enhancements" title="Permanent link">&para;</a></h1>
 <h2 id="summary">Summary<a class="headerlink" href="#summary" title="Permanent link">&para;</a></h2>
 <p>Frontend-focused polish phase bringing the tactical map and charts up to the quality level designed in the Block 3 brainstorm. Four sub-phases: FOW toggle (38a), map visual enhancements (38b), cross-chart tick sync (38c), and dark mode (38d). Two small backend extensions for FOW detection data and elevation/sensor-range capture. No engine changes.</p>
+<blockquote>
+<p><strong>Phase 117 supersession:</strong> This file records Phase 38's scoped verdict at
+the time; its end-to-end FOW and bidirectional-sync claims are not current
+capability evidence. The live FOW toggle filters the main enemy-marker loop
+but not trails, arcs, hit testing, stale selection/sidebar state, or sensor
+overlays, and the API defaults to privileged frames without caller
+authorization. Chart clicks write a tick query, but the Map tab does not
+consume it and tab changes discard it. Phase 117 corrected exact
+<code>UnitStatus</code> rendering and rewrote the public guide; REM-041 / Phase 128 owns
+authorized complete side-safe exposure and REM-049 / Phase 136 owns replay,
+query, export, editor, and analysis semantic integrity.</p>
+</blockquote>
 <p><strong>Tests</strong>: 35 new (13 Python + 22 frontend vitest). Total: ~7,811 (7,289 Python passing + 23 skipped + 241 deselected slow + 258 frontend vitest).</p>
 <p><strong>Files</strong>: 6 new + 57 modified = 63 total files changed.</p>
 <h2 id="what-was-built">What Was Built<a class="headerlink" href="#what-was-built" title="Permanent link">&para;</a></h2>

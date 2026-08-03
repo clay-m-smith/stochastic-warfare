@@ -1,0 +1,7484 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="High-fidelity stochastic wargame simulator — multi-scale, multi-domain, multi-era">
+      
+      
+        <meta name="author" content="Clay Smith">
+      
+      
+        <link rel="canonical" href="https://clay-m-smith.github.io/stochastic-warfare/devlog/phase-117/">
+      
+      
+        <link rel="prev" href="../phase-116/">
+      
+      
+        <link rel="next" href="../../specs/project-structure/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.4">
+    
+    
+      
+        <title>Phase 117 - Historical Outcome-Envelope Integrity - Stochastic Warfare</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="blue-grey" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#phase-117-historical-outcome-envelope-integrity" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="Stochastic Warfare" class="md-header__button md-logo" aria-label="Stochastic Warfare" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Stochastic Warfare
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Phase 117 - Historical Outcome-Envelope Integrity
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="blue-grey" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="blue-grey" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/clay-m-smith/stochastic-warfare" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    clay-m-smith/stochastic-warfare
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../guide/getting-started/" class="md-tabs__link">
+          
+  
+  
+  Guide
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../concepts/architecture/" class="md-tabs__link">
+          
+  
+  
+  Concepts
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../reference/api/" class="md-tabs__link">
+          
+  
+  
+  Reference
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../brainstorm/" class="md-tabs__link">
+          
+  
+  
+  Architecture (Internal)
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../development-phases/" class="md-tabs__link">
+          
+  
+  
+  Development Phases
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../" class="md-tabs__link">
+          
+  
+  
+  Devlog
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../specs/project-structure/" class="md-tabs__link">
+          
+  
+  
+  Specifications
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="Stochastic Warfare" class="md-nav__button md-logo" aria-label="Stochastic Warfare" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Stochastic Warfare
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/clay-m-smith/stochastic-warfare" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    clay-m-smith/stochastic-warfare
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Guide
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Guide
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guide/getting-started/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting Started
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guide/web-ui/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Web UI
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guide/scenarios/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Scenario Library
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Concepts
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Concepts
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../concepts/architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../concepts/models/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Mathematical Models
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/eras/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Eras
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/units/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Units & Equipment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture (Internal)
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Architecture (Internal)
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../brainstorm/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Core Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../brainstorm-post-mvp/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Post-MVP Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../brainstorm-block2/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 2 Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../brainstorm-block3/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 3 Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../brainstorm-block4/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 4 Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../brainstorm-block5/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 5 Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../brainstorm-block6/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 6 Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../brainstorm-block7/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 7 Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../brainstorm-block8/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 8 Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../brainstorm-block9/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 9 Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../brainstorm-block10/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 10 Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../brainstorm-block11/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 11 Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Development Phases
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Development Phases
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development-phases/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MVP (0-10)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development-phases-post-mvp/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Post-MVP (11-24)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development-phases-block2/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 2 (25-30)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development-phases-block3/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 3 (31-36)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development-phases-block4/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 4 (37-39)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development-phases-block5/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 5 (40-48)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development-phases-block6/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 6 (49-57)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development-phases-block7/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 7 (58-67)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development-phases-block8/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 8 (68-82)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development-phases-block9/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 9 (83-91)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development-phases-block10/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 10 (92-97)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development-phases-block11/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 11 (98-104)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development-phases-block12/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 12 (105-114)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development-phases-block13/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 13 (115-127)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development-phases-block14/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 14 (128-130)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development-phases-block15/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 15 (131)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development-phases-block16/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 16 (132)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development-phases-block17/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 17 (133)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development-phases-block18/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 18 (134)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development-phases-block19/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 19 (135-137)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../remediation-backlog/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Remediation Backlog
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Devlog
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Devlog
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-0/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 0 - Scaffolding
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-1/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 1 - Terrain & Environment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-2/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 2 - Entities & Movement
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-3/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 3 - Detection & Intelligence
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-4/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 4 - Combat & Morale
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-5/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 5 - C2 Infrastructure
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-6/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 6 - Logistics & Supply
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-7/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 7 - Engagement Validation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-8/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 8 - AI & Planning
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-9/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 9 - Simulation Orchestration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-10/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 10 - Campaign Validation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-11/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 11 - Core Fidelity Fixes
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-12/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 12 - Deep Systems Rework
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-13/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 13 - Performance Optimization
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-14/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 14 - Tooling & Dev Experience
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-15/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 15 - Real-World Terrain
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-16/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 16 - Electronic Warfare
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-17/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 17 - Space & Satellite
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-18/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 18 - CBRN Effects
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-19/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 19 - Doctrinal AI Schools
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-20/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 20 - WW2 Era
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-21/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 21 - WW1 Era
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-22/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 22 - Napoleonic Era
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-23/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 23 - Ancient & Medieval Era
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-24/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 24 - Unconventional Warfare
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-25/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 25 - Engine Wiring
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-26/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 26 - Core Polish
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-27/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 27 - Combat Completeness
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-28/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 28 - Modern Data Package
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-28.5/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 28.5 - Directed Energy
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-29/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 29 - Historical Data Expansion
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-30/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 30 - Scenario Library
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-31/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 31 - Documentation Site
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-32/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 32 - API & Service Foundation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-33/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 33 - Frontend Foundation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-34/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 34 - Run Results & Analysis
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-35/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 35 - Tactical Map
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-36/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 36 - Scenario Tweaker & Polish
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-37/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 37 - Integration Fixes & E2E
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-38/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 38 - Map & Chart Enhancements
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-39/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 39 - Quality & Packaging
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-40/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 40 - Battle Loop Foundation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-41/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 41 - Combat Depth
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-42/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 42 - Tactical Behavior
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-43/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 43 - Domain-Specific Resolution
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-44/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 44 - Environmental & Subsystem Integration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-45/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 45 - Mathematical Model Audit & Hardening
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-46/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 46 - Scenario Data Cleanup & Expansion
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-47/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 47 - Full Recalibration & Validation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-48/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 48 - Block 5 Deficit Resolution
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-49/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 49 - Calibration Schema Hardening
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-50/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 50 - Combat Fidelity Polish
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-51/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 51 - Naval Combat Completeness
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-52/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 52 - Environmental Continuity
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-53/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 53 - C2 & AI Completeness
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-54/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 54 - Era-Specific & Domain Sub-Engine Wiring
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-55/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 55 - Resolution & Scenario Migration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-56/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 56 - Performance & Logistics
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-57/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 57 - Full Validation & Regression
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-58/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 58 - Structural Verification & Core Combat Wiring
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-59/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 59 - Atmospheric & Ground Environment Wiring
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-60/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 60 - Obscurants, Fire, & Visual Environment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-61/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 61 - Maritime, Acoustic, & EM Environment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-62/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 62 - Human Factors, CBRN, & Air Combat Environment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-63/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 63 - Cross-Module Feedback Loops
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-64/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 64 - C2 Friction & Command Delay
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-65/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 65 - Space & EW Sub-Engine Activation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-66/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 66 - Unconventional, Naval, & Cleanup
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-67/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 67 - Integration Validation & Recalibration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-68/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 68 - Consequence Enforcement
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-69/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 69 - C2 Depth
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-70/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 70 - Performance Optimization
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-71/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 71 - Missile & Carrier Ops Completion
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-72/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 72 - Checkpoint & State Completeness
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-73/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 73 - Historical Scenario Correctness
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-74/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 74 - Combat Engine Unit Tests
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-75/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 75 - Simulation Core & Domain Unit Tests
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-76/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 76 - API Robustness
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-77/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 77 - Frontend Accessibility
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-78/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 78 - P2 Environment Wiring
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-79/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 79 - CI/CD & Packaging
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-80/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 80 - API & Frontend Sync
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-81/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 81 - Recalibration & Validation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-82/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 82 - Block 8 Postmortem & Documentation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-83/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 83 - Profiling Infrastructure
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-84/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 84 - Spatial Culling & Scan Scheduling
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-85/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 85 - LOD & Aggregation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-86/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 86 - Engagement & Calibration Optimization
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-87/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 87 - Expanded Numba JIT
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-88/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 88 - SoA Data Layer
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-89/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 89 - Per-Side Parallelism
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-90/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 90 - Validation & Benchmarking
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-91/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 91 - Scenario Recalibration & Regression
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-92/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 92 - API Analytics & Frame Enrichment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-93/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 93 - Results Dashboard Depth
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-94/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 94 - Tactical Map Enrichment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-95/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 95 - Calibration & Scenario Editor Depth
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-96/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 96 - Analysis & Event Interaction
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-97/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 97 - Data Catalog & Block 10 Validation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-98/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 98 - Shared Prework (Block 11 Golden Scenarios)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-99/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 99 - Debecka Pass 2003 (Block 11)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-100/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 100 - Khafji 1991 (Block 11)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-101/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 101 - Fallujah Phase Line Fran 2004 (Block 11)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-102/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 102 - Bint Jbeil + INS Hanit 2006 (Block 11)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-103/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 103 - Block 11 Polish - OOB + engine gap tightening
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-104/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 104 - Configurable Deployment Modes
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-105/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 105 - Checkpoint State Integrity
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-106/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 106 - API Execution Integrity
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-107/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 107 - Scenario Configuration Wiring
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-108/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 108 - Logistics Runtime Wiring
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-109/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 109 - Equipment Mapping Integrity
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-110/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 110 - ASAT Production Integration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-111/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 111 - Time-on-Target Execution
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-112/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 112 - Validation and Documentation Trust
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-113/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 113 - Morale State Ownership
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-114/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 114 - Era Override Execution
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-115/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 115 - Sensing-Aware Tactical Standoff
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-116/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 116 - Fog-of-War Contact Continuation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 117 - Historical Outcome-Envelope Integrity
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 117 - Historical Outcome-Envelope Integrity
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#objective" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Objective
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#start-state" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Start state
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#specification-and-research" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Specification and research
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#baseline-inventory" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Baseline inventory
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#production-red-proof" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Production red proof
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#implementation-evidence" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Implementation evidence
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#focused-validation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Focused validation
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#conditional-and-broader-validation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Conditional and broader validation
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#simplify-review" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Simplify review
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#documentation-and-cross-document-audit" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Documentation and cross-document audit
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Documentation and cross-document audit">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#postmortem-reopened-exhaustive-web-ui-audit" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Postmortem-reopened exhaustive Web UI audit
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#postmortem" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Postmortem
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#remaining-deficits" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Remaining deficits
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_8" >
+        
+          
+          <label class="md-nav__link" for="__nav_8" id="__nav_8_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Specifications
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_8">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Specifications
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../specs/project-structure/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Project Structure
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../specs/checkpoint-state/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Checkpoint State Contract
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../specs/equipment-mapping/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Equipment Mapping and Runtime Loadouts
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../specs/asat-production-integration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ASAT Production Integration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../specs/time-on-target-execution/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Time-on-Target Execution
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../specs/validation-and-documentation-trust/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Validation and Documentation Trust
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../specs/fog-of-war-contact-continuation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Fog-of-War Contact Continuation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../specs/historical-outcome-envelope-integrity/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Historical Outcome-Envelope Integrity
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../specs/morale-state-ownership/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Morale State Ownership
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../specs/era-override-execution/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Era Override Execution
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../specs/sensing-aware-tactical-standoff/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Sensing-Aware Tactical Standoff
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../skills-and-hooks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Skills & Hooks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#objective" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Objective
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#start-state" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Start state
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#specification-and-research" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Specification and research
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#baseline-inventory" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Baseline inventory
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#production-red-proof" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Production red proof
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#implementation-evidence" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Implementation evidence
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#focused-validation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Focused validation
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#conditional-and-broader-validation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Conditional and broader validation
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#simplify-review" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Simplify review
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#documentation-and-cross-document-audit" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Documentation and cross-document audit
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Documentation and cross-document audit">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#postmortem-reopened-exhaustive-web-ui-audit" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Postmortem-reopened exhaustive Web UI audit
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#postmortem" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Postmortem
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#remaining-deficits" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Remaining deficits
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="phase-117-historical-outcome-envelope-integrity">Phase 117 - Historical Outcome-Envelope Integrity<a class="headerlink" href="#phase-117-historical-outcome-envelope-integrity" title="Permanent link">&para;</a></h1>
+<p><strong>Status:</strong> Complete</p>
+<p><strong>Remediation:</strong> REM-030</p>
+<h2 id="objective">Objective<a class="headerlink" href="#objective" title="Permanent link">&para;</a></h2>
+<p>Replace catalog winner tables, unqualified <code>documented_outcomes</code>, and
+legacy-runner comparisons presented as historical accuracy with one typed,
+source-backed, held-out production backtest and disposition contract. This
+phase will not tune physical performance or manufacture a historical pass.</p>
+<h2 id="start-state">Start state<a class="headerlink" href="#start-state" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Phase 116 is committed and synchronized at
+  <code>9a74d5ca7f9f3c8f6d023c5dd3d31862497f5435</code>.</li>
+<li><code>git pull --ff-only origin main</code> reported <code>Already up to date</code>.</li>
+<li><code>git status --short --branch</code> reported clean <code>## main...origin/main</code>, and
+  local/origin HEAD both resolved to the exact Phase 116 commit.</li>
+<li>The Phase 116 hosted push is fully green: the standard partition passed
+  11,953/11,953 with six known warnings in 1,624.50 seconds; exact partition,
+  frontend, terrain, API, E2E, Ruff/ESLint, documentation, production
+  benchmark, and Docker jobs all passed.</li>
+</ul>
+<h2 id="specification-and-research">Specification and research<a class="headerlink" href="#specification-and-research" title="Permanent link">&para;</a></h2>
+<p>The Phase 117 specification is
+<a href="../../specs/historical-outcome-envelope-integrity/">Historical Outcome-Envelope Integrity</a>.
+The <code>$spec</code>, <code>$backtest</code>, <code>$research-military</code>, <code>$research-models</code>, and
+<code>$design-review</code> routes apply.</p>
+<p>Authoritative source review found:</p>
+<ul>
+<li>U.S. Army <em>ARMOR</em>, October--December 2015, p. 98 records 28 Iraqi
+  tanks plus 16 personnel carriers destroyed, no American losses, and a
+  23-minute Eagle Troop action at 73 Easting.</li>
+<li>U.S. Army Special Operations History Office <em>Veritas</em>, vol. 1, no. 1,
+  p. 84 records a two-and-a-half-hour Debecka crossroads fight and five
+  T-55s, three APCs, and eight cargo vehicles destroyed. This conflicts with
+  the shipped four-hour/modal-ten proxy and leaves it unsupported.</li>
+<li>GAO's DoD VV&amp;A summaries require intended-use validation, documented
+  evidence/limitations, and suitable data rather than metadata presence.</li>
+<li>NIST's exact binomial interval supplies the study's finite-sample coverage
+  calculation. The corrected specification applies it to one joint per-run
+  outcome rather than combining independent per-metric bounds.</li>
+</ul>
+<p>The design review rejected winner-only gating and required a revised direction:
+winner is diagnostic, while source-scoped loss and duration metrics form one
+joint gate for the real 73 Easting study. The follow-up review also rejected
+post-run scoped extraction, independent marginal bounds, an ambiguous terminal
+boundary, mixed plan/error semantics, and a scenario-level validation badge.
+The corrected contract uses a factory-owned per-session backtest runner, an
+exact 1,380-second source-synchronous cutoff with explicit right-censoring, one
+joint binomial success per seed, an exact pre-run-rejection/runtime-<code>ERROR</code>
+split, and claim-level public dispositions with conservative aggregation.
+Fresh SciPy evaluation of the exact rule gave lower bounds 0.860891659332 for
+20/20 joint successes and 0.783893835793 for 19/20, so the frozen 0.80 policy
+requires all 20 runs to match the complete joint envelope.
+The bootstrap study plan is based on the clean Phase 116 design base
+<code>9a74d5ca7f9f3c8f6d023c5dd3d31862497f5435</code>. Its initial canonical digest was
+<code>8d80b6748d8f50890954178618db7faaf8ea9b7c8b2557c2c13d9d74887e0fd6</code>.
+Postmortem review then found that its single exact-44 Iraqi vehicle gate could
+accept the wrong tank/personnel-carrier composition. A production-red
+regression proved the defect, and the unaccepted bootstrap plan was corrected
+to separate exact 28-tank and 16-personnel-carrier gates. Its corrected digest
+is <code>3e70e8de01f565c586a4598b8758c1564e8b0bd0d952fbfbcc24a7c14094c400</code>.
+The pre-correction artifact is invalidated and the complete held-out study is
+rerun against the corrected plan before closure; no accepted evidence is
+retroactively redefined.
+Because the plan and implementation share Phase 117's one-commit transition,
+its <code>predeclaration_revision</code> is explicitly null and it is ineligible for
+validation promotion.
+Zero retained validated scenarios is non-vacuous only with pass/fail evaluator
+controls, exact claim digests, a real durable failed artifact, and public
+removal of unqualified legacy metadata.</p>
+<p>The Army outcome source also informed the shipped 73 Easting metadata. The
+study therefore declares source reuse and is ineligible for
+<code>production_validated</code> even if it were to pass; held-out RNG seeds cannot make
+reused historical evidence independent. A separate non-modern production
+control will prove that the new route retains era identity without absorbing
+REM-040's legacy conversion repair.</p>
+<h2 id="baseline-inventory">Baseline inventory<a class="headerlink" href="#baseline-inventory" title="Permanent link">&para;</a></h2>
+<p>Read-only inventory commands and code tracing found:</p>
+<ul>
+<li>31 shipped scenario YAML files contain <code>documented_outcomes</code>;</li>
+<li>the collections contain 83 metrics and 54 unique metric names;</li>
+<li>source-quality counts are 19 tier-0, 41 tier-1, and 23 tier-2 entries;</li>
+<li>tolerance counts are 1 at 1.3x, 2 at 1.4x, 7 at 1.5x, 19 at 2x,
+  53 at 3x, and 1 at 5x;</li>
+<li>27/31 collections have root <code>sources</code> lists, totaling 86 strings;</li>
+<li>six collections are synthetic/future analytical cases rather than observed
+  historical engagements;</li>
+<li>the production analysis vocabulary directly supports only 2/83 legacy
+  metric names (<code>exchange_ratio</code> in two scenarios); and</li>
+<li>no production historical-verdict schema or artifact exists.</li>
+</ul>
+<p>Exactly 19 Python test files mention <code>documented_outcomes</code>; nine call
+<code>compare_to_historical</code>. Four shipped suites use the simplified legacy runner,
+three factory-backed suites perform current metric projection only, and two
+use synthetic comparator fixtures. No shipped comparison asserts the legacy
+boolean verdict. The canonical 46-scenario seed-42 evaluator is already
+correctly labeled current-engine regression only.</p>
+<p>The strongest public contradiction is the frontend's five “golden” scenarios,
+described as historically calibrated and regression-tested against historical
+outcome envelopes. The detail endpoint also returns raw legacy outcome
+metadata, while the UI reads the nonexistent field <code>metric</code> instead of the
+authored <code>name</code>.</p>
+<h2 id="production-red-proof">Production red proof<a class="headerlink" href="#production-red-proof" title="Permanent link">&para;</a></h2>
+<p>Before implementation, this fresh factory-owned command exercised the first
+held-out seed at the exact 1,380-second observation cutoff:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>.venv/bin/python<span class="w"> </span>-c<span class="w"> </span><span class="s2">&quot;from stochastic_warfare.tools._run_helpers import run_scenario_batch; r=run_scenario_batch(&#39;data/scenarios/73_easting/scenario.yaml&#39;, {}, 1, 11700, 276, metric_names=[&#39;blue_destroyed&#39;,&#39;red_destroyed&#39;,&#39;win_blue&#39;,&#39;ticks_executed&#39;], data_dir=&#39;data&#39;); q=r.runs[0]; print({&#39;metrics&#39;:r.metrics_dict(),&#39;duration_s&#39;:q.duration_s,&#39;condition_type&#39;:q.condition_type,&#39;winning_side&#39;:q.winning_side,&#39;game_over&#39;:q.game_over,&#39;seed&#39;:q.seed,&#39;code_commit&#39;:r.code_revision.commit,&#39;dirty&#39;:r.code_revision.dirty,&#39;worktree_fingerprint&#39;:r.code_revision.worktree_fingerprint,&#39;source_fingerprint&#39;:r.source_fingerprint,&#39;config_fingerprint&#39;:r.config_fingerprint})&quot;</span>
+</code></pre></div>
+<p>It completed in approximately 5 seconds under the user's accepted shared-core
+contention and reported seed 11700, 276 ticks, 1,380 seconds,
+<code>condition_type=max_ticks</code>, <code>winning_side=draw</code>, 0 blue destroyed, 0 red
+destroyed, and no blue win. The source requires exactly 28 scoped Iraqi tanks,
+16 scoped Iraqi personnel carriers, zero scoped American vehicles, and a
+natural 1,380-second completion. Thus the fresh production run already misses
+the joint outcome on both Iraqi component losses and censored duration; it is
+not a no-crash or winner-only inference. Provenance bound the
+run to Phase 116 commit <code>9a74d5ca7f9f3c8f6d023c5dd3d31862497f5435</code>,
+dirty worktree fingerprint
+<code>b66f62aab705457ae9cba20db95c31dfacb211fe19b13e071807314454a6e924</code>,
+source fingerprint
+<code>328467cd1f200cf2f0157da917ab20b9e9bbc43fb7ee985f5d4472d2df3cd3e5</code>,
+and config fingerprint
+<code>5edee0f800115415b0d6652999acdd23552f6fcc839af2ba7db68e86fd644728</code>.</p>
+<p>The pre-implementation runner can report only whole-side generic metrics and
+cannot yet issue scoped receipts, validate the plan/ledger, compute the joint
+bound, or persist a self-validating artifact. Frozen red tests for those
+missing boundaries and the legacy/API/frontend fail-open behavior follow.</p>
+<h2 id="implementation-evidence">Implementation evidence<a class="headerlink" href="#implementation-evidence" title="Permanent link">&para;</a></h2>
+<p>Phase 117 introduces one strict historical-validation package under
+<code>stochastic_warfare.validation.historical_backtest</code>. The implementation is
+split by responsibility rather than by test fixture:</p>
+<ul>
+<li><code>claims.py</code> owns the typed claim ledger, source scanner, scenario summaries,
+  accepted-evidence verification, and conservative aggregation;</li>
+<li><code>studies.py</code> owns strict source, lineage, seed-interval, metric, acceptance,
+  predeclaration, and study-plan models;</li>
+<li><code>runner.py</code> accepts only one factory-prepared production scenario, builds a
+  fresh runtime session for every held-out seed, observes the synchronized
+  source boundary, and emits complete typed receipts;</li>
+<li><code>evaluator.py</code> computes one exact joint binomial result from the ordered
+  per-run gating vector;</li>
+<li><code>artifacts.py</code> owns typed completed/<code>ERROR</code> evidence, canonical digests,
+  receipt recomputation, atomic write, and reload validation; and</li>
+<li><code>scripts/run_historical_backtest.py</code> is the bounded command boundary that
+  loads the canonical ledger/plan, calls <code>SimulationRuntimeFactory.prepare</code>,
+  runs the study, and publishes only beneath <code>docs/evidence/</code>.</li>
+</ul>
+<p>The plan and claim schemas share one stable lowercase ID contract. Seed
+interval counts and overlaps use arithmetic rather than constructing unbounded
+sets, and a plan may request at most 1,000 held-out production runs. Unknown
+fields, duplicate YAML keys and IDs, booleans in numeric fields, non-finite
+values, ambiguous units, unsupported extractors, winner-only gating, seed
+lineage overlap, impossible statistical policies, nonempty analysis patches,
+symlinked inputs/outputs, and preparation identity drift all reject. Errors
+before valid execution publish nothing; failures after execution begins
+produce a typed <code>ERROR</code> artifact rather than a false historical <code>FAIL</code>.</p>
+<p>The runtime path has a closed extractor vocabulary for exact side/unit-type
+status counts, natural-terminal duration with right-censoring, winner
+diagnostics, and explicitly scoped exchange ratio. It exposes the production
+terminal-cause vocabulary, effective era and era-contract digests, authored
+and loaded typed rosters, exact assignment/loadout identities, and one
+observation receipt per seed. The runner never constructs a context, engine,
+unit, force, or loadout. <code>load_effective_unit_loader()</code> is shared by
+<code>ScenarioLoader</code> and study scope validation so the non-modern control audits
+the same base-plus-era catalog boundary instead of reimplementing loadouts.</p>
+<p>The durable artifact recomputes vectors, per-metric membership, joint
+successes, lower bound, verdict, terminal/censoring evidence, claim bindings,
+and its self-digest on reload. Acceptance is a separate, stricter operation:
+it requires a clean completed <code>PASS</code>, independent evidence lineage, immutable
+predeclaration ancestry, exact claim/metric binding, committed plan and
+artifact content, no relevant code/dependency drift, and fresh factory
+preparation with matching production identities. A result from one scenario
+cannot promote another scenario's claim.</p>
+<p>Scanner version 2 audits seven explicit source groups: two API Python paths,
+three public frontend paths, four frontend test paths, 38 Python test paths,
+101 public-document paths, 34 scenario-YAML paths, and 12 workflow-skill paths.
+It recognizes separator variants and camel-case status tokens, rejects
+generated <code>*.d.ts</code> declarations from its TypeScript source contract, and
+binds every candidate file either to exact claim IDs or to an explicit
+reviewed-nonclaim rationale. Reviews are deliberately file-level rather than
+occurrence-level; semantic locators and the manual cross-document audit remain
+part of closure evidence.</p>
+<p>The current ledger contains 243 claims: 224 <code>unsupported</code>, 19
+<code>current_engine_regression_only</code>, and zero <code>production_validated</code>. Its surface
+inventory is:</p>
+<table>
+<thead>
+<tr>
+<th>Surface</th>
+<th style="text-align: right;">Claims</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Public documentation</td>
+<td style="text-align: right;">164 across 67 paths</td>
+</tr>
+<tr>
+<td>Scenario <code>documented_outcomes</code> collections</td>
+<td style="text-align: right;">31 collections / 83 metrics</td>
+</tr>
+<tr>
+<td>Python <code>documented_outcomes</code> tests</td>
+<td style="text-align: right;">19</td>
+</tr>
+<tr>
+<td>Python historical-claim tests</td>
+<td style="text-align: right;">6</td>
+</tr>
+<tr>
+<td>Scenario historical prose</td>
+<td style="text-align: right;">3</td>
+</tr>
+<tr>
+<td>Current-engine regression snapshot</td>
+<td style="text-align: right;">1</td>
+</tr>
+<tr>
+<td>Duplicated regression tables</td>
+<td style="text-align: right;">3</td>
+</tr>
+<tr>
+<td>API claim surfaces</td>
+<td style="text-align: right;">4</td>
+</tr>
+<tr>
+<td>Frontend claim surfaces</td>
+<td style="text-align: right;">11</td>
+</tr>
+<tr>
+<td>Frontend historical-claim test</td>
+<td style="text-align: right;">1</td>
+</tr>
+</tbody>
+</table>
+<p>The 196 candidate-file reviews consist of 135 claim-bound reviews and 61
+explicit exclusions. Full ledger/data validation currently reports zero
+uninventoried collections, missing collections, unreviewed candidates, stale
+reviews, source-digest mismatches, source-rule mismatches, binding errors,
+obsolete boolean historical APIs, or claim-content digest mismatches. The
+ledger and all source-review digests will be frozen again after the final
+status documentation edits.</p>
+<p>Legacy <code>envelope_check.py</code> and its structural-only suite are removed. The
+compatibility <code>HistoricalDataLoader</code> and Monte Carlo comparison code now
+reject duplicate metrics, booleans masquerading as numbers, missing/empty /
+partial/non-finite vectors, and empty reports. They expose diagnostics but no
+boolean historical-validation verdict. Five older scenario suites now assert
+current production regression semantics without presenting direct helper
+construction or legacy comparison as historical evidence.</p>
+<p>The scenario API owns a single cached immutable application-ledger load and
+returns claim-level disposition, limitation, intended use, metric/event scope,
+regression-evidence flag, and accepted references. Its conservative aggregate
+cannot widen an individual claim. Scenario detail removes raw
+<code>documented_outcomes</code> and source lists from the authoritative public config;
+unknown or externally rooted scenarios receive a synthetic unsupported result
+without leaking an absolute path. The React list/detail pages and TypeScript
+schema consume that exact claim-level contract and no longer present the five
+regression references as historically calibrated “golden” scenarios.</p>
+<p>The corrected 73 Easting plan executed all seeds 11700--11719. Every run
+observed zero destroyed scoped Iraqi tanks against the exact 28 required, zero
+destroyed scoped Iraqi personnel carriers against the exact 16 required, zero
+destroyed scoped American vehicles against the exact zero required, and the
+1,380-second cutoff without a natural terminal. The complete joint result is
+therefore 0/20 with lower confidence bound 0.0. Terminal diagnostics are 16
+draws and four red wins, all with the production
+<code>max_ticks</code> condition. The artifact is a completed <code>FAIL</code>, not an <code>ERROR</code> and
+not accepted evidence; <code>study_failed</code>, dirty candidate execution, reused
+source evidence, and the one-commit bootstrap's missing immutable
+predeclaration independently prevent promotion. The result changes the public
+claim only by making its unsupported status explicit. It does not tune the
+scenario or identify the first production fidelity defect.</p>
+<table>
+<thead>
+<tr>
+<th>Capability stage</th>
+<th>Production evidence</th>
+<th>Result</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Declared</td>
+<td>strict ledger, source, plan, extractor, acceptance, receipt, and artifact schemas</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>Loaded</td>
+<td>canonical 243-claim ledger and both 73 Easting / Agincourt plans load through public strict loaders</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>Wired</td>
+<td>CLI and accepted-evidence verification reach <code>SimulationRuntimeFactory</code>, prepared scenario, runner, evaluator, writer, and reload validator</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>Enabled</td>
+<td>explicit plan opt-in; missing/unknown claims remain unsupported and no historical feature toggle exists</td>
+<td>Yes / N/A toggle</td>
+</tr>
+<tr>
+<td>Exercised</td>
+<td>20 fresh 73 Easting sessions plus a non-modern Agincourt production control</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>Outcome-affecting</td>
+<td>gating-boundary mutations change the verdict; winner-only diagnostics cannot rescue a failed gate</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>Persisted/exposed</td>
+<td>reload-validated failed JSON artifact plus claim-level API/frontend projection</td>
+<td>Yes</td>
+</tr>
+</tbody>
+</table>
+<p>Checkpoint persistence is N/A for the backtest owner: it owns no mutable
+simulation state and creates complete fresh runtime sessions. Runtime
+checkpoint behavior is unchanged and retains its ordinary regression gates.</p>
+<h2 id="focused-validation">Focused validation<a class="headerlink" href="#focused-validation" title="Permanent link">&para;</a></h2>
+<p>The historical-contract candidate passed 221 focused nodes together after the
+bounded-interval, boolean-coercion, single-audit, cache, and acceptance fixes:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>.venv/bin/python -m pytest -q \
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>  tests/unit/test_phase117_historical_acceptance.py \
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>  tests/unit/test_phase117_historical_adversarial.py \
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>  tests/unit/test_phase117_historical_artifacts.py \
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>  tests/unit/test_phase117_historical_integrity.py \
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>  tests/unit/test_phase117_historical_runtime.py \
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>  tests/unit/test_historical_data.py \
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>  tests/unit/test_monte_carlo.py
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a># 221 passed in 80.19s; 0 failed/errors/skipped/warnings
+</code></pre></div>
+<p>A later independent simplify review found that study IDs were less strict than
+accepted-evidence claim IDs. The shared stable-ID repair and its malformed-plan
+control then passed the affected 12/12 nodes in 1.29s. Because that 12-node run
+overlaps the 221-node set, it is not added to the count. The post-document
+freeze reruns the resulting 222-node focused selection once and records its
+authoritative count below.</p>
+<p>The first 222-node freeze attempt deliberately retained a real integrity red:
+217 passed and five failed in 80.12s after a one-line specification reflow was
+made following ledger regeneration. Every failure named the same exact
+<code>docs/specs/historical-outcome-envelope-integrity.md</code> source-review and claim
+digest mismatch; no runner/evaluator behavior failed. This is expected
+fail-closed behavior, not accepted green evidence. The specification locator,
+review digest, claim digest, and ledger self-digest are refreshed before the
+authoritative rerun.</p>
+<p>After that mechanical refresh, the exact same selection passed:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>UV_CACHE_DIR=/tmp/sw-phase117-final-uv-cache uv run --no-sync python \
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>  -m pytest -p no:cacheprovider -o addopts= -q \
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>  tests/unit/test_phase117_historical_acceptance.py \
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>  tests/unit/test_phase117_historical_adversarial.py \
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>  tests/unit/test_phase117_historical_artifacts.py \
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>  tests/unit/test_phase117_historical_integrity.py \
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>  tests/unit/test_phase117_historical_runtime.py \
+<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>  tests/unit/test_historical_data.py \
+<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a>  tests/unit/test_monte_carlo.py
+<a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a># 222 passed in 97.86s; 0 failed/errors/skipped/warnings
+</code></pre></div>
+<p>Postmortem added three more focused nodes after that freeze: unstable claim-ID
+rejection, final held-out-run source-drift rejection, and canonical rejection
+of the dot path. The split 28-tank / 16-personnel-carrier contract strengthened
+an existing plan node, and its duration-control indexing repair did not add a
+node. The then-current selection passed freshly with the same seven-file
+boundary:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>.venv/bin/python -m pytest -q \
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>  tests/unit/test_phase117_historical_integrity.py \
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>  tests/unit/test_phase117_historical_artifacts.py \
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>  tests/unit/test_phase117_historical_runtime.py \
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>  tests/unit/test_phase117_historical_acceptance.py \
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>  tests/unit/test_phase117_historical_adversarial.py \
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>  tests/unit/test_historical_data.py \
+<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>  tests/unit/test_monte_carlo.py
+<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a># 225 passed in 101.37s; 0 failures/errors/skips; no warnings displayed
+</code></pre></div>
+<p>The final scanner-bound inventory update deliberately produced one additional
+red: the exact-ledger test expected 99 public-document candidates while the
+reviewed Phase 38/39 supersession notices made the live value 101. It failed
+1/1 at that assertion in 12.04s. After updating the exact expected inventory to
+101 public documents, 12 workflow paths, and 59 exclusions and refreshing the
+test file's own review digest, the complete seven-file selection passed again:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>UV_CACHE_DIR=/tmp/sw-phase117-final-uv-cache uv run --no-sync python \
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>  -m pytest -p no:cacheprovider -o addopts= -q \
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>  tests/unit/test_phase117_historical_acceptance.py \
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>  tests/unit/test_phase117_historical_adversarial.py \
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>  tests/unit/test_phase117_historical_artifacts.py \
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>  tests/unit/test_phase117_historical_integrity.py \
+<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a>  tests/unit/test_phase117_historical_runtime.py \
+<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a>  tests/unit/test_historical_data.py \
+<a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a>  tests/unit/test_monte_carlo.py
+<a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a># 226 passed in 82.50s; 0 failures/errors/skips; no warnings displayed
+</code></pre></div>
+<p>The final 196-candidate refresh intentionally triggered the same exact-count
+guard once more: 225 nodes passed and
+<code>test_strict_claim_ledger_audits_the_exact_repository_inventory</code> failed in
+82.81s because it still expected 101 public-document candidates while the two
+newly reviewed correction records make the exact value 103. Its paired
+reviewed-nonclaim expectation was updated from 59 to 61 at the same boundary.
+This one-failure run is retained as a fail-closed red, not added to the passing
+total. After correcting the two exact expectations and regenerating the
+source-bound ledger, the identical seven-file selection passed 226/226 in
+74.27s with no failures, errors, skips, or displayed warnings.</p>
+<p>The seed-interval and legacy numeric coercion matrix passed 79/79 in 1.98s.
+The existing historical-data and Monte Carlo compatibility suites passed
+86/86 in 1.14s. Two runtime/checkpoint regression controls passed in 4.28s.
+<code>$audit-determinism</code> returned <strong>DETERMINISTIC</strong> and
+<code>$validate-conventions</code> returned <strong>CLEAN</strong>: the phase adds no RNG draw, stream,
+ordering, checkpoint, coordinate, or mutable simulation-state behavior.
+Wall-clock time appears only in artifact creation metadata and does not affect
+the simulation result or acceptance calculation.</p>
+<p>Postmortem's source-to-runtime audit then found that two shipped
+<code>school_config</code> proxy shapes assigned zero units and that the editor emitted
+unsupported School and commander shapes. The strict repair rejects the four
+proxy families, retains exact per-unit School assignments, removes the two
+no-op catalog blocks, and makes School/commander creation explicitly
+unavailable instead of substituting side-wide proxy state. The current focused
+boundary is green:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>.venv/bin/python -m pytest -q \
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>  tests/unit/test_phase_25a_scenario_wiring.py \
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>  tests/unit/test_phase55_resolution_scenarios.py \
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>  tests/validation/test_phase_30_scenarios.py \
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>  tests/unit/test_phase48_deficit_fixes.py
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a># 437 passed in 39.05s; 0 failures/errors/skips/warnings
+<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a>
+<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a>.venv/bin/python -m pytest -q \
+<a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a>  tests/unit/test_phase112_doctrine_compare.py \
+<a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a>  tests/unit/test_phase112_analysis_consumers.py \
+<a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a>  tests/integration/test_phase112_commander_unit_integrity.py \
+<a id="__codelineno-5-12" name="__codelineno-5-12" href="#__codelineno-5-12"></a>  tests/unit/test_phase_25d_commander_wiring.py
+<a id="__codelineno-5-13" name="__codelineno-5-13" href="#__codelineno-5-13"></a># 117 passed in 137.08s; 0 failures/errors
+<a id="__codelineno-5-14" name="__codelineno-5-14" href="#__codelineno-5-14"></a>
+<a id="__codelineno-5-15" name="__codelineno-5-15" href="#__codelineno-5-15"></a>cd frontend &amp;&amp; npm test -- --run \
+<a id="__codelineno-5-16" name="__codelineno-5-16" href="#__codelineno-5-16"></a>  src/__tests__/pages/editor/ConfigToggles.test.tsx \
+<a id="__codelineno-5-17" name="__codelineno-5-17" href="#__codelineno-5-17"></a>  src/__tests__/pages/editor/DoctrinePicker.test.tsx \
+<a id="__codelineno-5-18" name="__codelineno-5-18" href="#__codelineno-5-18"></a>  src/__tests__/pages/editor/CommanderPicker.test.tsx \
+<a id="__codelineno-5-19" name="__codelineno-5-19" href="#__codelineno-5-19"></a>  src/__tests__/pages/CalibrationSliders.test.tsx \
+<a id="__codelineno-5-20" name="__codelineno-5-20" href="#__codelineno-5-20"></a>  src/__tests__/hooks/useScenarioEditor.test.ts
+<a id="__codelineno-5-21" name="__codelineno-5-21" href="#__codelineno-5-21"></a># 5 files / 36 tests passed in 1.40s; 0 warnings/errors
+</code></pre></div>
+<p>The fresh async transport attempts did not complete under the qualified host
+condition and are not counted. Exact parser, loader, factory/runtime, reducer,
+and direct-route results are retained; hosted API validation remains a
+separate post-push gate.</p>
+<p>The same audit surfaced a separate optional-suite authority defect. A fresh
+factory-built runtime comparison produced these exact authored/runtime values:</p>
+<table>
+<thead>
+<tr>
+<th>Scenario</th>
+<th>Authored escalation</th>
+<th>Runtime escalation</th>
+<th>DEW runtime</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Taiwan Strait</td>
+<td>thresholds <code>[0,.2,.35,.45,.6,.75,.85,.92,.95,.97,.99]</code>; hysteresis <code>.65</code>; cooldown <code>14,400s</code></td>
+<td>default thresholds <code>[0,.15,.25,.35,.5,.6,.7,.8,.85,.9,.95]</code>; hysteresis <code>.7</code>; cooldown <code>3,600s</code></td>
+<td>engine present from <code>dew_config: {}</code>, but zero directed-energy loadouts</td>
+</tr>
+<tr>
+<td>Srebrenica 1995</td>
+<td>thresholds <code>[0,.05,.1,.2,.3,.4,.5,.6,.7,.8,.9]</code>; hysteresis <code>.7</code>; cooldown <code>1,800s</code></td>
+<td>the same default thresholds; hysteresis <code>.7</code>; cooldown <code>3,600s</code></td>
+<td>absent</td>
+</tr>
+<tr>
+<td>Hybrid Gray Zone</td>
+<td>default threshold values; hysteresis <code>.7</code>; cooldown <code>7,200s</code></td>
+<td>default thresholds; hysteresis <code>.7</code>; cooldown <code>3,600s</code></td>
+<td>absent</td>
+</tr>
+</tbody>
+</table>
+<p>The production benchmark control contains 50 loaded <code>de_shorad</code> units with an
+exact <code>de_shorad_50kw</code> directed-energy loadout, but has no <code>dew_config</code>, so its
+runtime DEW engine is absent. Phase 117 removes ignored enable-like editor/data
+keys and records this truth; it does not claim an engagement capability.
+REM-050 / Phase 137 owns strict consumed Escalation/DEW configuration and a
+real scenario combining a DEW engine with capable units and behavioral
+engagement evidence.</p>
+<h2 id="conditional-and-broader-validation">Conditional and broader validation<a class="headerlink" href="#conditional-and-broader-validation" title="Permanent link">&para;</a></h2>
+<p>The full historical inventory/data gate passed from the write-frozen
+pre-status tree with the exact counts below. The historical-only portion is
+rerun after final status edits so its review digests name the committed
+candidate rather than this intermediate document tree:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>.venv/bin/python scripts/validate_scenario_data.py
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a># historical claims: 31 collections / 83 metrics; 25 Python claim-test
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a># surfaces; 1 frontend claim-test surface; 164 documentation claims across
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a># 67 paths; candidate paths 2 + 3 + 4 + 38 + 103 + 34 + 12;
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a># 135 claim-bound reviews + 61 reviewed nonclaims; all 9 deficit families zero
+<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a># data: 184 unit YAML files; 442/442 catalog keys; 8,388/8,388 initial units;
+<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a># 70 override groups -&gt; 1,128/1,128 units and 1,131/1,131 applications;
+<a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a># 11 constellations; 3 ASAT systems; 52 scenarios; 0 errors; 0 warnings;
+<a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a># 1 explicitly classified intentionally sensorless unit
+<a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a># PASSED; 0 errors, 0 warnings, 1 explicit sensorless classification;
+<a id="__codelineno-6-11" name="__codelineno-6-11" href="#__codelineno-6-11"></a># provisional all-repair freeze wall time 45.87s
+<a id="__codelineno-6-12" name="__codelineno-6-12" href="#__codelineno-6-12"></a>
+<a id="__codelineno-6-13" name="__codelineno-6-13" href="#__codelineno-6-13"></a>.venv/bin/python -m pytest -q \
+<a id="__codelineno-6-14" name="__codelineno-6-14" href="#__codelineno-6-14"></a>  tests/validation/test_phase_30_scenarios.py::TestScenarioFullLoad
+<a id="__codelineno-6-15" name="__codelineno-6-15" href="#__codelineno-6-15"></a># 52 passed in 37.42s
+</code></pre></div>
+<p>The one sensorless classification is the existing
+<code>modern/civilian_noncombatant</code>; it is not a Phase 117 warning or silent
+mapping omission. A packaged-loader control also loaded the same strict
+catalog ledger without repository-only documentation/test sources and exposed
+73 Easting as unsupported, with current-engine regression evidence and no
+accepted IDs. Docker was not locally available. The hosted workflow contains
+the real no-<code>.git</code> image smoke, so no current page calls that image result
+passed before the post-push workflow actually supplies it.</p>
+<p>The complete 46-scenario seed-42 factory evaluator finished under the user's
+accepted shared-core qualification:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>.venv/bin/python scripts/evaluate_scenarios.py \
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>  --output /tmp/sw-phase117-all-scenarios-42.json --no-details --seed 42
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a># 46/46 completed; 39 OK; 7 WARN; 0 ERROR
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a># raw artifact SHA-256 40dde05e...; semantic SHA-256 6eb02276...
+<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a># elapsed wall time 7,948.60s
+</code></pre></div>
+<p>All 46 normalized semantic rows exactly match the Phase 116 baseline
+(baseline semantic SHA-256 <code>6eb02276...</code>). The seven retained warnings are the
+declared current-regression signals already owned by their scenarios; the six
+explicit evaluator exclusions remain <code>benchmark_battalion</code>,
+<code>benchmark_brigade</code>, <code>test_campaign</code>, <code>test_campaign_logistics</code>,
+<code>test_campaign_multi</code>, and <code>test_campaign_reinforce</code>. Phase 117 changes claim
+classification and validation execution, not simulation outcomes. This
+evaluator predates the later strict School schema and Bekaa/Suwalki/Taiwan
+data repairs, so it is retained only as qualified broad evidence. The current
+437-node production controls establish that the removed School proxies
+assigned zero units and that Taiwan's ignored-key removal preserves the same
+presence-default DEW runtime; current strict data validation and the final
+catalog projection cover those changed sources.</p>
+<p>Frontend validation is green on the current production source:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>cd frontend &amp;&amp; npm test
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a># 86 files; 451 tests passed; Vitest 4.86s
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a>cd frontend &amp;&amp; npm run lint
+<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a># exit 0; 0 warnings; 0 errors
+<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a>
+<a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a>cd frontend &amp;&amp; npm run build
+<a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a># 422 modules transformed; built in 49.90s
+</code></pre></div>
+<p>The frontend test diagnostics are 70 React Router future notices, ten React
+<code>act(...)</code> notices, and four jsdom navigation-not-implemented notices. Three
+hook dependency patterns in phase-touched files and one adjacent map-tab
+pattern were simplified after the earlier four-warning lint run; focused
+coverage passed 11/11 and the current ESLint run has no warning or error. The
+production build reports a six-month-old <code>caniuse-lite</code> database and large
+chunks of 580.52 kB and 4,875.37 kB; these are advisories, not hidden failures.</p>
+<p>An isolated eight-shard standard run passed 12,072/12,072, the API partition
+passed 267/267, and the terrain profile passed 97/97 before the final scanner
+and stable-ID controls were added. They remain useful pre-final regression
+evidence but are not mislabeled as final-freeze results. A first attempted
+eight-shard invocation incorrectly shared one manifest under <code>/tmp</code>; its
+apparently green outputs are excluded because the shards could overwrite one
+another's selection. Only per-shard isolated manifest/JUnit directories are
+eligible for final evidence.</p>
+<p>The fresh post-hardening collection audit is exact and warning-free:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>.venv/bin/python scripts/validate_test_partitions.py \
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>  --output /tmp/sw-phase117-independent-partitions.json
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a># exact union: true; pairwise disjoint: true; collection warnings: 0
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a># 12,605 = standard 12,092 + slow-only 110 + benchmark-only 88 +
+<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a>#          slow-benchmark 5 + API 269 + E2E 41
+<a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a># fresh postmortem collection; exact union/disjoint and zero warnings
+</code></pre></div>
+<p>An isolated current benchmark-policy run covers all 12 runtime-closure nodes
+and the corrected slow-benchmark oracle:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>.venv/bin/python scripts/run_pytest_partition.py benchmark-policy \
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>  --manifest /tmp/sw-phase117-final/benchmark-policy/manifest.json \
+<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a>  --junit /tmp/sw-phase117-final/benchmark-policy/junit.xml \
+<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a>  --forbid-skips --timeout-seconds 600
+<a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a># 88 passed in 49.03s; 0 failures/errors/skips/warnings; real 51.18s
+</code></pre></div>
+<p>The first fresh standard execution correctly failed one evidence-quality gate
+after 12,084 other nodes passed: shard 3 reported 1,510 passes and
+<code>test_evidence_ledgers_match_fresh_collection</code> failed because three new
+scanner-v2 adversarial controls had no reviewed disposition. Independent
+review classified all three as genuine fail-closed behavioral oracles: both
+full/packaged loaders reject appended scenario prose, scenario review rejects
+an omitted compatible prose binding, and the version-2 loader rejects a
+checksum-correct version-1 scanner ledger. No weak or structural completion
+credit was assigned.</p>
+<p>After adding those exact entries, the three controls passed in 1.18s,
+<code>scripts/validate_test_evidence.py</code> reported 228 no-direct, 103 reviewed
+behavioral, 1,020 weak, and 917 structural nodes, and the dedicated evidence
+ledger suite passed 2/2 in 44.04s. The complete formerly failing shard then
+passed 1,511/1,511 in 162.43s.</p>
+<p>The pre-postmortem standard gate used eight isolated parent directories; every
+shard independently collected the same warning-free 12,085-node universe:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>UV_CACHE_DIR=/tmp/sw-phase117-final-uv-cache uv run --no-sync python \
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>  scripts/run_pytest_partition.py standard \
+<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a>  --shard-index I --shard-count 8 \
+<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a>  --manifest /tmp/sw-phase117-final/standard-I/manifest.json \
+<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a>  --junit /tmp/sw-phase117-final/standard-I/junit.xml \
+<a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a>  --forbid-skips --timeout-seconds 2700
+<a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a># I = 0..7; shard 3 uses the repaired rerun directory
+</code></pre></div>
+<table>
+<thead>
+<tr>
+<th style="text-align: right;">Shard</th>
+<th>Final result</th>
+<th style="text-align: right;">Warnings</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: right;">0</td>
+<td>1,511 passed in 373.94s</td>
+<td style="text-align: right;">1 <code>datetime.utcnow()</code> deprecation</td>
+</tr>
+<tr>
+<td style="text-align: right;">1</td>
+<td>1,511 passed in 291.05s</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr>
+<td style="text-align: right;">2</td>
+<td>1,511 passed in 178.95s</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr>
+<td style="text-align: right;">3 rerun</td>
+<td>1,511 passed in 162.43s</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr>
+<td style="text-align: right;">4</td>
+<td>1,511 passed in 83.65s</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr>
+<td style="text-align: right;">5</td>
+<td>1,510 passed in 266.26s</td>
+<td style="text-align: right;">1 empty-chart legend + 4 unrendered animations</td>
+</tr>
+<tr>
+<td style="text-align: right;">6</td>
+<td>1,510 passed in 172.69s</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr>
+<td style="text-align: right;">7</td>
+<td>1,510 passed in 198.77s</td>
+<td style="text-align: right;">0</td>
+</tr>
+</tbody>
+</table>
+<p>That pre-postmortem total is <strong>12,085/12,085 passed</strong>, with zero failures,
+errors, skips, xfails, or xpasses and exactly six classified pre-existing
+warnings. The earlier 1,510-pass/one-failure shard remains the red proof and is
+not added to the passing total. Postmortem added three standard nodes: unstable
+claim-ID rejection, final-run source-drift rejection, and canonical rejection
+of the dot path. Each red-to-green control and the complete 225-node Phase 117
+focused gate pass freshly. The closure run must execute the current 12,092-node
+standard universe before this older full-partition evidence can be called
+final.</p>
+<p>That authoritative closure run is now complete. Attempts overlapping the final
+documentation/API-test formatting edits are excluded: shards 2 and 3 exposed
+stale claim digests and worktree-identity drift exactly as the fail-closed
+contract requires. After the write freeze, shard 2 found one further genuine
+red in the separate test-evidence ledger: the new API/simulation drift
+parameter branches lacked separate reviewed entries, two provider-parity tests
+lacked structural dispositions, and the prior unparameterized drift ID was
+stale. The repair split the two behavioral branches and classified both
+provider tests as <code>structural_only</code>; it did not award production capability
+credit to byte/text checks.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>.venv/bin/python scripts/validate_test_evidence.py
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a># no-direct=228; reviewed behavioral=104; weak=1,023; structural=919
+<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a>
+<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a>.venv/bin/python -m pytest -q \
+<a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a>  &#39;tests/unit/test_phase117_historical_acceptance.py::test_rejects_relevant_code_drift_after_execution[api-source]&#39; \
+<a id="__codelineno-12-6" name="__codelineno-12-6" href="#__codelineno-12-6"></a>  &#39;tests/unit/test_phase117_historical_acceptance.py::test_rejects_relevant_code_drift_after_execution[simulation-source]&#39; \
+<a id="__codelineno-12-7" name="__codelineno-12-7" href="#__codelineno-12-7"></a>  tests/unit/test_repository_skills.py::test_claude_edit_hooks_express_current_rng_and_sensor_contract \
+<a id="__codelineno-12-8" name="__codelineno-12-8" href="#__codelineno-12-8"></a>  tests/unit/test_repository_skills.py::test_claude_routes_exactly_mirror_canonical_repository_skills
+<a id="__codelineno-12-9" name="__codelineno-12-9" href="#__codelineno-12-9"></a># 4 passed in 10.78s
+<a id="__codelineno-12-10" name="__codelineno-12-10" href="#__codelineno-12-10"></a>
+<a id="__codelineno-12-11" name="__codelineno-12-11" href="#__codelineno-12-11"></a>UV_CACHE_DIR=/tmp/sw-phase117-final-uv-cache uv run --no-sync python \
+<a id="__codelineno-12-12" name="__codelineno-12-12" href="#__codelineno-12-12"></a>  scripts/run_pytest_partition.py standard \
+<a id="__codelineno-12-13" name="__codelineno-12-13" href="#__codelineno-12-13"></a>  --shard-index I --shard-count 8 \
+<a id="__codelineno-12-14" name="__codelineno-12-14" href="#__codelineno-12-14"></a>  --manifest /tmp/sw-phase117-closure-standard-I/manifest.json \
+<a id="__codelineno-12-15" name="__codelineno-12-15" href="#__codelineno-12-15"></a>  --junit /tmp/sw-phase117-closure-standard-I/junit.xml \
+<a id="__codelineno-12-16" name="__codelineno-12-16" href="#__codelineno-12-16"></a>  --forbid-skips --timeout-seconds 2700
+<a id="__codelineno-12-17" name="__codelineno-12-17" href="#__codelineno-12-17"></a># I = 0..7; only the latest valid result for each isolated shard is retained
+</code></pre></div>
+<table>
+<thead>
+<tr>
+<th style="text-align: right;">Shard</th>
+<th>Authoritative result</th>
+<th style="text-align: right;">Warnings</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: right;">0</td>
+<td>1,512 passed in 253.09s</td>
+<td style="text-align: right;">1 empty-chart legend</td>
+</tr>
+<tr>
+<td style="text-align: right;">1</td>
+<td>1,512 passed in 287.61s</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr>
+<td style="text-align: right;">2 repaired rerun</td>
+<td>1,512 passed in 173.76s</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr>
+<td style="text-align: right;">3 frozen rerun</td>
+<td>1,512 passed in 183.66s</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr>
+<td style="text-align: right;">4</td>
+<td>1,511 passed in 35.61s</td>
+<td style="text-align: right;">1 <code>datetime.utcnow()</code> deprecation</td>
+</tr>
+<tr>
+<td style="text-align: right;">5</td>
+<td>1,511 passed in 276.32s</td>
+<td style="text-align: right;">4 unrendered Matplotlib animations</td>
+</tr>
+<tr>
+<td style="text-align: right;">6</td>
+<td>1,511 passed in 172.00s</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr>
+<td style="text-align: right;">7</td>
+<td>1,511 passed in 347.26s</td>
+<td style="text-align: right;">0</td>
+</tr>
+</tbody>
+</table>
+<p>The exact aggregate is <strong>12,092/12,092 passed</strong> with zero failures, errors,
+skips, xfails, or xpasses and six classified warnings. Cumulative shard time
+was 1,729.31s. Every shard collected 12,092 selected of 12,295 considered
+nodes, with 203 deselected and zero collection warnings. The manifests contain
+12,092 unique selected IDs over indexes 0--7, split as four shards of 1,512 and
+four of 1,511; their complete-universe digest is
+<code>14d522108beb9ae3fe46f8c71c039c82dd6689b56827a56bd328cebc69c5b31d</code>.</p>
+<p>That aggregate predates the late strict School schema, editor narrowing, and
+three scenario-data edits. It is retained as broad Phase 117 evidence, not
+misrepresented as the final current-tree universe. A final current-tree
+standard run superseded that qualification after the status transition and
+before this record-only devlog addition:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>.venv/bin/python scripts/validate_test_partitions.py \
+<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a>  --output /tmp/sw-phase117-final-poststatus-partitions.json
+<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a># superset=12,619; standard=12,101; slow=110; benchmark=88;
+<a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a># slow-benchmark=5; API=274; E2E=41; exact union=true;
+<a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a># all marker partitions pairwise disjoint=true; collection warnings=0
+<a id="__codelineno-13-6" name="__codelineno-13-6" href="#__codelineno-13-6"></a>
+<a id="__codelineno-13-7" name="__codelineno-13-7" href="#__codelineno-13-7"></a>.venv/bin/python scripts/run_pytest_partition.py standard \
+<a id="__codelineno-13-8" name="__codelineno-13-8" href="#__codelineno-13-8"></a>  --shard-index I --shard-count 8 \
+<a id="__codelineno-13-9" name="__codelineno-13-9" href="#__codelineno-13-9"></a>  --manifest /tmp/sw-phase117-poststatus-standard-I/manifest.json \
+<a id="__codelineno-13-10" name="__codelineno-13-10" href="#__codelineno-13-10"></a>  --junit /tmp/sw-phase117-poststatus-standard-I/junit.xml \
+<a id="__codelineno-13-11" name="__codelineno-13-11" href="#__codelineno-13-11"></a>  --forbid-skips --timeout-seconds 2700
+<a id="__codelineno-13-12" name="__codelineno-13-12" href="#__codelineno-13-12"></a># I = 0..7
+</code></pre></div>
+<table>
+<thead>
+<tr>
+<th style="text-align: right;">Shard</th>
+<th>Final current-tree result</th>
+<th style="text-align: right;">Warnings</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: right;">0</td>
+<td>1,513 passed in 368.76s</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr>
+<td style="text-align: right;">1</td>
+<td>1,513 passed in 261.65s</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr>
+<td style="text-align: right;">2</td>
+<td>1,513 passed in 322.29s</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr>
+<td style="text-align: right;">3</td>
+<td>1,513 passed in 115.62s</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr>
+<td style="text-align: right;">4</td>
+<td>1,513 passed in 39.26s</td>
+<td style="text-align: right;">1 <code>datetime.utcnow()</code> deprecation</td>
+</tr>
+<tr>
+<td style="text-align: right;">5</td>
+<td>1,512 passed in 296.55s</td>
+<td style="text-align: right;">1 empty-chart legend</td>
+</tr>
+<tr>
+<td style="text-align: right;">6</td>
+<td>1,512 passed in 152.77s</td>
+<td style="text-align: right;">4 unrendered Matplotlib animations</td>
+</tr>
+<tr>
+<td style="text-align: right;">7</td>
+<td>1,512 passed in 233.60s</td>
+<td style="text-align: right;">0</td>
+</tr>
+</tbody>
+</table>
+<p>The exact current-tree aggregate is <strong>12,101/12,101 passed</strong> with zero
+failures, errors, skips, xfails, or xpasses and six classified warnings.
+Cumulative JUnit test time was 1,790.420s. Every shard independently collected
+12,101 selected of 12,304 considered nodes with 203 deselected and zero
+collection warnings. The selected manifests contain 12,101 unique IDs, are
+pairwise disjoint, and reproduce the complete standard universe exactly: five
+shards contain 1,513 nodes and three contain 1,512. The complete-universe
+SHA-256 is
+<code>6457dfec6ef362942d7832593f098ccf3db0a7f0e885809eaa34765cc5d8e920</code>.
+The final identity-focused scanner, ledger, artifact, documentation, public
+projection, and lint gates are rerun after this evidence-only edit. Hosted CI
+must still collect and pass the committed tree.</p>
+<p>The long marker runs are explicitly qualified rather than papered over. Slow
+shard 1 passed 28/28 in 338.68s. Slow shard 2 produced 26 passes and one stale
+Debecka expectation failure in 1,950.48s; that oracle was repaired later.
+Slow shards 0 and 3 each reached their 4,200-second containment limit before a
+summary (17 dots plus four error indicators for shard 0; ten dots for shard 3),
+and E2E reached 2,700 seconds without completing. Their unavailable counts are
+not zero and none is called a pass. The user accepted these as shared-core
+qualified results pending a future wholly free host. The machine reports 32
+logical CPUs and 62 GiB RAM with roughly 40--42 GiB available; observed load
+averages around 15--24 show CPU contention rather than memory exhaustion.</p>
+<p>One API-focused process collected the current API/scenario selection but then
+produced no test output. Independent probes reproduced the host issue with a
+minimal <code>aiosqlite.connect(':memory:')</code> and with interpreter shutdown after
+<code>asyncio.to_thread()</code>, while direct synchronous Phase 117 route calls completed
+in 1.59s after a 0.49s scan and 2.63s ledger load. The process remains alive at
+the owner's direction and is non-authoritative because candidate files changed
+after it started. It is a qualified host/runtime observation, not an API pass.
+The final matrix runs the non-async runtime closure separately and relies on a
+fresh completed API partition or hosted CI for the async boundary.</p>
+<p>A provisional real-study rerun likewise caught an in-flight source edit. It
+completed one seed, then published a typed <code>ERROR</code> at
+<code>runtime_construction</code> with
+<code>historical_runtime_construction_failed</code> when the dirty worktree fingerprint
+changed before the second session. The command exited 2 after 22.87s. That
+artifact is excluded from historical outcome evidence; it demonstrates the
+identity-drift guard and is replaced only from a write-frozen tree.</p>
+<p>The write-frozen replacement then completed all 20 production sessions in
+144.98s and persisted a reload-valid <code>FAIL</code>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>UV_CACHE_DIR=/tmp/sw-phase117-final-uv-cache uv run --no-sync python \
+<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a>  scripts/run_historical_backtest.py \
+<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a>  --output docs/evidence/phase-117/73-easting-phase117.json
+<a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a># status=FAIL; runs=20; joint_successes=0; lower_confidence_bound=0.0;
+<a id="__codelineno-14-5" name="__codelineno-14-5" href="#__codelineno-14-5"></a># promotion_eligible=false; artifact payload SHA-256 cb33583c...;
+<a id="__codelineno-14-6" name="__codelineno-14-6" href="#__codelineno-14-6"></a># file SHA-256 ba367f39...; 887,834 bytes
+</code></pre></div>
+<p>That pre-status artifact binds the then-current strict ledger and preserves the
+expected eligibility reasons <code>study_failed</code>, <code>dirty_revision</code>,
+<code>validation_source_reused</code>, and <code>plan_not_immutably_predeclared</code>. The final
+status-only ledger refresh reruns the same study once more rather than leaving
+the retained file bound to an intermediate documentation digest.</p>
+<p>Two later write-frozen candidates repeated the identical 0/20 outcome after
+intermediate ledger updates: payload <code>4132f4a5...</code> in 116.04s, then payload
+<code>5ef94ed...</code> in 127.443s (file <code>7f7d59a...</code>, 887,834 bytes) against execution
+ledger <code>64879a64...</code>. Each was reload-valid when written; subsequent
+cross-document repairs deliberately made each provisional. Neither stale
+identity is presented as the retained closure artifact. The closure tree runs
+the command above after its last reviewed-document digest refresh; the linked
+artifact is then the authoritative full identity and preserves the same exact
+20-run vectors, <code>FAIL</code>, 0/20 joint successes, 0.0 lower bound, and four
+eligibility reasons.</p>
+<p>Repository-wide Python lint is green, including the eight F601/F541 failures
+reported by remote CI at the original handoff:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a>.venv/bin/ruff check .
+<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a># All checks passed!
+<a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a>
+<a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a>git diff --check
+<a id="__codelineno-15-5" name="__codelineno-15-5" href="#__codelineno-15-5"></a># exit 0
+</code></pre></div>
+<p>The final changed/new-Python format probe initially found one file:
+<code>tests/api/test_scenarios.py</code>. It was mechanically formatted, its reviewed
+source digest is refreshed, and its direct live projection remains green. The
+exact rerun was:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a>mapfile -t phase_py_files &lt; &lt;({ git diff --name-only --diff-filter=ACMR;
+<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a>  git ls-files --others --exclude-standard; } | sort -u | rg &#39;\.py$&#39; |
+<a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a>  rg -v &#39;^(stochastic_warfare/entities/loader.py|stochastic_warfare/simulation/engine.py|stochastic_warfare/simulation/runtime.py|stochastic_warfare/simulation/scenario.py|stochastic_warfare/tools/_run_helpers.py|tests/benchmarks/test_benchmarks.py|tests/unit/test_phase48_deficit_fixes.py|tests/unit/test_phase55_resolution_scenarios.py|tests/unit/test_phase_25a_scenario_wiring.py|tests/validation/test_phase_30_scenarios.py)$&#39;)
+<a id="__codelineno-16-4" name="__codelineno-16-4" href="#__codelineno-16-4"></a>.venv/bin/ruff format --check &quot;${phase_py_files[@]}&quot;
+<a id="__codelineno-16-5" name="__codelineno-16-5" href="#__codelineno-16-5"></a># checked_files=33; 33 files already formatted
+</code></pre></div>
+<p>The exact command also excludes four phase-touched legacy test files:
+<code>test_phase_25a_scenario_wiring.py</code>, <code>test_phase48_deficit_fixes.py</code>,
+<code>test_phase55_resolution_scenarios.py</code>, and <code>test_phase_30_scenarios.py</code>.
+Together with the six large legacy files (<code>entities/loader.py</code>,
+<code>simulation/engine.py</code>, <code>simulation/runtime.py</code>, <code>simulation/scenario.py</code>,
+<code>tools/_run_helpers.py</code>, and <code>tests/benchmarks/test_benchmarks.py</code>), all ten
+were already unformatted at Phase 116. Reformatting their unrelated existing
+lines is excluded;
+format checking is not the hosted lint gate, while the complete relevant Ruff
+lint command above is green. Repository-wide <code>ruff format --check .</code> likewise
+reports 650 legacy unformatted files outside this phase. One exploratory Ruff
+command included <code>frontend/src/types/api.ts</code> and produced 784 Python-parser
+errors; that was a misrouted command, not Python or TypeScript lint evidence.
+The file is covered by the green frontend ESLint/build results.</p>
+<h2 id="simplify-review">Simplify review<a class="headerlink" href="#simplify-review" title="Permanent link">&para;</a></h2>
+<p><code>$simplify</code> returned <strong>READY AFTER IN-SCOPE FIXES</strong>. It required bounded seed
+arithmetic and the 1,000-run cap, one verified ledger audit per load, a
+zero-argument canonical API cache, pre-parse boolean rejection, and the shared
+stable-ID validator. Those fixes and focused controls are present. A second
+look found no unresolved HIGH or MEDIUM issue. Optional LOW duplication in
+SHA validators/runner assembly and the legacy mutable comparison list did not
+justify late production churn.</p>
+<h2 id="documentation-and-cross-document-audit">Documentation and cross-document audit<a class="headerlink" href="#documentation-and-cross-document-audit" title="Permanent link">&para;</a></h2>
+<p><code>$update-docs</code> synchronized the specification, public status pages, roadmaps,
+remediation matrix, API/scenario/model guides, workflow skills, historical
+supersession notices, and this evidence record. REM-047 / Phase 134 retains the
+separate 73 Easting source-synchronous fidelity investigation; REM-048 / Phase
+135 retains package-bound acceptance attestation. Neither is silently absorbed
+into REM-030.</p>
+<p>Documentation validation retained its own sequencing red. The first strict
+build ran while the prior artifact had been moved to <code>/tmp</code> for replacement
+and correctly failed exactly five links to the temporarily absent JSON file.
+After the new reload-valid artifact was present, both gates passed:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a>UV_CACHE_DIR=/tmp/sw-phase117-final-uv-cache uv run --no-sync python \
+<a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a>  scripts/validate_docs_links.py
+<a id="__codelineno-17-3" name="__codelineno-17-3" href="#__codelineno-17-3"></a># {&quot;invalid_diagnostic&quot;: true, &quot;invalid_exit_code&quot;: 1,
+<a id="__codelineno-17-4" name="__codelineno-17-4" href="#__codelineno-17-4"></a>#  &quot;valid_exit_code&quot;: 0}; real 1.07s
+<a id="__codelineno-17-5" name="__codelineno-17-5" href="#__codelineno-17-5"></a>
+<a id="__codelineno-17-6" name="__codelineno-17-6" href="#__codelineno-17-6"></a>UV_CACHE_DIR=/tmp/sw-phase117-final-uv-cache uv run --no-sync \
+<a id="__codelineno-17-7" name="__codelineno-17-7" href="#__codelineno-17-7"></a>  mkdocs build --strict \
+<a id="__codelineno-17-8" name="__codelineno-17-8" href="#__codelineno-17-8"></a>  --site-dir /tmp/sw-phase117-final/site-prepostmortem
+<a id="__codelineno-17-9" name="__codelineno-17-9" href="#__codelineno-17-9"></a># exit 0; Documentation built in 7.91s; real 8.45s
+</code></pre></div>
+<p>The strict build emitted the Material/MkDocs-2.0 compatibility advisory and
+listed the same three intentional unnav pages:
+<code>scenarios/calibration-template.md</code>,
+<code>scenarios/depth-checklist-template.md</code>, and <code>scenarios/gap-audit.md</code>. It
+reported no link, fragment, navigation, or build error after the artifact was
+restored.</p>
+<p>The first independent <code>$cross-doc-audit</code> found seven real documentation
+defects rather than accepting structural consistency as sufficient:</p>
+<ul>
+<li>architecture and API documentation described the configured no-<code>.git</code>
+  image smoke as already proved locally;</li>
+<li>the API claim-field list omitted claim-level
+  <code>current_engine_regression_evidence</code>;</li>
+<li>the web guide still described five Block 11 regression references although
+  the typed production projection currently groups 34 of 52 scenarios;</li>
+<li>Block 13 contained two stale queued/next statements for active Phase 117;</li>
+<li>README, docs index, and CLAUDE reused the partition-audit manifest as a test
+  runner output path even though the runner owns and replaces its manifest;</li>
+<li>the scenario guide's 38-modern / 14-era total omitted the two internal
+  benchmark fixtures from its rows, and the README roadmap stopped at Block
+  17; and</li>
+<li>the project-structure tree duplicated <code>frontend/src/types/api.ts</code>, while
+  the REM-048 summary overclaimed the pending hosted image boundary.</li>
+</ul>
+<p><code>$update-docs</code> repaired those findings. Production projection through the
+canonical loader independently counted 52 scenarios, all 52 aggregate
+<code>unsupported</code>, 34 with current-engine regression evidence, and zero accepted
+claim IDs. That pre-postmortem scanner snapshot retained 191 candidates and
+reviews (135 claim-bound plus 56 exclusions) and 243 claims. Later UI/data/doc
+repairs first expanded the inventory to 194 candidates; the later strict
+School/commander records expanded it again to the final 196. Both earlier
+identities and their artifacts are explicitly superseded. An independent strict ledger load had
+confirmed all nine audit-deficit families empty only for that earlier tree.</p>
+<p>The pre-postmortem cross-document result was <strong>PASS</strong> across all ten required
+areas at its then-current evidence freeze:</p>
+<table>
+<thead>
+<tr>
+<th>Area</th>
+<th>Result</th>
+<th>Evidence</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Roadmap/devlog alignment</td>
+<td>PASS</td>
+<td>Phase 117 consistently active through closure; Phase 118 unstarted</td>
+</tr>
+<tr>
+<td>Remediation traceability</td>
+<td>PASS</td>
+<td>REM-030 closure is phase-gated; REM-040/047/048 remain explicit owners</td>
+</tr>
+<tr>
+<td>Contract accuracy</td>
+<td>PASS</td>
+<td>strict typed ledger/study/artifact as then implemented; aggregate loss gate later superseded by postmortem</td>
+</tr>
+<tr>
+<td>Production evidence</td>
+<td>PASS</td>
+<td>then-retained 20-session artifact bound that ledger and remained a truthful <code>FAIL</code></td>
+</tr>
+<tr>
+<td>Architecture accuracy</td>
+<td>PASS</td>
+<td>factory/runtime ownership and configured/pending image boundary are explicit</td>
+</tr>
+<tr>
+<td>API accuracy</td>
+<td>PASS</td>
+<td>Python, TypeScript, reference fields, stripping, and 52-scenario projection agree</td>
+</tr>
+<tr>
+<td>Data/catalog accuracy</td>
+<td>SUPERSEDED</td>
+<td>This earlier path-category count incorrectly reported 38 modern + 14 era and a 191-file scanner; typed current classification is 37 modern + 15 historical and the final inventory is 196</td>
+</tr>
+<tr>
+<td>Public status accuracy</td>
+<td>PASS</td>
+<td>zero accepted scenarios, qualified incomplete runs, and future deficits disclosed</td>
+</tr>
+<tr>
+<td>Navigation/links</td>
+<td>PASS</td>
+<td>link validator and strict MkDocs build pass with only declared advisories</td>
+</tr>
+<tr>
+<td>Provider-context alignment</td>
+<td>PASS</td>
+<td>CODEX, CLAUDE, README, and public entry points use the same boundaries</td>
+</tr>
+</tbody>
+</table>
+<p>Those post-repair commands were:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a>.venv/bin/python scripts/validate_scenario_data.py --historical-claims-only
+<a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a># exit 0 in 15.292s; 31 collections / 83 metrics; 25 Python + 1 frontend
+<a id="__codelineno-18-3" name="__codelineno-18-3" href="#__codelineno-18-3"></a># claim-test surfaces; 164 documentation claims / 67 paths; 191/191 reviews;
+<a id="__codelineno-18-4" name="__codelineno-18-4" href="#__codelineno-18-4"></a># all nine deficit families zero
+<a id="__codelineno-18-5" name="__codelineno-18-5" href="#__codelineno-18-5"></a>
+<a id="__codelineno-18-6" name="__codelineno-18-6" href="#__codelineno-18-6"></a>.venv/bin/python scripts/validate_docs_links.py
+<a id="__codelineno-18-7" name="__codelineno-18-7" href="#__codelineno-18-7"></a># {&quot;invalid_diagnostic&quot;: true, &quot;invalid_exit_code&quot;: 1,
+<a id="__codelineno-18-8" name="__codelineno-18-8" href="#__codelineno-18-8"></a>#  &quot;valid_exit_code&quot;: 0}; exit 0 in 0.648s
+<a id="__codelineno-18-9" name="__codelineno-18-9" href="#__codelineno-18-9"></a>
+<a id="__codelineno-18-10" name="__codelineno-18-10" href="#__codelineno-18-10"></a>.venv/bin/mkdocs build --strict \
+<a id="__codelineno-18-11" name="__codelineno-18-11" href="#__codelineno-18-11"></a>  --site-dir /tmp/sw-phase117-final/site-crossdoc
+<a id="__codelineno-18-12" name="__codelineno-18-12" href="#__codelineno-18-12"></a># exit 0; Documentation built in 8.25s; real 8.720s
+</code></pre></div>
+<p>These are retained as an invalidated intermediate snapshot, not final closure
+evidence; the later typed-era and editor-integrity repairs changed reviewed
+sources and required a complete identity refresh.</p>
+<p>MkDocs retained only the Material/MkDocs-2.0 advisory and the same three
+intentional unnav pages. That audit's initial production-evidence failure was
+the expected stale intermediate artifact/ledger identity; its then-current
+write-frozen regeneration closed that blocker. Postmortem subsequently added
+strict-ID, final-run identity, component-gate, and dot-path repairs and found
+the stale standard count documented above. Those reviewed changes deliberately
+invalidate this earlier freeze; the corrected ledger/artifact, current 12,092
+standard execution, and all ten cross-document areas must pass again before
+the final <code>$postmortem</code> verdict.</p>
+<h3 id="postmortem-reopened-exhaustive-web-ui-audit">Postmortem-reopened exhaustive Web UI audit<a class="headerlink" href="#postmortem-reopened-exhaustive-web-ui-audit" title="Permanent link">&para;</a></h3>
+<p>The final independent audit did not accept the earlier documentation-only
+PASS. It compared the live API, React components, production schemas, old
+Phase 38/39 claims, and the public guide and found three bounded exposed-data
+defects plus a broader UI semantic boundary:</p>
+<ul>
+<li>the scenario API and badges used retired <code>schools_config</code>, the detail page
+  read retired <code>base_elevation</code> / <code>visibility_km</code>, and the editor also wrote
+  retired <code>base_elevation</code>;</li>
+<li>the list/detail badge surfaces discarded typed Space/DEW state, the terrain
+  editor offered nine schema-invalid values, and successful run submission
+  navigated to a history query the list did not consume;</li>
+<li>map rendering decoded the five production <code>UnitStatus</code> integers as an
+  unrelated six-state table and treated Surrendered and Routing as Destroyed;
+  one-click Space creation emitted <code>{enable_space: true}</code> even though the
+  production schema requires explicit catalog constellation IDs; and</li>
+<li>the doctrine picker wrote ignored <code>school_config.{side}_school</code> values, the
+  School toggle wrote ignored <code>enable_schools</code>, and the commander picker wrote
+  rejected <code>commander_config.side_defaults</code> while its catalog omitted 13
+  era-specific profiles; and</li>
+<li>chart/map cursor flow, complete event export, causal engagement replay,
+  current-frame selection, fullscreen/help affordances, and analysis input
+  controls were narrower than prior public claims. The client FOW toggle also
+  filters markers only; REM-041 already owns complete authorized side-safe
+  projection.</li>
+</ul>
+<p>Production fixes now use only canonical scenario keys, retain all six typed
+badge flags, redirect to the returned run, expose exactly the five terrain
+enum values, decode exact status values and classify only status 2 as
+Destroyed, and disable absent Space creation with an explicit unsupported
+message rather than choosing a proxy constellation. The school configuration
+is now a strict <code>SchoolScenarioConfig</code> accepting only exact
+<code>unit_assignments</code>; Bekaa Valley and Suwalki Gap remove no-op declarations that
+assigned 0/65 and 0/39 units. School and commander selectors are explicitly
+unavailable instead of emitting proxy state or hiding era-specific selections.
+The guide and Phase 30/38/39/54/55/95/96 records state the remaining limits.
+REM-049 / Phase 136 in Block 19 owns the larger non-FOW
+replay/export/editor/analysis boundary, including complete catalog-backed
+School, commander, and Space editing.</p>
+<p>The new frontend red proofs failed as intended:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a>npm test -- --run \
+<a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a>  src/__tests__/pages/ScenarioDetailPage.test.tsx \
+<a id="__codelineno-19-3" name="__codelineno-19-3" href="#__codelineno-19-3"></a>  src/__tests__/pages/ScenarioListPage.test.tsx \
+<a id="__codelineno-19-4" name="__codelineno-19-4" href="#__codelineno-19-4"></a>  src/__tests__/pages/editor/TerrainSection.test.tsx
+<a id="__codelineno-19-5" name="__codelineno-19-5" href="#__codelineno-19-5"></a># exit 1; 4 failed / 14 passed across 3 files
+<a id="__codelineno-19-6" name="__codelineno-19-6" href="#__codelineno-19-6"></a>
+<a id="__codelineno-19-7" name="__codelineno-19-7" href="#__codelineno-19-7"></a>npm test -- --run \
+<a id="__codelineno-19-8" name="__codelineno-19-8" href="#__codelineno-19-8"></a>  src/__tests__/pages/RunConfigPage.test.tsx \
+<a id="__codelineno-19-9" name="__codelineno-19-9" href="#__codelineno-19-9"></a>  src/__tests__/pages/editor/TerrainSection.test.tsx
+<a id="__codelineno-19-10" name="__codelineno-19-10" href="#__codelineno-19-10"></a># exit 1; 2 failed / 5 passed across 2 files
+<a id="__codelineno-19-11" name="__codelineno-19-11" href="#__codelineno-19-11"></a>
+<a id="__codelineno-19-12" name="__codelineno-19-12" href="#__codelineno-19-12"></a>npm test -- --run \
+<a id="__codelineno-19-13" name="__codelineno-19-13" href="#__codelineno-19-13"></a>  src/__tests__/components/map/UnitDetailSidebar.test.tsx \
+<a id="__codelineno-19-14" name="__codelineno-19-14" href="#__codelineno-19-14"></a>  src/__tests__/lib/unitRendering.overlay.test.ts \
+<a id="__codelineno-19-15" name="__codelineno-19-15" href="#__codelineno-19-15"></a>  src/__tests__/hooks/useScenarioEditor.test.ts \
+<a id="__codelineno-19-16" name="__codelineno-19-16" href="#__codelineno-19-16"></a>  src/__tests__/pages/editor/ConfigToggles.test.tsx
+<a id="__codelineno-19-17" name="__codelineno-19-17" href="#__codelineno-19-17"></a># exit 1; 7 failed / 40 passed across 4 files
+</code></pre></div>
+<p>After implementation, the combined status/editor/navigation regression was
+green:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a>npm test -- --run \
+<a id="__codelineno-20-2" name="__codelineno-20-2" href="#__codelineno-20-2"></a>  src/__tests__/pages/RunConfigPage.test.tsx \
+<a id="__codelineno-20-3" name="__codelineno-20-3" href="#__codelineno-20-3"></a>  src/__tests__/pages/editor/TerrainSection.test.tsx \
+<a id="__codelineno-20-4" name="__codelineno-20-4" href="#__codelineno-20-4"></a>  src/__tests__/pages/editor/TerrainPreview.test.tsx \
+<a id="__codelineno-20-5" name="__codelineno-20-5" href="#__codelineno-20-5"></a>  src/__tests__/components/map/UnitDetailSidebar.test.tsx \
+<a id="__codelineno-20-6" name="__codelineno-20-6" href="#__codelineno-20-6"></a>  src/__tests__/lib/unitRendering.overlay.test.ts \
+<a id="__codelineno-20-7" name="__codelineno-20-7" href="#__codelineno-20-7"></a>  src/__tests__/hooks/useScenarioEditor.test.ts \
+<a id="__codelineno-20-8" name="__codelineno-20-8" href="#__codelineno-20-8"></a>  src/__tests__/pages/editor/ConfigToggles.test.tsx \
+<a id="__codelineno-20-9" name="__codelineno-20-9" href="#__codelineno-20-9"></a>  src/__tests__/components/map/TacticalMap.test.tsx
+<a id="__codelineno-20-10" name="__codelineno-20-10" href="#__codelineno-20-10"></a># exit 0; 62 passed across 8 files; 921 ms Vitest duration
+</code></pre></div>
+<p>The live-catalog API classification test and direct route result at this
+snapshot expected two School scenarios, one DEW scenario, and four Space
+scenarios. The later school-integrity repair invalidated both results: Bekaa
+Valley and Suwalki Gap had assigned zero units, so their proxy declarations
+were removed. The old School set <code>{bekaa_valley_1982, suwalki_gap}</code> and its
+6.8-second route result are superseded, not current projection evidence.</p>
+<p>The corrected frozen route/API contract requires all 52 scenario summaries to
+remain <code>unsupported</code>, 34 to expose current-engine regression evidence, zero to
+expose an accepted claim ID, and exact optional-subsystem sets School <code>{}</code>,
+DEW <code>{taiwan_strait}</code>, and Space
+<code>{korean_peninsula, space_asat_escalation, space_isr_gap, taiwan_strait}</code>. The
+final direct route and hosted/transport checks must establish that result; the
+owner-approved silently running pre-repair async process remains qualified and
+cannot satisfy the corrected contract. Fresh collection contains 269 API
+nodes; the earlier 267/267 result remains historical rather than current.</p>
+<p>The completed direct route check after the all-repair ledger refresh reported
+52 scenarios, dispositions <code>{unsupported: 52}</code>, 34 current-engine regression
+summaries, zero accepted claim IDs, eras <code>{modern: 37, ww2: 5, ww1: 3,
+napoleonic: 3, ancient_medieval: 4}</code>, School <code>{}</code>, DEW <code>{taiwan_strait}</code>, and
+the four Space scenarios above. The final pre-transition rerun completed in
+4.97s. The exact command was:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a>.venv/bin/python -c &#39;import asyncio
+<a id="__codelineno-21-2" name="__codelineno-21-2" href="#__codelineno-21-2"></a>from collections import Counter
+<a id="__codelineno-21-3" name="__codelineno-21-3" href="#__codelineno-21-3"></a>from api.config import ApiSettings
+<a id="__codelineno-21-4" name="__codelineno-21-4" href="#__codelineno-21-4"></a>from api.routers.scenarios import list_scenarios
+<a id="__codelineno-21-5" name="__codelineno-21-5" href="#__codelineno-21-5"></a>rows=asyncio.run(list_scenarios(ApiSettings(data_dir=&quot;data&quot;)))
+<a id="__codelineno-21-6" name="__codelineno-21-6" href="#__codelineno-21-6"></a>print({&quot;scenarios&quot;:len(rows),&quot;dispositions&quot;:dict(sorted(Counter(row.historical_validation.aggregate_disposition.value for row in rows).items())),&quot;current_engine_regression&quot;:sum(row.historical_validation.current_engine_regression_evidence for row in rows),&quot;accepted_claim_ids&quot;:sum(len(row.historical_validation.accepted_claim_ids) for row in rows),&quot;eras&quot;:dict(sorted(Counter(row.era for row in rows).items())),&quot;schools&quot;:sorted(row.name for row in rows if row.has_schools),&quot;dew&quot;:sorted(row.name for row in rows if row.has_dew),&quot;space&quot;:sorted(row.name for row in rows if row.has_space)})&#39;
+</code></pre></div>
+<p>The independent exhaustive pre-freeze <code>$cross-doc-audit</code> then returned the
+following current-tree disposition. It did not promote stale evidence to a
+pass:</p>
+<table>
+<thead>
+<tr>
+<th>Area</th>
+<th>Result before freeze</th>
+<th>Evidence / remaining gate</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Roadmap/devlog alignment</td>
+<td>PASS</td>
+<td>Phase 117 remains in progress; Phase 118 is unstarted; Phase 135 is only the first phase in Block 19</td>
+</tr>
+<tr>
+<td>Remediation traceability</td>
+<td>PASS</td>
+<td>REM-030 remains phase-gated; REM-040/041/047/048/049/050 have explicit owners and proof obligations</td>
+</tr>
+<tr>
+<td>Contract accuracy</td>
+<td>PASS</td>
+<td>split 28/16 gates, strict stable IDs, dot-path rejection, final-run identity, and API-source acceptance drift are present</td>
+</tr>
+<tr>
+<td>Production evidence</td>
+<td>PENDING FREEZE</td>
+<td>retained artifact and ledger are intentionally invalidated by the reviewed repairs</td>
+</tr>
+<tr>
+<td>Architecture accuracy</td>
+<td>PASS</td>
+<td>factory/session ownership and the pending image boundary remain accurate</td>
+</tr>
+<tr>
+<td>API/Web accuracy</td>
+<td>CONDITIONAL</td>
+<td>all 35 audited mismatches are fixed, narrowed, or assigned; live async route completion remains qualified</td>
+</tr>
+<tr>
+<td>Data/catalog accuracy</td>
+<td>PENDING REFRESH</td>
+<td>the authoritative scanner inventory is 196 candidate files</td>
+</tr>
+<tr>
+<td>Public status accuracy</td>
+<td>PASS</td>
+<td>current in-progress status and zero accepted claims are explicit; recheck follows transition</td>
+</tr>
+<tr>
+<td>Navigation/links</td>
+<td>PASS</td>
+<td>link validation and strict documentation build pass</td>
+</tr>
+<tr>
+<td>Provider-context alignment</td>
+<td>PASS</td>
+<td>20/20 provider parity and 44/44 repository-skill controls pass</td>
+</tr>
+</tbody>
+</table>
+<p>Fresh closure-adjacent document/provider commands reported:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a>.venv/bin/python scripts/validate_docs_links.py
+<a id="__codelineno-22-2" name="__codelineno-22-2" href="#__codelineno-22-2"></a># exit 0; invalid-fixture diagnostic and valid-tree checks both behaved as required
+<a id="__codelineno-22-3" name="__codelineno-22-3" href="#__codelineno-22-3"></a>
+<a id="__codelineno-22-4" name="__codelineno-22-4" href="#__codelineno-22-4"></a>.venv/bin/mkdocs build --strict \
+<a id="__codelineno-22-5" name="__codelineno-22-5" href="#__codelineno-22-5"></a>  --site-dir /tmp/sw-phase117-final/site-crossdoc-current
+<a id="__codelineno-22-6" name="__codelineno-22-6" href="#__codelineno-22-6"></a># exit 0; Documentation built in 7.17s
+<a id="__codelineno-22-7" name="__codelineno-22-7" href="#__codelineno-22-7"></a>
+<a id="__codelineno-22-8" name="__codelineno-22-8" href="#__codelineno-22-8"></a>.venv/bin/python -m pytest -q tests/unit/test_repository_skills.py
+<a id="__codelineno-22-9" name="__codelineno-22-9" href="#__codelineno-22-9"></a># 44 passed
+</code></pre></div>
+<p>The strict build retained only the Material/MkDocs-2.0 compatibility advisory
+and the three declared unnav pages. The ledger refresh, retained 20-session
+artifact, live projection check, and final status re-audit close the three
+non-PASS cells; they remain phase blockers at this snapshot.</p>
+<p>The subsequent frozen-tree rerun closed those three cells but found one new
+Area 7 blocker instead of overlooking it: the canonical typed catalog counts
+37 Modern, 5 WW2, 3 WW1, 3 Napoleonic, and 4 Ancient/Medieval scenarios, while
+the scenario guide claimed 38 Modern / 14 historical and placed typed-WW2
+<code>eastern_front_1943</code> in its Modern table. The era reference also omitted that
+scenario from its WW2 list. The guide now reports 37 Modern / 15 historical,
+moves Eastern Front 1943 into the five-entry WW2 table, and synchronizes the
+era reference. The later School/commander and optional-config repairs also
+changed reviewed sources, so the ledger, retained artifact, and Area 7 review
+must be refreshed once more after the complete semantic freeze. Every earlier
+identity is excluded.</p>
+<h2 id="postmortem">Postmortem<a class="headerlink" href="#postmortem" title="Permanent link">&para;</a></h2>
+<p>Formal <code>$postmortem</code> verdict: <strong>ACCEPT</strong>.</p>
+<p>The independent review found the phase over its original REM-030 boundary but
+justifiably so: the required exhaustive audit exposed real School, commander,
+API/UI, and scenario-data false-authority defects. Phase 117 fixes only the
+bounded corruptions; REM-049 and REM-050 own the larger editor/replay and
+Escalation/DEW continuations. No stub, proxy, structural-only success,
+unconditional verdict, or swallowed failure received completion credit.</p>
+<p>The historical claim is integrated at every applicable stage: strict typed
+ledger/plan/artifact declarations; source-audited loading; factory-prepared
+fresh sessions; explicit CLI and acceptance boundaries; 20 production seeds
+plus adversarial controls; split 28-tank, 16-carrier, zero-US, and natural-time
+gates that determine the joint 0/20 result; and an atomic reload-valid artifact
+plus conservative claim-level API/frontend exposure. The retained result is a
+production <code>FAIL</code>, not historical validation, and all 52 scenario aggregates
+remain unsupported with zero accepted claims.</p>
+<p>The accepted pre-transition freeze bound ledger <code>1038209d...</code>, study plan
+<code>3e70e8de...</code>, artifact payload <code>1dfc4d73...</code>, and artifact file
+<code>058de80b...</code> (917,974 bytes). It passed the 196-candidate scanner with 135
+claim-bound reviews, 61 exclusions, and all nine deficit families empty; the
+226-node historical suite; 437 School/parser/runtime controls; 117 canonical
+School/commander controls; 451 frontend tests plus lint/build; the exact
+52/34/0 live projection; Ruff, diff, docs, provider, and repository-skill
+gates. The late async transport process, slow/E2E containment results, and
+hosted no-<code>.git</code> image are explicitly qualified rather than called passes.</p>
+<p>The postmortem authorized this status transition and one coherent Phase 117
+commit after the status-only documentation changes are rebound into the final
+ledger, the same 20-run failed artifact is persisted again, and the exact
+scanner/binding/docs/public-status gates pass. Any semantic change would
+reopen the gate.</p>
+<h2 id="remaining-deficits">Remaining deficits<a class="headerlink" href="#remaining-deficits" title="Permanent link">&para;</a></h2>
+<ul>
+<li>REM-040 / Phase 127 retains the legacy <code>HistoricalCampaign</code> era-propagation
+  defect. Phase 117 will not use that conversion path.</li>
+<li>A failed backtest supports an explicit unsupported disposition; it is not a
+  predictive invalidation of the engine for every intended use.</li>
+<li>No scenario is currently eligible for <code>production_validated</code> status.</li>
+<li>REM-047 / Phase 134 owns the first causal production divergence behind the
+  frozen 73 Easting source-synchronous miss. Phase 117 does not widen the
+  envelope or tune physical performance to hide it.</li>
+<li>Local evidence proves the packaged loader only for the current zero-accepted
+  ledger; the configured hosted no-<code>.git</code> image smoke remains pending until
+  post-push CI. REM-048 / Phase 135 owns build-time attestation and a
+  package-bound receipt before a future accepted claim can be exposed from
+  that image.</li>
+<li>REM-049 / Phase 136 owns complete ordered Web event export, causal replay and
+  cursor synchronization, current-frame selection, catalog-backed Space
+  editor creation, catalog-backed School and commander creation, and fully
+  bound analysis inputs. Phase 117 fixes the bounded corruptions and removes
+  false present-tense claims, but does not call that broader surface complete.</li>
+<li>REM-050 / Phase 137 owns strict consumed Escalation/DEW configuration,
+  enabled/disabled production behavior, and a catalog scenario that combines
+  a DEW engine with DEW-capable units and records a real engagement outcome.
+  Phase 117 only removes ignored enable-like keys and documents the current
+  presence/default boundary.</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs", "navigation.sections", "navigation.expand", "navigation.top", "search.suggest", "search.highlight", "content.code.copy"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>

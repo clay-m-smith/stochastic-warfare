@@ -794,15 +794,15 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#modern-scenarios-38-total" class="md-nav__link">
+  <a href="#modern-scenarios-37-total" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Modern Scenarios (38 total)
+        Modern Scenarios (37 total)
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Modern Scenarios (38 total)">
+    <nav class="md-nav" aria-label="Modern Scenarios (37 total)">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -860,21 +860,32 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#internal-benchmark-fixtures" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Internal Benchmark Fixtures
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#historical-era-scenarios-14-total" class="md-nav__link">
+  <a href="#historical-era-scenarios-15-total" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Historical Era Scenarios (14 total)
+        Historical Era Scenarios (15 total)
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Historical Era Scenarios (14 total)">
+    <nav class="md-nav" aria-label="Historical Era Scenarios (15 total)">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -2207,6 +2218,62 @@
     
   
     Block 17 (133)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development-phases-block18/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 18 (134)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development-phases-block19/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 19 (135-137)
   
 
     
@@ -5641,6 +5708,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devlog/phase-117/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 117 - Historical Outcome-Envelope Integrity
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -5885,6 +5980,34 @@
     
   
     Fog-of-War Contact Continuation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../specs/historical-outcome-envelope-integrity/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Historical Outcome-Envelope Integrity
   
 
     
@@ -6204,15 +6327,15 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#modern-scenarios-38-total" class="md-nav__link">
+  <a href="#modern-scenarios-37-total" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Modern Scenarios (38 total)
+        Modern Scenarios (37 total)
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Modern Scenarios (38 total)">
+    <nav class="md-nav" aria-label="Modern Scenarios (37 total)">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -6270,21 +6393,32 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#internal-benchmark-fixtures" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Internal Benchmark Fixtures
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#historical-era-scenarios-14-total" class="md-nav__link">
+  <a href="#historical-era-scenarios-15-total" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Historical Era Scenarios (14 total)
+        Historical Era Scenarios (15 total)
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Historical Era Scenarios (14 total)">
+    <nav class="md-nav" aria-label="Historical Era Scenarios (15 total)">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -6670,9 +6804,12 @@ guessed valid.</p>
 <h3 id="calibration-overrides">Calibration Overrides<a class="headerlink" href="#calibration-overrides" title="Permanent link">&para;</a></h3>
 <p>Calibration overrides change the current model configuration. They can support
 a predeclared, source-backed fitting study, but a fitted value or a passing
-regression seed does not by itself establish historical accuracy. Independent
-production outcome-envelope validation remains tracked by
-<a href="../../remediation-backlog/#rem-030-catalog-wide-historical-outcome-claims-lack-production-validation">REM-030</a>.</p>
+regression seed does not by itself establish historical accuracy. Phase 117's
+typed historical-study boundary separates calibration/training lineage from
+held-out evidence, runs exact declared seeds through the production runtime,
+and refuses promotion unless all source, plan, artifact, ledger, and Git
+bindings satisfy the accepted-evidence contract. The current catalog has zero
+production-validated scenarios.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="nt">calibration_overrides</span><span class="p">:</span>
 <a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="w">  </span><span class="nt">hit_probability_modifier</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1.0</span>
 <a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="w">  </span><span class="nt">target_size_modifier</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1.0</span>
@@ -6719,29 +6856,44 @@ other domains.</p>
 <a id="__codelineno-12-14" name="__codelineno-12-14" href="#__codelineno-12-14"></a><span class="w">  </span><span class="nt">update_interval_s</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">10.0</span>
 <a id="__codelineno-12-15" name="__codelineno-12-15" href="#__codelineno-12-15"></a><span class="w">  </span><span class="nt">auto_mopp_response</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
 <a id="__codelineno-12-16" name="__codelineno-12-16" href="#__codelineno-12-16"></a>
-<a id="__codelineno-12-17" name="__codelineno-12-17" href="#__codelineno-12-17"></a><span class="nt">escalation_config</span><span class="p">:</span><span class="w">                   </span><span class="c1"># Escalation Ladder</span>
-<a id="__codelineno-12-18" name="__codelineno-12-18" href="#__codelineno-12-18"></a><span class="w">  </span><span class="nt">initial_level</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">3</span>
-<a id="__codelineno-12-19" name="__codelineno-12-19" href="#__codelineno-12-19"></a><span class="w">  </span><span class="nt">max_level</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">7</span>
-<a id="__codelineno-12-20" name="__codelineno-12-20" href="#__codelineno-12-20"></a>
-<a id="__codelineno-12-21" name="__codelineno-12-21" href="#__codelineno-12-21"></a><span class="nt">school_config</span><span class="p">:</span><span class="w">                       </span><span class="c1"># Doctrinal AI Schools</span>
-<a id="__codelineno-12-22" name="__codelineno-12-22" href="#__codelineno-12-22"></a><span class="w">  </span><span class="nt">blue</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">maneuverist</span>
-<a id="__codelineno-12-23" name="__codelineno-12-23" href="#__codelineno-12-23"></a><span class="w">  </span><span class="nt">red</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">attrition</span>
-<a id="__codelineno-12-24" name="__codelineno-12-24" href="#__codelineno-12-24"></a>
-<a id="__codelineno-12-25" name="__codelineno-12-25" href="#__codelineno-12-25"></a><span class="nt">dew_config</span><span class="p">:</span><span class="w">                          </span><span class="c1"># Directed Energy Weapons</span>
-<a id="__codelineno-12-26" name="__codelineno-12-26" href="#__codelineno-12-26"></a><span class="w">  </span><span class="nt">enable_laser</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<a id="__codelineno-12-17" name="__codelineno-12-17" href="#__codelineno-12-17"></a><span class="nt">escalation_config</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{}</span><span class="w">                </span><span class="c1"># Presence loads current default engines</span>
+<a id="__codelineno-12-18" name="__codelineno-12-18" href="#__codelineno-12-18"></a>
+<a id="__codelineno-12-19" name="__codelineno-12-19" href="#__codelineno-12-19"></a><span class="nt">school_config</span><span class="p">:</span><span class="w">                       </span><span class="c1"># Doctrinal AI Schools</span>
+<a id="__codelineno-12-20" name="__codelineno-12-20" href="#__codelineno-12-20"></a><span class="w">  </span><span class="nt">unit_assignments</span><span class="p">:</span>
+<a id="__codelineno-12-21" name="__codelineno-12-21" href="#__codelineno-12-21"></a><span class="w">    </span><span class="nt">blue_m1a2_0000</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">maneuverist</span>
+<a id="__codelineno-12-22" name="__codelineno-12-22" href="#__codelineno-12-22"></a><span class="w">    </span><span class="nt">red_t72m_0000</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">attrition</span>
+<a id="__codelineno-12-23" name="__codelineno-12-23" href="#__codelineno-12-23"></a>
+<a id="__codelineno-12-24" name="__codelineno-12-24" href="#__codelineno-12-24"></a><span class="nt">dew_config</span><span class="p">:</span><span class="w">                          </span><span class="c1"># Directed Energy Weapons</span>
+<a id="__codelineno-12-25" name="__codelineno-12-25" href="#__codelineno-12-25"></a><span class="w">  </span><span class="nt">base_extinction_per_km</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.2</span><span class="w">        </span><span class="c1"># Consumed DEWConfig tuning field</span>
 </code></pre></div>
-<p>Omitting a block, omitting its suite enable flag, or setting that flag to
-<code>false</code> leaves the suite absent from runtime and checkpoints. The registered
-era selected by <code>era</code> can also forbid <code>ew</code>, <code>space</code>, or <code>cbrn</code>; explicitly
-enabling a forbidden suite is a load error. Era gates additionally reject
-forbidden GPS/PGM guidance, thermal sensors, finite data links, and sensor
-types outside the era allowlist.</p>
+<p>EW, Space, and CBRN require their explicit true enable flags; omitting their
+block/flag or setting the flag false leaves that suite absent. Escalation and
+DEW are presence-enabled: any non-null block creates their engines. DEW accepts
+the fields of <code>DEWConfig</code>; <code>enable_dew</code> and <code>enable_laser</code> are not flags.
+Escalation currently loads default engine settings and does not consume its
+authored tuning mapping (REM-050 / Phase 137), so use <code>{}</code> rather than implying
+that scenario values are active. The registered <code>era</code> can forbid EW, Space, or
+CBRN; explicitly enabling a forbidden suite is a load error. Era gates also
+reject forbidden GPS/PGM guidance, thermal sensors, finite data links, and
+sensor types outside the era allowlist.</p>
+<p><code>school_config</code> is different from the flag-enabled suites: its strict source
+schema accepts only exact <code>unit_assignments</code>. Unit IDs are the deterministic
+runtime IDs derived from the authored side, unit type, and ordinal; unknown
+units or schools fail before construction. Per-side doctrine experiments use
+the typed Doctrine Compare boundary rather than <code>blue</code>, <code>red</code>,
+<code>blue_school</code>, <code>red_school</code>, or <code>enable_schools</code> proxy keys, all of which are
+rejected.</p>
 <p>Constructing an enabled CBRN suite does not schedule a chemical, biological,
 radiological, or nuclear action. Typed production action/owner/delivery/target
 topology remains
 <a href="../../remediation-backlog/#rem-037-cbrn-has-no-typed-scheduled-action-boundary">REM-037</a>.</p>
 <h3 id="documented-outcomes">Documented Outcomes<a class="headerlink" href="#documented-outcomes" title="Permanent link">&para;</a></h3>
-<p>For validated historical scenarios, include reference data:</p>
+<p>Legacy documented outcome metadata is catalog history and is not production
+historical-validation evidence. <code>HistoricalClaimLedgerLoader</code> inventories and
+source-audits repository claims separately. Scenario list and detail APIs
+publish only that ledger's typed <code>historical_validation</code> summary; detail
+responses remove <code>documented_outcomes</code> and <code>sources</code> from the returned config.
+See the <a href="../../specs/historical-outcome-envelope-integrity/">historical outcome-envelope contract</a>.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="nt">documented_outcomes</span><span class="p">:</span>
 <a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">exchange_ratio</span>
 <a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a><span class="w">    </span><span class="nt">value</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">28.0</span>
@@ -6751,8 +6903,12 @@ topology remains
 <a id="__codelineno-13-7" name="__codelineno-13-7" href="#__codelineno-13-7"></a><span class="w">    </span><span class="nt">source_quality</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
 <a id="__codelineno-13-8" name="__codelineno-13-8" href="#__codelineno-13-8"></a><span class="w">    </span><span class="nt">notes</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;Eagle</span><span class="nv"> </span><span class="s">Troop</span><span class="nv"> </span><span class="s">only&quot;</span>
 </code></pre></div>
+<p>The retained Phase 117 73 Easting artifact completed as <code>FAIL</code>: 0/20 runs met
+the full joint envelope, the one-sided lower confidence bound was 0.0, and the
+study was not promotion-eligible. It therefore leaves 73 Easting unsupported;
+see the <a href="../../evidence/phase-117/73-easting-phase117.json">artifact</a>.</p>
 <hr />
-<h2 id="modern-scenarios-38-total">Modern Scenarios (38 total)<a class="headerlink" href="#modern-scenarios-38-total" title="Permanent link">&para;</a></h2>
+<h2 id="modern-scenarios-37-total">Modern Scenarios (37 total)<a class="headerlink" href="#modern-scenarios-37-total" title="Permanent link">&para;</a></h2>
 <h3 id="engagement-scenarios">Engagement Scenarios<a class="headerlink" href="#engagement-scenarios" title="Permanent link">&para;</a></h3>
 <table>
 <thead>
@@ -6768,37 +6924,37 @@ topology remains
 <td><strong>73 Easting</strong></td>
 <td>Eagle Troop vs Iraqi armor, 1991</td>
 <td>30 min</td>
-<td>Desert, thermal advantage, validated</td>
+<td>Desert, thermal advantage, aggregate historical status unsupported; current-engine regression evidence; Phase 117 study <code>FAIL</code></td>
 </tr>
 <tr>
 <td><strong>Debecka Pass</strong></td>
 <td>US SF + Peshmerga vs Iraqi 1st Mech, 2003</td>
 <td>4 hr</td>
-<td>Javelin ATGM, CAS, ridgeline defense, golden-scenario (Block 11)</td>
+<td>Javelin ATGM, CAS, ridgeline defense, Block 11 current-engine regression reference</td>
 </tr>
 <tr>
 <td><strong>Khafji</strong></td>
 <td>Iraqi III Corps vs Saudi/Qatari/USMC/coalition air + USS Missouri, 1991</td>
 <td>72 hr</td>
-<td>Full-OOB 233 units, hybrid tick resolution, naval gunfire, AC-130, multi-domain, golden-scenario (Block 11)</td>
+<td>Full-OOB 233 units, hybrid tick resolution, naval gunfire, AC-130, multi-domain, Block 11 current-engine regression reference</td>
 </tr>
 <tr>
 <td><strong>Fallujah Phase Line Fran</strong></td>
 <td>USMC RCT-1/RCT-7 + Army TF 2-7 CAV vs insurgent defenders, 2004</td>
 <td>120 hr</td>
-<td>Urban combat, HBIED pre-emplacement, AC-130U, and legacy scripted-action declarations; typed effect/continuation integrity is queued under REM-045, golden-scenario (Block 11)</td>
+<td>Urban combat, HBIED pre-emplacement, AC-130U, and legacy scripted-action declarations; typed effect/continuation integrity is queued under REM-045, Block 11 current-engine regression reference</td>
 </tr>
 <tr>
 <td><strong>Bint Jbeil 2006</strong></td>
 <td>IDF Golani/Paratrooper/Armor + Egoz SOF vs Hezbollah tank hunters, 2006</td>
 <td>240 hr</td>
-<td>ATGM-vs-MBT (Kornet + RPG-29 vs Merkava Mk III/IV), urban hills, reserve-mobilization morale gap, contested outcome (DRAW_SCENARIO), golden-scenario (Block 11)</td>
+<td>ATGM-vs-MBT (Kornet + RPG-29 vs Merkava Mk III/IV), urban hills, reserve-mobilization morale gap, contested outcome (DRAW_SCENARIO), Block 11 current-engine regression reference</td>
 </tr>
 <tr>
 <td><strong>INS Hanit 2006</strong></td>
 <td>Sa'ar 5 corvette vs Hezbollah coastal C-802 Noor ASCM strike, 2006</td>
 <td>2 hr</td>
-<td>Naval ASCM engagement, degraded-ECM posture, sea-skimming cruise missile, Barak-1 PD SAM, golden-scenario (Block 11)</td>
+<td>Naval ASCM engagement, degraded-ECM posture, sea-skimming cruise missile, Barak-1 PD SAM, Block 11 current-engine regression reference</td>
 </tr>
 <tr>
 <td><strong>Falklands Naval</strong></td>
@@ -6877,7 +7033,7 @@ topology remains
 <td><strong>Suwalki Gap</strong></td>
 <td>NATO defense of Baltic corridor</td>
 <td>72 hr</td>
-<td>EW, doctrinal schools</td>
+<td>EW, combined arms</td>
 </tr>
 <tr>
 <td><strong>Hybrid Gray Zone</strong></td>
@@ -6939,12 +7095,6 @@ topology remains
 <td>Escalation and war crimes</td>
 <td>72 hr</td>
 <td>Escalation, consequences</td>
-</tr>
-<tr>
-<td><strong>Eastern Front 1943</strong></td>
-<td>WWII Eastern Front</td>
-<td>72 hr</td>
-<td>Large-scale combined arms</td>
 </tr>
 <tr>
 <td><strong>COIN Campaign</strong></td>
@@ -7020,8 +7170,29 @@ topology remains
 </tr>
 </tbody>
 </table>
+<h3 id="internal-benchmark-fixtures">Internal Benchmark Fixtures<a class="headerlink" href="#internal-benchmark-fixtures" title="Permanent link">&para;</a></h3>
+<p>These two catalog scenarios complete the 37-scenario modern total. They are
+large synthetic performance fixtures, not historical-validation evidence.</p>
+<table>
+<thead>
+<tr>
+<th>Scenario</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Benchmark - Battalion Task Force (1,000 units)</strong></td>
+<td>Six-hour battalion-scale runtime benchmark</td>
+</tr>
+<tr>
+<td><strong>Benchmark - Brigade Combat Team (5,000 units)</strong></td>
+<td>Six-hour brigade-scale runtime benchmark</td>
+</tr>
+</tbody>
+</table>
 <hr />
-<h2 id="historical-era-scenarios-14-total">Historical Era Scenarios (14 total)<a class="headerlink" href="#historical-era-scenarios-14-total" title="Permanent link">&para;</a></h2>
+<h2 id="historical-era-scenarios-15-total">Historical Era Scenarios (15 total)<a class="headerlink" href="#historical-era-scenarios-15-total" title="Permanent link">&para;</a></h2>
 <h3 id="ww2">WW2<a class="headerlink" href="#ww2" title="Permanent link">&para;</a></h3>
 <table>
 <thead>
@@ -7051,6 +7222,11 @@ topology remains
 <td><strong>Midway</strong></td>
 <td>1942</td>
 <td>Carrier battle</td>
+</tr>
+<tr>
+<td><strong>Eastern Front 1943</strong></td>
+<td>1943</td>
+<td>Large-scale German-Soviet combined arms</td>
 </tr>
 </tbody>
 </table>
@@ -7148,7 +7324,9 @@ topology remains
 <li>Browse to any scenario's detail page</li>
 <li>Click <strong>Clone &amp; Tweak</strong> to open the editor with a copy of that scenario</li>
 <li>Modify forces (add/remove units, adjust counts), terrain, weather, duration, and calibration</li>
-<li>Toggle optional subsystems (EW, CBRN, Escalation, Schools, Space, DEW)</li>
+<li>Toggle supported optional subsystems (EW, CBRN, Escalation, DEW); exact
+   School and Space configurations can be removed but not created in this
+   editor</li>
 <li>Use the live YAML preview to verify your changes</li>
 <li>Click <strong>Validate</strong> to check for errors, then <strong>Run This Config</strong> to execute</li>
 </ol>

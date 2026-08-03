@@ -1817,6 +1817,62 @@
   
   
     <li class="md-nav__item">
+      <a href="../../development-phases-block18/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 18 (134)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development-phases-block19/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 19 (135-137)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../remediation-backlog/" class="md-nav__link">
         
   
@@ -5231,6 +5287,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devlog/phase-117/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 117 - Historical Outcome-Envelope Integrity
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -5495,6 +5579,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../specs/historical-outcome-envelope-integrity/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Historical Outcome-Envelope Integrity
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../specs/morale-state-ownership/" class="md-nav__link">
         
   
@@ -5634,15 +5746,15 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#1-envelope-format" class="md-nav__link">
+  <a href="#1-legacy-envelope-format-not-a-validation-plan" class="md-nav__link">
     <span class="md-ellipsis">
       
-        1. Envelope Format
+        1. Legacy Envelope Format (Not a Validation Plan)
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="1. Envelope Format">
+    <nav class="md-nav" aria-label="1. Legacy Envelope Format (Not a Validation Plan)">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -5695,15 +5807,15 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#2-permitted-vs-forbidden-calibration-techniques" class="md-nav__link">
+  <a href="#2-historical-calibration-guidance" class="md-nav__link">
     <span class="md-ellipsis">
       
-        2. Permitted vs. Forbidden Calibration Techniques
+        2. Historical Calibration Guidance
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="2. Permitted vs. Forbidden Calibration Techniques">
+    <nav class="md-nav" aria-label="2. Historical Calibration Guidance">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -5729,10 +5841,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#case-of-last-resort" class="md-nav__link">
+  <a href="#when-the-frozen-envelope-is-missed" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Case of last resort
+        When the frozen envelope is missed
       
     </span>
   </a>
@@ -5767,10 +5879,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#5-helpers" class="md-nav__link">
+  <a href="#5-phase-117-helper-removal" class="md-nav__link">
     <span class="md-ellipsis">
       
-        5. Helpers
+        5. Phase 117 Helper Removal
       
     </span>
   </a>
@@ -5799,6 +5911,12 @@
 
 <h1 id="block-11-scenario-calibration-template">Block 11 Scenario Calibration Template<a class="headerlink" href="#block-11-scenario-calibration-template" title="Permanent link">&para;</a></h1>
 <blockquote>
+<p><strong>Phase 117 historical-claim supersession (2026-08-02):</strong> This archived page
+preserves implementation history. Its historical-winner, outcome, casualty,
+duration, calibration, plausibility, envelope, and tolerance statements are
+not accepted historical validation. Any engine figures below are regression
+history only, not predictive evidence or calibration authority; the typed
+claim ledger and accepted production artifacts, if any, are authoritative.</p>
 <p><strong>Phase 112 integrity supersession (2026-07-30):</strong> This page preserves the
 Block 11 calibration and regression template as development history. Its
 worked seeds, winner thresholds, helper calls, and sample configuration are
@@ -5809,8 +5927,13 @@ themselves establish historical validation. REM-030/Phase 117 owns the
 replacement catalog-wide outcome-envelope contract and the disposition of
 every retained claim.</p>
 </blockquote>
-<p>Every Block 11 golden scenario defines an <strong>outcome envelope</strong> — a range of statistically-plausible results derived from historical sources. The scenario's regression test validates that the engine produces outcomes bracketing that envelope.</p>
-<p>This document defines:</p>
+<p>Block 11 treated each so-called golden scenario as if a local <strong>outcome
+envelope</strong> and regression assertion validated historical fidelity. That premise
+is retained here only as development history. These fragments are not strict
+study plans, their helper tests are not historical verdicts, and none can
+support <code>production_validated</code> without the Phase 117 ledger, production runner,
+artifact, and explicit promotion contract.</p>
+<p>This historical document records:</p>
 <ol>
 <li>The envelope format</li>
 <li>Permitted vs. forbidden calibration techniques</li>
@@ -5818,20 +5941,32 @@ every retained claim.</p>
 <li>Worked example</li>
 </ol>
 <hr />
-<h2 id="1-envelope-format">1. Envelope Format<a class="headerlink" href="#1-envelope-format" title="Permanent link">&para;</a></h2>
-<p>An envelope has four components:</p>
+<h2 id="1-legacy-envelope-format-not-a-validation-plan">1. Legacy Envelope Format (Not a Validation Plan)<a class="headerlink" href="#1-legacy-envelope-format-not-a-validation-plan" title="Permanent link">&para;</a></h2>
+<p>Block 11 described an envelope with four components. The examples below omit
+required source-lineage, exact unit/extractor/event-boundary, immutable
+predeclaration, production provenance, joint acceptance, and reload-validated
+artifact fields. Treat a legacy helper result as
+<code>current_engine_regression_only</code> only when it actually uses the production
+factory path; otherwise it is <code>unsupported</code>.</p>
 <h3 id="11-winner-envelope">1.1 Winner envelope<a class="headerlink" href="#11-winner-envelope" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nt">winner_envelope</span><span class="p">:</span>
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span><span class="nt">expected_winner</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">blue</span><span class="w">       </span><span class="c1"># or &quot;red&quot; or &quot;draw&quot;</span>
 <a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span><span class="nt">min_rate</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.7</span><span class="w">               </span><span class="c1"># historical winner wins in ≥70% of 10-iteration MC</span>
 </code></pre></div>
-<p>Rationale: history is a single realization; our Monte Carlo distribution should have the historical winner as its modal outcome but need not guarantee it.</p>
+<p>Historical rationale recorded by Block 11: history is one realization, so the
+template used a modal-winner threshold. Under the current contract,
+winner-only gating is invalid and winner agreement cannot substitute for an
+independently sourced outcome metric.</p>
 <h3 id="12-duration-envelope">1.2 Duration envelope<a class="headerlink" href="#12-duration-envelope" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="nt">duration_envelope</span><span class="p">:</span>
 <a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w">  </span><span class="nt">historical_s</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">21600</span><span class="w">         </span><span class="c1"># 6 hours main engagement</span>
 <a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w">  </span><span class="nt">tolerance</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.5</span><span class="w">              </span><span class="c1"># 10th–90th percentile spans 3h–9h (i.e., 50% of historical)</span>
 </code></pre></div>
-<p>Rationale: Many factors (weather, commander reaction time, supply delays) affect duration. A ±50% envelope around the historical figure is generous enough to accept plausible variation without being meaningless.</p>
+<p>Historical rationale recorded by Block 11: weather, reaction time, and supply
+delays motivated a broad duration range. The current contract does not invent a
+percentage tolerance: it requires a source-backed inclusive range, exact unit,
+comparable event boundary, and explicit cutoff censoring before results are
+observed.</p>
 <h3 id="13-casualty-envelope-per-side">1.3 Casualty envelope (per side)<a class="headerlink" href="#13-casualty-envelope-per-side" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="nt">casualty_envelopes</span><span class="p">:</span>
 <a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">side</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">red</span>
@@ -5841,7 +5976,11 @@ every retained claim.</p>
 <a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="w">    </span><span class="nt">historical</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0</span><span class="w">             </span><span class="c1"># 0 KIA among SF team during main engagement</span>
 <a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="w">    </span><span class="nt">max</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">3</span><span class="w">                    </span><span class="c1"># hard ceiling — higher means calibration is off</span>
 </code></pre></div>
-<p>Rationale: Historical casualty figures are usually known to ±20–40% precision due to AAR variance, unit-boundary questions, and the difference between KIA-only and total-casualty counts. Two-sided asymmetric envelopes (e.g., <code>max</code> for blue) acknowledge when historical reality is close to zero but the engine might produce small positive values.</p>
+<p>Historical rationale recorded by Block 11: casualty uncertainty motivated
+broad percentage ranges and asymmetric ceilings. Under the current contract,
+the source must support the actual range and population. KIA, total casualties,
+people, vehicles, formations, and generic unit records are not interchangeable,
+and a convenient tolerance cannot repair a unit mismatch.</p>
 <h3 id="14-key-dynamic-envelope">1.4 Key-dynamic envelope<a class="headerlink" href="#14-key-dynamic-envelope" title="Permanent link">&para;</a></h3>
 <p>Scenario-specific assertions that a defining tactical moment gets reproduced.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="nt">key_dynamics</span><span class="p">:</span>
@@ -5852,9 +5991,19 @@ every retained claim.</p>
 <a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="w">    </span><span class="nt">description</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;CAS</span><span class="nv"> </span><span class="s">should</span><span class="nv"> </span><span class="s">meaningfully</span><span class="nv"> </span><span class="s">engage&quot;</span>
 <a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="w">    </span><span class="nt">assertion</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;at</span><span class="nv"> </span><span class="s">least</span><span class="nv"> </span><span class="s">1</span><span class="nv"> </span><span class="s">CAS</span><span class="nv"> </span><span class="s">engagement</span><span class="nv"> </span><span class="s">event</span><span class="nv"> </span><span class="s">per</span><span class="nv"> </span><span class="s">run&quot;</span>
 </code></pre></div>
-<p>These are the scenario's "depth tests" — they verify that not only does the right side win by the right margin in the right time, but the <strong>mechanism</strong> of victory resembles the historical one.</p>
+<p>Block 11 called these "depth tests." Today they are diagnostics unless a closed
+production extractor, exact source assertion, unit, population, and
+source-synchronous event boundary are predeclared. A proxy such as a weapon
+share over a different vehicle population does not establish the historical
+mechanism.</p>
 <hr />
-<h2 id="2-permitted-vs-forbidden-calibration-techniques">2. Permitted vs. Forbidden Calibration Techniques<a class="headerlink" href="#2-permitted-vs-forbidden-calibration-techniques" title="Permanent link">&para;</a></h2>
+<h2 id="2-historical-calibration-guidance">2. Historical Calibration Guidance<a class="headerlink" href="#2-historical-calibration-guidance" title="Permanent link">&para;</a></h2>
+<p>The lists below preserve Block 11's intended guardrails; they are not blanket
+authorization to set fields or values. Current calibration requires a
+schema-valid, production-wired parameter, traceable source/rationale, a frozen
+backtest contract, separate training and held-out seeds, and validation on the
+factory-owned route. Unsupported fields and unexercised overrides remain
+explicitly unsupported.</p>
 <h3 id="permitted">Permitted<a class="headerlink" href="#permitted" title="Permanent link">&para;</a></h3>
 <ul>
 <li><strong>Commander CEV</strong> (<code>force_ratio_modifier</code>) within Dupuy-documented ranges (0.8–2.5 for symmetric forces; up to 3.0 for elite vs. conscript asymmetry with explicit historical justification)</li>
@@ -5875,13 +6024,21 @@ every retained claim.</p>
 <li><strong>Reducing IED/device density to "win faster"</strong>. IED employment is a documented historical rate — matching that rate is the point.</li>
 <li><strong>Synthetic "historical" data</strong>. Every calibration value cites a source.</li>
 </ul>
-<h3 id="case-of-last-resort">Case of last resort<a class="headerlink" href="#case-of-last-resort" title="Permanent link">&para;</a></h3>
+<h3 id="when-the-frozen-envelope-is-missed">When the frozen envelope is missed<a class="headerlink" href="#when-the-frozen-envelope-is-missed" title="Permanent link">&para;</a></h3>
 <p>If after applying all permitted techniques the envelope is still missed by a wide margin, the correct response is:</p>
 <ol>
 <li><strong>Document the miss</strong> in the phase devlog with quantitative detail (what the engine produces vs. what's expected)</li>
-<li><strong>Log a new deficit</strong> in <code>devlog/index.md</code> identifying the engine gap</li>
-<li><strong>Accept the wider envelope</strong> or relax the target for this scenario</li>
-<li><strong>Do not</strong> keep tuning until the envelope fits — that's overfitting to a single realization and masks the engine gap.</li>
+<li><strong>Keep the frozen study and its <code>FAIL</code> artifact</strong>; do not change its range,
+   threshold, metrics, seeds, population, or event boundary after seeing the
+   result</li>
+<li><strong>Classify the historical claim as <code>unsupported</code></strong> (or classify a separate
+   output snapshot as <code>current_engine_regression_only</code> when that is all it
+   proves)</li>
+<li><strong>Record a remediation item</strong> for the specific model, extraction, source,
+   unit, or scenario-representation gap</li>
+<li><strong>Predeclare any later study independently</strong> with a documented source or
+   modeling rationale; never tune on its held-out seeds or describe reused
+   evidence as independent validation</li>
 </ol>
 <hr />
 <h2 id="3-citation-discipline">3. Citation Discipline<a class="headerlink" href="#3-citation-discipline" title="Permanent link">&para;</a></h2>
@@ -5905,6 +6062,13 @@ every retained claim.</p>
 <p>Not acceptable: blogs, Wikipedia claims without primary citations, YouTube, unsourced news coverage.</p>
 <hr />
 <h2 id="4-worked-example-debecka-pass-from-phase-99">4. Worked Example — Debecka Pass (from Phase 99)<a class="headerlink" href="#4-worked-example-debecka-pass-from-phase-99" title="Permanent link">&para;</a></h2>
+<p>The following YAML and tests are preserved as the Block 11 illustration. They
+are not known to be a current schema-valid configuration, do not use the strict
+claim ledger or study plan, and do not produce a reload-validated artifact.
+They therefore cannot support a historical-validation claim. Debecka's current
+catalog metadata also conflicts with the source-scoped duration and vehicle
+counts, so it remains explicitly unsupported pending remediation and a new
+predeclared production study.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="c1"># data/scenarios/debecka_pass/scenario.yaml</span>
 <a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;Debecka</span><span class="nv"> </span><span class="s">Pass</span><span class="nv"> </span><span class="s">2003</span><span class="nv"> </span><span class="s">—</span><span class="nv"> </span><span class="s">Task</span><span class="nv"> </span><span class="s">Force</span><span class="nv"> </span><span class="s">Viking</span><span class="nv"> </span><span class="s">vs.</span><span class="nv"> </span><span class="s">Iraqi</span><span class="nv"> </span><span class="s">34th</span><span class="nv"> </span><span class="s">Bde</span><span class="nv"> </span><span class="s">mech&quot;</span>
 <a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="nt">date</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;2003-04-06T13:00:00+04:00&quot;</span>
@@ -5927,56 +6091,49 @@ every retained claim.</p>
 <a id="__codelineno-5-20" name="__codelineno-5-20" href="#__codelineno-5-20"></a><span class="w">  </span><span class="nt">cas_sortie_availability_per_hour</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2</span>
 </code></pre></div>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="c1"># tests/validation/test_debecka_pass.py</span>
-<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="k">def</span><span class="w"> </span><span class="nf">test_debecka_pass_envelope</span><span class="p">():</span>
-<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>    <span class="n">results</span> <span class="o">=</span> <span class="n">run_scenario_batch</span><span class="p">(</span>
-<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>        <span class="s2">&quot;data/scenarios/debecka_pass/scenario.yaml&quot;</span><span class="p">,</span>
-<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>        <span class="n">overrides</span><span class="o">=</span><span class="p">{},</span>
-<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a>        <span class="n">num_iterations</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">base_seed</span><span class="o">=</span><span class="mi">42</span><span class="p">,</span> <span class="n">max_ticks</span><span class="o">=</span><span class="mi">5000</span><span class="p">,</span>
-<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a>        <span class="n">metric_names</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;win_blue&quot;</span><span class="p">,</span> <span class="s2">&quot;blue_destroyed&quot;</span><span class="p">,</span> <span class="s2">&quot;red_destroyed&quot;</span><span class="p">,</span> <span class="s2">&quot;ticks_executed&quot;</span><span class="p">],</span>
-<a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a>        <span class="n">data_dir</span><span class="o">=</span><span class="s2">&quot;data&quot;</span><span class="p">,</span>
-<a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a>    <span class="p">)</span>
-<a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a>    <span class="c1"># Winner envelope</span>
-<a id="__codelineno-6-11" name="__codelineno-6-11" href="#__codelineno-6-11"></a>    <span class="n">blue_win_rate</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">results</span><span class="o">.</span><span class="n">metric_values</span><span class="p">(</span><span class="s2">&quot;win_blue&quot;</span><span class="p">))</span> <span class="o">/</span> <span class="mi">10</span>
-<a id="__codelineno-6-12" name="__codelineno-6-12" href="#__codelineno-6-12"></a>    <span class="k">assert</span> <span class="n">blue_win_rate</span> <span class="o">&gt;=</span> <span class="mf">0.7</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;Expected ≥70% blue wins, got </span><span class="si">{</span><span class="n">blue_win_rate</span><span class="si">:</span><span class="s2">.0%</span><span class="si">}</span><span class="s2">&quot;</span>
-<a id="__codelineno-6-13" name="__codelineno-6-13" href="#__codelineno-6-13"></a>
-<a id="__codelineno-6-14" name="__codelineno-6-14" href="#__codelineno-6-14"></a>    <span class="c1"># Casualty envelope</span>
-<a id="__codelineno-6-15" name="__codelineno-6-15" href="#__codelineno-6-15"></a>    <span class="n">avg_red_destroyed</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">results</span><span class="o">.</span><span class="n">metric_values</span><span class="p">(</span><span class="s2">&quot;red_destroyed&quot;</span><span class="p">))</span> <span class="o">/</span> <span class="mi">10</span>
-<a id="__codelineno-6-16" name="__codelineno-6-16" href="#__codelineno-6-16"></a>    <span class="k">assert</span> <span class="mi">15</span> <span class="o">&lt;=</span> <span class="n">avg_red_destroyed</span> <span class="o">&lt;=</span> <span class="mi">40</span><span class="p">,</span> \
-<a id="__codelineno-6-17" name="__codelineno-6-17" href="#__codelineno-6-17"></a>        <span class="sa">f</span><span class="s2">&quot;Iraqi destructions outside envelope: </span><span class="si">{</span><span class="n">avg_red_destroyed</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2">&quot;</span>
-<a id="__codelineno-6-18" name="__codelineno-6-18" href="#__codelineno-6-18"></a>
-<a id="__codelineno-6-19" name="__codelineno-6-19" href="#__codelineno-6-19"></a>    <span class="n">avg_blue_destroyed</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">results</span><span class="o">.</span><span class="n">metric_values</span><span class="p">(</span><span class="s2">&quot;blue_destroyed&quot;</span><span class="p">))</span> <span class="o">/</span> <span class="mi">10</span>
-<a id="__codelineno-6-20" name="__codelineno-6-20" href="#__codelineno-6-20"></a>    <span class="k">assert</span> <span class="n">avg_blue_destroyed</span> <span class="o">&lt;=</span> <span class="mi">3</span><span class="p">,</span> \
-<a id="__codelineno-6-21" name="__codelineno-6-21" href="#__codelineno-6-21"></a>        <span class="sa">f</span><span class="s2">&quot;SF casualties too high (historical: 0, max: 3): </span><span class="si">{</span><span class="n">avg_blue_destroyed</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2">&quot;</span>
-<a id="__codelineno-6-22" name="__codelineno-6-22" href="#__codelineno-6-22"></a>
-<a id="__codelineno-6-23" name="__codelineno-6-23" href="#__codelineno-6-23"></a>    <span class="c1"># Duration envelope</span>
-<a id="__codelineno-6-24" name="__codelineno-6-24" href="#__codelineno-6-24"></a>    <span class="n">avg_ticks</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">results</span><span class="o">.</span><span class="n">metric_values</span><span class="p">(</span><span class="s2">&quot;ticks_executed&quot;</span><span class="p">))</span> <span class="o">/</span> <span class="mi">10</span>
-<a id="__codelineno-6-25" name="__codelineno-6-25" href="#__codelineno-6-25"></a>    <span class="c1"># 6 hours ± 50%, tick_duration_seconds=5.0 → 2160-6480 ticks</span>
-<a id="__codelineno-6-26" name="__codelineno-6-26" href="#__codelineno-6-26"></a>    <span class="k">assert</span> <span class="mi">2160</span> <span class="o">&lt;=</span> <span class="n">avg_ticks</span> <span class="o">&lt;=</span> <span class="mi">6480</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;Duration outside envelope: </span><span class="si">{</span><span class="n">avg_ticks</span><span class="si">:</span><span class="s2">.0f</span><span class="si">}</span><span class="s2"> ticks&quot;</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="c1"># Historical Block 11 regression sketch; not a historical-validation route.</span>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="k">def</span><span class="w"> </span><span class="nf">test_debecka_pass_envelope</span><span class="p">():</span>
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>    <span class="n">results</span> <span class="o">=</span> <span class="n">run_scenario_batch</span><span class="p">(</span>
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>        <span class="s2">&quot;data/scenarios/debecka_pass/scenario.yaml&quot;</span><span class="p">,</span>
+<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a>        <span class="n">overrides</span><span class="o">=</span><span class="p">{},</span>
+<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a>        <span class="n">num_iterations</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">base_seed</span><span class="o">=</span><span class="mi">42</span><span class="p">,</span> <span class="n">max_ticks</span><span class="o">=</span><span class="mi">5000</span><span class="p">,</span>
+<a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a>        <span class="n">metric_names</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;win_blue&quot;</span><span class="p">,</span> <span class="s2">&quot;blue_destroyed&quot;</span><span class="p">,</span> <span class="s2">&quot;red_destroyed&quot;</span><span class="p">,</span> <span class="s2">&quot;ticks_executed&quot;</span><span class="p">],</span>
+<a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a>        <span class="n">data_dir</span><span class="o">=</span><span class="s2">&quot;data&quot;</span><span class="p">,</span>
+<a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a>    <span class="p">)</span>
+<a id="__codelineno-6-11" name="__codelineno-6-11" href="#__codelineno-6-11"></a>    <span class="c1"># Winner envelope</span>
+<a id="__codelineno-6-12" name="__codelineno-6-12" href="#__codelineno-6-12"></a>    <span class="n">blue_win_rate</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">results</span><span class="o">.</span><span class="n">metric_values</span><span class="p">(</span><span class="s2">&quot;win_blue&quot;</span><span class="p">))</span> <span class="o">/</span> <span class="mi">10</span>
+<a id="__codelineno-6-13" name="__codelineno-6-13" href="#__codelineno-6-13"></a>    <span class="k">assert</span> <span class="n">blue_win_rate</span> <span class="o">&gt;=</span> <span class="mf">0.7</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;Expected ≥70% blue wins, got </span><span class="si">{</span><span class="n">blue_win_rate</span><span class="si">:</span><span class="s2">.0%</span><span class="si">}</span><span class="s2">&quot;</span>
+<a id="__codelineno-6-14" name="__codelineno-6-14" href="#__codelineno-6-14"></a>
+<a id="__codelineno-6-15" name="__codelineno-6-15" href="#__codelineno-6-15"></a>    <span class="c1"># Casualty envelope</span>
+<a id="__codelineno-6-16" name="__codelineno-6-16" href="#__codelineno-6-16"></a>    <span class="n">avg_red_destroyed</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">results</span><span class="o">.</span><span class="n">metric_values</span><span class="p">(</span><span class="s2">&quot;red_destroyed&quot;</span><span class="p">))</span> <span class="o">/</span> <span class="mi">10</span>
+<a id="__codelineno-6-17" name="__codelineno-6-17" href="#__codelineno-6-17"></a>    <span class="k">assert</span> <span class="mi">15</span> <span class="o">&lt;=</span> <span class="n">avg_red_destroyed</span> <span class="o">&lt;=</span> <span class="mi">40</span><span class="p">,</span> \
+<a id="__codelineno-6-18" name="__codelineno-6-18" href="#__codelineno-6-18"></a>        <span class="sa">f</span><span class="s2">&quot;Iraqi destructions outside envelope: </span><span class="si">{</span><span class="n">avg_red_destroyed</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2">&quot;</span>
+<a id="__codelineno-6-19" name="__codelineno-6-19" href="#__codelineno-6-19"></a>
+<a id="__codelineno-6-20" name="__codelineno-6-20" href="#__codelineno-6-20"></a>    <span class="n">avg_blue_destroyed</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">results</span><span class="o">.</span><span class="n">metric_values</span><span class="p">(</span><span class="s2">&quot;blue_destroyed&quot;</span><span class="p">))</span> <span class="o">/</span> <span class="mi">10</span>
+<a id="__codelineno-6-21" name="__codelineno-6-21" href="#__codelineno-6-21"></a>    <span class="k">assert</span> <span class="n">avg_blue_destroyed</span> <span class="o">&lt;=</span> <span class="mi">3</span><span class="p">,</span> \
+<a id="__codelineno-6-22" name="__codelineno-6-22" href="#__codelineno-6-22"></a>        <span class="sa">f</span><span class="s2">&quot;SF casualties too high (historical: 0, max: 3): </span><span class="si">{</span><span class="n">avg_blue_destroyed</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2">&quot;</span>
+<a id="__codelineno-6-23" name="__codelineno-6-23" href="#__codelineno-6-23"></a>
+<a id="__codelineno-6-24" name="__codelineno-6-24" href="#__codelineno-6-24"></a>    <span class="c1"># Duration envelope</span>
+<a id="__codelineno-6-25" name="__codelineno-6-25" href="#__codelineno-6-25"></a>    <span class="n">avg_ticks</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">results</span><span class="o">.</span><span class="n">metric_values</span><span class="p">(</span><span class="s2">&quot;ticks_executed&quot;</span><span class="p">))</span> <span class="o">/</span> <span class="mi">10</span>
+<a id="__codelineno-6-26" name="__codelineno-6-26" href="#__codelineno-6-26"></a>    <span class="c1"># 6 hours ± 50%, tick_duration_seconds=5.0 → 2160-6480 ticks</span>
+<a id="__codelineno-6-27" name="__codelineno-6-27" href="#__codelineno-6-27"></a>    <span class="k">assert</span> <span class="mi">2160</span> <span class="o">&lt;=</span> <span class="n">avg_ticks</span> <span class="o">&lt;=</span> <span class="mi">6480</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;Duration outside envelope: </span><span class="si">{</span><span class="n">avg_ticks</span><span class="si">:</span><span class="s2">.0f</span><span class="si">}</span><span class="s2"> ticks&quot;</span>
 </code></pre></div>
-<p>The key-dynamic check (Javelin dominance) is a separate test because it requires running one full iteration with event capture, which is heavier:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="nd">@pytest</span><span class="o">.</span><span class="n">mark</span><span class="o">.</span><span class="n">slow</span>
-<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="k">def</span><span class="w"> </span><span class="nf">test_debecka_pass_javelin_dominance</span><span class="p">():</span>
-<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>    <span class="n">javelin_kills</span> <span class="o">=</span> <span class="n">count_destructions_by_weapon</span><span class="p">(</span>
-<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>        <span class="s2">&quot;data/scenarios/debecka_pass/scenario.yaml&quot;</span><span class="p">,</span>
-<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>        <span class="n">weapon_id</span><span class="o">=</span><span class="s2">&quot;javelin_clm&quot;</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">42</span><span class="p">,</span> <span class="n">data_dir</span><span class="o">=</span><span class="s2">&quot;data&quot;</span><span class="p">,</span>
-<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a>    <span class="p">)</span>
-<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a>    <span class="n">total_red_kills</span> <span class="o">=</span> <span class="n">count_total_destructions</span><span class="p">(</span><span class="s2">&quot;data/scenarios/debecka_pass/scenario.yaml&quot;</span><span class="p">,</span>
-<a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a>                                                <span class="n">side</span><span class="o">=</span><span class="s2">&quot;red&quot;</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">42</span><span class="p">,</span> <span class="n">data_dir</span><span class="o">=</span><span class="s2">&quot;data&quot;</span><span class="p">)</span>
-<a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a>    <span class="n">ratio</span> <span class="o">=</span> <span class="n">javelin_kills</span> <span class="o">/</span> <span class="nb">max</span><span class="p">(</span><span class="n">total_red_kills</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
-<a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a>    <span class="k">assert</span> <span class="n">ratio</span> <span class="o">&gt;=</span> <span class="mf">0.5</span><span class="p">,</span> \
-<a id="__codelineno-7-11" name="__codelineno-7-11" href="#__codelineno-7-11"></a>        <span class="sa">f</span><span class="s2">&quot;Javelin should cause ≥50% of Iraqi kills, got </span><span class="si">{</span><span class="n">ratio</span><span class="si">:</span><span class="s2">.0%</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="n">javelin_kills</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">total_red_kills</span><span class="si">}</span><span class="s2">)&quot;</span>
-</code></pre></div>
+<p>The historical template also proposed a separate Javelin-dominance helper.
+That proxy compared incompatible populations and had no source-synchronous
+event boundary, so Phase 117 removed the sketch rather than preserving it as a
+validation example.</p>
 <hr />
-<h2 id="5-helpers">5. Helpers<a class="headerlink" href="#5-helpers" title="Permanent link">&para;</a></h2>
-<p>The regression-test helpers live in <code>stochastic_warfare/tools/envelope_check.py</code>:</p>
-<ul>
-<li><code>check_winner_envelope(results, expected_winner, min_rate=0.7)</code></li>
-<li><code>check_duration_envelope(results, historical_s, tolerance=0.5, tick_duration_s=5.0)</code></li>
-<li><code>check_casualty_envelope(results, side, historical, tolerance=0.4, max_override=None)</code></li>
-<li><code>count_destructions_by_weapon(scenario_path, weapon_id, seed, data_dir, max_ticks=5000)</code></li>
-<li><code>count_total_destructions(scenario_path, side, seed, data_dir, max_ticks=5000)</code></li>
-</ul>
-<p>Each scenario's regression test uses these to keep assertions uniform and the test easy to read.</p>
+<h2 id="5-phase-117-helper-removal">5. Phase 117 Helper Removal<a class="headerlink" href="#5-phase-117-helper-removal" title="Permanent link">&para;</a></h2>
+<p>Phase 117 removed <code>stochastic_warfare/tools/envelope_check.py</code> and its synthetic
+unit tests. The unused helpers returned local boolean <code>PASS</code>/<code>FAIL</code> labels or
+event counts without loading the claim ledger and predeclared study plan,
+executing the typed historical-study boundary, or writing a reload-validated
+artifact. No compatibility shim remains.</p>
+<p>Current historical work uses <code>HistoricalClaimLedgerLoader -&gt;
+HistoricalStudyLoader -&gt; SimulationRuntimeFactory.prepare -&gt;
+HistoricalBacktestRunner -&gt; load_historical_artifact</code>. A completed <code>PASS</code> still
+requires a separate clean-revision, immutable-predeclaration, exact-metric
+ledger promotion before any claim becomes <code>production_validated</code>.</p>
 
 
 

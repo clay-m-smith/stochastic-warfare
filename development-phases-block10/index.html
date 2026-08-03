@@ -2366,6 +2366,62 @@
   
   
     <li class="md-nav__item">
+      <a href="../development-phases-block18/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 18 (134)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../development-phases-block19/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 19 (135-137)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../remediation-backlog/" class="md-nav__link">
         
   
@@ -5780,6 +5836,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-117/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 117 - Historical Outcome-Envelope Integrity
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -6024,6 +6108,34 @@
     
   
     Fog-of-War Contact Continuation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../specs/historical-outcome-envelope-integrity/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Historical Outcome-Envelope Integrity
   
 
     
@@ -6696,6 +6808,19 @@
 
 
 <h1 id="stochastic-warfare-block-10-development-phases-92-97">Stochastic Warfare -- Block 10 Development Phases (92--97)<a class="headerlink" href="#stochastic-warfare-block-10-development-phases-92-97" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p><strong>Phase 117 historical-claim supersession (2026-08-02):</strong> This archived page
+preserves implementation history. Its historical-winner, outcome, casualty,
+duration, calibration, plausibility, envelope, and tolerance statements are
+not accepted historical validation. Any engine figures below are regression
+history only, not predictive evidence or calibration authority; the typed
+claim ledger and accepted production artifacts, if any, are authoritative.</p>
+<p><strong>Phase 117 editor-integrity correction (2026-08-02):</strong> Phase 95's planned
+school and commander proxy fields were not production authorities. The
+selectors are explicitly unavailable pending REM-049 / Phase 136; typed
+doctrine comparison is owned by Phase 112. Their archived plan and exit
+criteria below are superseded, not current capability claims.</p>
+</blockquote>
 <h2 id="philosophy">Philosophy<a class="headerlink" href="#philosophy" title="Permanent link">&para;</a></h2>
 <p>Block 10 is the <strong>UI depth &amp; engine exposure block</strong>. The engine has 60+ domain engines, 32 behavioral flags, 68 calibration parameters, 9 doctrinal schools, and 100+ event types — but the web UI, built in Block 3 (Phases 31–36) and partially synced in Phase 80, exposes a fraction of this capability. Block 10 surfaces existing data through existing APIs to existing UI components. Where the API lacks a necessary endpoint or data field, we add it — but the simulation logic remains unchanged.</p>
 <p><strong>Design principle</strong>: Zero new engine capabilities. Every feature surfaces existing data.</p>
@@ -6706,7 +6831,7 @@
 4. Doctrine and commander selectors functional in scenario editor
 5. Event filtering by type/side/tick range operational
 6. Weapon and doctrine catalog pages functional
-7. All 40 scenarios produce correct winners (no engine regressions)
+7. All 40 scenarios match the frozen current-engine terminal snapshot (no engine regressions)
 8. All existing tests pass + new frontend/API tests</p>
 <p><strong>Cross-document alignment</strong>: This document must stay synchronized with <code>brainstorm-block10.md</code> (design thinking), <code>devlog/index.md</code> (phase status), and <code>specs/project-structure.md</code> (module definitions). Run <code>/cross-doc-audit</code> after any structural change.</p>
 <hr />
@@ -7246,7 +7371,7 @@
 <h3 id="97c-block-10-regression-validation">97c: Block 10 Regression Validation<a class="headerlink" href="#97c-block-10-regression-validation" title="Permanent link">&para;</a></h3>
 <p>Verify that all Block 10 changes haven't broken the engine or existing UI.</p>
 <ul>
-<li><strong>Engine regression</strong>: Run the evaluator on all 40 scenarios — all must produce correct winners</li>
+<li><strong>Engine regression</strong>: Run the evaluator on all 40 scenarios — all must match the frozen current-engine terminal snapshot</li>
 <li>No engine changes were made, so this is a safety check</li>
 <li><strong>API regression</strong>: Run existing API test suite — all endpoints still function correctly</li>
 <li><strong>Frontend regression</strong>: Run vitest suite — all existing tests pass</li>
@@ -7255,7 +7380,7 @@
 <li><strong>Performance</strong>: Map rendering at 300 units with all new overlays enabled — verify &lt;16ms per frame</li>
 </ul>
 <p><strong>Tests</strong> (~6):
-- Evaluator regression (40 scenarios, correct winners)
+- Evaluator regression (40 scenarios, frozen current-engine terminal snapshot)
 - New analytics endpoints integration test (submit run, wait, query analytics)
 - New metadata endpoints return non-empty data
 - Frame enrichment produces valid field ranges</p>
@@ -7277,7 +7402,7 @@
 <ul>
 <li>Weapon catalog page functional with filtering and detail modals</li>
 <li>Doctrine catalog page functional with era filtering</li>
-<li>All 40 scenarios produce correct winners (evaluator regression)</li>
+<li>All 40 scenarios match the frozen current-engine terminal snapshot (evaluator regression)</li>
 <li>All existing tests pass (Python + vitest)</li>
 <li>Documentation updated across all living documents</li>
 <li>Block 10 COMPLETE</li>

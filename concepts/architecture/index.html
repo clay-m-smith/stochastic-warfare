@@ -874,6 +874,17 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#historical-validation-boundary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Historical-validation boundary
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#source-identity-in-checkouts-and-immutable-images" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2153,6 +2164,62 @@
     
   
     Block 17 (133)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development-phases-block18/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 18 (134)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development-phases-block19/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 19 (135-137)
   
 
     
@@ -5587,6 +5654,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devlog/phase-117/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 117 - Historical Outcome-Envelope Integrity
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -5831,6 +5926,34 @@
     
   
     Fog-of-War Contact Continuation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../specs/historical-outcome-envelope-integrity/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Historical Outcome-Envelope Integrity
   
 
     
@@ -6141,6 +6264,17 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#historical-validation-boundary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Historical-validation boundary
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#source-identity-in-checkouts-and-immutable-images" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -6398,8 +6532,8 @@
 </tr>
 <tr>
 <td><strong>validation</strong></td>
-<td>Historical data, Monte Carlo harness, campaign validation</td>
-<td>7, 10</td>
+<td>Legacy comparison diagnostics plus typed production historical-claim studies and artifacts</td>
+<td>7, 10, 117</td>
 </tr>
 <tr>
 <td><strong>population</strong></td>
@@ -6503,7 +6637,7 @@
 non-battle idle demand only. March/combat demand and synchronization with live
 fuel tanks or weapon magazines remain explicit remediation boundaries.</p>
 <h3 id="engagement-gate-sequence">Engagement Gate Sequence<a class="headerlink" href="#engagement-gate-sequence" title="Permanent link">&para;</a></h3>
-<p>Within combat, each potential engagement passes through a series of gates before resolving. If any gate rejects, the engagement is skipped. This gate sequence was wired in Phases 40--47 (Block 5: Core Combat Fidelity), connecting 40+ previously disconnected subsystems into the battle loop. Source-backed historical scenarios use separately declared outcome envelopes; synthetic, test, calibration, and benchmark scenarios are not historical validation claims.</p>
+<p>Within combat, each potential engagement passes through a series of gates before resolving. If any gate rejects, the engagement is skipped. This gate sequence was wired in Phases 40--47 (Block 5: Core Combat Fidelity), connecting 40+ previously disconnected subsystems into the battle loop. Production historical-validation claims use a separate typed study plan, the SimulationRuntimeFactory-owned runtime path, retained raw vectors and observation receipts, and a digest-bearing verdict artifact; legacy scenario metadata is not a verdict.</p>
 <ol>
 <li><strong>Shared targeting decision</strong> -- ordinary direct engagement must consume the
    same current owner-side contact, exact weapon, sensing/fire-control source,
@@ -6605,6 +6739,36 @@ registry lookup. <code>RuntimeSession.step()</code> returns <code>True</code> at
 Provenance exposes source/config fingerprints, exact seeds and rosters, code
 and data revisions, catalog/doctrine/loadout fingerprints, and initial plus
 arriving assignments.</p>
+<h3 id="historical-validation-boundary">Historical-validation boundary<a class="headerlink" href="#historical-validation-boundary" title="Permanent link">&para;</a></h3>
+<p>Historical acceptance is a separate typed pipeline over the production runtime:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>historical_claims.yaml
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>  -&gt; HistoricalClaimLedgerLoader
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>  -&gt; HistoricalStudyLoader / HistoricalStudyPlan
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>  -&gt; SimulationRuntimeFactory.prepare()
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>  -&gt; HistoricalBacktestRunner
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>  -&gt; observation receipts + ordered raw vectors
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>  -&gt; evaluate_joint_coverage()
+<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>  -&gt; completed PASS/FAIL or operational ERROR artifact
+<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a>  -&gt; accepted-evidence verification and public claim disposition
+</code></pre></div>
+<p>The full loader verifies the ledger's self-digest, source paths and content
+digests for every repository claim, and any accepted artifact bindings. Each
+study predeclares source lineage, exact claim and metric scopes, event
+boundaries, seeds, runtime inputs, and acceptance policy. The runner builds
+every seed through <code>PreparedScenario</code>, observes typed terminal outcomes and
+metric receipts, and retains the complete vectors rather than trusting summary
+statistics. <code>PASS</code> and <code>FAIL</code> are completed evaluations; an <code>ERROR</code> records a
+post-start operational failure without a verdict and is never promotable.
+Invalid plans reject before an artifact is created.</p>
+<p>Promotion additionally requires a clean, predeclared, source-backed,
+independent study; exact accepted metric bindings; a <code>PASS</code> with eligible
+lineage; committed ledger and artifact identities; matching Git ancestry; and
+fresh factory/source/data identities. Legacy <code>HistoricalDataLoader</code>,
+<code>ScenarioRunner</code>, <code>HistoricalMetric</code>, and <code>MonteCarloHarness</code> remain diagnostic
+compatibility interfaces and cannot issue a historical verdict. The current
+ledger has zero production-validated scenarios. The retained 73 Easting study
+is a completed, non-promotable <code>FAIL</code> with 0/20 joint successes and a 0.0
+one-sided lower confidence bound.</p>
 <h3 id="source-identity-in-checkouts-and-immutable-images">Source identity in checkouts and immutable images<a class="headerlink" href="#source-identity-in-checkouts-and-immutable-images" title="Permanent link">&para;</a></h3>
 <p>Runtime source identity is Git-first. When preparation starts inside a Git
 worktree, the resolver records <code>HEAD</code>, a dirty flag, and a content-sensitive
@@ -6634,11 +6798,19 @@ identity data and any packaged-source tampering fail before a
 and source-manifest digest. Scenario and catalog inputs are outside this
 application manifest and retain their separate runtime data and catalog
 revisions.</p>
-<p><code>.github/workflows/build.yml</code> exercises this path on pull requests to <code>main</code>,
-pushes to <code>main</code>, and manual dispatches. It builds with <code>GITHUB_SHA</code>, asserts
-that <code>/app/.git</code> is absent, runs a bounded scenario through
-<code>SimulationRuntimeFactory -&gt; RuntimeSession</code>, and checks the expected commit
-and clean immutable-image identity.</p>
+<p><code>.github/workflows/build.yml</code> is configured to exercise this path on pull
+requests to <code>main</code>, pushes to <code>main</code>, and manual dispatches. It builds with
+<code>GITHUB_SHA</code>, asserts that <code>/app/.git</code> is absent, runs a bounded scenario
+through <code>SimulationRuntimeFactory -&gt; RuntimeSession</code>, and checks the expected
+commit and clean immutable-image identity. The configured image smoke also
+checks that docs and tests are absent, loads the historical ledger through
+<code>load_scenario_catalog()</code>, audits all API-published scenario claims in the
+current zero-accepted ledger, and verifies that 73 Easting remains unsupported
+with regression evidence but no accepted claim IDs. Phase 117's local
+packaged-loader tests exercise the ledger boundary; the hosted image result is
+pending until the phase is pushed and the workflow completes. REM-048 / Phase
+135 owns the build-time attestation and package receipt needed before a future
+nonempty accepted claim can be verified without Git.</p>
 <p><code>ScenarioLoader</code> is the lower-level engine-wiring boundary used by that
 factory. Given a scenario YAML or prevalidated effective config, it:</p>
 <ol>
@@ -6663,9 +6835,13 @@ factory. Given a scenario YAML or prevalidated effective config, it:</p>
      execution uses finite side-owned assets and scheduled exact-target orders;
      unsupported ASAT types fail during loading.</li>
 <li><code>cbrn_config.enable_cbrn: true</code> -&gt; creates CBRN engines (dispersal, contamination, protection)</li>
-<li><code>school_config</code> present -&gt; creates doctrinal school registry</li>
-<li><code>escalation_config</code> present -&gt; creates escalation engine</li>
-<li><code>dew_config</code> present -&gt; creates directed energy weapon engine</li>
+<li>strict <code>school_config.unit_assignments</code> -&gt; creates the doctrinal school
+     registry and applies exact unit IDs; commander-derived schools and typed
+     analysis-side policies use the same staged runtime assignment boundary</li>
+<li><code>escalation_config</code> present -&gt; creates escalation/unconventional engines
+     with current defaults; the mapping is not yet consumed (REM-050)</li>
+<li><code>dew_config</code> present -&gt; validates consumed <code>DEWConfig</code> tuning and creates
+     the directed energy weapon engine; it has no <code>enable_dew</code> flag</li>
 <li><code>era</code> specified -&gt; loads era-specific data and engines</li>
 <li>Creates always-on behavioral engines: ROE engine (default WEAPONS_FREE) and
    the rout planner coordinated by <code>MoraleRuntime</code></li>
@@ -6686,7 +6862,10 @@ every side supplies a valid catalog profile; all omitted with no
 per-unit commander overrides and <code>school_config.unit_assignments</code> are validated
 eagerly against the planned roster, profile catalog, and school catalog. The
 resulting commander, school, and OODA assignments are runtime behavior, not
-metadata; they survive reinforcement registration and checkpoint continuation.</p>
+metadata; they survive reinforcement registration and checkpoint continuation.
+Unknown <code>school_config</code> fields reject, so legacy <code>enable_schools</code>, side-name,
+and <code>{side}_school</code> proxy shapes cannot create an empty registry while claiming
+an assignment.</p>
 <p>The retained loadout builder creates every initial, arriving, and
 checkpoint-reconstructed weapon/sensor attachment. Its immutable fingerprint
 and per-unit resolution topology are part of checkpoint compatibility, while
@@ -6770,10 +6949,10 @@ derives semantic stuck/resource-blocked populations from those counters rather
 than inferring intent from final displacement.</p>
 <h3 id="null-config-gating">Null-Config Gating<a class="headerlink" href="#null-config-gating" title="Permanent link">&para;</a></h3>
 <p>Every optional subsystem follows the same pattern:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="k">if</span> <span class="n">config</span><span class="o">.</span><span class="n">ew_config</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">config</span><span class="o">.</span><span class="n">ew_config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;enable_ew&quot;</span><span class="p">)</span> <span class="ow">is</span> <span class="kc">True</span><span class="p">:</span>
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>    <span class="c1"># Create and wire EW engines</span>
-<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="k">else</span><span class="p">:</span>
-<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>    <span class="n">ctx</span><span class="o">.</span><span class="n">ew_engine</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># Disabled -- zero cost</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="k">if</span> <span class="n">config</span><span class="o">.</span><span class="n">ew_config</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">config</span><span class="o">.</span><span class="n">ew_config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;enable_ew&quot;</span><span class="p">)</span> <span class="ow">is</span> <span class="kc">True</span><span class="p">:</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>    <span class="c1"># Create and wire EW engines</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="k">else</span><span class="p">:</span>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>    <span class="n">ctx</span><span class="o">.</span><span class="n">ew_engine</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># Disabled -- zero cost</span>
 </code></pre></div>
 <p>The equivalent <code>enable_space</code> and <code>enable_cbrn</code> flags control their suites.
 The effective registered era is checked before construction, so a scenario
@@ -6864,9 +7043,9 @@ identical:</p>
 <h2 id="web-application-layer">Web Application Layer<a class="headerlink" href="#web-application-layer" title="Permanent link">&para;</a></h2>
 <p>The engine is wrapped by a web application stack that provides interactive access without writing Python code.</p>
 <h3 id="architecture">Architecture<a class="headerlink" href="#architecture" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>Browser (React) -&gt; Vite dev proxy -&gt; FastAPI (api/) -&gt; Simulation Engine (stochastic_warfare/)
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>                                         |
-<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>                                    SQLite (aiosqlite)
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>Browser (React) -&gt; Vite dev proxy -&gt; FastAPI (api/) -&gt; Simulation Engine (stochastic_warfare/)
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>                                         |
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>                                    SQLite (aiosqlite)
 </code></pre></div>
 <h3 id="api-layer-api">API Layer (<code>api/</code>)<a class="headerlink" href="#api-layer-api" title="Permanent link">&para;</a></h3>
 <p>A FastAPI service sits alongside the engine (not inside it). It provides:</p>
@@ -6880,6 +7059,9 @@ identical:</p>
   and source/code/data/catalog/doctrine/loadout provenance</li>
 <li><strong>A/B and doctrine comparison</strong> over common seeds, plus strict parameter
   sweeps</li>
+<li><strong>Ledger-backed historical-validation summaries</strong> on every scenario list and
+  detail response, with legacy <code>documented_outcomes</code> and <code>sources</code> removed from
+  detail configuration payloads</li>
 </ul>
 <p>The application lifespan owns one settings object, database connection, and run
 manager. A run is accepted only after its effective scenario config validates
@@ -6910,7 +7092,10 @@ plausible zeroes.</p>
 map), Scenario Editor (clone-and-tweak), Analysis (Monte Carlo, same-scenario
 A/B comparison, sensitivity sweep, and doctrine comparison). Analysis views
 validate and expose raw vectors and provenance instead of accepting summary-only
-payloads.</p>
+payloads. The scenario list labels Block 11 entries as current-engine
+regression references, and scenario detail renders the exact ledger-backed
+aggregate disposition and claim scopes. It does not present legacy documented
+outcomes as validation evidence.</p>
 <p>See the <a href="../../guide/web-ui/">Web UI Guide</a> for usage documentation.</p>
 <h2 id="consequence-enforcement-gates">Consequence Enforcement Gates<a class="headerlink" href="#consequence-enforcement-gates" title="Permanent link">&para;</a></h2>
 <p>The engine's legacy resource-consumption and C2-friction consequences use an
@@ -6987,14 +7172,14 @@ need every consequence. No general performance multiplier is claimed without
 the controlled semantic-equivalence evidence queued under REM-031.</p>
 <h2 id="checkpointing">Checkpointing<a class="headerlink" href="#checkpointing" title="Permanent link">&para;</a></h2>
 <p>Checkpoint-participating runtime owners implement the checkpoint protocol:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="k">class</span><span class="w"> </span><span class="nc">SomeEngine</span><span class="p">:</span>
-<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">get_state</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
-<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;Serialize full internal state.&quot;&quot;&quot;</span>
-<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>        <span class="o">...</span>
-<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>
-<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">set_state</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;Restore from serialized state.&quot;&quot;&quot;</span>
-<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a>        <span class="o">...</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="k">class</span><span class="w"> </span><span class="nc">SomeEngine</span><span class="p">:</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">get_state</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;Serialize full internal state.&quot;&quot;&quot;</span>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>        <span class="o">...</span>
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">set_state</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;Restore from serialized state.&quot;&quot;&quot;</span>
+<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a>        <span class="o">...</span>
 </code></pre></div>
 <p>This enables:</p>
 <ul>

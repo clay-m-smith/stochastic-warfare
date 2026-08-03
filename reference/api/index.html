@@ -874,6 +874,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#scenario-historical-validation-contract" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Scenario historical-validation contract
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#frame-targeting-exposure" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1066,6 +1077,17 @@
   
     <nav class="md-nav" aria-label="Validation Classes">
       <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#historical-claim-and-backtest-boundary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Historical claim and backtest boundary
+      
+    </span>
+  </a>
+  
+</li>
         
           <li class="md-nav__item">
   <a href="#montecarloharness" class="md-nav__link">
@@ -2291,6 +2313,62 @@
     
   
     Block 17 (133)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development-phases-block18/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 18 (134)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development-phases-block19/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 19 (135-137)
   
 
     
@@ -5725,6 +5803,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devlog/phase-117/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 117 - Historical Outcome-Envelope Integrity
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -5989,6 +6095,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../specs/historical-outcome-envelope-integrity/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Historical Outcome-Envelope Integrity
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../specs/morale-state-ownership/" class="md-nav__link">
         
   
@@ -6155,6 +6289,17 @@
     <span class="md-ellipsis">
       
         Endpoints
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#scenario-historical-validation-contract" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Scenario historical-validation contract
       
     </span>
   </a>
@@ -6354,6 +6499,17 @@
   
     <nav class="md-nav" aria-label="Validation Classes">
       <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#historical-claim-and-backtest-boundary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Historical claim and backtest boundary
+      
+    </span>
+  </a>
+  
+</li>
         
           <li class="md-nav__item">
   <a href="#montecarloharness" class="md-nav__link">
@@ -6628,12 +6784,12 @@
 <tr>
 <td>GET</td>
 <td><code>/api/scenarios</code></td>
-<td>List all scenarios (base + era)</td>
+<td>List all scenarios (base + era), each with typed historical-validation status</td>
 </tr>
 <tr>
 <td>GET</td>
 <td><code>/api/scenarios/{name}</code></td>
-<td>Full scenario config as JSON</td>
+<td>Public scenario config, force summary, and typed historical-validation status</td>
 </tr>
 <tr>
 <td>POST</td>
@@ -6758,7 +6914,7 @@
 <tr>
 <td>GET</td>
 <td><code>/api/meta/commanders</code></td>
-<td>Commander profiles with personality traits</td>
+<td>13 base/global commander profiles with personality traits; 13 era-specific profiles remain omitted (REM-049)</td>
 </tr>
 <tr>
 <td>GET</td>
@@ -6792,6 +6948,64 @@
 </tr>
 </tbody>
 </table>
+<h3 id="scenario-historical-validation-contract">Scenario historical-validation contract<a class="headerlink" href="#scenario-historical-validation-contract" title="Permanent link">&para;</a></h3>
+<p>Both scenario endpoints require a <code>historical_validation</code> object loaded from
+the canonical repository claim ledger. The API audits the ledger self-digest,
+every API-published scenario claim's source digest, and all accepted evidence
+before returning catalog data. It does not derive a verdict from scenario YAML
+metadata.</p>
+<table>
+<thead>
+<tr>
+<th>Summary field</th>
+<th>Type</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>aggregate_disposition</code></td>
+<td><code>production_validated \| current_engine_regression_only \| unsupported</code></td>
+<td>Conservative whole-scenario status</td>
+</tr>
+<tr>
+<td><code>claims</code></td>
+<td><code>HistoricalValidationClaim[]</code></td>
+<td>Ordered inventoried claim statuses</td>
+</tr>
+<tr>
+<td><code>accepted_claim_ids</code></td>
+<td><code>string[]</code></td>
+<td>Exact claims backed by accepted production evidence</td>
+</tr>
+<tr>
+<td><code>current_engine_regression_evidence</code></td>
+<td><code>boolean</code></td>
+<td>Whether regression evidence exists; never a validation verdict</td>
+</tr>
+<tr>
+<td><code>ledger_sha256</code></td>
+<td><code>string</code></td>
+<td>Canonical ledger identity used for the response</td>
+</tr>
+</tbody>
+</table>
+<p>Each claim supplies <code>claim_id</code>, <code>disposition</code>, <code>reason_codes</code>, <code>limitation</code>,
+<code>intended_use</code>, <code>metric_scope</code>, <code>event_scope</code>,
+<code>current_engine_regression_evidence</code>, <code>accepted_study_id</code>, and
+<code>accepted_artifact_path</code>. The claim-level regression flag records only whether
+that exact claim has current-engine regression evidence. An aggregate is
+<code>production_validated</code> only when all
+of its claims are production-validated members of one accepted study/use/event
+family. Any unsupported claim makes the aggregate unsupported; otherwise a
+regression-only claim makes it <code>current_engine_regression_only</code>.</p>
+<p>Paths without an exact repository ledger identity receive a synthetic
+<code>unsupported</code> claim with reason <code>missing_ledger_identity</code>; no absolute source
+path is exposed. <code>GET /api/scenarios/{name}</code> removes legacy
+<code>documented_outcomes</code> and <code>sources</code> from <code>config</code>. Those fields are catalog
+history, not a public evidence surface. The current ledger contains zero
+production-validated scenarios, and the retained Phase 117 73 Easting study is
+a completed <code>FAIL</code> rather than accepted evidence.</p>
 <h3 id="frame-targeting-exposure">Frame targeting exposure<a class="headerlink" href="#frame-targeting-exposure" title="Permanent link">&para;</a></h3>
 <p>Completed runs store the paired targeting projections introduced with format
 115 at each captured map frame. Current checkpoint format 116 additionally
@@ -7075,9 +7289,17 @@ manifest. Missing, malformed, symlinked, non-regular, or modified packaged
 source is rejected before session construction; a verified image reports
 <code>dirty=False</code>. Data and catalog revisions remain independent provenance fields.</p>
 <p>The repository Docker workflow covers pull requests to <code>main</code>, pushes to
-<code>main</code>, and manual dispatch. Its image smoke asserts that <code>.git</code> is absent,
-executes a bounded production session, and verifies the supplied commit and
-clean code-revision result.</p>
+<code>main</code>, and manual dispatch. Its configured image smoke asserts that <code>.git</code> is
+absent, executes a bounded production session, and verifies the supplied
+commit and clean code-revision result. It also checks that docs and tests are
+absent, loads the historical claim ledger through <code>load_scenario_catalog()</code>,
+audits every API-published scenario claim, and verifies the expected
+unsupported/current-engine-regression status for 73 Easting. Phase 117's local
+packaged-loader tests exercise the same ledger boundary, but the hosted image
+smoke remains pending until this phase is pushed and its workflow completes.
+The current ledger has zero accepted artifacts, so neither check proves future
+nonempty accepted-evidence support in a no-<code>.git</code> image. REM-048 / Phase 135
+owns the build-time attestation and package receipt required for that case.</p>
 <hr />
 <h3 id="scenarioloader">ScenarioLoader<a class="headerlink" href="#scenarioloader" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">stochastic_warfare.simulation.scenario</span><span class="w"> </span><span class="kn">import</span> <span class="n">ScenarioLoader</span>
@@ -7534,14 +7756,85 @@ contain only typed <code>DoctrineSideAssignment</code> values for known scenario
 </table>
 <hr />
 <h2 id="validation-classes">Validation Classes<a class="headerlink" href="#validation-classes" title="Permanent link">&para;</a></h2>
+<h3 id="historical-claim-and-backtest-boundary">Historical claim and backtest boundary<a class="headerlink" href="#historical-claim-and-backtest-boundary" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">stochastic_warfare.validation.historical_backtest</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a>    <span class="n">HistoricalBacktestRunner</span><span class="p">,</span>
+<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a>    <span class="n">HistoricalClaimLedgerLoader</span><span class="p">,</span>
+<a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a>    <span class="n">HistoricalStudyLoader</span><span class="p">,</span>
+<a id="__codelineno-14-5" name="__codelineno-14-5" href="#__codelineno-14-5"></a>    <span class="n">create_completed_artifact</span><span class="p">,</span>
+<a id="__codelineno-14-6" name="__codelineno-14-6" href="#__codelineno-14-6"></a>    <span class="n">evaluate_joint_coverage</span><span class="p">,</span>
+<a id="__codelineno-14-7" name="__codelineno-14-7" href="#__codelineno-14-7"></a>    <span class="n">load_historical_artifact</span><span class="p">,</span>
+<a id="__codelineno-14-8" name="__codelineno-14-8" href="#__codelineno-14-8"></a>    <span class="n">write_historical_artifact</span><span class="p">,</span>
+<a id="__codelineno-14-9" name="__codelineno-14-9" href="#__codelineno-14-9"></a><span class="p">)</span>
+</code></pre></div>
+<p>This is the production historical-outcome evidence boundary. It is distinct
+from the legacy comparison helpers below.</p>
+<table>
+<thead>
+<tr>
+<th>API</th>
+<th>Contract</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>HistoricalClaimLedgerLoader(root).load(path)</code></td>
+<td>Verify the ledger self-digest, source path/content binding for every repository claim, and accepted evidence</td>
+</tr>
+<tr>
+<td><code>HistoricalClaimLedgerLoader(root).load_scenario_catalog(path)</code></td>
+<td>Load the same ledger while source-auditing every API-published scenario claim; the current no-docs/no-tests package supports the zero-accepted ledger and fails closed on a future accepted reference until REM-048</td>
+</tr>
+<tr>
+<td><code>HistoricalStudyLoader(root).load(path)</code></td>
+<td>Validate the typed source lineage, claim/metric scopes, event boundaries, seeds, runtime inputs, and acceptance policy</td>
+</tr>
+<tr>
+<td><code>HistoricalBacktestRunner(prepared, plan).run()</code></td>
+<td>Build every seed from one <code>PreparedScenario</code>, retain typed terminal/metric receipts and ordered vectors, then return the exact evaluation and eligibility reasons</td>
+</tr>
+<tr>
+<td><code>evaluate_joint_coverage(...)</code></td>
+<td>Form the per-seed conjunction of all gating metrics and apply the exact one-sided Clopper--Pearson lower bound</td>
+</tr>
+<tr>
+<td><code>create_completed_artifact(...)</code></td>
+<td>Construct a digest-bearing completed <code>PASS</code> or <code>FAIL</code> artifact</td>
+</tr>
+<tr>
+<td><code>create_error_artifact(...)</code></td>
+<td>Record a post-start operational <code>ERROR</code> without inventing an evaluation or verdict</td>
+</tr>
+<tr>
+<td><code>write_historical_artifact(path, artifact)</code></td>
+<td>Write atomically, fsync, and reload-verify the exact artifact</td>
+</tr>
+<tr>
+<td><code>load_historical_artifact(path)</code></td>
+<td>Strictly parse and revalidate schema, digests, identities, evaluation, and eligibility</td>
+</tr>
+</tbody>
+</table>
+<p><code>PASS</code> is necessary but not sufficient for promotion. Accepted evidence also
+requires a clean, immutably predeclared, source-backed independent study,
+exact metric bindings, committed ledger/artifact identities, compatible Git
+ancestry, and unchanged runtime source/data identities. <code>FAIL</code> is completed
+negative evidence. <code>ERROR</code> is not a verdict and is never promotable. An invalid
+plan rejects before an artifact is produced.</p>
+<p>The repository runner is <code>scripts/run_historical_backtest.py</code>. Its checked-in
+73 Easting result is <code>FAIL</code> with 0/20 joint successes, lower confidence bound
+0.0, and no promotion eligibility; see the
+<a href="../../specs/historical-outcome-envelope-integrity/">contract</a> and
+<a href="../../evidence/phase-117/73-easting-phase117.json">artifact</a>.</p>
 <h3 id="montecarloharness">MonteCarloHarness<a class="headerlink" href="#montecarloharness" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">stochastic_warfare.validation.monte_carlo</span><span class="w"> </span><span class="kn">import</span> <span class="n">MonteCarloHarness</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">stochastic_warfare.validation.monte_carlo</span><span class="w"> </span><span class="kn">import</span> <span class="n">MonteCarloHarness</span>
 </code></pre></div>
 <p>Runs multiple independent iterations through the legacy validation interface.
 It remains available for compatibility, but its <code>ScenarioRunner</code> path is not
 the authoritative evidence boundary for production batch, comparison, sweep,
-or doctrine claims. Use <code>SimulationRuntimeFactory</code> and the shared analysis
-helpers for those claims.</p>
+doctrine, or historical-validation claims. Use <code>SimulationRuntimeFactory</code> and
+the shared analysis helpers for current-engine distribution claims, and the
+typed historical backtest boundary above for historical verdicts.</p>
 <p><strong>Constructor:</strong></p>
 <table>
 <thead>
@@ -7669,7 +7962,7 @@ helpers for those claims.</p>
 <td><code>compare_to_historical()</code></td>
 <td><code>historical: list[HistoricalMetric]</code></td>
 <td><code>ComparisonReport</code></td>
-<td>Compare against reference data</td>
+<td>Legacy reference diagnostic only; cannot issue a production historical verdict</td>
 </tr>
 <tr>
 <td><code>distribution()</code></td>
@@ -7703,7 +7996,7 @@ helpers for those claims.</p>
 <hr />
 <h2 id="infrastructure-classes">Infrastructure Classes<a class="headerlink" href="#infrastructure-classes" title="Permanent link">&para;</a></h2>
 <h3 id="rngmanager">RNGManager<a class="headerlink" href="#rngmanager" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">stochastic_warfare.core.rng</span><span class="w"> </span><span class="kn">import</span> <span class="n">RNGManager</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">stochastic_warfare.core.rng</span><span class="w"> </span><span class="kn">import</span> <span class="n">RNGManager</span>
 </code></pre></div>
 <p>Central PRNG management. Creates independent per-module random number generator streams from a single seed.</p>
 <p><strong>Constructor:</strong></p>
@@ -7750,7 +8043,7 @@ helpers for those claims.</p>
 </ul>
 <hr />
 <h3 id="eventbus">EventBus<a class="headerlink" href="#eventbus" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">stochastic_warfare.core.events</span><span class="w"> </span><span class="kn">import</span> <span class="n">EventBus</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">stochastic_warfare.core.events</span><span class="w"> </span><span class="kn">import</span> <span class="n">EventBus</span>
 </code></pre></div>
 <p>Publish/subscribe event system for recorder and subsystem consumers. Production
 morale inputs are coordinated directly by the simulation battle path; morale
@@ -7781,7 +8074,7 @@ transition events for downstream consumers.</p>
 <p>Events use class hierarchy for type matching -- subscribing to a base class receives all subclass events.</p>
 <hr />
 <h3 id="simulationclock">SimulationClock<a class="headerlink" href="#simulationclock" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">stochastic_warfare.core.clock</span><span class="w"> </span><span class="kn">import</span> <span class="n">SimulationClock</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">stochastic_warfare.core.clock</span><span class="w"> </span><span class="kn">import</span> <span class="n">SimulationClock</span>
 </code></pre></div>
 <p>Manages simulation time with variable-resolution ticks.</p>
 <p><strong>Key properties and methods:</strong></p>
@@ -7919,12 +8212,12 @@ transition events for downstream consumers.</p>
 <tr>
 <td><code>escalation_config</code></td>
 <td><code>dict \| None</code></td>
-<td>Escalation ladder configuration</td>
+<td>Presence enables default escalation/unconventional engines; authored tuning is not consumed (REM-050)</td>
 </tr>
 <tr>
 <td><code>school_config</code></td>
-<td><code>dict \| None</code></td>
-<td>Doctrinal school registry configuration and exact <code>unit_assignments</code></td>
+<td><code>SchoolScenarioConfig \| None</code></td>
+<td>Strict exact <code>unit_assignments</code>; legacy side/default proxy keys reject</td>
 </tr>
 <tr>
 <td><code>commander_config</code></td>
@@ -7934,7 +8227,7 @@ transition events for downstream consumers.</p>
 <tr>
 <td><code>dew_config</code></td>
 <td><code>dict \| None</code></td>
-<td>Directed energy weapon configuration</td>
+<td>Presence enables DEW; values are validated as <code>DEWConfig</code> tuning when the runtime constructs the engine</td>
 </tr>
 <tr>
 <td><code>indirect_fire</code></td>
@@ -7953,6 +8246,10 @@ schools fail eagerly before unit construction. Initial and arriving units are
 registered with commander, OODA, school, movement, morale, loadout, and
 logistics owners transactionally, and their assignment state participates in
 checkpoint continuation.</p>
+<p><code>SchoolScenarioConfig</code> rejects unknown fields. In particular,
+<code>enable_schools</code>, <code>blue</code>/<code>red</code>, and <code>blue_school</code>/<code>red_school</code> are not side
+assignment authorities. Typed per-side doctrine policies belong to analysis
+variants and remain separate from source-scenario exact unit assignments.</p>
 <hr />
 <h3 id="spaceconfig-and-asat-events">SpaceConfig and ASAT events<a class="headerlink" href="#spaceconfig-and-asat-events" title="Permanent link">&para;</a></h3>
 <p><code>SpaceConfig</code> rejects unknown fields and owns <code>enable_space</code>,
@@ -8001,7 +8298,7 @@ For <code>POST /api/runs/from-config</code>, malformed nested schema fields retu
 run and are then exposed as terminal <code>failed</code> run detail.</p>
 <p>The generic events endpoint exposes each terminal mission as
 <code>TimeOnTargetMissionEvent</code>:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a>GET /api/runs/{id}/events?event_type=TimeOnTargetMissionEvent&amp;side=blue
+<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a>GET /api/runs/{id}/events?event_type=TimeOnTargetMissionEvent&amp;side=blue
 </code></pre></div>
 <p>Its data includes mission/attacker/target identity, target point, scheduled and
 processing times, ordered exact-attachment battery results, generated and
@@ -8018,7 +8315,7 @@ on target, automatic firing-table solutions, and live-magazine reload
 provenance are not supported.</p>
 <hr />
 <h3 id="calibrationschema">CalibrationSchema<a class="headerlink" href="#calibrationschema" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">stochastic_warfare.simulation.calibration</span><span class="w"> </span><span class="kn">import</span> <span class="n">CalibrationSchema</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">stochastic_warfare.simulation.calibration</span><span class="w"> </span><span class="kn">import</span> <span class="n">CalibrationSchema</span>
 </code></pre></div>
 <p>Pydantic model (<code>extra="forbid"</code>) for all scenario tuning parameters. Replaces free-form <code>dict</code> overrides — mistyped keys are caught at parse time. Key fields organized by domain:</p>
 <p><strong>Combat &amp; Engagement:</strong></p>
@@ -8390,86 +8687,88 @@ per-scenario selective flags are preferred for performance.</p>
 <hr />
 <h2 id="usage-patterns">Usage Patterns<a class="headerlink" href="#usage-patterns" title="Permanent link">&para;</a></h2>
 <h3 id="basic-single-run">Basic Single Run<a class="headerlink" href="#basic-single-run" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
-<a id="__codelineno-20-2" name="__codelineno-20-2" href="#__codelineno-20-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">stochastic_warfare.simulation.runtime</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
-<a id="__codelineno-20-3" name="__codelineno-20-3" href="#__codelineno-20-3"></a>    <span class="n">AnalysisVariant</span><span class="p">,</span>
-<a id="__codelineno-20-4" name="__codelineno-20-4" href="#__codelineno-20-4"></a>    <span class="n">SimulationRuntimeFactory</span><span class="p">,</span>
-<a id="__codelineno-20-5" name="__codelineno-20-5" href="#__codelineno-20-5"></a><span class="p">)</span>
-<a id="__codelineno-20-6" name="__codelineno-20-6" href="#__codelineno-20-6"></a>
-<a id="__codelineno-20-7" name="__codelineno-20-7" href="#__codelineno-20-7"></a><span class="n">prepared</span> <span class="o">=</span> <span class="n">SimulationRuntimeFactory</span><span class="p">()</span><span class="o">.</span><span class="n">prepare</span><span class="p">(</span>
-<a id="__codelineno-20-8" name="__codelineno-20-8" href="#__codelineno-20-8"></a>    <span class="n">Path</span><span class="p">(</span><span class="s2">&quot;data/scenarios/73_easting/scenario.yaml&quot;</span><span class="p">),</span>
-<a id="__codelineno-20-9" name="__codelineno-20-9" href="#__codelineno-20-9"></a>    <span class="n">data_root</span><span class="o">=</span><span class="n">Path</span><span class="p">(</span><span class="s2">&quot;data&quot;</span><span class="p">),</span>
-<a id="__codelineno-20-10" name="__codelineno-20-10" href="#__codelineno-20-10"></a>    <span class="n">variants</span><span class="o">=</span><span class="p">(</span><span class="n">AnalysisVariant</span><span class="p">(</span><span class="n">variant_id</span><span class="o">=</span><span class="s2">&quot;baseline&quot;</span><span class="p">),),</span>
-<a id="__codelineno-20-11" name="__codelineno-20-11" href="#__codelineno-20-11"></a><span class="p">)</span>
-<a id="__codelineno-20-12" name="__codelineno-20-12" href="#__codelineno-20-12"></a><span class="n">session</span> <span class="o">=</span> <span class="n">prepared</span><span class="o">.</span><span class="n">build</span><span class="p">(</span>
-<a id="__codelineno-20-13" name="__codelineno-20-13" href="#__codelineno-20-13"></a>    <span class="s2">&quot;baseline&quot;</span><span class="p">,</span>
-<a id="__codelineno-20-14" name="__codelineno-20-14" href="#__codelineno-20-14"></a>    <span class="n">seed</span><span class="o">=</span><span class="mi">42</span><span class="p">,</span>
-<a id="__codelineno-20-15" name="__codelineno-20-15" href="#__codelineno-20-15"></a>    <span class="n">max_ticks</span><span class="o">=</span><span class="mi">10_000</span><span class="p">,</span>
-<a id="__codelineno-20-16" name="__codelineno-20-16" href="#__codelineno-20-16"></a>    <span class="n">record_events</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-<a id="__codelineno-20-17" name="__codelineno-20-17" href="#__codelineno-20-17"></a><span class="p">)</span>
-<a id="__codelineno-20-18" name="__codelineno-20-18" href="#__codelineno-20-18"></a><span class="n">result</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">run_to_completion</span><span class="p">()</span>
-<a id="__codelineno-20-19" name="__codelineno-20-19" href="#__codelineno-20-19"></a><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">result</span><span class="o">.</span><span class="n">victory_result</span><span class="o">.</span><span class="n">winning_side</span><span class="si">}</span><span class="s2"> wins by </span><span class="si">{</span><span class="n">result</span><span class="o">.</span><span class="n">victory_result</span><span class="o">.</span><span class="n">condition_type</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<a id="__codelineno-21-2" name="__codelineno-21-2" href="#__codelineno-21-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">stochastic_warfare.simulation.runtime</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+<a id="__codelineno-21-3" name="__codelineno-21-3" href="#__codelineno-21-3"></a>    <span class="n">AnalysisVariant</span><span class="p">,</span>
+<a id="__codelineno-21-4" name="__codelineno-21-4" href="#__codelineno-21-4"></a>    <span class="n">SimulationRuntimeFactory</span><span class="p">,</span>
+<a id="__codelineno-21-5" name="__codelineno-21-5" href="#__codelineno-21-5"></a><span class="p">)</span>
+<a id="__codelineno-21-6" name="__codelineno-21-6" href="#__codelineno-21-6"></a>
+<a id="__codelineno-21-7" name="__codelineno-21-7" href="#__codelineno-21-7"></a><span class="n">prepared</span> <span class="o">=</span> <span class="n">SimulationRuntimeFactory</span><span class="p">()</span><span class="o">.</span><span class="n">prepare</span><span class="p">(</span>
+<a id="__codelineno-21-8" name="__codelineno-21-8" href="#__codelineno-21-8"></a>    <span class="n">Path</span><span class="p">(</span><span class="s2">&quot;data/scenarios/73_easting/scenario.yaml&quot;</span><span class="p">),</span>
+<a id="__codelineno-21-9" name="__codelineno-21-9" href="#__codelineno-21-9"></a>    <span class="n">data_root</span><span class="o">=</span><span class="n">Path</span><span class="p">(</span><span class="s2">&quot;data&quot;</span><span class="p">),</span>
+<a id="__codelineno-21-10" name="__codelineno-21-10" href="#__codelineno-21-10"></a>    <span class="n">variants</span><span class="o">=</span><span class="p">(</span><span class="n">AnalysisVariant</span><span class="p">(</span><span class="n">variant_id</span><span class="o">=</span><span class="s2">&quot;baseline&quot;</span><span class="p">),),</span>
+<a id="__codelineno-21-11" name="__codelineno-21-11" href="#__codelineno-21-11"></a><span class="p">)</span>
+<a id="__codelineno-21-12" name="__codelineno-21-12" href="#__codelineno-21-12"></a><span class="n">session</span> <span class="o">=</span> <span class="n">prepared</span><span class="o">.</span><span class="n">build</span><span class="p">(</span>
+<a id="__codelineno-21-13" name="__codelineno-21-13" href="#__codelineno-21-13"></a>    <span class="s2">&quot;baseline&quot;</span><span class="p">,</span>
+<a id="__codelineno-21-14" name="__codelineno-21-14" href="#__codelineno-21-14"></a>    <span class="n">seed</span><span class="o">=</span><span class="mi">42</span><span class="p">,</span>
+<a id="__codelineno-21-15" name="__codelineno-21-15" href="#__codelineno-21-15"></a>    <span class="n">max_ticks</span><span class="o">=</span><span class="mi">10_000</span><span class="p">,</span>
+<a id="__codelineno-21-16" name="__codelineno-21-16" href="#__codelineno-21-16"></a>    <span class="n">record_events</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+<a id="__codelineno-21-17" name="__codelineno-21-17" href="#__codelineno-21-17"></a><span class="p">)</span>
+<a id="__codelineno-21-18" name="__codelineno-21-18" href="#__codelineno-21-18"></a><span class="n">result</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">run_to_completion</span><span class="p">()</span>
+<a id="__codelineno-21-19" name="__codelineno-21-19" href="#__codelineno-21-19"></a><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">result</span><span class="o">.</span><span class="n">victory_result</span><span class="o">.</span><span class="n">winning_side</span><span class="si">}</span><span class="s2"> wins by </span><span class="si">{</span><span class="n">result</span><span class="o">.</span><span class="n">victory_result</span><span class="o">.</span><span class="n">condition_type</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 </code></pre></div>
 <h3 id="monte-carlo-batch">Monte Carlo Batch<a class="headerlink" href="#monte-carlo-batch" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">stochastic_warfare.tools._run_helpers</span><span class="w"> </span><span class="kn">import</span> <span class="n">run_scenario_batch</span>
-<a id="__codelineno-21-2" name="__codelineno-21-2" href="#__codelineno-21-2"></a>
-<a id="__codelineno-21-3" name="__codelineno-21-3" href="#__codelineno-21-3"></a><span class="n">batch</span> <span class="o">=</span> <span class="n">run_scenario_batch</span><span class="p">(</span>
-<a id="__codelineno-21-4" name="__codelineno-21-4" href="#__codelineno-21-4"></a>    <span class="s2">&quot;data/scenarios/73_easting/scenario.yaml&quot;</span><span class="p">,</span>
-<a id="__codelineno-21-5" name="__codelineno-21-5" href="#__codelineno-21-5"></a>    <span class="n">overrides</span><span class="o">=</span><span class="p">{},</span>
-<a id="__codelineno-21-6" name="__codelineno-21-6" href="#__codelineno-21-6"></a>    <span class="n">num_iterations</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>
-<a id="__codelineno-21-7" name="__codelineno-21-7" href="#__codelineno-21-7"></a>    <span class="n">base_seed</span><span class="o">=</span><span class="mi">42</span><span class="p">,</span>
-<a id="__codelineno-21-8" name="__codelineno-21-8" href="#__codelineno-21-8"></a>    <span class="n">max_ticks</span><span class="o">=</span><span class="mi">10_000</span><span class="p">,</span>
-<a id="__codelineno-21-9" name="__codelineno-21-9" href="#__codelineno-21-9"></a>    <span class="n">metric_names</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;exchange_ratio&quot;</span><span class="p">],</span>
-<a id="__codelineno-21-10" name="__codelineno-21-10" href="#__codelineno-21-10"></a>    <span class="n">data_dir</span><span class="o">=</span><span class="n">Path</span><span class="p">(</span><span class="s2">&quot;data&quot;</span><span class="p">),</span>
-<a id="__codelineno-21-11" name="__codelineno-21-11" href="#__codelineno-21-11"></a><span class="p">)</span>
-<a id="__codelineno-21-12" name="__codelineno-21-12" href="#__codelineno-21-12"></a><span class="nb">print</span><span class="p">(</span><span class="n">batch</span><span class="o">.</span><span class="n">statistics_dict</span><span class="p">()[</span><span class="s2">&quot;exchange_ratio&quot;</span><span class="p">][</span><span class="s2">&quot;mean&quot;</span><span class="p">])</span>
-<a id="__codelineno-21-13" name="__codelineno-21-13" href="#__codelineno-21-13"></a><span class="nb">print</span><span class="p">(</span><span class="n">batch</span><span class="o">.</span><span class="n">metric_values</span><span class="p">(</span><span class="s2">&quot;exchange_ratio&quot;</span><span class="p">))</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">stochastic_warfare.tools._run_helpers</span><span class="w"> </span><span class="kn">import</span> <span class="n">run_scenario_batch</span>
+<a id="__codelineno-22-2" name="__codelineno-22-2" href="#__codelineno-22-2"></a>
+<a id="__codelineno-22-3" name="__codelineno-22-3" href="#__codelineno-22-3"></a><span class="n">batch</span> <span class="o">=</span> <span class="n">run_scenario_batch</span><span class="p">(</span>
+<a id="__codelineno-22-4" name="__codelineno-22-4" href="#__codelineno-22-4"></a>    <span class="s2">&quot;data/scenarios/73_easting/scenario.yaml&quot;</span><span class="p">,</span>
+<a id="__codelineno-22-5" name="__codelineno-22-5" href="#__codelineno-22-5"></a>    <span class="n">overrides</span><span class="o">=</span><span class="p">{},</span>
+<a id="__codelineno-22-6" name="__codelineno-22-6" href="#__codelineno-22-6"></a>    <span class="n">num_iterations</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>
+<a id="__codelineno-22-7" name="__codelineno-22-7" href="#__codelineno-22-7"></a>    <span class="n">base_seed</span><span class="o">=</span><span class="mi">42</span><span class="p">,</span>
+<a id="__codelineno-22-8" name="__codelineno-22-8" href="#__codelineno-22-8"></a>    <span class="n">max_ticks</span><span class="o">=</span><span class="mi">10_000</span><span class="p">,</span>
+<a id="__codelineno-22-9" name="__codelineno-22-9" href="#__codelineno-22-9"></a>    <span class="n">metric_names</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;exchange_ratio&quot;</span><span class="p">],</span>
+<a id="__codelineno-22-10" name="__codelineno-22-10" href="#__codelineno-22-10"></a>    <span class="n">data_dir</span><span class="o">=</span><span class="n">Path</span><span class="p">(</span><span class="s2">&quot;data&quot;</span><span class="p">),</span>
+<a id="__codelineno-22-11" name="__codelineno-22-11" href="#__codelineno-22-11"></a><span class="p">)</span>
+<a id="__codelineno-22-12" name="__codelineno-22-12" href="#__codelineno-22-12"></a><span class="nb">print</span><span class="p">(</span><span class="n">batch</span><span class="o">.</span><span class="n">statistics_dict</span><span class="p">()[</span><span class="s2">&quot;exchange_ratio&quot;</span><span class="p">][</span><span class="s2">&quot;mean&quot;</span><span class="p">])</span>
+<a id="__codelineno-22-13" name="__codelineno-22-13" href="#__codelineno-22-13"></a><span class="nb">print</span><span class="p">(</span><span class="n">batch</span><span class="o">.</span><span class="n">metric_values</span><span class="p">(</span><span class="s2">&quot;exchange_ratio&quot;</span><span class="p">))</span>
 </code></pre></div>
 <p>This characterizes the current production distribution. Historical validation
 additionally requires a predeclared source-backed envelope and held-out
-production evidence; see REM-030 in the remediation backlog.</p>
+production evidence. Phase 117 provides that separate typed study, runner,
+joint-evaluation, artifact, and promotion boundary; ordinary batch output does
+not become a historical verdict.</p>
 <h3 id="step-by-step-execution">Step-by-Step Execution<a class="headerlink" href="#step-by-step-execution" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a><span class="n">session</span> <span class="o">=</span> <span class="n">prepared</span><span class="o">.</span><span class="n">build</span><span class="p">(</span>
-<a id="__codelineno-22-2" name="__codelineno-22-2" href="#__codelineno-22-2"></a>    <span class="s2">&quot;baseline&quot;</span><span class="p">,</span>
-<a id="__codelineno-22-3" name="__codelineno-22-3" href="#__codelineno-22-3"></a>    <span class="n">seed</span><span class="o">=</span><span class="mi">42</span><span class="p">,</span>
-<a id="__codelineno-22-4" name="__codelineno-22-4" href="#__codelineno-22-4"></a>    <span class="n">max_ticks</span><span class="o">=</span><span class="mi">10_000</span><span class="p">,</span>
-<a id="__codelineno-22-5" name="__codelineno-22-5" href="#__codelineno-22-5"></a>    <span class="n">record_events</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-<a id="__codelineno-22-6" name="__codelineno-22-6" href="#__codelineno-22-6"></a><span class="p">)</span>
-<a id="__codelineno-22-7" name="__codelineno-22-7" href="#__codelineno-22-7"></a>
-<a id="__codelineno-22-8" name="__codelineno-22-8" href="#__codelineno-22-8"></a><span class="c1"># RuntimeSession.step() returns True at terminal.</span>
-<a id="__codelineno-22-9" name="__codelineno-22-9" href="#__codelineno-22-9"></a><span class="k">while</span> <span class="ow">not</span> <span class="n">session</span><span class="o">.</span><span class="n">step</span><span class="p">():</span>
-<a id="__codelineno-22-10" name="__codelineno-22-10" href="#__codelineno-22-10"></a>    <span class="n">tick</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">context</span><span class="o">.</span><span class="n">clock</span><span class="o">.</span><span class="n">tick_count</span>
-<a id="__codelineno-22-11" name="__codelineno-22-11" href="#__codelineno-22-11"></a>    <span class="k">if</span> <span class="n">tick</span> <span class="o">%</span> <span class="mi">100</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-<a id="__codelineno-22-12" name="__codelineno-22-12" href="#__codelineno-22-12"></a>        <span class="k">assert</span> <span class="n">session</span><span class="o">.</span><span class="n">recorder</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
-<a id="__codelineno-22-13" name="__codelineno-22-13" href="#__codelineno-22-13"></a>        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Tick </span><span class="si">{</span><span class="n">tick</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">session</span><span class="o">.</span><span class="n">recorder</span><span class="o">.</span><span class="n">events</span><span class="p">)</span><span class="si">}</span><span class="s2"> events so far&quot;</span><span class="p">)</span>
-<a id="__codelineno-22-14" name="__codelineno-22-14" href="#__codelineno-22-14"></a>
-<a id="__codelineno-22-15" name="__codelineno-22-15" href="#__codelineno-22-15"></a><span class="n">result</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">finalize</span><span class="p">()</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a><span class="n">session</span> <span class="o">=</span> <span class="n">prepared</span><span class="o">.</span><span class="n">build</span><span class="p">(</span>
+<a id="__codelineno-23-2" name="__codelineno-23-2" href="#__codelineno-23-2"></a>    <span class="s2">&quot;baseline&quot;</span><span class="p">,</span>
+<a id="__codelineno-23-3" name="__codelineno-23-3" href="#__codelineno-23-3"></a>    <span class="n">seed</span><span class="o">=</span><span class="mi">42</span><span class="p">,</span>
+<a id="__codelineno-23-4" name="__codelineno-23-4" href="#__codelineno-23-4"></a>    <span class="n">max_ticks</span><span class="o">=</span><span class="mi">10_000</span><span class="p">,</span>
+<a id="__codelineno-23-5" name="__codelineno-23-5" href="#__codelineno-23-5"></a>    <span class="n">record_events</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+<a id="__codelineno-23-6" name="__codelineno-23-6" href="#__codelineno-23-6"></a><span class="p">)</span>
+<a id="__codelineno-23-7" name="__codelineno-23-7" href="#__codelineno-23-7"></a>
+<a id="__codelineno-23-8" name="__codelineno-23-8" href="#__codelineno-23-8"></a><span class="c1"># RuntimeSession.step() returns True at terminal.</span>
+<a id="__codelineno-23-9" name="__codelineno-23-9" href="#__codelineno-23-9"></a><span class="k">while</span> <span class="ow">not</span> <span class="n">session</span><span class="o">.</span><span class="n">step</span><span class="p">():</span>
+<a id="__codelineno-23-10" name="__codelineno-23-10" href="#__codelineno-23-10"></a>    <span class="n">tick</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">context</span><span class="o">.</span><span class="n">clock</span><span class="o">.</span><span class="n">tick_count</span>
+<a id="__codelineno-23-11" name="__codelineno-23-11" href="#__codelineno-23-11"></a>    <span class="k">if</span> <span class="n">tick</span> <span class="o">%</span> <span class="mi">100</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+<a id="__codelineno-23-12" name="__codelineno-23-12" href="#__codelineno-23-12"></a>        <span class="k">assert</span> <span class="n">session</span><span class="o">.</span><span class="n">recorder</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+<a id="__codelineno-23-13" name="__codelineno-23-13" href="#__codelineno-23-13"></a>        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Tick </span><span class="si">{</span><span class="n">tick</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">session</span><span class="o">.</span><span class="n">recorder</span><span class="o">.</span><span class="n">events</span><span class="p">)</span><span class="si">}</span><span class="s2"> events so far&quot;</span><span class="p">)</span>
+<a id="__codelineno-23-14" name="__codelineno-23-14" href="#__codelineno-23-14"></a>
+<a id="__codelineno-23-15" name="__codelineno-23-15" href="#__codelineno-23-15"></a><span class="n">result</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">finalize</span><span class="p">()</span>
 </code></pre></div>
 <h3 id="checkpoint-and-restore">Checkpoint and Restore<a class="headerlink" href="#checkpoint-and-restore" title="Permanent link">&para;</a></h3>
 <p>Current checkpoint-participating runtime owners support the coordinated
 <code>get_state()</code> / <code>set_state()</code> contract:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a><span class="c1"># Advance a fresh branch runtime to a nonterminal checkpoint.</span>
-<a id="__codelineno-23-2" name="__codelineno-23-2" href="#__codelineno-23-2"></a><span class="n">branch</span> <span class="o">=</span> <span class="n">prepared</span><span class="o">.</span><span class="n">build</span><span class="p">(</span>
-<a id="__codelineno-23-3" name="__codelineno-23-3" href="#__codelineno-23-3"></a>    <span class="s2">&quot;baseline&quot;</span><span class="p">,</span>
-<a id="__codelineno-23-4" name="__codelineno-23-4" href="#__codelineno-23-4"></a>    <span class="n">seed</span><span class="o">=</span><span class="mi">42</span><span class="p">,</span>
-<a id="__codelineno-23-5" name="__codelineno-23-5" href="#__codelineno-23-5"></a>    <span class="n">max_ticks</span><span class="o">=</span><span class="mi">10_000</span><span class="p">,</span>
-<a id="__codelineno-23-6" name="__codelineno-23-6" href="#__codelineno-23-6"></a>    <span class="n">record_events</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-<a id="__codelineno-23-7" name="__codelineno-23-7" href="#__codelineno-23-7"></a><span class="p">)</span>
-<a id="__codelineno-23-8" name="__codelineno-23-8" href="#__codelineno-23-8"></a><span class="k">if</span> <span class="n">branch</span><span class="o">.</span><span class="n">step</span><span class="p">():</span>
-<a id="__codelineno-23-9" name="__codelineno-23-9" href="#__codelineno-23-9"></a>    <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;scenario became terminal before the branch checkpoint&quot;</span><span class="p">)</span>
-<a id="__codelineno-23-10" name="__codelineno-23-10" href="#__codelineno-23-10"></a><span class="n">state</span> <span class="o">=</span> <span class="n">branch</span><span class="o">.</span><span class="n">engine</span><span class="o">.</span><span class="n">get_state</span><span class="p">()</span>
-<a id="__codelineno-23-11" name="__codelineno-23-11" href="#__codelineno-23-11"></a>
-<a id="__codelineno-23-12" name="__codelineno-23-12" href="#__codelineno-23-12"></a><span class="c1"># Construct a fresh compatible runtime from the same prepared source.</span>
-<a id="__codelineno-23-13" name="__codelineno-23-13" href="#__codelineno-23-13"></a><span class="n">restored</span> <span class="o">=</span> <span class="n">prepared</span><span class="o">.</span><span class="n">build</span><span class="p">(</span>
-<a id="__codelineno-23-14" name="__codelineno-23-14" href="#__codelineno-23-14"></a>    <span class="s2">&quot;baseline&quot;</span><span class="p">,</span>
-<a id="__codelineno-23-15" name="__codelineno-23-15" href="#__codelineno-23-15"></a>    <span class="n">seed</span><span class="o">=</span><span class="mi">42</span><span class="p">,</span>
-<a id="__codelineno-23-16" name="__codelineno-23-16" href="#__codelineno-23-16"></a>    <span class="n">max_ticks</span><span class="o">=</span><span class="mi">10_000</span><span class="p">,</span>
-<a id="__codelineno-23-17" name="__codelineno-23-17" href="#__codelineno-23-17"></a>    <span class="n">record_events</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-<a id="__codelineno-23-18" name="__codelineno-23-18" href="#__codelineno-23-18"></a><span class="p">)</span>
-<a id="__codelineno-23-19" name="__codelineno-23-19" href="#__codelineno-23-19"></a><span class="n">restored</span><span class="o">.</span><span class="n">engine</span><span class="o">.</span><span class="n">set_state</span><span class="p">(</span><span class="n">state</span><span class="p">)</span>
-<a id="__codelineno-23-20" name="__codelineno-23-20" href="#__codelineno-23-20"></a>
-<a id="__codelineno-23-21" name="__codelineno-23-21" href="#__codelineno-23-21"></a><span class="c1"># Continue from the deterministic branch point.</span>
-<a id="__codelineno-23-22" name="__codelineno-23-22" href="#__codelineno-23-22"></a><span class="n">result</span> <span class="o">=</span> <span class="n">restored</span><span class="o">.</span><span class="n">run_to_completion</span><span class="p">()</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-24-1" name="__codelineno-24-1" href="#__codelineno-24-1"></a><span class="c1"># Advance a fresh branch runtime to a nonterminal checkpoint.</span>
+<a id="__codelineno-24-2" name="__codelineno-24-2" href="#__codelineno-24-2"></a><span class="n">branch</span> <span class="o">=</span> <span class="n">prepared</span><span class="o">.</span><span class="n">build</span><span class="p">(</span>
+<a id="__codelineno-24-3" name="__codelineno-24-3" href="#__codelineno-24-3"></a>    <span class="s2">&quot;baseline&quot;</span><span class="p">,</span>
+<a id="__codelineno-24-4" name="__codelineno-24-4" href="#__codelineno-24-4"></a>    <span class="n">seed</span><span class="o">=</span><span class="mi">42</span><span class="p">,</span>
+<a id="__codelineno-24-5" name="__codelineno-24-5" href="#__codelineno-24-5"></a>    <span class="n">max_ticks</span><span class="o">=</span><span class="mi">10_000</span><span class="p">,</span>
+<a id="__codelineno-24-6" name="__codelineno-24-6" href="#__codelineno-24-6"></a>    <span class="n">record_events</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+<a id="__codelineno-24-7" name="__codelineno-24-7" href="#__codelineno-24-7"></a><span class="p">)</span>
+<a id="__codelineno-24-8" name="__codelineno-24-8" href="#__codelineno-24-8"></a><span class="k">if</span> <span class="n">branch</span><span class="o">.</span><span class="n">step</span><span class="p">():</span>
+<a id="__codelineno-24-9" name="__codelineno-24-9" href="#__codelineno-24-9"></a>    <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;scenario became terminal before the branch checkpoint&quot;</span><span class="p">)</span>
+<a id="__codelineno-24-10" name="__codelineno-24-10" href="#__codelineno-24-10"></a><span class="n">state</span> <span class="o">=</span> <span class="n">branch</span><span class="o">.</span><span class="n">engine</span><span class="o">.</span><span class="n">get_state</span><span class="p">()</span>
+<a id="__codelineno-24-11" name="__codelineno-24-11" href="#__codelineno-24-11"></a>
+<a id="__codelineno-24-12" name="__codelineno-24-12" href="#__codelineno-24-12"></a><span class="c1"># Construct a fresh compatible runtime from the same prepared source.</span>
+<a id="__codelineno-24-13" name="__codelineno-24-13" href="#__codelineno-24-13"></a><span class="n">restored</span> <span class="o">=</span> <span class="n">prepared</span><span class="o">.</span><span class="n">build</span><span class="p">(</span>
+<a id="__codelineno-24-14" name="__codelineno-24-14" href="#__codelineno-24-14"></a>    <span class="s2">&quot;baseline&quot;</span><span class="p">,</span>
+<a id="__codelineno-24-15" name="__codelineno-24-15" href="#__codelineno-24-15"></a>    <span class="n">seed</span><span class="o">=</span><span class="mi">42</span><span class="p">,</span>
+<a id="__codelineno-24-16" name="__codelineno-24-16" href="#__codelineno-24-16"></a>    <span class="n">max_ticks</span><span class="o">=</span><span class="mi">10_000</span><span class="p">,</span>
+<a id="__codelineno-24-17" name="__codelineno-24-17" href="#__codelineno-24-17"></a>    <span class="n">record_events</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+<a id="__codelineno-24-18" name="__codelineno-24-18" href="#__codelineno-24-18"></a><span class="p">)</span>
+<a id="__codelineno-24-19" name="__codelineno-24-19" href="#__codelineno-24-19"></a><span class="n">restored</span><span class="o">.</span><span class="n">engine</span><span class="o">.</span><span class="n">set_state</span><span class="p">(</span><span class="n">state</span><span class="p">)</span>
+<a id="__codelineno-24-20" name="__codelineno-24-20" href="#__codelineno-24-20"></a>
+<a id="__codelineno-24-21" name="__codelineno-24-21" href="#__codelineno-24-21"></a><span class="c1"># Continue from the deterministic branch point.</span>
+<a id="__codelineno-24-22" name="__codelineno-24-22" href="#__codelineno-24-22"></a><span class="n">result</span> <span class="o">=</span> <span class="n">restored</span><span class="o">.</span><span class="n">run_to_completion</span><span class="p">()</span>
 </code></pre></div>
 <p>Current-format checkpoints require an exact effective scenario configuration,
 era contract, and runtime topology. An incompatible restore fails before

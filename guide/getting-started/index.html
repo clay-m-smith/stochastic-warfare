@@ -736,6 +736,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Running Monte Carlo Batches">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#running-a-historical-outcome-envelope-study" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Running a Historical Outcome-Envelope Study
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -2053,6 +2070,62 @@
     
   
     Block 17 (133)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development-phases-block18/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 18 (134)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development-phases-block19/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 19 (135-137)
   
 
     
@@ -5487,6 +5560,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devlog/phase-117/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 117 - Historical Outcome-Envelope Integrity
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -5731,6 +5832,34 @@
     
   
     Fog-of-War Contact Continuation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../specs/historical-outcome-envelope-integrity/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Historical Outcome-Envelope Integrity
   
 
     
@@ -6048,6 +6177,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Running Monte Carlo Batches">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#running-a-historical-outcome-envelope-study" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Running a Historical Outcome-Envelope Study
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -6325,17 +6471,41 @@ source/config fingerprints, and runtime provenance.</p>
 </code></pre></div>
 <p>A seeded distribution characterizes current production behavior; it is not by
 itself historical validation. A historical verdict requires a predeclared,
-source-backed outcome envelope and held-out production runs. Catalog-wide work
-for that claim is tracked by <a href="../../remediation-backlog/">REM-030</a>.</p>
+source-backed outcome envelope and held-out production runs. Phase 117 provides
+that strict boundary through the claim ledger, typed study plan, production
+runtime factory, retained observation receipts and vectors, joint-coverage
+evaluation, and digest-bearing artifact. The catalog currently exposes zero
+production-validated scenarios.</p>
+<h3 id="running-a-historical-outcome-envelope-study">Running a Historical Outcome-Envelope Study<a class="headerlink" href="#running-a-historical-outcome-envelope-study" title="Permanent link">&para;</a></h3>
+<p>Use the checked-in runner for a declared study; send exploratory output to a
+new evidence path so the stable artifact is not overwritten:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>uv<span class="w"> </span>run<span class="w"> </span>--no-sync<span class="w"> </span>python<span class="w"> </span>scripts/run_historical_backtest.py<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="w">  </span>--plan<span class="w"> </span>data/validation/historical_studies/73_easting_phase117.yaml<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="w">  </span>--output<span class="w"> </span>docs/evidence/local/73-easting.json
+</code></pre></div>
+<p>The route loads and audits the complete historical-claim ledger, validates the
+typed plan, prepares every seed through <code>SimulationRuntimeFactory</code>, retains
+exact metric observations and terminal evidence, evaluates joint coverage, and
+atomically reloads the written artifact. <code>PASS</code> and <code>FAIL</code> are completed study
+verdicts. <code>ERROR</code> means execution failed after starting and cannot be promoted;
+an invalid plan rejects before a study artifact is produced. A passing local
+file is still not accepted evidence: promotion additionally requires a clean,
+predeclared, source-backed, independent study and exact committed
+ledger/artifact/Git bindings.</p>
+<p>The retained Phase 117 73 Easting artifact is <code>FAIL</code>, with 0/20 joint successes
+and a one-sided lower confidence bound of 0.0. It is not promotion-eligible, so
+73 Easting remains unsupported for historical validation. See the
+<a href="../../specs/historical-outcome-envelope-integrity/">study contract</a> and
+<a href="../../evidence/phase-117/73-easting-phase117.json">retained artifact</a>.</p>
 <h2 id="using-the-web-ui">Using the Web UI<a class="headerlink" href="#using-the-web-ui" title="Permanent link">&para;</a></h2>
 <p>If you prefer a graphical interface over Python scripting, the project includes a full web application for browsing scenarios, running simulations, viewing interactive results, and editing configurations.</p>
 <h3 id="quick-start">Quick Start<a class="headerlink" href="#quick-start" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="c1"># Terminal 1: API server</span>
-<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>uv<span class="w"> </span>sync<span class="w"> </span>--extra<span class="w"> </span>api
-<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>uv<span class="w"> </span>run<span class="w"> </span>uvicorn<span class="w"> </span>api.main:app<span class="w"> </span>--reload
-<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>
-<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a><span class="c1"># Terminal 2: Frontend dev server</span>
-<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a><span class="nb">cd</span><span class="w"> </span>frontend<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>npm<span class="w"> </span>install<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>npm<span class="w"> </span>run<span class="w"> </span>dev
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="c1"># Terminal 1: API server</span>
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>uv<span class="w"> </span>sync<span class="w"> </span>--extra<span class="w"> </span>api
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>uv<span class="w"> </span>run<span class="w"> </span>uvicorn<span class="w"> </span>api.main:app<span class="w"> </span>--reload
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a>
+<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a><span class="c1"># Terminal 2: Frontend dev server</span>
+<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a><span class="nb">cd</span><span class="w"> </span>frontend<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>npm<span class="w"> </span>install<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>npm<span class="w"> </span>run<span class="w"> </span>dev
 </code></pre></div>
 <p>Open <strong>http://localhost:5173</strong> to access the web UI. From there you can:</p>
 <ul>

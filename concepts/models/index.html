@@ -2698,6 +2698,62 @@
   
   
     <li class="md-nav__item">
+      <a href="../../development-phases-block18/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 18 (134)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development-phases-block19/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 19 (135-137)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../remediation-backlog/" class="md-nav__link">
         
   
@@ -6112,6 +6168,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devlog/phase-117/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 117 - Historical Outcome-Envelope Integrity
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -6356,6 +6440,34 @@
     
   
     Fog-of-War Contact Continuation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../specs/historical-outcome-envelope-integrity/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Historical Outcome-Envelope Integrity
   
 
     
@@ -7412,7 +7524,29 @@ statistics, seed sequence, and runtime provenance. That experiment does not by
 itself validate the scenario historically. Historical acceptance additionally
 requires predeclared sources, units and event boundaries, calibration evidence
 separated from held-out seeds, and a persisted production-envelope verdict.
-REM-030/Phase 117 owns that catalog-wide acceptance contract.</p>
+Phase 117 implements that contract; the current claim ledger exposes zero
+production-validated scenarios.</p>
+<p>For a historical study, let $I_{m,i}$ be the strict in-source-range boolean
+for gating metric $m$ on held-out run $i$. A run succeeds only when every
+gating metric succeeds:</p>
+<p>$$
+J_i = \bigwedge_m I_{m,i}, \qquad k = \sum_{i=1}^{n} J_i
+$$</p>
+<p>The evaluator uses the exact one-sided Clopper--Pearson lower bound at declared
+confidence $c$:</p>
+<p>$$
+L =
+\begin{cases}
+0, &amp; k = 0 \
+F^{-1}_{\mathrm{Beta}(k,\,n-k+1)}(1-c), &amp; k &gt; 0
+\end{cases}
+$$</p>
+<p>The verdict is <code>PASS</code> exactly when $L$ is at least the predeclared minimum
+joint coverage. Marginal metric success cannot substitute for joint success.
+A right-censored natural-terminal duration observation is out of range, and
+diagnostic metrics do not affect the verdict. The artifact retains every
+metric boolean, joint boolean, observation receipt, and raw value so the
+calculation can be reproduced.</p>
 <h3 id="where-used_1">Where Used<a class="headerlink" href="#where-used_1" title="Permanent link">&para;</a></h3>
 <ul>
 <li><code>validation/monte_carlo.py</code> -- legacy <code>MonteCarloHarness</code> diagnostics</li>
@@ -7420,6 +7554,8 @@ REM-030/Phase 117 owns that catalog-wide acceptance contract.</p>
   campaign execution and metric extraction</li>
 <li><code>tools/_run_helpers.py</code> with <code>simulation/runtime.py</code> -- Phase 112
   authoritative production batch boundary through <code>SimulationRuntimeFactory</code></li>
+<li><code>validation/historical_backtest/</code> -- typed claim ledger, study plans,
+  production runner, exact joint evaluator, and digest-bearing artifacts</li>
 </ul>
 <h3 id="key-parameters_1">Key Parameters<a class="headerlink" href="#key-parameters_1" title="Permanent link">&para;</a></h3>
 <ul>
@@ -7802,8 +7938,11 @@ independent or predictive validation.</p>
 <p>Historical or predictive validation requires a predeclared, source-backed
 metric envelope with exact units and event boundaries, a production execution
 path, and calibration/training inputs separated from held-out validation
-evidence. The catalog-wide replacement contract remains queued under
-<a href="../../remediation-backlog/#rem-030-catalog-wide-historical-outcome-claims-lack-production-validation">REM-030</a>.</p>
+evidence. Phase 117 enforces those requirements with a typed claim ledger,
+study plan, production runtime, exact joint-coverage verdict, persisted
+artifact, and conservative promotion gate. The retained 73 Easting study is a
+completed <code>FAIL</code> with 0/20 joint successes and lower bound 0.0, so it remains
+unsupported rather than being labeled validated.</p>
 <h3 id="where-used_10">Where Used<a class="headerlink" href="#where-used_10" title="Permanent link">&para;</a></h3>
 <ul>
 <li><code>CampaignScenarioConfig.calibration_overrides</code> (typed defaults apply when a

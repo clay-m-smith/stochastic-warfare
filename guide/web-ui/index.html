@@ -2366,6 +2366,62 @@
   
   
     <li class="md-nav__item">
+      <a href="../../development-phases-block18/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 18 (134)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development-phases-block19/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 19 (135-137)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../remediation-backlog/" class="md-nav__link">
         
   
@@ -5780,6 +5836,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devlog/phase-117/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 117 - Historical Outcome-Envelope Integrity
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -6024,6 +6108,34 @@
     
   
     Fog-of-War Contact Continuation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../specs/historical-outcome-envelope-integrity/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Historical Outcome-Envelope Integrity
   
 
     
@@ -6721,7 +6833,7 @@
 </div>
 <hr />
 <h2 id="navigation">Navigation<a class="headerlink" href="#navigation" title="Permanent link">&para;</a></h2>
-<p>The sidebar provides access to four main sections:</p>
+<p>The sidebar provides access to six main sections:</p>
 <table>
 <thead>
 <tr>
@@ -6737,6 +6849,14 @@
 <tr>
 <td><strong>Units</strong></td>
 <td>Catalog of all unit definitions across eras</td>
+</tr>
+<tr>
+<td><strong>Weapons</strong></td>
+<td>Catalog of weapon definitions</td>
+</tr>
+<tr>
+<td><strong>Doctrines</strong></td>
+<td>Catalog of doctrine definitions</td>
 </tr>
 <tr>
 <td><strong>Runs</strong></td>
@@ -6757,27 +6877,49 @@
 <p>The default page shows all scenarios as cards. Each card displays:</p>
 <ul>
 <li>Scenario name and era badge (color-coded)</li>
-<li>Duration and force count</li>
-<li>Optional subsystem badges (EW, CBRN, Escalation, Schools, Space, DEW)</li>
+<li>Terrain type, duration, and side count</li>
+<li>Configuration-presence badges (EW, CBRN, Escalation, Schools, Space, DEW)</li>
 </ul>
+<p>At the Phase 117 freeze, none of the 52 catalog source scenarios declares an
+exact <code>school_config</code>, so the browser emits no School badge. Doctrine Compare
+applies typed per-side variants at runtime without changing source YAML.</p>
+<p>The 34 catalog scenarios whose typed summaries currently report
+<code>current_engine_regression_evidence=true</code> appear first under <strong>Current-Engine
+Regression References</strong>. That count is the current Phase 117 ledger result,
+not a fixed product rule; filtering can reduce the visible group. The grouping
+records only a regression role and does not claim historical validation or
+predictive calibration. Open a scenario to see its ledger-backed
+historical-validation disposition and claim-level limitations.</p>
 <p><strong>Filtering and search:</strong></p>
 <ul>
 <li><strong>Search</strong> -- type in the search box to filter by name</li>
-<li><strong>Era filter</strong> -- click era tabs to show only scenarios from a specific era</li>
+<li><strong>Era filter</strong> -- choose an era from the select control</li>
 <li><strong>Sort</strong> -- sort by name, duration, or era</li>
 </ul>
 <h3 id="detail-view">Detail View<a class="headerlink" href="#detail-view" title="Permanent link">&para;</a></h3>
-<p>Click a scenario card to see its full configuration:</p>
+<p>Click a scenario card to see its selected configuration summary:</p>
 <ul>
-<li><strong>Terrain</strong> -- dimensions, cell size, terrain type</li>
-<li><strong>Weather</strong> -- visibility, wind, temperature, cloud cover</li>
-<li><strong>Forces</strong> -- per-side unit composition tables with counts and key stats</li>
-<li><strong>Objectives</strong> -- positions and assigned sides</li>
-<li><strong>Victory conditions</strong> -- what triggers the end of the simulation</li>
-<li><strong>Optional configs</strong> -- which subsystems are enabled (shown as colored badges)</li>
-<li><strong>Documented outcomes</strong> -- authored historical/reference metadata; its
-  presence is not a current validation verdict</li>
+<li><strong>Terrain</strong> -- terrain type, width and height in metres, and base elevation
+  in metres when present</li>
+<li><strong>Weather</strong> -- visibility in metres and wind speed in metres per second when
+  present</li>
+<li><strong>Forces</strong> -- per-side unit counts and unit-type lists</li>
+<li><strong>Optional configs</strong> -- which subsystem configuration blocks are present
+  (shown as colored badges; presence is not proof that every nested runtime
+  option is enabled)</li>
+<li><strong>Historical Validation</strong> -- the conservative ledger-backed aggregate
+  disposition, regression-only notice, and each inventoried claim's intended
+  use, event and metric scopes, reason codes, limitation, and accepted evidence
+  reference when one exists</li>
 </ul>
+<p>The three public dispositions are <code>Production Validated</code>, <code>Current-Engine
+Regression Only</code>, and <code>Unsupported</code>. A production-validated aggregate applies
+only to the accepted claim scopes shown; it is not a broader predictive claim.
+The scenario detail API deliberately strips legacy <code>documented_outcomes</code> and
+<code>sources</code> from the displayed configuration, because citations and authored
+reference values are not verdicts. The current catalog contains zero
+production-validated scenarios; the retained Phase 117 73 Easting study is a
+completed <code>FAIL</code>, not accepted evidence.</p>
 <p><strong>Actions on the detail page:</strong></p>
 <table>
 <thead>
@@ -6793,7 +6935,7 @@
 </tr>
 <tr>
 <td><strong>Download YAML</strong></td>
-<td>Download the scenario configuration as a YAML file</td>
+<td>Download the public configuration projection as YAML; authored <code>sources</code> and legacy <code>documented_outcomes</code> are deliberately absent</td>
 </tr>
 <tr>
 <td><strong>Clone &amp; Tweak</strong></td>
@@ -6807,7 +6949,7 @@
 <p><strong>Filtering:</strong></p>
 <ul>
 <li><strong>Search</strong> -- filter by unit name or type</li>
-<li><strong>Domain</strong> -- ground, air, naval surface, naval subsurface</li>
+<li><strong>Domain</strong> -- Land, Air, Naval, Submarine, or Space</li>
 <li><strong>Era</strong> -- Modern, WW2, WW1, Napoleonic, Ancient/Medieval</li>
 </ul>
 <p>Click a unit to open a detail modal showing the full specification: weapons, sensors, communications, armor, speed, and signature profile.</p>
@@ -6819,21 +6961,24 @@
 <li><strong>Seed</strong> -- random seed for reproducibility (default: 42)</li>
 <li><strong>Max ticks</strong> -- safety limit to prevent runaway simulations</li>
 </ul>
-<p>Click <strong>Start Run</strong> to submit. You'll be redirected to the run detail page.</p>
+<p>Click <strong>Start Run</strong> to submit. A successful submission redirects to the new
+run's detail page.</p>
 <h3 id="live-progress">Live Progress<a class="headerlink" href="#live-progress" title="Permanent link">&para;</a></h3>
 <p>While a simulation is running, the run detail page shows live progress via WebSocket:</p>
 <ul>
 <li><strong>Progress bar</strong> -- tick advancement toward completion</li>
-<li><strong>Active units</strong> -- per-side count of surviving units</li>
-<li><strong>Events</strong> -- running count of simulation events</li>
+<li><strong>Active units</strong> -- per-side count whose serialized status is exactly
+  <code>UnitStatus.ACTIVE</code></li>
 <li><strong>Connection status</strong> -- green (connected), yellow (reconnecting), red (failed)</li>
 </ul>
 <p>If the WebSocket connection drops, the app automatically attempts reconnection with exponential backoff (up to 3 attempts). If reconnection fails, it falls back to polling the API.</p>
 <h3 id="run-history">Run History<a class="headerlink" href="#run-history" title="Permanent link">&para;</a></h3>
-<p>The <strong>Runs</strong> page shows all past and current runs in a table:</p>
+<p>The <strong>Runs</strong> page shows the latest 50 past and current runs returned by the API
+in a table:</p>
 <ul>
-<li>Scenario name, seed, status, duration, victor, timestamp</li>
-<li>Status badges: pending (gray), running (blue), completed (green), failed (red)</li>
+<li>Scenario name, seed, status, created time, and completed time</li>
+<li>Status badges: pending (gray), running (blue), completed (green), failed
+  (red), and cancelled (yellow)</li>
 <li>Click any row to view the run detail</li>
 </ul>
 <hr />
@@ -6843,10 +6988,11 @@
 <ul>
 <li><strong>Victory result</strong> -- which side won and by what condition</li>
 <li><strong>Timing</strong> -- simulation ticks and logical simulated elapsed duration</li>
-<li><strong>Force summary</strong> -- surviving units per side</li>
+<li><strong>Force summary</strong> -- total, active, disabled, and destroyed units per side</li>
 </ul>
 <h3 id="charts">Charts<a class="headerlink" href="#charts" title="Permanent link">&para;</a></h3>
-<p>Five interactive Plotly charts, all supporting zoom, pan, hover tooltips, and legend filtering:</p>
+<p>The Charts tab renders four event-derived Plotly charts and, when the analytics
+summary is available, four additional analytics charts:</p>
 <table>
 <thead>
 <tr>
@@ -6857,11 +7003,11 @@
 <tbody>
 <tr>
 <td><strong>Force Strength</strong></td>
-<td>Stacked area chart of active units over time per side</td>
+<td>Filled line traces of active units over elapsed seconds per side</td>
 </tr>
 <tr>
 <td><strong>Engagement Timeline</strong></td>
-<td>Scatter plot of engagements (tick vs range), colored by hit/miss</td>
+<td>Engagement range over elapsed seconds, colored by hit/miss</td>
 </tr>
 <tr>
 <td><strong>Morale Progression</strong></td>
@@ -6869,15 +7015,33 @@
 </tr>
 <tr>
 <td><strong>Event Activity</strong></td>
-<td>Histogram of events per tick (operational tempo)</td>
+<td>Event counts in 10-tick buckets</td>
 </tr>
 <tr>
-<td><strong>Comparison</strong></td>
-<td>Side-by-side metrics (when comparing two runs)</td>
+<td><strong>Casualty Breakdown</strong></td>
+<td>Optional categorical casualty summary</td>
+</tr>
+<tr>
+<td><strong>Engagement Summary</strong></td>
+<td>Optional categorical engagement summary</td>
+</tr>
+<tr>
+<td><strong>Suppression</strong></td>
+<td>Optional suppression time series</td>
+</tr>
+<tr>
+<td><strong>Morale Distribution</strong></td>
+<td>Optional morale-distribution time series</td>
 </tr>
 </tbody>
 </table>
-<p><strong>Tick sync</strong>: When the tactical map is playing back at a specific tick, all four charts show a vertical reference line at that tick. Clicking any data point on a chart sets the <code>?tick=N</code> URL parameter, which the map reads to jump to that tick -- bidirectional sync between charts and map.</p>
+<p>The four event-derived charts and the optional suppression and morale-
+distribution time series can set and display a <code>?tick=N</code> marker while the
+Charts tab is active. The categorical analytics charts do not. The Map tab
+writes its current frame's tick to the URL, but it does not consume an incoming
+tick, and changing tabs currently replaces the query parameters. Therefore
+there is no production bidirectional chart/map synchronization; REM-049 /
+Phase 136 owns that follow-up.</p>
 <h3 id="narrative">Narrative<a class="headerlink" href="#narrative" title="Permanent link">&para;</a></h3>
 <p>A text narrative of the battle, generated from simulation events. Controls:</p>
 <ul>
@@ -6905,7 +7069,7 @@
 <tr>
 <td><strong>Export Events CSV</strong></td>
 <td><code>.csv</code></td>
-<td>Complete event log with columns for tick, type, side, details</td>
+<td>At most the first 10,000 fetched events, with <code>tick</code>, <code>event_type</code>, <code>source</code>, and JSON <code>data</code> columns</td>
 </tr>
 <tr>
 <td><strong>Download Narrative</strong></td>
@@ -6919,7 +7083,9 @@
 </tr>
 </tbody>
 </table>
-<p>All downloads are generated client-side (no server round-trip).</p>
+<p>The download files are generated client-side from result, event, and narrative
+data already requested from the API. The CSV is not a complete-export contract
+for runs with more than 10,000 retained events.</p>
 <hr />
 <h2 id="scenario-editor-clone-tweak">Scenario Editor (Clone &amp; Tweak)<a class="headerlink" href="#scenario-editor-clone-tweak" title="Permanent link">&para;</a></h2>
 <p>The scenario editor lets you modify an existing scenario and run it with your changes. Access it via the <strong>Clone &amp; Tweak</strong> button on any scenario detail page.</p>
@@ -6927,18 +7093,19 @@
 <p>Two-column layout:</p>
 <ul>
 <li><strong>Left column</strong> -- form sections for editing (scrollable)</li>
-<li><strong>Right column</strong> -- live YAML preview + terrain preview (sticky)</li>
+<li><strong>Right column</strong> -- terrain preview, configuration diff, then live YAML
+  preview (sticky)</li>
 </ul>
 <h3 id="editing-sections">Editing Sections<a class="headerlink" href="#editing-sections" title="Permanent link">&para;</a></h3>
 <p><strong>General</strong> -- name, duration (hours), era, date</p>
-<p><strong>Terrain</strong> -- width, height, cell size, base elevation, terrain type (10 options: flat desert, forest, urban, mixed, rolling hills, mountain, coastal, arctic, jungle, swamp)</p>
+<p><strong>Terrain</strong> -- width, height, cell size, canonical <code>base_elevation_m</code>, and the
+five production <code>TerrainConfig</code> values: <code>flat_desert</code>, <code>open_ocean</code>,
+<code>hilly_defense</code>, <code>trench_warfare</code>, and <code>open_field</code></p>
 <p><strong>Weather</strong> -- visibility, wind speed, wind direction, temperature, cloud cover</p>
 <p><strong>Forces</strong> -- per-side panels with:</p>
 <ul>
 <li>Unit list showing type, count, and controls (+/- buttons, remove)</li>
 <li><strong>Add Unit</strong> button opens the unit picker modal</li>
-<li>Experience level slider (0.0--1.0)</li>
-<li>Morale selector</li>
 </ul>
 <p><strong>Unit Picker</strong> -- modal with search, domain filter tabs, and era filtering. Click a unit to add it to the current side.</p>
 <p><strong>Config Toggles</strong> -- enable/disable optional subsystems:</p>
@@ -6964,11 +7131,11 @@
 </tr>
 <tr>
 <td>Schools</td>
-<td>Doctrinal AI schools</td>
+<td>Existing exact unit assignments can be removed; adding them is disabled because the editor has no exact runtime-unit assignment builder</td>
 </tr>
 <tr>
 <td>Space</td>
-<td>Space and satellite systems</td>
+<td>Existing explicit Space configs can be removed; adding one is disabled because production requires catalog constellation IDs and the editor has no selector yet</td>
 </tr>
 <tr>
 <td>DEW</td>
@@ -6976,8 +7143,20 @@
 </tr>
 </tbody>
 </table>
-<p>Enabling a toggle adds sensible default configuration. Disabling removes the config entirely.</p>
-<p><strong>Calibration Sliders</strong> -- fine-tune simulation parameters:</p>
+<p>Enabling EW or CBRN adds its explicit flag-bearing default. Escalation and DEW
+add/remove presence-only <code>{}</code> blocks; Escalation currently uses runtime
+defaults rather than authored tuning (REM-050), while DEW may be tuned only
+with real <code>DEWConfig</code> fields. The editor explicitly refuses to invent School
+or Space proxy mappings. Author schema-validated YAML with exact
+<code>school_config.unit_assignments</code>, use typed Doctrine Compare for per-side
+school variants, or use an already configured Space scenario with exact
+constellation IDs.</p>
+<p>Commander selection is also unavailable here because the metadata endpoint
+does not expose the complete era-specific profile catalog. Existing canonical
+<code>sides[].commander_profile</code> values are preserved; authoring requires a valid
+profile on every side or none on every side.</p>
+<p><strong>Calibration Sliders</strong> -- fine-tune the exposed numeric and boolean
+calibration controls. Examples include:</p>
 <table>
 <thead>
 <tr>
@@ -6998,7 +7177,7 @@
 <td>Target Size Modifier</td>
 <td>0.1--3.0</td>
 <td>1.0</td>
-<td>Scales target detection signatures</td>
+<td>Scales target area in direct-engagement hit calculations</td>
 </tr>
 <tr>
 <td>Morale Degrade Rate</td>
@@ -7015,9 +7194,13 @@
 </tbody>
 </table>
 <h3 id="yaml-preview">YAML Preview<a class="headerlink" href="#yaml-preview" title="Permanent link">&para;</a></h3>
-<p>The right panel shows the live YAML representation of your edited configuration. It updates in real-time as you make changes. Use the <strong>Copy</strong> button to copy the YAML to your clipboard.</p>
+<p>The right panel shows the live YAML representation of your edited public
+configuration after the terrain preview and configuration diff. It updates as
+the editor reducer changes the configuration. Use <strong>Copy</strong> to copy it.</p>
 <h3 id="terrain-preview">Terrain Preview<a class="headerlink" href="#terrain-preview" title="Permanent link">&para;</a></h3>
-<p>Below the YAML preview, a small canvas shows an approximate terrain visualization: terrain type color fill, objective circles, and dimension labels.</p>
+<p>At the top of the right panel, a small canvas shows an approximate terrain
+visualization: terrain-type color fill, objective circles, and dimension
+labels.</p>
 <h3 id="actions">Actions<a class="headerlink" href="#actions" title="Permanent link">&para;</a></h3>
 <table>
 <thead>
@@ -7043,22 +7226,33 @@
 </table>
 <hr />
 <h2 id="tactical-map">Tactical Map<a class="headerlink" href="#tactical-map" title="Permanent link">&para;</a></h2>
-<p>The tactical map provides a 2D spatial visualization of a completed simulation run. Access it from the <strong>Map</strong> tab on any completed run, or click the fullscreen button to open it in a dedicated page.</p>
+<p>The tactical map provides a 2D spatial visualization of a completed simulation
+run from its <strong>Map</strong> tab. A dedicated <code>/map/{run_id}</code> route also exists, but the
+Map tab currently has no fullscreen button.</p>
 <h3 id="terrain">Terrain<a class="headerlink" href="#terrain" title="Permanent link">&para;</a></h3>
-<p>The map renders the terrain grid with cells colored by land cover type (desert/tan, forest/green, urban/gray, water/blue, mountain/brown). Objective zones are shown as highlighted circles. When elevation data is available, cells are brightness-modulated -- higher elevations appear slightly brighter, lower elevations slightly darker -- giving a visual sense of terrain relief.</p>
+<p>The map renders the terrain grid with colors for open, grassland, shrubland,
+three forest classes, three urban classes, water, wetland, two desert classes,
+snow/ice, and cultivated cover. Objective zones are outlined. When varying
+elevation data is available, cell brightness is modulated by elevation.</p>
 <h3 id="units">Units<a class="headerlink" href="#units" title="Permanent link">&para;</a></h3>
-<p>Units are displayed as side-colored markers (blue/red) with domain-specific shapes:</p>
+<p>Units are displayed as side-colored markers with domain-specific shapes:</p>
 <ul>
-<li><strong>Diamond</strong> -- armor</li>
-<li><strong>Circle</strong> -- infantry</li>
-<li><strong>Triangle</strong> -- aircraft</li>
-<li><strong>Pentagon</strong> -- naval</li>
+<li><strong>Rectangle</strong> -- ground</li>
+<li><strong>Triangle</strong> -- air</li>
+<li><strong>Diamond</strong> -- naval surface</li>
+<li><strong>Circle</strong> -- other domains</li>
 </ul>
-<p>Destroyed units are shown with reduced opacity and a red X overlay. Click a unit to see details in the sidebar (type, health, morale, ammunition, position).</p>
+<p>The serialized production status values are Active, Disabled, Destroyed,
+Surrendered, and Routing. Only Destroyed units receive reduced opacity and a
+red X; Disabled units receive an orange slash. Clicking a visible marker opens
+a snapshot sidebar with the fields available in that captured frame.</p>
 <h3 id="overlays">Overlays<a class="headerlink" href="#overlays" title="Permanent link">&para;</a></h3>
 <ul>
-<li><strong>Engagement arcs</strong> -- lines from attacker to target, colored by result (hit/miss). Arcs fade smoothly over a 10-tick window instead of appearing/disappearing instantly.</li>
-<li><strong>Movement trails</strong> -- fading polylines showing recent unit paths</li>
+<li><strong>Engagement arcs</strong> -- lines colored by hit/miss for events within ten ticks
+  before or after the displayed frame. The current absolute-delta window can
+  reveal a future arc; REM-049 owns causal replay correction.</li>
+<li><strong>Movement trails</strong> -- uniformly translucent polylines over up to 20 prior
+  replay frames</li>
 <li><strong>Sensor circles</strong> -- when the "Sensors" toggle is on and a unit is selected, a dashed semi-transparent circle shows the unit's maximum sensor range</li>
 </ul>
 <h3 id="map-controls">Map Controls<a class="headerlink" href="#map-controls" title="Permanent link">&para;</a></h3>
@@ -7096,32 +7290,52 @@
 <td>Enable Fog of War view (see below)</td>
 </tr>
 <tr>
+<td><strong>Morale</strong></td>
+<td>Color markers by captured morale state</td>
+</tr>
+<tr>
+<td><strong>Health</strong></td>
+<td>Show captured health bars</td>
+</tr>
+<tr>
+<td><strong>Posture</strong></td>
+<td>Show posture abbreviations</td>
+</tr>
+<tr>
+<td><strong>Suppression</strong></td>
+<td>Apply captured suppression opacity</td>
+</tr>
+<tr>
+<td><strong>Logistics</strong></td>
+<td>Show captured fuel/ammunition bars</td>
+</tr>
+<tr>
 <td><strong>Fit</strong></td>
-<td>Reset zoom to fit all units</td>
+<td>Reset zoom to the terrain extent</td>
 </tr>
 </tbody>
 </table>
 <p>Mouse world coordinates (easting/northing) are displayed when hovering over the map.</p>
 <h3 id="fog-of-war-fow">Fog of War (FOW)<a class="headerlink" href="#fog-of-war-fow" title="Permanent link">&para;</a></h3>
-<p>The FOW toggle enables a "what does this side see?" view. When active:</p>
+<p>The FOW toggle is a limited operator-side marker filter. When active:</p>
 <ol>
 <li>A side selector dropdown appears (e.g., Blue / Red)</li>
-<li>Only units that the selected side has detected are visible -- undetected enemy units are hidden entirely</li>
+<li>Undetected enemy unit markers are omitted from the main marker draw loop</li>
 <li>Friendly units (same side as selected) are always shown</li>
 </ol>
-<p>This display filter uses the simulation's captured detection data to show what
-each side believed at each tick. The FOW toggle is disabled for runs that do
-not have detection data (for example, older runs or scenarios without fog of
-war).</p>
+<p>This client filter does not filter movement trails, engagement arcs, hit
+testing, a previously selected unit sidebar, or its sensor circle. It therefore
+does not provide a complete side view even as a visualization. The toggle is
+disabled for runs without detection data.</p>
 <p>The frame client and TypeScript schemas support both exact
 <code>PRIVILEGED_ENGINE</code> targeting evidence and an opaque <code>SIDE_FOW</code> projection.
 The current main map request still omits those query parameters, receives the
 API's privileged default, and applies its FOW view in the browser. That is a
 useful operator/evaluator view, but it is not a player authorization boundary:
 browser filtering cannot prevent a caller from requesting or inspecting the
-underlying privileged response. REM-041 / Phase 128 must add server-side caller
-authorization and make the normal player-facing request side-safe before this
-UI can be described as secure for opposing players.</p>
+underlying privileged response. REM-041 / Phase 128 owns both server-side
+caller authorization and complete side-safe map projection/filtering before
+this UI can be described as secure for opposing players.</p>
 <h3 id="targeting-evidence">Targeting evidence<a class="headerlink" href="#targeting-evidence" title="Permanent link">&para;</a></h3>
 <p>Phase 115 frames can retain the exact sensing-aware tactical decision used by
 movement and ordinary direct engagement, including its disposition,
@@ -7133,7 +7347,9 @@ server and replay reader bind the stored payload's exact viewer side to the
 requested side before exposing it. Older privileged-only frames cannot be
 transformed into a trustworthy side projection after the fact.</p>
 <h3 id="playback-controls">Playback Controls<a class="headerlink" href="#playback-controls" title="Permanent link">&para;</a></h3>
-<p>The map includes a timeline scrubber and transport controls for stepping through the simulation:</p>
+<p>The map includes a replay-frame scrubber and transport controls. Sparse source
+frames may first be interpolated for display, so one step is one displayed
+frame rather than necessarily one production tick:</p>
 <table>
 <thead>
 <tr>
@@ -7148,11 +7364,11 @@ transformed into a trustworthy side projection after the fact.</p>
 </tr>
 <tr>
 <td>Step Forward</td>
-<td>Advance one tick</td>
+<td>Advance one replay frame</td>
 </tr>
 <tr>
 <td>Step Backward</td>
-<td>Go back one tick</td>
+<td>Go back one replay frame</td>
 </tr>
 <tr>
 <td>Speed 1x/2x/5x/10x</td>
@@ -7160,7 +7376,7 @@ transformed into a trustworthy side projection after the fact.</p>
 </tr>
 <tr>
 <td>Timeline Scrubber</td>
-<td>Drag to jump to any tick</td>
+<td>Drag to a replay-frame index</td>
 </tr>
 </tbody>
 </table>
@@ -7171,7 +7387,8 @@ transformed into a trustworthy side projection after the fact.</p>
 </ul>
 <hr />
 <h2 id="keyboard-shortcuts">Keyboard Shortcuts<a class="headerlink" href="#keyboard-shortcuts" title="Permanent link">&para;</a></h2>
-<p>Keyboard shortcuts are available on the tactical map and fullscreen map pages. Press <strong>?</strong> to see the shortcut help modal.</p>
+<p>Keyboard shortcuts are available while the tactical map has focus. There is no
+in-app shortcut-help modal yet.</p>
 <table>
 <thead>
 <tr>
@@ -7186,11 +7403,11 @@ transformed into a trustworthy side projection after the fact.</p>
 </tr>
 <tr>
 <td><code>Right Arrow</code></td>
-<td>Step forward one tick</td>
+<td>Step forward one replay frame</td>
 </tr>
 <tr>
 <td><code>Left Arrow</code></td>
-<td>Step backward one tick</td>
+<td>Step backward one replay frame</td>
 </tr>
 <tr>
 <td><code>1</code></td>
@@ -7208,10 +7425,6 @@ transformed into a trustworthy side projection after the fact.</p>
 <td><code>4</code></td>
 <td>Set playback speed to 10x</td>
 </tr>
-<tr>
-<td><code>?</code></td>
-<td>Show keyboard shortcut help</td>
-</tr>
 </tbody>
 </table>
 <p>Shortcuts are disabled when typing in input fields, text areas, or select elements.</p>
@@ -7228,14 +7441,16 @@ incomplete or internally inconsistent responses are shown as errors.</p>
 <li>Select a scenario</li>
 <li>Set the number of iterations and base seed</li>
 <li>Click <strong>Run Batch</strong></li>
-<li>View results: metric histograms, summary statistics, convergence plots</li>
+<li>View metric histograms, summary statistics, raw vectors, and reproduction
+   provenance; the UI does not currently render convergence plots</li>
 </ol>
 <h3 id="ab-comparison">A/B Comparison<a class="headerlink" href="#ab-comparison" title="Permanent link">&para;</a></h3>
 <p>Compare two sparse calibration configurations of the same source scenario with
 the same ordered seed sequence:</p>
 <ol>
-<li>Select one scenario and provide A/B overrides</li>
-<li>Set a base seed, iteration count, metrics, and family alpha</li>
+<li>Select one scenario and provide labels and A/B override JSON</li>
+<li>Set iteration count and max ticks. The UI fixes base seed to 42, family
+   alpha to 0.05, and metrics to each listed side's destroyed count</li>
 <li>View exact paired counts and differences, paired superiority, raw exact-sign
    p-values, Holm-adjusted p-values, and family-wise significance</li>
 <li>Inspect both ordered raw-vector and production-provenance envelopes</li>
@@ -7243,23 +7458,28 @@ the same ordered seed sequence:</p>
 <h3 id="sensitivity-sweep">Sensitivity Sweep<a class="headerlink" href="#sensitivity-sweep" title="Permanent link">&para;</a></h3>
 <p>Test how a single parameter affects outcomes:</p>
 <ol>
-<li>Select a scenario and parameter to sweep</li>
-<li>Set the range and number of steps</li>
+<li>Select a scenario and enter the parameter name</li>
+<li>Enter explicit duplicate-free comma-separated values, iteration count, and
+   max ticks. The UI fixes base seed to 42 and metrics to side destroyed counts</li>
 <li>View an errorbar chart plus each point's raw vectors and runtime provenance</li>
 </ol>
 <h3 id="doctrine-comparison">Doctrine Comparison<a class="headerlink" href="#doctrine-comparison" title="Permanent link">&para;</a></h3>
-<p>Compare distinct doctrinal-school policies while holding the source,
-calibration patch, seed sequence, and metric order constant:</p>
+<p>Compare catalog doctrinal-school assignments for one selected scenario side:</p>
 <ol>
-<li>Select one scenario and define at least two named policies</li>
-<li>Assign the same exact scenario-side set in every policy, using at least two
-   distinct catalog-backed schools</li>
-<li>Inspect per-variant raw vectors, commander/school assignment evidence, and
-   production provenance</li>
+<li>Select one scenario, one side to vary, at least two catalog schools,
+   iteration count, and max ticks</li>
+<li>The UI creates one variant per selected school for that side, fixes base
+   seed to 42, and requests win, side-destroyed, and tick metrics</li>
+<li>Inspect per-variant raw vectors, assignments, and source/config/doctrine/
+   loadout fingerprints. The UI does not define richer named policies or
+   expose a commander-policy editor here</li>
 </ol>
 <p>These analysis tools characterize current production behavior. They do not by
 themselves establish historical validity; that requires a predeclared,
-source-backed held-out envelope.</p>
+source-backed held-out envelope executed through the strict historical study
+boundary. The <a href="../../specs/historical-outcome-envelope-integrity/">Phase 117 contract</a>
+defines that route; no catalog scenario currently has accepted production
+historical-validation evidence.</p>
 <hr />
 <h2 id="api-server-configuration">API Server Configuration<a class="headerlink" href="#api-server-configuration" title="Permanent link">&para;</a></h2>
 <p>The API server is configured via environment variables (prefix <code>SW_API_</code>):</p>
@@ -7296,6 +7516,21 @@ source-backed held-out envelope.</p>
 <td><code>SW_API_CORS_ORIGINS</code></td>
 <td><code>["http://localhost:5173"]</code></td>
 <td>Allowed CORS origins</td>
+</tr>
+<tr>
+<td><code>SW_API_DATA_DIR</code></td>
+<td><code>data</code></td>
+<td>Scenario/catalog data root</td>
+</tr>
+<tr>
+<td><code>SW_API_MAX_STORED_EVENTS</code></td>
+<td><code>50000</code></td>
+<td>Maximum retained events per run</td>
+</tr>
+<tr>
+<td><code>SW_API_DEFAULT_MAX_TICKS</code></td>
+<td><code>10000</code></td>
+<td>Server default tick limit</td>
 </tr>
 </tbody>
 </table>

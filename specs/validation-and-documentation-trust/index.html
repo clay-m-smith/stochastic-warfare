@@ -1823,6 +1823,62 @@
   
   
     <li class="md-nav__item">
+      <a href="../../development-phases-block18/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 18 (134)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development-phases-block19/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 19 (135-137)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../remediation-backlog/" class="md-nav__link">
         
   
@@ -5237,6 +5293,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devlog/phase-117/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 117 - Historical Outcome-Envelope Integrity
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -5824,6 +5908,34 @@
     
   
     Fog-of-War Contact Continuation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../historical-outcome-envelope-integrity/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Historical Outcome-Envelope Integrity
   
 
     
@@ -6599,6 +6711,14 @@ two distinct catalog-backed school assignments across those variants.
 Unmapped sides retain their production commander-derived assignment.
 Unknown/duplicate sides, unknown schools, and variants with different
 mapped-side sets reject.</p>
+<p>Source-scenario school configuration is a separate strict
+<code>SchoolScenarioConfig</code> whose only field is exact <code>unit_assignments</code>. Unknown
+fields reject; <code>enable_schools</code>, <code>blue</code>/<code>red</code>, and
+<code>blue_school</code>/<code>red_school</code> are not alternate side-policy authorities. A
+scenario may therefore bind known stable initial/future unit IDs exactly, while
+side-wide experiments remain typed analysis variants. The scenario editor does
+not offer school selection until it can construct one of those production
+contracts without a proxy.</p>
 <p>The runtime session installs the variant as the highest-precedence typed
 school-assignment policy before context publication. Initial registration and
 every reinforcement registration consult that same policy; mutation after
@@ -7859,9 +7979,10 @@ explicit non-timing disposition go into <code>docs/devlog/phase-115.md</code>.</
   <code>FogOfWarManager.set_state()</code> discards. REM-027 proves fusion
   queue/track/receipt continuation only under an explicitly empty ordinary
   world-view topology.</li>
-<li>REM-030 owns production, provenance-bearing, held-out historical outcome
-  envelopes and remains assigned to planned Phase 117. Phase 112 relabels
-  unsupported historical claims; it does not establish catalog-wide validity.</li>
+<li>Phase 117 completed the repository-wide typed claim inventory and
+  fail-closed production study boundary, classifies zero claims as
+  production-validated, and closed REM-030 with a truthful failed study. The
+  Phase 112 relabeling did not itself establish catalog-wide validity.</li>
 <li>REM-031 owns per-flag semantic classification and common-seed production
   off/on evidence and remains assigned to planned Phase 118. Battalion and
   brigade runs remain <code>measurement_only</code>, not performance-regression evidence.</li>

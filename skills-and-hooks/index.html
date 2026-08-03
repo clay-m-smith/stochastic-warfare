@@ -1821,6 +1821,62 @@
   
   
     <li class="md-nav__item">
+      <a href="../development-phases-block18/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 18 (134)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../development-phases-block19/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 19 (135-137)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../remediation-backlog/" class="md-nav__link">
         
   
@@ -5235,6 +5291,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-117/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 117 - Historical Outcome-Envelope Integrity
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -5482,6 +5566,34 @@
     
   
     Fog-of-War Contact Continuation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../specs/historical-outcome-envelope-integrity/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Historical Outcome-Envelope Integrity
   
 
     
@@ -5906,10 +6018,10 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#pre-edit-python-hook-sim-core" class="md-nav__link">
+  <a href="#pre-editwrite-python-hook-sim-core" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Pre-Edit Python Hook (sim core)
+        Pre-Edit/Write Python Hook (sim core)
       
     </span>
   </a>
@@ -5928,21 +6040,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#spec-before-code-hook" class="md-nav__link">
+  <a href="#long-command-background-hook" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Spec-Before-Code Hook
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#research-source-hook" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Research Source Hook
+        Long-Command Background Hook
       
     </span>
   </a>
@@ -5951,6 +6052,17 @@
         
       </ul>
     </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#skill-enforced-gates-not-provider-hooks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Skill-Enforced Gates (Not Provider Hooks)
+      
+    </span>
+  </a>
   
 </li>
       
@@ -6318,10 +6430,10 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#pre-edit-python-hook-sim-core" class="md-nav__link">
+  <a href="#pre-editwrite-python-hook-sim-core" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Pre-Edit Python Hook (sim core)
+        Pre-Edit/Write Python Hook (sim core)
       
     </span>
   </a>
@@ -6340,21 +6452,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#spec-before-code-hook" class="md-nav__link">
+  <a href="#long-command-background-hook" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Spec-Before-Code Hook
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#research-source-hook" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Research Source Hook
+        Long-Command Background Hook
       
     </span>
   </a>
@@ -6363,6 +6464,17 @@
         
       </ul>
     </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#skill-enforced-gates-not-provider-hooks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Skill-Enforced Gates (Not Provider Hooks)
+      
+    </span>
+  </a>
   
 </li>
       
@@ -6448,17 +6560,17 @@
 
 
 <h1 id="stochastic-warfare-repository-skills-hooks">Stochastic Warfare — Repository Skills &amp; Hooks<a class="headerlink" href="#stochastic-warfare-repository-skills-hooks" title="Permanent link">&para;</a></h1>
-<p>The phase workflows are available on both supported agent surfaces:</p>
+<p>The phase workflows are maintained on both supported agent surfaces:</p>
 <ul>
 <li>Codex discovers the maintained repository routes in <code>.agents/skills/</code>;
   invoke them as <code>$skill-name</code>.</li>
-<li>Claude Code retains the legacy routes in <code>.claude/skills/</code>; invoke them as
-  <code>/skill-name</code>.</li>
+<li>Claude Code discovers exact maintained mirrors in <code>.claude/skills/</code>; invoke
+  them as <code>/skill-name</code>.</li>
 </ul>
 <p><code>CODEX.md</code> defines where each Codex skill belongs in the phase workflow. The
-Codex ports preserve the useful domain procedures while replacing
-Claude-specific tool metadata, <code>$ARGUMENTS</code> placeholders, and stale completion
-rules with the current production-path evidence contract.</p>
+canonical route bodies live in <code>.agents/skills/</code>; every <code>.claude</code> <code>SKILL.md</code>
+must remain byte-identical so neither provider can retain stale completion or
+production-path rules.</p>
 <h2 id="codex-phase-routing">Codex Phase Routing<a class="headerlink" href="#codex-phase-routing" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
@@ -6496,9 +6608,9 @@ rules with the current production-path evidence contract.</p>
 </table>
 <p>The route details and applicability rules in <code>CODEX.md</code> are authoritative.
 Skills augment that contract; they do not replace production-path behavioral
-evidence. <code>tests/unit/test_repository_skills.py</code> verifies that every legacy
-Claude route has a discoverable Codex port with portable frontmatter and
-matching UI metadata.</p>
+evidence. <code>tests/unit/test_repository_skills.py</code> verifies the exact route set,
+portable canonical frontmatter, Codex UI metadata, absence of obsolete prompt
+aliases, and byte-identical Claude mirrors.</p>
 <h2 id="custom-skills">Custom Skills<a class="headerlink" href="#custom-skills" title="Permanent link">&para;</a></h2>
 <h3 id="research-military">/research-military<a class="headerlink" href="#research-military" title="Permanent link">&para;</a></h3>
 <ul>
@@ -6556,9 +6668,27 @@ matching UI metadata.</p>
 </ul>
 <h3 id="backtest">/backtest<a class="headerlink" href="#backtest" title="Permanent link">&para;</a></h3>
 <ul>
-<li>Structures a comparison between simulation output and historical engagement data</li>
-<li>Defines: metrics to compare, acceptable tolerances, data sources, divergence analysis</li>
-<li>Example: simulate a scenario modeled on 73 Easting, compare attrition curves, engagement timelines, and movement rates against historical record</li>
+<li>Defines or executes a strict, source-backed historical study through
+  <code>HistoricalClaimLedgerLoader -&gt; HistoricalStudyLoader -&gt;
+  SimulationRuntimeFactory.prepare -&gt; HistoricalBacktestRunner</code>, followed by
+  atomic persistence and <code>load_historical_artifact</code> reload validation</li>
+<li>Predeclares exact source assertions, units, populations, closed production
+  extractors, source-synchronous event boundaries/censoring, ordered held-out
+  seeds, joint acceptance policy, intended use, and source/training lineage</li>
+<li>Treats a completed <code>PASS</code>, completed <code>FAIL</code>, and execution/evidence <code>ERROR</code>
+  distinctly: <code>ERROR</code> has no historical verdict, and <code>PASS</code> alone does not make
+  a repository claim <code>production_validated</code></li>
+<li>Never widens an envelope, lowers a threshold, changes seeds or metrics, or
+  redefines the event/population after observing a miss; preserves the <code>FAIL</code>
+  and records the specific remediation instead</li>
+<li>Promotes a claim only through an explicit ledger transition backed by a
+  reload-valid eligible <code>PASS</code>, clean execution revision, immutable committed
+  predeclaration, exact plan/artifact/ledger/claim identities, and one-to-one
+  accepted-claim bindings with identical source, unit, extractor, intended-use,
+  and event scope</li>
+<li>Rejects simplified/legacy runners, direct context construction, legacy
+  <code>documented_outcomes</code>, Block 11 envelope helpers, and no-crash output as
+  historical-validation evidence</li>
 </ul>
 <h3 id="audit-determinism">/audit-determinism<a class="headerlink" href="#audit-determinism" title="Permanent link">&para;</a></h3>
 <ul>
@@ -6598,7 +6728,8 @@ matching UI metadata.</p>
 <li>Identifies performance hotspots via cProfile analysis</li>
 <li>Classifies hotspots: algorithmic, Python overhead, allocation, redundant computation, I/O</li>
 <li>Estimates impact and implementation effort for each optimization</li>
-<li>Provides benchmark script template for standardized measurement</li>
+<li>Uses an existing production scenario, benchmark, or test and keeps any
+  temporary harness and profile output outside the repository</li>
 <li>Run when scenarios are slow or before/after optimization work</li>
 </ul>
 <h3 id="scenario-phase-14-updated">/scenario (Phase 14, updated)<a class="headerlink" href="#scenario-phase-14-updated" title="Permanent link">&para;</a></h3>
@@ -6641,6 +6772,9 @@ matching UI metadata.</p>
 <h3 id="timeline-phase-14">/timeline (Phase 14)<a class="headerlink" href="#timeline-phase-14" title="Permanent link">&para;</a></h3>
 <ul>
 <li>Runs a scenario and generates human-readable battle narrative</li>
+<li>Executes through <code>SimulationRuntimeFactory -&gt; PreparedScenario -&gt;
+  RuntimeSession</code> with a recorder factory; direct loader/engine construction is
+  diagnostic only</li>
 <li>Uses <code>tools/narrative.py</code> with full/summary/timeline styles</li>
 <li>Structures output as Opening/Main Battle/Conclusion phases</li>
 </ul>
@@ -6650,40 +6784,45 @@ matching UI metadata.</p>
 <li>Lists available unit types, guides through echelon hierarchy</li>
 <li>Generates <code>sides</code> section of scenario YAML</li>
 <li>Validates unit types, commander profiles, and doctrine templates</li>
+<li>Proves comparable roster/loadout behavior through the production
+  factory/session boundary</li>
 </ul>
 <h3 id="calibrate-phase-14">/calibrate (Phase 14)<a class="headerlink" href="#calibrate-phase-14" title="Permanent link">&para;</a></h3>
 <ul>
-<li>Auto-tunes calibration overrides to match historical metrics</li>
-<li>Sweeps wired influential parameters through the production analysis boundary</li>
-<li>Uses binary search refinement to narrow to target value</li>
-<li>Requires a frozen source-backed backtest envelope, predeclared tolerances,
-  held-out validation seeds, and exact production provenance</li>
-<li>Phase 112 implements REM-017's shared analysis boundary; the remediation
-  status changes only after the final phase gate. That boundary does not itself
-  validate history. Catalog-wide historical-envelope evidence remains queued
-  under REM-030</li>
+<li>Runs guarded sensitivity/calibration only when the user explicitly requests
+  it and the parameter is schema-valid, wired, and outcome-affecting</li>
+<li>Requires a frozen source-backed target, predeclared tolerances, independent
+  held-out validation, and exact production provenance</li>
+<li>Never widens a target, tunes physical performance after a miss, or conceals
+  an engine gap; same-data fit is calibration evidence, not validation</li>
+<li>Phase 117 completed the repository historical-claim inventory and REM-030
+  is closed with zero claims production-validated; calibration cannot change
+  a claim disposition without a separate eligible backtest and explicit
+  ledger transition</li>
 </ul>
 <h3 id="validate-data">/validate-data<a class="headerlink" href="#validate-data" title="Permanent link">&para;</a></h3>
 <ul>
 <li>Validates unit YAML and scenario YAML data integrity</li>
-<li>Catches equipment name → weapon/sensor ID mapping drift, missing sensor entries, invalid unit type references, broken ScenarioLoader loads</li>
+<li>Catches duplicate, semantically incompatible, unmapped, or stale
+  <code>EQUIPMENT_MAPPING_REGISTRY</code> records; typed sensor-policy violations; invalid
+  unit references; and broken production catalog/loadout/scenario construction</li>
 <li>Runs <code>scripts/validate_scenario_data.py</code> (standalone validation script)</li>
 <li>Diagnoses mapping, schema, loader, and runtime attachment defects without
   guessing substitutions or generic defaults</li>
 <li><strong>Run after</strong>: adding new units, weapons, scenarios, or modifying equipment entries</li>
-<li>The simplified-runner maps are static diagnostics; production evidence comes
-  from <code>SimulationRuntimeFactory -&gt; PreparedScenario -&gt; RuntimeSession</code>, exact
-  affected loadouts, and behavioral execution</li>
+<li>Static registry and <code>RuntimeLoadoutBuilder</code> checks prove exact construction;
+  outcome evidence comes from <code>SimulationRuntimeFactory -&gt; PreparedScenario -&gt;
+  RuntimeSession</code>, exact affected loadouts, and behavioral execution</li>
 </ul>
 <h3 id="evaluate-scenarios-phase-42">/evaluate-scenarios (Phase 42)<a class="headerlink" href="#evaluate-scenarios-phase-42" title="Permanent link">&para;</a></h3>
 <ul>
-<li>Runs all scenarios through simulation engine and compares against previous baseline</li>
+<li>Runs selected or catalog scenarios through the production factory/session
+  evaluator and compares against an explicit provenance-recorded baseline</li>
 <li>Reports winner changes, casualty deltas, condition changes, new/resolved issues</li>
 <li>Classifies changes as improvements, regressions, stalls, or neutral</li>
-<li>Saves new baseline for future comparisons</li>
 <li>Records explicit seed/revision/catalog provenance and requires investigation
-  before promoting a baseline</li>
-<li>Uses a real engine path but does not by itself prove API wiring,
+  and review before any new local baseline is retained</li>
+<li>Uses the production runtime path but does not by itself prove API wiring,
   reinforcement registration, deterministic replay, or stochastic fidelity</li>
 <li><strong>Run after</strong>: completing any phase that modifies battle loop, engagement resolution, or victory evaluation</li>
 <li>Key files: <code>scripts/evaluate_scenarios.py</code>, <code>scripts/evaluation_results_v*.json</code></li>
@@ -6700,38 +6839,48 @@ matching UI metadata.</p>
 </ul>
 <hr />
 <h2 id="hooks">Hooks<a class="headerlink" href="#hooks" title="Permanent link">&para;</a></h2>
-<h3 id="pre-edit-python-hook-sim-core">Pre-Edit Python Hook (sim core)<a class="headerlink" href="#pre-edit-python-hook-sim-core" title="Permanent link">&para;</a></h3>
+<h3 id="pre-editwrite-python-hook-sim-core">Pre-Edit/Write Python Hook (sim core)<a class="headerlink" href="#pre-editwrite-python-hook-sim-core" title="Permanent link">&para;</a></h3>
 <ul>
-<li><strong>Trigger</strong>: before any <code>.py</code> file in the simulation core is modified</li>
+<li><strong>Trigger</strong>: before any <code>.py</code> file in the simulation core is edited or written</li>
 <li><strong>Checks</strong>:</li>
-<li>No bare <code>import random</code> or <code>random.random()</code> / <code>random.choice()</code> etc.</li>
+<li>No bare Python <code>random</code>, legacy global <code>numpy.random</code>, or direct
+    <code>default_rng()</code> construction outside the central RNG owner; production
+    draws use injected <code>RNGManager.get_stream(ModuleId.&lt;SUBSYSTEM&gt;)</code> generators</li>
 <li>No <code>set()</code> iteration or unordered dict iteration driving simulation logic</li>
 <li>No bare <code>print()</code> (use logging framework)</li>
+<li>No wall-clock time in simulation logic</li>
 <li>Type hints present on public API functions</li>
-<li><strong>Action</strong>: warn and flag violations before edit is accepted</li>
+<li><strong>Action</strong>: block the edit/write and list each violation</li>
 </ul>
 <h3 id="yaml-validation-hook">YAML Validation Hook<a class="headerlink" href="#yaml-validation-hook" title="Permanent link">&para;</a></h3>
 <ul>
-<li><strong>Trigger</strong>: when a unit definition or scenario YAML is created or modified</li>
+<li><strong>Trigger</strong>: before a unit/config/scenario/data YAML is edited or written</li>
 <li><strong>Checks</strong>:</li>
 <li>Validates against the pydantic schema for that unit class (id field, numeric types, probability ranges)</li>
 <li><strong>Equipment category validation</strong>: all <code>category</code> values must be valid <code>EquipmentCategory</code> enum values (WEAPON, SENSOR, PROPULSION, PROTECTION, COMMUNICATION, NAVIGATION, UTILITY, POWER — NOT "TOOL")</li>
-<li><strong>Sensor presence check</strong>: warns if unit YAML has no <code>category: SENSOR</code> equipment entry</li>
-<li><strong>Equipment name sanity</strong>: flags obviously malformed weapon equipment names</li>
-<li><strong>Scenario unit_type validation</strong>: flags <code>unit_type</code> values that look like display names instead of valid IDs</li>
-<li><strong>Action</strong>: block write if structural issues found; warn on missing sensors</li>
+<li><strong>Sensor policy</strong>: <code>required</code> needs a real SENSOR entry;
+    <code>intentionally_none</code> needs a substantive reason and forbids SENSOR entries</li>
+<li><strong>Equipment identity</strong>: weapon/sensor names must resolve through the typed
+    production registry without guessed proxies or invented defaults</li>
+<li><strong>Scenario unit type</strong>: values must be exact stable catalog IDs, not display
+    names</li>
+<li><strong>Action</strong>: block the edit/write and describe any issue</li>
 </ul>
-<h3 id="spec-before-code-hook">Spec-Before-Code Hook<a class="headerlink" href="#spec-before-code-hook" title="Permanent link">&para;</a></h3>
+<h3 id="long-command-background-hook">Long-Command Background Hook<a class="headerlink" href="#long-command-background-hook" title="Permanent link">&para;</a></h3>
 <ul>
-<li><strong>Trigger</strong>: when creating a new module/package directory under the sim core</li>
-<li><strong>Checks</strong>: corresponding spec document exists in <code>docs/specs/</code></li>
-<li><strong>Action</strong>: warn if no spec exists — enforces specify-before-implement discipline</li>
+<li><strong>Trigger</strong>: before a Bash command</li>
+<li><strong>Checks</strong>: recognizes broad pytest commands and catalog-wide
+  <code>evaluate_scenarios.py</code> runs; an explicit <code>--scenario</code> evaluator remains a
+  foreground focused command</li>
+<li><strong>Action</strong>: preserves the command/timeout/description and sets
+  <code>run_in_background=true</code> only for recognized long runs</li>
 </ul>
-<h3 id="research-source-hook">Research Source Hook<a class="headerlink" href="#research-source-hook" title="Permanent link">&para;</a></h3>
+<h2 id="skill-enforced-gates-not-provider-hooks">Skill-Enforced Gates (Not Provider Hooks)<a class="headerlink" href="#skill-enforced-gates-not-provider-hooks" title="Permanent link">&para;</a></h2>
 <ul>
-<li><strong>Trigger</strong>: applied within /research-military and /research-models skills</li>
-<li><strong>Checks</strong>: all cited sources classified by tier; any source outside approved tiers is flagged</li>
-<li><strong>Action</strong>: flag unapproved sources with warning; never present unverified sources without explicit disclaimer</li>
+<li><code>$spec</code> plus the phase workflow enforce specification before implementation;
+  no installed provider hook scans new module paths for a spec.</li>
+<li><code>$research-military</code> and <code>$research-models</code> enforce the source tiers below;
+  no installed provider hook independently validates citations.</li>
 </ul>
 <hr />
 <h2 id="research-source-tiers">Research Source Tiers<a class="headerlink" href="#research-source-tiers" title="Permanent link">&para;</a></h2>
