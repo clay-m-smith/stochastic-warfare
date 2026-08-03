@@ -541,8 +541,8 @@ class TestDataFixes:
         assert data["cbrn_config"]["enable_cbrn"] is True
         assert len(data["cbrn_config"]["agent_releases"]) >= 2
 
-    def test_bekaa_valley_has_school_config(self):
-        """Bekaa Valley scenario has school_config for doctrinal AI."""
+    def test_bekaa_valley_ignored_school_proxy_removed(self):
+        """Bekaa Valley does not advertise an unassigned school registry."""
         from pathlib import Path
         import yaml
 
@@ -551,9 +551,7 @@ class TestDataFixes:
             pytest.skip("Scenario not found")
         with open(path) as f:
             data = yaml.safe_load(f)
-        assert "school_config" in data
-        assert data["school_config"]["blue"] == "air_power"
-        assert data["school_config"]["red"] == "attrition"
+        assert "school_config" not in data
 
     def test_falklands_red_morale_steady(self):
         """Falklands campaign red side has STEADY morale (not SHAKEN)."""

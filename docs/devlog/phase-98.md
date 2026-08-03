@@ -1,5 +1,13 @@
 # Phase 98: Shared Prework — Gap Audit, Calibration Conventions, Depth Framework
 
+> **Phase 117 historical-claim supersession (2026-08-02):** This archived page
+> preserves implementation history. Its historical-winner, outcome, casualty,
+> duration, calibration, plausibility, envelope, and tolerance statements are
+> not accepted historical validation. Any engine figures below are regression
+> history only, not predictive evidence or calibration authority; the typed
+> claim ledger and accepted production artifacts, if any, are authoritative.
+
+
 **Status**: Complete.
 **Block**: 11 (Golden Scenarios & End-to-End Engine Validation through UI).
 

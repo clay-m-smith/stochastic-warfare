@@ -1,63 +1,66 @@
+---
+name: what-if
+description: "Run guarded parameter sensitivity analysis for a specific Stochastic Warfare scenario and explain how outcomes respond across a defensible range. Use for explicit what-if or sensitivity questions about a schema-valid, wired parameter; do not silently default to a generic scenario or infer effects from unexercised runs."
+---
+
 # What-If Analysis
 
-Quick parameter sensitivity analysis — answers "what if X were different?" questions.
+Read `CODEX.md`, the relevant scenario contract, phase material, and remediation
+backlog.
 
-## Trigger
-Use when the user asks questions like:
-- "What if we increased the hit probability?"
-- "How sensitive is the outcome to force ratio?"
-- "What happens if we change the target size modifier?"
+## Hard Preflight — REM-017
 
-## Process
+Before executing a sweep, read REM-017 in `docs/remediation-backlog.md`.
 
-### 1. Parse the Question
-Identify from the user's question:
-- **Parameter**: Which calibration override to sweep (e.g., `hit_probability_modifier`)
-- **Range**: What values to test. If not specified, use sensible defaults:
-  - Multipliers: [0.25, 0.5, 0.75, 1.0, 1.25, 1.5, 2.0]
-  - Counts: [2, 4, 6, 8, 10]
-- **Scenario**: Which scenario to use (default: `test_campaign`)
-- **Metrics**: Which outcomes to track
+If REM-017 is not closed with behavioral evidence that the shared batch helper:
 
-### 2. Run Sweep
-Use `stochastic_warfare.tools.sensitivity`:
-```python
-from stochastic_warfare.tools.sensitivity import SweepConfig, run_sweep, plot_sweep
+- loads the exact expected force roster and loadouts through `ScenarioLoader`;
+- applies the swept value to runtime state;
+- demonstrates a controlled outcome effect;
+- rejects unknown metrics and invalid or empty scenario loads;
 
-config = SweepConfig(
-    scenario_path="data/scenarios/test_campaign/scenario.yaml",
-    parameter_name="hit_probability_modifier",
-    values=[0.5, 0.75, 1.0, 1.25, 1.5],
-    metric_names=["blue_destroyed", "red_destroyed"],
-    iterations_per_point=10,
-    max_ticks=50,
-)
-result = run_sweep(config)
-```
+stop. Do not run, plot, or interpret a sweep. Report that what-if analysis is
+blocked by REM-017 and identify the missing evidence. Do not accept skipped-unit
+warnings, zero-filled results, a short no-contact run, structural tests, the
+simplified scenario runner, or an ad hoc unverified harness as a workaround.
 
-### 3. Analyze Results
-For each sweep point, report:
-- Mean and standard deviation of each metric
-- Whether the relationship is linear, exponential, or threshold-based
-- Key inflection points where behavior changes dramatically
+Resume only after the remediation is closed and reverified.
 
-### 4. Visualize
-Generate a plot using `plot_sweep(result, metric="blue_destroyed")` and save it for the user.
+## Define the Question
 
-### 5. Summarize
-Provide a plain-language summary:
-- "Increasing hit probability from 0.5x to 1.5x reduces red losses by X on average"
-- "The effect is nonlinear — most of the change happens between 0.75x and 1.25x"
-- "This parameter has [high/medium/low] sensitivity"
+1. Require an explicit scenario or infer one unambiguously from the current
+   task; never silently use `test_campaign`.
+2. Identify the decision, parameter, baseline, metrics, horizon, and sides
+   affected.
+3. Validate the parameter and values against the current typed schema.
+4. Prove the parameter is loaded, wired, enabled, and outcome-affecting.
+5. Bound the range with sources, schema constraints, or documented scenario
+   plausibility. Include the current baseline.
+6. Predeclare seeds, iterations, horizon, and uncertainty summaries.
 
-## Common Parameters
-| Parameter | Description | Typical Range |
-|-----------|-------------|---------------|
-| `hit_probability_modifier` | Global hit probability scaling | 0.25–2.0 |
-| `target_size_modifier` | Target size scaling | 0.25–2.0 |
-| `force_ratio_modifier` | Force ratio assessment bias | 0.5–3.0 |
-| `morale_modifier` | Morale transition rate scaling | 0.5–2.0 |
+## Run a Meaningful Sweep
 
-## Reference
-- Module: `stochastic_warfare/tools/sensitivity.py`
-- Calibration keys: defined per-scenario in `calibration_overrides` section
+1. Assert expected units, subclasses, weapons, sensors, and side counts loaded.
+2. Confirm the run reaches contact or the behavior of interest before the
+   horizon.
+3. Use the same paired seed sequence across sweep points when analyzing
+   per-seed changes; otherwise use independent samples intentionally.
+4. Retain raw seed-level results.
+5. Report mean or median, dispersion, confidence intervals, baseline delta, and
+   outcome frequency as applicable.
+6. Identify thresholds or non-monotonic regions only when the observations
+   support them. Do not label a sparse curve linear, exponential, or causal
+   without model evidence.
+7. Distinguish sensitivity from historical validity and practical military
+   significance.
+
+## Visualize and Report
+
+Create a plot only when it materially clarifies the relationship. Save it to an
+explicit user-requested artifact path or a temporary/output location, not an
+untracked repository path.
+
+Report the exact scenario, revision, parameter, values, baseline, metrics,
+horizon, seeds, commands, load preflight, statistics, observed relationship,
+uncertainty, and limitations. Never predetermine the direction of the result or
+change production configuration during exploratory analysis.

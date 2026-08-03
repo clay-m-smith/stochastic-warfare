@@ -1,94 +1,83 @@
 ---
 name: design-review
-description: Review a module's design against military theory foundations and project architecture decisions. Ensures implementation stays grounded in established doctrine and our design principles.
-allowed-tools: Read, Grep, Glob, WebSearch, WebFetch
-context: fork
-agent: general-purpose
+description: "Review a Stochastic Warfare subsystem or proposed design against current architecture, sourced military or mathematical foundations, production wiring, and observable behavior. Use for an explicit design review or before implementing a materially new simulation subsystem; do not treat this review as code acceptance or phase completion."
 ---
 
-# Design Review — Military Theory & Architecture Compliance
+# Design Review
 
-You are reviewing a module's design in the Stochastic Warfare project to ensure it is grounded in established military theory and consistent with the project's architectural decisions.
+Read `CODEX.md` completely. Then read the current specification, relevant
+architecture pages, remediation entry, phase material, implementation, and
+behavioral tests. Treat `docs/brainstorm*.md` as historical design input, not
+current authority when it conflicts with later specifications or production
+behavior.
 
-## Target
-$ARGUMENTS
+## Review the Contract
 
-## Review Process
+1. Restate the design's inputs, outputs, state, dependencies, configuration,
+   enablement, persistence, and failure behavior.
+2. Identify non-goals and scale or fidelity boundaries.
+3. List unresolved choices rather than silently choosing the easiest behavior.
 
-### 1. Read the Module
-- Read the module's spec (`docs/specs/<module>.md`) and implementation
-- Understand what it models and how
+## Review Architecture and Wiring
 
-### 2. Cross-Reference Architecture Decisions
-Read `docs/brainstorm.md` and verify:
-- [ ] Consistent with the hybrid simulation loop (tick + event-driven)
-- [ ] Uses the correct spatial model for its scale (graph/grid/continuous)
-- [ ] Coordinates in ENU/UTM, not geodetic
-- [ ] Unit parameters are data-driven (YAML), not hardcoded
-- [ ] Full tactical resolution — no fidelity shortcuts
-- [ ] PRNG discipline maintained
-- [ ] State is serializable for checkpointing
+Check only applicable items:
 
-### 3. Military Theory Validation
-For the domain this module covers, check against relevant theorists:
+- dependency direction and separation of entity state from engine behavior;
+- real production path from typed scenario input through `SimulationEngine`;
+- hybrid clock/event semantics and logical-time use;
+- ENU internal coordinates and boundary-only geodetic formats;
+- explicit stateful dependency injection;
+- deterministic iteration and project RNG stream discipline;
+- complete checkpoint state for every affected mutable component;
+- typed, data-driven configuration with explicit rejection;
+- enabled and disabled behavior;
+- recorder, API, or UI exposure where required;
+- performance and multi-scale behavior, including current LOD or aggregation
+  contracts rather than obsolete blanket fidelity claims.
 
-**Combat/Engagement:**
-- Does it reflect Lanchester's mathematical foundations?
-- Does Clausewitzian friction manifest as stochastic variance in execution?
-- Are combined arms interactions modeled per Fuller's principles?
+## Review Domain Foundations
 
-**Movement/Maneuver:**
-- Does the model allow for Liddell Hart's indirect approach?
-- Can Jominian concepts (interior lines, concentration) emerge from the mechanics?
+Use only theory and evidence relevant to the mechanism. Invoke military or model
+research when a material claim lacks a source. Do not treat a named theorist as
+evidence that a behavior is modeled.
 
-**C2/Decision-Making:**
-- Is there a recognizable OODA loop (Boyd)?
-- Do order propagation delays create realistic C2 friction?
+For each claimed foundation:
 
-**Intelligence/Recon:**
-- Is Sun Tzu's emphasis on intelligence reflected in the detection model?
-- Does deception have mechanical support?
+1. cite the source and distinguish doctrine, theory, empirical data, and ethical
+   constraints;
+2. identify the concrete mechanic that expresses it;
+3. define the observable outcome or emergent behavior expected;
+4. identify counterexamples, degenerate cases, and conflicting frameworks.
 
-**Logistics:**
-- Are LOCs modeled as Jomini described?
-- Can logistics be disrupted (interdiction)?
+## Trace Completion Evidence
 
-**Morale:**
-- Is Clausewitz's moral forces concept present?
-- Does du Picq's/Marshall's work on combat motivation inform the model?
+Assess each applicable `CODEX.md` stage:
 
-**Air Power:**
-- Does Douhet's command-of-the-air concept have mechanical expression?
-- Is Warden's five-rings targeting theory supportable?
+- Declared
+- Loaded
+- Wired
+- Enabled
+- Exercised
+- Outcome-affecting
+- Persisted or exposed
 
-### 4. Emergent Behavior Check
-- Can realistic tactical/operational patterns emerge from the mechanics?
-- Can the model produce historically observed phenomena (suppression, envelopment, rout, breakthrough)?
-- Are there degenerate cases where the model produces unrealistic behavior?
+Use production-path behavior and tests as evidence. Imports, constructors,
+attribute checks, source searches, log messages, and no-crash runs are
+structural evidence only.
 
-## Output Format
+## Report
 
-```
-DESIGN REVIEW: <module>
-================================================
+Produce:
 
-ARCHITECTURE COMPLIANCE:
-  [PASS/FAIL/N/A] Each architecture decision check
+1. reviewed contract and sources;
+2. architecture findings with severity and file/line evidence;
+3. domain-foundation findings and conflicts;
+4. completion-matrix evidence and gaps;
+5. emergent behaviors the design can and cannot produce;
+6. prioritized recommendations and required tests;
+7. residual assumptions and tracked limitations;
+8. a design-only verdict: `APPROVED`, `APPROVED WITH NOTES`, or
+   `NEEDS REVISION`.
 
-MILITARY THEORY ALIGNMENT:
-  [ALIGNED/PARTIAL/MISSING/N/A] Each relevant theorist check
-  Notes on what's well-modeled and what's missing
-
-EMERGENT BEHAVIOR ASSESSMENT:
-  What patterns this design can/cannot produce
-
-RECOMMENDATIONS:
-  Prioritized list of design improvements
-
-VERDICT: APPROVED / APPROVED WITH NOTES / NEEDS REVISION
-```
-
-## Important
-- Not every theorist is relevant to every module — mark N/A where appropriate
-- The goal is not academic perfection but ensuring the simulation captures the right dynamics
-- Flag cases where theory conflicts with practical implementation constraints — these are trade-offs to document, not failures
+Explicitly state that the verdict does not establish implementation completeness
+or authorize a phase-complete status.

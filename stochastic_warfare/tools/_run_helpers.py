@@ -14,7 +14,10 @@ from pathlib import Path
 from typing import Any, Callable, Mapping, Sequence
 
 from stochastic_warfare.entities.base import UnitStatus
-from stochastic_warfare.simulation.engine import SimulationRunResult
+from stochastic_warfare.simulation.engine import (
+    PRODUCTION_TERMINAL_CONDITION_TYPES,
+    SimulationRunResult,
+)
 from stochastic_warfare.simulation.runtime import (
     AnalysisInputError,
     AnalysisVariant,
@@ -200,17 +203,6 @@ _UNIT_ASSIGNMENT_FIELDS = frozenset(
         "side",
         "commander_profile_id",
         "doctrine_school_id",
-    },
-)
-_TERMINAL_CONDITION_TYPES = frozenset(
-    {
-        "attrition_ratio",
-        "force_destroyed",
-        "max_ticks",
-        "morale_collapsed",
-        "supply_exhausted",
-        "territory_control",
-        "time_expired",
     },
 )
 
@@ -717,7 +709,7 @@ def validate_serialized_batch_evidence(
             run["condition_type"],
             path=f"{run_path}.condition_type",
         )
-        if condition_type not in _TERMINAL_CONDITION_TYPES:
+        if condition_type not in PRODUCTION_TERMINAL_CONDITION_TYPES:
             raise ValueError(
                 f"{run_path}.condition_type is not a supported terminal "
                 "condition",

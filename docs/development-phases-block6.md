@@ -1,5 +1,18 @@
 # Stochastic Warfare -- Block 6 Development Phases (49--57)
 
+> **Phase 117 historical-claim supersession (2026-08-02):** This archived page
+> preserves implementation history. Its historical-winner, outcome, casualty,
+> duration, calibration, plausibility, envelope, and tolerance statements are
+> not accepted historical validation. Any engine figures below are regression
+> history only, not predictive evidence or calibration authority; the typed
+> claim ledger and accepted production artifacts, if any, are authoritative.
+
+> **Phase 117 school-integrity correction (2026-08-02):** The two archived
+> scenario `school_config` coverage claims below used ignored side proxy keys
+> and assigned zero units. Those declarations were removed; current source
+> configuration accepts only strict exact `unit_assignments`.
+
+
 > **Phase 112 integrity supersession (2026-07-30):** This roadmap preserves
 > Block 6's historical plan. Its all-scenario winner checks and repeated seeds
 > from calibrated inputs are current-engine regression history, not

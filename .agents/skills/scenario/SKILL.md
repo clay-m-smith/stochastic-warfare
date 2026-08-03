@@ -53,16 +53,19 @@ Run the file-specific data validator:
 uv run python scripts/validate_scenario_data.py --file <scenario-path>
 ```
 
-Load the scenario through `ScenarioLoader` with a fixed seed. Verify exact unit
-types, counts, concrete classes, positions, loadouts, and configured runtime
-state; do not stop at a no-crash load.
+Use `ScenarioLoader` only for focused configuration/load diagnostics. Prove
+comparable behavior through `SimulationRuntimeFactory.prepare`, select the
+explicit prepared variant, and call `PreparedScenario.build` to obtain a
+bounded `RuntimeSession`. Verify exact unit types, counts, concrete classes,
+positions, loadouts, configured runtime state, and preparation identities; do
+not stop at a no-crash load.
 
-Run focused scenario validation plus a bounded `SimulationEngine` execution.
-Assert the required state transitions, events, resource changes, or victory
-outcome and include a contrasting or disabled control. Repeat with the same
-seed when determinism is applicable. Run checkpoint and comparison evaluation
-when the scenario exercises mutable or stochastic behavior covered by those
-contracts.
+Either call `run_to_completion()`, or drive `step()` until terminal and then
+call `finalize()`. Assert the required state transitions, events, resource
+changes, or victory outcome and include a contrasting or disabled control.
+Repeat through fresh factory-owned sessions with the same seed when determinism
+is applicable. Run checkpoint and comparison evaluation when the scenario
+exercises mutable or stochastic behavior covered by those contracts.
 
 Run the catalog-wide validator and relevant scenario evaluation before
 completion:

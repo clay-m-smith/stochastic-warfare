@@ -434,6 +434,10 @@ def _data_tree_revision(
     }
     runtime_output_directories = {
         "terrain_cache",
+        # Validation plans and claim/artifact ledgers audit production inputs;
+        # they are not simulation configuration and are fingerprinted by their
+        # own strict contracts.
+        "validation",
     }
     excluded = runtime_outputs | set(excluded_relative_paths)
     manifest: list[dict[str, Any]] = []
@@ -769,8 +773,10 @@ class PreparedScenario:
                 return variant
         raise ValueError(f"Unknown analysis variant {variant_id!r}")
 
-    def _assert_source_identity(self, *, stage: str) -> None:
-        """Reject a runtime assembled from sources unlike its preparation."""
+    def assert_source_identity(self, *, stage: str) -> None:
+        """Reject evidence produced from sources unlike this preparation."""
+        if not isinstance(stage, str) or not stage or stage != stage.strip():
+            raise ValueError("source-identity stage must be a non-empty trimmed string")
         current_data_revision, current_data_file_count = _data_tree_revision(
             self.data_root,
             excluded_relative_paths=self.data_revision_exclusions,
@@ -817,7 +823,7 @@ class PreparedScenario:
                 "PreparedVariant does not belong to this PreparedScenario",
             )
 
-        self._assert_source_identity(stage="before runtime construction")
+        self.assert_source_identity(stage="before runtime construction")
         effective = CampaignScenarioConfig.model_validate(
             selected.config.model_dump(mode="python"),
         )
@@ -918,7 +924,7 @@ class PreparedScenario:
             recorder=runtime_recorder,
             strict_mode=strict_mode,
         )
-        self._assert_source_identity(stage="during runtime construction")
+        self.assert_source_identity(stage="during runtime construction")
         return RuntimeSession(
             variant_id=selected.variant_id,
             seed=seed,

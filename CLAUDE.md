@@ -7,19 +7,19 @@ models, a headless Python engine, FastAPI service, and React frontend. Modern
 warfare is the primary data package, with four historical-era packages and
 integrated maritime warfare.
 
-**Current status**: Phases 105 through 116 and Block 12 are complete. Phase
-116's typed format-116 ordinary-contact, fusion-alias, bounded-witness,
-targeting, and DETECTION RNG continuation contract passes documentation,
-cross-document review, and postmortem; REM-029 is closed. The owner accepted
-its contended long-run evidence only with an explicit qualification; capped
-slow/API/E2E runs and inconclusive timing are not called passes. See
-`docs/devlog/phase-116.md`,
-`docs/specs/fog-of-war-contact-continuation.md`, and
-`docs/remediation-backlog.md` for the exact evidence, closure gates, and
-unresolved follow-ups.
+**Current status**: Phases 105 through 117 and Block 12 are complete. Phase
+117's typed historical-claim ledger, production backtest, conservative public
+projection, and persisted failure artifact passed documentation,
+cross-document review, and postmortem; REM-030 is closed. Its frozen 20-seed
+73 Easting production study remains a real `FAIL`: zero runs satisfied the
+joint source envelope and no claim was promoted. The owner accepted contended
+long-run evidence only with an explicit qualification; capped async
+API/slow/E2E runs are not called passes. See `docs/devlog/phase-117.md`,
+`docs/specs/historical-outcome-envelope-integrity.md`, and
+`docs/remediation-backlog.md` for the exact evidence and unresolved follow-ups.
 
-Block 13 is active with Phase 116 / REM-029 complete and closed. Phase 117 /
-REM-030 is next and remains unstarted.
+Block 13 is active with Phase 117 / REM-030 complete and closed. Phase 118 is
+next and has not started.
 REM-041 through REM-043 are assigned to planned Block 14.
 REM-044 is assigned to planned Block 15 for sourced sensor covariance and an
 atomic predictive-tracking transaction.
@@ -28,6 +28,24 @@ REM-045 assigns the legacy Fallujah scripted-action lifecycle to planned Block
 effect, or exact-once continuation evidence.
 REM-046 assigns complete active-deception checkpoint state and single-owner
 DETECTION RNG continuation to planned Block 17 / Phase 133.
+REM-047 assigns the separate 73 Easting source-synchronous engagement-fidelity
+miss to planned Block 18 / Phase 134. That phase must trace detection, contact,
+targeting, engagement, destruction, and the natural event boundary without
+widening the frozen casualty/duration envelope or tuning physical parameters
+to force agreement.
+REM-048 assigns package-bound accepted-evidence attestation to planned Block 19
+/ Phase 135. Phase 117 locally proves the packaged-loader boundary only for the
+current zero-accepted ledger; its hosted no-`.git` image smoke is configured
+and pending the phase push. A future accepted claim requires a build-time
+repository proof and tamper-evident runtime receipt.
+REM-049 assigns remaining replay/export/editor/analysis Web UI semantic
+integrity to planned Block 19 / Phase 136 after Phase 117 corrects bounded
+canonical-field, terrain, status, navigation, and invalid-default defects.
+REM-041 remains the separate owner for authenticated, complete side-safe FOW.
+REM-050 assigns strict consumed Escalation/DEW configuration and a real
+configured DEW engagement to planned Block 19 / Phase 137. Phase 117 records
+that escalation mappings are discarded and DEW is presence-enabled; engine
+construction or ignored enable-like keys are not behavioral proof.
 Phase 115's 73 Easting workload-identity change uses a strict non-timing
 transition qualification and is never called a performance pass. Phase 116
 has promoted the clean endpoint to the ordinary version-4 paired gate.
@@ -55,7 +73,7 @@ uv sync --locked --extra dev --extra api --extra terrain --extra mcp
 uv run --no-sync python scripts/validate_test_partitions.py \
   --output artifacts/partition-audit/manifest.json
 uv run --no-sync python scripts/run_pytest_partition.py standard \
-  --manifest artifacts/partition-audit/manifest.json \
+  --manifest artifacts/standard/manifest.json \
   --junit artifacts/standard/junit.xml --forbid-skips \
   --timeout-seconds 2700
 ```
@@ -154,12 +172,12 @@ production-evidence requirements.
 | `/research-military` | Military doctrine, historical data, theorist/philosopher writings (tiered sources) |
 | `/research-models` | Mathematical, stochastic, signal processing modeling approaches (tiered sources) |
 | `/validate-conventions` | Check code against PRNG, determinism, coordinate, logging conventions |
-| `/update-docs` | Propagate design decisions to brainstorm, specs, memory (MVP + post-MVP) |
+| `/update-docs` | Synchronize verified contracts and status across roadmaps, specs, devlogs, public docs, and provider context |
 | `/spec` | Draft/update module specification before implementation |
-| `/backtest` | Structure validation against historical engagement data |
+| `/backtest` | Run a predeclared source-backed production study; a result is not accepted validation by itself |
 | `/audit-determinism` | Deep PRNG discipline audit — trace all stochastic paths |
 | `/design-review` | Review module design against military theory and architecture |
-| `/cross-doc-audit` | Verify alignment across all docs (MVP + post-MVP + user-facing, 19 checks) |
+| `/cross-doc-audit` | Read-only verification across ten roadmap, evidence, contract, architecture, API, data, status, link, and provider areas |
 | `/simplify` | Review changed code for reuse, quality, and efficiency |
 | `/profile` | Performance profiling — cProfile analysis, hotspot identification, benchmarking |
 | `/scenario` | Interactive scenario creation/editing walkthrough (with mandatory equipment mapping validation) |
@@ -168,7 +186,7 @@ production-evidence requirements.
 | `/what-if` | Quick parameter sensitivity from natural language questions |
 | `/timeline` | Generate battle narrative from simulation run |
 | `/orbat` | Interactive order of battle builder |
-| `/calibrate` | Auto-tune calibration overrides to match historical data |
+| `/calibrate` | Guarded scenario calibration; never historical validation or post-miss envelope widening |
 | `/postmortem` | Structured retrospective after completing a phase — catches integration gaps, deficits, test quality issues |
 | `/evaluate-scenarios` | Run all scenarios, compare against baseline, report improvements/regressions |
 
@@ -204,6 +222,8 @@ production-evidence requirements.
 | `docs/development-phases-block15.md` | Block 15 roadmap (131), sensor covariance and predictive-tracking follow-up |
 | `docs/development-phases-block16.md` | Block 16 roadmap (132), scripted scenario action-integrity follow-up |
 | `docs/development-phases-block17.md` | Block 17 roadmap (133), active-deception checkpoint-integrity follow-up |
+| `docs/development-phases-block18.md` | Block 18 roadmap (134), 73 Easting source-synchronous engagement-fidelity follow-up |
+| `docs/development-phases-block19.md` | Block 19 roadmap (135–137), package-bound accepted-evidence, Web UI semantics, and Escalation/DEW configuration follow-ups |
 | `docs/remediation-backlog.md` | Audited implementation gaps and completion evidence |
 | `docs/specs/project-structure.md` | Full package tree, module decomposition, dependency graph |
 | `docs/devlog/` | Per-phase implementation logs (`index.md` tracks status) |
@@ -240,15 +260,17 @@ All phase details are in `docs/devlog/` (one file per phase). Per-phase tables i
 | Block 15 | 131 | Sourced sensor measurement covariance and atomic predictive tracking | Planned |
 | Block 16 | 132 | Typed, fail-closed, exact-once scripted scenario actions | Planned |
 | Block 17 | 133 | Complete active-deception checkpoint state with one DETECTION RNG authority | Planned |
+| Block 18 | 134 | Source-synchronous 73 Easting engagement and natural-boundary fidelity | Planned |
+| Block 19 | 135–137 | Build-time/no-Git accepted-evidence attestation, Web UI semantics, and Escalation/DEW configuration integrity | Planned |
 
 ### Block 11 Detail (COMPLETE)
 
 | Phase | Status | Focus |
 |-------|--------|-------|
-| 98 | Complete | Shared prework — gap audit (4 OOB briefs), envelope helpers (6 fns + 26 tests), calibration template, depth checklist template |
+| 98 | Complete | Shared prework — gap audit (4 OOB briefs), phase-era envelope helpers and tests retired by Phase 117, calibration template, depth checklist template |
 | 99 | Complete | Debecka Pass (2003) — 12 new YAMLs (6 units + 3 weapons + 5 ammo), scenario YAML, 8 regression tests. **Engine fixes**: LIGHT_INFANTRY exempt from seeker FOV (Javelin fires), `"Ordnance Stations"` / `"CSRL Rotary Launcher"` mapped to bomb_rack_generic (CAS bombs emit EngagementEvents). 1 accepted limitation (Peshmerga squad granularity). |
 | 100 | Complete | Khafji (1991) — 37 new YAMLs (14 units + 13 weapons + 10 ammo), scenario YAML with hybrid tick resolution + full OOB (233 units), 7 regression tests. Engine fixes: 16"/50 cross-era availability + NAVAL_GUN target_domains override for shore bombardment. 5 accepted limitations (naval-gunfire EngagementEvent, Iraqi artillery unit, SA-7/Spirit 03, AGM-65, full-OOB performance). |
 | 101 | Complete | Fallujah Phase Line Fran (2004) — 29 new YAMLs (14 units + 7 weapons + 7 ammo + 1 HBIED device), 333-unit scenario (198 blue + 135 red at full Al-Fajr scale), **2 new scenario-level config fields** (`initial_ieds` + `scripted_events`) plus four legacy handlers. Phase 115 confirmed the current run ends before the first due action and that load/reference checks do not prove typed, lifecycle-safe, exact-once effects; REM-045 / Phase 132 owns that follow-up. Engine fixes: `hbied` subtype (non-jammable), `INCENDIARY_WEAPON` fire behavior, and `unconventional_engine` auto-creation for authored initial IEDs. 13 phase-era tests (6 fast + 7 @slow). |
-| 102 | Complete | Bint Jbeil + INS Hanit (2006) — 19 new YAMLs (11 units + 4 weapons + 4 ammo) via 3 parallel authoring agents. Two scenarios: Bint Jbeil (249 units, IDF Golani/Paratrooper/Armor vs Hezbollah, phase-era `DRAW_SCENARIO`) + INS Hanit vignette (3 units, Sa'ar 5 vs C-802 Noor, phase-era `HISTORICAL_WINNERS.blue`). These labels preserve Block 11 intent/current regression behavior; they are not catalog-wide historical-validation evidence, which is queued under REM-030. 15 tests (9 fast + 6 @slow). **Zero engine fixes** — all new classes fit existing schemas (CORVETTE naval_type, NAVAL_GUN category, RADAR_ACTIVE guidance all existed). Block 11 COMPLETE. |
+| 102 | Complete | Bint Jbeil + INS Hanit (2006) — 19 new YAMLs (11 units + 4 weapons + 4 ammo) via 3 parallel authoring agents. Two scenarios: Bint Jbeil (249 units, IDF Golani/Paratrooper/Armor vs Hezbollah, phase-era `DRAW_SCENARIO`) + INS Hanit vignette (3 units, Sa'ar 5 vs C-802 Noor, phase-era `HISTORICAL_WINNERS.blue`). Phase 117 classifies these labels as unsupported historical claims with separate current-engine regression signals; the legacy direct-construction suites are not evidence. 15 phase-era tests (9 fast + 6 @slow). **Zero engine fixes** — all new classes fit existing schemas (CORVETTE naval_type, NAVAL_GUN category, RADAR_ACTIVE guidance all existed). Block 11 COMPLETE. |
 | 103 | Complete | Block 11 Polish — OOB + engine gap tightening. 3 new Iraqi artillery carrier units (2S1, 2S3, FROG-7), 10 weapon/sensor map additions, AGM-65 added to F-16C, FAE retagged INCENDIARY_WEAPON, `_publish_air_engagement_event` helper wired to 3 `_route_air_engagement` sites (AGM-65/AMRAAM/Hellfire/SAM now surface in /analytics/engagements chart), 4 `_publish_naval_engagement_event` sites added (torpedo, depth charge, ASHM, ASROC). 17 new tests. Resolves Phase 100 limitations #2 + #3 (partial) + #4. |
 | 104 | Complete | Configurable Deployment Modes — new `stochastic_warfare/simulation/deployment.py` with 5 modes (legacy / bounding_box / clustered / doctrinal / manual) + `DeploymentMode` + `GroupKey` enums + `DeploymentBox` + `DeploymentConfig` pydantic models. Per-unit `position: [x, y]` YAML override works in any mode. 6 formation templates in `data/formations/` (brigade_attack, brigade_defense, battalion_urban_defense, marine_urban_assault, mechanized_thrust, naval_patrol_station). All 4 Block 11 golden scenarios retrofitted (104b): Debecka→bounding_box, Khafji/Fallujah/Bint Jbeil→doctrinal (Hanit stays legacy). Tick-0 side separation: Debecka 0m→1292m, Fallujah 5m→1104m, Bint Jbeil 5m→2625m (Khafji already OK at 5050m+). Direction-aware `_deploy_doctrinal` auto-flips offset_y_frac when opposing box is at lower y. 33 new Phase 104 tests including all-golden regression guard. |

@@ -25,8 +25,8 @@ OpenAPI docs are available at `/api/docs` (Swagger UI) and `/api/redoc`.
 | GET | `/api/meta/eras` | Available eras with disabled modules |
 | GET | `/api/meta/doctrines` | Doctrine templates |
 | GET | `/api/meta/terrain-types` | Terrain type list |
-| GET | `/api/scenarios` | List all scenarios (base + era) |
-| GET | `/api/scenarios/{name}` | Full scenario config as JSON |
+| GET | `/api/scenarios` | List all scenarios (base + era), each with typed historical-validation status |
+| GET | `/api/scenarios/{name}` | Public scenario config, force summary, and typed historical-validation status |
 | POST | `/api/scenarios/validate` | Validate a scenario config against pydantic schema |
 | GET | `/api/units?domain=&era=&category=` | List units with optional filters |
 | GET | `/api/units/{type}` | Full unit definition |
@@ -51,13 +51,47 @@ OpenAPI docs are available at `/api/docs` (Swagger UI) and `/api/redoc`.
 | GET | `/api/runs/{id}/analytics/engagements` | Engagement summary with hit rates by type |
 | GET | `/api/runs/{id}/analytics/summary` | Combined analytics (all 4 above) |
 | GET | `/api/meta/schools` | Doctrinal schools (9) with OODA multiplier |
-| GET | `/api/meta/commanders` | Commander profiles with personality traits |
+| GET | `/api/meta/commanders` | 13 base/global commander profiles with personality traits; 13 era-specific profiles remain omitted (REM-049) |
 | GET | `/api/meta/weapons` | Weapon catalog (all eras) |
 | GET | `/api/meta/weapons/{id}` | Full weapon definition |
 | POST | `/api/analysis/compare` | A/B configuration comparison |
 | POST | `/api/analysis/sweep` | Parameter sensitivity sweep |
 | POST | `/api/analysis/doctrine-compare` | Common-seed doctrinal-policy comparison |
 | GET | `/api/analysis/tempo/{id}` | Operational tempo analysis |
+
+### Scenario historical-validation contract
+
+Both scenario endpoints require a `historical_validation` object loaded from
+the canonical repository claim ledger. The API audits the ledger self-digest,
+every API-published scenario claim's source digest, and all accepted evidence
+before returning catalog data. It does not derive a verdict from scenario YAML
+metadata.
+
+| Summary field | Type | Meaning |
+|---|---|---|
+| `aggregate_disposition` | `production_validated \| current_engine_regression_only \| unsupported` | Conservative whole-scenario status |
+| `claims` | `HistoricalValidationClaim[]` | Ordered inventoried claim statuses |
+| `accepted_claim_ids` | `string[]` | Exact claims backed by accepted production evidence |
+| `current_engine_regression_evidence` | `boolean` | Whether regression evidence exists; never a validation verdict |
+| `ledger_sha256` | `string` | Canonical ledger identity used for the response |
+
+Each claim supplies `claim_id`, `disposition`, `reason_codes`, `limitation`,
+`intended_use`, `metric_scope`, `event_scope`,
+`current_engine_regression_evidence`, `accepted_study_id`, and
+`accepted_artifact_path`. The claim-level regression flag records only whether
+that exact claim has current-engine regression evidence. An aggregate is
+`production_validated` only when all
+of its claims are production-validated members of one accepted study/use/event
+family. Any unsupported claim makes the aggregate unsupported; otherwise a
+regression-only claim makes it `current_engine_regression_only`.
+
+Paths without an exact repository ledger identity receive a synthetic
+`unsupported` claim with reason `missing_ledger_identity`; no absolute source
+path is exposed. `GET /api/scenarios/{name}` removes legacy
+`documented_outcomes` and `sources` from `config`. Those fields are catalog
+history, not a public evidence surface. The current ledger contains zero
+production-validated scenarios, and the retained Phase 117 73 Easting study is
+a completed `FAIL` rather than accepted evidence.
 
 ### Frame targeting exposure
 
@@ -278,9 +312,17 @@ source is rejected before session construction; a verified image reports
 `dirty=False`. Data and catalog revisions remain independent provenance fields.
 
 The repository Docker workflow covers pull requests to `main`, pushes to
-`main`, and manual dispatch. Its image smoke asserts that `.git` is absent,
-executes a bounded production session, and verifies the supplied commit and
-clean code-revision result.
+`main`, and manual dispatch. Its configured image smoke asserts that `.git` is
+absent, executes a bounded production session, and verifies the supplied
+commit and clean code-revision result. It also checks that docs and tests are
+absent, loads the historical claim ledger through `load_scenario_catalog()`,
+audits every API-published scenario claim, and verifies the expected
+unsupported/current-engine-regression status for 73 Easting. Phase 117's local
+packaged-loader tests exercise the same ledger boundary, but the hosted image
+smoke remains pending until this phase is pushed and its workflow completes.
+The current ledger has zero accepted artifacts, so neither check proves future
+nonempty accepted-evidence support in a no-`.git` image. REM-048 / Phase 135
+owns the build-time attestation and package receipt required for that case.
 
 ---
 
@@ -526,6 +568,48 @@ When called without `weights` (or with `None`), defaults to force-ratio-only sco
 
 ## Validation Classes
 
+### Historical claim and backtest boundary
+
+```python
+from stochastic_warfare.validation.historical_backtest import (
+    HistoricalBacktestRunner,
+    HistoricalClaimLedgerLoader,
+    HistoricalStudyLoader,
+    create_completed_artifact,
+    evaluate_joint_coverage,
+    load_historical_artifact,
+    write_historical_artifact,
+)
+```
+
+This is the production historical-outcome evidence boundary. It is distinct
+from the legacy comparison helpers below.
+
+| API | Contract |
+|---|---|
+| `HistoricalClaimLedgerLoader(root).load(path)` | Verify the ledger self-digest, source path/content binding for every repository claim, and accepted evidence |
+| `HistoricalClaimLedgerLoader(root).load_scenario_catalog(path)` | Load the same ledger while source-auditing every API-published scenario claim; the current no-docs/no-tests package supports the zero-accepted ledger and fails closed on a future accepted reference until REM-048 |
+| `HistoricalStudyLoader(root).load(path)` | Validate the typed source lineage, claim/metric scopes, event boundaries, seeds, runtime inputs, and acceptance policy |
+| `HistoricalBacktestRunner(prepared, plan).run()` | Build every seed from one `PreparedScenario`, retain typed terminal/metric receipts and ordered vectors, then return the exact evaluation and eligibility reasons |
+| `evaluate_joint_coverage(...)` | Form the per-seed conjunction of all gating metrics and apply the exact one-sided Clopper--Pearson lower bound |
+| `create_completed_artifact(...)` | Construct a digest-bearing completed `PASS` or `FAIL` artifact |
+| `create_error_artifact(...)` | Record a post-start operational `ERROR` without inventing an evaluation or verdict |
+| `write_historical_artifact(path, artifact)` | Write atomically, fsync, and reload-verify the exact artifact |
+| `load_historical_artifact(path)` | Strictly parse and revalidate schema, digests, identities, evaluation, and eligibility |
+
+`PASS` is necessary but not sufficient for promotion. Accepted evidence also
+requires a clean, immutably predeclared, source-backed independent study,
+exact metric bindings, committed ledger/artifact identities, compatible Git
+ancestry, and unchanged runtime source/data identities. `FAIL` is completed
+negative evidence. `ERROR` is not a verdict and is never promotable. An invalid
+plan rejects before an artifact is produced.
+
+The repository runner is `scripts/run_historical_backtest.py`. Its checked-in
+73 Easting result is `FAIL` with 0/20 joint successes, lower confidence bound
+0.0, and no promotion eligibility; see the
+[contract](../specs/historical-outcome-envelope-integrity.md) and
+[artifact](../evidence/phase-117/73-easting-phase117.json).
+
 ### MonteCarloHarness
 
 ```python
@@ -535,8 +619,9 @@ from stochastic_warfare.validation.monte_carlo import MonteCarloHarness
 Runs multiple independent iterations through the legacy validation interface.
 It remains available for compatibility, but its `ScenarioRunner` path is not
 the authoritative evidence boundary for production batch, comparison, sweep,
-or doctrine claims. Use `SimulationRuntimeFactory` and the shared analysis
-helpers for those claims.
+doctrine, or historical-validation claims. Use `SimulationRuntimeFactory` and
+the shared analysis helpers for current-engine distribution claims, and the
+typed historical backtest boundary above for historical verdicts.
 
 **Constructor:**
 
@@ -571,7 +656,7 @@ helpers for those claims.
 | `std()` | `metric: str` | `float` | Standard deviation |
 | `percentile()` | `metric: str, p: float` | `float` | Percentile (0-100) |
 | `confidence_interval()` | `metric: str, level: float = 0.95` | `tuple[float, float]` | Confidence interval |
-| `compare_to_historical()` | `historical: list[HistoricalMetric]` | `ComparisonReport` | Compare against reference data |
+| `compare_to_historical()` | `historical: list[HistoricalMetric]` | `ComparisonReport` | Legacy reference diagnostic only; cannot issue a production historical verdict |
 | `distribution()` | `metric: str` | `list[float]` | Raw values across all runs |
 
 | Property | Type | Description |
@@ -676,10 +761,10 @@ The top-level pydantic model for scenario YAML files. Key fields:
 | `ew_config` | `dict \| None` | Electronic warfare configuration |
 | `space_config` | `SpaceConfig \| None` | Strict selected constellations, space services, finite ASAT assets, and scheduled exact-target orders |
 | `cbrn_config` | `dict \| None` | CBRN effects configuration |
-| `escalation_config` | `dict \| None` | Escalation ladder configuration |
-| `school_config` | `dict \| None` | Doctrinal school registry configuration and exact `unit_assignments` |
+| `escalation_config` | `dict \| None` | Presence enables default escalation/unconventional engines; authored tuning is not consumed (REM-050) |
+| `school_config` | `SchoolScenarioConfig \| None` | Strict exact `unit_assignments`; legacy side/default proxy keys reject |
 | `commander_config` | `CommanderScenarioConfig \| None` | Commander tuning plus exact initial/future per-unit profile assignments |
-| `dew_config` | `dict \| None` | Directed energy weapon configuration |
+| `dew_config` | `dict \| None` | Presence enables DEW; values are validated as `DEWConfig` tuning when the runtime constructs the engine |
 | `indirect_fire` | `IndirectFireScenarioConfig` | Strict gate and exact preplanned time-on-target missions |
 
 Commander declaration is all-side or absent. Behavior is active only when
@@ -692,6 +777,11 @@ schools fail eagerly before unit construction. Initial and arriving units are
 registered with commander, OODA, school, movement, morale, loadout, and
 logistics owners transactionally, and their assignment state participates in
 checkpoint continuation.
+
+`SchoolScenarioConfig` rejects unknown fields. In particular,
+`enable_schools`, `blue`/`red`, and `blue_school`/`red_school` are not side
+assignment authorities. Typed per-side doctrine policies belong to analysis
+variants and remain separate from source-scenario exact unit assignments.
 
 ---
 
@@ -927,7 +1017,9 @@ print(batch.metric_values("exchange_ratio"))
 
 This characterizes the current production distribution. Historical validation
 additionally requires a predeclared source-backed envelope and held-out
-production evidence; see REM-030 in the remediation backlog.
+production evidence. Phase 117 provides that separate typed study, runner,
+joint-evaluation, artifact, and promotion boundary; ordinary batch output does
+not become a historical verdict.
 
 ### Step-by-Step Execution
 

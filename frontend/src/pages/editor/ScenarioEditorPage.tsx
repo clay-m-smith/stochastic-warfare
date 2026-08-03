@@ -78,8 +78,8 @@ function EditorContent({ initialConfig, scenarioName }: { initialConfig: Record<
           <TerrainSection config={config} dispatch={dispatch} />
           <WeatherSection config={config} dispatch={dispatch} />
           <ForceEditor config={config} dispatch={dispatch} />
-          <DoctrinePicker config={config} dispatch={dispatch} />
-          <CommanderPicker config={config} dispatch={dispatch} />
+          <DoctrinePicker />
+          <CommanderPicker />
           <ConfigToggles config={config} dispatch={dispatch} />
           <CalibrationSliders config={config} dispatch={dispatch} />
           <VictoryWeightsEditor config={config} dispatch={dispatch} />

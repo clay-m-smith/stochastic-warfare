@@ -33,10 +33,15 @@ describe('UnitDetailSidebar', () => {
     expect(onClose).toHaveBeenCalled()
   })
 
-  it('shows destroyed status', () => {
-    const destroyed = { ...UNIT, status: 3 }
-    render(<UnitDetailSidebar unit={destroyed} onClose={vi.fn()} />)
-    expect(screen.getByText('Destroyed')).toBeInTheDocument()
+  it.each([
+    [0, 'Active'],
+    [1, 'Disabled'],
+    [2, 'Destroyed'],
+    [3, 'Surrendered'],
+    [4, 'Routing'],
+  ])('maps production UnitStatus %s to %s', (status, label) => {
+    render(<UnitDetailSidebar unit={{ ...UNIT, status }} onClose={vi.fn()} />)
+    expect(screen.getByText(label)).toBeInTheDocument()
   })
 
   it('shows heading with degree symbol', () => {

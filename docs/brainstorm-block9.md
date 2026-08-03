@@ -1,5 +1,13 @@
 # Block 9: Performance at Scale
 
+> **Phase 117 historical-claim supersession (2026-08-02):** This archived page
+> preserves implementation history. Its historical-winner, outcome, casualty,
+> duration, calibration, plausibility, envelope, and tolerance statements are
+> not accepted historical validation. Any engine figures below are regression
+> history only, not predictive evidence or calibration authority; the typed
+> claim ledger and accepted production artifacts, if any, are authoritative.
+
+
 > **Phase 112 integrity supersession (2026-07-30):** This brainstorming page
 > preserves Block 9's contemporaneous design goals, projected timings, counts,
 > and proposed winner checks. They are not current benchmark gates,

@@ -23,8 +23,9 @@ if echo "$COMMAND" | grep -qE 'pytest\s+--tb' && ! echo "$COMMAND" | grep -qE 'p
   IS_LONG_RUN=true
 fi
 
-# Evaluator script (without --scenario for single)
-if echo "$COMMAND" | grep -q 'evaluate_scenarios'; then
+# Broad evaluator run; an explicit single-scenario run remains foreground.
+if echo "$COMMAND" | grep -q 'evaluate_scenarios' \
+  && ! echo "$COMMAND" | grep -qE -- '(^|[[:space:]])--scenario([=[:space:]]|$)'; then
   IS_LONG_RUN=true
 fi
 

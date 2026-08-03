@@ -1,5 +1,13 @@
 # Phase 51: Naval Combat Completeness
 
+> **Phase 117 historical-claim supersession (2026-08-02):** This archived page
+> preserves implementation history. Its historical-winner, outcome, casualty,
+> duration, calibration, plausibility, envelope, and tolerance statements are
+> not accepted historical validation. Any engine figures below are regression
+> history only, not predictive evidence or calibration authority; the typed
+> claim ledger and accepted production artifacts, if any, are authoritative.
+
+
 ## Summary
 
 Phase 51 is the third phase of Block 6. Completed naval engagement routing (DEPTH_CHARGE, ASROC, shore bombardment guard, VLS ammo tracking), naval posture system (NavalPosture enum with speed/engagement effects), DEW disable path (threshold-based destroy/disable), and mine/blockade engine wiring.

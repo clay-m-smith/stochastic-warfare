@@ -1,5 +1,13 @@
 # Phase 10: Full Campaign Validation & Backtesting
 
+> **Phase 117 historical-claim supersession (2026-08-02):** This archived page
+> preserves implementation history. Its historical-winner, outcome, casualty,
+> duration, calibration, plausibility, envelope, and tolerance statements are
+> not accepted historical validation. Any engine figures below are regression
+> history only, not predictive evidence or calibration authority; the typed
+> claim ledger and accepted production artifacts, if any, are authoritative.
+
+
 > **Phase 112 integrity note (2026-07-30):** This page preserves Phase 10's
 > historical implementation record and completion status. The bounded Golan
 > and Falklands production suites and their documented-outcome comparisons are

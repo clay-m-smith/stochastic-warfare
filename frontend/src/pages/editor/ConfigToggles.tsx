@@ -1,4 +1,5 @@
 import type { Dispatch } from 'react'
+import { configCreationLimitation } from '../../lib/editorConfigCapabilities'
 import type { EditorAction } from '../../types/editor'
 
 interface ConfigTogglesProps {
@@ -16,6 +17,12 @@ const TOGGLES = [
 ]
 
 export function ConfigToggles({ config, dispatch }: ConfigTogglesProps) {
+  const absentLimitations = TOGGLES.flatMap((toggle) => {
+    if (config[toggle.key] != null) return []
+    const limitation = configCreationLimitation(toggle.key)
+    return limitation ? [{ key: toggle.key, limitation }] : []
+  })
+
   return (
     <section>
       <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
@@ -24,13 +31,24 @@ export function ConfigToggles({ config, dispatch }: ConfigTogglesProps) {
       <div className="flex flex-wrap gap-3">
         {TOGGLES.map((t) => {
           const enabled = config[t.key] != null
+          const creationLimitation = enabled ? undefined : configCreationLimitation(t.key)
           return (
             <label key={t.key} className="flex items-center gap-2">
               <input
                 type="checkbox"
+                aria-label={t.label}
+                aria-describedby={creationLimitation ? `${t.key}-limitation` : undefined}
                 checked={enabled}
-                onChange={(e) =>
-                  dispatch({ type: 'TOGGLE_CONFIG', key: t.key, enabled: e.target.checked })
+                disabled={creationLimitation != null}
+                onChange={
+                  creationLimitation
+                    ? undefined
+                    : (e) =>
+                        dispatch({
+                          type: 'TOGGLE_CONFIG',
+                          key: t.key,
+                          enabled: e.target.checked,
+                        })
                 }
                 className="rounded border-gray-300 dark:border-gray-600"
               />
@@ -41,6 +59,15 @@ export function ConfigToggles({ config, dispatch }: ConfigTogglesProps) {
           )
         })}
       </div>
+      {absentLimitations.map(({ key, limitation }) => (
+        <p
+          key={key}
+          id={`${key}-limitation`}
+          className="mt-2 text-xs text-gray-500 dark:text-gray-400"
+        >
+          {limitation}
+        </p>
+      ))}
     </section>
   )
 }

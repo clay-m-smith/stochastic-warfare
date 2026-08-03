@@ -18,6 +18,18 @@ WW2_WEAPONS = DATA / "eras" / "ww2" / "weapons"
 WW2_AMMO = DATA / "eras" / "ww2" / "ammunition" / "small_arms"
 
 
+def _historical_validation():
+    from api.schemas import HistoricalValidationSummary
+
+    return HistoricalValidationSummary(
+        aggregate_disposition="unsupported",
+        claims=[],
+        accepted_claim_ids=[],
+        current_engine_regression_evidence=False,
+        ledger_sha256="0" * 64,
+    )
+
+
 # ---------------------------------------------------------------------------
 # ScenarioSummary schema — has_space, has_dew
 # ---------------------------------------------------------------------------
@@ -28,13 +40,21 @@ class TestScenarioSummarySchema:
 
     def test_has_space_field_exists(self):
         from api.schemas import ScenarioSummary
-        s = ScenarioSummary(name="test")
+
+        s = ScenarioSummary(
+            name="test",
+            historical_validation=_historical_validation(),
+        )
         assert hasattr(s, "has_space")
         assert s.has_space is False
 
     def test_has_dew_field_exists(self):
         from api.schemas import ScenarioSummary
-        s = ScenarioSummary(name="test")
+
+        s = ScenarioSummary(
+            name="test",
+            historical_validation=_historical_validation(),
+        )
         assert hasattr(s, "has_dew")
         assert s.has_dew is False
 
@@ -49,15 +69,25 @@ class TestExtractSummary:
 
     def test_space_config_detected(self):
         from api.routers.scenarios import _extract_summary
+
         cfg = {"name": "test", "space_config": {"enable_space": True}}
-        summary = _extract_summary("test", cfg)
+        summary = _extract_summary(
+            "test",
+            cfg,
+            _historical_validation(),
+        )
         assert summary.has_space is True
         assert summary.has_dew is False
 
     def test_dew_config_detected(self):
         from api.routers.scenarios import _extract_summary
+
         cfg = {"name": "test", "dew_config": {"enable_dew": True}}
-        summary = _extract_summary("test", cfg)
+        summary = _extract_summary(
+            "test",
+            cfg,
+            _historical_validation(),
+        )
         assert summary.has_dew is True
         assert summary.has_space is False
 
@@ -72,6 +102,7 @@ class TestEnableAllModern:
 
     def test_enable_all_modern_sets_21_flags(self):
         from stochastic_warfare.simulation.calibration import CalibrationSchema
+
         cal = CalibrationSchema(enable_all_modern=True)
         assert cal.enable_fog_of_war is True
         assert cal.enable_air_routing is True
@@ -81,12 +112,14 @@ class TestEnableAllModern:
 
     def test_enable_all_modern_false_leaves_defaults(self):
         from stochastic_warfare.simulation.calibration import CalibrationSchema
+
         cal = CalibrationSchema(enable_all_modern=False)
         assert cal.enable_fog_of_war is False
         assert cal.enable_air_routing is False
 
     def test_deferred_flags_excluded(self):
         from stochastic_warfare.simulation.calibration import CalibrationSchema
+
         cal = CalibrationSchema(enable_all_modern=True)
         # These 7 deferred flags must NOT be set by enable_all_modern
         assert cal.enable_fuel_consumption is False
@@ -205,16 +238,24 @@ class TestWW2WeaponData:
 
     def test_ammo_files_exist(self):
         expected = [
-            "792x57mm_mauser.yaml", "762x54r.yaml", "762x25mm_tokarev.yaml",
-            "stielhandgranate_charge.yaml", "rgd33_charge.yaml",
+            "792x57mm_mauser.yaml",
+            "762x54r.yaml",
+            "762x25mm_tokarev.yaml",
+            "stielhandgranate_charge.yaml",
+            "rgd33_charge.yaml",
         ]
         for f in expected:
             assert (WW2_AMMO / f).is_file(), f"Missing {f}"
 
     def test_weapons_have_required_fields(self):
         required = {"weapon_id", "display_name", "category", "compatible_ammo"}
-        for subdir in ["guns/kar98k.yaml", "guns/mosin_nagant.yaml", "guns/ppsh41.yaml",
-                       "explosives/stielhandgranate.yaml", "explosives/rgd33.yaml"]:
+        for subdir in [
+            "guns/kar98k.yaml",
+            "guns/mosin_nagant.yaml",
+            "guns/ppsh41.yaml",
+            "explosives/stielhandgranate.yaml",
+            "explosives/rgd33.yaml",
+        ]:
             path = WW2_WEAPONS / subdir
             data = yaml.safe_load(path.read_text())
             missing = required - set(data.keys())
@@ -222,8 +263,13 @@ class TestWW2WeaponData:
 
     def test_ammo_has_required_fields(self):
         required = {"ammo_id", "display_name", "ammo_type", "mass_kg"}
-        for f in ["792x57mm_mauser.yaml", "762x54r.yaml", "762x25mm_tokarev.yaml",
-                   "stielhandgranate_charge.yaml", "rgd33_charge.yaml"]:
+        for f in [
+            "792x57mm_mauser.yaml",
+            "762x54r.yaml",
+            "762x25mm_tokarev.yaml",
+            "stielhandgranate_charge.yaml",
+            "rgd33_charge.yaml",
+        ]:
             path = WW2_AMMO / f
             data = yaml.safe_load(path.read_text())
             missing = required - set(data.keys())

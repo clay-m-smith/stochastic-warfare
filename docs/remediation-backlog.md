@@ -51,7 +51,7 @@ Audit baseline: 2026-07-28 at `68acd4b`
 | REM-027 | P2 | 112 | Space ISR state | Buffered ISR checkpoint reports use generic JSON normalization rather than a typed semantic rehydration boundary | **Closed** | Yes | Yes | Yes | N/A | Yes | Yes | Yes | [Phase 112](devlog/phase-112.md#postmortem) |
 | REM-028 | P1 | 115 | Sensing/combat | Tactical movement can hold at catalog weapon range beyond usable sensing range | **Closed** | Yes | Yes | Yes | Yes | Yes | Yes | Yes | [Phase 115](devlog/phase-115.md#postmortem) |
 | REM-029 | P1 | 116 | Fog-of-war state | At the Phase 116 baseline, ordinary contacts serialized but were discarded by `FogOfWarManager.set_state()` | **Closed** | Yes | Yes | Yes | Yes | Yes | Yes | Yes | [Phase 116](devlog/phase-116.md#postmortem) |
-| REM-030 | P1 | 117 | Historical validation | At the Phase 112 baseline, catalog winner tables, legacy comparisons, and public docs claimed historical validation without a production, provenance-bearing, held-out outcome-envelope contract; fresh Debecka production exposed incompatible casualty units and a duration miss | Queued | Yes | - | - | N/A | Yes | Yes | - | Per-claim validated/regression-only/unsupported disposition plus typed held-out production-envelope artifacts |
+| REM-030 | P1 | 117 | Historical validation | At the Phase 112 baseline, catalog winner tables, legacy comparisons, and public docs claimed historical validation without a production, provenance-bearing, held-out outcome-envelope contract; fresh Debecka production exposed incompatible casualty units and a duration miss | **Closed** | Yes | Yes | Yes | N/A | Yes | Yes | Yes | [Phase 117](devlog/phase-117.md#postmortem) |
 | REM-031 | P1 | 118 | Performance semantics | At the Phase 112 baseline, Block 9 claimed five performance flags preserve scenario outcomes, but its regression executed only authored configurations, excluded the only two all-flag scenarios, and had no same-input disabled controls | Queued | Yes | Yes | Yes | - | - | - | - | Per-flag semantic classification and common-seed production off/on evidence with persisted provenance |
 | REM-032 | P1 | 119 | Guerrilla concealment | Populated-area blend probability was mapped to morale-owned `ROUTING`, while the production context exposes no matching population query or concealed-unit owner | Queued | Yes | Yes | - | - | - | - | - | Typed non-morale concealment changes targetability and persists/exposes its lifecycle |
 | REM-033 | P1 | 120 | Surrender/POW state | A public rout helper emitted `SurrenderEvent` and a synthetic POW count without changing authoritative morale/status; no production captor or prisoner lifecycle consumes it | Queued | Yes | Yes | - | N/A | - | - | - | Typed runtime surrender creates captor-owned prisoners and persists/exposes the complete lifecycle |
@@ -68,6 +68,10 @@ Audit baseline: 2026-07-28 at `68acd4b`
 | REM-044 | P1 | 131 | Detection estimation | FOW fusion uses generic isotropic range uncertainty and updates tracks without an elapsed-time predictive transaction | Queued | Yes | - | Yes | N/A | Yes | Yes | - | Sourced sensor covariance plus atomic predict/update/replacement continuation |
 | REM-045 | P1 | 132 | Scripted scenario actions | Phase 101 scripted events use an untyped parameter bag, silently consume failed/no-op actions, bypass position/casualty lifecycle owners, and do not checkpoint or expose exact-once state | Queued | Yes | Yes | Yes | N/A | - | - | - | Typed due-action owner with fail-closed effects, exact-once continuation, and public lifecycle evidence |
 | REM-046 | P1 | 133 | Deception state | Active/inactive decoys and their complete signature/degradation/ID topology are not safely checkpointed | Queued | Yes | Yes | Yes | - | Yes | Yes | - | Exact production decoy lifecycle continuation with one DETECTION RNG authority |
+| REM-047 | P1 | 134 | Historical engagement fidelity | The frozen 73 Easting production study records zero scoped Iraqi armored losses and no natural terminal in all 20 source-synchronous runs | Queued | Yes | Yes | Yes | N/A | Yes | Yes | Yes | Locate and correct the first production causal divergence without changing the frozen loss/duration envelope or tuning physical parameters to force a pass |
+| REM-048 | P1 | 135 | Packaged historical evidence | The local packaged-loader boundary and configured no-`.git` image smoke cover the current zero-accepted ledger, but hosted image evidence is pending and a future accepted artifact cannot be verified because repository acceptance requires Git while the canonical artifact is excluded from the image | Queued | Yes | Yes | Yes | N/A | - | Yes | - | Build-time repository attestation plus tamper-evident no-`.git` receipt and a real nonempty accepted-claim API smoke |
+| REM-049 | P1 | 136 | Web UI semantic integrity | Replay/export/editor/analysis surfaces retain incomplete or misleading boundaries after Phase 117 corrected status decoding, canonical scenario fields, and invalid one-click defaults | Queued | Yes | Yes | - | N/A | Yes | Yes | - | Complete export and causal replay/query projection plus explicit catalog-backed editor and analysis inputs |
+| REM-050 | P1 | 137 | Optional-suite configuration | Production discards authored escalation tuning, DEW enable-like keys are ignored while presence enables defaults, and no scenario combines a DEW config with a DEW-capable unit | Queued | - | Yes | - | - | Yes | - | - | Strict consumed Escalation/DEW configuration plus enabled/disabled production behavior and a real catalog DEW engagement |
 
 ## REM-001 - Exact checkpoint restoration
 
@@ -1348,7 +1352,7 @@ Winner-only agreement, same-data calibration, constructor or loader success,
 and `len(report) > 0` are not completion evidence. Physical weapon performance
 must not be tuned merely to force a historical pass.
 
-### Evidence-matrix rationale
+### Phase 112 baseline evidence-matrix rationale
 
 - `D` is **Yes** because typed `HistoricalMetric` and
   `HistoricalEngagement` metadata exist, although they do not yet provide the
@@ -1363,9 +1367,67 @@ must not be tuned merely to force a historical pass.
 - `P` remains unproven because no authoritative provenance-bearing verdict
   artifact is persisted or exposed.
 
-**Status:** Queued for Phase 117. Phase 112 relabeled false tests as
+**Phase 112 handoff status:** Queued for Phase 117. Phase 112 relabeled false tests as
 current-engine regression and recorded the deficit, but did not close
 REM-030.
+
+### Phase 117 implementation and closure evidence
+
+Phase 117 replaces that unowned claim surface with one strict repository
+ledger and factory-owned backtest boundary. Scanner version 2 enumerates 196
+candidate files across API Python, public and test frontend source, Python
+tests, public Markdown, scenario YAML, and repository workflow skills. The
+ledger binds 135 of those files to exact claim IDs and records 61 explicit
+reviewed nonclaims. Reviews are whole-file/digest based rather than
+occurrence-level, so semantic locators and a manual cross-document audit remain
+mandatory.
+
+The current inventory contains 243 claims: 224 unsupported, 19
+current-engine-regression-only, and zero production-validated. It covers all
+31 shipped `documented_outcomes` collections / 83 metrics, three scenario
+prose claims, 25 Python claim-test surfaces, one frontend claim-test surface,
+164 documentation claims across 67 paths, 11 frontend claim surfaces, four API
+claim surfaces, three duplicated regression tables, and the canonical
+46-scenario snapshot. Full source/data validation reports no uninventoried or
+missing collections, unreviewed candidates, stale reviews, source/rule/binding
+errors, obsolete boolean verdict APIs, or content-digest mismatch.
+
+The strict study plan declares source provenance and lineage, exact metric
+units/scopes/event boundary, arithmetic training/held-out seed intervals, a
+maximum of 1,000 production runs, and one joint acceptance policy. Execution
+uses `SimulationRuntimeFactory` preparation and one fresh production session
+per seed. Complete/`ERROR` artifacts persist raw vectors, exact production
+identities, terminal/censoring evidence, unit-level observation receipts,
+recomputed statistics/verdict, claim bindings, and a self-digest. Acceptance
+then adds clean Git ancestry, immutable predeclaration, independent evidence,
+exact metric binding, no relevant code/dependency drift, and fresh production
+identity checks. Scenario APIs and the frontend expose the resulting
+claim-level classification and remove legacy outcome metadata from the public
+config.
+
+The corrected 73 Easting study executed seeds 11700--11719 through that
+boundary. All 20 runs recorded zero of the required 28 scoped Iraqi tank
+losses, zero of the required 16 scoped Iraqi personnel-carrier losses, the
+required zero American scoped-vehicle losses, and a cutoff-censored rather
+than natural 1,380-second duration. Joint success is 0/20 and the one-sided
+lower bound is 0.0; diagnostics are 16 draws and four red wins. The retained
+artifact is therefore a completed `FAIL`, not a manufactured pass or an
+engine-wide predictive invalidation. Source reuse and the phase's one-commit
+bootstrap independently prevent promotion even under a hypothetical pass.
+
+The resulting matrix is `D=Yes, L=Yes, W=Yes, E=N/A, X=Yes, O=Yes, P=Yes`.
+Declaration is the strict ledger/plan/artifact schema; loading and wiring are
+the canonical ledger, plan, factory, runner, evaluator, and reload boundary;
+exercise/outcome evidence is the real 20-seed failed study and adversarial
+verdict controls; persistence/exposure is the durable artifact plus exact
+claim-level API/frontend result. `E` is N/A because historical conformity is
+not a simulation feature switch; explicit plan/no-plan and promotion-eligible /
+ineligible controls are the relevant negatives.
+
+**Status:** Closed in Phase 117 after accepted documentation,
+cross-document, postmortem, and final ledger/artifact gates. The retained
+production study remains a truthful `FAIL`; closure classifies the claim
+surface correctly and does not promote a scenario.
 
 ## REM-031 - Performance flags lack semantic-integrity evidence
 
@@ -2245,7 +2307,10 @@ The route does not authenticate a caller, derive a permitted side, or require
 an explicit operator privilege, however. Its omitted-query default is
 `PRIVILEGED_ENGINE`, and the current tactical map uses that default. A
 caller-supplied `scope=SIDE_FOW&side=...` is a payload choice, not an
-authorization boundary; client-side filtering is not access control.
+authorization boundary; client-side filtering is not access control. The
+current FOW toggle filters only the main enemy-marker draw loop: movement
+trails, engagement arcs, hit testing, a stale selected-unit sidebar, and its
+sensor circle can still disclose hidden activity.
 
 **Matrix:** `D=Yes, L=Yes, W=Yes, E=-, X=Yes, O=Yes, P=Yes`. These `Yes`
 entries describe the paired projection machinery only. They do not prove the
@@ -2260,6 +2325,10 @@ missing caller authorization or a safe default.
 - Make ordinary player and frontend defaults side-safe; reject unauthenticated,
   cross-side, and privilege-escalating requests without leaking target,
   attachment, or roster existence.
+- Feed the authorized side projection into every map overlay and interaction,
+  clear or rederive selected state as frames/sides change, and prove that
+  trails, arcs, hit testing, sidebars, and sensor overlays cannot cross the
+  caller's visibility boundary.
 - Prove allowed and denied production API calls, audit records, frontend use,
   legacy-data behavior, and persistence boundaries. A response filter or UI
   toggle alone is insufficient.
@@ -2494,3 +2563,242 @@ persistence/exposure remain unproven.
 
 **Status:** Queued for Phase 133 in Block 17. This follow-up was surfaced while
 Phase 116 repaired ordinary contacts and does not reopen REM-029.
+
+## REM-047 - 73 Easting misses the source-synchronous engagement signature
+
+### Phase 117 finding and nonclaim
+
+The corrected Phase 117 study observes the shipped 73 Easting scenario at the
+source's 1,380-second Eagle Troop boundary across held-out seeds 11700 through
+11719. All 20 production runs recorded zero destroyed scoped Iraqi tanks
+against the exact 28-tank range and zero destroyed scoped Iraqi personnel
+carriers against the exact 16-carrier range. All 20 retained the
+source-consistent zero destroyed American vehicles and reached the study
+cutoff without a natural terminal result. The complete joint outcome therefore
+succeeded in 0/20 runs, with an exact lower confidence bound of 0.0; the
+diagnostic terminal labels were 16 draws and four red wins.
+
+This persisted `FAIL` is valid evidence that the current authored scenario and
+production behavior do not reproduce the frozen source-scoped signature. It
+does not identify the first causal defect, prove that one subsystem is solely
+responsible, or authorize post-result changes to the study. Phase 117 closed
+REM-030 by publishing this truthful unsupported classification and retaining
+the complete failure artifact. REM-047 is a separate fidelity remediation and
+does not require Phase 117 to manufacture a passing historical claim.
+
+**Matrix:** `D=Yes, L=Yes, W=Yes, E=N/A, X=Yes, O=Yes, P=Yes`. These entries
+describe the strict study declaration, loaded production scenario, exercised
+detection-to-terminal path, observable miss, and persisted failure evidence;
+they do not assert that the missing source-synchronous fidelity is correct.
+`E` is N/A because causal integrity and fidelity are not an optional runtime
+toggle.
+
+### Required proof
+
+- Record a deterministic, source-synchronous causal trace from deployment and
+  visibility through detection, contact/fusion, targeting and fire-control,
+  movement/standoff, engagement, hit/damage, authoritative destruction, and
+  victory/termination. Identify the first unsupported or incorrect transition
+  before changing production behavior.
+- Distinguish scenario-scope or force-representation errors from detection,
+  targeting, engagement/effects, destruction-accounting, and event-boundary
+  defects. Correct only source- and model-backed causes through their
+  authoritative production owners; a proxy event, scripted casualty, or
+  validation-only override is not a repair.
+- Preserve the frozen 20-seed interval; separate exact loss gates for 28 Iraqi
+  tanks, 16 Iraqi personnel carriers, and zero American scoped vehicles; the
+  exact 1,380-second natural-duration gate; observation semantics; and the
+  joint acceptance rule. Do not recombine the Iraqi components, widen a
+  casualty or duration range, select favorable seeds, relax right-censoring,
+  change a victory threshold merely to hit 23 minutes, or tune physical weapon,
+  sensor, morale, or damage parameters to force agreement.
+- Make any natural action boundary arise from typed production objectives and
+  state transitions with authoritative logical time. An unconditional timer,
+  fabricated terminal cause, or study-cutoff relabel is not a natural result.
+- Prove realistic enabled/disabled or causal negative controls where
+  applicable, exact same-seed replay, and fresh/in-place continuation for every
+  changed state owner. Re-run affected catalog scenarios and explain every
+  semantic delta rather than treating a 73 Easting match as permission for
+  unrelated regressions.
+- Re-run the unchanged frozen study through `SimulationRuntimeFactory` and
+  retain complete receipts and a reload-validated artifact. REM-047 closes
+  only with a production-causal result satisfying the complete frozen joint
+  gate and all applicable phase reviews; if the investigation instead finds an
+  unrepresentable or differently scoped historical claim, retain or split the
+  numbered deficit rather than redefining success.
+
+**Status:** Queued for Phase 134 in Block 18. A future pass of this reused-source
+study would not by itself promote the claim to `production_validated`; Phase
+117's independence and intended-use restrictions remain in force.
+
+## REM-048 - Packaged accepted evidence lacks a no-Git attestation boundary
+
+### Phase 117 finding and current safe behavior
+
+The repository `HistoricalClaimLedgerLoader` verifies accepted evidence by
+checking Git ancestry, reading the execution ledger at the artifact's commit,
+checking code/dependency drift, reloading the committed plan, and freshly
+preparing the production scenario. The production Docker image intentionally
+contains neither `.git` nor `docs/`; accepted artifacts are currently retained
+under `docs/evidence/`. Therefore a future nonempty `accepted_evidence` entry
+cannot pass the same loader inside that image.
+
+The Phase 117 local packaged-loader control remains truthful and useful: the
+current ledger has zero `production_validated` claims, so the packaged loader
+audits every scenario claim it can publish and exposes 73 Easting as
+unsupported with current-engine regression evidence. A hosted no-`.git` image
+smoke is configured but remains pending the phase push. Neither the local
+control nor that zero-accepted smoke exercises or establishes packaged
+accepted-evidence support. Silently bypassing Git verification,
+copying an artifact without an attestation, or treating the build's source
+revision string as the entire proof would weaken the repository contract.
+
+**Matrix:** `D=Yes, L=Yes, W=Yes, E=N/A, X=-, O=Yes, P=-`. The accepted
+reference and verification schemas are declared, loaded, and reached by the
+packaged API, and the missing Git/evidence boundary fails closed observably.
+Real nonempty package execution and durable package-bound proof are absent.
+`E` is N/A because accepted evidence is a disposition, not a runtime feature
+toggle.
+
+### Required proof
+
+- At image build time, run the complete repository/Git accepted-evidence
+  verification before `.git` is discarded. Produce a strict canonical receipt
+  that binds the accepted claims to the exact source revision and source
+  manifest, execution and current ledgers, plans, artifacts, source
+  references, metric bindings, and production-input identities.
+- Package every evidence input required for independent runtime verification
+  at one canonical non-documentation boundary. Reject aliases, symlinks,
+  missing or extra files, digest drift, wrong revisions, stale receipts, and a
+  receipt copied from another image.
+- Keep repository and packaged verification semantically equivalent. A
+  no-`.git` runtime may verify the build-time receipt, but may not skip ancestry
+  or committed-content proof unless that proof is explicitly represented and
+  bound by the receipt.
+- Prove fail-closed tamper controls for the source manifest/revision, ledger and
+  claim content, plan, artifact, source bindings, receipt, and API data-root
+  identity.
+- Exercise a genuine clean, independently predeclared, source-backed
+  production `PASS` through repository acceptance, image construction, and a
+  real no-`.git` API response with the identical claim-level disposition.
+  Synthetic fixtures remain useful negative controls but cannot alone close
+  the production capability claim.
+
+**Status:** Queued for Phase 135 in Block 19. It does not reopen REM-030:
+Phase 117's catalog has no accepted claims and its packaged zero-accepted path
+fails closed correctly.
+
+## REM-049 - Web UI replay, export, editor, and analysis semantics are incomplete
+
+### Phase 117 finding and bounded corrections
+
+Phase 117's exhaustive cross-document audit found production UI behavior that
+did not match the public guide. The phase corrects the bounded data-integrity
+failures immediately: API/list/detail/editor code now uses canonical
+`school_config`, `base_elevation_m`, and `visibility_m`; both scenario badge
+surfaces retain all six typed flags; run submission reaches the returned run;
+the terrain editor offers only the five production `TerrainConfig` values;
+the map decodes the exact five `UnitStatus` integers and treats only status 2
+as destroyed; and one-click Space creation fails explicitly instead of
+inventing a semantically unrelated constellation proxy. The late closure audit
+also found that school and commander selectors wrote ignored or rejected proxy
+fields. Phase 117 makes `school_config` strict, removes the two shipped
+empty-registry proxy declarations, and disables both selectors with explicit
+unsupported guidance rather than presenting incomplete catalogs as runnable.
+
+The remaining surface is broader than the Phase 117 historical-evidence
+contract. Chart clicks write `?tick`, but the map does not consume it and tab
+changes discard it. Engagement arcs use an absolute ten-tick window and can
+appear before their event. Event CSV export reads at most the first 10,000
+events even though the server can retain 50,000. Selected-unit state is a
+stale captured object rather than a derivation from the current frame. A
+fullscreen route and keyboard shortcuts exist without the documented
+affordances. Analysis panels hard-code parts of seed, metric, alpha, or policy
+topology rather than exposing the broader controls previously described. The
+Phase 117 guide states these limits instead of calling them complete. FOW
+authorization and complete side filtering remain separately owned by REM-041.
+
+**Matrix:** `D=Yes, L=Yes, W=-, E=N/A, X=Yes, O=Yes, P=-`. Current typed API
+and UI models load and expose enough production state to reproduce the defects
+and show their visible consequences. End-to-end semantic wiring and durable
+complete export/replay evidence are not present. `E` is N/A because this is an
+integrity boundary, not an optional fidelity switch.
+
+### Required proof
+
+- Define one replay cursor contract across stored ticks, interpolated display
+  frames, URL state, charts, embedded map, and the fullscreen route. Consume
+  incoming cursor state, preserve it across tab changes, and prevent future
+  events from rendering before their logical time.
+- Export every retained event through bounded pagination/streaming with an
+  explicit schema, stable order, count receipt, and truncation failure rather
+  than silently calling a prefix complete.
+- Derive selected-unit and overlay state from the current authorized frame;
+  prove status, trails, arcs, sensor/sidebar data, and hide/show controls stay
+  semantically correct through replay and interpolation. REM-041 remains the
+  authorization owner for opposing-player views.
+- Add catalog-backed Space selection (including ownership and exact
+  constellation IDs) before re-enabling one-click creation. Reject unsupported
+  subsystem defaults rather than emitting schema-valid or invalid proxies.
+- Add a complete era-aware commander catalog and a production-owned exact-unit
+  or typed side-policy doctrine editor. Preserve all-side commander validity,
+  bind each selection to the canonical source/runtime field, and prove the
+  resulting initial and arriving assignment provenance. Do not reintroduce
+  `side_defaults`, `{side}_school`, or another proxy authority.
+- Either expose the analysis inputs the UI claims to compare or label and bind
+  every fixed seed, metric, alpha, assignment, and policy choice in requests,
+  results, and reproduction evidence.
+- Prove the real API/browser production paths with focused behavioral tests,
+  full frontend lint/typecheck/tests, and exact cross-document review.
+
+**Status:** Queued for Phase 136 in Block 19. Phase 117 fixes the bounded
+status/schema/navigation defects and public nonclaims; it does not claim this
+larger replay/export/editor/analysis capability complete.
+
+## REM-050 - Escalation and DEW scenario configuration is not behaviorally authoritative
+
+### Phase 117 finding and bounded correction
+
+The postmortem audit compared authored optional-suite data with the loaded
+runtime. `_create_escalation_engines(..., esc_cfg)` receives but never reads
+`esc_cfg`: Taiwan's authored thresholds, hysteresis `0.65`, and 14,400-second
+cooldown load as the ladder defaults, including hysteresis `0.7` and a
+3,600-second cooldown. Srebrenica's 1,800-second and Hybrid Gray Zone's
+7,200-second cooldowns likewise become 3,600 seconds. Those values are loaded
+source data, not wired behavior.
+
+DEW is presence-enabled. Taiwan was the only catalog scenario with
+`dew_config`, but its `enable_dew` key was ignored by `DEWConfig`; the non-null
+block merely constructed a default engine. No Taiwan unit carries a DEW
+weapon, while the benchmark scenario that carries a DEW-capable unit has no
+`dew_config`, so scenario presence does not prove a production DEW engagement.
+
+Phase 117 removes the editor's ignored `enable_escalation`/`enable_dew`
+markers, removes Taiwan's ignored `enable_dew` key, and documents the current
+presence/default behavior. It does not invent tuning semantics or a proxy DEW
+platform late in a historical-evidence phase.
+
+**Matrix:** `D=-, L=Yes, W=-, E=-, X=Yes, O=-, P=-`. Escalation mappings and
+DEW presence are loaded and their divergence is reproducible, but the authored
+escalation values are not a typed runtime authority and no configured catalog
+scenario proves a DEW-caused outcome. Exposure of block presence is not
+behavioral configuration evidence.
+
+### Required proof
+
+- Define strict typed source models for Escalation and DEW, reject unknown or
+  enable-like proxy fields, and state one unambiguous absent/disabled/enabled
+  contract.
+- Feed every supported escalation field into the production ladder and related
+  engines at construction; prove at least two distinct valid configurations
+  produce the declared runtime state and an observable difference.
+- Add a defensible catalog scenario or fixture with both a typed DEW config and
+  a real DEW-capable unit/loadout. Exercise a production engagement, event,
+  resource/cooldown state, and enabled/disabled control without proxy units.
+- Preserve exact configuration and live suite state across API execution,
+  provenance, checkpoint continuation, and scenario evaluation. Reject dead
+  authored fields in data validation.
+
+**Status:** Queued for Phase 137 in Block 19. REM-049 owns editor/catalog UX;
+REM-050 owns the production runtime and scenario-data authority those controls
+must eventually target.

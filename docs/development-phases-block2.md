@@ -1,5 +1,10 @@
 # Stochastic Warfare — Block 2 Development Phases (25–30)
 
+> **Phase 117 integrity correction (2026-08-02):** Suwalki's archived
+> side-school proxy assigned 0/39 units and was removed; source scenarios now
+> accept only strict exact `school_config.unit_assignments`. Optional-suite
+> presence and structural validation below are not behavioral exercise proof.
+
 ## Philosophy
 
 Block 2 turns individually excellent subsystems into a connected, data-rich whole. No new domains or architectural rewrites. Three priorities: (1) wire all existing engines into the scenario loading and tick loop pipeline, (2) fill missing cross-domain combat interaction paths, (3) populate YAML data packages to enable rich scenario authoring.

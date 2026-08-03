@@ -1,0 +1,171 @@
+schema_version: 1
+study_id: 73_easting.phase117.v1
+plan_repository_path: data/validation/historical_studies/73_easting_phase117.yaml
+claim_ids:
+  - scenario.73_easting.documented_outcomes
+scenario_path: data/scenarios/73_easting/scenario.yaml
+data_root: data
+intended_use: >-
+  Test whether the authored 73 Easting scenario repeatedly reproduces the
+  complete source-scoped Eagle Troop loss and natural-duration signature at
+  the declared observation boundary. This is an integrity backtest, not
+  predictive validation, accreditation, or operational decision support.
+limitations:
+  - One observed engagement does not define a real-world probability distribution.
+  - The validation source informed the shipped legacy outcome metadata, so the study is not independent.
+  - Vehicle counts test exact authored platform types and do not represent personnel, trucks, or the wider battle.
+sources:
+  - source_id: armor_2015_eagle_troop
+    url: https://www.benning.army.mil/armor/eARMOR/content/issues/2015/OCT_DEC/ARMOR_October-December2015Edition.pdf
+    citation: >-
+      Headquarters, Department of the Army, ARMOR, PB 17-15-4,
+      October-December 2015, page 98.
+    quality: secondary
+    locator: page 98, Eagle Troop 73 Easting account
+    accessed_on: 2026-08-02
+    supported_assertion: >-
+      Eagle Troop destroyed 28 Iraqi tanks, 16 personnel carriers, and 30
+      trucks in 23 minutes without American losses.
+    conflict_notes:
+      - >-
+        The article's nearby force-description wording is internally
+        inconsistent about the exact M1A1 troop count; this study does not use
+        that wording as a gating source range.
+lineage:
+  validation_source_relationship: reused
+  source_uses:
+    - source_id: armor_2015_eagle_troop
+      usage: scenario_metadata_authoring
+      details: >-
+        The same Eagle Troop outcome was represented in the shipped legacy
+        documented_outcomes metadata before this study was declared.
+  training_seed_intervals:
+    - first: 42
+      last: 1041
+  diagnostic_seed_intervals: []
+  notes:
+    - Historical scenario-tuning lineage is not established as complete.
+    - Held-out RNG seeds do not make the reused outcome source independent.
+held_out_seed_interval:
+  first: 11700
+  last: 11719
+observation_boundary_s: 1380.0
+maximum_ticks: 276
+analysis:
+  variant_id: historical_backtest
+  calibration_patch: {}
+acceptance_policy:
+  confidence: 0.95
+  minimum_joint_coverage: 0.80
+gating_metrics:
+  - metric_id: iraqi_tanks_destroyed
+    name: Iraqi tanks destroyed during the Eagle Troop action
+    source_ids:
+      - armor_2015_eagle_troop
+    source_range:
+      minimum: 28.0
+      maximum: 28.0
+    source_unit: vehicle_count
+    source_event_boundary: Eagle Troop action through the source's 23-minute boundary.
+    range_rationale: The source gives an exact component count of 28 Iraqi tanks.
+    extractor:
+      extractor_id: terminal_side_destroyed_count.v1
+      event_boundary: source_synchronous_cutoff
+      side: red
+      statuses:
+        - DESTROYED
+      included_unit_types:
+        - t72m
+      roster_scope: initial_only
+      runtime_unit: vehicle_count
+      conversion:
+        scale: 1.0
+        offset: 0.0
+  - metric_id: iraqi_personnel_carriers_destroyed
+    name: Iraqi personnel carriers destroyed during the Eagle Troop action
+    source_ids:
+      - armor_2015_eagle_troop
+    source_range:
+      minimum: 16.0
+      maximum: 16.0
+    source_unit: vehicle_count
+    source_event_boundary: Eagle Troop action through the source's 23-minute boundary.
+    range_rationale: The source gives an exact component count of 16 Iraqi personnel carriers.
+    extractor:
+      extractor_id: terminal_side_destroyed_count.v1
+      event_boundary: source_synchronous_cutoff
+      side: red
+      statuses:
+        - DESTROYED
+      included_unit_types:
+        - bmp1
+        - bmp2
+      roster_scope: initial_only
+      runtime_unit: vehicle_count
+      conversion:
+        scale: 1.0
+        offset: 0.0
+  - metric_id: american_vehicles_destroyed
+    name: American armored vehicles destroyed during the Eagle Troop action
+    source_ids:
+      - armor_2015_eagle_troop
+    source_range:
+      minimum: 0.0
+      maximum: 0.0
+    source_unit: vehicle_count
+    source_event_boundary: Eagle Troop action through the source's 23-minute boundary.
+    range_rationale: The account reports no American losses; this plan tests the authored vehicle scope only.
+    extractor:
+      extractor_id: terminal_side_destroyed_count.v1
+      event_boundary: source_synchronous_cutoff
+      side: blue
+      statuses:
+        - DESTROYED
+      included_unit_types:
+        - m1a1
+        - m3a2_bradley
+      roster_scope: initial_only
+      runtime_unit: vehicle_count
+      conversion:
+        scale: 1.0
+        offset: 0.0
+  - metric_id: natural_action_duration_seconds
+    name: Natural modeled Eagle Troop action duration
+    source_ids:
+      - armor_2015_eagle_troop
+    source_range:
+      minimum: 1380.0
+      maximum: 1380.0
+    source_unit: seconds
+    source_event_boundary: Eagle Troop action through the source's 23-minute boundary.
+    range_rationale: The stated 23 minutes converts exactly to 1,380 seconds.
+    extractor:
+      extractor_id: time_to_natural_terminal_seconds.v1
+      event_boundary: source_synchronous_cutoff
+      runtime_unit: seconds
+      conversion:
+        scale: 1.0
+        offset: 0.0
+diagnostic_metrics:
+  - metric_id: blue_winner
+    name: Blue public terminal winner indicator
+    source_ids:
+      - armor_2015_eagle_troop
+    source_range:
+      minimum: 1.0
+      maximum: 1.0
+    source_unit: indicator
+    source_event_boundary: Eagle Troop action through the source's 23-minute boundary.
+    range_rationale: Winner is retained only as a diagnostic and cannot affect the joint gate.
+    extractor:
+      extractor_id: terminal_winner_indicator.v1
+      event_boundary: source_synchronous_cutoff
+      side: blue
+      runtime_unit: indicator
+      conversion:
+        scale: 1.0
+        offset: 0.0
+artifact_policy:
+  clean_revision_required_for_promotion: true
+  immutable_predeclaration_required_for_promotion: true
+  predeclaration_revision: null

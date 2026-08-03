@@ -1,5 +1,10 @@
 # Stochastic Warfare — Block 3 Development Phases (31–36)
 
+> **Phase 117 editor-integrity correction (2026-08-02):** The archived School
+> creation/edit plan below had no exact production assignment boundary. Absent
+> School creation is now explicitly disabled, existing exact configuration can
+> be removed, and REM-049 / Phase 136 owns catalog-backed canonical editing.
+
 ## Philosophy
 
 Block 3 turns the headless simulation engine into an interactive product. Five priorities: (1) establish a professional public documentation site, (2) build a clean API boundary between the engine and any consumer, (3) make scenario configuration visual, (4) make results explorable, (5) make the spatial simulation visible.

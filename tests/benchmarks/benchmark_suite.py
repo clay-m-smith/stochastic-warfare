@@ -1843,6 +1843,8 @@ def _resolved_data_sources(
         relative_parts = path.relative_to(data_root).parts
         if relative_parts[0] == "scenarios":
             continue
+        if relative_parts[0] == "validation":
+            continue
         if len(relative_parts) >= 3 and relative_parts[0] == "eras" and relative_parts[2] == "scenarios":
             continue
         try:

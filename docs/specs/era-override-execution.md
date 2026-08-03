@@ -330,7 +330,9 @@ performance capability.
   registration, repair logistics, communications equipment assignment, and
   scheduled CBRN employment are not claimed by REM-018.
 - REM-020 and REM-021 retain their existing logistics authority scope.
-- Historical scenario validation remains REM-030.
+- Completed Phase 117 classifies zero historical claims as
+  production-validated and closed REM-030 with a truthful failed study; this
+  era-override contract does not change any claim disposition.
 - The validation-only campaign-data factory's era loss was recorded as
   REM-040/Phase 127 before Phase 114 closed; it was not silently absorbed into
   this contract.

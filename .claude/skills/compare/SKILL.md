@@ -1,59 +1,77 @@
-# A/B Configuration Comparison
+---
+name: compare
+description: "Compare two Stochastic Warfare scenario configurations with reproducible production runs and statistically appropriate effect analysis. Use for same-revision A/B override comparisons or parameter impact checks; require stored baseline artifacts before claiming a before/after code-revision comparison."
+---
 
-Run two scenario configurations and statistically compare their outcomes.
+# Configuration Comparison
 
-## Trigger
-Use when the user wants to:
-- Compare two different configurations of the same scenario
-- Determine if a parameter change has a statistically significant effect
-- Evaluate the impact of calibration overrides
+Read `CODEX.md`, the relevant scenario contract, phase material, and remediation
+backlog.
 
-## Process
+## Hard Preflight — REM-017
 
-### 1. Identify Configurations
-Determine what the user wants to compare:
-- **Same scenario, different overrides**: e.g., hit_probability_modifier=0.8 vs 1.2
-- **Different scenarios**: two scenario YAML files
-- **Before/after a code change**: run same config, compare results
+Before executing a comparison, read REM-017 in
+`docs/remediation-backlog.md`.
 
-Ask for:
-- Scenario path
-- Override dict for config A
-- Override dict for config B
-- Labels for A and B
-- Number of iterations (recommend 20+ for statistical significance)
-- Metrics to compare
+If REM-017 is not closed with behavioral evidence that the shared batch helper:
 
-### 2. Run Comparison
-Use `stochastic_warfare.tools.comparison`:
-```python
-from stochastic_warfare.tools.comparison import ComparisonConfig, run_comparison, format_comparison
+- loads the exact expected force roster and loadouts through `ScenarioLoader`;
+- applies both configurations to runtime state;
+- detects a controlled outcome difference;
+- rejects unknown metrics and invalid or empty scenario loads;
 
-config = ComparisonConfig(
-    scenario_path="data/scenarios/test_campaign/scenario.yaml",
-    overrides_a={"hit_probability_modifier": 0.8},
-    overrides_b={"hit_probability_modifier": 1.2},
-    label_a="Low Hit Prob",
-    label_b="High Hit Prob",
-    num_iterations=20,
-    metric_names=["blue_destroyed", "red_destroyed", "exchange_ratio"],
-)
-result = run_comparison(config)
-print(format_comparison(result))
-```
+stop. Do not run or interpret the comparison. Report that comparison is blocked
+by REM-017 and identify the missing evidence. Do not accept skipped-unit
+warnings, all-zero metrics, structural tests, the simplified scenario runner, or
+an ad hoc unverified harness as a workaround.
 
-### 3. Interpret Results
-For each metric, explain:
-- **p-value < 0.05**: Statistically significant difference. The parameter change has a measurable effect.
-- **p-value > 0.05**: No significant difference detected. Either the effect is too small or more iterations are needed.
-- **Effect size**: How large the practical difference is (|r| > 0.5 = large, > 0.3 = medium, > 0.1 = small)
+Resume only after the remediation is closed and reverified.
 
-### 4. Military Context
-Relate findings back to military concepts:
-- Hit probability changes → lethality of weapons systems
-- Force ratio changes → Lanchester attrition dynamics
-- Morale effects → Clausewitzian friction
+## Define the Comparison
 
-## Reference
-- Module: `stochastic_warfare/tools/comparison.py`
-- Available metrics: `blue_destroyed`, `red_destroyed`, `blue_active`, `red_active`, `exchange_ratio`, `ticks_executed`
+1. Identify the scenario, code and data revision, configuration A,
+   configuration B, labels, metrics, horizon, and decision the comparison must
+   inform.
+2. Scope the standard workflow to two configurations on the same code revision.
+   For code-version comparison, require reproducible stored baseline results or
+   an explicitly authorized isolated baseline environment; two override
+   dictionaries do not compare code revisions.
+3. Validate both configurations against current typed schemas.
+4. Validate every metric against a supported extractor and fail on unknown
+   names.
+5. Predeclare run count, seeds, practical effect threshold, alpha where used,
+   and treatment of multiple metrics.
+
+## Verify the Production Inputs
+
+Before interpreting results:
+
+- assert the expected units, subclasses, weapons, sensors, and side counts
+  loaded;
+- prove the differing values reached runtime state;
+- prove the simulation reached the behavior of interest;
+- retain an exact input and seed record.
+
+## Choose Statistics Consistently
+
+- When A and B use the same seed for each pair, analyze per-seed paired
+  differences with an appropriate paired method.
+- When samples are independent, use independent-sample methods such as
+  Mann-Whitney only when their assumptions fit.
+- Report means or medians, dispersion, effect size, confidence interval, and raw
+  seed-level direction.
+- Do not call `p > alpha` equivalence or absence of effect. Use a predeclared
+  equivalence margin and an appropriate equivalence method when equivalence is
+  the question.
+- Distinguish statistical significance from military or practical importance.
+
+## Report
+
+Report exact revisions, scenario, configurations, metrics, horizon, seeds,
+commands, load preflight, summary statistics, effect sizes, uncertainty,
+significance or equivalence interpretation, production-path evidence, and
+limitations.
+
+Do not mutate scenario data during a read-only comparison. If comparison
+surfaces a defect, reproduce it behaviorally and route it through the phase and
+remediation workflow in `CODEX.md`.

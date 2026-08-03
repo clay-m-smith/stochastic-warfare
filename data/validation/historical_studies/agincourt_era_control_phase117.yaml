@@ -1,0 +1,79 @@
+schema_version: 1
+study_id: agincourt.phase117.era-control.v1
+plan_repository_path: data/validation/historical_studies/agincourt_era_control_phase117.yaml
+claim_ids:
+  - scenario.agincourt.documented_outcomes
+scenario_path: data/eras/ancient_medieval/scenarios/agincourt/scenario.yaml
+data_root: data
+intended_use: >-
+  Exercise the production historical-study boundary for one exact
+  ancient_medieval tactical tick and prove effective-era evidence propagation.
+  This is an implementation control, not historical outcome validation.
+limitations:
+  - The active-roster envelope is authored catalog structure, not a historical observation.
+  - One tactical tick supplies no battle-fidelity or predictive evidence.
+sources:
+  - source_id: repository_agincourt_roster
+    url: https://github.com/clay-m-smith/stochastic-warfare/blob/main/data/eras/ancient_medieval/scenarios/agincourt/scenario.yaml
+    citation: Stochastic Warfare authored Agincourt scenario, English initial roster.
+    quality: tertiary
+    locator: sides[english].units in the checked-in scenario source
+    accessed_on: 2026-08-02
+    supported_assertion: >-
+      The authored scenario contains four English longbowman records and one
+      English men-at-arms record for five initial English entities.
+    conflict_notes:
+      - This repository source supports only the implementation-control roster, not a historical claim.
+lineage:
+  validation_source_relationship: unknown
+  source_uses:
+    - source_id: repository_agincourt_roster
+      usage: unknown
+      details: >-
+        Used to bind the authored production roster for an era-propagation
+        control; its relationship to historical scenario authoring is unknown.
+  training_seed_intervals: []
+  diagnostic_seed_intervals: []
+  notes:
+    - No historical-outcome inference or promotion is permitted from this control.
+held_out_seed_interval:
+  first: 21700
+  last: 21700
+observation_boundary_s: 5.0
+maximum_ticks: 1
+analysis:
+  variant_id: phase117_ancient_era_control
+  calibration_patch: {}
+acceptance_policy:
+  confidence: 0.95
+  minimum_joint_coverage: 0.01
+gating_metrics:
+  - metric_id: english_initial_entities_active
+    name: Authored English entities active after one tactical tick
+    source_ids:
+      - repository_agincourt_roster
+    source_range:
+      minimum: 0.0
+      maximum: 5.0
+    source_unit: entity_count
+    source_event_boundary: One exact production tactical tick from scenario start.
+    range_rationale: The control range is bounded by the exact five-entity authored English roster.
+    extractor:
+      extractor_id: terminal_side_active_count.v1
+      event_boundary: source_synchronous_cutoff
+      side: english
+      statuses:
+        - ACTIVE
+      included_unit_types:
+        - english_longbowman
+        - viking_huscarl
+      roster_scope: initial_only
+      runtime_unit: entity_count
+      conversion:
+        scale: 1.0
+        offset: 0.0
+diagnostic_metrics: []
+artifact_policy:
+  clean_revision_required_for_promotion: true
+  immutable_predeclaration_required_for_promotion: true
+  predeclaration_revision: null

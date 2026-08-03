@@ -1,5 +1,18 @@
 # Block 10: UI Depth & Engine Exposure
 
+> **Phase 117 historical-claim supersession (2026-08-02):** This archived page
+> preserves implementation history. Its historical-winner, outcome, casualty,
+> duration, calibration, plausibility, envelope, and tolerance statements are
+> not accepted historical validation. Any engine figures below are regression
+> history only, not predictive evidence or calibration authority; the typed
+> claim ledger and accepted production artifacts, if any, are authoritative.
+
+> **Phase 117 editor-integrity correction (2026-08-02):** The proposed school
+> and commander fields below were not production authorities. Both editor
+> selectors are explicitly unavailable pending catalog-complete canonical
+> support in REM-049 / Phase 136; Phase 112 owns typed doctrine comparison.
+
+
 > **Phase 112 integrity supersession (2026-07-30):** This brainstorming page
 > preserves Block 10's contemporaneous design inventory, counts, and scenario
 > claims. They are development history, not current historical-validation

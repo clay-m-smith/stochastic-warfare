@@ -3,6 +3,32 @@ import type { AnalysisBatchProvenance } from './analysis'
 
 // --- Scenarios ---
 
+export type HistoricalClaimDisposition =
+  | 'production_validated'
+  | 'current_engine_regression_only'
+  | 'unsupported'
+
+export interface HistoricalValidationClaim {
+  claim_id: string
+  disposition: HistoricalClaimDisposition
+  reason_codes: string[]
+  limitation: string
+  intended_use: string
+  metric_scope: string[]
+  event_scope: string
+  current_engine_regression_evidence: boolean
+  accepted_study_id: string | null
+  accepted_artifact_path: string | null
+}
+
+export interface HistoricalValidationSummary {
+  aggregate_disposition: HistoricalClaimDisposition
+  claims: HistoricalValidationClaim[]
+  accepted_claim_ids: string[]
+  current_engine_regression_evidence: boolean
+  ledger_sha256: string
+}
+
 export interface ScenarioSummary {
   name: string
   display_name: string
@@ -16,6 +42,7 @@ export interface ScenarioSummary {
   has_schools: boolean
   has_space: boolean
   has_dew: boolean
+  historical_validation: HistoricalValidationSummary
 }
 
 export interface ForceSummaryEntry {
@@ -27,6 +54,7 @@ export interface ScenarioDetail {
   name: string
   config: Record<string, unknown>
   force_summary: Record<string, ForceSummaryEntry>
+  historical_validation: HistoricalValidationSummary
 }
 
 // --- Units ---

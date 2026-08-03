@@ -3,11 +3,16 @@ import { screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { renderWithProviders } from '../helpers'
 import { RunConfigPage } from '../../pages/runs/RunConfigPage'
+import { useLocation } from 'react-router-dom'
 
 const MOCK_DETAIL = {
   name: '73_easting',
   config: { name: '73 Easting', era: 'modern' },
   force_summary: {},
+}
+
+function LocationProbe() {
+  return <output aria-label="Current location">{useLocation().pathname}</output>
 }
 
 beforeEach(() => {
@@ -51,13 +56,22 @@ describe('RunConfigPage', () => {
       .mockResolvedValueOnce(
         new Response(JSON.stringify({ run_id: 'run-123', status: 'pending' }), { status: 202 }),
       )
-    renderWithProviders(<RunConfigPage />, { route: '/runs/new?scenario=73_easting' })
+    renderWithProviders(
+      <>
+        <RunConfigPage />
+        <LocationProbe />
+      </>,
+      { route: '/runs/new?scenario=73_easting' },
+    )
     await waitFor(() => {
       expect(screen.getByText('Start Run')).toBeInTheDocument()
     })
     await user.click(screen.getByText('Start Run'))
     await waitFor(() => {
       expect(fetch).toHaveBeenCalledTimes(2)
+    })
+    await waitFor(() => {
+      expect(screen.getByLabelText('Current location')).toHaveTextContent('/runs/run-123')
     })
   })
 

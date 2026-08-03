@@ -4,6 +4,14 @@
 
 Final phase of Block 4 and the entire project roadmap. Closed test coverage gaps from Phases 34-36, virtualized event lists for large runs, typed analysis responses, and packaged the application for single-command startup via `uv run python -m api` and Docker.
 
+> **Phase 117 supersession:** This historical scoped verdict does not prove a
+> complete event-export or current Web UI semantic contract. The Events tab is
+> paginated and virtualized, but the export path independently fetches at most
+> the first 10,000 events while the server can retain 50,000. Phase 117 states
+> that prefix explicitly, corrects bounded canonical-field/status/terrain/
+> navigation/default defects, and assigns complete ordered export plus replay,
+> editor, and analysis integrity to REM-049 / Phase 136.
+
 **Tests**: 22 new (6 Python + 16 vitest), ~7,833 total (~7,561 Python + 272 vitest)
 
 ## What Was Built

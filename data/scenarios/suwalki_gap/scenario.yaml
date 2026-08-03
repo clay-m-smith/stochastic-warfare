@@ -172,10 +172,6 @@ ew_config:
       hop_rate_hz: 200.0
       sidelobe_ratio_db: 25.0
 
-school_config:
-  blue_school: maneuverist
-  red_school: deep_battle
-
 # Phase 54e: commander personalities for doctrinal AI
 commander_config:
   ooda_speed_base_mult: 1.0

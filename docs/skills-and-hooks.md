@@ -1,16 +1,16 @@
 # Stochastic Warfare — Repository Skills & Hooks
 
-The phase workflows are available on both supported agent surfaces:
+The phase workflows are maintained on both supported agent surfaces:
 
 - Codex discovers the maintained repository routes in `.agents/skills/`;
   invoke them as `$skill-name`.
-- Claude Code retains the legacy routes in `.claude/skills/`; invoke them as
-  `/skill-name`.
+- Claude Code discovers exact maintained mirrors in `.claude/skills/`; invoke
+  them as `/skill-name`.
 
 `CODEX.md` defines where each Codex skill belongs in the phase workflow. The
-Codex ports preserve the useful domain procedures while replacing
-Claude-specific tool metadata, `$ARGUMENTS` placeholders, and stale completion
-rules with the current production-path evidence contract.
+canonical route bodies live in `.agents/skills/`; every `.claude` `SKILL.md`
+must remain byte-identical so neither provider can retain stale completion or
+production-path rules.
 
 ## Codex Phase Routing
 
@@ -25,9 +25,9 @@ rules with the current production-path evidence contract.
 
 The route details and applicability rules in `CODEX.md` are authoritative.
 Skills augment that contract; they do not replace production-path behavioral
-evidence. `tests/unit/test_repository_skills.py` verifies that every legacy
-Claude route has a discoverable Codex port with portable frontmatter and
-matching UI metadata.
+evidence. `tests/unit/test_repository_skills.py` verifies the exact route set,
+portable canonical frontmatter, Codex UI metadata, absence of obsolete prompt
+aliases, and byte-identical Claude mirrors.
 
 ## Custom Skills
 
@@ -81,9 +81,27 @@ matching UI metadata.
 - Becomes the contract that implementation must satisfy
 
 ### /backtest
-- Structures a comparison between simulation output and historical engagement data
-- Defines: metrics to compare, acceptable tolerances, data sources, divergence analysis
-- Example: simulate a scenario modeled on 73 Easting, compare attrition curves, engagement timelines, and movement rates against historical record
+- Defines or executes a strict, source-backed historical study through
+  `HistoricalClaimLedgerLoader -> HistoricalStudyLoader ->
+  SimulationRuntimeFactory.prepare -> HistoricalBacktestRunner`, followed by
+  atomic persistence and `load_historical_artifact` reload validation
+- Predeclares exact source assertions, units, populations, closed production
+  extractors, source-synchronous event boundaries/censoring, ordered held-out
+  seeds, joint acceptance policy, intended use, and source/training lineage
+- Treats a completed `PASS`, completed `FAIL`, and execution/evidence `ERROR`
+  distinctly: `ERROR` has no historical verdict, and `PASS` alone does not make
+  a repository claim `production_validated`
+- Never widens an envelope, lowers a threshold, changes seeds or metrics, or
+  redefines the event/population after observing a miss; preserves the `FAIL`
+  and records the specific remediation instead
+- Promotes a claim only through an explicit ledger transition backed by a
+  reload-valid eligible `PASS`, clean execution revision, immutable committed
+  predeclaration, exact plan/artifact/ledger/claim identities, and one-to-one
+  accepted-claim bindings with identical source, unit, extractor, intended-use,
+  and event scope
+- Rejects simplified/legacy runners, direct context construction, legacy
+  `documented_outcomes`, Block 11 envelope helpers, and no-crash output as
+  historical-validation evidence
 
 ### /audit-determinism
 - Deep verification of PRNG discipline in a module
@@ -118,7 +136,8 @@ matching UI metadata.
 - Identifies performance hotspots via cProfile analysis
 - Classifies hotspots: algorithmic, Python overhead, allocation, redundant computation, I/O
 - Estimates impact and implementation effort for each optimization
-- Provides benchmark script template for standardized measurement
+- Uses an existing production scenario, benchmark, or test and keeps any
+  temporary harness and profile output outside the repository
 - Run when scenarios are slow or before/after optimization work
 
 ### /scenario (Phase 14, updated)
@@ -157,6 +176,9 @@ matching UI metadata.
 
 ### /timeline (Phase 14)
 - Runs a scenario and generates human-readable battle narrative
+- Executes through `SimulationRuntimeFactory -> PreparedScenario ->
+  RuntimeSession` with a recorder factory; direct loader/engine construction is
+  diagnostic only
 - Uses `tools/narrative.py` with full/summary/timeline styles
 - Structures output as Opening/Main Battle/Conclusion phases
 
@@ -165,37 +187,42 @@ matching UI metadata.
 - Lists available unit types, guides through echelon hierarchy
 - Generates `sides` section of scenario YAML
 - Validates unit types, commander profiles, and doctrine templates
+- Proves comparable roster/loadout behavior through the production
+  factory/session boundary
 
 ### /calibrate (Phase 14)
-- Auto-tunes calibration overrides to match historical metrics
-- Sweeps wired influential parameters through the production analysis boundary
-- Uses binary search refinement to narrow to target value
-- Requires a frozen source-backed backtest envelope, predeclared tolerances,
-  held-out validation seeds, and exact production provenance
-- Phase 112 implements REM-017's shared analysis boundary; the remediation
-  status changes only after the final phase gate. That boundary does not itself
-  validate history. Catalog-wide historical-envelope evidence remains queued
-  under REM-030
+- Runs guarded sensitivity/calibration only when the user explicitly requests
+  it and the parameter is schema-valid, wired, and outcome-affecting
+- Requires a frozen source-backed target, predeclared tolerances, independent
+  held-out validation, and exact production provenance
+- Never widens a target, tunes physical performance after a miss, or conceals
+  an engine gap; same-data fit is calibration evidence, not validation
+- Phase 117 completed the repository historical-claim inventory and REM-030
+  is closed with zero claims production-validated; calibration cannot change
+  a claim disposition without a separate eligible backtest and explicit
+  ledger transition
 
 ### /validate-data
 - Validates unit YAML and scenario YAML data integrity
-- Catches equipment name → weapon/sensor ID mapping drift, missing sensor entries, invalid unit type references, broken ScenarioLoader loads
+- Catches duplicate, semantically incompatible, unmapped, or stale
+  `EQUIPMENT_MAPPING_REGISTRY` records; typed sensor-policy violations; invalid
+  unit references; and broken production catalog/loadout/scenario construction
 - Runs `scripts/validate_scenario_data.py` (standalone validation script)
 - Diagnoses mapping, schema, loader, and runtime attachment defects without
   guessing substitutions or generic defaults
 - **Run after**: adding new units, weapons, scenarios, or modifying equipment entries
-- The simplified-runner maps are static diagnostics; production evidence comes
-  from `SimulationRuntimeFactory -> PreparedScenario -> RuntimeSession`, exact
-  affected loadouts, and behavioral execution
+- Static registry and `RuntimeLoadoutBuilder` checks prove exact construction;
+  outcome evidence comes from `SimulationRuntimeFactory -> PreparedScenario ->
+  RuntimeSession`, exact affected loadouts, and behavioral execution
 
 ### /evaluate-scenarios (Phase 42)
-- Runs all scenarios through simulation engine and compares against previous baseline
+- Runs selected or catalog scenarios through the production factory/session
+  evaluator and compares against an explicit provenance-recorded baseline
 - Reports winner changes, casualty deltas, condition changes, new/resolved issues
 - Classifies changes as improvements, regressions, stalls, or neutral
-- Saves new baseline for future comparisons
 - Records explicit seed/revision/catalog provenance and requires investigation
-  before promoting a baseline
-- Uses a real engine path but does not by itself prove API wiring,
+  and review before any new local baseline is retained
+- Uses the production runtime path but does not by itself prove API wiring,
   reinforcement registration, deterministic replay, or stochastic fidelity
 - **Run after**: completing any phase that modifies battle loop, engagement resolution, or victory evaluation
 - Key files: `scripts/evaluate_scenarios.py`, `scripts/evaluation_results_v*.json`
@@ -213,34 +240,45 @@ matching UI metadata.
 
 ## Hooks
 
-### Pre-Edit Python Hook (sim core)
-- **Trigger**: before any `.py` file in the simulation core is modified
+### Pre-Edit/Write Python Hook (sim core)
+- **Trigger**: before any `.py` file in the simulation core is edited or written
 - **Checks**:
-  - No bare `import random` or `random.random()` / `random.choice()` etc.
+  - No bare Python `random`, legacy global `numpy.random`, or direct
+    `default_rng()` construction outside the central RNG owner; production
+    draws use injected `RNGManager.get_stream(ModuleId.<SUBSYSTEM>)` generators
   - No `set()` iteration or unordered dict iteration driving simulation logic
   - No bare `print()` (use logging framework)
+  - No wall-clock time in simulation logic
   - Type hints present on public API functions
-- **Action**: warn and flag violations before edit is accepted
+- **Action**: block the edit/write and list each violation
 
 ### YAML Validation Hook
-- **Trigger**: when a unit definition or scenario YAML is created or modified
+- **Trigger**: before a unit/config/scenario/data YAML is edited or written
 - **Checks**:
   - Validates against the pydantic schema for that unit class (id field, numeric types, probability ranges)
   - **Equipment category validation**: all `category` values must be valid `EquipmentCategory` enum values (WEAPON, SENSOR, PROPULSION, PROTECTION, COMMUNICATION, NAVIGATION, UTILITY, POWER — NOT "TOOL")
-  - **Sensor presence check**: warns if unit YAML has no `category: SENSOR` equipment entry
-  - **Equipment name sanity**: flags obviously malformed weapon equipment names
-  - **Scenario unit_type validation**: flags `unit_type` values that look like display names instead of valid IDs
-- **Action**: block write if structural issues found; warn on missing sensors
+  - **Sensor policy**: `required` needs a real SENSOR entry;
+    `intentionally_none` needs a substantive reason and forbids SENSOR entries
+  - **Equipment identity**: weapon/sensor names must resolve through the typed
+    production registry without guessed proxies or invented defaults
+  - **Scenario unit type**: values must be exact stable catalog IDs, not display
+    names
+- **Action**: block the edit/write and describe any issue
 
-### Spec-Before-Code Hook
-- **Trigger**: when creating a new module/package directory under the sim core
-- **Checks**: corresponding spec document exists in `docs/specs/`
-- **Action**: warn if no spec exists — enforces specify-before-implement discipline
+### Long-Command Background Hook
+- **Trigger**: before a Bash command
+- **Checks**: recognizes broad pytest commands and catalog-wide
+  `evaluate_scenarios.py` runs; an explicit `--scenario` evaluator remains a
+  foreground focused command
+- **Action**: preserves the command/timeout/description and sets
+  `run_in_background=true` only for recognized long runs
 
-### Research Source Hook
-- **Trigger**: applied within /research-military and /research-models skills
-- **Checks**: all cited sources classified by tier; any source outside approved tiers is flagged
-- **Action**: flag unapproved sources with warning; never present unverified sources without explicit disclaimer
+## Skill-Enforced Gates (Not Provider Hooks)
+
+- `$spec` plus the phase workflow enforce specification before implementation;
+  no installed provider hook scans new module paths for a spec.
+- `$research-military` and `$research-models` enforce the source tiers below;
+  no installed provider hook independently validates citations.
 
 ---
 

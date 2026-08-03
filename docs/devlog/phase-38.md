@@ -4,6 +4,17 @@
 
 Frontend-focused polish phase bringing the tactical map and charts up to the quality level designed in the Block 3 brainstorm. Four sub-phases: FOW toggle (38a), map visual enhancements (38b), cross-chart tick sync (38c), and dark mode (38d). Two small backend extensions for FOW detection data and elevation/sensor-range capture. No engine changes.
 
+> **Phase 117 supersession:** This file records Phase 38's scoped verdict at
+> the time; its end-to-end FOW and bidirectional-sync claims are not current
+> capability evidence. The live FOW toggle filters the main enemy-marker loop
+> but not trails, arcs, hit testing, stale selection/sidebar state, or sensor
+> overlays, and the API defaults to privileged frames without caller
+> authorization. Chart clicks write a tick query, but the Map tab does not
+> consume it and tab changes discard it. Phase 117 corrected exact
+> `UnitStatus` rendering and rewrote the public guide; REM-041 / Phase 128 owns
+> authorized complete side-safe exposure and REM-049 / Phase 136 owns replay,
+> query, export, editor, and analysis semantic integrity.
+
 **Tests**: 35 new (13 Python + 22 frontend vitest). Total: ~7,811 (7,289 Python passing + 23 skipped + 241 deselected slow + 258 frontend vitest).
 
 **Files**: 6 new + 57 modified = 63 total files changed.

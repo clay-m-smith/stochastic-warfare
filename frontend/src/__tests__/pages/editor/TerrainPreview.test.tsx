@@ -26,7 +26,7 @@ beforeEach(() => {
 
 describe('TerrainPreview', () => {
   it('renders canvas and label', () => {
-    render(<TerrainPreview config={{ terrain: { width_m: 5000, height_m: 5000, terrain_type: 'desert' } }} />)
+    render(<TerrainPreview config={{ terrain: { width_m: 5000, height_m: 5000, terrain_type: 'flat_desert' } }} />)
     expect(screen.getByText('Terrain Preview')).toBeInTheDocument()
     expect(document.querySelector('canvas')).toBeInTheDocument()
   })

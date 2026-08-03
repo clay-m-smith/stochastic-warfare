@@ -2,7 +2,12 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { MapUnitFrame, MapReplayFrame, TerrainData, EngagementArc } from '../../types/map'
 import { useViewportControls } from './useViewportControls'
 import { LAND_COVER_COLORS, worldToScreen, screenToWorld, getVisibleCellRange, applyElevationShading } from '../../lib/terrain'
-import { drawUnit, hitTestUnit, type OverlayOptions } from '../../lib/unitRendering'
+import {
+  drawUnit,
+  hitTestUnit,
+  isDestroyedStatus,
+  type OverlayOptions,
+} from '../../lib/unitRendering'
 import { getSideColor, initSidesForScenario } from '../../lib/sideColors'
 import { MapControls } from './MapControls'
 import { MapLegend } from './MapLegend'
@@ -46,7 +51,6 @@ export function TacticalMap({ terrain, frames, engagementArcs = [], onTickChange
   const [showPosture, setShowPosture] = useState(false)
   const [showSuppression, setShowSuppression] = useState(true)
   const [showLogistics, setShowLogistics] = useState(false)
-  const terrainVersionRef = useRef(0)
   const lastTerrainDrawRef = useRef<string>('')
 
   const {
@@ -227,8 +231,6 @@ export function TacticalMap({ terrain, frames, engagementArcs = [], onTickChange
       tctx.fillStyle = '#E8E0D0'
       tctx.fillRect(0, 0, tc.width, tc.height)
     }
-
-    terrainVersionRef.current++
   }, [transform, canvasSize, terrain, elevRange])
 
   // Main render loop
@@ -268,7 +270,7 @@ export function TacticalMap({ terrain, frames, engagementArcs = [], onTickChange
         const frame = frames[i]
         if (!frame) continue
         for (const u of frame.units) {
-          if (!showDestroyed && u.status >= 3) continue
+          if (!showDestroyed && isDestroyedStatus(u.status)) continue
           const trail = unitTrails.get(u.id) ?? []
           trail.push({ x: u.x, y: u.y })
           unitTrails.set(u.id, trail)
@@ -326,7 +328,7 @@ export function TacticalMap({ terrain, frames, engagementArcs = [], onTickChange
     // Draw units
     if (currentFrameData) {
       for (const unit of currentFrameData.units) {
-        if (!showDestroyed && unit.status >= 2) continue
+        if (!showDestroyed && isDestroyedStatus(unit.status)) continue
         if (detectedSet && unit.side !== fowSide && !detectedSet.has(unit.id)) continue
         const isSelected = selectedUnit?.id === unit.id
         drawUnit(ctx2d, unit, transform, canvasSize.height, isSelected, showLabels, overlays)
@@ -352,8 +354,6 @@ export function TacticalMap({ terrain, frames, engagementArcs = [], onTickChange
     showLabels, showDestroyed, showEngagements, showTrails,
     showSensors, showFow, fowSide, selectedUnit, overlays,
     terrain.objectives, frames, engagementArcs,
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    terrainVersionRef.current,
   ])
 
   // Click handler for unit selection
@@ -365,7 +365,7 @@ export function TacticalMap({ terrain, frames, engagementArcs = [], onTickChange
       const sy = e.clientY - rect.top
 
       for (const unit of currentFrameData.units) {
-        if (!showDestroyed && unit.status >= 2) continue
+        if (!showDestroyed && isDestroyedStatus(unit.status)) continue
         if (hitTestUnit(sx, sy, unit, transform, canvasSize.height)) {
           setSelectedUnit(unit)
           return

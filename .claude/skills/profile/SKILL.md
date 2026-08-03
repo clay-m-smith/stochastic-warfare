@@ -1,130 +1,105 @@
-# Performance Profiling
+---
+name: profile
+description: Measure and explain performance in the production simulation path with reproducible before-and-after evidence. Use when a scenario or test is slow, a performance regression is suspected, an optimization is planned, or a phase changes performance-sensitive loops, allocation, spatial queries, or parallel execution.
+---
 
-Identify and analyze performance hotspots in the simulation. Produces actionable optimization recommendations with before/after measurement.
+# Profile Performance
 
-## Trigger
-Run this analysis:
-- When a scenario runs slower than expected
-- Before and after performance optimization work
-- At the start of integration-heavy phases (Phase 9, 10)
-- When the user reports slow tests or scenario execution
+Profile the requested production target and provide measured recommendations.
+Treat profiling as read-only diagnostics unless the user has also authorized an
+optimization. Do not create a new benchmark script or add instrumentation to
+production code merely because no convenient benchmark exists.
 
-## How to Profile
+## Define a Reproducible Baseline
 
-### Quick Profile (default)
-Run the target scenario or test with cProfile and summarize the top 20 hotspots:
+Record:
 
-```bash
-uv run python -m cProfile -s cumulative -m pytest tests/validation/test_golan_heights.py::TestGolanHeightsScenario::test_single_run -q 2>&1 | head -40
+- production scenario, test, or entry point;
+- phase-start revision and working tree state;
+- Python and dependency environment;
+- operating system and relevant hardware;
+- seed, scenario data revision, engine configuration, and enabled features;
+- warm-up policy, repetitions, and summary statistic.
+
+Use the same environment, seed set, configuration, and workload before and
+after a change. A single wall-clock observation is not a reliable regression
+measurement.
+
+## Choose a Production Target
+
+Prefer the narrowest existing benchmark that exercises the affected production
+path:
+
+- `scripts/evaluate_scenarios.py --scenario <scenario-id>`;
+- `tests/benchmarks/benchmark_suite.py`;
+- `tests/benchmarks/test_benchmarks.py`;
+- `tests/performance/test_battle_perf.py`;
+- `tests/validation/test_campaign_performance.py`.
+
+Check markers and run excluded `slow` or `benchmark` tests explicitly as
+documented in `CODEX.md`.
+
+Do not use the archived `scripts/archive/smoke_all.py`. Do not substitute the
+simplified `ScenarioRunner` when the performance claim concerns
+`SimulationEngine`, API execution, or another production path.
+
+## Capture a Call Profile
+
+Write profiling output to an OS-native temporary directory outside the
+repository. Replace `<temporary-directory>` below with that resolved path:
+
+```text
+uv run python -m cProfile -o <temporary-directory>/stochastic-warfare-profile.prof scripts/evaluate_scenarios.py --scenario <scenario-id> --no-details --seed <seed>
+uv run python -c "import pstats; pstats.Stats(r'<temporary-directory>/stochastic-warfare-profile.prof').strip_dirs().sort_stats('cumulative').print_stats(20)"
 ```
 
-Or for a specific script:
-```bash
-uv run python -m cProfile -s cumulative scripts/smoke_all.py 2>&1 | head -40
-```
+For tests, select an existing valid node and profile it without truncating or
+hiding command failures. Confirm the node exists before running it.
 
-### Targeted Profile
-For a specific function or module, use line_profiler-style timing via manual instrumentation:
+Keep any manual timing harness in a temporary file outside the repository.
+Never leave `time.perf_counter()` instrumentation or `print()` calls in
+simulation-core source.
 
-```python
-import time
-start = time.perf_counter()
-# ... code block ...
-elapsed = time.perf_counter() - start
-print(f"Block took {elapsed:.3f}s")
-```
+## Analyze
 
-### Benchmark Script
-Run `scripts/benchmark.py` (if it exists) for standardized measurements:
-```bash
-uv run python scripts/benchmark.py
-```
+For each material hotspot, report:
 
-## Analysis Checklist
+- function and file;
+- call count, total time, cumulative time, and percentage of measured runtime;
+- whether cost is algorithmic, Python overhead, allocation, redundant work,
+  I/O, synchronization, or measurement noise;
+- evidence that the function is on the affected production path;
+- estimated upper bound and implementation risk.
 
-### 1. Identify Hot Functions
-From the cProfile output, identify functions that:
-- Consume >5% of total time
-- Are called >10,000 times
-- Have a high `tottime/ncalls` ratio (expensive per call)
+Treat vectorization, caching, spatial indexing, batching, pre-sorting, and
+parallelism as hypotheses. They can change ordering, stochastic consumption,
+memory behavior, or results and require measurement plus correctness evidence.
 
-### 2. Classify Each Hotspot
+## Compare Before and After
 
-| Category | Description | Typical Fix |
-|----------|-------------|-------------|
-| **Algorithmic** | O(n²) or worse where O(n log n) is possible | Better data structure (KDTree, cache, index) |
-| **Python overhead** | Per-call function overhead dominates | Vectorize with numpy, batch operations |
-| **Allocation** | Object creation in inner loops | Pre-allocate, reuse, use arrays |
-| **Redundant** | Same computation repeated unnecessarily | Cache results, hoist invariants |
-| **I/O** | File or network operations in hot path | Lazy load, pre-cache |
+1. Repeat the same benchmark enough times to characterize noise.
+2. Compare a robust statistic and dispersion, not only the best run.
+3. Run focused correctness tests.
+4. Compare ordered events, final state, and outcomes for deterministic work.
+5. Run `$audit-determinism` if ordering, RNG use, caching, or parallelism
+   changed.
+6. Run scenario or Monte Carlo comparisons when stochastic outcomes can change.
+7. Run relevant slow and benchmark suites explicitly.
 
-### 3. Estimate Impact
-For each hotspot, estimate:
-- **Current cost**: % of total runtime
-- **Theoretical speedup**: how much faster the optimized version could be
-- **Implementation effort**: trivial / moderate / significant
+Do not weaken a predeclared performance threshold after it fails without the
+owner's approval and a documented rationale.
 
-### 4. Cross-Reference with Known Issues
-Check `docs/devlog/` for previously identified performance items. Check `docs/development-phases.md` for deferred optimization tasks.
+## Report
 
-## Output Format
+Provide:
 
-```
-## Profile Summary
+- target and reproducibility context;
+- exact commands and repetitions;
+- before/after timing table with dispersion;
+- top measured hotspots;
+- prioritized recommendations with expected benefit and risk;
+- correctness and determinism checks;
+- exclusions and residual uncertainty.
 
-**Target**: [what was profiled]
-**Total runtime**: [seconds]
-**Test count**: [if applicable]
-
-## Top Hotspots
-
-| Rank | Function | File:Line | Calls | Total Time | % | Category |
-|------|----------|-----------|-------|------------|---|----------|
-| 1 | ... | ... | ... | ... | ... | ... |
-
-## Recommendations
-
-### Priority 1 (fix now)
-...
-
-### Priority 2 (fix during Phase N)
-...
-
-### Priority 3 (post-MVP)
-...
-```
-
-## Benchmark Script Template
-
-If `scripts/benchmark.py` doesn't exist, create it with this structure:
-
-```python
-"""Benchmark suite for scenario runner performance."""
-import time
-from stochastic_warfare.validation.scenario_runner import ScenarioRunner, ScenarioRunnerConfig
-from stochastic_warfare.validation.historical_data import HistoricalDataLoader
-
-def bench_scenario(name: str, seed: int = 42) -> float:
-    loader = HistoricalDataLoader()
-    engagement = loader.load(f"data/scenarios/{name}/scenario.yaml")
-    runner = ScenarioRunner(ScenarioRunnerConfig())
-    start = time.perf_counter()
-    runner.run(engagement, seed=seed)
-    return time.perf_counter() - start
-
-if __name__ == "__main__":
-    scenarios = ["73_easting", "falklands_naval", "golan_heights"]
-    for name in scenarios:
-        elapsed = bench_scenario(name)
-        print(f"{name:20s}: {elapsed:.2f}s")
-```
-
-## Important Notes
-
-- Always measure BEFORE and AFTER optimization — gut feelings about performance are often wrong
-- Profile on the actual scenario (validation tests), not synthetic micro-benchmarks
-- Small functions called millions of times matter more than large functions called once
-- numpy vectorization typically gives 10-100x speedup over Python loops
-- KDTree/spatial indexing gives O(log n) vs O(n) — most impactful for large unit counts
-- On Windows, `ProcessPoolExecutor` has higher overhead than on Linux (spawn vs fork)
-- Monte Carlo parallelization via `max_workers` config is already available
+Do not claim an optimization succeeded from code shape, a synthetic
+microbenchmark, or one faster observation.

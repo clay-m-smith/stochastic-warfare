@@ -39,12 +39,19 @@ export function ScenarioCard({ scenario }: ScenarioCardProps) {
         ))}
       </div>
 
-      {(scenario.has_ew || scenario.has_cbrn || scenario.has_escalation || scenario.has_schools) && (
+      {(scenario.has_ew ||
+        scenario.has_cbrn ||
+        scenario.has_escalation ||
+        scenario.has_schools ||
+        scenario.has_space ||
+        scenario.has_dew) && (
         <div className="mt-2 flex flex-wrap gap-1">
           {scenario.has_ew && <Badge className="bg-yellow-100 text-yellow-800">EW</Badge>}
           {scenario.has_cbrn && <Badge className="bg-orange-100 text-orange-800">CBRN</Badge>}
           {scenario.has_escalation && <Badge className="bg-red-100 text-red-800">Escalation</Badge>}
           {scenario.has_schools && <Badge className="bg-purple-100 text-purple-800">Schools</Badge>}
+          {scenario.has_space && <Badge className="bg-indigo-100 text-indigo-800">Space</Badge>}
+          {scenario.has_dew && <Badge className="bg-cyan-100 text-cyan-800">DEW</Badge>}
         </div>
       )}
     </Card>

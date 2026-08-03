@@ -33,12 +33,14 @@ Open **http://localhost:5173** in your browser. The frontend proxies all `/api` 
 
 ## Navigation
 
-The sidebar provides access to four main sections:
+The sidebar provides access to six main sections:
 
 | Section | What It Shows |
 |---------|--------------|
 | **Scenarios** | Browse and search all available scenarios |
 | **Units** | Catalog of all unit definitions across eras |
+| **Weapons** | Catalog of weapon definitions |
+| **Doctrines** | Catalog of doctrine definitions |
 | **Runs** | Simulation run history and live tracking |
 | **Analysis** | Batch Monte Carlo, A/B comparison, sensitivity sweeps, doctrine comparison |
 
@@ -57,34 +59,59 @@ A theme toggle button in the sidebar footer switches between light and dark mode
 The default page shows all scenarios as cards. Each card displays:
 
 - Scenario name and era badge (color-coded)
-- Duration and force count
-- Optional subsystem badges (EW, CBRN, Escalation, Schools, Space, DEW)
+- Terrain type, duration, and side count
+- Configuration-presence badges (EW, CBRN, Escalation, Schools, Space, DEW)
+
+At the Phase 117 freeze, none of the 52 catalog source scenarios declares an
+exact `school_config`, so the browser emits no School badge. Doctrine Compare
+applies typed per-side variants at runtime without changing source YAML.
+
+The 34 catalog scenarios whose typed summaries currently report
+`current_engine_regression_evidence=true` appear first under **Current-Engine
+Regression References**. That count is the current Phase 117 ledger result,
+not a fixed product rule; filtering can reduce the visible group. The grouping
+records only a regression role and does not claim historical validation or
+predictive calibration. Open a scenario to see its ledger-backed
+historical-validation disposition and claim-level limitations.
 
 **Filtering and search:**
 
 - **Search** -- type in the search box to filter by name
-- **Era filter** -- click era tabs to show only scenarios from a specific era
+- **Era filter** -- choose an era from the select control
 - **Sort** -- sort by name, duration, or era
 
 ### Detail View
 
-Click a scenario card to see its full configuration:
+Click a scenario card to see its selected configuration summary:
 
-- **Terrain** -- dimensions, cell size, terrain type
-- **Weather** -- visibility, wind, temperature, cloud cover
-- **Forces** -- per-side unit composition tables with counts and key stats
-- **Objectives** -- positions and assigned sides
-- **Victory conditions** -- what triggers the end of the simulation
-- **Optional configs** -- which subsystems are enabled (shown as colored badges)
-- **Documented outcomes** -- authored historical/reference metadata; its
-  presence is not a current validation verdict
+- **Terrain** -- terrain type, width and height in metres, and base elevation
+  in metres when present
+- **Weather** -- visibility in metres and wind speed in metres per second when
+  present
+- **Forces** -- per-side unit counts and unit-type lists
+- **Optional configs** -- which subsystem configuration blocks are present
+  (shown as colored badges; presence is not proof that every nested runtime
+  option is enabled)
+- **Historical Validation** -- the conservative ledger-backed aggregate
+  disposition, regression-only notice, and each inventoried claim's intended
+  use, event and metric scopes, reason codes, limitation, and accepted evidence
+  reference when one exists
+
+The three public dispositions are `Production Validated`, `Current-Engine
+Regression Only`, and `Unsupported`. A production-validated aggregate applies
+only to the accepted claim scopes shown; it is not a broader predictive claim.
+The scenario detail API deliberately strips legacy `documented_outcomes` and
+`sources` from the displayed configuration, because citations and authored
+reference values are not verdicts. The current catalog contains zero
+production-validated scenarios; the retained Phase 117 73 Easting study is a
+completed `FAIL`, not accepted evidence.
 
 **Actions on the detail page:**
 
 | Button | What It Does |
 |--------|-------------|
 | **Run This Scenario** | Navigate to the run configuration page |
-| **Download YAML** | Download the scenario configuration as a YAML file |
+| **Download YAML** | Download the public configuration projection as YAML; authored `sources` and legacy `documented_outcomes` are deliberately absent |
 | **Clone & Tweak** | Open the scenario editor with a copy of this scenario |
 
 ---
@@ -96,7 +123,7 @@ The unit catalog page lists all unit definitions with key statistics.
 **Filtering:**
 
 - **Search** -- filter by unit name or type
-- **Domain** -- ground, air, naval surface, naval subsurface
+- **Domain** -- Land, Air, Naval, Submarine, or Space
 - **Era** -- Modern, WW2, WW1, Napoleonic, Ancient/Medieval
 
 Click a unit to open a detail modal showing the full specification: weapons, sensors, communications, armor, speed, and signature profile.
@@ -112,25 +139,28 @@ From a scenario detail page, click **Run This Scenario** to reach the run config
 - **Seed** -- random seed for reproducibility (default: 42)
 - **Max ticks** -- safety limit to prevent runaway simulations
 
-Click **Start Run** to submit. You'll be redirected to the run detail page.
+Click **Start Run** to submit. A successful submission redirects to the new
+run's detail page.
 
 ### Live Progress
 
 While a simulation is running, the run detail page shows live progress via WebSocket:
 
 - **Progress bar** -- tick advancement toward completion
-- **Active units** -- per-side count of surviving units
-- **Events** -- running count of simulation events
+- **Active units** -- per-side count whose serialized status is exactly
+  `UnitStatus.ACTIVE`
 - **Connection status** -- green (connected), yellow (reconnecting), red (failed)
 
 If the WebSocket connection drops, the app automatically attempts reconnection with exponential backoff (up to 3 attempts). If reconnection fails, it falls back to polling the API.
 
 ### Run History
 
-The **Runs** page shows all past and current runs in a table:
+The **Runs** page shows the latest 50 past and current runs returned by the API
+in a table:
 
-- Scenario name, seed, status, duration, victor, timestamp
-- Status badges: pending (gray), running (blue), completed (green), failed (red)
+- Scenario name, seed, status, created time, and completed time
+- Status badges: pending (gray), running (blue), completed (green), failed
+  (red), and cancelled (yellow)
 - Click any row to view the run detail
 
 ---
@@ -143,21 +173,31 @@ After a simulation completes, the run detail page shows results across several t
 
 - **Victory result** -- which side won and by what condition
 - **Timing** -- simulation ticks and logical simulated elapsed duration
-- **Force summary** -- surviving units per side
+- **Force summary** -- total, active, disabled, and destroyed units per side
 
 ### Charts
 
-Five interactive Plotly charts, all supporting zoom, pan, hover tooltips, and legend filtering:
+The Charts tab renders four event-derived Plotly charts and, when the analytics
+summary is available, four additional analytics charts:
 
 | Chart | What It Shows |
 |-------|--------------|
-| **Force Strength** | Stacked area chart of active units over time per side |
-| **Engagement Timeline** | Scatter plot of engagements (tick vs range), colored by hit/miss |
+| **Force Strength** | Filled line traces of active units over elapsed seconds per side |
+| **Engagement Timeline** | Engagement range over elapsed seconds, colored by hit/miss |
 | **Morale Progression** | Step chart of morale state changes |
-| **Event Activity** | Histogram of events per tick (operational tempo) |
-| **Comparison** | Side-by-side metrics (when comparing two runs) |
+| **Event Activity** | Event counts in 10-tick buckets |
+| **Casualty Breakdown** | Optional categorical casualty summary |
+| **Engagement Summary** | Optional categorical engagement summary |
+| **Suppression** | Optional suppression time series |
+| **Morale Distribution** | Optional morale-distribution time series |
 
-**Tick sync**: When the tactical map is playing back at a specific tick, all four charts show a vertical reference line at that tick. Clicking any data point on a chart sets the `?tick=N` URL parameter, which the map reads to jump to that tick -- bidirectional sync between charts and map.
+The four event-derived charts and the optional suppression and morale-
+distribution time series can set and display a `?tick=N` marker while the
+Charts tab is active. The categorical analytics charts do not. The Map tab
+writes its current frame's tick to the URL, but it does not consume an incoming
+tick, and changing tabs currently replaces the query parameters. Therefore
+there is no production bidirectional chart/map synchronization; REM-049 /
+Phase 136 owns that follow-up.
 
 ### Narrative
 
@@ -177,11 +217,13 @@ The export menu (dropdown in the page header) provides:
 | Option | Format | Contents |
 |--------|--------|----------|
 | **Export JSON** | `.json` | Full run result data |
-| **Export Events CSV** | `.csv` | Complete event log with columns for tick, type, side, details |
+| **Export Events CSV** | `.csv` | At most the first 10,000 fetched events, with `tick`, `event_type`, `source`, and JSON `data` columns |
 | **Download Narrative** | `.txt` | Battle narrative text |
 | **Print Report** | Browser print | Print-optimized summary with forces, narrative, and key statistics |
 
-All downloads are generated client-side (no server round-trip).
+The download files are generated client-side from result, event, and narrative
+data already requested from the API. The CSV is not a complete-export contract
+for runs with more than 10,000 retained events.
 
 ---
 
@@ -194,13 +236,16 @@ The scenario editor lets you modify an existing scenario and run it with your ch
 Two-column layout:
 
 - **Left column** -- form sections for editing (scrollable)
-- **Right column** -- live YAML preview + terrain preview (sticky)
+- **Right column** -- terrain preview, configuration diff, then live YAML
+  preview (sticky)
 
 ### Editing Sections
 
 **General** -- name, duration (hours), era, date
 
-**Terrain** -- width, height, cell size, base elevation, terrain type (10 options: flat desert, forest, urban, mixed, rolling hills, mountain, coastal, arctic, jungle, swamp)
+**Terrain** -- width, height, cell size, canonical `base_elevation_m`, and the
+five production `TerrainConfig` values: `flat_desert`, `open_ocean`,
+`hilly_defense`, `trench_warfare`, and `open_field`
 
 **Weather** -- visibility, wind speed, wind direction, temperature, cloud cover
 
@@ -208,8 +253,6 @@ Two-column layout:
 
 - Unit list showing type, count, and controls (+/- buttons, remove)
 - **Add Unit** button opens the unit picker modal
-- Experience level slider (0.0--1.0)
-- Morale selector
 
 **Unit Picker** -- modal with search, domain filter tabs, and era filtering. Click a unit to add it to the current side.
 
@@ -220,28 +263,45 @@ Two-column layout:
 | EW | Electronic Warfare (jamming, spoofing, ECCM) |
 | CBRN | Chemical, Biological, Radiological, Nuclear effects |
 | Escalation | Escalation ladder and political pressure |
-| Schools | Doctrinal AI schools |
-| Space | Space and satellite systems |
+| Schools | Existing exact unit assignments can be removed; adding them is disabled because the editor has no exact runtime-unit assignment builder |
+| Space | Existing explicit Space configs can be removed; adding one is disabled because production requires catalog constellation IDs and the editor has no selector yet |
 | DEW | Directed energy weapons |
 
-Enabling a toggle adds sensible default configuration. Disabling removes the config entirely.
+Enabling EW or CBRN adds its explicit flag-bearing default. Escalation and DEW
+add/remove presence-only `{}` blocks; Escalation currently uses runtime
+defaults rather than authored tuning (REM-050), while DEW may be tuned only
+with real `DEWConfig` fields. The editor explicitly refuses to invent School
+or Space proxy mappings. Author schema-validated YAML with exact
+`school_config.unit_assignments`, use typed Doctrine Compare for per-side
+school variants, or use an already configured Space scenario with exact
+constellation IDs.
 
-**Calibration Sliders** -- fine-tune simulation parameters:
+Commander selection is also unavailable here because the metadata endpoint
+does not expose the complete era-specific profile catalog. Existing canonical
+`sides[].commander_profile` values are preserved; authoring requires a valid
+profile on every side or none on every side.
+
+**Calibration Sliders** -- fine-tune the exposed numeric and boolean
+calibration controls. Examples include:
 
 | Slider | Range | Default | Effect |
 |--------|-------|---------|--------|
 | Hit Probability Modifier | 0.1--3.0 | 1.0 | Scales all hit probabilities |
-| Target Size Modifier | 0.1--3.0 | 1.0 | Scales target detection signatures |
+| Target Size Modifier | 0.1--3.0 | 1.0 | Scales target area in direct-engagement hit calculations |
 | Morale Degrade Rate | 0.1--5.0 | 1.0 | Scales morale degradation speed |
 | Thermal Contrast | 0.1--5.0 | 1.0 | Scales thermal sensor effectiveness |
 
 ### YAML Preview
 
-The right panel shows the live YAML representation of your edited configuration. It updates in real-time as you make changes. Use the **Copy** button to copy the YAML to your clipboard.
+The right panel shows the live YAML representation of your edited public
+configuration after the terrain preview and configuration diff. It updates as
+the editor reducer changes the configuration. Use **Copy** to copy it.
 
 ### Terrain Preview
 
-Below the YAML preview, a small canvas shows an approximate terrain visualization: terrain type color fill, objective circles, and dimension labels.
+At the top of the right panel, a small canvas shows an approximate terrain
+visualization: terrain-type color fill, objective circles, and dimension
+labels.
 
 ### Actions
 
@@ -255,27 +315,38 @@ Below the YAML preview, a small canvas shows an approximate terrain visualizatio
 
 ## Tactical Map
 
-The tactical map provides a 2D spatial visualization of a completed simulation run. Access it from the **Map** tab on any completed run, or click the fullscreen button to open it in a dedicated page.
+The tactical map provides a 2D spatial visualization of a completed simulation
+run from its **Map** tab. A dedicated `/map/{run_id}` route also exists, but the
+Map tab currently has no fullscreen button.
 
 ### Terrain
 
-The map renders the terrain grid with cells colored by land cover type (desert/tan, forest/green, urban/gray, water/blue, mountain/brown). Objective zones are shown as highlighted circles. When elevation data is available, cells are brightness-modulated -- higher elevations appear slightly brighter, lower elevations slightly darker -- giving a visual sense of terrain relief.
+The map renders the terrain grid with colors for open, grassland, shrubland,
+three forest classes, three urban classes, water, wetland, two desert classes,
+snow/ice, and cultivated cover. Objective zones are outlined. When varying
+elevation data is available, cell brightness is modulated by elevation.
 
 ### Units
 
-Units are displayed as side-colored markers (blue/red) with domain-specific shapes:
+Units are displayed as side-colored markers with domain-specific shapes:
 
-- **Diamond** -- armor
-- **Circle** -- infantry
-- **Triangle** -- aircraft
-- **Pentagon** -- naval
+- **Rectangle** -- ground
+- **Triangle** -- air
+- **Diamond** -- naval surface
+- **Circle** -- other domains
 
-Destroyed units are shown with reduced opacity and a red X overlay. Click a unit to see details in the sidebar (type, health, morale, ammunition, position).
+The serialized production status values are Active, Disabled, Destroyed,
+Surrendered, and Routing. Only Destroyed units receive reduced opacity and a
+red X; Disabled units receive an orange slash. Clicking a visible marker opens
+a snapshot sidebar with the fields available in that captured frame.
 
 ### Overlays
 
-- **Engagement arcs** -- lines from attacker to target, colored by result (hit/miss). Arcs fade smoothly over a 10-tick window instead of appearing/disappearing instantly.
-- **Movement trails** -- fading polylines showing recent unit paths
+- **Engagement arcs** -- lines colored by hit/miss for events within ten ticks
+  before or after the displayed frame. The current absolute-delta window can
+  reveal a future arc; REM-049 owns causal replay correction.
+- **Movement trails** -- uniformly translucent polylines over up to 20 prior
+  replay frames
 - **Sensor circles** -- when the "Sensors" toggle is on and a unit is selected, a dashed semi-transparent circle shows the unit's maximum sensor range
 
 ### Map Controls
@@ -290,22 +361,27 @@ The control bar above the map provides several toggles:
 | **Trails** | Show/hide movement trails |
 | **Sensors** | Show/hide sensor range circle for the selected unit |
 | **FOW** | Enable Fog of War view (see below) |
-| **Fit** | Reset zoom to fit all units |
+| **Morale** | Color markers by captured morale state |
+| **Health** | Show captured health bars |
+| **Posture** | Show posture abbreviations |
+| **Suppression** | Apply captured suppression opacity |
+| **Logistics** | Show captured fuel/ammunition bars |
+| **Fit** | Reset zoom to the terrain extent |
 
 Mouse world coordinates (easting/northing) are displayed when hovering over the map.
 
 ### Fog of War (FOW)
 
-The FOW toggle enables a "what does this side see?" view. When active:
+The FOW toggle is a limited operator-side marker filter. When active:
 
 1. A side selector dropdown appears (e.g., Blue / Red)
-2. Only units that the selected side has detected are visible -- undetected enemy units are hidden entirely
+2. Undetected enemy unit markers are omitted from the main marker draw loop
 3. Friendly units (same side as selected) are always shown
 
-This display filter uses the simulation's captured detection data to show what
-each side believed at each tick. The FOW toggle is disabled for runs that do
-not have detection data (for example, older runs or scenarios without fog of
-war).
+This client filter does not filter movement trails, engagement arcs, hit
+testing, a previously selected unit sidebar, or its sensor circle. It therefore
+does not provide a complete side view even as a visualization. The toggle is
+disabled for runs without detection data.
 
 The frame client and TypeScript schemas support both exact
 `PRIVILEGED_ENGINE` targeting evidence and an opaque `SIDE_FOW` projection.
@@ -313,9 +389,9 @@ The current main map request still omits those query parameters, receives the
 API's privileged default, and applies its FOW view in the browser. That is a
 useful operator/evaluator view, but it is not a player authorization boundary:
 browser filtering cannot prevent a caller from requesting or inspecting the
-underlying privileged response. REM-041 / Phase 128 must add server-side caller
-authorization and make the normal player-facing request side-safe before this
-UI can be described as secure for opposing players.
+underlying privileged response. REM-041 / Phase 128 owns both server-side
+caller authorization and complete side-safe map projection/filtering before
+this UI can be described as secure for opposing players.
 
 ### Targeting evidence
 
@@ -331,15 +407,17 @@ transformed into a trustworthy side projection after the fact.
 
 ### Playback Controls
 
-The map includes a timeline scrubber and transport controls for stepping through the simulation:
+The map includes a replay-frame scrubber and transport controls. Sparse source
+frames may first be interpolated for display, so one step is one displayed
+frame rather than necessarily one production tick:
 
 | Control | Action |
 |---------|--------|
 | Play/Pause | Start or stop automatic playback |
-| Step Forward | Advance one tick |
-| Step Backward | Go back one tick |
+| Step Forward | Advance one replay frame |
+| Step Backward | Go back one replay frame |
 | Speed 1x/2x/5x/10x | Set playback speed |
-| Timeline Scrubber | Drag to jump to any tick |
+| Timeline Scrubber | Drag to a replay-frame index |
 
 ### Zoom and Pan
 
@@ -350,18 +428,18 @@ The map includes a timeline scrubber and transport controls for stepping through
 
 ## Keyboard Shortcuts
 
-Keyboard shortcuts are available on the tactical map and fullscreen map pages. Press **?** to see the shortcut help modal.
+Keyboard shortcuts are available while the tactical map has focus. There is no
+in-app shortcut-help modal yet.
 
 | Key | Action |
 |-----|--------|
 | `Space` | Play / pause playback |
-| `Right Arrow` | Step forward one tick |
-| `Left Arrow` | Step backward one tick |
+| `Right Arrow` | Step forward one replay frame |
+| `Left Arrow` | Step backward one replay frame |
 | `1` | Set playback speed to 1x |
 | `2` | Set playback speed to 2x |
 | `3` | Set playback speed to 5x |
 | `4` | Set playback speed to 10x |
-| `?` | Show keyboard shortcut help |
 
 Shortcuts are disabled when typing in input fields, text areas, or select elements.
 
@@ -382,15 +460,17 @@ Run multiple iterations of the same scenario with different seeds to build stati
 1. Select a scenario
 2. Set the number of iterations and base seed
 3. Click **Run Batch**
-4. View results: metric histograms, summary statistics, convergence plots
+4. View metric histograms, summary statistics, raw vectors, and reproduction
+   provenance; the UI does not currently render convergence plots
 
 ### A/B Comparison
 
 Compare two sparse calibration configurations of the same source scenario with
 the same ordered seed sequence:
 
-1. Select one scenario and provide A/B overrides
-2. Set a base seed, iteration count, metrics, and family alpha
+1. Select one scenario and provide labels and A/B override JSON
+2. Set iteration count and max ticks. The UI fixes base seed to 42, family
+   alpha to 0.05, and metrics to each listed side's destroyed count
 3. View exact paired counts and differences, paired superiority, raw exact-sign
    p-values, Holm-adjusted p-values, and family-wise significance
 4. Inspect both ordered raw-vector and production-provenance envelopes
@@ -399,24 +479,29 @@ the same ordered seed sequence:
 
 Test how a single parameter affects outcomes:
 
-1. Select a scenario and parameter to sweep
-2. Set the range and number of steps
+1. Select a scenario and enter the parameter name
+2. Enter explicit duplicate-free comma-separated values, iteration count, and
+   max ticks. The UI fixes base seed to 42 and metrics to side destroyed counts
 3. View an errorbar chart plus each point's raw vectors and runtime provenance
 
 ### Doctrine Comparison
 
-Compare distinct doctrinal-school policies while holding the source,
-calibration patch, seed sequence, and metric order constant:
+Compare catalog doctrinal-school assignments for one selected scenario side:
 
-1. Select one scenario and define at least two named policies
-2. Assign the same exact scenario-side set in every policy, using at least two
-   distinct catalog-backed schools
-3. Inspect per-variant raw vectors, commander/school assignment evidence, and
-   production provenance
+1. Select one scenario, one side to vary, at least two catalog schools,
+   iteration count, and max ticks
+2. The UI creates one variant per selected school for that side, fixes base
+   seed to 42, and requests win, side-destroyed, and tick metrics
+3. Inspect per-variant raw vectors, assignments, and source/config/doctrine/
+   loadout fingerprints. The UI does not define richer named policies or
+   expose a commander-policy editor here
 
 These analysis tools characterize current production behavior. They do not by
 themselves establish historical validity; that requires a predeclared,
-source-backed held-out envelope.
+source-backed held-out envelope executed through the strict historical study
+boundary. The [Phase 117 contract](../specs/historical-outcome-envelope-integrity.md)
+defines that route; no catalog scenario currently has accepted production
+historical-validation evidence.
 
 ---
 
@@ -431,6 +516,9 @@ The API server is configured via environment variables (prefix `SW_API_`):
 | `SW_API_DB_PATH` | `data/api_runs.db` | SQLite database path |
 | `SW_API_MAX_CONCURRENT_RUNS` | `4` | Max parallel simulation runs |
 | `SW_API_CORS_ORIGINS` | `["http://localhost:5173"]` | Allowed CORS origins |
+| `SW_API_DATA_DIR` | `data` | Scenario/catalog data root |
+| `SW_API_MAX_STORED_EVENTS` | `50000` | Maximum retained events per run |
+| `SW_API_DEFAULT_MAX_TICKS` | `10000` | Server default tick limit |
 
 Run history is stored in the SQLite database and persists across server restarts.
 

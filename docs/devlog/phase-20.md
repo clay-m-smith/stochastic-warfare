@@ -1,5 +1,13 @@
 # Phase 20: WW2 Era
 
+> **Phase 117 historical-claim supersession (2026-08-02):** This archived page
+> preserves implementation history. Its historical-winner, outcome, casualty,
+> duration, calibration, plausibility, envelope, and tolerance statements are
+> not accepted historical validation. Any engine figures below are regression
+> history only, not predictive evidence or calibration authority; the typed
+> claim ledger and accepted production artifacts, if any, are authoritative.
+
+
 ## Summary
 
 Phase 20 introduces the era framework and the first historical era expansion: World War II. The era framework allows the simulation engine to load era-specific YAML data (units, weapons, ammunition, sensors, signatures, doctrines, commanders) from `data/eras/{era}/` directories, and optionally instantiate era-specific engine extensions. Three new engine modules cover WW2-specific combat domains: naval gunnery (bracket firing and fire control), convoy/anti-submarine warfare (wolf packs and depth charges), and strategic bombing (CEP area damage, flak, fighter escort).

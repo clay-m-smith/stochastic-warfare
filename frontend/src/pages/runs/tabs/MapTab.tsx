@@ -32,7 +32,7 @@ export function MapTab({ runId, result }: MapTabProps) {
     [setSearchParams],
   )
 
-  const rawFrames = framesData?.frames ?? []
+  const rawFrames = useMemo(() => framesData?.frames ?? [], [framesData?.frames])
   // Interpolate for smooth playback when few frames (strategic campaigns)
   const frames = useMemo(() => interpolateFrames(rawFrames), [rawFrames])
 

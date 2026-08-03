@@ -1,82 +1,87 @@
-# Phase Postmortem
+---
+name: postmortem
+description: "Gate closure of a numbered implementation phase. Use after implementation, tests, review, and documentation updates but before marking the phase complete or creating its required commit."
+---
 
-Structured retrospective to run after completing each implementation phase. Catches integration gaps, dead code, missing wiring, test quality issues, and documentation drift before moving on.
+# Run the Phase Postmortem
 
-## Trigger
-Run after completing a phase — before the commit, after tests pass and docs are updated.
+Follow `CODEX.md`. Use this review to decide whether a numbered phase is
+actually complete, not to rationalize a green status.
 
-## Process
+## Reconstruct the Contract
 
-### 1. Delivered vs Planned
-Compare what was actually delivered against the plan:
-- Read the phase section in `docs/development-phases-post-mvp.md` (or `development-phases.md` for MVP)
-- Read the phase devlog in `docs/devlog/phase-{N}.md`
-- List any planned items that were **dropped, deferred, or descoped**
-- List any **unplanned items** that were added
-- Verdict: was the scope well-calibrated?
+Read the applicable roadmap, phase devlog, remediation entries, specifications,
+original acceptance criteria, final production diff, and test diff. List:
 
-### 2. Integration Audit
-Check that new code is actually wired into the system, not just standalone:
-- For each new module: is it imported/used by at least one other module or test?
-- For new engine features: are they exercised in `simulation/engine.py` or `simulation/battle.py`?
-- For new config flags: do they appear in any scenario YAML or test?
-- For new event types: does something publish them AND something subscribe?
-- For new skills: are they listed in CLAUDE.md's skill table AND `docs/skills-and-hooks.md`?
-- **Red flag**: Any source file that exists but is never imported (dead module)
+- planned work delivered;
+- planned work dropped, deferred, or changed;
+- unplanned behavior added;
+- accepted non-goals and assumptions.
 
-### 3. Test Quality Review
-Spot-check test coverage quality (not just count):
-- Are there integration tests that exercise cross-module paths, or only unit tests?
-- Do tests use realistic data or only trivial/mock data?
-- Are edge cases covered (empty inputs, error paths, boundary values)?
-- Are any tests testing implementation details rather than behavior?
-- Do slow/heavy tests have appropriate marks (`@pytest.mark.slow`)?
+Do not rely on the devlog's completion label as evidence.
 
-### 4. API Surface Check
-Review public APIs of new modules:
-- Are type hints on all public functions?
-- Are there any functions that are public but should be private (`_` prefix)?
-- Do function signatures follow project conventions (DI pattern, no global state)?
-- Is `get_logger(__name__)` used (no bare `print()`)?
+## Audit Integration and Outcomes
 
-### 5. Deficit Discovery
-Look for new limitations or known issues introduced by this phase:
-- Any TODOs or FIXMEs in the new code?
-- Any hardcoded values that should be configurable?
-- Any known simplifications or shortcuts?
-- Any missing error handling at system boundaries?
-- **For each deficit found**: add to `docs/devlog/index.md` refinement index AND assign to a future phase in `development-phases-post-mvp.md`
+For every changed capability, evaluate the applicable declared, loaded, wired,
+enabled, exercised, outcome-affecting, and persisted/exposed stages. Require
+production-path evidence and negative or disabled controls where applicable.
 
-### 6. Documentation Freshness
-Verify the lockstep docs are accurate (not just updated — *accurate*):
-- Does CLAUDE.md's phase summary match what was actually built?
-- Does the module-to-phase index include ALL new files?
-- Does MEMORY.md reflect key learnings (not just copy-paste from devlog)?
-- Does README.md test count match `pytest --co -q | tail -1`?
-- Are all new skills in both CLAUDE.md skill table AND skills-and-hooks.md?
-- **User-facing docs staleness check** (if the phase changed any of the following):
-  - New modules/engines → is `docs/concepts/architecture.md` updated?
-  - Changed class signatures → is `docs/reference/api.md` still accurate?
-  - New scenarios → are `docs/guide/scenarios.md` and `docs/reference/eras.md` updated?
-  - New units/weapons/doctrines → is `docs/reference/units.md` updated?
-  - New era mechanics → is `docs/reference/eras.md` updated?
-  - New math models → is `docs/concepts/models.md` updated?
-  - Test count changed → is `docs/index.md` updated?
-  - New devlog file → is `mkdocs.yml` nav updated?
+Inspect direct callers and runtime ownership, but treat imports, constructor
+calls, config presence, event publication, mocks, source searches, and no-crash
+runs as structural diagnostics only. Verify event subscribers, checkpoint
+state, API exposure, or UI behavior only when the contract requires them.
 
-### 7. Performance Sanity
-Quick check that the phase didn't introduce performance issues:
-- Run `uv run python -m pytest --tb=short -q` — note total time
-- Compare to previous phase total time (from devlog or memory)
-- If >10% slower, investigate which new tests are heavy
+## Review Test Quality
 
-### 8. Summary
-Write a brief postmortem summary:
-- **Scope**: On target / Under / Over
-- **Quality**: High / Medium / Needs work
-- **Integration**: Fully wired / Gaps found
-- **Deficits**: N new items (list them)
-- **Action items**: What needs to happen before moving on
+- Confirm that each fixed defect or changed behavior has a regression test that
+  would fail without the implementation.
+- Prefer realistic state transitions and outcomes over attribute assertions.
+- Verify deterministic replay and checkpoint continuation for mutable or
+  stochastic changes.
+- Run scenario comparison, Monte Carlo, backtest, or performance evidence when
+  the phase can change those outcomes.
+- Run every relevant API, frontend, data, documentation, slow, terrain, E2E, or
+  benchmark boundary explicitly.
+- Record exact commands, pass/skip/deselect counts, timing, warnings, and suites
+  not run. Do not treat the default Python suite as all coverage or use
+  collection output as a passing count.
 
-## Output
-Update the phase devlog with a `## Postmortem` section containing the findings. If action items exist, implement them before committing.
+Rerun focused behavioral tests after any review-driven fix.
+
+## Review Implementation and Documentation
+
+Inspect the final diff for:
+
+- stubs, placeholders, dummy values, unconditional success, swallowed
+  exceptions, and log-only wiring;
+- incomplete serialization, nondeterministic iteration, wall-clock use, or
+  unsupported fallback behavior;
+- public API, type, logging, dependency-direction, and data-semantic problems;
+- TODOs, FIXMEs, performance regressions, and unexplained scope changes;
+- missing specification, architecture, API, data, user-guide, devlog,
+  remediation, status, or navigation updates;
+- unrelated or user-owned changes.
+
+Use an independent adversarial review for a material phase, then reproduce and
+verify its findings from source and commands.
+
+## Resolve the Verdict
+
+Record:
+
+- **Scope**: on target, under, or over;
+- **Quality**: high, medium, or needs work;
+- **Integration**: fully proven or gaps found;
+- **New deficits**: identifiers, evidence, priority, and planned phase;
+- **Validation**: exact results and exclusions;
+- **Action items**: required before closure or explicitly deferred.
+
+Add real deficits to `docs/remediation-backlog.md` and assign them to a roadmap
+phase. If any applicable completion stage or required validation is missing,
+reopen the phase, implement or track the finding honestly, rerun the affected
+evidence, and repeat the postmortem.
+
+When all gates pass, append the postmortem to the phase devlog, inspect
+`git status --short`, `git diff --check`, and the complete phase diff, then
+create one coherent commit containing only that phase's work. Do not include
+unrelated files and do not push.

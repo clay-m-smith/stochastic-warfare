@@ -1,5 +1,13 @@
 # Phase 95: Calibration & Scenario Editor Depth
 
+> **Phase 117 editor-integrity correction (2026-08-02):** The doctrine picker
+> wrote ignored `{side}_school` fields and the commander picker wrote rejected
+> `commander_config.side_defaults`; the available commander metadata also
+> omitted era-specific profiles. Both selectors are now explicitly unavailable
+> rather than emitting or concealing proxy state. REM-049 / Phase 136 owns
+> catalog-complete canonical editor support. The implementation claims below
+> are retained as superseded history, not current behavior.
+
 **Status**: Complete
 **Block**: 10 (UI Depth & Engine Exposure)
 **Tests**: 24 new frontend tests (396 total vitest)

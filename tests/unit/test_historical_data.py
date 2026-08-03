@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import math
 import textwrap
 from pathlib import Path
 
@@ -72,6 +71,28 @@ class TestHistoricalMetric:
         with pytest.raises(Exception):
             HistoricalMetric(name="x", value=1.0, source_quality=5)
 
+    @pytest.mark.parametrize("field", ["value", "tolerance_factor"])
+    def test_boolean_numeric_fields_rejected(self, field: str) -> None:
+        values = {"name": "x", "value": 1.0, "tolerance_factor": 2.0}
+        values[field] = True
+
+        with pytest.raises(ValidationError, match="must be a finite number"):
+            HistoricalMetric.model_validate(values)
+
+    def test_boolean_source_quality_rejected(self) -> None:
+        with pytest.raises(ValidationError, match="source_quality"):
+            HistoricalMetric(name="x", value=1.0, source_quality=True)
+
+    @pytest.mark.parametrize("value", [float("nan"), float("inf"), float("-inf")])
+    def test_nonfinite_value_rejected(self, value: float) -> None:
+        with pytest.raises(ValidationError, match="value must be finite"):
+            HistoricalMetric(name="x", value=value)
+
+    @pytest.mark.parametrize("value", [float("nan"), float("inf"), float("-inf")])
+    def test_nonfinite_tolerance_rejected(self, value: float) -> None:
+        with pytest.raises(ValidationError, match="tolerance_factor must be finite"):
+            HistoricalMetric(name="x", value=1.0, tolerance_factor=value)
+
 
 # ── ForceDefinition ──────────────────────────────────────────────────
 
@@ -89,15 +110,11 @@ class TestForceDefinition:
 
     def test_experience_out_of_range(self) -> None:
         with pytest.raises(Exception):
-            ForceDefinition(
-                side="red", units=[], personnel_total=100, experience_level=1.5
-            )
+            ForceDefinition(side="red", units=[], personnel_total=100, experience_level=1.5)
 
     def test_negative_experience(self) -> None:
         with pytest.raises(Exception):
-            ForceDefinition(
-                side="red", units=[], personnel_total=100, experience_level=-0.1
-            )
+            ForceDefinition(side="red", units=[], personnel_total=100, experience_level=-0.1)
 
     @pytest.mark.parametrize("morale", ["shaken", "PANICKED"])
     def test_invalid_morale_rejected(self, morale: str) -> None:
@@ -183,6 +200,7 @@ class TestHistoricalEngagement:
         raw = _minimal_engagement_dict()
         eng = HistoricalEngagement.model_validate(raw)
         from stochastic_warfare.simulation.calibration import CalibrationSchema
+
         assert isinstance(eng.calibration_overrides, CalibrationSchema)
         assert eng.behavior_rules == {}
         assert eng.sources == []
@@ -197,6 +215,15 @@ class TestHistoricalEngagement:
         raw = _minimal_engagement_dict()
         del raw["name"]
         with pytest.raises(Exception):
+            HistoricalEngagement.model_validate(raw)
+
+    def test_duplicate_documented_outcome_names_rejected(self) -> None:
+        raw = _minimal_engagement_dict()
+        raw["documented_outcomes"].append(
+            {"name": "exchange_ratio", "value": 30.0},
+        )
+
+        with pytest.raises(ValidationError, match="duplicate historical metric"):
             HistoricalEngagement.model_validate(raw)
 
 
@@ -216,6 +243,31 @@ class TestComparisonResult:
         )
         assert cr.within_tolerance is True
         assert cr.deviation_factor == pytest.approx(0.8929, rel=1e-3)
+
+    @pytest.mark.parametrize(
+        "field",
+        [
+            "historical_value",
+            "simulated_mean",
+            "simulated_std",
+            "tolerance_factor",
+            "deviation_factor",
+        ],
+    )
+    def test_boolean_numeric_fields_rejected(self, field: str) -> None:
+        values = {
+            "metric_name": "exchange_ratio",
+            "historical_value": 28.0,
+            "simulated_mean": 25.0,
+            "simulated_std": 3.0,
+            "tolerance_factor": 2.0,
+            "within_tolerance": True,
+            "deviation_factor": 25.0 / 28.0,
+        }
+        values[field] = True
+
+        with pytest.raises(ValidationError, match="must be a finite number"):
+            ComparisonResult.model_validate(values)
 
 
 # ── HistoricalDataLoader — compare_metric ────────────────────────────
@@ -267,6 +319,7 @@ class TestCompareMetric:
         m = HistoricalMetric(name="blue_kia", value=0.0, tolerance_factor=2.0)
         result = HistoricalDataLoader.compare_metric(1.5, m)
         assert result.within_tolerance is True  # 1.5 <= 2.0
+        assert result.deviation_factor is None
 
     def test_zero_historical_simulated_large(self) -> None:
         m = HistoricalMetric(name="blue_kia", value=0.0, tolerance_factor=2.0)
@@ -295,6 +348,29 @@ class TestCompareMetric:
         result2 = HistoricalDataLoader.compare_metric(8.0, m)
         assert result2.within_tolerance is False
 
+    @pytest.mark.parametrize("value", [float("nan"), float("inf"), float("-inf")])
+    def test_nonfinite_simulated_value_rejected(self, value: float) -> None:
+        metric = HistoricalMetric(name="x", value=10.0)
+
+        with pytest.raises(ValueError, match="simulated value must be finite"):
+            HistoricalDataLoader.compare_metric(value, metric)
+
+    @pytest.mark.parametrize("value", [float("nan"), float("inf"), float("-inf")])
+    def test_nonfinite_simulated_std_rejected(self, value: float) -> None:
+        metric = HistoricalMetric(name="x", value=10.0)
+
+        with pytest.raises(
+            ValueError,
+            match="simulated standard deviation must be finite",
+        ):
+            HistoricalDataLoader.compare_metric(10.0, metric, value)
+
+    def test_negative_simulated_std_rejected(self) -> None:
+        metric = HistoricalMetric(name="x", value=10.0)
+
+        with pytest.raises(ValueError, match="must be non-negative"):
+            HistoricalDataLoader.compare_metric(10.0, metric, -1.0)
+
 
 # ── HistoricalDataLoader — compare_all ───────────────────────────────
 
@@ -316,21 +392,19 @@ class TestCompareAll:
             HistoricalMetric(name="missing_one", value=10.0),
         ]
         simulated = {"ratio": 25.0}
-        results = HistoricalDataLoader.compare_all(simulated, metrics)
-        assert len(results) == 2
-        assert results[0].within_tolerance is True
-        assert results[1].within_tolerance is False
-        assert math.isnan(results[1].simulated_mean)
+
+        with pytest.raises(ValueError, match="missing simulated comparison input"):
+            HistoricalDataLoader.compare_all(simulated, metrics)
 
     def test_empty_historical(self) -> None:
-        results = HistoricalDataLoader.compare_all({"x": 1.0}, [])
-        assert results == []
+        with pytest.raises(ValueError, match="requires at least one metric"):
+            HistoricalDataLoader.compare_all({"x": 1.0}, [])
 
     def test_empty_simulated(self) -> None:
         metrics = [HistoricalMetric(name="ratio", value=28.0)]
-        results = HistoricalDataLoader.compare_all({}, metrics)
-        assert len(results) == 1
-        assert results[0].within_tolerance is False
+
+        with pytest.raises(ValueError, match="missing simulated comparison input"):
+            HistoricalDataLoader.compare_all({}, metrics)
 
     def test_with_stds(self) -> None:
         metrics = [HistoricalMetric(name="ratio", value=28.0)]
@@ -338,6 +412,40 @@ class TestCompareAll:
         stds = {"ratio": 3.0}
         results = HistoricalDataLoader.compare_all(simulated, metrics, stds)
         assert results[0].simulated_std == 3.0
+
+    def test_duplicate_historical_metric_names_rejected(self) -> None:
+        metrics = [
+            HistoricalMetric(name="ratio", value=28.0),
+            HistoricalMetric(name="ratio", value=30.0),
+        ]
+
+        with pytest.raises(ValueError, match="duplicate historical metric"):
+            HistoricalDataLoader.compare_all({"ratio": 25.0}, metrics)
+
+    def test_nonfinite_simulated_mapping_rejected(self) -> None:
+        metrics = [HistoricalMetric(name="ratio", value=28.0)]
+
+        with pytest.raises(ValueError, match="simulated value 'ratio' must be finite"):
+            HistoricalDataLoader.compare_all({"ratio": float("nan")}, metrics)
+
+    def test_supplied_stds_must_be_complete(self) -> None:
+        metrics = [HistoricalMetric(name="ratio", value=28.0)]
+
+        with pytest.raises(ValueError, match="missing simulated standard deviation"):
+            HistoricalDataLoader.compare_all({"ratio": 25.0}, metrics, {})
+
+    def test_nonfinite_std_mapping_rejected(self) -> None:
+        metrics = [HistoricalMetric(name="ratio", value=28.0)]
+
+        with pytest.raises(
+            ValueError,
+            match="simulated standard deviation 'ratio' must be finite",
+        ):
+            HistoricalDataLoader.compare_all(
+                {"ratio": 25.0},
+                metrics,
+                {"ratio": float("inf")},
+            )
 
 
 # ── HistoricalDataLoader — YAML loading ──────────────────────────────

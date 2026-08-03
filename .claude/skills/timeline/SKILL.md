@@ -1,69 +1,62 @@
-# Battle Timeline / Narrative
+---
+name: timeline
+description: "Generate an evidence-grounded battle timeline or after-action report from recorded simulation events. Use for scenario narratives, event-sequence analysis, battle reports, or recorder exposure checks."
+---
 
-Run a scenario and generate a human-readable narrative of the battle.
+# Generate a Battle Timeline
 
-## Trigger
-Use when the user wants to:
-- See what happens in a scenario run as a story
-- Generate a battle report or after-action review
-- Understand the sequence of events in a simulation
+Follow `CODEX.md`. Treat a narrative as a presentation of recorded evidence,
+not as proof that unobserved behavior occurred.
 
-## Process
+## Run the Production Scenario
 
-### 1. Select Scenario
-Ask the user which scenario to run, or use the one they've been working with.
+1. Select an explicit scenario path, deterministic seed, maximum tick count,
+   and any requested side or event filters.
+2. Inspect the current signatures for `SimulationRuntimeFactory`,
+   `AnalysisVariant`, `PreparedScenario.build`, `RuntimeSession`,
+   `EngineConfig`, and `SimulationRecorder` before building the run.
+3. Prepare through `SimulationRuntimeFactory`, build an explicit prepared
+   variant with a `recorder_factory`, and execute a bounded `RuntimeSession`.
+   Either call `run_to_completion()`, or drive `step()` until terminal and then
+   call `finalize()`. This preserves the scenario's production victory,
+   reinforcement, loadout, and runtime ownership boundaries. A direct
+   `ScenarioLoader` or engine
+   construction may diagnose configuration only; it is not comparable
+   production timeline evidence.
+4. Record the exact command, seed, tick bound, stop condition, and result.
 
-### 2. Run Simulation
-```python
-from stochastic_warfare.simulation.scenario import ScenarioLoader
-from stochastic_warfare.simulation.engine import SimulationEngine, EngineConfig
-from stochastic_warfare.simulation.recorder import SimulationRecorder
-from stochastic_warfare.simulation.victory import VictoryEvaluator
-```
-Run with recorder enabled and appropriate max_ticks.
+Avoid an unbounded default run. If the scenario is expensive, use the smallest
+bound that still exercises the requested narrative behavior and label the
+result as partial.
 
-### 3. Generate Narrative
-Use `stochastic_warfare.tools.narrative`:
-```python
-from stochastic_warfare.tools.narrative import generate_narrative, format_narrative
+## Build the Narrative
 
-ticks = generate_narrative(
-    recorder.events,
-    side_filter=None,        # or "blue"/"red"
-    event_types=None,        # or ["EngagementEvent", "MoraleStateChangeEvent"]
-    max_ticks=None,
-)
-```
+Pass `recorder.events` to
+`stochastic_warfare.tools.narrative.generate_narrative`, then format the result
+with `format_narrative` using `full`, `summary`, or `timeline` style.
 
-### 4. Structure as Report
-Present the narrative in three phases:
+Organize a longer report around actual simulation time or tick ranges:
 
-#### Opening (first 10% of ticks)
-- Initial contact and detection events
-- First engagement decisions
-- Force dispositions
+- initial disposition and first recorded contacts;
+- material engagements, decisions, morale transitions, and supply events;
+- termination condition, final recorded disposition, and losses.
 
-#### Main Battle (middle 80% of ticks)
-- Key engagements and their outcomes
-- Morale shifts and their causes
-- Commander decisions and order flow
-- Supply state changes
+Event-bearing ticks may be sparse. Do not calculate opening, middle, and
+conclusion percentages from the number of narrative entries.
 
-#### Conclusion (final 10% of ticks)
-- Victory conditions met
-- Final force disposition
-- Casualties and losses
+## Preserve Evidentiary Accuracy
 
-### 5. Output Styles
-Offer the user a choice:
-- **Full** (`style="full"`): Every tick with all entries
-- **Summary** (`style="summary"`): Only significant events (engagements, damage, morale changes, victories)
-- **Timeline** (`style="timeline"`): Compact one-line-per-event format
+- State only facts supported by recorded events, snapshots, final state, or run
+  results.
+- Label causal explanations and military interpretation as inference.
+- Do not invent commander intent, undetected movement, supply effects,
+  casualties, or victory reasons.
+- Do not treat the absence of a recorded event as proof that the underlying
+  behavior did not happen.
+- Identify formatter fallbacks and event types without dedicated narrative
+  handling when they materially affect readability.
 
-```python
-text = format_narrative(ticks, style="summary")
-```
-
-## Reference
-- Module: `stochastic_warfare/tools/narrative.py`
-- Event types with formatters: EngagementEvent, HitEvent, DamageEvent, DetectionEvent, MoraleStateChangeEvent, RoutEvent, SurrenderEvent, OrderIssuedEvent, DecisionMadeEvent, VictoryDeclaredEvent, OODAPhaseChangeEvent, and more
+When changing narrative or recorder code, add behavioral tests for ordering,
+filters, formatting, empty input, unknown event types, and deterministic
+output. Verify recorder/API/UI exposure separately when it is part of the
+requirement.

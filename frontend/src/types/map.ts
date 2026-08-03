@@ -1,5 +1,14 @@
 // TypeScript interfaces for map/spatial data (Phase 35)
 
+/** Exact integer values serialized by entities.base.UnitStatus. */
+export const MAP_UNIT_STATUS = {
+  ACTIVE: 0,
+  DISABLED: 1,
+  DESTROYED: 2,
+  SURRENDERED: 3,
+  ROUTING: 4,
+} as const
+
 export interface MapUnitFrame {
   id: string
   side: string

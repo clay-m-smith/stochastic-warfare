@@ -76,6 +76,43 @@ def _validate_scenario_identifier(value: Any) -> str:
 # ---------------------------------------------------------------------------
 
 
+class HistoricalClaimDisposition(str, Enum):
+    """Public disposition for one historical-validation claim."""
+
+    PRODUCTION_VALIDATED = "production_validated"
+    CURRENT_ENGINE_REGRESSION_ONLY = "current_engine_regression_only"
+    UNSUPPORTED = "unsupported"
+
+
+class HistoricalValidationClaim(BaseModel):
+    """Claim-level historical-validation status published by the API."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    claim_id: str
+    disposition: HistoricalClaimDisposition
+    reason_codes: list[str]
+    limitation: str
+    intended_use: str
+    metric_scope: list[str]
+    event_scope: str
+    current_engine_regression_evidence: bool
+    accepted_study_id: str | None
+    accepted_artifact_path: str | None
+
+
+class HistoricalValidationSummary(BaseModel):
+    """Conservative aggregate of a scenario's inventoried claims."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    aggregate_disposition: HistoricalClaimDisposition
+    claims: list[HistoricalValidationClaim]
+    accepted_claim_ids: list[str]
+    current_engine_regression_evidence: bool
+    ledger_sha256: str
+
+
 class ScenarioSummary(BaseModel):
     """Lightweight scenario listing entry."""
 
@@ -91,6 +128,7 @@ class ScenarioSummary(BaseModel):
     has_schools: bool = False
     has_space: bool = False
     has_dew: bool = False
+    historical_validation: HistoricalValidationSummary
 
 
 class ScenarioDetail(BaseModel):
@@ -99,6 +137,7 @@ class ScenarioDetail(BaseModel):
     name: str
     config: dict[str, Any] = Field(default_factory=dict)
     force_summary: dict[str, Any] = Field(default_factory=dict)
+    historical_validation: HistoricalValidationSummary
 
 
 # ---------------------------------------------------------------------------
@@ -439,19 +478,12 @@ class ReplayFrame(BaseModel):
     side_targeting: list[SideFowTargetingDecision] = Field(
         default_factory=list,
     )
-    side_targeting_outcomes: list[
-        SideFowEngagementRevalidationOutcome
-    ] = Field(default_factory=list)
+    side_targeting_outcomes: list[SideFowEngagementRevalidationOutcome] = Field(default_factory=list)
 
     @model_validator(mode="after")
     def _scope_isolated(self) -> ReplayFrame:
         if self.scope is TargetingExposureScope.PRIVILEGED_ENGINE:
-            if (
-                self.viewer_side is not None
-                or self.tracks
-                or self.side_targeting
-                or self.side_targeting_outcomes
-            ):
+            if self.viewer_side is not None or self.tracks or self.side_targeting or self.side_targeting_outcomes:
                 raise ValueError(
                     "PRIVILEGED_ENGINE frame cannot carry SIDE_FOW fields",
                 )
@@ -470,14 +502,10 @@ class ReplayFrame(BaseModel):
         for decision in self.side_targeting:
             if decision.viewer_side != self.viewer_side:
                 raise ValueError("SIDE_FOW frame contains another side's decision")
-            if (
-                decision.target_track_id is not None
-                and decision.target_track_id not in track_ids
-            ):
+            if decision.target_track_id is not None and decision.target_track_id not in track_ids:
                 raise ValueError("SIDE_FOW decision references an absent track")
         decision_keys = {
-            (decision.engine_tick, decision.battle_id, decision.shooter_id)
-            for decision in self.side_targeting
+            (decision.engine_tick, decision.battle_id, decision.shooter_id) for decision in self.side_targeting
         }
         for outcome in self.side_targeting_outcomes:
             if outcome.viewer_side != self.viewer_side:
@@ -510,11 +538,7 @@ class FramesResponse(BaseModel):
                 )
         elif not self.viewer_side:
             raise ValueError("SIDE_FOW response requires viewer_side")
-        if any(
-            frame.scope is not self.scope
-            or frame.viewer_side != self.viewer_side
-            for frame in self.frames
-        ):
+        if any(frame.scope is not self.scope or frame.viewer_side != self.viewer_side for frame in self.frames):
             raise ValueError("frame scope disagrees with response scope")
         return self
 
@@ -653,11 +677,7 @@ class CompareRequest(BaseModel):
     @field_validator("label_a", "label_b", mode="before")
     @classmethod
     def _valid_label(cls, value: Any) -> str:
-        if (
-            not isinstance(value, str)
-            or not value
-            or value != value.strip()
-        ):
+        if not isinstance(value, str) or not value or value != value.strip():
             raise ValueError(
                 "comparison labels must be non-empty trimmed strings",
             )
@@ -710,11 +730,7 @@ class SweepRequest(BaseModel):
     @field_validator("parameter_name", mode="before")
     @classmethod
     def _valid_parameter_name(cls, value: Any) -> str:
-        if (
-            not isinstance(value, str)
-            or not value
-            or value != value.strip()
-        ):
+        if not isinstance(value, str) or not value or value != value.strip():
             raise ValueError(
                 "parameter_name must be a non-empty trimmed string",
             )
@@ -870,10 +886,7 @@ class DoctrineCompareRequest(BaseModel):
             raise ValueError(
                 "doctrine comparison requires two distinct schools",
             )
-        patches = [
-            variant.calibration_patch.to_sparse_patch(mode="json")
-            for variant in self.variants
-        ]
+        patches = [variant.calibration_patch.to_sparse_patch(mode="json") for variant in self.variants]
         if any(patch != patches[0] for patch in patches[1:]):
             raise ValueError(
                 "doctrine comparison must hold calibration patches identical",

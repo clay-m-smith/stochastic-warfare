@@ -50,3 +50,21 @@ jobs:
           assert result.ticks_executed == 1;
           assert session.code_revision.commit == os.environ['EXPECTED_SOURCE_REVISION'];
           assert session.code_revision.dirty is False"
+
+      - name: Run immutable image historical-status smoke
+        run: >-
+          docker run --rm
+          stochastic-warfare:test
+          uv run --no-sync python -c
+          "from pathlib import Path;
+          from api.routers.scenarios import _historical_validation, _load_historical_claim_ledger;
+          assert not Path('docs').exists();
+          assert not Path('tests').exists();
+          ledger = _load_historical_claim_ledger();
+          summary = _historical_validation(
+              ledger,
+              Path('data/scenarios/73_easting/scenario.yaml'),
+          );
+          assert summary.aggregate_disposition.value == 'unsupported';
+          assert summary.current_engine_regression_evidence is True;
+          assert not summary.accepted_claim_ids"

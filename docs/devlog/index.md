@@ -2,6 +2,11 @@
 
 Rolling record of implementation decisions, changes, and lessons learned across all phases of Stochastic Warfare development.
 
+> **Historical-status scope:** Phase names, completed-status labels, and
+> archived test counts in this index record implementation history; they do
+> not establish historical validation. Only the typed historical-claim ledger
+> and an explicitly accepted production artifact can do so.
+
 ## Phases
 
 | Phase | Focus | Status | Log |
@@ -141,6 +146,7 @@ Rolling record of implementation decisions, changes, and lessons learned across 
 | **Block 13: Integrity Remediation Follow-ups** ||||
 | 115 | Sensing-Aware Tactical Standoff | **Complete** | [phase-115.md](phase-115.md) |
 | 116 | Fog-of-War Contact Continuation | **Complete** | [phase-116.md](phase-116.md) |
+| 117 | Historical Outcome-Envelope Integrity | **Complete** | [phase-117.md](phase-117.md) |
 
 ## Post-MVP Refinement Index
 

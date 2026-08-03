@@ -1,87 +1,81 @@
-# Auto-Calibration
+---
+name: calibrate
+description: "Calibrate a Stochastic Warfare scenario against a predeclared, source-backed historical outcome envelope using guarded sensitivity analysis and held-out validation. Use when the user explicitly asks to tune scenario calibration parameters; never use calibration to conceal an engine gap or alter physical weapon performance to force an outcome."
+---
 
-Automatically tune calibration overrides to match historical engagement metrics.
+# Scenario Calibration
 
-## Trigger
-Use when the user wants to:
-- Calibrate a scenario to match historical outcomes
-- Find the right parameter values for historical accuracy
-- Tune hit probability, target size, or force modifiers
+Read `CODEX.md`, the relevant scenario specification, historical envelope, phase
+material, and remediation backlog.
 
-## Process
+## Hard Preflight — REM-017
 
-### 1. Identify Target Metrics
-Ask the user for the historical metrics to match:
-- **Exchange ratio**: e.g., 4.6:1 for Golan Heights
-- **Casualties per side**: e.g., blue=10, red=46
-- **Duration**: how long the engagement lasted
-- **Other metrics**: territory control, morale outcomes
+Before running analysis or changing scenario data, read REM-017 in
+`docs/remediation-backlog.md`.
 
-### 2. Identify Influential Parameters
-Common calibration parameters and their primary effects:
-| Parameter | Primary Effect |
-|-----------|---------------|
-| `hit_probability_modifier` | Overall lethality scaling |
-| `target_size_modifier` | Defensive advantage (hull-down, concealment) |
-| `force_ratio_modifier` | Assessment bias for attack/defense decisions |
-| `morale_modifier` | Rate of morale degradation |
+If REM-017 is not closed with behavioral evidence that the shared batch helper:
 
-### 3. Sweep Each Parameter
-For each parameter, run a sensitivity sweep to find the value range that produces results closest to the target:
+- loads the exact expected force roster and loadouts through `ScenarioLoader`;
+- applies the requested override to runtime state;
+- produces a controlled outcome difference for an outcome-affecting parameter;
+- rejects unknown metrics and invalid or empty scenario loads;
 
-```python
-from stochastic_warfare.tools.sensitivity import SweepConfig, run_sweep
+stop. Do not run a sweep, infer parameter values, edit calibration, or report
+zero-valued output as analysis. Report that calibration is blocked by REM-017
+and identify the missing evidence. Do not work around this gate with structural
+tests, skipped-unit warnings, a simplified runner, or an ad hoc unverified
+harness.
 
-config = SweepConfig(
-    scenario_path="data/scenarios/{name}/scenario.yaml",
-    parameter_name="hit_probability_modifier",
-    values=[0.5, 0.75, 1.0, 1.25, 1.5, 1.75, 2.0],
-    metric_names=["exchange_ratio", "blue_destroyed", "red_destroyed"],
-    iterations_per_point=10,
-    max_ticks=200,
-)
-result = run_sweep(config)
-```
+Resume the workflow below only after that remediation is closed and reverified.
 
-### 4. Binary Search Refinement
-Once the approximate range is found, use binary search to narrow down:
-1. Find the two sweep points that bracket the target metric
-2. Test the midpoint
-3. Recurse until within 5% of target or 5 iterations
+## Establish the Calibration Contract
 
-### 5. Multi-Parameter Calibration
-If multiple parameters need tuning:
-1. Start with the most influential parameter (usually `hit_probability_modifier`)
-2. Fix it at the best value found
-3. Move to the next parameter
-4. Repeat until all parameters are calibrated
-5. Do one final validation sweep with all parameters set
+1. Require a source-backed, predeclared historical envelope. Use `$backtest` if
+   one does not exist.
+2. Separate fixed physical inputs from legitimate scenario calibration.
+3. Validate candidate field names and values against the current
+   `CalibrationSchema`; never rely on remembered parameter names.
+4. Prove each candidate parameter is loaded, wired, enabled, and
+   outcome-affecting in the production path.
+5. Freeze tuning seeds, held-out validation seeds, metrics, horizon, tolerances,
+   and stopping criteria before tuning.
 
-### 6. Validate
-Run 20+ iterations with the final calibration and compare:
-```python
-from stochastic_warfare.tools.comparison import compare_distributions
+## Tune Carefully
 
-# Compare simulation mean to historical value
-# p-value indicates if the simulation is consistent with history
-```
+1. Run and retain an unmodified baseline.
+2. Bound each range with sources, schema constraints, or documented military
+   plausibility.
+3. Use a coarse sweep to measure sensitivity and interaction.
+4. Use binary search only after demonstrating a monotonic relationship over the
+   bounded interval.
+5. When parameters interact, use an explicit multivariate design rather than
+   silently fixing them one at a time.
+6. Use common random numbers only with a paired analysis. Otherwise use
+   independent seed sets and the corresponding statistical method.
+7. Treat p-values as evidence about a specified null hypothesis, not confidence
+   that the model matches history. Use effect sizes, confidence intervals, and
+   the predeclared historical envelope.
+8. Stop and record an engine or scenario-model gap when plausible permitted
+   parameters cannot satisfy the envelope.
 
-### 7. Output
-Provide the final `calibration_overrides` block:
-```yaml
-calibration_overrides:
-  hit_probability_modifier: 0.85
-  target_size_modifier: 0.55
-  force_ratio_modifier: 1.0
-```
+Never tune per-weapon physical performance to force a scenario result, weaken an
+acceptance threshold after seeing a miss, validate on the tuning sample, or
+describe a non-significant difference as equivalence.
 
-Report:
-- Each parameter value and why it was chosen
-- Final metric comparison (simulation mean vs historical)
-- Confidence level (p-value from statistical test)
-- Any remaining discrepancies and possible causes
+## Validate and Record
 
-## Reference
-- Existing calibrations: see `data/scenarios/golan_heights/scenario.yaml`, `data/scenarios/73_easting/scenario.yaml`
-- Known calibration values: Golan target_size_modifier=0.55 (hull-down positions)
-- Modules: `stochastic_warfare/tools/sensitivity.py`, `stochastic_warfare/tools/comparison.py`
+1. Re-run the final candidate on held-out seeds.
+2. Verify expected forces, weapons, sensors, events, and modeled interactions
+   were exercised.
+3. Run scenario-data validation, focused production tests, deterministic replay
+   where applicable, scenario evaluation, and relevant broader suites.
+4. Test disabled or baseline behavior that distinguishes a real effect from an
+   unconditional result.
+5. Document every changed value with its source and rationale.
+6. Update the specification, phase devlog, and remediation status only after
+   evidence passes.
+7. Commit only as part of a completed coherent phase under `CODEX.md`.
+
+Report exact parameters, bounds, tuning and validation seeds, commands, raw
+results, statistics, envelope results, other-scenario effects, and remaining
+discrepancies.

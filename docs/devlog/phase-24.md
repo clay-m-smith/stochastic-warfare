@@ -1,5 +1,11 @@
 # Phase 24: Unconventional & Prohibited Warfare
 
+> **Phase 117 / REM-050 correction (2026-08-02):** The standalone escalation
+> engine supports thresholds, hysteresis, and cooldown, but production scenario
+> loading currently discards the authored `escalation_config` mapping and uses
+> defaults. Phase 137 owns typed scenario-to-runtime configuration proof; the
+> implementation descriptions below are not proof of that wiring.
+
 **Status**: Complete
 **Tests**: 345 new (6,325 total)
 **Dependencies**: None new

@@ -42,17 +42,19 @@ from stochastic_warfare.simulation.victory import VictoryEvaluator, VictoryResul
 logger = get_logger(__name__)
 
 _CHECKPOINT_VERSION = 116
-_TERMINAL_CONDITION_TYPES = frozenset({
-    "armistice",
-    "attrition_ratio",
-    "ceasefire",
-    "force_destroyed",
-    "max_ticks",
-    "morale_collapsed",
-    "supply_exhausted",
-    "territory_control",
-    "time_expired",
-})
+PRODUCTION_TERMINAL_CONDITION_TYPES: frozenset[str] = frozenset(
+    {
+        "armistice",
+        "attrition_ratio",
+        "ceasefire",
+        "force_destroyed",
+        "max_ticks",
+        "morale_collapsed",
+        "supply_exhausted",
+        "territory_control",
+        "time_expired",
+    },
+)
 
 
 def _checkpoint_targeting_memberships(
@@ -1839,7 +1841,7 @@ class SimulationEngine:
                 raw_last_victory["winning_side"]
                 not in declared_sides | {"draw"}
                 or raw_last_victory["condition_type"]
-                not in _TERMINAL_CONDITION_TYPES
+                not in PRODUCTION_TERMINAL_CONDITION_TYPES
                 or not raw_last_victory["message"]
             ):
                 raise ValueError(

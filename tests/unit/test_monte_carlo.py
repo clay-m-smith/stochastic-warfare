@@ -1,4 +1,9 @@
-"""Tests for stochastic_warfare.validation.monte_carlo."""
+"""Legacy Monte Carlo diagnostic unit tests.
+
+Synthetic per-metric range comparisons are compatibility diagnostics only.
+This module does not execute a historical study and cannot support a
+historical-validation claim.
+"""
 
 from __future__ import annotations
 
@@ -117,10 +122,13 @@ class TestMonteCarloResultStats:
     def test_missing_metric(self) -> None:
         runs = _make_runs(10)
         mc = MonteCarloResult(runs)
-        assert mc.mean("nonexistent") == 0.0
-        assert mc.std("nonexistent") == 0.0
-        dist = mc.distribution("nonexistent")
-        assert len(dist) == 0
+
+        with pytest.raises(ValueError, match="missing metric 'nonexistent'"):
+            mc.mean("nonexistent")
+        with pytest.raises(ValueError, match="missing metric 'nonexistent'"):
+            mc.std("nonexistent")
+        with pytest.raises(ValueError, match="missing metric 'nonexistent'"):
+            mc.distribution("nonexistent")
 
     def test_single_run(self) -> None:
         runs = [RunResult(seed=42, metrics={"x": 10.0}, terminated_by="done")]
@@ -133,23 +141,37 @@ class TestMonteCarloResultStats:
     def test_empty_runs(self) -> None:
         mc = MonteCarloResult([])
         assert mc.num_runs == 0
-        assert mc.mean("x") == 0.0
 
-    def test_inf_values_filtered(self) -> None:
+        with pytest.raises(ValueError, match="no runs"):
+            mc.mean("x")
+
+    @pytest.mark.parametrize("value", [float("nan"), float("inf"), float("-inf")])
+    def test_nonfinite_values_rejected(self, value: float) -> None:
         runs = [
-            RunResult(seed=1, metrics={"er": float("inf")}, terminated_by="t"),
+            RunResult(seed=1, metrics={"er": value}, terminated_by="t"),
             RunResult(seed=2, metrics={"er": 25.0}, terminated_by="t"),
-            RunResult(seed=3, metrics={"er": 30.0}, terminated_by="t"),
         ]
         mc = MonteCarloResult(runs)
-        # inf should be filtered out
-        assert mc.mean("er") == pytest.approx(27.5)
+
+        with pytest.raises(ValueError, match="non-finite metric 'er'"):
+            mc.mean("er")
+
+    def test_partial_metric_vector_rejected(self) -> None:
+        runs = [
+            RunResult(seed=1, metrics={"er": 25.0}, terminated_by="t"),
+            RunResult(seed=2, metrics={"other": 30.0}, terminated_by="t"),
+        ]
+
+        with pytest.raises(ValueError, match="missing metric 'er'.*seed 2"):
+            MonteCarloResult(runs).mean("er")
 
 
 # ── MonteCarloResult — comparison ────────────────────────────────────
 
 
-class TestMonteCarloResultComparison:
+class TestLegacyHistoricalComparisonDiagnostic:
+    """Exercise the legacy comparator without granting it verdict authority."""
+
     def test_compare_within_tolerance(self) -> None:
         runs = _make_runs(50, exchange_ratio=25.0, std=3.0)
         mc = MonteCarloResult(runs)
@@ -176,8 +198,53 @@ class TestMonteCarloResultComparison:
         historical = [
             HistoricalMetric(name="exchange_ratio", value=28.0),
         ]
-        report = mc.compare_to_historical(historical)
-        assert report.metric_results[0].within_tolerance is False
+
+        with pytest.raises(ValueError, match="missing metric 'exchange_ratio'.*seed 1"):
+            mc.compare_to_historical(historical)
+
+    def test_compare_empty_historical_rejected(self) -> None:
+        mc = MonteCarloResult(_make_runs(2))
+
+        with pytest.raises(ValueError, match="requires at least one metric"):
+            mc.compare_to_historical([])
+
+    def test_compare_rejects_incomplete_run_vectors(self) -> None:
+        runs = [
+            RunResult(seed=1, metrics={"exchange_ratio": 25.0}, terminated_by="t"),
+            RunResult(seed=2, metrics={"other": 1.0}, terminated_by="t"),
+        ]
+        historical = [HistoricalMetric(name="exchange_ratio", value=28.0)]
+
+        with pytest.raises(ValueError, match="missing metric"):
+            MonteCarloResult(runs).compare_to_historical(historical)
+
+    def test_compare_ignores_unrequested_nonfinite_diagnostics(self) -> None:
+        runs = [
+            RunResult(
+                seed=1,
+                metrics={"duration_s": 10.0, "exchange_ratio": float("inf")},
+                terminated_by="t",
+            ),
+            RunResult(
+                seed=2,
+                metrics={"duration_s": 12.0, "exchange_ratio": float("inf")},
+                terminated_by="t",
+            ),
+        ]
+        historical = [
+            HistoricalMetric(
+                name="duration_s",
+                value=11.0,
+                tolerance_factor=2.0,
+            ),
+        ]
+
+        report = MonteCarloResult(runs).compare_to_historical(historical)
+
+        assert [result.metric_name for result in report.metric_results] == [
+            "duration_s",
+        ]
+        assert report.metric_results[0].simulated_mean == pytest.approx(11.0)
 
 
 # ── ComparisonReport ─────────────────────────────────────────────────
@@ -214,13 +281,9 @@ class TestComparisonReport:
             )
         return ComparisonReport(results)
 
-    def test_all_within_tolerance(self) -> None:
+    def test_report_has_no_boolean_validation_verdict(self) -> None:
         report = self._make_report(3, 0)
-        assert report.all_within_tolerance() is True
-
-    def test_some_failing(self) -> None:
-        report = self._make_report(2, 1)
-        assert report.all_within_tolerance() is False
+        assert not hasattr(report, "all_within_tolerance")
 
     def test_passing_count(self) -> None:
         report = self._make_report(3, 2)
@@ -231,11 +294,11 @@ class TestComparisonReport:
         report = self._make_report(1, 1)
         text = report.summary()
         assert "1/2" in text
-        assert "PASS" in text
-        assert "FAIL" in text
+        assert "legacy diagnostic only" in text
+        assert "IN RANGE" in text
+        assert "OUT OF RANGE" in text
+        assert "historical validation" not in text
 
-    def test_empty_report(self) -> None:
-        report = ComparisonReport([])
-        assert report.all_within_tolerance() is True
-        assert report.passing_count() == 0
-        assert report.summary().startswith("Comparison Report: 0/0")
+    def test_empty_report_rejected(self) -> None:
+        with pytest.raises(ValueError, match="requires at least one metric"):
+            ComparisonReport([])

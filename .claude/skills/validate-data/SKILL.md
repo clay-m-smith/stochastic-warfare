@@ -1,107 +1,110 @@
 ---
 name: validate-data
-description: Validate unit YAML and scenario YAML data integrity. Catches equipment name drift, missing sensor mappings, invalid unit type references, and broken ScenarioLoader loads. Run after adding or modifying units, weapons, or scenarios.
-allowed-tools: Read, Grep, Glob, Bash
+description: Validate scenario, unit, weapon, ammunition, sensor, era, and equipment-mapping data through strict catalog checks, RuntimeLoadoutBuilder, and the production ScenarioLoader. Use after changing YAML catalogs, scenarios, unit equipment, mapping registries, or typed data schemas, and before committing any data-affecting phase.
 ---
 
-# Data Integrity Validator
+# Validate Data
 
-Validates that all unit YAML files and scenario YAML files are internally consistent and will load correctly through ScenarioLoader with armed and sensored units.
+Validate the paths named by the user or changed in the current phase. Use
+`CODEX.md` for data semantics and evidence requirements. Validation may diagnose
+problems, but it must never invent a plausible mapping, sensor, weapon, unit, or
+parameter merely to make a check pass.
 
-## Trigger
-Run this validation:
-- After adding new unit YAML files
-- After adding new scenario YAML files
-- After modifying equipment entries in unit YAML
-- After adding new weapon or ammo YAML files
-- After modifying `_WEAPON_NAME_MAP` or `_SENSOR_NAME_MAP` in `scenario_runner.py`
-- When the user asks to validate data integrity
-- As a pre-commit sanity check for data changes
+## Establish Scope
 
-## Arguments
-$ARGUMENTS
+1. Inspect `git status --short` and the phase diff.
+2. List the changed scenario, unit, weapon, ammunition, sensor, era, schema, and
+   mapping files.
+3. Trace each changed value through its typed schema, the production
+   `RuntimeLoadoutBuilder`, and `ScenarioLoader`.
+4. Identify which units and scenarios must expose or exercise the data.
 
-If arguments specify a file path, validate only that file. Otherwise validate everything.
+## Validate During Iteration
 
-## Process
+For each changed YAML file, run:
 
-### 1. Run Validation Script
-```bash
+```powershell
+uv run python scripts/validate_scenario_data.py --file <changed-yaml>
+```
+
+Read all errors and warnings. A zero exit code with warnings is not the same as
+a warning-free validation.
+
+For an equipment name or definition:
+
+1. Locate the authoritative YAML definition and stable ID with `rg`.
+2. Verify domain, era, category, capabilities, assignments, ammunition, and
+   sensor/weapon compatibility.
+3. Verify exact loader behavior and runtime attachment for the affected unit.
+4. Reject unsupported or ambiguous data explicitly.
+
+Do not map to the "closest" definition. Do not add a generic eye, binocular,
+weapon, timestamp, position, or other default without an explicit modeled
+requirement and traceable source.
+
+## Understand the Existing Validator
+
+`scripts/validate_scenario_data.py` uses the current production-owned data
+boundaries:
+
+- `EQUIPMENT_MAPPING_REGISTRY` and `EquipmentMappingRegistry` reject duplicate
+  keys and enforce exact mapping identity and target semantics;
+- `RuntimeLoadoutBuilder` resolves every reachable unit definition against the
+  effective base-plus-era weapon, ammunition, and sensor catalogs;
+- full-catalog coverage reports every unmapped authored key and stale registry
+  key; and
+- `ScenarioLoader` loads the affected scenarios through the same catalog and
+  loadout composition used by runtime preparation.
+
+Passing registry or load checks proves strict data construction, not that an
+attachment changes a production outcome. For mapping changes, run the focused
+unit and integration contracts as well:
+
+```powershell
+uv run python -m pytest tests/unit/test_phase_109_equipment_mapping.py tests/integration/test_phase_109_equipment_mapping.py -q
+```
+
+## Run the Full Data Gates
+
+After focused fixes, run:
+
+```powershell
 uv run python scripts/validate_scenario_data.py
+uv run python -m pytest tests/validation/test_phase_30_scenarios.py::TestScenarioFullLoad -q --tb=short -o addopts=
 ```
 
-Or for a single file:
-```bash
-uv run python scripts/validate_scenario_data.py --file $ARGUMENTS
-```
+Add focused production-path tests that assert the affected units' exact weapon,
+ammunition, sensor, equipment, configuration, and runtime behavior. Include
+negative tests for unknown, misspelled, incompatible, or incomplete data.
 
-### 2. If Errors Found, Diagnose and Fix
+When data can alter combat, movement, detection, victory, or another scenario
+outcome, also use `$evaluate-scenarios` and the relevant deterministic,
+checkpoint, comparison, or Monte Carlo checks from `CODEX.md`.
 
-#### Equipment name not in `_WEAPON_NAME_MAP`
-The unit YAML has a `category: WEAPON` equipment entry whose `name` doesn't have a mapping to a weapon definition ID.
+## Diagnose Without Papering Over
 
-**Fix**: Add the mapping to `_WEAPON_NAME_MAP` in `stochastic_warfare/validation/scenario_runner.py` (line ~951).
+When validation fails:
 
-To find the correct weapon ID:
-```bash
-# List available weapon definitions
-ls data/weapons/*.yaml data/eras/*/weapons/*.yaml 2>/dev/null
-# Check the weapon ID inside a file
-head -5 data/weapons/<candidate>.yaml
-```
+- trace the intended semantic identity from authoritative project data and
+  cited sources;
+- determine whether the defect is in YAML, schema, loader, mapping, or runtime
+  wiring;
+- change only the layer that is actually wrong;
+- verify both the affected item and a negative control;
+- report any remaining warnings or uncovered units.
 
-Map the equipment name to the closest matching weapon definition ID.
+Do not weaken validators or expected outcomes merely to accept current data.
 
-#### Equipment name not in `_SENSOR_NAME_MAP`
-Same as above but for `category: SENSOR` equipment.
+## Report
 
-**Fix**: Add the mapping to `_SENSOR_NAME_MAP` in `stochastic_warfare/validation/scenario_runner.py` (line ~1192).
+Report:
 
-Available sensor definitions:
-```bash
-ls data/sensors/*.yaml data/eras/*/sensors/*.yaml 2>/dev/null
-```
+- files and data identities checked;
+- exact commands, exit codes, error and warning counts;
+- evidence for declared, loaded, wired, enabled, exercised,
+  outcome-affecting, and persisted/exposed stages;
+- scenarios and excluded suites not run;
+- unresolved semantic assumptions or limitations.
 
-#### Unit has no SENSOR equipment
-The unit YAML has no equipment entry with `category: SENSOR`.
-
-**Fix**: Add a default sensor appropriate to the era:
-- Modern/WW2: `{name: "Mk 1 Eyeball", category: SENSOR, weight_kg: 0.0, reliability: 1.0}`
-- WW1: `{name: "Field Binoculars", category: SENSOR, weight_kg: 0.5, reliability: 0.99}`
-- Napoleonic/Ancient: `{name: "Naked Eye Observation", category: SENSOR, weight_kg: 0.0, reliability: 1.0}`
-
-#### Scenario references non-existent unit_type
-The scenario YAML references a `unit_type` that doesn't match any unit YAML's `unit_type` field.
-
-**Fix**: Either create the missing unit YAML or change the scenario to reference an existing unit type. Check available types:
-```bash
-grep -rh "^unit_type:" data/units/ data/eras/*/units/ 2>/dev/null | sort -u
-```
-
-#### Invalid equipment category
-A unit YAML uses a `category` value that isn't a valid `EquipmentCategory` enum value.
-
-Valid values: WEAPON, SENSOR, PROPULSION, PROTECTION, COMMUNICATION, NAVIGATION, UTILITY, POWER.
-Common mistake: `TOOL` should be `UTILITY`.
-
-### 3. Verify Fix
-After fixing, re-run validation:
-```bash
-uv run python scripts/validate_scenario_data.py
-```
-
-### 4. Run Full Load Test
-```bash
-uv run python -m pytest tests/validation/test_phase_30_scenarios.py::TestScenarioFullLoad -x --tb=short -q
-```
-
-All scenarios must pass with armed > 0 and sensored > 0.
-
-## Key Files
-| File | Purpose |
-|------|---------|
-| `scripts/validate_scenario_data.py` | Standalone validation script |
-| `stochastic_warfare/validation/scenario_runner.py:951` | `_WEAPON_NAME_MAP` — equipment name → weapon ID |
-| `stochastic_warfare/validation/scenario_runner.py:1192` | `_SENSOR_NAME_MAP` — equipment name → sensor ID |
-| `stochastic_warfare/entities/equipment.py:15` | `EquipmentCategory` enum |
-| `tests/validation/test_phase_30_scenarios.py:729` | `TestScenarioFullLoad` parametrized test |
+Only call data integrity complete when the applicable production stages have
+behavioral evidence.

@@ -10,8 +10,9 @@ export function ConfigBadges({ config }: ConfigBadgesProps) {
   if ('ew_config' in config) badges.push({ label: 'Electronic Warfare', className: 'bg-yellow-100 text-yellow-800' })
   if ('cbrn_config' in config) badges.push({ label: 'CBRN', className: 'bg-orange-100 text-orange-800' })
   if ('escalation_config' in config) badges.push({ label: 'Escalation', className: 'bg-red-100 text-red-800' })
-  if ('schools_config' in config) badges.push({ label: 'Doctrinal Schools', className: 'bg-purple-100 text-purple-800' })
+  if ('school_config' in config) badges.push({ label: 'Doctrinal Schools', className: 'bg-purple-100 text-purple-800' })
   if ('space_config' in config) badges.push({ label: 'Space', className: 'bg-indigo-100 text-indigo-800' })
+  if ('dew_config' in config) badges.push({ label: 'Directed Energy Weapons', className: 'bg-cyan-100 text-cyan-800' })
 
   if (badges.length === 0) return null
 

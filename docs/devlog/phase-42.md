@@ -1,5 +1,13 @@
 # Phase 42: Tactical Behavior
 
+> **Phase 117 historical-claim supersession (2026-08-02):** This archived page
+> preserves implementation history. Its historical-winner, outcome, casualty,
+> duration, calibration, plausibility, envelope, and tolerance statements are
+> not accepted historical validation. Any engine figures below are regression
+> history only, not predictive evidence or calibration authority; the typed
+> claim ledger and accepted production artifacts, if any, are authoritative.
+
+
 **Status**: Complete
 **Block**: 5 (Combat Depth)
 **Tests**: 26 new in `test_phase42_tactical_behavior.py` (5 test classes)

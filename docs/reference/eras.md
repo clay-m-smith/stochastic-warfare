@@ -47,11 +47,17 @@ wiring or outcome effects.
 
     A historical name, source citation, `documented_outcomes` field, successful
     load, or current-engine regression result does not by itself validate a
-    scenario against history. Earlier blanket Phase 47 claims are superseded
-    by [REM-030](../remediation-backlog.md#rem-030-catalog-wide-historical-outcome-claims-lack-production-validation).
-    Each scenario must have a provenance-bearing, held-out production
-    outcome-envelope verdict before it is described as historically validated;
-    otherwise its historical-validation status is unsupported.
+    scenario against history. Phase 117 replaces earlier blanket Phase 47
+    claims with a source-audited claim ledger, typed study plans, a
+    `SimulationRuntimeFactory`-owned runner, retained observations, joint
+    outcome-envelope evaluation, and digest-bearing artifacts. Only exact claim
+    scopes backed by an accepted, predeclared, independent, clean production
+    `PASS` may be marked `production_validated`; otherwise they remain
+    `current_engine_regression_only` or `unsupported`. The current ledger has
+    zero production-validated scenarios. The retained 73 Easting study is a
+    completed, non-promotable `FAIL`; see the
+    [contract](../specs/historical-outcome-envelope-integrity.md) and
+    [artifact](../evidence/phase-117/73-easting-phase117.json).
 
 ---
 
@@ -162,9 +168,10 @@ High-altitude bombing with circular error probable (CEP):
 ### Available Scenarios
 
 Kursk 1943 (largest tank battle), Normandy Bocage 1944 (hedgerow fighting),
-Stalingrad 1942 (urban combat), and Midway 1942 (carrier battle). Their
-availability and current-engine regression coverage are not historical
-outcome-envelope verdicts.
+Stalingrad 1942 (urban combat), Midway 1942 (carrier battle), and Eastern
+Front 1943 (large-scale German-Soviet combined arms). Their availability and
+current-engine regression coverage are not historical outcome-envelope
+verdicts.
 
 ---
 

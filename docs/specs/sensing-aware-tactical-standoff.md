@@ -639,7 +639,9 @@ the absence of cross-side/undetected or reversible-identifier leakage.
 5. Run Cambrai and Jutland seeds 42-44. For each, retain exact old-versus-new
    movement, capital/tank weapon-fire topology, ammunition, engagement events,
    casualties, terminal outcome, and warnings. Do not describe either as
-   historically validated under the open REM-030 contract.
+   historically validated: completed Phase 117 classifies zero claims as
+   production-validated and closed REM-030 with a truthful failed study; these
+   runs remain current-engine regression evidence only.
 6. Prove FOW disabled direct-contact behavior and FOW enabled no-contact,
    current-contact, stale/coasting, ownership, and single-draw behavior. Do not
    claim fresh nonempty-contact continuation.

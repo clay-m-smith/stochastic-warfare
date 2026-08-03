@@ -1,5 +1,13 @@
 # Phase 102: Bint Jbeil + INS Hanit (2006) — Final Block 11 Golden Scenario
 
+> **Phase 117 historical-claim supersession (2026-08-02):** This archived page
+> preserves implementation history. Its historical-winner, outcome, casualty,
+> duration, calibration, plausibility, envelope, and tolerance statements are
+> not accepted historical validation. Any engine figures below are regression
+> history only, not predictive evidence or calibration authority; the typed
+> claim ledger and accepted production artifacts, if any, are authoritative.
+
+
 **Status**: Complete (scenarios, engine plumbing, regression); Block 11 COMPLETE.
 **Block**: 11 (Golden Scenarios & End-to-End Engine Validation through UI).
 

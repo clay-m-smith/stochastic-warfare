@@ -2,8 +2,19 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { renderHook, waitFor } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { useScenarios, useScenario } from '../../hooks/useScenarios'
-import type { ScenarioSummary } from '../../types/api'
+import type {
+  HistoricalValidationSummary,
+  ScenarioSummary,
+} from '../../types/api'
 import { createElement } from 'react'
+
+const HISTORICAL_VALIDATION: HistoricalValidationSummary = {
+  aggregate_disposition: 'unsupported',
+  current_engine_regression_evidence: true,
+  accepted_claim_ids: [],
+  ledger_sha256: 'a'.repeat(64),
+  claims: [],
+}
 
 const MOCK_SCENARIOS: ScenarioSummary[] = [
   {
@@ -19,6 +30,7 @@ const MOCK_SCENARIOS: ScenarioSummary[] = [
     has_schools: false,
     has_space: false,
     has_dew: false,
+    historical_validation: HISTORICAL_VALIDATION,
   },
 ]
 
@@ -45,7 +57,12 @@ describe('useScenarios', () => {
 
 describe('useScenario', () => {
   it('fetches single scenario', async () => {
-    const detail = { name: '73_easting', config: {}, force_summary: {} }
+    const detail = {
+      name: '73_easting',
+      config: {},
+      force_summary: {},
+      historical_validation: HISTORICAL_VALIDATION,
+    }
     vi.spyOn(globalThis, 'fetch').mockResolvedValue(
       new Response(JSON.stringify(detail), { status: 200 }),
     )

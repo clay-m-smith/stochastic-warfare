@@ -1,9 +1,10 @@
-"""Monte Carlo harness for engagement and campaign validation.
+"""Legacy Monte Carlo harness for diagnostic compatibility.
 
 Runs N iterations of a scenario with different PRNG seeds, collects
-per-run metrics, and compares aggregate statistics against historical
-outcomes.  Supports both engagement-level (:class:`MonteCarloHarness`)
-and campaign-level (:class:`CampaignMonteCarloHarness`) validation.
+per-run metrics, and diagnoses aggregate differences from legacy historical
+metadata.  It is not the production historical-validation path.  Supports
+both engagement-level (:class:`MonteCarloHarness`) and campaign-level
+(:class:`CampaignMonteCarloHarness`) diagnostics.
 """
 
 from __future__ import annotations
@@ -63,36 +64,37 @@ class RunResult:
 
 
 class ComparisonReport:
-    """Aggregate comparison of Monte Carlo results to historical data."""
+    """Nonempty per-metric diagnostics with no aggregate validation verdict."""
 
     def __init__(self, metric_results: list[ComparisonResult]) -> None:
+        if not metric_results:
+            raise ValueError("comparison report requires at least one metric")
         self.metric_results = metric_results
 
-    def all_within_tolerance(self) -> bool:
-        """True if every metric falls within historical tolerance."""
-        return all(r.within_tolerance for r in self.metric_results)
-
     def passing_count(self) -> int:
-        """Number of metrics within tolerance."""
+        """Number of diagnostic metrics inside their legacy tolerance."""
         return sum(1 for r in self.metric_results if r.within_tolerance)
 
     def failing_count(self) -> int:
-        """Number of metrics outside tolerance."""
+        """Number of diagnostic metrics outside their legacy tolerance."""
         return sum(1 for r in self.metric_results if not r.within_tolerance)
 
     def summary(self) -> str:
-        """Human-readable summary of comparison results."""
+        """Human-readable diagnostic summary without a validation claim."""
         lines = [
-            f"Comparison Report: {self.passing_count()}/{len(self.metric_results)} metrics within tolerance",
+            "Comparison Report (legacy diagnostic only): "
+            f"{self.passing_count()}/{len(self.metric_results)} metrics "
+            "within configured tolerance",
             "",
         ]
         for r in self.metric_results:
-            status = "PASS" if r.within_tolerance else "FAIL"
+            status = "IN RANGE" if r.within_tolerance else "OUT OF RANGE"
+            deviation = "undefined" if r.deviation_factor is None else f"{r.deviation_factor:.3f}x"
             lines.append(
                 f"  [{status}] {r.metric_name}: "
                 f"historical={r.historical_value:.3f}, "
                 f"simulated={r.simulated_mean:.3f} +/- {r.simulated_std:.3f}, "
-                f"deviation={r.deviation_factor:.3f}x, "
+                f"deviation={deviation}, "
                 f"tolerance={r.tolerance_factor:.1f}x"
             )
         return "\n".join(lines)
@@ -104,7 +106,7 @@ class ComparisonReport:
 
 
 class MonteCarloResult:
-    """Collected results from all Monte Carlo runs."""
+    """Legacy run collection with strict diagnostic metric extraction."""
 
     def __init__(self, runs: list[RunResult]) -> None:
         self.runs = runs
@@ -114,23 +116,41 @@ class MonteCarloResult:
         return len(self.runs)
 
     def _values(self, metric: str) -> np.ndarray:
-        """Extract values of *metric* across all runs."""
-        vals = []
+        """Extract one complete finite metric vector or reject."""
+        if not self.runs:
+            raise ValueError(f"cannot extract metric {metric!r}: no runs")
+
+        vals: list[float] = []
         for run in self.runs:
-            v = run.metrics.get(metric)
-            if v is not None and np.isfinite(v):
-                vals.append(v)
-        return np.array(vals, dtype=np.float64) if vals else np.array([], dtype=np.float64)
+            if metric not in run.metrics:
+                raise ValueError(
+                    f"missing metric {metric!r} in run with seed {run.seed}",
+                )
+            value = run.metrics[metric]
+            if isinstance(value, bool):
+                raise ValueError(
+                    f"non-finite or non-numeric metric {metric!r} in run with seed {run.seed}",
+                )
+            try:
+                finite_value = float(value)
+            except (TypeError, ValueError) as exc:
+                raise ValueError(
+                    f"non-finite or non-numeric metric {metric!r} in run with seed {run.seed}",
+                ) from exc
+            if not np.isfinite(finite_value):
+                raise ValueError(
+                    f"non-finite metric {metric!r} in run with seed {run.seed}",
+                )
+            vals.append(finite_value)
+        return np.asarray(vals, dtype=np.float64)
 
     def mean(self, metric: str) -> float:
         """Mean of *metric* across runs."""
-        v = self._values(metric)
-        return float(np.mean(v)) if len(v) > 0 else 0.0
+        return float(np.mean(self._values(metric)))
 
     def median(self, metric: str) -> float:
         """Median of *metric* across runs."""
-        v = self._values(metric)
-        return float(np.median(v)) if len(v) > 0 else 0.0
+        return float(np.median(self._values(metric)))
 
     def std(self, metric: str) -> float:
         """Standard deviation of *metric* across runs."""
@@ -139,12 +159,9 @@ class MonteCarloResult:
 
     def percentile(self, metric: str, p: float) -> float:
         """Percentile *p* (0-100) of *metric*."""
-        v = self._values(metric)
-        return float(np.percentile(v, p)) if len(v) > 0 else 0.0
+        return float(np.percentile(self._values(metric), p))
 
-    def confidence_interval(
-        self, metric: str, level: float = 0.95
-    ) -> tuple[float, float]:
+    def confidence_interval(self, metric: str, level: float = 0.95) -> tuple[float, float]:
         """Confidence interval for the mean of *metric*.
 
         Uses Student's t-distribution for n < 30 (exact small-sample CI)
@@ -153,7 +170,7 @@ class MonteCarloResult:
         v = self._values(metric)
         n = len(v)
         if n < 2:
-            m = float(np.mean(v)) if n == 1 else 0.0
+            m = float(np.mean(v))
             return (m, m)
 
         m = float(np.mean(v))
@@ -178,19 +195,17 @@ class MonteCarloResult:
         """Raw array of *metric* values across runs."""
         return self._values(metric)
 
-    def compare_to_historical(
-        self, historical: list[HistoricalMetric]
-    ) -> ComparisonReport:
-        """Compare MC statistics to historical metrics."""
+    def compare_to_historical(self, historical: list[HistoricalMetric]) -> ComparisonReport:
+        """Build complete legacy diagnostics, never a validation verdict."""
         simulated: dict[str, float] = {}
         stds: dict[str, float] = {}
 
-        # Collect all metric names from runs
-        all_names: set[str] = set()
-        for run in self.runs:
-            all_names.update(run.metrics.keys())
-
-        for name in all_names:
+        # A legacy diagnostic is complete for its exact requested scope. An
+        # unrelated run metric may be undefined (for example an exchange ratio
+        # with a zero denominator) without invalidating finite requested
+        # observations; requested vectors still reject on any missing or
+        # non-finite value.
+        for name in sorted({metric.name for metric in historical}):
             simulated[name] = self.mean(name)
             stds[name] = self.std(name)
 
@@ -270,9 +285,7 @@ class MonteCarloHarness:
             logger.info("MC run %d/%d (seed=%d)", i + 1, n, seed)
             sim_result = self._runner.run(engagement, seed=seed)
             metrics = EngagementMetrics.extract_all(sim_result, blue_side, red_side)
-            run_results.append(
-                RunResult(seed=seed, metrics=metrics, terminated_by=sim_result.terminated_by)
-            )
+            run_results.append(RunResult(seed=seed, metrics=metrics, terminated_by=sim_result.terminated_by))
         return run_results
 
     def _run_parallel(
@@ -288,9 +301,7 @@ class MonteCarloHarness:
         by seed at the end for deterministic ordering.
         """
         workers = min(self._config.max_workers, len(seeds), os.cpu_count() or 1)
-        logger.info(
-            "MC parallel: %d iterations across %d workers", len(seeds), workers
-        )
+        logger.info("MC parallel: %d iterations across %d workers", len(seeds), workers)
 
         runner_cfg_dict = self._runner._config.model_dump()
         eng_dict = engagement.model_dump()
@@ -310,7 +321,9 @@ class MonteCarloHarness:
                 completed += 1
                 logger.info(
                     "MC run %d/%d complete (seed=%d)",
-                    completed, len(seeds), result.seed,
+                    completed,
+                    len(seeds),
+                    result.seed,
                 )
                 run_results.append(result)
 
@@ -409,9 +422,7 @@ class CampaignMonteCarloHarness:
             logger.info("Campaign MC run %d/%d (seed=%d)", i + 1, n, seed)
             result = self._runner.run(campaign, seed=seed)
             metrics = CampaignValidationMetrics.extract_all(result, blue_side, red_side)
-            run_results.append(
-                RunResult(seed=seed, metrics=metrics, terminated_by=result.terminated_by)
-            )
+            run_results.append(RunResult(seed=seed, metrics=metrics, terminated_by=result.terminated_by))
         return run_results
 
     def _run_parallel(
@@ -428,7 +439,8 @@ class CampaignMonteCarloHarness:
         workers = min(self._config.max_workers, len(seeds), os.cpu_count() or 1)
         logger.info(
             "Campaign MC parallel: %d iterations across %d workers",
-            len(seeds), workers,
+            len(seeds),
+            workers,
         )
 
         runner_cfg_dict = self._runner._config.model_dump()
@@ -449,7 +461,9 @@ class CampaignMonteCarloHarness:
                 completed += 1
                 logger.info(
                     "Campaign MC run %d/%d complete (seed=%d)",
-                    completed, len(seeds), result.seed,
+                    completed,
+                    len(seeds),
+                    result.seed,
                 )
                 run_results.append(result)
 

@@ -528,6 +528,102 @@
       "node_id": "tests/unit/simulation/test_tactical_targeting.py::test_fow_witness_implements_import_neutral_targeting_protocol",
       "rationale": "The real runtime-checkable protocol accepts a concrete ObserverDetectionWitness across the import-neutral targeting boundary. This proves protocol conformance only, not detection, targeting, or engagement behavior.",
       "strongest_oracle": "runtime protocol dispatch accepts ObserverDetectionWitness as ObserverDetectionWitnessView"
+    },
+    {
+      "classification": "behavioral_oracle",
+      "node_id": "tests/unit/test_monte_carlo.py::TestComparisonReport::test_report_has_no_boolean_validation_verdict",
+      "rationale": "The hasattr assertion is the exact negative public-interface contract under review. A real ComparisonReport omits the legacy all_within_tolerance aggregate so diagnostic range comparisons cannot be mistaken for a historical-validation verdict; this does not prove any simulation or validation outcome.",
+      "strongest_oracle": "a constructed ComparisonReport omits the misleading all_within_tolerance verdict attribute"
+    },
+    {
+      "classification": "behavioral_oracle",
+      "node_id": "tests/unit/test_phase117_historical_acceptance.py::test_rejects_relevant_code_drift_after_execution[api-source]",
+      "rationale": "The read_text call creates a committed post-execution API-source mutation in an isolated accepted-evidence repository; it does not inspect implementation structure. The real claim-ledger loader rejects that formerly accepted chain because its code/ledger revision can no longer be verified, and the fixture repository remains clean.",
+      "strongest_oracle": "accepted historical evidence fails closed after a committed API-source change invalidates its execution revision"
+    },
+    {
+      "classification": "behavioral_oracle",
+      "node_id": "tests/unit/test_phase117_historical_acceptance.py::test_rejects_relevant_code_drift_after_execution[simulation-source]",
+      "rationale": "The read_text call creates a committed post-execution simulation-source mutation in an isolated accepted-evidence repository; it does not inspect implementation structure. The real claim-ledger loader rejects that formerly accepted chain because its code/ledger revision can no longer be verified, and the fixture repository remains clean.",
+      "strongest_oracle": "accepted historical evidence fails closed after a committed simulation-source change invalidates its execution revision"
+    },
+    {
+      "classification": "behavioral_oracle",
+      "node_id": "tests/unit/test_phase117_historical_adversarial.py::test_cli_rejects_symlinked_path_aliases_before_loading[ledger]",
+      "rationale": "The read_text call belongs only to the output-preservation branch of the shared parameterized body. For this ledger branch, the real CLI rejects a symlinked ledger argument at its path boundary before loading or publishing evidence.",
+      "strongest_oracle": "historical-backtest CLI rejects a symlinked ledger path before evidence loading or publication"
+    },
+    {
+      "classification": "behavioral_oracle",
+      "node_id": "tests/unit/test_phase117_historical_adversarial.py::test_cli_rejects_symlinked_path_aliases_before_loading[output-parent]",
+      "rationale": "The read_text call is a destination-preservation oracle in another parameter branch, not source inspection. This branch sends the real CLI through a symlinked output parent and observes an exact pre-load path rejection without creating the resolved output target.",
+      "strongest_oracle": "historical-backtest CLI rejects an output path whose parent is a symlink before publication"
+    },
+    {
+      "classification": "behavioral_oracle",
+      "node_id": "tests/unit/test_phase117_historical_adversarial.py::test_cli_rejects_symlinked_path_aliases_before_loading[output]",
+      "rationale": "The read_text call verifies the pre-existing output bytes after the attempted write. The real CLI rejects the symlinked output target before loading and leaves the resolved destination byte-for-byte unchanged.",
+      "strongest_oracle": "historical-backtest CLI rejects a symlinked output target and preserves its existing destination bytes"
+    },
+    {
+      "classification": "behavioral_oracle",
+      "node_id": "tests/unit/test_phase117_historical_adversarial.py::test_cli_rejects_symlinked_path_aliases_before_loading[plan]",
+      "rationale": "The read_text call belongs only to the output-preservation branch of the shared parameterized body. For this plan branch, the real CLI rejects a symlinked study-plan argument at its path boundary before loading or publishing evidence.",
+      "strongest_oracle": "historical-backtest CLI rejects a symlinked study-plan path before evidence loading or publication"
+    },
+    {
+      "classification": "behavioral_oracle",
+      "node_id": "tests/unit/test_phase117_historical_artifacts.py::test_artifact_writer_rejects_symlink_aliases_without_mutating_destination[parent]",
+      "rationale": "The read_text call is the exact destination-state oracle, not implementation inspection. The real artifact writer rejects traversal through a symlinked parent and preserves the existing resolved destination bytes.",
+      "strongest_oracle": "artifact writer rejects a symlinked parent and leaves the resolved destination byte-for-byte unchanged"
+    },
+    {
+      "classification": "behavioral_oracle",
+      "node_id": "tests/unit/test_phase117_historical_artifacts.py::test_artifact_writer_rejects_symlink_aliases_without_mutating_destination[target]",
+      "rationale": "The read_text call is the exact destination-state oracle, not implementation inspection. The real artifact writer rejects a symlinked target and preserves the existing resolved destination bytes.",
+      "strongest_oracle": "artifact writer rejects a symlinked target and leaves its destination byte-for-byte unchanged"
+    },
+    {
+      "classification": "behavioral_oracle",
+      "node_id": "tests/unit/test_phase117_historical_artifacts.py::test_atomic_writer_preserves_existing_target_when_staged_reload_fails",
+      "rationale": "The staged reload failure is injected, so the claim is limited to the writer's rollback boundary. The stronger filesystem oracles prove that the real atomic writer propagates the validation error, preserves the prior target bytes, and removes every staged temporary file.",
+      "strongest_oracle": "atomic artifact write rolls back to the exact prior target and leaves no staged file after validation failure"
+    },
+    {
+      "classification": "behavioral_oracle",
+      "node_id": "tests/unit/test_phase117_historical_artifacts.py::test_runtime_scope_rejects_an_authored_type_absent_from_effective_catalog",
+      "rationale": "The read_text call loads a real study fixture rather than inspecting source. After the typed scenario is coherently changed to author an invented entity type, the historical runtime-scope validator rejects that type because the effective era catalog has no definition.",
+      "strongest_oracle": "historical runtime-scope validation rejects an authored entity absent from the effective era catalog"
+    },
+    {
+      "classification": "behavioral_oracle",
+      "node_id": "tests/unit/test_phase117_historical_artifacts.py::test_study_loader_rejects_duplicate_yaml_keys",
+      "rationale": "The read_text call supplies the body of a real study fixture to a deliberately duplicate-key YAML document; it is not source inspection. The production historical-study loader rejects the duplicated schema_version key before accepting a typed plan.",
+      "strongest_oracle": "historical-study loading fails closed on a duplicate YAML mapping key"
+    },
+    {
+      "classification": "behavioral_oracle",
+      "node_id": "tests/unit/test_phase117_historical_artifacts.py::test_vehicle_count_rejects_nonvehicle_ground_entities",
+      "rationale": "The read_text call loads a shipped typed study fixture rather than implementation source. Reclassifying its entity-count metric as vehicle_count causes the historical runtime-scope boundary to reject the included non-vehicle ground unit type.",
+      "strongest_oracle": "historical runtime-scope validation rejects non-vehicle entities from a vehicle-count metric"
+    },
+    {
+      "classification": "behavioral_oracle",
+      "node_id": "tests/unit/test_phase117_historical_integrity.py::test_full_and_packaged_loaders_reject_scenario_prose_append",
+      "rationale": "The read_text call captures a temporary scenario fixture for a controlled mutation; it does not inspect implementation source. Both real claim-ledger loading boundaries first accept the reviewed scenario and then fail closed with an exact claim_source_digest_mismatches diagnostic after historical prose is appended.",
+      "strongest_oracle": "full and packaged claim-ledger loaders reject reviewed scenario-source drift after historical prose is appended"
+    },
+    {
+      "classification": "behavioral_oracle",
+      "node_id": "tests/unit/test_phase117_historical_integrity.py::test_scenario_review_must_bind_collection_and_prose_claims",
+      "rationale": "The read_text call constructs a temporary scenario containing both a documented-outcome collection and historical prose; it does not inspect implementation source. The real claim-ledger loader rejects a review that binds only the collection claim while omitting the compatible prose claim.",
+      "strongest_oracle": "claim-ledger loading rejects a scenario review that omits a compatible historical-prose claim binding"
+    },
+    {
+      "classification": "behavioral_oracle",
+      "node_id": "tests/unit/test_phase117_historical_integrity.py::test_scanner_v1_ledger_is_rejected_after_v2_migration",
+      "rationale": "The read_text call mutates a serialized temporary ledger rather than implementation source. Recomputing the ledger digest after changing only the scanner version controls for checksum failure, and the real claim-ledger loader specifically rejects the obsolete version-one contract.",
+      "strongest_oracle": "claim-ledger loading rejects scanner-version-one evidence after the scanner-v2 migration"
     }
   ],
   "kind": "reviewed_behavioral_oracles",

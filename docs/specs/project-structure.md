@@ -1,5 +1,5 @@
 # Project Structure & Module Decomposition
-**Status**: Living reference, current through completed Phase 116.
+**Status**: Living reference, current through the Phase 117 implementation.
 **Last Updated**: 2026-08-02
 
 ---
@@ -17,7 +17,7 @@ stochastic-warfare/
 │   ├── __init__.py                   # Package marker, version
 │   ├── __main__.py                   # `python -m api` production entry point
 │   ├── config.py                     # ApiSettings (pydantic-settings)
-│   ├── schemas.py                    # Request/response Pydantic models
+│   ├── schemas.py                    # Request/response models, including typed historical status
 │   ├── dependencies.py               # FastAPI dependency injection
 │   ├── scenarios.py                  # Scenario/unit discovery helpers
 │   ├── database.py                   # Serialized SQLite persistence (aiosqlite)
@@ -26,7 +26,7 @@ stochastic-warfare/
 │   ├── main.py                       # Settings-owned app factory, lifespan, CORS
 │   └── routers/                      # Route handlers
 │       ├── meta.py                   # Health, eras, doctrines, terrain types
-│       ├── scenarios.py              # Scenario listing/detail
+│       ├── scenarios.py              # Scenario listing/detail + claim-ledger projection
 │       ├── units.py                  # Unit listing/detail
 │       ├── runs.py                   # Run lifecycle, events, narrative, WebSocket, batch
 │       ├── analysis.py               # Compare, sweep, doctrine compare
@@ -40,9 +40,8 @@ stochastic-warfare/
 │   └── src/
 │       ├── main.tsx                     # Entry: QueryClientProvider + RouterProvider
 │       ├── App.tsx                      # Router + Layout
-│       ├── types/api.ts                 # TypeScript interfaces (mirrors api/schemas.py)
 │       ├── types/
-│       │   ├── api.ts                  # TypeScript interfaces (mirrors api/schemas.py)
+│       │   ├── api.ts                  # TypeScript interfaces, including historical claim status (mirrors api/schemas.py)
 │       │   ├── analysis.ts             # Raw-vector, paired-inference, provenance types
 │       │   ├── map.ts                  # Map/replay types [Phase 35]
 │       │   └── editor.ts              # Editor state/action types [Phase 36]
@@ -95,7 +94,7 @@ stochastic-warfare/
 │       │   │   ├── ScenarioListPage.tsx
 │       │   │   ├── ScenarioCard.tsx
 │       │   │   ├── ScenarioFilters.tsx
-│       │   │   ├── ScenarioDetailPage.tsx  # + Clone&Tweak + Download YAML [Phase 36]
+│       │   │   ├── ScenarioDetailPage.tsx  # Config + exact ledger-backed historical status
 │       │   │   ├── ForceTable.tsx
 │       │   │   └── ConfigBadges.tsx
 │       │   ├── units/                  # Unit catalog
@@ -152,7 +151,7 @@ stochastic-warfare/
 │       ├── test.yml                  # Partition audit + standard/API/E2E/terrain
 │       ├── extended-tests.yml        # Sharded slow/benchmark partitions
 │       ├── benchmark.yml             # Paired policy + typed 73 Easting transition
-│       ├── build.yml                 # No-.git image build + production identity smoke
+│       ├── build.yml                 # No-.git identity + scenario historical-status smoke
 │       ├── lint.yml                  # Ruff and frontend lint
 │       └── docs.yml                  # Strict docs build/deployment
 ├── docs/
@@ -170,6 +169,8 @@ stochastic-warfare/
 │   │   ├── api.md                    # API class reference
 │   │   ├── eras.md                   # Era framework & mechanics
 │   │   └── units.md                  # Units & equipment catalog
+│   ├── evidence/
+│   │   └── phase-117/                # Stable digest-bearing historical study evidence
 │   └── specs/                        # Per-module specifications
 │       └── project-structure.md      # (this document)
 ├── data/
@@ -241,7 +242,7 @@ stochastic-warfare/
 │   │   │   ├── doctrine/            # 4 doctrine templates
 │   │   │   ├── commanders/          # 3 commander profiles
 │   │   │   ├── comms/               # 2 comm definitions (field telephone, SCR-300 radio) [P29]
-│   │   │   └── scenarios/           # 3 validation scenarios (Kursk, Midway, Normandy Bocage)
+│   │   │   └── scenarios/           # 4 catalog collections (Kursk, Midway, Normandy Bocage, Stalingrad)
 │   │   ├── ww1/                     # WW1 era data [Phases 21, 29]
 │   │   │   ├── units/               # 16 unit defs (3 infantry, 2 armor, 1 cavalry, 5 naval, 3 ground, 2 air) [P29: +10]
 │   │   │   │   ├── naval/           # Iron Duke BB, Konig BB, Invincible BC, G-class DD, U-boat [P29]
@@ -253,7 +254,7 @@ stochastic-warfare/
 │   │   │   ├── doctrine/            # 3 doctrine templates
 │   │   │   ├── commanders/          # 3 commander profiles
 │   │   │   ├── comms/               # 2 comm definitions (field telephone, runner messenger)
-│   │   │   └── scenarios/           # 2 validation scenarios (Somme Day 1, Cambrai)
+│   │   │   └── scenarios/           # 3 catalog collections (Somme Day 1, Cambrai, Jutland)
 │   │   ├── napoleonic/              # Napoleonic era data [Phases 22, 29]
 │   │   │   ├── units/               # 21 unit defs (infantry, cavalry, artillery, naval, engineer, supply) [P29: +11]
 │   │   │   │   └── naval/           # Ship of line 74, First Rate 100, Frigate 32, Corvette, Fire Ship [P29]
@@ -264,7 +265,7 @@ stochastic-warfare/
 │   │   │   ├── doctrine/            # 3 doctrine templates
 │   │   │   ├── commanders/          # 3 commander profiles
 │   │   │   ├── comms/               # 2 comm definitions (mounted courier, drum/bugle signals)
-│   │   │   └── scenarios/           # 2 validation scenarios (Austerlitz, Waterloo)
+│   │   │   └── scenarios/           # 3 catalog collections (Austerlitz, Waterloo, Trafalgar)
 │   │   └── ancient_medieval/        # Ancient & Medieval era data [Phases 23, 29]
 │   │       ├── units/               # 17 unit defs (infantry, cavalry, mounted, naval, siege) [P29: +10]
 │   │       │   └── naval/           # Trireme, Quinquereme, Longship, Dromon, Cog, War Galley [P29]
@@ -275,7 +276,12 @@ stochastic-warfare/
 │   │       ├── doctrine/            # 3 doctrine templates
 │   │       ├── commanders/          # 4 commander profiles (Hannibal, Henry V, William Conqueror, Subotai) [P29: +1]
 │   │       ├── comms/               # 2 comm definitions (battle horn, banner signal)
-│   │       └── scenarios/           # 3 validation scenarios (Cannae, Agincourt, Hastings)
+│   │       └── scenarios/           # 4 catalog collections (Cannae, Agincourt, Hastings, Salamis)
+│   ├── validation/                   # Historical claim ledger and typed study plans
+│   │   ├── historical_claims.yaml
+│   │   └── historical_studies/
+│   │       ├── 73_easting_phase117.yaml
+│   │       └── agincourt_era_control_phase117.yaml
 │   └── scenarios/                    # Complete scenario packages
 │       ├── example_scenario/
 │       │   ├── scenario.yaml         # Master scenario config: start date/time (UTC), duration, initial weather, time zone
@@ -286,22 +292,22 @@ stochastic-warfare/
 │       │   ├── environment/          # Climate zone, prevailing weather patterns, seasonal parameters, magnetic declination grid
 │       │   ├── forces/               # OOB and initial dispositions per side (land, air, naval)
 │       │   └── objectives/           # Victory conditions and ROE
-│       ├── 73_easting/              # Phase 7: 73 Easting validation scenario
-│       ├── falklands_naval/         # Phase 7: Falklands naval validation scenario
-│       ├── golan_heights/           # Phase 7: Golan Heights validation scenario
+│       ├── 73_easting/              # Phase 7: 73 Easting historical catalog scenario
+│       ├── falklands_naval/         # Phase 7: Falklands naval historical catalog scenario
+│       ├── golan_heights/           # Phase 7: Golan Heights historical catalog scenario
 │       ├── test_campaign/           # Phase 9: Minimal campaign test (2 sides, 1 objective, 24h)
 │       ├── test_campaign_multi/     # Phase 9: Multiple engagement points (2 objectives, 48h)
 │       ├── test_campaign_reinforce/ # Phase 9: Reinforcement schedule test (3 waves)
 │       ├── test_campaign_logistics/ # Phase 108: enabled deterministic logistics fixture
-│       ├── golan_campaign/         # Phase 10: Golan Heights 4-day campaign validation
-│       ├── falklands_campaign/     # Phase 10: Falklands San Carlos 5-day campaign validation
-│       ├── bekaa_valley_1982/     # Phase 16: Bekaa Valley SEAD validation (Israeli EW vs Syrian SAMs)
-│       ├── gulf_war_ew_1991/      # Phase 16: Gulf War EW campaign validation (Coalition vs Iraqi IADS)
+│       ├── golan_campaign/         # Phase 10: Golan Heights 4-day historical catalog campaign
+│       ├── falklands_campaign/     # Phase 10: Falklands San Carlos 5-day historical catalog campaign
+│       ├── bekaa_valley_1982/     # Phase 16: Bekaa Valley SEAD mechanics scenario (Israeli EW vs Syrian SAMs)
+│       ├── gulf_war_ew_1991/      # Phase 16: Gulf War EW mechanics scenario (Coalition vs Iraqi IADS)
 │       ├── space_gps_denial/      # Phase 17: PGM accuracy comparison (full GPS vs degraded vs denied)
-│       ├── space_isr_gap/         # Phase 17: Satellite overpass gap exploitation validation
-│       ├── space_asat_escalation/ # Phase 110: Catalog-backed exact-target direct-ascent ASAT validation
+│       ├── space_isr_gap/         # Phase 17: Satellite overpass gap exploitation mechanics scenario
+│       ├── space_asat_escalation/ # Phase 110: Catalog-backed exact-target direct-ascent ASAT scenario
 │       ├── cbrn_chemical_defense/ # Phase 18: Chemical attack on defended position (dispersal, MOPP, casualties)
-│       ├── cbrn_nuclear_tactical/ # Phase 18: Tactical nuclear weapon blast/EMP/fallout validation
+│       ├── cbrn_nuclear_tactical/ # Phase 18: Tactical nuclear weapon blast/EMP/fallout mechanics scenario
 │       ├── halabja_1988/         # Phase 24: Iraqi chemical escalation against Kurdish town
 │       ├── srebrenica_1995/      # Phase 24: Bosnian Serb protected zone violation
 │       ├── eastern_front_1943/   # Phase 24: German-Soviet mutual escalation (Kursk sector)
@@ -319,6 +325,7 @@ stochastic-warfare/
 │   ├── validate_test_partitions.py   # Disjoint exact-union audit
 │   ├── validate_test_evidence.py     # Weak/no-direct evidence-ledger audit
 │   ├── run_paired_benchmark.py       # Same-host paired + non-timing transition execution
+│   ├── run_historical_backtest.py    # Strict production study + atomic artifact publication
 │   ├── validate_docs_links.py        # Markdown target/fragment validation
 │   └── visualize/                    # Matplotlib visualization utilities
 └── stochastic_warfare/               # ===== MAIN PACKAGE =====
@@ -552,18 +559,26 @@ stochastic-warfare/
     │   ├── humint.py                 # Civilian HUMINT: Poisson tip generation, disposition-dependent flow
     │   ├── influence.py              # Population disposition dynamics: Markov chain transitions
     │   └── insurgency.py             # Insurgency dynamics: Markov radicalization pipeline, cell operations, discovery [Phase 24e]
-    ├── validation/                    # Engagement + campaign validation (Phase 7, 10)
+    ├── validation/                    # Legacy diagnostics + production historical studies
     │   ├── __init__.py
-    │   ├── historical_data.py         # Historical engagement data models + YAML loader
+    │   ├── historical_data.py         # Legacy historical comparison models + YAML loader
     │   ├── metrics.py                 # Engagement-level metric extraction from simulation results
-    │   ├── scenario_runner.py         # Lightweight tick-loop orchestrator for validation scenarios
-    │   ├── monte_carlo.py             # Monte Carlo harness: engagement + campaign, N iterations, statistics
+    │   ├── scenario_runner.py         # Legacy lightweight diagnostic orchestrator
+    │   ├── monte_carlo.py             # Legacy Monte Carlo comparison diagnostics
     │   ├── campaign_data.py           # Campaign-level historical data models, AIExpectation, CampaignDataLoader
-    │   ├── campaign_runner.py         # Campaign runner wrapping ScenarioLoader + SimulationEngine
+    │   ├── campaign_runner.py         # Campaign runner through factory prepare_config + RuntimeSession
     │   ├── campaign_metrics.py        # Campaign-level metric extraction (units destroyed, exchange ratio, etc.)
     │   ├── ai_validation.py           # AI decision quality analysis from recorder events
     │   ├── movement_diagnostics.py    # Typed semantic movement evaluator
-    │   └── performance.py             # cProfile + tracemalloc campaign performance profiling
+    │   ├── performance.py             # cProfile + tracemalloc campaign performance profiling
+    │   └── historical_backtest/       # Phase 117 production claim/evidence boundary
+    │       ├── __init__.py             # Public typed backtest API
+    │       ├── common.py               # Strict models, digests, and no-symlink guards
+    │       ├── claims.py               # Claim ledger, source audit, public dispositions
+    │       ├── studies.py              # Typed study plan, lineage, metrics, policy
+    │       ├── runner.py               # Factory-owned runs and observation receipts
+    │       ├── evaluator.py            # Exact joint Clopper--Pearson verdict
+    │       └── artifacts.py            # Digest-bearing atomic PASS/FAIL/ERROR artifacts
     ├── tools/                         # Developer tooling — MCP server, analysis, visualization [Phase 14]
     │   ├── __init__.py
     │   ├── serializers.py             # JSON serialization for numpy, datetime, enum, Position
@@ -1103,7 +1118,11 @@ the production scenario loop.
   vectors, terminal run records, exact seeds and runtime provenance.
   Same-scenario comparisons use paired differences, exact sign tests,
   superiority, and Holm family correction; sweeps and doctrine comparisons
-  reuse the same production construction boundary [Phase 112].
+  reuse the same production construction boundary [Phase 112]. Historical
+  studies use a separate typed plan and `HistoricalBacktestRunner` over the
+  same `SimulationRuntimeFactory` boundary, retaining per-seed observation
+  receipts and applying exact joint-coverage evaluation before publishing an
+  atomic digest-bearing artifact [Phase 117].
 - Does NOT contain domain logic — only sequencing and coordination
 
 **Depends on**: Everything (top of the dependency tree)

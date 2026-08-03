@@ -1,5 +1,12 @@
 # Phase 14: Tooling & Developer Experience
 
+> **Phase 117 historical-claim supersession (2026-08-02):** This archived page
+> preserves implementation history. Its historical-winner, outcome, casualty,
+> duration, calibration, plausibility, envelope, and tolerance statements are
+> not accepted historical validation. Any engine figures below are regression
+> history only, not predictive evidence or calibration authority; the typed
+> claim ledger and accepted production artifacts, if any, are authoritative.
+
 ## Overview
 Phase 14 adds developer tooling: a Claude Code MCP server, analysis utilities, visualization tools, and 6 new Claude skills. All new code lives in `stochastic_warfare/tools/` — purely additive, no modifications to existing simulation code.
 

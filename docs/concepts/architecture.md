@@ -36,7 +36,7 @@ Beyond the core 12, specialized domain modules provide optional capabilities:
 |--------|---------|-------|
 | **c2.ai** | OODA FSM, commander personalities, doctrine templates | 8 |
 | **c2.planning** | Mission analysis, COA generation, wargaming, estimates | 8 |
-| **validation** | Historical data, Monte Carlo harness, campaign validation | 7, 10 |
+| **validation** | Legacy comparison diagnostics plus typed production historical-claim studies and artifacts | 7, 10, 117 |
 | **population** | Civilian regions, displacement, collateral, insurgency | 12, 24 |
 | **ew** | Electronic warfare: jamming, spoofing, ECCM, SIGINT, decoys | 16 |
 | **space** | Orbital mechanics, GPS, SATCOM, space ISR, early warning, ASAT | 17 |
@@ -96,7 +96,7 @@ fuel tanks or weapon magazines remain explicit remediation boundaries.
 
 ### Engagement Gate Sequence
 
-Within combat, each potential engagement passes through a series of gates before resolving. If any gate rejects, the engagement is skipped. This gate sequence was wired in Phases 40--47 (Block 5: Core Combat Fidelity), connecting 40+ previously disconnected subsystems into the battle loop. Source-backed historical scenarios use separately declared outcome envelopes; synthetic, test, calibration, and benchmark scenarios are not historical validation claims.
+Within combat, each potential engagement passes through a series of gates before resolving. If any gate rejects, the engagement is skipped. This gate sequence was wired in Phases 40--47 (Block 5: Core Combat Fidelity), connecting 40+ previously disconnected subsystems into the battle loop. Production historical-validation claims use a separate typed study plan, the SimulationRuntimeFactory-owned runtime path, retained raw vectors and observation receipts, and a digest-bearing verdict artifact; legacy scenario metadata is not a verdict.
 
 1. **Shared targeting decision** -- ordinary direct engagement must consume the
    same current owner-side contact, exact weapon, sensing/fire-control source,
@@ -188,6 +188,42 @@ Provenance exposes source/config fingerprints, exact seeds and rosters, code
 and data revisions, catalog/doctrine/loadout fingerprints, and initial plus
 arriving assignments.
 
+### Historical-validation boundary
+
+Historical acceptance is a separate typed pipeline over the production runtime:
+
+```text
+historical_claims.yaml
+  -> HistoricalClaimLedgerLoader
+  -> HistoricalStudyLoader / HistoricalStudyPlan
+  -> SimulationRuntimeFactory.prepare()
+  -> HistoricalBacktestRunner
+  -> observation receipts + ordered raw vectors
+  -> evaluate_joint_coverage()
+  -> completed PASS/FAIL or operational ERROR artifact
+  -> accepted-evidence verification and public claim disposition
+```
+
+The full loader verifies the ledger's self-digest, source paths and content
+digests for every repository claim, and any accepted artifact bindings. Each
+study predeclares source lineage, exact claim and metric scopes, event
+boundaries, seeds, runtime inputs, and acceptance policy. The runner builds
+every seed through `PreparedScenario`, observes typed terminal outcomes and
+metric receipts, and retains the complete vectors rather than trusting summary
+statistics. `PASS` and `FAIL` are completed evaluations; an `ERROR` records a
+post-start operational failure without a verdict and is never promotable.
+Invalid plans reject before an artifact is created.
+
+Promotion additionally requires a clean, predeclared, source-backed,
+independent study; exact accepted metric bindings; a `PASS` with eligible
+lineage; committed ledger and artifact identities; matching Git ancestry; and
+fresh factory/source/data identities. Legacy `HistoricalDataLoader`,
+`ScenarioRunner`, `HistoricalMetric`, and `MonteCarloHarness` remain diagnostic
+compatibility interfaces and cannot issue a historical verdict. The current
+ledger has zero production-validated scenarios. The retained 73 Easting study
+is a completed, non-promotable `FAIL` with 0/20 joint successes and a 0.0
+one-sided lower confidence bound.
+
 ### Source identity in checkouts and immutable images
 
 Runtime source identity is Git-first. When preparation starts inside a Git
@@ -221,11 +257,19 @@ and source-manifest digest. Scenario and catalog inputs are outside this
 application manifest and retain their separate runtime data and catalog
 revisions.
 
-`.github/workflows/build.yml` exercises this path on pull requests to `main`,
-pushes to `main`, and manual dispatches. It builds with `GITHUB_SHA`, asserts
-that `/app/.git` is absent, runs a bounded scenario through
-`SimulationRuntimeFactory -> RuntimeSession`, and checks the expected commit
-and clean immutable-image identity.
+`.github/workflows/build.yml` is configured to exercise this path on pull
+requests to `main`, pushes to `main`, and manual dispatches. It builds with
+`GITHUB_SHA`, asserts that `/app/.git` is absent, runs a bounded scenario
+through `SimulationRuntimeFactory -> RuntimeSession`, and checks the expected
+commit and clean immutable-image identity. The configured image smoke also
+checks that docs and tests are absent, loads the historical ledger through
+`load_scenario_catalog()`, audits all API-published scenario claims in the
+current zero-accepted ledger, and verifies that 73 Easting remains unsupported
+with regression evidence but no accepted claim IDs. Phase 117's local
+packaged-loader tests exercise the ledger boundary; the hosted image result is
+pending until the phase is pushed and the workflow completes. REM-048 / Phase
+135 owns the build-time attestation and package receipt needed before a future
+nonempty accepted claim can be verified without Git.
 
 `ScenarioLoader` is the lower-level engine-wiring boundary used by that
 factory. Given a scenario YAML or prevalidated effective config, it:
@@ -251,9 +295,13 @@ factory. Given a scenario YAML or prevalidated effective config, it:
      execution uses finite side-owned assets and scheduled exact-target orders;
      unsupported ASAT types fail during loading.
    - `cbrn_config.enable_cbrn: true` -> creates CBRN engines (dispersal, contamination, protection)
-   - `school_config` present -> creates doctrinal school registry
-   - `escalation_config` present -> creates escalation engine
-   - `dew_config` present -> creates directed energy weapon engine
+   - strict `school_config.unit_assignments` -> creates the doctrinal school
+     registry and applies exact unit IDs; commander-derived schools and typed
+     analysis-side policies use the same staged runtime assignment boundary
+   - `escalation_config` present -> creates escalation/unconventional engines
+     with current defaults; the mapping is not yet consumed (REM-050)
+   - `dew_config` present -> validates consumed `DEWConfig` tuning and creates
+     the directed energy weapon engine; it has no `enable_dew` flag
    - `era` specified -> loads era-specific data and engines
 6. Creates always-on behavioral engines: ROE engine (default WEAPONS_FREE) and
    the rout planner coordinated by `MoraleRuntime`
@@ -276,6 +324,9 @@ per-unit commander overrides and `school_config.unit_assignments` are validated
 eagerly against the planned roster, profile catalog, and school catalog. The
 resulting commander, school, and OODA assignments are runtime behavior, not
 metadata; they survive reinforcement registration and checkpoint continuation.
+Unknown `school_config` fields reject, so legacy `enable_schools`, side-name,
+and `{side}_school` proxy shapes cannot create an empty registry while claiming
+an assignment.
 
 The retained loadout builder creates every initial, arriving, and
 checkpoint-reconstructed weapon/sensor attachment. Its immutable fingerprint
@@ -470,6 +521,9 @@ A FastAPI service sits alongside the engine (not inside it). It provides:
   and source/code/data/catalog/doctrine/loadout provenance
 - **A/B and doctrine comparison** over common seeds, plus strict parameter
   sweeps
+- **Ledger-backed historical-validation summaries** on every scenario list and
+  detail response, with legacy `documented_outcomes` and `sources` removed from
+  detail configuration payloads
 
 The application lifespan owns one settings object, database connection, and run
 manager. A run is accepted only after its effective scenario config validates
@@ -503,7 +557,10 @@ Key pages: Scenario Browser, Unit Catalog, Run Results (charts + narrative +
 map), Scenario Editor (clone-and-tweak), Analysis (Monte Carlo, same-scenario
 A/B comparison, sensitivity sweep, and doctrine comparison). Analysis views
 validate and expose raw vectors and provenance instead of accepting summary-only
-payloads.
+payloads. The scenario list labels Block 11 entries as current-engine
+regression references, and scenario detail renders the exact ledger-backed
+aggregate disposition and claim scopes. It does not present legacy documented
+outcomes as validation evidence.
 
 See the [Web UI Guide](../guide/web-ui.md) for usage documentation.
 

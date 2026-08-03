@@ -1,5 +1,13 @@
 # Phase 67: Integration Validation & Recalibration
 
+> **Phase 117 historical-claim supersession (2026-08-02):** This archived page
+> preserves implementation history. Its historical-winner, outcome, casualty,
+> duration, calibration, plausibility, envelope, and tolerance statements are
+> not accepted historical validation. Any engine figures below are regression
+> history only, not predictive evidence or calibration authority; the typed
+> claim ledger and accepted production artifacts, if any, are authoritative.
+
+
 **Status**: Complete
 **Block**: 7 (Final Engine Hardening) — BLOCK COMPLETE
 **Tests**: ~30 new (10 structural + 6 validation/evaluator + 3 cross-doc + ~7 MC slow)

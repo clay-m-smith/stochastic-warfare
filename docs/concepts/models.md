@@ -75,7 +75,34 @@ statistics, seed sequence, and runtime provenance. That experiment does not by
 itself validate the scenario historically. Historical acceptance additionally
 requires predeclared sources, units and event boundaries, calibration evidence
 separated from held-out seeds, and a persisted production-envelope verdict.
-REM-030/Phase 117 owns that catalog-wide acceptance contract.
+Phase 117 implements that contract; the current claim ledger exposes zero
+production-validated scenarios.
+
+For a historical study, let $I_{m,i}$ be the strict in-source-range boolean
+for gating metric $m$ on held-out run $i$. A run succeeds only when every
+gating metric succeeds:
+
+$$
+J_i = \bigwedge_m I_{m,i}, \qquad k = \sum_{i=1}^{n} J_i
+$$
+
+The evaluator uses the exact one-sided Clopper--Pearson lower bound at declared
+confidence $c$:
+
+$$
+L =
+\begin{cases}
+0, & k = 0 \\
+F^{-1}_{\mathrm{Beta}(k,\,n-k+1)}(1-c), & k > 0
+\end{cases}
+$$
+
+The verdict is `PASS` exactly when $L$ is at least the predeclared minimum
+joint coverage. Marginal metric success cannot substitute for joint success.
+A right-censored natural-terminal duration observation is out of range, and
+diagnostic metrics do not affect the verdict. The artifact retains every
+metric boolean, joint boolean, observation receipt, and raw value so the
+calculation can be reproduced.
 
 ### Where Used
 
@@ -84,6 +111,8 @@ REM-030/Phase 117 owns that catalog-wide acceptance contract.
   campaign execution and metric extraction
 - `tools/_run_helpers.py` with `simulation/runtime.py` -- Phase 112
   authoritative production batch boundary through `SimulationRuntimeFactory`
+- `validation/historical_backtest/` -- typed claim ledger, study plans,
+  production runner, exact joint evaluator, and digest-bearing artifacts
 
 ### Key Parameters
 
@@ -477,8 +506,11 @@ independent or predictive validation.
 Historical or predictive validation requires a predeclared, source-backed
 metric envelope with exact units and event boundaries, a production execution
 path, and calibration/training inputs separated from held-out validation
-evidence. The catalog-wide replacement contract remains queued under
-[REM-030](../remediation-backlog.md#rem-030-catalog-wide-historical-outcome-claims-lack-production-validation).
+evidence. Phase 117 enforces those requirements with a typed claim ledger,
+study plan, production runtime, exact joint-coverage verdict, persisted
+artifact, and conservative promotion gate. The retained 73 Easting study is a
+completed `FAIL` with 0/20 joint successes and lower bound 0.0, so it remains
+unsupported rather than being labeled validated.
 
 ### Where Used
 

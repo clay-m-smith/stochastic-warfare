@@ -1,5 +1,18 @@
 # Stochastic Warfare — Post-MVP Development Phases
 
+> **Phase 117 historical-claim supersession (2026-08-02):** This archived page
+> preserves implementation history. Its historical-winner, outcome, casualty,
+> duration, calibration, plausibility, envelope, and tolerance statements are
+> not accepted historical validation. Any engine figures below are regression
+> history only, not predictive evidence or calibration authority; the typed
+> claim ledger and accepted production artifacts, if any, are authoritative.
+
+> **Phase 117 / REM-050 correction (2026-08-02):** The archived escalation
+> design below exists in the standalone engine, but production scenario loading
+> discards authored thresholds, hysteresis, cooldown, and related tuning and
+> uses defaults. Phase 137 owns the typed consumed boundary and outcome proof.
+
+
 ## Philosophy
 Same as MVP: every phase produces runnable, testable code. Validation via matplotlib. No UI until engine fidelity justifies it. Phases 11–12 fix known deficits and deepen existing systems (including civilian population). Phases 13–14 optimize and tool up. Phases 15–19 add new domains. Phases 20–23 expand to historical eras. Phase 24 adds unconventional warfare and escalation modeling.
 

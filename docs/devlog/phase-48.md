@@ -1,5 +1,11 @@
 # Phase 48: Block 5 Deficit Resolution
 
+> **Phase 117 / REM-050 correction (2026-08-02):** Taiwan's archived
+> `enable_dew` key was ignored; block presence created only a default DEW
+> engine, and the scenario has no DEW-capable unit. The key was removed. Engine
+> presence is not production engagement evidence; Phase 137 owns strict DEW
+> configuration and a real configured loadout exercise.
+
 ## Summary
 
 Phase 48 resolves 14 planned deficits accumulated during Block 5 (Phases 40-47), wires 6 additional previously-unused calibration parameters into the engagement loop, enhances the victory condition system, and formally defers 16 items as accepted limitations. Zero new features — only bug fixes, configurable constants (with identical defaults for backward compatibility), data gap fills, calibration wiring, and deficit inventory cleanup.

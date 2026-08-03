@@ -1,5 +1,11 @@
 # Phase 54: Era-Specific & Domain Sub-Engine Wiring
 
+> **Phase 117 school-integrity correction (2026-08-02):** The Suwalki
+> `school_config` described below used ignored side proxy keys. It loaded an
+> empty registry and assigned 0/39 units, so it was removed. Current source
+> scenarios accept only strict exact `unit_assignments`; the historical count
+> and exercise claims below are not current capability evidence.
+
 **Status**: COMPLETE
 **Tests**: 53 new tests (all passing)
 **Block**: 6 (Final Tightening)

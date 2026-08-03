@@ -2,7 +2,7 @@
 
 **Phase range:** 115 through 127
 
-**Status:** Active; Phases 115--116 are complete and Phase 117 is next
+**Status:** Active; Phases 115--117 are complete and Phase 118 is next
 
 Block 13 owns integrity deficits discovered while specifying and validating
 Phases 112 through 114. It is not part of those implementations or the Block
@@ -14,7 +14,7 @@ postmortem, and single-commit workflow before its remediation item can close.
 
 Status: **Complete**. REM-028 is closed with accepted production, data,
 determinism, scenario, exposure, qualified broad-run, documentation, and
-postmortem evidence. Phase 116 is complete and Phase 117 is next.
+postmortem evidence. Phases 116--117 are complete and Phase 118 is next.
 
 Replace unrestricted catalog-range movement holding with a typed targeting
 precondition that distinguishes physical weapon reach from owner-side sensing,
@@ -29,8 +29,8 @@ production-exercised, outcome-affecting, and checkpoint/exposure evidence.
 
 Status: **Complete**. REM-029 is closed with accepted specification, benchmark
 promotion, production, determinism, data, scenario, qualified broad-run,
-documentation, cross-document, and postmortem evidence. Phase 117 is next and
-remains unstarted.
+documentation, cross-document, and postmortem evidence. Phase 117 is complete
+and Phase 118 is next.
 
 Before Phase 116 changes production state, promote the clean Phase 115
 73 Easting transition endpoint to an ordinary version-4 paired reference and
@@ -49,7 +49,7 @@ events, and whole-context checkpoint equality.
 
 ## Phase 117 - Historical Outcome-Envelope Integrity
 
-Status: **Not started**. REM-030 remains queued.
+Status: **Complete**. REM-030 is closed.
 
 Replace catalog-wide winner tables and legacy-runner comparisons presented as
 historical accuracy with one typed, provenance-bearing production validation
@@ -65,7 +65,9 @@ shifted from 20 British wins to 18 British and 2 French wins; and seed-42
 Trafalgar and `calibration_arctic` changed terminal winner, duration, and force
 status composition. These deterministic observations identify fidelity review
 work; they are not historical-validation verdicts or calibration authority.
-REM-030 remains queued for this phase.
+Phase 117 closed REM-030 against this inventory after accepted cross-document
+and postmortem review. The retained study remains a truthful production
+`FAIL`; no claim was promoted.
 
 Phase 115 adds two more inventory signals. Debecka changes from the Phase 114
 10/10 blue current-engine regression to 4/10 after the shared targeting owner
@@ -97,6 +99,12 @@ catalog/public claim and fresh production, held-out, persisted evidence for
 each scenario still described as historically validated. No regression-only
 or same-data calibrated result is described as historical or predictive
 validation.
+
+Phase 117 locally proves conservative packaged-loader exposure of the current
+zero-accepted ledger. Its hosted no-`.git` image smoke is configured and
+remains pending the phase push. Package-bound attestation for a future
+nonempty accepted claim is separately assigned to REM-048 / Phase 135 and does
+not permit this phase to imply that unexercised capability.
 
 ## Phase 118 - Performance-Flag Semantic Integrity
 

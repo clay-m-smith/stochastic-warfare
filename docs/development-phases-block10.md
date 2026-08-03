@@ -1,5 +1,19 @@
 # Stochastic Warfare -- Block 10 Development Phases (92--97)
 
+> **Phase 117 historical-claim supersession (2026-08-02):** This archived page
+> preserves implementation history. Its historical-winner, outcome, casualty,
+> duration, calibration, plausibility, envelope, and tolerance statements are
+> not accepted historical validation. Any engine figures below are regression
+> history only, not predictive evidence or calibration authority; the typed
+> claim ledger and accepted production artifacts, if any, are authoritative.
+
+> **Phase 117 editor-integrity correction (2026-08-02):** Phase 95's planned
+> school and commander proxy fields were not production authorities. The
+> selectors are explicitly unavailable pending REM-049 / Phase 136; typed
+> doctrine comparison is owned by Phase 112. Their archived plan and exit
+> criteria below are superseded, not current capability claims.
+
+
 ## Philosophy
 
 Block 10 is the **UI depth & engine exposure block**. The engine has 60+ domain engines, 32 behavioral flags, 68 calibration parameters, 9 doctrinal schools, and 100+ event types — but the web UI, built in Block 3 (Phases 31–36) and partially synced in Phase 80, exposes a fraction of this capability. Block 10 surfaces existing data through existing APIs to existing UI components. Where the API lacks a necessary endpoint or data field, we add it — but the simulation logic remains unchanged.
@@ -13,7 +27,7 @@ Block 10 is the **UI depth & engine exposure block**. The engine has 60+ domain 
 4. Doctrine and commander selectors functional in scenario editor
 5. Event filtering by type/side/tick range operational
 6. Weapon and doctrine catalog pages functional
-7. All 40 scenarios produce correct winners (no engine regressions)
+7. All 40 scenarios match the frozen current-engine terminal snapshot (no engine regressions)
 8. All existing tests pass + new frontend/API tests
 
 **Cross-document alignment**: This document must stay synchronized with `brainstorm-block10.md` (design thinking), `devlog/index.md` (phase status), and `specs/project-structure.md` (module definitions). Run `/cross-doc-audit` after any structural change.
@@ -579,7 +593,7 @@ Add a doctrine browsing page.
 
 Verify that all Block 10 changes haven't broken the engine or existing UI.
 
-- **Engine regression**: Run the evaluator on all 40 scenarios — all must produce correct winners
+- **Engine regression**: Run the evaluator on all 40 scenarios — all must match the frozen current-engine terminal snapshot
   - No engine changes were made, so this is a safety check
 - **API regression**: Run existing API test suite — all endpoints still function correctly
 - **Frontend regression**: Run vitest suite — all existing tests pass
@@ -588,7 +602,7 @@ Verify that all Block 10 changes haven't broken the engine or existing UI.
 - **Performance**: Map rendering at 300 units with all new overlays enabled — verify <16ms per frame
 
 **Tests** (~6):
-- Evaluator regression (40 scenarios, correct winners)
+- Evaluator regression (40 scenarios, frozen current-engine terminal snapshot)
 - New analytics endpoints integration test (submit run, wait, query analytics)
 - New metadata endpoints return non-empty data
 - Frame enrichment produces valid field ranges
@@ -611,7 +625,7 @@ Update all living documents to reflect Block 10 completion.
 ### Exit Criteria
 - Weapon catalog page functional with filtering and detail modals
 - Doctrine catalog page functional with era filtering
-- All 40 scenarios produce correct winners (evaluator regression)
+- All 40 scenarios match the frozen current-engine terminal snapshot (evaluator regression)
 - All existing tests pass (Python + vitest)
 - Documentation updated across all living documents
 - Block 10 COMPLETE

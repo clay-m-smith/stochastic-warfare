@@ -1,9 +1,22 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { screen, waitFor } from '@testing-library/react'
+import { screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { renderWithProviders } from '../helpers'
 import { ScenarioListPage } from '../../pages/scenarios/ScenarioListPage'
-import type { ScenarioSummary } from '../../types/api'
+import type { HistoricalValidationSummary, ScenarioSummary } from '../../types/api'
+
+const CURRENT_ENGINE_REGRESSION_VALIDATION: HistoricalValidationSummary = {
+  aggregate_disposition: 'unsupported',
+  current_engine_regression_evidence: true,
+  accepted_claim_ids: [],
+  ledger_sha256: 'a'.repeat(64),
+  claims: [],
+}
+
+const NO_REGRESSION_VALIDATION: HistoricalValidationSummary = {
+  ...CURRENT_ENGINE_REGRESSION_VALIDATION,
+  current_engine_regression_evidence: false,
+}
 
 const MOCK_SCENARIOS: ScenarioSummary[] = [
   {
@@ -19,6 +32,7 @@ const MOCK_SCENARIOS: ScenarioSummary[] = [
     has_schools: false,
     has_space: false,
     has_dew: false,
+    historical_validation: CURRENT_ENGINE_REGRESSION_VALIDATION,
   },
   {
     name: 'jutland_1916',
@@ -33,6 +47,7 @@ const MOCK_SCENARIOS: ScenarioSummary[] = [
     has_schools: false,
     has_space: false,
     has_dew: false,
+    historical_validation: NO_REGRESSION_VALIDATION,
   },
   {
     name: 'taiwan_strait',
@@ -45,8 +60,9 @@ const MOCK_SCENARIOS: ScenarioSummary[] = [
     has_cbrn: false,
     has_escalation: true,
     has_schools: false,
-    has_space: false,
-    has_dew: false,
+    has_space: true,
+    has_dew: true,
+    historical_validation: NO_REGRESSION_VALIDATION,
   },
   {
     name: 'bint_jbeil_2006',
@@ -56,11 +72,12 @@ const MOCK_SCENARIOS: ScenarioSummary[] = [
     sides: ['blue', 'red'],
     terrain_type: 'hilly_defense',
     has_ew: false,
-    has_cbrn: false,
+    has_cbrn: true,
     has_escalation: false,
-    has_schools: false,
+    has_schools: true,
     has_space: false,
     has_dew: false,
+    historical_validation: NO_REGRESSION_VALIDATION,
   },
 ]
 
@@ -134,13 +151,17 @@ describe('ScenarioListPage', () => {
     })
   })
 
-  it('shows EW and Escalation badges', async () => {
+  it('shows all typed optional-subsystem badges', async () => {
     renderWithProviders(<ScenarioListPage />)
     await waitFor(() => {
       expect(screen.getByText('Taiwan Strait')).toBeInTheDocument()
     })
     expect(screen.getByText('EW')).toBeInTheDocument()
     expect(screen.getByText('Escalation')).toBeInTheDocument()
+    expect(screen.getByText('Space')).toBeInTheDocument()
+    expect(screen.getByText('DEW')).toBeInTheDocument()
+    expect(screen.getByText('CBRN')).toBeInTheDocument()
+    expect(screen.getByText('Schools')).toBeInTheDocument()
   })
 
   it('sorts by era', async () => {
@@ -152,20 +173,36 @@ describe('ScenarioListPage', () => {
     const sortSelect = screen.getAllByRole('combobox')[1]!
     await user.selectOptions(sortSelect, 'era')
     const cards = screen.getAllByRole('heading', { level: 3 })
-    // Modern scenarios first (73 Easting, Bint Jbeil, Taiwan Strait), then WW1 (Jutland)
+    // Regression-reference 73 Easting first, then Modern, then WW1 (Jutland)
     expect(cards[cards.length - 1]!.textContent).toBe('Jutland 1916')
   })
 
-  it('shows Golden Scenarios section first with Bint Jbeil', async () => {
+  it('groups regression references only by typed evidence', async () => {
     renderWithProviders(<ScenarioListPage />)
     await waitFor(() => {
       expect(screen.getByText('73 Easting')).toBeInTheDocument()
     })
-    const headings = screen.getAllByRole('heading', { level: 2 })
-    expect(headings[0]!.textContent).toMatch(/Golden Scenarios/)
-    // Bint Jbeil should appear in the Golden Scenarios section (1 match)
-    // Modern section should appear second
-    expect(headings[1]!.textContent).toMatch(/Modern/)
+    const regressionHeading = screen.getByRole('heading', {
+      level: 2,
+      name: /Current-Engine Regression References/,
+    })
+    const modernHeading = screen.getByRole('heading', {
+      level: 2,
+      name: /^Modern/,
+    })
+    const regressionSection = regressionHeading.closest('section')
+    const modernSection = modernHeading.closest('section')
+
+    expect(regressionSection).not.toBeNull()
+    expect(modernSection).not.toBeNull()
+    expect(within(regressionSection!).getByText('73 Easting')).toBeInTheDocument()
+    expect(within(regressionSection!).queryByText('Bint Jbeil 2006')).not.toBeInTheDocument()
+    expect(within(modernSection!).getByText('Bint Jbeil 2006')).toBeInTheDocument()
+    expect(within(modernSection!).queryByText('73 Easting')).not.toBeInTheDocument()
+    expect(screen.getByText(/typed current-engine regression evidence/i)).toBeInTheDocument()
+    expect(screen.queryByText(/Golden Scenarios/i)).not.toBeInTheDocument()
+    expect(screen.queryByText(/historically calibrated/i)).not.toBeInTheDocument()
+    expect(screen.queryByText(/Block 11/i)).not.toBeInTheDocument()
   })
 
   it('shows era sections ordered Modern → WW1', async () => {

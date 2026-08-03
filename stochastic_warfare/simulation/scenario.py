@@ -625,6 +625,41 @@ class TerrainConfig(BaseModel):
         return v
 
 
+class SchoolScenarioConfig(BaseModel):
+    """Strict source-scenario configuration for exact school assignments."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    unit_assignments: dict[str, str] = Field(default_factory=dict)
+
+    @field_validator("unit_assignments", mode="before")
+    @classmethod
+    def _strict_assignments(cls, value: Any) -> dict[str, str]:
+        if not isinstance(value, Mapping):
+            raise ValueError("unit_assignments must be a mapping")
+        assignments: dict[str, str] = {}
+        for unit_id, school_id in value.items():
+            if (
+                not isinstance(unit_id, str)
+                or not unit_id
+                or unit_id != unit_id.strip()
+            ):
+                raise ValueError(
+                    "unit assignment IDs must be non-empty trimmed strings",
+                )
+            if (
+                not isinstance(school_id, str)
+                or not school_id
+                or school_id != school_id.strip()
+            ):
+                raise ValueError(
+                    "unit assignment school IDs must be non-empty trimmed "
+                    "strings",
+                )
+            assignments[unit_id] = school_id
+        return assignments
+
+
 class CampaignScenarioConfig(BaseModel):
     """Top-level campaign scenario definition loaded from YAML."""
 
@@ -650,7 +685,7 @@ class CampaignScenarioConfig(BaseModel):
     ew_config: dict[str, Any] | None = None
     space_config: SpaceConfig | None = None
     cbrn_config: dict[str, Any] | None = None
-    school_config: dict[str, Any] | None = None
+    school_config: SchoolScenarioConfig | None = None
     commander_config: CommanderScenarioConfig | None = None
     dew_config: dict[str, Any] | None = None
     behavior_rules: dict[str, Any] = {}
@@ -5321,7 +5356,7 @@ def _prepare_runtime_school_plan(
         })
 
     exact_assignments = (
-        config.school_config.get("unit_assignments", {})
+        config.school_config.unit_assignments
         if config.school_config is not None
         else {}
     )
@@ -6225,7 +6260,7 @@ class ScenarioLoader:
     ) -> None:
         """Validate exact-unit and analysis school references pre-runtime."""
         raw_exact = (
-            config.school_config.get("unit_assignments", {})
+            config.school_config.unit_assignments
             if config.school_config is not None
             else {}
         )
@@ -6454,14 +6489,13 @@ class ScenarioLoader:
         ``data/eras/{era}/`` — era-specific files add to (not replace)
         the base data set.
         """
-        from stochastic_warfare.entities.loader import UnitLoader
+        from stochastic_warfare.entities.loader import load_effective_unit_loader
         from stochastic_warfare.combat.ammunition import AmmoLoader, WeaponLoader
         from stochastic_warfare.detection.signatures import SignatureLoader
         from stochastic_warfare.detection.sensors import SensorLoader
         from stochastic_warfare.logistics.supply_classes import SupplyItemLoader
 
-        unit_loader = UnitLoader(self._data_dir / "units")
-        unit_loader.load_all()
+        unit_loader = load_effective_unit_loader(self._data_dir, era)
 
         weapon_loader = WeaponLoader(self._data_dir / "weapons")
         weapon_loader.load_all()
@@ -6494,12 +6528,6 @@ class ScenarioLoader:
         if era != "modern":
             era_dir = self._data_dir / "eras" / era
             if era_dir.is_dir():
-                era_units = era_dir / "units"
-                if era_units.is_dir():
-                    era_unit_loader = UnitLoader(era_units)
-                    era_unit_loader.load_all()
-                    unit_loader._definitions.update(era_unit_loader._definitions)
-
                 era_weapons = era_dir / "weapons"
                 if era_weapons.is_dir():
                     era_weapon_loader = WeaponLoader(era_weapons)
@@ -7265,7 +7293,11 @@ class ScenarioLoader:
 
         # 4. Schools
         if config.school_config is not None or doctrine_side_assignments:
-            school_config = dict(config.school_config or {})
+            school_config = (
+                config.school_config.model_dump(mode="python")
+                if config.school_config is not None
+                else {}
+            )
             # Exact per-unit assignments are committed with profile-derived
             # and analysis assignments in one precedence-ordered plan.
             school_config["unit_assignments"] = {}

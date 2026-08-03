@@ -50,6 +50,10 @@ from stochastic_warfare.space.catalog import (  # noqa: E402
     validate_asat_weapon_file,
     validate_constellation_file,
 )
+from stochastic_warfare.validation.historical_backtest.claims import (  # noqa: E402
+    ClaimLedgerAudit,
+    HistoricalClaimLedgerLoader,
+)
 
 _ERA_NAMES = (
     "modern",
@@ -58,7 +62,6 @@ _ERA_NAMES = (
     "ww1",
     "ww2",
 )
-
 type EquipmentMappingKey = tuple[EquipmentCategory, str]
 
 
@@ -152,6 +155,63 @@ class SpaceCatalogValidationStats:
 
     constellations: int = 0
     asat_weapons: int = 0
+
+
+def validate_historical_claim_inventory(
+    *,
+    repository_root: Path = PROJECT_ROOT,
+    ledger_path: Path | None = None,
+) -> tuple[ValidationResult, ClaimLedgerAudit | None]:
+    """Load and freshly audit the complete historical-claim inventory."""
+    selected_ledger = repository_root / "data/validation/historical_claims.yaml" if ledger_path is None else ledger_path
+    try:
+        _ledger, audit = HistoricalClaimLedgerLoader(repository_root).load_with_audit(
+            selected_ledger,
+        )
+    except (OSError, TypeError, ValueError) as exc:
+        return (
+            ValidationResult(
+                errors=[f"Historical claim inventory failed closed: {exc}"],
+            ),
+            None,
+        )
+    return ValidationResult(), audit
+
+
+def _print_historical_claim_audit(audit: ClaimLedgerAudit) -> None:
+    print(
+        "  Historical claim inventory: "
+        f"{audit.scenario_collections} scenario collections / "
+        f"{audit.scenario_metrics} metrics; "
+        f"{audit.python_test_surfaces} Python claim-test surfaces; "
+        f"{audit.frontend_test_surfaces} frontend claim-test surfaces; "
+        f"{audit.documentation_claims} documentation claims across "
+        f"{audit.documentation_claim_paths} paths",
+    )
+    print(
+        "  Candidate-source reviews: "
+        f"{audit.api_python_candidate_paths} API Python + "
+        f"{audit.frontend_public_candidate_paths} frontend production + "
+        f"{audit.frontend_test_candidate_paths} frontend test + "
+        f"{audit.python_test_candidate_paths} Python test + "
+        f"{audit.public_document_candidate_paths} public document + "
+        f"{audit.scenario_yaml_candidate_paths} scenario YAML + "
+        f"{audit.workflow_document_candidate_paths} workflow paths; "
+        f"{audit.claim_bound_source_reviews} claim-bound + "
+        f"{audit.reviewed_nonclaim_source_reviews} reviewed exclusions",
+    )
+    print(
+        "  Historical claim audit deficits: "
+        f"{len(audit.uninventoried_scenario_collections)} uninventoried, "
+        f"{len(audit.missing_scenario_collections)} missing, "
+        f"{len(audit.unreviewed_claim_source_paths)} unreviewed sources, "
+        f"{len(audit.stale_claim_source_reviews)} stale reviews, "
+        f"{len(audit.claim_source_digest_mismatches)} source-digest mismatches, "
+        f"{len(audit.claim_source_rule_mismatches)} rule mismatches, "
+        f"{len(audit.claim_source_binding_errors)} binding errors, "
+        f"{len(audit.forbidden_boolean_historical_apis)} forbidden boolean APIs, "
+        f"{len(audit.digest_mismatches)} claim-digest mismatches",
+    )
 
 
 def _unit_catalog_dir(era: str) -> Path:
@@ -620,18 +680,44 @@ def main() -> int:
     parser.add_argument("--units-only", action="store_true", help="Only check unit YAMLs")
     parser.add_argument("--scenarios-only", action="store_true", help="Only check scenario YAMLs")
     parser.add_argument("--space-only", action="store_true", help="Only check space YAMLs")
+    parser.add_argument(
+        "--historical-claims-only",
+        action="store_true",
+        help="Only audit the historical claim ledger and source inventory",
+    )
     parser.add_argument("--file", type=Path, help="Check a single YAML file")
     parser.add_argument("--no-load", action="store_true", help="Skip ScenarioLoader load test")
     parser.add_argument("--quiet", action="store_true", help="Only show errors")
     args = parser.parse_args()
-    if sum((args.units_only, args.scenarios_only, args.space_only)) > 1:
-        parser.error(
-            "--units-only, --scenarios-only, and --space-only are mutually exclusive",
+    if (
+        sum(
+            (
+                args.units_only,
+                args.scenarios_only,
+                args.space_only,
+                args.historical_claims_only,
+            ),
         )
+        > 1
+    ):
+        parser.error(
+            "--units-only, --scenarios-only, --space-only, and --historical-claims-only are mutually exclusive",
+        )
+    if args.file is not None and args.historical_claims_only:
+        parser.error("--file and --historical-claims-only are mutually exclusive")
 
     total_errors = 0
     total_warnings = 0
     total_classifications = 0
+
+    if args.historical_claims_only:
+        print("Checking the historical claim ledger and reviewed source inventory...")
+        result, audit = validate_historical_claim_inventory()
+        for error in result.errors:
+            print(f"  ERROR: {error}")
+        if audit is not None:
+            _print_historical_claim_audit(audit)
+        return 0 if result.ok else 1
 
     if args.file:
         # Single file mode
@@ -645,6 +731,8 @@ def main() -> int:
                 r2 = validate_scenario_loads(p)
                 r.errors.extend(r2.errors)
                 r.warnings.extend(r2.warnings)
+            claim_result, _ = validate_historical_claim_inventory()
+            r.errors.extend(claim_result.errors)
         else:
             r = validate_unit_yaml(p)
         for e in r.errors:
@@ -714,6 +802,15 @@ def main() -> int:
 
     # Scenario validation
     if not args.units_only and not args.space_only:
+        print("Checking the historical claim ledger and reviewed source inventory...")
+        claim_result, claim_audit = validate_historical_claim_inventory()
+        total_errors += len(claim_result.errors)
+        total_warnings += len(claim_result.warnings)
+        for error in claim_result.errors:
+            print(f"  ERROR: {error}")
+        if claim_audit is not None:
+            _print_historical_claim_audit(claim_audit)
+
         known = _known_unit_types()
         scenario_paths = _collect_scenario_yamls()
         print(f"Checking {len(scenario_paths)} scenario YAML files...")

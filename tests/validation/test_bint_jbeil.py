@@ -1,11 +1,11 @@
-"""Phase 102 Bint Jbeil wiring and current-engine regression.
+"""Legacy direct-construction diagnostics for Bint Jbeil.
 
-The tests prove that the authored units and weapons load and that the
-production simulation reaches active combat.  They do not claim that the
-current terminal result is consistent with the contested historical battle.
-At seed 42 the engine currently produces a blue ``force_destroyed`` win, which
-is retained here as a drift signal while the catalog-wide historical-outcome
-deficit remains tracked separately.
+The tests check that the authored units and weapons load and that a manually
+constructed simulation reaches active combat. They bypass
+``SimulationRuntimeFactory`` and the typed historical-study runner, so they are
+unsupported as historical validation and are not authoritative factory-backed
+current-engine regression evidence. The seed-42 terminal remains only a legacy
+drift signal.
 
 Covered data and routing include:
 
@@ -35,10 +35,7 @@ from stochastic_warfare.simulation.scenario import (
 )
 from stochastic_warfare.simulation.victory import VictoryEvaluator
 
-SCENARIO_PATH = (
-    Path(__file__).resolve().parents[2]
-    / "data" / "scenarios" / "bint_jbeil_2006" / "scenario.yaml"
-)
+SCENARIO_PATH = Path(__file__).resolve().parents[2] / "data" / "scenarios" / "bint_jbeil_2006" / "scenario.yaml"
 DATA_DIR = Path(__file__).resolve().parents[2] / "data"
 
 
@@ -92,9 +89,7 @@ class TestBintJbeilScenarioLoad:
     def test_scenario_loads(self) -> None:
         loader = ScenarioLoader(str(DATA_DIR))
         ctx = loader.load(SCENARIO_PATH, seed=42)
-        assert ctx.config.name.startswith("Bint Jbeil"), (
-            f"Wrong scenario loaded: {ctx.config.name}"
-        )
+        assert ctx.config.name.startswith("Bint Jbeil"), f"Wrong scenario loaded: {ctx.config.name}"
 
     def test_force_scale(self) -> None:
         """Force scale represents company-level granularity — 200-270 total."""
@@ -103,7 +98,7 @@ class TestBintJbeilScenarioLoad:
         blue = len(ctx.units_by_side.get("blue", []))
         red = len(ctx.units_by_side.get("red", []))
         total = blue + red
-        assert 200 <= total <= 270, f"Force scale {total} outside envelope [200, 270]"
+        assert 200 <= total <= 270, f"Force scale {total} outside range [200, 270]"
 
     def test_new_units_present(self) -> None:
         """Phase 102 IDF + Hezbollah unit types all load via registry."""
@@ -111,16 +106,21 @@ class TestBintJbeilScenarioLoad:
         ctx = loader.load(SCENARIO_PATH, seed=42)
         unit_types = {u.unit_type for units in ctx.units_by_side.values() for u in units}
         expected = {
-            "idf_golani_squad", "idf_paratrooper_squad", "idf_egoz_team",
-            "idf_merkava_mk4", "idf_merkava_mk3",
-            "hezbollah_local_fighter", "hezbollah_special_forces",
-            "hezbollah_atgm_team", "hezbollah_mortar_cell",
+            "idf_golani_squad",
+            "idf_paratrooper_squad",
+            "idf_egoz_team",
+            "idf_merkava_mk4",
+            "idf_merkava_mk3",
+            "hezbollah_local_fighter",
+            "hezbollah_special_forces",
+            "hezbollah_atgm_team",
+            "hezbollah_mortar_cell",
         }
         missing = expected - unit_types
         assert not missing, f"Missing unit types: {missing}"
 
-    def test_unconventional_engine_present(self) -> None:
-        """UnconventionalWarfareEngine enabled for Hezbollah insurgent path."""
+    def test_unconventional_warfare_flag_is_authored(self) -> None:
+        """The authored calibration flag is true; this is not engine proof."""
         loader = ScenarioLoader(str(DATA_DIR))
         ctx = loader.load(SCENARIO_PATH, seed=42)
         # UW engine auto-created when initial_ieds non-empty OR via calibration;
@@ -149,8 +149,8 @@ def run_result() -> dict:
 
 
 @pytest.mark.slow
-class TestBintJbeilRuntime:
-    """Current-engine production regression at one declared seed."""
+class TestBintJbeilLegacyRuntimeDiagnostic:
+    """Retain seed-42 direct-run guards without a historical verdict."""
 
     def test_combat_causes_casualties(self, run_result: dict) -> None:
         """The scenario reaches damaging combat rather than a no-op run."""
@@ -158,14 +158,12 @@ class TestBintJbeilRuntime:
         red_d = run_result["red_destroyed"]
         assert blue_d + red_d > 0, "No casualties at all — scenario not active"
 
-    def test_blue_casualty_ceiling(self, run_result: dict) -> None:
-        """Retain the current-engine blue-loss drift ceiling."""
-        assert run_result["blue_destroyed"] <= 80, (
-            f"Blue losses {run_result['blue_destroyed']} exceed regression ceiling"
-        )
+    def test_blue_loss_ceiling_guard(self, run_result: dict) -> None:
+        """Retain the legacy direct-run blue-loss ceiling."""
+        assert run_result["blue_destroyed"] <= 80, f"Blue losses {run_result['blue_destroyed']} exceed legacy ceiling"
 
-    def test_current_terminal_classification(self, run_result: dict) -> None:
-        """Record the known current result without presenting it as history."""
+    def test_seed42_terminal_guard(self, run_result: dict) -> None:
+        """Retain the known direct-run terminal without a history claim."""
         assert (run_result["winner"], run_result["condition"]) == (
             "blue",
             "force_destroyed",
@@ -173,13 +171,9 @@ class TestBintJbeilRuntime:
 
     def test_scenario_progresses(self, run_result: dict) -> None:
         """Scenario runs at least five ticks before its current terminal state."""
-        assert run_result["ticks"] >= 5, (
-            f"Scenario barely progressed: {run_result['ticks']} ticks"
-        )
+        assert run_result["ticks"] >= 5, f"Scenario barely progressed: {run_result['ticks']} ticks"
 
     def test_engagements_occur(self, run_result: dict) -> None:
         """Combat engagement events fire rather than a no-op completion."""
         engagements = [e for e in run_result["events"] if e.event_type == "EngagementEvent"]
-        assert len(engagements) >= 30, (
-            f"Only {len(engagements)} engagements — scenario not active"
-        )
+        assert len(engagements) >= 30, f"Only {len(engagements)} engagements — scenario not active"

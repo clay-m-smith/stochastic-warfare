@@ -1,6 +1,6 @@
 ---
 name: validate-data
-description: Validate scenario, unit, weapon, ammunition, sensor, era, and equipment-mapping data through static checks and the production ScenarioLoader. Use after changing YAML catalogs, scenarios, unit equipment, mapping tables, or typed data schemas, and before committing any data-affecting phase.
+description: Validate scenario, unit, weapon, ammunition, sensor, era, and equipment-mapping data through strict catalog checks, RuntimeLoadoutBuilder, and the production ScenarioLoader. Use after changing YAML catalogs, scenarios, unit equipment, mapping registries, or typed data schemas, and before committing any data-affecting phase.
 ---
 
 # Validate Data
@@ -15,8 +15,8 @@ parameter merely to make a check pass.
 1. Inspect `git status --short` and the phase diff.
 2. List the changed scenario, unit, weapon, ammunition, sensor, era, schema, and
    mapping files.
-3. Trace each changed value through its typed schema and the production
-   `ScenarioLoader`.
+3. Trace each changed value through its typed schema, the production
+   `RuntimeLoadoutBuilder`, and `ScenarioLoader`.
 4. Identify which units and scenarios must expose or exercise the data.
 
 ## Validate During Iteration
@@ -44,23 +44,24 @@ requirement and traceable source.
 
 ## Understand the Existing Validator
 
-`scripts/validate_scenario_data.py` provides two useful but distinct checks:
+`scripts/validate_scenario_data.py` uses the current production-owned data
+boundaries:
 
-- static checks against `_WEAPON_NAME_MAP` and `_SENSOR_NAME_MAP` in the
-  simplified `stochastic_warfare/validation/scenario_runner.py`;
-- load checks through the production
-  `stochastic_warfare.simulation.scenario.ScenarioLoader`.
+- `EQUIPMENT_MAPPING_REGISTRY` and `EquipmentMappingRegistry` reject duplicate
+  keys and enforce exact mapping identity and target semantics;
+- `RuntimeLoadoutBuilder` resolves every reachable unit definition against the
+  effective base-plus-era weapon, ammunition, and sensor catalogs;
+- full-catalog coverage reports every unmapped authored key and stale registry
+  key; and
+- `ScenarioLoader` loads the affected scenarios through the same catalog and
+  loadout composition used by runtime preparation.
 
-Passing a simplified-runner mapping check does not prove production wiring.
-The current load checks require non-empty sides and aggregate armed/sensored
-forces; they do not prove every affected unit received the semantically correct
-runtime equipment.
-
-For changes to literal mapping tables, also detect duplicate keys that Python
-would otherwise overwrite:
+Passing registry or load checks proves strict data construction, not that an
+attachment changes a production outcome. For mapping changes, run the focused
+unit and integration contracts as well:
 
 ```powershell
-uv run ruff check stochastic_warfare/validation/scenario_runner.py --select F601
+uv run python -m pytest tests/unit/test_phase_109_equipment_mapping.py tests/integration/test_phase_109_equipment_mapping.py -q
 ```
 
 ## Run the Full Data Gates

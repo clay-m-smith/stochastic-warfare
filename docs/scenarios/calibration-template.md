@@ -1,5 +1,12 @@
 # Block 11 Scenario Calibration Template
 
+> **Phase 117 historical-claim supersession (2026-08-02):** This archived page
+> preserves implementation history. Its historical-winner, outcome, casualty,
+> duration, calibration, plausibility, envelope, and tolerance statements are
+> not accepted historical validation. Any engine figures below are regression
+> history only, not predictive evidence or calibration authority; the typed
+> claim ledger and accepted production artifacts, if any, are authoritative.
+
 > **Phase 112 integrity supersession (2026-07-30):** This page preserves the
 > Block 11 calibration and regression template as development history. Its
 > worked seeds, winner thresholds, helper calls, and sample configuration are
@@ -10,9 +17,14 @@
 > replacement catalog-wide outcome-envelope contract and the disposition of
 > every retained claim.
 
-Every Block 11 golden scenario defines an **outcome envelope** — a range of statistically-plausible results derived from historical sources. The scenario's regression test validates that the engine produces outcomes bracketing that envelope.
+Block 11 treated each so-called golden scenario as if a local **outcome
+envelope** and regression assertion validated historical fidelity. That premise
+is retained here only as development history. These fragments are not strict
+study plans, their helper tests are not historical verdicts, and none can
+support `production_validated` without the Phase 117 ledger, production runner,
+artifact, and explicit promotion contract.
 
-This document defines:
+This historical document records:
 
 1. The envelope format
 2. Permitted vs. forbidden calibration techniques
@@ -21,9 +33,14 @@ This document defines:
 
 ---
 
-## 1. Envelope Format
+## 1. Legacy Envelope Format (Not a Validation Plan)
 
-An envelope has four components:
+Block 11 described an envelope with four components. The examples below omit
+required source-lineage, exact unit/extractor/event-boundary, immutable
+predeclaration, production provenance, joint acceptance, and reload-validated
+artifact fields. Treat a legacy helper result as
+`current_engine_regression_only` only when it actually uses the production
+factory path; otherwise it is `unsupported`.
 
 ### 1.1 Winner envelope
 
@@ -33,7 +50,10 @@ winner_envelope:
   min_rate: 0.7               # historical winner wins in ≥70% of 10-iteration MC
 ```
 
-Rationale: history is a single realization; our Monte Carlo distribution should have the historical winner as its modal outcome but need not guarantee it.
+Historical rationale recorded by Block 11: history is one realization, so the
+template used a modal-winner threshold. Under the current contract,
+winner-only gating is invalid and winner agreement cannot substitute for an
+independently sourced outcome metric.
 
 ### 1.2 Duration envelope
 
@@ -43,7 +63,11 @@ duration_envelope:
   tolerance: 0.5              # 10th–90th percentile spans 3h–9h (i.e., 50% of historical)
 ```
 
-Rationale: Many factors (weather, commander reaction time, supply delays) affect duration. A ±50% envelope around the historical figure is generous enough to accept plausible variation without being meaningless.
+Historical rationale recorded by Block 11: weather, reaction time, and supply
+delays motivated a broad duration range. The current contract does not invent a
+percentage tolerance: it requires a source-backed inclusive range, exact unit,
+comparable event boundary, and explicit cutoff censoring before results are
+observed.
 
 ### 1.3 Casualty envelope (per side)
 
@@ -57,7 +81,11 @@ casualty_envelopes:
     max: 3                    # hard ceiling — higher means calibration is off
 ```
 
-Rationale: Historical casualty figures are usually known to ±20–40% precision due to AAR variance, unit-boundary questions, and the difference between KIA-only and total-casualty counts. Two-sided asymmetric envelopes (e.g., `max` for blue) acknowledge when historical reality is close to zero but the engine might produce small positive values.
+Historical rationale recorded by Block 11: casualty uncertainty motivated
+broad percentage ranges and asymmetric ceilings. Under the current contract,
+the source must support the actual range and population. KIA, total casualties,
+people, vehicles, formations, and generic unit records are not interchangeable,
+and a convenient tolerance cannot repair a unit mismatch.
 
 ### 1.4 Key-dynamic envelope
 
@@ -73,11 +101,22 @@ key_dynamics:
     assertion: "at least 1 CAS engagement event per run"
 ```
 
-These are the scenario's "depth tests" — they verify that not only does the right side win by the right margin in the right time, but the **mechanism** of victory resembles the historical one.
+Block 11 called these "depth tests." Today they are diagnostics unless a closed
+production extractor, exact source assertion, unit, population, and
+source-synchronous event boundary are predeclared. A proxy such as a weapon
+share over a different vehicle population does not establish the historical
+mechanism.
 
 ---
 
-## 2. Permitted vs. Forbidden Calibration Techniques
+## 2. Historical Calibration Guidance
+
+The lists below preserve Block 11's intended guardrails; they are not blanket
+authorization to set fields or values. Current calibration requires a
+schema-valid, production-wired parameter, traceable source/rationale, a frozen
+backtest contract, separate training and held-out seeds, and validation on the
+factory-owned route. Unsupported fields and unexercised overrides remain
+explicitly unsupported.
 
 ### Permitted
 
@@ -99,14 +138,22 @@ These are the scenario's "depth tests" — they verify that not only does the ri
 - **Reducing IED/device density to "win faster"**. IED employment is a documented historical rate — matching that rate is the point.
 - **Synthetic "historical" data**. Every calibration value cites a source.
 
-### Case of last resort
+### When the frozen envelope is missed
 
 If after applying all permitted techniques the envelope is still missed by a wide margin, the correct response is:
 
 1. **Document the miss** in the phase devlog with quantitative detail (what the engine produces vs. what's expected)
-2. **Log a new deficit** in `devlog/index.md` identifying the engine gap
-3. **Accept the wider envelope** or relax the target for this scenario
-4. **Do not** keep tuning until the envelope fits — that's overfitting to a single realization and masks the engine gap.
+2. **Keep the frozen study and its `FAIL` artifact**; do not change its range,
+   threshold, metrics, seeds, population, or event boundary after seeing the
+   result
+3. **Classify the historical claim as `unsupported`** (or classify a separate
+   output snapshot as `current_engine_regression_only` when that is all it
+   proves)
+4. **Record a remediation item** for the specific model, extraction, source,
+   unit, or scenario-representation gap
+5. **Predeclare any later study independently** with a documented source or
+   modeling rationale; never tune on its held-out seeds or describe reused
+   evidence as independent validation
 
 ---
 
@@ -138,6 +185,14 @@ Not acceptable: blogs, Wikipedia claims without primary citations, YouTube, unso
 
 ## 4. Worked Example — Debecka Pass (from Phase 99)
 
+The following YAML and tests are preserved as the Block 11 illustration. They
+are not known to be a current schema-valid configuration, do not use the strict
+claim ledger or study plan, and do not produce a reload-validated artifact.
+They therefore cannot support a historical-validation claim. Debecka's current
+catalog metadata also conflicts with the source-scoped duration and vehicle
+counts, so it remains explicitly unsupported pending remediation and a new
+predeclared production study.
+
 ```yaml
 # data/scenarios/debecka_pass/scenario.yaml
 name: "Debecka Pass 2003 — Task Force Viking vs. Iraqi 34th Bde mech"
@@ -163,6 +218,7 @@ calibration_overrides:
 
 ```python
 # tests/validation/test_debecka_pass.py
+# Historical Block 11 regression sketch; not a historical-validation route.
 def test_debecka_pass_envelope():
     results = run_scenario_batch(
         "data/scenarios/debecka_pass/scenario.yaml",
@@ -190,32 +246,23 @@ def test_debecka_pass_envelope():
     assert 2160 <= avg_ticks <= 6480, f"Duration outside envelope: {avg_ticks:.0f} ticks"
 ```
 
-The key-dynamic check (Javelin dominance) is a separate test because it requires running one full iteration with event capture, which is heavier:
-
-```python
-@pytest.mark.slow
-def test_debecka_pass_javelin_dominance():
-    javelin_kills = count_destructions_by_weapon(
-        "data/scenarios/debecka_pass/scenario.yaml",
-        weapon_id="javelin_clm", seed=42, data_dir="data",
-    )
-    total_red_kills = count_total_destructions("data/scenarios/debecka_pass/scenario.yaml",
-                                                side="red", seed=42, data_dir="data")
-    ratio = javelin_kills / max(total_red_kills, 1)
-    assert ratio >= 0.5, \
-        f"Javelin should cause ≥50% of Iraqi kills, got {ratio:.0%} ({javelin_kills}/{total_red_kills})"
-```
+The historical template also proposed a separate Javelin-dominance helper.
+That proxy compared incompatible populations and had no source-synchronous
+event boundary, so Phase 117 removed the sketch rather than preserving it as a
+validation example.
 
 ---
 
-## 5. Helpers
+## 5. Phase 117 Helper Removal
 
-The regression-test helpers live in `stochastic_warfare/tools/envelope_check.py`:
+Phase 117 removed `stochastic_warfare/tools/envelope_check.py` and its synthetic
+unit tests. The unused helpers returned local boolean `PASS`/`FAIL` labels or
+event counts without loading the claim ledger and predeclared study plan,
+executing the typed historical-study boundary, or writing a reload-validated
+artifact. No compatibility shim remains.
 
-- `check_winner_envelope(results, expected_winner, min_rate=0.7)`
-- `check_duration_envelope(results, historical_s, tolerance=0.5, tick_duration_s=5.0)`
-- `check_casualty_envelope(results, side, historical, tolerance=0.4, max_override=None)`
-- `count_destructions_by_weapon(scenario_path, weapon_id, seed, data_dir, max_ticks=5000)`
-- `count_total_destructions(scenario_path, side, seed, data_dir, max_ticks=5000)`
-
-Each scenario's regression test uses these to keep assertions uniform and the test easy to read.
+Current historical work uses `HistoricalClaimLedgerLoader ->
+HistoricalStudyLoader -> SimulationRuntimeFactory.prepare ->
+HistoricalBacktestRunner -> load_historical_artifact`. A completed `PASS` still
+requires a separate clean-revision, immutable-predeclaration, exact-metric
+ledger promotion before any claim becomes `production_validated`.

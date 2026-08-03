@@ -1,74 +1,83 @@
 ---
 name: research-models
-description: Research mathematical, stochastic, and signal processing modeling approaches for simulation subsystems. Use when designing probability models, random processes, detection algorithms, optimization methods, or any quantitative engine component.
-allowed-tools: Read, Grep, Glob, WebSearch, WebFetch
-context: fork
-agent: general-purpose
+description: "Research defensible mathematical, stochastic, signal-processing, optimization, and numerical models for Stochastic Warfare. Use when selecting, replacing, or parameterizing an equation, distribution, estimator, random process, or quantitative algorithm; do not use for routine refactors that leave the model contract unchanged."
 ---
 
-# Mathematical & Stochastic Modeling Research Skill
+# Quantitative Model Research
 
-You are a mathematical modeling research assistant for the Stochastic Warfare wargame simulation project. The project draws heavily from signal processing, optimization, and electrical engineering for its stochastic models. Your job is to find, synthesize, and cite validated modeling approaches relevant to the development task.
+Read `CODEX.md`, the relevant specification, current implementation, phase
+material, and remediation entry. Research the model that the production path
+needs, not an isolated mathematical curiosity.
 
-## Task
-$ARGUMENTS
+## Frame the Decision
 
-## Research Source Tiers (STRICTLY ENFORCED)
+1. State the observable phenomenon, inputs, outputs, scale, units, and required
+   fidelity.
+2. Identify the current model and the precise deficiency or open design choice.
+3. Define required stochastic, numerical, runtime, and deterministic-replay
+   properties.
+4. Establish how candidate models could be parameterized and falsified.
 
-### Tier 1 — Primary / Authoritative (Preferred)
-- Established textbooks in signal processing, probability, stochastic processes, operations research, control theory
-- Government technical reports (DTIC, NIST, DoD modeling & simulation publications)
-- RAND Corporation and FFRDC analytical publications
+## Source Discipline
 
-### Tier 2 — Academic / Peer-Reviewed
-- IEEE (especially IEEE Transactions on Signal Processing, Aerospace & Electronic Systems, Systems, Man, and Cybernetics)
-- arxiv (note peer-review status explicitly)
-- SIAM journals, Applied Mathematics journals
-- Operations Research journals (MORS, INFORMS, Naval Research Logistics)
-- Journal of Defense Modeling and Simulation
-- Established academic publishers (Springer, Wiley, Cambridge UP)
+Classify every material source:
 
-### Tier 3 — Validated Reference
-- Well-documented open-source implementations with academic citations
-- scipy/numpy documentation (for implementation details of established methods)
-- Validated technical references with clear derivations
+### Tier 1 — Primary or Authoritative
 
-### EXCLUDED — Do NOT use
-- Unverified blogs, personal websites, forums, tutorials without citations
-- Stack Overflow answers (may reference for implementation hints but never for model selection)
-- Unsourced claims or derivations
-- Any source without verifiable mathematical foundation
+- Original papers, established textbooks, standards, and government technical
+  reports
+- FFRDC analytical publications with inspectable evidence and methods
 
-## Output Format
+### Tier 2 — Academic or Peer-Reviewed
 
-For each modeling approach, provide:
-1. **Model description** — what it is, mathematical formulation, key equations
-2. **Assumptions and limitations** — under what conditions does this model hold?
-3. **Parameters** — what needs to be estimated or configured, and from what data
-4. **Source** — full citation with tier classification
-5. **Implementation notes** — relevant Python libraries (numpy, scipy, etc.), computational complexity, numerical considerations
-6. **Alternatives** — other models considered and why this one is preferred (or trade-offs)
+- Peer-reviewed signal-processing, probability, control, applied-mathematics,
+  operations-research, and defense-modeling publications
+- Established academic-press monographs
 
-## Domain-Specific Modeling Areas
-When researching, consider applicability to these simulation domains:
-- **Combat**: hit probability, lethality, suppression, Lanchester models
-- **Movement**: stochastic deviation, terrain interaction, fatigue
-- **Detection/Intel**: signal-in-noise, Kalman filtering, ROC curves, Pd models
-- **Logistics**: queueing theory, network flow, inventory models
-- **Morale/C2**: Markov chains, state transitions, information propagation
-- **Terrain**: spatial statistics, elevation modeling, LOS algorithms
+### Tier 3 — Implementation Reference
 
-## Signal Processing & EE Analogies
-This project explicitly draws from SP/EE. When applicable, frame models in those terms:
-- Detection theory (Neyman-Pearson, matched filter) for reconnaissance
-- Kalman/particle filters for state estimation under uncertainty
-- Noise models (Gaussian, Poisson, shot noise) for stochastic processes
-- Convolution for effect propagation
-- Spectral analysis for temporal patterns
-- SNR-based formulations for detection and communication reliability
+- Official NumPy, SciPy, or other library documentation for implementation
+  behavior only
+- Cited open-source implementations as supplementary implementation evidence
 
-## Important
-- Provide mathematical formulations at a level suitable for direct implementation
-- Include parameter ranges or estimation methods where possible
-- Flag numerical stability concerns or edge cases
-- If a model requires Monte Carlo validation, describe the validation approach
+Treat arXiv material as a preprint unless publication is verified. Treat search
+indexes as discovery tools. Do not select a model from Tier 3 material alone, or
+from tutorials, forum answers, or implementations without a traceable
+mathematical source.
+
+## Evaluate Each Candidate
+
+Record:
+
+- formulation, equations, variable definitions, units, and dimensional checks;
+- assumptions, independence claims, stationarity, boundary conditions, and
+  failure modes;
+- parameter ranges, estimation data, identifiability, and correlations;
+- stochastic distribution and integration with project RNG streams;
+- numerical stability, precision, conditioning, clipping, and edge behavior;
+- computational complexity and expected hot-path cost;
+- calibration risk and sensitivity to inputs;
+- validation oracle, negative controls, and Monte Carlo design;
+- alternatives and why they are preferable or inferior for this use.
+
+For signal-processing models, define signal, noise, detection threshold, false
+alarm behavior, and ROC implications. For state estimators, define process and
+measurement models and covariance assumptions. For optimization, define the
+objective, constraints, convergence behavior, and infeasible cases.
+
+## Recommend and Hand Off
+
+Recommend a model only when its assumptions match the simulated phenomenon.
+State:
+
+- the selected formulation and source;
+- implementation-ready equations and units;
+- required configuration fields and validation;
+- deterministic RNG and iteration requirements;
+- expected test cases, sensitivity analysis, and performance checks;
+- assumptions that must be documented;
+- remaining evidence gaps.
+
+If implementation follows, trace it through the completion evidence matrix in
+`CODEX.md`. A correct derivation, import, or isolated function call does not
+prove production wiring or outcome effect.

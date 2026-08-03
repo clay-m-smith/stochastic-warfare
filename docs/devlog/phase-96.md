@@ -1,5 +1,11 @@
 # Phase 96: Analysis & Event Interaction
 
+> **Phase 112/117 integrity correction:** The Phase 96 doctrine tool described
+> below mutated an ignored `{side}_school` field and therefore did not establish
+> a behavioral comparison. Phase 112 replaced it with typed
+> `DoctrineAnalysisVariant` assignments in the production runtime and paired
+> provenance. The historical implementation text below is not current evidence.
+
 **Status**: Complete
 **Block**: 10 (UI Depth & Engine Exposure)
 **Tests**: 13 new frontend tests (409 total vitest)

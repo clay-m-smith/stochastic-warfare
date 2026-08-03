@@ -12,12 +12,17 @@ not as proof that unobserved behavior occurred.
 
 1. Select an explicit scenario path, deterministic seed, maximum tick count,
    and any requested side or event filters.
-2. Inspect the current constructor signatures for `ScenarioLoader`,
-   `SimulationEngine`, `EngineConfig`, `SimulationRecorder`, and
-   `VictoryEvaluator` before building the run.
-3. Load through `ScenarioLoader`, attach `SimulationRecorder` to the context's
-   event bus, configure a bounded engine run, and use the scenario's actual
-   victory contract where applicable.
+2. Inspect the current signatures for `SimulationRuntimeFactory`,
+   `AnalysisVariant`, `PreparedScenario.build`, `RuntimeSession`,
+   `EngineConfig`, and `SimulationRecorder` before building the run.
+3. Prepare through `SimulationRuntimeFactory`, build an explicit prepared
+   variant with a `recorder_factory`, and execute a bounded `RuntimeSession`.
+   Either call `run_to_completion()`, or drive `step()` until terminal and then
+   call `finalize()`. This preserves the scenario's production victory,
+   reinforcement, loadout, and runtime ownership boundaries. A direct
+   `ScenarioLoader` or engine
+   construction may diagnose configuration only; it is not comparable
+   production timeline evidence.
 4. Record the exact command, seed, tick bound, stop condition, and result.
 
 Avoid an unbounded default run. If the scenario is expensive, use the smallest

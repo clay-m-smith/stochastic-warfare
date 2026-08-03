@@ -1,5 +1,13 @@
 # Stochastic Warfare -- Block 5 Development Phases (40--48)
 
+> **Phase 117 historical-claim supersession (2026-08-02):** This archived page
+> preserves implementation history. Its historical-winner, outcome, casualty,
+> duration, calibration, plausibility, envelope, and tolerance statements are
+> not accepted historical validation. Any engine figures below are regression
+> history only, not predictive evidence or calibration authority; the typed
+> claim ledger and accepted production artifacts, if any, are authoritative.
+
+
 > **Phase 112 integrity supersession (2026-07-30):** This roadmap preserves
 > Block 5's historical plan. The winner-table and calibrated-input regression
 > delivered in this block is not a provenance-bearing, held-out production

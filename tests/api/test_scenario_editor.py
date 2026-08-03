@@ -115,6 +115,36 @@ async def test_validate_with_optional_configs(client):
     assert data["valid"] is True
 
 
+@pytest.mark.parametrize(
+    "school_config",
+    [
+        {"enable_schools": True},
+        {"enable_schools": False},
+        {"blue_school": "maneuverist", "red_school": "attrition"},
+        {"blue": "maneuverist", "red": "attrition"},
+    ],
+)
+async def test_school_proxy_configs_fail_validation_and_submission(
+    client,
+    school_config,
+):
+    cfg = _minimal_config()
+    cfg["school_config"] = school_config
+
+    validation = await client.post(
+        "/api/scenarios/validate",
+        json={"config": cfg},
+    )
+    assert validation.status_code == 200
+    assert validation.json()["valid"] is False
+
+    submission = await client.post(
+        "/api/runs/from-config",
+        json={"config": cfg, "seed": 1, "max_ticks": 1},
+    )
+    assert submission.status_code == 422
+
+
 # --- From-config endpoint ---
 
 
@@ -154,6 +184,54 @@ async def test_from_config_accepts_valid(client, monkeypatch):
         ["blue", 2],
         ["red", 2],
     ]
+
+
+async def test_from_config_preserves_exact_school_and_side_commander_assignments(
+    client,
+):
+    cfg = _minimal_config()
+    cfg["sides"][0]["commander_profile"] = "joint_campaign"
+    cfg["sides"][1]["commander_profile"] = "aggressive_armor"
+    cfg["school_config"] = {
+        "unit_assignments": {
+            "blue_m1a2_0000": "maneuverist",
+            "blue_m1a2_0001": "maneuverist",
+            "red_t72m_0000": "attrition",
+            "red_t72m_0001": "attrition",
+        },
+    }
+
+    response = await client.post(
+        "/api/runs/from-config",
+        json={"config": cfg, "seed": 117, "max_ticks": 1},
+    )
+    assert response.status_code == 202, response.text
+    run_id = response.json()["run_id"]
+
+    for _ in range(100):
+        detail = await client.get(f"/api/runs/{run_id}")
+        assert detail.status_code == 200
+        payload = detail.json()
+        if payload["status"] in {"completed", "failed"}:
+            break
+        await asyncio.sleep(0.01)
+    else:
+        pytest.fail("canonical commander/school run did not terminate")
+
+    assert payload["status"] == "completed", payload
+    assignments = payload["result"]["provenance"]["initial_unit_assignments"]
+    assert len(assignments) == 4
+    assert {
+        (
+            assignment["side"],
+            assignment["commander_profile_id"],
+            assignment["doctrine_school_id"],
+        )
+        for assignment in assignments
+    } == {
+        ("blue", "joint_campaign", "maneuverist"),
+        ("red", "aggressive_armor", "attrition"),
+    }
 
 
 async def test_from_config_rejects_invalid(client):
@@ -221,13 +299,14 @@ async def test_from_config_missing_config_field(client):
     assert resp.status_code == 422
 
 
-async def test_shipped_metadata_validates_and_runs_from_editor_config(
+async def test_public_scenario_config_validates_and_runs_without_claim_metadata(
     client,
 ) -> None:
     scenario = await client.get("/api/scenarios/73_easting")
     assert scenario.status_code == 200
     config = scenario.json()["config"]
-    assert "documented_outcomes" in config
+    assert "documented_outcomes" not in config
+    assert "sources" not in config
     assert "blue_forces" in config
 
     validation = await client.post(

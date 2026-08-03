@@ -1,9 +1,13 @@
-import type { MapUnitFrame, ViewportTransform } from '../types/map'
+import { MAP_UNIT_STATUS, type MapUnitFrame, type ViewportTransform } from '../types/map'
 import { worldToScreen } from './terrain'
 export { SIDE_COLORS } from './sideColors'
 import { getSideColor } from './sideColors'
 
 const UNIT_SIZE = 8
+
+export function isDestroyedStatus(status: number): boolean {
+  return status === MAP_UNIT_STATUS.DESTROYED
+}
 
 // --- Phase 94: overlay types and constants ---
 
@@ -139,8 +143,8 @@ export function drawUnit(
   const { sx, sy } = worldToScreen(unit.x, unit.y, transform, canvasHeight)
   let color = getSideColor(unit.side)
   const size = UNIT_SIZE
-  const disabled = unit.status === 1 // UnitStatus.DISABLED = 1
-  const destroyed = unit.status >= 2 // UnitStatus.DESTROYED = 2
+  const disabled = unit.status === MAP_UNIT_STATUS.DISABLED
+  const destroyed = isDestroyedStatus(unit.status)
 
   // Morale color override
   if (overlays?.showMorale && (unit.morale ?? 0) > 0) {

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from functools import lru_cache
 from pathlib import Path
 from typing import Any
 
@@ -10,21 +11,52 @@ from fastapi import APIRouter, Depends, HTTPException
 from api.config import ApiSettings
 from api.dependencies import get_settings
 from api.scenarios import resolve_scenario, scan_scenarios
-from api.schemas import ScenarioDetail, ScenarioSummary, ValidateConfigRequest, ValidateConfigResponse
+from api.schemas import (
+    HistoricalValidationSummary,
+    ScenarioDetail,
+    ScenarioSummary,
+    ValidateConfigRequest,
+    ValidateConfigResponse,
+)
+from stochastic_warfare.validation.historical_backtest import (
+    HistoricalClaimLedger,
+    HistoricalClaimLedgerLoader,
+)
 
 router = APIRouter(prefix="/scenarios", tags=["scenarios"])
+APPLICATION_ROOT = Path(__file__).resolve().parents[2]
 
 
-def _extract_summary(name: str, cfg: dict[str, Any]) -> ScenarioSummary:
+@lru_cache(maxsize=1)
+def _load_historical_claim_ledger() -> HistoricalClaimLedger:
+    """Load API-published claims from the immutable application catalog."""
+    return HistoricalClaimLedgerLoader(APPLICATION_ROOT).load_scenario_catalog(
+        APPLICATION_ROOT / "data/validation/historical_claims.yaml",
+    )
+
+
+def _historical_validation(
+    ledger: HistoricalClaimLedger,
+    scenario_path: str | Path,
+) -> HistoricalValidationSummary:
+    """Project one exact scenario path through the typed ledger boundary."""
+    summary = ledger.scenario_summary(Path(scenario_path))
+    return HistoricalValidationSummary.model_validate(
+        summary.model_dump(mode="json"),
+    )
+
+
+def _extract_summary(
+    name: str,
+    cfg: dict[str, Any],
+    historical_validation: HistoricalValidationSummary,
+) -> ScenarioSummary:
     """Build ScenarioSummary from parsed YAML config."""
     raw_sides = cfg.get("sides", [])
     if isinstance(raw_sides, dict):
         sides = list(raw_sides.keys())
     elif isinstance(raw_sides, list):
-        sides = [
-            s.get("side", "?") if isinstance(s, dict) else str(s)
-            for s in raw_sides
-        ]
+        sides = [s.get("side", "?") if isinstance(s, dict) else str(s) for s in raw_sides]
     else:
         sides = []
 
@@ -43,9 +75,10 @@ def _extract_summary(name: str, cfg: dict[str, Any]) -> ScenarioSummary:
         has_ew="ew_config" in cfg,
         has_cbrn="cbrn_config" in cfg,
         has_escalation="escalation_config" in cfg,
-        has_schools="schools_config" in cfg,
+        has_schools="school_config" in cfg,
         has_space="space_config" in cfg,
         has_dew="dew_config" in cfg,
+        historical_validation=historical_validation,
     )
 
 
@@ -53,7 +86,15 @@ def _extract_summary(name: str, cfg: dict[str, Any]) -> ScenarioSummary:
 async def list_scenarios(settings: ApiSettings = Depends(get_settings)) -> list[ScenarioSummary]:
     data_dir = Path(settings.data_dir)
     raw = scan_scenarios(data_dir)
-    return [_extract_summary(s["name"], s["config"]) for s in raw]
+    ledger = _load_historical_claim_ledger()
+    return [
+        _extract_summary(
+            s["name"],
+            s["config"],
+            _historical_validation(ledger, s["path"]),
+        )
+        for s in raw
+    ]
 
 
 @router.get("/{name}", response_model=ScenarioDetail)
@@ -71,6 +112,9 @@ async def get_scenario(name: str, settings: ApiSettings = Depends(get_settings))
 
     with open(path, encoding="utf-8") as f:
         config_dict = yaml.safe_load(f)
+
+    ledger = _load_historical_claim_ledger()
+    historical_validation = _historical_validation(ledger, path)
 
     # Build force summary from sides (supports list or dict format)
     force_summary: dict[str, Any] = {}
@@ -92,10 +136,15 @@ async def get_scenario(name: str, settings: ApiSettings = Depends(get_settings))
                     "unit_types": [u.get("unit_type", "?") for u in units],
                 }
 
+    public_config = serialize_to_dict(config_dict)
+    public_config.pop("documented_outcomes", None)
+    public_config.pop("sources", None)
+
     return ScenarioDetail(
         name=name,
-        config=serialize_to_dict(config_dict),
+        config=public_config,
         force_summary=force_summary,
+        historical_validation=historical_validation,
     )
 
 

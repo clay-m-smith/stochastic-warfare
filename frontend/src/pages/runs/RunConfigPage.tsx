@@ -23,7 +23,7 @@ export function RunConfigPage() {
     if (!scenarioName) return
     submitRun.mutate(
       { scenario: scenarioName, seed, max_ticks: maxTicks },
-      { onSuccess: (result) => navigate(`/runs?highlight=${result.run_id}`) },
+      { onSuccess: (result) => navigate(`/runs/${result.run_id}`) },
     )
   }
 

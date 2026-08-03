@@ -1,4 +1,4 @@
-import type { MapUnitFrame } from '../../types/map'
+import { MAP_UNIT_STATUS, type MapUnitFrame } from '../../types/map'
 
 const DOMAIN_NAMES: Record<number, string> = {
   0: 'Ground',
@@ -9,12 +9,11 @@ const DOMAIN_NAMES: Record<number, string> = {
 }
 
 const STATUS_NAMES: Record<number, string> = {
-  0: 'Active',
-  1: 'Damaged',
-  2: 'Suppressed',
-  3: 'Destroyed',
-  4: 'Routed',
-  5: 'Surrendered',
+  [MAP_UNIT_STATUS.ACTIVE]: 'Active',
+  [MAP_UNIT_STATUS.DISABLED]: 'Disabled',
+  [MAP_UNIT_STATUS.DESTROYED]: 'Destroyed',
+  [MAP_UNIT_STATUS.SURRENDERED]: 'Surrendered',
+  [MAP_UNIT_STATUS.ROUTING]: 'Routing',
 }
 
 const MORALE_NAMES: Record<number, string> = {

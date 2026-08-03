@@ -45,12 +45,12 @@ simplified `ScenarioRunner` when the performance claim concerns
 
 ## Capture a Call Profile
 
-For a production scenario on this Windows workspace, write profiling output
-outside the repository:
+Write profiling output to an OS-native temporary directory outside the
+repository. Replace `<temporary-directory>` below with that resolved path:
 
-```powershell
-uv run python -m cProfile -o C:\tmp\stochastic-warfare-profile.prof scripts/evaluate_scenarios.py --scenario <scenario-id> --no-details --seed <seed>
-uv run python -c "import pstats; pstats.Stats(r'C:\tmp\stochastic-warfare-profile.prof').strip_dirs().sort_stats('cumulative').print_stats(20)"
+```text
+uv run python -m cProfile -o <temporary-directory>/stochastic-warfare-profile.prof scripts/evaluate_scenarios.py --scenario <scenario-id> --no-details --seed <seed>
+uv run python -c "import pstats; pstats.Stats(r'<temporary-directory>/stochastic-warfare-profile.prof').strip_dirs().sort_stats('cumulative').print_stats(20)"
 ```
 
 For tests, select an existing valid node and profile it without truncating or

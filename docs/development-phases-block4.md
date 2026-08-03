@@ -8,6 +8,24 @@ Block 4 tightens the product. No new engine subsystems, no new simulation domain
 
 **Engine changes are surgical**: Block 4 modifies `stochastic_warfare/` only to wire existing but disconnected subsystems (DEW battle loop integration, reinforcement events). No new engines, no new data models, no architectural changes.
 
+> **Current-behavior supersession (Phase 117):** The Phase 38/39 completion
+> labels below record their historical scoped acceptance; they are not an
+> unqualified statement of the current UI contract. The present FOW control
+> filters only unit markers and is neither a complete side view nor an
+> authorization boundary (REM-041 / Phase 128). Chart and map cursors are not
+> bidirectionally synchronized across tabs; event CSV export is limited to the
+> first 10,000 fetched events; engagement replay can expose future arcs; and
+> editor/analysis affordances remain narrower than this historical plan.
+> Bounded canonical-field, terrain, status, and invalid-default defects were
+> corrected in Phase 117; REM-049 / Phase 136 owns the remaining web semantic
+> integrity work. The current contract is documented in
+> [the Web UI guide](guide/web-ui.md).
+
+> **Phase 117 / REM-050 correction:** The archived `enable_laser` DEW plan was
+> not a production flag and Taiwan never received the proposed DEW-capable
+> unit. DEW is currently presence-enabled with `DEWConfig` tuning; Phase 137
+> owns strict configuration and real scenario engagement proof.
+
 ---
 
 ## Phase 37: Integration Fixes & End-to-End Validation — COMPLETE

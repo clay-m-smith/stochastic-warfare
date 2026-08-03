@@ -5,6 +5,7 @@ import {
   drawLogisticsBars,
   drawEngagementFlash,
   drawUnit,
+  isDestroyedStatus,
   MORALE_COLORS,
   POSTURE_ABBREV,
   type OverlayOptions,
@@ -264,6 +265,16 @@ describe('drawUnit with overlays', () => {
 })
 
 describe('constants', () => {
+  it('classifies only production UnitStatus.DESTROYED as destroyed', () => {
+    expect([0, 1, 2, 3, 4].map(isDestroyedStatus)).toEqual([
+      false,
+      false,
+      true,
+      false,
+      false,
+    ])
+  })
+
   it('MORALE_COLORS has 5 entries', () => {
     expect(Object.keys(MORALE_COLORS)).toHaveLength(5)
   })

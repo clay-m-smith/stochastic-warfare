@@ -1,5 +1,18 @@
 # Stochastic Warfare — Post-MVP Brainstorm
 
+> **Phase 117 historical-claim supersession (2026-08-02):** This archived page
+> preserves implementation history. Its historical-winner, outcome, casualty,
+> duration, calibration, plausibility, envelope, and tolerance statements are
+> not accepted historical validation. Any engine figures below are regression
+> history only, not predictive evidence or calibration authority; the typed
+> claim ledger and accepted production artifacts, if any, are authoritative.
+
+> **Phase 117 / REM-050 correction (2026-08-02):** The archived escalation
+> design below exists in the standalone engine, but production scenario loading
+> discards authored thresholds, hysteresis, cooldown, and related tuning and
+> uses defaults. Phase 137 owns the typed consumed boundary and outcome proof.
+
+
 Thematic exploration of post-MVP development directions. All 10 MVP phases (0–10) are complete with 3,782 tests passing. This document captures design thinking, rationale, and research directions for Phases 11–24 across 13 thematic areas. Implementation roadmap is in `development-phases-post-mvp.md`.
 
 **Cross-document alignment**: This document should stay synchronized with `development-phases-post-mvp.md` (phase assignments), `brainstorm.md` (original architecture decisions), and `devlog/index.md` (deficit inventory).

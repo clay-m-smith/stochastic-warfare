@@ -562,7 +562,7 @@ class TestDataCompleteness:
         p = Path("data/scenarios/taiwan_strait/scenario.yaml")
         data = yaml.safe_load(p.read_text())
         assert "dew_config" in data
-        assert data["dew_config"]["enable_dew"] is True
+        assert data["dew_config"] == {}
 
     def test_trafalgar_formation_spacing(self):
         import yaml

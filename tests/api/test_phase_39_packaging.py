@@ -59,6 +59,31 @@ async def test_api_routes_take_precedence(client):
     assert data["status"] == "ok"
 
 
+def test_openapi_remains_available_with_spa_fallback(
+    monkeypatch: pytest.MonkeyPatch,
+):
+    """The built frontend catch-all must not break OpenAPI generation."""
+    import os
+
+    from api.main import create_app
+
+    real_isdir = os.path.isdir
+
+    def frontend_dist_exists(path: str) -> bool:
+        normalized = os.path.normpath(path)
+        if normalized.endswith(os.path.join("frontend", "dist")):
+            return True
+        if normalized.endswith(os.path.join("frontend", "dist", "assets")):
+            return False
+        return real_isdir(path)
+
+    monkeypatch.setattr(os.path, "isdir", frontend_dist_exists)
+    payload = create_app().openapi()
+
+    assert payload["openapi"].startswith("3.")
+    assert payload["info"]["title"] == "Stochastic Warfare API"
+
+
 # ── 39d: Terrain types from LandCover enum ──────────────────────────────
 
 

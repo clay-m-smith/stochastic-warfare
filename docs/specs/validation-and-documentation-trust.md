@@ -339,6 +339,15 @@ Unmapped sides retain their production commander-derived assignment.
 Unknown/duplicate sides, unknown schools, and variants with different
 mapped-side sets reject.
 
+Source-scenario school configuration is a separate strict
+`SchoolScenarioConfig` whose only field is exact `unit_assignments`. Unknown
+fields reject; `enable_schools`, `blue`/`red`, and
+`blue_school`/`red_school` are not alternate side-policy authorities. A
+scenario may therefore bind known stable initial/future unit IDs exactly, while
+side-wide experiments remain typed analysis variants. The scenario editor does
+not offer school selection until it can construct one of those production
+contracts without a proxy.
+
 The runtime session installs the variant as the highest-precedence typed
 school-assignment policy before context publication. Initial registration and
 every reinforcement registration consult that same policy; mutation after
@@ -1619,9 +1628,10 @@ Phase 112 is complete only when:
   `FogOfWarManager.set_state()` discards. REM-027 proves fusion
   queue/track/receipt continuation only under an explicitly empty ordinary
   world-view topology.
-- REM-030 owns production, provenance-bearing, held-out historical outcome
-  envelopes and remains assigned to planned Phase 117. Phase 112 relabels
-  unsupported historical claims; it does not establish catalog-wide validity.
+- Phase 117 completed the repository-wide typed claim inventory and
+  fail-closed production study boundary, classifies zero claims as
+  production-validated, and closed REM-030 with a truthful failed study. The
+  Phase 112 relabeling did not itself establish catalog-wide validity.
 - REM-031 owns per-flag semantic classification and common-seed production
   off/on evidence and remains assigned to planned Phase 118. Battalion and
   brigade runs remain `measurement_only`, not performance-regression evidence.

@@ -80,8 +80,10 @@ class CampaignRunResult:
 class CampaignRunner:
     """Run a historical campaign scenario through the full simulation engine.
 
-    Wraps :class:`ScenarioLoader` and :class:`SimulationEngine` into a
-    single ``run()`` call suitable for Monte Carlo iteration.
+    Converts the campaign to typed scenario configuration, prepares it through
+    :class:`SimulationRuntimeFactory.prepare_config`, builds a
+    :class:`RuntimeSession`, and exposes one ``run()`` call suitable for Monte
+    Carlo iteration.
 
     Parameters
     ----------
@@ -129,9 +131,7 @@ class CampaignRunner:
             recorder_factory=lambda context: SimulationRecorder(
                 context.event_bus,
                 RecorderConfig(
-                    snapshot_interval_ticks=(
-                        self._config.snapshot_interval_ticks
-                    ),
+                    snapshot_interval_ticks=(self._config.snapshot_interval_ticks),
                 ),
             ),
             engine_config=engine_config,
@@ -148,10 +148,7 @@ class CampaignRunner:
             duration_simulated_s=run_result.duration_s,
             victory_result=run_result.victory_result,
             recorder=session.recorder,
-            final_units_by_side={
-                side: list(units)
-                for side, units in ctx.units_by_side.items()
-            },
+            final_units_by_side={side: list(units) for side, units in ctx.units_by_side.items()},
             final_morale_states=dict(ctx.morale_states),
             terminated_by=terminated_by,
             run_result=run_result,

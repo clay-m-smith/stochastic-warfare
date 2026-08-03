@@ -303,9 +303,12 @@ guessed valid.
 
 Calibration overrides change the current model configuration. They can support
 a predeclared, source-backed fitting study, but a fitted value or a passing
-regression seed does not by itself establish historical accuracy. Independent
-production outcome-envelope validation remains tracked by
-[REM-030](../remediation-backlog.md#rem-030-catalog-wide-historical-outcome-claims-lack-production-validation).
+regression seed does not by itself establish historical accuracy. Phase 117's
+typed historical-study boundary separates calibration/training lineage from
+held-out evidence, runs exact declared seeds through the production runtime,
+and refuses promotion unless all source, plan, artifact, ledger, and Git
+bindings satisfy the accepted-evidence contract. The current catalog has zero
+production-validated scenarios.
 
 ```yaml
 calibration_overrides:
@@ -362,24 +365,35 @@ cbrn_config:                         # CBRN Effects
   update_interval_s: 10.0
   auto_mopp_response: true
 
-escalation_config:                   # Escalation Ladder
-  initial_level: 3
-  max_level: 7
+escalation_config: {}                # Presence loads current default engines
 
 school_config:                       # Doctrinal AI Schools
-  blue: maneuverist
-  red: attrition
+  unit_assignments:
+    blue_m1a2_0000: maneuverist
+    red_t72m_0000: attrition
 
 dew_config:                          # Directed Energy Weapons
-  enable_laser: true
+  base_extinction_per_km: 0.2        # Consumed DEWConfig tuning field
 ```
 
-Omitting a block, omitting its suite enable flag, or setting that flag to
-`false` leaves the suite absent from runtime and checkpoints. The registered
-era selected by `era` can also forbid `ew`, `space`, or `cbrn`; explicitly
-enabling a forbidden suite is a load error. Era gates additionally reject
-forbidden GPS/PGM guidance, thermal sensors, finite data links, and sensor
-types outside the era allowlist.
+EW, Space, and CBRN require their explicit true enable flags; omitting their
+block/flag or setting the flag false leaves that suite absent. Escalation and
+DEW are presence-enabled: any non-null block creates their engines. DEW accepts
+the fields of `DEWConfig`; `enable_dew` and `enable_laser` are not flags.
+Escalation currently loads default engine settings and does not consume its
+authored tuning mapping (REM-050 / Phase 137), so use `{}` rather than implying
+that scenario values are active. The registered `era` can forbid EW, Space, or
+CBRN; explicitly enabling a forbidden suite is a load error. Era gates also
+reject forbidden GPS/PGM guidance, thermal sensors, finite data links, and
+sensor types outside the era allowlist.
+
+`school_config` is different from the flag-enabled suites: its strict source
+schema accepts only exact `unit_assignments`. Unit IDs are the deterministic
+runtime IDs derived from the authored side, unit type, and ordinal; unknown
+units or schools fail before construction. Per-side doctrine experiments use
+the typed Doctrine Compare boundary rather than `blue`, `red`,
+`blue_school`, `red_school`, or `enable_schools` proxy keys, all of which are
+rejected.
 
 Constructing an enabled CBRN suite does not schedule a chemical, biological,
 radiological, or nuclear action. Typed production action/owner/delivery/target
@@ -388,7 +402,12 @@ topology remains
 
 ### Documented Outcomes
 
-For validated historical scenarios, include reference data:
+Legacy documented outcome metadata is catalog history and is not production
+historical-validation evidence. `HistoricalClaimLedgerLoader` inventories and
+source-audits repository claims separately. Scenario list and detail APIs
+publish only that ledger's typed `historical_validation` summary; detail
+responses remove `documented_outcomes` and `sources` from the returned config.
+See the [historical outcome-envelope contract](../specs/historical-outcome-envelope-integrity.md).
 
 ```yaml
 documented_outcomes:
@@ -401,20 +420,25 @@ documented_outcomes:
     notes: "Eagle Troop only"
 ```
 
+The retained Phase 117 73 Easting artifact completed as `FAIL`: 0/20 runs met
+the full joint envelope, the one-sided lower confidence bound was 0.0, and the
+study was not promotion-eligible. It therefore leaves 73 Easting unsupported;
+see the [artifact](../evidence/phase-117/73-easting-phase117.json).
+
 ---
 
-## Modern Scenarios (38 total)
+## Modern Scenarios (37 total)
 
 ### Engagement Scenarios
 
 | Scenario | Description | Duration | Key Features |
 |----------|-------------|----------|--------------|
-| **73 Easting** | Eagle Troop vs Iraqi armor, 1991 | 30 min | Desert, thermal advantage, validated |
-| **Debecka Pass** | US SF + Peshmerga vs Iraqi 1st Mech, 2003 | 4 hr | Javelin ATGM, CAS, ridgeline defense, golden-scenario (Block 11) |
-| **Khafji** | Iraqi III Corps vs Saudi/Qatari/USMC/coalition air + USS Missouri, 1991 | 72 hr | Full-OOB 233 units, hybrid tick resolution, naval gunfire, AC-130, multi-domain, golden-scenario (Block 11) |
-| **Fallujah Phase Line Fran** | USMC RCT-1/RCT-7 + Army TF 2-7 CAV vs insurgent defenders, 2004 | 120 hr | Urban combat, HBIED pre-emplacement, AC-130U, and legacy scripted-action declarations; typed effect/continuation integrity is queued under REM-045, golden-scenario (Block 11) |
-| **Bint Jbeil 2006** | IDF Golani/Paratrooper/Armor + Egoz SOF vs Hezbollah tank hunters, 2006 | 240 hr | ATGM-vs-MBT (Kornet + RPG-29 vs Merkava Mk III/IV), urban hills, reserve-mobilization morale gap, contested outcome (DRAW_SCENARIO), golden-scenario (Block 11) |
-| **INS Hanit 2006** | Sa'ar 5 corvette vs Hezbollah coastal C-802 Noor ASCM strike, 2006 | 2 hr | Naval ASCM engagement, degraded-ECM posture, sea-skimming cruise missile, Barak-1 PD SAM, golden-scenario (Block 11) |
+| **73 Easting** | Eagle Troop vs Iraqi armor, 1991 | 30 min | Desert, thermal advantage, aggregate historical status unsupported; current-engine regression evidence; Phase 117 study `FAIL` |
+| **Debecka Pass** | US SF + Peshmerga vs Iraqi 1st Mech, 2003 | 4 hr | Javelin ATGM, CAS, ridgeline defense, Block 11 current-engine regression reference |
+| **Khafji** | Iraqi III Corps vs Saudi/Qatari/USMC/coalition air + USS Missouri, 1991 | 72 hr | Full-OOB 233 units, hybrid tick resolution, naval gunfire, AC-130, multi-domain, Block 11 current-engine regression reference |
+| **Fallujah Phase Line Fran** | USMC RCT-1/RCT-7 + Army TF 2-7 CAV vs insurgent defenders, 2004 | 120 hr | Urban combat, HBIED pre-emplacement, AC-130U, and legacy scripted-action declarations; typed effect/continuation integrity is queued under REM-045, Block 11 current-engine regression reference |
+| **Bint Jbeil 2006** | IDF Golani/Paratrooper/Armor + Egoz SOF vs Hezbollah tank hunters, 2006 | 240 hr | ATGM-vs-MBT (Kornet + RPG-29 vs Merkava Mk III/IV), urban hills, reserve-mobilization morale gap, contested outcome (DRAW_SCENARIO), Block 11 current-engine regression reference |
+| **INS Hanit 2006** | Sa'ar 5 corvette vs Hezbollah coastal C-802 Noor ASCM strike, 2006 | 2 hr | Naval ASCM engagement, degraded-ECM posture, sea-skimming cruise missile, Barak-1 PD SAM, Block 11 current-engine regression reference |
 | **Falklands Naval** | Sheffield vs Exocet attack, 1982 | 1 hr | Naval, missile exchange |
 | **Golan Heights** | Israeli defense vs Syrian armor, 1973 | 6 hr | Prepared defense, force ratio |
 | **Bekaa Valley 1982** | Israeli SEAD vs Syrian IADS | 2 hr | EW, SEAD, air defense |
@@ -430,7 +454,7 @@ documented_outcomes:
 | **Golan Campaign** | Full Yom Kippur War Golan sector | Multi-day | Defensive campaign |
 | **Taiwan Strait** | Carrier strike vs amphibious assault | 24 hr | Air-naval, EW, escalation |
 | **Korean Peninsula** | Combined arms defense | 96 hr | CBRN, combined arms |
-| **Suwalki Gap** | NATO defense of Baltic corridor | 72 hr | EW, doctrinal schools |
+| **Suwalki Gap** | NATO defense of Baltic corridor | 72 hr | EW, combined arms |
 | **Hybrid Gray Zone** | SOF, insurgency, escalation | 168 hr | Unconventional, escalation |
 
 ### Special Scenarios
@@ -444,7 +468,6 @@ documented_outcomes:
 | **CBRN Nuclear Tactical** | Nuclear-action validation fixture | 2 hr | CBRN suite loads, but the authored scheduled detonation has no production consumer (REM-037) |
 | **Halabja 1988** | Chemical attack on civilians | 4 hr | CBRN, civilian population |
 | **Srebrenica 1995** | Escalation and war crimes | 72 hr | Escalation, consequences |
-| **Eastern Front 1943** | WWII Eastern Front | 72 hr | Large-scale combined arms |
 | **COIN Campaign** | Counterinsurgency operations | 720 hr | Insurgency, SOF, population |
 
 ### Calibration & Exercise Scenarios
@@ -466,9 +489,19 @@ documented_outcomes:
 | **test_campaign_logistics** | Phase 108 enabled logistics topology, cadence, resupply, and idle-demand fixture |
 | **time_on_target_validation** | Phase 111 exact two-battery scheduled-fire, resource, target-effect, event/API, and checkpoint fixture |
 
+### Internal Benchmark Fixtures
+
+These two catalog scenarios complete the 37-scenario modern total. They are
+large synthetic performance fixtures, not historical-validation evidence.
+
+| Scenario | Purpose |
+|----------|---------|
+| **Benchmark - Battalion Task Force (1,000 units)** | Six-hour battalion-scale runtime benchmark |
+| **Benchmark - Brigade Combat Team (5,000 units)** | Six-hour brigade-scale runtime benchmark |
+
 ---
 
-## Historical Era Scenarios (14 total)
+## Historical Era Scenarios (15 total)
 
 ### WW2
 
@@ -478,6 +511,7 @@ documented_outcomes:
 | **Normandy Bocage** | 1944 | Hedgerow fighting |
 | **Stalingrad** | 1942 | Urban combat |
 | **Midway** | 1942 | Carrier battle |
+| **Eastern Front 1943** | 1943 | Large-scale German-Soviet combined arms |
 
 ### WW1
 
@@ -515,7 +549,9 @@ The easiest way to create a custom scenario is through the web UI's scenario edi
 1. Browse to any scenario's detail page
 2. Click **Clone & Tweak** to open the editor with a copy of that scenario
 3. Modify forces (add/remove units, adjust counts), terrain, weather, duration, and calibration
-4. Toggle optional subsystems (EW, CBRN, Escalation, Schools, Space, DEW)
+4. Toggle supported optional subsystems (EW, CBRN, Escalation, DEW); exact
+   School and Space configurations can be removed but not created in this
+   editor
 5. Use the live YAML preview to verify your changes
 6. Click **Validate** to check for errors, then **Run This Config** to execute
 

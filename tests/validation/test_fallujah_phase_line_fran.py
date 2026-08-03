@@ -1,10 +1,11 @@
-"""Current-engine Fallujah Phase Line Fran regression checks.
+"""Legacy direct-construction Fallujah Phase Line Fran diagnostics.
 
-The suite proves that the scenario loads its authored force, pre-emplaced IEDs,
+The suite checks that the scenario loads its authored force, pre-emplaced IEDs,
 and scripted-action declarations and that unit references in those declarations
-resolve. The declared seed-42 runtime checks its current terminal, casualty,
-combat-activity, and IED outcomes. It is current-engine regression evidence,
-not historical validation.
+resolve. Runtime checks manually assemble ``ScenarioLoader``,
+``VictoryEvaluator``, and ``SimulationEngine``. They are unsupported as
+historical validation and are not authoritative factory-backed current-engine
+regression evidence.
 
 The runtime currently terminates before the first scripted action at H+7. The
 schema and reference checks below therefore do not prove scripted-action
@@ -32,8 +33,7 @@ from stochastic_warfare.simulation.scenario import (
 from stochastic_warfare.simulation.victory import VictoryEvaluator
 
 SCENARIO_PATH = (
-    Path(__file__).resolve().parents[2]
-    / "data" / "scenarios" / "fallujah_phase_line_fran" / "scenario.yaml"
+    Path(__file__).resolve().parents[2] / "data" / "scenarios" / "fallujah_phase_line_fran" / "scenario.yaml"
 )
 DATA_DIR = Path(__file__).resolve().parents[2] / "data"
 
@@ -94,36 +94,28 @@ class TestFallujahScenarioLoad:
         """Scenario YAML must load + validate schema."""
         loader = ScenarioLoader(str(DATA_DIR))
         ctx = loader.load(SCENARIO_PATH, seed=42)
-        assert ctx.config.name.startswith("Fallujah"), (
-            f"Wrong scenario loaded: {ctx.config.name}"
-        )
+        assert ctx.config.name.startswith("Fallujah"), f"Wrong scenario loaded: {ctx.config.name}"
 
     def test_force_scale(self) -> None:
-        """Force scale matches Al-Fajr assault — 280-340 units total."""
+        """Retain the authored force-size range of 280–340 unit records."""
         loader = ScenarioLoader(str(DATA_DIR))
         ctx = loader.load(SCENARIO_PATH, seed=42)
         blue = len(ctx.units_by_side.get("blue", []))
         red = len(ctx.units_by_side.get("red", []))
         total = blue + red
-        assert 280 <= total <= 340, (
-            f"Force scale {total} outside Al-Fajr envelope [280, 340]"
-        )
+        assert 280 <= total <= 340, f"Force scale {total} outside authored range [280, 340]"
 
     def test_initial_ieds_emplaced(self) -> None:
         """20 pre-emplaced IEDs/HBIEDs must register as obstacles at load."""
         loader = ScenarioLoader(str(DATA_DIR))
         ctx = loader.load(SCENARIO_PATH, seed=42)
-        assert len(ctx.initial_ied_obstacle_ids) == 20, (
-            f"Expected 20 IEDs, got {len(ctx.initial_ied_obstacle_ids)}"
-        )
+        assert len(ctx.initial_ied_obstacle_ids) == 20, f"Expected 20 IEDs, got {len(ctx.initial_ied_obstacle_ids)}"
 
     def test_scripted_events_loaded(self) -> None:
         """Eleven scripted actions must parse; this is not dispatch proof."""
         loader = ScenarioLoader(str(DATA_DIR))
         ctx = loader.load(SCENARIO_PATH, seed=42)
-        assert len(ctx.scripted_events) == 11, (
-            f"Expected 11 scripted events, got {len(ctx.scripted_events)}"
-        )
+        assert len(ctx.scripted_events) == 11, f"Expected 11 scripted events, got {len(ctx.scripted_events)}"
 
     def test_scripted_event_targets_exist(self) -> None:
         """Authored unit references must resolve; this is not dispatch proof."""
@@ -157,95 +149,70 @@ class TestFallujahScenarioLoad:
 
 @pytest.fixture(scope="module")
 def run_result() -> dict:
-    """Run the declared seed-42 current-engine regression once."""
+    """Run the legacy direct-construction seed-42 diagnostic once."""
     return _run_one(seed=42, max_ticks=2000)
 
 
 @pytest.mark.slow
-class TestFallujahRuntimeEnvelope:
-    """Current-engine terminal assertions for one declared seed."""
+class TestFallujahLegacyRuntimeDiagnostic:
+    """Retain seed-42 direct-run guards without a historical verdict."""
 
-    def test_winner_envelope(self, run_result: dict) -> None:
-        """Retain the declared seed's current-engine blue winner."""
+    def test_seed42_blue_terminal_guard(self, run_result: dict) -> None:
+        """Retain the legacy seed-42 blue winner."""
         winner = run_result["winner"]
         assert "blue" in winner, f"Expected blue winner, got {winner!r}"
 
-    def test_red_casualty_envelope(self, run_result: dict) -> None:
-        """Retain the broad current-engine red-loss regression floor."""
+    def test_seed42_red_loss_floor(self, run_result: dict) -> None:
+        """Retain the broad legacy red-loss floor."""
         red_d = run_result["red_destroyed"]
-        assert red_d >= 20, (
-            f"Insurgent losses {red_d} below engine envelope (expect ≥ 20)"
-        )
+        assert red_d >= 20, f"Red losses {red_d} below legacy floor 20"
 
-    def test_blue_casualty_ceiling(self, run_result: dict) -> None:
-        """Retain the broad current-engine blue-loss regression ceiling."""
+    def test_seed42_blue_loss_ceiling(self, run_result: dict) -> None:
+        """Retain the broad legacy blue-loss ceiling."""
         blue_d = run_result["blue_destroyed"]
-        assert blue_d <= 50, (
-            f"Coalition losses {blue_d} exceed engine envelope"
-        )
+        assert blue_d <= 50, f"Blue losses {blue_d} exceed legacy ceiling 50"
 
-    def test_force_destroyed_terminal_progression(self, run_result: dict) -> None:
-        """Terminate semantically before the cap on an exact tactical clock."""
+    def test_seed42_force_destroyed_progression(self, run_result: dict) -> None:
+        """Retain the pre-cap force-destroyed terminal and exact clock."""
         ticks = run_result["ticks"]
         max_ticks = run_result["max_ticks"]
         tick_duration_s = run_result["tick_duration_s"]
 
         assert run_result["condition_type"] == "force_destroyed"
-        assert 0 < ticks < max_ticks, (
-            f"Expected a pre-cap terminal, got {ticks}/{max_ticks} ticks"
-        )
+        assert 0 < ticks < max_ticks, f"Expected a pre-cap terminal, got {ticks}/{max_ticks} ticks"
         assert tick_duration_s == 5.0
         assert run_result["elapsed_s"] == ticks * tick_duration_s
 
 
 @pytest.mark.slow
 class TestFallujahPhase101Infrastructure:
-    """Current-engine combat and pre-emplaced-IED runtime checks."""
+    """Legacy direct-run activity checks, not validation evidence."""
 
     def test_engagements_occur(self, run_result: dict) -> None:
         """Combat engagement events must fire — not a walkover."""
-        engagements = [
-            e for e in run_result["events"] if e.event_type == "EngagementEvent"
-        ]
-        assert len(engagements) >= 50, (
-            f"Only {len(engagements)} engagements — scenario not active"
-        )
+        engagements = [e for e in run_result["events"] if e.event_type == "EngagementEvent"]
+        assert len(engagements) >= 50, f"Only {len(engagements)} engagements — scenario not active"
 
     def test_ied_detonations_occur(self, run_result: dict) -> None:
         """Pre-emplaced HBIEDs must detonate on advancing units."""
-        ied_events = [
-            e for e in run_result["events"]
-            if e.event_type == "IEDDetonationEvent"
-        ]
-        assert len(ied_events) >= 1, (
-            "No IED detonations — initial_ieds pathway broken"
-        )
+        ied_events = [e for e in run_result["events"] if e.event_type == "IEDDetonationEvent"]
+        assert len(ied_events) >= 1, "No IED detonations — initial_ieds pathway broken"
 
     def test_marine_rifle_engages(self) -> None:
         """The scenario's exact M16A4 attachment fires in a controlled
-        production engagement.
+        loaded-component engagement.
 
         The default Phase 109 outcome is CAS-dominated and destroys the
         defenders before Marine squads enter rifle range.  Isolating one
-        loaded squad and one loaded defender preserves production construction,
+        loaded squad and one loaded defender retains direct construction,
         detection, battle routing, event publication, and live ammunition
         while removing that unrelated force-timing dependency.
         """
         ctx = ScenarioLoader(DATA_DIR).load(SCENARIO_PATH, seed=42)
-        marine = next(
-            unit
-            for unit in ctx.units_by_side["blue"]
-            if unit.unit_type == "us_marine_rifle_squad_urban"
-        )
-        defender = next(
-            unit
-            for unit in ctx.units_by_side["red"]
-            if unit.unit_type == "iraqi_insurgent_urban"
-        )
+        marine = next(unit for unit in ctx.units_by_side["blue"] if unit.unit_type == "us_marine_rifle_squad_urban")
+        defender = next(unit for unit in ctx.units_by_side["red"] if unit.unit_type == "iraqi_insurgent_urban")
         m16 = next(
-            attachment
-            for attachment in ctx.unit_weapons[marine.entity_id]
-            if attachment.weapon.weapon_id == "m16a4"
+            attachment for attachment in ctx.unit_weapons[marine.entity_id] if attachment.weapon.weapon_id == "m16a4"
         )
         ammo_id = m16.ammunition[0].ammo_id
         rounds_before = m16.weapon.ammo_state.available(ammo_id)
@@ -268,8 +235,7 @@ class TestFallujahPhase101Infrastructure:
             ctx.clock.current_time,
         )
 
-        assert [
-            (event.attacker_id, event.target_id, event.weapon_id)
-            for event in events
-        ] == [(marine.entity_id, defender.entity_id, "m16a4")]
+        assert [(event.attacker_id, event.target_id, event.weapon_id) for event in events] == [
+            (marine.entity_id, defender.entity_id, "m16a4")
+        ]
         assert m16.weapon.ammo_state.available(ammo_id) < rounds_before

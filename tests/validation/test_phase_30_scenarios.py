@@ -161,11 +161,9 @@ class TestSuwalkiGap:
         cfg = _load_scenario_by_name("suwalki_gap")
         assert cfg.ew_config is not None
 
-    def test_has_school_config(self):
+    def test_ignored_school_proxy_config_removed(self):
         cfg = _load_scenario_by_name("suwalki_gap")
-        assert cfg.school_config is not None
-        assert cfg.school_config["blue_school"] == "maneuverist"
-        assert cfg.school_config["red_school"] == "deep_battle"
+        assert cfg.school_config is None
 
     def test_has_documented_outcomes(self):
         raw = yaml.safe_load(

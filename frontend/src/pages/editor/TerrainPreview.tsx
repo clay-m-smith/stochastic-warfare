@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useMemo, useRef } from 'react'
 import { terrainTypeColor } from '../../lib/terrainTypeColors'
 
 interface TerrainPreviewProps {
@@ -10,8 +10,11 @@ export function TerrainPreview({ config }: TerrainPreviewProps) {
   const terrain = (config.terrain as Record<string, unknown>) ?? {}
   const width = (terrain.width_m as number) ?? 5000
   const height = (terrain.height_m as number) ?? 5000
-  const terrainType = (terrain.terrain_type as string) ?? 'mixed'
-  const objectives = (config.objectives as Record<string, unknown>[]) ?? []
+  const terrainType = (terrain.terrain_type as string) ?? 'flat_desert'
+  const objectives = useMemo(
+    () => (config.objectives as Record<string, unknown>[]) ?? [],
+    [config.objectives],
+  )
 
   useEffect(() => {
     const canvas = canvasRef.current

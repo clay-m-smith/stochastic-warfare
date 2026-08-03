@@ -2,8 +2,11 @@ import type { Dispatch } from 'react'
 import type { EditorAction } from '../../types/editor'
 
 const TERRAIN_TYPES = [
-  'flat_desert', 'desert', 'grassland', 'forest', 'mixed',
-  'urban', 'coastal', 'mountain', 'arctic', 'jungle',
+  'flat_desert',
+  'open_ocean',
+  'hilly_defense',
+  'trench_warfare',
+  'open_field',
 ]
 
 interface TerrainSectionProps {
@@ -63,8 +66,8 @@ export function TerrainSection({ config, dispatch }: TerrainSectionProps) {
             type="number"
             step={10}
             className="mt-1 block w-full rounded border-gray-300 text-sm shadow-sm dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200"
-            value={(terrain.base_elevation as number) ?? 0}
-            onChange={(e) => set('base_elevation', parseFloat(e.target.value) || 0)}
+            value={(terrain.base_elevation_m as number) ?? 0}
+            onChange={(e) => set('base_elevation_m', parseFloat(e.target.value) || 0)}
           />
         </label>
 
@@ -72,7 +75,7 @@ export function TerrainSection({ config, dispatch }: TerrainSectionProps) {
           <span className="text-sm text-gray-700 dark:text-gray-300">Terrain Type</span>
           <select
             className="mt-1 block w-full rounded border-gray-300 text-sm shadow-sm dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200"
-            value={(terrain.terrain_type as string) ?? 'mixed'}
+            value={(terrain.terrain_type as string) ?? 'flat_desert'}
             onChange={(e) => set('terrain_type', e.target.value)}
           >
             {TERRAIN_TYPES.map((t) => (

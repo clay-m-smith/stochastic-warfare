@@ -2,7 +2,7 @@
 
 ![Python](https://img.shields.io/badge/python-%3E%3D3.12-blue)
 ![Tests](https://img.shields.io/badge/tests-partitioned_validation-blue)
-![Phase](https://img.shields.io/badge/phase-116_COMPLETE-brightgreen)
+![Phase](https://img.shields.io/badge/phase-117_COMPLETE-brightgreen)
 
 High-fidelity, high-resolution wargame simulator with a headless Python engine,
 FastAPI service, and React frontend. Models warfare across multiple scales —
@@ -13,9 +13,11 @@ signal-processing-inspired models throughout.
 The simulator covers the modern era (Cold War to present) as its prototype
 period and treats maritime warfare as a fully integrated domain alongside land
 and air operations, not a deferred add-on. It includes source-backed historical
-scenario data and current-engine regression tooling. A catalog-wide historical
-validity claim requires the queued production-path work in
-[REM-030](docs/remediation-backlog.md).
+scenario data, current-engine regression tooling, and a typed historical-claim
+ledger plus production backtest boundary. The current ledger exposes zero
+production-validated scenarios; a historical name, citation, regression result,
+or legacy `documented_outcomes` entry is not a verdict. See the
+[historical outcome-envelope contract](docs/specs/historical-outcome-envelope-integrity.md).
 
 Core mathematical models include Markov chains (morale state transitions, weather), Monte Carlo methods (engagement and campaign outcome analysis), Kalman filters (enemy state estimation from noisy sensor data), Poisson processes (equipment breakdown), log-normal uncertainty (reinforcement arrival time), queueing theory (medical evacuation, supply bottlenecks), and SNR-based detection theory (unified across visual, thermal, radar, and acoustic sensors).
 
@@ -39,7 +41,7 @@ uv sync --locked --extra dev --extra api --extra terrain --extra mcp
 uv run --no-sync python scripts/validate_test_partitions.py \
   --output artifacts/partition-audit/manifest.json
 uv run --no-sync python scripts/run_pytest_partition.py standard \
-  --manifest artifacts/partition-audit/manifest.json \
+  --manifest artifacts/standard/manifest.json \
   --junit artifacts/standard/junit.xml --forbid-skips \
   --timeout-seconds 2700
 ```
@@ -67,15 +69,24 @@ static, documentation, cross-document, and postmortem gates also passed. The
 owner accepted contended long-run evidence with an explicit qualification:
 API/E2E and two slow shards reached their containment limits, Khafji's clean
 reproduction remained pending, and final paired timing dispersion was
-inconclusive; none is called a pass. Debecka's 4/10 result remains a REM-030
-signal rather than being tuned away. Hosted CI is the final independent
-environment control. Exact commands, counts, warnings, exclusions, and
+inconclusive; none is called a pass. Debecka's 4/10 result remained a signal
+rather than being tuned away; the Phase 117 claim ledger records that
+current-engine regression evidence while keeping its historical claim
+unsupported. Hosted CI is
+the final independent environment control. Exact commands, counts, warnings, exclusions, and
 artifacts are in the [Phase 116 devlog](docs/devlog/phase-116.md).
 
 Block 13 is active. Phase 115's sensing-aware tactical-standoff and format-115
 targeting implementation is complete, and REM-028 is closed. Phase 116 /
 REM-029 is complete and closed with format-116 ordinary-contact continuation.
-Phase 117 / REM-030 is next and remains unstarted.
+Phase 117 completed the typed claim ledger, study plan, production runner,
+joint-coverage evaluator, digest-bearing artifact, conservative API exposure,
+and accepted-evidence gate for REM-030; the remediation is complete and
+REM-030 is closed. Its 73 Easting study completed with a
+`FAIL` verdict: 0/20 runs jointly satisfied the declared envelope and the
+one-sided lower confidence bound was 0.0. The result is not promotion-eligible,
+so the catalog still exposes zero production-validated scenarios. See the
+[retained artifact](docs/evidence/phase-117/73-easting-phase117.json).
 Phase 115's authorization,
 mount/director-topology, and availability-aware-selection findings are tracked
 separately as REM-041 through REM-043 in planned Block 14. The
@@ -87,6 +98,21 @@ evidence.
 Active/inactive decoy checkpoint integrity is REM-046 in planned Block 17;
 Phase 116 rejects non-pristine deception state rather than restoring an
 incomplete signature or duplicate DETECTION RNG owner.
+The separate 73 Easting source-synchronous engagement miss is REM-047 in
+planned Block 18. Package-bound attestation for any future accepted historical
+evidence is REM-048 in planned Block 19. Local Phase 117 evidence proves the
+packaged-loader boundary only for the truthful zero-accepted ledger; the
+hosted no-`.git` image smoke is configured and remains pending until the phase
+commit is pushed.
+The remaining Web UI replay/export/editor/analysis semantic boundary is
+REM-049 in planned Block 19 / Phase 136. Phase 117 fixes the bounded canonical
+field, status, terrain, navigation, and invalid-default defects and documents
+the current limits; REM-041 separately owns complete authorized side-safe FOW.
+REM-050 in planned Block 19 / Phase 137 owns the separate production/data
+boundary where authored escalation tuning is discarded and no configured
+catalog scenario exercises a DEW-capable loadout. Phase 117 removes ignored
+editor/DEW marker keys and documents presence/default behavior; it does not
+claim those suites behaviorally configured.
 The intentional 73 Easting workload-identity change was handled by a strict
 non-timing transition qualification, not by timing unequal workloads; Phase
 116 subsequently promoted the clean endpoint to the ordinary paired gate.
@@ -128,7 +154,13 @@ of a strict manifest covering `stochastic_warfare/`, `api/`, `pyproject.toml`,
 and `uv.lock`. Production runtime preparation recomputes that manifest, so a
 missing or malformed identity, a source edit, or an unsupported source entry
 fails closed. Scenario and catalog files are verified separately by the
-runtime data revision. The Docker workflow supplies `GITHUB_SHA`, builds on
+runtime data revision. The Docker workflow's configured image smoke also loads
+the historical-claim ledger through its scenario-catalog boundary, proves that
+docs and tests are absent, and checks that 73 Easting remains unsupported with
+only current-engine regression evidence and no accepted claim IDs. This is a
+pending hosted control until the Phase 117 commit is pushed; the current local
+proof is the packaged loader, not an executed no-`.git` image. The workflow
+supplies `GITHUB_SHA`, builds on
 pull requests to `main`, pushes to `main`, and manual dispatches, then asserts
 that `.git` is absent and runs a production-runtime identity smoke inside the
 image.
@@ -172,7 +204,7 @@ All raster grids share the convention: `Grid[0,0]` = SW corner, row increases no
 | Model | Module | Purpose |
 |-------|--------|---------|
 | Markov chains | `morale/state`, `environment/weather` | State transitions (morale 5-state, weather evolution) |
-| Monte Carlo | `validation/monte_carlo` | Engagement and campaign outcome distributions |
+| Monte Carlo | `tools/_run_helpers`, `validation/historical_backtest` | Production distributions and strict historical outcome-envelope studies |
 | Kalman filter | `detection/estimation` | 4-state enemy position/velocity tracking |
 | Poisson processes | `logistics/maintenance` | Equipment breakdown (`1 - exp(-dt/MTBF)`) |
 | Queueing theory (M/M/c) | `logistics/medical` | Priority-based medical evacuation |
@@ -217,7 +249,7 @@ stochastic_warfare/       # simulation engine
   population/             # civilian regions, displacement, collateral, HUMINT, influence, insurgency
   escalation/             # escalation ladder, political pressure, consequences, war termination
   simulation/             # scenario loading, battle/campaign managers, engine
-  validation/             # historical data, Monte Carlo, campaign validation
+  validation/             # legacy diagnostics plus typed production historical backtests
   ew/                     # electronic warfare: jamming, spoofing, ECCM, SIGINT, decoys
   space/                  # space & satellite: GPS, SATCOM, ISR, early warning, ASAT
   cbrn/                   # CBRN effects: agents, dispersal, contamination, protection, nuclear
@@ -243,6 +275,7 @@ data/                     # YAML data catalog
     medical_facilities/   # medical facility definitions
   eras/                    # Era-specific data packages (WW2, WW1, Napoleonic, Ancient/Medieval)
   scenarios/              # modern, test, and historical-era scenario definitions
+  validation/             # historical claim ledger and typed study plans
 
 tests/                    # six audited disjoint Python test partitions
 docs/                     # specs, brainstorm, devlog, development phases
@@ -252,16 +285,22 @@ For the full package tree and module decomposition, see [`docs/specs/project-str
 
 ## Development Status
 
-Phases 105 through 116 and Block 12 are complete. Phase 116 implements one
+Phases 105 through 117 and Block 12 are complete. Phase 116 implements one
 typed, runtime-owned format-116 boundary for exact roster-backed ordinary
 fog-of-war contact, fusion-alias, bounded-witness, targeting, and DETECTION RNG
 continuation; REM-029 is closed. Its long-run evidence carries the explicit
-owner-approved contention qualification above. See the
+owner-approved contention qualification above. Phase 117 completed the
+REM-030 historical-claim inventory and fail-closed production study boundary.
+The current 73 Easting artifact is a completed `FAIL`, not accepted evidence,
+and the public catalog remains conservatively unsupported with zero
+production-validated scenarios. See the
 [Phase 116 devlog](docs/devlog/phase-116.md), the
 [contact-continuation specification](docs/specs/fog-of-war-contact-continuation.md), the
+[historical outcome-envelope specification](docs/specs/historical-outcome-envelope-integrity.md), the
+[Phase 117 evidence](docs/evidence/phase-117/73-easting-phase117.json), the
 [remediation backlog](docs/remediation-backlog.md), and the phase roadmaps for
 the exact evidence and remaining boundaries. Block 13 remains active with
-Phase 117 / REM-030 next and unstarted.
+Phase 117 complete and REM-030 closed. Phase 118 is next and has not started.
 
 | Phase | Focus | Tests | Status |
 |-------|-------|-------|--------|
@@ -390,7 +429,7 @@ the Phase 114 row reports its exact closure union. For the full phase
 roadmap, see
 [`docs/development-phases.md`](docs/development-phases.md) (MVP),
 [`docs/development-phases-post-mvp.md`](docs/development-phases-post-mvp.md)
-(post-MVP), and `docs/development-phases-block{N}.md` for Blocks 2–17. The live
+(post-MVP), and `docs/development-phases-block{N}.md` for Blocks 2–19. The live
 integrity issue inventory is in
 [`docs/remediation-backlog.md`](docs/remediation-backlog.md). For per-phase
 implementation logs, see [`docs/devlog/`](docs/devlog/).
@@ -427,6 +466,13 @@ comparison), `POST /api/analysis/sweep` (sensitivity analysis), and
 `POST /api/analysis/doctrine-compare` (doctrinal policy comparison). Analysis
 results retain ordered raw metric vectors, seeds, and runtime provenance;
 comparisons use common-seed paired differences.
+
+Both scenario list and detail responses include a typed
+`historical_validation` summary. Detail responses deliberately omit legacy
+`documented_outcomes` and `sources` from `config`; the ledger-backed aggregate,
+claim dispositions, limitations, exact scopes, reason codes, accepted-evidence
+references, regression flag, and ledger digest are the authoritative public
+status surface.
 
 ## Frontend Development
 

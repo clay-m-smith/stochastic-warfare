@@ -1,85 +1,62 @@
-# Order of Battle Builder
+---
+name: orbat
+description: "Design sourced military force structures. Use when creating or editing a scenario force composition, TO&E definition, command hierarchy, attachment plan, or historical order of battle."
+---
 
-Interactive builder for constructing military organization (Order of Battle / ORBAT).
+# Build an Order of Battle
 
-## Trigger
-Use when the user wants to:
-- Build a force structure for a scenario
-- Create a TO&E (Table of Organization & Equipment) definition
-- Design an ORBAT for a specific side
+Follow `CODEX.md` and distinguish data definitions from behavior that is proven
+to be wired into the production simulation.
 
-## Process
+## Choose the Artifact
 
-### 1. Select Force Structure
-Ask the user for:
-- **Side name**: e.g., "blue", "red", "opfor"
-- **Echelon level**: What size force? (Squad → Platoon → Company → Battalion → Brigade → Division → Corps)
-- **Branch**: Infantry, Armor, Mechanized, Artillery, Air Defense, Naval, Air, SOF
+Determine which output the request requires:
 
-### 2. List Available Unit Types
-Use Glob to show available unit definitions:
-```
-data/units/ground/*.yaml     — Ground units (M1A2, T-72, rifle squad, etc.)
-data/units/aerial/*.yaml     — Aircraft (F-16C, AH-64D, MQ-9, etc.)
-data/units/air_defense/*.yaml — AD systems (Patriot, etc.)
-data/units/naval/*.yaml      — Ships (DDG-51, SSN-688, LHD-1, etc.)
-data/units/support/*.yaml    — Support vehicles (HEMTT, etc.)
-```
+- **Scenario composition**: Author the flattened `sides[].units` representation
+  accepted by `SideConfig`.
+- **TO&E definition**: Author a hierarchical `TOEDefinition` under
+  `data/organizations/` for loading through the organization loader.
+- **Runtime hierarchy or attachments**: Specify the required organization-tree
+  or task-organization behavior and trace how it reaches the production engine.
 
-Show key stats for each: display_name, domain, max_speed, crew size.
+Do not imply that a flattened scenario unit count preserves echelon hierarchy,
+reporting relationships, or attachments.
 
-### 3. Build Hierarchy
-For each echelon, guide the user through:
-- How many subordinate units of each type
-- Command structure (who reports to whom)
-- Attachment/detachment of supporting units
+## Establish the Force
 
-Example company structure:
-```
-Tank Company (3x platoons)
-├── HQ Section: 2x M1A2
-├── 1st Platoon: 4x M1A2
-├── 2nd Platoon: 4x M1A2
-└── 3rd Platoon: 4x M1A2
-```
+1. Identify side, era, branch, echelon, mission, time period, and requested
+   fidelity.
+2. Inspect existing unit and organization catalogs before selecting types.
+3. Resolve every unit identifier from the actual unit data and verify the
+   required equipment exists.
+4. Resolve modern commander profiles from `data/commander_profiles/`, historical
+   commanders from the applicable era catalog, and doctrine from the matching
+   doctrine catalog.
+5. Use authoritative organizational tables, doctrine, or historical sources
+   for real formations. Record citations, date/version, substitutions, and
+   uncertainty. Clearly label hypothetical force structures.
+6. Include command, logistics, reconnaissance, air defense, fires, and support
+   elements when the mission or source requires them. Do not add them merely to
+   make a force appear balanced.
+7. Consult `docs/remediation-backlog.md` before claiming that morale, depots,
+   reinforcements, commander profiles, doctrine, or other scenario fields
+   change runtime outcomes.
 
-### 4. Configure Side Settings
-For the whole side:
-- **Experience level**: 0.0–1.0 (0.5 = average)
-- **Initial morale**: STEADY (default)
-- **Commander profile**: Select from `data/commanders/*.yaml`
-- **Doctrine template**: Select from `data/doctrine/*.yaml`
+## Validate the Result
 
-### 5. Output
-Generate the `sides` section of a scenario YAML:
-```yaml
-sides:
-  - side: "blue"
-    units:
-      - unit_type: "m1a2"
-        count: 14
-      - unit_type: "m109a6"
-        count: 6
-    experience_level: 0.8
-    morale_initial: "STEADY"
-    commander_profile: "aggressive_armor"
-    doctrine_template: "us_combined_arms"
-    depots:
-      - depot_id: "blue_fob"
-        position: [500, 5000]
-        capacity_tons: 500
-```
+For a TO&E artifact, load it through the actual organization loader and assert
+the expected parent-child structure, counts, identifiers, and attachment
+semantics.
 
-### 6. Validate
-Check that:
-- All unit_type values exist in `data/units/`
-- Commander profile exists
-- Doctrine template exists
-- Force composition makes military sense (warn if no logistics, no air defense, etc.)
+For scenario composition, validate the scenario data and use `ScenarioLoader`
+only for focused configuration diagnostics. Verify the comparable instantiated
+roster and loadouts through `SimulationRuntimeFactory.prepare`, an explicit
+prepared variant, and `PreparedScenario.build`. Run a bounded `RuntimeSession`
+by either calling `run_to_completion()`, or driving `step()` until terminal and
+then calling `finalize()`, when the requested hierarchy or composition is
+supposed to affect simulation behavior.
 
-## Reference
-- Unit definitions: `data/units/**/*.yaml`
-- TO&E definitions: `data/organizations/*.yaml`
-- Commander profiles: `data/commanders/*.yaml`
-- Doctrine templates: `data/doctrine/*.yaml`
-- Schema: `stochastic_warfare/simulation/scenario.py` → `SideConfig`
+Add negative coverage for invalid unit references, malformed hierarchy, or
+unsupported configuration. Update the relevant unit, scenario, organization,
+and phase documentation after validation. Report sourcing assumptions and
+runtime limitations with the output.

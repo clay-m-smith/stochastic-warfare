@@ -2087,6 +2087,44 @@ class TestRuntimeClosure:
     ) -> None:
         assert benchmark_module._is_loader_data_path(relative_path)
 
+    def test_resolved_data_sources_exclude_validation_evidence(
+        self,
+        tmp_path: Path,
+    ) -> None:
+        repo = tmp_path / "repo"
+        scenario = repo / "data/scenarios/test/scenario.yaml"
+        selected = repo / "data/units/selected.yaml"
+        unrelated = repo / "data/units/unrelated.yaml"
+        validation = repo / "data/validation/historical_studies/control.yaml"
+        terrain = repo / "data/terrain/selected.hgt"
+
+        for path in (scenario, selected, unrelated, validation, terrain):
+            path.parent.mkdir(parents=True, exist_ok=True)
+
+        scenario.write_text("name: Synthetic closure\n", encoding="utf-8")
+        selected.write_text("unit_type: selected_unit\n", encoding="utf-8")
+        unrelated.write_text("unit_type: unrelated_unit\n", encoding="utf-8")
+        validation.write_text(
+            "study_id: synthetic-control\nscenario_id: selected_unit\n",
+            encoding="utf-8",
+        )
+        terrain.write_bytes(b"selected terrain")
+        (repo / "uv.lock").write_text("version = 1\n", encoding="utf-8")
+
+        sources = benchmark_module._resolved_data_sources(
+            repo,
+            scenario,
+            {"selected_unit"},
+            frozenset({"data/terrain/selected.hgt"}),
+        )
+
+        assert [(source.path, source.role) for source in sources] == [
+            ("data/scenarios/test/scenario.yaml", "scenario"),
+            ("data/terrain/selected.hgt", "external_runtime_input"),
+            ("data/units/selected.yaml", "resolved_units"),
+            ("uv.lock", "dependency_lock"),
+        ]
+
     def test_working_tree_mode_and_type_are_exact(
         self,
         tmp_path: Path,

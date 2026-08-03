@@ -1,4 +1,8 @@
 import { useReducer } from 'react'
+import {
+  CONFIG_DEFAULTS,
+  configCreationLimitation,
+} from '../lib/editorConfigCapabilities'
 import type { EditorAction, EditorState } from '../types/editor'
 
 function setNested(obj: Record<string, unknown>, path: string[], value: unknown): Record<string, unknown> {
@@ -20,16 +24,6 @@ function getSides(config: Record<string, unknown>): Record<string, unknown>[] {
 
 function setSides(config: Record<string, unknown>, sides: Record<string, unknown>[]): Record<string, unknown> {
   return { ...config, sides }
-}
-
-const CONFIG_DEFAULTS: Record<string, Record<string, unknown>> = {
-  ew_config: { enable_ew: true },
-  cbrn_config: { enable_cbrn: true },
-  escalation_config: { enable_escalation: true },
-  school_config: { enable_schools: true },
-  space_config: { enable_space: true },
-  dew_config: { enable_dew: true },
-  commander_config: {},
 }
 
 function editorReducer(state: EditorState, action: EditorAction): EditorState {
@@ -102,7 +96,14 @@ function editorReducer(state: EditorState, action: EditorAction): EditorState {
     case 'TOGGLE_CONFIG': {
       const next = { ...state.config }
       if (action.enabled) {
-        next[action.key] = CONFIG_DEFAULTS[action.key] ?? {}
+        const defaultConfig = CONFIG_DEFAULTS[action.key]
+        if (!defaultConfig) {
+          const limitation =
+            configCreationLimitation(action.key) ??
+            `Adding ${action.key} is unsupported because no production default is declared.`
+          return { ...state, validationErrors: [limitation] }
+        }
+        next[action.key] = { ...defaultConfig }
       } else {
         delete next[action.key]
       }
@@ -145,34 +146,6 @@ function editorReducer(state: EditorState, action: EditorAction): EditorState {
           calibration_overrides: {
             ...cal,
             victory_weights: { ...vw, [action.key]: action.value },
-          },
-        },
-        isDirty: true,
-      }
-    }
-
-    case 'SET_SCHOOL': {
-      const sc = (state.config.school_config as Record<string, unknown>) ?? CONFIG_DEFAULTS.school_config ?? {}
-      return {
-        ...state,
-        config: {
-          ...state.config,
-          school_config: { ...sc, [`${action.side}_school`]: action.school_id || undefined },
-        },
-        isDirty: true,
-      }
-    }
-
-    case 'SET_COMMANDER': {
-      const cc = (state.config.commander_config as Record<string, unknown>) ?? CONFIG_DEFAULTS.commander_config ?? {}
-      const sd = (cc.side_defaults as Record<string, unknown>) ?? {}
-      return {
-        ...state,
-        config: {
-          ...state.config,
-          commander_config: {
-            ...cc,
-            side_defaults: { ...sd, [action.side]: action.profile_id || undefined },
           },
         },
         isDirty: true,

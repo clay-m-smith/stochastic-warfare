@@ -10,17 +10,6 @@ import type { ScenarioSummary } from '../../types/api'
 import { ScenarioCard } from './ScenarioCard'
 import { ScenarioFilters } from './ScenarioFilters'
 
-// Block 11 golden scenarios — shown first in the library as the
-// highest-fidelity reference set (historically calibrated, regression-
-// tested against historical outcome envelopes).
-const GOLDEN_SCENARIO_IDS: ReadonlySet<string> = new Set([
-  'debecka_pass',
-  'khafji',
-  'fallujah_phase_line_fran',
-  'bint_jbeil_2006',
-  'ins_hanit_2006',
-])
-
 const ERA_SECTION_ORDER = ['modern', 'ww2', 'ww1', 'napoleonic', 'ancient_medieval']
 
 interface ScenarioSection {
@@ -79,14 +68,15 @@ export function ScenarioListPage() {
     return sorted
   }, [scenarios, era, search, sort])
 
-  // Partition filtered scenarios into sections: Golden first, then by era.
+  // Partition filtered scenarios into sections: regression references first,
+  // then by era.
   // Respects existing sort within each section.
   const sections = useMemo<ScenarioSection[]>(() => {
-    const golden: ScenarioSummary[] = []
+    const regressionReferences: ScenarioSummary[] = []
     const byEra: Record<string, ScenarioSummary[]> = {}
     for (const s of filtered) {
-      if (GOLDEN_SCENARIO_IDS.has(s.name)) {
-        golden.push(s)
+      if (s.historical_validation.current_engine_regression_evidence) {
+        regressionReferences.push(s)
       } else {
         const key = s.era || 'other'
         if (!byEra[key]) byEra[key] = []
@@ -94,12 +84,13 @@ export function ScenarioListPage() {
       }
     }
     const result: ScenarioSection[] = []
-    if (golden.length > 0) {
+    if (regressionReferences.length > 0) {
       result.push({
-        key: 'golden',
-        title: 'Golden Scenarios',
-        subtitle: 'Block 11 reference set — historically calibrated, regression-tested against outcome envelopes',
-        scenarios: golden,
+        key: 'regression-references',
+        title: 'Current-Engine Regression References',
+        subtitle:
+          'Scenarios with typed current-engine regression evidence — not historical validation or predictive calibration',
+        scenarios: regressionReferences,
       })
     }
     for (const eraKey of ERA_SECTION_ORDER) {

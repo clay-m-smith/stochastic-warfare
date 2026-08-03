@@ -1,5 +1,11 @@
 # Phase 55: Resolution & Scenario Migration
 
+> **Phase 117 school-integrity correction (2026-08-02):** The Bekaa
+> `school_config` described below used ignored side proxy keys. It loaded an
+> empty registry and assigned 0/65 units, so it was removed. Current source
+> scenarios accept only strict exact `unit_assignments`; the historical count
+> and exercise claims below are not current capability evidence.
+
 ## Summary
 
 Phase 55 addresses three structural issues: (1) long-range battles resolving via `time_expired` instead of decisive combat, (2) scenario data gaps — missing ROE, weapon assignments, config coverage, and (3) dead calibration fields — `sead_arm_effectiveness`, `drone_provocation_prob`, `seeker_fov_deg`, GasWarfareEngine unwired.

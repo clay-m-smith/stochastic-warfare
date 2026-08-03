@@ -1,15 +1,10 @@
 /** Maps terrain_type strings to display colors for the terrain preview. */
 export const TERRAIN_TYPE_COLORS: Record<string, string> = {
   flat_desert: '#EDC9AF',
-  desert: '#C2B280',
-  grassland: '#90EE90',
-  forest: '#228B22',
-  mixed: '#8FBC8F',
-  urban: '#A9A9A9',
-  coastal: '#87CEEB',
-  mountain: '#8B8682',
-  arctic: '#FFFAFA',
-  jungle: '#006400',
+  open_ocean: '#87CEEB',
+  hilly_defense: '#8B8682',
+  trench_warfare: '#8B7355',
+  open_field: '#90EE90',
 }
 
 export function terrainTypeColor(type: string): string {

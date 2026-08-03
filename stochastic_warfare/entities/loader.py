@@ -548,3 +548,20 @@ class UnitLoader:
         kwargs["armor_side"] = defn.armor_side
         kwargs["armor_type"] = defn.armor_type
         return GroundUnit(**common, **kwargs)
+
+
+def load_effective_unit_loader(data_root: Path, era: str) -> UnitLoader:
+    """Load the exact base-plus-era unit catalog used by production scenarios."""
+    if not isinstance(era, str) or not era or era != era.strip():
+        raise ValueError("era must be a non-empty trimmed string")
+    root = data_root.resolve()
+    loader = UnitLoader(root / "units")
+    loader.load_all()
+    if era == "modern":
+        return loader
+    era_units = root / "eras" / era / "units"
+    if era_units.is_dir():
+        overlay = UnitLoader(era_units)
+        overlay.load_all()
+        loader._definitions.update(overlay._definitions)
+    return loader

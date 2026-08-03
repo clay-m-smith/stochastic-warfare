@@ -1,10 +1,22 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { fetchScenarios, fetchScenario } from '../../api/scenarios'
-import type { ScenarioSummary, ScenarioDetail } from '../../types/api'
+import type {
+  HistoricalValidationSummary,
+  ScenarioDetail,
+  ScenarioSummary,
+} from '../../types/api'
 
 beforeEach(() => {
   vi.restoreAllMocks()
 })
+
+const HISTORICAL_VALIDATION: HistoricalValidationSummary = {
+  aggregate_disposition: 'unsupported',
+  current_engine_regression_evidence: true,
+  accepted_claim_ids: [],
+  ledger_sha256: 'a'.repeat(64),
+  claims: [],
+}
 
 const MOCK_SCENARIO: ScenarioSummary = {
   name: '73_easting',
@@ -19,6 +31,7 @@ const MOCK_SCENARIO: ScenarioSummary = {
   has_schools: false,
   has_space: false,
   has_dew: false,
+  historical_validation: HISTORICAL_VALIDATION,
 }
 
 describe('fetchScenarios', () => {
@@ -38,6 +51,7 @@ describe('fetchScenario', () => {
       name: '73_easting',
       config: { name: '73 Easting', era: 'modern' },
       force_summary: { blue: { unit_count: 3, unit_types: ['m1a1_abrams'] } },
+      historical_validation: HISTORICAL_VALIDATION,
     }
     vi.spyOn(globalThis, 'fetch').mockResolvedValue(
       new Response(JSON.stringify(detail), { status: 200 }),
@@ -49,7 +63,12 @@ describe('fetchScenario', () => {
 
   it('encodes special characters in name', async () => {
     vi.spyOn(globalThis, 'fetch').mockResolvedValue(
-      new Response(JSON.stringify({ name: 'test name', config: {}, force_summary: {} }), { status: 200 }),
+      new Response(JSON.stringify({
+        name: 'test name',
+        config: {},
+        force_summary: {},
+        historical_validation: HISTORICAL_VALIDATION,
+      }), { status: 200 }),
     )
     await fetchScenario('test name')
     expect(fetch).toHaveBeenCalledWith('/api/scenarios/test%20name')

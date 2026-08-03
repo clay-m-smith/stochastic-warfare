@@ -10,7 +10,7 @@ from fastapi import FastAPI, Request
 from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import FileResponse, JSONResponse
 
 from api import __version__
 from api.config import ApiSettings
@@ -28,17 +28,10 @@ async def request_validation_error_response(
     """Return serializable validation errors even for non-finite input."""
     errors: list[dict[str, Any]] = []
     for raw_error in exc.errors():
-        error = {
-            key: value
-            for key, value in raw_error.items()
-            if key != "input"
-        }
+        error = {key: value for key, value in raw_error.items() if key != "input"}
         context = error.get("ctx")
         if isinstance(context, Mapping):
-            error["ctx"] = {
-                key: str(value)
-                for key, value in context.items()
-            }
+            error["ctx"] = {key: str(value) for key, value in context.items()}
         errors.append(error)
     return JSONResponse(
         status_code=422,
@@ -115,10 +108,10 @@ def create_app(settings: ApiSettings | None = None) -> FastAPI:
 
     # Serve built frontend if available (Phase 39c)
     import os
+
     frontend_dist = os.path.join(os.path.dirname(__file__), "..", "frontend", "dist")
     if os.path.isdir(frontend_dist):
         from fastapi.staticfiles import StaticFiles
-        from fastapi.responses import FileResponse
 
         index_html = os.path.join(frontend_dist, "index.html")
 

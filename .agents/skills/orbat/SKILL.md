@@ -48,9 +48,12 @@ For a TO&E artifact, load it through the actual organization loader and assert
 the expected parent-child structure, counts, identifiers, and attachment
 semantics.
 
-For scenario composition, validate the scenario data, load it through
-`ScenarioLoader`, and verify the exact instantiated roster and loadouts. Run a
-bounded production-engine test when the requested hierarchy or composition is
+For scenario composition, validate the scenario data and use `ScenarioLoader`
+only for focused configuration diagnostics. Verify the comparable instantiated
+roster and loadouts through `SimulationRuntimeFactory.prepare`, an explicit
+prepared variant, and `PreparedScenario.build`. Run a bounded `RuntimeSession`
+by either calling `run_to_completion()`, or driving `step()` until terminal and
+then calling `finalize()`, when the requested hierarchy or composition is
 supposed to affect simulation behavior.
 
 Add negative coverage for invalid unit references, malformed hierarchy, or

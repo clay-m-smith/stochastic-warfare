@@ -172,8 +172,38 @@ print(batch.metric_values("exchange_ratio"))
 
 A seeded distribution characterizes current production behavior; it is not by
 itself historical validation. A historical verdict requires a predeclared,
-source-backed outcome envelope and held-out production runs. Catalog-wide work
-for that claim is tracked by [REM-030](../remediation-backlog.md).
+source-backed outcome envelope and held-out production runs. Phase 117 provides
+that strict boundary through the claim ledger, typed study plan, production
+runtime factory, retained observation receipts and vectors, joint-coverage
+evaluation, and digest-bearing artifact. The catalog currently exposes zero
+production-validated scenarios.
+
+### Running a Historical Outcome-Envelope Study
+
+Use the checked-in runner for a declared study; send exploratory output to a
+new evidence path so the stable artifact is not overwritten:
+
+```bash
+uv run --no-sync python scripts/run_historical_backtest.py \
+  --plan data/validation/historical_studies/73_easting_phase117.yaml \
+  --output docs/evidence/local/73-easting.json
+```
+
+The route loads and audits the complete historical-claim ledger, validates the
+typed plan, prepares every seed through `SimulationRuntimeFactory`, retains
+exact metric observations and terminal evidence, evaluates joint coverage, and
+atomically reloads the written artifact. `PASS` and `FAIL` are completed study
+verdicts. `ERROR` means execution failed after starting and cannot be promoted;
+an invalid plan rejects before a study artifact is produced. A passing local
+file is still not accepted evidence: promotion additionally requires a clean,
+predeclared, source-backed, independent study and exact committed
+ledger/artifact/Git bindings.
+
+The retained Phase 117 73 Easting artifact is `FAIL`, with 0/20 joint successes
+and a one-sided lower confidence bound of 0.0. It is not promotion-eligible, so
+73 Easting remains unsupported for historical validation. See the
+[study contract](../specs/historical-outcome-envelope-integrity.md) and
+[retained artifact](../evidence/phase-117/73-easting-phase117.json).
 
 ## Using the Web UI
 

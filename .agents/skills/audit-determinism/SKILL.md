@@ -10,9 +10,12 @@ path. Treat the audit as read-only unless the user has also authorized
 implementation. Read the relevant specification and `CODEX.md` invariants before
 classifying findings.
 
-`stochastic_warfare/validation/scenario_runner.py` is a separate simplified
-simulator. Evidence from it does not establish deterministic behavior in the
-production `ScenarioLoader` and `SimulationEngine` path.
+Comparable behavioral evidence must use
+`SimulationRuntimeFactory.prepare / prepare_config -> PreparedScenario.build ->
+RuntimeSession` with fresh sessions for each replay. Direct
+`ScenarioLoader`/`SimulationEngine` construction and the separate simplified
+`stochastic_warfare/validation/scenario_runner.py` may support diagnostics, but
+do not establish determinism in the production runtime path.
 
 ## Establish Scope
 

@@ -1,64 +1,105 @@
 ---
 name: validate-conventions
-description: Review Python code against Stochastic Warfare project conventions. Checks for PRNG discipline, deterministic iteration, coordinate system usage, logging, and type hints. Use after writing or modifying simulation core code.
-allowed-tools: Read, Grep, Glob
+description: Review changed Python against Stochastic Warfare's simulation conventions and production architecture. Use after modifying simulation-core code, public APIs, typed configuration, state serialization, coordinates, logging, or deterministic execution, and before a phase commit.
 ---
 
-# Convention Validator
+# Validate Conventions
 
-You are reviewing code in the Stochastic Warfare project for compliance with project conventions. These conventions exist to ensure simulation determinism, reproducibility, and code quality.
+Review the requested Python target or the current phase's changed Python files.
+Treat this as a read-only review unless the task also authorizes implementation.
+Use `CODEX.md` as the canonical rule set and inspect the real production path
+before classifying findings.
 
-## Target
-$ARGUMENTS
+## Establish Scope
 
-If no specific file or directory is given, scan the entire simulation core (`src/` or the main package directory).
+1. Record `git status --short`.
+2. Identify the phase-start revision and the changed or newly created Python
+   files in scope. Do not assume `HEAD~1` represents the current phase.
+3. Preserve unrelated and user-owned changes.
+4. Default the package scope to `stochastic_warfare/`, `api/`, and affected
+   tests. Scan the entire repository only when requested.
 
-## Convention Rules (CHECK ALL)
+## Review Rules
 
-### 1. PRNG Discipline (CRITICAL)
-- **VIOLATION**: Any use of `import random`, `random.random()`, `random.choice()`, `random.randint()`, `random.uniform()`, `random.gauss()`, or any `random` module function
-- **REQUIRED**: All randomness must flow through seeded `numpy.random.Generator` instances
-- **VIOLATION**: Using `numpy.random.seed()` or the legacy `numpy.random.RandomState` global functions (e.g., `np.random.random()`, `np.random.randn()`)
-- **REQUIRED**: Explicit `numpy.random.Generator` via `numpy.random.default_rng(seed)` or forked from the central RNG manager
-- **CHECK**: Each subsystem should use its own dedicated PRNG stream, not share generators across subsystems
+### Randomness
 
-### 2. Deterministic Iteration (CRITICAL)
-- **VIOLATION**: Iterating over `set()` objects where iteration order affects simulation logic
-- **VIOLATION**: Relying on `dict` iteration order for simulation-critical sequences (acceptable for display/logging)
-- **REQUIRED**: Use sorted collections, ordered data structures, or explicit ordering when iteration order matters
-- **CHECK**: Look for `for x in some_set` or `for k, v in some_dict.items()` in simulation-critical paths
+- Production simulation draws must use an injected
+  `numpy.random.Generator` from
+  `RNGManager.get_stream(ModuleId.<SUBSYSTEM>)`.
+- Flag Python `random`, legacy/global `np.random` draws, hidden generator
+  construction, incorrect stream selection, and unintended stream sharing.
+- Allow central RNG initialization and purpose-built test/tool generators when
+  they do not bypass the production contract.
 
-### 3. Coordinate System
-- **VIOLATION**: Using lat/lon (geodetic) coordinates in simulation math (distance calculations, movement, range checks)
-- **REQUIRED**: All simulation math in ENU/UTM (meters). Geodetic only at import/export/display boundaries
-- **CHECK**: Look for variables named `lat`, `lon`, `latitude`, `longitude` in simulation core — these should only appear in conversion functions
+### Deterministic State and Events
 
-### 4. Logging
-- **VIOLATION**: Bare `print()` calls in simulation core code
-- **REQUIRED**: Use the project logging framework (`logging` module or project-specific logger)
-- **EXCEPTION**: `print()` is acceptable in CLI entry points, scripts, and test utilities
+- Trace iteration that affects state, draw order, event order, serialization, or
+  outcomes.
+- Do not flag mapping iteration merely because it is a mapping. Establish
+  whether its construction and required order are deterministic.
+- Check stable tie-breakers and serialized ordering.
 
-### 5. Type Hints
-- **CHECK**: All public API functions (not prefixed with `_`) should have type hints for parameters and return values
-- **ADVISORY**: Missing type hints are a warning, not a blocking violation
+### Coordinates and Time
 
-### 6. No Timing-Dependent Behavior
-- **VIOLATION**: Using `time.time()`, `datetime.now()`, or wall-clock time in simulation logic
-- **REQUIRED**: All time in the simulation is simulation time (tick count, sim clock), never wall-clock
-- **EXCEPTION**: Performance profiling, logging timestamps, and non-simulation utility code
+- Simulation math uses ENU meters.
+- Geodetic values are valid only at import, export, conversion, and display
+  boundaries.
+- Simulation behavior uses the logical clock. Wall-clock timing is valid only
+  in profiling, logging metadata, and non-simulation boundaries.
 
-## Output Format
+Variable-name searches identify candidates, not violations.
 
-For each file checked, report:
+### Architecture and State
+
+- Preserve the dependency direction and keep entities as state rather than
+  subsystem engines.
+- Construct and inject stateful dependencies; do not introduce global engine
+  instances.
+- Public APIs require parameter and return type hints.
+- Configuration and data inputs use typed Pydantic models and reject unsupported
+  input explicitly.
+- Every affected stateful component serializes and restores all mutable state.
+- Optional features require verified enabled and disabled behavior.
+
+### Logging
+
+Simulation-core code uses
+`stochastic_warfare.core.logging.get_logger`. Bare `print()` is acceptable only
+at CLI, script, and test-utility boundaries.
+
+## Inspect and Verify
+
+Use `rg` to find candidates, then read surrounding control flow. For example:
+
+```powershell
+rg -n "import random|from random|RandomState|default_rng|np\.random" stochastic_warfare api
+rg -n "time\.time|datetime\.now|print\(" stochastic_warfare api
+rg -n "latitude|longitude|for .* in .*set|\.items\(\)" stochastic_warfare
 ```
-FILE: path/to/file.py
-  [CRITICAL] Line XX: description of violation — suggested fix
-  [WARNING]  Line XX: description of concern — suggested fix
-  [OK] No violations found
+
+Run Ruff on the changed Python paths:
+
+```powershell
+uv run ruff check <changed-python-paths>
 ```
 
-Provide a summary at the end:
-- Total files checked
-- Critical violations (must fix)
-- Warnings (should fix)
-- Files clean
+Run focused behavioral tests for every confirmed concern. Static checks,
+imports, constructors, source searches, mocks, and no-crash runs cannot prove
+that a feature is loaded, wired, enabled, exercised, or outcome-affecting.
+Tests of `stochastic_warfare/validation/scenario_runner.py` do not prove the
+production engine path.
+
+## Report
+
+Group results by file and report:
+
+- severity: `CRITICAL`, `WARNING`, or `CLEAN`;
+- exact line and rule;
+- `CONFIRMED` or `CANDIDATE`;
+- why production behavior is affected;
+- recommended fix and behavioral evidence;
+- commands run, results, exclusions, and limitations.
+
+Do not silently edit findings during a review-only request. During an authorized
+phase implementation, correct only in-scope issues, rerun affected checks, and
+place legitimate scope expansions in the remediation backlog.

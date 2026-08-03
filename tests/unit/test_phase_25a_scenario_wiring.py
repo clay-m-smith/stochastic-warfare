@@ -93,7 +93,43 @@ class TestConfigParsing:
 
     def test_school_config_accepted(self) -> None:
         cfg = _minimal_config(school_config={"unit_assignments": {}})
-        assert cfg.school_config == {"unit_assignments": {}}
+        assert cfg.school_config is not None
+        assert cfg.school_config.unit_assignments == {}
+
+    @pytest.mark.parametrize(
+        "proxy_config",
+        [
+            {"enable_schools": True},
+            {"enable_schools": False},
+            {"blue_school": "maneuverist", "red_school": "attrition"},
+            {"blue": "maneuverist", "red": "attrition"},
+        ],
+    )
+    def test_school_proxy_keys_rejected(
+        self,
+        proxy_config: dict[str, object],
+    ) -> None:
+        with pytest.raises(ValueError):
+            _minimal_config(school_config=proxy_config)
+
+    @pytest.mark.parametrize(
+        "assignments",
+        [
+            {"": "maneuverist"},
+            {" blue_unit": "maneuverist"},
+            {"blue_unit": ""},
+            {"blue_unit": "maneuverist "},
+            {"blue_unit": 42},
+        ],
+    )
+    def test_school_assignment_ids_are_strict(
+        self,
+        assignments: dict[object, object],
+    ) -> None:
+        with pytest.raises(ValueError):
+            _minimal_config(
+                school_config={"unit_assignments": assignments},
+            )
 
     def test_commander_config_accepted(self) -> None:
         cfg = _minimal_config(

@@ -4011,6 +4011,18 @@
     },
     {
       "classification": "structural_only",
+      "node_id": "tests/unit/test_repository_skills.py::test_claude_edit_hooks_express_current_rng_and_sensor_contract",
+      "rationale": "This node inspects provider settings and hook text for required tokens. It proves a static workflow declaration only, not runtime RNG, sensor, mapping, or simulation behavior.",
+      "strongest_oracle": "provider hook/settings text contains the declared RNG, sensor-policy, and mapping guard tokens"
+    },
+    {
+      "classification": "structural_only",
+      "node_id": "tests/unit/test_repository_skills.py::test_claude_routes_exactly_mirror_canonical_repository_skills",
+      "rationale": "This node compares provider skill files byte-for-byte and checks obsolete prompt absence. It proves static provider parity only, not execution of any workflow or production capability.",
+      "strongest_oracle": "all provider skill files byte-match their canonical repository counterparts and have no obsolete prompt"
+    },
+    {
+      "classification": "structural_only",
       "node_id": "tests/unit/test_repository_skills.py::test_codex_skill_manifest_is_portable_and_discoverable[audit-determinism]",
       "rationale": "The strongest current oracle is structural; this node cannot support a behavioral capability claim.",
       "strongest_oracle": "source/signature/import call: read_text"
@@ -4674,12 +4686,6 @@
       "node_id": "tests/api/test_phase_39_packaging.py::TestMainModule::test_main_module_import_does_not_raise_structural_diagnostic",
       "rationale": "The exact @pytest.mark.structural marker and absence of a direct assertion identify this as a reviewed compatibility diagnostic; it cannot support a behavioral capability or closure claim.",
       "strongest_oracle": "explicit structural marker with successful completion but no direct assertion"
-    },
-    {
-      "classification": "structural_only",
-      "node_id": "tests/unit/test_envelope_check.py::TestCountDestructionsByWeapon::test_counts_matching_events",
-      "rationale": "The exact count checks helper filtering over synthetic events, while all runtime construction and execution are mocked; it does not prove production scenario execution or recorder exposure.",
-      "strongest_oracle": "exact helper count over synthetic recorder events plus mocked runtime-call arguments"
     },
     {
       "classification": "structural_only",

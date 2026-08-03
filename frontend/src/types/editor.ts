@@ -28,6 +28,7 @@ export interface EditorSideConfig {
   units: EditorUnitEntry[]
   experience_level?: number
   morale_initial?: MoraleInitial
+  commander_profile?: string
 }
 
 export interface EditorState {
@@ -49,6 +50,4 @@ export type EditorAction =
   | { type: 'SET_CALIBRATION'; key: string; value: number | boolean }
   | { type: 'SET_SIDE_CALIBRATION'; side: string; field: string; value: number }
   | { type: 'SET_VICTORY_WEIGHT'; key: string; value: number }
-  | { type: 'SET_SCHOOL'; side: string; school_id: string }
-  | { type: 'SET_COMMANDER'; side: string; profile_id: string }
   | { type: 'SET_VALIDATION'; errors: string[] }

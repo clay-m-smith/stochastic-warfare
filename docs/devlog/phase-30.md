@@ -1,5 +1,11 @@
 # Phase 30: Scenario & Campaign Library
 
+> **Phase 117 school-integrity correction (2026-08-02):** Suwalki's archived
+> side-school proxy loaded an empty registry and assigned 0/39 units. The
+> declaration was removed and current source configuration accepts only strict
+> exact `unit_assignments`; the exercise and structural-coverage claims below
+> are superseded, not current behavioral evidence.
+
 ## Summary
 
 Final Block 2 phase. Comprehensive scenario library exercising the full wired engine across all domains and eras. Pure data phase: scenario YAML + 1 test file, zero new source files. 3 deficits resolved.

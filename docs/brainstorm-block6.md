@@ -1,5 +1,18 @@
 # Stochastic Warfare -- Block 6 Brainstorm
 
+> **Phase 117 historical-claim supersession (2026-08-02):** This archived page
+> preserves implementation history. Its historical-winner, outcome, casualty,
+> duration, calibration, plausibility, envelope, and tolerance statements are
+> not accepted historical validation. Any engine figures below are regression
+> history only, not predictive evidence or calibration authority; the typed
+> claim ledger and accepted production artifacts, if any, are authoritative.
+
+> **Phase 117 school-integrity correction (2026-08-02):** The archived
+> scenario `school_config` coverage below used ignored side proxy keys and
+> assigned zero units. Those declarations were removed; current source
+> configuration accepts only strict exact `unit_assignments`.
+
+
 > **Phase 112 integrity supersession (2026-07-30):** This brainstorming page
 > preserves Block 6's contemporaneous design goals, counts, and proposed winner
 > checks. They are development history, not current historical-validation

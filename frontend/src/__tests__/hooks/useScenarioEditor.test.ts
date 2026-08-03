@@ -86,10 +86,42 @@ describe('editorReducer', () => {
     expect(next.config.ew_config).toBeDefined()
   })
 
+  it('uses presence-only defaults for Escalation and DEW', () => {
+    const state = makeState({ name: 'test' })
+    const escalation = editorReducer(state, {
+      type: 'TOGGLE_CONFIG',
+      key: 'escalation_config',
+      enabled: true,
+    })
+    const dew = editorReducer(state, {
+      type: 'TOGGLE_CONFIG',
+      key: 'dew_config',
+      enabled: true,
+    })
+
+    expect(escalation.config.escalation_config).toEqual({})
+    expect(dew.config.dew_config).toEqual({})
+  })
+
   it('TOGGLE_CONFIG disables a config key', () => {
     const state = makeState({ ew_config: { enable_ew: true } })
     const next = editorReducer(state, { type: 'TOGGLE_CONFIG', key: 'ew_config', enabled: false })
     expect(next.config.ew_config).toBeUndefined()
+  })
+
+  it('does not invent a proxy Space configuration without catalog selection', () => {
+    const state = makeState({ name: 'test' })
+    const next = editorReducer(state, {
+      type: 'TOGGLE_CONFIG',
+      key: 'space_config',
+      enabled: true,
+    })
+
+    expect(next.config.space_config).toBeUndefined()
+    expect(next.isDirty).toBe(false)
+    expect(next.validationErrors).toEqual([
+      expect.stringMatching(/explicit catalog constellation IDs/),
+    ])
   })
 
   it('SET_CALIBRATION sets calibration override', () => {

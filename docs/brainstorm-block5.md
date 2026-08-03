@@ -1,5 +1,7 @@
 # Stochastic Warfare — Block 5 Brainstorm
 
+Current status: Phase 117 supersedes these historical-validation claims; this document is retained only as planning history.
+
 ## Context
 
 Blocks 1–4 (Phases 0–39) built the complete simulation engine, 5 historical eras, a REST API, a React web application, Docker packaging, and ~7,833 tests. 42 scenarios (27 modern + 15 historical). The engine has 19+ modules across all combat domains.
@@ -10,7 +12,7 @@ Block 4 completed the web application and made the product runnable via a single
 
 ## Motivation: Systematic Scenario Evaluation
 
-Running all 42 scenarios and comparing outputs to historical outcomes reveals **systemic fidelity gaps** in the engine. These are not bugs but architectural simplifications made during initial development that now produce unrealistic results.
+The original Block 5 planning exercise treated then-current scenario comparisons as historical evidence. Phase 117 does not accept those runs as historical validation; the tables below are retained only to explain the planning context that motivated later engine work.
 
 ### Scenarios with Wrong Winner (6 of 16 historical)
 
